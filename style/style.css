@@ -1,0 +1,41 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/*
+ * Default style set for Basis library
+ */
+
+  @import 'tree/compat/style.css';
+  @import 'table/vista/style.css';
+  @import 'form/default/style.css';
+  @import 'window/w1_cabinet/style.css';
+  @import 'balloon/w1_cabinet/style.css';
+  @import 'dropdown/blue/style.css';
+  @import 'tabs/vista/style.css';
+  @import 'calendar/vista/style.css';
+
+
+  /* MAIN */
+
+  HTML,
+  BODY
+  {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  BODY
+  {
+    font-family: Verdana, Tahoma, Arial, sans-serif;
+    font-size: small;
+  }

@@ -1,0 +1,28 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/*
+ * Default style set for Basis library (IE fixes)
+ */
+
+  @import 'calendar/vista/style_ie.css';
+  @import 'table/vista/style_ie.css';
+  @import 'tree/compat/style_ie.css';
+  @import 'tabs/vista/style_ie.css';
+  @import 'window/w1_cabinet/style_ie.css';
+
+  BODY,
+  TD,
+  TH
+  {
+    font-family: Verdana, Tahoma, Arial, sans-serif;
+    font-size: x-small;
+  }

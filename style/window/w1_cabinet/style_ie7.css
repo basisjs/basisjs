@@ -1,0 +1,52 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * W1 Cabinet style (http://www.w1.ru) for Basis.Controls.Window
+ * Internet Explorer 7.0 fixes
+ */
+
+  .Basis-Window-Canvas
+  {
+    height: 100%;
+    top: -1px;
+  }
+  .Basis-Window-Canvas .content
+  {
+    filter: alpha(opacity: 90);
+  }
+  .Basis-Window-Layout
+  {
+    margin-bottom: -10px;
+    top: -5px;
+    zoom: 1;
+  }
+
+  .Basis-Window-Content
+  {
+    zoom: 1;
+  }
+
+  .Basis-Window-Title-ButtonPlace
+  {
+    fl2oat: none;
+    po2sition: absolute;
+    ri2ght: 5px;
+    top: 1px;
+  }
+
+  .Basis-Window .Basis-Window-Title
+  {
+  }
+  .Basis-Window .Basis-Window-ButtonPlace
+  {
+    padding-bottom: 8px;
+  }

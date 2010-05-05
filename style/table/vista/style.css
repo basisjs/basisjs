@@ -1,0 +1,213 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Bases style for Basis.Controls.Table
+ */
+
+  .Basis-Table
+  {
+    border-collapse: separate;
+    border-spacing: 0;
+    border-left: 1px solid #E8E8E8;
+    border-bottom: 1px solid #E8E8E8;
+    empty-cells: show;
+  }
+
+  /*
+   * HEADER
+   */
+
+  /*
+   * default
+   */
+  .Basis-Table-Header-Cell
+  {
+    padding: 0;
+    margin: 0;
+    border: none;
+    border-bottom: 1px solid white;
+    font-weight: normal;
+    vertical-align: top;
+    text-align: left;
+    background-repeat: repeat-x;
+    background-image: url(bg.gif);
+    background-color: #F1F2F4;
+    white-space: nowrap;
+    -moz-user-select: none;
+    cursor: default;
+  }
+  .Basis-Table-Header-Cell-Content
+  {
+    height: 100%;
+    margin: 0;
+    margin-top: -8px;
+    padding-left: 1px;
+    border-top: 1px solid #D5D5D5;
+    border-bottom: 1px solid #D5D5D5;
+    border-right: 1px solid #D5D5D5;
+    background: url(hline_left.gif) no-repeat left top;
+  }
+  .Basis-Table-Header-GroupContent .Basis-Table-Header-Cell-Content
+  {
+    margin-bottom: -2px;
+    text-align: center;
+  }
+  .Basis-Table-Header-Cell-Title
+  {
+    display: block;
+    padding: 3px .5em 3px .4em;
+    background: url(hline_right.gif) no-repeat right top;
+    margin-right: -1px;
+  }
+  .Basis-Table-Sort-Direction
+  {
+    height: 8px;
+    width: 8px;
+    margin: 0 auto;
+  }
+
+  /*
+   * :hover
+   */
+  .Basis-Table .sortable:hover
+  {
+    cursor: pointer;
+    background-color: #B7E7FB;
+    background-image: url(hover_bg.gif);
+  }
+  .Basis-Table .sortable:hover .Basis-Table-Header-Cell-Content
+  {
+    background-image: url(hover_hline.gif);
+    border-color: #93C9E3;
+    border-left: none;
+    padding-left: 1px;
+  }
+  .Basis-Table .sortable:hover .Basis-Table-Header-Cell-Title
+  {
+    background-image: url(hover_hline.gif);
+  }
+
+  /*
+   *  selected
+   */
+  .Basis-Table .selected
+  {
+    background-color: #D8ECF6;
+    background-image: url(selected_bg.gif);
+  }
+  .Basis-Table .selected .Basis-Table-Header-Cell-Content
+  {
+    background-image: none;
+    border-color: #96D9F9;
+    border-left: 1px solid #96D9F9;
+    padding-left: 0;
+  }
+  .Basis-Table .selected .Basis-Table-Header-Cell-Title
+  {
+    background-image: none;
+  }
+  .Basis-Table .selected .Basis-Table-Sort-Direction
+  {
+    background: url(order_asc.gif) no-repeat center center;
+  }
+  .Basis-Table .sort-order-desc .selected .Basis-Table-Sort-Direction
+  {
+    background-image: url(order_desc.gif);
+  }
+
+  /*
+   *  COMMON
+   */
+
+  .Basis-Table TBODY TD.right,
+  .Basis-Table TFOOT TD.right
+  {
+    text-align: right;
+  }
+  .Basis-Table TBODY TD.center,
+  .Basis-Table TFOOT TD.center
+  {
+    text-align: center;
+    padding-left: .25em;
+  }
+
+  /*
+   * BODY
+   */
+
+  .Basis-Table-Body TD
+  {
+    padding: 3px .25em 3px .5em;
+    border-right: 1px solid #EDEDED;
+  }
+  .Basis-Table-Body TR.hover TD,
+  .Basis-Table-Body TR:hover TD
+  {              
+    background: #E8F5FD url(row_hover_bg.gif) repeat-x;
+    border-top: 1px solid #D8F0FA;
+    border-bottom: 1px solid #D8F0FA;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+  .Basis-Table-Body TR.selected TD
+  {
+    background: #D5EFFC url(row_selected_bg.gif) repeat-x;
+    border-right-color: #D1EBF8;
+    border-top: 1px solid #99DEFD;
+    border-bottom: 1px solid #99DEFD;
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+  .Basis-Table-GroupHeader TD
+  {
+    font-weight: bold;
+    border-top: 1px solid #EDEDED !important;
+    border-bottom: 1px solid #EDEDED !important;
+    font-size: 85% !important;
+    padding: 4px !important;
+    background: none !important;
+    cursor: pointer;
+  }
+  .Basis-Table-GroupHeader TD .expander
+  {
+    display: block;
+    float: left;
+    margin-left: -2px;
+    height: 1.2em;
+    width: 20px;
+    background: url(minus.gif) no-repeat center center;
+  }
+  TBODY.collapsed .Basis-Table-GroupHeader TD .expander
+  {
+    background-image: url(plus.gif);
+  }
+  TBODY.collapsed TR.Basis-Table-GroupHeader
+  {
+    display: table-row;
+  }
+  TBODY.collapsed TR
+  {
+    display: none;
+  }
+
+  /*
+   * FOOTER
+   */
+
+  .Basis-Table-Footer TD
+  {
+    border-top: 1px solid #E8E8E8;
+    border-right: 1px solid #E8E8E8;
+    background: url(footer_bg.gif) repeat-x;
+    padding: .22em .25em .22em .5em;
+  }
+

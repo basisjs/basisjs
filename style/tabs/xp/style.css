@@ -1,0 +1,127 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Default style for Basis.Controls.Tabs
+ */
+
+  .Basis-TabControl
+  {
+    border-bottom: 1px solid #919B9C;
+    -moz-user-select: none;
+  }
+  .Basis-TabControl-Start
+  {
+    width: 3px; 
+    height: 18px; 
+    float: left;
+  }
+  .Basis-TabControl-End
+  {
+    clear: both;
+  }
+  .Basis-TabControl .Basis-TabControl-TabGroup
+  {
+    float: left;
+    margin: 0 1ex 0 0;
+  }
+  .Basis-TabControl-Content .Basis-Tab
+  {
+    float: left;
+    margin: 2px 1px 0 1px;
+    font-family: Tahoma;
+    font-size: 8pt;
+    border: 1px solid #91A7B4;
+    border-bottom: none;
+    position: relative;
+    z-index: 10;
+    cursor: pointer;
+    background: white;
+    color: black;
+  }
+  .Basis-TabControl-Content .selected
+  {
+    margin: 0 -3px -4px -3px;
+    z-index: 100;
+    cursor: default;
+    border-top-color: #E68B2C;
+    border-left-color: #919B9C;
+    border-right-color: #919B9C;
+    padding-bottom: 5px;
+  }
+  .Basis-TabControl-Content .disabled
+  {
+    color: #A0A0A0;
+  }
+  .Basis-TabControl .Basis-Tab-Content
+  {
+    padding: 3px 5px 2px 5px;
+    margin: -1px -1px 0 -1px;
+    height: 13px;
+    background-image: url(not_active_bg.gif);
+    background-repeat: repeat-x;
+  }
+  .Basis-TabControl .Basis-Tab-Caption
+  {
+    white-space: nowrap;
+  }
+  .Basis-TabControl .selected .Basis-Tab-Content
+  {
+    padding: 3px 9px 5px 9px;
+    background-image: url(active_bg.gif);
+  }
+  .Basis-TabControl .Basis-Tab-Start
+  {
+    position: absolute;
+    z-index: 100;
+    top: -3px;
+    left: -1px;
+    width: 5px;
+    height: 18px;
+    background-image: url(not_active_left_bg.gif);
+    background-repeat: no-repeat;
+  }
+  .Basis-TabControl .Basis-Tab-End
+  {
+    position: absolute;
+    top: -3px;
+    left: 0;
+    width: 100%;
+    margin-left: 1px;
+    height: 18px;
+    background-image: url(not_active_right_bg.gif);
+    background-repeat: no-repeat;
+    background-position: top right;
+  }
+  .Basis-TabControl .selected .Basis-Tab-Start
+  {
+    background-image: url(active_left_bg.gif);
+  }
+  .Basis-TabControl .selected .Basis-Tab-End
+  {
+    background-image: url(active_right_bg.gif);
+  }
+
+  .Basis-PageControl
+  {
+    clear: left;
+    border: 1px solid #808080;
+    border-top: none;
+    padding: 4px 4px 4px;
+  }
+  .Basis-PageControl .Basis-Page
+  {
+    border: 1px solid #E0E0E0;
+    height: 100%;
+    overflow: auto;
+    position: relative;
+    padding: 4px;
+  }

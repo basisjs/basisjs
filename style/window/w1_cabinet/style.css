@@ -1,0 +1,270 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * W1 Cabinet style (http://www.w1.ru) for Basis.Controls.Window
+ */
+
+  .Basis-Blocker
+  {
+    z-index: 1000;
+  }
+  .Basis-Blocker .mate
+  {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: white;
+    opacity: .5;
+      -moz-opacity: .5;
+      -khtml-opacity: .5;
+      -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=50)";
+      filter: progid:DXImageTransform.Microsoft.Alpha(opacity=50);
+  }
+  .opacity-not-support .Basis-Blocker .Basis-Blocker-Mate
+  {
+    background: url(mate_white.png);
+  }
+
+  .Basis-Window
+  {
+    position: absolute;
+    position: fixed;  /* opera corrupt */
+  }
+  .Basis-Window-Canvas
+  {
+    /* позиционируем абсолютно, чтобы подложка не влияла на размеры блока */
+    position: absolute;
+    bottom: 5px;
+    top: 3px;
+    left: 0;
+    height: 100%;
+
+    /* подложка занимает все пространство */
+    width: 100%;
+  }
+  .Basis-Window-Canvas .corner-left-top,
+  .Basis-Window-Canvas .corner-right-top,
+  .Basis-Window-Canvas .corner-left-bottom,
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    background-image: url(corner.png);
+    background-repeat: no-repeat;
+
+    width: 10px;
+    height: 11px;
+
+    position: relative;
+  }
+  .Basis-Window-Canvas .corner-left-top
+  {
+    float: left;
+    margin-top: -11px;
+    top: 7px;
+    background-position: left top;
+  }
+  .Basis-Window-Canvas .corner-right-top
+  {
+    float: right;
+    margin-top: -11px;
+    top: 7px;
+    background-position: right top;
+  }
+
+/*
+  .Basis-Window-Canvas .side-top,
+  .Basis-Window-Canvas .side-left,
+  .Basis-Window-Canvas .side-right,
+  .Basis-Window-Canvas .side-bottom
+  {
+    background: red;
+  }
+*/
+
+  .Basis-Window-Canvas .side-top
+  {
+    margin: -5px 10px 0;
+    border-bottom: 1px solid black;
+    height: 4px;
+    background: url(h.png) repeat-x 0 1px;
+  }
+  .Basis-Window-Canvas .side-left
+  {
+    border-right: 1px solid black;
+    width: 5px;
+    position: absolute;
+    left: 0;
+    top: 7px;
+    bottom: 1px;
+    background: url(v.png) repeat-y 0 0;
+  }
+  .Basis-Window-Canvas .side-right
+  {
+    border-left: 1px solid black;
+    width: 5px;
+    position: absolute;
+    right: 0;
+    top: 7px;
+    bottom: 1px;
+    background: url(v.png) repeat-y -5px 0;
+  }
+  .Basis-Window-Canvas .side-bottom
+  {
+    margin: 0 10px;
+    border-top: 1px solid black;
+    height: 7px;
+    background: url(h.png) repeat-x 0 -3px;
+  }
+  .Basis-Window-Canvas .content
+  {
+    height: 100%;
+    margin: 0 6px;
+    background: black url(content.gif) repeat-x left top;
+    border: 1px solid #7A7A7A;
+
+    /* прозрачность */
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=90)";
+    opacity: .9;
+    -moz-opacity: .9;
+    -khtml-opacity: .9;
+  }
+  .Basis-Window-Canvas .corner-left-bottom
+  {
+    float: left;
+    background-position: left bottom;
+    top: -3px;
+  }
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    float: right;
+    background-position: right bottom;
+    top: -3px;
+  }
+/*
+  .Basis-Window-Canvas .corner-left-top,
+  .Basis-Window-Canvas .side-left,
+  .Basis-Window-Canvas .side-top,
+  .Basis-Window-Canvas .side-bottom,
+  .Basis-Window-Canvas .corner-left-bottom,
+  .Basis-Window-Canvas .corner-right-top,
+  .Basis-Window-Canvas .side-right,
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    di2splay: none;
+  }
+*/
+
+  .Basis-Window-Layout
+  {
+    position: relative;
+    z-index: 10;
+    color: white;
+    padding: 0 6px 0 6px;
+  }
+
+  .Basis-Window .Basis-Window-Title
+  {
+  }
+  .Basis-Window .Basis-Window-Title DIV
+  {
+    padding: 5px 0px 4px;
+    font-size: 85%;
+    text-align: center;
+  }
+
+  .Basis-Dragable .Basis-Window-Title
+  {
+    cursor: move;
+    user-select: none;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+  }
+  .Basis-Window-Title-ButtonPlace-Close,
+  .Basis-Window-Title-ButtonPlace-Minimize
+  {
+    padding: 0 22px;
+  }
+  .Basis-Window-Title-ButtonPlace-CloseMinimize
+  {
+    padding: 0 50px 0 25px;
+  }
+  .Basis-Window-Title-ButtonPlace
+  {
+    position: absolute;
+    right: 8px;
+    top: 0px;
+    display: block;
+  }
+  .Basis-Window-Title-MinimizeButton
+  {
+    display: block;
+    float: left;
+    width: 23px;
+    height: 17px;
+    background: url(button_minimize.png) no-repeat center left;
+    cursor: pointer;
+  }
+  .Basis-Window-Title-CloseButton
+  {
+    display: block;
+    float: left;
+    width: 23px;
+    height: 17px;
+    background: url(button_close.png) no-repeat center right;
+    cursor: pointer;
+  }
+  .Basis-Window-Title-ButtonPlace-CloseMinimize .Basis-Window-Title-CloseButton
+  {
+    background-image: url(button_close_minimize.png);
+    width: 21px;
+  }
+  .Basis-Window-Title-ButtonPlace-CloseMinimize .Basis-Window-Title-MinimizeButton
+  {
+    background-image: url(button_close_minimize.png);
+    width: 22px;
+  }
+  .Basis-Window-Title-MinimizeButton SPAN,
+  .Basis-Window-Title-CloseButton SPAN
+  {
+    display: none;
+  }
+
+  .Basis-Window .Basis-Window-Content
+  {
+    padding: 8px 6px;
+  }
+
+  .Basis-Window .Basis-Window-ButtonPlace
+  {
+    clear: both;
+    text-align: right;
+    margin-bottom: -4px;
+    padding: 8px 1px 0 4px !important;
+  }
+
+  .Basis-Popup
+  {
+    position: absolute;
+    background-color: #FFFF99;
+    border: 1px solid #F2C261;/*
+    opacity: 0.9;
+    -moz-opacity: 0.9;
+    -khtml-opacity: 0.9;
+    filter: alpha(opacity: 90);*/
+  }
+
+  .Basis-Popup-Content
+  {
+    min-height: 1em;
+    min-width: 100px;
+  }

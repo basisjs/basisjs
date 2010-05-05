@@ -1,0 +1,216 @@
+
+  H1
+  {
+    font-size: 140%;
+  }
+
+  #TestPanel
+  {
+    border: 1px solid;
+    border-color: #E0E0E0 #BBB #BBB #E0E0E0;
+    background: #E0EEF8;
+    float: left;
+    padding: 5px;
+    margin-bottom: 1em;
+  }
+  BUTTON
+  {
+    margin-right: 1ex;
+  }
+
+  #TestProgressbar
+  {
+    background: white;
+    border: 1px solid black;
+    padding: 4px;
+    width: 400px;
+    margin-bottom: 6px;
+  }
+  #TestProgressbar DIV
+  {
+    height: 5px;
+    font-size: 0;
+    background: blue;
+    width: 0px;
+  }
+
+  #result
+  {
+    clear: both;
+  }
+
+  .TestCase P
+  {
+    border-bottom: 2px solid #99CC99;
+    padding-bottom: 2px;
+    float: left;
+    margin: 0 0 .5em 0;
+  }
+  .TestCase P.fault
+  {
+    border-bottom-color: #DD9999;
+  }
+
+  .TestCase P EM
+  {
+    font-weight: bold;
+    font-style: normal;
+  }
+
+  .Test EM
+  {
+    font-weight: bold;
+  }
+
+  .TestCase UL UL
+  {
+    border-left: 2px solid #E0E0E0;
+  }
+  .TestCase UL
+  {
+    clear: both;
+    list-style: none;
+    margin: 0 0 0 -12px;
+    padding: 0 0 0 0px;
+    zoom: 1;
+  }
+  .TestCase LI
+  {
+    margin: .5em 0 .5em 2ex;
+    padding-left: 24px;
+  }
+
+  .TestCase LI.TestCase
+  {
+    background: url(testcase.gif) no-repeat 4px 0;
+  }
+  .TestCase LI.Test
+  {
+    background: url(test.gif) no-repeat 4px 0;
+  }
+
+  .TestCase SPAN.success,
+  .TestCase SPAN.fault,
+  .TestCase SPAN.uncomplete,
+  .TestCase SPAN.empty
+  {
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .TestCase SPAN.success
+  {
+    color: #009900;
+  }
+  .TestCase SPAN.fault
+  {
+    color: #AA0000;
+  }
+  .TestCase SPAN.uncomplete
+  {
+    color: #AA9900;
+  }
+  .TestCase SPAN.empty
+  {
+    color: #909090;
+  }
+
+  .Test DIV.code
+  {
+    font-family: Courier New;
+    font-size: 9pt;
+    line-height: 1.7em;
+  }
+
+  .Test DIV.line
+  {
+    position: relative;
+    zoom: 1;
+  }
+  .Test DIV.line .lineText
+  {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .Test DIV.line .lineText:hover
+  {
+    background-color: #F0F0F0;
+  }
+
+  .Test .ErrorDetailsExpander
+  {
+    position: absolute;
+    height: 1.8em;
+    width: 20px;
+    left: -20px;
+    top: 0px;
+    background: url(plus.gif) no-repeat center center;
+  }
+  .Test .show-error-details .ErrorDetailsExpander
+  {
+    background-image: url(minus.gif);
+  }
+
+  .ErrorLine .lineText
+  {
+    background-color: #FFE0D0 !important;
+    color: red;
+    border: 1px solid #DD0000;
+    margin-top: -1px;
+    padding-left: 4px;
+    cursor: pointer;
+  }
+  .BreakLine .lineText
+  {
+    background-color: #AA0000 !important;
+    color: white;
+    margin-left: -4px;
+    padding-left: 4px;
+    cursor: pointer;
+  }
+  .UncompleteLine
+  {
+    color: #AAA;
+    font-style: italic;
+  }
+
+  .ErrorDetails
+  {
+    display: none;
+    border: 1px solid #DD0000;
+    border-left: 3px solid #DD0000;
+    border-top: none;
+    padding-left: 10px;
+    margin: 0 0 5px 5px;
+  }
+  .show-error-details .ErrorDetails
+  {
+    display: block;
+  }
+  .ErrorDetails DIV B
+  {
+    display: block;
+    font-family: verdana, sans-serif;
+    font-size: 8pt;
+  }
+  .ErrorDetails DIV SPAN
+  {
+    display: block;
+    padding-left: 3ex;
+    margin-top: -.6em;
+  }
+  .ErrorDetails DIV SPAN.answer
+  {
+    color: red;
+  }
+  .ErrorDetails DIV SPAN.expect
+  {
+    color: #008800;
+  }
+  .ErrorDetails:hover DIV,
+  .ErrorDetails.hover DIV
+  {
+    display: block;
+    _width: 400px;
+  }

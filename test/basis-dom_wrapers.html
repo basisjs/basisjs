@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="ru" xml:lang="ru">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Test Suite - DOM Wrapers</title>
+
+  <style type="text/css">
+    @import "style/default/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript"  src="../basis.js"></script>
+  <script type="text/javascript"  src="../dom_wraper.js"></script>
+  <script type="text/javascript"  src="test.js"></script>
+  <script type="text/javascript"  src="common.js"></script>
+</head>
+
+<body>
+
+  <script type="text/javascript">
+    loadTest((function(){
+
+      var DOM = Basis.DOM;
+      var Data = Basis.Data;
+      var CSS = Basis.CSS;
+      var Event = Basis.Event;
+      var Tester = Basis.Test.Tester;
+
+      var MWrapers = DOM.Wrapers;
+      var Property = MWrapers.Property;
+      var PropertySet = MWrapers.DataObjectSet;
+
+      var CookieName;
+      var TestProperty;
+
+      var updateCount = 0;
+
+      var testSet = [
+        { info: { title: 'node0', value: 0, group: 1 } },
+        { info: { title: 'node1', value: 1, group: 2 } },
+        { info: { title: 'node2', value: 2, group: 1 } },
+        { info: { title: 'node3', value: 3, group: 3 } },
+        { info: { title: 'node4', value: 4, group: 4 } },
+        { info: { title: 'node5', value: 5, group: 2 } },
+        { info: { title: 'node6', value: 6, group: 2 } },
+        { info: { title: 'node7', value: 7, group: 1 } },
+        { info: { title: 'node8', value: 8, group: 3 } },
+        { info: { title: 'node9', value: 9, group: 1 } }
+      ];
+
+      function nodeFactory(cfg){
+        return new MWrapers.Node(cfg);
+      };
+
+      function checkNode(node){
+        if (node.firstChild != (node.childNodes.first() || null))
+          return 'Wrong firstChild ref';
+        if (node.lastChild != (node.childNodes.last() || null))
+          return 'Wrong lastChild ref';
+
+        for (var i = 0; i < node.childNodes.length; i++)
+        {
+          child = node.childNodes[i];
+          if (child.parentNode != node)
+            return 'child #' + i + ' has wrong parentNode ref';
+          if (child.previousSibling != (node.childNodes[i - 1] || null))
+            return 'child #' + i + ' has wrong previousSibling ref';
+          if (child.nextSibling != (node.childNodes[i + 1] || null))
+            return 'child #' + i + ' has wrong nextSibling ref';
+          if (child.document != node.document)
+            return 'child #' + i + ' has wrong document ref';
+        }
+        return false;
+      }
+
+      return [
+        {
+          name: 'Property',
+          testcase: [
+            {
+              name: 'create',
+              test: function(){
+                TestProperty = new Property(123);
+                this.is(123, TestProperty.value);
+              }
+            },
+            {
+              name: 'addLink/removeLink',
+              test: function(){
+
+
+              }
+            },
+            {
+              name: 'set #1',
+              test: function(){
+                var t = {};
+                var value = Math.random();
+
+                TestProperty.addLink(t, 'saved');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value, t.saved);
+
+                // not fire on existing value set
+                t.saved = 0;
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(0, t.saved);
+
+                // fire on existing value set, with forced flag
+                t.saved = 0;
+                TestProperty.set(value, true);
+                this.is(value, TestProperty.value);
+                this.is(value, t.saved);
+
+                TestProperty.clear();
+              }
+            },
+            {
+              name: 'set #2',
+              test: function(){
+                var t = {};
+                var value = Math.random();
+                TestProperty.addLink(t, 'saved');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value, t.saved);
+                TestProperty.clear();
+
+                var t = {};
+                var value = Math.random();
+                TestProperty.addLink(t, 'saved', '{0:.2}');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value.toFixed(2), t.saved);
+                TestProperty.clear();
+
+                var t = {};
+                var value = Math.random();
+                TestProperty.addLink(t, function(value){ this.saved = value * 2 });
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value * 2, t.saved);
+                TestProperty.clear();
+              }
+            },
+            {
+              name: 'set #3',
+              test: function(){
+                var t = DOM.createElement('DIV');
+                var value = Math.random();
+                TestProperty.addLink(t);
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(String(value), t.innerHTML);
+                TestProperty.clear();
+
+                var t = DOM.createElement('DIV');
+                var value = Math.random();
+                TestProperty.addLink(t, 'title');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(String(value), t.title);
+                TestProperty.clear();
+
+                var t = DOM.createText('#text');
+                var value = Math.random();
+                TestProperty.addLink(t);
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(String(value), t.nodeValue);
+                TestProperty.clear();
+
+                var t = DOM.createText('#text');
+                var value = Math.random();
+                TestProperty.addLink(t, null, '{0:.2}');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value.toFixed(2), t.nodeValue);
+                TestProperty.clear();
+              }
+            },
+            {
+              name: 'get',
+              test: function(){
+              }
+            }/*,
+            {
+              name: 'Property with proxy',
+              test: function(){
+                var a = new Property(0, null, Data.validator(function(value){ return !isNaN(value) && value }));
+                a.set(3);
+                this.is(3, a.value);
+                a.set('hello');
+                this.is(3, a.value);
+              }
+            }*/
+          ]
+        },
+        {
+          name: 'PropertySet',
+          testcase: [
+            {
+              name: 'test #1',
+              test: function(){
+                s = new PropertySet();
+                s.a = new Property(1);
+                s.b = new Property(2);
+
+                updateCount = 0;
+                s.add(s.a);
+                s.add(s.b);
+
+                s.addHandler({
+                  change: function(){
+                    updateCount++;
+                  }
+                });
+
+                s.a.set(11);
+                s.b.set(11);
+
+                this.is(0,0);
+
+                s.a.set('test');
+              }
+            },
+            {
+              name: 'checkout',
+              test: function(){
+                this.is(1, updateCount);
+                this.is('test', s.a.value);
+                this.is(11, s.b.value);
+              }
+            },
+            {
+              name: 'destroyed property unlink',
+              test: function(){
+                s = new PropertySet();
+                s.a = new Property(1);
+                s.b = new Property(2);
+
+                updateCount = 0;
+                s.add(s.a);
+                s.add(s.b);
+
+                s.addHandler({
+                  change: function(){
+                    updateCount++;
+                  }
+                });
+
+                this.is(2, s.objects.length);
+                this.is(0, updateCount);
+
+                s.a.destroy();
+
+                this.is(1, s.objects.length);
+                this.is(0, updateCount);
+              }
+            },
+            {
+              name: 'destroyed PropertySet unlink',
+              test: function(){
+                var result = 0;
+                s = new PropertySet();
+                s.a = new Property(1),
+                s.b = new Property(2);
+
+                s.addHandler({
+                  change: function(){
+                    result = a.value + b.value;
+                  }
+                });
+
+                s.a.destroy();
+
+                this.is(0, result);
+              }
+            }
+          ]
+        },
+        {
+          name: 'DOM wrappers',
+          testcase: [
+            {
+              name: 'basic',
+              testcase: [
+                {
+                  name: 'create',
+                  test: function(){
+                    var node = new MWrapers.Node();
+                    this.is(false, checkNode(node));
+
+                    var node = new MWrapers.Node({ info: { a: 1, b: 2 } });
+                    this.is({ a: 1, b: 2}, node.info);
+                  }
+                },
+                {
+                  name: 'create with childNodes',
+                  test: function(){
+                    var node = new MWrapers.Node({ childNodes: testSet.map(nodeFactory) });
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+
+                    var node = new MWrapers.Node({ childFactory: nodeFactory, childNodes: testSet });
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                  }
+                },
+                {
+                  name: 'appendChild',
+                  test: function(){
+                    var node = new MWrapers.Node();
+                    for (var i = 0; i < testSet.length; i++)
+                      node.appendChild(new MWrapers.Node(testSet[i]));
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                  }
+                },
+                {
+                  name: 'insertBefore',
+                  test: function(){
+                    var node = new MWrapers.Node();
+                    for (var i = 0; i < testSet.length; i++)
+                      node.insertBefore(new MWrapers.Node(testSet[i]));
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+
+                    var node = new MWrapers.Node();
+                    for (var i = 0; i < testSet.length; i++)
+                      node.insertBefore(new MWrapers.Node(testSet[i]), node.firstChild);
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.map(Data.getter('info')).reverse(), node.childNodes.map(Data.getter('info')));
+                  }
+                },
+                {
+                  name: 'DOM.insert',
+                  test: function(){
+                    var node = new MWrapers.Node();
+                    DOM.insert(node, testSet.map(nodeFactory))
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+
+                    var node = new MWrapers.Node({ childFactory: nodeFactory });
+                    DOM.insert(node, testSet)
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ];
+
+    })());
+
+
+  </script>
+</body>
+
+</html>

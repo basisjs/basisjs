@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="ru" xml:lang="ru">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Tree</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../style/tree/default/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Vista Style" href="../style/tree/vista/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Compat Style" href="../style/tree/compat/style.css" media="screen" />
+
+  <style type="text/css">
+    HTML,
+    BODY
+    {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    LABEL
+    {
+      cursor: pointer;
+    }
+    LABEL:hover
+    {
+      text-decoration: underline;
+    }
+    INPUT[type=checkbox]
+    {
+      position: relative;
+      top: 2px;
+    }
+    #TreeContainer
+    {
+      border: 1px solid green;
+      margin: .25em;
+      overflow: auto;
+      height: 500px;
+    }
+    .basis-tree
+    {
+      margin: .25em 0 .2em 0.25%;
+      border: 1px solid black;
+      width: 49%;
+      float: left;
+      padding: 2px;
+    }
+    .break
+    {
+      clear: both;
+    }
+    #firstRun
+    {
+      color: #A0A0A0;
+    }
+
+    .correct
+    {
+      color: #009900;
+    }
+    .clear
+    {
+      clear: both;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../style/tree/default/style_ie.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Vista Style" href="../style/tree/vista/style_ie.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Compat Style" href="../style/tree/compat/style_ie.css" media="screen" />
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../style_ie7.css" media="screen" />
+  <![endif]-->
+
+
+  <script type="text/javascript"  src="../basis.js"></script>
+  <script type="text/javascript"  src="../dom_wraper.js"></script>
+  <script type="text/javascript"  src="../dom_register.js"></script>
+  <script type="text/javascript"  src="../tree.js"></script>
+  <script type="text/javascript"  src="../generator.js"></script>
+</head>
+
+<body>
+  <div id="control_panel" style="border: 2px solid #808080; background: #F0F0F0; margin: .25em; padding: .5em">
+    <fieldset style="float: right; width: 50%">
+      <legend> selection </legend>
+      <button id="buttonSelectAll">select all</button> <span id="allNodesSelectTime"></span><br/>
+      <button id="buttonSelectionClear">clear</button>
+      <button id="buttonSelectionInverse">inverse selection</button> 
+      contain of <span id="in_selection">0 items</span> <br/>
+      <input  id="selected_name"/>
+      <button id="buttonRenameSelected">rename selected</button><br/>
+      <input  id="selected_value"/>
+      <button id="buttonSetValueSelected">set new value for selected</button><br/>
+      <button id="buttonDeleteSelected">delete selected</button>
+      <button id="buttonDisableSelected">disable selected</button><br/>
+    </fieldset>
+
+    <fieldset>
+      <legend> generate nodes </legend>
+      <input type="text" id="nodeCount"/><button id="buttonGenerate">gen nodes</button>
+      <div><span id="time"></span><span id="clearTime"></span></div>
+      <input type="checkbox" id="checkRandomNames" checked="checked" /> <label for="checkRandomNames">random names</label>
+    </fieldset>
+
+    <fieldset>
+      <legend> all nodes operations </legend>
+      <button id="buttonClearTree">remove all (clear tree)</button>
+      <button id="buttonEnableAll">enable all</button>
+      <button id="buttonCollapseAll">collapse all</button>
+      <button id="buttonExpandAll">expand all</button><br/>
+    </fieldset>
+
+    <fieldset>
+      <legend> other </legend>
+      <button id="buttonDisableTree">disable tree</button>
+      <button id="buttonEnableTree">enable tree</button>
+    </fieldset>
+
+    <div class="clear"></div>
+
+  </div>
+  <div id="TreeContainer"><div id="tree"></div></div>
+  <script type="text/javascript">
+
+    if (typeof console == 'undefined')
+      console = { log: Function.$null, warn: Function.$null, dir: Function.$null };
+
+    with(Basis.names(':BASE Event Data'))
+    with(Basis.DOM.Wrapers.Register.names('Count Sum Avg Collection SortedCollection Filter SortedFilter'))
+    with(Basis.Controls.Tree.names('Tree TreeNode TreeFolder'))
+
+    (function(){
+
+      var DOM = Basis.DOM;
+      var Data = Basis.Data;
+      var Event = Basis.Event;
+      var cssClass = Basis.CSS.cssClass;
+
+      var gString = Basis.Data.Generator.String;
+
+      function setNodeCount(value){
+        DOM.get('nodeCount').value = value;
+        if (isNaN(value)) 
+          DOM.get('time').innerHTML = '<span style="color: red">&quot;<b>' + value + '</b>&quot; is not a number</span>';
+        else 
+          genNodes(Number(value)); 
+      }
+
+      DOM.insert(DOM.get('nodeCount').parentNode, [1, 10, 100, 250, 500, 1000, 2000].map(function(item){ 
+        var btn = DOM.createElement('button', item); 
+        Event.addHandler(btn, 'click', function(){ setNodeCount(item) });
+        Event.onUnload(function(){ Event.clearHandlers(btn) });
+        return btn;
+      }), DOM.INSERT_BEFORE, DOM.get('nodeCount'));
+
+      if (!window.console) window.console = false;
+
+      // create tree (reference allowed in global scope)
+      TestTree = new Tree({
+        container: 'tree',
+        cssClassName: {
+          content: 'Frame-Nodes'
+        },
+        childFactory: function(config){
+          if (config.type == 'TreeFolder')
+            return new TreeFolder(config);
+          else
+            return new TreeNode(config);
+        },
+        selection: { multiple: true },
+        info: {
+          value: 0,
+          title: ''
+        }
+      });
+      DOM.insert(TestTree.element, DOM.createElement('#firstRun', '[empty tree]'));
+      DOM.insert('TreeContainer', DOM.createElement('.break'));
+
+      TestTree.selection.addHandler({ 
+        change: function(){
+          var count = this.items.length;
+          DOM.get('in_selection').innerHTML = '<b>' + count + '</b> item(s)';
+        }
+      });
+
+      var getValue = function(info){ return info.value };
+      var oddValue = function(info){ return info.value % 2 };
+      var evenValue = function(info){ return info.value % 2 == 0 };
+
+      function genNodes(count){
+        if (DOM.get('firstRun'))
+          DOM.remove(DOM.get('firstRun'));
+
+        var clearTime = new Date();
+        TestTree.clear();
+        DOM.get('clearTime').innerHTML = ' [clear time: ' + ((new Date() - clearTime)/1000).toFixed(3) + ']';
+
+        var isRandomTitle = DOM.get('checkRandomNames').checked;
+
+        // generate data
+        var data = [];
+        var title = 'very very long title '.repeat(10);
+        for (var i = 0; i < count; i++)
+        {
+          var val = Math.round(Math.random() * 10);
+          data.push({ id: 'tree_node' + i, value: val, title: title });
+          title = isRandomTitle ? gString(3, 48) : 'title' + i;
+        }
+
+        //if (console && console.profile) console.profile();
+        var timeStart = new Date();
+        var nodes = [TestTree];
+        var cn = [];
+        for (var i = 0; i < count; i++)
+        {
+          var kind = i % 2 ? TreeFolder : TreeNode;
+          // create node
+          var node = new kind({ info: data[i] });
+          //var node = { title: title, type: i % 2 ? 'TreeFolder' : 'TreeNode', info: { id: 'tree_node' + i, value: val } };
+          // add node to tree
+          var refNode = nodes[(i * count * 173) % nodes.length];
+          if (refNode == TestTree)
+            cn.push(node);
+          else
+            refNode.appendChild(node);
+            
+          if (kind == TreeFolder)
+            nodes.push(node);
+        }
+        TestTree.setChildNodes(cn);
+        //DOM.insert(TestTree.content, TestTree.childNodes.map(function(node){ return node.element }));
+/*        nodes.reverse().forEach(function(n){
+          if (n.df && n.df.firstChild)
+            n.childNodesContainer.appendChild(n.df);
+        });*/
+
+        var time = ((new Date() - timeStart)/1000).toFixed(3);
+        DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + time + '</b> sec';
+
+        //if (console && console.profileEnd) console.profileEnd();
+        nodes.clear();
+
+      };
+
+      var buttons = {
+        Generate: function(){ 
+          setNodeCount(DOM.get('nodeCount').value) 
+        },
+        ClearTree: function(){
+          this.clear();
+        },
+        CollapseAll: function(){
+          this.collapseAll();
+        },
+        ExpandAll: function(){
+          this.expandAll();
+        },
+        SelectionClear: function(){
+          this.selection.clear();
+        },
+        SelectAll: function(){
+          d = new Date();
+          DOM.axis(this, DOM.AXIS_DESCENDANT).forEach(function(node){ if (!node.selected) node.select(true) });
+          /*
+          this.selection.clear();
+          DOM.axis(this, DOM.AXIS_DESCENDANT).forEach(function(node){
+            var sel = this.selection;
+
+            sel.items.push(node);
+            sel.content[node.nodeType] = (sel.content[node.nodeType] || 0) + 1;
+
+            node.selected = true;
+            node.dispatch('select');
+            //sel.dispatch('change');
+          }, this);*/
+          //this.selection.dispatch('change');
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'select all: ' + ((new Date - d)/1000).toFixed(3));
+          //console.log('select all: ', ((new Date - d)/1000).toFixed(3));
+        },
+        SelectionInverse: function(){
+          DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ node.select(true) });
+        },
+        DeleteSelected: function(){
+          Array.from(this.selection.items).forEach(function(node){ node.destroy(); });
+        },
+        RenameSelected: function(){
+          this.selection.items.forEach(function(item){
+            item.update({ title: String(this) })
+          }, DOM.get('selected_name').value);
+        },
+        SetValueSelected: function(){
+          this.selection.items.forEach(function(node){ 
+            node.update({ value: this }); 
+            var txt = node.title.firstChild.nextSibling;
+            if (txt && txt.nodeValue.indexOf('value:') != -1)
+              txt.nodeValue = ' [value: {0}]'.format(this);
+          }, Number(DOM.get('selected_value').value));
+        },
+        DisableSelected: function(){
+          this.selection.items.forEach(function(){ node.disable() });
+        },
+        EnableAll: function(){
+          DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ node.enable() });
+        },
+        DisableTree: function(){
+          this.disable();
+        },
+        EnableTree: function(){
+          this.enable();
+        }
+      };
+//      keys(buttons).forEach(function(id){ var btn = DOM.get('button' + id); addHandler(btn, 'click', buttons[id], TestTree) });
+      Event.addHandler(document, 'click', function(event){
+        var sender = Event.sender(event);
+        if (DOM.is(sender, 'BUTTON') && sender.id)
+        {
+          (buttons[sender.id.substr(6)] || $self).call(TestTree)
+          Event.kill(event);
+        }
+      });
+
+    })();
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,359 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+  .Basis-Calendar
+  {
+    width: 28ex; /* content width must be divisible by 28 (7 segments for month days and 4 segments for monthes, years etc) */
+    padding: 0 5px;
+    font-size: 85%;
+    -moz-user-select: none;
+  }
+
+  /*
+   * HEADER
+   */
+
+  .Basis-Calendar-Header
+  {
+  }
+  .Basis-Calendar-Header .disabled
+  {
+    opacity: .25;
+      -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=25)";
+      filter: alpha(opacity: 25);
+      -khtml-opacity: .25;
+      -moz-opacity: .25;
+  }
+
+  .Basis-Calendar-MovePrevButton,
+  .Basis-Calendar-MoveNextButton
+  {
+    line-height: 1em;
+    width: 15%;
+    padding: .4em 0 .6em;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    font-weight: bold;
+  }
+  .Basis-Calendar-Header SPAN.over
+  {
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 2em;
+    top: 0;
+    left: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .Basis-Calendar-MovePrevButton:hover,
+  .Basis-Calendar-MoveNextButton:hover
+  {
+    color: #0066CC;
+  }
+
+  .Basis-Calendar-MovePrevButton
+  {
+    float: left;
+  }
+  .Basis-Calendar-MoveNextButton
+  {
+    float: right;
+  }
+  .Basis-Calendar-CancelButton
+  {
+    float: right;
+    width: 8%;
+    padding: .6em 0 .8em 0;
+    display: none;
+    font-family: Verdana;
+    font-size: 10px;
+    background-color: #F4F4F4;
+  }
+  .Basis-Calendar-CancelButton:hover
+  {
+    color: #DD0000;
+  }
+
+  .Basis-Calendar-MovePrevButton SPAN
+  {
+    background-image: url(arrow_left.gif);
+  }
+  .Basis-Calendar-MovePrevButton SPAN:hover
+  {
+    background-image: url(arrow_left_hover.gif);
+  }
+  .Basis-Calendar-MoveNextButton SPAN
+  {
+    background-image: url(arrow_right.gif);
+  }
+  .Basis-Calendar-MoveNextButton:hover SPAN
+  {
+    background-image: url(arrow_right_hover.gif);
+  }
+
+  .Basis-Calendar-Title
+  {
+    padding: .4em 0 .25em;
+    margin: 0 18px;
+    line-height: 1em;
+    text-align: center;
+    display: block;
+    color: black;
+    text-decoration: none;
+    background: #D9E8FB;
+  }
+  .Basis-Calendar-Title:hover
+  {
+    color: #0066CC;
+  }
+
+  .Basis-Calendar-SectionTabs
+  {
+    text-align: center;
+    padding-top: 4px;
+  }
+  .Basis-Calendar-SectionTab
+  {
+    display: inline-block;
+    padding: 2px 4px 3px;
+    cursor: pointer;
+    background: #F4F4F4;
+  }
+  .Basis-Calendar-SectionTab:first-child
+  {
+    -moz-border-radius-topleft: 3px;
+    -webkit-border-top-left-radius: 3px;
+    border-top-left-radius: 3px;
+  }
+  .Basis-Calendar-SectionTab:last-child
+  {
+    -moz-border-radius-topright: 3px;
+    -webkit-border-top-right-radius: 3px;
+    border-top-right-radius: 3px;
+  }
+  .Basis-Calendar-SectionTab:hover
+  {
+    background: #F8F8F8;
+  }
+  .Basis-Calendar-SectionTabs .selected
+  {
+    background: #D9E8FB;
+    cursor: default;
+  }
+
+  /*
+   * BODY
+   */
+
+  .Basis-Calendar-Body
+  {
+    clear: both;
+    border: 3px solid #D9E8FB;/*
+    -moz-border-radius: 0 0 3px 3px;
+    -webkit-border-radius: 0 0 3px 3px;
+    border-radius: 0 0 3px 3px;*/
+    border-bottom: none;
+    position: relative;
+    line-height: 1em !important;
+    height: 12.6em;
+    overflow: hidden;
+    margin: 0 -5px;
+  }
+  .Basis-Calendar-Section
+  {
+    top: -3px;
+    left: 0;
+    width: 100%;
+    position: absolute;
+    background-color: white;
+    display: none;
+  }
+  .Basis-Calendar-Section.selected
+  {
+    display: block;
+  }
+  .Basis-Calendar-SectionTitle
+  {
+    padding: .5em 0 .5em;
+    line-height: 1em;
+    text-align: center;
+    display: block;
+    color: black;
+    text-decoration: none;
+    background: #D9E8FB;
+  }
+  .Basis-Calendar-SectionContent
+  {
+    height: 10.5em;
+    border: 2px solid white;
+    position: relative;
+    overflow: hidden;
+    background: white;
+  }
+
+  .Basis-Calendar-ButtonPrevPeriod,
+  .Basis-Calendar-ButtonNextPeriod
+  {
+    width: 2em;
+    padding: .5em 0;
+    line-height: 1em;
+    position: absolute;
+    font-weight: bold;
+    back2ground: #F0F0F0;
+    color: #444;
+    top: -3px;
+    text-align: center;
+    text-decoration: none;
+    overflow: hidden;
+    z-index: 100;
+  }
+  .Basis-Calendar-ButtonPrevPeriod
+  {
+    left: -3px;
+  }
+  .Basis-Calendar-ButtonNextPeriod
+  {
+    right: -3px;
+  }
+  .Basis-Calendar-ButtonPrevPeriod:hover,
+  .Basis-Calendar-ButtonNextPeriod:hover
+  {
+    background: #D9E8FB;
+    color: #0066CC;
+  }
+
+  /* node */
+
+  .Basis-Calendar-Node
+  {
+    color: black;
+    text-decoration: none;
+    text-align: center;
+
+    display: block;
+    float: left;
+
+    cursor: pointer;
+  }
+
+  .Basis-Calendar-Body .Basis-Calendar-SectionContent .disabled,
+  .Basis-Calendar-Body .Basis-Calendar-SectionContent .disabled:hover
+  {
+    background: #CCCCCC !important;
+    outline: none !important;
+    cursor: default !important;
+    color: black !important;
+  }
+
+  .Basis-Calendar-Body .before,
+  .Basis-Calendar-Body .before:hover,
+  .Basis-Calendar-Body .after,
+  .Basis-Calendar-Body .after:hover
+  {
+    color: #999999 !important;
+  }
+
+  .Basis-Calendar-Node:hover
+  {
+    background: #F0F0F0;
+  }
+  .Basis-Calendar-Body .Basis-Calendar-SectionContent .selected
+  {
+    background: #D9E8FB;
+    outline: none;
+  }
+
+
+  /* century, year, month, quater */
+
+  .Basis-Calendar-Section-Century .Basis-Calendar-Node,
+  .Basis-Calendar-Section-Year .Basis-Calendar-Node,
+  .Basis-Calendar-Section-YearDecade .Basis-Calendar-Node
+  {
+    width: 25%;
+    padding: 1.25em 0;
+  }
+  .Basis-Calendar-Section-Century .Basis-Calendar-Node
+  {
+    padding: .75em 0;      
+  }
+  .Basis-Calendar-Section-YearQuarter .Basis-Calendar-Node
+  {
+    width: 50%;
+    padding: 2.125em 0;
+  }
+  .Basis-Calendar-Section-Quarter .Basis-Calendar-Node
+  {
+    width: 100%;
+    padding: 1.25em 0;
+  }
+
+  /* day */
+  .Basis-Calendar-Section-Month .week_days
+  {
+    float: left;
+    width: 100%;
+    padding: .25em 0;
+    border-bottom: 1px solid #F0F0F0;
+    margin-bottom: 1px;
+    margin-top: -2px;
+  }
+  .Basis-Calendar-Section-Month .week_days SPAN
+  {
+    width: 4ex;
+    text-align: center;
+    display: block;
+    float: left;
+  }
+  .Basis-Calendar-Section-Month .Basis-Calendar-Node
+  {
+    width: 4ex;
+    padding: .25em 0;
+  }
+  .Basis-Calendar-Section-Month .Basis-Calendar-Node:nth-child(7n),
+  .Basis-Calendar-Section-Month .Basis-Calendar-Node:nth-child(7n + 1)
+  {
+    background: #F8F8F8;
+  }
+
+  /*
+   *  FOOTER
+   */
+
+  .Basis-Calendar-Footer
+  {
+    padding: .25em 5px;
+    margin: 0 -5px;
+    text-align: center;
+    border: 3px solid #D9E8FB;
+    background: white;
+    border-top-width: 1px;
+    -moz-border-radius: 0 0 3px 3px;
+    -webkit-border-radius: 0 0 3px 3px;
+    border-radius: 0 0 3px 3px;
+  }
+
+  .Basis-Calendar-Footer LABEL
+  {
+    padding-right: 1ex;
+  }
+  .Basis-Calendar-Footer .value
+  {
+    cursor: pointer;
+    color: black;
+    text-decoration: none;
+  }
+  .Basis-Calendar-Footer .value:hover
+  {
+    color: #0066CC;
+  }

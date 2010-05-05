@@ -1,0 +1,165 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+ /*
+  * ButtonPanel
+  */
+
+  .Basis-ButtonPanel
+  {
+  }
+
+  .Basis-ButtonPanel .Basis-ButtonGroup
+  {
+    display: block;
+    display: inline-block;
+    margin-left: 4px;
+    padding-right: 3px;
+  }
+
+  .Basis-ButtonPanel .Basis-ButtonGroup .Basis-Button
+  {
+    margin: 0 -3px 0 0;
+  }
+  .Basis-ButtonPanel .Basis-ButtonGroup .Basis-Button-Wraper2
+  {
+    margin: 0;
+  }
+  .Basis-ButtonPanel .Basis-ButtonGroup .Basis-Button.first .Basis-Button-Wraper2
+  {
+    margin-left: -1px;
+  }
+  .Basis-ButtonPanel .Basis-ButtonGroup .Basis-Button.last .Basis-Button-Wraper2
+  {
+    margin-right: -1px;
+  }
+
+  .Basis-ButtonPanel .AlignLeft
+  {
+    text-align: left;
+  }
+  .Basis-ButtonPanel .AlignRight
+  {
+    text-align: right;
+  }
+  .Basis-ButtonPanel .AlignCenter
+  {
+    text-align: center;
+  }
+
+ /*
+  * Button
+  */
+
+  .Basis-Button
+  {
+    display: block;
+    display: inline-block;
+    z-index: 1;
+    position: relative;
+
+    margin: 4px;
+
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+
+    font-size: 85%;
+    line-height: 1em;
+    padding: 1px 0;
+  }
+  .Basis-Button-Wraper
+  {
+    border: solid #C0C0C0;
+    border-width: 1px 0;
+    margin: -1px 1px;
+    background: #DDDFE1 url(button_bg.gif) repeat-x;
+    background-position: left center;
+    cursor: pointer;
+    text-align: center;
+  }
+  .Basis-Button-Wraper2
+  {
+    margin: 0 -1px;
+    border: solid #C0C0C0;
+    border-width: 0 1px;
+  }
+  .Basis-Button-Content
+  {
+    display: block;
+    border: 2px solid transparent;
+    padding: .25em 1ex .31em;
+    text-decoration: none;
+    color: black;
+    text-align: center;
+  }/*
+  .Basis-Button-Content:hover,
+  .Basis-Button-Content:focus
+  {
+    border-color: #D0D0D0;
+  }*/
+  .Basis-Button .caption
+  {
+    display: inline-block;
+  }
+  .Basis-Button .pre,
+  .Basis-Button .post
+  {
+    background: no-repeat center center;
+    display: inline-block;
+    height: 16px;
+    width: 16px;
+    margin: -8px 0 -4px 0;
+  }
+  .Basis-Button .pre
+  {
+    display: none;
+    margin-right: 4px;
+  }
+  .Basis-Button .post
+  {
+    display: none;
+    margin-left: 4px;
+  }
+
+  /* state & interaction */
+
+  .Basis-Button:hover,
+  .Basis-Button:focus
+  {
+    z-index: 10;
+  }
+  .Basis-Button:hover .Basis-Button-Wraper,
+  .Basis-Button:hover .Basis-Button-Wraper2,
+  .Basis-Button:focus .Basis-Button-Wraper,
+  .Basis-Button:focus .Basis-Button-Wraper2
+  {
+    border-color: #888;
+  }
+
+  .Basis-ButtonPanel .disabled .Basis-Button,
+  .Basis-Button.disabled
+  {
+    -moz-opacity: 0.4;
+    -khtml-opacity: 0.4;
+    opacity: 0.4;
+
+    cursor: default;
+    color: #888;
+  }
+
+  .Basis-ButtonPanel .disabled .Basis-Button .Basis-Button-Wraper,
+  .Basis-ButtonPanel .disabled .Basis-Button .Basis-Button-Wraper2,
+  .Basis-Button.disabled .Basis-Button-Wraper,
+  .Basis-Button.disabled .Basis-Button-Wraper2
+  {
+    border-color: #C0C0C0;
+  }

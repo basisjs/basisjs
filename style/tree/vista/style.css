@@ -1,0 +1,121 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Vista style for Basis.Controls.Tree
+ */
+
+  .Basis-Tree
+  {
+    background-color: #FCFCFC;
+  }
+ 
+  .Basis-Tree UL
+  {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .Basis-Tree LI
+  {
+    margin: 0;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1em;
+  }
+  .Basis-Tree LI DIV.Tree-Node-Title
+  {
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .Basis-Tree LI DIV.Basis-Tree-Expander
+  {
+    position: absolute;
+    top: 0;
+    left: 1px;
+    width: 14px;
+    height: 22px;
+    background-image: url(minus.gif);
+    background-repeat: no-repeat;
+    background-position: center center;
+    cursor: pointer;
+  }
+  .Basis-Tree LI DIV.Basis-Tree-Expander:hover
+  {
+    background-image: url(minus_hover.gif);
+  }
+  .Basis-Tree LI.collapsed DIV.Basis-Tree-Expander
+  {
+    background-image: url(plus.gif);
+  }
+  .Basis-Tree LI.collapsed DIV.Basis-Tree-Expander:hover
+  {
+    background-image: url(plus_hover.gif);
+  }
+  .Basis-Tree LI DIV.Tree-Node-Title A
+  {
+    background-image: url(page.gif);
+    background-position: 1px center;
+    background-repeat: no-repeat;
+    padding: 4px 4px 3px 19px;
+    height: 1em;
+    text-decoration: none;
+    color: black;
+  }
+  .Basis-Tree LI DIV.Tree-Folder-Content A
+  {
+    background-image: url(folder.gif);
+  }
+  .Basis-Tree LI DIV.selected A
+  {
+    color: #0066CC !important;
+  }
+  .Basis-Tree .disabled A
+  {
+    color: #B0B0B0 !important;
+  }
+
+  /* BORDERED */
+
+  .Basis-Tree .Frame-Nodes LI DIV A
+  {
+    white-space: nowrap;
+  }
+  .Basis-Tree .Frame-Nodes LI DIV.Tree-Node-Title A:hover
+  {
+    background-position: left center;
+    border: 1px solid #D8F0FA !important;
+    background-color: #EFF8FD;
+    padding: 3px 3px 2px 18px;
+  }
+  .Basis-Tree .Frame-Nodes LI DIV.selected A,
+  .Basis-Tree .Frame-Nodes LI DIV.selected A:hover
+  {
+    background-position: left center;
+    padding: 3px 3px 2px 18px;
+    color: black !important;
+    background-color: #E4F3FD !important;
+    border: 1px solid #99DEFD !important;
+  }
+
+  /* MISC */
+
+  .Basis-Tree LI .Basis-Tree-Loading-Label
+  {
+    padding: 1px 4px;
+    border: 1px solid #E8E8E8;
+    background-color: #F4F4F4;
+    font-size: 80%;
+    margin-left: .25em;
+    margin-top: -.15em;
+    position: absolute;
+  }

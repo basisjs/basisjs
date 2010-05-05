@@ -1,0 +1,165 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Vista style for Basis.Controls.Tabs
+ */
+
+  /*
+   *  Tabs control
+   */
+
+  .Basis-TabControl
+  {
+    border-bottom: 1px solid #898C95;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    font-family: Tahoma, Verdana, sans-serif;
+  }
+  .Basis-TabControl .Basis-TabControl-Start
+  {
+    width: 2px; 
+    height: 1em; 
+    float: left;
+  }
+  .Basis-TabControl .Basis-TabControl-Content
+  {
+    padding-top: 2px;
+  }
+  .Basis-TabControl .Basis-TabControl-End
+  {
+    clear: both;
+  }
+  .Basis-TabControl .Basis-TabControl-TabGroup
+  {
+    float: left;
+    margin: 0 1ex 0 0;
+  }
+  .Basis-AccordionControl .Basis-TabControl-TabGroup
+  {
+    margin: 0 0 6px;
+    border-bottom: 1px solid #898C95;
+  }
+  .Basis-AccordionControl .Basis-TabControl-TabGroup:last-child
+  {
+    margin: 0 0 -1px;
+  }
+  .Basis-TabSheetControl .Basis-TabSheet
+  {
+    float: left;
+  }
+  .Basis-AccordionControl .Basis-Tab,
+  .Basis-TabControl .Basis-Tab
+  {
+    font-size: 85%;
+    margin: 0;
+    border: 1px solid #898C95;
+    cursor: pointer;
+    color: black;
+    background-color: #F3F3F3;
+    background-image: url(not_active_border.gif);
+    background-repeat: repeat-x;
+  }
+  .Basis-AccordionControl .selected .Basis-Tab
+  {
+    border-bottom-color: #BBB;
+  }
+  .Basis-AccordionControl .Basis-TabSheet
+  {
+    margin: -1px;
+  }
+  .Basis-TabControl .Basis-Tab
+  {
+    border-bottom: none;
+    float: left;
+  }
+  .Basis-TabControl .selected
+  {
+    margin: -2px -2px -1px -2px;
+    cursor: default;
+    position: relative;
+    z-index: 100;
+    background-image: none;
+    background-color: white;
+  }
+  .Basis-Tab.disabled,
+  .Basis-TabSheet.disabled .Basis-Tab
+  {
+    color: #A0A0A0;
+    cursor: default;
+  }
+  .Basis-AccordionControl .Basis-Tab-Content,
+  .Basis-TabControl .Basis-Tab-Content
+  {
+    display: block;
+    padding: .1em 6px .2em 6px;
+    margin: 0 1px;
+    border-top: 1px solid #FAFAFA;
+    background-color: #CFCFCF;
+    background-image: url(not_active_bg.gif);
+    background-repeat: repeat-x;
+  }
+  .Basis-TabControl .Basis-Tab-Caption
+  {
+    white-space: nowrap;
+    display: block;
+  }
+  .Basis-TabControl .selected .Basis-Tab-Content
+  {
+    padding: .1em 8px .2em 8px;
+    background-color: white;
+    background-image: none;
+    border-top-color: white;
+  }
+  .Basis-TabControl .selected .Basis-Tab-Caption
+  {
+    padding-bottom: 3px;
+  }
+  .Basis-TabControl .Basis-Tab-Start,
+  .Basis-TabControl .Basis-Tab-End
+  {
+    display: none;
+  }
+  
+  .Basis-AccordionControl
+  {
+    border: 1px solid #808080;
+  }
+  .Basis-AccordionControl .Basis-Page
+  {
+    margin: 0 1px;
+  }
+
+  /*
+   *  Pages control
+   */
+
+  .Basis-PageControl
+  {
+    border: 1px solid #808080;
+    padding: 4px 4px 4px;
+  }
+
+  .Basis-Page
+  {
+    padding: 4px;
+  }
+  .Basis-PageControl .Basis-Page
+  {
+    border: 1px solid #E0E0E0;
+    height: 100%;
+  }
+
+  .Basis-TabSheetControl .Basis-PageControl
+  {
+    clear: both;
+    border-top: none;
+  }

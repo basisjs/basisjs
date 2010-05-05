@@ -1,0 +1,37 @@
+
+
+  .Basis-Table
+  {
+    border: 1px solid #D9E8FB;
+    border-width: 0 1px;
+    table-layout: fixed;
+  }
+
+  .Basis-Table-Header TH:last-child
+  {
+    border: none;
+  }
+  .Basis-Table-Header TH
+  {
+    background: #D9E8FB;
+    padding: .2em .75ex;
+    font-weight: normal;
+    border-rig2ht: 1px solid white;
+    text-align: left;
+  }
+
+  .Basis-Table TD
+  {
+    border-bottom: 1px solid #E8E8E8;
+    padding: .2em .75ex;
+    width:20%;
+  }
+
+  .Basis-Table TR:hover
+  {
+    background: #F4F4F4;
+  }
+  .Basis-Table TR.selected
+  {
+    background: #D9E8FB;
+  }

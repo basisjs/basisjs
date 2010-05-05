@@ -1,0 +1,477 @@
+
+  HTML,
+  BODY
+  {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+
+    font-family: Tahoma, Verdana, Arial, sans-serif;
+    font-size: small;
+  }
+
+  .Basis-Layout-Panel-Top,
+  .Basis-Layout-Panel-Left,
+  .Basis-Layout-Panel-Client,
+  .Basis-Layout-Panel-Right,
+  .Basis-Layout-Panel-Bottom
+  {
+    position: absolute;
+  }
+
+  #Layout
+  {
+    position: relative;
+    height: 100%;
+  }
+
+  #Sidebar
+  {
+    width: 340px;
+    border-right: 1px solid #888;
+  }
+
+  #Toolbar
+  {
+    height: 2em;
+    background: #F0F0F0;
+    border-bottom: 1px solid #E0E0E0;
+  }
+
+  /*
+   * Sidebar
+   */
+
+  #Sidebar .Basis-PageControl,
+  #Sidebar .Basis-Page
+  {
+    border: none;
+    padding: 0;
+    height: 100%;
+  }
+  #Sidebar .Basis-Page
+  {
+    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: none;
+  }
+
+  #Sidebar .Basis-MatchInput
+  {
+    margin: 3px 27px 2px 3px;
+  }
+  #Sidebar .Basis-MatchInput INPUT
+  {
+    width: 100%;
+    margin: 0;
+    padding: 1px 20px 1px 2px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #909090 #D9D9D9 #D9D9D9 #909090;
+    background: white url(img/input_search_16x16.png) no-repeat right center;
+  }
+
+  #SearchTree
+  {
+    padding-left: 2px;
+  }
+  #SearchTree .Basis-Tree-NodeGroup-Title
+  {
+    margin-left: 4px !important;
+  }
+  #SearchTree .Basis-Tree-Node .Tree-Node-Title A
+  {
+    background-position: 3px .3em;
+    padding-left: 24px;
+  }
+  #SearchTree .match
+  {
+    background-color: #FFE13F;
+    padding: 0 0 0 2px;
+    border-radius: 2px;
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+  }
+  #SearchTree .Basis-Tree-Node .label
+  {
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+      -o-text-overflow: ellipsis;
+  }
+  #SearchTree .Basis-Tree-Node .namespace
+  {
+    padding-left: 1.5ex;
+    padding-right: .25ex;
+    color: #2B2;
+    display: block;
+    float: right;
+  }
+
+  #Sidebar .Basis-Tree-NodeGroup
+  {
+    margin: .2em 0 .4em;
+  }
+  #Sidebar .Basis-Tree-NodeGroup-Title
+  {
+    background: none;
+    height: .6em;
+    margin-bottom: .6em;
+    margin-right: 2px;
+    border-bottom: 1px solid #E0E0E0;
+    padding: 1px 0;
+    line-height: 1.2em;
+  }
+  #Sidebar .Basis-Tree-NodeGroup-Title SPAN
+  {
+    color: #888;
+    display: block;
+    float: left;
+    background: white;
+    padding-right: 4px;
+  }
+
+  #Sidebar .Basis-Tree-Expander
+  {
+    height: 1.7em;
+  }
+
+  #Sidebar DIV.Tree-Node-Title A
+  {
+    padding-left: 34px;
+    padding-bottom: .5em;
+    background-position: 14px 0.3em;
+    margin: 0 2px 0 0;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    line-height: 1.2em;
+  }
+
+  #Sidebar .Namespace-Content   A { background-image: url(img/node_module.png) }
+  #Sidebar .Section-Content     A { background-image: url(img/node_partition.png) }
+  #Sidebar .Class-Content       A { background-image: url(img/bullet_square_red.png) }
+  #Sidebar .Constant-Content    A { background-image: url(img/node_const.png) }
+  #Sidebar .Function-Content    A { background-image: url(img/node_class_function.png) }
+  #Sidebar .Method-Content      A { background-image: url(img/gears.png) }
+  #Sidebar .Property-Content    A { background-image: url(img/node_property.png) }
+  #Sidebar .Object-Content      A { background-image: url(img/node_property.png) }
+  #Sidebar .HtmlElement-Content A { background-image: url(img/element_copy.png) }
+
+  #Sidebar .Class-Content    .args,
+  #Sidebar .Function-Content .args,
+  #Sidebar .Method-Content   .args
+  {
+    color: #AAA;
+    margin-left: 2px;
+  }
+
+  /*
+   *  View
+   */
+
+  #Content
+  {
+    padding: 1em 8px 1em 16px;
+  }
+
+  #Content H2
+  {
+    font-family: Arial;
+    font-size: 120%;
+    margin: 0 0 1em 0;
+    padding-top: 4px;
+    padding-left: 44px;
+    background: no-repeat 4px 4px;
+    min-height: 40px;
+  }
+  #Content H2.kind-class     { background-image: url(img/node_class_big.png)    }
+  #Content H2.kind-property  { background-image: url(img/node_property_big.png) }
+  #Content H2.kind-object    { background-image: url(img/node_property_big.png) }
+  #Content H2.kind-function  { background-image: url(img/node_function_big.png) }
+  #Content H2.kind-method    { background-image: url(img/node_function_big.png) }
+  #Content H2.kind-namespace { background-image: url(img/node_module_big.png)   }
+  #Content H2.kind-constant  { background-image: url(img/node_const_big.png)    }
+
+  #Content H2 SPAN
+  {
+    display: block;
+  }
+  #Content H2 .path
+  {
+    color: #888;
+    font-size: 70%;
+    font-family: Verdana, Tahoma, sans-serif;
+    font-weight: normal;
+  }
+
+  #Content H3
+  {
+    font-size: 100%;
+    background-repeat: no-repeat;
+    background-position: 3px 3px;
+  }
+  #Content H3 SPAN
+  {
+    display: block;
+    padding: 3px 0;
+    border-bottom: 1px solid #333;
+  }
+
+  #Content .viewOptions
+  {
+    font-size: 85%;
+    float: right;
+    line-height: 1em;
+    margin-top: -.7em;
+  }
+  #Content .viewOptions .title,
+  #Content .viewOptions .options
+  {
+  }
+  #Content .viewOptions A
+  {
+    color: #0066CC;
+    margin-left: .5ex;
+    padding: .2em .75ex .3em;
+    border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+  }
+  #Content .viewOptions .selected
+  {
+    background: #D9E8FB;
+    color: #333;
+    text-decoration: none;
+    cursor: default;
+  }
+
+  #Content .viewInheritance UL
+  {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  #Content .viewInheritance LI
+  {
+    margin: .2em 0;
+  }
+  #Content .viewInheritance LI UL
+  {
+    padding-left: 14px;
+  }
+  #Content .viewInheritance .absent
+  {
+    opacity: .5;
+      -moz-opacity: .5;
+      filter: alpha(opacity:50);
+  }
+  #Content .viewInheritance .content A
+  {
+    padding-left: 20px;
+    background: url(img/bullet_square_red.png) 2px .1em no-repeat;
+    color: #0066CC;
+  }
+  #Content .viewInheritance .namespace
+  {
+    display: none;
+    font-size: 75%;
+    color: #AAA;
+    padding-left: 20px;
+  }
+  #Content .viewInheritance .show-namespace .namespace
+  {
+    display: block;
+  }
+  #Content .viewInheritance .tag
+  {
+    font-size: 80%;
+    margin-left: 1ex;
+    padding: 1px 1ex 2px;
+    background: #FFE13F;
+    border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+  }
+
+
+  #Content .viewTemplate .Basis-Tree
+  {
+    clear: both;
+    padding-left: 5px;
+  }
+  #Content .viewTemplate .Basis-Tree UL
+  {
+    margin: .2em 0;
+  }
+
+  #Content .viewTemplate .refList,
+  #Content .viewTemplate .ref
+  {
+    display: none;
+  }
+
+  #Content .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs
+  {
+    border: 2px solid #CEE1EB; #D9E8FB;
+    margin: 1.4em 4px .2em -4px;
+    padding-left: 2px;
+    position: relative;
+    border-radius: 0 4px 4px 4px;
+      -moz-border-radius: 0 4px 4px 4px;
+  }
+  #Content .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs > .refList
+  {
+    line-height: 1em;
+    display: block;
+    position: absolute;
+    top: -1em;
+    margin-top: -7px;
+    margin-left: -4px;
+    padding: 3px 0 2px;
+    font-size: 85%;
+    border-radius: 4px 4px 0 0;
+      -moz-border-radius: 4px 4px 0 0;
+    background: #CEE1EB;#D9E8FB;
+  }
+  #Content .viewTemplate .ref
+  {
+    display: inline;
+    padding: 0px 1ex;
+  }
+
+  #Content .viewTemplate .Doc-TemplateView-Text
+  {
+    display: inline;
+    padding: 1px 0px 2px 0px;
+    font-size: 85%;
+    border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+  }
+  #Content .viewTemplate .Doc-TemplateView-Text.hasRefs
+  {
+    background: #CDEB8B;
+    color: #85995A;
+    margin: 0 2px 0 1px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  #Content .viewTemplate .Doc-TemplateView-Text.hasRefs .refList
+  {
+    margin-right: 1ex;
+    display: inline;
+    color: #006600;
+  }
+  #Content .viewTemplate .Doc-TemplateView-Text.hasRefs .ref
+  {
+    padding: 0;
+  }
+
+  #Content .viewPrototype .Basis-PartitionNode-Content
+  {
+    border-top: 1px solid #E0E0E0;
+  }
+  #Content .viewPrototype .Basis-PartitionNode-Title
+  {
+    padding: .5em .5ex .2em .5ex;
+    font-weight: bold;
+  }
+  #Content .viewPrototype .item
+  {
+    border: 1px solid #F0F0F0;
+    border-top-color: white;
+    padding: .25em 1ex;
+  }
+  #Content .viewPrototype .item .jsDocs
+  {
+    padding: .25em 0 0 20px;
+    font-size: 85%;
+  }
+  #Content .viewPrototype .item A
+  {
+    color: #0066CC;
+  }
+  #Content .viewPrototype .item .title
+  {
+    padding-left: 20px;
+    background-repeat: no-repeat;
+    background-position: left top;
+    min-height: 16px;
+  }
+  #Content .viewPrototype .property .title
+  {
+    background-image: url(img/node_property.png);
+  }
+  #Content .viewPrototype .method .title
+  {
+    background-image: url(img/gears.png);
+  }
+  #Content .viewPrototype .method .args
+  {
+    margin-left: .33ex;
+    color: #888;
+  }
+
+
+  .jsDocs P
+  {
+    margin: .25em 0;
+  }
+  .jsDocs UL
+  {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .jsDocs LI
+  {
+    margin: .5em 0 .75em;
+    padding: 0 0 0 20px;
+  }
+  .jsDocs LI.param
+  {
+    background: url(img/jsdocs_param.png) no-repeat 2px -1px;
+  }
+  .jsDocs LI.optional
+  {
+    background-image: url(img/jsdocs_param_optional.png);
+  }
+  .jsDocs LI.param .name
+  {
+    font-weight: bold;
+    margin-right: 1ex;
+  }
+  .jsDocs LI P
+  {
+    padding-left: 3ex;
+  }
+  .jsDocs .tags
+  {
+    padding: .25em 0;
+  }
+  .jsDocs .tags .tag
+  {
+    font-size: 90%;
+    padding: 0px 4px 1px;
+    background: #FFCC99;
+    border-radius: 2px;
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+  }
+  .jsDocs .label
+  {
+    margin: .75em 0 .4em;
+    text-decoration: underline;
+  }
+  .jsDocs .types
+  {
+    color: #009900;
+  }
+  .jsDocs .types .splitter
+  {
+    margin: 0 .6ex;
+    color: black;
+  }

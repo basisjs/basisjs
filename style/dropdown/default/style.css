@@ -1,0 +1,90 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+  /*
+   *  DropDownList
+   */
+
+  .Basis-DropdownList
+  {
+    background-color: white;
+    border: 1px solid #D0D0D0;
+    padding: 0.2em 17px 0.25em 0.4em;
+    position: relative;
+    cursor: pointer;
+    cursor: hand;
+    float: left;
+    margin-right: 4px;
+  }
+  .Basis-DropdownList-Canvas
+  {
+    display: none;
+  }
+  .Basis-DropdownList-Content .focused
+  {
+    outline: 1px dotted black;
+  }
+  .Basis-DropdownList-Caption
+  {
+    display: block;
+    font-size: 85%;
+    height: 1.2em;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 15ex;
+    outline: none;
+    text-decoration: none;
+    color: black;
+  }
+  .Basis-DropdownList-Trigger
+  {
+    border-left: 1px solid #C0C0C0;
+    cursor: pointer;
+    cursor: hand;
+    background: #E0E0E0 url(arrow_down.gif) center center no-repeat;
+    width: 16px;
+    _width: 17px;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    _right: -1px;
+    _height: 1.5em;
+    top: 0;
+  }
+  .Basis-DropdownList-Popup
+  {
+    position: absolute;
+    z-index: 2000;
+    border: 1px solid #888;
+    background: white;
+  }
+  .Basis-DropdownList-Popup .selected
+  {
+    background-color: #E0E0FF !important;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content
+  {
+    min-width: 15ex;
+    max-width: 30ex;
+    font-size: 90%;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content A
+  {
+    display: block;
+    padding: 2px 4px;
+    color: black;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content A:hover
+  {
+    background-color: #E0E0E0;
+  }

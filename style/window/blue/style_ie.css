@@ -1,0 +1,78 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Blue style for Basis.Controls.Window
+ * Internet Explorer 5.0-6.0 fixes
+ */
+  
+  .Basis-Window
+  {
+    height: 1px;
+  }
+
+  .Basis-Window-Canvas
+  {
+    height: 100%;
+    padding-bottom: 45px;
+    zoom: 1;
+  }
+
+  /* various bugs and opacity */
+  .Basis-Window-Canvas *
+  {
+    zoom: 1;
+    font-size: 0;
+    position: relative;
+    filter: alpha(opacity: 90);
+  }
+
+  /* unsupport png fix */
+  .Basis-Window-Canvas .corner-left-top,
+  .Basis-Window-Canvas .corner-right-top,
+  .Basis-Window-Canvas .corner-left-bottom,
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    background-image: url(window.gif);
+  }
+  .Basis-Window-Canvas .side-top,
+  .Basis-Window-Canvas .side-bottom
+  {
+    background-image: url(window_h.gif);
+  }
+  .Basis-Window-Canvas .side-left,
+  .Basis-Window-Canvas .side-right
+  {
+    background-image: url(window_v.gif);
+  }
+
+  /* 3px gap fix */
+  .Basis-Window-Canvas .side-left,
+  .Basis-Window-Canvas .corner-left-bottom
+  {
+    margin-right: -3px;
+  }
+  .Basis-Window-Canvas .side-right,
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    margin-left: -3px;
+  }
+  .Basis-Window-Canvas .content,
+  .Basis-Window-Canvas .side-bottom
+  {
+    margin: 0;
+  }
+
+  /* set hasLayout */
+  .Basis-Window-Title
+  {
+    zoom: 1;
+  }

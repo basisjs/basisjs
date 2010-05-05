@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="ru" xml:lang="ru">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Test Suite - Date</title>
+
+  <style type="text/css">
+    @import "style/default/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript" src="../basis.js"></script>
+  <script type="text/javascript" src="../dom_wraper.js"></script>
+  <script type="text/javascript" src="../date.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    loadTest((function(){
+      var Data = Basis.Data;
+
+      var A = [1,2,3,4,5];
+      var B = [5,4,3,2,1];
+      var C = [1,2,3];
+      var D = [4,5];
+      var E = [1,2,3,2,3,2,1];
+      var T;
+
+      return [
+        {
+          name: 'Date',
+          testcase: [
+            {
+              name: 'isLeapYear()',
+              test: function(){
+                this.is(true, (new Date(2004,1)).isLeapYear());
+                this.is(true, (new Date(2000,1)).isLeapYear());
+                this.is(true, (new Date(1996,1)).isLeapYear());
+                this.is(true, (new Date(1600,1)).isLeapYear());
+                this.is(true, (new Date(2400,1)).isLeapYear());
+
+                this.is(false, (new Date(1995,1)).isLeapYear());
+                this.is(false, (new Date(1997,1)).isLeapYear());
+                this.is(false, (new Date(1998,1)).isLeapYear());
+                this.is(false, (new Date(1999,1)).isLeapYear());
+                this.is(false, (new Date(1900,1)).isLeapYear());
+                this.is(false, (new Date(2100,1)).isLeapYear());
+                this.is(false, (new Date(2500,1)).isLeapYear());
+              }
+            },
+            {
+              name: 'getMonthDayCount()',
+              test: function(){
+                var D = new Date(2007, 0);
+                this.is(31, D.getMonthDayCount());
+                var D = new Date(2007, 1);
+                this.is(28, D.getMonthDayCount());
+                var D = new Date(2007, 2);
+                this.is(31, D.getMonthDayCount());
+                var D = new Date(2007, 3);
+                this.is(30, D.getMonthDayCount());
+                var D = new Date(2007, 4);
+                this.is(31, D.getMonthDayCount());
+                var D = new Date(2007, 5);
+                this.is(30, D.getMonthDayCount());
+                var D = new Date(2007, 6);
+                this.is(31, D.getMonthDayCount());
+                var D = new Date(2007, 7);
+                this.is(31, D.getMonthDayCount());
+                var D = new Date(2007, 8);
+                this.is(30, D.getMonthDayCount());
+                var D = new Date(2007, 9);
+                this.is(31, D.getMonthDayCount());
+                var D = new Date(2007, 10);
+                this.is(30, D.getMonthDayCount());
+                var D = new Date(2007, 11);
+                this.is(31, D.getMonthDayCount());
+
+                var D = new Date(2008, 1);
+                this.is(29, D.getMonthDayCount());
+
+                var D = new Date(2000, 1);
+                this.is(29, D.getMonthDayCount());
+
+                var D = new Date(2100, 1);
+                this.is(28, D.getMonthDayCount());
+
+                var D = new Date(2400, 1);
+                this.is(29, D.getMonthDayCount());
+              }
+            },
+            {
+              name: 'monthName()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'diff()',
+              test: function(){
+                var d = new Date(2000, 0, 1);
+                this.is(0, d.diff('year', new Date(2000, 0, 1)));
+                this.is(0, d.diff('month', new Date(2000, 0, 1)));
+                this.is(0, d.diff('day', new Date(2000, 0, 1)));
+                this.is(0, d.diff('hour', new Date(2000, 0, 1)));
+                this.is(0, d.diff('minute', new Date(2000, 0, 1)));
+                this.is(0, d.diff('second', new Date(2000, 0, 1)));
+
+                this.is(0, d.diff('year', new Date(2000, 5, 14)));
+                this.is(1, d.diff('year', new Date(2001, 0, 1)));
+                this.is(2, d.diff('year', new Date(2002, 0, 1)));
+                this.is(2, d.diff('year', new Date(2002, 11, 31)));
+                this.is(102, d.diff('year', new Date(2102, 11, 31)));
+                this.is(-1, d.diff('year', new Date(1999, 0, 1)));
+                this.is(-2, d.diff('year', new Date(1998, 0, 1)));
+                this.is(-2, d.diff('year', new Date(1998, 11, 31)));
+                this.is(-102, d.diff('year', new Date(1898, 11, 31)));
+
+                this.is(0, d.diff('month', new Date(2000, 0, 2)));
+                this.is(1, d.diff('month', new Date(2000, 1, 1)));
+                this.is(1, d.diff('month', new Date(2000, 1, 28)));
+                this.is(17, d.diff('month', new Date(2001, 5, 15)));
+                this.is(125, d.diff('month', new Date(2010, 5, 15)));
+                this.is(-1, d.diff('month', new Date(1999, 11, 31)));
+                this.is(-1, d.diff('month', new Date(1999, 11, 1)));
+                this.is(-3, d.diff('month', new Date(1999, 9, 15)));
+                this.is(-123, d.diff('month', new Date(1989, 9, 15)));
+
+                this.is(0, d.diff('day', new Date(2000, 0, 1, 23, 59, 59)));
+                this.is(1, d.diff('day', new Date(2000, 0, 2)));
+                this.is(30, d.diff('day', new Date(2000, 0, 31)));
+                this.is(31, d.diff('day', new Date(2000, 1, 1)));
+                this.is(366, d.diff('day', new Date(2001, 0, 1)));
+                this.is(366 + 365, d.diff('day', new Date(2002, 0, 1)));
+                this.is(366 + 365 + 31, d.diff('day', new Date(2002, 1, 1)));
+                this.is(-1, d.diff('day', new Date(1999, 11, 31, 23, 59, 59)));
+                this.is(-31, d.diff('day', new Date(1999, 11, 1)));
+                this.is(-31 - 365, d.diff('day', new Date(1998, 11, 1)));
+                this.is(-31 - 365 - 16, d.diff('day', new Date(1998, 10, 15)));
+
+                this.is(0, d.diff('hour', new Date(2000, 0, 1, 0, 59, 59)));
+                this.is(1, d.diff('hour', new Date(2000, 0, 1, 1, 0, 0)));
+                this.is(1, d.diff('hour', new Date(2000, 0, 1, 1, 59, 59)));
+                this.is(24, d.diff('hour', new Date(2000, 0, 2)));
+                this.is(366 * 24, d.diff('hour', new Date(2001, 0, 1, 0, 59, 59)));
+                this.is(-1, d.diff('hour', new Date(1999, 11, 31, 23, 59, 59)));
+                this.is(-1 * 24 * 31, d.diff('hour', new Date(1999, 11, 1, 0, 0, 0)));
+                this.is(-(365 * 10 + 2 + 31) * 24, d.diff('hour', new Date(1989, 11, 1, 0, 0, 0)));
+
+                this.is(59, d.diff('minute', new Date(2000, 0, 1, 0, 59, 59)));
+                this.is(60, d.diff('minute', new Date(2000, 0, 1, 1, 0, 0)));
+                this.is(60 + 59, d.diff('minute', new Date(2000, 0, 1, 1, 59, 59)));
+                this.is(24 * 60, d.diff('minute', new Date(2000, 0, 2)));
+                this.is(366 * 24 * 60 + 59, d.diff('minute', new Date(2001, 0, 1, 0, 59, 59)));
+                this.is(-1, d.diff('minute', new Date(1999, 11, 31, 23, 59, 59)));
+                this.is(-1 * 24 * 31 * 60, d.diff('minute', new Date(1999, 11, 1, 0, 0, 0)));
+                this.is(-(365 * 10 + 2 + 31) * 24 * 60, d.diff('minute', new Date(1989, 11, 1, 0, 0, 0)));
+
+                this.is(59 * 60 + 59, d.diff('second', new Date(2000, 0, 1, 0, 59, 59)));
+                this.is(60 * 60, d.diff('second', new Date(2000, 0, 1, 1, 0, 0)));
+                this.is((60 + 59) * 60 + 59, d.diff('second', new Date(2000, 0, 1, 1, 59, 59)));
+                this.is(24 * 60 * 60, d.diff('second', new Date(2000, 0, 2)));
+                this.is((366 * 24 * 60 + 59) * 60 + 59, d.diff('second', new Date(2001, 0, 1, 0, 59, 59)));
+                this.is(-1, d.diff('second', new Date(1999, 11, 31, 23, 59, 59)));
+                this.is(-1 * 24 * 31 * 60 * 60, d.diff('second', new Date(1999, 11, 1, 0, 0, 0)));
+                this.is(-(365 * 10 + 2 + 31) * 24 * 60 * 60, d.diff('second', new Date(1989, 11, 1, 0, 0, 0)));
+              }
+            },
+            {
+              name: 'add()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'set()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'get()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'toODBCDate()',
+              test: function(){
+                var D = new Date(2007, 5, 20);
+                this.is('2007-06-20', D.toODBCDate());
+
+                var D = new Date(2007, 0, 1);
+                this.is('2007-01-01', D.toODBCDate());
+              }
+            },
+            {
+              name: 'toODBCTime()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'toODBC()',
+              test: function(){
+                this.is('2007-01-01T00:00:00.000', (new Date(2007, 0, 1)).toODBC());
+                this.is('2007-01-01T01:02:03.000', (new Date(2007, 0, 1, 1, 2, 3)).toODBC());
+                this.is('2007-01-01T01:02:03.123', (new Date(2007, 0, 1, 1, 2, 3, 123)).toODBC());
+                this.is('2008-01-01T01:02:03.123', (new Date(2007, 12, 1, 1, 2, 3, 123)).toODBC());
+              }
+            },
+            {
+              name: 'fromODBC()',
+              test: function(){
+                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01T00:00:00'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01T00:00:00.000'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01 00:00:00'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01 00:00:00.000'));
+                this.is(new Date(2007, 0, 1, 1, 2, 3), (new Date()).fromODBC('2007-01-01 01:02:03'));
+                this.is(new Date(2007, 0, 1, 1, 2, 3), (new Date()).fromODBC('2007-1-1 1:2:3'));
+                this.is(new Date(07, 0, 1, 1, 2, 3), (new Date()).fromODBC('07-1-1 1:2:3'));
+                this.is(new Date(2007, 0, 1, 23, 59, 59), (new Date()).fromODBC('2007-01-01 23:59:59'));
+              }
+            },
+            {
+              name: 'fromDate()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'toFormat()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'fromFormat()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'getYear()',
+              test: function(){
+                
+              }
+            },
+            {
+              name: 'setYear()',
+              test: function(){
+                
+              }
+            }
+          ]
+        }/**/
+      ];
+
+    })());
+
+//    if (top.nextTest)
+//      top.nextTest();
+
+  </script>
+</body>
+
+</html>

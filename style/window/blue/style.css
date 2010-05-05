@@ -1,0 +1,276 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Blue style for Basis.Controls.Window
+ */
+
+  .Basis-Blocker
+  {
+    z-index: 1000;
+  }
+  .Basis-Blocker .mate
+  {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: white;
+    filter: alpha(opacity=50);
+    opacity: .5;
+    -moz-opacity: .5;
+    -khtml-opacity: .5;
+  }
+  .opacity-not-support .Basis-Blocker .Basis-Blocker-Mate
+  {
+    background: url(mate_white.png);
+  }
+
+  /*
+   * Window
+   */
+
+  .Basis-Window
+  {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    min-width: 200px;
+    min-height: 4em;
+
+    color: black;
+  }
+  .Basis-Window-Canvas
+  {
+    /* позиционируем абсолютно, чтобы подложка не влияла на размеры блока */
+    position: absolute;
+    bottom: -20px;
+    top: 25px;
+    left: 0;
+
+    /* прозрачность */
+    opacity: .9;
+    -moz-opacity: .9;
+    -khtml-opacity: .9;
+
+    /* подложка занимает все пространство balloon */
+    width: 100%;
+  }
+
+  .Basis-Window-Canvas .corner-left-top,
+  .Basis-Window-Canvas .corner-right-top,
+  .Basis-Window-Canvas .corner-left-bottom,
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    background-image: url(window.png);
+    background-repeat: no-repeat;
+
+    width: 40px;
+    height: 40px;
+  }
+
+  .Basis-Window-Canvas .corner-left-top
+  {
+    float: left;
+    margin-top: -40px;
+    background-position: left top;
+  }
+  .Basis-Window-Canvas .corner-right-top
+  {
+    float: right;
+    margin-top: -40px;
+    background-position: right top;
+  }
+  .Basis-Window-Canvas .side-top
+  {
+    height: 40px;
+    margin: -40px 40px 0;
+    m2argin: -10px 40px 0;
+    background: url(window_h.png) repeat-x left top;
+  }
+  .Basis-Window-Canvas .side-left,
+  .Basis-Window-Canvas .side-right
+  {
+    float: left;
+    height: 100%;
+    width: 40px;
+    background: url(window_v.png) repeat-y left top;
+  }
+  .Basis-Window-Canvas .side-right
+  {
+    float: right;
+    background-position: right top;
+  }
+  .Basis-Window-Canvas .content
+  {
+    height: 100%;
+    margin: 0 40px;
+    background: white;
+  }
+  .Basis-Window-Canvas .corner-left-bottom
+  {
+    float: left;
+    background-position: left bottom;
+  }
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    float: right;
+    background-position: right bottom;
+  }
+  .Basis-Window-Canvas .side-bottom
+  {
+    height: 40px;
+    margin: 0 40px;
+    background: url(window_h.png) repeat-x left bottom;
+  }
+
+  .Basis-Window-Layout
+  {
+    position: relative;
+    overflow: hidden;
+
+    mar2gin: -28px 15px -23px;
+    m2argin: 0px 15px -50px;
+    margin: -10px 15px -40px;
+    padding: 5px;
+  }
+  .Basis-Window-Content
+  {
+    padding: 1em .5em;
+  }
+  .Basis-Window-Title
+  {
+    border-bottom: 1px solid #5FAAEA;
+    padding: .2em .4em;
+    color: #0271D0;
+    font-size: 120%;
+  }
+  .Basis-Dragable .Basis-Window-Title DIV
+  {
+    cursor: move;
+  }
+  .Basis-Window-Title-ButtonPlace
+  {
+    float: right;
+    margin-right: -10px;
+  }
+  .Basis-Window-Title-CloseButton
+  {
+    display: block;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    background: url(close.gif) no-repeat;
+  }
+  .Basis-Window-Title-CloseButton SPAN
+  {
+    display: none;
+  }
+  .Basis-Window-Title-MinimizeButton
+  {
+    display: none;
+  }
+  .Basis-Window-ButtonPlace
+  {
+    border-top: 1px solid #5FAAEA;
+    margin: 0px -6px -3px;
+    padding: 6px .4em 0px;
+    text-align: right;
+    position: relative;
+    top: 15px;
+  }
+  .Basis-Window-ButtonPlace BUTTON
+  {
+    padding-left: 1ex;
+    padding-right: 1ex;
+    margin-left: .5ex;
+  }
+
+  /*
+   *  Popup
+   */
+
+  .Basis-Popup
+  {
+    position: absolute;
+    background-color: #FFFF99;
+    width: 200px;
+    min-height: 1em;
+    border: 1px solid #F2C261;
+    opacity: 0.9;
+    -moz-opacity: 0.9;
+    -khtml-opacity: 0.9;
+    filter: alpha(opacity: 90);
+  }
+
+  /*
+   *  DropDownList
+   */
+
+  .Basis-DropdownList
+  {
+    background-color: white;
+    border: 1px solid #D0D0D0;
+    margin-top: 0.15em;
+    padding: 0.2em 17px 0.25em 0.4em;
+    position: relative;
+    cursor: pointer;
+    cursor: hand;
+    float: left;
+    margin-right: 4px;
+  }
+  .Basis-DropdownList-Popup
+  {
+    z-index: 2000;
+  }
+  .Basis-DropdownList-Caption
+  {
+    font-size: 85%;
+    height: 1.2em;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 15ex;
+  }
+  .Basis-DropdownList-Trigger
+  {
+    border-left: 1px solid #C0C0C0;
+    cursor: pointer;
+    cursor: hand;
+    background: #E0E0E0 url(arrow_down.gif) center center no-repeat;
+    width: 16px;
+    _width: 17px;
+    height: 100%;
+    position: absolute;
+    right: 0;
+    _right: -1px;
+    _height: 1.5em;
+    top: 0;
+  }
+  .Basis-DropdownList-PopupContent
+  {
+    min-width: 15ex;
+    max-width: 30ex;
+    font-size: 90%;
+  }
+  .Basis-DropdownList-PopupContent A
+  {
+    display: block;
+    padding: 2px 4px;
+    color: black;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .Basis-DropdownList-PopupContent A:hover
+  {
+    background-color: #E0E0E0;
+  }

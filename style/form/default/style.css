@@ -1,0 +1,161 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Default style for Basis Forms
+ */
+
+  .form-content
+  {
+    position: relative;
+    overflow: hidden;
+  }
+  .form-content TD.title
+  {
+    white-space: nowrap;
+    vertical-align: top;
+  }
+  .form-content .fieldWraper
+  {
+    clear: both;
+  }
+  .form-content .field
+  {
+    _position: relative;
+    _zoom: 1;
+    padding-left: 20px;
+    _width: 100%;
+  }
+  .form-content .field LABEL
+  {
+    display: block;
+  }
+  .form-content .field INPUT,
+  .form-content .field TEXTAREA
+  {
+    _border: expression("if (nodeName == 'TEXTAREA' || type.match(/text|password/)){runtimeStyle.border = '1px solid #808080';runtimeStyle.backgroundColor = 'white';runtimeStyle.padding = '2px';}");
+  }
+  .form-content .field INPUT[type="text"],
+  .form-content .field INPUT[type="password"],
+  .form-content .field TEXTAREA
+  {
+    border: 1px solid #808080;
+    background-color: white;
+    padding: 2px;
+  }
+  .form-content .field INPUT.radio,
+  .form-content .field INPUT.checkbox
+  {
+    width: 20px;
+    border: none;
+    background: none;
+  }
+  .form-content .invalid .field
+  {
+    background: url(warning.gif) left 0.2em no-repeat;
+  }
+  .form-content .valid .field
+  {
+    background: url(ok.gif) left 0.2em no-repeat;
+  }
+  .form-content .invalid .field INPUT,
+  .form-content .invalid .field TEXTAREA
+  {
+    border-color: #DD0000;
+  }
+  .form-content .field SELECT
+  {
+    width: 100%;
+  }
+
+  .form-content .monospace INPUT
+  {
+    font-family: Courier;
+  }
+  .form-content .have-button .field
+  {
+    padding-right: 25px;
+  }
+  .form-content .have-button .field .field-wraper
+  {
+    position: relative;
+  }
+  .form-content .have-button .field BUTTON
+  {
+    padding: 1px 0;
+    position: absolute;
+    width: 22px;
+    top: 0; 
+    right: -26px;
+    text-align: center;
+    border: 1px solid #808080;
+  }
+  .form-content .sample
+  {
+    clear: both;
+    display: block;
+    font-size: 85%;
+    color: #666;
+    padding: .2em 0 .4em;
+  }
+
+  .form-content .counter
+  {
+    text-align: right;
+    font-size: 80%;
+    color: #333;
+  }
+
+
+  /* ===========================
+       listbox */
+
+  .basis-listbox
+  {
+    border: 1px solid #888;
+  }
+  .basis-listbox-title
+  {
+    line-height: 1em;
+    margin-top: -.6em;
+    margin-left: 5px;
+    padding: 0 4px 4px 2px;
+    background: white;
+    float: left;
+  }
+  .basis-listbox-content
+  {
+    padding: 3px;
+    clear: both;
+    overflow-y: auto;
+  }
+  .basis-listbox-item
+  {
+    cursor: pointer;
+    padding: 1px;
+    margin: 1px;
+  }
+  .basis-listbox-item:hover
+  {
+    background-color: #F8F8F8;
+  }
+  .basis-listbox-item .basis-listbox-item-content
+  {
+    padding: 3px;
+  }
+  .basis-listbox-content .selected
+  {
+    padding: 0;
+    cursor: default;
+
+    background: #D5EFFC url(selected_bg.gif) repeat-x !important;
+    border: 1px solid #99DEFD;
+  }

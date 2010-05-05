@@ -1,0 +1,512 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="ru" xml:lang="ru">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Test Suite - Data module</title>
+
+  <style type="text/css">
+    @import "style/default/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript"  src="../basis.js"></script>
+  <script type="text/javascript"  src="../dom_wraper.js"></script>
+  <script type="text/javascript"  src="test.js"></script>
+  <script type="text/javascript"  src="common.js"></script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    loadTest((function(){
+
+      var Data = Basis.Data;
+
+      var data = [
+        { a: 11, b: 21, c: 31 },
+        { a: 12, b: 22 },
+        { a: 13, c: 33 },
+        { b: 24, c: 34 },
+        { a: 15 },
+        { b: 26 },
+        { c: 37 },
+        { d: { a: 1, b: 2, c: 3 } }
+      ];
+
+      return [
+        {
+          name: 'Main frame',
+          testcase: [
+            {
+              name: 'getter',
+              testcase: [
+                {
+                  name: 'create from path',
+                  test: function(){
+                    var g = Data.getter('a');
+                    this.is(11, g(data.first()));
+
+                    var g = Data.getter('d.a');
+                    this.is(1, g(data.last()));
+                  }
+                },
+                {
+                  name: 'create from path with modificator',
+                  test: function(){
+                    var g = Data.getter('a', 'value: {0:.2}');
+                    this.is("value: 11.00", g(data.first()));
+                  }
+                },
+                {
+                  name: 'create from function',
+                  test: function(){
+                    var g = Data.getter(function(object){ return object.a });
+                    this.is(11, g(data.first()));
+
+                    var g = Data.getter(function(object){ return object.a }, 'value: {0:.2}');
+                    this.is("value: 11.00", g(data.first()));
+                  }
+                },
+                {
+                  name: 'create from getter',
+                  test: function(){
+                    var g = Data.getter('a');
+                    var g2 = Data.getter(g);
+                    this.is(g, g2);
+                    this.is(11, g(data.first()));
+                    this.is(11, g2(data.first()));
+
+                    var g = Data.getter('a', '[{0}]');
+                    var g2 = Data.getter(g);
+                    this.is(true, g === g2);
+                    this.is('[11]', g(data.first()));
+                    this.is('[11]', g2(data.first()));
+
+                    var g = Data.getter('a', '[{0}]');
+                    var g2 = Data.getter(g, Function.$self);
+                    this.is(false, g === g2);
+                    this.is('[11]', g(data.first()));
+                    this.is('[11]', g2(data.first()));
+
+                    var g = Data.getter('a');
+                    var g2 = Data.getter(g, '[{0}]');
+                    this.is(false, g === g2);
+                    this.is(11, g(data.first()));
+                    this.is('[11]', g2(data.first()));
+
+                    var g = Data.getter('a', '[{0}]');
+                    var g2 = Data.getter(g, '{{0}}');
+                    this.is(false, g === g2);
+                    this.is('[11]', g(data.first()));
+                    this.is('{[11]}', g2(data.first()));
+
+                  }
+                },
+                {
+                  name: 'use on array',
+                  test: function(){
+                    var g = Data.getter('a');
+                    this.is("11,12,13,,15,,,", data.map(g).join(','));
+                    this.is("11,12,13,15", data.map(g).filter(Function.$isNotNull).join(','));
+                  }
+                },
+                {
+                  name: 'comparation',
+                  test: function(){
+                    this.is(true, Data.getter('a') === Data.getter('a'));
+                    this.is(true, Data.getter(Function.$self) === Data.getter(Function.$self));
+                    this.is(true, !Function.$self.getter);
+                    this.is(true, Data.getter(function(){ return 1 }) !== Data.getter(function(){ return 1 }));
+                    this.is(true, Data.getter(function(){ return 1 }) !== Data.getter(function(){ return 1; }));
+                    this.is(true, Data.getter(function(){ return 1 }) !== Data.getter(function(){ return 2 }));
+
+                    this.is(true, Data.getter(function(){ return 1 }, Number) !== Data.getter(function(){ return 1 }, Number));
+                    this.is(true, Data.getter(function(){ return 1 }, Number) !== Data.getter(function(){ return 1; }, Number));
+                    this.is(true, Data.getter(function(){ return 1 }, Number) !== Data.getter(function(){ return 2 }, Number));
+
+                    this.is(true, Data.getter(function(){ return 1 }, '') !== Data.getter(function(){ return 1 }, ''));
+                    this.is(true, Data.getter(function(){ return 1 }, '') !== Data.getter(function(){ return 1; }, ''));
+                    this.is(true, Data.getter(function(){ return 1 }, '') !== Data.getter(function(){ return 2 }, ''));
+
+                    this.is(true, Data.getter(function(){ return 1 }, 'f') !== Data.getter(function(){ return 1 }, 'f'));
+                    this.is(true, Data.getter(function(){ return 1 }, 'f') !== Data.getter(function(){ return 1; }, 'f'));
+                    this.is(true, Data.getter(function(){ return 1 }, 'f') !== Data.getter(function(){ return 2 }, 'f'));
+
+                    this.is(true, Data.getter(function(){ return 1 }, 'f') !== Data.getter(function(){ return 1 }, 'fs'));
+
+                    this.is(true, Data.getter('a', Number) !== Data.getter('a'));
+                    this.is(true, Data.getter('a', Number) === Data.getter('a', Number));
+                    this.is(true, Data.getter(Function.$self, Number) === Data.getter(Function.$self, Number));
+                    this.is(true, Data.getter(Function.$self, '') === Data.getter(Function.$self, ''));
+                    this.is(true, Data.getter(Function.$self, 'asd') === Data.getter(Function.$self, 'asd'));
+                    this.is(true, Data.getter(Function.$self, String) !== Data.getter(Function.$self, Number));
+
+                    this.is(true, Data.getter('a', '') === Data.getter('a', ''));
+                    this.is(true, Data.getter('a', '') !== Data.getter('a', 'f'));
+
+                    this.is(true, Data.getter('a', Number) === Data.getter(Data.getter('a', Number)));
+                    this.is(true, Data.getter('a', Number) !== Data.getter(Data.getter('a', Number), Number));
+
+                    this.is(true, Data.getter('a', Data.getter('b', Number)) === Data.getter('a', Data.getter('b', Number)));
+                    this.is(true, Data.getter('a', Data.getter('b', Number)) !== Data.getter('a', Data.getter('a', Number)));
+                    this.is(true, Data.getter('a', Data.getter('b', Number)) !== Data.getter('a', Data.getter('b')));
+                  }
+                }
+              ]
+            },
+            {
+              name: 'setter',
+              testcase: [
+                {
+                  name: 'create from path',
+                  test: function(){
+                    var s = Data.setter('a');
+                    var d = { a: 1 };
+                    this.is(2, s(d, 2));
+                    this.is(2, d.a);
+
+                    var s = Data.setter('b');
+                    var d = { a: 1 };
+                    this.is(2, s(d, 2));
+                    this.is(1, d.a);
+                    this.is(2, d.b);
+                  }
+                },
+                {
+                  name: 'create from path with modificator',
+                  test: function(){
+                    var s = Data.setter('a', 'value: {0:.2}');
+                    var d = { a: 1 };
+                    this.is("value: 11.00", s(d, 11));
+                    this.is("value: 11.00", d.a);
+
+                    var s = Data.setter('b', 'value: {0:.2}');
+                    var d = { a: 1 };
+                    this.is("value: 11.00", s(d, 11));
+                    this.is(1, d.a);
+                    this.is("value: 11.00", d.b);
+                  }
+                },
+                {
+                  name: 'create from function',
+                  test: function(){
+                    var s = Data.setter(function(object, value){ return object.a = value * value });
+                    var d = { a: 1 };
+                    this.is(4, s(d, 2));
+                    this.is(4, d.a);
+
+                    var s = Data.setter(function(object, value){ return object.b = value * value });
+                    var d = { a: 1 };
+                    this.is(4, s(d, 2));
+                    this.is(4, d.b);
+                    this.is(1, d.a);
+
+                    var d = { a: 1, setA: function(value){ return this.a = value } };
+                    var s = Data.setter(function(object, value){ return object.setA(value) }, '={0}');
+                    this.is('=2', s(d, 2));
+                    this.is('=2', d.a);
+                  }
+                },
+                {
+                  name: 'create with validator',
+                  test: function(){
+                    var s = Data.setter('a', null, function(value){ return value != null && String(value).length < 5 });
+                    var d = {a:1};
+                    var ex = false;
+                    this.is(4, s(d, 4));
+                    this.is(4, d.a);
+                    this.is('hell', s(d, 'hell'));
+                    this.is('hell', d.a);
+                    // exception
+                    try{
+                      s(d, 'hello');
+                    }catch(e){ ex = true;}
+                    this.is(true, ex);
+
+                    // ignore for data set
+                    var s = Data.setter('a', null, function(value){ return value != null && String(value).length < 5 }, true);
+                    var d = {a:1};
+                    this.is('hell', s(d, 'hell'));
+                    this.is('hell', d.a);
+                    this.is(undefined, s(d, 'hello'));  // no exception
+                    this.is('hell', d.a);
+                  }
+                },
+                {
+                  name: 'create from setter',
+                  test: function(){
+                    var s = Data.setter('a');
+                    var s2 = Data.setter(s);
+                    this.is(s, s2);
+                    var d = {a:1}
+                    this.is(2, s(d, 2));
+                    this.is(2, d.a);
+                    this.is(3, s2(d, 3));
+                    this.is(3, d.a);
+
+                    var s = Data.setter('a', '[{0}]');
+                    var s2 = Data.setter(s);
+                    this.is(s, s2);
+                    var d = {a:1}
+                    this.is('[2]', s(d, 2));
+                    this.is('[2]', d.a);
+                    this.is('[3]', s2(d, 3));
+                    this.is('[3]', d.a);
+
+                    var s = Data.setter('a');
+                    var s2 = Data.setter(s, '[{0}]');
+                    this.is(s, s2);
+                    var d = {a:1}
+                    this.is(2, s(d, 2));
+                    this.is(2, d.a);
+                    this.is(3, s2(d, 3));
+                    this.is(3, d.a);
+                  }
+                },
+                {
+                  name: 'create from setter with validator (what is right cases?)',
+                  test: function(){
+                    
+                  }
+                },
+                {
+                  name: 'use on array',
+                  test: function(){
+                    var s = Data.setter('a');
+                    var d = [{a:1},{a:2},{a:3},{b:1},{a:5},{b:2},{a:7}];
+                    this.is("0,1,2,3,4,5,6", d.map(s).join(','));
+                    var d = [{a:1},{a:2},{a:3},{b:1},{a:5},{b:2},{a:7}];
+                    this.is("0,1,2,3,4,5,6", d.map(s).filter(Function.$isNotNull).join(','));
+
+                    var s = Data.setter('a', function(){ return this.a * 2 });
+                    var d = [{a:1},{a:2},{a:3},{b:1},{a:5},{b:2},{a:7}];
+                    this.is("2,4,6,10,14", d.map(s).filter(Number).join(','));
+                    var d = [{a:1},{a:2},{a:3},{b:1},{a:5},{b:2},{a:7}];
+                    this.is("2,4,6,10,14", d.filter(Data.getter('a', Function.$isNotNull)).map(s).join(','));
+
+
+//                    var s = Data.setter(function(o, value){ return });
+                  }
+                },
+                {
+                  name: 'use on array #2 (copy property)',
+                  test: function(){
+                    var s = Data.setter('a', function(){ return this.b });
+                    var d = [{a:1},{a:2},{a:3},{b:4},{a:5},{b:6},{a:7}];
+                    this.is("4,6", d.map(s).filter(Function.$isNotNull).join(','));
+                  }
+                },
+                {
+                  name: 'validator use',
+                  test: function(){
+                    var s = Data.setter('c', function(){ return this.b }, Function.$isNotNull);
+                    var d = [{a:1},{a:2},{a:3},{b:4},{a:5},{b:6},{a:7}];
+                    var exception = false;
+                    try {
+                      d.map(s).join(',');
+                    } catch(e){ exception = true }
+                    this.is(true, exception);
+
+                    var s = Data.setter('c', function(){ return this.b }, Function.$isNotNull, true);
+                    var d = [{a:1},{a:2},{a:3},{b:4},{a:5},{b:6},{a:7}];
+                    this.is(",,,4,,6,", d.map(s).join(','));
+                    var d = [{a:1},{a:2},{a:3},{b:4},{a:5},{b:6},{a:7}];
+                    this.is("4,6", d.map(s).filter(Function.$isNotNull).join(','));
+                  }
+                }
+              ]
+            }
+          ]
+        }/*,
+        {
+          name: 'Storage',
+          testcase: [
+            {
+              name: 'create and get',
+              test: function(){
+                var s = new Storage();
+                s.insert({ id: 1, value: 'item1' });
+                s.insert({ id: 5, value: 'item2' });
+                s.insert({ id: 3, value: 'item3' });
+                s.insert({ id: 2, value: 'item4' });
+                s.insert({ id: 4, value: 'item5' });
+                // items count must be five
+                this.is(5, s.count());
+                // keys must be ordered
+                this.is('1,2,3,4,5', s.keys().join(','));
+                // get values
+                this.is('item3', s.item(3).value);
+                this.is(undefined, s.item(6));
+
+                // own primary key
+                var s = new Storage({ pk: Data.getter('item_id') });
+                s.insert({ id: 1, item_id: 11, value: 'item1' });
+                s.insert({ id: 5, item_id: 55, value: 'item2' });
+                s.insert({ id: 3, item_id: 33, value: 'item3' });
+
+                // items count must be three
+                this.is(3, s.count());
+                // keys must be ordered
+                this.is('11,33,55', s.keys().join(','));
+              }
+            },
+            {
+              name: 'Storage insert()',
+              test: function(){
+                var s = new Storage();
+                s.insert({ id: 1, value: 'item1' });
+                s.insert({ id: 2, value: 'item2' });
+                s.insert({ id: 3, value: 'item3' });
+                var ex = false;
+                this.is(3, s.count());
+
+                // duplicate exception
+                try {
+                  s.insert({ id: 2, value: 'new data' });
+                } catch(e) { ex = true }
+                this.is(true, ex);
+
+                // update on duplicate
+                s.insert({ id: 1, value: 'new value' }, true);
+                this.is('new value', s.item(1).value);
+              }
+            },
+            {
+              name: 'Storage update()',
+              test: function(){
+                var s = new Storage();
+                s.insert({ id: 1, value: 'item1' });
+                s.insert({ id: 2, value: 'item2' });
+                s.insert({ id: 3, value: 'item3' });
+
+                s.update(1, {});
+                this.is('item1', s.item(1).value);
+                s.update(1, { value: 'new item1' });
+                this.is('new item1', s.item(1).value);
+
+                // catch exception
+                var ex = false;
+                try {
+                  s.update(5, { value: 'just a value' });
+                } catch(e){ ex = true }
+                this.is(true, ex);
+                this.is(undefined, s.item(5));
+
+                // ignore exception
+                var ex = false;
+                try {
+                  s.update(5, { value: 'just a value' }, true);
+                } catch(e){ ex = true }
+                this.is(false, ex);
+                this.is(undefined, s.item(5));
+              }
+            },
+            {
+              name: 'Storage remove()',
+              test: function(){
+                var s = new Storage();
+                s.insert({ id: 1, value: 'item1' });
+                s.insert({ id: 2, value: 'item2' });
+                s.insert({ id: 3, value: 'item3' });
+
+                s.remove(1);
+                this.is(undefined, s.item(1));
+
+                s.remove(2);
+                this.is(undefined, s.item(2));
+
+                this.is(1, s.count());
+                this.is(1, s.keys().length);
+                this.is(1, s.rows().length);
+
+                // catch exception
+                var ex = false;
+                try {
+                  s.remove(5);
+                } catch(e){ ex = true }
+                this.is(true, ex);
+
+                // ignore exception
+                var ex = false;
+                try {
+                  s.remove(5, true);
+                } catch(e){ ex = true }
+                this.is(false, ex);
+                this.is(undefined, s.item(5));
+              }
+            },
+            {
+              name: 'Storage clear()',
+              test: function(){
+                var s = new Storage();
+                s.insert({ id: 1, value: 'item1' });
+                s.insert({ id: 2, value: 'item2' });
+                s.insert({ id: 3, value: 'item3' });
+
+                this.is(3, s.count());
+                s.clear();
+                this.is(0, s.count());
+              }
+            },
+            {
+              name: 'Storage select()',
+              test: function(){
+                var s = new Storage();
+                s.insert({ id: 1, value: 'item1' });
+                s.insert({ id: 100, value: 'item100' });
+                s.insert({ id: 2, value: 'item2' });
+                s.insert({ id: 3, value: 'item3' });
+
+                this.is('item1|item2|item3|item100', s.select().map(Data.getter('value')).join('|'))
+                this.is('item1|item3', s.select(function(data){ return data.id % 2 }).map(Data.getter('value')).join('|'))
+              }
+            },
+            {
+              name: 'Storage select() & Data.setter/Data.getter',
+              test: function(){
+                var s = new Storage();
+                s.insert({ id: 1, value: 'item1' });
+                s.insert({ id: 100, value: 'item100' });
+                s.insert({ id: 2, value: 'item2' });
+                s.insert({ id: 3, value: 'item3' });
+
+                this.is('0|1|2|3', s.select().map(Data.setter('mark')).join('|'));
+                this.is('0.00|1.00|2.00|3.00', s.rows().map(Data.getter('mark', '{0:.2}')).join('|'));
+                this.is('item1|item3item3item3', s.select().map(Data.setter('value', function(value){ return this.value.repeat(value + 1) }, function(){ return this.id % 2 }, true)).filter(Function.$isNotNull).join('|'));
+              }
+            },
+            {
+              name: 'Storage destroy()',
+              test: function(){
+                var s = new Storage();
+                s.insert({ id: 1, value: 'item1' });
+                s.insert({ id: 2, value: 'item2' });
+                s.insert({ id: 3, value: 'item3' });
+
+                this.is(3, s.count());
+                s.destroy();
+                this.is(undefined, s._rows);
+              }
+            }
+          ]
+        }*/
+      ];
+
+    })());
+
+//    if (top.nextTest)
+//      top.nextTest();
+
+  </script>
+</body>
+
+</html>

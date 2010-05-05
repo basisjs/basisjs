@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="ru" xml:lang="ru">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Table</title>
+
+  <link rel="stylesheet" type="text/css" title="Vista Style" href="../style/table/vista/style.css" media="screen" />
+
+  <style type="text/css">
+    HTML,
+    BODY
+    {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+    #table
+    {
+      margin: .5em;
+    }
+    #table TD,
+    #table TH
+    {
+      font-size: 90%;
+    }
+    #table TD.bold,
+    #table TH.bold
+    {
+      font-weight: bold;
+    }
+    #table TD.italic,
+    #table TH.italic
+    {
+      font-style: italic;
+    }
+    .match
+    {
+      background: gold;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <link rel="stylesheet" type="text/css" title="Vista Style" href="../style/table/vista/style_ie.css" media="screen" />
+  <style type="text/css">
+    BODY,
+    TABLE *
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <link rel="stylesheet" type="text/css" title="Vista Style" href="../style/table/vista/style_ie7.css" media="screen" />
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../basis.js"></script>
+  <script type="text/javascript" src="../generator.js"></script>
+  <script type="text/javascript" src="../dom_wraper.js"></script>
+  <script type="text/javascript" src="../dom_register.js"></script>
+  <script type="text/javascript" src="../layout.js"></script>
+  <script type="text/javascript" src="../table.js"></script>
+  <script type="text/javascript" src="../form.js"></script>
+</head>
+
+<body>
+  <div id="control_panel" style="border: 2px solid #808080; background: #F0F0F0; margin: .25em; padding: .5em">
+    <input type="text" id="rowCount"/><button onclick="setRowCount(Basis.DOM.get('rowCount').value)">gen rows</button><span id="time"></span><br/>
+    <button onclick="TestTable.body.clear()">clear</button>
+    <div>
+      <label><input type="checkbox" id="logEvents"/> log events</label>
+      <label><input type="checkbox" id="multipleSelection"/> multiple selection (using CTRL)</label>
+      <label><input type="checkbox" id="useGrouping"/> use grouping</label>
+      <label><input type="checkbox" id="useLoadData" checked="checked"/> use loadData method to fill table (faster)</label>
+    </div>
+  </div>
+  <!--<img src="/test.jpg"/>-->
+  <script type="text/javascript">
+    
+    (function(){
+      var Data = Basis.Data;
+      var DOM = Basis.DOM;
+      var Event = Basis.Event;
+
+      var Sum = Basis.DOM.Wrapers.Register.Sum;
+      var Max = Basis.DOM.Wrapers.Register.Max;
+
+      setRowCount = function(value){
+        DOM.get('rowCount').value = value;
+        if (isNaN(value)) 
+          DOM.get('time').innerHTML = '<span style=color:red>&quot;<b>' + value + '</b>&quot; is not a number</span>';
+        else 
+          genRows(Number(value)); 
+      }
+
+      DOM.insert('control_panel', [1, 10, 100, 250, 500, 1000].map(function(item){ 
+        var btn = DOM.createElement('button', item); 
+        Event.addHandler(btn, 'click', function(){ setRowCount(item) });
+        Event.onUnload(function(){ Event.clearHandlers(btn) });
+        return btn;
+      }), 'begin');
+
+      //var testASum, testASum2;
+      var logEventCheckbox = DOM.get('logEvents');
+      var useLoadData = DOM.get('useLoadData');
+      var useGrouping = DOM.get('useGrouping');
+      var multipleSelection = DOM.get('multipleSelection');
+
+      Event.addHandler(useGrouping, 'click', function(){
+        TestTable.setLocalGrouping(this.checked ? localGrouping : null);
+      }, useGrouping);
+
+      Event.addHandler(multipleSelection, 'click', function(){
+        TestTable.selection.clear();
+        TestTable.selection.multiple = this.checked;
+      }, multipleSelection);
+
+      var localGrouping = {
+        groupGetter: function(node){
+          if (node.info.count >= 0)
+            return 'greates or equal 0';
+          else
+            return ' less than 0';
+        },
+        localSorting: 'info.title'
+      };
+          
+      testAMax  = new Max(Data.getter('count', Number));
+      TestTable = new Basis.Controls.Table.Table(
+        {
+          container: document.body,
+          registers: [
+            testASum  = new Sum(Data.getter('amount', Number)),
+            testASum2 = new Sum(Data.getter('count', Number))
+          ],
+          positionDependent: true,
+          rowBehaviour: {
+            updatePosition: function(pos, gpos){
+              this.posText.nodeValue = pos + 1;
+              this.groupPosText.nodeValue = gpos + 1;
+              this.repaintCountText.nodeValue = Number(this.repaintCountText.nodeValue) + 1;
+            }
+          },
+          selection: {
+            multiple: multipleSelection.checked
+          },
+          localGrouping: useGrouping.checked ? localGrouping : null,
+          handlers: {
+            any: function(){
+              if (logEventCheckbox.checked)
+                if (typeof console != 'undefined')
+                  console.log(arguments);
+            }
+          },
+          //localSorting: Data.getter('info.id', Number),
+          structure: [
+            { 
+              header: {
+                content: '#'
+              },
+
+              body: {
+                template: '{posText|0}'
+              }
+            },
+            { 
+              header: {
+                content: '#G'
+              },
+
+              body: {
+                template: '{groupPosText|0}'
+              }
+            },
+            { 
+              header: {
+                content: 'PU'
+              },
+
+              body: {
+                template: '{repaintCountText|0}'
+              }
+            },
+            { 
+              className: 'right',
+              sorting: Data.getter('info.id', Number),
+
+              header: {
+                content: 'id'
+              },
+
+              body: {
+                content: Data.getter('info.id')
+              },
+
+              footer: {
+                className: 'right',
+                content: 'Total:'
+              }
+            },
+            { 
+              header: {
+                content: 'Rnd'
+              },
+
+              body: {
+                content: function(node){
+                  return '{0:.4}'.format(node.document ? DOM.index(node) : Math.random());
+                }
+              },
+
+              footer: {
+                className: 'right',
+                content: testAMax.addLink(DOM.createText(), null, Number)
+              }
+            },
+            { 
+              sorting: Data.getter('info.title', String.toLowerCase),
+
+              header: {
+                content: 'title'
+              },
+
+              body: {
+                content: Data.getter('info.title')
+              }
+            },
+            { 
+              className: 'right',
+              sorting: Data.getter('info.amount', Number),
+
+              header: {
+                className: 'bold',
+                content: 'amount'
+              },
+
+              body: {
+                className: 'italic',
+                content: Data.getter('info.amount', '{0:.2}р.')
+              },
+
+              footer: {
+                content: testASum.addLink(DOM.createText(), null, '{0:.2} р.')
+              }
+            },
+            { 
+              className: 'right',
+              sorting: Data.getter('info.count', Number),
+
+              header: {
+                content: 'count'
+              },
+
+              body: {
+                content: Data.getter('info.count', Number)
+              },
+
+              footer: {
+                content: testASum2.addLink(DOM.createText(), null)
+              }
+            }/*,
+            {
+              header: {
+                content: 'asd'
+              },
+              body: {
+                content: '-'
+              }
+            }/*,
+            { caption: 'update count',  className: 'right', fill: 'updateCount' }*/
+          ]
+        }
+      );
+
+      var stringcache = [];
+      function genRows(count){
+        var d1 = new Date();
+        TestTable.body.clear();
+
+        var data = [];
+        for (var i = 0; i < count; i++)
+          data.push({ 
+            id:     Basis.Data.Generator.Number(0, 0, 10000), 
+            title:  stringcache[i] || (stringcache[i] = Basis.Data.Generator.String(2, 50)), 
+            amount: Basis.Data.Generator.Number(2, -1000, 1000), 
+            count:  Basis.Data.Generator.Number(0, -10, 10)
+          });
+        // console.log(data.last().count);
+
+        var d = new Date();
+      //console.profile();
+        if (useLoadData.checked)
+          TestTable.loadData(data);
+        else
+          for (var i = 0; i < count; i++)
+            TestTable.appendChild({ info: data[i] });
+      //console.profileEnd();
+
+        var result = new Date();
+        DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + ((result - d)/1000).toFixed(3) + '</b> sec ' + ((result - d1)/1000).toFixed(3).quote('(');
+        data.clear();
+      };
+      Event.onLoad(function(){
+        setRowCount(10);
+      });
+
+      /*
+      tableFilter = new DOM.Wrapers.Property('', {
+        change: function(value){
+          var rx = new RegExp('(' + value.forRegExp() + ')', 'i');
+          TestTable.setMatchFunction(value ? function(node, reset){
+            if (!reset)
+            {
+              var textNode = node._m || node.element.childNodes[5].firstChild.firstChild;
+              var p = textNode.nodeValue.split(rx);
+              if (p.length > 1)
+              {
+                DOM.replace(
+                  node._x || textNode,
+                  node._x = DOM.createElement('SPAN.matched', DOM.wrap(p, { 'SPAN.match': function(v, i){ return i % 2 == 1 }}))
+                );
+                node._m = textNode;
+                return true;
+              }
+            }
+            
+            if (node._x)
+            {
+              DOM.replace(node._x, node._m);
+              delete node._x;
+              delete node._m;
+            }
+            
+            return false;
+          } : null);
+        }
+      }, String.trim);
+
+      DOM.insert(document.body, DOM.createElement({
+        description: 'INPUT',
+        keyup: function(){
+          tableFilter.set(this.value)
+        },
+        change: function(){
+          tableFilter.set(this.value)
+        }
+      }), DOM.INSERT_BEFORE, TestTable.element);*/
+
+      var field = new Basis.Controls.Form.MatchInput({
+        matchFilter: {
+          node: TestTable,
+          textNodeGetter: 'element.childNodes[5].firstChild.firstChild'
+        }
+      });
+      DOM.insert(document.body, field.element, DOM.INSERT_BEFORE, TestTable.element);
+
+/*
+TestTable.header.setLocalGrouping({
+  groupGetter: function(node){
+    return !!node.sorting;
+  },
+  titleGetter: Basis.Data.getter('info.title', { 'true': 'sortable', 'false': 'is\'t sortable' })
+})
+*/
+    })();
+  </script>
+</body>
+
+</html>

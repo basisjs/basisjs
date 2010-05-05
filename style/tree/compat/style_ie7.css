@@ -1,0 +1,33 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Compat style for Basis.Controls.Tree
+ * Internet Explorer 7.0 fixes
+ */
+
+  .Basis-Tree > UL
+  {
+    padding-top: 2px;
+    margin-bottom: -2px;
+  }
+  .Basis-Tree LI
+  {
+    zoom: 1;
+  }
+  .Basis-Tree DIV.Tree-Node-Title
+  {
+    margin-top: -2px;
+  }
+  .Basis-Tree DIV.Tree-Node-Title A
+  {
+    zoom: 1;
+  }

@@ -1,0 +1,55 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Base style for Basis.Controls.Table (IE fixes)
+ */
+
+  /*
+   * default
+   */
+  .Basis-Table THEAD TH
+  {
+    position: relative;
+  }
+  .Basis-Table THEAD TH DIV.Basis-Table-Header-Cell-Content
+  {
+    margin: 0;
+  }
+  .Basis-Table THEAD TH .Basis-Table-Sort-Direction
+  {
+    height: 8px;
+    font-size: 1px;
+    width: 100%;
+    position: absolute;
+  }
+
+  /*
+   * :hover
+   */
+  .Basis-Table THEAD TR TH.hover
+  {
+    background-color: #BDEDFF;
+    background-image: url(hover_bg.gif);
+    cursor: pointer;
+  }
+  .Basis-Table THEAD TR TH.hover DIV.Basis-Table-Header-Cell-Content
+  {
+    background-image: url(hover_hline.gif);
+    border-color: #93C9E3;
+    border-left: none;
+    padding-left: 1px;
+  }
+  .Basis-Table THEAD TR TH.hover SPAN.Basis-Table-Header-Cell-Title
+  {
+    background-image: url(hover_hline.gif);
+  }
+

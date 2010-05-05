@@ -1,0 +1,140 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+  /*
+   *  DropDownList
+   */
+
+  .Basis-DropdownList
+  {
+    border: 1px solid #87C4E0;
+    border-width: 0 1px;
+    background: #F2F9FC url(dropdown_bg.gif) repeat-x left bottom;
+/*    padding: 0.28em 16px 0.32em 6px;*/
+    padding: 0;
+    margin: 1px 3px 1px 0;
+    float: left;
+    position: relative;
+  }
+
+  .Basis-DropdownList-Canvas
+  {
+    display: none;
+  }
+  .Basis-DropdownList-Content
+  {
+    padding: 1px;
+  }
+  .Basis-DropdownList-Caption
+  {
+    padding: 2px 15px 3px 5px;
+    /*margin-right: 12px;*/
+    font-size: 85%;
+    height: 1.2em;
+    position: relative;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 120px;
+    display: block;
+    text-decoration: none;
+    color: black;
+  }
+  .Basis-DropdownList-CaptionText
+  {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
+  }
+
+  .Basis-DropdownList-Trigger
+  {
+    background: url(dropdown_arrow.gif) no-repeat right center;
+    border: 1px solid #87C4E0;
+    border-width: 1px 0;
+    cursor: pointer;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: -1px;
+  }
+
+  .Basis-DropdownList-Popup
+  {
+    padding: 0 !important;
+    opacity: .95;
+    -moz-opacity: .95;
+    -khtml-opacity: .95;
+    position: absolute;
+    border: 1px solid #87C4E0 !important;
+    border-bottom: none !important;
+    background: white;
+    margin: 1px 0 0;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content
+  {
+    padding: 0;
+    margin-bottom: -1px;
+    border-bottom: 1px solid #87C4E0;
+    _width: 142px;
+    font-size: 85%;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content A.item
+  {
+    padding: .3em 6px .35em;
+    zoom: 1;
+    display: block;
+    color: black;
+    text-decoration: none;
+    white-space: nowrap;
+    min-width: 130px;  /* important min-width here (not on parent nodes) - otherwise IE7 bug. but this bring bug to opera 9.2 */
+    min-height: 1em;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content A.item:hover
+  {
+    background-color: #E8E8E8;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content A.selected
+  {
+    background-color: #E1F1F9;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content A.disabled
+  {
+    color: #AAA;
+    background: none !important;
+    cursor: default;
+  }
+
+  .Basis-DropdownList-Popup .Basis-PartitionNode-Title
+  {
+    background: #F0F0F0;
+    padding: .3em 6px .35em;
+    font-weight: bold;
+  }
+
+  .Basis-DropdownList.disabled
+  {
+    background: #EDEDED url(dropdown_gray_bg.gif) repeat-x;
+    border-color: #CCC;
+  }
+  .Basis-DropdownList.disabled A
+  {
+    color: #AAA;
+  }
+  .Basis-DropdownList.disabled .Basis-DropdownList-Trigger
+  {
+    background: none;
+    border-color: #CCC;
+  }
+

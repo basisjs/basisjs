@@ -1,0 +1,118 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * Compat style for Basis.Controls.Tree
+ */
+
+  .Basis-Tree
+  {
+    overflow: hidden;
+  }
+
+  .Basis-Tree UL
+  {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .Basis-Tree LI
+  {
+    margin: 0;
+    position: relative;
+  }
+  .Basis-Tree LI UL
+  {
+    padding-left: 16px;
+  }
+  .Basis-Tree DIV.Basis-Tree-Expander
+  {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    width: 9px;
+    height: 1.5em;
+    background-image: url(minus.gif);
+    background-repeat: no-repeat;
+    background-position: center center;
+    cursor: pointer;
+  }
+  .Basis-Tree LI.collapsed DIV.Basis-Tree-Expander
+  {
+    background-image: url(plus.gif);
+  }
+  .Basis-Tree DIV.Tree-Node-Title A
+  {
+    background-image: url(page.gif);
+    background-repeat: no-repeat;
+    background-position: 414px .1em;
+
+    display: block;
+    padding: .4em 2px .4em 434px;
+    text-decoration: none;
+    color: black;
+    font-size: 85%;
+    line-height: 1em;
+    /*-moz-user-select: none;*/
+    /*user-select: none;*/
+    margin-left: -400px;
+  }
+  .Basis-Tree LI DIV.Tree-Node-Title A:hover
+  {
+    background-color: #EEEEEE;
+  }
+  .Basis-Tree LI DIV.Tree-Node-Title A:focus
+  {
+    outline: none;
+  }
+  .Basis-Tree DIV.Tree-Folder-Content A
+  {
+    background-image: url(folder_open.gif);
+  }
+  .Basis-Tree LI.collapsed DIV.Tree-Folder-Content A
+  {
+    background-image: url(folder_close.gif);
+  }
+  .Basis-Tree .selected A
+  {
+    background-color: #D9E8FB !important;
+  }
+  .Basis-Tree .disabled A
+  {
+    color: #B0B0B0 !important;
+    background-color: white !important;
+    cursor: default;
+  }
+
+  .Basis-Tree .Basis-Tree-NodeGroup,
+  .Basis-Tree .Basis-Tree-NodeGroup-Content
+  {
+    padding: 0;
+    margin: 0;
+  }
+  .Basis-Tree .Basis-Tree-NodeGroup-Title
+  {
+    font-size: 85%;
+    background: #F0F0F0;
+    padding: 2px 4px;
+  }
+
+  /* MISC */
+
+  .Basis-Tree LI .Basis-Tree-Loading-Label
+  {
+    padding: 1px 4px;
+    border: 1px solid #E8E8E8;
+    background-color: #F4F4F4;
+    font-size: 80%;
+    margin: .2em 0 .2em 33px;
+  }

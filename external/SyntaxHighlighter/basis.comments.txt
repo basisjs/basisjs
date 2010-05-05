@@ -1,0 +1,4 @@
+This libarary was midified to avoid problems with RegExp.
+Some regular expressions was changed and usage of ERegExp was removed.
+
+Dvornov Roman
