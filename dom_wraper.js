@@ -53,10 +53,9 @@
 
    /**
     * Creates behaviour singleton object.
-    * @param {Class} superClass Prototype class for inhiritance.
-    * @param {Object} behaviour Set of methods that being part of new behaviour
-    * object.
-    * @returns {Object} Behaviour singleton object inherited from superClass behaviour
+    * @param {Basis.Class} superClass Prototype class for inhiritance.
+    * @param {Object} behaviour Set of methods that being part of new behaviour object.
+    * @return {Object} Behaviour singleton object inherited from superClass behaviour
     * member if superClass specified and has behaviour member, otherwise new
     * root behaviour singleton object.
     */
@@ -73,25 +72,27 @@
     var slice = Array.prototype.slice;
 
    /**
-    * @class EventObject
+    * Base class for event dispacthing. It provides model when it's instance
+    * can registrate handlers for events, and call it when event happend. 
+    * @class
     */
     var EventObject = Class(null, {
      /**
       * Name of class.
-      * @type {String}
+      * @type {string}
       * @readonly
       */
       className: namespace + '.EventObject',
 
      /**
       * Unique id of object.
-      * @type {Number}
+      * @type {number}
       * @readonly
       */
       eventObjectId: 0,
 
      /**
-      * Default set of event handler.
+      * Default set of event handler. It calls after all other handlers are called.
       * @type {Object}
       * @private
       */
@@ -99,14 +100,13 @@
 
      /**
       * List of event handler sets.
-      * @type {Object[]}
+      * @type {Array.<Object>}
       * @private
       */
       handlers_: [],
 
      /**
-      * @method init
-      * @constructs
+      * @constructor
       */
       init: function(){
         this.handlers_ = new Array();
@@ -114,11 +114,10 @@
       },
 
      /**
-      * Adds event handler set to object.
-      * @method addHandler
-      * @param {Object} handler Hash of event handlers.
+      * Registrates new event handler set for object.
+      * @param {Object} handler Event handler set.
       * @param {Object=} thisObject Context object.
-      * @returns {Boolean} Returns true if handler was attached.
+      * @return {boolean} Whether event handler set was added.
       */
       addHandler: function(handler, thisObject){
         thisObject = thisObject || this;
@@ -143,12 +142,11 @@
       },
 
      /**
-      * Removes event handler set from object. For event handler set removing, params
+      * Removes event handler set from object. For this operation parameters
       * must be the same (equivalent) as used for addHandler method.
-      * @method removeHandler
-      * @param {Object} handler Hash of event handlers.
+      * @param {Object} handler Event handler set.
       * @param {Object=} thisObject Context object.
-      * @returns {Boolean}
+      * @return {boolean} Whether event handler set was removed.
       */
       removeHandler: function(handler, thisObject){
         thisObject = thisObject || this;
@@ -166,22 +164,12 @@
       },
 
      /**
-      * Removes all event handler sets from object, except behaviour event handler set.
-      * IMPORTANT: This is private method for inner calls only.
-      * @method clearHandlers_
-      * @private
+      * Fires event dispatching. All handlers assigned for some event will be called
+      * in reverse order of addiction. Behaviour handler to be called last.
+      * @param {string} eventName Name of dispatching event.
+      * @param {...*} args The arguments to the event handlers.
       */
-      /*clearHandlers_: function(){
-        this.handlers_.clear();
-      },*/
-
-     /**
-      * Fires eventName for object. All handlers assigned for some event name will be called
-      * in reverse order of addiction. Behaviour handler will be called last.
-      * @method dispatch
-      * @param {String} eventName Name of dispatching event.
-      */
-      dispatch: function(eventName){
+      dispatch: function(eventName, args){
         var behaviour = this.behaviour[eventName];
         var handlersCount = this.handlers_.length;
 
@@ -213,7 +201,6 @@
       },
 
      /**
-      * @method destroy
       * @destructor
       */
       destroy: function(){
@@ -287,22 +274,12 @@
     };
 
    /**
-    * @class DataObject
-    * @extends EventObject
+    * Base class for data storing.
+    * @class
+    * @extends {Basis.DOM.Wrapers.EventObject}
     */
     var DataObject = Class(EventObject, {
-     /**
-      * Name of class.
-      * @type {String}
-      * @readonly
-      */
       className: namespace + '.DataObject',
-
-     /**
-      * Simple or complex updates
-      * @type {Boolean}
-      */
-      //atomicInfo: false,
 
      /**
       * Using for data storing. Might be managed by delegate object (if used).
@@ -313,13 +290,13 @@
 
      /**
       * Count of info updates.
-      * @type {Number}
+      * @type {number}
       */
       updateCount: 0,
 
      /**
       * Object that manage info updates if assigned.
-      * @type {DataObject}
+      * @type {Basis.DOM.Wrapers.DataObject}
       */
       delegate: null,
 
@@ -327,7 +304,7 @@
       * Flag determines object behaviour when assigned delegate is destroing:
       *   true - cascade destroy (destroy object if delegate destroing)
       *   false - detach delegate (don't destroy object)
-      * @type {Boolean}
+      * @type {boolean}
       */
       cascadeDestroy: false,
 
@@ -335,25 +312,30 @@
       * Flag determines object behaviour when parentNode changing:
       *   true - set same delegate as parentNode has on insert, or unlink delegate on remove
       *   false - nothing to do
-      * @type {Boolean}
+      * @type {boolean}
       */
       autoDelegateParent: false,
 
      /**
       * State of object.
-      * @type {Number}
+      * @type {Basis.DOM.Wrapers.STATE}
       */
       state: STATE_READY,
 
      /**
       * Error text when object in ERROR state.
-      * @type {String}
+      * @type {?string}
       */
       errorText: null,
 
      /**
-      * @method init
-      * @constructs
+      * @param {Object=} config The configuration of object.
+      * @config {Object} handlers
+      * @config {Basis.DOM.Wrapers.DataObject|Object} info
+      * @config {boolean} cascadeDestroy
+      * @config {boolean} autoDelegateParent
+      * @return {Object}
+      * @constructor
       */
       init: function(config){
         this.inherit();
@@ -365,21 +347,21 @@
         // debug for
         ;;;if ((config && config.traceEvents_) || this.traceEvents_) this.addHandler({ any: function(){ console.log(this, arguments) } });
 
-        //var state = this.state;
-        //this.state = undefined;
+        // fetch settings from config if possible
         if (typeof config == 'object')
         {
+          // attach event handlers
           if (config.handlers)
             this.addHandler(config.handlers);
 
+          // attach
           if ('info' in config)
           {
-            // assign delegate
+            // if info is DataObject instance assign it as delegate
             if (config.info instanceof DataObject)
-            {
+              // this call should be silent for update event (second parameter),
+              // because we fire it later
               this.setDelegate(config.info, true);
-              //state = this.state;
-            }
             else
               this.info = config.info;
           }
@@ -396,17 +378,33 @@
       },
 
       /**
-       * @method setDelegate
-       * @param {DataObject} delegate
-       * @param {Boolean=} silent
-       * @returns {DataObject} Returns current delegate object.
+       * Set new delegate object or reject it (if passed null).
+       * @example
+       *   var a = new DataObject();
+       *   var b = new DataObject();
+       *
+       *   a.setDelegate(b);
+       *
+       *   a.update({ prop: 123 });
+       *   alert(a.info.prop); // 123
+       *   alert(a.info.prop === b.info.prop); // true
+       *
+       *   b.update({ prop: 456 }); // { prop: 456 }
+       *   alert(b.info.prop); // 456
+       *   alert(a.info.prop === b.info.prop); // true
+       *
+       *   a.setState(Basis.DOM.Wrapers.PROCESSING);
+       *   alert(a.state); // 'processing'
+       *   alert(a.state === b.state); // 'processing'
+       * @param {Basis.DOM.Wrapers.DataObject} delegate
+       * @param {boolean=} silent Prevent fire update event.
+       * @return {Basis.DOM.Wrapers.DataObject} Returns current delegate object.
        */
       setDelegate: function(delegate, silent){
         if (this.delegate !== delegate)
         {
           var delta = this.info;
           var oldDelegate = this.delegate;
-          var newState = STATE_READY;
 
           if (this.delegate)
           {
@@ -418,9 +416,9 @@
 
           if (delegate instanceof DataObject)
           {
+            // prevent from linking object that had already linked (event through some other objects)
             if (!this.isConnected(delegate))
             {
-              //newState = this.delegate.state;
               this.setState(delegate.state, delegate.errorText);
 
               this.delegate = delegate;
@@ -435,7 +433,7 @@
             }
           }
 
-          this.dispatch('delegateChanged_', this, oldDelegate);
+          //this.dispatch('delegateChanged_', this, oldDelegate);
           this.dispatch('delegateChanged', this, oldDelegate);
 
           if (!silent)
@@ -445,10 +443,10 @@
       },
 
      /**
-      * @method getRootDelegate
-      * @returns {DataObject}
+      * Returns root delegate object (that haven't delegate).
+      * @return {Basis.DOM.Wrapers.DataObject}
       */
-      getRootDelegate: function(object){
+      getRootDelegate: function(){
         var object = this;
 
         while (object.delegate)
@@ -458,10 +456,9 @@
       },
 
      /**
-      * Method returns true if current object is connected to object through this.delegate bubbling.
-      * @method isConnected
-      * @param {DataObject} object
-      * @returns {Boolean}
+      * Returns true if current object is connected to another object through delegate bubbling.
+      * @param {Basis.DOM.Wrapers.DataObject} object
+      * @return {boolean} Whether objects are connected.
       */
       isConnected: function(object){
         if (object instanceof DataObject)
@@ -477,10 +474,10 @@
       },
 
      /**
-      * @method update
-      * @param {Object} data
-      * @param {Boolean=} forceEvent
-      * @returns {Object|Boolean} Returns delta if data updated or false otherwise.
+      * Handle changing object data. Fires update event only if something was changed. 
+      * @param {Object} data New values for object data holder (this.info).
+      * @param {boolean=} forceEvent Fire update event even no changes.
+      * @return {Object|boolean} Delta if object data (this.info) was updated or false otherwise.
       */
       update: function(data, forceEvent){
         var delta = {};
@@ -493,17 +490,8 @@
           return delta;
         }
 
-        /*if (this.atomicInfo)
-        {
-          if (this.info !== data)
-          {
-            this.updateCount++;
-            delta = this.info;
-            this.info = data;
-          }
-        }
-        else */
         if (data)
+        {
           for (var prop in data)
             if (this.info[prop] !== data[prop])
             {
@@ -511,26 +499,20 @@
               delta[prop] = this.info[prop];
               this.info[prop] = data[prop];
             }
+        }
 
         if (forceEvent || (this.updateCount != updateCount))
-          this.dispatch('update', this, this.info, /*this.atomicInfo ? delta : */[this.info, delta].merge(), delta);
+          this.dispatch('update', this, this.info, [this.info, delta].merge(), delta);
 
         return this.updateCount != updateCount ? delta : false;
       },
 
      /**
-      * @method sync
-      * @param {Object} data
-      */
-      //sync: function(data){
-        //return this.update(complete({}, data || {}, this.))
-      //},
-
-     /**
-      * @method setState
-      * @param {String} state
-      * @param {String=} errorText
-      * @param {Boolean=} forceEvent
+      * Set new state for object. Fire stateChanged event only if state (or state text) was changed.
+      * @param {Basis.DOM.Wrapers.STATE|string} state New state for object
+      * @param {string=} errorText
+      * @param {boolean=} forceEvent Fire stateChanged event even state didn't changed.
+      * @return {Basis.DOM.Wrapers.STATE|string} Current object state.
       */
       setState: function(state, errorText, forceEvent){
         errorText = state == STATE_ERROR ? errorText : null;
@@ -559,7 +541,6 @@
       },
 
      /**
-      * @method destroy
       * @destructor
       */
       destroy: function(){
@@ -580,21 +561,31 @@
     //
     
    /**
-    * @class AbstractProperty
-    * @extends DataObject
+    * @class
+    * @extends {Basis.DOM.Wrapers.DataObject}
     */
     var AbstractProperty = Class(DataObject, {
       className: namespace + '.AbstractProperty',
 
+     /**
+      * Indicates that property is locked (don't fire event for changes).
+      * @type {boolean}
+      * @readonly
+      */
       locked: false,
-      lockValue: null,
-      lockUpdateCount: 0,
 
      /**
-      * @param {Any} initValue Initial value for object.
+      * Value before property locked (passed as oldValue when property unlock).
+      * @type {Object}
+      * @private
+      */
+      lockValue_: null,
+
+     /**
+      * @param {Object} initValue Initial value for object.
       * @param {Object} handlers
-      * @param {Function} proxy
-      * @constructs
+      * @param {function()} proxy
+      * @constructor
       */
       init: function(initValue, handlers, proxy){
         this.inherit();
@@ -610,10 +601,9 @@
       * Sets new value for property, only when data not equivalent current
       * property's value. In causes when value was changed or forceEvent
       * parameter was true event 'change' dispatching.
-      * @method set
-      * @param {Any} data New value for property.
-      * @param {Boolean=} forceEvent Dispatch 'change' event even value not changed.
-      * @returns {Boolean} True if value was changed.
+      * @param {Object} data New value for property.
+      * @param {boolean=} forceEvent Dispatch 'change' event even value not changed.
+      * @return {boolean} Whether value was changed.
       */
       set: function(data, forceEvent){
         var updateCount = this.updateCount;
@@ -633,20 +623,27 @@
         return updateCount != this.updateCount;
       },
 
+     /**
+      * Locks object for change event fire.
+      */
       lock: function(){
         if (!this.locked)
         {
-          this.lockUpdateCount = this.updateCount;
-          this.lockValue = this.value;
+          this.lockValue_ = this.value;
           this.locked = true;
         }
       },
+
+     /**
+      * Unlocks object for change event fire. If value was changed during object
+      * lock, than change event fires.
+      */
       unlock: function(){
         if (this.locked)
         {
           this.locked = false;
-          if (this.lockUpdateCount != this.updateCount)
-            this.dispatch('change', this.value, this.lockValue);
+          if (this.value !== this.lockValue_)
+            this.dispatch('change', this.value, this.lockValue_);
         }
       },
 
@@ -656,23 +653,20 @@
 
      /**
       * Sets init value for property.
-      * @method reset
       */
       reset: function(){
         this.set(this.initValue);
       },
 
      /**
-      * Returns property value.
-      * @method toString
-      * @returns {Object}
+      * Returns object value.
+      * @return {Object}
       */
       toString: function(){
         return this.value != null && this.value.constructor == Object ? String(this.value) : this.value;
       },
 
      /**
-      * @method destroy
       * @destructor
       */
       destroy: function(){
@@ -680,6 +674,7 @@
 
         delete this.initValue;
         delete this.proxy;
+        delete this.lockValue_;
         delete this.value;
       }
     });
@@ -697,6 +692,7 @@
     var DOM_INSERT_HANDLER = function(value){
       DOM.insert(DOM.clear(this), value);
     };
+
     function getFieldHandler(object){
       // property
       if (object instanceof Property)
@@ -709,17 +705,17 @@
           return DOM_INSERT_HANDLER;
         else
           return 'nodeValue';
-    };
+    }
 
    /**
-    * @class Property
-    * @extends AbstractProperty
+    * @class
+    * @extends {Basis.DOM.Wrapers.AbstractProperty}
     */
     var Property = Class(AbstractProperty, {
       className: namespace + '.Property',
 
      /**
-      * @type {[object]}
+      * @type {object}
       * @private
       */
       links_: null,
@@ -735,8 +731,7 @@
       }),
 
      /**
-      * @method init
-      * @constructs
+      * @constructor
       */
       init: function(initValue, handlers, proxy){
         this.inherit(initValue, handlers, proxy);
@@ -750,7 +745,6 @@
       * convert value to another value or type.
       * If object instance of {EventObject}, property attached handler. This handler
       * removes property links to object, when object destroy.
-      * @method addLink
       * @example
       *
       *   var property = new Property();
@@ -788,7 +782,7 @@
       * @param {Object} object Target object.
       * @param {String|Function=} field Field or method of target object.
       * @param {String|Function|Object=} format Value modificator.
-      * @returns {Object} Returns object.
+      * @return {Object} Returns object.
       */
       addLink: function(object, field, format){
         // object must be an Object
@@ -822,7 +816,8 @@
 
         // add link
         ;;;if (typeof console != 'undefined' && this.links_.search(true, function(link){ return link.object == object && link.field == field })) console.warn('Dublicate link for property (Property.addLink)');
-        this.links_.push(link);  // !!! TODO: check for duplicates object-field
+        this.links_.push(link);  // !!! TODO: check for object-field duplicates
+        
         if (link.isEventObject)
           object.addHandler(PropertyObjectDestroyAction, this); // add unlink handler on object destroy
 
@@ -834,7 +829,6 @@
 
      /**
       * Add link to object in simpler way.
-      * @method addLinkShortcut
       * @example
       *   // add custom class name to element (class name looks like "state-property.value")
       *   property.addLinkShortcut(element, 'className', 'state-{0}');
@@ -844,8 +838,10 @@
       *   property.addLinkShortcut(element, 'show', { ShowValue: true });
       *   property.addLinkShortcut(element, 'show', function(value){ return value == 'ShowValue' });  // the same
       *   property.addLinkShortcut(element, 'hide', { 'HideValue': true } });  // variation
+      * @param {object} element Target object.
       * @param {String} shortcutName Name of shortcut.
-      * @returns {Object} Returns object.
+      * @param {String|Function|Object=} format Value modificator.
+      * @return {Object} Returns object.
       */
       addLinkShortcut: function(element, shortcutName, format){
         return this.addLink(element, Property.shortcut[shortcutName], format);
@@ -854,7 +850,6 @@
      /**
       * Removes link or all links from object if exists. Parameters must be the same
       * as for addLink method. If field omited all links removes.
-      * @method removeLink
       * @example
       *   // add links
       *   property.addLink(object, 'field');
@@ -916,7 +911,6 @@
 
      /**
       * Removes all property links to objects.
-      * @method clear
       */
       clear: function(){
         // destroy links
@@ -935,9 +929,9 @@
       },
 
      /**
-      * @method power
-      * @private
       * @param {Object} link
+      * @param {Object} oldValue Object value before changes.
+      * @private
       */
       power: function(link, oldValue){
         var field = link.field;
@@ -956,7 +950,6 @@
       },
 
      /**
-      * @method destroy
       * @destructor
       */
       destroy: function(){
@@ -998,8 +991,8 @@
     };
 
    /**
-    * @class DataObjectSet
-    * @extends Property
+    * @class
+    * @extends {Basis.DOM.Wrapers.Property}
     */    
     var DataObjectSet = Class(Property, {
       className: namespace + '.DataObjectSet',
@@ -1012,38 +1005,35 @@
       },
 
      /**
-      * @type {DataObject[]}
+      * @type {Array.<Basis.DOM.Wrapers.DataObject>}
       */
       objects: [],
 
      /**
-      * @type {Number}
+      * @type {number}
       */
-      timer: null,
+      timer_: null,
 
      /**
-      * @type {Boolean}
+      * @type {boolean}
+      * @private
       */
-      locked: false,
+      valueChanged_: false,
 
      /**
-      * @type {Boolean}
+      * @type {boolean}
+      * @private
       */
-      valueChanged: false,
-
-     /**
-      * @type {Boolean}
-      */
-      stateChanged: false,
+      stateChanged_: false,
 
      /**
       * 
       */
       state: STATE_UNDEFINED,
 
-      //
-      // constructor
-      //
+     /** 
+      * @constructor
+      */
       init: function(config){
         config = config || {};
         var value = 'value' in config ? config.value : 0;
@@ -1072,7 +1062,7 @@
 
      /**
       * Adds one or more DataObject instances to objects collection.
-      * @method add
+      * @param {...Basis.DOM.Wrapers.DataObject} args
       */
       add: function(/* dataObject1 .. dataObjectN */){
         for (var i = 0, len = arguments.length; i < len; i++)
@@ -1092,8 +1082,7 @@
 
      /**
       * Removes DataObject instance from objects collection.
-      * @method remove
-      * @param {DataObject} object
+      * @param {Basis.DOM.Wrapers.DataObject} object
       */
       remove: function(object){
         if (this.objects.remove(object))
@@ -1104,7 +1093,6 @@
 
      /**
       * Removes all DataObject instances from objects collection.
-      * @method clear
       */
       clear: function(){
         for (var i = 0, len = this.objects.length; i < len; i++)
@@ -1115,20 +1103,18 @@
       },
 
      /**
-      * @method fire
-      * @param {Boolean} valueChanged 
-      * @param {Boolean} stateChanged
+      * @param {boolean} valueChanged 
+      * @param {boolean} stateChanged
       */
       fire: function(valueChanged, stateChanged){
-        this.valueChanged = this.valueChanged || !!valueChanged;
-        this.stateChanged = this.stateChanged || !!stateChanged;
-        if (!this.timer && !this.locked)
-          this.timer = setTimeout(this.trigger, 0);
+        this.valueChanged_ = this.valueChanged_ || !!valueChanged;
+        this.stateChanged_ = this.stateChanged_ || !!stateChanged;
+        if (!this.timer_ && !this.locked)
+          this.timer_ = setTimeout(this.trigger, 0);
       },
 
      /**
       * Makes object not sensitive for attached DataObject changes.
-      * @method lock
       */
       lock: function(){
         this.locked = true;
@@ -1136,25 +1122,24 @@
 
      /**
       * Makes object sensitive for attached DataObject changes.
-      * @method unlock
       */
       unlock: function(){
         this.locked = false;
       },
       
      /**
-      * @method update
+      * @private
       */
       update: function(){
-        clearTimeout(this.timer);
-        delete this.timer;
+        clearTimeout(this.timer_);
+        delete this.timer_;
 
         if (!Cleaner.globalDestroy)
         {
-          if (this.valueChanged)
+          if (this.valueChanged_)
             this.set(this.calculateValue());
 
-          if (this.stateChanged)
+          if (this.stateChanged_)
           {
             var stateMap = {};
             var len = this.objects.length;
@@ -1185,17 +1170,16 @@
           }
         }
 
-        this.valueChanged = false;
-        this.stateChanged = false;
+        this.valueChanged_ = false;
+        this.stateChanged_ = false;
       },
 
      /**
-      * @method destroy
       * @destructor
       */
       destroy: function(){
         this.lock();
-        clearTimeout(this.timer);
+        clearTimeout(this.timer_);
         this.trigger = Function.$null;
 
         this.inherit();
@@ -1209,18 +1193,15 @@
     //
 
    /**
-    * @class AbstractNode
-    * @extends DataObject
+    * @class
+    * @extends {Basis.DOM.Wrapers.DataObject}
     */
     var AbstractNode = Class(DataObject, {
       className: namespace + '.AbstractNode',
 
      /**
-      * Default event handler set.
-      * @type {Object}
-      * @private
+      * @inheritDoc
       */
-      
       behaviour: createBehaviour(DataObject, {
         update: function(node, newData, oldData, delta){
           var parentNode = this.parentNode;
@@ -1290,13 +1271,13 @@
       }),
 
      /**
-      * @type {String}
+      * @type {string}
       * @readonly
       */
       nodeType: 'DOMWraperNode',
 
      /**
-      * @type {Boolean}
+      * @type {boolean}
       * @readonly
       */
       canHaveChildren: false,
@@ -1304,13 +1285,13 @@
      /**
       * A list that contains all children of this node. If there are no children,
       * this is a list containing no nodes.
-      * @type {AbstractNode[]}
+      * @type {Array.<Basis.DOM.Wrapers.AbstractNode>}
       * @readonly
       */
       childNodes: [],
 
      /**
-      * @type {AbstractNode}
+      * @type {Basis.DOM.Wrapers.AbstractNode}
       * @readonly
       */
       document: null,
@@ -1319,7 +1300,7 @@
       * The parent of this node. All nodes may have a parent. However, if a node
       * has just been created and not yet added to the tree, or if it has been
       * removed from the tree, this is null. 
-      * @type {AbstractNode}
+      * @type {Basis.DOM.Wrapers.AbstractNode}
       * @readonly
       */
       parentNode: null,
@@ -1327,7 +1308,7 @@
      /**
       * The node immediately following this node. If there is no such node,
       * this returns null.
-      * @type {AbstractNode}
+      * @type {Basis.DOM.Wrapers.AbstractNode}
       * @readonly
       */
       nextSibling: null,
@@ -1335,39 +1316,39 @@
      /**
       * The node immediately preceding this node. If there is no such node,
       * this returns null.
-      * @type {AbstractNode}
+      * @type {Basis.DOM.Wrapers.AbstractNode}
       * @readonly
       */
       previousSibling: null,
 
      /**
       * The first child of this node. If there is no such node, this returns null.
-      * @type {AbstractNode}
+      * @type {Basis.DOM.Wrapers.AbstractNode}
       * @readonly
       */
       firstChild: null,
 
      /**
       * The last child of this node. If there is no such node, this returns null.
-      * @type {AbstractNode}
+      * @type {Basis.DOM.Wrapers.AbstractNode}
       * @readonly
       */
       lastChild: null,
 
      /**
-      * @type {Boolean}
+      * @type {boolean}
       */
       positionDependent: false,
 
      /**
       * Object that's manage childNodes updates.
-      * @type {AbstractProperty}
+      * @type {Basis.DOM.Wrapers.DataObject}
       */
       collection: null,
 
      /**
       * Order of nodes according to collection order.
-      * @type {Array}
+      * @type {Array.<Basis.DOM.Wrapers.AbstractNode>}
       */
       collectionOrderedNodes_: [],
 
@@ -1379,7 +1360,7 @@
 
      /**
       * Sorting direction
-      * @type {Boolean}
+      * @type {boolean}
       */
       localSortingDesc: false,
 
@@ -1391,21 +1372,20 @@
 
      /**
       * Reference to group node in groupControl
-      * @type {AbstractNode}
+      * @type {Basis.DOM.Wrapers.AbstractNode}
       */
       groupNode: null,
 
      /**
       * Groups controling object
-      * @type {GroupControl}
+      * @type {Basis.DOM.Wrapers.GroupControl}
       */
       groupControl: null,
 
      /**
-      * @method init
       * @param {Object} config
-      * @returns {Object} Returns a config. 
-      * @constructs
+      * @return {Object} Returns a config. 
+      * @constructor
       */
       init: function(config){
         config = this.inherit(config);
@@ -1450,38 +1430,34 @@
 
      /**
       * Adds the node newChild to the end of the list of children of this node. If the newChild is already in the tree, it is first removed.
-      * @method appendChild
       * @param {AbstractNode} newChild The node to add.
-      * @returns {AbstractNode} The node added.
+      * @return {AbstractNode} The node added.
       */
       appendChild: function(newChild){
       },
 
      /**
       * Inserts the node newChild before the existing child node refChild. If refChild is null, insert newChild at the end of the list of children.
-      * @method insertBefore
       * @param {AbstractNode} newChild The node to insert.
       * @param {AbstractNode} refChild The reference node, i.e., the node before which the new node must be inserted.
-      * @returns {AbstractNode} The node being inserted.
+      * @return {AbstractNode} The node being inserted.
       */
       insertBefore: function(newChild, refChild){
       },
 
      /**
       * Removes the child node indicated by oldChild from the list of children, and returns it.
-      * @method removeChild
       * @param {AbstractNode} oldChild The node being removed.
-      * @returns {AbstractNode} The node removed.
+      * @return {AbstractNode} The node removed.
       */
       removeChild: function(oldChild){
       },
 
      /**
       * Replaces the child node oldChild with newChild in the list of children, and returns the oldChild node.
-      * @method replaceChild
       * @param {AbstractNode} newChild The new node to put in the child list.
       * @param {AbstractNode} oldChild The node being replaced in the list.
-      * @returns {AbstractNode} The node replaced.
+      * @return {AbstractNode} The node replaced.
       */
       replaceChild: function(newChild, oldChild){
       },
@@ -1495,29 +1471,25 @@
 
      /**
       * Returns whether this node has any children. 
-      * @method hasChildNodes
-      * @returns {Boolean} Returns true if this node has any children, false otherwise.
+      * @return {Boolean} Returns true if this node has any children, false otherwise.
       */
       hasChildNodes: function(){
         return this.childNodes.length > 0;
       },
 
      /**
-      * @method setCollection
       * @param {DataObject} collection
       */
       setCollection: function(collection){
       },
 
      /**
-      * @method setLocalGrouping
       * @param {Function|String} grouping
       */
       setLocalGrouping: function(grouping){
       },
 
      /**
-      * @method setLocalSorting
       * @param {Function|String} sorting
       * @param {Function|Boolean} desc
       */
@@ -1525,7 +1497,6 @@
       },
 
      /**
-      * @method destroy
       * @destructor
       */
       destroy: function(){
@@ -1725,9 +1696,8 @@
 
      /**
       * Changes selection property of node.
-      * @method
       * @param {Selection} selection New selection value for node.
-      * @returns {boolean} Returns true if selection was changed.
+      * @return {boolean} Returns true if selection was changed.
       */
       setSelection: function(selection){
         if (this.selection == selection)
@@ -1752,7 +1722,7 @@
       
      /**
       * Returns true if node has it's own selection.
-      * @returns {boolean}
+      * @return {boolean}
       */
       hasOwnSelection: function(){
         return !!this.selection
@@ -1765,9 +1735,8 @@
 
      /**
       * Makes node selected if possible.
-      * @method
       * @param {boolean} multiple
-      * @returns {boolean} Returns true if selected state has been changed.
+      * @return {boolean} Returns true if selected state has been changed.
       */
       select: function(multiple){
         var selected = this.selected;
@@ -1788,9 +1757,8 @@
 
      /**
       * Makes node unselected.
-      * @method
       * @param {boolean} multiple
-      * @returns {boolean} Returns true if selected state has been changed.
+      * @return {boolean} Returns true if selected state has been changed.
       */
       unselect: function(){
         var selected = this.selected;
@@ -1809,7 +1777,7 @@
 
 
      /**
-      * @method enable
+      * Makes node enabled.
       */
       enable: function(){
         if (this.disabled)
@@ -1820,7 +1788,7 @@
       },
 
      /**
-      * @method disable
+      * Makes node disabled.
       */
       disable: function(){
         if (!this.disabled)
@@ -1835,8 +1803,7 @@
       },
 
      /**
-      * @method isDisabled
-      * @returns {Boolean} Return true if node or one of it's ancestor nodes are disabled.
+      * @return {Boolean} Return true if node or one of it's ancestor nodes are disabled.
       */
       isDisabled: function(){
         return this.disabled 
@@ -1887,7 +1854,6 @@
       },
 
      /**
-      * @method destroy
       * @destructor
       */
       destroy: function(){
@@ -2096,10 +2062,16 @@
         }
       },
 
+     /**
+      * @inheritDoc
+      */
       appendChild: function(newChild){
         return this.insertBefore(newChild);
       },
 
+     /**
+      * @inheritDoc
+      */
       insertBefore: function(newChild, refChild){
         if (!this.canHaveChildren)
           throw new Error(EXCEPTION_CANT_INSERT);
@@ -2347,6 +2319,9 @@
         return newChild;
       },
 
+     /**
+      * @inheritDoc
+      */
       removeChild: function(oldChild){
         if (oldChild == null || oldChild.parentNode !== this) // this.childNodes.absent(oldChild) truly but speedless
           throw new Error(EXCEPTION_NODE_NOT_FOUND);
@@ -2423,6 +2398,9 @@
         return oldChild;
       },
 
+     /**
+      * @inheritDoc
+      */
       replaceChild: function(newChild, oldChild){
         if (oldChild == null || oldChild.parentNode !== this) // this.childNodes.absent(oldChild) truly but speedless
           throw new Error(EXCEPTION_NODE_NOT_FOUND);
@@ -2433,6 +2411,9 @@
         return this.removeChild(oldChild);
       },
 
+     /**
+      * @inheritDoc
+      */
       clear: function(alive){
         // if node haven't childs nothing to do (event don't fire)
         if (!this.firstChild)
@@ -2494,7 +2475,7 @@
       },
 
      /**
-      * @params {[object]} childNodes
+      * @params {[Object]} childNodes
       */
       setChildNodes: function(childNodes){
         this.clear();
@@ -2523,6 +2504,9 @@
         return this.childNodes;
       },
 
+     /**
+      * @inheritDoc
+      */
       setCollection: function(collection){
       	if (this.collection !== collection)
       	{
@@ -2567,6 +2551,9 @@
         }
       },
 
+     /**
+      * @inheritDoc
+      */
       setLocalGrouping: function(grouping){
         var isLocalGroupingChanged = false;
         if (!grouping)
@@ -2673,6 +2660,9 @@
           this.dispatch('localGroupingChanged', this);
       },
 
+     /**
+      * @inheritDoc
+      */
       setLocalSorting: function(sorting, desc){
         if (sorting)
           sorting = Data(sorting);
@@ -2762,6 +2752,9 @@
         }
       },
 
+     /**
+      * @inheritDoc
+      */
       setMatchFunction: function(matchFunction){
         if (this.matchFunction != matchFunction)
         {
@@ -2800,7 +2793,6 @@
    /**
     * @class GroupControl
     */
-
     var GroupControl = Class(AbstractNode, HierarchyTools, {
       className: namespace + '.GroupControl',
 
@@ -2914,6 +2906,10 @@
       childClass: HtmlNode,
       groupControlClass: HtmlGroupControl,
 
+     /**
+      * Template for object.
+      * @type {Basis.Html.Template}
+      */
       template: null,
 
       //
@@ -3050,7 +3046,7 @@
         return this.childNodes;
       },
 
-      addEventListener: function(eventName){
+      addEventListener: function(eventName, donotKill){
         Event.addHandler(this.element, eventName, function(event){ 
           var node = this.getNodeByEventSender(event);          
           
@@ -3059,7 +3055,8 @@
             
           this.dispatch(eventName, event, node);
           
-          Event.kill(event);
+          if (!donotKill)
+            Event.kill(event);
         }, this);
       },
       getNodeByEventSender: function(event){
@@ -3269,7 +3266,6 @@
 
      /**
       * Add to selection list all selectable descendant nodes.
-      * @method select
       */
       select: function(){
       	// select all child nodes?
@@ -3278,7 +3274,6 @@
 
      /**
       * Remove all nodes from selection.
-      * @method unselect
       */
       unselect: function(){
         if (this.selection)
@@ -3286,7 +3281,7 @@
       },
 
      /**
-      * @method disable
+      * @inheritDoc
       */
       disable: function(){
         if (!this.disabled)
@@ -3297,9 +3292,6 @@
         }
       },
 
-     /**
-      * @method destroy
-      */
       destroy: function(){
         // selection destroy - clean selected nodes
         if (this.selection)
@@ -3352,7 +3344,7 @@
 
      /**
       * A node list.
-      * @type {InteractiveNode[]}
+      * @type {[InteractiveNode]}
       * @readonly
       */
       items: [],

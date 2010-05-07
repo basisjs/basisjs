@@ -401,6 +401,15 @@
     background-position: left top;
     min-height: 16px;
   }
+  #Content .viewPrototype .item .title .tags
+  {
+    color: #009900;
+  }
+  #Content .viewPrototype .item .title .tags .splitter
+  {
+    margin: 0 .5ex;
+    color: black;
+  }
   #Content .viewPrototype .property .title
   {
     background-image: url(img/node_property.png);
@@ -474,4 +483,10 @@
   {
     margin: 0 .6ex;
     color: black;
+  }
+
+  .viewJsDoc .content
+  {
+    padding-left: 16px;
+    font-size: 90%;
   }

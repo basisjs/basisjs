@@ -378,12 +378,30 @@
         {
           this.titleText.nodeValue = newInfo.title;
           this.ref.nodeValue = '#' + newInfo.objPath;
-          this.jsDocPanel.setDelegate(nsCore.JsDocEntity(newInfo.objPath));
+          this.jsDocPanel.setDelegate(a = nsCore.JsDocEntity(newInfo.objPath));
         }
       }
     }),
     init: function(config){
       this.jsDocPanel = new JsDocPanel();
+      this.jsDocPanel.addHandler({
+        update: function(object, newInfo){
+          if (newInfo.tags)
+          {
+            var type = newInfo.tags.type || (newInfo.tags.returns && newInfo.tags.returns.type);
+            if (type)
+            {
+              DOM.insert(this.content, DOM.createElement('SPAN.tags',
+                DOM.createElement('SPAN.splitter', ':'),
+                DOM.wrap(
+                  type.replace(/^\s*\{|\}\s*$/g, '').split(/(\|)/),
+                  { 'SPAN.splitter': function(value, idx){ return idx % 2 } }
+                )
+              ));
+            }
+          }
+        }
+      }, this)
       config = this.inherit(config);
 
       DOM.insert(this.jsDocContent, this.jsDocPanel.element)

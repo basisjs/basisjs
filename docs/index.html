@@ -22,7 +22,7 @@
   <script type="text/javascript" src="../dom_wraper.js"></script>
   <script type="text/javascript" src="../dom_register.js"></script>
   <script type="text/javascript" src="../entity.js"></script>
-  <script type="text/javascript" src="../css.js"></script>
+  <!--<script type="text/javascript" src="../css.js"></script>-->
   <script type="text/javascript" src="../crypt.js"></script>
   <script type="text/javascript" src="../generator.js"></script>
   <script type="text/javascript" src="../layout.js"></script>
@@ -46,19 +46,34 @@
   <script type="text/javascript" src="../window.js"></script>
 
   <style type="text/css">
-    @import "../external/SyntaxHighlighter/styles/shCore.css";
-    @import "../external/SyntaxHighlighter/styles/shThemeDefault.css";
+    @import "../third_party/SyntaxHighlighter/styles/shCore.css";
+    @import "../third_party/SyntaxHighlighter/styles/shThemeDefault.css";
+
+    .syntaxhighlighter
+    {
+      border: 1px solid #DDDDDD !important;
+    }
   </style>
 
-  <script type="text/javascript" src="../external/SyntaxHighlighter/src/shCore.js"></script>
-  <script type="text/javascript" src="../external/SyntaxHighlighter/scripts/shBrushJScript.js"></script>
-  <script type="text/javascript" src="../external/SyntaxHighlighter/scripts/shBrushCSS.js"></script>
+  <script type="text/javascript" src="../third_party/SyntaxHighlighter/src/shCore.js"></script>
+  <script type="text/javascript" src="../third_party/SyntaxHighlighter/scripts/shBrushJScript.js"></script>
+  <script type="text/javascript" src="../third_party/SyntaxHighlighter/scripts/shBrushCSS.js"></script>
 
 </head>
 
 <body>
   <div id="Layout"></div>
 
+  <script type="text/javascript">
+    (function(){
+      var m;
+      if (m = location.search.match(/ext=([^&]+)/))
+      {
+        var scripts = m[1].split(',');
+        document.write(scripts.map(String.format, '<script type="text/javascript" src="{0}"><\/script>'))
+      }
+    })();  
+  </script>
   <script type="text/javascript" src="resources/core.js"></script>
   <script type="text/javascript" src="resources/view.js"></script>
   <script type="text/javascript" src="resources/nav.js"></script>

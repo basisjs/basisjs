@@ -95,8 +95,9 @@
             }
           }
           else
-          if (key == 'returns')
+          if (/returns?/.test(key))
           {
+            key = 'returns';
             if (!tags[key])
               tags[key] = {};
             var p = value.match(/^\s*\{([^\}]+)\}(?:\s+(.+))?/i);
