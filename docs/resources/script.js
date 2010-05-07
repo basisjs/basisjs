@@ -354,7 +354,7 @@
 //  console.log(DOM.tag(document, 'SCRIPT').map(Data('getAttribute("src")')).filter(Data('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')));
 
   function parseSource(code){
-    var parts = code.split(/(?:\/\*\*((?:.|[\r\n])+?)\*\/)/m);
+    var parts = code.replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|[\r\n])+?)\*\/)/m);
     var ns = '';
     var isClass;
     var clsPrefix = '';
