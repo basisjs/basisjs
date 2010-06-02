@@ -85,7 +85,7 @@
         return result;
       }
       else
-        console.warn('Unknown what to do', config);
+        console.warn('Unknown what to do', arguments);
     };
 
     var InternalEntitySetType = Class(null, {

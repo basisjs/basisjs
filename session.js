@@ -31,6 +31,7 @@
     var DEBUG_MODE = Basis.Browser.Cookies.get('DEBUG_MODE');
 
     var activeSession;
+    var timestamp;
     var freezeState = false;
     var sessions = {};
 
@@ -39,7 +40,11 @@
         sessions[key] = new Session(key);
 
       return sessions[key];
-    };
+    }
+
+    function genTimestamp(){
+      return +(new Date);
+    }
 
     /*
      *  SessionManager
@@ -47,31 +52,38 @@
 
     var SessionManager = extend(new nsWrapers.EventObject(), {
       isOpened: function(){
-        return Function.$isNotNull(activeSession);
+        return !!activeSession;
       },
       getTimestamp: function(){
         if (activeSession)
-          return activeSession.timestamp;
+          return timestamp;
       },
       open: function(key, data){
         var session = getSession(key);
-        if (activeSession == session)
+
+        if (activeSession === session)
         {
+          // if session isn't changed, unfreeze active session only (if necessary)
           if (freezeState)
             this.unfreeze();
 
           return;
         }
-        else
-          this.close();
 
+        // close current session
+        this.close();
+
+        // set new active session
         activeSession = session;
-        session.timestamp = Number(new Date());
+        timestamp = genTimestamp();
+
+        // update session data
         if (data)
           extend(session.data, data);
 
         ;;; if (DEBUG_MODE && typeof console != 'undefined') console.info('Session opened: ' + activeSession.key);
 
+        // fire event
         this.dispatch('sessionOpen', this);
       },
       close: function(){
@@ -83,24 +95,26 @@
           ;;; if (DEBUG_MODE && typeof console != 'undefined') console.info('Session closed: ' + activeSession.key);
 
           this.dispatch('sessionClose', this);
+
           activeSession = null;
+          timestamp = null;
         }
       },
       freeze: function(){
-        if (!freezeState && activeSession)
+        if (activeSession && !freezeState)
         {
-          try {
-            this.dispatch('sessionFreeze', this);
-          } catch(e){
-            ;;; if (typeof console != 'undefined') console.log(e);
-          };
+          this.dispatch('sessionFreeze', this);
+
           freezeState = true;
+          timestamp = null;
         }
       },
       unfreeze: function(){
-        if (freezeState)
+        if (activeSession && freezeState)
         {
           freezeState = false;
+          timestamp = genTimestamp();
+
           this.dispatch('sessionUnfreeze', this);
         }
       },

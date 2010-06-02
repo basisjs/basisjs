@@ -398,9 +398,9 @@
 
           DOM.css(this.element, {
             right:  'auto',
-            left:   Basis.CSS.px(point.x - (dirH != LEFT) * (this.element.offsetWidth >> (dirH == CENTER))),
+            left:   Basis.CSS.px(parseInt(point.x - (dirH != LEFT) * (this.element.offsetWidth >> (dirH == CENTER)))),
             bottom: 'auto',
-            top:    Basis.CSS.px(point.y - (dirV != TOP) * (this.element.offsetHeight >> (dirV == CENTER)))
+            top:    Basis.CSS.px(parseInt(point.y - (dirV != TOP) * (this.element.offsetHeight >> (dirV == CENTER))))
           });
 
           this.dispatch('realign');
