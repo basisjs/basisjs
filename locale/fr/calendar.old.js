@@ -1,4 +1,4 @@
-Basis.Locale['Controls.Calendar'] = {
+Basis.Controls.Calendar.LOCALE = {
   QUARTER:  'Quarter',
   TODAY:    'Today',
   SELECTED: 'Selected',

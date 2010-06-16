@@ -916,6 +916,7 @@
       else
         return extend({}, names);
     };
+
     namespace.extend = function(newNames){
       complete(names, newNames);
       extend(this, newNames);
@@ -930,8 +931,9 @@
 
     var path = namespace.split('.');
     var cursor = window;
-    var name, stepPath;
-    var namespacesRoot;
+    var name;
+    var stepPath;
+    var nsRoot;
     while (path.length)
     {
       name = path.shift();
@@ -940,20 +942,17 @@
       if (!cursor[name])
       {
         cursor[name] = createNamespace((!path.length ? wrapFunction : null) || function(){}, stepPath);
-        if (namespacesRoot)
-        {
-          //console.log(stepPath);
-          namespacesRoot.namespaces_[stepPath] = cursor[name];
-        }
+        if (nsRoot)
+          nsRoot.namespaces_[stepPath] = cursor[name];
       }
 
       cursor = cursor[name];
 
-      if (!namespacesRoot)
+      if (!nsRoot)
       {
-        namespacesRoot = cursor;
-        if (!namespacesRoot.namespaces_)
-          namespacesRoot.namespaces_ = {};
+        nsRoot = cursor;
+        if (!nsRoot.namespaces_)
+          nsRoot.namespaces_ = {};
       }
     }
 
@@ -1283,9 +1282,11 @@
     //
 
     function setCookie(name, value, expire, path){
-      document.cookie = name + "=" + (value == null ? '' : escape(value)) +
+      document.cookie = xx = name + "=" + (value == null ? '' : escape(value)) +
                         ";path=" + (path || location.pathname) +
                         (expire ? ";expires=" + (new Date(Number(new Date) + expire * 1000)).toGMTString() : '');
+      //alert(xx);
+      //alert(expire);
     }
 
     function getCookie(name){
@@ -1348,7 +1349,7 @@
     /** @const */ var PROCESSING_INSTRUCTION_NODE = 7;
     /** @const */ var COMMENT_NODE = 8;
     /** @const */ var DOCUMENT_NODE = 9;
-    /** @const */ var DOCUMENT_NODE = 10;
+    /** @const */ var DOCUMENT_TYPE_NODE = 10;
     /** @const */ var DOCUMENT_FRAGMENT_NODE = 11;
     /** @const */ var NOTATION_NODE = 12;
 
@@ -2388,7 +2389,7 @@
       ENTITY_NODE: ENTITY_NODE,
       PROCESSING_INSTRUCTION_NODE: PROCESSING_INSTRUCTION_NODE,
       COMMENT_NODE: COMMENT_NODE,
-      DOCUMENT_NODE: DOCUMENT_NODE,
+      DOCUMENT_TYPE_NODE: DOCUMENT_TYPE_NODE,
       DOCUMENT_NODE: DOCUMENT_NODE,
       DOCUMENT_FRAGMENT_NODE: DOCUMENT_FRAGMENT_NODE,
       NOTATION_NODE: NOTATION_NODE,

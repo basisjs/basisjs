@@ -2094,7 +2094,7 @@
 
           if (!isChildClassInstance)
             //;;;console.warn('Bad child class: ', this, newChild, this.childClass);
-            throw new Error(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (this.childClass && this.childClass.prototype.className) + ' but ' + (newChild && newChild.className) + ')');
+            throw new Error(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (this.childClass && this.childClass.className) + ' but ' + (newChild && newChild.className) + ')');
         }
 
         // if refChild omit, append newChild
@@ -3046,14 +3046,15 @@
         return this.childNodes;
       },
 
-      addEventListener: function(eventName, donotKill){
+      addEventListener: function(eventName, dispatchEvent, donotKill){
+        dispatchEvent = dispatchEvent || eventName;
         Event.addHandler(this.element, eventName, function(event){ 
           var node = this.getNodeByEventSender(event);          
           
           if (node)
-            node.dispatch(eventName, event);
+            node.dispatch(dispatchEvent, event);
             
-          this.dispatch(eventName, event, node);
+          this.dispatch(dispatchEvent, event, node);
           
           if (!donotKill)
             Event.kill(event);

@@ -213,20 +213,3 @@
     padding-right: 1ex;
     margin-left: .5ex;
   }
-
-  /*
-   *  Popup
-   */
-
-  .Basis-Popup
-  {
-    position: absolute;
-    background-color: #FFFF99;
-    width: 200px;
-    min-height: 1em;
-    border: 1px solid #F2C261;
-    opacity: 0.9;
-    -moz-opacity: 0.9;
-    -khtml-opacity: 0.9;
-    filter: alpha(opacity: 90);
-  }

@@ -11,7 +11,7 @@
 
   (function(){
 
-    // namespace
+   /** @namespace Basis.Controls.Popup */
 
     var namespace = 'Basis.Controls.Popup';
 
@@ -20,7 +20,9 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
     var Event = Basis.Event;
+    var Data = Basis.Data;
     var Template = Basis.Html.Template;
+
     var Cleaner = Basis.Cleaner;
 
     var nsWrapers = DOM.Wrapers;
@@ -169,9 +171,6 @@
       }
     }));
 
-    /**
-     * @class Popup
-     */
 
     var THREAD_HANDLER = {
       finish: function(){
@@ -180,6 +179,9 @@
       }
     };
 
+   /**
+    * @class
+    */
     var Popup = Class(nsWrapers.HtmlContainer, {
       className: namespace + '.Popup',
 
@@ -210,9 +212,9 @@
       cssLayoutPrefix: 'popup-',
 
       init: function(config){
-        config = this.inherit(config);
+        this.document = this;
 
-        Event.addHandler(this.element, 'click', this.click, this);
+        config = this.inherit(config);
 
         //if (config.id)
         //  this.element.id = config.id;
@@ -247,6 +249,9 @@
           this.thread = config.thread;
           this.thread.addHandler(THREAD_HANDLER, this);
         }
+
+        //Event.addHandler(this.element, 'click', this.click, this);
+        this.addEventListener('click');
 
         Cleaner.add(this);
 
@@ -488,9 +493,8 @@
     });
 
    /**
-    * @class Balloon
+    * @class
     */
-
     var Balloon = Class(Popup, {
       className: namespace + '.Balloon',
 
@@ -518,13 +522,144 @@
     });
 
     //
+    // Menu
+    //
+
+   /**
+    * @class
+    */
+    var MenuItem = Class(nsWrapers.HtmlNode, {
+      className: namespace + '.MenuItem',
+      template: new Template(
+        '<div{element} class="Basis-Menu-Item">' +
+          '<a{content|selectedElement} href="#">{titleText}</a>' +
+        '</div>'
+      ),
+      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
+        update: function(object, newInfo, oldInfo, delta){
+          this.titleText.nodeValue = this.captionGetter(this);
+        }
+      }),
+
+      caption: '[untitled]',
+      captionGetter: Data('caption'),
+      handler: null,
+      defaultHandler: function(node){
+        if (this.parentNode)
+          this.parentNode.defaultHandler(node);
+      },
+      groupId: 0,
+
+      init: function(config){
+        if (config && config.caption)
+          this.caption = config.caption;
+        if (typeof config.captionGetter == 'function')
+          this.captionGetter = config.captionGetter;
+
+        config = this.inherit(config);
+
+        if (config.groupId)
+          this.groupId = config.groupId;
+
+        if (typeof config.handler == 'function')
+          this.handler = config.handler;
+        if (typeof config.defaultHandler == 'function')
+          this.defaultHandler = config.defaultHandler;
+
+        return config;
+      }
+    });
+
+    var MenuItemSet = Class(MenuItem, {
+      className: namespace + '.MenuItemSet',
+      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {}),
+      template: new Template(
+        '<div{element|content|childNodesElement} class="Basis-Menu-ItemSet"/>'
+      ),
+      childFactory: function(cfg){ return new this.childClass(cfg) },
+      childClass: MenuItem
+    });
+
+   /**
+    * @class
+    */
+    var MenuPartitionNode = Class(nsWrapers.HtmlPartitionNode, {
+      className: namespace + '.MenuPartitionNode',
+      template: new Template(
+        '<div{element} class="Basis-Menu-ItemGroup">' +
+          '<div{childNodesElement|content} class="Basis-Menu-ItemGroup-Content"></div>' +
+        '</div>'
+      )
+    });
+
+   /**
+    * @class
+    */
+    var MenuGroupControl = Class(nsWrapers.HtmlGroupControl, {
+      className: namespace + '.MenuGroupControl',
+      childClass: MenuPartitionNode
+    });
+
+   /**
+    * @class
+    */
+    var Menu = Class(Popup, {
+      className: namespace + '.Menu',
+      childClass: MenuItem,
+
+      defaultDir: [LEFT, BOTTOM, LEFT, TOP].join(' '),
+
+      groupControlClass: MenuGroupControl,
+      localGrouping: {
+        groupGetter: Data('groupId')
+      },
+
+      defaultHandler: Function.$null,
+      behaviour: nsWrapers.createBehaviour(Popup, {
+        click: function(event, node){
+          if (node && !node.isDisabled())
+          {
+            if (node.handler)
+              node.handler(node);
+            else
+              node.parentNode.defaultHandler(node);
+
+            this.hide();
+          }
+        }
+      }),
+
+      template: new Template(
+        '<div{element|selectedElement} class="Basis-Menu">' +
+          '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
+        '</div>'
+      ),
+
+      init: function(config){
+        config = this.inherit(config);
+
+        if (typeof config.defaultHandler == 'function')
+          this.defaultHandler = config.defaultHandler;
+
+        //this.addEventListener('click');
+
+        return config;
+      }
+    });
+
+    //
     // export names
     //
 
     Basis.namespace(namespace).extend({
       ORIENTATION: ORIENTATION,
       Popup: Popup,
-      Balloon: Balloon
+      Balloon: Balloon,
+      Menu: Menu,
+      MenuGroupControl: MenuGroupControl,
+      MenuPartitionNode: MenuPartitionNode,
+      MenuItem: MenuItem,
+      MenuItemSet: MenuItemSet
     });
 
   })();

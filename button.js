@@ -38,7 +38,7 @@
     * @class Button
     */
 
-    var Button = Class.create(nsWrapers.HtmlNode, {
+    var Button = Class(nsWrapers.HtmlNode, {
       className: namespace + '.Button',
 
       /*behaviour: createBehaviour(HtmlNode, {
@@ -82,7 +82,7 @@
         }
       }),
 
-      titleGetter: Data.getter('caption'),
+      titleGetter: Data('caption'),
       caption: '[no title]',
       groupId: 0,
       name: null,
@@ -133,8 +133,8 @@
    /**
     * @class ButtonGroupControl
     */
-    var ButtonGroupControl = Class.create(nsWrapers.HtmlGroupControl, {
-      childClass: Class.create(nsWrapers.HtmlPartitionNode, {
+    var ButtonGroupControl = Class(nsWrapers.HtmlGroupControl, {
+      childClass: Class(nsWrapers.HtmlPartitionNode, {
         behaviour: createBehaviour(nsWrapers.HtmlPartitionNode, {
           childNodesModified: function(node){
             for (var i = 0, child; child = this.childNodes[i]; i++)
@@ -152,7 +152,7 @@
    /**
     * @class ButtonPanel
     */
-    var ButtonPanel = Class.create(nsWrapers.HtmlControl, {
+    var ButtonPanel = Class(nsWrapers.HtmlControl, {
       className: namespace + '.ButtonPanel',
 
       template: new Template(
@@ -165,11 +165,11 @@
 
       groupControlClass: ButtonGroupControl,
       localGrouping: {
-        groupGetter: Data.getter('groupId || -object.eventObjectId')
+        groupGetter: Data('groupId || -object.eventObjectId')
       },
 
       getButtonByName: function(name){
-        return this.childNodes.search(name, Data.getter('name'));
+        return this.childNodes.search(name, Data('name'));
       }
     });
 

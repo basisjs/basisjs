@@ -937,7 +937,7 @@
       init: function(entityType, name, memberSelector, entitySet){
         this.inherit(entityType, name);
 
-        this.name = 'Collection ' + name.quote() + ' of ' + (entityType ? entityType.name.quote('{') : 'mixed');
+        this.name = 'Collection ' + name.quote() + ' of ' + (entityType ? (entityType.name || entityType.entityType.name || '?').quote('{') : 'mixed');
 
         this.entityTypeWraper = this.entityType;
         this.entityType = Function.$self;

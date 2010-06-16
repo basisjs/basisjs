@@ -507,13 +507,6 @@
       className: namespace + '.ComplexFieldItem',
 
       canHaveChildren: false,
-/*
-      behaviour: createBehaviour(HtmlNode, {
-        select:   function(){ cssClass(this.element).add('selected') },
-        unselect: function(){ cssClass(this.element).remove('selected') },
-        disable:  function(){ cssClass(this.element).add('disable') },
-        enable:   function(){ cssClass(this.element).remove('disable') }
-      }),*/
       
       valueGetter: Data.getter('value'),
       titleGetter: function(info){ return coalesce(info.title, info.value) },
@@ -730,12 +723,12 @@
 
       behaviour: createBehaviour(ComplexFieldItem, {
         select: function(){
+          this.inherit();
           this.field.checked = true;
-          cssClass(this.element).add('selected');
         },
         unselect: function(){
+          this.inherit();
           this.field.checked = false;
-          cssClass(this.element).remove('selected');
         },
         click: function(){
           if (this.selected)
@@ -754,13 +747,7 @@
           '<input{field} type="checkbox"/>' +
           '<span{content}>{titleText}</span>' +
         '</label>'
-      ),
-
-      init: function(config){
-        this.inherit(config);
-        this.dispatch('update', this, this.info, this.info, {});
-        //this.field.value = this.getValue();
-      }
+      )
     });
 
    /**
@@ -828,13 +815,7 @@
 
       template: new Template(
         '<option{element|field}></option>'
-      ),
-
-      init: function(config){
-        this.inherit(config);
-        this.dispatch('update', this, this.info, this.info, {});
-        //this.field.value = this.getValue();
-      }
+      )
     });
 
 
@@ -908,8 +889,6 @@
       className: namespace + '.Field.Combobox.Item',
 
       behaviour: createBehaviour(ComplexFieldItem, {
-      	select: function(){ cssClass(this.element).add('selected') },
-      	unselect: function(){ cssClass(this.element).remove('selected') },
         click:  function(){
           this.select();
           //if (this.parentNode)
@@ -922,36 +901,7 @@
 
       template: new Template(
         '<a{element} class="item" href="#">{titleText}</a>'
-      ),
-
-      init: function(config){
-        //this.element = DOM.createElement('A.item[href="#"]' + CSS.makeClassName(config.className));
-        this.inherit(config);
-        this.titleText.nodeValue = this.titleGetter(this.info, this);
-        //DOM.insert(this.element, config.content || DOM.createText(this.getTitle()));
-      }/*,
-      select: function(){
-        var parent = this.parentNode;
-        if (parent)
-        {
-          if (parent.delegate !== this)
-            parent.setValue(this.getValue());
-          else
-            parent.selection.add(this);
-        }
-        else
-          this.inherit()
-      },
-      unselect: function(){
-        var parent = this.parentNode;
-        if (parent)
-        {
-          if (parent.delegate === this)
-            parent.selection.remove(this);
-        }
-        else
-          this.inherit()
-      }*/
+      )
     });
 
     var ComboboxCaptionHandlers = {
@@ -1002,18 +952,6 @@
       className: namespace + '.Field.Combobox',
 
       childClass: ComboboxItem,
-
-      /*
-      childFactory: function(config){
-        return new this.childClass({
-          valueGetter: this.itemValueGetter,
-          titleGetter: this.itemTitleGetter,
-          className: config.className,
-          info: config
-        });
-      },*/
-
-      //atomicInfo: true,
 
       behaviour: createBehaviour(Field, {
         disable: function(){

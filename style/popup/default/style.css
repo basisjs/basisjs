@@ -1,0 +1,30 @@
+/*
+ * Basis JavaSript library 
+ * ---------------------------------
+ *
+ * Homepage: basis.et-lab.ru
+ * copyright (c) 2006-2010
+ * Author:   Dvornov lahmatiy Roman <rdvornov@gmail.com>
+ *
+ * ---------------------------------
+ *
+ * W1 Cabinet style (http://www.w1.ru) for Basis.Controls.Balloon
+ *
+ */
+
+  .Basis-Popup
+  {
+    position: absolute;
+    background-color: #FFFF99;
+    border: 1px solid #F2C261;/*
+    opacity: 0.9;
+    -moz-opacity: 0.9;
+    -khtml-opacity: 0.9;
+    filter: alpha(opacity: 90);*/
+  }
+
+  .Basis-Popup-Content
+  {
+    min-height: 1em;
+    min-width: 100px;
+  }
