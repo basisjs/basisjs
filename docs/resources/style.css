@@ -475,11 +475,13 @@
     margin: .75em 0 .4em;
     text-decoration: underline;
   }
-  .jsDocs .types
+  .jsDocs .types,
+  .viewConfig .types
   {
     color: #009900;
   }
-  .jsDocs .types .splitter
+  .jsDocs .types .splitter,
+  .viewConfig .types .splitter
   {
     margin: 0 .6ex;
     color: black;
@@ -489,4 +491,16 @@
   {
     padding-left: 16px;
     font-size: 90%;
+  }
+
+  .viewConfig UL
+  {
+    list-style: none;
+    padding: 0 0 0 5px;
+    margin: 0;
+  }
+  .viewConfig LI
+  {
+    padding: .2em 0 .2em 20px;
+    background: url(img/config.png) no-repeat left center;
   }

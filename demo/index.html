@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Demos</title>
+
+  <style type="text/css">
+    HTML,
+    BODY
+    {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #DemoTree
+    {
+      padding: 10px;
+    }
+
+    #DemoTree UL,
+    #DemoTree LI
+    {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #DemoTree .Basis-Tree-NodeGroup-Title
+    {
+      border-bottom: 1px solid #E0E0E0;
+      clear: both;
+      height: .5em;
+      margin-bottom: .5em;
+      line-height: 1em;
+    }
+    #DemoTree .Basis-Tree-NodeGroup-Title SPAN
+    {
+      padding: 0 1ex;
+      background: white;
+    }
+
+    #DemoTree .Basis-Tree-NodeGroup-Content
+    {
+      overflow: hidden;
+      padding: 5px;
+    }
+
+    #DemoTree .Demo-TreeNode
+    {
+      width: 140px;
+      float: left;
+      text-align: center;
+      cursor: pointer;
+      margin-right: 1px;
+    }
+    #DemoTree .Demo-TreeNode A
+    {
+      display: block;
+      text-decoration: none;
+      color: #333;
+    }
+    #DemoTree .Demo-TreeNode A:hover
+    {
+      background: #F4F4F4;
+    }
+    #DemoTree .Demo-TreeNode IMG
+    {
+      margin: 5px 5px 0 5px;
+      border: 1px solid #F0F0F0;
+      background: white;
+    }
+    #DemoTree .Demo-TreeNode A:hover IMG
+    {
+      border-color: #CCC;
+    }
+    #DemoTree .Demo-TreeNode .title
+    {
+      display: block;
+      padding: 4px 10px 7px;
+      text-align: center;
+      font-size: 85%;
+      height: 2.5em;
+    }
+    #DemoTree .selected
+    {
+      background-color: #EAF7FF !important;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY,
+    TABLE *
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../basis.js"></script>
+  <script type="text/javascript" src="../generator.js"></script>
+  <script type="text/javascript" src="../dom_wraper.js"></script>
+  <script type="text/javascript" src="../tree.js"></script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    (function(){
+      var Class = Basis.Class;
+      var Data = Basis.Data;
+      var nsWrapers = Basis.DOM.Wrapers;
+      var nsTree = Basis.Controls.Tree;
+
+      var data = [
+        {
+          title: 'Simple',
+          demos: [
+            { title: 'Tree', url: 'simple/tree.html', image: 'simple/tree.png' },
+            { title: 'Tabs', url: 'simple/tabs.html', image: 'simple/tabs.png' },
+            { title: 'Calendar', url: 'simple/calendar.html' }
+          ]
+        },
+        {
+          title: 'Selection',
+          demos: [
+            { title: 'Share selection', url: 'selection/share.html' },
+            { title: 'Multiple selections for control', url: 'selection/multiple.html' }
+          ]
+        },
+        {
+          title: 'Tabs',
+          demos: [
+            { title: 'All tabs.js module controls', url: 'tabs/tabs.html' }
+          ]
+        },
+        {
+          title: 'Various',
+          demos: [
+            { title: 'Node grouping', url: 'various/grouping.html' },
+            { title: 'Match input', url: 'various/match.html' }
+          ]
+        },
+        {
+          title: 'Entity',
+          demos: [
+            { title: 'Basic demo', url: 'entity/basic.html' }
+          ]
+        }
+      ];
+
+      var treeDemos = new nsTree.Tree({
+        id: 'DemoTree',
+        container: document.body,
+        childClass: Class.create(nsTree.TreeNode, {
+          className: 'Demo-TreeNode',
+          template: new Basis.Html.Template(
+            '<li{element} class="Demo-TreeNode">' +
+              '<a{content|title} href="#">' +
+                '<img src{imageUrl}="box.png" width="100" height="75"/>' +
+                '<span class="title">{titleText}</span>' +
+              '</a>' +
+            '</li>'
+          ),
+          behaviour: nsWrapers.createBehaviour(nsTree.TreeNode, {
+            select: function(){
+              this.inherit();
+              location.href = this.info.url;
+            },
+            update: function(object, newInfo, oldInfo, delta){
+              this.inherit(object, newInfo, oldInfo, delta);
+              
+              //console.log(newInfo.image || newInfo.url.replace('.html', '.png'));
+              this.imageUrl.nodeValue = newInfo.image || newInfo.url.replace('.html', '.png');
+            }
+          })
+        }),
+        localGrouping: {
+          groupGetter: Data.getter('info.group')
+        },
+        childNodes: data.map(function(section){
+          return section.demos.map(function(demo, idx, array){
+            return { info: Object.extend(demo, { group: '{0} ({1})'.format(this.title, array.length) }) };
+          }, section);
+        }).flatten()
+      });
+
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Grouping switch</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/table/vista/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/menu/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .Demo-Section
+    {
+      width: 300px;
+      float: left;
+      border-right: 1px solid #EEE;
+      margin-right: 10px;
+      padding-right: 10px;
+    }
+
+    .Basis-Tree
+    {
+      border: 1px solid #AAA;
+      height: 400px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../table.js"></script>
+  <script type="text/javascript" src="../../layout.js"></script>
+  <script type="text/javascript" src="../../popup.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Grouping switch</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"><button id="demo-changeGroupingButton">Change grouping</button></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // make shortcut
+    var Data = Basis.Data;
+    var DOM = Basis.DOM;
+    var nsTree = Basis.Controls.Tree;
+    var nsTable = Basis.Controls.Table;
+    var nsPopup = Basis.Controls.Popup;
+
+    // data
+    var data = [
+      { info: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
+      { info: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
+      { info: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
+      { info: { title: 'tortor', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
+      { info: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
+    ].repeat(3);
+
+    //
+    // Create controls
+    //
+
+    var demoContainer = DOM.get('demo-container');
+
+    var tree = new nsTree.Tree({
+      childClass: nsTree.TreeNode,
+      childNodes: data,
+      localGrouping: {
+        groupGetter: 'info.title'
+      }
+    });
+
+    var table = new nsTable.Table({
+      structure: [
+        { header: 'Title', body: { content: Data.getter('info.title') } },
+        { header: 'Content', body: { content: Data.getter('info.content') } }
+      ],
+      childNodes: data,
+      localGrouping: {
+        groupGetter: 'info.title'
+      }
+    });
+
+    // insert controls to document
+    DOM.insert(demoContainer, DOM.wrap([
+      tree.element,
+      table.element
+    ], { '.Demo-Section': Function.$true }));
+
+    // create grouping menu
+    function setGrouping(grouping){
+      tree.setLocalGrouping(grouping);
+      table.setLocalGrouping(grouping);
+    }
+
+    var groupigMenu = new nsPopup.Menu({
+      childNodes: [
+        {
+          caption: 'No grouping',
+          handler: function(){
+            setGrouping();
+          }
+        },
+        {
+          caption: 'Group by title',
+          handler: function(){
+            setGrouping('info.title');
+          }
+        },
+        {
+          caption: 'Group by first letter',
+          handler: function(){
+            setGrouping({
+              groupGetter: 'info.title.charAt(0)',
+              titleGetter: Basis.Data.getter('info.title', 'Group for letter <{0}>'),
+              localSorting: 'info.title'
+            });
+          }
+        }
+      ]
+    });
+
+    // attach menu open to button
+    var button = DOM.get('demo-changeGroupingButton');
+    Basis.Event.addHandler(button, 'click', function(){ groupigMenu.show(this) }, button);
+
+  </script>
+</body>
+
+</html>

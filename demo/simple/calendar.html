@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Calendar</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/calendar/google/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    BODY, HTML
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+  </style>
+
+  <!--[if lt IE 7]>
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/calendar/vista/style_ie.css" media="screen" />
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+  
+  <script type="text/javascript"  src="../../basis.js"></script>
+  <script type="text/javascript"  src="../../date.js"></script>
+  <script type="text/javascript"  src="../../dom_wraper.js"></script>
+  <script type="text/javascript"  src="../../locale/en/calendar.js"></script>
+  <script type="text/javascript"  src="../../calendar.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Calendar</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+
+    new Basis.Controls.Calendar.Calendar({
+      container: Basis.DOM.get('demo-container'),
+      sections: ['Month', 'Year', 'YearDecade']
+    });
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Share selection between controls</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Vista Style" href="../../style/tree/vista/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Default Style" href="../../style/tree/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .Basis-Tree
+    {
+      border: 1px solid #AAA;
+      width: 300px;
+      height: 400px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      float: left;
+      margin-right: 10px;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Share selection between controls</h1>
+  
+  <p id="demo-summary">
+    This demonstration shows how you can share selection between controls (even particular nodes). Use CTRL for multiple node selection.
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+   
+    // make shortcut
+    var DOM = Basis.DOM;
+    var nsTree = Basis.Controls.Tree;
+
+    // data for tree
+    var data = [
+      { info: { title: 'node1' } },
+      { info: { title: 'node2' },
+        childNodes: [
+          { info: { title: 'node2.1' } },
+          { info: { title: 'node2.1' } }
+        ]
+      },
+      { info: { title: 'node3' },
+        childNodes: [
+          { info: { title: 'node3.1' } },
+          { info: { title: 'node3.2' } },
+          { info: { title: 'node3.3' },
+            childNodes: [
+              { info: { title: 'node3.3.1' } },
+              { info: { title: 'node3.3.2' } },
+              { info: { title: 'node3.3.3' } },
+              { info: { title: 'node3.3.4' } },
+              { info: { title: 'node3.3.5' } }
+            ]
+          }
+        ]
+      },
+      { info: { title: 'node4' } }
+    ];
+
+    //
+    // Create tree controls
+    //
+
+    // child nodes factory
+    var treeChildFactory = function(config){
+      if (config.childNodes)
+        return new nsTree.TreeFolder(Object.complete({ document: this.document || this }, config));
+      else
+        return new nsTree.TreeNode(Object.complete({ document: this.document || this }, config));
+    };
+
+    // setup selection for control (multiple mode)
+    var demoContainer = DOM.get('demo-container');
+    var treeSelection = new Basis.DOM.Wrapers.Selection({ multiple: true });
+    var tree1 = new nsTree.Tree({
+      id: 'Tree1',
+      container: demoContainer,
+      selection: treeSelection, 
+      childFactory: treeChildFactory,
+      childNodes: data
+    });
+
+    var tree2 = new nsTree.Tree({
+      id: 'Tree2',
+      container: demoContainer,
+      selection: treeSelection,
+      childFactory: treeChildFactory,
+      childNodes: data
+    });
+
+    var tree3 = new nsTree.Tree({
+      id: 'Tree3',
+      container: demoContainer,
+      selection: tree2.selection, // pass tree2 selection object (it is still treeSelection)
+      childFactory: treeChildFactory,
+      childNodes: data
+    });
+
+    // make output of selection content
+    var contentText = DOM.createText('nothing');
+    DOM.insert(demoContainer, DOM.createElement('', DOM.createElement('LABEL', 'Selection contains: '), contentText));
+    treeSelection.addHandler({
+      change: function(){
+        contentText.nodeValue = this.items.map(function(node){ return '({0}) {1}'.format(node.document.element.id, node.info.title) }).join(', ') || 'nothing';
+      }
+    });
+
+  </script>
+</body>
+
+</html>

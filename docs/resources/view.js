@@ -319,9 +319,21 @@
     ),
     behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
       update: function(object, newInfo){
-        this.nameText.nodeValue = newInfo.name;
+        if (newInfo.tags && newInfo.tags.config)
+        {
+          var typ = newInfo.tags.config[this.propName];
+          if (typ)
+            DOM.insert(this.content, DOM.createElement('SPAN.types', DOM.createElement('SPAN.splitter', ':'),
+              DOM.wrap(typ.type.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })
+            ));
+        }
       }
-    })
+    }),
+    init: function(config){
+      this.propName = config.propName;
+      this.inherit(config);
+      this.nameText.nodeValue = this.propName;
+    }
   });
 
   var viewConfigRegExp = /config\.(?:([a-z0-9\_\$]+)|\[(\'\")([a-z0-9\_\$]+)\2\])/gi;
@@ -344,20 +356,26 @@
 
           for (var i = 0; i < list.length; i++)
           {
-            var code = String(list[i].obj.prototype.init);
+            var path = list[i].obj.className + '.prototype.init';
+            var jsDoc = nsCore.JsDocEntity.get(path)
+            if (!jsDoc)
+              jsDoc = nsCore.JsDocEntity({ path: path, text: '-' });
+
+            var code = String(list[i].obj.prototype.init).replace(/\/\*(.|[\r\n])+?\*\/|\/\/.+/g, '');
             var m;
             while (m = viewConfigRegExp.exec(code))
             {
-              items[m[1] || m[3]] = {
-                info: {
-                  name: m[1] || m[3]
-                }
+              var name = m[1] || m[3];
+              items[name] = {
+                propName: name,
+                info: jsDoc || {}
               };
             }
           }
 
-          this.setChildNodes(Object.values(items));
-          DOM.display(this.element, true);
+          items = Object.values(items);
+          this.setChildNodes(items);
+          DOM.display(this.element, items.length);
         }
         else
           DOM.display(this.element, false);

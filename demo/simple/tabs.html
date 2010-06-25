@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Tabs</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tabs/vista/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Default Style" href="../../style/tabs/xp/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #MyTabs
+    {
+      width: 500px;
+    }
+
+    #MyTabs H1
+    {
+      font-size: 120%;
+    }
+    #MyTabs P
+    {
+      font-size: 85%;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../tabs.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Tabs</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    new Basis.Controls.Tabs.TabSheetControl({
+      id: 'MyTabs',
+      container: Basis.DOM.get('demo-container'),
+      childNodes: [
+        {
+          info: { title: 'Tab 1' },
+          content: [
+            Basis.DOM.createElement('H1', 'Tab 1 Header'),
+            Basis.DOM.createElement('P', 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus. '.repeat(2))
+          ]
+        },
+        {
+          info: { title: 'Tab 2' },
+          content: 'Content for Tab 2'
+        }
+      ]
+    });
+
+  </script>
+</body>
+
+</html>

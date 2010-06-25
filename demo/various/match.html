@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Using match filter</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/table/vista/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .Demo-Section
+    {
+      width: 300px;
+      float: left;
+      border-right: 1px solid #EEE;
+      margin-right: 10px;
+      padding-right: 10px;
+    }
+
+    .MatchHolder
+    {
+      margin: .25em 0;
+    }
+    .MatchHolder INPUT
+    {
+      width: 300px;
+    }
+
+    .match
+    {
+      background: gold;
+      padding: 0 1px 0 1px;
+      -webkit-border-radius: 2px;
+      -moz-border-radius: 2px;
+      border-radius: 2px;
+    }
+
+    .custom-match
+    {
+      background: #66AA66;
+      text-decoration: underline;
+    }
+
+    .Basis-Tree
+    {
+      border: 1px solid #AAA;
+      height: 400px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../table.js"></script>
+  <script type="text/javascript" src="../../form.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Using match filter</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // make shortcut
+    var Data = Basis.Data;
+    var DOM = Basis.DOM;
+    var nsTree = Basis.Controls.Tree;
+    var nsTable = Basis.Controls.Table;
+    var nsForm = Basis.Controls.Form;
+
+    var MatchInput = Basis.Controls.Form.MatchInput;
+
+    // data
+    var data = [
+      { info: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
+      { info: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
+      { info: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
+      { info: { title: 'Maecenas', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
+      { info: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
+    ].repeat(5).sortAsObject(Math.random);
+
+    // Create a tree
+    var tree = new nsTree.Tree({
+      childClass: nsTree.TreeNode,
+      childNodes: data
+    });
+
+    // Create a table
+    var table = new nsTable.Table({
+      structure: [
+        { header: 'Title', body: { content: Data.getter('info.title') } },
+        { header: 'Content', body: { content: Data.getter('info.content') } }
+      ],
+      childNodes: data
+    })
+
+    // insert controls to document and link with match input
+    DOM.insert(DOM.get('demo-container'), DOM.wrap([
+      [
+        'Type in:',
+        new nsForm.MatchInput({
+          cssClassName: 'MatchHolder',
+          matchFilter: {
+            node: tree
+          }
+        }).element,
+        tree.element
+      ],
+      [
+        'Type in:',
+        new nsForm.MatchInput({
+          cssClassName: 'MatchHolder',
+          matchFilter: {
+            node: table,
+            textNodeGetter: 'element.lastChild.firstChild.firstChild',
+            wrapElement: 'A.custom-match'
+          }
+        }).element,
+        table.element
+      ]
+    ], { '.Demo-Section': Function.$true }));
+
+  </script>
+</body>
+
+</html>

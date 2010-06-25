@@ -334,6 +334,7 @@
       * @config {Basis.DOM.Wrapers.DataObject|Object} info
       * @config {boolean} cascadeDestroy
       * @config {boolean} autoDelegateParent
+      * @config {boolean} traceEvents_ Debug for.
       * @return {Object}
       * @constructor
       */
@@ -384,18 +385,16 @@
        *   var b = new DataObject();
        *
        *   a.setDelegate(b);
-       *
        *   a.update({ prop: 123 });
-       *   alert(a.info.prop); // 123
-       *   alert(a.info.prop === b.info.prop); // true
+       *   alert(a.info.prop); // shows 123
+       *   alert(a.info.prop === b.info.prop); // shows true
        *
-       *   b.update({ prop: 456 }); // { prop: 456 }
-       *   alert(b.info.prop); // 456
-       *   alert(a.info.prop === b.info.prop); // true
+       *   b.update({ prop: 456 });
+       *   alert(a.info.prop === b.info.prop); // shows true
        *
        *   a.setState(Basis.DOM.Wrapers.PROCESSING);
-       *   alert(a.state); // 'processing'
-       *   alert(a.state === b.state); // 'processing'
+       *   alert(a.state); // shows 'processing'
+       *   alert(a.state === b.state); // shows 'processing'
        * @param {Basis.DOM.Wrapers.DataObject} delegate
        * @param {boolean=} silent Prevent fire update event.
        * @return {Basis.DOM.Wrapers.DataObject} Returns current delegate object.
@@ -731,6 +730,7 @@
       }),
 
      /**
+      * @inheritDoc
       * @constructor
       */
       init: function(initValue, handlers, proxy){
@@ -1031,7 +1031,13 @@
       */
       state: STATE_UNDEFINED,
 
-     /** 
+     /**
+      * @param {Object} config
+      * @config {Object} value
+      * @config {Object} handlers
+      * @config {function()} proxy
+      * @config {function()} calculateValue
+      * @config {Array.<Basis.DOM.Wrapers.DataObject>} objects
       * @constructor
       */
       init: function(config){
@@ -1336,6 +1342,8 @@
       lastChild: null,
 
      /**
+      * Indicates that child nodes are sensetive for it's position. If true positionChanged
+      * event will be fired for child nodes on child nodes permutation. 
       * @type {boolean}
       */
       positionDependent: false,
@@ -1384,6 +1392,13 @@
 
      /**
       * @param {Object} config
+      * @config {function()|string} localSorting
+      * @config {boolean} localSortingDesc
+      * @config {Basis.DOM.Wrapers.AbstractNode} document
+      * @config {boolean} positionDependent
+      * @config {Object} localGrouping
+      * @config {Basis.DOM.Wrapers.DataObject} collection
+      * @config {Array} childNodes
       * @return {Object} Returns a config. 
       * @constructor
       */
@@ -1430,68 +1445,68 @@
 
      /**
       * Adds the node newChild to the end of the list of children of this node. If the newChild is already in the tree, it is first removed.
-      * @param {AbstractNode} newChild The node to add.
-      * @return {AbstractNode} The node added.
+      * @param {Basis.DOM.Wrapers.AbstractNode} newChild The node to add.
+      * @return {Basis.DOM.Wrapers.AbstractNode} The node added.
       */
       appendChild: function(newChild){
       },
 
      /**
       * Inserts the node newChild before the existing child node refChild. If refChild is null, insert newChild at the end of the list of children.
-      * @param {AbstractNode} newChild The node to insert.
-      * @param {AbstractNode} refChild The reference node, i.e., the node before which the new node must be inserted.
-      * @return {AbstractNode} The node being inserted.
+      * @param {Basis.DOM.Wrapers.AbstractNode} newChild The node to insert.
+      * @param {Basis.DOM.Wrapers.AbstractNode} refChild The reference node, i.e., the node before which the new node must be inserted.
+      * @return {Basis.DOM.Wrapers.AbstractNode} The node being inserted.
       */
       insertBefore: function(newChild, refChild){
       },
 
      /**
       * Removes the child node indicated by oldChild from the list of children, and returns it.
-      * @param {AbstractNode} oldChild The node being removed.
-      * @return {AbstractNode} The node removed.
+      * @param {Basis.DOM.Wrapers.AbstractNode} oldChild The node being removed.
+      * @return {Basis.DOM.Wrapers.AbstractNode} The node removed.
       */
       removeChild: function(oldChild){
       },
 
      /**
       * Replaces the child node oldChild with newChild in the list of children, and returns the oldChild node.
-      * @param {AbstractNode} newChild The new node to put in the child list.
-      * @param {AbstractNode} oldChild The node being replaced in the list.
-      * @return {AbstractNode} The node replaced.
+      * @param {Basis.DOM.Wrapers.AbstractNode} newChild The new node to put in the child list.
+      * @param {Basis.DOM.Wrapers.AbstractNode} oldChild The node being replaced in the list.
+      * @return {Basis.DOM.Wrapers.AbstractNode} The node replaced.
       */
       replaceChild: function(newChild, oldChild){
       },
 
      /**
       * Removes all child nodes from the list of children, fast way to remove all childs.
-      * @param {Boolean} alive
+      * @param {boolean} alive
       */
       clear: function(alive){
       },
 
      /**
       * Returns whether this node has any children. 
-      * @return {Boolean} Returns true if this node has any children, false otherwise.
+      * @return {boolean} Returns true if this node has any children, false otherwise.
       */
       hasChildNodes: function(){
         return this.childNodes.length > 0;
       },
 
      /**
-      * @param {DataObject} collection
+      * @param {Basis.DOM.Wrapers.DataObject} collection
       */
       setCollection: function(collection){
       },
 
      /**
-      * @param {Function|String} grouping
+      * @param {Object|function()|string} grouping
       */
       setLocalGrouping: function(grouping){
       },
 
      /**
-      * @param {Function|String} sorting
-      * @param {Function|Boolean} desc
+      * @param {function()|string} sorting
+      * @param {boolean} desc
       */
       setLocalSorting: function(sorting, desc){
       },
@@ -1637,26 +1652,26 @@
 
      /**
       * Indicate could be able node to be selected or not.
-      * @type {Boolean}
+      * @type {boolean}
       * @readonly
       */
       selectable: true,
 
      /**
       * Indicate node is selected.
-      * @type {Boolean}
+      * @type {boolean}
       * @readonly
       */
       selected: false,
 
      /**
       * Set of selected child nodes.
-      * @type {Selection}
+      * @type {Basis.DOM.Wrapers.Selection}
       */
       selection: null,
 
      /**
-      *
+      * @type {boolean}
       */
       matched: true,
 
@@ -1665,23 +1680,25 @@
       * node state instead of check for this property value (ancestor nodes may
       * be disabled and current node will be disabled too, but node disabled property
       * could has false value).
-      * @type {Boolean}
+      * @type {boolean}
       * @readonly
       */
       disabled: false,
 
-      //
-      // constructor
-      //
+     /**
+      * @param {Object} config
+      * @config {Basis.DOM.Wrapers.Selection} selection
+      * @config {boolean} selectable
+      * @config {boolean} selected
+      * @config {boolean} disabled
+      * @constructor
+      */
       init: function(config){
         if (typeof config == 'object' && config.selection instanceof Selection)
           this.selection = config.selection;
 
         config = this.inherit(config);
 
-        //if (config.disabled)
-        //  this.disabled = true;
-        
         if (config.selectable == false)
           this.selectable = false;
 
@@ -1696,7 +1713,7 @@
 
      /**
       * Changes selection property of node.
-      * @param {Selection} selection New selection value for node.
+      * @param {Basis.DOM.Wrapers.Selection} selection New selection value for node.
       * @return {boolean} Returns true if selection was changed.
       */
       setSelection: function(selection){
@@ -1811,6 +1828,10 @@
                || !!DOM.parent(this, Data('disabled'));
       },
 
+     /**
+      * @param {function()} func
+      * @return {boolean}
+      */
       match: function(func){
         if (typeof func != 'function')
         {
@@ -1827,7 +1848,7 @@
               this.dispatch('match')
             }
 
-          return;
+          return true;
         }
         
         if (func(this))
@@ -2772,10 +2793,10 @@
     var Node = Class(InteractiveNode, HierarchyTools, {
       className: namespace + '.Node',
 
-      //
-      // constructor
-      //
-
+     /**
+      * @param {Object} config
+      * @config {function()} childFactory
+      */
       init: function(config){
         if (config && typeof config.childFactory == 'function')
           this.childFactory = config.childFactory;
@@ -2912,10 +2933,19 @@
       */
       template: null,
 
-      //
+     /**
+      * @type {Object}
+      */
       cssClassName: {},
 
-      // methods
+     /**
+      * @param {Object} config
+      * @config {Basis.Html.Template} template
+      * @config {Object} cssClassName
+      * @config {Node} container
+      * @config {string} id
+      * @constructor
+      */
       init: function(config){
         if (config && config.template)
           this.template = config.template;
@@ -3235,6 +3265,11 @@
         return new this.childClass(config);
       },
 
+     /**
+      * @param {Object} config
+      * @config {Object|boolean|Basis.DOM.Wrapers.Selection} selection
+      * @constructor
+      */
       init: function(config){
         config = extend({}, config);
 

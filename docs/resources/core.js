@@ -76,7 +76,7 @@
         for (var i = 0, key; key = parts[i]; i += 2)
         {
           var value = parts[i + 1];
-          if (key == 'param')
+          if (key == 'param' || key == 'config')
           {
             if (!tags[key])
               tags[key] = {};

@@ -730,15 +730,15 @@
   });
 
   String.complete({
-    ltrim: function(){
+    trimLeft: String.prototype.trimLeft || function(){
       return this.replace(/^\s\s*/, '');
     },
-    rtrim: function(){
+    trimRight: String.prototype.trimRight || function(){
       return this.replace(/\s\s*$/, '');
     },
     // implemented at ECMAScript5
     trim: function(){
-      return this.ltrim().rtrim();
+      return this.trimLeft().trimRight();
     }
   });
 
@@ -818,11 +818,11 @@
     trim: function(value){
       return String(value).trim();
     },
-    ltrim: function(value){
-      return String(value).ltrim();
+    trimLeft: function(value){
+      return String(value).trimLeft();
     },
-    rtrim: function(value){
-      return String(value).rtrim();
+    trimRight: function(value){
+      return String(value).trimRight();
     },
     isEmpty: function(value){
       return value == null || String(value) == '';
@@ -1282,11 +1282,9 @@
     //
 
     function setCookie(name, value, expire, path){
-      document.cookie = xx = name + "=" + (value == null ? '' : escape(value)) +
+      document.cookie = name + "=" + (value == null ? '' : escape(value)) +
                         ";path=" + (path || location.pathname) +
                         (expire ? ";expires=" + (new Date(Number(new Date) + expire * 1000)).toGMTString() : '');
-      //alert(xx);
-      //alert(expire);
     }
 
     function getCookie(name){
@@ -2036,7 +2034,7 @@
       var isDOMLikeObject = !isNode(node);
       var result;
 
-      if (!source || source.constructor != Array)
+      if (!source || !(source instanceof Array))
         result = isDOMLikeObject ? source && node.insertBefore(source, refChild) : handleInsert(node, source, refChild);
       else
       {

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Tabs</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tabs/vista/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .DemoBlock
+    {
+      border: 1px solid #D0D0D0;
+      border-radius: 3px;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+      padding: 15px;
+      margin: 0 0 .5em 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .DemoBlock H2
+    {
+      font-size: 80%;
+      font-weight: normal;
+      background: #EEE;
+      margin: -15px -15px 10px -15px;
+      padding: 2px;
+      text-align: center;
+    }
+    
+    .Basis-AccordionControl .Basis-Page
+    {
+      height: 120px;
+      overflow: auto;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../tabs.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Tabs</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // import names
+    var DOM = Basis.DOM;
+    var Event = Basis.Event;
+    var Data = Basis.Data;
+
+    var Tabs = Basis.Controls.Tabs;
+
+    function createBlock(header){
+      return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
+    }
+
+    // Data source
+    var data = [
+      { info: { title: 'tab4' }, groupId: 3, content: 'content 4' },
+      { info: { title: 'tab1' }, groupId: 1, content: 'content 1' },
+      { info: { title: 'tab6' }, groupId: 3, content: 'content 6' },
+      { info: { title: 'tab5' }, groupId: 3, content: 'content 5 '.repeat(100) },
+      { info: { title: 'tab3' }, groupId: 2, content: 'content 3', selected: true  },
+      { info: { title: 'tab2' }, groupId: 2, content: 'content 2', disabled: true  },
+      { info: { title: 'tab7' }, groupId: 3, content: 'content 7' }
+    ];
+
+    //
+    // Main part
+    //
+
+    // AccordionControl
+    new Tabs.AccordionControl({
+      container: DOM.css(createBlock('AccordionControl'), { 'float': 'right', width: '250px' }),
+      childNodes: data
+    });
+
+    // AccordionControl with sorting & grouping
+    new Tabs.AccordionControl({
+      container: DOM.css(createBlock('AccordionControl with localSorting & localGrouping'), { 'float': 'right', width: '250px' }),
+      localGrouping: {
+        groupGetter: 'groupId',
+        localSorting: 'info.title'
+      },
+      localSorting: 'info.title',
+      childNodes: data
+    });
+
+    // TabControl
+    new Tabs.TabControl({
+      container: createBlock('TabControl'),
+      childNodes: data
+    });
+
+    // TabControl with sorting & grouping
+    new Tabs.TabControl({
+      container: createBlock('TabControl with localSorting & localGrouping'),
+      localGrouping: {
+        groupGetter: 'groupId',
+        localSorting: 'info.title'
+      },
+      localSorting: 'info.title',
+      childNodes: data
+    });
+
+    // PageControl
+    var container = createBlock('PageControl');
+    var buttonPanel = DOM.createElement();
+    DOM.insert(container, DOM.createElement('', 'Show page: ', buttonPanel));
+
+    new Tabs.PageControl({
+      container: container,
+      handlers: {
+        childNodesModified: function(){
+          var pagecontrol = this;
+          DOM.insert(DOM.clear(buttonPanel), this.childNodes.map(function(page, index){
+            var button = page.button;
+            if (!button)
+              page.button = button = DOM.createElement({
+                description: 'BUTTON',
+                click: function(){
+                  var page = pagecontrol.childNodes[index];
+                  if (!page.disabled)
+                    page.select();
+                  else
+                    alert('page with title ' + (page.info.title) + ' is disabled and can\'t be selected');
+                }
+              }, (page.info.title));
+            return button;
+          }));
+        }
+      },
+      childNodes: data
+    });
+
+    // TabSheetControl
+    new Tabs.TabSheetControl({
+      container: createBlock('TabSheetControl'),
+      childNodes: data
+    });
+
+    // TabSheetControl with sorting & grouping
+    new Tabs.TabSheetControl({
+      container: createBlock('TabSheetControl with localSorting & localGrouping'),
+      localGrouping: {
+        groupGetter: 'groupId',
+        localSorting: 'info.title'
+      },
+      localSorting: 'info.title',
+      childNodes: data
+    });
+
+  </script>
+</body>
+
+</html>

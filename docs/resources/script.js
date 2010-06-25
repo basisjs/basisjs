@@ -379,7 +379,7 @@
               //console.log(m);
               //console.log(ns, clsPrefix, isClass);
             //console.log(m[1], jsdoc.last());
-            var text = jsdoc.last().replace(/(^|[\r\n]+)\s*\*[\t ]*/g, '\n').ltrim();
+            var text = jsdoc.last().replace(/(^|[\r\n]+)\s*\*[\t ]*/g, '\n').trimLeft();
             var e = nsCore.JsDocEntity({
               path: ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + m[3],
               text: text
@@ -389,11 +389,10 @@
             if (isClass)
               clsPrefix = m[3];
             else
-
-            if (m[1] || m[2])
-            {
-              clsPrefix = '';
-            }
+              if (m[1] || m[2])
+              {
+                clsPrefix = '';
+              }
           }
         }
       return jsdoc;

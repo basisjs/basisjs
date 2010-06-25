@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Entity basic</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/form/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    .Basis-Tree
+    {
+      border: 1px solid #AAA;
+      width: 240px;
+      height: 300px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      float: left;
+      margin-right: 10px;
+    }
+
+    .form-content
+    {
+      overflow: hidden;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../entity.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../form.js"></script>
+  <script type="text/javascript" src="../../locale/en/form.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basis Demos: Entity basic</h1>
+
+  <p id="demo-summary">
+    В данной демонстации показана реализация простого интерфейса редактирования данных в связке список-форма с использованием Basis.Entity.
+  </p>
+  <div id="demo-description">
+    <p>В дереве (Basis.Controls.Tree) представлен список статей. При выборе одного из пунктов его данные (данные статьи) загружаются в форму (Basis.Controls.FormContent), при это не происходит никакого копирования или присвоения данных. Загрузка данных осуществляется через связывание листа дерева (Basis.Controls.Tree.TreeNode) с формой, путем назначения посленей делегатом (form.setDelegate) выбранного листа. Это...</p>
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script id="demo-javascript" type="text/javascript">
+    
+    // Определяем новый тип данных.
+    var Article = new Basis.Entity.EntityType({
+      // Необязательное поле, используется в основном для отладки.
+      name: 'Article',
+      
+      // Опеределяем какое поле является ключом. Это так же необязательное поле и в данной
+      // демонстрации не используется, однако лучше определять ключевое поле, чтобы придать
+      // уникальность и дать возможность адресовать к нужным данным.
+      id: 'id',
+
+      // Определяем набор полей
+      fields: {
+        id: Number,
+        title: String,
+        content: String
+      }
+    });
+
+    // Генерируем тестовый набор данных.
+    for (var i = 0; i < 10; i++)
+      Article({
+        id: i,
+        title: 'title #' + i,
+        content: 'content #' + i
+      });
+
+    // Создаем новый класс для листов дерева с переопределеной функцией формирования заголовка.
+    // Данный код вынесен отдельно для наглядности и мог бы быть вставлен непосрественно в
+    // конструкторе дерева, без заведения переменной для нового класса.
+    var MyTreeNode = Basis.Class.create(Basis.Controls.Tree.TreeNode, {
+      titleGetter: function(node){
+        return '[{id}] {title}'.format(node.info)
+      }
+    });
+
+    // Создаем дерево
+    var myTree = new Basis.Controls.Tree.Tree({
+      // Определяем класс для дочерних узлов (описан выше)
+      childClass: MyTreeNode,
+
+      // Задаем управляющую коллекцию. Так как мы используем Entity, то нет необходимости в
+      // создании массива для хранения списка всех экземпляров данных, а так же нет необходимости
+      // отслеживать изменения в данном наборе: новые элементы будут добавляться, удаляться и
+      // изменяться по мере работы непосредственно с самими данными.
+      collection: Article.all,
+
+      // Определяем сортировку для дочерних узлов: сортируем по title.
+      localSorting: Basis.Data.getter('info.title'),
+
+      // Задаем обработчик на событие изменения выборки (Selection).
+      selection: {
+        handlers: {
+          change: function(){
+            // В данном контесте this указывает на выборку (myTree.selection).
+
+            // Назначаем делегатом формы первый выбранный элемент. Если не выбрано ни одного узла
+            // (this.items[0] равно undefined), то форма останется без делегата (по сути не будет
+            // привязана к каким либо данным).
+            myForm.setDelegate(this.items[0]);
+          }
+        }
+      }
+    });
+
+    // Создаем форму
+    var myForm = new Basis.Controls.Form.FormContent({
+      // Делаем форму недоступной для редактирования на первоначальном этапе, так как к ней еще
+      // не привязаны данные и соответственно нечего редактировать.
+      disabled: true,
+      
+      // Добавляем собственные обработчики событий.
+      handlers: {
+        // Событие смены делегата
+        delegateChanged: function(object, oldDelegate){
+          // В данном контесте this указывает на форму (myForm).
+
+          if (this.delegate)
+          {
+            // Если делегат назначен - загружаем данные в поля формы. Так как при назначении
+            // делегата объект начинает указывать на те же данные что и делегат (свойство info), мы
+            // можем оперировать с ними как будто они собственные (принадлежат форме), без обращения
+            // непосрественно к делегату. В данном случае this.info === this.delegate.info.
+            this.loadData(this.info);
+
+            // Делаем форму активной.
+            this.enable();
+          }
+          else
+          {
+            // Так как форма больше не привязана к данным - очищаем поля.
+            this.reset();
+            // Делаем форму НЕактивной.
+            this.disable();
+          }
+        }
+      },
+      
+      // Создаем поля формы.
+      // Важно, чтобы имена полей (свойство name) соотвествовали полям редактируемых данных. Только
+      // в этом случае будет обеспечена правильная работа метода myForm.loadData, а так же данные
+      // полученные путем сериализации формы (myForm.serialize()) будут "совместимы" с редактируемым
+      // типом данных и смогут быть использованы для обновления целевого (редактируемого) объекта.
+      childNodes: [
+        {
+          type: 'text',
+          name: 'title',
+          title: 'Title'
+        },
+        {
+          type: 'textarea',
+          name: 'content',
+          title: 'Content'
+        }
+      ]
+    });
+
+    // Создаем панель с кнопками
+    var myButtonPanel = new Basis.Controls.Button.ButtonPanel({
+      childNodes: [
+        {
+          // Функция сохранения
+          caption: 'Save',
+          handler: function(){
+            // Так как форма указывает на те же данные, что и редактируемый объект мы можем вызывать
+            // метод обновления самой формы (myForm.update). В случае если никакого объекта не привязано
+            // то будут обновлен собственный контейнер данных (myForm.info), что не имеет никакого 
+            // эффекта. Но так как в поведении формы мы ограничили ее доступность к редактированию, которое
+            // доступно только когда форме задан делегат, то в таком случае возможно лишь "сохранение"
+            // путого объекта
+            myForm.update(myForm.serialize());
+          }
+        },
+        {
+          // Функция отмены (сброс в начальное состояние).
+          caption: 'Cancel',
+          handler: function(){
+            // Если к форме привязаны данные (задан делегат) загружаем данные из объекта какими они были
+            // до сохранения. Опять же, так как к форме привязан делегат, то ее контейнер данных содержит
+            // данные редактируемого объекта. Если делегат не назначен (форме) то форма будет содержать
+            // пустой контейнер данных и данный метод не будет иметь эффекта.
+            myForm.loadData(myForm.info);
+          }
+        }
+      ]
+    });
+
+    // Вставляем компоненты в документ
+    Basis.DOM.insert('demo-container', [
+      myTree.element,
+      myForm.element,
+      myButtonPanel.element
+    ]);
+
+  </script>  
+</body>
+
+</html>
