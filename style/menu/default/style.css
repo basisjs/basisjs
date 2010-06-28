@@ -14,6 +14,7 @@
 
   .Basis-Menu
   {
+    margin: 10px;
     position: absolute;
     border: 1px solid #979797;
     font-size: 90%;
@@ -56,7 +57,7 @@
     background-color: rgba(210, 226, 247, .3);
     border-color: #AECFF7;
     border-color: rgba(136, 186, 247, .6);
-    box-shadow: 0 0 1px white inset;
+    box-shadow: 0px 0px 1px white inset;
       -moz-box-shadow: 0 0 1px white inset;
       -webkit-box-shadow: 0 0 1px white inset;
   }

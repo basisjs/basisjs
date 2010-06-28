@@ -9,7 +9,7 @@
 
   document.write('<style type="text/css">@import "../demo.css";@import "../../third_party/SyntaxHighlighter/styles/shCore.css";@import "../../third_party/SyntaxHighlighter/styles/shThemeDefault.css";</style>');
   document.write('shCore'.qw().map(String.format, '<script language="javascript" src="../../third_party/SyntaxHighlighter/src/{0}.js"></script>').join(''));
-  document.write('shBrushJScript shBrushCSS'.qw().map(String.format, '<script language="javascript" src="../../third_party/SyntaxHighlighter/scripts/{0}.js"></script>').join(''));
+  document.write('shBrushJScript shBrushCss'.qw().map(String.format, '<script language="javascript" src="../../third_party/SyntaxHighlighter/scripts/{0}.js"></script>').join(''));
   
   Basis.Event.onLoad(function(){
     

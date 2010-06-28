@@ -99,7 +99,7 @@
         // transport
         this.transport = new ServiceCallTransport(method, config.callback);
         this.transport.completeRequest = Object.coalesce(config.completeRequest, false);
-        this.transport.requestHeaders = { SOAPAction: (method.namespace + '/' + method) };
+        this.transport.requestHeaders = { SOAPAction: (method.namespace + (!/\/$/.test(method.namespace) ? '/' : '') + method) };
 
         this.transport.requestEnvelope = this.envelope;
         this.transport.postBody = this.envelope.element.ownerDocument;

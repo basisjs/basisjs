@@ -3015,6 +3015,9 @@
     function addHandler(node, eventType, handler, thisObject){
       node = getNode(node);
 
+      if (!node)
+        throw new Error('Event.addHandler: can\'t attach event listener to undefined');
+
       if (typeof handler != 'function')
         throw new Error('Event.addHandler: handler must be a function');
 

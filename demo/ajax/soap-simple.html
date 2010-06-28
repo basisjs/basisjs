@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: SOAP, Temperature convertor</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Vista Style" href="../../style/tree/vista/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Default Style" href="../../style/tree/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    FORM
+    {
+      border: 1px solid #CCC;
+      margin: 5px;
+      padding: 4px;
+      width: 30%;
+      float: left;
+    }
+    FORM P
+    {
+      margin: .25em;
+      color: #888;
+    }
+    FORM H2
+    {
+      background: #E0E0E0;
+      margin: -0.25em -0.25em .5em -0.25em;
+      padding: 4px;
+      font-size: 100%;
+    }
+    LABEL
+    {
+      display: block;
+    }
+    .loading
+    {
+      color: #06C;
+      font-style: italic;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style_ie.css" media="screen" />
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../ajax.js"></script>
+  <script type="text/javascript" src="../../xml.js"></script>
+  <script type="text/javascript" src="../../soap.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: SOAP, Temperature convertor</h1>
+  
+  <p id="demo-summary">
+    Simple example of Basis.SOAP
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container">
+    <form id="convertFormNative">
+      <h2>Using Basis.Ajax.Transport</h2>
+      <label>Enter a value (celsius degree):</label>
+      <input id="convertFormNative_Value" type="text" value="100.0"/>
+      <button type="submit">Convert</button>
+      <p>Press Convert button or enter</p>
+      <div id="convertFormNative_Result"></div>
+    </form>
+
+    <form id="convertFormDynamicCall">
+      <h2>Using Basis.SOAP (dynamic method call)</h2>
+      <label>Enter a value (celsius degree):</label>
+      <input id="convertFormDynamicCall_Value" type="text" value="100.0"/>
+      <button type="submit">Convert</button>
+      <p>Press Convert button or enter</p>
+      <div id="convertFormDynamicCall_Result"></div>
+    </form>
+
+    <form id="convertFormStaticCall">
+      <h2>Using Basis.SOAP (static method call)</h2>
+      <label>Enter a value (celsius degree):</label>
+      <input id="convertFormStaticCall_Value" type="text" value="100.0"/>
+      <button type="submit">Convert</button>
+      <p>Press Convert button or enter</p>
+      <div id="convertFormStaticCall_Result"></div>
+    </form>
+  </div>
+
+  <script type="text/javascript" id="demo-javascript">
+    // IMPORTANT: Host server must has url proxy for pathes starts with /w3schools_com
+    // to http://www.w3schools.com
+    // So, /w3schools_com/webservices/tempconvert.asmx should be proxed to 
+    // http://www.w3schools.com/webservices/tempconvert.asmx
+
+    var $ = Basis.DOM.get;
+    var cssClass = Basis.CSS.cssClass;
+
+    function setText(block, text){
+      block.innerHTML = text;
+    }
+
+    var RESULT_FORMAT = 'Result: {0}' + String.Entity.deg + ' C = {1}' + String.Entity.deg + ' F';
+
+    //
+    // Basis.Ajax.Transport
+    //
+
+    var nativeResult = $('convertFormNative_Result');
+    var transport = new Basis.Ajax.Transport({
+      method: 'POST',
+      url: '/w3schools_com/webservices/tempconvert.asmx',
+
+      callback: {
+        start: function(){
+          cssClass(nativeResult).add('loading');
+          setText(nativeResult, 'Converting...');
+        },
+        complete: function(){
+          cssClass(nativeResult).remove('loading');
+        },
+        failure: function(){
+          setText(nativeResult, 'Error');
+        },
+        success: function(req){
+          var data = Basis.XML.XML2Object(req.responseXML);
+          setText(nativeResult, RESULT_FORMAT.format(this.reqValue, data['soap:Envelope']['soap:Body'].CelsiusToFahrenheitResponse.CelsiusToFahrenheitResult));
+        }
+      }
+    });
+    transport.encoding = 'utf-8';
+    transport.contentType = 'text/xml';
+    transport.requestHeaders = { SOAPAction: 'http://tempuri.org/CelsiusToFahrenheit' };
+
+    $('convertFormNative').onsubmit = function(e){
+      transport.reqValue = Number($('convertFormNative_Value').value);
+      transport.postBody = 
+        '<?xml version="1.0" encoding="utf-8"?>\n<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><CelsiusToFahrenheit xmlns="http://tempuri.org/"><Celsius>' +
+        transport.reqValue +
+        '</Celsius></CelsiusToFahrenheit></soap:Body></soap:Envelope>';
+      transport.request();
+      Basis.Event.kill(e);
+    };
+
+    //
+    // Basis.SOAP (dynamic method)
+    // 
+
+    var service = new Basis.SOAP.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
+    
+    var dynCallResult = $('convertFormDynamicCall_Result');
+    $('convertFormDynamicCall').onsubmit = function(e){
+      service.call('CelsiusToFahrenheit', {
+        body: {
+          Celsius: Number($('convertFormDynamicCall_Value').value)
+        },
+        callback: {
+          start: function(){
+            cssClass(dynCallResult).add('loading');
+            setText(dynCallResult, 'Converting...');
+          },
+          complete: function(){
+            cssClass(dynCallResult).remove('loading');
+          },
+          failure: function(){
+            setText(dynCallResult, 'Error');
+          },
+          success: function(envelopeData){
+            setText(dynCallResult, RESULT_FORMAT.format(this.requestBody().Celsius, envelopeData['soap:Body'].CelsiusToFahrenheitResponse.CelsiusToFahrenheitResult));
+          }
+        }
+      });
+      Basis.Event.kill(e);
+    };
+
+    //
+    // Basis.SOAP (static method)
+    // 
+
+    var staticCallResult = $('convertFormStaticCall_Result');
+
+    var celsiusValue = new Basis.DOM.Wrapers.Property(100);
+
+    var service2 = new Basis.SOAP.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
+    var service2_method = service2.createMethodCall('CelsiusToFahrenheit', true, {
+      callback: {
+        start: function(){
+          cssClass(staticCallResult).add('loading');
+          setText(staticCallResult, 'Converting...');
+        },
+        complete: function(){
+          cssClass(staticCallResult).remove('loading');
+        },
+        failure: function(){
+          setText(staticCallResult, 'Error');
+        },
+        success: function(envelopeData){
+          setText(staticCallResult, RESULT_FORMAT.format(this.requestBody().Celsius, envelopeData['soap:Body'].CelsiusToFahrenheitResponse.CelsiusToFahrenheitResult));
+        }
+      }
+    });
+
+    $('convertFormStaticCall').onsubmit = function(e){
+      service2_method.call({
+        Celsius: Number($('convertFormStaticCall_Value').value)
+      });
+      Basis.Event.kill(e);
+    };
+    
+  </script>
+</body>
+
+</html>
