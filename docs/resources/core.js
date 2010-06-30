@@ -137,7 +137,7 @@
               };
             }
           }
-          else if (key == 'type')
+          /*else if (key == 'type')
           {
             var typ = value.match(/\{([^}]+)\}/)[1];
             var ref = map[typ];
@@ -152,7 +152,7 @@
               }
             }
             tags[key] = value;
-          }
+          }*/
           else
             tags[key] = value;
         }
