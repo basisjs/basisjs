@@ -429,6 +429,14 @@
   {
     margin: .25em 0;
   }
+  .jsDocs .description A
+  {
+    color: #06C;
+  }
+  .jsDocs .description A.doclink-namespace {
+    padding-left: 18px;
+    background: url(img/node_module.png) left center no-repeat;
+  }
   .jsDocs UL
   {
     margin: 0;
@@ -485,6 +493,24 @@
   {
     margin: 0 .6ex;
     color: black;
+  }
+  .jsDocs .linksPanel UL
+  {
+    list-style: none;
+    padding: 0;
+    margin: .75em 0;
+  }
+  .jsDocs .linksPanel LI
+  {
+    list-style: none;
+    padding: 0;
+    margin: .4em 0 .4em 8px;
+  }
+  .jsDocs .linksPanel A
+  {
+    color: #06C;
+    padding-left: 20px;
+    background: url(img/demo.png) no-repeat left center;
   }
 
   .viewJsDoc .content

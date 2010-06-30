@@ -11,7 +11,14 @@
 
   (function(){
 
-    // namespace
+   /**
+    * Interface to communicate with server SOAP service.
+    *
+    * @link ./demo/ajax/soap-simple.html
+    * @link ./demo/ajax/soap-list.html
+    *
+    * @namespace Basis.SOAP
+    */
 
     var namespace = 'Basis.SOAP';
 
@@ -52,21 +59,47 @@
     //
 
    /**
-    * @class Service
+    * @class
     */
     var Service = Class(null, {
       className: namespace + '.Service',
 
+     /**
+      * @type {string}
+      * @readonly
+      */
+      url: null,
+
+     /**
+      * @type {string}
+      * @readonly
+      */
+      namespace: null,
+
+     /**
+      * @contructor
+      */
       init: function(url, namespace){
         this.url = url;
         this.namespace = namespace;
         this.methods = new Array();
       },
+
+     /**
+      * @param {string} method
+      * @param {object} config
+      */
       call: function(method, config){
         var method = this.createMethodCall(method, false, config);
         method.transport.abort();
         method.invoke(config.header, config.body, config.callback, config.mapping);
       },
+
+     /**
+      * @param {string} method
+      * @param {object} config
+      * @return {Basis.SOAP.ServiceCall} Return new ServiceCall instance
+      */
       createMethodCall: function(method, staticData, config){
         /*if (!this.methods[method])
           this.methods[method] = new ServiceCall(this, new QName(method, this.namespace), config, staticData);
@@ -74,6 +107,10 @@
         return this.methods[method];*/
         return new ServiceCall(this, new QName(method, this.namespace), config, staticData);
       },
+
+     /**
+      * @destructor
+      */
       destroy: function(){
         for (var name in this.methods)
         {
@@ -84,11 +121,43 @@
     });
 
    /**
-    * @class ServiceCall
+    * @class
     */
     var ServiceCall = Class(null, {
       className: namespace + '.ServiceCall',
 
+     /**
+      * @type {Basis.SOAP.Service}
+      */
+      service: null,
+
+     /**
+      * @type {Basis.SOAP.ServiceCallTransport}
+      * @readonly
+      */
+      transport: null,
+
+     /**
+      * @type {Basis.XML.QName}
+      */
+      method: null,
+
+     /**
+      * Request envelope
+      * @type {Basis.SOAP.Envelope}
+      * @private
+      */
+      envelope: null,
+
+     /**
+      * Request body content
+      * @type {Object}
+      */
+      body: null,
+
+     /**
+      * @constructor
+      */
       init: function(service, method, config, staticData){
         this.service = service;
         this.method = method;
@@ -112,7 +181,7 @@
         }
       },
       repeatCall: function(){
-        this.transport.get(this.service.url);
+        this.transport.get(this.url); // this.service.url
       },
       call: function(body){
         return this.invoke(null, body || this.body);
@@ -141,9 +210,10 @@
       }
     });
 
-   /**
-    * @class ServiceCallTransport
-    */
+    //
+    // Service call transport
+    //
+
     var ServiceCallTransportBehaviour = {
       start: function(){
         /* debug for */
@@ -255,6 +325,9 @@
       }
     };
 
+   /**
+    * @class ServiceCallTransport
+    */
     var ServiceCallTransport = Class(Basis.Ajax.Transport, {
       className: namespace + '.ServiceCallTransport',
       callback: {},
@@ -359,10 +432,13 @@
       // full destroy in Transport class
     });
 
-    /*
-     *  *SOAP Envelope
-     */
+    //
+    // SOAP Envelope
+    //
 
+   /**
+    * @class
+    */
     var Envelope = Class(XMLElement, {
       className: namespace + '.Envelope',
 
@@ -467,10 +543,13 @@
       }
     });
 
-    /*
-     *  Envelope Header
-     */
+    //
+    // Envelope header
+    //
 
+   /**
+    * @class
+    */
     var EnvelopeHeader = Class(XMLElement, {
       className: namespace + '.EnvelopeHeader',
 
@@ -501,10 +580,13 @@
       }
     });
 
-    /*
-     *  Envelope Body
-     */
+    //
+    // Envelope body
+    //
 
+   /**
+    * @class
+    */
     var EnvelopeBody = Class(XMLElement, {
       className: namespace + '.EnvelopeBody',
 

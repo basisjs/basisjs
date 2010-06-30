@@ -14,6 +14,23 @@
       tags: Function.$self
     }
   });
+  var JsDocLinkEntity_UrlResolver = document.createElement('A');
+  var JsDocLinkEntity = new nsEntity.EntityType({
+    name: 'JsDocLinkEntity',
+    id: 'url',
+    fields: {
+      url: function(value){
+        if (value)
+        {
+          JsDocLinkEntity_UrlResolver.href = value.replace(/^\.\//, '../');
+          return JsDocLinkEntity_UrlResolver.href;
+        }
+        else
+          return value;
+      },
+      title: function(value){ return value != null ? String(value) : null; }
+    }
+  });
 
   awaitingForUpdate = {};
 
@@ -94,8 +111,14 @@
               };
             }
           }
-          else
-          if (/returns?/.test(key))
+          else if (key == 'link')
+          {
+            if (!tags[key])
+              tags[key] = [];
+
+            tags[key].push(value);
+          }
+          else if (/returns?/.test(key))
           {
             key = 'returns';
             if (!tags[key])
@@ -114,6 +137,22 @@
               };
             }
           }
+          else if (key == 'type')
+          {
+            var typ = value.match(/\{([^}]+)\}/)[1];
+            var ref = map[typ];
+            if (ref && ref.kind == 'class')
+            {
+              var obj = map[this.value.path];
+              var objHolder = map[this.value.path.replace(/\.prototype\.[a-z0-9\_]+$/i, '')];
+              //if (/childClass/.test(this.value.path)) debugger;
+              if (obj && obj.kind == 'property')
+              {
+                console.log(this.value.path + ': ' + objHolder.objPath + ' -' + obj.title + '-> ' + ref.objPath);
+              }
+            }
+            tags[key] = value;
+          }
           else
             tags[key] = value;
         }
@@ -121,6 +160,16 @@
       }
       return res;
     }
+  });
+
+  JsDocLinkEntity.entityType.entityClass.extend({
+    set: function(){
+      var res = this.inherit.apply(this, arguments);
+      if (res && res.key == 'url')
+      {
+        resourceLoader.addResource(this.value.url, 'link');
+      }
+    },
   });
 
   jsDocs = {};
@@ -229,7 +278,7 @@
       {
         if (obj.classMap_)
         {
-          if (window.console) console.log('>>', objPath);
+          //if (window.console) console.log('>>', objPath);
         }
         else
           obj.classMap_ = {
@@ -243,7 +292,7 @@
         {
           if (!obj.superClass_.classMap_)
           {
-            if (window.console) console.log('!', objPath);
+            //if (window.console) console.log('!', objPath);
             obj.superClass_.classMap_ = { childNodes: [obj.classMap_] };
           }
           else
@@ -325,13 +374,133 @@
     return result;
   }
 
+  var sourceKindParser = {
+    'jsdoc': function parseSource(resource){
+
+      function createJsDocEntity(source, path){
+        text = source.replace(/(^|[\r\n]+)\s*\*[\t ]*/g, '\n').trimLeft();
+        var e = JsDocEntity({
+          path: path,
+          text: text
+        });
+        jsDocs[e.value.path] = e.value.text;
+      }
+
+      var parts = resource.text.replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|[\r\n])+?)\*\/)/m);
+      var ns = '';
+      var isClass;
+      var clsPrefix = '';
+
+      parts.reduce(function(jsdoc, code, idx){
+        if (idx % 2)
+        {
+          jsdoc.push(code);
+          var m = code.match(/@namespace\s+(\S+)/);
+          if (m)
+          {
+            ns = m[1];
+            createJsDocEntity(code, ns);
+          }
+          var m = code.match(/@class/);
+          isClass = !!m;
+          if (isClass)
+            clsPrefix = '';
+        }
+        else
+          if (idx)
+          {
+            var m = code.match(/\s*(var\s+)?(function\s+)?([a-z0-9\_\$]+)/i);
+            if (m)
+            {
+                //console.log(m);
+                //console.log(ns, clsPrefix, isClass);
+              //console.log(m[1], jsdoc.last());
+              createJsDocEntity(jsdoc.last(), ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + m[3]);
+              
+              if (isClass)
+                clsPrefix = m[3];
+              else
+                if (m[1] || m[2])
+                {
+                  clsPrefix = '';
+                }
+            }
+          }
+        return jsdoc;
+      }, []);
+
+      processAwaitingJsDocs();
+    },
+    'link': function(resource){
+      var title = resource.text.match(/<title>(.+?)<\/title>/i);
+      JsDocLinkEntity({
+        title: title[1] || null,
+        url: resource.url
+      });
+      //console.log('Link loaded: ', resource.text.length);
+    }
+  };
+
+  var resourceLoader = {
+    queue: [],
+    loaded: {},
+    curResource: null,
+    urlResolver: document.createElement('A'),
+    transport: new Basis.Ajax.Transport({
+      callback: {
+        failure: function(){
+          resourceLoader.curResource.attemptCount++;
+          if (resourceLoader.curResource.attemptCount < 3)
+            resourceLoader.queue.push(resourceLoader.curResource);
+        },
+        complete: function(req){
+          var res = resourceLoader.curResource;
+          res.text = req.responseText;
+          sourceKindParser[res.kind](res);
+
+          resourceLoader.curResource = null;
+
+          setTimeout(function(){
+            resourceLoader.load();
+          }, 5);
+        }
+      }
+    }),
+    addResource: function(url, kind){
+      this.urlResolver.href = url;
+      url = this.urlResolver.href;
+      if (!this.loaded[url])
+      {
+        this.queue.push({
+          url: url,
+          kind: kind,
+          attemptCount: 0
+        });
+
+        this.load();
+      }
+    },
+    load: function(){
+      if (this.curResource)
+        return;
+
+      this.curResource = this.queue.shift();
+
+      if (this.curResource)
+        this.transport.request(this.curResource.url);
+    }
+
+  };
+
   Basis.namespace(namespace).extend({
     JsDocEntity: JsDocEntity,
+    JsDocLinkEntity: JsDocLinkEntity,
     processAwaitingJsDocs: processAwaitingJsDocs,
     walk: walk,
     getFunctionDescription: getFunctionDescription,
     getMembers: getMembers,
-    getInheritance: getInheritance
+    getInheritance: getInheritance,
+    loadResource: resourceLoader.addResource.bind(resourceLoader)
   });
 
 })();

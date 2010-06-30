@@ -351,71 +351,10 @@
   //
 
   var scripts = DOM.tag(document, 'SCRIPT').map(Data('getAttribute("src")')).filter(Data('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')); //['../basis.js', '../dom_wraper.js', '../tree.js'];
-//  console.log(DOM.tag(document, 'SCRIPT').map(Data('getAttribute("src")')).filter(Data('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')));
+  //  console.log(DOM.tag(document, 'SCRIPT').map(Data('getAttribute("src")')).filter(Data('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')));
 
-  function parseSource(code){
-    var parts = code.replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|[\r\n])+?)\*\/)/m);
-    var ns = '';
-    var isClass;
-    var clsPrefix = '';
-    parts.reduce(function(jsdoc, code, idx){
-      if (idx % 2)
-      {
-        jsdoc.push(code);
-        var m = code.match(/@namespace\s+(\S+)/);
-        if (m)
-          ns = m[1];
-        var m = code.match(/@class/);
-        isClass = !!m;
-        if (isClass)
-          clsPrefix = '';
-      }
-      else
-        if (idx)
-        {
-          var m = code.match(/\s*(var\s+)?(function\s+)?([a-z0-9\_\$]+)/i);
-          if (m)
-          {
-              //console.log(m);
-              //console.log(ns, clsPrefix, isClass);
-            //console.log(m[1], jsdoc.last());
-            var text = jsdoc.last().replace(/(^|[\r\n]+)\s*\*[\t ]*/g, '\n').trimLeft();
-            var e = nsCore.JsDocEntity({
-              path: ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + m[3],
-              text: text
-            });
-            jsDocs[e.value.path] = e.value.text;
-            
-            if (isClass)
-              clsPrefix = m[3];
-            else
-              if (m[1] || m[2])
-              {
-                clsPrefix = '';
-              }
-          }
-        }
-      return jsdoc;
-    }, []);
-    nsCore.processAwaitingJsDocs();
-  }
-
-  function sourceLoad(list){
-    var src = list.shift();
-
-    var t = new Basis.Ajax.Transport(src);
-    t.addHandler({
-      complete: function(req){
-        parseSource(req.responseText);
-        if (list.length)
-          setTimeout(function(){
-            sourceLoad(list);
-          }, 5);
-      }
-    });
-    t.get();
-  }
-
-  sourceLoad(scripts);
+  scripts.forEach(function(src){
+    nsCore.loadResource(src, 'jsdoc');
+  });
 
 })();

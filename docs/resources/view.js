@@ -511,6 +511,35 @@
     }
   });
 
+  var JsDocLinkViewItem = Class(nsWrapers.HtmlNode, {
+    template: new Template(
+      '<li{element|content} class="item">' +
+        '<a href{ref}="#" target="_blank">{titleText}</a>' +
+      '</li>'
+    ),
+    behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
+      update: function(object, newInfo){
+        if (newInfo.url)
+        {
+          this.titleText.nodeValue = newInfo.title || newInfo.url;
+          this.ref.nodeValue = newInfo.url;
+        }
+      }
+    })
+  });
+  var JsDocLinksPanel = Class(nsWrapers.HtmlNode, {
+    childClass: JsDocLinkViewItem,
+    childFactory: function(config){
+      return new this.childClass(config);
+    },
+    template: new Template(
+      '<div{element|content} class="linksPanel">' +
+        '<div class="label">Links:</div>' +
+        '<ul{childNodesElement}/>' +
+      '</div>'
+    )
+  });
+
   var JsDocView = Class(View, {
     template: new Template(
       '<div{element} class="view viewJsDoc">' +
@@ -545,26 +574,56 @@
     }
   });
 
+  var tagLabels = 'readonly private'.qw();
   var JsDocPanel = Class(nsWrapers.HtmlPanel, {
     template: new Template(
-      '<div{element|content} class="jsDocs"><p{description}>{descriptionText}</p></div>'
+      '<div{element|content} class="jsDocs"><div{description} class="description"/><div{link} class="links"/></div>'
     ),
     behaviour: new nsWrapers.createBehaviour(nsWrapers.HtmlPanel, {
       update: function(object, newInfo){
+        DOM.clear(this.content);
+
         if (newInfo.tags)
         {
-          DOM.clear(this.content);
-          var tags = [];
-          Object.iterate(Object.slice(newInfo.tags, 'readonly private'.qw()), function(key, value){
+          var tags = DOM.wrap(Object.keys(Object.slice(newInfo.tags, tagLabels)), { 'SPAN.tag': Function.$true });
+          /*Object.iterate(Object.slice(newInfo.tags, tagLabels), function(key, value){
             tags.push(DOM.createElement('SPAN.tag', key));
-          });
+          });*/
           if (tags.length)
             DOM.insert(this.content, DOM.createElement('.tags', tags));
           
           if (newInfo.tags.description != '')
           {
-            this.descriptionText.nodeValue = newInfo.tags.description;
+            if (!newInfo.tags.description_)
+            {
+              newInfo.tags.description_ = DOM.wrap(
+                newInfo.tags.description.trimRight().split(/(?:\r\n?|\n\r?){2,}/).map(function(line){
+                  var parts = line.split(/\{([a-z0-9\_\.]+)\}/i);
+                  for (var i = 1; i < parts.length; i += 2)
+                  {
+                    var descr = map[parts[i]];
+                    if (descr)
+                      parts[i] = DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), descr.title);
+                    else
+                      parts[i] = parts[i].quote('{');
+                  }
+                  return parts;
+                }),
+                { 'P': Function.$true }
+              );
+            }
+            
+            DOM.insert(DOM.clear(this.description), newInfo.tags.description_);
             DOM.insert(this.content, this.description);
+          }
+
+          if (newInfo.tags.link && newInfo.tags.link.length)
+          {
+            if (!this.linksPanel)
+              this.linksPanel = new JsDocLinksPanel();
+
+            this.linksPanel.setChildNodes(newInfo.tags.link.map(nsCore.JsDocLinkEntity));
+            DOM.insert(this.content, this.linksPanel.element);
           }
           
           if (newInfo.tags.param)
@@ -607,7 +666,7 @@
             var code;
             DOM.insert(this.content, [
               DOM.createElement('DIV.label', 'Example:'),
-              code =DOM.createElement('PRE',
+              code = DOM.createElement('PRE',
                 newInfo.tags.example
               )
             ]);
@@ -615,11 +674,22 @@
             SyntaxHighlighter.highlight({}, code);
           }
         }
-        else
-          DOM.clear(this.content);
+
         DOM.display(this.element, !!newInfo.text)
       }
-    })
+    }),
+    destroy: function(){
+      if (this.info.tags && this.info.tags.description_)
+      {
+        delete this.info.tags.description_;
+      }
+      if (this.linksPanel)
+      {
+        this.linksPanel.destroy();
+        delete this.linksPanel;
+      }
+      this.inherit();
+    }
   });
 
   //

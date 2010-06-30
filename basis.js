@@ -13,8 +13,8 @@
  * @annotation
  * Basis library core module.
  *
- * This file should be loaded first. It contains various sections and there is a short
- * overview of content:
+ * This file should be loaded first. It contains various most using sections.
+ * Overview of content:
  *   # Buildin class extensions and fixes
  *     - Object (new class members only)
  *     - Function

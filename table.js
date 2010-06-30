@@ -11,7 +11,15 @@
 
   (function(){
 
-    // namespace
+   /**
+    * Table namespace
+    *
+    * @link ./test/speed-table.html
+    * @link ./demo/various/match.html
+    * @link ./demo/various/grouping.html
+    *
+    * @namespace Basis.Controls.Table
+    */
 
     var namespace = 'Basis.Controls.Table';
 
@@ -46,7 +54,7 @@
     var HEADERCELL_CSS_SORTDESC = 'sort-order-desc';
 
    /**
-    * @class HeaderCell
+    * @class
     */
 
     var HeaderCell = Class(HtmlNode, {
@@ -102,7 +110,7 @@
     });
 
    /**
-    * @class Header
+    * @class
     */
     var Header = Class(HtmlNode, {
       className: namespace + '.Header',
@@ -221,7 +229,7 @@
     //
 
    /**
-    * @class Footer
+    * @class
     */
     var Footer = Class(HtmlNode, {
       className: namespace + '.Footer',
@@ -284,7 +292,7 @@
 
     /**
      * Base row class
-     * @class Row
+     * @class
      */
 
     var Row = Class(HtmlNode, {
@@ -361,7 +369,7 @@
     });
 
    /**
-    * @class Body
+    * @class
     */
     var Body = Class(HtmlPartitionNode, {
       className: namespace + '.Body',
@@ -382,7 +390,7 @@
     });
     
    /**
-    * @class Table
+    * @class
     */
     var Table = Class(HtmlControl, {
       className: namespace + '.Table',

@@ -551,7 +551,7 @@
             throw new Error('URL is not defined');
 
           // prepare url
-          params = Object.iterate(this.params, function(value, key){
+          params = Object.iterate(this.params, function(key, value){
             return (value == null) || (value && typeof value.toString == 'function' && value.toString() == null)
               ? null
               : key + '=' + Encode.escape(value)

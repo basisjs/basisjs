@@ -1262,7 +1262,8 @@
           ref.update(this.all.value[i]);
       },
       getEntity: function(data){
-        return this.identifiedEntity[typeof data == 'number' || typeof data == 'string' ? data : this.getId(data)];
+        if (this.idField)
+          return this.identifiedEntity[typeof data == 'number' || typeof data == 'string' ? this.fields[this.idField](data) : this.getId(data)];
       },
       createEntity: function(data){
         return new this.entityClass(data);

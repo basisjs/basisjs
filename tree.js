@@ -11,7 +11,28 @@
 
   (function(){
 
-   /** @namespace Basis.Controls.Tree */
+   /**
+    * This namespace contains {Basis.Controls.Tree.Tree} control class and it's
+    * child nodes classes. There are two base child classes for tree
+    * {Basis.Controls.Tree.TreeNode} and {Basis.Controls.Tree.TreeFolder}.
+    *
+    * The main difference between this classes is that
+    * {Basis.Controls.Tree.TreeNode} has abstact expand/collapse methods and
+    * can't be collapsed/expanded, but {Basis.Controls.Tree.TreeFolder} can.
+    *
+    * Also this namespace has two additional classes for child nodes grouping
+    * {Basis.Controls.Tree.TreeGroupControl} and
+    * {Basis.Controls.Tree.TreePartitionNode}.
+    *
+    * Most part of component logic implemented in {Basis.DOM.Wrapers} namespace,
+    * and this one just contains templates and collapse/expand implementation.
+    *
+    * @link ./test/speed-tree.html
+    * @link ./demo/simple/tree.html
+    * @link ./demo/entity/basic.html
+    *
+    * @namespace Basis.Controls.Tree
+    */
 
     var namespace = 'Basis.Controls.Tree';
     
@@ -63,8 +84,9 @@
     });
 
    /**
-    * @class TreeNode
-    * @extends Basis.DOM.Wrapers.HtmlNode
+    * Base child class for {Basis.Controls.Tree.Tree}
+    * @class
+    * @extends {Basis.DOM.Wrapers.HtmlNode}
     */
     var TreeNode = Class(nsWrapers.HtmlNode, {
       className: namespace + '.TreeNode',
@@ -112,12 +134,12 @@
       ),
 
      /**
-      * @property {Boolean} altTitle
+      * @property {boolean} altTitle
       */
       altTitle: true,
 
      /**
-      * @property {Function} titleGetter
+      * @property {function()} titleGetter
       */
       titleGetter: Data('info.title'),
 
@@ -129,13 +151,13 @@
       collapse: Function.$undef,
       collapseAll: collapseAll
 
-      /* no custom destructor actions */
+      /* no custom destructor */
 
     });
 
    /**
-    * @class TreeFolder
-    * @extends TreeNode
+    * @class
+    * @extends {Basis.Controls.Tree.TreeNode}
     */
     var TreeFolder = Class(TreeNode, {
       className: namespace + '.TreeFolder',
@@ -164,7 +186,7 @@
 
      /**
       * Template for node element. 
-      * @property {HtmlTemplate} template
+      * @property {Basis.Html.Template} template
       * @private
       */
       template: new Template(
@@ -178,20 +200,21 @@
       ),
 
      /**
-      * @property {Boolean} canCollapse
+      * @property {boolean} canCollapse
       */
       canCollapse: true,
 
      /**
-      * @property {Boolean} collapsed
+      * @property {boolean} collapsed
       */
       collapsed: false,
 
      /**
-      * @method init
       * @param {Object} config
-      * @returns {Object} Returns a config.
-      * @constructs
+      * @config {boolean} canCollapse
+      * @config {boolean} collapsed
+      * @return {Object} Returns a config.
+      * @constructor
       */
       init: function(config){
         config = this.inherit(config);
@@ -213,7 +236,7 @@
 
      /**
       * Makes child nodes visible.
-      * @returns {boolean} Returns true if node was expanded.
+      * @return {boolean} Returns true if node was expanded.
       */
       expand: function(){
         if (this.collapsed)
@@ -226,7 +249,7 @@
 
      /**
       * Makes child nodes invisible.
-      * @returns {boolean} Returns true if node was collpased.
+      * @return {boolean} Returns true if node was collpased.
       */
       collapse: function(){
         if (!this.collapsed && this.canCollapse)
@@ -244,13 +267,13 @@
         this.collapsed ? this.expand() : this.collapse();
       } 
 
-      /* no custom destructor actions */
+      /* no custom destructor */
 
     });
 
    /**
-    * @class Tree
-    * @extends Basis.DOM.Wrapers.Control
+    * @class
+    * @extends {Basis.DOM.Wrapers.Control}
     */
     var Tree = Class(nsWrapers.Control, {
       className: namespace + '.Tree',
@@ -259,13 +282,8 @@
       groupControlClass: TreeGroupControl,
 
      /**
-      * @property {Function} childFactory
-      */
-      //childFactory: Function.$null,
-
-     /**
       * Template for node element. 
-      * @property {HtmlTemplate} template
+      * @property {Basis.Html.Template} template
       * @private
       */
       template: new Template(
@@ -275,10 +293,10 @@
       ),
 
      /**
-      * @method init
       * @param {Object} config
-      * @returns {Object} Returns a config.
-      * @constructs
+      * @config {function()} childClass
+      * @return {Object} Returns a config.
+      * @constructor
       */
       init: function(config){
         if (config instanceof Object)
@@ -309,7 +327,7 @@
       */
       collapseAll: collapseAll
 
-      /* no custom destructor actions */
+      /* no custom destructor */
 
     });
 

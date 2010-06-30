@@ -28,24 +28,23 @@
     var cssClass = Basis.CSS.cssClass;
     var extend = Object.extend;
     var complete = Object.complete;
+    var slice = Array.prototype.slice;
 
     //
     // Main part
     //
 
-   /**
-    * Module exceptions
-    */
-    var EXCEPTION_DATAOBJECT_REQUIRED = namespace + ': Instance of DataObject required';
-    var EXCEPTION_BAD_OBJECT_LINK = namespace + ': Link to undefined object ignored';
-    var EXCEPTION_CANT_INSERT = namespace + ': Node can\'t be inserted at specified point in hierarchy';
-    var EXCEPTION_NODE_NOT_FOUND = namespace + ': Node was not found';
-    var EXCEPTION_BAD_CHILD_CLASS = namespace + ': Child node has wrong class';
-    var EXCEPTION_NULL_CHILD = namespace + ': Child node is null';
+    // Module exceptions
 
-   /**
-    * States for DataObject
-    */
+    /** @const */ var EXCEPTION_DATAOBJECT_REQUIRED = namespace + ': Instance of DataObject required';
+    /** @const */ var EXCEPTION_BAD_OBJECT_LINK = namespace + ': Link to undefined object ignored';
+    /** @const */ var EXCEPTION_CANT_INSERT = namespace + ': Node can\'t be inserted at specified point in hierarchy';
+    /** @const */ var EXCEPTION_NODE_NOT_FOUND = namespace + ': Node was not found';
+    /** @const */ var EXCEPTION_BAD_CHILD_CLASS = namespace + ': Child node has wrong class';
+    /** @const */ var EXCEPTION_NULL_CHILD = namespace + ': Child node is null';
+
+    // States for DataObject
+
     /** @const */ var STATE_UNDEFINED = 'undefined';
     /** @const */ var STATE_READY = 'ready';
     /** @const */ var STATE_PROCESSING = 'processing';
@@ -69,7 +68,6 @@
     var HTML_EVENT_OBJECT_ID_HOLDER = 'basisEventObjectId';
     var eventObjects = new Array();
     var eventObjectId = 1;
-    var slice = Array.prototype.slice;
 
    /**
     * Base class for event dispacthing. It provides model when it's instance
@@ -3359,7 +3357,9 @@
     }
 
    /**
-    * @class Selection
+    * @link ./demo/selection/share.html
+    * @link ./demo/selection/multiple.html
+    * @class
     */
     var Selection = Class(EventObject, {
       className: namespace + '.Selection',
