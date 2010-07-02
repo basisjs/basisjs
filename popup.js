@@ -241,9 +241,6 @@
         if (config.relElement)
           this.relElement = DOM.get(config.relElement);
 
-        //if (config.handlers)
-        //  this.addHandler(config.handlers);
-
         if (config.thread)
         {
           this.thread = config.thread;

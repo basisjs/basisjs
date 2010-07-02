@@ -1017,13 +1017,13 @@
             {
               name: 'ltrim()',
               test: function(){
-                this.is('x \n ', ' \n x \n '.ltrim());
+                this.is('x \n ', ' \n x \n '.trimLeft());
               }
             },
             {
               name: 'rtrim()',
               test: function(){
-                this.is(' \n x', ' \n x \n '.rtrim());
+                this.is(' \n x', ' \n x \n '.trimRight());
               }
             },
             {

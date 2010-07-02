@@ -125,9 +125,9 @@
       // Constructor
       //
       init: function(config){
-        this.inherit();
+        this.inherit(config);
 
-        if (config)
+        if (typeof config == 'object')
         {
           var props = ['fixLeft', 'fixRight', 'fixTop', 'fixBottom', 'axisX', 'axisY'];
           for (var i = 0; i < props.length; i++)
@@ -144,9 +144,6 @@
 
           this.setElement(config.element, config.trigger);
           this.setBase(config.baseElement);
-
-          if (config.handlers)
-            this.addHandler(config.handlers);
         }
 
         Basis.Cleaner.add(this);

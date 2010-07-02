@@ -104,11 +104,28 @@
       handlers_: [],
 
      /**
+      * @param {Object} config
+      * @config {Object} handlers Event handler set.
+      * @config {Object} thisObject Context for event handler set (handlers).
+      * @config {boolean} traceEvents_ Debug for.
       * @constructor
       */
-      init: function(){
+      init: function(config){
         this.handlers_ = new Array();
         eventObjects[this.eventObjectId = eventObjectId++] = this;
+
+        if (typeof config == 'object')
+        {
+          ;;;if ((config && config.traceEvents_) || this.traceEvents_) this.handlers_.push({ handler: { any: function(){ console.log(this, arguments) } }, thisObject: this });
+
+          if (config.handlers)
+            this.handlers_.push({
+              handler: config.handlers,
+              thisObject: config.thisObject || this
+            });
+        }
+
+        return config;
       },
 
      /**
@@ -328,31 +345,22 @@
 
      /**
       * @param {Object=} config The configuration of object.
-      * @config {Object} handlers
-      * @config {Basis.DOM.Wrapers.DataObject|Object} info
-      * @config {boolean} cascadeDestroy
-      * @config {boolean} autoDelegateParent
-      * @config {boolean} traceEvents_ Debug for.
+      * @config {Basis.DOM.Wrapers.DataObject|Object} info Initial data. If Basis.DOM.Wrapers.DataObject instance passed it became a delegate to the new object.
+      * @config {boolean} cascadeDestroy Override prototype's cascaseDestroy property.
+      * @config {boolean} autoDelegateParent Override prototype's cascaseDestroy property.
       * @return {Object}
       * @constructor
       */
       init: function(config){
-        this.inherit();
+        this.inherit(config);
 
         // ovveride class members for object members
         this.info = {};
         this.updateCount = 0;
 
-        // debug for
-        ;;;if ((config && config.traceEvents_) || this.traceEvents_) this.addHandler({ any: function(){ console.log(this, arguments) } });
-
         // fetch settings from config if possible
         if (typeof config == 'object')
         {
-          // attach event handlers
-          if (config.handlers)
-            this.addHandler(config.handlers);
-
           // attach
           if ('info' in config)
           {
@@ -580,8 +588,8 @@
 
      /**
       * @param {Object} initValue Initial value for object.
-      * @param {Object} handlers
-      * @param {function()} proxy
+      * @param {Object=} handlers
+      * @param {function()=} proxy
       * @constructor
       */
       init: function(initValue, handlers, proxy){
@@ -1390,13 +1398,13 @@
 
      /**
       * @param {Object} config
-      * @config {function()|string} localSorting
-      * @config {boolean} localSortingDesc
+      * @config {function()|string} localSorting Initial local sorting function.
+      * @config {boolean} localSortingDesc Initial local sorting order.
       * @config {Basis.DOM.Wrapers.AbstractNode} document
-      * @config {boolean} positionDependent
-      * @config {Object} localGrouping
-      * @config {Basis.DOM.Wrapers.DataObject} collection
-      * @config {Array} childNodes
+      * @config {boolean} positionDependent Override prototype's positionDependent property.
+      * @config {Object} localGrouping Initial config for local grouping.
+      * @config {Basis.DOM.Wrapers.DataObject} collection Sets collection for object.
+      * @config {Array} childNodes Initial child node set.
       * @return {Object} Returns a config. 
       * @constructor
       */
@@ -1552,16 +1560,26 @@
     });
 
    /**
-    * @class PartitionNode
-    * @extend AbstractNode
+    * @class
     */
     var PartitionNode = Class(AbstractNode, {
       className: namespace + '.PartitionNode',
       canHaveChildren: true,
 
       titleGetter: Data('info.title'),
+
+     /**
+      * Destroy object if it doesn't contain any children (became empty).
+      * @type {boolean}
+      */
       emptyAutoDestroy: true,
 
+     /**
+      * @param {Object} config
+      * @config {boolean} emptyAutoDestroy Override prototype value for emptyAutoDestroy property.
+      * @config {function()} titleGetter
+      * @constructor
+      */
       init: function(config){
         config = this.inherit(config);
 
@@ -1575,12 +1593,17 @@
       },
 
       setTitleGetter: function(titleGetter){
-        this.titleGetter = Data(titleGetter);
-        this.updateTitle();
-      },
-      updateTitle: function(){
+        var getter = Data(titleGetter);
+        if (this.titleGetter !== getter)
+        {
+          this.titleGetter = Data(titleGetter);
+          this.dispatch('update', this, this.info, this.info, {});
+        }
       },
 
+     /**
+      * @inheritDoc
+      */
       appendChild: function(newChild){
         return this.insertBefore(newChild);
       },
@@ -1685,10 +1708,10 @@
 
      /**
       * @param {Object} config
-      * @config {Basis.DOM.Wrapers.Selection} selection
-      * @config {boolean} selectable
-      * @config {boolean} selected
-      * @config {boolean} disabled
+      * @config {Basis.DOM.Wrapers.Selection} selection Set Selection control for child nodes.
+      * @config {boolean} selectable Initial value for selectable property.
+      * @config {boolean} selected Initial value for selected property. If true 'select' event will fired.
+      * @config {boolean} disabled Initial value for disabled property. If true 'disable' event will fired.
       * @constructor
       */
       init: function(config){
@@ -2793,7 +2816,7 @@
 
      /**
       * @param {Object} config
-      * @config {function()} childFactory
+      * @config {function()} childFactory Override prototype's childFactory property.
       */
       init: function(config){
         if (config && typeof config.childFactory == 'function')
@@ -2938,10 +2961,10 @@
 
      /**
       * @param {Object} config
-      * @config {Basis.Html.Template} template
-      * @config {Object} cssClassName
-      * @config {Node} container
-      * @config {string} id
+      * @config {Basis.Html.Template} template Override prototype's template with custom template.
+      * @config {Object|string} cssClassName Set of CSS classes for parts of HTML structure.
+      * @config {Node} container Specify HTML element that will be a container of root HTML element (node.element).
+      * @config {string} id Id for root HTML element (node.element).
       * @constructor
       */
       init: function(config){
@@ -2992,6 +3015,10 @@
         
         return config;
       },
+
+     /**
+      * @inheritDoc
+      */
       insertBefore: function(newChild, refChild){
         if (newChild = this.inherit(newChild, refChild))
         { 
@@ -3138,23 +3165,14 @@
       ),
 
       behaviour: createBehaviour(PartitionNode, {
-        update: function(){
-          this.inherit.apply(this, arguments);
-          this.updateTitle();
+        update: function(object, newInfo, oldInfo, delta){
+          this.inherit(object, newInfo, oldInfo, delta);
+
+          if (this.titleText)
+            this.titleText.nodeValue = this.titleGetter(this);
         }
       }),
 
-      init: function(config){
-        config = this.inherit(config);
-
-        this.updateTitle();
-
-        return config;
-      },
-      updateTitle: function(){
-        if (this.titleText)
-          this.titleText.nodeValue = this.titleGetter(this);
-      },
       clear: PartitionNode.prototype.clear
     });
 
@@ -3366,30 +3384,32 @@
 
      /**
       * Could selection store more than one node or not.
-      * @type {Boolean}
+      * @type {boolean}
       * @readonly
       */
       multiple: false,
 
      /**
       * Indicate that this selection not able to add new nodes to node list.
-      * @type {Boolean}
+      * @type {boolean}
       * @readonly
       */
       disabled: false,
 
      /**
       * A node list.
-      * @type {[InteractiveNode]}
+      * @type {Array.<Basis.DOM.Wrapers.InteractiveNode>}
       * @readonly
       */
       items: [],
 
-      //
-      // constructor
-      //
+     /**
+      * @param {Object} config
+      * @config {boolean} multiple Set multiple mode for selection (more than one node cen be selected).
+      * @constructor
+      */
       init: function(config){
-        this.inherit();
+        this.inherit(config);
 
         this.items = new Array();
 
@@ -3397,13 +3417,18 @@
         {
           if (config.multiple)
             this.multiple = !!config.multiple;
-
-          if (config.handlers)
-            this.addHandler(config.handlers, config.thisObject);
         }
 
         Cleaner.add(this);
       },
+
+     /**
+      * Method that add new node to selection. Adding node must be selectable and isn't disabled.
+      * Otherwise nothing happens. If node has already selected than nothing happens.
+      * @param {Basis.DOM.Wrapers.InteractiveNode} node Node that will be added to selection items.
+      * @param {boolean} multiple Determine addiction mode.
+      * @return {Basis.DOM.Wrapers.InteractiveNode} Returns added node.
+      */
       add: function(node, multiple){
         if (!this.disabled && node instanceof InteractiveNode && node.selectable && !node.isDisabled())
         {
@@ -3442,6 +3467,11 @@
           return node;
         }
       },
+
+     /**
+      * @param {Basis.DOM.Wrapers.InteractiveNode} node Node that will be removed from selection items.
+      * @return {Basis.DOM.Wrapers.InteractiveNode} Returns removed node.
+      */
       remove: function(node){
         if (node instanceof InteractiveNode)
         {
@@ -3460,9 +3490,18 @@
           }
         }
       },
+     /**
+      * @param {Basis.DOM.Wrapers.InteractiveNode} node Node that will be removed from selection items.
+      * @return {boolean} Returns true if node in selection.
+      */
       has: function(node){
         return this.items.has(node);
       },
+
+     /**
+      * Removes all nodes from selection.
+      * @param {boolean} silent If true no event fires.
+      */
       clear: function(silent){
         this.items.forEach(function(node){
           node.selected = false;
@@ -3475,9 +3514,9 @@
           prepareSelectionForUpdate.call(this);
       },
 
-      //
-      // destructor
-      //
+     /**
+      * @destructor
+      */
       destroy: function(){
         // clear items
         this.clear(true);

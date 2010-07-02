@@ -189,9 +189,6 @@
           this.setDefaultValue();
         }
 
-        if (config.handlers)
-          this.addHandler(config.handlers);
-
         return config;
       },
       setReadOnly: function(readOnly){

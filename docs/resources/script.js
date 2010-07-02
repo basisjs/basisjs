@@ -334,7 +334,13 @@
     if (sender && sender.hash != '')
       navTree.open(sender.hash, DOM.parentOf(navTree.element, sender));
 
-    DOM.focus(searchInput.field, true);
+    //DOM.focus(searchInput.field, true);
+  });
+  var searchInputFocused = false;
+  Event.addHandler(searchInput.field, 'focus', function(){ searchInputFocused = true; });
+  Event.addHandler(searchInput.field, 'blur', function(){ searchInputFocused = false; });
+  Event.addGlobalHandler('keydown', function(e){
+    DOM.focus(searchInput.field, !searchInputFocused);
   });
 
   function checkLocation(){

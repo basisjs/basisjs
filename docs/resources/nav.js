@@ -152,7 +152,7 @@
 
   var docClass = Class.create(baseTreeFolder, {
     nodeType: 'Class',
-    views: [nsView.viewInheritance, nsView.viewTemplate, nsView.viewConfig, nsView.viewPrototype],
+    views: [nsView.viewInheritance, nsView.viewTemplate, nsView.viewConstructor, nsView.viewConfig, nsView.viewPrototype],
     childFactory: function(config){
       var childClass = kindNodeClass[config.info.kind];
       return new childClass(config);

@@ -27,7 +27,7 @@
   }
 
   var ViewOption = Class(nsWrapers.HtmlNode, {
-    template: new Template('<a{element} href="#">{titleText}</a>'),
+    template: new Template('<span{element} class="option">{titleText}</span>'),
     init: function(config){
       config = this.inherit(config);
 
@@ -255,7 +255,7 @@
       update: function(object, newInfo){
         var pathPart = newInfo.objPath.split(/\./);
         this.classNameText.nodeValue = pathPart.pop();
-        this.namespaceText.nodeValue = pathPart.join('.');
+        this.namespaceText.nodeValue = this.info.namespace || pathPart.join('.');
 
         this.ref.nodeValue = '#' + newInfo.objPath;
         
@@ -269,6 +269,24 @@
 
   var ViewInheritance = Class(ViewList, {
     childClass: InheritanceItem,
+    groupControlClass: Class(ViewList.prototype.groupControlClass, {
+      childClass: Class(ViewList.prototype.groupControlClass.prototype.childClass, {
+        behaviour: nsWrapers.createBehaviour(ViewList.prototype.groupControlClass.prototype.childClass, {
+          update: function(object, newInfo, oldInfo, delta){
+            this.inherit(object, newInfo, oldInfo, delta);
+            this.hrefAttr.nodeValue = '#' + newInfo.title;
+          }
+        }),
+        template: new Template(
+          '<div{element} class="Basis-PartitionNode">' +
+            '<div class="Basis-PartitionNode-Title">' +
+              '<a href{hrefAttr}="#">{titleText}</a>' +
+            '</div>' +
+            '<div{childNodesElement|content} class="Basis-PartitionNode-Content"/>' +
+          '</div>'
+        )
+      })
+    }),
     template: new Template(
       '<div{element} class="view viewInheritance">' +
         htmlHeader('Inheritance') +
@@ -280,18 +298,22 @@
 
       var view = this;
       this.viewOptions = new ViewOptions({
-        title: 'Show',
+        title: 'Group by',
         childNodes: [
           {
+            title: 'Namespace',
             selected: true,
-            title: 'Name only',
             handler: function(){
+              view.setLocalGrouping({
+                groupGetter: Data('info.classInfo.namespace || "Basis"')
+              });
               cssClass(view.content).remove('show-namespace');
             }
           },
           {
-            title: 'With namespace',
+            title: 'None',
             handler: function(){
+              view.setLocalGrouping();
               cssClass(view.content).add('show-namespace');
             }
           }
@@ -321,16 +343,23 @@
       update: function(object, newInfo){
         if (newInfo.tags && newInfo.tags.config)
         {
-          var typ = newInfo.tags.config[this.propName];
-          if (typ)
-            DOM.insert(this.content, DOM.createElement('SPAN.types', DOM.createElement('SPAN.splitter', ':'),
-              DOM.wrap(typ.type.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })
-            ));
+          var descr = newInfo.tags.config[this.propName];
+          if (descr)
+          {
+            DOM.insert(this.content,
+              DOM.createElement('SPAN.types', DOM.createElement('SPAN.splitter', ':'),
+                DOM.wrap(descr.type.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })
+              )
+            );
+            if (descr.description)
+              DOM.insert(this.element, DOM.createElement('P', descr.description))
+          }
         }
       }
     }),
     init: function(config){
       this.propName = config.propName;
+      this.context = config.context;
       this.inherit(config);
       this.nameText.nodeValue = this.propName;
     }
@@ -339,7 +368,28 @@
   var viewConfigRegExp = /config\.(?:([a-z0-9\_\$]+)|\[(\'\")([a-z0-9\_\$]+)\2\])/gi;
   var ViewConfig = Class(ViewList, {
     childClass: ConfigItem,
-    localSorting: Data('info.name'),
+    localSorting: Data('propName'),
+    groupControlClass: Class(ViewList.prototype.groupControlClass, {
+      childClass: Class(ViewList.prototype.groupControlClass.prototype.childClass, {
+        behaviour: nsWrapers.createBehaviour(ViewList.prototype.groupControlClass.prototype.childClass, {
+          update: function(object, newInfo, oldInfo, delta){
+            var parts = newInfo.path.split(/\./);
+            parts.pop();
+            parts.pop();
+            this.hrefAttr.nodeValue = '#' + parts.join('.');
+            this.titleText.nodeValue = parts.pop();
+          }
+        }),
+        template: new Template(
+          '<div{element} class="Basis-PartitionNode">' +
+            '<div class="Basis-PartitionNode-Title">' +
+              '<a href{hrefAttr}="#">{titleText}</a>' +
+            '</div>' +
+            '<div{childNodesElement|content} class="Basis-PartitionNode-Content"/>' +
+          '</div>'
+        )
+      })
+    }),
     template: new Template(
       '<div{element} class="view viewConfig">' +
         htmlHeader('Config') +
@@ -351,15 +401,18 @@
         var path = newInfo.objPath;
         if (newInfo.objPath && map[path].obj.prototype.init)
         {
-          var list = nsCore.getInheritance(map[path].obj);
+          var list = nsCore.getInheritance(map[path].obj).reverse();
           var items = {};
 
+          this.groupOrder = {};
           for (var i = 0; i < list.length; i++)
           {
             var path = list[i].obj.className + '.prototype.init';
-            var jsDoc = nsCore.JsDocEntity.get(path)
+            var jsDoc = nsCore.JsDocEntity(path);
+            /*var jsDoc = nsCore.JsDocEntity.get(path)
             if (!jsDoc)
-              jsDoc = nsCore.JsDocEntity({ path: path, text: '-' });
+              jsDoc = nsCore.JsDocEntity({ path: path, text: ' ' });*/
+            this.groupOrder[path] = i;
 
             var code = String(list[i].obj.prototype.init).replace(/\/\*(.|[\r\n])+?\*\/|\/\/.+/g, '');
             var m;
@@ -368,7 +421,8 @@
               var name = m[1] || m[3];
               items[name] = {
                 propName: name,
-                info: jsDoc || {}
+                info: jsDoc,
+                context: list[i].obj
               };
             }
           }
@@ -380,14 +434,56 @@
         else
           DOM.display(this.element, false);
       }
-    })
+    }),
+    init: function(config){
+      config = this.inherit(config);
+
+      var view = this;
+      this.viewOptions = new ViewOptions({
+        title: 'Group by',
+        childNodes: [
+          {
+            selected: true,
+            title: 'Inheritance',
+            handler: function(){
+              view.setLocalGrouping({
+                groupGetter: Data('delegate'),
+                localSortingDesc: true,
+                localSorting: function(group){
+                  var groupControl = group.parentNode || this;
+                  return groupControl.document.groupOrder[group.info.path];
+                }
+              });
+            }
+          },
+          {
+            title: 'None',
+            handler: function(){
+              view.setLocalGrouping();
+            }
+          }
+        ]
+      });
+      DOM.insert(this.element, this.viewOptions.element, 1);
+
+      this.jsdocPanel = new JsDocPanel();
+
+      return config;
+    },
+    destroy: function(){
+      this.jsdocPanel.destroy();
+      delete this.jsdocPanel;
+      this.viewOptions.destroy();
+      delete this.viewOptions;
+      this.inherit();
+    }
   });
 
   var PrototypeItem = Class(nsWrapers.HtmlNode, {
     template: new Template(
       '<div{element} class="item property">' +
         '<div{content} class="title"><a href{ref}="#">{titleText}</a></div>' +
-        '<div{jsDocContent}/>' +
+        '<a{trigger} href="#" class="trigger">...</a>' +
       '</div>'
     ),
     behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
@@ -396,7 +492,7 @@
         {
           this.titleText.nodeValue = newInfo.title;
           this.ref.nodeValue = '#' + newInfo.objPath;
-          this.jsDocPanel.setDelegate(a = nsCore.JsDocEntity(newInfo.objPath));
+          this.jsDocPanel.setDelegate(nsCore.JsDocEntity(newInfo.objPath));
         }
       }
     }),
@@ -406,6 +502,7 @@
         update: function(object, newInfo){
           if (newInfo.tags)
           {
+            cssClass(this.element).add('hasJsDoc');
             var type = newInfo.tags.type || (newInfo.tags.returns && newInfo.tags.returns.type);
             if (type)
             {
@@ -422,7 +519,7 @@
       }, this)
       config = this.inherit(config);
 
-      DOM.insert(this.jsDocContent, this.jsDocPanel.element)
+      DOM.insert(this.element, this.jsDocPanel.element)
 
       return config;
     },
@@ -435,11 +532,11 @@
   
   var PrototypeMethod = Class(PrototypeItem, {
     template: new Template(
-      '<div{element} class="item method">' +
+      '<div{element} class="item method collapsed">' +
         '<div{content} class="title">' +
           '<a href{ref}="#">{titleText}</a><span class="args">({argsText})</span>' +
         '</div>' +
-        '<div{jsDocContent}/>' +
+        '<a{trigger} href="#" class="trigger">...</a>' +
       '</div>'
     ),
     behaviour: nsWrapers.createBehaviour(PrototypeItem, {
@@ -462,8 +559,16 @@
         '<div{content|childNodesElement} class="content"></div>' +
       '</div>'
     ),
+    behaviour: nsWrapers.createBehaviour(ViewList, {
+      click: function(event, node){
+        if (node && Event.sender(event).className == 'trigger')
+          cssClass(node.element).remove('collapsed');
+      }
+    }),
     init: function(config){
       config = this.inherit(config);
+
+      this.document = this;
 
       var view = this;
       this.viewOptions = new ViewOptions({
@@ -473,6 +578,7 @@
             selected: true,
             title: 'Type',
             handler: function(){
+              cssClass(view.content).remove('classGrouping');
               view.setLocalGrouping({
                 groupGetter: Data('info.kind'),
                 titleGetter: Data('info.id', { property: 'Properties', method: 'Methods' }),
@@ -485,6 +591,7 @@
           {
             title: 'Implementation',
             handler: function(){
+              cssClass(view.content).add('classGrouping');
               view.setLocalGrouping({
                 groupGetter: function(node){
                   return node.info.implementationClass;
@@ -501,6 +608,8 @@
 
       DOM.insert(this.element, this.viewOptions.element, 1);
 
+      this.addEventListener('click');
+
       return config;
     },
     destroy: function(){
@@ -514,7 +623,7 @@
   var JsDocLinkViewItem = Class(nsWrapers.HtmlNode, {
     template: new Template(
       '<li{element|content} class="item">' +
-        '<a href{ref}="#" target="_blank">{titleText}</a>' +
+        '<a href{href}="#" target="_blank">{titleText}</a>' +
       '</li>'
     ),
     behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
@@ -522,7 +631,7 @@
         if (newInfo.url)
         {
           this.titleText.nodeValue = newInfo.title || newInfo.url;
-          this.ref.nodeValue = newInfo.url;
+          this.href.nodeValue = newInfo.url;
         }
       }
     })
@@ -543,7 +652,7 @@
   var JsDocView = Class(View, {
     template: new Template(
       '<div{element} class="view viewJsDoc">' +
-        htmlHeader('jsDoc') +
+        htmlHeader('Description') +
         '<div{content} class="content"></div>' +
       '</div>'
     ),
@@ -574,6 +683,32 @@
     }
   });
 
+  var JsDocConstructorView = Class(JsDocView, {
+    template: new Template(
+      '<div{element} class="view viewJsDoc">' +
+        htmlHeader('Constructor') +
+        '<div{content} class="content"></div>' +
+      '</div>'
+    ),
+    behaviour: nsWrapers.createBehaviour(View, {
+      delegateChanged: function(){
+        if (this.delegate)
+        {
+          var path = this.delegate.info.objPath + '.prototype.init';
+          var jsDoc = nsCore.JsDocEntity(path)
+          this.contentPanel.setDelegate(jsDoc);
+        }
+      }
+    }),
+    init: function(config){
+      config = this.inherit(config);
+
+      this.configPanel
+
+      return config;
+    }
+  });
+
   var tagLabels = 'readonly private'.qw();
   var JsDocPanel = Class(nsWrapers.HtmlPanel, {
     template: new Template(
@@ -592,7 +727,7 @@
           if (tags.length)
             DOM.insert(this.content, DOM.createElement('.tags', tags));
           
-          if (newInfo.tags.description != '')
+          if (newInfo.tags.description)
           {
             if (!newInfo.tags.description_)
             {
@@ -714,6 +849,7 @@
   });
 
   var viewJsDoc = new JsDocView();
+  var viewConstructor = new JsDocConstructorView();
 
   var viewSourceCode = new View({
     template: new Template(
@@ -748,8 +884,9 @@
         
         var cursor = this;
         for (var i = 0, item; item = list[i]; i++)
-          cursor = cursor.appendChild({
+          /*cursor = */cursor.appendChild({
             info: {
+              classInfo: map[item.cls.className],
               objPath: item.cls.className,
               present: item.present,
               tag: item.tag
@@ -793,6 +930,7 @@
 
     viewTitle: viewTitle,
     viewJsDoc: viewJsDoc,
+    viewConstructor: viewConstructor,
     viewSourceCode: viewSourceCode,
     viewTemplate: viewTemplate,
     viewInheritance: viewInheritance,

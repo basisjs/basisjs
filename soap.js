@@ -12,7 +12,7 @@
   (function(){
 
    /**
-    * Interface to communicate with server SOAP service.
+    * Interface for communication with SOAP services.
     *
     * @link ./demo/ajax/soap-simple.html
     * @link ./demo/ajax/soap-list.html

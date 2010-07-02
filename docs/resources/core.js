@@ -11,6 +11,7 @@
     fields: {
       path: String,
       text: String,
+      context: String,
       tags: Function.$self
     }
   });
@@ -74,7 +75,7 @@
         var objPath = this.value.path;
         var objInfo = map[objPath];
 
-        if (/class|property|method/.test(objInfo.kind))
+        if (objInfo && /class|property|method/.test(objInfo.kind))
         {
           if (!fetchInheritedJsDocs(objPath, this))
           {
@@ -156,7 +157,12 @@
           else
             tags[key] = value;
         }
-        this.set('tags', tags);
+
+        delete tags.inheritDoc;
+        if (tags.description.trim() == '')
+          delete tags.description;
+
+        this.set('tags', Object.keys(tags).length ? tags : null);
       }
       return res;
     }
@@ -183,7 +189,7 @@
   rootClasses = {};
 
   cnt = 0;
-  function walk(scope, path, context, d){
+  function walk(scope, path, context, d, ns){
     if (d > 8)
       return window.console && console.log(path);
 
@@ -196,7 +202,6 @@
       var lastChar = key.charAt(key.length - 1);
       if (lastChar == '_')
         continue;
-
 
       var obj = scope[key];
       
@@ -276,6 +281,8 @@
 
       if (kind == 'class')
       {
+        info.namespace = ns;
+
         if (obj.classMap_)
         {
           //if (window.console) console.log('>>', objPath);
@@ -287,39 +294,39 @@
 
         if (!obj.classMap_.info)
         {
-        obj.classMap_.info = { path: objPath, title: objPath, obj: obj };
-        if (obj.superClass_)
-        {
-          if (!obj.superClass_.classMap_)
+          obj.classMap_.info = { path: objPath, title: objPath, obj: obj };
+          if (obj.superClass_)
           {
-            //if (window.console) console.log('!', objPath);
-            obj.superClass_.classMap_ = { childNodes: [obj.classMap_] };
+            if (!obj.superClass_.classMap_)
+            {
+              //if (window.console) console.log('!', objPath);
+              obj.superClass_.classMap_ = { childNodes: [obj.classMap_] };
+            }
+            else
+            {
+              obj.superClass_.classMap_.childNodes.push(obj.classMap_);
+            }
           }
           else
-          {
-            obj.superClass_.classMap_.childNodes.push(obj.classMap_);
-          }
-        }
-        else
-          rootClasses[objPath] = obj;
-        asd.push(objPath);
+            rootClasses[objPath] = obj;
+          asd.push(objPath);
         }  
       }
 
       if (kind == 'namespace')
       {
-        walk(obj, objPath, kind, d+1);
+        walk(obj, objPath, kind, d+1, objPath);
       }
       
       if (kind == 'object' && typeof obj == 'object')
       {
-        walk(obj, objPath, kind, d+1);
+        walk(obj, objPath, kind, d+1, ns);
       }
 
       if (kind == 'class')
       {
-        walk(obj, objPath, kind, d+1);
-        walk(obj.prototype, objPath + '.prototype', 'prototype', d+1);
+        walk(obj, objPath, kind, d+1, ns);
+        walk(obj.prototype, objPath + '.prototype', 'prototype', d+1, ns);
       }
     }
   }

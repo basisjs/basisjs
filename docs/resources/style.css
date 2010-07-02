@@ -231,7 +231,7 @@
   #Content .viewOptions .options
   {
   }
-  #Content .viewOptions A
+  #Content .viewOptions .option
   {
     color: #0066CC;
     margin-left: .5ex;
@@ -239,6 +239,8 @@
     border-radius: 3px;
       -moz-border-radius: 3px;
       -webkit-border-radius: 3px;
+    cursor: pointer;
+    text-decoration: underline;
   }
   #Content .viewOptions .selected
   {
@@ -273,6 +275,20 @@
     padding-left: 20px;
     background: url(img/bullet_square_red.png) 2px .1em no-repeat;
     color: #0066CC;
+  }
+  #Content .viewInheritance .Basis-PartitionNode-Title A
+  {
+    background: url(img/node_module.png) left center no-repeat;
+    color: #009900;
+  }
+  #Content .viewInheritance .Basis-PartitionNode-Content
+  {
+    padding-left: 20px;
+    padding: .2em 0 .5em 16px;
+  }
+  #Content .viewInheritance .Basis-PartitionNode-Content .title
+  {
+    margin: .25em 0;
   }
   #Content .viewInheritance .namespace
   {
@@ -376,8 +392,16 @@
   }
   #Content .viewPrototype .Basis-PartitionNode-Title
   {
-    padding: .5em .5ex .2em .5ex;
-    font-weight: bold;
+    margin: 1em .5ex .2em 0;
+  }
+  #Content .viewPrototype .classGrouping .Basis-PartitionNode-Title
+  {
+    background: url(img/bullet_square_red.png) no-repeat 2px center;
+    padding-left: 20px;
+  }
+  #Content .viewPrototype .Basis-PartitionNode-Content
+  {
+    padding-left: 20px;
   }
   #Content .viewPrototype .item
   {
@@ -389,6 +413,29 @@
   {
     padding: .25em 0 0 20px;
     font-size: 85%;
+  }
+  #Content .viewPrototype .collapsed .jsDocs,
+  #Content .viewPrototype .item .trigger
+  {
+    display: none;
+  }
+  #Content .viewPrototype .hasJsDoc.collapsed .trigger
+  {
+    display: inline-block;
+    border: 1px solid #DDDDDD;
+    border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+    color: #888888;
+    font-size: 80%;
+    margin: 0.2em 0 0 20px;
+    padding: 0 1ex;
+    text-decoration: none;
+  }
+  #Content .viewPrototype .item .trigger:hover
+  {
+    border-color: #AAA;
+    color: #444;
   }
   #Content .viewPrototype .item A
   {
@@ -436,6 +483,7 @@
   .jsDocs .description A.doclink-namespace {
     padding-left: 18px;
     background: url(img/node_module.png) left center no-repeat;
+    color: #009900;
   }
   .jsDocs UL
   {
@@ -519,14 +567,38 @@
     font-size: 90%;
   }
 
-  .viewConfig UL
+  .viewConfig UL.content
   {
     list-style: none;
     padding: 0 0 0 5px;
     margin: 0;
   }
-  .viewConfig LI
+  .viewConfig .content A
   {
-    padding: .2em 0 .2em 20px;
+    color: #06C;
+  }
+  .viewConfig .content LI
+  {
+    padding: .2em 0 .2em 0;
+  }
+  .viewConfig .content .title
+  {
+    padding-left: 18px;
     background: url(img/config.png) no-repeat left center;
+  }
+  .viewConfig P
+  {
+    margin: 0 0 0 20px;
+    font-size: 85%;
+    color: #888;
+  }
+  .viewConfig .Basis-PartitionNode-Title
+  {
+    padding-left: 20px;
+    background: url(img/bullet_square_red.png) no-repeat left center;
+  }
+  .viewConfig .Basis-PartitionNode-Content
+  {
+    padding-left: 20px;
+    padding-bottom: .5em;
   }
