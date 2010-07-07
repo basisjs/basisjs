@@ -2581,7 +2581,7 @@
               }
               else
               {
-                ;;; if (typeof console != undefined) console.log('Wrong end tag </' + m[6] + '> in Html.Template (ignored)\n\n' + htmlCode.replace(new RegExp('(</' + m[6] + '>)(' + str + ')$'), '==[here]=>$1<=$2'));
+                ;;; if (typeof console != undefined) console.log('Wrong end tag </' + m[6] + '> in Html.Template (ignored)\n\n' + str.replace(new RegExp('(</' + m[6] + '>)(' + str + ')$'), '==[here]=>$1<=$2'));
               }
             }
             else

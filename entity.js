@@ -525,6 +525,7 @@
       },
       sync: function(data, set){
         data = data || [];
+
         var save = data.map(this.entityType).sortAsObject(Data.getter('uniqueId')).unique(true);
         var self = this.value.sortAsObject(Data.getter('uniqueId')).unique(true);
 
@@ -1135,7 +1136,7 @@
         this.dataGetter = config.dataGetter || Function.$self;
         this.destroyDataGetter = config.destroyDataGetter || null;
         this.entityType = config.entityType || Function.$self;
-        this.isExists = config.isExists || function(value){ return Boollean.normalize(keys(value).length) };
+        this.isExists = config.isExists || function(value){ return Boolean.normalize(Object.keys(value).length) };
       },
       update: function(entity){
         if (this.isExists(entity.value, entity))

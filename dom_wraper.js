@@ -1916,6 +1916,10 @@
 
     var HierarchyToolsCollectionHandlers = {
 
+      stateChanged: function(object, newState, oldState, errorText){
+        this.dispatch('collectionStateChanged', object, newState, oldState, errorText);
+      },
+
       datasetChanged: function(newValue, delta){
         var con = this.collectionOrderedNodes_;
 
@@ -2553,10 +2557,15 @@
       	if (this.collection !== collection)
       	{
       	  var oldCollection = this.collection;
+      	  var oldCollectionState = STATE_UNDEFINED;
+      	  var oldCollectionErrorText;
 
       	  // detach
           if (this.collection)
           {
+        	  oldCollectionState = this.collection.state;
+        	  oldCollectionErrorText = this.collection.errorText;
+
             this.collection.removeHandler(HierarchyToolsCollectionHandlers, this);
 
             if (this.childNodes.length == this.collectionOrderedNodes_.length)
@@ -2590,6 +2599,8 @@
           // TODO: restore localSorting & localGrouping, fast node reorder
 
           this.dispatch('collectionChanged', this, oldCollection);
+          if (oldCollectionState != this.collection.state || oldCollectionErrorText != this.collection.errorText)
+            this.dispatch('collectionStateChanged', this.collection, this.collection.state, oldCollectionState, oldCollectionErrorText);
         }
       },
 
@@ -3369,6 +3380,7 @@
       delete this._fireTimer;
       this.dispatch('change', this);
     }
+
     function prepareSelectionForUpdate(){
       if (!this._fireTimer)
         this._fireTimer = setTimeout(selectionFireUpdate.bind(this), 0);

@@ -194,18 +194,18 @@
       template: new Template(
         '<div{element} class="Basis-Window">' +
           '<div class="Basis-Window-Canvas">' +
-            '<div class="corner-left-top"></div>' +
-            '<div class="corner-right-top"></div>' +
-            '<div class="side-top"></div>' +
-            '<div class="side-left"></div>' +
-            '<div class="side-right"></div>' +
-            '<div class="content"></div>' +
-            '<div class="corner-left-bottom"></div>' +
-            '<div class="corner-right-bottom"></div>' +
-            '<div class="side-bottom"></div>' +
+            '<div class="corner-left-top"/>' +
+            '<div class="corner-right-top"/>' +
+            '<div class="side-top"/>' +
+            '<div class="side-left"/>' +
+            '<div class="side-right"/>' +
+            '<div class="content"/>' +
+            '<div class="corner-left-bottom"/>' +
+            '<div class="corner-right-bottom"/>' +
+            '<div class="side-bottom"/>' +
           '</div>' +
           '<div{layout} class="Basis-Window-Layout">' +
-            '<div{content|childNodesElement} class="Basis-Window-Content"></div>' +
+            '<div{content|childNodesElement} class="Basis-Window-Content"/>' +
           '</div>' +
         '</div>'
       ),
