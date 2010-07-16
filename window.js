@@ -420,7 +420,7 @@
         else
         {
           //windowManager.activate(this);
-          ;;;if (typeof console != 'undefined') console.warn('make window activate on window.open()');
+          //;;;if (typeof console != 'undefined') console.warn('make window activate on window.open()');
           this.realign();
         }
       },

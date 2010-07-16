@@ -131,6 +131,9 @@
   function slice(source, keys){
     var result = {};
 
+    if (!keys)
+      return extend(result, source);
+
     for (var i = 0, key; key = keys[i++];)
       if (key in source)
         result[key] = source[key];
@@ -911,10 +914,7 @@
     var names = {};
 
     namespace.names = function(keys){
-      if (keys)
-        return Object.slice(names, typeof keys == 'string' ? keys.qw() : keys);
-      else
-        return extend({}, names);
+      return Object.slice(names, typeof keys == 'string' ? keys.qw() : keys);
     };
 
     namespace.extend = function(newNames){

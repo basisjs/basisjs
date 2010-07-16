@@ -443,7 +443,7 @@
 
         // add event handlers
         this.addEventListener('click');
-        this.addEventListener('contextmenu');
+        this.addEventListener('contextmenu', 'contextmenu', true);
 
         // returns config
         return config;

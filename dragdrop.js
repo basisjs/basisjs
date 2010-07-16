@@ -23,8 +23,8 @@
     var addGlobalHandler = Event.addGlobalHandler;
     var removeGlobalHandler = Event.removeGlobalHandler;
 
-    var MLayout = Basis.Layout;
-    var MWrapers = Basis.DOM.Wrapers;
+    var nsWrapers = Basis.DOM.Wrapers;
+    var nsLayout = Basis.Layout;
     
     //
     // Main part
@@ -101,7 +101,7 @@
       element: 'Basis-DragDrop-DragElement'
     };
 
-    var DragDropElement = Basis.Class.create(MWrapers.EventObject, {
+    var DragDropElement = Basis.Class.create(nsWrapers.EventObject, {
       className: namespace + '.DragDropElement',
 
       containerGetter: Data.getter('element'),
@@ -221,14 +221,14 @@
     });
 
     var MoveableElement = Basis.Class.create(DragDropElement, {
-      behaviour: MWrapers.createBehaviour(DragDropElement, {
+      behaviour: nsWrapers.createBehaviour(DragDropElement, {
         start: function(config){
           var element = this.containerGetter(this, config.initX, config.initY);
 
           if (element)
           {
-            var box = new MLayout.Box(element);
-            var viewport = new MLayout.Viewport(this.baseElement);
+            var box = new nsLayout.Box(element);
+            var viewport = new nsLayout.Viewport(this.baseElement);
 
             // set class
             cssClass(element).add(DDCssClass.element);

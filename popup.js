@@ -248,7 +248,7 @@
         }
 
         //Event.addHandler(this.element, 'click', this.click, this);
-        this.addEventListener('click');
+        this.addEventListener('click', 'click', true);
 
         Cleaner.add(this);
 

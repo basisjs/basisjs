@@ -1433,6 +1433,7 @@
             delete this.entityType.identifiedEntity[curValue];
           }
 
+          if (!this.attachedHandlers) debugger;
           if (this.attachedHandlers[key])
           {
             this.attachedHandlers[key].object.removeHandler(this.attachedHandlers[key].handler, this);

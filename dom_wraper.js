@@ -143,7 +143,7 @@
         for (var i = 0, item; item = this.handlers_[i]; i++)
           if (item.handler === handler && item.thisObject === thisObject)
           {
-            ;;;if (typeof console != 'undefined') console.warn('Add dublicate handler to EventObject instance (' + this.className + ')');
+            ;;;if (typeof console != 'undefined') console.warn('Add dublicate handler to EventObject instance (' + this + ')');
             return false;
           }
 
@@ -801,14 +801,6 @@
           field = getFieldHandler(object);
 
         // process format argument
-        /*if (typeof format == 'string')
-          format = Data(Function.$self, format);//format.getFormatHandler();
-        else
-          if (format != null && typeof format == 'object')
-            format = Data(Function.$self, format);//(function(key){ return this[key] }).bind(format);
-          else
-            format = typeof format == 'function' ? format : Function.$self;
-        */
         if (typeof format != 'function')
           format = Data(Function.$self, format);
 
@@ -902,15 +894,11 @@
         {
           if (link.object === object && (deleteAll || field == link.field))
           {
-            if (link.isAbsctractObject)
+            if (link.isEventObject)
               link.object.removeHandler(PropertyObjectDestroyAction, this); // remove unlink handler on object destroy
-
-            delete link.object;
-            delete link.field;
-            delete link.format;
-            continue;
           }
-          this.links_[k++] = link;
+          else
+            this.links_[k++] = link;
         }
         this.links_.length = k;
       },
@@ -921,14 +909,8 @@
       clear: function(){
         // destroy links
         for (var i = 0, link; link = this.links_[i]; i++)
-        {
-          if (link.isAbsctractObject)
-            link.object.removeHandler(this.destroyAction, this); // remove unlink on object destroy
-
-          delete link.object;
-          delete link.field;
-          delete link.format;
-        }
+          if (link.isEventObject)
+            link.object.removeHandler(PropertyObjectDestroyAction, this); // remove unlink on object destroy
 
         // clear links array
         this.links_.clear();
@@ -2559,6 +2541,8 @@
       	  var oldCollection = this.collection;
       	  var oldCollectionState = STATE_UNDEFINED;
       	  var oldCollectionErrorText;
+      	  var newCollectionState = STATE_UNDEFINED;
+      	  var newCollectionErrorText;
 
       	  // detach
           if (this.collection)
@@ -2594,13 +2578,16 @@
 
             this.collectionOrderedNodes_ = [];
             this.collectionOrderedNodes_.push.apply(this.collectionOrderedNodes_, collectionOrder);
+
+        	  newCollectionState = this.collection.state;
+        	  newCollectionErrorText = this.collection.errorText;
           }
 
           // TODO: restore localSorting & localGrouping, fast node reorder
 
           this.dispatch('collectionChanged', this, oldCollection);
-          if (oldCollectionState != this.collection.state || oldCollectionErrorText != this.collection.errorText)
-            this.dispatch('collectionStateChanged', this.collection, this.collection.state, oldCollectionState, oldCollectionErrorText);
+          if (oldCollectionState != newCollectionState || oldCollectionErrorText != newCollectionErrorText)
+            this.dispatch('collectionStateChanged', this.collection, newCollectionState, oldCollectionState, oldCollectionErrorText);
         }
       },
 
@@ -3063,7 +3050,7 @@
             var insertPoint = container.lastChild != newChild ? newChild.nextSibling.element : null;
 
             container.childNodesElement.insertBefore(newChild.element, insertPoint);
-          }/**/
+          }/***/
           
           return newChild;
         }
