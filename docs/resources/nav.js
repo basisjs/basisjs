@@ -6,7 +6,7 @@
   var Data = Basis.Data;
   var DOM = Basis.DOM;
 
-  var cssClass = Basis.cssClass;
+  var cssClass = Basis.CSS.cssClass;
 
   var nsWrapers = Basis.DOM.Wrapers;
   var nsTree = Basis.Controls.Tree;

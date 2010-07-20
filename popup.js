@@ -498,7 +498,7 @@
       cssLayoutPrefix: 'mode-',
 
       template: new Template(
-        '<div{element} class="Basis-Balloon">' +
+        '<div{element|selectedElement} class="Basis-Balloon">' +
           '<div class="Basis-Balloon-Canvas">' +
             '<div class="corner-left-top"/>' +
             '<div class="corner-right-top"/>' +
@@ -513,7 +513,7 @@
             '<div class="corner-right-bottom"/>' +
             '<div class="side-bottom"/>' +
           '</div>' +
-          '<div{content} class="Basis-Balloon-Content"/>' +
+          '<div{content|childNodesElement} class="Basis-Balloon-Content"/>' +
         '</div>'
       )
     });

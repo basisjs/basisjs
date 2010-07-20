@@ -16,7 +16,7 @@
     var DOM = Basis.DOM;
     var Event = Basis.Event;
     var Data = Basis.Data;
-    var cssClass = Basis.cssClass;
+    var cssClass = Basis.CSS.cssClass;
 
     var highlight = Function.runOnce(function(){
       SyntaxHighlighter.highlight({}, DOM.get('javascript'));

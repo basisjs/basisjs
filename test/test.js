@@ -16,7 +16,7 @@
     var CSS = Basis.CSS;
     var Browser = Basis.Browser;
     var Event = Basis.Event;
-    var cssClass = Basis.cssClass;
+    var cssClass = Basis.CSS.cssClass;
     var extend = Object.extend;
     var Class = Basis.Class;
 
@@ -271,7 +271,7 @@
           var uncomplete = false;
           for (var i = 0; i < this.lines.length; i++)
           {
-            var node = DOM.createElement('.line', DOM.createElement({ description: '.lineText', click: function(event){ cssClass(this.parentNode).flip('show-error-details') }}, this.lines[i]));
+            var node = DOM.createElement('.line', DOM.createElement({ description: '.lineText', click: function(event){ cssClass(this.parentNode).toggle('show-error-details') }}, this.lines[i]));
             var testIndex = this.testLines[i];
 
             if (uncomplete)

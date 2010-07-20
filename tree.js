@@ -17,8 +17,9 @@
     * {Basis.Controls.Tree.TreeNode} and {Basis.Controls.Tree.TreeFolder}.
     *
     * The main difference between this classes is that
-    * {Basis.Controls.Tree.TreeNode} has abstact expand/collapse methods and
-    * can't be collapsed/expanded, but {Basis.Controls.Tree.TreeFolder} can.
+    * {Basis.Controls.Tree.TreeNode} has abstact {Basis.Controls.Tree.TreeNode#expand}
+    * and {Basis.Controls.Tree.TreeNode#collapse} methods and can't be
+    * collapsed/expanded, but {Basis.Controls.Tree.TreeFolder} can.
     *
     * Also this namespace has two additional classes for child nodes grouping
     * {Basis.Controls.Tree.TreeGroupControl} and
@@ -44,7 +45,7 @@
     var DOM = Basis.DOM;
 
     var Template = Basis.Html.Template;
-    var cssClass = Basis.cssClass;
+    var cssClass = Basis.CSS.cssClass;
 
     var nsWrapers = DOM.Wrapers;
 
@@ -156,6 +157,7 @@
     });
 
    /**
+    * Base child class for {Basis.Controls.Tree.Tree} that can has children.
     * @class
     * @extends {Basis.Controls.Tree.TreeNode}
     */

@@ -11,31 +11,36 @@
 
 /**
  * @annotation
- * Basis library core module.
+ * Basis library core module. It provides various most using functions
+ * and namespaces.
  *
- * This file should be loaded first. It contains various most using sections.
- * Overview of content:
- *   # Buildin class extensions and fixes
- *     - Object (new class members only)
- *     - Function
- *     - Array
- *     - String
- *     - Number
- *     - Date (you can find other extensions for Date in date.js)
- *   # Namespace sheme (module subsystem)
- *   # Class (provides inheritance)
- *   # Browser (version detections & Cookies interface)
- *   # DOM
- *   # Event
- *   # Html (generaly template)
- *   # CSS (generaly className interface)
- *   # Data
- *   # Cleaner
+ * This file should be loaded first.
+ *
+ * Content overview:
+ * - Buildin class extensions and fixes
+ *   o Object (new class members only)
+ *   o Function
+ *   o Array
+ *   o String
+ *   o Number
+ *   o Date (you can find other extensions for Date in date.js)
+ * - Namespace sheme (module subsystem)
+ * - Class (provides inheritance)
+ * - Browser (version detections & Cookies interface)
+ * - DOM
+ * - Event
+ * - Html (generaly template)
+ * - CSS (generaly className interface)
+ * - Data
+ * - Cleaner
  */
 
 (function(){
 
- /** @namespace Basis */
+ /** 
+  * Root namespace for Basis framework.
+  * @namespace Basis
+  */
 
   var namespace = 'Basis';
 
@@ -57,7 +62,7 @@
  /**
   * Returns first not null (undefined) value.
   * @param {...[object]} arguments
-  * @returns {object}
+  * @return {object}
   */ 
   function coalesce(/* arg1 .. argN */){
     for (var i = 0; i < arguments.length; i++)
@@ -69,7 +74,7 @@
   * Copy all properties from source object(s) to object.
   * @param {object} object Any object should be extended.
   * @param {object} source
-  * @returns {object} Extended object.
+  * @return {object} Extended object.
   */
   function extend(object, source){
     ;;;if (arguments.length > 2 && typeof arguments[2] != 'number') { console.warn('extend: more than 2 arguments!'); debugger; }
@@ -83,7 +88,7 @@
   * Copy only missed properties from source object(s) to object.
   * @param {object} object Any object should be completed.
   * @param {object} source
-  * @returns {object} Completed object.
+  * @return {object} Completed object.
   */
   function complete(object, source){
     ;;;if (arguments.length > 2) { console.warn('complete: more than 2 arguments!'); debugger; }
@@ -97,7 +102,7 @@
  /**
   * Returns all property names of object.
   * @param {object} object Any object can has properties.
-  * @returns {[string]}
+  * @return {[string]}
   */
   function keys(object){
     var result = new Array();
@@ -111,7 +116,7 @@
  /**
   * Returns all property values of object.
   * @param {object} object Any object can has properties.
-  * @returns {[object]}
+  * @return {[object]}
   */
   function values(object){
     var result = new Array();
@@ -126,7 +131,7 @@
   * Creates a slice of source object.
   * @param {object} source Any object can has properties.
   * @param {[string]} keys Desired key set.
-  * @returns {object} New object with desired keys from source object.
+  * @return {object} New object with desired keys from source object.
   */
   function slice(source, keys){
     var result = {};
@@ -142,9 +147,31 @@
   }
 
  /**
+  * Creates a slice of source object and delete keys from source.
+  * @param {object} source Any object can has properties.
+  * @param {[string]} keys Desired key set.
+  * @return {object} New object with desired keys from source object.
+  */
+  function splice(source, keys){
+    var result = {};
+
+    if (!keys)
+      return extend(result, source);
+
+    for (var i = 0, key; key = keys[i++];)
+      if (key in source)
+      {
+        result[key] = source[key];
+        delete source[key];
+      }
+
+    return result;
+  }
+
+ /**
   * Returns callback call results for all pair key-value of object.
   * @param {object} object Any object can has properties.
-  * @returns {[object]}
+  * @return {[object]}
   */
   function iterate(object, callback, thisObject){
     var result = new Array();
@@ -165,6 +192,7 @@
     keys: keys,
     values: values,
     slice: slice,
+    splice: splice,
     iterate: iterate,
     coalesce: coalesce
   });
@@ -227,27 +255,29 @@
 
     // 
     lazyInit: function(init, thisObject){
-      var inited = 0, _self;
+      var inited = 0, _self, data;
       return _self = function(){
         if (!inited++)
         {
-          _self.data = init.apply(thisObject || this);
-          ;;;if (typeof _self.data == 'undefined' && typeof console != 'undefined') console.warn('lazyInit function returns nothing:\n' + init);
+          _self.inited = true;
+          _self.data = data = init.apply(thisObject || this);
+          ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInit function returns nothing:\n' + init);
         }
-        return _self.data;
+        return data;
       };
     },
 
     lazyInitAndRun: function(init, run, thisObject){
-      var inited = 0, _self;
+      var inited = 0, _self, data;
       return _self = function(){
         if (!inited++)
         {
-          _self.data = init.apply(thisObject || this);
-          ;;;if (typeof _self.data == 'undefined' && typeof console != 'undefined') console.warn('lazyInitAndRun function returns nothing:\n' + init);
+          _self.inited = true;
+          _self.data = data = init.apply(thisObject || this);
+          ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInitAndRun function returns nothing:\n' + init);
         }
-        run.apply(_self.data, arguments);
-        return _self.data;
+        run.apply(data, arguments);
+        return data;
       };
     },
 
@@ -484,7 +514,7 @@
     * @param {any} value
     * @param {function(object)|string} getter
     * @param {number=} offset
-    * @returns {any}
+    * @return {any}
     */
     search: function(value, getter, offset){
       Array.lastSearchIndex = -1;
@@ -499,7 +529,7 @@
     * @param {any} value
     * @param {function(object)|string} getter
     * @param {number=} offset
-    * @returns {any}
+    * @return {any}
     */
     lastSearch: function(value, getter, offset){
       Array.lastSearchIndex = -1;
@@ -521,7 +551,7 @@
     * @param {function(object)|string} getter
     * @param {boolean} desc Must be true for reverse sorted arrays.
     * @param {boolean} strong If true - returns result only if value found. 
-    * @returns {number}
+    * @return {number}
     */
     binarySearchPos: function(value, getter, desc, strong, left, right){ 
       if (!this.length)  // empty array check
@@ -976,7 +1006,45 @@
   //!ms;;;var GMethodStat = [];
   var Class = (function(){ 
 
-   /** @namespace Basis.Class */
+   /**
+    * This namespace introduce class creation scheme. It recomended for new
+    * classes creation, but use able to use buildin sheme for your purposes.
+    *
+    * The main benefits that provides by this sheme, that all methods are able
+    * to call inherited method (via this.inherit(args..)), like in other OO
+    * languages. All Basis classes and components (with some exceptions) are
+    * building using this sheme.
+    * @example
+    *   var classA = Basis.Class(Basis.Class, { // you can use null instead of Basis.Class
+    *     name: 'default value',
+    *     init: function(title){ // special method - constructor
+    *       this.title = title;
+    *     },
+    *     say: function(){
+    *       return 'My name is {0}.'.format(this.title);
+    *     }
+    *   });
+    *
+    *   var classB = Basis.Class(classA, {
+    *     age: 0,
+    *     init: function(title, age){
+    *       this.inherit(title);
+    *       this.age = age;
+    *     },
+    *     say: function(){
+    *       return this.inherit() + ' I\'m {0} year old.'.format(this.age);
+    *     }
+    *   });
+    *
+    *   var foo = new classA('John');
+    *   var bar = new classA('Ivan', 25);
+    *   alert(foo.say()); // My name is John.
+    *   alert(bar.say()); // My name is Ivan. I'm 25 year old.
+    *   alert(bar instanceof Basis.Class); // false (for some reasons it false now)
+    *   alert(bar instanceof classA); // true
+    *   alert(bar instanceof classB); // true
+    * @namespace Basis.Class
+    */
 
     var namespace = 'Basis.Class';
 
@@ -997,7 +1065,7 @@
     * @param {function()} method Function to be wrapped.
     * @param {function()} ancestorMethod Function that will be able to called through this.inherit.
     * @param {object} proto Reference to ancestor prototype. Generaly for debug purposes.
-    * @returns {function()} Wrapped method.
+    * @return {function()} Wrapped method.
     * @private
     */
     function wrapMethod(method, ancestorMethod, proto){
@@ -1047,7 +1115,7 @@
       * Class constructor.
       * @param {function()} SuperClass CLass that new one inherite of.
       * @param {...object} extensions Objects that extends new class prototype.
-      * @returns {function()} A new class.
+      * @return {function()} A new class.
       */
       create: function(SuperClass){
 
@@ -1327,7 +1395,42 @@
 
   var DOM = (function(){
 
-   /** @namespace Basis.DOM */
+   /**
+    * This namespace provides functions for manupulations with DOM - transerval,
+    * node creation, moving and test nodes. Most of functions are compatible with
+    * native and simulated (object that generaly has properties like firsChild,
+    * lastChild, parentNode etc) DOM structures.
+    *
+    * Function overview:
+    * - Order & position functions:
+    *     {Basis.DOM.sort}, {Basis.DOM.comparePosition}, {Basis.DOM.index},
+    *     {Basis.DOM.lastIndex}, {Basis.DOM.deep}
+    * - Getters:
+    *     {Basis.DOM.get}, {Basis.DOM.tag}, {Basis.DOM.tags}, {Basis.DOM.axis}
+    * - Traversal:
+    *     {Basis.DOM.TreeWalker}, {Basis.DOM.first}, {Basis.DOM.last},
+    *     {Basis.DOM.next}, {Basis.DOM.prev}, {Basis.DOM.parent}
+    * - Constructors:
+    *     {Basis.DOM.createElement}, {Basis.DOM.createText},
+    *     {Basis.DOM.createFragment}
+    * - DOM manipulations:
+    *     {Basis.DOM.insert}, {Basis.DOM.remove}, {Basis.DOM.replace},
+    *     {Basis.DOM.swap}, {Basis.DOM.clone}, {Basis.DOM.clear}, {Basis.DOM.wrap}
+    * - Style and attribute setters/getters:
+    *     {Basis.DOM.setAttribute}, {Basis.DOM.display}, {Basis.DOM.show},
+    *     {Basis.DOM.hide}, {Basis.DOM.visibility}, {Basis.DOM.visible},
+    *     {Basis.DOM.invisible}, {Basis.DOM.css}
+    * - Checkers:
+    *     {Basis.DOM.IS_ELEMENT_NODE}, {Basis.DOM.IS_TEXT_NODE}, {Basis.DOM.is},
+    *     {Basis.DOM.parentOf}, {Basis.DOM.isInside}
+    * - Input interface:
+    *     {Basis.DOM.focus}, {Basis.DOM.setSelectionRange},
+    *     {Basis.DOM.getSelectionStart}, {Basis.DOM.getSelectionEnd}
+    * - Misc:
+    *     {Basis.DOM.outerHTML}, {Basis.DOM.textContent}
+    *
+    * @namespace Basis.DOM
+    */
 
     var namespace = 'Basis.DOM';
 
@@ -1389,7 +1492,7 @@
     * Sort nodes in their DOM order.
     * @function
     * @param {[Node]} nodes List of nodes.
-    * @returns {[Node]} Sorted node list.
+    * @return {[Node]} Sorted node list.
     */
     var sort = $self;
     
@@ -1398,7 +1501,7 @@
     * @function
     * @param {Node} nodeA
     * @param {Node} nodeB
-    * @returns {number}
+    * @return {number}
     */ 
     var comparePosition = function(nodeA, nodeB){ return 0 };
 
@@ -1438,7 +1541,7 @@
    /**
     * Returns true if node is instance of Node.
     * @param {Node} node
-    * @returns {boolean}
+    * @return {boolean}
     */ 
     var isNode;
     if (typeof Node != 'undefined')
@@ -1461,7 +1564,7 @@
     * @param {Node} node Target node
     * @param {Node|any} newNode Inserting node or object.
     * @param {Node} refChild Child of node.
-    * @returns {Node}
+    * @return {Node}
     */ 
     function handleInsert(node, newNode, refChild){
       if (newNode != null)
@@ -1469,21 +1572,34 @@
     }
 
     /**
+    * Note: Tree nodes should have properties: parentNode, nextSibling, prevSibling, firstChild,
+    * lastChild, nodeType
     * @class TreeWalker
-    * Note: Tree nodes should have properties: parentNode, nextSibling, prevSibling, firstChild, lastChild, nodeType
     */
     var TreeWalker = Class(null, {
       className: namespace + '.TreeWalker',
 
-      root: document,
-      cursor: null,
+     /**
+      * Root node of tree.
+      */
+      root_: document,
+
+     /**
+      * Current position of walker.
+      */
+      cursor_: null,
+
+     /**
+      * Default filter function.
+      * @type {function()}
+      */
       filter: $true,
 
      /**
-      * @constructs
       * @param {Node|object} root
       * @param {function(object):boolean} filter
       * @param {boolean} direction
+      * @constructor
       */
       init: function(root, filter, direction){
         this.setRoot(root);
@@ -1496,7 +1612,6 @@
       },
 
      /**
-      * @method
       * @param {boolean} direction False for normal (forward) direction, true for backward direction.
       */
       setDirection: function(direction){
@@ -1519,25 +1634,23 @@
 
      /**
       * Change root object.
-      * @method
       */
       setRoot: function(node){
-        this.root = node || document;
+        this.root_ = node || document;
         this.reset();
       },
 
      /**
       * Reset internal cursor to init state.
-      * @method 
       */
       reset: function(){
-        this.cursor = null;
+        this.cursor_ = null;
       },
 
      /**
       * Returns first node.
       * @param {function(object):boolean} filter Override internal filter
-      * @returns {Node|object}
+      * @return {Node|object}
       */
       first: function(filter){
         this.reset();
@@ -1547,7 +1660,7 @@
      /**
       * Returns last node.
       * @param {function(object):boolean} filter Override internal filter
-      * @returns {Node|object}
+      * @return {Node|object}
       */
       last: function(filter){
         this.reset();
@@ -1557,7 +1670,7 @@
      /**
       * Returns all nodes.
       * @param {function(object):boolean} filter Override internal filter
-      * @returns {Node|object}
+      * @return {Node|object}
       */
       nodes: function(filter, result){
         var node;
@@ -1576,20 +1689,20 @@
      /**
       * Returns next node from cursor.
       * @param {function(object):boolean} filter Override internal filter
-      * @returns {Node|object}
+      * @return {Node|object}
       */
       next: function(filter){
         filter = filter || this.filter;
 
-        var cursor = this.cursor || this.root;
+        var cursor = this.cursor_ || this.root_;
 
         do
         {
           var node = cursor[this.a]; // next child
           while (!node)
           {
-            if (cursor === this.root)
-              return this.cursor = null;
+            if (cursor === this.root_)
+              return this.cursor_ = null;
 
             if (node = cursor[this.b]) // next sibling
               break;
@@ -1599,24 +1712,24 @@
         }
         while (!filter(cursor = node));
 
-        return this.cursor = cursor;
+        return this.cursor_ = cursor;
       },
 
      /**
       * Returns previous node from cursor.
       * @param {function(object):boolean} filter Override internal filter
-      * @returns {Node|object}
+      * @return {Node|object}
       */
       prev: function(filter){
         filter = filter || this.filter;
 
-        var cursor = this.cursor;
+        var cursor = this.cursor_;
         var prevSibling = this.c; // previous sibling
         var prevChild = this.d;   // previous child
 
         do
         {
-          var node = cursor ? cursor[prevSibling] : this.root[prevChild];
+          var node = cursor ? cursor[prevSibling] : this.root_[prevChild];
           if (node)
           {
             while (node[prevChild])
@@ -1627,7 +1740,7 @@
             if (cursor)
               cursor = cursor[PARENT_NODE];
 
-          if (!cursor || cursor === this.root)
+          if (!cursor || cursor === this.root_)
           { 
             cursor = null;
             break;
@@ -1635,7 +1748,7 @@
         }
         while (!filter(cursor));
 
-        return this.cursor = cursor;
+        return this.cursor_ = cursor;
       },
       destroy: function(){
         Cleaner.remove(this);
@@ -1643,11 +1756,13 @@
     });
     TreeWalker.BACKWARD = true;
 
+    //
     // MISC
+    //
    /**
     * Returns outerHTML for node, even for browser doesn't support this property (only IE support)
     * @param {Node} node
-    * @returns {string}
+    * @return {string}
     */
     function outerHTML(node){
       return createElement('', node.cloneNode(true)).innerHTML;
@@ -1656,7 +1771,7 @@
    /**
     * Returns all inner text of node (nodeValue for Attribute)
     * @param {Node} node
-    * @returns {string}
+    * @return {string}
     */
     var TEXT_PROPERTIES = 'textContent innerText nodeValue'.qw();
 
@@ -1681,7 +1796,7 @@
    /**
     * Returns node by id. This is $() like function
     * @param {string|Node} id
-    * @returns {Node}
+    * @return {Node}
     */
     function get(id){ 
       if (isNode(id) || (id && id.nodeType))
@@ -1694,7 +1809,7 @@
     * Returns all descendant elements tagName name for node.
     * @param {string} tagName Tag name.
     * @param {Element} node Context element.
-    * @returns {[Element]}
+    * @return {[Element]}
     */
     function tag(node, tagName){
       node = get(node) || document;
@@ -1709,7 +1824,7 @@
     * Returns all descendant elements with names for node.
     * @param {string|[string]} names Comma or space separated names string, or string list of names.
     * @param {Element} node Context element.
-    * @returns {[Element]}
+    * @return {[Element]}
     */
     function tags(node, names){
       return sort(
@@ -1728,7 +1843,7 @@
     * @param {Node} root Relative point for axis.
     * @param {number} AXIS Axis constant.
     * @param {function(node):boolean} filter Filter function. If it's returns true node will be in result list.
-    * @returns {[Node]}
+    * @return {[Node]}
     */
     function axis(root, axis, filter){
       var walker, cursor;
@@ -1863,7 +1978,7 @@
    /**
     * Creates a new TextNode with text as content (nodeValue).
     * @param {string} text Content.
-    * @returns {!Text} The new text node.
+    * @return {!Text} The new text node.
     */
     function createText(text){
       return document.createTextNode(text != null ? text : '');
@@ -1872,7 +1987,7 @@
    /**
     * Returns new DocumentFragmentNode with arguments as childs.
     * @param {string} text 
-    * @returns {!DocumentFragment} The new DocumentFragment
+    * @return {!DocumentFragment} The new DocumentFragment
     */
     function createFragment(){
       var result = document.createDocumentFragment();
@@ -1905,7 +2020,7 @@
     * Creates a new Element with arguments as childs.
     * @param {string|object} def CSS-selector like definition or object for extended Element creation.
     * @param {...Node|object} childs Child nodes 
-    * @returns {!Element} The new Element.
+    * @return {!Element} The new Element.
     */
     function createElement(def, childs){
       var isComplexDef = def != undefined && typeof def != 'string';
@@ -2006,7 +2121,7 @@
     *   Or it might be one of INSERT_BEGIN, INSERT_BEFORE,
     *   INSERT_AFTER, INSERT_END
     * @param {Node|object} refChild Child node of node, using for INSERT_BEFORE & INSERT_AFTER
-    * @returns {Node|[Node]} Inserted nodes (may different of source members). 
+    * @return {Node|[Node]} Inserted nodes (may different of source members). 
     */
     function insert(node, source, insertPoint, refChild){
       var node = get(node); // TODO: remove
@@ -2057,7 +2172,7 @@
    /**
     * Remove node from it's parent and returns this node.
     * @param {Node} node
-    * @returns {Node}
+    * @return {Node}
     */
     function remove(node){
       return node[PARENT_NODE] ? node[PARENT_NODE].removeChild(node) : node;
@@ -2067,7 +2182,7 @@
     * Replace oldNode for newNode and returns oldNode.
     * @param {Node} oldNode
     * @param {Node} newNode
-    * @returns {Node}
+    * @return {Node}
     */
     function replace(oldNode, newNode){
       return oldNode[PARENT_NODE] ? oldNode[PARENT_NODE].replaceChild(newNode, oldNode) : oldNode;
@@ -2077,7 +2192,7 @@
     * Change placing of nodes and returns the result of operation.
     * @param {Node} nodeA
     * @param {Node} nodeB
-    * @returns {boolean}
+    * @return {boolean}
     */
     function swap(nodeA, nodeB){
       if (nodeA === nodeB || comparePosition(nodeA, nodeB) & (POSITION_CONTAINED_BY | POSITION_CONTAINS | POSITION_DISCONNECTED))
@@ -2094,7 +2209,7 @@
     * Clone node.
     * @param {Node} node
     * @param {boolean} noChildren If true than clone only node with no children.
-    * @returns {Node}
+    * @return {Node}
     */
     function clone(node, noChildren){
       var result = node.cloneNode(!noChildren);
@@ -2106,7 +2221,7 @@
    /**
     * Removes all child nodes of node and returns this node.
     * @param {Node} node
-    * @returns {Node}
+    * @return {Node}
     */
     function clear(node){
       node = get(node);
@@ -2127,7 +2242,7 @@
     *   // result: [<a>1</a>, <a>2</a>, <b><a>3</a></b>]
     * @param {[any]} array
     * @param {object} map
-    * @returns {[any]}
+    * @return {[any]}
     */
     function wrap(array, map, getter){
       var result = [];
@@ -2166,7 +2281,7 @@
     * Changes for node display value.
     * @param {Node} node
     * @param {boolean|string} display
-    * @returns {Node}
+    * @return {Node}
     */
     function display(node, display){
       node.style.display = typeof display == 'string' ? display : (display ? '' : 'none');
@@ -2190,7 +2305,7 @@
     * Changes node visibility.
     * @param {Node} node
     * @param {boolean} visible
-    * @returns {Node}
+    * @return {Node}
     */
     function visibility(node, visible){
       node.style.visibility = visible ? '' : 'hidden';
@@ -2238,7 +2353,7 @@
     * Apply new style property values for node.
     * @param {Node} node Node which style to be changed.
     * @param {object} style Object contains new values for node style properties.
-    * @returns {Node} 
+    * @return {Node} 
     */
     function css(node, style){
       if (node = get(node)) 
@@ -2275,7 +2390,7 @@
     * Returns true if child is descendant of parent.
     * @param {Node} node
     * @param {Node} child
-    * @returns {boolean}
+    * @return {boolean}
     */
     function parentOf(node, child){
       return node.contains(child);
@@ -2285,7 +2400,7 @@
     * Returns true if node is decendant of parent or node equal to parent.
     * @param {Node} node
     * @param {Node} root
-    * @returns {Node}
+    * @return {Node}
     */
     function isInside(node, root){
       return node == root || root.contains(node);
@@ -2492,19 +2607,72 @@
 
     var namespace = 'Basis.Html';
 
-   /**
-    * @class
-    */
-
     // Test for browser (IE) normalize text nodes during cloning
     var CLONE_NORMALIZE_TEXT_BUG = (function(){
       return DOM.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
     })();
 
+   /**
+    * Creates DOM structure template from marked HTML. Use {Basis.Html.Template#createInstance}
+    * method to apply template to object. It creates clone of DOM structure and adds
+    * links into object to pointed parts of structure.
+    *
+    * To remove links to DOM structure from object use {Basis.Html.Template#clearInstance}
+    * method.
+    * @example
+    *   // create a template
+    *   var template = new Basis.Template(
+    *     '<li{element} class="listitem">' +
+    *       '<a href{hrefAttr}="#">{titleText}</a>' + 
+    *       '<span class="description">{descriptionText}</span>' +
+    *     '</li>'
+    *   );
+    *   
+    *   // create 10 DOM elements using template
+    *   for (var i = 0; i < 10; i++)
+    *   {
+    *     var node = template.createInstance();
+    *     cssClass(node.element).add('item' + i);
+    *     node.hrefAttr.nodeValue = '/foo/bar.html';
+    *     node.titleText.nodeValue = 'some title';
+    *     node.descriptionText.nodeValue = 'description text';
+    *   }
+    *   
+    *   // create and attach DOM structure to existing object
+    *   var dataObject = new Basis.DOM.Wrapers.DataObject({
+    *     info: { title: 'Some data', value: 123 },
+    *     handlers: {
+    *       update: function(object, newInfo, oldInfo, delta){
+    *         this.titleText.nodeValue = newInfo.title;
+    *         // other DOM manipulations
+    *       }
+    *     }
+    *   });
+    *   // apply template to object
+    *   template.createInstance(dataObject);
+    *   // trigger update event that fill template with data
+    *   dataObject.update(null, true);
+    *   ...
+    *   Basis.DOM.insert(someElement, dataObject.element);
+    *   ...
+    *   // destroy object
+    *   template.clearInstance(dataObject);
+    *   dataObject.destroy();
+    * @class
+    */
+
     var Template = Class(null, {
       className: namespace + '.Template',
+
+     /**
+      * @param {string|function()} template Template source code that will be parsed
+      * into DOM structure prototype. Parsing will be initiated on first
+      * {Basis.Html.Template#createInstance} call. If function passed it be called at
+      * first {Basis.Html.Template#createInstance} and it's result will be used as
+      * template source code.
+      * @constructor
+      */
       init: function(template){
-        //this.parse(template);
         this.source = template;
       },
       parse: function(){
@@ -2788,7 +2956,7 @@
    /**
     * Cross-browser event wrapper.
     * @param {Event} event
-    * @returns {Event}
+    * @return {Event}
     */
     function wrap(event){
       return event || window.event;
@@ -2797,7 +2965,7 @@
    /**
     * Returns DOM node if possible.
     * @param {Node|string} object
-    * @returns {Node}
+    * @return {Node}
     */
     function getNode(object){ 
       return object === window || (object = DOM.get(object)) ? object : null;
@@ -2806,7 +2974,7 @@
    /**
     * Returns event sender (target element).
     * @param {Event} event
-    * @returns {Node}
+    * @return {Node}
     */
     function sender(event){
       event = wrap(event);
@@ -2860,7 +3028,7 @@
    /**
     * Returns key code for keyboard events.
     * @param {Event} event
-    * @returns {number}
+    * @return {number}
     */
     function key(event){
       event = wrap(event);
@@ -2871,7 +3039,7 @@
    /**
     * Returns char for keyboard events.
     * @param {Event} event
-    * @returns {number}
+    * @return {number}
     */
     function charCode(event){
       event = wrap(event);
@@ -2883,7 +3051,7 @@
     * Checks if pressed mouse button equal to desire mouse button.
     * @param {Event} event
     * @param {object} button One of MOUSE constant
-    * @returns {boolean}
+    * @return {boolean}
     */
     function mouseButton(event, button){
       event = wrap(event);
@@ -2897,7 +3065,7 @@
    /**
     * Returns mouse click horizontal page coordinate.
     * @param {Event} event
-    * @returns {number}
+    * @return {number}
     */
     function mouseX(event){
       event = wrap(event);
@@ -2911,7 +3079,7 @@
    /**
     * Returns mouse click vertical page coordinate.
     * @param {Event} event
-    * @returns {number}
+    * @return {number}
     */
     function mouseY(event){
       event = wrap(event);
@@ -3662,7 +3830,7 @@
     //DOM: DOM,
     //Event: Event,
     //CSS: CSS,
-    cssClass: CSS.cssClass,
+    //cssClass: CSS.cssClass,
     //Html: Html,
     
     //Class: Class,

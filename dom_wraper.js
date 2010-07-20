@@ -11,7 +11,32 @@
 
   (function(){
 
-   /** @namespace Basis.DOM.Wrapers */
+   /**
+    * This namespace contains base classes and functions for components of Basis framework.
+    *
+    * Namespace overview:
+    * - Event layer:
+    *   {Basis.DOM.Wrapers.EventObject}, {Basis.DOM.Wrapers.createBehaviour}
+    * - Data layer:
+    *   {Basis.DOM.Wrapers.DataObject}, {Basis.DOM.Wrapers.AbstractProperty},
+    *   {Basis.DOM.Wrapers.Property}, {Basis.DOM.Wrapers.DataObjectSet}
+    * - Non-visual DOM classes:
+    *   {Basis.DOM.Wrapers.AbstractNode}, {Basis.DOM.Wrapers.InteractiveNode},
+    *   {Basis.DOM.Wrapers.Node}, {Basis.DOM.Wrapers.PartitionNode},
+    *   {Basis.DOM.Wrapers.GroupControl}
+    * - Visual DOM classes:
+    *   {Basis.DOM.Wrapers.HtmlNode}, {Basis.DOM.Wrapers.HtmlPanel},
+    *   {Basis.DOM.Wrapers.HtmlContainer}, {Basis.DOM.Wrapers.HtmlControl},
+    *   {Basis.DOM.Wrapers.HtmlPartitionNode}, {Basis.DOM.Wrapers.HtmlGroupControl}
+    * - Misc:
+    *   {Basis.DOM.Wrapers.Selection}
+    *
+    * Aliases are available:
+    * - {Basis.DOM.Wrapers.PropertySet} for {Basis.DOM.Wrapers.DataObjectSet}
+    * - {Basis.DOM.Wrapers.Control} for {Basis.DOM.Wrapers.HtmlControl}
+    * - {Basis.DOM.Wrapers.HtmlList} for {Basis.DOM.Wrapers.HtmlContainer}
+    * @namespace Basis.DOM.Wrapers
+    */
 
     var namespace = String('Basis.DOM.Wrapers');
 
@@ -345,7 +370,8 @@
 
      /**
       * @param {Object=} config The configuration of object.
-      * @config {Basis.DOM.Wrapers.DataObject|Object} info Initial data. If Basis.DOM.Wrapers.DataObject instance passed it became a delegate to the new object.
+      * @config {Basis.DOM.Wrapers.DataObject} delegate Set a delegate to the new object.
+      * @config {Basis.DOM.Wrapers.DataObject|Object} info Initial data. If Basis.DOM.Wrapers.DataObject instance passed it became a delegate of the new object.
       * @config {boolean} cascadeDestroy Override prototype's cascaseDestroy property.
       * @config {boolean} autoDelegateParent Override prototype's cascaseDestroy property.
       * @return {Object}
@@ -361,17 +387,21 @@
         // fetch settings from config if possible
         if (typeof config == 'object')
         {
-          // attach
-          if ('info' in config)
-          {
-            // if info is DataObject instance assign it as delegate
-            if (config.info instanceof DataObject)
-              // this call should be silent for update event (second parameter),
-              // because we fire it later
-              this.setDelegate(config.info, true);
-            else
+          var delegate = config.delegate;
+
+          // for backward capability (probably permanently here)
+          if (!delegate && config.info instanceof DataObject)
+            delegate = config.info;
+
+          // assign a delegate
+          if (delegate)
+            // this call must be silent for update event (second parameter),
+            // update event should be fired later
+            this.setDelegate(delegate, true);
+          else
+            // .. or info object if passed
+            if (config.info)
               this.info = config.info;
-          }
 
           if (typeof config.cascadeDestroy == 'boolean')
             this.cascadeDestroy = config.cascadeDestroy;
@@ -1382,7 +1412,7 @@
       * @param {Object} config
       * @config {function()|string} localSorting Initial local sorting function.
       * @config {boolean} localSortingDesc Initial local sorting order.
-      * @config {Basis.DOM.Wrapers.AbstractNode} document
+      * @config {Basis.DOM.Wrapers.AbstractNode} document (deprecated) Must be removed. Used as hot fix.
       * @config {boolean} positionDependent Override prototype's positionDependent property.
       * @config {Object} localGrouping Initial config for local grouping.
       * @config {Basis.DOM.Wrapers.DataObject} collection Sets collection for object.
@@ -1392,9 +1422,6 @@
       */
       init: function(config){
         config = this.inherit(config);
-
-        // TODO: remove
-        this.config = config;
 
         if (config.localSorting)
         {

@@ -19,6 +19,37 @@
   var nsCore = BasisDoc.Core;
 
   //
+  // functions
+  //
+
+  var typeSplitter = DOM.createElement('SPAN.splitter', '|');
+  function parseTypes(text){
+    var parts = (text || '').split(/\s*\|\s*/);
+    var result = DOM.createFragment();
+    var node;
+    for (var i = 0; i < parts.length; i++)
+    {
+      if (i)
+        result.appendChild(typeSplitter.cloneNode(true));
+
+      var descr = map[parts[i]];
+      if (descr)
+        node = DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), parts[i]);
+      else
+      {
+        var m = parts[i].match(/^Array\.\<(.+)\>/);
+        if (m && (descr = map[m[1]]))
+          node = DOM.createFragment('Array.<', DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), m[1]), '>');
+        else
+          node = DOM.createText(parts[i]);
+      }
+
+      result.appendChild(node);
+    }
+    return result;
+  }
+
+  //
   // View
   //
 
@@ -348,7 +379,8 @@
           {
             DOM.insert(this.content,
               DOM.createElement('SPAN.types', DOM.createElement('SPAN.splitter', ':'),
-                DOM.wrap(descr.type.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })
+                parseTypes(descr.type)
+                //DOM.wrap(descr.type.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })
               )
             );
             if (descr.description)
@@ -503,15 +535,16 @@
           if (newInfo.tags)
           {
             cssClass(this.element).add('hasJsDoc');
-            var type = newInfo.tags.type || (newInfo.tags.returns && newInfo.tags.returns.type);
-            if (type)
+            var typ = newInfo.tags.type || (newInfo.tags.returns && newInfo.tags.returns.type);
+            if (typ)
             {
-              DOM.insert(this.content, DOM.createElement('SPAN.tags',
+              DOM.insert(this.content, DOM.createElement('SPAN.types',
                 DOM.createElement('SPAN.splitter', ':'),
-                DOM.wrap(
+                parseTypes(typ.replace(/^\s*\{|\}\s*$/g, ''))
+                /*DOM.wrap(
                   type.replace(/^\s*\{|\}\s*$/g, '').split(/(\|)/),
                   { 'SPAN.splitter': function(value, idx){ return idx % 2 } }
-                )
+                )*/
               ));
             }
           }
@@ -718,6 +751,59 @@
       update: function(object, newInfo){
         DOM.clear(this.content);
 
+        function parseDescription(text){
+          var listItem = false;
+          var lines = text.trimRight().split(/(?:\r\n?|\n\r?){2,}|((?:\r\n?|\n\r?)\s*\-\s+)/).map(function(line, idx){
+            if (idx % 2)
+            {
+              listItem = !!line;
+              return;
+            }
+
+            var m = line.match(/^\s*(.+):(\r\n?|\n\r?)/);
+            var h;
+            if (m)
+            {
+              h = DOM.createElement('SPAN.definition', m[1]);
+              line = line.substr(m[0].length);
+            }
+
+            var parts = line.split(/\{([a-z0-9\_\.\#]+)\}/i);
+            for (var i = 1; i < parts.length; i += 2)
+            {
+              var mapPath = parts[i].replace(/#/, '.prototype.');
+              var descr = map[mapPath];
+              if (descr)
+                parts[i] = DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), descr.title);
+              else
+                parts[i] = parts[i].quote('{');
+            }
+
+            return DOM.createElement(listItem ? 'LI' : 'P', h, parts);
+          }).filter(Function.$isNotNull).flatten();
+
+          var result = [];
+          var listContext;
+          for (var i = 0; i < lines.length; i++)
+          {
+            if (lines[i].tagName == 'LI')
+            {
+              if (!listContext)
+              {
+                listContext = DOM.createElement('UL');
+                result.push(listContext);
+              }
+              listContext.appendChild(lines[i]);
+            }
+            else
+            {
+              listContext = null;
+              result.push(lines[i]);
+            }
+          }
+          return result;
+        }
+
         if (newInfo.tags)
         {
           var tags = DOM.wrap(Object.keys(Object.slice(newInfo.tags, tagLabels)), { 'SPAN.tag': Function.$true });
@@ -731,21 +817,7 @@
           {
             if (!newInfo.tags.description_)
             {
-              newInfo.tags.description_ = DOM.wrap(
-                newInfo.tags.description.trimRight().split(/(?:\r\n?|\n\r?){2,}/).map(function(line){
-                  var parts = line.split(/\{([a-z0-9\_\.]+)\}/i);
-                  for (var i = 1; i < parts.length; i += 2)
-                  {
-                    var descr = map[parts[i]];
-                    if (descr)
-                      parts[i] = DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), descr.title);
-                    else
-                      parts[i] = parts[i].quote('{');
-                  }
-                  return parts;
-                }),
-                { 'P': Function.$true }
-              );
+              newInfo.tags.description_ = parseDescription(newInfo.tags.description);
             }
             
             DOM.insert(DOM.clear(this.description), newInfo.tags.description_);
@@ -771,9 +843,11 @@
                   var isOptional = types != value.type;
                   return DOM.createElement('LI.param' + (isOptional ? '.optional' : ''),
                     DOM.createElement('SPAN.name', key),
-                    DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
+                    //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
+                    DOM.createElement('SPAN.types', parseTypes(types)),
                     (isOptional ? ' (optional)' : ''),
-                    DOM.createElement('P', value.description)
+                    parseDescription(value.description || '')
+                    //DOM.createElement('P', value.description)
                   );
                 })
               )
@@ -788,7 +862,8 @@
                 Object.iterate({ ret: newInfo.tags.returns }, function(key, value){
                   var types = value.type.replace(/=$/, '');
                   return DOM.createElement('LI.param',
-                    DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
+                    //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
+                    DOM.createElement('SPAN.types', parseTypes(types)),
                     DOM.createElement('P', value.description)
                   );
                 })

@@ -341,13 +341,13 @@
                 {
                   name: 'encode',
                   test: function(){
-                    this.is('', ''.base64());
-                    this.is('aABlAGwAbABvACAAdwBvAHIAbAA=', 'hello worl'.base64());
-                    this.is('aABlAGwAbABvACAAdwBvAHIAbABkAA==', 'hello world'.base64());
-                    this.is('aABlAGwAbABvACAAdwBvAHIAbABkACEA', 'hello world!'.base64());
-                    this.is('PwRABDgEMgQ1BEIEIAA8BDgEQAQ=', 'привет мир'.base64());
-                    this.is('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', 'Привет мирHello world'.base64(true));
-                    this.is('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA', 'Привет мирHello world'.base64());
+                    this.is('', Base64.encode(''));
+                    this.is('aABlAGwAbABvACAAdwBvAHIAbAA=', Base64.encode('hello worl'));
+                    this.is('aABlAGwAbABvACAAdwBvAHIAbABkAA==', Base64.encode('hello world'));
+                    this.is('aABlAGwAbABvACAAdwBvAHIAbABkACEA', Base64.encode('hello world!'));
+                    this.is('PwRABDgEMgQ1BEIEIAA8BDgEQAQ=', Base64.encode('привет мир'));
+                    this.is('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', Base64.encode('Привет мирHello world', true));
+                    this.is('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA', Base64.encode('Привет мирHello world'));
                   }
                 },
                 {

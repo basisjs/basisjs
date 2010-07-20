@@ -98,7 +98,7 @@
           {
             if (!tags[key])
               tags[key] = {};
-            var p = value.match(/^\s*\{([^\}]+)\}\s+(\S+)(?:\s+(.+))?/i);
+            var p = value.match(/^\s*\{([^\}]+)\}\s+(\S+)(?:\s+((?:.|[\r\n])+))?/i);
             if (!p)
             {
               if (typeof console != 'undefined')
@@ -385,7 +385,7 @@
     'jsdoc': function parseSource(resource){
 
       function createJsDocEntity(source, path){
-        text = source.replace(/(^|[\r\n]+)\s*\*[\t ]*/g, '\n').trimLeft();
+        text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|[\r\n]+)\s*\*/g, '\n').trimLeft();
         var e = JsDocEntity({
           path: path,
           text: text

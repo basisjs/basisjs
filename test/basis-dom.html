@@ -71,13 +71,6 @@
 
       return [
         {
-          critical: true,
-          name: 'Lib required',
-          test: function(){
-            this.is('object', typeof Basis, true);
-          }
-        },
-        {
           name: 'TreeWalker',
           testcase: [
             {
@@ -124,9 +117,9 @@
                 var w = new DOM.TreeWalker(pg);
                 this.is('n1', resolveNodes(w.next()));
                 this.is('n2', resolveNodes(w.next()));
-                this.is(DOM.get('n2'), w.cursor);
+                this.is(DOM.get('n2'), w.cursor_);
                 w.reset();
-                this.is(null, w.cursor);
+                this.is(null, w.cursor_);
                 this.is('1', resolveNodes(w.next(DOM.IS_TEXT_NODE)));
                 this.is(true, w.filter != DOM.IS_TEXT_NODE);
                 this.is('2', resolveNodes(w.next(DOM.IS_TEXT_NODE)));
@@ -138,9 +131,9 @@
                 var w = new DOM.TreeWalker(pg, null, DOM.TreeWalker.BACKWARD);
                 this.is('n1', resolveNodes(w.next()));
                 this.is('n10', resolveNodes(w.next()));
-                this.is(DOM.get('n10'), w.cursor);
+                this.is(DOM.get('n10'), w.cursor_);
                 w.reset();
-                this.is(null, w.cursor);
+                this.is(null, w.cursor_);
                 this.is('9', resolveNodes(w.next(DOM.IS_TEXT_NODE)));
                 this.is(true, w.filter != DOM.IS_TEXT_NODE);
                 this.is('8', resolveNodes(w.next(DOM.IS_TEXT_NODE)));
@@ -152,9 +145,9 @@
                 var w = new DOM.TreeWalker(pg);
                 this.is('9', resolveNodes(w.prev()));
                 this.is('n10', resolveNodes(w.prev()));
-                this.is(DOM.get('n10'), w.cursor);
+                this.is(DOM.get('n10'), w.cursor_);
                 w.reset();
-                this.is(null, w.cursor);
+                this.is(null, w.cursor_);
                 this.is('9', resolveNodes(w.prev(DOM.IS_TEXT_NODE)));
                 this.is(true, w.filter != DOM.IS_TEXT_NODE);
                 this.is('8', resolveNodes(w.prev(DOM.IS_TEXT_NODE)));
@@ -166,9 +159,9 @@
                 var w = new DOM.TreeWalker(pg, null, DOM.TreeWalker.BACKWARD);
                 this.is('1', resolveNodes(w.prev()));
                 this.is('n2', resolveNodes(w.prev()));
-                this.is(DOM.get('n2'), w.cursor);
+                this.is(DOM.get('n2'), w.cursor_);
                 w.reset();
-                this.is(null, w.cursor);
+                this.is(null, w.cursor_);
                 this.is('1', resolveNodes(w.prev(DOM.IS_TEXT_NODE)));
                 this.is(true, w.filter != DOM.IS_TEXT_NODE);
                 this.is('2', resolveNodes(w.prev(DOM.IS_TEXT_NODE)));
@@ -179,13 +172,13 @@
               test: function(){
                 var w = new DOM.TreeWalker(pg);
                 this.is('n1', resolveNodes(w.first()));
-                this.is(DOM.get('n1'), w.cursor);
+                this.is(DOM.get('n1'), w.cursor_);
                 w.next();
-                this.is(true, DOM.get('n1') !== w.cursor);
+                this.is(true, DOM.get('n1') !== w.cursor_);
                 this.is('n1', resolveNodes(w.first()));
                 
                 w.reset();
-                this.is(null, w.cursor);
+                this.is(null, w.cursor_);
                 this.is('1', resolveNodes(w.first(DOM.IS_TEXT_NODE)));
                 this.is(true, w.filter != DOM.IS_TEXT_NODE);
                 w.next();
@@ -197,13 +190,13 @@
               test: function(){
                 var w = new DOM.TreeWalker(pg, null, DOM.TreeWalker.BACKWARD);
                 this.is('n1', resolveNodes(w.first()));
-                this.is(DOM.get('n1'), w.cursor);
+                this.is(DOM.get('n1'), w.cursor_);
                 w.next();
-                this.is(true, DOM.get('n1') !== w.cursor);
+                this.is(true, DOM.get('n1') !== w.cursor_);
                 this.is('n1', resolveNodes(w.first()));
                 
                 w.reset();
-                this.is(null, w.cursor);
+                this.is(null, w.cursor_);
                 this.is('9', resolveNodes(w.first(DOM.IS_TEXT_NODE)));
                 this.is(true, w.filter != DOM.IS_TEXT_NODE);
                 w.next();
@@ -216,13 +209,13 @@
                 var w = new DOM.TreeWalker(pg);
                 var el;
                 this.is('9', resolveNodes(el = w.last()));
-                this.is(el, w.cursor);
+                this.is(el, w.cursor_);
                 w.next();
-                this.is(true, el !== w.cursor);
+                this.is(true, el !== w.cursor_);
                 this.is('9', resolveNodes(w.last()));
                 
                 w.reset();
-                this.is(null, w.cursor);
+                this.is(null, w.cursor_);
                 this.is('n10', resolveNodes(w.last(DOM.IS_ELEMENT_NODE)));
                 this.is(true, w.filter != DOM.IS_ELEMENT_NODE);
                 w.next();
@@ -235,13 +228,13 @@
                 var w = new DOM.TreeWalker(pg, null, DOM.TreeWalker.BACKWARD);
                 var el;
                 this.is('1', resolveNodes(el = w.last()));
-                this.is(el, w.cursor);
+                this.is(el, w.cursor_);
                 w.next();
-                this.is(true, el !== w.cursor);
+                this.is(true, el !== w.cursor_);
                 this.is('1', resolveNodes(w.last()));
 
                 w.reset();
-                this.is(null, w.cursor);
+                this.is(null, w.cursor_);
                 this.is('n2', resolveNodes(w.last(DOM.IS_ELEMENT_NODE)));
                 this.is(true, w.filter != DOM.IS_ELEMENT_NODE);
                 w.next();
