@@ -37,31 +37,14 @@
 
 (function(){
 
- /** 
-  * Root namespace for Basis framework.
-  * @namespace Basis
+ /**
+  * Object extensions
+  * @namespace Object
   */
 
-  var namespace = 'Basis';
-
-  // test functions
-  function $undefined(value) { return value == undefined };
-  function $defined(value)   { return value != undefined };
-  function $isNull(value)    { return value == null || value == undefined };
-  function $isNotNull(value) { return value != null && value != undefined };
-  function $isSame(value)    { return value === this };
-  function $isNotSame(value) { return value !== this };
-
-  // gag functions
-  function $self(value) { return value };
-  function $false()     { return false };
-  function $true()      { return true };
-  function $null()      { return null };
-  function $undef()     { };
-
  /**
-  * Returns first not null (undefined) value.
-  * @param {...[object]} arguments
+  * Returns first not null value.
+  * @param {...*} args
   * @return {object}
   */ 
   function coalesce(/* arg1 .. argN */){
@@ -102,7 +85,7 @@
  /**
   * Returns all property names of object.
   * @param {object} object Any object can has properties.
-  * @return {[string]}
+  * @return {Array.<string>}
   */
   function keys(object){
     var result = new Array();
@@ -116,7 +99,7 @@
  /**
   * Returns all property values of object.
   * @param {object} object Any object can has properties.
-  * @return {[object]}
+  * @return {Array.<Object>}
   */
   function values(object){
     var result = new Array();
@@ -130,7 +113,7 @@
  /**
   * Creates a slice of source object.
   * @param {object} source Any object can has properties.
-  * @param {[string]} keys Desired key set.
+  * @param {Array.<string>} keys Desired key set.
   * @return {object} New object with desired keys from source object.
   */
   function slice(source, keys){
@@ -149,7 +132,7 @@
  /**
   * Creates a slice of source object and delete keys from source.
   * @param {object} source Any object can has properties.
-  * @param {[string]} keys Desired key set.
+  * @param {Array.<string>} keys Desired key set.
   * @return {object} New object with desired keys from source object.
   */
   function splice(source, keys){
@@ -171,7 +154,7 @@
  /**
   * Returns callback call results for all pair key-value of object.
   * @param {object} object Any object can has properties.
-  * @return {[object]}
+  * @return {Array.<Object>}
   */
   function iterate(object, callback, thisObject){
     var result = new Array();
@@ -182,10 +165,6 @@
     return result;
   }
   
-  // ============================================
-  // Object extensions
-  //
-
   extend(Object, {
     extend: extend,
     complete: complete,
@@ -197,45 +176,75 @@
     coalesce: coalesce
   });
 
-  // ============================================ 
-  // Function extensions
-  //
+ /**
+  * Function extensions
+  * @namespace Function
+  */
 
-  complete(Function.prototype, {
-    // implemented in ECMAScript
-    // TODO: check compliance
-    bind: function(thisObject){
-      var method = this;
-      var params = Array.from(arguments, 1);
+ /**
+  * @param {any} value
+  * @return {boolean} Returns true if value is undefined.
+  */
+  function $undefined(value) { return value == undefined };
 
-      return params.length
-        ? function(){
-            return method.apply(thisObject, params.concat.apply(params, arguments));
-          }
-        : function(){
-            return method.apply(thisObject, arguments);
-          }
-    }
-  });
+ /**
+  * @param {any} value
+  * @return {boolean} Returns true if value is not undefined.
+  */
+  function $defined(value)   { return value != undefined };
 
-  // EXTENSIONS
-  extend(Function.prototype, {
-    extend: function(proto){
-      var classProto  = this.prototype;
-      var constructor = classProto.constructor;
+ /**
+  * @param {any} value
+  * @return {boolean} Returns true if value is null.
+  */
+  function $isNull(value)    { return value == null || value == undefined };
 
-      extend(classProto, proto.prototype || proto);
+ /**
+  * @param {any} value
+  * @return {boolean} Returns true if value is not null.
+  */
+  function $isNotNull(value) { return value != null && value != undefined };
 
-      // prevent constructor overwrite for browsers where constructor property haven't DontEnum flag
-      if ('constructor' in proto)
-        classProto.constructor = constructor;
+ /**
+  * @param {any} value
+  * @return {boolean} Returns true if value is equal (===) to this.
+  */
+  function $isSame(value)    { return value === this };
 
-      return this;
-    },
-    complete: function(proto){
-      return complete(this.prototype, proto.prototype || proto);
-    }
-  });
+ /**
+  * @param {any} value
+  * @return {boolean} Returns true if value is not equal (!==) to this.
+  */
+  function $isNotSame(value) { return value !== this };
+
+ /**
+  * Just returns first param.
+  * @param {any} value
+  * @return {boolean} Returns value argument.
+  */
+  function $self(value) { return value };
+
+ /**
+  * Always returns false.
+  * @return {boolean}
+  */
+  function $false()     { return false };
+
+ /**
+  * Always returns true.
+  * @return {boolean}
+  */
+  function $true()      { return true };
+
+ /**
+  * Always returns null.
+  */
+  function $null()      { return null };
+
+ /**
+  * Always returns undefined.
+  */
+  function $undef()     { };
 
   extend(Function, {
     // test functions
@@ -253,7 +262,11 @@
     $null:      $null,
     $undef:     $undef,
 
-    // 
+   /**
+    * @param {function()} init Function that should be called at first time.
+    * @param {Object=} thisObject
+    * @return {function()} Returns lazy function.
+    */
     lazyInit: function(init, thisObject){
       var inited = 0, _self, data;
       return _self = function(){
@@ -267,6 +280,12 @@
       };
     },
 
+   /**
+    * @param {function()} init Function that should be called at first time.
+    * @param {function()} run Function that will be called all times.
+    * @param {Object=} thisObject
+    * @return {function()} Returns lazy function.
+    */
     lazyInitAndRun: function(init, run, thisObject){
       var inited = 0, _self, data;
       return _self = function(){
@@ -281,6 +300,11 @@
       };
     },
 
+   /**
+    * @param {function()} run Function that will be called only once.
+    * @param {Object=} thisObject
+    * @return {function()} Returns lazy function.
+    */
     runOnce: function(run, thisObject){
       var fired = 0;
       return function(){
@@ -290,22 +314,144 @@
     }
   });
 
+ /**
+  * @namespace Function.prototype
+  */
+
+  complete(Function.prototype, {
+   /**
+    * Changes function default context. It also makes possible to set static
+    * arguments for function.
+    * Implemented in Fifth Edition of ECMA-262.
+    * TODO: check compliance
+    * @param {Object} thisObject 
+    * @param {...*} args
+    * @return {function()}
+    */
+    bind: function(thisObject/*, arg1 .. argN*/){
+      var method = this;
+      var params = Array.from(arguments, 1);
+
+      return params.length
+        ? function(){
+            return method.apply(thisObject, params.concat.apply(params, arguments));
+          }
+        : function(){
+            return method.apply(thisObject, arguments);
+          };
+    }
+  });
+
+  // EXTENSIONS
+  /*
+  extend(Function.prototype, {
+    extend: function(proto){
+      debugger;
+      var classProto  = this.prototype;
+      var constructor = classProto.constructor;
+
+      extend(classProto, proto.prototype || proto);
+
+      // prevent constructor overwrite for browsers where constructor property haven't DontEnum flag
+      if ('constructor' in proto)
+        classProto.constructor = constructor;
+
+      return this;
+    },
+    complete: function(proto){
+      debugger;
+      return complete(this.prototype, proto.prototype || proto);
+    }
+  });
+  */
+
   
-  // ============================================
-  // Boolean extensions
-  //
+ /**
+  * Boolean extensions
+  * @namespace Boolean
+  */
 
   extend(Boolean, {
-    invert: function(value){ return !value },
-    normalize: function(value){ return !!value }
-  });
-  
-  // ============================================ 
-  // Array extensions
-  //
+   /**
+    * Inverse value to opposite boolean value.
+    * @param {any} value
+    * @return {boolean}
+    */
+    invert: function(value){
+      return !value;
+    },
 
-  // FIXES
-  Array.complete({
+   /**
+    * Convert value to bollean.
+    * @param {any} value
+    * @return {boolean}
+    */
+    normalize: function(value){
+      return !!value;
+    }
+  });
+
+  
+ /**
+  * Array extensions
+  * @namespace Array
+  */
+
+  complete(Array, {
+   /**
+    * Retruns true if value is Array instance.
+    * @param {Object} value
+    * @return {boolean}
+    */
+    isArray: function(value){
+      return Object.prototype.toString.call(value) === '[object Array]';
+    }
+  });
+
+  extend(Array, {
+    // array copier
+    from: function(object, offset){ 
+      var result;
+      
+      if (object != null)
+      {
+        var len = object.length;
+        
+        if (typeof len == 'undefined')
+          return [object];
+        
+        if (!offset)
+          offset = 0;
+
+        if (len - offset > 0)
+        {
+          result = new Array();
+          for (var i = offset, k = 0; i < len; i++)
+            result[k++] = object[i];
+          return result;
+        }
+      }
+
+      return [];
+    },
+
+    // filled array creator
+    create: function(length, fillValue, thisObject){
+      var result = new Array();
+      var isFunc = typeof fillValue == 'function';
+      
+      for (var i = 0; i < length; i++)
+        result[i] = isFunc ? fillValue.call(thisObject, i, result) : fillValue;
+      
+      return result;
+    }
+  });
+
+ /**
+  * @namespace Array.prototype
+  */
+
+  complete(Array.prototype, {
     // JavaScript 1.6
     indexOf: function(searchElement, offset){
       offset = parseInt(offset) || 0;
@@ -386,44 +532,7 @@
     }
   });
 
-  // EXTENSIONS
-  // array copier
-  Array.from = function(object, offset){ 
-    var result;
-    
-    if (object != null)
-    {
-      var len = object.length;
-      
-      if (typeof len == 'undefined')
-        return [object];
-      
-      var offset = offset || 0;
-      if (len - offset > 0)
-      {
-        result = new Array();
-        for (var i = offset, k = 0; i < len; i++)
-          result[k++] = object[i];
-        return result;
-      }
-    }
-
-    return [];
-  };
-
-  // filled array creator
-  Array.create = function(length, fillValue, thisObject){
-    var result = new Array();
-    var isFunc = typeof fillValue == 'function';
-    
-    for (var i = 0; i < length; i++)
-      result[i] = isFunc ? fillValue.call(thisObject, i, result) : fillValue;
-    
-    return result;
-  };
-
-  // extend class prototype
-  Array.extend({
+  extend(Array.prototype, {
     // extractors
     clone: function(){
       return Array.from(this);
@@ -473,7 +582,7 @@
 
     // getters
     item: function(index){
-      var index = parseInt(index || 0);
+      index = parseInt(index || 0);
       return this[index >= 0 ? index : this.length + index];
     },
     first: function(index){
@@ -548,9 +657,11 @@
     * When strong parameter equal false insert position returns.
     * Otherwise returns position of founded item, but -1 if nothing found.
     * @param {any} value Value search for
-    * @param {function(object)|string} getter
-    * @param {boolean} desc Must be true for reverse sorted arrays.
-    * @param {boolean} strong If true - returns result only if value found. 
+    * @param {function(object)|string=} getter
+    * @param {boolean=} desc Must be true for reverse sorted arrays.
+    * @param {boolean=} strong If true - returns result only if value found. 
+    * @param {number=} left Min left index. If omit it equals to zero.
+    * @param {number=} right Max right index. If omit it equals to array length.
     * @return {number}
     */
     binarySearchPos: function(value, getter, desc, strong, left, right){ 
@@ -586,7 +697,7 @@
       return this.binarySearchPos(value, getter, false, true);
     },
 
-    binarySearchIntervalPos: function(value, leftGetter, rightGetter, strong){
+    binarySearchIntervalPos: function(value, leftGetter, rightGetter, strong, left, right){
       if (!this.length)  // empty array check
         return -1;
 
@@ -594,8 +705,8 @@
       rightGetter = Data.getter(rightGetter || $self);
 
       var pos, compareValue;
-      var l = 0;
-      var r = this.length - 1;
+      var l = isNaN(left) ? 0 : left;
+      var r = isNaN(right) ? this.length - 1 : right;
       var lv, rv;
 
       // binary search
@@ -683,13 +794,69 @@
     };
   }
 
-  // ============================================
-  // String
-  //
+ /**
+  * String extensions
+  * @namespace String
+  */
 
   var STRING_QUOTE_PAIRS = { '<': '>', '[': ']', '(': ')', '{': '}', '\xAB': '\xBB' };
 
-  String.extend({
+  String.Entity = {
+    laquo:  '\xAB',
+    raquo:  '\xBB',
+    nbsp:   '\xA0',
+    quot:   '\x22',
+    quote:  '\x22',
+    copy:   '\xA9',
+    shy:    '\xAD',
+    para:   '\xB6',
+    sect:   '\xA7',
+    deg:    '\xB0',
+    mdash:  '\u2014',
+    hellip: '\u2026'
+  };
+
+  complete(String, {
+    toLowerCase: function(value){
+      return String(value).toLowerCase();
+    },
+    toUpperCase: function(value){
+      return String(value).toUpperCase();
+    },
+    trim: function(value){
+      return String(value).trim();
+    },
+    trimLeft: function(value){
+      return String(value).trimLeft();
+    },
+    trimRight: function(value){
+      return String(value).trimRight();
+    },
+    isEmpty: function(value){
+      return value == null || String(value) == '';
+    },
+    isNotEmpty: function(value){
+      return value != null && String(value) != '';
+    }
+  });
+
+ /**
+  * @namespace String.prototype
+  */
+  complete(String.prototype, {
+    trimLeft: String.prototype.trimLeft || function(){
+      return this.replace(/^\s\s*/, '');
+    },
+    trimRight: String.prototype.trimRight || function(){
+      return this.replace(/\s\s*$/, '');
+    },
+    // implemented at ECMAScript5
+    trim: function(){
+      return this.trimLeft().trimRight();
+    }
+  });
+
+  extend(String.prototype, {
     toObject: function(){
       // try { return eval('0,' + this) } catch(e) {}
       // safe solution with no eval:
@@ -762,18 +929,7 @@
     }
   });
 
-  String.complete({
-    trimLeft: String.prototype.trimLeft || function(){
-      return this.replace(/^\s\s*/, '');
-    },
-    trimRight: String.prototype.trimRight || function(){
-      return this.replace(/\s\s*$/, '');
-    },
-    // implemented at ECMAScript5
-    trim: function(){
-      return this.trimLeft().trimRight();
-    }
-  });
+  String.format = String.prototype.format;
 
   // Fix some methods
   // ----------------
@@ -823,55 +979,13 @@
       return _native_String_substr.call(this, start < 0 ? Math.max(0, this.length + start) : start, end);
     };
   }
-
-  // extend String
   
-  String.Entity = {
-    laquo:  '\xAB',
-    raquo:  '\xBB',
-    nbsp:   '\xA0',
-    quot:   '\x22',
-    quote:  '\x22',
-    copy:   '\xA9',
-    shy:    '\xAD',
-    para:   '\xB6',
-    sect:   '\xA7',
-    deg:    '\xB0',
-    mdash:  '\u2014',
-    hellip: '\u2026'
-  };
+ /**
+  * Number extensions
+  * @namespace Number.prototype
+  */
 
-  complete(String, {
-    toLowerCase: function(value){
-      return String(value).toLowerCase();
-    },
-    toUpperCase: function(value){
-      return String(value).toUpperCase();
-    },
-    trim: function(value){
-      return String(value).trim();
-    },
-    trimLeft: function(value){
-      return String(value).trimLeft();
-    },
-    trimRight: function(value){
-      return String(value).trimRight();
-    },
-    isEmpty: function(value){
-      return value == null || String(value) == '';
-    },
-    isNotEmpty: function(value){
-      return value != null && String(value) != '';
-    },
-    format: String.prototype.format
-  });
-
-  
-  // ============================================ 
-  // Number extensions
-  //
-
-  Number.extend({
+  extend(Number.prototype, {
     fit: function(min, max){
       if (!isNaN(min) && this < min)
         return Number(min);
@@ -923,9 +1037,13 @@
   // Date (other extensions & fixes moved to date.js)
   //
 
+ /**
+  * @namespace Date.prototype
+  */
+
   // IE 5.0-7.0 fix
   if ((new Date).getYear() < 1900)
-    Date.extend({
+    extend(Date.prototype, {
       getYear: function(){
         return this.getFullYear() - 1900;
       },
@@ -933,6 +1051,19 @@
         return this.setFullYear(!isNaN(year) && year < 100 ? Number(year) + 1900 : year);
       }
     });
+
+
+
+  // ============================================
+  // Main part
+  //
+
+ /** 
+  * Root namespace for Basis framework.
+  * @namespace Basis
+  */
+
+  var namespace = 'Basis';
 
   // ============================================ 
   // Namespace subsystem
@@ -989,21 +1120,10 @@
     return namespaces[namespace] = cursor;
   }
 
-  //getNamespace('Basis');
-
-  //Basis.namespace = getNamespace;
-  //Basis.namespaces_ = namespaces;
-
-  //Basis.Locale = {};
-
-  //!ms;;;Basis.instanceStorage = instanceStorage;
-
   // ============================================ 
   // OOP section: Class implementation
   //
 
-  //!ms;;;var instanceStorage = {};
-  //!ms;;;var GMethodStat = [];
   var Class = (function(){ 
 
    /**
@@ -1069,22 +1189,21 @@
     * @private
     */
     function wrapMethod(method, ancestorMethod, proto){
-      var ancestorMethod = ancestorMethod || abstractMethod;
-
-      //!ms;;;if (!method.mw) GMethodStat.push(method); method.mw = (method.mw || 0) + 1;
+      if (!ancestorMethod)
+        ancestorMethod = abstractMethod;
 
       // create method wrapper
       var methodWrapper = function(){
         var saveInherit = this.inherit;
         this.inherit = ancestorMethod;
-        //!ms;;;arguments.callee.method.cc = (arguments.callee.method.cc || 0) + 1;
         var result = methodWrapper.method.apply(this, arguments);
         this.inherit = saveInherit;
         return result;
       };
 
       // workaroud for browsers which doesn't enum for toString
-      methodWrapper.toString = function(){ return method.toString() };
+      methodWrapper.toString = function(){ return methodWrapper.method.toString() };
+      methodWrapper.valueOf = function(){ return methodWrapper.method.valueOf() };
 
       // extend and return wrapped method
       return extend(methodWrapper, {
@@ -1120,11 +1239,11 @@
       create: function(SuperClass){
 
         //function newClass(){
-        var newClass = function BasisClass(){
-          //!ms;;;var s = instanceStorage[this.className]; if (!s) s = instanceStorage[this.className] = []; s.push(this);
+        var newClass = new Function("if (typeof this.init == 'function') return this.init.apply(this, arguments) & undefined;")
+        /*function BasisClass(){
           if (typeof this.init == 'function')
-            return this.init.apply(this, arguments) & undefined;  // !!! return undefined?
-        }
+            return this.init.apply(this, arguments) & undefined;
+        };*/
 
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
@@ -1199,8 +1318,10 @@
         if (source.toString !== Object.prototype.toString)
           keys.add('toString');
         
-        for (var i = 0, key; key = keys[i]; i++)
+        var i = keys.length;
+        while (i--)
         {
+          var key = keys[i];
           var value = source[key];
 
           if (key == 'className')
@@ -1217,7 +1338,6 @@
         return this;
       },
       destroy: function(){
-        //!ms;;;var s = instanceStorage[this.className]; if (s) s.remove(this);
         for (var prop in this)
           delete this[prop];
         
@@ -1704,10 +1824,10 @@
             if (cursor === this.root_)
               return this.cursor_ = null;
 
-            if (node = cursor[this.b]) // next sibling
-              break;
-              
-            cursor = cursor[PARENT_NODE];
+            node = cursor[this.b]; // next sibling
+
+            if (!node) 
+              cursor = cursor[PARENT_NODE];
           }
         }
         while (!filter(cursor = node));
@@ -2124,7 +2244,7 @@
     * @return {Node|[Node]} Inserted nodes (may different of source members). 
     */
     function insert(node, source, insertPoint, refChild){
-      var node = get(node); // TODO: remove
+      node = get(node); // TODO: remove
 
       if (!node)
         throw new Error('DOM.insert: destination node can\'t be null');
@@ -2148,8 +2268,8 @@
 
       var isDOMLikeObject = !isNode(node);
       var result;
-
-      if (!source || !(source instanceof Array))
+      
+      if (!source || !Array.isArray(source))
         result = isDOMLikeObject ? source && node.insertBefore(source, refChild) : handleInsert(node, source, refChild);
       else
       {
@@ -2356,7 +2476,8 @@
     * @return {Node} 
     */
     function css(node, style){
-      if (node = get(node)) 
+      node = get(node);
+      if (node)
       {
         var value, mapping;
         for (var key in style)
@@ -3120,8 +3241,14 @@
       var handlers = Array.from(globalHandlers[event.type]);
 
       if (handlers)
-        for (var i = handlers.length - 1, handlerObject; handlerObject = handlers[i--];)
+      {
+        var i = handlers.length;
+        while (i--)
+        {
+          var handlerObject = handlers[i];
           handlerObject.handler.call(handlerObject.thisObject, event);
+        }
+      }
     };
 
    /**
@@ -3135,9 +3262,13 @@
       if (handlers)
       {
         // search for similar handler, returns if found (prevent for handler dublicates)
-        for (var i = 0, handlerObject; handlerObject = handlers[i]; i++)
+        var i = handlers.length;
+        while (i--)
+        {
+          var handlerObject = handlers[i];
           if (handlerObject.handler === handler && handlerObject.thisObject === thisObject)
             return;
+        }
       }
       else
       {
@@ -3276,7 +3407,7 @@
         if (typeof eventType != 'string')
         {
           // no eventType - delete handlers for all events
-          for (var eventType in handlers)
+          for (eventType in handlers)
             clearHandlers(node, eventType);
         }
         else
@@ -3436,11 +3567,12 @@
   var CSS = (function(){
 
    /** @namespace Basis.CSS */
+
    
     var namespace = 'Basis.CSS';
 
     function makeClassName(classes){
-      return classes != null ? String(classes).trim().replace(/^(.)|\s+|\s*,\s*/g, '.$1') : '';
+      return classes != null ? String.trim(classes).replace(/^(.)|\s+|\s*,\s*/g, '.$1') : '';
     };
 
     var ClassNameWraper = Class(null, {
@@ -3819,23 +3951,10 @@
   // export names
   //
 
-  //!ms;;;Basis.mstat = function(){var g = Basis.Data.getter;var x = GMethodStat.map(g('mw'));var xc = GMethodStat.filter(g('mw != 1')).length;console.log(['method count: ' + x.length, 'method more than once wrapped (mtow): {0} ({1:.2}%)'.format(xc, 100 * (xc/x.length)), 'method only once wrapped (moow): ' + (x.length - xc)].join('\n'));var tcc = GMethodStat.map(g('cc || 0')).reduce(function(a,b){return a+b}, 0);var tcc1 = GMethodStat.filter(g('mw != 1')).map(g('cc || 0')).reduce(function(a,b){return a+b}, 0);console.log(['total methods calls count: ' + tcc, 'mtow calls count: {0} ({1:.2}%)'.format(tcc1, 100 * (tcc1/tcc)), 'moow calls count: ' + (tcc - tcc1)].join('\n')); };
-  //!ms;;;Basis.istat = function(){var total = 0;console.log(Object.keys(instanceStorage).sort().map(function(k){total += instanceStorage[k].length;return k + ': ' + instanceStorage[k].length;}).join('\n') + '\n' + '-'.repeat(20) + '\n' +'Total instances: ' + total);};
-
   // extend Basis
   getNamespace(namespace).extend({
     namespace: getNamespace,
 
-    //Data: Data,
-    //DOM: DOM,
-    //Event: Event,
-    //CSS: CSS,
-    //cssClass: CSS.cssClass,
-    //Html: Html,
-    
-    //Class: Class,
-    
-    //Browser: Browser,
     Cleaner: Cleaner   
   });
 

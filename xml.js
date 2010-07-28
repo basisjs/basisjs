@@ -361,7 +361,7 @@
               if (prop == 'xmlns' || typeof value == 'function')
                 continue;
 
-              if (value && value.constructor == Array)
+              if (value && Array.isArray(value))
               {
                 for (var i = 0; i < value.length; i++)
                   result.appendChild(Object2XML(document, prop, ns, value[i]));

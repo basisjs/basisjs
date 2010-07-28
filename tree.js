@@ -48,6 +48,7 @@
     var cssClass = Basis.CSS.cssClass;
 
     var nsWrapers = DOM.Wrapers;
+    var createBehaviour = nsWrapers.createBehaviour;
 
    /**
     * Expand all descendant nodes.
@@ -95,7 +96,7 @@
       canHaveChildren: false,
 
       // node behaviour handlers
-      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
+      behaviour: createBehaviour(nsWrapers.HtmlNode, {
         click: function(event){
           if (DOM(Event.sender(event)).isInside(this.title || this.element))
             this.select(Event(event).ctrlKey);
@@ -168,7 +169,7 @@
       childClass: TreeNode,
       groupControlClass: TreeGroupControl,
 
-      behaviour: nsWrapers.createBehaviour(TreeNode, {
+      behaviour: createBehaviour(TreeNode, {
         //dblclick: function(){ this.toggle() },
         click: function(event){
           if (this.expander && DOM(Event.sender(event)).isInside(this.expander))

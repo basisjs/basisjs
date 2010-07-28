@@ -11,7 +11,9 @@
 
   (function(){
 
-    // namespace
+   /**
+    * @namespace Basis.Controls.Tabs
+    */
 
     var namespace = 'Basis.Controls.Tabs';
 
@@ -48,6 +50,9 @@
     //  Pages Controls prototype
     //
 
+   /**
+    * @class
+    */
     var AbstractTabsControl = Class(nsWrapers.HtmlControl, {
       className: namespace + '.AbstractTabsControl',
 
@@ -88,6 +93,9 @@
       return value == null || value == '' ? '[no title]' : value;
     };
 
+   /**
+    * @class
+    */
     var Tab = Class(nsWrapers.HtmlNode, {
       className: namespace + '.Tab',
 
@@ -164,6 +172,9 @@
     // Tabs control
     //
 
+   /**
+    * @class
+    */
     var TabsGroupControl = Class(nsWrapers.HtmlGroupControl, {
       childClass: Class(nsWrapers.HtmlPartitionNode, {
         template: new Template(
@@ -172,6 +183,9 @@
       })
     });
 
+   /**
+    * @class
+    */
     var TabControl = Class(AbstractTabsControl, {
       className: namespace + '.TabControl',
 
@@ -204,6 +218,9 @@
     //  Page Node
     //
 
+   /**
+    * @class
+    */
     var Page = Class(nsWrapers.HtmlContainer, {
       className: namespace + '.Page',
 
@@ -241,6 +258,9 @@
     //  Page Control
     //
 
+   /**
+    * @class
+    */
     var PageControl = Class(AbstractTabsControl, {
       className: namespace + '.PageControl',
 
@@ -255,6 +275,9 @@
     //  TabSheet Node
     //
 
+   /**
+    * @class
+    */
     var TabSheet = Class(Tab, {
       className: namespace + '.TabSheet',
 
@@ -312,6 +335,9 @@
     // AccordionControl
     //
 
+   /**
+    * @class
+    */
     var AccordionControl = Class(TabControl, {
       className: namespace + '.AccordionControl',
 
@@ -328,6 +354,9 @@
     //  TabSheetControl
     //
 
+   /**
+    * @class
+    */
     var TabSheetControl = Class(TabControl, {
       className: namespace + '.TabSheetControl',
 

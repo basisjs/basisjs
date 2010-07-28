@@ -351,7 +351,7 @@
           if (className)
             cell.firstChild.className = className.call(this, this, cell);
           
-          if (!content || !(content instanceof Array))
+          if (!content || !Array.isArray(content))
             content = [content];
 
           for (var j = 0; j < content.length; j++)

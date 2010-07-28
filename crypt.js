@@ -11,7 +11,9 @@
 
   (function(){
 
-    // namespace
+   /**
+    * @namespace Basis.Crypt
+    */
 
     var namespace = 'Basis.Crypt';
 
@@ -34,7 +36,9 @@
 
     var UTF16 = (function(){
     
-     /** @namespace Basis.Crypt.UTF16 */
+     /**
+      * @namespace Basis.Crypt.UTF16
+      */
       var namespace = 'Basis.Crypt.UTF16';
 
       // utf16 string -> utf16 bytes array
@@ -204,7 +208,9 @@
 
     var Base64 = (function(){
 
-     /** @namespace */
+     /**
+      * @namespace Basis.Crypt.Base64
+      */
       var namespace = 'Basis.Crypt.Base64';
 
       var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=".toArray();
@@ -293,6 +299,10 @@
 
     })();
 
+   /**
+    * @namespace Basis.Crypt
+    */
+
     // =======================================
     //  [ HEX Encode/Decode ]
 
@@ -317,7 +327,7 @@
         return number2hex(input);
 
       var output = new Array();
-      if (input.constructor == Array)
+      if (Array.isArray(input))
         output = input.map(HEX);
       else
         output = String(input).toArray().map(function(c){ return number2hex(c.charCodeAt(0)); });
@@ -528,7 +538,7 @@
     var cryptTarget = '';
     function setCryptTarget(target){
       cryptTarget = target || '';
-      return x;
+      return context_;
     }
 
     var cryptMethods = {
@@ -541,11 +551,11 @@
       hex:     function(){ return HEX(this) }
     };
 
-    var x = {};
+    var context_ = {};
     Object.iterate(cryptMethods, function(name, value){
-      x[name] = function(useUTF8){
+      context_[name] = function(useUTF8){
         var result = value.call(cryptTarget, useUTF8);
-        return cryptTarget = Object.extend(typeof result != 'object' ? Object(result) : result, x);
+        return cryptTarget = Object.extend(typeof result != 'object' ? Object(result) : result, context_);
       }
     });
 

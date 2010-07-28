@@ -1,3 +1,4 @@
+/// <reference path="basis.js />
 /*!
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
@@ -129,7 +130,7 @@
       handlers_: [],
 
      /**
-      * @param {Object} config
+      * @param {Object=} config
       * @config {Object} handlers Event handler set.
       * @config {Object} thisObject Context for event handler set (handlers).
       * @config {boolean} traceEvents_ Debug for.
@@ -209,7 +210,7 @@
       * @param {string} eventName Name of dispatching event.
       * @param {...*} args The arguments to the event handlers.
       */
-      dispatch: function(eventName, args){
+      dispatch: function(eventName/*, arg1 .. argN */){
         var behaviour = this.behaviour[eventName];
         var handlersCount = this.handlers_.length;
 
@@ -223,8 +224,10 @@
           {
             var handlers = slice.call(this.handlers_);
             var item, handler;
-            for (var i = handlers.length - 1; item = handlers[i]; i--)
+            var i = handlers.length;
+            while (i--)
             {
+              item = handlers[i];
               // debug for
               ;;;if (typeof item.handler['any'] == 'function') item.handler.any.apply(item.thisObject, [eventName].concat(args));
 
@@ -270,9 +273,9 @@
     * @constant
     */
     var DATAOBJECT_DELEGATE_HANDLER = {
-      /*datasetChanged: function(newValue, delta){ 
+      datasetChanged: function(newValue, delta){ 
         this.dispatch('update', this, this.info, this.info, {});
-      },*/
+      },
       change: function(newValue, oldValue, delta){ 
         this.dispatch('update', this, newValue, oldValue, delta);
       },
@@ -1079,7 +1082,7 @@
         if (config.objects)
           this.add.apply(this, config.objects);
 
-        this.fire(!!config.calculateValue, true);
+        this.fire(!!config.calculateOnInit, true);
 
         Cleaner.add(this);
       },
@@ -2081,7 +2084,7 @@
       updatePositions_: function(pos1, pos2){
         if (this.positionDependent)
         {
-          if (pos2 == -1) debugger;
+          ;;;if (pos2 == -1) debugger;
           this.minPosition_ = Math.min(this.minPosition_, pos1, pos2);
           this.maxPosition_ = Math.max(this.maxPosition_, pos1, pos2);
           if (!this.positionUpdateTimer_)
@@ -2187,6 +2190,9 @@
 
           refChild = group.childNodes[pos];
 
+          if (!refChild && pos >= group.childNodes.length)
+            refChild = group.nextSibling && group.nextSibling.firstChild;
+
           if (newChild === refChild 
               || (this.localSorting && newChild.parentNode === this && newChildValue === this.localSorting(refChild)))
           {
@@ -2203,9 +2209,6 @@
             }
             return newChild;
           }
-
-          if (!refChild && pos >= group.childNodes.length)
-            refChild = group.nextSibling && group.nextSibling.firstChild;
         }
         else
           if (this.localSorting)
@@ -2359,7 +2362,8 @@
         */
 
         //if (this.matchFunction)
-        newChild.match(this.matchFunction);
+        if (newChild.match)
+          newChild.match(this.matchFunction);
 
         var changesInfo = [{ pos: pos, node: newChild, oldPos: prevPosition }];
         //if (moveMode)
@@ -2530,7 +2534,7 @@
       },
 
      /**
-      * @params {[Object]} childNodes
+      * @params {Array.<Object>} childNodes
       */
       setChildNodes: function(childNodes){
         this.clear();
@@ -2623,6 +2627,7 @@
       */
       setLocalGrouping: function(grouping){
         var isLocalGroupingChanged = false;
+        var order;
         if (!grouping)
         {
           if (this.groupControl)
@@ -2634,7 +2639,6 @@
 
             if (this.firstChild)
             {
-              var order;
               if (!this.localSorting)
                 order = this.collection ? this.collectionOrderedNodes_ : this.childNodes;
               else
@@ -2685,8 +2689,6 @@
             if (this.firstChild)
             {
               // new order
-              var order;
-
               if (!this.localSorting)
                 order = this.collection ? this.collectionOrderedNodes_ : this.childNodes;
               else
@@ -2738,6 +2740,7 @@
         //console.log(this.localSorting, sorting, this.localSorting != sorting);
         if (this.localSorting != sorting || this.localSortingDesc != !!desc)
         {
+          var order;
           this.localSortingDesc = !!desc;
 
           if (!sorting)
@@ -2747,7 +2750,7 @@
             if (this.collection)
             {
               // if collection assigned, restore collection item order
-              var order = this.collectionOrderedNodes_;
+              order = this.collectionOrderedNodes_;
 
               // sort child nodes according to groups disposition
               if (this.localGrouping)
@@ -2774,7 +2777,6 @@
               // count of top level elements (if used). No events dispatching (time benefits).
               // Sorting time of wrapers (AbstractNodes) equals N*log(N) + N (reference update).
               // NOTE: Nodes selected state will remain (sometimes it can be important)
-              var order;
               if (this.localGrouping)
               {
                 order = [];
@@ -3099,9 +3101,14 @@
         //DOM.clear(this.childNodesElement);
         if (1 || !alive)
         {
-          for (var i = 0, node; node = this.childNodes[i]; i++)
+          var i = this.childNodes.length;
+          var node;
+          while (i--)
+          {
+            node = this.childNodes[i];
             if (this.childNodesElement == node.element.parentNode)
               this.childNodesElement.removeChild(node.element);
+          }
         }
         this.inherit(alive);
       },
@@ -3233,8 +3240,9 @@
       },
       clear: function(membersAlive){
         var groups = Array.from(this.childNodes);
-        for (var group, i = 0; group = groups[i]; i++)
+        while (groups.length)
         {
+          var group = groups.pop();
           group.clear(membersAlive);
           group.destroy();
         }

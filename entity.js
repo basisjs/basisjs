@@ -11,7 +11,9 @@
 
   (function(){
 
-    // namespace
+   /**
+    * @namespace Basis.Entity
+    */
 
     var namespace = 'Basis.Entity';
 

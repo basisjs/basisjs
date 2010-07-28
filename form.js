@@ -11,7 +11,9 @@
 
   (function(){
 
-    // namespace
+   /**
+    * @namespace Basis.Controls.Form
+    */
 
     var namespace = 'Basis.Controls.Form';
 
@@ -509,12 +511,12 @@
       titleGetter: function(info){ return coalesce(info.title, info.value) },
 
       init: function(config){
-        config = this.inherit(config);
-        
-        if (typeof config.valueGetter == 'function')
+        if (config && typeof config.valueGetter == 'function')
           this.valueGetter = config.valueGetter;
-        if (typeof config.titleGetter == 'function')
+        if (config && typeof config.titleGetter == 'function')
           this.titleGetter = config.titleGetter;
+
+        config = this.inherit(config);
 
         this.element.node = this;
 
@@ -1465,7 +1467,6 @@
                               : function(value){ return new RegExp('(' + startPoints + ')(' + value.forRegExp() + ')', 'i') };
         this.map = {};
         this.map[config.wrapElement || 'SPAN.match'] = function(v, i){ return (i % 3) == 2 };
-
 
         this.inherit('', {
           change: this.changeHandler

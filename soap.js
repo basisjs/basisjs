@@ -305,7 +305,7 @@
 
           items = items.Items ? items.Items[Object.keys(items.Items)[0]] : items[Object.keys(items)[0]];
 
-          if (storage.constructor == Array)
+          if (Array.isArray(storage))
           {
             storage.set(items);
           }

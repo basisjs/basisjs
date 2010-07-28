@@ -150,7 +150,7 @@
           if (typeof popup.hideOnKey == 'function')
             result = popup.hideOnKey(key);
           else
-            if (popup.hideOnKey instanceof Array)
+            if (Array.isArray(popup.hideOnKey))
               result = popup.hideOnKey.has(key);
 
           if (result)
@@ -376,7 +376,7 @@
             if (rotateOffset == maxRotate)
               break;
 
-            if (this.autorotate.constructor == Array)
+            if (Array.isArray(this.autorotate))
             {
               var rotate = this.autorotate[rotateOffset++];
 

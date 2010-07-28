@@ -11,7 +11,9 @@
 
   (function(){
 
-    // namespace
+   /**
+    * @namespace Basis.Controls.Button
+    */
 
     var namespace = 'Basis.Controls.Button';
 

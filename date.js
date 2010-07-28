@@ -11,7 +11,9 @@
 
   (function(){
 
-    // namespace
+   /**
+    * @namespace Basis.Date
+    */
     var namespace = 'Basis.Date';
 
     // import names
@@ -101,7 +103,7 @@
   
     // Date prototype extension
 
-    Date.extend({
+    Object.extend(Date.prototype, {
       isLeapYear: function(){
         return isLeapYear(this.getFullYear());
       },
@@ -218,7 +220,7 @@
       };
     }
 
-    Date.complete({
+    Object.complete(Date.prototype, {
       // implemented in ECMAScript5
       // TODO: check for time zone
       toISOString: function(){
@@ -237,8 +239,8 @@
       }
     });
 
-    // backward capability
-    Date.extend({
+    // capability
+    Object.extend(Date.prototype, {
       toODBCDate: Date.prototype.toISODateString,
       toODBCTime: Date.prototype.toISOTimeString,
       toODBC: Date.prototype.toISOString,

@@ -11,7 +11,9 @@
 
   (function(){
 
-    // namespace
+   /**
+    * @namespace Basis.Publish2
+    */
 
     var namespace = 'Basis.Publish2';
 
@@ -57,7 +59,7 @@
     var NO_CREATE = true;
 
    /**
-    * @class DataChunk
+    * @class
     */
     var DataChunk = Class.create(DataObject, {
       className: namespace + '.DataChunk',
@@ -221,7 +223,7 @@
     };
 
    /**
-    * @class AbstractAdapter
+    * @class
     */
     var AbstractAdapter = Class.create(EventObject, {
       linkedDataChunk: null,
@@ -274,9 +276,6 @@
       }
     });
 
-   /**
-    * @class AjaxAdapter
-    */
     var AjaxAdapterHandler = {
       prepare: function(){
         if (this.callback.before)
@@ -327,6 +326,9 @@
       }
     };
     
+   /**
+    * @class
+    */
     var AjaxAdapter = Class.create(AbstractAdapter, {
       behaviour: createBehaviour(AbstractAdapter, {
         link:   function(){ this.transport.abort(); },
@@ -353,7 +355,7 @@
     });
 
    /**
-    * @class SOAPAdapter
+    * @class
     */
     var SOAPAdapter = Class.create(AjaxAdapter, {  /// UNSAFE!!!!!
       behaviour: createBehaviour(AjaxAdapter, {
@@ -373,7 +375,7 @@
     });
 
    /**
-    * @class Subscriber
+    * @class
     */
     var Subscriber = Class.create(DataObject, {
       className: namespace + '.Subscriber',
@@ -517,7 +519,7 @@
     };
 
    /**
-    * @class Publisher
+    * @class
     */
     var Publisher = Class.create(EventObject, {
       className: namespace + '.Publisher',

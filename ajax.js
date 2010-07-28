@@ -11,7 +11,9 @@
 
   (function(){
 
-    // namespace
+   /**
+    * @namespace Basis.Ajax
+    */
 
     var namespace = 'Basis.Ajax';
 
@@ -606,7 +608,7 @@
           // set timeout
           ;;;if (DEBUG_TIMEOUT) { this.timeout = Math.random() * 2000; if (typeof console != 'undefined') console.log('set random timeout: {0#.2} sec'.format(this.timeout/1000)); }
           if (this.timeout)
-            this.timeoutTimer = setTimeout(this.abort.bind(this, true), this.timeout);
+            this.timeoutTimer = setTimeout(function(){ this.abort(true); }.bind(this), this.timeout);
 
           // send data
           if (method == 'POST')

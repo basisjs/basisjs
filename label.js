@@ -11,7 +11,9 @@
 
   (function(){
 
-   /** @namespace Basis.Controls.Popup */
+   /**
+    * @namespace Basis.Controls.Label
+    */
 
     var namespace = 'Basis.Controls.Label';
 
@@ -214,7 +216,7 @@
    /**
     * @class
     */
-    var Empty = Class(ChildCount, { className: namespace + '.Empty',
+    var IsEmpty = Class(ChildCount, { className: namespace + '.IsEmpty',
       visibilityGetter: function(childCount){ return !childCount },
       defaultContent: 'Empty'
     })
@@ -230,7 +232,7 @@
       CollectionState: CollectionState,
       CollectionProcessing: CollectionProcessing,
       ChildCount: ChildCount,
-      Empty: Empty
+      IsEmpty: IsEmpty
     });
 
   })();

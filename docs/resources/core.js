@@ -9,6 +9,8 @@
     name: 'JsDocEntity',
     id: 'path',
     fields: {
+      file: String,
+      line: Number,
       path: String,
       text: String,
       context: String,
@@ -388,7 +390,9 @@
         text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|[\r\n]+)\s*\*/g, '\n').trimLeft();
         var e = JsDocEntity({
           path: path,
-          text: text
+          text: text,
+          file: resource.url,
+          line: line
         });
         jsDocs[e.value.path] = e.value.text;
       }
@@ -397,24 +401,35 @@
       var ns = '';
       var isClass;
       var clsPrefix = '';
+      var skipDeclaration = false;
+      var line = 0;
 
       parts.reduce(function(jsdoc, code, idx){
         if (idx % 2)
         {
-          jsdoc.push(code);
-          var m = code.match(/@namespace\s+(\S+)/);
-          if (m)
+          if (code.match(/@annotation/))
           {
-            ns = m[1];
-            createJsDocEntity(code, ns);
+            skipDeclaration = true;
           }
-          var m = code.match(/@class/);
-          isClass = !!m;
-          if (isClass)
-            clsPrefix = '';
+          else
+          {
+            jsdoc.push(code);
+            var m = code.match(/@namespace\s+(\S+)/);
+            if (m)
+            {
+              ns = m[1];
+              createJsDocEntity(code, ns);
+              skipDeclaration = true;
+            }
+            var m = code.match(/@class/);
+            isClass = !!m;
+            if (isClass)
+              clsPrefix = '';
+          }
         }
         else
-          if (idx)
+        {
+          if (!skipDeclaration && idx)
           {
             var m = code.match(/\s*(var\s+)?(function\s+)?([a-z0-9\_\$]+)/i);
             if (m)
@@ -433,6 +448,9 @@
                 }
             }
           }
+          skipDeclaration = false;
+        }
+        line += code.split(/\r\n?|\n\r?/).length - 1;
         return jsdoc;
       }, []);
 

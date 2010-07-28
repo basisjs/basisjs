@@ -50,7 +50,7 @@
           if (value === null)
             return 'null';
           
-          if (value.constructor == Array)
+          if (Array.isArray(value))
             return "[" + value.map(value2string).join(', ') + "]";
           
           if (value.constructor == Date)
