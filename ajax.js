@@ -240,7 +240,7 @@
       if (this.debug) infoOutput('State: (' + (arguments.length ? readyState : this.transport.readyState) + ') ' + state);
 
       // calc progress time
-      this.requestTime = new Date() - this.requestStartTime;
+      this.requestTime = Date.now() - this.requestStartTime;
 
       // dispatch self event
       try {
@@ -603,7 +603,7 @@
           }
 
           // save transfer start point time
-          this.requestStartTime = new Date();
+          this.requestStartTime = Date.now();
 
           // set timeout
           ;;;if (DEBUG_TIMEOUT) { this.timeout = Math.random() * 2000; if (typeof console != 'undefined') console.log('set random timeout: {0#.2} sec'.format(this.timeout/1000)); }

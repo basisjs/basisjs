@@ -1038,6 +1038,25 @@
   //
 
  /**
+  * @namespace Date
+  */
+
+  complete(Date, {
+   /**
+    * Returns the milliseconds elapsed since 1 January 1970 00:00:00 UTC up until now as a number.
+    * When using now to create timestamps or unique IDs, keep in mind that the resolution may be
+    * 15 milliseconds on Windows, so you could end up with several equal values if now is called
+    * multiple times within a short time span.
+    *
+    * This method was standardized in ECMA-262 5th edition.
+    * @return {number}
+    */
+    now: function(){
+      return +new Date();
+    }
+  });
+
+ /**
   * @namespace Date.prototype
   */
 

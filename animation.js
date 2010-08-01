@@ -26,7 +26,7 @@
     // MAIN PART
 
     function timePosition(startTime, duration){
-      var elapsed = new Date - startTime;
+      var elapsed = Date.now() - startTime;
       if (elapsed >= duration)
         return 1.0;
       else
@@ -74,7 +74,7 @@
       start: function(invertOnStarted){
         if (!this.started)
         {
-          this.startTime = new Date;
+          this.startTime = Date.now();
           this.started = true;
           this.run();
         }
@@ -102,7 +102,7 @@
         if (this.started)
         {
           var progress = timePosition(this.startTime, this.duration);
-          this.startTime = new Date - this.duration * (1.0 - progress) ;
+          this.startTime = Date.now() - this.duration * (1.0 - progress) ;
           this.run();
         }
       },

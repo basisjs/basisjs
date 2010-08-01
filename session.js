@@ -42,9 +42,7 @@
       return sessions[key];
     }
 
-    function genTimestamp(){
-      return +(new Date);
-    }
+    var genTimestamp = Date.now;
 
     /*
      *  SessionManager
