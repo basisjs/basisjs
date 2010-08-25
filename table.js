@@ -151,7 +151,7 @@
 
         // inherit create
         this.selection = new nsWrapers.Selection({
-          thisObject: this,
+          handlersContext: this,
           handlers: {
             change: function(){
               var cell = this.selection.items[0];

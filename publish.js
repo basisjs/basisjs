@@ -66,10 +66,10 @@
 
      /**
       * Count of attached subscribers.
-      * @property {Number} subscriberCount_
+      * @property {Number} subscriberCount
       * @private
       */
-      subscriberCount_: 0,
+      //subscriberCount: 0,
 
      /**
       * When first subscriber attached and data chunk in error state, data will be auto-reload.
@@ -88,6 +88,13 @@
       */
       state: STATE.UNDEFINED,
 
+      behaviour: nsWrapers.createBehaviour(nsWrapers.DataObject, {
+        subscribersChanged: function(){
+          if (this.subscriberCount > 0 && (this.state == STATE.UNDEFINED || (this.state == STATE.ERROR && this.autorepair) || this.state == STATE.DEPRECATED))
+            this.process();          
+        }
+      }),
+
      /**
       * @method init
       * @constructs
@@ -97,7 +104,7 @@
       init: function(key, adapterGetter){
         this.inherit();
 
-        this.subscriberCount_ = 0;
+        //this.subscriberCount = 0;
         this.key = key;
 
         this.adapterGetter = adapterGetter;
@@ -110,7 +117,7 @@
       * @param {Boolean} forced If true not check conditions, just load.
       */
       process: function(processId, forced){
-        if (forced || (this.subscriberCount_ != 0 && this.state != STATE.PROCESSING))
+        if (forced || (this.subscriberCount != 0 && this.state != STATE.PROCESSING))
           if (this.adapter = (this.adapter || this.adapterGetter()))  // this.adapterGetter(processId)
             this.adapter.start(this);
       },
@@ -134,7 +141,7 @@
       },
 
      /**
-      * Reload data if data chunk if error state.
+      * Reload data if data chunk in error state.
       * @method repaire
       */
       repair: function(){
@@ -152,7 +159,7 @@
       * @method deprecate
       */
       deprecate: function(){
-        if (this.subscriberCount_ == 0)
+        if (this.subscriberCount == 0)
           this.reset();
         else
         {
@@ -161,30 +168,32 @@
         }
       },
 
+      /*
       addHandler: function(handler, thisObject){
         if (this.inherit(handler, thisObject))
         {
           if (thisObject instanceof Subscriber)
           {
-            this.subscriberCount_++;
-            if (this.subscriberCount_ == 1 && (this.state == STATE.UNDEFINED || (this.state == STATE.ERROR && this.autorepair)))
+            //this.subscriberCount++;
+            if (this.subscriberCount > 0 && (this.state == STATE.UNDEFINED || (this.state == STATE.ERROR && this.autorepair) || this.state == STATE.DEPRECATED))
               this.process();
           }
         }
       },
 
+      /*
       removeHandler: function(handler, thisObject){
         if (this.inherit(handler, thisObject))
           if (thisObject instanceof Subscriber)
           {
-            this.subscriberCount_--;
+            this.subscriberCount--;
           }
       },
 
       clearHandlers_: function(){
         this.inherit();
-        this.subscriberCount_ = 0;
-      },
+        this.subscriberCount = 0;
+      },*/
 
      /**
       * @method destroy

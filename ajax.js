@@ -1,4 +1,4 @@
-/*!
+/*!asd
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
  *
@@ -613,6 +613,7 @@
           // send data
           if (method == 'POST')
           {
+            //debugger;
             data = this.postBody || params || '';
 
             if (Browser.test('ie'))                // IE XHR fixes

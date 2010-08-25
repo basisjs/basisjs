@@ -774,7 +774,8 @@
 
     var GroupEntitySet = Class(EntitySet, {
       className: namespace + '.GroupEntitySet',
-      init: function(entityType, name, groupingEntitySet){
+      init: function(entityType, name, groupingEntitySet, groupId){
+        this.groupId_ = groupId;
         this.groupingEntitySet = groupingEntitySet;
         this.inherit(entityType, name);
       },
@@ -789,6 +790,8 @@
 
       autoDestroyEmptyGroups: false,
       groupSelector: null,
+
+      groupClass: GroupEntitySet,
 
       init: function(entityType, name, groupSelector, entitySet){
         name = 'Grouping ' + name.quote() + ' of ' + (entityType ? entityType.name.quote('{') : 'mixed');
@@ -854,7 +857,7 @@
         var group = this.groups[groupId];
         if (!group && autocreate)
         {
-          group = this.groups[groupId] = new GroupEntitySet(this.entityTypeWraper, 'Group set ' + groupId, this);
+          group = this.groups[groupId] = new this.groupClass(this.entityTypeWraper, 'Group set ' + groupId, this, groupId);
           this.append(group);
         }
         return group;
@@ -1051,7 +1054,7 @@
             return entity;
           }
           else
-            return null;
+            return entityType.isSingleton ? entityType.createEntity() : null;
         };
 
         var entityType = new InternalEntityType(config, result);
@@ -1201,7 +1204,8 @@
         ;;;if (typeof console != 'undefined' && entityTypes.search(this.name, Data('name'))) console.warn('Dublicate entity name: ', this.name);
         entityTypes.push(this);
 
-        this.idField = config.id;
+        this.isSingleton = config.isSingleton;
+        this.idField  = config.id;
         this.wraper   = wraper;
         this.handlers = config.handlers;
 
@@ -1238,7 +1242,7 @@
             this.addReflection(name, config.reflections[name]);
 
         this.entityClass = Class(Entity, {
-          className: Entity.prototype.className + '.' + this.name,
+          className: this.constructor.className + '.' + this.name,
           entityType: this,
           all: this.all
         });
@@ -1265,11 +1269,16 @@
           ref.update(this.all.value[i]);
       },
       getEntity: function(data){
+        if (this.isSingleton)
+          return this.singleton;
         if (this.idField)
           return this.identifiedEntity[typeof data == 'number' || typeof data == 'string' ? this.fields[this.idField](data) : this.getId(data)];
       },
       createEntity: function(data){
-        return new this.entityClass(data);
+        var entity = this.singleton || new this.entityClass(data);
+        if (this.isSingleton)
+          this.singleton = entity;
+        return entity;
       },
       parse: function(data, autocreate){
         if (data && data.entityType === this)
@@ -1301,7 +1310,7 @@
         return entity;
       },
       getId: function(entityOrData){
-        if (entityOrData)
+        if (entityOrData && this.idField)
         {
           if (entityOrData.entityType)
             return entityOrData.value[this.idField];
@@ -1334,10 +1343,12 @@
 
       behaviour: nsWrapers.createBehaviour(Property, {
         change: function(newValue, oldValue, delta){
+          this.inherit(newValue, oldValue);
           for (var name in this.entityType._reflection)
             this.entityType._reflection[name].update(this);
         },
         destroy: function(){
+          this.inherit();
           for (var name in this._reflection)
             this.entityType._reflection[name].detach(this);
         },

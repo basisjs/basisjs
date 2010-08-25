@@ -70,7 +70,7 @@
             '<div class="Basis-Button-Wraper2">' +
               '<a{content} class="Basis-Button-Content" href="#">' + 
                 '<em class="pre"/>' +
-                '<span class="caption">{titleText}</span>' +
+                '<span class="caption">{captionText}</span>' +
                 '<em class="post"/>' +
               '</a>' +
             '</div>' +
@@ -84,7 +84,7 @@
         }
       }),
 
-      titleGetter: Data('caption'),
+      captionGetter: Data('caption'),
       caption: '[no title]',
       groupId: 0,
       name: null,
@@ -94,8 +94,10 @@
 
         // add default handlers
         var handlers = extend({}, config.handlers);
+
         if (config.handler)
           complete(handlers, { click: config.handler });
+
         if (Object.keys(handlers))
           config.handlers = handlers;
         else
@@ -110,7 +112,7 @@
         if (config.name)
           this.name = config.name;
 
-        this.setTitle('caption' in config ? config.caption : this.caption);
+        this.setCaption('caption' in config ? config.caption : this.caption);
 
         Event.addHandler(this.element, 'click', function(event){
           this.click();
@@ -121,9 +123,13 @@
         if (!this.isDisabled())
           this.dispatch('click');
       },
+      setCaption: function(newCaption){
+        this.caption = newCaption;
+        this.captionText.nodeValue = this.captionGetter(this);
+      },
       setTitle: function(caption){
-        this.caption = caption;
-        this.titleText.nodeValue = this.titleGetter(this);
+        ;;;if (typeof console != 'undefined') console.warn("Button.setTitle is deprecated. Use Button.setCaption instead");
+        return this.setCaption(caption);
       },
       destroy: function(){
         Event.clearHandlers(this.element);

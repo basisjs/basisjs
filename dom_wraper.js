@@ -1,4 +1,3 @@
-/// <reference path="basis.js />
 /*!
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
@@ -36,6 +35,7 @@
     * - {Basis.DOM.Wrapers.PropertySet} for {Basis.DOM.Wrapers.DataObjectSet}
     * - {Basis.DOM.Wrapers.Control} for {Basis.DOM.Wrapers.HtmlControl}
     * - {Basis.DOM.Wrapers.HtmlList} for {Basis.DOM.Wrapers.HtmlContainer}
+    *
     * @namespace Basis.DOM.Wrapers
     */
 
@@ -46,7 +46,7 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
     var Event = Basis.Event;
-    var Data = Basis.Data;
+    var Fn = Basis.Data;
     var Template = Basis.Html.Template;
 
     var Cleaner = Basis.Cleaner;
@@ -75,6 +75,7 @@
     /** @const */ var STATE_READY = 'ready';
     /** @const */ var STATE_PROCESSING = 'processing';
     /** @const */ var STATE_ERROR = 'error';
+    /** @const */ var STATE_DEPRECATED = 'deprecated';
 
    /**
     * Creates behaviour singleton object.
@@ -92,8 +93,8 @@
 
     // EventObject seed ID
     var HTML_EVENT_OBJECT_ID_HOLDER = 'basisEventObjectId';
-    var eventObjects = new Array();
     var eventObjectId = 1;
+    var eventObjectMap = {};
 
    /**
     * Base class for event dispacthing. It provides model when it's instance
@@ -132,23 +133,31 @@
      /**
       * @param {Object=} config
       * @config {Object} handlers Event handler set.
-      * @config {Object} thisObject Context for event handler set (handlers).
+      * @config {Object} handlersContext Context for event handler set (handlers).
       * @config {boolean} traceEvents_ Debug for.
       * @constructor
       */
       init: function(config){
+        // init properties
         this.handlers_ = new Array();
-        eventObjects[this.eventObjectId = eventObjectId++] = this;
 
+        // registrate object
+        eventObjectMap[eventObjectId] = this;
+        this.eventObjectId = eventObjectId++;
+
+        // apply config
         if (typeof config == 'object')
         {
           ;;;if ((config && config.traceEvents_) || this.traceEvents_) this.handlers_.push({ handler: { any: function(){ console.log(this, arguments) } }, thisObject: this });
+          ;;;if (config && 'thisObject' in config) console.warn(this.className + ': thisObject in config is deprecated. Use handlersContext instead');
 
           if (config.handlers)
+          {
             this.handlers_.push({
               handler: config.handlers,
-              thisObject: config.thisObject || this
+              thisObject: config.handlersContext || this
             });
+          }
         }
 
         return config;
@@ -214,7 +223,8 @@
         var behaviour = this.behaviour[eventName];
         var handlersCount = this.handlers_.length;
 
-        //if (!window.eventNum)window.eventNum = 0;window.eventNum++;console.log('{eventNum:04}'.format(window), eventName, this);
+        if (!window.eventNum)window.eventNum = 0;window.eventNum++;//console.log('{eventNum:04}'.format(window), eventName, this);
+        if (!window.eventMap)window.eventMap = {};if (!eventMap[eventName])eventMap[eventName]=0;eventMap[eventName]++;//console.log('{eventNum:04}'.format(window), eventName, this);
 
         if (handlersCount || behaviour)
         {
@@ -258,12 +268,157 @@
 
         // remove all event handler sets
         delete this.handlers_;
-        delete eventObjects[this.eventObjectId];
+        delete eventObjectMap[this.eventObjectId];
 
         // no handlers in destroyed object, nothing dispatch
         this.dispatch = Function.$undef;
       }
     });
+
+    //
+    // TimeEventManager
+    //
+
+    var TimeEventManager = (function(){
+      var NEVER = 2E12;
+      var EVENT_TIME_GETTER = Fn('eventTime');
+
+      var eventStack = [];
+      var map = {};
+      var fireTime = NEVER;
+      var timer = null;
+
+      var lockSetTimeout = false;
+
+      function setNextTime(){
+        if (lockSetTimeout)
+          return;
+
+        if (eventStack.length)
+        {
+          var now = Date.now();
+          var firstEventTime = Math.max(eventStack[0].eventTime, now);
+
+          // move fire time backward
+          if (firstEventTime < fireTime)
+          {
+            clearTimeout(timer);
+            timer = setTimeout(fire, (fireTime = firstEventTime) - now);
+          }
+        }
+        else
+        {
+          timer = clearTimeout(timer);
+          fireTime = NEVER;
+        }
+      }
+
+      function add(object, event, eventTime){
+        //debugger;
+        //;;;if (typeof console != 'undefined') console.log('try add event:', object.eventObjectId, object, event, eventTime);
+
+        var objectId = object.eventObjectId;
+        var eventMap = map[event];
+        if (!eventMap)
+          eventMap = map[event] = {};
+
+        var eventObject = eventMap[objectId];
+
+        if (eventObject)
+        {
+          if (isNaN(eventTime))
+          {
+            //;;;if (typeof console != 'undefined') console.log('eventTime is NaN - remove it');
+            return remove(object, event);
+          }            
+
+          if (eventObject.eventTime == eventTime)
+            return;
+
+          // temporary remove from stack
+          eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
+          eventObject.eventTime = eventTime;
+        }
+        else
+        {
+          if (isNaN(eventTime))
+            return;
+
+          // event config
+          eventObject = eventMap[objectId] = {
+            eventName: event,
+            object: object,
+            eventTime: eventTime,
+            callback: object[event]
+          };
+        }
+
+        // insert event into stack
+        eventStack.splice(eventStack.binarySearchPos(eventTime, EVENT_TIME_GETTER), 0, eventObject);
+
+        //;;;if (typeof console != 'undefined') console.log('event added');
+
+        setNextTime();
+      }
+
+      function remove(object, event){
+        //debugger;
+
+        var objectId = object.eventObjectId;
+        var eventObject = map[event] && map[event][objectId];
+
+        //;;;if (typeof console != 'undefined') console.log('try to remove:', objectId, object);
+
+        if (eventObject)
+        {
+          //;;;if (typeof console != 'undefined') console.log('remove object:', objectId, object);
+
+          // delete object from stack and map
+          eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
+          delete map[event][objectId];
+
+          setNextTime();
+        }
+      }
+
+      function fire(){
+        var now = Date.now();
+        var pos = eventStack.binarySearchPos(now + 15, EVENT_TIME_GETTER);
+
+        //;;;if (typeof console != 'undefined') console.log('>>>> event manager cycle');
+        //;;;if (typeof console != 'undefined') console.log('before fire:', eventStack.map(EVENT_TIME_GETTER), now, now + 15, pos);
+
+        lockSetTimeout = true; // lock for set timeout if callback calling will add new events
+        eventStack.splice(0, pos).forEach(function(eventObject){
+          //;;;if (typeof console != 'undefined') console.log('process object :', eventObject.object.eventObjectId, eventObject.object);
+
+          delete map[eventObject.eventName][eventObject.object.eventObjectId];
+          eventObject.callback.call(eventObject.object);
+        });
+        lockSetTimeout = false; // unlock
+
+        //;;;if (typeof console != 'undefined') console.log('after fire:', eventStack.map(EVENT_TIME_GETTER));
+
+        fireTime = NEVER;
+        setNextTime();
+
+        //;;;if (typeof console != 'undefined') console.log('>> next time:', fireTime == NEVER ? 'Never' : fireTime);
+      }
+
+      Cleaner.add({
+        destroy: function(){
+          lockSetTimeout = true;
+          clearTimeout(timer);
+          delete eventStack;
+          delete map;
+        }
+      })
+
+      return {
+        add: add,
+        remove: remove
+      };
+    })();
 
     //
     // DataObject
@@ -273,6 +428,8 @@
     * @constant
     */
     var DATAOBJECT_DELEGATE_HANDLER = {
+      isSubscriber: true,
+
       datasetChanged: function(newValue, delta){ 
         this.dispatch('update', this, this.info, this.info, {});
       },
@@ -295,8 +452,25 @@
       stateChanged: function(object, newState, oldState, errorText){
         if (this.state != newState || this.errorText != errorText)
         {
+          if (this.state != newState)
+          {
+            if (this.state == STATE_READY)
+            {
+              this.timestamp = object.timestamp;
+              if (!isNaN(this.timestamp + this.maxAge))
+                TimeEventManager.add(this, 'deprecate', this.timestamp + this.maxAge);
+            }
+            else
+            {
+              if (this.timestamp + this.maxAge)
+                TimeEventManager.remove(this, 'deprecate');
+              this.timestamp = NaN;
+            }
+          }
+
           this.state = newState;
           this.errorText = newState == STATE_ERROR ? errorText : null;
+
           this.dispatch('stateChanged', object, newState, oldState, this.errorText);
         }
       },
@@ -317,10 +491,24 @@
     };
 
    /**
+    * DataObject state object.
+    * @class
+    */
+    var DataState = function(state, data){
+      this.state = state || STATE_UNDEFINED;
+      this.data = data;
+    };
+    DataState.prototype.toString = function(){
+      return this.state;
+    };
+
+   /**
     * Base class for data storing.
     * @class
     * @extends {Basis.DOM.Wrapers.EventObject}
     */
+    noUpdateCount = 0;
+    noStateCount = 0;
     var DataObject = Class(EventObject, {
       className: namespace + '.DataObject',
 
@@ -329,7 +517,7 @@
       * It takes from config.info.
       * @type {Object}
       */
-      info: {},
+      info: null,
 
      /**
       * Count of info updates.
@@ -344,24 +532,33 @@
       delegate: null,
 
      /**
+      * Count of subscribed objects. Not all linked (unsing addHandlers) objects
+      * are subscribers of object, but only those who attached via handlers with
+      * isSubscriber property set to true. This property can use to determinate
+      * is data update necessary or not. Usualy if object is not in STATE_READY
+      * or STATE_PROCESSING and subscriberCount more than zero - update needed.
+      * @type {number}
+      */
+      subscriberCount: 0,
+
+     /**
+      * Indicates if object influence to related objects (his delegate or/and
+      * collection) or not.
+      * @type {boolean}
+      */
+      isActiveSubscriber: true,
+
+     /**
       * Flag determines object behaviour when assigned delegate is destroing:
-      *   true - cascade destroy (destroy object if delegate destroing)
-      *   false - detach delegate (don't destroy object)
+      * - true - destroy object on delegate object destroing (cascade destroy)
+      * - false - don't destroy object, detach delegate only
       * @type {boolean}
       */
       cascadeDestroy: false,
 
      /**
-      * Flag determines object behaviour when parentNode changing:
-      *   true - set same delegate as parentNode has on insert, or unlink delegate on remove
-      *   false - nothing to do
-      * @type {boolean}
-      */
-      autoDelegateParent: false,
-
-     /**
       * State of object.
-      * @type {Basis.DOM.Wrapers.STATE}
+      * @type {Basis.DOM.Wrapers.DataState}
       */
       state: STATE_READY,
 
@@ -372,72 +569,170 @@
       errorText: null,
 
      /**
+      * Time when object got ready state. Commonly when data of object was inited last time.
+      * This property 
+      */
+      timestamp: NaN,
+
+     /**
+      * Max time (in milliseconds) for data in ready state until it became deprecated.
+      * If it set to NaN this functionality is disabled.
+      * @type {number}
+      */
+      maxAge: NaN,
+
+     /**
       * @param {Object=} config The configuration of object.
-      * @config {Basis.DOM.Wrapers.DataObject} delegate Set a delegate to the new object.
-      * @config {Basis.DOM.Wrapers.DataObject|Object} info Initial data. If Basis.DOM.Wrapers.DataObject instance passed it became a delegate of the new object.
-      * @config {boolean} cascadeDestroy Override prototype's cascaseDestroy property.
-      * @config {boolean} autoDelegateParent Override prototype's cascaseDestroy property.
+      * @config {Basis.DOM.Wrapers.DataObject} delegate Set a delegate to the
+      *   new object. If passed than config.info will be ignored.
+      * @config {Basis.DOM.Wrapers.DataObject|Object} info Initial data for info
+      *   property. If {Basis.DOM.Wrapers.DataObject} instance passed it became
+      *   a delegate for the new object.
+      * @config {boolean} isActiveSubscriber Overrides prototype's {Basis.DOM.Wrapers.DataObject#isActiveSubscriber} property.
+      * @config {boolean} cascadeDestroy Overrides prototype's {Basis.DOM.Wrapers.DataObject#cascaseDestroy} property.
+      * @config {number} maxAge Overrides prototype's {Basis.DOM.Wrapers.DataObject#maxAge} property.
       * @return {Object}
       * @constructor
       */
       init: function(config){
+        // inherit
         this.inherit(config);
 
-        // ovveride class members for object members
-        this.info = {};
+        // init properties
         this.updateCount = 0;
+        this.info = {};
 
-        // fetch settings from config if possible
+        // apply config if possible
         if (typeof config == 'object')
         {
-          var delegate = config.delegate;
+          if (typeof config.isActiveSubscriber == 'boolean')
+            this.isActiveSubscriber = config.isActiveSubscriber;
 
-          // for backward capability (probably permanently here)
-          if (!delegate && config.info instanceof DataObject)
-            delegate = config.info;
-
-          // assign a delegate
-          if (delegate)
-            // this call must be silent for update event (second parameter),
-            // update event should be fired later
-            this.setDelegate(delegate, true);
-          else
-            // .. or info object if passed
-            if (config.info)
-              this.info = config.info;
+          if (typeof config.maxAge == 'number')
+          {
+            var maxAge = Number(config.maxAge);
+            this.maxAge = maxAge <= 0 ? NaN : maxAge;
+          }
 
           if (typeof config.cascadeDestroy == 'boolean')
             this.cascadeDestroy = config.cascadeDestroy;
 
-          if (typeof config.autoDelegateParent == 'boolean')
-            this.autoDelegateParent = config.autoDelegateParent;
+          // set info property
+          var delegate = config.delegate;
+
+          // for backward capability (but probably permanently here)
+          if (!delegate && config.info instanceof DataObject)
+            delegate = config.info;
+
+          if (delegate)
+            // assign a delegate
+            this.setDelegate(delegate);
+          else
+            // ... or info object
+            if (config.info)
+            {
+              this.info = config.info;
+              this.dispatch('update', this, this.info, {}, this.info);
+            }
         }
+
         //this.setState(state, this.errorText);
+
+        if (this.state == STATE_READY)
+        {
+          this.timestamp = Date.now();
+          if (!isNaN(this.maxAge))
+            TimeEventManager.add(this, 'deprecate', this.timestamp + this.maxAge);
+        }
+
+        // apply changes
+        if (this.state == this.constructor.prototype.state && (this.behaviour.stateChanged || this.handlers_.length))
+          this.dispatch('stateChanged', this, this.state, null, this.errorText);
 
         return config || {};
       },
 
-      /**
-       * Set new delegate object or reject it (if passed null).
-       * @example
-       *   var a = new DataObject();
-       *   var b = new DataObject();
-       *
-       *   a.setDelegate(b);
-       *   a.update({ prop: 123 });
-       *   alert(a.info.prop); // shows 123
-       *   alert(a.info.prop === b.info.prop); // shows true
-       *
-       *   b.update({ prop: 456 });
-       *   alert(a.info.prop === b.info.prop); // shows true
-       *
-       *   a.setState(Basis.DOM.Wrapers.PROCESSING);
-       *   alert(a.state); // shows 'processing'
-       *   alert(a.state === b.state); // shows 'processing'
-       * @param {Basis.DOM.Wrapers.DataObject} delegate
-       * @param {boolean=} silent Prevent fire update event.
-       * @return {Basis.DOM.Wrapers.DataObject} Returns current delegate object.
-       */
+     /**
+      * @inheritDoc
+      */
+      addHandler: function(handler, thisObject){
+        var result = this.inherit(handler, thisObject);
+        if (result && handler.isSubscriber && thisObject)
+        {
+          if (thisObject.isActiveSubscriber)
+          {
+            this.subscriberCount = this.subscriberCount + 1;
+            this.dispatch('subscribersChanged');
+          }
+        }
+        return result;
+      },
+
+     /**
+      * @inheritDoc
+      */
+      removeHandler: function(handler, thisObject){
+        var result = this.inherit(handler, thisObject);
+        if (result && handler.isSubscriber && thisObject)
+        {
+          if (thisObject.isActiveSubscriber)
+          {
+            this.subscriberCount = this.subscriberCount - 1;
+            this.dispatch('subscribersChanged');
+          }
+        }
+        return result;
+      },
+
+     /**
+      * Changes isActiveSubscriber property.
+      * @param {boolean} isActive New value for {Basis.DOM.Wrapers.DataObject#isActiveSubscriber} property
+      * @return Current {Basis.DOM.Wrapers.DataObject#isActiveSubscriber} property value
+      */
+      setIsActiveSubscriber: function(isActive){
+        if (this.isActiveSubscriber != isActive)
+        {
+          this.isActiveSubscriber = !!isActive;
+
+          var delegate = this.delegate;
+          if (delegate)
+          {
+            delegate.subscriberCount = delegate.subscriberCount + (isActive ? 1 : -1);
+            delegate.dispatch('subscribersChanged');
+          }
+
+          var collection = this.collection;
+          if (collection)
+          {
+            collection.subscriberCount = collection.subscriberCount + (isActive ? 1 : -1);
+            collection.dispatch('subscribersChanged');
+          }
+        }
+
+        return !!isActive;
+      },
+
+     /**
+      * Set new delegate object or reject it (if passed null).
+      * @example
+      *   var a = new DataObject();
+      *   var b = new DataObject();
+      *
+      *   a.setDelegate(b);
+      *   a.update({ prop: 123 });
+      *   alert(a.info.prop); // shows 123
+      *   alert(a.info.prop === b.info.prop); // shows true
+      *
+      *   b.update({ prop: 456 });
+      *   alert(a.info.prop === b.info.prop); // shows true
+      *
+      *   a.setState(Basis.DOM.Wrapers.PROCESSING);
+      *   alert(a.state); // shows 'processing'
+      *   alert(a.state === b.state); // shows 'processing'
+      * @param {Basis.DOM.Wrapers.DataObject} delegate
+      * @param {boolean=} silent Prevent fire update event.
+      * @return {Basis.DOM.Wrapers.DataObject} Returns current delegate object.
+      */
       setDelegate: function(delegate, silent){
         if (this.delegate !== delegate)
         {
@@ -471,7 +766,6 @@
             }
           }
 
-          //this.dispatch('delegateChanged_', this, oldDelegate);
           this.dispatch('delegateChanged', this, oldDelegate);
 
           if (!silent)
@@ -487,7 +781,7 @@
       getRootDelegate: function(){
         var object = this;
 
-        while (object.delegate)
+        while (object.delegate && object.delegate !== object)
           object = object.delegate;
 
         return object;
@@ -501,11 +795,10 @@
       isConnected: function(object){
         if (object instanceof DataObject)
         {
-          while (object && object !== this)
+          while (object && object !== this && object !== object.delegate)
             object = object.delegate;
             
-          if (object)
-            return true;
+          return object === this;
         }
 
         return false;
@@ -557,16 +850,30 @@
 
         if (state != this.state || errorText != this.errorText)
         {
-          var oldState = this.state;
-          var oldErrorText = this.errorText;
           var root = this.getRootDelegate();
 
           if (root !== this)
-          {
             root.setState(state, errorText, forceEvent);
-          }
           else
           {
+            var oldState = this.state;
+            var oldErrorText = this.errorText;
+
+            if (this.state != state)
+            {
+              if (state == STATE_READY)
+              {
+                this.timestamp = Date.now();
+                if (!isNaN(this.timestamp + this.maxAge)) TimeEventManager.add(this, 'deprecate', this.timestamp + this.maxAge);
+              }
+              else
+              {
+                if (this.timestamp + this.maxAge)
+                  TimeEventManager.remove(this, 'deprecate');
+                this.timestamp = NaN;
+              }
+            }
+
             this.state = state;
             this.errorText = errorText;
 
@@ -576,6 +883,39 @@
         }
 
         return this.state;
+      },
+
+     /**
+      * Sets new value for maxAge property. Adds or removes object to/from
+      * deprecator if necessary.
+      * @param {number} newMaxAge New value for maxAge. If new value less or
+      * equal to zero it set to NaN (disable deprecate functionality)
+      * @return {number} Current maxAge value.
+      */
+      setMaxAge: function(newMaxAge){
+        if (!newMaxAge || newMaxAge < 0)
+          newMaxAge = NaN;
+
+        if (this.maxAge != newMaxAge)
+        {
+          this.maxAge = newMaxAge;
+
+          if (newMaxAge)
+            TimeEventManager.add(this, 'deprecate', this.timestamp + this.maxAge);
+          else
+            TimeEventManager.remove(this, 'deprecate')
+        }
+
+        return this.maxAge;
+      },
+
+     /**
+      * Default action on deprecate, set object to STATE_DEPRECATED state,
+      * but only if object is not in STATE_PROCESSING state.
+      */
+      deprecate: function(){
+        if (this.state != STATE_PROCESSING)
+          this.setState(STATE_DEPRECATED);
       },
 
      /**
@@ -764,7 +1104,7 @@
             return;
 
           for (var i = 0, link; link = this.links_[i++];)
-            this.power(link, oldValue);
+            this.power_(link, oldValue);
         }
       }),
 
@@ -835,7 +1175,7 @@
 
         // process format argument
         if (typeof format != 'function')
-          format = Data(Function.$self, format);
+          format = Fn(Function.$self, format);
 
         // create link
         var link = { 
@@ -846,14 +1186,14 @@
         };
 
         // add link
-        ;;;if (typeof console != 'undefined' && this.links_.search(true, function(link){ return link.object == object && link.field == field })) console.warn('Dublicate link for property (Property.addLink)');
+        ;;;if (typeof console != 'undefined' && this.links_.search(true, function(link){ return link.object == object && link.field == field })) console.warn('Property.addLink: Dublicate link for property');
         this.links_.push(link);  // !!! TODO: check for object-field duplicates
         
         if (link.isEventObject)
           object.addHandler(PropertyObjectDestroyAction, this); // add unlink handler on object destroy
 
         // make effect on object
-        this.power(link);
+        this.power_(link);
 
         return object;
       },
@@ -954,7 +1294,7 @@
       * @param {Object} oldValue Object value before changes.
       * @private
       */
-      power: function(link, oldValue){
+      power_: function(link, oldValue){
         var field = link.field;
 
         // field specified
@@ -994,8 +1334,8 @@
     //
     //  Property Set
     //
-
-    var DataObjectSetStatePriority = [STATE_READY, STATE_UNDEFINED, STATE_ERROR, STATE_PROCESSING];
+                                   // lowest priority                                              highest priority
+    var DataObjectSetStatePriority = [STATE_READY, STATE_DEPRECATED, STATE_UNDEFINED, STATE_ERROR, STATE_PROCESSING];
     var DataObjectSetHandlers = {
       stateChanged: function(){
         this.fire(false, true);
@@ -1021,9 +1361,7 @@
      /**
       * @type {Function}
       */
-      calculateValue: function(){
-      	return this.value + 1;
-      },
+      calculateValue: Fn('value + 1'),
 
      /**
       * @type {Array.<Basis.DOM.Wrapers.DataObject>}
@@ -1032,6 +1370,7 @@
 
      /**
       * @type {number}
+      * @private
       */
       timer_: null,
 
@@ -1045,10 +1384,10 @@
       * @type {boolean}
       * @private
       */
-      stateChanged_: false,
+      stateChanged_: true,
 
      /**
-      * 
+      * Default state is UNDEFINED
       */
       state: STATE_UNDEFINED,
 
@@ -1056,6 +1395,7 @@
       * @param {Object} config
       * @config {Object} value
       * @config {Object} handlers
+      * @config {boolean} calculateOnInit
       * @config {function()} proxy
       * @config {function()} calculateValue
       * @config {Array.<Basis.DOM.Wrapers.DataObject>} objects
@@ -1063,26 +1403,23 @@
       */
       init: function(config){
         config = config || {};
-        var value = 'value' in config ? config.value : 0;
-        var handlers = config.handlers || null; 
-        var proxy = config.proxy;
 
-        this.inherit(value, handlers, proxy);
+        this.inherit('value' in config ? config.value : 0, config.handlers, config.proxy);
 
         this.objects = new Array();
 
         if (typeof config.calculateValue == 'function')
           this.calculateValue = config.calculateValue;
-        else
-          this.simpleSet = true;
-
-        // create a closure
-        this.trigger = this.update.bind(this);
 
         if (config.objects)
+        {
+          this.lock();
           this.add.apply(this, config.objects);
+          this.unlock();
+        }
 
-        this.fire(!!config.calculateOnInit, true);
+        this.valueChanged_ = !!config.calculateOnInit;
+        this.update();
 
         Cleaner.add(this);
       },
@@ -1104,7 +1441,7 @@
             throw new Error(EXCEPTION_DATAOBJECT_REQUIRED);
         }
 
-        this.fire(!this.simpleSet, true);
+        this.fire(true, true);
       },
 
      /**
@@ -1115,18 +1452,18 @@
         if (this.objects.remove(object))
           object.removeHandler(DataObjectSetHandlers, this);
 
-        this.fire(!this.simpleSet, true);
+        this.fire(true, true);
       },
 
      /**
       * Removes all DataObject instances from objects collection.
       */
       clear: function(){
-        for (var i = 0, len = this.objects.length; i < len; i++)
-          this.objects[i].removeHandler(DataObjectSetHandlers, this);
+        for (var i = 0, object; object = this.objects[i]; i++)
+          object.removeHandler(DataObjectSetHandlers, this);
         this.objects.clear();
 
-        this.fire(!this.simpleSet, true);
+        this.fire(true, true);
       },
 
      /**
@@ -1134,10 +1471,17 @@
       * @param {boolean} stateChanged
       */
       fire: function(valueChanged, stateChanged){
-        this.valueChanged_ = this.valueChanged_ || !!valueChanged;
-        this.stateChanged_ = this.stateChanged_ || !!stateChanged;
-        if (!this.timer_ && !this.locked)
-          this.timer_ = setTimeout(this.trigger, 0);
+        if (!this.locked)
+        {
+          this.valueChanged_ = this.valueChanged_ || !!valueChanged;
+          this.stateChanged_ = this.stateChanged_ || !!stateChanged;
+
+          if (!this.timer_ && (this.valueChanged_ || this.stateChanged_))
+          {
+            this.timer_ = true;
+            TimeEventManager.add(this, 'update', Date.now());
+          }
+        }
       },
 
      /**
@@ -1158,8 +1502,8 @@
       * @private
       */
       update: function(){
-        clearTimeout(this.timer_);
         delete this.timer_;
+        TimeEventManager.remove(this, 'update');
 
         if (!Cleaner.globalDestroy)
         {
@@ -1171,9 +1515,7 @@
             var stateMap = {};
             var len = this.objects.length;
             if (!len)
-            {
               this.setState(STATE_UNDEFINED)
-            }
             else
             {
               var maxWeight = -2;
@@ -1206,12 +1548,10 @@
       */
       destroy: function(){
         this.lock();
-        clearTimeout(this.timer_);
-        this.trigger = Function.$null;
+        this.clear();
+        TimeEventManager.remove(this, 'update');
 
         this.inherit();
-
-        this.clear();
       }
     });
 
@@ -1235,6 +1575,7 @@
 
           if (parentNode)
           {
+            // TODO: remove this event dispatch. it using only by DOM.Wrapers.Register
             this.parentNode.dispatch('childUpdated', this, newData, oldData, delta);
 
             var nodes = parentNode.childNodes;
@@ -1296,6 +1637,14 @@
           }
         }
       }),
+
+     /**
+      * Flag determines object behaviour when parentNode changing:
+      * - true: set same delegate as parentNode has on insert, or unlink delegate on remove
+      * - false: nothing to do
+      * @type {boolean}
+      */
+      autoDelegateParent: false,
 
      /**
       * @type {string}
@@ -1413,10 +1762,11 @@
 
      /**
       * @param {Object} config
+      * @config {boolean} autoDelegateParent Overrides prototype's {Basis.DOM.Wrapers.DataObject#autoDelegateParent} property.
+      * @config {boolean} positionDependent Override prototype's positionDependent property.
       * @config {function()|string} localSorting Initial local sorting function.
       * @config {boolean} localSortingDesc Initial local sorting order.
       * @config {Basis.DOM.Wrapers.AbstractNode} document (deprecated) Must be removed. Used as hot fix.
-      * @config {boolean} positionDependent Override prototype's positionDependent property.
       * @config {Object} localGrouping Initial config for local grouping.
       * @config {Basis.DOM.Wrapers.DataObject} collection Sets collection for object.
       * @config {Array} childNodes Initial child node set.
@@ -1424,40 +1774,50 @@
       * @constructor
       */
       init: function(config){
-        config = this.inherit(config);
+        // apply config
+        config = config || {};
+
+        if (typeof config.autoDelegateParent == 'boolean')
+          this.autoDelegateParent = config.autoDelegateParent;
+
+        if (typeof config.positionDependent == 'boolean')
+          this.positionDependent = config.positionDependent;
 
         if (config.localSorting)
-        {
-          this.localSorting = Data(config.localSorting);
-          this.localSortingDesc = !!config.localSortingDesc;
-        }
+          this.localSorting = Fn(config.localSorting);
 
-        if (config.document)
-          this.document = config.document;
-
-        if (config.positionDependent)
-          this.positionDependent = true;
+        if (typeof config.localSortingDesc == 'boolean')
+          this.localSortingDesc = config.localSortingDesc;
 
         if ('localGrouping' in config)
           this.localGrouping = config.localGrouping;
 
+        if (config.document)
+          this.document = config.document;
+
         if (this.localGrouping)
           this.setLocalGrouping(this.localGrouping);
 
+        // init properties
         if (this.canHaveChildren)
-        {
           this.childNodes = new Array();
 
+        // inherit
+        config = this.inherit(config);
+
+        // append childs
+        if (this.canHaveChildren)
+        {
           if (config.collection)
             this.setCollection(config.collection);
           else
           {
             if (config.childNodes)
-              //DOM.insert(this, config.childNodes);
-              this.setChildNodes(config.childNodes);
+              this.setChildNodes(config.childNodes); //DOM.insert(this, config.childNodes);
           }
         }
 
+        // return config
         return config;
       },
 
@@ -1578,7 +1938,7 @@
       className: namespace + '.PartitionNode',
       canHaveChildren: true,
 
-      titleGetter: Data('info.title'),
+      titleGetter: Fn('info.title'),
 
      /**
       * Destroy object if it doesn't contain any children (became empty).
@@ -1593,22 +1953,25 @@
       * @constructor
       */
       init: function(config){
-        config = this.inherit(config);
+        // apply config
+        if (typeof config == 'object')
+        {
+          if (typeof config.emptyAutoDestroy == 'boolean')
+            this.emptyAutoDestroy = !!config.emptyAutoDestroy;
 
-        if ('emptyAutoDestroy' in config)
-          this.emptyAutoDestroy = !!config.emptyAutoDestroy;
+          if (config.titleGetter)
+            this.titleGetter = Fn(config.titleGetter);
+        }
 
-        if (config.titleGetter)
-          this.setTitleGetter(config.titleGetter);
-
-        return config;
+        // inherit
+        return this.inherit(config);
       },
 
       setTitleGetter: function(titleGetter){
-        var getter = Data(titleGetter);
+        var getter = Fn(titleGetter);
         if (this.titleGetter !== getter)
         {
-          this.titleGetter = Data(titleGetter);
+          this.titleGetter = Fn(titleGetter);
           this.dispatch('update', this, this.info, this.info, {});
         }
       },
@@ -1722,24 +2085,30 @@
       * @param {Object} config
       * @config {Basis.DOM.Wrapers.Selection} selection Set Selection control for child nodes.
       * @config {boolean} selectable Initial value for selectable property.
-      * @config {boolean} selected Initial value for selected property. If true 'select' event will fired.
       * @config {boolean} disabled Initial value for disabled property. If true 'disable' event will fired.
+      * @config {boolean} selected Initial value for selected property. If true 'select' event will fired.
       * @constructor
       */
       init: function(config){
-        if (typeof config == 'object' && config.selection instanceof Selection)
-          this.selection = config.selection;
+        // apply config
+        if (typeof config == 'object')
+        {
+          if (config.selection instanceof Selection)
+            this.selection = config.selection;
 
+          if (config.selectable == false)
+            this.selectable = false;
+        }
+
+        // inherit
         config = this.inherit(config);
 
-        if (config.selectable == false)
-          this.selectable = false;
+        // synchronize node state according to config
+        if (config.disabled)
+          this.disable();
 
         if (config.selected)
           this.select(true);
-
-        if (config.disabled)
-          this.disable();
 
         return config;
       },
@@ -1858,7 +2227,7 @@
       isDisabled: function(){
         return this.disabled 
                || (this.document && this.document.disabled)
-               || !!DOM.parent(this, Data('disabled'));
+               || !!DOM.parent(this, Fn('disabled'));
       },
 
      /**
@@ -1926,7 +2295,9 @@
      *  Hierarchy handlers & methods
      */
 
-    var HierarchyToolsCollectionHandlers = {
+    var HIERARCHYTOOLS_COLLECTION_HANDLERS = {
+
+      isSubscriber: true,
 
       stateChanged: function(object, newState, oldState, errorText){
         this.dispatch('collectionStateChanged', object, newState, oldState, errorText);
@@ -2078,7 +2449,7 @@
 
       // position trace properties
       positionUpdateTimer_: null,
-      minPosition_: 1000000,
+      minPosition_: 1E12,
       maxPosition_: 0,
 
       updatePositions_: function(pos1, pos2){
@@ -2089,21 +2460,21 @@
           this.maxPosition_ = Math.max(this.maxPosition_, pos1, pos2);
           if (!this.positionUpdateTimer_)
           {
-            var self = this;
-            this.positionUpdateTimer_ = setTimeout(function(){
-              var len = Math.min(self.maxPosition_ + 1, self.childNodes.length);
+            this.positionUpdateTimer_ = function(){
+              var len = Math.min(this.maxPosition_ + 1, this.childNodes.length);
               //console.log(self.minPosition_, len);
+              //console.log('update pos');
 
-              var gnode = self.childNodes[self.minPosition_];
+              var gnode = this.childNodes[this.minPosition_];
               var group = gnode && gnode.groupNode;
-              var gpos = self.minPosition_;
+              var gpos = this.minPosition_;
               if (group)
                 gpos = group.childNodes.indexOf(gnode);
 
               //console.log('updatePosition: ' + self.minPosition_ + '...' + (self.minPosition_ + len - 1) );
-              for (var i = self.minPosition_; i < len; i++, gpos++)
+              for (var i = this.minPosition_; i < len; i++, gpos++)
               {
-                var node = self.childNodes[i];
+                var node = this.childNodes[i];
                 if (node.groupNode != group)
                 {
                   gpos = 0;
@@ -2112,10 +2483,11 @@
                 node.dispatch('updatePosition', i, gpos);
               }
 
-              delete self.minPosition_;
-              delete self.maxPosition_;
-              delete self.positionUpdateTimer_;
-            }, 0);
+              delete this.minPosition_;
+              delete this.maxPosition_;
+              delete this.positionUpdateTimer_;
+            };
+            TimeEventManager.add(this, 'positionUpdateTimer_', Date.now());
           }
         }
       },
@@ -2318,7 +2690,10 @@
         if (pos == 0)
           this.firstChild = newChild;
         else
+        {
+          //if (!refChild.previousSibling) debugger;
           refChild.previousSibling.nextSibling = newChild;
+        }
 
         // update refChild
         refChild.previousSibling = newChild;
@@ -2388,9 +2763,7 @@
         if (!(oldChild instanceof this.childClass))
           throw new Error(EXCEPTION_BAD_CHILD_CLASS);
 
-    	  //if (this.localSorting) console.log('local sorting removeChild');
         // update this
-        //this.childNodes.remove(oldChild);
         var pos = this.childNodes.indexOf(oldChild);
         this.childNodes.splice(pos, 1);
         this.updatePositions_(pos, this.firstChild == this.lastChild ? 0 : this.childNodes.length - 1);
@@ -2401,9 +2774,6 @@
         // update document & selection
         var updateDocument = oldChild.document === this.document;
         var updateSelection = oldChild.selection === this.selection;
-
-        //if (oldChild.selection === this.selection)
-        //  oldChild.setSelection();
 
         if (oldChild.firstChild && (updateDocument || updateSelection))
           DOM.axis(oldChild, DOM.AXIS_DESCENDANT).forEach(function(node){
@@ -2447,7 +2817,6 @@
           oldChild.groupNode.removeChild(oldChild);
 
         // dispatch event
-        //this.dispatch('childRemoved', oldChild);
         this.dispatch('childNodesModified', this, { deleted: [{ pos: pos, node: oldChild }] });
 
         if (oldChild.autoDelegateParent)
@@ -2488,7 +2857,6 @@
 
         // dispatch event
         // NOTE: important dispatch event before nodes remove/destroy, because listeners may analize removing nodes
-        //this.dispatch('childsRemoved', this);
         this.dispatch('childNodesModified', this, { deleted: childNodes.map(function(node, pos){ return { pos: pos, node: node } }).reverse() });
 
         while (childNodes.length)
@@ -2536,8 +2904,8 @@
      /**
       * @params {Array.<Object>} childNodes
       */
-      setChildNodes: function(childNodes){
-        this.clear();
+      setChildNodes: function(childNodes, keepAlive){
+        this.clear(!!keepAlive);
 
         if (childNodes)
         {
@@ -2581,7 +2949,7 @@
         	  oldCollectionState = this.collection.state;
         	  oldCollectionErrorText = this.collection.errorText;
 
-            this.collection.removeHandler(HierarchyToolsCollectionHandlers, this);
+            this.collection.removeHandler(HIERARCHYTOOLS_COLLECTION_HANDLERS, this);
 
             if (this.childNodes.length == this.collectionOrderedNodes_.length)
               this.clear();
@@ -2603,7 +2971,7 @@
           if (collection && this.canHaveChildren && collection instanceof DataObject)
           {
             this.collection = collection;
-            this.collection.addHandler(HierarchyToolsCollectionHandlers, this);
+            this.collection.addHandler(HIERARCHYTOOLS_COLLECTION_HANDLERS, this);
 
             var collectionOrder = DOM.insert(this, this.collection.value);
 
@@ -2656,7 +3024,7 @@
         else
         {
           var getterOnly = typeof grouping == 'function' || typeof grouping == 'string';
-          var groupGetter = Data(getterOnly ? grouping : grouping.groupGetter);
+          var groupGetter = Fn(getterOnly ? grouping : grouping.groupGetter);
           var config = getterOnly ? null : grouping;
 
           if (groupGetter && (!this.groupControl || this.groupControl.groupGetter !== groupGetter))
@@ -2734,7 +3102,7 @@
       */
       setLocalSorting: function(sorting, desc){
         if (sorting)
-          sorting = Data(sorting);
+          sorting = Fn(sorting);
 
         // TODO: fix when direction changes only
         //console.log(this.localSorting, sorting, this.localSorting != sorting);
@@ -2869,7 +3237,7 @@
       groupByEventObject: {},
 
       groupEmptyAutoDestroy: true,
-      groupTitleGetter: Data('info.title'),
+      groupTitleGetter: Fn('info.title'),
 
       childClass: PartitionNode,
       childFactory: function(config){
@@ -2895,7 +3263,7 @@
       },
 
       setTitleGetter: function(titleGetter){
-        this.groupTitleGetter = Data(titleGetter);
+        this.groupTitleGetter = Fn(titleGetter);
 
         for (var group = this.firstChild; group; group = group.nextSibling)
           group.setTitleGetter(this.groupTitleGetter);
@@ -3036,9 +3404,9 @@
           DOM.insert(config.container, this.element);
 
         // apply changes
-        this.dispatch('update', this, this.info, {}, this.info);
+        /*this.dispatch('update', this, this.info, {}, this.info);
         if (this.state == this.constructor.prototype.state)
-          this.dispatch('stateChanged', this, this.state, undefined, this.errorText);
+          this.dispatch('stateChanged', this, this.state, undefined, this.errorText);*/
         
         return config;
       },
@@ -3049,26 +3417,6 @@
       insertBefore: function(newChild, refChild){
         if (newChild = this.inherit(newChild, refChild))
         { 
-          /*var nextSibling = newChild.nextSibling;
-          var insertPoint = nextSibling && nextSibling.element;
-          var groupNode = newChild.groupNode;
-          var container;
-
-          if (groupNode && groupNode.childNodesElement)
-          {
-            container = groupNode.childNodesElement;
-            if (insertPoint && newChild.groupNode != nextSibling.groupNode)
-              insertPoint = null;
-          }
-          else
-          {
-            container = this.childNodesElement;
-          }
-
-          //console.log('insertBefore', groupNode, groupNode && groupNode.parentNode, groupNode && groupNode.parentNode && groupNode.parentNode.parentNode);
-          container.insertBefore(newChild.element, insertPoint);
-          /*/
-
           if (this == newChild.parentNode)
           {
             var container = newChild.groupNode;
@@ -3079,7 +3427,7 @@
             var insertPoint = container.lastChild != newChild ? newChild.nextSibling.element : null;
 
             container.childNodesElement.insertBefore(newChild.element, insertPoint);
-          }/***/
+          }
           
           return newChild;
         }
@@ -3096,10 +3444,11 @@
           return oldChild;
         }
       },
+      // TODO: fix method. make it sensetive for alive and fix bug with setChildNodes(ar, true)
       clear: function(alive){
         // remove and destroy nodes
         //DOM.clear(this.childNodesElement);
-        if (1 || !alive)
+        /*if (1 || !alive)
         {
           var i = this.childNodes.length;
           var node;
@@ -3109,10 +3458,20 @@
             if (this.childNodesElement == node.element.parentNode)
               this.childNodesElement.removeChild(node.element);
           }
+        }*/
+
+        if (alive)
+        {
+          //debugger;
+          var i = this.childNodes.length;
+          var node;
+          while (node = this.childNodes[--i])
+            DOM.remove(node.element);
         }
+
         this.inherit(alive);
       },
-      setChildNodes: function(childNodes){
+      setChildNodes: function(childNodes, keepAlive){
         // reallocate childNodesElement to new DocumentFragment
         var domFragment = DOM.createFragment();
         var target = this.groupControl || this;
@@ -3124,7 +3483,7 @@
         // for child node positions at real DOM (html document), because all new child nodes
         // will be inserted into temporary DocumentFragment that will be inserted into html document
         // later (after inherited method call)
-        this.inherit(childNodes);
+        this.inherit(childNodes, keepAlive);
 
         // restore childNodesElement
         container.appendChild(domFragment);
@@ -3149,10 +3508,10 @@
       },
       getNodeByEventSender: function(event){
         var sender = Event.sender(event);
-        var htmlNode = sender[HTML_EVENT_OBJECT_ID_HOLDER] ? sender : DOM.parent(sender, Data(HTML_EVENT_OBJECT_ID_HOLDER), 0, this.element);
+        var htmlNode = sender[HTML_EVENT_OBJECT_ID_HOLDER] ? sender : DOM.parent(sender, Fn(HTML_EVENT_OBJECT_ID_HOLDER), 0, this.element);
         if (htmlNode)
         {
-          var node = eventObjects[htmlNode[HTML_EVENT_OBJECT_ID_HOLDER]];
+          var node = eventObjectMap[htmlNode[HTML_EVENT_OBJECT_ID_HOLDER]];
           if (node && node.document == this)
             return node;
         }
@@ -3576,7 +3935,8 @@
         UNDEFINED: STATE_UNDEFINED,
         READY: STATE_READY,
         PROCESSING: STATE_PROCESSING,
-        ERROR: STATE_ERROR
+        ERROR: STATE_ERROR,
+        DEPRECATED: STATE_DEPRECATED
       },
 
       // tools
@@ -3607,7 +3967,5 @@
       HtmlContainer: HtmlContainer,
       HtmlControl: Control
     });
-
-    //Basis.namespace('Basis.Controls');
 
   })();

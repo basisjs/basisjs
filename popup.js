@@ -527,17 +527,22 @@
     */
     var MenuItem = Class(nsWrapers.HtmlNode, {
       className: namespace + '.MenuItem',
+
+      childFactory: function(cfg){ return new this.childClass(cfg) },
+
       template: new Template(
         '<div{element} class="Basis-Menu-Item">' +
-          '<a{content|selectedElement} href="#">{titleText}</a>' +
-        '</div>'
+          '<a{content|selectedElement} href="#">{captionText}</a>' +
+        '</div>' +
+        '<div{childNodesElement}/>'
       ),
       behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
-        update: function(object, newInfo, oldInfo, delta){
-          this.titleText.nodeValue = this.captionGetter(this);
+        childNodesModified: function(){
+          Basis.CSS.cssClass(this.element).bool('hasSubItems', this.hasChildNodes());
         }
       }),
 
+      groupId: 0,
       caption: '[untitled]',
       captionGetter: Data('caption'),
       handler: null,
@@ -545,36 +550,47 @@
         if (this.parentNode)
           this.parentNode.defaultHandler(node);
       },
-      groupId: 0,
 
       init: function(config){
-        if (config && config.caption)
-          this.caption = config.caption;
-        if (typeof config.captionGetter == 'function')
-          this.captionGetter = config.captionGetter;
+        // apply config
+        if (typeof config == 'object')
+        {
+          if (config.caption)
+            this.caption = config.caption;
 
+          if (typeof config.captionGetter == 'function')
+            this.captionGetter = config.captionGetter;
+
+          if (config.groupId)
+            this.groupId = config.groupId;
+
+          if (typeof config.handler == 'function')
+            this.handler = config.handler;
+
+          if (typeof config.defaultHandler == 'function')
+            this.defaultHandler = config.defaultHandler;
+        }
+
+        // inherit
         config = this.inherit(config);
 
-        if (config.groupId)
-          this.groupId = config.groupId;
-
-        if (typeof config.handler == 'function')
-          this.handler = config.handler;
-        if (typeof config.defaultHandler == 'function')
-          this.defaultHandler = config.defaultHandler;
+        this.setCaption(this.caption);
 
         return config;
+      },
+      setCaption: function(newCaption){
+        this.caption = newCaption;
+        this.captionText.nodeValue = this.captionGetter(this);
       }
     });
+    MenuItem.prototype.childClass = MenuItem;
 
     var MenuItemSet = Class(MenuItem, {
       className: namespace + '.MenuItemSet',
       behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {}),
       template: new Template(
         '<div{element|content|childNodesElement} class="Basis-Menu-ItemSet"/>'
-      ),
-      childFactory: function(cfg){ return new this.childClass(cfg) },
-      childClass: MenuItem
+      )
     });
 
    /**
@@ -605,6 +621,7 @@
       childClass: MenuItem,
 
       defaultDir: [LEFT, BOTTOM, LEFT, TOP].join(' '),
+      subMenu: null,
 
       groupControlClass: MenuGroupControl,
       localGrouping: {
@@ -614,7 +631,7 @@
       defaultHandler: Function.$null,
       behaviour: nsWrapers.createBehaviour(Popup, {
         click: function(event, node){
-          if (node && !node.isDisabled())
+          if (node && !node.isDisabled() && !(node instanceof MenuItemSet))
           {
             if (node.handler)
               node.handler(node);
@@ -622,7 +639,29 @@
               node.parentNode.defaultHandler(node);
 
             this.hide();
+            Event.kill(event);
           }
+        },
+        mouseover: function(event, node){
+          /*if (node instanceof MenuItem)
+          {
+            if (node.hasChildNodes() && !node.isDisabled())
+            {
+              if (!this.subMenu)
+                this.subMenu = new Menu({ dir: [RIGHT, TOP, LEFT, TOP].join(' ') });
+
+              this.subMenu.clear(true);
+
+              
+              DOM.insert(DOM.clear(this.subMenu.content), node.childNodesElement);
+              this.subMenu.show(node.element);
+            }
+            else
+            {
+              if (this.subMenu)
+                this.subMenu.hide();
+            }
+          }*/
         }
       }),
 
@@ -638,7 +677,7 @@
         if (typeof config.defaultHandler == 'function')
           this.defaultHandler = config.defaultHandler;
 
-        //this.addEventListener('click');
+        this.addEventListener('mouseover');
 
         return config;
       }

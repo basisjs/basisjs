@@ -95,6 +95,7 @@
         {
           this.visible_ = visible;
           this.traceChanges_();
+          this.dispatch('visibilityChanged', this.visible_);
         }
       },
 
@@ -202,13 +203,28 @@
     // Child nodes count labels
     //
 
+    var CHILD_COUNT_FUNCTION = function(){
+      this.setVisibility(this.visibilityGetter(this.delegate ? this.delegate.childNodes.length : 0, this.delegate));
+    };
+
+    var CHILD_COUNT_HANDLER = {
+      childNodesModified: CHILD_COUNT_FUNCTION,
+      collectionStateChanged: CHILD_COUNT_FUNCTION,
+      stateChanged: CHILD_COUNT_FUNCTION
+    };
+
    /**
     * @class
     */
     var ChildCount = Class(NodeLabel, { className: namespace + '.ChildCount',
       behaviour: nsWrapers.createBehaviour(NodeLabel, {
-        childNodesModified: function(object, delta){
-          this.setVisibility(this.visibilityGetter(object.childNodes.length, object, delta));
+        delegateChanged: function(object, oldDelegate){
+          this.inherit(object, oldDelegate);
+          if (oldDelegate)
+            oldDelegate.removeHandler(CHILD_COUNT_HANDLER, this);
+          if (this.delegate)
+            this.delegate.addHandler(CHILD_COUNT_HANDLER, this);
+          CHILD_COUNT_FUNCTION.call(this);
         }
       })
     });
@@ -217,7 +233,9 @@
     * @class
     */
     var IsEmpty = Class(ChildCount, { className: namespace + '.IsEmpty',
-      visibilityGetter: function(childCount){ return !childCount },
+      visibilityGetter: function(childCount, object){ 
+        return !childCount && (object.collection ? object.collection.state : object.state) == nsWrapers.STATE.READY;
+      },
       defaultContent: 'Empty'
     })
 

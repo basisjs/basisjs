@@ -1258,11 +1258,10 @@
       create: function(SuperClass){
 
         //function newClass(){
-        var newClass = new Function("if (typeof this.init == 'function') return this.init.apply(this, arguments) & undefined;")
-        /*function BasisClass(){
+        var newClass = function BasisClass(){
           if (typeof this.init == 'function')
             return this.init.apply(this, arguments) & undefined;
-        };*/
+        };
 
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
@@ -1305,25 +1304,6 @@
 
       /* isn't need for complete method, because existing prototype methods aren't overriding and new methods aren't required to be wrapped
       complete: function(source){
-        var proto = this.prototype;
-        
-        if (source.prototype)
-          source = source.prototype;
-
-        for (var key in source)
-        {
-          if (key in proto[key] == false)
-          {
-            var value = source[key];
-
-            if (typeof value == 'function' && value.extend !== Class.extend) // wrap only functions, but not a classes 
-              value = wrapMethod(value.method || value, proto[key], proto)
-          
-            proto[key] = value;
-          }
-        }
-        
-        return this;
       },*/
       extend: function(source){
         var proto = this.prototype;
@@ -1507,14 +1487,14 @@
     // export names
     //
 
-    return getNamespace(namespace).extend({
+    namespace = getNamespace(namespace);
+    namespace.toString = function(){ return browserPrettyName };
+    return namespace.extend({
       FeatureSupport: FeatureSupport,
       testImage: testImage,
 
       name: browserName,
       prettyName: browserPrettyName,
-      
-      toString: function(){ return browserPrettyName },
       
       test: testBrowser,  // multiple test
       is: function(name){ return testBrowser(name) },  // single test
@@ -3015,6 +2995,11 @@
       return unescapeElement.firstChild.nodeValue;
     }
 
+    function string2Html(text){
+      unescapeElement.innerHTML = text;
+      return DOM.createFragment.apply(null, Array.from(unescapeElement.childNodes));
+    }
+
     //
     // export names
     //
@@ -3022,7 +3007,8 @@
     return getNamespace(namespace).extend({
       Template: Template,
       escape: escape,
-      unescape: unescape
+      unescape: unescape,
+      string2Html: string2Html
     });
 
   })();
@@ -3951,6 +3937,95 @@
     ;;;result.objects_ = objects;
     return result;
   }();
+
+  //
+  // setZeroTimeout
+  //
+
+  // inspired on David Baron's Weblog http://dbaron.org/log/20100309-faster-timeouts
+  // Adds setZeroTimeout to the window object, and hide everything
+  // else in a closure.
+  (function() {
+
+    var eventScheme = typeof window.addEventListener == 'function' && typeof window.postMessage == 'function';
+    var messageName = "zero-timeout-message";
+
+    var timeoutQueue = [];
+    var map = {};
+    var idx = 1;
+
+    // Like setTimeout, but only takes a function argument.  There's
+    // no time argument (always zero) and no arguments (you have to
+    // use a closure).
+    function setZeroTimeout(fn) {
+      //;;;if (typeof console != 'undefined') console.info('Set zero timeout', fn);
+
+      var callback = { key: 'z' + (idx++), fn: fn };
+      map[callback.key] = callback;
+      timeoutQueue.push(callback);
+
+      if (eventScheme)
+        postMessage(messageName, "*");
+      else
+        callback.timer = nativeSetTimeout.call(window, handleMessage, 0);
+
+      return callback.key;
+    }
+
+    function handleMessage(event){
+      if (eventScheme)
+      {
+        if (event.source != window || event.data != messageName)
+          return;
+
+        Event.kill(event);
+      }
+
+      //;;;if (typeof console != 'undefined') console.info('Zero timeout call: ' + timeoutQueue.length + ' function(s) left');
+
+      if (timeoutQueue.length)
+      {
+        var callback = timeoutQueue.shift();
+        delete map[callback.key];
+        callback.fn();
+      }
+    }
+
+    if (eventScheme)
+      window.addEventListener("message", handleMessage, true);
+
+    //;;;if (typeof console != 'undefined') console.info('Zero timeout based on ' + (eventScheme ? 'postMessage' : 'setTimeout(.., 0)'));
+
+    //
+    // override setTimeout
+    //
+    var naviteSetTimeout = setTimeout;
+    window.setTimeout = function(fn, timeout){
+      if (timeout)
+        return naviteSetTimeout.call(window, fn, timeout);
+      else
+        return setZeroTimeout(fn);
+    }
+
+    //
+    // override clearTimeout
+    //
+    var nativeClearTimeout = clearTimeout;
+    window.clearTimeout = function(timer){
+      if (/z\d+/.test(timer))
+      {
+        var callback = map[timer];
+        if (callback)
+        {
+          clearTimeout(callback.timer);
+          timeoutQueue.remove(callback);
+          delete map[timer];
+        }
+      }
+      else
+        return nativeClearTimeout.call(window, timer);
+    }
+  })();
 
   // ============================================ 
   // Init part

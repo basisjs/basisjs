@@ -442,9 +442,6 @@
     var Envelope = Class(XMLElement, {
       className: namespace + '.Envelope',
 
-      init: function(element){
-        this.setElement(element);
-      },
       setElement: function(element){
         this.header = null;
         this.body = null;
@@ -484,10 +481,10 @@
         var headers = DOM.axis(this.element, DOM.AXIS_CHILD, function(node){
           return DOM.IS_ELEMENT_NODE(node) && SOAP_HEADER_QNAME.equals(QName.fromElement(node))
         });*/
-        var headers = XML.getElementsByQName(this.element, SOAP_HEADER_QNAME);
+        var header = XML.getElementsByQName(this.element, SOAP_HEADER_QNAME)[0];
 
-        if (headers[0])
-          return new EnvelopeHeader(headers[0])
+        if (header)
+          return new EnvelopeHeader(header)
 
         if (forceCreate)
           return this.createHeader();
@@ -521,10 +518,10 @@
         /*var bodies = DOM.axis(this.element, DOM.AXIS_CHILD, function(node){
           return DOM.IS_ELEMENT_NODE(node) && SOAP_BODY_QNAME.equals(QName.fromElement(node))
         });*/
-        var bodies = XML.getElementsByQName(this.element, SOAP_BODY_QNAME);
+        var body = XML.getElementsByQName(this.element, SOAP_BODY_QNAME)[0];
 
-        if (bodies[0])
-          return new EnvelopeBody(bodies[0])
+        if (body)
+          return new EnvelopeBody(body)
 
         if (forceCreate)
           return this.createBody();
@@ -539,7 +536,7 @@
       destroy: function(){
         delete this.header;
         delete this.body;
-        delete this.element;
+        this.inherit();
       }
     });
 
@@ -554,7 +551,7 @@
       className: namespace + '.EnvelopeHeader',
 
       init: function(element, document){
-        this.element = element || QName.createElement(document, SOAP_HEADER_QNAME);
+        this.inherit(element || QName.createElement(document, SOAP_HEADER_QNAME));
       },
       getValue: function(){
         return XML2Object(this.element);
@@ -573,9 +570,9 @@
           }
       },
       setSection: function(qname, data){
-        var section = XML.getElementsByQName(this.element, qname);
-        if (section[0])
-          DOM.remove(section[0]);
+        var section = XML.getElementsByQName(this.element, qname)[0];
+        if (section)
+          DOM.remove(section);
         this.appendChild(Basis.Data.wrapper(qname)(data), qname.namespace);
       }
     });
@@ -591,7 +588,7 @@
       className: namespace + '.EnvelopeBody',
 
       init: function(element, document){
-        this.element = element || QName.createElement(document, SOAP_BODY_QNAME);
+        this.inherit(element || QName.createElement(document, SOAP_BODY_QNAME));
       },
       getValue: function(){
         return XML2Object(this.element);

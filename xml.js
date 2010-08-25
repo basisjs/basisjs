@@ -43,14 +43,14 @@
         return this.prefix ? this.prefix + ':' + this.localpart : this.localpart;
       },
       equals: function(obj){
-        return (obj instanceof QName &&
-                obj.localpart == this.localpart &&
-                obj.namespace == this.namespace);
+        return obj instanceof QName &&
+               obj.localpart == this.localpart &&
+               obj.namespace == this.namespace;
       }
     });
 
     extend(QName, {
-      fromElement: function(element){
+      fromNode: function(element){
         return new QName(
           element.baseName || element.localName,
           element.namespaceURI,
@@ -106,44 +106,32 @@
         this.element = element;
       },
       qname: function(){
-        return QName.fromElement(this.element);
+        return QName.fromNode(this.element);
       },
       setAttribute: function(qname, value){
-        var attr = QName.createAttribute(this.element.ownerDocument, qname, value);
-        if (this.element.setAttributeNodeNS)
-          this.element.setAttributeNodeNS(attr);
-        else
-          this.element.setAttributeNode(attr);
+        setAttributeNodeNS(this.element, QName.createAttribute(this.element.ownerDocument, qname, value));
       },
       getAttribute: function(qname){
         for (var i = 0, attr; attr = this.element.attributes[i++];)
-        {
-          if (qname.equals(QName.fromElement(attr)))
-            return attr.nodeValue;
-        }
+          if (qname.equals(QName.fromNode(attr)))
+            return attr;
+
         return null;
       },
       hasAttribute: function(qname){
-        for (var i = 0, attr; attr = this.element.attributes[i++];)
-        {
-          if (qname.equals(QName.fromElement(attr)))
-            return true;
-        }
-        return false;
+        return !!this.getAttribute(qname);
       },
       setValue: function(value, cdata){
-        var createFunction = cdata ? createCDATA : createText;
-        this.element.appendChild(createFunction(this.element.ownerDocument, value));
+        this.element.appendChild((cdata ? createCDATA : createText)(this.element.ownerDocument, value));
       },
-      getValue: function(){ // is correct?
+      getValue: function(){ // is it correct?
         return this.element.firstChild.nodeValue;
       },
       clear: function(){
         DOM.clear(this.element);
       },
       createChild: function(qname){
-        var child = QName.createElement(this.element.ownerDocument, qname);
-        this.element.appendChild(child);
+        var child = this.element.appendChild(QName.createElement(this.element.ownerDocument, qname));
         return new XMLElement(child);
       },
       getChildren: function(qname){
@@ -152,36 +140,35 @@
         });
       },
       destroy: function(){
-        this.inherit();
+        delete this.element;
       }
     });
 
     /*
      *  document
      */
-    var XMLProgID;
+    var XMLProgId = 'native';
     var createDocument = function(){
-      var implementation = document.implementation
+      var implementation = document.implementation;
       if (implementation && implementation.createDocument)
       {
-        XMLProgID = 'native';
         return function(namespace, nodename){ 
           return implementation.createDocument(namespace, nodename, null);
-        };
+        }
       }
 
       if (window.ActiveXObject)
       {
         // http://blogs.msdn.com/xmlteam/archive/2006/10/23/using-the-right-version-of-msxml-in-internet-explorer.aspx
-        var progID = ["MSXML2.DOMDocument.6.0", "MSXML2.DOMDocument.3.0"];
+        var progId = ["MSXML2.DOMDocument.6.0", "MSXML2.DOMDocument.3.0"];
 
-        for (var i = 0; i < progID.length; i++)
+        for (var i = 0; i < progId.length; i++)
           try { 
-            if (new ActiveXObject(progID[i]))
+            if (new ActiveXObject(progId[i]))
             {
-              XMLProgID = progID[i];
+              XMLProgId = progId[i];
               return function(namespace, nodename){
-                var xmlDocument = new ActiveXObject(XMLProgID);
+                var xmlDocument = new ActiveXObject(XMLProgId);
                 xmlDocument.documentElement = createElementNS(xmlDocument, nodename, namespace);
                 return xmlDocument;
               };
@@ -189,11 +176,9 @@
           } catch(e) {}
       }
 
-      return Function.$null;
-    }();
-
-    if (createDocument === Function.$null)
       throw new Error('Browser doesn\'t support for XML document!');
+
+    }();
 
     /*
      *  element
@@ -201,19 +186,13 @@
 
     function createElementNS(document, nodename, namespace){
       if (namespace)
-      {
-        if (XMLProgID == 'native')
-          return document.createElementNS(namespace, nodename);
-        else
-          return document.createNode(1, nodename, namespace);
-      }
+        return XMLProgId == 'native'
+                 ? document.createElementNS(namespace, nodename)
+                 : document.createNode(1, nodename, namespace);
       else
-      {
-        if (XMLProgID == 'native')
-          return document.createElement(nodename);
-        else
-          return document.createNode(1, nodename);
-      }
+        return XMLProgId == 'native'
+                 ? document.createElement(nodename)
+                 : document.createNode(1, nodename);
     };
 
     /*
@@ -221,7 +200,7 @@
      */
 
     function createAttribute(document, nodename, value){
-      var attr = XMLProgID == 'native'
+      var attr = XMLProgId == 'native'
                    ? document.createAttribute(nodename)
                    : document.createNode(2, nodename);
 
@@ -230,7 +209,7 @@
     }
 
     function createAttributeNS(document, nodename, namespace, value){
-      var attr = XMLProgID == 'native'
+      var attr = XMLProgId == 'native'
                    ? document.createAttributeNS(namespace, nodename)
                    : document.createNode(2, nodename, namespace);
 
@@ -284,7 +263,7 @@
           return '';
 
         // test for <node xsi:nil="true"/>
-        if (attributes.length == 1 && XSI_NIL.equals(QName.fromElement(attributes[0])))
+        if (attributes.length == 1 && XSI_NIL.equals(QName.fromNode(attributes[0])))
           return null;
       }
 

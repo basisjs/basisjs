@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Property &amp; DataObjectSet</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/form/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    .Basis-Tree
+    {
+      border: 1px solid #AAA;
+      width: 240px;
+      height: 300px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      float: left;
+      margin-right: 10px;
+    }
+
+    .form-content
+    {
+      overflow: hidden;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basis Demos: Property &amp; DataObjectSet</h1>
+
+  <p id="demo-summary">
+    ...
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script id="demo-javascript" type="text/javascript">
+
+    var DOM = Basis.DOM;
+    var nsWrapers = Basis.DOM.Wrapers;
+    var nsButton = Basis.Controls.Button;
+    
+    var property1 = new nsWrapers.Property(0);
+    var property2 = new nsWrapers.Property(0);
+
+    var dataObjectSet = new nsWrapers.DataObjectSet({
+      objects: [property1, property2],
+      calculateValue: function(){
+        return this.objects.reduce(function(value, object){
+          return value + object.value;
+        }, 0);
+      }
+    })
+
+    var container = DOM.get('demo-container');
+    DOM.insert(container, [
+      {
+        caption: 'Add 1 to property1',
+        handler: function(){ property1.set(property1.value + 1) }
+      },
+      {
+        caption: 'Add 1 to property1 and than sub 1 ',
+        handler: function(){ property1.set(property1.value + 1); property1.set(property1.value - 1); }
+      },
+      {
+        caption: 'Add 1 to property2',
+        handler: function(){ property2.set(property2.value + 1) }
+      },
+      {
+        caption: 'Add 1 to property1 & property2',
+        handler: function(){ property1.set(property1.value + 1) & property2.set(property2.value + 1) }
+      }
+    ].map(function(config){
+      return new nsButton.Button(config).element;
+    }));
+
+    DOM.insert(container, DOM.createElement('', property1.addLink(DOM.createText(), null, 'Property1.value: {0}'), ' ', p1_uc = DOM.createText('(update count: 0)')));
+    DOM.insert(container, DOM.createElement('', property2.addLink(DOM.createText(), null, 'Property2.value: {0}'), ' ', p2_uc = DOM.createText('(update count: 0)')));
+    DOM.insert(container, DOM.createElement('', dataObjectSet.addLink(DOM.createText(), null, 'DataObjectSet.value (sum of property1.value & property2.value): {0}'), ' ', dos_uc = DOM.createText('(update count: 0)')));
+
+    property1.addHandler({
+      change: function(){
+        p1_uc.nodeValue = '(update count: {0})'.format(this.updateCount);
+      }
+    });
+
+    property2.addHandler({
+      change: function(){
+        p2_uc.nodeValue = '(update count: {0})'.format(this.updateCount);
+      }
+    });
+
+    dataObjectSet.addHandler({
+      change: function(){
+        dos_uc.nodeValue = '(update count: {0})'.format(this.updateCount);
+      }
+    });
+
+
+  </script>  
+</body>
+
+</html>

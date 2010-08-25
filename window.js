@@ -123,7 +123,8 @@
           return topWindow ? topWindow.element.style.zIndex : 2001;
         },
         activate: function(win){ // nove window on top of stack
-          stack.remove(win) && this.add(win);
+          if (stack.last() != win)
+            stack.remove(win) && this.add(win);
         },
         reposition: function(){
           for (var i = 0, win; win = stack[i]; i++)

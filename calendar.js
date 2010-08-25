@@ -563,7 +563,7 @@
         // create control (setup selection)
         config = this.inherit(Object.complete({
           selection: {
-            thisObject: this,
+            handlersContext: this,
             handlers: {
               change: function(){
                 var section = this.selection.items.first();

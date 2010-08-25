@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Paginator</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../plugins/style/paginator/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #Demo-Section
+    {
+      width: 600px;
+      border: 1px solid #E0E0E0;
+      padding: 5px;
+      margin-top: 20px;
+    }
+
+    .Basis-Paginator
+    {
+      margin: 2em 0 1em;
+      width: 100%;
+    }
+
+    .show_dimenstion .Basis-Paginator
+    {
+      border: 1px dashed #AAA;
+    }
+    .self_size .Basis-Paginator
+    {
+      width: auto;
+    }
+
+    .paginator_pages {
+      text-align: right;
+      font-size: 0.8em; 
+      color: #808080;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../layout.js"></script>
+  <script type="text/javascript" src="../../dragdrop.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
+  <script type="text/javascript" src="../../plugins/paginator.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Paginator</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    var DOM = Basis.DOM;
+    var nsButton = Basis.Controls.Button;
+
+	  function setWidth(w){
+	    demoSection.style.width = w + 'px';
+	  }
+	  function setPageCount(pageCount){
+	    paginators[0].setProperties(pageCount);
+	  }
+
+	  var paginators = [ 
+      new Basis.Plugin.Paginator({ pageCount: 1024, pageSpan: 10, activePage: 350 }),
+      new Basis.Plugin.Paginator({ pageCount: 100, pageSpan: 13, activePage: 70 }),
+      new Basis.Plugin.Paginator({ pageCount: 50, pageSpan: 15, activePage: 15 }),
+      new Basis.Plugin.Paginator({ pageCount: 5, pageSpan: 5, activePage: 5 }),
+      new Basis.Plugin.Paginator({ pageCount: 5, pageSpan: 1, activePage: 5 })
+    ];
+
+	  var demoSection = DOM.createElement('#Demo-Section',
+      paginators.map(function(paginator){
+        return DOM.createElement('',
+          paginator.element,
+          DOM.createElement(".paginator_pages", paginator.pageCount_ + ' pages')
+        )
+      })
+    );
+
+    DOM.insert(DOM.get('demo-container'), [
+      new nsButton.ButtonPanel({
+        childNodes: [
+          {
+            caption: 'Auto / 100% width',
+            handler: function(){
+              Basis.CSS.cssClass(document.body).toggle('self_size');
+            }
+          },
+          {
+            caption: 'Show / hide dimensions',
+            handler: function(){
+              Basis.CSS.cssClass(document.body).toggle('show_dimenstion');
+            }
+          }
+        ]
+      }).element,
+      DOM.createElement('', 
+        'Set paginators container width: ',
+        new nsButton.ButtonPanel({
+          childNodes: [300, 450, 600, 750, 900].map(function(width){
+            return {
+              caption: width,
+              handler: function(){
+                setWidth(this.caption);
+              }
+            }
+          })
+        }).element
+      ),
+      DOM.createElement('', 
+        'Set first paginator page count: ',
+        new nsButton.ButtonPanel({
+          childNodes: [5, 10, 100, 200, 1024].map(function(pageCount){
+            return {
+              caption: pageCount,
+              handler: function(){
+                setPageCount(this.caption);
+              }
+            }
+          })
+        }).element
+      ),
+      demoSection
+    ]);
+
+  </script>
+</body>
+
+</html>
