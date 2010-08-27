@@ -167,7 +167,7 @@
 
         // transport
         this.transport = new ServiceCallTransport(method, config.callback);
-        this.transport.completeRequest = Object.coalesce(config.completeRequest, false);
+        //this.transport.completeRequest = Object.coalesce(config.completeRequest, false);
         this.transport.requestHeaders = { SOAPAction: (method.namespace + (!/\/$/.test(method.namespace) ? '/' : '') + method) };
 
         this.transport.requestEnvelope = this.envelope;
@@ -187,6 +187,8 @@
         return this.invoke(null, body || this.body);
       },
       invoke: function(headerData, bodyData, callback, mapping){
+        this.transport.abort();
+
         this.envelope.setBody(this.method, bodyData);
 
         if (headerData)

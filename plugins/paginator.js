@@ -165,7 +165,7 @@
         }));
       }
 
-      this.pageWidth_ = 1/pageCount;
+      this.pageWidth_ = 1/(pageCount || 1);
 
       if (this.pageCount_ != pageCount)
       {
@@ -177,7 +177,7 @@
         this.dispatch('pageCountChanged', this.pageCount_);
       }
 
-      this.scrollTrumb.style.width = percent(pageSpan/pageCount);
+      this.scrollTrumb.style.width = percent(pageSpan/(pageCount || 1));
       DOM.display(this.scrollbarContainer, pageSpan < pageCount);
 
       this.setSpanStartPage(this.spanStartPage_);
@@ -210,7 +210,7 @@
       }
 
       if (!noUpdateSlider)
-        this.scrollTrumb.style.left = '{0:.4}%'.format(100 * pageNumber/this.pageCount_);
+        this.scrollTrumb.style.left = percent(pageNumber/(this.pageCount_ || 1));
     },
     updateSelection: function(){
       var selectedIndex = this.childNodes.binarySearch(this.activePage_, 'info.pageNumber');

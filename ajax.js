@@ -1,4 +1,4 @@
-/*!asd
+/*!
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
  *
@@ -11,9 +11,7 @@
 
   (function(){
 
-   /**
-    * @namespace Basis.Ajax
-    */
+    // namespace
 
     var namespace = 'Basis.Ajax';
 
@@ -22,32 +20,33 @@
     var Class = Basis.Class;
     var Event = Basis.Event;
 
-    var complete = Object.complete;
-
     var Browser = Basis.Browser;
     var Cookies = Browser.Cookies;
     var Cleaner = Basis.Cleaner;
+
+    var nsWrapers = Basis.DOM.Wrapers;
+    var TimeEventManager = nsWrapers.TimeEventManager;
 
     //
     // Main part
     //
 
     // const
-    var STATE = ['Uninitialized', 'Loading', 'Loaded', 'Interactive', 'Complete'];
-    var STATE_COMPLETE = 4;
-    var METHOD = ['GET', 'POST', 'HEAD'];
+
+    /** @const */ var STATE_UNSENT = 0;
+    /** @const */ var STATE_OPENED = 1;
+    /** @const */ var STATE_HEADERS_RECEIVED = 2;
+    /** @const */ var STATE_LOADING = 3;
+    /** @const */ var STATE_DONE = 4;
 
     var DEBUG_MODE = Cookies.get('DEBUG_AJAX');
-    var DEBUG_TIMEOUT = Cookies.get('DEBUG_AJAX_TIMEOUT');
 
     // base 
-    var DEFAULT = {
-      method: 'GET',
-      contentType: 'application/x-www-form-urlencoded'
-    };
+    var DEFAULT_METHOD = 'GET';
+    var DEFAULT_CONTENT_TYPE = 'application/x-www-form-urlencoded';
 
     // TODO: better debug info out
-    var infoOutput = typeof console != 'undefined' && console.log ? function(message){ console.log(message) } : Function.$self;
+    var logOutput = typeof console != 'undefined' ? function(){ console.log(arguments) } : Function.$self;
     function exception(e){
       if (typeof e == 'undefined')
         return;
@@ -98,35 +97,33 @@
     * @function createTransport
     * Creates transport constructor
     */
-    var TransportProgID;
+    var TransportProgID = 'native';
     var createTransport = function(){
 
       if (window.XMLHttpRequest)
-      {
-        TransportProgID = 'native';
-        return function(){ return new XMLHttpRequest() };
-      }
+        return function(){
+          return new XMLHttpRequest();
+        };
 
       if (window.ActiveXObject)
       {
         var progID = [
-                      "MSXML2.XMLHTTP.6.0",
-                      "MSXML2.XMLHTTP.3.0",
-                      "MSXML2.XMLHTTP",
-                      "Microsoft.XMLHTTP"
-                     ];
+          "MSXML2.XMLHTTP.6.0",
+          "MSXML2.XMLHTTP.3.0",
+          "MSXML2.XMLHTTP",
+          "Microsoft.XMLHTTP"
+        ];
 
-        for (var i = 0; i < progID.length; i++)
+        for (var i = 0; TransportProgID = progID[i]; i++)
           try { 
-            if (new ActiveXObject(progID[i]))
-            {
-              TransportProgID = progID[i];
-              return new Function('return new ActiveXObject("' + progID[i] + '")');
-            }
+            if (new ActiveXObject(TransportProgID))
+              return function(){
+                return new ActiveXObject(TransportProgID);
+              };
           } catch(e) {}
       }
 
-      return Function.$null;
+      throw new Error(TransportProgID = 'Browser doesn\'t support for XMLHttpRequest!');
     }();
 
     //
@@ -136,21 +133,23 @@
     var inprogressTransports = new Array();
     var TransportDispatcher = (function(){
 
-      var handlers = new Array({
-        handler: {
-          start: function(){
-            //console.log('add transport', this);
-            inprogressTransports.add(this);
-          },
-          complete: function(){
-            //console.log('remove transport', this);
-            inprogressTransports.remove(this);
+      var handlers = [
+        {
+          handler: {
+            start: function(){
+              //console.log('add transport', this);
+              inprogressTransports.add(this);
+            },
+            complete: function(){
+              //console.log('remove transport', this);
+              inprogressTransports.remove(this);
+            }
           }
         }
-      });
+      ];
 
+      // clear handlers on destroy
       Event.onUnload(function(){
-        // destroy events
         handlers.clear();
       });
 
@@ -159,34 +158,39 @@
           // search for duplicate
           for (var i = 0, item; item = handlers[i]; i++)
             if (item.handler === handler && item.thisObject === thisObject)
-              return;
+              return false;
 
           // add handler
           handlers.push({ 
-            handler:    handler,
+            handler: handler,
             thisObject: thisObject
           });
+
+          return true;
         },
         removeHandler: function(handler, thisObject){
-          for (var i = 0, k = 0, item; item = handlers[i]; i++)
-            if (item.handler !== handler || item.thisObject !== thisObject)
-              handlers[k++] = this.handlers[i];
+          // search for handler and remove
+          for (var i = 0, item; item = handlers[i]; i++)
+            if (item.handler === handler && item.thisObject === thisObject)
+            {
+              handlers.splice(i, 1);
+              return true;
+            }
 
-          handlers.length = k;
+          // handler not found
+          return false;
         },
         dispatch: function(event){
           // self event dispatch
           if (handlers.length)
           {
-            var arg = Array.from(arguments, 1);
+            var args = Array.prototype.slice.call(arguments, 1);
             var item, handler;
-            for (var i = handlers.length - 1; i >= 0; i--)
+            for (var i = handlers.length - 1; item = handlers[i]; i--)
             {
-              item = handlers[i];
               handler = item.handler[event];
               if (typeof handler == 'function')
-                if (handler.apply(item.thisObject || this, arg)) 
-                  return; // cancel bubble
+                handler.apply(item.thisObject || this, args)
             }
           }
         },
@@ -200,113 +204,187 @@
     })();
 
    /**
-    * set transport request headers
-    * private method
-    * @function setRequestHeaders
+    * Sets transport request headers
+    * @private
     */
-    function setRequestHeaders(){
+    function setRequestHeaders(transport, requestData){
       var headers = {
-        'JavaScript-Framework': 'Basis 1.0'
+        'JS-Framework': 'Basis'
       };
 
-      if (this.method.toUpperCase() == 'POST') 
+      if (/POST/i.test(requestData.method)) 
       {
-        headers['Content-type'] = this.contentType + (this.encoding ? '\x3B charset=' + this.encoding : '');
+        headers['Content-type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
         if (Browser.test('gecko'))
           headers['Connection'] = 'close';
       }
       else
         if (Browser.test('ie')) // disable IE caching
-          headers['If-Modified-Since'] = 'Sat, 1 Jan 2000 00:00:00 GMT';
+          headers['If-Modified-Since'] = new Date(0).toGMTString();
 
-      complete(headers, this.requestHeaders);
-
-      for (var name in headers)
-        if (headers[name] != null) // some browsers (like IE) may crash if undefine value is set for header
-          this.transport.setRequestHeader(name, headers[name]);
+      Object.iterate(Object.complete(headers, requestData.headers), function(key, value){
+        if (value != null)
+          this.setRequestHeader(key, value);
+      }, transport);
     };
 
    /**
     * readyState change handler
     * private method
-    * @function respondToReadyStateChange
+    * @function readyStateChangeHandler
     */
-    function respondToReadyStateChange(readyState){
-      var state = STATE[typeof readyState == 'number' ? readyState : this.transport.readyState];
+    function readyStateChangeHandler(readyState){
+      var transport = this.transport;
 
-      //Basis.DOM.insert('log', Basis.DOM.createElement('', '>', Basis.DOM.createElement('B', state), ' ', Array.from(arguments, 1)));
+      if (!transport)
+        return;
 
-      if (!this.transport) return;
-      if (this.debug) infoOutput('State: (' + (arguments.length ? readyState : this.transport.readyState) + ') ' + state);
+      if (typeof readyState != 'number')
+        readyState = transport.readyState;
 
-      // calc progress time
-      this.requestTime = Date.now() - this.requestStartTime;
+      // BUGFIX: IE & Gecko fire OPEN readystate twice
+      if (readyState == this.prevReadyState_)
+        return;
+      this.prevReadyState_ = readyState;
+
+      ;;;if (this.debug) logOutput('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
 
       // dispatch self event
-      try {
-        this.dispatch('changeState', state);
-      } catch(e) {
-        this.dispatchException(e, 'Transport error in `Complete` section handler, on status handler.');
-      }
+      this.dispatch('readyStateChanged', readyState);
 
-      if (state == 'Complete')
+      if (readyState == STATE_DONE)
       {
-        clearTimeout(this.timeoutTimer);
+        TimeEventManager.remove(this, 'timeoutAbort');
 
-        // progress over (otherwise any abort method call may occur double respondToReadyStateChange call)
+        var newState = nsWrapers.STATE.UNDEFINED;
+        var errorText;
+
+        // progress over (otherwise any abort method call may occur double readyStateChangeHandler call)
         this.progress = false;
 
         // clean event handler (avoid memory leak in MSIE)
-        // remove? MSIE already drop hanlder on download complete. check it
-        this.transport.onreadystatechange = Function.$undef;
+        // remove? MSIE already drop handler on download complete. check it
+        transport.onreadystatechange = null; //Function.$undef;
 
-        // case abort, statusCode, success, fault
-        try {
-          var dispatchCase;
-          if (this.aborted)
+        // case abort, success, fault
+        if (this.aborted)
+        {
+          var abortedByTimeout = this.abortedByTimeout;
+
+          if (abortedByTimeout)
+            this.dispatch('timeout');
+
+          // dispatch event
+          this.dispatch('abort', abortedByTimeout);
+
+          ;;;if (this.debug) logOutput('Request aborted' + (abortedByTimeout ? ' (timeout)' : ''));
+        }
+        else
+        {
+          var isSuccess = this.responseIsSuccess();
+
+          this.update({
+            text: transport.responseText,
+            xml: transport.responseXML
+          });
+
+          // dispatch events
+          if (isSuccess)
           {
-            // dispatch event
-            this.dispatch(dispatchCase = 'abort');
-
-            if (this.debug) infoOutput('Request aborted');
-          }
-          else if (this.timeoutAborted)
-          {
-            // dispatch event
-            this.dispatch(dispatchCase = 'timeout');
-
-            if (this.debug) infoOutput('Request timeout');
+            this.dispatch('success', transport);
+            newState = nsWrapers.STATE.READY;
           }
           else
           {
-            var isSuccess = this.responseIsSuccess();
-
-            // dispatch events
-            this.dispatch(dispatchCase = isSuccess ? 'success' : 'failure');
-
-            // dispatch status
-            this.dispatch(dispatchCase = 'status', this.transport.status);
+            this.dispatch('failure', transport);
+            newState = nsWrapers.STATE.ERROR;
           }
-        } catch(e) {
-          this.dispatchException(e, 'Transport error in `' + dispatchCase + '` case handler.');
+
+          // dispatch status
+          this.dispatch('httpStatus', transport.status);
         }
 
         // dispatch complete event
-        try {
-          this.dispatch('complete');
-        } catch(e) { 
-          this.dispatchException(e, 'Transport error in `Complete` section handler, on status handler.');
-        }
+        this.dispatch('complete', transport);
 
-        // reset flags
-        this.aborted  = false;
-        this.timeoutAborted = false;
+        // set new state
+        this.setState(newState, errorText);
       }
+      else
+        this.setState(nsWrapers.STATE.PROCESSING);
 
       // dispatch event
       // there is not need any more
       // this.dispatch('state' + state);
     };
+
+    function doRequest(requestData){
+      TimeEventManager.remove(this, 'timeoutAbort'); // ???
+
+      // set flags
+      this.progress = false;
+      this.aborted = false;
+      this.abortedByTimeout = false;
+      this.prevReadyState_ = -1;
+
+      // create new XMLHTTPRequest instance for gecko browsers in asynchronous mode
+      // object crash otherwise
+      if (Browser.test('gecko1.8.1-') && requestData.asynchronous)
+      {
+        ;;;if (typeof console != 'undefined') console.info('Recreate transport (fix for current gecko version)');
+        this.transport = createTransport();
+      }
+
+      var transport = this.transport;
+
+      if (this.asynchronous)
+        // set ready state change handler
+        transport.onreadystatechange = readyStateChangeHandler.bind(this);
+      else
+        // catch state change for 'loading' in synchronous mode
+        readyStateChangeHandler.call(this, STATE_UNSENT);
+
+      // open transport
+      transport.open(requestData.method, requestData.location, requestData.asynchronous);
+      this.progress = true;
+
+      // set headers
+      setRequestHeaders(transport, requestData);
+
+      // progress started
+      this.dispatch('start');
+      if (this.aborted)
+      {
+        ;;;if (this.debug && typeof console != 'undefined') console.warn('Transport: request was aborted while `start` event dispatch');
+        readyStateChangeHandler.call(this, STATE_DONE);
+        return;  // request aborted
+      }
+
+      if (this.aborted || !this.progress)
+      {
+        ;;;if (this.debug && typeof console != 'undefined') console.warn('Transport: request was aborted while response to readyState change dispatch');
+        return;
+      }
+
+      // save transfer start point time & set timeout
+      this.requestStartTime = Date.now();
+      TimeEventManager.add(this, 'timeoutAbort', this.requestStartTime + this.timeout);
+
+      // send data
+      transport.send(requestData.postBody);
+
+      // catching for
+      //   - 'complete' state in synchronous mode
+      //   - 'loading'  state for Opera
+      /*if (!this.asynchronous)
+      {
+        var readyState = transport.readyState;
+        while (readyState++ < STATE_DONE)
+          readyStateChangeHandler.call(this, readyState);
+      }*/
+
+      ;;;if (this.debug) logOutput('Request over, waiting for response');
+    }
 
     //
     // Transport
@@ -315,34 +393,42 @@
    /**
     * @class
     */
-    var Transport = Class(null, {
+    var Transport = Class(nsWrapers.DataObject, {
       className: namespace + '.Transport',
 
-      behaviour: {},
-      onRequest: Function.$true,
+      state:     nsWrapers.STATE.UNDEFINED,
+
+      behaviour: nsWrapers.createBehaviour(nsWrapers.DataObject, {
+        stateChanged: function(object, newState, oldState, delta){
+          this.inherit(object, newState, oldState, delta);
+          for (var i = 0; i < this.influence.length; i++)
+            this.influence[i].setState(this.state, this.errorText);
+        }
+      }),
+
+      influence: [],
       debug:     DEBUG_MODE,
 
       // object states
       progress: false,
       aborted:  false,
-      timeoutAborted: false,
+      abortedByTimeout: false,
       abortCalled: false,
 
       // times
-      timeout: 30000,  // 30 sec
-      timeoutTimer: null,
+      timeout:  30000, // 30 sec
 
       requestStartTime: 0,
-      requestTime: 0,
+
+      requestData_: null,
 
       // transport properties
       asynchronous: true,
-      method:       DEFAULT.method,
-      contentType:  DEFAULT.contentType,
+      method:       DEFAULT_METHOD,
+      contentType:  DEFAULT_CONTENT_TYPE,
       encoding:     null,
 
       // behaviour
-      defaultFailureError: true,
       completeRequest: false,
 
       //
@@ -352,11 +438,14 @@
         var config = typeof urlOrConfig != 'object' || urlOrConfig == null ? {} : urlOrConfig;
         var url = config === urlOrConfig ? config.url : urlOrConfig;
 
-        // event handlers
-        this.handlers = new Array();
+        // handlers
+        if (config.callback)
+          config.handlers = config.callback;
 
         // transport object
         this.transport = createTransport();
+
+        this.influence = new Array();
 
         // request params
         this.url = url;
@@ -369,14 +458,23 @@
         if (asynchronous != null && !asynchronous)
           this.asynchronous = false;
 
-        // handlers
-        if (config.callback)
-          this.addHandler(config.callback);
+        if (typeof config.asynchronous == 'boolean')
+          this.asynchronous = config.asynchronous;
 
-        if (config.paramMapping)
-          this.paramMapping = Array.from(config.paramMapping);
+        Cleaner.add(this);  // ???
 
-        Cleaner.add(this);
+        // create inherit
+        return this.inherit(config);
+      },
+
+      setInfluence: function(){
+        var list = Array.from(arguments);
+        for (var i = 0; i < list.length; i++)
+          list[i].setState(this.state, this.errorText);
+        this.influence.set(list);
+      },
+      clearInfluence: function(){
+        this.influence.clear();
       },
 
       // params methods
@@ -399,249 +497,138 @@
       //
       // Event handlers
       //
-      addHandler: function(handler, thisObject){
-        thisObject = thisObject || this;
-
-        // search for duplicate
-        for (var i = 0, item; item = this.handlers[i]; i++)
-          if (item.handler === handler && item.thisObject === thisObject)
-            return;
-
-        // add handler
-        this.handlers.push({ 
-          handler:    handler,
-          thisObject: thisObject
-        });
-      },
-      removeHandler: function(handler, thisObject){
-        thisObject = thisObject || this;
-
-        for (var i = 0, k = 0, item; item = this.handlers[i]; i++)
-          if (item.handler !== handler || item.thisObject !== thisObject)
-            this.handlers[k++] = this.handlers[i];
-
-        this.handlers.length = k;
-      },
-      clearHandlers: function(){
-        this.handlers.clear();
-      },
-      dispatch: function(event){
+      dispatch: function(eventName){
         // global event dispatch
         TransportDispatcher.dispatch.apply(this, arguments);
-
-        // self event dispatch
-        var behaviour = this.behaviour[event];
-        if (this.handlers.length || behaviour)
-        {
-          var arg = [this.transport].concat(Array.from(arguments, 1));
-          var item, handler;
-          for (var i = this.handlers.length - 1; i >= 0; i--)
-          {
-            item = this.handlers[i];
-
-            ;;;if (DEBUG_MODE) { handler = item.handler['any']; if (typeof handler == 'function') handler.apply(this, arguments); }
-
-            handler = item.handler[event];
-            if (typeof handler == 'function')
-              if (handler.apply(item.thisObject, arg))
-                return; // cancel bubble
-          }
-
-          if (typeof behaviour == 'function')
-            behaviour.apply(this, arg);
-        }
+        this.inherit.apply(this, arguments);
       },
 
       dispatchException: function(e, comment){
         this.dispatch('exception', e, comment);
 
         // old model; probably deprecated
-        if (this.onException)
-          this.onException(e, comment);
-        else
-          infoOutput(exception(e) + '\n' + comment);
-          //throw new Error(Basis.Debug.exception(exception) + '\n' + comment);
-      },
-
-      getRequestHeader: function(name){
-        return this.requestHeaders && this.requestHeaders[name];
+        logOutput(exception(e) + '\n' + comment);
+        //throw new Error(Basis.Debug.exception(exception) + '\n' + comment);
       },
 
       //
       // Main actions
       //
 
+      timeoutAbort: function(){
+        this.abortedByTimeout = true;
+        this.abort();
+      },
+
       // abort request
       abort: function(timeout){
-        //Basis.DOM.insert('log', Basis.DOM.createElement('', '>>', Basis.DOM.createElement('B', 'abort'), ' ', Array.from(arguments, 1)));
-        clearTimeout(this.timeoutTimer);
-
         ;;;if (this.debug && typeof console != 'undefined') console.info('Transport: abort method called');
 
-        this.abortCalled = true;
+        this.aborted = true;
+
         if (!this.progress)
           return;
 
-        //Basis.DOM.insert('log', Basis.DOM.createElement('', '!!!'));
-
-        if (timeout)
-          this.timeoutAborted = true;
-        else
-          this.aborted = true;
+        TimeEventManager.remove(this, 'timeoutAbort');
 
         this.progress = false;
-        this.transport.abort(1);
+        this.transport.abort();
 
-        // fix: catching for 'Complete' state in asynchronous mode for Opera
-        if (this.asynchronous && Browser.test('opera') && this.destroy !== Function.$undef)
-          respondToReadyStateChange.call(this, STATE_COMPLETE);
+        // BUGFIX: catching for 'Complete' state in asynchronous mode
+        if (this.asynchronous && this.transport.onreadystatechange && this.transport.onreadystatechange !== Function.$undef)
+          readyStateChangeHandler.call(this, STATE_DONE);
       },
 
       // do request
       request: function(url){
-        var location, params;
-        var method, data;
+        //debugger;
+        var location = url || this.url;
+        var method = this.method.toUpperCase();
+        var params;
+        var postBody = null;
+        var transport = this.transport;
 
-        if (!this.transport)
+        if (!transport)
           throw new Error('Transport is not allowed');
 
-        // if requested already
-        if (this.progress)
-          // don't start request until previous request not over
-          if (this.completeRequest) 
-            return;
-          else
-            this.abort();
+        if (!location)
+          throw new Error('URL is not defined');
 
-        if (url) 
-          this.url = url;
+        // abort request for double sure that it doesn't in progress
+        this.abort();
 
-        if (this.paramMapping && arguments.length > 1)
-          for (var i = 0, key; key = this.paramMapping[i++];)
-            this.setParam(key, arguments[i]);
+        // reset requestData & stored info
+        delete this.requestData_;
+        this.update({
+          responseText: '',
+          responseXml: null
+        });
 
-        try {
-          clearTimeout(this.timeoutTimer);
+        this.progress = false;
+        this.aborted = false;
+        this.abortedByTimeout = false;
 
-          // set flags
-          this.progress = false;
-          this.aborted  = false;
-          this.timeoutAborted = false;
-          this.abortCalled = false;
+        // dispatch prepare event
+        this.dispatch('prepare');
+        if (this.aborted)
+        {
+          ;;;if (this.debug && typeof console != 'undefined') console.info('Transport: request was aborted while `prepare` event dispatch');
+          //this.dispatch('abort', false);
+          return;
+        }
 
-          // # dispatch prepare event
-          this.dispatch('prepare');
-          if (this.abortCalled)
+        // prepare url
+        params = Object.iterate(this.params, function(key, value){
+          return (value == null) || (value && typeof value.toString == 'function' && value.toString() == null)
+            ? null
+            : key + '=' + Encode.escape(value)
+        }).filter(Function.$isNotNull).join('&');
+
+        // prepare location & postBody
+        if (method == 'POST')
+        {
+          postBody = this.postBody || params || '';
+
+          // BUGFIX: IE fixes
+          if (Browser.test('ie'))
           {
-            ;;;if (this.debug && typeof console != 'undefined') console.info('Transport: request was aborted while `prepare` event dispatch');
-            this.dispatch('abort');
-            return;
-          }
-              
-          // onRequest handler (obsolete)
-          // TODO: remove
-          if (this.onRequest && !this.onRequest(this.transport))
-          {
-            ;;;if (this.debug && typeof console != 'undefined') console.warn('Transport: request was aborted because onRequest() doesn\'t return a true value');
-            this.dispatch('abort');
-            return;
-          }
-
-          method = this.method.toUpperCase();
-
-          if (!this.url)
-            throw new Error('URL is not defined');
-
-          // prepare url
-          params = Object.iterate(this.params, function(key, value){
-            return (value == null) || (value && typeof value.toString == 'function' && value.toString() == null)
-              ? null
-              : key + '=' + Encode.escape(value)
-          }).filter(Function.$isNotNull).join('&');
-          //console.log(params);
-
-          location = this.url;
-          if (method == 'GET' && params)
-            location += (this.url.indexOf('?') == -1 ? '?' : '&') + params;
-
-          // create new XMLHTTPRequest instance for gecko browsers in asynchronous mode
-          // object crash otherwise
-          if (Browser.test('gecko1.8.1-') && this.asynchronous)
-          {
-            ;;;if (typeof console != 'undefined') console.info('Recreate transport (fix for current gecko version)');
-            this.transport = createTransport();
-          }
-
-          // open transport
-          this.transport.open(this.method, location, this.asynchronous);
-
-          this.progress = true;
-
-          // progress started
-          this.dispatch('start');
-          if (this.abortCalled)
-          {
-            ;;;if (this.debug && typeof console != 'undefined') console.warn('Transport: request was aborted while `start` event dispatch');
-            respondToReadyStateChange.call(this, STATE_COMPLETE);
-            return;  // request aborted
-          }
-
-          // set headers
-          setRequestHeaders.call(this);
-
-          if (this.asynchronous)
-            // set ready state change handler
-            this.transport.onreadystatechange = respondToReadyStateChange.bind(this);
-          else
-            // catch state change for 'loading' in synchronous mode
-            respondToReadyStateChange.call(this);
-
-          if (!this.progress)
-          {
-            ;;;if (this.debug && typeof console != 'undefined') console.warn('Transport: request was aborted while response to readyState change dispatch');
-            return;
-          }
-
-          // save transfer start point time
-          this.requestStartTime = Date.now();
-
-          // set timeout
-          ;;;if (DEBUG_TIMEOUT) { this.timeout = Math.random() * 2000; if (typeof console != 'undefined') console.log('set random timeout: {0#.2} sec'.format(this.timeout/1000)); }
-          if (this.timeout)
-            this.timeoutTimer = setTimeout(function(){ this.abort(true); }.bind(this), this.timeout);
-
-          // send data
-          if (method == 'POST')
-          {
-            //debugger;
-            data = this.postBody || params || '';
-
-            if (Browser.test('ie'))                // IE XHR fixes
-            {
-              if (typeof data == 'object' && typeof data.documentElement != 'undefined' && typeof data.xml == 'string')
-                data = data.xml;                   // sending xmldocument content as string, otherwise IE override content-type header
+            if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
+              // sending xmldocument content as string, otherwise IE override content-type header
+              postBody = postBody.xml;                   
+            else
+              if (typeof postBody == 'string')
+                // ie stop send postBody when found \r
+                postBody = postBody.replace(/\r/g, ''); 
               else
-                if (typeof data == 'string')        
-                  data = data.replace(/\r/g, '');  // ie stop send data when found \r
-                else
-                  if (data == null || data == '')
-                    data = '[empty request]';      // don't understand null, undefined or '' post body
-            }
-            this.transport.send(data);
+                if (postBody == null || postBody == '')
+                  // IE doesn't accept null, undefined or '' post body
+                  postBody = '[empty request]';      
           }
-          else
-            this.transport.send(null);
+        }
+        else
+        {
+          if (params)
+            location += (location.indexOf('?') == -1 ? '?' : '&') + params;
+        }
 
-          // catching for
-          //   - 'complete' state in synchronous mode
-          //   - 'loading'  state for Opera
-          if (!this.asynchronous || Browser.test('opera'))
-            respondToReadyStateChange.call(this);
+        this.requestData_ = {
+          method: method,
+          location: location,
+          contentType: this.contentType,
+          enconding: this.encoding,
+          asynchronous: this.asynchronous,
+          headers: Object.extend({}, this.requestHeaders),
+          postBody: postBody
+        };
 
-          if (this.debug) infoOutput('Request over, waiting for response');
-        } catch (e) {
-          this.progress = false;
-          this.dispatchException(e, 'Transport request error');
+        doRequest.call(this, this.requestData_);
+      },
+
+      repeat: function(){
+        if (this.requestData_)
+        {
+          this.abort();
+          doRequest.call(this, this.requestData_);
         }
       },
 
@@ -652,10 +639,14 @@
       // response status
       responseIsSuccess: function() {
         try {
-          return this.aborted ? false :
-                      (this.transport.status == undefined)
-                   || (this.transport.status == 0)
-                   || (this.transport.status >= 200 && this.transport.status < 300);
+          if (this.aborted)
+            return false;
+
+          var status = this.transport.status;
+          return (status == undefined)
+              || (status == 0)
+              || (status >= 200 && this.transport.status < 300);
+
         } catch(e) { 
           this.dispatchException(e, 'Get transport status error.');
         }
@@ -664,13 +655,15 @@
       destroy: function(){
         this.destroy = Function.$undef;
 
-        this.handlers.clear();
-
+        delete this.requestData_;
         this.transport.onreadystatechange = Function.$undef;
         this.transport.abort();
 
+        this.clearInfluence();
+
         this.inherit();
 
+        delete this.transport;
         Cleaner.remove(this);
       }
     });

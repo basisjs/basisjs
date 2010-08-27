@@ -148,7 +148,7 @@
         // apply config
         if (typeof config == 'object')
         {
-          ;;;if ((config && config.traceEvents_) || this.traceEvents_) this.handlers_.push({ handler: { any: function(){ console.log(this, arguments) } }, thisObject: this });
+          ;;;if ((config && config.traceEvents_) || this.traceEvents_) this.handlers_.push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
           ;;;if (config && 'thisObject' in config) console.warn(this.className + ': thisObject in config is deprecated. Use handlersContext instead');
 
           if (config.handlers)
@@ -223,8 +223,8 @@
         var behaviour = this.behaviour[eventName];
         var handlersCount = this.handlers_.length;
 
-        if (!window.eventNum)window.eventNum = 0;window.eventNum++;//console.log('{eventNum:04}'.format(window), eventName, this);
-        if (!window.eventMap)window.eventMap = {};if (!eventMap[eventName])eventMap[eventName]=0;eventMap[eventName]++;//console.log('{eventNum:04}'.format(window), eventName, this);
+        //if (!window.eventNum)window.eventNum = 0;window.eventNum++;//console.log('{eventNum:04}'.format(window), eventName, this);
+        //if (!window.eventMap)window.eventMap = {};if (!eventMap[eventName])eventMap[eventName]=0;eventMap[eventName]++;//console.log('{eventNum:04}'.format(window), eventName, this);
 
         if (handlersCount || behaviour)
         {
@@ -507,8 +507,6 @@
     * @class
     * @extends {Basis.DOM.Wrapers.EventObject}
     */
-    noUpdateCount = 0;
-    noStateCount = 0;
     var DataObject = Class(EventObject, {
       className: namespace + '.DataObject',
 
@@ -687,7 +685,7 @@
      /**
       * Changes isActiveSubscriber property.
       * @param {boolean} isActive New value for {Basis.DOM.Wrapers.DataObject#isActiveSubscriber} property
-      * @return Current {Basis.DOM.Wrapers.DataObject#isActiveSubscriber} property value
+      * @return {boolean} Current {Basis.DOM.Wrapers.DataObject#isActiveSubscriber} property value
       */
       setIsActiveSubscriber: function(isActive){
         if (this.isActiveSubscriber != isActive)
@@ -3944,6 +3942,9 @@
 
       // functions 
       createBehaviour: createBehaviour,
+
+      // objects
+      TimeEventManager: TimeEventManager,
 
       // classes
       EventObject: EventObject,

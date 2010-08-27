@@ -2165,6 +2165,29 @@
         var attributes = {};
         var entryName;
 
+        description.replace(DESCRIPTION_PART_REGEXP, function(m, typ, entryName, attrName, attrValue, attrValue2, attrValue3, attrValue4, gabage){
+          if (gabage)
+          {
+            throw new Error(
+              'Create element error in DOM.createElement()' +
+              '\n\nElement description:\n> ' + description + 
+              '\n\nProblem place:\n> ' + description.substr(0, m.index) + '-->' + description.substr(m.index) + '<--'
+            );
+          }
+
+          if (!entryName) 
+            entryName = attrName;
+
+          switch (typ){
+            case '#': attributes.id = entryName; break;
+            case '.': classNames.push(entryName); break;
+            default:
+              if (entryName != 'class')                 
+                attributes[entryName] = attrValue ? attrValue2 || attrValue3 || attrValue4 : entryName;
+          }
+          
+        });
+        /*DESCRIPTION_PART_REGEXP.lastIndex = -1;
         while (m = DESCRIPTION_PART_REGEXP.exec(description))
         {
           if (m[8])
@@ -2185,7 +2208,7 @@
               if (entryName != 'class')                 
                 attributes[entryName] = m[4] ? m[5] || m[6] || m[7] : entryName;
           }
-        }
+        }*/
 
         // create element
         if (IS_NAME_ATTRIBUTE_BUG && attributes.name && /^(input|textarea|select)$/i.test(elementName))
@@ -3709,12 +3732,14 @@
 
     var namespace = 'Basis.Data';
 
+    var getterIdx = 1;
     var getterCache = {};
     var getterPathCache = {};
     //var setterCache = {};
 
-    var mGetter = new Function('item', 'return item.modificator');
+    var mGetter = function(item){ return item.modificator };
     mGetter.getter = mGetter;
+    mGetter.getterIdx_ = getterIdx++;
 
     function getter(path, modificator){
       var func, result;
@@ -3736,14 +3761,20 @@
         {
           func = new Function('object', 'return object != null ? object.' + path + ' : object');
           func.path = path;
+          func.getterIdx_ = getterIdx++;
           getterPathCache[path] = func;
         }
       }
       else
+      {
         func = path;
+        if (!func.getterIdx_)
+          func.getterIdx_ = getterIdx++;
+      }
 
-      if (getterCache[func] && getterCache[func].search(modificator, mGetter))
-        return getterCache[func][Array.lastSearchIndex].getter;
+      var getterIdx_ = func.getterIdx_;
+      if (getterCache[getterIdx_] && getterCache[getterIdx_].search(modificator, mGetter))
+        return getterCache[getterIdx_][Array.lastSearchIndex].getter;
 
       switch (typeof modificator)
       {
@@ -3766,10 +3797,10 @@
             result = func;
       }
 
-      if (!getterCache[func])
-        getterCache[func] = [];
+      if (!getterCache[getterIdx_])
+        getterCache[getterIdx_] = [];
 
-      getterCache[func].push({
+      getterCache[getterIdx_].push({
         getter: result,
         modificator: modificator
       });
