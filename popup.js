@@ -398,7 +398,7 @@
             };
           }
 
-          DOM.css(this.element, {
+          DOM.setStyle(this.element, {
             right:  'auto',
             left:   Basis.CSS.px(parseInt(point.x - (dirH != LEFT) * (this.element.offsetWidth >> (dirH == CENTER)))),
             bottom: 'auto',

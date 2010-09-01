@@ -39,6 +39,8 @@
     /** @const */ var STATE_LOADING = 3;
     /** @const */ var STATE_DONE = 4;
 
+    var IS_POST_REGEXP = /POST/i;
+
     var DEBUG_MODE = Cookies.get('DEBUG_AJAX');
 
     // base 
@@ -47,20 +49,6 @@
 
     // TODO: better debug info out
     var logOutput = typeof console != 'undefined' ? function(){ console.log(arguments) } : Function.$self;
-    function exception(e){
-      if (typeof e == 'undefined')
-        return;
-
-      var info;
-      try {
-        info = (e.name ? 'Error' : e.name) + 
-               (Function.$defined(e.fileName) ? ' in\n' + e.fileName : '') +
-               (Function.$defined(e.lineNumber) ? '\nat line ' + e.lineNumber : '') +
-               (Function.$defined(e.number) ? '\nline: ' + ((e.number >> 16) & 0x1FFF) : '');
-      } catch(_e) { /*alert(_e)*/ }
-      return (info ? info + '\n\n' : '') +
-             (e.message || e.description || e);
-    }
 
     // Encode
     var CodePages = {};
@@ -97,7 +85,7 @@
     * @function createTransport
     * Creates transport constructor
     */
-    var TransportProgID = 'native';
+    var XHRSupport = 'native';
     var createTransport = function(){
 
       if (window.XMLHttpRequest)
@@ -105,7 +93,8 @@
           return new XMLHttpRequest();
         };
 
-      if (window.ActiveXObject)
+      var ActiveXObject = window.ActiveXObject;
+      if (ActiveXObject)
       {
         var progID = [
           "MSXML2.XMLHTTP.6.0",
@@ -114,16 +103,17 @@
           "Microsoft.XMLHTTP"
         ];
 
-        for (var i = 0; TransportProgID = progID[i]; i++)
-          try { 
-            if (new ActiveXObject(TransportProgID))
+        for (var i = 0, fn; XHRSupport = progID[i]; i++)
+          try {
+            if (new ActiveXObject(XHRSupport))
               return function(){
-                return new ActiveXObject(TransportProgID);
+                return new ActiveXObject(XHRSupport);
               };
           } catch(e) {}
       }
 
-      throw new Error(TransportProgID = 'Browser doesn\'t support for XMLHttpRequest!');
+      throw new Error(XHRSupport = 'Browser doesn\'t support for XMLHttpRequest!');
+
     }();
 
     //
@@ -212,7 +202,7 @@
         'JS-Framework': 'Basis'
       };
 
-      if (/POST/i.test(requestData.method)) 
+      if (IS_POST_REGEXP.test(requestData.method)) 
       {
         headers['Content-type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
         if (Browser.test('gecko'))
@@ -269,7 +259,7 @@
         // case abort, success, fault
         if (this.aborted)
         {
-          var abortedByTimeout = this.abortedByTimeout;
+          var abortedByTimeout = this.abortedByTimeout_;
 
           if (abortedByTimeout)
             this.dispatch('timeout');
@@ -324,7 +314,7 @@
       // set flags
       this.progress = false;
       this.aborted = false;
-      this.abortedByTimeout = false;
+      this.abortedByTimeout_ = false;
       this.prevReadyState_ = -1;
 
       // create new XMLHTTPRequest instance for gecko browsers in asynchronous mode
@@ -384,6 +374,8 @@
       }*/
 
       ;;;if (this.debug) logOutput('Request over, waiting for response');
+
+      return true;
     }
 
     //
@@ -411,8 +403,8 @@
 
       // object states
       progress: false,
-      aborted:  false,
-      abortedByTimeout: false,
+      aborted: false,
+      abortedByTimeout_: false,
       abortCalled: false,
 
       // times
@@ -428,9 +420,6 @@
       contentType:  DEFAULT_CONTENT_TYPE,
       encoding:     null,
 
-      // behaviour
-      completeRequest: false,
-
       //
       // constructor
       //
@@ -445,6 +434,7 @@
         // transport object
         this.transport = createTransport();
 
+        this.requestHeaders = {};
         this.influence = new Array();
 
         // request params
@@ -503,20 +493,12 @@
         this.inherit.apply(this, arguments);
       },
 
-      dispatchException: function(e, comment){
-        this.dispatch('exception', e, comment);
-
-        // old model; probably deprecated
-        logOutput(exception(e) + '\n' + comment);
-        //throw new Error(Basis.Debug.exception(exception) + '\n' + comment);
-      },
-
       //
       // Main actions
       //
 
       timeoutAbort: function(){
-        this.abortedByTimeout = true;
+        this.abortedByTimeout_ = true;
         this.abort();
       },
 
@@ -566,7 +548,7 @@
 
         this.progress = false;
         this.aborted = false;
-        this.abortedByTimeout = false;
+        this.abortedByTimeout_ = false;
 
         // dispatch prepare event
         this.dispatch('prepare');
@@ -585,7 +567,7 @@
         }).filter(Function.$isNotNull).join('&');
 
         // prepare location & postBody
-        if (method == 'POST')
+        if (IS_POST_REGEXP.test(method))
         {
           postBody = this.postBody || params || '';
 
@@ -615,20 +597,20 @@
           method: method,
           location: location,
           contentType: this.contentType,
-          enconding: this.encoding,
+          encoding: this.encoding,
           asynchronous: this.asynchronous,
           headers: Object.extend({}, this.requestHeaders),
           postBody: postBody
         };
 
-        doRequest.call(this, this.requestData_);
+        return doRequest.call(this, this.requestData_);
       },
 
       repeat: function(){
         if (this.requestData_)
         {
           this.abort();
-          doRequest.call(this, this.requestData_);
+          return doRequest.call(this, this.requestData_);
         }
       },
 
@@ -639,17 +621,16 @@
       // response status
       responseIsSuccess: function() {
         try {
-          if (this.aborted)
-            return false;
-
-          var status = this.transport.status;
-          return (status == undefined)
-              || (status == 0)
-              || (status >= 200 && this.transport.status < 300);
-
-        } catch(e) { 
-          this.dispatchException(e, 'Get transport status error.');
+          if (!this.aborted)
+          {
+            var status = this.transport.status;
+            return (status == undefined)
+                || (status == 0)
+                || (status >= 200 && this.transport.status < 300);
+          }
+        } catch(e) {
         }
+        return false;
       },
 
       destroy: function(){

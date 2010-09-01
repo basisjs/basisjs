@@ -88,7 +88,7 @@
         var box = this.captureElementBox;
         box.recalc(this.element.parentNode);
         if (box.defined)
-          DOM.css(this.element, {
+          DOM.setStyle(this.element, {
             top:    box.top  + 'px',
             left:   box.left + 'px',
             width:  (box.element == document.body ? document.documentElement.scrollWidth  : box.width) + 'px',
@@ -381,7 +381,7 @@
       },
       realign: function(){
         if (this.autocenter)
-          DOM.css(this.element, {
+          DOM.setStyle(this.element, {
             left: CSS.px(Math.max(0, parseInt(0.5 * (document.body.clientWidth  - this.element.offsetWidth)))),
             top:  CSS.px(Math.max(0, parseInt(0.5 * (document.body.clientHeight - this.element.offsetHeight))))
           });

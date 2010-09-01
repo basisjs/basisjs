@@ -61,7 +61,7 @@
       var style = testElement.style;
 
       var testElement2 = new Helper();
-      DOM.css(testElement2, {
+      DOM.setStyle(testElement2, {
         width: '1px',
         height: '1px'
       });
@@ -343,7 +343,7 @@
         var element = DOM.get(element) || this.element;
         if (element)
         {
-          DOM.css(element, {
+          DOM.setStyle(element, {
             top: this.top + 'px',
             left: this.left + 'px',
             width: this.width + 'px',

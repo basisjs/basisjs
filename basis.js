@@ -1903,7 +1903,9 @@
 
     // extract tag names
     function tagNames(names){
-      if (!names) return;
+      if (!names)
+        return;
+
       var result = String(names).trim().split(/\s*,\s*|\s+/).unique();
       return result.indexOf('*') == -1 && result;
     };
@@ -2165,29 +2167,6 @@
         var attributes = {};
         var entryName;
 
-        description.replace(DESCRIPTION_PART_REGEXP, function(m, typ, entryName, attrName, attrValue, attrValue2, attrValue3, attrValue4, gabage){
-          if (gabage)
-          {
-            throw new Error(
-              'Create element error in DOM.createElement()' +
-              '\n\nElement description:\n> ' + description + 
-              '\n\nProblem place:\n> ' + description.substr(0, m.index) + '-->' + description.substr(m.index) + '<--'
-            );
-          }
-
-          if (!entryName) 
-            entryName = attrName;
-
-          switch (typ){
-            case '#': attributes.id = entryName; break;
-            case '.': classNames.push(entryName); break;
-            default:
-              if (entryName != 'class')                 
-                attributes[entryName] = attrValue ? attrValue2 || attrValue3 || attrValue4 : entryName;
-          }
-          
-        });
-        /*DESCRIPTION_PART_REGEXP.lastIndex = -1;
         while (m = DESCRIPTION_PART_REGEXP.exec(description))
         {
           if (m[8])
@@ -2208,7 +2187,7 @@
               if (entryName != 'class')                 
                 attributes[entryName] = m[4] ? m[5] || m[6] || m[7] : entryName;
           }
-        }*/
+        }
 
         // create element
         if (IS_NAME_ATTRIBUTE_BUG && attributes.name && /^(input|textarea|select)$/i.test(elementName))
@@ -2236,7 +2215,7 @@
       if (isComplexDef)
       {
         if (def.css)
-          css(element, def.css);
+          DOM.Style.setStyle(element, def.css);
 
         for (var event in def)
           if (typeof def[event] == 'function')
@@ -2413,106 +2392,6 @@
         node.removeAttribute(name);
       else
         node.setAttribute(name, value)
-    }
-
-    //
-    // Style
-    //
-
-   /**
-    * Changes for node display value.
-    * @param {Node} node
-    * @param {boolean|string} display
-    * @return {Node}
-    */
-    function display(node, display){
-      node.style.display = typeof display == 'string' ? display : (display ? '' : 'none');
-      return node;
-    }
-
-   /**
-    * @deprecated use Basis.DOM.display instead.
-    */
-    function show(element){
-      return display(element, 1);
-    }
-   /**
-    * @deprecated use Basis.DOM.display instead.
-    */
-    function hide(element){ 
-      return display(element);
-    }
-
-   /**
-    * Changes node visibility.
-    * @param {Node} node
-    * @param {boolean} visible
-    * @return {Node}
-    */
-    function visibility(node, visible){
-      node.style.visibility = visible ? '' : 'hidden';
-      return node;
-    }
-
-   /**
-    * @deprecated use Basis.DOM.visibility instead.
-    */
-    function visible(element){
-      return visibility(element, 1);
-    }
-   /**
-    * @deprecated use Basis.DOM.visibility instead.
-    */
-    function invisible(element){
-      return visibility(element);
-    }
-
-    // create style property map
-    var styleMap = {};
-
-    function addStyleMapping(property, names){
-      var name, mapping = {};
-      names = names.qw();
-      for (var i = 0; name = names[i++];)
-      {
-        if (typeof testElement.style[name] != 'undefined')
-        {
-          Browser.FeatureSupport['css-' + property] = name;
-          mapping.key = name;
-          break;
-        }
-      }
-      styleMap[property] = mapping;
-    };
-
-    addStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter');
-    addStyleMapping('float', 'cssFloat styleFloat');
-
-    if (styleMap.opacity.key == 'filter')
-      styleMap.opacity.getter = function(value){ return 'alpha(opacity:{0:.0})'.format(Math.round(value * 100)) };
-
-   /**
-    * Apply new style property values for node.
-    * @param {Node} node Node which style to be changed.
-    * @param {object} style Object contains new values for node style properties.
-    * @return {Node} 
-    */
-    function css(node, style){
-      node = get(node);
-      if (node)
-      {
-        var value, mapping;
-        for (var key in style)
-        {
-          value = style[key];
-          mapping = styleMap[key];
-          key = mapping ? mapping.key : key.camelize();
-            
-          if (key)
-            node.style[key] = mapping && mapping.getter ? mapping.getter(value) : value;
-        }
-      }
-      return node;
     }
 
     //
@@ -2715,15 +2594,6 @@
       // attributes
       setAttribute: setAttribute,
 
-      // style
-      display: display,
-      show: show,
-      hide: hide,
-      visibility: visibility,
-      visible: visible,
-      invisible: invisible,
-      css: css,
-
       // checkers
       IS_ELEMENT_NODE: IS_ELEMENT_NODE,
       IS_TEXT_NODE: IS_TEXT_NODE,
@@ -2736,6 +2606,434 @@
       setSelectionRange: setSelectionRange,
       getSelectionStart: getSelectionStart,
       getSelectionEnd: getSelectionEnd
+    });
+
+  })();
+
+  // ============================================
+  // DOM.Style
+  // 
+  // Authors: Vladimir Ratsev & Roman Dvornov
+  //
+
+  (function() {
+
+   /**
+    * @namespace
+    */
+    
+    var namespace = 'Basis.DOM.Style';
+
+    // main part
+
+    var IMPORTANT_REGEXP = /\s*!important/i;
+    var IMPORTANT = String('important');
+    var cssStyleSheets = {};
+
+    // shortcut
+    
+    function cssRule(selector, styleSheet){
+      return getStyleSheet(styleSheet, true).getRule(selector, true);
+    }
+
+    // working with stylesheets
+
+    function StyleSheet_insertRule(rule, index){
+      // fetch selector and style from rule description
+      var m = rule.match(/^([^{]+)\{(.*)\}\s*$/);
+      if (m)
+      {
+        var selectors = m[1].trim().split(/\s*,\s*/);
+        for (var i = 0; i < selectors.length; i++)
+          this.addRule(selectors[i], m[2] || null, index++);
+        return index - 1;
+      }
+
+      ;;;throw new Error("Syntax error in CSS rule to be added");
+    }
+
+    function StyleSheet_makeCompatible(style)
+    {
+      // FF throws exception if access to cssRules property until stylesheet isn't ready (loaded)
+      try {
+        if (!style.cssRules)
+          style.cssRules = style.rules;
+      }
+      catch(e){
+      }
+
+      // extend style sheet with methods according to W3C spec
+      if (!style.insertRule)
+        style.insertRule = StyleSheet_insertRule;
+
+      if (!style.deleteRule)
+        style.deleteRule = style.removeRule;
+
+      return style;
+    }
+
+    function addStyleSheet(url, title)
+    {
+      var element = DOM.createElement(!url ? 'STYLE' : 'LINK[type="text/css"][rel="{alt}stylesheet"][href="{url}"]'.format({
+        alt: title ? 'alternate ' : '',
+        url: url//url.quote('"')
+      }));
+
+      DOM.tag(document, 'HEAD')[0].appendChild(element);
+
+      return StyleSheet_makeCompatible(element.sheet || element.styleSheet);
+    }
+
+    var basisId = 1;
+
+    function getStyleSheet(id, createIfNotExists){
+      id = id || 'DefaultGenericStyleSheet';
+
+      if (!cssStyleSheets[id])
+        if (createIfNotExists)
+          cssStyleSheets[id] = new CssStyleSheetWrapper(addStyleSheet())
+
+      return cssStyleSheets[id];
+    }
+
+    // tools
+
+    function isPropertyImportant(style, property){
+      if (style.getPropertyPriority)
+        return style.getPropertyPriority(property) == IMPORTANT;
+      else
+        return false;
+    }
+
+    //
+    // Style mapping
+    //
+
+    var styleMapping = {};
+    var testElement = DOM.createElement('DIV');
+
+    function createStyleMapping(property, names, regSupport, getters){
+      getters = getters || {};
+      names = names.qw();
+
+      for (var i = 0, name; name = names[i]; i++)
+      {
+        if (typeof testElement.style[name] != 'undefined')
+        {
+          if (regSupport)
+            Browser.FeatureSupport['css-' + property] = name;
+
+          styleMapping[property] = {
+            key: name,
+            getter: getters[name]
+          };
+
+          return;
+        }
+      }
+    };
+
+    createStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter', true, {
+      fitler: function(value){ return 'alpha(opacity:_)'.replace('_', parseInt(value * 100)) }
+    });
+    createStyleMapping('border-radius', 'borderRadius MozBorderRadius WebkitBorderRadius', true);
+    createStyleMapping('float', 'cssFloat styleFloat');
+
+   /**
+    * Apply new style property values for node.
+    * @param {Node} node Node which style to be changed.
+    * @param {object} style Object contains new values for node style properties.
+    * @return {Node} 
+    */
+    function getStylePropertyMapping(key, value){
+      var mapping = styleMapping[key];
+      if (key = mapping ? mapping.key : key.camelize())
+        return {
+          key: key,
+          value: mapping && mapping.getter ? mapping.getter(value) : value
+        };
+    }
+
+   /**
+    * Apply new style property value for node.
+    * @param {Node} node Node which style to be changed.
+    * @param {string} key Name of property.
+    * @param {string} value Value of property.
+    */
+    function setStyleProperty(node, key, value){
+      var mapping = getStylePropertyMapping(key, value);
+      if (mapping)
+        return node.style[mapping.key] = mapping.value;
+    }
+
+   /**
+    * Apply new style properties for node.
+    * @param {Node} node Node which style to be changed.
+    * @param {object} style Object contains new values for node style properties.
+    * @return {Node} 
+    */
+    function setStyle(node, style){
+      for (var key in style)
+        setStyleProperty(node, key, style[key]);
+
+      return node;
+    }
+
+
+    //
+    // DOM node styling
+    //
+
+   /**
+    * Changes for node display value.
+    * @param {Node} node
+    * @param {boolean|string} display
+    * @return {Node}
+    */
+    function display(node, display){
+      return setStyleProperty(node, 'display', typeof display == 'string' ? display : (display ? '' : 'none'));
+    }
+
+   /**
+    * @deprecated use Basis.DOM.display instead.
+    */
+    function show(element){
+      return display(element, 1);
+    }
+   /**
+    * @deprecated use Basis.DOM.display instead.
+    */
+    function hide(element){ 
+      return display(element);
+    }
+
+   /**
+    * Changes node visibility.
+    * @param {Node} node
+    * @param {boolean} visible
+    * @return {Node}
+    */
+    function visibility(node, visible){
+      return setStyleProperty(node, 'visibility', visible ? '' : 'hidden');
+    }
+
+   /**
+    * @deprecated use Basis.DOM.visibility instead.
+    */
+    function visible(element){
+      return visibility(element, 1);
+    }
+   /**
+    * @deprecated use Basis.DOM.visibility instead.
+    */
+    function invisible(element){
+      return visibility(element);
+    }
+
+    //
+    // classes
+    //
+
+   /**
+    * @class
+    */
+    var CssStyleSheetWrapper = Class(null, {
+      className: namespace + '.CssStyleSheetWrapper',
+
+      styleSheet: null,
+
+     /**
+      * @param {StyleSheet} styleSheet
+      * @constructor
+      */
+      init: function(styleSheet){
+        this.styleSheet = styleSheet;
+        this.rules = [];
+        this.map = {};
+      },
+
+     /**
+      * @param {string} selector
+      * @param {boolean=} createIfNotExists
+      * @return {CssRuleWrapper|CssRuleWrapperSet}
+      */
+      getRule: function(selector, createIfNotExists){
+        if (!this.map[selector])
+        {
+          if (createIfNotExists)
+          {
+            var styleSheet = this.styleSheet;
+            var index = this.rules.length;
+            var newIndex = styleSheet.insertRule(selector + '{}', index);
+
+            for (var i = index; i <= newIndex; i++)
+              this.rules.push(new CssRuleWrapper(styleSheet.cssRules[i]));
+
+            this.map[selector] = index != newIndex ? new CssRuleWrapperSet(this.rules.splice(index)) : this.rules[index];
+          }
+        }
+
+        return this.map[selector];
+      },
+
+     /**
+      * @param {string} selector
+      */
+      deleteRule: function(selector){
+        var rule = this.map[selector];
+        if (rule)
+        {
+          var rules = rule.rules || [rule];
+          for (var i = 0; i < rules.length; i++)
+          {
+            var ruleIndex = this.rules.indexOf(rules[i]);
+            this.stylesheet.deleteRule(ruleIndex);
+            this.rules.splice(ruleIndex, 1);
+          }
+          delete this.map[selector];
+        }
+      },
+
+     /**
+      * @destructor
+      */
+      destroy: function(){
+        delete this.rules;
+      }
+    });
+
+   /**
+    * @class
+    */
+    var CssRuleWrapper = Class(null, {
+      className: namespace + '.CssRuleWrapper',
+
+     /**
+      * type {CSSRule}
+      */
+      rule: null,
+
+     /**
+      * @param {CSSRule} rule
+      * @contructor
+      */
+      init: function(rule){
+        if (rule)
+        {
+          this.rule = rule;
+          this.selector = rule.selectorText;
+        }
+      },
+
+     /**
+      * @param {string} property
+      * @param {any} value
+      */
+      setProperty: function(property, value){
+        var mapping;
+        var imp = !!IMPORTANT_REGEXP.test(value);
+        var style = this.rule.style;
+        if (imp || isPropertyImportant(style, property))
+        {
+          value = value.replace(IMPORTANT_REGEXP, '');
+
+          if (mapping = getStylePropertyMapping(property, value))
+          {
+            var key = mapping.key;
+
+            if (style.setProperty)
+            {
+              // W3C scheme
+
+              // if property exists and important, remove it
+              if (!imp)
+                style.removeProperty(key);
+
+              // set new value for property
+              style.setProperty(key, mapping.value, (imp ? IMPORTANT : ''));
+            }
+            else
+            {
+              // IE8- scheme
+              var newValue = key + ': ' + mapping.value + (imp ? ' !' + IMPORTANT : '') + ';';
+              var rxText = style[key] ? key + '\\s*:\\s*' + style[key] + '(\\s*!' + IMPORTANT + ')?\\s*;?' : '^';
+
+              style.cssText = style.cssText.replace(new RegExp(rxText, 'i'), newValue);
+            }
+          }
+        }
+        else 
+          DOM.setStyleProperty(this.rule, property, value);
+      },
+
+     /**
+      * @param {Object} style
+      */
+      setStyle: function(style){
+        Object.iterate(style, this.setProperty, this);
+      },
+
+     /**
+      * Removes all style properties
+      */
+      clear: function(){
+        this.rule.style.cssText = "";
+      },
+
+     /**
+      * @destructor
+      */
+      destroy: function(){
+        delete this.rule;
+      }
+    });
+
+   /**
+    * @class
+    */
+    var CssRuleWrapperSet = Class(null, {
+      className: namespace + '.CssRuleWrapperSet',
+
+      init: function(rules){
+        this.rules = rules;
+      },
+      destroy: function(){
+        delete this.rules;
+      }
+    });
+
+    ['setProperty', 'setStyle', 'clear'].forEach(function(method){
+      CssRuleWrapperSet.prototype[method] = function(){
+        for (var rule, i = 0; rule = this.rules[i]; i++)
+          rule[method].apply(rule, arguments);
+      }
+    });
+
+    // export names
+
+    DOM.extend({
+      // style interface
+      setStyleProperty: setStyleProperty,
+      setStyle: setStyle,
+
+      // node styling
+      display: display,
+      show: show,
+      hide: hide,
+      visibility: visibility,
+      visible: visible,
+      invisible: invisible
+    });
+
+    return getNamespace(namespace).extend({
+      // style interface
+      setStyleProperty: setStyleProperty,
+      setStyle: setStyle,
+
+      // rule and stylesheet interfaces
+      cssRule: cssRule,
+      getStyleSheet: getStyleSheet,
+      addStyleSheet: addStyleSheet
     });
 
   })();
@@ -2910,7 +3208,8 @@
               {
                 var strings = [];
                 var tmp = params.replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' });
-                params = tmp.trim()
+                params = tmp
+                  .trim()
                   .replace(/([a-z0-9\_]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, attr, ref, name, value){
                     if (name)
                       getters[name] = path + 'childNodes[' + pos + ']' + '.getAttributeNode("' + attr + '")';
@@ -3527,7 +3826,7 @@
       return function(callback, thisObject){
         if (fired)
         {
-          ;;;if (typeof console != 'undefined') console.warn('Event.onLoad(): Can\'t attach handler to onload event, because it\'s alredy fired!');
+          ;;;if (typeof console != 'undefined') console.warn('Event.onLoad(): Can\'t attach handler to onload event, because it\'s already fired!');
           return;
         }
 

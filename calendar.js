@@ -639,7 +639,7 @@
               //console.log('start', cfg.deltaX, arguments);
               cfg.element = self.activeSection.content.cloneNode(true);
               cfg.sign = 0;
-              DOM.css(cfg.element, { position: 'absolute', width: '100%', zIndex: 10 });
+              DOM.setStyle(cfg.element, { position: 'absolute', width: '100%', zIndex: 10 });
               DOM.insert(self.activeSection.content.parentNode, cfg.element, DOM.INSERT_BEFORE, self.activeSection.content);
             },
             move: function(cfg){
@@ -656,11 +656,11 @@
               if (dx > width)
                 return this.stop();
 
-              DOM.css(cfg.element, {
+              DOM.setStyle(cfg.element, {
                 left: (cfg.l = cfg.deltaX) + 'px',
                 opacity: cfg.o = 1//dx > width/2 ? 2 * (width - dx)/width : 1
               });
-              //DOM.css(self.activeSection.content, {
+              //DOM.setStyle(self.activeSection.content, {
               //  opacity: dx > width/3 ? (3 * dx - width)/(2*width) : 0
               //});
             },
@@ -670,8 +670,8 @@
               //DOM.remove(cfg.element);
 
               var t = new Basis.Animation.Thread({ duration: 250 * (1 - Math.abs(cfg.l)/width) });
-              var m = new Basis.Animation.Modificator(t, function(value){ DOM.css(cfg.element, { left: value + 'px' }) }, cfg.l, width * cfg.deltaX.sign());
-              //var m = new Basis.Animation.Modificator(t, function(value){ DOM.css(cfg.element, { opacity: value }) }, cfg.o, 0);
+              var m = new Basis.Animation.Modificator(t, function(value){ DOM.setStyle(cfg.element, { left: value + 'px' }) }, cfg.l, width * cfg.deltaX.sign());
+              //var m = new Basis.Animation.Modificator(t, function(value){ DOM.setStyle(cfg.element, { opacity: value }) }, cfg.o, 0);
               t.start();
 
               //if (Math.abs(cfg.deltaX) > width/2)

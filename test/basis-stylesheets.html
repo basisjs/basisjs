@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="ru" xml:lang="ru">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Stylesheet</title>
+  <!--<link id="loadingStyleSheet" href="/cgi-bin/delay_css.pl" type="text/css" rel="stylesheet"/>-->
+  <style id="testStyleSheet"  type="text/css">
+    @import "style/default/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+    #playground {
+      position: absolute;
+      left: -1000px;
+      top: -1000px;
+      width: 100px;
+      height: 100px;
+    }
+    #playground2 {
+      position: absolute;
+      left: -1000px;
+      top: -1000px;
+      width: 100px !important;
+    }
+  </style>
+  
+  <script type="text/javascript"  src="../basis.js"></script>
+  <script type="text/javascript"  src="../dom_wraper.js"></script>
+  <script type="text/javascript"  src="test.js"></script>
+  <script type="text/javascript"  src="common.js"></script>
+</head>
+
+<body>
+  <div id="playground"></div>
+  <div id="playground2"></div>
+  <script type="text/javascript">
+    loadTest((function(){
+      var DOM = Basis.DOM;
+
+      var CSS = Basis.CSS;
+      var Event = Basis.Event;
+      var Tester = Basis.Test.Tester;
+      var cssRule = Basis.DOM.Style.cssRule;
+
+
+      var updateCount = 0;
+
+      var pg = DOM.get('playground');
+      var pg2 = DOM.get('playground2');
+
+      return [
+        {
+          name: 'CssStyleSheet',
+          testcase: [
+            {
+              name: 'getStyleSheet',
+              test: function() {
+                var styleSheet = Basis.DOM.Style.getStyleSheet('testStyleSheet');
+                this.is(false, !!styleSheet);
+
+                styleSheet = Basis.DOM.Style.getStyleSheet('testStyleSheet', true);
+                this.is(true, !!styleSheet);
+                //debugger;
+                //styleSheet = Basis.DOM.Style.wrapStyleSheet(Basis.DOM.Style.addStyleSheet('/cgi-bin/delay_css.pl'));
+
+              }
+            }
+          ]
+        },
+        {
+          name: 'CssRule',
+          testcase: [
+            {
+              name: 'create',
+              test: function(){
+                var rule = cssRule('#playground, #playground2');
+                rule.setStyle({width: '200px !important'});
+                //this.is('#playground, #playground2', rule.selector);
+                this.is(200, pg.clientWidth);
+                this.is(200, pg2.clientWidth);
+                rule.clear();
+                /*var rule1 = cssRule('#playground');
+                var rule2 = cssRule('#playground');
+                this.is(true, rule1.rule === rule2.rule);*/
+              }
+            },
+            {
+              name: 'setProperty',
+              test: function(){
+                var width;
+                var rule = cssRule('#playground');
+                rule.setStyle({width: '200px'});
+                this.is(200, pg.clientWidth);
+                rule.setStyle({width: '300px !important'});
+                this.is(300, pg.clientWidth);
+                rule.setStyle({width: '200px !important'});
+                this.is(200, pg.clientWidth);
+                rule.setStyle({width: '100px'});
+                this.is(100, pg.clientWidth);
+                rule.setStyle({width: '150px', height: '100px !important'});
+                this.is(150, pg.clientWidth);
+                this.is(100, pg.clientHeight);
+                rule.setStyle({width: '200px !important', height: '200px !important'});
+                this.is(200, pg.clientWidth);
+                this.is(200, pg.clientHeight);
+
+                rule = cssRule('#playground2');
+                rule.setStyle({width: '300px !important'});
+                this.is(300, pg2.clientWidth);
+              }
+            },
+            {
+              name: 'clear',
+              test: function(){
+                var width;
+                var rule = cssRule('#playground');
+                rule.setStyle({width: '200px', height: '200px'});
+                rule.clear();
+                this.is(100, pg.clientWidth);
+                this.is(100, pg.clientHeight);
+
+                rule = cssRule('#playground2');
+                rule.setStyle({height: '100px !important'});
+                rule.clear();
+                this.is(0, pg2.clientHeight);
+
+              }
+            }
+          ]
+        }
+      ];
+    })());
+
+
+  </script>
+</body>
+
+</html>

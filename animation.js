@@ -175,10 +175,10 @@
     var FX = {
       CSS: {
         FadeIn: function(thread, element){
-          return new Modificator(thread, function(value){ DOM.css(element, { opacity: value }) }, 0, 1);
+          return new Modificator(thread, function(value){ DOM.setStyle(element, { opacity: value }) }, 0, 1);
         },
         FadeOut: function(thread, element){
-          return new Modificator(thread, function(value){ DOM.css(element, { opacity: value }) }, 1, 0);
+          return new Modificator(thread, function(value){ DOM.setStyle(element, { opacity: value }) }, 1, 0);
         }
       }
     };

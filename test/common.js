@@ -31,7 +31,7 @@ function loadTest(TestCase){
 
     testcase.addHandler({
       progress: function(diff, p){
-        DOM.css(progressbar.firstChild, { width: CSS.percent(100 * p) });
+        DOM.setStyle(progressbar.firstChild, { width: CSS.percent(100 * p) });
       },
       over: function(){
         DOM.remove(progressbar);

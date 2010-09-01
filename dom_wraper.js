@@ -1359,7 +1359,9 @@
      /**
       * @type {Function}
       */
-      calculateValue: Fn('value + 1'),
+      calculateValue: function(){
+        return this.value + 1;
+      },
 
      /**
       * @type {Array.<Basis.DOM.Wrapers.DataObject>}
