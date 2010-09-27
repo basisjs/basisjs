@@ -364,7 +364,7 @@
       
       template: new Template(
         '<div{element|content} class="Basis-TabSheetControl">' +
-          '<div class="Basis-TabControl">' +
+          '<div{tabsElement} class="Basis-TabControl">' +
             '<div class="Basis-TabControl-Start"/>' +
             '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +
             '<div class="Basis-TabControl-End"/>' +

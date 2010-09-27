@@ -1176,7 +1176,7 @@
     *   });
     *
     *   var foo = new classA('John');
-    *   var bar = new classA('Ivan', 25);
+    *   var bar = new classB('Ivan', 25);
     *   alert(foo.say()); // My name is John.
     *   alert(bar.say()); // My name is Ivan. I'm 25 year old.
     *   alert(bar instanceof Basis.Class); // false (for some reasons it false now)
@@ -1283,7 +1283,7 @@
 
         // override extend method for newClass, new one extending prototype with method wrapping
         newClass.extend = BaseClass.extend;
-        newClass.complete = BaseClass.complete;
+        //newClass.complete = BaseClass.complete;
         
         // extend newClass prototype
         for (var i = 1; i < arguments.length; i++)
@@ -1470,7 +1470,7 @@
 
     function setCookie(name, value, expire, path){
       document.cookie = name + "=" + (value == null ? '' : escape(value)) +
-                        ";path=" + (path || location.pathname) +
+                        ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
                         (expire ? ";expires=" + (new Date(Number(new Date) + expire * 1000)).toGMTString() : '');
     }
 
@@ -1480,7 +1480,7 @@
     }
 
     function removeCookie(name, path){
-      document.cookie = name + "=;expires=" + new Date(0).toGMTString() + ";path=" + (path || location.pathname);
+      document.cookie = name + "=;expires=" + new Date(0).toGMTString() + ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname));
     }
 
     //
@@ -2672,11 +2672,17 @@
       return style;
     }
 
+   /**
+    * Creates <STYLE> or <LINK> node, adds it to document and returns it's stylesheet object.
+    * @param {string=} url Url of css file. In this case <LINK> will created. If this parameter ommited <STYLE> will created
+    * @param {string=} title Value for title attribute.
+    * @return {StyleSheet}
+    */
     function addStyleSheet(url, title)
     {
-      var element = DOM.createElement(!url ? 'STYLE' : 'LINK[type="text/css"][rel="{alt}stylesheet"][href="{url}"]'.format({
+      var element = DOM.createElement(!url ? 'STYLE[type="text/css"]' : 'LINK[type="text/css"][rel="{alt}stylesheet"][href={url}]'.format({
         alt: title ? 'alternate ' : '',
-        url: url//url.quote('"')
+        url: url.quote('"')
       }));
 
       DOM.tag(document, 'HEAD')[0].appendChild(element);
@@ -2686,8 +2692,15 @@
 
     var basisId = 1;
 
+   /**
+    * Returns generic stylesheet by it's id.
+    * @param {string=} id
+    * @param {boolean=} createIfNotExists
+    * @return {Basis.DOM.Style.CssStyleSheetWrapper}
+    */
     function getStyleSheet(id, createIfNotExists){
-      id = id || 'DefaultGenericStyleSheet';
+      if (!id)
+        id = 'DefaultGenericStyleSheet';
 
       if (!cssStyleSheets[id])
         if (createIfNotExists)
@@ -2761,6 +2774,9 @@
     * @param {string} value Value of property.
     */
     function setStyleProperty(node, key, value){
+      if (typeof node.setProperty == 'function')
+        return node.setProperty(key, value);
+
       var mapping = getStylePropertyMapping(key, value);
       if (mapping)
         return node.style[mapping.key] = mapping.value;
@@ -2840,7 +2856,16 @@
     var CssStyleSheetWrapper = Class(null, {
       className: namespace + '.CssStyleSheetWrapper',
 
+     /**
+      * Wrapped stylesheet
+      * @type {StyleSheet}
+      */
       styleSheet: null,
+
+     /**
+      * @type {Array.<CssRuleWrapper|CssRuleWrapperSet>}
+      */
+      rules: null,
 
      /**
       * @param {StyleSheet} styleSheet
@@ -2849,7 +2874,7 @@
       init: function(styleSheet){
         this.styleSheet = styleSheet;
         this.rules = [];
-        this.map = {};
+        this.map_ = {};
       },
 
      /**
@@ -2858,7 +2883,7 @@
       * @return {CssRuleWrapper|CssRuleWrapperSet}
       */
       getRule: function(selector, createIfNotExists){
-        if (!this.map[selector])
+        if (!this.map_[selector])
         {
           if (createIfNotExists)
           {
@@ -2869,18 +2894,18 @@
             for (var i = index; i <= newIndex; i++)
               this.rules.push(new CssRuleWrapper(styleSheet.cssRules[i]));
 
-            this.map[selector] = index != newIndex ? new CssRuleWrapperSet(this.rules.splice(index)) : this.rules[index];
+            this.map_[selector] = index != newIndex ? new CssRuleWrapperSet(this.rules.splice(index)) : this.rules[index];
           }
         }
 
-        return this.map[selector];
+        return this.map_[selector];
       },
 
      /**
       * @param {string} selector
       */
       deleteRule: function(selector){
-        var rule = this.map[selector];
+        var rule = this.map_[selector];
         if (rule)
         {
           var rules = rule.rules || [rule];
@@ -2890,7 +2915,7 @@
             this.stylesheet.deleteRule(ruleIndex);
             this.rules.splice(ruleIndex, 1);
           }
-          delete this.map[selector];
+          delete this.map_[selector];
         }
       },
 
@@ -2912,6 +2937,11 @@
       * type {CSSRule}
       */
       rule: null,
+
+     /**
+      * type {string}
+      */
+      selector: '',
 
      /**
       * @param {CSSRule} rule
@@ -2994,6 +3024,15 @@
     var CssRuleWrapperSet = Class(null, {
       className: namespace + '.CssRuleWrapperSet',
 
+     /**
+      * @type {Array.<CssRuleWrapper>}
+      */
+      rules: null,
+
+     /**
+      * @param {Array.<CssRuleWrapper>} rules
+      * @constructor
+      */
       init: function(rules){
         this.rules = rules;
       },
@@ -3033,7 +3072,12 @@
       // rule and stylesheet interfaces
       cssRule: cssRule,
       getStyleSheet: getStyleSheet,
-      addStyleSheet: addStyleSheet
+      addStyleSheet: addStyleSheet,
+
+      // classes
+      CssStyleSheetWrapper: CssStyleSheetWrapper,
+      CssRuleWrapper: CssRuleWrapper,
+      CssRuleWrapperSet: CssRuleWrapperSet
     });
 
   })();
@@ -3503,10 +3547,13 @@
     */
     function mouseButton(event, button){
       event = wrap(event);
-
-      if ('which' in event)
-        return event.which == button.VALUE;
+                                     // W3C DOM3     // Other browsers
+      var btn = 'buttons' in event ? event.buttons : event.which;
+      if (typeof btn == 'number')
+        // DOM scheme
+        return btn == button.VALUE;
       else
+        // IE6-8
         return event.button & button.BIT;
     }
 
@@ -3567,6 +3614,7 @@
     function observeGlobalEvents(event){
       var handlers = Array.from(globalHandlers[event.type]);
 
+      //console.log(event.type, event, handlers);
       if (handlers)
       {
         var i = handlers.length;
@@ -3625,6 +3673,15 @@
       var handlers = globalHandlers[eventType];
       if (handlers)
         handlers.collapse(compareHandlers, { handler: handler, thisObject: thisObject });
+
+      if (!handlers.length)
+      {
+        delete globalHandlers[eventType];
+        if (document.removeEventListener)
+          document.removeEventListener(eventType, observeGlobalEvents, true);
+        else
+          removeHandler(document, eventType, $null);
+      }
     };
 
     //

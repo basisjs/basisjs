@@ -118,6 +118,14 @@
           this.click();
           Event.kill(event);
         }, this);
+
+        Event.addHandler(this.element, 'keydown', function(event){
+          if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
+          {
+            this.click();
+            Event.kill(event);
+          }
+        }, this);
       },
       click: function(){
         if (!this.isDisabled())

@@ -89,7 +89,7 @@
         config = this.inherit(extend(config, { selectable: !!config.sorting }));
 
         DOM.insert(this.content, config.content || '');
-
+        
         if (config.groupId)
           this.groupId = config.groupId;
 
@@ -123,6 +123,7 @@
 
       groupControlClass: Class(HtmlGroupControl, {
         childClass: Class(HtmlPartitionNode, {
+          className: namespace + '.HeaderPartitionNode',
           behaviour: createBehaviour(HtmlPartitionNode, {
             childNodesModified: function(){
               this.element.colSpan = this.childNodes.length;
@@ -184,14 +185,17 @@
             }
           }, this);
 
+        this.applyConfig_(config.structure)
+
+        if (this.document)
+          DOM.insert(this.document.element, this.element, DOM.INSERT_BEGIN);
+
         // return config object
         return config;
       },
-      applyConfig_: function(config){
-        if (config && config.structure)
+      applyConfig_: function(structure){
+        if (structure)
         {
-          var structure = config.structure;
-
           this.clear();
 
           for (var i = 0; i < structure.length; i++)
@@ -205,7 +209,6 @@
               };
 
             var content = headerConfig.content;
-            
             this.appendChild({
               content: typeof content == 'function' ? content.call(this) : content,
               sorting: colConfig.sorting,
@@ -231,8 +234,33 @@
    /**
     * @class
     */
+
+    var FooterCell = Class(nsWrapers.HtmlPanel, {
+      className: namespace + '.FooterCell',
+
+      colSpan: 1,
+
+      template: new Template(
+        '<td{element} class="Basis-Table-Footer-Cell">' +
+          '<div{content}>' + String.Entity.nbsp + '</div>' +
+        '</td>'
+      ),
+
+      setColSpan: function(colSpan){
+        this.element.colSpan = this.colSpan = colSpan || 1;
+      }
+    });
+
+   /**
+    * @class
+    */
     var Footer = Class(HtmlNode, {
       className: namespace + '.Footer',
+
+      childClass: FooterCell,
+      childFactory: function(config){
+        return new this.childClass(config);
+      },
 
       template: new Template(
         '<tfoot{element} class="Basis-Table-Footer">' +
@@ -240,14 +268,24 @@
         '</tfoot>'
       ),
 
-      applyConfig_: function(config){
+      init: function(config){
+        config = this.inherit(config);
+
+        this.applyConfig_(config.structure);
+
+        if (this.useFooter)
+          DOM.insert(config.container || this.document.element, this.element, 1);
+
+        return config;
+      },
+
+      applyConfig_: function(structure){
         //console.dir(this);
-        if (config && config.structure)
+        if (structure)
         {
-          var structure = config.structure;
           var prevCell = null;
 
-          DOM.clear(this.content);
+          this.clear();
           this.useFooter = false;
 
           for (var i = 0; i < structure.length; i++)
@@ -257,30 +295,37 @@
 
             if (colConfig.footer)
             {
-              cell = DOM.createElement('TD.Basis-Table-Footer-Cell' + CSS.makeClassName(colConfig.cssClassName) + CSS.makeClassName(colConfig.footer.cssClassName));
-
               var content = colConfig.footer.content;
 
-              if (typeof content == 'object' && nsWrapers.Register && content instanceof nsWrapers.Register.Register)
+              if (typeof content == 'object' && content instanceof nsWrapers.Property)
               {
-                if (this.document)
+                if (this.document && typeof content.attach == 'function')
                   content.attach(this.document);
                 content = content.addLink(DOM.createText(), null, colConfig.footer.format);
               }
-              else if (typeof content == 'function')
-                content = content.call(this, this.document && this.document.registers);
+              else
+              {
+                if (typeof content == 'function')
+                  content = content.call(this, this.document && this.document.registers);
+              }
                 
-              DOM.insert(cell, DOM.createElement('', content));
               this.useFooter = true;
+
+              cell = this.appendChild({
+                cssClassName: (colConfig.cssClassName || '') + ' ' + (colConfig.footer.cssClassName || ''),
+                content: content
+              });
             }
             else
-              if (!prevCell)
-                cell = DOM.createElement('TD.Basis-Table-Footer-Cell', DOM.createElement('', ''));
+            {
+              if (prevCell)
+                prevCell.setColSpan(prevCell.colSpan + 1);
               else
-                prevCell.colSpan = (prevCell.colSpan || 1) + 1;
-
+                cell = this.appendChild({});
+            }
+  
             if (cell)
-              this.content.appendChild(prevCell = cell);
+              prevCell = cell;
           }
         }
       }
@@ -420,15 +465,9 @@
 
         this.body = this; // backward capability
 
-        this.header = new Header({ document: this });
-        this.footer = new Footer({ document: this });
-
-        //this.header.parentNode = this;
-        //this.footer.parentNode = this;
-        
-        this.header.applyConfig_(config);
-        this.footer.applyConfig_(config);
-
+        this.header = new Header(Object.extend({ document: this, structure: config.structure }, config.header));
+        this.footer = new Footer(Object.extend({ document: this, structure: config.structure }, config.footer));
+      
         if (!this.localSorting && config.structure && config.structure.search(true, function(item){ return item.sorting && ('autosorting' in item) }))
         {
           var col = config.structure[Array.lastSearchIndex];
@@ -436,10 +475,6 @@
           this.setLocalSorting(col.sorting, col.defaultOrder == 'desc');
         }
         //this.header.traceSortingChanges();
-
-        DOM.insert(this.element, this.header.element, DOM.INSERT_BEGIN);
-        if (this.footer.useFooter)
-          DOM.insert(this.element, this.footer.element, 1);
 
         // add event handlers
         this.addEventListener('click');
@@ -450,24 +485,19 @@
       },
 
       attachRegisters_: function(registers){
-        if (this.registers)
-          for (var r in this.registers)
-            this.registers[r].detach(this);
+        Object.iterate(this.registers, function(key, register){
+          register.detach(this);
+        }, this);
 
         this.registers = {};
-        if (registers)
-        {
-          var k = Object.keys(registers);
-          for (var i = 0; i < k.length; i++)
+
+        Object.iterate(registers, function(key, register){
+          if (typeof register.attach == 'function')
           {
-            var register = registers[k[i]];
-            if (register.attach)
-            {
-              register.attach(this);
-              this.registers[k[i]] = register;
-            }
+            register.attach(this);
+            this.registers[key] = register;
           }
-        }
+        }, this);
       },
 
       applyConfig_: function(config){

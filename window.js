@@ -39,7 +39,7 @@
 
       template: new Template(
         '<div{element} class="Basis-Blocker">' + 
-          '<div{content} class="mate"/>' +
+          '<div{content} class="Basis-Blocker-Mate"/>' +
         '</div>'
       ),
 
@@ -233,6 +233,7 @@
         config = this.inherit(config);
 
         DOM.hide(this.element);
+        window.aaaa = this;
 
         // modal window
         if (config.modal)
@@ -241,34 +242,42 @@
         // process title
         if (config.title != null)
         {
-          this.title = DOM.createElement('', config.title);
+          this.title = DOM.createElement('.Basis-Window-TitleCaption', config.title);
           DOM.insert(this.layout, DOM.createElement('.Basis-Window-Title', this.title), DOM.INSERT_BEGIN);
         }
 
+        // add generic rule
+        var genericRuleClassName = 'genericRule-' + this.eventObjectId;
+        CSS.cssClass(this.element).add(genericRuleClassName);
+        this.cssRule = DOM.Style.cssRule('.' + genericRuleClassName);
+
+        // make window moveable
         if (config.moveable)
           if (Basis.DragDrop)
           {
-            /*this.dde = new Basis.DragDrop.DragDropElement({
-              element: this.element,
-              trigger: this.title.parentNode,
-              fixRight: false,
-              fixBottom: false
-            });*/
             this.dde = new Basis.DragDrop.MoveableElement({
               element: this.element,
               trigger: this.title.parentNode,
-              fixRight: false,
-              fixBottom: false
-            });
-            this.dde.addHandler(
-              {
+              fixRig3ht: false,
+              fixBot3tom: false,
+
+              handlersContext: this,
+              handlers: {
                 move: function(){
+                  //console.log(this);
                   this.autocenter = false;
                   //console.log('move');
+                },
+                over: function(){
+                  //console.log(this);
+                  this.cssRule.setStyle(Object.slice(this.element.style, 'left top'.qw()));
+                  DOM.setStyle(this.element, {
+                    top: '',
+                    left: ''
+                  });
                 }
-              },
-              this
-            );
+              }
+            });
           }
           else
           {
@@ -303,7 +312,7 @@
         }
 
         var tbClose = !config.titleButton || config.titleButton.close !== false;
-        var tbMinimize = config.titleButton && config.titleButton.minimize;
+        var tbMinimize = false && config.titleButton && config.titleButton.minimize;
         if (this.title && (tbClose || tbMinimize))
         {
           var titleButtonContainer = DOM.insert(this.title.parentNode, DOM.createElement('SPAN.Basis-Window-Title-ButtonPlace'), DOM.INSERT_BEGIN);
@@ -381,9 +390,9 @@
       },
       realign: function(){
         if (this.autocenter)
-          DOM.setStyle(this.element, {
-            left: CSS.px(Math.max(0, parseInt(0.5 * (document.body.clientWidth  - this.element.offsetWidth)))),
-            top:  CSS.px(Math.max(0, parseInt(0.5 * (document.body.clientHeight - this.element.offsetHeight))))
+          this.cssRule.setStyle({
+            left: Math.max(0, parseInt(0.5 * (document.body.clientWidth  - this.element.offsetWidth))) + 'px',
+            top:  Math.max(0, parseInt(0.5 * (document.body.clientHeight - this.element.offsetHeight))) + 'px'
           });
       },
       activate: function(){
@@ -474,6 +483,10 @@
         }
 
         this.inherit();
+
+        this.cssRule.destroy();
+
+        delete this.cssRule;
         delete this.title;
         delete this.blocker;
 

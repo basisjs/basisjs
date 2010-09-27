@@ -15,6 +15,7 @@
 
     // import names
 
+    var Class = Basis.Class;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
     var Data = Basis.Data;
@@ -30,7 +31,7 @@
     // Main part
     //
 
-    var isIE = Basis.Browser.is('IE8-');
+    var isIE = Basis.Browser.is('IE9-');
 
     var DDEConfig;
     var DDEHandler = {
@@ -61,8 +62,8 @@
       move: function(e){  // `this` store DDE config
         var dde = DDEConfig.dde;
 
-        if (!Event.mouseButton(e, Event.MOUSE_LEFT))
-          return DDEHandler.over();
+        //if (!Event.mouseButton(e, Event.MOUSE_LEFT))
+        //  return DDEHandler.over();
 
         if (!DDEConfig.run)
         {
@@ -101,7 +102,7 @@
       element: 'Basis-DragDrop-DragElement'
     };
 
-    var DragDropElement = Basis.Class.create(nsWrapers.EventObject, {
+    var DragDropElement = Class(nsWrapers.EventObject, {
       className: namespace + '.DragDropElement',
 
       containerGetter: Data.getter('element'),
@@ -220,7 +221,7 @@
       }
     });
 
-    var MoveableElement = Basis.Class.create(DragDropElement, {
+    var MoveableElement = Class(DragDropElement, {
       behaviour: nsWrapers.createBehaviour(DragDropElement, {
         start: function(config){
           var element = this.containerGetter(this, config.initX, config.initY);

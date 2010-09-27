@@ -1,0 +1,6 @@
+
+  .Basis-Window-Canvas
+  {
+    bottom: auto;
+    height: expression(this.offsetParent.offsetHeight - 41);
+  }

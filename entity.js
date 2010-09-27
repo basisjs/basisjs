@@ -329,6 +329,21 @@
 
         return false;
       },
+      setIsActiveSubscriber: function(isActive){
+        if (this.isActiveSubscriber != isActive)
+        {
+          this.inherit(isActive);
+
+          var masterEntitySet = this.masterEntitySet;
+          if (masterEntitySet)
+          {
+            masterEntitySet.subscriberCount = masterEntitySet.subscriberCount + (isActive ? 1 : -1);
+            masterEntitySet.dispatch('subscribersChanged');
+          }
+        }
+
+        return this.isActiveSubscriber;
+      },
       toString: function(){
         return '[object EntitySet]';
       },
@@ -713,6 +728,7 @@
     var untitledGrouping = new UntitledName('Grouping');
 
     var GroupingMasterEntitySetHandler = {
+      isSubscriber: true,
       datasetChanged: function(newValue, delta){
         if (Cleaner.globalDestroy)
           return;
@@ -818,7 +834,8 @@
       setMasterEntitySet: function(entitySet){
         if (this.masterEntitySet != entitySet)
         {
-          if (this.masterEntitySet)
+          var oldMasterEntitySet = this.masterEntitySet;
+          if (oldMasterEntitySet)
           {
             this.clear();
             this.masterEntitySet.removeHandler(GroupingMasterEntitySetHandler, this);
@@ -839,6 +856,8 @@
               });
             }
           }
+
+          this.dispatch('masterEntitySetChanged', oldMasterEntitySet);
         }
       },
       setGroupSelector: function(groupSelector){
@@ -891,6 +910,7 @@
     var untitledCollection = new UntitledName('Collection');
 
     var CollectionMasterEntitySetHandler = {
+      isSubscriber: true,
       datasetChanged: function(newValue, delta){
         if (Cleaner.globalDestroy)
           return;
@@ -963,7 +983,8 @@
       setMasterEntitySet: function(entitySet){
         if (this.masterEntitySet != entitySet)
         {
-          if (this.masterEntitySet)
+          var oldMasterEntitySet = this.masterEntitySet;
+          if (oldMasterEntitySet)
           {
             this.clear();
             this.masterEntitySet.removeHandler(CollectionMasterEntitySetHandler, this);
@@ -983,6 +1004,8 @@
               });
             }
           }
+
+          this.dispatch('masterEntitySetChanged', oldMasterEntitySet);
         }
       },
       setMemberSelector: function(memberSelector){

@@ -320,7 +320,7 @@
 
     function Object2XML(document, nodeName, namespace, content){
       if (String(nodeName).charAt(0) == '@')
-        return content == null ? content : createAttributeNS(document, nodeName.substr(1), /*namespace*/ '', content);
+        return content == null ? content : createAttributeNS(document, nodeName.substr(1), /*namespace*/ '', String(content));
       else
       {
         var result = createElementNS(document, nodeName.toString(), (content && content.xmlns) || nodeName.namespace || namespace);

@@ -17,7 +17,7 @@
   {
     z-index: 1000;
   }
-  .Basis-Blocker .mate
+  .Basis-Blocker .Basis-Blocker-Mate
   {
     position: absolute;
     width: 100%;

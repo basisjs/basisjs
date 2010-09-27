@@ -1,7 +1,12 @@
 (function(){
 
+ /**
+  * @namespace
+  */
+
   var namespace = 'BasisDoc';
 
+  // import names
 
   var Class = Basis.Class;
   var DOM = Basis.DOM;
@@ -20,6 +25,10 @@
   var nsCore = BasisDoc.Core;
   var nsView = BasisDoc.View;
   var nsNav = BasisDoc.Nav;
+
+  //
+  // main part
+  //
 
   var curHash;
 
@@ -44,10 +53,10 @@
     nsCore.walk(value.prototype, name + '.prototype', 'prototype');
   });
 
-  var t = new Date();
+  var walkStartTime = Date.now();
   Basis.namespaces_['Basis'] = Basis;
   nsCore.walk(Basis.namespaces_, '', 'object',0);
-  if (typeof console != 'undefined') console.log(new Date - t, cnt);
+  if (typeof console != 'undefined') console.log(Date.now() - walkStartTime, nsCore.walkThroughCount());
 
   //
   // View
@@ -69,93 +78,109 @@
   // NavTree
   //
 
+  var NavTree = Class(nsTree.Tree, {
+    childClass: nsNav.docSection,
+    open: function(path, noScroll){
+      path = path.replace(/^#/, '');
 
-  var navTree = new nsTree.Tree({
-    selection: {
-      handlers: {
-        change: function(){
-          objectView.setDelegate(this.items.first());
-        }
-      }
-    },
-    childNodes: [
-      new nsNav.docSection({
-        info: { title: 'Buildin class extensions' },
-        collapsed: true,
-        childNodes: Object.keys(buildin).map(function(name){
-          return new nsNav.docClass({
-            info: {
-              kind: 'Class',
-              title: name,
-              path: '',
-              objPath: name,
-              obj: buildin[name]
-            }
-          });
-        })
-      }),
-      new nsNav.docSection({
-        info: { title: 'Basis' },
-        childNodes: Object.keys(Basis.namespaces_).map(function(name){
-          return new nsNav.docNamespace({
-            info: map[name]
-          })
-        }, Basis.namespaces_)
-      })
-    ]
-  });
+      if (!path || (curHash == '#' + path))
+        return;
 
-  navTree.open = function(path, noScroll){
-    path = path.replace(/^#/, '');
+      curHash = location.hash = '#' + path;
 
-    if (!path || (curHash == '#' + path))
-      return;
+      var rootNS = path.split(".")[0];
+      if (buildin[rootNS])
+        rootNS = 'window';
 
-    curHash = location.hash = '#' + path;
+      var node = this.childNodes.search(rootNS, 'info.objPath');
 
-    var node;
-    if (path.match(/^Basis/))
-      node = this.lastChild.childNodes.sortAsObject('info.objPath').reverse().search(true, function(node){ return !!path.match("^" + node.info.objPath.forRegExp()) });
-    else
-    {
-      this.firstChild.expand();
-      node = this.firstChild.childNodes.search(path.split('.')[0], 'info.objPath');
-    }
+      console.log(node);
 
-    if (node)
-    {
-      var cursor = node.info.objPath;
-      var least = path.replace(new RegExp("^" + cursor.forRegExp() + '\\.?'), '');
-      if (least)
+      if (node)
       {
-        var parts = least.split(/\./);
-        while (node && parts.length)
-        {
-          var p = parts.shift();
-          cursor += '.' + p;
-          if (p == 'prototype')
-            cursor += '.' + parts.shift();
-
-          node.expand();
-          node = node.childNodes.search(cursor, 'info.objPath');
-        }
+        node.expand();
+        node = node.childNodes
+                 .sortAsObject('info.objPath')
+                 .reverse()
+                 .search(0, function(node){
+                   return path.indexOf(node.info.objPath);
+                 });
       }
 
       if (node)
       {
-        node.select();
-        //node.expand();
-        if (!noScroll)
-          node.element.scrollIntoView(false);
+        var cursor = node.info.objPath;
+        var least = path.replace(new RegExp("^" + cursor.forRegExp() + '\\.?'), '');
+        if (least)
+        {
+          var parts = least.split(/\./);
+          while (node && parts.length)
+          {
+            var p = parts.shift();
+            cursor += '.' + p;
+            if (p == 'prototype')
+              cursor += '.' + parts.shift();
 
-        document.title = 'Basis API - ' + node.info.title + (node.info.path ? ' @ ' + node.info.path : '');
+            node.expand();
+            node = node.childNodes.search(cursor, 'info.objPath');
+          }
+        }
+
+        if (node)
+        {
+          node.select();
+          //node.expand();
+          if (!noScroll)
+            node.element.scrollIntoView(false);
+
+          document.title = 'Basis API - ' + node.info.title + (node.info.path ? ' @ ' + node.info.path : '');
+        }
       }
     }
-  };
+  });
+
+  var navTree = new NavTree({
+    selection: {
+      handlers: {
+        change: function(){
+          objectView.setDelegate(this.items[0]);
+        }
+      }
+    },
+    childNodes: [
+      {
+        info: { title: 'Buildin class extensions', objPath: 'window' },
+        collapsed: true,
+        childNodes: Object.iterate(buildin, function(key, value){
+          return new nsNav.docClass({
+            info: {
+              kind: 'Class',
+              title: key,
+              path: '',
+              objPath: key,
+              obj: value
+            }
+          });
+        })
+      },
+      {
+        info: { title: 'Basis', objPath: 'Basis' },
+        childNodes: Object.iterate(Basis.namespaces_, function(key){
+          return new nsNav.docNamespace({
+            info: map[key]
+          })
+        })
+      }
+    ]
+  });
+
+  var SearchTree = Class(nsTree.Tree, {
+    
+  });
 
   var searchTree = new nsTree.Tree({
     id: 'SearchTree',
-    localSorting: 'info.title.toLowerCase()',
+    localSorting: Data('info.title', String.toLowerCase),
     localGrouping: nsNav.nodeTypeGrouping,
     childClass: Class(nsTree.TreeNode, {
       template: new Template(
@@ -174,7 +199,7 @@
         this.title.href = '#' + this.info.objPath;
         cssClass(this.content).add(this.info.kind.capitalize() + '-Content');
 
-        if (this.info.kind == 'function' || this.info.kind == 'class' || this.info.kind == 'method')
+        if (/^(function|method|class)$/.test(this.info.kind))
           DOM.insert(this.label, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
 
         this.namespaceText.nodeValue = this.info.kind != 'namespace' ? this.info.path : '';
@@ -195,10 +220,6 @@
     ]
   });
 
-  var loadSearchIndex = Function.runOnce(function(){
-    searchTree.setChildNodes(searchValues.map(Data.wrapper('info')));
-  });
-
   var SearchMatchInput = Class(nsForm.MatchInput, {
     matchFilterClass: Class(nsForm.MatchFilter, {
       changeHandler: function(value){
@@ -208,7 +229,9 @@
         //console.log(rx.source);
         var textNodeGetter = this.textNodeGetter;
         var map = this.map;
-        this.map['SPAN.match'] = function(s, i){ return s && (i % 5 == 2 || i % 5 == 4) };
+
+        map['SPAN.match'] = function(s, i){ return s && (i % 5 == 2 || i % 5 == 4) };
+
         this.node.setMatchFunction(value ? function(child, reset){
           if (!reset)
           {
@@ -239,15 +262,16 @@
     })
   });
 
+  var loadSearchIndex = Function.runOnce(function(){
+    searchTree.setChildNodes(nsCore.Search.values.map(Data.wrapper('info')));
+  });
+
   var searchInput = new SearchMatchInput({
     matchFilter: {
+      node: searchTree,
       regexpGetter: function(value){
         return new RegExp('(^|[^a-z])(' + value.forRegExp() + ')', 'i');
       },
-      /*wrapFilter: function(v, i){
-        return (i % 3) == 2;
-      },*/
-      node: searchTree,
       handlers: {
         change: function(value){
           if (value != '')
@@ -347,8 +371,9 @@
     if (location.hash != curHash)
       navTree.open(location.hash);
   }
+
   setInterval(checkLocation, 250);
-  setTimeout(checkLocation, 10);
+  setTimeout(checkLocation, 0);
 
   DOM.focus(searchInput.field, true);
 

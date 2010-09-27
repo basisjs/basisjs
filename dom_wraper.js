@@ -533,8 +533,8 @@
       * Count of subscribed objects. Not all linked (unsing addHandlers) objects
       * are subscribers of object, but only those who attached via handlers with
       * isSubscriber property set to true. This property can use to determinate
-      * is data update necessary or not. Usualy if object is not in STATE_READY
-      * or STATE_PROCESSING and subscriberCount more than zero - update needed.
+      * is data update necessary or not. Usualy if object is not in READY
+      * or PROCESSING state and subscriberCount more than zero - update needed.
       * @type {number}
       */
       subscriberCount: 0,
@@ -1761,6 +1761,12 @@
       groupControl: null,
 
      /**
+      * Class for grouping control. Class should be inherited from {Basis.DOM.Wrapers.GroupControl}
+      * @type {Class}
+      */
+      groupControlClass: null,
+
+     /**
       * @param {Object} config
       * @config {boolean} autoDelegateParent Overrides prototype's {Basis.DOM.Wrapers.DataObject#autoDelegateParent} property.
       * @config {boolean} positionDependent Override prototype's positionDependent property.
@@ -1944,11 +1950,11 @@
       * Destroy object if it doesn't contain any children (became empty).
       * @type {boolean}
       */
-      emptyAutoDestroy: true,
+      autoDestroyIfEmpty: true,
 
      /**
       * @param {Object} config
-      * @config {boolean} emptyAutoDestroy Override prototype value for emptyAutoDestroy property.
+      * @config {boolean} autoDestroyIfEmpty Override prototype value for autoDestroyIfEmpty property.
       * @config {function()} titleGetter
       * @constructor
       */
@@ -1956,8 +1962,8 @@
         // apply config
         if (typeof config == 'object')
         {
-          if (typeof config.emptyAutoDestroy == 'boolean')
-            this.emptyAutoDestroy = !!config.emptyAutoDestroy;
+          if (typeof config.autoDestroyIfEmpty == 'boolean')
+            this.autoDestroyIfEmpty = !!config.autoDestroyIfEmpty;
 
           if (config.titleGetter)
             this.titleGetter = Fn(config.titleGetter);
@@ -2010,7 +2016,7 @@
           this.dispatch('childNodesModified', this, { deleted: [{ pos: pos, node: oldChild }] });
         }
 
-        if (!this.firstChild && this.emptyAutoDestroy)
+        if (!this.firstChild && this.autoDestroyIfEmpty)
           this.destroy();
 
         return oldChild;
@@ -2034,7 +2040,7 @@
         this.dispatch('childNodesModified', this, { deleted: childNodes.map(function(node, pos){ return { pos: pos, node: node } }).reverse() });
 
         // destroy partition if necessary
-        if (this.emptyAutoDestroy)
+        if (this.autoDestroyIfEmpty)
           this.destroy();
       }
     });
@@ -2212,10 +2218,10 @@
       disable: function(){
         if (!this.disabled)
         {
-          DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, function(node){
-            if (node.selected)
-              node.unselect();
-          });
+          //DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, function(node){
+          //  if (node.selected)
+          //    node.unselect();
+          //});
           this.disabled = true;
           this.dispatch('disable');
         }
@@ -3033,9 +3039,9 @@
 
             // create new group control if not exists
             if (!this.groupControl)
-              this.groupControl = new (this.groupControlClass || GroupControl)({
+              this.groupControl = new this.groupControlClass({ // (this.groupControlClass || GroupControl)
                 groupControlHolder: this,
-                groupEmptyAutoDestroy: config ? config.groupEmptyAutoDestroy : undefined
+                autoDestroyEmptyGroups: config ? config.autoDestroyEmptyGroups : undefined
               });
             else
               this.groupControl.clear();
@@ -3233,10 +3239,10 @@
     var GroupControl = Class(AbstractNode, HierarchyTools, {
       className: namespace + '.GroupControl',
 
-      groupById: {},
-      groupByEventObject: {},
+      groupsById_: {},
+      groupsByEventObject_: {},
 
-      groupEmptyAutoDestroy: true,
+      autoDestroyEmptyGroups: true,
       groupTitleGetter: Fn('info.title'),
 
       childClass: PartitionNode,
@@ -3253,11 +3259,11 @@
       init: function(config){
         config = this.inherit(config);
 
-        this.groupById = {};
-        this.groupByEventObject = {};
+        this.groupsById_ = {};
+        this.groupsByEventObject_ = {};
 
-        if (typeof config.groupEmptyAutoDestroy != 'undefined')
-          this.groupEmptyAutoDestroy = !!config.groupEmptyAutoDestroy;
+        if (typeof config.autoDestroyEmptyGroups != 'undefined')
+          this.autoDestroyEmptyGroups = !!config.autoDestroyEmptyGroups;
 
         return config;
       },
@@ -3269,31 +3275,31 @@
           group.setTitleGetter(this.groupTitleGetter);
       },
 
-      createGroupNode: function(info, emptyAutoDestroy){
+      createGroupNode: function(info, autoDestroyEmptyGroups){
         var isDelegate = info instanceof EventObject;
 
         var group = this.appendChild(new this.childClass({
           titleGetter: this.groupTitleGetter,
-          emptyAutoDestroy: arguments.length > 1 ? !!emptyAutoDestroy : this.groupEmptyAutoDestroy,
+          autoDestroyIfEmpty: arguments.length > 1 ? !!autoDestroyEmptyGroups : this.autoDestroyEmptyGroups,
           info: isDelegate ? info : { id: info, title: info }
         }));
 
         if (isDelegate)
         {
           group._eoid = info.eventObjectId;
-          this.groupByEventObject[info.eventObjectId] = group;
+          this.groupsByEventObject_[info.eventObjectId] = group;
         }
         else
         {
           group._id = info;
-          this.groupById[info] = group;
+          this.groupsById_[info] = group;
         }
 
         return group;
       },
       getGroupNode: function(node){
         var id = this.groupGetter(node);
-        var group = id instanceof EventObject ? this.groupByEventObject[id.eventObjectId] : this.groupById[id];
+        var group = id instanceof EventObject ? this.groupsByEventObject_[id.eventObjectId] : this.groupsById_[id];
 
         return group || this.createGroupNode(id);
       },
@@ -3302,20 +3308,22 @@
         if (this.inherit(oldChild))
         {
           if (oldChild._eoid)
-            delete this.groupByEventObject[oldChild._eoid];
+            delete this.groupsByEventObject_[oldChild._eoid];
           else
-            delete this.groupById[oldChild._id];
+            delete this.groupsById_[oldChild._id];
 
           return oldChild;
         }
       },
 
       clear: function(alive){
-        this.groupById = {};
-        this.groupByEventObject = {};
+        this.groupsById_ = {};
+        this.groupsByEventObject_ = {};
         this.inherit();
       }
     });
+
+    AbstractNode.prototype.groupControlClass = GroupControl;
 
     //
     // HTML reflections

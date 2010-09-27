@@ -1,9 +1,21 @@
 (function(){
 
+ /**
+  * @namespace
+  */
+
   var namespace = 'BasisDoc.Core';
 
+  // import names
+
   var Data = Basis.Data;
+
+  var nsWrapers = Basis.DOM.Wrapers;
   var nsEntity = Basis.Entity;
+
+  // main part
+
+
 
   var JsDocEntity = new nsEntity.EntityType({
     name: 'JsDocEntity',
@@ -17,7 +29,7 @@
       tags: Function.$self
     }
   });
-  var JsDocLinkEntity_UrlResolver = document.createElement('A');
+  var urlResolver_ = document.createElement('A');
   var JsDocLinkEntity = new nsEntity.EntityType({
     name: 'JsDocLinkEntity',
     id: 'url',
@@ -25,8 +37,8 @@
       url: function(value){
         if (value)
         {
-          JsDocLinkEntity_UrlResolver.href = value.replace(/^\.\//, '../');
-          return JsDocLinkEntity_UrlResolver.href;
+          urlResolver_.href = value.replace(/^\.\//, '../');
+          return urlResolver_.href;
         }
         else
           return value;
@@ -35,7 +47,7 @@
     }
   });
 
-  awaitingForUpdate = {};
+  var awaitingUpdateQueue = {};
 
   function fetchInheritedJsDocs(path, entity){
     var objPath = path;
@@ -59,13 +71,13 @@
   }
   
   function processAwaitingJsDocs(){
-    var keys = Object.keys(awaitingForUpdate);
+    var keys = Object.keys(awaitingUpdateQueue);
     for (var k = 0; k < keys.length; k++)
     {
       var objPath = keys[k];
-      var awaitingEntity = awaitingForUpdate[objPath];
+      var awaitingEntity = awaitingUpdateQueue[objPath];
       if (fetchInheritedJsDocs(objPath, awaitingEntity))
-        delete awaitingForUpdate[objPath];
+        delete awaitingUpdateQueue[objPath];
     }
   }
 
@@ -81,7 +93,7 @@
         {
           if (!fetchInheritedJsDocs(objPath, this))
           {
-            awaitingForUpdate[this.value.path] = this;
+            awaitingUpdateQueue[this.value.path] = this;
           }
         }
       }
@@ -185,12 +197,12 @@
   map = {};
   charMap = {};
   members = {};
-  asd = [];
-  searchIndex = {};
-  searchValues = [];
+  var searchIndex = {};
+  var searchValues = [];
   rootClasses = {};
 
-  cnt = 0;
+  var walkThroughCount = 0;
+
   function walk(scope, path, context, d, ns){
     if (d > 8)
       return window.console && console.log(path);
@@ -214,7 +226,7 @@
           || (key == 'toString' && (Object.prototype.toString === obj || Basis.Class.BaseClass.prototype.toString === obj)))
         continue;
 
-      cnt++;
+      walkThroughCount++;
 
       var objPath = path ? (path + '.' + key) : key;
       var kind;
@@ -287,7 +299,7 @@
 
         if (obj.classMap_)
         {
-          //if (window.console) console.log('>>', objPath);
+          if (window.console) console.log('>>', objPath);
         }
         else
           obj.classMap_ = {
@@ -311,7 +323,6 @@
           }
           else
             rootClasses[objPath] = obj;
-          asd.push(objPath);
         }  
       }
 
@@ -383,8 +394,8 @@
     return result;
   }
 
-  var sourceKindParser = {
-    'jsdoc': function parseSource(resource){
+  var sourceParser = {
+    'jsdoc': function(resource){
 
       function createJsDocEntity(source, path){
         text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|[\r\n]+)\s*\*/g, '\n').trimLeft();
@@ -462,7 +473,6 @@
         title: title[1] || null,
         url: resource.url
       });
-      //console.log('Link loaded: ', resource.text.length);
     }
   };
 
@@ -470,30 +480,30 @@
     queue: [],
     loaded: {},
     curResource: null,
-    urlResolver: document.createElement('A'),
-    transport: new Basis.Ajax.Transport({
-      callback: {
-        failure: function(){
-          resourceLoader.curResource.attemptCount++;
-          if (resourceLoader.curResource.attemptCount < 3)
-            resourceLoader.queue.push(resourceLoader.curResource);
-        },
-        complete: function(req){
-          var res = resourceLoader.curResource;
-          res.text = req.responseText;
-          sourceKindParser[res.kind](res);
-
-          resourceLoader.curResource = null;
-
-          setTimeout(function(){
-            resourceLoader.load();
-          }, 5);
+    transport: Function.lazyInit(function(){
+      return new Basis.Ajax.Transport({
+        handlersContext: resourceLoader,
+        handlers: {
+          failure: function(){
+            var curResource = this.curResource;
+            if (curResource.attemptCount++ < 3)
+              this.queue.push(curResource);
+          },
+          success: function(req){
+            var curResource = this.curResource;
+            curResource.text = req.responseText;
+            sourceParser[curResource.kind](curResource);
+          },
+          complete: function(req){
+            this.curResource = null;
+            nsWrapers.TimeEventManager.add(this, 'load', Date.now() + 5);
+          }
         }
-      }
+      });
     }),
     addResource: function(url, kind){
-      this.urlResolver.href = url;
-      url = this.urlResolver.href;
+      urlResolver_.href = url;
+      url = urlResolver_.href;
       if (!this.loaded[url])
       {
         this.queue.push({
@@ -502,7 +512,7 @@
           attemptCount: 0
         });
 
-        this.load();
+        nsWrapers.TimeEventManager.add(resourceLoader, 'load', Date.now());
       }
     },
     load: function(){
@@ -512,20 +522,27 @@
       this.curResource = this.queue.shift();
 
       if (this.curResource)
-        this.transport.request(this.curResource.url);
+      {
+        this.transport().request(this.curResource.url);
+      }
     }
-
   };
 
   Basis.namespace(namespace).extend({
     JsDocEntity: JsDocEntity,
     JsDocLinkEntity: JsDocLinkEntity,
-    processAwaitingJsDocs: processAwaitingJsDocs,
+
     walk: walk,
+    walkThroughCount: function(){ return walkThroughCount },
     getFunctionDescription: getFunctionDescription,
     getMembers: getMembers,
     getInheritance: getInheritance,
-    loadResource: resourceLoader.addResource.bind(resourceLoader)
+    loadResource: resourceLoader.addResource.bind(resourceLoader),
+
+    Search: {
+      index: searchIndex,
+      values: searchValues
+    }
   });
 
 })();

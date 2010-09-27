@@ -337,6 +337,8 @@
       // open transport
       transport.open(requestData.method, requestData.location, requestData.asynchronous);
       this.progress = true;
+      this.aborted = false;
+      this.abortedByTimeout_ = false;
 
       // set headers
       setRequestHeaders(transport, requestData);
@@ -360,8 +362,27 @@
       this.requestStartTime = Date.now();
       TimeEventManager.add(this, 'timeoutAbort', this.requestStartTime + this.timeout);
 
+      // prepare post body
+      var postBody = requestData.postBody;
+
+      // BUGFIX: IE fixes for post body
+      if (requestData.method == 'POST' && Browser.test('ie9-'))
+      {
+        if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
+          // sending xmldocument content as string, otherwise IE override content-type header
+          postBody = postBody.xml;                   
+        else
+          if (typeof postBody == 'string')
+            // ie stop send postBody when found \r
+            postBody = postBody.replace(/\r/g, ''); 
+          else
+            if (postBody == null || postBody == '')
+              // IE doesn't accept null, undefined or '' post body
+              postBody = '[empty request]';      
+      }
+
       // send data
-      transport.send(requestData.postBody);
+      transport.send(postBody);
 
       // catching for
       //   - 'complete' state in synchronous mode
@@ -527,14 +548,17 @@
         var location = url || this.url;
         var method = this.method.toUpperCase();
         var params;
-        var postBody = null;
+        var postBody;
         var transport = this.transport;
 
         if (!transport)
           throw new Error('Transport is not allowed');
 
         if (!location)
+        {
+          debugger;
           throw new Error('URL is not defined');
+        }
 
         // abort request for double sure that it doesn't in progress
         this.abort();
@@ -570,22 +594,6 @@
         if (IS_POST_REGEXP.test(method))
         {
           postBody = this.postBody || params || '';
-
-          // BUGFIX: IE fixes
-          if (Browser.test('ie'))
-          {
-            if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
-              // sending xmldocument content as string, otherwise IE override content-type header
-              postBody = postBody.xml;                   
-            else
-              if (typeof postBody == 'string')
-                // ie stop send postBody when found \r
-                postBody = postBody.replace(/\r/g, ''); 
-              else
-                if (postBody == null || postBody == '')
-                  // IE doesn't accept null, undefined or '' post body
-                  postBody = '[empty request]';      
-          }
         }
         else
         {

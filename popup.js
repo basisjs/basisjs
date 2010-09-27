@@ -23,6 +23,8 @@
     var Data = Basis.Data;
     var Template = Basis.Html.Template;
 
+    var cssClass = Basis.CSS.cssClass;
+
     var Cleaner = Basis.Cleaner;
 
     var nsWrapers = DOM.Wrapers;
@@ -195,7 +197,7 @@
         layoutChanged: function(oldOrientation, oldDir){
           var oldClass = (oldOrientation + '-' + oldDir.qw().slice(2, 4).join('-')).toLowerCase();
           var newClass = (this.orientation + '-' + this.dir.qw().slice(2, 4).join('-')).toLowerCase();
-          Basis.CSS.cssClass(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
+          cssClass(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
         }
       }),
 
@@ -216,9 +218,12 @@
 
         config = this.inherit(config);
 
-        //if (config.id)
-        //  this.element.id = config.id;
+        // add generic rule
+        var genericRuleClassName = 'genericRule-' + this.eventObjectId;
+        cssClass(this.element).add(genericRuleClassName);
+        this.cssRule = DOM.Style.cssRule('.' + genericRuleClassName);
 
+        // 
         this.ignoreClickFor = Array.from(config.ignoreClickFor);
 
         if (typeof config.hideOnAnyClick == 'boolean')
@@ -398,11 +403,11 @@
             };
           }
 
-          DOM.setStyle(this.element, {
+          this.cssRule.setStyle({
             right:  'auto',
-            left:   Basis.CSS.px(parseInt(point.x - (dirH != LEFT) * (this.element.offsetWidth >> (dirH == CENTER)))),
+            left:   parseInt(point.x - (dirH != LEFT) * (this.element.offsetWidth >> (dirH == CENTER))) + 'px',
             bottom: 'auto',
-            top:    Basis.CSS.px(parseInt(point.y - (dirV != TOP) * (this.element.offsetHeight >> (dirV == CENTER))))
+            top:    parseInt(point.y - (dirV != TOP) * (this.element.offsetHeight >> (dirV == CENTER))) + 'px'
           });
 
           this.dispatch('realign');
@@ -485,6 +490,9 @@
 
         this.inherit();
 
+        this.cssRule.destroy();
+        delete this.cssRule;
+
         Cleaner.remove(this);
       }
     });
@@ -538,7 +546,7 @@
       ),
       behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
         childNodesModified: function(){
-          Basis.CSS.cssClass(this.element).bool('hasSubItems', this.hasChildNodes());
+          cssClass(this.element).bool('hasSubItems', this.hasChildNodes());
         }
       }),
 
@@ -580,7 +588,8 @@
       },
       setCaption: function(newCaption){
         this.caption = newCaption;
-        this.captionText.nodeValue = this.captionGetter(this);
+        if (this.captionText)
+          this.captionText.nodeValue = this.captionGetter(this);
       }
     });
     MenuItem.prototype.childClass = MenuItem;

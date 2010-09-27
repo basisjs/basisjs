@@ -31,7 +31,7 @@
    */
   .Basis-Table-Header-Cell
   {
-    padding: 0;
+    padding: 0 !important; /* IMPORTANT: cell must has no padding */
     margin: 0;
     border: none;
     border-bottom: 1px solid white;
@@ -205,9 +205,12 @@
 
   .Basis-Table-Footer TD
   {
+    padding: 0 !important; /* IMPORTANT: cell must has no padding */
     border-top: 1px solid #E8E8E8;
     border-right: 1px solid #E8E8E8;
     background: url(footer_bg.gif) repeat-x;
+  }
+  .Basis-Table-Footer TD DIV
+  {
     padding: .22em .25em .22em .5em;
   }
-
