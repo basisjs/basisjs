@@ -75,7 +75,9 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../tree.js"></script>
   <script type="text/javascript" src="../../table.js"></script>
   <script type="text/javascript" src="../../form.js"></script>
@@ -124,8 +126,8 @@
     // Create a table
     var table = new nsTable.Table({
       structure: [
-        { header: 'Title', body: { content: Data.getter('info.title') } },
-        { header: 'Content', body: { content: Data.getter('info.content') } }
+        { header: 'Title', body: { content: Function.getter('info.title') } },
+        { header: 'Content', body: { content: Function.getter('info.content') } }
       ],
       childNodes: data
     })
@@ -148,7 +150,7 @@
           cssClassName: 'MatchHolder',
           matchFilter: {
             node: table,
-            textNodeGetter: 'element.lastChild.firstChild.firstChild',
+            textNodeGetter: 'element.lastChild.firstChild',
             wrapElement: 'A.custom-match'
           }
         }).element,

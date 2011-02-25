@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -22,22 +22,25 @@
     var Class = Basis.Class;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
-    var Data = Basis.Data;
     var Template = Basis.Html.Template;
     var Cleaner = Basis.Cleaner;
 
-    var nsWrapers = DOM.Wrapers;
-
-    var cssClass = Basis.CSS.cssClass;
     var complete = Object.complete;
     var coalesce = Object.coalesce;
+    var getter = Function.getter;
+    var cssClass = Basis.CSS.cssClass;
 
-    var createBehaviour = nsWrapers.createBehaviour; 
-    var Control = nsWrapers.Control;         
-    var HtmlNode = nsWrapers.HtmlNode;        
-    var Selection = nsWrapers.Selection;       
-    var InteractiveNode = nsWrapers.InteractiveNode; 
-    var AbstractProperty = nsWrapers.AbstractProperty;
+    var createBehaviour = Basis.EventObject.createBehaviour; 
+
+    var nsWrappers = DOM.Wrapper;
+
+    var Control = nsWrappers.Control;         
+    var HtmlNode = nsWrappers.HtmlNode;        
+    var Selection = nsWrappers.Selection;       
+    var InteractiveNode = nsWrappers.InteractiveNode; 
+
+    var AbstractProperty = Basis.Data.Property.AbstractProperty;
+    var Property = Basis.Data.Property.Property;
 
     //
     // Main part
@@ -47,14 +50,14 @@
     //  Fields
     //
 
-    var Field = Class.create(HtmlNode, {
+    var Field = Class(HtmlNode, {
       className: namespace + '.Field',
 
       canHaveChildren: false,
 
       serializable: true,
 
-      behaviour: createBehaviour(HtmlNode, {
+      behaviour: {
         select: function(){
           DOM.focus(this.field, true);
         },
@@ -88,7 +91,7 @@
           if (field.valid)
             field.setValid();
         }
-      }),
+      },
       
       template: new Template(
         '<div{element|sampleContainer} class="fieldWraper">' +
@@ -349,7 +352,7 @@
     // Simple fields
     //
 
-    Field.Hidden = Class.create(Field, {
+    Field.Hidden = Class(Field, {
       className: namespace + '.Field.Hidden',
 
       selectable: false,
@@ -365,7 +368,7 @@
       }
     });
 
-    Field.Text = Class.create(Field, {
+    Field.Text = Class(Field, {
       className: namespace + '.Field.Text',
       
       fieldTemplate: new Template(
@@ -388,7 +391,7 @@
       }
     });
 
-    Field.Password = Class.create(Field.Text, {
+    Field.Password = Class(Field.Text, {
       className: namespace + '.Field.Password',
 
       fieldTemplate: new Template(
@@ -396,7 +399,7 @@
       )
     });
 
-    Field.File = Class.create(Field, {
+    Field.File = Class(Field, {
       className: namespace + '.Field.File',
 
       fieldTemplate: new Template(
@@ -409,7 +412,7 @@
       }
     });
 
-    Field.Textarea = Class.create(Field, {
+    Field.Textarea = Class(Field, {
       className: namespace + '.Field.Textarea',
 
       fieldTemplate: new Template(
@@ -458,7 +461,7 @@
       }
     });
 
-    Field.Checkbox = Class.create(Field, {
+    Field.Checkbox = Class(Field, {
       className: namespace + '.Field.Checkbox',
 
       fieldTemplate: new Template(
@@ -477,12 +480,14 @@
           DOM.insert(label, this.field, DOM.INSERT_BEGIN);
         }
 
-        /*        
-        Event.addHandler(this.element, 'click', function(event){
+                
+        /*Event.addHandler(this.element, 'click', function(event){
           if (Event.sender(event) != this.field)
             this.invert();
-        }, this);
-        */
+          else
+            Event.kill(event);
+        }, this);*/
+        
       },
       invert: function(){
         this.setValue(!this.getValue());
@@ -498,16 +503,28 @@
       }
     });
 
+    Field.Label = Class(Field, {
+      className: namespace + '.Field.Label',
+      
+      fieldTemplate: new Template(
+        '<div{field|element} class="label">{fieldValueText}</div>'
+      ),
+      setValue: function(newValue){
+        this.inherit(newValue);
+        this.fieldValueText.nodeValue = this.field.value;
+      }
+    });
+
     //
     // Complex fields
     //
 
-    var ComplexFieldItem = Class.create(HtmlNode, {
+    var ComplexFieldItem = Class(HtmlNode, {
       className: namespace + '.ComplexFieldItem',
 
       canHaveChildren: false,
       
-      valueGetter: Data.getter('value'),
+      valueGetter: getter('value'),
       titleGetter: function(info){ return coalesce(info.title, info.value) },
 
       init: function(config){
@@ -534,7 +551,7 @@
       }
     });
 
-    var ComplexField = Class.create(Field, {
+    var ComplexField = Class(Field, nsWrappers.HtmlContainer, {
       className: namespace + '.Field.ComplexField',
 
       canHaveChildren: true,
@@ -545,7 +562,7 @@
           titleGetter: this.itemTitleGetter
         };
 
-        if (itemConfig.info)
+        if (itemConfig.info || itemConfig.delegate)
           complete(config, itemConfig);
         else
           config.info = itemConfig;
@@ -555,7 +572,7 @@
 
       multipleSelect: false,
 
-      itemValueGetter: Data.getter('value'),
+      itemValueGetter: getter('value'),
       itemTitleGetter: function(info){ return coalesce(info.title, info.value); },
 
       init: function(config){
@@ -563,16 +580,16 @@
         this.selection = new Selection({ multiple: !!this.multipleSelect });
         this.selection.addHandler({
           change: function(){
-            var values = this.selection.items.map(Data.getter('getValue()'));
-            this.setValue(this.selection.multiple ? values : values[0]);
+            var values = this.selection.getItems().map(getter('getValue()'));
+            this.setValue(!this.selection.multiple ? values[0] : values);
           }
         }, this);
 
         // value & title getters
         if (config.itemValueGetter)
-          this.itemValueGetter = Data.getter(config.itemValueGetter);
+          this.itemValueGetter = getter(config.itemValueGetter);
         if (config.itemTitleGetter)
-          this.itemTitleGetter = Data.getter(config.itemTitleGetter);
+          this.itemTitleGetter = getter(config.itemTitleGetter);
 
         config = this.inherit(config);
 
@@ -589,7 +606,7 @@
         return config;
       },
       getValue: function(){
-        var value = this.selection.items.map(Data.getter('getValue()'));
+        var value = this.selection.getItems().map(getter('getValue()'));
         return !this.selection.multiple ? value[0] : value;
       },
       setValue: function(/* value[] */value){
@@ -604,19 +621,12 @@
         source.forEach(function(key){ this[key] = true }, selected);
 
         // prevent selection dispatch change event
-        this.selection.dispatch = Function.$null;
-        //this.selection.clear();
+        var selectedItems = [];
         for (var item = this.firstChild; item; item = item.nextSibling)
           if (selected[item.getValue()])
-          {
-            if (!item.selected)
-              item.select(true);
-          }
-          else
-            item.unselect();
-        delete this.selection.dispatch;
-        clearTimeout(this.selection._fireTimer);
-        delete this.selection._fireTimer;
+            selectedItems.push(item);
+
+        this.selection.set(selectedItems);
 
         this.change();
       },
@@ -626,15 +636,16 @@
         Cleaner.remove(this);
       }
     });
+    delete ComplexField.prototype.template;
 
     //
     // Radio group
     //
 
-    var RadioGroupItem = Class.create(ComplexFieldItem, {
+    var RadioGroupItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.RadioGroup.Item',
 
-      behaviour: createBehaviour(ComplexFieldItem, {
+      behaviour: {
         select: function(){
           this.field.checked = true;
           cssClass(this.element).add('selected');
@@ -646,11 +657,11 @@
         click: function(){
           this.select();
         },
-        update: function(item, newValue, oldValue, diff){
-          this.field.value = this.valueGetter(newValue, item);
-          this.titleText.nodeValue = this.titleGetter(newValue, item);
+        update: function(item, delta){
+          this.field.value = this.valueGetter(item.info, item);
+          this.titleText.nodeValue = this.titleGetter(item.info, item);
         }
-      }),
+      },
 
       template: new Template(
         '<label{element} class="item">' + 
@@ -665,7 +676,7 @@
       }
     });
 
-    Field.RadioGroup = Class.create(ComplexField, {
+    Field.RadioGroup = Class(ComplexField, {
       className: namespace + '.Field.RadioGroup',
 
       childClass: RadioGroupItem,
@@ -717,10 +728,10 @@
     * @class CheckGroupItem
     */
 
-    var CheckGroupItem = Class.create(ComplexFieldItem, {
+    var CheckGroupItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.CheckGroup.Item',
 
-      behaviour: createBehaviour(ComplexFieldItem, {
+      behaviour: {
         select: function(){
           this.inherit();
           this.field.checked = true;
@@ -735,11 +746,11 @@
           else
             this.select(true);
         },
-        update: function(item, newValue, oldValue, diff){
-          this.field.value = this.valueGetter(newValue, item);
-          this.titleText.nodeValue = this.titleGetter(newValue, item);
+        update: function(item, delta){
+          this.field.value = this.valueGetter(item.info, item);
+          this.titleText.nodeValue = this.titleGetter(item.info, item);
         }
-      }),
+      },
 
       template: new Template(
         '<label{element} class="item">' + 
@@ -753,7 +764,7 @@
     * @class Field.CheckGroup
     */
 
-    Field.CheckGroup = Class.create(ComplexField, {
+    Field.CheckGroup = Class(ComplexField, {
       className: namespace + '.Field.CheckGroup',
 
       childClass: CheckGroupItem,
@@ -794,10 +805,10 @@
     // Select
     //
 
-    var SelectItem = Class.create(ComplexFieldItem, {
+    var SelectItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.Select.Item',
 
-      behaviour: createBehaviour(ComplexFieldItem, {
+      behaviour: {
         select: function(){
 //          if (this.parentNode)
 //            this.parentNode.setValue(this.getValue());
@@ -806,11 +817,11 @@
 //          if (this.parentNode)
 //            this.parentNode.setValue();
         },
-        update: function(item, newValue, oldValue, diff){
-          this.field.value = this.valueGetter(newValue, item);
-          this.field.text  = this.titleGetter(newValue, item);
+        update: function(item, delta){
+          this.field.value = this.valueGetter(item.info, item);
+          this.field.text = this.titleGetter(item.info, item);
         }
-      }),
+      },
 
       template: new Template(
         '<option{element|field}></option>'
@@ -818,7 +829,7 @@
     });
 
 
-    Field.Select = Class.create(ComplexField, {
+    Field.Select = Class(ComplexField, {
       className: namespace + '.Field.Select',
 
       childClass: SelectItem,
@@ -845,7 +856,7 @@
         // prevent selection dispatch change event 
         this.selection.dispatch = Function.$null;
         if (item)
-          this.selection.add(item);
+          this.selection.add([item]);
         else
           this.selection.clear();
         delete this.selection.dispatch;
@@ -884,19 +895,19 @@
     // Combobox
     //
 
-    var ComboboxItem = Class.create(ComplexFieldItem, {
+    var ComboboxItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.Combobox.Item',
 
-      behaviour: createBehaviour(ComplexFieldItem, {
+      behaviour: {
         click:  function(){
           this.select();
           //if (this.parentNode)
           //  this.parentNode.setValue(this.getValue());
         },
-        update: function(item, newValue, oldValue, diff){
-          this.titleText.nodeValue = this.titleGetter(newValue, item);
+        update: function(item, delta){
+          this.titleText.nodeValue = this.titleGetter(item.info, item);
         }
-      }),
+      },
 
       template: new Template(
         '<a{element} class="item" href="#">{titleText}</a>'
@@ -915,7 +926,7 @@
       },*/
       keypress: function(event){
         var key = Event.key(event);
-        var cur = this.selection.items[0];
+        var cur = this.selection.pick();
 
         switch (key){
           case Event.KEY.DOWN:
@@ -947,7 +958,7 @@
       }
     };
     
-    Field.Combobox = Class.create(ComplexField, {
+    Field.Combobox = Class(ComplexField, {
       className: namespace + '.Field.Combobox',
 
       childClass: ComboboxItem,
@@ -961,8 +972,8 @@
           if (this.delegate && this.delegate.select)
             this.delegate.select();
         },
-        update: function(object, newValue, oldValue, delta){
-          this.inherit(object, newValue, oldValue, delta);
+        update: function(object, delta){
+          this.inherit(object, delta);
 
           // update title
           var title = coalesce(this.getTitle(), this.getValue(), '');
@@ -1096,7 +1107,7 @@
 
             this.setDelegate(item);
             if (item)
-              item.select();
+              this.selection.set([item]);
             else
               this.selection.clear();
 
@@ -1146,7 +1157,7 @@
     //  Value validators
     //
 
-    var ValidatorError = Class.create(null, {
+    var ValidatorError = Class(null, {
       className: namespace + '.ValidatorError',
 
       init: function(field, message){
@@ -1211,7 +1222,7 @@
     // FORM
     //
 
-    var Form = Class.create(Control, {
+    var Form = Class(Control, {
       className: namespace + '.Form',
       
       canHaveChildren: false,
@@ -1304,7 +1315,7 @@
       }
     });
 
-    var FormContent = Class.create(Control, {
+    var FormContent = Class(Control, {
       className: namespace + '.FormContent',
       
       canHaveChildren: true,
@@ -1313,7 +1324,7 @@
       	return Field.create(config.type || 'text', complete({ tableLayout: this.tableLayout }, config));
       },
 
-      behaviour: createBehaviour(Control, {
+      behaviour: {
         disable: function(){
           for (var field = this.firstChild; field; field = field.nextSibling)
             if (!field.disabled)
@@ -1324,7 +1335,7 @@
             if (!field.disabled)
               field.dispatch('enable');
         }
-      }),
+      },
       
       template: new Template(
         '<div{element|content|childNodesElement} class="form-content"/>'
@@ -1425,43 +1436,69 @@
     });
 
     // additional
-    
-    var MatchFilter = Class.create(nsWrapers.Property, {
-      changeHandler: function(value){
-        var rx = this.regexpGetter(value);
-        var textNodeGetter = this.textNodeGetter;
-        var map = this.map;
-        this.node.setMatchFunction(value ? function(child, reset){
-          if (!reset)
-          {
-            var textNode = child._m || textNodeGetter(child);
-            var p = textNode.nodeValue.split(rx);
+
+    var MatchProperty = Class(Property, {
+      matchFunction: function(child, reset){
+        if (!reset)
+        {
+          var textNodes = child._m || this.textNodeGetter(child);
+          if (textNodes.constructor != Array)
+            textNodes = [ textNodes ];
+
+          var hasMatches = false;
+
+          for (var i = 0; i < textNodes.length; i++)
+          {                             
+            var textNode = textNodes[i];
+            if (!textNode)
+              continue;
+
+            var hasMatch = false; 
+            var p = textNode.nodeValue.split(this.rx);
             if (p.length > 1)
             {
+              if (!child._x) 
+                child._x = [];
+              if (!child._m) 
+                child._m = [];
+
               DOM.replace(
-                child._x || textNode,
-                child._x = DOM.createElement('SPAN.matched', DOM.wrap(p, map))
+                child._x[i] || textNode,
+                child._x[i] = DOM.createElement('SPAN.matched', DOM.wrap(p, this.map))
               );
-              child._m = textNode;
-              return true;
+              child._m[i] = textNode;
+              hasMatches = true;
+              hasMatch = true;
+            }
+
+            if (child._x && child._x[i] && !hasMatch)
+            { 
+               DOM.replace(child._x[i], child._m[i]);
+               child._x[i] = child._m[i];
             }
           }
-          
-          if (child._x)
-          {
-            DOM.replace(child._x, child._m);
-            delete child._x;
-            delete child._m;
-          }
-          
-          return false;
-        } : null);
+
+          return hasMatches;
+        }
+
+        for (var i = 0; i < child._x.length; i++)
+        {                             
+          if (child._x[i])
+             DOM.replace(child._x[i], child._m[i]);
+        }
+        delete child._x;
+        delete child._m;
+
+        return false;
+      },
+      changeHandler: function(value){
+        this.rx = this.regexpGetter(value);
       },
       init: function(config){
         var startPoints = config.startPoints || '';
 
         this.node = config.node;
-        this.textNodeGetter = Data.getter(config.textNodeGetter || 'titleText');
+        this.textNodeGetter = getter(config.textNodeGetter || 'titleText');
         this.regexpGetter = typeof config.regexpGetter == 'function'
                               ? config.regexpGetter
                               : function(value){ return new RegExp('(' + startPoints + ')(' + value.forRegExp() + ')', 'i') };
@@ -1476,6 +1513,40 @@
           this.addHandler(config.handlers, config.thisObject);
       }
     });
+
+    var NodeMatchHandler = {
+      childNodesModified: function(obj, delta){
+        /*this.match();*/
+        if (delta.inserted)
+        {
+          for (var i = 0, child; child = delta.inserted[i]; i++)
+            this.matchFunction(child, this.value == '');
+        }
+      }
+    }
+
+    var Matcher = Class(MatchProperty, {
+      match: function(){
+        for(var child = this.node.firstChild; child; child = child.nextSibling)
+          this.matchFunction(child, this.value == '')
+      },
+      changeHandler: function(value){
+        this.inherit(value);
+        this.match();
+      },
+      init: function(config){
+        this.inherit(config);
+
+        this.node.addHandler(NodeMatchHandler, this);
+      }
+    });
+
+    var MatchFilter = Class(MatchProperty, {
+      changeHandler: function(value){
+        this.inherit(value);
+        this.node.setMatchFunction(value ? this.matchFunction.bind(this) : null);
+      }
+    });
     
     var MatchInputHandler = {
       keyup: function(){
@@ -1486,7 +1557,7 @@
       }
     };
 
-    var MatchInput = Class.create(HtmlNode, {
+    var MatchInput = Class(HtmlNode, {
       template: new Template(
         '<div{element|content} class="Basis-MatchInput">' +
           '<input{field} type="text"/>' +
@@ -1522,6 +1593,7 @@
       CheckGroupItem: CheckGroupItem,
       Combobox: Field.Combobox,
       ComboboxItem: ComboboxItem,
+      Matcher: Matcher,
       MatchFilter: MatchFilter,
       MatchInput: MatchInput
     });

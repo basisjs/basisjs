@@ -1,0 +1,94 @@
+
+  .Basis-SyntaxHighlight
+  {
+    border: 1px solid #E0E0E0;
+    padding: 1px;
+    margin: 0 1ex;
+    overflow: hidden;
+    pos3ition: relative;
+
+    font-family: Consolas, monospace;
+    font-size: 100%;
+    line-height: 1.4em;
+    white-space: pre;   /* на случай если основной блок не <PRE> */
+  }
+
+  .Basis-SyntaxHighlight .line
+  {
+    position: relative; /* для webkit, иначе при начале выделения с нумерации будет
+                             выделяться текст с самого начала блока */
+    zoom: 1;            /* для IE6/7 */
+    wh3ite-space: pre;   /* важно чтобы сохранялись переносы в IE7 */
+
+    background: #F0F0F0;
+  }
+
+  .Basis-SyntaxHighlight .even
+  {
+    background-color: #F8F8F8;
+  }
+  /*.Basis-SyntaxHighlight .line:hover
+  {
+    background: #DDD;
+  }*/
+
+  .Basis-SyntaxHighlight .lineNumber
+  {
+    position: absolute;
+    left: 0;
+
+    padding: 0 .5ex;
+    margin: 0;
+    width: 6ex;
+    line-height: 1.4em;
+    height: 1.4em;
+
+    background: none;
+    border: none;
+    font-family: Consolas, monospace;
+    font-size: 100%;
+    text-align: right;
+    color: #666;
+
+      -moz-user-select: none;    /* задаем user-select для Firefox & webkit, чтобы блок не попадал в область выделения*/
+      -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;        /* фактически это свойство делает ненужным блок .over, 
+                                    но пока оно поддерживается только в Firefox & webkit */
+  }
+
+  .Basis-SyntaxHighlight .over
+  {
+    display: block;
+    position: absolute;
+    left: 0;
+    width: 7ex;
+    height: 1.4em;
+    z-index: 1;
+    background: url(#);          /* для IE и Opera, иначе блок будет "простреливаться"
+                                    (пропускать события мыши нижележащим блокам) */
+  }
+
+  .Basis-SyntaxHighlight .lineContent
+  {
+    margin-left: 7ex;
+    padding-left: 2.5ex;
+    border-left: 2px solid #33BB66;
+    display: block;
+    white-space: pre-wrap;      /* сохраняем форматирование, но оставляем возможность переносить по словам */
+  }
+
+
+  .Basis-SyntaxHighlight .token-string
+  {
+    color: blue;
+  }
+  .Basis-SyntaxHighlight .token-comment 
+  {
+    color: #008200;
+  }
+  .Basis-SyntaxHighlight .token-keyword
+  {
+    color: #006699;
+    font-weight: bold;
+  }

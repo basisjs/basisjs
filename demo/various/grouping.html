@@ -52,7 +52,9 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../tree.js"></script>
   <script type="text/javascript" src="../../table.js"></script>
   <script type="text/javascript" src="../../layout.js"></script>
@@ -98,22 +100,21 @@
     var demoContainer = DOM.get('demo-container');
 
     var tree = new nsTree.Tree({
-      childClass: nsTree.TreeNode,
-      childNodes: data,
       localGrouping: {
         groupGetter: 'info.title'
-      }
+      },
+      childNodes: data
     });
 
     var table = new nsTable.Table({
-      structure: [
-        { header: 'Title', body: { content: Data.getter('info.title') } },
-        { header: 'Content', body: { content: Data.getter('info.content') } }
-      ],
-      childNodes: data,
       localGrouping: {
         groupGetter: 'info.title'
-      }
+      },
+      childNodes: data,
+      structure: [
+        { header: 'Title', body: { content: Function.getter('info.title') } },
+        { header: 'Content', body: { content: Function.getter('info.content') } }
+      ]
     });
 
     // insert controls to document
@@ -134,12 +135,14 @@
           caption: 'No grouping',
           handler: function(){
             setGrouping();
+            groupigMenu.hide();
           }
         },
         {
           caption: 'Group by title',
           handler: function(){
             setGrouping('info.title');
+            groupigMenu.hide();
           }
         },
         {
@@ -147,9 +150,10 @@
           handler: function(){
             setGrouping({
               groupGetter: 'info.title.charAt(0)',
-              titleGetter: Basis.Data.getter('info.title', 'Group for letter <{0}>'),
+              titleGetter: Function.getter('info.title', 'Group for letter <{0}>'),
               localSorting: 'info.title'
             });
+            groupigMenu.hide();
           }
         }
       ]

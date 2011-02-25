@@ -9,12 +9,12 @@
   var Class = Basis.Class;
   var DOM = Basis.DOM;
   var Event = Basis.Event;
-  var Data = Basis.Data;
   var Template = Basis.Html.Template;
 
+  var getter = Function.getter;
   var cssClass = Basis.CSS.cssClass;
 
-  var nsWrapers = Basis.DOM.Wrapers;
+  var nsWrappers = Basis.DOM.Wrapper;
   var nsTree = Basis.Controls.Tree;
   var nsCore = BasisDoc.Core;
 
@@ -54,25 +54,32 @@
   //
 
   function htmlHeader(title){
-    return '<h3><span>{0}</span></h3>'.format(title);
+    return '<span{header}/>'//'<h3><span>{0}</span></h3>'.format(title);
   }
 
-  var ViewOption = Class(nsWrapers.HtmlNode, {
+  var ViewOption = Class(nsWrappers.HtmlNode, {
     template: new Template('<span{element} class="option">{titleText}</span>'),
+    behaviour: {
+      click: function(){
+        this.select();
+      },
+      select: function(){
+        this.inherit();
+        if (this.handler)
+          this.handler();
+      }
+    },
     init: function(config){
-      config = this.inherit(config);
+      if (config && config.handler)
+        this.handler = config.handler;
+      
+      this.inherit(config);
 
       this.titleText.nodeValue = config.title;
-      this.addHandler({
-        click: function(){ this.select() },
-        select: config.handler
-      });
-
-      return config;
     }
   });
 
-  var ViewOptions = Class(nsWrapers.HtmlControl, {
+  var ViewOptions = Class(nsWrappers.HtmlControl, {
     childClass: ViewOption,
     template: new Template(
       '<div{element} class="viewOptions">' +
@@ -90,8 +97,22 @@
     }
   });
 
-  var View = Class(nsWrapers.HtmlPanel, {
-    className: 'View'/*,
+  var View = Class(Basis.Plugin.X.ControlItem, {
+    className: 'View',
+    satelliteConfig: {
+      header: {
+        delegate: Function.$self,
+        instanceOf: Class(Basis.Plugin.X.ControlItemHeader, {
+          template: new Template(
+            '<h3{element} class="Content-Header">' +
+              '<span>{titleText}</span>' +
+            '</h3>'
+          ),
+          titleGetter: Function.getter('delegate && object.delegate.viewHeader')
+        })
+      }
+    }
+    /*,
     autoDelegateParent: true*/
   });
 
@@ -163,17 +184,19 @@
 
   var ViewTemplate = Class(View, {
     className: 'ViewTemplate',
+    viewHeader: 'Template',
     template: new Template(
       '<div{element} class="view viewTemplate">' +
         htmlHeader('Template') +
         '<div{content} class="content"></div>' +
       '</div>'
     ),
-    behaviour: nsWrapers.createBehaviour(View, {
-      update: function(object, newInfo, oldInfo, delta){
-        this.inherit(object, newInfo, oldInfo, delta);
+    behaviour: {
+      update: function(object, delta){
+        this.inherit(object, delta);
         
-        if (newInfo.obj && newInfo.obj != oldInfo.obj)
+        var newInfo = this.info;
+        if ('obj' in delta && newInfo.obj)
         {
           var template = newInfo.obj.prototype.template;
           //console.log(template);
@@ -228,7 +251,7 @@
             DOM.display(this.element, false);
         }
       }
-    }),
+    },
     init: function(config){
       config = this.inherit(config);
 
@@ -270,7 +293,7 @@
     }
   });
 
-  var InheritanceItem = Class(nsWrapers.HtmlNode, {
+  var InheritanceItem = Class(nsWrappers.HtmlNode, {
     canHaveChildren: true,
     childFactory: function(config){
       return new InheritanceItem(config);
@@ -282,8 +305,9 @@
         '<ul{childNodesElement}></ul>' +
       '</li>'
     ),
-    behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
-      update: function(object, newInfo){
+    behaviour: {
+      update: function(object, delta){
+        var newInfo = this.info;
         var pathPart = newInfo.objPath.split(/\./);
         this.classNameText.nodeValue = pathPart.pop();
         this.namespaceText.nodeValue = this.info.namespace || pathPart.join('.');
@@ -295,19 +319,19 @@
         if (newInfo.tag)
           DOM.insert(this.content, DOM.createElement('SPAN.tag.tag-' + newInfo.tag, newInfo.tag));
       }
-    })
+    }
   });
 
   var ViewInheritance = Class(ViewList, {
     childClass: InheritanceItem,
     groupControlClass: Class(ViewList.prototype.groupControlClass, {
       childClass: Class(ViewList.prototype.groupControlClass.prototype.childClass, {
-        behaviour: nsWrapers.createBehaviour(ViewList.prototype.groupControlClass.prototype.childClass, {
-          update: function(object, newInfo, oldInfo, delta){
-            this.inherit(object, newInfo, oldInfo, delta);
-            this.hrefAttr.nodeValue = '#' + newInfo.title;
+        behaviour: {
+          update: function(object, delta){
+            this.inherit(object, delta);
+            this.hrefAttr.nodeValue = '#' + this.info.title;
           }
-        }),
+        },
         template: new Template(
           '<div{element} class="Basis-PartitionNode">' +
             '<div class="Basis-PartitionNode-Title">' +
@@ -318,6 +342,7 @@
         )
       })
     }),
+    viewHeader: 'Inheritance',
     template: new Template(
       '<div{element} class="view viewInheritance">' +
         htmlHeader('Inheritance') +
@@ -336,7 +361,7 @@
             selected: true,
             handler: function(){
               view.setLocalGrouping({
-                groupGetter: Data('info.classInfo.namespace || "Basis"')
+                groupGetter: getter('info.classInfo.namespace || "Basis"')
               });
               cssClass(view.content).remove('show-namespace');
             }
@@ -363,15 +388,16 @@
     }
   });
 
-  var ConfigItem = Class(nsWrapers.HtmlNode, {
+  var ConfigItem = Class(nsWrappers.HtmlNode, {
     canHaveChildren: false,
     template: new Template(
       '<li{element} class="item">' +
         '<div{content} class="title">{nameText}</div>' +
       '</li>'
     ),
-    behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
-      update: function(object, newInfo){
+    behaviour: {
+      update: function(object, delta){
+        var newInfo = this.info;
         if (newInfo.tags && newInfo.tags.config)
         {
           var descr = newInfo.tags.config[this.propName];
@@ -388,7 +414,7 @@
           }
         }
       }
-    }),
+    },
     init: function(config){
       this.propName = config.propName;
       this.context = config.context;
@@ -400,18 +426,18 @@
   var viewConfigRegExp = /config\.(?:([a-z0-9\_\$]+)|\[(\'\")([a-z0-9\_\$]+)\2\])/gi;
   var ViewConfig = Class(ViewList, {
     childClass: ConfigItem,
-    localSorting: Data('propName'),
+    localSorting: getter('propName'),
     groupControlClass: Class(ViewList.prototype.groupControlClass, {
       childClass: Class(ViewList.prototype.groupControlClass.prototype.childClass, {
-        behaviour: nsWrapers.createBehaviour(ViewList.prototype.groupControlClass.prototype.childClass, {
-          update: function(object, newInfo, oldInfo, delta){
-            var parts = newInfo.path.split(/\./);
+        behaviour: {
+          update: function(object, delta){
+            var parts = this.info.path.split(/\./);
             parts.pop();
             parts.pop();
             this.hrefAttr.nodeValue = '#' + parts.join('.');
             this.titleText.nodeValue = parts.pop();
           }
-        }),
+        },
         template: new Template(
           '<div{element} class="Basis-PartitionNode">' +
             '<div class="Basis-PartitionNode-Title">' +
@@ -422,14 +448,16 @@
         )
       })
     }),
+    viewHeader: 'Config',
     template: new Template(
       '<div{element} class="view viewConfig">' +
         htmlHeader('Config') +
         '<ul{content|childNodesElement} class="content"></ul>' +
       '</div>'
     ),
-    behaviour: nsWrapers.createBehaviour(ViewList, {
-      update: function(object, newInfo, oldInfo, delta){
+    behaviour: {
+      update: function(object, delta){
+        var newInfo = this.info;
         var path = newInfo.objPath;
         if (newInfo.objPath && map[path].obj.prototype.init)
         {
@@ -466,7 +494,7 @@
         else
           DOM.display(this.element, false);
       }
-    }),
+    },
     init: function(config){
       config = this.inherit(config);
 
@@ -479,12 +507,12 @@
             title: 'Inheritance',
             handler: function(){
               view.setLocalGrouping({
-                groupGetter: Data('delegate'),
-                localSortingDesc: true,
+                groupGetter: getter('delegate'),
+                localSortingDesc: true/*,
                 localSorting: function(group){
                   var groupControl = group.parentNode || this;
                   return groupControl.document.groupOrder[group.info.path];
-                }
+                }*/
               });
             }
           },
@@ -511,15 +539,16 @@
     }
   });
 
-  var PrototypeItem = Class(nsWrapers.HtmlNode, {
+  var PrototypeItem = Class(nsWrappers.HtmlNode, {
     template: new Template(
       '<div{element} class="item property">' +
         '<div{content} class="title"><a href{ref}="#">{titleText}</a></div>' +
         '<a{trigger} href="#" class="trigger">...</a>' +
       '</div>'
     ),
-    behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
-      update: function(object, newInfo){
+    behaviour: {
+      update: function(object, delta){
+        var newInfo = this.info;
         if (newInfo.objPath)
         {
           this.titleText.nodeValue = newInfo.title;
@@ -527,11 +556,12 @@
           this.jsDocPanel.setDelegate(nsCore.JsDocEntity(newInfo.objPath));
         }
       }
-    }),
+    },
     init: function(config){
       this.jsDocPanel = new JsDocPanel();
       this.jsDocPanel.addHandler({
-        update: function(object, newInfo){
+        update: function(object, delta){
+          var newInfo = this.info;
           if (newInfo.tags)
           {
             cssClass(this.element).add('hasJsDoc');
@@ -572,12 +602,12 @@
         '<a{trigger} href="#" class="trigger">...</a>' +
       '</div>'
     ),
-    behaviour: nsWrapers.createBehaviour(PrototypeItem, {
-      update: function(object, newInfo, oldInfo, delta){
-        this.inherit(object, newInfo, oldInfo, delta);
-        this.argsText.nodeValue = nsCore.getFunctionDescription(newInfo.obj).args;
+    behaviour: {
+      update: function(object, delta){
+        this.inherit(object, delta);
+        this.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
       }
-    })
+    }
   });
 
   var ViewPrototype = Class(ViewList, {
@@ -586,18 +616,19 @@
       var childClass = config.info.kind == 'method' ? PrototypeMethod : PrototypeItem;
       return new childClass(config);
     },
+    viewHeader: 'Prototype',
     template: new Template(
       '<div{element} class="view viewPrototype">' +
         htmlHeader('Prototype') +
         '<div{content|childNodesElement} class="content"></div>' +
       '</div>'
     ),
-    behaviour: nsWrapers.createBehaviour(ViewList, {
+    behaviour: {
       click: function(event, node){
         if (node && Event.sender(event).className == 'trigger')
           cssClass(node.element).remove('collapsed');
       }
-    }),
+    },
     init: function(config){
       config = this.inherit(config);
 
@@ -613,8 +644,8 @@
             handler: function(){
               cssClass(view.content).remove('classGrouping');
               view.setLocalGrouping({
-                groupGetter: Data('info.kind'),
-                titleGetter: Data('info.id', { property: 'Properties', method: 'Methods' }),
+                groupGetter: getter('info.kind'),
+                titleGetter: getter('info.id', { property: 'Properties', method: 'Methods' }),
                 localSorting: function(group){
                   return group.info.id == 'method';
                 }
@@ -629,7 +660,7 @@
                 groupGetter: function(node){
                   return node.info.implementationClass;
                 },
-                titleGetter: Data('info.id'),
+                titleGetter: getter('info.id'),
                 localSorting: function(group){
                   return view.inheritance.indexOf(group.info.id);
                 }
@@ -653,23 +684,24 @@
     }
   });
 
-  var JsDocLinkViewItem = Class(nsWrapers.HtmlNode, {
+  var JsDocLinkViewItem = Class(nsWrappers.HtmlNode, {
     template: new Template(
       '<li{element|content} class="item">' +
         '<a href{href}="#" target="_blank">{titleText}</a>' +
       '</li>'
     ),
-    behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
-      update: function(object, newInfo){
+    behaviour: {
+      update: function(object, delta){
+        var newInfo = this.info;
         if (newInfo.url)
         {
           this.titleText.nodeValue = newInfo.title || newInfo.url;
           this.href.nodeValue = newInfo.url;
         }
       }
-    })
+    }
   });
-  var JsDocLinksPanel = Class(nsWrapers.HtmlNode, {
+  var JsDocLinksPanel = Class(nsWrappers.HtmlContainer, {
     childClass: JsDocLinkViewItem,
     childFactory: function(config){
       return new this.childClass(config);
@@ -683,22 +715,19 @@
   });
 
   var JsDocView = Class(View, {
+    viewHeader: 'Description',
     template: new Template(
       '<div{element} class="view viewJsDoc">' +
         htmlHeader('Description') +
         '<div{content} class="content"></div>' +
       '</div>'
     ),
-    behaviour: nsWrapers.createBehaviour(View, {
+    behaviour: {
       delegateChanged: function(){
         if (this.delegate)
           this.contentPanel.setDelegate(nsCore.JsDocEntity(this.delegate.info.objPath));
-      }/*,
-      update: function(object, newInfo, oldInfo, delta){
-        var doc = nsCore.JsDocEntity(newInfo.objPath);
-        DOM.display(this.element, doc && !!doc.value.text);
-      }*/
-    }),
+      }
+    },
     init: function(config){
       this.contentPanel = new JsDocPanel();
 
@@ -717,13 +746,14 @@
   });
 
   var JsDocConstructorView = Class(JsDocView, {
+    viewHeader: 'Constructor',
     template: new Template(
       '<div{element} class="view viewJsDoc">' +
         htmlHeader('Constructor') +
         '<div{content} class="content"></div>' +
       '</div>'
     ),
-    behaviour: nsWrapers.createBehaviour(View, {
+    behaviour: nsWrappers.createBehaviour(JsDocView, {
       delegateChanged: function(){
         if (this.delegate)
         {
@@ -736,19 +766,21 @@
     init: function(config){
       config = this.inherit(config);
 
-      this.configPanel
+      //this.configPanel
 
       return config;
     }
   });
 
   var tagLabels = 'readonly private'.qw();
-  var JsDocPanel = Class(nsWrapers.HtmlPanel, {
+  var JsDocPanel = Class(nsWrappers.HtmlNode, {
     template: new Template(
       '<div{element|content} class="jsDocs"><div{description} class="description"/><div{link} class="links"/></div>'
     ),
-    behaviour: new nsWrapers.createBehaviour(nsWrapers.HtmlPanel, {
-      update: function(object, newInfo){
+    behaviour: {
+      update: function(object, delta){
+        var newInfo = this.info;
+
         DOM.clear(this.content);
 
         function parseDescription(text){
@@ -876,18 +908,17 @@
             var code;
             DOM.insert(this.content, [
               DOM.createElement('DIV.label', 'Example:'),
-              code = DOM.createElement('PRE',
-                newInfo.tags.example
-              )
+              code = DOM.createElement('PRE.Basis-SyntaxHighlight')
             ]);
-            code.className = 'brush: javascript';
-            SyntaxHighlighter.highlight({}, code);
+            code.innerHTML = Basis.Plugin.SyntaxHighlight.highlight(newInfo.tags.example);
+            //code.className = 'brush: javascript';
+            //SyntaxHighlighter.highlight({}, code);
           }
         }
 
         DOM.display(this.element, !!newInfo.text)
       }
-    }),
+    },
     destroy: function(){
       if (this.info.tags && this.info.tags.description_)
       {
@@ -906,37 +937,56 @@
   // View instances
   //
 
-  var viewTitle = new View({
+  var ViewTitle = Class(View, {
     template: new Template(
       '<h2{element} class="view viewTitle">' +
         '<span class="title">{contentText}</span>' +
         '<span class="path">{pathText}</span>' +
       '</h2>'
     ),
-    handlers: {
-      update: function(object, newInfo, oldInfo, delta){
-        this.contentText.nodeValue = (this.info.title || '') + (/^(method|function|class)$/.test(newInfo.kind) ? nsCore.getFunctionDescription(this.info.obj).args.quote('(') : '');
+    behaviour: {
+      update: function(object, delta){
+        this.inherit();
+
+        this.contentText.nodeValue = (this.info.title || '') + (/^(method|function|class)$/.test(this.info.kind) ? nsCore.getFunctionDescription(this.info.obj).args.quote('(') : '');
         this.pathText.nodeValue = (this.info.path || '');
 
-        cssClass(this.element).replace(oldInfo.kind, newInfo.kind, 'kind-');
+        if ('kind' in delta)
+          cssClass(this.element).replace(delta.kind, this.info.kind, 'kind-');
       }
     }
   });
+  var viewTitle = new ViewTitle();
 
   var viewJsDoc = new JsDocView();
   var viewConstructor = new JsDocConstructorView();
 
-  var viewSourceCode = new View({
+  var SourceCodeView = Class(View, {
+    viewHeader: 'Source code',
     template: new Template(
       '<div{element} class="view viewSourceCode">' +
         htmlHeader('Source code') +
-        '<div{content} class="content"></div>' +
+        '<div{content} class="content"><span{sourceCode}/></div>' +
       '</div>'
     ),
-    handlers: {
-      update: function(object, newInfo, oldInfo, delta){
+    satelliteConfig: Object.extend({
+      sourceCode: {
+        delegate: Function.$self,
+        instanceOf: Class(Basis.Plugin.SyntaxHighlight.SourceCodeNode, {
+          codeGetter: function(node){
+            return (node.info.obj || '').toString();
+          }
+        })
+      }
+    }, View.prototype.satelliteConfig)
+  });
+
+  var viewSourceCode = new SourceCodeView({
+    /*handlers: {
+      update: function(object, delta){
         // TODO: reduce updates
-        if (newInfo.obj && newInfo.obj != oldInfo.obj)
+        var newInfo = this.info;
+        if ('obj' in delta && newInfo.obj)
         {
           var code = (newInfo.obj || '').toString();
           code = code.replace(/^function/, code.match(/\n(\s*)\}$/)[1] + '$&');
@@ -945,17 +995,27 @@
           SyntaxHighlighter.highlight({}, this.source);
         }
       }
-    }
+    }*/
   });
 
   var viewTemplate = new ViewTemplate();
 
   var viewInheritance = new ViewInheritance({
     handlers: {
-      update: function(object, newInfo, oldInfo, delta){
+      update: function(object, delta){
         this.clear();
 
-        var list = newInfo.title ? nsCore.getInheritance(newInfo.kind == 'class' ? newInfo.obj : map[newInfo.path.replace(/.prototype$/, '')].obj, newInfo.kind == 'class' ? null : newInfo.title) : [];
+        var newInfo = this.info;
+        var list = newInfo.title
+          ? nsCore.getInheritance(
+              newInfo.kind == 'class'
+                ? newInfo.obj
+                : (map[newInfo.path.replace(/.prototype$/, '')] || { obj: null }).obj,
+              newInfo.kind == 'class'
+                ? null
+                : newInfo.title
+            )
+          : [];
         
         var cursor = this;
         for (var i = 0, item; item = list[i]; i++)
@@ -974,12 +1034,13 @@
   var viewPrototype = new ViewPrototype({
     localSorting: 'info.title',
     handlers: {
-      update: function(object, newInfo){
+      update: function(object, delta){
+        var newInfo = this.info;
         if (newInfo.obj)
         {
           var inheritance = nsCore.getInheritance(newInfo.obj);
           var list = nsCore.getMembers(newInfo.objPath + '.prototype');
-          this.inheritance = inheritance.map(Data('cls.className'));
+          this.inheritance = inheritance.map(getter('cls.className'));
           list.forEach(function(member){
             member.info.implementationClass = !inheritance.length ? newInfo.obj : inheritance.search(true, function(item){ return member.info.title in item.cls.prototype }).cls.className;
           });
@@ -998,6 +1059,7 @@
   Basis.namespace(namespace).extend({
     htmlHeader: htmlHeader,
     View: View,
+    ViewTitle: ViewTitle,
     ViewTemplate: ViewTemplate,
     ViewList: ViewList,
     ViewInheritance: ViewInheritance,

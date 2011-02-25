@@ -26,12 +26,12 @@
   var Class = Basis.Class;
   var DOM = Basis.DOM;
   var Event = Basis.Event;
-  var Data = Basis.Data;
-  var cssClass = Basis.CSS.cssClass;
 
   var Template = Basis.Html.Template;
 
-  var nsWrapers = Basis.DOM.Wrapers;
+  var cssClass = Basis.CSS.cssClass;
+
+  var nsWrappers = Basis.DOM.Wrapper;
 
   //
   // main part
@@ -45,7 +45,7 @@
   * Base child node class for Paginator
   * @class
   */
-  var PaginatorNode = Class(nsWrapers.HtmlNode, {
+  var PaginatorNode = Class(nsWrappers.HtmlNode, {
     className: namespace + '.PaginatorNode',
 
     template: new Template(
@@ -56,12 +56,12 @@
       '</td>'
     ),
 
-    behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
-      update: function(object, newInfo, oldInfo, delta){
-        this.inherit(object, newInfo, oldInfo, delta);
+    behaviour: nsWrappers.createBehaviour(nsWrappers.HtmlNode, {
+      update: function(object, delta){
+        this.inherit(object, delta);
 
-        this.pageNumber.nodeValue = newInfo.pageNumber + 1;
-        this.link.href = this.urlGetter(newInfo.pageNumber);
+        this.pageNumber.nodeValue = this.info.pageNumber + 1;
+        this.link.href = this.urlGetter(this.info.pageNumber);
       }
     }),
 
@@ -72,7 +72,7 @@
   * Paginator
   * @class
   */
-  var Paginator = Class(nsWrapers.Control, {
+  var Paginator = Class(nsWrappers.Control, {
     className: namespace + '.Paginator',
 
     childClass: PaginatorNode,
@@ -93,7 +93,7 @@
     	'</table>'
     ),
 
-    behaviour: nsWrapers.createBehaviour(nsWrapers.Control, {
+    behaviour: nsWrappers.createBehaviour(nsWrappers.Control, {
       click: function(event, node){
         if (node)
           this.setActivePage(node.info.pageNumber);
@@ -107,6 +107,7 @@
             this.setSpanStartPage(Math.round(pos/this.pageWidth_), true);
           }
         }
+        Event.kill(event);
       },
       childNodesModified: function(){
         this.spanAttr.nodeValue = this.childNodes.length;

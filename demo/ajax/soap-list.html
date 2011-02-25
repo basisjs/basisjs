@@ -54,7 +54,8 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../ajax.js"></script>
   <script type="text/javascript" src="../../xml.js"></script>
   <script type="text/javascript" src="../../soap.js"></script>
@@ -110,17 +111,17 @@
       },
       callback: {
         start: function(){
-          ProviderGroup.all.setState(Basis.DOM.Wrapers.STATE.PROCESSING)
+          ProviderGroup.all.setState(Basis.Data.STATE.PROCESSING)
         },
         failure: function(){
-          ProviderGroup.all.setState(Basis.DOM.Wrapers.STATE.ERROR)
+          ProviderGroup.all.setState(Basis.Data.STATE.ERROR)
         },
         success: function(envelopeData){
           // synchonize with current dataset
           ProviderGroup.all.sync(this.responseBody().ProviderGroup);
 
           // change dataset state to READY
-          ProviderGroup.all.setState(Basis.DOM.Wrapers.STATE.READY)
+          ProviderGroup.all.setState(Basis.Data.STATE.READY)
         }
       }
     });
@@ -150,20 +151,20 @@
 
       // customize item class
       childClass: Basis.Class(Basis.Controls.Tree.TreeNode, {
-        titleGetter: Basis.Data('info', '{Title} ({ProviderCount})')
+        titleGetter: Function.getter('info', '{Title} ({ProviderCount})')
       }),
 
       // add handler for trace state changes
       handlers: {
-        stateChanged: function(object, newState, oldState, errorText){
-          if (newState == Basis.DOM.Wrapers.STATE.PROCESSING)
+        stateChanged: function(object, oldState){
+          if (this.state == Basis.Data.STATE.PROCESSING)
           {
             if (!this.loadingLabel)
               this.loadingLabel = Basis.DOM.createElement('.loading', 'loading...');
             Basis.DOM.insert(this.element, this.loadingLabel);
           }  
 
-          if (oldState == Basis.DOM.Wrapers.STATE.PROCESSING)
+          if (oldState == Basis.Data.STATE.PROCESSING)
             Basis.DOM.remove(this.loadingLabel);
         }
       }

@@ -7,9 +7,8 @@
     }
   };
 
-  document.write('<style type="text/css">@import "../demo.css";@import "../../third_party/SyntaxHighlighter/styles/shCore.css";@import "../../third_party/SyntaxHighlighter/styles/shThemeDefault.css";</style>');
-  document.write('shCore'.qw().map(String.format, '<script language="javascript" src="../../third_party/SyntaxHighlighter/src/{0}.js"></script>').join(''));
-  document.write('shBrushJScript shBrushCss'.qw().map(String.format, '<script language="javascript" src="../../third_party/SyntaxHighlighter/scripts/{0}.js"></script>').join(''));
+  document.write('<style type="text/css">@import "../demo.css";</style>');
+  document.write('<script type="text/javascript" src="../../plugins/highlight.js"></script>');
   
   Basis.Event.onLoad(function(){
     
@@ -19,8 +18,8 @@
     var cssClass = Basis.CSS.cssClass;
 
     var highlight = Function.runOnce(function(){
-      SyntaxHighlighter.highlight({}, DOM.get('javascript'));
-      SyntaxHighlighter.highlight({}, DOM.get('css'));
+      DOM.get('javascript').innerHTML = Basis.Plugin.SyntaxHighlight.highlight(DOM.get('javascript').innerHTML);
+      //SyntaxHighlighter.highlight({}, DOM.get('css'));
     });
 
     var cssSource, jsSource;
@@ -41,7 +40,7 @@
             DOM.wrap(
               DOM
                 .tag('SCRIPT')
-                .map(Data.getter('getAttribute("src")'))
+                .map(Function.getter('getAttribute("src")'))
                 .filter(String.isNotEmpty)
                 .filter(function(value){ return !/third_party/.test(value) && !/demo\.js/.test(value) })
                 .map(function(value){ return DOM.createElement('A[href={0}]'.format(value.quote()), value.replace(/^([\.]+\/)+/, '')) }),
@@ -59,7 +58,7 @@
     cssClass(tabs.firstChild).add('selected');
     
     cssSource.className = 'brush: css';
-    jsSource.className = 'brush: javascript';
+    jsSource.className = 'Basis-SyntaxHighlight';
 
     Event.addHandler(tabs, 'click', function(event){
       var sender = Event.sender(event);

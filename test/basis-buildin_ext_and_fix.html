@@ -20,7 +20,9 @@
   </style>
   
   <script type="text/javascript"  src="../basis.js"></script>
-  <script type="text/javascript"  src="../dom_wraper.js"></script>
+  <script type="text/javascript"  src="../data.js"></script>
+  <script type="text/javascript"  src="../property.js"></script>
+  <script type="text/javascript"  src="../dom_wrapper.js"></script>
   <script type="text/javascript"  src="test.js"></script>
   <script type="text/javascript"  src="common.js"></script>
 </head>
@@ -564,11 +566,11 @@
                     var T = [{ value: 0 },{ value: 1 },{ value: 2 },{ value: 3 },{ value: 4 },{ value: 2, b: 1 }];
                     this.is(undefined, T.search(2));
                     this.is(T[1], T.search(T[1]));
-                    this.is(T[1], T.search(1.0, Data.getter('value')));
-                    this.is(undefined, T.search(1.5, Data.getter('value')));
-                    this.is(undefined, T.search('2', Data.getter('value')));
-                    this.is(T[2], T.search(2, Data.getter('value')));
-                    this.is(T.last(), T.search(2, Data.getter('value'), 3));
+                    this.is(T[1], T.search(1.0, Function.getter('value')));
+                    this.is(undefined, T.search(1.5, Function.getter('value')));
+                    this.is(undefined, T.search('2', Function.getter('value')));
+                    this.is(T[2], T.search(2, Function.getter('value')));
+                    this.is(T.last(), T.search(2, Function.getter('value'), 3));
                     this.is(T.last(), T.search(2, 'value', 3));
 
                     var T = [];
@@ -576,12 +578,12 @@
                     T[7] = { value: 5 };
                     T[9] = { value: 3 };
                     this.is(undefined, T.search(2));
-                    this.is(undefined, T.search(2, Data.getter('value')));
-                    this.is(T[3], T.search(3.0, Data.getter('value')));
-                    this.is(undefined, T.search(1.5, Data.getter('value')));
-                    this.is(undefined, T.search('3', Data.getter('value')));
-                    this.is(T[3], T.search(3, Data.getter('value')));
-                    this.is(T[9], T.search(3, Data.getter('value'), 4));
+                    this.is(undefined, T.search(2, Function.getter('value')));
+                    this.is(T[3], T.search(3.0, Function.getter('value')));
+                    this.is(undefined, T.search(1.5, Function.getter('value')));
+                    this.is(undefined, T.search('3', Function.getter('value')));
+                    this.is(T[3], T.search(3, Function.getter('value')));
+                    this.is(T[9], T.search(3, Function.getter('value'), 4));
                   }
                 },
                 {
@@ -590,11 +592,11 @@
                     var T = [{ value: 0 },{ value: 1 },{ value: 2 },{ value: 3 },{ value: 4 },{ value: 2, b: 1 }];
                     this.is(undefined, T.lastSearch(2));
                     this.is(T[1], T.lastSearch(T[1]));
-                    this.is(T[1], T.lastSearch(1.0, Data.getter('value')));
-                    this.is(undefined, T.lastSearch(1.5, Data.getter('value')));
-                    this.is(undefined, T.lastSearch('2', Data.getter('value')));
-                    this.is(T.last(), T.lastSearch(2, Data.getter('value')));
-                    this.is(T[2], T.lastSearch(2, Data.getter('value'), 3));
+                    this.is(T[1], T.lastSearch(1.0, Function.getter('value')));
+                    this.is(undefined, T.lastSearch(1.5, Function.getter('value')));
+                    this.is(undefined, T.lastSearch('2', Function.getter('value')));
+                    this.is(T.last(), T.lastSearch(2, Function.getter('value')));
+                    this.is(T[2], T.lastSearch(2, Function.getter('value'), 3));
                     this.is(T[2], T.lastSearch(2, 'value', 3));
                     this.is(T[2], T.lastSearch(2, 'value', 4));
                     this.is(T.last(), T.lastSearch(2, 'value', 5));
@@ -604,12 +606,12 @@
                     T[7] = { value: 5 };
                     T[9] = { value: 3 };
                     this.is(undefined, T.lastSearch(2));
-                    this.is(undefined, T.lastSearch(2, Data.getter('value')));
-                    this.is(T[9], T.lastSearch(3.0, Data.getter('value')));
-                    this.is(undefined, T.lastSearch(1.5, Data.getter('value')));
-                    this.is(undefined, T.lastSearch('3', Data.getter('value')));
-                    this.is(T[9], T.lastSearch(3, Data.getter('value')));
-                    this.is(T[3], T.lastSearch(3, Data.getter('value'), 4));
+                    this.is(undefined, T.lastSearch(2, Function.getter('value')));
+                    this.is(T[9], T.lastSearch(3.0, Function.getter('value')));
+                    this.is(undefined, T.lastSearch(1.5, Function.getter('value')));
+                    this.is(undefined, T.lastSearch('3', Function.getter('value')));
+                    this.is(T[9], T.lastSearch(3, Function.getter('value')));
+                    this.is(T[3], T.lastSearch(3, Function.getter('value'), 4));
                   }
                 }
               ]
@@ -655,7 +657,7 @@
                     this.is(-1, T.binarySearchPos(1.5, 'a', false, true));
                     this.is(2, T.binarySearchPos(2,   'a'));
                     this.is(4, T.binarySearchPos(4,   'a'));
-                    this.is(5, T.binarySearchPos(5,   Data.getter('a')));
+                    this.is(5, T.binarySearchPos(5,   Function.getter('a')));
                   }
                 },
                 {
@@ -671,22 +673,22 @@
                     this.is(-1, T.binarySearch(5));
 
                     var T = [{ a: 0 }, { a: 1}, { a: 2 }, { a: 3 }, { a: 4 }];
-                    this.is(-1, T.binarySearch(-1,  Data.getter('a')));
-                    this.is(0,  T.binarySearch(0,   Data.getter('a')));
-                    this.is(-1, T.binarySearch(0,   Data.getter('b')));
-                    this.is(1,  T.binarySearch(1,   Data.getter('a')));
-                    this.is(-1, T.binarySearch(1.5, Data.getter('a')));
-                    this.is(2,  T.binarySearch(2,   Data.getter('a')));
-                    this.is(4,  T.binarySearch(4,   Data.getter('a')));
-                    this.is(-1, T.binarySearch(5,   Data.getter('a')));
+                    this.is(-1, T.binarySearch(-1,  Function.getter('a')));
+                    this.is(0,  T.binarySearch(0,   Function.getter('a')));
+                    this.is(-1, T.binarySearch(0,   Function.getter('b')));
+                    this.is(1,  T.binarySearch(1,   Function.getter('a')));
+                    this.is(-1, T.binarySearch(1.5, Function.getter('a')));
+                    this.is(2,  T.binarySearch(2,   Function.getter('a')));
+                    this.is(4,  T.binarySearch(4,   Function.getter('a')));
+                    this.is(-1, T.binarySearch(5,   Function.getter('a')));
                   }
                 },
                 {
                   name: 'binarySearchIntervalPos()',
                   test: function(){
                     var T = [{ l: 0, r: 1 }, { l: 2, r: 3}, { l: 4, r: 5}];
-                    var l = Data.getter('l');
-                    var r = Data.getter('r');
+                    var l = Function.getter('l');
+                    var r = Function.getter('r');
                     this.is(0, T.binarySearchIntervalPos(-1, l, r));
                     this.is(-1, T.binarySearchIntervalPos(-1, l, r, true));
                     this.is(0, T.binarySearchIntervalPos(0, l, r));
@@ -718,8 +720,8 @@
                   name: 'binarySearchInterval()',
                   test: function(){
                     var T = [{ l: 0, r: 1 }, { l: 2, r: 3}, { l: 4, r: 5}];
-                    var l = Data.getter('l');
-                    var r = Data.getter('r');
+                    var l = Function.getter('l');
+                    var r = Function.getter('r');
                     this.is(-1, T.binarySearchInterval(-1, l, r));
                     this.is(0,  T.binarySearchInterval(0, l, r));
                     this.is(0,  T.binarySearchInterval(1, l, r));

@@ -1,21 +1,29 @@
 (function(){
 
+ /**
+  * @namespace Basis.Controls.Table
+  */
+
   var namespace = 'Basis.Controls.Table';
 
   // import names
 
   var Class = Basis.Class;
-  var Template = Basis.Html.Template;
+  var Event = Basis.Event;
   var DOM = Basis.DOM;
+  var Template = Basis.Html.Template;
+
+  var nsTable = Basis.Controls.Table;
+  var nsWrappers = Basis.DOM.Wrapper;
+
   var Box = Basis.Layout.Box;
   var Viewport = Basis.Layout.Viewport;
 
-  var nsTable = Basis.Controls.Table;
-  var nsWrapers = Basis.DOM.Wrapers;
+  var TimeEventManager = Basis.TimeEventManager;
 
   /* caculate scroll width */
   var ScrollBarWidth = 17;
-  Basis.Event.onLoad(function(){
+  Event.onLoad(function(){
     var tester = DOM.createElement('');
     DOM.setStyle(tester, { height: '100px', overflow: 'scroll' });
     DOM.insert(document.body, tester);
@@ -32,7 +40,12 @@
     return DOM.createElement('.Basis-ScrollTable-ExpandFooterCell');
   }
 
+ /**
+  * @class
+  */
   var ScrollTable = Class(nsTable.Table, {
+    className: namespace + '.ScrollTable',
+
     template: new Template(
       '<div{element} class="Basis-Table Basis-ScrollTable">' +
         '<div{headerFooterContainer} class="Basis-ScrollTable-HeaderFooterContainer">' +
@@ -50,16 +63,17 @@
         '</div>' +
       '</div>'
     ),
-    behaviour: nsWrapers.createBehaviour(nsTable.Table, {
+
+    behaviour: nsWrappers.createBehaviour(nsTable.Table, {
       childNodesModified: function(node, delta){
         this.inherit(node, delta);
-        nsWrapers.TimeEventManager.add(this, 'adjust', Date.now());
+        TimeEventManager.add(this, 'adjust', Date.now());
         //console.log('!');
         //setTimeout(this.sync.bind(this), 0);
       },
-      childUpdated: function(child, newInfo, oldInfo, delta){
-        this.inherit(child, newInfo, oldInfo, delta);
-        nsWrapers.TimeEventManager.add(this, 'adjust', Date.now());
+      childUpdated: function(child, delta){
+        this.inherit(child, delta);
+        TimeEventManager.add(this, 'adjust', Date.now());
       }
     }),
 
@@ -118,11 +132,11 @@
       this.tableBox = new Box(this.tableElement);
       this.lastScrollLeftPosition = 0;
 
-      Basis.Event.addHandler(this.scrollContainer, 'scroll', this.onScroll.bind(this));
-      Basis.Event.addHandler(window, 'resize', this.adjust.bind(this));
+      Event.addHandler(this.scrollContainer, 'scroll', this.onScroll.bind(this));
+      Event.addHandler(window, 'resize', this.adjust.bind(this));
 
       this.sync();
-      nsWrapers.TimeEventManager.add(this, 'adjust', Date.now());
+      TimeEventManager.add(this, 'adjust', Date.now());
     },
     onScroll: function(event){
       var scrollLeft = this.scrollContainer.scrollLeft;

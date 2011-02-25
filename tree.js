@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -25,30 +25,30 @@
     * {Basis.Controls.Tree.TreeGroupControl} and
     * {Basis.Controls.Tree.TreePartitionNode}.
     *
-    * Most part of component logic implemented in {Basis.DOM.Wrapers} namespace,
+    * Most part of component logic implemented in {Basis.DOM.Wrapper} namespace,
     * and this one just contains templates and collapse/expand implementation.
     *
     * @link ./test/speed-tree.html
     * @link ./demo/simple/tree.html
-    * @link ./demo/entity/basic.html
+    * @link ./demo/data/entity.html
     *
     * @namespace Basis.Controls.Tree
     */
 
-    var namespace = 'Basis.Controls.Tree';
+    var namespace = String('Basis.Controls.Tree');
     
     // import names
 
     var Class = Basis.Class;
     var Event = Basis.Event;
-    var Data = Basis.Data;
     var DOM = Basis.DOM;
 
     var Template = Basis.Html.Template;
-    var cssClass = Basis.CSS.cssClass;
 
-    var nsWrapers = DOM.Wrapers;
-    var createBehaviour = nsWrapers.createBehaviour;
+    var cssClass = Basis.CSS.cssClass;
+    var getter = Function.getter;
+
+    var nsWrappers = DOM.Wrapper;
 
    /**
     * Expand all descendant nodes.
@@ -65,9 +65,19 @@
     }
 
    /**
+    * Here is an example for tree recursive childFactory
+    */
+    /*function treeChildFactory(config){
+      if (config.childNodes)
+        return new TreeFolder(Object.complete({ childFactory: this.childFactory }, config));
+      else
+        return new TreeNode(config);
+    }*/
+
+   /**
     * @class
     */
-    var TreePartitionNode = Class(nsWrapers.HtmlPartitionNode, {
+    var TreePartitionNode = Class(nsWrappers.HtmlPartitionNode, {
       className: namespace + '.TreePartitionNode',
       template: new Template(
         '<li{element} class="Basis-Tree-NodeGroup">' + 
@@ -80,7 +90,7 @@
    /**
     * @class
     */
-    var TreeGroupControl = Class(nsWrapers.HtmlGroupControl, {
+    var TreeGroupControl = Class(nsWrappers.HtmlGroupControl, {
       className: namespace + '.TreeGroupControl',
       childClass: TreePartitionNode
     });
@@ -88,72 +98,51 @@
    /**
     * Base child class for {Basis.Controls.Tree.Tree}
     * @class
-    * @extends {Basis.DOM.Wrapers.HtmlNode}
     */
-    var TreeNode = Class(nsWrapers.HtmlNode, {
+    var TreeNode = Class(nsWrappers.HtmlContainer, {
       className: namespace + '.TreeNode',
 
       canHaveChildren: false,
+      //childFactory: null,
 
       // node behaviour handlers
-      behaviour: createBehaviour(nsWrapers.HtmlNode, {
+      behaviour: {
         click: function(event){
-          if (DOM(Event.sender(event)).isInside(this.title || this.element))
+          if (DOM(Event.sender(event)).isInside(this.tmpl.title || this.tmpl.element))
             this.select(Event(event).ctrlKey);
         },
-        update: function(node, newInfo, oldInfo, delta){
-          this.inherit(node, newInfo, oldInfo, delta);
+        update: function(node, delta){
+          this.inherit(node, delta);
 
-          var title = this.titleGetter(this);
-          if (title !== this._title)
-          {
-            this._title = title;
-
-            // check out a title value
-            var isText = title != null && title != '';
-            
-            // set new title
-            this.titleText.nodeValue = isText ? title : '[no title]';
-
-            // update alt
-            if (this.altTitle)
-              DOM.setAttribute(this.content, 'title', isText ? title : null);
-          }
+          // set new title
+          var title = String(this.titleGetter(this));
+          this.tmpl.titleText.data = title || '[no title]';
         }
-      }),
+      },
 
      /**
       * Template for node element. 
-      * @property {Basis.Html.Template} template
+      * @type {Basis.Html.Template}
       * @private
       */
       template: new Template(
-        '<li{element} class="Basis-Tree-Node">' + 
-          '<div{content|selectedElement} class="Tree-Node-Title Tree-Node-Content">' + 
-            '<a{title} href="#">{titleText|[no title]}</a>' + 
-          '</div>' + 
+        '<li{element} class="Basis-Tree-Node">' +
+          '<div{content|selectedElement} class="Tree-Node-Title Tree-Node-Content">' +
+            '<a{title} href="#">{titleText|[no title]}</a>' +
+          '</div>' +
         '</li>'
       ),
 
      /**
-      * @property {boolean} altTitle
+      * @type {function()}
       */
-      altTitle: true,
-
-     /**
-      * @property {function()} titleGetter
-      */
-      titleGetter: Data('info.title'),
-
-      /* no custom constructor */
+      titleGetter: getter('info.title'),
 
       // there are abstract methods, implemented for capability with TreeFolder
       expand: Function.$undef,
       expandAll: expandAll,
       collapse: Function.$undef,
       collapseAll: collapseAll
-
-      /* no custom destructor */
 
     });
 
@@ -169,72 +158,70 @@
       childClass: TreeNode,
       groupControlClass: TreeGroupControl,
 
-      behaviour: createBehaviour(TreeNode, {
-        //dblclick: function(){ this.toggle() },
+      behaviour: {
         click: function(event){
-          if (this.expander && DOM(Event.sender(event)).isInside(this.expander))
+          if (this.expander && DOM(Event.sender(event)).isInside(this.tmpl.expander))
             this.toggle();
           else
             this.inherit(event);
         },
         expand: function(){
-          cssClass(this.element).remove('collapsed');
-          DOM.display(this.childNodesElement, true);
+          cssClass(this.tmpl.element).remove('collapsed');
+          DOM.display(this.tmpl.childNodesElement, true);
         },
         collapse: function(){
-          DOM.display(this.childNodesElement, false);
-          cssClass(this.element).add('collapsed');
+          DOM.display(this.tmpl.childNodesElement, false);
+          cssClass(this.tmpl.element).add('collapsed');
         }
-      }),
+      },
 
      /**
       * Template for node element. 
-      * @property {Basis.Html.Template} template
+      * @type {Basis.Html.Template}
       * @private
       */
       template: new Template(
         '<li{element} class="Basis-Tree-Folder">' + 
           '<div{content|selectedElement} class="Tree-Node-Title Tree-Folder-Content">' + 
-            '<div{expander} class="Basis-Tree-Expander"></div>' + 
+            '<div{expander} class="Basis-Tree-Expander"/>' + 
             '<a{title} href="#">{titleText|[no title]}</a>' + 
           '</div>' + 
-          '<ul{childNodesElement}></ul>' + 
+          '<ul{childNodesElement}/>' + 
         '</li>'
       ),
 
      /**
-      * @property {boolean} canCollapse
+      * @type {boolean}
       */
-      canCollapse: true,
+      collapsable: true,
 
      /**
-      * @property {boolean} collapsed
+      * @type {boolean}
       */
       collapsed: false,
 
      /**
       * @param {Object} config
-      * @config {boolean} canCollapse
+      * @config {boolean} collapsable
       * @config {boolean} collapsed
-      * @return {Object} Returns a config.
       * @constructor
       */
       init: function(config){
-        config = this.inherit(config);
+        this.inherit(config);
 
-        // can this node collapse
-        if ('canCollapse' in config)
-          this.canCollapse = !!config.canCollapse;
+        if (config)
+        {
+          // can this node collapse
+          if ('collapsable' in config)
+            this.collapsable = !!config.collapsable;
 
-        // collapse node
-        // using this statements instead of this.collapse() is decrease node create time
-        if ('collapsed' in config)
-          this.collapsed = !!config.collapsed;
+          // collapse node
+          if ('collapsed' in config)
+            this.collapsed = !!config.collapsed;
+        }
 
-        if (this.collapsed && this.canCollapse)
+        if (this.collapsed && this.collapsable)
           this.dispatch('collapse');
-
-        return config;
       },
 
      /**
@@ -255,7 +242,7 @@
       * @return {boolean} Returns true if node was collpased.
       */
       collapse: function(){
-        if (!this.collapsed && this.canCollapse)
+        if (!this.collapsed && this.collapsable)
         {
           this.collapsed = true;
           this.dispatch('collapse');
@@ -270,23 +257,22 @@
         this.collapsed ? this.expand() : this.collapse();
       } 
 
-      /* no custom destructor */
-
     });
 
    /**
     * @class
-    * @extends {Basis.DOM.Wrapers.Control}
     */
-    var Tree = Class(nsWrapers.Control, {
+    var Tree = Class(nsWrappers.Control, {
       className: namespace + '.Tree',
 
       childClass: TreeNode,
       groupControlClass: TreeGroupControl,
 
+      //childFactory: treeChildFactory,
+
      /**
       * Template for node element. 
-      * @property {Basis.Html.Template} template
+      * @type {Basis.Html.Template}
       * @private
       */
       template: new Template(
@@ -298,40 +284,29 @@
      /**
       * @param {Object} config
       * @config {function()} childClass
-      * @return {Object} Returns a config.
       * @constructor
       */
       init: function(config){
-        if (config instanceof Object)
-        {
-          // childClass
-          if (typeof config.childClass == 'function')
-            this.childClass = config.childClass;
-        }
-
         // inherit
-        config = this.inherit(config);
+        this.inherit(config);
 
         // attach event handlers
         this.addEventListener('click');
         this.addEventListener('dblclick');
-
-        return config;
       },
+
      /**
       * Expand all descendant nodes.
-      * @method expandAll
       */
       expandAll: expandAll,
 
      /**
       * Collapse all descendant nodes.
-      * @method collapseAll
       */
-      collapseAll: collapseAll
+      collapseAll: collapseAll,
 
-      /* no custom destructor */
-
+      expand: Function.$undef,
+      collapse: Function.$undef
     });
 
     //

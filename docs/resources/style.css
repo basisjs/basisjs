@@ -11,15 +11,6 @@
     font-size: small;
   }
 
-  .Basis-Layout-Panel-Top,
-  .Basis-Layout-Panel-Left,
-  .Basis-Layout-Panel-Client,
-  .Basis-Layout-Panel-Right,
-  .Basis-Layout-Panel-Bottom
-  {
-    position: absolute;
-  }
-
   #Layout
   {
     position: relative;
@@ -28,13 +19,15 @@
 
   #Sidebar
   {
+    position: relative;
     width: 340px;
+    height: 100%;
+    float: left;
     border-right: 1px solid #888;
   }
 
   #Toolbar
   {
-    height: 2em;
     background: #F0F0F0;
     border-bottom: 1px solid #E0E0E0;
   }
@@ -52,14 +45,15 @@
   }
   #Sidebar .Basis-Page
   {
-    overflow: auto;
+    /*overflow: auto;
     overflow-y: scroll;
-    overflow-x: none;
+    overflow-x: none;*/
   }
 
   #Sidebar .Basis-MatchInput
   {
-    margin: 3px 27px 2px 3px;
+    margin: 0 24px 0 0;
+    padding: 3px;
   }
   #Sidebar .Basis-MatchInput INPUT
   {
@@ -172,9 +166,12 @@
    *  View
    */
 
-  #Content
+  #Content,
+  #ObjectView
   {
-    padding: 1em 8px 1em 16px;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
   }
 
   #Content H2
@@ -212,12 +209,15 @@
     font-size: 100%;
     background-repeat: no-repeat;
     background-position: 3px 3px;
+    margin: 0;
+    padding: 0;
+    background: white;
   }
   #Content H3 SPAN
   {
     display: block;
-    padding: 3px 0;
-    border-bottom: 1px solid #333;
+    padding: .25em 1ex;
+    line-height: 1.2em;
   }
 
   #Content .viewOptions
@@ -225,7 +225,8 @@
     font-size: 85%;
     float: right;
     line-height: 1em;
-    margin-top: -.7em;
+    margin-top: 1em;
+    margin-right: 1ex;
   }
   #Content .viewOptions .title,
   #Content .viewOptions .options
@@ -250,10 +251,14 @@
     cursor: default;
   }
 
+  #Content .viewTitle
+  {
+    margin: 5px 0 0 5px;
+  }
+
   #Content .viewInheritance UL
   {
     margin: 0;
-    padding: 0;
     list-style: none;
   }
   #Content .viewInheritance LI
@@ -262,6 +267,7 @@
   }
   #Content .viewInheritance LI UL
   {
+    padding: 0;
     padding-left: 14px;
   }
   #Content .viewInheritance .absent
@@ -471,6 +477,11 @@
     color: #888;
   }
 
+  #Content .content
+  {
+    border-top: 1px solid #888;
+    padding: 1em 1ex 2em 2ex;
+  }
 
   .jsDocs P
   {
@@ -626,4 +637,67 @@
   {
     padding-left: 20px;
     padding-bottom: .5em;
+  }
+
+
+  /*********************************/
+
+  .XControl-Content
+  {
+    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    position: absolute;
+    top: 4em;
+    bottom: 0;
+    width: 100%;
+  }
+
+    .XControlHeader
+    {
+      poi3nter-events: none;
+      position: absolute;
+      left: 0; 
+      right: 17px;
+      top: 4em;
+      z-index: 10;
+      border-bottom: 1px solid #888;
+    }/*
+    .XControlHeader:after
+    {
+      margin-top: 1px;
+      background: url(img/top_white_grad.png) repeat-x left;
+      position: absolute;
+      content: ' ';
+      height: 20px;
+      width: 100%;
+      top: 100%;
+    }*/
+    .XControlFooter
+    {
+      poi3nter-events: none;
+      position: absolute;
+      left: 0; 
+      right: 17px;
+      bottom: 0;
+      z-index: 10;
+      /*padding-top: 20px;
+      background: url(img/bottom_white_grad.png) repeat-x;*/
+    }
+
+  .Content-Header
+  {
+    cursor: pointer;
+    height: 23px;
+    border-top: 1px solid #888;
+    background: #F0F0F0 !important;
+  }
+  .Content-Header SPAN
+  {
+    border-top: 1px solid white;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #D8D8D8), color-stop(35%, #E8E8E8), color-stop(65%, #E8E8E8),color-stop(100%, #F8F8F8)) !important;
+    font-wei3ght: normal !important;
+    font-family: Consolas;
+    padding-left: 14px !important;
+    /*background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #FBB700), color-stop(1, #D96200));*/
   }

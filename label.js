@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -15,16 +15,31 @@
     * @namespace Basis.Controls.Label
     */
 
-    var namespace = 'Basis.Controls.Label';
+    var namespace = String('Basis.Controls.Label');
 
     // import names
 
     var Class = Basis.Class;
     var DOM = Basis.DOM;
-    var Data = Basis.Data;
     var Template = Basis.Html.Template;
 
-    var nsWrapers = Basis.DOM.Wrapers;
+    var getter = Function.getter;
+
+    var createBehaviour = Basis.EventObject.createBehaviour;
+    var nsWrappers = Basis.DOM.Wrapper;
+    var STATE = Basis.Data.STATE;
+
+
+    //
+    // Main part
+    //
+
+    var stateTemplate = new Template(
+      '<div{element|content} class="Basis-Label-State"/>'
+    );
+    var processingTemplate = new Template(
+      '<div{element|content} class="Basis-Label-Processing"/>'
+    );
 
     //
     // NodeLabel
@@ -34,7 +49,9 @@
     * Base class for all labels.
     * @class
     */
-    var NodeLabel = Class(nsWrapers.HtmlPanel, { className: namespace + '.NodeLabel',
+    var NodeLabel = Class(nsWrappers.HtmlNode, {
+      className: namespace + '.NodeLabel',
+
       cascadeDestroy: true,
 
       show_: false,
@@ -43,13 +60,13 @@
 
       defaultContent: '[no text]',
 
-      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlPanel, {
+      behaviour: {
         delegateChanged: function(object, oldDelegate){
           var newContainer = oldDelegate ? oldDelegate.element == this.container : !this.container;
           if (newContainer)
             this.setContainer(this.delegate && this.delegate.element);
         }
-      }),
+      },
 
       init: function(config){
         config = config || {};
@@ -64,7 +81,7 @@
           config.content = this.defaultContent;
 
         if (config.visibilityGetter)
-          this.visibilityGetter = Data(config.visibilityGetter);
+          this.visibilityGetter = getter(config.visibilityGetter);
 
         config = this.inherit(config);
 
@@ -77,7 +94,7 @@
         if (this.container && this.visible_)
         {
           if (this.container != this.element.parentNode)
-            DOM.insert(this.container, this.element);
+            DOM.insert(this.container, this.tmpl.element);
         }
         else
           DOM.remove(this.element);
@@ -113,13 +130,16 @@
     * Label that reacts on master node state changes.
     * @class
     */
-    var State = Class(NodeLabel, { className: namespace + '.State',
+    var State = Class(NodeLabel, {
+      className: namespace + '.State',
 
-      behaviour: nsWrapers.createBehaviour(NodeLabel, {
-        stateChanged: function(object, newState, oldState, stateData){
-          this.setVisibility(this.visibilityGetter(newState, oldState));
+      behaviour: {
+        stateChanged: function(object, oldState){
+          this.setVisibility(this.visibilityGetter(this.state, oldState));
         }
-      }),
+      },
+
+      template: stateTemplate,
 
       init: function(config){
         if (config)
@@ -129,7 +149,7 @@
             var map = {};
             for (var state, i = 0; state = config.visibleStates[i++];)
               map[state] = true;
-            config.visibilityGetter = Data(Function.$self, map);
+            config.visibilityGetter = getter(Function.$self, map);
           }
         }
 
@@ -141,9 +161,12 @@
     * Label that shows only when delegate node in processing state.
     * @class
     */
-    var Processing = Class(State, { className: namespace + '.Processing',
-      visibilityGetter: function(newState){ return newState == nsWrapers.STATE.PROCESSING },
-      defaultContent: 'Processing...'
+    var Processing = Class(State, {
+      className: namespace + '.Processing',
+
+      visibilityGetter: function(newState){ return newState == STATE.PROCESSING },
+      defaultContent: 'Processing...',
+      template: processingTemplate
     });
 
     //
@@ -151,9 +174,8 @@
     //
 
     var CollectionState_CollectionHandler = {
-      stateChanged: function(object, newState, oldState, stateData){
-        this.setVisibility(this.visibilityGetter(newState, oldState));
-        this.dispatch('collectionStateChanged', object, newState, oldState, stateData);
+      stateChanged: function(object, oldState){
+        this.setVisibility(this.visibilityGetter(object.state, oldState));
       }
     };
 
@@ -165,7 +187,7 @@
         if (object.collection)
         {
           object.collection.addHandler(CollectionState_CollectionHandler, this);
-          CollectionState_CollectionHandler.stateChanged.call(this, object.collection, object.collection.state, object.collection.state);
+          CollectionState_CollectionHandler.stateChanged.call(this, object.collection, object.collection.state);
         }
       }
     };
@@ -173,8 +195,10 @@
    /**
     * @class
     */
-    var CollectionState = Class(State, { className: namespace + '.CollectionState',
-      behaviour: nsWrapers.createBehaviour(NodeLabel, {
+    var CollectionState = Class(State, {
+      className: namespace + '.CollectionState',
+
+      behaviour: createBehaviour(NodeLabel, {
         delegateChanged: function(object, oldDelegate){
           this.inherit(object, oldDelegate);
 
@@ -187,16 +211,20 @@
             CollectionState_DelegateHandler.collectionChanged.call(this, this.delegate, oldDelegate && oldDelegate.collection);
           }
         }
-      })
+      }),
+      template: stateTemplate
     });
 
    /**
     * Label that shows only when delegate's collection in processing state.
     * @class
     */
-    var CollectionProcessing = Class(CollectionState, { className: namespace + '.CollectionProcessing',
-      visibilityGetter: function(newState){ return newState == nsWrapers.STATE.PROCESSING },
-      defaultContent: 'Processing...'
+    var CollectionProcessing = Class(CollectionState, {
+      className: namespace + '.CollectionProcessing',
+
+      visibilityGetter: function(newState){ return newState == STATE.PROCESSING },
+      defaultContent: 'Processing...',
+      template: processingTemplate
     });
 
     //
@@ -207,34 +235,64 @@
       this.setVisibility(this.visibilityGetter(this.delegate ? this.delegate.childNodes.length : 0, this.delegate));
     };
 
-    var CHILD_COUNT_HANDLER = {
+    var ChildCount_CollectionHandler = {
+      stateChanged: function(object, oldState){
+        this.setVisibility(this.visibilityGetter(object.itemCount, this.delegate));
+      }
+    };
+
+    var ChildCount_DelegateHandler = {
       childNodesModified: CHILD_COUNT_FUNCTION,
       collectionStateChanged: CHILD_COUNT_FUNCTION,
-      stateChanged: CHILD_COUNT_FUNCTION
+      stateChanged: CHILD_COUNT_FUNCTION,
+
+      collectionChanged: function(object, oldCollection){
+        if (oldCollection)
+          oldCollection.removeHandler(ChildCount_CollectionHandler, this);
+
+        if (object.collection)
+        {
+          object.collection.addHandler(ChildCount_CollectionHandler, this);
+          ChildCount_CollectionHandler.stateChanged.call(this, object.collection, object.collection.state);
+        }
+      }
     };
 
    /**
     * @class
     */
-    var ChildCount = Class(NodeLabel, { className: namespace + '.ChildCount',
-      behaviour: nsWrapers.createBehaviour(NodeLabel, {
+    var ChildCount = Class(NodeLabel, {
+      className: namespace + '.ChildCount',
+
+      behaviour: {
         delegateChanged: function(object, oldDelegate){
           this.inherit(object, oldDelegate);
+
           if (oldDelegate)
-            oldDelegate.removeHandler(CHILD_COUNT_HANDLER, this);
+            oldDelegate.removeHandler(ChildCount_DelegateHandler, this);
+
           if (this.delegate)
-            this.delegate.addHandler(CHILD_COUNT_HANDLER, this);
+          {
+            this.delegate.addHandler(ChildCount_DelegateHandler, this);
+            ChildCount_DelegateHandler.collectionChanged.call(this, this.delegate);
+          }
+
           CHILD_COUNT_FUNCTION.call(this);
         }
-      })
+      },
+      template: new Template(
+        '<div{element|content} class="Basis-CountLabel"/>'
+      )
     });
 
    /**
     * @class
     */
-    var IsEmpty = Class(ChildCount, { className: namespace + '.IsEmpty',
+    var IsEmpty = Class(ChildCount, {
+      className: namespace + '.IsEmpty',
+
       visibilityGetter: function(childCount, object){ 
-        return !childCount && (object.collection ? object.collection.state : object.state) == nsWrapers.STATE.READY;
+        return !childCount && (object.collection ? object.collection.state : object.state) == STATE.READY;
       },
       defaultContent: 'Empty'
     })

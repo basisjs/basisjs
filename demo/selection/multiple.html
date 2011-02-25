@@ -22,7 +22,7 @@
     {
       border: 1px solid #AAA;
       width: 300px;
-      height: 400px;
+      height: 400ex;
       overflow: auto;
       overflow-y: scroll;
       overflow-x: hidden;
@@ -61,7 +61,8 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../tree.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -86,7 +87,7 @@
     var Data = Basis.Data;
 
     var nsTree = Basis.Controls.Tree;
-    var Selection = Basis.DOM.Wrapers.Selection;
+    var Selection = Basis.DOM.Wrapper.Selection;
 
     //
     // THIS SECTION FOR AUTOMATIC SELECTION CONTENT OUTPUT AND NOT A PART OF DEMONSTATION
@@ -98,7 +99,7 @@
       this.element = DOM.insert(selectionOutput, DOM.createElement('', DOM.createElement('LABEL', (name || 'Tree selection') + ': '), this.content = DOM.createText()));
       this.addHandler({
         change: function(){
-          this.content.nodeValue = this.items.map(Data.getter('info.title')).join(', ') || 'no items';
+          this.content.nodeValue = this.getItems().map(Function.getter('info.title + " " + object.document')).join(', ') || 'no items';
         }
       });
     }
@@ -160,13 +161,18 @@
     new nsTree.Tree({
       id: 'DemoTree',
       container: DOM.get('demo-container'),
-      selection: { multiple: true },
+
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(Object.complete({ document: this.document || this }, config));
+          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
         else
-          return new nsTree.TreeNode(Object.complete({ document: this.document || this }, config));
+          return new nsTree.TreeNode(config);
       },
+
+      selection: {
+        multiple: true
+      },
+
       childNodes: data
     });
 

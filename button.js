@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -22,15 +22,15 @@
     var Class = Basis.Class;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
-    var Data = Basis.Data;
     var Template = Basis.Html.Template;
 
     var extend = Object.extend;
     var complete = Object.complete;
+    var getter = Function.getter;
+    var cssClass = Basis.CSS.cssClass;
 
-    var nsWrapers = DOM.Wrapers;
-    var STATE = nsWrapers.STATE;
-    var createBehaviour = nsWrapers.createBehaviour;
+    var nsWrappers = DOM.Wrapper;
+    var STATE = Basis.Data.STATE;
 
     //
     // Main part
@@ -40,29 +40,8 @@
     * @class Button
     */
 
-    var Button = Class(nsWrapers.HtmlNode, {
+    var Button = Class(nsWrappers.HtmlNode, {
       className: namespace + '.Button',
-
-      /*behaviour: createBehaviour(HtmlNode, {
-        stateChanged: function(object, newState, oldState, errorText){
-          this.inherit(object, newState, oldState, errorText);
-
-          if (newState == STATE.READY)
-            this.enable();
-          else
-            this.disable();
-        }
-        /*,
-        disable: function(){
-          this.inherit();
-          this.element.setAttribute('tabindex', -1);
-        },
-        enable: function(){
-          this.inherit();
-          //delete this.element.tabindex;
-          this.element.removeAttribute('tabindex');
-        }*//*
-      }),*/
 
       template: new Template(
         '<div{element} class="Basis-Button">' + 
@@ -78,13 +57,13 @@
         '</div>'
       ),
 
-      behaviour: createBehaviour(nsWrapers.HtmlNode, {
+      behaviour: {
         select: function(){
           DOM.focus(this.content);
         }
-      }),
+      },
 
-      captionGetter: Data('caption'),
+      captionGetter: getter('caption'),
       caption: '[no title]',
       groupId: 0,
       name: null,
@@ -149,16 +128,20 @@
    /**
     * @class ButtonGroupControl
     */
-    var ButtonGroupControl = Class(nsWrapers.HtmlGroupControl, {
-      childClass: Class(nsWrapers.HtmlPartitionNode, {
-        behaviour: createBehaviour(nsWrapers.HtmlPartitionNode, {
+    var ButtonGroupControl = Class(nsWrappers.HtmlGroupControl, {
+      className: namespace + '.ButtonGroupControl',
+      childClass: Class(nsWrappers.HtmlPartitionNode, {
+        className: namespace + '.ButtonPartitionNode',
+        behaviour: {
           childNodesModified: function(node){
             for (var i = 0, child; child = this.childNodes[i]; i++)
-              Basis.CSS.cssClass(child.element)
+            {
+              cssClass(child.element)
                 .bool('first', child == node.firstChild)
                 .bool('last', child == node.lastChild);
+            }
           }
-        }),
+        },
         template: new Template(
           '<div{element|content|childNodesElement} class="Basis-ButtonGroup"></div>'
         )
@@ -168,7 +151,7 @@
    /**
     * @class ButtonPanel
     */
-    var ButtonPanel = Class(nsWrapers.HtmlControl, {
+    var ButtonPanel = Class(nsWrappers.HtmlControl, {
       className: namespace + '.ButtonPanel',
 
       template: new Template(
@@ -181,11 +164,11 @@
 
       groupControlClass: ButtonGroupControl,
       localGrouping: {
-        groupGetter: Data('groupId || -object.eventObjectId')
+        groupGetter: getter('groupId || -object.eventObjectId')
       },
 
       getButtonByName: function(name){
-        return this.childNodes.search(name, Data('name'));
+        return this.childNodes.search(name, getter('name'));
       }
     });
 

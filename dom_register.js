@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -13,13 +13,13 @@
 
     // namespace
 
-    var namespace = String('Basis.DOM.Wrapers.Register');
+    var namespace = String('Basis.DOM.Wrapper.Register');
 
     // import names
 
     var Class = Basis.Class;
-    var Data = Basis.Data;
-    var MWrapers = Basis.DOM.Wrapers;
+    var getter = Function.getter;
+    var Property = Basis.Data.Property.Property;
 
     //
     // Main part
@@ -27,19 +27,32 @@
 
     // CONST
     
-    var EXCEPTION_EVENT_OBJECT_NEEDED = 'Object must be an instance of Basis.DOM.Wrapers.EventObject';
+    var EXCEPTION_EVENT_OBJECT_NEEDED = 'Object must be an instance of Basis.EventObject';
 
     var RegisterHandlers = {
       childNodesModified: function(node, delta){
         //console.log('childNodesModified: ', node, delta);
+
         this.lock();
-        if (delta.inserted)
-          for (var i = 0, item; item = delta.inserted[i]; i++)
-            this.handleAdd(this.getter(item.node.info, item.node));
 
         if (delta.deleted)
-          for (var i = 0, item; item = delta.deleted[i]; i++)
-            this.handleRemove(this.getter(item.node.info, item.node));
+        { 
+          /*if (!node.firstChild)
+            this.handleRemoveAll(node);
+          else*/
+            for (var i = 0, item; item = delta.deleted[i]; i++)
+              this.handleRemove(this.getter(item.info, item));
+        }
+
+        if (delta.inserted)
+        {
+          /*if (node.childNodes.length == delta.inserted.length)
+            this.handleAddAll(node);
+          else*/
+            for (var i = 0, item; item = delta.inserted[i]; i++)
+              this.handleAdd(this.getter(item.info, item));
+        }
+
         this.unlock();
       }/*,
       childInserted: function(child){
@@ -70,19 +83,19 @@
       }
     };
 
-    var Register = Class.create(MWrapers.Property, {
+    var Register = Class(Property, {
       className: namespace + '.Register',
 
       // constructor
       init: function(initValue, getter, behaviour){
         this.inherit(initValue, behaviour);
         this.attachments = new Array();
-        this.getter = Data.getter(getter);
+        this.getter = Function.getter(getter);
       },
 
       // attachment methods
       attach: function(node){
-        if (node instanceof MWrapers.EventObject)
+        if (node instanceof Basis.EventObject)
         {
           if (this.attachments.add(node))
           {
@@ -150,7 +163,7 @@
     // Collections
     //
 
-    var Collection = Class.create(Register, {
+    var Collection = Class(Register, {
       className: namespace + '.Collection',
 
       init: function(getter){
@@ -180,7 +193,7 @@
       }
     });
 
-    var SortedCollection = Class.create(Collection, {
+    var SortedCollection = Class(Collection, {
       className: namespace + '.SortedCollection',
 
       add: function(value){
@@ -204,7 +217,7 @@
       init: function(getter, filter){
         this.inherit(getter);
 
-        this.filter = filter ? Data.getter(filter) : false;
+        this.filter = filter ? getter(filter) : false;
       },
       handleAdd: function(value){
         if (!this.filter || this.filter(value))
@@ -226,11 +239,11 @@
     // will be fixed in future. But now Filter & SortedFilter inherited from
     // different classes and not connected.
 
-    var Filter = Class.create(Collection, FilterMethods, {
+    var Filter = Class(Collection, FilterMethods, {
       className: namespace + '.Filter'
     });
 
-    var SortedFilter = Class.create(SortedCollection, FilterMethods, {
+    var SortedFilter = Class(SortedCollection, FilterMethods, {
       className: namespace + '.SortedFilter'
     });
 
@@ -238,7 +251,7 @@
     // Aggregates
     //
 
-    var Count = Class.create(Register, {
+    var Count = Class(Register, {
       className: namespace + '.Count',
 
       init: function(getter){
@@ -249,7 +262,7 @@
         this.set(this.value + (Number(value) ? 1 : 0));
       },
       handleRemove: function(value){
-        this.set(this.value - (Number(value) ? 1 : 0));
+        this.set(this.value + (Number(value) ? -1 : 0));
       },
       // optimize
       handleUpdate: function(newValue, oldValue){
@@ -269,7 +282,7 @@
       }
     });
 
-    var Sum = Class.create(Register, {
+    var Sum = Class(Register, {
       className: namespace + '.Sum',
 
       init: function(getter){
@@ -299,7 +312,7 @@
       }
     });
 
-    var Avg = Class.create(Register, {
+    var Avg = Class(Register, {
       className: namespace + '.Avg',
 
       init: function(getter){
@@ -319,7 +332,7 @@
       }
     });
 
-    var Min = Class.create(Register, {
+    var Min = Class(Register, {
       className: namespace + '.Min',
       init: function(getter){
         this.inherit(null, getter);
@@ -341,7 +354,7 @@
         this.inherit();
       }
     });
-    var Max = Class.create(Register, {
+    var Max = Class(Register, {
       className: namespace + '.Max',
       init: function(getter){
         this.inherit(null, getter);

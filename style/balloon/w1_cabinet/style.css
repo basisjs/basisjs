@@ -108,7 +108,7 @@
     width: 5px;
     padding: 1px 0 0;
   }
-  .Basis-Balloon-Canvas .canvas-content
+  .Basis-Balloon-Canvas .content
   {
     -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=95)";
     opacity: .95;

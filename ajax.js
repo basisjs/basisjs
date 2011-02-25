@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -24,8 +24,12 @@
     var Cookies = Browser.Cookies;
     var Cleaner = Basis.Cleaner;
 
-    var nsWrapers = Basis.DOM.Wrapers;
-    var TimeEventManager = nsWrapers.TimeEventManager;
+    var TimeEventManager = Basis.TimeEventManager;
+
+    var nsData = Basis.Data;
+    var STATE = nsData.STATE;
+
+    var nsWrappers = Basis.DOM.Wrapper;
 
     //
     // Main part
@@ -246,15 +250,14 @@
       {
         TimeEventManager.remove(this, 'timeoutAbort');
 
-        var newState = nsWrapers.STATE.UNDEFINED;
-        var errorText;
+        var newState = STATE.UNDEFINED;
+        var error;
 
         // progress over (otherwise any abort method call may occur double readyStateChangeHandler call)
         this.progress = false;
 
-        // clean event handler (avoid memory leak in MSIE)
-        // remove? MSIE already drop handler on download complete. check it
-        transport.onreadystatechange = null; //Function.$undef;
+        // clean event handler
+        transport.onreadystatechange = Function.$undef;
 
         // case abort, success, fault
         if (this.aborted)
@@ -282,12 +285,13 @@
           if (isSuccess)
           {
             this.dispatch('success', transport);
-            newState = nsWrapers.STATE.READY;
+            newState = STATE.READY;
           }
           else
           {
             this.dispatch('failure', transport);
-            newState = nsWrapers.STATE.ERROR;
+            newState = STATE.ERROR;
+            error = this.getRequestError(transport);
           }
 
           // dispatch status
@@ -298,10 +302,10 @@
         this.dispatch('complete', transport);
 
         // set new state
-        this.setState(newState, errorText);
+        this.setState(newState, error);
       }
       else
-        this.setState(nsWrapers.STATE.PROCESSING);
+        this.setState(STATE.PROCESSING);
 
       // dispatch event
       // there is not need any more
@@ -406,18 +410,18 @@
    /**
     * @class
     */
-    var Transport = Class(nsWrapers.DataObject, {
+    var Transport = Class(nsData.DataObject, {
       className: namespace + '.Transport',
 
-      state:     nsWrapers.STATE.UNDEFINED,
+      state:     STATE.UNDEFINED,
 
-      behaviour: nsWrapers.createBehaviour(nsWrapers.DataObject, {
-        stateChanged: function(object, newState, oldState, delta){
-          this.inherit(object, newState, oldState, delta);
+      behaviour: {
+        stateChanged: function(object, oldState){
+          this.inherit(object, oldState);
           for (var i = 0; i < this.influence.length; i++)
-            this.influence[i].setState(this.state, this.errorText);
+            this.influence[i].setState(this.state, this.state.data);
         }
-      }),
+      },
 
       influence: [],
       debug:     DEBUG_MODE,
@@ -471,6 +475,9 @@
 
         if (typeof config.asynchronous == 'boolean')
           this.asynchronous = config.asynchronous;
+
+        if (config.influence)
+          this.setInfluence(config.influence);
 
         Cleaner.add(this);  // ???
 
@@ -555,10 +562,7 @@
           throw new Error('Transport is not allowed');
 
         if (!location)
-        {
-          debugger;
           throw new Error('URL is not defined');
-        }
 
         // abort request for double sure that it doesn't in progress
         this.abort();
@@ -627,7 +631,7 @@
       },
 
       // response status
-      responseIsSuccess: function() {
+      responseIsSuccess: function(){
         try {
           if (!this.aborted)
           {
@@ -639,6 +643,13 @@
         } catch(e) {
         }
         return false;
+      },
+
+      getRequestError: function(req){
+        return {
+          code: 'SERVER_ERROR',
+          msg: req.responseText
+        }
       },
 
       destroy: function(){

@@ -46,7 +46,8 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../tree.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -101,22 +102,19 @@
     // Create tree controls
     //
 
-    // child nodes factory
-    var treeChildFactory = function(config){
-      if (config.childNodes)
-        return new nsTree.TreeFolder(Object.complete({ document: this.document || this }, config));
-      else
-        return new nsTree.TreeNode(Object.complete({ document: this.document || this }, config));
-    };
-
     // setup selection for control (multiple mode)
     var demoContainer = DOM.get('demo-container');
-    var treeSelection = new Basis.DOM.Wrapers.Selection({ multiple: true });
+    var treeSelection = new Basis.DOM.Wrapper.Selection({ multiple: true });
     var tree1 = new nsTree.Tree({
       id: 'Tree1',
       container: demoContainer,
       selection: treeSelection, 
-      childFactory: treeChildFactory,
+      childFactory: function(config){
+        if (config.childNodes)
+          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
+        else
+          return new nsTree.TreeNode(config);
+      },
       childNodes: data
     });
 
@@ -124,7 +122,12 @@
       id: 'Tree2',
       container: demoContainer,
       selection: treeSelection,
-      childFactory: treeChildFactory,
+      childFactory: function(config){
+        if (config.childNodes)
+          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
+        else
+          return new nsTree.TreeNode(config);
+      },
       childNodes: data
     });
 
@@ -132,7 +135,12 @@
       id: 'Tree3',
       container: demoContainer,
       selection: tree2.selection, // pass tree2 selection object (it is still treeSelection)
-      childFactory: treeChildFactory,
+      childFactory: function(config){
+        if (config.childNodes)
+          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
+        else
+          return new nsTree.TreeNode(config);
+      },
       childNodes: data
     });
 
@@ -141,7 +149,7 @@
     DOM.insert(demoContainer, DOM.createElement('', DOM.createElement('LABEL', 'Selection contains: '), contentText));
     treeSelection.addHandler({
       change: function(){
-        contentText.nodeValue = this.items.map(function(node){ return '({0}) {1}'.format(node.document.element.id, node.info.title) }).join(', ') || 'nothing';
+        contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(node.document.element.id, node.info.title) }).join(', ') || 'nothing';
       }
     });
 

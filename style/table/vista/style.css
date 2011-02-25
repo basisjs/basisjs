@@ -190,7 +190,7 @@
   {
     background-image: url(plus.gif);
   }
-  TBODY.collapsed TR.Basis-Table-GroupHeader
+  TBODY.collapsed .Basis-Table-GroupHeader
   {
     display: table-row;
   }

@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -19,7 +19,8 @@
 
     var Class = Basis.Class;
     var extend = Object.extend;
-    var nsWrapers = Basis.DOM.Wrapers;
+
+    var EventObject = Basis.EventObject;
 
     /*
      *  Common
@@ -48,7 +49,7 @@
      *  SessionManager
      */
 
-    var SessionManager = extend(new nsWrapers.EventObject(), {
+    var SessionManager = extend(new EventObject(), {
       isOpened: function(){
         return !!activeSession;
       },
@@ -142,16 +143,16 @@
      *  Session
      */
 
-    var Session = Class(nsWrapers.EventObject, {
+    var Session = Class(EventObject, {
       className: namespace + '.Session',
 
-      behaviour: nsWrapers.createBehaviour(nsWrapers.EventObject, {
+      behaviour: {
         destroy: function(){
           if (activeSession == this)
             SessionManager.close();
           delete sessions[this.key]
         }
-      }),
+      },
 
       init: function(key){
         this.inherit();

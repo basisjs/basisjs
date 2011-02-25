@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -172,6 +172,11 @@
 
         this.transport.requestEnvelope = this.envelope;
         this.transport.postBody = this.envelope.element.ownerDocument;
+        this.transport.url = {
+          toString: function(){
+            return service.url;
+          }
+        }
 
         if (staticData)
         {
@@ -181,7 +186,7 @@
         }
       },
       repeatCall: function(){
-        this.transport.get(this.url); // this.service.url
+        this.transport.get(); // this.service.url
       },
       call: function(body){
         return this.invoke(null, body || this.body);
@@ -200,7 +205,7 @@
         if (mapping)
           this.transport.setMapping(mapping);
 
-        this.transport.get(this.url); // this.service.url
+        this.transport.get(); // this.service.url
       },
       destroy: function(){
         this.destroy = Function.$undef;
@@ -575,7 +580,7 @@
         var section = XML.getElementsByQName(this.element, qname)[0];
         if (section)
           DOM.remove(section);
-        this.appendChild(Basis.Data.wrapper(qname)(data), qname.namespace);
+        this.appendChild(Function.wrapper(qname)(data), qname.namespace);
       }
     });
 

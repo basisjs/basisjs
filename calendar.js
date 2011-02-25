@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -20,13 +20,13 @@
     var Class = Basis.Class;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
-    var Data = Basis.Data;
     var Template = Basis.Html.Template;
 
+    var getter = Function.getter;
     var cssClass = Basis.CSS.cssClass;
 
-    var nsWrapers = DOM.Wrapers;
-    var Property = nsWrapers.Property;
+    var nsWrappers = DOM.Wrapper;
+    var Property = Basis.Data.Property.Property;
 
     //
     // CONST
@@ -129,7 +129,7 @@
     // SECTIONS
     //
 
-    var CalendarNode = Class(nsWrapers.HtmlNode, {
+    var CalendarNode = Class(nsWrappers.HtmlNode, {
       className: namespace + '.Calendar.Node',
 
       canHaveChildren: false,
@@ -137,18 +137,18 @@
         '<a{element|content} class="Basis-Calendar-Node" href="#move:down">{title|-}</a>'
       ),
 
-      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
+      behaviour: {
         select: function(){
           this.inherit();
 
           DOM.focus(this.element);
         },
-        update: function(object, newInfo, oldInfo, delta){
-          this.inherit(object, newInfo, oldInfo, delta);
+        update: function(object, delta){
+          this.inherit(object, delta);
 
           if ('periodStart' in delta || 'periodEnd' in delta)
           {
-            this.title.nodeValue = PERIOD_TITLE[this.nodePeriodName](newInfo);
+            this.title.nodeValue = PERIOD_TITLE[this.nodePeriodName](this.info);
 
             /*
             if (this.document.isPeriodEnabled(newInfo.periodStart, newInfo.periodEnd))
@@ -169,12 +169,12 @@
             if (this.parentNode)
             {
               cssClass(this.element)
-                .bool('before', newInfo.periodStart < this.parentNode.info.periodStart)
-                .bool('after', newInfo.periodEnd > this.parentNode.info.periodEnd);
+                .bool('before', this.info.periodStart < this.parentNode.info.periodStart)
+                .bool('after', this.info.periodEnd > this.parentNode.info.periodEnd);
             }
           }
         }
-      }),
+      },
 
       init: function(nodePeriodName){
         this.nodePeriodName = nodePeriodName;
@@ -187,7 +187,7 @@
       }
     });
 
-    var CalendarSection = Class(nsWrapers.HtmlNode, {
+    var CalendarSection = Class(nsWrappers.HtmlContainer, {
       className: namespace + '.Calendar.Section',
 
       childClass: CalendarNode,
@@ -199,7 +199,7 @@
         '</div>'
       ),
 
-      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
+      behaviour: {
         select: function(){
           this.inherit();
           cssClass(this.titleElement).add('selected');
@@ -208,9 +208,10 @@
           this.inherit();
           cssClass(this.titleElement).remove('selected');
         },
-        update: function(object, newInfo, oldInfo, delta){
-          this.inherit(object, newInfo, oldInfo, delta);
+        update: function(object, delta){
+          this.inherit(object, delta);
 
+          var newInfo = this.info;
           if ('periodStart' in delta || 'periodEnd' in delta)
           {
             this.setTitle();
@@ -247,7 +248,7 @@
           else
             this.selection.clear();
         }
-      }),
+      },
 
       // dates
 
@@ -271,11 +272,11 @@
       nodePeriodUnitCount: 1,
 
       init: function(config){
-        this.selection = new nsWrapers.Selection();
+        config = Object.complete({ selection: new nsWrappers.Selection(config && config.selection) }, config);
 
         this.titleElement = DOM.createElement({
           description: '.Basis-Calendar-SectionTab',
-          click: new Event.Handler(this.select, this)
+          click: this.select.bind(this, false)
         }, this.tabTitleText = DOM.createText(''));
 
         config = this.inherit(config);
@@ -359,7 +360,7 @@
       nodePeriodName: DAY,
       nodePeriodUnit: DAY,
 
-      getTabTitle: Data.getter('getDate()'),
+      getTabTitle: getter('getDate()'),
       getTitle: function(){
         return LOCALE('MONTH').FULL[this.info.periodStart.getMonth()] + ' ' + this.info.periodStart.getFullYear();
       },
@@ -385,8 +386,8 @@
 
         return config;
       },
-      getTabTitle: Data.getter('getMonth()', function(key){ return LOCALE('MONTH').FULL[key] }),
-      getTitle: Data.getter('getFullYear()')
+      getTabTitle: getter('getMonth()', function(key){ return LOCALE('MONTH').FULL[key] }),
+      getTitle: getter('getFullYear()')
     });
 
     CalendarSection.YearDecade = Class(CalendarSection, {
@@ -401,7 +402,7 @@
       getInitOffset: function(){
         return 1;
       },
-      getTabTitle: Data.getter('getFullYear()'),
+      getTabTitle: getter('getFullYear()'),
       getTitle: function(){
         return this.info.periodStart.getFullYear() + ' - ' + this.info.periodEnd.getFullYear();
       }
@@ -462,7 +463,7 @@
     // Calendar
     //
 
-    var Calendar = Class(nsWrapers.HtmlControl, {
+    var Calendar = Class(nsWrappers.HtmlControl, {
       className: namespace + '.Calendar',
 
       canHaveChildren: true,
@@ -504,17 +505,20 @@
         '</div>'
       })),
 
-      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlControl, {
+      behaviour: {
         childNodesModified: function(){
-          this.childNodes.forEach(function(n){n.setTitle()});
-          DOM.insert(DOM.clear(this.sectionTabs), this.childNodes.map(Data.getter('titleElement')));
+          this.childNodes.forEach(getter('setTitle()'));
+          DOM.insert(
+            DOM.clear(this.sectionTabs),
+            this.childNodes.map(getter('titleElement'))
+          );
         },
         click: function(event, node){
           
           if (node instanceof CalendarNode)
           {
             var newDate = node.info.periodStart;
-            this.selectedDate.set(new Date(this.selectedDate.value).add(this.activeSection.nodePeriodName, this.selectedDate.value.diff(this.activeSection.nodePeriodName, newDate)));
+            this.selectedDate.set(new Date(this.selectedDate.value).add(this.activeSection.nodePeriodUnit, this.selectedDate.value.diff(this.activeSection.nodePeriodName, newDate)));
             this.nextSection(BACKWARD);
           }
           else
@@ -550,7 +554,7 @@
 
           Event.kill(event);
         }
-      }),
+      },
 
       // enable/disable periods
       minDate: null,
@@ -566,7 +570,7 @@
             handlersContext: this,
             handlers: {
               change: function(){
-                var section = this.selection.items.first();
+                var section = this.selection.pick();
                 this.activeSection = section;
                 if (section)
                 {
@@ -601,7 +605,7 @@
 
         // Generate HTML structure
 
-        this.todayDate.addLink(this.todayText, null, Data.getter("toFormat('%D.%M.%Y')"));
+        this.todayDate.addLink(this.todayText, null, getter("toFormat('%D.%M.%Y')"));
 
         // min/max dates
 

@@ -8,10 +8,12 @@
 
   // import names
 
-  var Data = Basis.Data;
+  var getter = Function.getter;
 
-  var nsWrapers = Basis.DOM.Wrapers;
+  var nsWrappers = Basis.DOM.Wrapper;
   var nsEntity = Basis.Entity;
+
+  var TimeEventManager = Basis.TimeEventManager;
 
   // main part
 
@@ -189,7 +191,7 @@
       {
         resourceLoader.addResource(this.value.url, 'link');
       }
-    },
+    }
   });
 
   jsDocs = {};
@@ -299,7 +301,7 @@
 
         if (obj.classMap_)
         {
-          if (window.console) console.log('>>', objPath);
+          //if (window.console) console.log('>>', objPath);
         }
         else
           obj.classMap_ = {
@@ -363,7 +365,7 @@
   }
 
   function getMembers(path){
-    return (members[path] || []).map(Data.wrapper('info'));
+    return (members[path] || []).map(Function.wrapper('info'));
   }
 
   function getInheritance(cls, key){
@@ -496,7 +498,7 @@
           },
           complete: function(req){
             this.curResource = null;
-            nsWrapers.TimeEventManager.add(this, 'load', Date.now() + 5);
+            TimeEventManager.add(this, 'load', Date.now() + 5);
           }
         }
       });
@@ -512,7 +514,7 @@
           attemptCount: 0
         });
 
-        nsWrapers.TimeEventManager.add(resourceLoader, 'load', Date.now());
+        TimeEventManager.add(resourceLoader, 'load', Date.now());
       }
     },
     load: function(){

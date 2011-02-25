@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -20,14 +20,13 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
     var Event = Basis.Event;
-    var Data = Basis.Data;
     var Template = Basis.Html.Template;
 
+    var getter = Function.getter;
     var cssClass = Basis.CSS.cssClass;
-
     var Cleaner = Basis.Cleaner;
 
-    var nsWrapers = DOM.Wrapers;
+    var nsWrappers = DOM.Wrapper;
     var nsLayout = Basis.Layout;
 
     if (!nsLayout)
@@ -66,140 +65,36 @@
       CENTER: CENTER
     };
 
-
-    //
-    //  Popup manager
-    //
-
-    // NOTE: PopupManager adds global event handlers dynamicaly because click event
-    // that makes popup visible can also hide it (as click outside of popup).
-
-    var PopupManager = new (Class(nsWrapers.Node, {
-      className: namespace + '.PopupManager',
-
-      behaviour: nsWrapers.createBehaviour(nsWrapers.Node, {
-        childNodesModified: function(node, delta){
-          if (delta.deleted)
-            for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
-              item.node.hide();
-
-          if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
-          {
-            Event.addGlobalHandler('click', this.hideByClick, this);
-            Event.addGlobalHandler('keydown', this.hideByKey, this);
-          }
-
-          if (node.lastChild)
-            this.lastChild.select();
-          else
-          {
-            Event.removeGlobalHandler('click', this.hideByClick, this);
-            Event.removeGlobalHandler('keydown', this.hideByKey, this);
-          }
-        }
-      }),
-
-      init: function(){
-        this.inherit();
-        this.selection = new nsWrapers.Selection();
-
-        Cleaner.add(PopupManager);
-      },
-      insertBefore: function(popup){
-        if (this.inherit(popup))
-          popup.element.style.zIndex = Basis.Controls.Window ? Basis.Controls.Window.getWindowTopZIndex() : 2001;
-      },
-      removeChild: function(popup){
-        if (popup)
-        {
-          if (popup.nextSibling)
-            this.removeChild(popup.nextSibling);
-
-          this.inherit(popup);
-        }
-      },
-      hideByClick: function(event){
-        var sender = Event.sender(event);
-        var popup = this.lastChild;
-        var ancestorAxis;
-
-        while (popup)
-        {
-          if (!popup.hideOnAnyClick)
-            return;
-
-          if (!ancestorAxis)
-            ancestorAxis = DOM.axis(sender, DOM.AXIS_ANCESTOR_OR_SELF);
-
-          if (ancestorAxis.has(popup.element) || ancestorAxis.some(Array.prototype.has, popup.ignoreClickFor))
-          {
-            this.removeChild(popup.nextSibling);
-            return;
-          }
-
-          popup = popup.previousSibling;
-        }
-
-        this.clear();
-      },
-      hideByKey: function(event){
-        var key = Event.key(event);
-        var popup = this.lastChild;
-        if (popup && popup.hideOnKey)
-        {
-          var result = false;
-
-          if (typeof popup.hideOnKey == 'function')
-            result = popup.hideOnKey(key);
-          else
-            if (Array.isArray(popup.hideOnKey))
-              result = popup.hideOnKey.has(key);
-
-          if (result)
-            popup.hide();
-        }
-      },
-      clear: function(){
-        if (this.firstChild)
-          this.removeChild(this.firstChild);
-      },
-      destroy: function(){
-        Cleaner.remove(PopupManager);
-
-        this.selection.destroy();
-        delete this.selection;
-
-        this.inherit();
-      }
-    }));
-
-
     var THREAD_HANDLER = {
       finish: function(){
         if (!this.visible)
+        {
           DOM.remove(this.element);
+          this.dispatch('cleanup', this);
+        }
       }
     };
 
    /**
     * @class
     */
-    var Popup = Class(nsWrapers.HtmlContainer, {
+    var Popup = Class(nsWrappers.HtmlContainer, {
       className: namespace + '.Popup',
 
       template: new Template(
         '<div{element|selectedElement} class="Basis-Popup">' +
+          '<div{closeButton} class="Basis-Popup-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
         '</div>'
       ),
 
-      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlContainer, {
+      behaviour: {
         layoutChanged: function(oldOrientation, oldDir){
           var oldClass = (oldOrientation + '-' + oldDir.qw().slice(2, 4).join('-')).toLowerCase();
           var newClass = (this.orientation + '-' + this.dir.qw().slice(2, 4).join('-')).toLowerCase();
           cssClass(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
         }
-      }),
+      },
 
       visible: false,
       autorotate: false,
@@ -210,6 +105,7 @@
 
       hideOnAnyClick: true,
       hideOnKey: false,
+      ignoreClickFor: [],
 
       cssLayoutPrefix: 'popup-',
 
@@ -403,12 +299,47 @@
             };
           }
 
-          this.cssRule.setStyle({
+          var offsetParentBox = new nsLayout.Box(this.element.offsetParent);
+
+          var style = {
+            left: 'auto',
+            right: 'auto',
+            top: 'auto',
+            bottom: 'auto'
+          };
+
+          switch (dirH){
+            case LEFT:
+              style.left = point.x + 'px';
+              break;
+            case CENTER:
+              style.left = Math.round(point.x - this.element.offsetWidth/2) + 'px';
+              break;
+            case RIGHT:
+              style.right = (offsetParentBox.width - point.x) + 'px';
+              break;
+          }
+
+          switch (dirV){
+            case TOP:
+              style.top = point.y + 'px';
+              break;
+            case CENTER:
+              style.top = Math.round(point.y - this.element.offsetHeight/2) + 'px';
+              break;
+            case BOTTOM:
+              style.bottom = (offsetParentBox.height - point.y) + 'px';
+              break;
+          }
+
+          //Basis.DOM.Style.setStyle(this.element, style);
+          this.cssRule.setStyle(style);
+          /*this.cssRule.setStyle({
             right:  'auto',
             left:   parseInt(point.x - (dirH != LEFT) * (this.element.offsetWidth >> (dirH == CENTER))) + 'px',
             bottom: 'auto',
             top:    parseInt(point.y - (dirV != TOP) * (this.element.offsetHeight >> (dirV == CENTER))) + 'px'
-          });
+          });*/
 
           this.dispatch('realign');
         }
@@ -432,14 +363,15 @@
 
           // make element invisible & insert element into DOM
           DOM.visibility(this.element, false);
-          if (!DOM.IS_ELEMENT_NODE(this.element.parentNode))
-            DOM.insert(document.body, this.element);
+          /*if (!DOM.IS_ELEMENT_NODE(this.element.parentNode))
+            DOM.insert(document.body, this.element);*/
+
+          PopupManager.appendChild(this);
 
           // dispatch `beforeShow` event, there we can fill popup with content
           this.dispatch.apply(this, ['beforeShow'].concat(args));
 
           // set visible flag to TRUE
-          PopupManager.appendChild(this);
           this.visible = true;
 
           // realign position and make it visible
@@ -462,7 +394,10 @@
             if (this.thread)
               this.thread.start(1);
             else
+            {
               DOM.remove(this.element);
+              this.dispatch('cleanup', this);
+            }
           }
 
           // set visible flag to FALSE
@@ -510,18 +445,21 @@
           '<div class="Basis-Balloon-Canvas">' +
             '<div class="corner-left-top"/>' +
             '<div class="corner-right-top"/>' +
-            '<div class="side-top"/>' +
-            '<div class="side-left"/>' +
-            '<div class="side-right"/>' +
-            '<div class="vert-helper">' +
+            '<div class="side-top"><span class="helper"/><span class="tail"/><div class="filler"/></div>' +
+            '<div class="side-left"><span class="helper"/><span class="tail"/><div class="filler"></div></div>' +
+            '<div class="side-right"><span class="helper"/><span class="tail"/><div class="filler"></div></div>' +
+            /*'<div class="vert-helper">' +
               '<div class="vert-filler"/>' +
-            '</div>' +
-            '<div class="canvas-content"/>' +
+            '</div>' +*/
+            '<div class="content"/>' +
             '<div class="corner-left-bottom"/>' +
             '<div class="corner-right-bottom"/>' +
-            '<div class="side-bottom"/>' +
+            '<div class="side-bottom"><span class="helper"/><span class="tail"/><div class="filler"/></div>' +
           '</div>' +
-          '<div{content|childNodesElement} class="Basis-Balloon-Content"/>' +
+          '<div class="Basis-Balloon-Layout">' +
+            '<div{closeButton} class="Basis-Balloon-CloseButton"><span>Close</span></div>' +
+            '<div{content|childNodesElement} class="Basis-Balloon-Content"/>' +
+          '</div>' +
         '</div>'
       )
     });
@@ -533,26 +471,26 @@
    /**
     * @class
     */
-    var MenuItem = Class(nsWrapers.HtmlNode, {
+    var MenuItem = Class(nsWrappers.HtmlContainer, {
       className: namespace + '.MenuItem',
 
       childFactory: function(cfg){ return new this.childClass(cfg) },
 
       template: new Template(
         '<div{element} class="Basis-Menu-Item">' +
-          '<a{content|selectedElement} href="#">{captionText}</a>' +
+          '<a{content|selectedElement} href="#"><span>{captionText}</span></a>' +
         '</div>' +
         '<div{childNodesElement}/>'
       ),
-      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {
+      behaviour: {
         childNodesModified: function(){
           cssClass(this.element).bool('hasSubItems', this.hasChildNodes());
         }
-      }),
+      },
 
       groupId: 0,
       caption: '[untitled]',
-      captionGetter: Data('caption'),
+      captionGetter: getter('caption'),
       handler: null,
       defaultHandler: function(node){
         if (this.parentNode)
@@ -596,7 +534,7 @@
 
     var MenuItemSet = Class(MenuItem, {
       className: namespace + '.MenuItemSet',
-      behaviour: nsWrapers.createBehaviour(nsWrapers.HtmlNode, {}),
+      behaviour: nsWrappers.createBehaviour(nsWrappers.HtmlNode, {}),
       template: new Template(
         '<div{element|content|childNodesElement} class="Basis-Menu-ItemSet"/>'
       )
@@ -605,7 +543,7 @@
    /**
     * @class
     */
-    var MenuPartitionNode = Class(nsWrapers.HtmlPartitionNode, {
+    var MenuPartitionNode = Class(nsWrappers.HtmlPartitionNode, {
       className: namespace + '.MenuPartitionNode',
       template: new Template(
         '<div{element} class="Basis-Menu-ItemGroup">' +
@@ -617,7 +555,7 @@
    /**
     * @class
     */
-    var MenuGroupControl = Class(nsWrapers.HtmlGroupControl, {
+    var MenuGroupControl = Class(nsWrappers.HtmlGroupControl, {
       className: namespace + '.MenuGroupControl',
       childClass: MenuPartitionNode
     });
@@ -634,25 +572,26 @@
 
       groupControlClass: MenuGroupControl,
       localGrouping: {
-        groupGetter: Data('groupId')
+        groupGetter: getter('groupId')
       },
 
-      defaultHandler: Function.$null,
-      behaviour: nsWrapers.createBehaviour(Popup, {
+      defaultHandler: function(){
+        this.hide();
+      },
+      behaviour: {
         click: function(event, node){
-          if (node && !node.isDisabled() && !(node instanceof MenuItemSet))
+          if (node /*&& node.parentNode === this*/ && !node.isDisabled() && !(node instanceof MenuItemSet))
           {
             if (node.handler)
               node.handler(node);
             else
-              node.parentNode.defaultHandler(node);
+              node.defaultHandler(node);
 
-            this.hide();
             Event.kill(event);
           }
-        },
+        }/*,
         mouseover: function(event, node){
-          /*if (node instanceof MenuItem)
+          if (node instanceof MenuItem)
           {
             if (node.hasChildNodes() && !node.isDisabled())
             {
@@ -670,12 +609,13 @@
               if (this.subMenu)
                 this.subMenu.hide();
             }
-          }*/
-        }
-      }),
+          }
+        }*/
+      },
 
       template: new Template(
         '<div{element|selectedElement} class="Basis-Menu">' +
+          '<div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
         '</div>'
       ),
@@ -693,11 +633,185 @@
     });
 
     //
+    //  Popup manager
+    //
+
+    // NOTE: PopupManager adds global event handlers dynamicaly because click event
+    // that makes popup visible can also hide it (as click outside of popup).
+
+    var PopupManagerClass = Class(nsWrappers.Control, {
+      className: namespace + '.PopupManager',
+
+      handheldMode: false,
+
+      childClass: Popup,
+      behaviour: nsWrappers.createBehaviour(nsWrappers.Node, {
+        childNodesModified: function(object, delta){
+          if (delta.deleted)
+            for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
+              item.hide();
+
+          if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
+          {
+            cssClass(this.element).add('IsNotEmpty');
+            document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
+                                                               // general sibling combinator (~) doesn't work otherwise
+                                                               // (it's useful for handheld scenarios, when popups show on fullsreen)
+            Event.addGlobalHandler('click', this.hideByClick, this);
+            Event.addGlobalHandler('keydown', this.hideByKey, this);
+            Event.addGlobalHandler('scroll', this.hideByScroll, this);
+            Event.addHandler(window, 'resize', this.realignAll, this);
+          }
+
+          if (this.lastChild)
+            this.lastChild.select();
+          else
+          {
+            cssClass(this.element).remove('IsNotEmpty');
+            document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
+                                                               // general sibling combinator (~) doesn't work otherwise
+                                                               // (it's useful for handheld scenarios, when popups show on fullsreen)
+            Event.removeGlobalHandler('click', this.hideByClick, this);
+            Event.removeGlobalHandler('keydown', this.hideByKey, this);
+            Event.removeGlobalHandler('scroll', this.hideByScroll, this);
+            Event.removeHandler(window, 'resize', this.realignAll, this);
+          }
+        }
+      }),
+
+      insertBefore: function(popup){
+        // save documentElement (IE, mozilla and others) and body (webkit) scrollTop
+        var documentST_ = document.documentElement.scrollTop;
+        var bodyST_ = document.body.scrollTop;
+
+        if (this.inherit(popup))
+        {
+          // store saved scrollTop to popup and scroll viewport to top
+          popup.documentST_ = documentST_;
+          popup.bodyST_ = bodyST_;
+          if (this.handheldMode)
+          {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+          }
+
+          // set zIndex
+          popup.element.style.zIndex = Basis.Controls.Window ? Basis.Controls.Window.getWindowTopZIndex() : 2001;
+        }
+      },
+      removeChild: function(popup){
+        if (popup)
+        {
+          if (popup.nextSibling)
+            this.removeChild(popup.nextSibling);
+
+          this.inherit(popup);
+
+          // restore documentElement (IE, mozilla and others) and body (webkit) scrollTop
+          if (this.handheldMode)
+          {
+            document.documentElement.scrollTop = popup.documentST_;
+            document.body.scrollTop = popup.bodyST_;
+          }
+        }
+      },
+      realignAll: function(){
+        for (var popup = this.firstChild; popup; popup = popup.nextSibling)
+          popup.realign();
+      },
+      clear: function(){
+        if (this.firstChild)
+          this.removeChild(this.firstChild);
+      },
+      hideByClick: function(event){
+        var sender = Event.sender(event);
+        var popup = this.lastChild;
+        var ancestorAxis;
+
+        while (popup)
+        {
+          if (sender === popup.closeButton || DOM.parentOf(popup.closeButton, sender))
+          {
+            this.removeChild(popup);
+            return;
+          }
+
+          if (!popup.hideOnAnyClick)
+            return;
+
+          if (!ancestorAxis)
+            ancestorAxis = DOM.axis(sender, DOM.AXIS_ANCESTOR_OR_SELF);
+
+          if (ancestorAxis.has(popup.element) || ancestorAxis.some(Array.prototype.has, popup.ignoreClickFor))
+          {
+            this.removeChild(popup.nextSibling);
+            return;
+          }
+
+          popup = popup.previousSibling;
+        }
+
+        this.clear();
+      },
+      hideByKey: function(event){
+        var key = Event.key(event);
+        var popup = this.lastChild;
+        if (popup && popup.hideOnKey)
+        {
+          var result = false;
+
+          if (typeof popup.hideOnKey == 'function')
+            result = popup.hideOnKey(key);
+          else
+            if (Array.isArray(popup.hideOnKey))
+              result = popup.hideOnKey.has(key);
+
+          if (result)
+            popup.hide();
+        }
+      },
+      hideByScroll: function(event){
+        var sender = Event.sender(event);
+
+        if (DOM.parentOf(sender, this.element))
+          return;
+
+        var popup = this.lastChild;
+        while (popup)
+        {
+          var next = popup.previousSibling;
+          if (popup.relElement && popup.offsetParent !== sender && DOM.parentOf(sender, popup.relElement))
+            popup.hide();
+          popup = next;
+        }
+      }
+    });
+
+    var PopupManager = new PopupManagerClass({
+      id: 'Basis-PopupStack'
+    });
+
+    Event.onLoad(function(){
+      DOM.insert(document.body, PopupManager.element, DOM.INSERT_BEGIN);
+      PopupManager.realignAll();
+    });
+
+    function setHandheldMode(mode){
+      PopupManager.handheldMode = !!mode;
+    }
+
+    //
     // export names
     //
 
     Basis.namespace(namespace).extend({
+      // const
       ORIENTATION: ORIENTATION,
+
+      // methods
+      setHandheldMode: setHandheldMode,
+
+      // classes
       Popup: Popup,
       Balloon: Balloon,
       Menu: Menu,

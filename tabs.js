@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -21,26 +21,27 @@
 
     var Class = Basis.Class;
     var DOM = Basis.DOM;
-    var Data = Basis.Data;
 
     var Template = Basis.Html.Template;
+    var cssClass = Basis.CSS.cssClass;
+    var getter = Function.getter;
 
-    var nsWrapers = DOM.Wrapers;
-    var createBehaviour = nsWrapers.createBehaviour;
+    var nsWrappers = DOM.Wrapper;
 
     //
     //  behaviour handlers
     //
 
     function baseSelectHandler(child){
-      if (this.selection && !this.selection.items.length)
+      if (this.selection && !this.selection.itemCount)
         child.select();
     }
 
     function baseUnselectHandler(){
-      if (this.selection && !this.selection.items.length)
+      if (this.selection && !this.selection.itemCount)
       {
-        var node = this.childNodes.search(false, 'isDisabled()');
+        // select first non-disabled child
+        var node = this.childNodes.search(false, 'disabled');
         if (node)
           node.select();
       }
@@ -53,17 +54,17 @@
    /**
     * @class
     */
-    var AbstractTabsControl = Class(nsWrapers.HtmlControl, {
+    var AbstractTabsControl = Class(nsWrappers.HtmlControl, {
       className: namespace + '.AbstractTabsControl',
 
       canHaveChildren: true,
-      childClass: nsWrapers.HtmlNode,
+      childClass: nsWrappers.HtmlNode,
 
-      behaviour: createBehaviour(nsWrapers.HtmlControl, {
+      behaviour: {
         childEnabled: baseSelectHandler,
         childDisabled: baseUnselectHandler,
         childNodesModified: baseUnselectHandler
-      }),
+      },
 
       //
       //  common methods
@@ -96,15 +97,16 @@
    /**
     * @class
     */
-    var Tab = Class(nsWrapers.HtmlNode, {
+    var Tab = Class(nsWrappers.HtmlContainer, {
       className: namespace + '.Tab',
 
       canHaveChildren: false,
 
-      behaviour: createBehaviour(nsWrapers.HtmlNode, { 
+      behaviour: {
         disable: function(){ 
           this.inherit();
 
+          this.unselect();
           if (this.document)
             this.document.dispatch('childDisabled', this);
         },
@@ -115,17 +117,16 @@
             this.document.dispatch('childEnabled', this);
         },
         click: function(event){
-          this.select();
+          if (!this.isDisabled())
+            this.select();
         },
-        update: function(node, newInfo, oldInfo, delta){
-          this.inherit(node, newInfo, oldInfo, delta);
+        update: function(node, delta){
+          this.inherit(node, delta);
 
-          var title = this.titleGetter(this);
-          if (title !== this._title)
-            // set new title
-            this.titleText.nodeValue = tabCaptionFormat(this._title = title);
+          // set new title
+          this.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
         }
-      }),
+      },
 
       template: new Template(
         '<div{element|selectedElement} class="Basis-Tab">' +
@@ -143,7 +144,7 @@
       * Using to fetch title value.
       * @property {function(node)}
       */
-      titleGetter: Data.getter('info.title'),
+      titleGetter: getter('info.title'),
       
      /**
       * Using for tab default grouping.
@@ -152,19 +153,25 @@
       groupId: 0,
 
       init: function(config){
-        // create node
-        config = this.inherit(config);
+        if (config)
+        {
+          // add name if exists
+          if (config.name != '')
+            this.name = config.name;
 
-        // add name if exists
-        if (config.name != '')
-          this.name = config.name;
+          // add groupId if exists
+          if (config.groupId != '')
+            this.groupId = config.groupId;
 
-        // add groupId if exists
-        if (config.groupId != '')
-          this.groupId = config.groupId;
+          if (config.content)
+          {
+            config = Object.complete({}, config);
+            delete config.content;
+          }
+        }
 
-        // return config object
-        return config;
+        // inherit
+        this.inherit(config);
       }
     });
 
@@ -175,8 +182,8 @@
    /**
     * @class
     */
-    var TabsGroupControl = Class(nsWrapers.HtmlGroupControl, {
-      childClass: Class(nsWrapers.HtmlPartitionNode, {
+    var TabsGroupControl = Class(nsWrappers.HtmlGroupControl, {
+      childClass: Class(nsWrappers.HtmlPartitionNode, {
         template: new Template(
           '<div{element|content|childNodesElement} class="Basis-TabControl-TabGroup"></div>'
         )
@@ -202,12 +209,10 @@
 
       init: function(config){
         // create control
-        config = this.inherit(config);
+        this.inherit(config);
 
         // add event listners
-        this.addEventListener('click');
-
-        return config;
+        this.addEventListener('click', 'click', true);
       }
 
       /* no custom destructor actions */
@@ -221,36 +226,34 @@
    /**
     * @class
     */
-    var Page = Class(nsWrapers.HtmlContainer, {
+    var Page = Class(nsWrappers.HtmlContainer, {
       className: namespace + '.Page',
 
       canHaveChildren: true,
 
-      behaviour: createBehaviour(nsWrapers.HtmlContainer, { 
+      behaviour: {
         select: function(){
-          DOM.display(this.element, true);
+          cssClass(this.element).remove('Basis-Page-Hidden');
           this.inherit();
         },
         unselect: function(){
-          DOM.display(this.element, false);
+          cssClass(this.element).add('Basis-Page-Hidden');
           this.inherit();
         }
-      }),
+      },
       
       template: new Template(
-        '<div{element} class="Basis-Page" style="display: none">' + 
+        '<div{element} class="Basis-Page Basis-Page-Hidden">' + 
           '<div{content|childNodesElement} class="Basis-Page-Content"/>' +
         '</div>'
       ),
 
       init: function(config){
-        config = this.inherit(config);
-        
         // add name if exists
-        if (config.name != '')
+        if (config && config.name != '')
           this.name = config.name;
 
-        return config;
+        this.inherit(config);
       }
     });
 
@@ -282,21 +285,18 @@
       className: namespace + '.TabSheet',
 
       canHaveChildren: true,
-      childClass: nsWrapers.HtmlNode,
-      childFactory: function(config){
-        return new (this.childClass === nsWrapers.HtmlNode ? nsWrapers.HtmlPanel : this.childClass)(config);
-      },
+      childClass: nsWrappers.HtmlNode,
 
-      behaviour: createBehaviour(Tab, {
+      behaviour: {
         select: function(){
           this.inherit();
-          DOM.display(this.pageElement, true);
+          cssClass(this.pageElement).remove('Basis-Page-Hidden');
         },
         unselect: function(){
           this.inherit();
-          DOM.display(this.pageElement, false);
+          cssClass(this.pageElement).add('Basis-Page-Hidden');
         }
-      }),
+      },
       
       template: new Template(
         '<div{element|selectedElement} class="Basis-TabSheet">' +
@@ -309,21 +309,25 @@
             '</span>' + 
             '<span class="Basis-Tab-End"/>' +
           '</div>' +
-          '<div{pageElement} class="Basis-Page" style="display: none">' + 
+          '<div{pageElement} class="Basis-Page Basis-Page-Hidden">' +
             '<div{pageContent|childNodesElement} class="Basis-Page-Content"/>' +
           '</div>' +
         '</div>'
       ),
 
       init: function(config){
-        config = this.inherit(config);
+        var content;
+        if (config && config.content)
+        {
+          config = Object.complete({}, config);
+          content = config.content;
+          delete config.content;
+        }
 
-//        DOM.display(this.pageElement, false);
+        this.inherit(config);
 
-        if (config.content)
-          DOM.insert(this.childNodesElement, config.content);
-
-        return config;
+        if (content)
+          DOM.insert(this.pageContent, content);
       },
       destroy: function(){
         DOM.remove(this.pageElement);

@@ -44,7 +44,9 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
   <script type="text/javascript" src="../../entity.js"></script>
   <script type="text/javascript" src="../../tree.js"></script>
   <script type="text/javascript" src="../../form.js"></script>
@@ -114,8 +116,8 @@
       // изменяться по мере работы непосредственно с самими данными.
       collection: Article.all,
 
-      // Определяем сортировку для дочерних узлов: сортируем по title.
-      localSorting: Basis.Data.getter('info.title'),
+      // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
+      localSorting: 'info.title',
 
       // Задаем обработчик на событие изменения выборки (Selection).
       selection: {
@@ -124,9 +126,9 @@
             // В данном контесте this указывает на выборку (myTree.selection).
 
             // Назначаем делегатом формы первый выбранный элемент. Если не выбрано ни одного узла
-            // (this.items[0] равно undefined), то форма останется без делегата (по сути не будет
+            // (this.pick() равно undefined), то форма останется без делегата (по сути не будет
             // привязана к каким либо данным).
-            myForm.setDelegate(this.items[0]);
+            myForm.setDelegate(this.pick());
           }
         }
       }
@@ -159,6 +161,7 @@
           {
             // Так как форма больше не привязана к данным - очищаем поля.
             this.reset();
+
             // Делаем форму НЕактивной.
             this.disable();
           }

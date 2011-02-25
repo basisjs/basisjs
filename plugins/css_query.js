@@ -19,8 +19,8 @@
 
     var Class = Basis.Class;
     var DOM = Basis.DOM;
-    var Data = Basis.Data;
     var extend = Object.extend;
+    var getter = Function.getter;
 
     //
     // Main part

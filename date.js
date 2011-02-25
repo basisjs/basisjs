@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -18,7 +18,7 @@
 
     // import names
 
-    var getter = Basis.Data.getter;
+    var getter = Function.getter;
 
     // CONST
     var MONTH_DAY_COUNT = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -249,8 +249,26 @@
 
     // extend Date
 
-    Date.fromISOString = function(isoString){
+    /*Date.fromISOString = function(isoString){
       return isoString ? (new Date()).fromISOString(isoString) : null;
+    };*/
+
+    var reIsoStringSplit = /\D/;
+    function fastDateParse(y, m, d, h, i, s, ms){
+      return new Date(y, m - 1, d, h || 0, i || 0, s || 0, ms || 0);
+    }
+    Date.fromISOString = function(isoString){
+      return isoString ? fastDateParse.apply(null, String(isoString).split(reIsoStringSplit)) : null;
+    }
+
+    Date.timer = function(date){
+      var timer = date || new Date;
+      timer.measure = function(seconds){
+        return seconds
+          ? ((new Date - timer)/1000).toFixed(3)
+          : new Date - timer;
+      }
+      return timer;
     };
 
     // export names

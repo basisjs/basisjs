@@ -11,12 +11,12 @@
   var Class = Basis.Class;
   var DOM = Basis.DOM;
   var Event = Basis.Event;
-  var Data = Basis.Data;
   var Template = Basis.Html.Template;
 
+  var getter = Function.getter;
   var cssClass = Basis.CSS.cssClass;
 
-  var nsWrapers = Basis.DOM.Wrapers;
+  var nsWrappers = Basis.DOM.Wrapper;
   var nsTree = Basis.Controls.Tree;
   var nsTabs = Basis.Controls.Tabs;
   var nsForm = Basis.Controls.Form;
@@ -56,23 +56,43 @@
   var walkStartTime = Date.now();
   Basis.namespaces_['Basis'] = Basis;
   nsCore.walk(Basis.namespaces_, '', 'object',0);
-  if (typeof console != 'undefined') console.log(Date.now() - walkStartTime, nsCore.walkThroughCount());
+  //if (typeof console != 'undefined') console.log(Date.now() - walkStartTime, nsCore.walkThroughCount());
 
   //
   // View
   //
 
-  var objectView = new nsWrapers.HtmlContainer({
+  var ObjectViewControl = Class(Basis.Plugin.X.Control, {
+    template: new Template(
+      '<div{element} class="XControl">' +
+        '<span{header}/>' +
+        '<div{content|childNodesElement} class="XControl-Content"/>' +
+      '</div>'
+    ),
+    satelliteConfig: {
+      header: {
+        existsIf: Function.getter('delegate'),
+        delegate: Function.$self,
+        instanceOf: nsView.ViewTitle
+      }
+    }
+  })
+
+  var objectView = new ObjectViewControl({
+    id: 'ObjectView',
     childClass: nsView.View,
     handlers: {
       delegateChanged: function(object, oldDelegate){
         this.clear(true);
-        this.setChildNodes(this.delegate ? [nsView.viewTitle, nsView.viewJsDoc].concat(this.delegate.views) : null).forEach(function(node){
+        this.setChildNodes(this.delegate ? [/*nsView.viewTitle, */nsView.viewJsDoc].concat(this.delegate.views) : null).forEach(function(node){
           node.setDelegate(this);
         }, this.getRootDelegate());
+        this.recalc();
       }
     }
   });
+
+  objectView.content.id = 'xxx';
 
   //
   // NavTree
@@ -94,7 +114,7 @@
 
       var node = this.childNodes.search(rootNS, 'info.objPath');
 
-      console.log(node);
+      //if (typeof console != 'undefined') console.log(node);
 
       if (node)
       {
@@ -143,7 +163,7 @@
     selection: {
       handlers: {
         change: function(){
-          objectView.setDelegate(this.items[0]);
+          objectView.setDelegate(this.pick());
         }
       }
     },
@@ -180,7 +200,7 @@
 
   var searchTree = new nsTree.Tree({
     id: 'SearchTree',
-    localSorting: Data('info.title', String.toLowerCase),
+    localSorting: getter('info.title', String.toLowerCase),
     localGrouping: nsNav.nodeTypeGrouping,
     childClass: Class(nsTree.TreeNode, {
       template: new Template(
@@ -263,7 +283,7 @@
   });
 
   var loadSearchIndex = Function.runOnce(function(){
-    searchTree.setChildNodes(nsCore.Search.values.map(Data.wrapper('info')));
+    searchTree.setChildNodes(nsCore.Search.values.map(Function.wrapper('info')));
   });
 
   var searchInput = new SearchMatchInput({
@@ -285,7 +305,7 @@
   Event.addHandler(searchInput.field, 'keyup', function(event){
     var key = Event.key(event);
     var ctrl = this.matchFilter.node;
-    var selected = ctrl.selection.items[0];
+    var selected = ctrl.selection.pick();
     
     if ([Event.KEY.UP, Event.KEY.DOWN].has(key))
     {
@@ -314,38 +334,36 @@
     childFactory: function(cfg){
       return new nsTree.TreeFolder([{ document: this.document }].merge(cfg));
     },
-    childNodes: Object.values(rootClasses).map(Data('classMap_'))
+    childNodes: Object.values(rootClasses).map(getter('classMap_'))
   })*/
 
   //
   // Layout
   //
 
-  var layout = new Basis.Layout.Layout({
+  var panel = new Basis.Layout.VerticalPanelStack({
     container: 'Layout',
-    left: {
-      id: 'Sidebar',
-      content: new Basis.Layout.Layout({
-        top: {
-          id: 'Toolbar',
-          content: searchInput.element
-        },
-        client: {
-          id: 'Sidebar',
-          content: sidebarPages.element
-        }
-      })
-    },
-    client: {
-      id: 'Content',
-      overflow: 'auto',
-      overflowY: 'scroll',
-      overflowX: 'visible',
-      content: [
-        //clsTree.element,
-        objectView.element
-      ]
-    }
+    id: 'Sidebar',
+    childNodes: [
+      {
+        id: 'Toolbar',
+        childNodes: searchInput
+      },
+      {
+        id: 'SidebarContent',
+        flex: 1,
+        childNodes: sidebarPages
+      }
+    ]
+  });
+
+  new nsWrappers.HtmlNode({
+    container: 'Layout',
+    id: 'Content',
+    content: [
+      //clsTree.element,
+      objectView.element
+    ]
   });
 
   Event.addGlobalHandler('click', function(e){
@@ -364,6 +382,10 @@
   Event.addHandler(searchInput.field, 'focus', function(){ searchInputFocused = true; });
   Event.addHandler(searchInput.field, 'blur', function(){ searchInputFocused = false; });
   Event.addGlobalHandler('keydown', function(e){
+    var event = Event(e);
+    if (event.ctrlKey || event.shiftKey || event.altKey)
+      return;
+
     DOM.focus(searchInput.field, !searchInputFocused);
   });
 
@@ -381,8 +403,8 @@
   // jsDocs parse
   //
 
-  var scripts = DOM.tag(document, 'SCRIPT').map(Data('getAttribute("src")')).filter(Data('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')); //['../basis.js', '../dom_wraper.js', '../tree.js'];
-  //  console.log(DOM.tag(document, 'SCRIPT').map(Data('getAttribute("src")')).filter(Data('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')));
+  var scripts = DOM.tag(document, 'SCRIPT').map(getter('getAttribute("src")')).filter(getter('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')); //['../basis.js', '../dom_wraper.js', '../tree.js'];
+  //  console.log(DOM.tag(document, 'SCRIPT').map(getter('getAttribute("src")')).filter(getter('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')));
 
   scripts.forEach(function(src){
     nsCore.loadResource(src, 'jsdoc');

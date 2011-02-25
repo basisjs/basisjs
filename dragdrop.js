@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -18,13 +18,15 @@
     var Class = Basis.Class;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
-    var Data = Basis.Data;
 
+    var getter = Function.getter;
     var cssClass = Basis.CSS.cssClass;
     var addGlobalHandler = Event.addGlobalHandler;
     var removeGlobalHandler = Event.removeGlobalHandler;
 
-    var nsWrapers = Basis.DOM.Wrapers;
+    var EventObject = Basis.EventObject;
+
+    var nsWrappers = Basis.DOM.Wrapper;
     var nsLayout = Basis.Layout;
     
     //
@@ -102,10 +104,10 @@
       element: 'Basis-DragDrop-DragElement'
     };
 
-    var DragDropElement = Class(nsWrapers.EventObject, {
+    var DragDropElement = Class(EventObject, {
       className: namespace + '.DragDropElement',
 
-      containerGetter: Data.getter('element'),
+      containerGetter: getter('element'),
 
       element: null,
       trigger: null,            // element that trig a drag; if null element is trig drag itself
@@ -200,9 +202,9 @@
         return !!(DDEConfig && DDEConfig.dde == this);
       },
 
-      start: function(){
+      start: function(event){
         if (!this.isDraging())
-          DDEHandler.start.call(this);
+          DDEHandler.start.call(this, event);
       },
       stop: function(){
         if (this.isDraging())
@@ -222,7 +224,7 @@
     });
 
     var MoveableElement = Class(DragDropElement, {
-      behaviour: nsWrapers.createBehaviour(DragDropElement, {
+      behaviour: {
         start: function(config){
           var element = this.containerGetter(this, config.initX, config.initY);
 
@@ -278,7 +280,7 @@
           // remove class
           cssClass(config.element).remove(DDCssClass.element);
         }
-      })
+      }
     });
 
     //

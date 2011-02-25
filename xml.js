@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -249,66 +249,107 @@
      *  tools
      */
 
-    function XML2Object(element, mapping){  // require for refactoring
-      var childNodes = element.childNodes;
-      var attributes = element.attributes;
-      var len = childNodes.length;
-      mapping = mapping || {};
+    function XML2Object(node, mapping){  // require for refactoring
+      var nodeType = node.nodeType;
+      var attributes = node.attributes;
+      var firstChild = node.firstChild;
 
-      if (len == 0 && element.nodeType != ELEMENT_NODE && (!attributes || attributes.length == 0))
-        return null;
-      if (len == 0 && element.nodeType == ELEMENT_NODE)  
+      if (!firstChild)
       {
-        if (attributes.length == 0)
-          return '';
+        var firstAttr = attributes && attributes[0];
+        if (nodeType == ELEMENT_NODE)
+        {
+          if (!firstAttr)
+            return '';
 
-        // test for <node xsi:nil="true"/>
-        if (attributes.length == 1 && XSI_NIL.equals(QName.fromNode(attributes[0])))
-          return null;
+          // test for <node xsi:nil="true"/>
+          if (attributes.length == 1
+              && firstAttr.localName == XSI_NIL.localpart
+              && firstAttr.namespaceURI == XSI_NIL.namespace)
+            return null;
+        }
+        else
+        {
+          if (!firstAttr)
+            return null;
+        }
+      }
+      else
+      {
+        // single child node and not an element -> return child nodeValue
+        if (firstChild.nodeType != ELEMENT_NODE && firstChild === node.lastChild)
+          return firstChild.nodeValue;
       }
 
-      if (len == 1 && childNodes[0].nodeType != ELEMENT_NODE)
-        return childNodes[0].nodeValue;
-
       var result = {};
-      var nodes = Array.from(childNodes).concat(Array.from(attributes));
-      for (var i = 0; i < nodes.length; i++)
+      var nodes = [];
+      var childNodesCount = 0;
+      var value;
+      var cursor;
+      var object;
+      var name;
+      var isElement;
+      var map;
+
+      if (cursor = firstChild)
       {
-        var child = nodes[i];
-        var name  = child.tagName || child.nodeName;
+        do
+        {
+          childNodesCount = nodes.push(cursor);
+        }
+        while (cursor = cursor.nextSibling);
+      }
 
-        if (name == undefined || (name == 'xmlns' && child.nodeType == ATTRIBUTE_NODE))
-          continue;
+      if (attributes)
+        for (var i = 0, attr; attr = attributes[i]; i++)
+          nodes.push(attr);
 
-        var obj = child.nodeType == ATTRIBUTE_NODE 
-                    ? child.nodeValue              // Opera's attributes haven't childNodes
-                    : XML2Object(child, mapping);  // ! recursion
+      if (!mapping)
+        mapping = {};
 
-        if (mapping[name])
+      for (var i = 0, child; child = nodes[i]; i++)
+      {
+        name = child.nodeName;
+        isElement = i < childNodesCount;
+        map = mapping[name];
+
+        if (isElement)
+        {
+          value = XML2Object(child, mapping);
+        }
+        else
+        {
+          if (name == 'xmlns')
+            continue;
+
+          value = child.nodeValue;
+        }
+
+        if (map)
         {
           var realName = name;
 
-          if (mapping[name].storeName)
-            obj[mapping[name].storeName] = realName;
+          if (map.storeName)
+            value[map.storeName] = realName;
 
-          if (mapping[name].rename)
-            name = mapping[name].rename;
+          if (map.rename)
+            name = map.rename;
 
-          if (!result[name] && mapping[realName].forceArray) // ?!
-            result[name] = new Array();
+          if (!result[name] && map.forceArray)
+            value = [value];
         }
 
-        var node = result[name];
-        if (node)
+        if (name in result)
         {
-          if (node.constructor != Array)
-            node = result[name] = [node];
-          node.push(obj);
+          if ((object = result[name]) && object.push)
+            object.push(value);
+          else
+            result[name] = [object, value];
         }
         else
-          result[name] = obj;
-
+          result[name] = value;
       }
+
       return result;
     };
 

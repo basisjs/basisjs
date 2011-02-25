@@ -1,205 +1,275 @@
-(function(){
 
-  var namespace = 'BasisDoc.Nav';
+  (function(){
 
-  var Class = Basis.Class;
-  var Data = Basis.Data;
-  var DOM = Basis.DOM;
+    // namespace
 
-  var cssClass = Basis.CSS.cssClass;
+    var namespace = 'BasisDoc.Nav';
 
-  var nsWrapers = Basis.DOM.Wrapers;
-  var nsTree = Basis.Controls.Tree;
-  var nsCore = BasisDoc.Core;
-  var nsView = BasisDoc.View;
+    //
+    // import names
+    //
 
-  var groupTitle = {
-    Namespace: 'Namespaces',
-    Method: 'Methods',
-    Function: 'Functions',
-    Property: 'Properties',
-    Constant: 'Constants',
-    Class: 'Classes',
-    Object: 'Objects',
-    HtmlElement: 'DOM elements',
-    ClassMember: 'Class members'
-  };
-  var kindNodeType = {
-    'namespace': 'Namespace',
-    'method': 'Method',
-    'function': 'Function',
-    'property': 'Property',
-    'classMember': 'ClassMember',
-    'constant': 'Constant',
-    'htmlElement': 'HtmlElement',
-    'class': 'Class',
-    'object': 'Object'
-  };
+    var Class = Basis.Class;
+    var DOM = Basis.DOM;
 
-  var groupWeight = {
-    Namespace: 0,
-    ClassMember: 1,
-    Constant: 2,
-    Class: 3,
-    Object: 4,
-    HtmlElement: 5,
-    Property: 5.1,
-    Method: 6,
-    Function: 6
-  };
+    var cssClass = Basis.CSS.cssClass;
 
-  var baseTreeNode = Class.create(nsTree.TreeNode, {
-    nodeType: 'baseTreeNode',
-    behaviour: nsWrapers.createBehaviour(nsTree.TreeNode, {
-      update: function(object, newInfo, oldInfo, delta){
-        this.inherit(object, newInfo, oldInfo, delta);
+    var nsWrapers = Basis.DOM.Wrapers;
+    var nsTree = Basis.Controls.Tree;
+    var nsCore = BasisDoc.Core;
+    var nsView = BasisDoc.View;
+
+    //
+    // Maps
+    //
+
+    var kindNodeType = {
+      'namespace': 'Namespace',
+      'method': 'Method',
+      'function': 'Function',
+      'property': 'Property',
+      'classMember': 'ClassMember',
+      'constant': 'Constant',
+      'htmlElement': 'HtmlElement',
+      'class': 'Class',
+      'object': 'Object'
+    };
+
+    var groupTitle = {
+      Namespace: 'Namespaces',
+      Method: 'Methods',
+      Function: 'Functions',
+      Property: 'Properties',
+      Constant: 'Constants',
+      Class: 'Classes',
+      Object: 'Objects',
+      HtmlElement: 'DOM elements',
+      ClassMember: 'Class members'
+    };
+
+    var groupWeight = {
+      Namespace: 0,
+      ClassMember: 1,
+      Constant: 2,
+      Class: 3,
+      Object: 4,
+      HtmlElement: 5,
+      Property: 5.1,
+      Method: 6,
+      Function: 6
+    };
+
+    var nodeTypeGrouping = {
+      groupGetter: function(node){
+        return node.info.isClassMember ? 'ClassMember' : kindNodeType[node.info.kind];
+      },
+      titleGetter: Function.getter('info.id', groupTitle),
+      localSorting: Function.getter('info.id', groupWeight)
+    };
+
+    //
+    // Base navigation tree child node classes
+    //
+
+    //
+    // Nodes
+    //
+
+   /**
+    * @class
+    */
+    var baseTreeNode = Class(nsTree.TreeNode, {
+      nodeType: 'baseTreeNode',
+      altTitle: false,
+      init: function(config){
+        this.inherit(config);
+
         this.title.href = '#' + this.info.objPath;
-        cssClass(this.content).add(this.nodeType + '-Content');
+        this.content.className += ' ' + this.nodeType + '-Content';
       }
-    }),
-    altTitle: false,
-    localSorting: Data('info.title')
-  });
+    });
 
-  var docMethod = Class.create(baseTreeNode, {
-    nodeType: 'Method',
-    views: [nsView.viewInheritance, nsView.viewSourceCode],
-    init: function(config){
-      config = this.inherit(config);
-      
-      DOM.insert(this.title, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
+   /**
+    * @class
+    */
+    var docFunction = Class(baseTreeNode, {
+      nodeType: 'Function',
+      views: [
+        nsView.viewSourceCode
+      ],
 
-      return config;
-    }
-  });
+      template: new Basis.Html.Template(
+        baseTreeNode.prototype.template.source.replace('</a>', '<span class="args">({argsText})</span></a>')
+      ),
 
-  var docFunction = Class.create(baseTreeNode, {
-    nodeType: 'Function',
-    views: [nsView.viewSourceCode],
-    init: function(config){
-      config = this.inherit(config);
-      
-      DOM.insert(this.title, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
-
-      return config;
-    }
-  });
-
-  var docProperty = Class.create(baseTreeNode, {
-    nodeType: 'Property',
-    views: [nsView.viewInheritance]
-  });
-
-  var docClassMember = Class.create(baseTreeNode, {
-    nodeType: 'ClassMember'
-  });
-
-  var docConstant = Class.create(baseTreeNode, {
-    nodeType: 'Constant'
-  });
-
-  var docHtmlElement = Class.create(baseTreeNode, {
-    nodeType: 'HtmlElement'
-  });
-
-  var baseTreeFolder = Class.create(nsTree.TreeFolder, {
-    nodeType: 'baseTreeFolder',
-    behaviour: nsWrapers.createBehaviour(nsTree.TreeFolder, {
-      update: function(object, newInfo, oldInfo, delta){
-        this.inherit(object, newInfo, oldInfo, delta);
-        this.title.href = '#' + this.info.objPath;
-        cssClass(this.content).add(this.nodeType + '-Content');
+      init: function(config){
+        this.inherit(config);
+        this.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
       }
-    }),
+    });
 
-    localSorting: function(node){ return groupWeight[node.nodeType] + '-' + node.info.title },
+   /**
+    * @class
+    */
+    var docMethod = Class(docFunction, {
+      nodeType: 'Method',
+      views: [
+        nsView.viewInheritance,
+        nsView.viewSourceCode
+      ]
+    });
 
-    collapsed: true,
 
-    inited: false,
-    getMembers: Function.$null,
-    expand: function(){
-      if (this.inherit())
-      {
-        DOM.insert(this, this.getMembers());
-        this.expand = this.inherit;
+   /**
+    * @class
+    */
+    var docProperty = Class(baseTreeNode, {
+      nodeType: 'Property',
+      views: [
+        nsView.viewInheritance
+      ]
+    });
+
+   /**
+    * @class
+    */
+    var docClassMember = Class(baseTreeNode, {
+      nodeType: 'ClassMember'
+    });
+
+   /**
+    * @class
+    */
+    var docConstant = Class(baseTreeNode, {
+      nodeType: 'Constant'
+    });
+
+   /**
+    * @class
+    */
+    var docHtmlElement = Class(baseTreeNode, {
+      nodeType: 'HtmlElement'
+    });
+
+
+    //
+    // Folders
+    //
+
+   /**
+    * @class
+    */
+    var baseTreeFolder = Class(nsTree.TreeFolder, {
+      nodeType: 'baseTreeFolder',
+
+      collapsed: true,
+
+      childFactory: function(config){
+        var childClass = kindNodeClass[config.info.kind];
+        return new childClass(config);
+      },
+      localSorting: function(node){
+        return groupWeight[node.nodeType] + '-' + node.info.title
+      },
+      localGrouping: nodeTypeGrouping,
+
+      init: baseTreeNode.prototype.init,
+
+      getMembers: Function.$null,
+      expand: function(){
+        if (this.inherit())
+        {
+          DOM.insert(this, this.getMembers());
+          this.expand = this.inherit;
+        }
       }
-    }
-  });
+    });
 
-  var docSection = Class.create(baseTreeFolder, {
-    nodeType: 'Section',
-    collapsed: false,
-    selectable: false
-  });
+   /**
+    * @class
+    */
+    var docSection = Class(baseTreeFolder, {
+      nodeType: 'Section',
+      collapsed: false,
+      selectable: false,
+      localGrouping: null
+    });
 
-  var nodeTypeGrouping = {
-    groupGetter: function(node){ return node.info.isClassMember ? 'ClassMember' : kindNodeType[node.info.kind] },
-    titleGetter: Data('info.id', groupTitle),
-    localSorting: Data('info.id', groupWeight)
-  };
-  var docNamespace = Class.create(baseTreeFolder, {
-    nodeType: 'Namespace',
-    childFactory: function(config){
-      var childClass = kindNodeClass[config.info.kind];
-      return new childClass(config);
-    },
-    localGrouping: nodeTypeGrouping,
-    getMembers: function(){
-      return nsCore.getMembers(this.info.objPath);
-    }
-  });
+   /**
+    * @class
+    */
+    var docNamespace = Class(baseTreeFolder, {
+      nodeType: 'Namespace',
+      getMembers: function(){
+        return nsCore.getMembers(this.info.objPath);
+      }
+    });
 
-  var docClass = Class.create(baseTreeFolder, {
-    nodeType: 'Class',
-    views: [nsView.viewInheritance, nsView.viewTemplate, nsView.viewConstructor, nsView.viewConfig, nsView.viewPrototype],
-    childFactory: function(config){
-      var childClass = kindNodeClass[config.info.kind];
-      return new childClass(config);
-    },
-    localGrouping: nodeTypeGrouping,
-    init: function(config){
-      config = this.inherit(config);
-      
-      DOM.insert(this.title, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
+   /**
+    * @class
+    */
+    var docClass = Class(baseTreeFolder, {
+      nodeType: 'Class',
 
-      return config;
-    },
-    getMembers: function(){
-      return nsCore.getMembers(this.info.objPath + '.prototype')
-             .concat(nsCore.getMembers(this.info.objPath));
-    }
-  });
+      template: new Basis.Html.Template(
+        baseTreeFolder.prototype.template.source.replace('</a>', '<span class="args">({argsText})</span></a>')
+      ),
 
-  var docObject = Class.create(baseTreeFolder, {
-    nodeType: 'Object',
-    childFactory: function(config){
-      var childClass = kindNodeClass[config.info.kind];
-      return new childClass(config);
-    },
-    localGrouping: nodeTypeGrouping,
-    getMembers: function(){
-      return nsCore.getMembers(this.info.objPath);
-    }
-  });
+      views: [
+        nsView.viewInheritance,
+        nsView.viewTemplate,
+        nsView.viewConstructor,
+        nsView.viewConfig,
+        nsView.viewPrototype
+      ],
+      init: function(config){
+        this.inherit(config);
+        this.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+      },
+      getMembers: function(){
+        return [
+                 nsCore.getMembers(this.info.objPath + '.prototype'),
+                 nsCore.getMembers(this.info.objPath)
+               ].flatten();
+      }
+    });
 
-  var kindNodeClass = {
-    'namespace': docNamespace,
-    'method': docMethod,
-    'function': docFunction,
-    'property': docProperty,
-    'classMember': docClassMember,
-    'constant': docConstant,
-    'htmlElement': docHtmlElement,
-    'class': docClass,
-    'object': docObject
-  };
+   /**
+    * @class
+    */
+    var docObject = Class(baseTreeFolder, {
+      nodeType: 'Object',
+      getMembers: function(){
+        return nsCore.getMembers(this.info.objPath);
+      }
+    });
 
-  Basis.namespace(namespace).extend({
-    nodeTypeGrouping: nodeTypeGrouping,
-    docClass: docClass,
-    docNamespace: docNamespace,
-    docSection: docSection
-  });
+    //
+    // map node type -> tree child class
+    //
 
-})();
+    var kindNodeClass = {
+      'namespace': docNamespace,
+      'method': docMethod,
+      'function': docFunction,
+      'property': docProperty,
+      'classMember': docClassMember,
+      'constant': docConstant,
+      'htmlElement': docHtmlElement,
+      'class': docClass,
+      'object': docObject
+    };
+
+
+    //
+    // export names
+    //
+
+    Basis.namespace(namespace).extend({
+      nodeTypeGrouping: nodeTypeGrouping,
+      docClass: docClass,
+      docNamespace: docNamespace,
+      docSection: docSection
+    });
+
+  })();

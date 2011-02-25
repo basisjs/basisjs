@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -20,1173 +20,874 @@
     // import names
 
     var Class = Basis.Class;
-    var Data = Basis.Data;
     var Cleaner = Basis.Cleaner;
 
     var extend = Object.extend;
     var complete = Object.complete;
+    var arrayFrom = Array.from;
+    var $self = Function.$self;
+    var getter = Function.getter;
 
-    var nsWrapers = Basis.DOM.Wrapers;
+    var nsData = Basis.Data;
+    var nsWrappers = Basis.DOM.Wrapper;
 
-    var AbstractProperty = nsWrapers.AbstractProperty;
-    var Property = nsWrapers.Property;
-    var STATE = nsWrapers.STATE;
+    var EventObject = Basis.EventObject;
+    var AbstractDataset = nsData.AbstractDataset;
+    var Dataset = nsData.Dataset;
+    var AggregateDataset = nsData.AggregateDataset;
+    var Collection = nsData.Collection;
+    var Grouping = nsData.Grouping;
+    var DataObject = nsData.DataObject;
+    var STATE = nsData.STATE;
 
-    /*
-     *  Misc
-     */
+    //
 
-    var UntitledName = Class(null, {
-      init: function(name){
-        this.counter = 0;
-        this.name = name;
-      },
-      getName: function(){
-        return '[untitled{0}{1}]'.format(this.name, this.counter++);
+    var isKeyType = { 'string': 1, 'number': 1 };
+    var entityTypes = [];
+
+    var NumericId = function(value){
+      return isNaN(value) ? null : Number(value);
+    }
+    var IntId = function(value){
+      return isNaN(value) ? null : parseInt(value);
+    }
+    var StringId = function(value){
+      return value == null ? null : String(value);
+    }
+
+    // ---
+
+    var untitledNames = {};
+    function getUntitledName(name){
+      untitledNames[name] = untitledNames[name] || 0;
+      return name + (untitledNames[name]++);
+    }
+
+    //
+    // EntitySet
+    //
+
+    var ENTITYSET_WRAP_METHOD = function(data){
+      ;;;if (!this.wrapper) debugger;
+      return this.inherit(data && data.map(this.wrapper));
+    };
+
+    var ENTITYSET_INIT_METHOD = function(name){
+      return function(config){
+        if (config)
+        {
+          this.name = config.name || getUntitledName(name);
+          this.wrapper = config.wrapper;
+        }
+        else
+          this.name = getUntitledName(name);
+
+        this.inherit(config);
+      }
+    }
+
+    var ENTITYSET_SYNC_METHOD = function(data, set){
+
+      Dataset.setAccumulateState(true);
+      data = (data || []).map(this.wrapper);
+      Dataset.setAccumulateState(false);
+
+      var res = this.inherit(data, set);
+
+      return res;
+    };
+
+   /**
+    * @class
+    */
+    var EntitySet = Class(Dataset, {
+      className: namespace + '.EntitySet',
+
+      wrapper: Function.$self,
+
+      init: ENTITYSET_INIT_METHOD('EntitySet'),
+      sync: ENTITYSET_SYNC_METHOD,
+
+      set: ENTITYSET_WRAP_METHOD,
+      add: ENTITYSET_WRAP_METHOD,
+      remove: ENTITYSET_WRAP_METHOD,
+
+      destroy: function(){
+        this.inherit();
+
+        delete this.wrapper;
       }
     });
 
-    /*
-     *  Storages
-     */
+    //
+    // Read only EntitySet
+    //
 
-    var eUniqueId = 1;
-    var eGlobalStorage = {};
-    var eReadOnly = {};
-    var eReadOnlyWriteAllow = false;
+   /**
+    * @class
+    */
+    var ReadOnlyEntitySet = Class(EntitySet, {
+      className: namespace + '.ReadOnlyEntitySet',
 
-    /**
-     *  EntitySetType
-     */
+      set: Function.$false,
+      add: Function.$false,
+      remove: Function.$false,
+      clear: Function.$false
+    });
 
-    var EntitySetType = function(entityType){
-      if (this instanceof EntitySetType)
+    //
+    // Entity collection
+    //
+
+   /**
+    * @class
+    */
+    var EntityCollection = Class(Collection, {
+      className: namespace + '.EntityCollection',
+
+      init: ENTITYSET_INIT_METHOD('EntityCollection'),
+      sync: ENTITYSET_SYNC_METHOD/*,
+
+      set: ENTITYSET_WRAP_METHOD,
+      add: ENTITYSET_WRAP_METHOD,
+      remove: ENTITYSET_WRAP_METHOD*/
+    });
+
+    //
+    // Entity grouping
+    //
+
+   /**
+    * @class
+    */
+    var EntityGrouping = Class(Grouping, {
+      className: namespace + '.EntityGrouping',
+
+      groupClass: ReadOnlyEntitySet,
+
+      init: ENTITYSET_INIT_METHOD('EntityGrouping'),
+      sync: ENTITYSET_SYNC_METHOD,
+
+      getGroup: function(object, autocreate){
+        var group = this.inherit(object, autocreate);
+        if (group)
+          group.wrapper = this.wrapper;
+        return group;
+      }
+    });
+
+    //
+    // EntitySetWrapper
+    //
+
+    var EntitySetWrapper = function(wrapper){
+      if (this instanceof EntitySetWrapper)
       {
-        var entitySetType = new InternalEntitySetType({ entityType: entityType });
+        var entitySetType = new EntitySetConstructor(wrapper || $self);
 
-        var result = function(data, entitySet){
-          if (arguments.length)
+        return function(data, entitySet){
+          if (data != null)
           {
-            //console.log('create/update entitySet', data, entitySet instanceof EntitySet);
-            if (data == null)
-              return null;
-
             if (!(entitySet instanceof EntitySet))
               entitySet = entitySetType.createEntitySet();
 
-            entitySet.set(data instanceof AbstractProperty ? data._value : data);
+            entitySet.set(data instanceof Dataset ? data.getItems() : Array.from(data));
 
             return entitySet;
           }
           else
             return null;
         };
-
-        result.callText = function(){ return 'EntitySet' + (entityType ? (entityType.entityType || entityType).name.quote('(') : '()') };
-
-        return result;
       }
-      else
-        console.warn('Unknown what to do', arguments);
     };
+    EntitySetWrapper.className = namespace + '.EntitySetWrapper';
 
-    var InternalEntitySetType = Class(null, {
-      className: namespace + '.EntitySetType',
+    //
+    // EntitySetConstructor
+    //
 
-      init: function(config){
-        this.entityType = config.entityType;
+   /**
+    * @class
+    */
+    var EntitySetConstructor = Class(null, {
+      className: namespace + '.EntitySetConstructor',
+
+      init: function(wrapper){
+        this.wrapper = wrapper;
       },
       createEntitySet: function(){
-        return new EntitySet(this.entityType, 'Set of ' + (this.entityType.entityType || this.entityType).name.quote('{'));
+        return new EntitySet({
+          wrapper: this.wrapper,
+          name: 'Set of ' + ((this.wrapper.entityType || this.wrapper).name || '').quote('{')
+        });
       }
     });
-    EntitySetType.className = namespace + '.EntitySetType';
 
-    /**
-     *  EntitySet
-     */
+   /*
+    *  EntityTypeWrapper
+    */
 
-    var EntitySetToEntitySetHandler = {};
-
-    function entitySetAddLinks(entitySet, inserted){
-      var result = [];
-      for (var i = inserted.length - 1; i >= 0; i--)
+    var EntityTypeWrapper = function(config){
+      if (this instanceof EntityTypeWrapper)
       {
-        var entity = inserted[i];
-        var index = entity.uniqueId;
-        var ea = entitySet.attaches[index];
-        if (ea)
-          ea.count++;
-        else
-        {
-          result.push(entity);
-          ea = entitySet.attaches[index] = {
-            count: 1,
-            entity: entity,
-            isEntitySet: entity instanceof EntitySet,
-            handler: {
-              datasetChanged: entity instanceof EntitySet
-                ? // handler for entitySet
-                  (function(entity){
-                    return function(dataset, delta){
-                      if (!entitySet.__nested_trigger)
-                      {
-                        //var old = Array.from(entitySet.value);
-                        //var injection = [0, oldValue.length].concat(newValue);
-                        var d = -(delta.inserted ? delta.inserted.length : 0) + (delta.deleted ? delta.deleted.length : 0);
-                        var injection = [0, entity.value.length + d].concat(entity.value);
-                        var count = ea.count;
-                        var count2 = 0;
-                        var complexDelta = {
-                          inserted: [],
-                          deleted: [],
-                          updated: []
-                        };
+        var result = function(data, entity){
+          // newData - data for target EntityType instance
+          // entity - current instance of target EntityType
 
-                        for (var i = 0, offset = 0; count && i < entitySet._value.length; i++)
-                        {
-                          var e = entitySet._value[i];
-                          if (e === entity)
-                          {
-                            count--;
-
-                            injection[0] = offset;
-                            entitySet.value.splice.apply(entitySet.value, injection);
-
-                            if (delta.deleted)
-                              for (var item, j = 0; item = delta.deleted[j]; j++)
-                                complexDelta.deleted.push({
-                                  pos: item.pos + offset + count2 * d,
-                                  info: item.info
-                                });
-
-                            if (delta.inserted)
-                              for (var item, j = 0; item = delta.inserted[j]; j++)
-                                complexDelta.inserted.push({
-                                  pos: item.pos + offset,
-                                  info: item.info
-                                });
-
-                            if (delta.updated)
-                              for (var item, j = 0; item = delta.updated[j]; j++)
-                                complexDelta.updated.push({
-                                  pos: item.pos + offset,
-                                  oldPos: item.oldPos + offset,
-                                  info: item.info
-                                });
-
-                            count2++;
-                          }
-
-                          offset += e instanceof EntitySet ? e.value.length : 1;
-                        }
-
-                        complexDelta.deleted = complexDelta.deleted.sortAsObject('pos').reverse();
-                        //console.log(complexDelta.deleted);
-
-                        for (var key in complexDelta)
-                          if (!complexDelta[key].length)
-                            delete complexDelta[key];
-
-                        //entitySet.__nested_trigger++;
-                        entitySet.dispatch('datasetChanged', entitySet.value, complexDelta);
-                        //entitySet.__nested_trigger--;
-                      //console.log('changes', delta);
-                      }
-                    };
-                  })(entity)
-                : Function.$null,
-              change: entity instanceof EntitySet == false
-                ? // handler for entity
-                  (function(entity){
-                    return function(){
-                      if (!entitySet.__nested_trigger)
-                      {
-                        var delta = {
-                          updated: [],
-                          changedMembers: [entity]
-                        };
-                        var count = ea.count;
-                        var pos = -1;
-                        while (count-- && (pos = entitySet._value.indexOf(entity, pos + 1)) != -1)
-                        {
-                          delta.updated.push({
-                            pos: pos,
-                            oldPos: pos,
-                            info: entity
-                          });
-                        }
-                        entitySet.dispatch('datasetChanged', entitySet.value, delta);
-                      }
-                      else
-                        entitySet.updateCount++;
-                    };
-                  })(entity)
-                : Function.$null,
-              destroy: function(entity){
-                entitySet.remove([entity].repeat(ea.count));
-                //entitySet.set(entitySet.value.filter(Function.$isNotSame, entity));
-              }
-            }
-          };
-          entity.addHandler(ea.handler, entitySet);
-        };
-      }
-      return result;
-    };
-
-    function entitySetRemoveLinks(entitySet, deleted){
-      var result = [];
-      for (var i = deleted.length - 1; i >= 0; i--)
-      {
-        var entity = deleted[i];
-        var index = entity.uniqueId;
-        if (index != -1)
-        {
-          var ea = entitySet.attaches[index];
-
-          if (!(--ea.count))
+          if (data != null)
           {
-            result.push(ea.entity);
+            // if newData instance of target EntityType return newData
+            if (data === entity || data.entityType === entityType)
+              return data;
 
-            ea.entity.removeHandler(ea.handler, entitySet);
-            delete ea.entity;
-            delete entitySet.attaches[index];
-          }
-        }
-      }
-      return result;
-    };
+            var idValue;
+            var idField = entityType.idField;
 
-    var EntitySetMemberFilter = function(item){
-      // this - EntitySet
-      if (item)
-      {
-        // already in entitySet or instance of Entity
-        if (this.attaches[item.uniqueId] || item instanceof Entity)
-          return true;
-        else
-          if (item instanceof EntitySet)
-          {
-            if (this.isDependenced(item))
+            if (isKeyType[typeof data])
             {
-              ;;; if (typeof console != 'undefined') console.warn('Destination EntitySet depend on source EntitySet');
-              return false;
+              if (!idField)
+                return;
+
+              idValue = data;
+              data = {};
+              data[idField] = idValue;
             }
-            if (item.isDependenced(this))
+            else
             {
-              ;;; if (typeof console != 'undefined') console.warn('Source EntitySet depend on destination EntitySet');
-              return false;
-            }
-            return true;
-          }
-      }
-      return false;
-      /*
-      return item &&
-             (
-               this.attaches[item.uniqueId] ||  // already in entitySet
-               item instanceof Entity ||
-              (item instanceof EntitySet && !this.isDependenced(item) && !item.isDependenced(this))
-             );
-      */
-    };
-
-    var untitledEntitySet = new UntitledName('EntitySet');
-    var EntitySet = Class(Property, {
-      className: namespace + '.EntitySet',
-
-      state: STATE.UNDEFINED,
-
-      init: function(entityType, name){
-        eGlobalStorage[this.uniqueId = eUniqueId++] = this;
-
-        this.inherit([]);
-        this._value = [];
-        this.info = this;
-
-        this.name = name || untitledEntitySet.getName();
-        this.entityType = entityType ? entityType.wraper || entityType : Function.$self;
-
-        this.attaches = {};
-
-        this.updateCount = 0;
-        this.__nested_trigger = 0;
-      },
-      isDependenced: function(entitySet){
-        if (entitySet === this)
-          return true;
-
-        for (var id in this.attaches)
-        {
-          var ea = this.attaches[id];
-          if (ea.isEntitySet)
-          {
-            if (ea.entity === entitySet || ea.entity.isDependenced(entitySet))
-              return true;
-          }
-        }
-
-        return false;
-      },
-      setIsActiveSubscriber: function(isActive){
-        if (this.isActiveSubscriber != isActive)
-        {
-          this.inherit(isActive);
-
-          var masterEntitySet = this.masterEntitySet;
-          if (masterEntitySet)
-          {
-            masterEntitySet.subscriberCount = masterEntitySet.subscriberCount + (isActive ? 1 : -1);
-            masterEntitySet.dispatch('subscribersChanged');
-          }
-        }
-
-        return this.isActiveSubscriber;
-      },
-      toString: function(){
-        return '[object EntitySet]';
-      },
-      set: function(data, forceEvent){
-
-        if (eReadOnly[this.uniqueId] && !eReadOnlyWriteAllow)
-          return;
-
-        if (data)
-        {
-          // optimization: just append possible
-          if (this._value.length == 0)
-            return this.append(data, forceEvent);
-
-          this.__nested_trigger++;
-          data = Array.from(data).map(this.entityType).filter(EntitySetMemberFilter, this);
-          this.__nested_trigger--;
-
-          // optimization: just delete possible (clear)
-          if (data.length == 0)
-            return this.clear();
-
-          // hard way
-          var updateCount = this.updateCount;
-          var _inserted = [];
-          var _deleted = [];
-          var _insertedPos = [];
-
-          if (!data.equal(this._value))
-          {
-            var changes = {
-              deleted:  [],
-              inserted: [],
-              updated:  []
-            };
-
-            // current_value (this._value) -> _old
-            var _old = Array.from(this._value);
-            // new_value (data) -> current value
-            this._value.set(data);
-
-            //var old = Array.from(this.value);
-            this.value.clear();
-
-            var exists = {};
-
-            var oldOffsets = new Array(_old.length);
-            for (var i = 0, offset = 0; i < _old.length; i++)
-            {
-              var entity = _old[i];
-              oldOffsets[i] = offset;
-              offset += entity instanceof EntitySet ? entity.value.length : 1;
-            }
-            //console.log(oldOffsets);
-
-            for (var i = 0, offset = 0; i < this._value.length; i++, offset += len)
-            {
-              var entity = this._value[i];
-              var isEntitySet = entity instanceof EntitySet;
-              var len = isEntitySet ? entity.value.length : 1;
-              var index = entity.uniqueId;
-              var exist = null;
-
-              if (this.attaches[index])
-                if (exists[index])
-                  exist = exists[index];
-                else
-                  exist = exists[index] = {
-                    count: this.attaches[index].count,
-                    lastPos: -1
-                  };
-
-              var items = isEntitySet ? entity.value : [entity];
-              if (!exist || exist.count == 0)
-              {
-                for (var j = 0; j < len; j++)
-                {
-                  changes.inserted.push({
-                    pos: offset + j,
-                    info: items[j]
-                  });
-                }
-
-                this.value.push.apply(this.value, items);
-                _inserted.push(entity);
-                _insertedPos.push(i);
-              }
+              if (idField)
+                idValue = data[idField];
               else
               {
-                exist.count--;
-                exist.lastPos = _old.indexOf(entity, exist.lastPos + 1);
-                oldOffsets[exist.lastPos] = -1;
-
-                this.value.push.apply(this.value, items);
-              }
-            }
-
-            //console.log(oldOffsets);
-            for (var i = oldOffsets.length - 1; i >= 0; i--)
-            {
-              var offset = oldOffsets[i];
-              if (offset != -1)
-              {
-                var entity = _old[i];
-                var items = entity instanceof EntitySet ? entity.value : [entity];
-
-                offset += items.length - 1;
-                for (var j = 0; j < items.length; j++)
-                  changes.deleted.push({
-                    pos:  offset - j,
-                    info: items[j]
-                  });
-
-                _deleted.push(entity);
-                _old.splice(i, 1);
-              }
-            }
-
-            // processing position changes
-            for (var i = 0; i < _inserted.length; i++)
-              _old.splice(_insertedPos[i], 0, _inserted[i]);
-
-            var oldOffsets = [];
-            for (var i = 0, offset = 0; i < _old.length; i++)
-            {
-              oldOffsets[i] = offset;
-              offset += _old[i] instanceof EntitySet ? _old[i].value.length : 1;
-            }
-
-            var delta = 0;
-            for (var i = 0, offset = 0; i < this._value.length; i++)
-            {
-              var a = this._value[i];
-              var aLength = a instanceof EntitySet ? a.value.length : 1;
-              var b = _old[i];
-              var bLength = b instanceof EntitySet ? b.value.length : 1;
-
-              if (a !== b)
-              {
-                // swap
-                var oldPos = _old.indexOf(a, i);
-                _old[i] = _old[oldPos];
-                _old[oldPos] = b;
-                b = a;
-
-                bLength = b instanceof EntitySet ? b.value.length : 1;
-
-                // calc delta position
-                delta += bLength - aLength;
-
-                // form updated
-                var items = b instanceof EntitySet ? b.value : [b];
-                for (var j = 0; j < bLength; j++)
+                if (isSingleton)
                 {
-                  changes.updated.push({
-                    pos: offset + j,
-                    oldPos: oldOffsets[oldPos] + delta + j,
-                    info: items[j]
-                  });
+                  entity = entityType.singleton;
+                  if (!entity)
+                    return entityType.singleton = new entityType.entityClass(data);
                 }
-
-                this.updateCount += bLength;
-              }
-
-              offset += aLength;
-            }
-
-            for (var key in changes)
-              if (!changes[key].length)
-                delete changes[key];
-
-            if (_inserted.length)
-            {
-              this.updateCount++;
-              var items = entitySetAddLinks(this, _inserted);
-              if (items.length)
-                changes.addedMembers = items;
-            }
-            if (_deleted.length)
-            {
-              this.updateCount++;
-              var items = entitySetRemoveLinks(this, _deleted);
-              if (items.length)
-                changes.removedMembers = items;
-            }
-          }
-        }
-
-        if (forceEvent || this.updateCount != updateCount)
-          this.dispatch('datasetChanged', this.value, /*old || this.value, */changes || {});
-
-        return changes || {};
-      },
-      update: function(data, forceEvent){
-        this.set(data, forceEvent);
-      },
-      sync: function(data, set){
-        data = data || [];
-
-        var save = data.map(this.entityType).sortAsObject(Data.getter('uniqueId')).unique(true);
-        var self = this.value.sortAsObject(Data.getter('uniqueId')).unique(true);
-
-        self.exclude(save).forEach(Data.getter('destroy()'));
-
-        if (set)
-          return this.set(data);
-      },
-      append: function(data, forceEvent){
-        if (eReadOnly[this.uniqueId] && !eReadOnlyWriteAllow)
-          return;
-
-        if (data)
-        {
-          //var old = Array.from(this.value);
-          var updateCount = this.updateCount;
-          var changes = {
-            inserted: []
-          };
-          var _inserted = [];
-
-          this.__nested_trigger++;
-          data = Array.from(data).map(this.entityType).filter(EntitySetMemberFilter, this);
-          this.__nested_trigger--;
-
-          var items;
-          var pos = this.value.length;
-          for (var i = 0; i < data.length; i++)
-          {
-            var entity = data[i];
-
-            items = entity instanceof EntitySet ? entity.value : [entity];
-            this.value.push.apply(this.value, items);
-            for (var j = 0; j < items.length; j++)
-              changes.inserted.push({
-                pos: pos++,
-                info: items[j]
-              });
-
-            this._value.push(entity);
-            _inserted.push(entity);
-          }
-
-          if (_inserted.length)
-          {
-            this.updateCount++;
-            var items = entitySetAddLinks(this, _inserted);
-            if (items.length)
-              changes.addedMembers = items;
-          }
-        }
-
-        if (forceEvent || this.updateCount != updateCount)
-          this.dispatch('datasetChanged', this.value,/* old, */changes);
-
-        return changes || {};
-      },
-      remove: function(data){
-        if (eReadOnly[this.uniqueId] && !eReadOnlyWriteAllow)
-          return;
-
-        if (this.destroy == Function.$undef)
-          return;
-
-        if (data)
-        {
-          //var old = Array.from(this.value);
-          var updateCount = this.updateCount;
-          var changes = {
-            deleted: []
-          };
-          var _deleted = [];
-
-          this.__nested_trigger++;
-          data = Array.from(data).map(this.entityType);
-          this.__nested_trigger--;
-
-          // optimization: filter list of removing items only for existing
-          for (var i = 0, k = 0; i < data.length; i++)
-          {
-            if (data[i] && this.attaches[data[i].uniqueId])
-              data[k++] = data[i];
-          }
-          data.length = k;
-
-          // remove
-          for (var i = this._value.length - 1, offset = this.value.length; data.length && i >= 0; i--)
-          {
-            var entity = this._value[i];
-            var index = data.indexOf(entity);
-            var isEntitySet = entity instanceof EntitySet;
-            var len = isEntitySet ? entity.value.length : 1;
-            offset -= len;
-            if (index != -1)
-            {
-              var items = isEntitySet ? entity.value : [entity];
-              for (var j = len - 1; j >= 0; j--)
-              {
-                changes.deleted.push({
-                  pos: offset + j,
-                  info: items[j]
-                });
-              }
-
-              this.value.splice(offset, len);
-              this._value.splice(i, 1);
-              _deleted.unshift(entity);
-              data.splice(index, 1);
-            }
-          }
-
-          if (_deleted.length)
-          {
-            this.updateCount++;
-            var items = entitySetRemoveLinks(this, _deleted);
-            if (items.length)
-              changes.removedMembers = items;
-          }
-        }
-
-        if (this.updateCount != updateCount)
-          this.dispatch('datasetChanged', this.value,/* old, */changes);
-
-        return changes || {};
-      },
-      clear: function(){
-        if (eReadOnly[this.uniqueId] && !eReadOnlyWriteAllow)
-          return;
-
-        //this.remove(this._value);
-        if (this._value.length)
-        {
-          var changes = { deleted: [] };
-
-          for (var i = this.value.length - 1; i >= 0; i--)
-            changes.deleted.push({
-              pos: i,
-              info: this.value[i]
-            });
-
-          var items = entitySetRemoveLinks(this, this._value);
-          if (items.length)
-            changes.removedMembers = items;
-
-          var old = Array.from(this.value);
-          this.value.clear();
-          this._value.clear();
-
-          this.dispatch('datasetChanged', this.value, /*old, */changes);
-        }
-
-        return changes;
-      },
-      getCount: function(entity){
-        var ea = this.attaches[this.entityType(entity).uniqueId];
-        return ea ? ea.count : 0;
-      },
-      has: function(entity){
-        return this.attaches[this.entityType(entity).uniqueId];
-      },
-      destroy: function(){
-        delete eReadOnly[this.uniqueId];
-
-        this.clear();
-        this.inherit();
-
-        delete eGlobalStorage[this.uniqueId];
-
-        // delete this.value;  // deleted in this.inherit()
-        delete this._value;
-        delete this.info;
-
-        delete this.attaches;
-
-        delete this.entityType;
-      }
-    });
-
-    /*
-     *  GroupingEntitySet
-     */
-
-    var untitledGrouping = new UntitledName('Grouping');
-
-    var GroupingMasterEntitySetHandler = {
-      isSubscriber: true,
-      datasetChanged: function(newValue, delta){
-        if (Cleaner.globalDestroy)
-          return;
-
-        if (delta.inserted)
-        {
-          for (var i = 0, item; item = delta.inserted[i]; i++)
-          {
-            var entity = item.info;
-            var group = this.entityGroup[entity.uniqueId];
-
-            if (!group)
-              group = this.getGroup(this.groupSelector(entity), true);
-              
-            group.append(entity);
-
-            this.entityGroup[entity.uniqueId] = group;
-          }
-        }
-        if (delta.deleted)
-        {
-          for (var i = 0, item; item = delta.deleted[i]; i++)
-          {
-            var entity = item.info;
-            var group = this.entityGroup[entity.uniqueId];
-
-            if (group)
-            {
-              group.remove(entity);
-              if (group.getCount(entity) == 0)
-                delete this.entityGroup[entity.uniqueId];
-            }
-          }
-        }
-        if (delta.updated)
-        {
-          for (var i = 0, item; item = delta.updated[i]; i++)
-          {
-            var entity = item.info;
-            var curGroup = this.entityGroup[entity.uniqueId];
-            if (curGroup)
-            {
-              var group = this.getGroup(this.groupSelector(entity), true);
-              if (curGroup != group)
-              {
-                var s = [entity].repeat(curGroup.getCount(entity));
-                curGroup.remove(s);
-                group.append(s);
-                this.entityGroup[entity.uniqueId] = group;
               }
             }
-          }
-        }
-      },
-      stateChanged: function(object, newState, oldState, errorText){
-        this.setState(newState, errorText);
-      }
-    };
 
-    var GroupEntitySet = Class(EntitySet, {
-      className: namespace + '.GroupEntitySet',
-      init: function(entityType, name, groupingEntitySet, groupId){
-        this.groupId_ = groupId;
-        this.groupingEntitySet = groupingEntitySet;
-        this.inherit(entityType, name);
-      },
-      destroy: function(){
-        this.inherit();
-        delete this.groupingEntitySet;
-      }
-    });
+            if (idValue != null)
+              entity = entityType.map_[idValue];
 
-    var GroupingEntitySet = Class(EntitySet, {
-      className: namespace + '.GroupingEntitySet',
-
-      autoDestroyEmptyGroups: false,
-      groupSelector: null,
-
-      groupClass: GroupEntitySet,
-
-      init: function(entityType, name, groupSelector, entitySet){
-        name = 'Grouping ' + name.quote() + ' of ' + (entityType ? entityType.name.quote('{') : 'mixed');
-
-        this.inherit(entityType, name);
-
-        this.entityTypeWraper = this.entityType;
-        this.entityType = Function.$self;
-        this.groups = {};
-        this.entityGroup = {};
-
-        this.setMasterEntitySet(entitySet || entityType.all);
-        /*
-        this.masterEntitySet = entitySet || entityType.all;
-        if (this.masterEntitySet)
-        {
-          this.masterEntitySet.addHandler(GroupingMasterEntitySetHandler, this);
-          this.entityTypeWraper = this.masterEntitySet.entityType;
-          //this.setDelegate(this.masterEntitySet);
-        }*/
-
-        this.setGroupSelector(groupSelector);
-      },
-      setMasterEntitySet: function(entitySet){
-        if (this.masterEntitySet != entitySet)
-        {
-          var oldMasterEntitySet = this.masterEntitySet;
-          if (oldMasterEntitySet)
-          {
-            this.clear();
-            this.masterEntitySet.removeHandler(GroupingMasterEntitySetHandler, this);
-            delete this.masterEntitySet;
-          }
-
-          if (entitySet)
-          {
-            this.masterEntitySet = entitySet;
-            this.masterEntitySet.addHandler(GroupingMasterEntitySetHandler, this);
-            //this.entityType = this.masterEntitySet.entityType;
-            this.entityTypeWraper = this.masterEntitySet.entityType;
-
-            if (this.groupSelector)
-            {
-              GroupingMasterEntitySetHandler.datasetChanged.call(this, null, {
-                inserted: this.masterEntitySet.value.map(Data.wrapper('info'))
-              });
-            }
-          }
-
-          this.dispatch('masterEntitySetChanged', oldMasterEntitySet);
-        }
-      },
-      setGroupSelector: function(groupSelector){
-        groupSelector = Data.getter(groupSelector);
-        if (this.groupSelector != groupSelector)
-        {
-          this.groupSelector = groupSelector;
-
-          if (this.groupSelector && this.masterEntitySet)
-            GroupingMasterEntitySetHandler.datasetChanged.call(this, null, {
-              updated: this.masterEntitySet.value.map(Data.wrapper('info'))
-            });
-        }
-      },
-      getGroup: function(groupId, autocreate){
-        var group = this.groups[groupId];
-        if (!group && autocreate)
-        {
-          group = this.groups[groupId] = new this.groupClass(this.entityTypeWraper, 'Group set ' + groupId, this, groupId);
-          this.append(group);
-        }
-        return group;
-      },
-      destroy: function(){
-        this.setMasterEntitySet();
-        /*if (this.masterEntitySet)
-        {
-          this.masterEntitySet.removeHandler(GroupingMasterEntitySetHandler, this);
-          delete this.masterEntitySet;
-        }*/
-
-        delete this.entityGroup;
-        this.clear();
-
-        for (var groupId in this.groups)
-        {
-          this.groups[groupId].destroy();
-          delete this.groups[groupId];
-        }
-        delete this.groups;
-
-        this.inherit();
-      }
-    });
-
-    /*
-     * CollectionEntitySet
-     */
-
-    var untitledCollection = new UntitledName('Collection');
-
-    var CollectionMasterEntitySetHandler = {
-      isSubscriber: true,
-      datasetChanged: function(newValue, delta){
-        if (Cleaner.globalDestroy)
-          return;
-
-        if (delta.inserted)
-          this.append(delta.inserted.map(Data.getter('info')).filter(this.memberSelector));
-
-        if (delta.deleted)
-          this.remove(delta.deleted.map(Data.getter('info')).filter(this.memberSelector));
-
-        if (delta.updated)
-        {
-          var eSet = {};
-          for (var i = 0, item; item = delta.updated[i]; i++)
-          {
-            var entity = item.info;
-            if (!eSet[entity.uniqueId])
-              eSet[entity.uniqueId] = { items: [] };
-            eSet[entity.uniqueId].items.push(entity);
-          }
-
-          for (var key in eSet)
-          {
-            var item = eSet[key].items;
-            var entity = item[0];
-            var isMember = this.memberSelector(entity);
-            if (isMember)
-            {
-              if (!this.attaches[entity.uniqueId])
-                this.append(item);
-            }
-            else
-            {
-              if (this.attaches[entity.uniqueId])
-                this.remove(item);
-            }
-          }
-        }
-      },
-      stateChanged: function(object, newState, oldState, errorText){
-        this.setState(newState, errorText);
-      }
-    };
-
-    var CollectionEntitySet = Class(EntitySet, {
-      className: namespace + '.CollectionEntitySet',
-
-      memberSelector: null,
-
-      init: function(entityType, name, memberSelector, entitySet){
-        this.inherit(entityType, name);
-
-        this.name = 'Collection ' + name.quote() + ' of ' + (entityType ? (entityType.name || entityType.entityType.name || '?').quote('{') : 'mixed');
-
-        this.entityTypeWraper = this.entityType;
-        this.entityType = Function.$self;
-
-        this.setMasterEntitySet(entitySet || (entityType ? entityType.all : null));
-        /*
-        this.masterEntitySet = entitySet || (entityType ? entityType.all : null);
-        if (this.masterEntitySet)
-        {
-          this.masterEntitySet.addHandler(CollectionMasterEntitySetHandler, this);
-          this.entityType = this.masterEntitySet.entityType;
-          //this.setDelegate(this.masterEntitySet);
-        }*/
-
-        this.setMemberSelector(memberSelector);
-      },
-      setMasterEntitySet: function(entitySet){
-        if (this.masterEntitySet != entitySet)
-        {
-          var oldMasterEntitySet = this.masterEntitySet;
-          if (oldMasterEntitySet)
-          {
-            this.clear();
-            this.masterEntitySet.removeHandler(CollectionMasterEntitySetHandler, this);
-            delete this.masterEntitySet;
-          }
-
-          if (entitySet)
-          {
-            this.masterEntitySet = entitySet;
-            this.masterEntitySet.addHandler(CollectionMasterEntitySetHandler, this);
-            this.entityType = this.masterEntitySet.entityType;
-
-            if (this.memberSelector)
-            {
-              CollectionMasterEntitySetHandler.datasetChanged.call(this, null, {
-                inserted: this.masterEntitySet.value.map(Data.wrapper('info'))
-              });
-            }
-          }
-
-          this.dispatch('masterEntitySetChanged', oldMasterEntitySet);
-        }
-      },
-      setMemberSelector: function(memberSelector){
-        memberSelector = Data.getter(memberSelector);
-        if (this.memberSelector != memberSelector)
-        {
-          this.memberSelector = memberSelector;
-
-          if (this.memberSelector && this.masterEntitySet)
-          {
-            CollectionMasterEntitySetHandler.datasetChanged.call(this, null, {
-              updated: this.masterEntitySet.value.map(Data.wrapper('info'))
-            });
-          }
-        }
-      },
-      destroy: function(){
-        this.setMasterEntitySet();/*
-        if (this.masterEntitySet)
-        {
-          this.masterEntitySet.removeHandler(CollectionMasterEntitySetHandler, this);
-          delete this.masterEntitySet;
-        }*/
-
-        this.inherit();
-      }
-    });
-
-    /*
-     *  EntityType
-     */
-
-    var EntityType = function(config){
-      if (this instanceof EntityType)
-      {
-        var result = function(newData, entity){
-          //return entityType.parse(data, true);
-
-          if (arguments.length && newData != null)
-          {
-            if (newData.entityType == entityType)
-              return newData;
-            //console.log('create/update entity', data, entity instanceof Entity);
-            var data = newData instanceof AbstractProperty ? newData._value : newData;
-            var parse = false;
-            if (!(entity instanceof Entity))
-              parse = true;
-            else
-              if (data != entity)
-              {
-                if ((typeof data == 'number' || typeof data == 'string') && entityType.idField)
-                  parse = true;
-                else
-                {
-                  if (entity)
-                  {
-                    var id = entityType.getId(data);
-                    parse = id != null && id != entity.getId();
-                  }
-                }
-                //entity = entityType.parse(data instanceof AbstractProperty ? data.value : data, false);
-              }
-
-            if (parse || !entity)
-              entity = entityType.parse(data, true);
-            else
+            if (entity && entity.entityType === entityType)
               entity.update(data);
+            else
+              entity = new entityType.entityClass(data);
 
             return entity;
           }
           else
-            return entityType.isSingleton ? entityType.createEntity() : null;
+            return entityType.singleton;
         };
 
-        var entityType = new InternalEntityType(config, result);
+        var entityType = new EntityTypeConstructor(config || {}, result);
+        var entityClass = entityType.entityClass;
+        var isSingleton = entityType.isSingleton;
 
         extend(result, {
-          getConfig: function(){
-            var result = {
-              id: entityType.idField,
-              name: entityType.name,
-              fields: {},
-              aliases: {},
-              reflection: {}
-            };
-            for (var key in entityType.fields)
-              result.fields[key] = {
-                wraper: entityType.fields[key],
-                defaultValue: entityType.defaults[key]
-              };
-            for (var key in entityType._reflection)
-              result.reflection[key] = {
-                description: 'todo...'
-              };
-            for (var key in entityType.aliases)
-              result.aliases[key] = entityType.aliases[key];
+          entityType: entityType,
 
-            return result;
-          },
           get: function(data){
-            return entityType.getEntity(data);
+            return entityType.get(data);
           },
           getAll: function(){
-            return Array.from(entityType.all.value);
+            return arrayFrom(entityType.all.getItems());
           },
-          addField: function(key, wraper){
-            entityType.addField(key, wraper);
+          addField: function(key, wrapper){
+            entityType.addField(key, wrapper);
           },
           all: entityType.all,
-          createCollection: function(name, memberSelector, entitySet){
-            var collection = entityType._collection[name];
+          createCollection: function(name, memberSelector, dataset){
+            var collection = entityType.collection_[name];
 
             if (!collection && memberSelector)
-              collection = entityType._collection[name] = new CollectionEntitySet(entityType, name, memberSelector, entitySet);
+            {
+              return entityType.collection_[name] = new EntityCollection({
+                wrapper: result,
+                sources: [dataset || entityType.all],
+                filter: memberSelector
+              });
+            }
 
-            return entityType._collection[name];
+            return collection;
           },
           getCollection: function(name){
-            return entityType._collection[name];
+            return entityType.collection_[name];
           },
-          createGrouping: function(name, groupSelector, entitySet){
-            ;;;if (name == '*') return entityType._grouping;
-
-            var grouping = entityType._grouping[name];
-
-            if (!grouping && groupSelector)
-              grouping = entityType._grouping[name] = new GroupingEntitySet(entityType, name, groupSelector, entitySet);
+          createGrouping: function(name, groupGetter, dataset){
+            var grouping = entityType.grouping_[name];
+            if (!grouping && groupGetter)
+            {
+              return entityType.grouping_[name] = new EntityGrouping({
+                wrapper: result,
+                sources: [dataset || entityType.all],
+                groupGetter: groupGetter
+              });
+            }
 
             return grouping;
           },
           getGrouping: function(name){
-            return entityType._grouping[name];
+            return entityType.grouping_[name];
           }
         });
 
         // debug only
         ;;;
-         result.entityType = entityType;
-        result.callText = function(){ return entityType.name };
+        //result.entityType = entityType;
+        //result.callText = function(){ return entityType.name };
 
         return result;
       }
       //else
       //  return namedEntityTypes.get(config);
     };
-    EntityType.className = namespace + '.EntityType';
+    EntityTypeWrapper.className = namespace + '.EntityTypeWrapper';
 
-    var untitledEntityType = new UntitledName('EntityType');
-    var entityTypes = [];
+    //
+    // Entity type construcotr
+    //
 
+    var get_singleton = getter('singleton');
+    var fieldDestroyHandlers = {};
+
+   /**
+    * @class
+    */
+    var EntityTypeConstructor = Class(null, {
+      className: namespace + '.EntityType',
+      name: 'UntitledEntityType',
+
+      defaults: {},
+      fields: {},
+      extensible: false,
+
+      init: function(config, wrapper){
+        this.name = config.name || getUntitledName(this.name);
+
+        ;;;if (typeof console != 'undefined' && entityTypes.search(this.name, getter('name'))) console.warn('Dublicate entity type name: ', this.name);
+        entityTypes.push(this);
+
+        this.isSingleton = config.isSingleton;
+        this.wrapper = wrapper;
+
+        this.all = new ReadOnlyEntitySet({
+          wrapper: wrapper
+        });
+        this.map_ = {};
+
+        if (config.extensible)
+          this.extensible = true;
+
+        this.fields = {};
+        this.defaults = {};
+        if (config.fields)
+          for (var key in config.fields)
+          {
+            var func = config.fields[key];
+            this.addField(key, func);
+            if ([NumericId, IntId, StringId].has(func))
+              config.id = key;
+          }
+
+        if (!this.isSingleton)
+        {
+          var idField = this.idField = config.id || null;
+          this.idFieldNames = [];
+          if (idField)
+          {
+            this.idFieldNames.push(idField);
+
+            var idFieldWrapper = this.fields[this.idField];
+            var getId = function(data){
+              if (data)
+              {
+                if (data instanceof DataObject)
+                  data = data.info;
+                return data[idField]; 
+              }
+            };
+
+            this.getId = getId;
+            this.get = function(data){
+              return this.map_[isKeyType[typeof data] ? idFieldWrapper(data) : getId(data)];
+            };
+          }
+        }
+        else
+        {
+          this.get = get_singleton;
+        }
+
+        this.aliases = {};
+        if (config.aliases)
+        {
+          //extend(this.aliases, config.aliases);
+          Object.iterate(config.aliases, function(key, value){
+            this.aliases[key] = value;
+            if (value == this.idField)
+              this.idFieldNames.push(key);
+          }, this);
+        }
+
+        this.collection_ = {};
+        if (config.collections)
+        {
+          for (var name in config.collections)
+          {
+            this.collection_[name] = new EntityCollection({
+              name: name,
+              wrapper: wrapper,
+              sources: [this.all],
+              filter: config.collections[name] || Function.$true
+            });
+          }
+        }
+
+        this.grouping_ = {};
+        if (config.groupings)
+        {
+          for (var name in config.groupings)
+          {
+            this.grouping_[name] = new EntityGrouping({
+              name: name,
+              wrapper: wrapper,
+              sources: [this.all],
+              groupGetter: config.groupings[name] || Function.$true
+            });
+          }
+        }
+
+        this.reflection_ = {};
+        if (config.reflections)
+          for (var name in config.reflections)
+            this.addReflection(name, config.reflections[name]);
+
+        this.entityClass = Class(Entity, {
+          className: namespace,//this.constructor.className + '.' + this.name.replace(/\s/g, '_'),
+          entityType: this,
+          all: this.all,
+          getId: idField
+            ? function(){
+                return this.info[idField];
+              }
+            : Function.$null
+        });
+      },
+      addField: function(key, wrapper){
+        if (this.all.length)
+        {
+          ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not added, because instance of this entity type has already exists.');
+          return;
+        }
+
+        if (typeof wrapper == 'function')
+        {
+          this.fields[key] = wrapper;
+          this.defaults[key] = this.fields[key]();
+        }
+        else
+        {
+          ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field description has been ignored. Wraper: ', wrapper);
+          this.fields[key] = $self;
+          this.defaults[key] = this.defaults[key]; // init key
+        }
+
+        if (!fieldDestroyHandlers[key])
+          fieldDestroyHandlers[key] = {
+            destroy: function(){
+              this.set(key, null);
+            }
+          };
+      },
+      addReflection: function(name, cfg){
+        var ref = new Reflection(name, cfg);
+        this.reflection_[name] = ref;
+        var all = this.all.getItems();
+        for (var i = all.length; --i >= 0;)
+          ref.update(all[i]);
+      },
+      get: Function.$null,
+      /*create: function(data){
+        var entity = this.singleton || new this.entityClass(data);
+
+        if (this.isSingleton)
+          this.singleton = entity;
+
+        return entity;
+      },*/
+      getId: function(entityOrData){
+        if (entityOrData && this.idField)
+        {
+          var source = entityOrData;
+
+          if (entityOrData instanceof DataObject)
+            source = source.info;
+
+          for (var i = 0, name; name = this.idFieldNames[i]; i++)
+            if (name in source)
+              return source[name];
+        }
+      }
+    });
+
+    //
+    //  Entity
+    //
+
+    function entityWarn(entity, message){
+      ;;;if (typeof console != 'undefined') console.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.eventObjectId + ': ' + message, entity); 
+    };
+
+   /**
+    * @class
+    */
+    var Entity = Class(DataObject, {
+      className: namespace + '.Entity',
+
+      canHaveDelegate: false,
+
+      rollbackData_: null,
+      silentSet_: false,
+
+      behaviour: {
+        update: function(object, delta){
+          this.inherit(object, delta);
+
+          for (var name in this.entityType.reflection_)
+            this.entityType.reflection_[name].update(this);
+        },
+        destroy: function(){
+          this.inherit();
+
+          for (var name in this.reflection_)
+            this.entityType.reflection_[name].detach(this);
+        }/*,
+        stateChanged: function(object, newState, oldState, errorText){
+          this.inherit(object, newState, oldState, errorText);
+
+          if (newState == STATE.READY)
+            this.rollbackData_ = null;
+        }*/
+      },
+
+      init: function(data){
+        var entityType = this.entityType;
+
+        // inherit
+        this.inherit();
+
+        // copy default values
+        // make it here, because update event dispatch on this.inherit() when info passed in config
+        //this.info = extend({}, this.entityType.defaults);
+
+        // set up some properties
+        this.fieldHandlers_ = {};
+        this.value = // backward compatibility
+        this.info = {};
+        //this.delegate = this;
+
+        var defaults = entityType.defaults;
+        var fields = entityType.fields;
+        var aliases = entityType.aliases;
+        
+        var values = {};
+
+        for (var key in data)
+          values[aliases[key] || key] = data[key];
+
+        for (var key in defaults)
+        {
+          var value = key in values ? fields[key](values[key]) : defaults[key];
+
+          if (entityType.idField == key)
+          {
+            if (value != null)
+            {
+              if (entityType.map_[value])
+              {
+                ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.info[key] + ' => ' + value);
+                continue;
+              }
+
+              entityType.map_[value] = this;
+            }
+          }
+
+          if (value && value !== this && value instanceof EventObject)
+          {
+            //if (value.addHandler(fieldDestroyHandlers[key], this))
+            value.handlers_.push({
+              handler: fieldDestroyHandlers[key],
+              thisObject: this
+            });
+            this.fieldHandlers_[key] = true;
+          }
+
+          this.info[key] = value;
+        }
+
+        // apply data for entity
+        /*/this.silentSet_ = true;
+
+        
+        for (var key in defaults)
+          this.info[key] = defaults[key];
+
+        if (data)
+        {
+          for (var key in data)
+            this.set(key, data[key]);
+        }
+
+        this.silentSet_ = false;/**/
+
+        // reg entity in all entity type instances list
+        var all = this.all;
+
+        all.map_[this.eventObjectId] = this;
+        all.changeCount++;
+        all.itemCount++;
+
+        all.dispatch('datasetChanged', all, {
+          inserted: [this]
+        });
+
+        // fire reflections
+        this.reflection_ = {};
+        for (var name in entityType.reflection_)
+          entityType.reflection_[name].update(this);
+      },
+      toString: function(){
+        return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
+      },
+      get: function(key){
+        if (this.info)
+          return this.info[this.entityType.aliases[key] || key];
+      },
+      set: function(key, value, rollback){
+        // shortcut
+        var entityType = this.entityType;
+
+        // resolve field key
+        key = entityType.aliases[key] || key;
+
+        // get value wrapper
+        var valueWrapper = entityType.fields[key];
+
+        if (!valueWrapper)
+        {
+          // exit if no new fields allowed
+          if (!entityType.extensible)
+          {
+            ;;;entityWarn(this, 'Set value for "' + key + '" property is ignored.');
+            return;
+          }
+
+          // emulate field wrapper
+          valueWrapper = $self;
+        }
+
+        // main part
+        var delta;
+        var newValue = valueWrapper(value, this.info[key]);
+        var curValue = this.info[key];  // NOTE: value can be modify by valueWrapper,
+                                        // that why we fetch it again after valueWrapper call
+
+        var valueChanged = newValue !== curValue
+                           // date comparation fix;
+                           && (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || Number(newValue) !== Number(curValue));
+
+        // if value changed make some actions:
+        // - update id map if neccessary
+        // - attach/detach handlers on object destroy (for EventObjects)
+        // - registrate changes to rollback data if neccessary
+        // - fire 'change' event for not silent mode
+        if (valueChanged)
+        {
+          if (entityType.idField == key)
+          {
+            var map_ = entityType.map_;
+            if (map_[newValue])
+            {
+              ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.info[key] + ' => ' + newValue);
+              return;
+            }
+
+            if (curValue != null)
+              delete map_[curValue];
+
+            if (newValue != null)
+              map_[newValue] = this;
+          }
+
+          // set new value for field and increase updateCount
+          this.info[key] = newValue;
+          this.updateCount += 1;
+          
+          // remove attached handler if exists
+          if (this.fieldHandlers_[key])
+          {
+            curValue.removeHandler(fieldDestroyHandlers[key], this);
+            delete this.fieldHandlers_[key];
+          }
+
+          // add new handler if object is instance of EventObject
+          // newValue !== this prevents recursion for self update
+          if (newValue && newValue !== this && newValue instanceof EventObject)
+          {
+            if (newValue.addHandler(fieldDestroyHandlers[key], this))
+              this.fieldHandlers_[key] = true;
+          } 
+          
+
+          // prepare result and delta;
+          delta = {};
+          delta[key] = curValue;
+
+          // if rollback mode - store changes
+          if (rollback)
+            this.rollbackData_ = complete(this.rollbackData_ || {}, delta);
+
+          // fire event for not silent mode
+          if (!this.silentSet_)
+            this.dispatch('update', this, this.info, delta);
+        }
+
+        // return delta or false (if no changes)
+        return delta ? { key: key, value: curValue } : false;
+      },
+      update: function(data, forceEvent, rollback){
+        if (data)
+        {
+          var updateCount = 0;
+          var delta = {};
+          var setResult;
+
+          // switch off change event dispatch
+          this.silentSet_ = true;
+
+          // update fields
+          for (var key in data)
+            if (setResult = this.set(key, data[key], rollback))
+            {
+              updateCount++;
+              delta[setResult.key] = setResult.value;
+            }
+
+          // switch on change event dispatch
+          this.silentSet_ = false;
+
+          // dispatch event
+          if (updateCount)
+          {
+            this.dispatch('update', this, delta);
+            return delta;
+          }
+        }
+
+        return false;
+      },
+      reset: function(){
+        this.update(this.entityType.defaults);
+      },
+      clear: function(){
+        var data = {};
+        for (var key in this.info)
+          data[key] = undefined;
+        return this.update(data);
+      },
+      rollback: function(){
+        if (this.state == STATE.PROCESSING)
+        {
+          ;;;entityWarn(this, 'Entity in processing state (entity.rollback() aborted)');
+          return;
+        }
+
+        if (this.rollbackData_)
+        {
+          this.update(this.rollbackData_);
+          delete this.rollbackData_;
+        }
+        this.setState(STATE.READY);
+      },
+      destroy: function(){
+        // shortcut
+        var entityType = this.entityType;
+
+        // unlink attached handlers
+        for (var key in this.fieldHandlers_)
+          this.info[key].removeHandler(fieldDestroyHandlers[key], this);
+          //removeFromDestroyMap(this.info[key], this, key);
+        delete this.fieldHandlers_;
+
+        // delete from identify hash
+        var id = this.info[entityType.idField];
+        if (entityType.map_[id] === this)
+          delete entityType.map_[id];
+
+        // delete from all entity type list
+        var all = this.all;
+
+        delete all.map_[this.eventObjectId];
+        all.changeCount++;
+        all.itemCount--;
+
+        // inherit
+        this.inherit();
+
+        all.dispatch('datasetChanged', all, {
+          deleted: [this]
+        });
+
+        this.value = // backward compatibility
+        this.info = {}; 
+
+        // clear links
+        //delete this.info;
+        //delete this.value;
+      }
+    });
+
+    //
+    // Reflection
+    //
+
+   /**
+    * @class
+    */
     var Reflection = Class(null, {
       className: namespace + '.Reflection',
       init: function(name, config){
         this.name = name;
         this.keepReflectionAlive = config.keepReflectionAlive === true;
-        this.dataGetter = config.dataGetter || Function.$self;
+        this.dataGetter = config.dataGetter || $self;
         this.destroyDataGetter = config.destroyDataGetter || null;
-        this.entityType = config.entityType || Function.$self;
-        this.isExists = config.isExists || function(value){ return Boolean.normalize(Object.keys(value).length) };
+        this.entityType = config.entityType || $self;
+        this.isExists = config.isExists || function(value){ return !!Object.keys(value).length };
       },
       update: function(entity){
-        if (this.isExists(entity.value, entity))
+        if (this.isExists(entity.info, entity))
           this.attach(entity, this.name);
         else
           this.detach(entity, this.name);
       },
       attach: function(entity){
-        var ref = entity._reflection[this.name];
-        var data = this.dataGetter(entity.value, entity);
+        var ref = entity.reflection_[this.name];
+        var data = this.dataGetter(entity.info, entity);
         if (ref)
         {
-          if (typeof ref.update == 'function')
+          if (ref instanceof DataObject)
             ref.update(data);
           else
             extend(ref, data);
         }
         else
-          entity._reflection[this.name] = this.entityType(data);
+          entity.reflection_[this.name] = this.entityType(data);
       },
       detach: function(entity){
-        var ref = entity._reflection[this.name];
+        var ref = entity.reflection_[this.name];
         if (ref)
         {
           if (!this.keepReflectionAlive)
@@ -1198,445 +899,47 @@
           {
             if (this.destroyDataGetter)
             {
-              var data = this.destroyDataGetter(entity.value, entity);
-              if (typeof ref.update == 'function')
+              var data = this.destroyDataGetter(entity.info, entity);
+              if (ref instanceof DataObject)
                 ref.update(data);
               else
                 extend(ref, data);
             }
           }
-          delete entity._reflection[this.name];
+          delete entity.reflection_[this.name];
         }
       },
       destroy: function(){
       }
     });
 
-    var InternalEntityType = Class(null, {
-      className: namespace + '.EntityType',
-      name: 'UntitledEntityType',
+    //
+    // Misc
+    //
 
-      defaults: {},
-      fields: {},
-      extensible: false,
-
-      init: function(config, wraper){
-        this.name = config.name || untitledEntityType.getName();
-        this.config  = extend({}, config);
-
-        ;;;if (typeof console != 'undefined' && entityTypes.search(this.name, Data('name'))) console.warn('Dublicate entity name: ', this.name);
-        entityTypes.push(this);
-
-        this.isSingleton = config.isSingleton;
-        this.idField  = config.id;
-        this.wraper   = wraper;
-        this.handlers = config.handlers;
-
-        this.all = new EntitySet(this, 'All entities of ' + this.name.quote('{'));
-        eReadOnly[this.all.uniqueId] = true;
-        this.identifiedEntity = {};
-
-        if (config.extensible)
-          this.extensible = true;
-
-        this.defaults  = {};
-        this.fields = {};
-        if (config.fields)
-          for (var key in config.fields)
-            this.addField(key, config.fields[key]);
-
-        this.aliases = {};
-        if (config.aliases)
-          extend(this.aliases, config.aliases);
-
-        this._collection = {};
-        if (config.collections)
-          for (var name in config.collections)
-            this._collection[name] = new CollectionEntitySet(this, name, config.collections[name] || Function.$true);
-
-        this._grouping = {};
-        if (config.groupings)
-          for (var name in config.groupings)
-            this._grouping[name] = new GroupingEntitySet(this, name, config.groupings[name] || Function.$true);
-
-        this._reflection = {};
-        if (config.reflections)
-          for (var name in config.reflections)
-            this.addReflection(name, config.reflections[name]);
-
-        this.entityClass = Class(Entity, {
-          className: this.constructor.className + '.' + this.name,
-          entityType: this,
-          all: this.all
-        });
-
-        if (config.dirty)
-          this.entityClass.prototype.dirty = true;
-      },
-      addField: function(key, wraper){
-        if (typeof wraper == 'function')
-        {
-          this.fields[key] = wraper;
-          this.defaults[key] = this.fields[key]();
-        }
-        else
-        {
-          ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wraper for `' + key + '` field is not a function. Field description has been ignored. Wraper: ', wraper);
-          this.fields[key] = Function.$self;
-          this.defaults[key] = this.defaults[key]; // init key
-        }
-      },
-      addReflection: function(name, cfg){
-        var ref = this._reflection[name] = new Reflection(name, cfg);
-        for (var i = this.all.value.length; --i >= 0;)
-          ref.update(this.all.value[i]);
-      },
-      getEntity: function(data){
-        if (this.isSingleton)
-          return this.singleton;
-        if (this.idField)
-          return this.identifiedEntity[typeof data == 'number' || typeof data == 'string' ? this.fields[this.idField](data) : this.getId(data)];
-      },
-      createEntity: function(data){
-        var entity = this.singleton || new this.entityClass(data);
-        if (this.isSingleton)
-          this.singleton = entity;
-        return entity;
-      },
-      parse: function(data, autocreate){
-        if (data && data.entityType === this)
-          return data;
-
-        var entity = this.getEntity(data);
-        var isKeyValue = typeof data == 'number' || typeof data == 'string';
-
-        if (!entity)
-        {
-          if (isKeyValue)
-            if (this.idField)
-            {
-              //data = Data.wrapper(this.idField)(data);
-              var tmp = {};
-              tmp[this.idField] = data;
-              data = tmp;
-            }
-            else
-              return;
-
-          if (autocreate != false)
-            entity = this.createEntity(data);
-        }
-        else
-          if (!isKeyValue && (entity !== data))
-            entity.update(data);
-
-        return entity;
-      },
-      getId: function(entityOrData){
-        if (entityOrData && this.idField)
-        {
-          if (entityOrData.entityType)
-            return entityOrData.value[this.idField];
-          else
-            return entityOrData[this.idField];
-        }
-      }
-    });
-
-    /*
-     *  Entity
-     */
-
-    function entityWarn(entity, message){
-      ;;;if (typeof console != 'undefined') console.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.uniqueId + ': ' + message, entity); 
-    };
-
-    var Entity = Class(Property, {
-      className: namespace + '.Entity',
-
-      rollbackData: null,
-      cascadeDestroy: true,
-
-      dirty: false,
-
-      /*setDelegate: function(){
-        console.log('used');
-        this.inherit.apply(this, arguments);
-      },*/
-
-      behaviour: nsWrapers.createBehaviour(Property, {
-        change: function(newValue, oldValue, delta){
-          this.inherit(newValue, oldValue);
-          for (var name in this.entityType._reflection)
-            this.entityType._reflection[name].update(this);
-        },
-        destroy: function(){
-          this.inherit();
-          for (var name in this._reflection)
-            this.entityType._reflection[name].detach(this);
-        },
-        delegateChanged: function(object, oldDelegate){
-          this.inherit(object, oldDelegate);
-          this.info = this;
-        },
-        stateChanged: function(object, newState, oldState, errorText){
-          this.inherit(object, newState, oldState, errorText);
-          if (newState == STATE.READY)
-            this.rollbackData = null;
-        }
-      }),
-
-      init: function(data){
-        eGlobalStorage[this.uniqueId = eUniqueId++] = this;
-
-        this.inherit(extend({}, this.entityType.defaults), this.entityType.handlers);
-        this.updateCount = 0;
-        this.attachedHandlers = {};
-
-        this.info = this;
-        this._value = this.value;
-
-        this.__silentSet = true;
-        if (data)
-          for (var key in data)
-            this.set(key, data[key]);
-        this.__silentSet = false;
-
-        eReadOnlyWriteAllow = true;
-        this.entityType.all.append([this]);
-        eReadOnlyWriteAllow = false;
-
-        this._reflection = {};
-        for (var name in this.entityType._reflection)
-          this.entityType._reflection[name].update(this);
-      },
-      toString: function(){
-        return '[object Entity]';
-      },
-      getId: function(data){
-        return this.entityType.getId(data || this);
-      },
-      get: function(key){
-        if (this.value)
-          return this.value[this.entityType.aliases[key] || key];
-      },
-      set: function(key, value, rollback){
-        // omit method, to prevent data rewrite
-
-        key = this.entityType.aliases[key] || key;
-
-        var wraper = this.entityType.fields[key];
-        if (!wraper)
-        {
-          if (!this.entityType.extensible)
-          {
-            ;;;if (!this.dirty) entityWarn(this, 'Set value for "' + key + '" property ignored');
-            return;
-          }
-          wraper = Function.$self;
-        }
-
-        this.__nested_trigger = true;
-
-        var result;
-        var nestedUpdateCount;
-        var curValue = this.value[key];
-        if (curValue)
-          nestedUpdateCount = curValue.updateCount;
-
-        var newValue = wraper(value, curValue);
-
-        this.__nested_trigger = false;
-
-        var valueChanged = newValue !== curValue;
-
-        if (valueChanged && newValue instanceof Date && curValue instanceof Date)
-          valueChanged = newValue - curValue;
-
-        if (valueChanged)
-        {
-          if (this.entityType.idField == key)
-          {
-            var keyEntity = this.entityType.identifiedEntity[newValue];
-            if (keyEntity && keyEntity !== this)
-            {
-              ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.value[key] + ' => ' + newValue);
-              return;
-            }
-
-            if (typeof newValue != 'undefined' && newValue != null)
-              this.entityType.identifiedEntity[newValue] = this;
-            delete this.entityType.identifiedEntity[curValue];
-          }
-
-          if (!this.attachedHandlers) debugger;
-          if (this.attachedHandlers[key])
-          {
-            this.attachedHandlers[key].object.removeHandler(this.attachedHandlers[key].handler, this);
-            delete this.attachedHandlers[key];
-          }
-
-          // newValue !== this prevent recursion for self update
-          if (newValue !== this && newValue instanceof AbstractProperty)
-          {
-            this.attachedHandlers[key] = {
-              object: newValue,
-              handler: {
-                change: function(){
-                  if (!this.__nested_trigger)
-                    this.dispatch('change', this.value, this.value, {});
-                },
-                datasetChanged: function(){
-                  if (!this.__nested_trigger)
-                  {
-                    //;;;if (typeof console != 'undefined') console.warn('We needs to do something here?');
-                    this.dispatch('change', this.value, this.value, {});
-                  }
-                },
-                destroy: function(){
-                  var u = {};
-                  u[key] = null;
-                  this.update(u);
-                }
-              }
-            };
-            newValue.addHandler(this.attachedHandlers[key].handler, this);
-          }
-
-          this.value[key] = newValue;
-          this.updateCount++;
-
-          result = { key: key, value: curValue };
-
-          var delta = {};
-          delta[key] = curValue;
-
-          if (rollback)
-            this.rollbackData = complete(this.rollbackData || {}, delta);
-
-          if (!this.__silentSet)
-            this.dispatch('change', this.value, [this.value, delta].merge(), delta);
-        }
-        else
-          // nested updated
-          if (newValue && newValue.updateCount != nestedUpdateCount)
-            this.updateCount++;
-
-        return result;
-      },
-      rollback: function(){
-        if (this.state == STATE.PROCESSING)
-        {
-          ;;;entityWarn(this, 'Entity in processing state (entity.rollback() aborted)');
-          return;
-        }
-
-        if (this.rollbackData)
-        {
-          this.update(this.rollbackData);
-          this.rollbackData = null;
-        }
-        this.setState(STATE.READY);
-      },
-      update: function(data, forceEvent, rollback){
-        var updateCount = this.updateCount;
-        var delta = {};
-        var keySet = data || this.value;
-        var res;
-
-        if (!data)
-          data = this.entityType.defaults;
-
-        this.__silentSet = true;
-        for (var key in keySet)
-          if (res = this.set(key, data[key], rollback))
-            delta[res.key] = res.value;
-        this.__silentSet = false;
-
-        if (forceEvent || (this.updateCount != updateCount))
-          this.dispatch('change', this.value, [this.value, delta].merge(), delta);
-
-        return this.updateCount != updateCount ? delta : false;
-      },
-      clear: function(){
-        var data = {};
-        for (var key in this.value)
-          data[key] = undefined;
-        return this.update(data);
-      },
-      destroy: function(){
-        // prevent call this method again
-        this.destroy = Function.$undef;
-
-        // delete from identify hash
-        var id = this.getId();
-        if (this.entityType.identifiedEntity[id] === this)
-          delete this.entityType.identifiedEntity[id];
-        eReadOnlyWriteAllow = true;
-        this.entityType.all.remove(this);
-        eReadOnlyWriteAllow = false;
-
-        // unlink attached handlers
-        for (var key in this.attachedHandlers)
-        {
-          this.attachedHandlers[key].object.removeHandler(this.attachedHandlers[key].handler, this);
-          delete this.attachedHandlers[key];
-        }
-        delete this.attachedHandlers;
-
-        // fire object destroy event handlers, primary for linked objects
-        this.dispatch('destroy', this);
-
-        //
-        var tmp = this.value;
-        this.dispatch('change', this.value = {}, tmp, {});
-
-        // inherit
-        this.dispatch = Function.$undef;
-        this.inherit();
-
-        delete eGlobalStorage[this.uniqueId];
-
-        delete this._group;
-        delete this.entityType;
-
-        delete this.info;
-        delete this._value;
-      }
-    });
-
-    function stat(){
-      return entityTypes.reduce(function(item, res){
-        res[item.name] = item.all.value.length;
-        return res;
-      }, {});
-    };
-
-    function isEntity(value, entityType){
-      //entityType = entityType ? (entityType.entityType ? entityType.entityType.wraper : entityType) : null;
-      //return value instanceof Entity && (entityType ? value.entityType == entityType || value.entityType == entityType.entityType : true);
-      entityType = (entityType ? (entityType.entityType ? entityType.entityType.entityClass : entityType.entityClass) : Entity);
-      return value instanceof entityType;
+    function isEntity(value){
+      return value && value instanceof Entity;
     }
 
     //
     // export names
     //
 
-    var exportNames = {
+    Basis.namespace(namespace).extend({
+      isEntity: isEntity,
+
+      NumericId: NumericId,
+      IntId: IntId,
+      StringId: StringId,
+
+      EntityType: EntityTypeWrapper,
       Entity: Entity,
-      EntityType: EntityType,
-      EntitySetType: EntitySetType,
+
+      EntitySetType: EntitySetWrapper,
       EntitySet: EntitySet,
-      CollectionEntitySet: CollectionEntitySet,
-      GroupingEntitySet: GroupingEntitySet,
-      GroupEntitySet: GroupEntitySet,
-      stat: stat,
-      isEntity: isEntity
-    };
-
-    ;;;Object.extend(exportNames, { entityTypes_: entityTypes, InternalEntityType_: InternalEntityType });
-
-    Basis.namespace(namespace).extend(exportNames);
+      ReadOnlyEntitySet: ReadOnlyEntitySet,
+      Collection: EntityCollection,
+      Grouping: EntityGrouping
+    });
 
   })();

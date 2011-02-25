@@ -1,32 +1,33 @@
-Basis.Controls.Form.Field.LOCALE = {
-  Textarea: {
-    SYMBOLS_LEFT: 'Осталось символов'
-  }
-};
-Basis.Controls.Form.Validator.LOCALE = {
-  RegExp: {
-    WRONG_FORMAT: 'Значение имеет неверный формат.'
-  },
-  Required: {
-    MUST_BE_FILLED: 'Поле не должно оставаться пустым.'
-  },
-  Number: {
-    WRONG_FORMAT: 'Поле имеет неверный формат числа.'
-  },
-  Currency: {
-    WRONG_FORMAT: 'Поле имеет неверный формат суммы.',
-    MUST_BE_GREATER_ZERO: 'Сумма должна быть больше нуля.'
-  },
-  Email: {
-    WRONG_FORMAT: 'Поле имеет неверный формат e-mail.'
-  },
-  Url: {
-    WRONG_FORMAT: 'Поле имеет неверный формат URL.'
-  },
-  MinLength: {
-    MUST_BE_LONGER_THAN: 'Значение не должно быть короче чем {0} символов.'
-  },
-  MaxLength: {
-    MUST_BE_SHORTER_THAN: 'Значение не должно быть длиннее чем {0} символов.'
-  }
-};
+
+  Basis.Controls.Form.Field.LOCALE = {
+    Textarea: {
+      SYMBOLS_LEFT: 'РћСЃС‚Р°Р»РѕСЃСЊ СЃРёРјРІРѕР»РѕРІ'
+    }
+  };
+  Basis.Controls.Form.Validator.LOCALE = {
+    RegExp: {
+      WRONG_FORMAT: 'Р—РЅР°С‡РµРЅРёРµ РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚.'
+    },
+    Required: {
+      MUST_BE_FILLED: 'РџРѕР»Рµ РЅРµ РґРѕР»Р¶РЅРѕ РѕСЃС‚Р°РІР°С‚СЊСЃСЏ РїСѓСЃС‚С‹Рј.'
+    },
+    Number: {
+      WRONG_FORMAT: 'РџРѕР»Рµ РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ С‡РёСЃР»Р°.'
+    },
+    Currency: {
+      WRONG_FORMAT: 'РџРѕР»Рµ РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ СЃСѓРјРјС‹.',
+      MUST_BE_GREATER_ZERO: 'РЎСѓРјРјР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ РЅСѓР»СЏ.'
+    },
+    Email: {
+      WRONG_FORMAT: 'РџРѕР»Рµ РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ e-mail.'
+    },
+    Url: {
+      WRONG_FORMAT: 'РџРѕР»Рµ РёРјРµРµС‚ РЅРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ URL.'
+    },
+    MinLength: {
+      MUST_BE_LONGER_THAN: 'Р—РЅР°С‡РµРЅРёРµ РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РєРѕСЂРѕС‡Рµ С‡РµРј {0} СЃРёРјРІРѕР»РѕРІ.'
+    },
+    MaxLength: {
+      MUST_BE_SHORTER_THAN: 'Р—РЅР°С‡РµРЅРёРµ РЅРµ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РґР»РёРЅРЅРµРµ С‡РµРј {0} СЃРёРјРІРѕР»РѕРІ.'
+    }
+  };

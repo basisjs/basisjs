@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -25,14 +25,16 @@
  *   o Number
  *   o Date (you can find other extensions for Date in date.js)
  * - Namespace sheme (module subsystem)
- * - Class (provides inheritance)
- * - Browser (version detections & Cookies interface)
- * - DOM
- * - Event
- * - Html (generaly template)
- * - CSS (generaly className interface)
- * - Data
+ * - namespace Basis.Browser (version detections & Cookies interface)
+ * - namespace Basis.Class (provides inheritance)
+ * - class EventObject
+ * - namespace Basis.DOM
+ * - namespace Basis.DOM.Style
+ * - namespace Basis.Event
+ * - namespace Basis.Html (generaly template)
+ * - namespace Basis.CSS (generaly className interface)
  * - Cleaner
+ * - TimeEventManager
  */
 
 (function(){
@@ -60,7 +62,6 @@
   * @return {object} Extended object.
   */
   function extend(object, source){
-    ;;;if (arguments.length > 2 && typeof arguments[2] != 'number') { console.warn('extend: more than 2 arguments!'); debugger; }
     for (var key in source)
       object[key] = source[key];
     
@@ -74,7 +75,6 @@
   * @return {object} Completed object.
   */
   function complete(object, source){
-    ;;;if (arguments.length > 2) { console.warn('complete: more than 2 arguments!'); debugger; }
     for (var key in source)
       if (key in object == false)
         object[key] = source[key];
@@ -246,6 +246,141 @@
   */
   function $undef()     { };
 
+
+ /**
+  * @function
+  * @param  {function(object)|string} path
+  * @param  {function(value)|string|object=} modificator
+  * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
+  */
+  var getter = (function(){
+    var getterIdx = 1;
+    var getterCache = {};
+    var getterPathCache = {};
+
+    var mGetter = function(item){ return item.modificator };
+    mGetter.getter = mGetter;
+    mGetter.getterIdx_ = getterIdx++;
+
+    return function(path, modificator){
+      var func, result;
+
+      if (!modificator)
+      {
+        if (path.getter)
+          return path.getter;
+        
+        if (typeof path == 'function')
+          return path;
+      }
+
+      if (typeof path != 'function')
+      {
+        if (getterPathCache[path])
+          func = getterPathCache[path];
+        else
+        {
+          func = new Function('object', 'return object != null ? object.' + path + ' : object');
+          func.path = path;
+          func.getterIdx_ = getterIdx++;
+          getterPathCache[path] = func;
+        }
+      }
+      else
+      {
+        func = path;
+        if (!func.getterIdx_)
+          func.getterIdx_ = getterIdx++;
+      }
+
+      var getterIdx_ = func.getterIdx_;
+      var modList = getterCache[getterIdx_];
+      if (modList)
+      {
+        if (typeof modificator == 'undefined')
+        {
+          if (modList.nmg)
+            return modList.nmg;
+        }
+        else
+        {
+          for (var i = 0; i < modList.length; i++) 
+            if (modList[i].modificator === modificator)
+              return modList[i].getter;
+        }
+      }
+      else
+        modList = getterCache[getterIdx_] = [];
+
+      var cacheResult = true;
+      switch (typeof modificator)
+      {
+        case 'string': 
+          result = function(object){ return modificator.format(func(object)) };
+          break;
+
+        case 'function': 
+          result = function(object){ return modificator(func(object)) };
+          break;
+
+        case 'object':
+          cacheResult = false;
+          result = function(object){ return modificator[func(object)] }; 
+          break;
+
+        default:
+          if (!func.path)
+            result = function(object){ return func(object) };
+          else
+            result = func;
+      }
+
+      if (cacheResult)
+      {
+        modList.push({
+          getter: result,
+          modificator: modificator
+        });
+
+        // save null modificator getter
+        if (typeof modificator == 'undefined')
+          modList.nmg = result;
+      }
+
+      result.getter = result;
+
+      return result;
+    };
+
+  })();
+
+ /**
+  * @param {function(object)|string|object} getter
+  * @param {any} defValue
+  * @param {function(value):boolean} checker
+  * @return {function(object)}
+  */
+  function def(getter, defValue, checker){
+    checker = checker || $isNull;
+    var result = function(object){
+      var res = getter(object);
+      return checker(res) ? defValue : res;
+    };
+    return result;
+  };
+
+ /**
+  * @param {string} key
+  * @return {object}
+  */
+  function wrapper(key){
+    return function(value){
+      var result = {};
+      result[key] = value;
+      return result;
+    }
+  };
+
   extend(Function, {
     // test functions
     $undefined: $undefined,
@@ -262,18 +397,24 @@
     $null:      $null,
     $undef:     $undef,
 
+    // getters and modificators
+    getter:     getter,
+    def:        def,
+    wrapper:    wrapper,
+
    /**
     * @param {function()} init Function that should be called at first time.
     * @param {Object=} thisObject
     * @return {function()} Returns lazy function.
     */
     lazyInit: function(init, thisObject){
-      var inited = 0, _self, data;
-      return _self = function(){
+      var inited = 0, self, data;
+      return self = function(){
         if (!inited++)
         {
-          _self.inited = true;
-          _self.data = data = init.apply(thisObject || this);
+          self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
+          self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
+          data = init.apply(thisObject || this);
           ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInit function returns nothing:\n' + init);
         }
         return data;
@@ -287,12 +428,13 @@
     * @return {function()} Returns lazy function.
     */
     lazyInitAndRun: function(init, run, thisObject){
-      var inited = 0, _self, data;
-      return _self = function(){
+      var inited = 0, self, data;
+      return self = function(){
         if (!inited++)
         {
-          _self.inited = true;
-          _self.data = data = init.apply(thisObject || this);
+          self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
+          self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
+          data = init.apply(thisObject || this);
           ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInitAndRun function returns nothing:\n' + init);
         }
         run.apply(data, arguments);
@@ -618,7 +760,7 @@
     *     // result -> [{ a: 1, b: 2 }, { a: 1, b: 4}]
     *
     *   // but if you need all items of array with filtered by condition use Array#filter method instead
-    *   var result = list.filter(Data.getter('a == 1'));
+    *   var result = list.filter(Function.getter('a == 1'));
     *
     * @param {any} value
     * @param {function(object)|string} getter
@@ -627,7 +769,7 @@
     */
     search: function(value, getter, offset){
       Array.lastSearchIndex = -1;
-      getter = Data.getter(getter || $self);
+      getter = Function.getter(getter || $self);
       
       for (var index = parseInt(offset || 0), len = this.length; index < len; index++)
         if (/*index in this && */getter(this[index]) === value)
@@ -642,7 +784,7 @@
     */
     lastSearch: function(value, getter, offset){
       Array.lastSearchIndex = -1;
-      getter = Data.getter(getter || $self);
+      getter = Function.getter(getter || $self);
 
       var len = this.length - 1;
       var index = isNaN(offset) || offset == null ? len : parseInt(offset);
@@ -668,7 +810,7 @@
       if (!this.length)  // empty array check
         return strong ? -1 : 0;
 
-      getter = Data.getter(getter || $self);
+      getter = Function.getter(getter || $self);
       desc = !!desc;
 
       var pos, compareValue;
@@ -701,8 +843,8 @@
       if (!this.length)  // empty array check
         return -1;
 
-      leftGetter  = Data.getter(leftGetter || $self);
-      rightGetter = Data.getter(rightGetter || $self);
+      leftGetter  = getter(leftGetter || $self);
+      rightGetter = getter(rightGetter || $self);
 
       var pos, compareValue;
       var l = isNaN(left) ? 0 : left;
@@ -756,7 +898,7 @@
       return this.reduce(extend, object || {});
     },
     sortAsObject: function(getter, comparator, desc){
-      getter = Data.getter(getter);
+      getter = Function.getter(getter);
       desc = desc ? -1 : 1;
 
       return this
@@ -767,8 +909,9 @@
                };
              })                                                                           // strong sorting (neccessary only for browsers with no strong sorting, just for sure)
         .sort(comparator || function(a, b){ return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1)) })
-        //.map(function(item){ return this[item.index] }, this);
-        .map(Data.getter('i', this));
+        .map(function(item){
+               return this[item.i];
+             }, this);
     },
     set: function(array){
       if (this !== array)
@@ -1108,12 +1251,12 @@
   }
 
   function getNamespace(namespace, wrapFunction){
-
     var path = namespace.split('.');
     var cursor = window;
     var name;
     var stepPath;
     var nsRoot;
+
     while (path.length)
     {
       name = path.shift();
@@ -1138,6 +1281,171 @@
 
     return namespaces[namespace] = cursor;
   }
+
+  // ============================================ 
+  // Browser
+  //
+
+  var Browser = (function(){
+
+   /** @namespace Basis.Browser */
+
+    var namespace = 'Basis.Browser';
+
+    //
+    // main part
+    //
+
+    function versionToInt(version){
+      var base = 1000000;
+      var part = String(version).split(".");
+      for (var i = 0, result = 0; i < 4 && i < part.length; i++, base/=100)
+        result += part[i] * base;
+
+      return result;
+    }
+
+    function testBrowser(/* browserName1 .. browserNameN */){
+      for (var i = 0; i < arguments.length; i++)
+      {
+        var forTest = arguments[i].toLowerCase();
+
+        // using cache
+        if (forTest in answers)
+        {
+          if (answers[forTest])
+            return true;
+        }
+        else 
+        {
+          // calculate answer
+          var m = forTest.match(/^([a-z]+)(([\d\.]+)([+-=]?))?$/i);
+          if (m)
+          { 
+            answers[forTest] = false;
+
+            var name = m[1].toLowerCase();
+            var version = versionToInt(m[3]); // what
+            var operation = m[4] || '=';      // how
+            var cmpVersion = versions[name];  // with
+
+            if (!cmpVersion)
+              continue;
+
+            return answers[forTest] = 
+                 !version
+              || (operation == '=' && cmpVersion == version)
+              || (operation == '+' && cmpVersion >= version)
+              || (operation == '-' && cmpVersion <  version);
+          }
+          else
+          {
+            ;;;throw new Error('Bad browser version description in Browser.test() function: ' + forTest);
+          }
+        }
+      }
+
+      return false;
+    }
+
+    var FeatureSupport = {
+      dataurl: false
+    };
+
+    // DATA URI SHEME test
+    var testImage = new Image();
+    testImage.onload = function(){ FeatureSupport.datauri = true };
+    testImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+
+    var answers = {};
+    var versions = {};
+    var userAgent = window.navigator.userAgent;
+    var browserName = 'unknown';
+    var browserPrettyName = 'unknown';
+    var browserNames = {
+      'MSIE':        ['Internet Explorer', 'msie', 'ie'],
+      'Gecko':       ['Gecko', 'gecko'],
+      'Safari':      ['Safari', 'safari'],
+      'iPhone OS':   ['iPhone', 'iphone'],
+      'AdobeAir':    ['AdobeAir', 'air'],
+      'AppleWebKit': ['WebKit'],
+      'Chrome':      ['Chrome', 'chrome'],
+      'FireFox':     ['FireFox', 'firefox', 'ff'],
+      'Iceweasel':   ['FireFox', 'firefox', 'ff'],
+      'Shiretoko':   ['FireFox', 'firefox', 'ff'],
+      'Opera':       ['Opera', 'opera']
+    };
+
+    // init
+    for (var name in browserNames)
+    {
+      if (name == 'MSIE' && window.opera)
+        continue;  // opera identifies as IE :(
+
+      if (name == 'Safari' && userAgent.match(/chrome/i))
+        continue;  // Chrome identifies as Safari :(
+
+      if (name == 'AppleWebKit' && userAgent.match(/iphone/i))
+        continue;
+
+      if (userAgent.match(new RegExp(name + '.' + '(\\d+(\\.\\d+)*)', 'i')))
+      {
+        var version   = RegExp.$1;
+        var verNumber = versionToInt(version);
+        var names     = browserNames[name];
+
+        browserName = names[0] + verNumber;
+        browserPrettyName = names[0] + ' ' + version;
+
+        for (var j = 0; j < names.length; j++)
+          versions[names[j].toLowerCase()] = verNumber;
+      }
+    }
+
+    //
+    // Cookies
+    //
+
+    function setCookie(name, value, expire, path){
+      document.cookie = name + "=" + (value == null ? '' : escape(value)) +
+                        ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
+                        (expire ? ";expires=" + (new Date(Number(new Date) + expire * 1000)).toGMTString() : '');
+    }
+
+    function getCookie(name){
+      var m = document.cookie.match(new RegExp("(^|;)\\s*" + name + "\\s*=\\s*(.*?)\\s*(;|$)"));
+      return m && unescape(m[2]);
+    }
+
+    function removeCookie(name, path){
+      document.cookie = name + "=;expires=" + new Date(0).toGMTString() + ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname));
+    }
+
+    //
+    // export names
+    //
+
+    namespace = getNamespace(namespace);
+    namespace.toString = function(){ return browserPrettyName };
+    return namespace.extend({
+      FeatureSupport: FeatureSupport,
+      testImage: testImage,
+
+      name: browserName,
+      prettyName: browserPrettyName,
+      
+      test: testBrowser,  // multiple test
+      is: function(name){ return testBrowser(name) },  // single test
+
+      // Cookie interface
+      Cookies: {
+        set: setCookie,
+        get: getCookie,
+        remove: removeCookie
+      }
+    });
+
+  })();
 
   // ============================================ 
   // OOP section: Class implementation
@@ -1231,6 +1539,13 @@
       });
     }
 
+    function isEventObjectSubClass(testClass){
+      var cursor = testClass.superClass_;
+      while (cursor && cursor !== testClass && cursor !== EventObject)
+        cursor = cursor.superClass_;
+      return cursor === EventObject;
+    }
+
    /**
     * Root class for all classes created by Basis class model.
     * @type {function()}
@@ -1251,7 +1566,7 @@
 
      /**
       * Class constructor.
-      * @param {function()} SuperClass CLass that new one inherite of.
+      * @param {function()} SuperClass Class that new one inherits of.
       * @param {...object} extensions Objects that extends new class prototype.
       * @return {function()} A new class.
       */
@@ -1296,15 +1611,16 @@
         // TODO: remove className from prototype
         //newClass.prototype.className = newClass.className;
         
-        // WARN: don't use extend() to assign this (IE doesn't enumerate it)
+        // WARN: don't use extend() to assign this value (IE doesn't enumerate it)
         newClass.prototype.constructor = newClass;
         
         return newClass;
       },
 
-      /* isn't need for complete method, because existing prototype methods aren't overriding and new methods aren't required to be wrapped
-      complete: function(source){
-      },*/
+      // isn't need for complete method, because existing prototype methods aren't overriding and new methods aren't required to be wrapped
+      // complete: function(source){
+      // },
+
       extend: function(source){
         var proto = this.prototype;
         
@@ -1326,12 +1642,17 @@
           if (key == 'className')
             this.className = value;
           else
-          {
-            if (typeof value == 'function' && value.extend !== BaseClass.extend) // wrap only functions, but not a classes 
-              value = wrapMethod(value.method || value, proto[key], proto)
+            if (key == 'behaviour' && isEventObjectSubClass(this))
+            {
+              proto[key] = value && value.isBehaviour_ ? value : EventObject.createBehaviour(this.superClass_, value);
+            }
+            else
+            {
+              if (typeof value == 'function' && value.extend !== BaseClass.extend) // wrap only functions, but not a classes 
+                value = wrapMethod(value.method || value, proto[key], proto)
               
-            proto[key] = value;
-          }
+              proto[key] = value;
+            }
         }
         
         return this;
@@ -1350,163 +1671,219 @@
     });
   })();
 
-  // ============================================ 
-  // Browser
+  // ================================
+  // EventObject
+  //
 
-  var Browser = (function(){
+  var EventObject = (function(){
 
-   /** @namespace Basis.Browser */
+    var slice = Array.prototype.slice;
 
-    var namespace = 'Basis.Browser';
+    // EventObject seed ID
+    var eventObjectId = 1;
 
-    //
-    // main part
-    //
+    //var eventObjectMap = {};
 
-    function versionToInt(version){
-      var base = 1000000;
-      var part = String(version).split(".");
-      for (var i = 0, result = 0; i < 4 && i < part.length; i++, base/=100)
-        result += part[i] * base;
-
-      return result;
+   /**
+    * Creates behaviour singleton object.
+    * @param {Basis.Class} superClass Prototype class for inhiritance.
+    * @param {Object} behaviour Set of methods that being part of new behaviour object.
+    * @return {Object} Behaviour singleton object inherited from superClass behaviour
+    * member if superClass specified and has behaviour member, otherwise new
+    * root behaviour singleton object.
+    */
+    function createBehaviour(superClass, behaviour){
+      var proto = superClass && superClass.prototype;
+      var superClassBehaviour = proto && proto.behaviour && proto.behaviour.constructor;
+      return new (Class(superClassBehaviour, Object.extend({ isBehaviour_: true, className: superClass ? 'subclass of ' + superClass.className + '.Behaviour' : 'EventObject.Behaviour' }, behaviour)))();
     }
 
-    function testBrowser(/* browserName1 .. browserNameN */){
-      for (var i = 0; i < arguments.length; i++)
-      {
-        var forTest = arguments[i].toLowerCase();
+   /**
+    * Base class for event dispacthing. It provides model when it's instance
+    * can registrate handlers for events, and call it when event happend. 
+    * @class
+    */
+    var EventObject = Class(null, {
+     /**
+      * Name of class.
+      * @type {string}
+      * @readonly
+      */
+      className: namespace + '.EventObject',
 
-        // using cache
-        if (forTest in answers)
+     /**
+      * Unique id of object.
+      * @type {number}
+      * @readonly
+      */
+      eventObjectId: 0,
+
+     /**
+      * Default set of event handler. It calls after all other handlers are called.
+      * @type {Object}
+      * @private
+      */
+      behaviour: createBehaviour(null, {}),
+
+     /**
+      * List of event handler sets.
+      * @type {Array.<Object>}
+      * @private
+      */
+      handlers_: [],
+
+     /**
+      * @param {Object=} config
+      * @config {Object} handlers Event handler set.
+      * @config {Object} handlersContext Context for event handler set (handlers).
+      * @config {boolean} traceEvents_ Debug for.
+      * @constructor
+      */
+      init: function(config){
+        // init properties
+        this.handlers_ = new Array();
+
+        // registrate object
+        //eventObjectMap[eventObjectId] = this;
+        this.eventObjectId = eventObjectId++;
+
+        // apply config
+        if (config)
         {
-          if (answers[forTest])
-            return true;
-        }
-        else 
-        {
-          // calculate answer
-          var m = forTest.match(/^([a-z]+)(([\d\.]+)([+-=]?))?$/i);
-          if (m)
-          { 
-            answers[forTest] = false;
+          ;;;if (config.traceEvents_ || this.traceEvents_) this.handlers_.push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
+          ;;;if ('thisObject' in config) console.warn(this.className + ': thisObject in config is deprecated. Use handlersContext instead');
 
-            var name = m[1].toLowerCase();
-            var version = versionToInt(m[3]); // what
-            var operation = m[4] || '=';      // how
-            var cmpVersion = versions[name];  // with
-
-            if (!cmpVersion)
-              continue;
-
-            return answers[forTest] = 
-                 !version
-              || (operation == '=' && cmpVersion == version)
-              || (operation == '+' && cmpVersion >= version)
-              || (operation == '-' && cmpVersion <  version);
-          }
-          else
+          if (config.handlers)
           {
-            ;;;throw new Error('Bad browser version description in Browser.test() function: ' + forTest);
+            this.handlers_.push({
+              handler: config.handlers,
+              thisObject: config.handlersContext || this
+            });
           }
         }
-      }
 
-      return false;
-    }
+        return config;
+      },
 
-    var FeatureSupport = {
-      dataurl: false
-    };
+     /**
+      * Registrates new event handler set for object.
+      * @param {Object} handler Event handler set.
+      * @param {Object=} thisObject Context object.
+      * @return {boolean} Whether event handler set was added.
+      */
+      addHandler: function(handler, thisObject){
+        thisObject = thisObject || this;
+        
+        ;;;if (this.handlers_ === this.constructor.prototype.handlers_ && typeof console != 'undefined') console.warn('Add handler for not inited instance of EventObject (' + this.className + ')');
 
-    // DATA URL SHEME test
-    var testImage = new Image();
-    testImage.onload = function(){ FeatureSupport.dataurl = true };
-    testImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
+        // search for duplicate
+        for (var i = 0, item; item = this.handlers_[i]; i++)
+          if (item.handler === handler && item.thisObject === thisObject)
+          {
+            ;;;if (typeof console != 'undefined') console.warn('Add dublicate handler to EventObject instance (' + this + ')');
+            return false;
+          }
 
-    var answers = {};
-    var versions = {};
-    var userAgent = window.navigator.userAgent;
-    var browserName = 'unknown';
-    var browserPrettyName = 'unknown';
-    var browserNames = {
-      'MSIE':        ['Internet Explorer', 'msie', 'ie'],
-      'Gecko':       ['Gecko', 'gecko'],
-      'Safari':      ['Safari', 'safari'],
-      'AppleWebKit': ['WebKit'],
-      'Chrome':      ['Chrome', 'chrome'],
-      'FireFox':     ['FireFox', 'firefox', 'ff'],
-      'Iceweasel':   ['FireFox', 'firefox', 'ff'],
-      'Shiretoko':   ['FireFox', 'firefox', 'ff'],
-      'Opera':       ['Opera', 'opera']
-    };
+        // add handler
+        this.handlers_.push({ 
+          handler: handler,
+          thisObject: thisObject
+        });
 
-    // init
-    for (var name in browserNames)
-    {
-      if (name == 'MSIE' && window.opera)
-        continue;  // opera identifies as IE :(
+        return true;
+      },
 
-      if (name == 'Safari' && userAgent.match(/chrome/i))
-        continue;  // Chrome identifies as Safari :(
+     /**
+      * Removes event handler set from object. For this operation parameters
+      * must be the same (equivalent) as used for addHandler method.
+      * @param {Object} handler Event handler set.
+      * @param {Object=} thisObject Context object.
+      * @return {boolean} Whether event handler set was removed.
+      */
+      removeHandler: function(handler, thisObject){
+        thisObject = thisObject || this;
 
-      if (userAgent.match(new RegExp(name + '.' + '(\\d+(\\.\\d+)*)', 'i')))
-      {
-        var version   = RegExp.$1;
-        var verNumber = versionToInt(version);
-        var names     = browserNames[name];
+        // search for handler and remove
+        for (var i = 0, item; item = this.handlers_[i]; i++)
+          if (item.handler === handler && item.thisObject === thisObject)
+          {
+            this.handlers_.splice(i, 1);
+            return true;
+          }
 
-        browserName = names[0] + verNumber;
-        browserPrettyName = names[0] + ' ' + version;
+        // handler not found
+        return false;
+      },
 
-        for (var j = 0; j < names.length; j++)
-          versions[names[j].toLowerCase()] = verNumber;
-      }
-    }
+     /**
+      * Fires event dispatching. All handlers assigned for some event will be called
+      * in reverse order of addiction. Behaviour handler to be called last.
+      * @param {string} eventName Name of dispatching event.
+      * @param {...*} args The arguments to the event handlers.
+      */
+      dispatch: function(eventName/*, arg1 .. argN */){
+        var behaviour = this.behaviour[eventName];
+        var handlersCount = this.handlers_.length;
 
-    //
-    // Cookies
-    //
+        //console.log(this, eventName);
 
-    function setCookie(name, value, expire, path){
-      document.cookie = name + "=" + (value == null ? '' : escape(value)) +
-                        ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
-                        (expire ? ";expires=" + (new Date(Number(new Date) + expire * 1000)).toGMTString() : '');
-    }
+        //if (!window.eventNum)window.eventNum = 0;window.eventNum++;//console.log('{eventNum:04}'.format(window), eventName, this);
+        //if (!window.eventMap)window.eventMap = {};if (!eventMap[eventName])eventMap[eventName]=0;eventMap[eventName]++;//console.log('{eventNum:04}'.format(window), eventName, this);
 
-    function getCookie(name){
-      var m = document.cookie.match(new RegExp("(^|;)\\s*" + name + "\\s*=\\s*(.*?)\\s*(;|$)"));
-      return m && unescape(m[2]);
-    }
+        if (handlersCount || behaviour)
+        {
+          var args = slice.call(arguments, 1);
 
-    function removeCookie(name, path){
-      document.cookie = name + "=;expires=" + new Date(0).toGMTString() + ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname));
-    }
+          if (handlersCount)
+          {
+            var handlers = slice.call(this.handlers_);
+            var config;
+            var func;
+            var i = handlers.length;
+            while (i--)
+            {
+              config = handlers[i];
+              // debug for
+              ;;;if (typeof config.handler.any == 'function') config.handler.any.apply(config.thisObject, arguments);
 
-    //
-    // export names
-    //
+              // handler call
+              func = config.handler[eventName];
+              if (typeof func == 'function')
+                func.apply(config.thisObject, args);
+            }
+          }
+        
+          if (typeof behaviour == 'function')
+            behaviour.apply(this, args);
+        }
+      },
 
-    namespace = getNamespace(namespace);
-    namespace.toString = function(){ return browserPrettyName };
-    return namespace.extend({
-      FeatureSupport: FeatureSupport,
-      testImage: testImage,
+     /**
+      * @destructor
+      */
+      destroy: function(){
+        // remove object from global instance storage (debug for)
+        //!ms;;;var s = Basis.instanceStorage && Basis.instanceStorage[this.className]; if (s) s.remove(this);
 
-      name: browserName,
-      prettyName: browserPrettyName,
-      
-      test: testBrowser,  // multiple test
-      is: function(name){ return testBrowser(name) },  // single test
+        // prevent call this method again
+        this.destroy = Function.$undef;
 
-      // Cookie interface
-      Cookies: {
-        set: setCookie,
-        get: getCookie,
-        remove: removeCookie
+        // fire object destroy event handlers
+        this.dispatch('destroy', this);
+
+        // remove all event handler sets
+        delete this.handlers_;
+
+        //delete eventObjectMap[this.eventObjectId];
+
+        // no handlers in destroyed object, nothing dispatch
+        this.dispatch = Function.$undef;
       }
     });
 
+    EventObject.createBehaviour = createBehaviour;
+
+    return EventObject;
   })();
 
   // ============================================ 
@@ -1520,7 +1897,7 @@
     * native and simulated (object that generaly has properties like firsChild,
     * lastChild, parentNode etc) DOM structures.
     *
-    * Function overview:
+    * Functions overview:
     * - Order & position functions:
     *     {Basis.DOM.sort}, {Basis.DOM.comparePosition}, {Basis.DOM.index},
     *     {Basis.DOM.lastIndex}, {Basis.DOM.deep}
@@ -1538,7 +1915,7 @@
     * - Style and attribute setters/getters:
     *     {Basis.DOM.setAttribute}, {Basis.DOM.display}, {Basis.DOM.show},
     *     {Basis.DOM.hide}, {Basis.DOM.visibility}, {Basis.DOM.visible},
-    *     {Basis.DOM.invisible}, {Basis.DOM.css}
+    *     {Basis.DOM.invisible}
     * - Checkers:
     *     {Basis.DOM.IS_ELEMENT_NODE}, {Basis.DOM.IS_TEXT_NODE}, {Basis.DOM.is},
     *     {Basis.DOM.parentOf}, {Basis.DOM.isInside}
@@ -1557,7 +1934,7 @@
     var document = window.document;
 
     // element for DOM support tests
-    var testElement = document.createElement('DIV');
+    var testElement = document.createElement('div');
 
     // nodeType
     /** @const */ var ELEMENT_NODE = 1;
@@ -1640,7 +2017,7 @@
     {
       // IE6-8 DOM sheme
       sort = function(nodes){
-        return nodes.sortAsObject(Data.getter('sourceIndex'));
+        return nodes.sortAsObject(getter('sourceIndex'));
       };
 
       comparePosition = function(nodeA, nodeB){
@@ -1898,7 +2275,7 @@
       for (var i = 0, property; property = TEXT_PROPERTIES[i++];)
         if (node[property] != null)
           return node[property];
-      return axis(node, AXIS_DESCENDANT, IS_TEXT_NODE).map(Data.getter('nodeValue')).join('');
+      return axis(node, AXIS_DESCENDANT, IS_TEXT_NODE).map(getter('nodeValue')).join('');
     };
 
     // extract tag names
@@ -1970,7 +2347,7 @@
       var walker, cursor;
       var result = new Array;
 
-      filter = typeof filter == 'string' ? Data.getter(filter) : filter || $true;
+      filter = typeof filter == 'string' ? getter(filter) : filter || $true;
 
       switch(axis)
       {
@@ -2045,7 +2422,7 @@
         filter = $true;
 
       if (typeof filter == 'string')
-        filter = Data.getter('tagName=='+filter.quote());
+        filter = getter('tagName=='+filter.quote());
 
       viewDeep = viewDeep || 0;
 
@@ -2120,14 +2497,24 @@
     }
 
    /**
-    * Using by createElement.
+    * Using by createElement. Check if browser (Internet Explorer 6 & 7) has problem with name attribute.
     * @type {boolean}
     * @privare
     */
-    var IS_NAME_ATTRIBUTE_BUG = (function(){
+    var IS_ATTRIBUTE_BUG_NAME = (function(){
       var input = document.createElement('INPUT');
       input.name = 'a';
       return !/name/.test(outerHTML(input))
+    })();
+
+   /**
+    * Using by createElement. Check if browser (Internet Explorer 6 & 7) has problem to set value for style attribute.
+    * @type {boolean}
+    * @privare
+    */
+    var IS_ATTRIBUTE_BUG_STYLE = (function(){
+      testElement.setAttribute('style', 'color: red');
+      return testElement.style.color !== 'red';
     })();
 
    /**
@@ -2143,11 +2530,11 @@
     * @param {...Node|object} childs Child nodes 
     * @return {!Element} The new Element.
     */
-    function createElement(def, childs){
-      var isComplexDef = def != undefined && typeof def != 'string';
-      var description = (isComplexDef ? def.description : def) || '';
+    function createElement(config, childs){
+      var isConfig = config != undefined && typeof config != 'string';
+      var description = (isConfig ? config.description : config) || '';
 
-      var elementName = 'DIV';
+      var elementName = 'div'; // modern browsers become case sensetive for tag names for xhtml
       var element;
       
       // fetch tag name
@@ -2173,7 +2560,7 @@
           {
             throw new Error(
               'Create element error in DOM.createElement()' +
-              '\n\nElement description:\n> ' + description + 
+              '\n\nDescription:\n> ' + description + 
               '\n\nProblem place:\n> ' + description.substr(0, m.index) + '-->' + description.substr(m.index) + '<--'
             );
           }
@@ -2190,9 +2577,8 @@
         }
 
         // create element
-        if (IS_NAME_ATTRIBUTE_BUG && attributes.name && /^(input|textarea|select)$/i.test(elementName))
+        if (IS_ATTRIBUTE_BUG_NAME && attributes.name && /^(input|textarea|select)$/i.test(elementName))
           elementName = '<' + elementName + ' name=' + attributes.name + '>';
-          //delete attributes.name; // check in ie6
       }
         
       // create element
@@ -2200,8 +2586,13 @@
 
       // set attributes
       if (attributes)
+      {
+        if (attributes.style && IS_ATTRIBUTE_BUG_STYLE)
+          element.style.cssText = attributes.style;
+
         for (var attrName in attributes)
           element.setAttribute(attrName, attributes[attrName], 0);
+      }
 
       // set css classes
       if (classNames && classNames.length)
@@ -2212,17 +2603,17 @@
         handleInsert(element, createFragment.apply(0, Array.from(arguments, 1).flatten()));
 
       // attach event handlers
-      if (isComplexDef)
+      if (isConfig)
       {
-        if (def.css)
-          DOM.Style.setStyle(element, def.css);
+        if (config.css)
+          DOM.Style.setStyle(element, config.css);
 
-        for (var event in def)
-          if (typeof def[event] == 'function')
-            Event.addHandler(element, event, def[event], element);
+        for (var event in config)
+          if (typeof config[event] == 'function')
+            Event.addHandler(element, event, config[event], element);
           else
-            if (def[event] instanceof Event.Handler)
-              Event.addHandler(element, event, def[event].handler, def[event].thisObject);
+            if (config[event] instanceof Event.Handler)
+              Event.addHandler(element, event, config[event].handler, config[event].thisObject);
       }
 
       // return an element
@@ -2367,7 +2758,7 @@
     */
     function wrap(array, map, getter){
       var result = [];
-      getter = Data.getter(getter || $self);
+      getter = Function.getter(getter || $self);
       for (var k in map)
         for (var i = 0; i < array.length; i++)
         {
@@ -2613,7 +3004,8 @@
   // ============================================
   // DOM.Style
   // 
-  // Authors: Vladimir Ratsev & Roman Dvornov
+  // Authors: Vladimir Ratsev
+  //          Roman Dvornov
   //
 
   (function() {
@@ -2652,8 +3044,7 @@
       ;;;throw new Error("Syntax error in CSS rule to be added");
     }
 
-    function StyleSheet_makeCompatible(style)
-    {
+    function StyleSheet_makeCompatible(style){
       // FF throws exception if access to cssRules property until stylesheet isn't ready (loaded)
       try {
         if (!style.cssRules)
@@ -2678,8 +3069,7 @@
     * @param {string=} title Value for title attribute.
     * @return {StyleSheet}
     */
-    function addStyleSheet(url, title)
-    {
+    function addStyleSheet(url, title){
       var element = DOM.createElement(!url ? 'STYLE[type="text/css"]' : 'LINK[type="text/css"][rel="{alt}stylesheet"][href={url}]'.format({
         alt: title ? 'alternate ' : '',
         url: url.quote('"')
@@ -3117,14 +3507,14 @@
     *   for (var i = 0; i < 10; i++)
     *   {
     *     var node = template.createInstance();
-    *     cssClass(node.element).add('item' + i);
+    *     Basis.CSS.cssClass(node.element).add('item' + i);
     *     node.hrefAttr.nodeValue = '/foo/bar.html';
     *     node.titleText.nodeValue = 'some title';
     *     node.descriptionText.nodeValue = 'description text';
     *   }
     *   
     *   // create and attach DOM structure to existing object
-    *   var dataObject = new Basis.DOM.Wrapers.DataObject({
+    *   var dataObject = new Basis.Data.DataObject({
     *     info: { title: 'Some data', value: 123 },
     *     handlers: {
     *       update: function(object, newInfo, oldInfo, delta){
@@ -3327,13 +3717,8 @@
         }
 
         this.proto = proto;
-        //console.log(DOM.outerHTML(proto));
-        //this.proto.html = DOM.outerHTML(proto);
-        //this.x = document.createElement("DIV");
         this.createInstance = new Function('object',
           'object = object || {};' + 
-          //'var html = this.x;' +
-          //'html.innerHTML = this.proto.html;' +
           'var html = this.proto.cloneNode(true);' + 
           body.map(String.format, '{alias} = {path};').join('') +
           'return object;'
@@ -3460,7 +3845,7 @@
     * @return {Node}
     */
     function getNode(object){ 
-      return object === window || (object = DOM.get(object)) ? object : null;
+      return typeof object == 'string' ? DOM.get(object) : object;
     }
 
    /**
@@ -3959,6 +4344,7 @@
       return classes != null ? String.trim(classes).replace(/^(.)|\s+|\s*,\s*/g, '.$1') : '';
     };
 
+    var rx = /(^|\\s+)selected(\\s+|$)|$/;
     var ClassNameWraper = Class(null, {
       className: namespace + '.ClassName',
 
@@ -4078,202 +4464,6 @@
 
   })();
  
-  // ============================================
-  // Data
-  //
-
-  var Data = (function(){
-
-   /** @namespace Basis.Data */
-
-    var namespace = 'Basis.Data';
-
-    var getterIdx = 1;
-    var getterCache = {};
-    var getterPathCache = {};
-    //var setterCache = {};
-
-    var mGetter = function(item){ return item.modificator };
-    mGetter.getter = mGetter;
-    mGetter.getterIdx_ = getterIdx++;
-
-    function getter(path, modificator){
-      var func, result;
-
-      if (!modificator)
-      {
-        if (path.getter)
-          return path.getter;
-        
-        if (typeof path == 'function')
-          return path;
-      }
-
-      if (typeof path != 'function')
-      {
-        if (getterPathCache[path])
-          func = getterPathCache[path];
-        else
-        {
-          func = new Function('object', 'return object != null ? object.' + path + ' : object');
-          func.path = path;
-          func.getterIdx_ = getterIdx++;
-          getterPathCache[path] = func;
-        }
-      }
-      else
-      {
-        func = path;
-        if (!func.getterIdx_)
-          func.getterIdx_ = getterIdx++;
-      }
-
-      var getterIdx_ = func.getterIdx_;
-      if (getterCache[getterIdx_] && getterCache[getterIdx_].search(modificator, mGetter))
-        return getterCache[getterIdx_][Array.lastSearchIndex].getter;
-
-      switch (typeof modificator)
-      {
-        case 'string': 
-          result = function(object){ return modificator.format(func(object)) };
-          break;
-
-        case 'function': 
-          result = function(object){ return modificator(func(object)) };
-          break;
-
-        case 'object':
-          result = function(object){ return modificator[func(object)] }; 
-          break;
-
-        default:
-          if (!func.path)
-            result = function(object){ return func(object) };
-          else
-            result = func;
-      }
-
-      if (!getterCache[getterIdx_])
-        getterCache[getterIdx_] = [];
-
-      getterCache[getterIdx_].push({
-        getter: result,
-        modificator: modificator
-      });
-
-      result.getter = result;
-
-      return result;
-    };
-
-    function def(getter, defValue, checker){
-      checker = checker || $isNull;
-      var result = function(object){
-        var res = getter(object);
-        return checker(res) ? defValue : res;
-      };
-      return result;
-    };
-
-    function wrapper(key){
-      return function(value){
-        var result = {};
-        result[key] = value;
-        return result;
-      }
-    };
-
-    /*
-     *  experimental
-     */
-    /*
-    function proxy(getter, setter, modificator, validator){
-      if (!getter)
-        getter = $self;
-
-      var result = function(object){
-        var value = getter(object);
-        if (setter)
-        {
-          return setter(object, value);
-        }
-        else
-          return value;
-      };
-    };
-
-    function validator(validator, ignoreException){
-      return function(value){
-        var result = validator.call(this, value);
-        if (!result && !ignoreException)
-          throw new Error('Value is not passed validator check');
-
-        return result;
-      };
-    };*//*
-
-    function setter(path, modificator, validator, ignoreException){
-      if (path && path.isDataSetter)
-        return path;
-
-      var setter, validate, result;
-      if (typeof path != 'function')
-      {
-        if (!setterCache[path])
-          setterCache[path] = new Function('object', 'value', 'return object.' + path + ' = value');
-
-        setter = setterCache[path];
-      }
-      else 
-        setter = path;
-
-      if (typeof validator == 'function')
-      {
-        validate = function(object, value){
-          if (!validator.call(object, value))
-          {
-            if (ignoreException)
-              return;
-            else
-              throw new Error('Value is not passed validator check');
-          }
-
-          return setter(object, value);
-        }
-      }
-      else
-        validate = setter;
-
-      result = validate;
-
-      switch (typeof modificator)
-      {
-        case 'string': 
-          result = function(object, value){ return validate(object, modificator.format(value)) };
-          break;
-        case 'function': 
-          result = function(object, value){ return validate(object, modificator.call(object, value)) };
-          break;
-      }
-
-      result.isDataSetter = true;
-
-      return result;
-    };*/
-
-    // export
-
-    return getNamespace(namespace, getter).extend({
-      getter: getter,
-      def: def,
-      wrapper: wrapper/*,
-      setter: setter,
-      proxy: proxy,
-      validator: validator*/
-    });
-
-  })();
-
   // =====================================================================
   // Cleaner
   // Description: Singleton that is destroy registred objects when page unload
@@ -4335,7 +4525,7 @@
   (function() {
 
     var eventScheme = typeof window.addEventListener == 'function' && typeof window.postMessage == 'function';
-    var messageName = "zero-timeout-message";
+    var messageName = "zeroTimeoutMessage";
 
     var timeoutQueue = [];
     var map = {};
@@ -4347,7 +4537,7 @@
     function setZeroTimeout(fn) {
       //;;;if (typeof console != 'undefined') console.info('Set zero timeout', fn);
 
-      var callback = { key: 'z' + (idx++), fn: fn };
+      var callback = { key: 'z' + (idx++), fn: typeof fn == 'function' ? fn : new Function(fn) };
       map[callback.key] = callback;
       timeoutQueue.push(callback);
 
@@ -4368,8 +4558,6 @@
         Event.kill(event);
       }
 
-      //;;;if (typeof console != 'undefined') console.info('Zero timeout call: ' + timeoutQueue.length + ' function(s) left');
-
       if (timeoutQueue.length)
       {
         var callback = timeoutQueue.shift();
@@ -4381,15 +4569,13 @@
     if (eventScheme)
       window.addEventListener("message", handleMessage, true);
 
-    //;;;if (typeof console != 'undefined') console.info('Zero timeout based on ' + (eventScheme ? 'postMessage' : 'setTimeout(.., 0)'));
-
     //
     // override setTimeout
     //
-    var naviteSetTimeout = setTimeout;
+    var nativeSetTimeout = setTimeout;
     window.setTimeout = function(fn, timeout){
       if (timeout)
-        return naviteSetTimeout.call(window, fn, timeout);
+        return nativeSetTimeout.call(window, fn, timeout);
       else
         return setZeroTimeout(fn);
     }
@@ -4414,6 +4600,152 @@
     }
   })();
 
+  //
+  // TimeEventManager
+  //
+
+  var TimeEventManager = (function(){
+    var NEVER = 2E12;
+    var EVENT_TIME_GETTER = getter('eventTime');
+
+    var eventStack = [];
+    var map = {};
+    var fireTime = NEVER;
+    var timer = null;
+
+    var lockSetTimeout = false;
+
+    function setNextTime(){
+      if (lockSetTimeout)
+        return;
+
+      if (eventStack.length)
+      {
+        var now = Date.now();
+        var firstEventTime = Math.max(eventStack[0].eventTime, now);
+
+        // move fire time backward
+        if (firstEventTime < fireTime)
+        {
+          clearTimeout(timer);
+          timer = setTimeout(fire, (fireTime = firstEventTime) - now);
+        }
+      }
+      else
+      {
+        timer = clearTimeout(timer);
+        fireTime = NEVER;
+      }
+    }
+
+    function add(object, event, eventTime){
+      //debugger;
+      //;;;if (typeof console != 'undefined') console.log('try add event:', object.eventObjectId, object, event, eventTime);
+
+      var objectId = object.eventObjectId;
+      var eventMap = map[event];
+
+      if (!eventMap)
+        eventMap = map[event] = {};
+
+      var eventObject = eventMap[objectId];
+
+      if (eventObject)
+      {
+        if (isNaN(eventTime))
+        {
+          //;;;if (typeof console != 'undefined') console.log('eventTime is NaN - remove it');
+          return remove(object, event);
+        }            
+
+        if (eventObject.eventTime == eventTime)
+          return;
+
+        // temporary remove from stack
+        eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
+        eventObject.eventTime = eventTime;
+      }
+      else
+      {
+        if (isNaN(eventTime))
+          return;
+
+        // event config
+        eventObject = eventMap[objectId] = {
+          eventName: event,
+          object: object,
+          eventTime: eventTime,
+          callback: object[event]
+        };
+      }
+
+      // insert event into stack
+      eventStack.splice(eventStack.binarySearchPos(eventTime, EVENT_TIME_GETTER), 0, eventObject);
+
+      //;;;if (typeof console != 'undefined') console.log('event added');
+
+      setNextTime();
+    }
+
+    function remove(object, event){
+      //debugger;
+
+      var objectId = object.eventObjectId;
+      var eventObject = map[event] && map[event][objectId];
+
+      //;;;if (typeof console != 'undefined') console.log('try to remove:', objectId, object);
+
+      if (eventObject)
+      {
+        //;;;if (typeof console != 'undefined') console.log('remove object:', objectId, object);
+
+        // delete object from stack and map
+        eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
+        delete map[event][objectId];
+
+        setNextTime();
+      }
+    }
+
+    function fire(){
+      var now = Date.now();
+      var pos = eventStack.binarySearchPos(now + 15, EVENT_TIME_GETTER);
+
+      //;;;if (typeof console != 'undefined') console.log('>>>> event manager cycle');
+      //;;;if (typeof console != 'undefined') console.log('before fire:', eventStack.map(EVENT_TIME_GETTER), now, now + 15, pos);
+
+      lockSetTimeout = true; // lock for set timeout if callback calling will add new events
+      eventStack.splice(0, pos).forEach(function(eventObject){
+        //;;;if (typeof console != 'undefined') console.log('process object :', eventObject.object.eventObjectId, eventObject.object);
+
+        delete map[eventObject.eventName][eventObject.object.eventObjectId];
+        eventObject.callback.call(eventObject.object);
+      });
+      lockSetTimeout = false; // unlock
+
+      //;;;if (typeof console != 'undefined') console.log('after fire:', eventStack.map(EVENT_TIME_GETTER));
+
+      fireTime = NEVER;
+      setNextTime();
+
+      //;;;if (typeof console != 'undefined') console.log('>> next time:', fireTime == NEVER ? 'Never' : fireTime);
+    }
+
+    Cleaner.add({
+      destroy: function(){
+        lockSetTimeout = true;
+        clearTimeout(timer);
+        delete eventStack;
+        delete map;
+      }
+    })
+
+    return {
+      add: add,
+      remove: remove
+    };
+  })();
+
   // ============================================ 
   // Init part
   //
@@ -4436,7 +4768,10 @@
   getNamespace(namespace).extend({
     namespace: getNamespace,
 
-    Cleaner: Cleaner   
+    EventObject: EventObject,
+    TimeEventManager: TimeEventManager,
+
+    Cleaner: Cleaner
   });
 
   Basis.Locale = {};

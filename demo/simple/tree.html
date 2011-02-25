@@ -45,7 +45,8 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../tree.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -103,9 +104,9 @@
       container: Basis.DOM.get('demo-container'),
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(Object.complete({ document: this.document || this }, config));
+          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
         else
-          return new nsTree.TreeNode(Object.complete({ document: this.document || this }, config));
+          return new nsTree.TreeNode(config);
       },
       childNodes: data
     })

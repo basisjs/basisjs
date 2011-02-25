@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Selection as collection</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
+
+  <style id="demo-css" type="text/css">
+    .Basis-Tree
+    {
+      border: 1px solid #888;
+      width: 300px;
+      height: 400px;
+      float: left;
+      margin-right: 1ex;
+      overflow: auto;
+    }
+  </style>
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Collection as collection</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container">
+    <div id="demo-panel">
+      <button id="button-SelectAll">Select all</button>
+      <button id="button-SelectChildNodes">Select first level child nodes</button>
+      <button id="button-ClearSelection">Clear selection</button>
+      <p>Use CTRL key for multiple select.</p>
+    </div>
+  </div>
+
+  <script id="demo-javascript" type="text/javascript">
+    var Data = Basis.Data;
+    var DOM = Basis.DOM;
+    var Event = Basis.Event;
+    var nsWrappers = Basis.DOM.Wrappers;
+    var nsTree = Basis.Controls.Tree;
+
+    var demoContainer = DOM.get('demo-container');
+
+    //
+    // Master tree
+    //
+
+    var tree1 = new nsTree.Tree({
+      container: demoContainer,
+      selection: { multiple: true },
+      childNodes: Array.create(10, function(i){
+        return new nsTree.TreeFolder({
+          info: {
+            id: i,
+            title: 'item #' + i
+          },
+          childNodes: [
+            new nsTree.TreeNode({
+              info: {
+                title: 'child of item #' + i
+              }
+            })
+          ]
+        })
+      })
+    });
+
+    //
+    // Related tree shows tree1 selected items
+    //
+
+    var tree2 = new nsTree.Tree({
+      container: demoContainer,
+      content: 'Selected items:',
+      collection: tree1.selection
+    });
+
+    //
+    // Related tree shows tree1 selected item groups. Each group also can
+    // be expanded and shows it's content.
+    //
+
+    var tree3 = new nsTree.Tree({
+      container: demoContainer,
+      content: 'Selected items by group:',
+      collection: new Basis.Data.Grouping({
+        sources: [tree1.selection], 
+        groupGetter: Function.getter('info.id % 2', {
+          'NaN': 'Child items',
+          '0': 'Even items',
+          '1': 'Odd items'
+        })
+      }),
+      childClass: Basis.Class(nsTree.TreeFolder, {
+        collapsed: true,
+        behaviour: {
+          expand: function(){
+            this.inherit();
+            this.setCollection(this.delegate);
+          }
+        },
+        init: function(config){
+          this.inherit(config);
+
+          this.itemCountText = DOM.insert(this.title, '');
+
+          this.delegate.addHandler({
+            datasetChanged: function(dataset, delta){
+              this.itemCountText.nodeValue = ' ({0})'.format(dataset.itemCount);
+            }
+          }, this);
+        }
+      })
+    });
+
+    //
+    // Add click event handlers on buttons
+    //
+
+    Event.addHandler('button-SelectAll', 'click', function(){
+      tree1.selection.set(DOM.axis(tree1, DOM.AXIS_DESCENDANT));
+    });
+
+    Event.addHandler('button-SelectChildNodes', 'click', function(){
+      tree1.selection.set(tree1.childNodes);
+    });
+
+    Event.addHandler('button-ClearSelection', 'click', function(){
+      tree1.selection.clear();
+    });
+
+  </script>
+</body>
+
+</html>

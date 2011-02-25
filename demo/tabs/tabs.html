@@ -59,7 +59,8 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../tabs.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -107,13 +108,13 @@
 
     // AccordionControl
     new Tabs.AccordionControl({
-      container: DOM.css(createBlock('AccordionControl'), { 'float': 'right', width: '250px' }),
+      container: DOM.Style.setStyle(createBlock('AccordionControl'), { 'float': 'right', width: '250px' }),
       childNodes: data
     });
 
     // AccordionControl with sorting & grouping
     new Tabs.AccordionControl({
-      container: DOM.css(createBlock('AccordionControl with localSorting & localGrouping'), { 'float': 'right', width: '250px' }),
+      container: DOM.Style.setStyle(createBlock('AccordionControl with localSorting & localGrouping'), { 'float': 'right', width: '250px' }),
       localGrouping: {
         groupGetter: 'groupId',
         localSorting: 'info.title'
@@ -151,17 +152,24 @@
           var pagecontrol = this;
           DOM.insert(DOM.clear(buttonPanel), this.childNodes.map(function(page, index){
             var button = page.button;
+
             if (!button)
-              page.button = button = DOM.createElement({
-                description: 'BUTTON',
-                click: function(){
-                  var page = pagecontrol.childNodes[index];
-                  if (!page.disabled)
-                    page.select();
-                  else
-                    alert('page with title ' + (page.info.title) + ' is disabled and can\'t be selected');
-                }
-              }, (page.info.title));
+            {
+              page.button = button = DOM.createElement(
+                {
+                  description: 'BUTTON',
+                  click: function(){
+                    var page = pagecontrol.childNodes[index];
+                    if (!page.disabled)
+                      page.select();
+                    else
+                      alert('page with title ' + (page.info.title) + ' is disabled and can\'t be selected');
+                  }
+                },
+                page.info.title
+              );
+            }
+
             return button;
           }));
         }

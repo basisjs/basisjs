@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -20,8 +20,8 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
 
-    var nsWrapers = DOM.Wrapers;
-    var Property = nsWrapers.Property;
+    var nsWrappers = DOM.Wrapper;
+    var Property = Basis.Data.Property.Property;
 
     // MAIN PART
 
@@ -42,7 +42,7 @@
       timer: null,
       started: false,
 
-      behaviour: nsWrapers.createBehaviour(Property, {
+      behaviour: {
         change: function(value, prevValue){
           if (value == 0.0)
             this.dispatch('start');
@@ -52,7 +52,7 @@
           if (value == 1.0)
             this.dispatch('finish');
         }
-      }),
+      },
 
       init: function(config){
         var config = config || {};
@@ -127,6 +127,7 @@
       thread: null,
       setter: Function.$null,
       notRevert: false,
+      timeFunction: Function.$self,
 
       init: function(thread, setter, start, end, notInvert){
         if (thread instanceof Thread)
@@ -149,7 +150,7 @@
             //;;;if (typeof console != 'undefined') console.log(this.className, 'invert');
           },
           change: function(progress){
-            this.setter(this.start + this.range * progress);
+            this.setter(this.start + this.range * this.timeFunction(progress));
             //console.log(this.className, progress);
           },
           finish: function(){

@@ -20,9 +20,9 @@
     var extend = Object.extend;
     var Class = Basis.Class;
 
-    var MWrapers = Basis.DOM.Wrapers;
-    var EventObject = MWrapers.EventObject;
-    var Property = MWrapers.Property;
+    var nsWrappers = Basis.DOM.Wrapper;
+    var EventObject = Basis.EventObject;
+    var Property = Basis.Data.Property.Property;
 
     // const
 
@@ -66,7 +66,7 @@
      *  Test
      */
 
-    var AbstractTest = Class.create(EventObject, {
+    var AbstractTest = Class(EventObject, {
       className: namespace + '.AbstractTest',
 
       result:   false,
@@ -159,7 +159,7 @@
     var re0001 = new RegExp('\u0001', 'g');
     var re0002 = new RegExp('\u0002(?!.*\u0002)');
     var reThisIs = new RegExp('this\\.is\u0002', 'g');
-    var Test = Class.create(AbstractTest, {
+    var Test = Class(AbstractTest, {
       className: namespace + '.Test',
 
       testType: 'Test',
@@ -385,7 +385,7 @@
       }
     };
 
-    var TestCase = Class.create(AbstractTest, {
+    var TestCase = Class(AbstractTest, {
       className: namespace + '.TestCase',
 
       testType: 'TestCase',

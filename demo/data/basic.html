@@ -44,7 +44,9 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
   <script type="text/javascript" src="../../button.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -65,13 +67,14 @@
   <script id="demo-javascript" type="text/javascript">
 
     var DOM = Basis.DOM;
-    var nsWrapers = Basis.DOM.Wrapers;
+    var nsData = Basis.Data;
+    var nsWrappers = Basis.DOM.Wrapper;
     var nsButton = Basis.Controls.Button;
     
-    var property1 = new nsWrapers.Property(0);
-    var property2 = new nsWrapers.Property(0);
+    var property1 = new nsData.Property.Property(0);
+    var property2 = new nsData.Property.Property(0);
 
-    var dataObjectSet = new nsWrapers.DataObjectSet({
+    var dataObjectSet = new nsData.Property.DataObjectSet({
       objects: [property1, property2],
       calculateValue: function(){
         return this.objects.reduce(function(value, object){

@@ -238,7 +238,7 @@
   }
   .Basis-Dragable .Basis-Window-TitleCaption
   {
-    cursor: pointer;
+    cursor: move;
   }
   .Basis-Window-Title-CloseButton
   {

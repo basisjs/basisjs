@@ -1,3 +1,5 @@
+
+  @import "../plugins/style/highlight/style.css";
   
   HTML,
   BODY
@@ -127,7 +129,7 @@
   {
     font-size: 100%;
     padding: 4px 4px 2px 4px;
-    margin: 1em 0 -.75em;
+    margin: 1em 0 0.5em;
     border-bottom: 1px dotted #E8E8E8;
   }
 
@@ -148,3 +150,16 @@
     padding-right: 8px;
     text-align: right;
   }
+
+  #demo-panel
+  {
+    border-bottom: 1px solid #F0F0F0;
+    padding-bottom: .25em;
+    margin-bottom: .25em;
+  }
+  #demo-panel P
+  {
+    margin: .4em 0;
+    font-size: 85%;
+  }
+

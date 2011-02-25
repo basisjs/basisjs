@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Entity user list</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/tree/compat/style.css" media="screen" />
+
+  <style id="demo-css" type="text/css">
+    HTML,
+    BODY
+    {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .Basis-Tree
+    {
+      margin: 10px;
+      height: 400px;
+      width: 300px;
+      overflow: auto;
+      border: 1px solid #888;
+      position: relative;
+    }
+
+    .Basis-Label-Processing
+    {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      background: gold;
+      font-size: 85%;
+      padding: 2px 4px;
+      border-radius: 4px;
+        -moz-border-radius: 4px;
+    }
+    .Basis-Tree-NodeGroup-Title
+    {
+      border-top: 1px solid #888;
+      border-bottom: 1px solid #888;
+    }
+
+    TEXTAREA
+    {
+      width: 60%;
+      height: 8em;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY,
+    TABLE *
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../entity.js"></script>
+  <script type="text/javascript" src="../../ajax.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../label.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basis Demos: Entity user list</h1>
+
+  <p id="demo-summary">
+    ...
+  </p>
+  <div id="demo-description">
+    <p>...</p>
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script id="demo-javascript" type="text/javascript">
+    // import names
+
+    var Data = Basis.Data;
+    var DOM = Basis.DOM;
+    var nsWrappers = Basis.DOM.Wrapper;
+    var nsEntity = Basis.Entity;
+    var nsTree = Basis.Controls.Tree;
+    var nsLabel = Basis.Controls.Label;
+
+    var STATE = Basis.Data.STATE;
+
+    var demoContainer = DOM.get('demo-container');
+
+    // reusable handlers
+
+    var colHandler = {
+      subscribersChanged: function(){
+        if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
+          this.adapter.get();
+      },
+      stateChanged: function(){
+        if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
+          this.adapter.get();
+      }
+    };
+    var adapterHandler = {
+      success: function(request){
+        var data = request.responseText.toObject();
+        this.sync(data);
+      }
+    };
+
+    // define data types
+
+    var UserGroup = new nsEntity.EntityType({
+      name: 'UserGroup',
+      fields: {
+        groupId: nsEntity.IntId,
+        title: String
+      }
+    });
+
+    var User = new nsEntity.EntityType({
+      name: 'User',
+      fields: {
+        userId: nsEntity.IntId,
+        group: UserGroup,
+        title: String
+      },
+      aliases: {
+        groupId: 'group'
+      }
+    });
+
+    // create sync adapters
+
+    UserGroup.all.addHandler(colHandler);
+    UserGroup.all.adapter = new Basis.Ajax.Transport({
+      url: 'userlist_groups.json',
+      influence: UserGroup.all,
+      handlersContext: UserGroup.all,
+      handlers: adapterHandler
+    });
+    UserGroup.all.addHandler({
+      
+    })
+
+    User.all.addHandler(colHandler);
+    User.all.adapter = new Basis.Ajax.Transport({
+      url: 'userlist_users.json',
+      influence: User.all,
+      handlersContext: User.all,
+      handlers: adapterHandler
+    });
+
+    // create controls
+
+    DOM.insert(demoContainer, DOM.createElement({
+      description: 'BUTTON',
+      click: function(){
+        UserGroup.all.deprecate();
+        User.all.deprecate();
+      }
+    }, 'Update'));
+
+    var tree = new nsTree.Tree({
+      container: demoContainer,
+      isActiveSubscriber: true,
+      collection: User.all,
+      childClass: Basis.Class(nsTree.TreeNode, {
+        titleGetter: function(node){
+          return this.info.title;
+        }
+      }),
+      localSorting: 'info.title',
+      localGrouping: {
+        groupGetter: 'info.group',
+        titleGetter: 'info.title',
+        isActiveSubscriber: true,
+        collection: UserGroup.all,
+        localSorting: 'info.title'
+      }
+    });
+
+    new nsLabel.CollectionProcessing({
+      delegate: tree
+    });
+
+  </script>
+</body>
+
+</html>

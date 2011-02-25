@@ -3,7 +3,7 @@
  * http://code.google.com/p/basis-js/
  *
  * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
+ * Copyright (c) 2006-2011 Roman Dvornov.
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
@@ -22,12 +22,9 @@
     var Class = Basis.Class;
     var Cleaner = Basis.Cleaner;
 
-    var nsWrapers = Basis.DOM.Wrapers;
-    var EventObject = nsWrapers.EventObject;
-    var DataObject = nsWrapers.DataObject;
-
-    var createBehaviour = nsWrapers.createBehaviour;
-    var STATE = nsWrapers.STATE;
+    var EventObject = Basis.EventObject;
+    var DataObject = Basis.Data.DataObject;
+    var STATE = Basis.Data.STATE;
 
     //
     // Main part
@@ -88,12 +85,12 @@
       */
       state: STATE.UNDEFINED,
 
-      behaviour: nsWrapers.createBehaviour(nsWrapers.DataObject, {
+      behaviour: {
         subscribersChanged: function(){
           if (this.subscriberCount > 0 && (this.state == STATE.UNDEFINED || (this.state == STATE.ERROR && this.autorepair) || this.state == STATE.DEPRECATED))
             this.process();          
         }
-      }),
+      },
 
      /**
       * @method init
@@ -339,12 +336,12 @@
     * @class
     */
     var AjaxAdapter = Class.create(AbstractAdapter, {
-      behaviour: createBehaviour(AbstractAdapter, {
+      behaviour: {
         link:   function(){ this.transport.abort(); },
         unlink: function(){ this.transport.abort(); },
         start:  function(){ this.transport.get(); },
         stop:   function(){ }
-      }),
+      },
 
       init: function(config){
         config = this.inherit(config);
@@ -367,11 +364,11 @@
     * @class
     */
     var SOAPAdapter = Class.create(AjaxAdapter, {  /// UNSAFE!!!!!
-      behaviour: createBehaviour(AjaxAdapter, {
+      behaviour: {
         start: function(){
           this.method.call();
         }
-      }),
+      },
       init: function(config){
         this.inherit(Object.complete({ transport: config.transport.transport }, config));
         this.context = config.transport;
@@ -388,6 +385,9 @@
     */
     var Subscriber = Class.create(DataObject, {
       className: namespace + '.Subscriber',
+
+      isActiveSubscriber: true,
+      subscriptionType: 1,
 
      /**
       * @method init
@@ -472,7 +472,7 @@
         {
           var chunk = sessionDataChunk[key] || {};
           data[key].update(chunk.info);
-          data[key].setState(chunk.state || STATE.UNDEFINED, chunk.errorText);
+          data[key].setState(chunk.state || STATE.UNDEFINED, chunk.state.data);
         }
       },
       sessionClose: function(session){

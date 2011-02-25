@@ -65,7 +65,9 @@
 
 
   <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../dom_wraper.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
   <script type="text/javascript" src="../../ajax.js"></script>
   <script type="text/javascript" src="../../xml.js"></script>
   <script type="text/javascript" src="../../soap.js"></script>
@@ -204,7 +206,7 @@
 
     var staticCallResult = $('convertFormStaticCall_Result');
 
-    var celsiusValue = new Basis.DOM.Wrapers.Property(100);
+    var celsiusValue = new Basis.Data.Property.Property(100);
 
     var service2 = new Basis.SOAP.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
     var service2_method = service2.createMethodCall('CelsiusToFahrenheit', true, {

@@ -62,8 +62,9 @@
 
 
   <script type="text/javascript" src="../basis.js"></script>
-  <script type="text/javascript" src="../generator.js"></script>
-  <script type="text/javascript" src="../dom_wraper.js"></script>
+  <script type="text/javascript" src="../plugins/generator.js"></script>
+  <script type="text/javascript" src="../data.js"></script>
+  <script type="text/javascript" src="../dom_wrapper.js"></script>
   <script type="text/javascript" src="../dom_register.js"></script>
   <script type="text/javascript" src="../layout.js"></script>
   <script type="text/javascript" src="../table.js"></script>
@@ -73,7 +74,9 @@
 <body>
   <div id="control_panel" style="border: 2px solid #808080; background: #F0F0F0; margin: .25em; padding: .5em">
     <input type="text" id="rowCount"/><button onclick="setRowCount(Basis.DOM.get('rowCount').value)">gen rows</button><span id="time"></span><br/>
-    <button onclick="TestTable.body.clear()">clear</button>
+    <button onclick="TestTable.clear()">clear</button>
+    <button onclick="var tt = Date.now();TestTable.childNodesElement.parentNode.removeChild(TestTable.childNodesElement);TestTable.childNodes.reverse().forEach(function(node){node.element.parentNode.removeChild(node.element)});alert(Date.now()-tt)">clear test</button>
+    <button onclick="var tt = Date.now();TestTable.childNodesElement.parentNode.removeChild(TestTable.childNodesElement);alert(Date.now()-tt)">clear test</button>
     <div>
       <label><input type="checkbox" id="logEvents"/> log events</label>
       <label><input type="checkbox" id="multipleSelection"/> multiple selection (using CTRL)</label>
@@ -91,6 +94,7 @@
 
       var Sum = Basis.DOM.Wrapers.Register.Sum;
       var Max = Basis.DOM.Wrapers.Register.Max;
+      var Count = Basis.DOM.Wrapers.Register.Count;
 
       setRowCount = function(value){
         DOM.get('rowCount').value = value;
@@ -132,157 +136,158 @@
         localSorting: 'info.title'
       };
           
-      testAMax  = new Max(Data.getter('count', Number));
-      TestTable = new Basis.Controls.Table.Table(
-        {
-          container: document.body,
-          registers: [
-            testASum  = new Sum(Data.getter('amount', Number)),
-            testASum2 = new Sum(Data.getter('count', Number))
-          ],
-          positionDependent: true,
-          rowBehaviour: {
-            updatePosition: function(pos, gpos){
-              this.posText.nodeValue = pos + 1;
-              this.groupPosText.nodeValue = gpos + 1;
-              this.repaintCountText.nodeValue = Number(this.repaintCountText.nodeValue) + 1;
+      //testAMax  = new Max(Data.getter('count', Number));
+      TestTable = new Basis.Controls.Table.Table({
+        id: 'table',
+        container: document.body,
+        registers: [
+          testAOddCount = new Count('count % 2'),
+          testASum  = new Sum(Data.getter('amount', Number)),
+          testASum2 = new Sum(Data.getter('count', Number))
+        ],
+        positionDependent: true,
+        rowBehaviour: {
+          updatePosition: function(pos, gpos){
+            this.posText.nodeValue = pos + 1;
+            this.groupPosText.nodeValue = gpos + 1;
+            this.repaintCountText.nodeValue = Number(this.repaintCountText.nodeValue) + 1;
+          }
+        },
+        selection: {
+          multiple: multipleSelection.checked
+        },
+        localGrouping: useGrouping.checked ? localGrouping : null,
+        handlers: {
+          any: function(){
+            if (logEventCheckbox.checked)
+              if (typeof console != 'undefined')
+                console.log(arguments);
+          }
+        },
+        //localSorting: Data.getter('info.id', Number),
+        structure: [
+          { 
+            header: {
+              content: '#'
+            },
+
+            body: {
+              template: '{posText|0}'
             }
           },
-          selection: {
-            multiple: multipleSelection.checked
-          },
-          localGrouping: useGrouping.checked ? localGrouping : null,
-          handlers: {
-            any: function(){
-              if (logEventCheckbox.checked)
-                if (typeof console != 'undefined')
-                  console.log(arguments);
+          { 
+            header: {
+              content: '#G'
+            },
+
+            body: {
+              template: '{groupPosText|0}'
             }
           },
-          //localSorting: Data.getter('info.id', Number),
-          structure: [
-            { 
-              header: {
-                content: '#'
-              },
+          { 
+            header: {
+              content: 'PU'
+            },
 
-              body: {
-                template: '{posText|0}'
+            body: {
+              template: '{repaintCountText|0}'
+            }
+          },
+          { 
+            sorting: Data.getter('info.id', Number),
+            cssClassName: 'right',
+
+            header: {
+              content: 'id'
+            },
+
+            body: {
+              content: Data.getter('info.id')
+            },
+
+            footer: {
+              cssClassName: 'right',
+              content: 'Total:'
+            }
+          },
+          { 
+            header: {
+              content: 'Rnd'
+            },
+
+            body: {
+              content: function(node){
+                return '{0:.4}'.format(node.document ? DOM.index(node) : Math.random());
               }
             },
-            { 
-              header: {
-                content: '#G'
-              },
 
-              body: {
-                template: '{groupPosText|0}'
-              }
+            footer: {
+              cssClassName: 'right',
+              content: testAOddCount.addLink(DOM.createText(), null, 'odd count: {0}')
+            }
+          },
+          { 
+            sorting: Data.getter('info.title', String.toLowerCase),
+
+            header: {
+              content: 'title'
             },
-            { 
-              header: {
-                content: 'PU'
-              },
 
-              body: {
-                template: '{repaintCountText|0}'
-              }
+            body: {
+              content: Data.getter('info.title')
+            }
+          },
+          { 
+            sorting: Data.getter('info.amount', Number),
+            cssClassName: 'right',
+
+            header: {
+              cssClassName: 'bold',
+              content: 'amount'
             },
-            { 
-              className: 'right',
-              sorting: Data.getter('info.id', Number),
 
-              header: {
-                content: 'id'
-              },
-
-              body: {
-                content: Data.getter('info.id')
-              },
-
-              footer: {
-                className: 'right',
-                content: 'Total:'
-              }
+            body: {
+              cssClassName: 'italic',
+              content: Data.getter('info.amount', '{0:.2}ð.')
             },
-            { 
-              header: {
-                content: 'Rnd'
-              },
 
-              body: {
-                content: function(node){
-                  return '{0:.4}'.format(node.document ? DOM.index(node) : Math.random());
-                }
-              },
+            footer: {
+              content: testASum.addLink(DOM.createText(), null, '{0:.2} ð.')
+            }
+          },
+          { 
+            sorting: Data.getter('info.count', Number),
+            cssClassName: 'right',
 
-              footer: {
-                className: 'right',
-                content: testAMax.addLink(DOM.createText(), null, Number)
-              }
+            header: {
+              content: 'count'
             },
-            { 
-              sorting: Data.getter('info.title', String.toLowerCase),
 
-              header: {
-                content: 'title'
-              },
-
-              body: {
-                content: Data.getter('info.title')
-              }
+            body: {
+              content: Data.getter('info.count', Number)
             },
-            { 
-              className: 'right',
-              sorting: Data.getter('info.amount', Number),
 
-              header: {
-                className: 'bold',
-                content: 'amount'
-              },
-
-              body: {
-                className: 'italic',
-                content: Data.getter('info.amount', '{0:.2}ð.')
-              },
-
-              footer: {
-                content: testASum.addLink(DOM.createText(), null, '{0:.2} ð.')
-              }
+            footer: {
+              content: testASum2.addLink(DOM.createText(), null)
+            }
+          }/*,
+          {
+            header: {
+              content: 'asd'
             },
-            { 
-              className: 'right',
-              sorting: Data.getter('info.count', Number),
-
-              header: {
-                content: 'count'
-              },
-
-              body: {
-                content: Data.getter('info.count', Number)
-              },
-
-              footer: {
-                content: testASum2.addLink(DOM.createText(), null)
-              }
-            }/*,
-            {
-              header: {
-                content: 'asd'
-              },
-              body: {
-                content: '-'
-              }
-            }/*,
-            { caption: 'update count',  className: 'right', fill: 'updateCount' }*/
-          ]
-        }
-      );
+            body: {
+              content: '-'
+            }
+          }/*,
+          { caption: 'update count',  className: 'right', fill: 'updateCount' }*/
+        ]
+      });
 
       var stringcache = [];
       function genRows(count){
-        var d1 = new Date();
-        TestTable.body.clear();
+        var d1 = Date.now();
+        TestTable.clear();
+        var clearTime = Date.now() - d1;
 
         var data = [];
         for (var i = 0; i < count; i++)
@@ -294,7 +299,7 @@
           });
         // console.log(data.last().count);
 
-        var d = new Date();
+        var d = Date.now();
       //console.profile();
         if (useLoadData.checked)
           TestTable.loadData(data);
@@ -303,9 +308,8 @@
             TestTable.appendChild({ info: data[i] });
       //console.profileEnd();
 
-        var result = new Date();
-        DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + ((result - d)/1000).toFixed(3) + '</b> sec ' + ((result - d1)/1000).toFixed(3).quote('(');
-        data.clear();
+        var loadDataTime = Date.now() - d;
+        DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + (loadDataTime/1000).toFixed(3) + '</b> sec ' + ((clearTime)/1000).toFixed(3).quote('(');
       };
       Event.onLoad(function(){
         setRowCount(10);
@@ -356,7 +360,7 @@
       var field = new Basis.Controls.Form.MatchInput({
         matchFilter: {
           node: TestTable,
-          textNodeGetter: 'element.childNodes[5].firstChild.firstChild'
+          textNodeGetter: 'element.childNodes[5].firstChild'
         }
       });
       DOM.insert(document.body, field.element, DOM.INSERT_BEFORE, TestTable.element);

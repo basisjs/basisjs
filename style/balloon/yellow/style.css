@@ -97,7 +97,7 @@
 
     margin: -7px 7px 0;
   }
-  .Basis-Balloon-Canvas .canvas-content
+  .Basis-Balloon-Canvas .content
   {
     border-width: 0 1px;
 
@@ -143,14 +143,14 @@
 
   .Basis-Balloon-Canvas .side-top,
   .Basis-Balloon-Canvas .side-bottom,
-  .Basis-Balloon-Canvas .canvas-content,
+  .Basis-Balloon-Canvas .content,
   .Basis-Balloon-Canvas .vert-filler
   {
     background-color: #fcf8d5;
     background-image: url(balloon_sub_border.gif);
     background-repeat: repeat-x;
   }
-  .Basis-Balloon-Canvas .canvas-content,
+  .Basis-Balloon-Canvas .content,
   .Basis-Balloon-Canvas .vert-filler
   {
     background-repeat: repeat-y;
@@ -191,8 +191,8 @@
     margin-bottom: -40px;
   }
 
-  .mode-h-right-top .canvas-content,
-  .mode-h-right-bottom .canvas-content
+  .mode-h-right-top .content,
+  .mode-h-right-bottom .content
   {
     border-right: none;
     margin-right: 7px;
@@ -212,8 +212,8 @@
     background-position: right top;
   }
 
-  .mode-h-left-top .canvas-content,
-  .mode-h-left-bottom .canvas-content
+  .mode-h-left-top .content,
+  .mode-h-left-bottom .content
   {
     background-position: right top;
     border-left: none;

@@ -88,10 +88,11 @@
 
 
   <script type="text/javascript"  src="../basis.js"></script>
-  <script type="text/javascript"  src="../dom_wraper.js"></script>
+  <script type="text/javascript"  src="../data.js"></script>
+  <script type="text/javascript"  src="../dom_wrapper.js"></script>
   <script type="text/javascript"  src="../dom_register.js"></script>
   <script type="text/javascript"  src="../tree.js"></script>
-  <script type="text/javascript"  src="../generator.js"></script>
+  <script type="text/javascript"  src="../plugins/generator.js"></script>
 </head>
 
 <body>
@@ -193,7 +194,7 @@
 
       TestTree.selection.addHandler({ 
         change: function(){
-          var count = this.items.length;
+          var count = this.itemCount;
           DOM.get('in_selection').innerHTML = '<b>' + count + '</b> item(s)';
         }
       });
@@ -271,40 +272,35 @@
           this.expandAll();
         },
         SelectionClear: function(){
+          d = new Date();
           this.selection.clear();
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
         },
         SelectAll: function(){
           d = new Date();
-          DOM.axis(this, DOM.AXIS_DESCENDANT).forEach(function(node){ if (!node.selected) node.select(true) });
-          /*
-          this.selection.clear();
-          DOM.axis(this, DOM.AXIS_DESCENDANT).forEach(function(node){
-            var sel = this.selection;
-
-            sel.items.push(node);
-            sel.content[node.nodeType] = (sel.content[node.nodeType] || 0) + 1;
-
-            node.selected = true;
-            node.dispatch('select');
-            //sel.dispatch('change');
-          }, this);*/
-          //this.selection.dispatch('change');
-          DOM.insert(DOM.clear('allNodesSelectTime'), 'select all: ' + ((new Date - d)/1000).toFixed(3));
-          //console.log('select all: ', ((new Date - d)/1000).toFixed(3));
+          this.selection.set(DOM.axis(this, DOM.AXIS_DESCENDANT));
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
         },
         SelectionInverse: function(){
-          DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ node.select(true) });
+          d = new Date();
+          this.selection.set(DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ return !node.selected }));
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
         },
         DeleteSelected: function(){
-          Array.from(this.selection.items).forEach(function(node){ node.destroy(); });
+          d = new Date();
+          var items = this.selection.getItems();
+          this.selection.clear();
+          items.forEach(function(node){ node.destroy(); });
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+          //Array.from(this.selection.getItems()).forEach(function(node){ node.destroy(); });
         },
         RenameSelected: function(){
-          this.selection.items.forEach(function(item){
+          this.selection.getItems().forEach(function(item){
             item.update({ title: String(this) })
           }, DOM.get('selected_name').value);
         },
         SetValueSelected: function(){
-          this.selection.items.forEach(function(node){ 
+          this.selection.getItems().forEach(function(node){ 
             node.update({ value: this }); 
             var txt = node.title.firstChild.nextSibling;
             if (txt && txt.nodeValue.indexOf('value:') != -1)
@@ -312,7 +308,7 @@
           }, Number(DOM.get('selected_value').value));
         },
         DisableSelected: function(){
-          this.selection.items.forEach(function(){ node.disable() });
+          this.selection.getItems().forEach(function(){ node.disable() });
         },
         EnableAll: function(){
           DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ node.enable() });
