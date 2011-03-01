@@ -1,0 +1,6 @@
+
+  .Basis-Balloon-Canvas
+  {
+    bottom: auto;
+    height: expression(this.offsetParent.offsetHeight - 10);
+  }

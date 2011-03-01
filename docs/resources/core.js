@@ -17,6 +17,27 @@
 
   // main part
 
+  var urlResolver_ = document.createElement('A');
+
+  function resolveUrl(value){
+    urlResolver_.href = value.replace(/^\.\//, '../');
+    return urlResolver_.href;
+  }
+
+
+  var JsDocLinkEntity = new nsEntity.EntityType({
+    name: 'JsDocLinkEntity',
+    fields: {
+      url: nsEntity.StringId,
+      title: function(value){ return value != null ? String(value) : null; }
+    }
+  });
+  JsDocLinkEntity.entityType.entityClass.extend({
+    init: function(){
+      this.inherit.apply(this, arguments);
+      resourceLoader.addResource(this.info.url, 'link');
+    }
+  });
 
 
   var JsDocEntity = new nsEntity.EntityType({
@@ -31,21 +52,14 @@
       tags: Function.$self
     }
   });
-  var urlResolver_ = document.createElement('A');
-  var JsDocLinkEntity = new nsEntity.EntityType({
-    name: 'JsDocLinkEntity',
-    id: 'url',
+
+  var JsDocConfigOption = new nsEntity.EntityType({
     fields: {
-      url: function(value){
-        if (value)
-        {
-          urlResolver_.href = value.replace(/^\.\//, '../');
-          return urlResolver_.href;
-        }
-        else
-          return value;
-      },
-      title: function(value){ return value != null ? String(value) : null; }
+      path: nsEntity.StringId,
+      constructorPath: String,
+      name: String,
+      type: String,
+      description: String
     }
   });
 
@@ -62,9 +76,9 @@
       {
         //console.log(inherit.cls.className + postFix);
         var inheritedEntity = JsDocEntity.get(inherit.cls.className + postPath);
-        if (inheritedEntity && inheritedEntity.value.text)
+        if (inheritedEntity && inheritedEntity.info.text)
         {
-          entity.set('text', inheritedEntity.value.text);
+          entity.set('text', inheritedEntity.info.text);
           return true;
         }
       }
@@ -83,113 +97,137 @@
     }
   }
 
+  function parseJsDocText(text){
+    var parts = text.split(/\s*\@([a-z]+)[\t ]*/i);
+    var tags = {};
+    parts.unshift('description');
+    for (var i = 0, key; key = parts[i]; i += 2)
+    {
+      var value = parts[i + 1];
+      if (key == 'param' || key == 'config')
+      {
+        if (!tags[key])
+          tags[key] = {};
+
+        var p = value.match(/^\s*\{([^\}]+)\}\s+(\S+)(?:\s+((?:.|[\r\n])+))?/i);
+        if (!p)
+        {
+          if (typeof console != 'undefined')
+            console.warn('jsdoc parse error: ', value, p);
+        }
+        else
+        {
+          tags[key][p[2]] = {
+            type: p[1],
+            description: p[3]
+          };
+
+          if (key == 'config')
+          {
+            JsDocConfigOption({
+              path: this.info.path + ':' + p[2],
+              type: p[1],
+              description: p[3] || ''
+            });
+          }
+        }
+      }
+      else if (key == 'link')
+      {
+        if (!tags[key])
+          tags[key] = [];
+
+        tags[key].push(value);
+      }
+      else if (/returns?/.test(key))
+      {
+        key = 'returns';
+        if (!tags[key])
+          tags[key] = {};
+        var p = value.match(/^\s*\{([^\}]+)\}(?:\s+(.+))?/i);
+        if (!p)
+        {
+          if (typeof console != 'undefined')
+            console.warn('jsdoc parse error: ', this.value.path, value, p);
+        }
+        else
+        {
+          tags[key] = {
+            type: p[1],
+            description: p[2]
+          };
+        }
+      }
+      /*else if (key == 'type')
+      {
+        var typ = value.match(/\{([^}]+)\}/)[1];
+        var ref = map[typ];
+        if (ref && ref.kind == 'class')
+        {
+          var obj = map[this.value.path];
+          var objHolder = map[this.value.path.replace(/\.prototype\.[a-z0-9\_]+$/i, '')];
+          //if (/childClass/.test(this.value.path)) debugger;
+          if (obj && obj.kind == 'property')
+          {
+            console.log(this.value.path + ': ' + objHolder.objPath + ' -' + obj.title + '-> ' + ref.objPath);
+          }
+        }
+        tags[key] = value;
+      }*/
+      else
+        tags[key] = value;
+    }
+
+    delete tags.inheritDoc;
+    if (tags.description.trim() == '')
+      delete tags.description;
+
+    this.set('tags', Object.keys(tags).length ? tags : null);
+  }
+
   JsDocEntity.entityType.entityClass.extend({
+    behaviour: {
+      update: function(object, delta){
+        this.inherit(object, delta);
+
+        if (this.subscriberCount && this.info.text)
+        {
+          var self = this;
+          setTimeout(function(){
+            self.parseText(self.info.text)
+          }, 0);
+        }
+      },
+      subscribersChanged: function(){
+        if (this.subscriberCount && this.info.text)
+        {
+          var self = this;
+          //debugger;
+          setTimeout(function(){
+            self.parseText(self.info.text)
+          }, 0);
+        }
+      }
+    }/*,
     init: function(){
       this.inherit.apply(this, arguments);
-      if (this.value.text == '')
-      {
-        var objPath = this.value.path;
-        var objInfo = map[objPath];
 
-        if (objInfo && /class|property|method/.test(objInfo.kind))
+      var objPath = this.info.path;
+      var objInfo = map[objPath];
+
+      if (objInfo && /class|property|method/.test(objInfo.kind))
+      {
+        if (!fetchInheritedJsDocs(objPath, this))
         {
-          if (!fetchInheritedJsDocs(objPath, this))
-          {
-            awaitingUpdateQueue[this.value.path] = this;
-          }
+          awaitingUpdateQueue[this.value.path] = this;
         }
       }
-    },
-    set: function(key, value){
-      var res = this.inherit.apply(this, arguments);
-      if (res && res.key == 'text')
+    }*/,
+    parseText: function(text){
+      if (this.parsedText_ != text)
       {
-        var parts = this.value.text.split(/\s*\@([a-z]+)\s*/i);
-        var tags = {};
-        parts.unshift('description');
-        for (var i = 0, key; key = parts[i]; i += 2)
-        {
-          var value = parts[i + 1];
-          if (key == 'param' || key == 'config')
-          {
-            if (!tags[key])
-              tags[key] = {};
-            var p = value.match(/^\s*\{([^\}]+)\}\s+(\S+)(?:\s+((?:.|[\r\n])+))?/i);
-            if (!p)
-            {
-              if (typeof console != 'undefined')
-                console.warn('jsdoc parse error: ', value, p);
-            }
-            else
-            {
-              tags[key][p[2]] = {
-                type: p[1],
-                description: p[3]
-              };
-            }
-          }
-          else if (key == 'link')
-          {
-            if (!tags[key])
-              tags[key] = [];
-
-            tags[key].push(value);
-          }
-          else if (/returns?/.test(key))
-          {
-            key = 'returns';
-            if (!tags[key])
-              tags[key] = {};
-            var p = value.match(/^\s*\{([^\}]+)\}(?:\s+(.+))?/i);
-            if (!p)
-            {
-              if (typeof console != 'undefined')
-                console.warn('jsdoc parse error: ', this.value.path, value, p);
-            }
-            else
-            {
-              tags[key] = {
-                type: p[1],
-                description: p[2]
-              };
-            }
-          }
-          /*else if (key == 'type')
-          {
-            var typ = value.match(/\{([^}]+)\}/)[1];
-            var ref = map[typ];
-            if (ref && ref.kind == 'class')
-            {
-              var obj = map[this.value.path];
-              var objHolder = map[this.value.path.replace(/\.prototype\.[a-z0-9\_]+$/i, '')];
-              //if (/childClass/.test(this.value.path)) debugger;
-              if (obj && obj.kind == 'property')
-              {
-                console.log(this.value.path + ': ' + objHolder.objPath + ' -' + obj.title + '-> ' + ref.objPath);
-              }
-            }
-            tags[key] = value;
-          }*/
-          else
-            tags[key] = value;
-        }
-
-        delete tags.inheritDoc;
-        if (tags.description.trim() == '')
-          delete tags.description;
-
-        this.set('tags', Object.keys(tags).length ? tags : null);
-      }
-      return res;
-    }
-  });
-
-  JsDocLinkEntity.entityType.entityClass.extend({
-    set: function(){
-      var res = this.inherit.apply(this, arguments);
-      if (res && res.key == 'url')
-      {
-        resourceLoader.addResource(this.value.url, 'link');
+        this.parsedText_ = text;
+        parseJsDocText.call(this, text);
       }
     }
   });
@@ -273,6 +311,9 @@
       var firstChar = key.charAt(0).toLowerCase();
       if (!charMap[firstChar])
         charMap[firstChar] = [];
+
+      if (map[objPath])
+        console.log(objPath);
 
       var info = map[objPath] = {
         isClassMember: context == 'class',
@@ -400,7 +441,7 @@
     'jsdoc': function(resource){
 
       function createJsDocEntity(source, path){
-        text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|[\r\n]+)\s*\*/g, '\n').trimLeft();
+        var text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|[\r\n]+)\s*\*/g, '\n').trimLeft();
         var e = JsDocEntity({
           path: path,
           text: text,
@@ -533,6 +574,9 @@
   Basis.namespace(namespace).extend({
     JsDocEntity: JsDocEntity,
     JsDocLinkEntity: JsDocLinkEntity,
+    JsDocConfigOption: JsDocConfigOption,
+
+    resolveUrl: resolveUrl,
 
     walk: walk,
     walkThroughCount: function(){ return walkThroughCount },

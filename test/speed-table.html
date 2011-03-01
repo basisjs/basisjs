@@ -65,6 +65,7 @@
   <script type="text/javascript" src="../plugins/generator.js"></script>
   <script type="text/javascript" src="../data.js"></script>
   <script type="text/javascript" src="../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../property.js"></script>
   <script type="text/javascript" src="../dom_register.js"></script>
   <script type="text/javascript" src="../layout.js"></script>
   <script type="text/javascript" src="../table.js"></script>
@@ -92,9 +93,9 @@
       var DOM = Basis.DOM;
       var Event = Basis.Event;
 
-      var Sum = Basis.DOM.Wrapers.Register.Sum;
-      var Max = Basis.DOM.Wrapers.Register.Max;
-      var Count = Basis.DOM.Wrapers.Register.Count;
+      var Sum = Basis.DOM.Wrapper.Register.Sum;
+      var Max = Basis.DOM.Wrapper.Register.Max;
+      var Count = Basis.DOM.Wrapper.Register.Count;
 
       setRowCount = function(value){
         DOM.get('rowCount').value = value;
@@ -136,14 +137,14 @@
         localSorting: 'info.title'
       };
           
-      //testAMax  = new Max(Data.getter('count', Number));
+      //testAMax  = new Max(Function.getter('count', Number));
       TestTable = new Basis.Controls.Table.Table({
         id: 'table',
         container: document.body,
         registers: [
           testAOddCount = new Count('count % 2'),
-          testASum  = new Sum(Data.getter('amount', Number)),
-          testASum2 = new Sum(Data.getter('count', Number))
+          testASum  = new Sum(Function.getter('amount', Number)),
+          testASum2 = new Sum(Function.getter('count', Number))
         ],
         positionDependent: true,
         rowBehaviour: {
@@ -164,7 +165,7 @@
                 console.log(arguments);
           }
         },
-        //localSorting: Data.getter('info.id', Number),
+        //localSorting: Function.getter('info.id', Number),
         structure: [
           { 
             header: {
@@ -172,7 +173,7 @@
             },
 
             body: {
-              template: '{posText|0}'
+              content: '{posText|0}'
             }
           },
           { 
@@ -181,7 +182,7 @@
             },
 
             body: {
-              template: '{groupPosText|0}'
+              content: '{groupPosText|0}'
             }
           },
           { 
@@ -190,11 +191,11 @@
             },
 
             body: {
-              template: '{repaintCountText|0}'
+              content: '{repaintCountText|0}'
             }
           },
           { 
-            sorting: Data.getter('info.id', Number),
+            sorting: Function.getter('info.id', Number),
             cssClassName: 'right',
 
             header: {
@@ -202,7 +203,7 @@
             },
 
             body: {
-              content: Data.getter('info.id')
+              content: Function.getter('info.id')
             },
 
             footer: {
@@ -227,18 +228,18 @@
             }
           },
           { 
-            sorting: Data.getter('info.title', String.toLowerCase),
+            sorting: Function.getter('info.title', String.toLowerCase),
 
             header: {
               content: 'title'
             },
 
             body: {
-              content: Data.getter('info.title')
+              content: Function.getter('info.title')
             }
           },
           { 
-            sorting: Data.getter('info.amount', Number),
+            sorting: Function.getter('info.amount', Number),
             cssClassName: 'right',
 
             header: {
@@ -248,7 +249,7 @@
 
             body: {
               cssClassName: 'italic',
-              content: Data.getter('info.amount', '{0:.2}ð.')
+              content: Function.getter('info.amount', '{0:.2}ð.')
             },
 
             footer: {
@@ -256,7 +257,7 @@
             }
           },
           { 
-            sorting: Data.getter('info.count', Number),
+            sorting: Function.getter('info.count', Number),
             cssClassName: 'right',
 
             header: {
@@ -264,7 +265,7 @@
             },
 
             body: {
-              content: Data.getter('info.count', Number)
+              content: Function.getter('info.count', Number)
             },
 
             footer: {
@@ -316,7 +317,7 @@
       });
 
       /*
-      tableFilter = new DOM.Wrapers.Property('', {
+      tableFilter = new DOM.Wrapper.Property('', {
         change: function(value){
           var rx = new RegExp('(' + value.forRegExp() + ')', 'i');
           TestTable.setMatchFunction(value ? function(node, reset){
@@ -370,7 +371,7 @@ TestTable.header.setLocalGrouping({
   groupGetter: function(node){
     return !!node.sorting;
   },
-  titleGetter: Basis.Data.getter('info.title', { 'true': 'sortable', 'false': 'is\'t sortable' })
+  titleGetter: Basis.Function.getter('info.title', { 'true': 'sortable', 'false': 'is\'t sortable' })
 })
 */
     })();

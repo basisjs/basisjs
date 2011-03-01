@@ -1,0 +1,472 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+/**
+ * New blue style for Basis.Controls.Window
+ */
+
+ /**
+  * window style
+  */
+
+  .Basis-Balloon
+  {
+    position: absolute;
+    min-height: 12px; /* 4 (top) + 6 (bottom) + 2 (border) */
+    min-width: 60px;
+  }
+
+  .Basis-Balloon-Canvas
+  {
+    position: absolute;
+
+    bottom: 0px;
+    top: 0px;
+    right: 0px;
+    left: 0px;
+
+    padding-bottom: 10px; /* 5 (top) + 5 (bottom) */
+  }
+
+  .Basis-Balloon-Canvas *
+  {
+    border-color: #E5B720;
+    border-style: solid;
+    border-width: 0;
+  }
+
+  .Basis-Balloon-Canvas .helper,
+  .Basis-Balloon-Canvas .tail
+  {
+    display: none;
+  }
+
+  .Basis-Balloon-Canvas .corner-left-top,
+  .Basis-Balloon-Canvas .corner-right-top,
+  .Basis-Balloon-Canvas .corner-left-bottom,
+  .Basis-Balloon-Canvas .corner-right-bottom
+  {
+    background-repeat: no-repeat;
+    background-image: url(corners.png);
+  }
+
+  .Basis-Balloon-Canvas .side-top .helper,
+  .Basis-Balloon-Canvas .side-top .filler,
+  .Basis-Balloon-Canvas .side-bottom .helper,
+  .Basis-Balloon-Canvas .side-bottom .filler
+  {
+    background-repeat: repeat-x;
+    background-image: url(repeat-x.png);
+  }
+
+  .Basis-Balloon-Canvas .side-left .helper,
+  .Basis-Balloon-Canvas .side-left .filler,
+  .Basis-Balloon-Canvas .side-right .helper,
+  .Basis-Balloon-Canvas .side-right .filler
+  {
+    background-repeat: repeat-y;
+    background-image: url(repeat-y.png);
+  }
+
+  .Basis-Balloon-Canvas .side-top .tail,
+  .Basis-Balloon-Canvas .side-left .tail,
+  .Basis-Balloon-Canvas .side-right .tail,
+  .Basis-Balloon-Canvas .side-bottom .tail
+  {
+    background-repeat: no-repeat;
+    background-image: url(tails.png);
+  }
+
+  .Basis-Balloon-Canvas .corner-left-top
+  {
+    float: left;
+
+    width: 10px;
+    height: 10px;
+
+    margin-top: -5px;
+    margin-right: -5px;
+    margin-left: -5px;
+
+    background-position: 0 0;
+  }
+  .Basis-Balloon-Canvas .corner-right-top
+  {
+    float: right;
+
+    width: 12px;
+    height: 10px;
+
+    margin-top: -5px;
+    margin-right: -7px;
+    margin-left: -5px;
+
+    background-position: -10px 0;
+  }
+  .Basis-Balloon-Canvas .side-top
+  {
+    margin-right: 5px;
+    margin-left: 5px;
+  }
+  .Basis-Balloon-Canvas .side-top .filler
+  {
+    margin-top: -5px;
+    height: 4px;
+    border-bottom-width: 1px;
+    overflow: hidden;
+  }
+  .Basis-Balloon-Canvas .side-top .tail
+  {
+    width: 32px;
+    height: 13px;
+    margin-top: -13px;
+    background-position: -13px 0;
+  }
+  .Basis-Balloon-Canvas .side-top .helper
+  {
+    height: 4px;
+    margin-top: -5px;
+    border-bottom-width: 1px;
+  }
+
+  .Basis-Balloon-Canvas .side-left
+  {
+    position: relative; /* ? */
+    float: left;
+
+    height: 100%;
+
+    margin-left: -5px;
+    margin-top: 5px;
+  }
+  .Basis-Balloon-Canvas .side-left .filler
+  {
+    width: 4px;
+    background-position: 0 0;
+    border-right-width: 1px;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+  }
+  .Basis-Balloon-Canvas .side-left .tail
+  {
+    width: 14px;
+    height: 32px;
+    background-position: 0 -13px;
+    margin-left: -9px;
+  }
+
+  .Basis-Balloon-Canvas .side-right
+  {
+    position: relative; /* ? */
+    float: right;
+
+    width: 7px;
+    height: 100%;
+
+    margin-right: -7px;
+    margin-top: 5px;
+  }
+  .Basis-Balloon-Canvas .side-right .filler
+  {
+    width: 6px;
+    border-left-width: 1px;
+    background-position: -4px 0;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+  }
+  .Basis-Balloon-Canvas .side-right .tail
+  {
+    width: 16px;
+    height: 32px;
+    background-position: -45px -13px;
+    margin-right: -9px;
+  }
+
+  .Basis-Balloon-Canvas .content
+  {
+    height: 100%;
+    padding: 5px 0px 5px;
+    out2line: 1px solid red;
+
+    background-color: #F7E36F;
+  }
+
+  .Basis-Balloon-Canvas .side-bottom
+  {
+    margin-right: 5px;
+    margin-left: 5px;
+  }
+  .Basis-Balloon-Canvas .side-bottom .filler
+  {
+    height: 6px;
+    border-top-width: 1px;
+    background-position: 0 -4px;
+    overflow: hidden;
+  }
+  .Basis-Balloon-Canvas .side-bottom .tail
+  {
+    width: 32px;
+    height: 16px;
+    background-position: -13px -44px;
+  }
+  .Basis-Balloon-Canvas .side-bottom .helper
+  {
+    border-top-width: 1px;
+    height: 6px;
+    background-position: 0 -4px;
+  }
+
+  .Basis-Balloon-Canvas .corner-left-bottom
+  {
+    float: left;
+
+    width: 10px;
+    height: 12px;
+
+    margin-top: -5px;
+    margin-left: -5px;
+
+    background-position: 0 -10px;
+  }
+  .Basis-Balloon-Canvas .corner-right-bottom
+  {
+    float: right;
+
+    width: 12px;
+    height: 12px;
+
+    margin-top: -5px;
+    margin-right: -7px;
+
+    background-position: -10px -10px;
+  }
+
+ /*
+  * Content
+  */
+
+  .Basis-Balloon-Layout
+  {
+    position: relative;
+    padding: 3px;
+  }
+
+  .Basis-Balloon-CloseButton
+  {
+    display: none;
+  }
+
+  .Basis-Balloon-Content
+  {
+    position: relative;
+    background: #FFFAC3;
+    border: 1px solid #F3DD67;
+    padding: 5px;
+    border-radius: 2px;
+      -webkit-border-radius: 2px;
+      -moz-border-radius: 2px;
+  }
+
+  .mode-h-left-top .Basis-Balloon-Content,
+  .mode-h-left-center .Basis-Balloon-Content,
+  .mode-h-left-bottom .Basis-Balloon-Content,
+  .mode-h-right-top .Basis-Balloon-Content,
+  .mode-h-right-center .Basis-Balloon-Content,
+  .mode-h-right-bottom .Basis-Balloon-Content,
+  .mode-v-left-center .Basis-Balloon-Content,
+  .mode-v-right-center .Basis-Balloon-Content
+  {
+    min-height: 24px;
+  }
+
+ /**
+  * Modes
+  */
+
+ /*********************************
+  * TOP BOTTOM
+  */
+
+  .mode-v-left-bottom,
+  .mode-v-right-bottom,
+  .mode-v-center-bottom,
+  .mode-h-center-bottom
+  {
+    margin-bottom: 10px;
+  }
+
+  .mode-h-right-bottom,
+  .mode-h-left-bottom
+  {
+    margin-bottom: -22px;
+  }
+
+  /* ========================== */
+
+  .mode-v-left-top,
+  .mode-v-right-top,
+  .mode-v-center-top,
+  .mode-h-center-top
+  {
+    margin-top: 10px;
+  }
+
+  .mode-h-right-top,
+  .mode-h-left-top
+  {
+    margin-top: -21px;
+  }
+
+  /* ========================== */
+
+  .mode-v-center-top .side-top,
+  .mode-h-center-top .side-top,
+  .mode-v-center-bottom .side-bottom,
+  .mode-h-center-bottom .side-bottom
+  {
+    margin-left: 37px;
+  }
+
+  .mode-v-center-top .side-top .helper,
+  .mode-h-center-top .side-top .helper,
+  .mode-v-center-bottom .side-bottom .helper,
+  .mode-h-center-bottom .side-bottom .helper
+  {
+    display: block;
+    float: left;
+    width: 50%;
+    margin-left: -32px;
+  }
+
+  .mode-v-left-top .side-top .tail,
+  .mode-v-left-bottom .side-bottom .tail,
+  .mode-v-center-bottom .side-bottom .tail,
+  .mode-h-center-bottom .side-bottom .tail
+  {
+    display: block;
+    float: left;
+  }
+
+  .mode-v-right-top .side-top .tail,
+  .mode-v-right-bottom .side-bottom .tail
+  {
+    float: right;
+    display: block;
+  }
+
+  /* side-top tail in center */
+
+  .mode-v-left-top .side-top .filler
+  {
+    margin-left: 32px;
+  }
+  .mode-v-right-top .side-top .filler
+  {
+    margin-right: 32px;
+  }
+
+  .mode-v-center-top .side-top,
+  .mode-h-center-top .side-top
+  {
+    margin-left: 21px;
+    margin-right: 21px;
+  }
+  .mode-v-center-top .side-top .helper,
+  .mode-h-center-top .side-top .helper
+  {
+    margin-left: -16px;
+  }
+  .mode-v-center-top .side-top .tail,
+  .mode-h-center-top .side-top .tail
+  {
+    display: block;
+    float: right;
+    position: absolute;
+    left: 50%;
+    margin-left: -16px;
+  }
+  .mode-v-center-top .side-top .filler,
+  .mode-h-center-top .side-top .filler
+  {
+    margin-right: -16px;
+    width: 50%;
+    float: right;
+  }
+
+ /*******************************
+  *  LEFT RIGHT
+  */
+
+  .mode-v-left-center,
+  .mode-h-left-top,
+  .mode-h-left-center,
+  .mode-h-left-bottom
+  {
+    margin-left: 10px;
+  }
+
+  .mode-v-left-top,
+  .mode-v-left-bottom
+  {
+    margin-left: -22px;
+  }
+
+  .mode-v-right-center,
+  .mode-h-right-center,
+  .mode-h-right-top,
+  .mode-h-right-bottom
+  {
+    margin-right: 10px;
+  }
+
+  .mode-v-right-top,
+  .mode-v-right-bottom
+  {
+    margin-right: -21px;
+  }
+
+
+  .mode-h-right-top .side-right .tail,
+  .mode-h-left-top .side-left .tail,
+  .mode-h-right-bottom .side-right .tail,
+  .mode-h-left-bottom .side-left .tail
+  {
+    display: block;
+  }
+
+  .mode-h-right-top .side-right .filler,
+  .mode-h-left-top .side-left .filler
+  {
+    height: auto;
+    position: absolute;
+    top: 32px;
+  }
+
+  .mode-h-right-bottom .side-right .filler,
+  .mode-h-left-bottom .side-left .filler
+  {
+    height: auto;
+    position: absolute;
+    bottom: 32px;
+  }
+  .mode-h-right-bottom .side-right .tail,
+  .mode-h-left-bottom .side-left .tail
+  {
+    position: absolute;
+    bottom: 0;
+  }
+
+  .mode-h-right-bottom
+  {
+    
+  }

@@ -11,7 +11,7 @@
 
   (function(){
 
-    // namespace
+    /** @namespace Basis.Layout */
 
     var namespace = 'Basis.Layout';
 

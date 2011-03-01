@@ -11,7 +11,7 @@
 
   (function(){
 
-    // namespace
+    /** @namespace Basis.Ajax */
 
     var namespace = 'Basis.Ajax';
 

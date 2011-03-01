@@ -13,22 +13,12 @@
 
    /**
     * Namespace overview:
-    * - Non-visual DOM classes:
-    *   {Basis.DOM.Wrapper.AbstractNode}, {Basis.DOM.Wrapper.InteractiveNode},
-    *   {Basis.DOM.Wrapper.Node}, {Basis.DOM.Wrapper.PartitionNode},
-    *   {Basis.DOM.Wrapper.GroupControl}
-    * - Visual DOM classes:
-    *   {Basis.DOM.Wrapper.HtmlNode}, {Basis.DOM.Wrapper.HtmlContainer}, 
-    *   {Basis.DOM.Wrapper.HtmlPartitionNode}, {Basis.DOM.Wrapper.HtmlGroupControl},
-    *   {Basis.DOM.Wrapper.HtmlControl}
-    * - Misc:
-    *   {Basis.DOM.Wrapper.Selection}
+    * - DataObjectSet
+    * - AbstractProperty
+    * - Property
+    * - PropertySet as aliases for DataObjectSet
     *
-    * Aliases are available:
-    * - {Basis.DOM.Wrapper.PropertySet} for {Basis.Data.DataObjectSet}
-    * - {Basis.DOM.Wrapper.Control} for {Basis.DOM.Wrapper.HtmlControl}
-    *
-    * @namespace Basis.DOM.Wrapper
+    * @namespace Basis.Data.Property
     */
 
     var namespace = String('Basis.Data.Property');

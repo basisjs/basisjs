@@ -23,6 +23,7 @@
   //
 
   var typeSplitter = DOM.createElement('SPAN.splitter', '|');
+
   function parseTypes(text){
     var parts = (text || '').split(/\s*\|\s*/);
     var result = DOM.createFragment();
@@ -49,13 +50,17 @@
     return result;
   }
 
-  //
-  // View
-  //
-
   function htmlHeader(title){
     return '<span{header}/>'//'<h3><span>{0}</span></h3>'.format(title);
   }
+
+  function extendViewSatelliteConfig(config){
+    return Object.complete(config, View.prototype.satelliteConfig);
+  }
+
+  //
+  // View
+  //
 
   var ViewOption = Class(nsWrappers.HtmlNode, {
     template: new Template('<span{element} class="option">{titleText}</span>'),
@@ -108,12 +113,195 @@
               '<span>{titleText}</span>' +
             '</h3>'
           ),
-          titleGetter: Function.getter('delegate && object.delegate.viewHeader')
+          titleGetter: getter('delegate && object.delegate.viewHeader')
         })
       }
     }
     /*,
     autoDelegateParent: true*/
+  });
+
+  var tagLabels = 'readonly private'.qw();
+  var JsDocPanel = Class(nsWrappers.HtmlNode, {
+    isActiveSubscriber: true,
+    template: new Template(
+      '<div{element|content} class="jsDocs">' +
+        '<div{description} class="description"/>' +
+        '<div{link} class="links"/>' +
+      '</div>'
+    ),
+    behaviour: {
+      update: function(object, delta){
+        var newInfo = this.info;
+
+        DOM.clear(this.content);
+
+        function parseDescription(text){
+          var listItem = false;
+          var lines = text.trimRight().split(/(?:\r\n?|\n\r?){2,}|((?:\r\n?|\n\r?)\s*\-\s+)/).map(function(line, idx){
+            if (idx % 2)
+            {
+              listItem = !!line;
+              return;
+            }
+
+            var m = line.match(/^\s*(.+):(\r\n?|\n\r?)/);
+            var h;
+            if (m)
+            {
+              h = DOM.createElement('SPAN.definition', m[1]);
+              line = line.substr(m[0].length);
+            }
+
+            var parts = line.split(/\{([a-z0-9\_\.\#]+)\}/i);
+            for (var i = 1; i < parts.length; i += 2)
+            {
+              var mapPath = parts[i].replace(/#/, '.prototype.');
+              var descr = map[mapPath];
+              if (descr)
+                parts[i] = DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), descr.title);
+              else
+                parts[i] = parts[i].quote('{');
+            }
+
+            return DOM.createElement(listItem ? 'LI' : 'P', h, parts);
+          }).filter(Function.$isNotNull).flatten();
+
+          var result = [];
+          var listContext;
+          for (var i = 0; i < lines.length; i++)
+          {
+            if (lines[i].tagName == 'LI')
+            {
+              if (!listContext)
+              {
+                listContext = DOM.createElement('UL');
+                result.push(listContext);
+              }
+              listContext.appendChild(lines[i]);
+            }
+            else
+            {
+              listContext = null;
+              result.push(lines[i]);
+            }
+          }
+          return result;
+        }
+
+        if (newInfo.tags)
+        {
+          var tags = DOM.wrap(Object.keys(Object.slice(newInfo.tags, tagLabels)), { 'SPAN.tag': Function.$true });
+          /*Object.iterate(Object.slice(newInfo.tags, tagLabels), function(key, value){
+            tags.push(DOM.createElement('SPAN.tag', key));
+          });*/
+          if (tags.length)
+            DOM.insert(this.content, DOM.createElement('.tags', tags));
+          
+          if (newInfo.tags.description)
+          {
+            if (!newInfo.tags.description_)
+            {
+              newInfo.tags.description_ = parseDescription(newInfo.tags.description);
+            }
+            
+            DOM.insert(DOM.clear(this.description), newInfo.tags.description_);
+            DOM.insert(this.content, this.description);
+          }
+
+          if (newInfo.tags.link && newInfo.tags.link.length)
+          {
+            if (!this.linksPanel)
+              this.linksPanel = new JsDocLinksPanel();
+
+            this.linksPanel.setChildNodes(newInfo.tags.link.map(nsCore.resolveUrl).map(nsCore.JsDocLinkEntity));
+            DOM.insert(this.content, this.linksPanel.element);
+          }
+          
+          if (newInfo.tags.param)
+          {
+            DOM.insert(this.content, [
+              DOM.createElement('DIV.label', 'Parameters:'),
+              DOM.createElement('UL',
+                Object.iterate(newInfo.tags.param, function(key, value){
+                  var types = value.type.replace(/=$/, '');
+                  var isOptional = types != value.type;
+                  return DOM.createElement('LI.param' + (isOptional ? '.optional' : ''),
+                    DOM.createElement('SPAN.name', key),
+                    //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
+                    DOM.createElement('SPAN.types', parseTypes(types)),
+                    (isOptional ? ' (optional)' : ''),
+                    parseDescription(value.description || '')
+                    //DOM.createElement('P', value.description)
+                  );
+                })
+              )
+            ]);
+          }
+
+          if (newInfo.tags.returns)
+          {
+            DOM.insert(this.content, [
+              DOM.createElement('DIV.label', 'Returns:'),
+              DOM.createElement('UL',
+                Object.iterate({ ret: newInfo.tags.returns }, function(key, value){
+                  var types = value.type.replace(/=$/, '');
+                  return DOM.createElement('LI.param',
+                    //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
+                    DOM.createElement('SPAN.types', parseTypes(types)),
+                    parseDescription(value.description || '')
+                    //DOM.createElement('P', value.description)
+                  );
+                })
+              )
+            ])
+          }
+
+          if (newInfo.tags.example)
+          {
+            var code;
+            DOM.insert(this.content, [
+              DOM.createElement('DIV.label', 'Example:'),
+              code = DOM.createElement('PRE.Basis-SyntaxHighlight')
+            ]);
+            code.innerHTML = Basis.Plugin.SyntaxHighlight.highlight(newInfo.tags.example);
+            //code.className = 'brush: javascript';
+            //SyntaxHighlighter.highlight({}, code);
+          }
+        }
+
+        DOM.display(this.element, !!newInfo.text)
+      }
+    },
+    destroy: function(){
+      if (this.info.tags && this.info.tags.description_)
+      {
+        delete this.info.tags.description_;
+      }
+      if (this.linksPanel)
+      {
+        this.linksPanel.destroy();
+        delete this.linksPanel;
+      }
+      this.inherit();
+    }
+  });
+
+  var JsDocView = Class(View, {
+    viewHeader: 'Description',
+    template: new Template(
+      '<div{element} class="view viewJsDoc">' +
+        htmlHeader('Description') +
+        '<div{content} class="content"><span{contentPanel}/></div>' +
+      '</div>'
+    ),
+    satelliteConfig: extendViewSatelliteConfig({
+      contentPanel: {
+        existsIf: getter('info.objPath'),
+        delegate: getter('info.objPath', nsCore.JsDocEntity),
+        instanceOf: JsDocPanel
+      }
+    })
   });
 
   var TemplateTreeNode = Class(nsTree.TreeNode, {
@@ -294,10 +482,6 @@
   });
 
   var InheritanceItem = Class(nsWrappers.HtmlNode, {
-    canHaveChildren: true,
-    childFactory: function(config){
-      return new InheritanceItem(config);
-    },
     template: new Template(
       '<li{element} class="item">' +
         '<div{content} class="title"><a href{ref}="#">{classNameText}</a></div>' +
@@ -397,47 +581,44 @@
     ),
     behaviour: {
       update: function(object, delta){
-        var newInfo = this.info;
-        if (newInfo.tags && newInfo.tags.config)
+        this.inherit(object, delta);
+
+        this.nameText.nodeValue = this.info.name;
+
+        if (this.info.type)
         {
-          var descr = newInfo.tags.config[this.propName];
-          if (descr)
-          {
-            DOM.insert(this.content,
-              DOM.createElement('SPAN.types', DOM.createElement('SPAN.splitter', ':'),
-                parseTypes(descr.type)
-                //DOM.wrap(descr.type.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })
-              )
-            );
-            if (descr.description)
-              DOM.insert(this.element, DOM.createElement('P', descr.description))
-          }
+          DOM.insert(this.content,
+            DOM.createElement('SPAN.types', DOM.createElement('SPAN.splitter', ':'),
+              parseTypes(this.info.type)
+            )
+          );
         }
+
+        if (this.info.description)
+          DOM.insert(this.element, DOM.createElement('P', this.info.description))
       }
-    },
-    init: function(config){
-      this.propName = config.propName;
-      this.context = config.context;
-      this.inherit(config);
-      this.nameText.nodeValue = this.propName;
     }
   });
 
   var viewConfigRegExp = /config\.(?:([a-z0-9\_\$]+)|\[(\'\")([a-z0-9\_\$]+)\2\])/gi;
+
   var ViewConfig = Class(ViewList, {
+    viewHeader: 'Config',
+
+    template: new Template(
+      '<div{element} class="view viewConfig">' +
+        htmlHeader('Config') +
+        '<span{viewOptions}/>' +
+        '<ul{content|childNodesElement} class="content"></ul>' +
+      '</div>'
+    ),
+
     childClass: ConfigItem,
-    localSorting: getter('propName'),
+    localSorting: getter('info.name'),
+
     groupControlClass: Class(ViewList.prototype.groupControlClass, {
       childClass: Class(ViewList.prototype.groupControlClass.prototype.childClass, {
-        behaviour: {
-          update: function(object, delta){
-            var parts = this.info.path.split(/\./);
-            parts.pop();
-            parts.pop();
-            this.hrefAttr.nodeValue = '#' + parts.join('.');
-            this.titleText.nodeValue = parts.pop();
-          }
-        },
+        isActiveSubscriber: true,
         template: new Template(
           '<div{element} class="Basis-PartitionNode">' +
             '<div class="Basis-PartitionNode-Title">' +
@@ -445,98 +626,93 @@
             '</div>' +
             '<div{childNodesElement|content} class="Basis-PartitionNode-Content"/>' +
           '</div>'
-        )
+        ),
+        behaviour: {
+          update: function(object, delta){
+            this.inherit(object, delta);
+
+            var parts = this.info.path.replace(/\.prototype\.init$/, '').split(/\./);
+            this.hrefAttr.nodeValue = '#' + parts.join('.');
+            this.titleText.nodeValue = parts.join('.');
+          }
+        }
       })
     }),
-    viewHeader: 'Config',
-    template: new Template(
-      '<div{element} class="view viewConfig">' +
-        htmlHeader('Config') +
-        '<ul{content|childNodesElement} class="content"></ul>' +
-      '</div>'
-    ),
     behaviour: {
       update: function(object, delta){
-        var newInfo = this.info;
-        var path = newInfo.objPath;
-        if (newInfo.objPath && map[path].obj.prototype.init)
-        {
-          var list = nsCore.getInheritance(map[path].obj).reverse();
-          var items = {};
+        this.inherit(object, delta);
 
-          this.groupOrder = {};
+        var path = this.info.objPath;
+        if ('objPath' in delta && path && map[path].obj.prototype.init)
+        {
+          var list = nsCore.getInheritance(map[path].obj);
+          var items = {};
+          this.groupOrder_ = {};
+
           for (var i = 0; i < list.length; i++)
           {
-            var path = list[i].obj.className + '.prototype.init';
-            var jsDoc = nsCore.JsDocEntity(path);
-            /*var jsDoc = nsCore.JsDocEntity.get(path)
-            if (!jsDoc)
-              jsDoc = nsCore.JsDocEntity({ path: path, text: ' ' });*/
-            this.groupOrder[path] = i;
-
-            var code = String(list[i].obj.prototype.init).replace(/\/\*(.|[\r\n])+?\*\/|\/\/.+/g, '');
+            var classRef = list[i].obj;
+            var path = classRef.className + '.prototype.init';
+            var code = String(classRef.prototype.init).replace(/\/\*(.|[\r\n])+?\*\/|\/\/.+/g, '');
             var m;
+
+            this.groupOrder_[path] = i;
+
             while (m = viewConfigRegExp.exec(code))
             {
               var name = m[1] || m[3];
-              items[name] = {
-                propName: name,
-                info: jsDoc,
-                context: list[i].obj
-              };
+              if (!items[name])
+              {
+                items[name] = nsCore.JsDocConfigOption({
+                  name: name,
+                  path: path + ':' + name,
+                  constructorPath: path
+                });
+              }
             }
           }
 
-          items = Object.values(items);
-          this.setChildNodes(items);
-          DOM.display(this.element, items.length);
+          this.clear();
+
+          if (this.groupControl)
+            this.groupControl.setLocalSorting(getter('info.path', this.groupOrder_));
+
+          this.setChildNodes(Object.values(items));
         }
-        else
-          DOM.display(this.element, false);
+      },
+      childNodesModified: function(){
+        DOM.display(this.element, this.firstChild);
       }
     },
-    init: function(config){
-      config = this.inherit(config);
-
-      var view = this;
-      this.viewOptions = new ViewOptions({
-        title: 'Group by',
-        childNodes: [
-          {
-            selected: true,
-            title: 'Inheritance',
-            handler: function(){
-              view.setLocalGrouping({
-                groupGetter: getter('delegate'),
-                localSortingDesc: true/*,
-                localSorting: function(group){
-                  var groupControl = group.parentNode || this;
-                  return groupControl.document.groupOrder[group.info.path];
-                }*/
-              });
-            }
-          },
-          {
-            title: 'None',
-            handler: function(){
-              view.setLocalGrouping();
-            }
-          }
-        ]
-      });
-      DOM.insert(this.element, this.viewOptions.element, 1);
-
-      this.jsdocPanel = new JsDocPanel();
-
-      return config;
-    },
-    destroy: function(){
-      this.jsdocPanel.destroy();
-      delete this.jsdocPanel;
-      this.viewOptions.destroy();
-      delete this.viewOptions;
-      this.inherit();
-    }
+    satelliteConfig: extendViewSatelliteConfig({
+      viewOptions: {
+        delegate: Function.$self,
+        instanceOf: ViewOptions,
+        config: function(owner){
+          return {
+            title: 'Group by',
+            childNodes: [
+              {
+                selected: true,
+                title: 'Inheritance',
+                handler: function(){
+                  owner.setLocalGrouping({
+                    groupGetter:  getter('info.constructorPath', nsCore.JsDocEntity),
+                    localSorting: getter('info.path', owner.groupOrder_)
+                  });
+                }
+              },
+              {
+                title: 'None',
+                handler: function(){
+                  owner.setLocalGrouping();
+                }
+              }
+            ]
+          };
+        }
+      }
+    })
   });
 
   var PrototypeItem = Class(nsWrappers.HtmlNode, {
@@ -548,12 +724,11 @@
     ),
     behaviour: {
       update: function(object, delta){
-        var newInfo = this.info;
-        if (newInfo.objPath)
+        if ('objPath' in delta)
         {
-          this.titleText.nodeValue = newInfo.title;
-          this.ref.nodeValue = '#' + newInfo.objPath;
-          this.jsDocPanel.setDelegate(nsCore.JsDocEntity(newInfo.objPath));
+          this.titleText.nodeValue = this.info.title;
+          this.ref.nodeValue = '#' + this.info.objPath;
+          this.jsDocPanel.setDelegate(nsCore.JsDocEntity(this.info.implementationClass + '.prototype.' + this.info.title));
         }
       }
     },
@@ -561,30 +736,24 @@
       this.jsDocPanel = new JsDocPanel();
       this.jsDocPanel.addHandler({
         update: function(object, delta){
-          var newInfo = this.info;
-          if (newInfo.tags)
+          var tags = object.info.tags;
+          if (tags)
           {
             cssClass(this.element).add('hasJsDoc');
-            var typ = newInfo.tags.type || (newInfo.tags.returns && newInfo.tags.returns.type);
-            if (typ)
+            var type = tags.type || (tags.returns && tags.returns.type);
+            if (type)
             {
               DOM.insert(this.content, DOM.createElement('SPAN.types',
                 DOM.createElement('SPAN.splitter', ':'),
-                parseTypes(typ.replace(/^\s*\{|\}\s*$/g, ''))
-                /*DOM.wrap(
-                  type.replace(/^\s*\{|\}\s*$/g, '').split(/(\|)/),
-                  { 'SPAN.splitter': function(value, idx){ return idx % 2 } }
-                )*/
+                parseTypes(type.replace(/^\s*\{|\}\s*$/g, ''))
               ));
             }
           }
         }
       }, this)
-      config = this.inherit(config);
 
+      this.inherit(config);
       DOM.insert(this.element, this.jsDocPanel.element)
-
-      return config;
     },
     destroy: function(){
       this.jsDocPanel.destroy();
@@ -595,11 +764,11 @@
   
   var PrototypeMethod = Class(PrototypeItem, {
     template: new Template(
-      '<div{element} class="item method collapsed">' +
+      '<div{element} class="item method">' +
         '<div{content} class="title">' +
           '<a href{ref}="#">{titleText}</a><span class="args">({argsText})</span>' +
         '</div>' +
-        '<a{trigger} href="#" class="trigger">...</a>' +
+        //'<a{trigger} href="#" class="trigger">...</a>' +
       '</div>'
     ),
     behaviour: {
@@ -646,9 +815,7 @@
               view.setLocalGrouping({
                 groupGetter: getter('info.kind'),
                 titleGetter: getter('info.id', { property: 'Properties', method: 'Methods' }),
-                localSorting: function(group){
-                  return group.info.id == 'method';
-                }
+                localSorting: getter('info.id', { property: 1, method: 2 })
               });
             }
           },
@@ -692,12 +859,10 @@
     ),
     behaviour: {
       update: function(object, delta){
-        var newInfo = this.info;
-        if (newInfo.url)
-        {
-          this.titleText.nodeValue = newInfo.title || newInfo.url;
-          this.href.nodeValue = newInfo.url;
-        }
+        this.inherit(object, delta);
+
+        this.titleText.nodeValue = this.info.title || this.info.url;
+        this.href.nodeValue = this.info.url;
       }
     }
   });
@@ -714,224 +879,18 @@
     )
   });
 
-  var JsDocView = Class(View, {
-    viewHeader: 'Description',
-    template: new Template(
-      '<div{element} class="view viewJsDoc">' +
-        htmlHeader('Description') +
-        '<div{content} class="content"></div>' +
-      '</div>'
-    ),
-    behaviour: {
-      delegateChanged: function(){
-        if (this.delegate)
-          this.contentPanel.setDelegate(nsCore.JsDocEntity(this.delegate.info.objPath));
-      }
-    },
-    init: function(config){
-      this.contentPanel = new JsDocPanel();
-
-      config = this.inherit(config);
-
-      DOM.insert(this.content, this.contentPanel.element);
-    
-      return config;
-    },
-    destroy: function(){
-      this.contentPanel.destroy();
-      delete this.contentPanel;
-
-      this.inherit();
-    }
-  });
-
   var JsDocConstructorView = Class(JsDocView, {
     viewHeader: 'Constructor',
-    template: new Template(
-      '<div{element} class="view viewJsDoc">' +
-        htmlHeader('Constructor') +
-        '<div{content} class="content"></div>' +
-      '</div>'
-    ),
-    behaviour: nsWrappers.createBehaviour(JsDocView, {
-      delegateChanged: function(){
-        if (this.delegate)
-        {
-          var path = this.delegate.info.objPath + '.prototype.init';
-          var jsDoc = nsCore.JsDocEntity(path)
-          this.contentPanel.setDelegate(jsDoc);
-        }
+    satelliteConfig: extendViewSatelliteConfig({
+      contentPanel: {
+        existsIf: getter('info.objPath'),
+        delegate: getter('info.objPath + ".prototype.init"', nsCore.JsDocEntity),
+        instanceOf: JsDocPanel
       }
-    }),
-    init: function(config){
-      config = this.inherit(config);
-
-      //this.configPanel
-
-      return config;
-    }
+    })
   });
 
-  var tagLabels = 'readonly private'.qw();
-  var JsDocPanel = Class(nsWrappers.HtmlNode, {
-    template: new Template(
-      '<div{element|content} class="jsDocs"><div{description} class="description"/><div{link} class="links"/></div>'
-    ),
-    behaviour: {
-      update: function(object, delta){
-        var newInfo = this.info;
 
-        DOM.clear(this.content);
-
-        function parseDescription(text){
-          var listItem = false;
-          var lines = text.trimRight().split(/(?:\r\n?|\n\r?){2,}|((?:\r\n?|\n\r?)\s*\-\s+)/).map(function(line, idx){
-            if (idx % 2)
-            {
-              listItem = !!line;
-              return;
-            }
-
-            var m = line.match(/^\s*(.+):(\r\n?|\n\r?)/);
-            var h;
-            if (m)
-            {
-              h = DOM.createElement('SPAN.definition', m[1]);
-              line = line.substr(m[0].length);
-            }
-
-            var parts = line.split(/\{([a-z0-9\_\.\#]+)\}/i);
-            for (var i = 1; i < parts.length; i += 2)
-            {
-              var mapPath = parts[i].replace(/#/, '.prototype.');
-              var descr = map[mapPath];
-              if (descr)
-                parts[i] = DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), descr.title);
-              else
-                parts[i] = parts[i].quote('{');
-            }
-
-            return DOM.createElement(listItem ? 'LI' : 'P', h, parts);
-          }).filter(Function.$isNotNull).flatten();
-
-          var result = [];
-          var listContext;
-          for (var i = 0; i < lines.length; i++)
-          {
-            if (lines[i].tagName == 'LI')
-            {
-              if (!listContext)
-              {
-                listContext = DOM.createElement('UL');
-                result.push(listContext);
-              }
-              listContext.appendChild(lines[i]);
-            }
-            else
-            {
-              listContext = null;
-              result.push(lines[i]);
-            }
-          }
-          return result;
-        }
-
-        if (newInfo.tags)
-        {
-          var tags = DOM.wrap(Object.keys(Object.slice(newInfo.tags, tagLabels)), { 'SPAN.tag': Function.$true });
-          /*Object.iterate(Object.slice(newInfo.tags, tagLabels), function(key, value){
-            tags.push(DOM.createElement('SPAN.tag', key));
-          });*/
-          if (tags.length)
-            DOM.insert(this.content, DOM.createElement('.tags', tags));
-          
-          if (newInfo.tags.description)
-          {
-            if (!newInfo.tags.description_)
-            {
-              newInfo.tags.description_ = parseDescription(newInfo.tags.description);
-            }
-            
-            DOM.insert(DOM.clear(this.description), newInfo.tags.description_);
-            DOM.insert(this.content, this.description);
-          }
-
-          if (newInfo.tags.link && newInfo.tags.link.length)
-          {
-            if (!this.linksPanel)
-              this.linksPanel = new JsDocLinksPanel();
-
-            this.linksPanel.setChildNodes(newInfo.tags.link.map(nsCore.JsDocLinkEntity));
-            DOM.insert(this.content, this.linksPanel.element);
-          }
-          
-          if (newInfo.tags.param)
-          {
-            DOM.insert(this.content, [
-              DOM.createElement('DIV.label', 'Parameters:'),
-              DOM.createElement('UL',
-                Object.iterate(newInfo.tags.param, function(key, value){
-                  var types = value.type.replace(/=$/, '');
-                  var isOptional = types != value.type;
-                  return DOM.createElement('LI.param' + (isOptional ? '.optional' : ''),
-                    DOM.createElement('SPAN.name', key),
-                    //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
-                    DOM.createElement('SPAN.types', parseTypes(types)),
-                    (isOptional ? ' (optional)' : ''),
-                    parseDescription(value.description || '')
-                    //DOM.createElement('P', value.description)
-                  );
-                })
-              )
-            ]);
-          }
-
-          if (newInfo.tags.returns)
-          {
-            DOM.insert(this.content, [
-              DOM.createElement('DIV.label', 'Returns:'),
-              DOM.createElement('UL',
-                Object.iterate({ ret: newInfo.tags.returns }, function(key, value){
-                  var types = value.type.replace(/=$/, '');
-                  return DOM.createElement('LI.param',
-                    //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
-                    DOM.createElement('SPAN.types', parseTypes(types)),
-                    DOM.createElement('P', value.description)
-                  );
-                })
-              )
-            ])
-          }
-
-          if (newInfo.tags.example)
-          {
-            var code;
-            DOM.insert(this.content, [
-              DOM.createElement('DIV.label', 'Example:'),
-              code = DOM.createElement('PRE.Basis-SyntaxHighlight')
-            ]);
-            code.innerHTML = Basis.Plugin.SyntaxHighlight.highlight(newInfo.tags.example);
-            //code.className = 'brush: javascript';
-            //SyntaxHighlighter.highlight({}, code);
-          }
-        }
-
-        DOM.display(this.element, !!newInfo.text)
-      }
-    },
-    destroy: function(){
-      if (this.info.tags && this.info.tags.description_)
-      {
-        delete this.info.tags.description_;
-      }
-      if (this.linksPanel)
-      {
-        this.linksPanel.destroy();
-        delete this.linksPanel;
-      }
-      this.inherit();
-    }
-  });
 
   //
   // View instances
@@ -969,7 +928,7 @@
         '<div{content} class="content"><span{sourceCode}/></div>' +
       '</div>'
     ),
-    satelliteConfig: Object.extend({
+    satelliteConfig: extendViewSatelliteConfig({
       sourceCode: {
         delegate: Function.$self,
         instanceOf: Class(Basis.Plugin.SyntaxHighlight.SourceCodeNode, {
@@ -978,7 +937,7 @@
           }
         })
       }
-    }, View.prototype.satelliteConfig)
+    })
   });
 
   var viewSourceCode = new SourceCodeView({

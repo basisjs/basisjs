@@ -524,7 +524,7 @@
       },
 
       loadData: function(items, noCascadeDestroy){
-        this.setChildNodes(items.map(Data.wrapper('info')))
+        this.setChildNodes(items.map(Function.wrapper('info')))
       },
 
       destroy: function(){

@@ -97,8 +97,6 @@
             // TODO: remove this event dispatch. it using only by DOM.Wrapper.Register
             this.parentNode.dispatch('childUpdated', this, this.info, [this.info, delta].merge(), delta);
 
-            var nodes = parentNode.childNodes;
-
             if (parentNode.matchFunction)
             {
               this.match();
@@ -789,7 +787,6 @@
 
     var HIERARCHYTOOLS_COLLECTION_HANDLERS = {
       datasetChanged: function(dataset, delta){
-        // console.log(delta);
 
         var newDelta = {};
         var deleted = [];
@@ -945,8 +942,6 @@
           {
             this.positionUpdateTimer_ = function(){
               var len = Math.min(this.maxPosition_ + 1, this.childNodes.length);
-              //console.log(self.minPosition_, len);
-              //console.log('update pos');
 
               var gnode = this.childNodes[this.minPosition_];
               var group = gnode && gnode.groupNode;
@@ -954,7 +949,6 @@
               if (group)
                 gpos = group.childNodes.indexOf(gnode);
 
-              //console.log('updatePosition: ' + self.minPosition_ + '...' + (self.minPosition_ + len - 1) );
               for (var i = this.minPosition_; i < len; i++, gpos++)
               {
                 var node = this.childNodes[i];
@@ -1020,7 +1014,6 @@
             newChildValue = localSorting(newChild);
             pos = groupChildNodes.binarySearchPos(newChildValue, sortingSearch, this.localSortingDesc);
             newChild.sortingValue = newChildValue;
-            //console.log('sorting', newChildValue, group.childNodes.map(this.localSorting), group.childNodes);
           }
           else
           {
@@ -1030,16 +1023,10 @@
               pos = groupChildNodes.length;
           }
 
-          //;;;if (!this.groupControl.childNodes.has(group) && typeof console != 'undefined') console.warn('miss node group in groupControl for node:', newChild);
-
           refChild = groupChildNodes[pos];
 
           if (!refChild && pos >= groupChildNodes.length)
           {
-            //refChild = group == this.groupControl.nullGroup
-            //  ? this.groupControl.firstChild && this.groupControl.firstChild.firstChild
-            //  : group.nextSibling && group.nextSibling.firstChild;
-
             var cursor = group;
             while (cursor = cursor.nextSibling)
               if (refChild = cursor.firstChild)
@@ -1187,10 +1174,7 @@
         if (pos == 0)
           this.firstChild = newChild;
         else
-        {
-          //if (!refChild.previousSibling) debugger;
           refChild.previousSibling.nextSibling = newChild;
-        }
 
         // update refChild
         refChild.previousSibling = newChild;
@@ -1623,7 +1607,6 @@
           sorting = getter(sorting);
 
         // TODO: fix when direction changes only
-        //console.log(this.localSorting, sorting, this.localSorting != sorting);
         if (this.localSorting != sorting || this.localSortingDesc != !!desc)
         {
           this.localSortingDesc = !!desc;
@@ -1664,7 +1647,6 @@
             fastChildNodesOrder(this, order);
 
             // update position dependent nodes
-            // console.log('setSorting updatePosition: 0...' + this.childNodes.length);
             clearTimeout(this.positionUpdateTimer_);
             delete this.positionUpdateTimer_;
             if (this.positionDependent)
@@ -1818,89 +1800,65 @@
           {
             var owner = this.groupControlHolder;
             var childNodes = owner.childNodes;
-            var first = newChild.firstChild;
-            var last = newChild.lastChild;
-            var node;
+
+            var firstChild = newChild.firstChild;
+            var lastChild = newChild.lastChild;
+
             var cursor;
+            var insertArgs;
+            var nextGroupFirstChild;
+            var prevGroupLastChild;
 
-            var prevLast;
-            var nextFirst;
-
-            //
-            // remove
-            //
-
-            if (first.previousSibling)
+            // search for prev group lastChild
+            cursor = newChild.previousSibling;
+            while (cursor)
             {
-              // first.previousSibling.nextSibling = first.previousSibling.groupNode.nextSibling.firstChild;
-              node = null;
-              cursor = first.previousSibling.groupNode;
-              
-              if (cursor === this.nullGroup)
-                cursor = { nextSibling: this.firstChild };
+              if (prevGroupLastChild = cursor.lastChild)
+                break;
 
-              while (!node && (cursor = cursor.nextSibling))
-                node = cursor.firstChild;
-
-              first.previousSibling.nextSibling = node;
+              cursor = cursor.previousSibling;
             }
 
-            if (last.nextSibling)
+            if (!prevGroupLastChild)
+              prevGroupLastChild = this.nullGroup.lastChild;
+
+            // search for next group firstChild
+            cursor = newChild.nextSibling;
+            while (cursor)
             {
-              // last.nextSibling.previousSibling = last.nextSibling.groupNode.previousSibling.lastChild;
-              node = null;
-              cursor = last.nextSibling.groupNode;
+              if (nextGroupFirstChild = cursor.firstChild)
+                break;
 
-              while (!node && (cursor = cursor.previousSibling))
-                node = cursor.lastChild;
-
-              last.nextSibling.previousSibling = node || this.nullGroup.lastChild;
+              cursor = cursor.nextSibling;
             }
 
-            var nodes = childNodes.splice(childNodes.indexOf(first), newChild.childNodes.length)
-
-            //
-            // insert
-            //
-
-            // first.previousSibling = newChild.previousSibling.lastChild;
-            // use loop because of empty groups
-            node = null;
-            cursor = newChild;
-            while (!node && (cursor = cursor.previousSibling))
-              node = cursor.lastChild;
-            if (!node)
-              node = this.nullGroup.lastChild;
-            if (first.previousSibling = node)
-              node.nextSibling = first;
-
-            // last.nextSibling = newChild.nextSibling.firstChild;
-            // use loop because of empty groups
-            node = null;
-            cursor = newChild;
-            while (!node && (cursor = cursor.nextSibling))
-              node = cursor.firstChild;
-            if (last.nextSibling = node)
-              node.previousSibling = last;
-
-            if (last.nextSibling)
+            if (firstChild.previousSibling != prevGroupLastChild || lastChild.nextSibling != nextGroupFirstChild)
             {
-              nodes.unshift(0, childNodes.indexOf(last.nextSibling));
-              childNodes.splice.apply(childNodes, nodes);
-              nodes.shift();
-              nodes.shift();
-            }
-            else
-            {
-              childNodes.push.apply(childNodes, nodes);
-              owner.lastChild = last;
-            }
+              // cut nodes from old position
+              if (firstChild.previousSibling)
+                firstChild.previousSibling.nextSibling = lastChild.nextSibling;
+              if (lastChild.nextSibling)
+                lastChild.nextSibling.previousSibling = firstChild.previousSibling;
 
-            if (this.firstChild == newChild)
-              owner.firstChild = this.nullGroup.firstChild || first;
+              insertArgs = childNodes.splice(childNodes.indexOf(firstChild), newChild.childNodes.length);
 
-            //for (var i = nodes.length - 1; i >= 0; i--)
-            //  owner.insertBefore(nodes[i], nodes[i].nextSibling);
+              // insert nodes on new position and link edge nodes
+              var pos = childNodes.indexOf(nextGroupFirstChild);
+              insertArgs.unshift(pos != -1 ? pos : childNodes.length, 0);
+              childNodes.splice.apply(childNodes, insertArgs);
+
+              // firstChild/lastChild are present anyway
+              firstChild.previousSibling = prevGroupLastChild;
+              lastChild.nextSibling = nextGroupFirstChild;
+
+              if (prevGroupLastChild)
+                prevGroupLastChild.nextSibling = firstChild;
+              if (nextGroupFirstChild)
+                nextGroupFirstChild.previousSibling = lastChild;
+
+              owner.firstChild = childNodes[0];
+              owner.lastChild = childNodes[childNodes.length - 1];
+            }
           }
 
           return newChild;
@@ -1959,11 +1917,16 @@
             }
             else
             {
-              satellite = new config.instanceOf({
+              var instanceConfig = {
                 document: this.document,
                 delegate: delegate,
                 collection: collection
-              });
+              };
+
+              if (config.config)
+                Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(this) : config.config);
+
+              satellite = new config.instanceOf(instanceConfig);
 
               this.satellite[key] = satellite;
               satellite.owner = this;
@@ -2050,9 +2013,9 @@
       * @param {Object} config
       * @config {Basis.Html.Template} template Override prototype's template with custom template.
       * @config {Object|string} cssClassName Set of CSS classes for parts of HTML structure.
-      * @config {Node} container Specify HTML element that will be a container of root HTML element (node.element).
+      * @config {Node} container Specify HTML element that will be a container of template root element (node.element).
       * @config {Node|Array.<Node>} content
-      * @config {string} id Id for root HTML element (node.element).
+      * @config {string} id Id for template root element (node.element).
       * @constructor
       */
       init: function(config){
@@ -2586,6 +2549,7 @@
    /**
     * @link ./demo/selection/share.html
     * @link ./demo/selection/multiple.html
+    * @link ./demo/selection/collection.html
     * @class
     */
     var Selection = Class(Dataset, {

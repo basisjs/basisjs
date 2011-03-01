@@ -90,6 +90,7 @@
   <script type="text/javascript"  src="../basis.js"></script>
   <script type="text/javascript"  src="../data.js"></script>
   <script type="text/javascript"  src="../dom_wrapper.js"></script>
+  <script type="text/javascript"  src="../property.js"></script>
   <script type="text/javascript"  src="../dom_register.js"></script>
   <script type="text/javascript"  src="../tree.js"></script>
   <script type="text/javascript"  src="../plugins/generator.js"></script>
@@ -142,7 +143,7 @@
       console = { log: Function.$null, warn: Function.$null, dir: Function.$null };
 
     with(Basis.names(':BASE Event Data'))
-    with(Basis.DOM.Wrapers.Register.names('Count Sum Avg Collection SortedCollection Filter SortedFilter'))
+    with(Basis.DOM.Wrapper.Register.names('Count Sum Avg Collection SortedCollection Filter SortedFilter'))
     with(Basis.Controls.Tree.names('Tree TreeNode TreeFolder'))
 
     (function(){

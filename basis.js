@@ -1677,6 +1677,8 @@
 
   var EventObject = (function(){
 
+    /** @namespace Basis */
+
     var slice = Array.prototype.slice;
 
     // EventObject seed ID
@@ -2422,7 +2424,7 @@
         filter = $true;
 
       if (typeof filter == 'string')
-        filter = getter('tagName=='+filter.quote());
+        filter = getter('tagName==' + filter.quote());
 
       viewDeep = viewDeep || 0;
 

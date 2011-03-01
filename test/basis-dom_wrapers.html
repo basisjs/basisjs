@@ -20,7 +20,9 @@
   </style>
   
   <script type="text/javascript"  src="../basis.js"></script>
+  <script type="text/javascript"  src="../data.js"></script>
   <script type="text/javascript"  src="../dom_wrapper.js"></script>
+  <script type="text/javascript"  src="../property.js"></script>
   <script type="text/javascript"  src="test.js"></script>
   <script type="text/javascript"  src="common.js"></script>
 </head>
@@ -30,15 +32,16 @@
   <script type="text/javascript">
     loadTest((function(){
 
+      var Class = Basis.Class;
       var DOM = Basis.DOM;
       var Data = Basis.Data;
       var CSS = Basis.CSS;
       var Event = Basis.Event;
       var Tester = Basis.Test.Tester;
 
-      var MWrapers = DOM.Wrapers;
-      var Property = MWrapers.Property;
-      var PropertySet = MWrapers.DataObjectSet;
+      var nsWrappers = DOM.Wrapper;
+      var Property = Basis.Data.Property.Property;
+      var PropertySet = Basis.Data.Property.DataObjectSet;
 
       var CookieName;
       var TestProperty;
@@ -59,13 +62,13 @@
       ];
 
       function nodeFactory(cfg){
-        return new MWrapers.Node(cfg);
+        return new nsWrappers.Node(cfg);
       };
 
       function checkNode(node){
-        if (node.firstChild != (node.childNodes.first() || null))
+        if (node.firstChild != (node.childNodes[0] || null))
           return 'Wrong firstChild ref';
-        if (node.lastChild != (node.childNodes.last() || null))
+        if (node.lastChild != (node.childNodes[node.childNodes.length - 1] || null))
           return 'Wrong lastChild ref';
 
         for (var i = 0; i < node.childNodes.length; i++)
@@ -81,6 +84,12 @@
             return 'child #' + i + ' has wrong document ref';
         }
         return false;
+      }
+
+      function $values(ar){
+        return ar.map(function(node){
+          return node.info.value + '(' + node.info.group + ')';
+        })
       }
 
       return [
@@ -300,70 +309,328 @@
                 {
                   name: 'create',
                   test: function(){
-                    var node = new MWrapers.Node();
+                    var node = new nsWrappers.Node();
                     this.is(false, checkNode(node));
 
-                    var node = new MWrapers.Node({ info: { a: 1, b: 2 } });
+                    var node = new nsWrappers.Node({ info: { a: 1, b: 2 } });
                     this.is({ a: 1, b: 2}, node.info);
                   }
                 },
                 {
                   name: 'create with childNodes',
                   test: function(){
-                    var node = new MWrapers.Node({ childNodes: testSet.map(nodeFactory) });
+                    var node = new nsWrappers.Node({ childNodes: testSet.map(nodeFactory) });
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                    this.is($values(testSet), $values(node.childNodes));
 
-                    var node = new MWrapers.Node({ childFactory: nodeFactory, childNodes: testSet });
+                    var node = new nsWrappers.Node({ childFactory: nodeFactory, childNodes: testSet });
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                    this.is($values(testSet), $values(node.childNodes));
                   }
                 },
                 {
                   name: 'appendChild',
                   test: function(){
-                    var node = new MWrapers.Node();
+                    var node = new nsWrappers.Node();
                     for (var i = 0; i < testSet.length; i++)
-                      node.appendChild(new MWrapers.Node(testSet[i]));
+                      node.appendChild(new nsWrappers.Node(testSet[i]));
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                    this.is($values(testSet), $values(node.childNodes));
                   }
                 },
                 {
                   name: 'insertBefore',
                   test: function(){
-                    var node = new MWrapers.Node();
+                    var node = new nsWrappers.Node();
                     for (var i = 0; i < testSet.length; i++)
-                      node.insertBefore(new MWrapers.Node(testSet[i]));
-                    this.is(false, checkNode(node));
-                    this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                      node.insertBefore(new nsWrappers.Node(testSet[i]));
 
-                    var node = new MWrapers.Node();
-                    for (var i = 0; i < testSet.length; i++)
-                      node.insertBefore(new MWrapers.Node(testSet[i]), node.firstChild);
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.map(Data.getter('info')).reverse(), node.childNodes.map(Data.getter('info')));
+                    this.is($values(testSet), $values(node.childNodes));
+
+                    var node = new nsWrappers.Node();
+                    for (var i = 0; i < testSet.length; i++)
+                      node.insertBefore(new nsWrappers.Node(testSet[i]), node.firstChild);
+
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is($values(testSet).reverse(), $values(node.childNodes));
                   }
                 },
                 {
                   name: 'DOM.insert',
                   test: function(){
-                    var node = new MWrapers.Node();
+                    var node = new nsWrappers.Node();
                     DOM.insert(node, testSet.map(nodeFactory))
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                    this.is($values(testSet), $values(node.childNodes));
 
-                    var node = new MWrapers.Node({ childFactory: nodeFactory });
+                    var node = new nsWrappers.Node({ childFactory: nodeFactory });
                     DOM.insert(node, testSet)
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
-                    this.is(testSet.map(Data.getter('info')), node.childNodes.map(Data.getter('info')));
+                    this.is($values(testSet), $values(node.childNodes));
+                  }
+                }
+              ]
+            },
+            {
+              name: 'localSorting',
+              testcase: []
+            },
+            {
+              name: 'localGrouping',
+              testcase: [
+                {
+                  name: 'localGrouping in config',
+                  test: function(){
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      localGrouping: 'info.group'
+                    });
+
+                    for (var i = 0; i < testSet.length; i++)
+                      node.appendChild(testSet[i]);
+
+                    this.is(false, checkNode(node));
+                    this.is($values(testSet.sortAsObject('info.group')), $values(node.childNodes));
+
+                    // =======================================
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      localGrouping: {
+                        groupGetter: 'info.group',
+                        localSorting: 'info.id',
+                        localSortingDesc: true
+                      }
+                    });
+
+                    for (var i = 0; i < testSet.length; i++)
+                      node.appendChild(testSet[i]);
+
+                    this.is(false, checkNode(node));
+                    this.is($values([4, 3, 8, 1, 5, 6, 0, 2, 7, 9].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    // ======================================
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      localSorting: 'info.value',
+                      localSortingDesc: true,
+                      localGrouping: {
+                        groupGetter: 'info.group',
+                        localSorting: 'info.id',
+                        localSortingDesc: true
+                      },
+                      childNodes: testSet
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is($values([4, 8, 3, 6, 5, 1, 9, 7, 2, 0].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+                  }
+                },
+                {
+                  name: 'update PartitionNode',
+                  test: function(){
+                    // ======================================
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      localSorting: 'info.value',
+                      localSortingDesc: true,
+                      localGrouping: {
+                        groupGetter: 'info.group',
+                        localSorting: 'info.title',
+                        localSortingDesc: true
+                      },
+                      childNodes: testSet
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is($values([4, 8, 3, 6, 5, 1, 9, 7, 2, 0].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    var groups = Array.from(node.groupControl.childNodes);
+                    /*for (var i = 0; i < groups.length; i++)
+                      groups[i].update({ title: 'group' + i });*/
+
+                    groups[0].update({ title: -4 });
+                    this.is(false, checkNode(node));
+                    this.is($values([8, 3, 6, 5, 1, 9, 7, 2, 0, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[1].update({ title: -3 });
+                    this.is(false, checkNode(node));
+                    this.is($values([6, 5, 1, 9, 7, 2, 0, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[2].update({ title: -2 });
+                    this.is(false, checkNode(node));
+                    this.is($values([9, 7, 2, 0, 6, 5, 1, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[3].update({ title: -1 });
+                    this.is(false, checkNode(node));
+                    this.is($values([9, 7, 2, 0, 6, 5, 1, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+                  }
+                },
+                {
+                  name: 'update PartitionNode with delegate',
+                  test: function(){
+                    var groupNodes = {};
+                    for (var i = 1; i <= 4; i++)
+                      groupNodes[i] = new nsWrappers.Node({
+                        info: {
+                          title: i
+                        }
+                      });
+
+                    // ======================================
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      localSorting: 'info.value',
+                      localSortingDesc: true,
+                      localGrouping: {
+                        groupGetter: Function.getter('info.group', groupNodes),
+                        localSorting: 'info.title',
+                        localSortingDesc: true
+                      },
+                      childNodes: testSet//.filter(Function.getter('info.group >= 3'))
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(4, node.groupControl.childNodes.length);
+                    this.is($values([4, 8, 3, 6, 5, 1, 9, 7, 2, 0].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    var groups = Array.from(node.groupControl.childNodes);
+                    /*for (var i = 0; i < groups.length; i++)
+                      groups[i].update({ title: 'group' + i });*/
+
+                    groups[0].update({ title: -4 });
+                    this.is(false, checkNode(node));
+                    this.is($values([8, 3, 6, 5, 1, 9, 7, 2, 0, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[1].update({ title: -3 });
+                    this.is(false, checkNode(node));
+                    this.is($values([6, 5, 1, 9, 7, 2, 0, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[2].update({ title: -2 });
+                    this.is(false, checkNode(node));
+                    this.is($values([9, 7, 2, 0, 6, 5, 1, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[3].update({ title: -1 });
+                    this.is(false, checkNode(node));
+                    this.is($values([9, 7, 2, 0, 6, 5, 1, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                  }
+                },
+                {
+                  name: 'setLocalGrouping after create and update PartitionNode with delegate',
+                  test: function(){
+
+                    var groupNodes = {};
+                    for (var i = 1; i <= 4; i++)
+                      groupNodes[i] = new nsWrappers.Node({
+                        info: {
+                          title: i
+                        }
+                      });
+
+
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      localSorting: 'info.value',
+                      localSortingDesc: true,
+                      childNodes: testSet//.filter(Function.getter('info.group >= 3'))
+                    });
+
+                    this.is(false, checkNode(node));
+
+                    node.setLocalGrouping({
+                      groupGetter: Function.getter('info.group', groupNodes),
+                      localSorting: 'info.title',
+                      localSortingDesc: true
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(4, node.groupControl.childNodes.length);
+                    this.is($values([4, 8, 3, 6, 5, 1, 9, 7, 2, 0].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    var groups = Array.from(node.groupControl.childNodes);
+                    /*for (var i = 0; i < groups.length; i++)
+                      groups[i].update({ title: 'group' + i });*/
+
+                    groups[0].update({ title: -4 });
+                    this.is(false, checkNode(node));
+                    this.is($values([8, 3, 6, 5, 1, 9, 7, 2, 0, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[1].update({ title: -3 });
+                    this.is(false, checkNode(node));
+                    this.is($values([6, 5, 1, 9, 7, 2, 0, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[2].update({ title: -2 });
+                    this.is(false, checkNode(node));
+                    this.is($values([9, 7, 2, 0, 6, 5, 1, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+
+                    groups[3].update({ title: -1 });
+                    this.is(false, checkNode(node));
+                    this.is($values([9, 7, 2, 0, 6, 5, 1, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
+                  }
+                },
+                {
+                  name: 'setLocalGrouping after create and update PartitionNode with delegate & subscription',
+                  test: function(){
+
+                    var groupDelegateClass = Class(nsWrappers.Node, {
+                      behaviour: {
+                        update: function(){
+                          if (this.subscriberCount)
+                            this.update({ title: this.title_ });
+                        },
+                        subscribersChanged: function(){
+                          if (this.subscriberCount)
+                            this.update({ title: this.title_ });
+                        }
+                      },
+                      init: function(config){
+                        this.title_ = config.title;
+                        this.inherit(config);
+                      }
+                    })
+
+                    var groupNodes = {};
+                    for (var i = 1; i <= 4; i++)
+                      groupNodes[i] = new groupDelegateClass({
+                        title: -i,
+                        info: {
+                          title: i
+                        }
+                      });
+
+
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      localSorting: 'info.value',
+                      localSortingDesc: true,
+                      childNodes: testSet//.filter(Function.getter('info.group >= 3'))
+                    });
+
+                    node.groupControlClass = Class(node.groupControlClass, {
+                      childClass: Class(node.groupControlClass.prototype.childClass, {
+                        isActiveSubscriber: true
+                      })
+                    });
+
+                    this.is(false, checkNode(node));
+
+                    node.setLocalGrouping({
+                      groupGetter: Function.getter('info.group', groupNodes),
+                      localSorting: 'info.title',
+                      localSortingDesc: true
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(4, node.groupControl.childNodes.length);
+                    this.is($values([9, 7, 2, 0, 6, 5, 1, 8, 3, 4].map(Function.getter(Function.$self, testSet))), $values(node.childNodes));
                   }
                 }
               ]

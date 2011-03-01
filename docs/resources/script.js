@@ -84,7 +84,7 @@
     handlers: {
       delegateChanged: function(object, oldDelegate){
         this.clear(true);
-        this.setChildNodes(this.delegate ? [/*nsView.viewTitle, */nsView.viewJsDoc].concat(this.delegate.views) : null).forEach(function(node){
+        this.setChildNodes(this.delegate ? [/*nsView.viewTitle, */nsView.viewJsDoc].concat(this.delegate.views || []) : null).forEach(function(node){
           node.setDelegate(this);
         }, this.getRootDelegate());
         this.recalc();

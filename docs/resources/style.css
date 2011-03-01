@@ -222,6 +222,8 @@
 
   #Content .viewOptions
   {
+    position: relative;
+    z-index: 1;
     font-size: 85%;
     float: right;
     line-height: 1em;
@@ -688,16 +690,29 @@
   .Content-Header
   {
     cursor: pointer;
-    height: 23px;
     border-top: 1px solid #888;
-    background: #F0F0F0 !important;
+    background: #F0F0F0 url(img/tab_bg_bottom.png?2) repeat-x left bottom !important;
+    overflow: hidden;
+    line-height: 1em;
+    padding: 0 !important;
   }
   .Content-Header SPAN
   {
+    display: block;
+    line-height: 1em !important;
+    height: 1em !important;
+    overflow: hidden;
+    padding: 1px 1ex 2px !important;
     border-top: 1px solid white;
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #D8D8D8), color-stop(35%, #E8E8E8), color-stop(65%, #E8E8E8),color-stop(100%, #F8F8F8)) !important;
+    border-bottom: 1px solid white;
+    background: url(img/tab_bg_top.png?1) repeat-x 0 -2px;
     font-wei3ght: normal !important;
     font-family: Consolas;
     padding-left: 14px !important;
     /*background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #FBB700), color-stop(1, #D96200));*/
+  }
+
+  .Basis-SyntaxHighlight
+  {
+    margin: 0;
   }

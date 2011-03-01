@@ -174,18 +174,14 @@
       *   a delegate for the new object.
       * @config {boolean} isActiveSubscriber Overrides prototype's {Basis.Data.DataObject#isActiveSubscriber} property.
       * @config {boolean} cascadeDestroy Overrides prototype's {Basis.Data.DataObject#cascaseDestroy} property.
-      * @config {number} maxAge Overrides prototype's {Basis.Data.DataObject#maxAge} property.
+      * @config {string|Object} state
+      * @config {number} subscriptionType
       * @return {Object}
       * @constructor
       */
       init: function(config){
         // inherit
         this.inherit(config);
-
-        /*if (config && config.handlers)
-          debugger;*/
-        //this.handlers_ = [];
-        //this.eventObjectId = eventObjectId++;
 
         // init properties
         this.subscribers_ = {};
@@ -291,7 +287,7 @@
       *   b.update({ prop: 456 });
       *   alert(a.info.prop === b.info.prop); // shows true
       *
-      *   a.setState(Basis.DOM.Wrapper.STATE.PROCESSING);
+      *   a.setState(Basis.Data.STATE.PROCESSING);
       *   alert(a.state); // shows 'processing'
       *   alert(a.state === b.state); // shows true
       * @param {Basis.Data.DataObject} delegate
@@ -358,6 +354,9 @@
 
           this.dispatch('delegateChanged', this, oldDelegate);
           this.dispatch('update', this, delta);
+
+          //if (this.delegate && isDelegateSubscriber)
+          //  this.delegate.addSubscriber(this);
         }
 
         return this.delegate;
@@ -365,10 +364,10 @@
 
      /**
       * Set new state for object. Fire stateChanged event only if state (or state text) was changed.
-      * @param {Basis.DOM.Wrapper.STATE|string} state New state for object
+      * @param {Basis.Data.STATE|string} state New state for object
       * @param {Object=} data
       * @param {boolean=} forceEvent Fire stateChanged event even state didn't changed.
-      * @return {Basis.DOM.Wrapper.STATE|string} Current object state.
+      * @return {Basis.Data.STATE|string} Current object state.
       */
       setState: function(state, data){
         if (this.state != String(state) || this.state.data != data)
@@ -540,7 +539,7 @@
 
      /**
       * Set new value for subscriptionType property.
-      * @param {number}  New value for {Basis.Data.DataObject#subscriptionType} property.
+      * @param {number} subscriptionType New value for {Basis.Data.DataObject#subscriptionType} property.
       * @return {boolean} Returns true if {Basis.Data.DataObject#subscriptionType} was changed.
       */
       setSubscriptionType: function(subscriptionType){
