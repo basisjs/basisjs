@@ -705,6 +705,7 @@
             childNodes: [
               {
                 title: 'Inheritance',
+                selected: true,
                 handler: function(){
                   owner.setLocalGrouping({
                     groupGetter:  getter('info.constructorPath', nsCore.JsDocEntity),
@@ -713,7 +714,6 @@
                 }
               },
               {
-                selected: true,
                 title: 'None',
                 handler: function(){
                   owner.setLocalGrouping();
