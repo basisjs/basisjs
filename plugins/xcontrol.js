@@ -1,5 +1,8 @@
 (function(){
-  
+
+ /**
+  * @namespace Basis.Plugin.X
+  */  
   var namespace = 'Basis.Plugin.X';
     
   var Class = Basis.Class;
@@ -65,8 +68,9 @@
         Event.addHandler(this.element, 'mousewheel', function(event){
           //console.log('mousewheel')
           try {
-            this.pp.content.dispatchEvent(event);
+            this.owner.content.dispatchEvent(event);
           } catch(e) {
+            MW_SUPPORTED = false;
             Event.removeHandler(this.element, 'mousewheel');
           }
         }, this);
@@ -76,7 +80,11 @@
     }
   });
 
+ /**
+  * @class
+  */
   var XControl = Class(nsWrappers.Control, {
+    className: namespace + '.Control',
     childClass: XControlItem,
     template: new Template(
       '<div{element} class="XControl">' +
@@ -85,27 +93,9 @@
     ),
     behaviour: {
       childNodesModified: function(object, delta){
-        //console.log('mm')
-        //console.log('master childNodesModified');
-        //this.header.setChildNodes(this.childNodes);
-        //this.footer.setChildNodes(this.childNodes);
         this.recalc();
-        /*if (this.satellite)
-        {
-          this.satellite.header.setChildNodes(this.childNodes);
-          this.satellite.footer.setChildNodes(this.childNodes);
-        }*/
       }
     },
-
-    /*satelliteConfig: {
-      header: {
-        instanceOf: XControlHeaderList
-      },
-      footer: {
-        instanceOf: XControlHeaderList
-      }
-    },*/
 
     clientHeight_: -1,
     scrollHeight_: -1,
@@ -118,50 +108,36 @@
       this.inherit(Object.complete({ childNodes: null }, config));
 
       var headerClass = this.childClass.prototype.satelliteConfig.header.instanceOf;
-      this.meterHeader = new headerClass({ info: { title: 'test' } });
+      this.meterHeader = new headerClass({
+        container: this.element,
+        info: { title: 'meter' }
+      });
       this.meterElement = this.meterHeader.element;
-      this.element.appendChild(this.meterElement);
       DOM.Style.setStyle(this.meterElement, {
         position: 'absolute',
         visibility: 'hidden'
       });
 
-      this.childNodesDataset = new nsWrappers.ChildNodesDataset(this/*, {
-        handlers: {
-          datasetChanged: function(){
-            console.log('datasetChanged');
-          }
-        }
-      }*/);
+      this.childNodesDataset = new nsWrappers.ChildNodesDataset(this);
 
       this.header = new XControlHeaderList({
         container: this.element,
         childClass: headerClass,
         collection: this.childNodesDataset,
-        cssClassName: 'XControlHeader'/*,
-        handlers: {
-          childNodesModified: function(){
-            console.log('related childNodesModified')
-          }
-        }*/
+        cssClassName: 'XControlHeader'
       });
       this.footer = new XControlHeaderList({
         container: this.element,
         childClass: headerClass,
         collection: this.childNodesDataset,
-        cssClassName: 'XControlFooter'/*,
-        handlers: {
-          childNodesModified: function(){
-            console.log('related childNodesModified')
-          }
-        }*/
+        cssClassName: 'XControlFooter'
       });
 
       DOM.hide(this.header.element);
       DOM.hide(this.footer.element);
 
-      this.header.pp = this;
-      this.footer.pp = this;
+      this.header.owner = this;
+      this.footer.owner = this;
       
       this.thread = new Basis.Animation.Thread({
         duration: 400,
@@ -178,20 +154,17 @@
 
       Event.addHandler(this.content, 'scroll', this.recalc, this);
       Event.addHandler(window, 'resize', this.recalc, this);
+      this.addEventListener('click', 'click', true);
 
       if (config.childNodes)
         this.setChildNodes(config.childNodes);
 
-      this.recalc();
-      setInterval(function(){ self.recalc() }, 500);
-
-      this.addEventListener('click');
-      //this.dispatch('childNodesModified', {});
+      this.timer_ = setInterval(function(){ self.recalc() }, 500);
     },
     scrollToNode: function(node){
       if (node && node.parentNode === this)
       {
-        var scrollTop = this.topPoints[DOM.index(node)];
+        var scrollTop = Math.min(this.content.scrollHeight - this.content.clientHeight, this.topPoints[DOM.index(node)]);
 
         if (this.thread)
         {
@@ -205,6 +178,10 @@
           this.content.scrollTop = scrollTop;
       }
     },
+
+   /**
+    * xx
+    */
     recalc: function(){
       var content = this.content;
       var clientHeight = content.clientHeight;
@@ -212,72 +189,36 @@
       var scrollTop = content.scrollTop;
       var isFit = clientHeight == scrollHeight;
 
-      //console.log('clientHeight: {0}, scrollHeight: {1}'.format(clientHeight, scrollHeight))
-
       if (this.clientHeight_ != clientHeight || this.scrollHeight_ != scrollHeight)
       {
         // save values 
         this.clientHeight_ = clientHeight;
         this.scrollHeight_ = scrollHeight;
 
+        var top = [];
+        var bottom = [];
+
         if (!isFit)
         {
           // calc scroll points
           var headerElementHeight = this.meterElement.offsetHeight;
-          var heights = [];
-          var topPoints = [0];
-          var bottomPoints = [scrollHeight - clientHeight];
-          //var v = scrollHeight - clientHeight;
-          var xx = [];
-          var yy = [];
-          var hh = 0;
-          var hh2 = headerElementHeight * this.childNodes.length - clientHeight;
-          //console.log(headerElementHeight);
-          for (var node, height, i = 0; node = this.childNodes[i]; i++)
+          var topHeight = 0;
+          var bottomHeight = headerElementHeight * this.childNodes.length - clientHeight;
+          for (var node, i = 0; node = this.childNodes[i]; i++)
           {
-            //console.log(node.element.offsetTop);
-            height = node.element.offsetHeight;
+            var height = node.element.offsetHeight;
             var offsetTop = node.element.offsetTop;
 
-            if (height)
-            {
-              height -= headerElementHeight;
-              //hh += headerElementHeight;
-            }
+            top.push(offsetTop ? offsetTop - topHeight : top[i - 1] || 0);
+            bottom.push(offsetTop ? offsetTop + bottomHeight : bottom[i - 1] || bottomHeight);
 
-            heights.unshift(height);
-            //v-= height;
-            //xx.push(v);
-            topPoints.push(topPoints[i] + height);
-            xx.push(offsetTop ? offsetTop - hh : xx[i - 1] || 0);
-            yy.push(offsetTop ? offsetTop + hh2 : yy[i - 1] || hh2);
-
-            hh2 -= headerElementHeight;
-            if (1 || height)
-            {
-              hh += headerElementHeight;
-            }
+            topHeight += headerElementHeight;
+            bottomHeight -= headerElementHeight;
           }
-          //console.log(topPoints);
-          //console.log(xx);
-          //console.log(heights);
-          //console.log(xx, clientHeight, scrollHeight);
-          for (var i = 0; i < heights.length; i++)
-          {
-            bottomPoints.unshift(bottomPoints[0] - heights[i]);
-          }
-          //console.log(scrollHeight, clientHeight, scrollHeight - clientHeight)
-          //console.log(bottomPoints);
-          //console.log(yy);
+        }
 
-          this.topPoints = xx;
-          this.bottomPoints = yy;
-        }
-        else
-        {
-          this.topPoints = [];
-          this.bottomPoints = [];
-        }
+        this.topPoints = top;
+        this.bottomPoints = bottom;
 
         // values that's trigger for update headers
         this.scrollTop_ = -1;
@@ -327,6 +268,20 @@
           this.lastBottomPoint = this.childNodes.length;
         }
       }
+    },
+    destroy: function(){
+      clearInterval(this.timer_);
+
+      this.thread.destroy();
+      this.modificator.destroy();
+      this.header.destroy();
+      this.footer.destroy();
+      this.childNodesDataset.destroy();
+
+      Event.removeHandler(this.content, 'scroll', this.recalc, this);
+      Event.removeHandler(window, 'resize', this.recalc, this);
+
+      this.inherit();
     }
   });
 
@@ -334,7 +289,7 @@
     Control: XControl,
     ControlItem: XControlItem,
     ControlItemHeader: XControlItemHeader,
-    XControlHeaderList: XControlHeaderList
+    ControlHeaderList: XControlHeaderList
   })
 
 })();

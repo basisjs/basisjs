@@ -436,6 +436,10 @@
         return this.inherit(config);
       },
 
+     /**
+      * Set new getter for title
+      * @param {string|function()} titleGetter
+      */
       setTitleGetter: function(titleGetter){
         var getter = getter(titleGetter);
         if (this.titleGetter !== getter)
@@ -2599,7 +2603,7 @@
 
      /**
       * @param {Object} config
-      * @config {boolean} multiple Set multiple mode for selection (more than one node cen be selected).
+      * @config {boolean} multiple Set multiple mode for selection (more than one node can be selected).
       * @constructor
       */
       init: function(config){

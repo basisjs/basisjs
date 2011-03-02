@@ -441,24 +441,26 @@
     'jsdoc': function(resource){
 
       function createJsDocEntity(source, path){
-        var text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|[\r\n]+)\s*\*/g, '\n').trimLeft();
+        var text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft();
         var e = JsDocEntity({
           path: path,
           text: text,
           file: resource.url,
-          line: line
+          line: line + 1 + lineFix
         });
         jsDocs[e.value.path] = e.value.text;
       }
 
-      var parts = resource.text.replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|[\r\n])+?)\*\/)/m);
+      var parts = resource.text.replace(/\r\n|\n\r|\r/g, '\n').replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|\n)+?)\*\/)/);
       var ns = '';
       var isClass;
       var clsPrefix = '';
       var skipDeclaration = false;
       var line = 0;
+      var lineFix;
 
       parts.reduce(function(jsdoc, code, idx){
+        lineFix = 0;
         if (idx % 2)
         {
           if (code.match(/@annotation/))
@@ -475,8 +477,7 @@
               createJsDocEntity(code, ns);
               skipDeclaration = true;
             }
-            var m = code.match(/@class/);
-            isClass = !!m;
+            isClass = !!code.match(/@class/);
             if (isClass)
               clsPrefix = '';
           }
@@ -485,18 +486,16 @@
         {
           if (!skipDeclaration && idx)
           {
-            var m = code.match(/\s*(var\s+)?(function\s+)?([a-z0-9\_\$]+)/i);
+            var m = code.match(/^([\s\n]*)(var\s+|function\s+)?([a-z0-9\_\$]+)/i);
             if (m)
             {
-                //console.log(m);
-                //console.log(ns, clsPrefix, isClass);
-              //console.log(m[1], jsdoc.last());
+              lineFix = (m[1].match(/\n/g) || []).length;
               createJsDocEntity(jsdoc.last(), ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + m[3]);
               
               if (isClass)
                 clsPrefix = m[3];
               else
-                if (m[1] || m[2])
+                if (m[2])
                 {
                   clsPrefix = '';
                 }
@@ -504,7 +503,9 @@
           }
           skipDeclaration = false;
         }
-        line += code.split(/\r\n?|\n\r?/).length - 1;
+
+        line += (code.match(/\n/g) || []).length;
+
         return jsdoc;
       }, []);
 

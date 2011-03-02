@@ -84,9 +84,16 @@
     handlers: {
       delegateChanged: function(object, oldDelegate){
         this.clear(true);
-        this.setChildNodes(this.delegate ? [/*nsView.viewTitle, */nsView.viewJsDoc].concat(this.delegate.views || []) : null).forEach(function(node){
-          node.setDelegate(this);
-        }, this.getRootDelegate());
+
+        this.inherit(object, oldDelegate);
+
+        if (this.delegate)
+        {
+          this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
+            return view.isAcceptableObject(this.info);
+          }, this));
+        }
+
         this.recalc();
       }
     }
@@ -119,11 +126,13 @@
       if (node)
       {
         node.expand();
-        node = node.childNodes
+        node = node.childNodes.search(path, 'info.objPath')
+               ||
+               node.childNodes
                  .sortAsObject('info.objPath')
                  .reverse()
                  .search(0, function(node){
-                   return path.indexOf(node.info.objPath);
+                   return path.indexOf(node.info.objPath + '.');
                  });
       }
 
@@ -338,6 +347,29 @@
   })*/
 
   //
+  // Source view
+  //
+
+  /*
+  var sourceView = new Basis.DOM.Wrapper.HtmlContainer({
+    template: new Basis.Html.Template(
+      '<div{element} id="SourceCodeViewer">' +
+        '<div class="layout">' +
+          '<div class="header">Header</div>' +
+          '<div{content} class="content"></div>' +
+        '</div>' +
+      '</div>'
+    )
+  });
+
+  DOM.insert(document.body, sourceView.element);
+  DOM.insert(sourceView.content, new Basis.Plugin.SyntaxHighlight.SourceCodeNode({
+    info: {
+      code: Basis.DOM.Wrapper.Node.prototype.insertBefore.toString()
+    }
+  }).element);*/
+
+  //
   // Layout
   //
 
@@ -373,7 +405,7 @@
     var sender = Event.sender(e);
     if (sender.tagName != 'A')
       sender = DOM.parent(sender, 'A');
-    if (sender && sender.hash != '')
+    if (sender && sender.pathname == location.pathname && sender.hash != '')
       navTree.open(sender.hash, DOM.parentOf(navTree.element, sender));
 
     //DOM.focus(searchInput.field, true);
@@ -403,7 +435,11 @@
   // jsDocs parse
   //
 
-  var scripts = DOM.tag(document, 'SCRIPT').map(getter('getAttribute("src")')).filter(getter('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')); //['../basis.js', '../dom_wraper.js', '../tree.js'];
+  var scripts = DOM
+                  .tag(document, 'SCRIPT')
+                  .map(getter('getAttribute("src")'))
+                  .filter(getter('match(/^\\.\\.\\/[a-z0-9\\_\/]+\\.js$/i)'));
+   //['../basis.js', '../dom_wraper.js', '../tree.js'];
   //  console.log(DOM.tag(document, 'SCRIPT').map(getter('getAttribute("src")')).filter(getter('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')));
 
   scripts.forEach(function(src){

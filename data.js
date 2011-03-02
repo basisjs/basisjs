@@ -1,4 +1,14 @@
-
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2011 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+  
   (function(){
 
    /**
@@ -94,7 +104,7 @@
 
      /**
       * State of object.
-      * @type {Basis.DOM.Wrapper.DataState}
+      * @type {Basis.Data.STATE|string}
       */
       state: STATE_READY,
 
@@ -160,7 +170,7 @@
      /**
       * Subscriber type indicates what sort of influence has currency object on
       * related objects (delegate, collection).
-      * @type {number}
+      * @type {Basis.Data.SUBSCRIPTION|number}
       */
       subscriptionType: SUBSCRIPTION_DELEGATE | SUBSCRIPTION_COLLECTION,
 
@@ -276,15 +286,18 @@
      /**
       * Set new delegate object or reject it (if passed null).
       * @example
-      *   var a = new DataObject();
-      *   var b = new DataObject();
+      *   var a = new Basis.Data.DataObject();
+      *   var b = new Basis.Data.DataObject();
       *
       *   a.setDelegate(b);
       *   a.update({ prop: 123 });
       *   alert(a.info.prop); // shows 123
+      *   alert(b.info.prop); // shows 123
       *   alert(a.info.prop === b.info.prop); // shows true
       *
       *   b.update({ prop: 456 });
+      *   alert(a.info.prop); // shows 456
+      *   alert(b.info.prop); // shows 456
       *   alert(a.info.prop === b.info.prop); // shows true
       *
       *   a.setState(Basis.Data.STATE.PROCESSING);
@@ -321,6 +334,9 @@
             // prevent from linking object that had already linked (event through some other objects)
             if (!this.isConnected(delegate))
             {
+              if (isDelegateSubscriber)
+                delegate.addSubscriber(this);
+
               this.setState(delegate.state, delegate.state.data);
 
               for (var key in delegate.info)
@@ -341,9 +357,6 @@
               this.info = delegate.info;
 
               delegate.addHandler(DATAOBJECT_DELEGATE_HANDLER, this);
-
-              if (isDelegateSubscriber)
-                delegate.addSubscriber(this);
             }
             else
             {

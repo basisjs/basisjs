@@ -149,8 +149,8 @@
   #Sidebar .Class-Content       A { background-image: url(img/bullet_square_red.png) }
   #Sidebar .Constant-Content    A { background-image: url(img/node_const.png) }
   #Sidebar .Function-Content    A { background-image: url(img/node_class_function.png) }
-  #Sidebar .Method-Content      A { background-image: url(img/gears.png) }
-  #Sidebar .Property-Content    A { background-image: url(img/node_property.png) }
+  #Sidebar .Method-Content      A { background-image: url(img/node_method.png) }
+  #Sidebar .Property-Content    A { background-image: url(img/node_property2.png) }
   #Sidebar .Object-Content      A { background-image: url(img/node_property.png) }
   #Sidebar .HtmlElement-Content A { background-image: url(img/element_copy.png) }
 
@@ -467,16 +467,31 @@
   }
   #Content .viewPrototype .property .title
   {
-    background-image: url(img/node_property.png);
+    background-image: url(img/node_property2.png);
   }
   #Content .viewPrototype .method .title
   {
-    background-image: url(img/gears.png);
+    background-image: url(img/node_method.png);
   }
   #Content .viewPrototype .method .args
   {
     margin-left: .33ex;
     color: #888;
+  }
+  #Content .viewPrototype .method .types
+  {
+    padding-right: 3ex;
+  }
+  #Content .viewPrototype .method .event
+  {
+    margin: 0 0 0 1ex;
+    padding: 1px .75ex 2px;
+    font-size: 85%;
+    background: #FFEA7C;
+    color: #886600;
+      -webkit-border-radius: 3px;
+      -moz-border-radius: 3px;
+    border-radius: 3px;
   }
 
   #Content .content
@@ -715,4 +730,94 @@
   .Basis-SyntaxHighlight
   {
     margin: 0;
+  }
+
+  #Content .jsDocs A.location
+  {
+    display: block;
+    float: right;
+    color: #666;
+    font-size: 90%;
+  }
+
+  #Content .viewPrototype .jsDocs A.location
+  {
+    margin-top: -1.5em;
+    font-size: 100%;
+  }
+
+  .viewInheritance .Basis-PartitionNode
+  {
+    display: table-row;
+    background: #F8F8F8;
+  }
+  .viewInheritance .Basis-PartitionNode:nth-child(2n)
+  {
+    background: #F0F0F0;
+  }
+  .viewInheritance .Basis-PartitionNode-Title
+  {
+    display: table-cell;
+    border-top: 1px solid #E0E0E0;
+    padding: .5em 0.5ex .5em 2ex;
+    text-align: right;
+    margin: 1ex 0;
+  }
+  .viewInheritance .Basis-PartitionNode-Title A
+  {
+    background: none !important;
+    padding-left: 0 !important;
+  }
+  #Content .viewInheritance .Basis-PartitionNode-Content
+  {
+    display: table-cell;
+    border-top: 1px solid #E0E0E0;
+    padding: 0 2ex 0 0.5ex;
+  }
+  .viewInheritance .Basis-PartitionNode-Content .item
+  {
+    margin: .5em 0 !important;
+  }
+  
+  #SourceCodeViewer
+  {
+    background: rgba(0, 0, 0, .75);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+  }
+
+  #SourceCodeViewer .layout
+  {
+    position: absolute;
+    top: 2em;
+    left: 50px;
+    right: 50px;
+    bottom: 2em;
+    border: 1px solid black;
+    background: #F0F0F0;
+  }
+  #SourceCodeViewer .header
+  {
+    padding: .5em 1ex;
+    line-height: 1em;
+    text-align: center;
+    font-weight: bold;
+  }
+  #SourceCodeViewer .content
+  {
+    background: white;
+    position: absolute;
+    top: 2em;
+    border-top: 1px solid #BBB;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding: 1ex;
   }

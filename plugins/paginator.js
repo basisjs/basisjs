@@ -17,7 +17,9 @@
 
 (function(Basis){
 
-  // namespace
+ /**
+  * @namespace Basis.Plugin
+  */ 
   
   var namespace = 'Basis.Plugin';
 
@@ -151,6 +153,11 @@
       return config;
     },
 
+   /**
+    * @param {number} pageCount
+    * @param {number} pageSpan
+    * @param {number} activePage
+    */
     setProperties: function(pageCount, pageSpan, activePage){
       pageSpan = Math.min(pageSpan || 10, pageCount);
 

@@ -333,7 +333,7 @@
     };
 
    /**
-    * @class ServiceCallTransport
+    * @class
     */
     var ServiceCallTransport = Class(Basis.Ajax.Transport, {
       className: namespace + '.ServiceCallTransport',

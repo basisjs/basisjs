@@ -58,32 +58,37 @@
       '</div>';
     template = template.firstChild;
 
-    function highlight(code){
+    function highlight(code, keepFormat){
 
-      function normalize(code){
+      function normalize(code, offset){
         code = code
                  .trimRight()
                  .replace(/\r\n|\n\r|\r/g, '\n')
-                 .replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
+
+        if (!keepFormat)
+          code = code.replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
 
         // fix empty strings
         code = code.replace(/\n[ \t]+/g, function(m){ return m.replace(/\t/g, '  '); }).replace(/\n[ \t]+\n/g, '\n\n');
 
-        // normalize code offset
-        var minOffset = 1000;
-        var lines = code.split(/\n+/);
-        var startLine = Number(code.match(/^function/) != null); // hotfix for function.toString()
-        for (var i = startLine; i < lines.length; i++)
+        if (!keepFormat)
         {
-          var m = lines[i].match(/^\s*/);
-          if (m[0].length < minOffset)
-            minOffset = m[0].length;
-          if (minOffset == 0)
-            break;
-        }
+          // normalize code offset
+          var minOffset = 1000;
+          var lines = code.split(/\n+/);
+          var startLine = Number(code.match(/^function/) != null); // hotfix for function.toString()
+          for (var i = startLine; i < lines.length; i++)
+          {
+            var m = lines[i].match(/^\s*/);
+            if (m[0].length < minOffset)
+              minOffset = m[0].length;
+            if (minOffset == 0)
+              break;
+          }
 
-        if (minOffset > 0)
-          code = code.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
+          if (minOffset > 0)
+            code = code.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
+        }
 
         code = code.replace(new RegExp('(^|\\n)( +)', 'g'), function(m, a, b){ return a + '\xA0'.repeat(b.length)});
 
@@ -91,13 +96,13 @@
       }
 
       function getMatches(code){
-        function addMatch(kind, start, end){
+        function addMatch(kind, start, end, x){
           if (lastMatchPos != start)
             result.push(code.substring(lastMatchPos, start).replace(keywordRegExp, '<span class="token-keyword">$1</span>'));
 
           lastMatchPos = end + 1;
 
-          result.push('<span class="token-' + kind + '">' + code.substring(start, end + 1) + '</span>');
+          result.push('<span class="token-' + kind + '">' + code.substring(start, end + 1) + '</span>' + (x || ''));
         }
 
         var result = [];
@@ -184,8 +189,8 @@
                 }
                 else if (sym[i] == '\n')
                 {
-                  addMatch('comment', start, i);
-                  start = i;
+                  addMatch('comment', start, i - 1, '\n');
+                  lastMatchPos = start = i + 1;
                 }
               }
             }
@@ -200,7 +205,8 @@
 
       //  MAIN PART
 
-      var html = getMatches(normalize(code)/*.replace(/\&/g, '&amp;')*/.replace(/</g, '&lt;'));
+      var html = getMatches(normalize(code).replace(/</g, '&lt;'));
+      //console.log(html);
 
       //console.log('getmatches ' + (new Date - t));
 
@@ -230,6 +236,8 @@
       template: new Template(
         '<pre{element|codeElement} class="Basis-SyntaxHighlight"/>'
       ),
+      codeGetter: Function.getter('info.code'),
+      normalize: true,
       behaviour: {
         update: function(object, delta){
           this.inherit(object, delta);
@@ -239,12 +247,20 @@
           {
             this.code_ = code;
             //DOM.insert(DOM.clear(this.codeElement), highlight(code));
-            this.codeElement.innerHTML = highlight(code);
+            this.codeElement.innerHTML = highlight(code, !this.normalize);
             //DOM.insert(this.codeElement, DOM.createElement('TEXTAREA', Basis.DOM.outerHTML(highlight(code))));
           }
         }
       },
-      codeGetter: Function.getter('info.code')
+      init: function(config){
+        if (config)
+        {
+          if ('normalize' in config)
+            this.normalize = !!config.normalize;
+        }
+
+        this.inherit(config);
+      }
     });
 
     Basis.namespace(namespace).extend({
