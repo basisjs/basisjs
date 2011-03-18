@@ -68,7 +68,6 @@
     //
 
     var ENTITYSET_WRAP_METHOD = function(data){
-      ;;;if (!this.wrapper) debugger;
       return this.inherit(data && data.map(this.wrapper));
     };
 
@@ -334,7 +333,6 @@
         });
 
         // debug only
-        ;;;
         //result.entityType = entityType;
         //result.callText = function(){ return entityType.name };
 
@@ -540,6 +538,13 @@
       ;;;if (typeof console != 'undefined') console.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.eventObjectId + ': ' + message, entity); 
     };
 
+    var ENTITY_ROLLBACK_HANDLER = {
+      stateChanged: function(object, oldState){
+        if (this.state == STATE.READY)
+          this.rollbackData_ = null;
+      }
+    };
+
    /**
     * @class
     */
@@ -563,13 +568,7 @@
 
           for (var name in this.reflection_)
             this.entityType.reflection_[name].detach(this);
-        }/*,
-        stateChanged: function(object, newState, oldState, errorText){
-          this.inherit(object, newState, oldState, errorText);
-
-          if (newState == STATE.READY)
-            this.rollbackData_ = null;
-        }*/
+        }
       },
 
       init: function(data){
@@ -748,7 +747,11 @@
 
           // if rollback mode - store changes
           if (rollback)
+          {
+            if (!this.rollbackHandler_)
+              this.rollbackHandler_ = this.addHandler(ENTITY_ROLLBACK_HANDLER);
             this.rollbackData_ = complete(this.rollbackData_ || {}, delta);
+          }
 
           // fire event for not silent mode
           if (!this.silentSet_)
@@ -843,6 +846,8 @@
 
         this.value = // backward compatibility
         this.info = {}; 
+
+        delete this.rollbackData_;
 
         // clear links
         //delete this.info;

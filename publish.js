@@ -472,7 +472,7 @@
         {
           var chunk = sessionDataChunk[key] || {};
           data[key].update(chunk.info);
-          data[key].setState(chunk.state || STATE.UNDEFINED, chunk.state.data);
+          data[key].setState(chunk.state || STATE.UNDEFINED, chunk.state && chunk.state.data);
         }
       },
       sessionClose: function(session){

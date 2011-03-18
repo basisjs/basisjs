@@ -155,9 +155,6 @@
       handlersContext: UserGroup.all,
       handlers: adapterHandler
     });
-    UserGroup.all.addHandler({
-      
-    })
 
     User.all.addHandler(colHandler);
     User.all.adapter = new Basis.Ajax.Transport({

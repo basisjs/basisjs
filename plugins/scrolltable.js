@@ -64,18 +64,16 @@
       '</div>'
     ),
 
-    behaviour: nsWrappers.createBehaviour(nsTable.Table, {
+    behaviour: {
       childNodesModified: function(node, delta){
         this.inherit(node, delta);
         TimeEventManager.add(this, 'adjust', Date.now());
-        //console.log('!');
-        //setTimeout(this.sync.bind(this), 0);
       },
       childUpdated: function(child, delta){
         this.inherit(child, delta);
         TimeEventManager.add(this, 'adjust', Date.now());
       }
-    }),
+    },
 
     init: function(config){
       this.inherit(config);        

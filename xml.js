@@ -153,7 +153,10 @@
       if (implementation && implementation.createDocument)
       {
         return function(namespace, nodename){ 
-          return implementation.createDocument(namespace, nodename, null);
+          var result = implementation.createDocument(namespace, nodename, null);
+          if (result.charset && result.charset != document.charset)
+            result.charset = document.charset;
+          return result;
         }
       }
 
@@ -325,18 +328,23 @@
           value = child.nodeValue;
         }
 
-        if (map)
+        while (map)
         {
-          var realName = name;
-
           if (map.storeName)
-            value[map.storeName] = realName;
+            value[map.storeName] = name;
 
           if (map.rename)
+          {
             name = map.rename;
+            map = mapping[name];
+          }
+          else
+          {
+            if (!result[name] && map.forceArray)
+              value = [value];
 
-          if (!result[name] && map.forceArray)
-            value = [value];
+            break;
+          }
         }
 
         if (name in result)

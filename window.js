@@ -182,13 +182,10 @@
               handlersContext: this,
               handlers: {
                 move: function(){
-                  //console.log(this);
                   this.autocenter = false;
                   this.element.style.margin = 0;
-                  //console.log('move');
                 },
                 over: function(){
-                  //console.log(this);
                   this.cssRule.setStyle(Object.slice(this.element.style, 'left top'.qw()));
                   DOM.setStyle(this.element, {
                     top: '',

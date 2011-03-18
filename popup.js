@@ -11,7 +11,9 @@
 
   (function(){
 
-   /** @namespace Basis.Controls.Popup */
+   /**
+    * @namespace Basis.Controls.Popup
+    */
 
     var namespace = 'Basis.Controls.Popup';
 
@@ -26,8 +28,10 @@
     var cssClass = Basis.CSS.cssClass;
     var Cleaner = Basis.Cleaner;
 
-    var nsWrappers = DOM.Wrapper;
+    var nsWrappers = Basis.DOM.Wrapper;
     var nsLayout = Basis.Layout;
+
+    var createBehaviour = Basis.EventObject.createBehaviour;
 
     if (!nsLayout)
       throw 'Basis.Controls.Popup: Basis.Layout required';
@@ -534,7 +538,7 @@
 
     var MenuItemSet = Class(MenuItem, {
       className: namespace + '.MenuItemSet',
-      behaviour: nsWrappers.createBehaviour(nsWrappers.HtmlNode, {}),
+      behaviour: createBehaviour(nsWrappers.HtmlNode, {}),
       template: new Template(
         '<div{element|content|childNodesElement} class="Basis-Menu-ItemSet"/>'
       )
@@ -645,7 +649,7 @@
       handheldMode: false,
 
       childClass: Popup,
-      behaviour: nsWrappers.createBehaviour(nsWrappers.Node, {
+      behaviour: createBehaviour(nsWrappers.Node, {
         childNodesModified: function(object, delta){
           if (delta.deleted)
             for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
@@ -679,16 +683,16 @@
         }
       }),
 
-      insertBefore: function(popup){
+      insertBefore: function(newChild, refChild){
         // save documentElement (IE, mozilla and others) and body (webkit) scrollTop
         var documentST_ = document.documentElement.scrollTop;
         var bodyST_ = document.body.scrollTop;
 
-        if (this.inherit(popup))
+        if (this.inherit(newChild, refChild))
         {
           // store saved scrollTop to popup and scroll viewport to top
-          popup.documentST_ = documentST_;
-          popup.bodyST_ = bodyST_;
+          newChild.documentST_ = documentST_;
+          newChild.bodyST_ = bodyST_;
           if (this.handheldMode)
           {
             document.documentElement.scrollTop = 0;
@@ -696,7 +700,7 @@
           }
 
           // set zIndex
-          popup.element.style.zIndex = Basis.Controls.Window ? Basis.Controls.Window.getWindowTopZIndex() : 2001;
+          newChild.element.style.zIndex = Basis.Controls.Window ? Basis.Controls.Window.getWindowTopZIndex() : 2001;
         }
       },
       removeChild: function(popup){

@@ -441,10 +441,10 @@
       * @param {string|function()} titleGetter
       */
       setTitleGetter: function(titleGetter){
-        var getter = getter(titleGetter);
-        if (this.titleGetter !== getter)
+        titleGetter = getter(titleGetter);
+        if (this.titleGetter !== titleGetter)
         {
-          this.titleGetter = getter(titleGetter);
+          this.titleGetter = titleGetter;
           this.dispatch('update', this, {});
         }
       },
@@ -1408,7 +1408,7 @@
       */
       setChildNodes: function(childNodes, keepAlive){
         if (!this.collection)
-          this.clear(this.collection ? false : !!keepAlive);
+          this.clear(!!keepAlive);
 
         if (childNodes)
         {
@@ -1450,7 +1450,7 @@
           if (oldCollection)
           {
             if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION.COLLECTION))
-              oldCollection.removeSubscriber(this);
+              oldCollection.removeSubscriber(this, SUBSCRIPTION.COLLECTION);
             oldCollection.removeHandler(HIERARCHYTOOLS_COLLECTION_HANDLERS, this);
 
             delete this.collection;
@@ -1475,7 +1475,7 @@
 
             collection.addHandler(HIERARCHYTOOLS_COLLECTION_HANDLERS, this);
             if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION.COLLECTION))
-              collection.addSubscriber(this);
+              collection.addSubscriber(this, SUBSCRIPTION.COLLECTION);
           }
 
           // TODO: restore localSorting & localGrouping, fast node reorder
@@ -2259,7 +2259,7 @@
             this.inherit(object, delta);
 
             if (this.tmpl.titleText)
-              this.tmpl.titleText.nodeValue = this.titleGetter(this) || '';
+              this.tmpl.titleText.nodeValue = Object.coalesce(this.titleGetter(this), '');
           }
         })
       ),
@@ -2635,8 +2635,6 @@
     Basis.namespace(namespace).extend({
       // tools
       HierarchyTools: HierarchyTools,
-
-      createBehaviour: createBehaviour,
 
       // classes
       AbstractNode: AbstractNode,

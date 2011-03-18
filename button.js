@@ -82,14 +82,17 @@
         else
           delete config.handlers;
 
-        // inherit
-        this.inherit(config);
+        if (config.captionGetter)
+          this.captionGetter = Function.getter(config.captionGetter);
 
         if (config.groupId)
           this.groupId = config.groupId;
 
         if (config.name)
           this.name = config.name;
+
+        // inherit
+        this.inherit(config);
 
         this.setCaption('caption' in config ? config.caption : this.caption);
 
@@ -115,7 +118,7 @@
         this.captionText.nodeValue = this.captionGetter(this);
       },
       setTitle: function(caption){
-        ;;;if (typeof console != 'undefined') console.warn("Button.setTitle is deprecated. Use Button.setCaption instead");
+        ;;;if (typeof console != 'undefined'){ console.warn("Button.setTitle is deprecated. Use Button.setCaption instead"); debugger; }
         return this.setCaption(caption);
       },
       destroy: function(){

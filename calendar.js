@@ -418,6 +418,15 @@
       nodePeriodUnit: YEAR,
       nodePeriodUnitCount: 10,
 
+      getTabTitle: function(date){
+        if (date)
+        {
+          var year = date.getFullYear();
+          var start = year - year % 10;
+          return start + '-' + (Number(start.toString().substr(-2)) + 9).lead(2);
+        }
+      },
+
       getInitOffset: function(){
         return 1;
       }
@@ -518,7 +527,7 @@
           if (node instanceof CalendarNode)
           {
             var newDate = node.info.periodStart;
-            this.selectedDate.set(new Date(this.selectedDate.value).add(this.activeSection.nodePeriodUnit, this.selectedDate.value.diff(this.activeSection.nodePeriodName, newDate)));
+            this.selectedDate.set(new Date(this.selectedDate.value).add(this.activeSection.nodePeriodUnit, this.selectedDate.value.diff(this.activeSection.nodePeriodUnit, newDate)));
             this.nextSection(BACKWARD);
           }
           else

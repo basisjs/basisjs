@@ -532,7 +532,7 @@
           this.unlock();
         }
 
-        this.valueChanged_ = !!config.calculateOnInit;
+        this.valueChanged_ = this.stateChanged_ = !!config.calculateOnInit;
         this.update();
 
         Cleaner.add(this);
@@ -647,7 +647,7 @@
               }
 
               if (curObject)
-                this.setState(curObject.state, curObject.errorText);
+                this.setState(curObject.state, curObject.state.data);
             }
             //this.setState();
           }

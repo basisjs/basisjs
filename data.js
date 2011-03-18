@@ -312,7 +312,7 @@
         {
           var delta = {};
           var oldDelegate = this.delegate;
-          var isDelegateSubscriber = this.isActiveSubscriber && this.subscriptionType & SUBSCRIPTION_DELEGATE;
+          var isDelegateSubscriber = this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_DELEGATE);
 
           if (oldDelegate)
           {
@@ -324,7 +324,7 @@
             this.info = {};
 
             if (isDelegateSubscriber)
-              oldDelegate.removeSubscriber(this);
+              oldDelegate.removeSubscriber(this, SUBSCRIPTION_DELEGATE);
 
             delete this.delegate;
           }
@@ -335,7 +335,7 @@
             if (!this.isConnected(delegate))
             {
               if (isDelegateSubscriber)
-                delegate.addSubscriber(this);
+                delegate.addSubscriber(this, SUBSCRIPTION_DELEGATE);
 
               this.setState(delegate.state, delegate.state.data);
 
@@ -367,9 +367,6 @@
 
           this.dispatch('delegateChanged', this, oldDelegate);
           this.dispatch('update', this, delta);
-
-          //if (this.delegate && isDelegateSubscriber)
-          //  this.delegate.addSubscriber(this);
         }
 
         return this.delegate;
@@ -423,7 +420,7 @@
           if (oldCollection)
           {
             if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_COLLECTION))
-              oldCollection.removeSubscriber(this);
+              oldCollection.removeSubscriber(this, SUBSCRIPTION_COLLECTION);
 
             delete this.collection;
           }
@@ -433,7 +430,7 @@
             this.collection = collection;
 
             if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_COLLECTION))
-              collection.addSubscriber(this);
+              collection.addSubscriber(this, SUBSCRIPTION_COLLECTION);
           }
             
           this.dispatch('collectionChanged', this, oldCollection);
@@ -484,33 +481,41 @@
 
      /**
       * @param {Basis.EventObject} object
-      * @return {boolean} Returns true if subscriber has beed added.
+      * @return {boolean} Returns true if subscriber has been added.
       */
-      addSubscriber: function(object){
-        var objectId = object.eventObjectId;
-        if (!this.subscribers_[objectId])
+      addSubscriber: function(object, subscriberType){
+        ;;;if (!subscriberType && typeof console != 'undefined') console.warn('addSubscriber has no subscriberType argument');
+
+        var subscriberId = subscriberType + '_' + object.eventObjectId;
+        if (!this.subscribers_[subscriberId])
         {
-          this.subscribers_[objectId] = object;
+          this.subscribers_[subscriberId] = object;
           this.subscriberCount += 1;
           this.dispatch('subscribersChanged');
+
           return true;
         }
+
         return false;
       },
 
      /**
       * @param {Basis.EventObject} object
-      * @return {boolean} Returns true if subscriber has beed removed.
+      * @return {boolean} Returns true if subscriber has been removed.
       */
-      removeSubscriber: function(object){
-        var objectId = object.eventObjectId;
-        if (this.subscribers_[objectId])
+      removeSubscriber: function(object, subscriberType){
+        ;;;if (!subscriberType && typeof console != 'undefined') console.warn('removeSubscriber has no subscriberType argument');
+
+        var subscriberId = subscriberType + '_' + object.eventObjectId;
+        if (this.subscribers_[subscriberId])
         {
-          delete this.subscribers_[objectId];
+          delete this.subscribers_[subscriberId];
           this.subscriberCount -= 1;
           this.dispatch('subscribersChanged');
+
           return true;
         }
+        
         return false;
       },
 
@@ -520,7 +525,7 @@
       * @return {boolean} Returns true if {Basis.Data.DataObject#isActiveSubscriber} was changed.
       */
       setIsActiveSubscriber: function(isActive){
-        if (this.isActiveSubscriber != isActive)
+        if (this.isActiveSubscriber != !!isActive)
         {
           var delegate = this.delegate;
           var collection = this.collection;
@@ -529,20 +534,22 @@
           if (delegate && (subscriptionType & SUBSCRIPTION_DELEGATE))
           {
             if (isActive)
-              delegate.addSubscriber(this);
+              delegate.addSubscriber(this, SUBSCRIPTION_DELEGATE);
             else
-              delegate.removeSubscriber(this);
+              delegate.removeSubscriber(this, SUBSCRIPTION_DELEGATE);
           }
 
           if (collection && (subscriptionType & SUBSCRIPTION_COLLECTION))
           {
             if (isActive)
-              collection.addSubscriber(this);
+              collection.addSubscriber(this, SUBSCRIPTION_COLLECTION);
             else
-              collection.removeSubscriber(this);
+              collection.removeSubscriber(this, SUBSCRIPTION_COLLECTION);
           }
 
           this.isActiveSubscriber = !!isActive;
+
+          this.dispatch('isActiveStateChanged');
 
           return true;
         }
@@ -565,23 +572,23 @@
           {
             var delegate = this.delegate;
             var collection = this.collection;
-            var delegateSubscriptionChanged = delegate && ((newSubscriptionType & SUBSCRIPTION_DELEGATE) ^ SUBSCRIPTION_DELEGATE);
-            var collectionSubscriptionChanged = collection && ((newSubscriptionType & SUBSCRIPTION_COLLECTION) ^ SUBSCRIPTION_COLLECTION);
+            var delegateSubscriptionChanged = delegate && ((newSubscriptionType & SUBSCRIPTION_DELEGATE) ^ (curSubscriptionType & SUBSCRIPTION_DELEGATE));
+            var collectionSubscriptionChanged = collection && ((newSubscriptionType & SUBSCRIPTION_COLLECTION) ^ (curSubscriptionType & SUBSCRIPTION_COLLECTION));
 
             if (delegateSubscriptionChanged)
             {
               if (curSubscriptionType & SUBSCRIPTION_DELEGATE)
-                delegate.removeSubscriber(this);
+                delegate.removeSubscriber(this, SUBSCRIPTION_DELEGATE);
               else
-                delegate.addSubscriber(this);
+                delegate.addSubscriber(this, SUBSCRIPTION_DELEGATE);
             }
 
             if (collectionSubscriptionChanged)
             {
               if (curSubscriptionType & SUBSCRIPTION_COLLECTION)
-                collection.removeSubscriber(this);
+                collection.removeSubscriber(this, SUBSCRIPTION_COLLECTION);
               else
-                collection.addSubscriber(this);
+                collection.addSubscriber(this, SUBSCRIPTION_COLLECTION);
             }
           }
 
@@ -605,7 +612,7 @@
           delegate.removeHandler(DATAOBJECT_DELEGATE_HANDLER, this);
 
           if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_DELEGATE))
-            delegate.removeSubscriber(this);
+            delegate.removeSubscriber(this, SUBSCRIPTION_DELEGATE);
 
           delete this.delegate;
         }
@@ -708,6 +715,15 @@
     */
     var Dataset = Class(AbstractDataset, {
       className: namespace + '.Dataset',
+
+      init: function(config){
+        config = this.inherit(config);
+
+        if (config && config.items)
+          this.set(config.items);
+
+        return config;
+      },
 
       add: function(data){
         
@@ -878,7 +894,6 @@
             var object = this.map_[objectId];
             deleted.push(object);
 
-            ;;;if (typeof object.destroy != 'function') debugger;
             object.destroy();
           }
         }
@@ -916,6 +931,9 @@
 
     });
 
+    //
+    // accumulate dataset changes
+    //
     (function(){
       var awatingDatasetCache = {};
       var realDispatch_ = Dataset.prototype.dispatch;
@@ -1016,7 +1034,7 @@
             });
 
             if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_SOURCE))
-              source.addSubscriber(this);
+              source.addSubscriber(this, SUBSCRIPTION_SOURCE);
 
             return true;
           }
@@ -1030,24 +1048,21 @@
 
     function createADMethod_removeSource(handler){
       return function(source){
-        if (source instanceof AbstractDataset)
+        if (this.sources.remove(source))
         {
-          if (this.sources.remove(source))
-          {
-            source.removeHandler(handler, this);
-            handler.datasetChanged.call(this, source, {
-              deleted: source.getItems()
-            });
+          source.removeHandler(handler, this);
+          handler.datasetChanged.call(this, source, {
+            deleted: source.getItems()
+          });
 
-            if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_SOURCE))
-              source.removeSubscriber(this);
+          if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_SOURCE))
+            source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
 
-            return true;
-          }
+          return true;
         }
         else
         {
-          ;;;if(typeof console != 'undefined') console.warn(this.className + '.removeSource: source isn\'t type of AbstractDataset');
+          ;;;if(typeof console != 'undefined') console.warn(this.className + '.removeSource: source isn\'t in dataset source list');
         }
       }
     }
@@ -1062,7 +1077,7 @@
           });
 
           if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_SOURCE))
-            source.removeSubscriber(this);
+            source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
         }
 
         this.sources.clear();
@@ -1174,33 +1189,54 @@
       },
 
       setIsActiveSubscriber: function(isActive){
-        if (this.inherit(isActive))
+        if (this.isActiveSubscriber != !!isActive)
         {
           if (this.sources.length && (this.subscriptionType & SUBSCRIPTION_SOURCE))
           {
             if (isActive)
-              this.sources.forEach(function(source){ source.addSubscriber(this) }, this);
+            {
+              //this.sources.forEach(function(source){ source.addSubscriber(this, SUBSCRIPTION_SOURCE) }, this);
+              for (var i = 0, source; source = this.sources[i]; i++)
+                source.addSubscriber(this, SUBSCRIPTION_SOURCE);
+            }
             else
-              this.sources.forEach(function(source){ source.removeSubscriber(this) }, this);            
+            {
+              //this.sources.forEach(function(source){ source.removeSubscriber(this, SUBSCRIPTION_SOURCE) }, this);
+              for (var i = 0, source; source = this.sources[i]; i++)
+                source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
+            }
           }
-
-          return true;
         }
 
-        return false;
+        return this.inherit(isActive);
       },
 
       setSubscriptionType: function(subscriptionType){
-        var sourceSubscriptionChanged = this.sources.length && (subscriptionType & SUBSCRIPTION_SOURCE) ^ SUBSCRIPTION_SOURCE;
-        if (sourceSubscriptionChanged && this.isActiveSubscriber)
+        var curSubscriptionType = this.subscriptionType;
+        var newSubscriptionType = Number(subscriptionType) || 0;
+
+        if (curSubscriptionType != subscriptionType && this.isActiveSubscriber)
         {
-          if (subscriptionType & SUBSCRIPTION_SOURCE)
-            this.sources.forEach(function(source){ source.addSubscriber(this) }, this);
-          else
-            this.sources.forEach(function(source){ source.removeSubscriber(this) }, this);
+          var sourceSubscriptionChanged = this.sources.length && (newSubscriptionType & SUBSCRIPTION_SOURCE) ^ (curSubscriptionType & SUBSCRIPTION_SOURCE);
+
+          if (sourceSubscriptionChanged)
+          {
+            if (newSubscriptionType & SUBSCRIPTION_SOURCE)
+            {
+              //this.sources.forEach(function(source){ source.addSubscriber(this, SUBSCRIPTION_SOURCE) }, this);
+              for (var i = 0, source; source = this.sources[i]; i++)
+                source.addSubscriber(this, SUBSCRIPTION_SOURCE);
+            }
+            else
+            {
+              //this.sources.forEach(function(source){ source.removeSubscriber(this, SUBSCRIPTION_SOURCE) }, this);
+              for (var i = 0, source; source = this.sources[i]; i++)
+                source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
+            }
+          }
         }
 
-        return this.inherit(subscriptionType);
+        return this.inherit(newSubscriptionType);
       },
 
       addSource: createADMethod_addSource(AGGREGATEDATASET_DATASET_HANDLER),
@@ -1612,6 +1648,8 @@
       }
     };
 
+    var groupingClearSources = createADMethod_clear(GROUPING_DATASET_HANDLER);
+
    /**
     * @class
     */
@@ -1697,8 +1735,14 @@
       addSource: createADMethod_addSource(GROUPING_DATASET_HANDLER),
       removeSource: createADMethod_removeSource(GROUPING_DATASET_HANDLER),
 
+
       clear: function(){
-        var deleted = Object.values(this.groups_);
+        //debugger;
+        // delete sources
+        groupingClearSources.call(this);
+
+        // destroy groups?
+        /*var deleted = Object.values(this.groups_);
         this.groups_ = {};
 
         for (var objectId in this.map_)
@@ -1714,15 +1758,31 @@
           });
 
           for (var i = 0; i < deleted.length; i++)
-            group.destroy();
-        }
+            deleted[i].destroy();
+        }*/
 
         // TODO!!
         //this.sources.clear();
       },
 
       destroy: function(){
+        // prevent destroy empty groups, groups will destroy all at once (to reduce event dispatching)
+        this.destroyEmpty = false;
+
+        // inherit
         this.inherit();
+
+        // fetch groups
+        var groups = Object.values(this.groups_);
+
+        // dispatch event
+        this.dispatch('datasetChanged', this, {
+          deleted: groups
+        });
+
+        // destroy groups
+        for (var i = 0; i < groups.length; i++)
+          groups[i].destroy();
 
         delete this.groups_;
       }

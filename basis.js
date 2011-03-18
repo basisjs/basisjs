@@ -1684,8 +1684,6 @@
     // EventObject seed ID
     var eventObjectId = 1;
 
-    //var eventObjectMap = {};
-
    /**
     * Creates behaviour singleton object.
     * @param {Basis.Class} superClass Prototype class for inhiritance.
@@ -1746,7 +1744,6 @@
         this.handlers_ = new Array();
 
         // registrate object
-        //eventObjectMap[eventObjectId] = this;
         this.eventObjectId = eventObjectId++;
 
         // apply config
@@ -1827,11 +1824,6 @@
         var behaviour = this.behaviour[eventName];
         var handlersCount = this.handlers_.length;
 
-        //console.log(this, eventName);
-
-        //if (!window.eventNum)window.eventNum = 0;window.eventNum++;//console.log('{eventNum:04}'.format(window), eventName, this);
-        //if (!window.eventMap)window.eventMap = {};if (!eventMap[eventName])eventMap[eventName]=0;eventMap[eventName]++;//console.log('{eventNum:04}'.format(window), eventName, this);
-
         if (handlersCount || behaviour)
         {
           var args = slice.call(arguments, 1);
@@ -1865,7 +1857,6 @@
       */
       destroy: function(){
         // remove object from global instance storage (debug for)
-        //!ms;;;var s = Basis.instanceStorage && Basis.instanceStorage[this.className]; if (s) s.remove(this);
 
         // prevent call this method again
         this.destroy = Function.$undef;
@@ -1875,8 +1866,6 @@
 
         // remove all event handler sets
         delete this.handlers_;
-
-        //delete eventObjectMap[this.eventObjectId];
 
         // no handlers in destroyed object, nothing dispatch
         this.dispatch = Function.$undef;
@@ -3568,7 +3557,6 @@
         //this.source = htmlCode;
 
         function parseText(str, path, pos){
-          //console.log('parseText: ', arguments);
           var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
           var result = [];
           var node;
@@ -3655,7 +3643,6 @@
 
                     return attr == 'class' ? CSS.makeClassName(value.replace(/^([\'\"]?)(.*?)\1$/, "$2")) : '[' + attr + (value ? '=' + value : '') + ']'
                   });
-                //console.log(params);
               }
 
               var element = DOM.createElement(tagName + params);
@@ -3680,8 +3667,6 @@
         var proto = parseHtml('', 0);
 
         var aliases = [];
-        //console.log(htmlCode, DOM.createElement('', '\n\n', proto.cloneNode(true)).innerHTML);
-        //console.log(keys(getters).map(function(k){ return k + ' = ' + getters[k] }).join('\n'));
         var body = keys(getters).map(function(name, idx){
           // optimize path
           var indexPath = getters[name].replace(/\.?childNodes\[(\d+)\]/g, "$1 ").qw();
@@ -4001,7 +3986,6 @@
     function observeGlobalEvents(event){
       var handlers = Array.from(globalHandlers[event.type]);
 
-      //console.log(event.type, event, handlers);
       if (handlers)
       {
         var i = handlers.length;
@@ -4641,9 +4625,6 @@
     }
 
     function add(object, event, eventTime){
-      //debugger;
-      //;;;if (typeof console != 'undefined') console.log('try add event:', object.eventObjectId, object, event, eventTime);
-
       var objectId = object.eventObjectId;
       var eventMap = map[event];
 
@@ -4655,10 +4636,7 @@
       if (eventObject)
       {
         if (isNaN(eventTime))
-        {
-          //;;;if (typeof console != 'undefined') console.log('eventTime is NaN - remove it');
           return remove(object, event);
-        }            
 
         if (eventObject.eventTime == eventTime)
           return;
@@ -4684,23 +4662,15 @@
       // insert event into stack
       eventStack.splice(eventStack.binarySearchPos(eventTime, EVENT_TIME_GETTER), 0, eventObject);
 
-      //;;;if (typeof console != 'undefined') console.log('event added');
-
       setNextTime();
     }
 
     function remove(object, event){
-      //debugger;
-
       var objectId = object.eventObjectId;
       var eventObject = map[event] && map[event][objectId];
 
-      //;;;if (typeof console != 'undefined') console.log('try to remove:', objectId, object);
-
       if (eventObject)
       {
-        //;;;if (typeof console != 'undefined') console.log('remove object:', objectId, object);
-
         // delete object from stack and map
         eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
         delete map[event][objectId];
@@ -4713,24 +4683,15 @@
       var now = Date.now();
       var pos = eventStack.binarySearchPos(now + 15, EVENT_TIME_GETTER);
 
-      //;;;if (typeof console != 'undefined') console.log('>>>> event manager cycle');
-      //;;;if (typeof console != 'undefined') console.log('before fire:', eventStack.map(EVENT_TIME_GETTER), now, now + 15, pos);
-
       lockSetTimeout = true; // lock for set timeout if callback calling will add new events
       eventStack.splice(0, pos).forEach(function(eventObject){
-        //;;;if (typeof console != 'undefined') console.log('process object :', eventObject.object.eventObjectId, eventObject.object);
-
         delete map[eventObject.eventName][eventObject.object.eventObjectId];
         eventObject.callback.call(eventObject.object);
       });
       lockSetTimeout = false; // unlock
 
-      //;;;if (typeof console != 'undefined') console.log('after fire:', eventStack.map(EVENT_TIME_GETTER));
-
       fireTime = NEVER;
       setNextTime();
-
-      //;;;if (typeof console != 'undefined') console.log('>> next time:', fireTime == NEVER ? 'Never' : fireTime);
     }
 
     Cleaner.add({

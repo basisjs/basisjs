@@ -58,14 +58,14 @@
       '</td>'
     ),
 
-    behaviour: nsWrappers.createBehaviour(nsWrappers.HtmlNode, {
+    behaviour: {
       update: function(object, delta){
         this.inherit(object, delta);
 
         this.pageNumber.nodeValue = this.info.pageNumber + 1;
         this.link.href = this.urlGetter(this.info.pageNumber);
       }
-    }),
+    },
 
     urlGetter: Function.$self
   });
@@ -95,7 +95,7 @@
     	'</table>'
     ),
 
-    behaviour: nsWrappers.createBehaviour(nsWrappers.Control, {
+    behaviour: {
       click: function(event, node){
         if (node)
           this.setActivePage(node.info.pageNumber);
@@ -117,7 +117,7 @@
       activePageChanged: function(){
         this.updateSelection();
       }
-    }),
+    },
 
     pageSpan_: 0,
     pageCount_: 0,

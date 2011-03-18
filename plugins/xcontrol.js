@@ -145,6 +145,7 @@
       });
       var self = this;
       this.modificator = new Basis.Animation.Modificator(this.thread, function(value){
+        //console.log('set scrollTop ', self.content.scrollTop = parseInt(value));
         self.content.scrollTop = parseInt(value);
         self.recalc();
       }, 0, 0, true)
@@ -159,7 +160,7 @@
       if (config.childNodes)
         this.setChildNodes(config.childNodes);
 
-      this.timer_ = setInterval(function(){ self.recalc() }, 500);
+      //this.timer_ = setInterval(function(){ self.recalc() }, 500);
     },
     scrollToNode: function(node){
       if (node && node.parentNode === this)
@@ -175,7 +176,10 @@
           this.thread.start();
         }
         else
+        {
           this.content.scrollTop = scrollTop;
+          //console.log('set scroll top#2', this.content.scrollTop = scrollTop);
+        }
       }
     },
 
@@ -183,6 +187,8 @@
     * xx
     */
     recalc: function(){
+      //console.log('>>', this.content.scrollTop);
+
       var content = this.content;
       var clientHeight = content.clientHeight;
       var scrollHeight = content.scrollHeight;
@@ -244,9 +250,10 @@
         {
           var topPoint = this.topPoints.binarySearchPos(scrollTop);
           var bottomPoint = this.bottomPoints.binarySearchPos(scrollTop);
-
+          
           if (this.lastTopPoint != topPoint)
           {
+            this.lastTopPoint = topPoint;
             this.header.childNodes.forEach(function(node, index){
               node.element.style.display = index >= topPoint ? 'none' : '';
             });
@@ -254,13 +261,11 @@
 
           if (this.lastBottomPoint != bottomPoint)
           {
+            this.lastBottomPoint = bottomPoint;
             this.footer.childNodes.forEach(function(node, index){
               node.element.style.display = index < bottomPoint ? 'none' : '';
             });
           }
-
-          this.lastTopPoint = topPoint;
-          this.lastBottomPoint = bottomPoint;
         }
         else
         {

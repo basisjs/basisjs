@@ -791,8 +791,13 @@
 
         var events = this.info.obj.toString().match(/dispatch\((["'])[a-z]+\1/gi);
         if (events)
+        {
+          var eventNames = {};
           for (var i = 0; i < events.length; i++)
-            DOM.insert(this.content, DOM.createElement('SPAN.event', events[i].split(/['"]/)[1]));
+            eventNames[events[i].split(/['"]/)[1]] = 1;
+
+          DOM.insert(this.content, Object.keys(eventNames).sort().map(function(eventName){ return DOM.createElement('SPAN.event', eventName) }));
+        }
       }
     }
   });
