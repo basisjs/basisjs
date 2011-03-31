@@ -155,6 +155,10 @@
     cursor: default;
     color: #888;
   }
+  .Basis-Button.disabled A
+  {
+    cursor: default;
+  }
 
   .Basis-ButtonPanel .disabled .Basis-Button .Basis-Button-Wraper,
   .Basis-ButtonPanel .disabled .Basis-Button .Basis-Button-Wraper2,

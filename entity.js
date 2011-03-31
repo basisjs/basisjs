@@ -755,7 +755,7 @@
 
           // fire event for not silent mode
           if (!this.silentSet_)
-            this.dispatch('update', this, this.info, delta);
+            this.dispatch('update', this, delta);
         }
 
         // return delta or false (if no changes)

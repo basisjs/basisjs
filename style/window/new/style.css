@@ -54,6 +54,7 @@
 
   .Basis-Window-Canvas
   {
+    pointer-events: none;
     position: absolute;
 
     bottom: 1px;

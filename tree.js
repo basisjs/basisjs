@@ -35,7 +35,7 @@
     * @namespace Basis.Controls.Tree
     */
 
-    var namespace = String('Basis.Controls.Tree');
+    var namespace = 'Basis.Controls.Tree';
     
     // import names
 

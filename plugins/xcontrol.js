@@ -160,7 +160,7 @@
       if (config.childNodes)
         this.setChildNodes(config.childNodes);
 
-      //this.timer_ = setInterval(function(){ self.recalc() }, 500);
+      this.timer_ = setInterval(function(){ self.recalc() }, 500);
     },
     scrollToNode: function(node){
       if (node && node.parentNode === this)

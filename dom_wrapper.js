@@ -32,7 +32,7 @@
     * @namespace Basis.DOM.Wrapper
     */
 
-    var namespace = String('Basis.DOM.Wrapper');
+    var namespace = 'Basis.DOM.Wrapper';
 
     // import names
 

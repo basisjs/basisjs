@@ -340,6 +340,9 @@
           }
           else
           {
+            if (map.format)
+              value = map.format(value);
+
             if (!result[name] && map.forceArray)
               value = [value];
 

@@ -15,7 +15,7 @@
     * @namespace Basis.Controls.Label
     */
 
-    var namespace = String('Basis.Controls.Label');
+    var namespace = 'Basis.Controls.Label';
 
     // import names
 

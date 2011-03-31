@@ -26,6 +26,7 @@
 
   .Basis-Balloon-Canvas
   {
+    pointer-events: none;
     position: absolute;
 
     bottom: 0px;

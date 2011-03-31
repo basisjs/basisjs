@@ -13,7 +13,7 @@
 
     // namespace
 
-    var namespace = String('Basis.DOM.Wrapper.Register');
+    var namespace = 'Basis.DOM.Wrapper.Register';
 
     // import names
 

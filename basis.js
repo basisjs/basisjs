@@ -2493,7 +2493,7 @@
     * @privare
     */
     var IS_ATTRIBUTE_BUG_NAME = (function(){
-      var input = document.createElement('INPUT');
+      var input = document.createElement('input');
       input.name = 'a';
       return !/name/.test(outerHTML(input))
     })();

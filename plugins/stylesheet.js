@@ -4,7 +4,7 @@
   * @namespace
   */
   
-  var namespace = String('Basis.DOM.Style');
+  var namespace = 'Basis.DOM.Style';
 
   // import names
 

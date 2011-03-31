@@ -366,9 +366,8 @@
           }
 
           // make element invisible & insert element into DOM
+          cssClass(this.element).remove('pre-transition');
           DOM.visibility(this.element, false);
-          /*if (!DOM.IS_ELEMENT_NODE(this.element.parentNode))
-            DOM.insert(document.body, this.element);*/
 
           PopupManager.appendChild(this);
 
@@ -382,6 +381,7 @@
           this.realign();
           if (this.thread) this.thread.start(1);
           DOM.visibility(this.element, true);
+          cssClass(this.element).add('pre-transition');
 
           // dispatch `show` event, there we can set focus for elements etc.
           this.dispatch.apply(this, ['show'].concat(args));
@@ -706,7 +706,7 @@
       removeChild: function(popup){
         if (popup)
         {
-          if (popup.nextSibling)
+          if (popup.hideOnAnyClick && popup.nextSibling)
             this.removeChild(popup.nextSibling);
 
           this.inherit(popup);
@@ -729,10 +729,11 @@
       },
       hideByClick: function(event){
         var sender = Event.sender(event);
-        var popup = this.lastChild;
         var ancestorAxis;
 
-        while (popup)
+        var popups = this.childNodes.filter(Function.getter('hideOnAnyClick')).reverse();
+
+        for (var i = 0, popup; popup = popups[i]; i++)
         {
           if (sender === popup.closeButton || DOM.parentOf(popup.closeButton, sender))
           {
@@ -740,22 +741,18 @@
             return;
           }
 
-          if (!popup.hideOnAnyClick)
-            return;
-
           if (!ancestorAxis)
             ancestorAxis = DOM.axis(sender, DOM.AXIS_ANCESTOR_OR_SELF);
 
           if (ancestorAxis.has(popup.element) || ancestorAxis.some(Array.prototype.has, popup.ignoreClickFor))
           {
-            this.removeChild(popup.nextSibling);
+            this.removeChild(popups[i - 1]);
             return;
           }
-
-          popup = popup.previousSibling;
         }
 
-        this.clear();
+        this.removeChild(popups.last());
+        //this.clear();
       },
       hideByKey: function(event){
         var key = Event.key(event);

@@ -23,7 +23,7 @@
     *
     * @namespace Basis.Data
     */
-    var namespace = String('Basis.Data');
+    var namespace = 'Basis.Data';
 
     // import names
 
@@ -304,10 +304,9 @@
       *   alert(a.state); // shows 'processing'
       *   alert(a.state === b.state); // shows true
       * @param {Basis.Data.DataObject} delegate
-      * @param {boolean=} silent Prevent fire update event.
       * @return {Basis.Data.DataObject} Returns current delegate object.
       */
-      setDelegate: function(delegate, silent){
+      setDelegate: function(delegate){
         if (this.canHaveDelegate && this.delegate !== delegate)
         {
           var delta = {};
@@ -1408,7 +1407,11 @@
 
           var delta;
           if (delta = getDelta(inserted, deleted))
+          {
+            this.itemCount += inserted.length - deleted.length;
+            this.changeCount++;
             this.dispatch('datasetChanged', this, delta);
+          }
         }
       },
 

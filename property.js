@@ -21,7 +21,7 @@
     * @namespace Basis.Data.Property
     */
 
-    var namespace = String('Basis.Data.Property');
+    var namespace = 'Basis.Data.Property';
 
     // import names
 

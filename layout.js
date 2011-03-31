@@ -98,12 +98,13 @@
       // element.style.position = 'relative';
       if (SUPPORT_ONRESIZE)
       {
+        cssClass(element).add('Basis-Layout-OnResizeElement');
         element.onresize = handler;
       }
       else
       {
         var iframe = DOM.createElement({
-          description: 'IFRAME',
+          description: 'IFRAME.Basis-Layout-OnResizeFrame',
           css: {
             position: 'absolute',
             width: '100%',
@@ -118,7 +119,7 @@
         DOM.insert(element, iframe);
 
         iframe.onload = function(){
-          iframe.contentWindow.onresize = handler;
+          (iframe.contentWindow.onresize = handler)();
         }
       }
     }
@@ -327,9 +328,9 @@
           this.width  = element.offsetWidth;
           this.height = element.offsetHeight;
 
-          if (this.width <= 0 || this.height <= 0)
-            this.reset();
-          else
+          //if (this.width <= 0 || this.height <= 0)
+          //  this.reset();
+          //else
           {
             this.bottom = this.top  + this.height;
             this.right  = this.left + this.width;
@@ -579,7 +580,7 @@
       childClass: VerticalPanel,
       template: new Basis.Html.Template(
         '<div{element|content|childNodesElement} class="Basis-VerticalPanelStack">' + 
-          '<div{ruller} style="position: absolute; visibility: hidden; top: -1000px; width: 10px;"/>' +
+          (SUPPORT_DISPLAYBOX ? '' : '<div{ruller} style="position: absolute; visibility: hidden; top: -1000px; width: 10px;"/>') +
         '</div>'
       ),
 
