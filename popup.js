@@ -449,16 +449,14 @@
           '<div class="Basis-Balloon-Canvas">' +
             '<div class="corner-left-top"/>' +
             '<div class="corner-right-top"/>' +
-            '<div class="side-top"><span class="helper"/><span class="tail"/><div class="filler"/></div>' +
-            '<div class="side-left"><span class="helper"/><span class="tail"/><div class="filler"></div></div>' +
-            '<div class="side-right"><span class="helper"/><span class="tail"/><div class="filler"></div></div>' +
-            /*'<div class="vert-helper">' +
-              '<div class="vert-filler"/>' +
-            '</div>' +*/
+            '<div class="side-top"/>' +
+            '<div class="side-left"/>' +
+            '<div class="side-right"/>' +
             '<div class="content"/>' +
             '<div class="corner-left-bottom"/>' +
             '<div class="corner-right-bottom"/>' +
-            '<div class="side-bottom"><span class="helper"/><span class="tail"/><div class="filler"/></div>' +
+            '<div class="side-bottom"/>' +
+            '<div class="tail"/>' +
           '</div>' +
           '<div class="Basis-Balloon-Layout">' +
             '<div{closeButton} class="Basis-Balloon-CloseButton"><span>Close</span></div>' +

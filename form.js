@@ -435,6 +435,14 @@
         Event.addHandler(this.field, 'keyup', this.updateCounter, this);
         Event.addHandler(this.field, 'input', this.updateCounter, this);
 
+        if (window.opera)
+        {
+          Event.addHandler(this.field, 'focus', function(event){
+            this.contentEditable = true;
+            this.contentEditable = false;
+          }, this.field);
+      	}
+
         return config;
       },
       updateCounter: function(){

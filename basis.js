@@ -1390,9 +1390,9 @@
 
       if (userAgent.match(new RegExp(name + '.' + '(\\d+(\\.\\d+)*)', 'i')))
       {
-        var version   = RegExp.$1;
-        var verNumber = versionToInt(version);
         var names     = browserNames[name];
+        var version   = window.opera && typeof window.opera.version == 'function' ? window.opera.version() : RegExp.$1;
+        var verNumber = versionToInt(version);
 
         browserName = names[0] + verNumber;
         browserPrettyName = names[0] + ' ' + version;

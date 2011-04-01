@@ -47,7 +47,7 @@
 
   .Basis-Window
   {
-    position: fixed;
+    position: absolute;
     min-height: 40px; /* 32 (top) + 7 (bottom) + 2 (white border) + 2 (dark border) */
     min-width: 60px;
   }
