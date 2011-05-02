@@ -19,7 +19,8 @@
     *   {Basis.Data.STATE}, {Basis.Data.SUBSCRIPTION}
     * - Classes:
     *   {Basis.Data.DataObject}, {Basis.Data.AbstractDataset}, {Basis.Data.Dataset},
-    *   {Basis.Data.AggregateDataset}, {Basis.Data.Collection}, {Basis.Data.Grouping}
+    *   {Basis.Data.AggregateDataset}, {Basis.Data.IndexedDataset}, {Basis.Data.Collection},
+    *   {Basis.Data.Grouping}
     *
     * @namespace Basis.Data
     */
@@ -85,13 +86,10 @@
         this.dispatch('stateChanged', object, oldState);
       },
       destroy: function(){
-        if (!this.parentNode || !this.parentNode.collection)
-        {
-          if (this.cascadeDestroy)
-            this.destroy();
-          else
-            this.setDelegate();
-        }
+        if (this.cascadeDestroy)
+          this.destroy();
+        else
+          this.setDelegate();
       }
     };
 
@@ -648,31 +646,32 @@
       eventCache_: null,
 
       itemCount: 0,
-      changeCount: 0,
-      changeCount_: 0,
+      version: 0,
+      version_: 0,
 
+     /**
+      * @constructor
+      */
       init: function(config){
-        config = this.inherit(config);
+        this.inherit(config);
 
         this.map_ = {};
         this.itemCount = 0;
-        this.changeCount = 0;
+        this.version = 0;
 
         this.eventCache_ = {
           mode: false,
           delta: []
         };
-
-        return config;
       },
 
       has: function(object){
         return !!(object && this.map_[object.eventObjectId]);
       },
       getItems: function(){
-        if (!this.eventCache_.mode && this.changeCount_ != this.changeCount)
+        if (!this.eventCache_.mode && this.version_ != this.version)
         {
-          this.changeCount_ = this.changeCount;
+          this.version_ = this.version;
           this.cache_ = Object.values(this.map_);
         }
 
@@ -715,13 +714,15 @@
     var Dataset = Class(AbstractDataset, {
       className: namespace + '.Dataset',
 
+     /**
+      * @config {Array.<Basis.Data.DataObject>} items Initial set of items.
+      * @constructor
+      */
       init: function(config){
-        config = this.inherit(config);
+        this.inherit(config);
 
         if (config && config.items)
           this.set(config.items);
-
-        return config;
       },
 
       add: function(data){
@@ -750,7 +751,7 @@
         if (inserted.length)
         {
           this.itemCount += inserted.length;
-          this.changeCount++;
+          this.version++;
 
           this.dispatch('datasetChanged', this, delta = {
             inserted: inserted
@@ -786,7 +787,7 @@
         if (deleted.length)
         {
           this.itemCount -= deleted.length;
-          this.changeCount++;
+          this.version++;
 
           this.dispatch('datasetChanged', this, delta = {
             deleted: deleted
@@ -856,7 +857,7 @@
         if (delta = getDelta(inserted, deleted))
         {
           this.itemCount += inserted.length - deleted.length;
-          this.changeCount++;
+          this.version++;
 
           this.dispatch('datasetChanged', this, delta);
           return delta;
@@ -918,7 +919,7 @@
               deleted[i].removeHandler(DATASET_ITEM_HANDLER, this);
 
           this.itemCount = 0;
-          this.changeCount++;
+          this.version++;
 
           this.dispatch('datasetChanged', this, delta = {
             deleted: deleted
@@ -1081,7 +1082,7 @@
 
         this.sources.clear();
         this.itemCount = 0;
-        this.changeCount++;
+        this.version++;
         this.map_ = {};
       }
     }
@@ -1141,7 +1142,7 @@
         if (delta = getDelta(inserted, deleted))
         {
           this.itemCount += inserted.length - deleted.length;
-          this.changeCount++;
+          this.version++;
 
           this.dispatch('datasetChanged', this, delta);
         }
@@ -1160,24 +1161,26 @@
       subscriptionType: SUBSCRIPTION_SOURCE,
       sources: null,
 
+     /**
+      * @config {Array.<Basis.Data.AbstractDataset>} sources Set of source datasets for aggregate.
+      * @constructor
+      */
       init: function(config){
         this.sources = [];
 
-        config = this.inherit(config);
+        this.inherit(config);
 
         if (config)
         {
           if (Array.isArray(config.sources))
             config.sources.forEach(this.addSource, this);
         }
-
-        return config;
       },
 
       getItems: function(){
-        if (!this.eventCache_.mode && this.changeCount_ != this.changeCount)
+        if (!this.eventCache_.mode && this.version_ != this.version)
         {
-          this.changeCount_ = this.changeCount;
+          this.version_ = this.version;
           this.cache_ = [];
 
           for (var objectId in this.map_)
@@ -1192,16 +1195,11 @@
         {
           if (this.sources.length && (this.subscriptionType & SUBSCRIPTION_SOURCE))
           {
-            if (isActive)
+            for (var i = 0; source = this.sources[i]; i++)
             {
-              //this.sources.forEach(function(source){ source.addSubscriber(this, SUBSCRIPTION_SOURCE) }, this);
-              for (var i = 0, source; source = this.sources[i]; i++)
+              if (isActive)
                 source.addSubscriber(this, SUBSCRIPTION_SOURCE);
-            }
-            else
-            {
-              //this.sources.forEach(function(source){ source.removeSubscriber(this, SUBSCRIPTION_SOURCE) }, this);
-              for (var i = 0, source; source = this.sources[i]; i++)
+              else
                 source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
             }
           }
@@ -1220,16 +1218,11 @@
 
           if (sourceSubscriptionChanged)
           {
-            if (newSubscriptionType & SUBSCRIPTION_SOURCE)
+            for (var i = 0; source = this.sources[i]; i++)
             {
-              //this.sources.forEach(function(source){ source.addSubscriber(this, SUBSCRIPTION_SOURCE) }, this);
-              for (var i = 0, source; source = this.sources[i]; i++)
+              if (newSubscriptionType & SUBSCRIPTION_SOURCE)
                 source.addSubscriber(this, SUBSCRIPTION_SOURCE);
-            }
-            else
-            {
-              //this.sources.forEach(function(source){ source.removeSubscriber(this, SUBSCRIPTION_SOURCE) }, this);
-              for (var i = 0, source; source = this.sources[i]; i++)
+              else
                 source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
             }
           }
@@ -1250,6 +1243,370 @@
     });
 
     //
+    // IndexedDataset
+    //
+
+    function binarySearchPos(array, map, left, right){ 
+      if (!array.length)  // empty array check
+        return 0;
+
+      var pos;
+      var value;
+      var compareValue;
+      var l = isNaN(left) ? 0 : left;
+      var r = isNaN(right) ? array.length - 1 : right;
+
+      do 
+      {
+        pos = (l + r) >> 1;
+
+        cmpValue = array[pos].value || 0;
+        if (cmpValue === value)
+        {
+          cmpValue = array[pos].object.eventObjectId;
+          value = map.object.eventObjectId;
+        }
+        else
+          value = map.value || 0;
+
+        if (value < cmpValue)
+          r = pos - 1;
+        else 
+          if (value > cmpValue)
+            l = pos + 1;
+          else
+            return value == cmpValue ? pos : 0;  
+      }
+      while (l <= r);
+
+      return pos + (cmpValue < value);
+    }
+
+    var INDEXEDDATASET_ITEM_HANDLER = {
+      update: function(object){
+        var map_ = this.map_[object.eventObjectId];
+        var newValue = this.index(object);
+        var index = this.index_;
+
+        if (map_.value != newValue)
+        {
+          // search for current position in index
+          var curPos = binarySearchPos(index, map_);
+
+          // set for new value
+          map_.value = newValue;
+
+          // checking the need for changes
+          var left = index[curPos - 1];
+          var right = index[curPos + 1];
+
+          if (
+              (!left || left.value <= newValue)
+              &&
+              (!right || newValue <= right.value)
+             )
+          {
+            //console.log('index: ', index.map(Function.getter('object.info.value')));
+            return;
+          }
+
+          // remove from index
+          index.splice(curPos, 1);
+
+          // search for new position in index
+          var newPos = binarySearchPos(index, map_);
+
+          // insert into index on new position
+          index.splice(newPos, 0, map_);
+
+          //console.log('index: ', index.map(Function.getter('object.info.value')));
+
+          // calculate delta
+          if (index.length > this.offset)
+          {
+            var rangeEnd = this.offset + this.limit;
+            var curPosZone = (curPos > this.offset) + (curPos > rangeEnd);
+            var newPosZone = (newPos > this.offset) + (newPos > rangeEnd);
+
+            if (newPosZone == curPosZone)
+              return;
+
+            var deleted;
+            var inserted;
+            var delta = {};
+            switch (newPosZone){
+              case 0:
+                inserted = index[this.offset];
+                deleted = curPosZone == 1 ? map_ : index[rangeEnd];
+              break;
+              case 1:
+                inserted = map_;
+                deleted = curPosZone == 0 ? index[this.offset - 1] : index[rangeEnd];
+              break;
+              case 2:
+                inserted = index[rangeEnd - 1];
+                deleted = curPosZone == 1 ? map_ : index[this.offset - 1];
+              break;
+            }
+
+            this.version++;
+
+            if (inserted)
+            {
+              //inserted.indexed = true;
+              delta.inserted = [inserted.object];
+            }
+
+            if (deleted)
+            {
+              //deleted.indexed = false;
+              delta.deleted = [deleted.object];
+            }
+
+            this.dispatch('datasetChanged', this, delta);
+          }
+        }
+      }
+    };
+
+    var INDEXEDDATASET_DATASET_HANDLER = {
+      datasetChanged: function(source, delta){
+
+        function updateDelta(map_, target, lookup){
+          if (map_)
+          {
+            var object = map_.object;
+            var id = object.eventObjectId;
+            if (lookup[id])
+              delete lookup[id];
+            else
+              target[id] = object;
+          }
+        }
+
+        var sourceId = source.eventObjectId;
+        var inserted = {};
+        var deleted = {};
+        var object;
+        var objectId;
+        var map_;
+        var index = this.index_;
+
+        if (delta.inserted)
+        {
+          for (var i = 0, object; object = delta.inserted[i]; i++)
+          {
+            objectId = object.eventObjectId;
+            map_ = this.map_[objectId];
+
+            if (!map_)
+            {
+              map_ = this.map_[objectId] = {
+                object: object,
+                count: 0,
+                //indexed: false,
+                value: this.index(object)
+              };
+
+              object.addHandler(INDEXEDDATASET_ITEM_HANDLER, this);
+
+              // rebuild index
+              var pos = binarySearchPos(index, map_);//this.index_.binarySearchPos(map_.value, 'value');
+
+              this.index_.splice(pos, 0, map_);
+              if (index.length > this.offset && pos < this.offset + this.limit)
+              {
+                updateDelta(index[this.offset + this.limit], deleted, inserted);
+                updateDelta(pos < this.offset ? index[this.offset] : map_, inserted, deleted);
+              }
+            }
+
+            if (!map_[sourceId])
+            {
+              map_[sourceId] = source;
+              map_.count++;
+            }
+          }
+        }
+
+        if (delta.deleted)
+        {
+          for (var i = 0, object; object = delta.deleted[i]; i++)
+          {
+            objectId = object.eventObjectId;
+            map_ = this.map_[objectId];
+
+            if (map_ && map_[sourceId])
+            {
+              delete map_[sourceId];
+              if (map_.count-- == 1)
+              {
+                map_.object.removeHandler(INDEXEDDATASET_ITEM_HANDLER, this);
+
+                var pos = binarySearchPos(index, map_); //this.index_.binarySearchPos(map_.value, 'value');
+                
+                if (index.length > this.offset && pos < this.offset + this.limit)
+                {
+                  updateDelta(index[this.offset + this.limit], inserted, deleted);
+                  updateDelta(pos < this.offset ? index[this.offset] : map_, deleted, inserted);
+                }
+                
+                index.splice(pos, 1);
+
+                delete this.map_[objectId];
+              }
+            }
+          }
+        }
+
+        inserted = Object.values(inserted);
+        deleted = Object.values(deleted);
+
+        //console.log(inserted, deleted);
+        //debugger;
+
+        if (delta = getDelta(inserted, deleted))
+        {
+          this.itemCount += inserted.length - deleted.length;
+          this.version++;
+
+          this.dispatch('datasetChanged', this, delta);
+        }
+      },
+      destroy: function(source){
+        this.removeSource(source);
+      }
+    };
+
+    function normalizeOffset(offset){
+      offset = parseInt(offset) || 0;
+      return offset >= 0 ? offset : 0;
+    }
+    function normalizeLimit(limit){
+      limit = parseInt(limit);
+      return limit >= 1 ? limit : 1;
+    }
+
+   /**
+    * @class
+    */
+    var IndexedDataset = Class(AggregateDataset, {
+      className: namespace + '.IndexedDataset',
+
+     /**
+      * Ordering items function.
+      * @type {function}
+      * @readonly
+      */
+      index: Function.$true,
+
+     /**
+      * Start of range.
+      * @type {number}
+      * @readonly
+      */
+      offset: 0,
+
+     /**
+      * Length of range.
+      * @type {number}
+      * @readonly
+      */
+      limit: 10,
+
+     /**
+      * @config {function} index Function for index value calculation; values are ordering according to this values.
+      * @config {number} offset Initial value of range start.
+      * @config {number} limit Initial value of range length.
+      * @constructor
+      */
+      init: function(config){
+        this.index_ = [];
+
+        if (config)
+        {
+          if (config.index)
+            this.index = getter(config.index);
+          if ('offset' in config)
+            this.offset = normalizeOffset(config.offset);
+          if ('limit' in config)
+            this.limit = normalizeLimit(config.limit);
+        }
+
+        this.inherit(config);
+      },
+
+     /**
+      * Set new range for dataset.
+      * @param {number} offset Start of range.
+      * @param {number} limit Length of range.
+      */
+      setRange: function(offset, limit){
+        offset = normalizeOffset(offset);
+        limit = normalizeLimit(limit);
+
+        if (this.offset != offset || this.limit != limit)
+        {
+          var inserted = [];
+          var deleted = [];
+
+          var oldRangeEnd = this.offset + this.limit;
+          var newRangeEnd = offset + limit;
+
+          if (offset != this.offset)
+          {
+            if (offset < this.offset)
+              inserted.push.apply(inserted, this.index_.slice(offset, Math.min(this.offset, newRangeEnd)));
+            else
+              deleted.push.apply(deleted, this.index_.slice(this.offset, Math.min(offset, oldRangeEnd)));
+          }
+
+          if (newRangeEnd != oldRangeEnd)
+          {
+            if (newRangeEnd < oldRangeEnd)
+              deleted.push.apply(deleted, this.index_.slice(Math.max(newRangeEnd, this.offset), oldRangeEnd));
+            else
+              inserted.push.apply(inserted, this.index_.slice(Math.max(oldRangeEnd, offset), newRangeEnd));
+          }
+
+          this.offset = offset;
+          this.limit = limit;
+
+          inserted = inserted.map(getter('object'));
+          deleted = deleted.map(getter('object'));
+
+          if (delta = getDelta(inserted, deleted))
+          {
+            this.itemCount += inserted.length - deleted.length;
+            this.version++;
+
+            this.dispatch('datasetChanged', this, delta);
+          }
+        }
+      },
+
+      getItems: function(){
+        if (!this.eventCache_.mode && this.version_ != this.version)
+        {
+          this.version_ = this.version;
+          this.cache_ = this.index_.slice(this.offset, this.offset + this.limit).map(getter('object'));
+        }
+
+        return this.cache_;
+      },
+
+      // TODO: performance optimizations
+      has: function(object){
+        return object && this.getItems().has(object);
+      },
+
+      addSource: createADMethod_addSource(INDEXEDDATASET_DATASET_HANDLER),
+      removeSource: createADMethod_removeSource(INDEXEDDATASET_DATASET_HANDLER),
+      clear: createADMethod_clear(INDEXEDDATASET_DATASET_HANDLER)
+    });
+
+
+    //
     // Collection
     //
 
@@ -1260,10 +1617,10 @@
 
         if (map_.state != newState)
         {
-          map_.state = newState;
+          map_.state = newState
 
-          this.itemCount -= -newState;
-          this.changeCount++;
+          this.itemCount += newState ? 1 : -1;
+          this.version++;
 
           this.dispatch('datasetChanged', this,
             newState
@@ -1336,7 +1693,7 @@
         if (delta = getDelta(inserted, deleted))
         {
           this.itemCount += inserted.length - deleted.length;
-          this.changeCount++;
+          this.version++;
 
           this.dispatch('datasetChanged', this, delta);
         }
@@ -1346,6 +1703,7 @@
       }
     };
 
+
    /**
     * @class
     */
@@ -1353,6 +1711,10 @@
       className: namespace + '.Collection',
       filter: Function.$true,
 
+     /**
+      * @config {function():boolean} filter Filter function.
+      * @constructor
+      */
       init: function(config){
         if (config)
         {
@@ -1360,13 +1722,13 @@
             this.filter = getter(config.filter);
         }
 
-        return this.inherit(config);
+        this.inherit(config);
       },
 
       getItems: function(){
-        if (!this.eventCache_.mode && this.changeCount_ != this.changeCount)
+        if (!this.eventCache_.mode && this.version_ != this.version)
         {
-          this.changeCount_ = this.changeCount;
+          this.version_ = this.version;
           this.cache_ = [];
 
           for (var objectId in this.map_)
@@ -1409,7 +1771,8 @@
           if (delta = getDelta(inserted, deleted))
           {
             this.itemCount += inserted.length - deleted.length;
-            this.changeCount++;
+            this.version++;
+
             this.dispatch('datasetChanged', this, delta);
           }
         }
@@ -1476,7 +1839,7 @@
 
           //oldGroup.remove([object]);
           delete oldGroup.map_[objectId];
-          oldGroup.changeCount++;
+          oldGroup.version++;
           oldGroup.itemCount--;
 
           oldGroup.dispatch('datasetChanged', oldGroup, {
@@ -1485,7 +1848,7 @@
 
           //newGroup.add([object]);
           newGroup.map_[objectId] = object;
-          newGroup.changeCount++;
+          newGroup.version++;
           newGroup.itemCount++;
 
           newGroup.dispatch('datasetChanged', this, {
@@ -1562,7 +1925,7 @@
 
             // group.add([object]);
             group.map_[objectId] = object;
-            group.changeCount++;
+            group.version++;
             group.itemCount++;
 
             // add to event cache
@@ -1598,12 +1961,12 @@
 
                 // group.remove([object]);
                 delete group.map_[objectId];
-                group.changeCount++;
+                group.version++;
                 group.itemCount--;
 
                 // remove from groupin map
                 delete this.map_[objectId];
-                this.changeCount++;
+                this.version++;
                 this.itemCount--;
 
                 // add to event cache
@@ -1664,6 +2027,12 @@
 
       destroyEmpty: true,
 
+     /**
+      * @config {function} filter Group function.
+      * @config {class} groupClass Class for group instances. Should be instance of AbstractDataset.
+      * @config {boolean} destroyEmpty Destroy empty groups automaticaly or not.
+      * @constructor
+      */
       init: function(config){
         this.groups_ = {};
 
@@ -1677,16 +2046,16 @@
             this.destroyEmpty = false;
         }
 
-        return this.inherit(config);
+        this.inherit(config);
       },
 
       has: function(object){
         return !!(object && this.groups_[object.groupId] === object);
       },
       getItems: function(){
-        if (!this.eventCache_.mode && this.changeCount_ != this.changeCount)
+        if (!this.eventCache_.mode && this.version_ != this.version)
         {
-          this.changeCount_ = this.changeCount;
+          this.version_ = this.version;
           this.cache_ = Object.values(this.groups_);
         }
 
@@ -1715,7 +2084,7 @@
             group.groupId = groupId;
 
             this.groups_[groupId] = group;
-            this.changeCount++;
+            this.version++;
             this.itemCount++; // temp fix TODO: fix up item counting
 
             this.dispatch('datasetChanged', this, {
@@ -1726,18 +2095,9 @@
 
         return group;
       },
-      setGroupGetter: function(groupGetter){
-        groupGetter = getter(groupGetter);
-        if (this.groupGetter != groupGetter)
-        {
-          // todo
-          console.warn('setGroupGetter is not implemented yet');
-        }
-      },
 
       addSource: createADMethod_addSource(GROUPING_DATASET_HANDLER),
       removeSource: createADMethod_removeSource(GROUPING_DATASET_HANDLER),
-
 
       clear: function(){
         //debugger;
@@ -1818,6 +2178,7 @@
       AbstractDataset: AbstractDataset,
       Dataset: Dataset,
       AggregateDataset: AggregateDataset,
+      IndexedDataset: IndexedDataset,
       Collection: Collection,
       Grouping: Grouping
     });

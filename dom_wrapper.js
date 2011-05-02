@@ -831,6 +831,7 @@
             //var node = this.insertBefore(item.info, con[item.pos]);
             var newChild = createChildByFactory(this, {
               isActiveSubscriber: false,
+              cascadeDestroy: false,
               delegate: item
             });
 
@@ -2412,36 +2413,38 @@
     var CHILDNODES_DATASET_HANDLER = {
       childNodesModified: function(node, delta){
         var newDelta = {};
-        var deltaCount = 0;
+        var node;
+        var insertCount = 0;
+        var deleteCount = 0;
         var inserted = delta.inserted;
         var deleted = delta.deleted;
 
         if (inserted && inserted.length)
         {
-          newDelta['inserted'] = inserted;
+          newDelta.inserted = inserted;
 
-          for (var i = 0, node; node = inserted[i]; i++)
+          while (node = inserted[insertCount])
           {
             this.map_[node.eventObjectId] = node;
-            deltaCount++;
+            insertCount++;
           }
         }
 
         if (deleted && deleted.length)
         {
-          newDelta['deleted'] = deleted;
+          newDelta.deleted = deleted;
 
-          for (var i = 0, node; node = deleted[i]; i++)
+          while (node = deleted[deleteCount])
           {
             delete this.map_[node.eventObjectId];
-            deltaCount--;
+            deleteCount++;
           }
         }
 
-        if (Object.keys(delta).length)
+        if (insertCount || deleteCount)
         {
-          this.itemCount += deltaCount;
-          this.changeCount++;
+          this.itemCount += insertCount - deleteCount;
+          this.version++;
 
           this.dispatch('datasetChanged', this, newDelta);
         }
@@ -2454,6 +2457,9 @@
       }
     };
 
+   /**
+    * @class
+    */
     var ChildNodesDataset = Class(AbstractDataset, {
       className: namespace + '.ChildNodesDataset',
 
@@ -2535,7 +2541,6 @@
     };
 
     var SELECTION_WRAPPED_METHOD2 = function(nodes){
-
       if (!this.multiple)
         nodes.splice(1);
 

@@ -646,7 +646,7 @@
         var all = this.all;
 
         all.map_[this.eventObjectId] = this;
-        all.changeCount++;
+        all.version++;
         all.itemCount++;
 
         all.dispatch('datasetChanged', all, {
@@ -834,7 +834,7 @@
         var all = this.all;
 
         delete all.map_[this.eventObjectId];
-        all.changeCount++;
+        all.version++;
         all.itemCount--;
 
         // inherit
