@@ -8,7 +8,7 @@
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
-  
+
   (function(){
 
    /**
@@ -78,13 +78,21 @@
     var DATAOBJECT_DELEGATE_HANDLER = {
       update: function(object, delta){ 
         this.updateCount += 1;
-        this.info = object.info;
+        this.info = object.info;  // proposition introduce rootDelegateChanged event instead
         this.dispatch('update', object, delta);
       },
       stateChanged: function(object, oldState){
         this.state = object.state;
         this.dispatch('stateChanged', object, oldState);
+      },/*
+      delegateChanged: function(object, oldDelegate){
+        this.info = object.info;
+        this.dispatch('rootDelegateChange', object, oldDelegate);
       },
+      rootDelegateChanged: function(object, oldDelegate){
+        this.info = object.info;
+        this.dispatch('rootDelegateChange', object, oldDelegate);
+      },*/
       destroy: function(){
         if (this.cascadeDestroy)
           this.destroy();
@@ -642,6 +650,7 @@
       state: STATE_UNDEFINED,
 
       map_: null,
+      member_: null,
       cache_: [],
       eventCache_: null,
 
@@ -656,6 +665,7 @@
         this.inherit(config);
 
         this.map_ = {};
+        this.member_ = {};
         this.itemCount = 0;
         this.version = 0;
 
@@ -666,13 +676,13 @@
       },
 
       has: function(object){
-        return !!(object && this.map_[object.eventObjectId]);
+        return !!(object && this.member_[object.eventObjectId]);
       },
       getItems: function(){
-        if (!this.eventCache_.mode && this.version_ != this.version)
+        if (this.version_ != this.version)
         {
           this.version_ = this.version;
-          this.cache_ = Object.values(this.map_);
+          this.cache_ = Object.values(this.member_);
         }
 
         return this.cache_;
@@ -684,14 +694,43 @@
       set:    Function.$false,
       clear:  Function.$false,
 
+      dispatch: function(event, dataset, delta){
+        if (event == 'datasetChanged')
+        {
+          var items;
+
+          if (items = delta.inserted)
+          {
+            for (var i = 0, object; object = items[i]; i++)
+              this.member_[object.eventObjectId] = this.map_[object.eventObjectId];
+
+            this.itemCount += items.length;
+            this.version++;
+          }
+
+          if (items = delta.deleted)
+          {
+            for (var i = 0, object; object = items[i]; i++)
+              delete this.member_[object.eventObjectId];
+
+            this.itemCount -= items.length;
+            this.version++;
+          }
+        }
+
+        this.inherit.apply(this, arguments);
+      },
+
       destroy: function(){
         this.clear();
 
         this.inherit();
 
-        this.getItems = Function.$null;
+        this.getItems = Function.$null; // are we need for this?
+
         delete this.itemCount;
         delete this.map_;
+        delete this.member_;
         delete this.cache_;
         delete this.eventCache_;
       }
@@ -750,9 +789,6 @@
         // trace changes
         if (inserted.length)
         {
-          this.itemCount += inserted.length;
-          this.version++;
-
           this.dispatch('datasetChanged', this, delta = {
             inserted: inserted
           });
@@ -786,9 +822,6 @@
         // trace changes
         if (deleted.length)
         {
-          this.itemCount -= deleted.length;
-          this.version++;
-
           this.dispatch('datasetChanged', this, delta = {
             deleted: deleted
           });
@@ -856,9 +889,6 @@
         var delta;
         if (delta = getDelta(inserted, deleted))
         {
-          this.itemCount += inserted.length - deleted.length;
-          this.version++;
-
           this.dispatch('datasetChanged', this, delta);
           return delta;
         }
@@ -915,11 +945,8 @@
         if (deleted.length)
         {
           for (var i = 0; i < deleted.length; i++)
-            if (deleted[i].all !== this)
+            if (deleted[i].all !== this)      // KOSTIL' for Entity
               deleted[i].removeHandler(DATASET_ITEM_HANDLER, this);
-
-          this.itemCount = 0;
-          this.version++;
 
           this.dispatch('datasetChanged', this, delta = {
             deleted: deleted
@@ -936,7 +963,8 @@
     //
     (function(){
       var awatingDatasetCache = {};
-      var realDispatch_ = Dataset.prototype.dispatch;
+      var proto = AbstractDataset.prototype;
+      var realDispatch_ = DataObject.prototype.dispatch;
       var setStateCount = 0;
       var urgentTimer;
 
@@ -983,7 +1011,7 @@
       function urgentFlush(){
         ;;;if (typeof console != 'undefined') console.warn('(debug) Urgent flush dataset changes');
         setStateCount = 0;
-        delete Dataset.prototype.dispatch;
+        proto.dispatch = realDispatch_;
         flushAllDataset();      
       }
 
@@ -995,11 +1023,12 @@
       }
 
       Dataset.setAccumulateState = function(state){
+        if (state !== 'xxx') return;
         if (state)
         {
           if (setStateCount == 0)
           {
-            AbstractDataset.prototype.dispatch = patchedDispatch;
+            proto.dispatch = patchedDispatch;
             urgentTimer = setTimeout(urgentFlush, 0);
           }
           setStateCount++;
@@ -1009,7 +1038,7 @@
           if (setStateCount == 1)
           {
             clearTimeout(urgentTimer);
-            delete AbstractDataset.prototype.dispatch;
+            proto.dispatch = realDispatch_;
             flushAllDataset();
           }
 
@@ -1081,8 +1110,6 @@
         }
 
         this.sources.clear();
-        this.itemCount = 0;
-        this.version++;
         this.map_ = {};
       }
     }
@@ -1141,9 +1168,6 @@
 
         if (delta = getDelta(inserted, deleted))
         {
-          this.itemCount += inserted.length - deleted.length;
-          this.version++;
-
           this.dispatch('datasetChanged', this, delta);
         }
       },
@@ -1178,13 +1202,13 @@
       },
 
       getItems: function(){
-        if (!this.eventCache_.mode && this.version_ != this.version)
+        if (this.version_ != this.version)
         {
           this.version_ = this.version;
           this.cache_ = [];
 
-          for (var objectId in this.map_)
-            this.cache_.push(this.map_[objectId].object);
+          for (var objectId in this.member_)
+            this.cache_.push(this.member_[objectId].object);
         }
 
         return this.cache_;
@@ -1241,6 +1265,7 @@
         delete this.sources;
       }
     });
+
 
     //
     // IndexedDataset
@@ -1349,19 +1374,11 @@
               break;
             }
 
-            this.version++;
-
             if (inserted)
-            {
-              //inserted.indexed = true;
               delta.inserted = [inserted.object];
-            }
 
             if (deleted)
-            {
-              //deleted.indexed = false;
               delta.deleted = [deleted.object];
-            }
 
             this.dispatch('datasetChanged', this, delta);
           }
@@ -1467,9 +1484,6 @@
 
         if (delta = getDelta(inserted, deleted))
         {
-          this.itemCount += inserted.length - deleted.length;
-          this.version++;
-
           this.dispatch('datasetChanged', this, delta);
         }
       },
@@ -1577,28 +1591,20 @@
 
           if (delta = getDelta(inserted, deleted))
           {
-            this.itemCount += inserted.length - deleted.length;
-            this.version++;
-
             this.dispatch('datasetChanged', this, delta);
           }
         }
       },
 
-      getItems: function(){
-        if (!this.eventCache_.mode && this.version_ != this.version)
+      /*getItems: function(){
+        if (this.version_ != this.version)
         {
           this.version_ = this.version;
           this.cache_ = this.index_.slice(this.offset, this.offset + this.limit).map(getter('object'));
         }
 
         return this.cache_;
-      },
-
-      // TODO: performance optimizations
-      has: function(object){
-        return object && this.getItems().has(object);
-      },
+      },*/
 
       addSource: createADMethod_addSource(INDEXEDDATASET_DATASET_HANDLER),
       removeSource: createADMethod_removeSource(INDEXEDDATASET_DATASET_HANDLER),
@@ -1617,10 +1623,7 @@
 
         if (map_.state != newState)
         {
-          map_.state = newState
-
-          this.itemCount += newState ? 1 : -1;
-          this.version++;
+          map_.state = newState;
 
           this.dispatch('datasetChanged', this,
             newState
@@ -1692,9 +1695,6 @@
 
         if (delta = getDelta(inserted, deleted))
         {
-          this.itemCount += inserted.length - deleted.length;
-          this.version++;
-
           this.dispatch('datasetChanged', this, delta);
         }
       },
@@ -1725,8 +1725,8 @@
         this.inherit(config);
       },
 
-      getItems: function(){
-        if (!this.eventCache_.mode && this.version_ != this.version)
+      /*getItems: function(){
+        if (this.version_ != this.version)
         {
           this.version_ = this.version;
           this.cache_ = [];
@@ -1737,7 +1737,7 @@
         }
 
         return this.cache_;
-      },
+      },*/
 
       setFilter: function(filter){
         filter = filter ? getter(filter) : Function.$true;
@@ -1770,9 +1770,6 @@
           var delta;
           if (delta = getDelta(inserted, deleted))
           {
-            this.itemCount += inserted.length - deleted.length;
-            this.version++;
-
             this.dispatch('datasetChanged', this, delta);
           }
         }
@@ -1839,8 +1836,6 @@
 
           //oldGroup.remove([object]);
           delete oldGroup.map_[objectId];
-          oldGroup.version++;
-          oldGroup.itemCount--;
 
           oldGroup.dispatch('datasetChanged', oldGroup, {
             deleted: [object]
@@ -1848,8 +1843,6 @@
 
           //newGroup.add([object]);
           newGroup.map_[objectId] = object;
-          newGroup.version++;
-          newGroup.itemCount++;
 
           newGroup.dispatch('datasetChanged', this, {
             inserted: [object]
@@ -1858,8 +1851,9 @@
           // destroy oldGroup if empty
           if (this.destroyEmpty && !oldGroup.itemCount)
           {
-            this.groups_[oldGroup.groupId].destroy();
+            //this.groups_[oldGroup.groupId].destroy();
             delete this.groups_[oldGroup.groupId];
+            delete this.map_[oldGroup.eventObjectId];
             oldGroup.destroy();
             this.dispatch('datasetChanged', this, {
               deleted: [oldGroup]
@@ -1925,8 +1919,6 @@
 
             // group.add([object]);
             group.map_[objectId] = object;
-            group.version++;
-            group.itemCount++;
 
             // add to event cache
             groupId = group.eventObjectId;
@@ -1961,13 +1953,9 @@
 
                 // group.remove([object]);
                 delete group.map_[objectId];
-                group.version++;
-                group.itemCount--;
 
                 // remove from groupin map
                 delete this.map_[objectId];
-                this.version++;
-                this.itemCount--;
 
                 // add to event cache
                 groupId = group.eventObjectId;
@@ -1997,17 +1985,20 @@
 
           if (this.destroyEmpty && !group.itemCount)
           {
-            deleted.push(this.groups_[group.groupId]);
-            this.groups_[group.groupId].destroy();
+            deleted.push(group);
+            //this.groups_[group.groupId].destroy();
             delete this.groups_[group.groupId];
+            delete this.map_[group.eventObjectId];
             group.destroy();
           }
         }
 
         if (deleted.length)
+        {
           this.dispatch('datasetChanged', this, {
             deleted: deleted
           });
+        }
       },
       destroy: function(source){
         this.removeSource(source);
@@ -2049,7 +2040,7 @@
         this.inherit(config);
       },
 
-      has: function(object){
+      /*has: function(object){
         return !!(object && this.groups_[object.groupId] === object);
       },
       getItems: function(){
@@ -2060,11 +2051,11 @@
         }
 
         return this.cache_;
-      },
+      },*/
 
-      getGroup: function(object, autocreate){
-        var isDataObject = object instanceof DataObject;
-        var groupId = isDataObject ? object.eventObjectId : object;
+      getGroup: function(value, autocreate){
+        var isDataObject = value instanceof DataObject;
+        var groupId = isDataObject ? value.eventObjectId : value;
         var group = this.groups_[groupId];
         if (!group)
         {
@@ -2073,19 +2064,18 @@
             var config = {};
 
             if (isDataObject)
-              config.delegate = object;
+              config.delegate = value;
             else
               config.info = {
-                groupId: object,
-                title: object
+                groupId: value,
+                title: value
               };
 
             group = new this.groupClass(config);
             group.groupId = groupId;
 
+            this.map_[group.eventObjectId] = group;
             this.groups_[groupId] = group;
-            this.version++;
-            this.itemCount++; // temp fix TODO: fix up item counting
 
             this.dispatch('datasetChanged', this, {
               inserted: [group]

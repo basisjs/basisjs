@@ -856,7 +856,7 @@
       },
       destroy: function(object){
         //this.clear();
-        if (this.collection == object)
+        if (this.collection === object)
           this.setCollection();
       }
     };
@@ -2576,6 +2576,8 @@
       */
       behaviour: {
         datasetChanged: function(dataset, delta){
+          this.inherit(dataset, delta);
+
           if (delta.inserted)
           {
             for (var i = 0, node; node = delta.inserted[i]; i++)
@@ -2629,7 +2631,7 @@
       */
       pick: function(){
         for (var objectId in this.map_)
-          return this.map_[objectId];
+          return this.member_[objectId];
       }
     });
 

@@ -50,9 +50,10 @@
   * @return {object}
   */ 
   function coalesce(/* arg1 .. argN */){
-    for (var i = 0; i < arguments.length; i++)
-      if (arguments[i] != null)
-        return arguments[i];
+    var args = arguments;
+    for (var i = 0; i < args.length; i++)
+      if (args[i] != null)
+        return args[i];
   }
 
  /**
@@ -650,16 +651,17 @@
     // JavaScript 1.8
     reduce: function(callback, initialValue){ // unfortunately mozilla implementation hasn't thisObject as third argument
       var len = this.length;
+      var argsLen = arguments.length;
 
       // no value to return if no initial value and an empty array
-      if (len == 0 && arguments.length == 1)
+      if (len == 0 && argsLen == 1)
         throw new TypeError();
 
       var result;
       var inited = 0;
-      if (arguments.length >= 2)
+      if (argsLen > 1)
       {
-        result = arguments[1];
+        result = initialValue;
         inited = 1;
       }
 
@@ -987,11 +989,11 @@
   * @namespace String.prototype
   */
   complete(String.prototype, {
-    trimLeft: String.prototype.trimLeft || function(){
-      return this.replace(/^\s\s*/, '');
+    trimLeft: function(){
+      return this.replace(/^\s+/, '');
     },
-    trimRight: String.prototype.trimRight || function(){
-      return this.replace(/\s\s*$/, '');
+    trimRight: function(){
+      return this.replace(/\s+$/, '');
     },
     // implemented at ECMAScript5
     trim: function(){
@@ -1003,7 +1005,7 @@
     toObject: function(){
       // try { return eval('0,' + this) } catch(e) {}
       // safe solution with no eval:
-      try { return Function('return ' + this)() } catch(e) {}
+      try { return Function('return 0,' + this)() } catch(e) {}
     },
     toArray: (new String('a')[0]
       ? function(){
@@ -1140,13 +1142,13 @@
       return !isNaN(this) && this >= min && this <= max;
     },
     quote: function(start, end){ 
-      return String(this).quote(start, end);
+      return (this + '').quote(start, end);
     },
     toHex: function(){
       return parseInt(this).toString(16).toUpperCase();
     },
     sign: function(){
-      return this < 0 ? -1 : Number(this != 0);
+      return this < 0 ? -1 : +(this > 0);
     },
     base: function(div){
       return !div || isNaN(div) ? 0 : Math.floor(this/div) * div;
@@ -1349,11 +1351,11 @@
     }
 
     var FeatureSupport = {
-      dataurl: false
+      datauri: false
     };
 
     // DATA URI SHEME test
-    var testImage = new Image();
+    var testImage = typeof Image != 'undefined' ? new Image() : {}; // NOTE test for Image neccesary for node.js
     testImage.onload = function(){ FeatureSupport.datauri = true };
     testImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==';
 
@@ -1409,7 +1411,7 @@
     function setCookie(name, value, expire, path){
       document.cookie = name + "=" + (value == null ? '' : escape(value)) +
                         ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname)) +
-                        (expire ? ";expires=" + (new Date(Number(new Date) + expire * 1000)).toGMTString() : '');
+                        (expire ? ";expires=" + (new Date(Date.now() + expire * 1000)).toGMTString() : '');
     }
 
     function getCookie(name){
@@ -1581,24 +1583,17 @@
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
 
-        // save init method if exists 
-        var init = SuperClass.prototype.init;
-        var hasInit = typeof init == 'function';
-        if (hasInit)
-          SuperClass.prototype.init = undefined;
+        // inheritance
 
-        // assign SuperClass instance for newClass prototype, 
-        // this makes newClass instanceof SuperClass
-        newClass.prototype = new SuperClass();
+        // temp class constructor with no init call
+        var SuperClass_ = function(){};
+        SuperClass_.prototype = SuperClass.prototype;
+
+        newClass.prototype = new SuperClass_();
         newClass.superClass_ = SuperClass;
         
-        // restore init value
-        if (hasInit)
-          SuperClass.prototype.init = init;
-
         // override extend method for newClass, new one extending prototype with method wrapping
         newClass.extend = BaseClass.extend;
-        //newClass.complete = BaseClass.complete;
         
         // extend newClass prototype
         for (var i = 1; i < arguments.length; i++)
@@ -1749,8 +1744,10 @@
         // apply config
         if (config)
         {
+          try {
           ;;;if (config.traceEvents_ || this.traceEvents_) this.handlers_.push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
           ;;;if ('thisObject' in config) console.warn(this.className + ': thisObject in config is deprecated. Use handlersContext instead');
+          }catch(e){ debugger; }
 
           if (config.handlers)
           {
@@ -3141,7 +3138,7 @@
     */
     function getStylePropertyMapping(key, value){
       var mapping = styleMapping[key];
-      if (key = mapping ? mapping.key : key.camelize())
+      if (key = mapping ? mapping.key : key.replace(/^-ms-/, 'ms-').camelize())
         return {
           key: key,
           value: mapping && mapping.getter ? mapping.getter(value) : value
@@ -4737,6 +4734,6 @@
     Cleaner: Cleaner
   });
 
-  Basis.Locale = {};
+  window.Basis.Locale = {};
 
 })();

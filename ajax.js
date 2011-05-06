@@ -449,8 +449,8 @@
       // constructor
       //
       init: function(urlOrConfig, asynchronous, method){
-        var config = typeof urlOrConfig != 'object' || urlOrConfig == null ? {} : urlOrConfig;
-        var url = config === urlOrConfig ? config.url : urlOrConfig;
+        var config = typeof urlOrConfig != 'object' || urlOrConfig == null ? { url: urlOrConfig } : urlOrConfig;
+        var url = config.url;
 
         // handlers
         if (config.callback)
@@ -488,7 +488,7 @@
       setInfluence: function(){
         var list = Array.from(arguments);
         for (var i = 0; i < list.length; i++)
-          list[i].setState(this.state, this.errorText);
+          list[i].setState(this.state, this.state.data);
         this.influence.set(list);
       },
       clearInfluence: function(){
@@ -579,7 +579,15 @@
         this.abortedByTimeout_ = false;
 
         // dispatch prepare event
-        this.dispatch('prepare');
+        //this.dispatch('prepare');
+        var handlers = this.handlers_;
+        var handler;
+        for (var i = handlers.length - 1; handler = handlers[i]; i--)
+        {
+          if (handler.handler.prepare)
+            handler.handler.prepare.call(handler.thisObject || this);
+        }
+
         if (this.aborted)
         {
           ;;;if (this.debug && typeof console != 'undefined') console.info('Transport: request was aborted while `prepare` event dispatch');
