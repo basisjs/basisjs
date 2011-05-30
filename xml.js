@@ -372,13 +372,15 @@
 
     function Object2XML(document, nodeName, namespace, content){
       if (String(nodeName).charAt(0) == '@')
-        return content == null ? content : createAttributeNS(document, nodeName.substr(1), /*namespace*/ '', String(content));
+        return content == null ? content : createAttributeNS(document, nodeName.substr(1), /*content.xmlns || namespace || null*/'', String(content.content || content));
       else
       {
-        var result = createElementNS(document, nodeName.toString(), (content && content.xmlns) || nodeName.namespace || namespace);
+        var result = createElementNS(document, nodeName.toString(), nodeName.namespace || namespace);
         if (typeof content == 'undefined' || content === null)
           setAttributeNodeNS(result, QName.createAttribute(document, XSI_NIL, 'true'));
-        else if (isPrimitiveObject(content))
+        else
+        {
+          if (isPrimitiveObject(content))
             result.appendChild(createText(document, content));
           else
           {
@@ -411,6 +413,7 @@
               }
             }
           }
+        }
         return result;
       }
     };

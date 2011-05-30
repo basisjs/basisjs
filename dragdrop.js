@@ -264,11 +264,11 @@
           {
             var newTop = config.box.top + config.deltaY;
             
-            if (this.fixTop && newTop < 0) //config.viewport.top)
-              newTop = 0;//config.viewport.top;
+            if (this.fixTop && newTop < 0)
+              newTop = 0;
             else
-              if (this.fixBottom && newTop + config.box.height > config.viewport.height)//config.viewport.bottom)
-                newTop = config.viewport.height - config.box.height;//config.viewport.bottom - config.box.height;
+              if (this.fixBottom && newTop + config.box.height > config.viewport.height)
+                newTop = config.viewport.height - config.box.height;
 
             config.element.style.top = newTop + 'px';
           }

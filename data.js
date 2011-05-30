@@ -81,6 +81,9 @@
         this.info = object.info;  // proposition introduce rootDelegateChanged event instead
         this.dispatch('update', object, delta);
       },
+      rollbackUpdate: function(object, delta){
+        this.dispatch('rollbackUpdate', object, delta);
+      },
       stateChanged: function(object, oldState){
         this.state = object.state;
         this.dispatch('stateChanged', object, oldState);
@@ -702,7 +705,7 @@
           if (items = delta.inserted)
           {
             for (var i = 0, object; object = items[i]; i++)
-              this.member_[object.eventObjectId] = this.map_[object.eventObjectId];
+              this.member_[object.eventObjectId] = object;
 
             this.itemCount += items.length;
             this.version++;
@@ -1023,7 +1026,7 @@
       }
 
       Dataset.setAccumulateState = function(state){
-        if (state !== 'xxx') return;
+        return;
         if (state)
         {
           if (setStateCount == 0)
@@ -1201,18 +1204,18 @@
         }
       },
 
-      getItems: function(){
+      /*getItems: function(){
         if (this.version_ != this.version)
         {
           this.version_ = this.version;
           this.cache_ = [];
 
           for (var objectId in this.member_)
-            this.cache_.push(this.member_[objectId].object);
+            this.cache_.push(this.member_[objectId]);
         }
 
         return this.cache_;
-      },
+      },*/
 
       setIsActiveSubscriber: function(isActive){
         if (this.isActiveSubscriber != !!isActive)
@@ -1844,12 +1847,12 @@
           //newGroup.add([object]);
           newGroup.map_[objectId] = object;
 
-          newGroup.dispatch('datasetChanged', this, {
+          newGroup.dispatch('datasetChanged', newGroup, {
             inserted: [object]
           });
 
           // destroy oldGroup if empty
-          if (this.destroyEmpty && !oldGroup.itemCount)
+          if (('destroyEmpty' in oldGroup ? oldGroup.destroyEmpty : this.destroyEmpty) && !oldGroup.itemCount)
           {
             //this.groups_[oldGroup.groupId].destroy();
             delete this.groups_[oldGroup.groupId];
@@ -1983,7 +1986,7 @@
 
           group.dispatch('datasetChanged', group, delta);
 
-          if (this.destroyEmpty && !group.itemCount)
+          if (('destroyEmpty' in group ? group.destroyEmpty : this.destroyEmpty) && !group.itemCount)
           {
             deleted.push(group);
             //this.groups_[group.groupId].destroy();

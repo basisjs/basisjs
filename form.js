@@ -880,7 +880,7 @@
     var ComboboxPopupHandler = {
       show: function(){ cssClass(this.field).add('Basis-DropdownList-Opened'); },
       hide: function(){ cssClass(this.field).remove('Basis-DropdownList-Opened'); },
-      click: function(event){
+      click: function(event, node){
         var sender = Event.sender(event);
         var item = sender.tagName == 'A' ? sender : DOM.parent(sender, 'A', 0, this.content);
 
@@ -1489,13 +1489,16 @@
           return hasMatches;
         }
 
-        for (var i = 0; i < child._x.length; i++)
-        {                             
-          if (child._x[i])
-             DOM.replace(child._x[i], child._m[i]);
+        if (child._x)
+        {
+          for (var i = 0; i < child._x.length; i++)
+          {                             
+            if (child._x[i])
+               DOM.replace(child._x[i], child._m[i]);
+          }
+          delete child._x;
+          delete child._m;
         }
-        delete child._x;
-        delete child._m;
 
         return false;
       },

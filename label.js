@@ -58,6 +58,8 @@
       visible_: false,
       visibilityGetter: Function.$false,
 
+      insertPoint: DOM.INSERT_END,
+
       defaultContent: '[no text]',
 
       behaviour: {
@@ -83,6 +85,9 @@
         if (config.visibilityGetter)
           this.visibilityGetter = getter(config.visibilityGetter);
 
+        if (config.insertPoint)
+          this.insertPoint = config.insertPoint;
+
         config = this.inherit(config);
 
         this.traceChanges_();
@@ -94,7 +99,7 @@
         if (this.container && this.visible_)
         {
           if (this.container != this.element.parentNode)
-            DOM.insert(this.container, this.tmpl.element);
+            DOM.insert(this.container, this.tmpl.element, this.insertPoint);
         }
         else
           DOM.remove(this.element);
@@ -292,7 +297,8 @@
       className: namespace + '.IsEmpty',
 
       visibilityGetter: function(childCount, object){ 
-        return !childCount && (object.collection ? object.collection.state : object.state) == STATE.READY;
+        var state = object.collection ? object.collection.state : object.state;
+        return !childCount && state == STATE.READY;
       },
       defaultContent: 'Empty'
     })

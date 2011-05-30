@@ -599,7 +599,7 @@
         params = Object.iterate(this.params, function(key, value){
           return (value == null) || (value && typeof value.toString == 'function' && value.toString() == null)
             ? null
-            : key + '=' + Encode.escape(value)
+            : key + '=' + String(value.toString()).replace(/[%=&]/g, function(m){ return { '%': '%25', '=': '%3D', '&': '%26' }[m] })//Encode.escape(Basis.Crypt.UTF8.fromUTF16(value.toString()))
         }).filter(Function.$isNotNull).join('&');
 
         // prepare location & postBody

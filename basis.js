@@ -1561,6 +1561,7 @@
       // prototype defaults
       prototype: { 
         constructor: null, 
+        init: Function(),
         toString: function(){
           return '[object ' + (this.constructor || this).className + ']';
         }
@@ -1574,37 +1575,44 @@
       */
       create: function(SuperClass){
 
-        //function newClass(){
-        var newClass = function BasisClass(){
-          if (typeof this.init == 'function')
-            return this.init.apply(this, arguments) & undefined;
-        };
-
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
+
+        var className;
+        var args = arguments;
+
+        // deal with className
+        for (var i = 1; i < args.length; i++)
+          if (args[i].className)
+            className = args[i].className;
+
+        if (!className)
+          className = SuperClass.className + '._SubClass_';
+
+        // new class constructor
+        // NOTE: this code makes Chrome and Firefox show class name in console
+        var newClass = new Function(
+          "return {'" + className + "': function(){\n" +
+          "  this.init.apply(this, arguments);\n" + 
+          "}}['" + className + "'];"
+        )();
 
         // inheritance
 
         // temp class constructor with no init call
-        var SuperClass_ = function(){};
+        var SuperClass_ = Function();
         SuperClass_.prototype = SuperClass.prototype;
 
         newClass.prototype = new SuperClass_();
         newClass.superClass_ = SuperClass;
+        newClass.className = className;
         
         // override extend method for newClass, new one extending prototype with method wrapping
         newClass.extend = BaseClass.extend;
         
         // extend newClass prototype
-        for (var i = 1; i < arguments.length; i++)
-          newClass.extend(arguments[i]);
-
-        // deal with className
-        if (!newClass.className)
-          newClass.className = 'subclass of ' + SuperClass.className;
-        
-        // TODO: remove className from prototype
-        //newClass.prototype.className = newClass.className;
+        for (var i = 1; i < args.length; i++)
+          newClass.extend(args[i]);
         
         // WARN: don't use extend() to assign this value (IE doesn't enumerate it)
         newClass.prototype.constructor = newClass;

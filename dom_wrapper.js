@@ -146,6 +146,13 @@
       colMap_: null,
 
      /**
+      * Map for collection member -> child node.
+      * @type {Object}
+      * @private
+      */
+      destroyCollectionMember: true,
+
+     /**
       * @type {Basis.DOM.Wrapper.AbstractNode}
       * @readonly
       */
@@ -851,7 +858,7 @@
         else
           this.dispatch('childNodesModified', this, newDelta);
 
-        if (deleted.length)
+        if (this.destroyCollectionMember && deleted.length)
           deleted.forEach(getter('destroy()'));
       },
       destroy: function(object){
