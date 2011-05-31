@@ -1589,10 +1589,13 @@
         if (!className)
           className = SuperClass.className + '._SubClass_';
 
+        var warn = '';
+        ;;;warn ="  if (typeof this.init != 'function'){ console.warn('Call class constructor as function is prohibited!'); debugger; }\n";
+
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
         var newClass = new Function(
-          "return {'" + className + "': function(){\n" +
+          "return {'" + className + "': function(){\n" + warn +
           "  this.init.apply(this, arguments);\n" + 
           "}}['" + className + "'];"
         )();

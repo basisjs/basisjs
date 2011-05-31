@@ -356,8 +356,9 @@
                 }
                 else
                 {
-                  if (delegate.info[key] !== this.info[key])
-                    delta[key] = this.info[key];
+                  delta[key] = undefined;
+                  //if (delegate.info[key] !== this.info[key])
+                  //  delta[key] = this.info[key];
                 }
               }
 
@@ -1388,6 +1389,7 @@
         }
       }
     };
+    INDEXEDDATASET_ITEM_HANDLER.rollbackUpdate = INDEXEDDATASET_ITEM_HANDLER.update;
 
     var INDEXEDDATASET_DATASET_HANDLER = {
       datasetChanged: function(source, delta){
@@ -1636,6 +1638,7 @@
         }
       }
     };
+    COLLECTION_ITEM_HANDLER.rollbackUpdate = COLLECTION_ITEM_HANDLER.update;
     
     var COLLECTION_DATASET_HANDLER = {
       datasetChanged: function(source, delta){
@@ -1865,6 +1868,7 @@
         }
       }
     };
+    GROUPING_ITEM_HANDLER.rollbackUpdate = GROUPING_ITEM_HANDLER.update;
 
     var GROUPING_DATASET_HANDLER = {
       datasetChanged: function(source, delta){

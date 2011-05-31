@@ -2178,7 +2178,7 @@
       insertBefore: function(newChild, refChild){
         if (newChild = this.inherit(newChild, refChild))
         { 
-          if (this == newChild.parentNode)
+          if (this === newChild.parentNode)
           {
             var container = newChild.groupNode;
             var insertPoint = null;
@@ -2192,7 +2192,8 @@
             while (insertPoint && insertPoint.parentNode != container.childNodesElement)
               insertPoint = insertPoint.parentNode;
 
-            container.childNodesElement.insertBefore(newChild.element, insertPoint);
+            if ((newChild.element.parentNode !== container.childNodesElement) || (newChild.element.nextSibling !== insertPoint))
+              container.childNodesElement.insertBefore(newChild.element, insertPoint);
           }
           
           return newChild;
