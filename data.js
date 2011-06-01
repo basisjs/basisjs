@@ -1074,7 +1074,7 @@
         }
         else
         {
-          ;;;if(typeof console != 'undefined') console.warn(this.className + '.addSource: source isn\'t type of AbstractDataset');
+          ;;;if(typeof console != 'undefined') console.warn(this.className + '.addSource: source isn\'t type of AbstractDataset', source);
         }
       }
     }
@@ -1095,8 +1095,28 @@
         }
         else
         {
-          ;;;if(typeof console != 'undefined') console.warn(this.className + '.removeSource: source isn\'t in dataset source list');
+          ;;;if(typeof console != 'undefined') console.warn(this.className + '.removeSource: source isn\'t in dataset source list', source);
         }
+      }
+    }
+
+    function createADMethod_setSources(handler){
+      return function(sources){
+        var exists = Array.from(this.sources); // clone list
+        for (var i = 0, source; source = sources[i]; i++)
+        {
+          if (source instanceof AbstractDataset)
+          {
+            if (!exists.remove(source))
+              this.addSource(source);
+          }
+          else
+          {
+            ;;;if(typeof console != 'undefined') console.warn(this.className + '.setSources: source isn\'t type of AbstractDataset', source);
+          }
+        }
+
+        exists.forEach(this.removeSource, this);
       }
     }
 
@@ -1261,6 +1281,7 @@
 
       addSource: createADMethod_addSource(AGGREGATEDATASET_DATASET_HANDLER),
       removeSource: createADMethod_removeSource(AGGREGATEDATASET_DATASET_HANDLER),
+      setSources: createADMethod_setSources(AGGREGATEDATASET_DATASET_HANDLER),
       clear: createADMethod_clear(AGGREGATEDATASET_DATASET_HANDLER),
 
       destroy: function(){
@@ -1613,6 +1634,7 @@
 
       addSource: createADMethod_addSource(INDEXEDDATASET_DATASET_HANDLER),
       removeSource: createADMethod_removeSource(INDEXEDDATASET_DATASET_HANDLER),
+      setSources: createADMethod_setSources(INDEXEDDATASET_DATASET_HANDLER),
       clear: createADMethod_clear(INDEXEDDATASET_DATASET_HANDLER)
     });
 
@@ -1783,6 +1805,7 @@
 
       addSource: createADMethod_addSource(COLLECTION_DATASET_HANDLER),
       removeSource: createADMethod_removeSource(COLLECTION_DATASET_HANDLER),
+      setSources: createADMethod_setSources(COLLECTION_DATASET_HANDLER),
       clear: createADMethod_clear(COLLECTION_DATASET_HANDLER),
 
       sync: function(data, set){
@@ -2012,8 +2035,6 @@
       }
     };
 
-    var groupingClearSources = createADMethod_clear(GROUPING_DATASET_HANDLER);
-
    /**
     * @class
     */
@@ -2095,35 +2116,8 @@
 
       addSource: createADMethod_addSource(GROUPING_DATASET_HANDLER),
       removeSource: createADMethod_removeSource(GROUPING_DATASET_HANDLER),
-
-      clear: function(){
-        //debugger;
-        // delete sources
-        groupingClearSources.call(this);
-
-        // destroy groups?
-        /*var deleted = Object.values(this.groups_);
-        this.groups_ = {};
-
-        for (var objectId in this.map_)
-        {
-          this.map_[objectId].object.removeHandler(GROUPING_ITEM_HANDLER, this);
-          delete this.map_[objectId];
-        }
-
-        if (deleted.length)
-        {
-          this.dispatch('datasetChanged', this, {
-            deleted: deleted
-          });
-
-          for (var i = 0; i < deleted.length; i++)
-            deleted[i].destroy();
-        }*/
-
-        // TODO!!
-        //this.sources.clear();
-      },
+      setSources: createADMethod_setSources(GROUPING_DATASET_HANDLER),
+      clear: createADMethod_clear(GROUPING_DATASET_HANDLER),
 
       destroy: function(){
         // prevent destroy empty groups, groups will destroy all at once (to reduce event dispatching)
