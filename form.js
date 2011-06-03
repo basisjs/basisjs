@@ -67,11 +67,11 @@
           {
             var key = Event.key(event);
           
-            if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
-              Event.cancelDefault(event);
-
             if (((field.nextFieldOnEnter || event.ctrlKey) && key == Event.KEY.ENTER) || key == Event.KEY.CTRL_ENTER)
+            {
+              Event.cancelDefault(event);
               field.nextFieldFocus();
+            }
             else
               field.setValid();
           }
