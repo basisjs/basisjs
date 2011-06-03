@@ -76,7 +76,9 @@
         if (config)
         {
           this.name = config.name || getUntitledName(name);
-          this.wrapper = config.wrapper;
+
+          if (config.wrapper)
+            this.wrapper = config.wrapper;
         }
         else
           this.name = getUntitledName(name);
