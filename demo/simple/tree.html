@@ -104,7 +104,7 @@
       container: Basis.DOM.get('demo-container'),
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
+          return new nsTree.TreeFolder(config);
         else
           return new nsTree.TreeNode(config);
       },

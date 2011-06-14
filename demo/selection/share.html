@@ -111,7 +111,7 @@
       selection: treeSelection, 
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
+          return new nsTree.TreeFolder(config);
         else
           return new nsTree.TreeNode(config);
       },
@@ -124,7 +124,7 @@
       selection: treeSelection,
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
+          return new nsTree.TreeFolder(config);
         else
           return new nsTree.TreeNode(config);
       },
@@ -137,7 +137,7 @@
       selection: tree2.selection, // pass tree2 selection object (it is still treeSelection)
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
+          return new nsTree.TreeFolder(config);
         else
           return new nsTree.TreeNode(config);
       },

@@ -96,10 +96,10 @@
     var _init = Selection.prototype.init;
     Selection.prototype.init = function(config, name){
       _init.call(this, config);
-      this.element = DOM.insert(selectionOutput, DOM.createElement('', DOM.createElement('LABEL', (name || 'Tree selection') + ': '), this.content = DOM.createText()));
+      this.element = DOM.insert(selectionOutput, DOM.createElement('', DOM.createElement('LABEL', (name || 'Tree selection') + ': '), this.content = DOM.createText('{no items}')));
       this.addHandler({
-        change: function(){
-          this.content.nodeValue = this.getItems().map(Function.getter('info.title + " " + object.document')).join(', ') || 'no items';
+        datasetChanged: function(){
+          this.content.nodeValue = this.getItems().map(Function.getter('info.title + " " + object.document')).join(', ') || '{no items}';
         }
       });
     }
@@ -164,7 +164,7 @@
 
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(Object.complete({ childFactory: (this.document || this).childFactory }, config));
+          return new nsTree.TreeFolder(config);
         else
           return new nsTree.TreeNode(config);
       },

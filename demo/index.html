@@ -183,7 +183,7 @@
         childClass: Class(nsTree.TreeNode, {
           className: 'Demo-TreeNode',
           template: new Basis.Html.Template(
-            '<li{element} class="Demo-TreeNode">' +
+            '<li{element} class="Demo-TreeNode" event-click="select">' +
               '<a{content|title} href="#">' +
                 '<img src{imageUrl}="box.png" width="100" height="75"/>' +
                 '<span class="title">{titleText}</span>' +

@@ -111,7 +111,7 @@
       className: namespace + '.TreeNode',
 
       canHaveChildren: false,
-      //childFactory: null,
+      childFactory: null,
 
       event_update: function(object, delta){
         TmplContainer.prototype.event_update.call(this, object, delta);
