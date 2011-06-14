@@ -22,11 +22,16 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
 
-    var Template = Basis.Html.Template;
     var cssClass = Basis.CSS.cssClass;
     var getter = Function.getter;
 
     var nsWrappers = DOM.Wrapper;
+
+    var Template = Basis.Html.Template;
+    var TmplNode = nsWrappers.TmplNode;
+    var TmplContainer = nsWrappers.TmplContainer;
+
+    var createEvent = Basis.EventObject.createEvent;
 
     //
     //  behaviour handlers
@@ -54,17 +59,15 @@
    /**
     * @class
     */
-    var AbstractTabsControl = Class(nsWrappers.HtmlControl, {
+    var AbstractTabsControl = Class(nsWrappers.TmplControl, {
       className: namespace + '.AbstractTabsControl',
 
       canHaveChildren: true,
-      childClass: nsWrappers.HtmlNode,
+      childClass: TmplNode,
 
-      behaviour: {
-        childEnabled: baseSelectHandler,
-        childDisabled: baseUnselectHandler,
-        childNodesModified: baseUnselectHandler
-      },
+      event_childEnabled: createEvent('childEnabled') && baseSelectHandler,
+      event_childDisabled: createEvent('childDisabled') && baseUnselectHandler,
+      event_childNodesModified: baseUnselectHandler,
 
       //
       //  common methods
@@ -97,48 +100,55 @@
    /**
     * @class
     */
-    var Tab = Class(nsWrappers.HtmlContainer, {
+    var Tab = Class(TmplContainer, {
       className: namespace + '.Tab',
 
       canHaveChildren: false,
 
-      behaviour: {
-        disable: function(){ 
-          this.inherit();
+      event_disable: function(){ 
+        TmplContainer.prototype.event_disable.call(this);
 
-          this.unselect();
-          if (this.document)
-            this.document.dispatch('childDisabled', this);
-        },
-        enable: function(){ 
-          this.inherit();
+        this.unselect();
+        if (this.document)
+          //this.document.dispatch('childDisabled', this);
+          this.document.event_childDisabled(this.document, this);
+      },
+      event_enable: function(){ 
+        TmplContainer.prototype.event_enable.call(this);
 
-          if (this.document)
-            this.document.dispatch('childEnabled', this);
-        },
-        click: function(event){
-          if (!this.isDisabled())
-            this.select();
-        },
-        update: function(node, delta){
-          this.inherit(node, delta);
+        if (this.document)
+          //this.document.dispatch('childEnabled', this);
+          this.document.event_childEnabled(this.document, this);
+      },
+      event_update: function(node, delta){
+        TmplContainer.prototype.event_update.call(this, node, delta);
 
-          // set new title
-          this.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
-        }
+        // set new title
+        this.tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
       },
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Tab">' +
+        '<div{element|selectedElement} class="Basis-Tab" event-click="select">' +
           '<span class="Basis-Tab-Start"/>' +
           '<span class="Basis-Tab-Content">' +
-            '<span{content} class="Basis-Tab-Caption">' +
+            '<span class="Basis-Tab-Caption">' +
               '{titleText}' +
             '</span>' +
           '</span>' + 
           '<span class="Basis-Tab-End"/>' +
-        '</div>'
+        '</div>' +
+        '<div{content}/>'
       ),
+      
+      templateAction: function(actionName, event){
+        if (actionName == 'select')
+        {
+          if (!this.isDisabled())
+            this.select();
+        }
+
+        TmplContainer.prototype.templateAction.call(this, actionName, event);
+      },
 
      /**
       * Using to fetch title value.
@@ -150,29 +160,7 @@
       * Using for tab default grouping.
       * @property {number}
       */
-      groupId: 0,
-
-      init: function(config){
-        if (config)
-        {
-          // add name if exists
-          if (config.name != '')
-            this.name = config.name;
-
-          // add groupId if exists
-          if (config.groupId != '')
-            this.groupId = config.groupId;
-
-          if (config.content)
-          {
-            config = Object.complete({}, config);
-            delete config.content;
-          }
-        }
-
-        // inherit
-        this.inherit(config);
-      }
+      groupId: 0
     });
 
     //
@@ -182,8 +170,8 @@
    /**
     * @class
     */
-    var TabsGroupControl = Class(nsWrappers.HtmlGroupControl, {
-      childClass: Class(nsWrappers.HtmlPartitionNode, {
+    var TabsGroupControl = Class(nsWrappers.TmplGroupingNode, {
+      childClass: Class(nsWrappers.TmplPartitionNode, {
         template: new Template(
           '<div{element|content|childNodesElement} class="Basis-TabControl-TabGroup"></div>'
         )
@@ -197,7 +185,7 @@
       className: namespace + '.TabControl',
 
       childClass: Tab,
-      groupControlClass: TabsGroupControl,
+      localGroupingClass: TabsGroupControl,
 
       template: new Template(
         '<div{element} class="Basis-TabControl">' +
@@ -205,18 +193,7 @@
           '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +
           '<div class="Basis-TabControl-End"/>' +
         '</div>'
-      ),
-
-      init: function(config){
-        // create control
-        this.inherit(config);
-
-        // add event listners
-        this.addEventListener('click', 'click', true);
-      }
-
-      /* no custom destructor actions */
-
+      )
     });
 
     //
@@ -226,35 +203,23 @@
    /**
     * @class
     */
-    var Page = Class(nsWrappers.HtmlContainer, {
+    var Page = Class(TmplContainer, {
       className: namespace + '.Page',
 
-      canHaveChildren: true,
-
-      behaviour: {
-        select: function(){
-          cssClass(this.element).remove('Basis-Page-Hidden');
-          this.inherit();
-        },
-        unselect: function(){
-          cssClass(this.element).add('Basis-Page-Hidden');
-          this.inherit();
-        }
+      event_select: function(){
+        cssClass(this.element).remove('Basis-Page-Hidden');
+        TmplContainer.prototype.event_select.call(this);
+      },
+      event_unselect: function(){
+        cssClass(this.element).add('Basis-Page-Hidden');
+        TmplContainer.prototype.event_unselect.call(this);
       },
       
       template: new Template(
         '<div{element} class="Basis-Page Basis-Page-Hidden">' + 
           '<div{content|childNodesElement} class="Basis-Page-Content"/>' +
         '</div>'
-      ),
-
-      init: function(config){
-        // add name if exists
-        if (config && config.name != '')
-          this.name = config.name;
-
-        this.inherit(config);
-      }
+      )
     });
 
     //
@@ -285,53 +250,38 @@
       className: namespace + '.TabSheet',
 
       canHaveChildren: true,
-      childClass: nsWrappers.HtmlNode,
+      childClass: TmplNode,
 
-      behaviour: {
-        select: function(){
-          this.inherit();
-          cssClass(this.pageElement).remove('Basis-Page-Hidden');
-        },
-        unselect: function(){
-          this.inherit();
-          cssClass(this.pageElement).add('Basis-Page-Hidden');
-        }
+      event_select: function(){
+        Tab.prototype.event_select.call(this);
+        cssClass(this.tmpl.pageElement).remove('Basis-Page-Hidden');
+      },
+      event_unselect: function(){
+        Tab.prototype.event_unselect.call(this);
+        cssClass(this.tmpl.pageElement).add('Basis-Page-Hidden');
       },
       
       template: new Template(
-        '<div{element|selectedElement} class="Basis-TabSheet">' +
+        '<div{element|selectedElement} class="Basis-TabSheet" event-click="select">' +
           '<div{tabElement} class="Basis-Tab">' +
             '<span class="Basis-Tab-Start"/>' +
             '<span class="Basis-Tab-Content">' +
-              '<span{content} class="Basis-Tab-Caption">' +
+              '<span class="Basis-Tab-Caption">' +
                 '{titleText}' +
               '</span>' +
             '</span>' + 
             '<span class="Basis-Tab-End"/>' +
           '</div>' +
           '<div{pageElement} class="Basis-Page Basis-Page-Hidden">' +
-            '<div{pageContent|childNodesElement} class="Basis-Page-Content"/>' +
+            '<div{content|pageContent|childNodesElement} class="Basis-Page-Content"/>' +
           '</div>' +
         '</div>'
       ),
 
-      init: function(config){
-        var content;
-        if (config && config.content)
-        {
-          config = Object.complete({}, config);
-          content = config.content;
-          delete config.content;
-        }
-
-        this.inherit(config);
-
-        if (content)
-          DOM.insert(this.pageContent, content);
-      },
       destroy: function(){
-        DOM.remove(this.pageElement);
-        this.inherit();
+        DOM.remove(this.tmpl.pageElement);
+        
+        Tab.prototype.destroy.call(this);
       }
     });
 
@@ -378,19 +328,19 @@
       ),
 
       insertBefore: function(newChild, refChild){
-        if (newChild = this.inherit(newChild, refChild))
+        if (newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild))
         {
-          if (this.pagesElement)
-            this.pagesElement.insertBefore(newChild.pageElement, this.nextSibling ? this.nextSibling.pageElement : null)
+          if (this.tmpl.pagesElement)
+            this.tmpl.pagesElement.insertBefore(newChild.tmpl.pageElement, this.nextSibling ? this.nextSibling.tmpl.pageElement : null)
 
           return newChild;
         }
       },
       removeChild: function(oldChild){
-      	if (oldChild = this.inherit(oldChild))
+      	if (oldChild = TabControl.prototype.removeChild.call(this, oldChild))
         {
-          if (this.pagesElement)
-            oldChild.element.appendChild(oldChild.pageElement);
+          if (this.tmpl.pagesElement)
+            oldChild.element.appendChild(oldChild.tmpl.pageElement);
 
           return oldChild;
         }
@@ -398,10 +348,10 @@
       clear: function(){
         // put pageElement back to TabSheet root element
         this.childNodes.forEach(function(tabsheet){
-          tabsheet.element.appendChild(tabsheet.pageElement);
+          tabsheet.element.appendChild(tabsheet.tmpl.pageElement);
         });
 
-        this.inherit();
+        TabControl.prototype.clear.call(this);
       }
     });
 

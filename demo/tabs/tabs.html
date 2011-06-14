@@ -87,6 +87,8 @@
 
     var Tabs = Basis.Controls.Tabs;
 
+    var getter = Function.getter;
+
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
     }
@@ -116,10 +118,10 @@
     new Tabs.AccordionControl({
       container: DOM.Style.setStyle(createBlock('AccordionControl with localSorting & localGrouping'), { 'float': 'right', width: '250px' }),
       localGrouping: {
-        groupGetter: 'groupId',
-        localSorting: 'info.title'
+        groupGetter: getter('groupId'),
+        localSorting: getter('info.title')
       },
-      localSorting: 'info.title',
+      localSorting: getter('info.title'),
       childNodes: data
     });
 
@@ -133,10 +135,10 @@
     new Tabs.TabControl({
       container: createBlock('TabControl with localSorting & localGrouping'),
       localGrouping: {
-        groupGetter: 'groupId',
-        localSorting: 'info.title'
+        groupGetter: getter('groupId'),
+        localSorting: getter('info.title')
       },
-      localSorting: 'info.title',
+      localSorting: getter('info.title'),
       childNodes: data
     });
 
@@ -187,10 +189,10 @@
     new Tabs.TabSheetControl({
       container: createBlock('TabSheetControl with localSorting & localGrouping'),
       localGrouping: {
-        groupGetter: 'groupId',
-        localSorting: 'info.title'
+        groupGetter: getter('groupId'),
+        localSorting: getter('info.title')
       },
-      localSorting: 'info.title',
+      localSorting: getter('info.title'),
       childNodes: data
     });
 

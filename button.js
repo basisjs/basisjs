@@ -39,7 +39,7 @@
     * @class Button
     */
 
-    var Button = Class(nsWrappers.HtmlNode, {
+    var Button = Class(nsWrappers.TmplNode, {
       className: namespace + '.Button',
 
       template: new Template(
@@ -56,10 +56,8 @@
         '</div>'
       ),
 
-      behaviour: {
-        select: function(){
-          DOM.focus(this.content);
-        }
+      event_select: function(){
+        DOM.focus(this.content);
       },
 
       captionGetter: getter('caption'),
@@ -85,7 +83,7 @@
           this.captionGetter = Function.getter(config.captionGetter);
 
         // inherit
-        this.inherit(config);
+        nsWrappers.TmplNode.prototype.init.call(this, config);
 
         this.setCaption('caption' in config ? config.caption : this.caption);
 
@@ -105,7 +103,8 @@
       },
       click: function(){
         if (!this.isDisabled())
-          this.dispatch('click');
+          //this.dispatch('click');
+          this.event_click();
       },
       setCaption: function(newCaption){
         this.caption = newCaption;
