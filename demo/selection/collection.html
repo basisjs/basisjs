@@ -109,20 +109,18 @@
       }),
       childClass: Basis.Class(nsTree.TreeFolder, {
         collapsed: true,
-        behaviour: {
-          expand: function(){
-            this.inherit();
-            this.setCollection(this.delegate);
-          }
+        event_expand: function(){
+          nsTree.TreeFolder.prototype.event_expand.call(this);
+          this.setCollection(this.delegate);
         },
         init: function(config){
-          this.inherit(config);
+          nsTree.TreeFolder.prototype.init.call(this, config);
 
-          this.itemCountText = DOM.insert(this.title, '');
+          this.tmpl.itemCountText = DOM.insert(this.tmpl.title, '');
 
           this.delegate.addHandler({
             datasetChanged: function(dataset, delta){
-              this.itemCountText.nodeValue = ' ({0})'.format(dataset.itemCount);
+              this.tmpl.itemCountText.nodeValue = ' ({0})'.format(dataset.itemCount);
             }
           }, this);
         }

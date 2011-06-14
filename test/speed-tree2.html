@@ -1,0 +1,346 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Speed Test: Basis Tree</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../style/tree/default/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Vista Style" href="../style/tree/vista/style.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Compat Style" href="../style/tree/compat/style.css" media="screen" />
+
+  <style type="text/css">
+    HTML,
+    BODY
+    {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    LABEL
+    {
+      cursor: pointer;
+    }
+    LABEL:hover
+    {
+      text-decoration: underline;
+    }
+    INPUT[type=checkbox]
+    {
+      position: relative;
+      top: 2px;
+    }
+    #TreeContainer
+    {
+      border: 1px solid green;
+      margin: .25em;
+      overflow: auto;
+      height: 500px;
+    }
+    .basis-tree
+    {
+      margin: .25em 0 .2em 0.25%;
+      border: 1px solid black;
+      width: 49%;
+      float: left;
+      padding: 2px;
+    }
+    .break
+    {
+      clear: both;
+    }
+    #firstRun
+    {
+      color: #A0A0A0;
+    }
+
+    .correct
+    {
+      color: #009900;
+    }
+    .clear
+    {
+      clear: both;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../style/tree/default/style_ie.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Vista Style" href="../style/tree/vista/style_ie.css" media="screen" />
+  <link rel="alternate stylesheet" type="text/css" title="Compat Style" href="../style/tree/compat/style_ie.css" media="screen" />
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../style_ie7.css" media="screen" />
+  <![endif]-->
+
+
+  <script type="text/javascript"  src="../basis.js"></script>
+  <script type="text/javascript"  src="../data.js"></script>
+  <script type="text/javascript"  src="../dom_wrapper.js"></script>
+  <script type="text/javascript"  src="../property.js"></script>
+  <script type="text/javascript"  src="../dom_register.js"></script>
+  <script type="text/javascript"  src="../tree.js"></script>
+  <script type="text/javascript"  src="../../plugins/generator.js"></script>
+</head>
+
+<body>
+  <div id="control_panel" style="border: 2px solid #808080; background: #F0F0F0; margin: .25em; padding: .5em">
+    <fieldset style="float: right; width: 50%">
+      <legend> selection </legend>
+      <button id="buttonSelectAll">select all</button> <span id="allNodesSelectTime"></span><br/>
+      <button id="buttonSelectionClear">clear</button>
+      <button id="buttonSelectionInverse">inverse selection</button> 
+      contain of <span id="in_selection">0 items</span> <br/>
+      <input  id="selected_name"/>
+      <button id="buttonRenameSelected">rename selected</button><br/>
+      <input  id="selected_value"/>
+      <button id="buttonSetValueSelected">set new value for selected</button><br/>
+      <button id="buttonDeleteSelected">delete selected</button>
+      <button id="buttonDisableSelected">disable selected</button><br/>
+    </fieldset>
+
+    <fieldset>
+      <legend> generate nodes </legend>
+      <input type="text" id="nodeCount"/><button id="buttonGenerate">gen nodes</button>
+      <div><span id="time"></span><span id="clearTime"></span></div>
+      <input type="checkbox" id="checkRandomNames" /> <label for="checkRandomNames">random names</label>
+    </fieldset>
+
+    <fieldset>
+      <legend> all nodes operations </legend>
+      <button id="buttonClearTree">remove all (clear tree)</button>
+      <button id="buttonEnableAll">enable all</button>
+      <button id="buttonCollapseAll">collapse all</button>
+      <button id="buttonExpandAll">expand all</button><br/>
+    </fieldset>
+
+    <fieldset>
+      <legend> other </legend>
+      <button id="buttonDisableTree">disable tree</button>
+      <button id="buttonEnableTree">enable tree</button>
+    </fieldset>
+
+    <div class="clear"></div>
+
+  </div>
+  <div id="TreeContainer"><div id="tree"></div></div>
+  <script type="text/javascript">
+
+    if (typeof console == 'undefined')
+      console = { log: Function.$null, warn: Function.$null, dir: Function.$null };
+
+    with(Basis.names(':BASE Event Data'))
+    with(Basis.DOM.Wrapper.Register.names('Count Sum Avg Collection SortedCollection Filter SortedFilter'))
+    with(Basis.Controls.Tree.names('Tree TreeNode TreeFolder'))
+
+    (function(){
+
+      var DOM = Basis.DOM;
+      var Data = Basis.Data;
+      var Event = Basis.Event;
+      var cssClass = Basis.CSS.cssClass;
+
+      var gString = Basis.Data.Generator.String;
+
+      function setNodeCount(value){
+        DOM.get('nodeCount').value = value;
+        if (isNaN(value)) 
+          DOM.get('time').innerHTML = '<span style="color: red">&quot;<b>' + value + '</b>&quot; is not a number</span>';
+        else 
+          genNodes(Number(value)); 
+      }
+
+      DOM.insert(DOM.get('nodeCount').parentNode, [1, 10, 100, 250, 500, 1000, 2000].map(function(item){ 
+        var btn = DOM.createElement('button', item); 
+        Event.addHandler(btn, 'click', function(){ setNodeCount(item) });
+        Event.onUnload(function(){ Event.clearHandlers(btn) });
+        return btn;
+      }), DOM.INSERT_BEFORE, DOM.get('nodeCount'));
+
+      if (!window.console) window.console = false;
+
+      // create tree (reference allowed in global scope)
+      TestTree = new Tree({
+        container: 'tree',
+        cssClassName: {
+          content: 'Frame-Nodes'
+        },
+        childFactory: function(config){
+          if (config.type == 'TreeFolder')
+            return new TreeFolder(config);
+          else
+            return new TreeNode(config);
+        },
+        selection: { multiple: true },
+        info: {
+          value: 0,
+          title: ''
+        }
+      });
+      DOM.insert(TestTree.element, DOM.createElement('#firstRun', '[empty tree]'));
+      DOM.insert('TreeContainer', DOM.createElement('.break'));
+
+      TestTree.selection.addHandler({ 
+        change: function(){
+          var count = this.itemCount;
+          DOM.get('in_selection').innerHTML = '<b>' + count + '</b> item(s)';
+        }
+      });
+
+      var getValue = function(info){ return info.value };
+      var oddValue = function(info){ return info.value % 2 };
+      var evenValue = function(info){ return info.value % 2 == 0 };
+
+      function genNodes(count){
+        if (DOM.get('firstRun'))
+          DOM.remove(DOM.get('firstRun'));
+
+        var clearTime = new Date();
+        TestTree.clear();
+        DOM.get('clearTime').innerHTML = ' [clear time: ' + ((new Date() - clearTime)/1000).toFixed(3) + ']';
+
+        var isRandomTitle = DOM.get('checkRandomNames').checked;
+
+        // generate data
+        var data = [];
+        var title = 'very very long title '.repeat(10);
+        for (var i = 0; i < count; i++)
+        {
+          var val = Math.round(Math.random() * 10);
+          data.push({
+            info: {
+              id: 'tree_node' + i,
+              value: val,
+              title: title
+            }
+          });
+          title = isRandomTitle ? gString(3, 48) : 'title' + i;
+        }
+
+        var timeStart = new Date();
+        var nodes = [{}];
+        var cn = [];
+        for (var i = 0; i < count; i++)
+        {
+          var node = data[i];
+          var idx = (i * count * 173) % nodes.length;
+          if (!idx)
+          {
+            cn.push(node);
+            node.root = 1;
+          }
+          else
+            nodes[idx].childNodes.push(node);
+            
+          if (i % 2)
+          {
+            nodes.push(node);
+            node.type = 'TreeFolder';
+            node.childFactory = TestTree.childFactory;
+            node.childNodes = [];
+          }
+        }
+
+        TestTree.setChildNodes(cn);
+
+        var time = ((new Date() - timeStart)/1000).toFixed(3);
+        DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + time + '</b> sec';
+
+        //if (console && console.profileEnd) console.profileEnd();
+        nodes.clear();
+
+      };
+
+      var buttons = {
+        Generate: function(){ 
+          setNodeCount(DOM.get('nodeCount').value) 
+        },
+        ClearTree: function(){
+          this.clear();
+        },
+        CollapseAll: function(){
+          this.collapseAll();
+        },
+        ExpandAll: function(){
+          this.expandAll();
+        },
+        SelectionClear: function(){
+          d = new Date();
+          this.selection.clear();
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+        },
+        SelectAll: function(){
+          d = new Date();
+          this.selection.set(DOM.axis(this, DOM.AXIS_DESCENDANT));
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+        },
+        SelectionInverse: function(){
+          d = new Date();
+          this.selection.set(DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ return !node.selected }));
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+        },
+        DeleteSelected: function(){
+          d = new Date();
+          var items = this.selection.getItems();
+          this.selection.clear();
+          items.forEach(function(node){ node.destroy(); });
+          DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
+          //Array.from(this.selection.getItems()).forEach(function(node){ node.destroy(); });
+        },
+        RenameSelected: function(){
+          this.selection.getItems().forEach(function(item){
+            item.update({ title: String(this) })
+          }, DOM.get('selected_name').value);
+        },
+        SetValueSelected: function(){
+          this.selection.getItems().forEach(function(node){ 
+            node.update({ value: this }); 
+            var txt = node.title.firstChild.nextSibling;
+            if (txt && txt.nodeValue.indexOf('value:') != -1)
+              txt.nodeValue = ' [value: {0}]'.format(this);
+          }, Number(DOM.get('selected_value').value));
+        },
+        DisableSelected: function(){
+          this.selection.getItems().forEach(function(){ node.disable() });
+        },
+        EnableAll: function(){
+          DOM.axis(this, DOM.AXIS_DESCENDANT, function(node){ node.enable() });
+        },
+        DisableTree: function(){
+          this.disable();
+        },
+        EnableTree: function(){
+          this.enable();
+        }
+      };
+//      keys(buttons).forEach(function(id){ var btn = DOM.get('button' + id); addHandler(btn, 'click', buttons[id], TestTree) });
+      Event.addHandler(document, 'click', function(event){
+        var sender = Event.sender(event);
+        if (sender.tagName == 'BUTTON' && sender.id)
+        {
+          (buttons[sender.id.substr(6)] || $self).call(TestTree)
+          Event.kill(event);
+        }
+      });
+
+      Event.onLoad(function(){
+        //genNodes(2000);
+      });
+
+    })();
+
+  </script>
+</body>
+
+</html>

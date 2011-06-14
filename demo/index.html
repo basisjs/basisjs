@@ -32,6 +32,13 @@
       padding: 0;
     }
 
+    .Basis-Tree-NodeGroup,
+    .Basis-PartitionNode
+    {
+      border: 1px solid red;
+      padding: 5px;
+    }
+
     #DemoTree .Basis-Tree-NodeGroup-Title
     {
       border-bottom: 1px solid #E0E0E0;
@@ -118,7 +125,7 @@
     (function(){
       var Class = Basis.Class;
       var Data = Basis.Data;
-      var nsWrapers = Basis.DOM.Wrapers;
+      var nsWrappers = Basis.DOM.Wrappers;
       var nsTree = Basis.Controls.Tree;
 
       var data = [
@@ -170,10 +177,10 @@
         }
       ];
 
-      var treeDemos = new nsTree.Tree({
+      treeDemos = new nsTree.Tree({
         id: 'DemoTree',
         container: document.body,
-        childClass: Class.create(nsTree.TreeNode, {
+        childClass: Class(nsTree.TreeNode, {
           className: 'Demo-TreeNode',
           template: new Basis.Html.Template(
             '<li{element} class="Demo-TreeNode">' +
@@ -183,27 +190,38 @@
               '</a>' +
             '</li>'
           ),
-          behaviour: {
-            select: function(){
-              this.inherit();
-              location.href = this.info.url;
-            },
-            update: function(object, delta){
-              this.inherit(object, delta);
-              
-              this.imageUrl.nodeValue = this.info.image || this.info.url.replace('.html', '.png');
-            }
+          event_select: function(){
+            nsTree.TreeNode.prototype.event_select.call(this);
+
+            location.href = this.info.url;
+          },
+          event_update: function(object, delta){
+            nsTree.TreeNode.prototype.event_update.call(this, object, delta);
+          
+            this.tmpl.imageUrl.nodeValue = this.info.image || this.info.url.replace('.html', '.png');
           }
         }),
         localGrouping: {
-          groupGetter: Function.getter('info.group')
+          localSorting: function(node){ return node.info.title },
+          groupGetter: Function.getter('info.groupId'),
+          //localGroupingClass: nsTree.TreeGroupingNode,
+          localGrouping: {
+            childClass: nsTree.TreePartitionNode,
+            groupGetter: function(x){
+              return x.info.title.length > 4;
+            },
+            localGrouping: {
+              
+            }
+          }
         },
         childNodes: data.map(function(section){
           return section.demos.map(function(demo, idx, array){
-            return { info: Object.extend(demo, { group: '{0} ({1})'.format(this.title, array.length) }) };
+            return { info: Object.extend(demo, { groupId: this.title }) };
           }, section);
         }).flatten()
       });
+
 
     })();
   </script>

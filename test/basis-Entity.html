@@ -1,0 +1,1018 @@
+<!doctype html>
+
+<html lang="ru" xml:lang="ru">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Basis Test Suite - Entity</title>
+
+  <style type="text/css">
+    @import "style/default/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript"  src="../basis.js"></script>
+  <script type="text/javascript"  src="../data.js"></script>
+  <script type="text/javascript"  src="../entity.js"></script>
+  <script type="text/javascript"  src="../property.js"></script>
+  <script type="text/javascript"  src="../dom_wrapper.js"></script>
+  <script type="text/javascript">
+    (function(){
+      var init_ = Basis.Entity.BaseEntity.prototype.init;
+      Basis.Entity.BaseEntity.prototype.init = function(){
+        this.history_ = [];
+        this.historyAll_ = [];
+        init_.apply(this, arguments);
+      };
+
+      var dispatch_ = Basis.Data.Object.prototype.event_update;
+      Basis.Data.Object.prototype.event_update = function(obj, delta){
+        this.history_.push(delta);
+        this.historyAll_.push(['update'].concat(Array.from(arguments)));
+        dispatch_.apply(this, arguments);
+      }
+
+      var dispatch_ru = Basis.Data.Object.prototype.event_rollbackUpdate;
+      Basis.Data.Object.prototype.event_rollbackUpdate = function(obj, delta){
+        this.historyAll_.push(['rollbackUpdate'].concat(Array.from(arguments)));
+        dispatch_ru.apply(this, arguments);
+      }
+
+    })();
+  </script>
+  <script type="text/javascript"  src="test.js"></script>
+  <script type="text/javascript"  src="common.js"></script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    loadTest((function(){
+
+      var nsData = Basis.Data;
+      var nsEntity = Basis.Entity;
+
+      var data = [
+      ];
+
+      function resetHistory(obj){
+        obj.history_ = [];
+        obj.historyAll_ = [];
+      }
+
+      return [
+        {
+          name: 'Main frame',
+          testcase: [
+            {
+              name: 'construct',
+              testcase: [
+                {
+                  name: 'simple create',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: Number,
+                        value: String
+                      }
+                    });
+
+                    this.is(true, EntityType.all !== null);
+                    this.is(true, EntityType.all instanceof nsData.AbstractDataset);
+
+                    var entityA = EntityType();
+                    this.is(undefined, entityA);
+                    this.is(0, EntityType.all.itemCount);
+
+                    var entityB = EntityType({});
+                    this.is(true, entityB !== null);
+                    this.is(1, EntityType.all.itemCount);
+                    this.is({ id: 0, value: '' }, entityB.info);
+
+                    var entityC = EntityType({ id: '1', value: 'test' });
+                    this.is(2, EntityType.all.itemCount);
+                    this.is({ id: 1, value: 'test' }, entityC.info);
+
+                    var entityD = EntityType({ id: '1', value: 'test' });
+                    this.is(3, EntityType.all.itemCount);
+                    this.is(true, entityD != entityC);
+                    this.is({ id: 1, value: 'test' }, entityD.info);
+                  }
+                },
+                {
+                  name: 'keys test #1',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: nsEntity.IntId,
+                        value: String
+                      }
+                    });
+
+                    this.is(true, EntityType.all !== null);
+                    this.is(true, EntityType.all instanceof nsData.AbstractDataset);
+
+                    var entityA = EntityType();
+                    this.is(undefined, entityA);
+                    this.is(0, EntityType.all.itemCount);
+
+                    var entityB = EntityType({});
+                    this.is(true, entityB !== null);
+                    this.is(1, EntityType.all.itemCount);
+                    this.is({ id: null, value: '' }, entityB.info);
+
+                    var entityC = EntityType({});
+                    this.is(true, entityC !== entityB);
+                    this.is(2, EntityType.all.itemCount);
+                    this.is({ id: null, value: '' }, entityC.info);
+
+                    var entityD = EntityType({ id: '1', value: 'test' });
+                    this.is(3, EntityType.all.itemCount);
+                    this.is({ id: 1, value: 'test' }, entityD.info);
+
+                    var entityE = EntityType({ id: 1, value: 'test2' });
+                    this.is(true, entityE === entityD);
+                    this.is(3, EntityType.all.itemCount);
+                    this.is({ id: 1, value: 'test2' }, entityE.info);
+
+                    var entityF = EntityType({ id: 1 });
+                    this.is(true, entityF === entityD);
+                    this.is(3, EntityType.all.itemCount);
+                    this.is({ id: 1, value: 'test2' }, entityF.info);
+
+                    var entityG = EntityType(1);
+                    this.is(true, entityG === entityD);
+                    this.is(3, EntityType.all.itemCount);
+                    this.is({ id: 1, value: 'test2' }, entityG.info);
+
+                    var entityI = EntityType('1');
+                    this.is(true, entityI === entityD);
+                    this.is(3, EntityType.all.itemCount);
+                    this.is({ id: 1, value: 'test2' }, entityI.info);
+
+                    var entityH = EntityType(entityD);
+                    this.is(true, entityH === entityD);
+                    this.is(3, EntityType.all.itemCount);
+                    this.is({ id: 1, value: 'test2' }, entityH.info);
+
+                    var entityK = EntityType(entityC);
+                    this.is(true, entityK === entityC);
+                    this.is(3, EntityType.all.itemCount);
+                    this.is({ id: null, value: '' }, entityK.info);
+                  }
+                },
+                {
+                  name: 'keys test #2 (change id)',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: nsEntity.IntId,
+                        value: String
+                      }
+                    });
+
+                    // base test made in previous testcase
+
+                    var entityA = EntityType({});
+                    this.is(1, EntityType.all.itemCount);
+                    this.is({ id: null, value: '' }, entityA.info);
+
+                    var entityB = EntityType({ id: 1 });
+                    this.is(2, EntityType.all.itemCount);
+                    this.is({ id: 1, value: '' }, entityB.info);
+
+                    // try to change id for existing value, will be ignored
+                    entityA.update({ id: 1 });
+                    this.is(2, EntityType.all.itemCount);
+                    this.is(entityB, EntityType.get(1));
+                    this.is({ id: null, value: '' }, entityA.info);
+
+                    entityA.update({ id: 2 });
+                    this.is(2, EntityType.all.itemCount);
+                    this.is(entityA, EntityType.get(2));
+                    this.is({ id: 2, value: '' }, entityA.info);
+
+                    // destroy entityB
+                    entityB.destroy();
+                    this.is(1, EntityType.all.itemCount);
+                    this.is(undefined, EntityType.get(1));
+                    this.is({}, entityB.info);
+
+                    entityA.update({ id: 1 });
+                    this.is(1, EntityType.all.itemCount);
+                    this.is(entityA, EntityType.get(1));
+                    this.is(undefined, EntityType.get(2));
+                    this.is({ id: 1, value: '' }, entityA.info);
+
+                    entityA.update({ id: '1' });
+                    this.is(1, EntityType.all.itemCount);
+                    this.is(entityA, EntityType.get(1));
+                    this.is(entityA, EntityType.get('1'));
+                    this.is({ id: 1, value: '' }, entityA.info);
+
+                    // destroy entityA
+                    entityA.destroy();
+                    this.is(0, EntityType.all.itemCount);
+                    this.is(undefined, EntityType.get(1));
+                    this.is({}, entityA.info);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'update with rollback',
+              testcase: [
+                {
+                  name: 'with no id field',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: Number,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+                    this.is(0, entity.history_.length);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: 1, value: '1', self: false }, entity.info);
+
+                    // update, no rollbackUpdate
+                    resetHistory(entity);
+                    entity.update({ id: 2, value: '2' });
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1' }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 2, value: '2', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // update and rollbackUpdate
+                    resetHistory(entity);
+                    entity.update({ id: 3 }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 2 }, entity.history_[0]);
+                    this.is({ id: 2 }, entity.rollbackData_);
+                    this.is({ id: 3, value: '2', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // update and rollbackUpdate
+                    resetHistory(entity);
+                    entity.update({ value: 3 }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2' }, entity.history_[0]);
+                    this.is({ id: 2, value: '2' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // update, no rollbackUpdate
+                    resetHistory(entity);
+                    entity.update({ value: 4 }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '3' }, entity.history_[0]);
+                    this.is({ id: 2, value: '2' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '4', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // rollbackUpdate, no update
+                    resetHistory(entity);
+                    entity.update({ value: 5 });
+                    this.is(0, entity.history_.length); // no update
+                    this.is({ id: 2, value: '5' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '4', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // rollbackUpdate, no update
+                    resetHistory(entity);
+                    entity.update({ value: 6 });
+                    this.is(0, entity.history_.length); // no update
+                    this.is({ id: 2, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '4', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '5' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // update, no rollbackUpdate
+                    resetHistory(entity);
+                    entity.update({ value: 7 }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '4' }, entity.history_[0]);
+                    this.is({ id: 2, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // when change id field in no rollback mode -> update and no rollbackUpdate (in other cases otherwise)
+                    // in this case entity has no id
+                    resetHistory(entity);
+                    entity.update({ id: 4 });
+                    this.is(0, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: 2 }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+                  }
+                },
+                {
+                  name: 'update rollback storage',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: Number,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 4, value: '6', self: false });
+
+                    // prepare
+                    resetHistory(entity);
+                    entity.update({ id: 3, value: '7' }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: undefined, value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    //
+                    // main part
+                    //
+
+                    // update in no rollback mode should check for existing key in rollback storage, but not value
+                    resetHistory(entity);
+                    entity.update({ self: true });
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: true }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    resetHistory(entity);
+                    entity.update({ self: false });
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    resetHistory(entity);
+                    entity.update({ self: true }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6', self: false }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: true }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // rollbackUpdate, no update
+                    resetHistory(entity);
+                    entity.update({ self: true }, true);
+                    this.is(0, entity.history_.length);
+                    this.is({ id: 4, value: '6', self: false }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: true }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // rollbackUpdate, no update
+                    resetHistory(entity);
+                    entity.update({ self: true });
+                    this.is(0, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: true }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // update, rollbackUpdate
+                    resetHistory(entity);
+                    entity.update({ self: 1 });
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: 1 }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                  }
+                },
+                {
+                  name: 'updates with id field',
+                  test: function(){
+
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: nsEntity.IntId,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+                    this.is(0, entity.history_.length);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // prepare
+                    resetHistory(entity);
+                    entity.update({ id: 2, value: '2' });
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1' }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 2, value: '2', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    //
+                    // main part
+                    //
+
+                    // update and rollbackUpdate
+                    resetHistory(entity);
+                    entity.update({ id: 3 }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 2 }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 3, value: '2', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // update and rollbackUpdate
+                    resetHistory(entity);
+                    entity.update({ value: 3 }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2' }, entity.history_[0]);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // when change id field in no rollback mode -> update and no rollbackUpdate (in other cases otherwise)
+                    // in this case entity has no id
+                    resetHistory(entity);
+                    entity.update({ id: 4 });
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 3 }, entity.history_[0]);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '3', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                  }
+                },
+                {
+                  name: 'drop rollback storage when info has the same data, with no id',
+                  test: function(){
+
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: Number,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+
+                    resetHistory(entity);
+                    entity.update({ id: 2, value: '2', self: true }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
+                    this.is({ id: 1, value: '1', self: false }, entity.rollbackData_);
+                    this.is({ id: 2, value: '2', self: true }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: undefined, value: undefined, self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+
+                    // should drop rollback storage
+                    resetHistory(entity);
+                    entity.update({ id: 1, value: '1', self: false }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 2, value: '2', self: true }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '1', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: 1, value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // must be no rollback mode
+                    resetHistory(entity);
+                    entity.update({ value: '2' });
+                    this.is(1, entity.history_.length);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '2', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // update with rollback
+                    resetHistory(entity);
+                    entity.update({ value: '3' }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2' }, entity.history_[0]);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // should do nothing
+                    resetHistory(entity);
+                    entity.update({ value: '2' });
+                    this.is(0, entity.history_.length);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // should drop rollback storage
+                    resetHistory(entity);
+                    entity.update({ value: '3' });
+                    this.is(0, entity.history_.length);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    resetHistory(entity);
+                    entity.update({ value: '2' });
+
+                    // update with rollback
+                    resetHistory(entity);
+                    entity.update({ value: '3' }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2' }, entity.history_[0]);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // should drop rollback storage
+                    resetHistory(entity);
+                    entity.update({ value: '2' }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '3' }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '2', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // ----------------------------------------------
+                    /*
+                    // update with rollback
+                    entity.update({ value: '3' }, true);
+
+                    // should drop rollback storage
+                    entity.update({ value: '3' });
+                    this.is(9, entity.history_.length);
+                    this.is({ value: '3' }, entity.history_[5]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(8, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    */
+                  }  
+                },
+                {
+                  name: 'drop rollback storage when info has the same data, with id',
+                  test: function(){
+
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: nsEntity.IntId,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+
+                    resetHistory(entity);
+                    entity.update({ id: 2, value: '2', self: true }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
+                    this.is({ id: 2, value: '2', self: true }, entity.info);
+                    this.is({ value: '1', self: false }, entity.rollbackData_);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined, self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // should drop rollback storage
+                    resetHistory(entity);
+                    entity.update({ id: 1, value: '1', self: false }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 2, value: '2', self: true }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '1', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // must be no rollback mode
+                    resetHistory(entity);
+                    entity.update({ value: '2' });
+                    this.is(1, entity.history_.length);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '2', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // update with rollback
+                    resetHistory(entity);
+                    entity.update({ value: '3' }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2' }, entity.history_[0]);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // should do nothing
+                    resetHistory(entity);
+                    entity.update({ value: '2' });
+                    this.is(0, entity.history_.length);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // should drop rollback storage
+                    resetHistory(entity);
+                    entity.update({ value: '3' });
+                    this.is(0, entity.history_.length);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    resetHistory(entity);
+                    entity.update({ value: '2' });
+
+                    // update with rollback
+                    resetHistory(entity);
+                    entity.update({ value: '3' }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2' }, entity.history_[0]);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // should drop rollback storage
+                    resetHistory(entity);
+                    entity.update({ value: '2' }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '3' }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '2', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // ----------------------------------------------
+                    /*
+                    // update with rollback
+                    entity.update({ value: '3' }, true);
+
+                    // should drop rollback storage
+                    entity.update({ value: '3' });
+                    this.is(9, entity.history_.length);
+                    this.is({ value: '3' }, entity.history_[5]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '3', self: false }, entity.info);
+                    this.is(8, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    */
+                  }  
+                }
+              ]
+            },
+            {
+              name: 'set with rollback',
+              testcase: [
+                {
+                  name: 'with no id field',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: Number,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+                    this.is(0, entity.history_.length);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // prepare
+                    resetHistory(entity);
+                    entity.update({ id: 2, value: '2' });
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1' }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 2, value: '2', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    //
+                    // main part
+                    //
+
+                    // update and rollbackUpdate
+                    resetHistory(entity);
+                    entity.set('id', 3, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 2 }, entity.history_[0]);
+                    this.is({ id: 2 }, entity.rollbackData_);
+                    this.is({ id: 3, value: '2', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // update and rollbackUpdate
+                    resetHistory(entity);
+                    entity.set('value', 3, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2' }, entity.history_[0]);
+                    this.is({ id: 2, value: '2' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // update, no rollbackUpdate
+                    resetHistory(entity);
+                    entity.set('value', 4, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '3' }, entity.history_[0]);
+                    this.is({ id: 2, value: '2' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '4', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // rollbackUpdate, no update
+                    resetHistory(entity);
+                    entity.set('value', 5);
+                    this.is(0, entity.history_.length); // no update
+                    this.is({ id: 2, value: '5' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '4', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // rollbackUpdate, no update
+                    resetHistory(entity);
+                    entity.set('value', 6);
+                    this.is(0, entity.history_.length); // no update
+                    this.is({ id: 2, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '4', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '5' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // update, no rollbackUpdate
+                    resetHistory(entity);
+                    entity.set('value', 7, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '4' }, entity.history_[0]);
+                    this.is({ id: 2, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // when change id field in no rollback mode -> update and no rollbackUpdate (in other cases otherwise)
+                    // in this case entity has no id
+                    resetHistory(entity);
+                    entity.set('id', 4);
+                    this.is(0, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: 2 }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+                  }
+                },
+                {
+                  name: 'update rollback storage',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: Number,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 4, value: '6', self: false });
+
+                    // prepare
+                    resetHistory(entity);
+                    entity.update({ id: 3, value: '7' }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: undefined, value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    //
+                    // main part
+                    //
+
+                    // update in no rollback mode should check for existing key in rollback storage, but not value
+                    resetHistory(entity);
+                    entity.set('self', true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: true }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    resetHistory(entity);
+                    entity.set('self', false);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    resetHistory(entity);
+                    entity.set('self', true, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6', self: false }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: true }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // no rollbackUpdate, no update 
+                    resetHistory(entity);
+                    entity.set('self', true, true);
+                    this.is(0, entity.history_.length);
+                    this.is({ id: 4, value: '6', self: false }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: true }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // rollbackUpdate, no update
+                    resetHistory(entity);
+                    entity.set('self', true);
+                    this.is(0, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: true }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // update, no rollbackUpdate
+                    resetHistory(entity);
+                    entity.set('self', 1);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '7', self: 1 }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                  }
+                },
+                {
+                  name: 'updates with id field',
+                  test: function(){
+
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: nsEntity.IntId,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+                    this.is(0, entity.history_.length);
+
+                    // prepare
+                    resetHistory(entity);
+                    entity.update({ id: 2, value: '2' });
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1' }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 2, value: '2', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    //
+                    // main part
+                    //
+
+                    // update and rollbackUpdate
+                    resetHistory(entity);
+                    entity.set('id', 3, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 2 }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 3, value: '2', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    // update and rollbackUpdate
+                    resetHistory(entity);
+                    entity.set('value', 3, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2' }, entity.history_[0]);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 3, value: '3', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    // when change id field in no rollback mode -> update and no rollbackUpdate (in other cases otherwise)
+                    // in this case entity has no id
+                    resetHistory(entity);
+                    entity.set('id', 4);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 3 }, entity.history_[0]);
+                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '3', self: false }, entity.info);
+                    this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                  }
+                }
+              ]
+            },
+            {
+              name: 'rollback',
+              testcase: [
+                {
+                  name: 'with no id field, full rollback',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: Number,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+
+                    resetHistory(entity);
+                    entity.update({ id: 2, value: 2, self: true }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
+                    this.is({ id: 1, value: '1', self: false }, entity.rollbackData_);
+                    this.is({ id: 2, value: '2', self: true }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: undefined, value: undefined, self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    resetHistory(entity);
+                    entity.rollback();
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 2, value: '2', self: true }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 1, value: '1', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ id: 1, value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+                  }
+                },
+                {
+                  name: 'with id field, full rollback',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: nsEntity.IntId,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+
+                    resetHistory(entity);
+                    entity.update({ id: 2, value: 2, self: true }, true);
+                    this.is(1, entity.history_.length);
+                    this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
+                    this.is({ value: '1', self: false }, entity.rollbackData_);
+                    this.is({ id: 2, value: '2', self: true }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: undefined, self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+
+                    resetHistory(entity);
+                    entity.rollback();
+                    this.is(1, entity.history_.length);
+                    this.is({ value: '2', self: true }, entity.history_[0]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 2, value: '1', self: false }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                    this.is({ value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
+                  }
+                }/*,
+                {
+                  name: 'must not change object state',
+                  test: function(){
+                    var EntityType = new nsEntity.EntityType({
+                      fields: {
+                        id: nsEntity.IntId,
+                        value: String,
+                        self: Function.$self
+                      }
+                    });
+
+                    var entity = EntityType({ id: 1, value: '1', self: false });
+
+                    entity.update({ id: 2, value: 2, self: true }, true);
+                    this.is(2, entity.history_.length);
+                    this.is({ id: 1, value: '1', self: false }, entity.history_[1]);
+                    this.is({ value: '1', self: false }, entity.rollbackData_);
+                    this.is({ id: 2, value: '2', self: true }, entity.info);
+                    this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+
+                    entity.setState(nsData.STATE.UNDEFINED);
+
+                    entity.rollback();
+                    this.is(nsData.STATE.UNDEFINED, entity.state);
+                    this.is(3, entity.history_.length);
+                    this.is({ value: '2', self: true }, entity.history_[2]);
+                    this.is(null, entity.rollbackData_);
+                    this.is({ id: 2, value: '1', self: false }, entity.info);
+                    this.is(2, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
+                  }
+                }*/
+              ]
+            }
+          ]
+        }
+      ];
+
+    })());
+
+//    if (top.nextTest)
+//      top.nextTest();
+
+  </script>
+</body>
+
+</html>

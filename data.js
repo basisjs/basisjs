@@ -1,4 +1,4 @@
-/*!
+/**!
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
  *
@@ -16,7 +16,7 @@
     *
     * Namespace overview:
     * - Const:
-    *   {Basis.Data.STATE}, {Basis.Data.SUBSCRIPTION}
+    *   {Basis.Data.STATE}, {Basis.Data.Subscription}
     * - Classes:
     *   {Basis.Data.DataObject}, {Basis.Data.AbstractDataset}, {Basis.Data.Dataset},
     *   {Basis.Data.AggregateDataset}, {Basis.Data.IndexedDataset}, {Basis.Data.Collection},
@@ -26,12 +26,21 @@
     */
     var namespace = 'Basis.Data';
 
+    //
     // import names
+    //
 
     var Class = Basis.Class;
-    var getter = Function.getter;
 
     var EventObject = Basis.EventObject;
+
+    var extend = Object.extend;
+    var values = Object.values;
+    var getter = Function.getter;
+    var $true = Function.$true;
+    var $false = Function.$false;
+    var createEvent = EventObject.createEvent;
+    var event = EventObject.event;
 
     //
     // Main part
@@ -45,57 +54,134 @@
     /** @const */ var STATE_ERROR      = 'error';
     /** @const */ var STATE_DEPRECATED = 'deprecated';
 
-    /** @const */ var SUBSCRIPTION_NONE       = 0x00;
-    /** @const */ var SUBSCRIPTION_DELEGATE   = 0x01;
-    /** @const */ var SUBSCRIPTION_COLLECTION = 0x02;
-    /** @const */ var SUBSCRIPTION_SOURCE     = 0x04;
-    /** @const */ var SUBSCRIPTION_MASK       = SUBSCRIPTION_DELEGATE | SUBSCRIPTION_COLLECTION | SUBSCRIPTION_SOURCE;
+    // New events
+
+    //
+    // Subscription sheme
+    //
+
+    var subscriptionHandlers = {};
+    var subscriptionSeed = 1;
+
+    var Subscription = {
+      NONE: 0,
+      MASK: 0,
+
+     /**
+      * Registrate new type of subscription
+      * @param {string} name
+      * @param {Object} handler
+      * @param {function()} action
+      */
+      add: function(name, handler, action){
+        subscriptionHandlers[subscriptionSeed] = {
+          handler: handler,
+          action: action,
+          context: {
+            add: function(thisObject, object){
+              if (object)
+              {
+                var subscriberId = Subscription[name] + '_' + thisObject.eventObjectId;
+
+                if (!object.subscribers_)
+                  object.subscribers_ = {};
+
+                if (!object.subscribers_[subscriberId])
+                {
+                  object.subscribers_[subscriberId] = thisObject;
+                  object.subscriberCount += 1;
+                  object.event_subscribersChanged();
+                }
+                else
+                {
+                  ;;;console.warn('Attempt to add dublicate subscription');
+                }
+              }
+            },
+            remove: function(thisObject, object){
+              if (object)
+              {
+                var subscriberId = Subscription[name] + '_' + thisObject.eventObjectId;
+                if (object.subscribers_[subscriberId])
+                {
+                  delete object.subscribers_[subscriberId];
+                  object.subscriberCount -= 1;
+                  object.event_subscribersChanged();
+                }
+                else
+                {
+                  ;;;console.warn('Trying remove non-exists subscription');
+                }
+              }
+            }
+          }
+        };
+
+        Subscription[name] = subscriptionSeed;
+        Subscription.MASK |= subscriptionSeed;
+
+        subscriptionSeed <<= 1;
+      }
+    };
 
    /**
-    * Returns delta object
+    * Apply subscription according with current state.
+    * For internal purposes only.
     */
-    function getDelta(inserted, deleted){
-      var delta = {};
-      var result;
+    function applySubscription(object, mask, state){
+      var idx = 1;
+      var config;
 
-      if (inserted && inserted.length)
-        result = delta.inserted = inserted;
-
-      if (deleted && deleted.length)
-        result = delta.deleted = deleted;
-
-      if (result)
-        return delta;
+      while (mask)
+      {
+        if (mask & 1)
+        {
+          config = subscriptionHandlers[idx];
+          if (state & idx)
+          {
+            object.addHandler(config.handler, config.context);
+            config.action(config.context.add, object);
+          }
+          else
+          {
+            object.removeHandler(config.handler, config.context);
+            config.action(config.context.remove, object);
+          }
+        }
+          
+        mask >>= 1;
+        idx <<= 1;
+      }
     }
 
     //
     // DataObject
     //
 
+    var NULL_INFO = {};
+
    /**
     * @const
     */
     var DATAOBJECT_DELEGATE_HANDLER = {
       update: function(object, delta){ 
-        this.updateCount += 1;
-        this.info = object.info;  // proposition introduce rootDelegateChanged event instead
-        this.dispatch('update', object, delta);
+        this.event_update(object, delta);
       },
       rollbackUpdate: function(object, delta){
-        this.dispatch('rollbackUpdate', object, delta);
+        this.event_rollbackUpdate(object, delta);
       },
       stateChanged: function(object, oldState){
         this.state = object.state;
-        this.dispatch('stateChanged', object, oldState);
-      },/*
+        this.event_stateChanged(object, oldState);
+      },
       delegateChanged: function(object, oldDelegate){
         this.info = object.info;
-        this.dispatch('rootDelegateChange', object, oldDelegate);
+        this.event_rootDelegateChanged(object, oldDelegate);
       },
       rootDelegateChanged: function(object, oldDelegate){
         this.info = object.info;
-        this.dispatch('rootDelegateChange', object, oldDelegate);
-      },*/
+        this.event_rootDelegateChanged(object, oldDelegate);
+      },
       destroy: function(){
         if (this.cascadeDestroy)
           this.destroy();
@@ -103,6 +189,24 @@
           this.setDelegate();
       }
     };
+
+    //
+    // Registrate subscription type
+    //
+
+    Subscription.add(
+      'DELEGATE',
+      {
+        delegateChanged: function(object, oldDelegate){
+          this.remove(object, oldDelegate);
+          this.add(object, object.delegate);
+        }
+      },
+      function(action, object){
+        action(object, object.delegate);
+      }
+    );
+
 
    /**
     * Base class for data storing.
@@ -112,23 +216,16 @@
       className: namespace + '.DataObject',
 
      /**
-      * State of object.
+      * State of object. Might be managed by delegate object (if used).
       * @type {Basis.Data.STATE|string}
       */
       state: STATE_READY,
 
      /**
       * Using for data storing. Might be managed by delegate object (if used).
-      * It takes from config.info.
       * @type {Object}
       */
       info: null,
-
-     /**
-      * Count of info updates.
-      * @type {number}
-      */
-      updateCount: 0,
 
      /**
       * @type {boolean}
@@ -150,116 +247,73 @@
       cascadeDestroy: false,
 
      /**
-      * Object that's manage childNodes updates.
-      * @type {Basis.Data.AbstractDataset}
-      */
-      collection: null,
-
-     /**
       * Count of subscribed objects. This property can use to determinate
       * is data update necessary or not. Usualy if object is in UNDEFINED
       * or DEPRECATED state and subscriberCount more than zero - update needed.
       * @type {number}
+      * @readonly
       */
       subscriberCount: 0,
 
      /**
       * Subscribers list. Using to prevent subscriber dublicate count.
       * @type {Object}
+      * @private
       */
       subscribers_: null,
 
      /**
-      * Indicates if object influence to related objects (his delegate or/and
-      * collection) or not.
+      * Indicates if object influences to related objects or not (is
+      * subscription on).
       * @type {boolean}
       */
-      isActiveSubscriber: false,
+      active: false,
 
      /**
       * Subscriber type indicates what sort of influence has currency object on
       * related objects (delegate, collection).
-      * @type {Basis.Data.SUBSCRIPTION|number}
+      * @type {Basis.Data.Subscription|number}
       */
-      subscriptionType: SUBSCRIPTION_DELEGATE | SUBSCRIPTION_COLLECTION,
+      subscribeTo: Subscription.DELEGATE,
+
+      event_update: createEvent('update'),
+      event_rollbackUpdate: createEvent('rollbackUpdate'),
+      event_stateChanged: createEvent('stateChanged'),
+      event_delegateChanged: createEvent('delegateChanged'),
+      event_rootDelegateChanged: createEvent('rootDelegateChanged'),
+      event_subscribersChanged: createEvent('subscribersChanged'),
+      event_activeChanged: createEvent('activeChanged'),
 
      /**
       * @param {Object=} config The configuration of object.
-      * @config {Basis.Data.AbstractDataset} collection Set a collection to a new object.
-      * @config {Basis.Data.DataObject} delegate Set a delegate to a
-      *   new object. If passed than config.info will be ignored.
-      * @config {Basis.Data.DataObject|Object} info Initial data for info
-      *   property. If {Basis.Data.DataObject} instance passed it became
-      *   a delegate for the new object.
-      * @config {boolean} isActiveSubscriber Overrides prototype's {Basis.Data.DataObject#isActiveSubscriber} property.
-      * @config {boolean} cascadeDestroy Overrides prototype's {Basis.Data.DataObject#cascaseDestroy} property.
-      * @config {string|Object} state
-      * @config {number} subscriptionType
-      * @return {Object}
       * @constructor
       */
       init: function(config){
         // inherit
-        this.inherit(config);
+        //EventObject.prototype.init.call(this, config);
 
-        // init properties
-        this.subscribers_ = {};
-        this.updateCount = 0;
-        this.info = {};
-        
-        // apply config if possible
-        if (config)
+        // info/delegate
+        var delegate = this.delegate;
+
+        if (delegate)
         {
-          if (typeof config.isActiveSubscriber == 'boolean')
-            this.isActiveSubscriber = config.isActiveSubscriber;
-
-          if (!isNaN(config.subscriptionType))
-            this.subscriptionType = config.subscriptionType;
-
-          if (typeof config.cascadeDestroy == 'boolean')
-            this.cascadeDestroy = config.cascadeDestroy;
-
-          if (config.state)
-            this.state = config.state;
-
-          // set info property
-          var delegate = config.delegate;
-
-          // for backward capability (but probably permanently here)
-          if (!delegate && config.info instanceof DataObject)
-            delegate = config.info;
-
-          if (delegate)
-            // assign a delegate
-            this.setDelegate(delegate);
-          else
-            // .. or assign info object
-            if (config.info)
-            {
-              var delta = {};
-              for (var key in config.info)
-              {
-                this.info[key] = config.info[key];
-                delta[key] = undefined;
-              }
-
-              this.dispatch('update', this, delta);
-            }
-
-          // set collection
-          if (config.collection)
-            this.setCollection(config.collection);
+          // assign a delegate
+          // NOTE: config.info & config.state ignore in this case
+          this.delegate = null;
+          this.info = NULL_INFO;
+          this.state = delegate.state;
+          this.setDelegate(delegate);
         }
         else
         {
-          this.state = Object(String(this.state));
+          // if info doesn't exists - init it
+          if (!this.info)
+            this.info = {};
         }
 
-        // apply state changes
-        if (this.state == this.constructor.prototype.state && (this.behaviour.stateChanged || this.handlers_.length))
-          this.dispatch('stateChanged', this, undefined);
-
-        return config || {};
+        // subscription sheme: activate subscription if active
+        if (this.active)
+          applySubscription(this, this.subscribeTo, Subscription.MASK);
       },
 
      /**
@@ -315,70 +369,94 @@
       * @param {Basis.Data.DataObject} delegate
       * @return {Basis.Data.DataObject} Returns current delegate object.
       */
-      setDelegate: function(delegate){
-        if (this.canHaveDelegate && this.delegate !== delegate)
+      setDelegate: function(newDelegate){
+
+        // check is newDelegate can be linked to this object as delegate
+        if (this.canHaveDelegate && newDelegate && newDelegate instanceof DataObject)
         {
-          var delta = {};
-          var oldDelegate = this.delegate;
-          var isDelegateSubscriber = this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_DELEGATE);
-
-          if (oldDelegate)
+          // check for connected prevents from linking to objects
+          // that has this object in delegate chains
+          if (newDelegate.delegate && this.isConnected(newDelegate))
           {
-            oldDelegate.removeHandler(DATAOBJECT_DELEGATE_HANDLER, this);
+            // DEBUG: show warning in debug mode that we drop delegate because it is already connected with object
+            ;;;if (newDelegate && typeof console != 'undefined') console.warn('(debug) New delegate has already connected to object. Delegate assign has been ignored.', this, newDelegate);
 
-            for (var key in this.info)
-              delta[key] = this.info[key];
-
-            this.info = {};
-
-            if (isDelegateSubscriber)
-              oldDelegate.removeSubscriber(this, SUBSCRIPTION_DELEGATE);
-
-            delete this.delegate;
+            // newDelegate can't be assigned
+            return false;
           }
-
-          if (delegate instanceof DataObject)
-          {
-            // prevent from linking object that had already linked (event through some other objects)
-            if (!this.isConnected(delegate))
-            {
-              if (isDelegateSubscriber)
-                delegate.addSubscriber(this, SUBSCRIPTION_DELEGATE);
-
-              this.setState(delegate.state, delegate.state.data);
-
-              for (var key in delegate.info)
-              {
-                if (key in delta)
-                {
-                  if (delegate.info[key] === delta[key])
-                    delete delta[key];
-                }
-                else
-                {
-                  delta[key] = undefined;
-                  //if (delegate.info[key] !== this.info[key])
-                  //  delta[key] = this.info[key];
-                }
-              }
-
-              this.delegate = delegate;
-              this.info = delegate.info;
-
-              delegate.addHandler(DATAOBJECT_DELEGATE_HANDLER, this);
-            }
-            else
-            {
-              // throw exception?
-              ;;;if (typeof console != 'undefined') console.warn('(debug) New delegate has already connected to object. Delegate assign has been ignored.', this, delegate);
-            }
-          }
-
-          this.dispatch('delegateChanged', this, oldDelegate);
-          this.dispatch('update', this, delta);
+        }
+        else
+        {
+          // can't assign delegate if newDelegate isn't instance of DataObject
+          newDelegate = null;
         }
 
-        return this.delegate;
+        // only if newDelegate differ with current value
+        if (this.delegate !== newDelegate)
+        {
+          var oldDelegate = this.delegate;
+          var oldState = this.state;
+          var oldInfo = this.info;
+          var delta = {};
+
+          // remove handler from oldDelegate if present
+          if (oldDelegate)
+            oldDelegate.removeHandler(DATAOBJECT_DELEGATE_HANDLER, this);
+
+          if (newDelegate)
+          {
+            // assing new delegate
+            this.delegate = newDelegate;
+            this.info = newDelegate.info;
+            this.state = newDelegate.state;
+
+            // add handler to new delegate
+            newDelegate.addHandler(DATAOBJECT_DELEGATE_HANDLER, this);
+
+            // calculate delta as difference between current info and delegate info
+            for (var key in newDelegate.info)
+              if (key in oldInfo === false)
+                delta[key] = undefined;
+
+            for (var key in oldInfo)
+              if (oldInfo[key] !== newDelegate.info[key])
+                delta[key] = oldInfo[key];
+          }
+          else
+          {
+            // reset delegate and info
+            this.delegate = null;
+            this.info = {};
+
+            // copy info, no update, no delta
+            for (var key in oldInfo)
+              this.info[key] = oldInfo[key];
+          }
+
+          // fire event if delegate changed
+          this.event_delegateChanged(this, oldDelegate);
+
+          // update & stateChanged can be fired only if new delegate was assigned;
+          // otherwise (delegate drop) do nothing -> perfomance benefits
+          if (newDelegate)
+          {
+            // fire update event if any key in delta (info changed)
+            for (var key in delta)
+            {
+              this.event_update(this, delta);
+              break;
+            }
+
+            // fire stateChanged event if state was changed
+            if (oldState !== this.state && (String(oldState) != this.state || oldState.data != this.state.data))
+              this.event_stateChanged(this, oldState);
+          }
+
+          // delegate was changed
+          return true;
+        }
+
+        return false; // delegate doesn't changed
       },
 
      /**
@@ -389,29 +467,33 @@
       * @return {Basis.Data.STATE|string} Current object state.
       */
       setState: function(state, data){
+        // set new state for root
+        if (this.delegate)
+        {
+          var root = this.getRootDelegate();
+          if (root !== this)
+            return root.setState(state, data);
+        }
+
+        // set new state for object
         if (this.state != String(state) || this.state.data != data)
         {
           var oldState = this.state;
-          var root = this.getRootDelegate();
-
-          if (root !== this)
-          {
-            return root.setState(state, data);
-          }
 
           this.state = Object(String(state));
           this.state.data = data;
 
-          this.dispatch('stateChanged', this, oldState);
+          this.event_stateChanged(this, oldState);
+
+          return true; // state was changed
         }
 
-        return this.state;
-
+        return false; // state wasn't changed
       },
 
      /**
-      * Default action on deprecate, set object to STATE_DEPRECATED state,
-      * but only if object is not in STATE_PROCESSING state.
+      * Default action on deprecate, set object state to STATE_DEPRECATED,
+      * but only if object isn't in STATE_PROCESSING state.
       */
       deprecate: function(){
         if (this.state != STATE_PROCESSING)
@@ -419,41 +501,8 @@
       },
 
      /**
-      * @param {Basis.Data.AbstractDataset} collection
-      */
-      setCollection: function(collection){
-        if (this.collection != collection)
-        {
-          var oldCollection = this.collection;
-
-          if (oldCollection)
-          {
-            if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_COLLECTION))
-              oldCollection.removeSubscriber(this, SUBSCRIPTION_COLLECTION);
-
-            delete this.collection;
-          }
-
-          if (collection instanceof AbstractDataset)
-          {
-            this.collection = collection;
-
-            if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_COLLECTION))
-              collection.addSubscriber(this, SUBSCRIPTION_COLLECTION);
-          }
-            
-          this.dispatch('collectionChanged', this, oldCollection);
-
-          return true;
-        }
-
-        return false;
-      },
-
-     /**
       * Handle changing object data. Fires update event only if something was changed. 
       * @param {Object} data New values for object data holder (this.info).
-      * @param {boolean=} forceEvent Fire update event even no changes.
       * @return {Object|boolean} Delta if object data (this.info) was updated or false otherwise.
       */
       update: function(data){
@@ -479,8 +528,7 @@
 
           if (updateCount)
           {
-            this.updateCount += updateCount;
-            this.dispatch('update', this, delta);
+            this.event_update(this, delta);
             return delta;
           }
         }
@@ -489,76 +537,19 @@
       },
 
      /**
-      * @param {Basis.EventObject} object
-      * @return {boolean} Returns true if subscriber has been added.
-      */
-      addSubscriber: function(object, subscriberType){
-        ;;;if (!subscriberType && typeof console != 'undefined') console.warn('addSubscriber has no subscriberType argument');
-
-        var subscriberId = subscriberType + '_' + object.eventObjectId;
-        if (!this.subscribers_[subscriberId])
-        {
-          this.subscribers_[subscriberId] = object;
-          this.subscriberCount += 1;
-          this.dispatch('subscribersChanged');
-
-          return true;
-        }
-
-        return false;
-      },
-
-     /**
-      * @param {Basis.EventObject} object
-      * @return {boolean} Returns true if subscriber has been removed.
-      */
-      removeSubscriber: function(object, subscriberType){
-        ;;;if (!subscriberType && typeof console != 'undefined') console.warn('removeSubscriber has no subscriberType argument');
-
-        var subscriberId = subscriberType + '_' + object.eventObjectId;
-        if (this.subscribers_[subscriberId])
-        {
-          delete this.subscribers_[subscriberId];
-          this.subscriberCount -= 1;
-          this.dispatch('subscribersChanged');
-
-          return true;
-        }
-        
-        return false;
-      },
-
-     /**
       * Set new value for isActiveSubscriber property.
       * @param {boolean} isActive New value for {Basis.Data.DataObject#isActiveSubscriber} property.
       * @return {boolean} Returns true if {Basis.Data.DataObject#isActiveSubscriber} was changed.
       */
-      setIsActiveSubscriber: function(isActive){
-        if (this.isActiveSubscriber != !!isActive)
+      setActive: function(isActive){
+        isActive = !!isActive;
+
+        if (this.active != isActive)
         {
-          var delegate = this.delegate;
-          var collection = this.collection;
-          var subscriptionType = this.subscriptionType;
+          this.active = isActive;
+          this.event_activeChanged();
 
-          if (delegate && (subscriptionType & SUBSCRIPTION_DELEGATE))
-          {
-            if (isActive)
-              delegate.addSubscriber(this, SUBSCRIPTION_DELEGATE);
-            else
-              delegate.removeSubscriber(this, SUBSCRIPTION_DELEGATE);
-          }
-
-          if (collection && (subscriptionType & SUBSCRIPTION_COLLECTION))
-          {
-            if (isActive)
-              collection.addSubscriber(this, SUBSCRIPTION_COLLECTION);
-            else
-              collection.removeSubscriber(this, SUBSCRIPTION_COLLECTION);
-          }
-
-          this.isActiveSubscriber = !!isActive;
-
-          this.dispatch('isActiveStateChanged');
+          applySubscription(this, this.subscribeTo, Subscription.MASK * isActive);
 
           return true;
         }
@@ -571,37 +562,17 @@
       * @param {number} subscriptionType New value for {Basis.Data.DataObject#subscriptionType} property.
       * @return {boolean} Returns true if {Basis.Data.DataObject#subscriptionType} was changed.
       */
-      setSubscriptionType: function(subscriptionType){
-        var curSubscriptionType = this.subscriptionType;
-        var newSubscriptionType = subscriptionType;
+      setSubscription: function(subscriptionType){
+        var curSubscriptionType = this.subscribeTo;
+        var newSubscriptionType = subscriptionType & Subscription.MASK;
+        var delta = curSubscriptionType ^ newSubscriptionType;
 
-        if (curSubscriptionType != newSubscriptionType)
+        if (delta)
         {
-          if (this.isActiveSubscriber)
-          {
-            var delegate = this.delegate;
-            var collection = this.collection;
-            var delegateSubscriptionChanged = delegate && ((newSubscriptionType & SUBSCRIPTION_DELEGATE) ^ (curSubscriptionType & SUBSCRIPTION_DELEGATE));
-            var collectionSubscriptionChanged = collection && ((newSubscriptionType & SUBSCRIPTION_COLLECTION) ^ (curSubscriptionType & SUBSCRIPTION_COLLECTION));
+          this.subscribeTo = newSubscriptionType;
 
-            if (delegateSubscriptionChanged)
-            {
-              if (curSubscriptionType & SUBSCRIPTION_DELEGATE)
-                delegate.removeSubscriber(this, SUBSCRIPTION_DELEGATE);
-              else
-                delegate.addSubscriber(this, SUBSCRIPTION_DELEGATE);
-            }
-
-            if (collectionSubscriptionChanged)
-            {
-              if (curSubscriptionType & SUBSCRIPTION_COLLECTION)
-                collection.removeSubscriber(this, SUBSCRIPTION_COLLECTION);
-              else
-                collection.addSubscriber(this, SUBSCRIPTION_COLLECTION);
-            }
-          }
-
-          this.subscriptionType = newSubscriptionType;
+          if (this.active)
+            applySubscription(this, delta, newSubscriptionType);
 
           return true;
         }
@@ -613,36 +584,46 @@
       * @destructor
       */
       destroy: function(){
-        // deassign delegate
-        var delegate = this.delegate;
-        if (delegate)
+        // remove subscriptions if necessary
+        if (this.active)
+          applySubscription(this, this.subscribeTo, 0);
+
+        // drop delegate
+        if (this.delegate)
         {
-          this.info = {};
-          delegate.removeHandler(DATAOBJECT_DELEGATE_HANDLER, this);
-
-          if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_DELEGATE))
-            delegate.removeSubscriber(this, SUBSCRIPTION_DELEGATE);
-
-          delete this.delegate;
+          this.delegate.removeHandler(DATAOBJECT_DELEGATE_HANDLER, this);
+          this.delegate = null;
         }
 
-        // remove collection
-        if (this.collection)
-        {
-          this.setCollection();
-          delete this.collection;
-        }
+        // inherit
+        EventObject.prototype.destroy.call(this);
 
-        this.inherit();
-
-        delete this.state;
-        delete this.subscribers_;
+        // drop info & state
+        this.info = NULL_INFO;
+        this.state = STATE_UNDEFINED;
       }
     });
 
     //
     // Datasets
     //
+
+   /**
+    * Returns delta object
+    */
+    function getDelta(inserted, deleted){
+      var delta = {};
+      var result;
+
+      if (inserted && inserted.length)
+        result = delta.inserted = inserted;
+
+      if (deleted && deleted.length)
+        result = delta.deleted = deleted;
+
+      if (result)
+        return delta;
+    }
 
    /**
     * @class
@@ -653,25 +634,60 @@
       canHaveDelegate: false,
       state: STATE_UNDEFINED,
 
+      itemCount: 0,
+
       map_: null,
-      member_: null,
-      cache_: [],
+      item_: null,
       eventCache_: null,
 
-      itemCount: 0,
-      version: 0,
-      version_: 0,
+      cache_: null,
+
+      event_datasetChanged: createEvent('datasetChanged') && function(dataset, delta){
+        // before event
+        var items;
+        var insertCount = 0;
+        var deleteCount = 0;
+        var object;
+
+        // add new items
+        if (items = delta.inserted)
+        {
+          while (object = items[insertCount])
+          {
+            this.item_[object.eventObjectId] = object;
+            insertCount++;
+          }
+        }
+
+        // remove old items
+        if (items = delta.deleted)
+        {
+          while (object = items[deleteCount])
+          {
+            delete this.item_[object.eventObjectId];
+            deleteCount++;
+          }
+        }
+
+        // update item count
+        this.itemCount += insertCount - deleteCount;
+
+        // drop cache
+        this.cache_ = null;
+
+        // call event 
+        event.datasetChanged.call(this, dataset, delta);
+      },
 
      /**
       * @constructor
       */
       init: function(config){
-        this.inherit(config);
+        // inherit
+        DataObject.prototype.init.call(this, config);
 
         this.map_ = {};
-        this.member_ = {};
-        this.itemCount = 0;
-        this.version = 0;
+        this.item_ = {};
 
         this.eventCache_ = {
           mode: false,
@@ -679,63 +695,137 @@
         };
       },
 
+     /**
+      * Check is object in dataset.
+      * @param {Basis.Data.DataObject} object Object check for.
+      * @return {boolean} Returns true if object in dataset.
+      */
       has: function(object){
-        return !!(object && this.member_[object.eventObjectId]);
+        return !!(object && this.item_[object.eventObjectId]);
       },
+
+     /**
+      * Returns all items in dataset.
+      * @return {Array.<Basis.Data.DataObject>} 
+      */
       getItems: function(){
-        if (this.version_ != this.version)
-        {
-          this.version_ = this.version;
-          this.cache_ = Object.values(this.member_);
-        }
+        if (!this.cache_)
+          this.cache_ = values(this.item_);
 
         return this.cache_;
       },
 
-      sync:   Function.$false,
-      add:    Function.$false,
-      remove: Function.$false,
-      set:    Function.$false,
-      clear:  Function.$false,
+     /**
+      * Returns first any item if exists.
+      * @return {Basis.Data.DataObject}
+      */
+      pick: function(){
+        for (var objectId in this.item_)
+          return this.item_[objectId];
 
+        return null;
+      },
+
+     /**
+      * Returns first any N items if exists.
+      * @param {number} count Max length of resulting array.
+      * @return {Array.<Basis.Data.DataObject>} 
+      */
+      top: function(count){
+        var result = [];
+
+        for (var objectId in this.item_)
+          result.push(this.item_[objectId]);
+
+        return result;
+      },
+
+     /**
+      * @param {Array.<Basis.Data.DataObject>} items
+      */
+      add: function(items){
+      },
+
+     /**
+      * @param {Array.<Basis.Data.DataObject>} items
+      */
+      remove: function(items){
+      },
+
+     /**
+      * @param {Array.<Basis.Data.DataObject>} items
+      */
+      set: function(items){
+      },
+
+     /**
+      * @param {Array.<Basis.Data.DataObject>} items
+      * @param {boolean=} set
+      */
+      sync: function(items, set){
+      },
+
+     /**
+      */
+      clear: function(){
+      },
+
+     /**
+      * @inheritDocs
+      */
       dispatch: function(event, dataset, delta){
         if (event == 'datasetChanged')
         {
           var items;
+          var insertCount = 0;
+          var deleteCount = 0;
+          var object;
 
+          // add new items
           if (items = delta.inserted)
           {
-            for (var i = 0, object; object = items[i]; i++)
-              this.member_[object.eventObjectId] = object;
-
-            this.itemCount += items.length;
-            this.version++;
+            while (object = items[insertCount])
+            {
+              this.item_[object.eventObjectId] = object;
+              insertCount++;
+            }
           }
 
+          // remove old items
           if (items = delta.deleted)
           {
-            for (var i = 0, object; object = items[i]; i++)
-              delete this.member_[object.eventObjectId];
-
-            this.itemCount -= items.length;
-            this.version++;
+            while (object = items[deleteCount])
+            {
+              delete this.item_[object.eventObjectId];
+              deleteCount++;
+            }
           }
+
+          // update item count
+          this.itemCount += insertCount - deleteCount;
+
+          // drop cache
+          delete this.cache_;
         }
 
-        this.inherit.apply(this, arguments);
+        // inherit
+        DataObject.prototype.dispatch.apply(this, arguments);
       },
 
+     /**
+      * @destructor
+      */
       destroy: function(){
         this.clear();
 
-        this.inherit();
+        // inherit
+        DataObject.prototype.destroy.call(this);
 
-        this.getItems = Function.$null; // are we need for this?
+        this.cache_ = [];
+        this.itemCount = 0;
 
-        delete this.itemCount;
         delete this.map_;
-        delete this.member_;
-        delete this.cache_;
+        delete this.item_;
         delete this.eventCache_;
       }
     });
@@ -762,17 +852,21 @@
       * @constructor
       */
       init: function(config){
-        this.inherit(config);
+        // inherit
+        AbstractDataset.prototype.init.call(this, config);
 
-        if (config && config.items)
-          this.set(config.items);
+        var items = this.items;
+        if (items)
+        {
+          delete this.items;
+          this.set(items);
+        }
       },
 
       add: function(data){
-        
-        // insert
         var delta;
         var inserted = [];
+
         for (var i = 0; i < data.length; i++)
         {
           var object = data[i];
@@ -784,8 +878,7 @@
               this.map_[objectId] = object;
               inserted.push(object);
 
-              if (object.all !== this)
-                object.addHandler(DATASET_ITEM_HANDLER, this);
+              object.addHandler(DATASET_ITEM_HANDLER, this);
             }
           }
         }
@@ -793,7 +886,7 @@
         // trace changes
         if (inserted.length)
         {
-          this.dispatch('datasetChanged', this, delta = {
+          this.event_datasetChanged(this, delta = {
             inserted: inserted
           });
         }
@@ -802,10 +895,9 @@
       },
 
       remove: function(data){
-
-        // delete items
         var delta;
         var deleted = [];
+
         for (var i = 0; i < data.length; i++)
         {
           var object = data[i];
@@ -817,8 +909,7 @@
               delete this.map_[objectId];
               deleted.push(object);
 
-              if (object.all !== this)
-                object.removeHandler(DATASET_ITEM_HANDLER, this);
+              object.removeHandler(DATASET_ITEM_HANDLER, this);
             }
           }
         }
@@ -826,7 +917,7 @@
         // trace changes
         if (deleted.length)
         {
-          this.dispatch('datasetChanged', this, delta = {
+          this.event_datasetChanged(this, delta = {
             deleted: deleted
           });
         }
@@ -851,11 +942,7 @@
         {
           var object = data[i];
           if (object instanceof DataObject)
-          {
-            var objectId = object.eventObjectId;
-
-            map_[objectId] = object;
-          }
+            map_[object.eventObjectId] = object;
         }
 
         // delete data
@@ -869,11 +956,11 @@
           else
           {
             var object = this.map_[objectId];
+
             delete this.map_[objectId];
             deleted.push(object);
 
-            if (object.all !== this)
-              object.removeHandler(DATASET_ITEM_HANDLER, this);
+            object.removeHandler(DATASET_ITEM_HANDLER, this);
           }
         }
         
@@ -882,20 +969,21 @@
         for (var objectId in map_)
         {
           var object = map_[objectId];
-          this.map_[objectId] = map_[objectId];
+          
+          this.map_[objectId] = object;
           inserted.push(object);
 
-          if (object.all !== this)
-            object.addHandler(DATASET_ITEM_HANDLER, this);
+          object.addHandler(DATASET_ITEM_HANDLER, this);
         }
 
         // trace changes
         var delta;
         if (delta = getDelta(inserted, deleted))
         {
-          this.dispatch('datasetChanged', this, delta);
-          return delta;
+          this.event_datasetChanged(this, delta);
         }
+
+        return delta;
       },
 
       sync: function(data, set){
@@ -915,18 +1003,19 @@
           if (object instanceof DataObject)
           {
             var objectId = object.eventObjectId;
+
             map_[objectId] = object;
             if (!this.map_[objectId])
               inserted.push(object);
           }
         }
 
-        for (var objectId in this.map_)
+        for (var objectId in this.item_)
         {
           if (!map_[objectId])
           {
-            var object = this.map_[objectId];
-            deleted.push(object);
+            var object = this.item_[objectId];
+            /*deleted.push(object);*/
 
             object.destroy();
           }
@@ -941,21 +1030,20 @@
       },
 
       clear: function(){
-
         var delta;
         var deleted = this.getItems();
-        this.map_ = {};
 
         if (deleted.length)
         {
-          for (var i = 0; i < deleted.length; i++)
-            if (deleted[i].all !== this)      // KOSTIL' for Entity
-              deleted[i].removeHandler(DATASET_ITEM_HANDLER, this);
+          for (var i = 0, object; object = deleted[i]; i++)
+            object.removeHandler(DATASET_ITEM_HANDLER, this);
 
-          this.dispatch('datasetChanged', this, delta = {
+          this.event_datasetChanged(this, delta = {
             deleted: deleted
           });
         }
+
+        this.map_ = {};
 
         return delta;
       }
@@ -968,7 +1056,7 @@
     (function(){
       var awatingDatasetCache = {};
       var proto = AbstractDataset.prototype;
-      var realDispatch_ = DataObject.prototype.dispatch;
+      var realDispatch_ = AbstractDataset.prototype.event_datasetChanged;
       var setStateCount = 0;
       var urgentTimer;
 
@@ -983,12 +1071,12 @@
           cache.mode = false;
           cache.delta = [];
 
-          realDispatch_.method.call(dataset, 'datasetChanged', dataset, delta);
+          realDispatch_.call(dataset, dataset, delta);
         }
       }
 
       function flushAllDataset(){
-        Object.values(awatingDatasetCache).forEach(flushDataset);
+        values(awatingDatasetCache).forEach(flushDataset);
       }
 
       function storeDatasetDelta(dataset, delta){
@@ -999,7 +1087,7 @@
         if (isInsert && isDelete)
         {
           flushDataset(dataset);
-          realDispatch_.method.call(dataset, 'datasetChanged', dataset, delta);
+          realDispatch_.call(dataset, dataset, delta);
           return;
         }
 
@@ -1015,24 +1103,21 @@
       function urgentFlush(){
         ;;;if (typeof console != 'undefined') console.warn('(debug) Urgent flush dataset changes');
         setStateCount = 0;
-        proto.dispatch = realDispatch_;
+        AbstractDataset.prototype.event_datasetChanged = realDispatch_;
         flushAllDataset();      
       }
 
-      function patchedDispatch(event, dataset, delta){
-        if (event == 'datasetChanged')
-          storeDatasetDelta(dataset, delta);
-        else
-          realDispatch_.method.apply(this, arguments);
+      function patchedDispatch(dataset, delta){
+        storeDatasetDelta(dataset, delta);
       }
 
       Dataset.setAccumulateState = function(state){
-        return;
+        //if (state !== 'xxx') return;
         if (state)
         {
           if (setStateCount == 0)
           {
-            proto.dispatch = patchedDispatch;
+            AbstractDataset.prototype.event_datasetChanged = patchedDispatch;
             urgentTimer = setTimeout(urgentFlush, 0);
           }
           setStateCount++;
@@ -1042,7 +1127,7 @@
           if (setStateCount == 1)
           {
             clearTimeout(urgentTimer);
-            proto.dispatch = realDispatch_;
+            AbstractDataset.prototype.event_datasetChanged = realDispatch_;
             flushAllDataset();
           }
 
@@ -1055,88 +1140,55 @@
     // Dataset aggregate
     //
 
-    function createADMethod_addSource(handler){
-      return function(source){
-        if (source instanceof AbstractDataset)
+   /**
+    * @class
+    */
+
+    var AGGREGATEDATASET_ITEM_HANDLER = {
+      update: function(object){
+        var map_ = this.map_;
+        var config = this.source_[object.eventObjectId];
+        var curRef = config.item;
+        var newRef = this.transform ? this.transform(object) : object;
+
+        if (newRef instanceof DataObject == false)
+          newRef = null;
+
+        if (curRef != newRef)
         {
-          if (this.sources.add(source))
+          config.item = newRef;
+
+          var delta = {};
+
+          // remove 
+          if (curRef)
           {
-            source.addHandler(handler, this);
-            handler.datasetChanged.call(this, source, {
-              inserted: source.getItems()
-            });
-
-            if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_SOURCE))
-              source.addSubscriber(this, SUBSCRIPTION_SOURCE);
-
-            return true;
+            if (--map_[curRef.eventObjectId] == 0)
+            {
+              // delete from map
+              delete this.map_[curRef.eventObjectId];
+              delta.deleted = [curRef];
+            }
           }
-        }
-        else
-        {
-          ;;;if(typeof console != 'undefined') console.warn(this.className + '.addSource: source isn\'t type of AbstractDataset', source);
-        }
-      }
-    }
 
-    function createADMethod_removeSource(handler){
-      return function(source){
-        if (this.sources.remove(source))
-        {
-          source.removeHandler(handler, this);
-          handler.datasetChanged.call(this, source, {
-            deleted: source.getItems()
-          });
-
-          if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_SOURCE))
-            source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
-
-          return true;
-        }
-        else
-        {
-          ;;;if(typeof console != 'undefined') console.warn(this.className + '.removeSource: source isn\'t in dataset source list', source);
-        }
-      }
-    }
-
-    function createADMethod_setSources(handler){
-      return function(sources){
-        var exists = Array.from(this.sources); // clone list
-        for (var i = 0, source; source = sources[i]; i++)
-        {
-          if (source instanceof AbstractDataset)
+          if (newRef)
           {
-            if (!exists.remove(source))
-              this.addSource(source);
+            if (map_[newRef.eventObjectId])
+            {
+              map_[newRef.eventObjectId]++;
+            }
+            else
+            {
+              // insert to map
+              map_[newRef.eventObjectId] = 1;
+              delta.inserted = [newRef];
+            }
           }
-          else
-          {
-            ;;;if(typeof console != 'undefined') console.warn(this.className + '.setSources: source isn\'t type of AbstractDataset', source);
-          }
+
+          this.event_datasetChanged(this, delta);
         }
-
-        exists.forEach(this.removeSource, this);
       }
-    }
-
-    function createADMethod_clear(handler){
-      return function(){
-        for (var i = 0, source; source = this.sources[i]; i++)
-        {
-          source.removeHandler(handler, this);
-          handler.datasetChanged.call(this, source, {
-            deleted: source.getItems()
-          });
-
-          if (this.isActiveSubscriber && (this.subscriptionType & SUBSCRIPTION_SOURCE))
-            source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
-        }
-
-        this.sources.clear();
-        this.map_ = {};
-      }
-    }
+    };
 
     var AGGREGATEDATASET_DATASET_HANDLER = {
       datasetChanged: function(source, delta){
@@ -1145,28 +1197,57 @@
         var deleted = [];
         var object;
         var objectId;
-        var map_;
+        var item;
+        var itemId;
+        var map_ = this.map_;
+        var source_ = this.source_;
 
         if (delta.inserted)
         {
           for (var i = 0, object; object = delta.inserted[i]; i++)
           {
             objectId = object.eventObjectId;
-            map_ = this.map_[objectId];
-
-            if (!map_)
+            
+            if (source_[objectId])
             {
-              map_ = this.map_[objectId] = {
-                object: object,
-                count: 0
-              };
-              inserted.push(object);
+              // item exists
+              source_[objectId].count++;
             }
-
-            if (!map_[sourceId])
+            else
             {
-              map_[sourceId] = source;
-              map_.count++;
+              // new source item
+              object.addHandler(AGGREGATEDATASET_ITEM_HANDLER, this);
+
+              // get item from source object
+              item = this.transform ? this.transform(object) : object;
+              if (item instanceof DataObject == false)
+              {
+                item = null;
+              }
+
+              // reg in source map
+              source_[objectId] = {
+                count: 1,
+                object: object,
+                item: item
+              };
+
+              if (item)
+              {
+                // item is fit requirements to be in set
+                itemId = item.eventObjectId;
+
+                if (map_[itemId])
+                {
+                  map_[itemId]++;
+                }
+                else
+                {
+                  // new member, add to delta
+                  map_[itemId] = 1;
+                  inserted.push(item);
+                }
+              }
             }
           }
         }
@@ -1176,23 +1257,31 @@
           for (var i = 0, object; object = delta.deleted[i]; i++)
           {
             objectId = object.eventObjectId;
-            map_ = this.map_[objectId];
 
-            if (map_ && map_[sourceId])
+            if (--source_[objectId].count == 0)
             {
-              delete map_[sourceId];
-              if (map_.count-- == 1)
+              // new source item
+              object.removeHandler(AGGREGATEDATASET_ITEM_HANDLER, this);
+
+              item = source_[objectId].item;
+              if (item)
               {
-                delete this.map_[objectId];
-                deleted.push(object);
+                itemId = item.eventObjectId;
+                if (--map_[itemId] == 0)
+                {
+                  delete map_[itemId];
+                  deleted.push(item);
+                }
               }
+
+              delete source_[objectId];
             }
           }
         }
 
         if (delta = getDelta(inserted, deleted))
         {
-          this.dispatch('datasetChanged', this, delta);
+          this.event_datasetChanged(this, delta);
         }
       },
       destroy: function(source){
@@ -1200,96 +1289,125 @@
       }
     };
 
+    //
+    // Registrate subscription type
+    //
+
+    Subscription.add(
+      'SOURCE',
+      {
+        sourcesChanged: function(object, delta){
+          var array;
+
+          if (array = delta.inserted)
+            for (var i = array.length; i --> 0;)
+              this.add(object, array[i]);
+
+          if (array = delta.deleted)
+            for (var i = array.length; i --> 0;)
+              this.remove(object, array[i]);
+        }
+      },
+      function(action, object){
+        for (var i = object.sources.length; i --> 0;)
+          action(object, object.sources[i]);
+      }
+    );
+
    /**
     * @class
     */
     var AggregateDataset = Class(AbstractDataset, {
       className: namespace + '.AggregateDataset',
 
-      subscriptionType: SUBSCRIPTION_SOURCE,
+      subscriptionType: Subscription.SOURCE,
       sources: null,
+
+      event_sourcesChanged: createEvent('sourcesChanged'),
 
      /**
       * @config {Array.<Basis.Data.AbstractDataset>} sources Set of source datasets for aggregate.
       * @constructor
       */
       init: function(config){
+        this.map_ = {};
+        this.source_ = {};
+
+        // inherit
+        AbstractDataset.prototype.init.call(this, config);
+
+        var sources = this.sources;
         this.sources = [];
 
-        this.inherit(config);
-
-        if (config)
-        {
-          if (Array.isArray(config.sources))
-            config.sources.forEach(this.addSource, this);
-        }
+        if (Array.isArray(sources))
+          sources.forEach(this.addSource, this);
       },
 
-      /*getItems: function(){
-        if (this.version_ != this.version)
+     /**
+      * @param {Basis.Data.AbstractDataset} source
+      */
+      addSource: function(source){
+        if (source instanceof AbstractDataset)
         {
-          this.version_ = this.version;
-          this.cache_ = [];
-
-          for (var objectId in this.member_)
-            this.cache_.push(this.member_[objectId]);
-        }
-
-        return this.cache_;
-      },*/
-
-      setIsActiveSubscriber: function(isActive){
-        if (this.isActiveSubscriber != !!isActive)
-        {
-          if (this.sources.length && (this.subscriptionType & SUBSCRIPTION_SOURCE))
+          if (this.sources.add(source))
           {
-            for (var i = 0; source = this.sources[i]; i++)
-            {
-              if (isActive)
-                source.addSubscriber(this, SUBSCRIPTION_SOURCE);
-              else
-                source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
-            }
+            var handler = this.constructor.sourceHandler;
+
+            source.addHandler(handler, this);
+            handler.datasetChanged.call(this, source, {
+              inserted: source.getItems()
+            });
+
+            this.event_sourcesChanged(this, {
+              inserted: [source]
+            });
+
+            return true;
           }
         }
-
-        return this.inherit(isActive);
-      },
-
-      setSubscriptionType: function(subscriptionType){
-        var curSubscriptionType = this.subscriptionType;
-        var newSubscriptionType = Number(subscriptionType) || 0;
-
-        if (curSubscriptionType != subscriptionType && this.isActiveSubscriber)
+        else
         {
-          var sourceSubscriptionChanged = this.sources.length && (newSubscriptionType & SUBSCRIPTION_SOURCE) ^ (curSubscriptionType & SUBSCRIPTION_SOURCE);
-
-          if (sourceSubscriptionChanged)
-          {
-            for (var i = 0; source = this.sources[i]; i++)
-            {
-              if (newSubscriptionType & SUBSCRIPTION_SOURCE)
-                source.addSubscriber(this, SUBSCRIPTION_SOURCE);
-              else
-                source.removeSubscriber(this, SUBSCRIPTION_SOURCE);
-            }
-          }
+          ;;;if(typeof console != 'undefined') console.warn(this.className + '.addSource: source isn\'t instance of AbstractDataset');
         }
-
-        return this.inherit(newSubscriptionType);
       },
 
-      addSource: createADMethod_addSource(AGGREGATEDATASET_DATASET_HANDLER),
-      removeSource: createADMethod_removeSource(AGGREGATEDATASET_DATASET_HANDLER),
-      setSources: createADMethod_setSources(AGGREGATEDATASET_DATASET_HANDLER),
-      clear: createADMethod_clear(AGGREGATEDATASET_DATASET_HANDLER),
+     /**
+      * @param {Basis.Data.AbstractDataset} source
+      */
+      removeSource: function(source){
+        if (this.sources.remove(source))
+        {
+          var handler = this.constructor.sourceHandler;
+
+          source.removeHandler(handler, this);
+          handler.datasetChanged.call(this, source, {
+            deleted: source.getItems()
+          });
+
+          this.event_sourcesChanged(this, {
+            deleted: [source]
+          });
+
+          return true;
+        }
+        else
+        {
+          ;;;if(typeof console != 'undefined') console.warn(this.className + '.removeSource: source isn\'t in dataset source list');
+        }
+      },
+      clear: function(){
+        Array.from(this.sources).forEach(this.removeSource, this);
+      },
 
       destroy: function(){
-        this.inherit();
+        // inherit
+        AbstractDataset.prototype.destroy.call(this);
 
-        delete this.sources;
+        this.sources = null;
       }
     });
+
+    AggregateDataset.sourceHandler = AGGREGATEDATASET_DATASET_HANDLER;
 
 
     //
@@ -1302,7 +1420,7 @@
 
       var pos;
       var value;
-      var compareValue;
+      var cmpValue;
       var l = isNaN(left) ? 0 : left;
       var r = isNaN(right) ? array.length - 1 : right;
 
@@ -1405,12 +1523,11 @@
             if (deleted)
               delta.deleted = [deleted.object];
 
-            this.dispatch('datasetChanged', this, delta);
+            this.event_datasetChanged(this, delta);
           }
         }
       }
     };
-    INDEXEDDATASET_ITEM_HANDLER.rollbackUpdate = INDEXEDDATASET_ITEM_HANDLER.update;
 
     var INDEXEDDATASET_DATASET_HANDLER = {
       datasetChanged: function(source, delta){
@@ -1447,7 +1564,6 @@
               map_ = this.map_[objectId] = {
                 object: object,
                 count: 0,
-                //indexed: false,
                 value: this.index(object)
               };
 
@@ -1502,15 +1618,12 @@
           }
         }
 
-        inserted = Object.values(inserted);
-        deleted = Object.values(deleted);
-
-        //console.log(inserted, deleted);
-        //debugger;
+        inserted = values(inserted);
+        deleted = values(deleted);
 
         if (delta = getDelta(inserted, deleted))
         {
-          this.dispatch('datasetChanged', this, delta);
+          this.event_datasetChanged(this, delta);
         }
       },
       destroy: function(source){
@@ -1518,13 +1631,9 @@
       }
     };
 
-    function normalizeOffset(offset){
-      offset = parseInt(offset) || 0;
-      return offset >= 0 ? offset : 0;
-    }
-    function normalizeLimit(limit){
-      limit = parseInt(limit);
-      return limit >= 1 ? limit : 1;
+    function normalizeNumber(num, min){
+      num = parseInt(num) || 0;
+      return num > min ? num : min;
     }
 
    /**
@@ -1538,7 +1647,7 @@
       * @type {function}
       * @readonly
       */
-      index: Function.$true,
+      index: $true,
 
      /**
       * Start of range.
@@ -1568,12 +1677,13 @@
           if (config.index)
             this.index = getter(config.index);
           if ('offset' in config)
-            this.offset = normalizeOffset(config.offset);
+            this.offset = normalizeNumber(config.offset, 0);
           if ('limit' in config)
-            this.limit = normalizeLimit(config.limit);
+            this.limit = normalizeNumber(config.limit, 1);
         }
 
-        this.inherit(config);
+        // inherit
+        AggregateDataset.prototype.init.call(this, config);
       },
 
      /**
@@ -1582,68 +1692,38 @@
       * @param {number} limit Length of range.
       */
       setRange: function(offset, limit){
-        offset = normalizeOffset(offset);
-        limit = normalizeLimit(limit);
+        var inserted = [];
+        var item_ = Object.slice(this.item_);
 
-        if (this.offset != offset || this.limit != limit)
+        this.offset = offset = normalizeNumber(offset, 0);
+        this.limit = limit = normalizeNumber(limit, 1);
+
+        var ar = this.index_.slice(offset, offset + limit);
+
+        for (var i = 0, object; object = ar[i]; i++)
         {
-          var inserted = [];
-          var deleted = [];
-
-          var oldRangeEnd = this.offset + this.limit;
-          var newRangeEnd = offset + limit;
-
-          if (offset != this.offset)
-          {
-            if (offset < this.offset)
-              inserted.push.apply(inserted, this.index_.slice(offset, Math.min(this.offset, newRangeEnd)));
-            else
-              deleted.push.apply(deleted, this.index_.slice(this.offset, Math.min(offset, oldRangeEnd)));
-          }
-
-          if (newRangeEnd != oldRangeEnd)
-          {
-            if (newRangeEnd < oldRangeEnd)
-              deleted.push.apply(deleted, this.index_.slice(Math.max(newRangeEnd, this.offset), oldRangeEnd));
-            else
-              inserted.push.apply(inserted, this.index_.slice(Math.max(oldRangeEnd, offset), newRangeEnd));
-          }
-
-          this.offset = offset;
-          this.limit = limit;
-
-          inserted = inserted.map(getter('object'));
-          deleted = deleted.map(getter('object'));
-
-          if (delta = getDelta(inserted, deleted))
-          {
-            this.dispatch('datasetChanged', this, delta);
-          }
-        }
-      },
-
-      /*getItems: function(){
-        if (this.version_ != this.version)
-        {
-          this.version_ = this.version;
-          this.cache_ = this.index_.slice(this.offset, this.offset + this.limit).map(getter('object'));
+          var objectId = object.object.eventObjectId;
+          if (item_[objectId])
+            delete item_[objectId];
+          else
+            inserted.push(object.object);
         }
 
-        return this.cache_;
-      },*/
-
-      addSource: createADMethod_addSource(INDEXEDDATASET_DATASET_HANDLER),
-      removeSource: createADMethod_removeSource(INDEXEDDATASET_DATASET_HANDLER),
-      setSources: createADMethod_setSources(INDEXEDDATASET_DATASET_HANDLER),
-      clear: createADMethod_clear(INDEXEDDATASET_DATASET_HANDLER)
+        var delta;
+        if (delta = getDelta(inserted, values(item_)))
+        {
+          this.event_datasetChanged(this, delta);
+        }
+      }
     });
 
+    IndexedDataset.sourceHandler = INDEXEDDATASET_DATASET_HANDLER;
 
     //
     // Collection
     //
 
-    var COLLECTION_ITEM_HANDLER = {
+/*    var COLLECTION_ITEM_HANDLER = {
       update: function(object){
         var map_ = this.map_[object.eventObjectId];
         var newState = !!this.filter(object);
@@ -1652,7 +1732,7 @@
         {
           map_.state = newState;
 
-          this.dispatch('datasetChanged', this,
+          this.event_datasetChanged(this,
             newState
               ? { inserted: [object] }
               : { deleted: [object] }
@@ -1660,7 +1740,6 @@
         }
       }
     };
-    COLLECTION_ITEM_HANDLER.rollbackUpdate = COLLECTION_ITEM_HANDLER.update;
     
     var COLLECTION_DATASET_HANDLER = {
       datasetChanged: function(source, delta){
@@ -1723,52 +1802,32 @@
 
         if (delta = getDelta(inserted, deleted))
         {
-          this.dispatch('datasetChanged', this, delta);
+          this.event_datasetChanged(this, delta);
         }
       },
       destroy: function(source){
         this.removeSource(source);
       }
     };
-
+*/
 
    /**
     * @class
     */
     var Collection = Class(AggregateDataset, {
       className: namespace + '.Collection',
-      filter: Function.$true,
 
-     /**
-      * @config {function():boolean} filter Filter function.
-      * @constructor
-      */
-      init: function(config){
-        if (config)
-        {
-          if (config.filter)
-            this.filter = getter(config.filter);
-        }
-
-        this.inherit(config);
+      filter: $true,
+      transform: function(object){
+        return this.filter(object) ? object : null;
       },
 
-      /*getItems: function(){
-        if (this.version_ != this.version)
-        {
-          this.version_ = this.version;
-          this.cache_ = [];
-
-          for (var objectId in this.map_)
-            if (this.map_[objectId].state)
-              this.cache_.push(this.map_[objectId].object);
-        }
-
-        return this.cache_;
-      },*/
-
+     /**
+      * Set new filter function.
+      * @param {function(item):boolean} filter
+      */
       setFilter: function(filter){
-        filter = filter ? getter(filter) : Function.$true;
+        filter = filter ? getter(filter) : $true;
         if (this.filter != filter)
         {
           this.filter = filter;
@@ -1779,75 +1838,39 @@
           var object;
           var newState;
 
-          for (var id in this.map_)
+          for (var id in this.source_)
           {
-            config = this.map_[id];
+            config = this.source_[id];
             object = config.object;
             newState = !!filter(object);
 
-            if (newState != config.state)
+            if ((newState && !config.item) || (!newState && config.item))
             {
-              config.state = newState;
               if (newState)
+              {
+                config.item = object;
+                this.map_[id] = 1;
                 inserted.push(object);
+              }
               else
+              {
+                config.item = null;
+                delete this.map_[id];
                 deleted.push(object);
+              }
             }
           }
 
           var delta;
           if (delta = getDelta(inserted, deleted))
           {
-            this.dispatch('datasetChanged', this, delta);
+            this.event_datasetChanged(this, delta);
           }
         }
-      },
-
-      addSource: createADMethod_addSource(COLLECTION_DATASET_HANDLER),
-      removeSource: createADMethod_removeSource(COLLECTION_DATASET_HANDLER),
-      setSources: createADMethod_setSources(COLLECTION_DATASET_HANDLER),
-      clear: createADMethod_clear(COLLECTION_DATASET_HANDLER),
-
-      sync: function(data, set){
-        if (!data)
-          return;
-
-        Dataset.setAccumulateState(true);
-
-        var res = [];
-        var map_ = {};
-        var deleted = [];
-
-        for (var i = 0; i < data.length; i++)
-        {
-          var object = data[i];
-          if (object instanceof DataObject)
-          {
-            var objectId = object.eventObjectId;
-            map_[objectId] = object;
-          }
-        }
-
-        for (var objectId in this.map_)
-        {
-          if (this.map_[objectId].state && !map_[objectId])
-          {
-            var object = this.map_[objectId].object;
-            deleted.push(object);
-
-            object.destroy();
-          }
-        }
-
-        Dataset.setAccumulateState(false);
-
-        return res;
-      },
-
-      destroy: function(){
-        this.inherit();
       }
     });
+    //Collection.sourceHandler = COLLECTION_DATASET_HANDLER;
+    Collection.sourceHandler = AGGREGATEDATASET_DATASET_HANDLER;
 
     //
     // Grouping
@@ -1866,32 +1889,31 @@
           //oldGroup.remove([object]);
           delete oldGroup.map_[objectId];
 
-          oldGroup.dispatch('datasetChanged', oldGroup, {
+          oldGroup.event_datasetChanged(oldGroup, {
             deleted: [object]
           });
 
           //newGroup.add([object]);
           newGroup.map_[objectId] = object;
 
-          newGroup.dispatch('datasetChanged', newGroup, {
+          newGroup.event_datasetChanged(newGroup, {
             inserted: [object]
           });
 
           // destroy oldGroup if empty
-          if (('destroyEmpty' in oldGroup ? oldGroup.destroyEmpty : this.destroyEmpty) && !oldGroup.itemCount)
+          if (!oldGroup.itemCount && ('destroyEmpty' in oldGroup ? oldGroup.destroyEmpty : this.destroyEmpty))
           {
             //this.groups_[oldGroup.groupId].destroy();
             delete this.groups_[oldGroup.groupId];
             delete this.map_[oldGroup.eventObjectId];
             oldGroup.destroy();
-            this.dispatch('datasetChanged', this, {
+            this.event_datasetChanged(this, {
               deleted: [oldGroup]
             });
           }
         }
       }
     };
-    GROUPING_ITEM_HANDLER.rollbackUpdate = GROUPING_ITEM_HANDLER.update;
 
     var GROUPING_DATASET_HANDLER = {
       datasetChanged: function(source, delta){
@@ -2011,9 +2033,9 @@
           if (!delta.deleted.length)
             delete delta.deleted;
 
-          group.dispatch('datasetChanged', group, delta);
+          group.event_datasetChanged(group, delta);
 
-          if (('destroyEmpty' in group ? group.destroyEmpty : this.destroyEmpty) && !group.itemCount)
+          if (!group.itemCount && ('destroyEmpty' in group ? group.destroyEmpty : this.destroyEmpty))
           {
             deleted.push(group);
             //this.groups_[group.groupId].destroy();
@@ -2025,7 +2047,7 @@
 
         if (deleted.length)
         {
-          this.dispatch('datasetChanged', this, {
+          this.event_datasetChanged(this, {
             deleted: deleted
           });
         }
@@ -2041,7 +2063,7 @@
     var Grouping = Class(AggregateDataset, {
       className: namespace + '.Grouping',
 
-      groupGetter: Function.$true,
+      groupGetter: $true,
       groupClass: AbstractDataset,
 
       destroyEmpty: true,
@@ -2051,35 +2073,13 @@
       * @config {class} groupClass Class for group instances. Should be instance of AbstractDataset.
       * @config {boolean} destroyEmpty Destroy empty groups automaticaly or not.
       * @constructor
-      */
+      */ 
       init: function(config){
         this.groups_ = {};
 
-        if (config)
-        {
-          if (config.groupGetter)
-            this.groupGetter = getter(config.groupGetter);
-          if (config.groupClass)
-            this.groupClass = config.groupClass;
-          if (config.destroyEmpty === false)
-            this.destroyEmpty = false;
-        }
-
-        this.inherit(config);
+        // inherit
+        AggregateDataset.prototype.init.call(this, config);
       },
-
-      /*has: function(object){
-        return !!(object && this.groups_[object.groupId] === object);
-      },
-      getItems: function(){
-        if (!this.eventCache_.mode && this.version_ != this.version)
-        {
-          this.version_ = this.version;
-          this.cache_ = Object.values(this.groups_);
-        }
-
-        return this.cache_;
-      },*/
 
       getGroup: function(value, autocreate){
         var isDataObject = value instanceof DataObject;
@@ -2105,7 +2105,7 @@
             this.map_[group.eventObjectId] = group;
             this.groups_[groupId] = group;
 
-            this.dispatch('datasetChanged', this, {
+            this.event_datasetChanged(this, {
               inserted: [group]
             });
           }
@@ -2114,33 +2114,32 @@
         return group;
       },
 
-      addSource: createADMethod_addSource(GROUPING_DATASET_HANDLER),
-      removeSource: createADMethod_removeSource(GROUPING_DATASET_HANDLER),
-      setSources: createADMethod_setSources(GROUPING_DATASET_HANDLER),
-      clear: createADMethod_clear(GROUPING_DATASET_HANDLER),
-
       destroy: function(){
         // prevent destroy empty groups, groups will destroy all at once (to reduce event dispatching)
         this.destroyEmpty = false;
 
-        // inherit
-        this.inherit();
-
         // fetch groups
-        var groups = Object.values(this.groups_);
+        var groups = values(this.groups_);
+        for (var i = groups.length; i --> 0;)
+          groups[i].destroyEmpty = false;
+
+        // inherit
+        AggregateDataset.prototype.destroy.call(this);
 
         // dispatch event
-        this.dispatch('datasetChanged', this, {
+        this.event_datasetChanged(this, {
           deleted: groups
         });
 
         // destroy groups
-        for (var i = 0; i < groups.length; i++)
+        for (var i = groups.length; i --> 0;)
           groups[i].destroy();
 
         delete this.groups_;
       }
     });
+
+    Grouping.sourceHandler = GROUPING_DATASET_HANDLER;
 
     //
     // export names
@@ -2148,6 +2147,9 @@
 
     Basis.namespace(namespace).extend({
       // const
+     /**
+      * @enum {string}
+      */
       STATE: {
         UNDEFINED: STATE_UNDEFINED,
         READY: STATE_READY,
@@ -2156,14 +2158,10 @@
         DEPRECATED: STATE_DEPRECATED
       },
 
-      SUBSCRIPTION: {
-        NONE: SUBSCRIPTION_NONE,
-        DELEGATE: SUBSCRIPTION_DELEGATE,
-        COLLECTION: SUBSCRIPTION_COLLECTION,
-        MASK: SUBSCRIPTION_MASK
-      },
+      Subscription: Subscription,
 
       // classes
+      Object: DataObject,
       DataObject: DataObject,
 
       AbstractDataset: AbstractDataset,

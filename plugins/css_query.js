@@ -41,6 +41,32 @@
 
     var ELEMENT_NODE = DOM.ELEMENT_NODE;
 
+    function unique(arr, sorted){
+      if (!arr.length)
+        return [];
+
+      var source, result;
+
+      if (sorted)
+        // no source array copy, no array sorting
+        // O = N
+        result = [(source = arr)[0]];
+      else
+        // copy source array, sort copy of array
+        // O = N*log(N)
+        source = result = Array.from(arr).sort(function(a, b){
+          if (a === b) return 0;
+          else return typeof a == typeof b ? a > b || -1 : typeof a > typeof b || -1;
+        });
+
+      for (var i = 1, k = 0; i < source.length; i++)
+        if (result[k] !== source[i])
+          result[++k] = source[i];
+      result.length = k + 1;
+
+      return result;
+    }
+
     function findPrev(node, deep){
       while (node = node.previousSibling)
         if (node.nodeType == ELEMENT_NODE)
@@ -537,7 +563,7 @@
             nodes = DOM.tag('*');
           else
           {
-            tags = tags.unique();
+            tags = unique(tags);
             nodes = [];
             for (var i = 0; i < tags.length; i++)
               nodes.push.apply(nodes, DOM.tag(element, tags[i]));
@@ -593,9 +619,9 @@
       if (config.checkClassName)
         config.push(EXTRACT_CLASS_NAME);
 
-      config = config.sortAsObject(Data.getter('weight', Number));
-      selector.check = eval('0,function(node){var className, attrValue; return ' + config.map(Data.getter('testDOM')).join(' && ') + '}');
-      selector.checkSnapshot = eval('0,function(node){ var className, attrValue; return ' + config.map(Data.getter('testSnapshot')).join(' && ') + '}');
+      config = config.sortAsObject(getter('weight', Number));
+      selector.check = eval('0,function(node){var className, attrValue; return ' + config.map(getter('testDOM')).join(' && ') + '}');
+      selector.checkSnapshot = eval('0,function(node){ var className, attrValue; return ' + config.map(getter('testSnapshot')).join(' && ') + '}');
 //console.log(selector.text);
 //console.log(selector.check.toString());
 //console.log(selector.checkSnapshot.toString());
@@ -640,7 +666,7 @@
     };
 
     function compileSelectorGroup(config){
-      //config = config.unique();
+      //config = unique(config);
       var tmp = {};
       for (var i = 0; i < config.length; i++)
         tmp[config[i].toString()] = config[i];

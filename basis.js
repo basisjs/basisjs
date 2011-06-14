@@ -8,7 +8,7 @@
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
-
+'use strict';
 /**
  * @annotation
  * Basis library core module. It provides various most using functions
@@ -38,6 +38,9 @@
  */
 
 (function(){
+
+  // Define global scope: `window` in the browser, or `global` on the server
+  var global = this;
 
  /**
   * Object extensions
@@ -183,69 +186,100 @@
   */
 
  /**
-  * @param {any} value
+  * @param {*} value
   * @return {boolean} Returns true if value is undefined.
   */
-  function $undefined(value) { return value == undefined };
+  function $undefined(value){
+    return value == undefined;
+  }
 
  /**
-  * @param {any} value
+  * @param {*} value
   * @return {boolean} Returns true if value is not undefined.
   */
-  function $defined(value)   { return value != undefined };
+  function $defined(value){
+    return value != undefined;
+  }
 
  /**
-  * @param {any} value
+  * @param {*} value
   * @return {boolean} Returns true if value is null.
   */
-  function $isNull(value)    { return value == null || value == undefined };
+  function $isNull(value){
+    return value == null || value == undefined;
+  }
 
  /**
-  * @param {any} value
+  * @param {*} value
   * @return {boolean} Returns true if value is not null.
   */
-  function $isNotNull(value) { return value != null && value != undefined };
+  function $isNotNull(value){
+    return value != null && value != undefined;
+  }
 
  /**
-  * @param {any} value
+  * @param {*} value
   * @return {boolean} Returns true if value is equal (===) to this.
   */
-  function $isSame(value)    { return value === this };
+  function $isSame(value){
+    return value === this;
+  }
 
  /**
-  * @param {any} value
+  * @param {*} value
   * @return {boolean} Returns true if value is not equal (!==) to this.
   */
-  function $isNotSame(value) { return value !== this };
+  function $isNotSame(value){
+    return value !== this;
+  }
 
  /**
   * Just returns first param.
-  * @param {any} value
+  * @param {*} value
   * @return {boolean} Returns value argument.
   */
-  function $self(value) { return value };
+  function $self(value){
+    return value;
+  }
+
+ /**
+  * Returns a function that always returns the same value.
+  * @param {*} value
+  * @return {function()}
+  */
+  function $const(value){
+    return function(){ return value };
+  }
 
  /**
   * Always returns false.
   * @return {boolean}
   */
-  function $false()     { return false };
+  var $false = function(){
+    return false;
+  }
 
  /**
   * Always returns true.
   * @return {boolean}
   */
-  function $true()      { return true };
+  var $true = function(){
+    return true;
+  }
 
  /**
   * Always returns null.
   */
-  function $null()      { return null };
+  var $null = function(){
+    return null;
+  }
 
  /**
   * Always returns undefined.
   */
-  function $undef()     { };
+  var $undef = function(){
+    return
+  }
 
 
  /**
@@ -314,7 +348,7 @@
         modList = getterCache[getterIdx_] = [];
 
       var cacheResult = true;
-      switch (typeof modificator)
+      switch (modificator && typeof modificator)
       {
         case 'string': 
           result = function(object){ return modificator.format(func(object)) };
@@ -357,7 +391,7 @@
 
  /**
   * @param {function(object)|string|object} getter
-  * @param {any} defValue
+  * @param {*} defValue
   * @param {function(value):boolean} checker
   * @return {function(object)}
   */
@@ -393,6 +427,7 @@
 
     // gag functions
     $self:      $self,
+    $const:     $const,
     $false:     $false,
     $true:      $true,
     $null:      $null,
@@ -464,7 +499,7 @@
   complete(Function.prototype, {
    /**
     * Changes function default context. It also makes possible to set static
-    * arguments for function.
+    * arguments (folding) for function.
     * Implemented in Fifth Edition of ECMA-262.
     * TODO: check compliance
     * @param {Object} thisObject 
@@ -485,56 +520,6 @@
     }
   });
 
-  // EXTENSIONS
-  /*
-  extend(Function.prototype, {
-    extend: function(proto){
-      debugger;
-      var classProto  = this.prototype;
-      var constructor = classProto.constructor;
-
-      extend(classProto, proto.prototype || proto);
-
-      // prevent constructor overwrite for browsers where constructor property haven't DontEnum flag
-      if ('constructor' in proto)
-        classProto.constructor = constructor;
-
-      return this;
-    },
-    complete: function(proto){
-      debugger;
-      return complete(this.prototype, proto.prototype || proto);
-    }
-  });
-  */
-
-  
- /**
-  * Boolean extensions
-  * @namespace Boolean
-  */
-
-  extend(Boolean, {
-   /**
-    * Inverse value to opposite boolean value.
-    * @param {any} value
-    * @return {boolean}
-    */
-    invert: function(value){
-      return !value;
-    },
-
-   /**
-    * Convert value to bollean.
-    * @param {any} value
-    * @return {boolean}
-    */
-    normalize: function(value){
-      return !!value;
-    }
-  });
-
-  
  /**
   * Array extensions
   * @namespace Array
@@ -554,8 +539,6 @@
   extend(Array, {
     // array copier
     from: function(object, offset){ 
-      var result;
-      
       if (object != null)
       {
         var len = object.length;
@@ -568,9 +551,8 @@
 
         if (len - offset > 0)
         {
-          result = new Array();
-          for (var i = offset, k = 0; i < len; i++)
-            result[k++] = object[i];
+          for (var result = [], k = 0, i = offset; i < len;)
+            result[k++] = object[i++];
           return result;
         }
       }
@@ -678,47 +660,8 @@
 
   extend(Array.prototype, {
     // extractors
-    clone: function(){
-      return Array.from(this);
-    },
     flatten: function(){
       return this.concat.apply([], this);
-    },
-    unique: function(sorted){
-      if (!this.length)
-        return [];
-
-      var source, result;
-
-      if (sorted)
-        // no source array copy, no array sorting
-        // O = N
-        result = [(source = this)[0]];
-      else
-        // copy source array, sort copy of array
-        // O = N*log(N)
-        source = result = Array.from(this).sort(function(a, b){
-          if (a === b) return 0;
-          else return typeof a == typeof b ? a > b || -1 : typeof a > typeof b || -1;
-        });
-
-      for (var i = 1, k = 0; i < source.length; i++)
-        if (result[k] !== source[i])
-          result[++k] = source[i];
-      result.length = k + 1;
-
-      return result;
-    },
-    collapse: function(callback, thisObject){
-      var len = this.length;
-      for (var i = 0, k = 0; i < len; i++)
-        if (!callback.call(thisObject, this[i], i, this))
-          this[k++] = this[i];
-      this.length = k;
-      return this;
-    },
-    exclude: function(array){
-      return this.filter(this.absent, array);
     },
     repeat: function(count){
       return Array.create(parseInt(count) || 0, this).flatten();
@@ -764,10 +707,10 @@
     *   // but if you need all items of array with filtered by condition use Array#filter method instead
     *   var result = list.filter(Function.getter('a == 1'));
     *
-    * @param {any} value
+    * @param {*} value
     * @param {function(object)|string} getter
     * @param {number=} offset
-    * @return {any}
+    * @return {*}
     */
     search: function(value, getter, offset){
       Array.lastSearchIndex = -1;
@@ -779,10 +722,10 @@
     },
 
    /**
-    * @param {any} value
+    * @param {*} value
     * @param {function(object)|string} getter
     * @param {number=} offset
-    * @return {any}
+    * @return {*}
     */
     lastSearch: function(value, getter, offset){
       Array.lastSearchIndex = -1;
@@ -800,7 +743,7 @@
     * Binary search in ordered array where getter(item) === value and return position.
     * When strong parameter equal false insert position returns.
     * Otherwise returns position of founded item, but -1 if nothing found.
-    * @param {any} value Value search for
+    * @param {*} value Value search for
     * @param {function(object)|string=} getter
     * @param {boolean=} desc Must be true for reverse sorted arrays.
     * @param {boolean=} strong If true - returns result only if value found. 
@@ -841,45 +784,6 @@
       return this.binarySearchPos(value, getter, false, true);
     },
 
-    binarySearchIntervalPos: function(value, leftGetter, rightGetter, strong, left, right){
-      if (!this.length)  // empty array check
-        return -1;
-
-      leftGetter  = getter(leftGetter || $self);
-      rightGetter = getter(rightGetter || $self);
-
-      var pos, compareValue;
-      var l = isNaN(left) ? 0 : left;
-      var r = isNaN(right) ? this.length - 1 : right;
-      var lv, rv;
-
-      // binary search
-      do 
-      {
-        compareValue = this[pos = (l + r) >> 1];
-        if (value < (lv = leftGetter(compareValue)))
-          r = pos - 1;
-        else 
-          if (value > (rv = rightGetter(compareValue)))
-            l = pos + 1;
-          else
-            return value >= lv && value <= rv ? pos : -1; // founded element
-                                                          // -1 returns when it seems as founded element,
-                                                          // but not equal (array item or value looked for have wrong data type for compare)
-      }
-      while (l <= r);
-
-      return strong ? -1 : pos + (rightGetter(compareValue) < value);
-    },
-    binarySearchInterval: function(value, leftGetter, rightGetter){
-      return this.binarySearchIntervalPos(value, leftGetter, rightGetter, true);
-    },
-
-    // array comparators
-    equal: function(array){
-      return this.length == array.length && this.every(function(item, index){ return item === array[index] });
-    },
-
     // collection for
     add: function(value){
       return this.indexOf(value) == -1 && !!this.push(value);
@@ -909,7 +813,7 @@
                  i: index,       // index
                  v: getter(item) // value
                };
-             })                                                                           // strong sorting (neccessary only for browsers with no strong sorting, just for sure)
+             })                                                                           // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
         .sort(comparator || function(a, b){ return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1)) })
         .map(function(item){
                return this[item.i];
@@ -917,7 +821,10 @@
     },
     set: function(array){
       if (this !== array)
-        this.clear().push.apply(this, array);
+      {
+        this.length = 0;
+        this.push.apply(this, array);
+      }
       return this;
     },
     clear: function(){
@@ -1052,10 +959,6 @@
           return value;
         }
       );
-    },
-    ellipsis: function(length){
-      var str = this.substr(0, length || 0);
-      return this.length > str.length ? str + '\u2026' : str;
     },
     quote: function(quoteS, quoteE){
       quoteS = quoteS || '"';
@@ -1207,6 +1110,7 @@
 
   // IE 5.0-7.0 fix
   if ((new Date).getYear() < 1900)
+  {
     extend(Date.prototype, {
       getYear: function(){
         return this.getFullYear() - 1900;
@@ -1215,7 +1119,7 @@
         return this.setFullYear(!isNaN(year) && year < 100 ? Number(year) + 1900 : year);
       }
     });
-
+  }
 
 
   // ============================================
@@ -1254,7 +1158,7 @@
 
   function getNamespace(namespace, wrapFunction){
     var path = namespace.split('.');
-    var cursor = window;
+    var cursor = global;
     var name;
     var stepPath;
     var nsRoot;
@@ -1361,7 +1265,7 @@
 
     var answers = {};
     var versions = {};
-    var userAgent = window.navigator.userAgent;
+    var userAgent = global.navigator && global.navigator.userAgent;
     var browserName = 'unknown';
     var browserPrettyName = 'unknown';
     var browserNames = {
@@ -1381,7 +1285,7 @@
     // init
     for (var name in browserNames)
     {
-      if (name == 'MSIE' && window.opera)
+      if (name == 'MSIE' && global.opera)
         continue;  // opera identifies as IE :(
 
       if (name == 'Safari' && userAgent.match(/chrome/i))
@@ -1393,7 +1297,7 @@
       if (userAgent.match(new RegExp(name + '.' + '(\\d+(\\.\\d+)*)', 'i')))
       {
         var names     = browserNames[name];
-        var version   = window.opera && typeof window.opera.version == 'function' ? window.opera.version() : RegExp.$1;
+        var version   = global.opera && typeof global.opera.version == 'function' ? global.opera.version() : RegExp.$1;
         var verNumber = versionToInt(version);
 
         browserName = names[0] + verNumber;
@@ -1433,7 +1337,7 @@
       FeatureSupport: FeatureSupport,
       testImage: testImage,
 
-      name: browserName,
+      //name: browserName,
       prettyName: browserPrettyName,
       
       test: testBrowser,  // multiple test
@@ -1497,50 +1401,6 @@
 
     var namespace = 'Basis.Class';
 
-   /** 
-    * Abstract method is using when no method to be wrapped.
-    * Using by wrapMethod.
-    * @type {function()}
-    * @private
-    */
-    var abstractMethod = extend(function(){}, {
-      inherit: $undef,
-      proto: null,
-      toString: function(){ return '[abstract method]' }
-    });
-    
-   /**
-    * Creates method wrapper that makes this.inherit to work.
-    * @param {function()} method Function to be wrapped.
-    * @param {function()} ancestorMethod Function that will be able to called through this.inherit.
-    * @param {object} proto Reference to ancestor prototype. Generaly for debug purposes.
-    * @return {function()} Wrapped method.
-    * @private
-    */
-    function wrapMethod(method, ancestorMethod, proto){
-      if (!ancestorMethod)
-        ancestorMethod = abstractMethod;
-
-      // create method wrapper
-      var methodWrapper = function(){
-        var saveInherit = this.inherit;
-        this.inherit = ancestorMethod;
-        var result = methodWrapper.method.apply(this, arguments);
-        this.inherit = saveInherit;
-        return result;
-      };
-
-      // workaroud for browsers which doesn't enum for toString
-      methodWrapper.toString = function(){ return methodWrapper.method.toString() };
-      methodWrapper.valueOf = function(){ return methodWrapper.method.valueOf() };
-
-      // extend and return wrapped method
-      return extend(methodWrapper, {
-        method: method,
-        proto: proto
-      });
-    }
-
     function isEventObjectSubClass(testClass){
       var cursor = testClass.superClass_;
       while (cursor && cursor !== testClass && cursor !== EventObject)
@@ -1553,6 +1413,7 @@
     * @type {function()}
     */
     var BaseClass = function(){};
+    var seed = 1;
 
     extend(BaseClass, {
       // Base class name
@@ -1581,44 +1442,46 @@
         var className;
         var args = arguments;
 
-        // deal with className
-        for (var i = 1; i < args.length; i++)
-          if (args[i].className)
-            className = args[i].className;
-
-        if (!className)
-          className = SuperClass.className + '._SubClass_';
-
-        var warn = '';
-        ;;;warn ="  if (typeof this.init != 'function'){ console.warn('Call class constructor as function is prohibited!'); debugger; }\n";
-
-        // new class constructor
-        // NOTE: this code makes Chrome and Firefox show class name in console
-        var newClass = new Function(
-          "return {'" + className + "': function(){\n" + warn +
-          "  this.init.apply(this, arguments);\n" + 
-          "}}['" + className + "'];"
-        )();
-
-        // inheritance
-
         // temp class constructor with no init call
         var SuperClass_ = Function();
         SuperClass_.prototype = SuperClass.prototype;
 
-        newClass.prototype = new SuperClass_();
-        newClass.superClass_ = SuperClass;
-        newClass.className = className;
-        
-        // override extend method for newClass, new one extending prototype with method wrapping
-        newClass.extend = BaseClass.extend;
-        
+        var newClassProps = {
+          superClass_: SuperClass,
+          prototype: new SuperClass_(),
+          extend: BaseClass.extend
+        }
+
         // extend newClass prototype
         for (var i = 1; i < args.length; i++)
-          newClass.extend(args[i]);
-        
+          newClassProps.extend(args[i]);
+
+        if (!newClassProps.className)
+          newClassProps.className = SuperClass.className + '._SubClass_';
+
+        // new class constructor
+        // NOTE: this code makes Chrome and Firefox show class name in console
+        //console.log(newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/), newClassProps.prototype.init);
+        var NULL_CONFIG = {};
+        var newClass = newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/)//isEventObjectSubClass(SuperClass)
+          ? function(extend, config){
+              // mark object
+              this.eventObjectId = seed++;
+              // extend and override instance properties
+              for (var key in extend)
+                this[key] = extend[key];
+              this.init(config || NULL_CONFIG);
+            }
+          : function(){
+              // mark object
+              this.eventObjectId = seed++;
+              this.init.apply(this, arguments);
+            };
+
         // WARN: don't use extend() to assign this value (IE doesn't enumerate it)
-        newClass.prototype.constructor = newClass;
+        newClassProps.prototype.constructor = newClass;
+
+        extend(newClass, newClassProps);
         
         return newClass;
       },
@@ -1639,8 +1502,7 @@
         if (source.toString !== Object.prototype.toString)
           keys.add('toString');
         
-        var i = keys.length;
-        while (i--)
+        for (var i = keys.length; i --> 0;)
         {
           var key = keys[i];
           var value = source[key];
@@ -1648,17 +1510,7 @@
           if (key == 'className')
             this.className = value;
           else
-            if (key == 'behaviour' && isEventObjectSubClass(this))
-            {
-              proto[key] = value && value.isBehaviour_ ? value : EventObject.createBehaviour(this.superClass_, value);
-            }
-            else
-            {
-              if (typeof value == 'function' && value.extend !== BaseClass.extend) // wrap only functions, but not a classes 
-                value = wrapMethod(value.method || value, proto[key], proto)
-              
-              proto[key] = value;
-            }
+            proto[key] = value;
         }
         
         return this;
@@ -1673,7 +1525,8 @@
 
     return getNamespace(namespace, BaseClass.create).extend({
       BaseClass: BaseClass,
-      create: BaseClass.create
+      create: BaseClass.create,
+      createHP: BaseClass.create
     });
   })();
 
@@ -1683,7 +1536,9 @@
 
   var EventObject = (function(){
 
-    /** @namespace Basis */
+   /**
+    * @namespace Basis
+    */
 
     var slice = Array.prototype.slice;
 
@@ -1691,25 +1546,42 @@
     var eventObjectId = 1;
 
    /**
-    * Creates behaviour singleton object.
-    * @param {Basis.Class} superClass Prototype class for inhiritance.
-    * @param {Object} behaviour Set of methods that being part of new behaviour object.
-    * @return {Object} Behaviour singleton object inherited from superClass behaviour
-    * member if superClass specified and has behaviour member, otherwise new
-    * root behaviour singleton object.
-    */
-    function createBehaviour(superClass, behaviour){
-      var proto = superClass && superClass.prototype;
-      var superClassBehaviour = proto && proto.behaviour && proto.behaviour.constructor;
-      return new (Class(superClassBehaviour, Object.extend({ isBehaviour_: true, className: superClass ? 'subclass of ' + superClass.className + '.Behaviour' : 'EventObject.Behaviour' }, behaviour)))();
-    }
-
-   /**
     * Base class for event dispacthing. It provides model when it's instance
     * can registrate handlers for events, and call it when event happend. 
     * @class
     */
-    var EventObject = Class(null, {
+    var EventObject = Class();
+
+    function dispatchEvent(eventName){
+      return EventObject.event[eventName] || (EventObject.event[eventName] = function(){
+        var handlers = this.handlers_;
+        if (!handlers || !handlers.length)
+          return;
+
+        handlers = slice.call(handlers);
+
+        var config;
+        var func;
+        for (var i = handlers.length; i --> 0;)
+        {
+          config = handlers[i];
+          // debug for
+          //;;;if (typeof config.handler.any == 'function') config.handler.any.apply(config.thisObject, arguments);
+
+          // handler call
+          func = config.handler[eventName];
+          if (typeof func == 'function')
+            func.apply(config.thisObject, arguments);
+        }
+      })
+    };
+
+    EventObject.createEvent = dispatchEvent;
+    EventObject.event = {};
+
+    EventObject.createEvent('destroy');
+
+    return EventObject.extend({
      /**
       * Name of class.
       * @type {string}
@@ -1718,25 +1590,11 @@
       className: namespace + '.EventObject',
 
      /**
-      * Unique id of object.
-      * @type {number}
-      * @readonly
-      */
-      eventObjectId: 0,
-
-     /**
-      * Default set of event handler. It calls after all other handlers are called.
-      * @type {Object}
-      * @private
-      */
-      behaviour: createBehaviour(null, {}),
-
-     /**
       * List of event handler sets.
       * @type {Array.<Object>}
       * @private
       */
-      handlers_: [],
+      handlers_: null,
 
      /**
       * @param {Object=} config
@@ -1745,32 +1603,30 @@
       * @config {boolean} traceEvents_ Debug for.
       * @constructor
       */
-      init: function(config){
-        // init properties
-        this.handlers_ = new Array();
+      /*init: function(config){
 
-        // registrate object
-        this.eventObjectId = eventObjectId++;
+
+        // init properties
+        //this.handlers_ = [];
 
         // apply config
         if (config)
         {
-          try {
-          ;;;if (config.traceEvents_ || this.traceEvents_) this.handlers_.push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
-          ;;;if ('thisObject' in config) console.warn(this.className + ': thisObject in config is deprecated. Use handlersContext instead');
-          }catch(e){ debugger; }
-
-          if (config.handlers)
+          // fast add first hanlder
+          if (this.handlers)
           {
-            this.handlers_.push({
-              handler: config.handlers,
-              thisObject: config.handlersContext || this
-            });
+            (this.handlers_ = [])[0] = {
+              handler: this.handlers,
+              thisObject: this.handlersContext || this
+            };
+            this.handlers = null; // should we drop this properties?
+            this.handlersContext = null; // should we drop this properties?
           }
-        }
 
-        return config;
-      },
+          // debug for
+          ;;;if (this.traceEvents_) (this.handlers_ || (this.handlers_ = [])).push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
+        }
+      },*/
 
      /**
       * Registrates new event handler set for object.
@@ -1779,25 +1635,31 @@
       * @return {boolean} Whether event handler set was added.
       */
       addHandler: function(handler, thisObject){
-        thisObject = thisObject || this;
+        if (!this.handlers_)
+          this.handlers_ = [];
+
+        if (!thisObject)
+          thisObject = this;
         
-        ;;;if (this.handlers_ === this.constructor.prototype.handlers_ && typeof console != 'undefined') console.warn('Add handler for not inited instance of EventObject (' + this.className + ')');
+        //;;;if (!this.handlers_ && typeof console != 'undefined') console.warn('Add handler for not inited or destroyed instance of EventObject (' + this.className + ')');
 
         // search for duplicate
-        for (var i = 0, item; item = this.handlers_[i]; i++)
+        // check from end to start is more efficient for objects which often add/remove handlers
+        for (var i = this.handlers_.length, item; i --> 0;)
+        {
+          item = this.handlers_[i];
           if (item.handler === handler && item.thisObject === thisObject)
           {
-            ;;;if (typeof console != 'undefined') console.warn('Add dublicate handler to EventObject instance (' + this + ')');
+            ;;;if (typeof console != 'undefined') console.warn('Add dublicate handler to EventObject instance: ', this);
             return false;
           }
+        }
 
         // add handler
-        this.handlers_.push({ 
+        return !!this.handlers_.push({ 
           handler: handler,
-          thisObject: thisObject
+          thisObject: thisObject || this
         });
-
-        return true;
       },
 
      /**
@@ -1808,57 +1670,26 @@
       * @return {boolean} Whether event handler set was removed.
       */
       removeHandler: function(handler, thisObject){
-        thisObject = thisObject || this;
+        if (!this.handlers_)
+          return;
+
+        if (!thisObject)
+          thisObject = this;
 
         // search for handler and remove
-        for (var i = 0, item; item = this.handlers_[i]; i++)
+        // check from end to start is more efficient for objects which often add/remove handlers
+        for (var i = this.handlers_.length, item; i --> 0;)
+        {
+          item = this.handlers_[i];
           if (item.handler === handler && item.thisObject === thisObject)
-          {
-            this.handlers_.splice(i, 1);
-            return true;
-          }
+            return !!this.handlers_.splice(i, 1);
+        }
 
         // handler not found
         return false;
       },
 
-     /**
-      * Fires event dispatching. All handlers assigned for some event will be called
-      * in reverse order of addiction. Behaviour handler to be called last.
-      * @param {string} eventName Name of dispatching event.
-      * @param {...*} args The arguments to the event handlers.
-      */
-      dispatch: function(eventName/*, arg1 .. argN */){
-        var behaviour = this.behaviour[eventName];
-        var handlersCount = this.handlers_.length;
-
-        if (handlersCount || behaviour)
-        {
-          var args = slice.call(arguments, 1);
-
-          if (handlersCount)
-          {
-            var handlers = slice.call(this.handlers_);
-            var config;
-            var func;
-            var i = handlers.length;
-            while (i--)
-            {
-              config = handlers[i];
-              // debug for
-              ;;;if (typeof config.handler.any == 'function') config.handler.any.apply(config.thisObject, arguments);
-
-              // handler call
-              func = config.handler[eventName];
-              if (typeof func == 'function')
-                func.apply(config.thisObject, args);
-            }
-          }
-        
-          if (typeof behaviour == 'function')
-            behaviour.apply(this, args);
-        }
-      },
+      event_destroy: EventObject.event.destroy,
 
      /**
       * @destructor
@@ -1870,19 +1701,18 @@
         this.destroy = Function.$undef;
 
         // fire object destroy event handlers
-        this.dispatch('destroy', this);
+        //this.dispatch('destroy', this);
+        this.event_destroy(this);
 
         // remove all event handler sets
-        delete this.handlers_;
+        //delete this.handlers_;
+        this.handlers_ = null;
 
         // no handlers in destroyed object, nothing dispatch
+        // dispatch will throw exception
         this.dispatch = Function.$undef;
       }
     });
-
-    EventObject.createBehaviour = createBehaviour;
-
-    return EventObject;
   })();
 
   // ============================================ 
@@ -1898,26 +1728,21 @@
     *
     * Functions overview:
     * - Order & position functions:
-    *     {Basis.DOM.sort}, {Basis.DOM.comparePosition}, {Basis.DOM.index},
-    *     {Basis.DOM.lastIndex}, {Basis.DOM.deep}
+    *     {Basis.DOM.comparePosition}
     * - Getters:
-    *     {Basis.DOM.get}, {Basis.DOM.tag}, {Basis.DOM.tags}, {Basis.DOM.axis}
+    *     {Basis.DOM.get}, {Basis.DOM.tag}, {Basis.DOM.axis}
     * - Traversal:
-    *     {Basis.DOM.TreeWalker}, {Basis.DOM.first}, {Basis.DOM.last},
-    *     {Basis.DOM.next}, {Basis.DOM.prev}, {Basis.DOM.parent}
+    *     {Basis.DOM.TreeWalker}
     * - Constructors:
     *     {Basis.DOM.createElement}, {Basis.DOM.createText},
     *     {Basis.DOM.createFragment}
     * - DOM manipulations:
     *     {Basis.DOM.insert}, {Basis.DOM.remove}, {Basis.DOM.replace},
     *     {Basis.DOM.swap}, {Basis.DOM.clone}, {Basis.DOM.clear}, {Basis.DOM.wrap}
-    * - Style and attribute setters/getters:
-    *     {Basis.DOM.setAttribute}, {Basis.DOM.display}, {Basis.DOM.show},
-    *     {Basis.DOM.hide}, {Basis.DOM.visibility}, {Basis.DOM.visible},
-    *     {Basis.DOM.invisible}
+    * - Attribute setters/getters:
+    *     {Basis.DOM.setAttribute}
     * - Checkers:
-    *     {Basis.DOM.IS_ELEMENT_NODE}, {Basis.DOM.IS_TEXT_NODE}, {Basis.DOM.is},
-    *     {Basis.DOM.parentOf}, {Basis.DOM.isInside}
+    *     {Basis.DOM.is}, {Basis.DOM.parentOf}, {Basis.DOM.isInside}
     * - Input interface:
     *     {Basis.DOM.focus}, {Basis.DOM.setSelectionRange},
     *     {Basis.DOM.getSelectionStart}, {Basis.DOM.getSelectionEnd}
@@ -1930,7 +1755,7 @@
     var namespace = 'Basis.DOM';
 
     // for better pack
-    var document = window.document;
+    var document = global.document;
 
     // element for DOM support tests
     var testElement = document.createElement('div');
@@ -1984,41 +1809,25 @@
     var INSERT_AFTER = 'after';
 
    /**
-    * Sort nodes in their DOM order.
-    * @function
-    * @param {[Node]} nodes List of nodes.
-    * @return {[Node]} Sorted node list.
-    */
-    var sort = $self;
-    
-   /**
     * Returns result of node comparation.
     * @function
     * @param {Node} nodeA
     * @param {Node} nodeB
     * @return {number}
     */ 
-    var comparePosition = function(nodeA, nodeB){ return 0 };
+    var comparePosition;
 
     // init functions depends on browser support
     if (typeof testElement.compareDocumentPosition == 'function')
     {
       // W3C DOM sheme
-      sort = function(nodes){
-        return nodes.sort(function(a, b){ return 3 - (comparePosition(a, b) & (POSITION_PRECENDING | POSITION_FOLLOWING)) }); // 6
-      };
-
       comparePosition = function(nodeA, nodeB){
-        return nodeA.compareDocumentPosition(nodeB)
+        return nodeA.compareDocumentPosition(nodeB);
       };
     }
     else
     {
       // IE6-8 DOM sheme
-      sort = function(nodes){
-        return nodes.sortAsObject(getter('sourceIndex'));
-      };
-
       comparePosition = function(nodeA, nodeB){
         if (nodeA == nodeB)
           return 0;
@@ -2027,9 +1836,9 @@
           return POSITION_DISCONNECTED | POSITION_IMPLEMENTATION_SPECIFIC;
         
         if (nodeA.sourceIndex > nodeB.sourceIndex)
-          return POSITION_PRECENDING | (POSITION_CONTAINS * parentOf(nodeB, nodeA));
+          return POSITION_PRECENDING | (POSITION_CONTAINS * nodeB.contains(childA));
         else
-          return POSITION_FOLLOWING  | (POSITION_CONTAINED_BY * parentOf(nodeA, nodeB));
+          return POSITION_FOLLOWING  | (POSITION_CONTAINED_BY * nodeA.contains(childB));
       };
     }
 
@@ -2039,6 +1848,7 @@
     * @return {boolean}
     */ 
     var isNode;
+
     if (typeof Node != 'undefined')
     {
       isNode = function(node){ return node instanceof Node };
@@ -2047,12 +1857,15 @@
       if (!Node.prototype.contains)
       {
         Node.prototype.contains = function(node){
-          return !!(comparePosition(this, node) & POSITION_CONTAINED_BY)
+          return !!(this.compareDocumentPosition(node) & POSITION_CONTAINED_BY)
         }
       }
     }
     else
+    {
+      // IE6-IE8 version
       isNode = function(node){ return node && node.ownerDocument === document };
+    }
 
    /**
     * Insert newNode into node. If newNode is instance of Node, it insert without change; otherwise it converts to TextNode.
@@ -2071,13 +1884,13 @@
     * lastChild, nodeType
     * @class TreeWalker
     */
-    var TreeWalker = Class(null, {
+    var TreeWalker = Class.createHP(null, {
       className: namespace + '.TreeWalker',
 
      /**
       * Root node of tree.
       */
-      root_: document,
+      root_: null,
 
      /**
       * Current position of walker.
@@ -2102,8 +1915,6 @@
 
         if (typeof filter == 'function')
           this.filter = filter;
-
-        Cleaner.add(this);
       },
 
      /**
@@ -2246,7 +2057,8 @@
         return this.cursor_ = cursor;
       },
       destroy: function(){
-        Cleaner.remove(this);
+        this.root_ = null;
+        this.cursor_ = null;
       }
     });
     TreeWalker.BACKWARD = true;
@@ -2274,16 +2086,7 @@
       for (var i = 0, property; property = TEXT_PROPERTIES[i++];)
         if (node[property] != null)
           return node[property];
-      return axis(node, AXIS_DESCENDANT, IS_TEXT_NODE).map(getter('nodeValue')).join('');
-    };
-
-    // extract tag names
-    function tagNames(names){
-      if (!names)
-        return;
-
-      var result = String(names).trim().split(/\s*,\s*|\s+/).unique();
-      return result.indexOf('*') == -1 && result;
+      return axis(node, AXIS_DESCENDANT, function(node){ return node.nodeType == TEXT_NODE }).map(getter('nodeValue')).join('');
     };
 
     //
@@ -2317,20 +2120,6 @@
         return Array.from(node.getElementsByTagName(tagName || '*'));
     }
 
-   /**
-    * Returns all descendant elements with names for node.
-    * @param {string|[string]} names Comma or space separated names string, or string list of names.
-    * @param {Element} node Context element.
-    * @return {[Element]}
-    */
-    function tags(node, names){
-      return sort(
-        (tagNames(names) || ['*'])
-        .map(function(name){ return tag(node, name) })
-        .flatten()
-      );
-    }
-
     //
     // Navigation
     //
@@ -2338,7 +2127,7 @@
    /**
     * Returns nodes axis in XPath like way.
     * @param {Node} root Relative point for axis.
-    * @param {number} AXIS Axis constant.
+    * @param {number} axis Axis constant.
     * @param {function(node):boolean} filter Filter function. If it's returns true node will be in result list.
     * @return {[Node]}
     */
@@ -2347,6 +2136,10 @@
       var result = new Array;
 
       filter = typeof filter == 'string' ? getter(filter) : filter || $true;
+
+      if (axis & (AXIS_SELF | AXIS_ANCESTOR_OR_SELF | AXIS_DESCENDANT_OR_SELF))
+        if (filter(root))
+          result.push(root);
 
       switch(axis)
       {
@@ -2371,12 +2164,15 @@
         case AXIS_DESCENDANT:
         case AXIS_DESCENDANT_OR_SELF:
           if (root[FIRST_CHILD])
-            (new TreeWalker(root)).nodes(filter, result);
+          {
+            walker = new TreeWalker(root);
+            walker.nodes(filter, result);
+          }
         break;
 
         case AXIS_FOLLOWING:
-          walker = new TreeWalker(document, filter);
-          walker.cursor = root[NEXT_SIBLING] || root[PARENT_NODE];
+          walker = new TreeWalker(root, filter);
+          walker.cursor_ = root[NEXT_SIBLING] || root[PARENT_NODE];
           while (cursor = walker.next())
             result.push(cursor);
         break;
@@ -2394,8 +2190,8 @@
         break;
 
         case AXIS_PRESCENDING:
-          walker = new TreeWalker(document, filter, TreeWalker.BACKWARD);
-          walker.cursor = root[PREVIOUS_SIBLING] || root[PARENT_NODE];
+          walker = new TreeWalker(root, filter, TreeWalker.BACKWARD);
+          walker.cursor_ = root[PREVIOUS_SIBLING] || root[PARENT_NODE];
           while (cursor = walker.next())
             result.push(cursor);
         break;
@@ -2408,65 +2204,25 @@
         break;
       }
 
-      if (axis & (AXIS_SELF | AXIS_ANCESTOR_OR_SELF | AXIS_DESCENDANT_OR_SELF))
-        if (filter(root))
-          result.unshift(root);
-
       return result;
     }
 
-
-    function nextElement(node, filter, viewDeep, root){
-      if (!filter || filter == '*')
-        filter = $true;
-
-      if (typeof filter == 'string')
-        filter = getter('tagName==' + filter.quote());
-
-      viewDeep = viewDeep || 0;
-
-      do
+   /**
+    * Returns ancestor that matchFunction returns true for.
+    * @param {Node} node Start node for traversal.
+    * @param {function(node):boolean} matchFunction Checking function.
+    * @param {Node=} bound Don't traversal after bound node.
+    * @return {Node} First ancestor node that pass matchFunction.
+    */
+    function findAncestor(node, matchFunction, bound){
+      while (node && node != bound)
       {
-        node = node[this];  // this contains direction
-      
-        if (!node || node === root)
-          break;
-
-        if (filter(node))
+        if (matchFunction(node))
           return node;
+
+        node = node.parentNode;
       }
-      while (--viewDeep); 
-
-      return null;
     }
-
-    var prev = nextElement.bind(PREVIOUS_SIBLING);
-    var next = nextElement.bind(NEXT_SIBLING);
-    var parent = nextElement.bind(PARENT_NODE);
-
-    function first(node, filter, viewDeep){
-      node = node[FIRST_CHILD];
-      
-      return !node || !filter || filter(node) ? node : next(node, filter, viewDeep);
-    }
-
-    function last(node, filter, viewDeep){
-      node = node[LAST_CHILD];
-      
-      return !node || !filter || filter(node) ? node : prev(node, filter, viewDeep);
-    }
-
-    function count(node, filter, root){
-      var count = 0;
-      // this contains direction
-      while (node = nextElement.call(this, node, filter, 0, root))
-        count++;
-      return count;
-    }
-
-    var index = count.bind(PREVIOUS_SIBLING);
-    var lastIndex = count.bind(NEXT_SIBLING);
-    var deep = count.bind(PARENT_NODE);
 
     //
     // DOM constructors
@@ -2521,7 +2277,7 @@
     * @type {RegExp}
     * @private
     */
-    var DESCRIPTION_PART_REGEXP = /([\#\.])([a-z0-9\_\-\:]+)|\[([a-z0-9\_\-]+)(=(?:\"((?:\\.|[^\"])+)\"|\'((?:\\.|[^\'])+)\'|((?:\\.|[^\]])+)))?\s*\]|\s*(\S)/gi;
+    var DESCRIPTION_PART_REGEXP = /([\#\.])([a-z0-9\_\-\:]+)|\[([a-z0-9\_\-:]+)(=(?:\"((?:\\.|[^\"])+)\"|\'((?:\\.|[^\'])+)\'|((?:\\.|[^\]])+)))?\s*\]|\s*(\S)/gi;
 
    /**
     * Creates a new Element with arguments as childs.
@@ -2775,7 +2531,7 @@
     * Set new value for attribute. If value is null than attribute will be deleted.
     * @param {Node} node
     * @param {string} name
-    * @param {any} value
+    * @param {*} value
     */
     function setAttribute(node, name, value){
       if (value == null)
@@ -2788,14 +2544,8 @@
     // Checkers
     //
 
-    function IS_ELEMENT_NODE(node){ 
-      return !!(node && node.nodeType == ELEMENT_NODE);
-    }
-    function IS_TEXT_NODE(node){ 
-      return !!(node && node.nodeType == TEXT_NODE);
-    }
     function is(element, names){ // names may be a string (comma or space separated tag names) or an array
-      return (tagNames(names) || []).has(element.tagName);
+      return (new RegExp('(^|\\W)' + element.tagName + '(\\W|$)')).test(names);
     }
 
    /**
@@ -2859,6 +2609,16 @@
         }
     }
 
+    function ieGetInputPosition(isStart){
+      if (document.selection)
+      {
+        var range = document.selection.createRange();
+        if (range.compareEndPoints("StartToEnd", range) != 0)
+          range.collapse(isStart);
+        return range.getBookmark().charCodeAt(2) - 2;
+      }
+    }
+
     function getSelectionStart(input){
       if (typeof input.selectionStart != 'undefined')
         return input.selectionStart;
@@ -2873,36 +2633,9 @@
         return ieGetInputPosition(false);
     }
 
-    function ieGetInputPosition(isStart){
-      if (document.selection)
-      {
-        var range = document.selection.createRange();
-        if (range.compareEndPoints("StartToEnd", range) != 0)
-          range.collapse(isStart);
-        return range.getBookmark().charCodeAt(2) - 2;
-      }
-    }
-
-    // funny stuff
-
-    var functionReflections = {};
-    'insert parentOf isInside'.qw().forEach(function(name){
-      functionReflections[name] = function(){
-        var args = Array.from(arguments);
-        args.unshift(chainContext);
-        return DOM[name].apply(DOM, args);
-      }
-    });
-
-    var chainContext;
-    function setContext(node){
-      chainContext = get(node);
-      return functionReflections;
-    }
-
     // Export names
 
-    return getNamespace(namespace, setContext).extend({
+    return getNamespace(namespace).extend({
       // CONST
 
       // nodeType
@@ -2939,8 +2672,8 @@
       INSERT_AFTER: INSERT_AFTER, 
 
       // nodes order functions
-      sort: sort,
-      comparePosition: comparePosition,
+      //sort: sort,
+      //comparePosition: comparePosition,
 
       // Classes
       TreeWalker: TreeWalker,
@@ -2952,20 +2685,21 @@
       // getters
       get: get,
       tag: tag,
-      tags: tags,
+      //tags: tags,
       axis: axis,
+      findAncestor: findAncestor,
       
       // navigation
-      first: first,
-      last: last,
-      next: next,
-      prev: prev,
-      parent: parent,
+      //first: first,
+      //last: last,
+      //next: next,
+      //prev: prev,
+      //parent: parent,
 
       // node position
-      index: index,
-      lastIndex: lastIndex,
-      deep: deep,
+      //index: index,
+      //lastIndex: lastIndex,
+      //deep: deep,
 
       // DOM constructors
       createElement: createElement,
@@ -2985,9 +2719,9 @@
       setAttribute: setAttribute,
 
       // checkers
-      IS_ELEMENT_NODE: IS_ELEMENT_NODE,
-      IS_TEXT_NODE: IS_TEXT_NODE,
-      is: is,
+      //IS_ELEMENT_NODE: IS_ELEMENT_NODE,
+      //IS_TEXT_NODE: IS_TEXT_NODE,
+      //is: is,
       parentOf: parentOf,
       isInside: isInside,
 
@@ -3136,7 +2870,7 @@
     };
 
     createStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter', true, {
-      fitler: function(value){ return 'alpha(opacity:_)'.replace('_', parseInt(value * 100)) }
+      fitler: function(value){ return 'alpha(opacity:' + parseInt(value * 100) + ')' }
     });
     createStyleMapping('border-radius', 'borderRadius MozBorderRadius WebkitBorderRadius', true);
     createStyleMapping('float', 'cssFloat styleFloat');
@@ -3242,7 +2976,7 @@
    /**
     * @class
     */
-    var CssStyleSheetWrapper = Class(null, {
+    var CssStyleSheetWrapper = Class.createHP(null, {
       className: namespace + '.CssStyleSheetWrapper',
 
      /**
@@ -3319,7 +3053,7 @@
    /**
     * @class
     */
-    var CssRuleWrapper = Class(null, {
+    var CssRuleWrapper = Class.createHP(null, {
       className: namespace + '.CssRuleWrapper',
 
      /**
@@ -3346,7 +3080,7 @@
 
      /**
       * @param {string} property
-      * @param {any} value
+      * @param {*} value
       */
       setProperty: function(property, value){
         var mapping;
@@ -3410,7 +3144,7 @@
    /**
     * @class
     */
-    var CssRuleWrapperSet = Class(null, {
+    var CssRuleWrapperSet = Class.createHP(null, {
       className: namespace + '.CssRuleWrapperSet',
 
      /**
@@ -3535,7 +3269,7 @@
     * @class
     */
 
-    var Template = Class(null, {
+    var Template = Class.createHP(null, {
       className: namespace + '.Template',
 
      /**
@@ -3642,7 +3376,7 @@
                 var tmp = params.replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' });
                 params = tmp
                   .trim()
-                  .replace(/([a-z0-9\_]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, attr, ref, name, value){
+                  .replace(/(?:([a-z0-9\_]+):)?([a-z0-9\_]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attr, ref, name, value){
                     if (name)
                       getters[name] = path + 'childNodes[' + pos + ']' + '.getAttributeNode("' + attr + '")';
 
@@ -3770,7 +3504,7 @@
 
     // for better pack
 
-    var document = window.document;
+    var document = global.document;
 
     //
     // Const
@@ -3831,7 +3565,7 @@
     * @return {Event}
     */
     function wrap(event){
-      return event || window.event;
+      return event || global.event;
     }
 
    /**
@@ -3970,7 +3704,7 @@
     //
 
     var compareHandlers = function(item){
-      return item.handler == this.handler && item.thisObject == this.thisObject;
+      return item.handler != this.handler || item.thisObject != this.thisObject;
     }
 
    /**
@@ -4016,13 +3750,9 @@
       if (handlers)
       {
         // search for similar handler, returns if found (prevent for handler dublicates)
-        var i = handlers.length;
-        while (i--)
-        {
-          var handlerObject = handlers[i];
-          if (handlerObject.handler === handler && handlerObject.thisObject === thisObject)
+        for (var i = 0, item; item = handlers[i]; i++)
+          if (item.handler === handler && item.thisObject === thisObject)
             return;
-        }
       }
       else
       {
@@ -4051,15 +3781,25 @@
     function removeGlobalHandler(eventType, handler, thisObject){
       var handlers = globalHandlers[eventType];
       if (handlers)
-        handlers.collapse(compareHandlers, { handler: handler, thisObject: thisObject });
-
-      if (!handlers.length)
       {
-        delete globalHandlers[eventType];
-        if (document.removeEventListener)
-          document.removeEventListener(eventType, observeGlobalEvents, true);
-        else
-          removeHandler(document, eventType, $null);
+        for (var i = 0, item; item = handlers[i]; i++)
+        {
+          if (item.handler === handler && item.thisObject === thisObject)
+          {
+            handlers.splice(i, 1);
+
+            if (!handlers.length)
+            {
+              delete globalHandlers[eventType];
+              if (document.removeEventListener)
+                document.removeEventListener(eventType, observeGlobalEvents, true);
+              else
+                removeHandler(document, eventType, $null);
+            }
+
+            return;
+          }
+        }
       }
     };
 
@@ -4085,16 +3825,23 @@
 
       if (!node[EVENT_HOLDER])
         node[EVENT_HOLDER] = {};
+
+      // event handler
+      var handlerObject = {
+        handler: handler,
+        thisObject: thisObject
+      };
         
       var handlers = node[EVENT_HOLDER];
       var eventTypeHandlers = handlers[eventType];
       if (!eventTypeHandlers)
       {
-        eventTypeHandlers = handlers[eventType] = new Array();
+        eventTypeHandlers = handlers[eventType] = [handlerObject];
         eventTypeHandlers.fireEvent = function(event){ // closure
           // simulate capture phase for old browsers
           event = wrap(event);
           if (noCaptureSheme && event)
+          {
             if (typeof event.returnValue == 'undefined')
             {
               observeGlobalEvents(event);
@@ -4103,10 +3850,11 @@
               if (typeof event.returnValue == 'undefined')
                 event.returnValue = true;
             }
+          }
 
           // call eventType handlers
-          for (var i = 0, handlerObject; handlerObject = eventTypeHandlers[i++];)
-            handlerObject.handler.call(handlerObject.thisObject, event);
+          for (var i = 0, item; item = eventTypeHandlers[i++];)
+            item.handler.call(item.thisObject, event);
         };
 
         if (node.addEventListener) 
@@ -4116,15 +3864,16 @@
           // old IE event model
           node.attachEvent('on' + eventType, eventTypeHandlers.fireEvent);
       }
+      else
+      {
+        // check for dublicates, exit if found
+        for (var i = 0, item; item = eventTypeHandlers[i]; i++)
+          if (item.handler === handler && item.thisObject === thisObject)
+            return;
 
-      // attach new event handler (unique only)
-      var handlerObject = {
-        handler: handler,
-        thisObject: thisObject
-      };
-
-      if (!eventTypeHandlers.some(compareHandlers, handlerObject)) 
+        // add only unique handlers
         eventTypeHandlers.push(handlerObject);
+      }
     };
 
    /**
@@ -4134,6 +3883,8 @@
     * @param {object=} thisObject Context for handlers
     */
     function addHandlers(node, handlers, thisObject){
+      node = getNode(node);
+
       for (var eventType in handlers)
         addHandler(node, eventType, handlers[eventType], thisObject);
     };
@@ -4152,8 +3903,23 @@
       if (handlers)
       {
         var eventTypeHandlers = handlers[eventType];
-        if (eventTypeHandlers && !handlers[eventType].collapse(compareHandlers, { handler: handler, thisObject: thisObject }).length)
-          clearHandlers(node, eventType);
+        if (eventTypeHandlers)
+        {
+          for (var i = 0, item; item = eventTypeHandlers[i]; i++)
+          {
+            if (item.handler === handler && item.thisObject === thisObject)
+            {
+              // delete event handler
+              eventTypeHandlers.splice(i, 1);
+
+              // if there is no more handler for this event, clear it
+              if (!eventTypeHandlers.length)
+                clearHandlers(node, eventType);
+
+              return;
+            }
+          }
+        }
       }
     };
 
@@ -4163,10 +3929,11 @@
     * @param {string} eventType
     */
     function clearHandlers(node, eventType){
-      node = getNode(node)
-      
+      node = getNode(node);
+
       var handlers = node[EVENT_HOLDER];
       if (handlers)
+      {
         if (typeof eventType != 'string')
         {
           // no eventType - delete handlers for all events
@@ -4187,6 +3954,7 @@
             delete handlers[eventType];
           }
         }
+      }
     };
 
    /**
@@ -4227,7 +3995,7 @@
       if (Browser.is('ie7-'))
       {
         (function(){
-          var secretId = '_' + (new Date - 0);
+          var secretId = '_' + Date.now();
           document.write('<script id="' + secretId + '" defer src="//:"><\/script>');
           getNode(secretId).onreadystatechange = function(){
             if (this.readyState == 'complete')
@@ -4256,7 +4024,7 @@
 
       // if all else fails fall back on window.onload/document.onload
       addHandler(document, "load", fireHandlers, false);
-      addHandler(window, "load", fireHandlers, false);
+      addHandler(global, "load", fireHandlers, false);
 
       // return attach function
       return function(callback, thisObject){
@@ -4279,7 +4047,7 @@
     * @param {object=} thisObject Context for handler
     */
     function onUnload(handler, thisObject){ 
-      addHandler(window, 'unload', handler, thisObject);
+      addHandler(global, 'unload', handler, thisObject);
     }
 
     //
@@ -4339,7 +4107,7 @@
     };
 
     var rx = /(^|\\s+)selected(\\s+|$)|$/;
-    var ClassNameWraper = Class(null, {
+    var ClassNameWraper = Class.createHP(null, {
       className: namespace + '.ClassName',
 
       init: function(element){ 
@@ -4518,7 +4286,7 @@
   // else in a closure.
   (function() {
 
-    var eventScheme = typeof window.addEventListener == 'function' && typeof window.postMessage == 'function';
+    var eventScheme = typeof global.addEventListener == 'function' && typeof global.postMessage == 'function';
     var messageName = "zeroTimeoutMessage";
 
     var timeoutQueue = [];
@@ -4538,7 +4306,7 @@
       if (eventScheme)
         postMessage(messageName, "*");
       else
-        callback.timer = nativeSetTimeout.call(window, handleMessage, 0);
+        callback.timer = nativeSetTimeout.call(global, handleMessage, 0);
 
       return callback.key;
     }
@@ -4546,7 +4314,7 @@
     function handleMessage(event){
       if (eventScheme)
       {
-        if (event.source != window || event.data != messageName)
+        if (event.source != global || event.data != messageName)
           return;
 
         Event.kill(event);
@@ -4561,15 +4329,15 @@
     }
 
     if (eventScheme)
-      window.addEventListener("message", handleMessage, true);
+      global.addEventListener("message", handleMessage, true);
 
     //
     // override setTimeout
     //
     var nativeSetTimeout = setTimeout;
-    window.setTimeout = function(fn, timeout){
+    global.setTimeout = function(fn, timeout){
       if (timeout)
-        return nativeSetTimeout.call(window, fn, timeout);
+        return nativeSetTimeout.call(global, fn, timeout);
       else
         return setZeroTimeout(fn);
     }
@@ -4578,7 +4346,7 @@
     // override clearTimeout
     //
     var nativeClearTimeout = clearTimeout;
-    window.clearTimeout = function(timer){
+    global.clearTimeout = function(timer){
       if (/z\d+/.test(timer))
       {
         var callback = map[timer];
@@ -4590,7 +4358,7 @@
         }
       }
       else
-        return nativeClearTimeout.call(window, timer);
+        return nativeClearTimeout.call(global, timer);
     }
   })();
 
@@ -4706,8 +4474,8 @@
       destroy: function(){
         lockSetTimeout = true;
         clearTimeout(timer);
-        delete eventStack;
-        delete map;
+        eventStack.length = 0;
+        map = null;
       }
     })
 
@@ -4745,6 +4513,6 @@
     Cleaner: Cleaner
   });
 
-  window.Basis.Locale = {};
+  global.Basis.Locale = {};
 
-})();
+}).call(this);

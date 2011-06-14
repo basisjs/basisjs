@@ -19,7 +19,7 @@
 
     // import names
 
-    var Class = Basis.Class;
+    var Class = Basis.Class.createHP;
     var Cleaner = Basis.Cleaner;
 
     var extend = Object.extend;
@@ -39,6 +39,8 @@
     var Grouping = nsData.Grouping;
     var DataObject = nsData.DataObject;
     var STATE = nsData.STATE;
+
+    var NULL_INFO = {};
 
     //
 
@@ -67,36 +69,40 @@
     // EntitySet
     //
 
-    var ENTITYSET_WRAP_METHOD = function(data){
-      return this.inherit(data && data.map(this.wrapper));
-    };
+    var ENTITYSET_WRAP_METHOD = function(superClass, method){
+      return function(data){
+        return superClass.prototype[method].call(this, data && data.map(this.wrapper));
+      };
+    }
 
-    var ENTITYSET_INIT_METHOD = function(name){
+    var ENTITYSET_INIT_METHOD = function(superClass, name){
       return function(config){
-        if (config)
+        if (!this.name)
+          this.name = getUntitledName(name);
+        /*if (config)
         {
           this.name = config.name || getUntitledName(name);
-
-          if (config.wrapper)
-            this.wrapper = config.wrapper;
+          this.wrapper = config.wrapper;
         }
         else
-          this.name = getUntitledName(name);
+          this.name = getUntitledName(name);*/
 
-        this.inherit(config);
+        // inherit
+        superClass.prototype.init.call(this, config);
       }
     }
 
-    var ENTITYSET_SYNC_METHOD = function(data, set){
+    var ENTITYSET_SYNC_METHOD = function(superClass){
+      return function(data, set){
+        Dataset.setAccumulateState(true);
+        data = (data || []).map(this.wrapper);
+        Dataset.setAccumulateState(false);
 
-      Dataset.setAccumulateState(true);
-      data = (data || []).map(this.wrapper);
-      Dataset.setAccumulateState(false);
+        var res = superClass.prototype.sync.call(this, data, set);
 
-      var res = this.inherit(data, set);
-
-      return res;
-    };
+        return res;
+      };
+    }
 
    /**
     * @class
@@ -106,15 +112,16 @@
 
       wrapper: Function.$self,
 
-      init: ENTITYSET_INIT_METHOD('EntitySet'),
-      sync: ENTITYSET_SYNC_METHOD,
+      init: ENTITYSET_INIT_METHOD(Dataset, 'EntitySet'),
+      sync: ENTITYSET_SYNC_METHOD(Dataset),
 
-      set: ENTITYSET_WRAP_METHOD,
-      add: ENTITYSET_WRAP_METHOD,
-      remove: ENTITYSET_WRAP_METHOD,
+      set: ENTITYSET_WRAP_METHOD(Dataset, 'set'),
+      add: ENTITYSET_WRAP_METHOD(Dataset, 'add'),
+      remove: ENTITYSET_WRAP_METHOD(Dataset, 'remove'),
 
       destroy: function(){
-        this.inherit();
+        // inherit
+        Dataset.prototype.destroy.call(this);
 
         delete this.wrapper;
       }
@@ -146,13 +153,15 @@
     var EntityCollection = Class(Collection, {
       className: namespace + '.EntityCollection',
 
-      init: ENTITYSET_INIT_METHOD('EntityCollection'),
-      sync: ENTITYSET_SYNC_METHOD/*,
+      init: ENTITYSET_INIT_METHOD(Collection, 'EntityCollection'),
+      sync: ENTITYSET_SYNC_METHOD(Collection)/*,
 
       set: ENTITYSET_WRAP_METHOD,
       add: ENTITYSET_WRAP_METHOD,
       remove: ENTITYSET_WRAP_METHOD*/
     });
+
+    EntityCollection.sourceHandler = Collection.sourceHandler;
 
     //
     // Entity grouping
@@ -166,11 +175,11 @@
 
       groupClass: ReadOnlyEntitySet,
 
-      init: ENTITYSET_INIT_METHOD('EntityGrouping'),
-      sync: ENTITYSET_SYNC_METHOD,
+      init: ENTITYSET_INIT_METHOD(Grouping, 'EntityGrouping'),
+      sync: ENTITYSET_SYNC_METHOD(Grouping),
 
       getGroup: function(object, autocreate){
-        var group = this.inherit(object, autocreate);
+        var group = Grouping.prototype.getGroup.call(this, object, autocreate);
         if (group)
           group.wrapper = this.wrapper;
         return group;
@@ -263,7 +272,7 @@
                 {
                   entity = entityType.singleton;
                   if (!entity)
-                    return entityType.singleton = new entityType.entityClass(data);
+                    return entityType.singleton = new entityClass(data);
                 }
               }
             }
@@ -274,7 +283,7 @@
             if (entity && entity.entityType === entityType)
               entity.update(data);
             else
-              entity = new entityType.entityClass(data);
+              entity = new entityClass(data);
 
             return entity;
           }
@@ -291,9 +300,6 @@
 
           get: function(data){
             return entityType.get(data);
-          },
-          getAll: function(){
-            return arrayFrom(entityType.all.getItems());
           },
           addField: function(key, wrapper){
             entityType.addField(key, wrapper);
@@ -389,6 +395,7 @@
 
         this.fields = {};
         this.defaults = {};
+        this.aliases = {};
         if (config.fields)
           for (var key in config.fields)
           {
@@ -427,7 +434,6 @@
           this.get = getSingleton;
         }
 
-        this.aliases = {};
         if (config.aliases)
         {
           //extend(this.aliases, config.aliases);
@@ -466,12 +472,13 @@
           }
         }
 
-        this.reflection_ = {};
+        ;;;if (config.reflections) console.warn('Reflections are deprecated');
+        /*this.reflection_ = {};
         if (config.reflections)
           for (var name in config.reflections)
-            this.addReflection(name, config.reflections[name]);
+            this.addReflection(name, config.reflections[name]);*/
 
-        this.entityClass = Class(Entity, {
+        this.entityClass = Class(Entity(this, this.all, this.index_, this.slot_, this.fields, this.defaults, this.aliases), {
           className: namespace,//this.constructor.className + '.' + this.name.replace(/\s/g, '_'),
           entityType: this,
           defaults: this.defaults,
@@ -484,12 +491,13 @@
         });
       },
       addField: function(key, wrapper){
-        if (this.all.length)
+        if (this.all.itemCount)
         {
-          ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not added, because instance of this entity type has already exists.');
+          ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
           return;
         }
 
+        this.aliases[key] = key;
         if (typeof wrapper == 'function')
         {
           this.fields[key] = wrapper;
@@ -509,13 +517,13 @@
             }
           };
       },
-      addReflection: function(name, cfg){
+      /*addReflection: function(name, cfg){
         var ref = new Reflection(name, cfg);
         this.reflection_[name] = ref;
         var all = this.all.getItems();
         for (var i = all.length; --i >= 0;)
           ref.update(all[i]);
-      },
+      },*/
       get: Function.$null,
       /*create: function(data){
         var entity = this.singleton || new this.entityClass(data);
@@ -564,461 +572,432 @@
     var ENTITY_ROLLBACK_HANDLER = {
       stateChanged: function(object, oldState){
         if (this.state == STATE.READY)
-          this.modified = null;
+          this.rollbackData_ = null;
       }
     };
+
+    function fieldCleaner(key){
+      this.set(key, null);
+    }
 
    /**
     * @class
     */
-    var Entity = Class(DataObject, {
-      className: namespace + '.Entity',
+   var BaseEntity = Class(DataObject);
+   /**
+    * @class
+    */
+    var Entity = function(entityType, all, typeIndex, typeSlot, fields, defaults, aliases){
 
-      canHaveDelegate: false,
+      var idField = entityType.idField;
 
-      modified: null,
-      silentSet_: false,
+      return Class(BaseEntity, {
+        className: namespace + '.Entity',
 
-      behaviour: {
-        update: function(object, delta){
-          this.inherit(object, delta);
+        canHaveDelegate: false,
 
-          for (var name in this.entityType.reflection_)
-            this.entityType.reflection_[name].update(this);
-        },
-        destroy: function(){
-          this.inherit();
+        rollbackData_: null,
 
-          for (var name in this.reflection_)
-            this.entityType.reflection_[name].detach(this);
-        }
-      },
+        /*
+        behaviour: {
+          update: function(object, delta){
+            //this.inherit(object, delta);
 
-      init: function(data){
-        var entityType = this.entityType;
+            for (var name in this.entityType.reflection_)
+              this.entityType.reflection_[name].update(this);
+          },
+          destroy: function(){
+            //this.inherit();
 
-        // inherit
-        this.inherit();
-
-        // copy default values
-        // make it here, because update event dispatch on this.inherit() when info passed in config
-        //this.info = extend({}, this.entityType.defaults);
-
-        // set up some properties
-        this.fieldHandlers_ = {};
-        this.value = // backward compatibility
-        this.info = {};
-        //this.delegate = this;
-
-        var defaults = entityType.defaults;
-        var fields = entityType.fields;
-        var aliases = entityType.aliases;
-        
-        var values = {};
-        var slot;
-
-        for (var key in data)
-          values[aliases[key] || key] = data[key];
-
-        for (var key in fields)
-        {
-          var value = key in values ? fields[key](values[key]) : defaults[key];
-
-          if (key == entityType.idField)
-          {
-            if (value != null)
-            {
-              if (entityType.index_[value])
-              {
-                ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.info[key] + ' => ' + value);
-                continue;
-              }
-
-              entityType.index_[value] = this;
-              slot = entityType.slot_[value];
-            }
+            for (var name in this.reflection_)
+              this.entityType.reflection_[name].detach(this);
           }
-          else
+        },*/
+
+        init: function(data){
+          //var entityType = this.entityType;
+
+          // inherit
+          BaseEntity.prototype.init.call(this);
+
+          // copy default values
+
+          // set up some properties
+          this.fieldHandlers_ = {};
+          this.info = {};//new entityType.xdefaults;//{};
+
+          var values = {};
+
+          for (var key in data)
+            values[aliases[key] || key] = data[key];
+
+          for (var key in fields)
           {
+            var value = key in data ? fields[key](data[key]) : defaults[key];
+
             if (value && value !== this && value instanceof EventObject)
             {
-              /*value.handlers_.push({
-                handler: fieldDestroyHandlers[key],
-                thisObject: this
-              });*/
+                //this.destroyHandlers[this.eventObjectId] = fieldCleaner.bind(this, key);
 
               if (value.addHandler(fieldDestroyHandlers[key], this))
                 this.fieldHandlers_[key] = true;
             }
+
+            this.info[key] = value;
           }
 
-          this.info[key] = value;
-        }
-
-        if (slot)
-          slot.setDelegate(this);
-
-        // apply data for entity
-        /*/this.silentSet_ = true;
-
-        
-        for (var key in defaults)
-          this.info[key] = defaults[key];
-
-        if (data)
-        {
-          for (var key in data)
-            this.set(key, data[key]);
-        }
-
-        this.silentSet_ = false;/**/
-
-        // reg entity in all entity type instances list
-        this.all.dispatch('datasetChanged', this.all, {
-          inserted: [this]
-        });
-
-        // fire reflections
-        this.reflection_ = {};
-        for (var name in entityType.reflection_)
-          entityType.reflection_[name].update(this);
-      },
-      toString: function(){
-        return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
-      },
-      get: function(key){
-        if (this.info)
-          return this.info[this.entityType.aliases[key] || key];
-      },
-      set: function(key, value, rollback){
-        // shortcut
-        var entityType = this.entityType;
-
-        // resolve field key
-        key = entityType.aliases[key] || key;
-
-        // get value wrapper
-        var valueWrapper = entityType.fields[key];
-
-        if (!valueWrapper)
-        {
-          // exit if no new fields allowed
-          if (!entityType.extensible)
+          if (idField)
           {
-            ;;;entityWarn(this, 'Set value for "' + key + '" property is ignored.');
-            return;
-          }
-
-          // emulate field wrapper
-          valueWrapper = $self;
-        }
-
-        // main part
-        var mode;
-        var delta;
-        var updateDelta;
-        var result = {};
-        var newValue = valueWrapper(value, this.info[key]);
-        var curValue = this.info[key];  // NOTE: value can be modify by valueWrapper,
-                                        // that why we fetch it again after valueWrapper call
-
-        var valueChanged = newValue !== curValue
-                           // date comparation fix;
-                           && (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || Number(newValue) !== Number(curValue));
-
-        // if value changed make some actions:
-        // - update id map if neccessary
-        // - attach/detach handlers on object destroy (for EventObjects)
-        // - registrate changes to rollback data if neccessary
-        // - fire 'change' event for not silent mode
-        if (valueChanged)
-        {
-
-          // NOTE: rollback mode is not allowed for id field
-          if (entityType.idField == key)
-          {
-            var index_ = entityType.index_;
-            var slot_ = entityType.slot_;
-
-            // if new value is already in use, ignore changes
-            if (index_[newValue])
+            var id = this.info[idField];
+            if (id != null)
             {
-              ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.info[key] + ' => ' + newValue);
-              return false;  // no changes
-            }
-
-            // if current value is not null, remove old value from index first
-            if (curValue != null)
-            {
-              delete index_[curValue];
-              if (slot_[curValue])
-                slot_[curValue].setDelegate();
-            }
-
-            // if new value is not null, add new value to index
-            if (newValue != null)
-            {
-              index_[newValue] = this;
-              if (slot_[newValue])
-                slot_[newValue].setDelegate(this);
-            }
-          }
-          else
-          {
-            // NOTE: rollback mode is not allowed for id field
-            if (rollback)
-            {
-              // rollback mode
-
-              // add rollback handler
-              /*if (!this.rollbackHandler_)
-                this.rollbackHandler_ = this.addHandler(ENTITY_ROLLBACK_HANDLER);*/
-
-              // create rollback storage if absent
-              // actually this means rollback mode is switched on
-              if (!this.modified)
-                this.modified = {};
-
-              // save current value if key is not in rollback storage
-              // if key is not in rollback storage, than this key didn't change since rollback mode was switched on
-              if (key in this.modified === false)
+              if (typeIndex[id])
               {
-                // create rollback delta
-                result.rollback = {
-                  key: key,
-                  value: undefined
-                };
-
-                // store current value
-                this.modified[key] = curValue;
-
-                mode = 'ROLLBACK_AND_INFO';
+                // id value is used by another entity
+                ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.info[key] + ' => ' + value);
+                this.info[idField] = null;
               }
               else
               {
-                if (this.modified[key] === newValue)
-                {
-                  result.rollback = {
-                    key: key,
-                    value: newValue
-                  };
-                  
-                  delete this.modified[key];
+                // id value is free, use it
+                typeIndex[id] = this;
 
-                  if (!Object.keys(this.modified).length)
-                    delete this.modified;
-                }
+                // link to slot
+                var slot = typeSlot[id];
+                if (slot)
+                  slot.setDelegate(this); 
+              }
+            }
+          }
+
+          // reg entity in all entity type instances list
+          all.event_datasetChanged(all, {
+            inserted: [this]
+          });
+        },
+        toString: function(){
+          return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
+        },
+        get: function(key){
+          if (this.info)
+            return this.info[aliases[key] || key];
+        },
+        set: function(key, value, rollback, silent){
+          // resolve field key
+          key = aliases[key] || key;
+
+          // get value wrapper
+          var valueWrapper = fields[key];
+
+          if (!valueWrapper)
+          {
+            // exit if no new fields allowed
+            if (!entityType.extensible)
+            {
+              ;;;entityWarn(this, 'Set value for "' + key + '" property is ignored.');
+              return;
+            }
+
+            // emulate field wrapper
+            valueWrapper = $self;
+          }
+
+          // main part
+          var update = true;
+          var delta;
+          var updateDelta;
+          var result;
+          var rollbackInfo = this.rollbackData_;
+          var newValue = valueWrapper(value, this.info[key]);
+          var curValue = this.info[key];  // NOTE: value can be modify by valueWrapper,
+                                          // that why we fetch it again after valueWrapper call
+
+          var valueChanged = newValue !== curValue
+                             // date comparation fix;
+                             && (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
+
+          // if value changed make some actions:
+          // - update id map if neccessary
+          // - attach/detach handlers on object destroy (for EventObjects)
+          // - registrate changes to rollback data if neccessary
+          // - fire 'change' event for not silent mode
+          if (valueChanged)
+          {
+            result = {};
+
+            // NOTE: rollback mode is not allowed for id field
+            if (idField == key)
+            {
+              // if new value is already in use, ignore changes
+              if (typeIndex[newValue])
+              {
+                ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.info[key] + ' => ' + newValue);
+                return false;  // no changes
+              }
+
+              // if current value is not null, remove old value from index first
+              if (curValue != null)
+              {
+                delete typeIndex[curValue];
+                if (typeSlot[curValue])
+                  typeSlot[curValue].setDelegate();
+              }
+
+              // if new value is not null, add new value to index
+              if (newValue != null)
+              {
+                typeIndex[newValue] = this;
+                if (typeSlot[newValue])
+                  typeSlot[newValue].setDelegate(this);
               }
             }
             else
             {
-              // if update with no rollback and object in rollback mode
-              // and has changing key in rollback storage, than change
-              // value in rollback storage, but not in info
-              if (this.modified && key in this.modified)
+              // NOTE: rollback mode is not allowed for id field
+              if (rollback)
               {
-                if (this.modified[key] !== newValue)
+                // rollback mode
+
+                // add rollback handler
+                if (!this.rollbackHandler_)
+                  this.rollbackHandler_ = this.addHandler(ENTITY_ROLLBACK_HANDLER);
+
+                // create rollback storage if absent
+                // actually this means rollback mode is switched on
+                if (!rollbackInfo)
+                  this.rollbackData_ = rollbackInfo = {};
+
+                // save current value if key is not in rollback storage
+                // if key is not in rollback storage, than this key didn't change since rollback mode was switched on
+                if (key in rollbackInfo === false)
                 {
                   // create rollback delta
                   result.rollback = {
                     key: key,
-                    value: this.modified[key]
+                    value: undefined
                   };
 
-                  // store new value
-                  this.modified[key] = newValue;
-
-                  mode = 'ROLLBACK_ONLY';
+                  // store current value
+                  rollbackInfo[key] = curValue;
                 }
                 else
-                  return false;
+                {
+                  if (rollbackInfo[key] === newValue)
+                  {
+                    result.rollback = {
+                      key: key,
+                      value: newValue
+                    };
+
+                    delete rollbackInfo[key];
+
+                    if (!Object.keys(rollbackInfo).length)
+                      this.rollbackData_ = null;
+                  }
+                }
+              }
+              else
+              {
+                // if update with no rollback and object in rollback mode
+                // and has changing key in rollback storage, than change
+                // value in rollback storage, but not in info
+                if (rollbackInfo && key in rollbackInfo)
+                {
+                  if (rollbackInfo[key] !== newValue)
+                  {
+                    // create rollback delta
+                    result.rollback = {
+                      key: key,
+                      value: rollbackInfo[key]
+                    };
+
+                    // store new value
+                    rollbackInfo[key] = newValue;
+
+                    // prevent info update
+                    update = false;
+                  }
+                  else
+                    return false;
+                }
               }
             }
+
+            if (update)
+            {
+              // set new value for field
+              this.info[key] = newValue;
+              
+              // remove attached handler if exists
+              if (this.fieldHandlers_[key])
+              {
+                curValue.removeHandler(fieldDestroyHandlers[key], this);
+                this.fieldHandlers_[key] = false;
+              }
+
+              // add new handler if object is instance of EventObject
+              // newValue !== this prevents recursion for self update
+              if (newValue && newValue !== this && newValue instanceof EventObject)
+              {
+                if (newValue.addHandler(fieldDestroyHandlers[key], this))
+                  this.fieldHandlers_[key] = true;
+              }
+
+              // prepare result
+              result.key = key;
+              result.value = curValue;
+            }
+          }
+          else
+          {
+            if (!rollback && rollbackInfo && key in rollbackInfo)
+            {
+              // delete from rollback
+              result = {
+                rollback: {
+                  key: key,
+                  value: rollbackInfo[key]
+                }
+              };
+
+              delete rollbackInfo[key];
+
+              if (!Object.keys(rollbackInfo).length)
+                this.rollbackData_ = null;
+            }
           }
 
-          if (mode != 'ROLLBACK_ONLY')
+          // fire events for not silent mode
+          if (!silent && result)
           {
-            // set new value for field
-            this.info[key] = newValue;
-            
-            // remove attached handler if exists
-            if (this.fieldHandlers_[key])
+            if (result.key)
             {
-              curValue.removeHandler(fieldDestroyHandlers[key], this);
-              delete this.fieldHandlers_[key];
+              var delta = {};
+              delta[key] = curValue;
+              this.event_update(this, delta);
             }
 
-            // add new handler if object is instance of EventObject
-            // newValue !== this prevents recursion for self update
-            if (newValue && newValue !== this && newValue instanceof EventObject)
+            if (result.rollback)
             {
-              if (newValue.addHandler(fieldDestroyHandlers[key], this))
-                this.fieldHandlers_[key] = true;
-            } 
-
-            // prepare result
-            result.key = key;
-            result.value = curValue;
+              var rollbackDelta = {};
+              rollbackDelta[result.rollback.key] = result.rollback.value;
+              this.event_rollbackUpdate(this, rollbackDelta);
+            }
           }
-        }
-        else
-        {
-          if (!rollback && this.modified && key in this.modified)
+
+          // return delta or false (if no changes)
+          return result || false;
+        },
+        update: function(data, rollback){
+          if (data)
           {
-            // delete from rollback
-            result.rollback = {
-              key: key,
-              value: this.modified[key]
-            };
-
-            delete this.modified[key];
-
-            if (!Object.keys(this.modified).length)
-              delete this.modified;
-          }
-        }
-
-        // fire events for not silent mode
-        if (!this.silentSet_)
-        {
-          if (result.key)
-          {
+            var update;
             var delta = {};
-            delta[key] = curValue;
-            this.dispatch('update', this, delta);
-          }
 
-          if (result.rollback)
-          {
-            var rollbackData = {};
-            rollbackData[result.rollback.key] = result.rollback.value;
-            this.dispatch('rollbackUpdate', this, rollbackData);
-          }
-        }
+            var rollbackUpdate;
+            var rollbackDelta = {};
 
-        // return delta or false (if no changes)
-        return result || false;
-      },
-      update: function(data, rollback){
-        if (data)
-        {
-          var update;
-          var delta = {};
+            var setResult;
 
-          var rollbackUpdate;
-          var rollbackDelta = {};
-
-          var setResult;
-
-          // switch off change event dispatch
-          this.silentSet_ = true;
-
-          // update fields
-          for (var key in data)
-          {
-            if (setResult = this.set(key, data[key], rollback))
+            // update fields
+            for (var key in data)
             {
-              if (setResult.key)
+              if (setResult = this.set(key, data[key], rollback, true)) //this.set(key, data[key], rollback))
               {
-                update = true;
-                delta[setResult.key] = setResult.value;
-              }
-              if (setResult.rollback)
-              {
-                rollbackUpdate = true;
-                rollbackDelta[setResult.rollback.key] = setResult.rollback.value;
+                if (setResult.key)
+                {
+                  update = true;
+                  delta[setResult.key] = setResult.value;
+                }
+                if (setResult.rollback)
+                {
+                  rollbackUpdate = true;
+                  rollbackDelta[setResult.rollback.key] = setResult.rollback.value;
+                }
               }
             }
+
+            // dispatch events
+            if (update)
+              this.event_update(this, delta);
+
+            if (rollbackUpdate)
+              this.event_rollbackUpdate(this, rollbackDelta);
           }
 
-          // switch on change event dispatch
-          this.silentSet_ = false;
+          return update ? delta : false;
+        },
+        reset: function(){
+          this.update(defaults);
+        },
+        clear: function(){
+          var data = {};
+          for (var key in this.info)
+            data[key] = undefined;
+          return this.update(data);
+        },
+        commit: function(data){
+          if (this.rollbackData_)
+          {
+            var rollbackData = this.rollbackData_;
+            this.rollbackData_ = null;
+          }
 
-          // dispatch events
-          if (update)
-            this.dispatch('update', this, delta);
+          this.update(data);
 
-          if (rollbackUpdate)
-            this.dispatch('rollbackUpdate', this, rollbackDelta);
+          if (rollbackData)
+            this.event_rollbackUpdate(this, rollbackData);
+        },
+        rollback: function(){
+          if (this.state == STATE.PROCESSING)
+          {
+            ;;;entityWarn(this, 'Entity in processing state (entity.rollback() aborted)');
+            return;
+          }
+
+          if (this.rollbackData_)
+          {
+            var rollbackData = this.rollbackData_;
+            this.rollbackData_ = null;
+            this.update(rollbackData);
+
+            this.event_rollbackUpdate(this, rollbackData);
+          }
+          this.setState(STATE.READY);
+        },
+        destroy: function(){
+          // shortcut
+          //var entityType = this.entityType;
+
+          // unlink attached handlers
+          for (var key in this.fieldHandlers_)
+            this.info[key].removeHandler(fieldDestroyHandlers[key], this);
+            //removeFromDestroyMap(this.info[key], this, key);
+          this.fieldHandlers_ = NULL_INFO;
+
+          // delete from identify hash
+          var id = this.info[idField];
+          if (typeIndex[id] === this)
+          {
+            delete typeIndex[id];
+            if (typeSlot[id])
+              typeSlot[id].setDelegate();
+          }
+
+          // inherit
+          DataObject.prototype.destroy.call(this);
+
+          // delete from all entity type list (is it right order?)
+          all.event_datasetChanged(all, {
+            deleted: [this]
+          });
+
+          // clear links
+          this.info = NULL_INFO; 
+          this.rollbackData_ = null;
         }
-
-        return update ? delta : false;
-      },
-      reset: function(){
-        this.update(this.entityType.defaults);
-      },
-      clear: function(){
-        var data = {};
-        for (var key in this.info)
-          data[key] = undefined;
-        return this.update(data);
-      },
-      commit: function(data){
-        if (this.modified)
-        {
-          var rollbackDelta = this.modified;
-          delete this.modified;
-        }
-
-        this.update(data);
-
-        if (rollbackDelta)
-          this.dispatch('rollbackUpdate', this, rollbackDelta);
-      },
-      rollback: function(){
-        if (this.state == STATE.PROCESSING)
-        {
-          ;;;entityWarn(this, 'Entity in processing state (entity.rollback() aborted)');
-          return;
-        }
-
-        if (this.modified)
-        {
-          var rollbackDelta = this.modified;
-          delete this.modified;
-          this.update(rollbackDelta);
-
-          this.dispatch('rollbackUpdate', this, rollbackDelta);
-        }
-        this.setState(STATE.READY);
-      },
-      destroy: function(){
-        // shortcut
-        var entityType = this.entityType;
-
-        // unlink attached handlers
-        for (var key in this.fieldHandlers_)
-          this.info[key].removeHandler(fieldDestroyHandlers[key], this);
-          //removeFromDestroyMap(this.info[key], this, key);
-        delete this.fieldHandlers_;
-
-        // delete from identify hash
-        var id = this.info[entityType.idField];
-        if (entityType.index_[id] === this)
-        {
-          delete entityType.index_[id];
-          if (entityType.slot_[id])
-            entityType.slot_[id].setDelegate();
-        }
-
-        // inherit
-        this.inherit();
-
-        // delete from all entity type list (is it right order?)
-        this.all.dispatch('datasetChanged', this.all, {
-          deleted: [this]
-        });
-
-        this.value = // backward compatibility
-        this.info = {}; 
-
-        delete this.modified;
-
-        // clear links
-        //delete this.info;
-        //delete this.value;
-      }
-    });
+      });
+    };
 
     //
     // Reflection
@@ -1027,7 +1006,7 @@
    /**
     * @class
     */
-    var Reflection = Class(null, {
+    /*var Reflection = Class(null, {
       className: namespace + '.Reflection',
       init: function(name, config){
         this.name = name;
@@ -1081,7 +1060,7 @@
       },
       destroy: function(){
       }
-    });
+    });*/
 
     //
     // Misc
@@ -1104,6 +1083,7 @@
 
       EntityType: EntityTypeWrapper,
       Entity: Entity,
+      BaseEntity: BaseEntity,
 
       EntitySetType: EntitySetWrapper,
       EntitySet: EntitySet,

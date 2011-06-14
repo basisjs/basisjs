@@ -24,6 +24,9 @@
     var EventObject = Basis.EventObject;
     var Property = Basis.Data.Property.Property;
 
+    var event = EventObject.event;
+    var createEvent = EventObject.createEvent;
+
     // const
 
     var TEST_NUMBER = 0;
@@ -34,7 +37,7 @@
      *  Tools
      */
 
-    function value2string(value){
+    function value2string(value, linear){
       switch (typeof value)
       {
         case 'boolean':
@@ -56,7 +59,15 @@
           if (value.constructor == Date)
             return String(value);
 
-          return '{object}';
+          if (!linear)
+          {
+            return '{' + Object.iterate(value, function(key, value){
+              return key + ': ' + value2string(value, true);
+            }).join(', ') + '}'
+          }
+          else
+            return '{object}';
+
         default:
           return "unknown type '" + (typeof value) + "'";
       }
@@ -80,11 +91,15 @@
       totalTestCount: 1,
       completeTestCount: 0,
 
+      event_progress: createEvent('progress'),
+      event_reset: createEvent('reset'),
+      event_over: createEvent('over'),
+
       name: 'no name',
       testType: 'AbstractTest',
 
       init: function(name, critical){
-        this.inherit();
+        EventObject.prototype.init.call(this);
         this.name = (name || 'test#' + TEST_NUMBER++)
         this.critical = critical || false;
         this.timer = 0;
@@ -105,7 +120,7 @@
           this.completeTestCount = 0;
           this.progress(-tmp);
 
-          this.dispatch('reset');
+          this.event_reset();
         }
       },
 
@@ -125,14 +140,14 @@
         this.completeTestCount = this.totalTestCount;
         this.progress(tmp);
 
-        this.dispatch('over');
+        this.event_over();
       },
       success: Function.$null,
       fault: Function.$null,
       progress: function(diff){
 //          console.log(diff);
         if (diff)
-          this.dispatch('progress', diff, this.completeTestCount/(this.totalTestCount || 1));
+          this.event_progress(diff, this.completeTestCount/(this.totalTestCount || 1));
       },
       toString: function(){
         return (this.testType ? this.testType + ' ' : '') + this.name + ': ' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.success ? 'success' : 'fault (passed {1} of {0})'.format(this.testCount, this.successCount))));
@@ -165,7 +180,7 @@
       testType: 'Test',
 
       init: function(name, critical, test){
-        this.inherit(name, critical);
+        AbstractTest.prototype.init.call(this, name, critical);
         this.test = test;
 
         this.errorLines = [];
@@ -236,7 +251,7 @@
         {
           this.errorLines = [];
           this.testCount = 0;
-          this.inherit();
+          AbstractTest.prototype.reset.call(this);
         }
       },
       run: function(){
@@ -245,8 +260,8 @@
         try {
           Tester.result = this;
           this.test.call(Tester);
-//          console.log(this.name);
         } catch(e) {
+          console.log(e);
           error = e;
           this.broken = ['Wrong answer', 'Type mismatch'].has(e.message);
         } finally {
@@ -257,7 +272,7 @@
         }
       },
       toDOM: function(){
-        var element = this.inherit();
+        var element = AbstractTest.prototype.toDOM.call(this);
         if (!this.result)
         {
           var pre;
@@ -357,7 +372,11 @@
         this.successCount++;
       },
       fault: function(error, answer, result){
-        this.errorLines[this.testCount] = { error: error, answer: answer, result: result };
+        this.errorLines[this.testCount] = {
+          error: error,
+          answer: answer && typeof answer == 'object' ? (Array.isArray(answer) ? Array.from(answer) : Object.slice(answer)) : answer,
+          result: result && typeof result == 'object' ? (Array.isArray(result) ? Array.from(result) : Object.slice(result)) : result
+        };
         this.testCount++;
       }
     });
@@ -390,15 +409,13 @@
 
       testType: 'TestCase',
 
-      behaviour: {
-        progress: function(diff, p){
-          this.completeTestCount += diff;
-          //console.log(this.name + '(' + p + ')');
-        }
+      event_progress: function(diff, p){
+        event.progress.call(this, diff, p);
+        this.completeTestCount += diff;
       },
 
       init: function(name, critical, tests){
-        this.inherit(name, critical);
+        AbstractTest.prototype.init.call(this, name, critical);
 
         this.items = new Array();
         var totalTestCount = 0, item;
@@ -409,7 +426,7 @@
           else
             item = new TestCase(test.name, test.critical, test.testcase);
 
-          item.addHandler({ progress: function(diff, progress){ this.dispatch('progress', diff, (this.completeTestCount + diff)/(this.totalTestCount || 0)) } }, this);
+          item.addHandler({ progress: function(diff, progress){ this.event_progress(diff, (this.completeTestCount + diff)/(this.totalTestCount || 0)) } }, this);
 
           this.items[i] = item;
           totalTestCount += item.totalTestCount;
@@ -421,7 +438,7 @@
         if (TesterState == 'stop')
         {
           this.items.forEach(function(item){ item.reset() });
-          this.inherit();
+          AbstractTest.prototype.reset.call(this);
           return true;
         }
       },
@@ -503,11 +520,22 @@
             case 'boolean':
             case 'function':
             case 'undefined':
-              if (answer != result)
+              if (answer !== result)
                 error = new Error('Wrong answer');
             break;
             default:
-              if ('length' in answer)
+              if (result === answer)
+              {
+                break;
+              }
+
+              if ((!result && answer) || (result && !answer))
+              {
+                error = new Error('Wrong answer');
+                break;
+              }
+
+              if (answer && 'length' in answer)
               {
                 if (answer.length != result.length)
                   error = new Error('Wrong answer');

@@ -1,0 +1,26 @@
+
+
+  BODY
+  {
+    font-size: x-small;
+    font-family: Tahoma;
+    color: #999999;
+  }
+
+  B
+  {
+    font-size: 120%;
+    color: black;
+  }
+  B.total
+  {
+    font-size: 200%;
+    color: #AA0000;
+  }
+  HR
+  {
+    height: 0px;
+    border: none;
+    border-top: 1px solid #999;
+    margin: 2px;
+  }

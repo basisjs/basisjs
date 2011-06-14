@@ -1,11 +1,9 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<!doctype html>
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
-  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Speed Test: Basis Tree</title>
 
   <link rel="stylesheet" type="text/css" title="Default Style" href="../style/tree/default/style.css" media="screen" />
@@ -93,7 +91,7 @@
   <script type="text/javascript"  src="../property.js"></script>
   <script type="text/javascript"  src="../dom_register.js"></script>
   <script type="text/javascript"  src="../tree.js"></script>
-  <script type="text/javascript"  src="../plugins/generator.js"></script>
+  <script type="text/javascript"  src="../../plugins/generator.js"></script>
 </head>
 
 <body>
@@ -116,7 +114,7 @@
       <legend> generate nodes </legend>
       <input type="text" id="nodeCount"/><button id="buttonGenerate">gen nodes</button>
       <div><span id="time"></span><span id="clearTime"></span></div>
-      <input type="checkbox" id="checkRandomNames" checked="checked" /> <label for="checkRandomNames">random names</label>
+      <input type="checkbox" id="checkRandomNames" /> <label for="checkRandomNames">random names</label>
     </fieldset>
 
     <fieldset>
@@ -220,7 +218,13 @@
         for (var i = 0; i < count; i++)
         {
           var val = Math.round(Math.random() * 10);
-          data.push({ id: 'tree_node' + i, value: val, title: title });
+          data.push({
+            info: {
+              id: 'tree_node' + i,
+              value: val,
+              title: title
+            }
+          });
           title = isRandomTitle ? gString(3, 48) : 'title' + i;
         }
 
@@ -232,30 +236,28 @@
         {
           var kind = i % 2 ? TreeFolder : TreeNode;
           // create node
-          var node = new kind({ info: data[i] });
+          var node = new kind(data[i]);
           //var node = { title: title, type: i % 2 ? 'TreeFolder' : 'TreeNode', info: { id: 'tree_node' + i, value: val } };
           // add node to tree
           var refNode = nodes[(i * count * 173) % nodes.length];
           if (refNode == TestTree)
             cn.push(node);
           else
-            refNode.appendChild(node);
+            refNode.insertBefore(node);
             
           if (kind == TreeFolder)
             nodes.push(node);
         }
         TestTree.setChildNodes(cn);
         //DOM.insert(TestTree.content, TestTree.childNodes.map(function(node){ return node.element }));
-/*        nodes.reverse().forEach(function(n){
-          if (n.df && n.df.firstChild)
-            n.childNodesContainer.appendChild(n.df);
-        });*/
+        //if (console && console.profileEnd) console.profileEnd();
 
         var time = ((new Date() - timeStart)/1000).toFixed(3);
         DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + time + '</b> sec';
 
-        //if (console && console.profileEnd) console.profileEnd();
-        nodes.clear();
+        
+        cn.length = 0;
+        nodes.length = 0;
 
       };
 
@@ -324,11 +326,15 @@
 //      keys(buttons).forEach(function(id){ var btn = DOM.get('button' + id); addHandler(btn, 'click', buttons[id], TestTree) });
       Event.addHandler(document, 'click', function(event){
         var sender = Event.sender(event);
-        if (DOM.is(sender, 'BUTTON') && sender.id)
+        if (sender.tagName == 'BUTTON' && sender.id)
         {
           (buttons[sender.id.substr(6)] || $self).call(TestTree)
           Event.kill(event);
         }
+      });
+
+      Event.onLoad(function(){
+        //genNodes(2000);
       });
 
     })();

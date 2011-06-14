@@ -22,7 +22,7 @@
     * collapsed/expanded, but {Basis.Controls.Tree.TreeFolder} can.
     *
     * Also this namespace has two additional classes for child nodes grouping
-    * {Basis.Controls.Tree.TreeGroupControl} and
+    * {Basis.Controls.Tree.TreeGroupingNode} and
     * {Basis.Controls.Tree.TreePartitionNode}.
     *
     * Most part of component logic implemented in {Basis.DOM.Wrapper} namespace,
@@ -39,16 +39,24 @@
     
     // import names
 
-    var Class = Basis.Class;
+    var Class = Basis.Class.createHP;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
-
-    var Template = Basis.Html.Template;
 
     var cssClass = Basis.CSS.cssClass;
     var getter = Function.getter;
 
     var nsWrappers = DOM.Wrapper;
+
+    var Template = Basis.Html.Template;
+    var TmplContainer = nsWrappers.TmplContainer;
+    var Control = nsWrappers.Control;
+
+    var createEvent = Basis.EventObject.createEvent;
+    var basisEvent = Basis.EventObject.event;
+
+    createEvent('collapse');
+    createEvent('expand');
 
    /**
     * Expand all descendant nodes.
@@ -77,7 +85,7 @@
    /**
     * @class
     */
-    var TreePartitionNode = Class(nsWrappers.HtmlPartitionNode, {
+    var TreePartitionNode = Class(nsWrappers.TmplPartitionNode, {
       className: namespace + '.TreePartitionNode',
       template: new Template(
         '<li{element} class="Basis-Tree-NodeGroup">' + 
@@ -90,8 +98,8 @@
    /**
     * @class
     */
-    var TreeGroupControl = Class(nsWrappers.HtmlGroupControl, {
-      className: namespace + '.TreeGroupControl',
+    var TreeGroupingNode = Class(nsWrappers.TmplGroupingNode, {
+      className: namespace + '.TreeGroupingNode',
       childClass: TreePartitionNode
     });
 
@@ -99,25 +107,18 @@
     * Base child class for {Basis.Controls.Tree.Tree}
     * @class
     */
-    var TreeNode = Class(nsWrappers.HtmlContainer, {
+    var TreeNode = Class(TmplContainer, {
       className: namespace + '.TreeNode',
 
       canHaveChildren: false,
       //childFactory: null,
 
-      // node behaviour handlers
-      behaviour: {
-        click: function(event){
-          if (DOM(Event.sender(event)).isInside(this.tmpl.title || this.tmpl.element))
-            this.select(Event(event).ctrlKey);
-        },
-        update: function(node, delta){
-          this.inherit(node, delta);
+      event_update: function(object, delta){
+        TmplContainer.prototype.event_update.call(this, object, delta);
 
-          // set new title
-          var title = String(this.titleGetter(this));
-          this.tmpl.titleText.data = title || '[no title]';
-        }
+        // set new title
+        var title = String(this.titleGetter(this));
+        this.tmpl.titleText.nodeValue = title || '[no title]';
       },
 
      /**
@@ -132,6 +133,11 @@
           '</div>' +
         '</li>'
       ),
+
+      dispatchEvent: function(eventName, event){
+        if (eventName == 'click' && DOM.isInside(Event.sender(event), this.tmpl.title || this.element) && !this.isDisabled())
+          this.select(Event(event).ctrlKey);
+      },
 
      /**
       * @type {function()}
@@ -156,23 +162,19 @@
 
       canHaveChildren: true,
       childClass: TreeNode,
-      groupControlClass: TreeGroupControl,
+      localGroupingClass: TreeGroupingNode,
 
-      behaviour: {
-        click: function(event){
-          if (this.expander && DOM(Event.sender(event)).isInside(this.tmpl.expander))
-            this.toggle();
-          else
-            this.inherit(event);
-        },
-        expand: function(){
-          cssClass(this.tmpl.element).remove('collapsed');
-          DOM.display(this.tmpl.childNodesElement, true);
-        },
-        collapse: function(){
-          DOM.display(this.tmpl.childNodesElement, false);
-          cssClass(this.tmpl.element).add('collapsed');
-        }
+      event_expand: function(){
+        basisEvent.expand.call(this);
+
+        cssClass(this.element).remove('collapsed');
+        DOM.display(this.childNodesElement, true);
+      },
+      event_collapse: function(){
+        basisEvent.collapse.call(this);
+
+        DOM.display(this.childNodesElement, false);
+        cssClass(this.element).add('collapsed');
       },
 
      /**
@@ -181,9 +183,9 @@
       * @private
       */
       template: new Template(
-        '<li{element} class="Basis-Tree-Folder">' + 
-          '<div{content|selectedElement} class="Tree-Node-Title Tree-Folder-Content">' + 
-            '<div{expander} class="Basis-Tree-Expander"/>' + 
+        '<li{element} class="Basis-Tree-Folder" event:click="click">' +
+          '<div{content|selectedElement} class="Tree-Node-Title Tree-Folder-Content">' +
+            '<div{expander} class="Basis-Tree-Expander" event:click="toggle"/>' +
             '<a{title} href="#">{titleText|[no title]}</a>' + 
           '</div>' + 
           '<ul{childNodesElement}/>' + 
@@ -207,21 +209,18 @@
       * @constructor
       */
       init: function(config){
-        this.inherit(config);
-
-        if (config)
-        {
-          // can this node collapse
-          if ('collapsable' in config)
-            this.collapsable = !!config.collapsable;
-
-          // collapse node
-          if ('collapsed' in config)
-            this.collapsed = !!config.collapsed;
-        }
+        // inherit
+        TreeNode.prototype.init.call(this, config);
 
         if (this.collapsed && this.collapsable)
-          this.dispatch('collapse');
+          this.event_collapse();
+      },
+
+      dispatchEvent: function(eventName, event){
+        if (eventName == 'click' && this.tmpl.expander && DOM.isInside(Event.sender(event), this.tmpl.expander))
+          this.toggle();
+        else
+          TreeNode.prototype.dispatchEvent.call(this, eventName, event);
       },
 
      /**
@@ -232,7 +231,7 @@
         if (this.collapsed)
         {
           this.collapsed = false;
-          this.dispatch('expand');
+          this.event_expand();
           return true;
         }
       },
@@ -245,7 +244,7 @@
         if (!this.collapsed && this.collapsable)
         {
           this.collapsed = true;
-          this.dispatch('collapse');
+          this.event_collapse();
           return true;
         }
       },
@@ -262,11 +261,11 @@
    /**
     * @class
     */
-    var Tree = Class(nsWrappers.Control, {
+    var Tree = Class(Control, {
       className: namespace + '.Tree',
 
       childClass: TreeNode,
-      groupControlClass: TreeGroupControl,
+      localGroupingClass: TreeGroupingNode,
 
       //childFactory: treeChildFactory,
 
@@ -277,7 +276,7 @@
       */
       template: new Template(
         '<div{element} class="Basis-Tree">' + 
-          '<ul{content|childNodesElement|disabledElement} class="Basis-Tree-Root"></ul>' + 
+          '<ul{childNodesElement|content|disabledElement} class="Basis-Tree-Root"></ul>' + 
         '</div>'
       ),
 
@@ -288,7 +287,7 @@
       */
       init: function(config){
         // inherit
-        this.inherit(config);
+        Control.prototype.init.call(this, config);
 
         // attach event handlers
         this.addEventListener('click');
@@ -317,7 +316,7 @@
       Tree: Tree,
       TreeNode: TreeNode,
       TreeFolder: TreeFolder,
-      TreeGroupControl: TreeGroupControl,
+      TreeGroupingNode: TreeGroupingNode,
       TreePartitionNode: TreePartitionNode
     });
 

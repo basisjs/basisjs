@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: SOAP, List loading</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .Basis-Tree
+    {
+      width: 250px;
+      height: 300px;
+      border: 1px solid #888;
+      position: relative;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style_ie.css" media="screen" />
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../ajax.js"></script>
+  <script type="text/javascript" src="../../xml.js"></script>
+  <script type="text/javascript" src="../../soap.js"></script>
+  <script type="text/javascript" src="../../entity.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: SOAP, List loading</h1>
+  
+  <p id="demo-summary">
+    Simple example of Basis.SOAP
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    // IMPORTANT: Host server must has url proxy for pathes starts with /w1service
+    // to http://service.w1.ru/10/
+    // So, /w1service/PublicService.asmx should be proxed to 
+    // http://services.w1.ru/10/PublicService.asmx
+
+    var demoContainer = Basis.DOM.get('demo-container');
+
+    // create service and it's method
+    var service = new Basis.SOAP.Service('/w1service/PublicService.asmx', 'Wallet.Public.WebService');
+    var getProviderGroup = service.createMethodCall('GetProviderGroups', true, {
+      body: {
+        // method parameters
+        CultureId: 'en-US',
+      },
+      callback: {
+        success: function(envelopeData){
+          // clear all old tree nodes
+          myTree.clear();
+
+          // insert new nodes
+          var data = this.responseBody().ProviderGroup;
+          for (var i = 0; i < data.length; i++)
+            myTree.appendChild({
+              info: data[i],
+              titleGetter: function(node){
+                return node.info.Title;
+              }
+            });
+        }
+      }
+    });
+
+    // create provider group list
+    var myTree = new Basis.Controls.Tree.Tree({
+      // set default sorting for nodes
+      localSorting: 'info.Title',
+
+      // customize item class
+      childClass: Basis.Class(Basis.Controls.Tree.TreeNode, {
+        titleGetter: function(node){
+          return node.info.Title;
+        }
+      })
+    });
+
+    // add trigger button and list control (tree) on page
+    Basis.DOM.insert(demoContainer,
+    [
+      Basis.DOM.createElement(
+        {
+          description: 'BUTTON',
+          click: function(){
+            getProviderGroup.call();
+          }
+        },
+        'Load provider list'
+      ),
+      myTree.element
+    ]);
+
+    
+  </script>
+</body>
+
+</html>

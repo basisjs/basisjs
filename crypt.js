@@ -391,7 +391,7 @@
 
         // init arguments h0, h1, h2, h3, h4
         var H = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0];
-        var stored = H.clone();
+        var stored = Array.from(H);
 
         // make a hash
         var S;
@@ -510,7 +510,7 @@
         
         // init arguments a, b, c, d
         var A = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476];
-        var stored = A.clone();
+        var stored = Array.from(A);
 
         // make a hash
         var chunk = dwords.length >> 4;

@@ -254,28 +254,12 @@
     };*/
 
     var reIsoStringSplit = /\D/;
-
-    Date.fromISOString = (function(){
-      function fastDateParse(y, m, d, h, i, s, ms){
-        return new Date(y, m - 1, d, h || 0, i || 0, s || 0, ms || 0);
-      }
-      return function(isoString){
-        return fastDateParse.apply(null, isoString.split(reIsoStringSplit));
-      }
-    })();
-
-    Date.fromISOStringTZ = (function(){
-      var tzoffset = (new Date).getTimezoneOffset();
-      function fastDateParse(y, m, d, h, i, s, ms){
-        return new Date(y, m - 1, d, h || 0, +(i || 0) - this, s || 0, ms || 0);
-      }
-      return function(isoDateString){
-        var tz = isoDateString.substr(10).match(/([\-\+])(\d\d?):?(\d\d?)?/) || 0;
-        if (tz)
-          tz = tzoffset + (tz[1] == '-' ? -1 : 1) * (tz[3] != null ? +tz[2] * 60 + (+tz[3]) : +tz[2]);
-        return fastDateParse.apply(tz, isoDateString.split(reIsoStringSplit));
-      }
-    })();
+    function fastDateParse(y, m, d, h, i, s, ms){
+      return new Date(y, m - 1, d, h || 0, i || 0, s || 0, ms || 0);
+    }
+    Date.fromISOString = function(isoString){
+      return isoString ? fastDateParse.apply(null, String(isoString).split(reIsoStringSplit)) : null;
+    }
 
     Date.timer = function(date){
       var timer = date || new Date;

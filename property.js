@@ -35,6 +35,8 @@
 
     var EventObject = Basis.EventObject;
     var TimeEventManager = Basis.TimeEventManager;
+    var event = EventObject.event;
+    var createEvent = EventObject.createEvent;
 
     var nsData = Basis.Data;
     var DataObject = nsData.DataObject;
@@ -80,13 +82,12 @@
       * @constructor
       */
       init: function(initValue, handlers, proxy){
-        this.inherit();
+        DataObject.prototype.init.call(this, {
+          handlers: handlers
+        });
 
         this.proxy = typeof proxy == 'function' ? proxy : Function.$self;
         this.initValue = this.value = this.proxy(initValue);
-
-        if (handlers)
-          this.addHandler(handlers);
       },
 
      /**
@@ -98,21 +99,20 @@
       * @return {boolean} Whether value was changed.
       */
       set: function(data, forceEvent){
-        var updateCount = this.updateCount;
-
         var oldValue = this.value;
         var newValue = this.proxy ? this.proxy(data) : newValue;
+        var updated = false;
 
         if (newValue !== oldValue)
         {
           this.value = newValue;
-          this.updateCount += 1;
+          updated = true;
         }
 
-        if (!this.locked && (forceEvent || updateCount != this.updateCount))
-          this.dispatch('change', newValue, oldValue);
+        if (!this.locked && (updated || forceEvent))
+          this.event_change(newValue, oldValue);
 
-        return updateCount != this.updateCount;
+        return updated;
       },
 
      /**
@@ -135,7 +135,7 @@
         {
           this.locked = false;
           if (this.value !== this.lockValue_)
-            this.dispatch('change', this.value, this.lockValue_);
+            this.event_change(this.value, this.lockValue_);
         }
       },
 
@@ -162,7 +162,7 @@
       * @destructor
       */
       destroy: function(){
-        this.inherit();
+        DataObject.prototype.destroy.call(this);
 
         delete this.initValue;
         delete this.proxy;
@@ -211,14 +211,14 @@
       */
       links_: null,
 
-      behaviour: {
-        change: function(value, oldValue){
-          if (!this.links_.length || Cleaner.globalDestroy)
-            return;
+      event_change: createEvent('change') && function(value, oldValue){
+        event.change.call(this, value, oldValue);
 
-          for (var i = 0, link; link = this.links_[i++];)
-            this.power_(link, oldValue);
-        }
+        if (!this.links_.length || Cleaner.globalDestroy)
+          return;
+
+        for (var i = 0, link; link = this.links_[i++];)
+          this.power_(link, oldValue);
       },
 
      /**
@@ -226,7 +226,7 @@
       * @constructor
       */
       init: function(initValue, handlers, proxy){
-        this.inherit(initValue, handlers, proxy);
+        AbstractProperty.prototype.init.call(this, initValue, handlers, proxy);
         this.links_ = new Array();
 
         Cleaner.add(this);
@@ -428,10 +428,10 @@
       */
       destroy: function(){
         this.clear();
-        delete this.links_;
 
-        this.inherit();
+        AbstractProperty.prototype.destroy.call(this);
 
+        this.links_ = null;
         Cleaner.remove(this);
       }
     });
@@ -518,7 +518,7 @@
       init: function(config){
         config = config || {};
 
-        this.inherit('value' in config ? config.value : 0, config.handlers, config.proxy);
+        Property.prototype.init.call(this, 'value' in config ? config.value : 0, config.handlers, config.proxy);
 
         this.objects = new Array();
 
@@ -665,7 +665,7 @@
         this.clear();
         TimeEventManager.remove(this, 'update');
 
-        this.inherit();
+        Property.prototype.destroy.call(this);
       }
     });
 

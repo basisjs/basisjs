@@ -1,4 +1,4 @@
-/*!
+/**
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
  *
@@ -17,16 +17,19 @@
 
     // import names
 
-    var Class = Basis.Class;
+    var Class = Basis.Class.createHP;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
-    var Template = Basis.Html.Template;
+    var nsWrappers = DOM.Wrapper;
 
     var getter = Function.getter;
     var cssClass = Basis.CSS.cssClass;
 
-    var nsWrappers = DOM.Wrapper;
+    var Template = Basis.Html.Template;
     var Property = Basis.Data.Property.Property;
+    var TmplNode = nsWrappers.TmplNode;
+    var TmplContainer = nsWrappers.TmplContainer;
+    var TmplControl = nsWrappers.TmplControl;
 
     //
     // CONST
@@ -57,6 +60,34 @@
         month: date.getMonth(),
         year:  date.getFullYear()
       };
+    }
+
+    function binarySearchIntervalPos(arr, value){
+      if (!arr.length)  // empty array check
+        return -1;
+
+      var pos, compareValue;
+      var l = 0;
+      var r = arr.length;
+      var lv, rv;
+
+      // binary search
+      do 
+      {
+        compareValue = arr[pos = (l + r) >> 1];
+        if (value < (lv = compareValue.info.periodStart))
+          r = pos - 1;
+        else 
+          if (value > (rv = compareValue.info.periodEnd))
+            l = pos + 1;
+          else
+            return value >= lv && value <= rv ? pos : -1; // founded element
+                                                          // -1 returns when it seems as founded element,
+                                                          // but not equal (array item or value looked for have wrong data type for compare)
+      }
+      while (l <= r);
+
+      return -1;
     }
 
     //
@@ -129,7 +160,7 @@
     // SECTIONS
     //
 
-    var CalendarNode = Class(nsWrappers.HtmlNode, {
+    var CalendarNode = Class(TmplNode, {
       className: namespace + '.Calendar.Node',
 
       canHaveChildren: false,
@@ -139,32 +170,16 @@
 
       behaviour: {
         select: function(){
-          this.inherit();
+          TmplNode.prototype.behaviour.select.call(this);
 
           DOM.focus(this.element);
         },
         update: function(object, delta){
-          this.inherit(object, delta);
+          TmplNode.prototype.behaviour.update.call(this, object, delta);
 
           if ('periodStart' in delta || 'periodEnd' in delta)
           {
-            this.title.nodeValue = PERIOD_TITLE[this.nodePeriodName](this.info);
-
-            /*
-            if (this.document.isPeriodEnabled(newInfo.periodStart, newInfo.periodEnd))
-            {
-              this.enable();
-
-              //console.log(this.document.viewDate.value, newInfo.periodStart, newInfo.periodEnd, newInfo.periodStart <= this.document.viewDate.value && this.document.viewDate.value <= newInfo.periodEnd);
-              if (newInfo.periodStart <= this.document.selectedDate.value && this.document.selectedDate.value <= newInfo.periodEnd)
-                this.select();
-              else
-                this.unselect();
-            }
-            else
-            {
-              this.disable();
-            }*/
+            this.tmpl.title.nodeValue = this.titleGetter(this.info);
 
             if (this.parentNode)
             {
@@ -174,24 +189,13 @@
             }
           }
         }
-      },
-
-      init: function(nodePeriodName){
-        this.nodePeriodName = nodePeriodName;
-
-        config = this.inherit({});
-
-        cssClass(this.element).add(nodePeriodName);
-
-        return config;
       }
     });
 
-    var CalendarSection = Class(nsWrappers.HtmlContainer, {
+    var CalendarSection = Class(TmplContainer, {
       className: namespace + '.Calendar.Section',
 
       childClass: CalendarNode,
-      childFactory: function(config){ return new CalendarNode(config) },
       template: new Template(
         '<div{element|selectedElement} class="Basis-Calendar-Section">' +
           '<div class="Basis-Calendar-SectionTitle">{titleText}</div>' +
@@ -201,20 +205,20 @@
 
       behaviour: {
         select: function(){
-          this.inherit();
-          cssClass(this.titleElement).add('selected');
+          TmplContainer.prototype.behaviour.select.call(this);
+          cssClass(this.tabElement).add('selected');
         },
         unselect: function(){
-          this.inherit();
-          cssClass(this.titleElement).remove('selected');
+          TmplContainer.prototype.behaviour.unselect.call(this);
+          cssClass(this.tabElement).remove('selected');
         },
         update: function(object, delta){
-          this.inherit(object, delta);
+          TmplContainer.prototype.behaviour.update.call(this, object, delta);
 
           var newInfo = this.info;
           if ('periodStart' in delta || 'periodEnd' in delta)
           {
-            this.setTitle();
+            this.tmpl.titleText.nodeValue = this.getTitle(newInfo.periodStart) || '-';
 
             // update nodes
             var nodePeriod = getPeriod(this.nodePeriodName, new Date(newInfo.periodStart).add(this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(newInfo.periodStart) || 0)));
@@ -230,23 +234,20 @@
             }
 
             this.maxDate = nodePeriod.periodEnd;
-
-            /*
-            var doc = this.document;
-            this.isPrevPeriodEnabled = doc.isNextPeriodEnabled(this.minDate, BACKWARD);
-            this.isNextPeriodEnabled = doc.isNextPeriodEnabled(this.maxDate, FORWARD);
-
-            cssClass(doc.prev).bool('disabled', !this.isPrevPeriodEnabled);
-            cssClass(doc.next).bool('disabled', !this.isNextPeriodEnabled);*/
           }
 
-          this.tabTitleText.nodeValue = this.getTabTitle(this.info.selectedDate) || '-';
+          this.tabTitleText.nodeValue = this.getTabTitle(newInfo.selectedDate) || '-';
 
-          var node = this.getNodeByDate(this.info.selectedDate);
+          var node = this.getNodeByDate(newInfo.selectedDate);
           if (node)
             node.select();
           else
-            this.selection.clear();
+          {
+            if (newInfo.selectedDate && this.minDate <= newInfo.selectedDate && newInfo.selectedDate <= this.maxDate)
+              this.setViewDate(newInfo.selectedDate);
+            else
+              this.selection.clear();
+          }
         }
       },
 
@@ -272,46 +273,38 @@
       nodePeriodUnitCount: 1,
 
       init: function(config){
-        config = Object.complete({ selection: new nsWrappers.Selection(config && config.selection) }, config);
+        this.selection = new nsWrappers.Selection();
 
-        this.titleElement = DOM.createElement({
+        this.tabElement = DOM.createElement({
           description: '.Basis-Calendar-SectionTab',
           click: this.select.bind(this, false)
         }, this.tabTitleText = DOM.createText(''));
 
-        config = this.inherit(config);
+        TmplContainer.prototype.init.call(this, config);
 
         cssClass(this.element).add('Basis-Calendar-Section-' + this.sectionName);
 
-        //for (var i = 0; i < this.nodeCount; i++)
-        //  this.appendChild(new CalendarNode(this.nodePeriodName, i));
-        DOM.insert(this, [this.nodePeriodName].repeat(this.nodeCount));
+        this.setChildNodes([{
+          cssClassName: this.nodePeriodName,
+          titleGetter: PERIOD_TITLE[this.nodePeriodName]
+        }].repeat(this.nodeCount));
 
-        if (config.viewDate)
+        if (config && config.viewDate)
           this.setViewDate(config.viewDate);
-        if (config.selectedDate)
+        if (config && config.selectedDate)
           this.update({ selectedDate: config.selectedDate });
 
-        return config;
       },
 
-      getTitle: function(){  },
-      getTabTitle: function(){ return '1' },
-      setTitle: function(){
-        if (!this.info.periodStart)
-          return;
-
-        this.titleText.nodeValue = this.getTitle(this.info.periodStart) || '-';
-        /*if (this.document)
-          this.document.title.set(this.getTitle() || PERIOD_TITLE[this.periodName](this.info));*/
-      },
+      getTitle: function(){},
+      getTabTitle: function(){ return '-' },
 
       // nodes methods
 
       getNodeByDate: function(date){
         if (date && this.info.periodStart <= date && date <= this.info.periodEnd)
         {
-          var pos = this.childNodes.binarySearchInterval(date, 'info.periodStart', 'info.periodEnd');
+          var pos = binarySearchIntervalPos(this.childNodes, date);
           if (pos != -1)
             return this.childNodes[pos];
         }
@@ -323,9 +316,6 @@
         var allowed = forward ? this.isNextPeriodEnabled : this.isPrevPeriodEnabled;
         if (allowed)
         {
-          //var period = this.document.getNextPeriod(forward ? this.info.periodEnd : this.info.periodStart, forward);
-          //period = getPeriod(this.periodName, new Date(forward ? this.info.periodStart - 1 : this.info.periodEnd + 1));
-          //console.log(this.info.periodEnd, new Date(forward ? Number(this.info.periodEnd) + 1 : this.info.periodStart - 1));
           this.update(getPeriod(this.periodName, new Date(forward ? Number(this.info.periodEnd) + 1 : Number(this.info.periodStart) - 1)));
         }
       },
@@ -335,7 +325,14 @@
       },
 
       // bild methods
-      getInitOffset: Function.$null
+      getInitOffset: Function.$null,
+
+      destroy: function(){
+        TmplContainer.prototype.destroy.call(this);
+
+        this.tabElement = null;
+        this.tabTitleText = null;
+      }
     });
 
 
@@ -361,8 +358,8 @@
       nodePeriodUnit: DAY,
 
       getTabTitle: getter('getDate()'),
-      getTitle: function(){
-        return LOCALE('MONTH').FULL[this.info.periodStart.getMonth()] + ' ' + this.info.periodStart.getFullYear();
+      getTitle: function(periodStart){
+        return LOCALE('MONTH').FULL[periodStart.getMonth()] + ' ' + periodStart.getFullYear();
       },
       getInitOffset: function(date){
         return 1 + (new Date(date).set(DAY, 1).getDay() + 5) % 7;
@@ -378,14 +375,6 @@
       nodePeriodName: MONTH,
       nodePeriodUnit: MONTH,
 
-      init: function(config){
-        config = this.inherit(config);
-
-        /*for (var node = this.firstChild, i = 0; node; node = node.nextSibling, i++)
-          node.setTitle(LOCALE('MONTH').SHORT[i].toLowerCase());*/
-
-        return config;
-      },
       getTabTitle: getter('getMonth()', function(key){ return LOCALE('MONTH').FULL[key] }),
       getTitle: getter('getFullYear()')
     });
@@ -403,8 +392,8 @@
         return 1;
       },
       getTabTitle: getter('getFullYear()'),
-      getTitle: function(){
-        return this.info.periodStart.getFullYear() + ' - ' + this.info.periodEnd.getFullYear();
+      getTitle: function(periodStart){
+        return periodStart.getFullYear() + ' - ' + this.info.periodEnd.getFullYear();
       }
     });
 
@@ -441,16 +430,7 @@
       nodeCount: 4,
       nodePeriodName: 'quarter',
       nodePeriodUnit: MONTH,
-      nodePeriodUnitCount: 3/*,
-
-      init: function(config){
-        config = this.inherit(config);
-
-        for (var node = this.firstChild, i = 1; node; node = node.nextSibling, i++)
-          node.setTitle(i + ' ' + LOCALE('QUARTER').toLowerCase());
-
-        return config;
-      }*/
+      nodePeriodUnitCount: 3
     });
 
     CalendarSection.Quarter = Class(CalendarSection, {
@@ -463,8 +443,8 @@
       nodePeriodName: MONTH,
       nodePeriodUnit: MONTH,
 
-      getTitle: function(){
-        return [Math.floor(1 + date.getMonth().base(3)/3), LOCALE('QUARTER').toLowerCase(), date.getFullYear()].join(' ');
+      getTitle: function(periodStart){
+        return [Math.floor(1 + periodStart.getMonth().base(3)/3), LOCALE('QUARTER').toLowerCase(), periodStart.getFullYear()].join(' ');
       }
     });
 
@@ -472,13 +452,12 @@
     // Calendar
     //
 
-    var Calendar = Class(nsWrappers.HtmlControl, {
+    var Calendar = Class(TmplControl, {
       className: namespace + '.Calendar',
 
-      canHaveChildren: true,
       childClass: CalendarSection,
-      childFactory: function(name){
-        return new CalendarSection[name]({
+      childFactory: function(config){
+        return new CalendarSection[config.type]({
           viewDate: this.date.value,
           selectedDate: this.selectedDate.value
         });
@@ -487,14 +466,7 @@
       template: new Template(Function.lazyInit(function(){
         return '<div{element} class="Basis-Calendar">' +
           '<div{headerElement} class="Basis-Calendar-Header">' +
-            /*'<a{prev} href="#move:prev" class="Basis-Calendar-MovePrevButton">' +
-              '<span>\u2039</span><span class="over"></span>' +
-            '</a>' +
-            '<a{next} href="#move:next" class="Basis-Calendar-MoveNextButton">' +
-              '<span>\u203A</span><span class="over"></span>' +
-            '</a>' +*/
             '<div{sectionTabs} class="Basis-Calendar-SectionTabs">{titleText}</div>' +
-            //'<a href="#move:up" class="Basis-Calendar-Title">{titleText}</a>' +
           '</div>' +
           '<div class="Basis-Calendar-Body">' +
             '<a{prev} href="#move:prev" class="Basis-Calendar-ButtonPrevPeriod">' +
@@ -516,14 +488,13 @@
 
       behaviour: {
         childNodesModified: function(){
-          this.childNodes.forEach(getter('setTitle()'));
+          //this.childNodes.forEach(getter('setTitle()'));
           DOM.insert(
-            DOM.clear(this.sectionTabs),
-            this.childNodes.map(getter('titleElement'))
+            DOM.clear(this.tmpl.sectionTabs),
+            this.childNodes.map(getter('tabElement'))
           );
         },
         click: function(event, node){
-          
           if (node instanceof CalendarNode)
           {
             var newDate = node.info.periodStart;
@@ -534,8 +505,8 @@
           {
             var sender = Event.sender(event);
             
-            if (!DOM.is(sender, 'A'))
-              sender = DOM.parent(sender, 'A', 0, this.element);
+            if (sender.tagName != 'A')
+              sender = DOM.findAncestor(sender, function(node){ return node.tagName == 'A' }, this.element);
 
             if (sender && sender.hash)
             {
@@ -571,10 +542,12 @@
       map: {},
       periodEnableByDefault: true,   // default state of periods: 1 = enabled, 0 = disabled
 
+      sections: ['Month', /*'Quarter', 'YearQuarters', */'Year', 'YearDecade'/*, 'Century'*/],
+
       // constructor
       init: function(config){
         // create control (setup selection)
-        config = this.inherit(Object.complete({
+        TmplControl.prototype.init.call(this, Object.complete({
           selection: {
             handlersContext: this,
             handlers: {
@@ -590,6 +563,8 @@
             }
           }
         }, config));
+
+        config = config || {};
 
         // dates
 
@@ -614,26 +589,15 @@
 
         // Generate HTML structure
 
-        this.todayDate.addLink(this.todayText, null, getter("toFormat('%D.%M.%Y')"));
+        this.todayDate.addLink(this.tmpl.todayText, null, getter("toFormat('%D.%M.%Y')"));
 
         // min/max dates
-
-        if (config.minDate)
-          this.minDate = config.minDate;
-
-        if (config.maxDate)
-          this.maxDate = config.maxDate;
-
-        // default state & map
-
-        if (config.map)
-          this.map = config.map;
 
         if (config.defaultState)
           this.periodEnableByDefault = config.defaultState == 'enabled';
 
         // insert sections
-        DOM.insert(this, config.sections || ['Month', /*'Quarter', 'YearQuarters', */'Year', 'YearDecade'/*, 'Century'*/]);
+        DOM.insert(this, this.sections.map(Function.wrapper('type')));
 
         // add event handler
         this.addEventListener('click');
@@ -642,58 +606,6 @@
         // this.selection.add(this.firstChild);
         if (this.firstChild)
           this.firstChild.select();
-
-        /*
-        var self = this;
-        new Basis.DragDrop.DragDropElement({
-          element: this.content,
-          handlers: {
-            start: function(cfg){
-              //console.log('start', cfg.deltaX, arguments);
-              cfg.element = self.activeSection.content.cloneNode(true);
-              cfg.sign = 0;
-              DOM.setStyle(cfg.element, { position: 'absolute', width: '100%', zIndex: 10 });
-              DOM.insert(self.activeSection.content.parentNode, cfg.element, DOM.INSERT_BEFORE, self.activeSection.content);
-            },
-            move: function(cfg){
-              if (cfg.deltaX.sign() != cfg.sign)
-              {
-                var diff = 2 - Math.abs(cfg.sign + cfg.deltaX.sign());
-                while (diff--)
-                  self.nextPeriod(cfg.sign > cfg.deltaX.sign());
-                cfg.sign = cfg.deltaX.sign();
-              }
-
-              var width = cfg.element.offsetWidth;
-              var dx = Math.abs(cfg.deltaX);
-              if (dx > width)
-                return this.stop();
-
-              DOM.setStyle(cfg.element, {
-                left: (cfg.l = cfg.deltaX) + 'px',
-                opacity: cfg.o = 1//dx > width/2 ? 2 * (width - dx)/width : 1
-              });
-              //DOM.setStyle(self.activeSection.content, {
-              //  opacity: dx > width/3 ? (3 * dx - width)/(2*width) : 0
-              //});
-            },
-            over: function(cfg){
-              var width = cfg.element.offsetWidth;
-              
-              //DOM.remove(cfg.element);
-
-              var t = new Basis.Animation.Thread({ duration: 250 * (1 - Math.abs(cfg.l)/width) });
-              var m = new Basis.Animation.Modificator(t, function(value){ DOM.setStyle(cfg.element, { left: value + 'px' }) }, cfg.l, width * cfg.deltaX.sign());
-              //var m = new Basis.Animation.Modificator(t, function(value){ DOM.setStyle(cfg.element, { opacity: value }) }, cfg.o, 0);
-              t.start();
-
-              //if (Math.abs(cfg.deltaX) > width/2)
-              //  self.nextPeriod(cfg.deltaX < 0);
-              
-              //console.log('over', arguments)
-            }
-          }
-        })*/
       },
 
       // section navigate
@@ -710,7 +622,10 @@
           section.setViewDate(this.selectedDate.value);
         }
         else
-          !forward && this.dispatch('change');
+        {
+          if (!forward)
+            this.dispatch('change');
+        }
       },
       nextPeriod: function(forward){
         this.activeSection.nextPeriod(forward);
@@ -974,7 +889,7 @@
       // destruction
 
       destroy: function(){
-        this.inherit();
+        TmplControl.prototype.destroy.call(this);
 
         this.date.destroy();
         this.todayDate.destroy();

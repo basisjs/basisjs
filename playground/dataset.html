@@ -1,0 +1,214 @@
+
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf08" />
+  <title>Basis Dataset Playground</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../plugins/style/highlight/style.css" media="screen" />
+
+  <script type="text/javascript" src="../basis.js"></script>
+  <script type="text/javascript" src="../data.js"></script>
+  <script type="text/javascript" src="../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../entity.js"></script>
+
+  <style type="text/css">
+    BODY
+    {
+      color: black;
+      font-size: small;
+    }
+
+    .dataset
+    {
+      border: 1px solid red;
+      float: left;
+      width: 150px;
+    }
+  </style>
+</head>
+
+<body>
+  <script type="text/javascript">
+    var nsData = Basis.Data;
+    var nsEntity = Basis.Entity;
+    var DataObject = nsData.DataObject;
+
+
+    var data = [
+      { id:  1, value:  12 },  // 1
+      { id:  2, value:   2 },
+      { id:  3, value:  32 },
+      { id:  4, value:  44 },
+      { id:  5, value:  12 },  // 5
+      { id:  6, value:   3 },
+      { id:  7, value:   5 },
+      { id:  8, value:  45 },
+      { id:  9, value:  11 },
+      { id: 10, value:  10 },  // 10
+      { id: 11, value: 152 },
+      { id: 12, value:  54 },
+      { id: 13, value:  15 },
+      { id: 14, value:  32 },
+      { id: 15, value:  33 }   // 15
+    ].map(function(item){
+      return new DataObject({ info: item });
+    });
+
+    var refData = {};
+    for (var i = 0; i < data.length; i++)
+    {
+      var id = data[i].info.value;
+      if (!refData[id])
+      {
+        refData[id] = new DataObject({ info: { id: id, value: id, title: 'ref data for ' + id } });
+      }
+    }
+
+    var Value = new nsEntity.EntityType({
+      name: 'Value',
+      fields: {
+        id: nsEntity.IntId,
+        value: Number,
+        double: Number
+      },
+      calculate: function(delta){
+        if ('value' in delta)
+          delta.double = delta.value * 2;
+      }
+    });
+
+    document.write(data.map(Function.getter('info.value')).sortAsObject(Number).join(', '));
+
+    var datasetA = new Basis.Data.Dataset({
+      items: data
+    });
+    var datasetB = new Basis.Data.Dataset({
+      items: [data[0], data[1], data[2]]
+    });
+    var datasetC = new Basis.Data.Dataset({
+      items: [data[2], data[3], data[4]]
+    });
+    var datasetD = new Basis.Data.Dataset({
+      items: [data[4], data[5], data[6]]
+    });
+
+    new Basis.DOM.Wrapper.HtmlContainer({
+      cssClassName: 'dataset',
+      content: 'AggregateDataset, all datasets, no transform',
+      container: document.body,
+      localSorting: 'info.value',
+      collection: dd1 = new nsData.AggregateDataset({
+        sources: [datasetA, datasetB, datasetC, datasetD]
+      }),
+      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+        template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
+        behaviour: {
+          update: function(object, delta){
+            this.inherit(object, delta);
+
+            this.valueText.nodeValue = this.info.value;
+            this.idText.nodeValue = this.delegate.eventObjectId;
+          }
+        }
+      })
+    });
+
+    new Basis.DOM.Wrapper.HtmlContainer({
+      cssClassName: 'dataset',
+      content: 'AggregateDataset, all datasets, with transform',
+      container: document.body,
+      localSorting: 'info.value',
+      collection: new nsData.AggregateDataset({
+        transform: function(object){
+          return refData[object.info.value];
+        },
+        sources: [datasetA, datasetB, datasetC, datasetD]
+      }),
+      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+        template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
+        behaviour: {
+          update: function(object, delta){
+            this.inherit(object, delta);
+
+            this.valueText.nodeValue = this.info.title;
+            this.idText.nodeValue = this.delegate.eventObjectId;
+          }
+        }
+      })
+    });
+
+    new Basis.DOM.Wrapper.HtmlContainer({
+      cssClassName: 'dataset',
+      content: 'Collection, all datasets, no transform, odd only',
+      container: document.body,
+      localSorting: 'info.value',
+      collection: xx = new nsData.Collection({
+        filter: 'info.value % 2 == 0',
+        sources: [datasetA, datasetB, datasetC, datasetD]
+      }),
+      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+        template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
+        behaviour: {
+          update: function(object, delta){
+            this.inherit(object, delta);
+
+            this.valueText.nodeValue = this.info.value;
+            this.idText.nodeValue = this.delegate.eventObjectId;
+          }
+        }
+      })
+    });
+
+
+    new Basis.DOM.Wrapper.HtmlContainer({
+      cssClassName: 'dataset',
+      content: 'Value.all',
+      container: document.body,
+      localSorting: 'info.value',
+      collection: Value.all,
+      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+        template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
+        behaviour: {
+          update: function(object, delta){
+            this.inherit(object, delta);
+
+            this.valueText.nodeValue = this.info.value;
+            this.idText.nodeValue = this.info.id;
+          }
+        }
+      })
+    });
+
+    C = new Basis.DOM.Wrapper.HtmlContainer({
+      cssClassName: 'dataset',
+      content: 'AggregateDataset, all datasets, with transform',
+      container: document.body,
+      localSorting: 'info.value',
+      collection: new nsData.AggregateDataset({
+        transform: function(object){
+          return object.info.id ? Value.getSlot(object.info.id) : null;
+        },
+        sources: [datasetA, datasetB, datasetC, datasetD]
+      }),
+      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+        template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
+        behaviour: {
+          update: function(object, delta){
+            this.inherit(object, delta);
+
+            this.idText.nodeValue = this.info.id;
+            this.valueText.nodeValue = 'value' in this.info ? this.info.value : '<empty slot>';
+          }
+        }
+      })
+    });
+
+    Value.all.sync(data.map(Function.getter('info')).slice(0,10));
+
+  </script>
+</body>
+
+</html>

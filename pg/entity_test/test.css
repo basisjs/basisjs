@@ -1,0 +1,14 @@
+
+  BODY
+  {
+    font: small tahoma;
+  }
+
+  HR
+  {
+    color: black;
+    height: 1px;
+    border: none;
+    background: #888;
+    margin: 2px 0;
+  }

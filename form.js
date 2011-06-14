@@ -37,7 +37,6 @@
     var Control = nsWrappers.Control;         
     var HtmlNode = nsWrappers.HtmlNode;        
     var Selection = nsWrappers.Selection;       
-    var InteractiveNode = nsWrappers.InteractiveNode; 
 
     var AbstractProperty = Basis.Data.Property.AbstractProperty;
     var Property = Basis.Data.Property.Property;
@@ -67,11 +66,11 @@
           {
             var key = Event.key(event);
           
-            if (((field.nextFieldOnEnter || event.ctrlKey) && key == Event.KEY.ENTER) || key == Event.KEY.CTRL_ENTER)
-            {
+            if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
               Event.cancelDefault(event);
+
+            if (((field.nextFieldOnEnter || event.ctrlKey) && key == Event.KEY.ENTER) || key == Event.KEY.CTRL_ENTER)
               field.nextFieldFocus();
-            }
             else
               field.setValid();
           }
@@ -121,7 +120,9 @@
       	if (this.tableLayout = config.tableLayout)
       	  this.template = this.tableTemplate;
       	  
-        config = this.inherit(config);
+        this.inherit(config);
+
+        config = config || {};
 
         this.name = config.name || config.id;
         this.id   = config.id;
@@ -502,7 +503,7 @@
       },
       setValue: function(value){
         var state = this.field.checked;
-        this.field.checked = Boolean.normalize(value);
+        this.field.checked = !!value;
         if (state != this.field.checked)
           this.change();
       },
@@ -1539,7 +1540,7 @@
     var Matcher = Class(MatchProperty, {
       match: function(){
         for(var child = this.node.firstChild; child; child = child.nextSibling)
-          this.matchFunction(child, this.value == '')
+          this.matchFunction(child, this.value == '');
       },
       changeHandler: function(value){
         this.inherit(value);

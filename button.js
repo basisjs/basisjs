@@ -29,8 +29,7 @@
     var getter = Function.getter;
     var cssClass = Basis.CSS.cssClass;
 
-    var nsWrappers = DOM.Wrapper;
-    var STATE = Basis.Data.STATE;
+    var nsWrappers = Basis.DOM.Wrapper;
 
     //
     // Main part
@@ -85,27 +84,22 @@
         if (config.captionGetter)
           this.captionGetter = Function.getter(config.captionGetter);
 
-        if (config.groupId)
-          this.groupId = config.groupId;
-
-        if (config.name)
-          this.name = config.name;
-
         // inherit
         this.inherit(config);
 
         this.setCaption('caption' in config ? config.caption : this.caption);
 
-        Event.addHandler(this.element, 'click', function(event){
-          this.click();
-          Event.kill(event);
-        }, this);
-
-        Event.addHandler(this.element, 'keydown', function(event){
-          if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
-          {
+        Event.addHandlers(this.element, {
+          click: function(event){
             this.click();
             Event.kill(event);
+          },
+          keydown: function(event){
+            if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
+            {
+              this.click();
+              Event.kill(event);
+            }
           }
         }, this);
       },
@@ -115,11 +109,7 @@
       },
       setCaption: function(newCaption){
         this.caption = newCaption;
-        this.captionText.nodeValue = this.captionGetter(this);
-      },
-      setTitle: function(caption){
-        ;;;if (typeof console != 'undefined'){ console.warn("Button.setTitle is deprecated. Use Button.setCaption instead"); debugger; }
-        return this.setCaption(caption);
+        this.tmpl.captionText.nodeValue = this.captionGetter(this);
       },
       destroy: function(){
         Event.clearHandlers(this.element);
