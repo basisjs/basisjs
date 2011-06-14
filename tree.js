@@ -127,16 +127,27 @@
       * @private
       */
       template: new Template(
-        '<li{element} class="Basis-Tree-Node">' +
+        '<li{element} class="Basis-Tree-Node" event-click="select">' +
           '<div{content|selectedElement} class="Tree-Node-Title Tree-Node-Content">' +
             '<a{title} href="#">{titleText|[no title]}</a>' +
           '</div>' +
         '</li>'
       ),
 
-      dispatchEvent: function(eventName, event){
-        if (eventName == 'click' && DOM.isInside(Event.sender(event), this.tmpl.title || this.element) && !this.isDisabled())
-          this.select(Event(event).ctrlKey);
+      templateAction: function(actionName, event){
+        switch (actionName){
+          case 'select':
+            if (!this.isDisabled())
+              this.select(Event(event).ctrlKey);
+            break;
+
+          case 'toggle':
+            this.toggle();
+            break;
+
+          default:
+            TmplContainer.prototype.templateAction.call(this, actionName, event);
+        }
       },
 
      /**
@@ -149,7 +160,6 @@
       expandAll: expandAll,
       collapse: Function.$undef,
       collapseAll: collapseAll
-
     });
 
    /**
@@ -183,9 +193,9 @@
       * @private
       */
       template: new Template(
-        '<li{element} class="Basis-Tree-Folder" event:click="click">' +
+        '<li{element} class="Basis-Tree-Folder" event-click="select">' +
           '<div{content|selectedElement} class="Tree-Node-Title Tree-Folder-Content">' +
-            '<div{expander} class="Basis-Tree-Expander" event:click="toggle"/>' +
+            '<div{expander} class="Basis-Tree-Expander" event-click="toggle"/>' +
             '<a{title} href="#">{titleText|[no title]}</a>' + 
           '</div>' + 
           '<ul{childNodesElement}/>' + 
@@ -214,13 +224,6 @@
 
         if (this.collapsed && this.collapsable)
           this.event_collapse();
-      },
-
-      dispatchEvent: function(eventName, event){
-        if (eventName == 'click' && this.tmpl.expander && DOM.isInside(Event.sender(event), this.tmpl.expander))
-          this.toggle();
-        else
-          TreeNode.prototype.dispatchEvent.call(this, eventName, event);
       },
 
      /**
@@ -279,20 +282,6 @@
           '<ul{childNodesElement|content|disabledElement} class="Basis-Tree-Root"></ul>' + 
         '</div>'
       ),
-
-     /**
-      * @param {Object} config
-      * @config {function()} childClass
-      * @constructor
-      */
-      init: function(config){
-        // inherit
-        Control.prototype.init.call(this, config);
-
-        // attach event handlers
-        this.addEventListener('click');
-        this.addEventListener('dblclick');
-      },
 
      /**
       * Expand all descendant nodes.

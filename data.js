@@ -290,7 +290,7 @@
       */
       init: function(config){
         // inherit
-        //EventObject.prototype.init.call(this, config);
+        EventObject.prototype.init.call(this, config);
 
         // info/delegate
         var delegate = this.delegate;
@@ -1723,7 +1723,7 @@
     // Collection
     //
 
-/*    var COLLECTION_ITEM_HANDLER = {
+  /*    var COLLECTION_ITEM_HANDLER = {
       update: function(object){
         var map_ = this.map_[object.eventObjectId];
         var newState = !!this.filter(object);
@@ -1809,7 +1809,7 @@
         this.removeSource(source);
       }
     };
-*/
+  */
 
    /**
     * @class

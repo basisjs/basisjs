@@ -2120,33 +2120,10 @@
           DOM.insert(this.container, element);
       },
 
-      dispatchEvent: function(event){ },
-      addEventListener: function(eventName, dispatchEvent, donotKill){
-        dispatchEvent = dispatchEvent || eventName;
-        createEvent(eventName);
-
-        Event.addHandler(this.element, eventName, function(event){ 
-          var node = this.getNodeByEventSender(event);
-          var event = Event(event);
-            
-          if (node)
-            node.dispatchEvent(eventName, event);
-              
-          this.dispatchEvent(eventName, event, node);
-          
-          if (!donotKill && Event.sender(event).tagName != 'INPUT')
-            Event.kill(event);
-        }, this);
-      },
-      getNodeByEventSender: function(event){
-        var sender = Event.sender(event);
-        var htmlNode = sender[HTML_EVENT_OBJECT_ID_HOLDER] ? sender : DOM.findAncestor(sender, getter(HTML_EVENT_OBJECT_ID_HOLDER), this.element);
-        if (htmlNode)
-        {
-          var node = eventObjectMap[htmlNode[HTML_EVENT_OBJECT_ID_HOLDER]];
-          if (node && node.document == this)
-            return node;
-        }
+      templateAction: function(actionName, event){
+        // send action to document node
+        //if (this.document && this.document !== this)
+        //  this.document.templateAction(actionName, event, this);
       },
 
       destroy: function(){

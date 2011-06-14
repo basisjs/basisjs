@@ -8,7 +8,7 @@
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
-'use strict';
+//'use strict';
 /**
  * @annotation
  * Basis library core module. It provides various most using functions
@@ -1357,6 +1357,8 @@
   // OOP section: Class implementation
   //
 
+  var instanceMap = {};
+
   var Class = (function(){ 
 
    /**
@@ -1400,13 +1402,6 @@
     */
 
     var namespace = 'Basis.Class';
-
-    function isEventObjectSubClass(testClass){
-      var cursor = testClass.superClass_;
-      while (cursor && cursor !== testClass && cursor !== EventObject)
-        cursor = cursor.superClass_;
-      return cursor === EventObject;
-    }
 
    /**
     * Root class for all classes created by Basis class model.
@@ -1463,7 +1458,7 @@
         // NOTE: this code makes Chrome and Firefox show class name in console
         //console.log(newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/), newClassProps.prototype.init);
         var NULL_CONFIG = {};
-        var newClass = newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/)//isEventObjectSubClass(SuperClass)
+        var newClass = newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/)
           ? function(extend, config){
               // mark object
               this.eventObjectId = seed++;
@@ -1603,14 +1598,14 @@
       * @config {boolean} traceEvents_ Debug for.
       * @constructor
       */
-      /*init: function(config){
+      init: function(config){
 
-
+        instanceMap[this.eventObjectId] = this;
         // init properties
         //this.handlers_ = [];
 
         // apply config
-        if (config)
+        /*if (config)
         {
           // fast add first hanlder
           if (this.handlers)
@@ -1625,8 +1620,8 @@
 
           // debug for
           ;;;if (this.traceEvents_) (this.handlers_ || (this.handlers_ = [])).push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
-        }
-      },*/
+        }*/
+      },
 
      /**
       * Registrates new event handler set for object.
@@ -1690,6 +1685,8 @@
       },
 
       event_destroy: EventObject.event.destroy,
+      templateAction: function(actionName, event){
+      },
 
      /**
       * @destructor
@@ -1707,6 +1704,7 @@
         // remove all event handler sets
         //delete this.handlers_;
         this.handlers_ = null;
+        delete instanceMap[this.eventObjectId];
 
         // no handlers in destroyed object, nothing dispatch
         // dispatch will throw exception
@@ -3220,6 +3218,8 @@
       return DOM.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
     })();
 
+    var tmplEventListeners = {};
+
    /**
     * Creates DOM structure template from marked HTML. Use {Basis.Html.Template#createInstance}
     * method to apply template to object. It creates clone of DOM structure and adds
@@ -3268,7 +3268,6 @@
     *   dataObject.destroy();
     * @class
     */
-
     var Template = Class.createHP(null, {
       className: namespace + '.Template',
 
@@ -3376,14 +3375,54 @@
                 var tmp = params.replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' });
                 params = tmp
                   .trim()
-                  .replace(/(?:([a-z0-9\_]+):)?([a-z0-9\_]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attr, ref, name, value){
+                  .replace(/(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attrName, ref, name, value){
                     if (name)
-                      getters[name] = path + 'childNodes[' + pos + ']' + '.getAttributeNode("' + attr + '")';
+                      getters[name] = path + 'childNodes[' + pos + ']' + '.getAttributeNode("' + attrName + '")';
+
+                    var eventMatch = attrName.match(/^event-([a-z]+)/i);
+                    if (eventMatch)
+                    {
+                      var eventName = eventMatch[1];
+                      if (!tmplEventListeners[eventName])
+                      {
+                        //console.log('add listener for ' + eventName);
+                        tmplEventListeners[eventName] = true;
+                        Event.addGlobalHandler(eventMatch[1], function(event){
+                          var cursor = Event.sender(event);
+                          var attr;
+                          var refId;
+
+                          // search for nearest node with event-* attribute
+                          do {
+                            if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
+                              break;
+                          } while (cursor = cursor.parentNode);
+
+                          // if not found - exit
+                          if (!attr)
+                            return;
+
+                          // search for nearest node refer to Basis.Class instance
+                          do {
+                            if (refId = cursor.basisEventObjectId)
+                            {
+                              // if found call templateAction method
+                              var node = instanceMap[refId];
+                              if (node)
+                              {
+                                node.templateAction(attr.nodeValue, event);
+                              }
+                              break;
+                            }
+                          } while (cursor  = cursor.parentNode);
+                        });
+                      }
+                    }
 
                     if (value)
                       value = strings.shift();
 
-                    return attr == 'class' ? CSS.makeClassName(value.replace(/^([\'\"]?)(.*?)\1$/, "$2")) : '[' + attr + (value ? '=' + value : '') + ']'
+                    return attrName == 'class' ? CSS.makeClassName(value.replace(/^([\'\"]?)(.*?)\1$/, "$2")) : '[' + attrName + (value ? '=' + value : '') + ']'
                   });
               }
 
