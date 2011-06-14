@@ -17,7 +17,7 @@
 
     // import names
 
-    var Class = Basis.Class.createHP;
+    var Class = Basis.Class;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
     var nsWrappers = DOM.Wrapper;

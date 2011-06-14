@@ -8,7 +8,7 @@
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
-//'use strict';
+'use strict';
 /**
  * @annotation
  * Basis library core module. It provides various most using functions
@@ -1357,8 +1357,6 @@
   // OOP section: Class implementation
   //
 
-  var instanceMap = {};
-
   var Class = (function(){ 
 
    /**
@@ -1408,7 +1406,7 @@
     * @type {function()}
     */
     var BaseClass = function(){};
-    var seed = 1;
+    var seed = { id: 1 };
 
     extend(BaseClass, {
       // Base class name
@@ -1453,25 +1451,29 @@
 
         if (!newClassProps.className)
           newClassProps.className = SuperClass.className + '._SubClass_';
+        className = newClassProps.className;
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
-        //console.log(newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/), newClassProps.prototype.init);
         var NULL_CONFIG = {};
         var newClass = newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/)
-          ? function(extend, config){
-              // mark object
-              this.eventObjectId = seed++;
-              // extend and override instance properties
-              for (var key in extend)
-                this[key] = extend[key];
-              this.init(config || NULL_CONFIG);
-            }
-          : function(){
-              // mark object
-              this.eventObjectId = seed++;
-              this.init.apply(this, arguments);
-            };
+          ? new Function('seed', 'NULL_CONFIG',
+            'return {"' + className + '": function(extend, config){\n' +
+            // mark object
+            '  this.eventObjectId = seed.id++;\n' +
+            // extend and override instance properties
+            '  for (var key in extend)\n' +
+            '    this[key] = extend[key];\n' +
+            // call constructor
+            '  this.init(config || NULL_CONFIG);\n' +
+            '}}["' + className + '"]')(seed, NULL_CONFIG)
+          : new Function('seed',
+            'return {"' + className + '": function(){\n\n' +
+            // mark object
+            '  this.eventObjectId = seed.id++;\n' +
+            // call constructor
+            '  this.init.apply(this, arguments);\n\n' +
+            '}}["' + className + '"]')(seed);
 
         // WARN: don't use extend() to assign this value (IE doesn't enumerate it)
         newClassProps.prototype.constructor = newClass;
@@ -1520,8 +1522,7 @@
 
     return getNamespace(namespace, BaseClass.create).extend({
       BaseClass: BaseClass,
-      create: BaseClass.create,
-      createHP: BaseClass.create
+      create: BaseClass.create
     });
   })();
 
@@ -1600,7 +1601,7 @@
       */
       init: function(config){
 
-        instanceMap[this.eventObjectId] = this;
+        //instanceMap[this.eventObjectId] = this;
         // init properties
         //this.handlers_ = [];
 
@@ -1704,7 +1705,6 @@
         // remove all event handler sets
         //delete this.handlers_;
         this.handlers_ = null;
-        delete instanceMap[this.eventObjectId];
 
         // no handlers in destroyed object, nothing dispatch
         // dispatch will throw exception
@@ -1882,7 +1882,7 @@
     * lastChild, nodeType
     * @class TreeWalker
     */
-    var TreeWalker = Class.createHP(null, {
+    var TreeWalker = Class(null, {
       className: namespace + '.TreeWalker',
 
      /**
@@ -2974,7 +2974,7 @@
    /**
     * @class
     */
-    var CssStyleSheetWrapper = Class.createHP(null, {
+    var CssStyleSheetWrapper = Class(null, {
       className: namespace + '.CssStyleSheetWrapper',
 
      /**
@@ -3051,7 +3051,7 @@
    /**
     * @class
     */
-    var CssRuleWrapper = Class.createHP(null, {
+    var CssRuleWrapper = Class(null, {
       className: namespace + '.CssRuleWrapper',
 
      /**
@@ -3142,7 +3142,7 @@
    /**
     * @class
     */
-    var CssRuleWrapperSet = Class.createHP(null, {
+    var CssRuleWrapperSet = Class(null, {
       className: namespace + '.CssRuleWrapperSet',
 
      /**
@@ -3219,6 +3219,9 @@
     })();
 
     var tmplEventListeners = {};
+    var tmplNodeMap = { seed: 1 };
+
+    var HTML_EVENT_OBJECT_ID_HOLDER = 'basisObjectId';
 
    /**
     * Creates DOM structure template from marked HTML. Use {Basis.Html.Template#createInstance}
@@ -3268,8 +3271,10 @@
     *   dataObject.destroy();
     * @class
     */
-    var Template = Class.createHP(null, {
+    var Template = Class(null, {
       className: namespace + '.Template',
+
+      map_: tmplNodeMap,
 
      /**
       * @param {string|function()} template Template source code that will be parsed
@@ -3404,10 +3409,10 @@
 
                           // search for nearest node refer to Basis.Class instance
                           do {
-                            if (refId = cursor.basisEventObjectId)
+                            if (refId = cursor[HTML_EVENT_OBJECT_ID_HOLDER])
                             {
                               // if found call templateAction method
-                              var node = instanceMap[refId];
+                              var node = tmplNodeMap[refId];
                               if (node)
                               {
                                 node.templateAction(attr.nodeValue, event);
@@ -3484,23 +3489,39 @@
             body[j].path = body[j].path.replace(path_re, body[i].name);
         }
 
-        this.proto = proto;
-        this.createInstance = new Function('object',
-          'object = object || {};' + 
-          'var html = this.proto.cloneNode(true);' + 
-          body.map(String.format, '{alias} = {path};').join('') +
-          'return object;'
-        );
+        this.createInstance = new Function('proto', 'map', 
+          'return function(object, node){' +
+          '  object = object || {};\n' + 
+          '  var html = proto.cloneNode(true);\n' + 
+          body.map(String.format,
+          '  {alias} = {path};\n'
+          ).join('') +
+          '  if (node && object.element)\n' +
+          '  {\n' + 
+          '    var id = map.seed++;\n' +
+          '    map[id] = node;\n' +
+          '    object.element.' + HTML_EVENT_OBJECT_ID_HOLDER + ' = id;' +
+          //'    ;;;object.element.setAttribute("_e", node.eventObjectId);' +
+          '  }' +
+          '  return object;' +
+          '}'
+        )(proto, tmplNodeMap);
 
-        this.clearInstance = new Function('object',
-          aliases.map(String.format, 'delete object.{0};').join('')
-        );
+        this.clearInstance = new Function('map',
+          'return function(object, node){\n' +
+          '  var id = object.element && object.element.' + HTML_EVENT_OBJECT_ID_HOLDER + ';\n' +
+          '  if (id) delete map[id];\n' +
+          aliases.map(String.format,
+          '  delete object.{0};\n'
+          ).join('') +
+          '}'
+        )(tmplNodeMap);
       },
-      createInstance: function(object){
+      createInstance: function(object, node){
         this.parse();
-        return this.createInstance(object);
+        return this.createInstance(object, node);
       },
-      clearInstance: function(object){
+      clearInstance: function(object, node){
       }
     });
  
@@ -4146,7 +4167,7 @@
     };
 
     var rx = /(^|\\s+)selected(\\s+|$)|$/;
-    var ClassNameWraper = Class.createHP(null, {
+    var ClassNameWraper = Class(null, {
       className: namespace + '.ClassName',
 
       init: function(element){ 

@@ -39,7 +39,7 @@
     
     // import names
 
-    var Class = Basis.Class.createHP;
+    var Class = Basis.Class;
     var Event = Basis.Event;
     var DOM = Basis.DOM;
 
@@ -159,7 +159,14 @@
       expand: Function.$undef,
       expandAll: expandAll,
       collapse: Function.$undef,
-      collapseAll: collapseAll
+      collapseAll: collapseAll,
+
+     /**
+      * Inverts node collapsed state. If node was collapsed expand it, otherwise collapse it.
+      */
+      toggle: function(){
+        this.collapsed ? this.expand() : this.collapse();
+      }
     });
 
    /**
@@ -250,13 +257,6 @@
           this.event_collapse();
           return true;
         }
-      },
-
-     /**
-      * Inverts node collapsed state. If node was collapsed expand it, otherwise collapse it.
-      */
-      toggle: function(){
-        this.collapsed ? this.expand() : this.collapse();
       } 
 
     });

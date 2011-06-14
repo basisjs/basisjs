@@ -19,7 +19,7 @@
 
     // import names
 
-    var Class = Basis.Class.createHP;
+    var Class = Basis.Class;
     var Cleaner = Basis.Cleaner;
 
     var extend = Object.extend;

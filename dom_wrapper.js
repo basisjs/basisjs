@@ -1,4 +1,4 @@
-/**
+/*!
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
  *
@@ -36,7 +36,7 @@
 
     // import names
 
-    var Class = Basis.Class.createHP;
+    var Class = Basis.Class;
     var DOM = Basis.DOM;
     var Event = Basis.Event;
     var nsData = Basis.Data;
@@ -1900,9 +1900,6 @@
     // HTML reflections
     //
 
-    var HTML_EVENT_OBJECT_ID_HOLDER = 'basisEventObjectId';
-    var eventObjectMap = {};
-
     var SATELLITE_DESTROY_HANDLER = {
       destroy: function(object){
         DOM.replace(object.element, this);
@@ -2052,7 +2049,7 @@
         {
           //this.template.createInstance(this.tmpl = {});
           //extend(this, this.tmpl);
-          this.template.createInstance(this.tmpl);
+          this.template.createInstance(this.tmpl, this);
           this.element = this.tmpl.element;
 
           // insert content
@@ -2066,28 +2063,8 @@
 
         Node.prototype.init.call(this, config);
 
-        var element = this.element;
-        if (element)
-        {
-          element[HTML_EVENT_OBJECT_ID_HOLDER] = this.eventObjectId;
-          ;;;element.setAttribute('_e', this.eventObjectId);
-          eventObjectMap[this.eventObjectId] = this;
-          
-          if (this.id)
-            element.id = this.id;
-        }
-
-        if (true) // this.template
-        {
-          var delta = {};
-          for (var key in this.info)
-            delta[key] = undefined;
-          for (var key in delta)
-          {
-            this.event_update(this, delta);
-            break;
-          }
-        }
+        if (this.id)
+          this.element.id = this.id;
 
         // inherit init
 
@@ -2115,9 +2092,21 @@
           SATELLITE_HANDLER.update.call(this, this, {});
         }
 
+        if (true) // this.template
+        {
+          var delta = {};
+          for (var key in this.info)
+            delta[key] = undefined;
+          for (var key in delta)
+          {
+            this.event_update(this, delta);
+            break;
+          }
+        }
+
         // add to container
         if (this.container)
-          DOM.insert(this.container, element);
+          DOM.insert(this.container, this.element);
       },
 
       templateAction: function(actionName, event){
@@ -2127,8 +2116,6 @@
       },
 
       destroy: function(){
-        delete eventObjectMap[this.eventObjectId];
-
         if (this.satellite)
         {
           for (var key in this.satellite)
@@ -2145,14 +2132,15 @@
         var element = this.element;
         if (element)
         {
-          Event.clearHandlers(element);
+          this.element = null;
           if (element.parentNode)
             element.parentNode.removeChild(element);
-
         }
 
+        if (this.template)
+          this.template.clearInstance(this.tmpl, this);
+
         this.tmpl = null;
-        this.element = null;
         this.childNodesElement = null;
       }
     });
@@ -2301,10 +2289,12 @@
         var element = this.element;
         if (element)
         {
-          Event.clearHandlers(element);
           if (element.parentNode)
             element.parentNode.removeChild(element);
         }
+
+        if (this.template)
+          this.template.clearInstance(this.tmpl, this);
 
         this.tmpl = null;
         this.element = null;
