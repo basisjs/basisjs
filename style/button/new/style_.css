@@ -1,0 +1,160 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+ /*
+  * Button
+  */
+
+  .Basis-Button
+  {
+    /*display: block;
+    display: inline-block;*/
+    z-index: 1;
+    position: relative;
+
+    /* old browsers */
+    background: #DDDFE1 url(button_bg.gif) repeat-x left center;
+
+    /* SVG fallback(Opera 11.10-, IE9) */
+    background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9Imc0OTciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CjxzdG9wIHN0b3AtY29sb3I9IiNGMkYyRjIiIG9mZnNldD0iMCIvPjxzdG9wIHN0b3AtY29sb3I9IiNFQkVCRUIiIG9mZnNldD0iMC41Ii8+PHN0b3Agc3RvcC1jb2xvcj0iI0RERERERCIgb2Zmc2V0PSIwLjUiLz48c3RvcCBzdG9wLWNvbG9yPSIjQ0ZDRkNGIiBvZmZzZXQ9IjEiLz4KPC9saW5lYXJHcmFkaWVudD4KPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNnNDk3KSIgLz4KPC9zdmc+) padding-box;
+
+    /* old webkit */
+    background-image: -webkit-gradient(linear, left top, left bottom, from(#F2F2F2), color-stop(50%, #EBEBEB), color-stop(50%, #DDD), to(#CFCFCF)); 
+
+    /* modern browsers */
+    background-image: -moz-linear-gradient(top, #F2F2F2, #EBEBEB 50%, #DDD 50%, #CFCFCF); 
+    background-image: -webkit-linear-gradient(top, #F2F2F2, #EBEBEB 50%, #DDD 50%, #CFCFCF); 
+    background-image: -ms-linear-gradient(top, #F2F2F2, #EBEBEB 50%, #DDD 50%, #CFCFCF); 
+    background-image: -o-linear-gradient(top, #F2F2F2, #EBEBEB 50%, #DDD 50%, #CFCFCF); 
+
+    /* IE5.5 - IE7 */
+    filter: progid:DXImageTransform.Microsoft.Gradient(GradientType=0,StartColorStr=#F2F2F2,EndColorStr=#CFCFCF);
+
+    /* IE8 */
+    -ms-filter: "progid:DXImageTransform.Microsoft.Gradient(GradientType=0,StartColorStr=#F2F2F2,EndColorStr=#CFCFCF)";
+
+      -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
+      -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
+
+    border: 1px solid #C0C0C0;
+      -webkit-border-radius: 2px;
+      -moz-border-radius: 2px;
+    border-radius: 2px;
+
+      -webkit-user-select: none;
+      -moz-user-select: none;
+    user-select: none;
+
+    padding: 0 0.5ex;
+    margin: 0;
+
+    font-size: 85%;
+    text-decoration: none;
+    color: black;
+    line-height: 1.21;
+
+    outline: none;
+
+    cursor: pointer;
+
+    *overflow: visible;
+      -webkit-appearance: button;
+
+    font-family: Tahoma;
+  }
+
+  button.Basis-Button::-moz-focus-inner
+  {
+    border: 0;
+    padding: 0;
+  }
+
+  .Basis-Button-Caption
+  {
+    padding: .35em 1ex 0.4em;
+  }
+
+  /* state & interaction */
+
+  .Basis-Button:hover,
+  .Basis-Button:focus
+  {
+    z-index: 10;
+    border-color: #888;
+  }
+
+  .Basis-ButtonPanel .disabled .Basis-Button,
+  .Basis-Button.disabled
+  {
+    /*-moz-opacity: 0.4;
+    -khtml-opacity: 0.4;
+    opacity: 0.4;*/
+
+    background-color: #F4F4F4;
+    background-image: none;
+
+    cursor: default;
+    color: #888;
+    border-color: #C0C0C0;
+  }
+
+ /*
+  * ButtonPanel
+  */
+
+  .Basis-ButtonGroup
+  {
+    /*display: block;
+    display: inline-block;*/
+    display: inline;
+    margin-right: 6px;
+  }
+
+  .Basis-ButtonPanel .Basis-ButtonGroup:last-child
+  {
+    margin-right: 0;
+  }
+
+  .Basis-ButtonGroup .Basis-Button
+  {
+    margin-right: -1px;
+
+      -webkit-border-radius: 0;
+      -moz-border-radius: 0;
+    border-radius: 0;
+  }
+  .Basis-ButtonGroup .Basis-Button.first
+  {
+    margin-left: -1px;
+
+      -webkit-border-top-left-radius: 2px;
+      -moz-border-topleft-radius: 2px;
+    border-top-left-radius: 2px;
+
+      -webkit-border-bottom-left-radius: 2px;
+      -moz-border-bottomleft-radius: 2px;
+    border-bottom-left-radius: 2px;
+  }
+  .Basis-ButtonGroup .Basis-Button.last
+  {
+    margin-right: -1px;
+
+      -webkit-border-top-right-radius: 2px;
+      -moz-border-topright-radius: 2px;
+    border-top-right-radius: 2px;
+
+      -webkit-border-bottom-right-radius: 2px;
+      -moz-border-bottomright-radius: 2px;
+    border-bottom-right-radius: 2px;
+  }
+
+

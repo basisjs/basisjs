@@ -933,6 +933,10 @@
           if (newChild.parentNode)
             newChild.parentNode.removeChild(newChild);
         }
+
+        // add to group
+        if (newChild.groupNode != group)
+          group.insert(newChild, refChild);
         
         // insert
         if (refChild) 
@@ -962,10 +966,6 @@
 
         // insert newChild into childNodes
         childNodes.splice(pos, 0, newChild);
-
-        // add to group
-        if (newChild.groupNode != group)
-          group.insert(newChild, refChild);
 
         // update newChild
         newChild.parentNode = this;

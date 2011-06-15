@@ -52,31 +52,17 @@
       name: null,
 
       template: new Template(
-        '<div{element} class="Basis-Button">' + 
-          '<div class="Basis-Button-Wraper">' +
-            '<div class="Basis-Button-Wraper2">' +
-              '<a{content} class="Basis-Button-Content" href="#" event-click="click" event-keydown="keydown">' + 
-                '<em class="pre"/>' +
-                '<span class="caption">{captionText}</span>' +
-                '<em class="post"/>' +
-              '</a>' +
-            '</div>' +
-          '</div>' +
-        '</div>'
+        '<span{element} class="Basis-Button" event-click="click" event-keydown="keydown">' + 
+          '<button{buttonElement} class="Basis-Button-Caption">{captionText}</button>' +
+        '</span>'
       ),
 
       templateAction: function(actionName, event){
         if (actionName == 'click')
-        {
           this.click();
-          Event.kill(event);
-        }
 
         if (actionName == 'keydown' && [Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
-        {
           this.click();
-          Event.kill(event);
-        }
 
         TmplNode.prototype.templateAction.call(this, actionName, event);
       },
@@ -87,7 +73,16 @@
       },
 
       event_select: function(){
-        DOM.focus(this.content);
+        DOM.focus(this.element);
+      },
+      
+      event_disable: function(){
+        TmplNode.prototype.event_disable.call(this);
+        this.tmpl.buttonElement.disabled = true;
+      },
+      event_enable: function(){
+        TmplNode.prototype.event_enable.call(this);
+        this.tmpl.buttonElement.disabled = false;
       },
 
       init: function(config){
