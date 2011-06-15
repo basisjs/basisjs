@@ -16,25 +16,53 @@
   .Basis-Tree
   {
     overflow: hidden;
-  }
 
-  .Basis-Tree UL
-  {
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .Basis-Tree LI
+  .Basis-TreeNode
   {
     margin: 0;
     position: relative;
   }
-  .Basis-Tree LI UL
+  .Basis-TreeNode-Content
   {
+    margin: 0;
     padding-left: 16px;
+    list-style: none;
   }
-  .Basis-Tree DIV.Basis-Tree-Expander
+  .Basis-TreeNode-Caption
+  {
+    background-image: url(page.gif);
+    background-repeat: no-repeat;
+    background-position: 414px .1em;
+
+    display: block;
+    cursor: pointer;
+    padding: .4em 2px .4em 434px;
+    text-decoration: none;
+    color: black;
+    font-size: 85%;
+    line-height: 1em;
+    /*-moz-user-select: none;*/
+    /*user-select: none;*/
+    margin-left: -400px;
+  }
+  .Basis-TreeNode-Caption:hover
+  {
+    background-color: #EEEEEE;
+  }
+  .Basis-TreeNode-Caption:focus
+  {
+    outline: none;
+  }
+  .Basis-TreeNode-CanHaveChildren .Basis-TreeNode-Caption
+  {
+    background-image: url(folder_open.gif);
+  }
+  .Basis-TreeNode-Expander
   {
     position: absolute;
     top: 0;
@@ -46,60 +74,39 @@
     background-position: center center;
     cursor: pointer;
   }
-  .Basis-Tree LI.collapsed DIV.Basis-Tree-Expander
-  {
-    background-image: url(plus.gif);
-  }
-  .Basis-Tree DIV.Tree-Node-Title A
-  {
-    background-image: url(page.gif);
-    background-repeat: no-repeat;
-    background-position: 414px .1em;
 
-    display: block;
-    padding: .4em 2px .4em 434px;
-    text-decoration: none;
-    color: black;
-    font-size: 85%;
-    line-height: 1em;
-    /*-moz-user-select: none;*/
-    /*user-select: none;*/
-    margin-left: -400px;
-  }
-  .Basis-Tree LI DIV.Tree-Node-Title A:hover
-  {
-    background-color: #EEEEEE;
-  }
-  .Basis-Tree LI DIV.Tree-Node-Title A:focus
-  {
-    outline: none;
-  }
-  .Basis-Tree DIV.Tree-Folder-Content A
-  {
-    background-image: url(folder_open.gif);
-  }
-  .Basis-Tree LI.collapsed DIV.Tree-Folder-Content A
+  .Basis-TreeNode.collapsed .Basis-TreeNode-Caption
   {
     background-image: url(folder_close.gif);
   }
-  .Basis-Tree .selected A
+  .Basis-TreeNode.collapsed .Basis-TreeNode-Expander
+  {
+    background-image: url(plus.gif);
+  }
+  .Basis-TreeNode.collapsed .Basis-TreeNode-Content
+  {
+    display: none;
+  }
+
+  .Basis-TreeNode-Title.selected .Basis-TreeNode-Caption
   {
     background-color: #D9E8FB !important;
   }
-  .Basis-Tree .disabled A
+  .Basis-TreeNode-Title.disabled .Basis-TreeNode-Caption
   {
     color: #B0B0B0 !important;
     background-color: white !important;
     cursor: default;
   }
 
-  .Basis-Tree .Basis-Tree-NodeGroup,
-  .Basis-Tree .Basis-Tree-NodeGroup-Content
+  .Basis-TreePartitionNode,
+  .Basis-TreePartitionNode-Content
   {
+    list-style: none;
     padding: 0;
     margin: 0;
   }
-  .Basis-Tree .Basis-Tree-NodeGroup-Title
+  .Basis-TreePartitionNode-Title
   {
     font-size: 85%;
     background: #F0F0F0;

@@ -41,8 +41,6 @@
     background-image: -ms-linear-gradient(top, #F2F2F2, #EBEBEB 50%, #DDD 50%, #CFCFCF); 
     background-image: -o-linear-gradient(top, #F2F2F2, #EBEBEB 50%, #DDD 50%, #CFCFCF); 
 
-    -webkit-transition: -webkit-background .2s;
-
       -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
       -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;

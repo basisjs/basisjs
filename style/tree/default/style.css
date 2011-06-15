@@ -30,6 +30,10 @@
   {
     padding-left: 17px;
   }
+  .Basis-Tree .collapsed UL
+  {
+    display: none;
+  }
   .Basis-Tree DIV.Basis-Tree-Expander
   {
     position: absolute;

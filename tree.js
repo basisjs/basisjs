@@ -55,9 +55,6 @@
     var createEvent = Basis.EventObject.createEvent;
     var basisEvent = Basis.EventObject.event;
 
-    createEvent('collapse');
-    createEvent('expand');
-
    /**
     * Expand all descendant nodes.
     */
@@ -88,9 +85,9 @@
     var TreePartitionNode = Class(nsWrappers.TmplPartitionNode, {
       className: namespace + '.TreePartitionNode',
       template: new Template(
-        '<li{element} class="Basis-Tree-NodeGroup">' + 
-          '<div class="Basis-Tree-NodeGroup-Title"><span>{titleText}</span></div>' +
-          '<ul{childNodesElement} class="Basis-Tree-NodeGroup-Content"/>' +
+        '<li{element} class="Basis-TreePartitionNode">' + 
+          '<div class="Basis-TreePartitionNode-Title"><span>{titleText}</span></div>' +
+          '<ul{childNodesElement} class="Basis-TreePartitionNode-Content"/>' +
         '</li>'
       )
     });
@@ -121,15 +118,18 @@
         this.tmpl.titleText.nodeValue = title || '[no title]';
       },
 
+      event_collapse: createEvent('collapse'),
+      event_expand: createEvent('expand'),
+
      /**
       * Template for node element. 
       * @type {Basis.Html.Template}
       * @private
       */
       template: new Template(
-        '<li{element} class="Basis-Tree-Node">' +
-          '<div{content|selectedElement} class="Tree-Node-Title Tree-Node-Content">' +
-            '<a{title} event-click="select" href="#">{titleText|[no title]}</a>' +
+        '<li{element} class="Basis-TreeNode">' +
+          '<div{content} class="Basis-TreeNode-Title">' +
+            '<span{title} class="Basis-TreeNode-Caption" event-click="select">{titleText|[no title]}</span>' +
           '</div>' +
         '</li>'
       ),
@@ -182,15 +182,11 @@
       localGroupingClass: TreeGroupingNode,
 
       event_expand: function(){
-        basisEvent.expand.call(this);
-
+        TreeNode.prototype.event_expand.call(this);
         cssClass(this.element).remove('collapsed');
-        DOM.display(this.childNodesElement, true);
       },
       event_collapse: function(){
-        basisEvent.collapse.call(this);
-
-        DOM.display(this.childNodesElement, false);
+        TreeNode.prototype.event_collapse.call(this);
         cssClass(this.element).add('collapsed');
       },
 
@@ -200,12 +196,12 @@
       * @private
       */
       template: new Template(
-        '<li{element} class="Basis-Tree-Folder">' +
-          '<div{content|selectedElement} class="Tree-Node-Title Tree-Folder-Content">' +
-            '<div{expander} class="Basis-Tree-Expander" event-click="toggle"/>' +
-            '<a{title} event-click="select" href="#">{titleText|[no title]}</a>' + 
+        '<li{element} class="Basis-TreeNode">' +
+          '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
+            '<div{expander} class="Basis-TreeNode-Expander" event-click="toggle"/>' +
+            '<span{title} class="Basis-TreeNode-Caption" event-click="select">{titleText|[no title]}</span>' +
           '</div>' + 
-          '<ul{childNodesElement}/>' + 
+          '<ul{childNodesElement} class="Basis-TreeNode-Content"/>' + 
         '</li>'
       ),
 
@@ -278,9 +274,9 @@
       * @private
       */
       template: new Template(
-        '<div{element} class="Basis-Tree">' + 
-          '<ul{childNodesElement|content|disabledElement} class="Basis-Tree-Root"></ul>' + 
-        '</div>'
+        '<ul{element} class="Basis-Tree">' + 
+          //'<ul{childNodesElement} class="Basis-Tree-Root"></ul>' + 
+        '</ul>'
       ),
 
      /**

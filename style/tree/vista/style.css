@@ -24,6 +24,10 @@
     padding: 0;
     list-style: none;
   }
+  .Basis-Tree .collapsed UL
+  {
+    display: none;
+  }
 
   .Basis-Tree LI
   {
