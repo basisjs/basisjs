@@ -35,7 +35,6 @@
     .Basis-Tree-NodeGroup,
     .Basis-PartitionNode
     {
-      border: 1px solid red;
       padding: 5px;
     }
 
@@ -146,9 +145,10 @@
           ]
         },
         {
-          title: 'Tabs',
+          title: 'Defile',
           demos: [
-            { title: 'All tabs.js module controls', url: 'tabs/tabs.html' }
+            { title: 'Basis.Controls.Tabs', url: 'defile/tabs.html' },
+            { title: 'Basis.Controls.Button', url: 'defile/button.html' }
           ]
         },
         {
@@ -203,7 +203,7 @@
         }),
         localGrouping: {
           localSorting: function(node){ return node.info.title },
-          groupGetter: Function.getter('info.groupId'),
+          groupGetter: Function.getter('info.groupId')/*,
           //localGroupingClass: nsTree.TreeGroupingNode,
           localGrouping: {
             childClass: nsTree.TreePartitionNode,
@@ -213,7 +213,7 @@
             localGrouping: {
               
             }
-          }
+          }*/
         },
         childNodes: data.map(function(section){
           return section.demos.map(function(demo, idx, array){

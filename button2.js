@@ -58,7 +58,7 @@
       ),
 
       templateAction: function(actionName, event){
-        if (actionName == 'click')
+        if (actionName == 'click' && Event.mouseButton(event, Event.MOUSE_LEFT))
           this.click();
 
         if (actionName == 'keydown' && [Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))

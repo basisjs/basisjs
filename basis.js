@@ -1432,29 +1432,24 @@
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
 
-        var className;
-        var args = arguments;
-
         // temp class constructor with no init call
         var SuperClass_ = Function();
         SuperClass_.prototype = SuperClass.prototype;
 
         var newClassProps = {
+          className: SuperClass.className + '._SubClass_',
           superClass_: SuperClass,
           prototype: new SuperClass_(),
           extend: BaseClass.extend
-        }
+        };
 
         // extend newClass prototype
-        for (var i = 1; i < args.length; i++)
+        for (var args = arguments, i = 1; i < args.length; i++)
           newClassProps.extend(args[i]);
-
-        if (!newClassProps.className)
-          newClassProps.className = SuperClass.className + '._SubClass_';
-        className = newClassProps.className;
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
+        var className = newClassProps.className;
         var NULL_CONFIG = {};
         var newClass = newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/)
           ? new Function('seed', 'NULL_CONFIG',
@@ -1475,9 +1470,10 @@
             '  this.init.apply(this, arguments);\n\n' +
             '}}["' + className + '"]')(seed);
 
-        // WARN: don't use extend() to assign this value (IE doesn't enumerate it)
+        // add constructor property to prototype
         newClassProps.prototype.constructor = newClass;
 
+        // extend constructor with properties
         extend(newClass, newClassProps);
         
         return newClass;
@@ -3416,6 +3412,7 @@
                               if (node)
                               {
                                 node.templateAction(attr.nodeValue, event);
+                                //Event.kill(event);
                               }
                               break;
                             }

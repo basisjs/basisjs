@@ -776,6 +776,7 @@
 
         // search for insert point
         var isInside = newChild.parentNode === this;
+        var currentNewChildGroup = newChild.groupNode;
         var localGrouping = this.localGrouping;
         var localSorting = this.localSorting;
         var childNodes = this.childNodes;
@@ -786,10 +787,9 @@
           var newChildValue;
           var group = localGrouping.getGroupNode(newChild);
           var groupNodes = group.nodes;
-          var newChildGroup = newChild.groupNode;
 
           // optimization: test node position, possible it on right place
-          if (isInside && newChild.nextSibling === refChild && newChildGroup === group)
+          if (isInside && newChild.nextSibling === refChild && currentNewChildGroup === group)
             return newChild;
 
           // calculate newChild position
@@ -835,10 +835,10 @@
 
           if (newChild === refChild || (isInside && newChild.nextSibling === refChild))
           {
-            if (newChildGroup !== group)
+            if (currentNewChildGroup !== group)
             {
-              if (newChildGroup)
-                newChildGroup.remove(newChild);
+              if (currentNewChildGroup)
+                currentNewChildGroup.remove(newChild);
 
               group.insert(newChild);
             }
@@ -925,8 +925,8 @@
           childNodes.remove(newChild);
 
           // remove from old group (always remove for correct order)
-          if (newChild.groupNode)  // <-- newChildGroup?
-            newChild.groupNode.remove(newChild);
+          if (currentNewChildGroup)  // initial newChild.groupNode
+            currentNewChildGroup.remove(newChild);
         }
         else
         {
@@ -935,7 +935,8 @@
         }
 
         // add to group
-        if (newChild.groupNode != group)
+        // NOTE: we need insert into group here, because we create fake refChild if refChild doesn't exist
+        if (currentNewChildGroup != group)
           group.insert(newChild, refChild);
         
         // insert

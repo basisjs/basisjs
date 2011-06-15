@@ -41,6 +41,8 @@
     background-image: -ms-linear-gradient(top, #F2F2F2, #EBEBEB 50%, #DDD 50%, #CFCFCF); 
     background-image: -o-linear-gradient(top, #F2F2F2, #EBEBEB 50%, #DDD 50%, #CFCFCF); 
 
+    -webkit-transition: -webkit-background .2s;
+
       -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
       -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
@@ -92,13 +94,13 @@
   .Basis-Button:focus
   {
     z-index: 10;
-    /*border-color: #888;*/
+    /*border-color: #AAC;*/
 
     /* old browsers */
     background: #DDDFE1 url(button_bg_active.png) repeat-x left center;
 
     /* SVG fallback(Opera 11.10-, IE9) */
-    background-image:url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9Imc4MDciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CjxzdG9wIHN0b3AtY29sb3I9IiNFQUY2RkQiIG9mZnNldD0iMCIvPjxzdG9wIHN0b3AtY29sb3I9IiNEOUYwRkMiIG9mZnNldD0iMC41Ii8+PHN0b3Agc3RvcC1jb2xvcj0iI0JFRTZGRCIgb2Zmc2V0PSIwLjUiLz48c3RvcCBzdG9wLWNvbG9yPSIjQTdEOUY1IiBvZmZzZXQ9IjEiLz4KPC9saW5lYXJHcmFkaWVudD4KPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNnODA3KSIgLz4KPC9zdmc+) padding-box;
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIHZpZXdCb3g9IjAgMCAxIDEiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPgo8bGluZWFyR3JhZGllbnQgaWQ9Imc4MDciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjAlIiB5Mj0iMTAwJSI+CjxzdG9wIHN0b3AtY29sb3I9IiNFQUY2RkQiIG9mZnNldD0iMCIvPjxzdG9wIHN0b3AtY29sb3I9IiNEOUYwRkMiIG9mZnNldD0iMC41Ii8+PHN0b3Agc3RvcC1jb2xvcj0iI0JFRTZGRCIgb2Zmc2V0PSIwLjUiLz48c3RvcCBzdG9wLWNvbG9yPSIjQTdEOUY1IiBvZmZzZXQ9IjEiLz4KPC9saW5lYXJHcmFkaWVudD4KPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNnODA3KSIgLz4KPC9zdmc+) padding-box;
 
     /* old webkit */
     background-image: -webkit-gradient(linear, left top, left bottom, from(#EAF6FD), color-stop(50%, #D9F0FC), color-stop(50%, #DDD), to(#CFCFCF));

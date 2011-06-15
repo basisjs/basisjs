@@ -127,9 +127,9 @@
       * @private
       */
       template: new Template(
-        '<li{element} class="Basis-Tree-Node" event-click="select">' +
+        '<li{element} class="Basis-Tree-Node">' +
           '<div{content|selectedElement} class="Tree-Node-Title Tree-Node-Content">' +
-            '<a{title} href="#">{titleText|[no title]}</a>' +
+            '<a{title} event-click="select" href="#">{titleText|[no title]}</a>' +
           '</div>' +
         '</li>'
       ),
@@ -200,10 +200,10 @@
       * @private
       */
       template: new Template(
-        '<li{element} class="Basis-Tree-Folder" event-click="select">' +
+        '<li{element} class="Basis-Tree-Folder">' +
           '<div{content|selectedElement} class="Tree-Node-Title Tree-Folder-Content">' +
             '<div{expander} class="Basis-Tree-Expander" event-click="toggle"/>' +
-            '<a{title} href="#">{titleText|[no title]}</a>' + 
+            '<a{title} event-click="select" href="#">{titleText|[no title]}</a>' + 
           '</div>' + 
           '<ul{childNodesElement}/>' + 
         '</li>'
