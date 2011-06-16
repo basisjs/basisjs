@@ -23,6 +23,8 @@
     var nsWrappers = DOM.Wrapper;
     var Property = Basis.Data.Property.Property;
 
+    var createEvent = Basis.EventObject.createEvent;
+
     // MAIN PART
 
     function timePosition(startTime, duration){
@@ -42,30 +44,21 @@
       timer: null,
       started: false,
 
-      behaviour: {
-        change: function(value, prevValue){
-          if (value == 0.0)
-            this.dispatch('start');
+      event_start: createEvent('start'),
+      event_finish: createEvent('finish'),
+      event_invert: createEvent('invert'),
+      event_change: function(value, prevValue){
+        if (value == 0.0)
+          this.event_start();
 
-          this.inherit(value, prevValue);
+        Property.prototype.event_change.call(this, value, prevValue);
 
-          if (value == 1.0)
-            this.dispatch('finish');
-        }
+        if (value == 1.0)
+          this.event_finish();
       },
 
       init: function(config){
-        var config = config || {};
-        if (!config)
-          console.warn('No config for Thread:', config);
-
-        this.inherit();
-
-        if (config.duration)
-          this.duration = config.duration;
-
-        if (config.interval)
-          this.interval = config.interval;
+        Property.prototype.init.call(this);
 
         this.run = this.run.bind(this);
 
@@ -98,7 +91,8 @@
         }
       },
       invert: function(){
-        this.dispatch('invert');
+        this.event_invert();
+
         if (this.started)
         {
           var progress = timePosition(this.startTime, this.duration);
@@ -118,7 +112,7 @@
         this.stop();
         this.clear();
 
-        this.inherit();
+        Property.prototype.destroy.call();
       }
     });
 

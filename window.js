@@ -28,11 +28,16 @@
 
     var nsWrappers = DOM.Wrapper;
 
+    var createEvent = Basis.EventObject.createEvent;
+
+    var TmplNode = nsWrappers.TmplNode;
+    var TmplContainer = nsWrappers.TmplContainer;
+
    /**
     * @class
     * @extends Basis.DOM.Wrapper.HtmlNode
     */
-    var Blocker = Class(nsWrappers.HtmlNode, {
+    var Blocker = Class(TmplNode, {
       className: namespace + '.Blocker',
 
       captureElement: null,
@@ -44,7 +49,7 @@
       ),
 
       init: function(config){
-        this.inherit(config);
+        TmplNode.prototype.init.call(this, config);
 
         DOM.setStyle(this.element, {
           display: 'none',
@@ -78,7 +83,9 @@
       },
       destroy: function(){
         this.release();
-        this.inherit();
+        
+        TmplNode.prototype.destroy.call(this);
+        
         Cleaner.remove(this);
       }
     });
@@ -114,7 +121,7 @@
     * @class
     * @extends Basis.DOM.Wrapper.HtmlContainer
     */
-    var Window = Class(nsWrappers.HtmlContainer, {
+    var Window = Class(TmplContainer, {
       className: namespace + '.Window',
 
       template: new Template(
@@ -139,6 +146,11 @@
 
       // properties
 
+      event_beforeShow: createEvent('beforeShow'),
+      event_open: createEvent('open'),
+      event_close: createEvent('close'),
+      event_active: createEvent('active'),
+
       closeOnEscape: true,
 
       autocenter: false,
@@ -147,21 +159,22 @@
       closed: true,
 
       init: function(config){
-        this.inherit(config);
+        //this.inherit(config);
+        TmplContainer.prototype.init.call(this, config);
 
         // make main element invisible by default
         DOM.hide(this.element);
 
         // modal window
-        if (config.modal)
-          this.modal = true;
+        /*if (config.modal)
+          this.modal = true;*/
 
         // process title
-        if ('title' in config)
-          DOM.insert(this.title, config.title);
+        if (this.title)
+          DOM.insert(this.tmpl.title, this.title);
 
-        if ('closeOnEscape' in config)
-          this.closeOnEscape = !!config.closeOnEscape;
+        /*if ('closeOnEscape' in config)
+          this.closeOnEscape = !!config.closeOnEscape;*/
 
         // add generic rule
         var genericRuleClassName = 'genericRule-' + this.eventObjectId;
@@ -169,31 +182,30 @@
         this.cssRule = DOM.Style.cssRule('.' + genericRuleClassName);
 
         // make window moveable
-        if (config.moveable)
+        if (this.moveable)
         {
           if (Basis.DragDrop)
           {
             this.dde = new Basis.DragDrop.MoveableElement({
               element: this.element,
-              trigger: this.title.parentNode,
+              trigger: this.tmpl.title.parentNode,
               fixRight: false,
-              fixBottom: false,
-
-              handlersContext: this,
-              handlers: {
-                move: function(){
-                  this.autocenter = false;
-                  this.element.style.margin = 0;
-                },
-                over: function(){
-                  this.cssRule.setStyle(Object.slice(this.element.style, 'left top'.qw()));
-                  DOM.setStyle(this.element, {
-                    top: '',
-                    left: ''
-                  });
-                }
-              }
+              fixBottom: false
             });
+
+            this.dde.addHandler({
+              move: function(){
+                this.autocenter = false;
+                this.element.style.margin = 0;
+              },
+              over: function(){
+                this.cssRule.setStyle(Object.slice(this.element.style, 'left top'.qw()));
+                DOM.setStyle(this.element, {
+                  top: '',
+                  left: ''
+                });
+              }
+            }, this);
           }
           else
           {
@@ -203,16 +215,21 @@
 
         // buttons
         var buttons = Array.from(config.buttons).map(function(button){ return Object.complete({ handler: button.handler ? button.handler.bind(this) : button.handler }, button); }, this);
-        var buttons_ = Object.slice(config, 'buttonOk buttonCancel'.qw());
+
+        // common buttons
+        var buttons_ = {};
+        if (this.buttonOk)
+          buttons_.buttonOk = this.buttonOk;
+        if (this.buttonCancel)
+          buttons_.buttonCancel = this.buttonCancel;
+         
         for (var buttonId in buttons_)
         {
           var button = buttons_[buttonId];
           buttons.push({
             name: buttonId == 'buttonOk' ? 'ok' : 'cancel',
             caption: button.caption || button.title || button,
-            handlers: {
-              click: (button.handler || this.close).bind(this)
-            }
+            handler: (button.handler || this.close).bind(this)
           });
         }
 
@@ -220,14 +237,14 @@
         {
           this.buttonPanel = new Basis.Controls.Button.ButtonPanel({
             cssClassName: 'Basis-Window-ButtonPlace',
-            container: this.content,
+            container: this.tmpl.content,
             childNodes: buttons
           });
         }
 
-        if (!config.titleButton || config.titleButton.close !== false)
+        if (!this.titleButton || this.titleButton.close !== false)
         {
-          var titleButtonContainer = DOM.insert(this.title.parentNode, DOM.createElement('SPAN.Basis-Window-Title-ButtonPlace'), DOM.INSERT_BEGIN);
+          var titleButtonContainer = DOM.insert(this.tmpl.title.parentNode, DOM.createElement('SPAN.Basis-Window-Title-ButtonPlace'), DOM.INSERT_BEGIN);
           CSS.cssClass(titleButtonContainer.parentNode).add('Basis-Window-Title-ButtonPlace-Close');
           DOM.insert(
             titleButtonContainer,
@@ -244,13 +261,12 @@
           );
         }
 
-        if (config.autocenter !== false)
+        if (this.autocenter !== false)
           this.autocenter = this.autocenter_ = true;
 
         // handlers
-        if (config.thread)
+        if (this.thread)
         {
-          this.thread = config.thread;
           this.thread.addHandler({
             finish: function(){
               if (this.closed)
@@ -266,7 +282,7 @@
         Cleaner.add(this);
       },
       setTitle: function(title){
-        DOM.insert(DOM.clear(this.title), title);
+        DOM.insert(DOM.clear(this.tmpl.title), title);
       },
       realign: function(){
         if (this.autocenter)
@@ -301,14 +317,17 @@
           if (this.thread)
             this.thread.start(true);
 
-          this.dispatch('beforeShow', params);
+          //this.dispatch('beforeShow', params);
+          this.event_beforeShow(params);
           DOM.visibility(this.element, true);
 
           if (this.buttonPanel && this.buttonPanel.firstChild)
             this.buttonPanel.firstChild.select();
 
-          this.dispatch('open', params);
-          this.dispatch('active', params);
+          this.event_open(params);
+          this.event_active(params);
+          /*this.dispatch('open', params);
+          this.dispatch('active', params);*/
         }
         else
         {
@@ -330,7 +349,8 @@
           this.autocenter = this.autocenter_;
 
           this.closed = true;
-          this.dispatch('close', modalResult);
+          this.event_close(modalResult)
+          //this.dispatch('close', modalResult);
         }
       },
       destroy: function(){
@@ -356,54 +376,53 @@
     var wmBlocker = new Blocker();
     var windowManager = new nsWrappers.Control({
       id: 'Basis-WindowStack',
-      childClass: Window,
-      handlers: {
-        childNodesModified: function(){
-          CSS.cssClass(this.element).bool('IsNotEmpty', this.firstChild);
+      childClass: Window
+    });
 
-          var modalIndex = -1;
+    windowManager.addHandler({
+      childNodesModified: function(){
+        CSS.cssClass(this.element).bool('IsNotEmpty', this.firstChild);
 
-          if (this.lastChild)
+        var modalIndex = -1;
+
+        if (this.lastChild)
+        {
+          for (var i = 0, node; node = this.childNodes[i]; i++)
           {
-            for (var i = 0, node; node = this.childNodes[i]; i++)
-            {
-              node.element.style.zIndex = 2001 + i * 2;
-              if (node.modal)
-                modalIndex = i;
-            }
-
-            this.lastChild.select();
+            node.element.style.zIndex = 2001 + i * 2;
+            if (node.modal)
+              modalIndex = i;
           }
 
-          if (modalIndex != -1)
-            wmBlocker.capture(this.element, 2000 + modalIndex * 2);
-          else
-            wmBlocker.release();
+          this.lastChild.select();
+        }
 
-        }
-      },
-      selection: {
-        handlers: {
-          change: function(){
-            var selected = this.pick();
-            var lastWin = windowManager.lastChild;
-            if (selected)
-            {
-              if (selected.parentNode == windowManager && selected != lastWin)
-              {
-                // put selected on top
-                windowManager.insertBefore(selected);
-                windowManager.dispatch('childNodesModified', {});
-              }
-            }
-            else
-            {
-              if (lastWin)
-                this.add([lastWin]);
-            }
-          }
-        }
+        if (modalIndex != -1)
+          wmBlocker.capture(this.element, 2000 + modalIndex * 2);
+        else
+          wmBlocker.release();
       }
+    });
+
+    windowManager.selection.addHandler({
+      datasetChanged: function(){
+        var selected = this.pick();
+        var lastWin = windowManager.lastChild;
+        if (selected)
+        {
+          if (selected.parentNode == windowManager && selected != lastWin)
+          {
+            // put selected on top
+            windowManager.insertBefore(selected);
+            windowManager.event_childNodesModified({});
+          }
+        }
+        else
+        {
+          if (lastWin)
+            this.add([lastWin]);
+        }
+      }      
     });
 
     Event.onLoad(function(){

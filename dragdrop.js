@@ -26,6 +26,8 @@
 
     var EventObject = Basis.EventObject;
 
+    var createEvent = EventObject.createEvent;
+
     var nsWrappers = Basis.DOM.Wrapper;
     var nsLayout = Basis.Layout;
     
@@ -71,7 +73,7 @@
         {
           DDEConfig.run = true;
           dde.draging = true;
-          dde.dispatch('start', DDEConfig.event);
+          dde.event_start(DDEConfig.event);
         }
 
         if (dde.axisX)
@@ -80,7 +82,7 @@
         if (dde.axisY)
           DDEConfig.event.deltaY = dde.axisYproxy(Event.mouseY(e) - DDEConfig.event.initY);
 
-        dde.dispatch('move', DDEConfig.event);
+        dde.event_move(DDEConfig.event);
       },
       over: function(){  // `this` store DDE config
         var dde = DDEConfig.dde;
@@ -93,7 +95,7 @@
         dde.draging = false;
 
         if (DDEConfig.run)
-          dde.dispatch('over', DDEConfig.event);
+          dde.event_over(DDEConfig.event);
         
         DDEConfig = null;
       }
@@ -124,13 +126,18 @@
       axisXproxy: Function.$self,
       axisYproxy: Function.$self,
 
+      event_start: createEvent('start'),
+      event_move: createEvent('move'),
+      event_over: createEvent('over'),
+
       //
       // Constructor
       //
       init: function(config){
-        this.inherit(config);
+        //this.inherit(config);
+        EventObject.prototype.init.call(this, config);
 
-        if (typeof config == 'object')
+        /*if (typeof config == 'object')
         {
           var props = ['fixLeft', 'fixRight', 'fixTop', 'fixBottom', 'axisX', 'axisY'];
           for (var i = 0; i < props.length; i++)
@@ -145,9 +152,16 @@
           if (typeof config.containerGetter == 'function')
             this.containerGetter = config.containerGetter;
 
-          this.setElement(config.element, config.trigger);
-          this.setBase(config.baseElement);
-        }
+          
+        }*/
+        var element = this.element;
+        this.element = null;
+
+        var trigger = this.trigger;
+        this.trigger = null;
+
+        this.setElement(element, trigger);
+        this.setBase(this.baseElement);
 
         Basis.Cleaner.add(this);
       },
@@ -216,7 +230,7 @@
 
         this.stop();
 
-        this.inherit();
+        EventObject.prototype.destroy.call(this);
         
         this.setElement();
         this.setBase();
@@ -224,62 +238,69 @@
     });
 
     var MoveableElement = Class(DragDropElement, {
-      behaviour: {
-        start: function(config){
-          var element = this.containerGetter(this, config.initX, config.initY);
+      
+      event_start: function(config){
+        var element = this.containerGetter(this, config.initX, config.initY);
 
-          if (element)
-          {
-            var box = new nsLayout.Box(element);
-            var viewport = new nsLayout.Viewport(this.baseElement);
+        if (element)
+        {
+          var box = new nsLayout.Box(element);
+          var viewport = new nsLayout.Viewport(this.baseElement);
 
-            // set class
-            cssClass(element).add(DDCssClass.element);
+          // set class
+          cssClass(element).add(DDCssClass.element);
 
-            config.element = element;
-            config.box = box;
-            config.viewport = viewport;
-          }
-          else
-            console.warn('sdfsf')
-        },
-        move: function(config){
-          if (!config.element)
-            return;
-
-          if (this.axisX)
-          {
-            var newLeft = config.box.left + config.deltaX;
-            
-            if (this.fixLeft && newLeft < 0) //config.viewport.left)
-              newLeft = 0;//config.viewport.left;
-            else
-              if (this.fixRight && newLeft + config.box.width > config.viewport.width)//config.viewport.right)
-                newLeft = config.viewport.width - config.box.width;//config.viewport.right - config.box.width;
-
-            config.element.style.left = newLeft + 'px';
-          }
-
-          if (this.axisY)
-          {
-            var newTop = config.box.top + config.deltaY;
-            
-            if (this.fixTop && newTop < 0)
-              newTop = 0;
-            else
-              if (this.fixBottom && newTop + config.box.height > config.viewport.height)
-                newTop = config.viewport.height - config.box.height;
-
-            config.element.style.top = newTop + 'px';
-          }
-        },
-        over: function(config){
-          if (!config.element)
-            return;
-
-          // remove class
-          cssClass(config.element).remove(DDCssClass.element);
+          config.element = element;
+          config.box = box;
+          config.viewport = viewport;
         }
+        else
+          console.warn('sdfsf')
+
+        DragDropElement.prototype.event_start.call(this, config);
+      },
+
+      event_move: function(config){
+        if (!config.element)
+          return;
+
+        if (this.axisX)
+        {
+          var newLeft = config.box.left + config.deltaX;
+          
+          if (this.fixLeft && newLeft < 0) //config.viewport.left)
+            newLeft = 0;//config.viewport.left;
+          else
+            if (this.fixRight && newLeft + config.box.width > config.viewport.width)//config.viewport.right)
+              newLeft = config.viewport.width - config.box.width;//config.viewport.right - config.box.width;
+
+          config.element.style.left = newLeft + 'px';
+        }
+
+        if (this.axisY)
+        {
+          var newTop = config.box.top + config.deltaY;
+          
+          if (this.fixTop && newTop < 0)
+            newTop = 0;
+          else
+            if (this.fixBottom && newTop + config.box.height > config.viewport.height)
+              newTop = config.viewport.height - config.box.height;
+
+          config.element.style.top = newTop + 'px';
+        }
+
+        DragDropElement.prototype.event_move.call(this, config);
+      },
+
+      event_over: function(config){
+        if (!config.element)
+          return;
+
+        // remove class
+        cssClass(config.element).remove(DDCssClass.element);
+
+        DragDropElement.prototype.event_over.call(this, config);
       }
     });
 

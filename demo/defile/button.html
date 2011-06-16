@@ -39,23 +39,28 @@
       text-align: center;
     }
 
-    .imageLeft BUTTON
+    .imageLeft .Basis-Button-Caption
     {
       background: url(button_image.png) no-repeat 0 center;
       padding-left: 20px;
     }
 
-    .imageRight BUTTON
+    .imageRight .Basis-Button-Caption
     {
       background: url(button_image.png) no-repeat right center;
       padding-right: 20px;
     }
 
-    .imageOnly BUTTON
+    .imageOnly .Basis-Button-Caption
     {
       background: url(button_image.png) no-repeat center center;
       padding-left: 16px;
       text-indent: -100ex;
+    }
+
+    .big
+    {
+      font-size: 300%;
     }
 
 
@@ -207,6 +212,17 @@
         }
       ],
       container: createBlock('Buttons with Image')
+    });
+
+    new ButtonPanel({
+      childNodes: [
+        {
+          cssClassName: 'big',
+          caption: 'Button11',
+          handler: alertCaption
+        }
+      ],
+      container: createBlock('Big Button')
     });
 
   </script>

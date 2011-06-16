@@ -52,13 +52,16 @@
       name: null,
 
       template: new Template(
-        '<span{element} class="Basis-Button" event-click="click" event-keydown="keydown">' + 
-          '<button{buttonElement} class="Basis-Button-Caption">{captionText}</button>' +
-        '</span>'
+        '<button{element|buttonElement} class="Basis-Button" event-click="click" event-keydown="keydown" event-mousedown="mousedown">' + 
+          '<div class="Basis-Button-Caption">{captionText}</div>' +
+        '</button>'
       ),
 
       templateAction: function(actionName, event){
-        if (actionName == 'click' && Event.mouseButton(event, Event.MOUSE_LEFT))
+        if (actionName == 'mousedown')
+          this.leftButtonPressed = Event.mouseButton(event, Event.MOUSE_LEFT);
+
+        if (actionName == 'click' && this.leftButtonPressed)
           this.click();
 
         if (actionName == 'keydown' && [Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
