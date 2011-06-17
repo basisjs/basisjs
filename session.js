@@ -22,6 +22,8 @@
 
     var EventObject = Basis.EventObject;
 
+    var createEvent = EventObject.createEvent;
+
     /*
      *  Common
      */
@@ -50,6 +52,11 @@
      */
 
     var SessionManager = extend(new EventObject(), {
+      event_sessionOpen: createEvent('sessionOpen'),
+      event_sessionClose: createEvent('sessionClose'),
+      event_sessionFreeze: createEvent('sessionFreeze'),
+      event_sessionUnfreeze: createEvent('sessionUnfreeze'),
+
       isOpened: function(){
         return !!activeSession;
       },
@@ -83,7 +90,7 @@
         ;;; if (DEBUG_MODE && typeof console != 'undefined') console.info('Session opened: ' + activeSession.key);
 
         // fire event
-        this.dispatch('sessionOpen', this);
+        this.event_sessionOpen(this);
       },
       close: function(){
         if (activeSession)
@@ -93,7 +100,7 @@
 
           ;;; if (DEBUG_MODE && typeof console != 'undefined') console.info('Session closed: ' + activeSession.key);
 
-          this.dispatch('sessionClose', this);
+          this.event_sessionClose(this);
 
           activeSession = null;
           timestamp = null;
@@ -102,7 +109,7 @@
       freeze: function(){
         if (activeSession && !freezeState)
         {
-          this.dispatch('sessionFreeze', this);
+          this.event_sessionFreeze(this);
 
           freezeState = true;
           timestamp = null;
@@ -114,7 +121,7 @@
           freezeState = false;
           timestamp = genTimestamp();
 
-          this.dispatch('sessionUnfreeze', this);
+          this.event_sessionUnfreeze(this);
         }
       },
       storeData: function(key, data){
@@ -135,7 +142,7 @@
         while (key = keys.pop())
           sessions[key].destroy();
 
-        this.inherit();
+        EventObject.prototype.destroy.call(this);
       }
     });
 
@@ -146,16 +153,14 @@
     var Session = Class(EventObject, {
       className: namespace + '.Session',
 
-      behaviour: {
-        destroy: function(){
-          if (activeSession == this)
-            SessionManager.close();
-          delete sessions[this.key]
-        }
+      event_destroy: function(){
+        if (activeSession == this)
+          SessionManager.close();
+        delete sessions[this.key];
       },
 
       init: function(key){
-        this.inherit();
+        EventObject.prototype.init.call(this);
 
         this.key = key;
         this.data = {};
@@ -175,7 +180,7 @@
         return this.data[key];
       },
       destroy: function(){
-        this.inherit();
+        EventObject.prototype.destroy.call(this);
 
         var keys = Object.keys(this.data);
         var key;

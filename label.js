@@ -130,10 +130,6 @@
     var State = Class(NodeLabel, {
       className: namespace + '.State',
 
-      event_tateChanged: function(object, oldState){
-        this.setVisibility(this.visibilityGetter(this.state, oldState));
-      },
-
       template: stateTemplate,
 
       init: function(config){
@@ -145,7 +141,13 @@
           this.visibilityGetter = getter(Function.$self, map);
         }
 
-        return this.inherit(config);
+        NodeLabel.prototype.init.call(this, config);
+      }
+    });
+
+    var ObjectState = Class(State, {
+      event_stateChanged: function(object, oldState){
+        this.setVisibility(this.visibilityGetter(this.state, oldState));
       }
     });
 
@@ -153,11 +155,13 @@
     * Label that shows only when delegate node in processing state.
     * @class
     */
-    var Processing = Class(State, {
+    var Processing = Class(ObjectState, {
       className: namespace + '.Processing',
 
-      visibilityGetter: function(newState){ return newState == STATE.PROCESSING },
-      defaultContent: 'Processing...',
+      visibilityGetter: function(newState){ 
+        return newState == STATE.PROCESSING 
+      },
+      content: 'Processing...',
       template: processingTemplate
     });
 
@@ -190,20 +194,18 @@
     var CollectionState = Class(State, {
       className: namespace + '.CollectionState',
 
-      behaviour: createBehaviour(NodeLabel, {
-        delegateChanged: function(object, oldDelegate){
-          this.inherit(object, oldDelegate);
+      event_delegateChanged: function(object, oldDelegate){
+        State.prototype.event_delegateChanged.call(this, object, oldDelegate);
 
-          if (oldDelegate)
-            oldDelegate.removeHandler(CollectionState_DelegateHandler, this);
+        if (oldDelegate)
+          oldDelegate.removeHandler(CollectionState_DelegateHandler, this);
 
-          if (this.delegate)
-          {
-            this.delegate.addHandler(CollectionState_DelegateHandler, this);
-            CollectionState_DelegateHandler.collectionChanged.call(this, this.delegate, oldDelegate && oldDelegate.collection);
-          }
+        if (this.delegate)
+        {
+          this.delegate.addHandler(CollectionState_DelegateHandler, this);
+          CollectionState_DelegateHandler.collectionChanged.call(this, this.delegate, oldDelegate && oldDelegate.collection);
         }
-      }),
+      },
       template: stateTemplate
     });
 
@@ -215,7 +217,7 @@
       className: namespace + '.CollectionProcessing',
 
       visibilityGetter: function(newState){ return newState == STATE.PROCESSING },
-      defaultContent: 'Processing...',
+      content: 'Processing...',
       template: processingTemplate
     });
 
@@ -256,21 +258,19 @@
     var ChildCount = Class(NodeLabel, {
       className: namespace + '.ChildCount',
 
-      behaviour: {
-        delegateChanged: function(object, oldDelegate){
-          this.inherit(object, oldDelegate);
+      event_delegateChanged: function(object, oldDelegate){
+        NodeLabel.prototype.event_delegateChanged.call(this, object, oldDelegate);
 
-          if (oldDelegate)
-            oldDelegate.removeHandler(ChildCount_DelegateHandler, this);
+        if (oldDelegate)
+          oldDelegate.removeHandler(ChildCount_DelegateHandler, this);
 
-          if (this.delegate)
-          {
-            this.delegate.addHandler(ChildCount_DelegateHandler, this);
-            ChildCount_DelegateHandler.collectionChanged.call(this, this.delegate);
-          }
-
-          CHILD_COUNT_FUNCTION.call(this);
+        if (this.delegate)
+        {
+          this.delegate.addHandler(ChildCount_DelegateHandler, this);
+          ChildCount_DelegateHandler.collectionChanged.call(this, this.delegate);
         }
+
+        CHILD_COUNT_FUNCTION.call(this);
       },
       template: new Template(
         '<div{element|content} class="Basis-CountLabel"/>'
@@ -287,7 +287,7 @@
         var state = object.collection ? object.collection.state : object.state;
         return !childCount && state == STATE.READY;
       },
-      defaultContent: 'Empty'
+      content: 'Empty'
     })
 
     //

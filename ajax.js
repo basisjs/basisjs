@@ -31,6 +31,8 @@
 
     var nsWrappers = Basis.DOM.Wrapper;
 
+    var DataObject = nsData.DataObject;
+
     //
     // Main part
     //
@@ -410,17 +412,16 @@
    /**
     * @class
     */
-    var Transport = Class(nsData.DataObject, {
+    var Transport = Class(DataObject, {
       className: namespace + '.Transport',
 
       state:     STATE.UNDEFINED,
 
-      behaviour: {
-        stateChanged: function(object, oldState){
-          this.inherit(object, oldState);
-          for (var i = 0; i < this.influence.length; i++)
-            this.influence[i].setState(this.state, this.state.data);
-        }
+      event_stateChanged: function(object, oldState){
+        DataObject.prototype.event_stateChanged.call(this, object, oldState);
+
+        for (var i = 0; i < this.influence.length; i++)
+          this.influence[i].setState(this.state, this.state.data);
       },
 
       influence: [],
@@ -482,7 +483,8 @@
         Cleaner.add(this);  // ???
 
         // create inherit
-        return this.inherit(config);
+
+        DataObject.prototype.init.call(this, config);
       },
 
       setInfluence: function(){
@@ -669,7 +671,7 @@
 
         this.clearInfluence();
 
-        this.inherit();
+        DataObject.prototype.destroy.call(this);
 
         delete this.transport;
         Cleaner.remove(this);

@@ -6,10 +6,9 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Windows</title>
+  <title>Basis Demos: Tables</title>
 
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/window/new/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/table/vista/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -57,17 +56,15 @@
   <script type="text/javascript" src="../../basis.js"></script>
   <script type="text/javascript" src="../../data.js"></script>
   <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../button2.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../dragdrop.js"></script>
-  <script type="text/javascript" src="../../window.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
+  <script type="text/javascript" src="../../table.js"></script>
 
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Windows</h1>
+  <h1>Basic demos: Tables</h1>
   
   <p id="demo-summary">
     ..
@@ -87,70 +84,28 @@
 
     var getter = Function.getter;
 
-    var Button = Basis.Controls.Button.Button;
-    var Window = Basis.Controls.Window.Window;
+    var Table = Basis.Controls.Table.Table;
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
     }
 
-    var simpleWindow = new Window({
-      autocenter: true,
-      moveable: true,
-      title: 'Simple Window',
-      buttonOk: {
-        caption: 'OK',
-        handler: function(){
-          alert('OK');
-        }
-      },
-      buttonCancel: 'Cancel',
-      content: 'Simple Window Content',
-    });
+    var data = [
+      { info: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
+      { info: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
+      { info: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
+      { info: { title: 'Maecenas', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
+      { info: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
+    ].repeat(5).sortAsObject(Math.random);
 
-    var anotherWindow = new Window({
-      autocenter: true,
-      moveable: true,
-      title: 'Another Window',
-      buttonCancel: 'Cancel',
-
-      childNodes: [
-        {
-          content: 'Window ChildNode1 Content'
-        },
-        {
-          content: 'Window ChildNode2 Content'
-        }
-      ]
-
-    });
-
-    /*simpleWindow.addHandler({
-      open: function(){
-        alert('open window');
-      }
-    });*/
-
-    var container = createBlock('Simple Window');
-
-    new Button({
-      caption: 'Open Window',
-      handler: function(){
-        simpleWindow.open();
-      },
-      container: container
-    });
-
-    new Button({
-      caption: 'Open Another Window',
-      handler: function(){
-        anotherWindow.open();
-      },
-      container: container
-    });
-
-
-
+    var table = new Table({
+      structure: [
+        { header: 'Title', body: { content: Function.getter('info.title') } },
+        { header: 'Content', body: { content: Function.getter('info.content') } }
+      ],
+      childNodes: data,
+      container: createBlock('table')
+    }) 
 
   </script>
 </body>

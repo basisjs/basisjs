@@ -90,20 +90,12 @@
       className: namespace + '.Popup',
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Popup" event-click="click">' +
+        '<div{element|selectedElement} class="Basis-Popup">' +
           '<div{closeButton} class="Basis-Popup-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
         '</div>'
       ),
 
-      templateAction: function(actionName, event){
-        if (actionName == 'click')
-          this.click(event, this);
-
-        TmplContainer.prototype.templateAction.call(this, actionName, event);
-      },
-
-      event_click: createEvent('click'),
       event_beforeShow: createEvent('beforeShow'),
       event_show: createEvent('show'),
       event_hide: createEvent('hide'),
@@ -155,9 +147,6 @@
         Cleaner.add(this);
 
         return config;
-      },
-      click: function(event, node){
-        this.event_click(event, node);
       },
       setLayout: function(dir, orientation, noRealign){
         var oldDir = this.dir;

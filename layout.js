@@ -28,6 +28,8 @@
 
     var nsWrappers = DOM.Wrapper;
 
+    var TmplContainer = nsWrappers.TmplContainer;
+
     //
     // Main part
     //
@@ -533,7 +535,7 @@
    /**
     * @class
     */
-    var VerticalPanel = Class(nsWrappers.HtmlContainer, {
+    var VerticalPanel = Class(TmplContainer, {
       className: namespace + '.VerticalPanel',
 
       template: new Basis.Html.Template(
@@ -543,29 +545,23 @@
       flex: 0,
 
       init: function(config){
-        this.inherit(config);
+        TmplContainer.prototype.init.call(this, config);
 
-        if (config)
+        if (this.flex)
         {
-          if (config.flex)
-            this.flex = parseFloat(config.flex);
+          //DOM.Style.setStyleProperty(this.element, 'overflow', 'auto');
 
-          if (this.flex)
+          if (SUPPORT_DISPLAYBOX !== false)
+            DOM.Style.setStyleProperty(this.element, SUPPORT_DISPLAYBOX + 'box-flex', this.flex);
+        }
+        else
+        {
+          if (SUPPORT_DISPLAYBOX === false)
           {
-            //DOM.Style.setStyleProperty(this.element, 'overflow', 'auto');
-
-            if (SUPPORT_DISPLAYBOX !== false)
-              DOM.Style.setStyleProperty(this.element, SUPPORT_DISPLAYBOX + 'box-flex', this.flex);
-          }
-          else
-          {
-            if (SUPPORT_DISPLAYBOX === false)
-            {
-              addBlockResizeHandler(this.element, (function(){
-                if (this.parentNode)
-                  this.parentNode.realign();
-              }).bind(this));
-            }
+            addBlockResizeHandler(this.element, (function(){
+              if (this.parentNode)
+                this.parentNode.realign();
+            }).bind(this));
           }
         }
       }
@@ -574,7 +570,7 @@
    /**
     * @class
     */
-    var VerticalPanelStack = Class(nsWrappers.HtmlContainer, {
+    var VerticalPanelStack = Class(TmplContainer, {
       className: namespace + '.VerticalPanelStack',
 
       childClass: VerticalPanel,
@@ -589,7 +585,7 @@
         this.cssRule = DOM.Style.cssRule('.' + this.ruleClassName);
         this.cssRule.setProperty('overflow', 'auto');
 
-        config = this.inherit(config);
+        TmplContainer.prototype.init.call(this, config);
 
         if (SUPPORT_DISPLAYBOX === false)
         {
@@ -600,11 +596,9 @@
             this.realign();
           }).bind(this));
         }
-
-        return config;
       },
       insertBefore: function(newChild, refChild){
-        if (newChild = this.inherit(newChild, refChild))
+        if (newChild = TmplContainer.prototype.insertBefore.call(this, newChild, refChild))
         {
           if (newChild.flex && this.cssRule)
             cssClass(newChild.element).add(this.ruleClassName);
@@ -615,7 +609,7 @@
         }
       },
       removeChild: function(oldChild){
-        if (this.inherit(oldChild))
+        if (TmplContainer.prototype.removeChild.call(this, oldChild))
         {
           if (oldChild.flex && this.cssRule)
             cssClass(oldChild.element).remove(this.ruleClassName);

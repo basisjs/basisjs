@@ -148,7 +148,10 @@
           demos: [
             { title: 'Basis.Controls.Tabs', url: 'defile/tabs.html' },
             { title: 'Basis.Controls.Tree', url: 'defile/tree.html' },
-            { title: 'Basis.Controls.Button', url: 'defile/button.html' }
+            { title: 'Basis.Controls.Button', url: 'defile/button.html' },
+            { title: 'Basis.Controls.Window', url: 'defile/window.html' },
+            { title: 'Basis.Controls.Popup', url: 'defile/popup.html' },
+            { title: 'Basis.Controls.Animation', url: 'defile/animation.html' }
           ]
         },
         {
@@ -184,8 +187,8 @@
           '<ul{element}>' +
             '<div{childNodesElement}/>' +
             '<hr/>' +
-            '<hr/>' +
             '<!-- {childNodesHere} -->' +
+            '<hr/>' +
           '</ul>'
         ),
         childClass: Class(nsTree.TreeNode, {

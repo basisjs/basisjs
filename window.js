@@ -125,7 +125,7 @@
       className: namespace + '.Window',
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Window">' +
+        '<div{element|selectedElement} class="Basis-Window" event-mousedown="mousedown" event-keypress="keypress">' +
           '<div class="Basis-Window-Canvas">' +
             '<div class="corner-left-top"/>' +
             '<div class="corner-right-top"/>' +
@@ -139,10 +139,20 @@
           '</div>' +
           '<div{layout} class="Basis-Window-Layout">' +
             '<div class="Basis-Window-Title"><div{title} class="Basis-Window-TitleCaption"/></div>' +
-            '<div{content|childNodesElement} class="Basis-Window-Content"/>' +
+            '<div{content|childNodesElement} class="Basis-Window-Content">' +
+              '<!-- {childNodesHere} -->' +
+            '</div>' +
           '</div>' +
         '</div>'
       ),
+
+      templateAction: function(actionName, event){
+        if (actionName == 'mousedown')
+          this.activate();
+
+        if (actionName == 'keypress')
+          buttonKeyPressHandler.call(this, event);
+      },
 
       // properties
 
@@ -275,9 +285,9 @@
           }, this);
         }
 
-        Event.addHandler(this.element, 'keypress', buttonKeyPressHandler, this);
+        //Event.addHandler(this.element, 'keypress', buttonKeyPressHandler, this);
         //addHandler(this.element, 'click', Event.kill);
-        Event.addHandler(this.element, 'mousedown', this.activate, this);
+        //Event.addHandler(this.element, 'mousedown', this.activate, this);
 
         Cleaner.add(this);
       },
@@ -360,7 +370,7 @@
           delete this.dde;
         }
 
-        this.inherit();
+        TmplContainer.prototype.destroy.call();
 
         this.cssRule.destroy();
         delete this.cssRule;

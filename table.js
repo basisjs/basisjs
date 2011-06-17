@@ -38,11 +38,11 @@
     var Property = Basis.Data.Property.Property;
 
     var nsWrappers = DOM.Wrapper;
-    var HtmlNode = nsWrappers.HtmlNode;
-    var HtmlContainer = nsWrappers.HtmlContainer;
-    var HtmlControl = nsWrappers.HtmlControl;
-    var HtmlPartitionNode = nsWrappers.HtmlPartitionNode;
-    var HtmlGroupControl = nsWrappers.HtmlGroupControl;
+    var TmplNode = nsWrappers.TmplNode;
+    var TmplContainer = nsWrappers.TmplContainer;
+    var TmplControl = nsWrappers.TmplControl;
+    var TmplPartitionNode = nsWrappers.TmplPartitionNode;
+    var TmplGroupingNode = nsWrappers.TmplGroupingNode;
 
     //
     // Main part
@@ -59,27 +59,15 @@
     * @class
     */
 
-    var HeaderCell = Class(HtmlNode, {
+    var HeaderCell = Class(TmplNode, {
       className: namespace + '.HeaderCell',
 
       sorting: null,
       defaultOrder: false,
       groupId: 0,
 
-      behaviour: {
-        click: function(event){
-          if (this.selected)
-          {
-            if (this.document)
-              this.document.setLocalSorting(this.document.localSorting, !this.document.localSortingDesc);
-          }
-          else
-            this.select();
-        }
-      },
-
       template: new Template(
-        '<th{element|selectedElement} class="Basis-Table-Header-Cell">' +
+        '<th{element|selectedElement} class="Basis-Table-Header-Cell" event-click="click">' +
           '<div class="Basis-Table-Sort-Direction"></div>' +
           '<div class="Basis-Table-Header-Cell-Content">' + 
             '<span{content} class="Basis-Table-Header-Cell-Title"></span>' +
@@ -87,21 +75,34 @@
         '</th>'
       ),
 
+      templateAction: function(actionName, event){
+        if (actionName == 'click')
+        {
+          if (this.selected)
+          {
+            if (this.document)
+              this.document.setLocalSorting(this.document.localSorting, !this.document.localSortingDesc);
+          }
+          else
+            this.select();         
+        }
+
+        TmplNode.prototype.templateAction.call(this, actionName, event);
+      },
+
       init: function(config){
-        config = config || {};
-        config.selectable = !!config.sorting;
+        /*config = config || {};
+        config.selectable = !!config.sorting;*/
+
+        this.selectable = !!this.sorting;
         
-        this.inherit(config);
+        TmplNode.prototype.init.call(this, config);
 
         //DOM.insert(this.content, config.content || '');
         
-        if (config.groupId)
-          this.groupId = config.groupId;
-
-        if (config.sorting)
+        if (this.sorting)
         {
-          this.sorting = getter(config.sorting);
-          this.defaultOrder = config.defaultOrder == 'desc';
+          this.defaultOrder = this.defaultOrder == 'desc';
 
           cssClass(this.element).add(HEADERCELL_CSS_SORTABLE);
         }
@@ -110,14 +111,14 @@
         if (!this.selected)
           this.order = this.defaultOrder;
 
-        this.inherit();
+        TmplNode.prototype.select.call(this);
       }
     });
 
    /**
     * @class
     */
-    var Header = Class(HtmlContainer, {
+    var Header = Class(TmplContainer, {
       className: namespace + '.Header',
 
       canHaveChildren: true,
@@ -126,14 +127,14 @@
         return new this.childClass(config);
       },
 
-      groupControlClass: Class(HtmlGroupControl, {
-        childClass: Class(HtmlPartitionNode, {
+      localGroupingClass: Class(TmplGroupingNode, {
+        childClass: Class(TmplPartitionNode, {
           className: namespace + '.HeaderPartitionNode',
-          behaviour: {
-            childNodesModified: function(){
-              this.element.colSpan = this.childNodes.length;
-            }
+
+          event_childNodesModified: function(){
+            this.element.colSpan = this.childNodes.length;
           },
+
           template: new Template(
             '<th{element|selectedElement} class="Basis-Table-Header-Cell">' +
               '<div class="Basis-Table-Sort-Direction"></div>' +
@@ -153,23 +154,22 @@
       ),
 
       init: function(config){
-        this.inherit(config);
+        TmplContainer.prototype.init.call(this, config);
 
-        // inherit create
-        this.selection = new nsWrappers.Selection({
-          handlersContext: this,
-          handlers: {
-            change: function(){
-              var cell = this.selection.pick();
-              if (cell && this.document)
-                this.document.setLocalSorting(cell.sorting, cell.order);
-            }
-          }
-        });
+        this.selection = new nsWrappers.Selection({});
+
+        this.selection.addHandler({
+          datasetChanged: function(){
+            var cell = this.selection.pick();
+            if (cell && this.document)
+              this.document.setLocalSorting(cell.sorting, cell.order);
+          }          
+        }, this);
 
         // add event handlers
         //this.addEventListener('click');
         if (this.document)
+        {
           this.document.addHandler({
             localSortingChanged: function(){
               var document = this.document;
@@ -189,9 +189,9 @@
 
             }
           }, this);
+        }
 
-        if (config)
-          this.applyConfig_(config.structure)
+        this.applyConfig_(this.structure)
 
         if (this.document)
           DOM.insert(this.document.element, this.element, DOM.INSERT_BEGIN);
@@ -226,7 +226,7 @@
       },
       destroy: function(){
         delete this.document;
-        this.inherit();
+        TmplContainer.prototype.destroy.call(this);
       }
     });
 
@@ -238,7 +238,7 @@
     * @class
     */
 
-    var FooterCell = Class(HtmlNode, {
+    var FooterCell = Class(TmplNode, {
       className: namespace + '.FooterCell',
 
       colSpan: 1,
@@ -257,7 +257,7 @@
    /**
     * @class
     */
-    var Footer = Class(HtmlContainer, {
+    var Footer = Class(TmplContainer, {
       className: namespace + '.Footer',
 
       childClass: FooterCell,
@@ -272,14 +272,12 @@
       ),
 
       init: function(config){
-        config = config || {};
+        TmplContainer.prototype.init.call(this, config);
 
-        this.inherit(config);
-
-        this.applyConfig_(config.structure);
+        this.applyConfig_(this.structure);
 
         if (this.useFooter)
-          DOM.insert(config.container || this.document.element, this.element, 1);
+          DOM.insert(this.container || this.document.element, this.element, 1);
       },
 
       applyConfig_: function(structure){
@@ -343,7 +341,7 @@
     * @class
     */
 
-    var Row = Class(HtmlNode, {
+    var Row = Class(TmplNode, {
       className: namespace + '.Row',
       
       canHaveChildren: false,
@@ -353,17 +351,17 @@
       classNames: [],
 
       template: new Template(
-        '<tr{element|content|childNodesElement} class="Basis-Table-Row"></tr>'
+        '<tr{element|content|childNodesElement} class="Basis-Table-Row" event-click="select"></tr>'
       ),
 
-      behaviour: {
-        click: function(event){
+      templateAction: function(actionName, event){
+        if (actionName == 'select')
           this.select(Event(event).ctrlKey);
-        },
-        update: function(object, delta){
-          this.inherit(object, delta);
-          this.repaint();
-        }
+      },
+
+      event_update: function(object, delta){
+        TmplNode.prototype.event_update.call(this, object, delta);
+        this.repaint();
       },
 
       repaint: function(){
@@ -397,70 +395,78 @@
    /**
     * @class
     */
-    var Body = Class(HtmlPartitionNode, {
+    var Body = Class(TmplPartitionNode, {
       className: namespace + '.Body',
 
-      behaviour: {
-        click: function(){
-          cssClass(this.element).toggle('collapsed');
-        }
-      },
-      
       template: new Template(
-        '<tbody{element|childNodesElement} class="Basis-Table-Body">' +
+        '<tbody{element|childNodesElement} class="Basis-Table-Body" event-click="click">' +
           '<tr class="Basis-Table-GroupHeader">' +
             '<td{content} colspan="100"><span class="expander"></span>{titleText}</td>'+ 
           '</tr>' +
         '</tbody>'
-      )
+      ),
+
+      templateAction: function(actionName, event){
+        if (actioName == 'click')
+          cssClass(this.element).toogle('collapsed');
+
+        TmplPartitionNode.prototype.templateAction.call(this, actionName, event);
+      }
     });
     
    /**
     * @class
     */
-    var Table = Class(HtmlControl, {
+    var Table = Class(TmplControl, {
       className: namespace + '.Table',
       
       canHaveChildren: true,
       childClass: Row,
-      groupControlClass: Class(HtmlGroupControl, { childClass: Body }),
+      localGroupingClass: Class(TmplGroupingNode, { childClass: Body }),
 
       registers: null,
 
       template: new Template(
-        '<table{element|groupsElement} class="Basis-Table" cellspacing="0">' +
+        '<table{element|groupsElement} class="Basis-Table" cellspacing="0" event-click="click" event-contextmenu="contextmenu">' +
           '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
         '</table>'
       ),
 
+      templateAction: function(actionName, event){
+        
+        TmplControl.prototype.templateAction.call(this, actionName, event);
+      },
+
       //canHaveChildren: false,
 
       init: function(config){
-        config = config || {};
 
-        this.applyConfig_(config);
+        this.applyConfig_(this.structure);
 
-        this.inherit(config);
+        TmplControl.prototype.init.call(this, config);
 
-        if (config.registers)
-          this.attachRegisters_(config.registers);
+        if (this.registers)
+          this.attachRegisters_(this.registers);
 
         this.body = this; // backward capability
 
-        this.header = new Header(Object.extend({ document: this, structure: config.structure }, config.header));
-        this.footer = new Footer(Object.extend({ document: this, structure: config.structure }, config.footer));
+        var headerConfig = this.header;
+        var footerConfig = this.footer;
+
+        this.header = new Header(Object.extend({ document: this, structure: this.structure }, headerConfig));
+        this.footer = new Footer(Object.extend({ document: this, structure: this.structure }, footerConfig));
       
-        if (!this.localSorting && config.structure && config.structure.search(true, function(item){ return item.sorting && ('autosorting' in item) }))
+        if (!this.localSorting && this.structure && this.structure.search(true, function(item){ return item.sorting && ('autosorting' in item) }))
         {
-          var col = config.structure[Array.lastSearchIndex];
+          var col = this.structure[Array.lastSearchIndex];
           //console.log(col.sorting, col.defaultOrder == 'desc');
           this.setLocalSorting(col.sorting, col.defaultOrder == 'desc');
         }
         //this.header.traceSortingChanges();
 
         // add event handlers
-        this.addEventListener('click');
-        this.addEventListener('contextmenu', 'contextmenu', true);
+        /*this.addEventListener('click');
+        this.addEventListener('contextmenu', 'contextmenu', true);*/
       },
 
       attachRegisters_: function(registers){
@@ -479,10 +485,9 @@
         }, this);
       },
 
-      applyConfig_: function(config){
-        if (config && config.structure)
+      applyConfig_: function(structure){
+        if (structure)
         {
-          var structure = config.structure;
           var updaters = new Array();
           var template = '';
 
@@ -515,11 +520,22 @@
           }
 
           this.childClass = Class(Row, {
-            behaviour: config.rowBehaviour,
-            satelliteConfig: config.rowSatellite,
+            //behaviour: config.rowBehaviour,
+            satelliteConfig: this.rowSatellite,
             template: new Template(Row.prototype.template.source.replace('</tr>', template + '</tr>')),
             updaters: updaters
           });
+
+          if (this.rowBehaviour)
+          {
+            for (var i in this.rowBehaviour){
+              this.childClass['event_' + i] = function(){
+                this.rowBehaviour[i].apply(this, arguments);
+                Row.prototype['event_' + i].apply(this, arguments);
+              }
+            }
+          }
+
         }
       },
 
@@ -530,7 +546,7 @@
       destroy: function(){
         this.attachRegisters_({});
 
-        this.inherit();
+        TmplControl.prototype.destroy.call(this);
 
         this.header.destroy();
         this.footer.destroy();

@@ -3330,7 +3330,7 @@
           return DOM.createFragment.apply(null, result);
         }
 
-        var re = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|\s]+)\}\s*|.*?)-->/i;
+        var re = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
         function parseHtml(path, pos){
           var result = DOM.createFragment();
           var m;
