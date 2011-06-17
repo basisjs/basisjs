@@ -62,7 +62,7 @@
   // View
   //
 
-  var ObjectViewControl = Class(Basis.Plugin.X.Control, {
+  var ObjectViewControl = Class(nsWrappers.TmplContainer/*Basis.Plugin.X.Control*/, {
     template: new Template(
       '<div{element} class="XControl">' +
         '<span{header}/>' +
@@ -99,7 +99,7 @@
     }
   });
 
-  objectView.content.id = 'xxx';
+  objectView.tmpl.content.id = 'xxx';
 
   //
   // NavTree

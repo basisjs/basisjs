@@ -238,18 +238,16 @@
       ),
       codeGetter: Function.getter('info.code'),
       normalize: true,
-      behaviour: {
-        update: function(object, delta){
-          this.inherit(object, delta);
+      event_update: function(object, delta){
+        nsWrappers.HtmlNode.prototype.event_update.call(this, object, delta);
 
-          var code = this.codeGetter(this);
-          if (code != this.code_)
-          {
-            this.code_ = code;
-            //DOM.insert(DOM.clear(this.codeElement), highlight(code));
-            this.codeElement.innerHTML = highlight(code, !this.normalize);
-            //DOM.insert(this.codeElement, DOM.createElement('TEXTAREA', Basis.DOM.outerHTML(highlight(code))));
-          }
+        var code = this.codeGetter(this);
+        if (code != this.code_)
+        {
+          this.code_ = code;
+          //DOM.insert(DOM.clear(this.codeElement), highlight(code));
+          this.codeElement.innerHTML = highlight(code, !this.normalize);
+          //DOM.insert(this.codeElement, DOM.createElement('TEXTAREA', Basis.DOM.outerHTML(highlight(code))));
         }
       },
       init: function(config){
@@ -259,7 +257,7 @@
             this.normalize = !!config.normalize;
         }
 
-        this.inherit(config);
+        nsWrappers.HtmlNode.prototype.init.call(this, config);
       }
     });
 

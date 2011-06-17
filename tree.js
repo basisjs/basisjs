@@ -86,7 +86,9 @@
       className: namespace + '.TreePartitionNode',
       template: new Template(
         '<li{element} class="Basis-TreePartitionNode">' + 
-          '<div class="Basis-TreePartitionNode-Title"><span>{titleText}</span></div>' +
+          '<div class="Basis-TreePartitionNode-Title">' +
+            '<span>{titleText}</span>' +
+          '</div>' +
           '<ul{childNodesElement} class="Basis-TreePartitionNode-Content"/>' +
         '</li>'
       )

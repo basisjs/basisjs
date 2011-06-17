@@ -78,8 +78,9 @@
     #DemoList .Demo-TreeNode IMG
     {
       margin: 5px 5px 0 5px;
-      border: 1px solid #F0F0F0;
+      border: 1px solid #D0D0D0;
       background: white;
+      box-shadow: 1px 1px 3px rgba(0,0,0,.15);
     }
     #DemoList .Demo-TreeNode A:hover IMG
     {
@@ -128,19 +129,18 @@
 
       var data = [
         {
+          title: 'Web Apps',
+          demos: [
+            { title: 'Basis Docs', url: '../docs/index.html' },
+            { title: 'Wallet One Cabinet', url: 'https://en.w1.ru/client' }
+          ]
+        },
+        {
           title: 'Simple controls',
           demos: [
             { title: 'Tree', url: 'simple/tree.html', image: 'simple/tree.png' },
             { title: 'Tabs', url: 'simple/tabs.html', image: 'simple/tabs.png' },
             { title: 'Calendar', url: 'simple/calendar.html' }
-          ]
-        },
-        {
-          title: 'Selection',
-          demos: [
-            { title: 'Share selection', url: 'selection/share.html' },
-            { title: 'Multiple selections for control', url: 'selection/multiple.html' },
-            { title: 'Selection as data source', url: 'selection/collection.html' }
           ]
         },
         {
@@ -155,11 +155,11 @@
           ]
         },
         {
-          title: 'Various',
+          title: 'Selection',
           demos: [
-            { title: 'Node grouping', url: 'various/grouping.html' },
-            { title: 'Match input', url: 'various/match.html' },
-            { title: 'Paginator', url: 'various/paginator.html' }
+            { title: 'Share selection', url: 'selection/share.html' },
+            { title: 'Multiple selections for control', url: 'selection/multiple.html' },
+            { title: 'Selection as data source', url: 'selection/collection.html' }
           ]
         },
         {
@@ -169,6 +169,14 @@
             { title: 'Entity simple', url: 'data/entity.html' },
             { title: 'Entity user list', url: 'data/userlist.html' },
             { title: 'M:M relationship editor', url: 'data/m2m.html' }
+          ]
+        },
+        {
+          title: 'Various',
+          demos: [
+            { title: 'Node grouping', url: 'various/grouping.html' },
+            { title: 'Match input', url: 'various/match.html' },
+            { title: 'Paginator', url: 'various/paginator.html' }
           ]
         },
         {
@@ -221,7 +229,7 @@
               '</li>'
             )
           }),
-          localSorting: function(node){ return node.info.title },
+          //localSorting: function(node){ return node.info.title },
           groupGetter: Function.getter('info.groupId')/*,
           //localGroupingClass: nsTree.TreeGroupingNode,
           localGrouping: {

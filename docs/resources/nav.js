@@ -82,10 +82,10 @@
       nodeType: 'baseTreeNode',
       altTitle: false,
       init: function(config){
-        this.inherit(config);
+        nsTree.TreeNode.prototype.init.call(this, config);
 
-        this.title.href = '#' + this.info.objPath;
-        this.content.className += ' ' + this.nodeType + '-Content';
+        this.tmpl.title.href = '#' + this.info.objPath;
+        this.tmpl.content.className += ' ' + this.nodeType + '-Content';
       }
     });
 
@@ -103,8 +103,8 @@
       ),
 
       init: function(config){
-        this.inherit(config);
-        this.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+        baseTreeNode.prototype.init.call(this, config);
+        this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
       }
     });
 
@@ -177,10 +177,10 @@
 
       getMembers: Function.$null,
       expand: function(){
-        if (this.inherit())
+        if (nsTree.TreeFolder.prototype.expand.call(this))
         {
           DOM.insert(this, this.getMembers());
-          this.expand = this.inherit;
+          this.expand = nsTree.TreeFolder.prototype.expand;
         }
       }
     });
@@ -223,8 +223,8 @@
         nsView.viewPrototype
       ],
       init: function(config){
-        this.inherit(config);
-        this.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+        baseTreeFolder.prototype.init.call(this, config);
+        this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
       },
       getMembers: function(){
         return [
