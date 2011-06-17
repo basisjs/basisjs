@@ -366,6 +366,13 @@
    /**
     * @class
     */
+    var Slot = Class(DataObject, {
+      targetPoint: true
+    });
+
+   /**
+    * @class
+    */
     var EntityTypeConstructor = Class(null, {
       className: namespace + '.EntityType',
       name: 'UntitledEntityType',
@@ -585,7 +592,8 @@
    /**
     * @class
     */
-   var BaseEntity = Class(DataObject);
+    var BaseEntity = Class(DataObject);
+
    /**
     * @class
     */
@@ -627,6 +635,8 @@
           // set up some properties
           this.fieldHandlers_ = {};
           this.info = {};//new entityType.xdefaults;//{};
+          this.root = this;
+          this.target = this;
 
           var values = {};
 

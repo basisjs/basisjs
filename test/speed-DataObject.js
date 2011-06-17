@@ -40,11 +40,6 @@
 
       // Test #1
 
-      var clear = function(){
-        x.forEach(function(item){ item.destroy() });
-        x.length = 0;
-      };
-
       var x = [];
 
       speedTest('Create with no config', INNER_TEST_COUNT, function(){
@@ -86,7 +81,11 @@
         }), delegate);
       });
 
-      speedTest('destroy', 1, clear);
+      speedTest('destroy ' + INNER_TEST_COUNT * 4 + ' objects', 1, function(){
+        for (var i = x.length; i --> 0;)
+          x[i].destroy();
+        x.length = 0;
+      });
 
       // Test #4
 
@@ -100,7 +99,7 @@
           e: 5
         }
       });
-      speedTest('setDelegate', INNER_TEST_COUNT, function(){
+      speedTest('setDelegate with no update', INNER_TEST_COUNT, function(){
         a.setDelegate(b);
         a.setDelegate();
       });
@@ -125,7 +124,7 @@
           e: 5
         }
       });
-      speedTest('setDelegate', INNER_TEST_COUNT, function(){
+      speedTest('setDelegate with update', INNER_TEST_COUNT, function(){
         c.setDelegate(d);
         c.setDelegate();
       });
