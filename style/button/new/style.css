@@ -73,7 +73,7 @@
       -o-transition: .25s ease-in-out;
       -o-transition-property: background-color, border-color;
     transition: .25s ease-in-out;
-    transition: background-color, border-color, box-shadow;
+    transition-property: background-color, border-color, box-shadow;
 
   }
 
@@ -119,6 +119,8 @@
 
   .Basis-Button:active
   {
+    background-color: #BCD7F2;
+
       -webkit-box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;
       -moz-box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;
     box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;

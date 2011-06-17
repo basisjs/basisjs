@@ -25,10 +25,14 @@
 
     var getter = Function.getter;
 
-    var createBehaviour = Basis.EventObject.createBehaviour;
+    //var createBehaviour = Basis.EventObject.createBehaviour;
+    var createEvent = Basis.EventObject.createEvent;
+
+
     var nsWrappers = Basis.DOM.Wrapper;
     var STATE = Basis.Data.STATE;
 
+    var TmplNode = nsWrappers.TmplNode;
 
     //
     // Main part
@@ -49,7 +53,7 @@
     * Base class for all labels.
     * @class
     */
-    var NodeLabel = Class(nsWrappers.HtmlNode, {
+    var NodeLabel = Class(TmplNode, {
       className: namespace + '.NodeLabel',
 
       cascadeDestroy: true,
@@ -60,35 +64,23 @@
 
       insertPoint: DOM.INSERT_END,
 
-      defaultContent: '[no text]',
+      content: '[no text]',
 
-      behaviour: {
-        delegateChanged: function(object, oldDelegate){
-          var newContainer = oldDelegate ? oldDelegate.element == this.container : !this.container;
-          if (newContainer)
-            this.setContainer(this.delegate && this.delegate.element);
-        }
+      event_delegateChanged: function(object, oldDelegate){
+        var newContainer = oldDelegate ? oldDelegate.element == this.container : !this.container;
+        if (newContainer)
+          this.setContainer(this.delegate && this.delegate.element);
       },
+      event_visibilityChanged: createEvent('visibilityChanged'),
 
       init: function(config){
-        config = config || {};
+        var container = this.container;
+        this.container = null;
 
-        if (config.container)
-        {
-          this.container = config.container;
-          delete config.container;
-        }
+        TmplNode.prototype.init.call(this, config);
 
-        if (!config.content)
-          config.content = this.defaultContent;
-
-        if (config.visibilityGetter)
-          this.visibilityGetter = getter(config.visibilityGetter);
-
-        if (config.insertPoint)
-          this.insertPoint = config.insertPoint;
-
-        config = this.inherit(config);
+        if (container)
+          this.container = container;
 
         this.traceChanges_();
 
@@ -117,13 +109,13 @@
         {
           this.visible_ = visible;
           this.traceChanges_();
-          this.dispatch('visibilityChanged', this.visible_);
+          this.event_visibilityChanged(this.visible_);
         }
       },
 
       destroy: function(){
         delete this.container;
-        this.inherit();
+        TmplNode.prototype.destroy.call(this);
       }
     });
 
@@ -138,24 +130,19 @@
     var State = Class(NodeLabel, {
       className: namespace + '.State',
 
-      behaviour: {
-        stateChanged: function(object, oldState){
-          this.setVisibility(this.visibilityGetter(this.state, oldState));
-        }
+      event_tateChanged: function(object, oldState){
+        this.setVisibility(this.visibilityGetter(this.state, oldState));
       },
 
       template: stateTemplate,
 
       init: function(config){
-        if (config)
+        if (this.visibleStates && !this.visibilityGetter)
         {
-          if (config.visibleStates && !config.visibilityGetter)
-          {
-            var map = {};
-            for (var state, i = 0; state = config.visibleStates[i++];)
-              map[state] = true;
-            config.visibilityGetter = getter(Function.$self, map);
-          }
+          var map = {};
+          for (var state, i = 0; state = this.visibleStates[i++];)
+            map[state] = true;
+          this.visibilityGetter = getter(Function.$self, map);
         }
 
         return this.inherit(config);

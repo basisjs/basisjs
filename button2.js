@@ -24,8 +24,6 @@
     var DOM = Basis.DOM;
     var Template = Basis.Html.Template;
 
-    var extend = Object.extend;
-    var complete = Object.complete;
     var getter = Function.getter;
     var cssClass = Basis.CSS.cssClass;
 

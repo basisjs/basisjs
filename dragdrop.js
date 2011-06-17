@@ -151,8 +151,6 @@
 
           if (typeof config.containerGetter == 'function')
             this.containerGetter = config.containerGetter;
-
-          
         }*/
         var element = this.element;
         this.element = null;

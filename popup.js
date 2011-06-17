@@ -31,7 +31,11 @@
     var nsWrappers = Basis.DOM.Wrapper;
     var nsLayout = Basis.Layout;
 
-    var createBehaviour = Basis.EventObject.createBehaviour;
+    var createEvent = Basis.EventObject.createEvent;
+
+    var TmplNode = nsWrappers.TmplNode;
+    var TmplContainer = nsWrappers.TmplContainer;
+    var TmplControl = nsWrappers.TmplControl;
 
     if (!nsLayout)
       throw 'Basis.Controls.Popup: Basis.Layout required';
@@ -74,7 +78,7 @@
         if (!this.visible)
         {
           DOM.remove(this.element);
-          this.dispatch('cleanup', this);
+          this.event_cleanup(this);
         }
       }
     };
@@ -82,22 +86,33 @@
    /**
     * @class
     */
-    var Popup = Class(nsWrappers.HtmlContainer, {
+    var Popup = Class(TmplContainer, {
       className: namespace + '.Popup',
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Popup">' +
+        '<div{element|selectedElement} class="Basis-Popup" event-click="click">' +
           '<div{closeButton} class="Basis-Popup-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
         '</div>'
       ),
 
-      behaviour: {
-        layoutChanged: function(oldOrientation, oldDir){
-          var oldClass = (oldOrientation + '-' + oldDir.qw().slice(2, 4).join('-')).toLowerCase();
-          var newClass = (this.orientation + '-' + this.dir.qw().slice(2, 4).join('-')).toLowerCase();
-          cssClass(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
-        }
+      templateAction: function(actionName, event){
+        if (actionName == 'click')
+          this.click(event, this);
+
+        TmplContainer.prototype.templateAction.call(this, actionName, event);
+      },
+
+      event_click: createEvent('click'),
+      event_beforeShow: createEvent('beforeShow'),
+      event_show: createEvent('show'),
+      event_hide: createEvent('hide'),
+      event_realign: createEvent('realign'),
+      event_cleanup: createEvent('cleanup'),
+      event_layoutChanged: createEvent('layoutChanged') && function(oldOrientation, oldDir){
+        var oldClass = (oldOrientation + '-' + oldDir.qw().slice(2, 4).join('-')).toLowerCase();
+        var newClass = (this.orientation + '-' + this.dir.qw().slice(2, 4).join('-')).toLowerCase();
+        cssClass(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
       },
 
       visible: false,
@@ -116,7 +131,7 @@
       init: function(config){
         this.document = this;
 
-        config = this.inherit(config);
+        TmplContainer.prototype.init.call(this, config);
 
         // add generic rule
         var genericRuleClassName = 'genericRule-' + this.eventObjectId;
@@ -124,43 +139,25 @@
         this.cssRule = DOM.Style.cssRule('.' + genericRuleClassName);
 
         // 
-        this.ignoreClickFor = Array.from(config.ignoreClickFor);
+        this.ignoreClickFor = Array.from(this.ignoreClickFor);
 
-        if (typeof config.hideOnAnyClick == 'boolean')
-          this.hideOnAnyClick = config.hideOnAnyClick;
+        if (this.dir)
+          this.defaultDir = this.dir.toUpperCase();
 
-        if (config.hideOnKey)
-          this.hideOnKey = config.hideOnKey;
-
-        if (config.dir)
-          this.defaultDir = config.dir.toUpperCase();
-
-        this.setLayout(this.defaultDir, config.orientation);
+        this.setLayout(this.defaultDir, this.orientation);
           
-        if (config.autorotate)
-          this.autorotate = config.autorotate;
-
-        //if (config.content)
-        //  DOM.insert(this.content, config.content);
-
-        if (config.relElement)
-          this.relElement = DOM.get(config.relElement);
-
-        if (config.thread)
-        {
-          this.thread = config.thread;
+        if (this.thread)
           this.thread.addHandler(THREAD_HANDLER, this);
-        }
 
         //Event.addHandler(this.element, 'click', this.click, this);
-        this.addEventListener('click', 'click', true);
+        //this.addEventListener('click', 'click', true);
 
         Cleaner.add(this);
 
         return config;
       },
-      click: function(event){
-        this.dispatch('click', event);
+      click: function(event, node){
+        this.event_click(event, node);
       },
       setLayout: function(dir, orientation, noRealign){
         var oldDir = this.dir;
@@ -174,7 +171,7 @@
 
         if (oldDir != this.dir || oldOrientation != this.orientation)
         {
-          this.dispatch('layoutChanged', oldOrientation, oldDir);
+          this.event_layoutChanged(oldOrientation, oldDir);
           if (!noRealign)
             this.realign();
         }
@@ -345,7 +342,7 @@
             top:    parseInt(point.y - (dirV != TOP) * (this.element.offsetHeight >> (dirV == CENTER))) + 'px'
           });*/
 
-          this.dispatch('realign');
+          this.event_realign();
         }
       },
       show: function(relElement, dir, orientation, args){
@@ -372,7 +369,8 @@
           PopupManager.appendChild(this);
 
           // dispatch `beforeShow` event, there we can fill popup with content
-          this.dispatch.apply(this, ['beforeShow'].concat(args));
+          this.event_beforeShow.apply(this, args);
+          //this.dispatch.apply(this, ['beforeShow'].concat(args));
 
           // set visible flag to TRUE
           this.visible = true;
@@ -384,7 +382,8 @@
           cssClass(this.element).add('pre-transition');
 
           // dispatch `show` event, there we can set focus for elements etc.
-          this.dispatch.apply(this, ['show'].concat(args));
+          //this.dispatch.apply(this, ['show'].concat(args));
+          this.event_show.apply(this, args);
         }
         else
           this.realign();
@@ -400,7 +399,7 @@
             else
             {
               DOM.remove(this.element);
-              this.dispatch('cleanup', this);
+              this.event_cleanup(this);
             }
           }
 
@@ -410,7 +409,7 @@
             PopupManager.removeChild(this);
 
           // dispatch event
-          this.dispatch('hide');
+          this.event_hide();
         }
       },
       hideAll: function(){
@@ -425,9 +424,9 @@
 
         this.hide();
 
-        Event.removeHandler(this.element, 'click', this.click, this);
+        //Event.removeHandler(this.element, 'click', this.click, this);
 
-        this.inherit();
+        TmplContainer.prototype.destroy.call(this);
 
         this.cssRule.destroy();
         delete this.cssRule;
@@ -445,7 +444,7 @@
       cssLayoutPrefix: 'mode-',
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Balloon">' +
+        '<div{element|selectedElement} class="Basis-Balloon" event-click="click">' +
           '<div class="Basis-Balloon-Canvas">' +
             '<div class="corner-left-top"/>' +
             '<div class="corner-right-top"/>' +
@@ -473,21 +472,29 @@
    /**
     * @class
     */
-    var MenuItem = Class(nsWrappers.HtmlContainer, {
+    var MenuItem = Class(TmplContainer, {
       className: namespace + '.MenuItem',
 
       childFactory: function(cfg){ return new this.childClass(cfg) },
 
       template: new Template(
-        '<div{element} class="Basis-Menu-Item">' +
+        '<div{element} class="Basis-Menu-Item" event-click="click">' +
           '<a{content|selectedElement} href="#"><span>{captionText}</span></a>' +
         '</div>' +
         '<div{childNodesElement}/>'
       ),
-      behaviour: {
-        childNodesModified: function(){
-          cssClass(this.element).bool('hasSubItems', this.hasChildNodes());
+
+      templateAction: function(actionName, event){
+        if (actionName == 'click')
+        {
+          this.click();
+          Event.kill(event);  
         }
+        TmplContainer.prototype.templateAction.call(this, actionName, event);
+      },
+
+      event_childNodesModified: function(){
+        cssClass(this.element).bool('hasSubItems', this.hasChildNodes());
       },
 
       groupId: 0,
@@ -501,7 +508,7 @@
 
       init: function(config){
         // apply config
-        if (typeof config == 'object')
+        /*if (typeof config == 'object')
         {
           if (config.caption)
             this.caption = config.caption;
@@ -517,26 +524,34 @@
 
           if (typeof config.defaultHandler == 'function')
             this.defaultHandler = config.defaultHandler;
-        }
+        } */
 
         // inherit
-        config = this.inherit(config);
+        TmplContainer.prototype.init.call(this, config);
 
         this.setCaption(this.caption);
-
-        return config;
       },
       setCaption: function(newCaption){
         this.caption = newCaption;
-        if (this.captionText)
-          this.captionText.nodeValue = this.captionGetter(this);
+        if (this.tmpl.captionText)
+          this.tmpl.captionText.nodeValue = this.captionGetter(this);
+      },
+      click: function(){
+        if (!this.isDisabled() && !(this instanceof MenuItemSet))
+        {
+          if (this.handler)
+            this.handler(this);
+          else
+            this.defaultHandler(this);
+        }
       }
     });
     MenuItem.prototype.childClass = MenuItem;
 
     var MenuItemSet = Class(MenuItem, {
       className: namespace + '.MenuItemSet',
-      behaviour: createBehaviour(nsWrappers.HtmlNode, {}),
+      event_childNodesModified: TmplNode.prototype.event_childNodesModified,
+      //behaviour: createBehaviour(nsWrappers.HtmlNode, {}),
       template: new Template(
         '<div{element|content|childNodesElement} class="Basis-Menu-ItemSet"/>'
       )
@@ -545,7 +560,7 @@
    /**
     * @class
     */
-    var MenuPartitionNode = Class(nsWrappers.HtmlPartitionNode, {
+    var MenuPartitionNode = Class(nsWrappers.TmplPartitionNode, {
       className: namespace + '.MenuPartitionNode',
       template: new Template(
         '<div{element} class="Basis-Menu-ItemGroup">' +
@@ -557,7 +572,7 @@
    /**
     * @class
     */
-    var MenuGroupControl = Class(nsWrappers.HtmlGroupControl, {
+    var MenuGroupControl = Class(nsWrappers.TmplGroupingNode, {
       className: namespace + '.MenuGroupControl',
       childClass: MenuPartitionNode
     });
@@ -572,47 +587,11 @@
       defaultDir: [LEFT, BOTTOM, LEFT, TOP].join(' '),
       subMenu: null,
 
-      groupControlClass: MenuGroupControl,
-      localGrouping: {
-        groupGetter: getter('groupId')
-      },
+      localGroupingClass: MenuGroupControl,
+      localGrouping: getter('groupId'),
 
       defaultHandler: function(){
         this.hide();
-      },
-      behaviour: {
-        click: function(event, node){
-          if (node /*&& node.parentNode === this*/ && !node.isDisabled() && !(node instanceof MenuItemSet))
-          {
-            if (node.handler)
-              node.handler(node);
-            else
-              node.defaultHandler(node);
-
-            Event.kill(event);
-          }
-        }/*,
-        mouseover: function(event, node){
-          if (node instanceof MenuItem)
-          {
-            if (node.hasChildNodes() && !node.isDisabled())
-            {
-              if (!this.subMenu)
-                this.subMenu = new Menu({ dir: [RIGHT, TOP, LEFT, TOP].join(' ') });
-
-              this.subMenu.clear(true);
-
-              
-              DOM.insert(DOM.clear(this.subMenu.content), node.childNodesElement);
-              this.subMenu.show(node.element);
-            }
-            else
-            {
-              if (this.subMenu)
-                this.subMenu.hide();
-            }
-          }
-        }*/
       },
 
       template: new Template(
@@ -620,18 +599,7 @@
           '<div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
         '</div>'
-      ),
-
-      init: function(config){
-        config = this.inherit(config);
-
-        if (typeof config.defaultHandler == 'function')
-          this.defaultHandler = config.defaultHandler;
-
-        this.addEventListener('mouseover');
-
-        return config;
-      }
+      )
     });
 
     //
@@ -641,52 +609,50 @@
     // NOTE: PopupManager adds global event handlers dynamicaly because click event
     // that makes popup visible can also hide it (as click outside of popup).
 
-    var PopupManagerClass = Class(nsWrappers.Control, {
+    var PopupManagerClass = Class(TmplControl, {
       className: namespace + '.PopupManager',
 
       handheldMode: false,
 
       childClass: Popup,
-      behaviour: createBehaviour(nsWrappers.Node, {
-        childNodesModified: function(object, delta){
-          if (delta.deleted)
-            for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
-              item.hide();
+      event_childNodesModified: function(object, delta){
+        if (delta.deleted)
+          for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
+            item.hide();
 
-          if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
-          {
-            cssClass(this.element).add('IsNotEmpty');
-            document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
-                                                               // general sibling combinator (~) doesn't work otherwise
-                                                               // (it's useful for handheld scenarios, when popups show on fullsreen)
-            Event.addGlobalHandler('click', this.hideByClick, this);
-            Event.addGlobalHandler('keydown', this.hideByKey, this);
-            Event.addGlobalHandler('scroll', this.hideByScroll, this);
-            Event.addHandler(window, 'resize', this.realignAll, this);
-          }
-
-          if (this.lastChild)
-            this.lastChild.select();
-          else
-          {
-            cssClass(this.element).remove('IsNotEmpty');
-            document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
-                                                               // general sibling combinator (~) doesn't work otherwise
-                                                               // (it's useful for handheld scenarios, when popups show on fullsreen)
-            Event.removeGlobalHandler('click', this.hideByClick, this);
-            Event.removeGlobalHandler('keydown', this.hideByKey, this);
-            Event.removeGlobalHandler('scroll', this.hideByScroll, this);
-            Event.removeHandler(window, 'resize', this.realignAll, this);
-          }
+        if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
+        {
+          cssClass(this.element).add('IsNotEmpty');
+          document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
+                                                             // general sibling combinator (~) doesn't work otherwise
+                                                             // (it's useful for handheld scenarios, when popups show on fullsreen)
+          Event.addGlobalHandler('click', this.hideByClick, this);
+          Event.addGlobalHandler('keydown', this.hideByKey, this);
+          Event.addGlobalHandler('scroll', this.hideByScroll, this);
+          Event.addHandler(window, 'resize', this.realignAll, this);
         }
-      }),
+
+        if (this.lastChild)
+          this.lastChild.select();
+        else
+        {
+          cssClass(this.element).remove('IsNotEmpty');
+          document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
+                                                             // general sibling combinator (~) doesn't work otherwise
+                                                             // (it's useful for handheld scenarios, when popups show on fullsreen)
+          Event.removeGlobalHandler('click', this.hideByClick, this);
+          Event.removeGlobalHandler('keydown', this.hideByKey, this);
+          Event.removeGlobalHandler('scroll', this.hideByScroll, this);
+          Event.removeHandler(window, 'resize', this.realignAll, this);
+        }
+      },
 
       insertBefore: function(newChild, refChild){
         // save documentElement (IE, mozilla and others) and body (webkit) scrollTop
         var documentST_ = document.documentElement.scrollTop;
         var bodyST_ = document.body.scrollTop;
 
-        if (this.inherit(newChild, refChild))
+        if (TmplControl.prototype.insertBefore.call(this,newChild, refChild))
         {
           // store saved scrollTop to popup and scroll viewport to top
           newChild.documentST_ = documentST_;
@@ -707,7 +673,7 @@
           if (popup.hideOnAnyClick && popup.nextSibling)
             this.removeChild(popup.nextSibling);
 
-          this.inherit(popup);
+          TmplControl.prototype.removeChild.call(this, popup);
 
           // restore documentElement (IE, mozilla and others) and body (webkit) scrollTop
           if (this.handheldMode)
@@ -733,7 +699,7 @@
 
         for (var i = 0, popup; popup = popups[i]; i++)
         {
-          if (sender === popup.closeButton || DOM.parentOf(popup.closeButton, sender))
+          if (sender === popup.tmpl.closeButton || DOM.parentOf(popup.tmpl.closeButton, sender))
           {
             this.removeChild(popup);
             return;
