@@ -529,9 +529,9 @@
           if (this.rowBehaviour)
           {
             for (var i in this.rowBehaviour){
-              this.childClass['event_' + i] = function(){
+              this.childClass[i] = function(){
                 this.rowBehaviour[i].apply(this, arguments);
-                Row.prototype['event_' + i].apply(this, arguments);
+                Row.prototype[i].apply(this, arguments);
               }
             }
           }
