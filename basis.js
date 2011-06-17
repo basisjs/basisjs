@@ -3330,7 +3330,7 @@
           return DOM.createFragment.apply(null, result);
         }
 
-        var re = /<([a-z0-9\_]+)(\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>/i;
+        var re = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|\s]+)\}\s*|.*?)-->/i;
         function parseHtml(path, pos){
           var result = DOM.createFragment();
           var m;
@@ -3346,35 +3346,43 @@
               pos += tnodes.childNodes.length;
               result.appendChild(tnodes);
             }
-           
+
             if (m[6])
             {
-              if (m[6] == stack.last())
+              var comment = document.createComment(m[6]);
+              if (m[7])
+                getters[m[7]] = path + 'childNodes[' + pos + ']';
+              result.appendChild(comment);
+              pos++;
+            }
+            else if (m[5])
+            {
+              if (m[5] == stack.last())
               {
                 stack.pop();
                 return result;
               }
               else
               {
-                ;;; if (typeof console != undefined) console.log('Wrong end tag </' + m[6] + '> in Html.Template (ignored)\n\n' + str.replace(new RegExp('(</' + m[6] + '>)(' + str + ')$'), '==[here]=>$1<=$2'));
+                ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + str.replace(new RegExp('(</' + m[5] + '>)(' + str + ')$'), '==[here]=>$1<=$2'));
               }
             }
             else
             {
               var descr = m[0];
               var tagName = m[1];
-              var name = m[3];
-              var params = m[4];
-              var singleton = !!m[5];
+              var name = m[2];
+              var attributes = m[3];
+              var singleton = !!m[4];
 
               if (name)
                 getters[name] = path + 'childNodes[' + pos + ']';
 
-              if (params)
+              if (attributes)
               {
                 var strings = [];
-                var tmp = params.replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' });
-                params = tmp
+                var tmp = attributes.replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' });
+                attributes = tmp
                   .trim()
                   .replace(/(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attrName, ref, name, value){
                     if (name)
@@ -3428,7 +3436,7 @@
                   });
               }
 
-              var element = DOM.createElement(tagName + params);
+              var element = DOM.createElement(tagName + attributes);
 
               if (str.length && !singleton)
               {
@@ -3787,8 +3795,7 @@
 
       if (handlers)
       {
-        var i = handlers.length;
-        while (i--)
+        for (var i = handlers.length; i --> 0;)
         {
           var handlerObject = handlers[i];
           handlerObject.handler.call(handlerObject.thisObject, event);
@@ -3807,9 +3814,12 @@
       if (handlers)
       {
         // search for similar handler, returns if found (prevent for handler dublicates)
-        for (var i = 0, item; item = handlers[i]; i++)
-          if (item.handler === handler && item.thisObject === thisObject)
+        for (var i = handlers.length; i --> 0;)
+        {
+          var handlerObject = handlers[i];
+          if (handlerObject.handler === handler && handlerObject.thisObject === thisObject)
             return;
+        }
       }
       else
       {

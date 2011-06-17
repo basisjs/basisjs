@@ -2053,6 +2053,12 @@
           this.template.createInstance(this.tmpl, this);
           this.element = this.tmpl.element;
 
+          if (this.tmpl.childNodesHere)
+          {
+            this.tmpl.childNodesElement = this.tmpl.childNodesHere.parentNode;
+            this.tmpl.childNodesElement.insertPoint = this.tmpl.childNodesHere;
+          }
+
           // insert content
           if (this.content)
             DOM.insert(this.tmpl.content || this.element, this.content);
@@ -2172,7 +2178,7 @@
           var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
           var container = target.childNodesElement || target.element;
 
-          container.insertBefore(newChild.element, insertPoint);
+          container.insertBefore(newChild.element, insertPoint || container.insertPoint);
             
           return newChild;
         },
@@ -2213,6 +2219,7 @@
           var target = this.localGrouping || this;
           var container = target.childNodesElement || target.element;
           target.childNodesElement = domFragment;
+
           
           // call inherited method
           // NOTE: make sure that dispatching childNodesModified event handlers are not sensetive
@@ -2222,7 +2229,7 @@
           superClassProto.setChildNodes.call(this, childNodes, keepAlive);
 
           // restore childNodesElement
-          container.appendChild(domFragment);
+          container.insertBefore(domFragment, container.insertPoint);
           target.childNodesElement = container;
         }
       }

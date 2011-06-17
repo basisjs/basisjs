@@ -38,9 +38,9 @@
 
     /* modern browsers */
     background-image: -moz-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
-    background-image: -webkit-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0)); 
-    background-image: -ms-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0)); 
-    background-image: -o-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0)); 
+    background-image: -webkit-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
+    background-image: -o-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
+    background-image: -ms-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
 
     /* IE5.5 - IE7 */
     /*filter: progid:DXImageTransform.Microsoft.Gradient(GradientType=0,StartColorStr=#F2F2F2,EndColorStr=#CFCFCF);*/
@@ -67,11 +67,11 @@
 
     /* animation */
       -moz-transition: .25s ease-in-out;
-      -moz-transition-property: background-color, border-color, -webkit-moz-shadow, box-shadow;
+      -moz-transition-property: background-color, border-color, -moz-box-shadow, box-shadow;
       -webkit-transition: .25s ease-in-out;
       -webkit-transition-property: background-color, border-color, -webkit-box-shadow, box-shadow;
       -o-transition: .25s ease-in-out;
-      -o-transition-property: background-color, border-color;
+      -o-transition-property: background-color, border-color, box-shadow;
     transition: .25s ease-in-out;
     transition-property: background-color, border-color, box-shadow;
 
