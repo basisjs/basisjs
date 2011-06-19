@@ -94,38 +94,14 @@
     //  Window
     //
 
-
-    //
-    //
-    //
-
-    function buttonKeyPressHandler(event){
-      var key = Event.key(event);
-      var sender = Event.sender(event);
-      switch (key){
-        case Event.KEY.ESCAPE:
-          if (this.closeOnEscape)
-            this.close(0);
-          break;
-        case Event.KEY.ENTER:  
-          if (DOM.is(sender, 'TEXTAREA'))
-            return;
-          Event.kill(event);
-          break;
-        default:
-//          Event.kill(event);
-      }
-    }
-
    /**
     * @class
-    * @extends Basis.DOM.Wrapper.HtmlContainer
     */
     var Window = Class(TmplContainer, {
       className: namespace + '.Window',
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Window" event-mousedown="mousedown" event-keypress="keypress">' +
+        '<div{element} class="Basis-Window" event-mousedown="mousedown" event-keypress="keypress">' +
           '<div class="Basis-Window-Canvas">' +
             '<div class="corner-left-top"/>' +
             '<div class="corner-right-top"/>' +
@@ -137,9 +113,9 @@
             '<div class="corner-right-bottom"/>' +
             '<div class="side-bottom"/>' +
           '</div>' +
-          '<div{layout} class="Basis-Window-Layout">' +
+          '<div class="Basis-Window-Layout">' +
             '<div class="Basis-Window-Title"><div{title} class="Basis-Window-TitleCaption"/></div>' +
-            '<div{content|childNodesElement} class="Basis-Window-Content">' +
+            '<div{content} class="Basis-Window-Content">' +
               '<!-- {childNodesHere} -->' +
             '</div>' +
           '</div>' +
@@ -151,7 +127,20 @@
           this.activate();
 
         if (actionName == 'keypress')
-          buttonKeyPressHandler.call(this, event);
+        {
+          var key = Event.key(event);
+
+          if (key == Event.KEY.ESCAPE)
+          {
+            if (this.closeOnEscape)
+              this.close(0);
+          }
+          else if (key == Event.KEY.ENTER)
+          {
+            if (Event.sender(event).tagName != 'TEXTAREA')
+              Event.kill(event);
+          }
+        }
       },
 
       // properties
@@ -227,11 +216,11 @@
         var buttons = Array.from(config.buttons).map(function(button){ return Object.complete({ handler: button.handler ? button.handler.bind(this) : button.handler }, button); }, this);
 
         // common buttons
-        var buttons_ = {};
-        if (this.buttonOk)
+        var buttons_ = Object.slice(this, ['buttonOk', 'buttonCancel']);
+        /*if (this.buttonOk)
           buttons_.buttonOk = this.buttonOk;
         if (this.buttonCancel)
-          buttons_.buttonCancel = this.buttonCancel;
+          buttons_.buttonCancel = this.buttonCancel;*/
          
         for (var buttonId in buttons_)
         {

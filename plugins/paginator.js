@@ -12,7 +12,7 @@
  * - idea by ecto (ecto.ru)
  * - coded by karaboz (karaboz.ru)
  *
- * Basis adaptation by Roman Dvornov
+ * Basis.js adaptation by Roman Dvornov
  */
 
 (function(Basis){
@@ -29,11 +29,12 @@
   var DOM = Basis.DOM;
   var Event = Basis.Event;
 
-  var Template = Basis.Html.Template;
-
+  var createEvent = Basis.EventObject.createEvent;
   var cssClass = Basis.CSS.cssClass;
 
   var nsWrappers = Basis.DOM.Wrapper;
+
+  var Template = Basis.Html.Template;
 
   //
   // main part
@@ -41,6 +42,14 @@
 
   function percent(value){
     return (100 * value).toFixed(4) + '%';
+  }
+
+  function updateSelection(paginator){
+    var node = paginator.childNodes.search(paginator.activePage_, 'info.pageNumber');
+    if (node)
+      node.select();
+    else
+      paginator.selection.clear();
   }
 
  /**
@@ -53,22 +62,43 @@
     template: new Template(
       '<td{element} class="Basis-PaginatorNode">' +
         '<span>' +
-          '<a{link|selectedElement} href="#">{pageNumber}</a>' +
+          '<a{link|selectedElement} event-click="click" href="#">{pageNumber}</a>' +
         '</span>' +
       '</td>'
     ),
 
-    behaviour: {
-      update: function(object, delta){
-        this.inherit(object, delta);
+    templateAction: function(actionName, event){
+      if (actionName == 'click' && this.parentNode)
+        this.parentNode.templateAction(actionName, event, this);
+    },
 
-        this.pageNumber.nodeValue = this.info.pageNumber + 1;
-        this.link.href = this.urlGetter(this.info.pageNumber);
-      }
+    event_update: function(object, delta){
+      nsWrappers.HtmlNode.prototype.event_update.call(this, object, delta);
+
+      this.tmpl.pageNumber.nodeValue = this.info.pageNumber + 1;
+      this.tmpl.link.href = this.urlGetter(this.info.pageNumber);
     },
 
     urlGetter: Function.$self
   });
+
+  //
+  // Paginator
+  //
+
+  var DARGDROP_HANDLER = {
+    start: function(config){
+      this.initOffset = this.tmpl.scrollTrumb.offsetLeft;
+    },
+    move: function(config){
+      var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
+      this.setSpanStartPage(Math.round(pos * (this.pageCount_ - this.pageSpan_)));
+      this.tmpl.scrollTrumb.style.left = percent(pos);
+    },
+    over: function(config){
+      this.setSpanStartPage(this.spanStartPage_);
+    }
+  };
 
  /**
   * Paginator
@@ -80,77 +110,50 @@
     childClass: PaginatorNode,
 
     template: new Template(
-    	'<table{element} class="Basis-Paginator">' +
-    	  '<tbody>' +
-          '<tr{childNodesElement}></tr>' +
-          '<tr{scrollbarContainer}>' +
-            '<td colspan{spanAttr}="1">' +
-              '<div{scrollbar} class="Basis-Paginator-Scrollbar">' +
-                '<div{activePageMark} class="ActivePage"></div>' +
-                '<div{scrollTrumb} class="Slider"><span/></div>' +
-              '</div>' +
-            '</td>' +
-          '</tr>' +
-        '</tbody>' +
-    	'</table>'
+    	'<div{element} class="Basis-Paginator">' +
+        '<table><tbody><tr{childNodesElement}/></tbody></table>' +
+        '<div{scrollbarContainer} class="Basis-Paginator-ScrollbarContainer">' +
+          '<div{scrollbar} class="Basis-Paginator-Scrollbar" event-click="jumpTo">' +
+            '<div{activePageMarkWrapper}>' +
+              '<div{activePageMark} class="Basis-Paginator-ActivePageMark"><div/></div>' +
+            '</div>' +
+            '<div{scrollTrumbWrapper}>' + 
+              '<div{scrollTrumb} class="Basis-Paginator-ScrollbarSlider"><div{scrollTrumbElement}><span/></div></div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+    	'</div>'
     ),
-
-    behaviour: {
-      click: function(event, node){
-        if (node)
-          this.setActivePage(node.info.pageNumber);
-        else
+    templateAction: function(actionName, event, node){
+      if (actionName == 'click' && node)
+        this.setActivePage(node.info.pageNumber);
+      else
+        if (actionName == 'jumpTo')
         {
-          var sender = Event.sender(event);
-          if (sender == this.scrollbar)
-          {
-            var pos = ((Event.mouseX(event) - (new Basis.Layout.Box(sender)).left) - this.scrollTrumb.offsetWidth/2)/sender.offsetWidth;
-            this.scrollTrumb.style.left = percent(pos);
-            this.setSpanStartPage(Math.round(pos/this.pageWidth_), true);
-          }
+          var scrollbar = this.tmpl.scrollbar;
+          var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
+          this.setSpanStartPage(Math.floor(pos * this.pageCount_) - Math.floor(this.pageSpan_ / 2));
         }
-        Event.kill(event);
-      },
-      childNodesModified: function(){
-        this.spanAttr.nodeValue = this.childNodes.length;
-      },
-      activePageChanged: function(){
-        this.updateSelection();
-      }
+      Event.kill(event);
     },
+
+    event_activePageChanged: createEvent('activePageChanged'),
+    event_pageCountChanged: createEvent('pageCountChanged'),
 
     pageSpan_: 0,
     pageCount_: 0,
     activePage_: 0,
     spanStartPage_: -1,
-    pageWidth_: 0,
 
     init: function(config){
-      config = this.inherit(config);
+      nsWrappers.Control.prototype.init.call(this, config);
 
       this.setProperties(config.pageCount || 0, config.pageSpan);
-      this.setActivePage((config.activePage || 1) - 1, true);
+      this.setActivePage(Math.max(config.activePage - 1, 0), true);
 
-      this.scrollbarDD = new Basis.DragDrop.DragDropElement({
-        element: this.scrollTrumb,
-        //axisY: false,
-        //baseElement: this.scrollbar,
-        handlersContext: this,
-        handlers: {
-          start: function(){
-            this.ddPos = this.scrollTrumb.offsetLeft;
-          },
-          move: function(cfg){
-            var pos = ((this.ddPos + cfg.deltaX)/this.scrollTrumb.offsetParent.offsetWidth).fit(0, 1 - parseInt(this.scrollTrumb.style.width)/100);
-            this.scrollTrumb.style.left = percent(pos);
-            this.setSpanStartPage(Math.round(pos/this.pageWidth_), true);
-          }
-        }
-      });
-
-      this.addEventListener('click');
-
-      return config;
+      (this.scrollbarDD = new Basis.DragDrop.DragDropElement({
+        element: this.tmpl.scrollTrumb
+      })).addHandler(DARGDROP_HANDLER, this);
     },
 
    /**
@@ -159,6 +162,7 @@
     * @param {number} activePage
     */
     setProperties: function(pageCount, pageSpan, activePage){
+      pageCount = pageCount || 1;
       pageSpan = Math.min(pageSpan || 10, pageCount);
 
       if (pageSpan != this.pageSpan_)
@@ -173,20 +177,31 @@
         }));
       }
 
-      this.pageWidth_ = 1/(pageCount || 1);
-
       if (this.pageCount_ != pageCount)
       {
         this.pageCount_ = pageCount;
 
-        this.activePageMark.style.width = percent(this.pageWidth_);
-        //this.activePageMark.style.marginLeft = '-{0:.4}%'.format(width/2);
+        var rangeWidth = 1 / pageCount;
+        var activePageMarkWidth = rangeWidth / (1 - rangeWidth);
 
-        this.dispatch('pageCountChanged', this.pageCount_);
+        this.tmpl.activePageMark.style.width = percent(activePageMarkWidth);
+        this.tmpl.activePageMarkWrapper.style.width = percent(1 - rangeWidth);
+
+        this.event_pageCountChanged(this.pageCount_);
       }
 
-      this.scrollTrumb.style.width = percent(pageSpan/(pageCount || 1));
-      DOM.display(this.scrollbarContainer, pageSpan < pageCount);
+      // spanWidth : (1 - spanWidth)
+      // scrollThumbWidth : 1
+      // ---
+      // scrollThumbWidth = spanWidth * 1 / (1 - spanWidth)
+
+      var spanWidth = pageSpan / pageCount;
+      var scrollTrumbWidth = spanWidth / (1 - spanWidth);
+
+      this.tmpl.scrollTrumbWrapper.style.width = percent(1 - spanWidth);
+      this.tmpl.scrollTrumb.style.width = percent(scrollTrumbWidth);
+
+      cssClass(this.element).bool('Basis-Paginator-WithNoScroll', pageSpan >= pageCount);
 
       this.setSpanStartPage(this.spanStartPage_);
       this.setActivePage(arguments.length == 3 ? activePage : this.activePage_);
@@ -196,43 +211,38 @@
       if (newActivePage != this.activePage_)
       {
         this.activePage_ = Number(newActivePage);
-
-        this.dispatch('activePageChanged', newActivePage);
+        updateSelection(this);
+        this.event_activePageChanged(newActivePage);
       }
 
-      this.activePageMark.style.left = percent(newActivePage * this.pageWidth_);
+      this.tmpl.activePageMark.style.left = percent(newActivePage / Math.max(this.pageCount_ - 1, 1));
 
       if (spotlightActivePage)
-        this.setSpanStartPage(this.activePage_ - Math.round(this.pageSpan_/2) + 1);
+        this.spotlightPage(this.activePage_);
     },
-    setSpanStartPage: function(pageNumber, noUpdateSlider){
+    spotlightPage: function(pageNumber){
+      this.setSpanStartPage(pageNumber - Math.round(this.pageSpan_/2) + 1);
+    },
+    setSpanStartPage: function(pageNumber){
       pageNumber = pageNumber.fit(0, this.pageCount_ - this.pageSpan_);
       if (pageNumber != this.spanStartPage_)
       {
         this.spanStartPage_ = pageNumber;
 
-        for (var i = 0, node; node = this.childNodes[i]; i++)
-          node.update({ pageNumber: pageNumber + i });
+        for (var i = this.childNodes.length; i --> 0;)
+          this.childNodes[i].update({ pageNumber: pageNumber + i });
 
-        this.updateSelection();
+        updateSelection(this);
       }
 
-      if (!noUpdateSlider)
-        this.scrollTrumb.style.left = percent(pageNumber/(this.pageCount_ || 1));
-    },
-    updateSelection: function(){
-      var selectedIndex = this.childNodes.binarySearch(this.activePage_, 'info.pageNumber');
-      if (selectedIndex != -1)
-        this.childNodes[selectedIndex].select();
-      else
-        this.selection.clear();
+      this.tmpl.scrollTrumb.style.left = percent((pageNumber/Math.max(this.pageCount_ - this.pageSpan_, 1)).fit(0, 1));
     },
 
     destroy: function(){
       this.scrollbarDD.destroy();
       delete this.scrollbarDD;
 
-      this.inherit();
+      nsWrappers.Control.prototype.destroy.call(this);
     }
   });
 

@@ -38,7 +38,7 @@
     //
 
    /**
-    * @class Button
+    * @class
     */
 
     var Button = Class(TmplNode, {
@@ -57,9 +57,9 @@
 
       templateAction: function(actionName, event){
         if (actionName == 'mousedown')
-          this.leftButtonPressed = Event.mouseButton(event, Event.MOUSE_LEFT);
+          this.leftButtonPressed_ = Event.mouseButton(event, Event.MOUSE_LEFT);
 
-        if (actionName == 'click' && this.leftButtonPressed)
+        if (actionName == 'click' && this.leftButtonPressed_)
           this.click();
 
         if (actionName == 'keydown' && [Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
@@ -135,10 +135,12 @@
     });
 
    /**
-    * @class ButtonGroupControl
+    * @class
     */
-    var ButtonGroupControl = Class(TmplGroupingNode, {
-      className: namespace + '.ButtonGroupControl',
+    var ButtonGrouping = Class(TmplGroupingNode, {
+      className: namespace + '.ButtonGrouping',
+
+      groupGetter: getter('groupId || -object.eventObjectId'),
 
       childClass: Class(TmplPartitionNode, {
         className: namespace + '.ButtonPartitionNode',
@@ -162,7 +164,7 @@
     });
 
    /**
-    * @class ButtonPanel
+    * @class
     */
     var ButtonPanel = Class(nsWrappers.TmplControl, {
       className: namespace + '.ButtonPanel',
@@ -175,10 +177,10 @@
 
       childClass: Button,
 
-      localGroupingClass: ButtonGroupControl,
-      localGrouping: {
+      localGroupingClass: ButtonGrouping,
+      localGrouping: {}, /*{
         groupGetter: getter('groupId || -object.eventObjectId')
-      },
+      },*/
 
       getButtonByName: function(name){
         return this.childNodes.search(name, getter('name'));
@@ -192,7 +194,7 @@
     Basis.namespace(namespace).extend({
       Button: Button,
       ButtonPanel: ButtonPanel,
-      ButtonGroupControl: ButtonGroupControl
+      ButtonGrouping: ButtonGrouping
     });
 
   })();

@@ -70,11 +70,11 @@
   {
     padding-left: 2px;
   }
-  #SearchTree .Basis-Tree-NodeGroup-Title
+  #SearchTree .Basis-TreePartitionNode-Title
   {
     margin-left: 4px !important;
   }
-  #SearchTree .Basis-Tree-Node .Tree-Node-Title A
+  #SearchTree .Basis-TreeNode-Caption
   {
     background-position: 3px .3em;
     padding-left: 24px;
@@ -87,7 +87,7 @@
       -moz-border-radius: 2px;
       -webkit-border-radius: 2px;
   }
-  #SearchTree .Basis-Tree-Node .label
+  #SearchTree .Basis-TreeNode .label
   {
     white-space: nowrap;
     overflow: hidden;
@@ -95,7 +95,7 @@
     text-overflow: ellipsis;
       -o-text-overflow: ellipsis;
   }
-  #SearchTree .Basis-Tree-Node .namespace
+  #SearchTree .Basis-TreeNode .namespace
   {
     padding-left: 1.5ex;
     padding-right: .25ex;
@@ -104,11 +104,11 @@
     float: right;
   }
 
-  #Sidebar .Basis-Tree-NodeGroup
+  #Sidebar .Basis-TreePartitionNode
   {
     margin: .2em 0 .4em;
   }
-  #Sidebar .Basis-Tree-NodeGroup-Title
+  #Sidebar .Basis-TreePartitionNode-Title
   {
     background: none;
     height: .6em;
@@ -118,7 +118,7 @@
     padding: 1px 0;
     line-height: 1.2em;
   }
-  #Sidebar .Basis-Tree-NodeGroup-Title SPAN
+  #Sidebar .Basis-TreePartitionNode-Title SPAN
   {
     color: #888;
     display: block;
@@ -127,12 +127,12 @@
     padding-right: 4px;
   }
 
-  #Sidebar .Basis-Tree-Expander
+  #Sidebar .Basis-TreeNode-Expander
   {
     height: 1.7em;
   }
 
-  #Sidebar DIV.Tree-Node-Title A
+  #Sidebar .Basis-TreeNode-Caption
   {
     padding-left: 34px;
     padding-bottom: .5em;
@@ -144,15 +144,15 @@
     line-height: 1.2em;
   }
 
-  #Sidebar .Namespace-Content   A { background-image: url(img/node_module.png) }
-  #Sidebar .Section-Content     A { background-image: url(img/node_partition.png) }
-  #Sidebar .Class-Content       A { background-image: url(img/bullet_square_red.png) }
-  #Sidebar .Constant-Content    A { background-image: url(img/node_const.png) }
-  #Sidebar .Function-Content    A { background-image: url(img/node_class_function.png) }
-  #Sidebar .Method-Content      A { background-image: url(img/node_method.png) }
-  #Sidebar .Property-Content    A { background-image: url(img/node_property2.png) }
-  #Sidebar .Object-Content      A { background-image: url(img/node_property.png) }
-  #Sidebar .HtmlElement-Content A { background-image: url(img/element_copy.png) }
+  #Sidebar .Namespace-Content   .Basis-TreeNode-Caption { background-image: url(img/node_module.png) }
+  #Sidebar .Section-Content     .Basis-TreeNode-Caption { background-image: url(img/node_partition.png) }
+  #Sidebar .Class-Content       .Basis-TreeNode-Caption { background-image: url(img/bullet_square_red.png) }
+  #Sidebar .Constant-Content    .Basis-TreeNode-Caption { background-image: url(img/node_const.png) }
+  #Sidebar .Function-Content    .Basis-TreeNode-Caption { background-image: url(img/node_class_function.png) }
+  #Sidebar .Method-Content      .Basis-TreeNode-Caption { background-image: url(img/node_method.png) }
+  #Sidebar .Property-Content    .Basis-TreeNode-Caption { background-image: url(img/node_property2.png) }
+  #Sidebar .Object-Content      .Basis-TreeNode-Caption { background-image: url(img/node_property.png) }
+  #Sidebar .HtmlElement-Content .Basis-TreeNode-Caption { background-image: url(img/element_copy.png) }
 
   #Sidebar .Class-Content    .args,
   #Sidebar .Function-Content .args,

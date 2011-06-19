@@ -112,14 +112,54 @@
       autocenter: true,
       moveable: true,
       title: 'Another Window',
-      buttonCancel: 'Cancel',
+      buttonCancel: 'Close',
 
+      childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
+        template: new Basis.Html.Template(
+          '<div{element}>#{idText}. {titleText}</div>'
+        ),
+        event_update: function(object, delta){
+          Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
+
+          this.tmpl.idText.nodeValue = this.info.id;
+          this.tmpl.titleText.nodeValue = this.info.title;
+        }
+      }),
+
+      localGrouping: {
+        groupGetter: getter('info.id % 2'),
+        titleGetter: getter('info.title', { 0: 'even', 1: 'odd' })
+      },
       childNodes: [
         {
-          content: 'Window ChildNode1 Content'
+          info: {
+            id: 1,
+            title: 'Lorem'
+          }
         },
         {
-          content: 'Window ChildNode2 Content'
+          info: {
+            id: 2,
+            title: 'ipsum'
+          }
+        },
+        {
+          info: {
+            id: 3,
+            title: 'dolor'
+          }
+        },
+        {
+          info: {
+            id: 4,
+            title: 'discere'
+          }
+        },
+        {
+          info: {
+            id: 5,
+            title: 'admodum'
+          }
         }
       ]
 

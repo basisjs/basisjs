@@ -99,7 +99,7 @@
       ],
 
       template: new Basis.Html.Template(
-        baseTreeNode.prototype.template.source.replace('</a>', '<span class="args">({argsText})</span></a>')
+        baseTreeNode.prototype.template.source.replace('</span>', '<span class="args">({argsText})</span></span>')
       ),
 
       init: function(config){
@@ -173,7 +173,11 @@
       },
       localGrouping: nodeTypeGrouping,
 
-      init: baseTreeNode.prototype.init,
+      init: function(config){
+        baseTreeNode.prototype.init.call(this, config);
+        if (this.collapsed)
+          this.event_collapse();
+      },
 
       getMembers: Function.$null,
       expand: function(){
@@ -212,7 +216,7 @@
       nodeType: 'Class',
 
       template: new Basis.Html.Template(
-        baseTreeFolder.prototype.template.source.replace('</a>', '<span class="args">({argsText})</span></a>')
+        baseTreeFolder.prototype.template.source.replace('</span>', '<span class="args">({argsText})</span></span>')
       ),
 
       views: [

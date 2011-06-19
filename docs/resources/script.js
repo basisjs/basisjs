@@ -249,7 +249,7 @@
     ]
   });
 
-  var SearchMatchInput = Class(nsForm.MatchInput, {
+  /*var SearchMatchInput = Class(nsForm.MatchInput, {
     matchFilterClass: Class(nsForm.MatchFilter, {
       changeHandler: function(value){
         var fc = value.charAt(0);
@@ -289,13 +289,18 @@
         this.node.element.scrollTop = 0;
       }
     })
-  });
+  });*/
 
   var loadSearchIndex = Function.runOnce(function(){
     searchTree.setChildNodes(nsCore.Search.values.map(Function.wrapper('info')));
   });
 
-  var searchInput = new SearchMatchInput({
+  var searchInput = new nsWrappers.TmplNode({
+    template: new Basis.Html.Template(
+      '<div{element}><input{field} type="text" /></div>'
+    )
+  });
+  /*var searchInput = new SearchMatchInput({
     matchFilter: {
       node: searchTree,
       regexpGetter: function(value){
@@ -336,7 +341,7 @@
       if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(key))
         if (selected)
           navTree.open(selected.info.objPath);
-  }, searchInput);
+  }, searchInput);*/
 
   /*
   var clsTree = new nsTree.Tree({
@@ -404,21 +409,21 @@
     
     var sender = Event.sender(e);
     if (sender.tagName != 'A')
-      sender = DOM.parent(sender, 'A');
+      sender = DOM.findAncestor(sender, function(node){ node.tagName == 'A' });
     if (sender && sender.pathname == location.pathname && sender.hash != '')
       navTree.open(sender.hash, DOM.parentOf(navTree.element, sender));
 
     //DOM.focus(searchInput.field, true);
   });
   var searchInputFocused = false;
-  Event.addHandler(searchInput.field, 'focus', function(){ searchInputFocused = true; });
-  Event.addHandler(searchInput.field, 'blur', function(){ searchInputFocused = false; });
+  Event.addHandler(searchInput.tmpl.field, 'focus', function(){ searchInputFocused = true; });
+  Event.addHandler(searchInput.tmpl.field, 'blur', function(){ searchInputFocused = false; });
   Event.addGlobalHandler('keydown', function(e){
     var event = Event(e);
     if (event.ctrlKey || event.shiftKey || event.altKey)
       return;
 
-    DOM.focus(searchInput.field, !searchInputFocused);
+    DOM.focus(searchInput.tmpl.field, !searchInputFocused);
   });
 
   function checkLocation(){
@@ -429,7 +434,7 @@
   setInterval(checkLocation, 250);
   setTimeout(checkLocation, 0);
 
-  DOM.focus(searchInput.field, true);
+  DOM.focus(searchInput.tmpl.field, true);
 
   //
   // jsDocs parse

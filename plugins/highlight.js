@@ -1,13 +1,22 @@
 
   (function(){ 
     
+   /**
+    * @namespace Basis.Plugin.SyntaxHighlight
+    */
     var namespace = 'Basis.Plugin.SyntaxHighlight';
+
+    //
+    // import names
+    //
 
     var DOM = Basis.DOM;
     var nsWrappers = Basis.DOM.Wrapper;
     var Template = Basis.Html.Template;
 
-    //Function.getter = Basis.Data;
+    //
+    // Main part
+    //
 
     var keywords = 
       'break case catch continue ' +
@@ -16,48 +25,11 @@
       'new null return super switch ' +
       'this throw true try typeof var while with';
 
-
-    var regexps = [
-      {
-        kind: 'string',
-        rx: /\'(?:\\[\'\n\r]|[^\'\n\r])*\'/g
-      },
-      {
-        kind: 'string',
-        rx: /\"(?:\\[\"\n\r]|[^\"\n\r])*\"/g
-      },
-      {
-        kind: 'comment',
-        rx: /\/\/.*/gm
-      },
-      {
-        kind: 'comment',
-        rx: /\/\*[\s\S]*?\*\//g
-      },
-      {
-        kind: 'keyword',
-        rx: new RegExp('\\b(?:' + keywords.qw().join('|') + ')\\b', 'g')
-      }
-    ];
-
     var keywordRegExp = new RegExp('\\b(' + keywords.qw().join('|') + ')\\b', 'g');
 
-//        '<span class="lineNumber"><input value{numberText}="001"/></span>' +  // 
-    var lineTemplate = new Template(
-      '<div{element} class="line">' +
-        '<span{content} class="lineContent">' +
-          '<input class="lineNumber" value{numberText}="" type="none" unselectable="on" readonly tabindex="-1" /><span class="over"></span>' +
-        '</span>' +
-      '</div>'
-    );
-
-    var template = document.createElement('div');
-    template.innerHTML = 
-      '<div>' +
-        '<span class="lineContent"></span>' +
-      '</div>';
-    template = template.firstChild;
-
+   /**
+    * @func
+    */
     function highlight(code, keepFormat){
 
       function normalize(code, offset){
@@ -69,7 +41,9 @@
           code = code.replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
 
         // fix empty strings
-        code = code.replace(/\n[ \t]+/g, function(m){ return m.replace(/\t/g, '  '); }).replace(/\n[ \t]+\n/g, '\n\n');
+        code = code
+                 .replace(/\n[ \t]+/g, function(m){ return m.replace(/\t/g, '  '); })
+                 .replace(/\n[ \t]+\n/g, '\n\n');
 
         if (!keepFormat)
         {
@@ -96,13 +70,13 @@
       }
 
       function getMatches(code){
-        function addMatch(kind, start, end, x){
+        function addMatch(kind, start, end, rn){
           if (lastMatchPos != start)
             result.push(code.substring(lastMatchPos, start).replace(keywordRegExp, '<span class="token-keyword">$1</span>'));
 
           lastMatchPos = end + 1;
 
-          result.push('<span class="token-' + kind + '">' + code.substring(start, end + 1) + '</span>' + (x || ''));
+          result.push('<span class="token-' + kind + '">' + code.substring(start, end + 1) + '</span>' + (rn || ''));
         }
 
         var result = [];
@@ -198,7 +172,6 @@
         }
 
         result.push(code.substr(lastMatchPos, start).replace(keywordRegExp, '<span class="token-keyword">$1</span>'));
-        //console.log(html.join(''));
 
         return result;
       }
@@ -206,7 +179,6 @@
       //  MAIN PART
 
       var html = getMatches(normalize(code).replace(/</g, '&lt;'));
-      //console.log(html);
 
       //console.log('getmatches ' + (new Date - t));
 
@@ -245,9 +217,7 @@
         if (code != this.code_)
         {
           this.code_ = code;
-          //DOM.insert(DOM.clear(this.codeElement), highlight(code));
           this.codeElement.innerHTML = highlight(code, !this.normalize);
-          //DOM.insert(this.codeElement, DOM.createElement('TEXTAREA', Basis.DOM.outerHTML(highlight(code))));
         }
       },
       init: function(config){
@@ -260,6 +230,10 @@
         nsWrappers.HtmlNode.prototype.init.call(this, config);
       }
     });
+
+    //
+    // export names
+    //
 
     Basis.namespace(namespace).extend({
       // functions

@@ -131,15 +131,15 @@
         {
           title: 'Web Apps',
           demos: [
-            { title: 'Basis Docs', url: '../docs/index.html' },
-            { title: 'Wallet One Cabinet', url: 'https://en.w1.ru/client' }
+            { title: 'Basis Docs', url: '../docs/index.html', image: 'apps/docs.png' },
+            { title: 'Wallet One Cabinet', url: 'https://en.w1.ru/client', image: 'apps/w1.png' }
           ]
         },
         {
           title: 'Simple controls',
           demos: [
-            { title: 'Tree', url: 'simple/tree.html', image: 'simple/tree.png' },
-            { title: 'Tabs', url: 'simple/tabs.html', image: 'simple/tabs.png' },
+            { title: 'Tree', url: 'simple/tree.html' },
+            { title: 'Tabs', url: 'simple/tabs.html' },
             { title: 'Calendar', url: 'simple/calendar.html' }
           ]
         },
@@ -151,7 +151,15 @@
             { title: 'Basis.Controls.Button', url: 'defile/button.html' },
             { title: 'Basis.Controls.Window', url: 'defile/window.html' },
             { title: 'Basis.Controls.Popup', url: 'defile/popup.html' },
+            { title: 'Paginator', url: 'defile/paginator.html' },
             { title: 'Basis.Controls.Animation', url: 'defile/animation.html' }
+          ]
+        },
+        {
+          title: 'Common models',
+          demos: [
+            { title: 'Grouping', url: 'various/grouping.html' },
+            { title: 'Match input', url: 'various/match.html' }
           ]
         },
         {
@@ -172,14 +180,6 @@
           ]
         },
         {
-          title: 'Various',
-          demos: [
-            { title: 'Node grouping', url: 'various/grouping.html' },
-            { title: 'Match input', url: 'various/match.html' },
-            { title: 'Paginator', url: 'various/paginator.html' }
-          ]
-        },
-        {
           title: 'Ajax',
           demos: [
             { title: 'SOAP simple', url: 'ajax/soap-simple.html' },
@@ -193,10 +193,7 @@
         container: document.body,
         template: new Basis.Html.Template(
           '<ul{element}>' +
-            '<div{childNodesElement}/>' +
-            '<hr/>' +
             '<!-- {childNodesHere} -->' +
-            '<hr/>' +
           '</ul>'
         ),
         childClass: Class(nsTree.TreeNode, {

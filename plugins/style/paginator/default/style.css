@@ -20,10 +20,24 @@
 
   .Basis-Paginator
   {
-    line-height: 1em;
-    border-collapse: collapse;
-    table-layout: fixed;
+    line-height: 1;
+    display: inline;
+    display: inline-block;    
     /*width: 100%;*/
+  }
+  .Basis-Paginator TABLE
+  {
+    width: 100%;
+    border: none;
+    border-collapse: collapse;
+    tab2le-layout: fixed;
+  }
+  .Basis-Paginator TR,
+  .Basis-Paginator TD
+  {
+    padding: 0;
+    border: none;
+    overflow: visible;
   }
   .Basis-PaginatorNode
   {
@@ -34,7 +48,6 @@
   .Basis-PaginatorNode SPAN
   {
     display: block;
-    min-width: 5ex;
     padding: 3px 0;
     color: #fff;
   }
@@ -43,9 +56,9 @@
     padding: 2px .5ex;
     min-width: 3ex;
     color: #0066CC;
-    border-radius: 3px;
       -webkit-border-radius: 3px;
       -moz-border-radius: 3px;
+    border-radius: 3px;
   }
   .Basis-PaginatorNode A:hover
   {
@@ -60,36 +73,53 @@
     font-style: normal;
     font-weight: normal; 
   }
+  .Basis-Paginator-WithNoScroll .Basis-Paginator-ScrollbarContainer
+  {
+    display: none;
+  }
+  .Basis-Paginator-Scrollbar DIV
+  {
+    position: relative;
+  }
   .Basis-Paginator-Scrollbar
   {
     position: relative;
     height: 4px;
     background: #CCC;
     margin: 5px 0;
-    border-radius: 2px;
       -webkit-border-radius: 2px;
       -moz-border-radius: 2px;
+    border-radius: 2px;
     cursor: pointer;
     cursor: hand;
   }
-  .Basis-Paginator-Scrollbar .Slider
+  .Basis-Paginator-ScrollbarSlider
   {
     position: absolute;
     z-index: 2;
     width: 0;
-    height: 2px;
+    height: 0;
     top: 0;
     left: 0;
     font-size: 1px;
-    background: #666;
-    border: 1px solid #555;
-    border-radius: 2px;
-      -webkit-border-radius: 3px;
-      -moz-border-radius: 2px;
     cursor: pointer;
     cursor: hand;
   }
-  .Basis-Paginator-Scrollbar .Slider SPAN
+  .Basis-Paginator-ScrollbarSlider DIV
+  {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    height: 4px;
+    font-size: 1px;
+    background: #666;
+      -webkit-border-radius: 3px;
+      -moz-border-radius: 3px;
+    border-radius: 3px;
+    cursor: pointer;
+    cursor: hand;
+  }
+  .Basis-Paginator-ScrollbarSlider SPAN
   {
     display: block;
     position: absolute;
@@ -102,17 +132,23 @@
     overflow: hidden;
     background: url(slider.png) no-repeat left top;
   }
-  .Basis-Paginator-Scrollbar .ActivePage
+  .Basis-Paginator-ActivePageMark
   {
     position: absolute;
     z-index: 1;
     top: 0;
     left: 0;
     min-width: 2px;
+  }
+  .Basis-Paginator-ActivePageMark DIV
+  {
+    position: absolute;
+    width: 100%;
+    left: 0;
     height: 4px;
     overflow: hidden;
     background: #0066CC;
-    border-radius: 2px;
       -webkit-border-radius: 2px;
       -moz-border-radius: 2px;
+    border-radius: 2px;
   }

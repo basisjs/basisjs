@@ -2178,7 +2178,7 @@
           var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
           var container = target.childNodesElement || target.element;
 
-          container.insertBefore(newChild.element, insertPoint || container.insertPoint);
+          container.insertBefore(newChild.element, insertPoint || container.insertPoint || null); // NOTE: null at the end for IE
             
           return newChild;
         },
@@ -2229,7 +2229,7 @@
           superClassProto.setChildNodes.call(this, childNodes, keepAlive);
 
           // restore childNodesElement
-          container.insertBefore(domFragment, container.insertPoint);
+          container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
           target.childNodesElement = container;
         }
       }

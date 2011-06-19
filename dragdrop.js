@@ -63,7 +63,7 @@
         // kill event
         Event.cancelDefault(event);
       },
-      move: function(e){  // `this` store DDE config
+      move: function(event){  // `this` store DDE config
         var dde = DDEConfig.dde;
 
         //if (!Event.mouseButton(e, Event.MOUSE_LEFT))
@@ -77,14 +77,14 @@
         }
 
         if (dde.axisX)
-          DDEConfig.event.deltaX = dde.axisXproxy(Event.mouseX(e) - DDEConfig.event.initX);
+          DDEConfig.event.deltaX = dde.axisXproxy(Event.mouseX(event) - DDEConfig.event.initX);
 
         if (dde.axisY)
-          DDEConfig.event.deltaY = dde.axisYproxy(Event.mouseY(e) - DDEConfig.event.initY);
+          DDEConfig.event.deltaY = dde.axisYproxy(Event.mouseY(event) - DDEConfig.event.initY);
 
         dde.event_move(DDEConfig.event);
       },
-      over: function(){  // `this` store DDE config
+      over: function(event){  // `this` store DDE config
         var dde = DDEConfig.dde;
 
         // remove document handler if exists
@@ -98,6 +98,7 @@
           dde.event_over(DDEConfig.event);
         
         DDEConfig = null;
+        Event.kill(event);
       }
     };
 
@@ -115,10 +116,10 @@
       trigger: null,            // element that trig a drag; if null element is trig drag itself
       baseElement: null,        // element that will be a base of offset; if null then document body is base
 
-      fixTop:    true,
-      fixRight:  true,
+      fixTop: true,
+      fixRight: true,
       fixBottom: true,
-      fixLeft:   true,
+      fixLeft: true,
 
       axisX: true,
       axisY: true,
@@ -252,8 +253,6 @@
           config.box = box;
           config.viewport = viewport;
         }
-        else
-          console.warn('sdfsf')
 
         DragDropElement.prototype.event_start.call(this, config);
       },
@@ -266,11 +265,11 @@
         {
           var newLeft = config.box.left + config.deltaX;
           
-          if (this.fixLeft && newLeft < 0) //config.viewport.left)
-            newLeft = 0;//config.viewport.left;
+          if (this.fixLeft && newLeft < 0)
+            newLeft = 0;
           else
-            if (this.fixRight && newLeft + config.box.width > config.viewport.width)//config.viewport.right)
-              newLeft = config.viewport.width - config.box.width;//config.viewport.right - config.box.width;
+            if (this.fixRight && newLeft + config.box.width > config.viewport.width)
+              newLeft = config.viewport.width - config.box.width;
 
           config.element.style.left = newLeft + 'px';
         }
