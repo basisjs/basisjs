@@ -27,11 +27,11 @@
     var TimeEventManager = Basis.TimeEventManager;
 
     var nsData = Basis.Data;
-    var STATE = nsData.STATE;
-
     var nsWrappers = Basis.DOM.Wrapper;
 
     var DataObject = nsData.DataObject;
+
+    var STATE = nsData.STATE;
 
     //
     // Main part
@@ -86,6 +86,17 @@
       }
     })();
 
+   /**
+    * @function createEvent
+    */
+    function createEvent(eventName){
+      var event = Basis.EventObject.createEvent(eventName);
+      var args = [eventName];
+      return function(){
+        TransportDispatcher.dispatch.apply(null, args.concat(arguments));
+        event.apply(this, arguments);
+      }
+    }
 
    /**
     * @function createTransport
@@ -126,9 +137,9 @@
     // TransportDispatcher
     //
 
-    var inprogressTransports = new Array();
     var TransportDispatcher = (function(){
 
+      var inprogressTransports = new Array();
       var handlers = [
         {
           handler: {
@@ -241,12 +252,13 @@
       // BUGFIX: IE & Gecko fire OPEN readystate twice
       if (readyState == this.prevReadyState_)
         return;
-      this.prevReadyState_ = readyState;
+      else
+        this.prevReadyState_ = readyState;
 
       ;;;if (this.debug) logOutput('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
 
       // dispatch self event
-      this.dispatch('readyStateChanged', readyState);
+      this.event_readyStateChanged(readyState);
 
       if (readyState == STATE_DONE)
       {
@@ -267,10 +279,10 @@
           var abortedByTimeout = this.abortedByTimeout_;
 
           if (abortedByTimeout)
-            this.dispatch('timeout');
+            this.event_timeout();
 
           // dispatch event
-          this.dispatch('abort', abortedByTimeout);
+          this.event_abort(abortedByTimeout);
 
           ;;;if (this.debug) logOutput('Request aborted' + (abortedByTimeout ? ' (timeout)' : ''));
         }
@@ -286,22 +298,22 @@
           // dispatch events
           if (isSuccess)
           {
-            this.dispatch('success', transport);
+            this.event_success(transport);
             newState = STATE.READY;
           }
           else
           {
-            this.dispatch('failure', transport);
+            this.event_failure(transport);
             newState = STATE.ERROR;
             error = this.getRequestError(transport);
           }
 
           // dispatch status
-          this.dispatch('httpStatus', transport.status);
+          this.event_httpStatus(transport, transport.status);
         }
 
         // dispatch complete event
-        this.dispatch('complete', transport);
+        this.event_complete(transport);
 
         // set new state
         this.setState(newState, error);
@@ -350,7 +362,7 @@
       setRequestHeaders(transport, requestData);
 
       // progress started
-      this.dispatch('start');
+      this.event_start();
       if (this.aborted)
       {
         ;;;if (this.debug && typeof console != 'undefined') console.warn('Transport: request was aborted while `start` event dispatch');
@@ -416,6 +428,15 @@
       className: namespace + '.Transport',
 
       state:     STATE.UNDEFINED,
+
+      event_start: createEvent('start'),
+      event_readyStateChanged: createEvent('readyStateChanged'),
+      event_timeout: createEvent('timeout'),
+      event_abort: createEvent('abort'),
+      event_success: createEvent('success'),
+      event_failure: createEvent('failure'),
+      event_httpStatus: createEvent('httpStatus'),
+      event_complete: createEvent('complete'),
 
       event_stateChanged: function(object, oldState){
         DataObject.prototype.event_stateChanged.call(this, object, oldState);
@@ -520,7 +541,8 @@
       dispatch: function(eventName){
         // global event dispatch
         TransportDispatcher.dispatch.apply(this, arguments);
-        this.inherit.apply(this, arguments);
+        //this.inherit.apply(this, arguments);
+        DataObject.prototype.dispatch.apply(this, arguments);
       },
 
       //
@@ -583,11 +605,15 @@
         // dispatch prepare event
         //this.dispatch('prepare');
         var handlers = this.handlers_;
-        var handler;
-        for (var i = handlers.length - 1; handler = handlers[i]; i--)
+        if (handlers)
         {
-          if (handler.handler.prepare)
-            handler.handler.prepare.call(handler.thisObject || this);
+          var handler;
+          for (var i = handlers.length; i --> 0;)
+          {
+            handler = handlers[i];
+            if (handler.handler.prepare)
+              handler.handler.prepare.call(handler.thisObject || this);
+          }
         }
 
         if (this.aborted)

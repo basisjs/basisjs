@@ -148,7 +148,7 @@
         if (!p)
         {
           if (typeof console != 'undefined')
-            console.warn('jsdoc parse error: ', this.value.path, value, p);
+            console.warn('jsdoc parse error: ', this.info.path, value, p);
         }
         else
         {
@@ -164,12 +164,12 @@
         var ref = map[typ];
         if (ref && ref.kind == 'class')
         {
-          var obj = map[this.value.path];
-          var objHolder = map[this.value.path.replace(/\.prototype\.[a-z0-9\_]+$/i, '')];
-          //if (/childClass/.test(this.value.path)) debugger;
+          var obj = map[this.info.path];
+          var objHolder = map[this.info.path.replace(/\.prototype\.[a-z0-9\_]+$/i, '')];
+          //if (/childClass/.test(this.info.path)) debugger;
           if (obj && obj.kind == 'property')
           {
-            console.log(this.value.path + ': ' + objHolder.objPath + ' -' + obj.title + '-> ' + ref.objPath);
+            console.log(this.info.path + ': ' + objHolder.objPath + ' -' + obj.title + '-> ' + ref.objPath);
           }
         }
         tags[key] = value;
@@ -219,7 +219,7 @@
       {
         if (!fetchInheritedJsDocs(objPath, this))
         {
-          awaitingUpdateQueue[this.value.path] = this;
+          awaitingUpdateQueue[this.info.path] = this;
         }
       }
     }*/,
@@ -448,7 +448,7 @@
           file: resource.url,
           line: line + 1 + lineFix
         });
-        jsDocs[e.value.path] = e.value.text;
+        jsDocs[e.info.path] = e.info.text;
       }
 
       var parts = resource.text.replace(/\r\n|\n\r|\r/g, '\n').replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|\n)+?)\*\/)/);
@@ -525,25 +525,26 @@
     loaded: {},
     curResource: null,
     transport: Function.lazyInit(function(){
-      return new Basis.Ajax.Transport({
-        handlersContext: resourceLoader,
-        handlers: {
-          failure: function(){
-            var curResource = this.curResource;
-            if (curResource.attemptCount++ < 3)
-              this.queue.push(curResource);
-          },
-          success: function(req){
-            var curResource = this.curResource;
-            curResource.text = req.responseText;
-            sourceParser[curResource.kind](curResource);
-          },
-          complete: function(req){
-            this.curResource = null;
-            TimeEventManager.add(this, 'load', Date.now() + 5);
-          }
+      var transport = new Basis.Ajax.Transport();
+
+      transport.addHandler({
+        failure: function(){
+          var curResource = this.curResource;
+          if (curResource.attemptCount++ < 3)
+            this.queue.push(curResource);
+        },
+        success: function(req){
+          var curResource = this.curResource;
+          curResource.text = req.responseText;
+          sourceParser[curResource.kind](curResource);
+        },
+        complete: function(req){
+          this.curResource = null;
+          TimeEventManager.add(this, 'load', Date.now() + 5);
         }
-      });
+      }, resourceLoader);
+
+      return transport;
     }),
     addResource: function(url, kind){
       urlResolver_.href = url;
