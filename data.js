@@ -75,7 +75,7 @@
     * @param {Object} handler
     * @param {function()} action
     */
-    add: function(name, handler, action){
+    regType: function(name, handler, action){
       subscriptionHandlers[subscriptionSeed] = {
         handler: handler,
         action: action,
@@ -206,7 +206,7 @@
   // Registrate subscription type
   //
 
-  Subscription.add(
+  Subscription.regType(
     'DELEGATE',
     {
       delegateChanged: function(object, oldDelegate){
@@ -1338,7 +1338,7 @@
   // Registrate subscription type
   //
 
-  Subscription.add(
+  Subscription.regType(
     'SOURCE',
     {
       sourcesChanged: function(object, delta){

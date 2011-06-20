@@ -27,14 +27,14 @@
  *   o Number
  *   o Date (you can find other extensions for Date in date.js)
  * - Namespace sheme (module subsystem)
- * - namespace Basis.Browser (version detections & Cookies interface)
- * - namespace Basis.Class (provides inheritance)
+ * - Basis.Browser namespace (version detections & Cookies interface)
+ * - Basis.Class namespace (provides inheritance)
  * - class EventObject
- * - namespace Basis.DOM
- * - namespace Basis.DOM.Style
- * - namespace Basis.Event
- * - namespace Basis.Html (generaly template)
- * - namespace Basis.CSS (generaly className interface)
+ * - Basis.DOM namespace
+ * - Basis.DOM.Style namespace
+ * - Basis.Event namespace
+ * - Basis.Html namespace (generaly template)
+ * - Basis.CSS namespace (generaly className interface)
  * - Cleaner
  * - TimeEventManager
  */

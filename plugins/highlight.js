@@ -219,15 +219,6 @@
           this.code_ = code;
           this.tmpl.codeElement.innerHTML = highlight(code, !this.normalize);
         }
-      },
-      init: function(config){
-        if (config)
-        {
-          if ('normalize' in config)
-            this.normalize = !!config.normalize;
-        }
-
-        nsWrappers.HtmlNode.prototype.init.call(this, config);
       }
     });
 

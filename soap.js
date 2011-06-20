@@ -256,12 +256,12 @@
           Transport.prototype.event_success.apply(this, args);
         }
       },
-      event_failure: function(){
+      event_failure: function(request){
         var args = Array.from(arguments);
 
         var error = this.state.data || this.getRequestError(request);
         if (error.isSoapFailure)
-          this.event_soapfailure(error.code, error.msg);
+          this.event_soapfailure(request, error.code, error.msg);
           //nsAjax.TransportDispatcher.dispatch.call(this, 'soapfailure', error.code, error.msg);
 
         args.push(

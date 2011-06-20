@@ -36,26 +36,27 @@
     {
       var transport = new Basis.Ajax.Transport({
         url: '../' + filename,
-        handlers: {
-          success: function(req){
-            //t = new Date;
-            var node = new Basis.Plugin.SyntaxHighlight.SourceCodeNode({
-              container: document.body,
-              normalize: false,
-              info: {
-                code: req.responseText//.replace(/^\s*\n/, function(m){ return '.' + m })
-              }
-            });
-            //alert(new Date - t)
-            if (!isNaN(line))
-            {
-              var lineElement = node.element.childNodes[line - 1];
-              lineElement.className += ' selected';
-              setTimeout(function(){
-                document.documentElement.scrollTop =
-                document.body.scrollTop = lineElement.offsetTop - 200;
-              }, 15);
+        event_complete: function(req){
+          this.constructor.prototype.event_success.apply(this, arguments);
+
+          //t = new Date;
+          var node = new Basis.Plugin.SyntaxHighlight.SourceCodeNode({
+            container: document.body,
+            normalize: false,
+            info: {
+              code: req.responseText//.replace(/^\s*\n/, function(m){ return '.' + m })
             }
+          });
+
+          //alert(new Date - t)
+          if (!isNaN(line))
+          {
+            var lineElement = node.element.childNodes[line - 1];
+            lineElement.className += ' selected';
+            setTimeout(function(){
+              document.documentElement.scrollTop =
+              document.body.scrollTop = lineElement.offsetTop - 200;
+            }, 15);
           }
         }
       });

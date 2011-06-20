@@ -92,10 +92,15 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
+    //
     // import names
+    //
 
     var Data = Basis.Data;
     var DOM = Basis.DOM;
+
+    var getter = Function.getter;
+
     var nsWrappers = Basis.DOM.Wrapper;
     var nsEntity = Basis.Entity;
     var nsTree = Basis.Controls.Tree;
@@ -105,7 +110,9 @@
 
     var demoContainer = DOM.get('demo-container');
 
+    //
     // reusable handlers
+    //
 
     var colHandler = {
       subscribersChanged: function(){
@@ -151,18 +158,16 @@
     UserGroup.all.addHandler(colHandler);
     UserGroup.all.adapter = new Basis.Ajax.Transport({
       url: 'userlist_groups.json',
-      influence: UserGroup.all,
-      handlersContext: UserGroup.all,
-      handlers: adapterHandler
+      influence: UserGroup.all
     });
+    UserGroup.all.adapter.addHandler(adapterHandler, UserGroup.all);
 
     User.all.addHandler(colHandler);
     User.all.adapter = new Basis.Ajax.Transport({
       url: 'userlist_users.json',
-      influence: User.all,
-      handlersContext: User.all,
-      handlers: adapterHandler
+      influence: User.all
     });
+    User.all.adapter.addHandler(adapterHandler, User.all);
 
     // create controls
 
@@ -176,20 +181,23 @@
 
     var tree = new nsTree.Tree({
       container: demoContainer,
-      isActiveSubscriber: true,
-      collection: User.all,
       childClass: Basis.Class(nsTree.TreeNode, {
         titleGetter: function(node){
           return this.info.title;
         }
       }),
-      localSorting: 'info.title',
+
+      active: true,
+      collection: User.all,
+
+      localSorting: getter('info.title'),
       localGrouping: {
-        groupGetter: 'info.group',
-        titleGetter: 'info.title',
-        isActiveSubscriber: true,
-        collection: UserGroup.all,
-        localSorting: 'info.title'
+        groupGetter: function(node){ return node.info.group; },
+        titleGetter: getter('info.title'),
+        localSorting: getter('info.title'),
+
+        active: true,
+        collection: UserGroup.all
       }
     });
 

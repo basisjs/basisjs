@@ -339,14 +339,25 @@
     display: none;
   }
 
+  .Doc-TemplateView-Element UL,
+  .Doc-TemplateView-Element LI
+  {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .Doc-TemplateView-Element UL
+  {
+    padding-left: 20px;
+  }
   #Content .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs
   {
-    border: 2px solid #CEE1EB; #D9E8FB;
+    border: 2px solid #CEE1EB;
     margin: 1.4em 4px .2em -4px;
     padding-left: 2px;
     position: relative;
-    border-radius: 0 4px 4px 4px;
       -moz-border-radius: 0 4px 4px 4px;
+    border-radius: 0 4px 4px 4px;
   }
   #Content .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs > .refList
   {
@@ -358,9 +369,9 @@
     margin-left: -4px;
     padding: 3px 0 2px;
     font-size: 85%;
-    border-radius: 4px 4px 0 0;
       -moz-border-radius: 4px 4px 0 0;
-    background: #CEE1EB;#D9E8FB;
+    border-radius: 4px 4px 0 0;
+    background: #CEE1EB;
   }
   #Content .viewTemplate .ref
   {
@@ -373,9 +384,9 @@
     display: inline;
     padding: 1px 0px 2px 0px;
     font-size: 85%;
-    border-radius: 3px;
       -moz-border-radius: 3px;
       -webkit-border-radius: 3px;
+    border-radius: 3px;
   }
   #Content .viewTemplate .Doc-TemplateView-Text.hasRefs
   {

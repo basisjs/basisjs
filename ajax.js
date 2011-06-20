@@ -445,7 +445,7 @@
           this.influence[i].setState(this.state, this.state.data);
       },
 
-      influence: [],
+      influence: null,
       debug: DEBUG_MODE,
 
       // object states
@@ -463,39 +463,28 @@
 
       // transport properties
       asynchronous: true,
-      method:       DEFAULT_METHOD,
-      contentType:  DEFAULT_CONTENT_TYPE,
-      encoding:     null,
+      method: DEFAULT_METHOD,
+      contentType: DEFAULT_CONTENT_TYPE,
+      encoding: null,
 
       //
       // constructor
       //
-      init: function(urlOrConfig, asynchronous, method){
-        var config = typeof urlOrConfig != 'object' || urlOrConfig == null ? { url: urlOrConfig } : urlOrConfig;
-        var url = config.url;
+      init: function(config){
+        var influence = this.influence;
 
         // transport object
         this.transport = createTransport();
-
         this.requestHeaders = {};
         this.influence = new Array();
 
         // request params
-        this.url = url;
         this.params = {};
 
         // transport transfer properties
-        if (method || config.method)
-          this.method = method || config.method;
 
-        if (asynchronous != null && !asynchronous)
-          this.asynchronous = false;
-
-        if (typeof config.asynchronous == 'boolean')
-          this.asynchronous = config.asynchronous;
-
-        if (config.influence)
-          this.setInfluence(config.influence);
+        if (influence)
+          this.setInfluence(influence);
 
         Cleaner.add(this);  // ???
 
@@ -504,8 +493,8 @@
         DataObject.prototype.init.call(this, config);
 
         // handlers
-        if (config.callback)
-          this.addHandler(config.callback, this);
+        if (this.callback)
+          this.addHandler(this.callback, this);
       },
 
       setInfluence: function(){

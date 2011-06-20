@@ -655,7 +655,7 @@
 
           for (var key in fields)
           {
-            var value = key in data ? fields[key](data[key]) : defaults[key];
+            var value = key in values ? fields[key](values[key]) : defaults[key];
 
             if (value && value !== this && value instanceof EventObject)
             {

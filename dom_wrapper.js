@@ -107,7 +107,7 @@
   // registrate new subscription type
   //
 
-  Subscription.add(
+  Subscription.regType(
     'COLLECTION',
     {
       collectionChanged: function(object, oldCollection){
@@ -163,7 +163,7 @@
    /**
     * @inheritDoc
     */
-    subsribeTo: Subscription.DELEGATE | Subscription.COLLECTION,
+    subscribeTo: Subscription.DELEGATE | Subscription.COLLECTION,
 
    /**
     * Flag determines object behaviour when parentNode changing:
@@ -297,13 +297,16 @@
     */
     init: function(config){
 
+      var collection = this.collection;
+      var childNodes = this.childNodes;
+      var localGrouping = this.localGrouping;
+
+      this.collection = null; // NOTE: reset collection before inherit -> prevent double subscription activation
+                              // on this.active and on this.setCollection
+
       // inherit
       DataObject.prototype.init.call(this, config);
 
-      var collection = this.collection;
-      var childNodes = this.childNodes;
-
-      var localGrouping = this.localGrouping;
       if (localGrouping)
       {
         this.localGrouping = null;
@@ -1768,14 +1771,20 @@
 
     getGroupNode: function(node){
       var groupRef = this.groupGetter(node);
-      var isDelegate = groupRef instanceof EventObject;
+      var isDelegate = groupRef instanceof DataObject;
       var group = this.map_[isDelegate ? groupRef.eventObjectId : groupRef];
 
       if (!group && !this.collection)
       {
-        group = this.appendChild({
-          info: isDelegate ? groupRef : { id: groupRef, title: groupRef }
-        });
+        group = this.appendChild(
+          isDelegate
+            ? { delegate: groupRef }
+            : { info: {
+                  id: groupRef,
+                  title: groupRef
+                }
+              }
+        );
       }
 
       return group || this.nullGroup;
