@@ -34,37 +34,11 @@
       className: namespace + '.QName',
       init: function(localpart, namespace, prefix){
         this.localpart = localpart;
-        if (namespace)
-          this.namespace = namespace;
-        if (prefix)
-          this.prefix = prefix;
+        this.namespace = namespace || '';
+        this.prefix = prefix || '';
       },
       toString: function(){
         return this.prefix ? this.prefix + ':' + this.localpart : this.localpart;
-      },
-      equals: function(obj){
-        return obj instanceof QName &&
-               obj.localpart == this.localpart &&
-               obj.namespace == this.namespace;
-      }
-    });
-
-    extend(QName, {
-      fromNode: function(element){
-        return new QName(
-          element.baseName || element.localName,
-          element.namespaceURI,
-          element.prefix
-        );
-      },
-      createDocument: function(qname){
-        return createDocument(qname.namespace, qname);
-      },
-      createElement: function(document, qname){
-        return createElementNS(document, qname, qname.namespace);
-      },
-      createAttribute: function(document, qname, value){
-        return createAttributeNS(document, qname, qname.namespace, value);
       }
     });
 
@@ -72,82 +46,27 @@
      *  Constants
      */
 
+    var XSD_NAMESPACE = String('http://www.w3.org/2001/XMLSchema');
+    var XSI_NAMESPACE = String('http://www.w3.org/2001/XMLSchema-instance');
+    var NS_NAMESPACE  = String('http://www.w3.org/2000/xmlns/');
+
+    var XSI_NIL_LOCALPART = 'nil';
+
     var XMLNS = {
       PREFIX: 'xmlns',
-      NAMESPACE: 'http://www.w3.org/2000/xmlns/',
+      NAMESPACE: NS_NAMESPACE,
       BAD_SUPPORT: Browser.test('webkit528.16-') || Browser.test('opera9-')
                             // !!!todo: make a test like
                             // createElementNS(document, 'test', SOAP_NAMESPACE).attributes.length == 0;
     };
 
-    var XSD = {
-      PREFIX: 'xsd',
-      NAMESPACE: 'http://www.w3.org/2001/XMLSchema'
-    };
-
-    var XSI = {
-      PREFIX: 'xsi',
-      NAMESPACE: 'http://www.w3.org/2001/XMLSchema-instance'
-    };
-
-    var XSI_NIL = new QName('nil', XSI.NAMESPACE, XSI.PREFIX);
-
-    /*
-     * XML Element wraper
-     */
-
-    var XMLElement = Class(null, {
-      className: namespace + '.XMLElement',
-
-      init: function(element){
-        this.setElement(element);
-      },
-      setElement: function(element){
-        this.element = element;
-      },
-      qname: function(){
-        return QName.fromNode(this.element);
-      },
-      setAttribute: function(qname, value){
-        setAttributeNodeNS(this.element, QName.createAttribute(this.element.ownerDocument, qname, value));
-      },
-      getAttribute: function(qname){
-        for (var i = 0, attr; attr = this.element.attributes[i++];)
-          if (qname.equals(QName.fromNode(attr)))
-            return attr;
-
-        return null;
-      },
-      hasAttribute: function(qname){
-        return !!this.getAttribute(qname);
-      },
-      setValue: function(value, cdata){
-        this.element.appendChild((cdata ? createCDATA : createText)(this.element.ownerDocument, value));
-      },
-      getValue: function(){ // is it correct?
-        return this.element.firstChild.nodeValue;
-      },
-      clear: function(){
-        DOM.clear(this.element);
-      },
-      createChild: function(qname){
-        var child = this.element.appendChild(QName.createElement(this.element.ownerDocument, qname));
-        return new XMLElement(child);
-      },
-      getChildren: function(qname){
-        return getElementsByQName(this.element, qname).map(function(element){
-          return new XMLElement(element)
-        });
-      },
-      destroy: function(){
-        delete this.element;
-      }
-    });
-
     /*
      *  document
      */
+
     var XMLProgId = 'native';
+    var isNativeSupport = true;
+
     var createDocument = function(){
       var implementation = document.implementation;
       if (implementation && implementation.createDocument)
@@ -170,6 +89,7 @@
             if (new ActiveXObject(progId[i]))
             {
               XMLProgId = progId[i];
+              isNativeSupport = false;
               return function(namespace, nodename){
                 var xmlDocument = new ActiveXObject(XMLProgId);
                 xmlDocument.documentElement = createElementNS(xmlDocument, nodename, namespace);
@@ -183,53 +103,59 @@
 
     }();
 
+
     /*
      *  element
      */
 
     function createElementNS(document, nodename, namespace){
       if (namespace)
-        return XMLProgId == 'native'
+        return isNativeSupport
                  ? document.createElementNS(namespace, nodename)
-                 : document.createNode(1, nodename, namespace);
+                 : document.createNode(1, nodename, namespace)
       else
-        return XMLProgId == 'native'
-                 ? document.createElement(nodename)
-                 : document.createNode(1, nodename);
+        return document.createElement(nodename);
     };
+
 
     /*
      *  attribute
      */
 
-    function createAttribute(document, nodename, value){
-      var attr = XMLProgId == 'native'
-                   ? document.createAttribute(nodename)
-                   : document.createNode(2, nodename);
-
-      attr.nodeValue = value;
-      return attr;
-    }
-
     function createAttributeNS(document, nodename, namespace, value){
-      var attr = XMLProgId == 'native'
-                   ? document.createAttributeNS(namespace, nodename)
-                   : document.createNode(2, nodename, namespace);
+      if (namespace)
+        attr = isNativeSupport
+                 ? document.createAttributeNS(namespace, nodename)
+                 : document.createNode(2, nodename, namespace)
+      else
+        attr = document.createAttribute(nodename);
 
       attr.nodeValue = value;
       return attr;
     }
 
     function setAttributeNodeNS(element, attr){
-      return element.setAttributeNodeNS ? element.setAttributeNodeNS(attr) : element.setAttributeNode(attr);
+      return element.setAttributeNodeNS
+               ? element.setAttributeNodeNS(attr)
+               : element.setAttributeNode(attr);
     }
 
-    function removeAttributeNodeNS(element, attr){
-      return element.removeAttributeNodeNS ? element.removeAttributeNodeNS(attr) : element.removeAttributeNode(attr);
-    }
+    /*function removeAttributeNodeNS(element, attr){
+      return element.removeAttributeNodeNS
+               ? element.removeAttributeNodeNS(attr)
+               : element.removeAttributeNode(attr);
+    }*/
 
     function addNamespace(element, prefix, namespace){
-      setAttributeNodeNS(element, createAttributeNS(element.ownerDocument, XMLNS.PREFIX + (prefix ? ':' + prefix : ''), XMLNS.NAMESPACE, namespace));
+      setAttributeNodeNS(
+        element,
+        createAttributeNS(
+          element.ownerDocument,
+          XMLNS.PREFIX + (prefix ? ':' + prefix : ''),
+          XMLNS.NAMESPACE,
+          namespace
+        )
+      );
     }
 
     /*
@@ -246,12 +172,19 @@
 
     function createCDATA(document, value){
       return document.createCDATASection(value);
-    };
+    }
 
-    /*
-     *  tools
-     */
+    //
+    // XML -> Object
+    //
 
+   /**
+    * Converting xml tree to javascript object representation.
+    * @function
+    * @param {Node} node
+    * @param {object} mapping
+    * @return {object}
+    */ 
     function XML2Object(node, mapping){  // require for refactoring
       var nodeType = node.nodeType;
       var attributes = node.attributes;
@@ -267,8 +200,8 @@
 
           // test for <node xsi:nil="true"/>
           if (attributes.length == 1
-              && firstAttr.localName == XSI_NIL.localpart
-              && firstAttr.namespaceURI == XSI_NIL.namespace)
+              && firstAttr.localName == XSI_NIL_LOCALPART
+              && firstAttr.namespaceURI == XSI_NAMESPACE)
             return null;
         }
         else
@@ -316,6 +249,7 @@
         isElement = i < childNodesCount;
         map = mapping[name];
 
+        // fetch value
         if (isElement)
         {
           value = XML2Object(child, mapping);
@@ -328,6 +262,7 @@
           value = child.nodeValue;
         }
 
+        // mapping keys
         while (map)
         {
           if (map.storeName)
@@ -350,6 +285,7 @@
           }
         }
 
+        // store result
         if (name in result)
         {
           if ((object = result[name]) && object.push)
@@ -362,31 +298,63 @@
       }
 
       return result;
-    };
+    }
+
+    //
+    // Object -> XML
+    //
 
     function isPrimitiveObject(value){
       return typeof value == 'string'   || typeof value == 'number' || 
              typeof value == 'function' || typeof value == 'boolean' || 
-             value.constructor == Date  || value.constructor == RegExp;
-    };
+             value.constructor === Date  || value.constructor === RegExp;
+    }
 
+   /**
+    * @function
+    * @param {Document} document
+    * @param {string} nodeName
+    * @param {string=} namespace
+    * @param {object|string} content
+    */
     function Object2XML(document, nodeName, namespace, content){
       if (String(nodeName).charAt(0) == '@')
-        return content == null ? content : createAttributeNS(document, nodeName.substr(1), /*content.xmlns || namespace || null*/'', String(content.content || content));
+      {
+        return content == null
+                 ? content
+                 : createAttributeNS(document, nodeName.substr(1), /*namespace*/ '', String(content));
+      }
       else
       {
-        var result = createElementNS(document, nodeName.toString(), nodeName.namespace || namespace);
+        var result = createElementNS(
+                       document,
+                       nodeName.toString(),
+                       (content && content.xmlns) || nodeName.namespace || namespace
+                     );
         if (typeof content == 'undefined' || content === null)
-          setAttributeNodeNS(result, QName.createAttribute(document, XSI_NIL, 'true'));
+        {
+          setAttributeNodeNS(
+            result,
+            createAttributeNS(document,
+              XSI_NIL_LOCALPART,
+              XSI_NAMESPACE,
+              'true'
+            )
+          );
+        }
         else
         {
           if (isPrimitiveObject(content))
+          {
             result.appendChild(createText(document, content));
+          }
           else
           {
             var ns = content.xmlns || namespace;
+
             if (content.xmlns && XMLNS.BAD_SUPPORT)
               addNamespace(result, '', ns);
+
             for (var prop in content)
             {
               var value = content[prop];
@@ -401,7 +369,7 @@
               }
               else
               {
-                if (value != null && typeof value == 'object' && value.toString !== Object.prototype.toString)
+                if (value && typeof value == 'object' && value.toString !== Object.prototype.toString)
                   value = value.toString();
 
                 var node = Object2XML(document, prop, ns, value);
@@ -418,26 +386,30 @@
       }
     };
 
-    function getElementsByQName(element, qname){
-      if(element.getElementsByTagNameNS)
-        return element.getElementsByTagNameNS(qname.namespace, qname.localpart);
+    function getElementsByTagNameNS(element, name, namespace){
+      if (element.getElementsByTagNameNS)
+        return element.getElementsByTagNameNS(namespace, name);
 
       var result = new Array();
-      var nodes = DOM.tag(element, qname);
+      var nodes = DOM.tag(element, name);
 
       for (var i = 0, node; node = nodes[i++];)
-        if (node.namespaceURI == qname.namespace)
+        if (node.namespaceURI == namespace)
           result.push(node);
 
       return result;
-    };
+    }
+
+    //
+    // XML -> string
+    //
 
     function XML2String(node){
-      // gecko feature
+      // modern browsers feature
       if (typeof XMLSerializer != 'undefined')
         return (new XMLSerializer()).serializeToString(node);
 
-      // IE feature
+      // old IE feature
       if (typeof node.xml == 'string')
         return node.xml;
 
@@ -453,22 +425,24 @@
     //
 
     Basis.namespace(namespace).extend({
+      NAMESPACE: {
+        XMLShema: XSD_NAMESPACE,
+        XMLShemaInstance: XSI_NAMESPACE,
+        Namespace: NS_NAMESPACE
+      },
       XMLNS: XMLNS,
-      XSI: XSI,
-      XSD: XSD,
       QName: QName,
-      XMLElement: XMLElement,
-      getElementsByQName: getElementsByQName,
+      //XMLElement: XMLElement,
+      getElementsByTagNameNS: getElementsByTagNameNS,
       addNamespace: addNamespace,
       createDocument: createDocument,
       createElementNS: createElementNS,
-      createAttribute: createAttribute,
       createAttributeNS: createAttributeNS,
       setAttributeNodeNS: setAttributeNodeNS,
-      removeAttributeNodeNS: removeAttributeNodeNS,
+      //removeAttributeNodeNS: removeAttributeNodeNS,
       createText: createText,
       createCDATA: createCDATA,
-      XML2Object: XML2Object,
+      XML2Object: XML2Object, //function(){  var d = new Date(); var r = XML2Object.apply(this, arguments); console.log('xml2object', new Date - d, arguments); return r },
       XML2String: XML2String,
       Object2XML: Object2XML
     });

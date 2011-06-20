@@ -27,13 +27,15 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
 
+    var nsAjax = Basis.Ajax;
     var XML = Basis.XML;
 
     var QName = XML.QName;
-    var XMLElement = XML.XMLElement;
     var addNamespace = XML.addNamespace;
     var XML2Object = XML.XML2Object;
     var Object2XML = XML.Object2XML;
+    var createElementNS = XML.createElementNS;
+    var NAMESPACE = XML.NAMESPACE;
 
     //
     // Main part
@@ -41,18 +43,16 @@
 
     // CONST
 
-    var DEBUG_MODE = Basis.Browser.Cookies.get('DEBUG_MODE');
-
     var SOAP_VERSION   = '1.1';
     var SOAP_PREFIX    = 'soap';
-    var SOAP_NAMESPACE = 'http://schemas.xmlsoap.org/soap/envelope/';
-    var SOAP_ENCODING  = 'http://schemas.xmlsoap.org/soap/encoding/';
-    var ENCODING_STYLE = new QName('encodingStyle', SOAP_NAMESPACE, 's');
+    var SOAP_NAMESPACE = String('http://schemas.xmlsoap.org/soap/envelope/');
+    var SOAP_ENCODING  = String('http://schemas.xmlsoap.org/soap/encoding/');
 
-    var SOAP_ENVELOPE_QNAME = new QName('Envelope', SOAP_NAMESPACE, SOAP_PREFIX);
-    var SOAP_HEADER_QNAME   = new QName('Header',   SOAP_NAMESPACE, SOAP_PREFIX);
-    var SOAP_BODY_QNAME     = new QName('Body',     SOAP_NAMESPACE, SOAP_PREFIX);
-    var SOAP_FAULT_QNAME    = new QName('Fault',    SOAP_NAMESPACE, SOAP_PREFIX);
+    var SOAP_ENVELOPE = 'Envelope';
+    var SOAP_HEADER   = 'Header';
+    var SOAP_BODY     = 'Body';
+    var SOAP_FAULT    = 'Fault';
+
     
     //
     //  Service / ServiceCall / ServiceCallTransport
@@ -82,7 +82,6 @@
       init: function(url, namespace){
         this.url = url;
         this.namespace = namespace;
-        this.methods = new Array();
       },
 
      /**
@@ -90,7 +89,7 @@
       * @param {object} config
       */
       call: function(method, config){
-        var method = this.createMethodCall(method, false, config);
+        var method = this.createMethodCall(method, config, false);
         method.transport.abort();
         method.invoke(config.header, config.body, config.callback, config.mapping);
       },
@@ -100,24 +99,13 @@
       * @param {object} config
       * @return {Basis.SOAP.ServiceCall} Return new ServiceCall instance
       */
-      createMethodCall: function(method, staticData, config){
-        /*if (!this.methods[method])
-          this.methods[method] = new ServiceCall(this, new QName(method, this.namespace), config, staticData);
-
-        return this.methods[method];*/
+      createMethodCall: function(method, config, staticData){
         return new ServiceCall(this, new QName(method, this.namespace), config, staticData);
-      },
+      }
 
      /**
       * @destructor
       */
-      destroy: function(){
-        for (var name in this.methods)
-        {
-          this.methods[name].destroy();
-          delete this.methods[name]
-        }
-      }
     });
 
    /**
@@ -159,7 +147,9 @@
       * @constructor
       */
       init: function(service, method, config, staticData){
-        this.service = service;
+        config = config || {};
+
+        //this.service = service;
         this.method = method;
         this.envelope = new Envelope();
 
@@ -171,17 +161,18 @@
         this.transport.requestHeaders = { SOAPAction: (method.namespace + (!/\/$/.test(method.namespace) ? '/' : '') + method) };
 
         this.transport.requestEnvelope = this.envelope;
-        this.transport.postBody = this.envelope.element.ownerDocument;
+        this.transport.postBody = this.envelope.document;
         this.transport.url = {
           toString: function(){
             return service.url;
           }
         }
 
+        if (config.mapping)  this.transport.setMapping(config.mapping);
+        if (config.callback) this.transport.setCallback(config.callback);
+
         if (staticData)
         {
-          if (config.mapping)  this.transport.setMapping(config.mapping);
-          if (config.callback) this.transport.setCallback(config.callback);
           this.body = config.body || {};
         }
       },
@@ -194,10 +185,10 @@
       invoke: function(headerData, bodyData, callback, mapping){
         this.transport.abort();
 
-        this.envelope.setBody(this.method, bodyData);
+        this.envelope.getBody(true).setValue(this.method, bodyData);
 
         if (headerData)
-          this.envelope.setHeader(headerData, this.method.namespace);
+          this.envelope.getHeader(true).setValue(headerData, this.method.namespace);
 
         if (callback)
           this.transport.setCallback(callback);
@@ -221,219 +212,122 @@
     // Service call transport
     //
 
-    var ServiceCallTransportBehaviour = {
-      start: function(){
-        /* debug for */
-        if (DEBUG_MODE && window.console)
-        {
-          var request = {}, params = [];
-          request.transport = this;
-          request.body = this.requestBody();
-          request.xmlString = XML.XML2String(this.requestEnvelope.element.ownerDocument);
-          request.xml = XML2Object(this.postBody.documentElement);
-          for (var param in request.body)
-          {
-            var value = request.body[param];
-            if (typeof value != 'function')
-              params.push(param + ': ' + (typeof value == 'string' ? value.quote("'") : value));
-          }
-          console.log('request ' + this.soapMethod + (params.length ? '(' + params.join(', ') + '):' : ':'), request);
-        };
-
-        // complete handler
-        if (this.callback.start)
-          this.callback.start.call(this);
-      },
-      complete: function(req){
-        /* debug for */
-        if (DEBUG_MODE && window.console && Function.$defined(req.responseXML))
-        {
-          var response = {}, xmlRoot = req.responseXML.documentElement;
-          if (Function.$defined(req.responseXML) && Function.$defined(xmlRoot))
-          {
-            response.xmlString = XML.XML2String(xmlRoot);
-            response.xmlObject = XML2Object(xmlRoot);
-            if (this.responseIsSuccess())
-              response.body = this.responseBody(response.xmlObject);
-            else
-              response.body = (new Envelope(xmlRoot)).getBody().getValue()[SOAP_FAULT_QNAME];
-            response.transport = this;
-          }  
-          else
-            response.text = req.responseText;
-          console.log('response ' + this.soapMethod + ':', response);
-        }
-
-        // complete handler
-        if (this.callback.complete)
-          this.callback.complete.call(this);
-      },
-      failure: function(req){
-        var error = this.getRequestError(req);
-
-        if (error.isSoapFailure)
-          Basis.Ajax.TransportDispatcher.dispatch.call(this, 'soapfailure', error.code, error.msg);
-
-        if (this.callback.failure)
-          this.callback.failure.call(this, error.code, error.msg);
-        else
-          throw new Error('SOAP error:\n\n  ' +
-            (error.faultactor ? error.faultactor + '\n\n  ' : '') +
-            error.code + ': ' + error.msg
-          );
-      },
-      timeout: function(req){
-        if (this.callback.timeout)
-          this.callback.timeout.call(this);
-      },
-      abort: function(req){
-        if (this.callback.abort)
-          this.callback.abort.call(this);
-      },
-      success: function(req){
-        var success = this.callback.success;
-        if (!success || !Function.$defined(req.responseXML) || !Function.$defined(req.responseXML.documentElement))
-          return;
-
-        this.responseEnvelope = new Envelope(req.responseXML.documentElement);
-
-        if (typeof success == 'function')
-        {
-          var data = XML2Object(this.responseEnvelope.element, this.map);
-          success.call(this, data, this.requestEnvelope, req);
-        }
-        else
-        {
-          var storage = success;
-          var items = this.responseBody();
-
-          if (!items)
-            return;
-
-          items = items.Items ? items.Items[Object.keys(items.Items)[0]] : items[Object.keys(items)[0]];
-
-          if (Array.isArray(storage))
-          {
-            storage.set(items);
-          }
-          else if (storage.loadData)
-          {
-            storage.loadData(items);
-          }
-          else if (storage.appendChild)
-          {
-            if (typeof storage.clear == 'function')
-              storage.clear();
-
-            for (var i = 0; i < items.length; i++)
-              storage.appendChild(items[i]);
-          }
-        }
-      }
-    };
-
    /**
     * @class
     */
-    var ServiceCallTransport = Class(Basis.Ajax.Transport, {
+    var ServiceCallTransport = Class(nsAjax.Transport, {
       className: namespace + '.ServiceCallTransport',
       callback: {},
-      map: null,
-
-      behaviour: ServiceCallTransportBehaviour,
+      mapping: null,
 
       method: 'POST',
       contentType: 'text/xml',
       encoding: 'utf-8',
 
+      behaviour: {
+        failure: function(req, code, message){
+        }
+      },
+
+      requestDataGetter: Function.$self,
+      responseDataGetter: Function.$self,
+
+      errorCodeGetter: function(node){
+        return DOM.tag(node, 'code')[0];
+      },
+      errorMessageGetter: function(node){
+        return DOM.tag(node, 'message')[0];
+      },
+
       init: function(soapMethod, callback){
         this.inherit();
         this.soapMethod = soapMethod;
       },
-      setCallback: function(callback){
-        if (!callback)
-          this.callback = {};
-        else
+      dispatch: function(eventName, request){
+        var args = Array.from(arguments);
+        if (eventName == 'success')
         {
-          var failure = callback.failure;
-
-          ;;;if (callback.fault) { console.warn('callback.failure should be used instead of callback.fault'); }
-          if (callback.fault) failure = callback.fault; // to remove
-
-          ;;;for (var key in callback) if (typeof callback[key] != 'function') console.info('Probably wrong callback name `' + key + '` used ({0})'.format(callback[key]));
-
-          this.callback = {
-            start:    callback.start,
-            success:  callback.success || (typeof callback == 'function' ? callback : undefined),
-            failure:  failure,
-            abort:    callback.abort,
-            timeout:  callback.timeout,
-            complete: callback.complete !== Function.prototype.complete ? callback.complete : undefined
-          }
-        }
-      },
-      setMapping: function(map){
-        this.map = map;
-      },
-      invoke: function(headerData, bodyData, callback){ /* deprecate */ },
-      requestBody:  function(){
-        return this.requestEnvelope.getBody().getValue()[this.soapMethod];
-      },
-      responseBody: function(data){
-        if (data)
-          data = data[SOAP_BODY_QNAME];
-        else
-          data = this.responseEnvelope.getBody().getValue();
-        return data[this.soapMethod + 'Response'][this.soapMethod + 'Result'];
-      },
-      getRequestError: function(req){
-        var code, msg, faultactor, isSoapFailure = false;
-        if (Function.$defined(req.responseXML) && Function.$defined(req.responseXML.documentElement))
-        {
-          var data;
-          var fault;
-
-          try {
-            data = XML2Object(req.responseXML.documentElement);
-            fault = data[SOAP_BODY_QNAME][SOAP_FAULT_QNAME];
-          } catch(e) {
-            throw new Error('SOAP response parse error');
-          }
-
-          if (fault.faultactor)
-            faultactor = fault.faultactor;
-
-          if (fault.detail)
-          {
-            code = fault.detail.code;
-            msg  = fault.detail.message;
-          }
+          var xml = request.responseXML;
+          if (xml === undefined || xml.documentElement === undefined)
+            eventName = 'failure';
           else
           {
-            if (fault.faultstring.match(/^\s*([a-z0-9\_]+)\s*\:(.+)$/i))
+            if (xml.xml && DOMParser)
             {
-              code = RegExp.$1;
-              msg  = RegExp.$2;
+              var parser = new DOMParser();
+              xml = parser.parseFromString(xml.xml, "text/xml");
             }
-            else
-            {
-              code = 'UNKNOWN_ERROR';
-              msg  = fault.faultstring;
-            }
+
+            this.responseEnvelope = new Envelope(xml.documentElement);
+            //this.responseData = XML2Object(this.responseEnvelope.element, this.mapping);
+          
+            args.push(
+              this.getResponseData(),
+              this.getRequestData()
+            );
           }
+        }
+
+        if (eventName == 'failure')
+        {
+          var error = this.state.data || this.getRequestError(request);
+          if (error.isSoapFailure)
+            nsAjax.TransportDispatcher.dispatch.call(this, 'soapfailure', error.code, error.msg);
+
+          args.push(
+            error.code,
+            error.msg
+          );
+        }
+
+        this.inherit.apply(this, args);
+      },
+      setCallback: function(callback){
+        if (typeof callback == 'object')
+        {
+          ;;;if (callback.fault) { throw new Error('callback.failure must be used instead of callback.fault'); }
+          ;;;if (typeof callback == 'function') { console.warn('Callback must be an object, callback ignored') } else
+
+          this.addHandler(callback);
+        }
+      },
+      setMapping: function(mapping){
+        this.mapping = mapping;
+      },
+      //invoke: function(headerData, bodyData, callback){ /* deprecate */ },
+      getRequestData: function(){
+        return this.requestDataGetter(this, this.requestEnvelope.getBody().getValue());
+      },
+      getResponseData: function(){
+        var body = this.responseEnvelope && this.responseEnvelope.getBody();
+        if (body)
+          return this.responseDataGetter(this, body.getValue(this.mapping));
+      },
+      getRequestError: function(req){
+        var code, message, isSoapFailure = false;
+        var xml = req.responseXML;
+        if (xml != undefined && xml.documentElement != undefined)
+        {
+          var element = xml.documentElement;
+          var codeElement = this.errorCodeGetter(element);
+          var messageElement = this.errorMessageGetter(element);
+
+          this.responseEnvelope = new Envelope(element);
+
+          code = codeElement ? codeElement.firstChild.nodeValue : 'UNKNOWN_ERROR';
+          message = messageElement ? messageElement.firstChild.nodeValue : 'Unknown error';
+
+          console.log('SoapError:', code.quote('('), message)
 
           isSoapFailure = true;
         }
 
         return {
           code: code || 'TRANSPORT_ERROR',
-          msg: msg,
-          faultactor: faultactor,
+          msg: message,
+          //faultactor: faultactor,
           isSoapFailure: isSoapFailure
         }
-      },
-      extract: function(data){
-        return this.responseBody(data);
       }
 
       // full destroy in Transport class
@@ -446,104 +340,90 @@
    /**
     * @class
     */
-    var Envelope = Class(XMLElement, {
+    var Envelope = Class(null, {
       className: namespace + '.Envelope',
 
-      setElement: function(element){
-        this.header = null;
-        this.body = null;
+      header: null,
+      body: null,
+
+      init: function(element){
 
         if (!element)
         {
-          element = QName.createDocument(SOAP_ENVELOPE_QNAME).documentElement;
-          addNamespace(element, XML.XSI.PREFIX, XML.XSI.NAMESPACE);
-          addNamespace(element, XML.XSD.PREFIX, XML.XSD.NAMESPACE);
+          element = XML.createDocument(SOAP_NAMESPACE, SOAP_PREFIX + ':' + SOAP_ENVELOPE).documentElement;
+          addNamespace(element, 'xsd', NAMESPACE.XMLShema);
+          addNamespace(element, 'xsi', NAMESPACE.XMLShemaInstance);
           if (XML.XMLNS.BAD_SUPPORT) // bad browsers don't set namespace (xmlns attribute)
             addNamespace(element, SOAP_PREFIX, SOAP_NAMESPACE);
         }
-          
+
+        this.document = element.ownerDocument;
         this.element = element;
-        this.header = this.getHeader();
         this.body = this.getBody(true);  // minOccure for body is 1
       },
 
-      setValue: Function.$null,
-      getValue: Function.$null,
-      createChild: Function.$null,
+      getElementByName: function(name){
+        return XML.getElementsByTagNameNS(this.element, name, SOAP_NAMESPACE)[0];
+      },
 
       // Header
-      createHeader: function(){
-        if (!this.header)
-        {
-          this.header = new EnvelopeHeader(null, this.element.ownerDocument);
-          DOM.insert(this.element, this.header.element, DOM.INSERT_BEGIN);
-        }
-        return this.header;
-      },
       getHeader: function(forceCreate){
-        if (this.header)
-          return this.header;
+        var header = this.header;
 
-        /*
-        var headers = DOM.axis(this.element, DOM.AXIS_CHILD, function(node){
-          return DOM.IS_ELEMENT_NODE(node) && SOAP_HEADER_QNAME.equals(QName.fromElement(node))
-        });*/
-        var header = XML.getElementsByQName(this.element, SOAP_HEADER_QNAME)[0];
+        if (!header)
+        {
+          var headerElement = this.getElementByName('Header');
 
-        if (header)
-          return new EnvelopeHeader(header)
+          if (headerElement || forceCreate)
+          {
+            header = this.header = new EnvelopeHeader(headerElement, this.document);
 
-        if (forceCreate)
-          return this.createHeader();
-      },
-      setHeader: function(data, namespace){
-        this.getHeader(true).setValue(data, namespace);
-      },
-      appendHeader: function(data, namespace){
-        this.getHeader(true).appendChild(data, namespace);
-      },
-      hasHeader: function(){
-        return !!this.header;
+            if (!headerElement)
+              this.element.insertBefore(header.element, this.element.firstChild);
+          }
+        }
+
+        return header;
       },
       setHeaderSection: function(qname, data){
         this.getHeader(true).setSection(qname, data);
       },
 
       // Body
-      createBody: function(){
-        if (!this.body)
-        {
-          this.body = new EnvelopeBody(null, this.element.ownerDocument);
-          DOM.insert(this.element, this.body.element);
-        }
-        return this.body;
-      },
       getBody: function(forceCreate){
-        if (this.body)
-          return this.body;
+        var body = this.body;
 
-        /*var bodies = DOM.axis(this.element, DOM.AXIS_CHILD, function(node){
-          return DOM.IS_ELEMENT_NODE(node) && SOAP_BODY_QNAME.equals(QName.fromElement(node))
-        });*/
-        var body = XML.getElementsByQName(this.element, SOAP_BODY_QNAME)[0];
+        if (!body)
+        {
+          var bodyElement = this.getElementByName('Body');
 
-        if (body)
-          return new EnvelopeBody(body)
+          if (bodyElement || forceCreate)
+          {
+            body = this.body = new EnvelopeBody(bodyElement, this.document);
 
-        if (forceCreate)
-          return this.createBody();
-      },
-      setBody: function(method, data, encoding){
-        this.getBody(true).setValue(method, data, encoding);
-      },
-      hasBody: function(){
-        return !!this.body;
+            if (!bodyElement)
+              this.element.appendChild(body.element);
+          }
+        }
+
+        return body;
       },
 
       destroy: function(){
-        delete this.header;
-        delete this.body;
-        this.inherit();
+        if (this.header)
+        {
+          this.header.destroy();
+          delete this.header;
+        }
+
+        if (this.body)
+        {
+          this.body.destroy();
+          delete this.body;
+        }
+
+        delete this.element;
+        delete this.document;
       }
     });
 
@@ -554,17 +434,17 @@
    /**
     * @class
     */
-    var EnvelopeHeader = Class(XMLElement, {
+    var EnvelopeHeader = Class(null, {
       className: namespace + '.EnvelopeHeader',
 
       init: function(element, document){
-        this.inherit(element || QName.createElement(document, SOAP_HEADER_QNAME));
+        this.element = element || createElementNS(document, 'Header', SOAP_NAMESPACE);
       },
       getValue: function(){
         return XML2Object(this.element);
       },
       setValue: function(data, namespace){
-        this.clear();
+        DOM.clear(this.element);
         this.appendChild(data, namespace);
       },
       appendChild: function(data, namespace){
@@ -577,7 +457,7 @@
           }
       },
       setSection: function(qname, data){
-        var section = XML.getElementsByQName(this.element, qname)[0];
+        var section = XML.getElementsByTagNameNS(this.element, qname, qname.namespace)[0];
         if (section)
           DOM.remove(section);
         this.appendChild(Function.wrapper(qname)(data), qname.namespace);
@@ -591,29 +471,29 @@
    /**
     * @class
     */
-    var EnvelopeBody = Class(XMLElement, {
+    var EnvelopeBody = Class(null, {
       className: namespace + '.EnvelopeBody',
 
       init: function(element, document){
-        this.inherit(element || QName.createElement(document, SOAP_BODY_QNAME));
+        this.element = element || createElementNS(document, 'Body', SOAP_NAMESPACE);
       },
-      getValue: function(){
-        return XML2Object(this.element);
+      getValue: function(mapping){
+        return XML2Object(this.element, mapping);
       },
       setValue: function(method, data, encodingStyle){
-        this.clear();
+        DOM.clear(this.element);
         this.appendChild(method, data, encodingStyle);
       },
       appendChild: function(method, data, encodingStyle){
-        var child = Function.$defined(data)
-                      ? new XMLElement(this.element.appendChild(Object2XML(this.element.ownerDocument, method, method.namespace, data)))
-                      : this.createChild(method);
+        var child = Object2XML(this.element.ownerDocument, method, method.namespace, Function.$defined(data) ? data : {});
+
+        this.element.appendChild(child);
 
         if (XML.XMLNS.BAD_SUPPORT) // add namespace for bad browsers (xmlns attribute)
           addNamespace(child.element, '', method.namespace); 
 
         if (encodingStyle)
-          child.setAttribute(ENCODING_STYLE, encodingStyle);
+          XML.setAttributeNodeNS(child, XML.createAttributeNS(document, 'encodingStyle', SOAP_ENCODING, encodingStyle));
       }
     });
 

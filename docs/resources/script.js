@@ -409,7 +409,7 @@
     
     var sender = Event.sender(e);
     if (sender.tagName != 'A')
-      sender = DOM.findAncestor(sender, function(node){ node.tagName == 'A' });
+      sender = DOM.findAncestor(sender, function(node){ return node.tagName == 'A' });
     if (sender && sender.pathname == location.pathname && sender.hash != '')
       navTree.open(sender.hash, DOM.parentOf(navTree.element, sender));
 
