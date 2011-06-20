@@ -962,8 +962,6 @@
 
         if (cur)
           cur.select();
-        
-        //console.log(key, Event.KEY.ENTER, key == Event.KEY.ENTER)
       }
     };
     

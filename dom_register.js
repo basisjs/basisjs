@@ -21,6 +21,8 @@
     var getter = Function.getter;
     var Property = Basis.Data.Property.Property;
 
+    var createEvent = Basis.EventObject.createEvent;
+
     //
     // Main part
     //
@@ -88,7 +90,8 @@
 
       // constructor
       init: function(initValue, getter, behaviour){
-        this.inherit(initValue, behaviour);
+        //this.inherit(initValue, behaviour);
+        Property.prototype.init.call(this, initValue, behaviour);
         this.attachments = new Array();
         this.getter = Function.getter(getter);
       },
@@ -153,7 +156,7 @@
           node.removeHandler(RegisterHandlers, this);
         this.attachments.clear();
 
-        this.inherit();
+        Property.prototype.destroy.call(this);
 
         delete this.getter;
       }
@@ -166,8 +169,11 @@
     var Collection = Class(Register, {
       className: namespace + '.Collection',
 
+      event_childInserted: createEvent('childInserted'),
+      event_childRemoved: createEvent('childRemoved'),
+
       init: function(getter){
-        this.inherit([], getter || Function.$self);
+        Register.prototype.init.call(this, [], getter || Function.$self);
         this.childNodes = this.value;
       },
       add: function(value){
@@ -178,16 +184,17 @@
       },
       handleAdd: function(value){
         this.add(value);
-        this.dispatch('change', this.value);
-        this.dispatch('childInserted', value);
+        this.event_change(this.value);
+        this.event_childInserted(value);
       },
       handleRemove: function(value){
         this.remove(value);
-        this.dispatch('change', this.value);
-        this.dispatch('childRemoved', value);
+        this.event_change(this.value);
+        this.event_childRemoved(value);
       },
       destroy: function(){
-        this.inherit();
+        //this.inherit();
+        Register.prototype.destroy.call();
 
         delete this.childNodes;
       }
@@ -215,20 +222,22 @@
 
     var FilterMethods = {      
       init: function(getter, filter){
-        this.inherit(getter);
+        //this.inherit(getter);
+        Collection.prototype.init.call(this, getter);
 
         this.filter = filter ? getter(filter) : false;
       },
       handleAdd: function(value){
         if (!this.filter || this.filter(value))
-          this.inherit(value);
+          Collection.prototype.handleAdd.call(this, value);//this.inherit(value);
       },
       handleRemove: function(value){
         if (!this.filter || this.filter(value))
-          this.inherit(value);
+          Collection.prototype.handleRemove.call(this, value);//this.inherit(value);
       },
       destroy: function(){
-        this.inherit();
+        Collection.prototype.destroy.call(this, value);
+        //this.inherit();
 
         delete this.filter;
       }
@@ -255,7 +264,8 @@
       className: namespace + '.Count',
 
       init: function(getter){
-        this.inherit(0, getter || Function.$true);
+        //this.inherit(0, getter || Function.$true);
+        Register.prototype.init.call(this, 0, getter || Function.$true);
       },
 
       handleAdd: function(value){
@@ -286,7 +296,8 @@
       className: namespace + '.Sum',
 
       init: function(getter){
-        this.inherit(0, getter || Function.$self);
+        //this.inherit(0, getter || Function.$self);
+        Register.prototype.init.call(this, 0, getter || Function.$self);
       },
       handleAdd: function(value){
         this.set(this.value + (Number(value) || 0));
@@ -316,7 +327,9 @@
       className: namespace + '.Avg',
 
       init: function(getter){
-        this.inherit(0, getter || Function.$self);
+        //this.inherit(0, getter || Function.$self);
+        Register.prototype.init.call(this, 0, getter || Function.$self);
+
         this._count = 0;
         this._sum   = 0;
       },
@@ -335,7 +348,8 @@
     var Min = Class(Register, {
       className: namespace + '.Min',
       init: function(getter){
-        this.inherit(null, getter);
+        //this.inherit(null, getter);
+        Register.prototype.init.call(this, null, getter);
         this.collection = new SortedCollection(getter);
         this.collection.addLink(this, this.update);
       },
@@ -351,13 +365,15 @@
       destroy: function(){
         this.collection.destroy();
         delete this.collection;
-        this.inherit();
+        //this.inherit();
+        Register.prototype.destroy.call();
       }
     });
     var Max = Class(Register, {
       className: namespace + '.Max',
       init: function(getter){
-        this.inherit(null, getter);
+        //this.inherit(null, getter);
+        Register.prototype.init.call(this, null, getter);
         this.collection = new SortedCollection(getter);
         this.collection.addLink(this, this.update);
       },
@@ -373,7 +389,8 @@
       destroy: function(){
         this.collection.destroy();
         delete this.collection;
-        this.inherit();
+        //this.inherit();
+        Register.prototype.destroy.call();
       }
     });
 

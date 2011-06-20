@@ -137,7 +137,6 @@
     var transport = new Basis.Ajax.Transport({
       method: 'POST',
       url: '/w3schools_com/webservices/tempconvert.asmx',
-
       callback: {
         start: function(){
           cssClass(nativeResult).add('loading');
@@ -193,7 +192,7 @@
             setText(dynCallResult, 'Error');
           },
           success: function(envelopeData){
-            setText(dynCallResult, RESULT_FORMAT.format(this.requestBody().Celsius, envelopeData['soap:Body'].CelsiusToFahrenheitResponse.CelsiusToFahrenheitResult));
+            setText(dynCallResult, RESULT_FORMAT.format(this.getRequestData().Celsius, this.getResponseData().CelsiusToFahrenheitResponse.CelsiusToFahrenheitResult));
           }
         }
       });
@@ -209,7 +208,7 @@
     var celsiusValue = new Basis.Data.Property.Property(100);
 
     var service2 = new Basis.SOAP.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
-    var service2_method = service2.createMethodCall('CelsiusToFahrenheit', true, {
+    var service2_method = service2.createMethodCall('CelsiusToFahrenheit', {
       callback: {
         start: function(){
           cssClass(staticCallResult).add('loading');
@@ -222,10 +221,10 @@
           setText(staticCallResult, 'Error');
         },
         success: function(envelopeData){
-          setText(staticCallResult, RESULT_FORMAT.format(this.requestBody().Celsius, envelopeData['soap:Body'].CelsiusToFahrenheitResponse.CelsiusToFahrenheitResult));
+          setText(staticCallResult, RESULT_FORMAT.format(this.getRequestData().Celsius, this.getResponseData().CelsiusToFahrenheitResponse.CelsiusToFahrenheitResult));
         }
       }
-    });
+    }, true);
 
     $('convertFormStaticCall').onsubmit = function(e){
       service2_method.call({

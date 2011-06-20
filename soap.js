@@ -30,6 +30,8 @@
     var nsAjax = Basis.Ajax;
     var XML = Basis.XML;
 
+    var Transport = nsAjax.Transport;
+
     var QName = XML.QName;
     var addNamespace = XML.addNamespace;
     var XML2Object = XML.XML2Object;
@@ -204,7 +206,8 @@
         this.transport.destroy();
         this.envelope.destroy();
 
-        this.inherit();
+        this.contructor.prototype.destroy.call(this);
+        //this.inherit();
       }
     });
 
@@ -215,7 +218,7 @@
    /**
     * @class
     */
-    var ServiceCallTransport = Class(nsAjax.Transport, {
+    var ServiceCallTransport = Class(Transport, {
       className: namespace + '.ServiceCallTransport',
       callback: {},
       mapping: null,
@@ -224,10 +227,56 @@
       contentType: 'text/xml',
       encoding: 'utf-8',
 
-      behaviour: {
-        failure: function(req, code, message){
+      event_success: function(request){
+        var xml = request.responseXML;
+        if (xml === undefined || xml.documentElement === undefined)
+        {
+          //eventName = 'failure';
+          //Transport.prototype.event_failure.call(this, arguments);
+          this.event_failure(this);
+        }
+        else
+        {
+          var args = Array.from(arguments);
+
+          if (xml.xml && DOMParser)
+          {
+            var parser = new DOMParser();
+            xml = parser.parseFromString(xml.xml, "text/xml");
+          }
+
+          this.responseEnvelope = new Envelope(xml.documentElement);
+          //this.responseData = XML2Object(this.responseEnvelope.element, this.mapping);
+        
+          args.push(
+            this.getResponseData(),
+            this.getRequestData()
+          );
+
+          Transport.prototype.event_success.apply(this, args);
         }
       },
+      event_failure: function(){
+        var args = Array.from(arguments);
+
+        var error = this.state.data || this.getRequestError(request);
+        if (error.isSoapFailure)
+          this.event_soapfailure(error.code, error.msg);
+          //nsAjax.TransportDispatcher.dispatch.call(this, 'soapfailure', error.code, error.msg);
+
+        args.push(
+          error.code,
+          error.msg
+        );
+
+        Transport.prototype.event_failure.apply(this, args);
+      },
+      event_soapfailure: nsAjax.createEvent('soapfailure'),
+
+      /*behaviour: {
+        failure: function(req, code, message){
+        }
+      },*/
 
       requestDataGetter: Function.$self,
       responseDataGetter: Function.$self,
@@ -240,10 +289,11 @@
       },
 
       init: function(soapMethod, callback){
-        this.inherit();
+        //this.inherit();
+        Transport.prototype.init.call(this);
         this.soapMethod = soapMethod;
       },
-      dispatch: function(eventName, request){
+      /*dispatch: function(eventName, request){
         var args = Array.from(arguments);
         if (eventName == 'success')
         {
@@ -272,6 +322,7 @@
         {
           var error = this.state.data || this.getRequestError(request);
           if (error.isSoapFailure)
+            //this.event_soapfailure(error.code, error.msg);
             nsAjax.TransportDispatcher.dispatch.call(this, 'soapfailure', error.code, error.msg);
 
           args.push(
@@ -280,8 +331,8 @@
           );
         }
 
-        this.inherit.apply(this, args);
-      },
+        Transport.prototype.dispatch.apply(this, args);
+      },*/
       setCallback: function(callback){
         if (typeof callback == 'object')
         {
@@ -301,7 +352,7 @@
       getResponseData: function(){
         var body = this.responseEnvelope && this.responseEnvelope.getBody();
         if (body)
-          return this.responseDataGetter(this, body.getValue(this.mapping));
+          return this.responseDataGetter(body.getValue(this.mapping));
       },
       getRequestError: function(req){
         var code, message, isSoapFailure = false;

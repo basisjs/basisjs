@@ -446,7 +446,7 @@
       },
 
       influence: [],
-      debug:     DEBUG_MODE,
+      debug: DEBUG_MODE,
 
       // object states
       progress: false,
@@ -473,10 +473,6 @@
       init: function(urlOrConfig, asynchronous, method){
         var config = typeof urlOrConfig != 'object' || urlOrConfig == null ? { url: urlOrConfig } : urlOrConfig;
         var url = config.url;
-
-        // handlers
-        if (config.callback)
-          config.handlers = config.callback;
 
         // transport object
         this.transport = createTransport();
@@ -506,6 +502,10 @@
         // create inherit
 
         DataObject.prototype.init.call(this, config);
+
+        // handlers
+        if (config.callback)
+          this.addHandler(config.callback, this);
       },
 
       setInfluence: function(){
@@ -538,12 +538,12 @@
       //
       // Event handlers
       //
-      dispatch: function(eventName){
+      /*dispatch: function(eventName){
         // global event dispatch
         TransportDispatcher.dispatch.apply(this, arguments);
         //this.inherit.apply(this, arguments);
         DataObject.prototype.dispatch.apply(this, arguments);
-      },
+      },*/
 
       //
       // Main actions
@@ -604,7 +604,7 @@
 
         // dispatch prepare event
         //this.dispatch('prepare');
-        var handlers = this.handlers_;
+        /*var handlers = this.handlers_;
         if (handlers)
         {
           var handler;
@@ -614,7 +614,7 @@
             if (handler.handler.prepare)
               handler.handler.prepare.call(handler.thisObject || this);
           }
-        }
+        }*/
 
         if (this.aborted)
         {
@@ -710,7 +710,8 @@
 
     Basis.namespace(namespace).extend({
       Transport: Transport,
-      TransportDispatcher: TransportDispatcher
+      TransportDispatcher: TransportDispatcher,
+      createEvent: createEvent
     });
 
   })();
