@@ -32,12 +32,12 @@
       title: function(value){ return value != null ? String(value) : null; }
     }
   });
-  JsDocLinkEntity.entityType.entityClass.extend({
-    init: function(){
-      this.inherit.apply(this, arguments);
-      resourceLoader.addResource(this.info.url, 'link');
-    }
-  });
+
+  var JsDocLinkEntity_init_ = JsDocLinkEntity.entityType.entityClass.prototype.init;
+  JsDocLinkEntity.entityType.entityClass.prototype.init = function(){
+    JsDocLinkEntity_init_.apply(this, arguments);
+    resourceLoader.addResource(this.info.url, 'link');
+  };
 
 
   var JsDocEntity = new nsEntity.EntityType({
@@ -186,27 +186,24 @@
   }
 
   JsDocEntity.entityType.entityClass.extend({
-    behaviour: {
-      update: function(object, delta){
-        this.inherit(object, delta);
-
-        if (this.subscriberCount && this.info.text)
-        {
-          var self = this;
-          setTimeout(function(){
-            self.parseText(self.info.text)
-          }, 0);
-        }
-      },
-      subscribersChanged: function(){
-        if (this.subscriberCount && this.info.text)
-        {
-          var self = this;
-          //debugger;
-          setTimeout(function(){
-            self.parseText(self.info.text)
-          }, 0);
-        }
+    event_update: function(object, delta){
+      Basis.Data.DataObject.prototype.event_update.call(this, object, delta);
+      if (this.subscriberCount && 'text' in delta)
+      {
+        var self = this;
+        setTimeout(function(){
+          self.parseText(self.info.text)
+        }, 0);
+      }
+    },
+    event_subscribersChanged: function(){
+      if (this.subscriberCount && this.info.text)
+      {
+        var self = this;
+        //debugger;
+        setTimeout(function(){
+          self.parseText(self.info.text)
+        }, 0);
       }
     }/*,
     init: function(){
@@ -261,7 +258,7 @@
       
       if (   (key == 'constructor')
           || (key == 'prototype')
-          || (key == 'init' && context == 'prototype')
+          //|| (key == 'init' && context == 'prototype')
           || (key == 'className' && context == 'class')
           || (key == 'toString' && (Object.prototype.toString === obj || Basis.Class.BaseClass.prototype.toString === obj)))
         continue;
@@ -270,6 +267,7 @@
 
       var objPath = path ? (path + '.' + key) : key;
       var kind;
+      var title = key;
 
       if (map[objPath])
         continue;
@@ -285,7 +283,15 @@
               if (obj.className)
                 kind = 'property';
               else
-                kind = 'method';
+              {
+                if (title.indexOf('event_') == 0)
+                {
+                  kind = 'event';
+                  title = title.substr(6);
+                }
+                else
+                  kind = 'method';
+              }
             }
             else
               if (obj.className)
@@ -319,7 +325,8 @@
         isClassMember: context == 'class',
         path: path,
         objPath: objPath,
-        title: key,
+        key: key,
+        title: title,
         kind: kind,
         obj: obj
       };

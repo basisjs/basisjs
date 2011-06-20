@@ -603,7 +603,7 @@
    /**
     * Set new value for subscriptionType property.
     * @param {number} subscriptionType New value for {Basis.Data.DataObject#subscriptionType} property.
-    * @return {boolean} Returns true if {Basis.Data.DataObject#subscriptionType} was changed.
+    * @return {boolean} Returns true if {Basis.Data.DataObject#subscribeTo} was changed.
     */
     setSubscription: function(subscriptionType){
       var curSubscriptionType = this.subscribeTo;
@@ -1365,7 +1365,7 @@
   var AggregateDataset = Class(AbstractDataset, {
     className: namespace + '.AggregateDataset',
 
-    subscriptionType: Subscription.SOURCE,
+    subscribeTo: Subscription.SOURCE,
     sources: null,
 
     event_sourcesChanged: createEvent('sourcesChanged'),
@@ -1375,16 +1375,16 @@
     * @constructor
     */
     init: function(config){
+      var sources = this.sources;
+
+      this.sources = [];
       this.map_ = {};
       this.source_ = {};
 
       // inherit
       AbstractDataset.prototype.init.call(this, config);
 
-      var sources = this.sources;
-      this.sources = [];
-
-      if (Array.isArray(sources))
+      if (sources)
         sources.forEach(this.addSource, this);
     },
 

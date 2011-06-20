@@ -215,8 +215,8 @@
             newInfo.tags.description_ = parseDescription(newInfo.tags.description);
           }
           
-          DOM.insert(DOM.clear(this.description), newInfo.tags.description_);
-          DOM.insert(this.tmpl.content, this.description);
+          DOM.insert(DOM.clear(this.tmpl.description), newInfo.tags.description_);
+          DOM.insert(this.tmpl.content, this.tmpl.description);
         }
 
         if (newInfo.tags.link && newInfo.tags.link.length)
@@ -348,7 +348,7 @@
     init: function(config){
       TemplateTreeNode.EmptyElement.prototype.init.call(this, config);
 
-      this.endText.nodeValue = this.info.tagName;
+      this.tmpl.endText.nodeValue = this.info.tagName;
     }
   });
 
@@ -480,7 +480,7 @@
   var InheritanceItem = Class(nsWrappers.TmplNode, {
     template: new Template(
       '<li{element} class="item">' +
-        '<div{content} class="title"><a href{ref}="#">{classNameText}</a></div>' +
+        '<div{content} class="title"><a href{refAttr}="#">{classNameText}</a></div>' +
         '<span class="namespace">{namespaceText}</span>' +
         '<ul{childNodesElement}></ul>' +
       '</li>'
@@ -490,20 +490,58 @@
 
       var newInfo = this.info;
       var pathPart = newInfo.objPath.split(/\./);
-      this.classNameText.nodeValue = pathPart.pop();
-      this.namespaceText.nodeValue = newInfo.namespace || pathPart.join('.');
+      this.tmpl.classNameText.nodeValue = pathPart.pop();
+      this.tmpl.namespaceText.nodeValue = newInfo.namespace || pathPart.join('.');
 
-      this.ref.nodeValue = '#' + newInfo.objPath;
+      this.tmpl.refAttr.nodeValue = '#' + newInfo.objPath;
       
       cssClass(this.tmpl.content).bool('absent', !newInfo.present);
       
       if (newInfo.tag)
         DOM.insert(this.tmpl.content, DOM.createElement('SPAN.tag.tag-' + newInfo.tag, newInfo.tag));
-    }
+    },
+    event_unmatch: function(){}
   });
 
   var ViewInheritance = Class(ViewList, {
     childClass: InheritanceItem,
+
+    event_update: function(object, delta){
+      ViewList.prototype.event_update.call(this, object, delta);
+
+      this.clear();
+
+      var newInfo = this.info;
+      var list = newInfo.key
+        ? nsCore.getInheritance(
+            newInfo.kind == 'class'
+              ? newInfo.obj
+              : (map[newInfo.path.replace(/.prototype$/, '')] || { obj: null }).obj,
+            newInfo.kind == 'class'
+              ? null
+              : newInfo.key
+          )
+        : [];
+
+      if (newInfo.kind == 'class')
+        this.setMatchFunction(Function.$true);
+      else
+        this.setMatchFunction(function(node){
+          return list.search(node.info.objPath, Function.getter('cls.className')).tag;
+        });
+      
+      var cursor = this;
+      for (var i = 0, item; item = list[i]; i++)
+        /*cursor = */cursor.appendChild({
+          info: {
+            classInfo: map[item.cls.className] || { namespace: 'unknown' },
+            objPath: item.cls.className,
+            present: item.present,
+            tag: item.tag
+          }
+        });
+    },
+
     localGroupingClass: Class(ViewList.prototype.localGroupingClass, {
       childClass: Class(ViewList.prototype.localGroupingClass.prototype.childClass, {
         event_update: function(object, delta){
@@ -574,7 +612,7 @@
     event_update: function(object, delta){
       nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
-      this.nameText.nodeValue = this.info.name;
+      this.tmpl.nameText.nodeValue = this.info.name;
 
       if (this.info.type)
       {
@@ -630,7 +668,7 @@
       })
     }),
     event_update: function(object, delta){
-      ViewList.prototype.evnet_update.call(this, object, delta);
+      ViewList.prototype.event_update.call(this, object, delta);
 
       if ('objPath' in delta)
       {
@@ -704,11 +742,30 @@
     })
   });
 
+  //
+  // Prototype view
+  //
+
+  var PROTOTYPE_ITEM_WEIGHT = {
+    'event': 1,
+    'property': 2,
+    'method': 3
+  };
+
+  var PROTOTYPE_ITEM_TITLE = {
+    'event': 'Events',
+    'property': 'Properties',
+    'method': 'Methods'
+  };
+
+ /**
+  * @class
+  */
   var PrototypeItem = Class(nsWrappers.TmplNode, {
     template: new Template(
       '<div{element} class="item property">' +
         '<div{content} class="title">' +
-          '<a href{ref}="#">{titleText}</a><span{types} class="types"/>' +
+          '<a href{refAttr}="#">{titleText}</a><span{types} class="types"/>' +
         '</div>' +
         '<a{trigger} href="#" class="trigger">...</a>' +
       '</div>'
@@ -719,8 +776,8 @@
       if ('objPath' in delta)
       {
         this.tmpl.titleText.nodeValue = this.info.title;
-        this.ref.nodeValue = '#' + this.info.objPath;
-        this.jsDocPanel.setDelegate(nsCore.JsDocEntity(this.info.implementationClass + '.prototype.' + this.info.title));
+        this.tmpl.refAttr.nodeValue = '#' + this.info.objPath;
+        this.jsDocPanel.setDelegate(nsCore.JsDocEntity(this.info.implementationClass + '.prototype.' + this.info.key));
       }
     },
     init: function(config){
@@ -734,7 +791,7 @@
             var type = tags.type || (tags.returns && tags.returns.type);
             if (type)
             {
-              DOM.insert(this.types, [
+              DOM.insert(this.tmpl.types, [
                 DOM.createElement('SPAN.splitter', ':'),
                 parseTypes(type.replace(/^\s*\{|\}\s*$/g, ''))
               ]);
@@ -754,36 +811,47 @@
       nsWrappers.TmplNode.prototype.destroy.call(this);
     }
   });
+
+  var PrototypeEvent = Class(PrototypeItem, {
+    template: new Template(
+      '<div{element} class="item event">' +
+        '<div{content} class="title">' +
+          '<a href{refAttr}="#">{titleText}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
+        '</div>' +
+      '</div>'
+    ),
+    event_update: function(object, delta){
+      PrototypeItem.prototype.event_update.call(this, object, delta);
+      this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+    }
+  });
   
   var PrototypeMethod = Class(PrototypeItem, {
     template: new Template(
       '<div{element} class="item method">' +
         '<div{content} class="title">' +
-          '<a href{ref}="#">{titleText}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
+          '<a href{refAttr}="#">{titleText}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
         '</div>' +
-        //'<a{trigger} href="#" class="trigger">...</a>' +
       '</div>'
     ),
     event_update: function(object, delta){
       PrototypeItem.prototype.event_update.call(this, object, delta);
-      this.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+      this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
 
-      var events = this.info.obj.toString().match(/dispatch\((["'])[a-z]+\1/gi);
-      if (events)
-      {
-        var eventNames = {};
-        for (var i = 0; i < events.length; i++)
-          eventNames[events[i].split(/['"]/)[1]] = 1;
-
-        DOM.insert(this.tmpl.content, Object.keys(eventNames).sort().map(function(eventName){ return DOM.createElement('SPAN.event', eventName) }));
-      }
+      if (this.info.title == 'init')
+        DOM.insert(this.tmpl.content, DOM.createElement('SPAN.method_mark', 'constructor'), 0);
+      if (this.info.title == 'destroy')
+        DOM.insert(this.tmpl.content, DOM.createElement('SPAN.method_mark', 'destructor'), 0);
     }
   });
 
   var ViewPrototype = Class(ViewList, {
     childClass: PrototypeItem,
     childFactory: function(config){
-      var childClass = config.info.kind == 'method' ? PrototypeMethod : PrototypeItem;
+      var childClass = {
+        event: PrototypeEvent,
+        method: PrototypeMethod
+      }[config.info.kind] || PrototypeItem;
       return new childClass(config);
     },
     viewHeader: 'Prototype',
@@ -810,8 +878,8 @@
               view.setLocalSorting('info.title');
               view.setLocalGrouping({
                 groupGetter: getter('info.kind'),
-                titleGetter: getter('info.id', { property: 'Properties', method: 'Methods' }),
-                localSorting: getter('info.id', { property: 1, method: 2 })
+                titleGetter: getter('info.id', PROTOTYPE_ITEM_TITLE),
+                localSorting: getter('info.id', PROTOTYPE_ITEM_WEIGHT)
               });
             }
           },
@@ -820,7 +888,7 @@
             handler: function(){
               cssClass(view.tmpl.content).add('classGrouping');
               view.setLocalSorting(function(node){
-                return (node.info.kind == 'property' ? 1 : 2) + node.info.title;
+                return (PROTOTYPE_ITEM_WEIGHT[node.info.kind] || 0) + '_' + node.info.title;
               });
               view.setLocalGrouping({
                 groupGetter: function(node){
@@ -849,14 +917,14 @@
   var JsDocLinkViewItem = Class(nsWrappers.TmplNode, {
     template: new Template(
       '<li{element|content} class="item">' +
-        '<a href{href}="#" target="_blank">{titleText}</a>' +
+        '<a href{hrefAttr}="#" target="_blank">{titleText}</a>' +
       '</li>'
     ),
     event_update: function(object, delta){
       nsWrappers.TmplNode.prototype.event_udpate.call(this, object, delta);
 
       this.tmpl.titleText.nodeValue = this.info.title || this.info.url;
-      this.href.nodeValue = this.info.url;
+      this.tmpl.hrefAttr.nodeValue = this.info.url;
     }
   });
   var JsDocLinksPanel = Class(nsWrappers.TmplContainer, {
@@ -900,7 +968,7 @@
       View.prototype.event_update.call(this, object, delta);
 
       this.tmpl.contentText.nodeValue = (this.info.title || '') + (/^(method|function|class)$/.test(this.info.kind) ? nsCore.getFunctionDescription(this.info.obj).args.quote('(') : '');
-      this.pathText.nodeValue = (this.info.path || '');
+      this.tmpl.pathText.nodeValue = (this.info.path || '');
 
       if ('kind' in delta)
         cssClass(this.element).replace(delta.kind, this.info.kind, 'kind-');
@@ -950,36 +1018,7 @@
 
   var viewTemplate = new ViewTemplate();
 
-  var viewInheritance = new ViewInheritance({
-    event_update: function(object, delta){
-      ViewInheritance.prototype.event_update.call(this, object, delta);
-
-      this.clear();
-
-      var newInfo = this.info;
-      var list = newInfo.title
-        ? nsCore.getInheritance(
-            newInfo.kind == 'class'
-              ? newInfo.obj
-              : (map[newInfo.path.replace(/.prototype$/, '')] || { obj: null }).obj,
-            newInfo.kind == 'class'
-              ? null
-              : newInfo.title
-          )
-        : [];
-      
-      var cursor = this;
-      for (var i = 0, item; item = list[i]; i++)
-        /*cursor = */cursor.appendChild({
-          info: {
-            classInfo: map[item.cls.className] || { namespace: 'unknown' },
-            objPath: item.cls.className,
-            present: item.present,
-            tag: item.tag
-          }
-        });
-    }
-  });
+  var viewInheritance = new ViewInheritance();
 
   var viewPrototype = new ViewPrototype({
     localSorting: 'info.title',
@@ -993,7 +1032,7 @@
         var list = nsCore.getMembers(newInfo.objPath + '.prototype');
         this.inheritance = inheritance.map(getter('cls.className'));
         list.forEach(function(member){
-          member.info.implementationClass = !inheritance.length ? newInfo.obj : inheritance.search(true, function(item){ return member.info.title in item.cls.prototype }).cls.className;
+          member.info.implementationClass = !inheritance.length ? newInfo.obj : inheritance.search(true, function(item){ return member.info.key in item.cls.prototype }).cls.className;
         });
         this.setChildNodes(list);
       }

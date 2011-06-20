@@ -14,7 +14,7 @@
 
     var cssClass = Basis.CSS.cssClass;
 
-    var nsWrapers = Basis.DOM.Wrapers;
+    var nsWrappers = Basis.DOM.Wrapper;
     var nsTree = Basis.Controls.Tree;
     var nsCore = BasisDoc.Core;
     var nsView = BasisDoc.View;
@@ -32,7 +32,8 @@
       'constant': 'Constant',
       'htmlElement': 'HtmlElement',
       'class': 'Class',
-      'object': 'Object'
+      'object': 'Object',
+      'event': 'Event'
     };
 
     var groupTitle = {
@@ -44,7 +45,8 @@
       Class: 'Classes',
       Object: 'Objects',
       HtmlElement: 'DOM elements',
-      ClassMember: 'Class members'
+      ClassMember: 'Class members',
+      Event: 'Events'
     };
 
     var groupWeight = {
@@ -54,7 +56,8 @@
       Class: 3,
       Object: 4,
       HtmlElement: 5,
-      Property: 5.1,
+      Event: 5.1,
+      Property: 5.5,
       Method: 6,
       Function: 6
     };
@@ -119,6 +122,20 @@
       ]
     });
 
+   /**
+    * @event
+    */
+    var docEvent = Class(docFunction, {
+      nodeType: 'Event',
+      views: [
+        nsView.viewInheritance,
+        nsView.viewSourceCode
+      ]/*,
+      event_update: function(object, delta){
+        nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
+        this.tmpl.titleText.nodeValue = this.info.title.substr(6);
+      }*/
+    });
 
    /**
     * @class
@@ -255,6 +272,7 @@
     var kindNodeClass = {
       'namespace': docNamespace,
       'method': docMethod,
+      'event': docEvent,
       'function': docFunction,
       'property': docProperty,
       'classMember': docClassMember,

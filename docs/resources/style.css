@@ -149,6 +149,7 @@
   #Sidebar .Class-Content       .Basis-TreeNode-Caption { background-image: url(img/bullet_square_red.png) }
   #Sidebar .Constant-Content    .Basis-TreeNode-Caption { background-image: url(img/node_const.png) }
   #Sidebar .Function-Content    .Basis-TreeNode-Caption { background-image: url(img/node_class_function.png) }
+  #Sidebar .Event-Content       .Basis-TreeNode-Caption { background-image: url(img/node_event.png?!) }
   #Sidebar .Method-Content      .Basis-TreeNode-Caption { background-image: url(img/node_method.png) }
   #Sidebar .Property-Content    .Basis-TreeNode-Caption { background-image: url(img/node_property2.png) }
   #Sidebar .Object-Content      .Basis-TreeNode-Caption { background-image: url(img/node_property.png) }
@@ -156,6 +157,7 @@
 
   #Sidebar .Class-Content    .args,
   #Sidebar .Function-Content .args,
+  #Sidebar .Event-Content    .args,
   #Sidebar .Method-Content   .args
   {
     color: #AAA;
@@ -473,25 +475,26 @@
   {
     background-image: url(img/node_method.png);
   }
-  #Content .viewPrototype .method .args
+  #Content .viewPrototype .event .title
+  {
+    background-image: url(img/node_event.png);
+  }
+  #Content .viewPrototype .method .method_mark
+  {
+    margin-right: 1ex;
+    font-style: italic;
+    color: #080;
+  }
+  #Content .viewPrototype .method .args,
+  #Content .viewPrototype .event .args
   {
     margin-left: .33ex;
     color: #888;
   }
+  #Content .viewPrototype .event .title .types,
   #Content .viewPrototype .method .title .types
   {
     padding-right: 3ex;
-  }
-  #Content .viewPrototype .method .event
-  {
-    margin: 0 0 0 1ex;
-    padding: 1px .75ex 2px;
-    font-size: 85%;
-    background: #FFEA7C;
-    color: #886600;
-      -webkit-border-radius: 3px;
-      -moz-border-radius: 3px;
-    border-radius: 3px;
   }
 
   #Content .content

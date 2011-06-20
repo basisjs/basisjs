@@ -487,7 +487,15 @@
           for (var name in config.reflections)
             this.addReflection(name, config.reflections[name]);*/
 
-        this.entityClass = Class(Entity(this, this.all, this.index_, this.slot_, this.fields, this.defaults, this.aliases), {
+        this.entityClass = Entity(this, this.all, this.index_, this.slot_, this.fields, this.defaults, this.aliases);
+        this.entityClass.prototype.entityType = this;
+        this.entityClass.prototype.getId = idField
+            ? function(){
+                return this.info[idField];
+              }
+            : Function.$null;
+        /*Class(, {
+        
           className: namespace,//this.constructor.className + '.' + this.name.replace(/\s/g, '_'),
           entityType: this,
           defaults: this.defaults,
@@ -497,7 +505,7 @@
                 return this.info[idField];
               }
             : Function.$null
-        });
+        });*/
       },
       addField: function(key, wrapper){
         if (this.all.itemCount)
@@ -592,7 +600,9 @@
    /**
     * @class
     */
-    var BaseEntity = Class(DataObject);
+    var BaseEntity = Class(DataObject, {
+      init: EventObject.prototype.init
+    });
 
    /**
     * @class

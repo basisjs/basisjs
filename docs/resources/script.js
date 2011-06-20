@@ -81,21 +81,19 @@
   var objectView = new ObjectViewControl({
     id: 'ObjectView',
     childClass: nsView.View,
-    handlers: {
-      delegateChanged: function(object, oldDelegate){
-        this.clear(true);
+    event_delegateChanged: function(object, oldDelegate){
+      this.clear(true);
 
-        this.inherit(object, oldDelegate);
+      this.constructor.prototype.event_delegateChanged.call(this, object, oldDelegate);
 
-        if (this.delegate)
-        {
-          this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
-            return view.isAcceptableObject(this.info);
-          }, this));
-        }
-
-        this.recalc();
+      if (this.delegate)
+      {
+        this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
+          return view.isAcceptableObject(this.info);
+        }, this));
       }
+
+      //this.recalc();
     }
   });
 
@@ -170,10 +168,9 @@
 
   var navTree = new NavTree({
     selection: {
-      handlers: {
-        change: function(){
-          objectView.setDelegate(this.pick());
-        }
+      event_datasetChanged: function(dataset, delta){
+        this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
+        objectView.setDelegate(this.pick());
       }
     },
     childNodes: [
@@ -223,15 +220,15 @@
         '</li>'
       ),
       init: function(config){
-        config = this.inherit(config);
+        nsTree.TreeNode.prototype.init.call(this, config);
 
-        this.title.href = '#' + this.info.objPath;
+        this.tmpl.title.href = '#' + this.info.objPath;
         cssClass(this.content).add(this.info.kind.capitalize() + '-Content');
 
         if (/^(function|method|class)$/.test(this.info.kind))
-          DOM.insert(this.label, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
+          DOM.insert(this.tmpl.label, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
 
-        this.namespaceText.nodeValue = this.info.kind != 'namespace' ? this.info.path : '';
+        this.tmpl.namespaceText.nodeValue = this.info.kind != 'namespace' ? this.info.path : '';
       }
     })
   });
@@ -440,8 +437,7 @@
   // jsDocs parse
   //
 
-  var scripts = DOM
-                  .tag(document, 'SCRIPT')
+  var scripts = Array.from(document.getElementsByTagName('SCRIPT'))
                   .map(getter('getAttribute("src")'))
                   .filter(getter('match(/^\\.\\.\\/[a-z0-9\\_\/]+\\.js$/i)'));
    //['../basis.js', '../dom_wraper.js', '../tree.js'];

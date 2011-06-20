@@ -171,7 +171,7 @@
           }
         }
 
-        result.push(code.substr(lastMatchPos, start).replace(keywordRegExp, '<span class="token-keyword">$1</span>'));
+        result.push(code.substr(lastMatchPos).replace(keywordRegExp, '<span class="token-keyword">$1</span>'));
 
         return result;
       }
@@ -217,7 +217,7 @@
         if (code != this.code_)
         {
           this.code_ = code;
-          this.codeElement.innerHTML = highlight(code, !this.normalize);
+          this.tmpl.codeElement.innerHTML = highlight(code, !this.normalize);
         }
       },
       init: function(config){

@@ -24,8 +24,6 @@
     var DOM = Basis.DOM;
     var Template = Basis.Html.Template;
 
-    var extend = Object.extend;
-    var complete = Object.complete;
     var getter = Function.getter;
     var cssClass = Basis.CSS.cssClass;
 
@@ -40,43 +38,32 @@
     //
 
    /**
-    * @class Button
+    * @class
     */
 
     var Button = Class(TmplNode, {
       className: namespace + '.Button',
 
       captionGetter: getter('caption'),
-      caption: '[no title]',
+      caption: '[no caption]',
       groupId: 0,
       name: null,
 
       template: new Template(
-        '<div{element} class="Basis-Button">' + 
-          '<div class="Basis-Button-Wraper">' +
-            '<div class="Basis-Button-Wraper2">' +
-              '<a{content} class="Basis-Button-Content" href="#" event-click="click" event-keydown="keydown">' + 
-                '<em class="pre"/>' +
-                '<span class="caption">{captionText}</span>' +
-                '<em class="post"/>' +
-              '</a>' +
-            '</div>' +
-          '</div>' +
-        '</div>'
+        '<button{element|buttonElement} class="Basis-Button" event-click="click" event-keydown="keydown" event-mousedown="mousedown">' + 
+          '<div class="Basis-Button-Caption">{captionText}</div>' +
+        '</button>'
       ),
 
       templateAction: function(actionName, event){
-        if (actionName == 'click')
-        {
+        if (actionName == 'mousedown')
+          this.leftButtonPressed_ = Event.mouseButton(event, Event.MOUSE_LEFT);
+
+        if (actionName == 'click' && this.leftButtonPressed_)
           this.click();
-          Event.kill(event);
-        }
 
         if (actionName == 'keydown' && [Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
-        {
           this.click();
-          Event.kill(event);
-        }
 
         TmplNode.prototype.templateAction.call(this, actionName, event);
       },
@@ -87,86 +74,52 @@
       },
 
       event_select: function(){
-        DOM.focus(this.content);
+        DOM.focus(this.element);
+      },
+      
+      event_disable: function(){
+        TmplNode.prototype.event_disable.call(this);
+        this.tmpl.buttonElement.disabled = true;
+      },
+      event_enable: function(){
+        TmplNode.prototype.event_enable.call(this);
+        this.tmpl.buttonElement.disabled = false;
       },
 
       init: function(config){
-        //var config = extend({}, config);
-
-        // add default handlers
-        /*var handlers = extend({}, config.handlers);
-
-        if (config.handler)
-          complete(handlers, { click: config.handler });
-
-        if (Object.keys(handlers))
-          config.handlers = handlers;
-        else
-          delete config.handlers;*/
-
-        /*if (config.captionGetter)
-          this.captionGetter = Function.getter(config.captionGetter);*/
-
         // inherit
         TmplNode.prototype.init.call(this, config);
 
         //this.setCaption('caption' in config ? config.caption : this.caption);
         this.setCaption(this.caption);
-
-        /*Event.addHandlers(this.element, {
-          click: function(event){
-            this.click();
-            Event.kill(event);
-          },
-          keydown: function(event){
-            if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
-            {
-              this.click();
-              Event.kill(event);
-            }
-          }
-        }, this);*/
       },
       setCaption: function(newCaption){
         this.caption = newCaption;
         this.tmpl.captionText.nodeValue = this.captionGetter(this);
-      }/*,
-      destroy: function(){
-        Event.clearHandlers(this.element);
-
-        TmplNode.prototype.destroy.call(this);
-      }*/
+      }
     });
 
    /**
-    * @class ButtonGroupControl
+    * @class
     */
-    var ButtonGroupControl = Class(TmplGroupingNode, {
-      className: namespace + '.ButtonGroupControl',
+    var ButtonGrouping = Class(TmplGroupingNode, {
+      className: namespace + '.ButtonGrouping',
+
+      groupGetter: function(button){
+        return button.groupId || -button.eventObjectId;
+      },
 
       childClass: Class(TmplPartitionNode, {
         className: namespace + '.ButtonPartitionNode',
 
-        event_childNodesModified: function(node){
-          for (var i = 0, child; child = this.nodes[i]; i++)
-          {
-            cssClass(child.element)
-              .bool('first', child == node.first)
-              .bool('last', child == node.last);
-          }
-
-          TmplPartitionNode.prototype.event_childNodesModified.call(this, node);
-        },
-        
         template: new Template(
-          '<div{element|content|childNodesElement} class="Basis-ButtonGroup"></div>'
+          '<div{element} class="Basis-ButtonGroup"></div>'
         )
-
       })
     });
 
    /**
-    * @class ButtonPanel
+    * @class
     */
     var ButtonPanel = Class(nsWrappers.TmplControl, {
       className: namespace + '.ButtonPanel',
@@ -179,10 +132,8 @@
 
       childClass: Button,
 
-      localGroupingClass: ButtonGroupControl,
-      localGrouping: {
-        groupGetter: getter('groupId || -object.eventObjectId')
-      },
+      localGroupingClass: ButtonGrouping,
+      localGrouping: {},
 
       getButtonByName: function(name){
         return this.childNodes.search(name, getter('name'));
@@ -196,7 +147,7 @@
     Basis.namespace(namespace).extend({
       Button: Button,
       ButtonPanel: ButtonPanel,
-      ButtonGroupControl: ButtonGroupControl
+      ButtonGrouping: ButtonGrouping
     });
 
   })();

@@ -8,7 +8,9 @@
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
+
 'use strict';
+
 /**
  * @annotation
  * Basis library core module. It provides various most using functions
@@ -1418,6 +1420,12 @@
         init: Function(),
         toString: function(){
           return '[object ' + (this.constructor || this).className + ']';
+        },
+        destroy: function(){
+          for (var prop in this)
+            this[prop] = null;
+        
+          this.destroy = $undef;
         }
       },
 
@@ -1507,12 +1515,6 @@
         }
         
         return this;
-      },
-      destroy: function(){
-        for (var prop in this)
-          delete this[prop];
-        
-        this.destroy = $undef;
       }
     });
 
@@ -1682,8 +1684,6 @@
       },
 
       event_destroy: EventObject.event.destroy,
-      templateAction: function(actionName, event){
-      },
 
      /**
       * @destructor
@@ -3417,7 +3417,7 @@
                             {
                               // if found call templateAction method
                               var node = tmplNodeMap[refId];
-                              if (node)
+                              if (node && node.templateAction)
                               {
                                 node.templateAction(attr.nodeValue, event);
                                 //Event.kill(event);
