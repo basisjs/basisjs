@@ -35,11 +35,13 @@
     var nsWrappers = DOM.Wrapper;
 
     var Control = nsWrappers.Control;         
-    var HtmlNode = nsWrappers.HtmlNode;        
+    var TmplNode = nsWrappers.HtmlNode;        
     var Selection = nsWrappers.Selection;       
 
     var AbstractProperty = Basis.Data.Property.AbstractProperty;
     var Property = Basis.Data.Property.Property;
+
+    var createEvent = Basis.EventObject.createEvent;
 
     //
     // Main part
@@ -55,49 +57,26 @@
       canHaveChildren: false,
 
       serializable: true,
-
-      behaviour: {
-        select: function(){
-          DOM.focus(this.field, true);
-        },
-        keypress: function(field, event){
-          var event = Event(event);
-          if (event)
-          {
-            var key = Event.key(event);
-          
-            if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
-              Event.cancelDefault(event);
-
-            if (((field.nextFieldOnEnter || event.ctrlKey) && key == Event.KEY.ENTER) || key == Event.KEY.CTRL_ENTER)
-              field.nextFieldFocus();
-            else
-              field.setValid();
-          }
-        },
-        enable: function(){
-          this.field.removeAttribute('disabled');
-          cssClass(this.element).remove('disabled');
-        },
-        disable: function(){
-          this.field.setAttribute('disabled', 'disabled');
-          cssClass(this.element).add('disabled');
-        },
-        blur: function(field, event){
-          field.validate(true);
-        },
-        focus: function(field, event){
-          if (field.valid)
-            field.setValid();
-        }
+      
+      event_select: function(){
+        DOM.focus(this.field, true);
       },
+      event_enable: function(){
+        this.field.removeAttribute('disabled');
+        cssClass(this.element).remove('disabled');
+      },
+      event_disable: function(){
+        this.field.setAttribute('disabled', 'disabled');
+        cssClass(this.element).add('disabled');
+      },
+      event_change: createEvent('change'),
       
       template: new Template(
         '<div{element|sampleContainer} class="fieldWraper">' +
           '<div class="title">' +
             '<label><span{title}/></label>' +
           '</div>' +
-          '<div{fieldContainer|content} class="field"/>' +
+          '<div{fieldContainer|content} class="field" event-keyup="keyup" event-keypress=""/>' +
         '</div>'
       ),
       tableTemplate: new Template(
@@ -111,38 +90,62 @@
         '</tr>'
       ),
 
+      templateAction: function(actionName, event){
+        if (actionName == 'keypress')
+        {
+          var event = Event(event);
+          if (event)
+          {
+            var key = Event.key(event);
+          
+            if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
+              Event.cancelDefault(event);
+
+            if (((this.nextFieldOnEnter || event.ctrlKey) && key == Event.KEY.ENTER) || key == Event.KEY.CTRL_ENTER)
+              this.nextFieldFocus();
+            else
+              this.setValid();
+          }
+        }
+        elseif (actionName == 'blur')
+        {
+          this.validate(true);
+        }
+        elseif (actionName == 'focus')
+        {
+          if (field.valid)
+            this.setValid();
+        }
+
+        TmplNode.prototype.templateAction.call(this, actionName, event);
+      },
+
       init: function(config){
+
+      	if (this.tableLayout)
+      	  this.template = this.tableTemplate;
+      	  
+        TmplNode.prototype.init.call(this, config);
 
         // create field
         if (this.fieldTemplate)
           this.fieldTemplate.createInstance(this);
 
-      	if (this.tableLayout = config.tableLayout)
-      	  this.template = this.tableTemplate;
-      	  
-        this.inherit(config);
-
-        config = config || {};
-
-        this.name = config.name || config.id;
-        this.id   = config.id;
-            
-        if (this.field)
-        {
-          if (config.name)
-            this.field.name = config.name;
-          //if (config.id)
-          //  this.field.id = config.id;
-        }
-
         if (this.fieldContainer)
           DOM.insert(this.fieldContainer, this.field);
-        
+
+        this.name = this.name || this.id;
+
+        this.field = this.tmpl.field;
+            
+        if (this.field && this.name)
+          this.field.name = this.name;
+
         if (this.title)
-          DOM.insert(this.title, config.title);
+          DOM.insert(this.tmpl.title, this.title);
 
         // attach button
-        if (config.button)
+        if (this.button)
         {
           cssClass(this.element).add('have-button');
           this.button = DOM.createElement('BUTTON', config.caption || '...');
@@ -152,46 +155,49 @@
         }
 
         // set events
-        this.nextFieldOnEnter = Function.$defined(config.nextFieldOnEnter) ? config.nextFieldOnEnter : true;
-        Event.addHandler(this.field, 'keyup',    this.keyup,    this);
+        /*Event.addHandler(this.field, 'keyup',    this.keyup,    this);
         Event.addHandler(this.field, 'keypress', this.keypress, this);
         Event.addHandler(this.field, 'blur',     this.blur,     this);
         Event.addHandler(this.field, 'focus',    this.focus,    this);
-        Event.addHandler(this.field, 'change',   this.change,   this);
+        Event.addHandler(this.field, 'change',   this.change,   this);*/
 
         // attach validators
-        this.validators = new Array();
+        if (!this.validators)
+          this.validators = [];
+
+        /*this.validators = new Array();
         if (config.validators)
           //config.validators.forEach(this.attachValidator, this);
           for (var i = 0; i < config.validators.length; i++)
-            this.attachValidator(config.validators[i]);
+            this.attachValidator(config.validators[i]);*/
 
         // set sample
-        this.setSample(config.sample);
+        this.setSample(this.sample);
         
         // set min/max length
-        if (config.minLength) this.setMinLength(config.minLength);
-        if (config.maxLength) this.setMaxLength(config.maxLength);
+        if (this.minLength) this.setMinLength(this.minLength);
+        if (this.maxLength) this.setMaxLength(this.maxLength);
 
         // set value & default value
-        if (Function.$defined(config.readOnly))
-          this.setReadOnly(config.readOnly);
-        if (Function.$defined(config.disabled) && config.disabled)
+        if (this.readOnly)
+          this.setReadOnly(this.readOnly);
+        
+        if (this.disabled)
           this.disable();
 
         ;;;if (Function.$defined(config.returnValue) && typeof console != 'undefined') console.warn('Field.init: returnValue is deprecated');
         
         // serializable
-        if (Function.$defined(config.serializable))
-          this.serializable = config.serializable;
+        /*if (Function.$defined(config.serializable))
+          this.serializable = config.serializable;*/
 
         // size
-        if (Function.$defined(config.size))
-          this.field.size = config.size;
+        if (this.size)
+          this.field.size = this.size;
 
-        if (typeof config.value != 'undefined')
+        if (typeof this.value != 'undefined')
         {
-          this.defaultValue = config.value;
+          this.defaultValue = this.value;
           this.setDefaultValue();
         }
 
@@ -211,19 +217,19 @@
         }
       },
       setSample: function(sample){
-        if (this.sampleContainer && Function.$defined(sample) && sample != '')
+        if (this.sampleContainer && sample)
         {
-          if (!this.sample)
-            DOM.insert(this.sampleContainer, this.sample = DOM.createElement('SPAN.sample', sample));
+          if (!this.sampleElement)
+            DOM.insert(this.sampleContainer, this.sampleElement = DOM.createElement('SPAN.sample', sample));
           else
-            DOM.insert(DOM.clear(this.sample), sample);
+            DOM.insert(DOM.clear(this.sampleElement), sample);
         }
         else
         {
-          if (this.sample)
+          if (this.sampleElement)
           {
-            DOM.remove(this.sample);
-            this.sample = null;
+            DOM.remove(this.sampleElement);
+            this.sampleElement = null;
           }
         }
       },
@@ -232,17 +238,15 @@
       },
       setValue: function(newValue){
         this.field.value = Function.$defined(newValue) ? newValue : '';
-        this.change();
+        this.event_change();
       },
       disable: function(){
         if (!this.disabled)
         {
           this.disabled = true;
-          this.dispatch('disable');
+          this.event_disable();
+          //this.dispatch('disable');
         }
-      },
-      change: function(){
-        this.dispatch('change', this);
       },
       setMaxLength: function(len){
         this.maxLength = len;
@@ -258,6 +262,9 @@
         if (this.validators.remove(validator) && validate)
           this.validate();
       },
+      /*change: function(){
+        this.dispatch('change', this);
+      },
       keyup: function(event){
         this.dispatch('keyup', this, event);
       },
@@ -269,10 +276,11 @@
       },
       focus: function(event){
         this.dispatch('focus', this, event);
-      },
+      },*/
       select: function(){
         this.unselect();
-        this.inherit.apply(this, arguments);
+        TmplNode.prototype.select.apply(this, arguments);
+        //this.inherit.apply(this, arguments);
       },
       setValid: function(valid, message){
         if (typeof valid == 'boolean')
@@ -327,9 +335,10 @@
         }
         this.validators.clear();
 
-        this.inherit();
+        TmplNode.prototype.destroy.call(this);
+        //this.inherit();
 
-        delete this.sample;
+        delete this.sampleElement;
         delete this.sampleContainer;
         delete this.defaultValue;
         delete this.field;
@@ -364,8 +373,9 @@
       ),
 
       init: function(config){
-        config.value = coalesce(config.value, '');
-        this.inherit(config);
+        this.value = this.value || '';
+        //this.inherit(config);
+        Field.prototype.init.call(this, config);
       }
     });
 
@@ -377,18 +387,19 @@
       ),
 
       init: function(config){
-        if (config.minLength)
-        {
-          if (!config.validators) config.validators = new Array();
-          config.validators.push(Validator.MinLength);
-        }
-        config.value = coalesce(config.value, '');
-        return this.inherit(config);
+        this.value = this.value || '';
+
+        TmplNode.prototype.init.call(this, config);
+
+        if (this.minLength)
+          this.attachValidator(Validator.MinLength);
       },
       setMaxLength: function(len){
         len = len * 1 || 0;
         this.field.setAttribute('maxlength', len, 0);
-        this.inherit(len);
+        
+        TmplNode.prototype.setMaxLength.call(this, len);
+        //this.inherit(len);
       }
     });
 
@@ -409,7 +420,9 @@
 
       init: function(config){
         config.value = '';
-        this.inherit(config);
+        
+        TmplNode.prototype.init.call(this, config);
+        //this.inherit(config);
       }
     });
 
@@ -431,6 +444,7 @@
         config.nextFieldOnEnter = false;
         this.counter = DOM.createElement('.counter', Field.LOCALE.Textarea.SYMBOLS_LEFT + ': ', DOM.createText(0));
 
+        
         config = this.inherit(config);
 
         Event.addHandler(this.field, 'keyup', this.updateCounter, this);
@@ -1584,7 +1598,7 @@
       },
       destroy: function(){
         Event.clearHandlers(this.field);
-        this.inhrit();
+        this.inherit();
       }
     });
 

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Forms</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .DemoBlock
+    {
+      border: 1px solid #D0D0D0;
+      border-radius: 3px;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+      padding: 15px;
+      margin: 0 0 .5em 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .DemoBlock H2
+    {
+      font-size: 80%;
+      font-weight: normal;
+      background: #EEE;
+      margin: -15px -15px 10px -15px;
+      padding: 2px 2px 2px 1.5em;
+      /*text-align: center;*/
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../form.js"></script>
+
+  <script type="text/javascript" src="../../button2.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Forms</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // import names
+    var DOM = Basis.DOM;
+    var Event = Basis.Event;
+    var Data = Basis.Data;
+
+    var getter = Function.getter;
+
+    var Button = Basis.Controls.Button.Button;
+
+    var nsForm = Basis.Controls.Form;
+
+    function createBlock(header){
+      return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
+    }
+
+
+    new nsForm.Field.Text({
+      container: createBlock('Text Field')
+    });
+
+    new nsForm.Field.Textarea({
+      container: createBlock('Textarea Field')
+    });
+
+    new nsForm.Field.Select({
+      items: [
+        {
+          title: 'Option 1'
+        },
+        {
+          title: 'Option 2'
+        },
+        {
+          title: 'Option 3'
+        }
+      ],
+      container: createBlock('Select Field')
+    });
+
+    new nsForm.Field.Combobox({
+      items: [
+        {
+          title: 'Combobox Item 1'
+        },
+        {
+          title: 'Combobox Item 2'
+        },
+        {
+          title: 'Combobox Item 3'
+        }
+      ],
+      container: createBlock('Combobox Field')
+    });
+
+    new nsForm.Field.RedioGroup({
+      items: [
+        {
+          title: 'Radio Item 1'
+        },
+        {
+          title: 'Radio Item 2'
+        },
+        {
+          title: 'Radio Item 3'
+        }
+      ],
+      container: createBlock('RadioGroup Field')
+    });
+
+    new nsForm.Field.CheckGroup({
+      items: [
+        {
+          title: 'Check Item 1'
+        },
+        {
+          title: 'Check Item 2'
+        },
+        {
+          title: 'Check Item 3'
+        }
+      ],
+      container: createBlock('CheckGroup Field')
+    });
+
+    
+  </script>
+</body>
+
+</html>
