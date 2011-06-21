@@ -143,11 +143,11 @@
         case 'select':
           if (!this.isDisabled())
             this.select(Event(event).ctrlKey);
-          break;
+        break;
 
         case 'toggle':
           this.toggle();
-          break;
+        break;
 
         default:
           TmplContainer.prototype.templateAction.call(this, actionName, event);
@@ -279,6 +279,7 @@
     */
     template: new Template(
       '<ul{element} class="Basis-Tree">' + 
+        '<!-- {childNodesHere} -->' +
         //'<ul{childNodesElement} class="Basis-Tree-Root"></ul>' + 
       '</ul>'
     ),

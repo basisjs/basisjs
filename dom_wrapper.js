@@ -265,7 +265,7 @@
 
    /**
     * Grouping config
-    * @type {Object}
+    * @type {Basis.DOM.Wrapper.GroupingNode}
     */
     localGrouping: null,
 
@@ -475,7 +475,9 @@
     autoDestroyIfEmpty: false,
 
    /**
-    *
+    * The list of partition members.
+    * @type {Array.<Basis.DOM.Wrapper.AbstractNode>}
+    * @readonly
     */
     nodes: null,
 
@@ -1573,7 +1575,12 @@
       if (selection)
       { 
         if (!multiple)
-          selection.set([this]);
+        {
+          // check for selectable in non-multiple mode, because if node is non-selectable
+          // selection will be cleared and this is not desired behaviour
+          if (this.selectable)
+            selection.set([this]);
+        }
         else
         {
           if (selected)
@@ -1656,11 +1663,11 @@
       {
         if (this.matched)
         {
-          if (this.underMatch)
+          if (this.underMatch_)
           {
             // restore init state
-            this.underMatch(this, true);
-            delete this.underMatch;
+            this.underMatch_(this, true);
+            this.underMatch_ = null;
           }
         }
         else
@@ -1674,7 +1681,7 @@
         if (func(this))
         {
           // match
-          this.underMatch = func;
+          this.underMatch_ = func;
           if (!this.matched)
           {
             this.matched = true;
@@ -1684,7 +1691,7 @@
         else
         {
           // don't match
-          this.underMatch = null;
+          this.underMatch_ = null;
           if (this.matched)
           {
             this.matched = false;
@@ -1692,6 +1699,13 @@
           }
         }
       }
+    },
+
+   /**
+    * Set match function for child nodes.
+    * @param {function(node):bollean} func
+    */
+    setMatchFunction: function(func){
     },
 
    /**

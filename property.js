@@ -82,9 +82,9 @@
       * @constructor
       */
       init: function(initValue, handlers, proxy){
-        DataObject.prototype.init.call(this, {
-          handlers: handlers
-        });
+        DataObject.prototype.init.call(this, {});
+        if (handlers)
+          this.addHandler(handlers);
 
         this.proxy = typeof proxy == 'function' ? proxy : Function.$self;
         this.initValue = this.value = this.proxy(initValue);

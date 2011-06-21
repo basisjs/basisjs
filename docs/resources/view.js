@@ -36,12 +36,12 @@
 
       var descr = map[parts[i]];
       if (descr)
-        node = DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), parts[i]);
+        node = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr), parts[i]);
       else
       {
         var m = parts[i].match(/^Array\.\<(.+)\>/);
         if (m && (descr = map[m[1]]))
-          node = DOM.createFragment('Array.<', DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), m[1]), '>');
+          node = DOM.createFragment('Array.<', DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr), m[1]), '>');
         else
           node = DOM.createText(parts[i]);
       }
@@ -52,7 +52,9 @@
   }
 
   function htmlHeader(title){
-    return '<span{header}/>'//'<h3><span>{0}</span></h3>'.format(title);
+    return '<h3 class="Content-Header">' +
+             '<span>' + title + '</span>' +
+           '</h3>';
   }
 
   function extendViewSatelliteConfig(config){
@@ -64,25 +66,29 @@
   //
 
   var ViewOption = Class(nsWrappers.TmplNode, {
-    template: new Template('<span{element} class="option" event-click="click">{titleText}</span>'),
-    event_select: function(){
-      nsWrappers.TmplNode.prototype.event_select.call(this);
-      if (this.handler)
-        this.handler();
-    },
+    template: new Template(
+      '<span{element} class="option" event-click="click">{titleText}</span>'
+    ),
     templateAction: function(actionName, event){
       if (actionName == 'click')
         this.select();
       else
         nsWrappers.TmplNode.prototype.templateAction.call(this, actionName, event);
     },
+    event_select: function(){
+      nsWrappers.TmplNode.prototype.event_select.call(this);
+
+      if (this.handler)
+        this.handler();
+    },
     init: function(config){
       nsWrappers.TmplNode.prototype.init.call(this, config);
+
       this.tmpl.titleText.nodeValue = this.title;
     }
   });
 
-  var ViewOptions = Class(nsWrappers.TmplControl, {
+  var ViewOptions = Class(nsWrappers.TmplContainer, {
     childClass: ViewOption,
     template: new Template(
       '<div{element} class="viewOptions">' +
@@ -90,31 +96,18 @@
         '<span{childNodesElement} class="options"/>' +
       '</div>'
     ),
+    selection: {},
     init: function(config){
       nsWrappers.TmplControl.prototype.init.call(this, config);
+
       this.tmpl.titleText.nodeValue = this.title;
     }
   });
 
-  var View = Class(nsWrappers.TmplContainer/*Basis.Plugin.X.ControlItem*/, {
+  var View = Class(nsWrappers.TmplContainer, {
     className: 'View',
     autoDelegateParent: true,
-    isAcceptableObject: Function.$true,
-    satelliteConfig: {
-      header: {
-        delegate: Function.$self,
-        instanceOf: Class(nsWrappers.TmplNode/*Basis.Plugin.X.ControlItemHeader*/, {
-          template: new Template(
-            '<h3{element} class="Content-Header">' +
-              '<span>{titleText}</span>' +
-            '</h3>'
-          ),
-          titleGetter: getter('delegate && object.delegate.viewHeader')
-        })
-      }
-    }
-    /*,
-    autoDelegateParent: true*/
+    isAcceptableObject: Function.$true
   });
 
   var tagLabels = 'readonly private'.qw();
@@ -156,7 +149,7 @@
             var mapPath = parts[i].replace(/#/, '.prototype.');
             var descr = map[mapPath];
             if (descr)
-              parts[i] = DOM.createElement('A[href=#{objPath}].doclink-{kind}'.format(descr), descr.title);
+              parts[i] = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr), descr.title);
             else
               parts[i] = parts[i].quote('{');
           }
@@ -308,17 +301,27 @@
     ),
     satelliteConfig: extendViewSatelliteConfig({
       contentPanel: {
-        existsIf: getter('info.objPath'),
-        delegate: getter('info.objPath', nsCore.JsDocEntity),
+        existsIf: getter('info.fullPath'),
+        delegate: getter('info.fullPath', nsCore.JsDocEntity),
         instanceOf: JsDocPanel
       }
     })
   });
 
+  //
+  // Template View
+  //
+
+ /**
+  * @class
+  */
   var TemplateTreeNode = Class(nsTree.TreeNode, {
     selectable: false
   });
 
+ /**
+  * @class
+  */
   TemplateTreeNode.EmptyElement = Class(TemplateTreeNode, {
     template: new Template(
       '<li{element} class="Doc-TemplateView-Element">' + 
@@ -336,6 +339,9 @@
     }
   });
 
+ /**
+  * @class
+  */
   TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, {
     canHaveChildren: true,
     template: new Template(
@@ -352,7 +358,9 @@
     }
   });
 
-
+ /**
+  * @class
+  */
   TemplateTreeNode.Text = Class(TemplateTreeNode, {
     template: new Template(
       '<li{element} class="Doc-TemplateView-Text">' + 
@@ -370,6 +378,30 @@
     }
   });
 
+ /**
+  * @class
+  */
+  TemplateTreeNode.Comment = Class(TemplateTreeNode, {
+    template: new Template(
+      '<li{element} class="Doc-TemplateView-Comment">' + 
+        '<--<span>{titleText}</span>-->' + 
+      '</li>'
+    ),
+    init: function(config){
+      TemplateTreeNode.prototype.init.call(this, config);
+
+      if (this.info.ref.length)
+      {
+        DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
+        cssClass(this.element).add('hasRefs');
+      }
+    }
+  });
+
+
+ /**
+  * @class
+  */
   var ViewTemplate = Class(View, {
     className: 'ViewTemplate',
     viewHeader: 'Template',
@@ -379,6 +411,7 @@
     template: new Template(
       '<div{element} class="view viewTemplate">' +
         htmlHeader('Template') +
+        '<!-- {viewOptions} -->' +
         '<div{content} class="content"></div>' +
       '</div>'
     ),
@@ -400,7 +433,7 @@
 
           do
           {
-            if ([DOM.ELEMENT_NODE, DOM.TEXT_NODE].has(node.nodeType))
+            if ([DOM.ELEMENT_NODE, DOM.TEXT_NODE, DOM.COMMENT_NODE].has(node.nodeType))
             {
               var cfg = {
                 info: {
@@ -427,7 +460,10 @@
             if (config.info.tagName)
               childClass = config.childNodes.length ? TemplateTreeNode.Element : TemplateTreeNode.EmptyElement;
             else
-              childClass = TemplateTreeNode.Text;
+              if (config.info.el.nodeType == 3)
+                childClass = TemplateTreeNode.Text;
+              else
+                childClass = TemplateTreeNode.Comment;
             return new childClass([config, { childFactory: cf }].merge());
           };
           var t = new nsTree.Tree({ childFactory: cf, childNodes: [map.element.c] });
@@ -438,37 +474,31 @@
         }
       }
     },
-    init: function(config){
-      View.prototype.init.call(this, config);
-
-      var view = this;
-      this.viewOptions = new ViewOptions({
-        title: 'References',
-        childNodes: [
-          {
-            selected: true,
-            title: 'Show',
-            handler: function(){
-              cssClass(view.tmpl.content).add('show-references');
-            }
-          },
-          {
-            title: 'Hide',
-            handler: function(){
-              cssClass(view.tmpl.content).remove('show-references');
-            }
+    satelliteConfig: extendViewSatelliteConfig({
+      viewOptions: {
+        instanceOf: ViewOptions,
+        config: function(owner){
+          return {
+            title: 'References',
+            childNodes: [
+              {
+                title: 'Show',
+                selected: true,
+                handler: function(){
+                  cssClass(owner.tmpl.content).add('show-references');
+                }
+              },
+              {
+                title: 'Hide',
+                handler: function(){
+                  cssClass(owner.tmpl.content).remove('show-references');
+                }
+              }
+            ]
           }
-        ]
-      });
-
-      DOM.insert(this.element, this.viewOptions.element, 1);
-    },
-    destroy: function(){
-      this.viewOptions.destroy();
-      delete this.viewOptions;
-
-      View.prototype.destroy.call(this);
-    }
+        }
+      }
+    })
   });
 
   var ViewList = Class(View, {
@@ -489,18 +519,21 @@
       nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
       var newInfo = this.info;
-      var pathPart = newInfo.objPath.split(/\./);
+      var pathPart = newInfo.fullPath.split(/\./);
       this.tmpl.classNameText.nodeValue = pathPart.pop();
       this.tmpl.namespaceText.nodeValue = newInfo.namespace || pathPart.join('.');
 
-      this.tmpl.refAttr.nodeValue = '#' + newInfo.objPath;
-      
-      cssClass(this.tmpl.content).bool('absent', !newInfo.present);
+      this.tmpl.refAttr.nodeValue = '#' + newInfo.fullPath;
       
       if (newInfo.tag)
         DOM.insert(this.tmpl.content, DOM.createElement('SPAN.tag.tag-' + newInfo.tag, newInfo.tag));
     },
-    event_unmatch: function(){}
+    event_match: function(){
+      cssClass(this.tmpl.content).remove('absent');
+    },
+    event_unmatch: function(){
+      cssClass(this.tmpl.content).add('absent');
+    }
   });
 
   var ViewInheritance = Class(ViewList, {
@@ -524,10 +557,10 @@
         : [];
 
       if (newInfo.kind == 'class')
-        this.setMatchFunction(Function.$true);
+        this.setMatchFunction();
       else
         this.setMatchFunction(function(node){
-          return list.search(node.info.objPath, Function.getter('cls.className')).tag;
+          return list.search(node.info.fullPath, Function.getter('cls.className')).tag;
         });
       
       var cursor = this;
@@ -535,7 +568,7 @@
         /*cursor = */cursor.appendChild({
           info: {
             classInfo: map[item.cls.className] || { namespace: 'unknown' },
-            objPath: item.cls.className,
+            fullPath: item.cls.className,
             present: item.present,
             tag: item.tag
           }
@@ -670,9 +703,9 @@
     event_update: function(object, delta){
       ViewList.prototype.event_update.call(this, object, delta);
 
-      if ('objPath' in delta)
+      if ('fullPath' in delta)
       {
-        var path = this.info.objPath;
+        var path = this.info.fullPath;
         if (path && map[path].obj.prototype.init)
         {
           var list = nsCore.getInheritance(map[path].obj);
@@ -773,11 +806,12 @@
     event_update: function(object, delta){
       nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
-      if ('objPath' in delta)
+      if ('fullPath' in delta)
       {
         this.tmpl.titleText.nodeValue = this.info.title;
-        this.tmpl.refAttr.nodeValue = '#' + this.info.objPath;
-        this.jsDocPanel.setDelegate(nsCore.JsDocEntity(this.info.implementationClass + '.prototype.' + this.info.key));
+        this.tmpl.refAttr.nodeValue = '#' + this.info.fullPath;
+        if (this.info.implClass)
+          this.jsDocPanel.setDelegate(nsCore.JsDocEntity(this.info.implClass.info.fullPath + '.prototype.' + this.info.key));
       }
     },
     init: function(config){
@@ -812,6 +846,9 @@
     }
   });
 
+ /**
+  * @class
+  */
   var PrototypeEvent = Class(PrototypeItem, {
     template: new Template(
       '<div{element} class="item event">' +
@@ -826,6 +863,9 @@
     }
   });
   
+ /**
+  * @class
+  */
   var PrototypeMethod = Class(PrototypeItem, {
     template: new Template(
       '<div{element} class="item method">' +
@@ -845,74 +885,91 @@
     }
   });
 
+ /**
+  * @class
+  */
   var ViewPrototype = Class(ViewList, {
     childClass: PrototypeItem,
     childFactory: function(config){
-      var childClass = {
-        event: PrototypeEvent,
-        method: PrototypeMethod
-      }[config.info.kind] || PrototypeItem;
+      var childClass;
+
+      switch (config.delegate.info.kind){
+        case 'event': childClass = PrototypeEvent; break;
+        case 'method': childClass = PrototypeMethod; break;
+        default:
+          childClass = PrototypeItem
+      };
+
       return new childClass(config);
     },
     viewHeader: 'Prototype',
     template: new Template(
       '<div{element} class="view viewPrototype">' +
         htmlHeader('Prototype') +
+        '<!-- {viewOptions} -->' +
         '<div{content|childNodesElement} class="content"></div>' +
       '</div>'
     ),
-    init: function(config){
-      ViewList.prototype.init.call(this, config);
 
-      this.document = this;
+    event_update: function(object, delta){
+      ViewList.prototype.event_update.call(this, object, delta);
 
-      var view = this;
-      this.viewOptions = new ViewOptions({
-        title: 'Group by',
-        childNodes: [
-          {
-            selected: true,
-            title: 'Type',
-            handler: function(){
-              cssClass(view.tmpl.content).remove('classGrouping');
-              view.setLocalSorting('info.title');
-              view.setLocalGrouping({
-                groupGetter: getter('info.kind'),
-                titleGetter: getter('info.id', PROTOTYPE_ITEM_TITLE),
-                localSorting: getter('info.id', PROTOTYPE_ITEM_WEIGHT)
-              });
-            }
-          },
-          {
-            title: 'Implementation',
-            handler: function(){
-              cssClass(view.tmpl.content).add('classGrouping');
-              view.setLocalSorting(function(node){
-                return (PROTOTYPE_ITEM_WEIGHT[node.info.kind] || 0) + '_' + node.info.title;
-              });
-              view.setLocalGrouping({
-                groupGetter: function(node){
-                  return node.info.implementationClass;
-                },
-                titleGetter: getter('info.id'),
-                localSorting: function(group){
-                  return view.inheritance.indexOf(group.info.id);
-                }
-              });
-            }
-          }
-        ]
-      });
-
-      DOM.insert(this.element, this.viewOptions.element, 1);
+      var newInfo = this.info;
+      if (newInfo.obj)
+      {
+        //console.log('set', newInfo.obj, delta);
+        this.setChildNodes(nsCore.getMembers(newInfo.fullPath + '.prototype'));
+      }
     },
-    destroy: function(){
-      this.viewOptions.destroy();
-      delete this.viewOptions;
 
-      ViewList.prototype.destroy.call(this);
-    }
+    satelliteConfig: extendViewSatelliteConfig({
+      viewOptions: {
+        instanceOf: ViewOptions,
+        config: function(owner){
+          return {
+            title: 'Group by',
+            childNodes: [
+              {
+                title: 'Type',
+                selected: true,
+                handler: function(){
+                  cssClass(owner.tmpl.content).remove('classGrouping');
+                  owner.setLocalSorting('info.title');
+                  owner.setLocalGrouping({
+                    groupGetter: getter('info.kind'),
+                    titleGetter: getter('info.id', PROTOTYPE_ITEM_TITLE),
+                    localSorting: getter('info.id', PROTOTYPE_ITEM_WEIGHT)
+                  });
+                }
+              },
+              {
+                title: 'Implementation',
+                handler: function(){
+                  cssClass(owner.tmpl.content).add('classGrouping');
+                  owner.setLocalSorting(function(node){
+                    return (PROTOTYPE_ITEM_WEIGHT[node.info.kind] || 0) + '_' + node.info.title;
+                  });
+                  owner.setLocalGrouping({
+                    groupGetter: function(node){
+                      return node.info.implClass || mapDO['Basis.Class'];
+                    },
+                    titleGetter: getter('info.fullPath'),
+                    localSorting: function(group){
+                      return group.delegate && group.delegate.eventObjectId;
+                    }
+                  });
+                }
+              }
+            ]
+          }
+        }
+      }
+    })
   });
+
+  //
+  // ===========================
+  //
 
   var JsDocLinkViewItem = Class(nsWrappers.TmplNode, {
     template: new Template(
@@ -944,18 +1001,12 @@
     viewHeader: 'Constructor',
     satelliteConfig: extendViewSatelliteConfig({
       contentPanel: {
-        existsIf: getter('info.objPath'),
-        delegate: getter('info.objPath + ".prototype.init"', nsCore.JsDocEntity),
+        existsIf: getter('info.fullPath'),
+        delegate: getter('info.fullPath + ".prototype.init"', nsCore.JsDocEntity),
         instanceOf: JsDocPanel
       }
     })
   });
-
-
-
-  //
-  // View instances
-  //
 
   var ViewTitle = Class(View, {
     template: new Template(
@@ -974,10 +1025,6 @@
         cssClass(this.element).replace(delta.kind, this.info.kind, 'kind-');
     }
   });
-  var viewTitle = new ViewTitle();
-
-  var viewJsDoc = new JsDocView();
-  var viewConstructor = new JsDocConstructorView();
 
   var SourceCodeView = Class(View, {
     viewHeader: 'Source code',
@@ -999,45 +1046,24 @@
     })
   });
 
-  var viewSourceCode = new SourceCodeView({
-    /*handlers: {
-      update: function(object, delta){
-        // TODO: reduce updates
-        var newInfo = this.info;
-        if ('obj' in delta && newInfo.obj)
-        {
-          var code = (newInfo.obj || '').toString();
-          code = code.replace(/^function/, code.match(/\n(\s*)\}$/)[1] + '$&');
-          DOM.insert(DOM.clear(this.tmpl.content), this.source = DOM.createElement('PRE', code));
-          this.source.className = 'brush: javascript';
-          SyntaxHighlighter.highlight({}, this.source);
-        }
-      }
-    }*/
-  });
+  //
+  // View instances
+  //
+
+
+  var viewTitle = new ViewTitle();
+
+  var viewJsDoc = new JsDocView();
+
+  var viewConstructor = new JsDocConstructorView();
+
+  var viewSourceCode = new SourceCodeView();
 
   var viewTemplate = new ViewTemplate();
 
   var viewInheritance = new ViewInheritance();
 
-  var viewPrototype = new ViewPrototype({
-    localSorting: 'info.title',
-    event_update: function(object, delta){
-      ViewInheritance.prototype.event_update.call(this, object, delta);
-
-      var newInfo = this.info;
-      if (newInfo.obj)
-      {
-        var inheritance = nsCore.getInheritance(newInfo.obj);
-        var list = nsCore.getMembers(newInfo.objPath + '.prototype');
-        this.inheritance = inheritance.map(getter('cls.className'));
-        list.forEach(function(member){
-          member.info.implementationClass = !inheritance.length ? newInfo.obj : inheritance.search(true, function(item){ return member.info.key in item.cls.prototype }).cls.className;
-        });
-        this.setChildNodes(list);
-      }
-    }
-  });
+  var viewPrototype = new ViewPrototype();
 
   var viewConfig = new ViewConfig();
 

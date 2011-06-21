@@ -36,27 +36,7 @@
   //  Overview 
   //
 
-  var buildin = {
-    'Object': Object,
-    'String': String,
-    'Number': Number,
-    'Date': Date,
-    'Array': Array,
-    'Function': Function,
-    'Boolean': Boolean
-  };
-
-  nsCore.walk(buildin, '', 'object');
-  Object.iterate(buildin, function(name, value){
-    value.className = name;
-    nsCore.walk(value, name, 'class');
-    nsCore.walk(value.prototype, name + '.prototype', 'prototype');
-  });
-
-  var walkStartTime = Date.now();
-  Basis.namespaces_['Basis'] = Basis;
-  nsCore.walk(Basis.namespaces_, '', 'object',0);
-  //if (typeof console != 'undefined') console.log(Date.now() - walkStartTime, nsCore.walkThroughCount());
+  var buildin = nsCore.buildin;
 
   //
   // View
@@ -117,26 +97,26 @@
       if (buildin[rootNS])
         rootNS = 'window';
 
-      var node = this.childNodes.search(rootNS, 'info.objPath');
+      var node = this.childNodes.search(rootNS, 'info.fullPath');
 
       //if (typeof console != 'undefined') console.log(node);
 
       if (node)
       {
         node.expand();
-        node = node.childNodes.search(path, 'info.objPath')
+        node = node.childNodes.search(path, 'info.fullPath')
                ||
                node.childNodes
-                 .sortAsObject('info.objPath')
+                 .sortAsObject('info.fullPath')
                  .reverse()
                  .search(0, function(node){
-                   return path.indexOf(node.info.objPath + '.');
+                   return path.indexOf(node.info.fullPath + '.');
                  });
       }
 
       if (node)
       {
-        var cursor = node.info.objPath;
+        var cursor = node.info.fullPath;
         var least = path.replace(new RegExp("^" + cursor.forRegExp() + '\\.?'), '');
         if (least)
         {
@@ -149,7 +129,7 @@
               cursor += '.' + parts.shift();
 
             node.expand();
-            node = node.childNodes.search(cursor, 'info.objPath');
+            node = node.childNodes.search(cursor, 'info.fullPath');
           }
         }
 
@@ -160,7 +140,7 @@
           if (!noScroll)
             node.element.scrollIntoView(false);
 
-          document.title = 'Basis API - ' + node.info.title + (node.info.path ? ' @ ' + node.info.path : '');
+          document.title = 'Basis API: ' + node.info.title + (node.info.path ? ' @ ' + node.info.path : '');
         }
       }
     }
@@ -170,12 +150,15 @@
     selection: {
       event_datasetChanged: function(dataset, delta){
         this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
-        objectView.setDelegate(this.pick());
+
+        var selected = this.pick();
+        objectView.setDelegate(selected);
+        location.hash = '#' + (selected ? selected.info.fullPath : null)
       }
     },
     childNodes: [
       {
-        info: { title: 'Buildin class extensions', objPath: 'window' },
+        info: { title: 'Buildin class extensions', fullPath: 'window' },
         collapsed: true,
         childNodes: Object.iterate(buildin, function(key, value){
           return new nsNav.docClass({
@@ -183,14 +166,14 @@
               kind: 'Class',
               title: key,
               path: '',
-              objPath: key,
+              fullPath: key,
               obj: value
             }
           });
         })
       },
       {
-        info: { title: 'Basis', objPath: 'Basis' },
+        info: { title: 'Basis', fullPath: 'Basis' },
         childNodes: Object.iterate(Basis.namespaces_, function(key){
           return new nsNav.docNamespace({
             info: map[key]
@@ -200,30 +183,32 @@
     ]
   });
 
-  var SearchTree = Class(nsTree.Tree, {
-    
-  });
-
   var searchTree = new nsTree.Tree({
     id: 'SearchTree',
     localSorting: getter('info.title', String.toLowerCase),
     localGrouping: nsNav.nodeTypeGrouping,
     childClass: Class(nsTree.TreeNode, {
       template: new Template(
-        '<li{element} class="Basis-Tree-Node">' + 
-          '<div{content|selectedElement} class="Tree-Node-Title Tree-Node-Content">' + 
-            '<a{title} href="#">' +
+        '<li{element} class="Basis-TreeNode">' +
+          '<div{content} class="Basis-TreeNode-Title">' +
+            '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
               '<span class="namespace">{namespaceText}</span>' +
               '<span{label} class="label">{titleText}</span>' +
-            '</a>' + 
-          '</div>' + 
+            '</span>' +
+          '</div>' +
         '</li>'
       ),
+      templateAction: function(actionName, event){
+        if (actionName == 'select')
+          navTree.open(this.info.fullPath);
+
+        nsTree.TreeNode.prototype.templateAction.call(this, actionName, event);
+      },
       init: function(config){
         nsTree.TreeNode.prototype.init.call(this, config);
 
-        this.tmpl.title.href = '#' + this.info.objPath;
-        cssClass(this.content).add(this.info.kind.capitalize() + '-Content');
+        this.tmpl.title.href = '#' + this.info.fullPath;
+        cssClass(this.tmpl.content).add(this.info.kind.capitalize() + '-Content');
 
         if (/^(function|method|class)$/.test(this.info.kind))
           DOM.insert(this.tmpl.label, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
@@ -246,7 +231,7 @@
     ]
   });
 
-  /*var SearchMatchInput = Class(nsForm.MatchInput, {
+  var SearchMatchInput = Class(nsForm.MatchInput, {
     matchFilterClass: Class(nsForm.MatchFilter, {
       changeHandler: function(value){
         var fc = value.charAt(0);
@@ -258,7 +243,7 @@
 
         map['SPAN.match'] = function(s, i){ return s && (i % 5 == 2 || i % 5 == 4) };
 
-        this.node.setMatchFunction(value ? function(child, reset){
+        this.node.setMatchFunction(x = value ? function(child, reset){
           if (!reset)
           {
             var textNode = child._m || textNodeGetter(child);
@@ -283,62 +268,74 @@
           
           return false;
         } : null);
+
         this.node.element.scrollTop = 0;
       }
     })
-  });*/
+  });
 
   var loadSearchIndex = Function.runOnce(function(){
     searchTree.setChildNodes(nsCore.Search.values.map(Function.wrapper('info')));
   });
 
-  var searchInput = new nsWrappers.TmplNode({
-    template: new Basis.Html.Template(
-      '<div{element}><input{field} type="text" /></div>'
-    )
-  });
-  /*var searchInput = new SearchMatchInput({
+  var searchInputFocused = false;
+  var searchInput = new SearchMatchInput({
     matchFilter: {
       node: searchTree,
       regexpGetter: function(value){
         return new RegExp('(^|[^a-z])(' + value.forRegExp() + ')', 'i');
       },
-      handlers: {
-        change: function(value){
-          if (value != '')
-            loadSearchIndex();
+      event_change: function(value, oldValue){
+        this.constructor.prototype.event_change.call(this, value, oldValue);
+        if (value != '')
+          loadSearchIndex();
 
-          sidebarPages.item(value != '' ? 'search' : 'tree').select();
+        sidebarPages.item(value != '' ? 'search' : 'tree').select();
+        if (!value)
+        {
+          var selected = navTree.selection.pick();
+          if (selected)
+            selected.element.scrollIntoView(true);
         }
       }
     }
   });
-  Event.addHandler(searchInput.field, 'keyup', function(event){
-    var key = Event.key(event);
-    var ctrl = this.matchFilter.node;
-    var selected = ctrl.selection.pick();
-    
-    if ([Event.KEY.UP, Event.KEY.DOWN].has(key))
-    {
-      var cn = ctrl.childNodes;
-      var pos, node;
-      
-      if (selected && selected.matched)
-        pos = cn.indexOf(selected);
-      
-      if (key == Event.KEY.UP)
-        node = cn.lastSearch(true, 'matched', pos ? pos - 1 : null);
-      else
-        node = cn.search(true, 'matched', pos ? pos + 1 : null);
 
-      if (node)
-        node.select();
+  Event.addHandlers(searchInput.tmpl.field, {
+    keyup: function(event){
+      var key = Event.key(event);
+      var ctrl = this.matchFilter.node;
+      var selected = ctrl.selection.pick();
+      
+      if ([Event.KEY.UP, Event.KEY.DOWN].has(key))
+      {
+        var cn = ctrl.childNodes;
+        var pos, node;
+        
+        if (selected && selected.matched)
+          pos = cn.indexOf(selected);
+        
+        if (key == Event.KEY.UP)
+          node = cn.lastSearch(true, 'matched', pos ? pos - 1 : null);
+        else
+          node = cn.search(true, 'matched', pos ? pos + 1 : null);
+
+        if (node)
+          node.select();
+      }
+      else
+        if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(key))
+          if (selected)
+            navTree.open(selected.info.fullPath);
+    },
+    focus: function(){
+      searchInputFocused = true;
+    },
+    blur: function(){
+      searchInputFocused = false;
     }
-    else
-      if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(key))
-        if (selected)
-          navTree.open(selected.info.objPath);
-  }, searchInput);*/
+  }, searchInput);
+
 
   /*
   var clsTree = new nsTree.Tree({
@@ -405,16 +402,16 @@
       return;
     
     var sender = Event.sender(e);
+
     if (sender.tagName != 'A')
       sender = DOM.findAncestor(sender, function(node){ return node.tagName == 'A' });
+
     if (sender && sender.pathname == location.pathname && sender.hash != '')
       navTree.open(sender.hash, DOM.parentOf(navTree.element, sender));
 
     //DOM.focus(searchInput.field, true);
   });
-  var searchInputFocused = false;
-  Event.addHandler(searchInput.tmpl.field, 'focus', function(){ searchInputFocused = true; });
-  Event.addHandler(searchInput.tmpl.field, 'blur', function(){ searchInputFocused = false; });
+
   Event.addGlobalHandler('keydown', function(e){
     var event = Event(e);
     if (event.ctrlKey || event.shiftKey || event.altKey)

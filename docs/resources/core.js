@@ -10,6 +10,7 @@
 
   var getter = Function.getter;
 
+  var nsData = Basis.Data;
   var nsWrappers = Basis.DOM.Wrapper;
   var nsEntity = Basis.Entity;
 
@@ -66,8 +67,8 @@
   var awaitingUpdateQueue = {};
 
   function fetchInheritedJsDocs(path, entity){
-    var objPath = path;
-    var objInfo = map[objPath];
+    var fullPath = path;
+    var objInfo = map[fullPath];
     if (/class|property|method/.test(objInfo.kind))
     {
       var postPath = objInfo.kind == 'class' ? '' : '.prototype.' + objInfo.title;
@@ -90,10 +91,10 @@
     var keys = Object.keys(awaitingUpdateQueue);
     for (var k = 0; k < keys.length; k++)
     {
-      var objPath = keys[k];
-      var awaitingEntity = awaitingUpdateQueue[objPath];
-      if (fetchInheritedJsDocs(objPath, awaitingEntity))
-        delete awaitingUpdateQueue[objPath];
+      var fullPath = keys[k];
+      var awaitingEntity = awaitingUpdateQueue[fullPath];
+      if (fetchInheritedJsDocs(fullPath, awaitingEntity))
+        delete awaitingUpdateQueue[fullPath];
     }
   }
 
@@ -169,7 +170,7 @@
           //if (/childClass/.test(this.info.path)) debugger;
           if (obj && obj.kind == 'property')
           {
-            console.log(this.info.path + ': ' + objHolder.objPath + ' -' + obj.title + '-> ' + ref.objPath);
+            console.log(this.info.path + ': ' + objHolder.fullPath + ' -' + obj.title + '-> ' + ref.fullPath);
           }
         }
         tags[key] = value;
@@ -187,7 +188,7 @@
 
   JsDocEntity.entityType.entityClass.extend({
     event_update: function(object, delta){
-      Basis.Data.DataObject.prototype.event_update.call(this, object, delta);
+      nsData.DataObject.prototype.event_update.call(this, object, delta);
       if (this.subscriberCount && 'text' in delta)
       {
         var self = this;
@@ -209,12 +210,12 @@
     init: function(){
       this.inherit.apply(this, arguments);
 
-      var objPath = this.info.path;
-      var objInfo = map[objPath];
+      var fullPath = this.info.path;
+      var objInfo = map[fullPath];
 
       if (objInfo && /class|property|method/.test(objInfo.kind))
       {
-        if (!fetchInheritedJsDocs(objPath, this))
+        if (!fetchInheritedJsDocs(fullPath, this))
         {
           awaitingUpdateQueue[this.info.path] = this;
         }
@@ -229,11 +230,12 @@
     }
   });
 
-  jsDocs = {};
+  //jsDocs = {};
 
   map = {};
+  mapDO = {};
   charMap = {};
-  members = {};
+  var members = {};
   var searchIndex = {};
   var searchValues = [];
   rootClasses = {};
@@ -265,22 +267,24 @@
 
       walkThroughCount++;
 
-      var objPath = path ? (path + '.' + key) : key;
+      var fullPath = path ? (path + '.' + key) : key;
       var kind;
       var title = key;
+      var tag;
+      var implClass;
 
-      if (map[objPath])
+      if (map[fullPath])
         continue;
 
       switch (typeof obj){
         case 'function':
-          if (Basis.namespaces_[objPath])
+          if (Basis.namespaces_[fullPath])
             kind = 'namespace';
           else
           {
             if (context == 'prototype')
             {
-              if (obj.className)
+              if (obj.className)   // for properties which contains ref for class
                 kind = 'property';
               else
               {
@@ -294,10 +298,12 @@
               }
             }
             else
+            {
               if (obj.className)
                 kind = 'class';
               else
                 kind = 'function';
+            }
           }
         break;
         default:
@@ -314,33 +320,69 @@
         if (obj === Function.prototype[key] || obj === Basis.Class.BaseClass[key])
           continue;
 
+      if (context == 'prototype')
+      {
+        var clsPath = path.replace(/\.prototype$/, '');
+        var cls = map[clsPath] && map[clsPath].obj;
+        var superCls = cls && cls.superClass_;
+        if (superCls)
+        {
+          if (key in superCls.prototype)
+          {
+            var superClsPath = cls.superClass_.className + '.prototype.' + key;
+            if (map[superClsPath])
+              implClass = map[superClsPath].implClass;
+            //else
+            //  console.log(superClsPath, ' not found for ', clsPath);
+
+            if (cls.prototype[key] !== superCls.prototype[key])
+              tag = 'override';
+          }
+          else
+          {
+            implClass = mapDO[clsPath];
+            tag = 'implement';
+          }
+        }
+        else
+        {
+          //console.log(path, clsPath);
+        }
+      }
+
       var firstChar = key.charAt(0).toLowerCase();
       if (!charMap[firstChar])
         charMap[firstChar] = [];
 
-      if (map[objPath])
-        console.log(objPath);
+      if (map[fullPath])
+        console.log(fullPath);
 
-      var info = map[objPath] = {
+      var info = map[fullPath] = {
         isClassMember: context == 'class',
         path: path,
-        objPath: objPath,
+        fullPath: fullPath,
         key: key,
         title: title,
         kind: kind,
-        obj: obj
+        obj: obj,
+        tag: tag,
+        implClass: implClass
       };
+      
+      mapDO[fullPath] = new nsData.DataObject({
+        info: info
+      });
 
       if (kind == 'function' || kind == 'class' || kind == 'constant' || kind == 'namespace')
       {
-        if (!searchIndex[objPath])
+        if (!searchIndex[fullPath])
         {
-          searchIndex[objPath] = info;
+          searchIndex[fullPath] = info;
           searchValues.push(info);
         }
       }
 
-      members[path].push(info);
+      members[path].push(mapDO[fullPath]);
       charMap[firstChar].push(info);
 
       if (kind == 'class')
@@ -349,7 +391,7 @@
 
         if (obj.classMap_)
         {
-          //if (window.console) console.log('>>', objPath);
+          //if (window.console) console.log('>>', fullPath);
         }
         else
           obj.classMap_ = {
@@ -358,12 +400,12 @@
 
         if (!obj.classMap_.info)
         {
-          obj.classMap_.info = { path: objPath, title: objPath, obj: obj };
+          obj.classMap_.info = { path: fullPath, title: fullPath, obj: obj };
           if (obj.superClass_)
           {
             if (!obj.superClass_.classMap_)
             {
-              //if (window.console) console.log('!', objPath);
+              //if (window.console) console.log('!', fullPath);
               obj.superClass_.classMap_ = { childNodes: [obj.classMap_] };
             }
             else
@@ -372,27 +414,53 @@
             }
           }
           else
-            rootClasses[objPath] = obj;
+            rootClasses[fullPath] = obj;
         }  
       }
 
       if (kind == 'namespace')
       {
-        walk(obj, objPath, kind, d+1, objPath);
+        walk(obj, fullPath, kind, d + 1, fullPath);
       }
       
       if (kind == 'object' && typeof obj == 'object')
       {
-        walk(obj, objPath, kind, d+1, ns);
+        walk(obj, fullPath, kind, d + 1, ns);
       }
 
       if (kind == 'class')
       {
-        walk(obj, objPath, kind, d+1, ns);
-        walk(obj.prototype, objPath + '.prototype', 'prototype', d+1, ns);
+        walk(obj, fullPath, kind, d + 1, ns);
+        walk(obj.prototype, fullPath + '.prototype', 'prototype', d + 1, ns);
       }
     }
   }
+
+  var buildin = {
+    'Object': Object,
+    'String': String,
+    'Number': Number,
+    'Date': Date,
+    'Array': Array,
+    'Function': Function,
+    'Boolean': Boolean
+  };
+
+  var walkStartTime = Date.now();
+  walk(buildin, '', 'object');
+  Object.iterate(buildin, function(name, value){
+    value.className = name;
+    walk(value, name, 'class');
+    walk(value.prototype, name + '.prototype', 'prototype');
+  });
+
+  Basis.namespaces_['Basis'] = Basis;
+  walk(Basis.namespaces_, '', 'object',0);
+  if (typeof console != 'undefined') console.log(Date.now() - walkStartTime, '/', walkThroughCount);
+
+  //
+  // --------------------------------
+  //
 
   function getFunctionDescription(func){
     if (typeof func == 'function' && func.className && func.prototype && typeof func.prototype.init == 'function')
@@ -413,7 +481,7 @@
   }
 
   function getMembers(path){
-    return (members[path] || []).map(Function.wrapper('info'));
+    return members[path];
   }
 
   function getInheritance(cls, key){
@@ -455,7 +523,7 @@
           file: resource.url,
           line: line + 1 + lineFix
         });
-        jsDocs[e.info.path] = e.info.text;
+        //jsDocs[e.info.path] = e.info.text;
       }
 
       var parts = resource.text.replace(/\r\n|\n\r|\r/g, '\n').replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|\n)+?)\*\/)/);
@@ -587,8 +655,7 @@
 
     resolveUrl: resolveUrl,
 
-    walk: walk,
-    walkThroughCount: function(){ return walkThroughCount },
+    buildin: buildin,
     getFunctionDescription: getFunctionDescription,
     getMembers: getMembers,
     getInheritance: getInheritance,

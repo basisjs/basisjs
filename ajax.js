@@ -221,7 +221,7 @@
 
       if (IS_POST_REGEXP.test(requestData.method)) 
       {
-        headers['Content-type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
+        headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
         if (Browser.test('gecko'))
           headers['Connection'] = 'close';
       }
@@ -229,7 +229,7 @@
         if (Browser.test('ie')) // disable IE caching
           headers['If-Modified-Since'] = new Date(0).toGMTString();
 
-      Object.iterate(Object.complete(headers, requestData.headers), function(key, value){
+      Object.iterate(Object.extend(headers, requestData.headers), function(key, value){
         if (value != null)
           this.setRequestHeader(key, value);
       }, transport);

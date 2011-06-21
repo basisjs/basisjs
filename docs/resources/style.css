@@ -407,6 +407,29 @@
     padding: 0;
   }
 
+  #Content .viewTemplate .Doc-TemplateView-Comment
+  {
+    display: inline;
+    padding: 1px 0px 2px 0px;
+    font-size: 85%;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+    border-radius: 3px;
+  }
+  #Content .viewTemplate .Doc-TemplateView-Comment.hasRefs
+  {
+    background: #FFF0B0;
+    color: #996600;
+    margin: 0 2px 0 1px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  #Content .viewTemplate .Doc-TemplateView-Comment.hasRefs .ref
+  {
+    display: none;
+  }
+
+
   #Content .viewPrototype .Basis-PartitionNode-Content
   {
     border-top: 1px solid #E0E0E0;

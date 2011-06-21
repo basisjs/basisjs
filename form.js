@@ -1545,14 +1545,12 @@
         this.map = {};
         this.map[config.wrapElement || 'SPAN.match'] = function(v, i){ return (i % 3) == 2 };
 
-        Property.prototype.init.call(this, '', '', String.trim);
-
-        this.addHandler({
+        Property.prototype.init.call(this, '', {
           change: this.changeHandler
-        }, this);
+        }, String.trim);
 
-        /*if (this.handlers)
-          this.addHandler(config.handlers, config.thisObject);*/
+        if (this.handlers)
+          this.addHandler(this.handlers);
       }
     });
 

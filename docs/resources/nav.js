@@ -12,6 +12,7 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
 
+    var getter = Function.getter;
     var cssClass = Basis.CSS.cssClass;
 
     var nsWrappers = Basis.DOM.Wrapper;
@@ -56,18 +57,18 @@
       Class: 3,
       Object: 4,
       HtmlElement: 5,
-      Event: 5.1,
-      Property: 5.5,
-      Method: 6,
-      Function: 6
+      Event: 6,
+      Property: 7,
+      Method: 8,
+      Function: 9
     };
 
     var nodeTypeGrouping = {
       groupGetter: function(node){
-        return node.info.isClassMember ? 'ClassMember' : kindNodeType[node.info.kind];
+        return node.info.isClassMember ? 'ClassMember' : node.nodeType
       },
-      titleGetter: Function.getter('info.id', groupTitle),
-      localSorting: Function.getter('info.id', groupWeight)
+      titleGetter: getter('info.id', groupTitle),
+      localSorting: getter('info.id', groupWeight)
     };
 
     //
@@ -81,32 +82,31 @@
    /**
     * @class
     */
-    var baseTreeNode = Class(nsTree.TreeNode, {
-      nodeType: 'baseTreeNode',
-      altTitle: false,
+    var BaseDocTreeNode = Class(nsTree.TreeNode, {
+      views: [],
+
       init: function(config){
         nsTree.TreeNode.prototype.init.call(this, config);
 
-        this.tmpl.title.href = '#' + this.info.objPath;
-        this.tmpl.content.className += ' ' + this.nodeType + '-Content';
+        this.tmpl.title.href = '#' + this.info.fullPath;
+        cssClass(this.tmpl.content).add(this.nodeType + '-Content');
       }
     });
 
    /**
     * @class
     */
-    var docFunction = Class(baseTreeNode, {
+    var docFunction = Class(BaseDocTreeNode, {
       nodeType: 'Function',
+
       views: [
         nsView.viewSourceCode
       ],
 
-      template: new Basis.Html.Template(
-        baseTreeNode.prototype.template.source.replace('</span>', '<span class="args">({argsText})</span></span>')
-      ),
-
       init: function(config){
-        baseTreeNode.prototype.init.call(this, config);
+        BaseDocTreeNode.prototype.init.call(this, config);
+
+        DOM.insert(this.tmpl.title, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
         this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
       }
     });
@@ -116,6 +116,7 @@
     */
     var docMethod = Class(docFunction, {
       nodeType: 'Method',
+
       views: [
         nsView.viewInheritance,
         nsView.viewSourceCode
@@ -123,25 +124,23 @@
     });
 
    /**
-    * @event
+    * @class
     */
     var docEvent = Class(docFunction, {
       nodeType: 'Event',
+
       views: [
         nsView.viewInheritance,
         nsView.viewSourceCode
-      ]/*,
-      event_update: function(object, delta){
-        nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
-        this.tmpl.titleText.nodeValue = this.info.title.substr(6);
-      }*/
+      ]
     });
 
    /**
     * @class
     */
-    var docProperty = Class(baseTreeNode, {
+    var docProperty = Class(BaseDocTreeNode, {
       nodeType: 'Property',
+
       views: [
         nsView.viewInheritance
       ]
@@ -150,21 +149,21 @@
    /**
     * @class
     */
-    var docClassMember = Class(baseTreeNode, {
+    var docClassMember = Class(BaseDocTreeNode, {
       nodeType: 'ClassMember'
     });
 
    /**
     * @class
     */
-    var docConstant = Class(baseTreeNode, {
+    var docConstant = Class(BaseDocTreeNode, {
       nodeType: 'Constant'
     });
 
    /**
     * @class
     */
-    var docHtmlElement = Class(baseTreeNode, {
+    var docHtmlElement = Class(BaseDocTreeNode, {
       nodeType: 'HtmlElement'
     });
 
@@ -176,31 +175,31 @@
    /**
     * @class
     */
-    var baseTreeFolder = Class(nsTree.TreeFolder, {
-      nodeType: 'baseTreeFolder',
-
+    var BaseDocTreeFolder = Class(nsTree.TreeFolder, {
       collapsed: true,
 
       childFactory: function(config){
-        var childClass = kindNodeClass[config.info.kind];
-        return new childClass(config);
+        return new kindNodeClass[config.delegate.info.kind](config);
       },
       localSorting: function(node){
-        return groupWeight[node.nodeType] + '-' + node.info.title
+        return groupWeight[node.nodeType] + node.info.title;
       },
       localGrouping: nodeTypeGrouping,
 
       init: function(config){
-        baseTreeNode.prototype.init.call(this, config);
+        BaseDocTreeNode.prototype.init.call(this, config);
+
         if (this.collapsed)
           this.event_collapse();
       },
 
-      getMembers: Function.$null,
+      getMembers: function(){
+        return nsCore.getMembers(this.info.fullPath);
+      },
       expand: function(){
         if (nsTree.TreeFolder.prototype.expand.call(this))
         {
-          DOM.insert(this, this.getMembers());
+          this.setChildNodes(this.getMembers());
           this.expand = nsTree.TreeFolder.prototype.expand;
         }
       }
@@ -209,32 +208,34 @@
    /**
     * @class
     */
-    var docSection = Class(baseTreeFolder, {
+    var docSection = Class(BaseDocTreeFolder, {
       nodeType: 'Section',
+
       collapsed: false,
       selectable: false,
-      localGrouping: null
+      localGrouping: false,
+      expand: nsTree.TreeFolder.prototype.expand
     });
 
    /**
     * @class
     */
-    var docNamespace = Class(baseTreeFolder, {
-      nodeType: 'Namespace',
-      getMembers: function(){
-        return nsCore.getMembers(this.info.objPath);
-      }
+    var docNamespace = Class(BaseDocTreeFolder, {
+      nodeType: 'Namespace'
     });
 
    /**
     * @class
     */
-    var docClass = Class(baseTreeFolder, {
+    var docObject = Class(BaseDocTreeFolder, {
+      nodeType: 'Object'
+    });
+
+   /**
+    * @class
+    */
+    var docClass = Class(BaseDocTreeFolder, {
       nodeType: 'Class',
-
-      template: new Basis.Html.Template(
-        baseTreeFolder.prototype.template.source.replace('</span>', '<span class="args">({argsText})</span></span>')
-      ),
 
       views: [
         nsView.viewInheritance,
@@ -243,25 +244,18 @@
         nsView.viewConfig,
         nsView.viewPrototype
       ],
+
       init: function(config){
-        baseTreeFolder.prototype.init.call(this, config);
+        BaseDocTreeFolder.prototype.init.call(this, config);
+
+        DOM.insert(this.tmpl.title, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
         this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
       },
       getMembers: function(){
         return [
-                 nsCore.getMembers(this.info.objPath + '.prototype'),
-                 nsCore.getMembers(this.info.objPath)
+                 nsCore.getMembers(this.info.fullPath + '.prototype'),
+                 nsCore.getMembers(this.info.fullPath)
                ].flatten();
-      }
-    });
-
-   /**
-    * @class
-    */
-    var docObject = Class(baseTreeFolder, {
-      nodeType: 'Object',
-      getMembers: function(){
-        return nsCore.getMembers(this.info.objPath);
       }
     });
 
