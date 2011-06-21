@@ -58,6 +58,8 @@
 
       serializable: true,
 
+      nextFieldOnEnter: true,
+
       event_select: function(){
         DOM.focus(this.tmpl.field, true);
 
@@ -81,11 +83,14 @@
         {
           var key = Event.key(event);
         
-          if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
-            Event.cancelDefault(event);
+          /*if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
+            Event.cancelDefault(event);*/
 
           if (((this.nextFieldOnEnter || event.ctrlKey) && key == Event.KEY.ENTER) || key == Event.KEY.CTRL_ENTER)
+          {
+            Event.cancelDefault(event);
             this.nextFieldFocus();
+          }
           else
             this.setValid();
         }
@@ -407,6 +412,8 @@
     Field.Textarea = Class(Field, {
       className: namespace + '.Field.Textarea',
 
+      nextFieldOnEnter: false,
+
       fieldTemplate: new Template(
         '<textarea{field|element}/>'
       ),
@@ -414,7 +421,7 @@
       init: function(config){
         //this.value = this.value || '';
 
-        this.nextFieldOnEnter = false;
+
         this.counter = DOM.createElement('.counter', Field.LOCALE.Textarea.SYMBOLS_LEFT + ': ', DOM.createText(0));
 
         //inherit
@@ -872,6 +879,8 @@
           this.selection.clear();
       }
     });
+
+    Field.Select.Item = SelectItem;
 
     //
     //  Combobox
