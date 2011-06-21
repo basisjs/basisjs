@@ -9,6 +9,9 @@
   <title>Basis Demos: Forms</title>
 
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/form/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/popup/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/dropdown/blue/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -55,9 +58,13 @@
   <script type="text/javascript" src="../../basis.js"></script>
   <script type="text/javascript" src="../../data.js"></script>
   <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
+  <script type="text/javascript" src="../../layout.js"></script>
+  <script type="text/javascript" src="../../popup.js"></script>
   <script type="text/javascript" src="../../form.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
 
-  <script type="text/javascript" src="../../button2.js"></script>
+  <script type="text/javascript" src="../../locale/en/form.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -97,49 +104,67 @@
     });
 
     new nsForm.Field.Textarea({
-      container: createBlock('Textarea Field')
+      container: createBlock('Textarea Field'),
+      maxLength: 20
     });
 
     new nsForm.Field.Select({
       items: [
         {
-          title: 'Option 1'
+          title: 'Option 1',
+          value: 1
         },
         {
-          title: 'Option 2'
+          title: 'Option 2',
+          value: 2
         },
         {
-          title: 'Option 3'
+          title: 'Option 3',
+          value: 3
         }
       ],
       container: createBlock('Select Field')
     });
 
+    var property = new Basis.Data.Property.Property(1);
+
     new nsForm.Field.Combobox({
       items: [
         {
-          title: 'Combobox Item 1'
+          title: 'Combobox Item 1',
+          value: 1
         },
         {
-          title: 'Combobox Item 2'
+          info: {
+            title: 'Combobox Item 2',
+            value: 2
+          },
+          selected: true
         },
         {
-          title: 'Combobox Item 3'
+          title: 'Combobox Item 3',
+          value: 3
         }
       ],
+      property: property,
+      title: 'Combobox Title',
+      sample: 'Sample',
       container: createBlock('Combobox Field')
     });
 
-    new nsForm.Field.RedioGroup({
+    new nsForm.Field.RadioGroup({
       items: [
         {
-          title: 'Radio Item 1'
+          title: 'Radio Item 1',
+          value: 1
         },
         {
-          title: 'Radio Item 2'
+          title: 'Radio Item 2',
+          value: 2
         },
         {
-          title: 'Radio Item 3'
+          title: 'Radio Item 3',
+          value: 3
         }
       ],
       container: createBlock('RadioGroup Field')
@@ -148,16 +173,66 @@
     new nsForm.Field.CheckGroup({
       items: [
         {
-          title: 'Check Item 1'
+          title: 'Check Item 1',
+          value: 1
         },
         {
-          title: 'Check Item 2'
+          title: 'Check Item 2',
+          value: 2
         },
         {
-          title: 'Check Item 3'
+          title: 'Check Item 3',
+          value: 3,
+          selected: true
         }
       ],
       container: createBlock('CheckGroup Field')
+    });
+
+    // form
+
+
+    var formContainer = createBlock('Form');
+
+    var form = new nsForm.FormContent({
+      childNodes: [
+        {
+          type: 'text',
+          name: 'FirstName',
+          title: 'First Name',
+          minLength: 10
+        },
+        {
+          type: 'text',
+          name: 'LastName',
+          title: 'Last Name'
+        },
+        {
+          type: 'combobox',
+          name: 'Gender',
+          title: 'Gender',
+          items: [
+            { info: { value: 'Male', title: 'Male' } },
+            { info: { value: 'Female', title: 'Female' } }
+          ]
+        }
+      ],
+      onSubmit: function(data){
+        alert([
+          'First Name: ' + data.FirstName, 
+          'Last Name: ' + data.LastName, 
+          'Gender: '  + data.Gender
+        ].join('\n'));
+      },
+      container: formContainer
+    });
+
+    new Button({
+      caption: 'Submit',
+      handler: function(){
+        form.submit();
+      },
+      container: formContainer
     });
 
     
