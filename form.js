@@ -624,6 +624,8 @@
       }
     });
     delete ComplexField.prototype.template;
+    
+    ComplexField.Item = ComplexFieldItem;
 
     //
     // Radio group
@@ -722,6 +724,8 @@
       }*/
     });
 
+    Field.RadioGroup.Item = RadioGroupItem;
+
     //
     // Check Group
     //
@@ -813,6 +817,8 @@
         return config;
       }*/
     });
+
+    Field.CheckGroup.Item = CheckGroupItem;
 
     //
     // Select
@@ -1146,6 +1152,8 @@
         ComplexField.prototype.destroy.call(this);
       }
     });
+
+    Field.Combobox.Item = ComboboxItem;
 
     //
     //  Value validators
@@ -1614,11 +1622,10 @@
       Field: Field,
       Validator: Validator,
       ValidatorError: ValidatorError,
-      ComplexFieldItem: ComplexFieldItem,
-      RadioGroupItem: RadioGroupItem,
-      CheckGroupItem: CheckGroupItem,
+      RadioGroup: Field.RadioGroup,
+      CheckGroup: Field.CheckGroup,
       Combobox: Field.Combobox,
-      ComboboxItem: ComboboxItem,
+      ComplexField: ComplexField,
       Matcher: Matcher,
       MatchFilter: MatchFilter,
       MatchInput: MatchInput
