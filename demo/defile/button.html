@@ -41,7 +41,7 @@
 
     .imageLeft .Basis-Button-Caption
     {
-      background: url(button_image.png) no-repeat 0 center;
+      background: url(button_image.png) no-repeat left center;
       padding-left: 20px;
     }
 
@@ -56,6 +56,11 @@
       background: url(button_image.png) no-repeat center center;
       padding-left: 16px;
       text-indent: -100ex;
+    }
+
+    .fixedWidthButton
+    {
+      width: 50%;
     }
 
     .big
@@ -228,6 +233,13 @@
       ],
       container: createBlock('Big Button')
     });
+
+    new Button({
+      caption: 'Button16',
+      handler: alertCaption,
+      cssClassName: 'fixedWidthButton',
+      container: createBlock('Button with 50% Width')
+    })
 
   </script>
 </body>

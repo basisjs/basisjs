@@ -19,10 +19,49 @@
     position: relative;
     z-index: 1;
 
-    padding: 0 0.5ex;
+    /*padding: 0 0.5ex;*/
+    padding: 0;
     margin: 0;
 
     *overflow: visible; /* old IE padding fix */
+
+    font-size: 85%;
+    color: black;
+    vertical-align: top;
+
+    border: none;
+    background: none;
+
+    outline: none;
+    cursor: pointer;
+  }
+
+ /*
+  * Remove inner padding and border 
+  * Fixes appearance displayed oddly in FF3/4
+  * www.sitepen.com/blog/2008/05/14/the-devils-in-the-details-fixing-dojos-toolbar-buttons/
+  */
+  button.Basis-Button::-moz-focus-inner
+  {
+    border: 0;
+    padding: 0;
+  }
+
+  .Basis-Button-Caption
+  {
+    padding: .4em 0 0.45em;
+    position: relative;
+    z-index: 1;
+    margin: 0 1.5ex;
+  }
+
+  .Basis-Button-Over
+  {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
 
     /* old browsers */
     background: #D7D7D7 url(button_transparent_bg.png) repeat-x left center; 
@@ -58,13 +97,6 @@
       -moz-border-radius: 2px;
     border-radius: 2px;
 
-    font-size: 85%;
-    color: black;
-    vertical-align: top;
-
-    outline: none;
-    cursor: pointer;
-
     /* animation */
       -moz-transition: .25s ease-in-out;
       -moz-transition-property: background-color, border-color, -moz-box-shadow, box-shadow;
@@ -74,24 +106,6 @@
       -o-transition-property: background-color, border-color, box-shadow;
     transition: .25s ease-in-out;
     transition-property: background-color, border-color, box-shadow;
-
-  }
-
- /*
-  * Remove inner padding and border 
-  * Fixes appearance displayed oddly in FF3/4
-  * www.sitepen.com/blog/2008/05/14/the-devils-in-the-details-fixing-dojos-toolbar-buttons/
-  */
-  button.Basis-Button::-moz-focus-inner
-  {
-    border: 0;
-    padding: 0;
-  }
-
-  .Basis-Button-Caption
-  {
-    padding: .35em 1ex 0.4em;
-    /*margin: 0.1em;*/
   }
 
   /* state & interaction */
@@ -101,23 +115,28 @@
   .Basis-Button:focus
   {
     z-index: 2;
-    border-color: #888;
   }
 
+  .Basis-Button:hover .Basis-Button-Over,
+  .Basis-Button:active .Basis-Button-Over,
+  .Basis-Button:focus .Basis-Button-Over
+  {
+    border-color: #888;  
+  }
 
-  .Basis-Button:hover
+  .Basis-Button:hover .Basis-Button-Over
   {
     background-color: #BCD7F2;
   }
 
-  .Basis-Button:focus
+  .Basis-Button:focus .Basis-Button-Over
   {
       -webkit-box-shadow: 0 0 3px 1px #B7D9FE inset;
       -moz-box-shadow: 0 0 3px 1px #B7D9FE inset;
     box-shadow: 0 0 3px 1px #B7D9FE inset;
   }
 
-  .Basis-Button:active
+  .Basis-Button:active .Basis-Button-Over
   {
     background-color: #BCD7F2;
 
@@ -126,21 +145,14 @@
     box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;
   }
 
-  /*.Basis-Button:active .Basis-Button-Caption
-  {
-    margin-left: 0.2em;
-    margin-right: 0;
-    margin-top: 0.2em;
-    margin-bottom: 0;
-  } */
-
-  .Basis-ButtonPanel .disabled .Basis-Button,
   .Basis-Button.disabled
   {
-    /*-moz-opacity: 0.4;
-    -khtml-opacity: 0.4;
-    opacity: 0.4;*/
+    cursor: default;
+  }
 
+  .Basis-ButtonPanel .disabled .Basis-Button .Basis-Button-Over,
+  .Basis-Button.disabled .Basis-Button-Over
+  {
     background-color: #F4F4F4;
     background-image: none;
 
@@ -148,7 +160,6 @@
       -moz-box-shadow: none;
     box-shadow: none;
 
-    cursor: default;
     color: #888;
     border-color: #C0C0C0;
   }
@@ -159,8 +170,6 @@
 
   .Basis-ButtonGroup
   {
-    /*display: block;
-    display: inline-block;*/
     display: inline;
     margin-right: 5px;
   }
@@ -169,13 +178,17 @@
   {
     /* overlay for 1px on right */
     margin-right: -1px;
+  }
 
+  .Basis-ButtonGroup .Basis-Button .Basis-Button-Over
+  {
     /* remove border radius, only first and last buttons has border-radius */
       -webkit-border-radius: 0;
       -moz-border-radius: 0;
     border-radius: 0;
   }
-  .Basis-ButtonGroup .Basis-Button:first-child
+
+  .Basis-ButtonGroup .Basis-Button:first-child .Basis-Button-Over
   {
       -webkit-border-top-left-radius: 2px;
       -moz-border-topleft-radius: 2px;
@@ -185,7 +198,7 @@
       -moz-border-bottomleft-radius: 2px;
     border-bottom-left-radius: 2px;
   }
-  .Basis-ButtonGroup .Basis-Button:last-child
+  .Basis-ButtonGroup .Basis-Button:last-child .Basis-Button-Over
   {
     margin-right: 0;
 
