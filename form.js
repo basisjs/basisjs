@@ -1452,7 +1452,12 @@
 
     // additional
 
+   /**
+    * @class
+    */
     var MatchProperty = Class(Property, {
+      className: namespace + '.MatchProperty',
+
       matchFunction: function(child, reset){
         if (!reset)
         {
@@ -1549,6 +1554,9 @@
       }
     }
 
+   /**
+    * @class
+    */
     var Matcher = Class(MatchProperty, {
       event_change: function(value){
         MatchProperty.prototype.event_change.call(this, value);
@@ -1569,6 +1577,7 @@
     });
 
     var MatchFilter = Class(MatchProperty, {
+      className: namespace + '.MatchFilter',
       event_change: function(value){
         MatchProperty.prototype.event_change.call(this, value);
 

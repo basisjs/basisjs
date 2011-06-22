@@ -232,6 +232,10 @@
 
   //jsDocs = {};
 
+  //
+  // Analize object structure
+  //
+
   map = {};
   mapDO = {};
   charMap = {};
@@ -466,18 +470,21 @@
     if (typeof func == 'function' && func.className && func.prototype && typeof func.prototype.init == 'function')
       func = func.prototype.init;
 
+    if (func.basisDocFD_)
+      return func.basisDocFD_;
+
     var m = func.toString().match(/^\s*function(\s+\S+)?\s*\((\s*(?:\S+|\/\*[^*]+\*\/)(\s*(?:,\s*\S+|\/\*[^*]+\*\/))*\s*)?\)/);
     if (!m)
       console.log('Function parse error: ' + func.toString());
 
-    var result = {
-      name: String(m[1] || 'anonymous').trim(),
-      args: String(m[2] || '').replace(/\s*\,\s*/g, ', ')
-    };
+    var name = String(m[1] || 'anonymous').trim();
+    var args = String(m[2] || '').replace(/\s*\,\s*/g, ', ');
 
-    result.fullname = result.name + result.args.quote('(');
-    
-    return result;
+    return func.basisDocFD_ = {
+      name: name,
+      args: args,
+      fullname: name + args.quote('(')
+    };
   }
 
   function getMembers(path){
@@ -595,6 +602,7 @@
     }
   };
 
+  var RESOURCE_ATTEMPT_LOAD = 1;
   var resourceLoader = {
     queue: [],
     loaded: {},
@@ -605,7 +613,7 @@
       transport.addHandler({
         failure: function(){
           var curResource = this.curResource;
-          if (curResource.attemptCount++ < 3)
+          if (++curResource.attemptCount < RESOURCE_ATTEMPT_LOAD)
             this.queue.push(curResource);
         },
         success: function(req){

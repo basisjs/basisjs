@@ -128,6 +128,8 @@
       },
 
       localGroupingClass: Class(TmplGroupingNode, {
+        className: namespace + '.HeaderGroupingNode',
+
         childClass: Class(TmplPartitionNode, {
           className: namespace + '.HeaderPartitionNode',
 
@@ -422,7 +424,11 @@
       
       canHaveChildren: true,
       childClass: Row,
-      localGroupingClass: Class(TmplGroupingNode, { childClass: Body }),
+
+      localGroupingClass: Class(TmplGroupingNode, {
+        className: namespace + '.TableGroupingNode',
+        childClass: Body
+      }),
 
       registers: null,
 

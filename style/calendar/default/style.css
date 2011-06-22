@@ -14,7 +14,10 @@
     width: 28ex; /* content width must be divisible by 28 (7 segments for month days and 4 segments for monthes, years etc) */
     padding: 0 5px; /* horizontal padding = border-width + content padding */
     font-size: 82%;
-    -moz-user-select: none;
+
+      -moz-user-select: none;
+      -webkit-user-select: none;
+    user-select: none;
   }
 
   /*
@@ -118,6 +121,7 @@
     text-decoration: none;
     overflow: hidden;
     z-index: 1;
+    cursor: pointer;
   }
   .Basis-Calendar-ButtonPrevPeriod
   {
@@ -207,7 +211,7 @@
   }
 
   /* days */
-  .Basis-Calendar-Section-Month .week_days
+  .Basis-Calendar-MonthWeekDays
   {
     float: left;
     width: 100%;
@@ -216,7 +220,7 @@
     margin-bottom: 1px;
     margin-top: -2px;
   }
-  .Basis-Calendar-Section-Month .week_days SPAN
+  .Basis-Calendar-MonthWeekDays-Day
   {
     width: 4ex;
     text-align: center;
@@ -235,7 +239,7 @@
 
   .Basis-Calendar-Footer
   {
-    padding: .25em 2px;
+    padding: .4em 2px;
     margin: 0 -5px;
     text-align: center;
     background: white;
@@ -246,17 +250,17 @@
     border-radius: 0 0 3px 3px;
   }
 
-  .Basis-Calendar-Footer LABEL
+  .Basis-Calendar-Footer-Label
   {
     padding-right: 1ex;
   }
-  .Basis-Calendar-Footer .value
+  .Basis-Calendar-Footer-Value
   {
     cursor: pointer;
     color: black;
     text-decoration: none;
   }
-  .Basis-Calendar-Footer .value:hover
+  .Basis-Calendar-Footer-Value:hover
   {
     color: #0066CC;
   }

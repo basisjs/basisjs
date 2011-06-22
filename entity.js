@@ -367,6 +367,7 @@
     * @class
     */
     var Slot = Class(DataObject, {
+      className: namespace + '.Slot',
       targetPoint: true
     });
 
@@ -601,6 +602,7 @@
     * @class
     */
     var BaseEntity = Class(DataObject, {
+      className: namespace + '.BaseEntity',
       init: EventObject.prototype.init
     });
 

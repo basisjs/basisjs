@@ -131,23 +131,41 @@
     className: namespace + '.AbstractNode',
 
    /**
+    * This is a general event for notification of childs changes to the document.
+    * It may be dispatched after a single modification to the childNodes or after
+    * multiple changes have occurred. 
+    * @param {Basis.DOM.Wrapper.AbstractNode} node
+    * @param {object} delta Delta of changes.
+    * @event
+    */
+    event_childNodesModified: createEvent('childNodesModified', 'node', 'delta'),
+
+   /**
+    * @param {Basis.DOM.Wrapper.AbstractNode} node
+    * @param {Basis.Data.AbstractDataset} oldCollection
+    */
+    event_collectionChanged: createEvent('collectionChanged', 'node', 'oldCollection'),
+
+   /**
+    * @param {Basis.DOM.Wrapper.AbstractNode} node
+    * @param {Basis.DOM.Wrapper.GroupingNode} oldGroupingNode
+    */
+    event_localGroupingChanged: createEvent('localGroupingChanged', 'node', 'oldGroupingNode'),
+
+   /**
+    * @param {Basis.DOM.Wrapper.AbstractNode} node
+    */
+    event_localSortingChanged: createEvent('localSortingChanged', 'node'),
+
+   /**
     * @inheritDoc
     */
-    event_childUpdated: createEvent('childUpdated'),
-    event_childNodesModified: createEvent('childNodesModified'),
-    event_collectionChanged: createEvent('collectionChanged'),
-    event_localGroupingChanged: createEvent('localGroupingChanged'),
-    event_localSortingChanged: createEvent('localSortingChanged'),
-
     event_update: function(object, delta){
       DataObject.prototype.event_update.call(this, object, delta);
 
       var parentNode = this.parentNode;
       if (parentNode)
       {
-        // TODO: remove this event dispatch. it using only by DOM.Wrapper.Register
-        parentNode.event_childUpdated(this, this.info, [this.info, delta].merge(), delta);
-
         if (parentNode.matchFunction)
         {
           this.match();
@@ -906,7 +924,9 @@
         }
       }
 
-      // ======= if we in this point, than newChild inserting or moving into new position =======
+      //
+      // ======= after this point newChild inserting or moving into new position =======
+      //
 
       // unlink from old parent
       if (isInside)
@@ -1449,11 +1469,40 @@
   var InteractiveNode = Class(AbstractNode, {
     className: namespace + '.InteractiveNode',
   
+   /**
+    * Occurs after disabled property has been set to false.
+    * @event
+    */
     event_enable: createEvent('enable'),
+
+   /**
+    * Occurs after disabled property has been set to true.
+    * @event
+    */
     event_disable: createEvent('disable'),
+
+   /**
+    * Occurs after selected property has been set to true.
+    * @event
+    */
     event_select: createEvent('select'),
+
+   /**
+    * Occurs after selected property has been set to false.
+    * @event
+    */
     event_unselect: createEvent('unselect'),
+
+   /**
+    * Occurs after matched property has been set to true.
+    * @event
+    */
     event_match: createEvent('match'),
+
+   /**
+    * Occurs after matched property has been set to false.
+    * @event
+    */
     event_unmatch: createEvent('unmatch'),
 
    /**
@@ -1476,6 +1525,10 @@
     */
     selection: null,
 
+   /**
+    * @type {Basis.DOM.Wrapper.Selection}
+    * @private
+    */
     contextSelection: null,
 
    /**
@@ -2180,7 +2233,9 @@
  /**
   * @class
   */
-  var TmplGroupingNode = Class(GroupingNode); // see extends bellow
+  var TmplGroupingNode = Class(GroupingNode, {
+    className: namespace + '.TmplGroupingNode'
+  }); // look for extensions bellow
 
  /**
   * Template mixin
@@ -2263,7 +2318,7 @@
  /**
   * @class
   */
-  var TmplContainer = Class(TmplNode, DOMTemplateMixin(TmplNode), {
+  var TmplContainer = Class(TmplNode, DOMTemplateMixin, {
     className: namespace + '.TmplContainer',
 
     childClass: TmplNode,
@@ -2339,8 +2394,6 @@
   * @class
   */
   TmplGroupingNode.extend(DOMTemplateMixin(GroupingNode)).extend({
-    className: namespace + '.TmplGroupingNode',
-
    /**
     * @inheritDoc
     */

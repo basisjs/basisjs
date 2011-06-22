@@ -51,8 +51,8 @@
 
       template: new Template(
         '<button{element|buttonElement} class="Basis-Button" event-click="click" event-keydown="keydown" event-mousedown="mousedown">' + 
+          '<span class="Basis-Button-Back" />' +
           '<div class="Basis-Button-Caption">{captionText}</div>' +
-          '<span class="Basis-Button-Over"></span>' +
         '</button>'
       ),
 

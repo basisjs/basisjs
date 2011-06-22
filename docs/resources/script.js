@@ -153,7 +153,11 @@
 
         var selected = this.pick();
         objectView.setDelegate(selected);
-        location.hash = '#' + (selected ? selected.info.fullPath : null)
+        if (selected)
+        {
+          navTree.open(selected.info.fullPath, true);
+          location.hash = '#' + (selected ? selected.info.fullPath : null);
+        }
       }
     },
     childNodes: [

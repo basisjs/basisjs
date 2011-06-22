@@ -9,6 +9,8 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+'use strict';
+
   (function(){
 
     // namespace
@@ -41,6 +43,8 @@
     var HOUR  = 'hour';
     var FORWARD  = true;
     var BACKWARD = false;
+
+    var TAB_TEMPLATE = '<div{tabElement} class="Basis-Calendar-SectionTab" event-click="select">{tabTitleText}</div>';
 
     // locale
 
@@ -164,90 +168,101 @@
       className: namespace + '.Calendar.Node',
 
       canHaveChildren: false,
+
       template: new Template(
-        '<a{element|content} class="Basis-Calendar-Node" href="#move:down">{title|-}</a>'
+        '<a{element} class="Basis-Calendar-Node" event-click="click">{title|-}</a>'
       ),
+      templateAction: function(actionName, event){
+        if (actionName == 'click')
+          this.document.templateAction(actionName, event, this);
+        else
+          TmplNode.prototype.templateAction.call(this, actionName, event);
+      },
 
-      behaviour: {
-        select: function(){
-          TmplNode.prototype.behaviour.select.call(this);
+      event_select: function(){
+        TmplNode.prototype.event_select.call(this);
 
-          DOM.focus(this.element);
-        },
-        update: function(object, delta){
-          TmplNode.prototype.behaviour.update.call(this, object, delta);
+        DOM.focus(this.element);
+      },
+      event_update: function(object, delta){
+        TmplNode.prototype.event_update.call(this, object, delta);
 
-          if ('periodStart' in delta || 'periodEnd' in delta)
+        if ('periodStart' in delta || 'periodEnd' in delta)
+        {
+          this.tmpl.title.nodeValue = this.titleGetter(this.info);
+
+          if (this.parentNode)
           {
-            this.tmpl.title.nodeValue = this.titleGetter(this.info);
-
-            if (this.parentNode)
-            {
-              cssClass(this.element)
-                .bool('before', this.info.periodStart < this.parentNode.info.periodStart)
-                .bool('after', this.info.periodEnd > this.parentNode.info.periodEnd);
-            }
+            cssClass(this.element)
+              .bool('before', this.info.periodStart < this.parentNode.info.periodStart)
+              .bool('after', this.info.periodEnd > this.parentNode.info.periodEnd);
           }
         }
       }
     });
 
     var CalendarSection = Class(TmplContainer, {
-      className: namespace + '.Calendar.Section',
+      className: namespace + '.CalendarSection',
 
       childClass: CalendarNode,
+
       template: new Template(
         '<div{element|selectedElement} class="Basis-Calendar-Section">' +
           '<div class="Basis-Calendar-SectionTitle">{titleText}</div>' +
           '<div{content|childNodesElement} class="Basis-Calendar-SectionContent"/>' +
-        '</div>'
+        '</div>' +
+        TAB_TEMPLATE
       ),
+      /*templateAction: function(actionName, event){
+        if (actionName == 'select')
+          this.select();
+        else
+          TmplContainer.prototype.templateAction.call(this, actionName, event);
+      },*/
 
-      behaviour: {
-        select: function(){
-          TmplContainer.prototype.behaviour.select.call(this);
-          cssClass(this.tabElement).add('selected');
-        },
-        unselect: function(){
-          TmplContainer.prototype.behaviour.unselect.call(this);
-          cssClass(this.tabElement).remove('selected');
-        },
-        update: function(object, delta){
-          TmplContainer.prototype.behaviour.update.call(this, object, delta);
+      event_select: function(){
+        TmplContainer.prototype.event_select.call(this);
+        cssClass(this.tmpl.tabElement).add('selected');
+      },
+      event_unselect: function(){
+        TmplContainer.prototype.event_unselect.call(this);
+        cssClass(this.tmpl.tabElement).remove('selected');
+      },
+      event_update: function(object, delta){
+        TmplContainer.prototype.event_update.call(this, object, delta);
 
-          var newInfo = this.info;
-          if ('periodStart' in delta || 'periodEnd' in delta)
+        var newInfo = this.info;
+        if ('periodStart' in delta || 'periodEnd' in delta)
+        {
+          this.tmpl.titleText.nodeValue = this.getTitle(newInfo.periodStart) || '-';
+
+          // update nodes
+          var nodePeriod = getPeriod(this.nodePeriodName, new Date(newInfo.periodStart).add(this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(newInfo.periodStart) || 0)));
+
+          for (var node = this.firstChild; node; node = node.nextSibling)
           {
-            this.tmpl.titleText.nodeValue = this.getTitle(newInfo.periodStart) || '-';
+            // update node
+            node.update(nodePeriod);
 
-            // update nodes
-            var nodePeriod = getPeriod(this.nodePeriodName, new Date(newInfo.periodStart).add(this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(newInfo.periodStart) || 0)));
-            this.minDate = nodePeriod.periodStart;
-
-            for (var node = this.firstChild; node; node = node.nextSibling)
-            {
-              // update node
-              node.update(nodePeriod);
-
-              // move to next period
-              nodePeriod = getPeriod(this.nodePeriodName, new Date(nodePeriod.periodStart).add(this.nodePeriodUnit, this.nodePeriodUnitCount));
-            }
-
-            this.maxDate = nodePeriod.periodEnd;
+            // move to next period
+            nodePeriod = getPeriod(this.nodePeriodName, new Date(nodePeriod.periodStart).add(this.nodePeriodUnit, this.nodePeriodUnitCount));
           }
 
-          this.tabTitleText.nodeValue = this.getTabTitle(newInfo.selectedDate) || '-';
+          this.minDate = this.firstChild.periodStart;
+          this.maxDate = this.lastChild.periodEnd;
+        }
 
-          var node = this.getNodeByDate(newInfo.selectedDate);
-          if (node)
-            node.select();
+        this.tmpl.tabTitleText.nodeValue = this.getTabTitle(newInfo.selectedDate) || '-';
+
+        var node = this.getNodeByDate(newInfo.selectedDate);
+        if (node)
+          node.select();
+        else
+        {
+          if (newInfo.selectedDate && this.minDate <= newInfo.selectedDate && newInfo.selectedDate <= this.maxDate)
+            this.setViewDate(newInfo.selectedDate);
           else
-          {
-            if (newInfo.selectedDate && this.minDate <= newInfo.selectedDate && newInfo.selectedDate <= this.maxDate)
-              this.setViewDate(newInfo.selectedDate);
-            else
-              this.selection.clear();
-          }
+            this.selection.clear();
         }
       },
 
@@ -272,32 +287,25 @@
       nodePeriodUnit: '-',
       nodePeriodUnitCount: 1,
 
+      selection: {},
+
       init: function(config){
-        this.selection = new nsWrappers.Selection();
-
-        this.tabElement = DOM.createElement({
-          description: '.Basis-Calendar-SectionTab',
-          click: this.select.bind(this, false)
-        }, this.tabTitleText = DOM.createText(''));
-
         TmplContainer.prototype.init.call(this, config);
 
         cssClass(this.element).add('Basis-Calendar-Section-' + this.sectionName);
+        Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
 
         this.setChildNodes([{
           cssClassName: this.nodePeriodName,
           titleGetter: PERIOD_TITLE[this.nodePeriodName]
         }].repeat(this.nodeCount));
 
-        if (config && config.viewDate)
-          this.setViewDate(config.viewDate);
-        if (config && config.selectedDate)
-          this.update({ selectedDate: config.selectedDate });
-
+        this.setViewDate(this.viewDate);
+        this.update({ selectedDate: this.selectedDate });
       },
 
       getTitle: function(){},
-      getTabTitle: function(){ return '-' },
+      getTabTitle: function(){},
 
       // nodes methods
 
@@ -312,12 +320,14 @@
         return null;
       },
 
+      prevPeriod: function(forward){
+        if (this.isPrevPeriodEnabled)
+          this.update(getPeriod(this.periodName, new Date(+this.info.periodStart - 1)));
+      },
+
       nextPeriod: function(forward){
-        var allowed = forward ? this.isNextPeriodEnabled : this.isPrevPeriodEnabled;
-        if (allowed)
-        {
-          this.update(getPeriod(this.periodName, new Date(forward ? Number(this.info.periodEnd) + 1 : Number(this.info.periodStart) - 1)));
-        }
+        if (this.isNextPeriodEnabled)
+          this.update(getPeriod(this.periodName, new Date(+this.info.periodEnd + 1)));
       },
 
       setViewDate: function(date){
@@ -325,32 +335,27 @@
       },
 
       // bild methods
-      getInitOffset: Function.$null,
-
-      destroy: function(){
-        TmplContainer.prototype.destroy.call(this);
-
-        this.tabElement = null;
-        this.tabTitleText = null;
-      }
+      getInitOffset: Function.$null
     });
 
 
     CalendarSection.Month = Class(CalendarSection, {
-      className: namespace + '.Section.Month',
+      className: namespace + '.CalendarSection.Month',
 
       sectionName: 'Month',
       periodName: MONTH,
 
       template: new Template(Function.lazyInit(function(){
-        return '<div{element|selectedElement} class="Basis-Calendar-Section">' +
+        return '' +
+        '<div{element|selectedElement} class="Basis-Calendar-Section">' +
           '<div class="Basis-Calendar-SectionTitle">{titleText}</div>' +
           '<div{content|childNodesElement} class="Basis-Calendar-SectionContent">' +
-            '<div class="week_days">' +
-              LOCALE('DAY').SHORT2.map(String.format, '<span>{0}</span>').join('') +
+            '<div class="Basis-Calendar-MonthWeekDays">' +
+              LOCALE('DAY').SHORT2.map(String.format, '<span class="Basis-Calendar-MonthWeekDays-Day">{0}</span>').join('') +
             '</div>' +
           '</div>' +
-        '</div>'
+        '</div>' +
+        TAB_TEMPLATE
       })),
 
       nodeCount: 6 * 7,       // 6 weeks
@@ -367,7 +372,7 @@
     });
 
     CalendarSection.Year = Class(CalendarSection, {
-      className:  namespace + '.Section.Year',
+      className:  namespace + '.CalendarSection.Year',
 
       sectionName: 'Year',
       periodName: YEAR,
@@ -380,7 +385,7 @@
     });
 
     CalendarSection.YearDecade = Class(CalendarSection, {
-      className: namespace + '.Section.YearDecade',
+      className: namespace + '.CalendarSection.YearDecade',
 
       sectionName: 'YearDecade',
       periodName: 'decade',
@@ -398,7 +403,7 @@
     });
 
     CalendarSection.Century = Class(CalendarSection, {
-      className: namespace + '.Section.Century',
+      className: namespace + '.CalendarSection.Century',
 
       sectionName: 'Century',
       periodName: 'century',
@@ -422,7 +427,7 @@
     });
 
     CalendarSection.YearQuarters = Class(CalendarSection, {
-      className: namespace + '.Section.YearQuarter',
+      className: namespace + '.CalendarSection.YearQuarter',
 
       sectionName: 'YearQuarter',
       periodName: YEAR,
@@ -434,7 +439,7 @@
     });
 
     CalendarSection.Quarter = Class(CalendarSection, {
-      className: namespace + '.Section.Quarter',
+      className: namespace + '.CalendarSection.Quarter',
 
       sectionName: 'Quarter',
       periodName: 'quarter',
@@ -456,122 +461,116 @@
       className: namespace + '.Calendar',
 
       childClass: CalendarSection,
-      childFactory: function(config){
-        return new CalendarSection[config.type]({
-          viewDate: this.date.value,
-          selectedDate: this.selectedDate.value
-        });
-      },
+      childFactory: Function(),
 
       template: new Template(Function.lazyInit(function(){
-        return '<div{element} class="Basis-Calendar">' +
-          '<div{headerElement} class="Basis-Calendar-Header">' +
-            '<div{sectionTabs} class="Basis-Calendar-SectionTabs">{titleText}</div>' +
+        return '' +
+        '<div{element} class="Basis-Calendar">' +
+          '<div class="Basis-Calendar-Header">' +
+            '<div{sectionTabs} class="Basis-Calendar-SectionTabs" />' +
           '</div>' +
           '<div class="Basis-Calendar-Body">' +
-            '<a{prev} href="#move:prev" class="Basis-Calendar-ButtonPrevPeriod">' +
+            '<span event-click="move_prev" class="Basis-Calendar-ButtonPrevPeriod">' +
               '<span>\u2039</span><span class="over"></span>' +
-            '</a>' +
-            '<a{next} href="#move:next" class="Basis-Calendar-ButtonNextPeriod">' +
+            '</span>' +
+            '<span event-click="move_next" class="Basis-Calendar-ButtonNextPeriod">' +
               '<span>\u203A</span><span class="over"></span>' +
-            '</a>' +
+            '</span>' +
             '<div{content|childNodesElement} class="Basis-Calendar-Content"/>' +
           '</div>' +
-          '<div{footerElement} class="Basis-Calendar-Footer">' +
-            '<div class="today">' +
-              '<label>' + LOCALE('TODAY') + ':</label>' +
-              '<a href="#select:today" class="value">{todayText}</a>' +
+          '<div class="Basis-Calendar-Footer">' +
+            '<div class="Basis-Calendar-Footer-Date">' +
+              '<span class="Basis-Calendar-Footer-Label">' + LOCALE('TODAY') + ':</span>' +
+              '<span event-click="select_today" class="Basis-Calendar-Footer-Value">{todayText}</span>' +
             '</div>' +
           '</div>' +
         '</div>'
       })),
 
-      behaviour: {
-        childNodesModified: function(){
-          //this.childNodes.forEach(getter('setTitle()'));
-          DOM.insert(
-            DOM.clear(this.tmpl.sectionTabs),
-            this.childNodes.map(getter('tabElement'))
-          );
-        },
-        click: function(event, node){
-          if (node instanceof CalendarNode)
-          {
-            var newDate = node.info.periodStart;
-            this.selectedDate.set(new Date(this.selectedDate.value).add(this.activeSection.nodePeriodUnit, this.selectedDate.value.diff(this.activeSection.nodePeriodUnit, newDate)));
-            this.nextSection(BACKWARD);
-          }
-          else
-          {
-            var sender = Event.sender(event);
-            
-            if (sender.tagName != 'A')
-              sender = DOM.findAncestor(sender, function(node){ return node.tagName == 'A' }, this.element);
+      event_change: Basis.EventObject.createEvent('change'),
 
-            if (sender && sender.hash)
-            {
-              if (!cssClass(sender).has('disabled'))
-                switch (sender.hash.substr(1))
-                {
-                  case 'select:today':
-                    this.selectedDate.set(new Date());
-                  break;
-                  case 'select:current':
-                    this.selectDate(this.date.value);
-                  break;
-                  case 'move:prev':
-                    this.nextPeriod(BACKWARD);
-                  break;
-                  case 'move:next':
-                    this.nextPeriod(FORWARD);
-                  break;
-                  case 'move:up':
-                    this.nextSection(FORWARD);
-                  break;
-                }
-            }
-          }
+      event_childNodesModified: function(node, delta){
+        TmplControl.prototype.event_childNodesModified.call(this, node, delta);
 
-          Event.kill(event);
+        DOM.insert(
+          DOM.clear(this.tmpl.sectionTabs),
+          this.childNodes.map(getter('tmpl.tabElement'))
+        );
+      },
+      templateAction: function(actionName, event, node){
+        TmplControl.prototype.templateAction.call(this, actionName, event);
+
+        if (node instanceof CalendarNode)
+        {
+          var newDate = node.info.periodStart;
+          var activeSection = this.selection.pick();
+          this.selectedDate.set(new Date(this.selectedDate.value).add(activeSection.nodePeriodUnit, this.selectedDate.value.diff(activeSection.nodePeriodUnit, newDate)));
+          this.nextSection(BACKWARD);
+        }
+        else
+        {
+          if (cssClass(Event.sender(event)).has('disabled'))
+            return;
+
+          switch (actionName)
+          {
+            case 'select_today':
+              this.selectedDate.set(new Date());
+            break;
+
+            case 'select_current':
+              this.selectDate(this.date.value);
+            break;
+
+            case 'move_prev':
+              this.selection.pick().prevPeriod();
+            break;
+
+            case 'move_next':
+              this.selection.pick().nextPeriod();
+            break;
+
+            case 'move_up':
+              this.nextSection(FORWARD);
+            break;
+          }
         }
       },
+
+      date: null,
 
       // enable/disable periods
       minDate: null,
       maxDate: null,
-      map: {},
+      map: null,
       periodEnableByDefault: true,   // default state of periods: 1 = enabled, 0 = disabled
 
       sections: ['Month', /*'Quarter', 'YearQuarters', */'Year', 'YearDecade'/*, 'Century'*/],
 
-      // constructor
+     /**
+      * @constructor
+      */
       init: function(config){
-        // create control (setup selection)
-        TmplControl.prototype.init.call(this, Object.complete({
-          selection: {
-            handlersContext: this,
-            handlers: {
-              change: function(){
-                var section = this.selection.pick();
-                this.activeSection = section;
-                if (section)
-                {
-                  //DOM.insert(this.childNodesElement, section.element);
-                  section.update({ selectedDate: this.selectedDate.value });
-                }
-              }
-            }
-          }
-        }, config));
-
-        config = config || {};
-
         // dates
-
         this.todayDate = new Property(new Date());
-        this.date = new Property(new Date(config.date || new Date()));
-        this.selectedDate = new Property(new Date(config.date || new Date()));
+        this.selectedDate = new Property(new Date(this.date || new Date()));
+        this.date = new Property(new Date(this.date || new Date()));
 
+        this.selection = {
+          selectedDate: this.selectedDate,
+          event_datasetChanged: function(dataset, delta){
+            this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
+
+            var activeSection = this.pick();
+            if (activeSection)
+              activeSection.update({ selectedDate: this.selectedDate.value });
+          }
+        };
+
+        // inherit
+        TmplControl.prototype.init.call(this, config);
+
+        // add links
         this.selectedDate.addHandler({
           change: function(value){
             for (var section = this.firstChild; section; section = section.nextSibling)
@@ -579,33 +578,18 @@
           }
         }, this);
 
-        /*this.selectedDate.addHandler({
-          change: function(value){
-            var section = this.selection.items.first();
-            if (section)
-              section.setSelectedDate(value);
-          }
-        }, this);*/
-
-        // Generate HTML structure
-
         this.todayDate.addLink(this.tmpl.todayText, null, getter("toFormat('%D.%M.%Y')"));
 
         // min/max dates
 
-        if (config.defaultState)
-          this.periodEnableByDefault = config.defaultState == 'enabled';
-
         // insert sections
-        DOM.insert(this, this.sections.map(Function.wrapper('type')));
-
-        // add event handler
-        this.addEventListener('click');
-
-        // init state
-        // this.selection.add(this.firstChild);
-        if (this.firstChild)
-          this.firstChild.select();
+        this.setChildNodes(this.sections.map(function(sectionClass, index){
+          return new CalendarSection[sectionClass]({
+            selected: index == 0, // select firstChild
+            viewDate: this.date.value,
+            selectedDate: this.selectedDate.value
+          })
+        }, this));
       },
 
       // section navigate
@@ -615,7 +599,8 @@
           section.select();
       },
       nextSection: function(forward){
-        var section = forward ? this.activeSection.nextSibling : this.activeSection.previousSibling;
+        var activeSection = this.selection.pick();
+        var section = forward ? activeSection.nextSibling : activeSection.previousSibling;
         if (section)
         {
           section.select();
@@ -624,11 +609,8 @@
         else
         {
           if (!forward)
-            this.dispatch('change');
+            this.event_change();
         }
-      },
-      nextPeriod: function(forward){
-        this.activeSection.nextPeriod(forward);
       },
 
       // date change
@@ -791,8 +773,8 @@
           var year, month, mask;
           var monthIndex = s.month;
 
-          var cursor     = new Date(s.year, s.month);
-          var monthMark  = 11 - s.month;
+          var cursor = new Date(s.year, s.month);
+          var monthMark = 11 - s.month;
           var monthCount = (monthMark + 1) + (e.year - s.year - 1) * 12 + (e.month + 1) - 1; // month count - 1
 
           if (this.periodEnableByDefault)

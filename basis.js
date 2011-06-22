@@ -188,7 +188,7 @@
   */
 
  /**
-  * @param {*} value
+  * @param {any} value
   * @return {boolean} Returns true if value is undefined.
   */
   function $undefined(value){
@@ -196,7 +196,7 @@
   }
 
  /**
-  * @param {*} value
+  * @param {any} value
   * @return {boolean} Returns true if value is not undefined.
   */
   function $defined(value){
@@ -204,7 +204,7 @@
   }
 
  /**
-  * @param {*} value
+  * @param {any} value
   * @return {boolean} Returns true if value is null.
   */
   function $isNull(value){
@@ -212,7 +212,7 @@
   }
 
  /**
-  * @param {*} value
+  * @param {any} value
   * @return {boolean} Returns true if value is not null.
   */
   function $isNotNull(value){
@@ -220,7 +220,7 @@
   }
 
  /**
-  * @param {*} value
+  * @param {any} value
   * @return {boolean} Returns true if value is equal (===) to this.
   */
   function $isSame(value){
@@ -228,7 +228,7 @@
   }
 
  /**
-  * @param {*} value
+  * @param {any} value
   * @return {boolean} Returns true if value is not equal (!==) to this.
   */
   function $isNotSame(value){
@@ -237,7 +237,7 @@
 
  /**
   * Just returns first param.
-  * @param {*} value
+  * @param {any} value
   * @return {boolean} Returns value argument.
   */
   function $self(value){
@@ -246,7 +246,7 @@
 
  /**
   * Returns a function that always returns the same value.
-  * @param {*} value
+  * @param {any} value
   * @return {function()}
   */
   function $const(value){
@@ -393,7 +393,7 @@
 
  /**
   * @param {function(object)|string|object} getter
-  * @param {*} defValue
+  * @param {any} defValue
   * @param {function(value):boolean} checker
   * @return {function(object)}
   */
@@ -709,10 +709,10 @@
     *   // but if you need all items of array with filtered by condition use Array#filter method instead
     *   var result = list.filter(Function.getter('a == 1'));
     *
-    * @param {*} value
+    * @param {any} value
     * @param {function(object)|string} getter
     * @param {number=} offset
-    * @return {*}
+    * @return {any}
     */
     search: function(value, getter, offset){
       Array.lastSearchIndex = -1;
@@ -724,10 +724,10 @@
     },
 
    /**
-    * @param {*} value
+    * @param {any} value
     * @param {function(object)|string} getter
     * @param {number=} offset
-    * @return {*}
+    * @return {any}
     */
     lastSearch: function(value, getter, offset){
       Array.lastSearchIndex = -1;
@@ -745,7 +745,7 @@
     * Binary search in ordered array where getter(item) === value and return position.
     * When strong parameter equal false insert position returns.
     * Otherwise returns position of founded item, but -1 if nothing found.
-    * @param {*} value Value search for
+    * @param {any} value Value search for
     * @param {function(object)|string=} getter
     * @param {boolean=} desc Must be true for reverse sorted arrays.
     * @param {boolean=} strong If true - returns result only if value found. 
@@ -1453,7 +1453,11 @@
 
         // extend newClass prototype
         for (var args = arguments, i = 1; i < args.length; i++)
-          newClassProps.extend(args[i]);
+        {
+          //if (typeof args[i] == 'function' && !args[i].className)
+          //  console.log(args[i]);
+          newClassProps.extend(typeof args[i] == 'function' && !args[i].className ? args[i](SuperClass) : args[i]);
+        }
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
@@ -1538,44 +1542,46 @@
 
     // EventObject seed ID
     var eventObjectId = 1;
+    var events = {};
+
+    function dispatchEvent(eventName){
+      var eventFunction = events[eventName];
+
+      if (!eventFunction)
+      {
+        eventFunction = events[eventName] = function(){
+          var handlers = this.handlers_;
+          if (!handlers || !handlers.length)
+            return;
+
+          handlers = slice.call(handlers);
+
+          var config;
+          var func;
+          for (var i = handlers.length; i --> 0;)
+          {
+            config = handlers[i];
+            // debug for
+            //;;;if (typeof config.handler.any == 'function') config.handler.any.apply(config.thisObject, arguments);
+
+            // handler call
+            func = config.handler[eventName];
+            if (typeof func == 'function')
+              func.apply(config.thisObject, arguments);
+          }
+        };
+        ;;;if (arguments.length > 1){ var text = eventFunction.toString().replace(/\(\)/, '(' + Array.from(arguments, 1) + ')'); eventFunction.toString = function(){ return text } };
+      }
+
+      return eventFunction;
+    };
 
    /**
     * Base class for event dispacthing. It provides model when it's instance
     * can registrate handlers for events, and call it when event happend. 
     * @class
     */
-    var EventObject = Class();
-
-    function dispatchEvent(eventName){
-      return EventObject.event[eventName] || (EventObject.event[eventName] = function(){
-        var handlers = this.handlers_;
-        if (!handlers || !handlers.length)
-          return;
-
-        handlers = slice.call(handlers);
-
-        var config;
-        var func;
-        for (var i = handlers.length; i --> 0;)
-        {
-          config = handlers[i];
-          // debug for
-          //;;;if (typeof config.handler.any == 'function') config.handler.any.apply(config.thisObject, arguments);
-
-          // handler call
-          func = config.handler[eventName];
-          if (typeof func == 'function')
-            func.apply(config.thisObject, arguments);
-        }
-      })
-    };
-
-    EventObject.createEvent = dispatchEvent;
-    EventObject.event = {};
-
-    EventObject.createEvent('destroy');
-
-    return EventObject.extend({
+    var EventObject = Class(null, {
      /**
       * Name of class.
       * @type {string}
@@ -1683,7 +1689,12 @@
         return false;
       },
 
-      event_destroy: EventObject.event.destroy,
+     /**
+      * Fires when object is destroing.
+      * @param {Basis.EventObject} object Reference for object wich is destroing.
+      * @event
+      */
+      event_destroy: dispatchEvent('destroy', 'object'),
 
      /**
       * @destructor
@@ -1707,6 +1718,11 @@
         this.dispatch = Function.$undef;
       }
     });
+
+    EventObject.createEvent = dispatchEvent;
+    EventObject.event = events;
+
+    return EventObject;
   })();
 
   // ============================================ 
@@ -2525,7 +2541,7 @@
     * Set new value for attribute. If value is null than attribute will be deleted.
     * @param {Node} node
     * @param {string} name
-    * @param {*} value
+    * @param {any} value
     */
     function setAttribute(node, name, value){
       if (value == null)
@@ -3074,7 +3090,7 @@
 
      /**
       * @param {string} property
-      * @param {*} value
+      * @param {any} value
       */
       setProperty: function(property, value){
         var mapping;

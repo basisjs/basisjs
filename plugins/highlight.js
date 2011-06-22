@@ -205,11 +205,15 @@
     * @class
     */
     var SourceCodeNode = Basis.Class(nsWrappers.HtmlNode, {
+      className: namespace + '.SourceCodeNode',
+
       template: new Template(
         '<pre{element|codeElement} class="Basis-SyntaxHighlight"/>'
       ),
+
       codeGetter: Function.getter('info.code'),
       normalize: true,
+
       event_update: function(object, delta){
         nsWrappers.HtmlNode.prototype.event_update.call(this, object, delta);
 

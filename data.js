@@ -250,6 +250,11 @@
     */
     delegate: null,
 
+   /**
+    * Root of delegate chain. By default and when no delegate, it points to object itself.
+    * @type {Basis.Data.DataObject}
+    * @readonly
+    */
     root: null,
 
    /**
@@ -308,13 +313,73 @@
    /*
     * events 
     */
-    event_update: createEvent('update'),
-    event_rollbackUpdate: createEvent('rollbackUpdate'),
-    event_stateChanged: createEvent('stateChanged'),
-    event_delegateChanged: createEvent('delegateChanged'),
-    event_rootChanged: createEvent('rootChanged'),
-    event_targetChanged: createEvent('targetChanged'),
-    event_subscribersChanged: createEvent('subscribersChanged'),
+
+   /**
+    * Fires on info changes.
+    * @param {Basis.Data.DataObject} object Object which info property
+    * was changed. Usually it is root of delegate chain.
+    * @param {object} delta Delta of changes. Keys in delta are property
+    * names that was changed, and values is previous value of property
+    * (value of property before changes).
+    * @event
+    */
+    event_update: createEvent('update', 'object', 'delta'),
+
+   /**
+    * When info changing with rollback, modify property might be changed.
+    * In this case rollbackUpdate event fires.
+    * @param {Basis.Data.DataObject} object Object which modify property
+    * was changed.
+    * @param {object} delta Delta of changes. Keys in delta are property
+    * names that was changed, and values is previous value of property
+    * (value of property before changes).
+    * @event
+    */
+    event_rollbackUpdate: createEvent('rollbackUpdate', 'object', 'modifyDelta'),
+
+   /**
+    * Fires when state or state.data was changed.
+    * @param {Basis.Data.DataObject} object Object which state was changed.
+    * @param {object} oldState Object state before changes.
+    * @event
+    */
+    event_stateChanged: createEvent('stateChanged', 'object', 'oldState'),
+
+   /**
+    * Fires when state or state.data was changed.
+    * @param {Basis.Data.DataObject} object Object which state was changed.
+    * @param {Basis.Data.DataObject} oldDelegate Object delegate before changes.
+    * @event
+    */
+    event_delegateChanged: createEvent('delegateChanged', 'object', 'oldDelegate'),
+
+   /**
+    * Fires when root property was changed.
+    * @param {Basis.Data.DataObject} object Object which root property was changed.
+    * @param {Basis.Data.DataObject} oldRoot Object root before changes.
+    * @event
+    */
+    event_rootChanged: createEvent('rootChanged', 'object', 'oldRoot'),
+
+   /**
+    * Fires when target property was changed.
+    * @param {Basis.Data.DataObject} object Object which target property was changed.
+    * @param {Basis.Data.DataObject} oldTarget Object before changes.
+    * @event
+    */
+    event_targetChanged: createEvent('targetChanged', 'object', 'oldTarget'),
+
+   /**
+    * Fires when count of subscribers (subscriberCount property) was changed.
+    * @param {Basis.Data.DataObject} object Object which subscribers count was changed.
+    * @event
+    */
+    event_subscribersChanged: createEvent('subscribersChanged', 'object'),
+
+   /**
+    * Fires when state of subscription was changed.
+    * @event
+    */
     event_activeChanged: createEvent('activeChanged'),
 
    /**
@@ -687,7 +752,15 @@
 
     cache_: null,
 
-    event_datasetChanged: createEvent('datasetChanged') && function(dataset, delta){
+   /**
+    * Fires when items changed.
+    * @param {Basis.Data.AbstractDataset} dataset
+    * @param {object} delta Delta of changes. Must have property `inserted`
+    * or `deleted`, or both of them. `inserted` property is array of new items
+    * and `deleted` property is array of removed items.
+    * @event
+    */
+    event_datasetChanged: createEvent('datasetChanged', 'dataset', 'delta') && function(dataset, delta){
       // before event
       var items;
       var insertCount = 0;
@@ -811,6 +884,7 @@
     },
 
    /**
+    * Removes all items from dataset.
     */
     clear: function(){
     },
@@ -1368,7 +1442,15 @@
     subscribeTo: Subscription.SOURCE,
     sources: null,
 
-    event_sourcesChanged: createEvent('sourcesChanged'),
+   /**
+    * Fires when source set changed.
+    * @param {Basis.Data.AbstractDataset} dataset
+    * @param {object} delta Delta of changes. Must have property `inserted`
+    * or `deleted`, or both of them. `inserted` property is array of new sources
+    * and `deleted` property is array of removed sources.
+    * @event
+    */
+    event_sourcesChanged: createEvent('sourcesChanged', 'dataset', 'delta'),
 
    /**
     * @config {Array.<Basis.Data.AbstractDataset>} sources Set of source datasets for aggregate.

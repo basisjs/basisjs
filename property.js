@@ -154,9 +154,9 @@
       * Returns object value.
       * @return {Object}
       */
-      toString: function(){
+      /*toString: function(){
         return this.value != null && this.value.constructor == Object ? String(this.value) : this.value;
-      },
+      },*/
 
      /**
       * @destructor

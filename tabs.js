@@ -170,8 +170,12 @@
    /**
     * @class
     */
-    var TabsGroupControl = Class(nsWrappers.TmplGroupingNode, {
+    var TabsGroupingNode = Class(nsWrappers.TmplGroupingNode, {
+      className: namespace + '.TabsGroupingNode',
+
       childClass: Class(nsWrappers.TmplPartitionNode, {
+        className: namespace + '.TabsPartitionNode',
+
         template: new Template(
           '<div{element|content|childNodesElement} class="Basis-TabControl-TabGroup"></div>'
         )
@@ -185,7 +189,7 @@
       className: namespace + '.TabControl',
 
       childClass: Tab,
-      localGroupingClass: TabsGroupControl,
+      localGroupingClass: TabsGroupingNode,
 
       template: new Template(
         '<div{element} class="Basis-TabControl">' +

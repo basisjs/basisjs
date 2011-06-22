@@ -66,6 +66,7 @@
   //
 
   var ViewOption = Class(nsWrappers.TmplNode, {
+    className: namespace + '.ViewOption',
     template: new Template(
       '<span{element} class="option" event-click="click">{titleText}</span>'
     ),
@@ -89,6 +90,7 @@
   });
 
   var ViewOptions = Class(nsWrappers.TmplContainer, {
+    className: namespace + '.ViewOptions',
     childClass: ViewOption,
     template: new Template(
       '<div{element} class="viewOptions">' +
@@ -105,13 +107,14 @@
   });
 
   var View = Class(nsWrappers.TmplContainer, {
-    className: 'View',
+    className: namespace + '.View',
     autoDelegateParent: true,
     isAcceptableObject: Function.$true
   });
 
   var tagLabels = 'readonly private'.qw();
   var JsDocPanel = Class(nsWrappers.TmplNode, {
+    className: namespace + '.JsDocPanel',
     active: true,
     template: new Template(
       '<div{element|content} class="jsDocs">' +
@@ -292,6 +295,7 @@
   });
 
   var JsDocView = Class(View, {
+    className: namespace + '.JsDocView',
     viewHeader: 'Description',
     template: new Template(
       '<div{element} class="view viewJsDoc">' +
@@ -316,6 +320,7 @@
   * @class
   */
   var TemplateTreeNode = Class(nsTree.TreeNode, {
+    className: namespace + '.TemplateTreeNode',
     selectable: false
   });
 
@@ -323,6 +328,7 @@
   * @class
   */
   TemplateTreeNode.EmptyElement = Class(TemplateTreeNode, {
+    className: namespace + '.TemplateTreeNode.EmptyElement',
     template: new Template(
       '<li{element} class="Doc-TemplateView-Element">' + 
         '<span href="#"><{titleText}/></span>' + 
@@ -343,6 +349,7 @@
   * @class
   */
   TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, {
+    className: namespace + '.TemplateTreeNode.Element',
     canHaveChildren: true,
     template: new Template(
       '<li{element} class="Doc-TemplateView-Element">' + 
@@ -362,6 +369,7 @@
   * @class
   */
   TemplateTreeNode.Text = Class(TemplateTreeNode, {
+    className: namespace + '.TemplateTreeNode.Text',
     template: new Template(
       '<li{element} class="Doc-TemplateView-Text">' + 
         '<span href="#">{titleText}</span>' + 
@@ -382,6 +390,7 @@
   * @class
   */
   TemplateTreeNode.Comment = Class(TemplateTreeNode, {
+    className: namespace + '.TemplateTreeNode.Comment',
     template: new Template(
       '<li{element} class="Doc-TemplateView-Comment">' + 
         '<--<span>{titleText}</span>-->' + 
@@ -403,7 +412,7 @@
   * @class
   */
   var ViewTemplate = Class(View, {
-    className: 'ViewTemplate',
+    className: namespace + '.ViewTemplate',
     viewHeader: 'Template',
     isAcceptableObject: function(info){
       return !!(info.obj.prototype && info.obj.prototype.template);
@@ -502,12 +511,14 @@
   });
 
   var ViewList = Class(View, {
+    className: namespace + '.ViewList',
     childFactory: function(config){
       return new this.childClass(config);
     }
   });
 
   var InheritanceItem = Class(nsWrappers.TmplNode, {
+    className: namespace + '.InheritanceItem',
     template: new Template(
       '<li{element} class="item">' +
         '<div{content} class="title"><a href{refAttr}="#">{classNameText}</a></div>' +
@@ -537,6 +548,7 @@
   });
 
   var ViewInheritance = Class(ViewList, {
+    className: namespace + '.ViewInheritance',
     childClass: InheritanceItem,
 
     event_update: function(object, delta){
@@ -576,7 +588,9 @@
     },
 
     localGroupingClass: Class(ViewList.prototype.localGroupingClass, {
+      className: namespace + '.ViewInheritanceGroupingNode',
       childClass: Class(ViewList.prototype.localGroupingClass.prototype.childClass, {
+        className: namespace + '.ViewInheritancePartitionNode',
         event_update: function(object, delta){
           ViewList.prototype.localGroupingClass.prototype.childClass.prototype.event_update.call(this, object, delta);
           this.tmpl.hrefAttr.nodeValue = '#' + this.info.title;

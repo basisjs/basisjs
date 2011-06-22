@@ -146,6 +146,8 @@
     });
 
     var ObjectState = Class(State, {
+      className: namespace + '.ObjectState',
+
       event_stateChanged: function(object, oldState){
         this.setVisibility(this.visibilityGetter(this.state, oldState));
       }
