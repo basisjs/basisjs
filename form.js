@@ -58,8 +58,6 @@
 
       serializable: true,
 
-      nextFieldOnEnter: true,
-
       event_select: function(){
         DOM.focus(this.tmpl.field, true);
 
@@ -76,17 +74,14 @@
         TmplNode.prototype.event_disable.call(this);
       },
       event_change: createEvent('change'),
-      event_keyup: createEvent('keyup'),
+      event_keyup:  createEvent('keyup'),
       event_keypress: createEvent('keypress') && function(event){
         var event = Event(event);
         if (event)
         {
           var key = Event.key(event);
         
-          /*if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
-            Event.cancelDefault(event);*/
-
-          if (((this.nextFieldOnEnter || event.ctrlKey) && key == Event.KEY.ENTER) || key == Event.KEY.CTRL_ENTER)
+          if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
           {
             Event.cancelDefault(event);
             this.nextFieldFocus();
@@ -110,11 +105,11 @@
       },
       
       template: new Template(
-        '<div{element|sampleContainer} class="fieldWraper">' +
-          '<div class="title">' +
-            '<label><span{title}/></label>' +
+        '<div{element|sampleContainer} class="Basis-Field">' +
+          '<div class="Basis-Field-Title">' +
+            '<label><span{title}/>{titleText}</label>' +
           '</div>' +
-          '<div{fieldContainer|content} class="field"/>' +
+          '<div{fieldContainer|content} class="Basis-Field-Container"/>' +
         '</div>'
       ),
 
@@ -123,29 +118,29 @@
 
         // create field
         if (this.fieldTemplate)
+        {
           this.fieldTemplate.createInstance(this.tmpl, this);
 
-        this.childNodesElement = this.tmpl.childNodesElement || this.tmpl.element;
+          if (this.tmpl.fieldContainer)
+            DOM.insert(this.tmpl.fieldContainer, this.tmpl.field);
 
-        if (this.tmpl.fieldContainer)
-          DOM.insert(this.tmpl.fieldContainer, this.tmpl.field);
+          this.childNodesElement = this.tmpl.childNodesElement || this.tmpl.element;
+        }
 
         this.name = this.name || this.id;
 
-        //this.field = this.tmpl.field;
-            
-        if (this.title)
-          DOM.insert(this.tmpl.title, this.title);
+        if (this.tmpl.titleText)
+          this.tmpl.titleText.nodeValue = this.title || '';
 
         // attach button
-        if (this.button)
+        /*if (this.button)
         {
           cssClass(this.element).add('have-button');
           this.button = DOM.createElement('BUTTON', config.caption || '...');
           if (config.button.handler) 
             Event.addHandler(this.button, 'click', config.button.handler, this.button);
           DOM.insert(this.tmpl.field.parentNode, this.button, DOM.INSERT_AFTER, this.tmpl.field);
-        }
+        }*/
 
         // set events
         if (this.tmpl.field)
@@ -163,15 +158,8 @@
             this.tmpl.field.size = this.size;
         }
 
-        // attach validators
         if (!this.validators)
           this.validators = [];
-
-        /*this.validators = new Array();
-        if (config.validators)
-          //config.validators.forEach(this.attachValidator, this);
-          for (var i = 0; i < config.validators.length; i++)
-            this.attachValidator(config.validators[i]);*/
 
         // set sample
         this.setSample(this.sample);
@@ -212,7 +200,7 @@
         if (this.tmpl.sampleContainer && sample)
         {
           if (!this.sampleElement)
-            DOM.insert(this.tmpl.sampleContainer, this.sampleElement = DOM.createElement('SPAN.sample', sample));
+            DOM.insert(this.tmpl.sampleContainer, this.sampleElement = DOM.createElement('SPAN.Basis-Field-Sample', sample));
           else
             DOM.insert(DOM.clear(this.sampleElement), sample);
         }
@@ -391,7 +379,7 @@
       className: namespace + '.Field.Password',
 
       fieldTemplate: new Template(
-        '<input{field|element} type="password" event-keypress="keypress" event-focus="focus" event-blur="blur"/>'
+        '<input{field|element} type="password"/>'
       )
     });
 
@@ -418,10 +406,10 @@
         '<textarea{field|element}/>'
       ),
 
+      event_keypress: EventObject.event.keypress,
+
       init: function(config){
         //this.value = this.value || '';
-
-
         this.counter = DOM.createElement('.counter', Field.LOCALE.Textarea.SYMBOLS_LEFT + ': ', DOM.createText(0));
 
         //inherit
@@ -476,8 +464,8 @@
       value: false,
 
       template: new Template(
-        '<div class="fieldWrapper">' +
-          '<div{fieldContainer|content} class="field">' +
+        '<div{element} class="Basis-Field Basis-Field-Checkbox">' +
+          '<div{fieldContainer|content} class="Basis-Field-Container">' +
             '<label>' +
               '<input{field} type="checkbox"/>' +
               '<span>{titleText}</span>' +
@@ -485,6 +473,7 @@
           '</div>' +
         '</div>'
       ),
+      fieldTemplate: null,
       /*fieldTemplate: new Template(
         '<input{field|element} type="checkbox"/>'
       ),*/
@@ -512,9 +501,10 @@
 
     Field.Label = Class(Field, {
       className: namespace + '.Field.Label',
-      
+      cssClassName: 'Basis-Field-Label',
+
       fieldTemplate: new Template(
-        '<div{field|element} class="label">{fieldValueText}</div>'
+        '<label{field|element}>{fieldValueText}</label>'
       ),
       setValue: function(newValue){
         Field.prototype.setValue.call(this, newValue);
@@ -527,7 +517,7 @@
     //
 
     var ComplexFieldItem = Class(TmplNode, {
-      className: namespace + '.ComplexFieldItem',
+      className: namespace + '.ComplexField.Item',
 
       canHaveChildren: false,
       
@@ -551,6 +541,13 @@
         TmplNode.prototype.destroy.call(this);
       }*/
     });
+
+    var COMBOBOX_SELECTION_HANDLER = {
+      datasetChanged: function(){
+        var values = this.selection.getItems().map(getter('getValue()'));
+        this.setValue(!this.selection.multiple ? values[0] : values);
+      }
+    }
 
     var ComplexField = Class(Field, TmplContainer, {
       className: namespace + '.Field.ComplexField',
@@ -579,12 +576,7 @@
       init: function(config){
 
         this.selection = new Selection({ multiple: !!this.multipleSelect });
-        this.selection.addHandler({
-          datasetChanged: function(){
-            var values = this.selection.getItems().map(getter('getValue()'));
-            this.setValue(!this.selection.multiple ? values[0] : values);
-          }
-        }, this);
+        this.selection.addHandler(COMBOBOX_SELECTION_HANDLER, this);
 
         //inherit
         Field.prototype.init.call(this, config);
@@ -644,6 +636,7 @@
       event_select: function(){
         this.tmpl.field.checked = true;
         ComplexFieldItem.prototype.event_select.call(this);
+
         //cssClass(this.element).add('selected');
       },
       event_unselect: function(){
@@ -659,7 +652,7 @@
       },
 
       template: new Template(
-        '<label{element} class="item" event-click="select">' + 
+        '<label{element} class="Basis-RadioGroup-Item" event-click="select">' + 
           '<input{field} type="radio" class="radio"/>' +
           '<span{content}>{titleText}</span>' +
         '</label>'
@@ -745,12 +738,12 @@
       className: namespace + '.Field.CheckGroup.Item',
 
       event_select: function(){
-        ComplexFieldItem.prototype.event_select.call(this);
         this.tmpl.field.checked = true;
+        ComplexFieldItem.prototype.event_select.call(this);
       },
       event_unselect: function(){
-        ComplexFieldItem.prototype.event_unselect.call(this);
         this.tmpl.field.checked = false;
+        ComplexFieldItem.prototype.event_unselect.call(this);
       },
       event_update: function(object, delta){
         this.tmpl.field.value = this.valueGetter(object.info, object);
@@ -760,12 +753,11 @@
       },
 
       template: new Template(
-        '<label{element} class="item" event-click="click">' + 
+        '<label{element} event-click="click">' + 
           '<input{field} type="checkbox"/>' +
           '<span{content}>{titleText}</span>' +
         '</label>'
       ),
-
       templateAction: function(actionName, event){
         if (actionName == 'click' && !this.isDisabled())
         {
@@ -931,7 +923,7 @@
       },
 
       template: new Template(
-        '<a{element} class="item" href="#" event-click="click">{titleText}</a>'
+        '<a{element} class="Basis-Combobox-Item" href="#" event-click="click">{titleText}</a>'
       ),
       templateAction: function(actionName, event){
         if (actionName == 'click' && !this.isDisabled())
@@ -946,16 +938,10 @@
     });
 
     var ComboboxCaptionHandlers = {
-      focus: function(){
-        cssClass(this.tmpl.caption).add('focused');
-      },
       blur: function(){
-        cssClass(this.tmpl.caption).remove('focused');
-      },/*
-      keydown: function(){
-        console.log('down', key);
-      },*/
-      keypress: function(event){
+        this.hide();
+      },
+      keyup: function(event){
         var key = Event.key(event);
         var cur = this.selection.pick();
 
@@ -974,16 +960,27 @@
 
             cur = cur ? DOM.axis(cur, DOM.AXIS_PRESCENDING_SIBLING).search(false, 'disabled') : this.firstChild;
           break;
-
-          case Event.KEY.ENTER:
-            if (this.popup.visible)
-              this.hide();
-            return Event.kill(event);
-          break;
         }
 
         if (cur)
+        {
           cur.select();
+          DOM.focus(this.tmpl.field);
+        }
+      },
+      keydown: function(event){
+        var key = Event.key(event);
+        if (key == Event.KEY.DOWN || key == Event.KEY.UP)
+        {
+          Event.kill(event);
+        }
+        else if (key == Event.KEY.ENTER)
+        {
+          if (this.popup.visible)
+            this.hide();
+
+          Event.kill(event);
+        }
       }
     };
     
@@ -992,14 +989,7 @@
 
       childClass: ComboboxItem,
 
-      //behaviour: createBehaviour(Field, {
-      /*event_disable: function(){
-        cssClass(this.field).add('disabled');
-
-        ComplexField.prototype.event_disable.call(this);
-      },*/
       event_enable: function(){
-        //cssClass(this.field).remove('disabled');
         if (this.delegate && this.delegate.select)
           this.delegate.select();
 
@@ -1007,11 +997,11 @@
       },
       event_update: function(object, delta){
         ComplexField.prototype.event_update.call(this, object, delta);
-
         // update title
         var title = this.getTitle() || this.getValue() || '';
 
-        this.tmpl.field.title = this.tmpl.captionText.nodeValue = this.captionFormater(title, this.getValue());
+        this.tmpl.field.title = 
+        this.tmpl.captionText.nodeValue = this.captionFormater(title, this.getValue());
       },
       //}),
 
@@ -1023,19 +1013,8 @@
 
       captionFormater: Function.$self,
       
-      fieldTemplate: new Template(
-        '<div{field} class="Basis-DropdownList">' +
-          '<div class="Basis-DropdownList-Canvas">' +
-            '<div class="corner-left-top"/>' +
-            '<div class="corner-right-top"/>' +
-            '<div class="side-top"/>' +
-            '<div class="side-left"/>' +
-            '<div class="side-right"/>' +
-            '<div class="content"/>' +
-            '<div class="corner-left-bottom"/>' +
-            '<div class="corner-right-bottom"/>' +
-            '<div class="side-bottom"/>' +
-          '</div>' +
+      /*fieldTemplate: new Template(
+        '<div{field} class="Basis-DropdownList" event-click="click">' +
           '<div class="Basis-DropdownList-Content">' +
             '<a{caption} class="Basis-DropdownList-Caption" href="#">' +
               '<span class="Basis-DropdownList-CaptionText">{captionText}</span>' + 
@@ -1044,22 +1023,41 @@
           '</div>' +
           '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent"/>' +
         '</div>'
+      ),*/
+
+      fieldTemplate: new Template(
+        '<a{field} class="Basis-DropdownList" href="#" event-click="click">' +
+          '<span class="Basis-DropdownList-Caption">{captionText}</span>' +
+          '<span class="Basis-DropdownList-Trigger"/>' +
+        '</a>' +
+        '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent"/>'
       ),
+
+      templateAction: function(actionName, event){
+        if (actionName == 'click')
+        {
+          if (this.isDisabled() || this.popup.visible) 
+            this.hide() 
+          else
+            this.show({});
+
+          Event.kill(event);
+        }
+
+        ComplexField.prototype.templateAction.call(this, actionName, event);
+      },
 
       init: function(config){
         if (!Basis.Controls.Popup)
           throw new Error('Basis.Controls.Popup required for DropDownList');
 
-        this.value = this.property ? this.property.value : this.value;
-        //config.value = config.property ? config.property.value : config.value;
-        
-        /*var items = config.items;
-        delete config.items;*/
+        if (this.property)
+          this.value = this.property.value;
 
         // inherit
         ComplexField.prototype.init.call(this, config);
 
-        Event.addHandlers(this.tmpl.caption, ComboboxCaptionHandlers, this);
+        Event.addHandlers(this.tmpl.field, ComboboxCaptionHandlers, this);
 
         if (this.name)
           DOM.insert(this.tmpl.field, this.hidden = DOM.createElement('INPUT[type=hidden][name={0}]'.format(String(this.name).quote())));
@@ -1073,6 +1071,7 @@
           thread: this.thread,
           content: this.childNodesElement
         }, popupConfig));
+        
         this.popup.addHandler(ComboboxPopupHandler, this);
 
         /*if (items)
@@ -1087,22 +1086,12 @@
         this.setDefaultValue();*/
         //this.dispatch('update', this, this.info);
 
-        // add handlers
-        Event.addHandler(this.tmpl.field, 'click', function(event){
-          if (this.isDisabled() || this.popup.visible) 
-            this.hide() 
-          else
-            this.show();
-
-          Event.kill(event);
-        }, this);
-
         this.event_update(this);
       },
-      select: function(){
+      /*select: function(){
         ComplexField.prototype.select.call(this);
-        DOM.focus(this.tmpl.caption);
-      },
+        DOM.focus(this.tmpl.field);
+      },*/
       show: function(){ 
         this.popup.show(this.tmpl.field); 
         this.select();
@@ -1328,7 +1317,7 @@
       canHaveChildren: true,
       childClass: Field,
       childFactory: function(config){
-      	return Field.create(config.type || 'text', complete({ tableLayout: this.tableLayout }, config));
+      	return Field.create(config.type || 'text', config);
       },
 
       onSubmit: Function.$false,
@@ -1350,15 +1339,9 @@
       },
       
       template: new Template(
-        '<div{element|content|childNodesElement} class="form-content"/>'
+        '<div{element|content|childNodesElement} class="Basis-FormContent"/>'
       ),
 
-      init: function(config){
-      	Control.prototype.init.call(this, config);
-
-        /*if (this.fields)
-          DOM.insert(this, this.fields);*/
-      },
       getFieldByName: function(name){
       	return this.childNodes.search(name, 'name');
       },
@@ -1426,8 +1409,8 @@
       className: namespace + '.Form',
       
       template: new Template(
-        '<form{element|formElement}>' +
-          '<div{content|childNodesElement}/>' +
+        '<form{element|formElement} class="Basis-Form">' +
+          '<div{content|childNodesElement} class="Basis-FormContent"/>' +
         '</form>'
       ),
 
@@ -1527,9 +1510,13 @@
 
         return false;
       },
-      changeHandler: function(value){
+      
+      event_change: function(value){
         this.rx = this.regexpGetter(value);
+
+        Property.prototype.event_change.call(this, value);
       },
+      
       init: function(config){
         var startPoints = this.startPoints || '';
 
@@ -1543,20 +1530,17 @@
         }
 
         this.map = {};
-        this.map[config.wrapElement || 'SPAN.match'] = function(v, i){ return (i % 3) == 2 };
+        this.map[this.wrapElement || 'SPAN.match'] = function(v, i){ return (i % 3) == 2 };
 
-        Property.prototype.init.call(this, '', {
-          change: this.changeHandler
-        }, String.trim);
+        Property.prototype.init.call(this, '', this.handlers, String.trim);
 
-        if (this.handlers)
-          this.addHandler(this.handlers);
+        /*if (this.handlers)
+          this.addHandler(this.handlers);*/
       }
     });
 
     var NodeMatchHandler = {
       childNodesModified: function(obj, delta){
-        /*this.match();*/
         if (delta.inserted)
         {
           for (var i = 0, child; child = delta.inserted[i]; i++)
@@ -1566,57 +1550,73 @@
     }
 
     var Matcher = Class(MatchProperty, {
-      match: function(){
-        for(var child = this.node.firstChild; child; child = child.nextSibling)
-          this.matchFunction(child, this.value == '');
-      },
-      changeHandler: function(value){
-        MatchProperty.prototype.changeHandler.call(this, value);
-        
+      event_change: function(value){
+        MatchProperty.prototype.event_change.call(this, value);
+
         this.match();
       },
+      
       init: function(config){
         MatchProperty.prototype.init.call(this, config);
 
         this.node.addHandler(NodeMatchHandler, this);
+      },
+
+      match: function(){
+        for(var child = this.node.firstChild; child; child = child.nextSibling)
+          this.matchFunction(child, this.value == '');
       }
     });
 
     var MatchFilter = Class(MatchProperty, {
-      changeHandler: function(value){
-        MatchProperty.prototype.changeHandler.call(this, value);
+      event_change: function(value){
+        MatchProperty.prototype.event_change.call(this, value);
 
         this.node.setMatchFunction(value ? this.matchFunction.bind(this) : null);
       }
     });
     
-    var MatchInputHandler = {
+    /*var MatchInputHandler = {
       keyup: function(){
         this.matchFilter.set(this.tmpl.field.value);
       },
       change: function(){
         this.matchFilter.set(this.tmpl.field.value);
       }
-    };
+    };*/
 
-    var MatchInput = Class(TmplNode, {
-      template: new Template(
+    var MatchInput = Class(Field.Text, {
+      cssClassName: 'Basis-MatchInput',
+
+      matchFilterClass: MatchFilter,
+
+      /*template: new Template(
         '<div{element|content} class="Basis-MatchInput">' +
           '<input{field} type="text"/>' +
         '</div>'
-      ),
-      matchFilterClass: MatchFilter,
+      ),*/
+
+      event_keyup: function(event){
+        this.matchFilter.set(this.tmpl.field.value);
+        Field.Text.prototype.event_keyup.call(this, event);        
+      },
+
+      event_change: function(event){
+        this.matchFilter.set(this.tmpl.field.value);
+        Field.Text.prototype.event_change.call(this, event);        
+      },
+
       init: function(config){
-        TmplNode.prototype.init.call(this, config);
+        Field.Text.prototype.init.call(this, config);
         
         this.matchFilter = new this.matchFilterClass(this.matchFilter);
-        Event.addHandlers(this.tmpl.field, MatchInputHandler, this);
-      },
+        //Event.addHandlers(this.tmpl.field, MatchInputHandler, this);
+      }/*,
       destroy: function(){
         Event.clearHandlers(this.tmpl.field);
         
-        TmplNode.prototype.destroy.call(this);
-      }
+        this.constructor.prototype.destroy.call(this);
+      }*/
     });
 
     //

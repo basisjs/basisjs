@@ -358,7 +358,7 @@
           PopupManager.appendChild(this);
 
           // dispatch `beforeShow` event, there we can fill popup with content
-          this.event_beforeShow.apply(this, args);
+          this.event_beforeShow.apply(this, args || []);
           //this.dispatch.apply(this, ['beforeShow'].concat(args));
 
           // set visible flag to TRUE

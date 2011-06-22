@@ -13,82 +13,74 @@
  * Default style for Basis Forms
  */
 
-  .form-content
+  .Basis-FormContent
   {
     position: relative;
     overflow: hidden;
   }
-  .form-content TD.title
-  {
-    white-space: nowrap;
-    vertical-align: top;
-  }
-  .form-content .fieldWraper
+  .Basis-Field
   {
     clear: both;
   }
-  .form-content .field
+  .Basis-Field-Container
   {
     _position: relative;
     _zoom: 1;
     padding-left: 20px;
     _width: 100%;
   }
-  .form-content .field LABEL
+  .Basis-Field-Container LABEL
   {
     display: block;
   }
-  .form-content .field INPUT,
-  .form-content .field TEXTAREA
+  .Basis-Field-Container INPUT,
+  .Basis-Field-Container TEXTAREA
   {
     _border: expression("if (nodeName == 'TEXTAREA' || type.match(/text|password/)){runtimeStyle.border = '1px solid #808080';runtimeStyle.backgroundColor = 'white';runtimeStyle.padding = '2px';}");
   }
-  .form-content .field INPUT[type="text"],
-  .form-content .field INPUT[type="password"],
-  .form-content .field TEXTAREA
+  .Basis-Field-Container INPUT[type="text"],
+  .Basis-Field-Container INPUT[type="password"],
+  .Basis-Field-Container TEXTAREA
   {
     border: 1px solid #808080;
     background-color: white;
     padding: 2px;
   }
-  .form-content .field INPUT.radio,
-  .form-content .field INPUT.checkbox
+  /*.Basis-Field-Container INPUT.radio,
+  .Basis-Field-Container INPUT.checkbox
   {
     width: 20px;
     border: none;
     background: none;
-  }
-  .form-content .invalid .field
+  }*/
+  .Basis-FormContent .invalid .Basis-Field-Container
   {
     background: url(warning.gif) left 0.2em no-repeat;
   }
-  .form-content .valid .field
+  .Basis-FormContent .valid .Basis-Field-Container
   {
     background: url(ok.gif) left 0.2em no-repeat;
   }
-  .form-content .invalid .field INPUT,
-  .form-content .invalid .field TEXTAREA
+  .Basis-FormContent .invalid .Basis-Field-Container INPUT,
+  .Basis-FormContent .invalid .Basis-Field-Container TEXTAREA
   {
     border-color: #DD0000;
   }
-  .form-content .field SELECT
+  .Basis-Field-Container SELECT
   {
     width: 100%;
   }
 
-  .form-content .monospace INPUT
+  .Basis-FormContent .monospace INPUT
   {
     font-family: Courier;
   }
-  .form-content .have-button .field
+  /*.Basis-FormContent .have-button .Basis-Field-Container
   {
     padding-right: 25px;
   }
-  .form-content .have-button .field .field-wraper
-  {
-    position: relative;
-  }
-  .form-content .have-button .field BUTTON
+
+  .Basis-FormContent .have-button .Basis-Field-Container BUTTON
   {
     padding: 1px 0;
     position: absolute;
@@ -97,8 +89,8 @@
     right: -26px;
     text-align: center;
     border: 1px solid #808080;
-  }
-  .form-content .sample
+  }*/
+  .Basis-Field-Sample
   {
     clear: both;
     display: block;
@@ -107,18 +99,40 @@
     padding: .2em 0 .4em;
   }
 
-  .form-content .counter
+  .Basis-Field-LengthCounter
   {
     text-align: right;
     font-size: 80%;
     color: #333;
   }
 
+  /* Checkbox, Radio */
+
+  .Basis-CheckGroup LABEL INPUT,
+  .Basis-RadioGroup LABEL INPUT,
+  .Basis-Field-Checkbox LABEL INPUT
+  {
+    margin: 0 0.5ex 0 0;
+  }
+
+  .Basis-CheckGroup LABEL INPUT,
+  .Basis-CheckGroup LABEL SPAN,
+  .Basis-RadioGroup LABEL INPUT,
+  .Basis-RadioGroup LABEL SPAN,
+  .Basis-Field-Checkbox LABEL INPUT,
+  .Basis-Field-Checkbox LABEL SPAN
+  {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+
+
 
   /* ===========================
        listbox */
 
-  .basis-listbox
+  /*.basis-listbox
   {
     border: 1px solid #888;
   }
@@ -158,4 +172,4 @@
 
     background: #D5EFFC url(selected_bg.gif) repeat-x !important;
     border: 1px solid #99DEFD;
-  }
+  }*/

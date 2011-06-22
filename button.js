@@ -65,6 +65,7 @@
         if (actionName == 'keydown' && [Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
           this.click();
 
+
         TmplNode.prototype.templateAction.call(this, actionName, event);
       },
 

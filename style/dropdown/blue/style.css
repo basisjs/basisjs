@@ -15,61 +15,76 @@
 
   .Basis-DropdownList
   {
-    border: 1px solid #87C4E0;
-    border-width: 0 1px;
-    background: #F2F9FC url(dropdown_bg.gif) repeat-x left bottom;
-/*    padding: 0.28em 16px 0.32em 6px;*/
-    padding: 0;
-    margin: 1px 3px 1px 0;
-    float: left;
     position: relative;
+    display: inline;
+    display: inline-block;
+
+    min-width: 100px;
+    width: 144px;
+
+    background: #F2F9FC url(dropdown_bg.gif) repeat-x left bottom;
+
+    text-decoration: none;
+    outline: none;
   }
 
-  .Basis-DropdownList-Canvas
+  .Basis-DropdownList:focus   .Basis-DropdownList-Caption
   {
-    display: none;
+    outline: 1px dotted black;
   }
-  .Basis-DropdownList-Content
-  {
-    padding: 1px;
-  }
+
   .Basis-DropdownList-Caption
   {
-    padding: 4px 17px 5px 7px;
-    margin: -2px;
-    /*margin-right: 12px;*/
-    font-size: 85%;
-    height: 1.2em;
     position: relative;
     overflow: hidden;
-    text-overflow: ellipsis;
-    -o-text-overflow: ellipsis;
+    display: block;
+
+    min-height: 1.2em;
+    padding: 0.4em 17px 0.4em 0.5em;
+
+
     white-space: nowrap;
-    width: 120px;
-    display: block;
-    text-decoration: none;
+    font-size: 85%;
     color: black;
-  }
-  .Basis-DropdownList-CaptionText
-  {
-    display: block;
-    overflow: hidden;
     text-overflow: ellipsis;
-    -o-text-overflow: ellipsis;
+      -o-text-overflow: ellipsis;
   }
 
   .Basis-DropdownList-Trigger
   {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
     background: url(dropdown_arrow.gif) no-repeat right center;
     border: 1px solid #87C4E0;
-    border-width: 1px 0;
+
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+    border-radius: 2px;
+
     cursor: pointer;
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    left: 0;
-    top: -1px;
   }
+
+  .Basis-DropdownList.disabled
+  {
+    background-color: #EDEDED;
+    background-image: url(dropdown_gray_bg.gif);
+    /*border-color: #CCC;*/
+  }
+  .Basis-DropdownList.disabled A
+  {
+    color: #AAA;
+  }
+  .Basis-DropdownList.disabled .Basis-DropdownList-Trigger
+  {
+    background: none;
+    border-color: #CCC;
+  }
+
+  /* popup */
 
   .Basis-DropdownList-Popup
   {
@@ -81,7 +96,7 @@
     border: 1px solid #87C4E0 !important;
     border-bottom: none !important;
     background: white;
-    margin: 1px 0 0;
+    /*margin: 1px 0 0;*/
   }
   .Basis-DropdownList-Popup .Basis-Popup-Content
   {
@@ -91,7 +106,7 @@
     _width: 142px;
     font-size: 85%;
   }
-  .Basis-DropdownList-Popup .Basis-Popup-Content A.item
+  .Basis-DropdownList-Popup .Basis-Popup-Content A.Basis-Combobox-Item
   {
     padding: .3em 6px .35em;
     zoom: 1;
@@ -102,7 +117,7 @@
     min-width: 130px;  /* important min-width here (not on parent nodes) - otherwise IE7 bug. but this bring bug to opera 9.2 */
     min-height: 1em;
   }
-  .Basis-DropdownList-Popup .Basis-Popup-Content A.item:hover
+  .Basis-DropdownList-Popup .Basis-Popup-Content A.Basis-Combobox-Item:hover
   {
     background-color: #E8E8E8;
   }
@@ -122,20 +137,5 @@
     background: #F0F0F0;
     padding: .3em 6px .35em;
     font-weight: bold;
-  }
-
-  .Basis-DropdownList.disabled
-  {
-    background: #EDEDED url(dropdown_gray_bg.gif) repeat-x;
-    border-color: #CCC;
-  }
-  .Basis-DropdownList.disabled A
-  {
-    color: #AAA;
-  }
-  .Basis-DropdownList.disabled .Basis-DropdownList-Trigger
-  {
-    background: none;
-    border-color: #CCC;
   }
 
