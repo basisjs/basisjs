@@ -35,7 +35,7 @@
 
    /**
     * @class
-    * @extends Basis.DOM.Wrapper.HtmlNode
+    * @extends Basis.DOM.Wrapper.TmplNode
     */
     var Blocker = Class(TmplNode, {
       className: namespace + '.Blocker',

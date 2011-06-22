@@ -437,19 +437,26 @@
           var map = {};
           template.createInstance(map);
           
-          var dw = new DOM.TreeWalker(map.element);
-          var node = map.element;
+          var dw = new DOM.TreeWalker(map.element.parentNode);
+          var node = map.element.parentNode;
+          map.element.parentNode.c = {
+            childNodes: []
+          }
 
           do
           {
             if ([DOM.ELEMENT_NODE, DOM.TEXT_NODE, DOM.COMMENT_NODE].has(node.nodeType))
             {
+              var refs = [];
+
+              for (key in map)
+                if (map[key] === node)
+                  refs.push(key);
+
               var cfg = {
                 info: {
                   el: node,
-                  ref: Object.iterate(map, function(key, value){
-                    return value === this ? key : null
-                  }, node).filter(Function.$isNotNull),
+                  ref: refs,
                   title: node.nodeType == DOM.ELEMENT_NODE ? DOM.outerHTML(node.cloneNode(false)).match(/<([^>]+)>/)[1] : node.nodeValue,
                   tagName: (node.tagName || '').toLowerCase()
                 },
@@ -473,9 +480,9 @@
                 childClass = TemplateTreeNode.Text;
               else
                 childClass = TemplateTreeNode.Comment;
-            return new childClass([config, { childFactory: cf }].merge());
+            return new childClass(config);
           };
-          var t = new nsTree.Tree({ childFactory: cf, childNodes: [map.element.c] });
+          var t = new nsTree.Tree({ childFactory: cf, childNodes: map.element.parentNode.c.childNodes });
 
           //console.log(map.element.c);
 
@@ -992,7 +999,7 @@
       '</li>'
     ),
     event_update: function(object, delta){
-      nsWrappers.TmplNode.prototype.event_udpate.call(this, object, delta);
+      nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
       this.tmpl.titleText.nodeValue = this.info.title || this.info.url;
       this.tmpl.hrefAttr.nodeValue = this.info.url;
@@ -1022,24 +1029,6 @@
     })
   });
 
-  var ViewTitle = Class(View, {
-    template: new Template(
-      '<h2{element} class="view viewTitle">' +
-        '<span class="title">{contentText}</span>' +
-        '<span class="path">{pathText}</span>' +
-      '</h2>'
-    ),
-    event_update: function(object, delta){
-      View.prototype.event_update.call(this, object, delta);
-
-      this.tmpl.contentText.nodeValue = (this.info.title || '') + (/^(method|function|class)$/.test(this.info.kind) ? nsCore.getFunctionDescription(this.info.obj).args.quote('(') : '');
-      this.tmpl.pathText.nodeValue = (this.info.path || '');
-
-      if ('kind' in delta)
-        cssClass(this.element).replace(delta.kind, this.info.kind, 'kind-');
-    }
-  });
-
   var SourceCodeView = Class(View, {
     viewHeader: 'Source code',
     template: new Template(
@@ -1065,8 +1054,6 @@
   //
 
 
-  var viewTitle = new ViewTitle();
-
   var viewJsDoc = new JsDocView();
 
   var viewConstructor = new JsDocConstructorView();
@@ -1088,13 +1075,11 @@
   Basis.namespace(namespace).extend({
     htmlHeader: htmlHeader,
     View: View,
-    ViewTitle: ViewTitle,
     ViewTemplate: ViewTemplate,
     ViewList: ViewList,
     ViewInheritance: ViewInheritance,
     ViewPrototype: ViewPrototype,
 
-    viewTitle: viewTitle,
     viewJsDoc: viewJsDoc,
     viewConstructor: viewConstructor,
     viewSourceCode: viewSourceCode,

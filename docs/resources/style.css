@@ -696,13 +696,19 @@
 
   /*********************************/
 
+  .QuickNavBar
+  {
+    border-top: 1px solid #888;
+    border-bottom: 1px solid #888;
+  }
+
   .XControl-Content
   {
     overflow: auto;
     overflow-y: scroll;
     overflow-x: hidden;
     position: absolute;
-    top: 4em;
+    top: 7em;
     bottom: 0;
     width: 100%;
   }

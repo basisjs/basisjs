@@ -12,6 +12,7 @@
   (function(){
 
    /**
+    * @link ./demo/defile/button.html
     * @namespace Basis.Controls.Button
     */
 

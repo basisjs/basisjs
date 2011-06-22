@@ -56,7 +56,7 @@
   * Base child node class for Paginator
   * @class
   */
-  var PaginatorNode = Class(nsWrappers.HtmlNode, {
+  var PaginatorNode = Class(nsWrappers.TmplNode, {
     className: namespace + '.PaginatorNode',
 
     template: new Template(
@@ -73,7 +73,7 @@
     },
 
     event_update: function(object, delta){
-      nsWrappers.HtmlNode.prototype.event_update.call(this, object, delta);
+      nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
       this.tmpl.pageNumber.nodeValue = this.info.pageNumber + 1;
       this.tmpl.link.href = this.urlGetter(this.info.pageNumber);

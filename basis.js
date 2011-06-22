@@ -452,7 +452,7 @@
         {
           self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
           self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
-          data = init.apply(thisObject || this);
+          data = init.apply(thisObject || this, arguments);
           ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInit function returns nothing:\n' + init);
         }
         return data;
@@ -472,7 +472,7 @@
         {
           self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
           self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
-          data = init.apply(thisObject || this);
+          data = init.call(thisObject || this);
           ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInitAndRun function returns nothing:\n' + init);
         }
         run.apply(data, arguments);
@@ -1456,7 +1456,7 @@
         {
           //if (typeof args[i] == 'function' && !args[i].className)
           //  console.log(args[i]);
-          newClassProps.extend(typeof args[i] == 'function' && !args[i].className ? args[i](SuperClass) : args[i]);
+          newClassProps.extend(typeof args[i] == 'function' && !args[i].className ? args[i](SuperClass.prototype) : args[i]);
         }
 
         // new class constructor
@@ -1464,23 +1464,36 @@
         var className = newClassProps.className;
         var NULL_CONFIG = {};
         var newClass = newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/)
-          ? new Function('seed', 'NULL_CONFIG',
-            'return {"' + className + '": function(extend, config){\n' +
-            // mark object
-            '  this.eventObjectId = seed.id++;\n' +
-            // extend and override instance properties
-            '  for (var key in extend)\n' +
-            '    this[key] = extend[key];\n' +
-            // call constructor
-            '  this.init(config || NULL_CONFIG);\n' +
-            '}}["' + className + '"]')(seed, NULL_CONFIG)
-          : new Function('seed',
-            'return {"' + className + '": function(){\n\n' +
-            // mark object
-            '  this.eventObjectId = seed.id++;\n' +
-            // call constructor
-            '  this.init.apply(this, arguments);\n\n' +
-            '}}["' + className + '"]')(seed);
+          ? /** @cut debug for */new Function('seed', 'NULL_CONFIG', 'return {"' + className + '": ' +
+
+              // constructor with instance extension
+              function(extend, config){
+
+                // mark object
+                this.eventObjectId = seed.id++;
+
+                // extend and override instance properties
+                for (var key in extend)
+                  this[key] = extend[key];
+
+                // call constructor
+                this.init(config || NULL_CONFIG);
+              }
+
+            /** @cut debug for */+ '\n}["' + className + '"]')(seed, NULL_CONFIG)
+          : /** @cut debug for */new Function('seed', 'return {"' + className + '": ' +
+      
+              // simple constructor
+              function(){
+
+                // mark object
+                this.eventObjectId = seed.id++;
+
+                // call constructor
+                this.init.apply(this, arguments);
+              }
+
+            /** @cut debug for */+ '\n}["' + className + '"]')(seed);
 
         // add constructor property to prototype
         newClassProps.prototype.constructor = newClass;

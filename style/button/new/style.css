@@ -144,13 +144,13 @@
     box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;
   }
 
-  .Basis-Button.disabled
+  .Basis-Button.disabled,
+  .disabled .Basis-Button
   {
     cursor: default;
   }
 
-  .Basis-ButtonPanel .disabled .Basis-Button .Basis-Button-Back,
-  .Basis-Button.disabled .Basis-Button-Back
+  .disabled .Basis-Button-Back
   {
     background-color: #F4F4F4;
     background-image: none;
@@ -173,14 +173,16 @@
     margin-right: 5px;
   }
 
-  .Basis-ButtonGroup .Basis-Button
+  .Basis-ButtonGroup:last-child
   {
-    /* overlay for 1px on right */
-    margin-right: -1px;
+    margin-right: 0;
   }
 
   .Basis-ButtonGroup .Basis-Button .Basis-Button-Back
   {
+    /* overlay for 1px on right */
+    margin-right: -1px;
+
     /* remove border radius, only first and last buttons has border-radius */
       -webkit-border-radius: 0;
       -moz-border-radius: 0;

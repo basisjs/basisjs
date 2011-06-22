@@ -1786,6 +1786,7 @@
   });
 
  /**
+  * @link ./demo/common/grouping.html
   * @class
   */
   var GroupingNode = Class(AbstractNode, DomMixin, {
@@ -2240,18 +2241,14 @@
  /**
   * Template mixin
   */
-  var DOMTemplateMixin = function(SuperClass){
-    var superClassProto = SuperClass.prototype;
-    var superClass_insertBefore = superClassProto.insertBefore;
-    var superClass_removeChild = superClassProto.removeChild;
-
+  var DOMTemplateMixin = function(super_){
     return {
       localGroupingClass: TmplGroupingNode,
 
       // methods
       insertBefore: function(newChild, refChild){
         // inherit
-        var newChild = superClass_insertBefore.call(this, newChild, refChild);
+        var newChild = super_.insertBefore.call(this, newChild, refChild);
 
         var target = newChild.groupNode || this;
         var nextSibling = newChild.nextSibling;
@@ -2264,7 +2261,7 @@
       },
       removeChild: function(oldChild){
         // inherit
-        superClass_removeChild.call(this, oldChild);
+        super_.removeChild.call(this, oldChild);
 
         // remove from dom
         var element = oldChild.element;
@@ -2291,7 +2288,7 @@
         }
 
         // inherit
-        superClassProto.clear.call(this, alive);
+        super_.clear.call(this, alive);
       },
       setChildNodes: function(childNodes, keepAlive){
         // reallocate childNodesElement to new DocumentFragment
@@ -2306,7 +2303,7 @@
         // for child node positions at real DOM (html document), because all new child nodes
         // will be inserted into temporary DocumentFragment that will be inserted into html document
         // later (after inherited method call)
-        superClassProto.setChildNodes.call(this, childNodes, keepAlive);
+        super_.setChildNodes.call(this, childNodes, keepAlive);
 
         // restore childNodesElement
         container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
@@ -2393,7 +2390,7 @@
  /**
   * @class
   */
-  TmplGroupingNode.extend(DOMTemplateMixin(GroupingNode)).extend({
+  TmplGroupingNode.extend(DOMTemplateMixin(GroupingNode.prototype)).extend({
    /**
     * @inheritDoc
     */
@@ -2523,6 +2520,7 @@
     className: namespace + '.ChildNodesDataset',
 
     autoDestroy: true,
+    sourceNode: null,
 
     event_sourceNodeChanged: createEvent('sourceNodeChanged') && function(object, oldSourceNode){
       event.sourceNodeChanged.call(this, object, oldSourceNode);
@@ -2534,12 +2532,8 @@
     init: function(node, config){
       AbstractDataset.prototype.init.call(this, config);
 
-      var sourceNode = this.sourceNode;
-      if (sourceNode)
-      {
-        this.sourceNode = null;
-        this.setSourceNode(sourceNode);
-      }
+      if (node)
+        this.setSourceNode(node);
     },
     setSourceNode: function(node){
       if (node !== this.sourceNode)
@@ -2566,8 +2560,6 @@
 
         this.event_sourceNodeChanged(this, oldSourceNode);
       }
-
-      return this.sourceNode;
     },
     destroy: function(){
       // drop source node if exists
@@ -2600,7 +2592,7 @@
     multiple: false,
 
    /**
-    * Default behaviour
+    * @inheritDoc
     */
     event_datasetChanged: function(dataset, delta){
       Dataset.prototype.event_datasetChanged.call(this, dataset, delta);
@@ -2630,6 +2622,9 @@
       }
     },
 
+   /**
+    * @inheritDoc
+    */
     add: function(nodes){
       if (!this.multiple)
       {
@@ -2649,6 +2644,9 @@
       return Dataset.prototype.add.call(this, items);
     },
 
+   /**
+    * @inheritDoc
+    */
     set: function(nodes){
       if (!this.multiple)
         nodes.splice(1);
@@ -2686,14 +2684,14 @@
 
     // datasets
     ChildNodesDataset: ChildNodesDataset,
-    Selection: Selection,
+    Selection: Selection/*,
 
     // deprecated
     HtmlNode: TmplNode,
     HtmlGroupingNode: TmplGroupingNode,
     HtmlPartitionNode: TmplPartitionNode,
     HtmlContainer: TmplContainer,
-    HtmlControl: Control
+    HtmlControl: Control*/
   });
 
 })();

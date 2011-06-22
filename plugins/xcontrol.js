@@ -12,7 +12,7 @@
 
   var nsWrappers = Basis.DOM.Wrapper;
 
-  var XControlItemHeader = Class(nsWrappers.HtmlNode, {
+  var XControlItemHeader = Class(nsWrappers.TmplNode, {
     template: new Template(
       '<div{element} class="XControl-Item-Header">' +
         '<span>{titleText}</span>' +
@@ -35,7 +35,7 @@
     }
   });
 
-  var XControlItem = Class(nsWrappers.HtmlContainer, {
+  var XControlItem = Class(nsWrappers.TmplContainer, {
     template: new Template(
       '<div{element} class="XControl-Item">' +
         '<span{header}/>' +
@@ -51,7 +51,7 @@
   });
 
   var MW_SUPPORTED = true;
-  var XControlHeaderList = Class(nsWrappers.HtmlContainer, {
+  var XControlHeaderList = Class(nsWrappers.TmplContainer, {
     behaviour: {
       click: function(event, node){
         if (node)

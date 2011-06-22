@@ -8,7 +8,7 @@
 
   <title>Basis Demos: Paginator</title>
 
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../plugins/style/paginator/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
@@ -134,6 +134,7 @@
         new nsButton.ButtonPanel({
           childNodes: [300, 450, 600, 750, 900].map(function(width){
             return {
+              groupId: 1,
               caption: width,
               handler: function(){
                 setWidth(this.caption);
@@ -147,6 +148,7 @@
         new nsButton.ButtonPanel({
           childNodes: [5, 10, 100, 200, 1024].map(function(pageCount){
             return {
+              groupId: 1,
               caption: pageCount,
               handler: function(){
                 setPageCount(this.caption);

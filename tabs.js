@@ -12,6 +12,7 @@
   (function(){
 
    /**
+    * @link ./demo/defile/tabs.html
     * @namespace Basis.Controls.Tabs
     */
 

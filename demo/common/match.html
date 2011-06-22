@@ -126,7 +126,7 @@
     // Create a table
     var table = new nsTable.Table({
       structure: [
-        { header: 'Title', body: { content: Function.getter('info.title') } },
+        { header: 'Title', body: { content: Function.getter('info.title') }, sorting: Function.getter('info.title') },
         { header: 'Content', body: { content: Function.getter('info.content') } }
       ],
       childNodes: data

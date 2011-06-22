@@ -204,7 +204,7 @@
    /**
     * @class
     */
-    var SourceCodeNode = Basis.Class(nsWrappers.HtmlNode, {
+    var SourceCodeNode = Basis.Class(nsWrappers.TmplNode, {
       className: namespace + '.SourceCodeNode',
 
       template: new Template(
@@ -215,7 +215,7 @@
       normalize: true,
 
       event_update: function(object, delta){
-        nsWrappers.HtmlNode.prototype.event_update.call(this, object, delta);
+        nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
         var code = this.codeGetter(this);
         if (code != this.code_)

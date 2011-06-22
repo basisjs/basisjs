@@ -540,7 +540,6 @@
     var MenuItemSet = Class(MenuItem, {
       className: namespace + '.MenuItemSet',
       event_childNodesModified: TmplNode.prototype.event_childNodesModified,
-      //behaviour: createBehaviour(nsWrappers.HtmlNode, {}),
       template: new Template(
         '<div{element|content|childNodesElement} class="Basis-Menu-ItemSet"/>'
       )

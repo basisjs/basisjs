@@ -42,42 +42,76 @@
   // View
   //
 
-  var ObjectViewControl = Class(nsWrappers.TmplContainer/*Basis.Plugin.X.Control*/, {
+  var ViewTitle = Class(nsWrappers.TmplContainer, function(super){ return {
+    childClass: Class(nsWrappers.TmplNode, function(super_){ return {
+      template: new Template('<button{element} event-click="click">{titleText}</button>'),
+      templateAction: function(actionName, event){
+        if (actionName == 'click')
+          this.delegate.element.scrollIntoView();
+      },
+      init: function(config){
+        super_.init.call(this, config);
+        this.tmpl.titleText.nodeValue = this.delegate.viewHeader;
+      }
+    }}),
+
+    template: new Template(
+      '<div{element}>' +
+        '<h2 class="view viewTitle">' +
+          '<span class="title">{contentText}</span>' +
+          '<span class="path">{pathText}</span>' +
+        '</h2>' +
+        '<div{childNodesElement} class="QuickNavBar" />' +
+      '</div>'
+    ),
+    event_update: function(object, delta){
+      super.event_update.call(this, object, delta);
+
+      this.tmpl.contentText.nodeValue = (this.info.title || '') + (/^(method|function|class)$/.test(this.info.kind) ? nsCore.getFunctionDescription(this.info.obj).args.quote('(') : '');
+      this.tmpl.pathText.nodeValue = (this.info.path || '');
+
+      if ('kind' in delta)
+        cssClass(this.element).replace(delta.kind, this.info.kind, 'kind-');
+    }
+  }});
+
+  objectView = new nsWrappers.TmplContainer({
+    id: 'ObjectView',
+    childClass: nsView.View,
+
     template: new Template(
       '<div{element} class="XControl">' +
-        '<span{header}/>' +
+        '<!-- {header} -->' +
         '<div{content|childNodesElement} class="XControl-Content"/>' +
       '</div>'
     ),
     satelliteConfig: {
       header: {
         existsIf: Function.getter('delegate'),
-        delegate: Function.$self,
-        instanceOf: nsView.ViewTitle
+        delegate: Function.getter('delegate'),
+        collection: Function.lazyInit(function(){
+          return new nsWrappers.ChildNodesDataset(objectView);
+        }),
+        instanceOf: ViewTitle
       }
-    }
-  })
-
-  var objectView = new ObjectViewControl({
-    id: 'ObjectView',
-    childClass: nsView.View,
+    },
     event_delegateChanged: function(object, oldDelegate){
-      this.clear(true);
+      //this.clear(true);
 
       this.constructor.prototype.event_delegateChanged.call(this, object, oldDelegate);
 
       if (this.delegate)
       {
+        this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []), true);
+/*
         this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
           return view.isAcceptableObject(this.info);
-        }, this));
+        }, this));*/
       }
-
-      //this.recalc();
+      else
+        this.clear(true);
     }
   });
-
-  objectView.tmpl.content.id = 'xxx';
 
   //
   // NavTree
@@ -354,7 +388,7 @@
   //
 
   /*
-  var sourceView = new Basis.DOM.Wrapper.HtmlContainer({
+  var sourceView = new Basis.DOM.Wrapper.TmplContainer({
     template: new Basis.Html.Template(
       '<div{element} id="SourceCodeViewer">' +
         '<div class="layout">' +
@@ -392,7 +426,7 @@
     ]
   });
 
-  new nsWrappers.HtmlNode({
+  new nsWrappers.TmplNode({
     container: 'Layout',
     id: 'Content',
     content: [

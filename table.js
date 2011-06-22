@@ -15,8 +15,8 @@
     * Table namespace
     *
     * @link ./test/speed-table.html
-    * @link ./demo/various/match.html
-    * @link ./demo/various/grouping.html
+    * @link ./demo/common/match.html
+    * @link ./demo/common/grouping.html
     *
     * @namespace Basis.Controls.Table
     */
@@ -68,9 +68,9 @@
 
       template: new Template(
         '<th{element|selectedElement} class="Basis-Table-Header-Cell" event-click="click">' +
-          '<div class="Basis-Table-Sort-Direction"></div>' +
+          '<div class="Basis-Table-Sort-Direction"/>' +
           '<div class="Basis-Table-Header-Cell-Content">' + 
-            '<span{content} class="Basis-Table-Header-Cell-Title"></span>' +
+            '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
           '</div>' +
         '</th>'
       ),
@@ -91,9 +91,6 @@
       },
 
       init: function(config){
-        /*config = config || {};
-        config.selectable = !!config.sorting;*/
-
         this.selectable = !!this.sorting;
         
         TmplNode.prototype.init.call(this, config);
@@ -121,11 +118,7 @@
     var Header = Class(TmplContainer, {
       className: namespace + '.Header',
 
-      canHaveChildren: true,
       childClass: HeaderCell,
-      childFactory: function(config){
-        return new this.childClass(config);
-      },
 
       localGroupingClass: Class(TmplGroupingNode, {
         className: namespace + '.HeaderGroupingNode',
@@ -139,7 +132,7 @@
 
           template: new Template(
             '<th{element|selectedElement} class="Basis-Table-Header-Cell">' +
-              '<div class="Basis-Table-Sort-Direction"></div>' +
+              '<div class="Basis-Table-Sort-Direction" />' +
               '<div class="Basis-Table-Header-Cell-Content">' + 
                 '<span{content} class="Basis-Table-Header-Cell-Title">{titleText}</span>' +
               '</div>' +
@@ -150,45 +143,40 @@
 
       template: new Template(
         '<thead{element} class="Basis-Table-Header">' +
-          '<tr{groupsElement} class="Basis-Table-Header-GroupContent"></tr>' +
-          '<tr{childNodesElement|content}></tr>' +
+          '<tr{groupsElement} class="Basis-Table-Header-GroupContent" />' +
+          '<tr{childNodesElement|content} />' +
         '</thead>'
       ),
 
       init: function(config){
+        this.selection = {
+          owner: this,
+          event_datasetChanged: function(dataset, delta){
+            this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
+
+            var cell = this.pick();
+            if (cell && this.owner.document)
+              this.owner.document.setLocalSorting(cell.sorting, cell.order);
+          }
+        };
+
         TmplContainer.prototype.init.call(this, config);
-
-        this.selection = new nsWrappers.Selection({});
-
-        this.selection.addHandler({
-          datasetChanged: function(){
-            var cell = this.selection.pick();
-            if (cell && this.document)
-              this.document.setLocalSorting(cell.sorting, cell.order);
-          }          
-        }, this);
 
         // add event handlers
         //this.addEventListener('click');
         if (this.document)
         {
           this.document.addHandler({
-            localSortingChanged: function(){
-              var document = this.document;
-              
-              if (!document)
-                return;
-              
+            localSortingChanged: function(document){
               var cell = this.childNodes.search(document.localSorting, 'sorting');
               if (cell)
               {
                 cell.select();
                 cell.order = document.localSortingDesc;
-                cssClass(this.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
+                cssClass(this.tmpl.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
               }
               else
                 this.selection.clear();
-
             }
           }, this);
         }
@@ -227,7 +215,8 @@
         }
       },
       destroy: function(){
-        delete this.document;
+        this.document = null;
+
         TmplContainer.prototype.destroy.call(this);
       }
     });
@@ -309,7 +298,7 @@
               else
               {
                 if (typeof content == 'function')
-                  content = content.call(this, this.document && this.document.registers);
+                  content = content.call(this);
               }
                 
               this.useFooter = true;
@@ -353,7 +342,9 @@
       classNames: [],
 
       template: new Template(
-        '<tr{element|content|childNodesElement} class="Basis-Table-Row" event-click="select"></tr>'
+        '<tr{element} class="Basis-Table-Row" event-click="select">' +
+          '<!--{cells}-->' +
+        '</tr>'
       ),
 
       templateAction: function(actionName, event){
@@ -401,10 +392,11 @@
       className: namespace + '.Body',
 
       template: new Template(
-        '<tbody{element|childNodesElement} class="Basis-Table-Body" event-click="click">' +
+        '<tbody{element} class="Basis-Table-Body" event-click="click">' +
           '<tr class="Basis-Table-GroupHeader">' +
             '<td{content} colspan="100"><span class="expander"></span>{titleText}</td>'+ 
           '</tr>' +
+          '<!-- {childNodesHere} -->' +
         '</tbody>'
       ),
 
@@ -430,16 +422,13 @@
         childClass: Body
       }),
 
-      registers: null,
-
       template: new Template(
-        '<table{element|groupsElement} class="Basis-Table" cellspacing="0" event-click="click" event-contextmenu="contextmenu">' +
+        '<table{element|groupsElement} class="Basis-Table" cellspacing="0" event-click="click">' +
           '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
         '</table>'
       ),
 
       templateAction: function(actionName, event){
-        
         TmplControl.prototype.templateAction.call(this, actionName, event);
       },
 
@@ -451,11 +440,6 @@
 
         TmplControl.prototype.init.call(this, config);
 
-        if (this.registers)
-          this.attachRegisters_(this.registers);
-
-        this.body = this; // backward capability
-
         var headerConfig = this.header;
         var footerConfig = this.footer;
 
@@ -465,7 +449,6 @@
         if (!this.localSorting && this.structure && this.structure.search(true, function(item){ return item.sorting && ('autosorting' in item) }))
         {
           var col = this.structure[Array.lastSearchIndex];
-          //console.log(col.sorting, col.defaultOrder == 'desc');
           this.setLocalSorting(col.sorting, col.defaultOrder == 'desc');
         }
         //this.header.traceSortingChanges();
@@ -473,22 +456,6 @@
         // add event handlers
         /*this.addEventListener('click');
         this.addEventListener('contextmenu', 'contextmenu', true);*/
-      },
-
-      attachRegisters_: function(registers){
-        Object.iterate(this.registers, function(key, register){
-          register.detach(this);
-        }, this);
-
-        this.registers = {};
-
-        Object.iterate(registers, function(key, register){
-          if (typeof register.attach == 'function')
-          {
-            register.attach(this);
-            this.registers[key] = register;
-          }
-        }, this);
       },
 
       applyConfig_: function(structure){
@@ -528,16 +495,16 @@
           this.childClass = Class(Row, {
             //behaviour: config.rowBehaviour,
             satelliteConfig: this.rowSatellite,
-            template: new Template(Row.prototype.template.source.replace('</tr>', template + '</tr>')),
+            template: new Template(Row.prototype.template.source.replace('<!--{cells}-->', template)),
             updaters: updaters
           });
 
           if (this.rowBehaviour)
           {
-            for (var i in this.rowBehaviour){
-              this.childClass[i] = function(){
-                this.rowBehaviour[i].apply(this, arguments);
-                Row.prototype[i].apply(this, arguments);
+            for (var eventName in this.rowBehaviour){
+              this.childClass[eventName] = function(){
+                this.rowBehaviour[eventName].apply(this, arguments);
+                Row.prototype[eventName].apply(this, arguments);
               }
             }
           }
@@ -545,21 +512,18 @@
         }
       },
 
-      loadData: function(items, noCascadeDestroy){
+      loadData: function(items){
         this.setChildNodes(items.map(Function.wrapper('info')))
       },
 
       destroy: function(){
-        this.attachRegisters_({});
-
         TmplControl.prototype.destroy.call(this);
 
         this.header.destroy();
-        this.footer.destroy();
+        this.header = null;
 
-        delete this.header;
-        delete this.footer;
-        delete this.registers;
+        this.footer.destroy();
+        this.footer = null;
       }
     });    
 
