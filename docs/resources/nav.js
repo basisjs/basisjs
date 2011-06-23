@@ -65,7 +65,7 @@
 
     var nodeTypeGrouping = {
       groupGetter: function(node){
-        return node.info.isClassMember ? 'ClassMember' : node.nodeType
+        return node.info.isClassMember ? 'ClassMember' : node.nodeType;
       },
       titleGetter: getter('info.id', groupTitle),
       localSorting: getter('info.id', groupWeight)
@@ -285,7 +285,8 @@
       nodeTypeGrouping: nodeTypeGrouping,
       docClass: docClass,
       docNamespace: docNamespace,
-      docSection: docSection
+      docSection: docSection,
+      kindNodeType: kindNodeType
     });
 
   })();

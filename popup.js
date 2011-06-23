@@ -90,7 +90,7 @@
       className: namespace + '.Popup',
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Popup">' +
+        '<div{element|selected} class="Basis-Popup">' +
           '<div{closeButton} class="Basis-Popup-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
         '</div>'
@@ -121,8 +121,6 @@
       cssLayoutPrefix: 'popup-',
 
       init: function(config){
-        this.document = this;
-
         TmplContainer.prototype.init.call(this, config);
 
         // add generic rule
@@ -433,7 +431,7 @@
       cssLayoutPrefix: 'mode-',
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Balloon" event-click="click">' +
+        '<div{element|selected} class="Basis-Balloon" event-click="click">' +
           '<div class="Basis-Balloon-Canvas">' +
             '<div class="corner-left-top"/>' +
             '<div class="corner-right-top"/>' +
@@ -468,7 +466,7 @@
 
       template: new Template(
         '<div{element} class="Basis-Menu-Item" event-click="click">' +
-          '<a{content|selectedElement} href="#"><span>{captionText}</span></a>' +
+          '<a{content|selected} href="#"><span>{captionText}</span></a>' +
         '</div>' +
         '<div{childNodesElement}/>'
       ),
@@ -583,7 +581,7 @@
       },
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Menu">' +
+        '<div{element|selected} class="Basis-Menu">' +
           '<div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
         '</div>'

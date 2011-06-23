@@ -568,14 +568,16 @@
         {
           if (!skipDeclaration && idx)
           {
-            var m = code.match(/^([\s\n]*)(var\s+|function\s+)?([a-z0-9\_\$]+)/i);
+            var m = code.match(/^([\s\n]*)(var\s+|function\s+)?([a-z0-9\_\$\.]+)/i);
             if (m)
             {
+              var name = m[3];
+
               lineFix = (m[1].match(/\n/g) || []).length;
-              createJsDocEntity(jsdoc.last(), ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + m[3]);
+              createJsDocEntity(jsdoc.last(), ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
               
               if (isClass)
-                clsPrefix = m[3];
+                clsPrefix = name;
               else
                 if (m[2])
                 {

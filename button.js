@@ -129,7 +129,7 @@
 
       template: new Template(
         '<div{element} class="Basis-ButtonPanel">' +
-          '<div{childNodesElement|content|disabledElement} class="Basis-ButtonPanel-Content"/>' +
+          '<div{childNodesElement|content} class="Basis-ButtonPanel-Content"/>' +
         '</div>'
       ),
 

@@ -62,7 +62,7 @@
     template: new Template(
       '<td{element} class="Basis-PaginatorNode">' +
         '<span>' +
-          '<a{link|selectedElement} event-click="click" href="#">{pageNumber}</a>' +
+          '<a{link|selected} event-click="click" href="#">{pageNumber}</a>' +
         '</span>' +
       '</td>'
     ),

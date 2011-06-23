@@ -129,7 +129,7 @@
       },
 
       template: new Template(
-        '<div{element|selectedElement} class="Basis-Tab" event-click="select">' +
+        '<div{element|selected} class="Basis-Tab" event-click="select">' +
           '<span class="Basis-Tab-Start"/>' +
           '<span class="Basis-Tab-Content">' +
             '<span class="Basis-Tab-Caption">' +
@@ -267,7 +267,7 @@
       },
       
       template: new Template(
-        '<div{element|selectedElement} class="Basis-TabSheet" event-click="select">' +
+        '<div{element|selected} class="Basis-TabSheet" event-click="select">' +
           '<div{tabElement} class="Basis-Tab">' +
             '<span class="Basis-Tab-Start"/>' +
             '<span class="Basis-Tab-Content">' +

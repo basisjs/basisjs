@@ -35,8 +35,6 @@
     var extend = Object.extend;
     var cssClass = Basis.CSS.cssClass;
 
-    var Property = Basis.Data.Property.Property;
-
     var nsWrappers = DOM.Wrapper;
     var TmplNode = nsWrappers.TmplNode;
     var TmplContainer = nsWrappers.TmplContainer;
@@ -67,7 +65,7 @@
       groupId: 0,
 
       template: new Template(
-        '<th{element|selectedElement} class="Basis-Table-Header-Cell" event-click="click">' +
+        '<th{element|selected} class="Basis-Table-Header-Cell" event-click="click">' +
           '<div class="Basis-Table-Sort-Direction"/>' +
           '<div class="Basis-Table-Header-Cell-Content">' + 
             '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
@@ -80,8 +78,8 @@
         {
           if (this.selected)
           {
-            if (this.document)
-              this.document.setLocalSorting(this.document.localSorting, !this.document.localSortingDesc);
+            if (this.owner)
+              this.owner.setLocalSorting(this.owner.localSorting, !this.owner.localSortingDesc);
           }
           else
             this.select();         
@@ -131,7 +129,7 @@
           },
 
           template: new Template(
-            '<th{element|selectedElement} class="Basis-Table-Header-Cell">' +
+            '<th{element|selected} class="Basis-Table-Header-Cell">' +
               '<div class="Basis-Table-Sort-Direction" />' +
               '<div class="Basis-Table-Header-Cell-Content">' + 
                 '<span{content} class="Basis-Table-Header-Cell-Title">{titleText}</span>' +
@@ -155,24 +153,25 @@
             this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
 
             var cell = this.pick();
-            if (cell && this.owner.document)
-              this.owner.document.setLocalSorting(cell.sorting, cell.order);
+            if (cell && this.owner.owner)
+              this.owner.owner.setLocalSorting(cell.sorting, cell.order);
           }
         };
 
         TmplContainer.prototype.init.call(this, config);
 
+        this.applyConfig_(this.structure)
+
         // add event handlers
-        //this.addEventListener('click');
-        if (this.document)
+        if (this.owner)
         {
-          this.document.addHandler({
-            localSortingChanged: function(document){
-              var cell = this.childNodes.search(document.localSorting, 'sorting');
+          this.owner.addHandler({
+            localSortingChanged: function(owner){
+              var cell = this.childNodes.search(owner.localSorting, 'sorting');
               if (cell)
               {
                 cell.select();
-                cell.order = document.localSortingDesc;
+                cell.order = owner.localSortingDesc;
                 cssClass(this.tmpl.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
               }
               else
@@ -180,11 +179,6 @@
             }
           }, this);
         }
-
-        this.applyConfig_(this.structure)
-
-        if (this.document)
-          DOM.insert(this.document.element, this.element, DOM.INSERT_BEGIN);
       },
       applyConfig_: function(structure){
         if (structure)
@@ -215,7 +209,7 @@
         }
       },
       destroy: function(){
-        this.document = null;
+        this.owner = null;
 
         TmplContainer.prototype.destroy.call(this);
       }
@@ -268,7 +262,7 @@
         this.applyConfig_(this.structure);
 
         if (this.useFooter)
-          DOM.insert(this.container || this.document.element, this.element, 1);
+          DOM.insert(this.container || this.owner.element, this.element, 1);
       },
 
       applyConfig_: function(structure){
@@ -289,17 +283,8 @@
             {
               var content = colConfig.footer.content;
 
-              if (typeof content == 'object' && content instanceof Property)
-              {
-                if (this.document && typeof content.attach == 'function')
-                  content.attach(this.document);
-                content = content.addLink(DOM.createText(), null, colConfig.footer.format);
-              }
-              else
-              {
-                if (typeof content == 'function')
-                  content = content.call(this);
-              }
+              if (typeof content == 'function')
+                content = content.call(this);
                 
               this.useFooter = true;
 
@@ -394,15 +379,15 @@
       template: new Template(
         '<tbody{element} class="Basis-Table-Body" event-click="click">' +
           '<tr class="Basis-Table-GroupHeader">' +
-            '<td{content} colspan="100"><span class="expander"></span>{titleText}</td>'+ 
+            '<td{content} colspan="100"><span class="expander"/>{titleText}</td>'+ 
           '</tr>' +
           '<!-- {childNodesHere} -->' +
         '</tbody>'
       ),
 
       templateAction: function(actionName, event){
-        if (actioName == 'click')
-          cssClass(this.element).toogle('collapsed');
+        if (actionName == 'click')
+          cssClass(this.element).toggle('collapsed');
 
         TmplPartitionNode.prototype.templateAction.call(this, actionName, event);
       }
@@ -424,7 +409,9 @@
 
       template: new Template(
         '<table{element|groupsElement} class="Basis-Table" cellspacing="0" event-click="click">' +
+          '<!-- {headerElement} -->' +
           '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
+          '<!-- {footerElement} -->' +
         '</table>'
       ),
 
@@ -443,15 +430,16 @@
         var headerConfig = this.header;
         var footerConfig = this.footer;
 
-        this.header = new Header(Object.extend({ document: this, structure: this.structure }, headerConfig));
-        this.footer = new Footer(Object.extend({ document: this, structure: this.structure }, footerConfig));
+        this.header = new Header(Object.extend({ owner: this, structure: this.structure }, headerConfig));
+        this.footer = new Footer(Object.extend({ owner: this, structure: this.structure }, footerConfig));
+
+        DOM.replace(this.tmpl.headerElement, this.header.element);
       
         if (!this.localSorting && this.structure && this.structure.search(true, function(item){ return item.sorting && ('autosorting' in item) }))
         {
           var col = this.structure[Array.lastSearchIndex];
           this.setLocalSorting(col.sorting, col.defaultOrder == 'desc');
         }
-        //this.header.traceSortingChanges();
 
         // add event handlers
         /*this.addEventListener('click');

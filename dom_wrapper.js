@@ -124,6 +124,65 @@
   //  NODE
   //
 
+  var SATELLITE_DESTROY_HANDLER = {
+    destroy: function(object){
+      DOM.replace(object.element, this);
+    }
+  };
+
+  var SATELLITE_HANDLER = {
+    update: function(object, delta){
+      for (var key in this.satelliteConfig)
+      {
+        var config = this.satelliteConfig[key];
+        var exists = typeof config.existsIf != 'function' || config.existsIf(this);
+        var satellite = this.satellite[key];
+
+        if (exists)
+        {
+          var delegate = typeof config.delegate == 'function' ? config.delegate(this) : null;
+          var collection = typeof config.collection == 'function' ? config.collection(this) : null;
+          if (satellite)
+          {
+            satellite.setDelegate(delegate);
+            satellite.setCollection(collection);
+          }
+          else
+          {
+            var replaceElement = this.tmpl[config.replace || key];
+            var instanceConfig = {
+              delegate: delegate,
+              collection: collection
+            };
+
+            if (config.config)
+              Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(this) : config.config);
+
+            satellite = new config.instanceOf(instanceConfig);
+            satellite.owner = this;
+
+            this.satellite[key] = satellite;
+
+            if (replaceElement && satellite instanceof TmplNode && satellite.element)
+            {
+              DOM.replace(replaceElement, satellite.element);
+              satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
+            }
+          }
+        }
+        else
+        {
+          if (satellite)
+          {
+            satellite.destroy();
+            satellite.owner = null;
+            delete this.satellite[key];
+          }
+        }
+      }
+    }
+  };
+
  /**
   * @class
   */
@@ -301,6 +360,18 @@
     groupNode: null,
 
    /**
+    * Hash of satellite object configs.
+    * @type {Object}
+    */
+    satelliteConfig: null,
+
+   /**
+    * Satellite objects storage.
+    * @type {Object}
+    */
+    satellite: null,
+
+   /**
     * @param {Object} config
     * @config {boolean} autoDelegateParent Overrides prototype's {Basis.Data.DataObject#autoDelegateParent} property.
     * @config {function()|string} localSorting Initial local sorting function.
@@ -356,6 +427,15 @@
 
         if (collection)
           this.collection = null;
+      }
+
+      if (!this.satellite)
+        this.satellite = {};
+
+      if (this.satelliteConfig)
+      {
+        this.addHandler(SATELLITE_HANDLER);
+        //SATELLITE_HANDLER.update.call(this, this, {});
       }
     },
 
@@ -467,6 +547,18 @@
       {
         this.localGrouping.destroy();
         this.localGrouping = null;
+      }
+
+      // destroy satellites
+      if (this.satellite)
+      {
+        for (var key in this.satellite)
+        {
+          var satellite = this.satellite[key];
+          satellite.destroy();
+          satellite.owner = null;
+        }
+        this.satellite = null;
       }
 
       // remove pointers
@@ -1976,275 +2068,216 @@
 
   AbstractNode.prototype.localGroupingClass = GroupingNode;
 
-  //
-  // HTML reflections
-  //
 
-  var SATELLITE_DESTROY_HANDLER = {
-    destroy: function(object){
-      DOM.replace(object.element, this);
-    }
-  };
+ /**
+  * @mixin
+  */
+  var TemplateMixin = function(super_){
+    return {
+     /**
+      * Template for object.
+      * @type {Basis.Html.Template}
+      */
+      template: new Template(
+        '<div{element}/>'
+      ),
 
-  var SATELLITE_HANDLER = {
-    update: function(object, delta){
-      for (var key in this.satelliteConfig)
-      {
-        var config = this.satelliteConfig[key];
-        var exists = typeof config.existsIf != 'function' || config.existsIf(this);
-        var satellite = this.satellite[key];
+     /**
+      * Classes for template elements.
+      * @type {object}
+      */
+      cssClassName: null,
 
-        if (exists)
+     /**
+      * @inheritDoc
+      */
+      event_select: function(){
+        super_.event_select.call(this);
+
+        var element = this.tmpl.selected || this.tmpl.content || this.element;
+        element.className += ' selected';
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_unselect: function(){
+        super_.event_unselect.call(this);
+
+        var element = this.tmpl.selected || this.tmpl.content || this.element;
+        element.className = element.className.replace(/(^|\s+)selected(\s+|$)/, '$2');
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_disable:  function(){
+        super_.event_disable.call(this);
+
+        cssClass(this.tmpl.disabled || this.element).add('disabled');
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_enable: function(){
+        super_.event_enable.call(this);
+
+        cssClass(this.tmpl.disabled || this.element).remove('disabled');
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_match: function(){
+        super_.event_match.call(this);
+
+        DOM.display(this.element, true);
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_unmatch: function(){
+        super_.event_unmatch.call(this);
+
+        DOM.display(this.element, false);
+      },
+
+     /**
+      * @inheritDoc
+      */
+      init: function(config){
+
+        // create dom fragment by template
+        this.tmpl = {};
+        if (this.template)
         {
-          var delegate = typeof config.delegate == 'function' ? config.delegate(this) : null;
-          var collection = typeof config.collection == 'function' ? config.collection(this) : null;
-          if (satellite)
+          this.template.createInstance(this.tmpl, this);
+          this.element = this.tmpl.element;
+
+          if (this.tmpl.childNodesHere)
           {
-            satellite.setDelegate(delegate);
-            satellite.setCollection(collection);
+            this.tmpl.childNodesElement = this.tmpl.childNodesHere.parentNode;
+            this.tmpl.childNodesElement.insertPoint = this.tmpl.childNodesHere;
           }
-          else
+
+          // insert content
+          if (this.content)
+            DOM.insert(this.tmpl.content || this.element, this.content);
+        }
+        else
+          this.element = this.tmpl.element = DOM.createElement();
+
+        this.childNodesElement = this.tmpl.childNodesElement || this.element;
+
+        // inherit init
+        super_.init.call(this, config);
+
+        // update template
+        if (this.id)
+          this.element.id = this.id;
+
+        var cssClassNames = this.cssClassName;
+        if (cssClassNames)
+        {
+          if (typeof cssClassNames == 'string')
+            cssClassNames = { element: cssClassNames };
+
+          for (var alias in cssClassNames)
           {
-            var replaceElement = this.tmpl[config.replace || key];
-            var instanceConfig = {
-              document: this.document,
-              delegate: delegate,
-              collection: collection
-            };
-
-            if (config.config)
-              Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(this) : config.config);
-
-            satellite = new config.instanceOf(instanceConfig);
-            satellite.owner = this;
-
-            this.satellite[key] = satellite;
-
-            if (replaceElement && satellite instanceof TmplNode && satellite.element)
+            var node = this.tmpl[alias];
+            if (node)
             {
-              DOM.replace(replaceElement, satellite.element);
-              satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
+              var nodeClassName = cssClass(node);
+              nodeClassName.add.apply(nodeClassName, String(cssClassNames[alias]).qw());
             }
           }
         }
-        else
+
+        if (true) // this.template
         {
-          if (satellite)
-          {
-            satellite.destroy();
-            satellite.owner = null;
-            delete this.satellite[key];
-          }
+          var delta = {};
+          for (var key in this.info)
+            delta[key] = undefined;
+
+          this.event_update(this, delta);
         }
+
+        if (this.container)
+          DOM.insert(this.container, this.element);
+      },
+
+     /**
+      * Handler on template actions.
+      * @param {string} actionName
+      * @param {object} event
+      */
+      templateAction: function(actionName, event){
+        // send action to document node
+        //if (this.document && this.document !== this)
+        //  this.document.templateAction(actionName, event, this);
+      },
+
+     /**
+      * @inheritDoc
+      */
+      destroy: function(){
+        super_.destroy.call(this);
+
+        var element = this.element;
+        if (element)
+        {
+          this.element = null;
+          if (element.parentNode)
+            element.parentNode.removeChild(element);
+        }
+
+        if (this.template)
+          this.template.clearInstance(this.tmpl, this);
+
+        this.tmpl = null;
+        this.childNodesElement = null;
       }
     }
-  };
-
-  var TemplateMixin = {
   };
 
  /**
   * @class
   */
-  var TmplNode = Class(Node, {
-    className: namespace + '.TmplNode',
-
-    event_select: function(){
-      Node.prototype.event_select.call(this);
-
-      var element = this.tmpl.selectedElement || this.tmpl.content || this.element;
-      element.className += ' selected';
-    },
-    event_unselect: function(){
-      Node.prototype.event_unselect.call(this);
-
-      var element = this.tmpl.selectedElement || this.tmpl.content || this.element;
-      element.className = element.className.replace(/(^|\s+)selected(\s+|$)/, '$2');
-    },
-    event_disable:  function(){
-      Node.prototype.event_disable.call(this);
-
-      cssClass(this.tmpl.disabledElement || this.element).add('disabled');
-    },
-    event_enable: function(){
-      Node.prototype.event_enable.call(this);
-
-      cssClass(this.tmpl.disabledElement || this.element).remove('disabled');
-    },
-    event_match: function(){
-      Node.prototype.event_match.call(this);
-
-      DOM.display(this.element, true);
-    },
-    event_unmatch: function(){
-      Node.prototype.event_unmatch.call(this);
-
-      DOM.display(this.element, false);
-    },
-
-   /**
-    * Template for object.
-    * @type {Basis.Html.Template}
-    */
-    template: new Template(
-      '<div{element|childNodesElement}></div>'
-    ),
-
-   /**
-    * @type {Object}
-    */
-    cssClassName: null,
-
-   /**
-    * Hash of satellite object configs.
-    * @type {Object}
-    */
-    satelliteConfig: null,
-
-   /**
-    * Satellite objects storage.
-    * @type {Object}
-    */
-    satellite: null,
-
-   /**
-    * @param {Object} config
-    * @config {Basis.Html.Template} template Override prototype's template with custom template.
-    * @config {Object|string} cssClassName Set of CSS classes for parts of HTML structure.
-    * @config {Node} container Specify HTML element that will be a container of template root element (node.element).
-    * @config {Node|Array.<Node>} content
-    * @config {string} id Id for template root element (node.element).
-    * @constructor
-    */
-    init: function(config){
-      /*if (config)
-      {
-        if (typeof config != 'object' || !isNaN(config['nodeType']))
-          config = { content: config };
-      }*/
-
-      // create html structure by template
-      this.tmpl = {};
-      if (this.template)
-      {
-        //this.template.createInstance(this.tmpl = {});
-        //extend(this, this.tmpl);
-        this.template.createInstance(this.tmpl, this);
-        this.element = this.tmpl.element;
-
-        if (this.tmpl.childNodesHere)
-        {
-          this.tmpl.childNodesElement = this.tmpl.childNodesHere.parentNode;
-          this.tmpl.childNodesElement.insertPoint = this.tmpl.childNodesHere;
-        }
-
-        // insert content
-        if (this.content)
-          DOM.insert(this.tmpl.content || this.element, this.content);
-      }
-      else
-        this.element = this.tmpl.element = DOM.createElement();
-
-      this.childNodesElement = this.tmpl.childNodesElement || this.element;
-
-      Node.prototype.init.call(this, config);
-
-      if (this.id)
-        this.element.id = this.id;
-
-      // inherit init
-
-      var cssClassNames = this.cssClassName;
-      if (cssClassNames)
-      {
-        if (typeof cssClassNames == 'string')
-          cssClassNames = { element: cssClassNames };
-
-        for (var alias in cssClassNames)
-        {
-          var node = this.tmpl[alias];
-          if (node)
-          {
-            var nodeClassName = cssClass(node);
-            nodeClassName.add.apply(nodeClassName, String(cssClassNames[alias]).qw());
-          }
-        }
-      }
-
-      if (this.satelliteConfig)
-      {
-        this.satellite = {};
-        this.addHandler(SATELLITE_HANDLER);
-        SATELLITE_HANDLER.update.call(this, this, {});
-      }
-
-      if (true) // this.template
-      {
-        var delta = {};
-        for (var key in this.info)
-          delta[key] = undefined;
-        for (var key in delta)
-        {
-          this.event_update(this, delta);
-          break;
-        }
-      }
-
-      // add to container
-      if (this.container)
-        DOM.insert(this.container, this.element);
-    },
-
-    templateAction: function(actionName, event){
-      // send action to document node
-      //if (this.document && this.document !== this)
-      //  this.document.templateAction(actionName, event, this);
-    },
-
-    destroy: function(){
-      if (this.satellite)
-      {
-        for (var key in this.satellite)
-        {
-          var satellite = this.satellite[key];
-          satellite.destroy();
-          satellite.owner = null;
-        }
-        this.satellite = null;
-      }
-
-      Node.prototype.destroy.call(this);
-
-      var element = this.element;
-      if (element)
-      {
-        this.element = null;
-        if (element.parentNode)
-          element.parentNode.removeChild(element);
-      }
-
-      if (this.template)
-        this.template.clearInstance(this.tmpl, this);
-
-      this.tmpl = null;
-      this.childNodesElement = null;
-    }
+  var TmplNode = Class(Node, TemplateMixin, {
+    className: namespace + '.TmplNode'
   });
 
  /**
   * @class
   */
-  var TmplGroupingNode = Class(GroupingNode, {
-    className: namespace + '.TmplGroupingNode'
-  }); // look for extensions bellow
+  var TmplPartitionNode = Class(PartitionNode, TemplateMixin, {
+    className: namespace + '.TmplPartitionNode',
+
+    titleGetter: getter('info.title'),
+
+    template: new Template(
+      '<div{element} class="Basis-PartitionNode">' + 
+        '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
+        '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
+      '</div>'
+    ),
+
+    event_update: function(object, delta){
+      PartitionNode.prototype.event_update.call(this, object, delta);
+
+      if (this.tmpl.titleText)
+        this.tmpl.titleText.nodeValue = String(this.titleGetter(this));
+    }
+  });
 
  /**
-  * Template mixin
+  * Template mixin for containers classes
+  * @mixin
   */
-  var DOMTemplateMixin = function(super_){
+  var ContainerTemplateMixin = function(super_){
     return {
-      localGroupingClass: TmplGroupingNode,
-
       // methods
       insertBefore: function(newChild, refChild){
         // inherit
@@ -2315,82 +2348,9 @@
  /**
   * @class
   */
-  var TmplContainer = Class(TmplNode, DOMTemplateMixin, {
-    className: namespace + '.TmplContainer',
+  var TmplGroupingNode = Class(GroupingNode, ContainerTemplateMixin, {
+    className: namespace + '.TmplGroupingNode',
 
-    childClass: TmplNode,
-    childFactory: function(config){
-      return new this.childClass(config);
-    }
-  });
-
- /**
-  * @class
-  */
-  var TmplPartitionNode = Class(PartitionNode, {
-    className: namespace + '.TmplPartitionNode',
-
-    titleGetter: getter('info.title'),
-
-    template: new Template(
-      '<div{element} class="Basis-PartitionNode">' + 
-        '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
-        '<div{content|childNodesElement} class="Basis-PartitionNode-Content"></div>' + 
-      '</div>'
-    ),
-
-    event_update: function(object, delta){
-      PartitionNode.prototype.event_update.call(this, object, delta);
-
-      if (this.tmpl.titleText)
-        this.tmpl.titleText.nodeValue = String(this.titleGetter(this));
-    },
-
-   /**
-    * @constructor
-    */
-    init: function(config){
-      this.template.createInstance(this);
-      this.tmpl = this;
-
-      if (config && config.titleGetter)
-        this.titleGetter = getter(config.titleGetter);
-
-      PartitionNode.prototype.init.call(this, config);
-
-      var delta = {};
-      for (var key in this.info)
-        delta[key] = undefined;
-      for (var key in delta)
-      {
-        this.event_update(this, delta);
-        break;
-      }
-    },
-
-    destroy: function(){
-      PartitionNode.prototype.destroy.call(this);
-
-      var element = this.element;
-      if (element)
-      {
-        if (element.parentNode)
-          element.parentNode.removeChild(element);
-      }
-
-      if (this.template)
-        this.template.clearInstance(this.tmpl, this);
-
-      this.tmpl = null;
-      this.element = null;
-      this.childNodesElement = null;
-    }
-  });
-
- /**
-  * @class
-  */
-  TmplGroupingNode.extend(DOMTemplateMixin(GroupingNode.prototype)).extend({
    /**
     * @inheritDoc
     */
@@ -2414,9 +2374,21 @@
     }
   });
 
-  //
-  // CONTROL
-  //
+  TmplGroupingNode.prototype.localGroupingClass = TmplGroupingNode;
+
+ /**
+  * @class
+  */
+  var TmplContainer = Class(TmplNode, ContainerTemplateMixin, {
+    className: namespace + '.TmplContainer',
+
+    childClass: TmplNode,
+    childFactory: function(config){
+      return new this.childClass(config);
+    },
+
+    localGroupingClass: TmplGroupingNode
+  });
 
  /**
   * @class
@@ -2461,7 +2433,7 @@
       // inherit destroy, must be calling after inner objects destroyed
       TmplContainer.prototype.destroy.call(this);
 
-      // unlink from Cleaner
+      // remove from Cleaner
       Cleaner.remove(this);
     }
   });
@@ -2648,9 +2620,6 @@
     * @inheritDoc
     */
     set: function(nodes){
-      if (!this.multiple)
-        nodes.splice(1);
-
       var items = [];
       for (var i = 0, node; node = nodes[i]; i++)
       {
@@ -2658,9 +2627,35 @@
           items.push(node);
       }
 
+      if (!this.multiple)
+        nodes.splice(1);
+
       return Dataset.prototype.set.call(this, items);
     }
   });
+
+ /**
+  * @func
+  */
+  var simpleTemplate = function(template){
+    var refs = template.split(/\{((?:this|object)_[^}]+)\}/);
+    var lines = [];
+    for (var i = 1; i < refs.length; i += 2)
+    {
+      var name = refs[i].split('|')[0];
+      lines.push('this.tmpl.' + name + '.nodeValue = ' + name.replace(/_/g, '.'));
+    }
+    
+    return Function('tmpl', 'return ' + (function(super_){
+      return {
+        template: tmpl,
+        event_update: function(object, delta){
+          super_.event_update.call(this, object, delta);
+          _code_();
+        }
+      }
+    }).toString().replace('_code_()', lines.join(';')))(new Template(template));
+  };
 
   //
   // export names
@@ -2681,6 +2676,8 @@
     TmplNode: TmplNode,
     TmplContainer: TmplContainer,
     TmplControl: Control,
+
+    simpleTemplate: simpleTemplate,
 
     // datasets
     ChildNodesDataset: ChildNodesDataset,

@@ -52,7 +52,7 @@
   }
 
   function htmlHeader(title){
-    return '<h3 class="Content-Header">' +
+    return '<h3 class="Content-Header" event-click="scrollTo">' +
              '<span>' + title + '</span>' +
            '</h3>';
   }
@@ -65,54 +65,55 @@
   // View
   //
 
-  var ViewOption = Class(nsWrappers.TmplNode, {
-    className: namespace + '.ViewOption',
-    template: new Template(
-      '<span{element} class="option" event-click="click">{titleText}</span>'
+  var ViewOption = Class(nsWrappers.TmplNode,
+    nsWrappers.simpleTemplate(
+      '<span{element} class="option" event-click="click">{this_title}</span>'
     ),
-    templateAction: function(actionName, event){
-      if (actionName == 'click')
-        this.select();
-      else
-        nsWrappers.TmplNode.prototype.templateAction.call(this, actionName, event);
-    },
-    event_select: function(){
-      nsWrappers.TmplNode.prototype.event_select.call(this);
+    {
+      className: namespace + '.ViewOption',
+      templateAction: function(actionName, event){
+        if (actionName == 'click')
+          this.select();
+        else
+          nsWrappers.TmplNode.prototype.templateAction.call(this, actionName, event);
+      },
+      event_select: function(){
+        nsWrappers.TmplNode.prototype.event_select.call(this);
 
-      if (this.handler)
-        this.handler();
-    },
-    init: function(config){
-      nsWrappers.TmplNode.prototype.init.call(this, config);
-
-      this.tmpl.titleText.nodeValue = this.title;
+        if (this.handler)
+          this.handler();
+      }
     }
-  });
+  );
 
-  var ViewOptions = Class(nsWrappers.TmplContainer, {
-    className: namespace + '.ViewOptions',
-    childClass: ViewOption,
-    template: new Template(
+  var ViewOptions = Class(nsWrappers.TmplContainer,
+    nsWrappers.simpleTemplate(
       '<div{element} class="viewOptions">' +
-        '<span class="title">{titleText}:</span>' +
+        '<span class="title">{this_title}:</span>' +
         '<span{childNodesElement} class="options"/>' +
       '</div>'
     ),
-    selection: {},
-    init: function(config){
-      nsWrappers.TmplControl.prototype.init.call(this, config);
-
-      this.tmpl.titleText.nodeValue = this.title;
+    {
+      className: namespace + '.ViewOptions',
+      childClass: ViewOption,
+      selection: {}
     }
-  });
+  );
 
   var View = Class(nsWrappers.TmplContainer, {
     className: namespace + '.View',
     autoDelegateParent: true,
-    isAcceptableObject: Function.$true
+    isAcceptableObject: Function.$true,
+    templateAction: function(actionName, event){
+      if (actionName == 'scrollTo')
+      {
+        if (this.parentNode)
+          this.parentNode.scrollTo(this.element);
+      }
+    }
   });
 
-  var tagLabels = 'readonly private'.qw();
+  var tagLabels = ['readonly', 'private'];
   var JsDocPanel = Class(nsWrappers.TmplNode, {
     className: namespace + '.JsDocPanel',
     active: true,
@@ -300,7 +301,9 @@
     template: new Template(
       '<div{element} class="view viewJsDoc">' +
         htmlHeader('Description') +
-        '<div{content} class="content"><span{contentPanel}/></div>' +
+        '<div{content} class="content">' +
+          '<!-- {contentPanel} -->' +
+        '</div>' +
       '</div>'
     ),
     satelliteConfig: extendViewSatelliteConfig({

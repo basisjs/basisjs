@@ -42,18 +42,71 @@
   // View
   //
 
-  var ViewTitle = Class(nsWrappers.TmplContainer, function(super){ return {
-    childClass: Class(nsWrappers.TmplNode, function(super_){ return {
-      template: new Template('<button{element} event-click="click">{titleText}</button>'),
+  function smoothScroll(element){
+    var thread = new Basis.Animation.Thread({
+      duration: 350,
+      interval: 15
+    });
+    var modificator = new Basis.Animation.Modificator(thread, function(value){
+      element.scrollTop = parseInt(value);
+    }, 0, 0, true);
+
+    modificator.timeFunction = function(value){
+      return Math.sin(Math.acos(1 - value));
+    }
+
+    return {
+      scrollTo: function(relElement){
+        var curScrollTop = element.scrollTop;
+        modificator.setRange(curScrollTop, curScrollTop);
+        thread.stop();
+        modificator.setRange(curScrollTop, relElement.offsetTop);
+        thread.start();
+      }
+    }
+  };
+
+  var targetContent = new nsWrappers.TmplContainer({
+    id: 'ObjectView',
+    childClass: nsView.View,
+
+    template: new Template(
+      '<div{element} class="XControl">' +
+        '<div{content|childNodesElement} class="XControl-Content"/>' +
+      '</div>'
+    ),
+    event_delegateChanged: function(object, oldDelegate){
+      this.constructor.prototype.event_delegateChanged.call(this, object, oldDelegate);
+
+      if (this.delegate)
+      {
+        this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
+          return view.isAcceptableObject(this.info);
+        }, this), true);
+      }
+      else
+        this.clear(true);
+    }
+  });
+
+  var targetHeader = new nsWrappers.TmplContainer({
+    delegate: targetContent,
+    collection: new nsWrappers.ChildNodesDataset(targetContent),
+
+    /*childClass: Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate('<button{element} event-click="click">{this_delegate_viewHeader}</button>'), {
       templateAction: function(actionName, event){
         if (actionName == 'click')
-          this.delegate.element.scrollIntoView();
-      },
-      init: function(config){
-        super_.init.call(this, config);
-        this.tmpl.titleText.nodeValue = this.delegate.viewHeader;
+          this.delegate.parentNode.smoothScroll.scrollTo(this.delegate.element);
       }
-    }}),
+    }),*/
+    childClass: Class(Basis.Controls.Button.Button, {
+      captionGetter: function(button){
+        return button.delegate.viewHeader;
+      },
+      handler: function(){
+        this.delegate.parentNode.scrollTo(this.delegate.element);
+      }
+    }),
 
     template: new Template(
       '<div{element}>' +
@@ -65,53 +118,16 @@
       '</div>'
     ),
     event_update: function(object, delta){
-      super.event_update.call(this, object, delta);
+      this.constructor.prototype.event_update.call(this, object, delta);
 
       this.tmpl.contentText.nodeValue = (this.info.title || '') + (/^(method|function|class)$/.test(this.info.kind) ? nsCore.getFunctionDescription(this.info.obj).args.quote('(') : '');
       this.tmpl.pathText.nodeValue = (this.info.path || '');
 
       if ('kind' in delta)
-        cssClass(this.element).replace(delta.kind, this.info.kind, 'kind-');
-    }
-  }});
-
-  objectView = new nsWrappers.TmplContainer({
-    id: 'ObjectView',
-    childClass: nsView.View,
-
-    template: new Template(
-      '<div{element} class="XControl">' +
-        '<!-- {header} -->' +
-        '<div{content|childNodesElement} class="XControl-Content"/>' +
-      '</div>'
-    ),
-    satelliteConfig: {
-      header: {
-        existsIf: Function.getter('delegate'),
-        delegate: Function.getter('delegate'),
-        collection: Function.lazyInit(function(){
-          return new nsWrappers.ChildNodesDataset(objectView);
-        }),
-        instanceOf: ViewTitle
-      }
-    },
-    event_delegateChanged: function(object, oldDelegate){
-      //this.clear(true);
-
-      this.constructor.prototype.event_delegateChanged.call(this, object, oldDelegate);
-
-      if (this.delegate)
-      {
-        this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []), true);
-/*
-        this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
-          return view.isAcceptableObject(this.info);
-        }, this));*/
-      }
-      else
-        this.clear(true);
+        cssClass(this.element.firstChild).replace(delta.kind, this.info.kind, 'kind-');
     }
   });
+
 
   //
   // NavTree
@@ -186,7 +202,7 @@
         this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
 
         var selected = this.pick();
-        objectView.setDelegate(selected);
+        targetContent.setDelegate(selected);
         if (selected)
         {
           navTree.open(selected.info.fullPath, true);
@@ -245,12 +261,13 @@
       init: function(config){
         nsTree.TreeNode.prototype.init.call(this, config);
 
-        this.tmpl.title.href = '#' + this.info.fullPath;
         cssClass(this.tmpl.content).add(this.info.kind.capitalize() + '-Content');
+        this.nodeType = nsNav.kindNodeType[this.info.kind];
 
         if (/^(function|method|class)$/.test(this.info.kind))
           DOM.insert(this.tmpl.label, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
 
+        this.tmpl.title.href = '#' + this.info.fullPath;
         this.tmpl.namespaceText.nodeValue = this.info.kind != 'namespace' ? this.info.path : '';
       }
     })
@@ -426,14 +443,22 @@
     ]
   });
 
-  new nsWrappers.TmplNode({
+  var contentLayout = new Basis.Layout.VerticalPanelStack({
     container: 'Layout',
     id: 'Content',
-    content: [
-      //clsTree.element,
-      objectView.element
+    childNodes: [
+      {
+        id: 'ContentHeader',
+        content: targetHeader.element
+      },
+      { 
+        flex: 1,
+        content: targetContent.element
+      }
     ]
   });
+
+  targetContent.scrollTo = smoothScroll(contentLayout.lastChild.element).scrollTo;
 
   Event.addGlobalHandler('click', function(e){
     if (!Event.mouseButton(e, Event.MOUSE_LEFT))

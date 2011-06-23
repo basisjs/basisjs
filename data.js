@@ -1,4 +1,4 @@
-/**!
+/*!
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
  *

@@ -109,7 +109,7 @@
     });
 
     new nsForm.Field.Select({
-      items: [
+      childNodes: [
         {
           title: 'Option 1',
           value: 1
@@ -129,7 +129,7 @@
     var property = new Basis.Data.Property.Property(1);
 
     new nsForm.Field.Combobox({
-      items: [
+      childNodes: [
         {
           title: 'Combobox Item 1',
           value: 1
@@ -153,7 +153,7 @@
     });
 
     new nsForm.Field.RadioGroup({
-      items: [
+      childNodes: [
         {
           title: 'Radio Item 1',
           value: 1
@@ -171,7 +171,7 @@
     });
 
     new nsForm.Field.CheckGroup({
-      items: [
+      childNodes: [
         {
           title: 'Check Item 1',
           value: 1
@@ -211,7 +211,7 @@
           type: 'combobox',
           name: 'Gender',
           title: 'Gender',
-          items: [
+          childNodes: [
             { info: { value: 'Male', title: 'Male' } },
             { info: { value: 'Female', title: 'Female' } }
           ]

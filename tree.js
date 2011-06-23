@@ -57,19 +57,26 @@
   var createEvent = Basis.EventObject.createEvent;
   var basisEvent = Basis.EventObject.event;
 
- /**
-  * Expand all descendant nodes.
-  */
-  function expandAll(){
-    DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, 'expand()');    
-  }
 
- /**
-  * Collapse all descendant nodes.
-  */
-  function collapseAll(){
-    DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, 'collapse()');
-  }
+  var ExpandCollapseMixin = {
+   /**
+    * Expand all descendant nodes.
+    */
+    expandAll: function(){
+      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, 'expand()');    
+    },
+
+   /**
+    * Collapse all descendant nodes.
+    */
+    collapseAll: function(){
+      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, 'collapse()');
+    },
+
+    expand: Function(),
+    collapse: Function(),
+    toggle: Function()
+  };
 
  /**
   * Here is an example for tree recursive childFactory
@@ -108,7 +115,7 @@
   * Base child class for {Basis.Controls.Tree.Tree}
   * @class
   */
-  var TreeNode = Class(TmplContainer, {
+  var TreeNode = Class(TmplContainer, ExpandCollapseMixin, {
     className: namespace + '.TreeNode',
 
     canHaveChildren: false,
@@ -157,20 +164,7 @@
    /**
     * @type {function()}
     */
-    titleGetter: getter('info.title'),
-
-    // there are abstract methods, implemented for capability with TreeFolder
-    expand: Function.$undef,
-    expandAll: expandAll,
-    collapse: Function.$undef,
-    collapseAll: collapseAll,
-
-   /**
-    * Inverts node collapsed state. If node was collapsed expand it, otherwise collapse it.
-    */
-    toggle: function(){
-      this.collapsed ? this.expand() : this.collapse();
-    }
+    titleGetter: getter('info.title')
   });
 
  /**
@@ -257,8 +251,14 @@
         this.event_collapse();
         return true;
       }
-    } 
+    },
 
+   /**
+    * Inverts node collapsed state. If node was collapsed expand it, otherwise collapse it.
+    */
+    toggle: function(){
+      this.collapsed ? this.expand() : this.collapse();
+    }
   });
 
  /**
@@ -280,22 +280,8 @@
     template: new Template(
       '<ul{element} class="Basis-Tree">' + 
         '<!-- {childNodesHere} -->' +
-        //'<ul{childNodesElement} class="Basis-Tree-Root"></ul>' + 
       '</ul>'
-    ),
-
-   /**
-    * Expand all descendant nodes.
-    */
-    expandAll: expandAll,
-
-   /**
-    * Collapse all descendant nodes.
-    */
-    collapseAll: collapseAll,
-
-    expand: Function.$undef,
-    collapse: Function.$undef
+    )
   });
 
   //

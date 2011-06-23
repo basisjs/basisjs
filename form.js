@@ -9,6 +9,8 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+'use strict';
+
   (function(){
 
    /**
@@ -48,10 +50,29 @@
     // Main part
     //
 
+    var baseFieldTemplate = new Template(
+      '<div{element|sampleContainer} class="Basis-Field">' +
+        '<div class="Basis-Field-Title">' +
+          '<label><span{title}>{titleText}</span></label>' +
+        '</div>' +
+        '<div{content} class="Basis-Field-Container">' +
+          '<!-- field -->' +
+        '</div>' +
+      '</div>'
+    );
+
+    function createFieldTemplate(template, injection){
+      return new Template(template.source.replace('<!-- field -->', injection));
+    }
+
     //
     //  Fields
     //
 
+   /**
+    * Base class for all form field classes
+    * @class
+    */
     var Field = Class(TmplNode, {
       className: namespace + '.Field',
 
@@ -105,28 +126,10 @@
         EventObject.event.blur.call(this, event);
       },
       
-      template: new Template(
-        '<div{element|sampleContainer} class="Basis-Field">' +
-          '<div class="Basis-Field-Title">' +
-            '<label><span{title}/>{titleText}</label>' +
-          '</div>' +
-          '<div{fieldContainer|content} class="Basis-Field-Container"/>' +
-        '</div>'
-      ),
+      template: baseFieldTemplate,
 
       init: function(config){
         TmplNode.prototype.init.call(this, config);
-
-        // create field
-        if (this.fieldTemplate)
-        {
-          this.fieldTemplate.createInstance(this.tmpl, this);
-
-          if (this.tmpl.fieldContainer)
-            DOM.insert(this.tmpl.fieldContainer, this.tmpl.field);
-
-          this.childNodesElement = this.tmpl.childNodesElement || this.tmpl.element;
-        }
 
         this.name = this.name || this.id;
 
@@ -173,16 +176,11 @@
         if (this.readOnly)
           this.setReadOnly(this.readOnly);
         
-        if (this.disabled)
-          this.disable();
-
-        ;;;if (Function.$defined(config.returnValue) && typeof console != 'undefined') console.warn('Field.init: returnValue is deprecated');
+        //if (this.disabled)
+        //  this.disable();
         
-        if (typeof this.value != 'undefined')
-        {
-          this.defaultValue = this.value;
-          this.setDefaultValue();
-        }
+        this.defaultValue = this.value;
+        this.setDefaultValue();
       },
       setReadOnly: function(readOnly){
         if (readOnly)
@@ -221,13 +219,13 @@
         this.tmpl.field.value = newValue || '';
         this.event_change();
       },
-      disable: function(){
+      /*disable: function(){
         if (!this.disabled)
         {
           this.disabled = true;
           this.event_disable();
         }
-      },
+      },*/
       setMaxLength: function(len){
         this.maxLength = len;
       },
@@ -336,75 +334,74 @@
     // Simple fields
     //
 
+   /**
+    * @class
+    */
     Field.Hidden = Class(Field, {
       className: namespace + '.Field.Hidden',
 
       selectable: false,
       
-      template: new Template(''),
-      fieldTemplate: new Template(
-        '<input{field|element} type="hidden"/>'
-      )/*,
-
-      init: function(config){
-        this.value = this.value || '';
-
-        Field.prototype.init.call(this, config);
-      }*/
+      template: new Template(
+        '<input{element|field} type="hidden"/>'
+      )
     });
 
+   /**
+    * @class
+    */
     Field.Text = Class(Field, {
       className: namespace + '.Field.Text',
       
-      fieldTemplate: new Template(
-        '<input{field|element} type="text"/>'
+      template: createFieldTemplate(baseFieldTemplate,
+        '<input{field} type="text"/>'
       ),
 
       init: function(config){
-        //this.value = this.value || '';
-
         Field.prototype.init.call(this, config);
 
         if (this.minLength)
           this.attachValidator(Validator.MinLength);
       },
       setMaxLength: function(len){
-        len = len * 1 || 0;
         this.tmpl.field.setAttribute('maxlength', len, 0);
         
         Field.prototype.setMaxLength.call(this, len);
       }
     });
 
+   /**
+    * @class
+    */
     Field.Password = Class(Field.Text, {
       className: namespace + '.Field.Password',
 
-      fieldTemplate: new Template(
-        '<input{field|element} type="password"/>'
+      template: createFieldTemplate(baseFieldTemplate,
+        '<input{field} type="password"/>'
       )
     });
 
+   /**
+    * @class
+    */
     Field.File = Class(Field, {
       className: namespace + '.Field.File',
 
-      fieldTemplate: new Template(
-        '<input{field|element} type="file"/>'
-      )/*,      
-
-      init: function(config){
-        config.value = '';
-        
-        Field.prototype.init.call(this, config);
-      }*/
+      template: createFieldTemplate(baseFieldTemplate,
+        '<input{field} type="file"/>'
+      )
     });
 
+   /**
+    * @class
+    */
     Field.Textarea = Class(Field, {
       className: namespace + '.Field.Textarea',
 
       nextFieldOnEnter: false,
 
-      fieldTemplate: new Template(
-        '<textarea{field|element}/>'
+      template: createFieldTemplate(baseFieldTemplate,
+        '<textarea{field}/>'
       ),
 
       event_keypress: EventObject.event.keypress,
@@ -466,7 +463,7 @@
 
       template: new Template(
         '<div{element} class="Basis-Field Basis-Field-Checkbox">' +
-          '<div{fieldContainer|content} class="Basis-Field-Container">' +
+          '<div{content} class="Basis-Field-Container">' +
             '<label>' +
               '<input{field} type="checkbox"/>' +
               '<span>{titleText}</span>' +
@@ -474,10 +471,6 @@
           '</div>' +
         '</div>'
       ),
-      fieldTemplate: null,
-      /*fieldTemplate: new Template(
-        '<input{field|element} type="checkbox"/>'
-      ),*/
 
       /*init: function(config){
         this.value = this.value || false;
@@ -504,7 +497,7 @@
       className: namespace + '.Field.Label',
       cssClassName: 'Basis-Field-Label',
 
-      fieldTemplate: new Template(
+      template: createFieldTemplate(baseFieldTemplate,
         '<label{field|element}>{fieldValueText}</label>'
       ),
       setValue: function(newValue){
@@ -526,34 +519,27 @@
       titleGetter: function(info){ 
         return info.title || info.value 
       },
-      /*init: function(config){
-        TmplNode.prototype.init.call(this, config);
-
-        this.element.node = this;
-      },*/
       getTitle: function(){
         return this.titleGetter(this.info, this);
       },
       getValue: function(){
         return this.valueGetter(this.info, this);
-      }/*,
-      destroy: function(){
-        this.element.node = null;
-        TmplNode.prototype.destroy.call(this);
-      }*/
+      }
     });
 
     var COMBOBOX_SELECTION_HANDLER = {
       datasetChanged: function(){
-        var values = this.selection.getItems().map(getter('getValue()'));
-        this.setValue(!this.selection.multiple ? values[0] : values);
+        this.event_change();
       }
     }
 
+   /**
+    * @class
+    */
     var ComplexField = Class(Field, TmplContainer, {
       className: namespace + '.Field.ComplexField',
 
-      canHaveChildren: true,
+      template: Field.prototype.template,
 
       childFactory: function(itemConfig){
         var config = {
@@ -581,10 +567,6 @@
 
         //inherit
         Field.prototype.init.call(this, config);
-
-        // insert items
-        if (this.items)
-          DOM.insert(this, this.items);
 
         this.setDefaultValue(); 
 
@@ -614,8 +596,6 @@
             selectedItems.push(item);
 
         this.selection.set(selectedItems);
-
-        this.event_change();
       },
       destroy: function(){
         Field.prototype.destroy.call(this);
@@ -623,7 +603,6 @@
         Cleaner.remove(this);
       }
     });
-    delete ComplexField.prototype.template;
     
     ComplexField.Item = ComplexFieldItem;
 
@@ -631,6 +610,9 @@
     // Radio group
     //
 
+   /**
+    * @class
+    */
     var RadioGroupItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.RadioGroup.Item',
 
@@ -664,65 +646,28 @@
           this.select();
 
         ComplexFieldItem.prototype.templateAction.call(this, actionName, event);
-      }/*,
-
-      init: function(config){
-        ComplexFieldItem.prototype.init.call(this, config);
-
-        //this.event_update(this, {});
-        //this.dispatch('update', this, this.info, this.info, {});
-      }*/
+      }
     });
 
+   /**
+    * @class
+    */
     Field.RadioGroup = Class(ComplexField, {
       className: namespace + '.Field.RadioGroup',
 
       childClass: RadioGroupItem,
 
-      fieldTemplate: new Template(
+      template: createFieldTemplate(baseFieldTemplate,
         '<div{field|childNodesElement} class="Basis-RadioGroup"></div>'
       ),
 
       childFactory: function(config){
         var child = ComplexField.prototype.childFactory.call(this, config);
+
         child.tmpl.field.name = this.name;
 
         return child;
-      }/*,
-
-      init: function(config){
-        ComplexField.prototype.init.call(this, config);
-
-        //Event.addHandler(this.childNodesElement, 'click', this.change, this);
-        Event.addHandler(this.childNodesElement, 'click', function(event){
-          var sender = Event.sender(event);
-          var item = sender.tagName == 'LABEL' ? sender : DOM.parent(sender, 'LABEL', 0, this.field);
-
-          if (!item || !item.node) 
-            return;
-
-          if (!item.node.isDisabled())
-          {
-            var self = this;
-            setTimeout(function(){
-              self.dispatch('click', event, item.node);
-              item.node.dispatch('click', event);
-            }, 0);
-          }
-
-          Event.kill(event);
-        }, this);
-
-        //return config;
-      },*/
-      /*appendChild: function(newChild){
-        if (newChild = this.inherit(newChild, refChild))
-          newChild.field.name = this.name;
-      },
-      insertBefore: function(newChild, refChild){
-        if (newChild = this.inherit(newChild, refChild))
-          newChild.field.name = this.name;
-      }*/
+      }
     });
 
     Field.RadioGroup.Item = RadioGroupItem;
@@ -732,9 +677,8 @@
     //
 
    /**
-    * @class CheckGroupItem
+    * @class
     */
-
     var CheckGroupItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.CheckGroup.Item',
 
@@ -762,15 +706,10 @@
       templateAction: function(actionName, event){
         if (actionName == 'click' && !this.isDisabled())
         {
-          var self = this;
-          setTimeout(function(){
-            if (self.selected)
-              self.unselect();
-            else
-              self.select(self.parentNode.multipleSelect);
-          }, 0);
+          this.select(this.parentNode.multipleSelect);
 
-          Event.kill(event);
+          if (Event.sender(event).tagName != 'INPUT')
+            Event.kill(event);
         }
 
         ComplexFieldItem.prototype.templateAction.call(this, actionName, event);
@@ -778,9 +717,8 @@
     });
 
    /**
-    * @class Field.CheckGroup
+    * @class
     */
-
     Field.CheckGroup = Class(ComplexField, {
       className: namespace + '.Field.CheckGroup',
 
@@ -788,34 +726,9 @@
 
       multipleSelect: true,
 
-      fieldTemplate: new Template(
+      template: createFieldTemplate(baseFieldTemplate,
         '<div{field|childNodesElement} class="Basis-CheckGroup"></div>'
-      )/*,
-
-      init: function(config){
-        config = this.inherit(config);
-
-        Event.addHandler(this.childNodesElement, 'click', function(event){
-          var sender = Event.sender(event);
-          var item = sender.tagName == 'LABEL' ? sender : DOM.parent(sender, 'LABEL', 0, this.field);
-
-          if (!item || !item.node) 
-            return;
-
-          if (!item.node.isDisabled())
-          {
-            var self = this;
-            setTimeout(function(){
-              self.dispatch('click', event, item.node);
-              item.node.dispatch('click', event);
-            }, 0);
-          }
-
-          Event.kill(event);
-        }, this);
-
-        return config;
-      }*/
+      )
     });
 
     Field.CheckGroup.Item = CheckGroupItem;
@@ -847,13 +760,15 @@
       )
     });
 
-
+   /**
+    * @class
+    */
     Field.Select = Class(ComplexField, {
       className: namespace + '.Field.Select',
 
       childClass: SelectItem,
       
-      fieldTemplate: new Template(
+      template: createFieldTemplate(baseFieldTemplate,
         '<select{field|childNodesElement}/>'
       ),
 
@@ -885,24 +800,7 @@
       },
       hide: function(){ 
         cssClass(this.tmpl.field).remove('Basis-DropdownList-Opened'); 
-      }/*,
-      click: function(event, node){
-        var sender = Event.sender(event);
-        var item = sender.tagName == 'A' ? sender : DOM.parent(sender, 'A', 0, this.content);
-
-        if (!item || !item.node) 
-          return;
-
-        if (!item.node.isDisabled())
-        {
-          this.hide();
-
-          this.dispatch('click', event, item.node);
-          item.node.dispatch('click', event);
-        }
-
-        Event.kill(event);
-      }*/
+      }
     };
 
     //
@@ -912,11 +810,6 @@
     var ComboboxItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.Combobox.Item',
 
-      /*click:  function(){
-        this.select();
-        //if (this.parentNode)
-        //  this.parentNode.setValue(this.getValue());
-      },*/
       event_update: function(object, delta){
         this.tmpl.titleText.nodeValue = this.titleGetter(object.info, object);
 
@@ -1026,7 +919,7 @@
         '</div>'
       ),*/
 
-      fieldTemplate: new Template(
+      template: createFieldTemplate(baseFieldTemplate,
         '<a{field} class="Basis-DropdownList" href="#" event-click="click">' +
           '<span class="Basis-DropdownList-Caption">{captionText}</span>' +
           '<span class="Basis-DropdownList-Trigger"/>' +
@@ -1075,17 +968,8 @@
         
         this.popup.addHandler(ComboboxPopupHandler, this);
 
-        /*if (items)
-          DOM.insert(this, items);*/
-
         if (this.property)
           this.property.addLink(this, this.setValue); 
-
-        /*if (typeof defaultValue != 'undefined')
-          this.defaultValue = defaultValue;
-
-        this.setDefaultValue();*/
-        //this.dispatch('update', this, this.info);
 
         this.event_update(this);
       },
@@ -1142,11 +1026,11 @@
         if (this.property)
         {
           this.property.removeLink(this);
-          delete this.property;
+          this.property = null;
         }
 
         this.popup.destroy();
-        delete this.popup;
+        this.popup = null;
 
         ComplexField.prototype.destroy.call(this);
       }
@@ -1223,95 +1107,9 @@
     // FORM
     //
 
-    /*var Form = Class(Control, {
-      className: namespace + '.Form',
-      
-      canHaveChildren: false,
-      
-      template: new Template(
-        '<form{element}/>'
-      ),
-
-      init: function(config){
-        this.selection = false;
-
-        Control.prototype.init.call(this, config);
-
-        if (this.target)
-          this.element.target = this.target;
-          
-        if (this.action)
-          this.element.action = this.action;
-          
-        if (this.enctype)
-          this.element.enctype = this.enctype;
-
-        Event.addHandler(this.element, 'submit', this.submit, this);
-        this.setMethod(this.method);
-
-        this.element.onsubmit = this.submit;
-        this.onSubmit = this.onSubmit || Function.$false;
-
-        this.content = new FormContent(complete({ container: this.element, onSubmit: Function.$false }));
-      },
-      setData: function(data){
-        ;;; if (typeof console != 'undefined') console.warn('Form.setData() method deprecated. Use Form.loadData() instead');
-        this.loadData(data);
-      },
-      loadData: function(data){
-        return this.content.loadData(data);
-      },
-      getFieldByName: function(name){
-        return this.content.getFieldByName(name);
-      },
-      getFieldById: function(id){
-        return this.content.getFieldById(id);
-      },
-      setMethod: function(method){
-        this.element.method = method ? method.toUpperCase() : 'POST';
-      },
-      submit: function(){
-        var result = (this.validate() === true) && !this.onSubmit();
-
-        if (result)
-          if (this.tagName == 'FORM')
-            return false;
-          else
-            this.element.submit();
-        
-        return true;  
-      },
-      setDefaultState: function(){
-        ;;; if (typeof console != 'undefined') console.warn('Form.setDefaultState() is deprecated. Use Form.reset() instead');
-        return this.content.setDefaultState();
-      },
-      reset: function(){
-        return this.content.reset();
-      },
-      validate: function(){
-        return this.content.validate();
-      },
-      serialize: function(){
-        return this.content.serialize();
-      },
-
-      appendChild: function(newChild){
-        return this.content.appendChild(newChild);
-      },
-      removeChild: function(oldChild){
-        return this.content.removeChild(oldChild);
-      },
-      insertBefore: function(newChild, refChild){
-        return this.content.insertBefore(newChild, refChild);
-      },
-      replaceChild: function(newChild, oldChild){
-        return this.content.replaceChild(newChild, oldChild);
-      },
-      clear: function(){
-        return this.content.clear();
-      }
-    });*/
-
+   /**
+    * @class
+    */
     var FormContent = Class(Control, {
       className: namespace + '.FormContent',
       
@@ -1340,7 +1138,7 @@
       },
       
       template: new Template(
-        '<div{element|content|childNodesElement} class="Basis-FormContent"/>'
+        '<div{element} class="Basis-FormContent"/>'
       ),
 
       getFieldByName: function(name){
@@ -1406,6 +1204,9 @@
       }
     });
 
+   /**
+    * @class
+    */
     var Form = Class(FormContent, {
       className: namespace + '.Form',
       
@@ -1414,6 +1215,8 @@
           '<div{content|childNodesElement} class="Basis-FormContent"/>' +
         '</form>'
       ),
+
+      method: 'POST',
 
       init: function(config){
         this.selection = false;
@@ -1586,25 +1389,10 @@
       }
     });
     
-    /*var MatchInputHandler = {
-      keyup: function(){
-        this.matchFilter.set(this.tmpl.field.value);
-      },
-      change: function(){
-        this.matchFilter.set(this.tmpl.field.value);
-      }
-    };*/
-
     var MatchInput = Class(Field.Text, {
       cssClassName: 'Basis-MatchInput',
 
       matchFilterClass: MatchFilter,
-
-      /*template: new Template(
-        '<div{element|content} class="Basis-MatchInput">' +
-          '<input{field} type="text"/>' +
-        '</div>'
-      ),*/
 
       event_keyup: function(event){
         this.matchFilter.set(this.tmpl.field.value);
@@ -1620,13 +1408,7 @@
         Field.Text.prototype.init.call(this, config);
         
         this.matchFilter = new this.matchFilterClass(this.matchFilter);
-        //Event.addHandlers(this.tmpl.field, MatchInputHandler, this);
-      }/*,
-      destroy: function(){
-        Event.clearHandlers(this.tmpl.field);
-        
-        this.constructor.prototype.destroy.call(this);
-      }*/
+      }
     });
 
     //

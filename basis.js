@@ -1616,7 +1616,7 @@
       * @config {boolean} traceEvents_ Debug for.
       * @constructor
       */
-      init: function(config){
+      //init: function(config){
 
         //instanceMap[this.eventObjectId] = this;
         // init properties
@@ -1639,7 +1639,7 @@
           // debug for
           ;;;if (this.traceEvents_) (this.handlers_ || (this.handlers_ = [])).push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
         }*/
-      },
+      //},
 
      /**
       * Registrates new event handler set for object.
@@ -1654,8 +1654,6 @@
         if (!thisObject)
           thisObject = this;
         
-        //;;;if (!this.handlers_ && typeof console != 'undefined') console.warn('Add handler for not inited or destroyed instance of EventObject (' + this.className + ')');
-
         // search for duplicate
         // check from end to start is more efficient for objects which often add/remove handlers
         for (var i = this.handlers_.length, item; i --> 0;)
@@ -3299,8 +3297,6 @@
     var Template = Class(null, {
       className: namespace + '.Template',
 
-      map_: tmplNodeMap,
-
      /**
       * @param {string|function()} template Template source code that will be parsed
       * into DOM structure prototype. Parsing will be initiated on first
@@ -3312,6 +3308,8 @@
       init: function(template){
         this.source = template;
       },
+
+     /***/
       parse: function(){
         if (this.proto)
           return;
@@ -3523,33 +3521,39 @@
             body[j].path = body[j].path.replace(path_re, body[i].name);
         }
 
-        this.createInstance = new Function('proto', 'map', 
-          'return function(object, node){' +
-          '  object = object || {};\n' + 
-          '  var html = proto.cloneNode(true);\n' + 
-          body.map(String.format,
-          '  {alias} = {path};\n'
-          ).join('') +
-          '  if (node && object.element)\n' +
-          '  {\n' + 
-          '    var id = map.seed++;\n' +
-          '    map[id] = node;\n' +
-          '    object.element.' + HTML_EVENT_OBJECT_ID_HOLDER + ' = id;' +
-          //'    ;;;object.element.setAttribute("_e", node.eventObjectId);' +
-          '  }' +
-          '  return object;' +
-          '}'
-        )(proto, tmplNodeMap);
+        this.createInstance = new Function('proto', 'map', 'return ' + 
 
-        this.clearInstance = new Function('map',
-          'return function(object, node){\n' +
-          '  var id = object.element && object.element.' + HTML_EVENT_OBJECT_ID_HOLDER + ';\n' +
-          '  if (id) delete map[id];\n' +
-          aliases.map(String.format,
-          '  delete object.{0};\n'
-          ).join('') +
-          '}'
-        )(tmplNodeMap);
+          function(object, node){
+            var html = proto.cloneNode(true);
+            object = object || {};
+
+            _code_(); // <-- will be replaced for specific code
+
+            if (node && object.element)
+            {
+              var id = map.seed++;
+              map[id] = node;
+              object.element.basisObjectId = id;
+              //;;;object.element.setAttribute("_e", node.eventObjectId);
+            }
+
+            return object;
+          }
+
+        .toString().replace('_code_()', body.map(String.format,'{alias}={path};\n').join('')))(proto, tmplNodeMap);
+
+        this.clearInstance = new Function('map', 'return ' +
+
+          function(object, node){
+            var id = object.element && object.element.basisObjectId;
+            if (id)
+              delete map[id];
+
+            _code_(); // <-- will be replaced for specific code
+
+          }
+
+        .toString().replace('_code_()', aliases.map(String.format,'object.{0}=null;\n').join('')))(tmplNodeMap);
       },
       createInstance: function(object, node){
         this.parse();
