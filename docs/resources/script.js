@@ -56,12 +56,17 @@
     }
 
     return {
-      scrollTo: function(relElement){
+      scrollTo: function(relElement, jump){
         var curScrollTop = element.scrollTop;
         modificator.setRange(curScrollTop, curScrollTop);
         thread.stop();
-        modificator.setRange(curScrollTop, relElement.offsetTop);
-        thread.start();
+        if (jump)
+          element.scrollTop = relElement.offsetTop;
+        else
+        {
+          modificator.setRange(curScrollTop, relElement.offsetTop);
+          thread.start();
+        }
       }
     }
   };
@@ -83,28 +88,87 @@
         this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
           return view.isAcceptableObject(this.info);
         }, this), true);
+        this.scrollTo(this.firstChild.element, true);
       }
       else
         this.clear(true);
     }
   });
 
+  var prototypeDataset = new nsWrappers.ChildNodesDataset(nsView.viewPrototype);
+  var prototypeMapPopup = new Basis.Controls.Popup.Balloon({
+    id: 'PrototypeMapPopup',
+    dir: 'center bottom center top',
+    selection: {},
+    childClass: Class(nsWrappers.TmplNode,
+      nsWrappers.simpleTemplate('<div{element} class="item" event-click="scrollTo">{this_info_title}</div>'),
+      {
+        templateAction: function(actionName){
+          if (actionName == 'scrollTo')
+          {
+            var element = this.delegate.element;
+            targetContent.scrollTo(element);
+            this.parentNode.hide();
+            cssClass(element).add('highlight');
+            setTimeout(function(){ cssClass(element).remove('highlight'); });
+          }
+        }
+      }
+    ),
+    localSorting: Function.getter('info.title'),
+    event_beforeShow: function(){
+      this.constructor.prototype.event_beforeShow.call(this);
+      this.setCollection(prototypeDataset);
+    },
+    event_show: function(){
+      this.constructor.prototype.event_show.call(this);
+      prototypeMapPopupMatchInput.select();
+    },
+    event_hide: function(){
+      this.constructor.prototype.event_hide.call(this);
+      this.setCollection();
+      prototypeMapPopupMatchInput.setValue();
+    }
+  });
+
+  var prototypeMapPopupMatchInput = new nsForm.MatchInput({
+    event_keyup: function(event){
+      this.constructor.prototype.event_keyup.call(this);
+
+      var selected = prototypeMapPopup.selection.pick();
+      switch (Event.key(event)){
+        case Event.KEY.UP: 
+          prototypeMapPopup.selection.set([selected && selected.previousSibling || prototypeMapPopup.lastChild]);
+        break;
+        case Event.KEY.DOWN: 
+          prototypeMapPopup.selection.set([selected && selected.nextSibling || prototypeMapPopup.firstChild]);
+        break;
+        case Event.KEY.ENTER: 
+          if (selected)
+            selected.templateAction('scrollTo');
+        break;
+      }
+    },
+    matchFilter: {
+      node: prototypeMapPopup,
+      textNodeGetter: Function.getter('tmpl.this_info_title')
+    }
+  });
+  DOM.insert(prototypeMapPopup.tmpl.content.parentNode, prototypeMapPopupMatchInput.element, DOM.INSERT_BEGIN);
+
   var targetHeader = new nsWrappers.TmplContainer({
     delegate: targetContent,
     collection: new nsWrappers.ChildNodesDataset(targetContent),
 
-    /*childClass: Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate('<button{element} event-click="click">{this_delegate_viewHeader}</button>'), {
-      templateAction: function(actionName, event){
-        if (actionName == 'click')
-          this.delegate.parentNode.smoothScroll.scrollTo(this.delegate.element);
-      }
-    }),*/
     childClass: Class(Basis.Controls.Button.Button, {
       captionGetter: function(button){
         return button.delegate.viewHeader;
       },
       handler: function(){
-        this.delegate.parentNode.scrollTo(this.delegate.element);
+        if (this.delegate === nsView.viewPrototype)
+          prototypeMapPopup.show(this.element);
+        else
+          this.delegate.parentNode.scrollTo(this.delegate.element);
       }
     }),
 
@@ -477,7 +541,7 @@
 
   Event.addGlobalHandler('keydown', function(e){
     var event = Event(e);
-    if (event.ctrlKey || event.shiftKey || event.altKey)
+    if (event.ctrlKey || event.shiftKey || event.altKey || prototypeMapPopup.visible)
       return;
 
     DOM.focus(searchInput.tmpl.field, !searchInputFocused);

@@ -101,7 +101,7 @@
       event_hide: createEvent('hide'),
       event_realign: createEvent('realign'),
       event_cleanup: createEvent('cleanup'),
-      event_layoutChanged: createEvent('layoutChanged') && function(oldOrientation, oldDir){
+      event_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir') && function(oldOrientation, oldDir){
         var oldClass = (oldOrientation + '-' + oldDir.qw().slice(2, 4).join('-')).toLowerCase();
         var newClass = (this.orientation + '-' + this.dir.qw().slice(2, 4).join('-')).toLowerCase();
         cssClass(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
@@ -332,7 +332,7 @@
           this.event_realign();
         }
       },
-      show: function(relElement, dir, orientation, args){
+      show: function(relElement, dir, orientation){
         // assign new offset element
         this.relElement = DOM.get(relElement) || this.relElement;
 
@@ -356,7 +356,7 @@
           PopupManager.appendChild(this);
 
           // dispatch `beforeShow` event, there we can fill popup with content
-          this.event_beforeShow.apply(this, args || []);
+          this.event_beforeShow();
           //this.dispatch.apply(this, ['beforeShow'].concat(args));
 
           // set visible flag to TRUE
@@ -370,7 +370,7 @@
 
           // dispatch `show` event, there we can set focus for elements etc.
           //this.dispatch.apply(this, ['show'].concat(args));
-          this.event_show.apply(this, args);
+          this.event_show();
         }
         else
           this.realign();
@@ -406,17 +406,15 @@
         if (this.thread)
         {
           this.thread.removeHandler(THREAD_HANDLER, this);
-          delete this.thread;
+          this.thread = null;
         }
 
         this.hide();
 
-        //Event.removeHandler(this.element, 'click', this.click, this);
-
         TmplContainer.prototype.destroy.call(this);
 
         this.cssRule.destroy();
-        delete this.cssRule;
+        this.cssRule = null;
 
         Cleaner.remove(this);
       }
@@ -494,25 +492,6 @@
       },
 
       init: function(config){
-        // apply config
-        /*if (typeof config == 'object')
-        {
-          if (config.caption)
-            this.caption = config.caption;
-
-          if (typeof config.captionGetter == 'function')
-            this.captionGetter = config.captionGetter;
-
-          if (config.groupId)
-            this.groupId = config.groupId;
-
-          if (typeof config.handler == 'function')
-            this.handler = config.handler;
-
-          if (typeof config.defaultHandler == 'function')
-            this.defaultHandler = config.defaultHandler;
-        } */
-
         // inherit
         TmplContainer.prototype.init.call(this, config);
 

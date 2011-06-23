@@ -96,7 +96,8 @@
         TmplNode.prototype.event_disable.call(this);
       },
       event_change: createEvent('change'),
-      event_keyup:  createEvent('keyup'),
+      event_keydown: createEvent('keydown'),
+      event_keyup: createEvent('keyup'),
       event_keypress: createEvent('keypress') && function(event){
         var event = Event(event);
         if (event)
@@ -149,6 +150,7 @@
         // set events
         if (this.tmpl.field)
         {
+          Event.addHandler(this.tmpl.field, 'keydown',  this.keydown,  this);
           Event.addHandler(this.tmpl.field, 'keyup',    this.keyup,    this);
           Event.addHandler(this.tmpl.field, 'keypress', this.keypress, this);
           Event.addHandler(this.tmpl.field, 'blur',     this.blur,     this);
@@ -240,8 +242,11 @@
         if (this.validators.remove(validator) && validate)
           this.validate();
       },
-      change: function(){
-        this.event_change();
+      change: function(event){
+        this.event_change(event);
+      },
+      keydown: function(event){
+        this.event_keydown(event);
       },
       keyup: function(event){
         this.event_keyup(event);

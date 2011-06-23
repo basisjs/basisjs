@@ -808,7 +808,7 @@
 
     config = Object.extend({
       document: node.document,
-      selection: node.selection || node.contextSelection
+      contextSelection: node.selection || node.contextSelection
     }, config);
 
     if (factory)

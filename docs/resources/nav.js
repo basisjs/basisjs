@@ -240,8 +240,8 @@
       views: [
         nsView.viewInheritance,
         nsView.viewTemplate,
-        nsView.viewConstructor,
-        nsView.viewConfig,
+        //nsView.viewConstructor,
+        //nsView.viewConfig,
         nsView.viewPrototype
       ],
 
