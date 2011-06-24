@@ -230,7 +230,7 @@
 
       template: new Template(
         '<td{element} class="Basis-Table-Footer-Cell">' +
-          '<div{content}>' + String.Entity.nbsp + '</div>' +
+          '<div{content}>\xA0</div>' +
         '</td>'
       ),
 
@@ -377,7 +377,7 @@
       className: namespace + '.Body',
 
       template: new Template(
-        '<tbody{element} class="Basis-Table-Body" event-click="click">' +
+        '<tbody{element} class{sdf}="Basis-Table-Body" event-click="click">' +
           '<tr class="Basis-Table-GroupHeader">' +
             '<td{content} colspan="100"><span class="expander"/>{titleText}</td>'+ 
           '</tr>' +

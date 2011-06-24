@@ -2654,7 +2654,7 @@
           _code_();
         }
       }
-    }).toString().replace('_code_()', lines.join(';')))(new Template(template));
+    }).toString().replace('_code_()', lines.join(';\n')))(new Template(template));
   };
 
   //

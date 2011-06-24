@@ -322,72 +322,83 @@
  /**
   * @class
   */
-  var TemplateTreeNode = Class(nsTree.TreeNode, {
-    className: namespace + '.TemplateTreeNode',
-    selectable: false
-  });
+  var TemplateTreeNode = Class(nsWrappers.TmplContainer,
+    {
+      childFactory: null,
+      className: namespace + '.TemplateTreeNode',
+      selectable: false
+    }
+  );
 
  /**
   * @class
   */
-  TemplateTreeNode.EmptyElement = Class(TemplateTreeNode, {
-    className: namespace + '.TemplateTreeNode.EmptyElement',
-    template: new Template(
-      '<li{element} class="Doc-TemplateView-Element">' + 
-        '<span href="#"><{titleText}/></span>' + 
-      '</li>'
+  TemplateTreeNode.EmptyElement = Class(TemplateTreeNode,
+    nsWrappers.simpleTemplate(
+      '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
+        '<span href="#"><{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span><!--{attributes}-->/></span>' + 
+      '</div>'
     ),
-    init: function(config){
-      TemplateTreeNode.prototype.init.call(this, config);
+    {
+      className: namespace + '.TemplateTreeNode.EmptyElement',
+      satelliteConfig: {
+        attributes: {
+          existsIf: Function.getter('info.attrs'),
+          instanceOf: Class(nsWrappers.TmplNode, 
+            nsWrappers.simpleTemplate('<span> {this_info_nodeName}="{this_info_nodeValue}"</span>')
+          )
+        }
+      },
+      init: function(config){
+        TemplateTreeNode.prototype.init.call(this, config);
 
-      if (this.info.ref.length)
-      {
-        DOM.insert(this.element, DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref.join('-').split(/(\-)/), { 'span.ref': function(value, idx){ return idx % 2 == 0 } })), 0);
-        cssClass(this.element).add('hasRefs');
+        if (this.info.ref)
+        {
+          //DOM.insert(this.element, DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref.join('-').split(/(\-)/), { 'span.ref': function(value, idx){ return idx % 2 == 0 } })), 0);
+          cssClass(this.element).add('hasRefs');
+        }
       }
     }
-  });
+  );
 
  /**
   * @class
   */
-  TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, {
-    className: namespace + '.TemplateTreeNode.Element',
-    canHaveChildren: true,
-    template: new Template(
-      '<li{element} class="Doc-TemplateView-Element">' + 
-        '<span><{titleText}></span>' + 
-        '<ul{childNodesElement}></ul>' + 
-        '<span></{endText}></span>' +
-      '</li>'
+  TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, 
+    nsWrappers.simpleTemplate(
+      '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
+        '<span href="#"><{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span> {this_info_title}></span>' + 
+        '<div{childNodesElement} class="Doc-TemplateView-NodeContent"></div>' + 
+        '<span></{object_info_nodeName}></span>' +
+      '</div>'
     ),
-    init: function(config){
-      TemplateTreeNode.EmptyElement.prototype.init.call(this, config);
-
-      this.tmpl.endText.nodeValue = this.info.tagName;
+    {
+      className: namespace + '.TemplateTreeNode.Element'
     }
-  });
+  );
 
  /**
   * @class
   */
-  TemplateTreeNode.Text = Class(TemplateTreeNode, {
-    className: namespace + '.TemplateTreeNode.Text',
-    template: new Template(
-      '<li{element} class="Doc-TemplateView-Text">' + 
-        '<span href="#">{titleText}</span>' + 
-      '</li>'
+  TemplateTreeNode.Text = Class(TemplateTreeNode,
+    nsWrappers.simpleTemplate(
+      '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Text">' + 
+        '<span href="#"><span class="refList">{this_info_ref} |</span> "{this_info_nodeValue}"</span>' + 
+      '</div>'
     ),
-    init: function(config){
-      TemplateTreeNode.prototype.init.call(this, config);
+    {
+      className: namespace + '.TemplateTreeNode.Text',
+      init: function(config){
+        TemplateTreeNode.prototype.init.call(this, config);
 
-      if (this.info.ref.length)
-      {
-        DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
-        cssClass(this.element).add('hasRefs');
+        if (this.info.ref)
+        {
+          //DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
+          cssClass(this.element).add('hasRefs');
+        }
       }
     }
-  });
+  );
 
  /**
   * @class
@@ -395,14 +406,14 @@
   TemplateTreeNode.Comment = Class(TemplateTreeNode, {
     className: namespace + '.TemplateTreeNode.Comment',
     template: new Template(
-      '<li{element} class="Doc-TemplateView-Comment">' + 
-        '<--<span>{titleText}</span>-->' + 
-      '</li>'
+      '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Comment">' + 
+        '<--<span>{this_info_nodeValue}</span>-->' + 
+      '</div>'
     ),
     init: function(config){
       TemplateTreeNode.prototype.init.call(this, config);
 
-      if (this.info.ref.length)
+      if (this.info.ref)
       {
         DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
         cssClass(this.element).add('hasRefs');
@@ -429,6 +440,16 @@
     ),
     event_update: function(object, delta){
       View.prototype.event_update.call(this, object, delta);
+
+      function findRefs(map, node){
+        var result = [];
+
+        for (var key in map)
+          if (map[key] === node)
+            result.push(key);
+
+        return result.length ? result.join(' | ') : null;
+      }
         
       var newInfo = this.info;
       if ('obj' in delta && newInfo.obj)
@@ -450,18 +471,32 @@
           {
             if ([DOM.ELEMENT_NODE, DOM.TEXT_NODE, DOM.COMMENT_NODE].has(node.nodeType))
             {
-              var refs = [];
+              var attrs = [];
 
-              for (key in map)
-                if (map[key] === node)
-                  refs.push(key);
+              if (node.nodeType == 1)
+              {
+                for (var i, len = node.attributes.length; i < len; i++)
+                {
+                  var attr = node.attributes[i];
+                  var attrRefs = [];
+
+                  attrs.push({
+                    info: {
+                      nodeName: attr.nodeName,
+                      nodeValue: attr.nodeValue,
+                      refs: findRefs(map, attr)
+                    }
+                  });
+                }
+              }
 
               var cfg = {
                 info: {
-                  el: node,
-                  ref: refs,
-                  title: node.nodeType == DOM.ELEMENT_NODE ? DOM.outerHTML(node.cloneNode(false)).match(/<([^>]+)>/)[1] : node.nodeValue,
-                  tagName: (node.tagName || '').toLowerCase()
+                  nodeType: node.nodeType,
+                  nodeValue: node.nodeType == DOM.ELEMENT_NODE ? '' : node.nodeValue,
+                  nodeName: node.nodeType == DOM.ELEMENT_NODE ? node.tagName.toLowerCase() : '',
+                  ref: findRefs(map, node),
+                  attrs: attrs
                 },
                 childNodes: []
               };
@@ -476,18 +511,27 @@
           while (node = dw.next());
 
           var cf = function(config){
-            if (config.info.tagName)
-              childClass = config.childNodes.length ? TemplateTreeNode.Element : TemplateTreeNode.EmptyElement;
-            else
-              if (config.info.el.nodeType == 3)
+            switch (config.info.nodeType)
+            {
+              case 1:
+                childClass = config.childNodes.length ? TemplateTreeNode.Element : TemplateTreeNode.EmptyElement;
+              break;
+              case 3:
                 childClass = TemplateTreeNode.Text;
-              else
+              break;
+              default:
                 childClass = TemplateTreeNode.Comment;
+            }
+
             return new childClass(config);
           };
-          var t = new nsTree.Tree({ childFactory: cf, childNodes: map.element.parentNode.c.childNodes });
+          var t = new nsWrappers.TmplControl({
+            childFactory: cf,
+            childNodes: map.element.parentNode.c.childNodes
+          });
 
           //console.log(map.element.c);
+
 
           DOM.insert(DOM.clear(this.tmpl.content), t.element)
         }
@@ -501,16 +545,26 @@
             title: 'References',
             childNodes: [
               {
-                title: 'Show',
+                title: 'Schematic',
                 selected: true,
                 handler: function(){
                   cssClass(owner.tmpl.content).add('show-references');
+                  cssClass(owner.tmpl.content).remove('show-realReferences');
+                }
+              },
+              {
+                title: 'Real',
+                selected: true,
+                handler: function(){
+                  cssClass(owner.tmpl.content).remove('show-references');
+                  cssClass(owner.tmpl.content).add('show-realReferences');
                 }
               },
               {
                 title: 'Hide',
                 handler: function(){
                   cssClass(owner.tmpl.content).remove('show-references');
+                  cssClass(owner.tmpl.content).remove('show-realReferences');
                 }
               }
             ]

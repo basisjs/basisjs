@@ -342,14 +342,11 @@
     display: none;
   }
 
-  .Doc-TemplateView-Element UL,
-  .Doc-TemplateView-Element LI
+  .Doc-TemplateView-Node
   {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+    margin: 1px 0;
   }
-  .Doc-TemplateView-Element UL
+  .Doc-TemplateView-NodeContent
   {
     padding-left: 20px;
   }
@@ -362,7 +359,28 @@
       -moz-border-radius: 0 4px 4px 4px;
     border-radius: 0 4px 4px 4px;
   }
-  #Content .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs > .refList
+  #Content .viewTemplate .show-realReferences .Doc-TemplateView-Element.hasRefs > SPAN .refList
+  {
+    display: inline;
+    background: #CEE1EB;
+    font-size: 85%;
+    padding: 1px 1px 2px 1px;
+    margin-left: 1px;
+    position: relative;
+    top: -1px;
+      -moz-border-radius: 3px;
+    border-radius: 3px;
+  }
+  #Content .viewTemplate .refList B
+  {
+    display: none;
+  }
+  #Content .viewTemplate .show-realReferences .refList B
+  {
+    display: inline;
+    font-weight: normal;
+  }
+  #Content .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs > SPAN .refList
   {
     line-height: 1em;
     display: block;
@@ -370,7 +388,7 @@
     top: -1em;
     margin-top: -7px;
     margin-left: -4px;
-    padding: 3px 0 2px;
+    padding: 3px 1ex 2px;
     font-size: 85%;
       -moz-border-radius: 4px 4px 0 0;
     border-radius: 4px 4px 0 0;
@@ -401,7 +419,6 @@
   }
   #Content .viewTemplate .Doc-TemplateView-Text.hasRefs .refList
   {
-    margin-right: 1ex;
     display: inline;
     color: #006600;
   }
