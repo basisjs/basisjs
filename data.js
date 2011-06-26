@@ -977,7 +977,7 @@
       var items = this.items;
       if (items)
       {
-        delete this.items;
+        this.items = [];
         this.set(items);
       }
     },

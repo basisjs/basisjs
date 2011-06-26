@@ -377,7 +377,7 @@
       className: namespace + '.Body',
 
       template: new Template(
-        '<tbody{element} class{sdf}="Basis-Table-Body" event-click="click">' +
+        '<tbody{element} class="Basis-Table-Body" event-click="click">' +
           '<tr class="Basis-Table-GroupHeader">' +
             '<td{content} colspan="100"><span class="expander"/>{titleText}</td>'+ 
           '</tr>' +

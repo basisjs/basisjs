@@ -326,7 +326,27 @@
     {
       childFactory: null,
       className: namespace + '.TemplateTreeNode',
-      selectable: false
+      selectable: false,
+      init: function(config){
+        nsWrappers.TmplContainer.prototype.init.call(this, config);
+
+        if (this.info.ref)
+        {
+          //DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
+          cssClass(this.element).add('hasRefs');
+        }
+      }
+    }
+  );
+
+  TemplateTreeNode.Attribute = Class(TemplateTreeNode, 
+    nsWrappers.simpleTemplate(
+      '<span{element} class="Doc-TemplateView-Node Doc-TemplateView-Attribute">' +
+        '<span>{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span>="{this_info_nodeValue}"</span>' + 
+      '</div>'
+    ),
+    {
+      className: namespace + '.TemplateTreeNode.Attribute'
     }
   );
 
@@ -336,7 +356,7 @@
   TemplateTreeNode.EmptyElement = Class(TemplateTreeNode,
     nsWrappers.simpleTemplate(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
-        '<span href="#"><{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span><!--{attributes}-->/></span>' + 
+        '<span><{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span><!--{attributes}-->/></span>' + 
       '</div>'
     ),
     {
@@ -344,18 +364,15 @@
       satelliteConfig: {
         attributes: {
           existsIf: Function.getter('info.attrs'),
-          instanceOf: Class(nsWrappers.TmplNode, 
-            nsWrappers.simpleTemplate('<span> {this_info_nodeName}="{this_info_nodeValue}"</span>')
+          collection: function(node){
+            return new Basis.Data.Dataset({ items: node.info.attrs });
+          },
+          instanceOf: Class(nsWrappers.TmplContainer,
+            {
+              template: new Template('<span{element}><!-- {childNodesHere} --></span>'),
+              childClass: TemplateTreeNode.Attribute
+            }
           )
-        }
-      },
-      init: function(config){
-        TemplateTreeNode.prototype.init.call(this, config);
-
-        if (this.info.ref)
-        {
-          //DOM.insert(this.element, DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref.join('-').split(/(\-)/), { 'span.ref': function(value, idx){ return idx % 2 == 0 } })), 0);
-          cssClass(this.element).add('hasRefs');
         }
       }
     }
@@ -367,7 +384,7 @@
   TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, 
     nsWrappers.simpleTemplate(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
-        '<span href="#"><{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span> {this_info_title}></span>' + 
+        '<span><{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span><!--{attributes}-->></span>' + 
         '<div{childNodesElement} class="Doc-TemplateView-NodeContent"></div>' + 
         '<span></{object_info_nodeName}></span>' +
       '</div>'
@@ -383,43 +400,27 @@
   TemplateTreeNode.Text = Class(TemplateTreeNode,
     nsWrappers.simpleTemplate(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Text">' + 
-        '<span href="#"><span class="refList">{this_info_ref} |</span> "{this_info_nodeValue}"</span>' + 
+        '<span><span class="refList">{{this_info_ref}} </span>{this_info_nodeValue}</span>' + 
       '</div>'
     ),
     {
-      className: namespace + '.TemplateTreeNode.Text',
-      init: function(config){
-        TemplateTreeNode.prototype.init.call(this, config);
-
-        if (this.info.ref)
-        {
-          //DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
-          cssClass(this.element).add('hasRefs');
-        }
-      }
+      className: namespace + '.TemplateTreeNode.Text'
     }
   );
 
  /**
   * @class
   */
-  TemplateTreeNode.Comment = Class(TemplateTreeNode, {
-    className: namespace + '.TemplateTreeNode.Comment',
-    template: new Template(
+  TemplateTreeNode.Comment = Class(TemplateTreeNode,
+    nsWrappers.simpleTemplate(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Comment">' + 
         '<--<span>{this_info_nodeValue}</span>-->' + 
       '</div>'
     ),
-    init: function(config){
-      TemplateTreeNode.prototype.init.call(this, config);
-
-      if (this.info.ref)
-      {
-        DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
-        cssClass(this.element).add('hasRefs');
-      }
+    {
+      className: namespace + '.TemplateTreeNode.Comment'
     }
-  });
+  );
 
 
  /**
@@ -475,18 +476,18 @@
 
               if (node.nodeType == 1)
               {
-                for (var i, len = node.attributes.length; i < len; i++)
+                for (var i = 0, len = node.attributes.length; i < len; i++)
                 {
                   var attr = node.attributes[i];
                   var attrRefs = [];
 
-                  attrs.push({
+                  attrs.push(new Basis.Data.DataObject({
                     info: {
                       nodeName: attr.nodeName,
                       nodeValue: attr.nodeValue,
-                      refs: findRefs(map, attr)
+                      ref: findRefs(map, attr)
                     }
-                  });
+                  }));
                 }
               }
 
@@ -496,7 +497,7 @@
                   nodeValue: node.nodeType == DOM.ELEMENT_NODE ? '' : node.nodeValue,
                   nodeName: node.nodeType == DOM.ELEMENT_NODE ? node.tagName.toLowerCase() : '',
                   ref: findRefs(map, node),
-                  attrs: attrs
+                  attrs: attrs.length ? attrs : null
                 },
                 childNodes: []
               };
@@ -553,7 +554,7 @@
                 }
               },
               {
-                title: 'Real',
+                title: 'Highlight',
                 selected: true,
                 handler: function(){
                   cssClass(owner.tmpl.content).remove('show-references');
