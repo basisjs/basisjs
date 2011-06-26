@@ -79,6 +79,7 @@
       canHaveChildren: false,
 
       serializable: true,
+      template: baseFieldTemplate,
 
       event_select: function(){
         DOM.focus(this.tmpl.field, true);
@@ -126,8 +127,6 @@
 
         EventObject.event.blur.call(this, event);
       },
-      
-      template: baseFieldTemplate,
 
       init: function(config){
         TmplNode.prototype.init.call(this, config);
@@ -191,11 +190,8 @@
           this.tmpl.field.removeAttribute('readonly', 0);
       },
       setDefaultValue: function(){
-        if (typeof this.defaultValue != 'undefined')
-        {
-          this.setValue(this.defaultValue);
-          this.setValid();
-        }
+        this.setValue(this.defaultValue);
+        this.setValid();
       },
       setSample: function(sample){
         if (this.tmpl.sampleContainer && sample)
@@ -218,8 +214,12 @@
         return this.tmpl.field.value;
       },
       setValue: function(newValue){
-        this.tmpl.field.value = newValue || '';
-        this.event_change();
+        newValue = newValue || '';
+        if (this.tmpl.field.value != newValue)
+        {
+          this.tmpl.field.value = newValue;
+          this.event_change();
+        }
       },
       /*disable: function(){
         if (!this.disabled)
@@ -1380,11 +1380,14 @@
       },
 
       match: function(){
-        for(var child = this.node.firstChild; child; child = child.nextSibling)
+        for (var child = this.node.firstChild; child; child = child.nextSibling)
           this.matchFunction(child, this.value == '');
       }
     });
 
+   /**
+    * @class
+    */
     var MatchFilter = Class(MatchProperty, {
       className: namespace + '.MatchFilter',
       event_change: function(value){
@@ -1394,6 +1397,9 @@
       }
     });
     
+   /**
+    * @class
+    */
     var MatchInput = Class(Field.Text, {
       cssClassName: 'Basis-MatchInput',
 

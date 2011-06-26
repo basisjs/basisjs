@@ -515,10 +515,10 @@
     border: 1px solid #F0F0F0;
     border-top-color: white;
     padding: .25em 1ex;
-      -webkit-transition: background-color 1.8s .5s;
-      -moz-transition: background-color 1.8s .5s;
-      -o-transition: background-color 1.8s .5s;
-    transition: background-color 1.8s .5s;
+      -webkit-transition: background-color 1.5s .5s;
+      -moz-transition: background-color 1.5s .5s;
+      -o-transition: background-color 1.5s .5s;
+    transition: background-color 1.5s .5s;
   }
   #Content .viewPrototype .item.highlight
   {

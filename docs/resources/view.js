@@ -555,7 +555,6 @@
               },
               {
                 title: 'Highlight',
-                selected: true,
                 handler: function(){
                   cssClass(owner.tmpl.content).remove('show-references');
                   cssClass(owner.tmpl.content).add('show-realReferences');

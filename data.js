@@ -509,7 +509,7 @@
         {
           // assing new delegate
           this.delegate = newDelegate;
-          this.target = newDelegate.target || (this.targetPoint && newDelegate);
+          this.target = newDelegate.target || (this.targetPoint ? newDelegate : null);
           this.root = newDelegate.root;
           this.info = newDelegate.info;
           this.state = newDelegate.state;

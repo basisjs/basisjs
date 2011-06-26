@@ -587,16 +587,9 @@
       ;;;if (typeof console != 'undefined') console.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.eventObjectId + ': ' + message, entity); 
     };
 
-    var ENTITY_ROLLBACK_HANDLER = {
-      stateChanged: function(object, oldState){
-        if (this.state == STATE.READY)
-          this.rollbackData_ = null;
-      }
-    };
-
     function fieldCleaner(key){
       this.set(key, null);
-    }
+    };
 
    /**
     * @class
@@ -618,7 +611,7 @@
 
         canHaveDelegate: false,
 
-        rollbackData_: null,
+        modified: null,
 
         /*
         behaviour: {
@@ -731,7 +724,7 @@
           var delta;
           var updateDelta;
           var result;
-          var rollbackInfo = this.rollbackData_;
+          var rollbackInfo = this.modified;
           var newValue = valueWrapper(value, this.info[key]);
           var curValue = this.info[key];  // NOTE: value can be modify by valueWrapper,
                                           // that why we fetch it again after valueWrapper call
@@ -782,14 +775,10 @@
               {
                 // rollback mode
 
-                // add rollback handler
-                if (!this.rollbackHandler_)
-                  this.rollbackHandler_ = this.addHandler(ENTITY_ROLLBACK_HANDLER);
-
                 // create rollback storage if absent
                 // actually this means rollback mode is switched on
                 if (!rollbackInfo)
-                  this.rollbackData_ = rollbackInfo = {};
+                  this.modified = rollbackInfo = {};
 
                 // save current value if key is not in rollback storage
                 // if key is not in rollback storage, than this key didn't change since rollback mode was switched on
@@ -816,7 +805,7 @@
                     delete rollbackInfo[key];
 
                     if (!Object.keys(rollbackInfo).length)
-                      this.rollbackData_ = null;
+                      this.modified = null;
                   }
                 }
               }
@@ -887,7 +876,7 @@
               delete rollbackInfo[key];
 
               if (!Object.keys(rollbackInfo).length)
-                this.rollbackData_ = null;
+                this.modified = null;
             }
           }
 
@@ -961,10 +950,10 @@
           return this.update(data);
         },
         commit: function(data){
-          if (this.rollbackData_)
+          if (this.modified)
           {
-            var rollbackData = this.rollbackData_;
-            this.rollbackData_ = null;
+            var rollbackData = this.modified;
+            this.modified = null;
           }
 
           this.update(data);
@@ -979,10 +968,10 @@
             return;
           }
 
-          if (this.rollbackData_)
+          if (this.modified)
           {
-            var rollbackData = this.rollbackData_;
-            this.rollbackData_ = null;
+            var rollbackData = this.modified;
+            this.modified = null;
             this.update(rollbackData);
 
             this.event_rollbackUpdate(this, rollbackData);
@@ -1018,7 +1007,7 @@
 
           // clear links
           this.info = NULL_INFO; 
-          this.rollbackData_ = null;
+          this.modified = null;
         }
       });
     };

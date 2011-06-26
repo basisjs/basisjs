@@ -148,19 +148,18 @@
   .disabled .Basis-Button
   {
     cursor: default;
+    color: #888;
   }
 
   .disabled .Basis-Button-Back
   {
-    background-color: #F4F4F4;
-    background-image: none;
+    background: #F4F4F4 !important;
 
       -webkit-box-shadow: none;
       -moz-box-shadow: none;
     box-shadow: none;
 
-    color: #888;
-    border-color: #C0C0C0;
+    border-color: #C0C0C0 !important;
   }
 
  /*

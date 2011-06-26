@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Live entity edit</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/form/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/new/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    #ArticleList
+    {
+      border: 1px solid #AAA;
+      width: 320px;
+      height: 450px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      float: left;
+      margin-right: 10px;
+    }
+    .Article
+    {
+      margin: 2px;
+      padding: 4px 4px 4px 24px;
+      border: 1px solid #E0E0E0;
+      border-radius: 3px;
+      background: #F8F8F8 no-repeat 4px 2px;
+      font-size: 85%;
+      cursor: pointer;
+    }
+    .Article-Title
+    {
+      font-weight: bold;
+    }
+    .Article:hover
+    {
+      border-color: #C0C0C0;
+      background-color: #F0F0F0;
+    }
+    .Article.selected
+    {
+      border-color: #A0D8F0;
+      background-color: #F0F4FF;
+    }
+    .Article.modified
+    {
+      background-image: url(live_edit_modified.png);
+    }
+
+    #EditForm
+    {
+      border-radius: 5px;
+      background: #EEE;
+      padding: 10px;
+      float: left;
+    }
+    #EditForm INPUT,
+    #EditForm TEXTAREA
+    {
+      width: 40ex;
+      font-family: Consolas, Courier New, monospace;
+    }
+    #EditForm TEXTAREA
+    {
+      height: 5em;
+      resize: none;
+    }
+
+    .Basis-ButtonPanel
+    {
+      text-align: right;
+      padding-top: 10px;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
+  <script type="text/javascript" src="../../entity.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../form.js"></script>
+  <script type="text/javascript" src="../../locale/en/form.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basis Demos: Live entity edit</h1>
+
+  <p id="demo-summary">
+  </p>
+  <div id="demo-description">
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script id="demo-javascript" type="text/javascript">
+    
+    // Определяем новый тип данных.
+    var Article = new Basis.Entity.EntityType({
+      // Необязательное поле, используется в основном для отладки.
+      name: 'Article',
+      
+      // Определяем набор полей
+      fields: {
+        id: Number,
+        title: String,
+        content: String
+      }
+    });
+
+    // Генерируем тестовый набор данных.
+    for (var i = 1; i < 10; i++)
+      Article({
+        id: i,
+        title: 'Article #' + i,
+        content: (i + ' ').repeat(20)
+      });
+
+    var ArticleNode = Basis.Class(Basis.DOM.Wrapper.TmplNode, 
+      Basis.DOM.Wrapper.simpleTemplate(
+        '<div{element} class="Article" event-click="select">' +
+          '<div class="Article-Title">{this_info_title}</div>' +
+          '<div class="Article-Content">{this_info_content}</div>' +
+        '</div>'
+      ),
+      {
+        templateAction: function(actionName, event){
+          if (actionName == 'select')
+            this.select(Basis.Event(event).ctrlKey);
+        },
+        event_rollbackUpdate: function(object, modifiedDelta){
+          Basis.CSS.cssClass(this.element).bool('modified', object.modified)
+        }
+      }
+    );
+
+    // Создаем дерево
+    var myTree = new Basis.DOM.Wrapper.TmplContainer({
+      id: 'ArticleList',
+
+      // Определяем класс для дочерних узлов (описан выше)
+      childClass: ArticleNode,
+
+      // Задаем управляющую коллекцию. Так как мы используем Entity, то нет необходимости в
+      // создании массива для хранения списка всех экземпляров данных. Так же нет необходимости
+      // отслеживать изменения в данном наборе: новые элементы будут добавляться и удаляться
+      // автоматически.
+      collection: Article.all,
+
+      // Определяем сортировку для дочерних узлов: сортируем по childNode.info.title.
+      localSorting: Function.getter('info.title', String.toLowerCase),
+
+      // Создаем Selection для списка
+      selection: {}
+    });
+
+    myTree.selection.addHandler({
+      datasetChanged: function(){
+        // В данном контесте this указывает на выборку (myTree.selection).
+
+        // Назначаем делегатом формы первый выбранный элемент. Если не выбрано ни одного узла
+        // (this.pick() равно undefined), то форма останется без делегата (по сути не будет
+        // привязана к каким либо данным).
+        myEditor.setDelegate(this.pick());
+      }
+    });
+
+    // Создаем панель с кнопками
+    var myButtonPanel = new Basis.Controls.Button.ButtonPanel({
+      autoDelegateParent: true,
+
+      disabled: true,
+
+      childNodes: [
+        {
+          // Функция сохранения
+          caption: 'Save',
+          handler: function(){
+            myForm.getRootDelegate().commit();
+          }
+        },
+        {
+          // Функция отмены (сброс в начальное состояние).
+          caption: 'Cancel',
+          handler: function(){
+            myForm.getRootDelegate().rollback();
+            myForm.loadData(myForm.info);
+          }
+        }
+      ],
+
+      initHandler: {
+        targetChanged: function(){
+          if (this.target)
+            this.enable();
+          else
+            this.disable();
+        }
+      }
+    });
+
+    function updateObject(){
+      if (myForm && myForm.target)
+        myForm.target.set(this.name, this.getValue(), true);
+    }
+
+    // Создаем форму
+    var myForm = new Basis.Controls.Form.FormContent({
+      // Делаем форму недоступной для редактирования на первоначальном этапе, так как к ней еще
+      // не привязаны данные и соответственно нечего редактировать.
+      disabled: true,
+
+      autoDelegateParent: true,
+
+      // Создаем поля формы.
+      // Важно, чтобы имена полей (свойство name) соотвествовали полям редактируемых данных. Только
+      // в этом случае будет обеспечена правильная работа метода myForm.loadData, а так же данные
+      // полученные путем сериализации формы (myForm.serialize()) будут "совместимы" с редактируемым
+      // типом данных и смогут быть использованы для обновления целевого (редактируемого) объекта.
+      childNodes: [
+        {
+          type: 'text',
+          name: 'title',
+          title: 'Title',
+          initHandler: {
+            change: updateObject,
+            keyup: updateObject
+          }
+        },
+        {
+          type: 'textarea',
+          name: 'content',
+          title: 'Content',
+          initHandler: {
+            change: updateObject,
+            keyup: updateObject
+          }
+        }
+      ]
+    });
+
+    // Добавляем собственные обработчики событий.
+    // Событие смены делегата
+    myForm.addHandler({
+      targetChanged: function(object, oldTarget){
+        // В данном контесте this указывает на форму (myForm).
+        if (this.target)
+        {
+          this.loadData(this.info);
+
+          // Делаем форму активной.
+          this.enable();
+        }
+        else
+        {
+          // Так как форма больше не привязана к данным - очищаем поля.
+          this.reset();
+
+          // Делаем форму НЕактивной.
+          this.disable();
+        }
+      }
+    });
+
+    var myEditor = new Basis.DOM.Wrapper.TmplContainer({
+      id: 'EditForm',
+      targetPoint: true,
+      childNodes: [
+        myForm,
+        myButtonPanel
+      ]
+    });
+
+    // Вставляем компоненты в документ
+    Basis.DOM.insert('demo-container', [
+      myTree.element,
+      myEditor.element
+    ]);
+
+  </script>  
+</body>
+
+</html>

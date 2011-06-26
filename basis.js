@@ -1616,30 +1616,25 @@
       * @config {boolean} traceEvents_ Debug for.
       * @constructor
       */
-      //init: function(config){
+      init: function(config){
 
         //instanceMap[this.eventObjectId] = this;
         // init properties
         //this.handlers_ = [];
 
         // apply config
-        /*if (config)
+        // fast add first hanlder
+        if (this.initHandler)
         {
-          // fast add first hanlder
-          if (this.handlers)
-          {
-            (this.handlers_ = [])[0] = {
-              handler: this.handlers,
-              thisObject: this.handlersContext || this
-            };
-            this.handlers = null; // should we drop this properties?
-            this.handlersContext = null; // should we drop this properties?
-          }
+          (this.handlers_ = [])[0] = {
+            handler: this.initHandler,
+            thisObject: this.initHandlerContext || this
+          };
+        }
 
-          // debug for
-          ;;;if (this.traceEvents_) (this.handlers_ || (this.handlers_ = [])).push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
-        }*/
-      //},
+        // debug for
+        //;;;if (this.traceEvents_) (this.handlers_ || (this.handlers_ = [])).push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
+      },
 
      /**
       * Registrates new event handler set for object.
