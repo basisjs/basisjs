@@ -48,6 +48,9 @@
   // Main part
   //
 
+  var NULL_OBJECT = {};
+  var EMPTY_ARRAY = [];
+
   // States for StateObject
 
   /** @const */ var STATE_UNDEFINED  = 'undefined';
@@ -159,8 +162,6 @@
   //
   // DataObject
   //
-
-  var NULL_INFO = {};
 
  /**
   * @const
@@ -709,7 +710,7 @@
 
       // drop info & state
       this.root = null;
-      this.info = NULL_INFO;
+      this.info = NULL_OBJECT;
       this.state = STATE_UNDEFINED;
     }
   });
@@ -890,48 +891,6 @@
     },
 
    /**
-    * @inheritDocs
-    */
-    dispatch: function(event, dataset, delta){
-      if (event == 'datasetChanged')
-      {
-        var items;
-        var insertCount = 0;
-        var deleteCount = 0;
-        var object;
-
-        // add new items
-        if (items = delta.inserted)
-        {
-          while (object = items[insertCount])
-          {
-            this.item_[object.eventObjectId] = object;
-            insertCount++;
-          }
-        }
-
-        // remove old items
-        if (items = delta.deleted)
-        {
-          while (object = items[deleteCount])
-          {
-            delete this.item_[object.eventObjectId];
-            deleteCount++;
-          }
-        }
-
-        // update item count
-        this.itemCount += insertCount - deleteCount;
-
-        // drop cache
-        delete this.cache_;
-      }
-
-      // inherit
-      DataObject.prototype.dispatch.apply(this, arguments);
-    },
-
-   /**
     * @destructor
     */
     destroy: function(){
@@ -940,12 +899,12 @@
       // inherit
       DataObject.prototype.destroy.call(this);
 
-      this.cache_ = [];
+      this.cache_ = EMPTY_ARRAY;  // empty array here, to prevent recalc cache
       this.itemCount = 0;
 
-      delete this.map_;
-      delete this.item_;
-      delete this.eventCache_;
+      this.map_ = null;
+      this.item_ = null;
+      this.eventCache_ = null;
     }
   });
 
@@ -977,8 +936,8 @@
       var items = this.items;
       if (items)
       {
-        this.items = [];
         this.set(items);
+        this.items = null;
       }
     },
 
@@ -1172,71 +1131,66 @@
   //
   // accumulate dataset changes
   //
-  (function(){
-    var awatingDatasetCache = {};
+  Dataset.setAccumulateState = (function(){
     var proto = AbstractDataset.prototype;
-    var realDispatch_ = AbstractDataset.prototype.event_datasetChanged;
+    var realEvent = proto.event_datasetChanged;
     var setStateCount = 0;
     var urgentTimer;
+    var eventCache = {};
 
-    function flushDataset(dataset){
-      var cache = dataset.eventCache_;
-      if (cache.mode)
-      {
-        var delta = {};
-        delta[cache.mode] = cache.delta;
-
-        delete awatingDatasetCache[dataset.eventObjectId];
-        cache.mode = false;
-        cache.delta = [];
-
-        realDispatch_.call(dataset, dataset, delta);
-      }
+    function flushCache(cache){
+      var dataset = cache.dataset;
+      realEvent.call(dataset, dataset, cache);
     }
 
     function flushAllDataset(){
-      values(awatingDatasetCache).forEach(flushDataset);
+      var eventCacheCopy = eventCache;
+      eventCache = {};
+      values(eventCacheCopy).forEach(flushCache);
     }
 
     function storeDatasetDelta(dataset, delta){
-      var cache = dataset.eventCache_;
-      var isInsert = !!delta.inserted;
-      var isDelete = !!delta.deleted;
+      var datasetId = dataset.eventObjectId;
+      var inserted = delta.inserted;
+      var deleted = delta.deleted;
+      var cache = eventCache[datasetId];
 
-      if (isInsert && isDelete)
+      if (inserted && deleted)
       {
-        flushDataset(dataset);
-        realDispatch_.call(dataset, dataset, delta);
-        return;
+        if (cache)
+        {
+          delete eventCache[datasetId];
+          flushCache(cache);
+        }
+        return realEvent.call(dataset, dataset, delta);
       }
 
-      var mode = isInsert ? 'inserted' : 'deleted';
-      if (cache.mode && cache.mode != mode)
-        flushDataset(dataset);
+      var mode = inserted ? 'inserted' : 'deleted';
+      if (cache)
+      {
+        var array = cache[mode];
+        if (!array)
+          flushCache(cache);
+        else
+          return array.push.apply(array, inserted || deleted);
+      }
 
-      cache.mode = mode;
-      cache.delta.push.apply(cache.delta, delta[mode]);
-      awatingDatasetCache[dataset.eventObjectId] = dataset;
+      eventCache[datasetId] = delta;
+      delta.dataset = dataset;
     }
 
     function urgentFlush(){
       ;;;if (typeof console != 'undefined') console.warn('(debug) Urgent flush dataset changes');
-      setStateCount = 0;
-      AbstractDataset.prototype.event_datasetChanged = realDispatch_;
-      flushAllDataset();      
+      setStateCount = 1;
+      setAccumulateState(false);
     }
 
-    function patchedDispatch(dataset, delta){
-      storeDatasetDelta(dataset, delta);
-    }
-
-    Dataset.setAccumulateState = function(state){
-      //if (state !== 'xxx') return;
+    return function setAccumulateState(state){
       if (state)
       {
         if (setStateCount == 0)
         {
-          AbstractDataset.prototype.event_datasetChanged = patchedDispatch;
+          proto.event_datasetChanged = storeDatasetDelta;
           urgentTimer = setTimeout(urgentFlush, 0);
         }
         setStateCount++;
@@ -1246,7 +1200,7 @@
         if (setStateCount == 1)
         {
           clearTimeout(urgentTimer);
-          AbstractDataset.prototype.event_datasetChanged = realDispatch_;
+          proto.event_datasetChanged = realEvent;
           flushAllDataset();
         }
 
@@ -1256,12 +1210,33 @@
   })();
 
   //
-  // Dataset aggregate
+  // Registrate subscription type
   //
 
- /**
-  * @class
-  */
+  Subscription.regType(
+    'SOURCE',
+    {
+      sourcesChanged: function(object, delta){
+        var array;
+
+        if (array = delta.inserted)
+          for (var i = array.length; i --> 0;)
+            this.add(object, array[i]);
+
+        if (array = delta.deleted)
+          for (var i = array.length; i --> 0;)
+            this.remove(object, array[i]);
+      }
+    },
+    function(action, object){
+      for (var i = object.sources.length; i --> 0;)
+        action(object, object.sources[i]);
+    }
+  );
+
+  //
+  // Aggregate dataset 
+  //
 
   var AGGREGATEDATASET_ITEM_HANDLER = {
     update: function(object){
@@ -1407,31 +1382,6 @@
       this.removeSource(source);
     }
   };
-
-  //
-  // Registrate subscription type
-  //
-
-  Subscription.regType(
-    'SOURCE',
-    {
-      sourcesChanged: function(object, delta){
-        var array;
-
-        if (array = delta.inserted)
-          for (var i = array.length; i --> 0;)
-            this.add(object, array[i]);
-
-        if (array = delta.deleted)
-          for (var i = array.length; i --> 0;)
-            this.remove(object, array[i]);
-      }
-    },
-    function(action, object){
-      for (var i = object.sources.length; i --> 0;)
-        action(object, object.sources[i]);
-    }
-  );
 
  /**
   * @class
