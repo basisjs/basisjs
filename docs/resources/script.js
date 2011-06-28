@@ -552,7 +552,10 @@
       navTree.open(location.hash);
   }
 
-  setInterval(checkLocation, 250);
+  if ('onhashchange' in window)
+    Event.addHandler(window, 'hashchange', checkLocation);
+  else
+    setInterval(checkLocation, 250);
   setTimeout(checkLocation, 0);
 
   DOM.focus(searchInput.tmpl.field, true);

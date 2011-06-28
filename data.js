@@ -702,13 +702,13 @@
         this.delegate.removeHandler(DATAOBJECT_DELEGATE_HANDLER, this);
         this.delegate = null;
         this.target = null;
-        this.root = null;
       }
 
       // inherit
       EventObject.prototype.destroy.call(this);
 
       // drop info & state
+      this.root = null;
       this.info = NULL_INFO;
       this.state = STATE_UNDEFINED;
     }

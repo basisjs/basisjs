@@ -343,7 +343,7 @@
     nsWrappers.simpleTemplate(
       '<span{element} class="Doc-TemplateView-Node Doc-TemplateView-Attribute">' +
         '<span>{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span>="{this_info_nodeValue}"</span>' + 
-      '</div>'
+      '</span>'
     ),
     {
       className: namespace + '.TemplateTreeNode.Attribute'

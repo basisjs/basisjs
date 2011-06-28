@@ -509,7 +509,7 @@
         }
         else
         {
-          if (cssClass(Event.sender(event)).has('disabled'))
+          if (cssClass(Event.sender(event)).contains('disabled'))
             return;
 
           switch (actionName)

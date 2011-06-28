@@ -3187,6 +3187,14 @@
       }
     });
 
+    var unitFunc = {};
+    ['em', 'ex', 'px', '%'].forEach(function(unit){
+      unitFunc[unit == '%' ? 'percent' : unit] = function(value){
+        return value == 0 || isNaN(value) ? '0' : value + unit;
+      }
+    });
+
+
     // export names
 
     DOM.extend({
@@ -3217,7 +3225,7 @@
       CssStyleSheetWrapper: CssStyleSheetWrapper,
       CssRuleWrapper: CssRuleWrapper,
       CssRuleWrapperSet: CssRuleWrapperSet
-    });
+    }).extend(unitFunc);
 
   })();
 
@@ -3316,6 +3324,8 @@
         if (typeof str == 'function')
           this.source = str = str();
 
+        var source = str;
+
         //console.log('parse:', htmlCode);
 
         //this.source = htmlCode;
@@ -3359,8 +3369,9 @@
 
           while (m = re.exec(str))
           {
-            str = RegExp.rightContext;
             var pre = RegExp.leftContext;
+
+            str = RegExp.rightContext;
 
             if (pre.length)
             {
@@ -3386,7 +3397,7 @@
               }
               else
               {
-                ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + str.replace(new RegExp('(</' + m[5] + '>)(' + str + ')$'), '==[here]=>$1<=$2'));
+                ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + source.replace(new RegExp('(</' + m[5] + '>)(' + str + ')$'), '\n ==[here]=>$1<== \n$2'));
               }
             }
             else
@@ -3454,7 +3465,9 @@
                     if (value)
                       value = strings.shift();
 
-                    return attrName == 'class' ? CSS.makeClassName(value.replace(/^([\'\"]?)(.*?)\1$/, "$2")) : '[' + attrName + (value ? '=' + value : '') + ']'
+                    return attrName == 'class'
+                      ? value.replace(/^([\'\"]?)(.*?)\1$/, "$2").trim().replace(/^(.)|\s+|\s*,\s*/g, '.$1')
+                      : '[' + attrName + (value ? '=' + value : '') + ']';
                   });
               }
 
@@ -4193,130 +4206,106 @@
   var CSS = (function(){
 
    /** @namespace Basis.CSS */
-
-   
     var namespace = 'Basis.CSS';
 
-    function makeClassName(classes){
-      return classes != null ? String.trim(classes).replace(/^(.)|\s+|\s*,\s*/g, '.$1') : '';
-    };
+    var rxCache = {};
+    function tokenRegExp(token){
+      return rxCache[token] || (rxCache[token] = new RegExp('\\s*\\b' + token + '\\b'));
+    }
 
-    var rx = /(^|\\s+)selected(\\s+|$)|$/;
-    var ClassNameWraper = Class(null, {
+    var ClassList = Class(null, {
       className: namespace + '.ClassName',
 
       init: function(element){ 
-        this.element = typeof element == 'string' ? DOM.get(element) : element;
-        this.sync();
-        ;;;if (!this.element) throw new Error('ClassName wraper: Element ' + element + ' not found!');
+        this.element = element;
+        ;;;if (!element) throw new Error('ClassName wraper: Element ' + element + ' not found!');
+        //this.tokens = this.element.className.qw();
       },
-      sync: function(){
-        this.cache = this.element.className.qw();
+      toString: function(){
+        return this.element.className;
       },
-      toArray: function(){
-        return this.cache;
-      },
-      has: function(className){
-        return this.cache.has(className);    
-      },
-      absent: function(className){
-        return !this.has(className);
-      },
-      set: function(newValue){
-        this.element.className = (this.cache = newValue.qw()).join(' ');
-        return this;
-      },
-      add: function(newClass){ 
-        var classes = this.cache;
-        var count = classes.length;
-        var args = arguments;
 
-        if (args.length == 1)
-          classes.add(newClass);
-        else
-          classes.forEach.call(args, classes.add, classes);
-          //Array.from(args).forEach(classes.add, classes);
-
-        if (classes.length > count)
-          this.element.className = classes.join(' ');
-
-        return this;
-      },
-      remove: function(oldClass){
-        var classes = this.cache;
-        var count = classes.length;
-        var args = arguments;
-
-        if (args.length == 1)
-          classes.remove(oldClass)
-        else
-          classes.forEach.call(args, classes.remove, classes);
-          //Array.from(args).forEach(classes.remove, classes);
-
-        if (classes.length < count)
-          this.element.className = classes.join(' ');
-
-        return this;
+      set: function(tokenList){
+        this.clear();
+        tokenList.qw().forEach(this.add, this);
       },
       replace: function(searchFor, replaceFor, prefix){
-        var classes = this.cache;
-        var udpateCount = 0;
         prefix = prefix || '';
 
         if (typeof searchFor != 'undefined')
-          udpateCount += classes.remove(prefix + searchFor);
+          this.remove(prefix + searchFor);
         
         if (typeof replaceFor != 'undefined')
-          udpateCount += classes.add(prefix + replaceFor);
-        
-        if (udpateCount)
-          this.element.className = classes.join(' ');
-        
-        return this;
+          this.add(prefix + replaceFor);
+      },
+      bool: function(token, exists) {
+        if (exists)
+          this.add(token);
+        else
+          this.remove(token);
       },
       clear: function(){
-        this.element.className = this.cache.clear();
-        return this;
+        this.element.className = '';
       },
-      bool: function(className, mustExists) {
-        if (mustExists)
-          this.add(className);
-        else
-          this.remove(className);
-        return this;
+
+      contains: function(token){
+        return !!this.element.className.match(tokenRegExp(token));
       },
-      toggle: function(className){
-        var exists = this.has(className);
+      item: function(index){
+        return this.element.className.qw()[index];
+      },
+      add: function(token){ 
+        ;;;if (arguments.length > 1) console.warn('classList.add accept only one argument');
+        if (!this.element.className.match(tokenRegExp(token)))
+          this.element.className += ' ' + token;
+      },
+      remove: function(token){
+        ;;;if (arguments.length > 1) console.warn('classList.remove accept only one argument');
+        var className = this.element.className;
+        var newClassName = className.replace(tokenRegExp(token), '');
+        if (newClassName != className)
+          this.element.className = newClassName;
+      },
+      toggle: function(token){
+        var exists = this.contains(token);
+
         if (exists)
           this.remove(className);
         else
           this.add(className);
+
         return !exists;
-      }/*,
-      destroy: function(){
-        delete this.element;
-      }*/
+      }
     });
 
-    //var cache = {};
-    function cssClass(element){ 
-      return new ClassNameWraper(element);
-    }
+    var classList;
 
-    function unit(value, unit){ return value == 0 || isNaN(value) ? '0' : value + unit }
-    function em(value){ return unit(value, 'em') }
-    function ex(value){ return unit(value, 'ex') }
-    function px(value){ return unit(value, 'px') }
-    function percent(value){ return unit(value, '%') }
+    if (window.DOMTokenList && document.documentElement.classList)
+    {
+      extend(window.DOMTokenList.prototype, {
+        set: ClassList.prototype.set,
+        replace: ClassList.prototype.replace,
+        bool: ClassList.prototype.bool,
+        clear: function(){
+          for (var i = this.length; i --> 0;)
+            this.remove(this[i]);
+        }
+      });
+      classList = function(element){
+        return (typeof element == 'string' ? DOM.get(element) : element).classList;
+      }
+    }
+    else
+    {
+      classList = function(element){ 
+        return new ClassList(typeof element == 'string' ? DOM.get(element) : element);
+      }
+    }
 
     // export
     return getNamespace(namespace).extend({
-      cssClass: cssClass,
-      makeClassName: makeClassName,
-      em: em,
-      ex: ex,
-      px: px,
-      percent: percent
+      cssClass: classList,
+      classList: classList
     });
 
   })();

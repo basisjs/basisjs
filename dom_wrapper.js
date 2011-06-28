@@ -59,7 +59,7 @@
   var getter = Function.getter;
   var extend = Object.extend;
   var complete = Object.complete;
-  var cssClass = Basis.CSS.cssClass;
+  var classList = Basis.CSS.classList;
   var axis = DOM.axis;
   var createBehaviour = Basis.EventObject.createBehaviour;
   var createEvent = Basis.EventObject.createEvent;
@@ -2068,7 +2068,6 @@
 
   AbstractNode.prototype.localGroupingClass = GroupingNode;
 
-
  /**
   * @mixin
   */
@@ -2094,8 +2093,10 @@
       event_select: function(){
         super_.event_select.call(this);
 
-        var element = this.tmpl.selected || this.tmpl.content || this.element;
-        element.className += ' selected';
+        classList(this.tmpl.selected || this.tmpl.content || this.element).add('selected');
+        //  var element = this.tmpl.selectedElement || this.tmpl.content || this.tmpl.element;
+        //  element.className += ' selected';
+
       },
 
      /**
@@ -2104,8 +2105,9 @@
       event_unselect: function(){
         super_.event_unselect.call(this);
 
-        var element = this.tmpl.selected || this.tmpl.content || this.element;
-        element.className = element.className.replace(/(^|\s+)selected(\s+|$)/, '$2');
+        classList(this.tmpl.selected || this.tmpl.content || this.element).remove('selected');
+        //  var element = this.tmpl.selectedElement || this.tmpl.content || this.tmpl.element;
+        //  element.className = element.className.replace(/(^|\s+)selected(\s+|$)/, '$2');
       },
 
      /**
@@ -2114,7 +2116,7 @@
       event_disable:  function(){
         super_.event_disable.call(this);
 
-        cssClass(this.tmpl.disabled || this.element).add('disabled');
+        classList(this.tmpl.disabled || this.element).add('disabled');
       },
 
      /**
@@ -2123,7 +2125,7 @@
       event_enable: function(){
         super_.event_enable.call(this);
 
-        cssClass(this.tmpl.disabled || this.element).remove('disabled');
+        classList(this.tmpl.disabled || this.element).remove('disabled');
       },
 
      /**
@@ -2189,8 +2191,8 @@
             var node = this.tmpl[alias];
             if (node)
             {
-              var nodeClassName = cssClass(node);
-              nodeClassName.add.apply(nodeClassName, String(cssClassNames[alias]).qw());
+              var nodeClassName = classList(node);
+              String(cssClassNames[alias]).qw().forEach(nodeClassName.add, nodeClassName);
             }
           }
         }
