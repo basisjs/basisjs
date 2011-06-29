@@ -63,6 +63,61 @@
       min-width: 4ex;
       margin: 1px;
     }
+
+    #MetroDemo
+    {
+    }
+    .metro-continet
+    {
+      width: 20%;
+      float: left;
+    }
+    #MetroDemo H32
+    {
+      font-size: 100%;
+      border-bottom: 2px solid orange;
+      display: inline-block;
+      padding: .1em .5ex;
+      margin: 0 0 0 -.5ex;
+    }
+    #MetroDemo H3
+    {
+      font-size: 100%;
+      background: #FFE0A0;
+      padding: .2em .5ex;
+      margin: 0 3px -.3em 0;
+    }
+    #MetroDemo H4
+    {
+      font-size: 90%;
+      color: #CC9900;
+      margin: 1em 0 .4em;
+    }
+    #MetroDemo UL
+    {
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    #MetroDemo LI
+    {
+      margin-bottom: .2em;
+      border-left: 3px solid #E0E0E0;
+      padding: .25em 0 .25em .6ex;
+    }
+    .metro-country
+    {
+      margin: 0 .5ex;
+    }
+    .metro-name
+    {
+      display: block;
+    }
+    .metro-city
+    {
+      color: #888;
+      font-size: 80%;
+    }
   </style>
   <!--[if lt IE 7]>
   <style type="text/css">
@@ -94,7 +149,13 @@
     ..
   </div>
 
-  <div id="demo-container"></div>
+  <div id="demo-container">
+    <h2>1. Number grouping demo</h2>
+    <div id="NumberDemo-Container"></div>
+
+    <h2>2. Metro demo</h2>
+    <div id="MetroDemo-Container"></div>
+  </div>
 
   <script type="text/javascript" id="demo-javascript">
     
@@ -103,20 +164,20 @@
     var DOM = Basis.DOM;
     var nsWrappers = Basis.DOM.Wrapper;
 
+    //
+    // NUMBER GROUP DEMO
+    //
+
     // data
     var data = [];
     for (var i = 0; i < 32; i++)
+    {
       data.push({
         info: {
           id: i
         }
       });
-
-    //
-    // Create controls
-    //
-
-    var demoContainer = DOM.get('demo-container');
+    }
 
     var groupingClass = Basis.Class(nsWrappers.TmplGroupingNode, {
       childClass: Basis.Class(nsWrappers.TmplPartitionNode, nsWrappers.simpleTemplate(
@@ -132,9 +193,9 @@
     groupingClass.prototype.localGroupingClass = groupingClass;
 
     var list = new nsWrappers.TmplContainer({
-      container: demoContainer,
-      childNodes: data,
+      container: DOM.get('NumberDemo-Container'),
       childClass: Basis.Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate('<span{element} class="item">{object_info_id}</span>')),
+      childNodes: data,
       localGroupingClass: groupingClass,
       localGrouping: {
         localGrouping: {
@@ -145,6 +206,257 @@
               }
             }
           }
+        }
+      }
+    });
+
+    //
+    // METRO DEMO
+    //
+
+    var metro = [
+      { country: 'Argentina', city: 'Buenos Aires', name: 'Buenos Aires Metro' },
+      { country: 'Armenia', city: 'Yerevan', name: 'Yerevan Metro' },
+      { country: 'Austria', city: 'Vienna', name: 'Vienna U-Bahn' },
+      { country: 'Azerbaijan', city: 'Baku', name: 'Baku Metro' },
+      { country: 'Belarus', city: 'Minsk', name: 'Minsk Metro' },
+      { country: 'Belgium', city: 'Brussels', name: 'Brussels Metro' },
+      { country: 'Brazil', city: 'Belo Horizonte', name: 'Belo Horizonte Metro' },
+      { country: 'Brazil', city: 'Brasília', name: 'Brasília Metro' },
+      { country: 'Brazil', city: 'Porto Alegre', name: 'Porto Alegre Metro' },
+      { country: 'Brazil', city: 'Recife', name: 'Recife Metro' },
+      { country: 'Brazil', city: 'Rio de Janeiro', name: 'Rio de Janeiro Metro' },
+      { country: 'Brazil', city: 'São Paulo', name: 'São Paulo Metro' },
+      { country: 'Brazil', city: 'Teresina', name: 'Teresina Metro' },
+      { country: 'Bulgaria', city: 'Sofia', name: 'Sofia Metro' },
+      { country: 'Canada', city: 'Montreal', name: 'Montreal Metro' },
+      { country: 'Canada', city: 'Toronto', name: 'Toronto Subway and RT' },
+      { country: 'Canada', city: 'Vancouver', name: 'SkyTrain' },
+      { country: 'Chile', city: 'Santiago', name: 'Santiago Metro' },
+      { country: 'Chile', city: 'Valparaíso', name: 'Valparaíso Metro' },
+      { country: 'China', city: 'Beijing', name: 'Beijing Subway' },
+      { country: 'China', city: 'Chengdu', name: 'Chengdu Metro' },
+      { country: 'China', city: 'Chongqing', name: 'Chongqing Rail Transit' },
+      { country: 'China', city: 'Dalian', name: 'Dalian Metro' },
+      { country: 'China', city: 'Foshan', name: 'FMetro ' },
+      { country: 'China', city: 'Guangzhou', name: 'Guangzhou Metro' },
+      { country: 'China', city: 'Hong Kong', name: 'MTR (Mass Transit Railway)' },
+      { country: 'China', city: 'Nanjing', name: 'Nanjing Metro' },
+      { country: 'China', city: 'Shanghai', name: 'Shanghai Metro ' },
+      { country: 'China', city: 'Shenyang', name: 'Shenyang Metro' },
+      { country: 'China', city: 'Shenzhen', name: 'Shenzhen Metro' },
+      { country: 'China', city: 'Tianjin', name: 'Binhai Mass Transit' },
+      { country: 'China', city: 'Tianjin', name: 'Tianjin Metro' },
+      { country: 'China', city: 'Wuhan', name: 'Wuhan Metro' },
+      { country: 'Colombia', city: 'Medellín', name: 'Medellín Metro' },
+      { country: 'Czech Republic', city: 'Prague', name: 'Prague Metro' },
+      { country: 'Denmark', city: 'Copenhagen', name: 'S-train' },
+      { country: 'Denmark', city: 'Copenhagen', name: 'Copenhagen Metro' },
+      { country: 'Dominican Republic', city: 'Santo Domingo', name: 'Santo Domingo Metro' },
+      { country: 'Egypt', city: 'Cairo', name: 'Cairo Metro' },
+      { country: 'Finland', city: 'Helsinki', name: 'Helsinki Metro' },
+      { country: 'France', city: 'Lille', name: 'Lille Metro' },
+      { country: 'France', city: 'Lyon', name: 'Lyon Metro' },
+      { country: 'France', city: 'Marseille', name: 'Marseille Metro' },
+      { country: 'France', city: 'Paris', name: 'Paris Métro' },
+      { country: 'France', city: 'Rennes', name: 'Rennes Metro' },
+      { country: 'France', city: 'Toulouse', name: 'Toulouse Metro' },
+      { country: 'Georgia', city: 'Tbilisi', name: 'Tbilisi Metro' },
+      { country: 'Germany', city: 'Berlin', name: 'Berlin U-Bahn' },
+      { country: 'Germany', city: 'Berlin', name: 'Berlin S-Bahn' },
+      { country: 'Germany', city: 'Frankfurt', name: 'Frankfurt U-Bahn' },
+      { country: 'Germany', city: 'Hamburg', name: 'Hamburg U-Bahn' },
+      { country: 'Germany', city: 'Hamburg', name: 'Hamburg S-Bahn' },
+      { country: 'Germany', city: 'Munich', name: 'Munich U-Bahn' },
+      { country: 'Germany', city: 'Nuremberg', name: 'Nuremberg U-Bahn' },
+      { country: 'Greece', city: 'Athens–Piraeus', name: 'ISAP' },
+      { country: 'Greece', city: 'Athens', name: 'Athens Metro' },
+      { country: 'Hungary', city: 'Budapest', name: 'Budapest Metro' },
+      { country: 'India', city: 'Chennai', name: 'Chennai Mass Rapid Transit System (MRTS)' },
+      { country: 'India', city: 'Delhi', name: 'Delhi Metro' },
+      { country: 'India', city: 'Kolkata', name: 'Kolkata Metro' },
+      { country: 'Iran', city: 'Tehran', name: 'Tehran Metro' },
+      { country: 'Italy', city: 'Catania', name: 'Catania Metro' },
+      { country: 'Italy', city: 'Genoa', name: 'Genoa Metro' },
+      { country: 'Italy', city: 'Milan', name: 'Milan Metro' },
+      { country: 'Italy', city: 'Naples', name: 'Naples Metro' },
+      { country: 'Italy', city: 'Rome', name: 'Rome Metro' },
+      { country: 'Italy', city: 'Turin', name: 'Metrotorino' },
+      { country: 'Japan', city: 'Fukuoka', name: 'Fukuoka City Subway' },
+      { country: 'Japan', city: 'Kobe', name: 'Kobe Rapid Railway' },
+      { country: 'Japan', city: 'Kobe', name: 'Kobe Municipal Subway' },
+      { country: 'Japan', city: 'Kyoto', name: 'Kyoto Municipal Subway' },
+      { country: 'Japan', city: 'Nagoya', name: 'Nagoya Municipal Subway' },
+      { country: 'Japan', city: 'Osaka', name: 'Osaka Municipal Subway' },
+      { country: 'Japan', city: 'Sapporo', name: 'Sapporo Municipal Subway' },
+      { country: 'Japan', city: 'Sendai', name: 'Sendai Subway' },
+      { country: 'Japan', city: 'Tokyo', name: 'Tokyo Metro' },
+      { country: 'Japan', city: 'Tokyo', name: 'Toei Subway' },
+      { country: 'Japan', city: 'Tokyo', name: 'Tokyo Waterfront Area Rapid Transit' },
+      { country: 'Japan', city: 'Yokohama', name: 'Yokohama Municipal Subway' },
+      { country: 'Japan', city: 'Yokohama', name: 'Minatomirai Line' },
+      { country: 'North Korea', city: 'Pyongyang', name: 'Pyongyang Metro' },
+      { country: 'South Korea', city: 'Busan', name: 'Busan Subway' },
+      { country: 'South Korea', city: 'Daegu', name: 'Daegu Subway' },
+      { country: 'South Korea', city: 'Daejeon', name: 'Daejeon Subway' },
+      { country: 'South Korea', city: 'Gwangju', name: 'Gwangju Subway' },
+      { country: 'South Korea', city: 'Incheon', name: 'Incheon Subway' },
+      { country: 'South Korea', city: 'Seoul', name: 'Seoul Subway' },
+      { country: 'Malaysia', city: 'Kuala Lumpur', name: 'RapidKL Light Rail Transit' },
+      { country: 'Mexico', city: 'Mexico City', name: 'Mexico City Metro' },
+      { country: 'Mexico', city: 'Monterrey', name: 'Monterrey Metro' },
+      { country: 'Netherlands', city: 'Amsterdam', name: 'Amsterdam Metro' },
+      { country: 'Netherlands', city: 'Rotterdam', name: 'Rotterdam Metro' },
+      { country: 'Norway', city: 'Oslo', name: 'Oslo Metro' },
+      { country: 'Peru', city: 'Lima', name: 'Lima Metro' },
+      { country: 'Philippines', city: 'Manila', name: 'Manila Light Rail Transit System' },
+      { country: 'Philippines', city: 'Manila', name: 'Manila Metro Rail Transit System' },
+      { country: 'Poland', city: 'Warsaw', name: 'Warsaw Metro' },
+      { country: 'Portugal', city: 'Lisbon', name: 'Lisbon Metro' },
+      { country: 'Romania', city: 'Bucharest', name: 'Bucharest Metro' },
+      { country: 'Russia', city: 'Kazan', name: 'Kazan Metro' },
+      { country: 'Russia', city: 'Moscow', name: 'Moscow Metro' },
+      { country: 'Russia', city: 'Nizhny Novgorod', name: 'Nizhny Novgorod Metro' },
+      { country: 'Russia', city: 'Novosibirsk', name: 'Novosibirsk Metro' },
+      { country: 'Russia', city: 'Saint Petersburg', name: 'Saint Petersburg Metro' },
+      { country: 'Russia', city: 'Samara', name: 'Samara Metro' },
+      { country: 'Russia', city: 'Yekaterinburg', name: 'Yekaterinburg Metro' },
+      { country: 'Saudi Arabia', city: 'Mecca', name: 'Mecca Metro ' },
+      { country: 'Singapore', city: 'Singapore', name: 'Mass Rapid Transit' },
+      { country: 'Spain', city: 'Barcelona', name: 'Barcelona Metro' },
+      { country: 'Spain', city: 'Bilbao', name: 'Bilbao Metro' },
+      { country: 'Spain', city: 'Madrid', name: 'Madrid Metro (including MetroSur and other suburban lines)' },
+      { country: 'Spain', city: 'Palma de Mallorca', name: 'Palma de Mallorca Metro' },
+      { country: 'Spain', city: 'Seville', name: 'Seville Metro' },
+      { country: 'Spain', city: 'Valencia', name: 'Valencia Metro' },
+      { country: 'Sweden', city: 'Stockholm', name: 'Stockholm Metro' },
+      { country: 'Switzerland', city: 'Lausanne', name: 'Lausanne Metro' },
+      { country: 'Taiwan', city: 'Taipei', name: 'Taipei Metro' },
+      { country: 'Taiwan', city: 'Kaohsiung', name: 'Kaohsiung Mass Rapid Transit' },
+      { country: 'Thailand', city: 'Bangkok', name: 'Bangkok Skytrain' },
+      { country: 'Thailand', city: 'Bangkok', name: 'Bangkok Metro' },
+      { country: 'Thailand', city: 'Bangkok', name: 'Suvarnabhumi Airport Link City Line' },
+      { country: 'Turkey', city: 'Adana', name: 'Adana Metro' },
+      { country: 'Turkey', city: 'Ankara', name: 'Ankara Metro' },
+      { country: 'Turkey', city: 'Bursa', name: 'Bursa Metro' },
+      { country: 'Turkey', city: 'Istanbul', name: 'Istanbul Metro' },
+      { country: 'Turkey', city: 'Izmir', name: 'Izmir Metro' },
+      { country: 'Ukraine', city: 'Dnipropetrovsk', name: 'Dnipropetrovsk Metro' },
+      { country: 'Ukraine', city: 'Kharkiv', name: 'Kharkiv Metro' },
+      { country: 'Ukraine', city: 'Kiev', name: 'Kiev Metro' },
+      { country: 'Ukraine', city: 'Kryvyi Rih', name: 'Kryvyi Rih Metrotram' },
+      { country: 'United Arab Emirates', city: 'Dubai', name: 'Dubai Metro' },
+      { country: 'United Kingdom', city: 'Glasgow', name: 'Glasgow Subway' },
+      { country: 'United Kingdom', city: 'London', name: 'London Underground' },
+      { country: 'United Kingdom', city: 'London', name: 'Docklands Light Railway' },
+      { country: 'United Kingdom', city: 'Newcastle/Sunderland', name: 'Tyne & Wear Metro' },
+      { country: 'United States', city: 'Atlanta', name: 'MARTA' },
+      { country: 'United States', city: 'Baltimore', name: 'Metro Subway' },
+      { country: 'United States', city: 'Boston', name: 'MBTA' },
+      { country: 'United States', city: 'Chicago', name: 'Chicago \'L\'' },
+      { country: 'United States', city: 'Cleveland', name: 'RTA Rapid Transit (Red Line)' },
+      { country: 'United States', city: 'Los Angeles', name: 'Los Angeles County Metro Rail' },
+      { country: 'United States', city: 'Miami', name: 'Metrorail' },
+      { country: 'United States', city: 'New York City', name: 'New York City Subway' },
+      { country: 'United States', city: 'New York City', name: 'Staten Island Railway' },
+      { country: 'United States', city: 'New York City/New Jersey', name: 'PATH' },
+      { country: 'United States', city: 'Philadelphia', name: 'SEPTA' },
+      { country: 'United States', city: 'Philadelphia', name: 'PATCO Speedline' },
+      { country: 'United States', city: 'San Francisco Bay Area', name: 'BART' },
+      { country: 'United States', city: 'San Juan', name: 'Tren Urbano' },
+      { country: 'United States', city: 'Washington, D.C.', name: 'Washington Metro' },
+      { country: 'Uzbekistan', city: 'Tashkent', name: 'Tashkent Metro' },
+      { country: 'Venezuela', city: 'Caracas', name: 'Caracas Metro' },
+      { country: 'Venezuela', city: 'Los Teques', name: 'Los Teques Metro' },
+      { country: 'Venezuela', city: 'Maracaibo', name: 'Maracaibo Metro' },
+      { country: 'Venezuela', city: 'Valencia', name: 'Valencia Metro' }
+    ];
+    var continentByCountry = {
+      'Argentina': 'South America',
+      'Armenia': 'Asia',
+      'Austria': 'Europe',
+      'Azerbaijan': 'Asia',
+      'Belarus': 'Europe',
+      'Belgium': 'Europe',
+      'Brazil': 'South America',
+      'Bulgaria': 'Europe',
+      'Canada': 'North America',
+      'Chile': 'South America',
+      'China': 'Asia',
+      'Colombia': 'South America',
+      'Czech Republic': 'Europe',
+      'Denmark': 'Europe',
+      'Dominican Republic': 'North America',
+      'Egypt': 'Africa',
+      'Finland': 'Europe',
+      'France': 'Europe',
+      'Georgia': 'Asia',
+      'Germany': 'Europe',
+      'Greece': 'Europe',
+      'Hungary': 'Europe',
+      'India': 'Asia',
+      'Iran': 'Asia',
+      'Italy': 'Europe',
+      'Japan': 'Asia',
+      'North Korea': 'Asia',
+      'South Korea': 'Asia',
+      'Malaysia': 'Asia',
+      'Mexico': 'North America',
+      'Netherlands': 'Europe',
+      'Norway': 'Europe',
+      'Peru': 'South America',
+      'Philippines': 'Asia',
+      'Poland': 'Europe',
+      'Portugal': 'Europe',
+      'Romania': 'Europe',
+      'Russia': 'Europe',
+      'Saudi Arabia': 'Asia',
+      'Singapore': 'Asia',
+      'Spain': 'Europe',
+      'Sweden': 'Europe',
+      'Switzerland': 'Europe',
+      'Taiwan': 'Asia',
+      'Thailand': 'Asia',
+      'Turkey': 'Asia',
+      'Ukraine': 'Europe',
+      'United Arab Emirates': 'Asia',
+      'United Kingdom': 'Europe',
+      'United States': 'North America',
+      'Uzbekistan': 'Asia',
+      'Venezuela': 'South America'
+    };
+
+    var metroList = new nsWrappers.TmplContainer({
+      id: 'MetroDemo',
+      container: DOM.get('MetroDemo-Container'),
+      childClass: Basis.Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate(
+        '<li{element} class="metro">' +
+          '<span class="metro-name">{object_info_name}</span>' +
+          '<span class="metro-city">{object_info_city}</span>' +
+        '</li>'
+      )),
+      childNodes: metro.map(Function.wrapper('info')),
+      localSorting: Function.getter('info.name'),
+      localGrouping: {
+        // group metro by country
+        groupGetter: Function.getter('info.country'),
+        localSorting: Function.getter('info.title'),
+        childClass: Basis.Class(nsWrappers.TmplPartitionNode, nsWrappers.simpleTemplate(
+          '<div{element} class="metro-country">' +
+            '<h4 class="metro-country-title">{object_info_title}</h4>' +
+            '<ul{childNodesElement}/>' +
+          '</div>'
+        )),
+        localGrouping: {
+          // .. than group country by continent
+          groupGetter: Function.getter('info.id', continentByCountry),
+          localSorting: Function.getter('info.title'),
+          childClass: Basis.Class(nsWrappers.TmplPartitionNode, nsWrappers.simpleTemplate(
+            '<div{element} class="metro-continet">' +
+              '<h3 class="metro-continent-title">{object_info_title}</h3>' +
+              '<!-- {childNodesHere} -->' +
+            '</div>'
+          ))
         }
       }
     });

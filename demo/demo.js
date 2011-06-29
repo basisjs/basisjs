@@ -63,7 +63,7 @@
     Event.addHandler(tabs, 'click', function(event){
       var sender = Event.sender(event);
       var cssClassSender = cssClass(sender);
-      if (cssClassSender.has('DemoWrapper-Tab'))
+      if (cssClassSender.contains('DemoWrapper-Tab'))
       {
         DOM.axis(tabs, DOM.AXIS_CHILD).forEach(function(tab, idx){
           cssClass(tab).bool('selected', tab == sender);
