@@ -391,7 +391,7 @@
       var localGrouping = this.localGrouping;
 
       this.collection = null; // NOTE: reset collection before inherit -> prevent double subscription activation
-                              // on this.active and on this.setCollection
+                              // when this.active == true and collection is assigned
 
       // inherit
       DataObject.prototype.init.call(this, config);

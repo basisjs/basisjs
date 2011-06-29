@@ -1186,6 +1186,7 @@
     }
 
     return function setAccumulateState(state){
+    return;
       if (state)
       {
         if (setStateCount == 0)
@@ -1240,46 +1241,78 @@
 
   var AGGREGATEDATASET_ITEM_HANDLER = {
     update: function(object){
-      var map_ = this.map_;
-      var config = this.source_[object.eventObjectId];
-      var curRef = config.item;
-      var newRef = this.transform ? this.transform(object) : object;
+      var map = this.map_;
+      var sourceMap = this.source_[object.eventObjectId];
+      var transform = this.transform;
+      var curMember = config.member;
+      var newMember;
 
-      if (newRef instanceof DataObject == false)
-        newRef = null;
+      // update make sence only if transform function here
+      if (!transform)
+        return;
 
-      if (curRef != newRef)
+      // fetch new member ref
+      newMember = transform.call(this, object);
+      if (newMember instanceof DataObject == false)
+        newMember = null;
+
+      // if member ref is changed
+      if (curMember != newMember)
       {
-        config.item = newRef;
+        sourceMap.member = newMember;
 
         var delta = {};
 
-        // remove 
-        if (curRef)
+        // if here is ref for member already
+        if (curMember)
         {
-          if (--map_[curRef.eventObjectId] == 0)
+          // call callback on member ref add
+          if (this.removeMemberRef)
+            this.removeMemberRef(curMember, object);
+
+          // decrease ref count, and check is this ref for member last
+          if (--map[curMember.eventObjectId] == 0)
           {
+            // last ref for member
+
             // delete from map
-            delete this.map_[curRef.eventObjectId];
-            delta.deleted = [curRef];
+            delete this.map[curMember.eventObjectId];
+
+            // add to delta
+            delta.deleted = [curMember];
           }
         }
 
-        if (newRef)
+        // if new member exists, update map
+        if (newMember)
         {
-          if (map_[newRef.eventObjectId])
+          var newMemberId = newMember.eventObjectId;
+
+          // call callback on member ref add
+          if (this.addMemberRef)
+            this.addMemberRef(newMember, object);
+
+          if (map[newMemberId])
           {
-            map_[newRef.eventObjectId]++;
+            // member is already in map -> increase ref count
+            map[newMemberId]++;
           }
           else
           {
-            // insert to map
-            map_[newRef.eventObjectId] = 1;
-            delta.inserted = [newRef];
+            // add to map
+            map[newMemberId] = 1;
+
+            // add to delta
+            delta.inserted = [newMember];
           }
         }
 
-        this.event_datasetChanged(this, delta);
+        // fire event, if any delta
+        for (var key in delta)
+        {
+          this.event_datasetChanged(this, delta);
+          break;
+        }
       }
     }
   };
@@ -1289,57 +1322,80 @@
       var sourceId = source.eventObjectId;
       var inserted = [];
       var deleted = [];
-      var object;
-      var objectId;
-      var item;
-      var itemId;
-      var map_ = this.map_;
-      var source_ = this.source_;
+      var memberMap = this.map_;
+      var sourceMap = this.source_;
+      var transform = this.transform;
+
+      var sourceObject;
+      var sourceObjectId;
+      var member;
+      var memberId;
+
+      Dataset.setAccumulateState(true);
 
       if (delta.inserted)
       {
-        for (var i = 0, object; object = delta.inserted[i]; i++)
+        for (var i = 0; sourceObject = delta.inserted[i]; i++)
         {
-          objectId = object.eventObjectId;
+          sourceObjectId = sourceObject.eventObjectId;
           
-          if (source_[objectId])
+          // check: is this object already known
+          if (sourceMap[sourceObjectId])
           {
-            // item exists
-            source_[objectId].count++;
+            // item exists -> increase source links count
+            sourceMap[sourceObjectId].count++;
           }
           else
           {
             // new source item
-            object.addHandler(AGGREGATEDATASET_ITEM_HANDLER, this);
+            sourceObject.addHandler(AGGREGATEDATASET_ITEM_HANDLER, this);
 
-            // get item from source object
-            item = this.transform ? this.transform(object) : object;
-            if (item instanceof DataObject == false)
+            // get member item from source object
+            if (transform)
             {
-              item = null;
+              // if transform function present, get member item using it
+              member = transform.call(this, sourceObject);
+
+              // if transformed object is not a DataObject instance, thread it as null
+              if (member instanceof DataObject == false)
+                member = null;
+            }
+            else
+            {
+              // if no transform function, member item is source item
+              member = sourceObject;
             }
 
-            // reg in source map
-            source_[objectId] = {
+            // call callback on member ref add
+            if (member && this.addMemberRef)
+              this.addMemberRef(member, sourceObject);
+
+            // registrate in source map
+            sourceMap[sourceObjectId] = {
               count: 1,
-              object: object,
-              item: item
+              sourceObject: sourceObject,  // ref for source object (do we need for this?)
+              member: member               // ref for member object if exists
             };
 
-            if (item)
+            // if member item exists -> registrate it in map
+            if (member)
             {
               // item is fit requirements to be in set
-              itemId = item.eventObjectId;
+              memberId = member.eventObjectId;
 
-              if (map_[itemId])
+              // check: is member item already known
+              if (memberMap[memberId])
               {
-                map_[itemId]++;
+                // member item has already registrate -> increase ref count
+                memberMap[memberId]++;
               }
               else
               {
-                // new member, add to delta
-                map_[itemId] = 1;
-                inserted.push(item);
+                // registrate new member in map
+                memberMap[memberId] = 1;
+
+                // add to delta
+                inserted.push(member);
               }
             }
           }
@@ -1348,35 +1404,47 @@
 
       if (delta.deleted)
       {
-        for (var i = 0, object; object = delta.deleted[i]; i++)
+        for (var i = 0; sourceObject = delta.deleted[i]; i++)
         {
-          objectId = object.eventObjectId;
+          sourceObjectId = sourceObject.eventObjectId;
 
-          if (--source_[objectId].count == 0)
+          if (--sourceMap[sourceObjectId].count == 0)
           {
             // new source item
-            object.removeHandler(AGGREGATEDATASET_ITEM_HANDLER, this);
+            sourceObject.removeHandler(AGGREGATEDATASET_ITEM_HANDLER, this);
 
-            item = source_[objectId].item;
-            if (item)
+            // fetch member ref
+            member = sourceMap[sourceObjectId].member;
+
+            // call callback on member ref remove
+            if (this.removeMemberRef)
+              this.removeMemberRef(member, sourceObject);
+
+            // if member exists, remove ref from it
+            if (member)
             {
-              itemId = item.eventObjectId;
-              if (--map_[itemId] == 0)
+              memberId = member.eventObjectId;
+              if (--memberMap[memberId] == 0)
               {
-                delete map_[itemId];
-                deleted.push(item);
+                // delete from map
+                delete memberMap[memberId];
+
+                // add to delta
+                deleted.push(member);
               }
             }
 
-            delete source_[objectId];
+            // delete from source refs
+            delete sourceMap[sourceObjectId];
           }
         }
       }
 
+      Dataset.setAccumulateState(false);
+
+      // if any delta -> fire event 
       if (delta = getDelta(inserted, deleted))
-      {
         this.event_datasetChanged(this, delta);
-      }
     },
     destroy: function(source){
       this.removeSource(source);
@@ -1391,6 +1459,39 @@
 
     subscribeTo: Subscription.SOURCE,
     sources: null,
+
+   /**
+    * Map of member objects.
+    * @type {object}
+    * @private
+    */
+    map_: null,
+
+   /**
+    * Map of source objects.
+    * @type {object}
+    * @private
+    */
+    source_: null,
+
+   /**
+    * Transformation function.
+    * @type {function(Basis.Data.DataObject):Basis.Data.DataObject}
+    * @readonly
+    */
+    transform: null,
+
+   /**
+    * @type {function(Basis.Data.DataObject)}
+    */
+    addMemberRef: null,
+
+   /**
+    * @type {function(Basis.Data.DataObject)}
+    */
+    removeMemberRef: null,
+
+    valueGetter: null,
 
    /**
     * Fires when source set changed.
@@ -1428,13 +1529,15 @@
       {
         if (this.sources.add(source))
         {
-          var handler = this.constructor.sourceHandler;
+          // add event listeners to source
+          source.addHandler(AGGREGATEDATASET_DATASET_HANDLER, this);
 
-          source.addHandler(handler, this);
-          handler.datasetChanged.call(this, source, {
+          // add source members to source map
+          AGGREGATEDATASET_DATASET_HANDLER.datasetChanged.call(this, source, {
             inserted: source.getItems()
           });
 
+          // fire sources changed event
           this.event_sourcesChanged(this, {
             inserted: [source]
           });
@@ -1454,10 +1557,8 @@
     removeSource: function(source){
       if (this.sources.remove(source))
       {
-        var handler = this.constructor.sourceHandler;
-
-        source.removeHandler(handler, this);
-        handler.datasetChanged.call(this, source, {
+        source.removeHandler(AGGREGATEDATASET_DATASET_HANDLER, this);
+        AGGREGATEDATASET_DATASET_HANDLER.datasetChanged.call(this, source, {
           deleted: source.getItems()
         });
 
@@ -1472,6 +1573,10 @@
         ;;;if(typeof console != 'undefined') console.warn(this.className + '.removeSource: source isn\'t in dataset source list');
       }
     },
+
+   /**
+    * 
+    */
     clear: function(){
       Array.from(this.sources).forEach(this.removeSource, this);
     },
@@ -1481,25 +1586,25 @@
       AbstractDataset.prototype.destroy.call(this);
 
       this.sources = null;
+      this.map_ = null;
+      this.source_ = null;
     }
   });
-
-  AggregateDataset.sourceHandler = AGGREGATEDATASET_DATASET_HANDLER;
 
 
   //
   // IndexedDataset
   //
 
-  function binarySearchPos(array, map, left, right){ 
+  function binarySearchPos(array, map){ 
     if (!array.length)  // empty array check
       return 0;
 
     var pos;
     var value;
     var cmpValue;
-    var l = isNaN(left) ? 0 : left;
-    var r = isNaN(right) ? array.length - 1 : right;
+    var l = 0;
+    var r = array.length - 1;
 
     do 
     {
@@ -1527,190 +1632,23 @@
     return pos + (cmpValue < value);
   }
 
-  var INDEXEDDATASET_ITEM_HANDLER = {
-    update: function(object){
-      var map_ = this.map_[object.eventObjectId];
-      var newValue = this.index(object);
-      var index = this.index_;
+  function rebuild(){
+    var curSet = Object.slice(this.item_);
+    var newSet = this.index_.slice(this.offset, this.offset + this.limit);
+    var inserted = [];
+    var delta;
 
-      if (map_.value != newValue)
-      {
-        // search for current position in index
-        var curPos = binarySearchPos(index, map_);
-
-        // set for new value
-        map_.value = newValue;
-
-        // checking the need for changes
-        var left = index[curPos - 1];
-        var right = index[curPos + 1];
-
-        if (
-            (!left || left.value <= newValue)
-            &&
-            (!right || newValue <= right.value)
-           )
-        {
-          //console.log('index: ', index.map(Function.getter('object.info.value')));
-          return;
-        }
-
-        // remove from index
-        index.splice(curPos, 1);
-
-        // search for new position in index
-        var newPos = binarySearchPos(index, map_);
-
-        // insert into index on new position
-        index.splice(newPos, 0, map_);
-
-        //console.log('index: ', index.map(Function.getter('object.info.value')));
-
-        // calculate delta
-        if (index.length > this.offset)
-        {
-          var rangeEnd = this.offset + this.limit;
-          var curPosZone = (curPos > this.offset) + (curPos > rangeEnd);
-          var newPosZone = (newPos > this.offset) + (newPos > rangeEnd);
-
-          if (newPosZone == curPosZone)
-            return;
-
-          var deleted;
-          var inserted;
-          var delta = {};
-          switch (newPosZone){
-            case 0:
-              inserted = index[this.offset];
-              deleted = curPosZone == 1 ? map_ : index[rangeEnd];
-            break;
-            case 1:
-              inserted = map_;
-              deleted = curPosZone == 0 ? index[this.offset - 1] : index[rangeEnd];
-            break;
-            case 2:
-              inserted = index[rangeEnd - 1];
-              deleted = curPosZone == 1 ? map_ : index[this.offset - 1];
-            break;
-          }
-
-          if (inserted)
-            delta.inserted = [inserted.object];
-
-          if (deleted)
-            delta.deleted = [deleted.object];
-
-          this.event_datasetChanged(this, delta);
-        }
-      }
+    for (var i = 0, item; item = newSet[i]; i++)
+    {
+      var objectId = item.object.eventObjectId;
+      if (curSet[objectId])
+        delete curSet[objectId];
+      else
+        inserted.push(item.object);
     }
-  };
 
-  var INDEXEDDATASET_DATASET_HANDLER = {
-    datasetChanged: function(source, delta){
-
-      function updateDelta(map_, target, lookup){
-        if (map_)
-        {
-          var object = map_.object;
-          var id = object.eventObjectId;
-          if (lookup[id])
-            delete lookup[id];
-          else
-            target[id] = object;
-        }
-      }
-
-      var sourceId = source.eventObjectId;
-      var inserted = {};
-      var deleted = {};
-      var object;
-      var objectId;
-      var map_;
-      var index = this.index_;
-
-      if (delta.inserted)
-      {
-        for (var i = 0, object; object = delta.inserted[i]; i++)
-        {
-          objectId = object.eventObjectId;
-          map_ = this.map_[objectId];
-
-          if (!map_)
-          {
-            map_ = this.map_[objectId] = {
-              object: object,
-              count: 0,
-              value: this.index(object)
-            };
-
-            object.addHandler(INDEXEDDATASET_ITEM_HANDLER, this);
-
-            // rebuild index
-            var pos = binarySearchPos(index, map_);//this.index_.binarySearchPos(map_.value, 'value');
-
-            this.index_.splice(pos, 0, map_);
-            if (index.length > this.offset && pos < this.offset + this.limit)
-            {
-              updateDelta(index[this.offset + this.limit], deleted, inserted);
-              updateDelta(pos < this.offset ? index[this.offset] : map_, inserted, deleted);
-            }
-          }
-
-          if (!map_[sourceId])
-          {
-            map_[sourceId] = source;
-            map_.count++;
-          }
-        }
-      }
-
-      if (delta.deleted)
-      {
-        for (var i = 0, object; object = delta.deleted[i]; i++)
-        {
-          objectId = object.eventObjectId;
-          map_ = this.map_[objectId];
-
-          if (map_ && map_[sourceId])
-          {
-            delete map_[sourceId];
-            if (map_.count-- == 1)
-            {
-              map_.object.removeHandler(INDEXEDDATASET_ITEM_HANDLER, this);
-
-              var pos = binarySearchPos(index, map_); //this.index_.binarySearchPos(map_.value, 'value');
-              
-              if (index.length > this.offset && pos < this.offset + this.limit)
-              {
-                updateDelta(index[this.offset + this.limit], inserted, deleted);
-                updateDelta(pos < this.offset ? index[this.offset] : map_, deleted, inserted);
-              }
-              
-              index.splice(pos, 1);
-
-              delete this.map_[objectId];
-            }
-          }
-        }
-      }
-
-      inserted = values(inserted);
-      deleted = values(deleted);
-
-      if (delta = getDelta(inserted, deleted))
-      {
-        this.event_datasetChanged(this, delta);
-      }
-    },
-    destroy: function(source){
-      this.removeSource(source);
-    }
-  };
-
-  function normalizeNumber(num, min){
-    num = parseInt(num) || 0;
-    return num > min ? num : min;
+    if (delta = getDelta(inserted, values(curSet)))
+      AggregateDataset.prototype.event_datasetChanged.call(this, this, delta);
   }
 
  /**
@@ -1740,6 +1678,38 @@
     */
     limit: 10,
 
+    index_: null,
+
+    event_datasetChanged: function(dataset, delta){
+      var array;
+
+      if (array = delta.inserted)
+        for (var i = 0; i < array.length; i++)
+        {
+          var object = array[i];
+          var item = {
+            value: this.valueGetter(object),
+            object: object
+          };
+          var pos = binarySearchPos(this.index_, item);
+          this.index_.splice(pos, 0, item);
+        }
+
+      if (array = delta.deleted)
+        for (var i = 0; i < array.length; i++)
+        {
+          var object = array[i];
+          var item = {
+            value: this.valueGetter(object),
+            object: object
+          };
+          var pos = binarySearchPos(this.index_, item);
+          this.index_.splice(pos, 1);
+        }
+
+      rebuild.call(this);
+    },
+
    /**
     * @config {function} index Function for index value calculation; values are ordering according to this values.
     * @config {number} offset Initial value of range start.
@@ -1748,16 +1718,6 @@
     */
     init: function(config){
       this.index_ = [];
-
-      if (config)
-      {
-        if (config.index)
-          this.index = getter(config.index);
-        if ('offset' in config)
-          this.offset = normalizeNumber(config.offset, 0);
-        if ('limit' in config)
-          this.limit = normalizeNumber(config.limit, 1);
-      }
 
       // inherit
       AggregateDataset.prototype.init.call(this, config);
@@ -1769,32 +1729,12 @@
     * @param {number} limit Length of range.
     */
     setRange: function(offset, limit){
-      var inserted = [];
-      var item_ = Object.slice(this.item_);
+      this.offset = normalizeNumber(offset, 0);
+      this.limit = normalizeNumber(limit, 1);
 
-      this.offset = offset = normalizeNumber(offset, 0);
-      this.limit = limit = normalizeNumber(limit, 1);
-
-      var ar = this.index_.slice(offset, offset + limit);
-
-      for (var i = 0, object; object = ar[i]; i++)
-      {
-        var objectId = object.object.eventObjectId;
-        if (item_[objectId])
-          delete item_[objectId];
-        else
-          inserted.push(object.object);
-      }
-
-      var delta;
-      if (delta = getDelta(inserted, values(item_)))
-      {
-        this.event_datasetChanged(this, delta);
-      }
+      rebuild.call(this);
     }
   });
-
-  IndexedDataset.sourceHandler = INDEXEDDATASET_DATASET_HANDLER;
 
   //
   // Collection
@@ -1895,6 +1835,7 @@
     className: namespace + '.Collection',
 
     filter: $true,
+
     transform: function(object){
       return this.filter(object) ? object : null;
     },
@@ -1905,234 +1846,53 @@
     */
     setFilter: function(filter){
       filter = filter ? getter(filter) : $true;
+
       if (this.filter != filter)
       {
         this.filter = filter;
 
         var inserted = [];
         var deleted = [];
-        var config;
-        var object;
-        var newState;
+        var sourceObjectInfo;
+        var sourceObject;
+        var sourceMap = this.source_;
+        var memberMap = this.map_;
+        var exists;
+        var delta;
 
-        for (var id in this.source_)
+        for (var sourceObjectId in sourceMap)
         {
-          config = this.source_[id];
-          object = config.object;
-          newState = !!filter(object);
+          sourceObjectInfo = sourceMap[sourceObjectId];
+          sourceObject = sourceObjectInfo.sourceObject;
+          exists = filter(sourceObject);
 
-          if ((newState && !config.item) || (!newState && config.item))
+          if (exists && !sourceObjectInfo.member)
           {
-            if (newState)
-            {
-              config.item = object;
-              this.map_[id] = 1;
-              inserted.push(object);
-            }
-            else
-            {
-              config.item = null;
-              delete this.map_[id];
-              deleted.push(object);
-            }
+            sourceObjectInfo.member = sourceObject;
+            memberMap[id] = 1;
+
+            // add to delta
+            inserted.push(object);
+          }
+          else if (!exists && sourceObjectInfo.member)
+          {
+            sourceObjectInfo.member = null;
+            delete memberMap[id];
+
+            // add to delta
+            deleted.push(object);
           }
         }
 
-        var delta;
         if (delta = getDelta(inserted, deleted))
-        {
           this.event_datasetChanged(this, delta);
-        }
       }
     }
   });
-  //Collection.sourceHandler = COLLECTION_DATASET_HANDLER;
-  Collection.sourceHandler = AGGREGATEDATASET_DATASET_HANDLER;
 
   //
   // Grouping
   //
-
-  var GROUPING_ITEM_HANDLER = {
-    update: function(object){
-      var objectId = object.eventObjectId;
-      var oldGroup = this.map_[objectId].group;
-      var newGroup = this.getGroup(this.groupGetter(object), true);
-
-      if (oldGroup !== newGroup)
-      {
-        this.map_[objectId].group = newGroup;
-
-        //oldGroup.remove([object]);
-        delete oldGroup.map_[objectId];
-
-        oldGroup.event_datasetChanged(oldGroup, {
-          deleted: [object]
-        });
-
-        //newGroup.add([object]);
-        newGroup.map_[objectId] = object;
-
-        newGroup.event_datasetChanged(newGroup, {
-          inserted: [object]
-        });
-
-        // destroy oldGroup if empty
-        if (!oldGroup.itemCount && ('destroyEmpty' in oldGroup ? oldGroup.destroyEmpty : this.destroyEmpty))
-        {
-          //this.groups_[oldGroup.groupId].destroy();
-          delete this.groups_[oldGroup.groupId];
-          delete this.map_[oldGroup.eventObjectId];
-          oldGroup.destroy();
-          this.event_datasetChanged(this, {
-            deleted: [oldGroup]
-          });
-        }
-      }
-    }
-  };
-
-  var GROUPING_DATASET_HANDLER = {
-    datasetChanged: function(source, delta){
-      var sourceId = source.eventObjectId;
-      var inserted = [];
-      var deleted = [];
-      var object;
-      var objectId;
-      var map_;
-
-      var deltaCache = {};
-      var group;
-      var groupId;
-      var groupDelta;
-
-      if (delta.inserted)
-      {
-        // parse groups first
-        Dataset.setAccumulateState(true);
-        for (var i = 0, object; object = delta.inserted[i]; i++)
-        {
-          objectId = object.eventObjectId;
-          map_ = this.map_[objectId];
-
-          if (!map_)
-          {
-            group = this.getGroup(this.groupGetter(object), true);
-
-            map_ = this.map_[objectId] = {
-              object: object,
-              count: 0,
-              group: group
-            };
-
-            inserted.push(map_);
-          }
-
-          if (!map_[sourceId])
-          {
-            map_[sourceId] = source;
-            map_.count++;
-          }
-        }
-        Dataset.setAccumulateState(false);
-
-        // than add new objects to groups (otherwise groups items may be add by other object twice)
-        for (var i = 0; map_ = inserted[i]; i++)
-        {
-          object = map_.object;
-          group = map_.group;
-          objectId = object.eventObjectId;
-
-          // add object update event handler
-          object.addHandler(GROUPING_ITEM_HANDLER, this);
-
-          // group.add([object]);
-          group.map_[objectId] = object;
-
-          // add to event cache
-          groupId = group.eventObjectId;
-          groupDelta = deltaCache[groupId];
-          if (!groupDelta)
-            groupDelta = deltaCache[groupId] = {
-              group: group,
-              inserted: [object],
-              deleted: []
-            };
-          else
-            groupDelta.inserted.push(object);
-        }
-      }
-
-      if (delta.deleted)
-      {
-        for (var i = 0, object; object = delta.deleted[i]; i++)
-        {
-          objectId = object.eventObjectId;
-          map_ = this.map_[objectId];
-
-          if (map_ && map_[sourceId])
-          {
-            delete map_[sourceId];
-            if (map_.count-- == 1)
-            {
-              group = map_.group;
-
-              // remove object update event handler
-              object.removeHandler(GROUPING_ITEM_HANDLER, this);
-
-              // group.remove([object]);
-              delete group.map_[objectId];
-
-              // remove from groupin map
-              delete this.map_[objectId];
-
-              // add to event cache
-              groupId = group.eventObjectId;
-              groupDelta = deltaCache[groupId];
-              if (!groupDelta)
-                groupDelta = deltaCache[groupId] = {
-                  group: group,
-                  deleted: [object]
-                };
-              else
-                groupDelta.deleted.push(object);
-
-            }
-          }
-        }
-      }
-
-      for (var groupId in deltaCache)
-      {
-        delta = deltaCache[groupId];
-        group = delta.group;
-
-        if (!delta.deleted.length)
-          delete delta.deleted;
-
-        group.event_datasetChanged(group, delta);
-
-        if (!group.itemCount && ('destroyEmpty' in group ? group.destroyEmpty : this.destroyEmpty))
-        {
-          deleted.push(group);
-          //this.groups_[group.groupId].destroy();
-          delete this.groups_[group.groupId];
-          delete this.map_[group.eventObjectId];
-          group.destroy();
-        }
-      }
-
-      if (deleted.length)
-      {
-        this.event_datasetChanged(this, {
-          deleted: deleted
-        });
-      }
-    },
-    destroy: function(source){
-      this.removeSource(source);
-    }
-  };
 
  /**
   * @class
@@ -2145,6 +1905,20 @@
 
     destroyEmpty: true,
 
+    groupMap_: null,
+
+    transform: function(sourceObject){
+      return this.getGroup(this.groupGetter(sourceObject), true);
+    },
+    addMemberRef: function(group, sourceObject){
+      group.event_datasetChanged(group, { inserted: [sourceObject] });
+    },
+    removeMemberRef: function(group, sourceObject){
+      group.event_datasetChanged(group, { deleted: [sourceObject] });
+    },
+
+    //if (group.itemCount && (typeof group.destroyEmpty == 'undefined' ? group.destroyEmpty : this.destroyEmpty))
+
    /**
     * @config {function} filter Group function.
     * @config {class} groupClass Class for group instances. Should be instance of AbstractDataset.
@@ -2152,71 +1926,44 @@
     * @constructor
     */ 
     init: function(config){
-      this.groups_ = {};
+      this.groupMap_ = {};
 
       // inherit
       AggregateDataset.prototype.init.call(this, config);
     },
 
-    getGroup: function(value, autocreate){
-      var isDataObject = value instanceof DataObject;
-      var groupId = isDataObject ? value.eventObjectId : value;
-      var group = this.groups_[groupId];
-      if (!group)
+    getGroup: function(data, autocreate){
+      var isDataObject = data instanceof DataObject;
+      var groupId = isDataObject ? data.eventObjectId : data;
+      var group = this.groupMap_[groupId];
+
+      if (!group && autocreate)
       {
-        if (autocreate)
-        {
-          var config = {};
+        var groupConfig = {
+          groupId: groupId
+        };
 
-          if (isDataObject)
-            config.delegate = value;
-          else
-            config.info = {
-              groupId: value,
-              title: value
-            };
+        if (isDataObject)
+          groupConfig.delegate = data;
+        else
+          groupConfig.info = {
+            id: data,
+            title: data
+          };
 
-          group = new this.groupClass(config);
-          group.groupId = groupId;
-
-          this.map_[group.eventObjectId] = group;
-          this.groups_[groupId] = group;
-
-          this.event_datasetChanged(this, {
-            inserted: [group]
-          });
-        }
+        group = this.groupMap_[groupId] = new this.groupClass(groupConfig);
       }
 
       return group;
     },
 
     destroy: function(){
-      // prevent destroy empty groups, groups will destroy all at once (to reduce event dispatching)
-      this.destroyEmpty = false;
-
-      // fetch groups
-      var groups = values(this.groups_);
-      for (var i = groups.length; i --> 0;)
-        groups[i].destroyEmpty = false;
-
       // inherit
       AggregateDataset.prototype.destroy.call(this);
 
-      // dispatch event
-      this.event_datasetChanged(this, {
-        deleted: groups
-      });
-
-      // destroy groups
-      for (var i = groups.length; i --> 0;)
-        groups[i].destroy();
-
-      delete this.groups_;
+      this.groupMap_ = null;
     }
   });
-
-  Grouping.sourceHandler = GROUPING_DATASET_HANDLER;
 
   //
   // export names
