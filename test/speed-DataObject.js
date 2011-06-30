@@ -2,7 +2,7 @@
   Basis.Event.onLoad(function(){
 
     var TEST_COUNT = 5;
-    var INNER_TEST_COUNT = 4500;
+    var INNER_TEST_COUNT = 10000;
     var output = document.getElementById('output');
 
     var funcs = {};
@@ -48,21 +48,22 @@
    
       // Test #2
 
-      speedTest('Create with info', INNER_TEST_COUNT, function(){
-        x.push(new Basis.Data.DataObject({
-          info: {
-            a: 1,
-            b: 2,
-            c: 3,
-            d: 4,
-            e: 5,
-            f: 6,
-            k: 7,
-            l: 8,
-            m: 9,
-            n: 0
-          }
-        }));
+      speedTest('Create with info', 1, function(){
+        for (var i = 0; i < INNER_TEST_COUNT; i++)
+          x.push(new Basis.Data.DataObject({
+            info: {
+              a: 1,
+              b: 2,
+              c: 3,
+              d: 4,
+              e: 5,
+              f: 6,
+              k: 7,
+              l: 8,
+              m: 9,
+              n: 0
+            }
+          }));
       });
 
       // Test #3
@@ -81,7 +82,7 @@
         }), delegate);
       });
 
-      speedTest('destroy ' + INNER_TEST_COUNT * 4 + ' objects', 1, function(){
+      speedTest('destroy ' + x.length + ' objects', 1, function(){
         for (var i = x.length; i --> 0;)
           x[i].destroy();
         x.length = 0;

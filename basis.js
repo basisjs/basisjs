@@ -1552,6 +1552,7 @@
     */
 
     var slice = Array.prototype.slice;
+    var warnOnDestroy = function(){ throw 'Object had beed destroed before. Destroy method shouldn\'t be call more than once.' }
 
     // EventObject seed ID
     var eventObjectId = 1;
@@ -1562,27 +1563,27 @@
 
       if (!eventFunction)
       {
-        eventFunction = events[eventName] = function(){
+        eventFunction = events[eventName] = Function('eventName', 'slice', 'return function _event_' + eventName + '(){' + (function(){
+          var config;
+          var func;
+
           var handlers = this.handlers_;
           if (!handlers || !handlers.length)
             return;
 
           handlers = slice.call(handlers);
 
-          var config;
-          var func;
           for (var i = handlers.length; i --> 0;)
           {
             config = handlers[i];
-            // debug for
-            //;;;if (typeof config.handler.any == 'function') config.handler.any.apply(config.thisObject, arguments);
 
             // handler call
             func = config.handler[eventName];
             if (typeof func == 'function')
               func.apply(config.thisObject, arguments);
           }
-        };
+        }).toString().replace(/^function[^(]*\(\)\{|\}$/g, '') + '}')(eventName, slice);
+
         ;;;if (arguments.length > 1){ var text = eventFunction.toString().replace(/\(\)/, '(' + Array.from(arguments, 1) + ')'); eventFunction.toString = function(){ return text } };
       }
 
@@ -1594,6 +1595,7 @@
     * can registrate handlers for events, and call it when event happend. 
     * @class
     */
+    var destroyEvent;
     var EventObject = Class(null, {
      /**
       * Name of class.
@@ -1608,6 +1610,14 @@
       * @private
       */
       handlers_: null,
+
+     /**
+      * Fires when object is destroing.
+      * NOTE: don't override
+      * @param {Basis.EventObject} object Reference for object wich is destroing.
+      * @event
+      */
+      event_destroy: destroyEvent = dispatchEvent('destroy', 'object'),
 
      /**
       * @param {Object=} config
@@ -1626,11 +1636,13 @@
         // fast add first hanlder
         if (this.initHandler)
         {
-          (this.handlers_ = [])[0] = {
+          (this.handlers_ = []).push({
             handler: this.initHandler,
             thisObject: this.initHandlerContext || this
-          };
+          });
         }
+
+        //this.h_ = {};
 
         // debug for
         //;;;if (this.traceEvents_) (this.handlers_ || (this.handlers_ = [])).push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
@@ -1676,6 +1688,7 @@
       * @return {boolean} Whether event handler set was removed.
       */
       removeHandler: function(handler, thisObject){
+        //if (window.x++ == 0)debugger;
         if (!this.handlers_)
           return;
 
@@ -1696,32 +1709,20 @@
       },
 
      /**
-      * Fires when object is destroing.
-      * @param {Basis.EventObject} object Reference for object wich is destroing.
-      * @event
-      */
-      event_destroy: dispatchEvent('destroy', 'object'),
-
-     /**
       * @destructor
       */
       destroy: function(){
-        // remove object from global instance storage (debug for)
+        // warn on destroy method call (only in debug)
+        ;;;this.destroy = warnOnDestroy;
 
-        // prevent call this method again
-        this.destroy = Function.$undef;
+        if (this.handlers_)
+        {
+          // fire object destroy event handlers
+          destroyEvent.call(this);
 
-        // fire object destroy event handlers
-        //this.dispatch('destroy', this);
-        this.event_destroy(this);
-
-        // remove all event handler sets
-        //delete this.handlers_;
-        this.handlers_ = null;
-
-        // no handlers in destroyed object, nothing dispatch
-        // dispatch will throw exception
-        this.dispatch = Function.$undef;
+          // remove all event handler sets
+          this.handlers_ = null;
+        }
       }
     });
 
