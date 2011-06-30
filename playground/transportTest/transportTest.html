@@ -1,0 +1,313 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Speed Test: Basis Tree</title>
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/new/style.css" media="screen" />
+
+  <script type="text/javascript"  src="../../basis.js"></script>
+  <script type="text/javascript"  src="../../data.js"></script>
+  <script type="text/javascript"  src="../../property.js"></script>
+  <script type="text/javascript"  src="../../crypt.js"></script>
+  <script type="text/javascript"  src="../../ajax_.js"></script>
+  <script type="text/javascript"  src="../../xml.js"></script>
+  <script type="text/javascript"  src="../../soap_.js"></script>
+  <script type="text/javascript"  src="../../dom_wrapper.js"></script>
+  <script type="text/javascript"  src="../../button.js"></script>
+
+
+  <style>
+    #logOutput
+    {
+      width: 300px;
+      height: 200px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <div><textarea id="logOutput"></textarea></div>
+  </div>
+  <script type="text/javascript">
+    (function(){
+
+      var DOM = Basis.DOM;
+      var Data = Basis.Data;
+      var Event = Basis.Event;
+      var cssClass = Basis.CSS.cssClass;
+
+      var Button = Basis.Controls.Button.Button;
+      var Transport = Basis.Ajax.Transport;
+
+      var logOutput = DOM.get('logOutput')
+
+      function clearLog(){
+        logOutput.value = '';
+      }
+      function log(str){
+        logOutput.value += str + '\n';
+      }
+
+      clearLog();
+
+      var logCallback = {
+        readyStateChanged: function(req, readyState)
+        {
+          log('readyState: ' + readyState);
+        },
+        start: function(){
+          log('start event');
+        },
+        success: function(req){
+          log('success event');
+          log(req.info.responseText);
+
+        },
+        complete: function(req){
+          log('complete event');
+          log('------------------');
+        },
+        abort: function(){
+          log('abort event');
+        },
+        timeout: function(){
+          log('timeout event');
+        }
+      };
+
+      var influence1 = new Basis.Data.DataObject({});
+      influence1.addHandler({
+        stateChanged: function(){
+          log('influence1 state: ' + this.state);
+        }
+      });
+      var influence2 = new Basis.Data.DataObject({});
+      influence2.addHandler({
+        stateChanged: function(){
+          log('influence2 state: ' + this.state);
+        }
+      });
+
+
+      var transport = new Transport({
+        url: 'test.json',
+        method: 'GET',
+        callback: logCallback
+      });
+
+
+      new Button({
+        caption: 'Simple request',
+        handler: function(){
+          clearLog();
+          transport.get();
+        },
+        container: DOM.get('container')
+      });
+
+      new Button({
+        caption: 'Simple request with timeout',
+        handler: function(){
+          clearLog();
+          transport.get({
+            url: '/cgi-bin/delay.pl'
+          });
+        },
+        container: DOM.get('container')
+      });
+     
+      new Button({
+        caption: 'Request with abort',
+        handler: function(){
+          clearLog();
+          transport.get();
+          transport.abort();
+        },
+        container: DOM.get('container')
+      });
+
+      new Button({
+        caption: 'Two same request one by one',
+        handler: function(){
+          clearLog();
+          transport.get({
+            influence: influence1
+          });
+          transport.get({
+            influence: influence1
+          });
+        },
+        container: DOM.get('container')
+      });
+
+      new Button({
+        caption: 'Two diffenent request one by one',
+        handler: function(){
+          clearLog();
+            
+          var transport = new Transport({
+            url: 'test.json',
+            method: 'get',
+            callback: logCallback,
+            poolHashGetter: function(data){
+              return data.params.param.toFixed(2);
+            }
+          });
+          
+          transport.get({
+            influence: influence1,
+            params: { 'param': Math.random(1) }
+          });
+
+          transport.get({
+            influence: influence2,
+            params: { 'param': Math.random(1) }
+          });
+        },
+        container: DOM.get('container')
+      });
+
+      new Button({
+        caption: 'Transport with repeat',
+        handler: function(){
+          clearLog();
+          var transport = new Transport({
+            url: 'test.json',
+            method: 'POST',
+            callback: {
+              complete: function(request){
+                request.repeat();
+              }
+            }
+          });
+          transport.get({
+            influence: influence1
+          });
+        },
+        container: DOM.get('container')
+      });
+
+      //SOAP
+
+      var soapCallback = {
+        start: function(){
+          log('start event');
+        },
+        success: function(request){
+          log('success event');              
+        },
+        complete: function(){
+          log('complete event');
+        },
+        abort: function(){
+          log('abort event');
+        },
+        failure: function(request, code, message){
+          log('failure event');
+          log(request.info.error.code + ': ' + request.info.error.message);
+        },
+        soapfailure: function(request, code, message){
+          log('soapfailure event');
+          log(code + ': ' + message);            
+        }
+      };
+
+      var sessionKey = 'fe4c97c9-8e44-4314-9920-b33af86f1d33';
+      var namespace = 'Wallet.Security.WebService';
+
+      var soapTransport = new Basis.SOAP.SOAPProxy({
+        url: '/w1service/SecurityService.asmx',
+        namespace: namespace,
+        methodName: 'GetSessionUserId',
+        soapHeaderSections: {
+          ParamsHeader: {
+            namespace: namespace,
+            data: {
+              Params: {
+                Param: [
+                  {
+                    '@Name':  'CultureId',
+                    '@Value': 'ru-RU'
+                  }
+                ]
+              }
+            }
+          }
+        },
+        soapBody: {
+          SessionKey: sessionKey
+        },
+        callback: soapCallback,
+        poolHashGetter: function(requestData){
+          return requestData.soapBody.SessionKey;
+        }
+      });   
+
+      /*var service = new Basis.SOAP.Service('/w1service/SecurityService.asmx', 'Wallet.Security.WebService');
+      var soapMethod = service.createMethodCall('GetSessionUserId', {
+        callback: {
+          start: function(){
+            log('start event');
+          },
+          success: function(request){
+            log('success event');              
+          },
+          complete: function(){
+            log('complete event');
+          },
+          abort: function(){
+            log('abort event');
+          },
+          failure: function(request, code, message){
+            log('failure event');
+          },
+          soapfailure: function(request, code, message){
+            log('soapfailure event');
+            log(code + ': ' + message);            
+          }
+        }          
+      }, false);*/
+
+      new Button({
+        caption: 'SOAP Transport',
+        handler: function(){
+          clearLog();
+          soapTransport.get();
+        },
+        container: DOM.get('container')
+      });
+      new Button({
+        caption: 'Two same SOAP request one by one',
+        handler: function(){
+          clearLog();
+          soapTransport.get();
+          soapTransport.get();
+        },
+        container: DOM.get('container')
+      });
+      new Button({
+        caption: 'Two different SOAP request one by one',
+        handler: function(){
+          clearLog();
+          soapTransport.get({
+            soapBody: {  
+              SessionKey: 'fe4c97c9-8e44-4314-9920-b33af86f1d33'              
+            }
+          });
+          soapTransport.get({
+            soapBody: {
+              SessionKey: 'fe4c97c9-8e44-4314-9920-b33af86f1d34'              
+            }
+          });
+        },
+        container: DOM.get('container')
+      });
+
+    })();
+  </script>
+</body>
+
+</html>
