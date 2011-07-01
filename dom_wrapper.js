@@ -872,9 +872,9 @@
       if (!this.canHaveChildren)
         throw EXCEPTION_CANT_INSERT;
 
-      // newChild can't be ancestor of current node
       if (newChild.firstChild)
       {
+        // newChild can't be ancestor of current node
         var cursor = this;
         do {
           if (cursor == newChild)
@@ -897,13 +897,15 @@
       var localGrouping = this.localGrouping;
       var localSorting = this.localSorting;
       var childNodes = this.childNodes;
-      var pos = 0;
+      var newChildValue;
+      var groupNodes;
+      var group = null;
+      var pos = -1;
 
       if (localGrouping)
       {
-        var newChildValue;
-        var group = localGrouping.getGroupNode(newChild);
-        var groupNodes = group.nodes;
+        group = localGrouping.getGroupNode(newChild);
+        groupNodes = group.nodes;
 
         // optimization: test node position, possible it on right place
         if (isInside && newChild.nextSibling === refChild && currentNewChildGroup === group)
@@ -962,16 +964,20 @@
 
           return newChild;
         }
+
+        pos = -1; // NOTE: drop pos, because this index for group nodes
+                  // TODO: re-calculate pos as sum of previous groups nodes.length and pos
       }
       else
       {
         if (localSorting)
         {
           // if localSorting is using - refChild is ignore
-          var newChildValue = localSorting(newChild) || 0;
           var sortingDesc = this.localSortingDesc;
           var next = newChild.nextSibling;
           var prev = newChild.previousSibling;
+
+          newChildValue = localSorting(newChild) || 0;
 
           // some optimizations if node had already inside current node
           if (isInside)
@@ -991,7 +997,8 @@
           }
 
           // search for refChild
-          refChild = childNodes[childNodes.binarySearchPos(newChildValue, sortingSearch, sortingDesc)];
+          pos = childNodes.binarySearchPos(newChildValue, sortingSearch, sortingDesc);
+          refChild = childNodes[pos];
           newChild.sortingValue = newChildValue;
 
           if (newChild === refChild || (isInside && next === refChild))
@@ -1055,24 +1062,30 @@
 
       // add to group
       // NOTE: we need insert into group here, because we create fake refChild if refChild doesn't exist
-      if (currentNewChildGroup != group)
+      if (currentNewChildGroup !== group)
         group.insert(newChild, refChild);
       
       // insert
       if (refChild) 
       {
         // search for refChild position
-        pos = childNodes.indexOf(refChild)
+        // NOTE: if position is not equal -1 than position was found before (localSorting, logN)
+        if (pos == -1)
+          pos = childNodes.indexOf(refChild);
 
         // if refChild not found than throw exception
         if (pos == -1)
           throw EXCEPTION_NODE_NOT_FOUND;
 
+        // set next sibling
         newChild.nextSibling = refChild;
+
+        // insert newChild into childNodes
+        childNodes.splice(pos, 0, newChild);
       }
       else
       {
-        // insert in the end
+        // there is no refChild, insert newChild to the end of childNodes
         pos = childNodes.length;
 
         // create fake refChild, it helps with references updates
@@ -1082,10 +1095,10 @@
 
         // update lastChild
         this.lastChild = newChild;
-      }
 
-      // insert newChild into childNodes
-      childNodes.splice(pos, 0, newChild);
+        // insert newChild into childNodes
+        childNodes.push(newChild);
+      }
 
       // update newChild
       newChild.parentNode = this;

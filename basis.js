@@ -774,7 +774,7 @@
           if (desc ? value < compareValue : value > compareValue)
             l = pos + 1;
           else
-            return value == compareValue ? pos : -1;  // founded element
+            return value == compareValue ? pos : (strong ? -1 : 0);  // founded element
                                                       // -1 returns when it seems as founded element,
                                                       // but not equal (array item or value looked for have wrong data type for compare)
       }

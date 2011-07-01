@@ -179,6 +179,10 @@
       }
     }, 'Update'));
 
+    //
+    // User list
+    //
+
     var tree = new nsTree.Tree({
       container: demoContainer,
       childClass: Basis.Class(nsTree.TreeNode, {
@@ -196,7 +200,7 @@
         titleGetter: getter('info.title'),
         localSorting: getter('info.title'),
 
-        active: true,
+        active: false,
         collection: UserGroup.all
       }
     });
