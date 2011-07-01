@@ -9,6 +9,8 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+'use strict';
+
   (function(){
 
     /** @namespace Basis.Ajax */
@@ -180,13 +182,13 @@
       var newState;
       var error;
 
-      if (readyState == STATE_UNSENT && this.prevReadyState_ != 0)
+      if (readyState == STATE_UNSENT)
       {
         // dispatch event
         proxy.event_abort(this);
         proxy.event_complete(this);
 
-        newState = STATE.READY;
+        newState = STATE.READY; 
 
         ;;;if (this.debug) logOutput('Request aborted');
       }
@@ -217,12 +219,12 @@
 
         // dispatch complete event
         proxy.event_complete(this);
-
-        // set new state
-        this.setState(newState, this.info.error);
       }
       else
-        this.setState(STATE.PROCESSING);
+        newState = STATE.PROCESSING;
+
+      // set new state
+      this.setState(newState, this.info.error);
 
       this.prevReadyState_ = readyState;
     };
@@ -235,7 +237,7 @@
       timeout:  30000, // 30 sec
       requestStartTime: 0,
 
-      prepare: Function.$true,
+      //prepare: Function.$true,
 
       event_stateChanged: function(object, oldState){
         DataObject.prototype.event_stateChanged.call(this, object, oldState);
@@ -251,14 +253,14 @@
       },
 
       setInfluence: function(influence){
-        this.influence.set(Array.from(influence));
+        this.influence = Array.from(influence);
       },
       clearInfluence: function(){
-        this.influence.clear();
+        this.influence = [];
       },
 
       isIdle: function(){
-        return this.xhr.readyState == 4 || this.xhr.readyState == 0;
+        return this.xhr.readyState == STATE_DONE || this.xhr.readyState == STATE_UNSENT;
       },
 
       isSuccessful: function(){
@@ -311,14 +313,14 @@
             requestData.url += (requestData.url.indexOf('?') == -1 ? '?' : '&') + params;
         }
 
-        return true;
+        return requestData;
       },
 
       doRequest: function(requestData){
-        this.requestData_ = requestData;
+        this.requestData = requestData;
 
-        if (this.prepare(this.requestData_))
-          this.send(this.requestData_);
+        if (requestData = this.prepare(requestData))
+          this.send(requestData);
       },
       
       send: function(requestData){
@@ -381,10 +383,10 @@
       },
 
       repeat: function(){
-        if (this.requestData_)
+        if (this.requestData)
         {
           this.abort();
-          this.send(this.requestData_);
+          this.send(this.requestData);
         }
       },
 
@@ -410,7 +412,7 @@
         this.clearInfluence();
 
         delete this.xhr;
-        delete this.requestData_;
+        delete this.requestData;
         delete this.prevReadyState_;
 
         DataObject.prototype.destroy.call(this);
@@ -584,7 +586,7 @@
       prepare: function(requestData){
         var url = requestData.url || this.url;
 
-        if (!location)
+        if (!url)
           throw new Error('URL is not defined');
 
         Object.extend(requestData, {
@@ -607,7 +609,22 @@
       }
     });
 
+    var Service = Class(null, {
+      proxyClass: AjaxProxy,
+      requestClass: AjaxRequest,
 
+      init: function(config){
+        if (this.requestClass)
+          this.proxyClass.prototype.requestClass = this.requestClass;
+      },
+
+      createProxy: function(config){
+        var service = this;
+        return Function.lazyInit(function(){
+          return new service.proxyClass(config);
+        });
+      }
+    });
 
     //
     // export names
@@ -621,7 +638,8 @@
       Proxy: Proxy,
       AjaxProxy: AjaxProxy,
       AjaxRequest: AjaxRequest,
-      ProxyDispatcher: ProxyDispatcher
+      ProxyDispatcher: ProxyDispatcher,
+      Service: Service
     });
 
   })();

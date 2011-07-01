@@ -78,7 +78,7 @@
 
       isSuccessful: function(){
         var xml = this.xhr.responseXML;
-        return AjaxRequest.prototype.isSuccessful() && (xml !== undefined && xml.documentElement !== undefined);
+        return AjaxRequest.prototype.isSuccessful.call(this) && (xml !== undefined && xml.documentElement !== undefined);
       },
 
       init: function(config){
@@ -119,7 +119,8 @@
           var xml = this.xhr.responseXML;
           if (xml !== undefined || xml.documentElement !== undefined)
           {
-            if (xml.xml && DOMParser)
+            // convert to native document for IE
+            if (xml.xml && window.DOMParser)
             {
               var parser = new DOMParser();
               xml = parser.parseFromString(xml.xml, "text/xml");
@@ -198,7 +199,7 @@
       mapping: null,
       soapBody: null,
       soapHeader: null,
-      soapHeaderSections: null,
+      soapHeaderSections: {},
 
       prepare: function(requestData){
         var requestData = AjaxProxy.prototype.prepare.call(this, requestData);

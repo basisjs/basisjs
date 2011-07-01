@@ -4,7 +4,7 @@
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-  <title>Speed Test: Basis Tree</title>
+  <title>Transport Test</title>
   <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/new/style.css" media="screen" />
 
   <script type="text/javascript"  src="../../basis.js"></script>
@@ -123,7 +123,9 @@
         caption: 'Request with abort',
         handler: function(){
           clearLog();
-          transport.get();
+          transport.get({
+            influence: influence1
+          });
           transport.abort();
         },
         container: DOM.get('container')
@@ -215,7 +217,7 @@
         }
       };
 
-      var sessionKey = 'fe4c97c9-8e44-4314-9920-b33af86f1d33';
+      var sessionKey = 'e3ec7921-14da-4cb6-824b-8b7314863878';
       var namespace = 'Wallet.Security.WebService';
 
       var soapTransport = new Basis.SOAP.SOAPProxy({
@@ -244,7 +246,8 @@
         poolHashGetter: function(requestData){
           return requestData.soapBody.SessionKey;
         }
-      });   
+      });
+
 
       /*var service = new Basis.SOAP.Service('/w1service/SecurityService.asmx', 'Wallet.Security.WebService');
       var soapMethod = service.createMethodCall('GetSessionUserId', {
@@ -305,6 +308,60 @@
         },
         container: DOM.get('container')
       });
+
+
+      var customSOAPService = new Basis.Ajax.Service({
+        proxyClass: Basis.SOAP.SOAPProxy,
+        requestClass: Basis.Class(Basis.SOAP.SOAPRequest, {
+          prepare: function(requestData){
+            requestData.soapHeaderSections.ParamsHeader = {
+              namespace: namespace,
+              data: {
+                Params: {
+                  Param: [
+                    {
+                      '@Name':  'CultureId',
+                      '@Value': 'ru-RU'
+                    }
+                  ]
+                }
+              }
+            }
+
+            return Basis.SOAP.SOAPRequest.prototype.prepare.call(this, requestData);
+          },
+          responseDataGetter: function(data){
+            var method = this.requestData.methodName;
+            return data[method + 'Response'][method + 'Result'];
+          }
+        })
+      });
+
+      var customSOAPProxy = customSOAPService.createProxy({
+        url: '/w1service/SecurityService.asmx',
+        namespace: namespace,
+        methodName: 'GetSessionUserId',
+        soapBody: {
+          SessionKey: sessionKey
+        },
+        callback: {
+          success: function(request){
+            var data = request.getResponseData();
+            log(data);
+          }
+        }
+      });
+
+
+      new Button({
+        caption: 'SOAP request via Custom Service',
+        handler: function(){
+          clearLog();
+          customSOAPProxy().get();
+        },
+        container: DOM.get('container')
+      });
+
 
     })();
   </script>

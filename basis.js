@@ -1582,9 +1582,9 @@
             if (typeof func == 'function')
               func.apply(config.thisObject, arguments);
           }
-        }).toString().replace(/^function[^(]*\(\)\{|\}$/g, '') + '}')(eventName, slice);
+        }).toString().replace(/^\(?function[^(]*\(\)[^{]*\{|\}\)?$/g, '') + '}')(eventName, slice);
 
-        ;;;if (arguments.length > 1){ var text = eventFunction.toString().replace(/\(\)/, '(' + Array.from(arguments, 1) + ')'); eventFunction.toString = function(){ return text } };
+        ;;;if (arguments.length > 1){ var text = eventFunction.toString().replace(/\(\)/, '(' + Array.from(arguments, 1).join(', ') + ')'); eventFunction.toString = function(){ return text } };
       }
 
       return eventFunction;

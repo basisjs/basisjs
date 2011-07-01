@@ -391,7 +391,8 @@
         return element.getElementsByTagNameNS(namespace, name);
 
       var result = new Array();
-      var nodes = DOM.tag(element, name);
+      element.ownerDocument.setProperty('SelectionNamespaces', 'xmlns:x="' + namespace + '"');
+      var nodes = element.selectNodes('//x:' + name);
 
       for (var i = 0, node; node = nodes[i++];)
         if (node.namespaceURI == namespace)
