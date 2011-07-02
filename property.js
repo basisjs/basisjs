@@ -31,7 +31,7 @@
     var Cleaner = Basis.Cleaner;
 
     var getter = Function.getter;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
 
     var EventObject = Basis.EventObject;
     var TimeEventManager = Basis.TimeEventManager;
@@ -437,7 +437,7 @@
     });
 
     Property.shortcut = {
-      className: function(newValue, oldValue){ cssClass(this).replace(oldValue, newValue) },
+      className: function(newValue, oldValue){ classList(this).replace(oldValue, newValue) },
       show:      function(newValue){ DOM.display(this, !!newValue) },
       hide:      function(newValue){ DOM.display(this, !newValue) },
       disable:   function(newValue){ this.disabled = !!newValue },

@@ -25,7 +25,7 @@
   var DOM = Basis.DOM;
 
   var getter = Function.getter;
-  var cssClass = Basis.CSS.cssClass;
+  var classList = Basis.CSS.classList;
   var addGlobalHandler = Event.addGlobalHandler;
   var removeGlobalHandler = Event.removeGlobalHandler;
 
@@ -146,25 +146,10 @@
       //this.inherit(config);
       EventObject.prototype.init.call(this, config);
 
-      /*if (typeof config == 'object')
-      {
-        var props = ['fixLeft', 'fixRight', 'fixTop', 'fixBottom', 'axisX', 'axisY'];
-        for (var i = 0; i < props.length; i++)
-          if (props[i] in config)
-            this[props[i]] = !!config[props[i]];
-
-        if (typeof config.axisXproxy == 'function')
-          this.axisXproxy = config.axisXproxy;
-        if (typeof config.axisYproxy == 'function')
-          this.axisYproxy = config.axisYproxy;
-
-        if (typeof config.containerGetter == 'function')
-          this.containerGetter = config.containerGetter;
-      }*/
       var element = this.element;
-      this.element = null;
-
       var trigger = this.trigger;
+
+      this.element = null;
       this.trigger = null;
 
       this.setElement(element, trigger);
@@ -206,12 +191,12 @@
       if (this.element != element)
       {
         if (this.element)
-          cssClass(this.element).remove(DDCssClass.dragable);
+          classList(this.element).remove(DDCssClass.dragable);
 
         this.element = element;
 
         if (this.element)
-          cssClass(this.element).add(DDCssClass.dragable);
+          classList(this.element).add(DDCssClass.dragable);
       }
     },
 
@@ -259,7 +244,7 @@
         var viewport = new nsLayout.Viewport(this.baseElement);
 
         // set class
-        cssClass(element).add(DDCssClass.element);
+        classList(element).add(DDCssClass.element);
 
         config.element = element;
         config.box = box;
@@ -307,7 +292,7 @@
         return;
 
       // remove class
-      cssClass(config.element).remove(DDCssClass.element);
+      classList(config.element).remove(DDCssClass.element);
 
       DragDropElement.prototype.event_over.call(this, config);
     }

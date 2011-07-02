@@ -21,14 +21,23 @@
       font-family: Tahoma, Verdana, Arial, sans-serif;
     }
 
-    .Basis-Tree
+    #UserList
     {
       margin: 10px;
-      height: 400px;
+      height: 450px;
       width: 300px;
       overflow: auto;
       border: 1px solid #888;
       position: relative;
+    }
+    #UserList .user
+    {
+      margin: 1px;
+      padding: .2em .5ex;
+    }
+    #UserList .user:hover
+    {
+      background: #E8E8E8;
     }
 
     .Basis-Label-Processing
@@ -42,10 +51,12 @@
       border-radius: 4px;
         -moz-border-radius: 4px;
     }
-    .Basis-Tree-NodeGroup-Title
+    .Basis-PartitionNode-Title
     {
       border-top: 1px solid #888;
+      background: #E0E0E0;
       border-bottom: 1px solid #888;
+      padding: .5ex .2em;
     }
 
     TEXTAREA
@@ -138,6 +149,17 @@
       fields: {
         groupId: nsEntity.IntId,
         title: String
+      },
+      all: {
+        handler: colHandler,
+        afterInit: function(self){
+          self.adapter = new Basis.Ajax.Transport({
+            url: '../res/data/groups.json',
+            influence: self,
+            handler: adapterHandler,
+            handlerContext: self
+          });
+        }
       }
     });
 
@@ -150,24 +172,37 @@
       },
       aliases: {
         groupId: 'group'
+      },
+      all: {
+        handler: colHandler,
+        afterInit: function(self){
+          self.adapter = new Basis.Ajax.Transport({
+            url: '../res/data/users.json',
+            influence: self,
+            handler: adapterHandler,
+            handlerContext: self
+          });
+        }
       }
     });
 
     // create sync adapters
 
-    UserGroup.all.addHandler(colHandler);
-    UserGroup.all.adapter = new Basis.Ajax.Transport({
-      url: 'userlist_groups.json',
-      influence: UserGroup.all
-    });
-    UserGroup.all.adapter.addHandler(adapterHandler, UserGroup.all);
+    //UserGroup.all.addHandler(colHandler);
+    /*UserGroup.all.adapter = new Basis.Ajax.Transport({
+      url: '../res/data/groups.json',
+      influence: UserGroup.all,
+      handler: adapterHandler,
+      handlerContext: UserGroup.all
+    });*/
 
-    User.all.addHandler(colHandler);
-    User.all.adapter = new Basis.Ajax.Transport({
-      url: 'userlist_users.json',
-      influence: User.all
-    });
-    User.all.adapter.addHandler(adapterHandler, User.all);
+    //User.all.addHandler(colHandler);
+    /*User.all.adapter = new Basis.Ajax.Transport({
+      url: '../res/data/users.json',
+      influence: User.all,
+      handler: adapterHandler,
+      handlerContext: User.all
+    }); */
 
     // create controls
 
@@ -183,24 +218,32 @@
     // User list
     //
 
-    var tree = new nsTree.Tree({
+    function titleGetter(node){
+      return node.info.title;
+    }
+
+    var tree = new nsWrappers.TmplContainer({
       container: demoContainer,
-      childClass: Basis.Class(nsTree.TreeNode, {
-        titleGetter: function(node){
-          return this.info.title;
-        }
-      }),
+      id: 'UserList',
+
+      childClass: Basis.Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate(
+        '<div{element} class="user">' +
+          '{this_info_title}' +
+        '</div>'
+      )),
 
       active: true,
       collection: User.all,
 
-      localSorting: getter('info.title'),
+      localSorting: titleGetter,
       localGrouping: {
-        groupGetter: function(node){ return node.info.group; },
-        titleGetter: getter('info.title'),
-        localSorting: getter('info.title'),
+        groupGetter: function(node){
+          return node.info.group;
+        },
+        titleGetter: titleGetter,
+        localSorting: titleGetter,
 
-        active: false,
+        active: true,
         collection: UserGroup.all
       }
     });

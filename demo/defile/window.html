@@ -87,30 +87,33 @@
 
     var getter = Function.getter;
 
-    var Button = Basis.Controls.Button.Button;
-    var Window = Basis.Controls.Window.Window;
+    var nsButton = Basis.Controls.Button;
+    var nsWindow = Basis.Controls.Window;
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
     }
 
-    var simpleWindow = new Window({
+    var simpleWindow = new nsWindow.Window({
       autocenter: true,
       moveable: true,
       title: 'Simple Window',
-      buttonOk: {
-        caption: 'OK',
-        handler: function(){
-          alert('OK');
+      content: Basis.DOM.createElement({ css: { padding: '1.5em 1ex' } }, 'Basis is great framework!'),
+      buttons: [
+        {
+          caption: 'OK',
+          handler: function(){
+            alert('OK');
+          }
         }
-      },
-      buttonCancel: 'Cancel',
-      content: 'Simple Window Content',
+      ],
+      buttonCancel: 'Cancel'
     });
 
-    var anotherWindow = new Window({
+    var anotherWindow = new nsWindow.Window({
       autocenter: true,
       moveable: true,
+      modal: true,
       title: 'Another Window',
       buttonCancel: 'Close',
 
@@ -171,26 +174,23 @@
       }
     });*/
 
-    var container = createBlock('Simple Window');
-
-    new Button({
-      caption: 'Open Window',
-      handler: function(){
-        simpleWindow.open();
-      },
-      container: container
-    });
-
-    new Button({
-      caption: 'Open Another Window',
-      handler: function(){
-        anotherWindow.open();
-      },
-      container: container
-    });
-
-
-
+    new nsButton.ButtonPanel({
+      container: createBlock('Simple Window'),
+      childNodes: [
+        {
+          caption: 'Open Window',
+          handler: function(){
+            simpleWindow.open();
+          }
+        },
+        {
+          caption: 'Open Another Window',
+          handler: function(){
+            anotherWindow.open();
+          }
+        }
+      ]
+    })
 
   </script>
 </body>

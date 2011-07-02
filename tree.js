@@ -45,7 +45,7 @@
   var Event = Basis.Event;
   var DOM = Basis.DOM;
 
-  var cssClass = Basis.CSS.cssClass;
+  var classList = Basis.CSS.classList;
   var getter = Function.getter;
 
   var nsWrappers = DOM.Wrapper;
@@ -181,11 +181,11 @@
 
     event_expand: function(){
       TreeNode.prototype.event_expand.call(this);
-      cssClass(this.element).remove('collapsed');
+      classList(this.element).remove('collapsed');
     },
     event_collapse: function(){
       TreeNode.prototype.event_collapse.call(this);
-      cssClass(this.element).add('collapsed');
+      classList(this.element).add('collapsed');
     },
 
    /**

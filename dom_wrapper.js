@@ -341,7 +341,9 @@
     localSortingDesc: false,
 
    /**
-    * Grouping config
+    * GroupingNode config
+    * @link ./demo/common/grouping.html
+    * @link ./demo/common/grouping_of_grouping.html
     * @type {Basis.DOM.Wrapper.GroupingNode}
     */
     localGrouping: null,

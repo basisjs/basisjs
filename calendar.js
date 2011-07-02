@@ -25,7 +25,7 @@
     var nsWrappers = DOM.Wrapper;
 
     var getter = Function.getter;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
 
     var Template = Basis.Html.Template;
     var Property = Basis.Data.Property.Property;
@@ -193,9 +193,9 @@
 
           if (this.parentNode)
           {
-            cssClass(this.element)
-              .bool('before', this.info.periodStart < this.parentNode.info.periodStart)
-              .bool('after', this.info.periodEnd > this.parentNode.info.periodEnd);
+            var clsList = classList(this.element);
+            clsList.bool('before', this.info.periodStart < this.parentNode.info.periodStart);
+            clsList.bool('after', this.info.periodEnd > this.parentNode.info.periodEnd);
           }
         }
       }
@@ -222,11 +222,11 @@
 
       event_select: function(){
         TmplContainer.prototype.event_select.call(this);
-        cssClass(this.tmpl.tabElement).add('selected');
+        classList(this.tmpl.tabElement).add('selected');
       },
       event_unselect: function(){
         TmplContainer.prototype.event_unselect.call(this);
-        cssClass(this.tmpl.tabElement).remove('selected');
+        classList(this.tmpl.tabElement).remove('selected');
       },
       event_update: function(object, delta){
         TmplContainer.prototype.event_update.call(this, object, delta);
@@ -292,7 +292,7 @@
       init: function(config){
         TmplContainer.prototype.init.call(this, config);
 
-        cssClass(this.element).add('Basis-Calendar-Section-' + this.sectionName);
+        classList(this.element).add('Basis-Calendar-Section-' + this.sectionName);
         Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
 
         this.setChildNodes([{
@@ -509,7 +509,7 @@
         }
         else
         {
-          if (cssClass(Event.sender(event)).contains('disabled'))
+          if (classList(Event.sender(event)).contains('disabled'))
             return;
 
           switch (actionName)

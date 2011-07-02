@@ -26,7 +26,6 @@
     var Template = Basis.Html.Template;
 
     var getter = Function.getter;
-    var cssClass = Basis.CSS.cssClass;
 
     var nsWrappers = Basis.DOM.Wrapper;
 

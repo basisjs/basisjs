@@ -56,7 +56,7 @@
       overflow: hidden;
     }
 
-    #MasterTree .Basis-Tree-Node A
+    #MasterTree .Basis-TreeNode A
     {
       padding-left: 5px;
       margin: 0;
@@ -65,7 +65,7 @@
         -webkit-border-radius: 3px;
       border-radius: 3px;
     }
-    #MasterTree .Basis-Tree-Node
+    #MasterTree .Basis-TreeNode
     {
       float: left;
       margin: 0 0 2px 2px;
@@ -158,6 +158,7 @@
     var Event = Basis.Event;
     var DOM = Basis.DOM;
 
+    var nsWrappers = Basis.DOM.Wrapper;
     var nsEntity = Basis.Entity;
     var nsTree = Basis.Controls.Tree;
     var nsButton = Basis.Controls.Button;
@@ -253,39 +254,40 @@
         collapsed: true,
         titleGetter: Function.getter('info.Title'),
         localSorting: Function.getter('delegate.getId()'),
-        childClass: Class(nsTree.TreeNode, {
-          titleGetter: function(node){
-            return (masterSet == 'Field' ? Property.get(node.info.PropertyId) : Field.get(node.info.FieldId)).info.Title;
-          },
-          behaviour: {
-            click: function(){
-              if (this.parentNode)
-                this.parentNode.select();
-            }
+        childClass: Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate(
+          '<div{element} event-click="select">{this_info_Title}</div>'
+        ), {
+          templateAction: function(actionName, event){
+            if (actionName == 'select')
+              this.parentNode.select();
           }
         }),
-        behaviour: {
+        handler: {
           childNodesModified: function(){
-            this.countText.nodeValue = this.childNodes.length;
+            this.tmpl.countText.nodeValue = this.childNodes.length;
           },
           update: function(object, delta){
-            this.inherit(object, delta);
-
-            var rootDelegate = this.getRootDelegate();
-            var idField = rootDelegate.entityType.idField;
-            if (idField in delta)
+            if ('FieldId' in delta)
             {
-              var id = rootDelegate.getId();
-              this.setCollection(id ? Link.getGrouping(idField).getGroup(id, true) : null);
+              this.collection.clear();
+              this.collection.addSource(Link.getGrouping('FieldId').getGroup(this.info.FieldId, true));
             }
           }
+        },
+        init: function(config){
+          this.collection = new Basis.Data.AggregateDataset({ transform: Function.getter('info.PropertyId', Property.get) });
+          nsTree.TreeFolder.prototype.init.call(this, config);
+        },
+        destroy: function(){
+          this.collection.destroy();
+          nsTree.TreeFolder.prototype.destroy.call(this);
         }
       }),
 
       collection: Field.all,
 
       // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
-      localSorting: 'delegate.getId()',
+      localSorting: Function.getter('delegate.getId()'),
 
       // Задаем обработчик на событие изменения выборки (Selection).
       selection: {
@@ -365,13 +367,13 @@
       localGrouping: {
         //collection: Property.all,
         groupGetter: function(node){
-          return masterSet == 'Field' ? Property.get(node.info.PropertyId) : Field.get(node.info.FieldId);
+          return Property.get(node.info.PropertyId);
         },
         titleGetter: Function.getter('info.Title')
       },
 
       // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
-      localSorting: 'delegate.getId()'
+      localSorting: Function.getter('delegate.getId()')
     });
 
     // NOTE: для отладки - список всех связей
@@ -386,7 +388,7 @@
       }),
 
       collection: Link.all,
-      localSorting: 'info.FieldId'
+      localSorting: Function.getter('info.FieldId')
     });
 
     DOM.insert('demo-container', 

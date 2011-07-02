@@ -12,7 +12,7 @@
   var Template = Basis.Html.Template;
 
   var getter = Function.getter;
-  var cssClass = Basis.CSS.cssClass;
+  var classList = Basis.CSS.classList;
 
   var nsWrappers = Basis.DOM.Wrapper;
   var nsTree = Basis.Controls.Tree;
@@ -333,7 +333,7 @@
         if (this.info.ref)
         {
           //DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
-          cssClass(this.element).add('hasRefs');
+          classList(this.element).add('hasRefs');
         }
       }
     }
@@ -549,22 +549,22 @@
                 title: 'Schematic',
                 selected: true,
                 handler: function(){
-                  cssClass(owner.tmpl.content).add('show-references');
-                  cssClass(owner.tmpl.content).remove('show-realReferences');
+                  classList(owner.tmpl.content).add('show-references');
+                  classList(owner.tmpl.content).remove('show-realReferences');
                 }
               },
               {
                 title: 'Highlight',
                 handler: function(){
-                  cssClass(owner.tmpl.content).remove('show-references');
-                  cssClass(owner.tmpl.content).add('show-realReferences');
+                  classList(owner.tmpl.content).remove('show-references');
+                  classList(owner.tmpl.content).add('show-realReferences');
                 }
               },
               {
                 title: 'Hide',
                 handler: function(){
-                  cssClass(owner.tmpl.content).remove('show-references');
-                  cssClass(owner.tmpl.content).remove('show-realReferences');
+                  classList(owner.tmpl.content).remove('show-references');
+                  classList(owner.tmpl.content).remove('show-realReferences');
                 }
               }
             ]
@@ -604,10 +604,10 @@
         DOM.insert(this.tmpl.content, DOM.createElement('SPAN.tag.tag-' + newInfo.tag, newInfo.tag));
     },
     event_match: function(){
-      cssClass(this.tmpl.content).remove('absent');
+      classList(this.tmpl.content).remove('absent');
     },
     event_unmatch: function(){
-      cssClass(this.tmpl.content).add('absent');
+      classList(this.tmpl.content).add('absent');
     }
   });
 
@@ -690,14 +690,14 @@
               view.setLocalGrouping({
                 groupGetter: getter('info.classInfo.namespace || "Basis"')
               });
-              cssClass(view.tmpl.content).remove('show-namespace');
+              classList(view.tmpl.content).remove('show-namespace');
             }
           },
           {
             title: 'None',
             handler: function(){
               view.setLocalGrouping();
-              cssClass(view.tmpl.content).add('show-namespace');
+              classList(view.tmpl.content).add('show-namespace');
             }
           }
         ]
@@ -899,7 +899,7 @@
           var tags = object.info.tags;
           if (tags)
           {
-            cssClass(this.element).add('hasJsDoc');
+            classList(this.element).add('hasJsDoc');
             var type = tags.type || (tags.returns && tags.returns.type);
             if (type)
             {
@@ -1011,7 +1011,7 @@
                 title: 'Type',
                 selected: true,
                 handler: function(){
-                  cssClass(owner.tmpl.content).remove('classGrouping');
+                  classList(owner.tmpl.content).remove('classGrouping');
                   owner.setLocalSorting('info.title');
                   owner.setLocalGrouping({
                     groupGetter: getter('info.kind'),
@@ -1023,7 +1023,7 @@
               {
                 title: 'Implementation',
                 handler: function(){
-                  cssClass(owner.tmpl.content).add('classGrouping');
+                  classList(owner.tmpl.content).add('classGrouping');
                   owner.setLocalSorting(function(node){
                     return (PROTOTYPE_ITEM_WEIGHT[node.info.kind] || 0) + '_' + node.info.title;
                   });

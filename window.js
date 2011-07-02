@@ -22,7 +22,7 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
     var Event = Basis.Event;
-    var CSS = Basis.CSS;
+    var classList = Basis.CSS.classList;
     var Cleaner = Basis.Cleaner;
     var Template = Basis.Html.Template;
 
@@ -177,7 +177,7 @@
 
         // add generic rule
         var genericRuleClassName = 'genericRule-' + this.eventObjectId;
-        CSS.cssClass(this.element).add(genericRuleClassName);
+        classList(this.element).add(genericRuleClassName);
         this.cssRule = DOM.Style.cssRule('.' + genericRuleClassName);
 
         // make window moveable
@@ -213,7 +213,7 @@
         }
 
         // buttons
-        var buttons = Array.from(config.buttons).map(function(button){ return Object.complete({ handler: button.handler ? button.handler.bind(this) : button.handler }, button); }, this);
+        var buttons = Array.from(this.buttons).map(function(button){ return Object.complete({ handler: button.handler ? button.handler.bind(this) : button.handler }, button); }, this);
 
         // common buttons
         var buttons_ = Object.slice(this, ['buttonOk', 'buttonCancel']);
@@ -244,7 +244,7 @@
         if (!this.titleButton || this.titleButton.close !== false)
         {
           var titleButtonContainer = DOM.insert(this.tmpl.title.parentNode, DOM.createElement('SPAN.Basis-Window-Title-ButtonPlace'), DOM.INSERT_BEGIN);
-          CSS.cssClass(titleButtonContainer.parentNode).add('Basis-Window-Title-ButtonPlace-Close');
+          classList(titleButtonContainer.parentNode).add('Basis-Window-Title-ButtonPlace-Close');
           DOM.insert(
             titleButtonContainer,
             DOM.createElement(
@@ -380,7 +380,7 @@
 
     windowManager.addHandler({
       childNodesModified: function(){
-        CSS.cssClass(this.element).bool('IsNotEmpty', this.firstChild);
+        classList(this.element).bool('IsNotEmpty', this.firstChild);
 
         var modalIndex = -1;
 

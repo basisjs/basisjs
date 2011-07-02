@@ -25,7 +25,7 @@
     var Template = Basis.Html.Template;
 
     var getter = Function.getter;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
     var Cleaner = Basis.Cleaner;
 
     var nsWrappers = Basis.DOM.Wrapper;
@@ -104,7 +104,7 @@
       event_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir') && function(oldOrientation, oldDir){
         var oldClass = (oldOrientation + '-' + oldDir.qw().slice(2, 4).join('-')).toLowerCase();
         var newClass = (this.orientation + '-' + this.dir.qw().slice(2, 4).join('-')).toLowerCase();
-        cssClass(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
+        classList(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
       },
 
       visible: false,
@@ -125,7 +125,7 @@
 
         // add generic rule
         var genericRuleClassName = 'genericRule-' + this.eventObjectId;
-        cssClass(this.element).add(genericRuleClassName);
+        classList(this.element).add(genericRuleClassName);
         this.cssRule = DOM.Style.cssRule('.' + genericRuleClassName);
 
         // 
@@ -350,7 +350,7 @@
           }
 
           // make element invisible & insert element into DOM
-          cssClass(this.element).remove('pre-transition');
+          classList(this.element).remove('pre-transition');
           DOM.visibility(this.element, false);
 
           PopupManager.appendChild(this);
@@ -366,7 +366,7 @@
           this.realign();
           if (this.thread) this.thread.start(1);
           DOM.visibility(this.element, true);
-          cssClass(this.element).add('pre-transition');
+          classList(this.element).add('pre-transition');
 
           // dispatch `show` event, there we can set focus for elements etc.
           //this.dispatch.apply(this, ['show'].concat(args));
@@ -479,7 +479,7 @@
       },
 
       event_childNodesModified: function(){
-        cssClass(this.element).bool('hasSubItems', this.hasChildNodes());
+        classList(this.element).bool('hasSubItems', this.hasChildNodes());
       },
 
       groupId: 0,
@@ -587,7 +587,7 @@
 
         if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
         {
-          cssClass(this.element).add('IsNotEmpty');
+          classList(this.element).add('IsNotEmpty');
           document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
                                                              // general sibling combinator (~) doesn't work otherwise
                                                              // (it's useful for handheld scenarios, when popups show on fullsreen)
@@ -601,7 +601,7 @@
           this.lastChild.select();
         else
         {
-          cssClass(this.element).remove('IsNotEmpty');
+          classList(this.element).remove('IsNotEmpty');
           document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
                                                              // general sibling combinator (~) doesn't work otherwise
                                                              // (it's useful for handheld scenarios, when popups show on fullsreen)
@@ -680,7 +680,7 @@
           }
         }
 
-        this.removeChild(popups.last());
+        this.removeChild(popups.pop());
         //this.clear();
       },
       hideByKey: function(event){

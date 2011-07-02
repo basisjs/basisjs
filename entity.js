@@ -394,9 +394,9 @@
         this.isSingleton = config.isSingleton;
         this.wrapper = wrapper;
 
-        this.all = new ReadOnlyEntitySet({
+        this.all = new ReadOnlyEntitySet(Object.extend(config.all || {}, {
           wrapper: wrapper
-        });
+        }));
         this.index_ = {};
         this.slot_ = {};
 

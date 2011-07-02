@@ -29,17 +29,17 @@
     top: 0;
     left: 0;
     background: white;
-    opacity: .5;
+
       -moz-opacity: .5;
       -khtml-opacity: .5;
       -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=50)";
       filter: progid:DXImageTransform.Microsoft.Alpha(opacity=50);
+    opacity: .5;
   }
   .opacity-not-support .Basis-Blocker-Mate
   {
     background: url(mate_white.png);
   }
-
 
  /**
   * window style
@@ -266,4 +266,9 @@
     border-radius: 2px;
       -webkit-border-radius: 2px;
       -moz-border-radius: 2px;
+  }
+
+  .Basis-Window-ButtonPlace .Basis-ButtonPanel-Content
+  {
+    text-align: right;
   }

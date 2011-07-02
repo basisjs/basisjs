@@ -24,7 +24,7 @@
 
     var Browser = Basis.Browser;
     var extend = Object.extend;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
 
     var nsWrappers = DOM.Wrapper;
 
@@ -100,7 +100,7 @@
       // element.style.position = 'relative';
       if (SUPPORT_ONRESIZE)
       {
-        cssClass(element).add('Basis-Layout-OnResizeElement');
+        classList(element).add('Basis-Layout-OnResizeElement');
         element.onresize = handler;
       }
       else
@@ -601,7 +601,7 @@
         if (newChild = TmplContainer.prototype.insertBefore.call(this, newChild, refChild))
         {
           if (newChild.flex && this.cssRule)
-            cssClass(newChild.element).add(this.ruleClassName);
+            classList(newChild.element).add(this.ruleClassName);
 
           this.realign();
 
@@ -612,7 +612,7 @@
         if (TmplContainer.prototype.removeChild.call(this, oldChild))
         {
           if (oldChild.flex && this.cssRule)
-            cssClass(oldChild.element).remove(this.ruleClassName);
+            classList(oldChild.element).remove(this.ruleClassName);
 
           this.realign();
 

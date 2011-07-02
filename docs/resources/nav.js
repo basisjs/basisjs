@@ -13,7 +13,7 @@
     var DOM = Basis.DOM;
 
     var getter = Function.getter;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
 
     var nsWrappers = Basis.DOM.Wrapper;
     var nsTree = Basis.Controls.Tree;
@@ -89,7 +89,7 @@
         nsTree.TreeNode.prototype.init.call(this, config);
 
         this.tmpl.title.href = '#' + this.info.fullPath;
-        cssClass(this.tmpl.content).add(this.nodeType + '-Content');
+        classList(this.tmpl.content).add(this.nodeType + '-Content');
       }
     });
 

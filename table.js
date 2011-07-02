@@ -33,7 +33,7 @@
 
     var getter = Function.getter;
     var extend = Object.extend;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
 
     var nsWrappers = DOM.Wrapper;
     var TmplNode = nsWrappers.TmplNode;
@@ -99,7 +99,7 @@
         {
           this.defaultOrder = this.defaultOrder == 'desc';
 
-          cssClass(this.element).add(HEADERCELL_CSS_SORTABLE);
+          classList(this.element).add(HEADERCELL_CSS_SORTABLE);
         }
       },
       select: function(){
@@ -172,7 +172,7 @@
               {
                 cell.select();
                 cell.order = owner.localSortingDesc;
-                cssClass(this.tmpl.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
+                classList(this.tmpl.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
               }
               else
                 this.selection.clear();
@@ -387,7 +387,7 @@
 
       templateAction: function(actionName, event){
         if (actionName == 'click')
-          cssClass(this.element).toggle('collapsed');
+          classList(this.element).toggle('collapsed');
 
         TmplPartitionNode.prototype.templateAction.call(this, actionName, event);
       }

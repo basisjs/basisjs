@@ -30,7 +30,7 @@
   var Event = Basis.Event;
 
   var createEvent = Basis.EventObject.createEvent;
-  var cssClass = Basis.CSS.cssClass;
+  var classList = Basis.CSS.classList;
 
   var nsWrappers = Basis.DOM.Wrapper;
 
@@ -86,7 +86,7 @@
   // Paginator
   //
 
-  var DARGDROP_HANDLER = {
+  var DRAGDROP_HANDLER = {
     start: function(config){
       this.initOffset = this.tmpl.scrollTrumb.offsetLeft;
     },
@@ -151,9 +151,11 @@
       this.setProperties(config.pageCount || 0, config.pageSpan);
       this.setActivePage(Math.max(config.activePage - 1, 0), true);
 
-      (this.scrollbarDD = new Basis.DragDrop.DragDropElement({
-        element: this.tmpl.scrollTrumb
-      })).addHandler(DARGDROP_HANDLER, this);
+      this.scrollbarDD = new Basis.DragDrop.DragDropElement({
+        element: this.tmpl.scrollTrumb,
+        handler: DRAGDROP_HANDLER,
+        handlerContext: this
+      });
     },
 
    /**
@@ -201,7 +203,7 @@
       this.tmpl.scrollTrumbWrapper.style.width = percent(1 - spanWidth);
       this.tmpl.scrollTrumb.style.width = percent(scrollTrumbWidth);
 
-      cssClass(this.element).bool('Basis-Paginator-WithNoScroll', pageSpan >= pageCount);
+      classList(this.element).bool('Basis-Paginator-WithNoScroll', pageSpan >= pageCount);
 
       this.setSpanStartPage(this.spanStartPage_);
       this.setActivePage(arguments.length == 3 ? activePage : this.activePage_);

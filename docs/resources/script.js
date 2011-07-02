@@ -14,7 +14,7 @@
   var Template = Basis.Html.Template;
 
   var getter = Function.getter;
-  var cssClass = Basis.CSS.cssClass;
+  var classList = Basis.CSS.classList;
 
   var nsWrappers = Basis.DOM.Wrapper;
   var nsTree = Basis.Controls.Tree;
@@ -109,8 +109,8 @@
             var element = this.delegate.element;
             targetContent.scrollTo(element);
             this.parentNode.hide();
-            cssClass(element).add('highlight');
-            setTimeout(function(){ cssClass(element).remove('highlight'); });
+            classList(element).add('highlight');
+            setTimeout(function(){ classList(element).remove('highlight'); });
           }
         }
       }
@@ -188,7 +188,7 @@
       this.tmpl.pathText.nodeValue = (this.info.path || '');
 
       if ('kind' in delta)
-        cssClass(this.element.firstChild).replace(delta.kind, this.info.kind, 'kind-');
+        classList(this.element.firstChild).replace(delta.kind, this.info.kind, 'kind-');
     }
   });
 
@@ -325,7 +325,7 @@
       init: function(config){
         nsTree.TreeNode.prototype.init.call(this, config);
 
-        cssClass(this.tmpl.content).add(this.info.kind.capitalize() + '-Content');
+        classList(this.tmpl.content).add(this.info.kind.capitalize() + '-Content');
         this.nodeType = nsNav.kindNodeType[this.info.kind];
 
         if (/^(function|method|class)$/.test(this.info.kind))

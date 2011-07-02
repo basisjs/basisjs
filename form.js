@@ -31,7 +31,7 @@
     var complete = Object.complete;
     var coalesce = Object.coalesce;
     var getter = Function.getter;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
 
     var nsWrappers = DOM.Wrapper;
 
@@ -131,7 +131,7 @@
       init: function(config){
         TmplNode.prototype.init.call(this, config);
 
-        this.name = this.name || this.id;
+        this.name = this.name || '';
 
         if (this.tmpl.titleText)
           this.tmpl.titleText.nodeValue = this.title || '';
@@ -139,7 +139,7 @@
         // attach button
         /*if (this.button)
         {
-          cssClass(this.element).add('have-button');
+          classList(this.element).add('have-button');
           this.button = DOM.createElement('BUTTON', config.caption || '...');
           if (config.button.handler) 
             Event.addHandler(this.button, 'click', config.button.handler, this.button);
@@ -180,8 +180,11 @@
         //if (this.disabled)
         //  this.disable();
         
-        this.defaultValue = this.value;
-        this.setDefaultValue();
+        if (this.defaultValue !== this.value)
+        {
+          this.defaultValue = this.value;
+          this.setDefaultValue();
+        }
       },
       setReadOnly: function(readOnly){
         if (readOnly)
@@ -265,9 +268,11 @@
         TmplNode.prototype.select.apply(this, arguments);
       },
       setValid: function(valid, message){
+        var clsList = classList(this.element);
         if (typeof valid == 'boolean')
         {
-          cssClass(this.element).bool('invalid', !valid).bool('valid', valid);
+          clsList.bool('invalid', !valid)
+          clsList.bool('valid', valid);
           if (message)
             this.element.title = message;
           else
@@ -275,7 +280,8 @@
         }
         else
         {
-          cssClass(this.element).remove('invalid', 'valid');
+          clsList.remove('invalid');
+          clsList.remove('valid');
           this.element.removeAttribute('title');
         }
         this.valid = valid;
@@ -573,8 +579,6 @@
         //inherit
         Field.prototype.init.call(this, config);
 
-        this.setDefaultValue(); 
-
         Cleaner.add(this);
       },
       getValue: function(){
@@ -625,12 +629,12 @@
         this.tmpl.field.checked = true;
         ComplexFieldItem.prototype.event_select.call(this);
 
-        //cssClass(this.element).add('selected');
+        //classList(this.element).add('selected');
       },
       event_unselect: function(){
         this.tmpl.field.checked = false;
         ComplexFieldItem.prototype.event_unselect.call(this);
-        //cssClass(this.element).remove('selected');
+        //classList(this.element).remove('selected');
       },
       event_update: function(object, delta){
         this.tmpl.field.value = this.valueGetter(object.info, object);
@@ -669,7 +673,8 @@
       childFactory: function(config){
         var child = ComplexField.prototype.childFactory.call(this, config);
 
-        child.tmpl.field.name = this.name;
+        if (this.name)
+          child.tmpl.field.name = this.name;
 
         return child;
       }
@@ -801,10 +806,10 @@
 
     var ComboboxPopupHandler = {
       show: function(){ 
-        cssClass(this.tmpl.field).add('Basis-DropdownList-Opened'); 
+        classList(this.tmpl.field).add('Basis-DropdownList-Opened'); 
       },
       hide: function(){ 
-        cssClass(this.tmpl.field).remove('Basis-DropdownList-Opened'); 
+        classList(this.tmpl.field).remove('Basis-DropdownList-Opened'); 
       }
     };
 

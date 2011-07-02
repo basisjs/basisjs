@@ -23,7 +23,7 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
 
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
     var getter = Function.getter;
 
     var nsWrappers = DOM.Wrapper;
@@ -212,11 +212,11 @@
       className: namespace + '.Page',
 
       event_select: function(){
-        cssClass(this.element).remove('Basis-Page-Hidden');
+        classList(this.element).remove('Basis-Page-Hidden');
         TmplContainer.prototype.event_select.call(this);
       },
       event_unselect: function(){
-        cssClass(this.element).add('Basis-Page-Hidden');
+        classList(this.element).add('Basis-Page-Hidden');
         TmplContainer.prototype.event_unselect.call(this);
       },
       
@@ -259,11 +259,11 @@
 
       event_select: function(){
         Tab.prototype.event_select.call(this);
-        cssClass(this.tmpl.pageElement).remove('Basis-Page-Hidden');
+        classList(this.tmpl.pageElement).remove('Basis-Page-Hidden');
       },
       event_unselect: function(){
         Tab.prototype.event_unselect.call(this);
-        cssClass(this.tmpl.pageElement).add('Basis-Page-Hidden');
+        classList(this.tmpl.pageElement).add('Basis-Page-Hidden');
       },
       
       template: new Template(

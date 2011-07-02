@@ -15,7 +15,7 @@
     var DOM = Basis.DOM;
     var Event = Basis.Event;
     var Data = Basis.Data;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
 
     var highlight = Function.runOnce(function(){
       DOM.get('javascript').innerHTML = Basis.Plugin.SyntaxHighlight.highlight(DOM.get('javascript').innerHTML);
@@ -55,18 +55,18 @@
       }
     ];
     var tabs = DOM.createElement('#DemoTabs', DOM.wrap(pages, { '.DemoWrapper-Tab': Function.$true }, 'title'));
-    cssClass(tabs.firstChild).add('selected');
+    classList(tabs.firstChild).add('selected');
     
     cssSource.className = 'brush: css';
     jsSource.className = 'Basis-SyntaxHighlight';
 
     Event.addHandler(tabs, 'click', function(event){
       var sender = Event.sender(event);
-      var cssClassSender = cssClass(sender);
-      if (cssClassSender.contains('DemoWrapper-Tab'))
+      var classListSender = classList(sender);
+      if (classListSender.contains('DemoWrapper-Tab'))
       {
         DOM.axis(tabs, DOM.AXIS_CHILD).forEach(function(tab, idx){
-          cssClass(tab).bool('selected', tab == sender);
+          classList(tab).bool('selected', tab == sender);
           DOM.display(pages[idx].element, tab == sender);
         });
         if (sender == sender.parentNode.lastChild)
@@ -85,5 +85,5 @@
       DOM.createElement('#DemoCopy', DOM.createElement('P', 'Basis ' + String.Entity.copy + ' 2006-2010, home page'))
     ]);
 
-    cssClass(document.body).add('show');
+    classList(document.body).add('show');
   });

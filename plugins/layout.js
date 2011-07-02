@@ -14,7 +14,7 @@
 
     var Browser = Basis.Browser;
     var extend = Object.extend;
-    var cssClass = Basis.CSS.cssClass;
+    var classList = Basis.CSS.classList;
 
     var nsWrappers = DOM.Wrapper;
     var EventObject = Basis.EventObject;
@@ -361,7 +361,7 @@
                 config.element.style[name] = value;
               break;
               case 'cssClassName':
-                cssClass(config.element).add(value);
+                classList(config.element).add(value);
               break;
               case 'id':
                 config.element.id = value;

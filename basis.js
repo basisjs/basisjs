@@ -674,12 +674,12 @@
       index = parseInt(index || 0);
       return this[index >= 0 ? index : this.length + index];
     },
-    first: function(index){
+    /*first: function(index){
       return this[0];
     },
     last: function(){
       return this[this.length - 1];
-    },
+    },*/
 
     // search
    /**
@@ -718,7 +718,7 @@
       Array.lastSearchIndex = -1;
       getter = Function.getter(getter || $self);
       
-      for (var index = parseInt(offset || 0), len = this.length; index < len; index++)
+      for (var index = parseInt(offset) || 0, len = this.length; index < len; index++)
         if (/*index in this && */getter(this[index]) === value)
           return this[Array.lastSearchIndex = index];
     },
@@ -733,10 +733,10 @@
       Array.lastSearchIndex = -1;
       getter = Function.getter(getter || $self);
 
-      var len = this.length - 1;
+      var len = this.length;
       var index = isNaN(offset) || offset == null ? len : parseInt(offset);
       
-      for (var i = index > len ? len : index; i >= 0; i--)
+      for (var i = index > len ? len : index; i --> 0;)
         if (/*i in this && */getter(this[i]) === value)
           return this[Array.lastSearchIndex = i];
     },
@@ -796,9 +796,6 @@
     },
     has: function(value){
       return this.indexOf(value) != -1;
-    },
-    absent: function(value){
-      return this.indexOf(value) == -1;
     },
 
     // misc.
@@ -1478,6 +1475,9 @@
 
                 // call constructor
                 this.init(config || NULL_CONFIG);
+
+                if (this.afterInit)
+                  this.afterInit(this);
               }
 
             /** @cut debug for */+ '\n}["' + className + '"]')(seed, NULL_CONFIG)
@@ -1621,31 +1621,17 @@
 
      /**
       * @param {Object=} config
-      * @config {Object} handlers Event handler set.
-      * @config {Object} handlersContext Context for event handler set (handlers).
-      * @config {boolean} traceEvents_ Debug for.
       * @constructor
       */
       init: function(config){
-
-        //instanceMap[this.eventObjectId] = this;
-        // init properties
-        //this.handlers_ = [];
-
-        // apply config
-        // fast add first hanlder
-        if (this.initHandler)
+        // fast add first handler
+        if (this.handler)
         {
-          (this.handlers_ = []).push({
-            handler: this.initHandler,
-            thisObject: this.initHandlerContext || this
+          (this.handlers_ || (this.handlers_ = [])).push({
+            handler: this.handler,
+            thisObject: this.handlerContext || this
           });
         }
-
-        //this.h_ = {};
-
-        // debug for
-        //;;;if (this.traceEvents_) (this.handlers_ || (this.handlers_ = [])).push({ handler: { any: function(){ console.log('Event trace:', this, arguments) } }, thisObject: this });
       },
 
      /**
@@ -1655,17 +1641,19 @@
       * @return {boolean} Whether event handler set was added.
       */
       addHandler: function(handler, thisObject){
-        if (!this.handlers_)
-          this.handlers_ = [];
+        var handlers = this.handlers_;
+
+        if (!handlers)
+          handlers = this.handlers_ = [];
 
         if (!thisObject)
           thisObject = this;
         
         // search for duplicate
         // check from end to start is more efficient for objects which often add/remove handlers
-        for (var i = this.handlers_.length, item; i --> 0;)
+        for (var i = handlers.length, item; i --> 0;)
         {
-          item = this.handlers_[i];
+          item = handlers[i];
           if (item.handler === handler && item.thisObject === thisObject)
           {
             ;;;if (typeof console != 'undefined') console.warn('Add dublicate handler to EventObject instance: ', this);
@@ -1674,7 +1662,7 @@
         }
 
         // add handler
-        return !!this.handlers_.push({ 
+        return !!handlers.push({ 
           handler: handler,
           thisObject: thisObject || this
         });
@@ -1688,8 +1676,9 @@
       * @return {boolean} Whether event handler set was removed.
       */
       removeHandler: function(handler, thisObject){
-        //if (window.x++ == 0)debugger;
-        if (!this.handlers_)
+        var handlers = this.handlers_;
+
+        if (!handlers)
           return;
 
         if (!thisObject)
@@ -1697,11 +1686,11 @@
 
         // search for handler and remove
         // check from end to start is more efficient for objects which often add/remove handlers
-        for (var i = this.handlers_.length, item; i --> 0;)
+        for (var i = handlers.length, item; i --> 0;)
         {
-          item = this.handlers_[i];
+          item = handlers[i];
           if (item.handler === handler && item.thisObject === thisObject)
-            return !!this.handlers_.splice(i, 1);
+            return !!handlers.splice(i, 1);
         }
 
         // handler not found
@@ -3391,7 +3380,7 @@
             }
             else if (m[5])
             {
-              if (m[5] == stack.last())
+              if (m[5] == stack[stack.length - 1])
               {
                 stack.pop();
                 return result;
@@ -3517,7 +3506,7 @@
           aliases.push.apply(aliases, names);
 
           return {
-            name:  'object.' + names.first(),
+            name:  'object.' + names[0],
             alias: 'object.' + names.reverse().join(' = object.'), // reverse names to save alias order for iterate (for most browsers it should be work)
             path:  'html.' + newPath.join('.')
           }

@@ -574,7 +574,7 @@
               var name = m[3];
 
               lineFix = (m[1].match(/\n/g) || []).length;
-              createJsDocEntity(jsdoc.last(), ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
+              createJsDocEntity(jsdoc[jsdoc.length - 1], ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
               
               if (isClass)
                 clsPrefix = name;
