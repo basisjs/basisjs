@@ -9,7 +9,7 @@
   <title>M:M relationship editor</title>
 
   <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/tree/compat/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/new/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML
@@ -97,10 +97,16 @@
       font-size: 85%;
       line-height: 1em;
     }
+    #MasterTree .Field-WordLink:hover *
+    {
+      border-color: #888;
+    }
     #MasterTree .Field-WordLink-Title
     {
       padding: .1em .75ex;
       background: #E8E8E8;
+      background: #E8E8E8 padding-box -webkit-linear-gradient(top, rgba(255,255,255,0.25) 0, rgba(255,255,255,0.5) 10%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0) 60%);
+      background: #E8E8E8 -moz-linear-gradient(top, rgba(255,255,255,0.25) 0, rgba(255,255,255,0.5) 10%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0) 60%);
       border: 1px solid silver;
       border-right: none;
         -moz-border-radius: 3px 0 0 3px;
@@ -109,8 +115,11 @@
     }
     #MasterTree .Field-WordLink-DeleteButton
     {
+      color: #888;
       padding: .1em .75ex;
-      background: #E8E8E8 padding-box;
+      background: #E8E8E8;
+      background: #E8E8E8 padding-box -webkit-linear-gradient(top, rgba(255,255,255,0.25) 0, rgba(255,255,255,0.5) 10%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0) 60%);
+      background: #E8E8E8 -moz-linear-gradient(top, rgba(255,255,255,0.25) 0, rgba(255,255,255,0.5) 10%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0) 60%);
       border: 1px solid silver;
         -moz-border-radius: 0 3px 3px 0;
         -webkit-border-radius: 0 3px 3px 0;
@@ -120,6 +129,7 @@
     { 
       background-color: red;
       border-color: maroon;
+      color: maroon;
     }
 
     #MasterTree .count
@@ -218,24 +228,17 @@
 
     var classList = Basis.CSS.classList;
     
-    // Определяем тип данных - поле
+    // Определяем типы данных
     var Field = new nsEntity.EntityType({
-      // Необязательное поле, используется в основном для отладки.
       name: 'Field',
-
-      // Определяем набор полей
       fields: {
         FieldId: nsEntity.IntId,
         Title: String
       }
     });
 
-    // Определяем тип данных - слово
     var Word = new nsEntity.EntityType({
-      // Необязательное поле, используется в основном для отладки.
       name: 'Word',
-
-      // Определяем набор полей
       fields: {
         WordId: nsEntity.IntId,
         Title: String,
@@ -243,12 +246,8 @@
       }
     });
 
-    // Определяем тип данных - связь
     var Link = new Basis.Entity.EntityType({
-      // Необязательное поле, используется в основном для отладки.
       name: 'Link',
-
-      // Определяем набор полей
       fields: {
         LinkId: nsEntity.StringId,
         FieldId: Number,
@@ -260,9 +259,7 @@
       }
     });
 
-    //Link.getGrouping('FieldId').destroyEmpty = false;
-
-    var words = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.'.replace(/[^a-z]+/g, ' ').qw();
+    var words = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.'.replace(/[^a-z]+/ig, ' ').toLowerCase().qw();
 
     // Генерируем тестовый набор данных.
     for (var i = 0; i < 10; i++)
@@ -271,6 +268,7 @@
         FieldId: i,
         Title: 'Field #' + i
       });
+
       Word({
         WordId: i,
         Title: words[i],

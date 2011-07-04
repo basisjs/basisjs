@@ -227,6 +227,8 @@
      */
 
     var AjaxRequest = Class(DataObject, {
+      className: namespace + '.AjaxRequest',
+
       timeout:  30000, // 30 sec
       requestStartTime: 0,
 
@@ -279,7 +281,7 @@
         this.update({
           error: {
             code: 'SERVER_ERROR',
-            msg: req.responseText
+            msg: this.xhr.responseText
           }
         });
       },
@@ -466,6 +468,8 @@
      */
 
     var Proxy = Class(EventObject, {
+      className: namespace + '.Proxy',
+
       requests: null,
 
       poolHashGetter: Function.$true,
@@ -638,6 +642,8 @@
 
 
     var Service = Class(EventObject, {
+      className: namespace + '.Service',
+
       proxyClass: AjaxProxy,
       requestClass: AjaxRequest,
 
