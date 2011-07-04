@@ -29,7 +29,6 @@
     var TimeEventManager = Basis.TimeEventManager;
 
     var nsData = Basis.Data;
-    var nsWrappers = Basis.DOM.Wrapper;
 
     var DataObject = nsData.DataObject;
     var EventObject = Basis.EventObject;
@@ -53,8 +52,6 @@
     /** @const */ var STATE_DONE = 4;
 
     var IS_POST_REGEXP = /POST/i;
-
-    var DEBUG_MODE = Cookies.get('DEBUG_AJAX');
 
     // base 
     var DEFAULT_METHOD = 'GET';
@@ -161,6 +158,9 @@
     * @function readyStateChangeHandler
     */
     function readyStateChangeHandler(readyState){
+      var newState;
+      var error;
+
       var xhr = this.xhr;
       if (!xhr)
         return;
@@ -174,48 +174,43 @@
       if (readyState == this.prevReadyState_)
         return;
 
+      this.prevReadyState_ = readyState;
+
       ;;;if (this.debug) logOutput('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
 
       // dispatch self event
       proxy.event_readyStateChanged(this, readyState);
 
-      var newState;
-      var error;
-
-      if (readyState == STATE_UNSENT)
-      {
-        // dispatch event
-        proxy.event_abort(this);
-        proxy.event_complete(this);
-
-        newState = STATE.READY; 
-
-        ;;;if (this.debug) logOutput('Request aborted');
-      }
-      else if (readyState == STATE_DONE)
+      if (readyState == STATE_DONE)
       {
         TimeEventManager.remove(this, 'timeoutAbort');
         // clean event handler
         xhr.onreadystatechange = Function.$undef;
 
-        this.processResponse();
-
-        // dispatch events
-        if (this.isSuccessful())
+        if (typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders()))
         {
-          proxy.event_success(this);
-          newState = STATE.READY;
-        }
-        else
-        {
-          this.processErrorResponse();
-
+          proxy.event_abort(this);
           proxy.event_failure(this);
           newState = STATE.ERROR;
         }
+        else
+        {
+          this.processResponse();
 
-        // dispatch status
-        proxy.event_httpStatus(this, xhr.status);
+          // dispatch events
+          if (this.isSuccessful())
+          {
+            proxy.event_success(this);
+            newState = STATE.READY;
+          }
+          else
+          {
+            this.processErrorResponse();
+
+            proxy.event_failure(this);
+            newState = STATE.ERROR;
+          }
+        }
 
         // dispatch complete event
         proxy.event_complete(this);
@@ -225,8 +220,6 @@
 
       // set new state
       this.setState(newState, this.info.error);
-
-      this.prevReadyState_ = readyState;
     };
 
     /**
@@ -237,7 +230,7 @@
       timeout:  30000, // 30 sec
       requestStartTime: 0,
 
-      //prepare: Function.$true,
+      debug: false,
 
       event_stateChanged: function(object, oldState){
         DataObject.prototype.event_stateChanged.call(this, object, oldState);
@@ -277,7 +270,8 @@
       processResponse: function(){
         this.update({
           responseText: this.xhr.responseText,
-          responseXML: this.xhr.responseXML
+          responseXML: this.xhr.responseXML,
+          status: this.xhr.status
         });
       },
 
@@ -290,12 +284,9 @@
         });
       },
 
-      prepare: function(requestData){
-        this.update({
-          responseText: '',
-          responseXML: ''
-        });
+      prepare: Function.$true,
 
+      prepareRequestData: function(requestData){
         var params = Object.iterate(requestData.params, function(key, value){
           return (value == null) || (value && typeof value.toString == 'function' && value.toString() == null)
             ? null
@@ -303,15 +294,14 @@
         }).filter(Function.$isNotNull).join('&');
 
         // prepare location & postBody
-        if (IS_POST_REGEXP.test(requestData.method))
+        if (IS_POST_REGEXP.test(requestData.method) && !requestData.postBody)
         {
-          requestData.postBody = requestData.postBody || params || '';
+          requestData.postBody = params || '';
+          params = '';
         }
-        else
-        {
-          if (params)
-            requestData.url += (requestData.url.indexOf('?') == -1 ? '?' : '&') + params;
-        }
+
+        if (params)
+          requestData.url += (requestData.url.indexOf('?') == -1 ? '?' : '&') + params;
 
         return requestData;
       },
@@ -319,18 +309,24 @@
       doRequest: function(requestData){
         this.requestData = requestData;
 
-        if (requestData = this.prepare(requestData))
-          this.send(requestData);
+        if (!this.prepare())
+          return;
+
+        this.send(this.prepareRequestData(requestData));
       },
       
       send: function(requestData){
+        this.update({
+          responseText: '',
+          responseXML: '',
+          status: '',
+          error: ''
+        });
+
         // create new XMLHTTPRequest instance for gecko browsers in asynchronous mode
         // object crash otherwise
         if (Browser.test('gecko1.8.1-') && requestData.asynchronous)
-        {
-          ;;;if (typeof console != 'undefined') console.info('Recreate transport (fix for current gecko version)');
           this.xhr = createXmlHttpRequest();
-        }
 
         this.proxy.event_start(this);
 
@@ -352,14 +348,13 @@
         setRequestHeaders(xhr, requestData);
 
         // save transfer start point time & set timeout
-        this.requestStartTime = Date.now();
-        TimeEventManager.add(this, 'timeoutAbort', this.requestStartTime + this.timeout);
+        TimeEventManager.add(this, 'timeoutAbort', Date.now() + this.timeout);
 
         // prepare post body
         var postBody = requestData.postBody;
 
         // BUGFIX: IE fixes for post body
-        if (requestData.method == 'POST' && Browser.test('ie9-'))
+        if (IS_POST_REGEXP.test(requestData.method) && Browser.test('ie9-'))
         {
           if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
             // sending xmldocument content as string, otherwise IE override content-type header
@@ -371,7 +366,7 @@
             else
               if (postBody == null || postBody == '')
                 // IE doesn't accept null, undefined or '' post body
-                postBody = '[empty request]';      
+                postBody = '[No data]';      
         }
 
         // send data
@@ -395,9 +390,15 @@
         if (!this.isIdle())
         {
           TimeEventManager.remove(this, 'timeoutAbort');
-          this.xhr.onreadystatechange = Function.$undef;
+          //this.xhr.onreadystatechange = Function.$undef;
           this.xhr.abort();
-          readyStateChangeHandler.call(this, STATE_UNSENT);
+
+          /*this.proxy.event_abort(this);
+          this.proxy.event_complete(this);
+          this.setState(STATE.READY);*/
+
+          if (this.xhr.readyState != STATE_DONE)
+            readyStateChangeHandler.call(this, STATE_DONE);
         }
       },
 
@@ -413,11 +414,11 @@
 
         delete this.xhr;
         delete this.requestData;
-        delete this.prevReadyState_;
 
         DataObject.prototype.destroy.call(this);
       }
     });
+
 
 
     //
@@ -436,11 +437,11 @@
 
     var inprogressProxies = [];
     ProxyDispatcher.addHandler({
-      start: function(){
-        inprogressProxies.add(this);
+      start: function(proxy){
+        inprogressProxies.add(proxy);
       },
-      complete: function(){
-        inprogressProxies.remove(this);
+      complete: function(proxy){
+        inprogressProxies.remove(proxy);
       }
     });
 
@@ -451,11 +452,14 @@
     function createEvent(eventName) {
       var event = Basis.EventObject.createEvent(eventName);
       return function(){
-        event.apply(ProxyDispatcher, arguments);
+        event.apply(ProxyDispatcher, [this].concat(arguments));
+
+        if (this.service)
+          event.apply(this.service, [this].concat(arguments));
+
         event.apply(this, arguments);
       }
     }
-
 
     /**
      * @class Proxy
@@ -501,18 +505,19 @@
         return this.requests[requestHashId];
       },
 
-      prepare: Function.$self,
+      prepare: Function.$true,
+      prepareRequestData: Function.$self,
 
       request: function(config){
-        var requestData = Object.extend({}, config);
+        this.requestData = Object.slice(config);
 
-        if (!(requestData = this.prepare(requestData)))
+        if (!this.prepare())
           return;
-
+        
+        var requestData = this.prepareRequestData(this.requestData);
         var requestHashId = this.poolHashGetter(requestData);
 
         var request = this.getRequestByHash(requestHashId);
-
         request.abort();
         request.setInfluence(requestData.influence);
 
@@ -524,9 +529,16 @@
           this.requests[i].abort();
       },
 
+      repeat: function(){ 
+        if (this.requestData)
+          this.request(this.requestData);
+      },
+
       destroy: function(){
         for (var i in this.requests)
           this.requests[i].destroy();
+
+        delete this.requestData;
           
         EventObject.prototype.destroy.call(this);
 
@@ -547,9 +559,6 @@
       requestClass: AjaxRequest,
 
       event_readyStateChanged: createEvent('readyStateChanged'),
-      event_httpStatus: createEvent('httpStatus'),
-
-      debug: DEBUG_MODE,
 
       // transport properties
       asynchronous: true,
@@ -583,7 +592,7 @@
           delete this.params[key];
       },
 
-      prepare: function(requestData){
+      prepareRequestData: function(requestData){
         var url = requestData.url || this.url;
 
         if (!url)
@@ -609,13 +618,105 @@
       }
     });
 
-    var Service = Class(null, {
+    /**
+     * @class Service
+     */
+
+    var SERVICE_HANDLER = {
+      start: function(proxy){
+        console.log(proxy);
+        this.inprogressProxies.add(proxy);
+      },
+      complete: function(proxy){
+        this.inprogressProxies.remove(proxy);
+      },
+      service_failure: function(){
+        this.service.awaitingProxies = Array.from(this.inprogressProxies);
+        this.service.abort();
+      }
+    }
+
+
+    var Service = Class(EventObject, {
       proxyClass: AjaxProxy,
       requestClass: AjaxRequest,
 
+      event_service_failure: EventObject.createEvent('service_failure'),
+      /*event_sessionOpen: EventObject.createEvent('sessionOpen'),
+      event_sessionFreeze: EventObject.createEvent('sessionFreeze'),
+      event_sessionUnfreeze: EventObject.createEvent('sessionUnfreeze'),
+      event_sessionClose: EventObject.createEvent('sessionClose'),*/
+
+      prepare: Function.$true,
+      isServiceError: Function.$false,
+      /*setCredentials: Function.$undef,
+      getCredentials: Function.$self,
+      removeCredentials: Function.$undef,*/
+
+      sign: function(proxy){
+        proxy.setParams(this.credentials);
+      },
+
       init: function(config){
-        if (this.requestClass)
-          this.proxyClass.prototype.requestClass = this.requestClass;
+        EventObject.prototype.init.call(this, config);
+
+        this.inprogressProxies = [];
+        this.credentials = {};
+
+        this.requestClass = Class(this.requestClass, {
+          service: this,
+          processErrorResponse: function(){
+            this.constructor.superClass_.prototype.processErrorResponse.call(this);
+
+            if (this.service.isServiceError())
+              this.service.freeze();
+          }
+        });
+
+        this.proxyClass = Class(this.proxyClass, {
+          service: this,
+
+          request: function(requestData){
+            if (!this.service.prepare(this, requestData))
+              return;
+
+            this.service.sign(this);
+
+            this.constructor.superClass_.prototype.request.call(this, requestData);
+          },
+
+          requestClass: this.requestClass
+        });
+
+        this.addHandler(SERVICE_HANDLER, this);
+      },
+
+      /*open: function(){
+        if (!this.getCredentials())
+          this.freeze();
+      },
+
+      close: function(){
+        this.removeCredentials();
+      },*/
+
+      freeze: function(){
+        this.awaitingProxies = Array.from(this.inprogressProxies);
+        this.abort();
+
+        this.event_service_failure();
+      },
+
+      unfreeze: function(){
+        for (var i = 0, proxy; i < this.awaitingProxies[i]; i++)
+          proxy.repeat();
+
+        this.awaitingProxy = [];
+      },
+      
+      abort: function(){
+        for (var i = 0, proxy; proxy = this.inprogressProxies[i]; i++)
+          proxy.abort();
       },
 
       createProxy: function(config){
@@ -623,6 +724,12 @@
         return Function.lazyInit(function(){
           return new service.proxyClass(config);
         });
+      },
+
+      destroy: function(){
+        delete this.inprogressProxies;
+
+        EventObject.prototype.destroy.call(this);
       }
     });
 

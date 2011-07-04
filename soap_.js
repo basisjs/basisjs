@@ -147,7 +147,7 @@
         this.mapping = mapping;
       },
 
-      prepare: function(requestData){
+      prepareRequestData: function(requestData){
         this.setMapping(requestData.mapping);
 
         //add SOAPAction header
@@ -199,10 +199,19 @@
       mapping: null,
       soapBody: null,
       soapHeader: null,
-      soapHeaderSections: {},
 
-      prepare: function(requestData){
-        var requestData = AjaxProxy.prototype.prepare.call(this, requestData);
+      setSoapHeaderSection: function(name, data){
+        this.soapHeaderSections[name] = data;
+      },
+
+      init: function(config){
+        this.soapHeaderSections = {};
+
+        AjaxProxy.prototype.init.call(this);
+      },
+
+      prepareRequestData: function(requestData){
+        var requestData = AjaxProxy.prototype.prepareRequestData.call(this, requestData);
 
         Object.extend(requestData, {
           namespace: this.namespace,

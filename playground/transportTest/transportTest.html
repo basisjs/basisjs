@@ -66,6 +66,9 @@
           log(req.info.responseText);
 
         },
+        failure: function(){
+          log('failure event');
+        },
         complete: function(req){
           log('complete event');
           log('------------------');
@@ -217,7 +220,7 @@
         }
       };
 
-      var sessionKey = 'e3ec7921-14da-4cb6-824b-8b7314863878';
+      var sessionKey = '243d59f6-5c88-44be-9023-180225657939';
       var namespace = 'Wallet.Security.WebService';
 
       var soapTransport = new Basis.SOAP.SOAPProxy({
@@ -313,28 +316,28 @@
       var customSOAPService = new Basis.Ajax.Service({
         proxyClass: Basis.SOAP.SOAPProxy,
         requestClass: Basis.Class(Basis.SOAP.SOAPRequest, {
-          prepare: function(requestData){
-            requestData.soapHeaderSections.ParamsHeader = {
-              namespace: namespace,
-              data: {
-                Params: {
-                  Param: [
-                    {
-                      '@Name':  'CultureId',
-                      '@Value': 'ru-RU'
-                    }
-                  ]
-                }
-              }
-            }
-
-            return Basis.SOAP.SOAPRequest.prototype.prepare.call(this, requestData);
-          },
           responseDataGetter: function(data){
             var method = this.requestData.methodName;
             return data[method + 'Response'][method + 'Result'];
           }
-        })
+        }),
+        prepare: function(proxy){
+          proxy.setSoapHeaderSection('ParamsHeader', {
+            namespace: proxy.namespace,
+            data: {
+              Params: {
+                Param: [
+                  {
+                    '@Name':  'CultureId',
+                    '@Value': 'ru-RU'
+                  }
+                ]
+              }
+            }
+          });
+
+          return true;
+        }
       });
 
       var customSOAPProxy = customSOAPService.createProxy({
