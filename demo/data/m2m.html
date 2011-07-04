@@ -28,8 +28,8 @@
     .Basis-Tree
     {
       border: 1px solid #AAA;
-      width: 300px;
-      height: 400px;
+      width: 380px;
+      height: 600px;
       overflow: auto;
       overflow-y: scroll;
       overflow-x: hidden;
@@ -56,35 +56,72 @@
       overflow: hidden;
     }
 
-    #MasterTree .Basis-TreeNode A
+    #MasterTree,
+    #RelatedTree
     {
-      padding-left: 5px;
-      margin: 0;
-      background: #A0C0DD !important;
-        -moz-border-radius: 3px;
-        -webkit-border-radius: 3px;
-      border-radius: 3px;
+      -webkit-user-select: none;
     }
     #MasterTree .Basis-TreeNode
     {
-      float: left;
-      margin: 0 0 2px 2px;
-    }
-    #MasterTree .Basis-Tree-Folder
-    {
-      clear: both;
       border-bottom: 1px solid #E0E0E0;
       cursor: pointer;
     }
-    #MasterTree .Basis-Tree-Folder:hover
+    #MasterTree .emptyLabel
     {
-      background: #EEE;
+      display: none;
+      color: #AAA;
+      font-style: italic;
+      padding: .15em 0 .2em;
     }
-    #MasterTree .Basis-Tree-Folder UL
+    #MasterTree .empty .emptyLabel
     {
-      padding-top: 2px;
+      display: block;
+    }
+    #MasterTree .Basis-TreeNode .Basis-TreeNode-Caption:hover
+    {
+      background-color: inherit;
+    }
+    #MasterTree .Basis-TreeNode:hover
+    {
+      background-color: #EEF8FF;
+    }
+    #MasterTree .Basis-TreeNode-Content
+    {
+      padding: 2px 0 2px 16px;
       overflow: hidden;
     }
+    #MasterTree .Field-WordLink
+    {
+      margin: 4px 0 4px 2px;
+      display: inline-block;
+      font-size: 85%;
+      line-height: 1em;
+    }
+    #MasterTree .Field-WordLink-Title
+    {
+      padding: .1em .75ex;
+      background: #E8E8E8;
+      border: 1px solid silver;
+      border-right: none;
+        -moz-border-radius: 3px 0 0 3px;
+        -webkit-border-radius: 3px 0 0 3px;
+      border-radius: 3px 0 0 3px;
+    }
+    #MasterTree .Field-WordLink-DeleteButton
+    {
+      padding: .1em .75ex;
+      background: #E8E8E8 padding-box;
+      border: 1px solid silver;
+        -moz-border-radius: 0 3px 3px 0;
+        -webkit-border-radius: 0 3px 3px 0;
+      border-radius: 0 3px 3px 0;
+    }
+    #MasterTree .Field-WordLink-DeleteButton:hover
+    { 
+      background-color: red;
+      border-color: maroon;
+    }
+
     #MasterTree .count
     {
       margin-left: 1ex;
@@ -99,26 +136,40 @@
     {
       display: none;
     }
-    #RelatedTree .Basis-Tree-NodeGroup-Title
+    #RelatedTree LI
     {
       cursor: pointer;
       background: white;
-      padding-bottom: 4px;
+      padding: 2px 4px;
+      color: #888;
+      margin: 1px;
+      border-radius: 3px;
     }
-    #RelatedTree .Basis-Tree-NodeGroup-Title:hover
+    #RelatedTree LI.checked
+    {
+      background: #F0F0AA !important;
+      color: black;
+    }
+    #RelatedTree LI:hover
     {
       background: #E0E0E8;
     }
-    #RelatedTree .Basis-Tree-NodeGroup-Title INPUT
+    #RelatedTree .freq
+    { 
+      color: #AAA;
+      font-size: 85%;
+    }
+    #RelatedTree INPUT
     {
       margin: 0 5px 0 0;
       padding: 0;
       position: relative;
       top: 2px;
     }
-    #RelatedTree .selected .Basis-Tree-NodeGroup-Title
+    #RelatedTree .match
     {
-      background: #CCC;
+      background: gold;
+      border-radius: 3px;
     }
   </style>
   <!--[if lt IE 7]>
@@ -132,9 +183,11 @@
 
   <script type="text/javascript" src="../../basis.js"></script>
   <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
   <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../entity.js"></script>
   <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../form.js"></script>
   <script type="text/javascript" src="../../button.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -162,8 +215,10 @@
     var nsEntity = Basis.Entity;
     var nsTree = Basis.Controls.Tree;
     var nsButton = Basis.Controls.Button;
+
+    var classList = Basis.CSS.classList;
     
-    // Определяем новый тип данных.
+    // Определяем тип данных - поле
     var Field = new nsEntity.EntityType({
       // Необязательное поле, используется в основном для отладки.
       name: 'Field',
@@ -175,19 +230,20 @@
       }
     });
 
-    // Определяем новый тип данных.
-    var Property = new nsEntity.EntityType({
+    // Определяем тип данных - слово
+    var Word = new nsEntity.EntityType({
       // Необязательное поле, используется в основном для отладки.
-      name: 'Property',
+      name: 'Word',
 
       // Определяем набор полей
       fields: {
-        PropertyId: nsEntity.IntId,
-        Title: String
+        WordId: nsEntity.IntId,
+        Title: String,
+        Freq: Number
       }
     });
 
-    // Определяем новый тип данных.
+    // Определяем тип данных - связь
     var Link = new Basis.Entity.EntityType({
       // Необязательное поле, используется в основном для отладки.
       name: 'Link',
@@ -196,231 +252,129 @@
       fields: {
         LinkId: nsEntity.StringId,
         FieldId: Number,
-        PropertyId: Number
+        WordId: Number
       },
 
       groupings: {
-        FieldId: Function.getter('info.FieldId'),
-        PropertyId: Function.getter('info.PropertyId')
+        FieldId: Function.getter('info.FieldId')
       }
     });
 
-    Link.getGrouping('FieldId').destroyEmpty = false;
-    Link.getGrouping('PropertyId').destroyEmpty = false;
+    //Link.getGrouping('FieldId').destroyEmpty = false;
+
+    var words = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.'.replace(/[^a-z]+/g, ' ').qw();
 
     // Генерируем тестовый набор данных.
-    for (var i = 1; i <= 10; i++)
+    for (var i = 0; i < 10; i++)
     {
       Field({
         FieldId: i,
         Title: 'Field #' + i
       });
-      Property({
-        PropertyId: i,
-        Title: 'Property #' + i
+      Word({
+        WordId: i,
+        Title: words[i],
+        Freq: (i * 123) % 5
       });
     }
 
     for (var i = 0; i < 25; i++)
     {
-      var fieldId = parseInt((i * 2347.56) % Field.all.itemCount) + 1;
-      var propertyId = parseInt((i * 7263.23) % Property.all.itemCount) + 1;
+      var fieldId = parseInt((i * 2347.56) % Field.all.itemCount);
+      var wordId = parseInt((i * 7263.23) % Word.all.itemCount);
       Link({
-        LinkId: fieldId + '-' + propertyId,
+        LinkId: fieldId + '-' + wordId,
         FieldId: fieldId,
-        PropertyId: propertyId
+        WordId: wordId
       });
     }
 
-    // Какой набор является главным
-    var masterSet = 'Field';
+    //
+    // Интерфейс
+    //
 
     // Главное дерево - список полей
     var masterTree = new nsTree.Tree({
       id: 'MasterTree',
 
-      // Определяем класс для дочерних узлов
-      childClass: Class(nsTree.TreeFolder, {
-        template: new Basis.Html.Template(
-          '<li{element|selectedElement} class="Basis-Tree-Folder">' + 
-            '<div{content} class="Tree-Node-Title Tree-Folder-Content">' + 
-              '<div{expander} class="Basis-Tree-Expander"/>' + 
-              '<a href="#">{titleText|[no title]}<span class="count">({countText|0})</span></a>' + 
-            '</div>' + 
-            '<ul{childNodesElement}/>' + 
-          '</li>'
-        ),
-
-        collapsed: true,
-        titleGetter: Function.getter('info.Title'),
-        localSorting: Function.getter('delegate.getId()'),
-        childClass: Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate(
-          '<div{element} event-click="select">{this_info_Title}</div>'
-        ), {
-          templateAction: function(actionName, event){
-            if (actionName == 'select')
-              this.parentNode.select();
-          }
-        }),
-        handler: {
-          childNodesModified: function(){
-            this.tmpl.countText.nodeValue = this.childNodes.length;
-          },
-          update: function(object, delta){
-            if ('FieldId' in delta)
-            {
-              this.collection.clear();
-              this.collection.addSource(Link.getGrouping('FieldId').getGroup(this.info.FieldId, true));
-            }
-          }
-        },
-        init: function(config){
-          this.collection = new Basis.Data.AggregateDataset({ transform: Function.getter('info.PropertyId', Property.get) });
-          nsTree.TreeFolder.prototype.init.call(this, config);
-        },
-        destroy: function(){
-          this.collection.destroy();
-          nsTree.TreeFolder.prototype.destroy.call(this);
-        }
-      }),
-
       collection: Field.all,
 
       // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
-      localSorting: Function.getter('delegate.getId()'),
+      localSorting: Function.getter('info.Title'),
+
+      // Определяем класс для дочерних узлов
+      childClass: Class(nsTree.TreeFolder, {
+        template: new Basis.Html.Template(
+          '<li{element|selected} class="Basis-TreeNode empty" event-click="select">' +
+            '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
+              '<div{expander} class="Basis-TreeNode-Expander" event-click="toggle"/>' +
+              '<span{title} class="Basis-TreeNode-Caption">{titleText|[no title]}<span class="count">(Word count: {countText|0}, Frequency: {freqText|0})</span></span>' +
+            '</div>' + 
+            '<div{childNodesElement} class="Basis-TreeNode-Content">' + 
+              '<span class="emptyLabel">No words</span>' +
+            '</div>' +
+          '</li>'
+        ),
+
+        freqSum: 0,
+        titleGetter: Function.getter('info.Title'),
+        localSorting: function(node){
+          return Word.get(node.info.WordId).info.Title;
+        },
+        handler: {
+          childNodesModified: function(node, delta){
+            // calculate frequency delta sum
+            var deltaSum = 0;
+            var array;
+
+            if (array = delta.inserted)
+              for (var i = 0; i < array.length; i++)
+                deltaSum += Word.get(array[i].info.WordId).info.Freq;
+
+            if (array = delta.deleted)
+              for (var i = 0; i < array.length; i++)
+                deltaSum -= Word.get(array[i].info.WordId).info.Freq;
+
+            this.freqSum += deltaSum;
+
+            // update template
+            this.tmpl.countText.nodeValue = this.childNodes.length;
+            this.tmpl.freqText.nodeValue = this.freqSum;
+
+            classList(this.element).bool('empty', !this.childNodes.length);
+          }
+        },
+        init: function(config){
+          nsTree.TreeFolder.prototype.init.call(this, config);
+          this.setCollection(Link.getGrouping('FieldId').getGroup(this.info.FieldId, true));
+        },
+
+        childClass: Class(nsTree.TreeNode, {
+          template: new Basis.Html.Template(
+            '<div{element} class="Field-WordLink">' +
+              '<span class="Field-WordLink-Title">{titleText}</span>' +
+              '<span class="Field-WordLink-DeleteButton" event-click="delete">x</span>' +
+            '</div>'
+          ),
+          templateAction: function(actionName, event){
+            if (actionName == 'delete')
+              this.target.destroy();
+          },
+          titleGetter: function(node){
+            return Word.get(node.info.WordId).info.Title;
+          }
+        })
+      }),
 
       // Задаем обработчик на событие изменения выборки (Selection).
       selection: {
-        handlers: {
-          change: function(){
-            var selected = this.pick();
-            relatedTree.setDelegate(selected);
-            DOM.visibility(DOM.get('relatedTreeContainer'), selected);
+        handler: {
+          datasetChanged: function(){
+            relatedTree.setDelegate(this.pick());
           }
         }
       }
     });
-
-    // Зависимое дерево - список свойств
-    var RelatedTree = Class(nsTree.Tree, {
-      className: 'RelatedTree',
-      behaviour: {
-        delegateChanged: function(object, oldDelegate){
-          var rootDelegate = this.getRootDelegate();
-
-          this.setCollection();
-          if (this.delegate)
-          {
-            var idField = rootDelegate.entityType.idField;
-            this.groupControl.setCollection(idField == 'FieldId' ? Property.all : Field.all);
-            this.setCollection(Link.getGrouping(idField).getGroup(rootDelegate.getId(), true));
-          }
-        }
-      },
-      groupControlClass: Class(nsTree.TreeGroupControl, {
-        className: 'RelatedTreeGroupControl',
-        childClass: Class(nsTree.TreePartitionNode, {
-          template: new Basis.Html.Template(
-            '<li{element} class="Basis-Tree-NodeGroup">' + 
-              '<div class="Basis-Tree-NodeGroup-Title"><input{checkbox} type="checkbox"/><span>{titleText}</span></div>' +
-              '<ul{childNodesElement} class="Basis-Tree-NodeGroup-Content"/>' +
-            '</li>'
-          ),
-          behaviour: {
-            click: function(event){
-              var rootDelegate = this.document.getRootDelegate();
-              var idField = rootDelegate.entityType.idField;
-
-              var field = idField == 'FieldId' ? rootDelegate : this.delegate;
-              var property = idField == 'PropertyId' ? rootDelegate : this.delegate;
-
-              var fieldId = field.getId();
-              var propertyId = property.getId();
-              var linkId = fieldId + '-' + propertyId;
-
-              if (this.firstChild)
-              {
-                Link(linkId).destroy();
-              }
-              else
-              {
-                Link({
-                  LinkId: fieldId + '-' + propertyId,
-                  FieldId: fieldId,
-                  PropertyId: propertyId
-                });
-              }
-            },
-            childNodesModified: function(){
-              var isExists = !!this.firstChild;
-              this.checkbox.checked = isExists;
-              Basis.CSS.cssClass(this.element).bool('selected', isExists);
-            }
-          }
-        })
-      })
-    });
-
-    var relatedTree = new RelatedTree({
-      id: 'RelatedTree',
-
-      localGrouping: {
-        //collection: Property.all,
-        groupGetter: function(node){
-          return Property.get(node.info.PropertyId);
-        },
-        titleGetter: Function.getter('info.Title')
-      },
-
-      // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
-      localSorting: Function.getter('delegate.getId()')
-    });
-
-    // NOTE: для отладки - список всех связей
-    var linksTree = new nsTree.Tree({
-      // Определяем класс для дочерних узлов (описан выше)
-      childClass: Class(nsTree.TreeNode, {
-        titleGetter: function(node){
-          var field = Field.get(node.info.FieldId);
-          var property = Property.get(node.info.PropertyId);
-          return (field ? field.info.Title : '[no field]') + ' <-> ' + (property ? property.info.Title : '[no property]');
-        }
-      }),
-
-      collection: Link.all,
-      localSorting: Function.getter('info.FieldId')
-    });
-
-    DOM.insert('demo-container', 
-      DOM.createElement('#MainButtonPanel',
-        DOM.createElement(
-          {
-            description: 'BUTTON',
-            click: function(){
-
-              masterButtonPanel.appendChild(
-                relatedButtonPanel.replaceChild(
-                  masterButtonPanel.lastChild,
-                  relatedButtonPanel.lastChild
-                )
-              );
-
-              if (masterSet == 'Field')
-              {
-                masterSet = 'Property';
-                masterTree.setCollection(Property.all);
-              }
-              else
-              {
-                masterSet = 'Field';
-                masterTree.setCollection(Field.all);
-              }
-            }
-          },
-          'Swap!'
-        )
-      )
-    );
 
     var masterButtonPanel = new Basis.Controls.Button.ButtonPanel({
       childNodes: [
@@ -452,56 +406,92 @@
       ]
     });
 
+    // Зависимый список - список слов
+    var relatedTree = new nsTree.Tree({
+      id: 'RelatedTree',
+
+      // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
+      localSorting: function(node){
+        return Word(node.info.WordId).info.Title;
+      },
+
+      collection: new Basis.Data.AggregateDataset({
+        sources: [Word.all],
+        transform: function(srcObject){
+          return srcObject;
+        }
+      }),
+      event_delegateChanged: function(object, delta){
+        DOM.visibility(this.element.parentNode, this.delegate);
+        if (this.delegate)
+        {
+          var fieldId = this.info.FieldId;
+          this.collection.setTransform(function(object){
+            var wordId = object.info.WordId;
+            return Link.getSlot(fieldId + '-' + wordId, {
+              FieldId: fieldId,
+              WordId: wordId
+            });
+          });
+        }
+      },
+      childClass: Class(nsWrappers.TmplNode, {
+        template: new Basis.Html.Template(
+          '<li{element} event-click="toggle">' +
+            '<input{state} type="checkbox"/>{titleText} <span class="freq">(frequency: {frequencyText})</span>' +
+          '</li>'
+        ),
+        event_update: function(object, delta){
+          nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
+
+          var word = Word(this.info.WordId);
+          this.tmpl.titleText.nodeValue = word.info.Title;
+          this.tmpl.frequencyText.nodeValue = word.info.Freq;
+        },
+        event_targetChanged: function(object, oldTarget){
+          this.tmpl.state.checked = !!this.target;
+          classList(this.element).bool('checked', !!this.target);
+        },
+        templateAction: function(actionName, event){
+          if (actionName == 'toggle')
+          {
+            if (this.target)
+              this.target.destroy();
+            else
+              Link(this.info);
+          }
+        }
+      })
+    });
+
     var relatedButtonPanel = new Basis.Controls.Button.ButtonPanel({
       childNodes: [
         {
           caption: 'Check all',
           groupId: 1,
           handler: function(){
-            if (masterSet == 'Field')
-            {
-              var fieldId = relatedTree.info.FieldId;
-              Property.all.getItems().forEach(function(property){
-                var propertyId = property.info.PropertyId;
-                Link({
-                  LinkId: fieldId + '-' + propertyId,
-                  FieldId: fieldId,
-                  PropertyId: propertyId
-                });
-              });
-            }
-            else
-            {
-              var propertyId = relatedTree.info.PropertyId;
-              Field.all.getItems().forEach(function(property){
-                var fieldId = property.info.FieldId;
-                Link({
-                  LinkId: fieldId + '-' + propertyId,
-                  FieldId: fieldId,
-                  PropertyId: propertyId
-                });
-              });
-            }
+            relatedTree.collection.getItems().forEach(function(item){
+              if (!item.target)
+                Link(item.info);
+            });
           }
         },
         {
           caption: 'Uncheck all',
           groupId: 1,
           handler: function(){
-            var id = masterSet == 'Field' ? 'FieldId' : 'PropertyId';
-            Link.getGrouping(id).getGroup(relatedTree.info[id]).getItems().forEach(function(link){
-              link.destroy();
-            });
+            Link.getGrouping('FieldId').getGroup(relatedTree.info.FieldId).sync([]);
           }
         },
         {
           name: 'add',
-          caption: 'Add property',
+          caption: 'Add word',
           handler: function(){
             var newId = parseInt(Math.random() * 1000000 + 10);
-            Property({
-              PropertyId: newId,
-              Title: 'Property #' + newId
+            Word({
+              WordId: newId,
+              Title: 'Word #' + newId,
+              Freq: newId % 17
             });
           }
         }
@@ -522,11 +512,30 @@
           }
         },
         relatedButtonPanel.element,
+        new Basis.Controls.Form.MatchInput({
+          matchFilter: {
+            node: relatedTree
+          }
+        }).element,
         relatedTree.element
       ),
       DOM.createElement('.ListContainer',
         DOM.createElement('DIV.debug', 'Debug for (list of all links)'),
-        linksTree.element
+
+        // NOTE: для отладки - список всех связей
+        new nsTree.Tree({
+          // Определяем класс для дочерних узлов (описан выше)
+          childClass: Class(nsTree.TreeNode, {
+            titleGetter: function(node){
+              var field = Field.get(node.info.FieldId);
+              var property = Word.get(node.info.WordId);
+              return (field ? field.info.Title : '[no field]') + ' <-> ' + (property ? property.info.Title : '[no property]');
+            }
+          }),
+
+          collection: Link.all,
+          localSorting: Function.getter('info.FieldId')
+        }).element
       )/*,
       groupsTree.element*/
     ]);

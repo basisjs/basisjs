@@ -95,113 +95,105 @@
       items: [data[4], data[5], data[6]]
     });
 
-    new Basis.DOM.Wrapper.HtmlContainer({
+    new Basis.DOM.Wrapper.TmplContainer({
       cssClassName: 'dataset',
       content: 'AggregateDataset, all datasets, no transform',
       container: document.body,
-      localSorting: 'info.value',
+      localSorting: Function.getter('info.value'),
       collection: dd1 = new nsData.AggregateDataset({
         sources: [datasetA, datasetB, datasetC, datasetD]
       }),
-      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+      childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
         template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
-        behaviour: {
-          update: function(object, delta){
-            this.inherit(object, delta);
+        event_update: function(object, delta){
+          Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-            this.valueText.nodeValue = this.info.value;
-            this.idText.nodeValue = this.delegate.eventObjectId;
-          }
+          this.tmpl.valueText.nodeValue = this.info.value;
+          this.tmpl.idText.nodeValue = this.delegate.eventObjectId;
         }
       })
     });
 
-    new Basis.DOM.Wrapper.HtmlContainer({
+    new Basis.DOM.Wrapper.TmplContainer({
       cssClassName: 'dataset',
       content: 'AggregateDataset, all datasets, with transform',
       container: document.body,
-      localSorting: 'info.value',
+      localSorting: Function.getter('info.value'),
       collection: new nsData.AggregateDataset({
         transform: function(object){
           return refData[object.info.value];
         },
         sources: [datasetA, datasetB, datasetC, datasetD]
       }),
-      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+      childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
         template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
-        behaviour: {
-          update: function(object, delta){
-            this.inherit(object, delta);
+        event_update: function(object, delta){
+          Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-            this.valueText.nodeValue = this.info.title;
-            this.idText.nodeValue = this.delegate.eventObjectId;
-          }
+          this.tmpl.valueText.nodeValue = this.info.title;
+          this.tmpl.idText.nodeValue = this.delegate.eventObjectId;
         }
       })
     });
 
-    new Basis.DOM.Wrapper.HtmlContainer({
+    new Basis.DOM.Wrapper.TmplContainer({
       cssClassName: 'dataset',
       content: 'Collection, all datasets, no transform, odd only',
       container: document.body,
-      localSorting: 'info.value',
+      localSorting: Function.getter('info.value'),
       collection: xx = new nsData.Collection({
-        filter: 'info.value % 2 == 0',
+        filter: Function.getter('info.value % 2 == 0'),
         sources: [datasetA, datasetB, datasetC, datasetD]
       }),
-      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+      childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
         template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
-        behaviour: {
-          update: function(object, delta){
-            this.inherit(object, delta);
+        event_update: function(object, delta){
+          Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-            this.valueText.nodeValue = this.info.value;
-            this.idText.nodeValue = this.delegate.eventObjectId;
-          }
+          this.tmpl.valueText.nodeValue = this.info.value;
+          this.tmpl.idText.nodeValue = this.delegate.eventObjectId;
         }
       })
     });
 
 
-    new Basis.DOM.Wrapper.HtmlContainer({
+    new Basis.DOM.Wrapper.TmplContainer({
       cssClassName: 'dataset',
       content: 'Value.all',
       container: document.body,
-      localSorting: 'info.value',
+      localSorting: Function.getter('info.value'),
       collection: Value.all,
-      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+      childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
         template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
-        behaviour: {
-          update: function(object, delta){
-            this.inherit(object, delta);
+        event_update: function(object, delta){
+          Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-            this.valueText.nodeValue = this.info.value;
-            this.idText.nodeValue = this.info.id;
-          }
+          this.tmpl.valueText.nodeValue = this.info.value;
+          this.tmpl.idText.nodeValue = this.info.id;
         }
       })
     });
 
-    C = new Basis.DOM.Wrapper.HtmlContainer({
+    C = new Basis.DOM.Wrapper.TmplContainer({
       cssClassName: 'dataset',
       content: 'AggregateDataset, all datasets, with transform',
       container: document.body,
-      localSorting: 'info.value',
+      localSorting: Function.getter('info.value'),
       collection: new nsData.AggregateDataset({
         transform: function(object){
           return object.info.id ? Value.getSlot(object.info.id) : null;
         },
         sources: [datasetA, datasetB, datasetC, datasetD]
       }),
-      childClass: Basis.Class(Basis.DOM.Wrapper.HtmlNode, {
+      childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
         template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
-        behaviour: {
-          update: function(object, delta){
-            this.inherit(object, delta);
+        event_update: function(object, delta){
+          Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-            this.idText.nodeValue = this.info.id;
-            this.valueText.nodeValue = 'value' in this.info ? this.info.value : '<empty slot>';
-          }
+          if (!this.info.id)
+          console.log(this);
+          this.tmpl.idText.nodeValue = this.info.id;
+          this.tmpl.valueText.nodeValue = 'value' in this.info ? this.info.value : '<empty slot>';
         }
       })
     });

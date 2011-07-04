@@ -264,7 +264,7 @@
  /**
   * @class
   */
-  var Tree = Class(Control, {
+  var Tree = Class(Control, ExpandCollapseMixin, {
     className: namespace + '.Tree',
 
     childClass: TreeNode,

@@ -340,8 +340,8 @@
           getGrouping: function(name){
             return entityType.grouping_[name];
           },
-          getSlot: function(index){
-            return entityType.getSlot(index);
+          getSlot: function(index, defaults){
+            return entityType.getSlot(index, defaults);
           }
         });
 
@@ -571,8 +571,8 @@
           var defaults = extend({}, defaults);
           defaults[this.idField] = id;
           slot = this.slot_[id] = new DataObject({
-            defaults: defaults,
-            delegate: this.index_[id]
+            delegate: this.index_[id],
+            info: defaults
           });
         }
         return slot;
