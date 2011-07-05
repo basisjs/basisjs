@@ -135,10 +135,8 @@
           value: 1
         },
         {
-          info: {
-            title: 'Combobox Item 2',
-            value: 2
-          },
+          title: 'Combobox Item 2',
+          value: 2,
           selected: true
         },
         {
@@ -170,7 +168,7 @@
       container: createBlock('RadioGroup Field')
     });
 
-    new nsForm.Field.CheckGroup({
+    var checkGroup = new nsForm.Field.CheckGroup({
       childNodes: [
         {
           title: 'Check Item 1',
@@ -211,6 +209,10 @@
           type: 'combobox',
           name: 'Gender',
           title: 'Gender',
+          childClass: nsForm.Combobox.Item.subclass({
+            titleGetter: Function.getter('info.title'),
+            valueGetter: Function.getter('info.value')
+          }),
           childNodes: [
             { info: { value: 'Male', title: 'Male' } },
             { info: { value: 'Female', title: 'Female' } }

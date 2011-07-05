@@ -525,20 +525,21 @@
       className: namespace + '.ComplexField.Item',
 
       canHaveChildren: false,
-      
-      valueGetter: getter('value'),
-      titleGetter: function(info){ 
-        return info.title || info.value 
+
+      titleGetter: function(item){ 
+        return item.title || item.getValue();
       },
+      valueGetter: getter('value'),
+
       getTitle: function(){
-        return this.titleGetter(this.info, this);
+        return this.titleGetter(this);
       },
       getValue: function(){
-        return this.valueGetter(this.info, this);
+        return this.valueGetter(this);
       }
     });
 
-    var COMBOBOX_SELECTION_HANDLER = {
+    var COMPLEXFIELD_SELECTION_HANDLER = {
       datasetChanged: function(){
         this.event_change();
       }
@@ -552,10 +553,10 @@
 
       template: Field.prototype.template,
 
-      childFactory: function(itemConfig){
+      /*childFactory: function(itemConfig){
         var config = {
-          valueGetter: this.itemValueGetter,
-          titleGetter: this.itemTitleGetter
+          //valueGetter: this.itemValueGetter,
+          //titleGetter: this.itemTitleGetter
         };
 
         if (itemConfig.info || itemConfig.delegate)
@@ -564,17 +565,17 @@
           config.info = itemConfig;
 
         return new this.childClass(config);
-      },
+      },*/
 
       multipleSelect: false,
 
-      itemValueGetter: getter('value'),
-      itemTitleGetter: function(info){ return info.title || info.value; },
+      //itemValueGetter: getter('value'),
+      //itemTitleGetter: function(info){ return info.title || info.value; },
 
       init: function(config){
 
         this.selection = new Selection({ multiple: !!this.multipleSelect });
-        this.selection.addHandler(COMBOBOX_SELECTION_HANDLER, this);
+        this.selection.addHandler(COMPLEXFIELD_SELECTION_HANDLER, this);
 
         //inherit
         Field.prototype.init.call(this, config);
@@ -637,8 +638,8 @@
         //classList(this.element).remove('selected');
       },
       event_update: function(object, delta){
-        this.tmpl.field.value = this.valueGetter(object.info, object);
-        this.tmpl.titleText.nodeValue = this.titleGetter(object.info, object);
+        this.tmpl.field.value = this.getTitle();
+        this.tmpl.titleText.nodeValue = this.getValue();
 
         ComplexFieldItem.prototype.event_update.call(this, object, delta);
       },
@@ -701,8 +702,8 @@
         ComplexFieldItem.prototype.event_unselect.call(this);
       },
       event_update: function(object, delta){
-        this.tmpl.field.value = this.valueGetter(object.info, object);
-        this.tmpl.titleText.nodeValue = this.titleGetter(object.info, object);
+        this.tmpl.field.value = this.getTitle();
+        this.tmpl.titleText.nodeValue = this.getValue();
 
         ComplexFieldItem.prototype.event_update.call(this, object, delta);
       },
@@ -759,8 +760,8 @@
           this.parentNode.setValue();
       },
       event_update: function(object, delta){
-        this.tmpl.field.value = this.valueGetter(object.info, object);
-        this.tmpl.field.text = this.titleGetter(object.info, object);
+        this.tmpl.field.value = this.getValue();
+        this.tmpl.field.text = this.getTitle();
 
         ComplexFieldItem.prototype.event_update.call(this, object, delta);
       },
@@ -820,14 +821,16 @@
     var ComboboxItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.Combobox.Item',
 
-      event_update: function(object, delta){
-        this.tmpl.titleText.nodeValue = this.titleGetter(object.info, object);
+      //titleGetter: Function.getter('info.title'),
+      //valueGetter: Function.getter('info.value'),
 
+      event_update: function(object, delta){
         ComplexFieldItem.prototype.event_update.call(this, object, delta);
+        this.tmpl.titleText.nodeValue = this.getTitle();
       },
 
       template: new Template(
-        '<a{element} class="Basis-Combobox-Item" href="#" event-click="click">{titleText}</a>'
+        '<a{element} class="Basis-Combobox-Item" href="#" event-click="click">{titleText|}</a>'
       ),
       templateAction: function(actionName, event){
         if (actionName == 'click' && !this.isDisabled())
@@ -899,13 +902,27 @@
 
         ComplexField.prototype.event_enable.call(this);
       },
-      event_update: function(object, delta){
+      /*event_update: function(object, delta){
         ComplexField.prototype.event_update.call(this, object, delta);
         // update title
         var title = this.getTitle() || this.getValue() || '';
 
         this.tmpl.field.title = 
         this.tmpl.captionText.nodeValue = this.captionFormater(title, this.getValue());
+      },*/
+      event_change: function(){
+        ComplexField.prototype.event_change.call(this);
+
+        var value = this.getValue();
+
+        if (this.property)
+          this.property.set(value);
+
+        if (this.hidden)
+          this.hidden.value = value;
+
+        if (this.satellite)
+          this.satellite.captionItem.setDelegate(this.selection.pick());
       },
       //}),
 
@@ -913,25 +930,9 @@
       popup: null,
       property: null,
       
-      selectedIndex: -1,
-
-      captionFormater: Function.$self,
-      
-      /*fieldTemplate: new Template(
-        '<div{field} class="Basis-DropdownList" event-click="click">' +
-          '<div class="Basis-DropdownList-Content">' +
-            '<a{caption} class="Basis-DropdownList-Caption" href="#">' +
-              '<span class="Basis-DropdownList-CaptionText">{captionText}</span>' + 
-            '</a>' +
-            '<div class="Basis-DropdownList-Trigger"/>' +
-          '</div>' +
-          '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent"/>' +
-        '</div>'
-      ),*/
-
       template: createFieldTemplate(baseFieldTemplate,
         '<a{field} class="Basis-DropdownList" href="#" event-click="click">' +
-          '<span class="Basis-DropdownList-Caption">{captionText}</span>' +
+          '<span class="Basis-DropdownList-Caption"><!--{captionItem}--></span>' +
           '<span class="Basis-DropdownList-Trigger"/>' +
         '</a>' +
         '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent"/>'
@@ -958,8 +959,17 @@
         if (this.property)
           this.value = this.property.value;
 
+        this.satelliteConfig = {
+          captionItem: {
+            instanceOf: this.childClass,
+            delegate: Function.getter('selection.pick()')
+          }
+        };
+
         // inherit
         ComplexField.prototype.init.call(this, config);
+
+        this.satellite.captionItem.setDelegate(this.selection.pick());
 
         Event.addHandlers(this.tmpl.field, ComboboxCaptionHandlers, this);
 
@@ -967,21 +977,18 @@
           DOM.insert(this.tmpl.field, this.hidden = DOM.createElement('INPUT[type=hidden][name={0}]'.format(String(this.name).quote())));
 
         // create items popup
-        var popupConfig = this.popup;
         this.popup = new Basis.Controls.Popup.Popup(complete({
           cssClassName: 'Basis-DropdownList-Popup',
           autorotate: 1,
           ignoreClickFor: [this.tmpl.field],
           thread: this.thread,
-          content: this.childNodesElement
-        }, popupConfig));
-        
-        this.popup.addHandler(ComboboxPopupHandler, this);
+          content: this.childNodesElement,
+          handler: ComboboxPopupHandler,
+          handlerContext: this
+        }, this.popup));
 
         if (this.property)
-          this.property.addLink(this, this.setValue); 
-
-        this.event_update(this);
+          this.property.addLink(this, this.setValue);
       },
       /*select: function(){
         ComplexField.prototype.select.call(this);
@@ -995,41 +1002,26 @@
         this.popup.hide();
       },
       getTitle: function(){
-        return this.itemTitleGetter(this.info, this.delegate);
+        var selected = this.selection.pick();
+        return selected && selected.getTitle();
       },
       getValue: function(){
-        return this.itemValueGetter(this.info, this.delegate);
+        var selected = this.selection.pick();
+        return selected && selected.getValue();
       },
       setValue: function(value){
         /*if (value instanceof AbstractProperty)
           value = this.itemValueGetter(value.value);*/
-
         if (this.getValue() != value)
         {
           // update value & selection
           var item = this.childNodes.search(value, 'getValue()');
-          if (!item || (!item.disabled && this.delegate !== item))
-          {
-            this.selectedIndex = item ? Array.lastSearchIndex : -1;
+          if (item && !item.isDisabled())
+            this.selection.set([item]);
+          else
+            this.selection.clear();
 
-            this.setDelegate(item);
-            if (item)
-              this.selection.set([item]);
-            else
-              this.selection.clear();
-
-            value = this.getValue();
-
-            if (this.hidden)
-              this.hidden.value = value;
-
-            if (this.property)
-              this.property.set(value);
-          }
-          this.event_change();
         }
-
-        return this.getValue();
       },
       destroy: function(){
 
