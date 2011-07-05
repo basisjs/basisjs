@@ -57,20 +57,29 @@
   var createEvent = Basis.EventObject.createEvent;
   var basisEvent = Basis.EventObject.event;
 
+  function expand(node){
+    if (typeof node.expand == 'function')
+      node.expand();
+  }
+
+  function collapse(node){
+    if (typeof node.collapse == 'function')
+      node.collapse();
+  }
 
   var ExpandCollapseMixin = {
    /**
     * Expand all descendant nodes.
     */
     expandAll: function(){
-      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, 'expand()');    
+      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, expand);
     },
 
    /**
     * Collapse all descendant nodes.
     */
     collapseAll: function(){
-      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, 'collapse()');
+      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, collapse);
     },
 
     expand: Function(),

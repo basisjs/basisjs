@@ -79,10 +79,16 @@
       handler: {
         subscribersChanged: function(){
           if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
+          {
             this.adapter.request({
               url: '../' + this.info.url,
               influence: [this]
             });
+            this.adapter.request({
+              url: '../' + this.info.url,
+              influence: [this]
+            });
+          }
         },
         stateChanged: function(){
           if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))

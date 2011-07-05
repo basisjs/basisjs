@@ -952,13 +952,16 @@
   }
   #PrototypeMapPopup .Basis-Balloon-Content
   {
-    -moz-column-count: 4;
-    -moz-column-width: 20ex;
+    -moz-column-count: 5;
+    -moz-column-width: 24ex;
     -moz-column-gap: 1ex;
-    -webkit-column-count: 4;
+    -webkit-column-count: 5;
     -webkit-column-width: 24ex;
     -webkit-column-gap: 1ex;
-    width: 99ex;
+    column-count: 4;
+    column-width: 24ex;
+    column-gap: 1ex;
+    width: 124ex;
     line-height: 1.1em;
   }
   #PrototypeMapPopup .Basis-Balloon-Content .item
@@ -968,6 +971,7 @@
       -moz-border-radius: 3px;
     border-radius: 3px;
     padding: .25em .5ex;
+    backg3round: gray;
   }
   #PrototypeMapPopup .Basis-Balloon-Content .match
   {
@@ -989,4 +993,15 @@
   #PrototypeMapPopup .Basis-Field-Container
   {
     padding: 0;
+  }
+
+  #PrototypeMapPopup .Basis-PartitionNode
+  {
+    margin-bottom: 1.5em;
+  }
+  #PrototypeMapPopup .Basis-PartitionNode-Title
+  {
+    padding: .25em .5ex;
+    backgrou3nd: red;
+    font-weight: bold;
   }

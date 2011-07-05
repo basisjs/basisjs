@@ -490,6 +490,7 @@
 
         this.entityClass = Entity(this, this.all, this.index_, this.slot_, this.fields, this.defaults, this.aliases);
         this.entityClass.prototype.entityType = this;
+        this.entityClass.prototype.type = wrapper;
         this.entityClass.prototype.getId = idField
             ? function(){
                 return this.info[idField];

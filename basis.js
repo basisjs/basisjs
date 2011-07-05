@@ -1445,7 +1445,10 @@
           className: SuperClass.className + '._SubClass_',
           superClass_: SuperClass,
           prototype: new SuperClass_(),
-          extend: BaseClass.extend
+          extend: BaseClass.extend,
+          subclass: function(){
+            return Class.create.apply(null, [newClass].concat(Array.from(arguments)));
+          }
         };
 
         // extend newClass prototype
@@ -1475,9 +1478,6 @@
 
                 // call constructor
                 this.init(config || NULL_CONFIG);
-
-                if (this.afterInit)
-                  this.afterInit(this);
               }
 
             /** @cut debug for */+ '\n}["' + className + '"]')(seed, NULL_CONFIG)
@@ -1707,7 +1707,7 @@
         if (this.handlers_)
         {
           // fire object destroy event handlers
-          destroyEvent.call(this);
+          destroyEvent.call(this, this);
 
           // remove all event handler sets
           this.handlers_ = null;

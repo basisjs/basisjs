@@ -284,6 +284,11 @@
     colMap_: null,
 
    /**
+    * @type {Boolean}
+    */
+    destroyCollectionMember: true,
+
+   /**
     * @type {Basis.DOM.Wrapper.AbstractNode}
     * @readonly
     */
@@ -392,8 +397,9 @@
       var childNodes = this.childNodes;
       var localGrouping = this.localGrouping;
 
-      this.collection = null; // NOTE: reset collection before inherit -> prevent double subscription activation
-                              // when this.active == true and collection is assigned
+      if (collection)
+        this.collection = null; // NOTE: reset collection before inherit -> prevent double subscription activation
+                                // when this.active == true and collection is assigned
 
       // inherit
       DataObject.prototype.init.call(this, config);
@@ -698,6 +704,9 @@
       var newDelta = {};
       var deleted = [];
 
+      // WARN: it is better process deleted nodes before inserted, because if all child nodes
+      // are replaced for new one, we able to use fast clear and setChildNodes methods
+
       // delete nodes
       if (delta.deleted)
       {
@@ -708,10 +717,10 @@
           deleted.push.apply(deleted, this.childNodes);
 
           // optimization: if all old nodes deleted -> clear childNodes
-          var col = this.collection;
+          var tmp = this.collection;
           this.collection = null;
           this.clear(true);   // keep alive, event fires
-          this.collection = col;
+          this.collection = tmp;
           this.colMap_ = {};
         }
         else
@@ -736,11 +745,12 @@
         newDelta.inserted = [];
         for (var i = 0, item; item = delta.inserted[i]; i++)
         {
-          //var node = this.insertBefore(item.info, con[item.pos]);
           var newChild = createChildByFactory(this, {
-            active: false,
-            cascadeDestroy: false,
-            //canHaveDelegate: false,
+            cascadeDestroy: false,     // NOTE: it's important set cascadeDestroy to false, otherwise
+                                       // there will be two attempts to destroy node - 1st on delegate
+                                       // destroy, 2nd on object removal from collection
+            //canHaveDelegate: false,  // NOTE: we can't set canHaveDelegate in config, because it
+                                       // prevents delegate assignment
             delegate: item
           });
 
@@ -750,17 +760,21 @@
           this.colMap_[item.eventObjectId] = newChild;
           newDelta.inserted.push(newChild);
 
-          if (this.firstChild) // optimization, prepare for setChildNodes
+          // optimization: insert child only if node has at least one child, otherwise setChildNodes method
+          // will be used which is much faster (reduce event count, bulk insertion)
+          if (this.firstChild)
             this.insertBefore(newChild);
         }
       }
 
       if (!this.firstChild)
-        this.setChildNodes(newDelta.inserted); // event fires
+        // use fast child insert method if possible (it also fire childNodesModified event)
+        this.setChildNodes(newDelta.inserted);
       else
         this.event_childNodesModified(this, newDelta);
 
-      if (deleted.length)
+      // destroy removed items
+      if (this.destroyCollectionMember && deleted.length)
       {
         for (var i = 0, item; item = deleted[i]; i++)
           item.destroy();
@@ -2462,6 +2476,7 @@
 
   var CHILDNODESDATASET_HANDLER = {
     childNodesModified: function(node, delta){
+      var memberMap = this.memberMap_;
       var newDelta = {};
       var node;
       var insertCount = 0;
@@ -2475,7 +2490,7 @@
 
         while (node = inserted[insertCount])
         {
-          this.map_[node.eventObjectId] = node;
+          memberMap[node.eventObjectId] = node;
           insertCount++;
         }
       }
@@ -2486,7 +2501,7 @@
 
         while (node = deleted[deleteCount])
         {
-          delete this.map_[node.eventObjectId];
+          delete memberMap[node.eventObjectId];
           deleteCount++;
         }
       }

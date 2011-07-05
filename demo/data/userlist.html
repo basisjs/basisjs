@@ -152,12 +152,13 @@
       },
       all: {
         handler: colHandler,
-        afterInit: function(self){
-          self.adapter = new Basis.Ajax.Transport({
+        init: function(config){
+          this.constructor.prototype.init.call(this, config);
+          this.adapter = new Basis.Ajax.Transport({
             url: '../res/data/groups.json',
-            influence: self,
+            influence: [this],
             handler: adapterHandler,
-            handlerContext: self
+            handlerContext: this
           });
         }
       }
@@ -175,13 +176,15 @@
       },
       all: {
         handler: colHandler,
-        afterInit: function(self){
-          self.adapter = new Basis.Ajax.Transport({
+        init: function(config){
+          this.constructor.prototype.init.call(this, config);
+          this.adapter = new Basis.Ajax.Transport({
             url: '../res/data/users.json',
-            influence: self,
+            influence: [this],
             handler: adapterHandler,
-            handlerContext: self
+            handlerContext: this
           });
+
         }
       }
     });

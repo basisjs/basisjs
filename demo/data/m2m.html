@@ -301,7 +301,7 @@
       localSorting: Function.getter('info.Title'),
 
       // Определяем класс для дочерних узлов
-      childClass: Class(nsTree.TreeFolder, {
+      childClass: nsTree.TreeFolder.subclass({
         template: new Basis.Html.Template(
           '<li{element|selected} class="Basis-TreeNode empty" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
@@ -347,10 +347,10 @@
           this.setCollection(Link.getGrouping('FieldId').getGroup(this.info.FieldId, true));
         },
 
-        childClass: Class(nsTree.TreeNode, {
+        childClass: nsWrappers.TmplNode.subclass({
           template: new Basis.Html.Template(
             '<div{element} class="Field-WordLink">' +
-              '<span class="Field-WordLink-Title">{titleText}</span>' +
+              '<!--{word}-->' +
               '<span class="Field-WordLink-DeleteButton" event-click="delete">x</span>' +
             '</div>'
           ),
@@ -358,8 +358,13 @@
             if (actionName == 'delete')
               this.target.destroy();
           },
-          titleGetter: function(node){
-            return Word.get(node.info.WordId).info.Title;
+          satelliteConfig: {
+            word: {
+              delegate: Function.getter('info.WordId', Word),
+              instanceOf: nsWrappers.TmplNode.subclass(nsWrappers.simpleTemplate(
+                '<span{element} class="Field-WordLink-Title">{this_info_Title}</span>'
+              ))
+            }
           }
         })
       }),
@@ -410,7 +415,7 @@
 
       // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
       localSorting: function(node){
-        return Word(node.info.WordId).info.Title;
+        return node.satellite.word.info.Title;
       },
 
       collection: new Basis.Data.AggregateDataset({
@@ -419,9 +424,10 @@
           return srcObject;
         }
       }),
-      event_delegateChanged: function(object, delta){
-        DOM.visibility(this.element.parentNode, this.delegate);
-        if (this.delegate)
+      event_targetChanged: function(object, delta){
+        DOM.visibility(this.element.parentNode, !!this.target);
+
+        if (this.target)
         {
           var fieldId = this.info.FieldId;
           this.collection.setTransform(function(object){
@@ -433,23 +439,12 @@
           });
         }
       },
-      childClass: Class(nsWrappers.TmplNode, {
+      childClass: nsWrappers.TmplNode.subclass({
         template: new Basis.Html.Template(
           '<li{element} event-click="toggle">' +
-            '<input{state} type="checkbox"/>{titleText} <span class="freq">(frequency: {frequencyText})</span>' +
+            '<input{state} type="checkbox"/><!--{word}-->' +
           '</li>'
         ),
-        event_update: function(object, delta){
-          nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
-
-          var word = Word(this.info.WordId);
-          this.tmpl.titleText.nodeValue = word.info.Title;
-          this.tmpl.frequencyText.nodeValue = word.info.Freq;
-        },
-        event_targetChanged: function(object, oldTarget){
-          this.tmpl.state.checked = !!this.target;
-          classList(this.element).bool('checked', !!this.target);
-        },
         templateAction: function(actionName, event){
           if (actionName == 'toggle')
           {
@@ -457,6 +452,18 @@
               this.target.destroy();
             else
               Link(this.info);
+          }
+        },
+        event_targetChanged: function(object, oldTarget){
+          this.tmpl.state.checked = !!this.target;
+          classList(this.element).bool('checked', !!this.target);
+        },
+        satelliteConfig: {
+          word: {
+            delegate: Function.getter('info.WordId', Word),
+            instanceOf: nsWrappers.TmplNode.subclass(nsWrappers.simpleTemplate(
+              '<span{element}>{this_info_Title} <span class="freq">(frequency: {this_info_Freq})</span></span>'
+            ))
           }
         }
       })

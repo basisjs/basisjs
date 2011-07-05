@@ -715,6 +715,70 @@
   });
 
   //
+  // Mapper
+  //
+
+ /**
+  * @class
+  */
+  var KeyObjectMap = Class(null, {
+    className: namespace + '.KeyObjectMap',
+
+    itemClass: DataObject,
+    keyGetter: Function.$self,
+    map_: null,
+
+    init: function(config){
+      this.map_ = {};
+      Basis.Cleaner.add(this);
+    },
+    resolve: function(object){
+      return this.get(this.keyGetter(object), true);
+    },
+    create: function(data){
+      var itemConfig = {};
+
+      if (data instanceof DataObject)
+      {
+        itemConfig.delegate = data;
+      }
+      else
+      {
+        itemConfig.info = {
+          id: data,
+          title: data
+        };
+      }
+
+      return new this.itemClass(itemConfig);
+    },
+    get: function(data, autocreate){
+      var isDataObject = data instanceof DataObject;
+      var itemId = isDataObject ? data.eventObjectId : data;
+      var item = this.map_[itemId];
+
+      if (!item && autocreate)
+      {
+        item = this.map_[itemId] = this.create(data);
+        item.addHandler({
+          destroy: function(){
+            delete this.map_[itemId];
+          }
+        }, this);
+      }
+
+      return item;
+    },
+    destroy: function(){
+      Basis.Cleaner.remove(this);
+
+      var items = values(this.map_);
+      for (var i = items.length; i --> 0;)
+        items[0].destroy();
+    }
+  });
+
+  //
   // Datasets
   //
 
@@ -745,7 +809,6 @@
     state: STATE_UNDEFINED,
 
     itemCount: 0,
-
     memberMap_: null,
     item_: null,
 
@@ -1453,7 +1516,6 @@
     className: namespace + '.AggregateDataset',
 
     subscribeTo: Subscription.SOURCE,
-    sources: null,
 
    /**
     * Fires when source set changed.
@@ -1464,6 +1526,11 @@
     * @event
     */
     event_sourcesChanged: createEvent('sourcesChanged', 'dataset', 'delta'),
+
+   /**
+    * @type {Array.<Basis.Data.AbstractDataset>}
+    */
+    sources: null,
 
    /**
     * Allowed member class.
@@ -1522,84 +1589,91 @@
       {
         this.transform = transform;
 
-        var memberClass = this.memberClass;
-        var sourceMap = this.sourceMap_;
-        var memberMap = this.memberMap_;
-        var curMember;
-        var newMember;
-        var curMemberId;
-        var newMemberId;
-        var sourceObject;
-        var sourceObjectInfo;
-        var inserted = [];
-        var deleted = [];
+        delta = this.updateDataset();
+      }
 
-        for (var sourceObjectId in sourceMap)
+      return delta;
+    },
+
+    updateDataset: function(){
+      var memberClass = this.memberClass;
+      var sourceMap = this.sourceMap_;
+      var memberMap = this.memberMap_;
+      var curMember;
+      var newMember;
+      var curMemberId;
+      var newMemberId;
+      var sourceObject;
+      var sourceObjectInfo;
+      var inserted = [];
+      var deleted = [];
+      var delta;
+
+      for (var sourceObjectId in sourceMap)
+      {
+        sourceObjectInfo = sourceMap[sourceObjectId];
+        sourceObject = sourceObjectInfo.sourceObject;
+
+        curMember = sourceObjectInfo.member;
+        newMember = this.transform ? this.transform(sourceObject) : sourceObject;
+
+        if (newMember instanceof memberClass == false)
+          newMember = null;
+
+        if (curMember != newMember)
         {
-          sourceObjectInfo = sourceMap[sourceObjectId];
-          sourceObject = sourceObjectInfo.sourceObject;
+          sourceObjectInfo.member = newMember;
 
-          curMember = sourceObjectInfo.member;
-          newMember = transform ? this.transform(sourceObject) : sourceObject;
-
-          if (newMember instanceof memberClass == false)
-            newMember = null;
-
-          if (curMember != newMember)
+          // if here is ref for member already
+          if (curMember)
           {
-            sourceObjectInfo.member = newMember;
+            curMemberId = curMember.eventObjectId;
 
-            // if here is ref for member already
-            if (curMember)
+            // call callback on member ref add
+            if (this.removeMemberRef)
+              this.removeMemberRef(curMember, sourceObject);
+
+            // decrease ref count
+            memberMap[curMemberId]--;
+          }
+
+          // if new member exists, update map
+          if (newMember)
+          {
+            newMemberId = newMember.eventObjectId;
+
+            // call callback on member ref add
+            if (this.addMemberRef)
+              this.addMemberRef(newMember, sourceObject);
+
+            if (newMemberId in memberMap)
             {
-              curMemberId = curMember.eventObjectId;
-
-              // call callback on member ref add
-              if (this.removeMemberRef)
-                this.removeMemberRef(curMember, sourceObject);
-
-              // decrease ref count
-              memberMap[curMemberId]--;
+              // member is already in map -> increase ref count
+              memberMap[newMemberId]++;
             }
-
-            // if new member exists, update map
-            if (newMember)
+            else
             {
-              newMemberId = newMember.eventObjectId;
+              // add to map
+              memberMap[newMemberId] = 1;
 
-              // call callback on member ref add
-              if (this.addMemberRef)
-                this.addMemberRef(newMember, sourceObject);
-
-              if (newMemberId in memberMap)
-              {
-                // member is already in map -> increase ref count
-                memberMap[newMemberId]++;
-              }
-              else
-              {
-                // add to map
-                memberMap[newMemberId] = 1;
-
-                // add to delta
-                inserted.push(newMember);
-              }
+              // add to delta
+              inserted.push(newMember);
             }
           }
         }
-
-        // get deleted delta
-        for (var curMemberId in this.item_)
-          if (memberMap[curMemberId] == 0)
-          {
-            delete memberMap[curMemberId];
-            deleted.push(this.item_[curMemberId]);
-          }
-
-        // if any changes, fire event
-        if (delta = getDelta(inserted, deleted))
-          this.event_datasetChanged(this, delta);
       }
+
+      // get deleted delta
+      for (var curMemberId in this.item_)
+        if (memberMap[curMemberId] == 0)
+        {
+          delete memberMap[curMemberId];
+          deleted.push(this.item_[curMemberId]);
+        }
+
+      // if any changes, fire event
+      if (delta = getDelta(inserted, deleted))
+        this.event_datasetChanged(this, delta);
 
       return delta;
     },
@@ -1718,16 +1792,18 @@
     * @param {function(item):boolean} filter
     */
     setFilter: function(filter){
-      filter = filter ? getter(filter) : $true;
+      var delta;
+
+      if (!filter)
+        filter = $true;
 
       if (this.filter != filter)
       {
         this.filter = filter;
-
-        this.setTransform(function(object){
-          return this.filter(object) ? object : null;
-        });
+        delta = this.updateDataset();
       }
+
+      return delta;
     }
   });
 
@@ -1744,12 +1820,12 @@
     groupGetter: $true,
     groupClass: AbstractDataset,
 
-    destroyEmpty: true,
+    //destroyEmpty: true,
 
-    groupMap_: null,
+    //groupMap_: null,
 
     transform: function(sourceObject){
-      return this.getGroup(this.groupGetter(sourceObject), true);
+      return this.mapper.resolve(sourceObject);//this.getGroup(this.groupGetter(sourceObject), true);
     },
     addMemberRef: function(group, sourceObject){
       group.event_datasetChanged(group, { inserted: [sourceObject] });
@@ -1767,42 +1843,26 @@
     * @constructor
     */ 
     init: function(config){
-      this.groupMap_ = {};
+      //this.groupMap_ = {};
+      this.mapper = new KeyObjectMap({
+        keyGetter: this.groupGetter,
+        itemClass: this.groupClass
+      });
 
       // inherit
       AggregateDataset.prototype.init.call(this, config);
     },
 
     getGroup: function(data, autocreate){
-      var isDataObject = data instanceof DataObject;
-      var groupId = isDataObject ? data.eventObjectId : data;
-      var group = this.groupMap_[groupId];
-
-      if (!group && autocreate)
-      {
-        var groupConfig = {
-          groupId: groupId
-        };
-
-        if (isDataObject)
-          groupConfig.delegate = data;
-        else
-          groupConfig.info = {
-            id: data,
-            title: data
-          };
-
-        group = this.groupMap_[groupId] = new this.groupClass(groupConfig);
-      }
-
-      return group;
+      return this.mapper.get(data, autocreate);
     },
 
     destroy: function(){
       // inherit
       AggregateDataset.prototype.destroy.call(this);
 
-      this.groupMap_ = null;
+      //this.groupMap_ = null;
+      this.mapper.destroy();
     }
   });
 
@@ -1828,6 +1888,8 @@
     // classes
     Object: DataObject,
     DataObject: DataObject,
+
+    KeyObjectMap: KeyObjectMap,
 
     AbstractDataset: AbstractDataset,
     Dataset: Dataset,

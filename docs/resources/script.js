@@ -116,6 +116,7 @@
       }
     ),
     localSorting: Function.getter('info.title'),
+    localGrouping: Object.slice(nsView.viewPrototype.localGrouping, 'groupGetter localSorting titleGetter'.qw()),
     event_beforeShow: function(){
       this.constructor.prototype.event_beforeShow.call(this);
       this.setCollection(prototypeDataset);
