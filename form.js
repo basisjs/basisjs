@@ -638,8 +638,8 @@
         //classList(this.element).remove('selected');
       },
       event_update: function(object, delta){
-        this.tmpl.field.value = this.getTitle();
-        this.tmpl.titleText.nodeValue = this.getValue();
+        this.tmpl.field.value = this.getValue();
+        this.tmpl.titleText.nodeValue = this.getTitle();
 
         ComplexFieldItem.prototype.event_update.call(this, object, delta);
       },
