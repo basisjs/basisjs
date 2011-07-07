@@ -240,7 +240,7 @@
    /**
     * @inheritDoc
     */
-    subscribeTo: Subscription.DELEGATE | Subscription.COLLECTION,
+    subscribeTo: DataObject.prototype.subscribeTo | Subscription.COLLECTION,
 
    /**
     * Flag determines object behaviour when parentNode changing:
@@ -2318,8 +2318,11 @@
         var nextSibling = newChild.nextSibling;
         var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
         var container = target.childNodesElement || target.element;
+        var element = newChild.element;
+        var refNode = insertPoint || container.insertPoint || null;
 
-        container.insertBefore(newChild.element, insertPoint || container.insertPoint || null); // NOTE: null at the end for IE
+        if (element.parentNode !== container || element.nextSibling !== refNode) // prevent dom update
+          container.insertBefore(element, refNode); // NOTE: null at the end for IE
           
         return newChild;
       },

@@ -18,11 +18,11 @@
     position: relative;
     overflow: hidden;
   }
-  .Basis-Field
+  .Basis-FormContent .Basis-Field
   {
-    clear: both;
+    /*clear: both;*/
   }
-  .Basis-Field-Container
+  .Basis-FormContent .Basis-Field-Container
   {
     _position: relative;
     _zoom: 1;

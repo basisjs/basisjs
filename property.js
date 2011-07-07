@@ -516,23 +516,26 @@
       * @constructor
       */
       init: function(config){
-        config = config || {};
+        var handlers = this.handler;
+        delete this.handler;
 
-        Property.prototype.init.call(this, 'value' in config ? config.value : 0, config.handlers, config.proxy);
+        Property.prototype.init.call(this, this.value || 0, handlers, this.proxy);
 
-        this.objects = new Array();
+        /*if (typeof config.calculateValue == 'function')
+          this.calculateValue = config.calculateValue;*/
 
-        if (typeof config.calculateValue == 'function')
-          this.calculateValue = config.calculateValue;
-
-        if (config.objects)
+        if (this.objects.length)
         {
+          var objects = this.objects;
+          this.objects = [];
           this.lock();
-          this.add.apply(this, config.objects);
+          this.add.apply(this, objects);
           this.unlock();
         }
+        else
+          this.objects = [];
 
-        this.valueChanged_ = this.stateChanged_ = !!config.calculateOnInit;
+        this.valueChanged_ = this.stateChanged_ = !!this.calculateOnInit;
         this.update();
 
         Cleaner.add(this);

@@ -1434,7 +1434,9 @@
     //
 
     Basis.namespace(namespace).extend({
-      Form: Form,
+      createFieldTemplate: function(template){
+        return createFieldTemplate(baseFieldTemplate, template)
+      },
       FormContent: FormContent,
       Field: Field,
       Validator: Validator,

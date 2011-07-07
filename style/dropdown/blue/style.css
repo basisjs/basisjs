@@ -16,8 +16,9 @@
   .Basis-DropdownList
   {
     position: relative;
-    display: inline;
-    display: inline-block;
+    /*display: inline;
+    display: inline-block;*/
+    display: block;
 
     min-width: 100px;
     width: 144px;

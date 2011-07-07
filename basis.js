@@ -2400,7 +2400,10 @@
       node = get(node); // TODO: remove
 
       if (!node)
+      {
+        debugger;
         throw new Error('DOM.insert: destination node can\'t be null');
+      }
 
       switch (insertPoint) {
         case undefined: // insertPoint omited

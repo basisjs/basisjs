@@ -359,7 +359,7 @@
           delete this.dde;
         }
 
-        TmplContainer.prototype.destroy.call();
+        TmplContainer.prototype.destroy.call(this);
 
         this.cssRule.destroy();
         delete this.cssRule;

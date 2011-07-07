@@ -219,6 +219,19 @@
     }
   );
 
+  Subscription.regType(
+    'TARGET',
+    {
+      targetChanged: function(object, oldTarget){
+        this.remove(object, oldTarget);
+        this.add(object, object.target);
+      }
+    },
+    function(action, object){
+      action(object, object.target);
+    }
+  );
+
 
  /**
   * Base class for data storing.
@@ -292,7 +305,7 @@
     * related objects (delegate, collection).
     * @type {Basis.Data.Subscription|number}
     */
-    subscribeTo: Subscription.DELEGATE,
+    subscribeTo: Subscription.DELEGATE | Subscription.TARGET,
 
    /**
     * Count of subscribed objects. This property can use to determinate

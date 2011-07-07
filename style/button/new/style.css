@@ -98,13 +98,13 @@
 
     /* animation */
       -moz-transition: .25s ease-in-out;
-      -moz-transition-property: background-color, border-color, -moz-box-shadow, box-shadow;
+      -moz-transition-property: background-color, border-color, -moz-box-shadow, box-shadow, color;
       -webkit-transition: .25s ease-in-out;
-      -webkit-transition-property: background-color, border-color, -webkit-box-shadow, box-shadow;
+      -webkit-transition-property: background-color, border-color, -webkit-box-shadow, box-shadow, color;
       -o-transition: .25s ease-in-out;
-      -o-transition-property: background-color, border-color, box-shadow;
+      -o-transition-property: background-color, border-color, box-shadow, color;
     transition: .25s ease-in-out;
-    transition-property: background-color, border-color, box-shadow;
+    transition-property: background-color, border-color, box-shadow, color;
   }
 
   /* state & interaction */
@@ -126,6 +126,9 @@
   .Basis-Button:hover .Basis-Button-Back
   {
     background-color: #BCD7F2;
+      -webkit-box-shadow: none !important;
+      -moz-box-shadow: none !important;
+    box-shadow: none !important;
   }
 
   .Basis-Button:focus .Basis-Button-Back
@@ -155,15 +158,23 @@
   .disabled .Basis-Button .Basis-Button-Back
   {
     box-shadow: none;
+    /*  -moz-transition: none;
+      -webkit-transition: none;
+      -o-transition: none;
+    transition: none;*/
   }
 
   .disabled .Basis-Button-Back
   {
-    background: #F4F4F4 !important;
+    background-color: #F4F4F4 !important;
 
       -webkit-box-shadow: none;
       -moz-box-shadow: none;
     box-shadow: none;
+
+    /*  -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
+      -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .5) inset;*/
 
     border-color: #C0C0C0 !important;
   }
