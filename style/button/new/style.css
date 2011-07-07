@@ -151,6 +151,12 @@
     color: #888;
   }
 
+  .Basis-Button.disabled .Basis-Button-Back,
+  .disabled .Basis-Button .Basis-Button-Back
+  {
+    box-shadow: none;
+  }
+
   .disabled .Basis-Button-Back
   {
     background: #F4F4F4 !important;

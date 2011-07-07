@@ -274,7 +274,7 @@
       if (this.axisY)
       {
         var newTop = config.box.top + config.deltaY;
-        
+       
         if (this.fixTop && newTop < 0)
           newTop = 0;
         else
