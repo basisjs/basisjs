@@ -603,14 +603,14 @@
             if (handler.handler.prepare)
               handler.handler.prepare.call(handler.thisObject || this);
           }
-        }*/
+        }
 
         if (this.aborted)
         {
           ;;;if (this.debug && typeof console != 'undefined') console.info('Transport: request was aborted while `prepare` event dispatch');
           //this.dispatch('abort', false);
           return;
-        }
+        }*/
 
         // prepare url
         params = Object.iterate(this.params, function(key, value){

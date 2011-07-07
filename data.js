@@ -1793,6 +1793,7 @@
     */
     setFilter: function(filter){
       var delta;
+      filter = filter || $true;
 
       if (!filter)
         filter = $true;

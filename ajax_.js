@@ -289,7 +289,7 @@
       prepare: Function.$true,
 
       prepareRequestData: function(requestData){
-        var params = Object.iterate(requestData.params, function(key, value){
+        var params = Object.iterate(requestData.params , function(key, value){
           return (value == null) || (value && typeof value.toString == 'function' && value.toString() == null)
             ? null
             : key + '=' + String(value.toString()).replace(/[\%\=\&\<\>\s\+]/g, function(m){ var code = m.charCodeAt(0).toHex(); return '%' + (code.length < 2 ? '0' : '') + code })//Encode.escape(Basis.Crypt.UTF8.fromUTF16(value.toString()))
@@ -308,13 +308,12 @@
         return requestData;
       },
 
-      doRequest: function(requestData){
-        this.requestData = requestData;
+      doRequest: function(){
+        /*if (!this.prepare())
+          return;*/
 
-        if (!this.prepare())
-          return;
-
-        this.send(this.prepareRequestData(requestData));
+        //this.requestData = requestData;
+        this.send(this.prepareRequestData(this.requestData));
       },
       
       send: function(requestData){
@@ -439,11 +438,11 @@
 
     var inprogressProxies = [];
     ProxyDispatcher.addHandler({
-      start: function(proxy){
-        inprogressProxies.add(proxy);
+      start: function(request){
+        inprogressProxies.add(request.proxy);
       },
-      complete: function(proxy){
-        inprogressProxies.remove(proxy);
+      complete: function(request){
+        inprogressProxies.remove(request.proxy);
       }
     });
 
@@ -467,10 +466,28 @@
      * @class Proxy
      */
 
+    var PROXY_POOL_LIMIT_HANDLER = {
+      start: function(){
+        this.inprogressRequestsCount++;        
+      },
+      complete: function(request){
+        this.inprogressRequestsCount--;
+
+        var nextRequest = this.requestQueue.shift();
+        if (nextRequest)
+        {
+          setTimeout(function(){
+            nextRequest.doRequest();
+          }, 0);
+        }
+      }
+    }
+
     var Proxy = Class(EventObject, {
       className: namespace + '.Proxy',
 
       requests: null,
+      poolLimit: null,
 
       poolHashGetter: Function.$true,
 
@@ -483,12 +500,17 @@
 
       init: function(config){
         this.requests = {};
+        this.requestQueue = [];
+        this.inprogressRequestsCount = 0;
 
         EventObject.prototype.init.call(this, config);
 
         // handlers
         if (this.callback)
           this.addHandler(this.callback, this);
+
+        if (this.poolLimit)
+          this.addHandler(PROXY_POOL_LIMIT_HANDLER, this);
       },
 
       getRequestByHash: function(requestHashId){
@@ -497,7 +519,7 @@
           var request;
           //find idle transport
           for (var i in this.requests)
-            if (this.requests[i].isIdle())
+            if (this.requests[i].isIdle() && !this.requestQueue.has(this.requests[i]))
             {
               request = this.requests[i];
               delete this.requests[i];
@@ -513,30 +535,44 @@
       prepareRequestData: Function.$self,
 
       request: function(config){
-        this.requestData = Object.slice(config);
-
         if (!this.prepare())
           return;
-        
-        var requestData = this.prepareRequestData(this.requestData);
+
+        var requestData = Object.slice(config);
+
+        var requestData = this.prepareRequestData(requestData);
         var requestHashId = this.poolHashGetter(requestData);
+
+        if (this.requests[requestHashId])
+          this.requests[requestHashId].abort();
 
         var request = this.getRequestByHash(requestHashId);
         request.abort();
         request.setInfluence(requestData.influence);
 
-        return request.doRequest(requestData);
+        request.requestData = requestData;
+
+        if (this.poolLimit && this.inprogressRequestsCount >= this.poolLimit)
+        {
+          this.requestQueue.push(request);
+          request.setState(STATE.PROCESSING);
+        }
+        else
+          request.doRequest();
       },
 
       abort: function(timeout){
         for (var i in this.requests)
           this.requests[i].abort();
+
+        for (var i = 0, request; request = this.requestQueue[i]; i++)
+          request.setState(STATE.UNDEFINED);
       },
 
-      repeat: function(){ 
+      /*repeat: function(){ 
         if (this.requestData)
           this.request(this.requestData);
-      },
+      },*/
 
       destroy: function(){
         for (var i in this.requests)
@@ -627,16 +663,11 @@
      */
 
     var SERVICE_HANDLER = {
-      start: function(proxy){
-        console.log(proxy);
-        this.inprogressProxies.add(proxy);
+      start: function(request){
+        this.inprogressProxies.add(request.proxy);
       },
-      complete: function(proxy){
-        this.inprogressProxies.remove(proxy);
-      },
-      service_failure: function(){
-        this.service.awaitingProxies = Array.from(this.inprogressProxies);
-        this.service.abort();
+      complete: function(request){
+        this.inprogressProxies.remove(request.proxy);
       }
     }
 
@@ -647,27 +678,23 @@
       proxyClass: AjaxProxy,
       requestClass: AjaxRequest,
 
-      event_service_failure: EventObject.createEvent('service_failure'),
-      /*event_sessionOpen: EventObject.createEvent('sessionOpen'),
+      event_sessionOpen: EventObject.createEvent('sessionOpen'),
+      event_sessionClose: EventObject.createEvent('sessionClose'),
       event_sessionFreeze: EventObject.createEvent('sessionFreeze'),
       event_sessionUnfreeze: EventObject.createEvent('sessionUnfreeze'),
-      event_sessionClose: EventObject.createEvent('sessionClose'),*/
+
+      //event_service_failure: EventObject.createEvent('service_failure'),
+
+      isSecure: false,
 
       prepare: Function.$true,
+      signature: Function.$undef,
       isServiceError: Function.$false,
-      /*setCredentials: Function.$undef,
-      getCredentials: Function.$self,
-      removeCredentials: Function.$undef,*/
-
-      sign: function(proxy){
-        proxy.setParams(this.credentials);
-      },
 
       init: function(config){
         EventObject.prototype.init.call(this, config);
 
         this.inprogressProxies = [];
-        this.credentials = {};
 
         this.requestClass = Class(this.requestClass, {
           service: this,
@@ -676,17 +703,25 @@
 
             if (this.service.isServiceError())
               this.service.freeze();
+          },
+          doRequest: function(requestData){
+            var service = this.service;
+
+            this.constructor.superClass_.prototype.request.call(this, requestData);
           }
         });
 
         this.proxyClass = Class(this.proxyClass, {
           service: this,
 
+          needSignature: true,
+
           request: function(requestData){
             if (!this.service.prepare(this, requestData))
               return;
 
-            this.service.sign(this);
+            if (!this.service.sign(this))
+              return;
 
             this.constructor.superClass_.prototype.request.call(this, requestData);
           },
@@ -695,6 +730,22 @@
         });
 
         this.addHandler(SERVICE_HANDLER, this);
+      },
+
+      sign: function(){
+        if (service.isSecure)
+        {
+          if (service.sessionKey)
+          {
+            if (this.needSignature)
+              this.signature(this);
+          }
+          else 
+          {
+            this.service.awatingRequest.push(this);
+            return;
+          }
+        }            
       },
 
       /*open: function(){
@@ -706,18 +757,36 @@
         this.removeCredentials();
       },*/
 
+      openSession: function(sessionkey, data){
+        this.unfreeze(sessionKey);
+        this.sessionKey = sessionKey;
+
+        this.event_sessionOpen();
+      },
+
+      closeSession: function(){
+        this.sessionKey = '';
+        this.freeze();
+
+        this.event_sessionClose();
+      },
+
       freeze: function(){
         this.awaitingProxies = Array.from(this.inprogressProxies);
         this.abort();
 
-        this.event_service_failure();
+        this.event_sessionFreeze();
       },
 
-      unfreeze: function(){
-        for (var i = 0, proxy; i < this.awaitingProxies[i]; i++)
-          proxy.repeat();
+      unfreeze: function(sessionKey){
+        if (this.sessionKey == sessionKey)
+        {
+          for (var i = 0, proxy; i < this.awaitingProxies[i]; i++)
+            proxy.repeat();
+        }
 
         this.awaitingProxy = [];
+        this.event_sessionUnfreeze();
       },
       
       abort: function(){
@@ -726,10 +795,7 @@
       },
 
       createProxy: function(config){
-        var service = this;
-        return Function.lazyInit(function(){
-          return new service.proxyClass(config);
-        });
+        return new this.proxyClass(config);
       },
 
       destroy: function(){

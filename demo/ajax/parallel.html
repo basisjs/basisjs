@@ -40,8 +40,19 @@
   <script type="text/javascript" src="../../data.js"></script>
   <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../ajax_.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
+
+  <style>
+    .demo-list DIV.state-processing
+    {
+      background: url(../res/img/loading.gif) no-repeat left center;
+      padding-left: 20px;
+    }
+
+  </style>
+
 </head>
 
 <body>
@@ -56,6 +67,7 @@
 
   <div id="demo-container"></div>
 
+
   <script type="text/javascript" id="demo-javascript">
 
     var STATE = Basis.Data.STATE;
@@ -64,6 +76,7 @@
       poolHashGetter: function(requestData){
         return requestData.url;
       },
+      poolLimit: 1,
       handler: {
         success: function(req){
           var m = req.info.responseText.match(/<title>([^<]*)<\/title>/i);
@@ -123,6 +136,7 @@
     var links = new Basis.Data.Dataset();
     var list = new Basis.DOM.Wrapper.TmplContainer({
       container: Basis.DOM.get('demo-container'),
+      cssClassName: 'demo-list',
       collection: links,
       childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
         template: new Basis.Html.Template('<div{element}>{titleText}</div>'),
@@ -130,8 +144,20 @@
           Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
           this.tmpl.titleText.nodeValue = this.info.title || this.info.url;
+        },
+        event_stateChanged: function(object, oldState){
+          Basis.CSS.classList(this.element).replace(oldState, this.state, 'state-');
         }
       })
+    });
+
+    var button = new Basis.Controls.Button.Button({
+      container: Basis.DOM.get('demo-container'),
+      caption: 'Set active',
+      handler: function(){
+        for (var i = 0, child; child = list.childNodes[i]; i++)
+          child.setActive(true);
+      }
     });
     
   </script>

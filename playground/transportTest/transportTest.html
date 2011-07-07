@@ -159,7 +159,8 @@
             callback: logCallback,
             poolHashGetter: function(data){
               return data.params.param.toFixed(2);
-            }
+            },
+            poolLimit: 1
           });
           
           transport.get({
@@ -171,6 +172,7 @@
             influence: influence2,
             params: { 'param': Math.random(1) }
           });
+
         },
         container: DOM.get('container')
       });
@@ -360,7 +362,7 @@
         caption: 'SOAP request via Custom Service',
         handler: function(){
           clearLog();
-          customSOAPProxy().get();
+          customSOAPProxy.get();
         },
         container: DOM.get('container')
       });
