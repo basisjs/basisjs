@@ -835,6 +835,7 @@
       templateAction: function(actionName, event){
         if (actionName == 'click' && !this.isDisabled())
         {
+
           this.select();
           this.parentNode.hide();
           Event.kill(event);
@@ -845,9 +846,9 @@
     });
 
     var ComboboxCaptionHandlers = {
-      blur: function(){
+      /*blur: function(){
         this.hide();
-      },
+      },*/
       keyup: function(event){
         var key = Event.key(event);
         var cur = this.selection.pick();
