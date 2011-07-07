@@ -2288,12 +2288,12 @@
 
     titleGetter: getter('info.title'),
 
-    template: new Template(
+    /*template: new Template(
       '<div{element} class="Basis-PartitionNode">' + 
         '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
         '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
       '</div>'
-    ),
+    ),*/
 
     event_update: function(object, delta){
       PartitionNode.prototype.event_update.call(this, object, delta);

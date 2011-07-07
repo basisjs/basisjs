@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Generate tree using dataset</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/form/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    .TreeContainer
+    {
+      float: left;
+    }
+    .Basis-Tree
+    {
+      border: 1px solid #AAA;
+      width: 240px;
+      height: 300px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      margin-right: 10px;
+    }
+
+    .form-content
+    {
+      overflow: hidden;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../entity.js"></script>
+  <script type="text/javascript" src="../../tree.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basis Demos: Generate tree using dataset</h1>
+
+  <p id="demo-summary">
+    ...
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container">
+    <div id="fileTreeContainer" class="TreeContainer">
+      <h2>File tree</h2>
+    </div>
+    
+    <div id="lazyFileTreeContainer" class="TreeContainer">
+      <h2>Lazy file tree</h2>
+    </div>
+  </div>
+
+  <script id="demo-javascript" type="text/javascript">
+
+    var DOM = Basis.DOM;
+    var nsData = Basis.Data;
+    var nsEntity = Basis.Entity;
+    var nsWrappers = Basis.DOM.Wrapper;
+    var nsTree = Basis.Controls.Tree;
+
+    //
+    // DATA
+    //
+
+    var files = [
+      { path: '/', name: 'basis.js' },
+      { path: '/', name: 'dom_wrapper.js' },
+      { path: '/', name: 'data.js' },
+      { path: '/', name: 'entity.js' },
+      { path: '/demo/', name: 'index.html' },
+      { path: '/demo/', name: 'demo.js' },
+      { path: '/demo/data/', name: 'generate_tree.html' },
+      { path: '/demo/data/', name: 'live_edit.html' },
+      { path: '/docs/', name: 'index.html' },
+      { path: '/docs/resources/', name: 'script.js' }
+    ];
+
+    var folders = [
+      { path: '/', name: 'docs' },
+      { path: '/', name: 'style' },
+      { path: '/', name: 'demo' },
+      { path: '/demo/', name: 'data' },
+      { path: '/demo/', name: 'defile' },
+      { path: '/docs/', name: 'resources' }
+    ];
+
+    //
+    // DATA TYPES AND DATASET
+    //
+
+    var File = new nsEntity.EntityType({
+      fields: {
+        path: String,
+        name: String
+      }
+    });
+
+    var Folder = new nsEntity.EntityType({
+      fields: {
+        path: String,
+        name: String
+      }
+    });
+
+    files.forEach(File);
+    folders.forEach(Folder);
+
+    var goupingByParentId = new nsData.Grouping({
+      sources: [
+        Folder.all,
+        File.all
+      ],
+      groupGetter: function(object){
+        return object.info.path;
+      }
+    });
+
+    //
+    // CLASSES
+    //
+   
+    var grouping = {
+      childClass: nsWrappers.TmplPartitionNode,
+      groupGetter: function(node){
+        return node instanceof nsTree.TreeFolder == false;
+      },
+      localSorting: Function.getter('info.id')
+    };
+
+    var FolderNode = Basis.Class(nsTree.TreeFolder, {
+      titleGetter: Function.getter('info.name'),
+      localSorting: Function.getter('info.name'),
+      localGrouping: grouping,
+      init: function(config){
+        nsTree.TreeNode.prototype.init.call(this, config);
+        this.setCollection(goupingByParentId.getGroup(this.info.path + '' + this.info.name + '/'))
+      }
+    });
+
+    var LazyFolderNode = Basis.Class(nsTree.TreeFolder, {
+      titleGetter: Function.getter('info.name'),
+      localSorting: Function.getter('info.name'),
+      localGrouping: grouping,
+      collapsed: true,
+      event_expand: function(){
+        nsTree.TreeFolder.prototype.event_expand.call(this);
+        this.setCollection(goupingByParentId.getGroup(this.info.path + '' + this.info.name + '/'))
+      }
+    });
+
+    var FileNode = Basis.Class(nsTree.TreeNode, {
+      titleGetter: Function.getter('info.name')
+    });
+
+    var FileTree = Basis.Class(nsTree.Tree, {
+      collection: goupingByParentId.getGroup('/'),
+      localSorting: Function.getter('info.name'),
+      localGrouping: grouping,
+      childFactory: function(config){
+        if (config.delegate.type == Folder)
+          return new FolderNode(config);
+        else
+          return new FileNode(config);
+      }
+    });
+
+    //
+    // TREES
+    //
+
+    var tree = new FileTree({
+      container: document.getElementById('fileTreeContainer')
+    });
+
+    var lazyTree = new FileTree({
+      container: document.getElementById('lazyFileTreeContainer'),
+      childFactory: function(config){
+        if (config.delegate.type == Folder)
+          return new LazyFolderNode(config);
+        else
+          return new FileNode(config);
+      }
+    });
+
+
+  </script>  
+</body>
+
+</html>

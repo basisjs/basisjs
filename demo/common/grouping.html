@@ -133,25 +133,19 @@
       childNodes: [
         {
           selected: true,
-          info: {
-            title: 'No grouping',
-            value: null
-          }
+          title: 'No grouping',
+          value: null
         },
         {
-          info: {
-            title: 'Group by title',
-            value: Function.getter('info.title')
-          }
+          title: 'Group by title',
+          value: Function.getter('info.title')
         },
         {
-          info: {
-            title: 'Group by first letter',
-            value: {
-              groupGetter: Function.getter('info.title.charAt(0)'),
-              titleGetter: Function.getter('info.title', 'Group for letter <{0}>'),
-              localSorting: Function.getter('info.title')
-            }
+          title: 'Group by first letter',
+          value: {
+            groupGetter: Function.getter('info.title.charAt(0)'),
+            titleGetter: Function.getter('info.title', 'Group for letter <{0}>'),
+            localSorting: Function.getter('info.title')
           }
         }
       ]
