@@ -830,7 +830,7 @@
       },
 
       template: new Template(
-        '<a{element} class="Basis-Combobox-Item" href="#" event-click="click">{titleText|}</a>'
+        '<div{element} class="Basis-Combobox-Item" event-click="click">{titleText|}</div>'
       ),
       templateAction: function(actionName, event){
         if (actionName == 'click' && !this.isDisabled())
@@ -932,10 +932,10 @@
       property: null,
       
       template: createFieldTemplate(baseFieldTemplate,
-        '<a{field} class="Basis-DropdownList" href="#" event-click="click">' +
+        '<span{field} class="Basis-DropdownList" event-click="click" tabindex="0">' +
           '<span class="Basis-DropdownList-Caption"><!--{captionItem}--></span>' +
           '<span class="Basis-DropdownList-Trigger"/>' +
-        '</a>' +
+        '</span>' +
         '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent"/>'
       ),
 
@@ -963,7 +963,16 @@
         this.satelliteConfig = {
           captionItem: {
             instanceOf: this.childClass,
-            delegate: Function.getter('selection.pick()')
+            delegate: Function.getter('selection.pick()'),
+            config: {
+              getTitle: function(){ return this.delegate && this.delegate.getTitle() },
+              getValue: function(){ return this.delegate && this.delegate.getValue() },
+              handler: {
+                delegateChanged: function(){
+                  this.event_update(this, {});
+                }
+              }
+            }
           }
         };
 

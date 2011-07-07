@@ -310,9 +310,9 @@
     */
     subscribers_: null,
 
-   /*
-    * events 
-    */
+    //
+    // events 
+    //
 
    /**
     * Fires on info changes.
@@ -733,33 +733,33 @@
       Basis.Cleaner.add(this);
     },
     resolve: function(object){
-      return this.get(this.keyGetter(object), true);
+      return this.get(this.keyGetter(object), object);
     },
-    create: function(data){
+    create: function(key, object){
       var itemConfig = {};
 
-      if (data instanceof DataObject)
+      if (key instanceof DataObject)
       {
-        itemConfig.delegate = data;
+        itemConfig.delegate = key;
       }
       else
       {
         itemConfig.info = {
-          id: data,
-          title: data
+          id: key,
+          title: key
         };
       }
 
       return new this.itemClass(itemConfig);
     },
-    get: function(data, autocreate){
-      var isDataObject = data instanceof DataObject;
-      var itemId = isDataObject ? data.eventObjectId : data;
+    get: function(key, object){
+      var isDataObject = key instanceof DataObject;
+      var itemId = isDataObject ? key.eventObjectId : key;
       var item = this.map_[itemId];
 
-      if (!item && autocreate)
+      if (!item && object)
       {
-        item = this.map_[itemId] = this.create(data);
+        item = this.map_[itemId] = this.create(key, object);
         item.addHandler({
           destroy: function(){
             delete this.map_[itemId];
