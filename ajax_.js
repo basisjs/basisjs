@@ -189,8 +189,8 @@
 
         if (typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders()))
         {
-          proxy.event_abort(this);
           proxy.event_failure(this);
+          proxy.event_abort(this);
           newState = STATE.ERROR;
         }
         else
@@ -233,6 +233,7 @@
       requestStartTime: 0,
 
       debug: false,
+      proxy: null,
 
       event_stateChanged: function(object, oldState){
         DataObject.prototype.event_stateChanged.call(this, object, oldState);
@@ -453,10 +454,10 @@
     function createEvent(eventName) {
       var event = Basis.EventObject.createEvent(eventName);
       return function(){
-        event.apply(ProxyDispatcher, [this].concat(arguments));
+        event.apply(ProxyDispatcher, arguments);
 
         if (this.service)
-          event.apply(this.service, [this].concat(arguments));
+          event.apply(this.service, arguments);
 
         event.apply(this, arguments);
       }
@@ -466,13 +467,18 @@
      * @class Proxy
      */
 
-    var PROXY_POOL_LIMIT_HANDLER = {
-      start: function(){
-        this.inprogressRequestsCount++;        
+
+    var PROXY_REQUEST_HANDLER = {
+      start: function(request){
+        this.inprogressRequests.add(request);
       },
       complete: function(request){
-        this.inprogressRequestsCount--;
+        this.inprogressRequests.remove(request);
+      }
+    }
 
+    var PROXY_POOL_LIMIT_HANDLER = {
+      complete: function(request){
         var nextRequest = this.requestQueue.shift();
         if (nextRequest)
         {
@@ -501,13 +507,14 @@
       init: function(config){
         this.requests = {};
         this.requestQueue = [];
-        this.inprogressRequestsCount = 0;
+        this.inprogressRequests = [];
 
         EventObject.prototype.init.call(this, config);
 
         // handlers
-        if (this.callback)
-          this.addHandler(this.callback, this);
+        /*if (this.callback)
+          this.addHandler(this.callback, this);*/
+        this.addHandler(PROXY_REQUEST_HANDLER, this);
 
         if (this.poolLimit)
           this.addHandler(PROXY_POOL_LIMIT_HANDLER, this);
@@ -547,12 +554,12 @@
           this.requests[requestHashId].abort();
 
         var request = this.getRequestByHash(requestHashId);
-        request.abort();
+
+        request.initData = Object.slice(config);
+        request.requestData = requestData;
         request.setInfluence(requestData.influence);
 
-        request.requestData = requestData;
-
-        if (this.poolLimit && this.inprogressRequestsCount >= this.poolLimit)
+        if (this.poolLimit && this.inprogressRequests.length >= this.poolLimit)
         {
           this.requestQueue.push(request);
           request.setState(STATE.PROCESSING);
@@ -561,12 +568,35 @@
           request.doRequest();
       },
 
-      abort: function(timeout){
-        for (var i in this.requests)
-          this.requests[i].abort();
+      abort: function(){
+        for (var i = 0, request; request = this.inprogressRequests[i]; i++)
+          request.abort();
 
         for (var i = 0, request; request = this.requestQueue[i]; i++)
-          request.setState(STATE.UNDEFINED);
+          request.setState(STATE.ERROR);
+
+        this.inprogressRequests = [];
+        this.requestQueue = [];
+      },
+
+      stop: function(){
+        if (!this.stopped)
+        {
+          this.stoppedRequests = Array.concat(this.inprogressRequests, this.requestQueue);
+          this.abort();
+          this.stopped = true;
+        }
+      },
+
+      resume: function(){
+        if (this.stoppedRequests)
+        {
+          for (var i = 0, request; request = this.stoppedRequests[i]; i++)
+            request.proxy.get(request.initData);
+
+          this.stoppedRequests = [];
+        }
+        this.stopped = false;
       },
 
       /*repeat: function(){ 
@@ -579,6 +609,8 @@
           this.requests[i].destroy();
 
         delete this.requestData;
+        delete this.requestQueue;
+
           
         EventObject.prototype.destroy.call(this);
 
@@ -689,7 +721,7 @@
 
       prepare: Function.$true,
       signature: Function.$undef,
-      isServiceError: Function.$false,
+      isSessionExpiredError: Function.$false,
 
       init: function(config){
         EventObject.prototype.init.call(this, config);
@@ -701,26 +733,21 @@
           processErrorResponse: function(){
             this.constructor.superClass_.prototype.processErrorResponse.call(this);
 
-            if (this.service.isServiceError())
+            if (this.service.isSessionExpiredError())
               this.service.freeze();
-          },
-          doRequest: function(requestData){
-            var service = this.service;
-
-            this.constructor.superClass_.prototype.request.call(this, requestData);
           }
         });
 
         this.proxyClass = Class(this.proxyClass, {
           service: this,
 
-          needSignature: true,
+          needSignature: this.isSecure,
 
           request: function(requestData){
             if (!this.service.prepare(this, requestData))
               return;
 
-            if (!this.service.sign(this))
+            if (this.service.isSecure && this.needSignature && !this.service.sign(this))
               return;
 
             this.constructor.superClass_.prototype.request.call(this, requestData);
@@ -732,74 +759,67 @@
         this.addHandler(SERVICE_HANDLER, this);
       },
 
-      sign: function(){
-        if (service.isSecure)
+      sign: function(proxy){
+        if (this.sessionKey)
         {
-          if (service.sessionKey)
-          {
-            if (this.needSignature)
-              this.signature(this);
-          }
-          else 
-          {
-            this.service.awatingRequest.push(this);
-            return;
-          }
-        }            
+          this.signature(proxy, this.sessionData);
+          return true;
+        }
+        else
+        {
+          ;;; console.warn('Request skipped. Service session is not opened');
+          return false;
+        }
       },
 
-      /*open: function(){
-        if (!this.getCredentials())
-          this.freeze();
-      },
-
-      close: function(){
-        this.removeCredentials();
-      },*/
-
-      openSession: function(sessionkey, data){
-        this.unfreeze(sessionKey);
+      openSession: function(sessionKey, sessionData){
         this.sessionKey = sessionKey;
+        this.sessionData = sessionData;
+
+        this.unfreeze();
 
         this.event_sessionOpen();
       },
 
       closeSession: function(){
-        this.sessionKey = '';
         this.freeze();
 
         this.event_sessionClose();
       },
 
       freeze: function(){
-        this.awaitingProxies = Array.from(this.inprogressProxies);
-        this.abort();
+        this.oldSessionKey = this.sessionKey;
+        this.sessionKey = null;
+        this.sessionData = null;
+
+        this.stoppedProxies = Array.from(this.inprogressProxies);
+
+        for (var i = 0, proxy; proxy = this.inprogressProxies[i]; i++)
+          proxy.stop();
 
         this.event_sessionFreeze();
       },
 
-      unfreeze: function(sessionKey){
-        if (this.sessionKey == sessionKey)
+      unfreeze: function(){
+        if (this.oldSessionKey == this.sessionKey && this.stoppedProxies)
         {
-          for (var i = 0, proxy; i < this.awaitingProxies[i]; i++)
-            proxy.repeat();
+          for (var i = 0, proxy; proxy = this.stoppedProxies[i]; i++)
+            proxy.resume();
         }
 
-        this.awaitingProxy = [];
         this.event_sessionUnfreeze();
       },
       
-      abort: function(){
-        for (var i = 0, proxy; proxy = this.inprogressProxies[i]; i++)
-          proxy.abort();
-      },
-
       createProxy: function(config){
         return new this.proxyClass(config);
       },
 
       destroy: function(){
         delete this.inprogressProxies;
+        delete this.stoppedProxies;
+        delete this.sessionData;
+        delete this.sessionKey;
+        delete this.oldSessionKey;
 
         EventObject.prototype.destroy.call(this);
       }

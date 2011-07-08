@@ -44,6 +44,9 @@
     var processingTemplate = new Template(
       '<div{element|content} class="Basis-Label-Processing"/>'
     );
+    var errorTemplate = new Template(
+      '<div{element|content} class="Basis-Label-Error"/>'
+    );
 
     //
     // NodeLabel
@@ -166,6 +169,16 @@
       content: 'Processing...',
       template: processingTemplate
     });
+
+    var Error = Class(ObjectState, {
+      className: namespace + '.Error',
+
+      visibilityGetter: function(newState){ 
+        return newState == STATE.ERROR
+      },
+      content: 'Error',
+      template: errorTemplate
+    })
 
     //
     // Node collection state label
@@ -300,6 +313,7 @@
       NodeLabel: NodeLabel,
       State: State,
       Processing: Processing,
+      Error: Error,
       CollectionState: CollectionState,
       CollectionProcessing: CollectionProcessing,
       ChildCount: ChildCount,

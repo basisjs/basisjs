@@ -98,13 +98,13 @@
       },
       event_change: createEvent('change'),
       event_keydown: createEvent('keydown'),
-      event_keyup: createEvent('keyup'),
-      event_keypress: createEvent('keypress') && function(event){
+      event_keypress: createEvent('keyup'),
+      event_keyup: createEvent('keypress') && function(event){
         var event = Event(event);
         if (event)
         {
           var key = Event.key(event);
-        
+       
           if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
           {
             Event.cancelDefault(event);
@@ -114,7 +114,7 @@
             this.setValid();
         }
 
-        EventObject.event.keypress.call(this, event);
+        EventObject.event.keyup.call(this, event);
       },
       event_focus: createEvent('focus') && function(event){
         if (this.valid)
@@ -415,7 +415,7 @@
         '<textarea{field}/>'
       ),
 
-      event_keypress: EventObject.event.keypress,
+      event_keyup: EventObject.event.keypress,
 
       init: function(config){
         //this.value = this.value || '';
