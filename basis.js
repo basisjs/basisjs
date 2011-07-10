@@ -3391,6 +3391,7 @@
               else
               {
                 ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + source.replace(new RegExp('(</' + m[5] + '>)(' + str + ')$'), '\n ==[here]=>$1<== \n$2'));
+                throw "Wrong end tag";
               }
             }
             else
@@ -3479,6 +3480,9 @@
           
           if (str.length)
             parseText(str);
+
+          if (stack.length)
+            throw "No end tag for " + stack.reverse();
 
           return result;
         }

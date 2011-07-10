@@ -575,7 +575,7 @@
 
       childClass: VerticalPanel,
       template: new Basis.Html.Template(
-        '<div{element|content|childNodesElement} class="Basis-VerticalPanelStack">' + 
+        '<div{element|childNodesElement} class="Basis-VerticalPanelStack">' + 
           (SUPPORT_DISPLAYBOX ? '' : '<div{ruller} style="position: absolute; visibility: hidden; top: -1000px; width: 10px;"/>') +
         '</div>'
       ),

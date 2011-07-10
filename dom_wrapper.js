@@ -55,6 +55,7 @@
 
   var STATE = nsData.STATE;
   var AXIS_DESCENDANT = DOM.AXIS_DESCENDANT;
+  var AXIS_DESCENDANT_OR_SELF = DOM.AXIS_DESCENDANT_OR_SELF;
 
   var getter = Function.getter;
   var extend = Object.extend;
@@ -231,9 +232,8 @@
           this.match(parentNode.matchFunction);
         }
 
-        // if there more than one child - re-insert to change position if necessary
-        if (parentNode.firstChild !== parentNode.lastChild)
-          parentNode.insertBefore(this, this.nextSibling);
+        // re-insert to change position, group, sortingValue etc.
+        parentNode.insertBefore(this, this.nextSibling);
       }
     },
 
@@ -1208,33 +1208,6 @@
       // update oldChild and this.lastChild & this.firstChild
       oldChild.parentNode = null;
 
-      // update document & selection
-      var updateDocument = oldChild.document === this.document;
-      var updateSelection = oldChild.contextSelection === this.selection;
-
-      if (oldChild.firstChild && (updateDocument || updateSelection))
-        axis(oldChild, AXIS_DESCENDANT).forEach(function(node){
-          if (updateDocument && node.document == this.document)
-            node.document = null;
-
-          if (updateSelection && node.contextSelection == this.selection)
-          {
-            if (node.selected)
-              this.selection.remove([node]);
-            node.contextSelection = null;
-          }
-        }, oldChild);
-
-      if (updateDocument)
-        oldChild.document = null;
-
-      if (updateSelection && this.selection)
-      {
-        if (oldChild.selected)
-          this.selection.remove([oldChild]);
-        oldChild.contextSelection = null;
-      }
-
       // update nextSibling/lastChild
       if (oldChild.nextSibling)
         oldChild.nextSibling.previousSibling = oldChild.previousSibling;
@@ -1249,6 +1222,57 @@
         
       oldChild.nextSibling = null;
       oldChild.previousSibling = null;
+
+      //
+      // update document
+      //
+      if (oldChild.document === this.document)
+      {
+        axis(oldChild, AXIS_DESCENDANT_OR_SELF).forEach(function(node){
+          if (node.document == this.document)
+            node.document = null;
+        }, this);
+      }
+
+      //
+      // update selection
+      //
+      if (oldChild.contextSelection)
+      {
+        var contextSelection = oldChild.contextSelection;
+        var cursor = oldChild;
+        var unselect = [];
+        while (cursor)  // cursor will be null at the end, because oldChild.parentNode == null
+        {
+          if (cursor.contextSelection === contextSelection)
+          {
+            if (cursor.selected)
+              unselect.push(cursor);
+            cursor.contextSelection = null;
+          }
+
+          if (!cursor.selection && cursor.firstChild)
+            cursor = cursor.firstChild;
+          else
+          {
+            if (cursor.nextSibling)
+              cursor = cursor.nextSibling;
+            else
+            {
+              while (cursor = cursor.parentNode)
+              {
+                if (cursor.nextSibling)
+                {
+                  cursor = cursor.nextSibling;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        contextSelection.remove(unselect);
+      }
 
       if (oldChild.groupNode)
         oldChild.groupNode.remove(oldChild);

@@ -74,7 +74,7 @@
     background-color: white;
     cursor: default;
   }
-  .Basis-TreeNode-Caption:hover,
+  .Basis-TreeNode-Title:hover .Basis-TreeNode-Caption,
   .Basis-TreeNode.disabled .Basis-TreeNode-Caption:hover
   {
     background-color: #EEEEEE;
