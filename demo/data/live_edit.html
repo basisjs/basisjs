@@ -116,12 +116,11 @@
 
   <script id="demo-javascript" type="text/javascript">
     
-    // Определяем новый тип данных.
+    //
+    // Data
+    //
     var Article = new Basis.Entity.EntityType({
-      // Необязательное поле, используется в основном для отладки.
       name: 'Article',
-      
-      // Определяем набор полей
       fields: {
         id: Number,
         title: String,
@@ -129,7 +128,7 @@
       }
     });
 
-    // Генерируем тестовый набор данных.
+    // Generate data
     for (var i = 1; i < 10; i++)
       Article({
         id: i,
@@ -137,6 +136,9 @@
         content: (i + ' ').repeat(20)
       });
 
+    //
+    // Define new node class for Article
+    //
     var ArticleNode = Basis.Class(Basis.DOM.Wrapper.TmplNode, 
       Basis.DOM.Wrapper.simpleTemplate(
         '<div{element} class="Article" event-click="select">' +
@@ -155,95 +157,42 @@
       }
     );
 
-    // Создаем дерево
-    var myTree = new Basis.DOM.Wrapper.TmplContainer({
+    //
+    // Article list
+    //
+    var articleList = new Basis.DOM.Wrapper.TmplContainer({
       id: 'ArticleList',
-
-      // Определяем класс для дочерних узлов (описан выше)
-      childClass: ArticleNode,
-
-      // Задаем управляющую коллекцию. Так как мы используем Entity, то нет необходимости в
-      // создании массива для хранения списка всех экземпляров данных. Так же нет необходимости
-      // отслеживать изменения в данном наборе: новые элементы будут добавляться и удаляться
-      // автоматически.
-      collection: Article.all,
-
-      // Определяем сортировку для дочерних узлов: сортируем по childNode.info.title.
-      localSorting: Function.getter('info.title', String.toLowerCase),
-
-      // Создаем Selection для списка
-      selection: {}
-    });
-
-    myTree.selection.addHandler({
-      datasetChanged: function(){
-        // В данном контесте this указывает на выборку (myTree.selection).
-
-        // Назначаем делегатом формы первый выбранный элемент. Если не выбрано ни одного узла
-        // (this.pick() равно undefined), то форма останется без делегата (по сути не будет
-        // привязана к каким либо данным).
-        myEditor.setDelegate(this.pick());
-      }
-    });
-
-    // Создаем панель с кнопками
-    var myButtonPanel = new Basis.Controls.Button.ButtonPanel({
-      autoDelegateParent: true,
-
-      disabled: true,
-
-      childNodes: [
-        {
-          // Функция сохранения
-          caption: 'Save',
-          handler: function(){
-            myForm.getRootDelegate().commit();
-          }
-        },
-        {
-          // Функция отмены (сброс в начальное состояние).
-          caption: 'Cancel',
-          handler: function(){
-            myForm.getRootDelegate().rollback();
-            myForm.loadData(myForm.info);
+      childClass: ArticleNode,  // set class for child nodes
+      collection: Article.all,  // set data source
+      localSorting: Function.getter('info.title', String.toLowerCase),  // sorting for child nodes
+      selection: {              // we need for selection, define config for it
+        handler: {
+          datasetChanged: function(dataset, delta){ // dataset -> articleList.selection
+           // this -> articleList.selection
+           articleEditor.setDelegate(this.pick());
           }
         }
-      ],
-
-      handler: {
-        targetChanged: function(){
-          if (this.target)
-            this.enable();
-          else
-            this.disable();
-        }
-      }
+      }           
     });
+
+    //
+    // Article editor
+    //
 
     function updateObject(){
       if (myForm && myForm.target)
         myForm.target.set(this.name, this.getValue(), true);
     }
 
-    // Создаем форму
     var myForm = new Basis.Controls.Form.FormContent({
-      // Делаем форму недоступной для редактирования на первоначальном этапе, так как к ней еще
-      // не привязаны данные и соответственно нечего редактировать.
-      disabled: true,
-
-      autoDelegateParent: true,
-
-      // Создаем поля формы.
-      // Важно, чтобы имена полей (свойство name) соотвествовали полям редактируемых данных. Только
-      // в этом случае будет обеспечена правильная работа метода myForm.loadData, а так же данные
-      // полученные путем сериализации формы (myForm.serialize()) будут "совместимы" с редактируемым
-      // типом данных и смогут быть использованы для обновления целевого (редактируемого) объекта.
-      childNodes: [
+      disabled: true,             // desable by default
+      autoDelegateParent: true,   // delegate parent
+      childNodes: [               // define fields
         {
-          type: 'text',
-          name: 'title',
-          title: 'Title',
-          handler: {
+          type: 'text',           // type of field
+          name: 'title',          // name should be equal to field name in target object info
+          title: 'Title',         // caption
+          handler: {              // default handler for field, update info on value change and key up
             change: updateObject,
             keyup: updateObject
           }
@@ -257,45 +206,65 @@
             keyup: updateObject
           }
         }
-      ]
-    });
-
-    // Добавляем собственные обработчики событий.
-    // Событие смены делегата
-    myForm.addHandler({
-      targetChanged: function(object, oldTarget){
-        // В данном контесте this указывает на форму (myForm).
-        if (this.target)
-        {
-          this.loadData(this.info);
-
-          // Делаем форму активной.
-          this.enable();
-        }
-        else
-        {
-          // Так как форма больше не привязана к данным - очищаем поля.
-          this.reset();
-
-          // Делаем форму НЕактивной.
-          this.disable();
+      ],
+      handler: {                 // add handler for form
+        targetChanged: function(object, oldTarget){
+          // this -> myForm
+          if (this.target)
+          {
+            this.loadData(this.info); // if have got a target, load data to form
+            this.enable();            // and enable editing
+          }
+          else
+          {
+            this.reset();             // if no target - clear form
+            this.disable();           // and disable editing
+          }
         }
       }
     });
 
-    var myEditor = new Basis.DOM.Wrapper.TmplContainer({
-      id: 'EditForm',
-      targetPoint: true,
+    var formPanel = new Basis.Controls.Button.ButtonPanel({
+      autoDelegateParent: true,
+      disabled: true,
       childNodes: [
+        {
+          caption: 'Save',
+          handler: function(){
+            myForm.getRootDelegate().commit();
+          }
+        },
+        {
+          caption: 'Cancel',
+          handler: function(){
+            myForm.getRootDelegate().rollback();
+            myForm.loadData(myForm.info);
+          }
+        }
+      ],
+      handler: {
+        targetChanged: function(){
+          if (this.target)
+            this.enable();
+          else
+            this.disable();
+        }
+      }
+    });
+
+    var articleEditor = new Basis.DOM.Wrapper.TmplContainer({
+      id: 'EditForm',
+      targetPoint: true,         // this object will change target
+      childNodes: [              // set child nodes
         myForm,
-        myButtonPanel
+        formPanel
       ]
     });
 
-    // Вставляем компоненты в документ
+    // insert into document
     Basis.DOM.insert('demo-container', [
-      myTree.element,
-      myEditor.element
+      articleList.element,
+      articleEditor.element
     ]);
 
   </script>  

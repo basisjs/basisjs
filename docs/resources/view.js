@@ -1000,6 +1000,22 @@
       }
     },
 
+    localGroupingClass: Class(ViewList.prototype.localGroupingClass, {
+      className: namespace + '.ViewPrototypeGroupingNode',
+      childClass: Class(ViewList.prototype.localGroupingClass.prototype.childClass, {
+        className: namespace + '.ViewPrototypePartitionNode',
+        template: new Template(
+          '<div{element} class="Basis-PartitionNode">' +
+            '<div class="Basis-PartitionNode-Title">' +
+              '{titleText}' +
+            '</div>' +
+            '<div{childNodesElement|content} class="Basis-PartitionNode-Content"/>' +
+          '</div>'
+        )
+      })
+    }),
+
+
     satelliteConfig: extendViewSatelliteConfig({
       viewOptions: {
         instanceOf: ViewOptions,
