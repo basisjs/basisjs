@@ -141,20 +141,30 @@
 
         if (exists)
         {
+          var setDelegate = 'delegate' in config;
+          var setCollection = 'collection' in config;
+
           var delegate = typeof config.delegate == 'function' ? config.delegate(this) : null;
           var collection = typeof config.collection == 'function' ? config.collection(this) : null;
+
           if (satellite)
           {
-            satellite.setDelegate(delegate);
-            satellite.setCollection(collection);
+            if (setDelegate)
+              satellite.setDelegate(delegate);
+
+            if (setCollection)
+              satellite.setCollection(collection);
           }
           else
           {
             var replaceElement = this.tmpl[config.replace || key];
-            var instanceConfig = {
-              delegate: delegate,
-              collection: collection
-            };
+            var instanceConfig = {};
+
+            if (setDelegate)
+              instanceConfig.delegate = delegate;
+
+            if (setCollection)
+              instanceConfig.collection = collection;
 
             if (config.config)
               Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(this) : config.config);

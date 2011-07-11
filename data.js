@@ -1883,6 +1883,143 @@
   });
 
   //
+  // SubstractDataset
+  //
+
+  var datasetAbsentFilter = function(item){
+    return !this.has(item);
+  };
+
+  var SUBSCRACTDATASET_MINUEND_HANDLER = {
+    datasetChanged: function(dataset, delta){
+      var newDelta = getDelta(
+        /* inserted */ delta.inserted && delta.inserted.filter(datasetAbsentFilter, this.subtrahend),
+        /* deleted */  delta.deleted  && delta.deleted.filter(this.has, this)
+      );
+      
+      if (newDelta)
+        this.event_datasetChanged(this, newDelta);
+    },
+    destroy: function(){
+      this.setOperands(null, this.subtrahend);
+    }
+  };
+
+  var SUBSCRACTDATASET_SUBTRAHEND_HANDLER = {
+    datasetChanged: function(dataset, delta){
+      var newDelta = getDelta(
+        /* inserted */ delta.deleted  && delta.deleted.filter(datasetAbsentFilter, this),
+        /* deleted */  delta.inserted && delta.inserted.filter(this.has, this)
+      );
+
+      if (newDelta)
+        this.event_datasetChanged(this, newDelta);
+    },
+    destroy: function(){
+      this.setOperands(this.minuend, null);
+    }
+  };
+
+ /**
+  * @class
+  */
+  var SubtractDataset = Class(AbstractDataset, {
+   /**
+    * @type {Basis.Data.AbstractDataset}
+    */ 
+    minuend: null,
+
+   /**
+    * @type {Basis.Data.AbstractDataset}
+    */
+    subtrahend: null,
+
+   /**
+    * @constructor
+    */
+    init: function(config){
+
+      var minuend = this.minuend;
+      var subtrahend = this.subtrahend;
+
+      this.minuend = null;
+      this.subtrahend = null;
+
+      AbstractDataset.prototype.init.call(this, config);
+
+      if (minuend || subtrahend)
+        this.setOperands(minuend, subtrahend);
+    },
+
+   /**
+    * Set new operands.
+    * @param {Basis.Data.AbstractDataset} minuend
+    * @param {Basis.Data.AbstractDataset} subtrahend
+    * @return {Object} Delta if changes happend
+    */
+    setOperands: function(minuend, subtrahend){
+      var delta;
+
+      if (minuend instanceof AbstractDataset == false)
+        minuend = null;
+
+      if (subtrahend instanceof AbstractDataset == false)
+        subtrahend = null;
+
+      var oldMinuend = this.minuend;
+      var oldSubtrahend = this.subtrahend;
+
+      if (oldMinuend !== minuend)
+      {
+        if (oldMinuend)
+          oldMinuend.removeHandler(SUBSCRACTDATASET_MINUEND_HANDLER, this);
+
+        if (this.minuend = minuend)
+          minuend.addHandler(SUBSCRACTDATASET_MINUEND_HANDLER, this)
+      }
+
+      if (oldSubtrahend !== subtrahend)
+      {
+        if (oldSubtrahend)
+          oldSubtrahend.removeHandler(SUBSCRACTDATASET_SUBTRAHEND_HANDLER, this);
+
+        if (this.subtrahend = subtrahend)
+          subtrahend.addHandler(SUBSCRACTDATASET_SUBTRAHEND_HANDLER, this);
+      }
+
+      if (!minuend || !subtrahend)
+      {
+        if (this.itemCount)
+          this.event_datasetChanged(this, delta = {
+            deleted: this.getItems()
+          });
+      }
+      else
+      {
+        var deleted = [];
+        var inserted = [];
+
+        for (var key in this.item_)
+          if (!minuend.item_[key] || subtrahend.item_[key])
+            deleted.push(this.item_[key]);
+
+        for (var key in minuend.item_)
+          if (!this.item_[key] && !subtrahend.item_[key])
+            inserted.push(minuend.item_[key]);
+
+        if (delta = getDelta(inserted, deleted))
+          this.event_datasetChanged(this, delta);
+      }
+
+      return delta;
+    },
+
+    clear: function(){
+      this.setOperands();
+    }
+  });
+
+  //
   // export names
   //
 
@@ -1911,7 +2048,8 @@
     Dataset: Dataset,
     AggregateDataset: AggregateDataset,
     Collection: Collection,
-    Grouping: Grouping
+    Grouping: Grouping,
+    SubtractDataset: SubtractDataset
   });
 
 })();
