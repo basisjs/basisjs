@@ -1310,205 +1310,57 @@
   // Aggregate dataset 
   //
 
-  var AGGREGATEDATASET_ITEM_HANDLER = {
-    update: function(object){
-      // update make sence only if transform function here
-      if (!this.transform)
-        return;
-
-      var memberMap = this.memberMap_;
-      var sourceMap = this.sourceMap_[object.eventObjectId];
-      var curMember = sourceMap.member;
-      var curMemberId;
-      var newMember = this.transform(object); // fetch new member ref
-      var newMemberId;
-      var delta = {};
-      var inserted;
-      var deleted;
-      
-      if (newMember instanceof this.memberClass == false)
-        newMember = null;
-
-      // if member ref is changed
-      if (curMember != newMember)
-      {
-        sourceMap.member = newMember;
-
-        // if here is ref for member already
-        if (curMember)
-        {
-          curMemberId = curMember.eventObjectId;
-
-          // call callback on member ref add
-          if (this.removeMemberRef)
-            this.removeMemberRef(curMember, object);
-
-          // decrease ref count, and check is this ref for member last
-          if (--memberMap[curMemberId] == 0)
-          {
-            // last ref for member
-
-            // delete from map
-            delete memberMap[curMemberId];
-
-            // add to delta
-            deleted = [curMember];
-          }
-        }
-
-        // if new member exists, update map
-        if (newMember)
-        {
-          newMemberId = newMember.eventObjectId;
-
-          // call callback on member ref add
-          if (this.addMemberRef)
-            this.addMemberRef(newMember, object);
-
-          if (memberMap[newMemberId])
-          {
-            // member is already in map -> increase ref count
-            memberMap[newMemberId]++;
-          }
-          else
-          {
-            // add to map
-            memberMap[newMemberId] = 1;
-
-            // add to delta
-            inserted = [newMember];
-          }
-        }
-
-        // fire event, if any delta
-        if (delta = getDelta(inserted, deleted))
-          this.event_datasetChanged(this, delta);
-      }
-    }
-  };
-
   var AGGREGATEDATASET_DATASET_HANDLER = {
     datasetChanged: function(source, delta){
       var sourceId = source.eventObjectId;
       var inserted = [];
       var deleted = [];
-      var memberMap = this.memberMap_;
       var sourceMap = this.sourceMap_;
-      var transform = this.transform;
+      var memberMap = this.memberMap_;
 
-      var sourceObject;
-      var sourceObjectId;
-      var memberClass = this.memberClass;
-      var member;
-      var memberId;
+      var object;
+      var objectId;
 
       Dataset.setAccumulateState(true);
 
       if (delta.inserted)
       {
-        for (var i = 0; sourceObject = delta.inserted[i]; i++)
+        for (var i = 0; object = delta.inserted[i]; i++)
         {
-          sourceObjectId = sourceObject.eventObjectId;
+          objectId = object.eventObjectId;
           
           // check: is this object already known
-          if (sourceMap[sourceObjectId])
+          if (sourceMap[objectId])
           {
             // item exists -> increase source links count
-            sourceMap[sourceObjectId].count++;
+            sourceMap[objectId].count++;
           }
           else
           {
-            // new source item
-            sourceObject.addHandler(AGGREGATEDATASET_ITEM_HANDLER, this);
-
-            // get member item from source object
-            if (transform)
-            {
-              // if transform function present, get member item using it
-              member = transform.call(this, sourceObject);
-
-              // if transformed object is not a DataObject instance, thread it as null
-              if (member instanceof memberClass == false)
-                member = null;
-            }
-            else
-            {
-              // if no transform function, member item is source item
-              member = sourceObject;
-            }
-
-            // call callback on member ref add
-            if (member && this.addMemberRef)
-              this.addMemberRef(member, sourceObject);
-
             // registrate in source map
-            sourceMap[sourceObjectId] = {
+            sourceMap[objectId] = {
               count: 1,
-              sourceObject: sourceObject,  // ref for source object (do we need for this?)
-              member: member               // ref for member object if exists
+              object: object
             };
 
-            // if member item exists -> registrate it in map
-            if (member)
-            {
-              // item is fit requirements to be in set
-              memberId = member.eventObjectId;
-
-              // check: is member item already known
-              if (memberMap[memberId])
-              {
-                // member item has already registrate -> increase ref count
-                memberMap[memberId]++;
-              }
-              else
-              {
-                // registrate new member in map
-                memberMap[memberId] = 1;
-
-                // add to delta
-                inserted.push(member);
-              }
-            }
+            // add to delta
+            inserted.push(object);
           }
         }
       }
 
       if (delta.deleted)
       {
-        for (var i = 0; sourceObject = delta.deleted[i]; i++)
+        for (var i = 0; object = delta.deleted[i]; i++)
         {
-          sourceObjectId = sourceObject.eventObjectId;
+          objectId = object.eventObjectId;
 
           // descrease source counter and check is this occurence last
-          if (--sourceMap[sourceObjectId].count == 0)
+          if (--sourceMap[objectId].count == 0)
           {
-            // remove handler
-            sourceObject.removeHandler(AGGREGATEDATASET_ITEM_HANDLER, this);
-
-            // fetch member ref
-            member = sourceMap[sourceObjectId].member;
-
-            // if member exists, remove ref from it
-            if (member)
-            {
-              memberId = member.eventObjectId;
-
-              // call callback on member ref remove
-              if (this.removeMemberRef)
-                this.removeMemberRef(member, sourceObject);
-
-              if (--memberMap[memberId] == 0)
-              {
-                // delete from map
-                delete memberMap[memberId];
-
-                // add to delta
-                deleted.push(member);
-              }
-            }
-
             // delete from source refs
-            delete sourceMap[sourceObjectId];
+            delete sourceMap[objectId];
+            deleted.push(object);
           }
         }
       }
@@ -1530,6 +1382,9 @@
   var AggregateDataset = Class(AbstractDataset, {
     className: namespace + '.AggregateDataset',
 
+   /**
+    * @inheritDoc
+    */
     subscribeTo: Subscription.SOURCE,
 
    /**
@@ -1548,33 +1403,11 @@
     sources: null,
 
    /**
-    * Allowed member class.
-    */
-    memberClass: DataObject,
-
-   /**
     * Map of source objects.
     * @type {object}
     * @private
     */
     sourceMap_: null,
-
-   /**
-    * Transformation function.
-    * @type {function(Basis.Data.DataObject):Basis.Data.DataObject}
-    * @readonly
-    */
-    transform: null,
-
-   /**
-    * @type {function(Basis.Data.DataObject)}
-    */
-    addMemberRef: null,
-
-   /**
-    * @type {function(Basis.Data.DataObject)}
-    */
-    removeMemberRef: null,
 
    /**
     * @config {Array.<Basis.Data.AbstractDataset>} sources Set of source datasets for aggregate.
@@ -1591,106 +1424,6 @@
 
       if (sources)
         sources.forEach(this.addSource, this);
-    },
-
-   /**
-    * Set new transform function and apply new function to source objects.
-    * @param {function(object):object} transform
-    */
-    setTransform: function(transform){
-      var delta;
-
-      if (this.transform !== transform)
-      {
-        this.transform = transform;
-
-        delta = this.updateDataset();
-      }
-
-      return delta;
-    },
-
-    updateDataset: function(){
-      var memberClass = this.memberClass;
-      var sourceMap = this.sourceMap_;
-      var memberMap = this.memberMap_;
-      var curMember;
-      var newMember;
-      var curMemberId;
-      var newMemberId;
-      var sourceObject;
-      var sourceObjectInfo;
-      var inserted = [];
-      var deleted = [];
-      var delta;
-
-      for (var sourceObjectId in sourceMap)
-      {
-        sourceObjectInfo = sourceMap[sourceObjectId];
-        sourceObject = sourceObjectInfo.sourceObject;
-
-        curMember = sourceObjectInfo.member;
-        newMember = this.transform ? this.transform(sourceObject) : sourceObject;
-
-        if (newMember instanceof memberClass == false)
-          newMember = null;
-
-        if (curMember != newMember)
-        {
-          sourceObjectInfo.member = newMember;
-
-          // if here is ref for member already
-          if (curMember)
-          {
-            curMemberId = curMember.eventObjectId;
-
-            // call callback on member ref add
-            if (this.removeMemberRef)
-              this.removeMemberRef(curMember, sourceObject);
-
-            // decrease ref count
-            memberMap[curMemberId]--;
-          }
-
-          // if new member exists, update map
-          if (newMember)
-          {
-            newMemberId = newMember.eventObjectId;
-
-            // call callback on member ref add
-            if (this.addMemberRef)
-              this.addMemberRef(newMember, sourceObject);
-
-            if (newMemberId in memberMap)
-            {
-              // member is already in map -> increase ref count
-              memberMap[newMemberId]++;
-            }
-            else
-            {
-              // add to map
-              memberMap[newMemberId] = 1;
-
-              // add to delta
-              inserted.push(newMember);
-            }
-          }
-        }
-      }
-
-      // get deleted delta
-      for (var curMemberId in this.item_)
-        if (memberMap[curMemberId] == 0)
-        {
-          delete memberMap[curMemberId];
-          deleted.push(this.item_[curMemberId]);
-        }
-
-      // if any changes, fire event
-      if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(this, delta);
-
-      return delta;
     },
 
    /**
@@ -1785,6 +1518,335 @@
     }
   });
 
+  //
+  // TransformDataset
+  //
+
+  var TRANSFORMDATASET_ITEM_HANDLER = {
+    update: function(object){
+      // update make sence only if transform function here
+      if (!this.transform)
+        return;
+
+      var sourceMap = this.sourceMap_[object.eventObjectId];
+      var memberMap = this.memberMap_;
+      var curMember = sourceMap.member;
+      var curMemberId;
+      var newMember = this.transform(object); // fetch new member ref
+      var newMemberId;
+      var delta = {};
+      var inserted;
+      var deleted;
+      
+      if (newMember instanceof DataObject == false)
+        newMember = null;
+
+      // if member ref is changed
+      if (curMember != newMember)
+      {
+        sourceMap.member = newMember;
+
+        // if here is ref for member already
+        if (curMember)
+        {
+          curMemberId = curMember.eventObjectId;
+
+          // call callback on member ref add
+          if (this.removeMemberRef)
+            this.removeMemberRef(curMember, object);
+
+          // decrease ref count, and check is this ref for member last
+          if (--memberMap[curMemberId] == 0)
+          {
+            // last ref for member
+
+            // delete from map
+            delete memberMap[curMemberId];
+
+            // add to delta
+            deleted = [curMember];
+          }
+        }
+
+        // if new member exists, update map
+        if (newMember)
+        {
+          newMemberId = newMember.eventObjectId;
+
+          // call callback on member ref add
+          if (this.addMemberRef)
+            this.addMemberRef(newMember, object);
+
+          if (memberMap[newMemberId])
+          {
+            // member is already in map -> increase ref count
+            memberMap[newMemberId]++;
+          }
+          else
+          {
+            // add to map
+            memberMap[newMemberId] = 1;
+
+            // add to delta
+            inserted = [newMember];
+          }
+        }
+
+        // fire event, if any delta
+        if (delta = getDelta(inserted, deleted))
+          this.event_datasetChanged(this, delta);
+      }
+    }
+  };
+
+  var TRANSFORMDATASET_DATASET_HANDLER = {
+    datasetChanged: function(dataset, delta){
+      var sourceMap = this.sourceMap_;
+      var memberMap = this.memberMap_;
+      var inserted = [];
+      var deleted = [];
+      var sourceObject;
+
+      if (delta.inserted)
+      {
+        for (var i = 0; sourceObject = delta.inserted[i]; i++)
+        {
+          var member = this.transform ? this.transform(sourceObject) : sourceObject;
+
+          if (member instanceof DataObject == false)
+            member = null;
+
+          sourceObject.addHandler(TRANSFORMDATASET_ITEM_HANDLER, this);
+          sourceMap[sourceObject.eventObjectId] = {
+            sourceObject: sourceObject,
+            member: member
+          };
+
+          if (member)
+          {
+            var memberId = member.eventObjectId;
+            if (memberMap[memberId])
+            {
+              memberMap[memberId]++;
+            }
+            else
+            {
+              memberMap[memberId] = 1;
+              inserted.push(member);
+            }
+
+            if (this.addMemberRef)
+              this.addMemberRef(member, sourceObject);
+          }
+        }
+      }
+
+      if (delta.deleted)
+      {
+        for (var i = 0; sourceObject = delta.deleted[i]; i++)
+        {
+          var sourceObjectId = sourceObject.eventObjectId;
+          var member = sourceMap[sourceObjectId].member;
+
+          sourceObject.removeHandler(TRANSFORMDATASET_ITEM_HANDLER, this);
+          delete sourceMap[sourceObjectId];
+
+          if (member)
+          {
+            var memberId = member.eventObjectId;
+            if (--memberMap[memberId] == 0)
+            {
+              delete memberMap[memberId];
+              deleted.push(member);
+            }
+
+            if (this.removeMemberRef)
+              this.removeMemberRef(member, sourceObject);
+          }
+        }
+      }
+
+      if (delta = getDelta(inserted, deleted))
+        this.event_datasetChanged(this, delta);
+    },
+    destroy: function(){
+      this.setDataset();
+    }
+  };
+
+ /**
+  * @class
+  */
+  var TransformDataset = Class(AbstractDataset, {
+    className: namespace + '.TransformDataset',
+
+   /**
+    * Transformation function.
+    * @type {function(Basis.Data.DataObject):Basis.Data.DataObject}
+    * @readonly
+    */
+    transform: Function.$self,
+
+   /**
+    * @type {function(Basis.Data.DataObject)}
+    */
+    addMemberRef: null,
+
+   /**
+    * @type {function(Basis.Data.DataObject)}
+    */
+    removeMemberRef: null,
+
+   /**
+    * @type {Basis.Data.AbstractDataset}
+    */
+    dataset: null,
+
+   /**
+    * Map of source objects.
+    * @type {object}
+    * @private
+    */
+    sourceMap_: null,
+
+   /**
+    * @inheritDoc
+    */
+    init: function(config){
+      if (this.sources) console.warn('!!!!');
+
+      AbstractDataset.prototype.init.call(this, config);
+
+      this.sourceMap_ = {};
+
+      var dataset = this.dataset;
+      if (dataset)
+      {
+        this.dataset = null;
+        this.setDataset(dataset);
+      }
+    },
+
+   /**
+    * Set new transform function and apply new function to source objects.
+    * @param {function(Basis.Data.DataObject):Basis.Data.DataObject} transform
+    */
+    setTransform: function(transform){
+      if (this.transform !== transform)
+      {
+        this.transform = transform;
+        return this.runTransform();
+      }
+    },
+
+    setDataset: function(dataset){
+      if (dataset instanceof AbstractDataset == false)
+        dataset = null;
+
+      if (this.dataset !== dataset)
+      {
+        var oldDataset = this.dataset;
+
+        if (oldDataset)
+        {
+          oldDataset.removeHandler(TRANSFORMDATASET_DATASET_HANDLER, this);
+          TRANSFORMDATASET_DATASET_HANDLER.datasetChanged.call(this, oldDataset, {
+            deleted: oldDataset.getItems()
+          });
+        }
+
+        if (this.dataset = dataset)
+        {
+          dataset.addHandler(TRANSFORMDATASET_DATASET_HANDLER, this);
+          TRANSFORMDATASET_DATASET_HANDLER.datasetChanged.call(this, dataset, {
+            inserted: dataset.getItems()
+          });
+        }
+      }
+    },
+
+    runTransform: function(){
+      var sourceMap = this.sourceMap_;
+      var memberMap = this.memberMap_;
+      var curMember;
+      var newMember;
+      var curMemberId;
+      var newMemberId;
+      var sourceObject;
+      var sourceObjectInfo;
+      var inserted = [];
+      var deleted = [];
+      var delta;
+
+      for (var sourceObjectId in sourceMap)
+      {
+        sourceObjectInfo = sourceMap[sourceObjectId];
+        sourceObject = sourceObjectInfo.sourceObject;
+
+        curMember = sourceObjectInfo.member;
+        newMember = this.transform ? this.transform(sourceObject) : sourceObject;
+
+        if (newMember instanceof DataObject == false)
+          newMember = null;
+
+        if (curMember != newMember)
+        {
+          sourceObjectInfo.member = newMember;
+
+          // if here is ref for member already
+          if (curMember)
+          {
+            curMemberId = curMember.eventObjectId;
+
+            // call callback on member ref add
+            if (this.removeMemberRef)
+              this.removeMemberRef(curMember, sourceObject);
+
+            // decrease ref count
+            memberMap[curMemberId]--;
+          }
+
+          // if new member exists, update map
+          if (newMember)
+          {
+            newMemberId = newMember.eventObjectId;
+
+            // call callback on member ref add
+            if (this.addMemberRef)
+              this.addMemberRef(newMember, sourceObject);
+
+            if (newMemberId in memberMap)
+            {
+              // member is already in map -> increase ref count
+              memberMap[newMemberId]++;
+            }
+            else
+            {
+              // add to map
+              memberMap[newMemberId] = 1;
+
+              // add to delta
+              inserted.push(newMember);
+            }
+          }
+        }
+      }
+
+      // get deleted delta
+      for (var curMemberId in this.item_)
+        if (memberMap[curMemberId] == 0)
+        {
+          delete memberMap[curMemberId];
+          deleted.push(this.item_[curMemberId]);
+        }
+
+      // if any changes, fire event
+      if (delta = getDelta(inserted, deleted))
+        this.event_datasetChanged(this, delta);
+
+      return delta;
+    }
+  });
 
   //
   // Collection
@@ -1793,7 +1855,7 @@
  /**
   * @class
   */
-  var Collection = Class(AggregateDataset, {
+  var Collection = Class(TransformDataset, {
     className: namespace + '.Collection',
 
     transform: function(object){
@@ -1807,19 +1869,14 @@
     * @param {function(item):boolean} filter
     */
     setFilter: function(filter){
-      var delta;
-      filter = filter || $true;
-
-      if (!filter)
+      if (typeof filter != 'function')
         filter = $true;
 
-      if (this.filter != filter)
+      if (this.filter !== filter)
       {
         this.filter = filter;
-        delta = this.updateDataset();
+        return this.runTransform();
       }
-
-      return delta;
     }
   });
 
@@ -1830,7 +1887,7 @@
  /**
   * @class
   */
-  var Grouping = Class(AggregateDataset, {
+  var Grouping = Class(TransformDataset, {
     className: namespace + '.Grouping',
 
     groupGetter: $true,
@@ -1860,13 +1917,14 @@
     */ 
     init: function(config){
       //this.groupMap_ = {};
+
       this.mapper = new KeyObjectMap({
         keyGetter: this.groupGetter,
         itemClass: this.groupClass
       });
 
       // inherit
-      AggregateDataset.prototype.init.call(this, config);
+      TransformDataset.prototype.init.call(this, config);
     },
 
     getGroup: function(data, autocreate){
@@ -1875,7 +1933,7 @@
 
     destroy: function(){
       // inherit
-      AggregateDataset.prototype.destroy.call(this);
+      TransformDataset.prototype.destroy.call(this);
 
       //this.groupMap_ = null;
       this.mapper.destroy();
@@ -2046,10 +2104,14 @@
 
     AbstractDataset: AbstractDataset,
     Dataset: Dataset,
+
     AggregateDataset: AggregateDataset,
+
+    SubtractDataset: SubtractDataset,
+
+    TransformDataset: TransformDataset,
     Collection: Collection,
-    Grouping: Grouping,
-    SubtractDataset: SubtractDataset
+    Grouping: Grouping
   });
 
 })();
