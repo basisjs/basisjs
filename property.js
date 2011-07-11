@@ -509,6 +509,11 @@
       state: STATE.UNDEFINED,
 
      /**
+      * use extend constructor
+      */
+      extendConstructor: true,
+
+     /**
       * @param {Object} config
       * @config {Object} value
       * @config {Object} handlers

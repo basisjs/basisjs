@@ -598,7 +598,6 @@
     */
     var BaseEntity = Class(DataObject, {
       className: namespace + '.BaseEntity',
-      extendConstructor: false,
       init: EventObject.prototype.init
     });
 
@@ -632,6 +631,7 @@
           }
         },*/
 
+        extendConstructor: false,
         init: function(data){
           //var entityType = this.entityType;
 

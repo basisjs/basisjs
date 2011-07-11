@@ -1338,6 +1338,7 @@
         Property.prototype.event_change.call(this, value);
       },
       
+      extendConstructor: true,
       init: function(config){
         var startPoints = this.startPoints || '';
 

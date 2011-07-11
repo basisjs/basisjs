@@ -57,12 +57,11 @@
           this.event_finish();
       },
 
+      extendConstructor: true,
       init: function(config){
-        Property.prototype.init.call(this);
-
         this.run = this.run.bind(this);
 
-        return config;
+        Property.prototype.init.call(this, config);
       },
       start: function(invertOnStarted){
         if (!this.started)

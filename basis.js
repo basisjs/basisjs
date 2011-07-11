@@ -1411,10 +1411,11 @@
       // Base class name
       className: 'Basis.Class',
 
+      extendConstructor: false, 
+
       // prototype defaults
       prototype: { 
         constructor: null,
-        extendConstructor: false, 
         init: Function(),
         toString: function(){
           return '[object ' + (this.constructor || this).className + ']';
@@ -1465,10 +1466,13 @@
           );
         }
 
+        /** @cut */if (/^function[^(]*\(config\)/.test(newClassProps.prototype.init) ^ newClassProps.extendConstructor) console.warn('probably wrong extendConstructor value for ' + newClassProps.className);
+
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
         var className = newClassProps.className;
         var NULL_CONFIG = {};
+
         var newClass = 
             /** @cut for more verbose in dev */ new Function('seed', 'NULL_CONFIG', 'return {"' + className + '": ' + (
 

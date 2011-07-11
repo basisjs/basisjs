@@ -2560,6 +2560,7 @@
         this.destroy();
     },
 
+    extendConstructor: false,
     init: function(node, config){
       AbstractDataset.prototype.init.call(this, config);
 

@@ -288,6 +288,7 @@
         return DOM.tag(node, 'message')[0];
       },
 
+      extendConstructor: false,
       init: function(soapMethod, callback){
         //this.inherit();
         Transport.prototype.init.call(this);
