@@ -598,6 +598,7 @@
     */
     var BaseEntity = Class(DataObject, {
       className: namespace + '.BaseEntity',
+      extendConstructor: false,
       init: EventObject.prototype.init
     });
 

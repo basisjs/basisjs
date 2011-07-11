@@ -741,10 +741,12 @@
     keyGetter: Function.$self,
     map_: null,
 
+    extendConstructor: true,
     init: function(config){
       this.map_ = {};
       Basis.Cleaner.add(this);
     },
+
     resolve: function(object){
       return this.get(this.keyGetter(object), object);
     },

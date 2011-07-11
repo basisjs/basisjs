@@ -75,6 +75,9 @@
       */
       lockValue_: null,
 
+     /** use custom constructor */
+      extendConstructor: false,
+
      /**
       * @param {Object} initValue Initial value for object.
       * @param {Object=} handlers

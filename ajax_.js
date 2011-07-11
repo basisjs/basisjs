@@ -35,10 +35,6 @@
 
     var STATE = nsData.STATE;
 
-
-
-
-
     //
     // Main part
     //

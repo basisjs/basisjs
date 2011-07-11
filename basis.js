@@ -1413,7 +1413,8 @@
 
       // prototype defaults
       prototype: { 
-        constructor: null, 
+        constructor: null,
+        extendConstructor: false, 
         init: Function(),
         toString: function(){
           return '[object ' + (this.constructor || this).className + ']';
@@ -1444,6 +1445,7 @@
         var newClassProps = {
           className: SuperClass.className + '._SubClass_',
           superClass_: SuperClass,
+          extendConstructor: !!SuperClass.extendConstructor,
           prototype: new SuperClass_(),
           extend: BaseClass.extend,
           subclass: function(){
@@ -1456,44 +1458,45 @@
         {
           //if (typeof args[i] == 'function' && !args[i].className)
           //  console.log(args[i]);
-          newClassProps.extend(typeof args[i] == 'function' && !args[i].className ? args[i](SuperClass.prototype) : args[i]);
+          newClassProps.extend(
+            typeof args[i] == 'function' && !args[i].className
+              ? args[i](SuperClass.prototype)
+              : args[i]
+          );
         }
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
         var className = newClassProps.className;
         var NULL_CONFIG = {};
-        var newClass = newClassProps.prototype.init.toString().match(/^\s*function\s*\(\s*config\s*\)/)
-          ? /** @cut debug for */new Function('seed', 'NULL_CONFIG', 'return {"' + className + '": ' +
+        var newClass = 
+            /** @cut for more verbose in dev */ new Function('seed', 'NULL_CONFIG', 'return {"' + className + '": ' + (
 
-              // constructor with instance extension
-              function(extend, config){
+              newClassProps.extendConstructor
 
-                // mark object
-                this.eventObjectId = seed.id++;
+                // constructor with instance extension
+                ? function(extend, config){
+                    // mark object
+                    this.eventObjectId = seed.id++;
 
-                // extend and override instance properties
-                for (var key in extend)
-                  this[key] = extend[key];
+                    // extend and override instance properties
+                    for (var key in extend)
+                      this[key] = extend[key];
 
-                // call constructor
-                this.init(config || NULL_CONFIG);
-              }
+                    // call constructor
+                    this.init(config || NULL_CONFIG);
+                  }
 
-            /** @cut debug for */+ '\n}["' + className + '"]')(seed, NULL_CONFIG)
-          : /** @cut debug for */new Function('seed', 'return {"' + className + '": ' +
-      
-              // simple constructor
-              function(){
+                // simple constructor
+                : function(){
+                    // mark object
+                    this.eventObjectId = seed.id++;
 
-                // mark object
-                this.eventObjectId = seed.id++;
+                    // call constructor
+                    this.init.apply(this, arguments);
+                  }
 
-                // call constructor
-                this.init.apply(this, arguments);
-              }
-
-            /** @cut debug for */+ '\n}["' + className + '"]')(seed);
+            /** @cut for more verbose in dev */ ) + '\n}["' + className + '"]')(seed, NULL_CONFIG);
 
         // add constructor property to prototype
         newClassProps.prototype.constructor = newClass;
@@ -1525,8 +1528,8 @@
           var key = keys[i];
           var value = source[key];
 
-          if (key == 'className')
-            this.className = value;
+          if (key == 'className' || key == 'extendConstructor')
+            this[key] = value;
           else
             proto[key] = value;
         }
@@ -1563,28 +1566,33 @@
 
       if (!eventFunction)
       {
-        eventFunction = events[eventName] = Function('eventName', 'slice', 'return function _event_' + eventName + '(){' + (function(){
-          var config;
-          var func;
+        eventFunction = events[eventName] = 
+          /** @cut for more verbose in dev */ Function('eventName', 'slice', 'return function _event_' + eventName + '(){' + (
 
-          var handlers = this.handlers_;
-          if (!handlers || !handlers.length)
-            return;
+            function(){
+              var handlers = this.handlers_;
+              var config;
+              var func;
 
-          handlers = slice.call(handlers);
+              if (!handlers || !handlers.length)
+                return;
 
-          for (var i = handlers.length; i --> 0;)
-          {
-            config = handlers[i];
+              handlers = slice.call(handlers);
 
-            // handler call
-            func = config.handler[eventName];
-            if (typeof func == 'function')
-              func.apply(config.thisObject, arguments);
-          }
-        }).toString().replace(/^\(?function[^(]*\(\)[^{]*\{|\}\)?$/g, '') + '}')(eventName, slice);
+              for (var i = handlers.length; i --> 0;)
+              {
+                config = handlers[i];
 
-        ;;;if (arguments.length > 1){ var text = eventFunction.toString().replace(/\(\)/, '(' + Array.from(arguments, 1).join(', ') + ')'); eventFunction.toString = function(){ return text } };
+                // handler call
+                func = config.handler[eventName];
+                if (typeof func == 'function')
+                  func.apply(config.thisObject, arguments);
+              }
+            }
+
+          /** @cut for more verbose in dev */ ).toString().replace(/^\(?function[^(]*\(\)[^{]*\{|\}\)?$/g, '') + '}')(eventName, slice);
+
+        /** @cut for more verbose in dev */;;;if (arguments.length > 1){ var text = eventFunction.toString().replace(/\(\)/, '(' + Array.from(arguments, 1).join(', ') + ')'); eventFunction.toString = function(){ return text } };
       }
 
       return eventFunction;
@@ -1597,6 +1605,7 @@
     */
     var destroyEvent;
     var EventObject = Class(null, {
+
      /**
       * Name of class.
       * @type {string}
@@ -1618,6 +1627,9 @@
       * @event
       */
       event_destroy: destroyEvent = dispatchEvent('destroy', 'object'),
+
+     /** use extend constructor */
+      extendConstructor: true,
 
      /**
       * @param {Object=} config
@@ -3513,9 +3525,9 @@
           aliases.push.apply(aliases, names);
 
           return {
-            name:  'object.' + names[0],
-            alias: 'object.' + names.reverse().join(' = object.'), // reverse names to save alias order for iterate (for most browsers it should be work)
-            path:  'html.' + newPath.join('.')
+            name:  'res_.' + names[0],
+            alias: 'res_.' + names.reverse().join('=res_.'), // reverse names to save alias order for iterate (for most browsers it should be work)
+            path:  'dom_.' + newPath.join('.')
           }
         }, this).sortAsObject('path');
 
@@ -3526,39 +3538,42 @@
             body[j].path = body[j].path.replace(path_re, body[i].name);
         }
 
-        this.createInstance = new Function('proto', 'map', 'return ' + 
+        this.createInstance = new Function('proto_', 'map_', 'var res_, dom_; return ' + 
+          // mark name with dangling _ to avoid renaming by compiler, because
+          // this names using by generates code, and must be unchanged
 
           function(object, node){
-            var html = proto.cloneNode(true);
-            object = object || {};
+            res_ = object || {};
+            dom_ = proto_.cloneNode(true);
 
             _code_(); // <-- will be replaced for specific code
 
-            if (node && object.element)
+            if (node && res_.element)
             {
-              var id = map.seed++;
-              map[id] = node;
-              object.element.basisObjectId = id;
+              var id = map_.seed++;
+              map_[id] = node;
+              res_.element.basisObjectId = id;
               //;;;object.element.setAttribute("_e", node.eventObjectId);
             }
 
-            return object;
+            return res_;
           }
 
         .toString().replace('_code_()', body.map(String.format,'{alias}={path};\n').join('')))(proto, tmplNodeMap);
 
-        this.clearInstance = new Function('map', 'return ' +
+        this.clearInstance = new Function('map_', 'var obj_; return ' +
 
           function(object, node){
-            var id = object.element && object.element.basisObjectId;
+            obj_ = object;
+            var id = obj_.element && obj_.element.basisObjectId;
             if (id)
-              delete map[id];
+              delete map_[id];
 
             _code_(); // <-- will be replaced for specific code
 
           }
 
-        .toString().replace('_code_()', aliases.map(String.format,'object.{0}=null;\n').join('')))(tmplNodeMap);
+        .toString().replace('_code_()', aliases.map(String.format,'obj_.{0}=null;\n').join('')))(tmplNodeMap);
       },
       createInstance: function(object, node){
         this.parse();
@@ -4214,8 +4229,8 @@
       className: namespace + '.ClassName',
 
       init: function(element){ 
-        this.element = element;
         ;;;if (!element) throw new Error('ClassName wraper: Element ' + element + ' not found!');
+        this.element = element;
         //this.tokens = this.element.className.qw();
       },
       toString: function(){
