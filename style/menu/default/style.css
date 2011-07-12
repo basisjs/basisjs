@@ -17,10 +17,9 @@
     position: absolute;
     border: 1px solid #979797;
     font-size: 90%;
-    box-shadow: 4px 4px 2px -2px rgba(0,0,0,.5);
       -moz-box-shadow: 4px 4px 2px -2px rgba(0,0,0,.5);
       -webkit-box-shadow: 4px 4px 2px -2px rgba(0,0,0,.5);
-    max-height: 200px;
+    box-shadow: 4px 4px 2px -2px rgba(0,0,0,.5);
     overflow: auto;
     overflow-x: hidden;
   }
@@ -54,9 +53,9 @@
   {
     background: #E9EFF6 url(overlay.png) repeat-x;
     background-color: rgba(210, 226, 247, .3);
-    box-shadow: 0px 0px 1px white inset;
       -moz-box-shadow: 0 0 1px white inset;
       -webkit-box-shadow: 0 0 1px white inset;
+    box-shadow: 0px 0px 1px white inset;
   }
   .Basis-Menu-Item.disabled A
   {
@@ -75,9 +74,9 @@
     border: 1px solid transparent;
     padding: .22em 20px .26em 32px;
     display: block;
-    border-radius: 2px;
       -moz-border-radius: 3px;
       -webkit-border-radius: 2px;
+    border-radius: 2px;
   }
 
   .Basis-Menu-Item A.selected SPAN

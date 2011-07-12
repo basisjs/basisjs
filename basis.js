@@ -3317,8 +3317,8 @@
       * template source code.
       * @constructor
       */
-      init: function(template){
-        this.source = template;
+      init: function(templateSource){
+        this.source = templateSource;
       },
 
      /***/
@@ -3327,13 +3327,15 @@
           return;
 
         var str = this.source;
-        var getters = {};
+        var getters = {
+          element: 'childNodes[0]'
+        };
         var stack = [];
 
         if (typeof str == 'function')
           this.source = str = str();
 
-        var source = str;
+        var source = str.trim();
 
         //console.log('parse:', htmlCode);
 
@@ -3495,7 +3497,7 @@
           }
           
           if (str.length)
-            parseText(str);
+            result.appendChild(parseText(str, '', pos));
 
           if (stack.length)
             throw "No end tag for " + stack.reverse();

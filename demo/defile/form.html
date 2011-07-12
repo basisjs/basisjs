@@ -84,15 +84,13 @@
   <script type="text/javascript" id="demo-javascript">
     
     // import names
-    var DOM = Basis.DOM;
-    var Event = Basis.Event;
-    var Data = Basis.Data;
-
     var getter = Function.getter;
 
-    var Button = Basis.Controls.Button.Button;
-
+    var DOM = Basis.DOM;
+    var Event = Basis.Event;
+    var nsData = Basis.Data;
     var nsForm = Basis.Controls.Form;
+    var nsButton = Basis.Controls.Button;
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
@@ -126,7 +124,7 @@
       container: createBlock('Select Field')
     });
 
-    var property = new Basis.Data.Property.Property(1);
+    var property = new nsData.Property.Property(1);
 
     new nsForm.Field.Combobox({
       childNodes: [
@@ -234,7 +232,7 @@
       container: formContainer
     });
 
-    new Button({
+    new nsButton.Button({
       caption: 'Submit',
       handler: function(){
         form.submit();

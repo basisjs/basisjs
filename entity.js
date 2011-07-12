@@ -298,7 +298,12 @@
         var isSingleton = entityType.isSingleton;
 
         extend(result, {
+          toString: function(){
+            return this.typeName + '()';
+          },
           entityType: entityType,
+          type: result,
+          typeName: entityType.name,
 
           get: function(data){
             return entityType.get(data);
@@ -537,22 +542,7 @@
             }
           };
       },
-      /*addReflection: function(name, cfg){
-        var ref = new Reflection(name, cfg);
-        this.reflection_[name] = ref;
-        var all = this.all.getItems();
-        for (var i = all.length; --i >= 0;)
-          ref.update(all[i]);
-      },*/
       get: Function.$null,
-      /*create: function(data){
-        var entity = this.singleton || new this.entityClass(data);
-
-        if (this.isSingleton)
-          this.singleton = entity;
-
-        return entity;
-      },*/
       getId: function(entityOrData){
         if (entityOrData && this.idField)
         {
@@ -614,22 +604,6 @@
         canHaveDelegate: false,
 
         modified: null,
-
-        /*
-        behaviour: {
-          update: function(object, delta){
-            //this.inherit(object, delta);
-
-            for (var name in this.entityType.reflection_)
-              this.entityType.reflection_[name].update(this);
-          },
-          destroy: function(){
-            //this.inherit();
-
-            for (var name in this.reflection_)
-              this.entityType.reflection_[name].detach(this);
-          }
-        },*/
 
         extendConstructor: false,
         init: function(data){
@@ -1014,69 +988,6 @@
         }
       });
     };
-
-    //
-    // Reflection
-    //
-
-   /**
-    * @class
-    */
-    /*var Reflection = Class(null, {
-      className: namespace + '.Reflection',
-      init: function(name, config){
-        this.name = name;
-        this.keepReflectionAlive = config.keepReflectionAlive === true;
-        this.dataGetter = config.dataGetter || $self;
-        this.destroyDataGetter = config.destroyDataGetter || null;
-        this.entityType = config.entityType || $self;
-        this.isExists = config.isExists || function(value){ return !!Object.keys(value).length };
-      },
-      update: function(entity){
-        if (this.isExists(entity.info, entity))
-          this.attach(entity, this.name);
-        else
-          this.detach(entity, this.name);
-      },
-      attach: function(entity){
-        var ref = entity.reflection_[this.name];
-        var data = this.dataGetter(entity.info, entity);
-        if (ref)
-        {
-          if (ref instanceof DataObject)
-            ref.update(data);
-          else
-            extend(ref, data);
-        }
-        else
-          entity.reflection_[this.name] = this.entityType(data);
-      },
-      detach: function(entity){
-        var ref = entity.reflection_[this.name];
-        if (ref)
-        {
-          if (!this.keepReflectionAlive)
-          {
-            if (typeof ref.destroy == 'function')
-              ref.destroy();
-          }
-          else
-          {
-            if (this.destroyDataGetter)
-            {
-              var data = this.destroyDataGetter(entity.info, entity);
-              if (ref instanceof DataObject)
-                ref.update(data);
-              else
-                extend(ref, data);
-            }
-          }
-          delete entity.reflection_[this.name];
-        }
-      },
-      destroy: function(){
-      }
-    });*/
 
     //
     // Misc

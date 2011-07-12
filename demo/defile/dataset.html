@@ -1,0 +1,358 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/menu/default/style.css" media="screen" />
+
+  <title>Basis Demos: Dataset</title>
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .demo-container
+    {
+      font-family: consolas;
+    }
+
+    H2
+    {
+      clear: both;
+      margin: 0 0 1em;
+      padding-top: 1.5em;
+      font-size: 100%;
+    }
+
+    .DemoBlock
+    {
+      border: 1px solid #D0D0D0;
+      padding: 15px;
+      margin: 0 0 .5em 10px;
+      overflow: hidden;
+      position: relative;
+      wid2th: 15%;
+      float: left;
+    }
+    .DemoBlock H3
+    {
+      font-size: 90%;
+      font-weight: normal;
+      background: #EEE;
+      margin: -15px -15px 10px -15px;
+      padding: 2px 2px 2px 1.5em;
+      /*text-align: center;*/
+    }
+
+    .item
+    {
+      margin: 2px 0 2px 4px;
+      padding: .2em .75ex;
+      text-align: center;
+      display: inline-block;
+      min-width: 3ex;
+      background: #E0E0E0;
+      color: black;
+      border-radius: 3px;
+      position: relative;
+    }
+    .dsitem
+    {
+      margin: 2px;
+      padding: .2em 4px .2em .75ex;
+      text-align: center;
+      display: inline-block;
+      background: #999999;
+      color: white;
+      border-radius: 3px;
+    }
+    .delete
+    {
+      background: #CC0000;
+      color: white;
+      position: absolute;
+      font-size: 60%;
+      padding: 0 4px 2px;
+      line-height: 1;
+      border-radius: 3px;
+      top: -.5em;
+      right: -.75ex;
+      cursor: pointer;
+      opacity: .6;
+    }
+    .delete:hover
+    {
+      opacity: 1;
+    }
+    BUTTON
+    {
+      margin-left: 1ex;
+    }
+
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../layout.js"></script>
+  <script type="text/javascript" src="../../popup.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Dataset</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // import names
+    var DOM = Basis.DOM;
+    var nsData = Basis.Data;
+    var nsWrapper = Basis.DOM.Wrapper;
+
+    var getter = Function.getter;
+
+    function createHeader(header){
+      return DOM.insert(DOM.get('demo-container'), DOM.createElement('H2', header));
+    };
+
+    //
+    // Init data
+    //
+    var data = Array.create(10, function(i){
+      return new nsData.DataObject({
+        info: {
+          value: i + 1
+        }
+      });
+    });
+    var data2 = 'one two three four five six seven eight nine ten'.qw().map(function(value){
+      return new nsData.DataObject({
+        info: {
+          value: value
+        }
+      });
+    });
+
+    var ALL = new nsData.Dataset({
+      items: data
+    });
+
+    var A = new nsData.Dataset({
+      items: [data[0], data[1], data[2], data[3]]
+    });
+    var B = new nsData.Dataset({
+      items: [data[2], data[3], data[4], data[5]]
+    });
+    var C = new nsData.Dataset({
+      items: [data[1], data[2], data[5], data[6]]
+    });
+
+    //
+    // Custom classes & instances
+    //
+    var DatasetViewer = nsWrapper.TmplContainer.subclass(
+      nsWrapper.simpleTemplate(
+        '<div class="DemoBlock">' +
+          '<h3>{this_title}</h3>' +
+        '</div>'
+      ), 
+      {
+        container: document.getElementById('demo-container'),
+        childClass: nsWrapper.TmplNode.subclass(
+          nsWrapper.simpleTemplate(
+            '<span class="item">' +
+              '{this_info_value}' +
+            '</span>'
+          )
+        )
+      }
+    );
+
+    var EditableDatasetViewer = nsWrapper.TmplContainer.subclass(
+      nsWrapper.simpleTemplate(
+        '<div class="DemoBlock">' +
+          '<h3>{this_title}</h3>' +
+          '<!-- {childNodesHere} -->' +
+          '<button event-click="add">add</button>' +
+        '</div>'
+      ), 
+      {
+        container: document.getElementById('demo-container'),
+        templateAction: function(templateAction, event){
+          if (templateAction == 'add')
+          {
+            newItemPopup.collection.setOperands(newItemPopup.collection.minuend, this.collection);
+            newItemPopup.show(Basis.Event.sender(event));
+          }
+        },
+        childClass: nsWrapper.TmplNode.subclass(
+          nsWrapper.simpleTemplate(
+            '<span class="item">' +
+              '<span class="delete" event-click="delete">x</span>' +
+              '{this_info_value}' +
+            '</span>'
+          ),
+          {
+            templateAction: function(templateAction){
+              if (templateAction == 'delete')
+                this.parentNode.collection.remove([this.getRootDelegate()]);
+            }
+          }
+        )
+      }
+    );
+
+    var newItemPopup = new Basis.Controls.Popup.Menu({
+      collection: new nsData.Dataset.Subtract({ minuend: ALL }),
+      childClass: Basis.Controls.Popup.MenuItem.subclass({
+        captionGetter: Function.getter('info.value')
+      }),
+      localSorting: Function.getter('info.value'),
+      defaultHandler: function(node){
+        if (node)
+          this.collection.subtrahend.add([node.getRootDelegate()]);
+        this.hide();
+      }
+    });
+
+    //
+    // Demo
+    //
+    createHeader('Source datasets');
+
+    new EditableDatasetViewer({
+      title: 'dataset A',
+      collection: A
+    });
+    new EditableDatasetViewer({
+      title: 'dataset B',
+      collection: B
+    });
+    new EditableDatasetViewer({
+      title: 'dataset C',
+      collection: C
+    });
+
+    createHeader('Aggregate datasets');
+
+    new DatasetViewer({
+      title: 'Union (A ∪ B ∪ C)',
+      collection: new nsData.Dataset.Merge({
+        operation: nsData.Dataset.Merge.UNION,  // by default
+        sources: [A, B, C]
+      })
+    });
+
+    new DatasetViewer({
+      title: 'Intersection (A ∩ B ∩ C)',
+      collection: new nsData.Dataset.Merge({
+        operation: nsData.Dataset.Merge.INTERSECTION,
+        sources: [A, B, C]
+      })
+    });
+
+    new DatasetViewer({
+      title: 'AtLeastOneExclude (A ∪ B ∪ C) / (A ∩ B ∩ C) [union subtract intersection]',
+      collection: new nsData.Dataset.Merge({
+        operation: nsData.Dataset.Merge.AT_LEAST_ONE_EXCLUDE,
+        sources: [A, B, C]
+      })
+    });
+
+    new DatasetViewer({
+      title: 'Difference (A ∆ B ∆ C)',
+      collection: new nsData.Dataset.Merge({
+        operation: nsData.Dataset.Merge.DIFFERENCE,
+        sources: [A, B, C]
+      })
+    });
+
+    new DatasetViewer({
+      title: 'MoreThanOneInclude (A ∪ B ∪ C) / (A ∆ B ∆ C) [union subtract difference]',
+      collection: new nsData.Dataset.Merge({
+        operation: nsData.Dataset.Merge.MORE_THAN_ONE_INCLUDE ,
+        sources: [A, B, C]
+      })
+    });
+
+    createHeader('Subtract dataset');
+
+    new DatasetViewer({
+      title: 'Subtract (A / B)',
+      collection: new nsData.Dataset.Subtract({
+        minuend: A,
+        subtrahend: B
+      })
+    });
+
+    createHeader('Transform datasets');
+
+    new DatasetViewer({
+      title: 'Filter A -> another objects',
+      collection: new nsData.Dataset.Transform({
+        dataset: A,
+        transform: Function.getter('info.value - 1', data2)
+      })
+    });
+
+    new DatasetViewer({
+      title: 'Filter A -> odd',
+      collection: new nsData.Dataset.Filter({
+        dataset: A,
+        filter: Function.getter('info.value % 2')
+      })
+    });
+
+    new DatasetViewer({
+      title: 'Split A -> odd and even',
+      collection: new nsData.Dataset.Split({
+        dataset: A,
+        groupGetter: Function.getter('info.value % 2 ? "odd" : "even"')
+      }),
+      childClass: nsWrapper.TmplContainer.subclass(
+        nsWrapper.simpleTemplate(
+          '<span class="dsitem">' +
+            '{this_info_title}' +
+          '</span>'
+        ), {
+          childClass: DatasetViewer.prototype.childClass,
+          init: function(config){
+            this.collection = this.delegate;
+            nsWrapper.TmplContainer.prototype.init.call(this, config);
+          }
+        }
+      )
+    });
+    
+  </script>
+</body>
+
+</html>
