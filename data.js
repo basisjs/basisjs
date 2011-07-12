@@ -1341,20 +1341,37 @@
   // Merge dataset 
   //
 
+  function mergeDeltaUpdate(memberMap, deleted){
+    var operation = this.operation;
+    var sourceCount = this.sources.length;
+    var inserted = [];
+    var isMember;
+    var delta;
+
+    for (var objectId in memberMap)
+    {
+      isMember = operation(memberMap[objectId].count, sourceCount);
+
+      if (isMember ^ !!this.item_[objectId])
+        (isMember
+          ? inserted // not in items -> insert
+          : deleted  // already in items -> delete
+        ).push(memberMap[objectId].object); 
+    }
+
+    // fire event if delta found
+    if (delta = getDelta(inserted, deleted))
+      this.event_datasetChanged(this, delta);
+  }
+
   var AGGREGATEDATASET_DATASET_HANDLER = {
     datasetChanged: function(source, delta){
       var memberMap = this.memberMap_;
-      var inserted = [];
+      var check = {};
       var deleted = [];
 
       var object;
       var objectId;
-      var count;
-      var sourceCount = this.sources.length;
-      var operation = this.operation;
-
-      var updated = {};
-      var result;
 
       if (delta.inserted)
       {
@@ -1366,7 +1383,7 @@
           if (memberMap[objectId])
           {
             // item exists -> increase source links count
-            ++memberMap[objectId].count;
+            memberMap[objectId].count++;
           }
           else
           {
@@ -1377,7 +1394,7 @@
             };
           }
 
-          updated[objectId] = memberMap[objectId];
+          check[objectId] = memberMap[objectId];
         }
       }
 
@@ -1388,34 +1405,23 @@
           objectId = object.eventObjectId;
 
           // descrease source counter
-          count = --memberMap[objectId].count;
-
-
-          // if this occurence last -> delete from source refs
-          if (count == 0)
+          if (--memberMap[objectId].count == 0)
           {
+            // this occurence last -> delete from source refs
             if (this.item_[objectId])
               deleted.push(this.item_[objectId]);
+
             delete memberMap[objectId];
           }
           else
-            updated[objectId] = memberMap[objectId];
+          {
+            check[objectId] = memberMap[objectId];
+          }
         }
       }
 
-      for (var objectId in updated)
-      {
-        result = operation(updated[objectId].count, sourceCount);
-        if (result ^ !!this.item_[objectId])
-          (result
-             ? inserted
-             : deleted
-          ).push(updated[objectId].object)
-      }
-
-      // if any delta -> fire event 
-      if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(this, delta);
+      // build delta and fire event
+      mergeDeltaUpdate.call(this, check, deleted);
     },
     destroy: function(source){
       this.removeSource(source);
@@ -1481,19 +1487,8 @@
           // add event listeners to source
           source.addHandler(AGGREGATEDATASET_DATASET_HANDLER, this);
 
-          // add source members to source map
-          /*AGGREGATEDATASET_DATASET_HANDLER.datasetChanged.call(this, source, {
-            inserted: source.getItems()
-          });*/
-
           // process new source objects and update member map
-          var delta;
           var memberMap = this.memberMap_;
-          var operation = this.operation;
-          var sourceCount = this.sources.length;
-          var inserted = [];
-          var deleted = [];
-          var object;
           for (var objectId in source.item_)
           {
             // check: is this object already known
@@ -1512,21 +1507,8 @@
             }
           }
 
-          // build delta
-          for (var objectId in memberMap)
-          {
-            var result = operation(memberMap[objectId].count, sourceCount);
-
-            if (result ^ !!this.item_[objectId])
-              (result
-                ? inserted // not in items -> insert
-                : deleted  // already in items -> delete
-              ).push(memberMap[objectId].object); 
-          }
-
-          // fire event if delta found
-          if (delta = getDelta(inserted, deleted))
-            this.event_datasetChanged(this, delta);
+          // build delta and fire event
+          mergeDeltaUpdate.call(this, memberMap, []);
 
           // fire sources changes event
           this.event_sourcesChanged(this, {
@@ -1554,18 +1536,12 @@
         source.removeHandler(AGGREGATEDATASET_DATASET_HANDLER, this);
 
         // process removing source objects and update member map
-        var delta;
         var memberMap = this.memberMap_;
-        var operation = this.operation;
-        var sourceCount = this.sources.length;
-        var inserted = [];
+        var count;
         var deleted = [];
-        var object;
         for (var objectId in source.item_)
         {
-          count = --memberMap[objectId].count;
-
-          if (count == 0)
+          if (--memberMap[objectId].count == 0)
           {
             // add to delta
             if (this.item_[objectId])
@@ -1576,21 +1552,8 @@
           }
         }
 
-        // build delta
-        for (var objectId in memberMap)
-        {
-          var result = operation(memberMap[objectId].count, sourceCount);
-
-          if (result ^ !!this.item_[objectId])
-            (result
-              ? inserted // not in items -> insert
-              : deleted  // already in items -> delete
-            ).push(memberMap[objectId].object); 
-        }
-
-        // fire event if delta found
-        if (delta = getDelta(inserted, deleted))
-          this.event_datasetChanged(this, delta);
+        // build delta and fire event
+        mergeDeltaUpdate.call(this, memberMap, deleted);
 
         // fire sources changes event
         this.event_sourcesChanged(this, {

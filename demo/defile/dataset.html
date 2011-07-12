@@ -186,7 +186,8 @@
       ), 
       {
         container: document.getElementById('demo-container'),
-        childClass: nsWrapper.TmplNode.subclass(
+        childClass: //nsWrapper.TmplNode.subclass
+        (
           nsWrapper.simpleTemplate(
             '<span class="item">' +
               '{this_info_value}' +
@@ -273,7 +274,7 @@
 
     new DatasetViewer({
       title: 'Intersection (A ∩ B ∩ C)',
-      collection: new nsData.Dataset.Merge({
+      collection: I = new nsData.Dataset.Merge({
         operation: nsData.Dataset.Merge.INTERSECTION,
         sources: [A, B, C]
       })

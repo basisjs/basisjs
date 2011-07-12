@@ -2141,7 +2141,7 @@
       * @type {Basis.Html.Template}
       */
       template: new Template(
-        '<div{element}/>'
+        '<div/>'
       ),
 
      /**

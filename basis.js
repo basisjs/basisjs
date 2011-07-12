@@ -1447,11 +1447,21 @@
           className: SuperClass.className + '._SubClass_',
           superClass_: SuperClass,
           extendConstructor: !!SuperClass.extendConstructor,
-          prototype: new SuperClass_(),
+
+          // class methods
+          __extend__: function(value){
+            if (value && (typeof value == 'object' || (typeof value == 'function' && !value.className)))
+              return BaseClass.create.call(null, newClass, value);
+            else
+              return value;
+          },
           extend: BaseClass.extend,
           subclass: function(){
-            return Class.create.apply(null, [newClass].concat(Array.from(arguments)));
-          }
+            return BaseClass.create.apply(null, [newClass].concat(Array.from(arguments)));
+          },
+
+          // new class prototype
+          prototype: new SuperClass_()
         };
 
         // extend newClass prototype
@@ -1531,11 +1541,14 @@
         {
           var key = keys[i];
           var value = source[key];
+          var protoValue = proto[key]
 
           if (key == 'className' || key == 'extendConstructor')
             this[key] = value;
           else
-            proto[key] = value;
+            proto[key] = protoValue && protoValue.__extend__ 
+                           ? protoValue.__extend__(value)
+                           : value;
         }
         
         return this;
