@@ -24,7 +24,6 @@
     var Event = Basis.Event;
     var classList = Basis.CSS.classList;
     var Cleaner = Basis.Cleaner;
-    var Template = Basis.Html.Template;
 
     var nsWrappers = DOM.Wrapper;
 
@@ -42,11 +41,10 @@
 
       captureElement: null,
 
-      template: new Template(
-        '<div{element} class="Basis-Blocker">' + 
+      template:
+        '<div class="Basis-Blocker">' + 
           '<div{content} class="Basis-Blocker-Mate"/>' +
-        '</div>'
-      ),
+        '</div>',
 
       init: function(config){
         TmplNode.prototype.init.call(this, config);
@@ -77,7 +75,7 @@
           if (this.element.parentNode == this.captureElement)
             DOM.remove(this.element);
 
-          delete this.captureElement;
+          this.captureElement = null;
           DOM.hide(this.element);
         }
       },
@@ -100,8 +98,8 @@
     var Window = Class(TmplContainer, {
       className: namespace + '.Window',
 
-      template: new Template(
-        '<div{element} class="Basis-Window" event-mousedown="mousedown" event-keypress="keypress">' +
+      template:
+        '<div class="Basis-Window" event-mousedown="mousedown" event-keypress="keypress">' +
           '<div class="Basis-Window-Canvas">' +
             '<div class="corner-left-top"/>' +
             '<div class="corner-right-top"/>' +
@@ -114,20 +112,23 @@
             '<div class="side-bottom"/>' +
           '</div>' +
           '<div class="Basis-Window-Layout">' +
-            '<div class="Basis-Window-Title"><div{title} class="Basis-Window-TitleCaption"/></div>' +
+            '<div{ddtrigger} class="Basis-Window-Title">' +
+              '<div{title} class="Basis-Window-TitleCaption"/>' +
+            '</div>' +
             '<div{content} class="Basis-Window-Content">' +
               '<!-- {childNodesHere} -->' +
             '</div>' +
           '</div>' +
-        '</div>'
-      ),
+        '</div>',
 
-      templateAction: function(actionName, event){
-        if (actionName == 'mousedown')
+      action: {
+        close: function(){
+          this.close();
+        },
+        mousedown: function(){
           this.activate();
-
-        if (actionName == 'keypress')
-        {
+        },
+        keypress: function(){
           var key = Event.key(event);
 
           if (key == Event.KEY.ESCAPE)
@@ -157,6 +158,8 @@
       modal: false,
       closed: true,
 
+      title: '[no title]',
+
       init: function(config){
         //this.inherit(config);
         TmplContainer.prototype.init.call(this, config);
@@ -169,16 +172,14 @@
           this.modal = true;*/
 
         // process title
-        if (this.title)
-          DOM.insert(this.tmpl.title, this.title);
+        var titleContainer = this.tmpl.title.parentNode;
+        this.setTitle(this.title);
 
         /*if ('closeOnEscape' in config)
           this.closeOnEscape = !!config.closeOnEscape;*/
 
         // add generic rule
-        var genericRuleClassName = 'genericRule-' + this.eventObjectId;
-        classList(this.element).add(genericRuleClassName);
-        this.cssRule = DOM.Style.cssRule('.' + genericRuleClassName);
+        this.cssRule = DOM.Style.uniqueRule(this.element);
 
         // make window moveable
         if (this.moveable)
@@ -187,7 +188,7 @@
           {
             this.dde = new Basis.DragDrop.MoveableElement({
               element: this.element,
-              trigger: this.tmpl.title.parentNode,
+              trigger: this.tmpl.ddtrigger || titleContainer,
               fixRight: false,
               fixBottom: false
             });
@@ -243,20 +244,15 @@
 
         if (!this.titleButton || this.titleButton.close !== false)
         {
-          var titleButtonContainer = DOM.insert(this.tmpl.title.parentNode, DOM.createElement('SPAN.Basis-Window-Title-ButtonPlace'), DOM.INSERT_BEGIN);
-          classList(titleButtonContainer.parentNode).add('Basis-Window-Title-ButtonPlace-Close');
+          classList(titleContainer).add('Basis-Window-Title-ButtonPlace-Close');          
           DOM.insert(
-            titleButtonContainer,
-            DOM.createElement(
-              {
-                description: 'A[href=#].Basis-Window-Title-CloseButton',
-                click: new Event.Handler(function(event){
-                  Event.kill(event);
-                  this.close(0);
-                }, this)
-              },
-              DOM.createElement('SPAN', 'Close')
-            )
+            titleContainer,
+            DOM.createElement('SPAN.Basis-Window-Title-ButtonPlace', 
+              DOM.createElement('A[href=#].Basis-Window-Title-CloseButton[event-click="close"]',
+                DOM.createElement('SPAN', 'Close')
+              )
+            ),
+            DOM.INSERT_BEGIN
           );
         }
 
@@ -362,7 +358,7 @@
         TmplContainer.prototype.destroy.call(this);
 
         this.cssRule.destroy();
-        delete this.cssRule;
+        this.cssRule = null;
 
         Cleaner.remove(this);
       }

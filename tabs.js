@@ -28,7 +28,6 @@
 
     var nsWrappers = DOM.Wrapper;
 
-    var Template = Basis.Html.Template;
     var TmplNode = nsWrappers.TmplNode;
     var TmplContainer = nsWrappers.TmplContainer;
 
@@ -111,14 +110,12 @@
 
         this.unselect();
         if (this.document)
-          //this.document.dispatch('childDisabled', this);
           this.document.event_childDisabled(this.document, this);
       },
       event_enable: function(){ 
         TmplContainer.prototype.event_enable.call(this);
 
         if (this.document)
-          //this.document.dispatch('childEnabled', this);
           this.document.event_childEnabled(this.document, this);
       },
       event_update: function(node, delta){
@@ -128,7 +125,7 @@
         this.tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
       },
 
-      template: new Template(
+      template: 
         '<div{element|selected} class="Basis-Tab" event-click="select">' +
           '<span class="Basis-Tab-Start"/>' +
           '<span class="Basis-Tab-Content">' +
@@ -138,17 +135,13 @@
           '</span>' + 
           '<span class="Basis-Tab-End"/>' +
         '</div>' +
-        '<div{content}/>'
-      ),
+        '<div{content}/>',
       
-      templateAction: function(actionName, event){
-        if (actionName == 'select')
-        {
+      action: {
+        select: function(){
           if (!this.isDisabled())
             this.select();
         }
-
-        TmplContainer.prototype.templateAction.call(this, actionName, event);
       },
 
      /**
@@ -177,9 +170,8 @@
       childClass: Class(nsWrappers.TmplPartitionNode, {
         className: namespace + '.TabsPartitionNode',
 
-        template: new Template(
-          '<div{element|content|childNodesElement} class="Basis-TabControl-TabGroup"></div>'
-        )
+        template: 
+          '<div class="Basis-TabControl-TabGroup"/>'
       })
     });
 
@@ -192,13 +184,12 @@
       childClass: Tab,
       localGroupingClass: TabsGroupingNode,
 
-      template: new Template(
+      template: 
         '<div{element} class="Basis-TabControl">' +
           '<div class="Basis-TabControl-Start"/>' +
           '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +
           '<div class="Basis-TabControl-End"/>' +
         '</div>'
-      )
     });
 
     //
@@ -220,11 +211,10 @@
         TmplContainer.prototype.event_unselect.call(this);
       },
       
-      template: new Template(
+      template: 
         '<div{element} class="Basis-Page Basis-Page-Hidden">' + 
           '<div{content|childNodesElement} class="Basis-Page-Content"/>' +
         '</div>'
-      )
     });
 
     //
@@ -239,9 +229,8 @@
 
       childClass: Page,
       
-      template: new Template(
-        '<div{element|content|childNodesElement} class="Basis-PageControl"/>'
-      )
+      template: 
+        '<div class="Basis-PageControl"/>'
     });
 
     //
@@ -266,7 +255,7 @@
         classList(this.tmpl.pageElement).add('Basis-Page-Hidden');
       },
       
-      template: new Template(
+      template: 
         '<div{element|selected} class="Basis-TabSheet" event-click="select">' +
           '<div{tabElement} class="Basis-Tab">' +
             '<span class="Basis-Tab-Start"/>' +
@@ -280,8 +269,7 @@
           '<div{pageElement} class="Basis-Page Basis-Page-Hidden">' +
             '<div{content|pageContent|childNodesElement} class="Basis-Page-Content"/>' +
           '</div>' +
-        '</div>'
-      ),
+        '</div>',
 
       destroy: function(){
         DOM.remove(this.tmpl.pageElement);
@@ -302,11 +290,10 @@
 
       childClass: TabSheet,
       
-      template: new Template(
-        '<div{element|content} class="Basis-AccordionControl">' +
+      template: 
+        '<div{element} class="Basis-AccordionControl">' +
           '<div{content|childNodesElement} class="Basis-AccordionControl-Content"/>' +
         '</div>'
-      )
     });
 
     //
@@ -321,16 +308,15 @@
 
       childClass: TabSheet,
       
-      template: new Template(
-        '<div{element|content} class="Basis-TabSheetControl">' +
+      template: 
+        '<div{element} class="Basis-TabSheetControl">' +
           '<div{tabsElement} class="Basis-TabControl">' +
             '<div class="Basis-TabControl-Start"/>' +
             '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +
             '<div class="Basis-TabControl-End"/>' +
           '</div>' +
           '<div{pagesElement} class="Basis-PageControl"/>' +
-        '</div>'
-      ),
+        '</div>',
 
       insertBefore: function(newChild, refChild){
         if (newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild))

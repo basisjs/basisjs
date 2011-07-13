@@ -1494,8 +1494,14 @@
                     this.eventObjectId = seed.id++;
 
                     // extend and override instance properties
+                    var prop;
                     for (var key in extend)
-                      this[key] = extend[key];
+                    {
+                      prop = this[key];
+                      this[key] = prop && prop.__extend__ 
+                                    ? prop.__extend__(extend[key])
+                                    : extend[key];
+                    }
 
                     // call constructor
                     this.init(config || NULL_CONFIG);
@@ -1525,6 +1531,11 @@
       // complete: function(source){
       // },
 
+     /**
+      * Extend class prototype
+      * @param {Object} source If source has a prototype, it will be used to extend current prototype.
+      * @return {function()} Returns `this`.
+      */
       extend: function(source){
         var proto = this.prototype;
         
@@ -1555,9 +1566,20 @@
       }
     });
 
+    var ExtensibleProperty = function(extension){
+      return {
+        __extend__: function(extension){
+          var Base = Function();
+          Base.prototype = this;
+          return extend(new Base, extension);
+        }
+      }.__extend__(extension);
+    };
+
     return getNamespace(namespace, BaseClass.create).extend({
       BaseClass: BaseClass,
-      create: BaseClass.create
+      create: BaseClass.create,
+      ExtensibleProperty: ExtensibleProperty
     });
   })();
 
@@ -2799,7 +2821,19 @@
       return getStyleSheet(styleSheet, true).getRule(selector, true);
     }
 
+    var GENERIC_RULE_SEED = 10000;
+    function uniqueRule(element){
+      var token = 'genericRule-' + GENERIC_RULE_SEED++;
+
+      if (element)
+        CSS.classList(element).add(token);
+
+      return cssRule('.' + token);
+    }
+
+    //
     // working with stylesheets
+    //
 
     function StyleSheet_insertRule(rule, index){
       // fetch selector and style from rule description
@@ -3239,6 +3273,7 @@
       setStyle: setStyle,
 
       // rule and stylesheet interfaces
+      uniqueRule: uniqueRule,
       cssRule: cssRule,
       getStyleSheet: getStyleSheet,
       addStyleSheet: addStyleSheet,
@@ -3270,6 +3305,275 @@
     var tmplNodeMap = { seed: 1 };
 
     var HTML_EVENT_OBJECT_ID_HOLDER = 'basisObjectId';
+
+   /**
+    * Parsing template
+    * @func
+    */
+    function parseTemplate(){
+      if (this.proto)
+        return;
+
+      var str = this.source;
+      var getters = {
+        element: 'childNodes[0]'
+      };
+      var stack = [];
+
+      if (typeof str == 'function')
+        this.source = str = str();
+
+      var source = str.trim();
+
+      //console.log('parse:', htmlCode);
+
+      //this.source = htmlCode;
+
+      function parseText(str, path, pos){
+        var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
+        var result = [];
+        var node;
+        for (var i = 0; i < parts.length; i++)
+        {
+          if (i % 2)
+          {
+            var p = parts[i].split(/\|/);
+            getters[p[0]] = path + 'childNodes[' + pos + ']';
+            node = p.length > 1 ? p[1] : p[0];
+          }
+          else
+            node = parts[i].length ? parts[i] : null;
+
+          if (node != null)
+          {
+            // Some browsers (Internet Explorer) can normalize text nodes during cloning, that why 
+            // we need to insert comment nodes between text nodes to prevent text node merge
+            if (CLONE_NORMALIZE_TEXT_BUG)
+            {
+              if (result.length)
+                result.push(document.createComment(''));
+              pos++;
+            }
+            result.push(node);
+            pos++;
+          }
+        }
+        return DOM.createFragment.apply(null, result);
+      }
+
+      var re = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
+      function parseHtml(path, pos){
+        var result = DOM.createFragment();
+        var m;
+
+        while (m = re.exec(str))
+        {
+          var pre = RegExp.leftContext;
+
+          str = RegExp.rightContext;
+
+          if (pre.length)
+          {
+            var tnodes = parseText(pre, path, pos);
+            pos += tnodes.childNodes.length;
+            result.appendChild(tnodes);
+          }
+
+          if (m[6])
+          {
+            var comment = document.createComment(m[6]);
+            if (m[7])
+              getters[m[7]] = path + 'childNodes[' + pos + ']';
+            result.appendChild(comment);
+            pos++;
+          }
+          else if (m[5])
+          {
+            if (m[5] == stack[stack.length - 1])
+            {
+              stack.pop();
+              return result;
+            }
+            else
+            {
+              ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + source.replace(new RegExp('(</' + m[5] + '>)(' + str + ')$'), '\n ==[here]=>$1<== \n$2'));
+              throw "Wrong end tag";
+            }
+          }
+          else
+          {
+            var descr = m[0];
+            var tagName = m[1];
+            var name = m[2];
+            var attributes = m[3];
+            var singleton = !!m[4];
+
+            if (name)
+              getters[name] = path + 'childNodes[' + pos + ']';
+
+            if (attributes)
+            {
+              var strings = [];
+              var tmp = attributes.replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' });
+              attributes = tmp
+                .trim()
+                .replace(/(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attrName, ref, name, value){
+                  if (name)
+                    getters[name] = path + 'childNodes[' + pos + ']' + '.getAttributeNode("' + attrName + '")';
+
+                  var eventMatch = attrName.match(/^event-([a-z]+)/i);
+                  if (eventMatch)
+                  {
+                    var eventName = eventMatch[1];
+                    if (!tmplEventListeners[eventName])
+                    {
+                      //console.log('add listener for ' + eventName);
+                      tmplEventListeners[eventName] = true;
+                      Event.addGlobalHandler(eventMatch[1], function(event){
+                        var cursor = Event.sender(event);
+                        var attr;
+                        var refId;
+
+                        // search for nearest node with event-* attribute
+                        do {
+                          if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
+                            break;
+                        } while (cursor = cursor.parentNode);
+
+                        // if not found - exit
+                        if (!attr)
+                          return;
+
+                        // search for nearest node refer to Basis.Class instance
+                        do {
+                          if (refId = cursor[HTML_EVENT_OBJECT_ID_HOLDER])
+                          {
+                            // if found call templateAction method
+                            var node = tmplNodeMap[refId];
+                            if (node && node.templateAction)
+                            {
+                              node.templateAction(attr.nodeValue, event);
+                              //Event.kill(event);
+                            }
+                            break;
+                          }
+                        } while (cursor  = cursor.parentNode);
+                      });
+                    }
+                  }
+
+                  if (value)
+                    value = strings.shift();
+
+                  return attrName == 'class'
+                    ? value.replace(/^([\'\"]?)(.*?)\1$/, "$2").trim().replace(/^(.)|\s+|\s*,\s*/g, '.$1')
+                    : '[' + attrName + (value ? '=' + value : '') + ']';
+                });
+            }
+
+            var element = DOM.createElement(tagName + attributes);
+
+            if (/*str.length && */!singleton)
+            {
+              stack.push(tagName);
+              if (str.length)
+                element.appendChild(parseHtml(path + 'childNodes[' + pos + '].', 0));
+            }
+
+            result.appendChild(element);
+            pos++;
+          }
+        }
+        
+        if (str.length)
+          result.appendChild(parseText(str, '', pos));
+
+        if (stack.length)
+        {
+          ;;;if (typeof console != undefined) console.log('No end tag for ' + stack.reverse() + ' in Html.Template:\n\n' + source);
+          throw "No end tag for " + stack.reverse();
+        }
+
+        return result;
+      }
+
+      var proto = parseHtml('', 0);
+
+      var aliases = [];
+      var body = keys(getters).map(function(name, idx){
+        // optimize path
+        var indexPath = getters[name].replace(/\.?childNodes\[(\d+)\]/g, "$1 ").qw();
+        var newPath = getters[name].split('.');
+        var node = proto;
+        for (var i = 0; i < indexPath.length; i++)
+        {
+          if (!isNaN(indexPath[i]))
+          {
+            node = node.childNodes[indexPath[i]];
+
+            if (node == node.parentNode.firstChild)
+              newPath[i] = 'firstChild';
+            else
+              if (node == node.parentNode.lastChild)
+                newPath[i] = 'lastChild';
+          }
+        }
+
+        var names = name.split(/\|/);
+        aliases.push.apply(aliases, names);
+
+        return {
+          name:  'res_.' + names[0],
+          alias: 'res_.' + names.reverse().join('=res_.'), // reverse names to save alias order for iterate (for most browsers it should be work)
+          path:  'dom_.' + newPath.join('.')
+        }
+      }, this).sortAsObject('path');
+
+      for (var i = 0; i < body.length; i++)
+      {
+        var path_re = new RegExp('^' + body[i].path.forRegExp());
+        for (var j = i + 1; j < body.length; j++)
+          body[j].path = body[j].path.replace(path_re, body[i].name);
+      }
+
+      this.createInstance = new Function('proto_', 'map_', 'var res_, dom_; return ' + 
+        // mark name with dangling _ to avoid renaming by compiler, because
+        // this names using by generates code, and must be unchanged
+
+        function(object, node){
+          res_ = object || {};
+          dom_ = proto_.cloneNode(true);
+
+          _code_(); // <-- will be replaced for specific code
+
+          if (node && res_.element)
+          {
+            var id = map_.seed++;
+            map_[id] = node;
+            res_.element.basisObjectId = id;
+            //;;;object.element.setAttribute("_e", node.eventObjectId);
+          }
+
+          return res_;
+        }
+
+      .toString().replace('_code_()', body.map(String.format,'{alias}={path};\n').join('')))(proto, tmplNodeMap);
+
+      this.clearInstance = new Function('map_', 'var obj_; return ' +
+
+        function(object, node){
+          obj_ = object;
+          var id = obj_.element && obj_.element.basisObjectId;
+          if (id)
+            delete map_[id];
+
+          _code_(); // <-- will be replaced for specific code
+
+        }
+
+      .toString().replace('_code_()', aliases.map(String.format,'obj_.{0}=null;\n').join('')))(tmplNodeMap);
+    };
+
 
    /**
     * Creates DOM structure template from marked HTML. Use {Basis.Html.Template#createInstance}
@@ -3322,6 +3626,13 @@
     var Template = Class(null, {
       className: namespace + '.Template',
 
+      __extend__: function(value){
+        if (value instanceof Template)
+          return value;
+        else
+          return new Template(value);
+      },
+
      /**
       * @param {string|function()} template Template source code that will be parsed
       * into DOM structure prototype. Parsing will be initiated on first
@@ -3334,271 +3645,18 @@
         this.source = templateSource;
       },
 
-     /***/
-      parse: function(){
-        if (this.proto)
-          return;
-
-        var str = this.source;
-        var getters = {
-          element: 'childNodes[0]'
-        };
-        var stack = [];
-
-        if (typeof str == 'function')
-          this.source = str = str();
-
-        var source = str.trim();
-
-        //console.log('parse:', htmlCode);
-
-        //this.source = htmlCode;
-
-        function parseText(str, path, pos){
-          var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
-          var result = [];
-          var node;
-          for (var i = 0; i < parts.length; i++)
-          {
-            if (i % 2)
-            {
-              var p = parts[i].split(/\|/);
-              getters[p[0]] = path + 'childNodes[' + pos + ']';
-              node = p.length > 1 ? p[1] : p[0];
-            }
-            else
-              node = parts[i].length ? parts[i] : null;
-
-            if (node != null)
-            {
-              // Some browsers (Internet Explorer) can normalize text nodes during cloning, that why 
-              // we need to insert comment nodes between text nodes to prevent text node merge
-              if (CLONE_NORMALIZE_TEXT_BUG)
-              {
-                if (result.length)
-                  result.push(document.createComment(''));
-                pos++;
-              }
-              result.push(node);
-              pos++;
-            }
-          }
-          return DOM.createFragment.apply(null, result);
-        }
-
-        var re = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
-        function parseHtml(path, pos){
-          var result = DOM.createFragment();
-          var m;
-
-          while (m = re.exec(str))
-          {
-            var pre = RegExp.leftContext;
-
-            str = RegExp.rightContext;
-
-            if (pre.length)
-            {
-              var tnodes = parseText(pre, path, pos);
-              pos += tnodes.childNodes.length;
-              result.appendChild(tnodes);
-            }
-
-            if (m[6])
-            {
-              var comment = document.createComment(m[6]);
-              if (m[7])
-                getters[m[7]] = path + 'childNodes[' + pos + ']';
-              result.appendChild(comment);
-              pos++;
-            }
-            else if (m[5])
-            {
-              if (m[5] == stack[stack.length - 1])
-              {
-                stack.pop();
-                return result;
-              }
-              else
-              {
-                ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + source.replace(new RegExp('(</' + m[5] + '>)(' + str + ')$'), '\n ==[here]=>$1<== \n$2'));
-                throw "Wrong end tag";
-              }
-            }
-            else
-            {
-              var descr = m[0];
-              var tagName = m[1];
-              var name = m[2];
-              var attributes = m[3];
-              var singleton = !!m[4];
-
-              if (name)
-                getters[name] = path + 'childNodes[' + pos + ']';
-
-              if (attributes)
-              {
-                var strings = [];
-                var tmp = attributes.replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' });
-                attributes = tmp
-                  .trim()
-                  .replace(/(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attrName, ref, name, value){
-                    if (name)
-                      getters[name] = path + 'childNodes[' + pos + ']' + '.getAttributeNode("' + attrName + '")';
-
-                    var eventMatch = attrName.match(/^event-([a-z]+)/i);
-                    if (eventMatch)
-                    {
-                      var eventName = eventMatch[1];
-                      if (!tmplEventListeners[eventName])
-                      {
-                        //console.log('add listener for ' + eventName);
-                        tmplEventListeners[eventName] = true;
-                        Event.addGlobalHandler(eventMatch[1], function(event){
-                          var cursor = Event.sender(event);
-                          var attr;
-                          var refId;
-
-                          // search for nearest node with event-* attribute
-                          do {
-                            if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
-                              break;
-                          } while (cursor = cursor.parentNode);
-
-                          // if not found - exit
-                          if (!attr)
-                            return;
-
-                          // search for nearest node refer to Basis.Class instance
-                          do {
-                            if (refId = cursor[HTML_EVENT_OBJECT_ID_HOLDER])
-                            {
-                              // if found call templateAction method
-                              var node = tmplNodeMap[refId];
-                              if (node && node.templateAction)
-                              {
-                                node.templateAction(attr.nodeValue, event);
-                                //Event.kill(event);
-                              }
-                              break;
-                            }
-                          } while (cursor  = cursor.parentNode);
-                        });
-                      }
-                    }
-
-                    if (value)
-                      value = strings.shift();
-
-                    return attrName == 'class'
-                      ? value.replace(/^([\'\"]?)(.*?)\1$/, "$2").trim().replace(/^(.)|\s+|\s*,\s*/g, '.$1')
-                      : '[' + attrName + (value ? '=' + value : '') + ']';
-                  });
-              }
-
-              var element = DOM.createElement(tagName + attributes);
-
-              if (str.length && !singleton)
-              {
-                stack.push(tagName);
-                element.appendChild(parseHtml(path + 'childNodes[' + pos + '].', 0));
-              }
-
-              result.appendChild(element);
-              pos++;
-            }
-          }
-          
-          if (str.length)
-            result.appendChild(parseText(str, '', pos));
-
-          if (stack.length)
-            throw "No end tag for " + stack.reverse();
-
-          return result;
-        }
-
-        var proto = parseHtml('', 0);
-
-        var aliases = [];
-        var body = keys(getters).map(function(name, idx){
-          // optimize path
-          var indexPath = getters[name].replace(/\.?childNodes\[(\d+)\]/g, "$1 ").qw();
-          var newPath = getters[name].split('.');
-          var node = proto;
-          for (var i = 0; i < indexPath.length; i++)
-          {
-            if (!isNaN(indexPath[i]))
-            {
-              node = node.childNodes[indexPath[i]];
-
-              if (node == node.parentNode.firstChild)
-                newPath[i] = 'firstChild';
-              else
-                if (node == node.parentNode.lastChild)
-                  newPath[i] = 'lastChild';
-            }
-          }
-
-          var names = name.split(/\|/);
-          aliases.push.apply(aliases, names);
-
-          return {
-            name:  'res_.' + names[0],
-            alias: 'res_.' + names.reverse().join('=res_.'), // reverse names to save alias order for iterate (for most browsers it should be work)
-            path:  'dom_.' + newPath.join('.')
-          }
-        }, this).sortAsObject('path');
-
-        for (var i = 0; i < body.length; i++)
-        {
-          var path_re = new RegExp('^' + body[i].path.forRegExp());
-          for (var j = i + 1; j < body.length; j++)
-            body[j].path = body[j].path.replace(path_re, body[i].name);
-        }
-
-        this.createInstance = new Function('proto_', 'map_', 'var res_, dom_; return ' + 
-          // mark name with dangling _ to avoid renaming by compiler, because
-          // this names using by generates code, and must be unchanged
-
-          function(object, node){
-            res_ = object || {};
-            dom_ = proto_.cloneNode(true);
-
-            _code_(); // <-- will be replaced for specific code
-
-            if (node && res_.element)
-            {
-              var id = map_.seed++;
-              map_[id] = node;
-              res_.element.basisObjectId = id;
-              //;;;object.element.setAttribute("_e", node.eventObjectId);
-            }
-
-            return res_;
-          }
-
-        .toString().replace('_code_()', body.map(String.format,'{alias}={path};\n').join('')))(proto, tmplNodeMap);
-
-        this.clearInstance = new Function('map_', 'var obj_; return ' +
-
-          function(object, node){
-            obj_ = object;
-            var id = obj_.element && obj_.element.basisObjectId;
-            if (id)
-              delete map_[id];
-
-            _code_(); // <-- will be replaced for specific code
-
-          }
-
-        .toString().replace('_code_()', aliases.map(String.format,'obj_.{0}=null;\n').join('')))(tmplNodeMap);
-      },
+     /**
+      * Create DOM structure and return object with references for it's nodes.
+      * @param {Object=} object Storage for DOM references.
+      * @param {Object=} node Object which templateAction method will be called on events.
+      * @return {Object}
+      */
       createInstance: function(object, node){
-        this.parse();
+        parseTemplate.call(this);
         return this.createInstance(object, node);
       },
       clearInstance: function(object, node){
+        parseTemplate.call(this);
       }
     });
  

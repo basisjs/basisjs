@@ -158,6 +158,58 @@
   }
 
   //
+  // Registrate base subscription types
+  //
+
+  Subscription.regType(
+    'DELEGATE',
+    {
+      delegateChanged: function(object, oldDelegate){
+        this.remove(object, oldDelegate);
+        this.add(object, object.delegate);
+      }
+    },
+    function(action, object){
+      action(object, object.delegate);
+    }
+  );
+
+  Subscription.regType(
+    'TARGET',
+    {
+      targetChanged: function(object, oldTarget){
+        this.remove(object, oldTarget);
+        this.add(object, object.target);
+      }
+    },
+    function(action, object){
+      action(object, object.target);
+    }
+  );
+
+  Subscription.regType(
+    'SOURCE',
+    {
+      sourcesChanged: function(object, delta){
+        var array;
+
+        if (array = delta.inserted)
+          for (var i = array.length; i --> 0;)
+            this.add(object, array[i]);
+
+        if (array = delta.deleted)
+          for (var i = array.length; i --> 0;)
+            this.remove(object, array[i]);
+      }
+    },
+    function(action, object){
+      for (var i = object.sources.length; i --> 0;)
+        action(object, object.sources[i]);
+    }
+  );
+
+
+  //
   // DataObject
   //
 
@@ -201,35 +253,6 @@
     }
   };
 
-  //
-  // Registrate subscription type
-  //
-
-  Subscription.regType(
-    'DELEGATE',
-    {
-      delegateChanged: function(object, oldDelegate){
-        this.remove(object, oldDelegate);
-        this.add(object, object.delegate);
-      }
-    },
-    function(action, object){
-      action(object, object.delegate);
-    }
-  );
-
-  Subscription.regType(
-    'TARGET',
-    {
-      targetChanged: function(object, oldTarget){
-        this.remove(object, oldTarget);
-        this.add(object, object.target);
-      }
-    },
-    function(action, object){
-      action(object, object.target);
-    }
-  );
 
 
  /**
@@ -727,7 +750,7 @@
   });
 
   //
-  // Mapper
+  // KeyObjectMap
   //
 
  /**
@@ -1313,61 +1336,13 @@
   })();
 
   //
-  // Registrate subscription type
-  //
-
-  Subscription.regType(
-    'SOURCE',
-    {
-      sourcesChanged: function(object, delta){
-        var array;
-
-        if (array = delta.inserted)
-          for (var i = array.length; i --> 0;)
-            this.add(object, array[i]);
-
-        if (array = delta.deleted)
-          for (var i = array.length; i --> 0;)
-            this.remove(object, array[i]);
-      }
-    },
-    function(action, object){
-      for (var i = object.sources.length; i --> 0;)
-        action(object, object.sources[i]);
-    }
-  );
-
-  //
   // Merge dataset 
   //
-
-  function mergeDeltaUpdate(memberMap, deleted){
-    var operation = this.operation;
-    var sourceCount = this.sources.length;
-    var inserted = [];
-    var isMember;
-    var delta;
-
-    for (var objectId in memberMap)
-    {
-      isMember = operation(memberMap[objectId].count, sourceCount);
-
-      if (isMember ^ !!this.item_[objectId])
-        (isMember
-          ? inserted // not in items -> insert
-          : deleted  // already in items -> delete
-        ).push(memberMap[objectId].object); 
-    }
-
-    // fire event if delta found
-    if (delta = getDelta(inserted, deleted))
-      this.event_datasetChanged(this, delta);
-  }
 
   var AGGREGATEDATASET_DATASET_HANDLER = {
     datasetChanged: function(source, delta){
       var memberMap = this.memberMap_;
-      var check = {};
+      var updated = {};
       var deleted = [];
 
       var object;
@@ -1378,7 +1353,7 @@
         for (var i = 0; object = delta.inserted[i]; i++)
         {
           objectId = object.eventObjectId;
-          
+        
           // check: is this object already known
           if (memberMap[objectId])
           {
@@ -1394,7 +1369,8 @@
             };
           }
 
-          check[objectId] = memberMap[objectId];
+          // mark as updated
+          updated[objectId] = memberMap[objectId];
         }
       }
 
@@ -1404,24 +1380,16 @@
         {
           objectId = object.eventObjectId;
 
-          // descrease source counter
-          if (--memberMap[objectId].count == 0)
-          {
-            // this occurence last -> delete from source refs
-            if (this.item_[objectId])
-              deleted.push(this.item_[objectId]);
+          // mark as updated
+          updated[objectId] = memberMap[objectId];
 
-            delete memberMap[objectId];
-          }
-          else
-          {
-            check[objectId] = memberMap[objectId];
-          }
+          // descrease source counter
+          memberMap[objectId].count--;
         }
       }
 
       // build delta and fire event
-      mergeDeltaUpdate.call(this, check, deleted);
+      this.applyRule(updated);
     },
     destroy: function(source){
       this.removeSource(source);
@@ -1457,7 +1425,9 @@
    /**
     * @type {function(count, sourceCount):boolean}
     */
-    operation: $true,
+    rule: function(count, sourceCount){
+      return count > 0;
+    },
 
    /**
     * @config {Array.<Basis.Data.AbstractDataset>} sources Set of source datasets for aggregate.
@@ -1472,6 +1442,48 @@
       this.sources = [];
       if (sources)
         sources.forEach(this.addSource, this);
+    },
+
+    setRule: function(rule){
+      if (typeof rule != 'function')
+        rule = Merge.UNION;
+
+      if (this.rule !== rule)
+        this.rule = rule;
+        this.updateMembers();
+    },
+
+    applyRule: function(scope){
+      var memberMap = this.memberMap_;
+      var rule = this.rule;
+      var sourceCount = this.sources.length;
+      var inserted = [];
+      var deleted = [];
+      var memberCounter;
+      var isMember;
+      var delta;
+
+      if (!scope)
+        scope = memberMap;
+
+      for (var objectId in scope)
+      {
+        memberCounter = scope[objectId];
+        isMember = rule(memberCounter.count, sourceCount);
+
+        if (isMember != !!this.item_[objectId])
+          (isMember
+            ? inserted // not in items -> insert
+            : deleted  // already in items -> delete
+          ).push(memberCounter.object); 
+
+        if (memberCounter.count == 0)
+          delete memberMap[objectId];
+      }
+
+      // fire event if delta found
+      if (delta = getDelta(inserted, deleted))
+        this.event_datasetChanged(this, delta);
     },
 
    /**
@@ -1508,7 +1520,7 @@
           }
 
           // build delta and fire event
-          mergeDeltaUpdate.call(this, memberMap, []);
+          this.applyRule();
 
           // fire sources changes event
           this.event_sourcesChanged(this, {
@@ -1537,23 +1549,11 @@
 
         // process removing source objects and update member map
         var memberMap = this.memberMap_;
-        var count;
-        var deleted = [];
         for (var objectId in source.item_)
-        {
-          if (--memberMap[objectId].count == 0)
-          {
-            // add to delta
-            if (this.item_[objectId])
-              deleted.push(memberMap[objectId].object);
-
-            // remove from map
-            delete memberMap[objectId];
-          }
-        }
+          memberMap[objectId].count--;
 
         // build delta and fire event
-        mergeDeltaUpdate.call(this, memberMap, deleted);
+        this.applyRule();
 
         // fire sources changes event
         this.event_sourcesChanged(this, {
@@ -1601,6 +1601,9 @@
       Array.from(this.sources).forEach(this.removeSource, this);
     },
 
+   /**
+    * @inheritDoc
+    */
     destroy: function(){
       // inherit
       AbstractDataset.prototype.destroy.call(this);
@@ -1611,12 +1614,12 @@
 
  /**
   * ANY source INCLUDE item
+  * (by default)
   */
-  Merge.UNION = $true;
+  Merge.UNION = Merge.prototype.rule;
 
  /**
   * ALL sources must INCLUDE item
-  * @class
   */
   Merge.INTERSECTION = function(count, sourceCount){
     return count == sourceCount;
@@ -1624,7 +1627,6 @@
 
  /**
   * ONLY ONE source INCLUDE item
-  * @class
   */
   Merge.DIFFERENCE = function(count, sourceCount){
     return count == 1;
@@ -1635,7 +1637,6 @@
   * make sence for more than one source
   * for 2 sources it equal INTERSECTION
   * for 3 and more sources it equivalent UNION / DIFFERENCE (subtract)
-  * @class
   */
   Merge.MORE_THAN_ONE_INCLUDE = function(count, sourceCount){
     return sourceCount == 1 || count > 1;
@@ -1646,7 +1647,6 @@
   * make sence for more than one source
   * for 2 sources it equal DIFFERENCE
   * for 3 and more sources it equivalent UNION / INTERSECTION (subtract)
-  * @class
   */
   Merge.AT_LEAST_ONE_EXCLUDE = function(count, sourceCount){
     return sourceCount == 1 || count < sourceCount;
@@ -1655,6 +1655,46 @@
   //
   // Subtract
   //
+
+  var datasetAbsentFilter = function(item){
+    return !this.has(item);
+  };
+
+  var SUBTRACTDATASET_MINUEND_HANDLER = {
+    datasetChanged: function(dataset, delta){
+      if (!this.subtrahend)
+        return;
+
+      var newDelta = getDelta(
+        /* inserted */ delta.inserted && delta.inserted.filter(datasetAbsentFilter, this.subtrahend),
+        /* deleted */  delta.deleted  && delta.deleted.filter(this.has, this)
+      );
+      
+      if (newDelta)
+        this.event_datasetChanged(this, newDelta);
+    },
+    destroy: function(){
+      this.setOperands(null, this.subtrahend);
+    }
+  };
+
+  var SUBTRACTDATASET_SUBTRAHEND_HANDLER = {
+    datasetChanged: function(dataset, delta){
+      if (!this.minuend)
+        return;
+
+      var newDelta = getDelta(
+        /* inserted */ delta.deleted  && delta.deleted.filter(datasetAbsentFilter, this),
+        /* deleted */  delta.inserted && delta.inserted.filter(this.has, this)
+      );
+
+      if (newDelta)
+        this.event_datasetChanged(this, newDelta);
+    },
+    destroy: function(){
+      this.setOperands(this.minuend, null);
+    }
+  };
 
  /**
   * @class
@@ -1711,19 +1751,19 @@
       if (oldMinuend !== minuend)
       {
         if (oldMinuend)
-          oldMinuend.removeHandler(SUBSCRACTDATASET_MINUEND_HANDLER, this);
+          oldMinuend.removeHandler(SUBTRACTDATASET_MINUEND_HANDLER, this);
 
         if (this.minuend = minuend)
-          minuend.addHandler(SUBSCRACTDATASET_MINUEND_HANDLER, this)
+          minuend.addHandler(SUBTRACTDATASET_MINUEND_HANDLER, this)
       }
 
       if (oldSubtrahend !== subtrahend)
       {
         if (oldSubtrahend)
-          oldSubtrahend.removeHandler(SUBSCRACTDATASET_SUBTRAHEND_HANDLER, this);
+          oldSubtrahend.removeHandler(SUBTRACTDATASET_SUBTRAHEND_HANDLER, this);
 
         if (this.subtrahend = subtrahend)
-          subtrahend.addHandler(SUBSCRACTDATASET_SUBTRAHEND_HANDLER, this);
+          subtrahend.addHandler(SUBTRACTDATASET_SUBTRAHEND_HANDLER, this);
       }
 
       if (!minuend || !subtrahend)
@@ -1918,7 +1958,7 @@
         this.event_datasetChanged(this, delta);
     },
     destroy: function(){
-      this.setDataset();
+      this.setSource();
     }
   };
 
@@ -1927,6 +1967,12 @@
   */
   var Transform = Class(AbstractDataset, {
     className: namespace + '.Dataset.Transform',
+
+   /**
+    * Data source.
+    * @type {Basis.Data.AbstractDataset}
+    */
+    source: null,
 
    /**
     * Transformation function.
@@ -1946,11 +1992,6 @@
     removeMemberRef: null,
 
    /**
-    * @type {Basis.Data.AbstractDataset}
-    */
-    dataset: null,
-
-   /**
     * Map of source objects.
     * @type {object}
     * @private
@@ -1961,17 +2002,18 @@
     * @inheritDoc
     */
     init: function(config){
-      ;;;if (this.sources) console.warn('Dataset.Transform instances no more support for sources property, use dataset property instead.');
+      ;;;if (this.sources) throw 'Dataset.Transform instances no more support for sources property, use source property instead.';
+      ;;;if (this.dataset) throw 'Dataset.Transform instances no more support for dataset property, use source property instead.';
 
       AbstractDataset.prototype.init.call(this, config);
 
       this.sourceMap_ = {};
 
-      var dataset = this.dataset;
-      if (dataset)
+      var source = this.source;
+      if (source)
       {
-        this.dataset = null;
-        this.setDataset(dataset);
+        this.source = null;
+        this.setSource(source);
       }
     },
 
@@ -1991,11 +2033,11 @@
     * Set new source dataset.
     * @param {Basis.Data.AbstractDataset} dataset
     */
-    setDataset: function(dataset){
+    setSource: function(dataset){
       if (dataset instanceof AbstractDataset == false)
         dataset = null;
 
-      if (this.dataset !== dataset)
+      if (this.source !== dataset)
       {
         var oldDataset = this.dataset;
 
@@ -2107,7 +2149,7 @@
     * Drop dataset. All members are removing as side effect.
     */
     clear: function(){
-      this.setDataset();
+      this.setSource();
     },
 
     destroy: function(){
@@ -2120,14 +2162,14 @@
 
 
   //
-  // Filter
+  // Subset
   //
 
  /**
   * @class
   */
-  var Filter = Class(Transform, {
-    className: namespace + '.Dataset.Filter',
+  var Subset = Class(Transform, {
+    className: namespace + '.Dataset.Subset',
 
    /**
     * @inheritDoc
@@ -2238,50 +2280,6 @@
   });
 
   //
-  // SubstractDataset
-  //
-
-  var datasetAbsentFilter = function(item){
-    return !this.has(item);
-  };
-
-  var SUBSCRACTDATASET_MINUEND_HANDLER = {
-    datasetChanged: function(dataset, delta){
-      if (!this.subtrahend)
-        return;
-
-      var newDelta = getDelta(
-        /* inserted */ delta.inserted && delta.inserted.filter(datasetAbsentFilter, this.subtrahend),
-        /* deleted */  delta.deleted  && delta.deleted.filter(this.has, this)
-      );
-      
-      if (newDelta)
-        this.event_datasetChanged(this, newDelta);
-    },
-    destroy: function(){
-      this.setOperands(null, this.subtrahend);
-    }
-  };
-
-  var SUBSCRACTDATASET_SUBTRAHEND_HANDLER = {
-    datasetChanged: function(dataset, delta){
-      if (!this.minuend)
-        return;
-
-      var newDelta = getDelta(
-        /* inserted */ delta.deleted  && delta.deleted.filter(datasetAbsentFilter, this),
-        /* deleted */  delta.inserted && delta.inserted.filter(this.has, this)
-      );
-
-      if (newDelta)
-        this.event_datasetChanged(this, newDelta);
-    },
-    destroy: function(){
-      this.setOperands(this.minuend, null);
-    }
-  };
-
-  //
   // export names
   //
 
@@ -2292,7 +2290,7 @@
 
     // transform dataset
     Transform: Transform,
-    Filter: Filter,
+    Subset: Subset,
     Split: Grouping
   });
 
@@ -2325,7 +2323,7 @@
 
     // deprecate
     AggregateDataset: Merge,
-    Collection: Filter,
+    Collection: Subset,
     Grouping: Grouping
   });
 

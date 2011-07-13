@@ -65,8 +65,8 @@
     width: 7ex;
     height: 1.4em;
     z-index: 1;
-    background: url(#);          /* для IE и Opera, иначе блок будет "простреливаться"
-                                    (пропускать события мыши нижележащим блокам) */
+    background: url(data:image/png;base64,);  /* для IE и Opera, иначе блок будет "простреливаться"
+                                                 (пропускать события мыши нижележащим блокам) */
   }
 
   .Basis-SyntaxHighlight .lineContent

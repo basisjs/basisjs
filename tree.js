@@ -50,7 +50,6 @@
 
   var nsWrappers = DOM.Wrapper;
 
-  var Template = Basis.Html.Template;
   var TmplContainer = nsWrappers.TmplContainer;
   var Control = nsWrappers.Control;
 
@@ -102,14 +101,13 @@
   */
   var TreePartitionNode = Class(nsWrappers.TmplPartitionNode, {
     className: namespace + '.TreePartitionNode',
-    template: new Template(
+    template: 
       '<li{element} class="Basis-TreePartitionNode">' + 
         '<div class="Basis-TreePartitionNode-Title">' +
           '<span>{titleText}</span>' +
         '</div>' +
         '<ul{childNodesElement} class="Basis-TreePartitionNode-Content"/>' +
       '</li>'
-    )
   });
 
  /**
@@ -134,8 +132,7 @@
       TmplContainer.prototype.event_update.call(this, object, delta);
 
       // set new title
-      var title = String(this.titleGetter(this));
-      this.tmpl.titleText.nodeValue = title || '[no title]';
+      this.tmpl.titleText.nodeValue = String(this.titleGetter(this)) || '[no title]';
     },
 
     event_collapse: createEvent('collapse'),
@@ -146,27 +143,25 @@
     * @type {Basis.Html.Template}
     * @private
     */
-    template: new Template(
+    template: 
       '<li{element} class="Basis-TreeNode">' +
         '<div{content} class="Basis-TreeNode-Title">' +
-          '<span{title} class="Basis-TreeNode-Caption" event-click="select">{titleText|[no title]}</span>' +
+          '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
+            '{titleText}' +
+          '</span>' +
         '</div>' +
-      '</li>'
-    ),
+      '</li>',
 
-    templateAction: function(actionName, event){
-      switch (actionName){
-        case 'select':
-          if (!this.isDisabled())
-            this.select(Event(event).ctrlKey);
-        break;
-
-        case 'toggle':
-          this.toggle();
-        break;
-
-        default:
-          TmplContainer.prototype.templateAction.call(this, actionName, event);
+   /**
+    * @inheritDoc
+    */
+    action: {
+      select: function(event){
+        if (!this.isDisabled())
+          this.select(Event(event).ctrlKey);
+      },
+      toggle: function(event){
+        this.toggle();
       }
     },
 
@@ -202,15 +197,16 @@
     * @type {Basis.Html.Template}
     * @private
     */
-    template: new Template(
+    template:
       '<li{element} class="Basis-TreeNode">' +
         '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
           '<div{expander} class="Basis-TreeNode-Expander" event-click="toggle"/>' +
-          '<span{title} class="Basis-TreeNode-Caption" event-click="select">{titleText|[no title]}</span>' +
+          '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
+            '{titleText}' +
+          '</span>' +
         '</div>' + 
         '<ul{childNodesElement} class="Basis-TreeNode-Content"/>' + 
-      '</li>'
-    ),
+      '</li>',
 
    /**
     * @type {boolean}
@@ -286,11 +282,7 @@
     * @type {Basis.Html.Template}
     * @private
     */
-    template: new Template(
-      '<ul{element} class="Basis-Tree">' + 
-        '<!-- {childNodesHere} -->' +
-      '</ul>'
-    )
+    template: '<ul class="Basis-Tree"/>'
   });
 
   //

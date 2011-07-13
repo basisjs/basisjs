@@ -207,10 +207,10 @@
           type: 'combobox',
           name: 'Gender',
           title: 'Gender',
-          childClass: nsForm.Combobox.Item.subclass({
+          childClass: {
             titleGetter: Function.getter('info.title'),
             valueGetter: Function.getter('info.value')
-          }),
+          },
           childNodes: [
             { info: { value: 'Male', title: 'Male' } },
             { info: { value: 'Female', title: 'Female' } }

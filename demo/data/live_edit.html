@@ -114,7 +114,9 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
-    
+
+    var nsWrapper = Basis.DOM.Wrapper;
+  
     //
     // Data
     //
@@ -138,8 +140,8 @@
     //
     // Define new node class for Article
     //
-    var ArticleNode = Basis.Class(Basis.DOM.Wrapper.TmplNode, 
-      Basis.DOM.Wrapper.simpleTemplate(
+    var ArticleNode = Basis.Class(nsWrapper.TmplNode, 
+      nsWrapper.simpleTemplate(
         '<div{element} class="Article" event-click="select">' +
           '<div class="Article-Title">{this_info_title}</div>' +
           '<div class="Article-Content">{this_info_content}</div>' +
@@ -159,7 +161,7 @@
     //
     // Article list
     //
-    var articleList = new Basis.DOM.Wrapper.TmplContainer({
+    var articleList = new nsWrapper.TmplContainer({
       id: 'ArticleList',
       childClass: ArticleNode,  // set class for child nodes
       collection: Article.all,  // set data source
@@ -167,8 +169,8 @@
       selection: {              // we need for selection, define config for it
         handler: {
           datasetChanged: function(dataset, delta){ // dataset -> articleList.selection
-           // this -> articleList.selection
-           articleEditor.setDelegate(this.pick());
+            // this -> articleList.selection
+            articleEditor.setDelegate(this.pick());
           }
         }
       }           
@@ -251,7 +253,7 @@
       }
     });
 
-    var articleEditor = new Basis.DOM.Wrapper.TmplContainer({
+    var articleEditor = new nsWrapper.TmplContainer({
       id: 'EditForm',
       targetPoint: true,         // this object will change target
       childNodes: [              // set child nodes

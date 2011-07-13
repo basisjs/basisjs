@@ -153,8 +153,13 @@
           disabled: true
         },
         {
-          caption: 'Button6',
-          handler: alertCaption
+          caption: 'disable/enable button5',
+          handler: function(){
+            if (this.previousSibling.disabled)
+              this.previousSibling.enable();
+            else
+              this.previousSibling.disable();
+          }
         }
       ],
       container: createBlock('Button Panel')

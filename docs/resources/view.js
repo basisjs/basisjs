@@ -57,10 +57,6 @@
            '</h3>';
   }
 
-  function extendViewSatelliteConfig(config){
-    return Object.complete(config, View.prototype.satelliteConfig);
-  }
-
   //
   // View
   //
@@ -306,13 +302,13 @@
         '</div>' +
       '</div>'
     ),
-    satelliteConfig: extendViewSatelliteConfig({
+    satelliteConfig: {
       contentPanel: {
         existsIf: getter('info.fullPath'),
         delegate: getter('info.fullPath', nsCore.JsDocEntity),
         instanceOf: JsDocPanel
       }
-    })
+    }
   });
 
   //
@@ -538,7 +534,7 @@
         }
       }
     },
-    satelliteConfig: extendViewSatelliteConfig({
+    satelliteConfig: {
       viewOptions: {
         instanceOf: ViewOptions,
         config: function(owner){
@@ -571,7 +567,7 @@
           }
         }
       }
-    })
+    }
   });
 
   var ViewList = Class(View, {
@@ -822,7 +818,7 @@
         }
       }
     },
-    satelliteConfig: extendViewSatelliteConfig({
+    satelliteConfig: {
       viewOptions: {
         delegate: Function.$self,
         instanceOf: ViewOptions,
@@ -850,7 +846,7 @@
           };
         }
       }
-    })
+    }
   });
 
   //
@@ -1016,7 +1012,7 @@
     }),
 
 
-    satelliteConfig: extendViewSatelliteConfig({
+    satelliteConfig: {
       viewOptions: {
         instanceOf: ViewOptions,
         config: function(owner){
@@ -1058,7 +1054,7 @@
           }
         }
       }
-    })
+    }
   });
 
   //
@@ -1093,13 +1089,13 @@
 
   var JsDocConstructorView = Class(JsDocView, {
     viewHeader: 'Constructor',
-    satelliteConfig: extendViewSatelliteConfig({
+    satelliteConfig: {
       contentPanel: {
         existsIf: getter('info.fullPath'),
         delegate: getter('info.fullPath + ".prototype.init"', nsCore.JsDocEntity),
         instanceOf: JsDocPanel
       }
-    })
+    }
   });
 
   var SourceCodeView = Class(View, {
@@ -1110,7 +1106,7 @@
         '<div{content} class="content"><span{sourceCode}/></div>' +
       '</div>'
     ),
-    satelliteConfig: extendViewSatelliteConfig({
+    satelliteConfig: {
       sourceCode: {
         delegate: Function.$self,
         instanceOf: Class(Basis.Plugin.SyntaxHighlight.SourceCodeNode, {
@@ -1119,7 +1115,7 @@
           }
         })
       }
-    })
+    }
   });
 
   //

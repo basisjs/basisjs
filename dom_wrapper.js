@@ -125,6 +125,8 @@
   //  NODE
   //
 
+  var NULL_SATELLITE_CONFIG = Class.ExtensibleProperty();
+
   var SATELLITE_DESTROY_HANDLER = {
     destroy: function(object){
       DOM.replace(object.element, this);
@@ -136,6 +138,10 @@
       for (var key in this.satelliteConfig)
       {
         var config = this.satelliteConfig[key];
+
+        if (typeof config != 'object')
+          continue;
+
         var exists = typeof config.existsIf != 'function' || config.existsIf(this);
         var satellite = this.satellite[key];
 
@@ -194,6 +200,7 @@
     }
   };
 
+  window.asd = 0;
  /**
   * @class
   */
@@ -380,7 +387,7 @@
     * Hash of satellite object configs.
     * @type {Object}
     */
-    satelliteConfig: null,
+    satelliteConfig: NULL_SATELLITE_CONFIG,
 
    /**
     * Satellite objects storage.
@@ -450,7 +457,7 @@
       if (!this.satellite)
         this.satellite = {};
 
-      if (this.satelliteConfig)
+      if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
         this.addHandler(SATELLITE_HANDLER);
         //SATELLITE_HANDLER.update.call(this, this, {});
@@ -2132,6 +2139,11 @@
   AbstractNode.prototype.localGroupingClass = GroupingNode;
 
  /**
+  *
+  */
+  var TEMPLATE_ACTION = Class.ExtensibleProperty();
+
+ /**
   * @mixin
   */
   var TemplateMixin = function(super_){
@@ -2143,6 +2155,12 @@
       template: new Template(
         '<div/>'
       ),
+
+     /**
+      * Handlers for template actions.
+      * @type {Object}
+      */
+      action: TEMPLATE_ACTION,
 
      /**
       * Classes for template elements.
@@ -2282,6 +2300,8 @@
         // send action to document node
         //if (this.document && this.document !== this)
         //  this.document.templateAction(actionName, event, this);
+        if (this.action[actionName])
+          this.action[actionName].call(this, event);
       },
 
      /**

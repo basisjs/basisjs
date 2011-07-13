@@ -17,16 +17,27 @@
       font-family: Tahoma, Verdana, Arial, sans-serif;
     }
 
-    .demo-container
+    #demo-container
     {
-      font-family: consolas;
+      font-family: Consolas;
+    }
+
+    .img
+    {
+      text-align: center;
+    }
+    OBJECT
+    {
+      width: 100px;
+      height: 100px;
+      margin: -15px 0 0;
     }
 
     H2
     {
       clear: both;
-      margin: 0 0 1em;
-      padding-top: 1.5em;
+      margin: 0 0 .5em;
+      padding-top: 1em;
       font-size: 100%;
     }
 
@@ -34,18 +45,20 @@
     {
       border: 1px solid #D0D0D0;
       padding: 15px;
-      margin: 0 0 .5em 10px;
+      margin: 0 10px .5em 0;
       overflow: hidden;
       position: relative;
-      wid2th: 15%;
       float: left;
+      width: 160px;
+      display: inline-block;
     }
     .DemoBlock H3
     {
-      font-size: 90%;
+      clear: both;
+      font-size: 85%;
       font-weight: normal;
       background: #EEE;
-      margin: -15px -15px 10px -15px;
+      margin: 10px -15px -15px -15px;
       padding: 2px 2px 2px 1.5em;
       /*text-align: center;*/
     }
@@ -128,7 +141,8 @@
     ..
   </div>
 
-  <div id="demo-container"></div>
+  <div id="demo-container">
+  </div>
 
   <script type="text/javascript" id="demo-javascript">
     
@@ -142,6 +156,12 @@
     function createHeader(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('H2', header));
     };
+
+    function createImage(type){
+      return DOM.createElement('.img',
+        DOM.createElement('object[type="image/svg+xml"][data="dataset.svg?' + type + '"]')
+      );
+    }
 
     //
     // Init data
@@ -164,6 +184,9 @@
     var ALL = new nsData.Dataset({
       items: data
     });
+    var ALL2 = new nsData.Dataset({
+      items: data2
+    });
 
     var A = new nsData.Dataset({
       items: [data[0], data[1], data[2], data[3]]
@@ -181,28 +204,28 @@
     var DatasetViewer = nsWrapper.TmplContainer.subclass(
       nsWrapper.simpleTemplate(
         '<div class="DemoBlock">' +
+          '<span{content}/>' +
+          '<!-- {childNodesHere} -->' +
           '<h3>{this_title}</h3>' +
         '</div>'
       ), 
       {
         container: document.getElementById('demo-container'),
         childClass: //nsWrapper.TmplNode.subclass
-        (
           nsWrapper.simpleTemplate(
             '<span class="item">' +
               '{this_info_value}' +
             '</span>'
           )
-        )
       }
     );
 
     var EditableDatasetViewer = nsWrapper.TmplContainer.subclass(
       nsWrapper.simpleTemplate(
         '<div class="DemoBlock">' +
-          '<h3>{this_title}</h3>' +
           '<!-- {childNodesHere} -->' +
           '<button event-click="add">add</button>' +
+          '<h3>{this_title}</h3>' +
         '</div>'
       ), 
       {
@@ -233,9 +256,9 @@
 
     var newItemPopup = new Basis.Controls.Popup.Menu({
       collection: new nsData.Dataset.Subtract({ minuend: ALL }),
-      childClass: Basis.Controls.Popup.MenuItem.subclass({
+      childClass: {
         captionGetter: Function.getter('info.value')
-      }),
+      },
       localSorting: Function.getter('info.value'),
       defaultHandler: function(node){
         if (node)
@@ -248,6 +271,17 @@
     // Demo
     //
     createHeader('Source datasets');
+
+    new DatasetViewer({
+      title: 'dataset ALL',
+      collection: ALL
+    });
+    new DatasetViewer({
+      title: 'dataset ALL2',
+      collection: ALL2
+    });
+
+    createHeader('Custom datasets');
 
     new EditableDatasetViewer({
       title: 'dataset A',
@@ -262,49 +296,52 @@
       collection: C
     });
 
-    createHeader('Aggregate datasets');
+    createHeader('Operable datasets');
 
     new DatasetViewer({
       title: 'Union (A ∪ B ∪ C)',
+      content: createImage('union'),
       collection: new nsData.Dataset.Merge({
-        operation: nsData.Dataset.Merge.UNION,  // by default
+        rule: nsData.Dataset.Merge.UNION,  // by default
         sources: [A, B, C]
       })
     });
 
     new DatasetViewer({
       title: 'Intersection (A ∩ B ∩ C)',
+      content: createImage('intersection'),
       collection: I = new nsData.Dataset.Merge({
-        operation: nsData.Dataset.Merge.INTERSECTION,
+        rule: nsData.Dataset.Merge.INTERSECTION,
         sources: [A, B, C]
       })
     });
 
     new DatasetViewer({
       title: 'AtLeastOneExclude (A ∪ B ∪ C) / (A ∩ B ∩ C) [union subtract intersection]',
+      content: createImage('atleastoneexclude'),
       collection: new nsData.Dataset.Merge({
-        operation: nsData.Dataset.Merge.AT_LEAST_ONE_EXCLUDE,
+        rule: nsData.Dataset.Merge.AT_LEAST_ONE_EXCLUDE,
         sources: [A, B, C]
       })
     });
 
     new DatasetViewer({
       title: 'Difference (A ∆ B ∆ C)',
+      content: createImage('difference'),
       collection: new nsData.Dataset.Merge({
-        operation: nsData.Dataset.Merge.DIFFERENCE,
+        rule: nsData.Dataset.Merge.DIFFERENCE,
         sources: [A, B, C]
       })
     });
 
     new DatasetViewer({
       title: 'MoreThanOneInclude (A ∪ B ∪ C) / (A ∆ B ∆ C) [union subtract difference]',
+      content: createImage('morethanoneinclude'),
       collection: new nsData.Dataset.Merge({
-        operation: nsData.Dataset.Merge.MORE_THAN_ONE_INCLUDE ,
+        rule: nsData.Dataset.Merge.MORE_THAN_ONE_INCLUDE,
         sources: [A, B, C]
       })
     });
-
-    createHeader('Subtract dataset');
 
     new DatasetViewer({
       title: 'Subtract (A / B)',
@@ -319,24 +356,24 @@
     new DatasetViewer({
       title: 'Filter A -> another objects',
       collection: new nsData.Dataset.Transform({
-        dataset: A,
-        transform: Function.getter('info.value - 1', data2)
+        transform: Function.getter('info.value - 1', data2),
+        source: A
       })
     });
 
     new DatasetViewer({
       title: 'Filter A -> odd',
-      collection: new nsData.Dataset.Filter({
-        dataset: A,
-        filter: Function.getter('info.value % 2')
+      collection: new nsData.Dataset.Subset({
+        filter: Function.getter('info.value % 2'),
+        source: A
       })
     });
 
     new DatasetViewer({
       title: 'Split A -> odd and even',
       collection: new nsData.Dataset.Split({
-        dataset: A,
-        groupGetter: Function.getter('info.value % 2 ? "odd" : "even"')
+        groupGetter: Function.getter('info.value % 2 ? "odd" : "even"'),
+        source: A
       }),
       childClass: nsWrapper.TmplContainer.subclass(
         nsWrapper.simpleTemplate(

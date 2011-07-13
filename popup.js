@@ -22,7 +22,6 @@
     var Class = Basis.Class;
     var DOM = Basis.DOM;
     var Event = Basis.Event;
-    var Template = Basis.Html.Template;
 
     var getter = Function.getter;
     var classList = Basis.CSS.classList;
@@ -89,12 +88,11 @@
     var Popup = Class(TmplContainer, {
       className: namespace + '.Popup',
 
-      template: new Template(
+      template: 
         '<div{element|selected} class="Basis-Popup">' +
           '<div{closeButton} class="Basis-Popup-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
-        '</div>'
-      ),
+        '</div>',
 
       event_beforeShow: createEvent('beforeShow'),
       event_show: createEvent('show'),
@@ -124,9 +122,7 @@
         TmplContainer.prototype.init.call(this, config);
 
         // add generic rule
-        var genericRuleClassName = 'genericRule-' + this.eventObjectId;
-        classList(this.element).add(genericRuleClassName);
-        this.cssRule = DOM.Style.cssRule('.' + genericRuleClassName);
+        this.cssRule = DOM.Style.uniqueRule(this.element);
 
         // 
         this.ignoreClickFor = Array.from(this.ignoreClickFor);
@@ -143,8 +139,6 @@
         //this.addEventListener('click', 'click', true);
 
         Cleaner.add(this);
-
-        return config;
       },
       setLayout: function(dir, orientation, noRealign){
         var oldDir = this.dir;
@@ -428,7 +422,7 @@
 
       cssLayoutPrefix: 'mode-',
 
-      template: new Template(
+      template: 
         '<div{element|selected} class="Basis-Balloon" event-click="click">' +
           '<div class="Basis-Balloon-Canvas">' +
             '<div class="corner-left-top"/>' +
@@ -447,7 +441,6 @@
             '<div{content|childNodesElement} class="Basis-Balloon-Content"/>' +
           '</div>' +
         '</div>'
-      )
     });
 
     //
@@ -462,20 +455,16 @@
 
       childFactory: function(cfg){ return new this.childClass(cfg) },
 
-      template: new Template(
+      template:
         '<div{element} class="Basis-Menu-Item" event-click="click">' +
           '<a{content|selected} href="#"><span>{captionText}</span></a>' +
         '</div>' +
-        '<div{childNodesElement}/>'
-      ),
+        '<div{childNodesElement}/>',
 
-      templateAction: function(actionName, event){
-        if (actionName == 'click')
-        {
+      action: {
+        click: function(){
           this.click();
-          Event.kill(event);  
         }
-        TmplContainer.prototype.templateAction.call(this, actionName, event);
       },
 
       event_childNodesModified: function(){
@@ -499,6 +488,7 @@
       },
       setCaption: function(newCaption){
         this.caption = newCaption;
+
         if (this.tmpl.captionText)
           this.tmpl.captionText.nodeValue = this.captionGetter(this);
       },
@@ -517,9 +507,9 @@
     var MenuItemSet = Class(MenuItem, {
       className: namespace + '.MenuItemSet',
       event_childNodesModified: TmplNode.prototype.event_childNodesModified,
-      template: new Template(
-        '<div{element|content|childNodesElement} class="Basis-Menu-ItemSet"/>'
-      )
+
+      template: 
+        '<div class="Basis-Menu-ItemSet"/>'
     });
 
    /**
@@ -527,11 +517,11 @@
     */
     var MenuPartitionNode = Class(nsWrappers.TmplPartitionNode, {
       className: namespace + '.MenuPartitionNode',
-      template: new Template(
+
+      template:
         '<div{element} class="Basis-Menu-ItemGroup">' +
           '<div{childNodesElement|content} class="Basis-Menu-ItemGroup-Content"></div>' +
         '</div>'
-      )
     });
 
    /**
@@ -559,12 +549,11 @@
         this.hide();
       },
 
-      template: new Template(
+      template:
         '<div{element|selected} class="Basis-Menu">' +
           '<div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
         '</div>'
-      )
     });
 
     //
