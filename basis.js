@@ -1520,6 +1520,7 @@
 
         // add constructor property to prototype
         newClassProps.prototype.constructor = newClass;
+        newClass.constructor = { a: 1};
 
         // extend constructor with properties
         extend(newClass, newClassProps);

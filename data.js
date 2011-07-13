@@ -810,8 +810,8 @@
       Basis.Cleaner.remove(this);
 
       var items = values(this.map_);
-      for (var i = items.length; i --> 0;)
-        items[0].destroy();
+      for (var i = 0, item; item = items[i++];)
+        item.destroy();
     }
   });
 
@@ -846,7 +846,7 @@
     * Datasets can't have delegate by default.
     * @inheritDoc
     */
-    canHaveDelegate: false,
+    //canHaveDelegate: false, // ????
 
    /**
     * Default state for set is undefined. It useful to trigger dataset update
@@ -2039,17 +2039,17 @@
 
       if (this.source !== dataset)
       {
-        var oldDataset = this.dataset;
+        var oldSource = this.source;
 
-        if (oldDataset)
+        if (oldSource)
         {
-          oldDataset.removeHandler(TRANSFORMDATASET_DATASET_HANDLER, this);
-          TRANSFORMDATASET_DATASET_HANDLER.datasetChanged.call(this, oldDataset, {
-            deleted: oldDataset.getItems()
+          oldSource.removeHandler(TRANSFORMDATASET_DATASET_HANDLER, this);
+          TRANSFORMDATASET_DATASET_HANDLER.datasetChanged.call(this, oldSource, {
+            deleted: oldSource.getItems()
           });
         }
 
-        if (this.dataset = dataset)
+        if (this.source = dataset)
         {
           dataset.addHandler(TRANSFORMDATASET_DATASET_HANDLER, this);
           TRANSFORMDATASET_DATASET_HANDLER.datasetChanged.call(this, dataset, {

@@ -857,6 +857,9 @@
     throw (EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.className) + ')');
   }
 
+ /**
+  * @mixin
+  */
   var DomMixin = {
    /**
     * @inheritDoc
@@ -873,11 +876,11 @@
     * Function that will be called, when non-instance of childClass insert.
     * @example
     *   // code with no childFactory
-    *   function createChild(config){
+    *   function createNode(config){
     *     return new Basis.DOM.Wrapper.TmplNode(config);
     *   }
     *   var node = new Basis.DOM.Wrapper.TmplContainer();
-    *   node.appendChild(createChild({ .. config .. }));
+    *   node.appendChild(createNode({ .. config .. }));
     *
     *   // with childFactory
     *   var CustomClass = Basis.Class(Basis.DOM.Wrapper.TmplContainer, {
@@ -2308,19 +2311,16 @@
       * @inheritDoc
       */
       destroy: function(){
-        super_.destroy.call(this);
-
         var element = this.element;
-        if (element)
-        {
-          this.element = null;
-          if (element.parentNode)
-            element.parentNode.removeChild(element);
-        }
+        if (element && element.parentNode)
+          element.parentNode.removeChild(element);
+
+        super_.destroy.call(this);
 
         if (this.template)
           this.template.clearInstance(this.tmpl, this);
 
+        this.element = null;
         this.tmpl = null;
         this.childNodesElement = null;
       }

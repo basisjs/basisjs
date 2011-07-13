@@ -85,7 +85,7 @@
       color: white;
       border-radius: 3px;
     }
-    .delete
+    .remove
     {
       background: #CC0000;
       color: white;
@@ -99,7 +99,7 @@
       cursor: pointer;
       opacity: .6;
     }
-    .delete:hover
+    .remove:hover
     {
       opacity: 1;
     }
@@ -181,10 +181,10 @@
       });
     });
 
-    var ALL = new nsData.Dataset({
+    var NUMBERS = new nsData.Dataset({
       items: data
     });
-    var ALL2 = new nsData.Dataset({
+    var WORDS = new nsData.Dataset({
       items: data2
     });
 
@@ -230,9 +230,8 @@
       ), 
       {
         container: document.getElementById('demo-container'),
-        templateAction: function(templateAction, event){
-          if (templateAction == 'add')
-          {
+        action: {
+          add: function(){
             newItemPopup.collection.setOperands(newItemPopup.collection.minuend, this.collection);
             newItemPopup.show(Basis.Event.sender(event));
           }
@@ -240,14 +239,15 @@
         childClass: nsWrapper.TmplNode.subclass(
           nsWrapper.simpleTemplate(
             '<span class="item">' +
-              '<span class="delete" event-click="delete">x</span>' +
+              '<span class="remove" event-click="remove">x</span>' +
               '{this_info_value}' +
             '</span>'
           ),
           {
-            templateAction: function(templateAction){
-              if (templateAction == 'delete')
+            action: {
+              remove: function(){
                 this.parentNode.collection.remove([this.getRootDelegate()]);
+              }
             }
           }
         )
@@ -255,7 +255,7 @@
     );
 
     var newItemPopup = new Basis.Controls.Popup.Menu({
-      collection: new nsData.Dataset.Subtract({ minuend: ALL }),
+      collection: new nsData.Dataset.Subtract({ minuend: NUMBERS }),
       childClass: {
         captionGetter: Function.getter('info.value')
       },
@@ -273,12 +273,12 @@
     createHeader('Source datasets');
 
     new DatasetViewer({
-      title: 'dataset ALL',
-      collection: ALL
+      title: 'dataset NUMBERS',
+      collection: NUMBERS
     });
     new DatasetViewer({
-      title: 'dataset ALL2',
-      collection: ALL2
+      title: 'dataset WORDS',
+      collection: WORDS
     });
 
     createHeader('Custom datasets');
@@ -354,7 +354,7 @@
     createHeader('Transform datasets');
 
     new DatasetViewer({
-      title: 'Filter A -> another objects',
+      title: 'Transform for dataset A: NUMBERS -> WORDS',
       collection: new nsData.Dataset.Transform({
         transform: Function.getter('info.value - 1', data2),
         source: A
@@ -362,7 +362,7 @@
     });
 
     new DatasetViewer({
-      title: 'Filter A -> odd',
+      title: 'Subset of dataset A: ONLY ODD',
       collection: new nsData.Dataset.Subset({
         filter: Function.getter('info.value % 2'),
         source: A
@@ -370,7 +370,7 @@
     });
 
     new DatasetViewer({
-      title: 'Split A -> odd and even',
+      title: 'Split data A: ODD and EVEN',
       collection: new nsData.Dataset.Split({
         groupGetter: Function.getter('info.value % 2 ? "odd" : "even"'),
         source: A
