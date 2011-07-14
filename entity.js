@@ -319,7 +319,7 @@
             {
               return entityType.collection_[name] = new EntityCollection({
                 wrapper: result,
-                sources: [dataset || entityType.all],
+                source: dataset || entityType.all,
                 filter: memberSelector
               });
             }
@@ -335,7 +335,7 @@
             {
               return entityType.grouping_[name] = new EntityGrouping({
                 wrapper: result,
-                sources: [dataset || entityType.all],
+                source: dataset || entityType.all,
                 groupGetter: groupGetter
               });
             }
@@ -467,7 +467,7 @@
             this.collection_[name] = new EntityCollection({
               name: name,
               wrapper: wrapper,
-              sources: [this.all],
+              source: this.all,
               filter: config.collections[name] || Function.$true
             });
           }
@@ -481,7 +481,7 @@
             this.grouping_[name] = new EntityGrouping({
               name: name,
               wrapper: wrapper,
-              sources: [this.all],
+              source: this.all,
               groupGetter: config.groupings[name] || Function.$true
             });
           }

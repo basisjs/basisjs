@@ -830,7 +830,7 @@
       },
 
       template: new Template(
-        '<div{element} class="Basis-Combobox-Item" event-click="click">{titleText|}</div>'
+        '<div{element} class="Basis-Combobox-Item" event-click="click">{titleText}</div>'
       ),
       templateAction: function(actionName, event){
         if (actionName == 'click' && !this.isDisabled())

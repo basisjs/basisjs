@@ -1553,7 +1553,7 @@
         {
           var key = keys[i];
           var value = source[key];
-          var protoValue = proto[key]
+          var protoValue = proto[key];
 
           if (key == 'className' || key == 'extendConstructor')
             this[key] = value;
