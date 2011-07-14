@@ -28,8 +28,8 @@
     }
     OBJECT
     {
-      width: 100px;
       height: 100px;
+      width: 135px;
       margin: -15px 0 0;
     }
 
@@ -157,9 +157,9 @@
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('H2', header));
     };
 
-    function createImage(type){
+    function createImage(type, url){
       return DOM.createElement('.img',
-        DOM.createElement('object[type="image/svg+xml"][data="dataset.svg?' + type + '"]')
+        DOM.createElement('object[type="image/svg+xml"][data="' + (url || 'dataset.svg?') + type + '"]')
       );
     }
 
@@ -345,18 +345,19 @@
 
     new DatasetViewer({
       title: 'Subtract (A / B)',
+      content: createImage('', 'dataset.subtract.svg'),
       collection: new nsData.Dataset.Subtract({
         minuend: A,
         subtrahend: B
       })
     });
 
-    createHeader('Transform datasets');
+    createHeader('MapReduce datasets');
 
     new DatasetViewer({
-      title: 'Transform for dataset A: NUMBERS -> WORDS',
-      collection: new nsData.Dataset.Transform({
-        transform: Function.getter('info.value - 1', data2),
+      title: 'MapReduce for dataset A: NUMBERS -> WORDS',
+      collection: new nsData.Dataset.MapReduce({
+        map: Function.getter('info.value - 1', data2),
         source: A
       })
     });
@@ -364,7 +365,7 @@
     new DatasetViewer({
       title: 'Subset of dataset A: ONLY ODD',
       collection: new nsData.Dataset.Subset({
-        filter: Function.getter('info.value % 2'),
+        rule: Function.getter('info.value % 2'),
         source: A
       })
     });
@@ -372,7 +373,7 @@
     new DatasetViewer({
       title: 'Split data A: ODD and EVEN',
       collection: new nsData.Dataset.Split({
-        groupGetter: Function.getter('info.value % 2 ? "odd" : "even"'),
+        rule: Function.getter('info.value % 2 ? "odd" : "even"'),
         source: A
       }),
       childClass: nsWrapper.TmplContainer.subclass(

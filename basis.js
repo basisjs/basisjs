@@ -3297,208 +3297,220 @@
 
     var namespace = 'Basis.Html';
 
+    var tmplEventListeners = {};
+    var tmplNodeMap = { seed: 1 };
+
+    var HTML_EVENT_OBJECT_ID_HOLDER = 'basisObjectId';
+    var partFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
+
     // Test for browser (IE) normalize text nodes during cloning
     var CLONE_NORMALIZE_TEXT_BUG = (function(){
       return DOM.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
     })();
 
-    var tmplEventListeners = {};
-    var tmplNodeMap = { seed: 1 };
+    function parseText(context, str, nodePath, pos){
+      var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
+      var result = [];
+      var node;
+      for (var i = 0; i < parts.length; i++)
+      {
+        if (i % 2)
+        {
+          var p = parts[i].split(/\|/);
+          context.getters[p[0]] = nodePath + 'childNodes[' + pos + ']';
+          node = p.length > 1 ? p[1] : p[0];
+        }
+        else
+          node = parts[i].length ? parts[i] : null;
 
-    var HTML_EVENT_OBJECT_ID_HOLDER = 'basisObjectId';
+        if (node != null)
+        {
+          // Some browsers (Internet Explorer) can normalize text nodes during cloning, that why 
+          // we need to insert comment nodes between text nodes to prevent text node merge
+          if (CLONE_NORMALIZE_TEXT_BUG)
+          {
+            if (result.length)
+              result.push(document.createComment(''));
+            pos++;
+          }
+          result.push(node);
+          pos++;
+        }
+      }
+      return DOM.createFragment.apply(null, result);
+    }
+
+    function parseAttributes(context, str, nodePath){
+      var strings = [];
+      return str
+        .trim()
+        .replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' })
+        .replace(/(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attrName, ref, name, value){
+          if (name)
+            context.getters[name] = nodePath + '.getAttributeNode("' + attrName + '")';
+
+          var eventMatch = attrName.match(/^event-([a-z]+)/i);
+          if (eventMatch)
+          {
+            var eventName = eventMatch[1];
+            if (!tmplEventListeners[eventName])
+            {
+              tmplEventListeners[eventName] = true;
+              Event.addGlobalHandler(eventMatch[1], function(event){
+                var cursor = Event.sender(event);
+                var attr;
+                var refId;
+
+                // search for nearest node with event-{eventName} attribute
+                do {
+                  if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
+                    break;
+                } while (cursor = cursor.parentNode);
+
+                // if not found - exit
+                if (!attr)
+                  return;
+
+                // search for nearest node refer to Basis.Class instance
+                do {
+                  if (refId = cursor[HTML_EVENT_OBJECT_ID_HOLDER])
+                  {
+                    // if found call templateAction method
+                    var node = tmplNodeMap[refId];
+                    if (node && node.templateAction)
+                    {
+                      node.templateAction(attr.nodeValue, event);
+                      //Event.kill(event);
+                    }
+                    break;
+                  }
+                } while (cursor  = cursor.parentNode);
+              });
+            }
+          }
+
+          if (value)
+            value = strings.shift();
+
+          return attrName == 'class'
+            ? value.replace(/^([\'\"]?)(.*?)\1$/, "$2").trim().replace(/^(.)|\s+|\s*,\s*/g, '.$1')
+            : '[' + attrName + (value ? '=' + value : '') + ']';
+        });
+    }
+
+    function parseHtml(context, path){
+      var result = DOM.createFragment();
+      var m;
+      var pos = 0;
+
+      if (!path)
+        path = '';
+
+      if (!context.stack)
+        context.stack = [];
+
+      if (!context.source)
+        context.source = context.str;
+
+      while (m = partFinderRx.exec(context.str))
+      {
+        var pre = RegExp.leftContext;
+        context.str = context.str.substr(pre.length + m[0].length);
+
+        if (pre.length)
+        {
+
+          var tnodes = parseText(context, pre, path, pos);
+          pos += tnodes.childNodes.length;
+          result.appendChild(tnodes);
+        }
+
+        if (m[6])
+        {
+          var comment = document.createComment(m[6]);
+          if (m[7])
+            context.getters[m[7]] = path + 'childNodes[' + pos + ']';
+          result.appendChild(comment);
+          pos++;
+        }
+        else if (m[5])
+        {
+          if (m[5] == context.stack[context.stack.length - 1])
+          {
+            context.stack.pop();
+            return result;
+          }
+          else
+          {
+            ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + context.source.replace(new RegExp('(</' + m[5] + '>)(' + context.str + ')$'), '\n ==[here]=>$1<== \n$2'));
+            throw "Wrong end tag";
+          }
+        }
+        else
+        {
+          var descr = m[0];
+          var tagName = m[1];
+          var name = m[2];
+          var attributes = m[3];
+          var singleton = !!m[4];
+          var nodePath = path + 'childNodes[' + pos + ']';
+
+          if (name)
+            context.getters[name] = nodePath;
+
+          if (attributes)
+            attributes = parseAttributes(context, attributes, nodePath);
+
+          var element = DOM.createElement(tagName + attributes);
+
+          if (/*str.length && */!singleton)
+          {
+            context.stack.push(tagName);
+            if (context.str.length)
+              element.appendChild(parseHtml(context, nodePath + '.'));
+          }
+
+          result.appendChild(element);
+          pos++;
+        }
+      }
+      
+      if (context.str.length)
+        result.appendChild(parseText(context, context.str, '', pos));
+
+      if (context.stack.length)
+      {
+        ;;;if (typeof console != undefined) console.log('No end tag for ' + context.stack.reverse() + ' in Html.Template:\n\n' + context.source);
+        throw "No end tag for " + stack.reverse();
+      }
+
+      return result;
+    }
+
 
    /**
     * Parsing template
     * @func
     */
-    function parseTemplate(){
+    function parseTemplate(source){
       if (this.proto)
         return;
 
       var str = this.source;
-      var getters = {
-        element: 'childNodes[0]'
-      };
-      var stack = [];
 
       if (typeof str == 'function')
         this.source = str = str();
 
       var source = str.trim();
-
-      //console.log('parse:', htmlCode);
-
-      //this.source = htmlCode;
-
-      function parseText(str, path, pos){
-        var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
-        var result = [];
-        var node;
-        for (var i = 0; i < parts.length; i++)
-        {
-          if (i % 2)
-          {
-            var p = parts[i].split(/\|/);
-            getters[p[0]] = path + 'childNodes[' + pos + ']';
-            node = p.length > 1 ? p[1] : p[0];
-          }
-          else
-            node = parts[i].length ? parts[i] : null;
-
-          if (node != null)
-          {
-            // Some browsers (Internet Explorer) can normalize text nodes during cloning, that why 
-            // we need to insert comment nodes between text nodes to prevent text node merge
-            if (CLONE_NORMALIZE_TEXT_BUG)
-            {
-              if (result.length)
-                result.push(document.createComment(''));
-              pos++;
-            }
-            result.push(node);
-            pos++;
-          }
+      var context = {
+        str: source,
+        getters: {
+          element: 'childNodes[0]'
         }
-        return DOM.createFragment.apply(null, result);
-      }
+      };
 
-      var re = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
-      function parseHtml(path, pos){
-        var result = DOM.createFragment();
-        var m;
-
-        while (m = re.exec(str))
-        {
-          var pre = RegExp.leftContext;
-
-          str = RegExp.rightContext;
-
-          if (pre.length)
-          {
-            var tnodes = parseText(pre, path, pos);
-            pos += tnodes.childNodes.length;
-            result.appendChild(tnodes);
-          }
-
-          if (m[6])
-          {
-            var comment = document.createComment(m[6]);
-            if (m[7])
-              getters[m[7]] = path + 'childNodes[' + pos + ']';
-            result.appendChild(comment);
-            pos++;
-          }
-          else if (m[5])
-          {
-            if (m[5] == stack[stack.length - 1])
-            {
-              stack.pop();
-              return result;
-            }
-            else
-            {
-              ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + source.replace(new RegExp('(</' + m[5] + '>)(' + str + ')$'), '\n ==[here]=>$1<== \n$2'));
-              throw "Wrong end tag";
-            }
-          }
-          else
-          {
-            var descr = m[0];
-            var tagName = m[1];
-            var name = m[2];
-            var attributes = m[3];
-            var singleton = !!m[4];
-
-            if (name)
-              getters[name] = path + 'childNodes[' + pos + ']';
-
-            if (attributes)
-            {
-              var strings = [];
-              var tmp = attributes.replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' });
-              attributes = tmp
-                .trim()
-                .replace(/(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attrName, ref, name, value){
-                  if (name)
-                    getters[name] = path + 'childNodes[' + pos + ']' + '.getAttributeNode("' + attrName + '")';
-
-                  var eventMatch = attrName.match(/^event-([a-z]+)/i);
-                  if (eventMatch)
-                  {
-                    var eventName = eventMatch[1];
-                    if (!tmplEventListeners[eventName])
-                    {
-                      //console.log('add listener for ' + eventName);
-                      tmplEventListeners[eventName] = true;
-                      Event.addGlobalHandler(eventMatch[1], function(event){
-                        var cursor = Event.sender(event);
-                        var attr;
-                        var refId;
-
-                        // search for nearest node with event-* attribute
-                        do {
-                          if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
-                            break;
-                        } while (cursor = cursor.parentNode);
-
-                        // if not found - exit
-                        if (!attr)
-                          return;
-
-                        // search for nearest node refer to Basis.Class instance
-                        do {
-                          if (refId = cursor[HTML_EVENT_OBJECT_ID_HOLDER])
-                          {
-                            // if found call templateAction method
-                            var node = tmplNodeMap[refId];
-                            if (node && node.templateAction)
-                            {
-                              node.templateAction(attr.nodeValue, event);
-                              //Event.kill(event);
-                            }
-                            break;
-                          }
-                        } while (cursor  = cursor.parentNode);
-                      });
-                    }
-                  }
-
-                  if (value)
-                    value = strings.shift();
-
-                  return attrName == 'class'
-                    ? value.replace(/^([\'\"]?)(.*?)\1$/, "$2").trim().replace(/^(.)|\s+|\s*,\s*/g, '.$1')
-                    : '[' + attrName + (value ? '=' + value : '') + ']';
-                });
-            }
-
-            var element = DOM.createElement(tagName + attributes);
-
-            if (/*str.length && */!singleton)
-            {
-              stack.push(tagName);
-              if (str.length)
-                element.appendChild(parseHtml(path + 'childNodes[' + pos + '].', 0));
-            }
-
-            result.appendChild(element);
-            pos++;
-          }
-        }
-        
-        if (str.length)
-          result.appendChild(parseText(str, '', pos));
-
-        if (stack.length)
-        {
-          ;;;if (typeof console != undefined) console.log('No end tag for ' + stack.reverse() + ' in Html.Template:\n\n' + source);
-          throw "No end tag for " + stack.reverse();
-        }
-
-        return result;
-      }
-
-      var proto = parseHtml('', 0);
+      var proto = parseHtml(context, '', 0);
+      var getters = context.getters;
 
       var aliases = [];
       var body = keys(getters).map(function(name, idx){
@@ -3573,6 +3585,8 @@
         }
 
       .toString().replace('_code_()', aliases.map(String.format,'obj_.{0}=null;\n').join('')))(tmplNodeMap);
+
+      return this;
     };
 
 
@@ -3631,7 +3645,140 @@
         if (value instanceof Template)
           return value;
         else
-          return new Template(value);
+        {
+          if (typeof value == 'object')
+          {
+            var superTemplate = this;
+            var operationPriority = {
+              insertBefore: 1,
+              insertAfter: 2,
+              remove: 3,
+              replace: 4,
+              insertBegin: 5,
+              append: 6
+            };
+
+            var template = new Template(function(){
+
+              function findRefs(node){
+                var result = [];
+                for (var key in fullMap)
+                  if (fullMap[key] === node)
+                    result.push(key);
+                return result;
+              }
+
+              function toMarkup(node){
+                var result = '';
+                var refs = findRefs(node);
+
+                if (refs.length)
+                  refs = '{' + refs.join('|') + '}';
+
+                switch (node.nodeType){
+                  case 1: 
+                    var nodeName = node.nodeName.toLowerCase();
+                    result += '<' + nodeName + refs + DOM.outerHTML(node.cloneNode(false)).replace(/^<\w+|(\/>|><\/\w+>|>)$/g, '');
+                    if (node.firstChild)
+                      result += '>' + walk(node) + '</' + nodeName + '>'
+                    else
+                      result += '/>';
+                  break;
+                  case 8:
+                    result += '<!--' + node.nodeValue + '-->'
+                  break;
+                  default:
+                    result += refs || node.nodeValue;
+                };
+                return result;
+              }
+
+              var map = superTemplate.createInstance();
+              var F = Function();
+              F.prototype = map;
+              var fullMap = new F;
+
+              function walk(parent){
+                var node = parent.firstChild;
+                var result = '';
+                var br = 0;
+
+                while (node)
+                {
+                  br = 0;
+                  var refs = findRefs(node, map);
+                  if (refs)
+                  {
+                    for (var ri = 0, ref; ref = refs[ri++];)
+                    {
+                      var ops = keys(value[ref]).sortAsObject(function(key){ return operationPriority[key] });
+
+                      for (var i = 0, operation; operation = ops[i++];)
+                      {
+                        if (operation == 'remove')
+                        {
+                          node = node.nextSibling;
+                          br = 1;
+                          break;
+                        }
+
+                        parseTemplate.call({
+                          source: value[ref][operation]
+                        }).createInstance(fullMap);
+
+                        var fragment = fullMap.element.parentNode;
+
+                        delete fullMap.element;
+
+                        var br = 0;
+                        switch (operation){
+                          case 'insertBefore':
+                            result += walk(fragment);
+                          break;
+                          case 'insertAfter':
+                            node.parentNode.insertBefore(fragment, node.nextSibling);
+                          break;
+                          case 'replace':
+                            var t = fragment.firstChild || node.nextSibling;
+                            DOM.replace(node, fragment);
+                            node = t;
+                            br = 1;
+                          break;
+                          case 'insertBegin':
+                            node.insertBefore(fragment, node.firstChild);
+                          break;
+                          case 'append':
+                            node.appendChild(fragment);
+                          break;
+                        }
+                        //if (br)
+                        //  continue NEXT;
+                        if (br)
+                          break;
+                      }
+                      if (br)
+                        break;
+                    };
+                  }
+
+                  if (node && !br)
+                  {
+                    result += toMarkup(node);
+                    node = node.nextSibling;
+                  }
+                };
+
+                return result;
+              }
+
+              return walk(map.element.parentNode);
+            });
+            ;;;template.superTemplate_ = superTemplate;
+            return template;
+          }
+          else
+            return new Template(value);
+        }
       },
 
      /**

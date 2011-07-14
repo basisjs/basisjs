@@ -56,13 +56,13 @@
           '<label><span{title}>{titleText}</span></label>' +
         '</div>' +
         '<div{content} class="Basis-Field-Container">' +
-          '<!-- field -->' +
+          '<!-- {fieldPlace} -->' +
         '</div>' +
       '</div>'
     );
 
     function createFieldTemplate(template, injection){
-      return new Template(template.source.replace('<!-- field -->', injection));
+      return new Template(template.source.replace('<!-- {fieldPlace} -->', injection));
     }
 
     //
@@ -98,8 +98,8 @@
       },
       event_change: createEvent('change'),
       event_keydown: createEvent('keydown'),
-      event_keypress: createEvent('keyup'),
-      event_keyup: createEvent('keypress') && function(event){
+      event_keypress: createEvent('keypress'),
+      event_keyup: createEvent('keyup') && function(event){
         var event = Event(event);
         if (event)
         {

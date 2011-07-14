@@ -20,8 +20,12 @@
   * - Const:
   *   {Basis.Data.STATE}, {Basis.Data.Subscription}
   * - Classes:
-  *   {Basis.Data.DataObject}, {Basis.Data.AbstractDataset}, {Basis.Data.Dataset},
-  *   {Basis.Data.MergeDataset}, {Basis.Data.Collection}, {Basis.Data.Grouping}
+  *   {Basis.Data.DataObject}, {Basis.Data.KeyObjectMap},
+  *   {Basis.Data.AbstractDataset}, {Basis.Data.Dataset}
+  * - Various dataset classes:
+  *   {Basis.Data.Dataset.Merge}, {Basis.Data.Dataset.Subtract},
+  *   {Basis.Data.Dataset.MapReduce}, {Basis.Data.Dataset.Subset},
+  *   {Basis.Data.Dataset.Split}
   *
   * @namespace Basis.Data
   */
@@ -39,6 +43,7 @@
   var values = Object.values;
   var $self = Function.$self;
   var $true = Function.$true;
+  var $false = Function.$false;
   var createEvent = EventObject.createEvent;
   var event = EventObject.event;
 
@@ -190,6 +195,10 @@
   Subscription.regType(
     'SOURCE',
     {
+      sourceChanged: function(object, oldSource){
+        this.remove(object, oldSource);
+        this.add(object, object.source);
+      },
       sourcesChanged: function(object, delta){
         var array;
 
@@ -203,8 +212,10 @@
       }
     },
     function(action, object){
-      for (var i = object.sources.length; i --> 0;)
-        action(object, object.sources[i]);
+      var sources = object.sources || [object.source];
+
+      for (var i = 0, source; source = sources[i++];)
+        action(object, source);
     }
   );
 
@@ -1339,7 +1350,7 @@
   // Merge dataset 
   //
 
-  var AGGREGATEDATASET_DATASET_HANDLER = {
+  var MERGE_DATASET_HANDLER = {
     datasetChanged: function(source, delta){
       var memberMap = this.memberMap_;
       var updated = {};
@@ -1497,7 +1508,7 @@
         if (this.sources.add(source))
         {
           // add event listeners to source
-          source.addHandler(AGGREGATEDATASET_DATASET_HANDLER, this);
+          source.addHandler(MERGE_DATASET_HANDLER, this);
 
           // process new source objects and update member map
           var memberMap = this.memberMap_;
@@ -1545,7 +1556,7 @@
       if (this.sources.remove(source))
       {
         // remove event listeners from source
-        source.removeHandler(AGGREGATEDATASET_DATASET_HANDLER, this);
+        source.removeHandler(MERGE_DATASET_HANDLER, this);
 
         // process removing source objects and update member map
         var memberMap = this.memberMap_;
@@ -1800,37 +1811,34 @@
 
 
   //
-  // Transform
+  // MapReduce
   //
 
-  var TRANSFORMDATASET_MEMBER_HANDLER = {
+  var MAPREDUCEDATASET_SOURCEOBJECT_HANDLER = {
     update: function(object){
-      // update make sence only if transform function here
-      if (!this.transform)
-        return;
+      var newMember = this.map ? this.map(object) : object; // fetch new member ref
+      
+      if (newMember instanceof DataObject == false || this.reduce(newMember))
+        newMember = null;
 
       var sourceMap = this.sourceMap_[object.eventObjectId];
-      var memberMap = this.memberMap_;
       var curMember = sourceMap.member;
-      var curMemberId;
-      var newMember = this.transform(object); // fetch new member ref
-      var newMemberId;
-      var delta = {};
-      var inserted;
-      var deleted;
-      
-      if (newMember instanceof DataObject == false)
-        newMember = null;
 
       // if member ref is changed
       if (curMember != newMember)
       {
+        var memberMap = this.memberMap_;
+        var delta;
+        var inserted;
+        var deleted;
+
+        // update member
         sourceMap.member = newMember;
 
         // if here is ref for member already
         if (curMember)
         {
-          curMemberId = curMember.eventObjectId;
+          var curMemberId = curMember.eventObjectId;
 
           // call callback on member ref add
           if (this.removeMemberRef)
@@ -1852,7 +1860,7 @@
         // if new member exists, update map
         if (newMember)
         {
-          newMemberId = newMember.eventObjectId;
+          var newMemberId = newMember.eventObjectId;
 
           // call callback on member ref add
           if (this.addMemberRef)
@@ -1883,13 +1891,15 @@
     }*/
   };
 
-  var TRANSFORMDATASET_DATASET_HANDLER = {
+  var MAPREDUCEDATASET_DATASET_HANDLER = {
     datasetChanged: function(dataset, delta){
       var sourceMap = this.sourceMap_;
       var memberMap = this.memberMap_;
       var inserted = [];
       var deleted = [];
       var sourceObject;
+      var sourceObjectId;
+      var member;
 
       Dataset.setAccumulateState(true);
 
@@ -1897,12 +1907,12 @@
       {
         for (var i = 0; sourceObject = delta.inserted[i]; i++)
         {
-          var member = this.transform ? this.transform(sourceObject) : sourceObject;
+          member = this.map ? this.map(sourceObject) : sourceObject;
 
-          if (member instanceof DataObject == false)
+          if (member instanceof DataObject == false || this.reduce(member))
             member = null;
 
-          sourceObject.addHandler(TRANSFORMDATASET_MEMBER_HANDLER, this);
+          sourceObject.addHandler(MAPREDUCEDATASET_SOURCEOBJECT_HANDLER, this);
           sourceMap[sourceObject.eventObjectId] = {
             sourceObject: sourceObject,
             member: member
@@ -1931,10 +1941,10 @@
       {
         for (var i = 0; sourceObject = delta.deleted[i]; i++)
         {
-          var sourceObjectId = sourceObject.eventObjectId;
-          var member = sourceMap[sourceObjectId].member;
+          sourceObjectId = sourceObject.eventObjectId;
+          member = sourceMap[sourceObjectId].member;
 
-          sourceObject.removeHandler(TRANSFORMDATASET_MEMBER_HANDLER, this);
+          sourceObject.removeHandler(MAPREDUCEDATASET_SOURCEOBJECT_HANDLER, this);
           delete sourceMap[sourceObjectId];
 
           if (member)
@@ -1965,8 +1975,8 @@
  /**
   * @class
   */
-  var Transform = Class(AbstractDataset, {
-    className: namespace + '.Dataset.Transform',
+  var MapReduce = Class(AbstractDataset, {
+    className: namespace + '.Dataset.MapReduce',
 
    /**
     * Data source.
@@ -1975,19 +1985,44 @@
     source: null,
 
    /**
-    * Transformation function.
+    * Fires when source property changed.
+    * @param {Basis.Data.AbstractDataset} dataset Event initiator.
+    * @param {Basis.Data.AbstractDataset} oldSource Previous value for source property.
+    * @event
+    */
+    event_sourceChanged: createEvent('sourceChanged', 'dataset', 'oldSource'),
+
+   /**
+    * Map function for source object, to get member object.
     * @type {function(Basis.Data.DataObject):Basis.Data.DataObject}
     * @readonly
     */
-    transform: Function.$self,
+    map: $self,
 
    /**
+    * Filter function. It should return false, than result of map function
+    * become a member.
+    * @type {function(Basis.Data.DataObject):boolean}
+    * @readonly
+    */
+    reduce: $false,
+
+   /**
+    * Helper function.
+    */
+    rule: $false,
+
+   /**
+    * NOTE: Can't be changed after init.
     * @type {function(Basis.Data.DataObject)}
+    * @readonly
     */
     addMemberRef: null,
 
    /**
+    * NOTE: Can't be changed after init.
     * @type {function(Basis.Data.DataObject)}
+    * @readonly
     */
     removeMemberRef: null,
 
@@ -2002,8 +2037,8 @@
     * @inheritDoc
     */
     init: function(config){
-      ;;;if (this.sources) throw 'Dataset.Transform instances no more support for sources property, use source property instead.';
-      ;;;if (this.dataset) throw 'Dataset.Transform instances no more support for dataset property, use source property instead.';
+      ;;;if (this.sources) throw 'Dataset.MapReduce instances no more support for sources property, use source property instead.';
+      ;;;if (this.dataset) throw 'Dataset.MapReduce instances no more support for dataset property, use source property instead.';
 
       AbstractDataset.prototype.init.call(this, config);
 
@@ -2018,14 +2053,33 @@
     },
 
    /**
+    * Set new filter function.
+    * @param {function(Basis.Data.DataObject):boolean} filter
+    * @return {Object} Delta of member changes.
+    */
+    setRule: function(rule){
+      if (typeof rule != 'function')
+        rule = $true;
+
+      if (this.rule !== rule)
+      {
+        this.rule = rule;
+        return this.applyRule();
+      }
+    },
+
+   /**
     * Set new transform function and apply new function to source objects.
     * @param {function(Basis.Data.DataObject):Basis.Data.DataObject} transform
     */
-    setTransform: function(transform){
+    setMap: function(transform){
+      if (typeof rule != 'function')
+        rule = $self;
+
       if (this.transform !== transform)
       {
         this.transform = transform;
-        return this.runTransform();
+        return this.applyRule();
       }
     },
 
@@ -2033,29 +2087,31 @@
     * Set new source dataset.
     * @param {Basis.Data.AbstractDataset} dataset
     */
-    setSource: function(dataset){
-      if (dataset instanceof AbstractDataset == false)
-        dataset = null;
+    setSource: function(source){
+      if (source instanceof AbstractDataset == false)
+        source = null;
 
-      if (this.source !== dataset)
+      if (this.source !== source)
       {
         var oldSource = this.source;
 
         if (oldSource)
         {
-          oldSource.removeHandler(TRANSFORMDATASET_DATASET_HANDLER, this);
-          TRANSFORMDATASET_DATASET_HANDLER.datasetChanged.call(this, oldSource, {
+          oldSource.removeHandler(MAPREDUCEDATASET_DATASET_HANDLER, this);
+          MAPREDUCEDATASET_DATASET_HANDLER.datasetChanged.call(this, oldSource, {
             deleted: oldSource.getItems()
           });
         }
 
-        if (this.source = dataset)
+        if (this.source = source)
         {
-          dataset.addHandler(TRANSFORMDATASET_DATASET_HANDLER, this);
-          TRANSFORMDATASET_DATASET_HANDLER.datasetChanged.call(this, dataset, {
-            inserted: dataset.getItems()
+          source.addHandler(MAPREDUCEDATASET_DATASET_HANDLER, this);
+          MAPREDUCEDATASET_DATASET_HANDLER.datasetChanged.call(this, source, {
+            inserted: source.getItems()
           });
         }
+
+        this.event_sourceChanged(this, oldSource);
       }
     },
 
@@ -2063,7 +2119,7 @@
     * Apply transform for all source objects and rebuild member set.
     * @return {Object} Delta of member changes.
     */
-    runTransform: function(){
+    applyRule: function(){
       var sourceMap = this.sourceMap_;
       var memberMap = this.memberMap_;
       var curMember;
@@ -2082,9 +2138,9 @@
         sourceObject = sourceObjectInfo.sourceObject;
 
         curMember = sourceObjectInfo.member;
-        newMember = this.transform ? this.transform(sourceObject) : sourceObject;
+        newMember = this.map ? this.map(sourceObject) : sourceObject;
 
-        if (newMember instanceof DataObject == false)
+        if (newMember instanceof DataObject == false || this.reduce(newMember))
           newMember = null;
 
         if (curMember != newMember)
@@ -2168,70 +2224,54 @@
  /**
   * @class
   */
-  var Subset = Class(Transform, {
+  var Subset = Class(MapReduce, {
     className: namespace + '.Dataset.Subset',
 
    /**
     * @inheritDoc
     */
-    transform: function(object){
-      return this.filter(object) ? object : null;
+    reduce: function(object){
+      return !this.rule(object);
     },
 
    /**
-    * @type {function(Basis.Data.DataObject):boolean}
+    * @inheritDoc
     */
-    filter: $true,
-
-   /**
-    * Set new filter function.
-    * @param {function(Basis.Data.DataObject):boolean} filter
-    * @return {Object} Delta of member changes.
-    */
-    setFilter: function(filter){
-      if (typeof filter != 'function')
-        filter = $true;
-
-      if (this.filter !== filter)
-      {
-        this.filter = filter;
-        return this.runTransform();
-      }
-    }
+    rule: $true
   });
 
 
   //
-  // Grouping
+  // Split
   //
 
  /**
   * @class
   */
-  var Grouping = Class(Transform, {
-    className: namespace + '.Dataset.Grouping',
-
-   /**
-    * @type {Basis.Data.KeyObjectMap}
-    */
-    mapper: null,
-
-   /**
-    * @type {function(data):key}
-    */
-    groupGetter: $true,
-
-   /**
-    * @type {Basis.Data.AbstractDataset}
-    */
-    groupClass: AbstractDataset,
+  var Split = Class(MapReduce, {
+    className: namespace + '.Dataset.Split',
 
    /**
     * @inheritDoc
     */
-    transform: function(sourceObject){
-      return this.mapper.resolve(sourceObject);
+    map: function(object){
+      return this.keyMap.resolve(object);
     },
+
+   /**
+    * @type {function(data):key}
+    */
+    rule: $true,
+
+   /**
+    * @type {Basis.Data.AbstractDataset}
+    */
+    subsetClass: AbstractDataset,
+
+   /**
+    * @type {Basis.Data.KeyObjectMap}
+    */
+    keyMap: null,
 
    /**
     * @inheritDoc
@@ -2256,26 +2296,27 @@
     init: function(config){
       //this.groupMap_ = {};
 
-      if (!this.mapper)
-        this.mapper = new KeyObjectMap({
-          keyGetter: this.groupGetter,
-          itemClass: this.groupClass
-        });
+      if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
+        this.keyMap = new KeyObjectMap(Object.extend({
+          keyGetter: this.rule,
+          itemClass: this.subsetClass
+        }, this.keyMap));
 
       // inherit
-      Transform.prototype.init.call(this, config);
+      MapReduce.prototype.init.call(this, config);
     },
 
-    getGroup: function(data, autocreate){
-      return this.mapper.get(data, autocreate);
+    getSubset: function(data, autocreate){
+      return this.keyMap.get(data, autocreate);
     },
 
     destroy: function(){
       // inherit
-      Transform.prototype.destroy.call(this);
+      MapReduce.prototype.destroy.call(this);
 
-      //this.groupMap_ = null;
-      this.mapper.destroy();
+      // destroy keyMap
+      this.keyMap.destroy();
+      this.keyMap = null;
     }
   });
 
@@ -2289,9 +2330,9 @@
     Subtract: Subtract,
 
     // transform dataset
-    Transform: Transform,
+    MapReduce: MapReduce,
     Subset: Subset,
-    Split: Grouping
+    Split: Split
   });
 
   //
@@ -2324,7 +2365,7 @@
     // deprecate
     AggregateDataset: Merge,
     Collection: Subset,
-    Grouping: Grouping
+    Grouping: Split
   });
 
 })();

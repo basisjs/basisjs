@@ -538,9 +538,8 @@
     var VerticalPanel = Class(TmplContainer, {
       className: namespace + '.VerticalPanel',
 
-      template: new Basis.Html.Template(
-        '<div{element|content|childNodesElement} class="Basis-VerticalPanel"/>'
-      ),
+      template: 
+        '<div class="Basis-VerticalPanel"/>',
 
       flex: 0,
 
@@ -574,11 +573,10 @@
       className: namespace + '.VerticalPanelStack',
 
       childClass: VerticalPanel,
-      template: new Basis.Html.Template(
-        '<div{element|childNodesElement} class="Basis-VerticalPanelStack">' + 
+      template:
+        '<div class="Basis-VerticalPanelStack">' + 
           (SUPPORT_DISPLAYBOX ? '' : '<div{ruller} style="position: absolute; visibility: hidden; top: -1000px; width: 10px;"/>') +
-        '</div>'
-      ),
+        '</div>',
 
       init: function(config){
         this.ruleClassName = 'Basis-FlexStackPanel-' + ++stackPanelId;

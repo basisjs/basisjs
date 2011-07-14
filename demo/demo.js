@@ -76,8 +76,13 @@
     
     pages.forEach(function(page, idx){ DOM.display(page.element, !idx) });
 
-    DOM.insert(document.body, [
+    DOM.insert(
+      document.body,
       DOM.createElement('A#backLink[href="../index.html"]', 'Back to demos'),
+      DOM.INSERT_BEGIN
+    );
+
+    DOM.insert(document.body, [
       DOM.createElement('#DemoWrapper',
         tabs,
         DOM.wrap(pages, { '.DemoWrapper-Page': Function.$true }, 'element')

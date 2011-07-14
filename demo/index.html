@@ -60,20 +60,27 @@
     #DemoList .Demo-TreeNode
     {
       width: 140px;
-      float: left;
+      display: inline-block;
+      vertical-align: top;
       text-align: center;
       cursor: pointer;
-      margin-right: 1px;
+      height: 100%;
     }
     #DemoList .Demo-TreeNode A
     {
+      padding-top: 4px;
       display: block;
       text-decoration: none;
       color: #333;
+      border-radius: 3px;
+        -webkit-transition: .15s background-color;
+        -moz-transition: .15s background-color;
+      transition: .15s background-color;
+      background: white;
     }
     #DemoList .Demo-TreeNode A:hover
     {
-      background: #F4F4F4;
+      background: #F0F0F0;
     }
     #DemoList .Demo-TreeNode IMG
     {
@@ -84,15 +91,17 @@
     }
     #DemoList .Demo-TreeNode A:hover IMG
     {
-      border-color: #CCC;
+        -webkit-transition: .15s border-color;
+        -moz-transition: .15s border-color;
+      transition: .15s border-color;
+      border-color: #BBB;
     }
     #DemoList .Demo-TreeNode .title
     {
       display: block;
-      padding: 4px 10px 7px;
+      padding: 7px 10px 10px;
       text-align: center;
       font-size: 85%;
-      height: 2.5em;
     }
     #DemoList .selected
     {
@@ -221,15 +230,11 @@
               '</a>' +
             '</li>'
           ),
-          event_select: function(){
-            nsTree.TreeNode.prototype.event_select.call(this);
-
-            location.href = this.info.url;
-          },
           event_update: function(object, delta){
             nsTree.TreeNode.prototype.event_update.call(this, object, delta);
           
             this.tmpl.imageUrl.nodeValue = this.info.image || this.info.url.replace('.html', '.png');
+            this.tmpl.title.href = this.info.url;
           }
         }),
         localGrouping: {

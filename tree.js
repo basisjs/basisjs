@@ -197,7 +197,7 @@
     * @type {Basis.Html.Template}
     * @private
     */
-    template:
+    template: 
       '<li{element} class="Basis-TreeNode">' +
         '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
           '<div{expander} class="Basis-TreeNode-Expander" event-click="toggle"/>' +

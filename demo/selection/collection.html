@@ -100,8 +100,8 @@
       container: demoContainer,
       content: 'Selected items by group:',
       collection: new Basis.Data.Grouping({
-        sources: [tree1.selection], 
-        groupGetter: Function.getter('info.id % 2', {
+        source: tree1.selection, 
+        rule: Function.getter('info.id % 2', {
           'NaN': 'Child items',
           '0': 'Even items',
           '1': 'Odd items'
