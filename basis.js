@@ -1577,10 +1577,31 @@
       }.__extend__(extension);
     };
 
+    var NestedExtProperty = function(extension){
+      return {
+        __extend__: function(extension){
+          var Base = Function();
+          Base.prototype = this;
+          var property = new Base;
+
+          for (var key in extension)
+          {
+            var value = property[key];
+            property[key] = value && value.__extend__
+                         ? value.__extend__(extension[key])
+                         : ExtensibleProperty(extension[key]);
+          }
+
+          return property;
+        }
+      }.__extend__(extension);
+    };
+
     return getNamespace(namespace, BaseClass.create).extend({
       BaseClass: BaseClass,
       create: BaseClass.create,
-      ExtensibleProperty: ExtensibleProperty
+      ExtensibleProperty: ExtensibleProperty,
+      NestedExtProperty: NestedExtProperty
     });
   })();
 
@@ -1671,6 +1692,8 @@
      /** use extend constructor */
       extendConstructor: true,
 
+      listen: Class.NestedExtProperty(),
+
      /**
       * @param {Object=} config
       * @constructor
@@ -1700,6 +1723,8 @@
 
         if (!thisObject)
           thisObject = this;
+
+        ;;;if (!handler && typeof console != 'undefined') console.warn('EventObject#addHandler: `handler` argument is not an object (', handler, ')');
         
         // search for duplicate
         // check from end to start is more efficient for objects which often add/remove handlers
@@ -1708,7 +1733,7 @@
           item = handlers[i];
           if (item.handler === handler && item.thisObject === thisObject)
           {
-            ;;;if (typeof console != 'undefined') console.warn('Add dublicate handler to EventObject instance: ', this);
+            ;;;if (typeof console != 'undefined') console.warn('EventObject#addHandler: Add dublicate handler to EventObject instance: ', this);
             return false;
           }
         }
@@ -1735,6 +1760,8 @@
 
         if (!thisObject)
           thisObject = this;
+
+        ;;;if (!handler && typeof console != 'undefined') console.warn('EventObject#addHandler: `handler` argument is not an object (', handler, ')');
 
         // search for handler and remove
         // check from end to start is more efficient for objects which often add/remove handlers
@@ -3646,7 +3673,7 @@
           return value;
         else
         {
-          if (typeof value == 'object')
+          /*if (typeof value == 'object')
           {
             var superTemplate = this;
             var operationPriority = {
@@ -3776,7 +3803,7 @@
             ;;;template.superTemplate_ = superTemplate;
             return template;
           }
-          else
+          else*/
             return new Template(value);
         }
       },

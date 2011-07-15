@@ -76,7 +76,7 @@
   /** @const */ var EXCEPTION_NODE_NOT_FOUND = namespace + ': Node was not found';
   /** @const */ var EXCEPTION_BAD_CHILD_CLASS = namespace + ': Child node has wrong class';
   /** @const */ var EXCEPTION_NULL_CHILD = namespace + ': Child node is null';
-  /** @const */ var EXCEPTION_COLLECTION_CONFLICT = namespace + ': Operation is not allowed because node is under collection control';
+  /** @const */ var EXCEPTION_DATASOURCE_CONFLICT = namespace + ': Operation is not allowed because node is under dataSource control';
 
   function sortingSearch(node){
     return node.sortingValue || 0; // it's important return zero when sortingValue is undefined,
@@ -109,15 +109,15 @@
   //
 
   Subscription.regType(
-    'COLLECTION',
+    'DATASOURCE',
     {
-      collectionChanged: function(object, oldCollection){
-        this.remove(object, oldCollection);
-        this.add(object, object.collection);
+      dataSourceChanged: function(object, oldDataSource){
+        this.remove(object, oldDataSource);
+        this.add(object, object.dataSource);
       }
     },
     function(action, object){
-      action(object, object.collection);
+      action(object, object.dataSource);
     }
   );
 
@@ -148,18 +148,18 @@
         if (exists)
         {
           var setDelegate = 'delegate' in config;
-          var setCollection = 'collection' in config;
+          var setDataSource = 'dataSource' in config;
 
           var delegate = typeof config.delegate == 'function' ? config.delegate(this) : null;
-          var collection = typeof config.collection == 'function' ? config.collection(this) : null;
+          var dataSource = typeof config.dataSource == 'function' ? config.dataSource(this) : null;
 
           if (satellite)
           {
             if (setDelegate)
               satellite.setDelegate(delegate);
 
-            if (setCollection)
-              satellite.setCollection(collection);
+            if (setDataSource)
+              satellite.setDataSource(dataSource);
           }
           else
           {
@@ -169,8 +169,8 @@
             if (setDelegate)
               instanceConfig.delegate = delegate;
 
-            if (setCollection)
-              instanceConfig.collection = collection;
+            if (setDataSource)
+              instanceConfig.dataSource = dataSource;
 
             if (config.config)
               Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(this) : config.config);
@@ -200,7 +200,6 @@
     }
   };
 
-  window.asd = 0;
  /**
   * @class
   */
@@ -219,9 +218,9 @@
 
    /**
     * @param {Basis.DOM.Wrapper.AbstractNode} node
-    * @param {Basis.Data.AbstractDataset} oldCollection
+    * @param {Basis.Data.AbstractDataset} oldDataSource
     */
-    event_collectionChanged: createEvent('collectionChanged', 'node', 'oldCollection'),
+    event_dataSourceChanged: createEvent('dataSourceChanged', 'node', 'oldDataSource'),
 
    /**
     * @param {Basis.DOM.Wrapper.AbstractNode} node
@@ -257,7 +256,7 @@
    /**
     * @inheritDoc
     */
-    subscribeTo: DataObject.prototype.subscribeTo | Subscription.COLLECTION,
+    subscribeTo: DataObject.prototype.subscribeTo + Subscription.DATASOURCE,
 
    /**
     * Flag determines object behaviour when parentNode changing:
@@ -291,10 +290,10 @@
     * Object that's manage childNodes updates.
     * @type {Basis.Data.AbstractDataset}
     */
-    collection: null,
+    dataSource: null,
 
    /**
-    * Map collection members to child nodes.
+    * Map dataSource members to child nodes.
     * @type {Object}
     * @private
     */
@@ -303,7 +302,7 @@
    /**
     * @type {Boolean}
     */
-    destroyCollectionMember: true,
+    destroyDataSourceMember: true,
 
    /**
     * @type {Basis.DOM.Wrapper.AbstractNode}
@@ -402,21 +401,21 @@
     * @config {boolean} localSortingDesc Initial local sorting order.
     * @config {Basis.DOM.Wrapper.AbstractNode} document (deprecated) Must be removed. Used as hot fix.
     * @config {Object} localGrouping Initial config for local grouping.
-    * @config {Basis.Data.DataObject} collection Sets collection for object.
-    * @config {Basis.Data.AbstractDataset} collection Set a collection to a new object.
+    * @config {Basis.Data.DataObject} dataSource Sets dataSource for object.
+    * @config {Basis.Data.AbstractDataset} dataSource Set a dataSource to a new object.
     * @config {Array} childNodes Initial child node set.
     * @return {Object} Returns a config. 
     * @constructor
     */
     init: function(config){
 
-      var collection = this.collection;
+      var dataSource = this.dataSource;
       var childNodes = this.childNodes;
       var localGrouping = this.localGrouping;
 
-      if (collection)
-        this.collection = null; // NOTE: reset collection before inherit -> prevent double subscription activation
-                                // when this.active == true and collection is assigned
+      if (dataSource)
+        this.dataSource = null; // NOTE: reset dataSource before inherit -> prevent double subscription activation
+                                // when this.active == true and dataSource is assigned
 
       // inherit
       DataObject.prototype.init.call(this, config);
@@ -433,11 +432,11 @@
         // init child nodes storage
         this.childNodes = [];
 
-        // set collection
-        if (collection)
+        // set dataSource
+        if (dataSource)
         {
-          this.collection = null;
-          this.setCollection(collection);
+          this.dataSource = null;
+          this.setDataSource(dataSource);
         }
         else
         {
@@ -450,8 +449,8 @@
         if (childNodes)
           this.childNodes = null;
 
-        if (collection)
-          this.collection = null;
+        if (dataSource)
+          this.dataSource = null;
       }
 
       if (!this.satellite)
@@ -535,9 +534,9 @@
     },
 
    /**
-    * @param {Basis.Data.AbstractDataset} collection
+    * @param {Basis.Data.AbstractDataset} dataSource
     */
-    setCollection: function(collection){
+    setDataSource: function(dataSource){
     },
 
    /**
@@ -551,10 +550,10 @@
       DataObject.prototype.destroy.call(this);
 
       // delete childs
-      if (this.collection)
+      if (this.dataSource)
       {
-        // drop collection
-        this.setCollection();
+        // drop dataSource
+        this.setDataSource();
       }
       else
       {
@@ -715,7 +714,7 @@
    *  Hierarchy handlers & methods
    */
 
-  var DOMMIXIN_COLLECTION_HANDLERS = {
+  var DOMMIXIN_DATASOURCE_HANDLER = {
     datasetChanged: function(dataset, delta){
 
       var newDelta = {};
@@ -734,10 +733,10 @@
           deleted.push.apply(deleted, this.childNodes);
 
           // optimization: if all old nodes deleted -> clear childNodes
-          var tmp = this.collection;
-          this.collection = null;
+          var tmp = this.dataSource;
+          this.dataSource = null;
           this.clear(true);   // keep alive, event fires
-          this.collection = tmp;
+          this.dataSource = tmp;
           this.colMap_ = {};
         }
         else
@@ -765,7 +764,7 @@
           var newChild = createChildByFactory(this, {
             cascadeDestroy: false,     // NOTE: it's important set cascadeDestroy to false, otherwise
                                        // there will be two attempts to destroy node - 1st on delegate
-                                       // destroy, 2nd on object removal from collection
+                                       // destroy, 2nd on object removal from dataSource
             //canHaveDelegate: false,  // NOTE: we can't set canHaveDelegate in config, because it
                                        // prevents delegate assignment
             delegate: item
@@ -791,7 +790,7 @@
         this.event_childNodesModified(this, newDelta);
 
       // destroy removed items
-      if (this.destroyCollectionMember && deleted.length)
+      if (this.destroyDataSourceMember && deleted.length)
       {
         for (var i = 0, item; item = deleted[i]; i++)
           item.destroy();
@@ -799,8 +798,8 @@
     },
     destroy: function(object){
       //this.clear();
-      if (this.collection === object)
-        this.setCollection();
+      if (this.dataSource === object)
+        this.setDataSource();
     }
   };
 
@@ -897,6 +896,13 @@
    /**
     * @inheritDoc
     */
+    listen: {
+      dataSource: DOMMIXIN_DATASOURCE_HANDLER
+    },
+
+   /**
+    * @inheritDoc
+    */
     appendChild: function(newChild){
       return this.insertBefore(newChild);
     },
@@ -919,9 +925,9 @@
         while (cursor = cursor.parentNode)
       }
 
-      // check for collection
-      if (this.collection && !this.collection.has(newChild.delegate))
-        throw EXCEPTION_COLLECTION_CONFLICT;
+      // check for dataSource
+      if (this.dataSource && !this.dataSource.has(newChild.delegate))
+        throw EXCEPTION_DATASOURCE_CONFLICT;
 
       // construct new childClass instance if newChild is not instance of childClass
       if (newChild instanceof this.childClass == false)
@@ -1200,7 +1206,7 @@
           newChild.setDelegate(this);
 
         // dispatch event
-        if (!this.collection)
+        if (!this.dataSource)
           this.event_childNodesModified(this, { inserted: [newChild] });
       }
 
@@ -1218,8 +1224,8 @@
       if (oldChild instanceof this.childClass == false)
         throw EXCEPTION_BAD_CHILD_CLASS;
 
-      if (this.collection && this.collection.has(oldChild))
-        throw EXCEPTION_COLLECTION_CONFLICT;
+      if (this.dataSource && this.dataSource.has(oldChild))
+        throw EXCEPTION_DATASOURCE_CONFLICT;
 
       // update this
       var pos = this.childNodes.indexOf(oldChild);
@@ -1298,7 +1304,7 @@
         oldChild.groupNode.remove(oldChild);
 
       // dispatch event
-      if (!this.collection)
+      if (!this.dataSource)
         this.event_childNodesModified(this, { deleted: [oldChild] });
 
       if (oldChild.autoDelegateParent)
@@ -1312,8 +1318,8 @@
     * @inheritDoc
     */
     replaceChild: function(newChild, oldChild){
-      if (this.collection)
-        throw EXCEPTION_COLLECTION_CONFLICT;
+      if (this.dataSource)
+        throw EXCEPTION_DATASOURCE_CONFLICT;
 
       if (oldChild == null || oldChild.parentNode !== this) // this.childNodes.absent(oldChild) truly but speedless
         throw EXCEPTION_NODE_NOT_FOUND;
@@ -1330,10 +1336,10 @@
     */
     clear: function(alive){
 
-      // drop collection
-      if (this.collection)
+      // drop dataSource
+      if (this.dataSource)
       {
-        this.setCollection(); // it'll call clear again, but with no this.collection
+        this.setDataSource(); // it'll call clear again, but with no this.dataSource
         return;
       }
 
@@ -1402,7 +1408,7 @@
     * @params {Array.<Object>} childNodes
     */
     setChildNodes: function(newChildNodes, keepAlive){
-      if (!this.collection)
+      if (!this.dataSource)
         this.clear(!!keepAlive);
 
       if (newChildNodes)
@@ -1430,45 +1436,45 @@
    /**
     * @inheritDoc
     */
-    setCollection: function(collection){
-      if (!collection || !this.canHaveChildren || collection instanceof AbstractDataset == false)
-        collection = null;
+    setDataSource: function(dataSource){
+      if (!dataSource || !this.canHaveChildren || dataSource instanceof AbstractDataset == false)
+        dataSource = null;
 
-      if (this.collection !== collection)
+      if (this.dataSource !== dataSource)
       {
-        var oldCollection = this.collection;
+        var oldDataSource = this.dataSource;
 
         // detach
-        if (oldCollection)
+        if (oldDataSource)
         {
-          this.collection = null;
+          this.dataSource = null;
           this.colMap_ = null;
 
-          oldCollection.removeHandler(DOMMIXIN_COLLECTION_HANDLERS, this);
+          oldDataSource.removeHandler(this.listen.dataSource, this);
 
-          if (oldCollection.itemCount)
+          if (oldDataSource.itemCount)
             this.clear();
         }
 
         // TODO: switch off localSorting & localGrouping
 
         // attach
-        if (collection)
+        if (dataSource)
         {
-          this.collection = collection;
+          this.dataSource = dataSource;
           this.colMap_ = {};
 
-          collection.addHandler(DOMMIXIN_COLLECTION_HANDLERS, this);
+          dataSource.addHandler(this.listen.dataSource, this);
 
-          if (collection.itemCount)
-            DOMMIXIN_COLLECTION_HANDLERS.datasetChanged.call(this, collection, {
-              inserted: collection.getItems()
+          if (dataSource.itemCount)
+            this.listen.dataSource.datasetChanged.call(this, dataSource, {
+              inserted: dataSource.getItems()
             });
         }
 
         // TODO: restore localSorting & localGrouping, fast node reorder
 
-        this.event_collectionChanged(this, oldCollection);
+        this.event_dataSourceChanged(this, oldDataSource);
       }
     },
 
@@ -1967,7 +1973,7 @@
     childFactory: function(config){
       return new this.childClass(complete(config, {
         titleGetter: this.titleGetter,
-        autoDestroyIfEmpty: this.collection ? false : this.autoDestroyEmptyGroups
+        autoDestroyIfEmpty: this.dataSource ? false : this.autoDestroyEmptyGroups
       }));
     },
 
@@ -1976,7 +1982,7 @@
 
       this.nullGroup.nextSibling = this.firstChild;
 
-      if (delta.inserted && this.collection && this.nullGroup.first)
+      if (delta.inserted && this.dataSource && this.nullGroup.first)
       {
         var parentNode = this.owner;
         var nodes = Array.from(this.nullGroup.nodes); // ??? Array.from?
@@ -2007,7 +2013,7 @@
       var isDelegate = groupRef instanceof DataObject;
       var group = this.map_[isDelegate ? groupRef.eventObjectId : groupRef];
 
-      if (!group && !this.collection)
+      if (!group && !this.dataSource)
       {
         group = this.appendChild(
           isDelegate
@@ -2583,6 +2589,13 @@
     autoDestroy: true,
     sourceNode: null,
 
+   /**
+    * @inheritDoc
+    */
+    listen: {
+      sourceNode: CHILDNODESDATASET_HANDLER
+    },
+
     event_sourceNodeChanged: createEvent('sourceNodeChanged') && function(object, oldSourceNode){
       event.sourceNodeChanged.call(this, object, oldSourceNode);
 
@@ -2590,39 +2603,58 @@
         this.destroy();
     },
 
+   /**
+    * use extend constructor
+    */
     extendConstructor: false,
+
+   /**
+    * @constructor
+    */
     init: function(node, config){
       AbstractDataset.prototype.init.call(this, config);
 
       if (node)
         this.setSourceNode(node);
     },
+
+   /**
+    * Set source node for dataset.
+    * @param {Basis.DOM.Wrapper.AbstractNode} node
+    */
     setSourceNode: function(node){
+      if (node instanceof AbstractNode == false)
+        node = null;
+
       if (node !== this.sourceNode)
       {
         var oldSourceNode = this.sourceNode;
 
         if (oldSourceNode)
         {
-          this.sourceNode = null;
-          oldSourceNode.removeHandler(CHILDNODESDATASET_HANDLER, this);
-          CHILDNODESDATASET_HANDLER.childNodesModified.call(this, oldSourceNode, {
+          oldSourceNode.removeHandler(this.listen.sourceNode, this);
+          this.listen.sourceNode.childNodesModified.call(this, oldSourceNode, {
             deleted: oldSourceNode.childNodes
           });
         }
 
-        if (node instanceof AbstractNode)
+        if (node)
         {
-          this.sourceNode = node;
-          node.addHandler(CHILDNODESDATASET_HANDLER, this);
-          CHILDNODESDATASET_HANDLER.childNodesModified.call(this, node, {
+          node.addHandler(this.listen.sourceNode, this);
+          this.listen.sourceNode.childNodesModified.call(this, node, {
             inserted: node.childNodes
           });
         }
 
+        this.sourceNode = node;
+
         this.event_sourceNodeChanged(this, oldSourceNode);
       }
     },
+
+   /**
+    * @destructor
+    */
     destroy: function(){
       // drop source node if exists
       this.setSourceNode();
@@ -2640,7 +2672,7 @@
  /**
   * @link ./demo/selection/share.html
   * @link ./demo/selection/multiple.html
-  * @link ./demo/selection/collection.html
+  * @link ./demo/selection/dataSource.html
   * @class
   */
   var Selection = Class(Dataset, {

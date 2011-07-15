@@ -181,24 +181,24 @@
     })
 
     //
-    // Node collection state label
+    // Node dataSource state label
     //
 
-    var CollectionState_CollectionHandler = {
+    var DataSourceState_DataSourceHandler = {
       stateChanged: function(object, oldState){
         this.setVisibility(this.visibilityGetter(object.state, oldState));
       }
     };
 
-    var CollectionState_DelegateHandler = {
-      collectionChanged: function(object, oldCollection){
-        if (oldCollection)
-          oldCollection.removeHandler(CollectionState_CollectionHandler, this);
+    var DataSourceState_DelegateHandler = {
+      dataSourceChanged: function(object, oldDataSource){
+        if (oldDataSource)
+          oldDataSource.removeHandler(DataSourceState_DataSourceHandler, this);
 
-        if (object.collection)
+        if (object.dataSource)
         {
-          object.collection.addHandler(CollectionState_CollectionHandler, this);
-          CollectionState_CollectionHandler.stateChanged.call(this, object.collection, object.collection.state);
+          object.dataSource.addHandler(DataSourceState_DataSourceHandler, this);
+          DataSourceState_DataSourceHandler.stateChanged.call(this, object.dataSource, object.dataSource.state);
         }
       }
     };
@@ -206,30 +206,30 @@
    /**
     * @class
     */
-    var CollectionState = Class(State, {
-      className: namespace + '.CollectionState',
+    var DataSourceState = Class(State, {
+      className: namespace + '.DataSourceState',
 
       event_delegateChanged: function(object, oldDelegate){
         State.prototype.event_delegateChanged.call(this, object, oldDelegate);
 
         if (oldDelegate)
-          oldDelegate.removeHandler(CollectionState_DelegateHandler, this);
+          oldDelegate.removeHandler(DataSourceState_DelegateHandler, this);
 
         if (this.delegate)
         {
-          this.delegate.addHandler(CollectionState_DelegateHandler, this);
-          CollectionState_DelegateHandler.collectionChanged.call(this, this.delegate, oldDelegate && oldDelegate.collection);
+          this.delegate.addHandler(DataSourceState_DelegateHandler, this);
+          DataSourceState_DelegateHandler.dataSourceChanged.call(this, this.delegate, oldDelegate && oldDelegate.dataSource);
         }
       },
       template: stateTemplate
     });
 
    /**
-    * Label that shows only when delegate's collection in processing state.
+    * Label that shows only when delegate's dataSource in processing state.
     * @class
     */
-    var CollectionProcessing = Class(CollectionState, {
-      className: namespace + '.CollectionProcessing',
+    var DataSourceProcessing = Class(DataSourceState, {
+      className: namespace + '.DataSourceProcessing',
 
       visibilityGetter: function(newState){ return newState == STATE.PROCESSING },
       content: 'Processing...',
@@ -244,7 +244,7 @@
       this.setVisibility(this.visibilityGetter(this.delegate ? this.delegate.childNodes.length : 0, this.delegate));
     };
 
-    var ChildCount_CollectionHandler = {
+    var ChildCount_DataSourceHandler = {
       stateChanged: function(object, oldState){
         this.setVisibility(this.visibilityGetter(object.itemCount, this.delegate));
       }
@@ -252,17 +252,17 @@
 
     var ChildCount_DelegateHandler = {
       childNodesModified: CHILD_COUNT_FUNCTION,
-      collectionStateChanged: CHILD_COUNT_FUNCTION,
+      dataSourceStateChanged: CHILD_COUNT_FUNCTION,
       stateChanged: CHILD_COUNT_FUNCTION,
 
-      collectionChanged: function(object, oldCollection){
-        if (oldCollection)
-          oldCollection.removeHandler(ChildCount_CollectionHandler, this);
+      dataSourceChanged: function(object, oldDataSource){
+        if (oldDataSource)
+          oldDataSource.removeHandler(ChildCount_DataSourceHandler, this);
 
-        if (object.collection)
+        if (object.dataSource)
         {
-          object.collection.addHandler(ChildCount_CollectionHandler, this);
-          ChildCount_CollectionHandler.stateChanged.call(this, object.collection, object.collection.state);
+          object.dataSource.addHandler(ChildCount_DataSourceHandler, this);
+          ChildCount_DataSourceHandler.stateChanged.call(this, object.dataSource, object.dataSource.state);
         }
       }
     };
@@ -282,7 +282,7 @@
         if (this.delegate)
         {
           this.delegate.addHandler(ChildCount_DelegateHandler, this);
-          ChildCount_DelegateHandler.collectionChanged.call(this, this.delegate);
+          ChildCount_DelegateHandler.dataSourceChanged.call(this, this.delegate);
         }
 
         CHILD_COUNT_FUNCTION.call(this);
@@ -299,7 +299,7 @@
       className: namespace + '.IsEmpty',
 
       visibilityGetter: function(childCount, object){ 
-        var state = object.collection ? object.collection.state : object.state;
+        var state = object.dataSource ? object.dataSource.state : object.state;
         return !childCount && state == STATE.READY;
       },
       content: 'Empty'
@@ -314,8 +314,8 @@
       State: State,
       Processing: Processing,
       Error: Error,
-      CollectionState: CollectionState,
-      CollectionProcessing: CollectionProcessing,
+      DataSourceState: DataSourceState,
+      DataSourceProcessing: DataSourceProcessing,
       ChildCount: ChildCount,
       IsEmpty: IsEmpty
     });

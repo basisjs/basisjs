@@ -128,7 +128,7 @@
         mousedown: function(){
           this.activate();
         },
-        keypress: function(){
+        keypress: function(event){
           var key = Event.key(event);
 
           if (key == Event.KEY.ESCAPE)

@@ -137,7 +137,7 @@
     var list = new Basis.DOM.Wrapper.TmplContainer({
       container: Basis.DOM.get('demo-container'),
       cssClassName: 'demo-list',
-      collection: links,
+      dataSource: links,
       childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
         template: new Basis.Html.Template('<div{element}>{titleText}</div>'),
         event_update: function(object, delta){

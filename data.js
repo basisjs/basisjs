@@ -225,48 +225,6 @@
   //
 
  /**
-  * @const
-  */
-  var DATAOBJECT_DELEGATE_HANDLER = {
-    update: function(object, delta){ 
-      this.event_update(object, delta);
-    },
-    rollbackUpdate: function(object, delta){
-      this.event_rollbackUpdate(object, delta);
-    },
-    stateChanged: function(object, oldState){
-      this.state = object.state;
-      this.event_stateChanged(object, oldState);
-    },
-    /*delegateChanged: function(object, oldDelegate){
-      this.info = object.info;
-      this.event_rootChanged(object, oldDelegate);
-    },*/
-    rootChanged: function(object, oldRoot){
-      this.info = object.info;
-      this.root = object.root;
-      this.event_rootChanged(object, oldRoot);
-      if (this.targetPoint && this.target !== this.root)
-        this.target = this.root;
-    },
-    targetChanged: function(object, oldTarget){
-      if (this.target != object.target)
-      {
-        this.target = object.target;
-        this.event_targetChanged(object, oldTarget);
-      }
-    },
-    destroy: function(){
-      if (this.cascadeDestroy)
-        this.destroy();
-      else
-        this.setDelegate();
-    }
-  };
-
-
-
- /**
   * Base class for data storing.
   * @class
   */
@@ -335,10 +293,10 @@
 
    /**
     * Subscriber type indicates what sort of influence has currency object on
-    * related objects (delegate, collection).
+    * related objects (delegate, source, dataSource etc).
     * @type {Basis.Data.Subscription|number}
     */
-    subscribeTo: Subscription.DELEGATE | Subscription.TARGET,
+    subscribeTo: Subscription.DELEGATE + Subscription.TARGET,
 
    /**
     * Count of subscribed objects. This property can use to determinate
@@ -427,6 +385,49 @@
     * @event
     */
     event_activeChanged: createEvent('activeChanged'),
+
+   /**
+    * Default listeners.
+    * @inheritDoc
+    */
+    listen: {
+      delegate: {
+        update: function(object, delta){
+          this.event_update(object, delta);
+        },
+        rollbackUpdate: function(object, delta){
+          this.event_rollbackUpdate(object, delta);
+        },
+        stateChanged: function(object, oldState){
+          this.state = object.state;
+          this.event_stateChanged(object, oldState);
+        },
+        /*delegateChanged: function(object, oldDelegate){
+          this.info = object.info;
+          this.event_rootChanged(object, oldDelegate);
+        },*/
+        rootChanged: function(object, oldRoot){
+          this.info = object.info;
+          this.root = object.root;
+          this.event_rootChanged(object, oldRoot);
+          if (this.targetPoint && this.target !== this.root)
+            this.target = this.root;
+        },
+        targetChanged: function(object, oldTarget){
+          if (this.target != object.target)
+          {
+            this.target = object.target;
+            this.event_targetChanged(object, oldTarget);
+          }
+        },
+        destroy: function(){
+          if (this.cascadeDestroy)
+            this.destroy();
+          else
+            this.setDelegate();
+        }
+      }
+    },
 
    /**
     * @param {Object=} config The configuration of object.
@@ -547,9 +548,8 @@
         var oldInfo = this.info;
         var delta = {};
 
-        // remove handler from oldDelegate if present
         if (oldDelegate)
-          oldDelegate.removeHandler(DATAOBJECT_DELEGATE_HANDLER, this);
+          oldDelegate.removeHandler(this.listen.delegate, this);
 
         if (newDelegate)
         {
@@ -560,8 +560,7 @@
           this.info = newDelegate.info;
           this.state = newDelegate.state;
 
-          // add handler to new delegate
-          newDelegate.addHandler(DATAOBJECT_DELEGATE_HANDLER, this);
+          newDelegate.addHandler(this.listen.delegate, this);
 
           // calculate delta as difference between current info and delegate info
           for (var key in newDelegate.info)
@@ -744,10 +743,7 @@
 
       // drop delegate
       if (this.delegate)
-      {
-        this.delegate.removeHandler(DATAOBJECT_DELEGATE_HANDLER, this);
-        this.delegate = null;
-      }
+        this.setDelegate();
 
       // inherit
       EventObject.prototype.destroy.call(this);
@@ -771,7 +767,7 @@
     className: namespace + '.KeyObjectMap',
 
     itemClass: DataObject,
-    keyGetter: Function.$self,
+    keyGetter: $self,
     map_: null,
 
     extendConstructor: true,
@@ -1048,18 +1044,23 @@
   // Dataset
   //
 
-  var DATASET_ITEM_HANDLER = {
-    destroy: function(object){
-      if (this.memberMap_[object.eventObjectId])
-        this.remove([object]);
-    }
-  };
-
  /**
   * @class
   */
   var Dataset = Class(AbstractDataset, {
     className: namespace + '.Dataset',
+
+   /**
+    * @inheritDoc
+    */
+    listen: {
+      item: {
+        destroy: function(object){
+          if (this.memberMap_[object.eventObjectId])
+            this.remove([object]);
+        }
+      }
+    },
 
    /**
     * @config {Array.<Basis.Data.DataObject>} items Initial set of items.
@@ -1091,7 +1092,7 @@
           if (!memberMap[objectId])
           {
             memberMap[objectId] = object;
-            object.addHandler(DATASET_ITEM_HANDLER, this);
+            object.addHandler(this.listen.item, this);
 
             inserted.push(object);
           }
@@ -1122,7 +1123,7 @@
           var objectId = object.eventObjectId;
           if (memberMap[objectId])
           {
-            object.removeHandler(DATASET_ITEM_HANDLER, this);
+            object.removeHandler(this.listen.item, this);
             delete memberMap[objectId];
 
             deleted.push(object);
@@ -1174,7 +1175,7 @@
           if (!memberMap[objectId])
           {
             memberMap[objectId] = object;
-            object.addHandler(DATASET_ITEM_HANDLER, this);
+            object.addHandler(this.listen.item, this);
 
             inserted.push(object);
           }
@@ -1188,7 +1189,7 @@
         {
           object = memberMap[objectId];
 
-          object.removeHandler(DATASET_ITEM_HANDLER, this);
+          object.removeHandler(this.listen.item, this);
           delete memberMap[objectId];
 
           deleted.push(object);
@@ -1251,7 +1252,7 @@
       if (deleted.length)
       {
         for (var i = deleted.length; i --> 0;)
-          deleted[i].removeHandler(DATASET_ITEM_HANDLER, this);
+          deleted[i].removeHandler(this.listen.item, this);
 
         this.event_datasetChanged(this, delta = {
           deleted: deleted
@@ -1263,6 +1264,7 @@
       return delta;
     }
   });
+
 
   //
   // Accumulate dataset changes
@@ -1345,6 +1347,7 @@
       }
     }
   })();
+
 
   //
   // Merge dataset 
@@ -1441,6 +1444,13 @@
     },
 
    /**
+    * @inheritDoc
+    */
+    listen: {
+      source: MERGE_DATASET_HANDLER
+    },
+
+   /**
     * @config {Array.<Basis.Data.AbstractDataset>} sources Set of source datasets for aggregate.
     * @constructor
     */
@@ -1455,15 +1465,26 @@
         sources.forEach(this.addSource, this);
     },
 
+   /**
+    * Set new merge rule for dataset. Some types are available in Basis.Data.Dataset.Merge
+    * @param {function(count, sourceCount):boolean} rule New rule.
+    */
     setRule: function(rule){
       if (typeof rule != 'function')
         rule = Merge.UNION;
 
       if (this.rule !== rule)
+      {
         this.rule = rule;
-        this.updateMembers();
+        this.applyRule();
+      }
     },
 
+   /**
+    * Check all members are they match to rule or not.
+    * @param {Object=} scope Key map that will be checked. If not passed than all members
+    * will be checked.
+    */
     applyRule: function(scope){
       var memberMap = this.memberMap_;
       var rule = this.rule;
@@ -1479,7 +1500,7 @@
 
       for (var objectId in scope)
       {
-        memberCounter = scope[objectId];
+        memberCounter = memberMap[objectId];
         isMember = rule(memberCounter.count, sourceCount);
 
         if (isMember != !!this.item_[objectId])
@@ -1508,7 +1529,7 @@
         if (this.sources.add(source))
         {
           // add event listeners to source
-          source.addHandler(MERGE_DATASET_HANDLER, this);
+          source.addHandler(this.listen.source, this);
 
           // process new source objects and update member map
           var memberMap = this.memberMap_;
@@ -1556,7 +1577,7 @@
       if (this.sources.remove(source))
       {
         // remove event listeners from source
-        source.removeHandler(MERGE_DATASET_HANDLER, this);
+        source.removeHandler(this.listen.source, this);
 
         // process removing source objects and update member map
         var memberMap = this.memberMap_;
@@ -1724,6 +1745,14 @@
     subtrahend: null,
 
    /**
+    * @inheritDoc
+    */
+    listen: {
+      minuend: SUBTRACTDATASET_MINUEND_HANDLER,
+      subtrahend: SUBTRACTDATASET_SUBTRAHEND_HANDLER
+    },
+
+   /**
     * @constructor
     */
     init: function(config){
@@ -1762,19 +1791,19 @@
       if (oldMinuend !== minuend)
       {
         if (oldMinuend)
-          oldMinuend.removeHandler(SUBTRACTDATASET_MINUEND_HANDLER, this);
+          oldMinuend.removeHandler(this.listen.minuend, this);
 
         if (this.minuend = minuend)
-          minuend.addHandler(SUBTRACTDATASET_MINUEND_HANDLER, this)
+          minuend.addHandler(this.listen.minuend, this)
       }
 
       if (oldSubtrahend !== subtrahend)
       {
         if (oldSubtrahend)
-          oldSubtrahend.removeHandler(SUBTRACTDATASET_SUBTRAHEND_HANDLER, this);
+          oldSubtrahend.removeHandler(this.listen.subtrahend, this);
 
         if (this.subtrahend = subtrahend)
-          subtrahend.addHandler(SUBTRACTDATASET_SUBTRAHEND_HANDLER, this);
+          subtrahend.addHandler(this.listen.subtrahend, this);
       }
 
       if (!minuend || !subtrahend)
@@ -1885,13 +1914,10 @@
         if (delta = getDelta(inserted, deleted))
           this.event_datasetChanged(this, delta);
       }
-    }/*,
-    destroy: function(){
-      ;;;if (typeof console != 'undefined') console.warn('Destroing member, but source objects still here. (What we should to do: unlink source nodes, re-transform or throw exception?)');
-    }*/
+    }
   };
 
-  var MAPREDUCEDATASET_DATASET_HANDLER = {
+  var MAPREDUCEDATASET_SOURCE_HANDLER = {
     datasetChanged: function(dataset, delta){
       var sourceMap = this.sourceMap_;
       var memberMap = this.memberMap_;
@@ -1912,7 +1938,7 @@
           if (member instanceof DataObject == false || this.reduce(member))
             member = null;
 
-          sourceObject.addHandler(MAPREDUCEDATASET_SOURCEOBJECT_HANDLER, this);
+          sourceObject.addHandler(this.listen.sourceObject, this);
           sourceMap[sourceObject.eventObjectId] = {
             sourceObject: sourceObject,
             member: member
@@ -1944,7 +1970,7 @@
           sourceObjectId = sourceObject.eventObjectId;
           member = sourceMap[sourceObjectId].member;
 
-          sourceObject.removeHandler(MAPREDUCEDATASET_SOURCEOBJECT_HANDLER, this);
+          sourceObject.removeHandler(this.listen.sourceObject, this);
           delete sourceMap[sourceObjectId];
 
           if (member)
@@ -2036,6 +2062,14 @@
    /**
     * @inheritDoc
     */
+    listen: {
+      sourceObject: MAPREDUCEDATASET_SOURCEOBJECT_HANDLER,
+      source: MAPREDUCEDATASET_SOURCE_HANDLER
+    },
+
+   /**
+    * @inheritDoc
+    */
     init: function(config){
       ;;;if (this.sources) throw 'Dataset.MapReduce instances no more support for sources property, use source property instead.';
       ;;;if (this.dataset) throw 'Dataset.MapReduce instances no more support for dataset property, use source property instead.';
@@ -2097,16 +2131,16 @@
 
         if (oldSource)
         {
-          oldSource.removeHandler(MAPREDUCEDATASET_DATASET_HANDLER, this);
-          MAPREDUCEDATASET_DATASET_HANDLER.datasetChanged.call(this, oldSource, {
+          oldSource.removeHandler(this.listen.source, this);
+          this.listen.source.datasetChanged.call(this, oldSource, {
             deleted: oldSource.getItems()
           });
         }
 
         if (this.source = source)
         {
-          source.addHandler(MAPREDUCEDATASET_DATASET_HANDLER, this);
-          MAPREDUCEDATASET_DATASET_HANDLER.datasetChanged.call(this, source, {
+          source.addHandler(this.listen.source, this);
+          this.listen.source.datasetChanged.call(this, source, {
             inserted: source.getItems()
           });
         }
@@ -2319,6 +2353,18 @@
       this.keyMap = null;
     }
   });
+
+  /*var Index = Class(AbstractDataset, {
+    className: '',
+
+    init: function(config){
+      
+    },
+
+    setSource: function(){
+      
+    }
+  });*/
 
   //
   // export names

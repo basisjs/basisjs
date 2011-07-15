@@ -295,7 +295,7 @@
     var masterTree = new nsTree.Tree({
       id: 'MasterTree',
 
-      collection: Field.all,
+      dataSource: Field.all,
 
       // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
       localSorting: Function.getter('info.Title'),
@@ -344,7 +344,7 @@
         },
         init: function(config){
           nsTree.TreeFolder.prototype.init.call(this, config);
-          this.setCollection(Link.getGrouping('FieldId').getGroup(this.info.FieldId, true));
+          this.setDataSource(Link.getGrouping('FieldId').getGroup(this.info.FieldId, true));
         },
 
         childClass: nsWrappers.TmplNode.subclass({
@@ -418,7 +418,7 @@
         return node.satellite.word.info.Title;
       },
 
-      collection: new Basis.Data.AggregateDataset({
+      dataSource: new Basis.Data.AggregateDataset({
         sources: [Word.all],
         transform: function(srcObject){
           return srcObject;
@@ -430,7 +430,7 @@
         if (this.target)
         {
           var fieldId = this.info.FieldId;
-          this.collection.setTransform(function(object){
+          this.dataSource.setTransform(function(object){
             var wordId = object.info.WordId;
             return Link.getSlot(fieldId + '-' + wordId, {
               FieldId: fieldId,
@@ -475,7 +475,7 @@
           caption: 'Check all',
           groupId: 1,
           handler: function(){
-            relatedTree.collection.getItems().forEach(function(item){
+            relatedTree.dataSource.getItems().forEach(function(item){
               if (!item.target)
                 Link(item.info);
             });
@@ -538,7 +538,7 @@
             }
           }),
 
-          collection: Link.all,
+          dataSource: Link.all,
           localSorting: Function.getter('info.FieldId')
         }).element
       )/*,

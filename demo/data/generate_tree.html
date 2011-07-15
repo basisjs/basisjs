@@ -158,7 +158,7 @@
       localGrouping: grouping,
       init: function(config){
         nsTree.TreeNode.prototype.init.call(this, config);
-        this.setCollection(goupingByParentId.getGroup(this.info.path + '' + this.info.name + '/'))
+        this.setDataSource(goupingByParentId.getGroup(this.info.path + '' + this.info.name + '/'))
       }
     });
 
@@ -169,7 +169,7 @@
       collapsed: true,
       event_expand: function(){
         nsTree.TreeFolder.prototype.event_expand.call(this);
-        this.setCollection(goupingByParentId.getGroup(this.info.path + '' + this.info.name + '/'))
+        this.setDataSource(goupingByParentId.getGroup(this.info.path + '' + this.info.name + '/'))
       }
     });
 
@@ -178,7 +178,7 @@
     });
 
     var FileTree = Basis.Class(nsTree.Tree, {
-      collection: goupingByParentId.getGroup('/'),
+      dataSource: goupingByParentId.getGroup('/'),
       localSorting: Function.getter('info.name'),
       localGrouping: grouping,
       childFactory: function(config){

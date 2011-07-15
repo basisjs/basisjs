@@ -236,7 +236,7 @@
       )),
 
       active: true,
-      collection: User.all,
+      dataSource: User.all,
 
       localSorting: titleGetter,
       localGrouping: {
@@ -247,11 +247,11 @@
         localSorting: titleGetter,
 
         active: true,
-        collection: UserGroup.all
+        dataSource: UserGroup.all
       }
     });
 
-    new nsLabel.CollectionProcessing({
+    new nsLabel.DataSourceProcessing({
       delegate: tree
     });
 

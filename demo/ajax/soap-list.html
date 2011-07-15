@@ -149,7 +149,7 @@
       container: demoContainer,
 
       // set source dataset
-      collection: ProviderGroup.all,
+      dataSource: ProviderGroup.all,
 
       // make it sensetive to dataset state changes
       delegate: ProviderGroup.all,
@@ -161,7 +161,7 @@
     });
 
     // add handler for trace state changes
-    new Basis.Controls.Label.CollectionProcessing({
+    new Basis.Controls.Label.DataSourceProcessing({
       cssClassName: 'loading',
       content: 'loading...',
       delegate: tree

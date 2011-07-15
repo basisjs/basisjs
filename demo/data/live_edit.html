@@ -164,7 +164,7 @@
     var articleList = new nsWrapper.TmplContainer({
       id: 'ArticleList',
       childClass: ArticleNode,  // set class for child nodes
-      collection: Article.all,  // set data source
+      dataSource: Article.all,  // set data source
       localSorting: Function.getter('info.title', String.toLowerCase),  // sorting for child nodes
       selection: {              // we need for selection, define config for it
         handler: {

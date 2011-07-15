@@ -232,7 +232,7 @@
         container: document.getElementById('demo-container'),
         action: {
           add: function(){
-            newItemPopup.collection.setOperands(newItemPopup.collection.minuend, this.collection);
+            newItemPopup.dataSource.setOperands(newItemPopup.dataSource.minuend, this.dataSource);
             newItemPopup.show(Basis.Event.sender(event));
           }
         },
@@ -246,7 +246,7 @@
           {
             action: {
               remove: function(){
-                this.parentNode.collection.remove([this.getRootDelegate()]);
+                this.parentNode.dataSource.remove([this.getRootDelegate()]);
               }
             }
           }
@@ -255,14 +255,14 @@
     );
 
     var newItemPopup = new Basis.Controls.Popup.Menu({
-      collection: new nsData.Dataset.Subtract({ minuend: NUMBERS }),
+      dataSource: new nsData.Dataset.Subtract({ minuend: NUMBERS }),
       childClass: {
         captionGetter: Function.getter('info.value')
       },
       localSorting: Function.getter('info.value'),
       defaultHandler: function(node){
         if (node)
-          this.collection.subtrahend.add([node.getRootDelegate()]);
+          this.dataSource.subtrahend.add([node.getRootDelegate()]);
         this.hide();
       }
     });
@@ -274,26 +274,26 @@
 
     new DatasetViewer({
       title: 'dataset NUMBERS',
-      collection: NUMBERS
+      dataSource: NUMBERS
     });
     new DatasetViewer({
       title: 'dataset WORDS',
-      collection: WORDS
+      dataSource: WORDS
     });
 
     createHeader('Custom datasets');
 
     new EditableDatasetViewer({
       title: 'dataset A',
-      collection: A
+      dataSource: A
     });
     new EditableDatasetViewer({
       title: 'dataset B',
-      collection: B
+      dataSource: B
     });
     new EditableDatasetViewer({
       title: 'dataset C',
-      collection: C
+      dataSource: C
     });
 
     createHeader('Operable datasets');
@@ -301,7 +301,7 @@
     new DatasetViewer({
       title: 'Union (A ∪ B ∪ C)',
       content: createImage('union'),
-      collection: new nsData.Dataset.Merge({
+      dataSource: new nsData.Dataset.Merge({
         rule: nsData.Dataset.Merge.UNION,  // by default
         sources: [A, B, C]
       })
@@ -310,7 +310,7 @@
     new DatasetViewer({
       title: 'Intersection (A ∩ B ∩ C)',
       content: createImage('intersection'),
-      collection: I = new nsData.Dataset.Merge({
+      dataSource: I = new nsData.Dataset.Merge({
         rule: nsData.Dataset.Merge.INTERSECTION,
         sources: [A, B, C]
       })
@@ -319,7 +319,7 @@
     new DatasetViewer({
       title: 'AtLeastOneExclude (A ∪ B ∪ C) / (A ∩ B ∩ C) [union subtract intersection]',
       content: createImage('atleastoneexclude'),
-      collection: new nsData.Dataset.Merge({
+      dataSource: new nsData.Dataset.Merge({
         rule: nsData.Dataset.Merge.AT_LEAST_ONE_EXCLUDE,
         sources: [A, B, C]
       })
@@ -328,7 +328,7 @@
     new DatasetViewer({
       title: 'Difference (A ∆ B ∆ C)',
       content: createImage('difference'),
-      collection: new nsData.Dataset.Merge({
+      dataSource: new nsData.Dataset.Merge({
         rule: nsData.Dataset.Merge.DIFFERENCE,
         sources: [A, B, C]
       })
@@ -337,7 +337,7 @@
     new DatasetViewer({
       title: 'MoreThanOneInclude (A ∪ B ∪ C) / (A ∆ B ∆ C) [union subtract difference]',
       content: createImage('morethanoneinclude'),
-      collection: new nsData.Dataset.Merge({
+      dataSource: new nsData.Dataset.Merge({
         rule: nsData.Dataset.Merge.MORE_THAN_ONE_INCLUDE,
         sources: [A, B, C]
       })
@@ -346,7 +346,7 @@
     new DatasetViewer({
       title: 'Subtract (A / B)',
       content: createImage('', 'dataset.subtract.svg'),
-      collection: new nsData.Dataset.Subtract({
+      dataSource: new nsData.Dataset.Subtract({
         minuend: A,
         subtrahend: B
       })
@@ -356,7 +356,7 @@
 
     new DatasetViewer({
       title: 'MapReduce for dataset A: NUMBERS -> WORDS',
-      collection: new nsData.Dataset.MapReduce({
+      dataSource: new nsData.Dataset.MapReduce({
         map: Function.getter('info.value - 1', data2),
         source: A
       })
@@ -364,7 +364,7 @@
 
     new DatasetViewer({
       title: 'Subset of dataset A: ONLY ODD',
-      collection: new nsData.Dataset.Subset({
+      dataSource: new nsData.Dataset.Subset({
         rule: Function.getter('info.value % 2'),
         source: A
       })
@@ -372,7 +372,7 @@
 
     new DatasetViewer({
       title: 'Split data A: ODD and EVEN',
-      collection: new nsData.Dataset.Split({
+      dataSource: new nsData.Dataset.Split({
         rule: Function.getter('info.value % 2 ? "odd" : "even"'),
         source: A
       }),
@@ -384,7 +384,7 @@
         ), {
           childClass: DatasetViewer.prototype.childClass,
           init: function(config){
-            this.collection = this.delegate;
+            this.dataSource = this.delegate;
             nsWrapper.TmplContainer.prototype.init.call(this, config);
           }
         }
