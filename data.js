@@ -270,12 +270,12 @@
     cascadeDestroy: false,
 
    /**
-    * Flag to determine is this object for target connection or not. This property
+    * Flag to determine is this object target object or not. This property
     * is readonly and can't be changed after init.
     * @type {boolean}
     * @readobly
     */
-    targetPoint: false,
+    isTarget: false,
 
    /**
     * Reference to root delegate if some object in delegate chain marked as targetPoint.
@@ -330,18 +330,6 @@
     event_update: createEvent('update', 'object', 'delta'),
 
    /**
-    * When data changing with rollback, modify property might be changed.
-    * In this case rollbackUpdate event fires.
-    * @param {Basis.Data.DataObject} object Object which modify property
-    * was changed.
-    * @param {object} delta Delta of changes. Keys in delta are property
-    * names that was changed, and values is previous value of property
-    * (value of property before changes).
-    * @event
-    */
-    event_rollbackUpdate: createEvent('rollbackUpdate', 'object', 'modifyDelta'),
-
-   /**
     * Fires when state or state.data was changed.
     * @param {Basis.Data.DataObject} object Object which state was changed.
     * @param {object} oldState Object state before changes.
@@ -358,20 +346,25 @@
     event_delegateChanged: createEvent('delegateChanged', 'object', 'oldDelegate'),
 
    /**
-    * Fires when root property was changed.
-    * @param {Basis.Data.DataObject} object Object which root property was changed.
-    * @param {Basis.Data.DataObject} oldRoot Object root before changes.
-    * @event
-    */
-    event_rootChanged: createEvent('rootChanged', 'object', 'oldRoot'),
-
-   /**
     * Fires when target property was changed.
     * @param {Basis.Data.DataObject} object Object which target property was changed.
     * @param {Basis.Data.DataObject} oldTarget Object before changes.
     * @event
     */
-    event_targetChanged: createEvent('targetChanged', 'object', 'oldTarget'),
+    event_targetChanged: createEvent('targetChanged', 'object', 'oldTarget') && function(object, oldTarget){
+      var targetHandler = this.listen.target;
+
+      if (targetHandler)
+      {
+        if (oldTarget)
+          oldTarget.removeHandler(targetHandler, this);
+
+        if (this.target)
+          this.target.addHandler(targetHandler, this);
+      }
+
+      event.targetChanged.call(this, object, oldTarget);
+    },
 
    /**
     * Fires when count of subscribers (subscriberCount property) was changed.
@@ -386,6 +379,8 @@
     */
     event_activeChanged: createEvent('activeChanged'),
 
+    event_dataChanged: createEvent('dataChanged'),
+
    /**
     * Default listeners.
     * @inheritDoc
@@ -393,32 +388,24 @@
     listen: {
       delegate: {
         update: function(object, delta){
+          this.data = object.data;
           this.event_update(object, delta);
-        },
-        rollbackUpdate: function(object, delta){
-          this.event_rollbackUpdate(object, delta);
         },
         stateChanged: function(object, oldState){
           this.state = object.state;
           this.event_stateChanged(object, oldState);
         },
-        /*delegateChanged: function(object, oldDelegate){
-          this.data = object.data;
-          this.event_rootChanged(object, oldDelegate);
-        },*/
-        rootChanged: function(object, oldRoot){
-          this.data = object.data;
-          this.root = object.root;
-          this.event_rootChanged(object, oldRoot);
-          if (this.targetPoint && this.target !== this.root)
-            this.target = this.root;
-        },
         targetChanged: function(object, oldTarget){
-          if (this.target != object.target)
-          {
-            this.target = object.target;
-            this.event_targetChanged(object, oldTarget);
-          }
+          this.target = object.target;
+          this.event_targetChanged(object, oldTarget);
+        },
+        delegateChanged: function(object){
+          this.data = object.data;
+          this.event_dataChanged(object);
+        },
+        dataChanged: function(object){
+          this.data = object.data;
+          this.event_dataChanged(object);
         },
         destroy: function(){
           if (this.cascadeDestroy)
@@ -451,10 +438,13 @@
       }
       else
       {
-        this.root = this;
         // if data doesn't exists - init it
         if (!this.data)
           this.data = {};
+
+        // set target property to itself if isTarget property true
+        if (this.isTarget)
+          this.target = this;
       }
 
       // subscription sheme: activate subscription if active
@@ -484,13 +474,12 @@
     * @return {Basis.Data.DataObject}
     */
     getRootDelegate: function(){
-      return this.root;
-      /*var object = this;
+      var object = this;
 
       while (object.delegate && object.delegate !== object)
         object = object.delegate;
 
-      return object;*/
+      return object;
     },
 
    /**
@@ -543,7 +532,6 @@
       {
         var oldDelegate = this.delegate;
         var oldTarget = this.target;
-        var oldRoot = this.root;
         var oldState = this.state;
         var oldData = this.data;
         var delta = {};
@@ -555,10 +543,9 @@
         {
           // assing new delegate
           this.delegate = newDelegate;
-          this.target = newDelegate.target || (this.targetPoint ? newDelegate : null);
-          this.root = newDelegate.root;
           this.data = newDelegate.data;
           this.state = newDelegate.state;
+          this.target = newDelegate.target;
 
           newDelegate.addHandler(this.listen.delegate, this);
 
@@ -576,7 +563,6 @@
           // reset delegate and info
           this.delegate = null;
           this.target = null;
-          this.root = this;
           this.data = {};
 
           // copy data, no update, no delta
@@ -586,10 +572,6 @@
 
         // fire event if delegate changed
         this.event_delegateChanged(this, oldDelegate);
-
-        // fire event if root delegate changed
-        if (this.root !== oldRoot)
-          this.event_rootChanged(this, oldRoot);
 
         // fire event if target changed
         if (this.target !== oldTarget)
@@ -626,9 +608,11 @@
     * @return {Basis.Data.STATE|string} Current object state.
     */
     setState: function(state, data){
+      var root = this.target || this.getRootDelegate();
+
       // set new state for root
-      if (this.root != this)
-        return this.root.setState(state, data);
+      if (root !== this)
+        return root.setState(state, data);
 
       // set new state for object
       if (this.state != String(state) || this.state.data != data)
@@ -661,8 +645,10 @@
     * @return {Object|boolean} Delta if object data (this.data) was updated or false otherwise.
     */
     update: function(data){
-      if (this.root !== this)
-        return this.root.update(data);
+      var root = this.target || this.getRootDelegate();
+
+      if (root !== this)
+        return root.update(data);
 
       if (data)
       {

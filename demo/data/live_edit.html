@@ -153,8 +153,12 @@
             this.select(Basis.Event(event).ctrlKey);
           }
         },
-        event_rollbackUpdate: function(object, modifiedDelta){
-          Basis.CSS.classList(this.element).bool('modified', object.modified)
+        listen: {
+          target: {
+            rollbackUpdate: function(object, modifiedDelta){
+              Basis.CSS.classList(this.element).bool('modified', object.modified)
+            }
+          }
         }
       }
     );
@@ -246,17 +250,26 @@
       ],
       handler: {
         targetChanged: function(){
-          if (this.target)
+          if (this.target && this.target.modified)
             this.enable();
           else
             this.disable();
+        }
+      },
+      listen: {
+        target: {
+          rollbackUpdate: function(object, delta){
+            if (object.modified)
+              this.enable();
+            else
+              this.disable();
+          }
         }
       }
     });
 
     var articleEditor = new nsWrapper.TmplContainer({
       id: 'EditForm',
-      targetPoint: true,         // this object will change target
       childNodes: [              // set child nodes
         myForm,
         formPanel

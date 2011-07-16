@@ -372,8 +372,7 @@
     * @class
     */
     var Slot = Class(DataObject, {
-      className: namespace + '.Slot',
-      targetPoint: true
+      className: namespace + '.Slot'
     });
 
    /**
@@ -604,6 +603,8 @@
         canHaveDelegate: false,
 
         modified: null,
+        isTarget: true,
+        event_rollbackUpdate: EventObject.createEvent('rollbackUpdate'),
 
         extendConstructor_: false,
         init: function(data){

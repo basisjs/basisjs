@@ -101,13 +101,13 @@
     border-radius: 2px;
 
     /* animation */
-      -moz-transition: .25s ease-in-out;
+      -moz-transition: .1s ease-in-out;
       -moz-transition-property: background-color, border-color, color, box-shadow, -moz-box-shadow;
-      -webkit-transition: .25s ease-in-out;
+      -webkit-transition: .1s ease-in-out;
       -webkit-transition-property: background-color, border-color, color, box-shadow, -webkit-box-shadow;
-      -o-transition: .25s ease-in-out;
+      -o-transition: .1s ease-in-out;
       -o-transition-property: background-color, border-color, box-shadow, color;
-    transition: .25s ease-in-out;
+    transition: .1s ease-in-out;
     transition-property: background-color, border-color, box-shadow, color;
   }
 
