@@ -110,11 +110,11 @@
 
     // data
     var data = [
-      { info: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
-      { info: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
-      { info: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
-      { info: { title: 'Maecenas', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
-      { info: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
+      { data: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
+      { data: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
+      { data: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
+      { data: { title: 'Maecenas', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
+      { data: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
     ].repeat(5).sortAsObject(Math.random);
 
     // Create a tree
@@ -126,8 +126,8 @@
     // Create a table
     var table = new nsTable.Table({
       structure: [
-        { header: 'Title', body: { content: Function.getter('info.title') }, sorting: Function.getter('info.title') },
-        { header: 'Content', body: { content: Function.getter('info.content') } }
+        { header: 'Title', body: { content: Function.getter('data.title') }, sorting: Function.getter('data.title') },
+        { header: 'Content', body: { content: Function.getter('data.content') } }
       ],
       childNodes: data
     })

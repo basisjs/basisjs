@@ -43,7 +43,7 @@
           var node = new Basis.Plugin.SyntaxHighlight.SourceCodeNode({
             container: document.body,
             normalize: false,
-            info: {
+            data: {
               code: req.responseText//.replace(/^\s*\n/, function(m){ return '.' + m })
             }
           });

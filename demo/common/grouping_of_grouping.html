@@ -67,7 +67,7 @@
     #MetroDemo
     {
     }
-    .metro-continet
+    .metro-continent
     {
       width: 20%;
       float: left;
@@ -173,29 +173,29 @@
     for (var i = 0; i < 32; i++)
     {
       data.push({
-        info: {
+        data: {
           id: i
         }
       });
     }
 
     var groupingClass = Basis.Class(nsWrappers.TmplGroupingNode, {
-      childClass: Basis.Class(nsWrappers.TmplPartitionNode, nsWrappers.simpleTemplate(
+      childClass: nsWrappers.simpleTemplate(
         '<div{element} class="group">' +
           '<!-- {childNodesHere} -->' +
-          '<div class="group-title">{object_info_title}</div>' +
+          '<div class="group-title">{this_data_title}</div>' +
         '</div>'
-      )),
+      ),
       groupGetter: function(node){
-        return node.info.id >> 1;
+        return node.data.id >> 1;
       }
     });
     groupingClass.prototype.localGroupingClass = groupingClass;
 
     var list = new nsWrappers.TmplContainer({
       container: DOM.get('NumberDemo-Container'),
-      childClass: Basis.Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate('<span{element} class="item">{object_info_id}</span>')),
       childNodes: data,
+      childClass: nsWrappers.simpleTemplate('<span{element} class="item">{this_data_id}</span>'),
       localGroupingClass: groupingClass,
       localGrouping: {
         localGrouping: {
@@ -426,43 +426,42 @@
       'Venezuela': 'South America'
     };
 
-    var CountryPartitionNode = Basis.Class(nsWrappers.TmplPartitionNode, nsWrappers.simpleTemplate(
-      '<div{element} class="metro-country">' +
-        '<h4 class="metro-country-title">{this_info_title}</h4>' +
-        '<ul{childNodesElement}/>' +
-      '</div>'
-    ));
-
-    var ContinentPartitionNode = Basis.Class(nsWrappers.TmplPartitionNode, nsWrappers.simpleTemplate(
-      '<div{element} class="metro-continet">' +
-        '<h3 class="metro-continent-title">{this_info_title}</h3>' +
-        '<!-- {childNodesHere} -->' +
-      '</div>'
-    ));
-
     var metroList = new nsWrappers.TmplContainer({
       id: 'MetroDemo',
       container: DOM.get('MetroDemo-Container'),
-      childClass: Basis.Class(nsWrappers.TmplNode, nsWrappers.simpleTemplate(
+
+      childNodes: metro.map(Function.wrapper('data')),
+      localSorting: Function.getter('data.name'),
+      childClass: nsWrappers.simpleTemplate(
         '<li{element} class="metro">' +
-          '<span class="metro-name">{this_info_name}</span>' +
-          '<span class="metro-city">{this_info_city}</span>' +
+          '<span class="metro-name">{this_data_name}</span>' +
+          '<span class="metro-city">{this_data_city}</span>' +
         '</li>'
-      )),
-      childNodes: metro.map(Function.wrapper('info')),
-      localSorting: Function.getter('info.name'),
+      ),
+
       localGrouping: {
         // group metro by country
-        childClass: CountryPartitionNode,
-        groupGetter: Function.getter('info.country'),
-        localSorting: Function.getter('info.title'),
+        groupGetter: Function.getter('data.country'),
+        localSorting: Function.getter('data.title'),
+        childClass: nsWrappers.simpleTemplate(
+          '<div{element} class="metro-country">' +
+            '<h4 class="metro-country-title">{this_data_title}</h4>' +
+            '<ul{childNodesElement}/>' +
+          '</div>'
+        ),
+
         localGrouping: {
           // .. than group country by continent
-          childClass: ContinentPartitionNode,
           groupGetter: function(node){
-            return continentByCountry[node.info.id];
+            return continentByCountry[node.data.id];
           },
-          localSorting: Function.getter('info.title')
+          localSorting: Function.getter('data.title'),
+          childClass: nsWrappers.simpleTemplate(
+            '<div{element} class="metro-continent">' +
+              '<h3 class="metro-continent-title">{this_data_title}</h3>' +
+              '<!-- {childNodesHere} -->' +
+            '</div>'
+          )
         }
       }
     });

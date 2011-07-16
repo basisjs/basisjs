@@ -501,7 +501,7 @@
       },
 
       loadData: function(items){
-        this.setChildNodes(items.map(Function.wrapper('info')))
+        this.setChildNodes(items.map(Function.wrapper('data')))
       },
 
       destroy: function(){

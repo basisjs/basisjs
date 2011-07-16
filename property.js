@@ -61,6 +61,8 @@
     var AbstractProperty = Class(DataObject, {
       className: namespace + '.AbstractProperty',
 
+      event_change: createEvent('change'),
+
      /**
       * Indicates that property is locked (don't fire event for changes).
       * @type {boolean}
@@ -76,7 +78,9 @@
       lockValue_: null,
 
      /** use custom constructor */
-      extendConstructor: false,
+      extendConstructor_: false,
+
+      updateCount: 0,
 
      /**
       * @param {Object} initValue Initial value for object.
@@ -110,6 +114,7 @@
         {
           this.value = newValue;
           updated = true;
+          this.updateCount += 1;
         }
 
         if (!this.locked && (updated || forceEvent))
@@ -214,8 +219,8 @@
       */
       links_: null,
 
-      event_change: createEvent('change') && function(value, oldValue){
-        event.change.call(this, value, oldValue);
+      event_change: function(value, oldValue){
+        AbstractProperty.prototype.event_change.call(this, value, oldValue);
 
         if (!this.links_.length || Cleaner.globalDestroy)
           return;
@@ -511,7 +516,7 @@
      /**
       * use extend constructor
       */
-      extendConstructor: true,
+      extendConstructor_: true,
 
      /**
       * @param {Object} config

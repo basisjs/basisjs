@@ -215,7 +215,7 @@
         newState = STATE.PROCESSING;
 
       // set new state
-      this.setState(newState, this.info.error);
+      this.setState(newState, this.data.error);
     };
 
     /**

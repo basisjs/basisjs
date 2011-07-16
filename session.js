@@ -159,7 +159,7 @@
         delete sessions[this.key];
       },
 
-      extendConstructor: false,
+      extendConstructor_: false,
       init: function(key){
         EventObject.prototype.init.call(this);
 

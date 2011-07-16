@@ -129,12 +129,12 @@
 
       var localGrouping = {
         groupGetter: function(node){
-          if (node.info.count >= 0)
+          if (node.data.count >= 0)
             return 'greates or equal 0';
           else
             return ' less than 0';
         },
-        localSorting: 'info.title'
+        localSorting: 'data.title'
       };
           
       //testAMax  = new Max(Function.getter('count', Number));
@@ -165,7 +165,7 @@
                 console.log(arguments);
           }
         },
-        //localSorting: Function.getter('info.id', Number),
+        //localSorting: Function.getter('data.id', Number),
         structure: [
           { 
             header: {
@@ -195,7 +195,7 @@
             }
           },
           { 
-            sorting: Function.getter('info.id', Number),
+            sorting: Function.getter('data.id', Number),
             cssClassName: 'right',
 
             header: {
@@ -203,7 +203,7 @@
             },
 
             body: {
-              content: Function.getter('info.id')
+              content: Function.getter('data.id')
             },
 
             footer: {
@@ -228,18 +228,18 @@
             }
           },
           { 
-            sorting: Function.getter('info.title', String.toLowerCase),
+            sorting: Function.getter('data.title', String.toLowerCase),
 
             header: {
               content: 'title'
             },
 
             body: {
-              content: Function.getter('info.title')
+              content: Function.getter('data.title')
             }
           },
           { 
-            sorting: Function.getter('info.amount', Number),
+            sorting: Function.getter('data.amount', Number),
             cssClassName: 'right',
 
             header: {
@@ -249,7 +249,7 @@
 
             body: {
               cssClassName: 'italic',
-              content: Function.getter('info.amount', '{0:.2}ð.')
+              content: Function.getter('data.amount', '{0:.2}ð.')
             },
 
             footer: {
@@ -257,7 +257,7 @@
             }
           },
           { 
-            sorting: Function.getter('info.count', Number),
+            sorting: Function.getter('data.count', Number),
             cssClassName: 'right',
 
             header: {
@@ -265,7 +265,7 @@
             },
 
             body: {
-              content: Function.getter('info.count', Number)
+              content: Function.getter('data.count', Number)
             },
 
             footer: {
@@ -306,7 +306,7 @@
           TestTable.loadData(data);
         else
           for (var i = 0; i < count; i++)
-            TestTable.appendChild({ info: data[i] });
+            TestTable.appendChild({ data: data[i] });
       //console.profileEnd();
 
         var loadDataTime = Date.now() - d;
@@ -371,7 +371,7 @@ TestTable.header.setLocalGrouping({
   groupGetter: function(node){
     return !!node.sorting;
   },
-  titleGetter: Basis.Function.getter('info.title', { 'true': 'sortable', 'false': 'is\'t sortable' })
+  titleGetter: Basis.Function.getter('data.title', { 'true': 'sortable', 'false': 'is\'t sortable' })
 })
 */
     })();

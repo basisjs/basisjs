@@ -49,16 +49,16 @@
       var updateCount = 0;
 
       var testSet = [
-        { info: { title: 'node0', value: 0, group: 1 } },
-        { info: { title: 'node1', value: 1, group: 2 } },
-        { info: { title: 'node2', value: 2, group: 1 } },
-        { info: { title: 'node3', value: 3, group: 3 } },
-        { info: { title: 'node4', value: 4, group: 4 } },
-        { info: { title: 'node5', value: 5, group: 2 } },
-        { info: { title: 'node6', value: 6, group: 2 } },
-        { info: { title: 'node7', value: 7, group: 1 } },
-        { info: { title: 'node8', value: 8, group: 3 } },
-        { info: { title: 'node9', value: 9, group: 1 } }
+        { data: { title: 'node0', value: 0, group: 1 } },
+        { data: { title: 'node1', value: 1, group: 2 } },
+        { data: { title: 'node2', value: 2, group: 1 } },
+        { data: { title: 'node3', value: 3, group: 3 } },
+        { data: { title: 'node4', value: 4, group: 4 } },
+        { data: { title: 'node5', value: 5, group: 2 } },
+        { data: { title: 'node6', value: 6, group: 2 } },
+        { data: { title: 'node7', value: 7, group: 1 } },
+        { data: { title: 'node8', value: 8, group: 3 } },
+        { data: { title: 'node9', value: 9, group: 1 } }
       ];
 
       function nodeFactory(cfg){
@@ -88,7 +88,7 @@
 
       function $values(ar){
         return ar.map(function(node){
-          return node.info.value + '(' + node.info.group + ')';
+          return node.data.value + '(' + node.data.group + ')';
         })
       }
 
@@ -312,8 +312,8 @@
                     var node = new nsWrappers.Node();
                     this.is(false, checkNode(node));
 
-                    var node = new nsWrappers.Node({ info: { a: 1, b: 2 } });
-                    this.is({ a: 1, b: 2}, node.info);
+                    var node = new nsWrappers.Node({ data: { a: 1, b: 2 } });
+                    this.is({ a: 1, b: 2}, node.data);
                   }
                 },
                 {
@@ -391,21 +391,21 @@
                   test: function(){
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localGrouping: 'info.group'
+                      localGrouping: 'data.group'
                     });
 
                     for (var i = 0; i < testSet.length; i++)
                       node.appendChild(testSet[i]);
 
                     this.is(false, checkNode(node));
-                    this.is($values(testSet.sortAsObject('info.group')), $values(node.childNodes));
+                    this.is($values(testSet.sortAsObject('data.group')), $values(node.childNodes));
 
                     // =======================================
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
                       localGrouping: {
-                        groupGetter: 'info.group',
-                        localSorting: 'info.id',
+                        groupGetter: 'data.group',
+                        localSorting: 'data.id',
                         localSortingDesc: true
                       }
                     });
@@ -419,11 +419,11 @@
                     // ======================================
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: 'info.value',
+                      localSorting: 'data.value',
                       localSortingDesc: true,
                       localGrouping: {
-                        groupGetter: 'info.group',
-                        localSorting: 'info.id',
+                        groupGetter: 'data.group',
+                        localSorting: 'data.id',
                         localSortingDesc: true
                       },
                       childNodes: testSet
@@ -439,11 +439,11 @@
                     // ======================================
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: 'info.value',
+                      localSorting: 'data.value',
                       localSortingDesc: true,
                       localGrouping: {
-                        groupGetter: 'info.group',
-                        localSorting: 'info.title',
+                        groupGetter: 'data.group',
+                        localSorting: 'data.title',
                         localSortingDesc: true
                       },
                       childNodes: testSet
@@ -479,7 +479,7 @@
                     var groupNodes = {};
                     for (var i = 1; i <= 4; i++)
                       groupNodes[i] = new nsWrappers.Node({
-                        info: {
+                        data: {
                           title: i
                         }
                       });
@@ -487,14 +487,14 @@
                     // ======================================
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: 'info.value',
+                      localSorting: 'data.value',
                       localSortingDesc: true,
                       localGrouping: {
-                        groupGetter: Function.getter('info.group', groupNodes),
-                        localSorting: 'info.title',
+                        groupGetter: Function.getter('data.group', groupNodes),
+                        localSorting: 'data.title',
                         localSortingDesc: true
                       },
-                      childNodes: testSet//.filter(Function.getter('info.group >= 3'))
+                      childNodes: testSet//.filter(Function.getter('data.group >= 3'))
                     });
 
                     this.is(false, checkNode(node));
@@ -530,7 +530,7 @@
                     var groupNodes = {};
                     for (var i = 1; i <= 4; i++)
                       groupNodes[i] = new nsWrappers.Node({
-                        info: {
+                        data: {
                           title: i
                         }
                       });
@@ -538,16 +538,16 @@
 
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: 'info.value',
+                      localSorting: 'data.value',
                       localSortingDesc: true,
-                      childNodes: testSet//.filter(Function.getter('info.group >= 3'))
+                      childNodes: testSet//.filter(Function.getter('data.group >= 3'))
                     });
 
                     this.is(false, checkNode(node));
 
                     node.setLocalGrouping({
-                      groupGetter: Function.getter('info.group', groupNodes),
-                      localSorting: 'info.title',
+                      groupGetter: Function.getter('data.group', groupNodes),
+                      localSorting: 'data.title',
                       localSortingDesc: true
                     });
 
@@ -601,7 +601,7 @@
                     for (var i = 1; i <= 4; i++)
                       groupNodes[i] = new groupDelegateClass({
                         title: -i,
-                        info: {
+                        data: {
                           title: i
                         }
                       });
@@ -609,9 +609,9 @@
 
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: 'info.value',
+                      localSorting: 'data.value',
                       localSortingDesc: true,
-                      childNodes: testSet//.filter(Function.getter('info.group >= 3'))
+                      childNodes: testSet//.filter(Function.getter('data.group >= 3'))
                     });
 
                     node.groupControlClass = Class(node.groupControlClass, {
@@ -623,8 +623,8 @@
                     this.is(false, checkNode(node));
 
                     node.setLocalGrouping({
-                      groupGetter: Function.getter('info.group', groupNodes),
-                      localSorting: 'info.title',
+                      groupGetter: Function.getter('data.group', groupNodes),
+                      localSorting: 'data.title',
                       localSortingDesc: true
                     });
 

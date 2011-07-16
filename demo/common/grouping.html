@@ -90,11 +90,11 @@
 
     // data
     var data = [
-      { info: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
-      { info: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
-      { info: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
-      { info: { title: 'tortor', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
-      { info: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
+      { data: { title: 'Lorem', content: 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit.' } },
+      { data: { title: 'Sed', content: 'Sed metus nibh, sodales a, porta at, vulputate eget, dui.' } },
+      { data: { title: 'Pellentesque', content: 'Pellentesque ut nisl.' } },
+      { data: { title: 'tortor', content: 'Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.' } },
+      { data: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
     ].repeat(3);
 
     //
@@ -110,8 +110,8 @@
     var table = new nsTable.Table({
       childNodes: data,
       structure: [
-        { header: 'Title', body: { content: Function.getter('info.title') } },
-        { header: 'Content', body: { content: Function.getter('info.content') } }
+        { header: 'Title', body: { content: Function.getter('data.title') } },
+        { header: 'Content', body: { content: Function.getter('data.content') } }
       ]
     });
 
@@ -138,14 +138,14 @@
         },
         {
           title: 'Group by title',
-          value: Function.getter('info.title')
+          value: Function.getter('data.title')
         },
         {
           title: 'Group by first letter',
           value: {
-            groupGetter: Function.getter('info.title.charAt(0)'),
-            titleGetter: Function.getter('info.title', 'Group for letter <{0}>'),
-            localSorting: Function.getter('info.title')
+            groupGetter: Function.getter('data.title.charAt(0)'),
+            titleGetter: Function.getter('data.title', 'Group for letter <{0}>'),
+            localSorting: Function.getter('data.title')
           }
         }
       ]

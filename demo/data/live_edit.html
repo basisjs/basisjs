@@ -143,17 +143,18 @@
     var ArticleNode = Basis.Class(nsWrapper.TmplNode, 
       nsWrapper.simpleTemplate(
         '<div{element} class="Article" event-click="select">' +
-          '<div class="Article-Title">{this_info_title}</div>' +
-          '<div class="Article-Content">{this_info_content}</div>' +
+          '<div class="Article-Title">{this_data_title}</div>' +
+          '<div class="Article-Content">{this_data_content}</div>' +
         '</div>'
       ),
       {
-        templateAction: function(actionName, event){
-          if (actionName == 'select')
+        action: {
+          select: function(event){
             this.select(Basis.Event(event).ctrlKey);
+          }
         },
         event_rollbackUpdate: function(object, modifiedDelta){
-          Basis.CSS.cssClass(this.element).bool('modified', object.modified)
+          Basis.CSS.classList(this.element).bool('modified', object.modified)
         }
       }
     );
@@ -163,9 +164,9 @@
     //
     var articleList = new nsWrapper.TmplContainer({
       id: 'ArticleList',
-      childClass: ArticleNode,  // set class for child nodes
       dataSource: Article.all,  // set data source
-      localSorting: Function.getter('info.title', String.toLowerCase),  // sorting for child nodes
+      childClass: ArticleNode,  // set class for child nodes
+      localSorting: Function.getter('data.title', String.toLowerCase),  // sorting for child nodes
       selection: {              // we need for selection, define config for it
         handler: {
           datasetChanged: function(dataset, delta){ // dataset -> articleList.selection
@@ -193,7 +194,7 @@
           type: 'text',           // type of field
           name: 'title',          // name should be equal to field name in target object info
           title: 'Title',         // caption
-          handler: {              // default handler for field, update info on value change and key up
+          handler: {              // default handler for field, update data on value change and key up
             change: updateObject,
             keyup: updateObject
           }
@@ -213,7 +214,7 @@
           // this -> myForm
           if (this.target)
           {
-            this.loadData(this.info); // if have got a target, load data to form
+            this.loadData(this.data); // if have got a target, load data to form
             this.enable();            // and enable editing
           }
           else
@@ -239,7 +240,7 @@
           caption: 'Cancel',
           handler: function(){
             myForm.getRootDelegate().rollback();
-            myForm.loadData(myForm.info);
+            myForm.loadData(myForm.data);
           }
         }
       ],

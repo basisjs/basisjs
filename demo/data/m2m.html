@@ -1,12 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>M:M relationship editor</title>
+  <title>Basis Demos: M:M relationship editor</title>
 
   <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/tree/compat/style.css" media="screen" />
   <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/new/style.css" media="screen" />
@@ -204,7 +203,7 @@
 </head>
 
 <body>
-  <h1>M:M relationship editor</h1>
+  <h1>Basis Demos: M:M relationship editor</h1>
 
   <p id="demo-summary">
     ...
@@ -255,7 +254,7 @@
       },
 
       groupings: {
-        FieldId: Function.getter('info.FieldId')
+        FieldId: Function.getter('data.FieldId')
       }
     });
 
@@ -297,12 +296,12 @@
 
       dataSource: Field.all,
 
-      // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
-      localSorting: Function.getter('info.Title'),
+      // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
+      localSorting: Function.getter('data.Title'),
 
       // Определяем класс для дочерних узлов
       childClass: nsTree.TreeFolder.subclass({
-        template: new Basis.Html.Template(
+        template: 
           '<li{element|selected} class="Basis-TreeNode empty" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
               '<div{expander} class="Basis-TreeNode-Expander" event-click="toggle"/>' +
@@ -311,13 +310,12 @@
             '<div{childNodesElement} class="Basis-TreeNode-Content">' + 
               '<span class="emptyLabel">No words</span>' +
             '</div>' +
-          '</li>'
-        ),
+          '</li>',
 
         freqSum: 0,
-        titleGetter: Function.getter('info.Title'),
+        titleGetter: Function.getter('data.Title'),
         localSorting: function(node){
-          return Word.get(node.info.WordId).info.Title;
+          return Word.get(node.data.WordId).data.Title;
         },
         handler: {
           childNodesModified: function(node, delta){
@@ -327,11 +325,11 @@
 
             if (array = delta.inserted)
               for (var i = 0; i < array.length; i++)
-                deltaSum += Word.get(array[i].info.WordId).info.Freq;
+                deltaSum += Word.get(array[i].data.WordId).data.Freq;
 
             if (array = delta.deleted)
               for (var i = 0; i < array.length; i++)
-                deltaSum -= Word.get(array[i].info.WordId).info.Freq;
+                deltaSum -= Word.get(array[i].data.WordId).data.Freq;
 
             this.freqSum += deltaSum;
 
@@ -344,25 +342,26 @@
         },
         init: function(config){
           nsTree.TreeFolder.prototype.init.call(this, config);
-          this.setDataSource(Link.getGrouping('FieldId').getGroup(this.info.FieldId, true));
+          this.setDataSource(Link.getGrouping('FieldId').getSubset(this.data.FieldId, true));
         },
 
         childClass: nsWrappers.TmplNode.subclass({
-          template: new Basis.Html.Template(
+          template: 
             '<div{element} class="Field-WordLink">' +
               '<!--{word}-->' +
               '<span class="Field-WordLink-DeleteButton" event-click="delete">x</span>' +
-            '</div>'
-          ),
-          templateAction: function(actionName, event){
-            if (actionName == 'delete')
+            '</div>',
+
+          action: {
+            delete: function(event){
               this.target.destroy();
+            }
           },
           satelliteConfig: {
             word: {
-              delegate: Function.getter('info.WordId', Word),
+              delegate: Function.getter('data.WordId', Word),
               instanceOf: nsWrappers.TmplNode.subclass(nsWrappers.simpleTemplate(
-                '<span{element} class="Field-WordLink-Title">{this_info_Title}</span>'
+                '<span{element} class="Field-WordLink-Title">{this_data_Title}</span>'
               ))
             }
           }
@@ -413,25 +412,22 @@
     var relatedTree = new nsTree.Tree({
       id: 'RelatedTree',
 
-      // Определяем сортировку для дочерних узлов: сортируем по node.info.title.
+      // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
       localSorting: function(node){
-        return node.satellite.word.info.Title;
+        return node.satellite.word.data.Title;
       },
 
-      dataSource: new Basis.Data.AggregateDataset({
-        sources: [Word.all],
-        transform: function(srcObject){
-          return srcObject;
-        }
+      dataSource: new Basis.Data.Dataset.MapReduce({
+        source: Word.all
       }),
       event_targetChanged: function(object, delta){
         DOM.visibility(this.element.parentNode, !!this.target);
 
         if (this.target)
         {
-          var fieldId = this.info.FieldId;
-          this.dataSource.setTransform(function(object){
-            var wordId = object.info.WordId;
+          var fieldId = this.data.FieldId;
+          this.dataSource.setMap(function(object){
+            var wordId = object.data.WordId;
             return Link.getSlot(fieldId + '-' + wordId, {
               FieldId: fieldId,
               WordId: wordId
@@ -440,18 +436,17 @@
         }
       },
       childClass: nsWrappers.TmplNode.subclass({
-        template: new Basis.Html.Template(
+        template: 
           '<li{element} event-click="toggle">' +
             '<input{state} type="checkbox"/><!--{word}-->' +
-          '</li>'
-        ),
-        templateAction: function(actionName, event){
-          if (actionName == 'toggle')
-          {
+          '</li>',
+
+        action: {
+          toggle: function(event){
             if (this.target)
               this.target.destroy();
             else
-              Link(this.info);
+              Link(this.data);
           }
         },
         event_targetChanged: function(object, oldTarget){
@@ -460,9 +455,9 @@
         },
         satelliteConfig: {
           word: {
-            delegate: Function.getter('info.WordId', Word),
+            delegate: Function.getter('data.WordId', Word),
             instanceOf: nsWrappers.TmplNode.subclass(nsWrappers.simpleTemplate(
-              '<span{element}>{this_info_Title} <span class="freq">(frequency: {this_info_Freq})</span></span>'
+              '<span{element}>{this_data_Title} <span class="freq">(frequency: {this_data_Freq})</span></span>'
             ))
           }
         }
@@ -477,7 +472,7 @@
           handler: function(){
             relatedTree.dataSource.getItems().forEach(function(item){
               if (!item.target)
-                Link(item.info);
+                Link(item.data);
             });
           }
         },
@@ -485,7 +480,7 @@
           caption: 'Uncheck all',
           groupId: 1,
           handler: function(){
-            Link.getGrouping('FieldId').getGroup(relatedTree.info.FieldId).sync([]);
+            Link.getGrouping('FieldId').getSubset(relatedTree.data.FieldId).sync([]);
           }
         },
         {
@@ -519,7 +514,8 @@
         relatedButtonPanel.element,
         new Basis.Controls.Form.MatchInput({
           matchFilter: {
-            node: relatedTree
+            node: relatedTree,
+            textNodeGetter: Function.getter('satellite.word.tmpl.this_data_Title')
           }
         }).element,
         relatedTree.element
@@ -529,17 +525,17 @@
 
         // NOTE: для отладки - список всех связей
         new nsTree.Tree({
-          // Определяем класс для дочерних узлов (описан выше)
-          childClass: Class(nsTree.TreeNode, {
-            titleGetter: function(node){
-              var field = Field.get(node.info.FieldId);
-              var property = Word.get(node.info.WordId);
-              return (field ? field.info.Title : '[no field]') + ' <-> ' + (property ? property.info.Title : '[no property]');
-            }
-          }),
-
           dataSource: Link.all,
-          localSorting: Function.getter('info.FieldId')
+          localSorting: Function.getter('data.FieldId'),
+
+          // Определяем класс для дочерних узлов (описан выше)
+          childClass: {
+            titleGetter: function(node){
+              var field = Field.get(node.data.FieldId);
+              var property = Word.get(node.data.WordId);
+              return (field ? field.data.Title : '[no field]') + ' <-> ' + (property ? property.data.Title : '[no property]');
+            }
+          }
         }).element
       )/*,
       groupsTree.element*/

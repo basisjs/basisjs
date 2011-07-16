@@ -95,13 +95,13 @@
 
     // Data source
     var data = [
-      { info: { title: 'tab4' }, groupId: 3, content: 'content 4' },
-      { info: { title: 'tab1' }, groupId: 1, content: 'content 1' },
-      { info: { title: 'tab6' }, groupId: 3, content: 'content 6' },
-      { info: { title: 'tab5' }, groupId: 3, content: 'content 5 '.repeat(100) },
-      { info: { title: 'tab3' }, groupId: 2, content: 'content 3', selected: true  },
-      { info: { title: 'tab2' }, groupId: 2, content: 'content 2', disabled: true  },
-      { info: { title: 'tab7' }, groupId: 3, content: 'content 7' }
+      { data: { title: 'tab4' }, groupId: 3, content: 'content 4' },
+      { data: { title: 'tab1' }, groupId: 1, content: 'content 1' },
+      { data: { title: 'tab6' }, groupId: 3, content: 'content 6' },
+      { data: { title: 'tab5' }, groupId: 3, content: 'content 5 '.repeat(100) },
+      { data: { title: 'tab3' }, groupId: 2, content: 'content 3', selected: true  },
+      { data: { title: 'tab2' }, groupId: 2, content: 'content 2', disabled: true  },
+      { data: { title: 'tab7' }, groupId: 3, content: 'content 7' }
     ];
 
     //
@@ -119,9 +119,9 @@
       container: DOM.Style.setStyle(createBlock('AccordionControl with localSorting & localGrouping'), { 'float': 'right', width: '250px' }),
       localGrouping: {
         groupGetter: getter('groupId'),
-        localSorting: getter('info.title')
+        localSorting: getter('data.title')
       },
-      localSorting: getter('info.title'),
+      localSorting: getter('data.title'),
       childNodes: data
     });
 
@@ -136,9 +136,9 @@
       container: createBlock('TabControl with localSorting & localGrouping'),
       localGrouping: {
         groupGetter: getter('groupId'),
-        localSorting: getter('info.title')
+        localSorting: getter('data.title')
       },
-      localSorting: getter('info.title'),
+      localSorting: getter('data.title'),
       childNodes: data
     });
 
@@ -165,10 +165,10 @@
                     if (!page.disabled)
                       page.select();
                     else
-                      alert('page with title ' + (page.info.title) + ' is disabled and can\'t be selected');
+                      alert('page with title ' + (page.data.title) + ' is disabled and can\'t be selected');
                   }
                 },
-                page.info.title
+                page.data.title
               );
             }
 
@@ -190,9 +190,9 @@
       container: createBlock('TabSheetControl with localSorting & localGrouping'),
       localGrouping: {
         groupGetter: getter('groupId'),
-        localSorting: getter('info.title')
+        localSorting: getter('data.title')
       },
-      localSorting: getter('info.title'),
+      localSorting: getter('data.title'),
       childNodes: data
     });
 

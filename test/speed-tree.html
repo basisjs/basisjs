@@ -184,7 +184,7 @@
             return new TreeNode(config);
         },
         selection: { multiple: true },
-        info: {
+        data: {
           value: 0,
           title: ''
         }
@@ -199,9 +199,9 @@
         }
       });
 
-      var getValue = function(info){ return info.value };
-      var oddValue = function(info){ return info.value % 2 };
-      var evenValue = function(info){ return info.value % 2 == 0 };
+      var getValue = function(data){ return data.value };
+      var oddValue = function(data){ return data.value % 2 };
+      var evenValue = function(data){ return data.value % 2 == 0 };
 
       function genNodes(count){
         if (DOM.get('firstRun'))
@@ -220,7 +220,7 @@
         {
           var val = Math.round(Math.random() * 10);
           data.push({
-            info: {
+            data: {
               id: 'tree_node' + i,
               value: val,
               title: title
@@ -238,7 +238,7 @@
           var kind = i % 2 ? TreeFolder : TreeNode;
           // create node
           var node = new kind(data[i]);
-          //var node = { title: title, type: i % 2 ? 'TreeFolder' : 'TreeNode', info: { id: 'tree_node' + i, value: val } };
+          //var node = { title: title, type: i % 2 ? 'TreeFolder' : 'TreeNode', data: { id: 'tree_node' + i, value: val } };
           // add node to tree
           var refNode = nodes[(i * count * 173) % nodes.length];
           if (refNode == TestTree)

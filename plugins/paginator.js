@@ -45,7 +45,7 @@
   }
 
   function updateSelection(paginator){
-    var node = paginator.childNodes.search(paginator.activePage_, 'info.pageNumber');
+    var node = paginator.childNodes.search(paginator.activePage_, 'data.pageNumber');
     if (node)
       node.select();
     else
@@ -75,8 +75,8 @@
     event_update: function(object, delta){
       nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
-      this.tmpl.pageNumber.nodeValue = this.info.pageNumber + 1;
-      this.tmpl.link.href = this.urlGetter(this.info.pageNumber);
+      this.tmpl.pageNumber.nodeValue = this.data.pageNumber + 1;
+      this.tmpl.link.href = this.urlGetter(this.data.pageNumber);
     },
 
     urlGetter: Function.$self
@@ -126,7 +126,7 @@
     ),
     templateAction: function(actionName, event, node){
       if (actionName == 'click' && node)
-        this.setActivePage(node.info.pageNumber);
+        this.setActivePage(node.data.pageNumber);
       else
         if (actionName == 'jumpTo')
         {
@@ -172,7 +172,7 @@
         this.pageSpan_ = pageSpan;
         this.setChildNodes(Array.create(pageSpan, function(idx){
           return {
-            info: {
+            data: {
               pageNumber: idx
             }
           }

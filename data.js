@@ -241,7 +241,7 @@
     * Using for data storing. Might be managed by delegate object (if used).
     * @type {Object}
     */
-    info: null,
+    data: null,
 
    /**
     * @type {boolean}
@@ -249,7 +249,7 @@
     canHaveDelegate: true,
 
    /**
-    * Object that manage info updates if assigned.
+    * Object that manage data updates if assigned.
     * @type {Basis.Data.DataObject}
     */
     delegate: null,
@@ -319,8 +319,8 @@
     //
 
    /**
-    * Fires on info changes.
-    * @param {Basis.Data.DataObject} object Object which info property
+    * Fires on data changes.
+    * @param {Basis.Data.DataObject} object Object which data property
     * was changed. Usually it is root of delegate chain.
     * @param {object} delta Delta of changes. Keys in delta are property
     * names that was changed, and values is previous value of property
@@ -330,7 +330,7 @@
     event_update: createEvent('update', 'object', 'delta'),
 
    /**
-    * When info changing with rollback, modify property might be changed.
+    * When data changing with rollback, modify property might be changed.
     * In this case rollbackUpdate event fires.
     * @param {Basis.Data.DataObject} object Object which modify property
     * was changed.
@@ -403,11 +403,11 @@
           this.event_stateChanged(object, oldState);
         },
         /*delegateChanged: function(object, oldDelegate){
-          this.info = object.info;
+          this.data = object.data;
           this.event_rootChanged(object, oldDelegate);
         },*/
         rootChanged: function(object, oldRoot){
-          this.info = object.info;
+          this.data = object.data;
           this.root = object.root;
           this.event_rootChanged(object, oldRoot);
           if (this.targetPoint && this.target !== this.root)
@@ -437,24 +437,24 @@
       // inherit
       EventObject.prototype.init.call(this, config);
 
-      // info/delegate
+      // data/delegate
       var delegate = this.delegate;
 
       if (delegate)
       {
         // assign a delegate
-        // NOTE: ignore for this.info & this.state, no update/stateChanged events fired
+        // NOTE: ignore for this.data & this.state, no update/stateChanged events fired
         this.delegate = null;
-        this.info = delegate.info;
+        this.data = delegate.data;
         this.state = delegate.state;
         this.setDelegate(delegate);
       }
       else
       {
         this.root = this;
-        // if info doesn't exists - init it
-        if (!this.info)
-          this.info = {};
+        // if data doesn't exists - init it
+        if (!this.data)
+          this.data = {};
       }
 
       // subscription sheme: activate subscription if active
@@ -501,14 +501,14 @@
     *
     *   a.setDelegate(b);
     *   a.update({ prop: 123 });
-    *   alert(a.info.prop); // shows 123
-    *   alert(b.info.prop); // shows 123
-    *   alert(a.info.prop === b.info.prop); // shows true
+    *   alert(a.data.prop); // shows 123
+    *   alert(b.data.prop); // shows 123
+    *   alert(a.data.prop === b.data.prop); // shows true
     *
     *   b.update({ prop: 456 });
-    *   alert(a.info.prop); // shows 456
-    *   alert(b.info.prop); // shows 456
-    *   alert(a.info.prop === b.info.prop); // shows true
+    *   alert(a.data.prop); // shows 456
+    *   alert(b.data.prop); // shows 456
+    *   alert(a.data.prop === b.data.prop); // shows true
     *
     *   a.setState(Basis.Data.STATE.PROCESSING);
     *   alert(a.state); // shows 'processing'
@@ -545,7 +545,7 @@
         var oldTarget = this.target;
         var oldRoot = this.root;
         var oldState = this.state;
-        var oldInfo = this.info;
+        var oldData = this.data;
         var delta = {};
 
         if (oldDelegate)
@@ -557,19 +557,19 @@
           this.delegate = newDelegate;
           this.target = newDelegate.target || (this.targetPoint ? newDelegate : null);
           this.root = newDelegate.root;
-          this.info = newDelegate.info;
+          this.data = newDelegate.data;
           this.state = newDelegate.state;
 
           newDelegate.addHandler(this.listen.delegate, this);
 
-          // calculate delta as difference between current info and delegate info
-          for (var key in newDelegate.info)
-            if (key in oldInfo === false)
+          // calculate delta as difference between current data and delegate info
+          for (var key in newDelegate.data)
+            if (key in oldData === false)
               delta[key] = undefined;
 
-          for (var key in oldInfo)
-            if (oldInfo[key] !== newDelegate.info[key])
-              delta[key] = oldInfo[key];
+          for (var key in oldData)
+            if (oldData[key] !== newDelegate.data[key])
+              delta[key] = oldData[key];
         }
         else
         {
@@ -577,11 +577,11 @@
           this.delegate = null;
           this.target = null;
           this.root = this;
-          this.info = {};
+          this.data = {};
 
-          // copy info, no update, no delta
-          for (var key in oldInfo)
-            this.info[key] = oldInfo[key];
+          // copy data, no update, no delta
+          for (var key in oldData)
+            this.data[key] = oldData[key];
         }
 
         // fire event if delegate changed
@@ -599,7 +599,7 @@
         // otherwise (delegate drop) do nothing -> performance benefits
         if (newDelegate)
         {
-          // fire update event if any key in delta (info changed)
+          // fire update event if any key in delta (data changed)
           for (var key in delta)
           {
             this.event_update(this, delta);
@@ -657,8 +657,8 @@
 
    /**
     * Handle changing object data. Fires update event only if something was changed. 
-    * @param {Object} data New values for object data holder (this.info).
-    * @return {Object|boolean} Delta if object data (this.info) was updated or false otherwise.
+    * @param {Object} data New values for object data holder (this.data).
+    * @return {Object|boolean} Delta if object data (this.data) was updated or false otherwise.
     */
     update: function(data){
       if (this.root !== this)
@@ -671,11 +671,11 @@
 
         for (var prop in data)
         {
-          if (this.info[prop] !== data[prop])
+          if (this.data[prop] !== data[prop])
           {
             updateCount++;
-            delta[prop] = this.info[prop];
-            this.info[prop] = data[prop];
+            delta[prop] = this.data[prop];
+            this.data[prop] = data[prop];
           }
         }
 
@@ -748,10 +748,10 @@
       // inherit
       EventObject.prototype.destroy.call(this);
 
-      // drop info & state
+      // drop data & state
       this.root = null;
       this.target = null;
-      this.info = NULL_OBJECT;
+      this.data = NULL_OBJECT;
       this.state = STATE_UNDEFINED;
     }
   });
@@ -770,7 +770,7 @@
     keyGetter: $self,
     map_: null,
 
-    extendConstructor: true,
+    extendConstructor_: true,
     init: function(config){
       this.map_ = {};
       Basis.Cleaner.add(this);
@@ -788,7 +788,7 @@
       }
       else
       {
-        itemConfig.info = {
+        itemConfig.data = {
           id: key,
           title: key
         };
@@ -1409,6 +1409,10 @@
       this.removeSource(source);
     }
   };
+
+ /**
+  * @namespace Basis.Data.Dataset
+  */
 
  /**
   * @class
@@ -2106,13 +2110,13 @@
     * Set new transform function and apply new function to source objects.
     * @param {function(Basis.Data.DataObject):Basis.Data.DataObject} transform
     */
-    setMap: function(transform){
-      if (typeof rule != 'function')
-        rule = $self;
+    setMap: function(map){
+      if (typeof map != 'function')
+        map = $self;
 
-      if (this.transform !== transform)
+      if (this.map !== map)
       {
-        this.transform = transform;
+        this.map = map;
         return this.applyRule();
       }
     },

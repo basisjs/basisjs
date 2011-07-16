@@ -84,7 +84,6 @@
     
     // make shortcut
     var DOM = Basis.DOM;
-    var Data = Basis.Data;
 
     var nsTree = Basis.Controls.Tree;
     var Selection = Basis.DOM.Wrapper.Selection;
@@ -94,67 +93,67 @@
     //
     var selectionOutput = DOM.insert(DOM.get('demo-container'), DOM.createElement());
     var _init = Selection.prototype.init;
-    Selection.prototype.init = function(config, name){
+    Selection.prototype.init = function(config){
       _init.call(this, config);
-      this.element = DOM.insert(selectionOutput, DOM.createElement('', DOM.createElement('LABEL', (name || 'Tree selection') + ': '), this.content = DOM.createText('{no items}')));
+      this.element = DOM.insert(selectionOutput, DOM.createElement('', DOM.createElement('LABEL', (this.name || 'Tree selection') + ': '), this.content = DOM.createText('{no items}')));
       this.addHandler({
         datasetChanged: function(){
-          this.content.nodeValue = this.getItems().map(Function.getter('info.title + " " + object.document')).join(', ') || '{no items}';
+          this.content.nodeValue = this.getItems().map(Function.getter('data.title')).join(', ') || '{no items}';
         }
       });
-    }
+    };
 
     //
     // Main part
     //
 
     // create red selection
-    var redSelection = new Selection({ multiple: true }, 'Red selection');
+    var redSelection = new Selection({ multiple: true, name: 'Red selection' });
 
     // data for tree
     var data = [
-      { info: { title: 'node1' } },
-      { info: { title: 'node2' },
+      { data: { title: 'node1' } },
+      { data: { title: 'node2 (Red selection holder)' },
         selection: redSelection,
         cssClassName: 'red-selection',
         childNodes: [
-          { info: { title: 'node2.1' } },
-          { info: { title: 'node2.1' } }
+          { data: { title: 'node2.1' } },
+          { data: { title: 'node2.2' } }
         ]
       },
-      { info: { title: 'node3 (Green selection holder)' },
-        selection: new Selection({ multiple: true }, 'Green selection'),
+      { data: { title: 'node3 (Green selection holder)' },
+        selection: new Selection({ multiple: true, name: 'Green selection' }),
         cssClassName: 'green-selection',
         childNodes: [
-          { info: { title: 'node3.1' } },
-          { info: { title: 'node3.2' } },
-          { info: { title: 'node3.3 (Red selection holder)' },
+          { data: { title: 'node3.1' } },
+          { data: { title: 'node3.2' } },
+          { data: { title: 'node3.3 (Red selection holder)' },
             selection: redSelection,
             cssClassName: 'red-selection',
             childNodes: [
-              { info: { title: 'node3.3.1' } },
-              { info: { title: 'node3.3.2' } },
-              { info: { title: 'node3.3.3' },
+              { data: { title: 'node3.3.1' } },
+              { data: { title: 'node3.3.2' } },
+              { data: { title: 'node3.3.3' },
                 childNodes: [
-                  { info: { title: 'node3.3.3.1' } },
-                  { info: { title: 'node3.3.3.2' } },
-                  { info: { title: 'node3.3.3.3' } }
+                  { data: { title: 'node3.3.3.1' } },
+                  { data: { title: 'node3.3.3.2' } },
+                  { data: { title: 'node3.3.3.3' } }
                 ]
               },
-              { info: { title: 'node3.3.4' } },
-              { info: { title: 'node3.3.5' } }
+              { data: { title: 'node3.3.4' } },
+              { data: { title: 'node3.3.5' } }
             ]
           },
-          { info: { title: 'node3.4' },
+          { data: { title: 'node3.4' },
             childNodes: [
-              { info: { title: 'node3.4.1' } },
-              { info: { title: 'node3.4.2' } },
-              { info: { title: 'node3.4.3' } }
+              { data: { title: 'node3.4.1' } },
+              { data: { title: 'node3.4.2' } },
+              { data: { title: 'node3.4.3' } }
             ]
           }
         ]
       },
-      { info: { title: 'node4' } }
+      { data: { title: 'node4' } }
     ];
 
     // create a tree

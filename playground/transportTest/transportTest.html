@@ -63,7 +63,7 @@
         },
         success: function(req){
           log('success event');
-          log(req.info.responseText);
+          log(req.data.responseText);
 
         },
         failure: function(){
@@ -214,7 +214,7 @@
         },
         failure: function(request, code, message){
           log('failure event');
-          log(request.info.error.code + ': ' + request.info.error.message);
+          log(request.data.error.code + ': ' + request.data.error.message);
         },
         soapfailure: function(request, code, message){
           log('soapfailure event');

@@ -79,10 +79,10 @@
       do 
       {
         compareValue = arr[pos = (l + r) >> 1];
-        if (value < (lv = compareValue.info.periodStart))
+        if (value < (lv = compareValue.data.periodStart))
           r = pos - 1;
         else 
-          if (value > (rv = compareValue.info.periodEnd))
+          if (value > (rv = compareValue.data.periodEnd))
             l = pos + 1;
           else
             return value >= lv && value <= rv ? pos : -1; // founded element
@@ -189,13 +189,13 @@
 
         if ('periodStart' in delta || 'periodEnd' in delta)
         {
-          this.tmpl.title.nodeValue = this.titleGetter(this.info);
+          this.tmpl.title.nodeValue = this.titleGetter(this.data);
 
           if (this.parentNode)
           {
             var clsList = classList(this.element);
-            clsList.bool('before', this.info.periodStart < this.parentNode.info.periodStart);
-            clsList.bool('after', this.info.periodEnd > this.parentNode.info.periodEnd);
+            clsList.bool('before', this.data.periodStart < this.parentNode.data.periodStart);
+            clsList.bool('after', this.data.periodEnd > this.parentNode.data.periodEnd);
           }
         }
       }
@@ -231,13 +231,13 @@
       event_update: function(object, delta){
         TmplContainer.prototype.event_update.call(this, object, delta);
 
-        var newInfo = this.info;
+        var newData = this.data;
         if ('periodStart' in delta || 'periodEnd' in delta)
         {
-          this.tmpl.titleText.nodeValue = this.getTitle(newInfo.periodStart) || '-';
+          this.tmpl.titleText.nodeValue = this.getTitle(newData.periodStart) || '-';
 
           // update nodes
-          var nodePeriod = getPeriod(this.nodePeriodName, new Date(newInfo.periodStart).add(this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(newInfo.periodStart) || 0)));
+          var nodePeriod = getPeriod(this.nodePeriodName, new Date(newData.periodStart).add(this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(newData.periodStart) || 0)));
 
           for (var node = this.firstChild; node; node = node.nextSibling)
           {
@@ -252,15 +252,15 @@
           this.maxDate = this.lastChild.periodEnd;
         }
 
-        this.tmpl.tabTitleText.nodeValue = this.getTabTitle(newInfo.selectedDate) || '-';
+        this.tmpl.tabTitleText.nodeValue = this.getTabTitle(newData.selectedDate) || '-';
 
-        var node = this.getNodeByDate(newInfo.selectedDate);
+        var node = this.getNodeByDate(newData.selectedDate);
         if (node)
           node.select();
         else
         {
-          if (newInfo.selectedDate && this.minDate <= newInfo.selectedDate && newInfo.selectedDate <= this.maxDate)
-            this.setViewDate(newInfo.selectedDate);
+          if (newData.selectedDate && this.minDate <= newData.selectedDate && newData.selectedDate <= this.maxDate)
+            this.setViewDate(newData.selectedDate);
           else
             this.selection.clear();
         }
@@ -310,7 +310,7 @@
       // nodes methods
 
       getNodeByDate: function(date){
-        if (date && this.info.periodStart <= date && date <= this.info.periodEnd)
+        if (date && this.data.periodStart <= date && date <= this.data.periodEnd)
         {
           var pos = binarySearchIntervalPos(this.childNodes, date);
           if (pos != -1)
@@ -322,12 +322,12 @@
 
       prevPeriod: function(forward){
         if (this.isPrevPeriodEnabled)
-          this.update(getPeriod(this.periodName, new Date(+this.info.periodStart - 1)));
+          this.update(getPeriod(this.periodName, new Date(+this.data.periodStart - 1)));
       },
 
       nextPeriod: function(forward){
         if (this.isNextPeriodEnabled)
-          this.update(getPeriod(this.periodName, new Date(+this.info.periodEnd + 1)));
+          this.update(getPeriod(this.periodName, new Date(+this.data.periodEnd + 1)));
       },
 
       setViewDate: function(date){
@@ -398,7 +398,7 @@
       },
       getTabTitle: getter('getFullYear()'),
       getTitle: function(periodStart){
-        return periodStart.getFullYear() + ' - ' + this.info.periodEnd.getFullYear();
+        return periodStart.getFullYear() + ' - ' + this.data.periodEnd.getFullYear();
       }
     });
 
@@ -502,7 +502,7 @@
 
         if (node instanceof CalendarNode)
         {
-          var newDate = node.info.periodStart;
+          var newDate = node.data.periodStart;
           var activeSection = this.selection.pick();
           this.selectedDate.set(new Date(this.selectedDate.value).add(activeSection.nodePeriodUnit, this.selectedDate.value.diff(activeSection.nodePeriodUnit, newDate)));
           this.nextSection(BACKWARD);

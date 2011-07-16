@@ -1411,7 +1411,7 @@
       // Base class name
       className: 'Basis.Class',
 
-      extendConstructor: false, 
+      extendConstructor_: false, 
 
       // prototype defaults
       prototype: { 
@@ -1446,7 +1446,7 @@
         var newClassProps = {
           className: SuperClass.className + '._SubClass_',
           superClass_: SuperClass,
-          extendConstructor: !!SuperClass.extendConstructor,
+          extendConstructor_: !!SuperClass.extendConstructor_,
 
           // class methods
           __extend__: function(value){
@@ -1476,7 +1476,7 @@
           );
         }
 
-        /** @cut */if (/^function[^(]*\(config\)/.test(newClassProps.prototype.init) ^ newClassProps.extendConstructor) console.warn('probably wrong extendConstructor value for ' + newClassProps.className);
+        /** @cut */if (/^function[^(]*\(config\)/.test(newClassProps.prototype.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
@@ -1486,7 +1486,7 @@
         var newClass = 
             /** @cut for more verbose in dev */ new Function('seed', 'NULL_CONFIG', 'return {"' + className + '": ' + (
 
-              newClassProps.extendConstructor
+              newClassProps.extendConstructor_
 
                 // constructor with instance extension
                 ? function(extend, config){
@@ -1555,7 +1555,7 @@
           var value = source[key];
           var protoValue = proto[key];
 
-          if (key == 'className' || key == 'extendConstructor')
+          if (key == 'className' || key == 'extendConstructor_')
             this[key] = value;
           else
             proto[key] = protoValue && protoValue.__extend__ 
@@ -1690,7 +1690,7 @@
       event_destroy: destroyEvent = dispatchEvent('destroy', 'object'),
 
      /** use extend constructor */
-      extendConstructor: true,
+      extendConstructor_: true,
 
       listen: Class.NestedExtProperty(),
 
@@ -3645,10 +3645,10 @@
     *   
     *   // create and attach DOM structure to existing object
     *   var dataObject = new Basis.Data.DataObject({
-    *     info: { title: 'Some data', value: 123 },
+    *     data: { title: 'Some data', value: 123 },
     *     handlers: {
-    *       update: function(object, newInfo, oldInfo, delta){
-    *         this.titleText.nodeValue = newInfo.title;
+    *       update: function(object, delta){
+    *         this.titleText.nodeValue = this.info.title;
     *         // other DOM manipulations
     *       }
     *     }

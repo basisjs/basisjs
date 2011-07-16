@@ -73,29 +73,29 @@
 
     // data for tree
     var data = [
-      { info: { title: 'node1' } },
-      { info: { title: 'node2' },
+      { data: { title: 'node1' } },
+      { data: { title: 'node2' },
         childNodes: [
-          { info: { title: 'node2.1' } },
-          { info: { title: 'node2.1' } }
+          { data: { title: 'node2.1' } },
+          { data: { title: 'node2.1' } }
         ]
       },
-      { info: { title: 'node3' },
+      { data: { title: 'node3' },
         childNodes: [
-          { info: { title: 'node3.1' } },
-          { info: { title: 'node3.2' } },
-          { info: { title: 'node3.3' },
+          { data: { title: 'node3.1' } },
+          { data: { title: 'node3.2' } },
+          { data: { title: 'node3.3' },
             childNodes: [
-              { info: { title: 'node3.3.1' } },
-              { info: { title: 'node3.3.2' } },
-              { info: { title: 'node3.3.3' } },
-              { info: { title: 'node3.3.4' } },
-              { info: { title: 'node3.3.5' } }
+              { data: { title: 'node3.3.1' } },
+              { data: { title: 'node3.3.2' } },
+              { data: { title: 'node3.3.3' } },
+              { data: { title: 'node3.3.4' } },
+              { data: { title: 'node3.3.5' } }
             ]
           }
         ]
       },
-      { info: { title: 'node4' } }
+      { data: { title: 'node4' } }
     ];
 
     //
@@ -149,7 +149,7 @@
     DOM.insert(demoContainer, DOM.createElement('', DOM.createElement('LABEL', 'Selection contains: '), contentText));
     treeSelection.addHandler({
       change: function(){
-        contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(node.document.element.id, node.info.title) }).join(', ') || 'nothing';
+        contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(node.document.element.id, node.data.title) }).join(', ') || 'nothing';
       }
     });
 

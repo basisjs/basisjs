@@ -48,10 +48,10 @@
    
       // Test #2
 
-      speedTest('Create with info', 1, function(){
+      speedTest('Create with data', 1, function(){
         for (var i = 0; i < INNER_TEST_COUNT; i++)
           x.push(new Basis.Data.DataObject({
-            info: {
+            data: {
               a: 1,
               b: 2,
               c: 3,
@@ -71,7 +71,7 @@
       speedTest('Create with delegate', INNER_TEST_COUNT, function(){
         var delegate = new Basis.Data.DataObject;
         x.push(new Basis.Data.DataObject({
-          info: {
+          data: {
             a: 1,
             b: 2,
             c: 3,
@@ -92,7 +92,7 @@
 
       var a = new Basis.Data.DataObject();
       var b = new Basis.Data.DataObject({
-        info: {
+        data: {
           a: 1,
           b: 2,
           c: 3,
@@ -108,7 +108,7 @@
       // Test #4
 
       var c = new Basis.Data.DataObject({
-        info: {
+        data: {
           f: 6,
           k: 7,
           l: 8,
@@ -117,7 +117,7 @@
         }
       });
       var d = new Basis.Data.DataObject({
-        info: {
+        data: {
           a: 1,
           b: 2,
           c: 3,

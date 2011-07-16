@@ -168,14 +168,14 @@
     //
     var data = Array.create(10, function(i){
       return new nsData.DataObject({
-        info: {
+        data: {
           value: i + 1
         }
       });
     });
     var data2 = 'one two three four five six seven eight nine ten'.qw().map(function(value){
       return new nsData.DataObject({
-        info: {
+        data: {
           value: value
         }
       });
@@ -214,7 +214,7 @@
         childClass: //nsWrapper.TmplNode.subclass
           nsWrapper.simpleTemplate(
             '<span class="item">' +
-              '{this_info_value}' +
+              '{this_data_value}' +
             '</span>'
           )
       }
@@ -240,7 +240,7 @@
           nsWrapper.simpleTemplate(
             '<span class="item">' +
               '<span class="remove" event-click="remove">x</span>' +
-              '{this_info_value}' +
+              '{this_data_value}' +
             '</span>'
           ),
           {
@@ -257,9 +257,9 @@
     var newItemPopup = new Basis.Controls.Popup.Menu({
       dataSource: new nsData.Dataset.Subtract({ minuend: NUMBERS }),
       childClass: {
-        captionGetter: Function.getter('info.value')
+        captionGetter: Function.getter('data.value')
       },
-      localSorting: Function.getter('info.value'),
+      localSorting: Function.getter('data.value'),
       defaultHandler: function(node){
         if (node)
           this.dataSource.subtrahend.add([node.getRootDelegate()]);
@@ -357,7 +357,7 @@
     new DatasetViewer({
       title: 'MapReduce for dataset A: NUMBERS -> WORDS',
       dataSource: new nsData.Dataset.MapReduce({
-        map: Function.getter('info.value - 1', data2),
+        map: Function.getter('data.value - 1', data2),
         source: A
       })
     });
@@ -365,7 +365,7 @@
     new DatasetViewer({
       title: 'Subset of dataset A: ONLY ODD',
       dataSource: new nsData.Dataset.Subset({
-        rule: Function.getter('info.value % 2'),
+        rule: Function.getter('data.value % 2'),
         source: A
       })
     });
@@ -373,13 +373,13 @@
     new DatasetViewer({
       title: 'Split data A: ODD and EVEN',
       dataSource: new nsData.Dataset.Split({
-        rule: Function.getter('info.value % 2 ? "odd" : "even"'),
+        rule: Function.getter('data.value % 2 ? "odd" : "even"'),
         source: A
       }),
       childClass: nsWrapper.TmplContainer.subclass(
         nsWrapper.simpleTemplate(
           '<span class="dsitem">' +
-            '{this_info_title}' +
+            '{this_data_title}' +
           '</span>'
         ), {
           childClass: DatasetViewer.prototype.childClass,

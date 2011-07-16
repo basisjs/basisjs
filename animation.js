@@ -57,7 +57,7 @@
           this.event_finish();
       },
 
-      extendConstructor: true,
+      extendConstructor_: true,
       init: function(config){
         this.run = this.run.bind(this);
 

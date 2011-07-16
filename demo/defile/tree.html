@@ -69,30 +69,30 @@
 
     // data for tree
     var data = [
-      { info: { id: 1, title: 'node1' } },
-      { info: { id: 2, title: 'node2' },
+      { data: { id: 1, title: 'node1' } },
+      { data: { id: 2, title: 'node2' },
         childNodes: [
-          { info: { title: 'node2.1' } },
-          { info: { title: 'node2.1' } }
+          { data: { title: 'node2.1' } },
+          { data: { title: 'node2.1' } }
         ]
       },
-      { info: { id: 3, title: 'node3' },
+      { data: { id: 3, title: 'node3' },
         childNodes: [
-          { info: { title: 'node3.1' } },
-          { info: { title: 'node3.2' } },
-          { info: { title: 'node3.3' },
+          { data: { title: 'node3.1' } },
+          { data: { title: 'node3.2' } },
+          { data: { title: 'node3.3' },
             childNodes: [
-              { info: { title: 'node3.3.1' } },
-              { info: { title: 'node3.3.2' } },
-              { info: { title: 'node3.3.3' } },
-              { info: { title: 'node3.3.4' } },
-              { info: { title: 'node3.3.5' } }
+              { data: { title: 'node3.3.1' } },
+              { data: { title: 'node3.3.2' } },
+              { data: { title: 'node3.3.3' } },
+              { data: { title: 'node3.3.4' } },
+              { data: { title: 'node3.3.5' } }
             ]
           }
         ]
       },
-      { info: { id: 4, title: 'node4' } },
-      { info: { id: 5, title: 'node5' } }
+      { data: { id: 4, title: 'node4' } },
+      { data: { id: 5, title: 'node5' } }
     ];
 
     // create a tree
@@ -102,8 +102,8 @@
       localSorting: Function.getter('title'),
       localSortingDesc: true,
       localGrouping: {
-        groupGetter: Function.getter('info.id % 2'),
-        titleGetter: Function.getter('info.id', { 0: 'even', 1: 'odd' })
+        groupGetter: Function.getter('data.id % 2'),
+        titleGetter: Function.getter('data.id', { 0: 'even', 1: 'odd' })
       },
       childFactory: function(config){
         if (config.childNodes)

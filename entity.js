@@ -175,13 +175,13 @@
     var EntityGrouping = Class(Grouping, {
       className: namespace + '.EntityGrouping',
 
-      groupClass: ReadOnlyEntitySet,
+      subsetClass: ReadOnlyEntitySet,
 
       init: ENTITYSET_INIT_METHOD(Grouping, 'EntityGrouping'),
       sync: ENTITYSET_SYNC_METHOD(Grouping),
 
-      getGroup: function(object, autocreate){
-        var group = Grouping.prototype.getGroup.call(this, object, autocreate);
+      getSubset: function(object, autocreate){
+        var group = Grouping.prototype.getSubset.call(this, object, autocreate);
         if (group)
           group.wrapper = this.wrapper;
         return group;
@@ -329,14 +329,14 @@
           getCollection: function(name){
             return entityType.collection_[name];
           },
-          createGrouping: function(name, groupGetter, dataset){
+          createGrouping: function(name, rule, dataset){
             var grouping = entityType.grouping_[name];
-            if (!grouping && groupGetter)
+            if (!grouping && rule)
             {
               return entityType.grouping_[name] = new EntityGrouping({
                 wrapper: result,
                 source: dataset || entityType.all,
-                groupGetter: groupGetter
+                rule: rule
               });
             }
 
@@ -433,7 +433,7 @@
               if (data)
               {
                 if (data instanceof DataObject)
-                  data = data.info;
+                  data = data.data;
                 return data[idField]; 
               }
             };
@@ -482,7 +482,7 @@
               name: name,
               wrapper: wrapper,
               source: this.all,
-              groupGetter: config.groupings[name] || Function.$true
+              rule: config.groupings[name] || Function.$true
             });
           }
         }
@@ -499,7 +499,7 @@
         this.entityClass.prototype.typeName = this.name;
         this.entityClass.prototype.getId = idField
             ? function(){
-                return this.info[idField];
+                return this.data[idField];
               }
             : Function.$null;
         /*Class(, {
@@ -510,7 +510,7 @@
           all: this.all,
           getId: idField
             ? function(){
-                return this.info[idField];
+                return this.data[idField];
               }
             : Function.$null
         });*/
@@ -549,7 +549,7 @@
           var source = entityOrData;
 
           if (entityOrData instanceof DataObject)
-            source = source.info;
+            source = source.data;
 
           for (var i = 0, name; name = this.idFieldNames[i]; i++)
             if (name in source)
@@ -564,7 +564,7 @@
           defaults[this.idField] = id;
           slot = this.slot_[id] = new DataObject({
             delegate: this.index_[id],
-            info: defaults
+            data: defaults
           });
         }
         return slot;
@@ -605,7 +605,7 @@
 
         modified: null,
 
-        extendConstructor: false,
+        extendConstructor_: false,
         init: function(data){
           //var entityType = this.entityType;
 
@@ -616,7 +616,7 @@
 
           // set up some properties
           this.fieldHandlers_ = {};
-          this.info = {};//new entityType.xdefaults;//{};
+          this.data = {};//new entityType.xdefaults;//{};
           this.root = this;
           this.target = this;
 
@@ -637,19 +637,19 @@
                 this.fieldHandlers_[key] = true;
             }
 
-            this.info[key] = value;
+            this.data[key] = value;
           }
 
           if (idField)
           {
-            var id = this.info[idField];
+            var id = this.data[idField];
             if (id != null)
             {
               if (typeIndex[id])
               {
                 // id value is used by another entity
-                ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.info[key] + ' => ' + value);
-                this.info[idField] = null;
+                ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.data[key] + ' => ' + value);
+                this.data[idField] = null;
               }
               else
               {
@@ -673,8 +673,8 @@
           return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
         },
         get: function(key){
-          if (this.info)
-            return this.info[aliases[key] || key];
+          if (this.data)
+            return this.data[aliases[key] || key];
         },
         set: function(key, value, rollback, silent){
           // resolve field key
@@ -701,9 +701,9 @@
           var delta;
           var updateDelta;
           var result;
-          var rollbackInfo = this.modified;
-          var newValue = valueWrapper(value, this.info[key]);
-          var curValue = this.info[key];  // NOTE: value can be modify by valueWrapper,
+          var rollbackData = this.modified;
+          var newValue = valueWrapper(value, this.data[key]);
+          var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
                                           // that why we fetch it again after valueWrapper call
 
           var valueChanged = newValue !== curValue
@@ -725,7 +725,7 @@
               // if new value is already in use, ignore changes
               if (typeIndex[newValue])
               {
-                ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.info[key] + ' => ' + newValue);
+                ;;;entityWarn(this, 'Duplicate entity ID (entity.set() aborted) ' + this.data[key] + ' => ' + newValue);
                 return false;  // no changes
               }
 
@@ -754,12 +754,12 @@
 
                 // create rollback storage if absent
                 // actually this means rollback mode is switched on
-                if (!rollbackInfo)
-                  this.modified = rollbackInfo = {};
+                if (!rollbackData)
+                  this.modified = rollbackData = {};
 
                 // save current value if key is not in rollback storage
                 // if key is not in rollback storage, than this key didn't change since rollback mode was switched on
-                if (key in rollbackInfo === false)
+                if (key in rollbackData === false)
                 {
                   // create rollback delta
                   result.rollback = {
@@ -768,20 +768,20 @@
                   };
 
                   // store current value
-                  rollbackInfo[key] = curValue;
+                  rollbackData[key] = curValue;
                 }
                 else
                 {
-                  if (rollbackInfo[key] === newValue)
+                  if (rollbackData[key] === newValue)
                   {
                     result.rollback = {
                       key: key,
                       value: newValue
                     };
 
-                    delete rollbackInfo[key];
+                    delete rollbackData[key];
 
-                    if (!Object.keys(rollbackInfo).length)
+                    if (!Object.keys(rollbackData).length)
                       this.modified = null;
                   }
                 }
@@ -791,20 +791,20 @@
                 // if update with no rollback and object in rollback mode
                 // and has changing key in rollback storage, than change
                 // value in rollback storage, but not in info
-                if (rollbackInfo && key in rollbackInfo)
+                if (rollbackData && key in rollbackData)
                 {
-                  if (rollbackInfo[key] !== newValue)
+                  if (rollbackData[key] !== newValue)
                   {
                     // create rollback delta
                     result.rollback = {
                       key: key,
-                      value: rollbackInfo[key]
+                      value: rollbackData[key]
                     };
 
                     // store new value
-                    rollbackInfo[key] = newValue;
+                    rollbackData[key] = newValue;
 
-                    // prevent info update
+                    // prevent data update
                     update = false;
                   }
                   else
@@ -816,7 +816,7 @@
             if (update)
             {
               // set new value for field
-              this.info[key] = newValue;
+              this.data[key] = newValue;
               
               // remove attached handler if exists
               if (this.fieldHandlers_[key])
@@ -840,19 +840,19 @@
           }
           else
           {
-            if (!rollback && rollbackInfo && key in rollbackInfo)
+            if (!rollback && rollbackData && key in rollbackData)
             {
               // delete from rollback
               result = {
                 rollback: {
                   key: key,
-                  value: rollbackInfo[key]
+                  value: rollbackData[key]
                 }
               };
 
-              delete rollbackInfo[key];
+              delete rollbackData[key];
 
-              if (!Object.keys(rollbackInfo).length)
+              if (!Object.keys(rollbackData).length)
                 this.modified = null;
             }
           }
@@ -922,7 +922,7 @@
         },
         clear: function(){
           var data = {};
-          for (var key in this.info)
+          for (var key in this.data)
             data[key] = undefined;
           return this.update(data);
         },
@@ -961,12 +961,12 @@
 
           // unlink attached handlers
           for (var key in this.fieldHandlers_)
-            this.info[key].removeHandler(fieldDestroyHandlers[key], this);
-            //removeFromDestroyMap(this.info[key], this, key);
+            this.data[key].removeHandler(fieldDestroyHandlers[key], this);
+            //removeFromDestroyMap(this.data[key], this, key);
           this.fieldHandlers_ = NULL_INFO;
 
           // delete from identify hash
-          var id = this.info[idField];
+          var id = this.data[idField];
           if (typeIndex[id] === this)
           {
             delete typeIndex[id];
@@ -983,7 +983,7 @@
           });
 
           // clear links
-          this.info = NULL_INFO; 
+          this.data = NULL_INFO; 
           this.modified = null;
         }
       });

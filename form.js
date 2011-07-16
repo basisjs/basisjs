@@ -559,10 +559,10 @@
           //titleGetter: this.itemTitleGetter
         };
 
-        if (itemConfig.info || itemConfig.delegate)
+        if (itemConfig.data || itemConfig.delegate)
           complete(config, itemConfig);
         else
-          config.info = itemConfig;
+          config.data = itemConfig;
 
         return new this.childClass(config);
       },*/
@@ -570,7 +570,7 @@
       multipleSelect: false,
 
       //itemValueGetter: getter('value'),
-      //itemTitleGetter: function(info){ return info.title || info.value; },
+      //itemTitleGetter: function(data){ return data.title || data.value; },
 
       init: function(config){
 
@@ -821,8 +821,8 @@
     var ComboboxItem = Class(ComplexFieldItem, {
       className: namespace + '.Field.Combobox.Item',
 
-      //titleGetter: Function.getter('info.title'),
-      //valueGetter: Function.getter('info.value'),
+      //titleGetter: Function.getter('data.title'),
+      //valueGetter: Function.getter('data.value'),
 
       event_update: function(object, delta){
         ComplexFieldItem.prototype.event_update.call(this, object, delta);
@@ -1338,7 +1338,7 @@
         Property.prototype.event_change.call(this, value);
       },
       
-      extendConstructor: true,
+      extendConstructor_: true,
       init: function(config){
         var startPoints = this.startPoints || '';
 

@@ -194,7 +194,7 @@
         {
           title: 'Data',
           demos: [
-            { title: 'Property & DataObjectSet (broken)', url: 'data/basic.html' },
+            { title: 'Property & DataObjectSet', url: 'data/basic.html' },
             { title: 'Entity simple', url: 'data/entity.html' },
             { title: 'Live entity edit', url: 'data/live_edit.html' },
             { title: 'Entity user list', url: 'data/userlist.html' },
@@ -233,8 +233,8 @@
           event_update: function(object, delta){
             nsTree.TreeNode.prototype.event_update.call(this, object, delta);
           
-            this.tmpl.imageUrl.nodeValue = this.info.image || this.info.url.replace('.html', '.png');
-            this.tmpl.title.href = this.info.url;
+            this.tmpl.imageUrl.nodeValue = this.data.image || this.data.url.replace('.html', '.png');
+            this.tmpl.title.href = this.data.url;
           }
         }),
         localGrouping: {
@@ -246,13 +246,13 @@
               '</li>'
             )
           }),
-          //localSorting: function(node){ return node.info.title },
-          groupGetter: Function.getter('info.groupId')/*,
+          //localSorting: function(node){ return node.data.title },
+          groupGetter: Function.getter('data.groupId')/*,
           //localGroupingClass: nsTree.TreeGroupingNode,
           localGrouping: {
             childClass: nsTree.TreePartitionNode,
             groupGetter: function(x){
-              return x.info.title.length > 4;
+              return x.data.title.length > 4;
             },
             localGrouping: {
               
@@ -261,7 +261,7 @@
         },
         childNodes: data.map(function(section){
           return section.demos.map(function(demo, idx, array){
-            return { info: Object.extend(demo, { groupId: this.title }) };
+            return { data: Object.extend(demo, { groupId: this.title }) };
           }, section);
         }).flatten()
       });

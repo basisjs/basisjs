@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -130,13 +129,15 @@
     files.forEach(File);
     folders.forEach(Folder);
 
-    var goupingByParentId = new nsData.Grouping({
-      sources: [
-        Folder.all,
-        File.all
-      ],
-      groupGetter: function(object){
-        return object.info.path;
+    var goupingByParentId = new nsData.Dataset.Split({
+      source: new nsData.Dataset.Merge({
+        sources: [
+          Folder.all,
+          File.all
+        ]
+      }),
+      rule: function(object){
+        return object.data.path;
       }
     });
 
@@ -149,37 +150,37 @@
       groupGetter: function(node){
         return node instanceof nsTree.TreeFolder == false;
       },
-      localSorting: Function.getter('info.id')
+      localSorting: Function.getter('data.id')
     };
 
     var FolderNode = Basis.Class(nsTree.TreeFolder, {
-      titleGetter: Function.getter('info.name'),
-      localSorting: Function.getter('info.name'),
+      titleGetter: Function.getter('data.name'),
+      localSorting: Function.getter('data.name'),
       localGrouping: grouping,
       init: function(config){
         nsTree.TreeNode.prototype.init.call(this, config);
-        this.setDataSource(goupingByParentId.getGroup(this.info.path + '' + this.info.name + '/'))
+        this.setDataSource(goupingByParentId.getSubset(this.data.path + '' + this.data.name + '/'))
       }
     });
 
     var LazyFolderNode = Basis.Class(nsTree.TreeFolder, {
-      titleGetter: Function.getter('info.name'),
-      localSorting: Function.getter('info.name'),
+      titleGetter: Function.getter('data.name'),
+      localSorting: Function.getter('data.name'),
       localGrouping: grouping,
       collapsed: true,
       event_expand: function(){
         nsTree.TreeFolder.prototype.event_expand.call(this);
-        this.setDataSource(goupingByParentId.getGroup(this.info.path + '' + this.info.name + '/'))
+        this.setDataSource(goupingByParentId.getSubset(this.data.path + '' + this.data.name + '/'))
       }
     });
 
     var FileNode = Basis.Class(nsTree.TreeNode, {
-      titleGetter: Function.getter('info.name')
+      titleGetter: Function.getter('data.name')
     });
 
     var FileTree = Basis.Class(nsTree.Tree, {
-      dataSource: goupingByParentId.getGroup('/'),
-      localSorting: Function.getter('info.name'),
+      dataSource: goupingByParentId.getSubset('/'),
+      localSorting: Function.getter('data.name'),
       localGrouping: grouping,
       childFactory: function(config){
         if (config.delegate.type == Folder)

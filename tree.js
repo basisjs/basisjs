@@ -168,7 +168,7 @@
    /**
     * @type {function()}
     */
-    titleGetter: getter('info.title')
+    titleGetter: getter('data.title')
   });
 
  /**

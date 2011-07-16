@@ -124,42 +124,42 @@
         event_update: function(object, delta){
           Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-          this.tmpl.idText.nodeValue = this.info.id;
-          this.tmpl.titleText.nodeValue = this.info.title;
+          this.tmpl.idText.nodeValue = this.data.id;
+          this.tmpl.titleText.nodeValue = this.data.title;
         }
       }),
 
       localGrouping: {
-        groupGetter: getter('info.id % 2'),
-        titleGetter: getter('info.title', { 0: 'even', 1: 'odd' })
+        groupGetter: getter('data.id % 2'),
+        titleGetter: getter('data.title', { 0: 'even', 1: 'odd' })
       },
       childNodes: [
         {
-          info: {
+          data: {
             id: 1,
             title: 'Lorem'
           }
         },
         {
-          info: {
+          data: {
             id: 2,
             title: 'ipsum'
           }
         },
         {
-          info: {
+          data: {
             id: 3,
             title: 'dolor'
           }
         },
         {
-          info: {
+          data: {
             id: 4,
             title: 'discere'
           }
         },
         {
-          info: {
+          data: {
             id: 5,
             title: 'admodum'
           }

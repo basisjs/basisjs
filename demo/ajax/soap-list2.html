@@ -87,9 +87,9 @@
           var data = this.responseBody().ProviderGroup;
           for (var i = 0; i < data.length; i++)
             myTree.appendChild({
-              info: data[i],
+              data: data[i],
               titleGetter: function(node){
-                return node.info.Title;
+                return node.data.Title;
               }
             });
         }
@@ -99,12 +99,12 @@
     // create provider group list
     var myTree = new Basis.Controls.Tree.Tree({
       // set default sorting for nodes
-      localSorting: 'info.Title',
+      localSorting: 'data.Title',
 
       // customize item class
       childClass: Basis.Class(Basis.Controls.Tree.TreeNode, {
         titleGetter: function(node){
-          return node.info.Title;
+          return node.data.Title;
         }
       })
     });

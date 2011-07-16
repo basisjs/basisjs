@@ -1966,7 +1966,7 @@
     map_: null,
 
     autoDestroyEmptyGroups: true,
-    titleGetter: getter('info.title'),
+    titleGetter: getter('data.title'),
     groupGetter: Function.$undef,
 
     childClass: PartitionNode,
@@ -2018,7 +2018,7 @@
         group = this.appendChild(
           isDelegate
             ? { delegate: groupRef }
-            : { info: {
+            : { data: {
                   id: groupRef,
                   title: groupRef
                 }
@@ -2050,7 +2050,7 @@
 
       if ('groupId_' in newChild == false)
       {
-        newChild.groupId_ = newChild.delegate ? newChild.delegate.eventObjectId : newChild.info.id;
+        newChild.groupId_ = newChild.delegate ? newChild.delegate.eventObjectId : newChild.data.id;
         this.map_[newChild.groupId_] = newChild;
       }
 
@@ -2290,7 +2290,7 @@
         if (true) // this.template
         {
           var delta = {};
-          for (var key in this.info)
+          for (var key in this.data)
             delta[key] = undefined;
 
           this.event_update(this, delta);
@@ -2346,7 +2346,7 @@
   var TmplPartitionNode = Class(PartitionNode, TemplateMixin, {
     className: namespace + '.TmplPartitionNode',
 
-    titleGetter: getter('info.title'),
+    titleGetter: getter('data.title'),
 
     /*template: new Template(
       '<div{element} class="Basis-PartitionNode">' + 
@@ -2606,7 +2606,7 @@
    /**
     * use extend constructor
     */
-    extendConstructor: false,
+    extendConstructor_: false,
 
    /**
     * @constructor
@@ -2760,7 +2760,7 @@
   * @func
   */
   var simpleTemplate = function(template){
-    var refs = template.split(/\{((?:this|object)_[^}]+)\}/);
+    var refs = template.split(/\{(this_[^}]+)\}/);
     var lines = [];
     for (var i = 1; i < refs.length; i += 2)
     {
@@ -2803,14 +2803,7 @@
 
     // datasets
     ChildNodesDataset: ChildNodesDataset,
-    Selection: Selection/*,
-
-    // deprecated
-    HtmlNode: TmplNode,
-    HtmlGroupingNode: TmplGroupingNode,
-    HtmlPartitionNode: TmplPartitionNode,
-    HtmlContainer: TmplContainer,
-    HtmlControl: Control*/
+    Selection: Selection
   });
 
 })();

@@ -86,7 +86,7 @@
       if (this.delegate)
       {
         this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
-          return view.isAcceptableObject(this.info);
+          return view.isAcceptableObject(this.data);
         }, this), true);
         this.scrollTo(this.firstChild.element, true);
       }
@@ -101,7 +101,7 @@
     dir: 'center bottom center top',
     selection: {},
     childClass: Class(nsWrappers.TmplNode,
-      nsWrappers.simpleTemplate('<div{element} class="item" event-click="scrollTo">{this_info_title}</div>'),
+      nsWrappers.simpleTemplate('<div{element} class="item" event-click="scrollTo">{this_data_title}</div>'),
       {
         templateAction: function(actionName){
           if (actionName == 'scrollTo')
@@ -115,11 +115,11 @@
         }
       }
     ),
-    localSorting: Function.getter('info.title'),
+    localSorting: Function.getter('data.title'),
     localGrouping: Object.slice(nsView.viewPrototype.localGrouping, 'groupGetter localSorting titleGetter'.qw()),
     event_beforeShow: function(){
       this.constructor.prototype.event_beforeShow.call(this);
-      this.setCollection(prototypeDataset);
+      this.setDataSource(prototypeDataset);
     },
     event_show: function(){
       this.constructor.prototype.event_show.call(this);
@@ -127,7 +127,7 @@
     },
     event_hide: function(){
       this.constructor.prototype.event_hide.call(this);
-      this.setCollection();
+      this.setDataSource();
       prototypeMapPopupMatchInput.setValue();
     }
   });
@@ -152,14 +152,14 @@
     },
     matchFilter: {
       node: prototypeMapPopup,
-      textNodeGetter: Function.getter('tmpl.this_info_title')
+      textNodeGetter: Function.getter('tmpl.this_data_title')
     }
   });
   DOM.insert(prototypeMapPopup.tmpl.content.parentNode, prototypeMapPopupMatchInput.element, DOM.INSERT_BEGIN);
 
   var targetHeader = new nsWrappers.TmplContainer({
     delegate: targetContent,
-    collection: new nsWrappers.ChildNodesDataset(targetContent),
+    dataSource: new nsWrappers.ChildNodesDataset(targetContent),
 
     childClass: Class(Basis.Controls.Button.Button, {
       captionGetter: function(button){
@@ -185,11 +185,11 @@
     event_update: function(object, delta){
       this.constructor.prototype.event_update.call(this, object, delta);
 
-      this.tmpl.contentText.nodeValue = (this.info.title || '') + (/^(method|function|class)$/.test(this.info.kind) ? nsCore.getFunctionDescription(this.info.obj).args.quote('(') : '');
-      this.tmpl.pathText.nodeValue = (this.info.path || '');
+      this.tmpl.contentText.nodeValue = (this.data.title || '') + (/^(method|function|class)$/.test(this.data.kind) ? nsCore.getFunctionDescription(this.data.obj).args.quote('(') : '');
+      this.tmpl.pathText.nodeValue = (this.data.path || '');
 
       if ('kind' in delta)
-        classList(this.element.firstChild).replace(delta.kind, this.info.kind, 'kind-');
+        classList(this.element.firstChild).replace(delta.kind, this.data.kind, 'kind-');
     }
   });
 
@@ -212,26 +212,26 @@
       if (buildin[rootNS])
         rootNS = 'window';
 
-      var node = this.childNodes.search(rootNS, 'info.fullPath');
+      var node = this.childNodes.search(rootNS, 'data.fullPath');
 
       //if (typeof console != 'undefined') console.log(node);
 
       if (node)
       {
         node.expand();
-        node = node.childNodes.search(path, 'info.fullPath')
+        node = node.childNodes.search(path, 'data.fullPath')
                ||
                node.childNodes
-                 .sortAsObject('info.fullPath')
+                 .sortAsObject('data.fullPath')
                  .reverse()
                  .search(0, function(node){
-                   return path.indexOf(node.info.fullPath + '.');
+                   return path.indexOf(node.data.fullPath + '.');
                  });
       }
 
       if (node)
       {
-        var cursor = node.info.fullPath;
+        var cursor = node.data.fullPath;
         var least = path.replace(new RegExp("^" + cursor.forRegExp() + '\\.?'), '');
         if (least)
         {
@@ -244,7 +244,7 @@
               cursor += '.' + parts.shift();
 
             node.expand();
-            node = node.childNodes.search(cursor, 'info.fullPath');
+            node = node.childNodes.search(cursor, 'data.fullPath');
           }
         }
 
@@ -255,7 +255,7 @@
           if (!noScroll)
             node.element.scrollIntoView(false);
 
-          document.title = 'Basis API: ' + node.info.title + (node.info.path ? ' @ ' + node.info.path : '');
+          document.title = 'Basis API: ' + node.data.title + (node.data.path ? ' @ ' + node.data.path : '');
         }
       }
     }
@@ -270,18 +270,18 @@
         targetContent.setDelegate(selected);
         if (selected)
         {
-          navTree.open(selected.info.fullPath, true);
-          location.hash = '#' + (selected ? selected.info.fullPath : null);
+          navTree.open(selected.data.fullPath, true);
+          location.hash = '#' + (selected ? selected.data.fullPath : null);
         }
       }
     },
     childNodes: [
       {
-        info: { title: 'Buildin class extensions', fullPath: 'window' },
+        data: { title: 'Buildin class extensions', fullPath: 'window' },
         collapsed: true,
         childNodes: Object.iterate(buildin, function(key, value){
           return new nsNav.docClass({
-            info: {
+            data: {
               kind: 'Class',
               title: key,
               path: '',
@@ -292,10 +292,10 @@
         })
       },
       {
-        info: { title: 'Basis', fullPath: 'Basis' },
+        data: { title: 'Basis', fullPath: 'Basis' },
         childNodes: Object.iterate(Basis.namespaces_, function(key){
           return new nsNav.docNamespace({
-            info: map[key]
+            data: map[key]
           })
         })
       }
@@ -304,7 +304,7 @@
 
   var searchTree = new nsTree.Tree({
     id: 'SearchTree',
-    localSorting: getter('info.title', String.toLowerCase),
+    localSorting: getter('data.title', String.toLowerCase),
     localGrouping: nsNav.nodeTypeGrouping,
     childClass: Class(nsTree.TreeNode, {
       template: new Template(
@@ -319,21 +319,21 @@
       ),
       templateAction: function(actionName, event){
         if (actionName == 'select')
-          navTree.open(this.info.fullPath);
+          navTree.open(this.data.fullPath);
 
         nsTree.TreeNode.prototype.templateAction.call(this, actionName, event);
       },
       init: function(config){
         nsTree.TreeNode.prototype.init.call(this, config);
 
-        classList(this.tmpl.content).add(this.info.kind.capitalize() + '-Content');
-        this.nodeType = nsNav.kindNodeType[this.info.kind];
+        classList(this.tmpl.content).add(this.data.kind.capitalize() + '-Content');
+        this.nodeType = nsNav.kindNodeType[this.data.kind];
 
-        if (/^(function|method|class)$/.test(this.info.kind))
-          DOM.insert(this.tmpl.label, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.info.obj).args.quote('(')));
+        if (/^(function|method|class)$/.test(this.data.kind))
+          DOM.insert(this.tmpl.label, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.data.obj).args.quote('(')));
 
-        this.tmpl.title.href = '#' + this.info.fullPath;
-        this.tmpl.namespaceText.nodeValue = this.info.kind != 'namespace' ? this.info.path : '';
+        this.tmpl.title.href = '#' + this.data.fullPath;
+        this.tmpl.namespaceText.nodeValue = this.data.kind != 'namespace' ? this.data.path : '';
       }
     })
   });
@@ -395,7 +395,7 @@
   });
 
   var loadSearchIndex = Function.runOnce(function(){
-    searchTree.setChildNodes(nsCore.Search.values.map(Function.wrapper('info')));
+    searchTree.setChildNodes(nsCore.Search.values.map(Function.wrapper('data')));
   });
 
   var searchInputFocused = false;
@@ -446,7 +446,7 @@
       else
         if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(key))
           if (selected)
-            navTree.open(selected.info.fullPath);
+            navTree.open(selected.data.fullPath);
     },
     focus: function(){
       searchInputFocused = true;
@@ -483,7 +483,7 @@
 
   DOM.insert(document.body, sourceView.element);
   DOM.insert(sourceView.content, new Basis.Plugin.SyntaxHighlight.SourceCodeNode({
-    info: {
+    data: {
       code: Basis.DOM.Wrapper.Node.prototype.insertBefore.toString()
     }
   }).element);*/

@@ -148,7 +148,7 @@
       * Using to fetch title value.
       * @property {function(node)}
       */
-      titleGetter: getter('info.title'),
+      titleGetter: getter('data.title'),
       
      /**
       * Using for tab default grouping.

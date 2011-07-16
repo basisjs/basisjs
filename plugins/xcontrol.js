@@ -18,7 +18,7 @@
         '<span>{titleText}</span>' +
       '</div>'
     ),
-    titleGetter: Function.getter('info.title'),
+    titleGetter: Function.getter('data.title'),
     behaviour: {
       update: function(object, delta){
         this.inherit(object, delta);
@@ -110,7 +110,7 @@
       var headerClass = this.childClass.prototype.satelliteConfig.header.instanceOf;
       this.meterHeader = new headerClass({
         container: this.element,
-        info: { title: 'meter' }
+        data: { title: 'meter' }
       });
       this.meterElement = this.meterHeader.element;
       DOM.Style.setStyle(this.meterElement, {

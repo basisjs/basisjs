@@ -54,16 +54,16 @@
       { id: 14, value:  32 },
       { id: 15, value:  33 }   // 15
     ].map(function(item){
-      return new DataObject({ info: item });
+      return new DataObject({ data: item });
     });
 
     var refData = {};
     for (var i = 0; i < data.length; i++)
     {
-      var id = data[i].info.value;
+      var id = data[i].data.value;
       if (!refData[id])
       {
-        refData[id] = new DataObject({ info: { id: id, value: id, title: 'ref data for ' + id } });
+        refData[id] = new DataObject({ data: { id: id, value: id, title: 'ref data for ' + id } });
       }
     }
 
@@ -80,7 +80,7 @@
       }
     });
 
-    document.write(data.map(Function.getter('info.value')).sortAsObject(Number).join(', '));
+    document.write(data.map(Function.getter('data.value')).sortAsObject(Number).join(', '));
 
     var datasetA = new Basis.Data.Dataset({
       items: data
@@ -99,7 +99,7 @@
       cssClassName: 'dataset',
       content: 'AggregateDataset, all datasets, no transform',
       container: document.body,
-      localSorting: Function.getter('info.value'),
+      localSorting: Function.getter('data.value'),
       collection: dd1 = new nsData.AggregateDataset({
         sources: [datasetA, datasetB, datasetC, datasetD]
       }),
@@ -108,7 +108,7 @@
         event_update: function(object, delta){
           Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-          this.tmpl.valueText.nodeValue = this.info.value;
+          this.tmpl.valueText.nodeValue = this.data.value;
           this.tmpl.idText.nodeValue = this.delegate.eventObjectId;
         }
       })
@@ -118,10 +118,10 @@
       cssClassName: 'dataset',
       content: 'AggregateDataset, all datasets, with transform',
       container: document.body,
-      localSorting: Function.getter('info.value'),
+      localSorting: Function.getter('data.value'),
       collection: new nsData.AggregateDataset({
         transform: function(object){
-          return refData[object.info.value];
+          return refData[object.data.value];
         },
         sources: [datasetA, datasetB, datasetC, datasetD]
       }),
@@ -130,7 +130,7 @@
         event_update: function(object, delta){
           Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-          this.tmpl.valueText.nodeValue = this.info.title;
+          this.tmpl.valueText.nodeValue = this.data.title;
           this.tmpl.idText.nodeValue = this.delegate.eventObjectId;
         }
       })
@@ -140,9 +140,9 @@
       cssClassName: 'dataset',
       content: 'Collection, all datasets, no transform, odd only',
       container: document.body,
-      localSorting: Function.getter('info.value'),
+      localSorting: Function.getter('data.value'),
       collection: xx = new nsData.Collection({
-        filter: Function.getter('info.value % 2 == 0'),
+        filter: Function.getter('data.value % 2 == 0'),
         sources: [datasetA, datasetB, datasetC, datasetD]
       }),
       childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
@@ -150,7 +150,7 @@
         event_update: function(object, delta){
           Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-          this.tmpl.valueText.nodeValue = this.info.value;
+          this.tmpl.valueText.nodeValue = this.data.value;
           this.tmpl.idText.nodeValue = this.delegate.eventObjectId;
         }
       })
@@ -161,15 +161,15 @@
       cssClassName: 'dataset',
       content: 'Value.all',
       container: document.body,
-      localSorting: Function.getter('info.value'),
+      localSorting: Function.getter('data.value'),
       collection: Value.all,
       childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
         template: new Basis.Html.Template('<div{element}>[{idText}] {valueText}</div>'),
         event_update: function(object, delta){
           Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-          this.tmpl.valueText.nodeValue = this.info.value;
-          this.tmpl.idText.nodeValue = this.info.id;
+          this.tmpl.valueText.nodeValue = this.data.value;
+          this.tmpl.idText.nodeValue = this.data.id;
         }
       })
     });
@@ -178,10 +178,10 @@
       cssClassName: 'dataset',
       content: 'AggregateDataset, all datasets, with transform',
       container: document.body,
-      localSorting: Function.getter('info.value'),
+      localSorting: Function.getter('data.value'),
       collection: new nsData.AggregateDataset({
         transform: function(object){
-          return object.info.id ? Value.getSlot(object.info.id) : null;
+          return object.data.id ? Value.getSlot(object.data.id) : null;
         },
         sources: [datasetA, datasetB, datasetC, datasetD]
       }),
@@ -190,15 +190,15 @@
         event_update: function(object, delta){
           Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-          if (!this.info.id)
+          if (!this.data.id)
           console.log(this);
-          this.tmpl.idText.nodeValue = this.info.id;
-          this.tmpl.valueText.nodeValue = 'value' in this.info ? this.info.value : '<empty slot>';
+          this.tmpl.idText.nodeValue = this.data.id;
+          this.tmpl.valueText.nodeValue = 'value' in this.data ? this.data.value : '<empty slot>';
         }
       })
     });
 
-    Value.all.sync(data.map(Function.getter('info')).slice(0,10));
+    Value.all.sync(data.map(Function.getter('data')).slice(0,10));
 
   </script>
 </body>

@@ -10,12 +10,23 @@
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
 
   <style id="demo-css" type="text/css">
+    #sourceTree,
+    #selectedItemsTree,
+    #selectedItemsByGroupTree
+    {
+      float: left;
+    }
+    #sourceTree H2,
+    #selectedItemsTree H2,
+    #selectedItemsByGroupTree H2
+    {
+      font-size: 100%;
+    }
     .Basis-Tree
     {
       border: 1px solid #888;
       width: 300px;
       height: 400px;
-      float: left;
       margin-right: 1ex;
       overflow: auto;
     }
@@ -46,33 +57,38 @@
       <button id="button-ClearSelection">Clear selection</button>
       <p>Use CTRL key for multiple select.</p>
     </div>
+    <div id="sourceTree">
+      <h2>Source tree</h2>
+    </div>
+    <div id="selectedItemsTree">
+      <h2>Selected items</h2>
+    </div>
+    <div id="selectedItemsByGroupTree">
+      <h2>Selected items by groups</h2>
+    </div>
   </div>
 
   <script id="demo-javascript" type="text/javascript">
-    var Data = Basis.Data;
     var DOM = Basis.DOM;
     var Event = Basis.Event;
-    var nsWrappers = Basis.DOM.Wrappers;
     var nsTree = Basis.Controls.Tree;
-
-    var demoContainer = DOM.get('demo-container');
 
     //
     // Master tree
     //
 
     var tree1 = new nsTree.Tree({
-      container: demoContainer,
+      container: DOM.get('sourceTree'),
       selection: { multiple: true },
       childNodes: Array.create(10, function(i){
         return new nsTree.TreeFolder({
-          info: {
+          data: {
             id: i,
             title: 'item #' + i
           },
           childNodes: [
             new nsTree.TreeNode({
-              info: {
+              data: {
                 title: 'child of item #' + i
               }
             })
@@ -86,8 +102,7 @@
     //
 
     var tree2 = new nsTree.Tree({
-      container: demoContainer,
-      content: 'Selected items:',
+      container: DOM.get('selectedItemsTree'),
       dataSource: tree1.selection
     });
 
@@ -96,17 +111,16 @@
     // be expanded and shows it's content.
     //
     var tree3 = new nsTree.Tree({
-      container: demoContainer,
-      content: 'Selected items by group:',
+      container: DOM.get('selectedItemsByGroupTree'),
       dataSource: new Basis.Data.Dataset.Split({
         source: tree1.selection, 
-        rule: Function.getter('info.id % 2', {
+        rule: Function.getter('data.id % 2', {
           'NaN': 'Child items',
           '0': 'Even items',
           '1': 'Odd items'
         })
       }),
-      childClass: Basis.Class(nsTree.TreeFolder, {
+      childClass: nsTree.TreeFolder.subclass({
         collapsed: true,
         event_expand: function(){
           nsTree.TreeFolder.prototype.event_expand.call(this);

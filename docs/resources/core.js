@@ -37,7 +37,7 @@
   var JsDocLinkEntity_init_ = JsDocLinkEntity.entityType.entityClass.prototype.init;
   JsDocLinkEntity.entityType.entityClass.prototype.init = function(){
     JsDocLinkEntity_init_.apply(this, arguments);
-    resourceLoader.addResource(this.info.url, 'link');
+    resourceLoader.addResource(this.data.url, 'link');
   };
 
 
@@ -68,18 +68,18 @@
 
   function fetchInheritedJsDocs(path, entity){
     var fullPath = path;
-    var objInfo = map[fullPath];
-    if (/class|property|method/.test(objInfo.kind))
+    var objData = map[fullPath];
+    if (/class|property|method/.test(objData.kind))
     {
-      var postPath = objInfo.kind == 'class' ? '' : '.prototype.' + objInfo.title;
-      var inheritance = getInheritance(objInfo.kind == 'class' ? objInfo.obj : map[objInfo.path.replace(/.prototype$/, '')].obj, objInfo.kind == 'class' ? null : objInfo.title);
+      var postPath = objData.kind == 'class' ? '' : '.prototype.' + objData.title;
+      var inheritance = getInheritance(objData.kind == 'class' ? objData.obj : map[objData.path.replace(/.prototype$/, '')].obj, objData.kind == 'class' ? null : objData.title);
       for (var i = inheritance.length, inherit; inherit = inheritance[--i];)
       {
         //console.log(inherit.cls.className + postFix);
         var inheritedEntity = JsDocEntity.get(inherit.cls.className + postPath);
-        if (inheritedEntity && inheritedEntity.info.text)
+        if (inheritedEntity && inheritedEntity.data.text)
         {
-          entity.set('text', inheritedEntity.info.text);
+          entity.set('text', inheritedEntity.data.text);
           return true;
         }
       }
@@ -126,7 +126,7 @@
           if (key == 'config')
           {
             JsDocConfigOption({
-              path: this.info.path + ':' + p[2],
+              path: this.data.path + ':' + p[2],
               type: p[1],
               description: p[3] || ''
             });
@@ -149,7 +149,7 @@
         if (!p)
         {
           if (typeof console != 'undefined')
-            console.warn('jsdoc parse error: ', this.info.path, value, p);
+            console.warn('jsdoc parse error: ', this.data.path, value, p);
         }
         else
         {
@@ -165,12 +165,12 @@
         var ref = map[typ];
         if (ref && ref.kind == 'class')
         {
-          var obj = map[this.info.path];
-          var objHolder = map[this.info.path.replace(/\.prototype\.[a-z0-9\_]+$/i, '')];
-          //if (/childClass/.test(this.info.path)) debugger;
+          var obj = map[this.data.path];
+          var objHolder = map[this.data.path.replace(/\.prototype\.[a-z0-9\_]+$/i, '')];
+          //if (/childClass/.test(this.data.path)) debugger;
           if (obj && obj.kind == 'property')
           {
-            console.log(this.info.path + ': ' + objHolder.fullPath + ' -' + obj.title + '-> ' + ref.fullPath);
+            console.log(this.data.path + ': ' + objHolder.fullPath + ' -' + obj.title + '-> ' + ref.fullPath);
           }
         }
         tags[key] = value;
@@ -193,31 +193,31 @@
       {
         var self = this;
         setTimeout(function(){
-          self.parseText(self.info.text)
+          self.parseText(self.data.text)
         }, 0);
       }
     },
     event_subscribersChanged: function(){
-      if (this.subscriberCount && this.info.text)
+      if (this.subscriberCount && this.data.text)
       {
         var self = this;
         //debugger;
         setTimeout(function(){
-          self.parseText(self.info.text)
+          self.parseText(self.data.text)
         }, 0);
       }
     }/*,
     init: function(){
       this.inherit.apply(this, arguments);
 
-      var fullPath = this.info.path;
-      var objInfo = map[fullPath];
+      var fullPath = this.data.path;
+      var objData = map[fullPath];
 
-      if (objInfo && /class|property|method/.test(objInfo.kind))
+      if (objData && /class|property|method/.test(objData.kind))
       {
         if (!fetchInheritedJsDocs(fullPath, this))
         {
-          awaitingUpdateQueue[this.info.path] = this;
+          awaitingUpdateQueue[this.data.path] = this;
         }
       }
     }*/,
@@ -361,7 +361,7 @@
       if (map[fullPath])
         console.log(fullPath);
 
-      var info = map[fullPath] = {
+      var data = map[fullPath] = {
         isClassMember: context == 'class',
         path: path,
         fullPath: fullPath,
@@ -374,24 +374,24 @@
       };
       
       mapDO[fullPath] = new nsData.DataObject({
-        info: info
+        data: data
       });
 
       if (kind == 'function' || kind == 'class' || kind == 'constant' || kind == 'namespace')
       {
         if (!searchIndex[fullPath])
         {
-          searchIndex[fullPath] = info;
-          searchValues.push(info);
+          searchIndex[fullPath] = data;
+          searchValues.push(data);
         }
       }
 
       members[path].push(mapDO[fullPath]);
-      charMap[firstChar].push(info);
+      charMap[firstChar].push(data);
 
       if (kind == 'class')
       {
-        info.namespace = ns;
+        data.namespace = ns;
 
         if (obj.classMap_)
         {
@@ -402,9 +402,9 @@
             childNodes: []
           };
 
-        if (!obj.classMap_.info)
+        if (!obj.classMap_.data)
         {
-          obj.classMap_.info = { path: fullPath, title: fullPath, obj: obj };
+          obj.classMap_.data = { path: fullPath, title: fullPath, obj: obj };
           if (obj.superClass_)
           {
             if (!obj.superClass_.classMap_)
@@ -530,7 +530,7 @@
           file: resource.url,
           line: line + 1 + lineFix
         });
-        //jsDocs[e.info.path] = e.info.text;
+        //jsDocs[e.data.path] = e.data.text;
       }
 
       var parts = resource.text.replace(/\r\n|\n\r|\r/g, '\n').replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|\n)+?)\*\/)/);

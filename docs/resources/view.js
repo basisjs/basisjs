@@ -122,7 +122,7 @@
     event_update: function(object, delta){
       nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
       
-      var newInfo = this.info;
+      var newData = this.data;
 
       DOM.clear(this.tmpl.content);
 
@@ -179,54 +179,54 @@
         return result;
       }
 
-      if (newInfo.file)
+      if (newData.file)
       {
-        var filename = newInfo.file.replace(BASE_URL_RX, '');
+        var filename = newData.file.replace(BASE_URL_RX, '');
         DOM.insert(this.tmpl.content,
-          DOM.createElement('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]'.format(filename, newInfo.line),
-            filename + ':' + newInfo.line
+          DOM.createElement('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]'.format(filename, newData.line),
+            filename + ':' + newData.line
             /*DOM.createElement('SPAN.file', filename),
             DOM.createElement('SPAN.splitter', ':'),
-            DOM.createElement('SPAN.line', newInfo.line)*/
+            DOM.createElement('SPAN.line', newData.line)*/
           )
         );
       }
 
-      if (newInfo.tags)
+      if (newData.tags)
       {
-        var tags = DOM.wrap(Object.keys(Object.slice(newInfo.tags, tagLabels)), { 'SPAN.tag': Function.$true });
-        /*Object.iterate(Object.slice(newInfo.tags, tagLabels), function(key, value){
+        var tags = DOM.wrap(Object.keys(Object.slice(newData.tags, tagLabels)), { 'SPAN.tag': Function.$true });
+        /*Object.iterate(Object.slice(newData.tags, tagLabels), function(key, value){
           tags.push(DOM.createElement('SPAN.tag', key));
         });*/
         if (tags.length)
           DOM.insert(this.tmpl.content, DOM.createElement('.tags', tags));
         
-        if (newInfo.tags.description)
+        if (newData.tags.description)
         {
-          if (!newInfo.tags.description_)
+          if (!newData.tags.description_)
           {
-            newInfo.tags.description_ = parseDescription(newInfo.tags.description);
+            newData.tags.description_ = parseDescription(newData.tags.description);
           }
           
-          DOM.insert(DOM.clear(this.tmpl.description), newInfo.tags.description_);
+          DOM.insert(DOM.clear(this.tmpl.description), newData.tags.description_);
           DOM.insert(this.tmpl.content, this.tmpl.description);
         }
 
-        if (newInfo.tags.link && newInfo.tags.link.length)
+        if (newData.tags.link && newData.tags.link.length)
         {
           if (!this.linksPanel)
             this.linksPanel = new JsDocLinksPanel();
 
-          this.linksPanel.setChildNodes(newInfo.tags.link.map(nsCore.resolveUrl).map(nsCore.JsDocLinkEntity));
+          this.linksPanel.setChildNodes(newData.tags.link.map(nsCore.resolveUrl).map(nsCore.JsDocLinkEntity));
           DOM.insert(this.tmpl.content, this.linksPanel.element);
         }
         
-        if (newInfo.tags.param)
+        if (newData.tags.param)
         {
           DOM.insert(this.tmpl.content, [
             DOM.createElement('DIV.label', 'Parameters:'),
             DOM.createElement('UL',
-              Object.iterate(newInfo.tags.param, function(key, value){
+              Object.iterate(newData.tags.param, function(key, value){
                 var types = value.type.replace(/=$/, '');
                 var isOptional = types != value.type;
                 return DOM.createElement('LI.param' + (isOptional ? '.optional' : ''),
@@ -242,12 +242,12 @@
           ]);
         }
 
-        if (newInfo.tags.returns)
+        if (newData.tags.returns)
         {
           DOM.insert(this.tmpl.content, [
             DOM.createElement('DIV.label', 'Returns:'),
             DOM.createElement('UL',
-              Object.iterate({ ret: newInfo.tags.returns }, function(key, value){
+              Object.iterate({ ret: newData.tags.returns }, function(key, value){
                 var types = value.type.replace(/=$/, '');
                 return DOM.createElement('LI.param',
                   //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
@@ -260,25 +260,25 @@
           ])
         }
 
-        if (newInfo.tags.example)
+        if (newData.tags.example)
         {
           var code;
           DOM.insert(this.tmpl.content, [
             DOM.createElement('DIV.label', 'Example:'),
             code = DOM.createElement('PRE.Basis-SyntaxHighlight')
           ]);
-          code.innerHTML = Basis.Plugin.SyntaxHighlight.highlight(newInfo.tags.example);
+          code.innerHTML = Basis.Plugin.SyntaxHighlight.highlight(newData.tags.example);
           //code.className = 'brush: javascript';
           //SyntaxHighlighter.highlight({}, code);
         }
       }
 
-      DOM.display(this.element, !!newInfo.text)
+      DOM.display(this.element, !!newData.text)
     },
     destroy: function(){
-      if (this.info.tags && this.info.tags.description_)
+      if (this.data.tags && this.data.tags.description_)
       {
-        delete this.info.tags.description_;
+        delete this.data.tags.description_;
       }
 
       if (this.linksPanel)
@@ -304,8 +304,8 @@
     ),
     satelliteConfig: {
       contentPanel: {
-        existsIf: getter('info.fullPath'),
-        delegate: getter('info.fullPath', nsCore.JsDocEntity),
+        existsIf: getter('data.fullPath'),
+        delegate: getter('data.fullPath', nsCore.JsDocEntity),
         instanceOf: JsDocPanel
       }
     }
@@ -326,9 +326,9 @@
       init: function(config){
         nsWrappers.TmplContainer.prototype.init.call(this, config);
 
-        if (this.info.ref)
+        if (this.data.ref)
         {
-          //DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.info.ref, { 'span.ref': Function.$true }))], 0);
+          //DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.data.ref, { 'span.ref': Function.$true }))], 0);
           classList(this.element).add('hasRefs');
         }
       }
@@ -338,7 +338,7 @@
   TemplateTreeNode.Attribute = Class(TemplateTreeNode, 
     nsWrappers.simpleTemplate(
       '<span{element} class="Doc-TemplateView-Node Doc-TemplateView-Attribute">' +
-        '<span>{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span>="{this_info_nodeValue}"</span>' + 
+        '<span>{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span>="{this_data_nodeValue}"</span>' + 
       '</span>'
     ),
     {
@@ -352,16 +352,16 @@
   TemplateTreeNode.EmptyElement = Class(TemplateTreeNode,
     nsWrappers.simpleTemplate(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
-        '<span><{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span><!--{attributes}-->/></span>' + 
+        '<span><{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span><!--{attributes}-->/></span>' + 
       '</div>'
     ),
     {
       className: namespace + '.TemplateTreeNode.EmptyElement',
       satelliteConfig: {
         attributes: {
-          existsIf: Function.getter('info.attrs'),
-          collection: function(node){
-            return new Basis.Data.Dataset({ items: node.info.attrs });
+          existsIf: Function.getter('data.attrs'),
+          dataSource: function(node){
+            return new Basis.Data.Dataset({ items: node.data.attrs });
           },
           instanceOf: Class(nsWrappers.TmplContainer,
             {
@@ -380,9 +380,9 @@
   TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, 
     nsWrappers.simpleTemplate(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
-        '<span><{this_info_nodeName}<span class="refList"><b>{</b>{this_info_ref}<b>}</b></span><!--{attributes}-->></span>' + 
+        '<span><{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span><!--{attributes}-->></span>' + 
         '<div{childNodesElement} class="Doc-TemplateView-NodeContent"></div>' + 
-        '<span></{object_info_nodeName}></span>' +
+        '<span></{this_data_nodeName}></span>' +
       '</div>'
     ),
     {
@@ -396,7 +396,7 @@
   TemplateTreeNode.Text = Class(TemplateTreeNode,
     nsWrappers.simpleTemplate(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Text">' + 
-        '<span><span class="refList">{{this_info_ref}} </span>{this_info_nodeValue}</span>' + 
+        '<span><span class="refList">{{this_data_ref}} </span>{this_data_nodeValue}</span>' + 
       '</div>'
     ),
     {
@@ -410,7 +410,7 @@
   TemplateTreeNode.Comment = Class(TemplateTreeNode,
     nsWrappers.simpleTemplate(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Comment">' + 
-        '<--<span>{this_info_nodeValue}</span>-->' + 
+        '<--<span>{this_data_nodeValue}</span>-->' + 
       '</div>'
     ),
     {
@@ -425,8 +425,8 @@
   var ViewTemplate = Class(View, {
     className: namespace + '.ViewTemplate',
     viewHeader: 'Template',
-    isAcceptableObject: function(info){
-      return !!(info.obj.prototype && info.obj.prototype.template);
+    isAcceptableObject: function(data){
+      return !!(data.obj.prototype && data.obj.prototype.template);
     },
     template: new Template(
       '<div{element} class="view viewTemplate">' +
@@ -448,10 +448,10 @@
         return result.length ? result.join(' | ') : null;
       }
         
-      var newInfo = this.info;
-      if ('obj' in delta && newInfo.obj)
+      var newData = this.data;
+      if ('obj' in delta && newData.obj)
       {
-        var template = newInfo.obj.prototype.template;
+        var template = newData.obj.prototype.template;
         //console.log(template);
         if (template)
         {
@@ -478,7 +478,7 @@
                   var attrRefs = [];
 
                   attrs.push(new Basis.Data.DataObject({
-                    info: {
+                    data: {
                       nodeName: attr.nodeName,
                       nodeValue: attr.nodeValue,
                       ref: findRefs(map, attr)
@@ -488,7 +488,7 @@
               }
 
               var cfg = {
-                info: {
+                data: {
                   nodeType: node.nodeType,
                   nodeValue: node.nodeType == DOM.ELEMENT_NODE ? '' : node.nodeValue,
                   nodeName: node.nodeType == DOM.ELEMENT_NODE ? node.tagName.toLowerCase() : '',
@@ -508,7 +508,7 @@
           while (node = dw.next());
 
           var cf = function(config){
-            switch (config.info.nodeType)
+            switch (config.data.nodeType)
             {
               case 1:
                 childClass = config.childNodes.length ? TemplateTreeNode.Element : TemplateTreeNode.EmptyElement;
@@ -589,15 +589,15 @@
     event_update: function(object, delta){
       nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
-      var newInfo = this.info;
-      var pathPart = newInfo.fullPath.split(/\./);
+      var newData = this.data;
+      var pathPart = newData.fullPath.split(/\./);
       this.tmpl.classNameText.nodeValue = pathPart.pop();
-      this.tmpl.namespaceText.nodeValue = newInfo.namespace || pathPart.join('.');
+      this.tmpl.namespaceText.nodeValue = newData.namespace || pathPart.join('.');
 
-      this.tmpl.refAttr.nodeValue = '#' + newInfo.fullPath;
+      this.tmpl.refAttr.nodeValue = '#' + newData.fullPath;
       
-      if (newInfo.tag)
-        DOM.insert(this.tmpl.content, DOM.createElement('SPAN.tag.tag-' + newInfo.tag, newInfo.tag));
+      if (newData.tag)
+        DOM.insert(this.tmpl.content, DOM.createElement('SPAN.tag.tag-' + newData.tag, newData.tag));
     },
     event_match: function(){
       classList(this.tmpl.content).remove('absent');
@@ -616,29 +616,29 @@
 
       this.clear();
 
-      var newInfo = this.info;
-      var list = newInfo.key
+      var newData = this.data;
+      var list = newData.key
         ? nsCore.getInheritance(
-            newInfo.kind == 'class'
-              ? newInfo.obj
-              : (map[newInfo.path.replace(/.prototype$/, '')] || { obj: null }).obj,
-            newInfo.kind == 'class'
+            newData.kind == 'class'
+              ? newData.obj
+              : (map[newData.path.replace(/.prototype$/, '')] || { obj: null }).obj,
+            newData.kind == 'class'
               ? null
-              : newInfo.key
+              : newData.key
           )
         : [];
 
-      if (newInfo.kind == 'class')
+      if (newData.kind == 'class')
         this.setMatchFunction();
       else
         this.setMatchFunction(function(node){
-          return list.search(node.info.fullPath, Function.getter('cls.className')).tag;
+          return list.search(node.data.fullPath, Function.getter('cls.className')).tag;
         });
       
       var cursor = this;
       for (var i = 0, item; item = list[i]; i++)
         /*cursor = */cursor.appendChild({
-          info: {
+          data: {
             classInfo: map[item.cls.className] || { namespace: 'unknown' },
             fullPath: item.cls.className,
             present: item.present,
@@ -653,7 +653,7 @@
         className: namespace + '.ViewInheritancePartitionNode',
         event_update: function(object, delta){
           ViewList.prototype.localGroupingClass.prototype.childClass.prototype.event_update.call(this, object, delta);
-          this.tmpl.hrefAttr.nodeValue = '#' + this.info.title;
+          this.tmpl.hrefAttr.nodeValue = '#' + this.data.title;
         },
         template: new Template(
           '<div{element} class="Basis-PartitionNode">' +
@@ -684,7 +684,7 @@
             selected: true,
             handler: function(){
               view.setLocalGrouping({
-                groupGetter: getter('info.classInfo.namespace || "Basis"')
+                groupGetter: getter('data.classInfo.namespace || "Basis"')
               });
               classList(view.tmpl.content).remove('show-namespace');
             }
@@ -719,19 +719,19 @@
     event_update: function(object, delta){
       nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
-      this.tmpl.nameText.nodeValue = this.info.name;
+      this.tmpl.nameText.nodeValue = this.data.name;
 
-      if (this.info.type)
+      if (this.data.type)
       {
         DOM.insert(this.tmpl.content,
           DOM.createElement('SPAN.types', DOM.createElement('SPAN.splitter', ':'),
-            parseTypes(this.info.type)
+            parseTypes(this.data.type)
           )
         );
       }
 
-      if (this.info.description)
-        DOM.insert(this.element, DOM.createElement('P', this.info.description))
+      if (this.data.description)
+        DOM.insert(this.element, DOM.createElement('P', this.data.description))
     }
   });
 
@@ -739,8 +739,8 @@
 
   var ViewConfig = Class(ViewList, {
     viewHeader: 'Config',
-    isAcceptableObject: function(info){
-      return !!(info.obj.prototype && info.obj.prototype.init);
+    isAcceptableObject: function(data){
+      return !!(data.obj.prototype && data.obj.prototype.init);
     },
 
     template: new Template(
@@ -752,7 +752,7 @@
     ),
 
     childClass: ConfigItem,
-    localSorting: getter('info.name'),
+    localSorting: getter('data.name'),
 
     localGroupingClass: Class(ViewList.prototype.localGroupingClass, {
       childClass: Class(ViewList.prototype.localGroupingClass.prototype.childClass, {
@@ -768,7 +768,7 @@
         event_update: function(object, delta){
           ViewList.prototype.localGroupingClass.prototype.childClass.prototype.event_update.call(this, object, delta);
 
-          var parts = this.info.path.replace(/\.prototype\.init$/, '').split(/\./);
+          var parts = this.data.path.replace(/\.prototype\.init$/, '').split(/\./);
           this.tmpl.hrefAttr.nodeValue = '#' + parts.join('.');
           this.tmpl.titleText.nodeValue = parts.join('.');
         }
@@ -779,7 +779,7 @@
 
       if ('fullPath' in delta)
       {
-        var path = this.info.fullPath;
+        var path = this.data.fullPath;
         if (path && map[path].obj.prototype.init)
         {
           var list = nsCore.getInheritance(map[path].obj);
@@ -812,7 +812,7 @@
           this.clear();
 
           if (this.localGrouping)
-            this.localGrouping.setLocalSorting(getter('info.path', this.groupOrder_));
+            this.localGrouping.setLocalSorting(getter('data.path', this.groupOrder_));
 
           this.setChildNodes(Object.values(items));
         }
@@ -831,8 +831,8 @@
                 selected: true,
                 handler: function(){
                   owner.setLocalGrouping({
-                    groupGetter:  getter('info.constructorPath', nsCore.JsDocEntity),
-                    localSorting: getter('info.path', owner.groupOrder_)
+                    groupGetter:  getter('data.constructorPath', nsCore.JsDocEntity),
+                    localSorting: getter('data.path', owner.groupOrder_)
                   });
                 }
               },
@@ -882,17 +882,17 @@
 
       if ('fullPath' in delta)
       {
-        this.tmpl.titleText.nodeValue = this.info.title;
-        this.tmpl.refAttr.nodeValue = '#' + this.info.fullPath;
-        if (this.info.implClass)
-          this.jsDocPanel.setDelegate(nsCore.JsDocEntity(this.info.implClass.info.fullPath + '.prototype.' + this.info.key));
+        this.tmpl.titleText.nodeValue = this.data.title;
+        this.tmpl.refAttr.nodeValue = '#' + this.data.fullPath;
+        if (this.data.implClass)
+          this.jsDocPanel.setDelegate(nsCore.JsDocEntity(this.data.implClass.data.fullPath + '.prototype.' + this.data.key));
       }
     },
     init: function(config){
       this.jsDocPanel = new JsDocPanel();
       this.jsDocPanel.addHandler({
         update: function(object, delta){
-          var tags = object.info.tags;
+          var tags = object.data.tags;
           if (tags)
           {
             classList(this.element).add('hasJsDoc');
@@ -933,7 +933,7 @@
     ),
     event_update: function(object, delta){
       PrototypeItem.prototype.event_update.call(this, object, delta);
-      this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+      this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj).args;
     }
   });
   
@@ -950,11 +950,11 @@
     ),
     event_update: function(object, delta){
       PrototypeItem.prototype.event_update.call(this, object, delta);
-      this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+      this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj).args;
 
-      if (this.info.title == 'init')
+      if (this.data.title == 'init')
         DOM.insert(this.tmpl.content, DOM.createElement('SPAN.method_mark', 'constructor'), 0);
-      if (this.info.title == 'destroy')
+      if (this.data.title == 'destroy')
         DOM.insert(this.tmpl.content, DOM.createElement('SPAN.method_mark', 'destructor'), 0);
     }
   });
@@ -967,7 +967,7 @@
     childFactory: function(config){
       var childClass;
 
-      switch (config.delegate.info.kind){
+      switch (config.delegate.data.kind){
         case 'event': childClass = PrototypeEvent; break;
         case 'method': childClass = PrototypeMethod; break;
         default:
@@ -988,11 +988,11 @@
     event_update: function(object, delta){
       ViewList.prototype.event_update.call(this, object, delta);
 
-      var newInfo = this.info;
-      if (newInfo.obj)
+      var newData = this.data;
+      if (newData.obj)
       {
-        //console.log('set', newInfo.obj, delta);
-        this.setChildNodes(nsCore.getMembers(newInfo.fullPath + '.prototype'));
+        //console.log('set', newData.obj, delta);
+        this.setChildNodes(nsCore.getMembers(newData.fullPath + '.prototype'));
       }
     },
 
@@ -1024,11 +1024,11 @@
                 selected: true,
                 handler: function(){
                   classList(owner.tmpl.content).remove('classGrouping');
-                  owner.setLocalSorting('info.title');
+                  owner.setLocalSorting('data.title');
                   owner.setLocalGrouping({
-                    groupGetter: getter('info.kind'),
-                    titleGetter: getter('info.id', PROTOTYPE_ITEM_TITLE),
-                    localSorting: getter('info.id', PROTOTYPE_ITEM_WEIGHT)
+                    groupGetter: getter('data.kind'),
+                    titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE),
+                    localSorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT)
                   });
                 }
               },
@@ -1037,13 +1037,13 @@
                 handler: function(){
                   classList(owner.tmpl.content).add('classGrouping');
                   owner.setLocalSorting(function(node){
-                    return (PROTOTYPE_ITEM_WEIGHT[node.info.kind] || 0) + '_' + node.info.title;
+                    return (PROTOTYPE_ITEM_WEIGHT[node.data.kind] || 0) + '_' + node.data.title;
                   });
                   owner.setLocalGrouping({
                     groupGetter: function(node){
-                      return node.info.implClass || mapDO['Basis.Class'];
+                      return node.data.implClass || mapDO['Basis.Class'];
                     },
-                    titleGetter: getter('info.fullPath'),
+                    titleGetter: getter('data.fullPath'),
                     localSorting: function(group){
                       return group.delegate && group.delegate.eventObjectId;
                     }
@@ -1070,8 +1070,8 @@
     event_update: function(object, delta){
       nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
 
-      this.tmpl.titleText.nodeValue = this.info.title || this.info.url;
-      this.tmpl.hrefAttr.nodeValue = this.info.url;
+      this.tmpl.titleText.nodeValue = this.data.title || this.data.url;
+      this.tmpl.hrefAttr.nodeValue = this.data.url;
     }
   });
   var JsDocLinksPanel = Class(nsWrappers.TmplContainer, {
@@ -1091,8 +1091,8 @@
     viewHeader: 'Constructor',
     satelliteConfig: {
       contentPanel: {
-        existsIf: getter('info.fullPath'),
-        delegate: getter('info.fullPath + ".prototype.init"', nsCore.JsDocEntity),
+        existsIf: getter('data.fullPath'),
+        delegate: getter('data.fullPath + ".prototype.init"', nsCore.JsDocEntity),
         instanceOf: JsDocPanel
       }
     }
@@ -1111,7 +1111,7 @@
         delegate: Function.$self,
         instanceOf: Class(Basis.Plugin.SyntaxHighlight.SourceCodeNode, {
           codeGetter: function(node){
-            return (node.info.obj || '').toString();
+            return (node.data.obj || '').toString();
           }
         })
       }

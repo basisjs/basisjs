@@ -484,7 +484,7 @@
         // transport transfer properties
 
         if (influence)
-          this.setInfluence(influence);
+          this.setInfluence.apply(this, influence);
 
         Cleaner.add(this);  // ???
 

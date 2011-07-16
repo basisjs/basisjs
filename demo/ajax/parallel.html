@@ -79,7 +79,7 @@
       poolLimit: 1,
       handler: {
         success: function(req){
-          var m = req.info.responseText.match(/<title>([^<]*)<\/title>/i);
+          var m = req.data.responseText.match(/<title>([^<]*)<\/title>/i);
           if (m && req.influence[0])
             req.influence[0].update({ title: m[1] });
         }
@@ -94,11 +94,11 @@
           if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
           {
             this.adapter.request({
-              url: '../' + this.info.url,
+              url: '../' + this.data.url,
               influence: [this]
             });
             this.adapter.request({
-              url: '../' + this.info.url,
+              url: '../' + this.data.url,
               influence: [this]
             });
           }
@@ -106,7 +106,7 @@
         stateChanged: function(){
           if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
             this.adapter.request({
-              url: '../' + this.info.url,
+              url: '../' + this.data.url,
               influence: [this]
             });
         }
@@ -118,13 +118,13 @@
       url: '../index.html',
       handler: {
         success: function(req){
-          var list = req.info.responseText.match(/url:\s*(\"[^\"]+\"|\'[^\']+\')/g);
+          var list = req.data.responseText.match(/url:\s*(\"[^\"]+\"|\'[^\']+\')/g);
           var result = [];
           for (var i = 0; i < list.length; i++)
           {
             var m = list[i].match(/\"([^\"]+)\"|\'([^\']+)\'/);
             result.push(new UrlDataObject({
-              info: { url: m[1] || m[2] }
+              data: { url: m[1] || m[2] }
             }));
           }
           links.set(result);
@@ -143,7 +143,7 @@
         event_update: function(object, delta){
           Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-          this.tmpl.titleText.nodeValue = this.info.title || this.info.url;
+          this.tmpl.titleText.nodeValue = this.data.title || this.data.url;
         },
         event_stateChanged: function(object, oldState){
           Basis.CSS.classList(this.element).replace(oldState, this.state, 'state-');

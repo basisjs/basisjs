@@ -65,10 +65,10 @@
 
     var nodeTypeGrouping = {
       groupGetter: function(node){
-        return node.info.isClassMember ? 'ClassMember' : node.nodeType;
+        return node.data.isClassMember ? 'ClassMember' : node.nodeType;
       },
-      titleGetter: getter('info.id', groupTitle),
-      localSorting: getter('info.id', groupWeight)
+      titleGetter: getter('data.id', groupTitle),
+      localSorting: getter('data.id', groupWeight)
     };
 
     //
@@ -88,7 +88,7 @@
       init: function(config){
         nsTree.TreeNode.prototype.init.call(this, config);
 
-        this.tmpl.title.href = '#' + this.info.fullPath;
+        this.tmpl.title.href = '#' + this.data.fullPath;
         classList(this.tmpl.content).add(this.nodeType + '-Content');
       }
     });
@@ -107,7 +107,7 @@
         BaseDocTreeNode.prototype.init.call(this, config);
 
         DOM.insert(this.tmpl.title, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
-        this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+        this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj).args;
       }
     });
 
@@ -179,10 +179,10 @@
       collapsed: true,
 
       childFactory: function(config){
-        return new kindNodeClass[config.delegate.info.kind](config);
+        return new kindNodeClass[config.delegate.data.kind](config);
       },
       localSorting: function(node){
-        return groupWeight[node.nodeType] + node.info.title;
+        return groupWeight[node.nodeType] + node.data.title;
       },
       localGrouping: nodeTypeGrouping,
 
@@ -194,7 +194,7 @@
       },
 
       getMembers: function(){
-        return nsCore.getMembers(this.info.fullPath);
+        return nsCore.getMembers(this.data.fullPath);
       },
       expand: function(){
         if (nsTree.TreeFolder.prototype.expand.call(this))
@@ -249,12 +249,12 @@
         BaseDocTreeFolder.prototype.init.call(this, config);
 
         DOM.insert(this.tmpl.title, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
-        this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.info.obj).args;
+        this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj).args;
       },
       getMembers: function(){
         return [
-                 nsCore.getMembers(this.info.fullPath + '.prototype'),
-                 nsCore.getMembers(this.info.fullPath)
+                 nsCore.getMembers(this.data.fullPath + '.prototype'),
+                 nsCore.getMembers(this.data.fullPath)
                ].flatten();
       }
     });

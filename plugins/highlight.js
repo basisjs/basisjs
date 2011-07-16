@@ -211,7 +211,7 @@
         '<pre{element|codeElement} class="Basis-SyntaxHighlight"/>'
       ),
 
-      codeGetter: Function.getter('info.code'),
+      codeGetter: Function.getter('data.code'),
       normalize: true,
 
       event_update: function(object, delta){
