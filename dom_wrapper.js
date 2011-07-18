@@ -853,7 +853,7 @@
     if (!child)
       throw EXCEPTION_NULL_CHILD;
 
-    throw (EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.className) + ')');
+    throw (EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
   }
 
  /**

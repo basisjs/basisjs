@@ -2362,7 +2362,7 @@
     * @type {RegExp}
     * @private
     */
-    var DESCRIPTION_PART_REGEXP = /([\#\.])([a-z0-9\_\-\:]+)|\[([a-z0-9\_\-:]+)(=(?:\"((?:\\.|[^\"])+)\"|\'((?:\\.|[^\'])+)\'|((?:\\.|[^\]])+)))?\s*\]|\s*(\S)/gi;
+    var DESCRIPTION_PART_REGEXP = /#([a-z0-9\_\-\:]+)|\.([a-z0-9\_\-\:]+)|\[([a-z0-9\_\-:]+)(="((?:\\.|[^"])*)"|='((?:\\.|[^'])*)'|=((?:\\.|[^\]])*))?\s*\]|\s*(\S)/gi;
 
    /**
     * Creates a new Element with arguments as childs.
@@ -2405,15 +2405,18 @@
             );
           }
 
-          entryName = m[2] || m[3];
+          entryName = m[1] || m[2] || m[3];
 
-          switch (m[1]){
-            case '#': attributes.id = entryName; break;
-            case '.': classNames.push(entryName); break;
-            default:
-              if (entryName != 'class')                 
-                attributes[entryName] = m[4] ? m[5] || m[6] || m[7] : entryName;
-          }
+          if (m[1])     // id
+            attributes.id = entryName;
+          else
+            if (m[2])   // class
+              classNames.push(entryName);
+            else
+            {           // attribute
+              if (entryName != 'class')
+                attributes[entryName] = m[4] ? coalesce(m[5], m[6], m[7]) : entryName;
+            }
         }
 
         // create element
@@ -3371,7 +3374,7 @@
       var strings = [];
       return str
         .trim()
-        .replace(/("(\\"|[^"])*?"|'([^']|\\')*?')/g, function(m){ strings.push(m); return '\0' })
+        .replace(/"((?:\\.|[^"])*?)"|'((?:\\.|[^'])*?)'/g, function(m, dq, sq){ strings.push(dq || sq); return '\0' })
         .replace(/(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attrName, ref, name, value){
           if (name)
             context.getters[name] = nodePath + '.getAttributeNode("' + attrName + '")';
@@ -3417,11 +3420,13 @@
           }
 
           if (value)
-            value = strings.shift();
+            value = strings.shift() || '';
+          else
+            value = attrName;
 
           return attrName == 'class'
-            ? value.replace(/^([\'\"]?)(.*?)\1$/, "$2").trim().replace(/^(.)|\s+|\s*,\s*/g, '.$1')
-            : '[' + attrName + (value ? '=' + value : '') + ']';
+            ? value.trim().replace(/^(.)|\s+/g, '.$1')
+            : '[' + attrName + '=' + value.quote('"') + ']';
         });
     }
 
