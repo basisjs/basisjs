@@ -9,9 +9,9 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-'use strict';
-
 (function(){
+
+  'use strict';
 
  /**
   * This namespace contains base classes and functions for components of Basis framework.
@@ -314,10 +314,6 @@
     */
     subscribers_: null,
 
-    //
-    // events 
-    //
-
    /**
     * Fires on data changes.
     * @param {Basis.Data.DataObject} object Object which data property
@@ -344,6 +340,14 @@
     * @event
     */
     event_delegateChanged: createEvent('delegateChanged', 'object', 'oldDelegate'),
+
+   /**
+    * Fires when root of delegate chain was changed.
+    * @param {Basis.Data.DataObject} object Object which root was changed.
+    * @param {Basis.Data.DataObject} oldRoot Object root before changes.
+    * @event
+    */
+    event_rootChanged: createEvent('rootChanged', 'object', 'oldRoot'),
 
    /**
     * Fires when target property was changed.
@@ -379,8 +383,6 @@
     */
     event_activeChanged: createEvent('activeChanged'),
 
-    event_dataChanged: createEvent('dataChanged'),
-
    /**
     * Default listeners.
     * @inheritDoc
@@ -399,13 +401,9 @@
           this.target = object.target;
           this.event_targetChanged(object, oldTarget);
         },
-        delegateChanged: function(object){
+        rootChanged: function(object, oldRoot){
           this.data = object.data;
-          this.event_dataChanged(object);
-        },
-        dataChanged: function(object){
-          this.data = object.data;
-          this.event_dataChanged(object);
+          this.event_rootChanged(object, oldRoot);
         },
         destroy: function(){
           if (this.cascadeDestroy)
@@ -438,6 +436,8 @@
       }
       else
       {
+        this.root = this;
+
         // if data doesn't exists - init it
         if (!this.data)
           this.data = {};
@@ -530,10 +530,11 @@
       // only if newDelegate differ with current value
       if (this.delegate !== newDelegate)
       {
-        var oldDelegate = this.delegate;
-        var oldTarget = this.target;
         var oldState = this.state;
         var oldData = this.data;
+        var oldDelegate = this.delegate;
+        var oldTarget = this.target;
+        var oldRoot = this.root;
         var delta = {};
 
         if (oldDelegate)
@@ -543,6 +544,7 @@
         {
           // assing new delegate
           this.delegate = newDelegate;
+          this.root = newDelegate.root;
           this.data = newDelegate.data;
           this.state = newDelegate.state;
           this.target = newDelegate.target;
@@ -563,6 +565,7 @@
           // reset delegate and info
           this.delegate = null;
           this.target = null;
+          this.root = this;
           this.data = {};
 
           // copy data, no update, no delta
@@ -572,6 +575,10 @@
 
         // fire event if delegate changed
         this.event_delegateChanged(this, oldDelegate);
+
+        // fire event if target changed
+        if (this.root !== oldRoot)
+          this.event_rootChanged(this, oldRoot);
 
         // fire event if target changed
         if (this.target !== oldTarget)
@@ -735,9 +742,10 @@
       EventObject.prototype.destroy.call(this);
 
       // drop data & state
-      this.target = null;
       this.data = NULL_OBJECT;
       this.state = STATE_UNDEFINED;
+      this.root = null;
+      this.target = null;
     }
   });
 
@@ -2342,18 +2350,6 @@
       this.keyMap = null;
     }
   });
-
-  /*var Index = Class(AbstractDataset, {
-    className: '',
-
-    init: function(config){
-      
-    },
-
-    setSource: function(){
-      
-    }
-  });*/
 
   //
   // export names

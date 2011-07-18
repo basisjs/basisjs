@@ -9,9 +9,9 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-'use strict';
-
   (function(){
+
+    'use strict';
 
    /**
     * @link ./demo/defile/form.html
@@ -77,9 +77,10 @@
       className: namespace + '.Field',
 
       canHaveChildren: false,
-
-      serializable: true,
       template: baseFieldTemplate,
+
+      nextFieldOnEnter: true,
+      serializable: true,
 
       event_select: function(){
         DOM.focus(this.tmpl.field, true);
@@ -100,11 +101,10 @@
       event_keydown: createEvent('keydown'),
       event_keypress: createEvent('keypress'),
       event_keyup: createEvent('keyup') && function(event){
-        var event = Event(event);
-        if (event)
+        if (this.nextFieldOnEnter)
         {
           var key = Event.key(event);
-       
+         
           if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
           {
             Event.cancelDefault(event);
@@ -414,8 +414,6 @@
       template: createFieldTemplate(baseFieldTemplate,
         '<textarea{field}/>'
       ),
-
-      event_keyup: EventObject.event.keyup,
 
       init: function(config){
         //this.value = this.value || '';

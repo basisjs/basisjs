@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-'use strict';
-
 /**
  * @annotation
  * Basis library core module. It provides various most using functions
@@ -40,6 +38,8 @@
  */
 
 (function(){
+
+  'use strict';
 
   // Define global scope: `window` in the browser, or `global` on the server
   var global = this;
