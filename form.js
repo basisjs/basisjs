@@ -97,6 +97,7 @@
 
         TmplNode.prototype.event_disable.call(this);
       },
+      event_input: createEvent('input'),
       event_change: createEvent('change'),
       event_keydown: createEvent('keydown'),
       event_keypress: createEvent('keypress'),
@@ -155,6 +156,7 @@
           Event.addHandler(this.tmpl.field, 'blur',     this.blur,     this);
           Event.addHandler(this.tmpl.field, 'focus',    this.focus,    this);
           Event.addHandler(this.tmpl.field, 'change',   this.change,   this);
+          Event.addHandler(this.tmpl.field, 'input',    this.input,    this);
 
           if (this.name)
             this.tmpl.field.name = this.name;
@@ -247,6 +249,9 @@
       },
       change: function(event){
         this.event_change(event);
+      },
+      input: function(event){
+        this.event_input(event);       
       },
       keydown: function(event){
         this.event_keydown(event);
