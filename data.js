@@ -735,7 +735,6 @@
       EventObject.prototype.destroy.call(this);
 
       // drop data & state
-      this.root = null;
       this.target = null;
       this.data = NULL_OBJECT;
       this.state = STATE_UNDEFINED;
