@@ -415,7 +415,7 @@
         '<textarea{field}/>'
       ),
 
-      event_keyup: EventObject.event.keypress,
+      event_keyup: EventObject.event.keyup,
 
       init: function(config){
         //this.value = this.value || '';

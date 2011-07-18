@@ -199,6 +199,7 @@
       mapping: null,
       soapBody: null,
       soapHeader: null,
+      soapHeaderSections: null,
 
       setSoapHeaderSection: function(name, data){
         this.soapHeaderSections[name] = data;

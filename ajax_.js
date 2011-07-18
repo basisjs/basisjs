@@ -133,7 +133,9 @@
 
       if (IS_POST_REGEXP.test(requestData.method)) 
       {
-        headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
+        if (requestData.contentType != 'multipart/form-data')
+          headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
+
         if (Browser.test('gecko'))
           headers['Connection'] = 'close';
       }
@@ -562,6 +564,8 @@
         }
         else
           request.doRequest();
+
+        return request;
       },
 
       abort: function(){
@@ -712,7 +716,6 @@
       event_sessionUnfreeze: EventObject.createEvent('sessionUnfreeze'),
 
       //event_service_failure: EventObject.createEvent('service_failure'),
-
       isSecure: false,
 
       prepare: Function.$true,
@@ -724,20 +727,17 @@
 
         this.inprogressProxies = [];
 
-        this.requestClass = Class(this.requestClass, {
-          service: this,
-          processErrorResponse: function(){
-            this.constructor.superClass_.prototype.processErrorResponse.call(this);
-
-            if (this.service.isSessionExpiredError())
-              this.service.freeze();
-          }
-        });
-
         this.proxyClass = Class(this.proxyClass, {
           service: this,
 
           needSignature: this.isSecure,
+
+          event_failure: function(req){
+            this.constructor.superClass_.prototype.event_failure.apply(this, arguments);
+
+            if (this.service.isSessionExpiredError(req))
+              this.service.freeze();        
+          },
 
           request: function(requestData){
             if (!this.service.prepare(this, requestData))
