@@ -2348,10 +2348,11 @@
       */
       destroy: function(){
         var element = this.element;
-        if (element && element.parentNode)
-          element.parentNode.removeChild(element);
 
         super_.destroy.call(this);
+
+        if (element && element.parentNode)
+          element.parentNode.removeChild(element);
 
         if (this.template)
           this.template.clearInstance(this.tmpl, this);

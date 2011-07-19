@@ -3381,6 +3381,9 @@
       return result;
     }
 
+    //
+    // PARSE ATTRIBUTES
+    //
     function createEventHandler(name){
       return function(event){
         var cursor = Event.sender(event);
@@ -3417,9 +3420,6 @@
       }
     }
 
-    //
-    // PARSE ATTRIBUTES
-    //
     function parseAttributes(context, str, nodePath){
       str = str.trim();
 
@@ -3455,7 +3455,7 @@
 
         result += name == 'class'
                     ? value.trim().replace(/^(.)|\s+/g, '.$1')
-                    : '[' + name + '=' + value.quote('"') + ']';
+                    : '[' + name + (value ? '=' + value.quote('"') : '') + ']';
       }
 
       return result;
