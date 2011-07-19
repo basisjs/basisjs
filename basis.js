@@ -1567,39 +1567,39 @@
       }
     });
 
-    var ExtensibleProperty = function(extension){
+
+    var CustomExtendProperty = function(extension, func){
       return {
         __extend__: function(extension){
           var Base = Function();
           Base.prototype = this;
-          return extend(new Base, extension);
+          var result = new Base;
+          func(result, extension);
+          return result;
         }
       }.__extend__(extension);
     };
 
+    var ExtensibleProperty = function(extension){
+      return CustomExtendProperty(extension, extend);
+    };
+
     var NestedExtProperty = function(extension){
-      return {
-        __extend__: function(extension){
-          var Base = Function();
-          Base.prototype = this;
-          var property = new Base;
-
-          for (var key in extension)
-          {
-            var value = property[key];
-            property[key] = value && value.__extend__
-                         ? value.__extend__(extension[key])
-                         : ExtensibleProperty(extension[key]);
-          }
-
-          return property;
+      return CustomExtendProperty(extension, function(result, extension){
+        for (var key in extension)
+        {
+          var value = result[key];
+          result[key] = value && value.__extend__
+                       ? value.__extend__(extension[key])
+                       : ExtensibleProperty(extension[key]);
         }
-      }.__extend__(extension);
+      });
     };
 
     return getNamespace(namespace, BaseClass.create).extend({
       BaseClass: BaseClass,
       create: BaseClass.create,
+      CustomExtendProperty: CustomExtendProperty,
       ExtensibleProperty: ExtensibleProperty,
       NestedExtProperty: NestedExtProperty
     });

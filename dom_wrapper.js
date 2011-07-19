@@ -126,79 +126,90 @@
   //
 
   var NULL_SATELLITE_CONFIG = Class.ExtensibleProperty();
-
   var SATELLITE_DESTROY_HANDLER = {
     destroy: function(object){
       DOM.replace(object.element, this);
     }
   };
 
-  var SATELLITE_HANDLER = {
-    update: function(object, delta){
-      for (var key in this.satelliteConfig)
+  var SATELLITE_UPDATE = function(owner){
+    // this -> {
+    //   key: satelliteName,
+    //   config: satelliteConfig
+    // }
+    var key = this.key;
+    var config = this.config;
+
+    var exists = typeof config.existsIf != 'function' || config.existsIf(owner);
+    var satellite = owner.satellite[key];
+
+    if (exists)
+    {
+      var setDelegate = 'delegate' in config;
+      var setDataSource = 'dataSource' in config;
+
+      var delegate = typeof config.delegate == 'function' ? config.delegate(owner) : null;
+      var dataSource = typeof config.dataSource == 'function' ? config.dataSource(owner) : null;
+
+      if (satellite)
       {
-        var config = this.satelliteConfig[key];
+        if (setDelegate)
+          satellite.setDelegate(delegate);
 
-        if (typeof config != 'object')
-          continue;
+        if (setDataSource)
+          satellite.setDataSource(dataSource);
+      }
+      else
+      {
+        var replaceElement = owner.tmpl[config.replace || key];
+        var instanceConfig = {};
 
-        var exists = typeof config.existsIf != 'function' || config.existsIf(this);
-        var satellite = this.satellite[key];
+        if (setDelegate)
+          instanceConfig.delegate = delegate;
 
-        if (exists)
+        if (setDataSource)
+          instanceConfig.dataSource = dataSource;
+
+        if (config.config)
+          Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(owner) : config.config);
+
+        satellite = new config.instanceOf(instanceConfig);
+        satellite.owner = owner;
+        if (satellite.listen.owner)
+          owner.addHandler(satellite.listen.owner, satellite);
+
+        owner.satellite[key] = satellite;
+
+        if (replaceElement && satellite instanceof TmplNode && satellite.element)
         {
-          var setDelegate = 'delegate' in config;
-          var setDataSource = 'dataSource' in config;
-
-          var delegate = typeof config.delegate == 'function' ? config.delegate(this) : null;
-          var dataSource = typeof config.dataSource == 'function' ? config.dataSource(this) : null;
-
-          if (satellite)
-          {
-            if (setDelegate)
-              satellite.setDelegate(delegate);
-
-            if (setDataSource)
-              satellite.setDataSource(dataSource);
-          }
-          else
-          {
-            var replaceElement = this.tmpl[config.replace || key];
-            var instanceConfig = {};
-
-            if (setDelegate)
-              instanceConfig.delegate = delegate;
-
-            if (setDataSource)
-              instanceConfig.dataSource = dataSource;
-
-            if (config.config)
-              Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(this) : config.config);
-
-            satellite = new config.instanceOf(instanceConfig);
-            satellite.owner = this;
-
-            this.satellite[key] = satellite;
-
-            if (replaceElement && satellite instanceof TmplNode && satellite.element)
-            {
-              DOM.replace(replaceElement, satellite.element);
-              satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
-            }
-          }
-        }
-        else
-        {
-          if (satellite)
-          {
-            satellite.destroy();
-            satellite.owner = null;
-            delete this.satellite[key];
-          }
+          DOM.replace(replaceElement, satellite.element);
+          satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
         }
       }
     }
+    else
+    {
+      if (satellite)
+      {
+        if (satellite.listen.owner)
+          owner.removeHandler(satellite.listen.owner, satellite);
+
+        satellite.destroy();
+        satellite.owner = null;
+        delete owner.satellite[key];
+      }
+    }
   };
+
+  var SATELLITE_OWNER_HOOK = Class.CustomExtendProperty(
+    {
+      update: true
+    },
+    function(result, extend){
+      for (var key in extend)
+        result[key] = extend[key] ? SATELLITE_UPDATE : null;    
+    }
+  );
 
  /**
   * @class
@@ -458,8 +469,24 @@
 
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
-        this.addHandler(SATELLITE_HANDLER);
-        //SATELLITE_HANDLER.update.call(this, this, {});
+        //this.addHandler(SATELLITE_HANDLER);
+        for (var key in this.satelliteConfig)
+        {
+          var config = this.satelliteConfig[key];
+
+          if (typeof config == 'object')
+          {
+            var hook = config.hook
+                         ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
+                         : SATELLITE_OWNER_HOOK;
+
+            this.addHandler(hook, {
+              key: key,
+              config: config
+            });
+          }
+        }
+
       }
     },
 
