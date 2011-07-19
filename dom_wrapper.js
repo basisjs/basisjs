@@ -132,13 +132,15 @@
     }
   };
 
-  var SATELLITE_UPDATE = function(owner){
+  var SATELLITE_UPDATE = function(){
     // this -> {
     //   key: satelliteName,
+    //   owner: owner,
     //   config: satelliteConfig
     // }
     var key = this.key;
     var config = this.config;
+    var owner = this.owner;
 
     var exists = typeof config.existsIf != 'function' || config.existsIf(owner);
     var satellite = owner.satellite[key];
@@ -482,6 +484,7 @@
 
             this.addHandler(hook, {
               key: key,
+              owner: this,
               config: config
             });
           }
