@@ -3389,9 +3389,9 @@
 
         // search for nearest node with event-{eventName} attribute
         do {
-          attr = cursor.getAttributeNode && cursor.getAttributeNode(name);
-          cursor = cursor.parentNode;
-        } while (!attr && cursor);
+          if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(name)))
+            break;
+        } while (cursor = cursor.parentNode);
 
         // if not found - exit
         if (!cursor || !attr)
