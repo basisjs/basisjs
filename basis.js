@@ -2300,7 +2300,7 @@
     * @return {Node} First ancestor node that pass matchFunction.
     */
     function findAncestor(node, matchFunction, bound){
-      while (node && node != bound)
+      while (node && node !== bound)
       {
         if (matchFunction(node))
           return node;
@@ -2344,11 +2344,11 @@
     var IS_ATTRIBUTE_BUG_NAME = (function(){
       var input = document.createElement('input');
       input.name = 'a';
-      return !/name/.test(outerHTML(input))
+      return !/name/.test(outerHTML(input));
     })();
 
    /**
-    * Using by createElement. Check if browser (Internet Explorer 6 & 7) has problem to set value for style attribute.
+    * Using by createElement. Check if browser (Internet Explorer 6 & 7) has problem with value setting for style attribute.
     * @type {boolean}
     * @privare
     */
@@ -3330,17 +3330,28 @@
     var tmplEventListeners = {};
     var tmplNodeMap = { seed: 1 };
 
-    var HTML_EVENT_OBJECT_ID_HOLDER = 'basisObjectId';
-    var partFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
+    var tmplPartFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
+    var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
+    var domFragment = DOM.createFragment();
 
     // Test for browser (IE) normalize text nodes during cloning
     var CLONE_NORMALIZE_TEXT_BUG = (function(){
       return DOM.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
     })();
 
+    
+    var createFragment = DOM.createFragment;
+    var createText = DOM.createText;
+    var createComment = function(value){
+      return document.createComment(value);
+    };
+
+    //
+    // PARSE TEXT
+    //
     function parseText(context, str, nodePath, pos){
       var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
-      var result = [];
+      var result = createFragment();
       var node;
       for (var i = 0; i < parts.length; i++)
       {
@@ -3359,117 +3370,134 @@
           // we need to insert comment nodes between text nodes to prevent text node merge
           if (CLONE_NORMALIZE_TEXT_BUG)
           {
-            if (result.length)
-              result.push(document.createComment(''));
+            if (result.lastChild)
+              result.appendChild(createComment(''));
             pos++;
           }
-          result.push(node);
+          result.appendChild(createText(node));
           pos++;
         }
       }
-      return DOM.createFragment.apply(null, result);
+      return result;
     }
 
+    //
+    // PARSE ATTRIBUTES
+    //
     function parseAttributes(context, str, nodePath){
-      var strings = [];
-      return str
-        .trim()
-        .replace(/"((?:\\.|[^"])*?)"|'((?:\\.|[^'])*?)'/g, function(m, dq, sq){ strings.push(dq || sq); return '\0' })
-        .replace(/(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(\{([a-z0-9\_\|]+)\})?(=\0)?\s*/gi, function(m, ns, attrName, ref, name, value){
-          if (name)
-            context.getters[name] = nodePath + '.getAttributeNode("' + attrName + '")';
+      str = str.trim();
 
-          var eventMatch = attrName.match(/^event-([a-z]+)/i);
-          if (eventMatch)
+      if (!str)
+        return '';
+
+      var result = '';
+      var m;
+
+      while (m = tmplAttrRx.exec(str))
+      {
+        //    0      1   2     3      4       5
+        // m: match, ns, name, alias, value1, value2
+
+        var name = m[2];
+        var value = m[4] || m[5] || name;
+
+        // store reference for attribute
+        if (m[3])
+          context.getters[m[3]] = nodePath + '.getAttributeNode("' + name + '")';
+
+        // if attribute is event binding, add global event handler
+        var eventMatch = name.match(/^event-([a-z]+)/i);
+        if (eventMatch)
+        {
+          var eventName = eventMatch[1];
+          if (!tmplEventListeners[eventName])
           {
-            var eventName = eventMatch[1];
-            if (!tmplEventListeners[eventName])
-            {
-              tmplEventListeners[eventName] = true;
-              Event.addGlobalHandler(eventMatch[1], function(event){
-                var cursor = Event.sender(event);
-                var attr;
-                var refId;
+            tmplEventListeners[eventName] = true;
+            Event.addGlobalHandler(eventName, function(event){
+              var cursor = Event.sender(event);
+              var attr;
+              var refId;
 
-                // search for nearest node with event-{eventName} attribute
-                do {
-                  if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
-                    break;
-                } while (cursor = cursor.parentNode);
+              // search for nearest node with event-{eventName} attribute
+              do {
+                if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(name)))
+                  break;
+              } while (cursor = cursor.parentNode);
 
-                // if not found - exit
-                if (!attr)
-                  return;
+              // if not found - exit
+              if (!cursor || !attr)
+                return;
 
-                // search for nearest node refer to Basis.Class instance
-                do {
-                  if (refId = cursor[HTML_EVENT_OBJECT_ID_HOLDER])
+              // search for nearest node refer to Basis.Class instance
+              do {
+                if (refId = cursor.basisObjectId)
+                {
+                  // if found call templateAction method
+                  var node = tmplNodeMap[refId];
+                  if (node && node.templateAction)
                   {
-                    // if found call templateAction method
-                    var node = tmplNodeMap[refId];
-                    if (node && node.templateAction)
-                    {
-                      node.templateAction(attr.nodeValue, event);
-                      //Event.kill(event);
-                    }
-                    break;
+                    var actions = attr.nodeValue.qw();
+
+                    for (var i = 0, actionName; actionName = actions[i++];)
+                      node.templateAction(actionName, event);
+
+                    return;
                   }
-                } while (cursor  = cursor.parentNode);
-              });
-            }
+                }
+              } while (cursor = cursor.parentNode);
+            });
           }
+        }
 
-          if (value)
-            value = strings.shift() || '';
-          else
-            value = attrName;
+        result += name == 'class'
+                    ? value.trim().replace(/^(.)|\s+/g, '.$1')
+                    : '[' + name + '=' + value.quote('"') + ']';
+      }
 
-          return attrName == 'class'
-            ? value.trim().replace(/^(.)|\s+/g, '.$1')
-            : '[' + attrName + '=' + value.quote('"') + ']';
-        });
+      return result;
     }
 
+    //
+    // PARSE HTML
+    //
     function parseHtml(context, path){
-      var result = DOM.createFragment();
-      var m;
-      var pos = 0;
-
-      if (!path)
-        path = '';
-
       if (!context.stack)
         context.stack = [];
 
       if (!context.source)
         context.source = context.str;
 
-      while (m = partFinderRx.exec(context.str))
+      if (!path)
+        path = '.';
+
+      var result = createFragment();
+      var preText;
+      var pos = 0;
+      var m;
+      var stack = context.stack;
+
+      while (m = tmplPartFinderRx.exec(context.str))
       {
-        var pre = RegExp.leftContext;
-        context.str = context.str.substr(pre.length + m[0].length);
+        //    0      1        2      3           4            5         6        7
+        // m: match, tagName, alias, attributes, isSingleton, closeTag, comment, commentAlias
 
-        if (pre.length)
+        preText = RegExp.leftContext;
+        context.str = context.str.substr(preText.length + m[0].length);
+
+        // if something before -> parse text & append result
+        if (preText.length)
         {
-
-          var tnodes = parseText(context, pre, path, pos);
-          pos += tnodes.childNodes.length;
-          result.appendChild(tnodes);
+          result.appendChild(parseText(context, preText, path, pos));
+          pos = result.childNodes.length;
         }
 
-        if (m[6])
+        // end tag
+        if (m[5])
         {
-          var comment = document.createComment(m[6]);
-          if (m[7])
-            context.getters[m[7]] = path + 'childNodes[' + pos + ']';
-          result.appendChild(comment);
-          pos++;
-        }
-        else if (m[5])
-        {
-          if (m[5] == context.stack[context.stack.length - 1])
+          // if end tag match to last stack tag -> remove last tag from tag and return
+          if (m[5] == stack[stack.length - 1])
           {
-            context.stack.pop();
+            stack.pop();
             return result;
           }
           else
@@ -3478,6 +3506,16 @@
             throw "Wrong end tag";
           }
         }
+
+        // comment
+        if (m[6])
+        {
+          if (m[7])
+            context.getters[m[7]] = path + 'childNodes[' + pos + ']';
+
+          result.appendChild(createComment(m[6]));
+        }
+        // open tag
         else
         {
           var descr = m[0];
@@ -3486,33 +3524,30 @@
           var attributes = m[3];
           var singleton = !!m[4];
           var nodePath = path + 'childNodes[' + pos + ']';
+          var element = DOM.createElement(tagName + parseAttributes(context, attributes, nodePath));
 
           if (name)
             context.getters[name] = nodePath;
 
-          if (attributes)
-            attributes = parseAttributes(context, attributes, nodePath);
-
-          var element = DOM.createElement(tagName + attributes);
-
-          if (/*str.length && */!singleton)
+          if (!singleton)
           {
-            context.stack.push(tagName);
-            if (context.str.length)
-              element.appendChild(parseHtml(context, nodePath + '.'));
+            stack.push(tagName);
+            element.appendChild(parseHtml(context, nodePath + '.'));
           }
 
           result.appendChild(element);
-          pos++;
         }
+
+        pos++;
       }
       
+      // no tag found, but there can be trailing text -> parse text
       if (context.str.length)
-        result.appendChild(parseText(context, context.str, '', pos));
+        result.appendChild(parseText(context, context.str, path, pos));
 
-      if (context.stack.length)
+      if (stack.length)
       {
-        ;;;if (typeof console != undefined) console.log('No end tag for ' + context.stack.reverse() + ' in Html.Template:\n\n' + context.source);
+        ;;;if (typeof console != undefined) console.log('No end tag for ' + stack.reverse() + ' in Html.Template:\n\n' + context.source);
         throw "No end tag for " + stack.reverse();
       }
 
@@ -3537,73 +3572,83 @@
       var context = {
         str: source,
         getters: {
-          element: 'childNodes[0]'
+          element: '.childNodes[0]'
         }
       };
 
-      var proto = parseHtml(context, '', 0);
-      var getters = context.getters;
+      // parse html
+      var proto = parseHtml(context);
 
-      var aliases = [];
-      var body = keys(getters).map(function(name, idx){
-        // optimize path
-        var indexPath = getters[name].replace(/\.?childNodes\[(\d+)\]/g, "$1 ").qw();
-        var newPath = getters[name].split('.');
-        var node = proto;
-        for (var i = 0; i < indexPath.length; i++)
+      // build pathes for references
+      var body = Object.iterate(context.getters, function(name, getter){
+        var names = name.split(/\|/).map(String.format, 'obj_.{0}');
+
+        // optimize path (1)
+        var path = getter.split(/(\.?childNodes\[(\d+)\])/);
+        var cursor = proto;
+        for (var i = 0; i < path.length; i += 3)
         {
-          if (!isNaN(indexPath[i]))
-          {
-            node = node.childNodes[indexPath[i]];
+          var pos = path[i + 2];
+          if (!pos)
+            break;
 
-            if (node == node.parentNode.firstChild)
-              newPath[i] = 'firstChild';
-            else
-              if (node == node.parentNode.lastChild)
-                newPath[i] = 'lastChild';
-          }
+          path[i + 2] = '';
+          cursor = cursor.childNodes[pos];
+
+          if (!cursor.previousSibling)
+            path[i + 1] = '.firstChild';
+          else
+            if (!cursor.nextSibling)
+              path[i + 1] = '.lastChild';
         }
 
-        var names = name.split(/\|/);
-        aliases.push.apply(aliases, names);
-
+        // return body parts
         return {
-          name:  'res_.' + names[0],
-          alias: 'res_.' + names.reverse().join('=res_.'), // reverse names to save alias order for iterate (for most browsers it should be work)
-          path:  'dom_.' + newPath.join('.')
+          name:  names[0],
+          alias: names.join('='),
+          path:  'dom_' + path.join('')
         }
-      }, this).sortAsObject('path');
+      }).sortAsObject('path');
 
+      // optimize pathes (2)
       for (var i = 0; i < body.length; i++)
       {
-        var path_re = new RegExp('^' + body[i].path.forRegExp());
-        for (var j = i + 1; j < body.length; j++)
-          body[j].path = body[j].path.replace(path_re, body[i].name);
+        var pathRx = new RegExp('^' + body[i].path.forRegExp());
+        for (var j = i + 1, nextBodyPart; nextBodyPart = body[j++];)
+          nextBodyPart.path = nextBodyPart.path.replace(pathRx, body[i].name);
       }
 
-      this.createInstance = new Function('proto_', 'map_', 'var res_, dom_; return ' + 
-        // mark name with dangling _ to avoid renaming by compiler, because
-        // this names using by generates code, and must be unchanged
+      //
+      // build createInstance function
+      //
+      this.createInstance = new Function('proto_', 'map_', 'var obj_, dom_; return ' + 
+        // mark variable names with dangling _ to avoid renaming by compiler, because
+        // this names using by generated code, and must be unchanged
+
+        // WARN: don't use global scope variables, resulting function has isolated scope
 
         function(object, node){
-          res_ = object || {};
+          obj_ = object || {};
           dom_ = proto_.cloneNode(true);
 
+          // specific code start
           _code_(); // <-- will be replaced for specific code
+          // specific code end
 
-          if (node && res_.element)
+          if (node && obj_.element)
           {
-            var id = map_.seed++;
+            var id = obj_.element.basisObjectId = map_.seed++;
             map_[id] = node;
-            res_.element.basisObjectId = id;
-            //;;;object.element.setAttribute("_e", node.eventObjectId);
           }
 
-          return res_;
+          return obj_;
         }
 
       .toString().replace('_code_()', body.map(String.format,'{alias}={path};\n').join('')))(proto, tmplNodeMap);
 
+      //
+      // build clearInstance function
+      //
       this.clearInstance = new Function('map_', 'var obj_; return ' +
 
         function(object, node){
@@ -3612,13 +3657,13 @@
           if (id)
             delete map_[id];
 
+          // specific code start
           _code_(); // <-- will be replaced for specific code
+          // specific code end
 
         }
 
-      .toString().replace('_code_()', aliases.map(String.format,'obj_.{0}=null;\n').join('')))(tmplNodeMap);
-
-      return this;
+      .toString().replace('_code_()', body.map(String.format,'{alias}=null;\n').join('')))(tmplNodeMap);
     };
 
 
@@ -3677,140 +3722,7 @@
         if (value instanceof Template)
           return value;
         else
-        {
-          /*if (typeof value == 'object')
-          {
-            var superTemplate = this;
-            var operationPriority = {
-              insertBefore: 1,
-              insertAfter: 2,
-              remove: 3,
-              replace: 4,
-              insertBegin: 5,
-              append: 6
-            };
-
-            var template = new Template(function(){
-
-              function findRefs(node){
-                var result = [];
-                for (var key in fullMap)
-                  if (fullMap[key] === node)
-                    result.push(key);
-                return result;
-              }
-
-              function toMarkup(node){
-                var result = '';
-                var refs = findRefs(node);
-
-                if (refs.length)
-                  refs = '{' + refs.join('|') + '}';
-
-                switch (node.nodeType){
-                  case 1: 
-                    var nodeName = node.nodeName.toLowerCase();
-                    result += '<' + nodeName + refs + DOM.outerHTML(node.cloneNode(false)).replace(/^<\w+|(\/>|><\/\w+>|>)$/g, '');
-                    if (node.firstChild)
-                      result += '>' + walk(node) + '</' + nodeName + '>'
-                    else
-                      result += '/>';
-                  break;
-                  case 8:
-                    result += '<!--' + node.nodeValue + '-->'
-                  break;
-                  default:
-                    result += refs || node.nodeValue;
-                };
-                return result;
-              }
-
-              var map = superTemplate.createInstance();
-              var F = Function();
-              F.prototype = map;
-              var fullMap = new F;
-
-              function walk(parent){
-                var node = parent.firstChild;
-                var result = '';
-                var br = 0;
-
-                while (node)
-                {
-                  br = 0;
-                  var refs = findRefs(node, map);
-                  if (refs)
-                  {
-                    for (var ri = 0, ref; ref = refs[ri++];)
-                    {
-                      var ops = keys(value[ref]).sortAsObject(function(key){ return operationPriority[key] });
-
-                      for (var i = 0, operation; operation = ops[i++];)
-                      {
-                        if (operation == 'remove')
-                        {
-                          node = node.nextSibling;
-                          br = 1;
-                          break;
-                        }
-
-                        parseTemplate.call({
-                          source: value[ref][operation]
-                        }).createInstance(fullMap);
-
-                        var fragment = fullMap.element.parentNode;
-
-                        delete fullMap.element;
-
-                        var br = 0;
-                        switch (operation){
-                          case 'insertBefore':
-                            result += walk(fragment);
-                          break;
-                          case 'insertAfter':
-                            node.parentNode.insertBefore(fragment, node.nextSibling);
-                          break;
-                          case 'replace':
-                            var t = fragment.firstChild || node.nextSibling;
-                            DOM.replace(node, fragment);
-                            node = t;
-                            br = 1;
-                          break;
-                          case 'insertBegin':
-                            node.insertBefore(fragment, node.firstChild);
-                          break;
-                          case 'append':
-                            node.appendChild(fragment);
-                          break;
-                        }
-                        //if (br)
-                        //  continue NEXT;
-                        if (br)
-                          break;
-                      }
-                      if (br)
-                        break;
-                    };
-                  }
-
-                  if (node && !br)
-                  {
-                    result += toMarkup(node);
-                    node = node.nextSibling;
-                  }
-                };
-
-                return result;
-              }
-
-              return walk(map.element.parentNode);
-            });
-            ;;;template.superTemplate_ = superTemplate;
-            return template;
-          }
-          else*/
-            return new Template(value);
-        }
+          return new Template(value);
       },
 
      /**
