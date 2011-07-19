@@ -3381,6 +3381,42 @@
       return result;
     }
 
+    function createEventHandler(name){
+      return function(event){
+        var cursor = Event.sender(event);
+        var attr;
+        var refId;
+
+        // search for nearest node with event-{eventName} attribute
+        do {
+          attr = cursor.getAttributeNode && cursor.getAttributeNode(name);
+          cursor = cursor.parentNode;
+        } while (!attr && cursor);
+
+        // if not found - exit
+        if (!cursor || !attr)
+          return;
+
+        // search for nearest node refer to Basis.Class instance
+        do {
+          if (refId = cursor.basisObjectId)
+          {
+            // if found call templateAction method
+            var node = tmplNodeMap[refId];
+            if (node && node.templateAction)
+            {
+              var actions = attr.nodeValue.qw();
+
+              for (var i = 0, actionName; actionName = actions[i++];)
+                node.templateAction(actionName, event);
+
+              break;
+            }
+          }
+        } while (cursor = cursor.parentNode);
+      }
+    }
+
     //
     // PARSE ATTRIBUTES
     //
@@ -3413,39 +3449,7 @@
           if (!tmplEventListeners[eventName])
           {
             tmplEventListeners[eventName] = true;
-            Event.addGlobalHandler(eventName, function(event){
-              var cursor = Event.sender(event);
-              var attr;
-              var refId;
-
-              // search for nearest node with event-{eventName} attribute
-              do {
-                if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(name)))
-                  break;
-              } while (cursor = cursor.parentNode);
-
-              // if not found - exit
-              if (!cursor || !attr)
-                return;
-
-              // search for nearest node refer to Basis.Class instance
-              do {
-                if (refId = cursor.basisObjectId)
-                {
-                  // if found call templateAction method
-                  var node = tmplNodeMap[refId];
-                  if (node && node.templateAction)
-                  {
-                    var actions = attr.nodeValue.qw();
-
-                    for (var i = 0, actionName; actionName = actions[i++];)
-                      node.templateAction(actionName, event);
-
-                    return;
-                  }
-                }
-              } while (cursor = cursor.parentNode);
-            });
+            Event.addGlobalHandler(eventName, createEventHandler(name));
           }
         }
 
