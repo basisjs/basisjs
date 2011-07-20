@@ -443,6 +443,7 @@
         '</div>'
     });
 
+
     //
     // Menu
     //
@@ -504,6 +505,9 @@
     });
     MenuItem.prototype.childClass = MenuItem;
 
+   /**
+    * @class
+    */
     var MenuItemSet = Class(MenuItem, {
       className: namespace + '.MenuItemSet',
       event_childNodesModified: TmplNode.prototype.event_childNodesModified,

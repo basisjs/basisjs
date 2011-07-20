@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -44,7 +43,7 @@
 
   <script type="text/javascript" src="../demo.js"></script>
 
-  <style>
+  <style type="text/css">
     .demo-list DIV.state-processing
     {
       background: url(../res/img/loading.gif) no-repeat left center;
@@ -154,7 +153,7 @@
     var button = new Basis.Controls.Button.Button({
       container: Basis.DOM.get('demo-container'),
       caption: 'Set active',
-      handler: function(){
+      click: function(){
         for (var i = 0, child; child = list.childNodes[i]; i++)
           child.setActive(true);
       }

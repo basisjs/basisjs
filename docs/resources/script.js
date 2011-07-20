@@ -165,7 +165,7 @@
       captionGetter: function(button){
         return button.delegate.viewHeader;
       },
-      handler: function(){
+      click: function(){
         if (this.delegate === nsView.viewPrototype)
           prototypeMapPopup.show(this.element);
         else

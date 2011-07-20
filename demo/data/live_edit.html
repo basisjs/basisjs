@@ -236,13 +236,13 @@
       childNodes: [
         {
           caption: 'Save',
-          handler: function(){
+          click: function(){
             myForm.getRootDelegate().commit();
           }
         },
         {
           caption: 'Cancel',
-          handler: function(){
+          click: function(){
             myForm.getRootDelegate().rollback();
             myForm.loadData(myForm.data);
           }

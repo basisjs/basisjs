@@ -126,13 +126,13 @@
 
     new Button({
       caption: 'Button1',
-      handler: alertCaption,
+      click: alertCaption,
       container: simpleButtonsBlock
     });
 
     new Button({
       caption: 'Button2',
-      handler: alertCaption,
+      click: alertCaption,
       disabled: true,
       container: simpleButtonsBlock
     });
@@ -141,20 +141,20 @@
       childNodes: [
         {
           caption: 'Button3',
-          handler: alertCaption
+          click: alertCaption
         },
         {
           caption: 'Button4',
-          handler: alertCaption
+          click: alertCaption
         },
         {
           caption: 'Button5',
-          handler: alertCaption,
+          click: alertCaption,
           disabled: true
         },
         {
           caption: 'disable/enable button5',
-          handler: function(){
+          click: function(){
             if (this.previousSibling.disabled)
               this.previousSibling.enable();
             else
@@ -169,33 +169,33 @@
       childNodes: [
         {
           caption: 'Button7',
-          handler: alertCaption,
+          click: alertCaption,
           groupId: 1
         },
         {
           caption: 'Button8',
-          handler: alertCaption,
+          click: alertCaption,
           disabled: true,
           groupId: 1
         },
         {
           caption: 'Button9',
-          handler: alertCaption,
+          click: alertCaption,
           groupId: 2
         },
         {
           caption: 'Middle 9-10',
-          handler: alertCaption,
+          click: alertCaption,
           groupId: 2
         },
         {
           caption: 'Button10',
-          handler: alertCaption,
+          click: alertCaption,
           groupId: 2
         },
         {
           caption: 'Button11',
-          handler: alertCaption,
+          click: alertCaption,
           disabled: true,
           groupId: 3
         }
@@ -208,21 +208,21 @@
         {
           cssClassName: 'imageLeft',
           caption: 'Button12',
-          handler: alertCaption
+          click: alertCaption
         },
         {
           cssClassName: 'imageRight',
           caption: 'Button13',
-          handler: alertCaption
+          click: alertCaption
         },
         {
           cssClassName: 'imageOnly',
           caption: 'Button14',
-          handler: alertCaption
+          click: alertCaption
         },
         {
           caption: String.fromCharCode(8592),
-          handler: alertCaption
+          click: alertCaption
         }
       ],
       container: createBlock('Buttons with Image')
@@ -233,7 +233,7 @@
         {
           cssClassName: 'big',
           caption: 'Button15',
-          handler: alertCaption
+          click: alertCaption
         }
       ],
       container: createBlock('Big Button')
@@ -241,7 +241,7 @@
 
     new Button({
       caption: 'Button16',
-      handler: alertCaption,
+      click: alertCaption,
       cssClassName: 'fixedWidthButton',
       container: createBlock('Button with 50% Width')
     })

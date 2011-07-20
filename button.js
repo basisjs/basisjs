@@ -27,11 +27,10 @@
 
     var getter = Function.getter;
 
-    var nsWrappers = Basis.DOM.Wrapper;
+    var nsWrapper = Basis.DOM.Wrapper;
 
-    var TmplNode = nsWrappers.TmplNode;
-    var TmplGroupingNode = nsWrappers.TmplGroupingNode;
-    var TmplPartitionNode = nsWrappers.TmplPartitionNode;
+    var TmplNode = nsWrapper.TmplNode;
+    var TmplControl = nsWrapper.TmplControl;
 
     //
     // Main part
@@ -49,36 +48,26 @@
       groupId: 0,
       name: null,
 
-      template: new Template(
-        '<button{element|buttonElement} class="Basis-Button" event-click="click" event-keydown="keydown" event-mousedown="mousedown">' + 
+      template:
+        '<button{buttonElement} class="Basis-Button" event-click="click">' +
           '<span class="Basis-Button-Back" />' +
           '<div class="Basis-Button-Caption">{captionText}</div>' +
-        '</button>'
-      ),
+        '</button>',
 
-      templateAction: function(actionName, event){
-        if (actionName == 'mousedown')
-          this.leftButtonPressed_ = Event.mouseButton(event, Event.MOUSE_LEFT);
-
-        if (actionName == 'click' && this.leftButtonPressed_)
-          this.click();
-
-        if (actionName == 'keydown' && [Event.KEY.ENTER, Event.KEY.CTRL_ENTER, Event.KEY.SPACE].has(Event.key(event)))
-          this.click();
-
-
-        TmplNode.prototype.templateAction.call(this, actionName, event);
+      action: {
+        click: function(event){
+          if (!this.isDisabled())
+            this.click();
+        }
       },
 
       click: function(){
-        if (!this.isDisabled() && typeof this.handler == 'function')
-          this.handler.call(this);
       },
 
       event_select: function(){
+        TmplNode.prototype.event_select.call(this);
         DOM.focus(this.element);
       },
-      
       event_disable: function(){
         TmplNode.prototype.event_disable.call(this);
         this.tmpl.buttonElement.disabled = true;
@@ -89,6 +78,8 @@
       },
 
       init: function(config){
+        ;;;if (typeof this.handler == 'function' && typeof console != 'undefined') console.warn(namespace + '.Button: this.handler must be an object. Use this.click instead.')
+
         // inherit
         TmplNode.prototype.init.call(this, config);
 
@@ -104,41 +95,38 @@
    /**
     * @class
     */
-    var ButtonGrouping = Class(TmplGroupingNode, {
-      className: namespace + '.ButtonGrouping',
-
-      groupGetter: function(button){
-        return button.groupId || -button.eventObjectId;
-      },
-
-      childClass: Class(TmplPartitionNode, {
-        className: namespace + '.ButtonPartitionNode',
-
-        template: new Template(
-          '<div{element} class="Basis-ButtonGroup"></div>'
-        )
-      })
-    });
+    //var ButtonGrouping = Class(TmplGroupingNode, );
 
    /**
     * @class
     */
-    var ButtonPanel = Class(nsWrappers.TmplControl, {
+    var ButtonPanel = Class(TmplControl, {
       className: namespace + '.ButtonPanel',
 
-      template: new Template(
-        '<div{element} class="Basis-ButtonPanel">' +
+      template:
+        '<div class="Basis-ButtonPanel">' +
           '<div{childNodesElement|content} class="Basis-ButtonPanel-Content"/>' +
-        '</div>'
-      ),
+        '</div>',
 
       childClass: Button,
-
-      localGroupingClass: ButtonGrouping,
-      localGrouping: {},
-
       getButtonByName: function(name){
         return this.childNodes.search(name, getter('name'));
+      },
+
+      localGrouping: {},
+      localGroupingClass: {
+        className: namespace + '.ButtonGroupingNode',
+
+        groupGetter: function(button){
+          return button.groupId || -button.eventObjectId;
+        },
+
+        childClass: {
+          className: namespace + '.ButtonPartitionNode',
+
+          template:
+            '<div class="Basis-ButtonGroup"/>'
+        }
       }
     });
 
@@ -148,8 +136,7 @@
 
     Basis.namespace(namespace).extend({
       Button: Button,
-      ButtonPanel: ButtonPanel,
-      ButtonGrouping: ButtonGrouping
+      ButtonPanel: ButtonPanel
     });
 
   })();

@@ -3386,6 +3386,9 @@
     //
     function createEventHandler(name){
       return function(event){
+        if (event && event.type == 'click' && event.which == 3)
+          return;
+
         var cursor = Event.sender(event);
         var attr;
         var refId;
@@ -3953,7 +3956,7 @@
     function mouseButton(event, button){
       event = wrap(event);
                                      // W3C DOM3     // Other browsers
-      var btn = 'buttons' in event ? event.buttons : event.which;
+      var btn = /*'buttons' in event ? event.buttons : */event.which;
       if (typeof btn == 'number')
         // DOM scheme
         return btn == button.VALUE;

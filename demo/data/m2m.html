@@ -383,21 +383,21 @@
         {
           caption: 'Expand all',
           groupId: 1,
-          handler: function(){
+          click: function(){
             masterTree.expandAll();
           }
         },
         {
           caption: 'Collapse all',
           groupId: 1,
-          handler: function(){
+          click: function(){
             masterTree.collapseAll();
           }
         },
         {
           name: 'add',
           caption: 'Add field',
-          handler: function(){
+          click: function(){
             var newId = parseInt(Math.random() * 1000000 + 10);
             Field({
               FieldId: newId,
@@ -469,7 +469,7 @@
         {
           caption: 'Check all',
           groupId: 1,
-          handler: function(){
+          click: function(){
             relatedTree.dataSource.getItems().forEach(function(item){
               if (!item.target)
                 Link(item.data);
@@ -479,14 +479,14 @@
         {
           caption: 'Uncheck all',
           groupId: 1,
-          handler: function(){
+          click: function(){
             Link.getGrouping('FieldId').getSubset(relatedTree.data.FieldId).sync([]);
           }
         },
         {
           name: 'add',
           caption: 'Add word',
-          handler: function(){
+          click: function(){
             var newId = parseInt(Math.random() * 1000000 + 10);
             Word({
               WordId: newId,

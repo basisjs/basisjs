@@ -2312,7 +2312,9 @@
             if (node)
             {
               var nodeClassName = classList(node);
-              String(cssClassNames[alias]).qw().forEach(nodeClassName.add, nodeClassName);
+              var names = String(cssClassNames[alias]).qw();
+              for (var i = 0, name; name = names[i++];)
+                nodeClassName.add(name);
             }
           }
         }

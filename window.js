@@ -214,7 +214,11 @@
         }
 
         // buttons
-        var buttons = Array.from(this.buttons).map(function(button){ return Object.complete({ handler: button.handler ? button.handler.bind(this) : button.handler }, button); }, this);
+        var buttons = Array.from(this.buttons).map(function(button){
+          return Object.complete({
+            click: button.click ? button.click.bind(this) : button.click
+          }, button);
+        }, this);
 
         // common buttons
         var buttons_ = Object.slice(this, ['buttonOk', 'buttonCancel']);
@@ -229,7 +233,7 @@
           buttons.push({
             name: buttonId == 'buttonOk' ? 'ok' : 'cancel',
             caption: button.caption || button.title || button,
-            handler: (button.handler || this.close).bind(this)
+            click: (button.click || this.close).bind(this)
           });
         }
 

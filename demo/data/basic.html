@@ -83,26 +83,27 @@
     })
 
     var container = DOM.get('demo-container');
-    DOM.insert(container, [
-      {
-        caption: 'Add 1 to property1',
-        handler: function(){ property1.set(property1.value + 1) }
-      },
-      {
-        caption: 'Add 1 to property1 and than sub 1 ',
-        handler: function(){ property1.set(property1.value + 1); property1.set(property1.value - 1); }
-      },
-      {
-        caption: 'Add 1 to property2',
-        handler: function(){ property2.set(property2.value + 1) }
-      },
-      {
-        caption: 'Add 1 to property1 & property2',
-        handler: function(){ property1.set(property1.value + 1) & property2.set(property2.value + 1) }
-      }
-    ].map(function(config){
-      return new nsButton.Button(config).element;
-    }));
+    new nsButton.ButtonPanel({
+      container: container,
+      childNodes: [
+        {
+          caption: 'Add 1 to property1',
+          click: function(){ property1.set(property1.value + 1) }
+        },
+        {
+          caption: 'Add 1 to property1 and than sub 1 ',
+          click: function(){ property1.set(property1.value + 1); property1.set(property1.value - 1); }
+        },
+        {
+          caption: 'Add 1 to property2',
+          click: function(){ property2.set(property2.value + 1) }
+        },
+        {
+          caption: 'Add 1 to property1 & property2',
+          click: function(){ property1.set(property1.value + 1) & property2.set(property2.value + 1) }
+        }
+      ]
+    });
 
     DOM.insert(container, DOM.createElement('', property1.addLink(DOM.createText(), null, 'Property1.value: {0}'), ' ', p1_uc = DOM.createText('(update count: 0)')));
     DOM.insert(container, DOM.createElement('', property2.addLink(DOM.createText(), null, 'Property2.value: {0}'), ' ', p2_uc = DOM.createText('(update count: 0)')));

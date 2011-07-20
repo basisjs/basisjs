@@ -118,7 +118,7 @@
 
     new Button({
       caption: 'Show Popup',
-      handler: function(){
+      click: function(){
         popup.show(this.element);
       },
       container: createBlock('Popup')
@@ -137,7 +137,7 @@
 
     new Button({
       caption: 'Show Balloon',
-      handler: function(){
+      click: function(){
         balloon.show(this.element);
       },
       container: createBlock('Balloon')
@@ -181,7 +181,7 @@
       ]
     });
 
-    new Button({
+    new click({
       caption: 'Show Menu',
       handler: function(){
         menu.show(this.element);

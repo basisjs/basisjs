@@ -117,13 +117,13 @@
         childNodes: [
           {
             caption: 'Auto / 100% width',
-            handler: function(){
+            click: function(){
               Basis.CSS.cssClass(document.body).toggle('self_size');
             }
           },
           {
             caption: 'Show / hide bounding box',
-            handler: function(){
+            click: function(){
               Basis.CSS.cssClass(document.body).toggle('show_dimenstion');
             }
           }
@@ -136,7 +136,7 @@
             return {
               groupId: 1,
               caption: width,
-              handler: function(){
+              click: function(){
                 setWidth(this.caption);
               }
             }
@@ -150,7 +150,7 @@
             return {
               groupId: 1,
               caption: pageCount,
-              handler: function(){
+              click: function(){
                 setPageCount(this.caption);
               }
             }
