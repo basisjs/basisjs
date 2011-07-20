@@ -454,17 +454,18 @@
     var MenuItem = Class(TmplContainer, {
       className: namespace + '.MenuItem',
 
-      childFactory: function(cfg){ return new this.childClass(cfg) },
+      //childFactory: function(cfg){ return new this.childClass(cfg) },
 
       template:
         '<div{element} class="Basis-Menu-Item" event-click="click">' +
           '<a{content|selected} href="#"><span>{captionText}</span></a>' +
-        '</div>' +
-        '<div{childNodesElement}/>',
+        '</div>'/* +
+        '<div{childNodesElement}/>'*/,
 
       action: {
-        click: function(){
+        click: function(event){
           this.click();
+          Event.kill(event); // prevent default for <a>
         }
       },
 

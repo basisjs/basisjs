@@ -9,134 +9,138 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  (function(){
+(function(){
 
-   /**
-    * @link ./demo/defile/button.html
-    * @namespace Basis.Controls.Button
-    */
+  'use strict';
 
-    var namespace = 'Basis.Controls.Button';
+ /**
+  * @link ./demo/defile/button.html
+  * @namespace Basis.Controls.Button
+  */
 
-    // import names
+  var namespace = 'Basis.Controls.Button';
 
-    var Class = Basis.Class;
-    var Event = Basis.Event;
-    var DOM = Basis.DOM;
-    var Template = Basis.Html.Template;
+  // import names
 
-    var getter = Function.getter;
+  var Class = Basis.Class;
+  var Event = Basis.Event;
+  var DOM = Basis.DOM;
+  var Template = Basis.Html.Template;
 
-    var nsWrapper = Basis.DOM.Wrapper;
+  var getter = Function.getter;
 
-    var TmplNode = nsWrapper.TmplNode;
-    var TmplControl = nsWrapper.TmplControl;
+  var nsWrapper = Basis.DOM.Wrapper;
 
-    //
-    // Main part
-    //
+  var TmplNode = nsWrapper.TmplNode;
+  var TmplControl = nsWrapper.TmplControl;
 
-   /**
-    * @class
-    */
+  //
+  // Main part
+  //
 
-    var Button = Class(TmplNode, {
-      className: namespace + '.Button',
+ /**
+  * @class
+  */
+  var Button = Class(TmplNode, {
+    className: namespace + '.Button',
 
-      captionGetter: getter('caption'),
-      caption: '[no caption]',
-      groupId: 0,
-      name: null,
+    captionGetter: getter('caption'),
+    caption: '[no caption]',
+    groupId: 0,
+    name: null,
 
-      template:
-        '<button{buttonElement} class="Basis-Button" event-click="click">' +
-          '<span class="Basis-Button-Back" />' +
-          '<div class="Basis-Button-Caption">{captionText}</div>' +
-        '</button>',
+    template:
+      '<button{buttonElement} class="Basis-Button" event-click="click">' +
+        '<span class="Basis-Button-Back"/>' +
+        '<div class="Basis-Button-Caption">{captionText}</div>' +
+      '</button>',
 
-      action: {
-        click: function(event){
-          if (!this.isDisabled())
-            this.click();
-        }
-      },
-
-      click: function(){
-      },
-
-      event_select: function(){
-        TmplNode.prototype.event_select.call(this);
-        DOM.focus(this.element);
-      },
-      event_disable: function(){
-        TmplNode.prototype.event_disable.call(this);
-        this.tmpl.buttonElement.disabled = true;
-      },
-      event_enable: function(){
-        TmplNode.prototype.event_enable.call(this);
-        this.tmpl.buttonElement.disabled = false;
-      },
-
-      init: function(config){
-        ;;;if (typeof this.handler == 'function' && typeof console != 'undefined') console.warn(namespace + '.Button: this.handler must be an object. Use this.click instead.')
-
-        // inherit
-        TmplNode.prototype.init.call(this, config);
-
-        //this.setCaption('caption' in config ? config.caption : this.caption);
-        this.setCaption(this.caption);
-      },
-      setCaption: function(newCaption){
-        this.caption = newCaption;
-        this.tmpl.captionText.nodeValue = this.captionGetter(this);
+    action: {
+      click: function(event){
+        if (!this.isDisabled())
+          this.click();
       }
-    });
+    },
 
    /**
-    * @class
+    * Actions on click.
     */
-    //var ButtonGrouping = Class(TmplGroupingNode, );
+    click: function(){
+    },
 
-   /**
-    * @class
-    */
-    var ButtonPanel = Class(TmplControl, {
-      className: namespace + '.ButtonPanel',
+    event_select: function(){
+      TmplNode.prototype.event_select.call(this);
+      DOM.focus(this.element);
+    },
+    event_disable: function(){
+      TmplNode.prototype.event_disable.call(this);
+      this.tmpl.buttonElement.disabled = true;
+    },
+    event_enable: function(){
+      TmplNode.prototype.event_enable.call(this);
+      this.tmpl.buttonElement.disabled = false;
+    },
 
-      template:
-        '<div class="Basis-ButtonPanel">' +
-          '<div{childNodesElement|content} class="Basis-ButtonPanel-Content"/>' +
-        '</div>',
+    init: function(config){
+      ;;;if (typeof this.handler == 'function' && typeof console != 'undefined') console.warn(namespace + '.Button: this.handler must be an object. Use this.click instead.')
 
-      childClass: Button,
-      getButtonByName: function(name){
-        return this.childNodes.search(name, getter('name'));
+      // inherit
+      TmplNode.prototype.init.call(this, config);
+
+      //this.setCaption('caption' in config ? config.caption : this.caption);
+      this.setCaption(this.caption);
+    },
+    setCaption: function(newCaption){
+      this.caption = newCaption;
+      this.tmpl.captionText.nodeValue = this.captionGetter(this);
+    }
+  });
+
+ /**
+  * @class
+  */
+  //var ButtonGrouping = Class(TmplGroupingNode, );
+
+ /**
+  * @class
+  */
+  var ButtonPanel = Class(TmplControl, {
+    className: namespace + '.ButtonPanel',
+
+    template:
+      '<div class="Basis-ButtonPanel">' +
+        '<div{childNodesElement|content} class="Basis-ButtonPanel-Content"/>' +
+      '</div>',
+
+    childClass: Button,
+    getButtonByName: function(name){
+      return this.childNodes.search(name, getter('name'));
+    },
+
+    localGrouping: {},
+    localGroupingClass: {
+      className: namespace + '.ButtonGroupingNode',
+
+      groupGetter: function(button){
+        return button.groupId || -button.eventObjectId;
       },
 
-      localGrouping: {},
-      localGroupingClass: {
-        className: namespace + '.ButtonGroupingNode',
+      childClass: {
+        className: namespace + '.ButtonPartitionNode',
 
-        groupGetter: function(button){
-          return button.groupId || -button.eventObjectId;
-        },
-
-        childClass: {
-          className: namespace + '.ButtonPartitionNode',
-
-          template:
-            '<div class="Basis-ButtonGroup"/>'
-        }
+        template:
+          '<div class="Basis-ButtonGroup"/>'
       }
-    });
+    }
+  });
 
-    //
-    // export names
-    //
+  //
+  // export names
+  //
 
-    Basis.namespace(namespace).extend({
-      Button: Button,
-      ButtonPanel: ButtonPanel
-    });
+  Basis.namespace(namespace).extend({
+    Button: Button,
+    ButtonPanel: ButtonPanel
+  });
 
-  })();
+})();
