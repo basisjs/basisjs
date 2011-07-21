@@ -381,7 +381,7 @@
     * Fires when state of subscription was changed.
     * @event
     */
-    event_activeChanged: createEvent('activeChanged'),
+    event_activeChanged: createEvent('activeChanged', 'object'),
 
    /**
     * Default listeners.
@@ -693,7 +693,7 @@
       if (this.active != isActive)
       {
         this.active = isActive;
-        this.event_activeChanged();
+        this.event_activeChanged(this);
 
         applySubscription(this, this.subscribeTo, Subscription.MASK * isActive);
 

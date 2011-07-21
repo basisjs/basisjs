@@ -1674,37 +1674,37 @@
     * Occurs after disabled property has been set to false.
     * @event
     */
-    event_enable: createEvent('enable'),
+    event_enable: createEvent('enable', 'node'),
 
    /**
     * Occurs after disabled property has been set to true.
     * @event
     */
-    event_disable: createEvent('disable'),
+    event_disable: createEvent('disable', 'node'),
 
    /**
     * Occurs after selected property has been set to true.
     * @event
     */
-    event_select: createEvent('select'),
+    event_select: createEvent('select', 'node'),
 
    /**
     * Occurs after selected property has been set to false.
     * @event
     */
-    event_unselect: createEvent('unselect'),
+    event_unselect: createEvent('unselect', 'node'),
 
    /**
     * Occurs after matched property has been set to true.
     * @event
     */
-    event_match: createEvent('match'),
+    event_match: createEvent('match', 'node'),
 
    /**
     * Occurs after matched property has been set to false.
     * @event
     */
-    event_unmatch: createEvent('unmatch'),
+    event_unmatch: createEvent('unmatch', 'node'),
 
    /**
     * Indicate could be able node to be selected or not.
@@ -1772,7 +1772,7 @@
 
       // synchronize node state according to config
       if (this.disabled)
-        this.event_disable();
+        this.event_disable(this);
 
       if (this.selected)
       {
@@ -1847,7 +1847,7 @@
         if (!selected && this.selectable && !this.isDisabled())
         {
           this.selected = true;
-          this.event_select();
+          this.event_select(this);
         }
 
       return this.selected != selected;
@@ -1869,7 +1869,7 @@
         else
         {
           this.selected = false;
-          this.event_unselect();
+          this.event_unselect(this);
         }
       }
 
@@ -1884,7 +1884,7 @@
       if (this.disabled)
       {
         this.disabled = false;
-        this.event_enable();
+        this.event_enable(this);
       }
     },
 
@@ -1895,7 +1895,7 @@
       if (!this.disabled)
       {
         this.disabled = true;
-        this.event_disable();
+        this.event_disable(this);
       }
     },
 
@@ -1927,7 +1927,7 @@
         else
         {
           this.matched = true;
-          this.event_match()
+          this.event_match(this)
         }
       }
       else
@@ -1939,7 +1939,7 @@
           if (!this.matched)
           {
             this.matched = true;
-            this.event_match();
+            this.event_match(this);
           }
         }
         else
@@ -1949,7 +1949,7 @@
           if (this.matched)
           {
             this.matched = false;
-            this.event_unmatch();
+            this.event_unmatch(this);
           }
         }
       }
@@ -2210,8 +2210,8 @@
      /**
       * @inheritDoc
       */
-      event_select: function(){
-        super_.event_select.call(this);
+      event_select: function(node){
+        super_.event_select.call(this, node);
 
         classList(this.tmpl.selected || this.tmpl.content || this.element).add('selected');
         //  var element = this.tmpl.selectedElement || this.tmpl.content || this.tmpl.element;
@@ -2222,8 +2222,8 @@
      /**
       * @inheritDoc
       */
-      event_unselect: function(){
-        super_.event_unselect.call(this);
+      event_unselect: function(node){
+        super_.event_unselect.call(this, node);
 
         classList(this.tmpl.selected || this.tmpl.content || this.element).remove('selected');
         //  var element = this.tmpl.selectedElement || this.tmpl.content || this.tmpl.element;
@@ -2233,8 +2233,8 @@
      /**
       * @inheritDoc
       */
-      event_disable:  function(){
-        super_.event_disable.call(this);
+      event_disable: function(node){
+        super_.event_disable.call(this, node);
 
         classList(this.tmpl.disabled || this.element).add('disabled');
       },
@@ -2242,8 +2242,8 @@
      /**
       * @inheritDoc
       */
-      event_enable: function(){
-        super_.event_enable.call(this);
+      event_enable: function(node){
+        super_.event_enable.call(this, node);
 
         classList(this.tmpl.disabled || this.element).remove('disabled');
       },
@@ -2251,8 +2251,8 @@
      /**
       * @inheritDoc
       */
-      event_match: function(){
-        super_.event_match.call(this);
+      event_match: function(node){
+        super_.event_match.call(this, node);
 
         DOM.display(this.element, true);
       },
@@ -2260,8 +2260,8 @@
      /**
       * @inheritDoc
       */
-      event_unmatch: function(){
-        super_.event_unmatch.call(this);
+      event_unmatch: function(node){
+        super_.event_unmatch.call(this, node);
 
         DOM.display(this.element, false);
       },
