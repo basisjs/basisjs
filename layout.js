@@ -579,9 +579,14 @@
         '</div>',
 
       init: function(config){
-        this.ruleClassName = 'Basis-FlexStackPanel-' + ++stackPanelId;
-        this.cssRule = DOM.Style.cssRule('.' + this.ruleClassName);
-        this.cssRule.setProperty('overflow', 'auto');
+        if (SUPPORT_DISPLAYBOX === false)
+        {
+          //this.ruleClassName = 'Basis-FlexStackPanel-' + ++stackPanelId;
+          //this.cssRule = DOM.Style.cssRule('.' + this.ruleClassName);
+          this.cssRule = DOM.Style.uniqueRule();
+          this.ruleClassName = this.cssRule.token;
+          this.cssRule.setProperty('overflow', 'auto');
+        }
 
         TmplContainer.prototype.init.call(this, config);
 

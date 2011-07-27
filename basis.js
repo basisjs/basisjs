@@ -2852,14 +2852,17 @@
       return getStyleSheet(styleSheet, true).getRule(selector, true);
     }
 
-    var GENERIC_RULE_SEED = 10000;
+    var GENERIC_RULE_SEED = 1;
     function uniqueRule(element){
       var token = 'genericRule-' + GENERIC_RULE_SEED++;
 
       if (element)
         CSS.classList(element).add(token);
 
-      return cssRule('.' + token);
+      var result = cssRule('.' + token);
+      result.token = token;
+
+      return result;
     }
 
     //
@@ -3330,7 +3333,7 @@
     var tmplEventListeners = {};
     var tmplNodeMap = { seed: 1 };
 
-    var tmplPartFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>\/]*)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
+    var tmplPartFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>]*?)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
     var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
     var domFragment = DOM.createFragment();
 

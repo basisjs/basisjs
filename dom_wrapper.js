@@ -2792,7 +2792,7 @@
  /**
   * @func
   */
-  var simpleTemplate = function(template){
+  var simpleTemplate = function(template, config){
     var refs = template.split(/\{(this_[^}]+)\}/);
     var lines = [];
     for (var i = 1; i < refs.length; i += 2)
@@ -2801,22 +2801,22 @@
       lines.push('this.tmpl.' + name + '.nodeValue = ' + name.replace(/_/g, '.'));
     }
     
-    return Function('tmpl', 'return ' + (function(super_){
-      return {
-        template: tmpl,
+    return Function('tmpl_', 'config_', 'return ' + (function(super_){
+      return Object.extend({
+        template: tmpl_,
         event_update: function(object, delta){
           super_.event_update.call(this, object, delta);
           _code_();
         }
-      }
-    }).toString().replace('_code_()', lines.join(';\n')))(new Template(template));
+      }, config_);
+    }).toString().replace('_code_()', lines.join(';\n')))(new Template(template), config);
   };
 
   //
   // export names
   //
 
-  Basis.namespace(namespace).extend({
+  Basis.namespace(namespace, simpleTemplate).extend({
     // non-template classes
     AbstractNode: AbstractNode,
     InteractiveNode: InteractiveNode,
