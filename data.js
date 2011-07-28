@@ -1663,22 +1663,22 @@
 
  /**
   * MORE THAT ONE source INCLUDE item
-  * make sence for more than one source
+  * make sence for more than one source (if one source - no filter)
   * for 2 sources it equal INTERSECTION
   * for 3 and more sources it equivalent UNION / DIFFERENCE (subtract)
   */
   Merge.MORE_THAN_ONE_INCLUDE = function(count, sourceCount){
-    return sourceCount == 1 || count > 1;
+    return count > 1 || (sourceCount == 1 && count > 0);
   };
 
  /**
   * AT LEAST ONE source EXCLUDE item
-  * make sence for more than one source
+  * make sence for more than one source (if one source - no filter)
   * for 2 sources it equal DIFFERENCE
   * for 3 and more sources it equivalent UNION / INTERSECTION (subtract)
   */
   Merge.AT_LEAST_ONE_EXCLUDE = function(count, sourceCount){
-    return sourceCount == 1 || count < sourceCount;
+    return count < sourceCount || (sourceCount == 1 && count > 0);
   };
 
   //

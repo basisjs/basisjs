@@ -908,10 +908,10 @@
   });
 
   extend(String.prototype, {
-    toObject: function(){
+    toObject: function(rethrow){
       // try { return eval('0,' + this) } catch(e) {}
       // safe solution with no eval:
-      try { return Function('return 0,' + this)() } catch(e) {}
+      try { return Function('return 0,' + this)() } catch(e) { if (rethrow) throw e }
     },
     toArray: (new String('a')[0]
       ? function(){
@@ -2482,10 +2482,7 @@
       node = get(node); // TODO: remove
 
       if (!node)
-      {
-        debugger;
         throw new Error('DOM.insert: destination node can\'t be null');
-      }
 
       switch (insertPoint) {
         case undefined: // insertPoint omited
