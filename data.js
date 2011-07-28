@@ -1498,7 +1498,7 @@
       for (var objectId in scope)
       {
         memberCounter = memberMap[objectId];
-        isMember = rule(memberCounter.count, sourceCount);
+        isMember = sourceCount && memberCounter.count && rule(memberCounter.count, sourceCount);
 
         if (isMember != !!this.item_[objectId])
           (isMember
@@ -1668,7 +1668,7 @@
   * for 3 and more sources it equivalent UNION / DIFFERENCE (subtract)
   */
   Merge.MORE_THAN_ONE_INCLUDE = function(count, sourceCount){
-    return count > 0 && (sourceCount == 1 || count > 1);
+    return sourceCount == 1 || count > 1;
   };
 
  /**
@@ -1678,7 +1678,7 @@
   * for 3 and more sources it equivalent UNION / INTERSECTION (subtract)
   */
   Merge.AT_LEAST_ONE_EXCLUDE = function(count, sourceCount){
-    return count > 0 && (sourceCount == 1 || count < sourceCount);
+    return sourceCount == 1 || count < sourceCount;
   };
 
   //
