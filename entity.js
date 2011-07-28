@@ -320,7 +320,7 @@
               return entityType.collection_[name] = new EntityCollection({
                 wrapper: result,
                 source: dataset || entityType.all,
-                filter: memberSelector
+                rule: memberSelector
               });
             }
 
@@ -467,7 +467,7 @@
               name: name,
               wrapper: wrapper,
               source: this.all,
-              filter: config.collections[name] || Function.$true
+              rule: config.collections[name] || Function.$true
             });
           }
         }
