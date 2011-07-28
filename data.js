@@ -1668,7 +1668,7 @@
   * for 3 and more sources it equivalent UNION / DIFFERENCE (subtract)
   */
   Merge.MORE_THAN_ONE_INCLUDE = function(count, sourceCount){
-    return count > 1 || (sourceCount == 1 && count > 0);
+    return count > 0 && (sourceCount == 1 || count > 1);
   };
 
  /**
@@ -1678,7 +1678,7 @@
   * for 3 and more sources it equivalent UNION / INTERSECTION (subtract)
   */
   Merge.AT_LEAST_ONE_EXCLUDE = function(count, sourceCount){
-    return count < sourceCount || (sourceCount == 1 && count > 0);
+    return count > 0 && (sourceCount == 1 || count < sourceCount);
   };
 
   //
