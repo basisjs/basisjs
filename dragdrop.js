@@ -67,6 +67,9 @@
 
       // kill event
       Event.cancelDefault(event);
+
+      // ready to drag start, make other preparations if need
+      this.event_prepare(DDEConfig.event);
     },
     move: function(event){  // `this` store DDE config
       var dde = DDEConfig.dde;
@@ -135,7 +138,8 @@
     axisXproxy: Function.$self,
     axisYproxy: Function.$self,
 
-    event_start: createEvent('start'),
+    event_prepare: createEvent('prepare'), // occure before drag start
+    event_start: createEvent('start'), // occure on first mouse move
     event_move: createEvent('move'),
     event_over: createEvent('over'),
 
