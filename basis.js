@@ -1404,8 +1404,22 @@
     * Root class for all classes created by Basis class model.
     * @type {function()}
     */
-    var BaseClass = function(){};
+    var BaseClass = Function();
+
+   /**
+    * Global instances seed.
+    */
     var seed = { id: 1 };
+
+   /**
+    * Test object is it a class.
+    * @func
+    * @param {Object} object
+    * @return {boolean} Returns true if object is class.
+    */
+    function isClass(object){
+      return typeof object == 'function' && object.basisClass_;
+    };
 
     extend(BaseClass, {
       // Base class name
@@ -1445,12 +1459,13 @@
 
         var newClassProps = {
           className: SuperClass.className + '._SubClass_',
+          basisClass_: true,
           superClass_: SuperClass,
           extendConstructor_: !!SuperClass.extendConstructor_,
 
           // class methods
           __extend__: function(value){
-            if (value && (typeof value == 'object' || (typeof value == 'function' && !value.className)))
+            if (value && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
               return BaseClass.create.call(null, newClass, value);
             else
               return value;
@@ -1470,7 +1485,7 @@
           //if (typeof args[i] == 'function' && !args[i].className)
           //  console.log(args[i]);
           newClassProps.extend(
-            typeof args[i] == 'function' && !args[i].className
+            typeof args[i] == 'function' && !isClass(args[i])
               ? args[i](SuperClass.prototype)
               : args[i]
           );
@@ -1520,7 +1535,6 @@
 
         // add constructor property to prototype
         newClassProps.prototype.constructor = newClass;
-        newClass.constructor = { a: 1};
 
         // extend constructor with properties
         extend(newClass, newClassProps);
@@ -1599,6 +1613,7 @@
     return getNamespace(namespace, BaseClass.create).extend({
       BaseClass: BaseClass,
       create: BaseClass.create,
+      isClass: isClass,
       CustomExtendProperty: CustomExtendProperty,
       ExtensibleProperty: ExtensibleProperty,
       NestedExtProperty: NestedExtProperty

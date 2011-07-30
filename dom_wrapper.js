@@ -127,6 +127,10 @@
 
   var NULL_SATELLITE_CONFIG = Class.ExtensibleProperty();
   var SATELLITE_DESTROY_HANDLER = {
+    ownerChanged: function(sender, oldOwner){
+      if (sender.owner !== this)
+        ;// ???
+    },
     destroy: function(object){
       DOM.replace(object.element, this);
     }
@@ -164,7 +168,9 @@
       else
       {
         var replaceElement = owner.tmpl[config.replace || key];
-        var instanceConfig = {};
+        var instanceConfig = {
+          owner: owner
+        };
 
         if (setDelegate)
           instanceConfig.delegate = delegate;
@@ -176,9 +182,8 @@
           Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(owner) : config.config);
 
         satellite = new config.instanceOf(instanceConfig);
-        satellite.owner = owner;
-        if (satellite.listen.owner)
-          owner.addHandler(satellite.listen.owner, satellite);
+        //if (satellite.listen.owner)
+        //  owner.addHandler(satellite.listen.owner, satellite);
 
         owner.satellite[key] = satellite;
 
@@ -193,8 +198,8 @@
     {
       if (satellite)
       {
-        if (satellite.listen.owner)
-          owner.removeHandler(satellite.listen.owner, satellite);
+        //if (satellite.listen.owner)
+        //  owner.removeHandler(satellite.listen.owner, satellite);
 
         satellite.destroy();
         satellite.owner = null;
@@ -218,6 +223,32 @@
   */
   var AbstractNode = Class(DataObject, {
     className: namespace + '.AbstractNode',
+
+    //
+    // events
+    //
+
+   /**
+    * @inheritDoc
+    */
+    event_update: function(object, delta){
+      DataObject.prototype.event_update.call(this, object, delta);
+
+      var parentNode = this.parentNode;
+      if (parentNode)
+      {
+        if (parentNode.matchFunction)
+        {
+          this.match();
+          this.match(parentNode.matchFunction);
+        }
+
+        // re-insert to change position, group, sortingValue etc.
+        parentNode.insertBefore(this, this.nextSibling);
+      }
+    },
+
+    // new events
 
    /**
     * This is a general event for notification of childs changes to the document.
@@ -247,29 +278,36 @@
     event_localSortingChanged: createEvent('localSortingChanged', 'node'),
 
    /**
-    * @inheritDoc
+    * @param {Basis.DOM.Wrapper.AbstractNode} node
+    * @param {Basis.DOM.Wrapper.AbstractNode} oldOwner
     */
-    event_update: function(object, delta){
-      DataObject.prototype.event_update.call(this, object, delta);
+    event_ownerChanged: createEvent('ownerChanged', 'node', 'oldOwner'),
 
-      var parentNode = this.parentNode;
-      if (parentNode)
-      {
-        if (parentNode.matchFunction)
-        {
-          this.match();
-          this.match(parentNode.matchFunction);
-        }
+   /**
+    * @param {Basis.DOM.Wrapper.AbstractNode} node
+    * @param {Basis.DOM.Wrapper.AbstractNode} oldOwner
+    */
+    event_satellitesChanged: createEvent('satellitesChanged', 'node', 'delta'),
 
-        // re-insert to change position, group, sortingValue etc.
-        parentNode.insertBefore(this, this.nextSibling);
-      }
-    },
+    //
+    // properties
+    //
 
    /**
     * @inheritDoc
     */
     subscribeTo: DataObject.prototype.subscribeTo + Subscription.DATASOURCE,
+
+   /**
+    * @inheritDoc
+    */
+    listen: {
+      owner: {
+        destroy: function(){
+          this.setOwner();
+        }
+      }
+    },
 
    /**
     * Flag determines object behaviour when parentNode changing:
@@ -408,15 +446,23 @@
     satellite: null,
 
    /**
+    * Node owner. Generaly using by satellites and GroupingNode.
+    * @type {Basis.DOM.Wrapper.AbstractNode}
+    */
+    owner: null,
+
+    //
+    // methods
+    //
+
+   /**
+    * Process on init:
+    *   - localGrouping
+    *   - childNodes
+    *   - dataSource
+    *   - satelliteConfig
+    *   - owner
     * @param {Object} config
-    * @config {boolean} autoDelegateParent Overrides prototype's {Basis.Data.DataObject#autoDelegateParent} property.
-    * @config {function()|string} localSorting Initial local sorting function.
-    * @config {boolean} localSortingDesc Initial local sorting order.
-    * @config {Basis.DOM.Wrapper.AbstractNode} document (deprecated) Must be removed. Used as hot fix.
-    * @config {Object} localGrouping Initial config for local grouping.
-    * @config {Basis.Data.DataObject} dataSource Sets dataSource for object.
-    * @config {Basis.Data.AbstractDataset} dataSource Set a dataSource to a new object.
-    * @config {Array} childNodes Initial child node set.
     * @return {Object} Returns a config. 
     * @constructor
     */
@@ -466,6 +512,7 @@
           this.dataSource = null;
       }
 
+      // process satellite
       if (!this.satellite)
         this.satellite = {};
 
@@ -475,6 +522,9 @@
         for (var key in this.satelliteConfig)
         {
           var config = this.satelliteConfig[key];
+
+          if (Class.isClass(config))
+            config = { instanceOf: config };
 
           if (typeof config == 'object')
           {
@@ -489,7 +539,13 @@
             });
           }
         }
+      }
 
+      var owner = this.owner;
+      if (owner)
+      {
+        this.owner = null;
+        this.setOwner(owner);
       }
     },
 
@@ -570,11 +626,33 @@
     },
 
    /**
+    *
+    */
+    setOwner: function(owner){
+      if (!owner || owner instanceof AbstractNode == false)
+        owner = null;
+
+      if (this.owner !== owner)
+      {
+        var oldOwner = this.owner;
+
+        if (oldOwner)
+          oldOwner.removeHandler(this.listen.owner, this);
+
+        if (this.owner = owner)
+          owner.addHandler(this.listen.owner, this);
+
+        this.event_ownerChanged(this, oldOwner);
+      }
+    },
+
+   /**
     * @destructor
     */
     destroy: function(){
-      // This method actions order is important, for better perfomance: 
+      // This order of actions is better for perfomance: 
       // inherit destroy -> clear childNodes -> remove from parent
+      // DON'T CHANGE WITH NO ANALIZE AND TESTS
 
       // inherit (fire destroy event & remove handlers)
       DataObject.prototype.destroy.call(this);
@@ -602,6 +680,10 @@
         this.localGrouping.destroy();
         this.localGrouping = null;
       }
+
+      // drop owner
+      if (this.owner)
+        this.setOwner();
 
       // destroy satellites
       if (this.satellite)
@@ -1513,24 +1595,16 @@
     */
     setLocalGrouping: function(grouping, alive){
       if (typeof grouping == 'function' || typeof grouping == 'string')
-      {
-        /*if (this.localGrouping)
-        {
-          grouping = this.localGrouping;
-          grouping.setGroupGetter(getter(grouping));
-        }
-        else*/
-          grouping = {
-            groupGetter: getter(grouping)
-          };
-      }
-      else
-      {
-        if (typeof grouping != 'object' && grouping instanceof GroupingNode == false)
-        {
-          grouping = null;
-        }
-      }
+        grouping = {
+          groupGetter: getter(grouping)
+        };
+
+      if (grouping instanceof GroupingNode == false)
+        grouping = typeof grouping == 'object'
+          ? new this.localGroupingClass(Object.complete({
+              //owner: this
+            }, grouping))
+          : null;
 
       if (this.localGrouping !== grouping)
       {
@@ -1539,8 +1613,6 @@
 
         if (this.localGrouping)
         {
-          this.localGrouping = null;
-
           if (!grouping && this.firstChild)
           {
             order = this.localSorting
@@ -1553,26 +1625,17 @@
             fastChildNodesOrder(this, order);
           }
 
-          if (!alive)
-            oldGroupingNode.destroy();
-          else
-            oldGroupingNode.owner = null;
+          this.localGrouping = null;
+          oldGroupingNode.setOwner();
         }
 
         if (grouping)
         {
-          if (grouping instanceof GroupingNode)
-          {
-            grouping.setOwner(this);
-          }
-          else
-          {
-            grouping = new this.localGroupingClass(Object.complete({
-              owner: this
-            }, grouping));
-          }
-
+          // NOTE: it important set localGrouping before set owner for grouping,
+          // because grouping will try set localGrouping property on owner change
+          // for it's new owner and it fall in recursion
           this.localGrouping = grouping;
+          grouping.setOwner(this);
 
           // if there is child nodes - reorder it
           if (this.firstChild)
@@ -1988,24 +2051,13 @@
 
  /**
   * @link ./demo/common/grouping.html
+  * @link ./demo/common/grouping_of_grouping.html
   * @class
   */
   var GroupingNode = Class(AbstractNode, DomMixin, {
     className: namespace + '.GroupingNode',
 
-    map_: null,
-
-    autoDestroyEmptyGroups: true,
-    titleGetter: getter('data.title'),
-    groupGetter: Function.$undef,
-
-    childClass: PartitionNode,
-    childFactory: function(config){
-      return new this.childClass(complete(config, {
-        titleGetter: this.titleGetter,
-        autoDestroyIfEmpty: this.dataSource ? false : this.autoDestroyEmptyGroups
-      }));
-    },
+    // events
 
     event_childNodesModified: function(node, delta){
       event.childNodesModified.call(this, node, delta);
@@ -2021,6 +2073,40 @@
       }
     },
 
+    event_ownerChanged: function(node, oldOwner){
+      // detach from old owner, if it still connected
+      if (oldOwner && oldOwner.localGrouping === this)
+        oldOwner.setLocalGrouping(null, true);
+
+      // attach to new owner, if any and doesn't connected
+      if (this.owner && this.owner.localGrouping !== this)
+        this.owner.setLocalGrouping(this);
+
+      event.ownerChanged.call(this, node, oldOwner);
+
+      if (!this.owner && this.autoDestroyWithNoOwner)
+        this.destroy();
+    },
+
+    // properties
+
+    map_: null,
+
+    autoDestroyWithNoOwner: true,
+    autoDestroyEmptyGroups: true,
+    titleGetter: getter('data.title'),
+    groupGetter: Function.$undef,
+
+    childClass: PartitionNode,
+    childFactory: function(config){
+      return new this.childClass(complete(config, {
+        titleGetter: this.titleGetter,
+        autoDestroyIfEmpty: this.dataSource ? false : this.autoDestroyEmptyGroups
+      }));
+    },
+
+    // methods
+
     init: function(config){
       this.map_ = {};
 
@@ -2028,16 +2114,13 @@
         autoDestroyIfEmpty: false
       });
 
-      var owner = this.owner;
-      if (owner)
-      {
-        this.owner = null;
-        this.setOwner(owner);
-      }  
-
       AbstractNode.prototype.init.call(this, config);
     },
 
+   /**
+    * @param {Basis.DOM.Wrapper.AbstractNode} node
+    * @return {Basis.DOM.Wrapper.PartitionNode}
+    */
     getGroupNode: function(node){
       var groupRef = this.groupGetter(node);
       var isDelegate = groupRef instanceof DataObject;
@@ -2057,19 +2140,6 @@
       }
 
       return group || this.nullGroup;
-    },
-
-   /**
-    * Set owner node for GroupingNode
-    */
-    setOwner: function(node){
-      if (this.owner !== node)
-      {
-        if (this.owner)
-          this.owner.setLocalGrouping(null, true);
-
-        this.owner = node;
-      }
     },
 
    /**
