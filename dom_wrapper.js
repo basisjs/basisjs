@@ -2556,18 +2556,21 @@
    /**
     * @inheritDoc
     */
-    setOwner: function(owner){
-      var oldOwner = this.owner;
+    event_ownerChanged: function(node, oldOwner){
+      var cursor = this;
+      var owner = this.owner;
+      var element = null;
 
-      GroupingNode.prototype.setOwner.call(this, owner);
+      if (owner)
+        element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement || owner.element;
 
-      if (this.owner != oldOwner)
+      do
       {
-        if (this.owner)
-          this.element = this.childNodesElement = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement || owner.element;
-        else
-          this.element = this.childNodesElement = null;
+        cursor.element = cursor.childNodesElement = element;
       }
+      while (cursor = cursor.localGrouping);
+
+      GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
     }
   });
 
