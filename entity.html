@@ -1,0 +1,33 @@
+<!doctype html>
+<script type="text/javascript" src="basis.js"></script>
+<script type="text/javascript" src="data.js"></script>
+<script type="text/javascript" src="entity.js"></script>
+<script type="text/javascript" src="dom_wrapper.js"></script>
+<script>
+Basis.Event.onLoad(function(){
+  with (Basis.Entity)
+  {
+    t1 = new EntityType({
+      fields: {
+        id: StringId,
+        value: Number,
+        cube: CalculateField('value', function(value){
+          return value * value * value
+        })
+      }
+    });
+  }
+
+  new Basis.DOM.Wrapper.TmplContainer({
+    container: document.body,
+    dataSource: t1.all,
+    childClass: Basis.DOM.Wrapper(
+      '<div>{this_data_value} ({this_data_cube})</div>'
+    )
+  });
+
+  [1,2,3,4,5,6].map(function(n){
+    t1({ value: n });
+  });
+})
+</script>

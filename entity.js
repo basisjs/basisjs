@@ -137,6 +137,7 @@
       '}'
     )(func);
     result.args = args;
+    result.isCalcField = true;
     return result;
   }
 
@@ -595,16 +596,22 @@
       }
 
       this.aliases[key] = key;
-      if (typeof wrapper == 'function')
-      {
-        this.fields[key] = wrapper;
-        this.defaults[key] = this.fields[key]();
-      }
+
+      if (wrapper.isCalcField)
+        this.addCalcField(key, wrapper);
       else
       {
-        ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field description has been ignored. Wraper: ', wrapper);
-        this.fields[key] = $self;
-        this.defaults[key] = this.defaults[key]; // init key
+        if (typeof wrapper == 'function')
+        {
+          this.fields[key] = wrapper;
+          this.defaults[key] = this.fields[key]();
+        }
+        else
+        {
+          ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field description has been ignored. Wraper: ', wrapper);
+          this.fields[key] = $self;
+          this.defaults[key] = this.defaults[key]; // init key
+        }
       }
 
       this.getters['get_' + key] = function(){
@@ -621,11 +628,11 @@
           }
         };
     },
-    addCalcField: function(){
+    addCalcField: function(key, wrapper){
       if (!this.calcs)
         this.calcs = {};
       
-      if (Object.keys(this.fields).some(wrapper.args.has, wrapper.args))
+      if (Object.keys(this.calcs).some(wrapper.args.has, wrapper.args))
         throw 'Calculate field can\'t depend on calculate fields';
 
       this.calcs[key] = wrapper;
@@ -695,6 +702,7 @@
 
       canHaveDelegate: false,
       index: index__,
+      calcs: entityType.calcs,
 
       modified: null,
       isTarget: true,
@@ -738,7 +746,7 @@
         if (this.calcs)
         {
           for (var key in this.calcs)
-            this.data[key] = this.calcs(this.data, this.data);
+            this.data[key] = this.calcs[key].call(this, this.data, this.data);
         }
 
         // add to index
@@ -799,8 +807,8 @@
                            // date comparation fix;
                            && (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
 
-        // if value changed make some actions:
-        // - update id map if neccessary
+        // if value changed:
+        // - update index for id field
         // - attach/detach handlers on object destroy (for EventObjects)
         // - registrate changes to rollback data if neccessary
         // - fire 'change' event for not silent mode
