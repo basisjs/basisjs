@@ -735,7 +735,7 @@
           event_failure: function(req){
             this.constructor.superClass_.prototype.event_failure.apply(this, arguments);
 
-            if (this.service.isSessionExpiredError(req))
+            if (this.needSignature && this.service.isSessionExpiredError(req))
               this.service.freeze();        
           },
 
@@ -743,7 +743,7 @@
             if (!this.service.prepare(this, requestData))
               return;
 
-            if (this.service.isSecure && this.needSignature && !this.service.sign(this))
+            if (this.needSignature && !this.service.sign(this))
               return;
 
             this.constructor.superClass_.prototype.request.call(this, requestData);

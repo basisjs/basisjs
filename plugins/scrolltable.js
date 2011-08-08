@@ -50,7 +50,7 @@
       '<div{element} class="Basis-Table Basis-ScrollTable">' +
         '<div{headerFooterContainer} class="Basis-ScrollTable-HeaderFooterContainer">' +
           //'<div{headerFooterWrapper} style="position: absolute; height: 100%; width: 100%; top: 0; left: 0">' +
-            '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"></table>' +
+            '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"><!-- {headerElement} --></table>' +
             '<table{foot} cellspacing="0" border="0" class="Basis-ScrollTable-Footer"></table>' +
           //'</div>' +
         '</div>' +
@@ -64,24 +64,22 @@
       '</div>'
     ),
 
-    behaviour: {
-      childNodesModified: function(node, delta){
-        this.inherit(node, delta);
-        TimeEventManager.add(this, 'adjust', Date.now());
-      },
-      childUpdated: function(child, delta){
-        this.inherit(child, delta);
-        TimeEventManager.add(this, 'adjust', Date.now());
-      }
+    event_childNodesModified: function(node, delta){
+      nsTable.Table.prototype.event_childNodesModified.call(this, node, delta);
+      TimeEventManager.add(this, 'adjust', Date.now());
+    },
+    event_childUpdated: function(child, delta){
+      nsTable.Table.prototype.event_childUpdated.call(this, child, delta);
+      TimeEventManager.add(this, 'adjust', Date.now());
     },
 
     init: function(config){
-      this.inherit(config);        
+      nsTable.Table.prototype.init.call(this, config);
 
-      DOM.insert(this.head, this.header.element);
+      //DOM.insert(this.tmpl.head, this.header.element);
 
       /*create header clone*/
-      this.headerClone = new nsTable.Header(Object.extend({ container: this.tableElement, structure: config.structure }, config.header));
+      this.headerClone = new nsTable.Header(Object.extend({ container: this.tmpl.tableElement, structure: this.structure }, this.headerConfig));
 
       /*get header cells including groupCells*/
       this.originalCells = this.header.childNodes;
@@ -100,8 +98,8 @@
       if (this.footer.useFooter)
       {
         /*create footer clone*/
-        DOM.insert(this.foot, this.footer.element);
-        this.footerClone = new nsTable.Footer(Object.extend({ container: this.tableElement, structure: config.structure }, config.footer));
+        DOM.insert(this.tmpl.foot, this.footer.element);
+        this.footerClone = new nsTable.Footer(Object.extend({ container: this.tmpl.tableElement, structure: this.structure }, this.footerConfig));
 
         this.originalCells = this.originalCells.concat(this.footer.childNodes);
         this.clonedCells = this.clonedCells.concat(this.footerClone.childNodes)
@@ -124,23 +122,23 @@
           boxChangeListener: originalCell.element,
           contentSource: originalCell.content,
           contentDestination: clonedCell.content
-        })
+        });
       }
 
-      this.tableBox = new Box(this.tableElement);
+      this.tableBox = new Box(this.tmpl.tableElement);
       this.lastScrollLeftPosition = 0;
 
-      Event.addHandler(this.scrollContainer, 'scroll', this.onScroll.bind(this));
+      Event.addHandler(this.tmpl.scrollContainer, 'scroll', this.onScroll.bind(this));
       Event.addHandler(window, 'resize', this.adjust.bind(this));
 
       this.sync();
       TimeEventManager.add(this, 'adjust', Date.now());
     },
     onScroll: function(event){
-      var scrollLeft = this.scrollContainer.scrollLeft;
+      var scrollLeft = this.tmpl.scrollContainer.scrollLeft;
       if (scrollLeft != this.lastScrollLeftPosition) 
       {
-        DOM.setStyleProperty(this.headerFooterContainer, 'left', -scrollLeft + 'px');
+        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'left', -scrollLeft + 'px');
         this.lastScrollLeftPosition = scrollLeft;
       }
     },
@@ -151,28 +149,28 @@
       this.tableBox.recalc();
       var tableWidth = this.tableBox.width || 0;
 
-      if (this.tableWrapperElement.scrollWidth > this.scrollContainer.clientWidth)
+      if (this.tmpl.tableWrapperElement.scrollWidth > this.tmpl.scrollContainer.clientWidth)
       {
-        DOM.setStyleProperty(this.tableWrapperElement, 'width',  tableWidth + 'px');
-        DOM.setStyleProperty(this.headerFooterContainer, 'width', tableWidth + ScrollBarWidth + 'px');
+        DOM.setStyleProperty(this.tmpl.tableWrapperElement, 'width',  tableWidth + 'px');
+        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'width', tableWidth + ScrollBarWidth + 'px');
       }
       else
       {
-        DOM.setStyleProperty(this.tableWrapperElement, 'width', '100%');
-        DOM.setStyleProperty(this.headerFooterContainer, 'width', '100%');
+        DOM.setStyleProperty(this.tmpl.tableWrapperElement, 'width', '100%');
+        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'width', '100%');
       }
 
       /*adjust cells width*/
       this.cellsAdjustmentInfo.forEach(this.adjustCell);
       /*recalc expanderCell width*/
-      var freeSpaceWidth = Math.max(0, this.tableWrapperElement.clientWidth - this.tableElement.offsetWidth + ScrollBarWidth);
+      var freeSpaceWidth = Math.max(0, this.tmpl.tableWrapperElement.clientWidth - this.tmpl.tableElement.offsetWidth + ScrollBarWidth);
 
       /*recalc header heights*/
       this.headerBox.recalc();
       var headerHeight = this.headerBox.height || 0;
 
       DOM.setStyleProperty(this.element, 'paddingTop', headerHeight + 'px');
-      DOM.setStyleProperty(this.tableElement, 'marginTop', -headerHeight + 'px');
+      DOM.setStyleProperty(this.tmpl.tableElement, 'marginTop', -headerHeight + 'px');
       DOM.setStyle(this.headerExpandCell, { width: freeSpaceWidth + 'px', height: headerHeight + 'px' });
 
       /*recalc footer heights*/
@@ -182,7 +180,7 @@
         var footerHeight = this.footerBox.height || 0;
 
         DOM.setStyleProperty(this.element, 'paddingBottom', footerHeight + 'px');
-        DOM.setStyleProperty(this.tableElement, 'marginBottom', -footerHeight + 'px');
+        DOM.setStyleProperty(this.tmpl.tableElement, 'marginBottom', -footerHeight + 'px');
 
         DOM.setStyle(this.footerExpandCell, { width: freeSpaceWidth + 'px', height: footerHeight + 'px' });
       }

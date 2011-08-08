@@ -125,7 +125,7 @@
           className: namespace + '.HeaderPartitionNode',
 
           event_childNodesModified: function(){
-            this.element.colSpan = this.childNodes.length;
+            this.element.colSpan = this.nodes.length;
           },
 
           template: new Template(
@@ -331,11 +331,16 @@
           '<!--{cells}-->' +
         '</tr>'
       ),
+      action: { 
+        select: function(event){
+          this.select(Event(event).ctrlKey);
+        }
+      },
 
-      templateAction: function(actionName, event){
+      /*templateAction: function(actionName, event){
         if (actionName == 'select')
           this.select(Event(event).ctrlKey);
-      },
+      },*/
 
       event_update: function(object, delta){
         TmplNode.prototype.event_update.call(this, object, delta);
@@ -427,11 +432,11 @@
 
         TmplControl.prototype.init.call(this, config);
 
-        var headerConfig = this.header;
-        var footerConfig = this.footer;
+        this.headerConfig = this.header;
+        this.footerConfig = this.footer;
 
-        this.header = new Header(Object.extend({ owner: this, structure: this.structure }, headerConfig));
-        this.footer = new Footer(Object.extend({ owner: this, structure: this.structure }, footerConfig));
+        this.header = new Header(Object.extend({ owner: this, structure: this.structure }, this.headerConfig));
+        this.footer = new Footer(Object.extend({ owner: this, structure: this.structure }, this.footerConfig));
 
         DOM.replace(this.tmpl.headerElement, this.header.element);
       
@@ -480,18 +485,19 @@
             }
           }
 
-          this.childClass = Class(Row, {
+          this.childClass = this.childClass.subclass({
             //behaviour: config.rowBehaviour,
             satelliteConfig: this.rowSatellite,
-            template: new Template(Row.prototype.template.source.replace('<!--{cells}-->', template)),
+            template: new Template(this.childClass.prototype.template.source.replace('<!--{cells}-->', template)),
             updaters: updaters
           });
 
           if (this.rowBehaviour)
           {
-            for (var eventName in this.rowBehaviour){
-              this.childClass[eventName] = function(){
-                this.rowBehaviour[eventName].apply(this, arguments);
+            var rowBehaviour = this.rowBehaviour;
+            for (var eventName in rowBehaviour){
+              this.childClass.prototype[eventName] = function(){
+                rowBehaviour[eventName].apply(this, arguments);
                 Row.prototype[eventName].apply(this, arguments);
               }
             }

@@ -83,7 +83,6 @@
 
       init: function(config){
         AjaxRequest.prototype.init.call(this, config);
-
         this.requestEnvelope = new Envelope();
       },
 
@@ -148,6 +147,8 @@
       },
 
       prepareRequestData: function(requestData){
+        delete this.responseEnvelope;
+
         this.setMapping(requestData.mapping);
 
         //add SOAPAction header
@@ -161,7 +162,13 @@
         {
           var header = this.requestEnvelope.getHeader(true); 
           for (var i in requestData.soapHeaderSections)
-            header.setSection(new QName(i, requestData.soapHeaderSections[i].namespace), requestData.soapHeaderSections[i].data);
+          {
+            var section = requestData.soapHeaderSections[i];
+            var ns = section.namespace || this.proxy.namespace;
+            var data = section.data || section;
+
+            header.setSection(new QName(i, ns), data);
+          }
         }
 
         this.requestEnvelope.getBody(true).setValue(new QName(requestData.methodName, requestData.namespace), requestData.soapBody);
@@ -206,9 +213,10 @@
       },
 
       init: function(config){
-        this.soapHeaderSections = {};
+        if (!this.soapHeaderSections)
+          this.soapHeaderSections = {};
 
-        AjaxProxy.prototype.init.call(this);
+        AjaxProxy.prototype.init.call(this, config);
       },
 
       prepareRequestData: function(requestData){

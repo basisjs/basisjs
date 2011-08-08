@@ -93,7 +93,7 @@
       var event = Basis.EventObject.createEvent(eventName);
       var args = [eventName];
       return function(){
-        TransportDispatcher.dispatch.apply(null, args.concat(arguments));
+        TransportDispatcher.dispatch.apply(this, args.concat(arguments));
         event.apply(this, arguments);
       }
     }

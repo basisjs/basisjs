@@ -528,15 +528,28 @@
 
           if (typeof config == 'object')
           {
-            var hook = config.hook
-                         ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
-                         : SATELLITE_OWNER_HOOK;
-
-            this.addHandler(hook, {
+            var context = {
               key: key,
               owner: this,
               config: config
-            });
+            };
+            var hookAdded = false;
+            var hook = config.hook
+              ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
+              : SATELLITE_OWNER_HOOK;
+
+            for (var key in hook)
+              if (hook[key] === SATELLITE_UPDATE)
+              {
+                hookAdded = true;
+                this.addHandler(hook, context);
+                break;
+              }
+
+            if (!hookAdded)
+            {
+              SATELLITE_UPDATE.call(context)
+            }
           }
         }
       }
