@@ -32,17 +32,16 @@
         init_.apply(this, arguments);
       };
 
-      var dispatch_ = Basis.Data.Object.prototype.event_update;
-      Basis.Data.Object.prototype.event_update = function(obj, delta){
+      Basis.Entity.BaseEntity.prototype.event_update = function(obj, delta){
         this.history_.push(delta);
         this.historyAll_.push(['update'].concat(Array.from(arguments)));
-        dispatch_.apply(this, arguments);
+        Basis.EventObject.event.update.apply(this, arguments);
       }
+      
 
-      var dispatch_ru = Basis.Data.Object.prototype.event_rollbackUpdate;
-      Basis.Data.Object.prototype.event_rollbackUpdate = function(obj, delta){
+      Basis.Entity.BaseEntity.prototype.event_rollbackUpdate = function(obj, delta){
         this.historyAll_.push(['rollbackUpdate'].concat(Array.from(arguments)));
-        dispatch_ru.apply(this, arguments);
+        Basis.EventObject.event.rollbackUpdate.apply(this, arguments);
       }
 
     })();
@@ -249,7 +248,7 @@
                     entity.update({ id: 2, value: '2' });
                     this.is(1, entity.history_.length);
                     this.is({ id: 1, value: '1' }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 2, value: '2', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -258,7 +257,7 @@
                     entity.update({ id: 3 }, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 2 }, entity.history_[0]);
-                    this.is({ id: 2 }, entity.rollbackData_);
+                    this.is({ id: 2 }, entity.modified);
                     this.is({ id: 3, value: '2', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -268,7 +267,7 @@
                     entity.update({ value: 3 }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '2' }, entity.history_[0]);
-                    this.is({ id: 2, value: '2' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '2' }, entity.modified);
                     this.is({ id: 3, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -278,7 +277,7 @@
                     entity.update({ value: 4 }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '3' }, entity.history_[0]);
-                    this.is({ id: 2, value: '2' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '2' }, entity.modified);
                     this.is({ id: 3, value: '4', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -286,7 +285,7 @@
                     resetHistory(entity);
                     entity.update({ value: 5 });
                     this.is(0, entity.history_.length); // no update
-                    this.is({ id: 2, value: '5' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '5' }, entity.modified);
                     this.is({ id: 3, value: '4', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -295,7 +294,7 @@
                     resetHistory(entity);
                     entity.update({ value: 6 });
                     this.is(0, entity.history_.length); // no update
-                    this.is({ id: 2, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '4', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '5' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -305,7 +304,7 @@
                     entity.update({ value: 7 }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '4' }, entity.history_[0]);
-                    this.is({ id: 2, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -314,7 +313,7 @@
                     resetHistory(entity);
                     entity.update({ id: 4 });
                     this.is(0, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: 2 }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -337,7 +336,7 @@
                     resetHistory(entity);
                     entity.update({ id: 3, value: '7' }, true);
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: undefined, value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -350,21 +349,21 @@
                     resetHistory(entity);
                     entity.update({ self: true });
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: true }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
                     resetHistory(entity);
                     entity.update({ self: false });
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
                     resetHistory(entity);
                     entity.update({ self: true }, true);
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6', self: false }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6', self: false }, entity.modified);
                     this.is({ id: 3, value: '7', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -373,7 +372,7 @@
                     resetHistory(entity);
                     entity.update({ self: true }, true);
                     this.is(0, entity.history_.length);
-                    this.is({ id: 4, value: '6', self: false }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6', self: false }, entity.modified);
                     this.is({ id: 3, value: '7', self: true }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -381,7 +380,7 @@
                     resetHistory(entity);
                     entity.update({ self: true });
                     this.is(0, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -390,7 +389,7 @@
                     resetHistory(entity);
                     entity.update({ self: 1 });
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: 1 }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                   }
@@ -416,7 +415,7 @@
                     entity.update({ id: 2, value: '2' });
                     this.is(1, entity.history_.length);
                     this.is({ id: 1, value: '1' }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 2, value: '2', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -429,7 +428,7 @@
                     entity.update({ id: 3 }, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 2 }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 3, value: '2', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -438,7 +437,7 @@
                     entity.update({ value: 3 }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '2' }, entity.history_[0]);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 3, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -449,7 +448,7 @@
                     entity.update({ id: 4 });
                     this.is(1, entity.history_.length);
                     this.is({ id: 3 }, entity.history_[0]);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 4, value: '3', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                   }
@@ -472,7 +471,7 @@
                     entity.update({ id: 2, value: '2', self: true }, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
-                    this.is({ id: 1, value: '1', self: false }, entity.rollbackData_);
+                    this.is({ id: 1, value: '1', self: false }, entity.modified);
                     this.is({ id: 2, value: '2', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: undefined, value: undefined, self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -483,7 +482,7 @@
                     entity.update({ id: 1, value: '1', self: false }, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 2, value: '2', self: true }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '1', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: 1, value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -492,7 +491,7 @@
                     resetHistory(entity);
                     entity.update({ value: '2' });
                     this.is(1, entity.history_.length);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '2', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -501,7 +500,7 @@
                     entity.update({ value: '3' }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '2' }, entity.history_[0]);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -510,7 +509,7 @@
                     resetHistory(entity);
                     entity.update({ value: '2' });
                     this.is(0, entity.history_.length);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -518,7 +517,7 @@
                     resetHistory(entity);
                     entity.update({ value: '3' });
                     this.is(0, entity.history_.length);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -531,7 +530,7 @@
                     entity.update({ value: '3' }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '2' }, entity.history_[0]);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -541,7 +540,7 @@
                     entity.update({ value: '2' }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '3' }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '2', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -555,7 +554,7 @@
                     entity.update({ value: '3' });
                     this.is(9, entity.history_.length);
                     this.is({ value: '3' }, entity.history_[5]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(8, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     */
@@ -580,7 +579,7 @@
                     this.is(1, entity.history_.length);
                     this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
                     this.is({ id: 2, value: '2', self: true }, entity.data);
-                    this.is({ value: '1', self: false }, entity.rollbackData_);
+                    this.is({ value: '1', self: false }, entity.modified);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined, self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
 
@@ -589,7 +588,7 @@
                     entity.update({ id: 1, value: '1', self: false }, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 2, value: '2', self: true }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '1', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -598,7 +597,7 @@
                     resetHistory(entity);
                     entity.update({ value: '2' });
                     this.is(1, entity.history_.length);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '2', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -607,7 +606,7 @@
                     entity.update({ value: '3' }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '2' }, entity.history_[0]);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -616,7 +615,7 @@
                     resetHistory(entity);
                     entity.update({ value: '2' });
                     this.is(0, entity.history_.length);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -624,7 +623,7 @@
                     resetHistory(entity);
                     entity.update({ value: '3' });
                     this.is(0, entity.history_.length);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -637,7 +636,7 @@
                     entity.update({ value: '3' }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '2' }, entity.history_[0]);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -647,7 +646,7 @@
                     entity.update({ value: '2' }, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '3' }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '2', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -661,7 +660,7 @@
                     entity.update({ value: '3' });
                     this.is(9, entity.history_.length);
                     this.is({ value: '3' }, entity.history_[5]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '3', self: false }, entity.data);
                     this.is(8, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     */
@@ -692,7 +691,7 @@
                     entity.update({ id: 2, value: '2' });
                     this.is(1, entity.history_.length);
                     this.is({ id: 1, value: '1' }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 2, value: '2', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -705,7 +704,7 @@
                     entity.set('id', 3, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 2 }, entity.history_[0]);
-                    this.is({ id: 2 }, entity.rollbackData_);
+                    this.is({ id: 2 }, entity.modified);
                     this.is({ id: 3, value: '2', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -715,7 +714,7 @@
                     entity.set('value', 3, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '2' }, entity.history_[0]);
-                    this.is({ id: 2, value: '2' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '2' }, entity.modified);
                     this.is({ id: 3, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -725,7 +724,7 @@
                     entity.set('value', 4, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '3' }, entity.history_[0]);
-                    this.is({ id: 2, value: '2' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '2' }, entity.modified);
                     this.is({ id: 3, value: '4', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -733,7 +732,7 @@
                     resetHistory(entity);
                     entity.set('value', 5);
                     this.is(0, entity.history_.length); // no update
-                    this.is({ id: 2, value: '5' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '5' }, entity.modified);
                     this.is({ id: 3, value: '4', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '2' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -742,7 +741,7 @@
                     resetHistory(entity);
                     entity.set('value', 6);
                     this.is(0, entity.history_.length); // no update
-                    this.is({ id: 2, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '4', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '5' }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -752,7 +751,7 @@
                     entity.set('value', 7, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '4' }, entity.history_[0]);
-                    this.is({ id: 2, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 2, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -761,7 +760,7 @@
                     resetHistory(entity);
                     entity.set('id', 4);
                     this.is(0, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: 2 }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -784,7 +783,7 @@
                     resetHistory(entity);
                     entity.update({ id: 3, value: '7' }, true);
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: undefined, value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -797,21 +796,21 @@
                     resetHistory(entity);
                     entity.set('self', true);
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: true }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
                     resetHistory(entity);
                     entity.set('self', false);
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
                     resetHistory(entity);
                     entity.set('self', true, true);
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6', self: false }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6', self: false }, entity.modified);
                     this.is({ id: 3, value: '7', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -820,7 +819,7 @@
                     resetHistory(entity);
                     entity.set('self', true, true);
                     this.is(0, entity.history_.length);
-                    this.is({ id: 4, value: '6', self: false }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6', self: false }, entity.modified);
                     this.is({ id: 3, value: '7', self: true }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -828,7 +827,7 @@
                     resetHistory(entity);
                     entity.set('self', true);
                     this.is(0, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -837,7 +836,7 @@
                     resetHistory(entity);
                     entity.set('self', 1);
                     this.is(1, entity.history_.length);
-                    this.is({ id: 4, value: '6' }, entity.rollbackData_);
+                    this.is({ id: 4, value: '6' }, entity.modified);
                     this.is({ id: 3, value: '7', self: 1 }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -863,7 +862,7 @@
                     entity.update({ id: 2, value: '2' });
                     this.is(1, entity.history_.length);
                     this.is({ id: 1, value: '1' }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 2, value: '2', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -876,7 +875,7 @@
                     entity.set('id', 3, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 2 }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 3, value: '2', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -885,7 +884,7 @@
                     entity.set('value', 3, true);
                     this.is(1, entity.history_.length);
                     this.is({ value: '2' }, entity.history_[0]);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 3, value: '3', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -896,7 +895,7 @@
                     entity.set('id', 4);
                     this.is(1, entity.history_.length);
                     this.is({ id: 3 }, entity.history_[0]);
-                    this.is({ value: '2' }, entity.rollbackData_);
+                    this.is({ value: '2' }, entity.modified);
                     this.is({ id: 4, value: '3', self: false }, entity.data);
                     this.is(0, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                   }
@@ -923,7 +922,7 @@
                     entity.update({ id: 2, value: 2, self: true }, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
-                    this.is({ id: 1, value: '1', self: false }, entity.rollbackData_);
+                    this.is({ id: 1, value: '1', self: false }, entity.modified);
                     this.is({ id: 2, value: '2', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: undefined, value: undefined, self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -932,7 +931,7 @@
                     entity.rollback();
                     this.is(1, entity.history_.length);
                     this.is({ id: 2, value: '2', self: true }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 1, value: '1', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ id: 1, value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -955,7 +954,7 @@
                     entity.update({ id: 2, value: 2, self: true }, true);
                     this.is(1, entity.history_.length);
                     this.is({ id: 1, value: '1', self: false }, entity.history_[0]);
-                    this.is({ value: '1', self: false }, entity.rollbackData_);
+                    this.is({ value: '1', self: false }, entity.modified);
                     this.is({ id: 2, value: '2', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: undefined, self: undefined }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -964,7 +963,7 @@
                     entity.rollback();
                     this.is(1, entity.history_.length);
                     this.is({ value: '2', self: true }, entity.history_[0]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 2, value: '1', self: false }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                     this.is({ value: '1', self: false }, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' })[0][2]);
@@ -986,7 +985,7 @@
                     entity.update({ id: 2, value: 2, self: true }, true);
                     this.is(2, entity.history_.length);
                     this.is({ id: 1, value: '1', self: false }, entity.history_[1]);
-                    this.is({ value: '1', self: false }, entity.rollbackData_);
+                    this.is({ value: '1', self: false }, entity.modified);
                     this.is({ id: 2, value: '2', self: true }, entity.data);
                     this.is(1, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
 
@@ -996,7 +995,7 @@
                     this.is(nsData.STATE.UNDEFINED, entity.state);
                     this.is(3, entity.history_.length);
                     this.is({ value: '2', self: true }, entity.history_[2]);
-                    this.is(null, entity.rollbackData_);
+                    this.is(null, entity.modified);
                     this.is({ id: 2, value: '1', self: false }, entity.data);
                     this.is(2, entity.historyAll_.filter(function(arg){ return arg[0] == 'rollbackUpdate' }).length);
                   }

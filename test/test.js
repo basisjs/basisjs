@@ -98,6 +98,7 @@
       name: 'no name',
       testType: 'AbstractTest',
 
+      extendConstructor_: false,
       init: function(name, critical){
         EventObject.prototype.init.call(this);
         this.name = (name || 'test#' + TEST_NUMBER++)
@@ -157,7 +158,7 @@
       },
       toDOM: function(DOMFOR){
         if (DOMFOR) DOM = DOMFOR;
-        return DOM.createElement(CSS.makeClassName(this.testType), 
+        return DOM.createElement('.' + this.testType, 
                  DOM.createElement('SPAN', this.testType),
                  String.Entity.nbsp,
                  DOM.createElement('EM', this.name),
@@ -468,7 +469,7 @@
       },
       toDOM: function(DOMFOR){
         if (DOMFOR) DOM = DOMFOR;
-        return DOM.createElement(CSS.makeClassName(this.testType),
+        return DOM.createElement('.' + this.testType,
                  DOM.createElement('P.' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? 'success' : 'fault'))), 
                    DOM.createElement('SPAN', this.testType),
                    String.Entity.nbsp,

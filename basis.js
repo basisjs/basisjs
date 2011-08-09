@@ -1704,10 +1704,13 @@
       */
       event_destroy: destroyEvent = dispatchEvent('destroy', 'object'),
 
+     /**
+      * Related object listeners.
+      */
+      listen: Class.NestedExtProperty(),
+
      /** use extend constructor */
       extendConstructor_: true,
-
-      listen: Class.NestedExtProperty(),
 
      /**
       * @param {Object=} config

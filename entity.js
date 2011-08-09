@@ -88,10 +88,12 @@
 
         return value;
       }
+      Cleaner.add(this);
     },
     get: function(value, checkType){
       var item = this.index[value];
-      return item && (!checkType || item instanceof checkType) ? item : null;
+      if (item && (!checkType || item instanceof checkType))
+        return item;
     },
     add: function(value, item){
       var curr = this.index[value];
@@ -131,9 +133,10 @@
     }
 
     var result = new Function('calc',
-      'return function(delta, data){' +
+      'return function(delta, data, oldValue){' +
         (cond.length ? 'if (' + cond.join(' || ') + ')' : '') +
-        'return calc(' + calcArgs.join(', ') + ')' +
+        'return calc(' + calcArgs.join(', ') + ');' +
+        (cond.length ? 'return oldValue;' : '') +
       '}'
     )(func);
     result.args = args;
@@ -341,7 +344,12 @@
           else
           {
             if (idField)
-              idValue = data[idField];
+            {
+              if (entityType.calculateId)
+                idValue = entityType.calculateId(data, data);
+              else
+                idValue = data[idField];
+            }
             else
             {
               if (isSingleton)
@@ -380,8 +388,12 @@
         type: result,
         typeName: entityType.name,
         index: index,
+        reader: function(data){
+          return entityType.reader(data);
+        },
 
         get: function(data){
+          debugger;
           return entityType.get(data);
         },
         addField: function(key, wrapper){
@@ -470,6 +482,7 @@
 
       var index__;
       var entityClass__;
+      var idField;
 
       ;;;if (typeof console != 'undefined' && entityTypes.search(this.name, getter('name'))) console.warn('Dublicate entity type name: ', this.name);
       entityTypes.push(this);
@@ -489,63 +502,20 @@
       this.defaults = {};
       this.aliases = {};
       this.getters = {};
+
       if (config.fields)
         for (var key in config.fields)
         {
           var func = config.fields[key];
 
-          if (key === config.id || [NumericId, IntId, StringId].has(func))
-            func = new Index(func);
-
-          if (func instanceof Index)
-          {
-            config.id = key;
-            this.index__ = index__ = func;
-            func = func.valueWrapper;
-          }
-
           this.addField(key, func);
         }
 
-      if (!this.isSingleton)
-      {
-        var idField = this.idField = config.id || null;
-        this.idFieldNames = [];
-        if (idField)
-        {
-          this.idFieldNames.push(idField);
-
-          var idFieldWrapper = this.fields[this.idField];
-          var getId = function(data){
-            if (data)
-            {
-              if (data instanceof DataObject)
-                data = data.data;
-              return data[idField]; 
-            }
-          };
-
-          this.getId = getId;
-          this.get = function(data){
-            //return this.index_[isKeyType[typeof data] ? idFieldWrapper(data) : getId(data)];
-            return index__.get(isKeyType[typeof data] ? index__.normalize(data) : getId(data), entityClass__);
-          };
-        }
-      }
-      else
-      {
+      if (this.isSingleton)
         this.get = getSingleton;
-      }
 
       if (config.aliases)
-      {
-        //extend(this.aliases, config.aliases);
-        Object.iterate(config.aliases, function(key, value){
-          this.aliases[key] = value;
-          if (value == this.idField)
-            this.idFieldNames.push(key);
-        }, this);
-      }
+        Object.iterate(config.aliases, this.addAlias, this);
 
       this.collection_ = {};
       if (config.collections)
@@ -577,7 +547,8 @@
 
       ;;;if (config.reflections) console.warn('Reflections are deprecated');
 
-      entityClass__ = this.entityClass = Entity(this, this.all, index__, this.slot_, this.fields, this.defaults, this.getters, this.aliases).extend({
+      idField = this.idField;
+      entityClass__ = this.entityClass = Entity(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters).extend({
         entityType: this,
         type: wrapper,
         typeName: this.name,
@@ -588,7 +559,52 @@
           : Function.$null
       });
     },
-    addField: function(key, wrapper){
+    reader: function(data){
+      var result = {};
+
+      // key type value
+      if (isKeyType[typeof data])
+      {
+        if (this.idField)
+        {
+          result[this.idField] = data;
+          return result;
+        }
+        return null;
+      }
+
+      // return null id data is not an object
+      if (!data || data == null)
+        return null;
+
+        
+      // map data
+      for (var key in data)
+      {
+        var fieldKey = key in this.aliases 
+          ? this.aliases[key]
+          : '';
+
+        if (fieldKey && fieldKey in this.fields)
+        {
+          result[fieldKey] = this.fields[fieldKey].reader
+            ? this.fields[fieldKey].reader(data[key])
+            : data[key];
+        }
+      }
+
+      return result;
+    },
+    addAlias: function(alias, key){
+      if (key in this.fields)
+      {
+        if (alias in this.aliases == false)
+          this.aliases[alias] = key;
+        /** @cut */else console.warn('Alias `{0}` already exists'.format(alias));
+      }
+      /** @cut */else console.warn('Can\'t add alias `{0}` for non-exists field `{1}`'.format(alias, key));
+    },
+    addField: function(key, config){
       if (this.all.itemCount)
       {
         ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
@@ -597,22 +613,36 @@
 
       this.aliases[key] = key;
 
-      if (wrapper.isCalcField)
-        this.addCalcField(key, wrapper);
-      else
+      if (typeof config == 'function')
       {
-        if (typeof wrapper == 'function')
-        {
-          this.fields[key] = wrapper;
-          this.defaults[key] = this.fields[key]();
-        }
-        else
-        {
-          ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field description has been ignored. Wraper: ', wrapper);
-          this.fields[key] = $self;
-          this.defaults[key] = this.defaults[key]; // init key
-        }
+        config = {
+          type: config
+        };
       }
+
+      if ('type' in config && typeof config.type != 'function')
+      {
+        ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wraper: ', wrapper);
+        config.type = $self;
+      }
+
+      var wrapper = config.type || $self;
+
+      if ([NumericId, IntId, StringId].has(wrapper))
+        wrapper = new Index(wrapper);
+
+      if (wrapper instanceof Index)
+      {
+        this.idField = key;
+        this.index__ = wrapper;
+        wrapper = wrapper.valueWrapper;
+      }
+
+      this.fields[key] = wrapper;
+      this.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
+
+      if (config.calc)
+        this.addCalcField(key, config.calc, wrapper);
 
       this.getters['get_' + key] = function(){
         return this.data[key];
@@ -628,31 +658,72 @@
           }
         };
     },
-    addCalcField: function(key, wrapper){
+    addCalcField: function(key, wrapper, valueWrapper){
       if (!this.calcs)
-        this.calcs = {};
-      
-      if (Object.keys(this.calcs).some(wrapper.args.has, wrapper.args))
-        throw 'Calculate field can\'t depend on calculate fields';
+        this.calcs = [];
 
-      this.calcs[key] = wrapper;
+      // NOTE: simple dependence calculation
+      // TODO: check, is algoritm make real check for dependencies or not?
+      var before = this.calcs.length;
+      var after = 0;
+
+      for (var i = 0; i < this.calcs.length; i++)
+        if (this.calcs[i].wrapper.args.has(key))
+        {
+          before = i;
+          break;
+        }
+
+      for (var i = 0; i < this.calcs.length; i++)
+        if (wrapper.args.has(this.calcs[i].key))
+          after = i + 1;
+
+      if (after > before)
+      {
+        ;;;if (typeof console != 'undefined') console.warn('Can\'t add calculate field `{0}`, because recursion'.format(key));
+        return;
+      }
+
+      this.calcs.splice(Math.min(before, after), 0, {
+        key: key,
+        wrapper: wrapper,
+        check: function(newValue, oldValue){
+          var value = valueWrapper(newValue, oldValue);
+          if (newValue !== oldValue && value === oldValue)
+            throw 1;
+          return value;
+        }
+      });
+
+      if (key == this.idField)
+        this.calculateId = wrapper;
+
       this.fields[key] = function(value, oldValue){
-        if (typeof console != 'undefined') console.log('Calculate fields is readonly');
+        if (typeof console != 'undefined') console.log('Calculate fields are readonly');
         return oldValue;
       }
     },
-    get: Function.$null,
+    get: function(entityOrData){
+      var id = this.getId(entityOrData);
+      if (id != null)
+        return this.index__.get(id, this.entityClass);
+    },
     getId: function(entityOrData){
-      if (entityOrData && this.idField)
+      var idField = this.idField;
+      if (idField)
       {
         var source = entityOrData;
+
+        if (isKeyType[typeof entityOrData])
+          return entityOrData;
 
         if (entityOrData instanceof DataObject)
           source = source.data;
 
-        for (var i = 0, name; name = this.idFieldNames[i]; i++)
-          if (name in source)
-            return source[name];
+        if (this.calculateId)
+          return this.calculateId(source, source);
+        else
+          return source[idField];
       }
     },
     getSlot: function(id, defaults){
@@ -687,15 +758,51 @@
   */
   var BaseEntity = Class(DataObject, {
     className: namespace + '.BaseEntity',
-    init: EventObject.prototype.init
+    init: EventObject.prototype.init,
+    event_rollbackUpdate: EventObject.createEvent('rollbackUpdate')
   });
 
  /**
   * @class
   */
-  var Entity = function(entityType, all, index__, typeSlot, fields, defaults, getters, aliases){
+  var Entity = function(entityType, all, index__, typeSlot, fields, defaults, getters){
 
     var idField = entityType.idField;
+
+    function roolbackChanges(entity, delta, rollbackDelta){
+      for (var key in delta)
+        this.data[key] = delta[key];
+
+      for (var key in rollbackDelta)
+      {
+        if (!this.modified)
+        {
+          this.modified = rollbackDelta;
+        }
+        else
+        {
+          // ???
+        }
+      }
+    }
+
+    function updateIndex(entity, curValue, newValue){
+      // if current value is not null, remove old value from index first
+      if (curValue != null)
+      {
+        index__.remove(curValue, entity);
+        if (typeSlot[curValue])
+          typeSlot[curValue].setDelegate();
+      }
+
+      // if new value is not null, add new value to index
+      if (newValue != null)
+      {
+        index__.add(newValue, entity);
+        if (typeSlot[newValue])
+          typeSlot[newValue].setDelegate(entity);
+      }
+    }
 
     return Class(BaseEntity, getters, {
       className: namespace + '.Entity',
@@ -706,7 +813,6 @@
 
       modified: null,
       isTarget: true,
-      event_rollbackUpdate: EventObject.createEvent('rollbackUpdate'),
 
       extendConstructor_: false,
       init: function(data){
@@ -715,27 +821,21 @@
         // inherit
         BaseEntity.prototype.init.call(this);
 
-        // copy default values
-
         // set up some properties
         this.fieldHandlers_ = {};
         this.data = {};//new entityType.xdefaults;//{};
         this.root = this;
         this.target = this;
 
-        var values = {};
-
-        for (var key in data)
-          values[aliases[key] || key] = data[key];
-
+        // copy default values
         for (var key in fields)
         {
-          var value = key in values ? fields[key](values[key]) : defaults[key];
+          var value = key in data
+            ? fields[key](data[key])
+            : defaults[key];
 
           if (value && value !== this && value instanceof EventObject)
           {
-              //this.destroyHandlers[this.eventObjectId] = fieldCleaner.bind(this, key);
-
             if (value.addHandler(fieldDestroyHandlers[key], this))
               this.fieldHandlers_[key] = true;
           }
@@ -745,21 +845,13 @@
 
         if (this.calcs)
         {
-          for (var key in this.calcs)
-            this.data[key] = this.calcs[key].call(this, this.data, this.data);
+          for (var i = 0, calc; calc = this.calcs[i++];)
+            this.data[calc.key] = calc.wrapper(this.data, this.data, this.data[key]);
         }
 
         // add to index
-        if (idField)
-        {
-          var id = this.data[idField];
-          if (id != null)
-          {
-            index__.add(id, this);
-            if (typeSlot[id])
-              typeSlot[id].setDelegate(this);
-          }
-        }
+        if (idField && this.data[idField] != null)
+          updateIndex(this, null, this.data[idField]);
 
         // reg entity in all entity type instances list
         all.event_datasetChanged(all, {
@@ -770,13 +862,9 @@
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
       },
       get: function(key){
-        if (this.data)
-          return this.data[aliases[key] || key];
+        return this.data[key];
       },
-      set: function(key, value, rollback, silent){
-        // resolve field key
-        key = aliases[key] || key;
-
+      set: function(key, value, rollback, silent_){
         // get value wrapper
         var valueWrapper = fields[key];
 
@@ -794,7 +882,6 @@
         }
 
         // main part
-        var update = true;
         var delta;
         var updateDelta;
         var result;
@@ -812,32 +899,13 @@
         // - attach/detach handlers on object destroy (for EventObjects)
         // - registrate changes to rollback data if neccessary
         // - fire 'change' event for not silent mode
-        if (valueChanged)
+        if (valueChanged) updateField:
         {
           result = {};
 
-          // NOTE: rollback mode is not allowed for id field
-          if (idField == key)
+          // NOTE: rollback is not allowed for id field
+          if (key != idField)
           {
-            // if current value is not null, remove old value from index first
-            if (curValue != null)
-            {
-              index__.remove(curValue, this);
-              if (typeSlot[curValue])
-                typeSlot[curValue].setDelegate();
-            }
-
-            // if new value is not null, add new value to index
-            if (newValue != null)
-            {
-              index__.add(newValue, this);
-              if (typeSlot[newValue])
-                typeSlot[newValue].setDelegate(this);
-            }
-          }
-          else
-          {
-            // NOTE: rollback mode is not allowed for id field
             if (rollback)
             {
               // rollback mode
@@ -894,8 +962,7 @@
                   // store new value
                   rollbackData[key] = newValue;
 
-                  // prevent data update
-                  update = false;
+                  break updateField; // skip update field
                 }
                 else
                   return false;
@@ -903,30 +970,31 @@
             }
           }
 
-          if (update)
+          // main part of field update
+
+          // set new value for field
+          this.data[key] = newValue;
+          
+          // remove attached handler if exists
+          if (this.fieldHandlers_[key])
           {
-            // set new value for field
-            this.data[key] = newValue;
-            
-            // remove attached handler if exists
-            if (this.fieldHandlers_[key])
-            {
-              curValue.removeHandler(fieldDestroyHandlers[key], this);
-              this.fieldHandlers_[key] = false;
-            }
-
-            // add new handler if object is instance of EventObject
-            // newValue !== this prevents recursion for self update
-            if (newValue && newValue !== this && newValue instanceof EventObject)
-            {
-              if (newValue.addHandler(fieldDestroyHandlers[key], this))
-                this.fieldHandlers_[key] = true;
-            }
-
-            // prepare result
-            result.key = key;
-            result.value = curValue;
+            curValue.removeHandler(fieldDestroyHandlers[key], this);
+            this.fieldHandlers_[key] = false;
           }
+
+          // add new handler if object is instance of EventObject
+          // newValue !== this prevents recursion for self update
+          if (newValue && newValue !== this && newValue instanceof EventObject)
+          {
+            if (newValue.addHandler(fieldDestroyHandlers[key], this))
+              this.fieldHandlers_[key] = true;
+          }
+
+          // prepare result
+          result.key = key;
+          result.value = curValue;
+          result.delta = {};
+          result.delta[key] = value;
         }
         else
         {
@@ -947,30 +1015,44 @@
           }
         }
 
+
         // fire events for not silent mode
-        if (!silent && result)
+        if (!silent_ && result)
         {
-          var delta = {};
           var update = result.key;
+          var delta = result.delta || {};
 
           if (this.calcs)
           {
-            for (var key in this.calcs)
-            {
-              var value = this.calcs[key].call(this, this.data, this.data)
-              if (this.data[key] !== value)
+            try {
+              for (var i = 0, calc; calc = this.calcs[i++];)
               {
-                delta[key] = this.data[key];
-                this.data[key] = value;
-                update = true;
+                var key = calc.key;
+                var oldValue = this.data[key];
+                this.data[key] = calc.check(calc.wrapper(delta, this.data, this.data[key]));
+                if (this.data[key] !== oldValue)
+                {
+                  delta[key] = oldValue;
+                  update = true;
+                }
               }
+            } catch(e) {
+              rollbackChanges(this, delta, rollbackDelta);
+              return false;
             }
           }
 
           if (update)
           {
+            // update index
+            if (idField && idField in delta)
+              updateIndex(this, delta[idField], this.data[idField]);
+
+            // fire event
             delta[key] = curValue;
             this.event_update(this, delta);
+
+            result.delta = delta;
           }
 
           if (result.rollback)
@@ -1005,6 +1087,7 @@
                 update = true;
                 delta[setResult.key] = setResult.value;
               }
+
               if (setResult.rollback)
               {
                 rollbackUpdate = true;
@@ -1015,21 +1098,35 @@
 
           if (this.calcs)
           {
-            for (var key in this.calcs)
-            {
-              var value = this.calcs[key].call(this, this.data, this.data)
-              if (this.data[key] !== value)
+            try {
+              for (var i = 0, calc; calc = this.calcs[i++];)
               {
-                delta[key] = this.data[key];
-                this.data[key] = value;
-                update = true;
+                var key = calc.key;
+                var oldValue = this.data[key];
+                this.data[key] = calc.check(calc.wrapper(delta, this.data, this.data[key]), this.data[key]);
+                if (this.data[key] !== oldValue)
+                {
+                  delta[key] = oldValue;
+                  update = true;
+                }
               }
+            } catch(e) {
+              rollbackChanges(this, delta, rollbackDelta);
+              return false;
             }
           }
 
           // dispatch events
+
           if (update)
+          {
+            // update index if necessary
+            if (idField && idField in delta)
+              updateIndex(this, delta[idField], this.data[idField]);
+
+            // fire update event
             this.event_update(this, delta);
+          }
 
           if (rollbackUpdate)
             this.event_rollbackUpdate(this, rollbackDelta);
@@ -1086,9 +1183,8 @@
         this.fieldHandlers_ = NULL_INFO;
 
         // delete from index
-        var id = this.data[idField];
-        if (id)
-          index__.remove(id, this);
+        if (idField)
+          updateIndex(this, this.data[idField], null);
 
         // inherit
         DataObject.prototype.destroy.call(this);
