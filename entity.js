@@ -87,6 +87,15 @@
         }
 
         return value;
+      };
+      this.calcWrapper = function(newValue, oldValue){
+        // normalize new value
+        var value = normalize(newValue, oldValue);
+
+        if (value !== oldValue && index[value])
+          throw 'Duplicate value for index ' + oldValue + ' => ' + newValue;
+
+        return value;
       }
       Cleaner.add(this);
     },
@@ -627,6 +636,7 @@
       }
 
       var wrapper = config.type || $self;
+      var calcWrapper = wrapper;
 
       if ([NumericId, IntId, StringId].has(wrapper))
         wrapper = new Index(wrapper);
@@ -635,6 +645,7 @@
       {
         this.idField = key;
         this.index__ = wrapper;
+        calcWrapper = wrapper.calcWrapper;
         wrapper = wrapper.valueWrapper;
       }
 
@@ -642,7 +653,7 @@
       this.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
 
       if (config.calc)
-        this.addCalcField(key, config.calc, wrapper);
+        this.addCalcField(key, config.calc, calcWrapper);
 
       this.getters['get_' + key] = function(){
         return this.data[key];
@@ -668,7 +679,7 @@
       var after = 0;
 
       for (var i = 0; i < this.calcs.length; i++)
-        if (this.calcs[i].wrapper.args.has(key))
+        if (this.calcs[i].args.has(key))
         {
           before = i;
           break;
@@ -686,12 +697,9 @@
 
       this.calcs.splice(Math.min(before, after), 0, {
         key: key,
-        wrapper: wrapper,
-        check: function(newValue, oldValue){
-          var value = valueWrapper(newValue, oldValue);
-          if (newValue !== oldValue && value === oldValue)
-            throw 1;
-          return value;
+        args: wrapper.args,
+        wrapper: function(delta, data, oldValue){
+          return valueWrapper(wrapper(delta, data, oldValue));
         }
       });
 
@@ -769,21 +777,22 @@
 
     var idField = entityType.idField;
 
-    function roolbackChanges(entity, delta, rollbackDelta){
+    function rollbackChanges(entity, delta, rollbackDelta){
       for (var key in delta)
-        this.data[key] = delta[key];
+        entity.data[key] = delta[key];
 
-      for (var key in rollbackDelta)
-      {
-        if (!this.modified)
+      if (rollbackDelta)
+        for (var key in rollbackDelta)
         {
-          this.modified = rollbackDelta;
+          if (!entity.modified)
+          {
+            entity.modified = rollbackDelta;
+          }
+          else
+          {
+            // ???
+          }
         }
-        else
-        {
-          // ???
-        }
-      }
     }
 
     function updateIndex(entity, curValue, newValue){
@@ -828,11 +837,19 @@
         this.target = this;
 
         // copy default values
+        var value;
+        var delta = {};
         for (var key in fields)
         {
-          var value = key in data
-            ? fields[key](data[key])
-            : defaults[key];
+          if (key in data)
+          {
+            delta[key] = this.data[key];
+            value = fields[key](data[key]);
+          }
+          else
+          {
+            value = defaults[key];
+          }
 
           if (value && value !== this && value instanceof EventObject)
           {
@@ -845,8 +862,16 @@
 
         if (this.calcs)
         {
-          for (var i = 0, calc; calc = this.calcs[i++];)
-            this.data[calc.key] = calc.wrapper(this.data, this.data, this.data[key]);
+          try {
+            for (var i = 0, calc; calc = this.calcs[i++];)
+            {
+              delta[calc.key] = this.data[calc.key];
+              this.data[calc.key] = calc.wrapper(this.data, this.data, this.data[key]);
+            }
+          } catch(e){
+            ;;;if (typeof console != 'undefined') console.warn('Calc exception on init');
+            rollbackChanges(this, delta, null);
+          }
         }
 
         // add to index
@@ -1029,7 +1054,7 @@
               {
                 var key = calc.key;
                 var oldValue = this.data[key];
-                this.data[key] = calc.check(calc.wrapper(delta, this.data, this.data[key]));
+                this.data[key] = calc.wrapper(delta, this.data, this.data[key]);
                 if (this.data[key] !== oldValue)
                 {
                   delta[key] = oldValue;
@@ -1103,7 +1128,7 @@
               {
                 var key = calc.key;
                 var oldValue = this.data[key];
-                this.data[key] = calc.check(calc.wrapper(delta, this.data, this.data[key]), this.data[key]);
+                this.data[key] = calc.wrapper(delta, this.data, this.data[key]);
                 if (this.data[key] !== oldValue)
                 {
                   delta[key] = oldValue;

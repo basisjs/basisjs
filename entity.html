@@ -27,7 +27,10 @@ Basis.Event.onLoad(function(){
         },
         cube: {
           calc: CalculateField('square', 'value', function(square, value){
-            return square * value;
+            if (square > 30) 
+              throw 'overflow';
+            else
+              return square * value;
           })
         },
         a: {
