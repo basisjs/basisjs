@@ -248,9 +248,8 @@
     var Link = new Basis.Entity.EntityType({
       name: 'Link',
       fields: {
-        LinkId: nsEntity.StringId,
-        FieldId: Number,
-        WordId: Number
+        FieldId: nsEntity.NumberId,
+        WordId: nsEntity.NumberId
       },
 
       groupings: {
@@ -280,7 +279,6 @@
       var fieldId = parseInt((i * 2347.56) % Field.all.itemCount);
       var wordId = parseInt((i * 7263.23) % Word.all.itemCount);
       Link({
-        LinkId: fieldId + '-' + wordId,
         FieldId: fieldId,
         WordId: wordId
       });
@@ -427,10 +425,9 @@
         {
           var fieldId = this.data.FieldId;
           this.dataSource.setMap(function(object){
-            var wordId = object.data.WordId;
-            return Link.getSlot(fieldId + '-' + wordId, {
+            return Link.getSlot({
               FieldId: fieldId,
-              WordId: wordId
+              WordId: object.data.WordId
             });
           });
         }
@@ -438,7 +435,8 @@
       childClass: nsWrappers.TmplNode.subclass({
         template: 
           '<li{element} event-click="toggle">' +
-            '<input{state} type="checkbox"/><!--{word}-->' +
+            '<input{state} type="checkbox"/>' +
+            '<!--{word}-->' +
           '</li>',
 
         action: {

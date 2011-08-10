@@ -52,6 +52,9 @@
   var NumericId = function(value){
     return isNaN(value) ? null : Number(value);
   }
+  var NumberId = function(value){
+    return isNaN(value) ? null : Number(value);
+  }
   var IntId = function(value){
     return isNaN(value) ? null : parseInt(value);
   }
@@ -151,6 +154,19 @@
     result.args = args;
     result.isCalcField = true;
     return result;
+  }
+
+  function ConcatString(){
+    return CalculateField.apply(null, Array.from(arguments).concat(function(){
+      var value = [];
+      for (var i = arguments.length; i --> 0;)
+      {
+        if (arguments[i] == null)
+          return null;
+        value.push(arguments[i]);
+      }
+      return value.join('-');
+    }))
   }
 
   //
@@ -354,8 +370,8 @@
           {
             if (idField)
             {
-              if (entityType.calculateId)
-                idValue = entityType.calculateId(data, data);
+              if (entityType.compositeKey)
+                idValue = entityType.compositeKey(data, data);
               else
                 idValue = data[idField];
             }
@@ -402,7 +418,6 @@
         },
 
         get: function(data){
-          debugger;
           return entityType.get(data);
         },
         addField: function(key, wrapper){
@@ -489,9 +504,11 @@
     init: function(config, wrapper){
       this.name = config.name || getUntitledName(this.name);
 
-      var index__;
       var entityClass__;
       var idField;
+
+      this.index__ = config.index;
+      this.idFields = {};
 
       ;;;if (typeof console != 'undefined' && entityTypes.search(this.name, getter('name'))) console.warn('Dublicate entity type name: ', this.name);
       entityTypes.push(this);
@@ -512,13 +529,11 @@
       this.aliases = {};
       this.getters = {};
 
-      if (config.fields)
-        for (var key in config.fields)
-        {
-          var func = config.fields[key];
-
-          this.addField(key, func);
-        }
+      Object.iterate(config.fields, this.addField, this);
+      if (config.constrains)
+        config.constrains.forEach(function(item){
+          this.addCalcField(null, item);
+        }, this);
 
       if (this.isSingleton)
         this.get = getSingleton;
@@ -561,11 +576,9 @@
         entityType: this,
         type: wrapper,
         typeName: this.name,
-        getId: idField
-          ? function(){
-              return this.data[idField];
-            }
-          : Function.$null
+        getId: function(){
+          return this.__id__;
+        }
       });
     },
     reader: function(data){
@@ -636,24 +649,38 @@
       }
 
       var wrapper = config.type || $self;
-      var calcWrapper = wrapper;
+      var calcWrapper;
 
-      if ([NumericId, IntId, StringId].has(wrapper))
-        wrapper = new Index(wrapper);
+      if ([NumericId, NumberId, IntId, StringId].has(wrapper))
+        config.id = true;
 
-      if (wrapper instanceof Index)
+      if (config.id)
       {
-        this.idField = key;
-        this.index__ = wrapper;
-        calcWrapper = wrapper.calcWrapper;
-        wrapper = wrapper.valueWrapper;
-      }
+        if (!this.index__)
+          this.index__ = new Index(String);
 
-      this.fields[key] = wrapper;
-      this.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
+        this.idFields[key] = true;
+
+        if (this.idField || this.compositeKey)
+        {
+          this.idField = null;
+          this.compositeKey = ConcatString.apply(null, Object.keys(this.idFields));
+        }
+        else
+        {
+          this.idField = key;
+        }
+
+        //calcWrapper = this.index__.calcWrapper;
+        //wrapper = this.index__.valueWrapper;
+      }
 
       if (config.calc)
         this.addCalcField(key, config.calc, calcWrapper);
+      else
+        this.fields[key] = wrapper;
+
+      this.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
 
       this.getters['get_' + key] = function(){
         return this.data[key];
@@ -670,8 +697,21 @@
         };
     },
     addCalcField: function(key, wrapper, valueWrapper){
+      if (key && this.fields[key])
+      {
+        ;;;if (typeof console != 'undefined') console.warn('Field `{0}` had defined already'.format(key));
+        return;
+      }
+
       if (!this.calcs)
         this.calcs = [];
+
+      var calcConfig = {
+        args: wrapper.args,
+        wrapper: !valueWrapper ? wrapper : function(delta, data, oldValue){
+          return valueWrapper(wrapper(delta, data, oldValue));
+        }
+      };
 
       // NOTE: simple dependence calculation
       // TODO: check, is algoritm make real check for dependencies or not?
@@ -679,37 +719,42 @@
       var after = 0;
 
       for (var i = 0; i < this.calcs.length; i++)
-        if (this.calcs[i].args.has(key))
-        {
-          before = i;
-          break;
-        }
-
-      for (var i = 0; i < this.calcs.length; i++)
         if (wrapper.args.has(this.calcs[i].key))
           after = i + 1;
 
-      if (after > before)
+      if (key)
       {
-        ;;;if (typeof console != 'undefined') console.warn('Can\'t add calculate field `{0}`, because recursion'.format(key));
-        return;
-      }
+        // natural calc field
 
-      this.calcs.splice(Math.min(before, after), 0, {
-        key: key,
-        args: wrapper.args,
-        wrapper: function(delta, data, oldValue){
-          return valueWrapper(wrapper(delta, data, oldValue));
+        calcConfig.key = key;
+        for (var i = 0; i < this.calcs.length; i++)
+          if (this.calcs[i].args.has(key))
+          {
+            before = i;
+            break;
+          }
+
+        if (after > before)
+        {
+          ;;;if (typeof console != 'undefined') console.warn('Can\'t add calculate field `{0}`, because recursion'.format(key));
+          return;
         }
-      });
 
-      if (key == this.idField)
-        this.calculateId = wrapper;
+        if (this.idField && key == this.idField)
+          this.compositeKey = wrapper;
 
-      this.fields[key] = function(value, oldValue){
-        if (typeof console != 'undefined') console.log('Calculate fields are readonly');
-        return oldValue;
+        this.fields[key] = function(value, oldValue){
+          if (typeof console != 'undefined') console.log('Calculate fields are readonly');
+          return oldValue;
+        }
       }
+      else
+      {
+        // constrain
+        before = after;
+      }
+
+      this.calcs.splice(Math.min(before, after), 0, calcConfig);
     },
     get: function(entityOrData){
       var id = this.getId(entityOrData);
@@ -717,35 +762,37 @@
         return this.index__.get(id, this.entityClass);
     },
     getId: function(entityOrData){
-      var idField = this.idField;
-      if (idField)
+      if ((this.idField || this.compositeKey) && entityOrData != null)
       {
-        var source = entityOrData;
-
         if (isKeyType[typeof entityOrData])
           return entityOrData;
 
-        if (entityOrData instanceof DataObject)
-          source = source.data;
+        if (entityOrData && entityOrData.entityType === this)
+          return entityOrData.__id__;
 
-        if (this.calculateId)
-          return this.calculateId(source, source);
+        if (entityOrData instanceof DataObject)
+          entityOrData = entityOrData.data;
+
+        if (this.compositeKey)
+          return this.compositeKey(entityOrData, entityOrData);
         else
-          return source[idField];
+          return entityOrData[this.idField];
       }
     },
-    getSlot: function(id, defaults){
-      var slot = this.slot_[id];
-      if (!slot)
+    getSlot: function(data){
+      var id = this.getId(data);
+      if (id != null)
       {
-        var defaults = extend({}, defaults);
-        defaults[this.idField] = id;
-        slot = this.slot_[id] = new DataObject({
-          delegate: this.index__[id],
-          data: defaults
-        });
+        var slot = this.slot_[id];
+        if (!slot)
+        {
+          slot = this.slot_[id] = new DataObject({
+            delegate: this.get(id),
+            data: data
+          });
+        }
+        return slot;
       }
-      return slot;
     }
   });
 
@@ -795,6 +842,55 @@
         }
     }
 
+    function calc(entity, delta, rollbackDelta){
+      var update = false;
+      var calcs = entityType.calcs;
+      var id = entity.__id__;
+
+      var data = entity.data;
+      try {
+        if (calcs)
+        {
+          for (var i = 0, calc; calc = calcs[i++];)
+          {
+            var key = calc.key;
+            if (key)
+            {
+              var oldValue = data[key];
+              data[key] = calc.wrapper(delta, data, data[key]);
+              if (data[key] !== oldValue)
+              {
+                delta[key] = oldValue;
+                update = true;
+              }
+            }
+            else
+              calc.wrapper(delta, data);
+          }
+        }
+
+        if (entityType.compositeKey)
+          entity.__id__ = entityType.compositeKey(delta, data);
+        else
+          if (idField && idField in delta)
+            entity.__id__ = data[idField];
+
+        if (entity.__id__ !== id)
+          entityType.index__.calcWrapper(entity.__id__);
+
+      } catch(e) {
+        ;;;if (typeof console != 'undefined') console.warn('Exception on field calc');
+        entity.__id__ = id;
+        rollbackChanges(entity, delta, rollbackDelta);
+        update = false;
+      }
+
+      if (entity.__id__ !== id)
+        updateIndex(entity, id, entity.__id__);
+
+      return update;      
+    }
+
     function updateIndex(entity, curValue, newValue){
       // if current value is not null, remove old value from index first
       if (curValue != null)
@@ -817,8 +913,7 @@
       className: namespace + '.Entity',
 
       canHaveDelegate: false,
-      index: index__,
-      calcs: entityType.calcs,
+      //index: index__,
 
       modified: null,
       isTarget: true,
@@ -860,23 +955,7 @@
           this.data[key] = value;
         }
 
-        if (this.calcs)
-        {
-          try {
-            for (var i = 0, calc; calc = this.calcs[i++];)
-            {
-              delta[calc.key] = this.data[calc.key];
-              this.data[calc.key] = calc.wrapper(this.data, this.data, this.data[key]);
-            }
-          } catch(e){
-            ;;;if (typeof console != 'undefined') console.warn('Calc exception on init');
-            rollbackChanges(this, delta, null);
-          }
-        }
-
-        // add to index
-        if (idField && this.data[idField] != null)
-          updateIndex(this, null, this.data[idField]);
+        calc(this, delta);
 
         // reg entity in all entity type instances list
         all.event_datasetChanged(all, {
@@ -1019,7 +1098,7 @@
           result.key = key;
           result.value = curValue;
           result.delta = {};
-          result.delta[key] = value;
+          result.delta[key] = curValue;
         }
         else
         {
@@ -1046,46 +1125,26 @@
         {
           var update = result.key;
           var delta = result.delta || {};
-
-          if (this.calcs)
-          {
-            try {
-              for (var i = 0, calc; calc = this.calcs[i++];)
-              {
-                var key = calc.key;
-                var oldValue = this.data[key];
-                this.data[key] = calc.wrapper(delta, this.data, this.data[key]);
-                if (this.data[key] !== oldValue)
-                {
-                  delta[key] = oldValue;
-                  update = true;
-                }
-              }
-            } catch(e) {
-              rollbackChanges(this, delta, rollbackDelta);
-              return false;
-            }
-          }
-
-          if (update)
-          {
-            // update index
-            if (idField && idField in delta)
-              updateIndex(this, delta[idField], this.data[idField]);
-
-            // fire event
-            delta[key] = curValue;
-            this.event_update(this, delta);
-
-            result.delta = delta;
-          }
+          var rollbackDelta;
 
           if (result.rollback)
           {
-            var rollbackDelta = {};
+            rollbackDelta = {};
             rollbackDelta[result.rollback.key] = result.rollback.value;
-            this.event_rollbackUpdate(this, rollbackDelta);
           }
+
+          if (calc(this, delta, rollbackDelta))
+            update = true;
+
+          if (update)
+          {
+            // fire event
+            this.event_update(this, delta);
+            result.delta = delta;
+          }
+
+          if (rollbackDelta)
+            this.event_rollbackUpdate(this, rollbackDelta);
         }
 
         // return delta or false (if no changes)
@@ -1121,37 +1180,14 @@
             }
           }
 
-          if (this.calcs)
-          {
-            try {
-              for (var i = 0, calc; calc = this.calcs[i++];)
-              {
-                var key = calc.key;
-                var oldValue = this.data[key];
-                this.data[key] = calc.wrapper(delta, this.data, this.data[key]);
-                if (this.data[key] !== oldValue)
-                {
-                  delta[key] = oldValue;
-                  update = true;
-                }
-              }
-            } catch(e) {
-              rollbackChanges(this, delta, rollbackDelta);
-              return false;
-            }
-          }
+          // calc
+          if (calc(this, delta, rollbackDelta))
+            update = true;
 
           // dispatch events
 
           if (update)
-          {
-            // update index if necessary
-            if (idField && idField in delta)
-              updateIndex(this, delta[idField], this.data[idField]);
-
-            // fire update event
             this.event_update(this, delta);
-          }
 
           if (rollbackUpdate)
             this.event_rollbackUpdate(this, rollbackDelta);
@@ -1204,12 +1240,12 @@
         // unlink attached handlers
         for (var key in this.fieldHandlers_)
           this.data[key].removeHandler(fieldDestroyHandlers[key], this);
-          //removeFromDestroyMap(this.data[key], this, key);
+
         this.fieldHandlers_ = NULL_INFO;
 
         // delete from index
-        if (idField)
-          updateIndex(this, this.data[idField], null);
+        if (this.__id__)
+          updateIndex(this, this.__id__, null);
 
         // inherit
         DataObject.prototype.destroy.call(this);
@@ -1242,6 +1278,7 @@
     isEntity: isEntity,
 
     NumericId: NumericId,
+    NumberId: NumberId,
     IntId: IntId,
     StringId: StringId,
     Index: Index,
