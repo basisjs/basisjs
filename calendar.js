@@ -583,13 +583,14 @@
         // min/max dates
 
         // insert sections
-        this.setChildNodes(this.sections.map(function(sectionClass, index){
-          return new CalendarSection[sectionClass]({
-            selected: index == 0, // select firstChild
-            viewDate: this.date.value,
-            selectedDate: this.selectedDate.value
-          })
-        }, this));
+        if (this.sections)
+          this.setChildNodes(this.sections.map(function(sectionClass, index){
+            return new CalendarSection[sectionClass]({
+              selected: index == 0, // select firstChild
+              viewDate: this.date.value,
+              selectedDate: this.selectedDate.value
+            })
+          }, this));
       },
 
       // section navigate

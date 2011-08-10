@@ -135,7 +135,7 @@
     var adapterHandler = {
       success: function(request){
         var data = request.responseText.toObject();
-        this.sync(data);
+        this.sync(data && data.map(this.wrapper.reader));
       }
     };
 
