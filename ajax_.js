@@ -746,7 +746,7 @@
             if (this.needSignature && !this.service.sign(this))
               return;
 
-            this.constructor.superClass_.prototype.request.call(this, requestData);
+            return this.constructor.superClass_.prototype.request.call(this, requestData);
           },
 
           requestClass: this.requestClass

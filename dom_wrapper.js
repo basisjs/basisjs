@@ -1103,10 +1103,10 @@
         else
         {
           // search for refChild for right ordering
-          if (group.lastChild)
+          if (group.last)
           {
             // fast way to find refChild via current group lastChild (if exists)
-            refChild = group.lastChild.nextSibling;
+            refChild = group.last.nextSibling;
           }
           else
           {
@@ -1114,7 +1114,7 @@
             var cursor = group;
             refChild = null;
             while (cursor = cursor.nextSibling)
-              if (refChild = cursor.firstChild)
+              if (refChild = cursor.first)
                 break;
           }
         }
@@ -1613,11 +1613,13 @@
         };
 
       if (grouping instanceof GroupingNode == false)
-        grouping = typeof grouping == 'object'
+      {
+        grouping = grouping != null && typeof grouping == 'object'
           ? new this.localGroupingClass(Object.complete({
               //owner: this
             }, grouping))
           : null;
+      }
 
       if (this.localGrouping !== grouping)
       {
@@ -2492,8 +2494,11 @@
 
         var target = newChild.groupNode || this;
         var nextSibling = newChild.nextSibling;
-        var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
-        var container = target.childNodesElement || target.element;
+        var container = target.childNodesElement || target.element || this.childNodesElement || this.element;
+
+        //var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
+        var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
+
         var element = newChild.element;
         var refNode = insertPoint || container.insertPoint || null;
 

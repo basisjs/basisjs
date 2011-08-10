@@ -41,6 +41,8 @@
     var TmplControl = nsWrappers.TmplControl;
     var TmplPartitionNode = nsWrappers.TmplPartitionNode;
     var TmplGroupingNode = nsWrappers.TmplGroupingNode;
+    var GroupingNode = nsWrappers.GroupingNode;
+    var PartitionNode = nsWrappers.PartitionNode;
 
     //
     // Main part
@@ -110,13 +112,102 @@
       }
     });
 
+    //
+    // Table Header Grouping
+    //
+
+    var HeaderGroupCell = Basis.Class(nsWrappers.TmplNode, {
+      template: new Template(
+        '<th{element|selected} class="Basis-Table-Header-Cell">' +
+          '<div class="Basis-Table-Sort-Direction"></div>' +
+          '<div class="Basis-Table-Header-Cell-Content">' + 
+            '<span{content} class="Basis-Table-Header-Cell-Title">{titleText}</span>' +
+          '</div>' +
+        '</th>'
+      ),
+      event_update: function(object, delta){
+        nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
+        this.tmpl.titleText.nodeValue = this.titleGetter(this);
+      }
+    });
+
+    var TableHeaderGroupingClass = Basis.Class(GroupingNode, {
+      init: function(config){
+        GroupingNode.prototype.init.call(this, config);
+        this.headerRow = DOM.createElement('tr.Basis-Table-Header-GroupContent');
+      },
+      insertBefore: function(newChild, refChild){
+        var newChild = GroupingNode.prototype.insertBefore.call(this, newChild, refChild);
+
+        var refElement = newChild.nextSibling && newChild.nextSibling.cell.element;
+        DOM.insert(this.headerRow, newChild.cell.element, DOM.INSERT_BEFORE, refElement);
+
+        return newChild;
+      },
+      removeChild: function(oldChild){
+        DOM.remove(oldChild.cell.element);
+        GroupingNode.prototype.removeChild.call(oldChild);
+      },
+      event_ownerChanged: function(node, oldOwner){
+        if (oldOwner)
+          DOM.remove(this.headerRow);
+
+        if (this.owner && this.owner.element)
+        {
+          var cursor = this;
+          var element = this.owner.element;
+          do
+          {
+            DOM.insert(element, cursor.headerRow, DOM.INSERT_BEGIN);
+          } while (cursor = cursor.localGrouping);
+        }
+        
+        GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
+      },
+      childClass: {
+        init: function(config){
+          PartitionNode.prototype.init.call(this, config);
+          this.cell = new HeaderGroupCell({ titleGetter: this.titleGetter, delegate: this });
+        },
+        event_childNodesModified: function(object, delta){
+          var colSpan = 0;
+          if (this.nodes[0] && this.nodes[0] instanceof this.constructor)
+          {
+            for (var i = 0, node; node = this.nodes[i]; i++)
+              colSpan += node.cell.element.colSpan;
+          }
+          else
+            colSpan = this.nodes.length;
+
+          this.cell.element.colSpan = colSpan;
+
+          if (this.groupNode)
+            this.groupNode.event_childNodesModified.call(this.groupNode, this.groupNode, {});
+        },
+        destroy: function(){
+          PartitionNode.prototype.destroy.call(this);
+          
+          this.cell.destroy();
+        }
+      },
+      destroy: function(){
+        GroupingNode.prototype.destroy.call(this);
+        this.headerRow = null;
+      }
+    });
+    TableHeaderGroupingClass.prototype.localGroupingClass = TableHeaderGroupingClass;
+
    /**
     * @class
     */
+
     var Header = Class(TmplContainer, {
       className: namespace + '.Header',
 
       childClass: HeaderCell,
+
+      localGroupingClass: TableHeaderGroupingClass,
+      /*localGroupingClass: nsWrappers.GroupingNode,
 
       localGroupingClass: Class(TmplGroupingNode, {
         className: namespace + '.HeaderGroupingNode',
@@ -137,7 +228,7 @@
             '</th>'
           )
         })
-      }),
+      }),*/
 
       template: new Template(
         '<thead{element} class="Basis-Table-Header">' +
