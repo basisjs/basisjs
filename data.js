@@ -96,9 +96,10 @@
 
               if (!object.subscribers_[subscriberId])
               {
+                var oldSubscriberCount = object.subscriberCount;
                 object.subscribers_[subscriberId] = thisObject;
                 object.subscriberCount += 1;
-                object.event_subscribersChanged();
+                object.event_subscribersChanged(object, oldSubscriberCount);
               }
               else
               {
@@ -112,9 +113,10 @@
               var subscriberId = Subscription[name] + '_' + thisObject.eventObjectId;
               if (object.subscribers_[subscriberId])
               {
+                var oldSubscriberCount = object.subscriberCount;
                 delete object.subscribers_[subscriberId];
                 object.subscriberCount -= 1;
-                object.event_subscribersChanged();
+                object.event_subscribersChanged(object, oldSubscriberCount);
               }
               else
               {
@@ -391,19 +393,19 @@
       delegate: {
         update: function(object, delta){
           this.data = object.data;
-          this.event_update(object, delta);
+          this.event_update(this, delta);
         },
         stateChanged: function(object, oldState){
           this.state = object.state;
-          this.event_stateChanged(object, oldState);
+          this.event_stateChanged(this, oldState);
         },
         targetChanged: function(object, oldTarget){
           this.target = object.target;
-          this.event_targetChanged(object, oldTarget);
+          this.event_targetChanged(this, oldTarget);
         },
         rootChanged: function(object, oldRoot){
           this.data = object.data;
-          this.event_rootChanged(object, oldRoot);
+          this.event_rootChanged(this, oldRoot);
         },
         destroy: function(){
           if (this.cascadeDestroy)
