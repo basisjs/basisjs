@@ -232,21 +232,37 @@
         TmplContainer.prototype.event_update.call(this, object, delta);
 
         var newData = this.data;
+        var newNodes;
         if ('periodStart' in delta || 'periodEnd' in delta)
         {
           this.tmpl.titleText.nodeValue = this.getTitle(newData.periodStart) || '-';
 
+          // insert child nodes
+          if (!this.firstChild)
+            newNodes = [];
+
           // update nodes
           var nodePeriod = getPeriod(this.nodePeriodName, new Date(newData.periodStart).add(this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(newData.periodStart) || 0)));
 
-          for (var node = this.firstChild; node; node = node.nextSibling)
+          for (var i = 0; i < this.nodeCount; i++)
           {
-            // update node
-            node.update(nodePeriod);
+            if (newNodes)
+              // create new node
+              newNodes.push({
+                cssClassName: this.nodePeriodName,
+                titleGetter: PERIOD_TITLE[this.nodePeriodName],
+                data: nodePeriod
+              });
+            else
+              // update existing one
+              this.childNodes[i].update(nodePeriod);
 
             // move to next period
             nodePeriod = getPeriod(this.nodePeriodName, new Date(nodePeriod.periodStart).add(this.nodePeriodUnit, this.nodePeriodUnitCount));
           }
+
+          if (newNodes)
+            this.setChildNodes(newNodes);
 
           this.minDate = this.firstChild.periodStart;
           this.maxDate = this.lastChild.periodEnd;
@@ -294,14 +310,6 @@
 
         classList(this.element).add('Basis-Calendar-Section-' + this.sectionName);
         Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
-
-        this.setChildNodes([{
-          cssClassName: this.nodePeriodName,
-          titleGetter: PERIOD_TITLE[this.nodePeriodName]
-        }].repeat(this.nodeCount));
-
-        this.setViewDate(this.viewDate);
-        this.update({ selectedDate: this.selectedDate });
       },
 
       getTitle: function(){},
@@ -490,12 +498,24 @@
       event_change: Basis.EventObject.createEvent('change'),
 
       event_childNodesModified: function(node, delta){
+        if (delta.inserted)
+          for (var i = 0, section; section = delta.inserted[i++];)
+          {
+            section.setViewDate(this.date.value);
+            section.update({
+              selectedDate: this.selectedDate.value
+            });
+          }
+
         TmplControl.prototype.event_childNodesModified.call(this, node, delta);
 
         DOM.insert(
           DOM.clear(this.tmpl.sectionTabs),
           this.childNodes.map(getter('tmpl.tabElement'))
         );
+
+        if (!this.selection.itemCount && this.firstChild)
+          this.firstChild.select();
       },
       templateAction: function(actionName, event, node){
         TmplControl.prototype.templateAction.call(this, actionName, event);
@@ -584,12 +604,8 @@
 
         // insert sections
         if (this.sections)
-          this.setChildNodes(this.sections.map(function(sectionClass, index){
-            return new CalendarSection[sectionClass]({
-              selected: index == 0, // select firstChild
-              viewDate: this.date.value,
-              selectedDate: this.selectedDate.value
-            })
+          DOM.insert(this, this.sections.map(function(sectionClass, index){
+            return new CalendarSection[sectionClass]()
           }, this));
       },
 

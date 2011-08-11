@@ -155,38 +155,37 @@
       });
 
       var todoCalendar = new nsCalendar.Calendar({
-        sections: null
-      });
-      todoCalendar.appendChild(new nsCalendar.CalendarSection.Month({
-        selected: true,
-        viewDate: todoCalendar.date.value,
-        selectedDate: todoCalendar.selectedDate.value,
-        childClass: {
-          template:
-            '<div{element} class="Basis-Calendar-Node" event-click="click">' +
-              '<span class="title">{title}</span>' +
-              '<!--{taskList}-->' +
-            '</div>',
+        sections: null,
+        childNodes: [
+          new nsCalendar.CalendarSection.Month({
+            childClass: {
+              template:
+                '<div{element} class="Basis-Calendar-Node" event-click="click">' +
+                  '<span class="title">{title}</span>' +
+                  '<!--{taskList}-->' +
+                '</div>',
 
-          satelliteConfig: {
-            taskList: {
-              dataSource: function(owner){
-                return owner.data.periodStart
-                  ? taskByDate.getSubset(owner.data.periodStart.toISODateString(), true)
-                  : null;
-              },
-              instanceOf: nsWrapper.TmplContainer.subclass({
-                childClass: nsWrapper(
-                  '<div>' +
-                    '<span>{this_data_Date}</span>' +
-                    '<div>{this_data_Text}</div>' +
-                  '</div>'
-                )
-              })
+              satelliteConfig: {
+                taskList: {
+                  dataSource: function(owner){
+                    return owner.data.periodStart
+                      ? taskByDate.getSubset(owner.data.periodStart.toISODateString(), true)
+                      : null;
+                  },
+                  instanceOf: nsWrapper.TmplContainer.subclass({
+                    childClass: nsWrapper(
+                      '<div>' +
+                        '<span>{this_data_Date}</span>' +
+                        '<div>{this_data_Text}</div>' +
+                      '</div>'
+                    )
+                  })
+                }
+              }
             }
-          }
-        }
-      }));
+          })
+        ]
+      });
 
       Task.all.sync([
         { Date: new Date(2011, 07, 05), Text: 'test1' },

@@ -1,0 +1,409 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf08" />
+  <title>Basis Indexes Playground</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../style/table/vista/style.css" media="screen" />
+
+
+  <script type="text/javascript" src="../basis.js"></script>
+  <script type="text/javascript" src="../data.js"></script>
+  <script type="text/javascript" src="../property.js"></script>
+  <script type="text/javascript" src="../data_index.js"></script>
+  <script type="text/javascript" src="../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../entity.js"></script>
+
+  <script type="text/javascript" src="../table.js"></script>
+
+  <style type="text/css">
+    .superbar
+    {
+      height: 10px;
+      background: #DDD;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="Layout"></div>
+
+  <script type="text/javascript">
+    var Class = Basis.Class;
+    var DOM = Basis.DOM;
+    
+    var nsData = Basis.Data;
+    var nsEntity = Basis.Entity;
+    var nsWrappers = DOM.Wrapper;
+    var DataObject = nsData.DataObject;
+    var Dataset = nsData.Dataset;
+    var Property = nsData.Property.Property;
+
+    var MapReduce = nsData.Dataset.MapReduce;
+    var KeyObjectMap = nsData.KeyObjectMap;
+
+    var TimeEventManager = Basis.TimeEventManager;
+
+    var Sum = nsData.Index.Sum;
+    var Avg = nsData.Index.Avg;
+    var Max = nsData.Index.Max;
+    var Min = nsData.Index.Min;
+    var Count = nsData.Index.Count; 
+
+    var TmplNode = nsWrappers.TmplNode;
+
+
+    var INDEXMAP_INDEX_HANDLER = {
+      change: function(value){
+        this.indexUpdated = true;
+        this.fireUpdate();
+      }
+    }
+
+    var IndexMap = Class(nsData.Dataset.MapReduce, {
+      calcs: null,
+      indexes: null,
+      timer_: null,
+      indexUpdated: null,
+      memberSourceMap: null,
+      keyMap: null,
+      init: function(config){
+        this.indexUpdated = false;
+
+        this.memberSourceMap = {};
+
+        var indexes = this.indexes;
+        this.indexes = {};
+        if (indexes)
+        {
+          for (var indexName in indexes)
+            this.addIndex(indexName, indexes[indexName]);
+        }
+
+        if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
+          this.keyMap = new KeyObjectMap(Object.complete({
+            create: function(key, config){
+              return new this.itemClass(config);
+            }
+          }, this.keyMap));
+
+        nsData.Dataset.MapReduce.prototype.init.call(this, config);
+      },
+
+      addIndex: function(name, index){
+        this.indexes[name] = index;
+        index.addHandler(this.listen.index, this);
+
+        if (this.source)
+          index.setDataSource(this.source);
+      },
+      removeIndex: function(){
+        delete this.indexes[name];
+        index.removeHandler(this.listen.index, this);
+      },
+
+      addCalc: function(name, calc){
+        this.calcs[name] = calc;
+        this.fireUpdate();
+      },
+      removeCalc: function(){
+        delete this.calcs[name];
+      },
+
+      map: function(item){
+        return this.keyMap.get(item, true);
+      },
+
+      addMemberRef: function(member, sourceObject){
+        this.memberSourceMap[member.eventObjectId] = sourceObject;
+        member.addHandler(this.listen.member, this);
+
+        if (member.subscriberCount > 0)
+          this.calcMember(member, sourceObject);
+      },
+      removeMemberRef: function(member, sourceObject){
+        delete this.memberSourceMap[member.eventObjectId];
+        member.removeHandler(this.listen.member, this);
+      },
+
+      event_sourceChanged: function(){
+        nsData.Dataset.MapReduce.prototype.event_sourceChanged.apply(this, arguments);
+        
+        for (var indexName in this.indexes)
+          this.indexes[indexName].setDataSource(this.source);
+      },
+
+      listen: {
+        sourceObject: {
+          update: function(object, delta){
+            nsData.Dataset.MapReduce.prototype.listen.sourceObject.update.call(this, object, delta);
+
+            object.updated = true;
+            this.fireUpdate();
+          }
+        },
+        index: INDEXMAP_INDEX_HANDLER,
+        member: {
+          subscribersChanged: function(object, oldCount){
+            if (object.subscriberCount > 0 && oldCount == 0)
+              this.calcMember(object, this.memberSourceMap[object.eventObjectId]);
+          }
+        }
+      },
+
+      fireUpdate: function(){
+        if (!this.timer_)
+        {
+          this.timer_ = true;
+          TimeEventManager.add(this, 'apply', Date.now());
+        }
+      },
+
+      calcMember: function(member, sourceObject){
+        if (member.subscriberCount && (sourceObject.updated || this.indexUpdated))
+        {
+          sourceObject.updated = false;
+
+          var data = {};
+          var newValue;
+          var update;
+          for (var calcName in this.calcs)
+          {
+            newValue = this.calcs[calcName](this.indexes, sourceObject);
+            if (member.data[calcName] !== newValue)
+            {
+              data[calcName] = newValue;
+              update = true;
+            }
+          }
+              
+          if (update)  
+          {
+            member.update(data);
+          }
+        }
+      },  
+
+      apply: function(){
+        for (var idx in this.sourceMap_)
+          this.calcMember(this.sourceMap_[idx].member, this.sourceMap_[idx].sourceObject);
+
+        this.indexUpdated = false;
+        this.timer_ = false;
+      },
+
+      getMember: function(sourceObject){
+        return this.keyMap.get(sourceObject, true);
+      }
+    });
+
+    /*var indexMap = new IndexMap({
+      source: tableData,
+      dataGetter: {
+        id: Function.getter('data.id'),
+        totalPercent: function(item){
+          return item.data.total / this.Sum('data.total');
+        }
+      }
+    });*/
+
+    /*var indexMap = new IndexMap({
+      source: tableData,
+      calcs: {
+        totalPercent: function(item){
+          return item.data.total / this.Sum('data.total');
+        }
+      }
+    });*/
+
+
+
+    /////////////
+
+    var Summary = new nsEntity.EntityType({
+      fields: {
+        id: nsEntity.IntId,
+        error: Number,
+        processing: Number,
+        total: Number,
+        avg: Number,
+        isActive: Number
+      }
+    })
+
+    var data = [
+      { id:  1, error:  12, processing:  1, total: 56, avg:  5, isActive: true  },
+      { id:  2, error:   2, processing:  4, total: 32, avg: 15, isActive: false },
+      { id:  3, error:  32, processing:  7, total: 22, avg: 33, isActive: true  }/*,
+      { id:  4, error:  44, processing:  2, total: 65, avg: 34, isActive: true },
+      { id:  5, error:  12, processing:  5, total: 87, avg: 12, isActive: true },
+      { id:  6, error:   3, processing:  3, total: 23, avg: 54, isActive: false },
+      { id:  7, error:   5, processing:  8, total: 89, avg: 23, isActive: true },
+      { id:  8, error:  45, processing: 12, total: 21, avg: 78, isActive: true },
+      { id:  9, error:  11, processing:  4, total: 90, avg:  7, isActive: true },
+      { id: 10, error:  10, processing:  2, total: 52, avg: 12, isActive: false },
+      { id: 11, error: 152, processing:  9, total: 17, avg: 23, isActive: true },
+      { id: 12, error:  54, processing:  6, total: 82, avg: 51, isActive: true },
+      { id: 13, error:  15, processing:  2, total: 10, avg: 67, isActive: false },
+      { id: 14, error:  32, processing:  3, total: 32, avg: 91, isActive: false },
+      { id: 15, error:  33, processing:  2, total: 44, avg: 45, isActive: true }*/
+    ].map(function(item){
+      Summary(item)
+    });
+
+
+    var im = new IndexMap({
+      indexes: {
+        sum: new Max({ valueGetter: Function.getter('data.total') })
+      },
+      calcs: {
+        percentOfMax: function(indexes, data){
+          return data.data.total/ indexes.sum.value;
+        }
+      }
+    });
+
+    var control = new Basis.Controls.Table.Table({
+      structure: [
+        {
+          header: 'id',
+          body: {
+            content: '{idText}'
+          }
+        },
+        {
+          header: 'error',
+          body: {
+            content: '{errorText}'
+          }
+        },
+        {
+          header: 'processing',
+          body: {
+            content: '{processingText}'
+          }
+        },
+        {
+          header: 'total',
+          body: {
+            content: '{totalText}{bar}'
+          }
+        },
+        {
+          header: 'avg',
+          body: {
+            content: '{avgText}'
+          }
+        },
+        {
+          header: 'isActive',
+          body: {
+            content: '{isActiveText}'
+          }
+        }
+      ],
+
+      childClass: {
+        satelliteConfig: {
+          bar: {
+            delegate: function(owner){
+              return im.getMember(owner);
+            },
+            instanceOf: TmplNode.subclass({
+              cssClassName: 'superbar',
+              active: true,
+              event_update: function(object, delta){
+                TmplNode.prototype.event_update.call(this, object, delta);
+
+                if ('percentOfMax' in delta)
+                  this.element.style.width = (100 * this.data.percentOfMax) + '%';
+              }
+            })
+          }
+        }
+      },
+
+      rowBehaviour: {
+        event_update: function(){
+          this.tmpl.idText.nodeValue = this.data.id;
+          this.tmpl.errorText.nodeValue = this.data.error;
+          this.tmpl.processingText.nodeValue = this.data.processing;
+          this.tmpl.totalText.nodeValue = this.data.total;
+          this.tmpl.avgText.nodeValue = this.data.avg;
+          this.tmpl.isActiveText.nodeValue = this.data.isActive ? 'true' : 'false';
+        }
+      },
+      container: 'Layout'
+    });
+
+
+    var tableData = new nsWrappers.ChildNodesDataset(control);
+
+    im.setSource(tableData);
+
+    control.setDataSource(Summary.all);
+
+    new nsWrappers.TmplContainer({
+      dataSource: im,
+      childClass: nsWrappers(
+        '<div class="row">{this_data_percentOfMax}</div>',
+        {
+          active: true
+        }
+      ),
+      container: 'Layout'
+    })
+
+
+    var errorSum = new Sum({
+      valueGetter: Function.getter('data.error'),
+      dataSource: tableData
+    });
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Error Sum: ', errorSum.addLink(DOM.createText())));
+
+    var totalSum = new Sum({
+      valueGetter: Function.getter('data.total'),
+      dataSource: tableData
+    });
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Total Sum: ', totalSum.addLink(DOM.createText())));
+
+    var avgAvg = new Avg({
+      valueGetter: Function.getter('data.avg'),
+      dataSource: tableData
+    });
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Avg avg: ', avgAvg.addLink(DOM.createText())));
+
+    var count = new Count({
+      dataSource: tableData
+    });
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Count: ', count.addLink(DOM.createText())));
+
+    var isActiveCount = new Count({
+      valueGetter: Function.getter('data.isActive'),
+      dataSource: tableData
+    });
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'isActive Count: ', isActiveCount.addLink(DOM.createText())));
+
+    var isNotActiveCount = new Count({
+      valueGetter: function(item){ return ! item.data.isActive },
+      dataSource: tableData
+    });
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'isNotActive Count: ', isNotActiveCount.addLink(DOM.createText())));
+
+    var totalMax = new Max({
+      valueGetter: Function.getter('data.total'),
+      dataSource: tableData
+    });
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Total Max: ', totalMax.addLink(DOM.createText())));
+
+    var totalMin = new Min({
+      valueGetter: Function.getter('data.total'),
+      dataSource: tableData
+    });
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Total Min: ', totalMin.addLink(DOM.createText()))); 
+    
+  </script>
+</body>
+</html>

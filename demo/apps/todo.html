@@ -52,6 +52,7 @@
     }
     .Basis-Calendar-SectionContent
     {
+      border: none;
       position: absolute;
       top: 40px;
       bottom: 0;
@@ -115,6 +116,13 @@
       color: #888;
       text-decoration: line-through;
     }
+    .taskList .deleteButton
+    {
+      color: #880000;
+      padding: 2px;
+      background: #FFF0F0;
+      margin-right: 2px;
+    }
     .Basis-Calendar-Node
     {
       padding: 0 !important;
@@ -171,8 +179,15 @@
   <script type="text/javascript" src="../../entity.js"></script>
   <script type="text/javascript" src="../../property.js"></script>
   <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../layout.js"></script>
+  <script type="text/javascript" src="../../tabs.js"></script>
   <script type="text/javascript" src="../../calendar.js"></script>
   <script type="text/javascript" src="../../locale/ru/calendar.js"></script>
+  <script type="text/javascript" src="../../dragdrop.js"></script>
+  <script type="text/javascript" src="../../window.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
+  <script type="text/javascript" src="../../form.js"></script>
+  <script type="text/javascript" src="../../locale/ru/form.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -197,8 +212,13 @@
       var nsWrapper = Basis.DOM.Wrapper;
       var nsEntity = Basis.Entity;
       var nsCalendar = Basis.Controls.Calendar;
+      var nsLayout = Basis.Layout;
 
-      Task = new nsEntity.EntityType({
+      //
+      // Data
+      //
+
+      var Task = new nsEntity.EntityType({
         name: 'Task',
         fields: {
           TaskId: nsEntity.NumberId,
@@ -215,10 +235,22 @@
         }
       });
 
+      var taskByDone = new nsData.Dataset.Split({
+        source: Task.all,
+        rule: function(task){
+          return task.data.IsDone;
+        }
+      });
+
+      //
+      // Classes
+      //
+
       var TaskNode = nsWrapper.TmplNode.subclass({
         template:
-          '<li event-click="invertDone">' +
-            '<input{idDone} type="checkbox"/>' +
+          '<li event-click="edit">' +
+            '<span class="deleteButton" event-click="destroy">delete</span>' +
+            '<input{isDone} type="checkbox" event-click="invertDone"/>' +
             '<span class="date">{date}</span>' +
             '{text}' +
           '</li>',
@@ -228,6 +260,12 @@
             this.update({
               IsDone: !this.data.IsDone
             });
+          },
+          edit: function(){
+            taskWindow.setDelegate(this.target);
+          },
+          destroy: function(){
+            this.target.destroy();
           }
         },
 
@@ -237,66 +275,185 @@
           this.tmpl.date.nodeValue = this.data.Date.toFormat('%D.%M.%Y');
           this.tmpl.text.nodeValue = this.data.Text;
 
-          this.tmpl.idDone.checked = this.data.IsDone;
+          this.tmpl.isDone.checked = this.data.IsDone;
           Basis.CSS.classList(this.element).bool('IsDone', this.data.IsDone);
         }
       });
 
-      var todoList = new nsWrapper.TmplContainer({
+      var TaskList = nsWrapper.TmplContainer.subclass({
         template:
-          '<div id="TodoListPanel">' +
-            '<div>panel</div>' +
-            '<ul{childNodesElement} class="taskList"/>' +
-          '</div>',
+          '<ul class="taskList"/>',
 
-        dataSource: Task.all,
-        localSorting: Function.getter('data.Date', Number),
         childClass: TaskNode
       });
 
-      var todoCalendar = new nsCalendar.Calendar({
-        sections: null
+      //
+      // Instances
+      //
+
+      var todoList = new TaskList({
+        localSorting: Function.getter('data.Date', Number)
       });
-      todoCalendar.appendChild(new nsCalendar.CalendarSection.Month({
-        selected: true,
-        viewDate: todoCalendar.date.value,
-        selectedDate: todoCalendar.selectedDate.value,
+
+      var todoTabs = new Basis.Controls.Tabs.TabControl({
         childClass: {
-          template:
-            '<div{element} class="Basis-Calendar-Node" event-click="click">' +
-              '<span class="title">{title}</span>' +
-              '<!--{taskList}-->' +
-            '</div>',
+          titleGetter: function(tab){
+            var title = tab.delegate === Task.all
+              ? 'All tasks'
+              : tab.data.title
+                ? 'Complete tasks'
+                : 'Uncomplete tasks';
+            return title + ' (' + (this.data.itemCount || 0) + ')';
+          },
+          listen: {
+            delegate: {
+              datasetChanged: function(dataset, delta){
+                this.update({
+                  itemCount: dataset.itemCount
+                });
+              }
+            }
+          }
+        },
 
-          satelliteConfig: {
-            taskList: {
-              dataSource: function(owner){
-                return owner.data.periodStart
-                  ? taskByDate.getSubset(owner.data.periodStart.toISODateString(), true)
-                  : null;
-              },
-              instanceOf: nsWrapper.TmplContainer.subclass({
-                template: 
-                  '<ul class="taskList"/>',
+        childNodes: [
+          Task.all,
+          taskByDone.getSubset(true, true),
+          taskByDone.getSubset(false, true)
+        ],
 
-                childClass: TaskNode
-              })
+        selection: {
+          handler: {
+            datasetChanged: function(dataset, delta){
+              var selected = this.pick();
+              if (selected)
+                todoList.setDataSource(selected.delegate);
             }
           }
         }
-      }));
+      });
+
+      var todoCalendar = new nsCalendar.Calendar({
+        sections: null,
+        childNodes: [
+          new nsCalendar.CalendarSection.Month({
+            childClass: {
+              template:
+                '<div{element} class="Basis-Calendar-Node" event-click="click">' +
+                  '<span class="title">{title}</span>' +
+                  '<!--{taskList}-->' +
+                '</div>',
+
+              satelliteConfig: {
+                taskList: {
+                  dataSource: function(owner){
+                    return taskByDate.getSubset(owner.data.periodStart.toISODateString(), true);
+                  },
+                  instanceOf: TaskList
+                }
+              }
+            }
+          })
+        ]
+      });
+
+      var taskForm = new Basis.Controls.Form.FormContent({
+        autoDelegateParent: true,
+        handler: {
+          targetChanged: function(){
+            if (this.target)
+              this.loadData(this.data);
+          }
+        },
+        childNodes: [
+          {
+            type: 'textarea',
+            name: 'Text'
+          }
+        ],
+        submit: function(){
+          this.update(this.serialize());
+        }
+      });
+
+      var taskWindow = new Basis.Controls.Window.Window({
+        title: 'Task editor',
+        childNodes: [
+          taskForm
+        ],
+        buttons: [
+          {
+            caption: 'OK',
+            click: function(){
+              taskForm.submit();
+              this.close();
+            }
+          },
+          {
+            caption: 'Cancel'/*,
+            click: function(){
+              if (!this.data.TaskId)
+                this.delegate.destroy();
+            }*/
+          }
+        ],
+        handler: {
+          delegateChanged: function(){
+            if (this.delegate)
+              this.open();
+            else
+              this.close();
+          },
+          close: function(){
+            this.setDelegate();
+          }
+        }
+      });
+
+      //
+      // App layout
+      //
+
+      DOM.insert('demo-container', [
+        (new nsLayout.VerticalPanelStack({
+          id: 'TodoListPanel',
+          childNodes: [
+            {
+              childNodes: [
+                new nsWrapper.TmplNode({
+                  id: 'AddTaskButton',
+                  template: '<button event-click="add">+</button>',
+                  action: {
+                    add: function(){
+                      taskWindow.setDelegate(Task({ Date: new Date() }));
+                    }
+                  }
+                }),
+                todoTabs
+              ]
+            },
+            {
+              flex: 1,
+              childNodes: todoList
+            }
+          ]
+        })).element,
+        todoCalendar.element
+      ]);
+
+      //
+      // Load test data
+      //
 
       Task.all.sync([
         { Date: new Date(2011, 07, 05), Text: 'test1' },
         { Date: new Date(2011, 07, 01), Text: 'test2', IsDone: true },
         { Date: new Date(2011, 08, 05), Text: 'test3' },
         { Date: new Date(2011, 07, 01), Text: 'test4' },
-        { Date: new Date(), Text: 'test5 asd asd asdasd asdasdasd' }
-      ])
-
-      DOM.insert('demo-container', [
-        todoList.element,
-        todoCalendar.element
+        { Date: new Date(), Text: 'test5 asd asd asdasd asdasdasd' },
+        { Date: new Date(2011, 07, 15), Text: 'test5' },
+        { Date: new Date(2011, 07, 03), Text: 'test6' },
+        { Date: new Date(2011, 07, 05), Text: 'test5 asd asd asdasd asdasdasd' }
       ]);
 
     });

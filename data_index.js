@@ -13,6 +13,9 @@
 
   'use strict';
 
+ /**
+  * @namespace Basis.Data.Index
+  */
   var namespace = 'Basis.Data.Index';
 
   var Class = Basis.Class;
@@ -170,101 +173,131 @@
     }
   });
 
+
   //
-  // Indexes
+  // IndexController
   //
 
-  var INDEX_CONTROLLER_DESTROY_HANDLER = {
-    destroy: function(object){
-      this.removeHandler(INDEX_CONTROLLER_DESTROY_HANDLER);
-      delete indexControlCache[this.dataSourceObjectId];
+  var getIndexController = (function(){
+    var cache = {};
+
+    var INDEX_CONTROLLER_DESTROY_HANDLER = {
+      destroy: function(object){
+        object.removeHandler(INDEX_CONTROLLER_DESTROY_HANDLER);
+        delete cache[this];
+      }
+    };
+
+    return function(dataSource){
+      var dataSourceId = dataSource.eventObjectId;
+      var controller = cache[dataSourceId];
+
+      if (!controller)
+      {
+        controller = cache[dataSourceId] = new IndexController({
+          dataSource: dataSource
+        });
+        controller.addHandler(INDEX_CONTROLLER_DESTROY_HANDLER, dataSourceId);
+      }
+
+      return controller;
     }
-  }
-  var indexControlCache = {};
-  function getIndexController(dataSource){
-    var objectId = dataSource.eventObjectId;
-    var controller = indexControlCache[objectId];
-    if (!controller)
-    {
-      controller = indexControlCache[objectId] = new IndexController({ dataSource: dataSource });
-      controller.dataSourceObjectId = objectId;
-      controller.addHandler(INDEX_CONTROLLER_DESTROY_HANDLER);
-    }
-    return controller;
-  }
+
+  })();
 
   var INDEX_ITEM_HANDLER = {
     update: function(object, delta){
+      var oldValue;
       var newValue;
-      var indexController = this.indexController;
-      for (var j = 0, index; index = indexController.indexes[j]; j++)
+      var objectId = object.eventObjectId;
+
+      for (var i = 0, index; index = this.indexes[i++];)
       {
-        newValue = index.valueGetter(this);
-        index.upd(this, newValue, indexController.indexValueMap[this.eventObjectId][index.eventObjectId]);
-        indexController.indexValueMap[this.eventObjectId][index.eventObjectId] = newValue;
+        // fetch oldValue
+        oldValue = index.indexCache_[objectId];
+
+        // calc new value
+        newValue = index.valueGetter(object);
+
+        // update if value has changed
+        if (newValue !== oldValue)
+        {
+          index.upd(object, newValue, oldValue);
+          index.indexCache_[objectId] = newValue;
+        }
       }
     }
-  }
+  };
 
   var INDEX_CONTROLLER_DATASOURCE_HANDLER = {
     datasetChanged: function(object, delta){
-      this.indexes.forEach(function(item){ item.lock() });
+      var object;
+      var index;
+      var objectId;
+      var newValue;
+
+      for (var j = 0; index = this.indexes[j++];)
+        index.lock();
       
       if (delta.inserted)
-      {
-        for (var i = 0, item; item = delta.inserted[i]; i++)
+        for (var i = 0; object = delta.inserted[i++];)
         {
-          item.addHandler(INDEX_ITEM_HANDLER, item);
-          item.indexController = this;
+          objectId = object.eventObjectId;
+          object.addHandler(INDEX_ITEM_HANDLER, this);
 
-          var newValue;
-          this.indexValueMap[item.eventObjectId] = {};
-          for (var j = 0, index; index = this.indexes[j]; j++)
+          for (var j = 0; index = this.indexes[j++];)
           {
-            newValue = index.valueGetter(item);
-            this.indexValueMap[item.eventObjectId][index.eventObjectId] = newValue;
-            index.add(item, newValue);
+            newValue = index.valueGetter(object);
+            index.indexCache_[objectId] = newValue;
+            index.add(object, newValue);
           }
         }
-      }
 
       if (delta.deleted)
-      {
-        for (var i = 0, item; item = delta.deleted[i]; i++)
+        for (var i = 0; object = delta.deleted[i++];)
         {
-          item.removeHandler(INDEX_ITEM_HANDLER, item);
-          delete item.indexController;
+          objectId = object.eventObjectId;
+          object.removeHandler(INDEX_ITEM_HANDLER, this);
           
-          for (var j = 0, index; index = this.indexes[j]; j++)
-            index.remove(item, this.indexValueMap[item.eventObjectId][index.eventObjectId]);
-
-          delete this.indexValueMap[item.eventObjectId];
+          for (var j = 0, index; index = this.indexes[j++];)
+          {
+            index.remove(object, index.indexCache_[objectId]);
+            delete index.indexCache_[objectId];
+          }
         }
-      }
 
-      this.indexes.forEach(function(item){ item.unlock() });       
+      for (var j = 0; index = this.indexes[j++];)
+        index.unlock();
     },
     destroy: function(){
-      this.dataSource = null;
       this.destroy();
     }
-  }
+  };
 
+ /**
+  * @class
+  */
   var IndexController = Class(DataObject, {
     indexes: null,
-    indexMap: null,
+
     init: function(config){
       this.indexes = [];
-      this.indexValueMap = {};
 
-      if (this.dataSource)
-        this.dataSource.addHandler(INDEX_CONTROLLER_DATASOURCE_HANDLER, this);
+      // always exists (add handlers to members)
+      this.dataSource.addHandler(INDEX_CONTROLLER_DATASOURCE_HANDLER, this);
+      INDEX_CONTROLLER_DATASOURCE_HANDLER.datasetChanged.call(this, this.dataSource, {
+        inserted: this.dataSource.getItems()
+      });
 
+      // inherit
       DataObject.prototype.init.call(this, config);
     },
     
-    addIndex: function(index){
-      this.indexes.push(index);
+   /**
+    * Add new index
+    */
+    add: function(index){
+      this.indexes.add(index);
 
       if (this.dataSource.itemCount)
       {
@@ -273,95 +306,147 @@
         
         index.lock()
 
-        for (var i = 0, item; item = items[i]; i++)
+        for (var i = 0, object; object = items[i]; i++)
         {
-          newValue = index.valueGetter(item);
-
-          if (!this.indexValueMap[item.eventObjectId])
-            this.indexValueMap[item.eventObjectId] = {};
-
-          this.indexValueMap[item.eventObjectId][index.eventObjectId] = newValue;
-          index.add(item, newValue);
+          newValue = index.valueGetter(object);
+          index.indexCache_[object.eventObjectId] = newValue;
+          index.add(object, newValue);
         }
 
         index.unlock();
       }
     },
     
-    removeIndex: function(index){
-      this.indexes.remove(index);
-      if (!this.indexes.length)
+   /**
+    * Remove index
+    */
+    remove: function(index){
+      if (this.indexes.remove(index))
       {
-        this.destroy();
-        return;
-      }
-
-      if (this.dataSource.itemCount)
-      {          
-        var items = this.dataSource.getItems();
-        for (var i = 0, item; item = items[i]; i++)
-          delete this.indexValueMap[item.eventObjectId][index.eventObjectId];
+        // if there is no more indexes -> destroy
+        if (!this.indexes.length)
+          this.destroy();
       }
     },
 
     destroy: function(){
-      this.indexes = null;
-      this.indexValueMap = null;
+      // clear indexes
+      var index;
+      while (index = this.indexes.pop())
+        index.setDataSource();  // drop dataSource for indexes
 
-      if (this.dataSource)
-      {
-        this.dataSource.removeHandler(INDEX_CONTROLLER_DATASOURCE_HANDLER, this);
-        this.dataSource = null;
-      }
+      // always exists (remove handlers from members)
+      this.dataSource.removeHandler(INDEX_CONTROLLER_DATASOURCE_HANDLER, this);
+      INDEX_CONTROLLER_DATASOURCE_HANDLER.datasetChanged.call(this, this.dataSource, {
+        deleted: this.dataSource.getItems()
+      });
+      this.dataSource = null;
 
+      // inherit
       DataObject.prototype.destroy.call(this);
     }
   });
 
+
+ /**
+  * Base class for indexes.
+  * @class
+  */
   var Index = Class(Property, {
     extendConstructor_: true,
 
-    valueGetter: Function.$null,
-    
-    add: Function.$undefined,
-    remove: Function.$undefined,
-    upd: Function.$undefined,
+    autoDestroy: true,
 
+   /**
+    * @type {function(object):any}
+    */
+    valueGetter: Function.$null,
+
+   /**
+    * @type {Basis.Data.AbstractDataset}
+    */
+    dataSource: null,
+    
+   /**
+    * @constructor
+    */
     init: function(config){
       Property.prototype.init.call(this, this.value || 0);
 
-      if (this.dataSource){
-        var dataSource = this.dataSource;
+      var dataSource = this.dataSource;
+      if (dataSource)
+      {
         this.dataSource = null;
         this.setDataSource(dataSource);
       }
     },
 
+   /**
+    * Set data source
+    * @param {Basis.Data.AbstractDataset} dataSource
+    */
     setDataSource: function(dataSource){
-      if (this.dataSource && this.dataSource != dataSource)
-      {
-        this.indexController.removeIndex(this);
-        this.indexController = null;
-        this.dataSource = null;
-        this.reset();
-      }
+      if (dataSource instanceof AbstractDataset == false)
+        dataSource = null;
 
-      if (dataSource && this.dataSource != dataSource)
+      if (this.dataSource !== dataSource)
       {
+        var oldDataSource = this.dataSource;
         this.dataSource = dataSource;
-        this.indexController = getIndexController(dataSource);
-        this.indexController.addIndex(this);
+
+        if (oldDataSource)
+        {
+          this.indexCache_ = null;
+          getIndexController(oldDataSource).remove(this);
+          this.reset();  // Q: should we avoid unnecessary updates?
+        }
+
+        if (dataSource)
+        {
+          this.indexCache_ = {};
+          getIndexController(dataSource).add(this);
+        }
+        else
+        {
+          if (this.autoDestroy)
+            this.destroy();
+        }
+
+        // data source changed event?
       }
     },
 
+   /**
+    * Add value to index
+    */
+    add: function(item, value){
+    },
+   /**
+    * Remove value to index
+    */
+    remove: function(item, value){
+    },
+
+   /**
+    * Change value
+    */
+    upd: function(item, newValue, oldValue){
+    },
+
+   /**
+    * @destructor
+    */
     destroy: function(){
       Property.prototype.destroy.call(this);
 
-      this.indexController.removeIndex(this);
-      this.indexController = null;
+      // drop datasource
+      this.setDataSource();
     }
   });
 
+ /**
+  * @class
+  */
   var Sum = Class(Index, {
     add: function(item, value){
       this.value += value;
@@ -374,46 +459,51 @@
     }
   });
 
+ /**
+  * @class
+  */
   var Avg = Class(Index, {
-    init: function(config){
-      this.sum = 0;
-      this.count = 0;
-      Index.prototype.init.call(this, config);
-    },
+    sum_: 0,
+    count_: 0,
+
     add: function(item, value){
-      this.sum += value;
-      this.count++;
-      this.value = this.sum / this.count;
+      this.sum_ += value;
+      this.count_ += 1;
+      this.value = this.sum_/this.count_;
     },
     remove: function(item, value){
-      this.sum -= value;
-      this.count--;
-      this.value = this.count ? this.sum/this.count : 0;
+      this.sum_ -= value;
+      this.count_ -= 1;
+      this.value = this.count_ ? this.sum_/this.count_ : 0;
     },
     upd: function(item, newValue, oldValue){
-      this.sum += newValue - oldValue;
-      this.set(this.sum / this.count);
+      this.sum_ += newValue - oldValue;
+      this.set(this.sum_/this.count_);
     }
   });
 
+ /**
+  * @class
+  */
   var Count = Class(Index, {
     valueGetter: Function.$true,
     add: function(item, value){
       if (value)
-        this.value++;
+        this.value += 1;
     },
     remove: function(item, value){
       if (value)
-        this.value--;
+        this.value -= 1;
     },
     upd: function(item, newValue, oldValue){
-      if (newValue != oldValue)
-        this.set(this.value + (newValue ? 1 : -1));
+      this.set(this.value + (newValue ? 1 : -1));
     }
   });
 
+ /**
+  * @class
+  */
   var Max = Class(Index, {
-    sortFunction: function(a, b) { return b-a },
     init: function(config){
       this.stack = [];
       Index.prototype.init.call(this, config);
@@ -433,6 +523,9 @@
     }
   });
 
+ /**
+  * @class
+  */
   var Min = Class(Index, {
     init: function(config){
       this.stack = [];

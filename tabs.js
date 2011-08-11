@@ -94,7 +94,7 @@
     //
 
     function tabCaptionFormat(value){ 
-      return value == null || value == '' ? '[no title]' : value;
+      return value == null || String(value) == '' ? '[no title]' : value;
     };
 
    /**

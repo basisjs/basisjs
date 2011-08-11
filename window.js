@@ -153,10 +153,11 @@
 
       closeOnEscape: true,
 
-      autocenter: false,
+      autocenter: true,
       autocenter_: false,
       modal: false,
       closed: true,
+      moveable: true,
 
       title: '[no title]',
 
@@ -216,7 +217,7 @@
         // buttons
         var buttons = Array.from(this.buttons).map(function(button){
           return Object.complete({
-            click: button.click ? button.click.bind(this) : button.click
+            click: (button.click || this.close).bind(this)
           }, button);
         }, this);
 
