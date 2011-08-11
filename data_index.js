@@ -304,7 +304,7 @@
         var newValue;
         var items = this.dataSource.getItems();
         
-        index.lock()
+        index.lock();
 
         for (var i = 0, object; object = items[i]; i++)
         {

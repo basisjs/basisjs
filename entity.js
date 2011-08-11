@@ -938,7 +938,7 @@
         {
           if (key in data)
           {
-            delta[key] = this.data[key];
+            delta[key] = defaults[key];
             value = fields[key](data[key]);
           }
           else
