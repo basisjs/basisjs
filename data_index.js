@@ -27,8 +27,6 @@
   // IndexedDataset
   //
 
-  debugger;
-
   function binarySearchPos(array, map){ 
     if (!array.length)  // empty array check
       return 0;
