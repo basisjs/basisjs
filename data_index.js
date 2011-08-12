@@ -22,6 +22,7 @@
   
   var nsData = Basis.Data;
   var DataObject = nsData.DataObject;
+  var KeyObjectMap = nsData.KeyObjectMap;
   var Property = nsData.Property.Property;
 
   var AbstractDataset = nsData.AbstractDataset;
@@ -556,8 +557,8 @@
     memberSourceMap: null,
     keyMap: null,
 
-    event_sourceChanged: function(){
-      MapReduce.prototype.event_sourceChanged.apply(this, arguments);
+    event_sourceChanged: function(dataset, oldSource){
+      MapReduce.prototype.event_sourceChanged.call(this, dataset, oldSource);
       
       for (var indexName in this.indexes)
         this.indexes[indexName].setDataSource(this.source);
@@ -568,20 +569,27 @@
         update: function(object, delta){
           MapReduce.prototype.listen.sourceObject.update.call(this, object, delta);
 
-          object.updated = true;
+          this.stat.sourceObjectUpdate++;
+          this.sourceMap_[object.eventObjectId].updated = true;
           this.fireUpdate();
         }
       },
       index: {
         change: function(value){
-          this.indexUpdated = true;
-          this.fireUpdate();
+          this.context.indexValues[this.key] = value;
+          this.context.stat.indexUpdate++;
+          this.context.indexUpdated = true;
+          this.context.fireUpdate();
         }
       },
       member: {
         subscribersChanged: function(object, oldCount){
+          this.stat.subscribersChanged ++;
           if (object.subscriberCount > 0 && oldCount == 0)
+          {
+            this.stat.subscribersChangedSucc ++;
             this.calcMember(object);
+          }
         }
       }
     },
@@ -591,7 +599,7 @@
     },
 
     addMemberRef: function(member, sourceObject){
-      this.memberSourceMap[member.eventObjectId] = sourceObject;
+      this.memberSourceMap[member.eventObjectId] = sourceObject.eventObjectId;
       member.addHandler(this.listen.member, this);
 
       if (member.subscriberCount > 0)
@@ -605,15 +613,14 @@
 
     init: function(config){
       this.indexUpdated = false;
+      this.indexesBind_ = {};
       this.memberSourceMap = {};
 
       var indexes = this.indexes;
       this.indexes = {};
-      if (indexes)
-      {
-        for (var indexName in indexes)
-          this.addIndex(indexName, indexes[indexName]);
-      }
+
+      this.calcs = this.calcs || {};
+      this.indexValues = {};
 
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
         this.keyMap = new KeyObjectMap(Object.complete({
@@ -622,20 +629,50 @@
           }
         }, this.keyMap));
 
+      this.stat = {
+        applyCount: 0,
+        indexUpdate: 0,
+        tryCalcMember: 0,
+        tryUpdateMember: 0,
+        calcCount: 0,
+        updateMember: 0,
+        fireUpdate: 0,
+        fireUpdateSucc: 0,
+        subscribersChanged: 0,
+        subscribersChangedSucc: 0,
+        update: 0,
+        sourceObjectUpdate: 0
+      };
+
       MapReduce.prototype.init.call(this, config);
+
+      Object.iterate(indexes, this.addIndex, this);
     },
 
-    addIndex: function(name, index){
-      this.indexes[name] = index;
-      index.addHandler(this.listen.index, this);
+    addIndex: function(key, index){
+      if (!this.indexes[key])
+      {
+        this.indexes[key] = index;
+        this.indexValues[key] = index.value;
+        this.indexesBind_[key] = {
+          key: key,
+          context: this
+        };
+        index.addHandler(this.listen.index, this.indexesBind_[key]);
 
-      if (this.source)
-        index.setDataSource(this.source);
+        if (this.source)
+          index.setDataSource(this.source);
+      }
+      /** @cut */else if (typeof console != 'undefined') console.warn('Index `{0}` already exists'.format(key));
     },
 
-    removeIndex: function(indexName){
-      this.indexes[indexName].removeHandler(this.listen.index, this);
-      delete this.indexes[indexName];
+    removeIndex: function(key){
+      if (this.indexes[key])
+      {
+        delete this.indexValues[key];
+        this.indexes[key].removeHandler(this.listen.index, this.indexesBind_[key]);
+        delete this.indexes[key];
+      }
     },
 
     addCalc: function(name, calc){
@@ -648,14 +685,17 @@
     },
 
     fireUpdate: function(){
+      this.stat.fireUpdate++;
       if (!this.timer_)
       {
+        this.stat.fireUpdateSucc++;
         this.timer_ = true;
-        TimeEventManager.add(this, 'apply', Date.now());
+        Basis.TimeEventManager.add(this, 'apply', Date.now());
       }
     },
 
     apply: function(){
+      this.stat.applyCount++;
       for (var idx in this.item_)
         this.calcMember(this.item_[idx]);
 
@@ -664,9 +704,11 @@
     },
 
     calcMember: function(member){
-      var sourceObject = this.memberSourceMap[member.eventObjectId];
+      this.stat.tryCalcMember++;
+      var sourceObject = this.sourceMap_[this.memberSourceMap[member.eventObjectId]];
       if (member.subscriberCount && (sourceObject.updated || this.indexUpdated))
       {
+        this.stat.tryUpdateMember++;
         sourceObject.updated = false;
 
         var data = {};
@@ -674,8 +716,9 @@
         var update;
         for (var calcName in this.calcs)
         {
-          newValue = this.calcs[calcName](this.indexes, sourceObject);
-          if (member.data[calcName] !== newValue)
+          this.stat.calcCount++;
+          newValue = this.calcs[calcName](sourceObject.sourceObject.data, this.indexValues);
+          if (member.data[calcName] !== newValue && (!isNaN(newValue) || !isNaN(member.data[calcName])))
           {
             data[calcName] = newValue;
             update = true;
@@ -683,7 +726,10 @@
         }
             
         if (update)  
+        {
+          this.stat.updateMember++;
           member.update(data);
+        }
       }
     },  
 
@@ -692,10 +738,11 @@
     },
 
     destroy: function(){
-      this.timer = null;
+      this.timer_ = null;
       this.calcs = null;
       this.indexUpdated = null;
       this.memberSourceMap = null;
+      this.indexesBind_ = null;
 
       this.keyMap.destroy();
       this.keyMap = null;

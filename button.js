@@ -143,4 +143,11 @@
     ButtonPanel: ButtonPanel
   });
 
+  // new naming
+
+  Basis.namespace('basis.ui').extend({
+    Button: Button,
+    ButtonPanel: ButtonPanel
+  });
+
 })();

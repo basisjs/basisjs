@@ -282,7 +282,8 @@
     * @type {Basis.Html.Template}
     * @private
     */
-    template: '<ul class="Basis-Tree"/>'
+    template:
+      '<ul class="Basis-Tree"/>'
   });
 
   //
@@ -296,5 +297,20 @@
     TreeGroupingNode: TreeGroupingNode,
     TreePartitionNode: TreePartitionNode
   });
+
+  // new naming
+
+  Basis.namespace('basis.ui').extend({
+    Tree: Tree
+  });
+
+  Basis.namespace('basis.ui.tree').extend({
+    Tree: Tree,
+    Node: TreeNode,
+    Folder: TreeFolder,
+    GroupingNode: TreeGroupingNode,
+    PartitionNode: TreePartitionNode
+  });
+
 
 })();

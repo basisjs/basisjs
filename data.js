@@ -2401,4 +2401,40 @@
     Grouping: Split
   });
 
+  // new naming
+
+  Basis.namespace('basis.data').extend({
+   /**
+    * @enum {string}
+    */
+    STATE: {
+      UNDEFINED: STATE_UNDEFINED,
+      READY: STATE_READY,
+      PROCESSING: STATE_PROCESSING,
+      ERROR: STATE_ERROR,
+      DEPRECATED: STATE_DEPRECATED
+    },
+
+    Subscription: Subscription,
+
+    // classes
+    Object: DataObject,
+
+    KeyObjectMap: KeyObjectMap,
+
+    AbstractDataset: AbstractDataset,
+    Dataset: Dataset
+  });
+
+  Basis.namespace('basis.data.dataset').extend({
+    // operable datasets
+    Merge: Merge,
+    Subtract: Subtract,
+
+    // transform dataset
+    MapReduce: MapReduce,
+    Subset: Subset,
+    Split: Split
+  });
+
 })();

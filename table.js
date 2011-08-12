@@ -55,68 +55,11 @@
     var HEADERCELL_CSS_SORTABLE = 'sortable';
     var HEADERCELL_CSS_SORTDESC = 'sort-order-desc';
 
-   /**
-    * @class
-    */
-
-    var HeaderCell = Class(TmplNode, {
-      className: namespace + '.HeaderCell',
-
-      sorting: null,
-      defaultOrder: false,
-      groupId: 0,
-
-      template: new Template(
-        '<th{element|selected} class="Basis-Table-Header-Cell" event-click="click">' +
-          '<div class="Basis-Table-Sort-Direction"/>' +
-          '<div class="Basis-Table-Header-Cell-Content">' + 
-            '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
-          '</div>' +
-        '</th>'
-      ),
-
-      templateAction: function(actionName, event){
-        if (actionName == 'click')
-        {
-          if (this.selected)
-          {
-            if (this.owner)
-              this.owner.setLocalSorting(this.owner.localSorting, !this.owner.localSortingDesc);
-          }
-          else
-            this.select();         
-        }
-
-        TmplNode.prototype.templateAction.call(this, actionName, event);
-      },
-
-      init: function(config){
-        this.selectable = !!this.sorting;
-        
-        TmplNode.prototype.init.call(this, config);
-
-        //DOM.insert(this.content, config.content || '');
-        
-        if (this.sorting)
-        {
-          this.defaultOrder = this.defaultOrder == 'desc';
-
-          classList(this.element).add(HEADERCELL_CSS_SORTABLE);
-        }
-      },
-      select: function(){
-        if (!this.selected)
-          this.order = this.defaultOrder;
-
-        TmplNode.prototype.select.call(this);
-      }
-    });
-
     //
     // Table Header Grouping
     //
 
-    var HeaderGroupCell = Basis.Class(nsWrappers.TmplNode, {
+    var HeaderPartitionNode = Basis.Class(nsWrappers.TmplNode, {
       template: new Template(
         '<th{element|selected} class="Basis-Table-Header-Cell">' +
           '<div class="Basis-Table-Sort-Direction"></div>' +
@@ -131,23 +74,7 @@
       }
     });
 
-    var TableHeaderGroupingClass = Basis.Class(GroupingNode, {
-      init: function(config){
-        GroupingNode.prototype.init.call(this, config);
-        this.headerRow = DOM.createElement('tr.Basis-Table-Header-GroupContent');
-      },
-      insertBefore: function(newChild, refChild){
-        var newChild = GroupingNode.prototype.insertBefore.call(this, newChild, refChild);
-
-        var refElement = newChild.nextSibling && newChild.nextSibling.cell.element;
-        DOM.insert(this.headerRow, newChild.cell.element, DOM.INSERT_BEFORE, refElement);
-
-        return newChild;
-      },
-      removeChild: function(oldChild){
-        DOM.remove(oldChild.cell.element);
-        GroupingNode.prototype.removeChild.call(oldChild);
-      },
+    var HeaderGroupingNode = Basis.Class(GroupingNode, {
       event_ownerChanged: function(node, oldOwner){
         if (oldOwner)
           DOM.remove(this.headerRow);
@@ -164,10 +91,11 @@
         
         GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
       },
+
       childClass: {
         init: function(config){
           PartitionNode.prototype.init.call(this, config);
-          this.cell = new HeaderGroupCell({ titleGetter: this.titleGetter, delegate: this });
+          this.cell = new HeaderPartitionNode({ titleGetter: this.titleGetter, delegate: this });
         },
         event_childNodesModified: function(object, delta){
           var colSpan = 0;
@@ -190,45 +118,93 @@
           this.cell.destroy();
         }
       },
+
+      init: function(config){
+        GroupingNode.prototype.init.call(this, config);
+        this.element = this.childNodesElement = this.headerRow = DOM.createElement('tr.Basis-Table-Header-GroupContent');
+      },
+      insertBefore: function(newChild, refChild){
+        var newChild = GroupingNode.prototype.insertBefore.call(this, newChild, refChild);
+
+        var refElement = newChild.nextSibling && newChild.nextSibling.cell.element;
+        DOM.insert(this.headerRow, newChild.cell.element, DOM.INSERT_BEFORE, refElement);
+
+        return newChild;
+      },
+      removeChild: function(oldChild){
+        DOM.remove(oldChild.cell.element);
+        GroupingNode.prototype.removeChild.call(oldChild);
+      },
       destroy: function(){
         GroupingNode.prototype.destroy.call(this);
         this.headerRow = null;
       }
     });
-    TableHeaderGroupingClass.prototype.localGroupingClass = TableHeaderGroupingClass;
+    HeaderGroupingNode.prototype.localGroupingClass = HeaderGroupingNode;
 
    /**
     * @class
     */
 
+    var HeaderCell = Class(TmplNode, {
+      className: namespace + '.HeaderCell',
+
+      sorting: null,
+      defaultOrder: false,
+      groupId: 0,
+
+      template: new Template(
+        '<th{element|selected} class="Basis-Table-Header-Cell" event-click="click">' +
+          '<div class="Basis-Table-Sort-Direction"/>' +
+          '<div class="Basis-Table-Header-Cell-Content">' + 
+            '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
+          '</div>' +
+        '</th>'
+      ),
+
+      action: {
+        click: function(event){
+          if (this.selected)
+          {
+            var owner = this.parentNode && this.parentNode.owner;
+            if (owner)
+              owner.setLocalSorting(owner.localSorting, !owner.localSortingDesc);
+          }
+          else
+            this.select();         
+        }
+      },
+
+      init: function(config){
+        TmplNode.prototype.init.call(this, config);
+
+        //DOM.insert(this.content, config.content || '');
+
+        this.selectable = !!this.sorting;
+        if (this.sorting)
+        {
+          this.sorting = Function.getter(this.sorting);
+          this.defaultOrder = this.defaultOrder == 'desc';
+          classList(this.element).add(HEADERCELL_CSS_SORTABLE);
+        }
+      },
+      select: function(){
+        if (!this.selected)
+          this.order = this.defaultOrder;
+
+        TmplNode.prototype.select.call(this);
+      }
+    });
+
+   /**
+    * @class
+    */
     var Header = Class(TmplContainer, {
       className: namespace + '.Header',
 
       childClass: HeaderCell,
 
-      localGroupingClass: TableHeaderGroupingClass,
-      /*localGroupingClass: nsWrappers.GroupingNode,
-
-      localGroupingClass: Class(TmplGroupingNode, {
-        className: namespace + '.HeaderGroupingNode',
-
-        childClass: Class(TmplPartitionNode, {
-          className: namespace + '.HeaderPartitionNode',
-
-          event_childNodesModified: function(){
-            this.element.colSpan = this.nodes.length;
-          },
-
-          template: new Template(
-            '<th{element|selected} class="Basis-Table-Header-Cell">' +
-              '<div class="Basis-Table-Sort-Direction" />' +
-              '<div class="Basis-Table-Header-Cell-Content">' + 
-                '<span{content} class="Basis-Table-Header-Cell-Title">{titleText}</span>' +
-              '</div>' +
-            '</th>'
-          )
-        })
-      }),*/
+      localGroupingClass: HeaderGroupingNode,
 
       template: new Template(
         '<thead{element} class="Basis-Table-Header">' +
@@ -237,72 +213,58 @@
         '</thead>'
       ),
 
+      listen: {
+        owner: {
+          localSortingChanged: function(owner){
+            var cell = this.childNodes.search(owner.localSorting, 'sorting');
+            if (cell)
+            {
+              cell.select();
+              cell.order = owner.localSortingDesc;
+              classList(this.tmpl.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
+            }
+            else
+              this.selection.clear();
+          }
+        }
+      },
+
       init: function(config){
         this.selection = {
           owner: this,
-          event_datasetChanged: function(dataset, delta){
-            this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
-
-            var cell = this.pick();
-            if (cell && this.owner.owner)
-              this.owner.owner.setLocalSorting(cell.sorting, cell.order);
+          handlerContext: this,
+          handler: {
+            datasetChanged: function(dataset, delta){
+              var cell = dataset.pick();
+              if (cell && this.owner)
+                this.owner.setLocalSorting(cell.sorting, cell.order);
+            }
           }
         };
 
         TmplContainer.prototype.init.call(this, config);
 
         this.applyConfig_(this.structure)
-
-        // add event handlers
-        if (this.owner)
-        {
-          this.owner.addHandler({
-            localSortingChanged: function(owner){
-              var cell = this.childNodes.search(owner.localSorting, 'sorting');
-              if (cell)
-              {
-                cell.select();
-                cell.order = owner.localSortingDesc;
-                classList(this.tmpl.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
-              }
-              else
-                this.selection.clear();
-            }
-          }, this);
-        }
       },
       applyConfig_: function(structure){
         if (structure)
         {
-          this.clear();
-
-          for (var i = 0; i < structure.length; i++)
-          {
-            var colConfig = structure[i];
+          this.setChildNodes(structure.map(function(colConfig){
             var headerConfig = colConfig.header;
-            
-            if (headerConfig == null || typeof headerConfig == 'string')
-              headerConfig = {
-                content: headerConfig || String.Entity.nbsp
-              };
+            var config = Object.slice(colConfig, ['sorting', 'defaultOrder', 'groupId']);
 
-            var content = headerConfig.content;
-            this.appendChild({
-              content: typeof content == 'function' ? content.call(this) : content,
-              sorting: colConfig.sorting,
-              defaultOrder: colConfig.defaultOrder,
-              groupId: colConfig.groupId,
-              cssClassName: {
-                element: (headerConfig.cssClassName || '') + ' ' + (colConfig.cssClassName || '')
-              }
-            });
-          }
+            config.content = (headerConfig == null || typeof headerConfig != 'object'
+              ? headerConfig 
+              : headerConfig.content) || String.Entity.nbsp;
+
+            if (typeof config.content == 'function')
+              config.content = config.content.call(this);
+
+            config.cssClassName = (headerConfig.cssClassName || '') + ' ' + (colConfig.cssClassName || '');
+
+            return config;
+          }, this));
         }
-      },
-      destroy: function(){
-        this.owner = null;
-
-        TmplContainer.prototype.destroy.call(this);
       }
     });
 
@@ -548,7 +510,8 @@
           var updaters = new Array();
           var template = '';
 
-          this.clear();
+          if (this.firstChild)
+            this.clear();
 
           for (var i = 0; i < structure.length; i++)
           {
@@ -617,6 +580,21 @@
     //
 
     Basis.namespace(namespace).extend({
+      Table: Table,
+      Body: Body,
+      Header: Header,
+      HeaderCell: HeaderCell,
+      Row: Row,
+      Footer: Footer
+    });
+
+    // new naming
+
+    Basis.namespace('basis.ui').extend({
+      Table: Table
+    });
+
+    Basis.namespace('basis.ui.table').extend({
       Table: Table,
       Body: Body,
       Header: Header,
