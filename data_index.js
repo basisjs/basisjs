@@ -25,6 +25,7 @@
   var Property = nsData.Property.Property;
 
   var AbstractDataset = nsData.AbstractDataset;
+  var MapReduce = nsData.Dataset.MapReduce;
 
   //
   // IndexedDataset
@@ -353,8 +354,6 @@
   * @class
   */
   var Index = Class(Property, {
-    extendConstructor_: true,
-
     autoDestroy: true,
 
    /**
@@ -370,15 +369,13 @@
    /**
     * @constructor
     */
-    init: function(config){
+    init: function(valueGetter, dataSource){
       Property.prototype.init.call(this, this.value || 0);
 
-      var dataSource = this.dataSource;
+      this.valueGetter = Function.getter(valueGetter);
+
       if (dataSource)
-      {
-        this.dataSource = null;
         this.setDataSource(dataSource);
-      }
     },
 
    /**
@@ -504,9 +501,9 @@
   * @class
   */
   var Max = Class(Index, {
-    init: function(config){
+    init: function(valueGetter, dataSource){
       this.stack = [];
-      Index.prototype.init.call(this, config);
+      Index.prototype.init.call(this, valueGetter, dataSource);
     },
     add: function(item, value){
       this.stack.splice(this.stack.binarySearchPos(value), 0, value);
@@ -527,9 +524,9 @@
   * @class
   */
   var Min = Class(Index, {
-    init: function(config){
+    init: function(valueGetter, dataSource){
       this.stack = [];
-      Index.prototype.init.call(this, config);
+      Index.prototype.init.call(this, valueGetter, dataSource);
     },
     add: function(item, value){
       this.stack.splice(this.stack.binarySearchPos(value), 0, value);
@@ -547,6 +544,170 @@
   });
 
 
+ /**
+  * @class
+  */
+
+  var IndexMap = Class(MapReduce, {
+    calcs: null,
+    indexes: null,
+    timer_: null,
+    indexUpdated: null,
+    memberSourceMap: null,
+    keyMap: null,
+
+    event_sourceChanged: function(){
+      MapReduce.prototype.event_sourceChanged.apply(this, arguments);
+      
+      for (var indexName in this.indexes)
+        this.indexes[indexName].setDataSource(this.source);
+    },
+
+    listen: {
+      sourceObject: {
+        update: function(object, delta){
+          MapReduce.prototype.listen.sourceObject.update.call(this, object, delta);
+
+          object.updated = true;
+          this.fireUpdate();
+        }
+      },
+      index: {
+        change: function(value){
+          this.indexUpdated = true;
+          this.fireUpdate();
+        }
+      },
+      member: {
+        subscribersChanged: function(object, oldCount){
+          if (object.subscriberCount > 0 && oldCount == 0)
+            this.calcMember(object);
+        }
+      }
+    },
+
+    map: function(item){
+      return this.keyMap.get(item, true);
+    },
+
+    addMemberRef: function(member, sourceObject){
+      this.memberSourceMap[member.eventObjectId] = sourceObject;
+      member.addHandler(this.listen.member, this);
+
+      if (member.subscriberCount > 0)
+        this.calcMember(member);
+    },
+
+    removeMemberRef: function(member, sourceObject){
+      delete this.memberSourceMap[member.eventObjectId];
+      member.removeHandler(this.listen.member, this);
+    },
+
+    init: function(config){
+      this.indexUpdated = false;
+      this.memberSourceMap = {};
+
+      var indexes = this.indexes;
+      this.indexes = {};
+      if (indexes)
+      {
+        for (var indexName in indexes)
+          this.addIndex(indexName, indexes[indexName]);
+      }
+
+      if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
+        this.keyMap = new KeyObjectMap(Object.complete({
+          create: function(key, config){
+            return new this.itemClass(config);
+          }
+        }, this.keyMap));
+
+      MapReduce.prototype.init.call(this, config);
+    },
+
+    addIndex: function(name, index){
+      this.indexes[name] = index;
+      index.addHandler(this.listen.index, this);
+
+      if (this.source)
+        index.setDataSource(this.source);
+    },
+
+    removeIndex: function(indexName){
+      this.indexes[indexName].removeHandler(this.listen.index, this);
+      delete this.indexes[indexName];
+    },
+
+    addCalc: function(name, calc){
+      this.calcs[name] = calc;
+      this.fireUpdate();
+    },
+
+    removeCalc: function(){
+      delete this.calcs[name];
+    },
+
+    fireUpdate: function(){
+      if (!this.timer_)
+      {
+        this.timer_ = true;
+        TimeEventManager.add(this, 'apply', Date.now());
+      }
+    },
+
+    apply: function(){
+      for (var idx in this.item_)
+        this.calcMember(this.item_[idx]);
+
+      this.indexUpdated = false;
+      this.timer_ = false;
+    },
+
+    calcMember: function(member){
+      var sourceObject = this.memberSourceMap[member.eventObjectId];
+      if (member.subscriberCount && (sourceObject.updated || this.indexUpdated))
+      {
+        sourceObject.updated = false;
+
+        var data = {};
+        var newValue;
+        var update;
+        for (var calcName in this.calcs)
+        {
+          newValue = this.calcs[calcName](this.indexes, sourceObject);
+          if (member.data[calcName] !== newValue)
+          {
+            data[calcName] = newValue;
+            update = true;
+          }
+        }
+            
+        if (update)  
+          member.update(data);
+      }
+    },  
+
+    getMember: function(sourceObject){
+      return this.keyMap.get(sourceObject, true);
+    },
+
+    destroy: function(){
+      this.timer = null;
+      this.calcs = null;
+      this.indexUpdated = null;
+      this.memberSourceMap = null;
+
+      this.keyMap.destroy();
+      this.keyMap = null;
+
+      for (var indexName in this.indexes)
+        this.removeIndex(indexName);
+
+      MapReduce.prototype.destroy.call(this);
+    }
+  });
+
+
 
   //
   // export names
@@ -559,7 +720,8 @@
     Avg: Avg,
     Count: Count,
     Max: Max,
-    Min: Min
+    Min: Min,
+    IndexMap: IndexMap
   });
 
 })();

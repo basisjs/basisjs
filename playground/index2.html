@@ -51,28 +51,33 @@
     var Max = nsData.Index.Max;
     var Min = nsData.Index.Min;
     var Count = nsData.Index.Count; 
+    var IndexMap = nsData.Index.IndexMap;
 
     var TmplNode = nsWrappers.TmplNode;
 
 
-    var INDEXMAP_INDEX_HANDLER = {
-      change: function(value){
-        this.indexUpdated = true;
-        this.fireUpdate();
-      }
-    }
-
-    var IndexMap = Class(nsData.Dataset.MapReduce, {
-      calcs: null,
-      indexes: null,
+    var IndexObject = Class(DataObject, {
       timer_: null,
-      indexUpdated: null,
-      memberSourceMap: null,
-      keyMap: null,
-      init: function(config){
-        this.indexUpdated = false;
 
-        this.memberSourceMap = {};
+      listen: {
+        index: {
+          change: function(){
+            this.fireApply();
+          }
+        }
+      },
+      
+      event_subscribersChanged: function(object, oldCount){
+        DataObject.prototype.event_subscribersChanged.call(this, object, oldCount);
+
+        if (this.subscriberCount > 0 && oldCount == 0)
+          this.fireApply();
+      },
+
+      init: function(config){
+        var dataSource = this.dataSource;
+        if (dataSource)
+          this.dataSource = null;
 
         var indexes = this.indexes;
         this.indexes = {};
@@ -82,142 +87,67 @@
             this.addIndex(indexName, indexes[indexName]);
         }
 
-        if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
-          this.keyMap = new KeyObjectMap(Object.complete({
-            create: function(key, config){
-              return new this.itemClass(config);
-            }
-          }, this.keyMap));
+        if (dataSource)
+          this.setDataSource(dataSource);
 
-        nsData.Dataset.MapReduce.prototype.init.call(this, config);
+        DataObject.prototype.init.call(this, config);
+      },
+
+      setDataSource: function(dataSource){
+        if (dataSource instanceof nsData.AbstractDataset == false)
+          dataSource = null;
+
+        if (this.dataSource !== dataSource)
+        {
+          this.dataSource = dataSource;
+
+          if (dataSource)
+          {
+            for (var indexName in this.indexes)
+              this.indexes[indexName].setDataSource(dataSource);
+          }
+        }
       },
 
       addIndex: function(name, index){
         this.indexes[name] = index;
         index.addHandler(this.listen.index, this);
 
-        if (this.source)
-          index.setDataSource(this.source);
+        if (this.dataSource)
+          index.setDataSource(this.dataSource);
       },
+      
       removeIndex: function(){
         delete this.indexes[name];
         index.removeHandler(this.listen.index, this);
       },
 
-      addCalc: function(name, calc){
-        this.calcs[name] = calc;
-        this.fireUpdate();
-      },
-      removeCalc: function(){
-        delete this.calcs[name];
-      },
-
-      map: function(item){
-        return this.keyMap.get(item, true);
-      },
-
-      addMemberRef: function(member, sourceObject){
-        this.memberSourceMap[member.eventObjectId] = sourceObject;
-        member.addHandler(this.listen.member, this);
-
-        if (member.subscriberCount > 0)
-          this.calcMember(member, sourceObject);
-      },
-      removeMemberRef: function(member, sourceObject){
-        delete this.memberSourceMap[member.eventObjectId];
-        member.removeHandler(this.listen.member, this);
-      },
-
-      event_sourceChanged: function(){
-        nsData.Dataset.MapReduce.prototype.event_sourceChanged.apply(this, arguments);
-        
-        for (var indexName in this.indexes)
-          this.indexes[indexName].setDataSource(this.source);
-      },
-
-      listen: {
-        sourceObject: {
-          update: function(object, delta){
-            nsData.Dataset.MapReduce.prototype.listen.sourceObject.update.call(this, object, delta);
-
-            object.updated = true;
-            this.fireUpdate();
-          }
-        },
-        index: INDEXMAP_INDEX_HANDLER,
-        member: {
-          subscribersChanged: function(object, oldCount){
-            if (object.subscriberCount > 0 && oldCount == 0)
-              this.calcMember(object, this.memberSourceMap[object.eventObjectId]);
-          }
-        }
-      },
-
-      fireUpdate: function(){
+      fireApply: function(){
         if (!this.timer_)
         {
           this.timer_ = true;
           TimeEventManager.add(this, 'apply', Date.now());
         }
-      },
-
-      calcMember: function(member, sourceObject){
-        if (member.subscriberCount && (sourceObject.updated || this.indexUpdated))
-        {
-          sourceObject.updated = false;
-
-          var data = {};
-          var newValue;
-          var update;
-          for (var calcName in this.calcs)
-          {
-            newValue = this.calcs[calcName](this.indexes, sourceObject);
-            if (member.data[calcName] !== newValue)
-            {
-              data[calcName] = newValue;
-              update = true;
-            }
-          }
-              
-          if (update)  
-          {
-            member.update(data);
-          }
-        }
-      },  
-
+      }, 
+      
       apply: function(){
-        for (var idx in this.sourceMap_)
-          this.calcMember(this.sourceMap_[idx].member, this.sourceMap_[idx].sourceObject);
+        if (!this.subscriberCount)
+          return; 
 
-        this.indexUpdated = false;
+        var data = {};
+        var newValue;
+        for (var indexName in this.indexes)
+        {
+          newValue = this.indexes[indexName].value;
+          if (this.data[indexName] !== newValue)
+            data[indexName] = newValue;
+        }
+            
+        this.update(data);
+
         this.timer_ = false;
-      },
-
-      getMember: function(sourceObject){
-        return this.keyMap.get(sourceObject, true);
       }
     });
-
-    /*var indexMap = new IndexMap({
-      source: tableData,
-      dataGetter: {
-        id: Function.getter('data.id'),
-        totalPercent: function(item){
-          return item.data.total / this.Sum('data.total');
-        }
-      }
-    });*/
-
-    /*var indexMap = new IndexMap({
-      source: tableData,
-      calcs: {
-        totalPercent: function(item){
-          return item.data.total / this.Sum('data.total');
-        }
-      }
-    });*/
-
 
 
     /////////////
@@ -256,16 +186,42 @@
 
     var im = new IndexMap({
       indexes: {
-        sum: new Max({ valueGetter: Function.getter('data.total') })
+        sum: new Max('data.total')
       },
       calcs: {
         percentOfMax: function(indexes, data){
-          return data.data.total/ indexes.sum.value;
+          return data.data.total / indexes.sum.value;
         }
       }
     });
 
+    var io = new IndexObject({
+      indexes: {
+        error:      new Sum('data.error'),
+        processing: new Sum('data.error'),
+        total:      new Sum('data.total'),
+        avg:        new Avg('data.avg')
+      }
+    });
+
     var control = new Basis.Controls.Table.Table({
+      indexes: {
+        error:      new Sum('data.error'),
+        processing: new Sum('data.processing'),
+        total:      new Sum('data.total'),
+        avg:        new Avg('data.avg')
+      },
+
+      init: function(config){
+        Basis.Controls.Table.Table.prototype.init.call(this, config);
+
+        if (this.indexes){
+          var dataset = new nsWrappers.ChildNodesDataset(this);
+          for (var i in this.indexes)
+            this.indexes[i].setDataSource(dataset);
+        }
+      },
+
       structure: [
         {
           header: 'id',
@@ -277,33 +233,76 @@
           header: 'error',
           body: {
             content: '{errorText}'
+          },
+          footer: {
+            content: function(){
+              return this.owner.indexes.error.addLink(DOM.createText());
+            }
           }
         },
         {
           header: 'processing',
           body: {
             content: '{processingText}'
+          },
+          footer: {
+            content: function(){
+              return this.owner.indexes.processing.addLink(DOM.createText());
+            }
           }
         },
         {
           header: 'total',
           body: {
             content: '{totalText}{bar}'
+          },
+          footer: {
+            content: function(){
+              return this.owner.indexes.total.addLink(DOM.createText());
+            }
           }
         },
         {
           header: 'avg',
           body: {
             content: '{avgText}'
+          },
+          footer: {
+            content: function(){
+              return this.owner.indexes.avg.addLink(DOM.createText(), null, '{0:.2}');
+            }
           }
         },
         {
           header: 'isActive',
           body: {
             content: '{isActiveText}'
+          },
+          footer: {
+            content: ''
           }
         }
       ],
+
+      /*footer: {
+        delegate: io,
+        active: true,
+        handler: {
+          update: function(object, delta){
+            if ('error' in delta)
+              this.tmpl.errorText.nodeValue = this.data.error;
+
+            if ('processing' in delta)
+              this.tmpl.processingText.nodeValue = this.data.processing;
+
+            if ('total' in delta)
+              this.tmpl.totalText.nodeValue = this.data.total;
+
+            if ('avg' in delta)
+              this.tmpl.avgText.nodeValue = this.data.avg;
+          }
+        }
+      },*/
 
       childClass: {
         satelliteConfig: {
@@ -338,14 +337,17 @@
       container: 'Layout'
     });
 
+    control.setDataSource(Summary.all);
+
 
     var tableData = new nsWrappers.ChildNodesDataset(control);
 
     im.setSource(tableData);
+    io.setDataSource(tableData);
 
-    control.setDataSource(Summary.all);
 
-    new nsWrappers.TmplContainer({
+
+/*    new nsWrappers.TmplContainer({
       dataSource: im,
       childClass: nsWrappers(
         '<div class="row">{this_data_percentOfMax}</div>',
@@ -357,52 +359,29 @@
     })
 
 
-    var errorSum = new Sum({
-      valueGetter: Function.getter('data.error'),
-      dataSource: tableData
-    });
+    var errorSum = new Sum('data.error', tableData);
     DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Error Sum: ', errorSum.addLink(DOM.createText())));
 
-    var totalSum = new Sum({
-      valueGetter: Function.getter('data.total'),
-      dataSource: tableData
-    });
+    var totalSum = new Sum('data.total', tableData);
     DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Total Sum: ', totalSum.addLink(DOM.createText())));
 
-    var avgAvg = new Avg({
-      valueGetter: Function.getter('data.avg'),
-      dataSource: tableData
-    });
+    var avgAvg = new Avg('data.avg', tableData);
     DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Avg avg: ', avgAvg.addLink(DOM.createText())));
 
-    var count = new Count({
-      dataSource: tableData
-    });
+    var count = new Count(Function.$true, tableData);
     DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Count: ', count.addLink(DOM.createText())));
 
-    var isActiveCount = new Count({
-      valueGetter: Function.getter('data.isActive'),
-      dataSource: tableData
-    });
+    var isActiveCount = new Count('data.isActive', tableData);
     DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'isActive Count: ', isActiveCount.addLink(DOM.createText())));
 
-    var isNotActiveCount = new Count({
-      valueGetter: function(item){ return ! item.data.isActive },
-      dataSource: tableData
-    });
+    var isNotActiveCount = new Count(function(item){ return ! item.data.isActive }, tableData);
     DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'isNotActive Count: ', isNotActiveCount.addLink(DOM.createText())));
 
-    var totalMax = new Max({
-      valueGetter: Function.getter('data.total'),
-      dataSource: tableData
-    });
+    var totalMax = new Max('data.total', tableData);
     DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Total Max: ', totalMax.addLink(DOM.createText())));
 
-    var totalMin = new Min({
-      valueGetter: Function.getter('data.total'),
-      dataSource: tableData
-    });
-    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Total Min: ', totalMin.addLink(DOM.createText()))); 
+    var totalMin = new Min('data.total', tableData);
+    DOM.insert(DOM.get('Layout'), DOM.createElement('div', 'Total Min: ', totalMin.addLink(DOM.createText()))); */
     
   </script>
 </body>
