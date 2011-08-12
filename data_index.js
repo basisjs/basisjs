@@ -625,6 +625,8 @@
       this.memberSourceMap[member.eventObjectId] = sourceObject.eventObjectId;
       member.addHandler(this.listen.member, this);
 
+      this.sourceMap_[sourceObject.eventObjectId].updated = true;
+
       if (member.subscriberCount > 0)
         this.calcMember(member);
     },
