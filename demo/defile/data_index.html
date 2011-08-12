@@ -1,0 +1,312 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/style.css" media="screen" />
+
+  <title>Basis Demos: Dataset</title>
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #demo-container
+    {
+      font-family: Consolas;
+    }
+
+    .barWrapper
+    {
+      position: relative;
+      text-align: right;
+    }
+    .bar
+    {
+      position: absolute;
+      height: 100%;
+      background: rgba(128,200,128,.5);
+      right: 0;
+    }
+    .label
+    {
+      position: relative;
+    }
+
+    .diff
+    {
+      color: red;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../property.js"></script>
+  <script type="text/javascript" src="../../data_index.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../table.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Dataset</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container">
+  </div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // import names
+    var DOM = Basis.DOM;
+    var nsData = Basis.Data;
+    var nsWrapper = Basis.DOM.Wrapper;
+
+    var getter = Function.getter;
+
+    var seed = 0;
+    function genData(){
+      seed++;
+      return new basis.data.Object({
+        data: {
+          id: seed,
+          title: 'item' + seed,
+          value: parseInt(50 * Math.random()),
+          total: parseInt(150 * Math.random())
+        }
+      });
+    }
+
+    ttt = new Date();
+
+    var dataset = new basis.data.Dataset({
+      items: Array.create(15, genData)
+    });
+
+    console.log(new Date - ttt);
+
+    var indexMap = new Basis.Data.Index.IndexMap({
+      source: dataset,
+      indexes: {
+        valueMax: new Basis.Data.Index.Max('data.value'),
+        totalMax: new Basis.Data.Index.Max('data.total'),
+        totalMin: new Basis.Data.Index.Min('data.total'),
+        totalSum: new Basis.Data.Index.Sum('data.total')
+      },
+      calcs: {
+        percentOfValueMax: function(data, indexes){
+          return data.value/indexes.valueMax;
+        },
+        percentOfTotalMax: function(data, indexes){
+          return (data.total - indexes.totalMin)/(indexes.totalMax - indexes.totalMin);
+        },
+        percentOfTotalSum: function(data, indexes){
+          return data.total/indexes.totalSum;
+        }
+      }
+    });
+
+    var statPanelClass = new nsWrapper.TmplNode.subclass({
+      container: DOM.get('demo-container'),
+      data: Object.slice(indexMap.stat),
+      handler: {
+        update: function(object, delta){
+          DOM.insert(DOM.clear(this.element), Object.iterate(this.data, function(key, value){
+            var diff = key in delta ? value - delta[key] : 0;
+            return DOM.createElement(diff ? '.diff' : '', (diff ? '+' + diff + ' ' : '') + key + ': ' + value);
+          }));
+        }
+      },
+      sync: function(){
+        this.update(indexMap.stat);
+      }
+    });
+    new statPanelClass;
+
+    console.log(new Date - ttt);
+
+    new basis.ui.ButtonPanel({
+      container: DOM.get('demo-container'),
+      childNodes: [
+        {
+          caption: 'sync',
+          click: function(){
+            stat.sync();
+          }
+        },
+        {
+          caption: 'add',
+          click: function(){
+            dataset.add([genData()]);
+            stat.sync();
+          }
+        },
+        {
+          caption: 'add 5',
+          click: function(){
+            dataset.add(Array.create(5, genData()));
+            stat.sync();
+          }
+        },
+        {
+          caption: 'remove',
+          click: function(){
+            if (table.firstChild)
+              dataset.remove([table.firstChild.root]);
+            stat.sync();
+          }
+        },
+        {
+          caption: 'stress test #1',
+          click: function(){
+            var t = new Date();
+            var items = dataset.getItems();
+            for (var i = 0; i < 1000; i++)
+            {
+              var item = items[parseInt(8462 * i * Math.random()) % items.length];
+              item.update({
+                value: item.data.value + (i % 50),
+                total: item.data.total + (i % 150)
+              });
+            }
+            console.log(new Date - t);
+            stat.sync();
+          }
+        }
+      ]
+    });
+
+    var count = 0;
+    var table = new basis.ui.Table({
+      container: DOM.get('demo-container'),
+      dataSource: dataset, //new basis.data.dataset.Subset({ source: dataset, rule: function(d){ return d.data.id < 50 } }),
+      structure: [
+        {
+          header: '#',
+          body: Function.getter('data.id')
+        },
+        {
+          sorting: 'data.title',
+          header: 'Title',
+          body: Function.getter('data.title')
+        },
+        {
+          sorting: Function.getter('data.value', Number),
+          header: 'Value',
+          body: '<div class="barWrapper"><!--{percentOfValueMax}--><span class="label">{value}</span></div>'
+        },
+        {
+          sorting: Function.getter('data.total', Number),
+          header: 'Total',
+          body: '<div class="barWrapper"><!--{percentOfTotalMax}--><span class="label">{total}</span></div>'
+        },
+        {
+          header: 'Total, %',
+          body: '{percentOfTotalSum}'
+        }
+      ],
+
+      rowBehaviour: {
+        event_update: function(object, delta){
+          this.tmpl.total.nodeValue = this.data.total;
+          this.tmpl.value.nodeValue = this.data.value;
+        }
+      },
+      childClass: {
+        satelliteConfig: {
+          percentOfValueMax: {
+            hook: { rootChanged: true },
+            delegate: function(owner){
+              return indexMap.getMember(owner.root);
+            },
+            instanceOf: nsWrapper.TmplNode.subclass({
+              active: true,
+              cssClassName: 'bar',
+              event_update: function(object, delta){
+                //console.log(count++, delta);
+                this.element.style.width = '{0:.2}%'.format(100 * this.data.percentOfValueMax);
+                nsWrapper.TmplNode.prototype.event_update.call(this, object, delta);
+              }
+            })
+          },
+          percentOfTotalMax: {
+            hook: { rootChanged: true },
+            delegate: function(owner){
+              return indexMap.getMember(owner.root);
+            },
+            instanceOf: nsWrapper.TmplNode.subclass({
+              active: true,
+              cssClassName: 'bar',
+              event_update: function(object, delta){
+                this.element.style.width = '{0:.2}%'.format(100 * this.data.percentOfTotalMax);
+                nsWrapper.TmplNode.prototype.event_update.call(this, object, delta);
+              }
+            })
+          },
+          percentOfTotalSum: {
+            hook: { rootChanged: true },
+            delegate: function(owner){
+              return indexMap.getMember(owner.root);
+            },
+            instanceOf: nsWrapper.TmplNode.subclass({
+              active: true,
+              template: '{value}',
+              event_update: function(object, delta){
+                this.tmpl.value.nodeValue = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);
+                nsWrapper.TmplNode.prototype.event_update.call(this, object, delta);
+              }
+            })
+          }
+        }
+      }
+    });
+
+    var stat = new statPanelClass();
+    stat.sync();
+    DOM.setStyle(stat.element, {
+      position: 'absolute',
+      top: '10px',
+      left: '300px'
+    });
+
+    console.log(new Date - ttt);
+
+            /*indexMap.node.subclass(
+              null,
+              '{value}',
+              function(){
+                this.tmpl.value.nodeValue = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);
+              }
+            )*/
+
+    
+  </script>
+</body>
+
+</html>
