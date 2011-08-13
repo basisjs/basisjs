@@ -378,14 +378,34 @@
 
   function IndexConstructor(getter, indexType){
     getter = Function.getter(getter);
-    var indexConstructor = indexConstructorCache_[getter.getterIdx_];
+
+    var key = indexType + '_' + getter.getterIdx_;
+    var indexConstructor = indexConstructorCache_[key];
+
     if (!indexConstructor)
     {
-      indexConstructor = indexConstructorCache_[getter.getterIdx_] = this;
+      indexConstructor = indexConstructorCache_[key] = this;
       
       this.indexType = indexType;
+      this.indexClass = Index[indexType];
       this.getter = getter;
-      this.key = indexType + '_' + getter.getterIdx_;
+      this.key = key;
+      this.createInstance = function(dataset){
+        if (dataset instanceof AbstractDataset)
+        {
+          console.log(this.key);
+          var result = dataset.indexes && dataset.indexes[this.key];
+
+          if (!result)
+          {
+            result = new this.indexClass(this.getter);
+            result.addHandler(DATASET_INDEX_HANDLER, dataset);
+            result.key = this.key;
+          }
+
+          return result;
+        }
+      }
     }
 
     return indexConstructor;
@@ -436,47 +456,43 @@
     }
   };
 
+  function applyIndexDelta(index, inserted, deleted){
+    var cache = index.indexCache_;
+    index.lock();
+
+    if (inserted)
+      for (var i = 0, object; object = inserted[i++];)
+      {
+        var newValue = index.valueGetter(object);
+        cache[object.eventObjectId] = newValue;
+        index.add(object, newValue);
+      }
+
+    if (deleted)
+      for (var i = 0, object; object = deleted[i++];)
+      {
+        index.remove(object, cache[object.eventObjectId]);
+        delete cache[object.eventObjectId];
+      }
+
+    index.unlock();
+  }
+
   var DATASET_WITH_INDEX_HANDLER = {
     datasetChanged: function(object, delta){
-      var object;
-      var index;
-      var objectId;
-      var newValue;
-
-      for (var j in this.indexes)
-        this.indexes[j].lock();
-      
+      // add handler to new source object
       if (delta.inserted)
-        for (var i = 0; object = delta.inserted[i++];)
-        {
-          objectId = object.eventObjectId;
+        for (var i = 0, object; object = delta.inserted[i++];)
           object.addHandler(INDEX_ITEM_HANDLER, this);
 
-          for (var j in this.indexes)
-          {
-            index = this.indexes[j];
-            newValue = index.valueGetter(object);
-            index.indexCache_[objectId] = newValue;
-            index.add(object, newValue);
-          }
-        }
-
+      // remove handler from old source object
       if (delta.deleted)
-        for (var i = 0; object = delta.deleted[i++];)
-        {
-          objectId = object.eventObjectId;
+        for (var i = 0, object; object = delta.deleted[i++];)
           object.removeHandler(INDEX_ITEM_HANDLER, this);
-          
-          for (var j in this.indexes)
-          {
-            index = this.indexes[j];
-            index.remove(object, index.indexCache_[objectId]);
-            delete index.indexCache_[objectId];
-          }
-        }
 
+      // apply changes for indexes
       for (var j in this.indexes)
-        this.indexes[j].unlock();
+        applyIndexDelta(this.indexes[j], delta.inserted, delta.deleted);
     },
     
     destroy: function(){
@@ -489,79 +505,63 @@
     destroy: function(object){
       this.removeIndex(object);
     }
-  }
+  };
 
   AbstractDataset.prototype.createIndex = function(indexConstructor){
-    if (!(this.indexes && this.indexes[indexConstructor.key]))
+    if (indexConstructor instanceof IndexConstructor == false)
     {
-      var index = new Index[indexConstructor.indexType](indexConstructor.getter);
-      index.key = indexConstructor.key;
-      index.addHandler(DATASET_INDEX_HANDLER, this);
-
-      if (!this.indexes)
-      {
-        this.indexes = {};
-        this.indexCount = 0;
-        this.addHandler(DATASET_WITH_INDEX_HANDLER);
-      }
-      else if (this.itemCount)
-      {
-        var newValue;
-        var items = this.getItems();
-        
-        index.lock();
-
-        for (var i = 0, object; object = items[i]; i++)
-        {
-          newValue = index.valueGetter(object);
-          index.indexCache_[object.eventObjectId] = newValue;
-          index.add(object, newValue);
-        }
-
-        index.unlock();
-      }
-
-      this.indexes[indexConstructor.key] = index;
-
-      if (!this.indexCount)
-      {
-        DATASET_WITH_INDEX_HANDLER.datasetChanged.call(this, this, {
-          inserted: this.getItems()
-        });
-      }
-
-      this.indexCount++;
+      /** @cut */ if (typeof console != 'undefined') console.warn('indexConstructor must be an instance of IndexConstructor');
+      return;
     }
 
-    return this.indexes[indexConstructor.key]; 
+    if (!this.indexes)
+    {
+      this.indexes = {};
+      this.addHandler(DATASET_WITH_INDEX_HANDLER);
+
+      DATASET_WITH_INDEX_HANDLER.datasetChanged.call(this, this, {
+        inserted: this.getItems()
+      });
+    }
+
+    var key = indexConstructor.key;
+    if (!this.indexes[key])
+    {
+      var index = indexConstructor.createInstance(this);
+
+      this.indexes[key] = index;
+
+      applyIndexDelta(index, this.getItems());
+    }
+
+    return this.indexes[key]; 
   }
 
   AbstractDataset.prototype.removeIndex = function(index){
     if (this.indexes && this.indexes[index.key])
     {
       delete this.indexes[index.key];
-      this.indexCount--;
 
-      index.removeHandler(DATASET_INDEX_HANDLER);
+      //index.removeHandler(DATASET_INDEX_HANDLER);
+      index.destroy();
 
-      if (this.indexCount == 0)
-      {
-        this.removeHandler(DATASET_WITH_INDEX_HANDLER);
-        delete this.indexes;
-        delete this.indexCount;
-      }
+      for (var key in this.indexes)
+        return;
+
+      this.removeHandler(DATASET_WITH_INDEX_HANDLER);
+      delete this.indexes;
     }
   }
 
  /**
   * @class
   */
-
   var IndexMap = Class(MapReduce, {
     calcs: null,
-    indexes: null,
 
+    indexes: null,
     indexes_: null,
+
     timer_: null,
     indexUpdated: null,
     memberSourceMap: null,
@@ -571,19 +571,17 @@
       MapReduce.prototype.event_sourceChanged.call(this, dataset, oldSource);
       
       var index;
-      for (var indexName in this.indexes)
+      for (var indexName in this.indexes_)
       {
-        index = this.indexes[indexName];
+        index = this.indexes_[indexName];
         if (oldSource)
         { 
-          if (index instanceof IndexConstructor)
-            oldSource.removeIndex(this.indexes_[indexName]);
-
           this.removeIndex(indexName);
+          oldSource.removeIndex(this.indexes[indexName]);
         }
 
         if (this.source)
-          this.addIndex(indexName, this.indexes[indexName]);
+          this.addIndex(indexName, this.source.createIndex(index));
       }
     },
 
@@ -672,46 +670,56 @@
 
       MapReduce.prototype.init.call(this, config);
 
-      Object.iterate(indexes, this.addIndexConstructor, this);
+      Object.iterate(indexes, this.addIndex, this);
     },
 
-    addIndexConstructor: function(key, indexConstructor){
+    addIndex: function(key, index){
       if (!this.indexes[key])
       {
-        this.indexes[key] = indexConstructor;
-        if (this.source)
-          this.addIndex(key, indexConstructor);
+        if (index instanceof IndexConstructor)
+        {
+          if (!this.indexes_[key])
+          {
+            this.indexes_[key] = index;
+            index = this.source && this.source.createIndex(index);
+          }
+          else
+          {
+            /** @cut */ if (typeof console != 'undefined') console.warn('Index `{0}` already exists'.format(key));
+            return;
+          }
+        }
+
+        if (index instanceof Index)
+        {
+          this.indexValues[key] = index.value;
+          this.indexes[key] = index;
+          this.indexesBind_[key] = {
+            key: key,
+            context: this
+          };
+
+          index.addHandler(this.listen.index, this.indexesBind_[key]);
+          this.listen.index.change.call(this.indexesBind_[key], index.value);
+        }
+        else
+        {
+          return; // warn
+        }
       }
       /** @cut */else if (typeof console != 'undefined') console.warn('Index `{0}` already exists'.format(key));
     },
 
-    removeIndexConstructor: function(key){
-      delete this.indexes[key];      
-      this.removeIndex(key);
-    },
-   
-    addIndex: function(key, indexConstructor){
-      var index = this.indexes_[name] = 
-        indexConstructor instanceof IndexConstructor
-          ? this.source.createIndex(indexConstructor)
-          : this.indexes[name];
-
-      this.indexesBind_[key] = {
-        key: key,
-        context: this
-      };
-
-      index.addHandler(this.listen.index, this.indexesBind_[key]);
-      this.listen.index.change.call(this.indexesBind_[key], this.indexes_[name].value);
- 
-      this.indexValues[key] = index.value;
-    },
-
     removeIndex: function(key){
-      if (this.indexes_[key])
+      if (this.indexes_[key] || this.indexes[key])
       {
+        if (this.indexes[key])
+          this.indexes[key].removeHandler(this.listen.index, this.indexesBind_[key]);
+
         delete this.indexValues[key];
-        this.indexes[key].removeHandler(this.listen.index, this.indexesBind_[key]);
+        delete this.indexesBind_[key];
+        delete this.indexes[key];
+        delete this.indexes_[key];
       }
     },
 

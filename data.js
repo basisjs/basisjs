@@ -2354,6 +2354,15 @@
   });
 
   //
+
+  function wrapper(data){
+    if (Array.isArray(data))
+      return data.map(wrapper);
+    else
+      return { data: data };
+  }
+
+  //
   // export names
   //
 
@@ -2372,7 +2381,7 @@
   // export names
   //
 
-  Basis.namespace(namespace).extend({
+  Basis.namespace(namespace, wrapper).extend({
    /**
     * @enum {string}
     */
@@ -2403,7 +2412,7 @@
 
   // new naming
 
-  Basis.namespace('basis.data').extend({
+  Basis.namespace('basis.data', wrapper).extend({
    /**
     * @enum {string}
     */

@@ -201,33 +201,28 @@
     //
     // Custom classes & instances
     //
-    var DatasetViewer = nsWrapper.TmplContainer.subclass(
-      nsWrapper.simpleTemplate(
-        '<div class="DemoBlock">' +
-          '<span{content}/>' +
-          '<!-- {childNodesHere} -->' +
-          '<h3>{this_title}</h3>' +
-        '</div>'
-      ), 
+    var DatasetViewer = nsWrapper.TmplContainer.subclass(nsWrapper(
+      '<div class="DemoBlock">' +
+        '<span{content}/>' +
+        '<!-- {childNodesHere} -->' +
+        '<h3>{this_title}</h3>' +
+      '</div>',
       {
         container: document.getElementById('demo-container'),
-        childClass: //nsWrapper.TmplNode.subclass
-          nsWrapper.simpleTemplate(
-            '<span class="item">' +
-              '{this_data_value}' +
-            '</span>'
-          )
+        childClass: nsWrapper(
+          '<span class="item">' +
+            '{this_data_value}' +
+          '</span>'
+        )
       }
-    );
+    ));
 
-    var EditableDatasetViewer = nsWrapper.TmplContainer.subclass(
-      nsWrapper.simpleTemplate(
-        '<div class="DemoBlock">' +
-          '<!-- {childNodesHere} -->' +
-          '<button event-click="add">add</button>' +
-          '<h3>{this_title}</h3>' +
-        '</div>'
-      ), 
+    var EditableDatasetViewer = nsWrapper.TmplContainer.subclass(nsWrapper(
+      '<div class="DemoBlock">' +
+        '<!-- {childNodesHere} -->' +
+        '<button event-click="add">add</button>' +
+        '<h3>{this_title}</h3>' +
+      '</div>', 
       {
         container: document.getElementById('demo-container'),
         action: {
@@ -236,23 +231,21 @@
             newItemPopup.show(Basis.Event.sender(event));
           }
         },
-        childClass: nsWrapper.TmplNode.subclass(
-          nsWrapper.simpleTemplate(
-            '<span class="item">' +
-              '<span class="remove" event-click="remove">x</span>' +
-              '{this_data_value}' +
-            '</span>'
-          ),
+        childClass: nsWrapper(
+          '<span class="item">' +
+            '<span class="remove" event-click="remove">x</span>' +
+            '{this_data_value}' +
+          '</span>',
           {
             action: {
               remove: function(){
-                this.parentNode.dataSource.remove([this.getRootDelegate()]);
+                this.parentNode.dataSource.remove([this.delegate]);
               }
             }
           }
         )
       }
-    );
+    ));
 
     var newItemPopup = new Basis.Controls.Popup.Menu({
       dataSource: new nsData.Dataset.Subtract({ minuend: NUMBERS }),
@@ -262,7 +255,7 @@
       localSorting: Function.getter('data.value'),
       defaultHandler: function(node){
         if (node)
-          this.dataSource.subtrahend.add([node.getRootDelegate()]);
+          this.dataSource.subtrahend.add([node.root]);
         this.hide();
       }
     });

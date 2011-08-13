@@ -192,8 +192,8 @@
             {
               var item = items[parseInt(8462 * i * Math.random()) % items.length];
               item.update({
-                value: item.data.value + (i % 50),
-                total: item.data.total + (i % 150)
+                value: (item.data.value + i) % 50,
+                total: (item.data.total + i) % 150
               });
             }
             console.log(new Date - t);
@@ -266,6 +266,12 @@
               cssClassName: 'bar',
               event_update: function(object, delta){
                 this.element.style.width = '{0:.2}%'.format(100 * this.data.percentOfTotalMax);
+                /*this.element.style.backgroundColor = 
+                  this.data.percentOfTotalMax < .33
+                    ? 'red'
+                    : this.data.percentOfTotalMax < .66
+                      ? 'gold'
+                      : 'green';*/
                 nsWrapper.TmplNode.prototype.event_update.call(this, object, delta);
               }
             })
