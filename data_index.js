@@ -687,7 +687,7 @@
 
     removeIndexConstructor: function(key){
       delete this.indexes[key];      
-      removeIndex(key)
+      this.removeIndex(key);
     },
    
     addIndex: function(key, indexConstructor){
@@ -788,7 +788,7 @@
       this.keyMap = null;
 
       for (var indexName in this.indexes)
-        this.removeIndex(indexName);
+        this.removeIndexConstructor(indexName);
 
       MapReduce.prototype.destroy.call(this);
     }
