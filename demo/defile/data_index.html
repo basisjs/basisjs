@@ -5,7 +5,8 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../../style/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../demo.css" media="screen" />
 
   <title>Basis Demos: Dataset</title>
 
@@ -170,7 +171,7 @@
         {
           caption: 'add 5',
           click: function(){
-            dataset.add(Array.create(5, genData()));
+            dataset.add(Array.create(5, genData));
             stat.sync();
           }
         },

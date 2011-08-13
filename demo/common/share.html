@@ -148,7 +148,7 @@
     var contentText = DOM.createText('nothing');
     DOM.insert(demoContainer, DOM.createElement('', DOM.createElement('LABEL', 'Selection contains: '), contentText));
     treeSelection.addHandler({
-      change: function(){
+      datasetChanged: function(){
         contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(node.document.element.id, node.data.title) }).join(', ') || 'nothing';
       }
     });
