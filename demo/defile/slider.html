@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Slider</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../plugins/style/slider/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #Demo-Section
+    {
+      width: 600px;
+      border: 1px solid #E0E0E0;
+      padding: 5px;
+      margin-top: 20px;
+    }
+
+    .Basis-Paginator
+    {
+      margin: 2em 0 1em;
+      width: 100%;
+    }
+
+    .show_dimenstion .Basis-Paginator
+    {
+      border: 1px dashed #AAA;
+    }
+    .self_size .Basis-Paginator
+    {
+      width: auto;
+    }
+
+    .slider_pages {
+      text-align: right;
+      font-size: 0.8em; 
+      color: #808080;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../layout.js"></script>
+  <script type="text/javascript" src="../../dragdrop.js"></script>
+  <script type="text/javascript" src="../../button.js"></script>
+  <script type="text/javascript" src="../../plugins/slider.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Slider</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    var DOM = Basis.DOM;
+    var nsButton = Basis.Controls.Button;
+
+	  var sliders = [ 
+      new Basis.Plugin.Slider({ min: 0, max: 100, step: 50 }),
+      new Basis.Plugin.Slider({ min: 0, max: 100, step: 10 }),
+      new Basis.Plugin.Slider({ min: 0, max: 100 }),
+    ];
+
+	  var demoSection = DOM.createElement('#Demo-Section',
+      sliders.map(function(slider){
+        var label;
+        slider.addHandler({
+          change: function(slider){
+            label.nodeValue = this.value;
+          }
+        });
+        return DOM.createElement('',
+          slider.element,
+          DOM.createElement(".slider_pages", '>', label = DOM.createText())
+        )
+      })
+    );
+
+    DOM.insert(DOM.get('demo-container'), [
+      demoSection
+    ]);
+
+  </script>
+</body>
+
+</html>

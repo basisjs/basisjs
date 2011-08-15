@@ -369,21 +369,19 @@
           else
           {
             if (idField)
-            {
+              idValue = data[idField];
+            else
               if (entityType.compositeKey)
                 idValue = entityType.compositeKey(data, data);
               else
-                idValue = data[idField];
-            }
-            else
-            {
-              if (isSingleton)
               {
-                entity = entityType.singleton;
-                if (!entity)
-                  return entityType.singleton = new entityClass(data);
+                if (isSingleton)
+                {
+                  entity = entityType.singleton;
+                  if (!entity)
+                    return entityType.singleton = new entityClass(data);
+                }
               }
-            }
           }
 
           if (idValue != null && index)

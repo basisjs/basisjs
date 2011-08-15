@@ -17,6 +17,8 @@
 
 (function(Basis){
 
+  'strict mode';
+
  /**
   * @namespace Basis.Plugin
   */ 
@@ -32,9 +34,7 @@
   var createEvent = Basis.EventObject.createEvent;
   var classList = Basis.CSS.classList;
 
-  var nsWrappers = Basis.DOM.Wrapper;
-
-  var Template = Basis.Html.Template;
+  var nsWrapper = Basis.DOM.Wrapper;
 
   //
   // main part
@@ -56,30 +56,39 @@
   * Base child node class for Paginator
   * @class
   */
-  var PaginatorNode = Class(nsWrappers.TmplNode, {
+  var PaginatorNode = nsWrapper.TmplNode.subclass({
     className: namespace + '.PaginatorNode',
 
-    template: new Template(
+    pageGetter: Function.getter('data.pageNumber'),
+    urlGetter: Function.$self,
+
+    template:
       '<td{element} class="Basis-PaginatorNode">' +
         '<span>' +
           '<a{link|selected} event-click="click" href="#">{pageNumber}</a>' +
         '</span>' +
-      '</td>'
-    ),
+      '</td>',
 
-    templateAction: function(actionName, event){
-      if (actionName == 'click' && this.parentNode)
-        this.parentNode.templateAction(actionName, event, this);
+    action: {
+      click: function(event){
+        Event.kill(event);
+        if (!this.isDisabled())
+          this.click();
+      }
+    },
+
+    click: function(){
+      if (this.parentNode)
+        this.parentNode.setActivePage(this.pageGetter(this));
     },
 
     event_update: function(object, delta){
-      nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
+      nsWrapper.TmplNode.prototype.event_update.call(this, object, delta);
 
-      this.tmpl.pageNumber.nodeValue = this.data.pageNumber + 1;
-      this.tmpl.link.href = this.urlGetter(this.data.pageNumber);
-    },
-
-    urlGetter: Function.$self
+      var page = this.pageGetter(this);
+      this.tmpl.pageNumber.nodeValue = page + 1;
+      this.tmpl.link.href = this.urlGetter(page);
+    }
   });
 
   //
@@ -91,7 +100,7 @@
       this.initOffset = this.tmpl.scrollTrumb.offsetLeft;
     },
     move: function(config){
-      var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
+      var pos = ((this.initOffset + config.deltaX)/this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
       this.setSpanStartPage(Math.round(pos * (this.pageCount_ - this.pageSpan_)));
       this.tmpl.scrollTrumb.style.left = percent(pos);
     },
@@ -104,12 +113,12 @@
   * Paginator
   * @class
   */
-  var Paginator = Class(nsWrappers.Control, {
+  var Paginator = nsWrapper.Control.subclass({
     className: namespace + '.Paginator',
 
     childClass: PaginatorNode,
 
-    template: new Template(
+    template:
     	'<div{element} class="Basis-Paginator">' +
         '<table><tbody><tr{childNodesElement}/></tbody></table>' +
         '<div{scrollbarContainer} class="Basis-Paginator-ScrollbarContainer">' +
@@ -122,19 +131,14 @@
             '</div>' +
           '</div>' +
         '</div>' +
-    	'</div>'
-    ),
-    templateAction: function(actionName, event, node){
-      if (actionName == 'click' && node)
-        this.setActivePage(node.data.pageNumber);
-      else
-        if (actionName == 'jumpTo')
-        {
-          var scrollbar = this.tmpl.scrollbar;
-          var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
-          this.setSpanStartPage(Math.floor(pos * this.pageCount_) - Math.floor(this.pageSpan_ / 2));
-        }
-      Event.kill(event);
+    	'</div>',
+
+    action: {
+      jumpTo: function(actionName, event, node){
+        var scrollbar = this.tmpl.scrollbar;
+        var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left) / scrollbar.offsetWidth;
+        this.setSpanStartPage(Math.floor(pos * this.pageCount_) - Math.floor(this.pageSpan_ / 2));
+      }
     },
 
     event_activePageChanged: createEvent('activePageChanged'),
@@ -146,7 +150,7 @@
     spanStartPage_: -1,
 
     init: function(config){
-      nsWrappers.Control.prototype.init.call(this, config);
+      nsWrapper.Control.prototype.init.call(this, config);
 
       this.setProperties(config.pageCount || 0, config.pageSpan);
       this.setActivePage(Math.max(config.activePage - 1, 0), true);
@@ -242,9 +246,9 @@
 
     destroy: function(){
       this.scrollbarDD.destroy();
-      delete this.scrollbarDD;
+      this.scrollbarDD = null;
 
-      nsWrappers.Control.prototype.destroy.call(this);
+      nsWrapper.Control.prototype.destroy.call(this);
     }
   });
 

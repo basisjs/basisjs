@@ -1331,14 +1331,13 @@
       }
       else
       {
-        if (setStateCount == 1)
+        setStateCount -= setStateCount > 0;
+        if (setStateCount == 0)
         {
           clearTimeout(urgentTimer);
           proto.event_datasetChanged = realEvent;
           flushAllDataset();
         }
-
-        setStateCount -= setStateCount > 0;
       }
     }
   })();

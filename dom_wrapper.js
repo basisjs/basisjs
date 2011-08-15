@@ -1071,6 +1071,7 @@
 
       if (localGrouping)
       {
+        var cursor;
         group = localGrouping.getGroupNode(newChild);
         groupNodes = group.nodes;
 
@@ -1111,7 +1112,7 @@
           else
           {
             // search for refChild as first firstChild of next sibling groups (groups might be empty)
-            var cursor = group;
+            cursor = group;
             refChild = null;
             while (cursor = cursor.nextSibling)
               if (refChild = cursor.first)
@@ -1149,7 +1150,7 @@
           // some optimizations if node had already inside current node
           if (isInside)
           {
-            if (newChildValue === newChild.sortingValue)
+            if (newChildValue === newChild.localSorting)
               return newChild;
 
             if (
@@ -1166,7 +1167,7 @@
           // search for refChild
           pos = childNodes.binarySearchPos(newChildValue, sortingSearch, sortingDesc);
           refChild = childNodes[pos];
-          newChild.sortingValue = newChildValue;
+          newChild.sortingValue = newChildValue; // change sortingValue AFTER search
 
           if (newChild === refChild || (isInside && next === refChild))
             return newChild;
@@ -1215,7 +1216,15 @@
         newChild.previousSibling = null;
         newChild.nextSibling = null;
 
-        childNodes.remove(newChild);
+        if (pos == -1)
+          childNodes.remove(newChild);
+        else
+        {
+          var oldPos = childNodes.indexOf(newChild);
+          childNodes.splice(oldPos, 1);
+          if (oldPos < pos)
+            pos--;
+        }
 
         // remove from old group (always remove for correct order)
         if (currentNewChildGroup)  // initial newChild.groupNode
@@ -1255,6 +1264,9 @@
         // there is no refChild, insert newChild to the end of childNodes
         pos = childNodes.length;
 
+        // insert newChild into childNodes
+        childNodes.push(newChild);
+
         // create fake refChild, it helps with references updates
         refChild = { 
           previousSibling: this.lastChild
@@ -1262,9 +1274,6 @@
 
         // update lastChild
         this.lastChild = newChild;
-
-        // insert newChild into childNodes
-        childNodes.push(newChild);
       }
 
       // update newChild

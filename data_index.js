@@ -32,6 +32,35 @@
   // IndexedDataset
   //
 
+  function binarySearchPos_(array, value){ 
+    if (!array.length)  // empty array check
+      return 0;
+
+    var pos;
+    var cmpValue;
+    var l = 0;
+    var r = array.length - 1;
+
+    do 
+    {
+      pos = (l + r) >> 1;
+
+      cmpValue = array[pos] || 0;
+
+      if (value < cmpValue)
+        r = pos - 1;
+      else 
+        if (value > cmpValue)
+          l = pos + 1;
+        else
+          return value == cmpValue ? pos : 0;  
+    }
+    while (l <= r);
+
+    return pos + (cmpValue < value);
+  }
+
+
   function binarySearchPos(array, map){ 
     if (!array.length)  // empty array check
       return 0;
@@ -67,6 +96,7 @@
 
     return pos + (cmpValue < value);
   }
+
 
   function rebuild(){
     var curSet = Object.slice(this.item_);
@@ -337,7 +367,7 @@
       Index.prototype.init.call(this, valueGetter, dataSource);
     },
     add: function(item, value){
-      this.stack.splice(this.stack.binarySearchPos(value), 0, value);
+      this.stack.splice(binarySearchPos_(this.stack, value), 0, value);
       this.value = this.stack[this.stack.length - 1];
     },
     remove: function(item, value){
@@ -345,8 +375,9 @@
       this.value = this.stack[this.stack.length - 1];
     },
     upd: function(item, newValue, oldValue){
-      this.stack.remove(oldValue);
-      this.stack.splice(this.stack.binarySearchPos(newValue), 0, newValue);
+      //this.stack.remove(oldValue);
+      this.stack.splice(binarySearchPos_(this.stack, oldValue), 1);
+      this.stack.splice(binarySearchPos_(this.stack, newValue), 0, newValue);
       this.set(this.stack[this.stack.length - 1]);
     }
   });
@@ -360,7 +391,7 @@
       Index.prototype.init.call(this, valueGetter, dataSource);
     },
     add: function(item, value){
-      this.stack.splice(this.stack.binarySearchPos(value), 0, value);
+      this.stack.splice(binarySearchPos_(this.stack, value), 0, value);
       this.value = this.stack[0];
     },
     remove: function(item, value){
@@ -368,8 +399,9 @@
       this.value = this.stack[0];
     },
     upd: function(item, newValue, oldValue){
-      this.stack.remove(oldValue);
-      this.stack.splice(this.stack.binarySearchPos(newValue), 0, newValue);
+      //this.stack.remove(oldValue);
+      this.stack.splice(binarySearchPos_(this.stack, oldValue), 1);
+      this.stack.splice(binarySearchPos_(this.stack, newValue), 0, newValue);
       this.set(this.stack[0]);
     }
   });
@@ -393,7 +425,6 @@
       this.createInstance = function(dataset){
         if (dataset instanceof AbstractDataset)
         {
-          console.log(this.key);
           var result = dataset.indexes && dataset.indexes[this.key];
 
           if (!result)

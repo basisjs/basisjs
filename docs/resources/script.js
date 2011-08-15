@@ -436,7 +436,7 @@
           pos = cn.indexOf(selected);
         
         if (key == Event.KEY.UP)
-          node = cn.lastSearch(true, 'matched', pos ? pos - 1 : null);
+          node = cn.lastSearch(true, 'matched', pos ? pos : null);
         else
           node = cn.search(true, 'matched', pos ? pos + 1 : null);
 

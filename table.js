@@ -275,7 +275,6 @@
    /**
     * @class
     */
-
     var FooterCell = Class(TmplNode, {
       className: namespace + '.FooterCell',
 
@@ -369,7 +368,6 @@
     * Base row class
     * @class
     */
-
     var Row = Class(TmplNode, {
       className: namespace + '.Row',
       
@@ -379,28 +377,21 @@
       getters: [],
       classNames: [],
 
-      template: new Template(
-        '<tr{element} class="Basis-Table-Row" event-click="select">' +
+      template:
+        '<tr class="Basis-Table-Row" event-click="select">' +
           '<!--{cells}-->' +
-        '</tr>'
-      ),
+        '</tr>',
+
       action: { 
         select: function(event){
           this.select(Event(event).ctrlKey);
         }
       },
 
-      /*templateAction: function(actionName, event){
-        if (actionName == 'select')
-          this.select(Event(event).ctrlKey);
-      },*/
-
       event_update: function(object, delta){
         TmplNode.prototype.event_update.call(this, object, delta);
-        this.repaint();
-      },
 
-      repaint: function(){
+        // update template
         this.repaintCount += 1;  // WARN: don't use this.repaintCount++
                                  // on first call repaintCount is prototype member
 
@@ -434,20 +425,18 @@
     var Body = Class(TmplPartitionNode, {
       className: namespace + '.Body',
 
-      template: new Template(
-        '<tbody{element} class="Basis-Table-Body" event-click="click">' +
+      template:
+        '<tbody class="Basis-Table-Body" event-click="click">' +
           '<tr class="Basis-Table-GroupHeader">' +
             '<td{content} colspan="100"><span class="expander"/>{titleText}</td>'+ 
           '</tr>' +
           '<!-- {childNodesHere} -->' +
-        '</tbody>'
-      ),
+        '</tbody>',
 
-      templateAction: function(actionName, event){
-        if (actionName == 'click')
+      action: {
+        click: function(){
           classList(this.element).toggle('collapsed');
-
-        TmplPartitionNode.prototype.templateAction.call(this, actionName, event);
+        }
       }
     });
     
