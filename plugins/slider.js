@@ -31,6 +31,11 @@
 
   var Template = Basis.Html.Template;
 
+  var KEY_PLUS = 187;      // +
+  var KEY_KP_PLUS = 107;   // KEYPAD +
+  var KEY_MINUS = 189;     // -
+  var KEY_KP_MINUS = 109;  // KEYPAD -
+
   //
   // main part
   //
@@ -52,42 +57,71 @@
   //
 
   var DRAGDROP_HANDLER = {
-    start: function(config){
-      this.initOffset = this.tmpl.scrollTrumb.offsetLeft;
-    },
     move: function(config){
-//      console.log(this.initOffset, config.deltaX, this.initOffset + config.deltaX, this.tmpl.scrollTrumbWrapper.offsetWidth);
-      //console.log(pos, this.min + pos * (this.max - this.min), this.step * Math.floor(pos/this.stepWidth_));
-      //this.setValue(this.step * Math.floor(pos/this.stepWidth_));*/
-
-        var scrollbar = this.tmpl.scrollbar;
-        var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
-        this.setValue(this.step * Math.floor(pos/this.stepWidth_));
-
-      var pos = ((this.initOffset + config.deltaX)/this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
-      this.tmpl.scrollTrumb.style.left = percent(pos);
-    },
-    over: function(config){
-      var scrollTrumbWidth = this.stepWidth_/(1 - this.stepWidth_);
-      var newVal = (this.value - this.min)/(this.max - this.min);
-      this.tmpl.scrollTrumb.style.left = percent(newVal);
+      //var pos = (this.initOffset + config.deltaX)/this.tmpl.scrollbar.offsetWidth;
+      var scrollbar = this.tmpl.scrollbar;
+      var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
+      this.setValue(this.min + this.range_ * pos + (this.step/2));
     }
   };
 
  /**
   * @class
   */
-  var Slider = Class(nsWrapper.Control, {
+  var Label = nsWrapper.TmplNode.subclass({
+    template:
+      '<div class="Basis-Slider-Label">' +
+        '<span class="Basis-Slider-Label-Caption">' +
+          '{text}' +
+        '</span>' +
+      '</div>',
+
+    init: function(){
+      nsWrapper.TmplNode
+    }
+  });
+
+ /**
+  * @class
+  */
+  var LabelLayer = nsWrapper.TmplContainer.subclass({
+    className: namespace + '.Slider.LabelLayer',
+
+    template: 
+      '<div class="Basis-Slider-LabelLayer"/>',
+
+    childNodes: Label,
+
+    init: function(){}
+      
+  });
+
+ /**
+  * @class
+  */
+  var Slider = nsWrapper.TmplNode.subclass({
     className: namespace + '.Slider',
 
+    event_change: createEvent('change'),
+
+    captionFormat: function(value){
+      return Math.round(Number(value));
+    },
+
+    min: 0,
+    max: 100,
+    step: 1,
+    value: NaN,
+
     template:
-    	'<div{element} class="Basis-Slider">' +
-    	  '<div{ticks} class="Basis-Slider-Ticks"/>' +
-        '<div{scrollbarContainer} class="Basis-Slider-ScrollbarContainer">' +
-          '<div{scrollbar} class="Basis-Slider-Scrollbar" event-click="jumpTo">' +
-            '<div{scrollTrumbWrapper}>' + 
-              '<div{scrollTrumb} class="Basis-Slider-ScrollbarSlider"><div{scrollTrumbElement}><span/></div></div>' +
-            '</div>' +
+    	'<div{element} class="Basis-Slider" event-mousewheel="step" event-keyup="step" event-mousedown="focus" tabindex="0">' +
+        '<div{scrollbarContainer} class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
+      	  '<div{ticks} class="Basis-Slider-Ticks">' +
+      	    '<div class="Basis-Slider-Tick" style="left: 0"><span class="caption min">{minValue}</span></div>' +
+      	    '<div class="Basis-Slider-Tick" style="left: 100%"><span class="caption max">{maxValue}</span></div>' +
+      	  '</div>' +
+          '<div{scrollbar} class="Basis-Slider-Scrollbar">' +
+            '<div{scrollTrumb} class="Basis-Slider-ScrollbarSlider"></div>' +
           '</div>' +
         '</div>' +
     	'</div>',
@@ -96,33 +130,76 @@
       jumpTo: function(event){
         var scrollbar = this.tmpl.scrollbar;
         var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
-        this.setValue(this.step * Math.floor(pos/this.stepWidth_));
+        this.setValue(this.min + this.range_ * pos + (this.step/2))
+      },
+      focus: function(){
+        DOM.focus(this.element);
+      },
+      step: function(event){
+        var delta = Event.wheelDelta(event);
+
+        if (delta)
+        {
+          DOM.focus(this.element);
+          if (delta < 0)
+            this.stepDown();
+          else
+            this.stepUp();
+        }
+        else
+        {
+          var key = Event.key(event);
+          switch(key){
+            case Event.KEY.DOWN:
+            case Event.KEY.LEFT:
+            case KEY_MINUS:
+            case KEY_KP_MINUS:
+              this.stepDown();
+            break;
+            case Event.KEY.UP:
+            case Event.KEY.RIGHT:
+            case KEY_PLUS:
+            case KEY_KP_PLUS:
+              this.stepUp();
+            break;
+            case Event.KEY.PAGEDOWN:
+              this.stepDown(10);
+            break;
+            case Event.KEY.PAGEUP:
+              this.stepUp(10);
+            break;
+            case Event.KEY.HOME:
+              this.setValue(this.min);
+            break;
+            case Event.KEY.END:
+              this.setValue(this.max);
+            break;
+          }
+        }
       }
     },
 
-    event_change: createEvent('change'),
-
-    min: 0,
-    max: 100,
-    step: 1,
-    value: NaN,
-
     init: function(config){
-      nsWrapper.Control.prototype.init.call(this, config);
+      nsWrapper.TmplNode.prototype.init.call(this, config);
 
+      // save init values
       var step = this.step;
-      this.step = 0;
-      this.setProperties(this.min, this.max, step);
+      var value = this.value;
 
+      // make new values possible
+      this.step = 0;
+      this.value = this.min;
+
+      // set properties
+      this.setProperties(this.min, this.max, step);
+      this.setValue(isNaN(value) ? this.min : value);
+
+      // add drag posibility for slider
       this.scrollbarDD = new Basis.DragDrop.DragDropElement({
         element: this.tmpl.scrollTrumb,
         handler: DRAGDROP_HANDLER,
         handlerContext: this
       });
-    },
-
-    captionFormat: function(value){
-      return Math.round(Number(value));
     },
 
    /**
@@ -144,34 +221,50 @@
       if (this.min != min || this.max != max || this.step != step)
       {
         this.step = step;
-        min = this.normalize(min);
-        max = this.normalize(max);
+        this.min = min;
+        this.max = max = Math.floor((max - min)/step) * step;
+        this.range_ = this.max - this.min;
 
-        var tickCount = Math.min((this.max - this.min)/this.step, 25);
+        var tickCount = Math.min(this.range_/this.step, 20);
 
-        DOM.insert(DOM.clear(this.tmpl.ticks), Array.create(tickCount + 1, function(idx){
-          return DOM.createElement('SPAN.Basis-Slider-Tick[style="left: {0:.5}%"]'.format(100*idx/tickCount),
-            DOM.createElement('SPAN.caption' + (idx == 0 ? '.left' : (idx == tickCount ? '.right' : '')), this.captionFormat(idx * ((max - min)/tickCount)))
+        this.tmpl.minValue.nodeValue = this.captionFormat(this.min);
+        this.tmpl.maxValue.nodeValue = this.captionFormat(this.max);
+
+        DOM.insert(this.tmpl.ticks, Array.create(tickCount + 1, function(idx){
+          if (!idx || idx == tickCount)
+            return null;
+
+          var p = idx/tickCount;
+          var value = this.closest(p);
+          var pos = 100 * ((value - this.min)/this.range_);
+
+          return DOM.createElement('SPAN.Basis-Slider-Tick[style="left: {0:.5}%"]'.format(pos),
+            DOM.createElement('SPAN.caption',
+              this.captionFormat(value)
+            )
           );
         }, this));
-
-        /*var stepCount = (this.max - this.min)/this.step;
-        this.tmpl.scrollTrumbWrapper.style.width = percent(1 - 1/stepCount);
-        this.tmpl.scrollTrumb.style.width = percent(1/stepCount);*/
-
-        this.stepCount_ = 1 + (this.max - this.min)/this.step;
-        this.stepWidth_ = 1/this.stepCount_;
-        var scrollTrumbWidth = this.stepWidth_/(1 - this.stepWidth_);
-
-        this.tmpl.scrollTrumbWrapper.style.width = percent(1 - this.stepWidth_);
-        this.tmpl.scrollTrumb.style.width = percent(scrollTrumbWidth);
 
         this.setValue(this.value || this.min);
       }
     },
+    closest: function(pos){
+      return this.normalize(this.min + this.range_ * pos.fit(0, 1) + (this.step/2));
+    },
     normalize: function(value){
-      var value = Math.round(value * this.step)/this.step;
-      return value - (value % this.step);
+      if (value < this.min)
+        value = this.min;
+      else
+        if (value > this.max)
+          value = this.max;
+
+      return this.min + Math.floor(0.00001 + (value - this.min)/this.step) * this.step;
+    },
+    stepUp: function(count){
+      this.setValue(this.value + (count || 1) * this.step);
+    },
+    stepDown: function(count){
+      this.setValue(this.value - (count || 1) * this.step);
     },
     setValue: function(newValue){
       newValue = this.normalize(newValue);
@@ -187,11 +280,7 @@
         var oldValue = this.value;
 
         this.value = newValue;
-        var scrollTrumbWidth = this.stepWidth_/(1 - this.stepWidth_);
-        var newVal = (newValue - this.min)/(this.max - this.min);
-        this.tmpl.scrollTrumb.style.left = percent(newVal);
-
-        console.log(oldValue , '->', this.value);
+        this.tmpl.scrollTrumb.style.left = percent((newValue - this.min)/this.range_);
 
         this.event_change(this, oldValue);
       }
@@ -200,7 +289,7 @@
       this.scrollbarDD.destroy();
       this.scrollbarDD = null;
 
-      nsWrapper.Control.prototype.destroy.call(this);
+      nsWrapper.TmplNode.prototype.destroy.call(this);
     }
   });
 

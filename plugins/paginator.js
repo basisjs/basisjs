@@ -119,7 +119,7 @@
     childClass: PaginatorNode,
 
     template:
-    	'<div{element} class="Basis-Paginator">' +
+    	'<div{element} class="Basis-Paginator" event-mousewheel="scroll">' +
         '<table><tbody><tr{childNodesElement}/></tbody></table>' +
         '<div{scrollbarContainer} class="Basis-Paginator-ScrollbarContainer">' +
           '<div{scrollbar} class="Basis-Paginator-Scrollbar" event-click="jumpTo">' +
@@ -138,6 +138,11 @@
         var scrollbar = this.tmpl.scrollbar;
         var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left) / scrollbar.offsetWidth;
         this.setSpanStartPage(Math.floor(pos * this.pageCount_) - Math.floor(this.pageSpan_ / 2));
+      },
+      scroll: function(event){
+        var delta = Event.wheelDelta(event);
+        if (delta)
+          this.setSpanStartPage(this.spanStartPage_ + delta);
       }
     },
 

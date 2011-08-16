@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -90,8 +89,9 @@
 
 	  var sliders = [ 
       new Basis.Plugin.Slider({ min: 0, max: 100, step: 50 }),
-      new Basis.Plugin.Slider({ min: 0, max: 100, step: 10 }),
-      new Basis.Plugin.Slider({ min: 0, max: 100 }),
+      new Basis.Plugin.Slider({ min: 0, max: 100, step: 10, value: 23 }),
+      new Basis.Plugin.Slider({ min: 0, max: 100, value: 47 }),
+      new Basis.Plugin.Slider({ min: 20, max: 80, step: .15, captionFormat: function(value){ return value.toFixed(2) } })
     ];
 
 	  var demoSection = DOM.createElement('#Demo-Section',
@@ -99,12 +99,12 @@
         var label;
         slider.addHandler({
           change: function(slider){
-            label.nodeValue = this.value;
+            label.nodeValue = Math.floor(this.value * 1000)/1000;
           }
         });
         return DOM.createElement('',
           slider.element,
-          DOM.createElement(".slider_pages", '>', label = DOM.createText())
+          DOM.createElement(".slider_pages", label = DOM.createText(slider.value))
         )
       })
     );

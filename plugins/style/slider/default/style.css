@@ -16,18 +16,35 @@
   {
     line-height: 1;
     display: block;
+    padding: 4px 10px 4px;
+      -webkit-border-radius: 4px;
+      -moz-border-radius: 4px;
+    border-radius: 4px;
+    overflow: hidden;
   }
+  .Basis-Slider:hover,
+  .Basis-Slider:focus
+  {
+    background: #F4F4F4;
+  }
+  /*.Basis-Slider:focus
+  {
+    outline: none;
+      -webkit-box-shadow: 0 0 2px 1px rgba(255,155,0,.6);
+      -moz-box-shadow: 0 0 2px 1px rgba(255,155,0,.6);
+    box-shadow: 0 0 2px 1px rgba(255,155,0,.6);
+  }*/
   .Basis-Slider-Ticks
   {
     position: relative;
-    height: 3px;
+    height: 14px;
     margin-bottom: -5px;
     padding-top: 1em;
   }
   .Basis-Slider-Tick
   {
-    height: 5px;
-    border-left: 1px solid black;
+    height: 6px;
+    border-left: 1px solid #888;
     position: absolute;
     font-size: 10px;
   }
@@ -36,80 +53,61 @@
     position: absolute;
     width: 20ex;
     left: -10ex;
-    bottom: 7px;
+    top: -1.2em;
     text-align: center;
     margin-left: -1px;
     bo3rder: 1px solid red;
   }
+  .Basis-Slider-Tick .min,
+  .Basis-Slider-Tick .left
+  {
+    text-align: left;
+    left: 0;
+  }
+  .Basis-Slider-Tick .max,
   .Basis-Slider-Tick .right
   {
     text-align: right;
     right: 0;
     left: auto;
   }
-  .Basis-Slider-Tick .left
+
+  .Basis-Slider-Tick .min,
+  .Basis-Slider-Tick .max
   {
-    text-align: left;
-    left: 0;
+    height: 10px;
+  }
+  .Basis-Slider-Tick .max
+  {
+    margin-left: -2px;
   }
 
-  .Basis-Slider-WithNoScroll .Basis-Slider-ScrollbarContainer
+  .Basis-Slider-ScrollbarContainer
   {
-    display: none;
-  }
-  .Basis-Slider-Scrollbar DIV
-  {
-    position: relative;
+    cursor: pointer;
+    cursor: hand;
   }
   .Basis-Slider-Scrollbar
   {
     position: relative;
     z-index: 10;
-    height: 4px;
+    height: 3px;
+    margin: 6px 0 7px;
     background: #CCC;
-    margin: 5px 0;
-      -webkit-border-radius: 2px;
-      -moz-border-radius: 2px;
-    border-radius: 2px;
-    cursor: pointer;
-    cursor: hand;
   }
   .Basis-Slider-ScrollbarSlider
   {
     position: absolute;
     z-index: 2;
-    width: 0;
-    height: 0;
-    top: 0;
+
+    top: -7px;
     left: 0;
-    font-size: 1px;
-    cursor: pointer;
-    cursor: hand;
-  }
-  .Basis-Slider-ScrollbarSlider DIV
-  {
-    position: absolute;
-    width: 100%;
-    top: 0;
-    height: 4px;
-    font-size: 1px;
-    background: #666;
-      -webkit-border-radius: 3px;
-      -moz-border-radius: 3px;
-    border-radius: 3px;
-    cursor: pointer;
-    cursor: hand;
-  }
-  .Basis-Slider-ScrollbarSlider SPAN
-  {
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 50%;
-    margin-top: -7px;
     margin-left: -8px;
+
+    font-size: 1px;
     width: 16px;
     height: 16px;
-    overflow: hidden;
+
     background: url(slider.png) no-repeat left top;
+    cursor: pointer;
   }

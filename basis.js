@@ -3432,7 +3432,7 @@
               var actions = attr.nodeValue.qw();
 
               for (var i = 0, actionName; actionName = actions[i++];)
-                node.templateAction(actionName, event);
+                node.templateAction(actionName, Event(event));
 
               break;
             }
@@ -3470,7 +3470,9 @@
           if (!tmplEventListeners[eventName])
           {
             tmplEventListeners[eventName] = true;
-            Event.addGlobalHandler(eventName, createEventHandler(name));
+
+            for (var i = 0, names = Event.browserEvents(eventName), browserEventName; browserEventName = names[i++];)
+              Event.addGlobalHandler(browserEventName, createEventHandler(name));
           }
         }
 
@@ -3862,6 +3864,17 @@
       BIT:   2
     };
 
+    var BROWSER_EVENTS = {
+      mousewheel: ['mousewheel', 'DOMMouseScroll']
+    };
+
+   /**
+    * 
+    */
+    function browserEvents(eventName){
+      return BROWSER_EVENTS[eventName] || [eventName];
+    }
+
    /**
     * Function wraper with thisObject as context.
     * @class
@@ -4009,7 +4022,22 @@
         return event.pageY;
       else
         return event.clientY + (document.documentElement.scrollTop || document.body.scrollTop);
-    };
+    }
+
+   /**
+    * Returns mouse wheel delta.
+    * @param {Event} event
+    * @return {number} -1, 0, 1
+    */
+    function wheelDelta(event){
+      event = wrap(event);
+
+      return 'wheelDelta' in event
+        ? event.wheelDelta/120
+        : event.type == 'DOMMouseScroll'
+          ? -event.detail/3
+          : 0;
+    }
 
     //
     // Global events
@@ -4375,6 +4403,8 @@
       MOUSE_RIGHT: MOUSE_RIGHT,
       MOUSE_MIDDLE: MOUSE_MIDDLE,
 
+      browserEvents: browserEvents,
+
       Handler: Handler,
 
       sender: sender,
@@ -4388,6 +4418,7 @@
       mouseButton: mouseButton,
       mouseX: mouseX,
       mouseY: mouseY,
+      wheelDelta: wheelDelta,
 
       addGlobalHandler: addGlobalHandler,
       removeGlobalHandler: removeGlobalHandler,
