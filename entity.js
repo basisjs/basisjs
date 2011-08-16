@@ -868,7 +868,7 @@
         }
 
         if (entityType.compositeKey)
-          entity.__id__ = entityType.compositeKey(delta, data);
+          entity.__id__ = entityType.compositeKey(delta, data, entity.__id__);
         else
           if (idField && idField in delta)
             entity.__id__ = data[idField];
