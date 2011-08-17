@@ -4739,7 +4739,8 @@
           return;
 
         // temporary remove from stack
-        eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
+        //eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
+        eventStack.remove(eventObject);
         eventObject.eventTime = eventTime;
       }
       else
@@ -4769,7 +4770,8 @@
       if (eventObject)
       {
         // delete object from stack and map
-        eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
+        //eventStack.splice(eventStack.binarySearchPos(eventObject), 1);
+        eventStack.remove(eventObject);
         delete map[event][objectId];
 
         setNextTime();

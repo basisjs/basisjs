@@ -79,7 +79,11 @@
       //DOM.insert(this.tmpl.head, this.header.element);
 
       /*create header clone*/
-      this.headerClone = new nsTable.Header(Object.extend({ container: this.tmpl.tableElement, structure: this.structure }, this.headerConfig));
+      this.headerClone = new nsTable.Header(Object.extend({ 
+        owner: this.header.owner,
+        container: this.tmpl.tableElement, 
+        structure: this.structure
+      }, this.headerConfig));
 
       /*get header cells including groupCells*/
       this.originalCells = this.header.childNodes;
@@ -99,7 +103,11 @@
       {
         /*create footer clone*/
         DOM.insert(this.tmpl.foot, this.footer.element);
-        this.footerClone = new nsTable.Footer(Object.extend({ container: this.tmpl.tableElement, structure: this.structure }, this.footerConfig));
+        this.footerClone = new nsTable.Footer(Object.extend({ 
+          owner: this.footer.owner,
+          container: this.tmpl.tableElement, 
+          structure: this.structure 
+        }, this.footerConfig));
 
         this.originalCells = this.originalCells.concat(this.footer.childNodes);
         this.clonedCells = this.clonedCells.concat(this.footerClone.childNodes)

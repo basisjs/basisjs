@@ -339,10 +339,11 @@
                 content = content.call(this);
                 
               this.useFooter = true;
-
+              
               cell = this.appendChild({
                 cssClassName: (colConfig.cssClassName || '') + ' ' + (colConfig.footer.cssClassName || ''),
-                content: content
+                content: content,
+                template: colConfig.footer.template || FooterCell.prototype.template
               });
             }
             else
@@ -477,8 +478,8 @@
         this.headerConfig = this.header;
         this.footerConfig = this.footer;
 
-        this.header = new Header(Object.extend({ owner: this, structure: this.structure }, this.headerConfig));
-        this.footer = new Footer(Object.extend({ owner: this, structure: this.structure }, this.footerConfig));
+        this.header = new Header(Object.extend({ owner: this, structure: this.structure }, this.header));
+        this.footer = new Footer(Object.extend({ owner: this, structure: this.structure }, this.footer));
 
         DOM.replace(this.tmpl.headerElement, this.header.element);
       
