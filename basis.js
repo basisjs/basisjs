@@ -3986,11 +3986,10 @@
     */
     function mouseButton(event, button){
       event = wrap(event);
-                                     // W3C DOM3     // Other browsers
-      var btn = /*'buttons' in event ? event.buttons : */event.which;
-      if (typeof btn == 'number')
+
+      if (typeof event.which == 'number')
         // DOM scheme
-        return btn == button.VALUE;
+        return event.which == button.VALUE;
       else
         // IE6-8
         return event.button & button.BIT;
@@ -4007,7 +4006,10 @@
       if ('pageX' in event)
         return event.pageX;
       else
-        return event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft);
+        if (e.changedTouches)                 // iphone
+          return e.changedTouches[0].clientX;
+        else                                  // all others
+          return event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft);
     }
 
    /**
@@ -4021,7 +4023,10 @@
       if ('pageY' in event)
         return event.pageY;
       else
-        return event.clientY + (document.documentElement.scrollTop || document.body.scrollTop);
+        if (e.changedTouches)                 // iphone
+          return e.changedTouches[0].clientY;
+        else                                  // all others
+          return event.clientY + (document.documentElement.scrollTop || document.body.scrollTop);
     }
 
    /**
@@ -4032,11 +4037,13 @@
     function wheelDelta(event){
       event = wrap(event);
 
-      return 'wheelDelta' in event
-        ? event.wheelDelta/120
-        : event.type == 'DOMMouseScroll'
-          ? -event.detail/3
-          : 0;
+      if ('wheelDelta' in event) 
+        return event.wheelDelta/120; // IE, webkit, opera
+      else
+        if (event.type == 'DOMMouseScroll')
+          return -event.detail/3;    // gecko
+        else
+          return 0;                  // not a mousewheel event
     }
 
     //

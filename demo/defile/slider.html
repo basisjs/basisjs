@@ -46,6 +46,27 @@
       font-size: 0.8em; 
       color: #808080;
     }
+
+    .green
+    {
+      color: green;
+    }
+    .green.range
+    {
+      background: #BBB !important;
+    }
+    .red
+    {
+      color: red;
+    }
+    .ranges .Basis-Slider-Mark
+    {
+    }
+    .ranges .Basis-Slider-Mark-Caption
+    {
+      background-color: rgba(255,255,255,.75);
+      padding: 0 4px;
+    }
   </style>
   <!--[if lt IE 7]>
   <style type="text/css">
@@ -88,10 +109,48 @@
     var nsButton = Basis.Controls.Button;
 
 	  var sliders = [ 
-      new Basis.Plugin.Slider({ min: 0, max: 100, step: 50 }),
       new Basis.Plugin.Slider({ min: 0, max: 100, step: 10, value: 23 }),
       new Basis.Plugin.Slider({ min: 0, max: 100, value: 47 }),
-      new Basis.Plugin.Slider({ min: 20, max: 80, step: .15, captionFormat: function(value){ return value.toFixed(2) } })
+      new Basis.Plugin.Slider({ min: 0, max: 100, step: 50 }),
+      new Basis.Plugin.Slider({ min: 20, max: 80, step: .15, captionFormat: function(value){ return value.toFixed(1) } }),
+      new Basis.Plugin.Slider({ min: -15, max: 15, value: 0, marks: 15 }),
+      new Basis.Plugin.Slider({ min: -15, max: -30, value: 0 }),
+      new Basis.Plugin.Slider({ min: 0, max: 0, value: 0 }),
+      new Basis.Plugin.Slider({ min: 0, max: 4, value: 2, 
+        captionFormat: function(val){
+          return ['very cold', 'cold', 'normal', 'hot', 'very hot'][val];
+        },
+        marks: [
+          {
+            count: 'auto',
+            captionFormat: Function.$self,
+            childClass: {
+              isRange: true
+            }
+          },
+          'auto'
+        ]
+      }),
+      new Basis.Plugin.Slider({ min: 0, max: 100,
+        marks: [
+          { 
+            childClass: { isRange: true },
+            cssClassName: 'ranges',
+            marks: [
+              { pos: .13, caption: 'range1', cssClassName: 'red' },
+              { pos: .46, caption: 'range2', cssClassName: 'green' }
+            ]
+          },
+          { 
+            marks: [
+              { pos: .33, caption: 'smthing', cssClassName: 'red' },
+              { pos: .56, caption: 'smthing2', cssClassName: 'green' },
+              { pos: .83, caption: 'lahmatiy', cssClassName: 'red' }
+            ]
+          },
+          5
+        ]
+      })
     ];
 
 	  var demoSection = DOM.createElement('#Demo-Section',

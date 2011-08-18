@@ -20,7 +20,6 @@
 
   // import names
 
-  var Class = Basis.Class;
   var DOM = Basis.DOM;
   var Event = Basis.Event;
 
@@ -52,49 +51,152 @@
       paginator.selection.clear();
   }
 
+ /**
+  * @class
+  */
+  var Mark = nsWrapper.TmplNode.subclass({
+    className: namespace + '.Slider.Mark',
+
+    pos: 0,
+    caption: String.Entity.nbsp,
+
+    template:
+      '<div class="Basis-Slider-Mark">' +
+        '<span class="Basis-Slider-Mark-CaptionWrapper">' +
+          '<span class="Basis-Slider-Mark-Caption">' +
+            '{text}' +
+          '</span>' +
+        '</span>' +
+      '</div>',
+
+    init: function(config){
+      nsWrapper.TmplNode.prototype.init.call(this, config);
+      DOM.setStyle(this.element, {
+        left: (100 * this.pos) + '%',
+        width: (100 * this.width) + '%'
+      });
+      this.tmpl.text.nodeValue = this.caption;
+      if (this.isLast)
+        classList(this.element).add('last');
+      if (this.isRange)
+        classList(this.element).add('range');
+    }
+  });
+
+ /**
+  * @class
+  */
+  var MarkLayer = nsWrapper.TmplContainer.subclass({
+    className: namespace + '.Slider.MarkLayer',
+
+    template: 
+      '<div class="Basis-Slider-MarkLayer"/>',
+
+    childClass: Mark,
+
+    captionGetter: Function.$self,
+
+    count: 0,
+    marks: null,
+
+    init: function(config){
+      nsWrapper.TmplContainer.prototype.init.call(this, config);
+      this.apply();
+    },
+
+    apply: function(){
+      var marks = this.marks || [];
+      if (this.count > 0)
+      {
+        var self = this;
+        marks.push.apply(marks, Array.create(this.count, function(idx){
+          var p = (idx + 1)/self.count;
+          var value = this.closest(p);
+          var pos = ((value - this.min)/this.range_);
+
+          return {
+            pos: pos,
+            caption: self.captionFormat(value),
+            isLast: self.count == idx + 1
+          }
+        }, this.owner_));
+      }
+
+      var pos = 0;
+      marks = marks.filter(Function.$isNotNull).sortAsObject('pos').map(function(mark){
+        var s = mark.pos;
+        mark.width = mark.pos - pos;
+        mark.pos = pos;
+        pos = s;
+        return mark;
+      }, this);
+
+      if (pos != 1)
+        marks.push({
+          pos: pos,
+          width: 1 - pos,
+          isLast: true
+        });
+
+      this.setChildNodes(marks);
+    }
+  });
+
+
   //
   // Slider
   //
 
   var DRAGDROP_HANDLER = {
     move: function(config){
-      //var pos = (this.initOffset + config.deltaX)/this.tmpl.scrollbar.offsetWidth;
       var scrollbar = this.tmpl.scrollbar;
       var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
-      this.setValue(this.min + this.range_ * pos + (this.step/2));
+      this.setValue_(pos * this.count_);
     }
   };
 
- /**
-  * @class
-  */
-  var Label = nsWrapper.TmplNode.subclass({
-    template:
-      '<div class="Basis-Slider-Label">' +
-        '<span class="Basis-Slider-Label-Caption">' +
-          '{text}' +
-        '</span>' +
-      '</div>',
+  function stepAction(event){
+    var delta = Event.wheelDelta(event);
 
-    init: function(){
-      nsWrapper.TmplNode
+    if (delta)
+    {
+      DOM.focus(this.element);
+      if (delta < 0)
+        this.stepDown();
+      else
+        this.stepUp();
     }
-  });
-
- /**
-  * @class
-  */
-  var LabelLayer = nsWrapper.TmplContainer.subclass({
-    className: namespace + '.Slider.LabelLayer',
-
-    template: 
-      '<div class="Basis-Slider-LabelLayer"/>',
-
-    childNodes: Label,
-
-    init: function(){}
-      
-  });
+    else
+    {
+      var key = Event.key(event);
+      switch(key){
+        case Event.KEY.DOWN:
+        case Event.KEY.LEFT:
+        case KEY_MINUS:
+        case KEY_KP_MINUS:
+          this.stepDown();
+        break;
+        case Event.KEY.UP:
+        case Event.KEY.RIGHT:
+        case KEY_PLUS:
+        case KEY_KP_PLUS:
+          this.stepUp();
+        break;
+        case Event.KEY.PAGEDOWN:
+          this.stepDown(10);
+        break;
+        case Event.KEY.PAGEUP:
+          this.stepUp(10);
+        break;
+        case Event.KEY.HOME:
+          this.setValue(this.min);
+        break;
+        case Event.KEY.END:
+          this.setValue(this.max);
+        break;
+      }
+    }
+  }
 
  /**
   * @class
@@ -112,13 +214,15 @@
     max: 100,
     step: 1,
     value: NaN,
+    value_: NaN,
 
     template:
-    	'<div{element} class="Basis-Slider" event-mousewheel="step" event-keyup="step" event-mousedown="focus" tabindex="0">' +
+    	'<div{element} class="Basis-Slider Basis-Slider-MinMaxInside" event-mousewheel="step" event-keyup="step" event-mousedown="focus" tabindex="0">' +
+        '<div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>' +
+        '<div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>' +
         '<div{scrollbarContainer} class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
-      	  '<div{ticks} class="Basis-Slider-Ticks">' +
-      	    '<div class="Basis-Slider-Tick" style="left: 0"><span class="caption min">{minValue}</span></div>' +
-      	    '<div class="Basis-Slider-Tick" style="left: 100%"><span class="caption max">{maxValue}</span></div>' +
+      	  '<div class="Basis-Slider-MarkLayers">' +
+      	    '<!--{marks}-->' +
       	  '</div>' +
           '<div{scrollbar} class="Basis-Slider-Scrollbar">' +
             '<div{scrollTrumb} class="Basis-Slider-ScrollbarSlider"></div>' +
@@ -130,58 +234,25 @@
       jumpTo: function(event){
         var scrollbar = this.tmpl.scrollbar;
         var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
-        this.setValue(this.min + this.range_ * pos + (this.step/2))
+        this.setValue_(pos * this.count_);
       },
       focus: function(){
         DOM.focus(this.element);
       },
-      step: function(event){
-        var delta = Event.wheelDelta(event);
+      step: stepAction
+    },
 
-        if (delta)
-        {
-          DOM.focus(this.element);
-          if (delta < 0)
-            this.stepDown();
-          else
-            this.stepUp();
-        }
-        else
-        {
-          var key = Event.key(event);
-          switch(key){
-            case Event.KEY.DOWN:
-            case Event.KEY.LEFT:
-            case KEY_MINUS:
-            case KEY_KP_MINUS:
-              this.stepDown();
-            break;
-            case Event.KEY.UP:
-            case Event.KEY.RIGHT:
-            case KEY_PLUS:
-            case KEY_KP_PLUS:
-              this.stepUp();
-            break;
-            case Event.KEY.PAGEDOWN:
-              this.stepDown(10);
-            break;
-            case Event.KEY.PAGEUP:
-              this.stepUp(10);
-            break;
-            case Event.KEY.HOME:
-              this.setValue(this.min);
-            break;
-            case Event.KEY.END:
-              this.setValue(this.max);
-            break;
-          }
-        }
+    satelliteConfig: {
+      marks: {
+        instanceOf: nsWrapper.TmplContainer.subclass({
+          childClass: MarkLayer
+        })
       }
     },
 
-    init: function(config){
-      nsWrapper.TmplNode.prototype.init.call(this, config);
+    marks: 'auto',
 
+    init: function(config){
       // save init values
       var step = this.step;
       var value = this.value;
@@ -189,6 +260,10 @@
       // make new values possible
       this.step = 0;
       this.value = this.min;
+      this.value_ = 0;
+
+      // inherit
+      nsWrapper.TmplNode.prototype.init.call(this, config);
 
       // set properties
       this.setProperties(this.min, this.max, step);
@@ -220,30 +295,36 @@
 
       if (this.min != min || this.max != max || this.step != step)
       {
+        this.count_ = Math.ceil((max - min)/step);
+
         this.step = step;
         this.min = min;
-        this.max = max = Math.floor((max - min)/step) * step;
-        this.range_ = this.max - this.min;
+        this.max = this.min + this.count_ * this.step;
 
-        var tickCount = Math.min(this.range_/this.step, 20);
+        this.range_ = this.max - this.min;
 
         this.tmpl.minValue.nodeValue = this.captionFormat(this.min);
         this.tmpl.maxValue.nodeValue = this.captionFormat(this.max);
+        classList(this.element).bool('NoMax', this.max == this.min);
 
-        DOM.insert(this.tmpl.ticks, Array.create(tickCount + 1, function(idx){
-          if (!idx || idx == tickCount)
-            return null;
+        if (this.marks)
+        {
+          var marks = Array.isArray(this.marks) ? this.marks : [this.marks];
+          this.satellite.marks.setChildNodes(marks.map(function(layer){
+            if (typeof layer != 'object')
+              layer = { count: layer };
 
-          var p = idx/tickCount;
-          var value = this.closest(p);
-          var pos = 100 * ((value - this.min)/this.range_);
+            var layerConfig = Object.extend({
+              captionFormat: this.captionFormat,
+              owner_: this
+            }, layer);
 
-          return DOM.createElement('SPAN.Basis-Slider-Tick[style="left: {0:.5}%"]'.format(pos),
-            DOM.createElement('SPAN.caption',
-              this.captionFormat(value)
-            )
-          );
-        }, this));
+            if (layerConfig.count == 'auto')
+              layerConfig.count = Math.min(this.count_, 20);
+
+            return layerConfig;
+          }, this));
+        }
 
         this.setValue(this.value || this.min);
       }
@@ -261,29 +342,28 @@
       return this.min + Math.floor(0.00001 + (value - this.min)/this.step) * this.step;
     },
     stepUp: function(count){
-      this.setValue(this.value + (count || 1) * this.step);
+      this.setValue_(this.value_ + parseInt(count || 1));
     },
     stepDown: function(count){
-      this.setValue(this.value - (count || 1) * this.step);
+      this.setValue_(this.value_ - parseInt(count || 1));
     },
-    setValue: function(newValue){
-      newValue = this.normalize(newValue);
+    setValue_: function(newValue){
+      newValue = Math.round(newValue).fit(0, this.count_);
 
-      if (newValue < this.min)
-        newValue = this.min;
-      else
-        if (newValue > this.max)
-          newValue = this.max;
-
-      if (this.value != newValue)
+      if (this.value_ != newValue)
       {
+        this.value_ = newValue;
+
         var oldValue = this.value;
 
-        this.value = newValue;
-        this.tmpl.scrollTrumb.style.left = percent((newValue - this.min)/this.range_);
+        this.value = this.normalize(this.min + newValue * this.step);
+        this.tmpl.scrollTrumb.style.left = percent(newValue/this.count_);
 
         this.event_change(this, oldValue);
       }
+    },
+    setValue: function(newValue){
+      this.setValue_((newValue - this.min)/this.step);
     },
     destroy: function(){
       this.scrollbarDD.destroy();
@@ -294,6 +374,11 @@
   });
 
   // export names
+
+  Object.extend(Slider, {
+    MarkLayer: MarkLayer,
+    Mark: Mark
+  });
 
   Basis.namespace(namespace).extend({
     Slider: Slider

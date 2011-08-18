@@ -6,6 +6,7 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
   <link rel="stylesheet" type="text/css" href="../../style/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../../plugins/style/slider/default/style.css" media="screen" />
   <link rel="stylesheet" type="text/css" href="../demo.css" media="screen" />
 
   <title>Basis Demos: Dataset</title>
@@ -44,6 +45,17 @@
     {
       color: red;
     }
+
+    .Basis-Table
+    {
+      margin-right: 2ex;
+      float: left;
+    }
+    #RecordPanel
+    {
+      width: 250px;
+      float: left;
+    }
   </style>
   <!--[if lt IE 7]>
   <style type="text/css">
@@ -65,6 +77,9 @@
   <script type="text/javascript" src="../../dom_wrapper.js"></script>
   <script type="text/javascript" src="../../table.js"></script>
   <script type="text/javascript" src="../../button.js"></script>
+  <script type="text/javascript" src="../../layout.js"></script>
+  <script type="text/javascript" src="../../dragdrop.js"></script>
+  <script type="text/javascript" src="../../plugins/slider.js"></script>
 
   <script type="text/javascript" src="../seedrandom.js"></script>
 
@@ -277,8 +292,58 @@
             })
           }
         }
+      },
+      selection: {
+        handler: {
+          datasetChanged: function(){
+            recordPanel.setDelegate(this.pick());
+          }
+        }
       }
     });
+
+    var recordPanel = new nsWrapper.TmplContainer({
+      container: DOM.get('demo-container'),
+      id: 'RecordPanel',
+      handler: {
+        delegateChanged: function(){
+          DOM.display(this.element, !!this.delegate);
+        }
+      },
+      childNodes: [
+        new Basis.Plugin.Slider({
+          autoDelegateParent: true,
+          min: 0,
+          max: 50,
+          marks: 10,
+          handler: {
+            update: function(){
+              if ('value' in this.data)
+                this.setValue(this.data.value);
+            },
+            change: function(){
+              this.update({ value: this.value });
+            }
+          }
+        }),
+        new Basis.Plugin.Slider({
+          autoDelegateParent: true,
+          min: 0,
+          max: 150,
+          marks: 10,
+          handler: {
+            update: function(){
+              if ('total' in this.data)
+                this.setValue(this.data.total);
+            },
+            change: function(){
+              this.update({ total: this.value });
+            }
+          }
+        })
+      ]
+    });
+    DOM.hide(recordPanel.element);
 
     var stat = new statPanelClass();
     stat.sync();
