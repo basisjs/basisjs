@@ -7,8 +7,8 @@
 
   <title>Basis Demos: Slider</title>
 
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../plugins/style/slider/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../plugins/style/resizer/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -24,21 +24,18 @@
       border: 1px solid #E0E0E0;
       padding: 5px;
       margin-top: 20px;
+      position: relative;
+      min-width: 350px;
+      max-width: 90%;
     }
 
-    .Basis-Paginator
+    .Basis-Resizer
     {
-      margin: 2em 0 1em;
-      width: 100%;
-    }
-
-    .show_dimenstion .Basis-Paginator
-    {
-      border: 1px dashed #AAA;
-    }
-    .self_size .Basis-Paginator
-    {
-      width: auto;
+      opacity: .5;
+      right: -5px;
+      width: 5px;
+      top: -1px;
+      bottom: -1px;
     }
 
     .slider_pages {
@@ -88,6 +85,7 @@
   <script type="text/javascript" src="../../dragdrop.js"></script>
   <script type="text/javascript" src="../../button.js"></script>
   <script type="text/javascript" src="../../plugins/slider.js"></script>
+  <script type="text/javascript" src="../../plugins/resizer.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -167,6 +165,10 @@
         )
       })
     );
+
+    new Basis.Plugin.Resizer({
+      element: demoSection
+    });
 
     DOM.insert(DOM.get('demo-container'), [
       demoSection

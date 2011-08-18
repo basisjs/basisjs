@@ -4006,8 +4006,8 @@
       if ('pageX' in event)
         return event.pageX;
       else
-        if (e.changedTouches)                 // iphone
-          return e.changedTouches[0].clientX;
+        if (event.changedTouches)                 // iphone
+          return event.changedTouches[0].clientX;
         else                                  // all others
           return event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft);
     }
@@ -4023,8 +4023,8 @@
       if ('pageY' in event)
         return event.pageY;
       else
-        if (e.changedTouches)                 // iphone
-          return e.changedTouches[0].clientY;
+        if (event.changedTouches)                 // iphone
+          return event.changedTouches[0].clientY;
         else                                  // all others
           return event.clientY + (document.documentElement.scrollTop || document.body.scrollTop);
     }
@@ -4514,9 +4514,9 @@
         var exists = this.contains(token);
 
         if (exists)
-          this.remove(className);
+          this.remove(token);
         else
-          this.add(className);
+          this.add(token);
 
         return !exists;
       }

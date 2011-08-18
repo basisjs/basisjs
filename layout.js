@@ -628,7 +628,7 @@
 
         var element = this.element;
         var lastElement = this.lastChild.element;
-        var ruller = this.ruller;
+        var ruller = this.tmpl.ruller;
 
         var lastBox = new Box(lastElement, false, element);
         var bottom = (lastBox.bottom - getComputedProperty(element, 'paddingTop') - getComputedProperty(element, 'borderTopWidth')) || 0;
