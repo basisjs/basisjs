@@ -31,7 +31,6 @@
   var getter = Function.getter;
 
   var nsData = Basis.Data;
-  var nsWrappers = Basis.DOM.Wrapper;
 
   var EventObject = Basis.EventObject;
   var AbstractDataset = nsData.AbstractDataset;

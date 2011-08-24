@@ -200,7 +200,7 @@
 
           // test for <node xsi:nil="true"/>
           if (attributes.length == 1
-              && firstAttr.localName == XSI_NIL_LOCALPART
+              && (firstAttr.baseName || firstAttr.localName) == XSI_NIL_LOCALPART
               && firstAttr.namespaceURI == XSI_NAMESPACE)
             return null;
         }

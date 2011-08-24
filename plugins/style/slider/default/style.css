@@ -42,6 +42,11 @@
     margin-bottom: -5px;
     padding-top: 1em;
   }
+  .Basis-Slider-MarkLayer
+  {
+    position: absolute;
+    width: 100%;
+  }
   .Basis-Slider-Mark
   {
     height: 7px;

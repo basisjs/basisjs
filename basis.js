@@ -1636,6 +1636,7 @@
     // EventObject seed ID
     var eventObjectId = 1;
     var events = {};
+    var destroyEvent;
 
     function dispatchEvent(eventName){
       var eventFunction = events[eventName];
@@ -1679,7 +1680,6 @@
     * can registrate handlers for events, and call it when event happend. 
     * @class
     */
-    var destroyEvent;
     var EventObject = Class(null, {
 
      /**
@@ -4524,9 +4524,9 @@
 
     var classList;
 
-    if (window.DOMTokenList && document.documentElement.classList)
+    if (global.DOMTokenList && document.documentElement.classList)
     {
-      extend(window.DOMTokenList.prototype, {
+      extend(global.DOMTokenList.prototype, {
         set: ClassList.prototype.set,
         replace: ClassList.prototype.replace,
         bool: ClassList.prototype.bool,
@@ -4614,7 +4614,7 @@
   // else in a closure.
   (function() {
 
-    var eventScheme = typeof global.addEventListener == 'function' && typeof global.postMessage == 'function';
+    var eventScheme = typeof addEventListener == 'function' && typeof postMessage == 'function';
     var messageName = "zeroTimeoutMessage";
 
     var timeoutQueue = [];

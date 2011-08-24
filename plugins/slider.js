@@ -75,9 +75,12 @@
         left: (100 * this.pos) + '%',
         width: (100 * this.width) + '%'
       });
+
       this.tmpl.text.nodeValue = this.caption;
+
       if (this.isLast)
         classList(this.element).add('last');
+
       if (this.isRange)
         classList(this.element).add('range');
     }
@@ -221,9 +224,7 @@
         '<div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>' +
         '<div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>' +
         '<div{scrollbarContainer} class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
-      	  '<div class="Basis-Slider-MarkLayers">' +
-      	    '<!--{marks}-->' +
-      	  '</div>' +
+      	  '<div{marks} class="Basis-Slider-MarkLayers"/>' +
           '<div{scrollbar} class="Basis-Slider-Scrollbar">' +
             '<div{scrollTrumb} class="Basis-Slider-ScrollbarSlider"></div>' +
           '</div>' +
@@ -245,6 +246,7 @@
     satelliteConfig: {
       marks: {
         instanceOf: nsWrapper.TmplContainer.subclass({
+          template: '<div class="Basis-Slider-MarkLayers"/>',
           childClass: MarkLayer
         })
       }
