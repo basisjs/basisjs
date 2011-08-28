@@ -348,7 +348,7 @@
       },
       //invoke: function(headerData, bodyData, callback){ /* deprecate */ },
       getRequestData: function(){
-        return this.requestDataGetter(this, this.requestEnvelope.getBody().getValue());
+        return this.requestDataGetter(this.requestEnvelope.getBody().getValue());
       },
       getResponseData: function(){
         var body = this.responseEnvelope && this.responseEnvelope.getBody();
