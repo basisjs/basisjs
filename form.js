@@ -51,7 +51,7 @@
     //
 
     var baseFieldTemplate = new Template(
-      '<div{element|sampleContainer} class="Basis-Field">' +
+      '<div{element|selected|sampleContainer} class="Basis-Field">' +
         '<div class="Basis-Field-Title">' +
           '<label><span{title}>{titleText}</span></label>' +
         '</div>' +
@@ -512,11 +512,11 @@
       cssClassName: 'Basis-Field-Label',
 
       template: createFieldTemplate(baseFieldTemplate,
-        '<label{field|element}>{fieldValueText}</label>'
+        '<label{field}>{fieldValueText}</label>'
       ),
       setValue: function(newValue){
         Field.prototype.setValue.call(this, newValue);
-        this.fieldValueText.nodeValue = this.tmpl.field.value;
+        this.tmpl.fieldValueText.nodeValue = this.tmpl.field.value;
       }
     });
 

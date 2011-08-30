@@ -152,6 +152,7 @@
       className: namespace + '.ObjectState',
 
       event_stateChanged: function(object, oldState){
+        State.prototype.event_stateChanged.call(object, oldState);
         this.setVisibility(this.visibilityGetter(this.state, oldState));
       }
     });
@@ -312,6 +313,7 @@
     Basis.namespace(namespace).extend({
       NodeLabel: NodeLabel,
       State: State,
+      ObjectState: ObjectState,
       Processing: Processing,
       Error: Error,
       DataSourceState: DataSourceState,

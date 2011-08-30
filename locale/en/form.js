@@ -8,7 +8,7 @@ Basis.Controls.Form.Validator.LOCALE = {
     WRONG_FORMAT: 'The value has wrong format.'
   },
   Required: {
-    MUST_BE_FILLED: 'The field is required and must has a value.'
+    MUST_BE_FILLED: 'The field is required and must have a value.'
   },
   Number: {
     WRONG_FORMAT: 'The value has wrong format of number.'
