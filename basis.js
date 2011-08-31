@@ -3237,7 +3237,7 @@
           }
         }
         else 
-          DOM.setStyleProperty(this.rule, property, value);
+          setStyleProperty(this.rule, property, value);
       },
 
      /**
@@ -3474,6 +3474,33 @@
             for (var i = 0, names = Event.browserEvents(eventName), browserEventName; browserEventName = names[i++];)
               Event.addGlobalHandler(browserEventName, createEventHandler(name));
           }
+
+          if (!window.__basis_emitEvent)
+          {
+            window.__basis_emitEvent = function(event, actionList){
+              var event = Basis.Event(event);
+              var cursor = this;
+              var refId;
+              do {
+                if (refId = cursor.basisObjectId)
+                {
+                  // if found call templateAction method
+                  var node = tmplNodeMap[refId];
+                  if (node && node.templateAction)
+                  {
+                    var actions = actionList.qw();
+                    for (var i = 0, actionName; actionName = actions[i++];)
+                      node.templateAction(actionName, Event(event));
+
+                    break;
+                  }
+                }
+              } while (cursor = cursor.parentNode);
+            }
+          }
+            
+          //result += '[on' + eventName + '="alert(\'!\');__basis_emitEvent.call(this, event || window.event, ' + value.quote("'") + ')"]';
+          //continue;
         }
 
         result += name == 'class'
@@ -4003,12 +4030,12 @@
     function mouseX(event){
       event = wrap(event);
 
-      if ('pageX' in event)
-        return event.pageX;
+      if (event.changedTouches)               // touch device
+        return event.changedTouches[0].pageX;
       else
-        if (event.changedTouches)                 // iphone
-          return event.changedTouches[0].clientX;
-        else                                  // all others
+        if ('pageX' in event)                 // all others
+          return event.pageX;
+        else                                  
           return event.clientX + (document.documentElement.scrollLeft || document.body.scrollLeft);
     }
 
@@ -4020,12 +4047,12 @@
     function mouseY(event){
       event = wrap(event);
 
-      if ('pageY' in event)
-        return event.pageY;
-      else
-        if (event.changedTouches)                 // iphone
-          return event.changedTouches[0].clientY;
-        else                                  // all others
+      if (event.changedTouches)             // touch device
+        return event.changedTouches[0].pageY;
+      else                                  // all others
+        if ('pageY' in event)
+          return event.pageY;
+        else                                  
           return event.clientY + (document.documentElement.scrollTop || document.body.scrollTop);
     }
 

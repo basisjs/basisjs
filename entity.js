@@ -928,6 +928,8 @@
         this.root = this;
         this.target = this;
 
+        ;;;for (var key in data) if (!fields[key]) entityWarn(this, 'Set value for "' + key + '" property is ignored.');
+
         // copy default values
         var value;
         var delta = {};
