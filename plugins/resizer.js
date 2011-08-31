@@ -44,7 +44,7 @@
     }
   }
 
-  var resizerDisableRule = Basis.DOM.Style.cssRule('BODY *');
+  var resizerDisableRule = Basis.DOM.Style.cssRule('IFRAME');
 
   var PROPERTY_DELTA = {
     width: 'deltaX',/*
