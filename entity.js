@@ -367,11 +367,11 @@
           }
           else
           {
-            if (idField)
-              idValue = data[idField];
+            if (entityType.compositeKey)
+              idValue = entityType.compositeKey(data, data);
             else
-              if (entityType.compositeKey)
-                idValue = entityType.compositeKey(data, data);
+              if (idField)
+                idValue = data[idField];
               else
               {
                 if (isSingleton)
@@ -783,6 +783,14 @@
         var slot = this.slot_[id];
         if (!slot)
         {
+          if (isKeyType[typeof data])
+          {
+            var tmp = {};
+            if (this.idField && !this.compositeKey)
+              tmp[this.idField] = data;
+            data = tmp;
+          }
+
           slot = this.slot_[id] = new DataObject({
             delegate: this.get(id),
             data: data
