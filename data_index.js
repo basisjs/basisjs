@@ -287,7 +287,7 @@
     * Change value
     */
     upd: function(item, newValue, oldValue){
-    },
+    }
 
    /**
     * @destructor
