@@ -37,6 +37,8 @@
   var VELOCITY_DECREASE_FACTOR = 0.94;
 
   var Scroller = Class(EventObject, {
+    minScrollDelta: 0,
+
     event_start: EventObject.createEvent('start', 'scrollerObject'),
     event_finish: EventObject.createEvent('finish', 'scrollerObject'),
     event_startInertia: EventObject.createEvent('startInertia', 'scrollerObject'),
@@ -84,6 +86,7 @@
       this.currentDirection = 0;
 
       this.processInertia = false;
+      this.minScrollDeltaReached = false;
     },
 
     startUpdate: function(){
@@ -98,6 +101,7 @@
       this.lastUpdateTime = Date.now();
 
       this.startTime = this.lastUpdateTime;
+      this.startViewportPos = this.viewportPos;
 
       this.event_start(this);
     },
@@ -114,11 +118,21 @@
       this.event_finish(this);
     },
 
-    nextFrame: function(){
-      if (this.isUpdating)
-        this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler, this.targetElement);
-    },
+    defineScrollType: function(){
+      var offsetHeight = this.targetElement.offsetHeight;
+      var offsetWidth = this.targetElement.offsetWidth;
+      var offsetParent = this.targetElement.offsetParent;
 
+      if (this.targetElement.scrollWidth > offsetWidth || this.targetElement.scrollHeight > offsetHeight)
+      {
+        this.scrollProperty = 'scroll';
+        DOM.setStyle(this.targetElement, { overflow: 'hidden' });
+      }
+      else if (offsetParent){
+        this.scrollProperty = 'position';
+        DOM.setStyle(offsetParent, { overflow: 'hidden' });
+      }
+    },
 
     calcMinPosition: function(){
       return 0;
@@ -234,7 +248,12 @@
 
       var deltaPos = (this.viewportTargetPos - this.viewportPos);
       var smoothingFactor = this.panningActive || this.currentVelocity > 0 ? 1 : 0.12;
-      this.viewportPos += deltaPos * smoothingFactor;
+
+      if (!this.minScrollDeltaReached && Math.abs(deltaPos) > this.minScrollDelta)
+        this.minScrollDeltaReached = true;
+
+      if (this.minScrollDeltaReached)
+        this.viewportPos += deltaPos * smoothingFactor;
 
       if (!this.panningActive && this.currentVelocity < 0.001 && Math.abs(deltaPos) < 0.1)
       {
@@ -247,29 +266,11 @@
       this.nextFrame();
     },
 
-    calcExpectedPosition: function(){
-      var expectedInertiaDelta = 0;
-
-      if (this.currentVelocity)
-      {
-        var expectedInertiaIterationCount = Math.log(0.001 / this.currentVelocity) / Math.log(VELOCITY_DECREASE_FACTOR);
-        var velocity = this.currentVelocity;
-        for (var i = 0; i < expectedInertiaIterationCount; i++)
-        {
-          expectedInertiaDelta += this.currentDirection * velocity * AVARAGE_TICK_TIME_INTERVAl;
-          velocity *= VELOCITY_DECREASE_FACTOR;
-        }
-      }
-      var expectedPosition = this.viewportTargetPos + expectedInertiaDelta;
-
-      return Math.max(this.minPosition, Math.min(this.maxPosition, expectedPosition));
+    nextFrame: function(){
+      if (this.isUpdating)
+        this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler, this.targetElement);
     },
 
-    setTargetPosition: function(targetPosition){
-      this.viewportTargetPos = targetPosition;
-      this.startUpdate();
-    },
-    
     updateElementPosition: function(){
       if (this.scrollProperty == 'left' || this.scrollProperty == 'top')
       {
@@ -290,6 +291,29 @@
       {
         this.targetElement[this.scrollProperty] = this.viewportPos;
       }
+    },
+
+    setTargetPosition: function(targetPosition){
+      this.viewportTargetPos = targetPosition;
+      this.startUpdate();
+    },
+
+    calcExpectedPosition: function(){
+      var expectedInertiaDelta = 0;
+
+      if (this.currentVelocity)
+      {
+        var expectedInertiaIterationCount = Math.log(0.001 / this.currentVelocity) / Math.log(VELOCITY_DECREASE_FACTOR);
+        var velocity = this.currentVelocity;
+        for (var i = 0; i < expectedInertiaIterationCount; i++)
+        {
+          expectedInertiaDelta += this.currentDirection * velocity * AVARAGE_TICK_TIME_INTERVAl;
+          velocity *= VELOCITY_DECREASE_FACTOR;
+        }
+      }
+      var expectedPosition = this.viewportTargetPos + expectedInertiaDelta;
+
+      return Math.max(this.minPosition, Math.min(this.maxPosition, expectedPosition));
     }
   });
 
