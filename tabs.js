@@ -212,7 +212,7 @@
       },
       
       template: 
-        '<div{element} class="Basis-Page Basis-Page-Hidden">' + 
+        '<div{element|selected} class="Basis-Page Basis-Page-Hidden">' + 
           '<div{content|childNodesElement} class="Basis-Page-Content"/>' +
         '</div>'
     });

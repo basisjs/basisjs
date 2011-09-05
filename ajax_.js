@@ -205,7 +205,7 @@
           {
             this.processErrorResponse();
 
-            proxy.event_failure(this);
+            proxy.event_failure(this, this.data.error);
             newState = STATE.ERROR;
           }
         }

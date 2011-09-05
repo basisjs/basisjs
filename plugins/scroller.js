@@ -33,25 +33,33 @@
 
   var cancelRequestAnimFrame = createMethod('cancelRequestAnimFrame', clearInterval);
 
+  var AVARAGE_TICK_TIME_INTERVAl = 15;
+  var VELOCITY_DECREASE_FACTOR = 0.94;
+
   var Scroller = Class(EventObject, {
-    event_start: EventObject.createEvent('start'),
-    event_finish: EventObject.createEvent('finish'),
-    event_updatePosition: EventObject.createEvent('updatePosition'),
+    event_start: EventObject.createEvent('start', 'scrollerObject'),
+    event_finish: EventObject.createEvent('finish', 'scrollerObject'),
+    event_startInertia: EventObject.createEvent('startInertia', 'scrollerObject'),
+    event_updatePosition: EventObject.createEvent('updatePosition', 'scrollerObject', 'scrollPosition'),
 
     init: function(config){
       this.lastMousePos = 0;
       this.currentVelocity = 0;
       this.currentDirection = 0;
 
+      this.minPosition = 0;
+      this.maxPosition = 0;
+
       this.viewportPos = 0;
       this.viewportTargetPos = this.viewportPos;
       this.lastViewportTargetPos = this.viewportPos;
 
       this.updateFrameHandle = 0;
-      this.processInertia = false;
-      this.panningActive = false;
       this.lastMotionUpdate = 0;
       this.lastUpdateTime = 0;
+      this.startTime = 0;
+      this.processInertia = false;
+      this.panningActive = false;
 
       EventObject.prototype.init.call(this, config);
 
@@ -61,6 +69,8 @@
         Event.addHandler(this.targetElement, 'touchstart', this.onMouseDown.bind(this));
       }
 
+      this.scrollType = (this.scrollProperty == 'top' || this.scrollProperty == 'scrollTop') ? 'vertical' : 'horizontal';
+
       this.onMouseMoveHandler = this.onMouseMove.bind(this);
       this.onMouseUpHandler = this.onMouseUp.bind(this);
       this.onUpdateHandler = this.onUpdate.bind(this);
@@ -69,7 +79,10 @@
     resetVariables: function(){
       this.viewportTargetPos = this.viewportPos;
       this.lastViewportTargetPos = this.viewportTargetPos;
+
       this.currentVelocity = 0;
+      this.currentDirection = 0;
+
       this.processInertia = false;
     },
 
@@ -77,16 +90,14 @@
       if (this.isUpdating)
         return;
 
-      cancelRequestAnimFrame(this.updateFrameHandle);
-
-      this.maxPosition = this.scrollType == 'vertical' ? 
-        this.targetElement.scrollHeight - this.targetElement.offsetHeight : 
-        this.targetElement.scrollWidth - this.targetElement.offsetWidth;
+      this.minPosition = this.calcMinPosition();
+      this.maxPosition = this.calcMaxPosition();
 
       this.isUpdating = true;
-      this.targetElement.style.color = 'green';
-      this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler);
+      this.updateFrameHandle = this.nextFrame();
       this.lastUpdateTime = Date.now();
+
+      this.startTime = this.lastUpdateTime;
 
       this.event_start(this);
     },
@@ -95,16 +106,51 @@
       if (!this.isUpdating)
         return;
 
+      this.resetVariables();
+
       this.isUpdating = false;
-      this.targetElement.style.color = 'black';
       cancelRequestAnimFrame(this.updateFrameHandle);
 
       this.event_finish(this);
     },
 
+    nextFrame: function(){
+      if (this.isUpdating)
+        this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler, this.targetElement);
+    },
+
+
+    calcMinPosition: function(){
+      return 0;
+    },
+
+    calcMaxPosition: function(){
+      var max = 0;
+
+      if (!this.targetElement.offsetWidth)
+        return 0;
+
+      switch (this.scrollProperty)
+      {
+        case 'left': 
+          max = this.targetElement.offsetWidth - this.targetElement.offsetParent.offsetWidth;
+          break;
+        case 'scrollLeft':
+          max = this.targetElement.scrollWidth - this.targetElement.offsetWidth;
+          break;
+        case 'top':
+          max = this.targetElement.offsetHeight - this.targetElement.offsetParent.offsetHeight;
+          break;
+        case 'scrollTop':
+          max = this.targetElement.scrollHeight - this.targetElement.offsetHeight;
+          break;
+      }
+
+      return max;
+    },
+
     onMouseDown: function(event){
       this.stopUpdate();
-      this.resetVariables();
 
       this.panningActive = true;
 
@@ -112,8 +158,8 @@
 
       Event.addHandler(document, 'mousemove', this.onMouseMoveHandler);
       Event.addHandler(document, 'mouseup',   this.onMouseUpHandler);
-      Event.addHandler(this.targetElement, 'touchmove', this.onMouseMoveHandler);
-      Event.addHandler(this.targetElement, 'touchup',   this.onMouseUpHandler);
+      Event.addHandler(document, 'touchmove', this.onMouseMoveHandler);
+      Event.addHandler(document, 'touchend',   this.onMouseUpHandler);
 
       Event.kill(event);
     },
@@ -122,9 +168,10 @@
       this.startUpdate();
 
       var curMousePos = this.scrollType == 'vertical' ? Event.mouseY(event) : Event.mouseX(event);
+
       var delta = curMousePos - this.lastMousePos;
       this.lastMousePos = curMousePos;
-      this.viewportTargetPos += delta * 2;
+      this.viewportTargetPos -= delta;
 
       this.lastMotionUpdate = Date.now();
     },
@@ -139,65 +186,83 @@
       this.lastMotionUpdate = 0;
       
       // 100msec is a full hold gesture that complete zeroes out the velocity to be used as inertia
-      this.currentVelocity *= 1 - Math.min(1, Math.max(0, deltaTime/100));
+      this.currentVelocity *= 1 - Math.min(1, Math.max(0, deltaTime / 100));
+
+      this.event_startInertia(this);
 
       Event.removeHandler(document, 'mousemove', this.onMouseMoveHandler);
       Event.removeHandler(document, 'mouseup',   this.onMouseUpHandler);
+      Event.removeHandler(document, 'touchmove', this.onMouseMoveHandler);
+      Event.removeHandler(document, 'touchend',  this.onMouseUpHandler);
     },
 
     onUpdate: function(time){
-      this.targetElement.style.color = 'black';
-      //var deltaTime = time - this.lastUpdateTime;
-      //this.lastUpdateTime = time;
+      if (!time)
+        time = Date.now();
+
+      var deltaTime = time - this.lastUpdateTime;
+      this.lastUpdateTime = time;
+
+      if (!deltaTime)
+      {
+        this.nextFrame();
+        return;
+      }
+
       if (this.panningActive)
       {
         var delta = (this.viewportTargetPos - this.lastViewportTargetPos);
         this.lastViewportTargetPos = this.viewportTargetPos;
 
         var velocity = Math.abs(delta);
-        this.currentVelocity += (velocity - this.currentVelocity) * .3 * 4;
-        this.currentVelocity = Math.min(170, this.currentVelocity);
+        //this.currentVelocity += (velocity - this.currentVelocity) * 0.3 / deltaTime;
+        this.currentVelocity = velocity / deltaTime;
         this.currentDirection = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
       }
       else if (this.processInertia)
       {
-        this.viewportTargetPos += this.currentVelocity * this.currentDirection;
-        this.currentVelocity *= .9;        
-      }
+        this.viewportTargetPos += this.currentDirection * (this.currentVelocity *  deltaTime);
+        this.currentVelocity *= VELOCITY_DECREASE_FACTOR;
 
-      //fix target position if it gets out of bounds
-      this.fixTargetPosition(this.viewportTargetPos);
+        if (this.currentVelocity < 0.001 || this.viewportPos < this.minPosition || this.viewportPos > this.maxPosition)
+        {
+          this.viewportTargetPos = Math.min(this.maxPosition, Math.max(this.minPosition, this.viewportTargetPos));
+          this.currentVelocity = 0;
+          this.processInertia = false;
+        }
+      }
 
       var deltaPos = (this.viewportTargetPos - this.viewportPos);
-      this.viewportPos += deltaPos * 0.12;
+      var smoothingFactor = this.panningActive || this.currentVelocity > 0 ? 1 : 0.12;
+      this.viewportPos += deltaPos * smoothingFactor;
 
-      this.updateElementPosition(this.viewportPos);
-      this.event_updatePosition(this, this.viewportPos);
-
-      if (!this.panningActive && Math.abs(deltaPos) < 0.1)
+      if (!this.panningActive && this.currentVelocity < 0.001 && Math.abs(deltaPos) < 0.1)
       {
         this.stopUpdate();
-        this.resetVariables();
       }
 
-      if (this.isUpdating)
-      {
-        this.targetElement.style.color = 'green';
-        this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler);
-      }
+      this.updateElementPosition();
+      this.event_updatePosition(this, time, this.viewportPos);
+
+      this.nextFrame();
     },
 
-    fixTargetPosition: function(){
-      if (this.viewportTargetPos < -this.maxPosition)
+    calcExpectedPosition: function(){
+      var expectedInertiaDelta = 0;
+
+      if (this.currentVelocity)
       {
-        this.viewportTargetPos = -this.maxPosition;
-        this.currentVelocity = 0;
+        var expectedInertiaIterationCount = Math.log(0.001 / this.currentVelocity) / Math.log(VELOCITY_DECREASE_FACTOR);
+        var velocity = this.currentVelocity;
+        for (var i = 0; i < expectedInertiaIterationCount; i++)
+        {
+          expectedInertiaDelta += this.currentDirection * velocity * AVARAGE_TICK_TIME_INTERVAl;
+          velocity *= VELOCITY_DECREASE_FACTOR;
+        }
       }
-      else if (this.viewportTargetPos > 0)
-      {
-        this.viewportTargetPos = 0;
-        this.currentVelocity = 0;
-      }
+      var expectedPosition = this.viewportTargetPos + expectedInertiaDelta;
+
+      return Math.max(this.minPosition, Math.min(this.maxPosition, expectedPosition));
     },
 
     setTargetPosition: function(targetPosition){
@@ -205,11 +270,26 @@
       this.startUpdate();
     },
     
-    updateElementPosition: function(viewportPos){
-      if (this.scrollType == 'vertical')
-        this.targetElement.scrollTop = (-viewportPos);
-      else
-        this.targetElement.scrollLeft = (-viewportPos);
+    updateElementPosition: function(){
+      if (this.scrollProperty == 'left' || this.scrollProperty == 'top')
+      {
+        var scrollTop = this.scrollProperty == 'top';
+        var position = Math.round(-this.viewportPos) + 'px';
+        var translate2d = scrollTop ? 'translateY(' + position + ')' : 'translateX(' + position + ')';
+        var translate3d = 'translate3d(' + (!scrollTop ? position : 0) + ', ' + (scrollTop ? position : 0) + ', 0)';
+
+        DOM.setStyle(this.targetElement, {
+          '-webkit-transform': translate3d, 
+          '-moz-transform': translate2d,
+          '-ms-transform': translate2d
+        });
+
+        //this.targetElement.style[this.scrollProperty] = (-this.viewportPos) + 'px';
+      }
+      else if (this.scrollProperty == 'scrollLeft' || this.scrollProperty == 'scrollTop')
+      {
+        this.targetElement[this.scrollProperty] = this.viewportPos;
+      }
     }
   });
 
