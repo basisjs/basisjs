@@ -9,7 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  *
  * @author
- * Roman Dvornov <rdvornov@gmail.com>
  * Vladimir Ratsev <wuzykk@gmail.com>
  *
  */
@@ -34,7 +33,7 @@
       this.constructor.superClass_.prototype.event_childNodesModified.apply(this, arguments);
 
       this.pageSliderCssRule.setStyle({
-        width: (100/ this.childNodes.length) + '%'
+        width: (100 / this.childNodes.length) + '%'
       });
 
       DOM.setStyle(this.element, {
@@ -89,6 +88,14 @@
             item.parentNode.slideToPage(item);
         }
       });
+
+      if (this.selection.itemCount)
+      {
+        var self = this;
+        setTimeout(function(){
+          self.slideToPage(self.selection.pick())
+        }, 0);
+      }
     },
 
     slideToPage: function(page){

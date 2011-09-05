@@ -113,9 +113,9 @@
       {
         var self = this;
         marks.push.apply(marks, Array.create(this.count, function(idx){
-          var p = (idx + 1)/self.count;
+          var p = (idx + 1) / self.count;
           var value = this.closest(p);
-          var pos = ((value - this.min)/this.range_);
+          var pos = ((value - this.min) / this.range_);
 
           return {
             pos: pos,
@@ -153,7 +153,7 @@
   var DRAGDROP_HANDLER = {
     move: function(config){
       var scrollbar = this.tmpl.scrollbar;
-      var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
+      var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left) / scrollbar.offsetWidth;
       this.setValue_(pos * this.count_);
     }
   };
@@ -234,7 +234,7 @@
     action: {
       jumpTo: function(event){
         var scrollbar = this.tmpl.scrollbar;
-        var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left)/scrollbar.offsetWidth;
+        var pos = (Event.mouseX(event) - (new Basis.Layout.Box(scrollbar)).left) / scrollbar.offsetWidth;
         this.setValue_(pos * this.count_);
       },
       focus: function(){
@@ -297,7 +297,7 @@
 
       if (this.min != min || this.max != max || this.step != step)
       {
-        this.count_ = Math.ceil((max - min)/step);
+        this.count_ = Math.ceil((max - min) / step);
 
         this.step = step;
         this.min = min;
@@ -332,7 +332,7 @@
       }
     },
     closest: function(pos){
-      return this.normalize(this.min + this.range_ * pos.fit(0, 1) + (this.step/2));
+      return this.normalize(this.min + this.range_ * pos.fit(0, 1) + (this.step / 2));
     },
     normalize: function(value){
       if (value < this.min)
@@ -341,7 +341,7 @@
         if (value > this.max)
           value = this.max;
 
-      return this.min + Math.floor(0.00001 + (value - this.min)/this.step) * this.step;
+      return this.min + Math.floor(0.00001 + (value - this.min) / this.step) * this.step;
     },
     stepUp: function(count){
       this.setValue_(this.value_ + parseInt(count || 1));
@@ -359,13 +359,13 @@
         var oldValue = this.value;
 
         this.value = this.normalize(this.min + newValue * this.step);
-        this.tmpl.scrollTrumb.style.left = percent(newValue/this.count_);
+        this.tmpl.scrollTrumb.style.left = percent(newValue / this.count_);
 
         this.event_change(this, oldValue);
       }
     },
     setValue: function(newValue){
-      this.setValue_((newValue - this.min)/this.step);
+      this.setValue_((newValue - this.min) / this.step);
     },
     destroy: function(){
       this.scrollbarDD.destroy();

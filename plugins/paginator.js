@@ -8,11 +8,13 @@
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  *
+ * @author
+ * Roman Dvornov <rdvornov@gmail.com>
+ *
  * Inspired on Paginator 3000
  * - idea by ecto (ecto.ru)
  * - coded by karaboz (karaboz.ru)
  *
- * Basis.js adaptation by Roman Dvornov
  */
 
 (function(Basis){
@@ -100,7 +102,7 @@
       this.initOffset = this.tmpl.scrollTrumb.offsetLeft;
     },
     move: function(config){
-      var pos = ((this.initOffset + config.deltaX)/this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
+      var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
       this.setSpanStartPage(Math.round(pos * (this.pageCount_ - this.pageSpan_)));
       this.tmpl.scrollTrumb.style.left = percent(pos);
     },
@@ -232,7 +234,7 @@
         this.spotlightPage(this.activePage_);
     },
     spotlightPage: function(pageNumber){
-      this.setSpanStartPage(pageNumber - Math.round(this.pageSpan_/2) + 1);
+      this.setSpanStartPage(pageNumber - Math.round(this.pageSpan_ / 2) + 1);
     },
     setSpanStartPage: function(pageNumber){
       pageNumber = pageNumber.fit(0, this.pageCount_ - this.pageSpan_);
@@ -246,7 +248,7 @@
         updateSelection(this);
       }
 
-      this.tmpl.scrollTrumb.style.left = percent((pageNumber/Math.max(this.pageCount_ - this.pageSpan_, 1)).fit(0, 1));
+      this.tmpl.scrollTrumb.style.left = percent((pageNumber / Math.max(this.pageCount_ - this.pageSpan_, 1)).fit(0, 1));
     },
 
     destroy: function(){

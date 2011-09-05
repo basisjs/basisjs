@@ -382,7 +382,7 @@
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
         '<span><{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span><!--{attributes}-->></span>' + 
         '<div{childNodesElement} class="Doc-TemplateView-NodeContent"></div>' + 
-        '<span></{this_data_nodeName}></span>' +
+        '<span></{this_data_nodeName2}></span>' +
       '</div>'
     ),
     {
@@ -492,6 +492,7 @@
                   nodeType: node.nodeType,
                   nodeValue: node.nodeType == DOM.ELEMENT_NODE ? '' : node.nodeValue,
                   nodeName: node.nodeType == DOM.ELEMENT_NODE ? node.tagName.toLowerCase() : '',
+                  nodeName2: node.nodeType == DOM.ELEMENT_NODE ? node.tagName.toLowerCase() : '',
                   ref: findRefs(map, node),
                   attrs: attrs.length ? attrs : null
                 },
