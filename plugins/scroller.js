@@ -11,6 +11,66 @@
   var Class = Basis.Class;
   var Event = Basis.Event;
 
+  function getComputedStyle(element, styleProp){
+    if (window.getComputedStyle)
+    {
+      var computedStyle = document.defaultView.getComputedStyle(element, null);
+      if (computedStyle)
+        return computedStyle.getPropertyValue(styleProp);
+    }
+    else
+    {
+      if (element.currentStyle)
+        return element.currentStyle[styleProp];
+    }
+  }
+
+  //css transform/transform3d feature detection
+  var TRANSFORM_SUPPORT = false;
+  var TRANSFORM_3D_SUPPORT = false;
+  var TRANSFORM_PROPERTY_NAME;
+  
+  (function (){
+    
+    function testProps(element, properties) {
+      var p;
+      while (p = properties.shift()) {
+        if (typeof element.style[p] != 'undefined') 
+          return p;
+      }
+      return false;
+    }
+
+    var tester = DOM.createElement('');
+
+    TRANSFORM_PROPERTY_NAME = testProps(tester, [
+      'transform',
+      'WebkitTransform',
+      'msTransform',
+      'MozTransform',
+      'OTransform'
+    ]);
+
+    if (TRANSFORM_PROPERTY_NAME)
+      TRANSFORM_SUPPORT = true;
+
+    //transform3d
+    if (TRANSFORM_SUPPORT)
+    {
+      var prop = testProps(tester, [
+        'perspectiveProperty', 
+        'WebkitPerspective', 
+        'MozPerspective', 
+        'OPerspective', 
+        'msPerspective'
+      ]);
+
+      if (prop || 'webkitPerspective' in document.documentElement.style)
+        TRANSFORM_3D_SUPPORT = true;
+    }
+  })();
+
+  //requestAnimationFrame features
   var prefixes = ['webkit', 'moz', 'o', 'ms'];
 
   function createMethod(name, fallback){
@@ -33,11 +93,18 @@
 
   var cancelRequestAnimFrame = createMethod('cancelRequestAnimFrame', clearInterval);
 
+  //consts
   var AVARAGE_TICK_TIME_INTERVAl = 15;
   var VELOCITY_DECREASE_FACTOR = 0.94;
 
+  //class
   var Scroller = Class(EventObject, {
+    /*minScrollDeltaX: 0,
+    minScrollDeltaY: 0,*/
     minScrollDelta: 0,
+    scrollX: true,
+    scrollY: true,
+    scrollPropertyType: 'style',
 
     event_start: EventObject.createEvent('start', 'scrollerObject'),
     event_finish: EventObject.createEvent('finish', 'scrollerObject'),
@@ -45,24 +112,41 @@
     event_updatePosition: EventObject.createEvent('updatePosition', 'scrollerObject', 'scrollPosition'),
 
     init: function(config){
-      this.lastMousePos = 0;
-      this.currentVelocity = 0;
-      this.currentDirection = 0;
+      this.lastMouseX = 0;
+      this.lastMouseY = 0;
 
-      this.minPosition = 0;
-      this.maxPosition = 0;
+      this.currentVelocityX = 0;
+      this.currentVelocityY = 0;
 
-      this.viewportPos = 0;
-      this.viewportTargetPos = this.viewportPos;
-      this.lastViewportTargetPos = this.viewportPos;
+      this.currentDirectionX = 0;
+      this.currentDirectionY = 0;
 
+      this.minPositionX = 0;
+      this.minPositionY = 0;
+
+      this.maxPositionX = 0;
+      this.maxPositionY = 0;
+
+      this.viewportX = 0;
+      this.viewportY = 0;
+
+      this.viewportTargetX = this.viewportX;
+      this.viewportTargetY = this.viewportY;
+
+      this.lastViewportTargetX = this.viewportX;
+      this.lastViewportTargetY = this.viewportY;
+
+      //time
       this.updateFrameHandle = 0;
-      this.lastMotionUpdate = 0;
+      this.lastMotionUpdateTime = 0;
       this.lastUpdateTime = 0;
       this.startTime = 0;
+
+      //statuses
       this.processInertia = false;
       this.panningActive = false;
 
+      //init
       EventObject.prototype.init.call(this, config);
 
       if (this.targetElement)
@@ -71,37 +155,139 @@
         Event.addHandler(this.targetElement, 'touchstart', this.onMouseDown.bind(this));
       }
 
-      this.scrollType = (this.scrollProperty == 'top' || this.scrollProperty == 'scrollTop') ? 'vertical' : 'horizontal';
-
-      this.onMouseMoveHandler = this.onMouseMove.bind(this);
-      this.onMouseUpHandler = this.onMouseUp.bind(this);
+      /*this.onMouseMoveHandler = this.onMouseMove.bind(this);
+      this.onMouseUpHandler = this.onMouseUp.bind(this);*/
       this.onUpdateHandler = this.onUpdate.bind(this);
+
+      if (this.scrollPropertyType == 'scroll')
+      {
+        DOM.setStyle(this.targetElement, { overflow: 'hidden' }); 
+        this.updateElementPosition = this.updatePosition_scrollTopLeft;
+        this.calcDimentions = this.calcDimentions_scrollTopLeft;
+      }
+      else
+      {
+        DOM.setStyle(this.targetElement, { position: 'relative' });
+        this.updateElementPosition = TRANSFORM_SUPPORT ? this.updatePosition_styleTransform : this.updatePosition_styleTopLeft;
+        this.calcDimentions = this.calcDimentions_styleTopLeft;
+      }
+
+      if (this.minScrollDelta == 0)
+      {
+        this.minScrollDeltaYReached = true;
+        this.minScrollDeltaXReached = true;
+      }
+    },
+
+    updatePosition_scrollTopLeft: function(){
+      if (this.scrollX)
+        this.targetElement.scrollLeft = this.viewportX;
+      if (this.scrollY)
+        this.targetElement.scrollTop = this.viewportY;
+    },
+    
+    updatePosition_styleTopLeft: function(){
+      if (this.scrollX)
+        this.targetElement.style.left = -this.viewportX + 'px';
+      if (this.scrollY)
+        this.targetElement.style.top = -this.viewportY + 'px';
+    },
+
+    updatePosition_styleTransform: function(){
+      var deltaX = Math.round(-this.viewportX) + 'px';
+      var deltaY = Math.round(-this.viewportY) + 'px';
+
+      var style = {};
+      if (TRANSFORM_SUPPORT/* && this.isUpdating*/)
+      {
+        //style.left = 0;
+        //style.top = 0;
+        style[TRANSFORM_PROPERTY_NAME] = 'translate(' + deltaX + ', ' + deltaY + ')' + (TRANSFORM_3D_SUPPORT ? ' translateZ(0)' : '');
+      }
+      /*else
+      {
+        style[TRANSFORM_PROPERTY_NAME] = '';
+        if (this.scrollX)
+          style.left = deltaX;
+
+        if (this.scrollY)
+          style.top = deltaY;
+      }*/
+
+      DOM.setStyle(this.targetElement, style);
+    },
+
+    calcDimentions_scrollTopLeft: function(){
+      this.minPositionX = 0;
+      this.maxPositionX = this.targetElement.scrollWidth - this.targetElement.offsetWidth;
+      if (this.maxPositionX <= 0)
+        this.scrollX = false;
+
+      this.minPositionY = 0;
+      this.maxPositionY = this.targetElement.scrollHeight - this.targetElement.offsetHeight;
+      if (this.maxPositionY <= 0)
+        this.scrollY = false;
+    },
+
+    calcDimentions_styleTopLeft: function(){
+      this.minPositionX = 0;
+      this.minPositionY = 0;
+
+      //DOM.setStyle(this.targetElement, { overflow: 'hidden' });
+
+      var scrollWidth = this.targetElement.scrollWidth;
+      var scrollHeight = this.targetElement.scrollHeight;
+
+      var offsetParent = this.targetElement.offsetParent;
+      var offsetParentWidth = offsetParent.offsetWidth;
+      var offsetParentHeight = offsetParent.offsetHeight;
+      
+      this.maxPositionX = this.targetElement.scrollWidth - offsetParent.offsetWidth;
+      if (this.maxPositionX <= 0)
+        this.scrollX = false;
+
+      this.maxPositionY = this.targetElement.scrollHeight - offsetParent.offsetHeight;
+      if (this.maxPositionY <= 0)
+        this.scrollY = false;
+
+      //DOM.setStyle(this.targetElement, { overflow: 'visible' });
+
     },
 
     resetVariables: function(){
-      this.viewportTargetPos = this.viewportPos;
-      this.lastViewportTargetPos = this.viewportTargetPos;
+      this.viewportTargetX = this.viewportX;
+      this.viewportTargetY = this.viewportY;
 
-      this.currentVelocity = 0;
-      this.currentDirection = 0;
+      this.lastViewportTargetX = this.viewportTargetX;
+      this.lastViewportTargetY = this.viewportTargetY;
+
+      this.currentVelocityX = 0;
+      this.currentVelocityY = 0;
+      
+      this.currentDirectionX = 0;
+      this.currentDirectionY = 0;
+
+      this.minScrollDeltaXReached = false;
+      this.minScrollDeltaYReached = false;
 
       this.processInertia = false;
-      this.minScrollDeltaReached = false;
     },
 
     startUpdate: function(){
       if (this.isUpdating)
         return;
 
-      this.minPosition = this.calcMinPosition();
-      this.maxPosition = this.calcMaxPosition();
+      if (this.targetElement.offsetWidth)
+        this.calcDimentions();
+
+      this.startViewportX = this.viewportX;
+      this.startViewportY = this.viewportY;
 
       this.isUpdating = true;
       this.updateFrameHandle = this.nextFrame();
       this.lastUpdateTime = Date.now();
 
       this.startTime = this.lastUpdateTime;
-      this.startViewportPos = this.viewportPos;
 
       this.event_start(this);
     },
@@ -115,52 +301,9 @@
       this.isUpdating = false;
       cancelRequestAnimFrame(this.updateFrameHandle);
 
+      this.updateElementPosition();
+
       this.event_finish(this);
-    },
-
-    defineScrollType: function(){
-      var offsetHeight = this.targetElement.offsetHeight;
-      var offsetWidth = this.targetElement.offsetWidth;
-      var offsetParent = this.targetElement.offsetParent;
-
-      if (this.targetElement.scrollWidth > offsetWidth || this.targetElement.scrollHeight > offsetHeight)
-      {
-        this.scrollProperty = 'scroll';
-        DOM.setStyle(this.targetElement, { overflow: 'hidden' });
-      }
-      else if (offsetParent){
-        this.scrollProperty = 'position';
-        DOM.setStyle(offsetParent, { overflow: 'hidden' });
-      }
-    },
-
-    calcMinPosition: function(){
-      return 0;
-    },
-
-    calcMaxPosition: function(){
-      var max = 0;
-
-      if (!this.targetElement.offsetWidth)
-        return 0;
-
-      switch (this.scrollProperty)
-      {
-        case 'left': 
-          max = this.targetElement.offsetWidth - this.targetElement.offsetParent.offsetWidth;
-          break;
-        case 'scrollLeft':
-          max = this.targetElement.scrollWidth - this.targetElement.offsetWidth;
-          break;
-        case 'top':
-          max = this.targetElement.offsetHeight - this.targetElement.offsetParent.offsetHeight;
-          break;
-        case 'scrollTop':
-          max = this.targetElement.scrollHeight - this.targetElement.offsetHeight;
-          break;
-      }
-
-      return max;
     },
 
     onMouseDown: function(event){
@@ -168,26 +311,72 @@
 
       this.panningActive = true;
 
-      this.lastMousePos = this.scrollType == 'vertical' ? Event.mouseY(event) : Event.mouseX(event);
+      this.lastMouseX = Event.mouseX(event);
+      this.lastMouseY = Event.mouseY(event);
 
-      Event.addHandler(document, 'mousemove', this.onMouseMoveHandler);
-      Event.addHandler(document, 'mouseup',   this.onMouseUpHandler);
-      Event.addHandler(document, 'touchmove', this.onMouseMoveHandler);
-      Event.addHandler(document, 'touchend',   this.onMouseUpHandler);
+      Event.addHandler(document, 'mousemove', this.onMouseMove, this);
+      Event.addHandler(document, 'touchmove', this.onMouseMove, this);
+      Event.addHandler(document, 'mouseup', this.onMouseUp, this);
+      Event.addHandler(document, 'touchend', this.onMouseUp, this);
 
-      Event.kill(event);
+      //Event.kill(event);
+      Event.cancelDefault(event);
     },
 
     onMouseMove: function(event){
-      this.startUpdate();
 
-      var curMousePos = this.scrollType == 'vertical' ? Event.mouseY(event) : Event.mouseX(event);
+      if (this.minScrollDeltaXReached || !this.minScrollDeltaYReached)
+      {
+        var curMouseX = Event.mouseX(event)
+        var deltaX = this.lastMouseX - curMouseX;
+        this.lastMouseX = curMouseX;
+        this.viewportTargetX += deltaX;
+        this.currentDirectionX = deltaX == 0 ? 0 : (deltaX < 0 ? -1 : 1);
+      }
 
-      var delta = curMousePos - this.lastMousePos;
-      this.lastMousePos = curMousePos;
-      this.viewportTargetPos -= delta;
+      if (this.minScrollDeltaYReached || !this.minScrollDeltaXReached)
+      {
+        var curMouseY = Event.mouseY(event)
+        var deltaY = this.lastMouseY - curMouseY;
+        this.lastMouseY = curMouseY;
+        this.viewportTargetY += deltaY;
+        this.currentDirectionY = deltaY == 0 ? 0 : (deltaY < 0 ? -1 : 1);
+      }
 
-      this.lastMotionUpdate = Date.now();
+      if (this.minScrollDelta > 0)
+      {
+        if (!this.minScrollDeltaXReached && !this.minScrollDeltaYReached)
+        {
+          if (Math.abs(this.viewportTargetX - this.viewportX) > this.minScrollDelta)
+            this.minScrollDeltaXReached = true;
+
+          if (Math.abs(this.viewportTargetY - this.viewportY) > this.minScrollDelta)
+            this.minScrollDeltaYReached = true;          
+
+          if (this.minScrollDeltaYReached)
+          {
+            this.viewportTargetX = this.viewportX;
+            this.currentDirectionX = 0;
+          }
+
+          if (this.minScrollDeltaXReached)
+          {
+            this.viewportTargetY = this.viewportY;
+            this.currentDirectionY = 0;
+          }
+        }
+      }
+      
+      if (this.minScrollDelta == 0 || this.minScrollDeltaYReached || this.minScrollDeltaXReached)
+      {
+        this.startUpdate();
+      }
+      
+      //console.log('x:' + this.minScrollDeltaXReached)
+      //console.log('y:' + this.minScrollDeltaYReached);
+
+
+      this.lastMotionUpdateTime = Date.now();
     },
 
     onMouseUp: function(){
@@ -195,19 +384,22 @@
       this.processInertia = true;
 
       var timeNow = Date.now();
-      var deltaTime = timeNow - this.lastMotionUpdate;
+      var deltaTime = timeNow - this.lastMotionUpdateTime;
       deltaTime = Math.max(10, deltaTime); // low-timer granularity compensation
-      this.lastMotionUpdate = 0;
+      this.lastMotionUpdateTime = 0;
       
       // 100msec is a full hold gesture that complete zeroes out the velocity to be used as inertia
-      this.currentVelocity *= 1 - Math.min(1, Math.max(0, deltaTime / 100));
+      if (this.scrollX)
+        this.currentVelocityX *= 1 - Math.min(1, Math.max(0, deltaTime / 100));
+      if (this.scrollY)
+        this.currentVelocityY *= 1 - Math.min(1, Math.max(0, deltaTime / 100));
+
+      Event.removeHandler(document, 'mousemove', this.onMouseMove, this);
+      Event.removeHandler(document, 'touchmove', this.onMouseMove, this);
+      Event.removeHandler(document, 'mouseup',   this.onMouseUp, this);
+      Event.removeHandler(document, 'touchend',  this.onMouseUp, this);
 
       this.event_startInertia(this);
-
-      Event.removeHandler(document, 'mousemove', this.onMouseMoveHandler);
-      Event.removeHandler(document, 'mouseup',   this.onMouseUpHandler);
-      Event.removeHandler(document, 'touchmove', this.onMouseMoveHandler);
-      Event.removeHandler(document, 'touchend',  this.onMouseUpHandler);
     },
 
     onUpdate: function(time){
@@ -225,43 +417,89 @@
 
       if (this.panningActive)
       {
-        var delta = (this.viewportTargetPos - this.lastViewportTargetPos);
-        this.lastViewportTargetPos = this.viewportTargetPos;
+        var delta;
 
-        var velocity = Math.abs(delta);
-        //this.currentVelocity += (velocity - this.currentVelocity) * 0.3 / deltaTime;
-        this.currentVelocity = velocity / deltaTime;
-        this.currentDirection = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
+        if (this.scrollX/* && this.minScrollDeltaXReached*/)
+        {
+          delta = (this.viewportTargetX - this.lastViewportTargetX);
+          this.lastViewportTargetX = this.viewportTargetX;
+
+          this.currentVelocityX = Math.abs(delta) / deltaTime;
+          this.currentDirectionX = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
+        }
+
+        if (this.scrollY/* && this.minScrollDeltaYReached*/)
+        {
+          delta = (this.viewportTargetY - this.lastViewportTargetY);
+          this.lastViewportTargetY = this.viewportTargetY;
+
+          this.currentVelocityY = Math.abs(delta) / deltaTime;
+          this.currentDirectionY = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
+        }
       }
       else if (this.processInertia)
       {
-        this.viewportTargetPos += this.currentDirection * (this.currentVelocity *  deltaTime);
-        this.currentVelocity *= VELOCITY_DECREASE_FACTOR;
-
-        if (this.currentVelocity < 0.001 || this.viewportPos < this.minPosition || this.viewportPos > this.maxPosition)
+        if (this.scrollX)
         {
-          this.viewportTargetPos = Math.min(this.maxPosition, Math.max(this.minPosition, this.viewportTargetPos));
-          this.currentVelocity = 0;
-          this.processInertia = false;
+          this.viewportTargetX += this.currentDirectionX * (this.currentVelocityX *  deltaTime);
+          this.currentVelocityX *= VELOCITY_DECREASE_FACTOR;
+
+          if (this.currentVelocityX < 0.001 || this.viewportX < this.minPositionX || this.viewportX > this.maxPositionX)
+          {
+            this.viewportTargetX = Math.min(this.maxPositionX, Math.max(this.minPositionX, this.viewportTargetX));
+            this.currentVelocityX = 0;
+          }
         }
+
+        if (this.scrollY)
+        {
+          this.viewportTargetY += this.currentDirectionY * (this.currentVelocityY *  deltaTime);
+          this.currentVelocityY *= VELOCITY_DECREASE_FACTOR;
+
+          if (this.currentVelocityY < 0.001 || this.viewportY < this.minPositionY || this.viewportY > this.maxPositionY)
+          {
+            this.viewportTargetY = Math.min(this.maxPositionY, Math.max(this.minPositionY, this.viewportTargetY));
+            this.currentVelocityY = 0;
+          }          
+        }
+
+        if (this.currentVelocityX == 0 && this.currentVelocityY == 0)
+          this.processInertia = false;          
       }
 
-      var deltaPos = (this.viewportTargetPos - this.viewportPos);
-      var smoothingFactor = this.panningActive || this.currentVelocity > 0 ? 1 : 0.12;
+      var deltaX = 0;
+      var deltaY = 0;
 
-      if (!this.minScrollDeltaReached && Math.abs(deltaPos) > this.minScrollDelta)
-        this.minScrollDeltaReached = true;
-
-      if (this.minScrollDeltaReached)
-        this.viewportPos += deltaPos * smoothingFactor;
-
-      if (!this.panningActive && this.currentVelocity < 0.001 && Math.abs(deltaPos) < 0.1)
+      if (this.scrollX)
       {
+        deltaX = (this.viewportTargetX - this.viewportX);
+        var smoothingFactorX = this.panningActive || this.currentVelocityX > 0 ? 1 : 0.12;
+        this.viewportX += deltaX * smoothingFactorX;
+      }
+
+      if (this.scrollY)
+      {
+        deltaY = (this.viewportTargetY - this.viewportY);
+        var smoothingFactorY = this.panningActive || this.currentVelocityY > 0 ? 1 : 0.12;
+        this.viewportY += deltaY * smoothingFactorY;
+      }
+
+      var scrollXStop = !this.scrollX || (this.currentVelocityX < 0.001 && Math.abs(deltaX) < 0.1);
+      var scrollYStop = !this.scrollY || (this.currentVelocityY < 0.001 && Math.abs(deltaY) < 0.1);
+
+      if (!this.panningActive && scrollXStop && scrollYStop)
+      {
+        if (this.scrollX)
+          this.viewportX = this.viewportTargetX;
+
+        if (this.scrollY)
+          this.viewportY = this.viewportTargetY;
+
         this.stopUpdate();
       }
 
       this.updateElementPosition();
-      this.event_updatePosition(this, time, this.viewportPos);
+      this.event_updatePosition(this, time, this.viewportX, this.viewportY);
 
       this.nextFrame();
     },
@@ -271,49 +509,41 @@
         this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler, this.targetElement);
     },
 
-    updateElementPosition: function(){
-      if (this.scrollProperty == 'left' || this.scrollProperty == 'top')
-      {
-        var scrollTop = this.scrollProperty == 'top';
-        var position = Math.round(-this.viewportPos) + 'px';
-        var translate2d = scrollTop ? 'translateY(' + position + ')' : 'translateX(' + position + ')';
-        var translate3d = 'translate3d(' + (!scrollTop ? position : 0) + ', ' + (scrollTop ? position : 0) + ', 0)';
-
-        DOM.setStyle(this.targetElement, {
-          '-webkit-transform': translate3d, 
-          '-moz-transform': translate2d,
-          '-ms-transform': translate2d
-        });
-
-        //this.targetElement.style[this.scrollProperty] = (-this.viewportPos) + 'px';
-      }
-      else if (this.scrollProperty == 'scrollLeft' || this.scrollProperty == 'scrollTop')
-      {
-        this.targetElement[this.scrollProperty] = this.viewportPos;
-      }
-    },
-
-    setTargetPosition: function(targetPosition){
-      this.viewportTargetPos = targetPosition;
+    setTargetPosition: function(targetPositionX, targetPositionY){
+      this.viewportTargetX = targetPositionX || 0;
+      this.viewportTargetY = targetPositionY || 0;
       this.startUpdate();
+      this.processInertia = true;
     },
 
-    calcExpectedPosition: function(){
+    calcExpectedPosition: function(axis){
       var expectedInertiaDelta = 0;
 
-      if (this.currentVelocity)
+      var currentVelocity = axis == 'x' ? this.currentVelocityX : this.currentVelocityY;
+      var currentDirection = axis == 'x' ? this.currentDirectionX : this.currentDirectionY;
+      var viewportTargetPosition = axis == 'x' ? this.viewportTargetX : this.viewportTargetY;
+      var minPosition = axis == 'x' ? this.minPositionX : this.minPositionY;
+      var maxPosition = axis == 'x' ? this.maxPositionX : this.maxPositionY;
+
+      if (currentVelocity)
       {
-        var expectedInertiaIterationCount = Math.log(0.001 / this.currentVelocity) / Math.log(VELOCITY_DECREASE_FACTOR);
-        var velocity = this.currentVelocity;
+        var expectedInertiaIterationCount = Math.log(0.001 / currentVelocity) / Math.log(VELOCITY_DECREASE_FACTOR);
+        var velocity = currentVelocity;
         for (var i = 0; i < expectedInertiaIterationCount; i++)
         {
-          expectedInertiaDelta += this.currentDirection * velocity * AVARAGE_TICK_TIME_INTERVAl;
+          expectedInertiaDelta += currentDirection * velocity * AVARAGE_TICK_TIME_INTERVAl;
           velocity *= VELOCITY_DECREASE_FACTOR;
         }
       }
-      var expectedPosition = this.viewportTargetPos + expectedInertiaDelta;
+      var expectedPosition = viewportTargetPosition + expectedInertiaDelta;
 
-      return Math.max(this.minPosition, Math.min(this.maxPosition, expectedPosition));
+      return Math.max(minPosition, Math.min(maxPosition, expectedPosition));
+    },
+    calcExpectedPositionX: function(){
+      return this.calcExpectedPosition('x');
+    },
+    calcExpectedPositionY: function(){
+      return this.calcExpectedPosition('y');
     }
   });
 

@@ -27,18 +27,23 @@
 
   var PageSlider = Class(Basis.Controls.Tabs.PageControl, {
     template: 
-        '<div class="Basis-PageControl Basis-PageSlider"/>',
+      '<div class="Basis-PageControl Basis-PageSlider">' +
+        '<div/>' +
+      '</div>',
 
     event_childNodesModified: function(){
       this.constructor.superClass_.prototype.event_childNodesModified.apply(this, arguments);
 
-      this.pageSliderCssRule.setStyle({
+      /*this.pageSliderCssRule.setStyle({
         width: (100 / this.childNodes.length) + '%'
-      });
+      });*/
 
-      DOM.setStyle(this.element, {
+      /*DOM.setStyle(this.element, {
         width: (100 * this.childNodes.length) + '%'
-      });
+      });*/
+
+      for (var i = 0, child; child = this.childNodes[i]; i++)
+        DOM.setStyle(child.element, { left: (100 * i) + '%' });
     },
 
     init: function(config){
@@ -51,20 +56,25 @@
 
       this.scroller = new Basis.Plugin.Scroller({
         targetElement: this.element,
-        scrollProperty: 'left',
+        scrollY: false,
+        minScrollDelta: 10,
         handler: {
           startInertia: function(scroller){
             var selectedItem = this.selection.pick();
             if (selectedItem)
             {
               var slideToItem = selectedItem;
-              if (scroller.currentDirection == 0)
+              if (scroller.currentDirectionX == 0 || 
+                (scroller.currentDirectionX == 1 && scroller.viewportX < selectedItem.element.offsetLeft) || 
+                (scroller.currentDirectionX == -1 && scroller.viewportX > selectedItem.element.offsetLeft)
+              )
               {
-                var slideToItemPosition = Math.round(scroller.viewportPos / selectedItem.element.offsetWidth);
+                scroller.minScrollDeltaXReached = true;
+                var slideToItemPosition = Math.round(scroller.viewportX / selectedItem.element.offsetWidth);
                 slideToItem = this.childNodes[slideToItemPosition];
               }
               else
-                slideToItem = scroller.currentDirection == 1 ? selectedItem.nextSibling : selectedItem.previousSibling;
+                slideToItem = scroller.currentDirectionX == 1 ? selectedItem.nextSibling : selectedItem.previousSibling;
 
               if (!slideToItem)
                 slideToItem = selectedItem;
@@ -75,7 +85,7 @@
                 slideToItem.select();
             }
 
-            scroller.currentVelocity = 0;
+            scroller.currentVelocityX = 0;
           }
         },
         handlerContext: this
