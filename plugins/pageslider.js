@@ -56,7 +56,7 @@
 
       this.scroller = new Basis.Plugin.Scroller({
         targetElement: this.element,
-        scrollY: false,
+        preventScrollY: false,
         minScrollDelta: 10,
         handler: {
           startInertia: function(scroller){

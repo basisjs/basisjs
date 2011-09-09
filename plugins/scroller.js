@@ -102,8 +102,8 @@
     /*minScrollDeltaX: 0,
     minScrollDeltaY: 0,*/
     minScrollDelta: 0,
-    scrollX: true,
-    scrollY: true,
+    preventScrollX: false,
+    preventScrollY: false,
     scrollPropertyType: 'style',
 
     event_start: EventObject.createEvent('start', 'scrollerObject'),
@@ -243,15 +243,14 @@
       var offsetParentHeight = offsetParent.offsetHeight;
       
       this.maxPositionX = this.targetElement.scrollWidth - offsetParent.offsetWidth;
-      if (this.maxPositionX <= 0)
-        this.scrollX = false;
+
+      this.scrollX = !this.preventScrollX && this.maxPositionX > 0
 
       this.maxPositionY = this.targetElement.scrollHeight - offsetParent.offsetHeight;
-      if (this.maxPositionY <= 0)
-        this.scrollY = false;
+
+      this.scrollY = !this.preventScrollY && this.maxPositionY > 0
 
       //DOM.setStyle(this.targetElement, { overflow: 'visible' });
-
     },
 
     resetVariables: function(){
@@ -507,6 +506,18 @@
     nextFrame: function(){
       if (this.isUpdating)
         this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler, this.targetElement);
+    },
+
+    setPosition: function(positionX, positionY){
+      this.viewportX = positionX;
+      this.viewportY = positionY;
+      if (this.isUpdating)
+        this.stopUpdate();
+      else
+      {
+        this.resetVariables();
+        this.updateElementPosition();
+      }
     },
 
     setTargetPosition: function(targetPositionX, targetPositionY){
