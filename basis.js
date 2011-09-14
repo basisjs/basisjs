@@ -4229,7 +4229,8 @@
           }
 
           // call eventType handlers
-          for (var i = 0, item; item = eventTypeHandlers[i++];)
+          var handlers = Array.from(eventTypeHandlers);
+          for (var i = 0, item; item = handlers[i++];)
             item.handler.call(item.thisObject, event);
         };
 
