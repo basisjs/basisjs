@@ -8,19 +8,23 @@
 
   // import names
 
-  var Class = Basis.Class;
-  var DOM = Basis.DOM;
-  var Event = Basis.Event;
-  var Template = Basis.Html.Template;
+  var Class = basis.Class;
+  var DOM = basis.dom;
+  var Event = basis.dom.event;
+  var Template = basis.html.Template;
 
   var getter = Function.getter;
-  var classList = Basis.CSS.classList;
+  var classList = basis.cssom.classList;
 
-  var nsWrappers = Basis.DOM.Wrapper;
-  var nsTree = Basis.Controls.Tree;
-  var nsTabs = Basis.Controls.Tabs;
-  var nsForm = Basis.Controls.Form;
-  var nsEntity = Basis.Entity;
+  var nsWrappers = basis.dom.wrapper;
+  var nsTree = basis.ui.tree;
+  var nsTabs = basis.ui.tabs;
+  var nsForm = basis.ui.form;
+  var nsPopup = basis.ui.popup;
+  var nsButton = basis.ui.button;
+  var nsLayout = basis.layout;
+  var nsEntity = basis.entity;
+  var nsAnimation = basis.animation;
 
   var nsCore = BasisDoc.Core;
   var nsView = BasisDoc.View;
@@ -43,11 +47,11 @@
   //
 
   function smoothScroll(element){
-    var thread = new Basis.Animation.Thread({
+    var thread = new nsAnimation.Thread({
       duration: 350,
       interval: 15
     });
-    var modificator = new Basis.Animation.Modificator(thread, function(value){
+    var modificator = new nsAnimation.Modificator(thread, function(value){
       element.scrollTop = parseInt(value);
     }, 0, 0, true);
 
@@ -96,12 +100,12 @@
   });
 
   var prototypeDataset = new nsWrappers.ChildNodesDataset(nsView.viewPrototype);
-  var prototypeMapPopup = new Basis.Controls.Popup.Balloon({
+  var prototypeMapPopup = new nsPopup.Balloon({
     id: 'PrototypeMapPopup',
     dir: 'center bottom center top',
     selection: {},
     childClass: Class(nsWrappers.TmplNode,
-      nsWrappers.simpleTemplate('<div{element} class="item" event-click="scrollTo">{this_data_title}</div>'),
+      nsWrappers.simpleTemplate('<div{element} class="item" event-click="scrollTo">{this_data_key}</div>'),
       {
         templateAction: function(actionName){
           if (actionName == 'scrollTo')
@@ -161,7 +165,7 @@
     delegate: targetContent,
     dataSource: new nsWrappers.ChildNodesDataset(targetContent),
 
-    childClass: Class(Basis.Controls.Button.Button, {
+    childClass: Class(nsButton.Button, {
       captionGetter: function(button){
         return button.delegate.viewHeader;
       },
@@ -229,6 +233,7 @@
                  });
       }
 
+
       if (node)
       {
         var cursor = node.data.fullPath;
@@ -292,8 +297,8 @@
         })
       },
       {
-        data: { title: 'Basis', fullPath: 'Basis' },
-        childNodes: Object.iterate(Basis.namespaces_, function(key){
+        data: { title: 'basis', fullPath: 'basis' },
+        childNodes: Object.iterate(basis.namespaces_, function(key){
           return new nsNav.docNamespace({
             data: map[key]
           })
@@ -306,7 +311,7 @@
     id: 'SearchTree',
     localSorting: getter('data.title', String.toLowerCase),
     localGrouping: nsNav.nodeTypeGrouping,
-    childClass: Class(nsTree.TreeNode, {
+    childClass: Class(nsTree.Node, {
       template: new Template(
         '<li{element} class="Basis-TreeNode">' +
           '<div{content} class="Basis-TreeNode-Title">' +
@@ -321,10 +326,10 @@
         if (actionName == 'select')
           navTree.open(this.data.fullPath);
 
-        nsTree.TreeNode.prototype.templateAction.call(this, actionName, event);
+        nsTree.Node.prototype.templateAction.call(this, actionName, event);
       },
       init: function(config){
-        nsTree.TreeNode.prototype.init.call(this, config);
+        nsTree.Node.prototype.init.call(this, config);
 
         classList(this.tmpl.content).add(this.data.kind.capitalize() + '-Content');
         this.nodeType = nsNav.kindNodeType[this.data.kind];
@@ -470,8 +475,8 @@
   //
 
   /*
-  var sourceView = new Basis.DOM.Wrapper.TmplContainer({
-    template: new Basis.Html.Template(
+  var sourceView = new basis.DOM.Wrapper.TmplContainer({
+    template: new basis.Html.Template(
       '<div{element} id="SourceCodeViewer">' +
         '<div class="layout">' +
           '<div class="header">Header</div>' +
@@ -482,9 +487,9 @@
   });
 
   DOM.insert(document.body, sourceView.element);
-  DOM.insert(sourceView.content, new Basis.Plugin.SyntaxHighlight.SourceCodeNode({
+  DOM.insert(sourceView.content, new basis.Plugin.SyntaxHighlight.SourceCodeNode({
     data: {
-      code: Basis.DOM.Wrapper.Node.prototype.insertBefore.toString()
+      code: basis.DOM.Wrapper.Node.prototype.insertBefore.toString()
     }
   }).element);*/
 
@@ -492,7 +497,7 @@
   // Layout
   //
 
-  var panel = new Basis.Layout.VerticalPanelStack({
+  var panel = new nsLayout.VerticalPanelStack({
     container: 'Layout',
     id: 'Sidebar',
     childNodes: [
@@ -508,7 +513,7 @@
     ]
   });
 
-  var contentLayout = new Basis.Layout.VerticalPanelStack({
+  var contentLayout = new nsLayout.VerticalPanelStack({
     container: 'Layout',
     id: 'Content',
     childNodes: [
@@ -567,7 +572,7 @@
 
   var scripts = Array.from(document.getElementsByTagName('SCRIPT'))
                   .map(getter('getAttribute("src")'))
-                  .filter(getter('match(/^\\.\\.\\/[a-z0-9\\_\/]+\\.js$/i)'));
+                  .filter(getter('match(/^\\.\\.\\/[a-z0-9\\_\\-\/]+\\.js$/i)'));
    //['../basis.js', '../dom_wraper.js', '../tree.js'];
   //  console.log(DOM.tag(document, 'SCRIPT').map(getter('getAttribute("src")')).filter(getter('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')));
 

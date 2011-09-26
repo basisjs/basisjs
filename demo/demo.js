@@ -1,4 +1,10 @@
 
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.data');
+  basis.require('basis.cssom');
+  basis.require('basis.format.highlight');
+
   window.DemoLocale = {
     TABS: {
       DEMO: 'Demo',
@@ -8,17 +14,17 @@
   };
 
   document.write('<style type="text/css">@import "../demo.css";</style>');
-  document.write('<script type="text/javascript" src="../../plugins/highlight.js"></script>');
+  //document.write('<script type="text/javascript" src="../../plugins/highlight.js"></sc'+'ript>');
   
-  Basis.Event.onLoad(function(){
+  basis.dom.event.onLoad(function(){
     
-    var DOM = Basis.DOM;
-    var Event = Basis.Event;
-    var Data = Basis.Data;
-    var classList = Basis.CSS.classList;
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
+    var Data = basis.data;
+    var classList = basis.cssom.classList;
 
     var highlight = Function.runOnce(function(){
-      DOM.get('javascript').innerHTML = Basis.Plugin.SyntaxHighlight.highlight(DOM.get('javascript').innerHTML);
+      DOM.get('javascript').innerHTML = basis.format.highlight.highlight(DOM.get('javascript').innerHTML);
       //SyntaxHighlighter.highlight({}, DOM.get('css'));
     });
 
@@ -87,7 +93,7 @@
         tabs,
         DOM.wrap(pages, { '.DemoWrapper-Page': Function.$true }, 'element')
       ),
-      DOM.createElement('#DemoCopy', DOM.createElement('P', 'Basis.js ' + String.Entity.copy + ' 2006-2011, ', DOM.createElement('A[href="http://code.google.com/p/basis-js"][target="_blank"]', 'Project page')))
+      DOM.createElement('#DemoCopy', DOM.createElement('P', 'basis.js ' + String.Entity.copy + ' 2006-2011, ', DOM.createElement('A[href="http://code.google.com/p/basis-js"][target="_blank"]', 'Project page')))
     ]);
 
     classList(document.body).add('show');

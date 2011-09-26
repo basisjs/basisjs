@@ -9,14 +9,14 @@
     // import names
     //
 
-    var Class = Basis.Class;
-    var DOM = Basis.DOM;
+    var Class = basis.Class;
+    var DOM = basis.dom;
 
     var getter = Function.getter;
-    var classList = Basis.CSS.classList;
+    var classList = basis.cssom.classList;
 
-    var nsWrappers = Basis.DOM.Wrapper;
-    var nsTree = Basis.Controls.Tree;
+    var nsWrappers = basis.dom.wrapper;
+    var nsTree = basis.ui.tree;
     var nsCore = BasisDoc.Core;
     var nsView = BasisDoc.View;
 
@@ -82,11 +82,11 @@
    /**
     * @class
     */
-    var BaseDocTreeNode = Class(nsTree.TreeNode, {
+    var BaseDocTreeNode = Class(nsTree.Node, {
       views: [],
 
       init: function(config){
-        nsTree.TreeNode.prototype.init.call(this, config);
+        nsTree.Node.prototype.init.call(this, config);
 
         this.tmpl.title.href = '#' + this.data.fullPath;
         classList(this.tmpl.content).add(this.nodeType + '-Content');
@@ -175,14 +175,14 @@
    /**
     * @class
     */
-    var BaseDocTreeFolder = Class(nsTree.TreeFolder, {
+    var BaseDocTreeFolder = Class(nsTree.Folder, {
       collapsed: true,
 
       childFactory: function(config){
         return new kindNodeClass[config.delegate.data.kind](config);
       },
       localSorting: function(node){
-        return groupWeight[node.nodeType] + node.data.title;
+        return groupWeight[node.nodeType] + '_' + node.data.title;
       },
       localGrouping: nodeTypeGrouping,
 
@@ -197,10 +197,10 @@
         return nsCore.getMembers(this.data.fullPath);
       },
       expand: function(){
-        if (nsTree.TreeFolder.prototype.expand.call(this))
+        if (nsTree.Folder.prototype.expand.call(this))
         {
           this.setChildNodes(this.getMembers());
-          this.expand = nsTree.TreeFolder.prototype.expand;
+          this.expand = nsTree.Folder.prototype.expand;
         }
       }
     });
@@ -214,7 +214,7 @@
       collapsed: false,
       selectable: false,
       localGrouping: false,
-      expand: nsTree.TreeFolder.prototype.expand
+      expand: nsTree.Folder.prototype.expand
     });
 
    /**
@@ -238,10 +238,10 @@
       nodeType: 'Class',
 
       views: [
+        nsView.viewClassMap,
         nsView.viewInheritance,
         nsView.viewTemplate,
         //nsView.viewConstructor,
-        //nsView.viewConfig,
         nsView.viewPrototype
       ],
 
@@ -253,9 +253,9 @@
       },
       getMembers: function(){
         return [
-                 nsCore.getMembers(this.data.fullPath + '.prototype'),
-                 nsCore.getMembers(this.data.fullPath)
-               ].flatten();
+          nsCore.getMembers(this.data.fullPath + '.prototype'),
+          nsCore.getMembers(this.data.fullPath).map(function(item){ item.data.isClassMember = true; return item; })
+        ].flatten();
       }
     });
 
@@ -281,7 +281,7 @@
     // export names
     //
 
-    Basis.namespace(namespace).extend({
+    basis.namespace(namespace).extend({
       nodeTypeGrouping: nodeTypeGrouping,
       docClass: docClass,
       docNamespace: docNamespace,

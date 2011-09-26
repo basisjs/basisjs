@@ -132,9 +132,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -158,11 +156,15 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
+
+    basis.require('basis.data');
+    basis.require('basis.dom');
+    basis.require('basis.dom.wrapper');
     
     // make shortcut
-    var Data = Basis.Data;
-    var DOM = Basis.DOM;
-    var nsWrapper = Basis.DOM.Wrapper;
+    var Data = basis.data;
+    var DOM = basis.dom;
+    var nsWrapper = basis.dom.wrapper;
 
     //
     // NUMBER GROUP DEMO
@@ -179,7 +181,7 @@
       });
     }
 
-    var groupingClass = Basis.Class(nsWrapper.TmplGroupingNode, {
+    var groupingClass = basis.Class(nsWrapper.TmplGroupingNode, {
       childClass: nsWrapper.simpleTemplate(
         '<div{element} class="group">' +
           '<!-- {childNodesHere} -->' +
@@ -430,7 +432,7 @@
       id: 'MetroDemo',
       container: DOM.get('MetroDemo-Container'),
 
-      childNodes: Basis.Data(metro),  // metro.map(Function.wrapper('data'))
+      childNodes: Data(metro),  // metro.map(Function.wrapper('data'))
       localSorting: Function.getter('data.name'),
       childClass: nsWrapper(
         '<li class="metro">' +
@@ -465,7 +467,6 @@
         }
       }
     });
-
   </script>
 </body>
 

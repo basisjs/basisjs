@@ -10,11 +10,12 @@
 
   var getter = Function.getter;
 
-  var nsData = Basis.Data;
-  var nsWrappers = Basis.DOM.Wrapper;
-  var nsEntity = Basis.Entity;
+  var nsData = basis.data;
+  var nsWrappers = basis.dom.wrapper;
+  var nsEntity = basis.entity;
+  var nsAjax = basis.net.ajax;
 
-  var TimeEventManager = Basis.TimeEventManager;
+  var TimeEventManager = basis.TimeEventManager;
 
   // main part
 
@@ -43,11 +44,10 @@
 
   var JsDocEntity = new nsEntity.EntityType({
     name: 'JsDocEntity',
-    id: 'path',
     fields: {
+      path: nsEntity.StringId,
       file: String,
       line: Number,
-      path: String,
       text: String,
       context: String,
       tags: Function.$self
@@ -133,7 +133,7 @@
           }
         }
       }
-      else if (key == 'link')
+      else if (key == 'see' || key == 'link')
       {
         if (!tags[key])
           tags[key] = [];
@@ -238,26 +238,67 @@
 
   map = {};
   mapDO = {};
-  charMap = {};
   var members = {};
   var searchIndex = {};
   var searchValues = [];
   rootClasses = {};
 
   var walkThroughCount = 0;
+  var clsSeed = 1;
+  
+  clsList = [{
+    docsUid_: 0,
+    docsLevel_: 0,
+    docsProto_: {}
+  }];
 
-  function walk(scope, path, context, d, ns){
-    if (d > 8)
+  function getClassDocsProtoDescr(cls){
+    if (!cls)
+      return clsList[0];
+
+    if (!cls.docsProto_)
+    {
+      var superDescr = getClassDocsProtoDescr(cls.superClass_);
+      var Proto = Function();
+      Proto.prototype = superDescr.docsProto_;
+      cls.docsUid_ = clsSeed++;
+      cls.docsProto_ = new Proto;
+      cls.docsSuperUid_ = superDescr.docsUid_;
+      cls.docsLevel_ = superDescr.docsLevel_ + 1;
+      clsList.push(cls);
+    }
+
+    return cls;
+  }
+
+  function walk(ctx){
+    var scope = ctx.scope;
+    var path = ctx.path || '';
+    var context = ctx.context;
+    var deep = 1 + (ctx.deep || 0);
+    var ns = ctx.namespace || '';
+
+    if (deep > 8)
       return window.console && console.log(path);
 
     members[path] = new Array();
+
+    // new
+    var isPrototype = context == 'prototype';
+    if (isPrototype)
+    {
+      var clsPath = path.replace(/\.prototype$/, '');
+      var cls = map[clsPath] && map[clsPath].obj;
+      var clsProtoDescr = getClassDocsProtoDescr(cls);
+      var clsProto = cls.docsProto_;
+      var superClsPrototype = cls && cls.superClass_ && cls.superClass_.prototype;
+    }
 
     var keys = context == 'namespace' ? scope.names() : scope;
     for (var key in keys)
     {
       // ignore for private names
-      var lastChar = key.charAt(key.length - 1);
-      if (lastChar == '_')
+      if (/_$/.test(key))
         continue;
 
       var obj = scope[key];
@@ -266,118 +307,104 @@
           || (key == 'prototype')
           //|| (key == 'init' && context == 'prototype')
           || (key == 'className' && context == 'class')
-          || (key == 'toString' && (Object.prototype.toString === obj || Basis.Class.BaseClass.prototype.toString === obj)))
+          || (key == 'subclass' && context == 'class')
+          || (key == 'toString' && (Object.prototype.toString === obj || basis.Class.BaseClass.prototype.toString === obj)))
         continue;
 
       walkThroughCount++;
 
       var fullPath = path ? (path + '.' + key) : key;
-      var kind;
       var title = key;
+      var kind;
       var tag;
-      var implClass;
 
       if (map[fullPath])
-        continue;
-
-      switch (typeof obj){
-        case 'function':
-          if (Basis.namespaces_[fullPath])
-            kind = 'namespace';
-          else
-          {
-            if (context == 'prototype')
-            {
-              if (obj.className)   // for properties which contains ref for class
-                kind = 'property';
-              else
-              {
-                if (title.indexOf('event_') == 0)
-                {
-                  kind = 'event';
-                  title = title.substr(6);
-                }
-                else
-                  kind = 'method';
-              }
-            }
-            else
-            {
-              if (obj.className)
-                kind = 'class';
-              else
-                kind = 'function';
-            }
-          }
-        break;
-        default:
-          if (context == 'prototype')
-            kind = 'property';
-          else
-            if (obj && (obj == document || (obj.ownerDocument && obj.ownerDocument == document)))
-              kind = 'htmlElement';
-            else
-              kind = key.match(/[^A-Z0-9\_]/) ? 'object' : 'constant';
-      };
-
-      if (context == 'class' && kind == 'function')
-        if (obj === Function.prototype[key] || obj === Basis.Class.BaseClass[key])
-          continue;
-
-      if (context == 'prototype')
       {
-        var clsPath = path.replace(/\.prototype$/, '');
-        var cls = map[clsPath] && map[clsPath].obj;
-        var superCls = cls && cls.superClass_;
-        if (superCls)
-        {
-          if (key in superCls.prototype)
-          {
-            var superClsPath = cls.superClass_.className + '.prototype.' + key;
-            if (map[superClsPath])
-              implClass = map[superClsPath].implClass;
-            //else
-            //  console.log(superClsPath, ' not found for ', clsPath);
+        console.log('double scan: ', fullPath);
+        continue;
+      }
 
-            if (cls.prototype[key] !== superCls.prototype[key])
-              tag = 'override';
-          }
-          else
-          {
-            implClass = mapDO[clsPath];
-            tag = 'implement';
-          }
+      if (typeof obj == 'function')
+      {
+        if (basis.namespaces_[fullPath])
+        {
+          kind = 'namespace';
         }
         else
         {
-          //console.log(path, clsPath);
+          var isClass = basis.Class.isClass(obj);
+          if (isPrototype)
+          {
+            if (isClass)   // for properties which contains ref for class
+              kind = 'property';
+            else
+            {
+              var m = title.match(/^event_(.+)/);
+              if (m)
+              {
+                kind = 'event';
+                title = m[1];
+              }
+              else
+                kind = 'method';
+            }
+          }
+          else
+          {
+            kind = isClass ? 'class' : 'function';
+
+            if (context == 'class' && kind == 'function')
+              if (obj === Function.prototype[key] || obj === basis.Class.BaseClass[key])
+                continue;
+          }
         }
       }
-
-      var firstChar = key.charAt(0).toLowerCase();
-      if (!charMap[firstChar])
-        charMap[firstChar] = [];
-
-      if (map[fullPath])
-        console.log(fullPath);
+      else
+      {
+        if (isPrototype)
+          kind = 'property';
+        else
+          if (obj && (obj == document || (obj.ownerDocument && obj.ownerDocument == document)))
+            kind = 'htmlElement';
+          else
+            kind = /[^A-Z0-9\_]/.test(key) ? 'object' : 'constant';
+      };
 
       var data = map[fullPath] = {
-        isClassMember: context == 'class',
+        //isClassMember: context == 'class',
         path: path,
         fullPath: fullPath,
         key: key,
         title: title,
         kind: kind,
         obj: obj,
-        tag: tag,
-        implClass: implClass
+        members: []
       };
+
+      if (isPrototype)
+      {
+        if (superClsPrototype && key in superClsPrototype)
+          tag = obj !== superClsPrototype[key] ? 'override' : null;
+        else
+          tag = 'implement';
+
+        if (tag)
+        {
+          clsProto[key] = {
+            key: key,
+            cls: cls,
+            obj: data,
+            tag: tag
+          };
+        }
+      }
       
-      mapDO[fullPath] = new nsData.DataObject({
+      var dataObject = mapDO[fullPath] = new nsData.DataObject({
         data: data
       });
+      members[path].push(dataObject);
 
-      if (kind == 'function' || kind == 'class' || kind == 'constant' || kind == 'namespace')
+      if (/^(function|class|constant|namespace)$/.test(kind))
       {
         if (!searchIndex[fullPath])
         {
@@ -386,56 +413,82 @@
         }
       }
 
-      members[path].push(mapDO[fullPath]);
-      charMap[firstChar].push(data);
-
-      if (kind == 'class')
+      // go deeper
+      switch (kind)
       {
-        data.namespace = ns;
+        case 'class':
+          data.namespace = ns;
 
-        if (obj.classMap_)
-        {
-          //if (window.console) console.log('>>', fullPath);
-        }
-        else
-          obj.classMap_ = {
-            childNodes: []
-          };
-
-        if (!obj.classMap_.data)
-        {
-          obj.classMap_.data = { path: fullPath, title: fullPath, obj: obj };
-          if (obj.superClass_)
+          /*if (obj.classMap_)
           {
-            if (!obj.superClass_.classMap_)
-            {
-              //if (window.console) console.log('!', fullPath);
-              obj.superClass_.classMap_ = { childNodes: [obj.classMap_] };
-            }
-            else
-            {
-              obj.superClass_.classMap_.childNodes.push(obj.classMap_);
-            }
+            //if (window.console) console.log('>>', fullPath);
           }
           else
-            rootClasses[fullPath] = obj;
-        }  
-      }
+            obj.classMap_ = {
+              childNodes: []
+            };
 
-      if (kind == 'namespace')
-      {
-        walk(obj, fullPath, kind, d + 1, fullPath);
-      }
-      
-      if (kind == 'object' && typeof obj == 'object')
-      {
-        walk(obj, fullPath, kind, d + 1, ns);
-      }
+          if (!obj.classMap_.data)
+          {
+            obj.classMap_.data = { path: fullPath, title: fullPath, obj: obj };
+            if (obj.superClass_)
+            {
+              if (!obj.superClass_.classMap_)
+              {
+                //if (window.console) console.log('!', fullPath);
+                obj.superClass_.classMap_ = { childNodes: [obj.classMap_] };
+              }
+              else
+              {
+                obj.superClass_.classMap_.childNodes.push(obj.classMap_);
+              }
+            }
+            else
+              rootClasses[fullPath] = obj;
+          }*/
 
-      if (kind == 'class')
-      {
-        walk(obj, fullPath, kind, d + 1, ns);
-        walk(obj.prototype, fullPath + '.prototype', 'prototype', d + 1, ns);
+          //walk(obj, fullPath, kind, d + 1, ns);
+          walk({
+            scope: obj,
+            path: fullPath,
+            context: 'class',
+            deep: deep,
+            namespace: ns
+          });
+          //walk(obj.prototype, fullPath + '.prototype', 'prototype', d + 1, ns);
+          walk({
+            scope: obj.prototype,
+            path: fullPath + '.prototype',
+            context: 'prototype',
+            deep: deep,
+            namespace: ns
+          });
+
+        break;
+        case 'namespace':
+          //walk(obj, fullPath, kind, d + 1, fullPath);
+          walk({
+            scope: obj,
+            path: fullPath,
+            context: 'namespace',
+            deep: deep,
+            namespace: fullPath
+          });
+
+        break;
+        case 'object':
+          if (obj && typeof obj == 'object')
+          {
+            //walk(obj, fullPath, kind, d + 1, ns);
+            walk({
+              scope: obj,
+              path: fullPath,
+              context: 'object',
+              deep: deep,
+              namespace: ns
+            });
+          }
+        break;
       }
     }
   }
@@ -451,15 +504,23 @@
   };
 
   var walkStartTime = Date.now();
-  walk(buildin, '', 'object');
+  walk({
+    scope: buildin,
+    context: 'object'
+  });  // buildin, '', 'object'
+
   Object.iterate(buildin, function(name, value){
     value.className = name;
     walk(value, name, 'class');
     walk(value.prototype, name + '.prototype', 'prototype');
   });
 
-  Basis.namespaces_['Basis'] = Basis;
-  walk(Basis.namespaces_, '', 'object',0);
+  basis.namespaces_['basis'] = basis;
+  //walk(basis.namespaces_, '', 'object',0);
+  walk({
+    scope: basis.namespaces_,
+    context: 'object'
+  });
   if (typeof console != 'undefined') console.log(Date.now() - walkStartTime, '/', walkThroughCount);
 
   //
@@ -524,6 +585,8 @@
 
       function createJsDocEntity(source, path){
         var text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft();
+        //if (path == 'basis.dom') debugger;
+        //console.log(path);
         var e = JsDocEntity({
           path: path,
           text: text,
@@ -610,7 +673,7 @@
     loaded: {},
     curResource: null,
     transport: Function.lazyInit(function(){
-      var transport = new Basis.Ajax.Transport();
+      var transport = new nsAjax.Transport();
 
       transport.addHandler({
         failure: function(){
@@ -658,7 +721,7 @@
     }
   };
 
-  Basis.namespace(namespace).extend({
+  basis.namespace(namespace).extend({
     JsDocEntity: JsDocEntity,
     JsDocLinkEntity: JsDocLinkEntity,
     JsDocConfigOption: JsDocConfigOption,

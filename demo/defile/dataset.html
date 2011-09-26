@@ -122,11 +122,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../popup.js"></script>
+  <script type="text/javascript" src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -147,9 +143,11 @@
   <script type="text/javascript" id="demo-javascript">
     
     // import names
-    var DOM = Basis.DOM;
-    var nsData = Basis.Data;
-    var nsWrapper = Basis.DOM.Wrapper;
+    var DOM = basis.require('basis.dom');
+    var Event = basis.require('basis.dom.event');
+    var nsData = basis.require('basis.data');
+    var nsWrapper = basis.require('basis.dom.wrapper');
+    var Menu = basis.require('basis.ui.popup').Menu;
 
     var getter = Function.getter;
 
@@ -228,7 +226,7 @@
         action: {
           add: function(){
             newItemPopup.dataSource.setOperands(newItemPopup.dataSource.minuend, this.dataSource);
-            newItemPopup.show(Basis.Event.sender(event));
+            newItemPopup.show(Event.sender(event));
           }
         },
         childClass: nsWrapper(
@@ -247,7 +245,7 @@
       }
     ));
 
-    var newItemPopup = new Basis.Controls.Popup.Menu({
+    var newItemPopup = new Menu({
       dataSource: new nsData.Dataset.Subtract({ minuend: NUMBERS }),
       childClass: {
         captionGetter: Function.getter('data.value')

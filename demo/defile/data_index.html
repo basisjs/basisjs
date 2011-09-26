@@ -70,8 +70,8 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
+  <script type="text/javascript" src="../../src/basis.js"></script>
+<!--  <script type="text/javascript" src="../../data.js"></script>
   <script type="text/javascript" src="../../property.js"></script>
   <script type="text/javascript" src="../../data_index.js"></script>
   <script type="text/javascript" src="../../dom_wrapper.js"></script>
@@ -79,7 +79,7 @@
   <script type="text/javascript" src="../../button.js"></script>
   <script type="text/javascript" src="../../layout.js"></script>
   <script type="text/javascript" src="../../dragdrop.js"></script>
-  <script type="text/javascript" src="../../plugins/slider.js"></script>
+  <script type="text/javascript" src="../../plugins/slider.js"></script>-->
 
   <script type="text/javascript" src="../seedrandom.js"></script>
 
@@ -100,12 +100,16 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
-    
-    // import names
-    var DOM = Basis.DOM;
-    var nsData = Basis.Data;
-    var nsWrapper = Basis.DOM.Wrapper;
 
+    // import names
+    var DOM = basis.require('basis.dom');
+    var nsData = basis.require('basis.data');
+    var nsWrapper = basis.require('basis.dom.wrapper');
+    var nsDataIndex = basis.require('basis.data.index');
+
+    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
+    var Table = basis.require('basis.ui.table').Table;
+    var Slider = basis.require('basis.ui.slider').Slider;
     var getter = Function.getter;
 
     var seed = 0;
@@ -130,13 +134,13 @@
 
     console.log(new Date - ttt);
 
-    var indexMap = new Basis.Data.Index.IndexMap({
+    var indexMap = new nsDataIndex.IndexMap({
       source: dataset,
       indexes: {
-        valueMax: new Basis.Data.Index.Max('data.value'),
-        totalMax: new Basis.Data.Index.Max('data.total'),
-        totalMin: new Basis.Data.Index.Min('data.total'),
-        totalSum: new Basis.Data.Index.Sum('data.total')
+        valueMax: new nsDataIndex.Max('data.value'),
+        totalMax: new nsDataIndex.Max('data.total'),
+        totalMin: new nsDataIndex.Min('data.total'),
+        totalSum: new nsDataIndex.Sum('data.total')
       },
       calcs: {
         percentOfValueMax: function(data, indexes){
@@ -164,13 +168,12 @@
     var statPanelClass = new nsWrapper.TmplNode.subclass({
       container: DOM.get('demo-container'),
       data: Object.slice(indexMap.stat),
-      handler: {
-        update: function(object, delta){
-          DOM.insert(DOM.clear(this.element), Object.iterate(this.data, function(key, value){
-            var diff = key in delta ? value - delta[key] : 0;
-            return DOM.createElement(diff ? '.diff' : '', (diff ? '+' + diff + ' ' : '') + key + ': ' + value);
-          }));
-        }
+      templateUpdate: function(tmpl, eventName, delta){
+        if (!delta) delta = {};
+        DOM.insert(DOM.clear(this.element), Object.iterate(this.data, function(key, value){
+          var diff = key in delta ? value - delta[key] : 0;
+          return DOM.createElement(diff ? '.diff' : '', (diff ? '+' + diff + ' ' : '') + key + ': ' + value);
+        }));
       },
       sync: function(){
         this.update(indexMap.stat);
@@ -180,7 +183,7 @@
 
     console.log(new Date - ttt);
 
-    new basis.ui.ButtonPanel({
+    new ButtonPanel({
       container: DOM.get('demo-container'),
       childNodes: [
         {
@@ -237,7 +240,7 @@
     });
 
     var count = 0;
-    var table = new basis.ui.Table({
+    var table = new Table({
       container: DOM.get('demo-container'),
       dataSource: dataset, //new basis.data.dataset.Subset({ source: dataset, rule: function(d){ return d.data.id < 50 } }),
       structure: [
@@ -267,9 +270,14 @@
       ],
 
       rowBehaviour: {
-        event_update: function(object, delta){
-          for (var key in delta)
-            this.tmpl[key].nodeValue = this.data[key];
+        templateUpdate: function(tmpl, eventName, delta){
+          if (delta)
+            for (var key in delta)
+              tmpl[key].nodeValue = this.data[key];
+          else
+            for (var key in this.data)
+              if (key in tmpl)
+                tmpl[key].nodeValue = this.data[key];
         }
       },
       childClass: {
@@ -279,11 +287,11 @@
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },
-            instanceOf: Basis.Data.Object.subclass({
+            instanceOf: nsData.Object.subclass({
               active: true,
               event_update: function(object, delta){
                 //console.log(count++, delta);
-                nsWrapper.TmplNode.prototype.event_update.call(this, object, delta);
+                nsData.Object.prototype.event_update.call(this, object, delta);
 
                 this.owner.tmpl.percentOfTotalSum.nodeValue = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);
                 this.owner.tmpl.percentOfTotalMax.style.width = '{0:.2}%'.format(100 * this.data.percentOfTotalMax);
@@ -311,7 +319,7 @@
         }
       },
       childNodes: [
-        new Basis.Plugin.Slider({
+        new Slider({
           autoDelegateParent: true,
           min: 0,
           max: 50,
@@ -326,7 +334,7 @@
             }
           }
         }),
-        new Basis.Plugin.Slider({
+        new Slider({
           autoDelegateParent: true,
           min: 0,
           max: 150,

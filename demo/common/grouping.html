@@ -56,7 +56,13 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
+  <script type="text/javascript" src="../../_core.js"></script>
+  <script type="text/javascript" src="../../_ua.js"></script>
+  <script type="text/javascript" src="../../_dom.js"></script>
+  <script type="text/javascript" src="../../_dom_event.js"></script>
+  <script type="text/javascript" src="../../_cssom.js"></script>
+  <script type="text/javascript" src="../../_html.js"></script>
+
   <script type="text/javascript" src="../../data.js"></script>
   <script type="text/javascript" src="../../property.js"></script>
   <script type="text/javascript" src="../../dom_wrapper.js"></script>
@@ -82,11 +88,11 @@
   <script type="text/javascript" id="demo-javascript">
     
     // make shortcut
-    var Data = Basis.Data;
-    var DOM = Basis.DOM;
-    var nsTree = Basis.Controls.Tree;
-    var nsTable = Basis.Controls.Table;
-    var nsForm = Basis.Controls.Form;
+    var Data = basis.data;
+    var DOM = basis.dom;
+    var nsTree = basis.ui.tree;
+    var nsTable = basis.ui.table;
+    var nsForm = basis.ui.form;
 
     // data
     var data = [

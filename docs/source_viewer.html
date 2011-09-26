@@ -9,11 +9,7 @@
 
   <link rel="stylesheet" type="text/css" title="Default Style" href="../plugins/style/highlight/style.css" media="screen" />
 
-  <script type="text/javascript" src="../basis.js"></script>
-  <script type="text/javascript" src="../data.js"></script>
-  <script type="text/javascript" src="../ajax.js"></script>
-  <script type="text/javascript" src="../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../plugins/highlight.js"></script>
+  <script type="text/javascript" src="../basis-all.js"></script>
 
   <style type="text/css">
     BODY
@@ -34,13 +30,13 @@
     var filename = ((location.search || '').match(/[\?\&]file=([^&]+)/) || [])[1];
     if (filename)
     {
-      var transport = new Basis.Ajax.Transport({
+      var transport = new basis.net.ajax.Transport({
         url: '../' + filename,
         event_complete: function(req){
           this.constructor.prototype.event_success.apply(this, arguments);
 
           //t = new Date;
-          var node = new Basis.Plugin.SyntaxHighlight.SourceCodeNode({
+          var node = new basis.format.highlight.SourceCodeNode({
             container: document.body,
             normalize: false,
             data: {
@@ -52,11 +48,14 @@
           if (!isNaN(line))
           {
             var lineElement = node.element.childNodes[line - 1];
-            lineElement.className += ' selected';
-            setTimeout(function(){
-              document.documentElement.scrollTop =
-              document.body.scrollTop = lineElement.offsetTop - 200;
-            }, 15);
+            if (lineElement)
+            {
+              lineElement.className += ' selected';
+              setTimeout(function(){
+                document.documentElement.scrollTop =
+                document.body.scrollTop = lineElement.offsetTop - 200;
+              }, 15);
+            }
           }
         }
       });

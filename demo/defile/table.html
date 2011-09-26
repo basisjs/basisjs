@@ -77,13 +77,13 @@
   <script type="text/javascript" id="demo-javascript">
     
     // import names
-    var DOM = Basis.DOM;
-    var Event = Basis.Event;
-    var Data = Basis.Data;
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
+    var Data = basis.data;
 
     var getter = Function.getter;
 
-    var Table = Basis.Controls.Table.Table;
+    var Table = basis.ui.table.Table;
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));

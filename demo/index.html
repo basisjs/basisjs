@@ -122,19 +122,21 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../basis.js"></script>
-  <script type="text/javascript" src="../data.js"></script>
-  <script type="text/javascript" src="../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../tree.js"></script>
+  <script type="text/javascript" src="../basis-all.js"></script>
 </head>
 
 <body>
   <script type="text/javascript">
     (function(){
-      var Class = Basis.Class;
-      var Data = Basis.Data;
-      var nsWrappers = Basis.DOM.Wrapper;
-      var nsTree = Basis.Controls.Tree;
+      basis.require('basis.data');
+      basis.require('basis.html');
+      basis.require('basis.ui.tree');
+
+      var Class = basis.Class;
+      var Data = basis.data;
+      var nsWrappers = basis.dom.wrapper;
+      var nsTree = basis.ui.tree;
+      var Template = basis.html.Template;
 
       var data = [
         {
@@ -148,20 +150,20 @@
         {
           title: 'Defile',
           demos: [
-            { title: 'Basis.Data.Dataset', url: 'defile/dataset.html' },
-            { title: 'Basis.Data.Index', url: 'defile/data_index.html' },
-            { title: 'Basis.Controls.Tabs', url: 'defile/tabs.html' },
-            { title: 'Basis.Controls.Tree', url: 'defile/tree.html' },
-            { title: 'Basis.Controls.Table', url: 'defile/table.html' },
-            { title: 'Basis.Controls.Form', url: 'defile/form.html' },
-            { title: 'Basis.Controls.Button', url: 'defile/button.html' },
-            { title: 'Basis.Controls.Window', url: 'defile/window.html' },
-            { title: 'Basis.Controls.Popup', url: 'defile/popup.html' },
+            { title: 'basis.data.Dataset', url: 'defile/dataset.html' },
+            { title: 'basis.data.Index', url: 'defile/data_index.html' },
+            { title: 'basis.ui.Tabs', url: 'defile/tabs.html' },
+            { title: 'basis.ui.Tree', url: 'defile/tree.html' },
+            { title: 'basis.ui.Table', url: 'defile/table.html' },
+            { title: 'basis.ui.Form', url: 'defile/form.html' },
+            { title: 'basis.ui.Button', url: 'defile/button.html' },
+            { title: 'basis.ui.Window', url: 'defile/window.html' },
+            { title: 'basis.ui.Popup', url: 'defile/popup.html' },
             { title: 'Calendar', url: 'defile/calendar.html' },
             { title: 'Slider', url: 'defile/slider.html' },
             { title: 'Resizer', url: 'defile/resizer.html' },
             { title: 'Paginator', url: 'defile/paginator.html' }
-            //{ title: 'Basis.Controls.Animation', url: 'defile/animation.html' },
+            //{ title: 'basis.ui.Animation', url: 'defile/animation.html' },
           ]
         },
         {
@@ -215,31 +217,30 @@
       treeDemos = new nsWrappers.TmplContainer({
         id: 'DemoList',
         container: document.body,
-        template: new Basis.Html.Template(
+        template: 
           '<ul{element}>' +
             '<!-- {childNodesHere} -->' +
-          '</ul>'
-        ),
-        childClass: Class(nsTree.TreeNode, {
+          '</ul>',
+
+        childClass: {
           className: 'Demo-TreeNode',
-          template: new Basis.Html.Template(
+          template:
             '<li{element} class="Demo-TreeNode" event-click="select">' +
               '<a{content|title} href="#">' +
                 '<img src{imageUrl}="box.png" width="100" height="75"/>' +
                 '<span class="title">{titleText}</span>' +
               '</a>' +
-            '</li>'
-          ),
-          event_update: function(object, delta){
-            nsTree.TreeNode.prototype.event_update.call(this, object, delta);
-          
-            this.tmpl.imageUrl.nodeValue = this.data.image || this.data.url.replace('.html', '.png');
-            this.tmpl.title.href = this.data.url;
+            '</li>',
+
+          templateUpdate: function(tmpl, eventName, delta){
+            tmpl.titleText.nodeValue = this.data.title;
+            tmpl.title.href = this.data.url;
+            tmpl.imageUrl.nodeValue = this.data.image || this.data.url.replace('.html', '.png');
           }
-        }),
+        },
         localGrouping: {
           childClass: Class(nsWrappers.TmplPartitionNode, {
-            template: new Basis.Html.Template(
+            template: new Template(
               '<li{element} class="Demo-Group">' +
                 '<div class="Demo-Group-Title"><span>{titleText}</span></div>' +
                 '<ul{childNodesElement} class="Demo-Group-Content"/>' +

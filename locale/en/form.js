@@ -1,9 +1,9 @@
-Basis.Controls.Form.Field.LOCALE = {
+basis.ui.form.Field.LOCALE = {
   Textarea: {
     SYMBOLS_LEFT: 'Symbols left'
   }
 };
-Basis.Controls.Form.Validator.LOCALE = {
+basis.ui.form.Validator.LOCALE = {
   RegExp: {
     WRONG_FORMAT: 'The value has wrong format.'
   },

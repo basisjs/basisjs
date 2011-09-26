@@ -1,4 +1,4 @@
-Basis.Locale['Controls.Calendar'] = {
+basis.locale['ui.calendar'] = {
   QUARTER:  'Quarter',
   TODAY:    'Today',
   SELECTED: 'Selected',

@@ -86,11 +86,11 @@
     // import names
     var getter = Function.getter;
 
-    var DOM = Basis.DOM;
-    var Event = Basis.Event;
-    var nsData = Basis.Data;
-    var nsForm = Basis.Controls.Form;
-    var nsButton = Basis.Controls.Button;
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
+    var nsData = basis.data;
+    var nsForm = basis.ui.form;
+    var nsButton = basis.ui.button;
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
@@ -124,7 +124,7 @@
       container: createBlock('Select Field')
     });
 
-    var property = new nsData.Property.Property(1);
+    var property = new nsData.property.Property(1);
 
     new nsForm.Field.Combobox({
       childNodes: [
