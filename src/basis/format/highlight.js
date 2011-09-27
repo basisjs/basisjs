@@ -9,22 +9,26 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom.wrapper');
+basis.require('basis.ui');
 
-!function(){ 
+!function(basis){ 
 
   'use strict';
   
  /**
   * @namespace basis.format.highlight
   */
+
   var namespace = 'basis.format.highlight';
+
 
   //
   // import names
   //
 
-  var TmplNode = basis.dom.wrapper.TmplNode;
+  var Class = basis.Class;
+  var UINode = basis.ui.Node;
+
 
   //
   // Main part
@@ -216,7 +220,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var SourceCodeNode = basis.Class(TmplNode, {
+  var SourceCodeNode = Class(UINode, {
     className: namespace + '.SourceCodeNode',
 
     template:
@@ -247,4 +251,4 @@ basis.require('basis.dom.wrapper');
     SourceCodeNode: SourceCodeNode
   });
 
-}();
+}(basis);

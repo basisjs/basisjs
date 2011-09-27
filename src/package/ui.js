@@ -9,3 +9,4 @@
   basis.require('basis.data.property');
   basis.require('basis.data.index');
   basis.require('basis.entity');
+  basis.require('basis.ui');

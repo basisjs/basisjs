@@ -18,6 +18,7 @@
 basis.require('basis.dom');
 basis.require('basis.cssom');
 basis.require('basis.dragdrop');
+basis.require('basis.ui');
 
 !function(basis){
 

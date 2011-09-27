@@ -12,6 +12,7 @@
 basis.require('basis.dom');
 basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -24,20 +25,20 @@ basis.require('basis.cssom');
 
   var namespace = 'basis.ui.tabs';
 
+
   // import names
 
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var classList = basis.cssom.classList;
   var getter = Function.getter;
-
-  var nsWrappers = basis.dom.wrapper;
-
-  var TmplNode = nsWrappers.TmplNode;
-  var TmplContainer = nsWrappers.TmplContainer;
-
+  var classList = basis.cssom.classList;
   var createEvent = basis.EventObject.createEvent;
+
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+
 
   //
   //  behaviour handlers
@@ -65,11 +66,11 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var AbstractTabsControl = Class(nsWrappers.TmplControl, {
+  var AbstractTabsControl = Class(UIControl, {
     className: namespace + '.AbstractTabsControl',
 
     canHaveChildren: true,
-    childClass: TmplNode,
+    childClass: UINode,
 
     event_childEnabled: createEvent('childEnabled') && baseSelectHandler,
     event_childDisabled: createEvent('childDisabled') && baseUnselectHandler,
@@ -106,26 +107,26 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var Tab = Class(TmplContainer, {
+  var Tab = Class(UIContainer, {
     className: namespace + '.Tab',
 
     canHaveChildren: false,
 
     event_disable: function(){ 
-      TmplContainer.prototype.event_disable.call(this);
+      UIContainer.prototype.event_disable.call(this);
 
       this.unselect();
       if (this.document)
         this.document.event_childDisabled(this.document, this);
     },
     event_enable: function(){ 
-      TmplContainer.prototype.event_enable.call(this);
+      UIContainer.prototype.event_enable.call(this);
 
       if (this.document)
         this.document.event_childEnabled(this.document, this);
     },
     event_update: function(node, delta){
-      TmplContainer.prototype.event_update.call(this, node, delta);
+      UIContainer.prototype.event_update.call(this, node, delta);
 
       // set new title
       this.tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
@@ -167,19 +168,6 @@ basis.require('basis.cssom');
   // Tabs control
   //
 
- /**
-  * @class
-  */
-  var TabsGroupingNode = Class(nsWrappers.TmplGroupingNode, {
-    className: namespace + '.TabsGroupingNode',
-
-    childClass: Class(nsWrappers.TmplPartitionNode, {
-      className: namespace + '.TabsPartitionNode',
-
-      template: 
-        '<div class="Basis-TabControl-TabGroup"/>'
-    })
-  });
 
  /**
   * @class
@@ -188,7 +176,15 @@ basis.require('basis.cssom');
     className: namespace + '.TabControl',
 
     childClass: Tab,
-    localGroupingClass: TabsGroupingNode,
+    localGroupingClass: {
+      className: namespace + '.TabsGroupingNode',
+
+      childClass: {
+        className: namespace + '.TabsPartitionNode',
+        template: 
+          '<div class="Basis-TabControl-TabGroup"/>'
+      }
+    },
 
     template: 
       '<div{element} class="Basis-TabControl">' +
@@ -205,16 +201,16 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var Page = Class(TmplContainer, {
+  var Page = Class(UIContainer, {
     className: namespace + '.Page',
 
     event_select: function(){
       classList(this.element).remove('Basis-Page-Hidden');
-      TmplContainer.prototype.event_select.call(this);
+      UIContainer.prototype.event_select.call(this);
     },
     event_unselect: function(){
       classList(this.element).add('Basis-Page-Hidden');
-      TmplContainer.prototype.event_unselect.call(this);
+      UIContainer.prototype.event_unselect.call(this);
     },
     
     template: 
@@ -250,7 +246,7 @@ basis.require('basis.cssom');
     className: namespace + '.TabSheet',
 
     canHaveChildren: true,
-    childClass: TmplNode,
+    childClass: UINode,
 
     event_select: function(){
       Tab.prototype.event_select.call(this);

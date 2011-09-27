@@ -10,9 +10,8 @@
  */
 
 basis.require('basis.dom');
-basis.require('basis.cssom');
-basis.require('basis.html');
 basis.require('basis.data');
+basis.require('basis.html');
 
 !function(basis){
 
@@ -26,15 +25,8 @@ basis.require('basis.data');
   *   {basis.dom.wrapper.AbstractNode}, {basis.dom.wrapper.InteractiveNode},
   *   {basis.dom.wrapper.Node}, {basis.dom.wrapper.PartitionNode},
   *   {basis.dom.wrapper.GroupingNode}
-  * - Visual DOM classes:
-  *   {basis.dom.wrapper.TmplNode}, {basis.dom.wrapper.TmplContainer}, 
-  *   {basis.dom.wrapper.TmplPartitionNode}, {basis.dom.wrapper.TmplGroupingNode},
-  *   {basis.dom.wrapper.TmplControl}
   * - Misc:
   *   {basis.dom.wrapper.Selection}
-  *
-  * Aliases are available:
-  * - {basis.dom.wrapper.Control} for {basis.dom.wrapper.TmplControl}
   *
   * @namespace basis.dom.wrapper
   */
@@ -47,15 +39,11 @@ basis.require('basis.data');
   var DOM = basis.dom;
   var nsData = basis.data;
 
-  var Template = basis.html.Template;
   var EventObject = basis.EventObject;
   var Subscription = nsData.Subscription;
   var DataObject = nsData.DataObject;
   var AbstractDataset = nsData.AbstractDataset;
   var Dataset = nsData.Dataset;
-
-  var Cleaner = basis.Cleaner;
-  var TimeEventManager = basis.TimeEventManager;
 
   var STATE = nsData.STATE;
   var AXIS_DESCENDANT = DOM.AXIS_DESCENDANT;
@@ -64,9 +52,7 @@ basis.require('basis.data');
   var getter = Function.getter;
   var extend = Object.extend;
   var complete = Object.complete;
-  var classList = basis.cssom.classList;
   var axis = DOM.axis;
-  var createBehaviour = basis.EventObject.createBehaviour;
   var createEvent = basis.EventObject.createEvent;
   var event = basis.EventObject.event;
 
@@ -191,7 +177,7 @@ basis.require('basis.data');
 
         owner.satellite[key] = satellite;
 
-        if (replaceElement && satellite instanceof TmplNode && satellite.element)
+        if (replaceElement && satellite instanceof basis.ui.Node && satellite.element)
         {
           DOM.replace(replaceElement, satellite.element);
           satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
@@ -1002,20 +988,19 @@ basis.require('basis.data');
    /**
     * Function that will be called, when non-instance of childClass insert.
     * @example
-    *   // code with no childFactory
+    *   // example code with no childFactory
     *   function createNode(config){
-    *     return new basis.dom.wrapper.TmplNode(config);
+    *     return new basis.dom.wrapper.Node(config);
     *   }
-    *   var node = new basis.dom.wrapper.TmplContainer();
+    *   var node = new basis.dom.wrapper.Node();
     *   node.appendChild(createNode({ .. config .. }));
     *
-    *   // with childFactory
-    *   var CustomClass = basis.Class(basis.dom.wrapper.TmplContainer, {
+    *   // solution with childFactory
+    *   var node = new basis.dom.wrapper.Node({
     *     childFactory: function(config){
-    *       return new basis.dom.wrapper.TmplNode(config);
+    *       return new basis.dom.wrapper.Node(config);
     *     }
     *   });
-    *   var node = new CustomClass();
     *   node.appendChild({ .. config .. });
     * @type {function():object}
     */
@@ -2275,417 +2260,6 @@ basis.require('basis.data');
 
   AbstractNode.prototype.localGroupingClass = GroupingNode;
 
- /**
-  *
-  */
-  var TEMPLATE_ACTION = Class.ExtensibleProperty();
-
- /**
-  * @mixin
-  */
-  var TemplateMixin = function(super_){
-    return {
-     /**
-      * Template for object.
-      * @type {basis.Html.Template}
-      */
-      template: new Template(
-        '<div/>'
-      ),
-
-     /**
-      * Handlers for template actions.
-      * @type {Object}
-      */
-      action: TEMPLATE_ACTION,
-
-     /**
-      * Classes for template elements.
-      * @type {object}
-      */
-      cssClassName: null,
-
-     /**
-      *
-      */
-      event_update: function(object, delta){
-        super_.event_update.call(this, object, delta);
-
-        this.templateUpdate(this.tmpl, 'update', delta);
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_select: function(node){
-        super_.event_select.call(this, node);
-
-        classList(this.tmpl.selected || this.tmpl.content || this.element).add('selected');
-        //  var element = this.tmpl.selectedElement || this.tmpl.content || this.tmpl.element;
-        //  element.className += ' selected';
-
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_unselect: function(node){
-        super_.event_unselect.call(this, node);
-
-        classList(this.tmpl.selected || this.tmpl.content || this.element).remove('selected');
-        //  var element = this.tmpl.selectedElement || this.tmpl.content || this.tmpl.element;
-        //  element.className = element.className.replace(/(^|\s+)selected(\s+|$)/, '$2');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_disable: function(node){
-        super_.event_disable.call(this, node);
-
-        classList(this.tmpl.disabled || this.element).add('disabled');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_enable: function(node){
-        super_.event_enable.call(this, node);
-
-        classList(this.tmpl.disabled || this.element).remove('disabled');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_match: function(node){
-        super_.event_match.call(this, node);
-
-        DOM.display(this.element, true);
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_unmatch: function(node){
-        super_.event_unmatch.call(this, node);
-
-        DOM.display(this.element, false);
-      },
-
-     /**
-      * @inheritDoc
-      */
-      init: function(config){
-
-        // create dom fragment by template
-        this.tmpl = {};
-        if (this.template)
-        {
-          this.template.createInstance(this.tmpl, this);
-          this.element = this.tmpl.element;
-
-          if (this.tmpl.childNodesHere)
-          {
-            this.tmpl.childNodesElement = this.tmpl.childNodesHere.parentNode;
-            this.tmpl.childNodesElement.insertPoint = this.tmpl.childNodesHere;
-          }
-
-          // insert content
-          if (this.content)
-            DOM.insert(this.tmpl.content || this.element, this.content);
-        }
-        else
-          this.element = this.tmpl.element = DOM.createElement();
-
-        this.childNodesElement = this.tmpl.childNodesElement || this.element;
-
-        // inherit init
-        super_.init.call(this, config);
-
-        // update template
-        if (this.id)
-          this.element.id = this.id;
-
-        var cssClassNames = this.cssClassName;
-        if (cssClassNames)
-        {
-          if (typeof cssClassNames == 'string')
-            cssClassNames = { element: cssClassNames };
-
-          for (var alias in cssClassNames)
-          {
-            var node = this.tmpl[alias];
-            if (node)
-            {
-              var nodeClassName = classList(node);
-              var names = String(cssClassNames[alias]).qw();
-              for (var i = 0, name; name = names[i++];)
-                nodeClassName.add(name);
-            }
-          }
-        }
-
-        /*if (true) // this.template
-        {
-          var delta = {};
-          for (var key in this.data)
-            delta[key] = undefined;
-
-          this.event_update(this, delta);
-        }*/
-        if (this.tmpl)
-          this.templateUpdate(this.tmpl);
-
-        if (this.container)
-          DOM.insert(this.container, this.element);
-      },
-
-     /**
-      * Handler on template actions.
-      * @param {string} actionName
-      * @param {object} event
-      */
-      templateAction: function(actionName, event){
-        // send action to document node
-        //if (this.document && this.document !== this)
-        //  this.document.templateAction(actionName, event, this);
-        if (this.action[actionName])
-          this.action[actionName].call(this, event);
-      },
-
-     /**
-      * Handler on template actions.
-      * @param {string} actionName
-      * @param {object} event
-      */
-      templateUpdate: function(tmpl, event){
-        /** nothing to do, override it in descendant classes */
-      },
-
-     /**
-      * @inheritDoc
-      */
-      destroy: function(){
-        var element = this.element;
-
-        super_.destroy.call(this);
-
-        if (element && element.parentNode)
-          element.parentNode.removeChild(element);
-
-        if (this.template)
-          this.template.clearInstance(this.tmpl, this);
-
-        this.element = null;
-        this.tmpl = null;
-        this.childNodesElement = null;
-      }
-    }
-  };
-
- /**
-  * @class
-  */
-  var TmplNode = Class(Node, TemplateMixin, {
-    className: namespace + '.TmplNode'
-  });
-
- /**
-  * @class
-  */
-  var TmplPartitionNode = Class(PartitionNode, TemplateMixin, {
-    className: namespace + '.TmplPartitionNode',
-
-    titleGetter: getter('data.title'),
-
-    /*template: new Template(
-      '<div{element} class="Basis-PartitionNode">' + 
-        '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
-        '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
-      '</div>'
-    ),*/
-
-    templateUpdate: function(tmpl, eventName, delta){
-      if (tmpl.titleText)
-        tmpl.titleText.nodeValue = String(this.titleGetter(this));
-    }
-  });
-
- /**
-  * Template mixin for containers classes
-  * @mixin
-  */
-  var ContainerTemplateMixin = function(super_){
-    return {
-      // methods
-      insertBefore: function(newChild, refChild){
-        // inherit
-        var newChild = super_.insertBefore.call(this, newChild, refChild);
-
-        var target = newChild.groupNode || this;
-        var nextSibling = newChild.nextSibling;
-        var container = target.childNodesElement || target.element || this.childNodesElement || this.element;
-
-        //var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
-        var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
-
-        var element = newChild.element;
-        var refNode = insertPoint || container.insertPoint || null;
-
-        if (element.parentNode !== container || element.nextSibling !== refNode) // prevent dom update
-          container.insertBefore(element, refNode); // NOTE: null at the end for IE
-          
-        return newChild;
-      },
-      removeChild: function(oldChild){
-        // inherit
-        super_.removeChild.call(this, oldChild);
-
-        // remove from dom
-        var element = oldChild.element;
-        var parent = element.parentNode;
-
-        if (parent)
-          parent.removeChild(element);
-
-        return oldChild;
-      },
-      clear: function(alive){
-        // if not alive mode node element will be removed on node destroy
-        if (alive)
-        {
-          var node = this.firstChild;
-          while (node)
-          {
-            var element = node.element;
-            if (element.parentNode)
-              element.parentNode.removeChild(element);
-
-            node = node.nextSibling;
-          }
-        }
-
-        // inherit
-        super_.clear.call(this, alive);
-      },
-      setChildNodes: function(childNodes, keepAlive){
-        // reallocate childNodesElement to new DocumentFragment
-        var domFragment = DOM.createFragment();
-        var target = this.localGrouping || this;
-        var container = target.childNodesElement || target.element;
-        target.childNodesElement = domFragment;
-
-        // call inherited method
-        // NOTE: make sure that dispatching childNodesModified event handlers are not sensetive
-        // for child node positions at real DOM (html document), because all new child nodes
-        // will be inserted into temporary DocumentFragment that will be inserted into html document
-        // later (after inherited method call)
-        super_.setChildNodes.call(this, childNodes, keepAlive);
-
-        // restore childNodesElement
-        container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
-        target.childNodesElement = container;
-      }
-    }
-  };
-
- /**
-  * @class
-  */
-  var TmplGroupingNode = Class(GroupingNode, ContainerTemplateMixin, {
-    className: namespace + '.TmplGroupingNode',
-
-   /**
-    * @inheritDoc
-    */
-    childClass: TmplPartitionNode,
-
-   /**
-    * @inheritDoc
-    */
-    event_ownerChanged: function(node, oldOwner){
-      var cursor = this;
-      var owner = this.owner;
-      var element = null;
-
-      if (owner)
-        element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement || owner.element;
-
-      do
-      {
-        cursor.element = cursor.childNodesElement = element;
-      }
-      while (cursor = cursor.localGrouping);
-
-      GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
-    }
-  });
-
-  TmplGroupingNode.prototype.localGroupingClass = TmplGroupingNode;
-
- /**
-  * @class
-  */
-  var TmplContainer = Class(TmplNode, ContainerTemplateMixin, {
-    className: namespace + '.TmplContainer',
-
-    childClass: TmplNode,
-    childFactory: function(config){
-      return new this.childClass(config);
-    },
-
-    localGroupingClass: TmplGroupingNode
-  });
-
- /**
-  * @class
-  */
-  var Control = Class(TmplContainer, {
-    className: namespace + '.Control',
-
-   /**
-    * Create selection by default with empty config.
-    */
-    selection: {},
-
-   /**
-    * @param {Object} config
-    * @config {Object|boolean|basis.dom.wrapper.Selection} selection
-    * @constructor
-    */
-    init: function(config){
-      // make document link to itself
-      // NOTE: we make it before inherit because in other way
-      //       child nodes (passed by config.childNodes) will be with no document
-      this.document = this;
-
-      // inherit
-      TmplContainer.prototype.init.call(this, config);
-                   
-      // add to basis.Cleaner
-      Cleaner.add(this);
-    },
-
-   /**
-    * @inheritDoc
-    */
-    destroy: function(){
-      // selection destroy - clean selected nodes
-      if (this.selection)
-      {
-        this.selection.destroy(); // how about shared selection?
-        this.selection = null;
-      }
-
-      // inherit destroy, must be calling after inner objects destroyed
-      TmplContainer.prototype.destroy.call(this);
-
-      // remove from Cleaner
-      Cleaner.remove(this);
-    }
-  });
-
 
   //
   // ChildNodesDataset
@@ -2910,28 +2484,9 @@ basis.require('basis.data');
     }
   });
 
- /**
-  * @func
-  */
-  var simpleTemplate = function(template, config){
-    var refs = template.split(/\{(this_[^}]+)\}/);
-    var lines = [];
-    for (var i = 1; i < refs.length; i += 2)
-    {
-      var name = refs[i].split('|')[0];
-      lines.push('this.tmpl.' + name + '.nodeValue = ' + name.replace(/_/g, '.'));
-    }
-    
-    return Function('tmpl_', 'config_', 'return ' + (function(super_){
-      return Object.extend({
-        template: tmpl_,
-        templateUpdate: function(tmpl, eventName, delta){
-          super_.templateUpdate.call(this, tmpl, eventName, delta);
-          _code_();
-        }
-      }, config_);
-    }).toString().replace('_code_()', lines.join(';\n')))(new Template(template), config);
-  };
+  function simpleTemplate(){
+    return basis.ui.apply(this, arguments);
+  }
 
   //
   // export names
@@ -2944,14 +2499,6 @@ basis.require('basis.data');
     Node: Node,
     GroupingNode: GroupingNode,
     PartitionNode: PartitionNode,
-    Control: Control,
-
-    // template classes
-    TmplGroupingNode: TmplGroupingNode,
-    TmplPartitionNode: TmplPartitionNode,
-    TmplNode: TmplNode,
-    TmplContainer: TmplContainer,
-    TmplControl: Control,
 
     simpleTemplate: simpleTemplate,
 

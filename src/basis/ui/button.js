@@ -13,6 +13,7 @@ basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
 basis.require('basis.html');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -25,19 +26,19 @@ basis.require('basis.html');
 
   var namespace = 'basis.ui.button';
 
-  // import names
 
-  var Class = basis.Class;
-  var Event = basis.dom.event;
-  var DOM = basis.dom;
-  var Template = basis.html.Template;
+  //
+  // import names
+  //
 
   var getter = Function.getter;
 
-  var nsWrapper = basis.dom.wrapper;
+  var Class = basis.Class;
+  var DOM = basis.dom;
 
-  var TmplNode = nsWrapper.TmplNode;
-  var TmplControl = nsWrapper.TmplControl;
+  var UINode = basis.ui.Node;
+  var UIControl = basis.ui.Control;
+
 
   //
   // Main part
@@ -46,7 +47,7 @@ basis.require('basis.html');
  /**
   * @class
   */
-  var Button = Class(TmplNode, {
+  var Button = Class(UINode, {
     className: namespace + '.Button',
 
     captionGetter: getter('caption'),
@@ -73,15 +74,15 @@ basis.require('basis.html');
     click: function(){},
 
     event_select: function(){
-      TmplNode.prototype.event_select.call(this);
+      UINode.prototype.event_select.call(this);
       DOM.focus(this.element);
     },
     event_disable: function(){
-      TmplNode.prototype.event_disable.call(this);
+      UINode.prototype.event_disable.call(this);
       this.tmpl.buttonElement.disabled = true;
     },
     event_enable: function(){
-      TmplNode.prototype.event_enable.call(this);
+      UINode.prototype.event_enable.call(this);
       this.tmpl.buttonElement.disabled = false;
     },
 
@@ -89,7 +90,7 @@ basis.require('basis.html');
       ;;;if (typeof this.handler == 'function' && typeof console != 'undefined') console.warn(namespace + '.Button: this.handler must be an object. Use this.click instead.')
 
       // inherit
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       //this.setCaption('caption' in config ? config.caption : this.caption);
       this.setCaption(this.caption);
@@ -108,7 +109,7 @@ basis.require('basis.html');
  /**
   * @class
   */
-  var ButtonPanel = Class(TmplControl, {
+  var ButtonPanel = Class(UIControl, {
     className: namespace + '.ButtonPanel',
 
     template:

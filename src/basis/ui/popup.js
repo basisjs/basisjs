@@ -13,6 +13,7 @@ basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
 basis.require('basis.layout');
+basis.require('basis.ui');
 
 !function(){
 
@@ -40,10 +41,11 @@ basis.require('basis.layout');
 
   var createEvent = basis.EventObject.createEvent;
 
-  var TmplNode = nsWrapper.TmplNode;
-  var TmplContainer = nsWrapper.TmplContainer;
-  var TmplControl = nsWrapper.TmplControl;
-
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+  var UIPartitionNode = basis.ui.PartitionNode;
+  var UIGroupingNode = basis.ui.GroupingNode;
 
   //
   // CONST
@@ -91,7 +93,7 @@ basis.require('basis.layout');
  /**
   * @class
   */
-  var Popup = Class(TmplContainer, {
+  var Popup = Class(UIContainer, {
     className: namespace + '.Popup',
 
     template: 
@@ -125,7 +127,7 @@ basis.require('basis.layout');
     cssLayoutPrefix: 'popup-',
 
     init: function(config){
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       // add generic rule
       this.cssRule = cssom.uniqueRule(this.element);
@@ -410,7 +412,7 @@ basis.require('basis.layout');
 
       this.hide();
 
-      TmplContainer.prototype.destroy.call(this);
+      UIContainer.prototype.destroy.call(this);
 
       this.cssRule.destroy();
       this.cssRule = null;
@@ -456,7 +458,7 @@ basis.require('basis.layout');
  /**
   * @class
   */
-  var MenuItem = Class(TmplContainer, {
+  var MenuItem = Class(UIContainer, {
     className: namespace + '.MenuItem',
 
     //childFactory: function(cfg){ return new this.childClass(cfg) },
@@ -489,7 +491,7 @@ basis.require('basis.layout');
 
     init: function(config){
       // inherit
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       this.setCaption(this.caption);
     },
@@ -516,7 +518,7 @@ basis.require('basis.layout');
   */
   var MenuItemSet = Class(MenuItem, {
     className: namespace + '.MenuItemSet',
-    event_childNodesModified: TmplNode.prototype.event_childNodesModified,
+    event_childNodesModified: UINode.prototype.event_childNodesModified,
 
     template: 
       '<div class="Basis-Menu-ItemSet"/>'
@@ -525,7 +527,7 @@ basis.require('basis.layout');
  /**
   * @class
   */
-  var MenuPartitionNode = Class(nsWrapper.TmplPartitionNode, {
+  var MenuPartitionNode = Class(UIPartitionNode, {
     className: namespace + '.MenuPartitionNode',
 
     template:
@@ -537,7 +539,7 @@ basis.require('basis.layout');
  /**
   * @class
   */
-  var MenuGroupControl = Class(nsWrapper.TmplGroupingNode, {
+  var MenuGroupControl = Class(UIGroupingNode, {
     className: namespace + '.MenuGroupControl',
     childClass: MenuPartitionNode
   });
@@ -573,7 +575,7 @@ basis.require('basis.layout');
   // NOTE: PopupManager adds global event handlers dynamicaly because click event
   // that makes popup visible can also hide it (as click outside of popup).
 
-  var PopupManagerClass = Class(TmplControl, {
+  var PopupManagerClass = Class(UIControl, {
     className: namespace + '.PopupManager',
 
     handheldMode: false,
@@ -616,7 +618,7 @@ basis.require('basis.layout');
       var documentST_ = document.documentElement.scrollTop;
       var bodyST_ = document.body.scrollTop;
 
-      if (TmplControl.prototype.insertBefore.call(this,newChild, refChild))
+      if (UIControl.prototype.insertBefore.call(this,newChild, refChild))
       {
         // store saved scrollTop to popup and scroll viewport to top
         newChild.documentST_ = documentST_;
@@ -637,7 +639,7 @@ basis.require('basis.layout');
         if (popup.hideOnAnyClick && popup.nextSibling)
           this.removeChild(popup.nextSibling);
 
-        TmplControl.prototype.removeChild.call(this, popup);
+        UIControl.prototype.removeChild.call(this, popup);
 
         // restore documentElement (IE, mozilla and others) and body (webkit) scrollTop
         if (this.handheldMode)

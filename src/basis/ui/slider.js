@@ -20,10 +20,11 @@ basis.require('basis.dragdrop');
 !function(basis){
 
  /**
-  * @namespace basis.ui
+  * @namespace basis.ui.slider
   */ 
   
   var namespace = 'basis.ui.slider';
+
 
   // import names
 
@@ -33,20 +34,20 @@ basis.require('basis.dragdrop');
   var createEvent = basis.EventObject.createEvent;
   var classList = basis.cssom.classList;
 
-  var nsWrapper = basis.dom.wrapper;
-
-  var Template = basis.html.Template;
   var DragDropElement = basis.dragdrop.DragDropElement;
   var Box = basis.layout.Box;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+
+
+  //
+  // main part
+  //
 
   var KEY_PLUS = 187;      // +
   var KEY_KP_PLUS = 107;   // KEYPAD +
   var KEY_MINUS = 189;     // -
   var KEY_KP_MINUS = 109;  // KEYPAD -
-
-  //
-  // main part
-  //
 
   function percent(value){
     return (100 * value).toFixed(4) + '%';
@@ -63,7 +64,7 @@ basis.require('basis.dragdrop');
  /**
   * @class
   */
-  var Mark = nsWrapper.TmplNode.subclass({
+  var Mark = UINode.subclass({
     className: namespace + '.Slider.Mark',
 
     pos: 0,
@@ -79,7 +80,7 @@ basis.require('basis.dragdrop');
       '</div>',
 
     init: function(config){
-      nsWrapper.TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
       DOM.setStyle(this.element, {
         left: (100 * this.pos) + '%',
         width: (100 * this.width) + '%'
@@ -98,7 +99,7 @@ basis.require('basis.dragdrop');
  /**
   * @class
   */
-  var MarkLayer = nsWrapper.TmplContainer.subclass({
+  var MarkLayer = UIContainer.subclass({
     className: namespace + '.Slider.MarkLayer',
 
     template: 
@@ -112,7 +113,7 @@ basis.require('basis.dragdrop');
     marks: null,
 
     init: function(config){
-      nsWrapper.TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
       this.apply();
     },
 
@@ -213,7 +214,7 @@ basis.require('basis.dragdrop');
  /**
   * @class
   */
-  var Slider = nsWrapper.TmplNode.subclass({
+  var Slider = UINode.subclass({
     className: namespace + '.Slider',
 
     event_change: createEvent('change'),
@@ -254,7 +255,8 @@ basis.require('basis.dragdrop');
 
     satelliteConfig: {
       marks: {
-        instanceOf: nsWrapper.TmplContainer.subclass({
+        instanceOf: UIContainer.subclass({
+          className: namespace + '.MarkLayers',
           template: '<div class="Basis-Slider-MarkLayers"/>',
           childClass: MarkLayer
         })
@@ -274,7 +276,7 @@ basis.require('basis.dragdrop');
       this.value_ = 0;
 
       // inherit
-      nsWrapper.TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       // set properties
       this.setProperties(this.min, this.max, step);
@@ -380,7 +382,7 @@ basis.require('basis.dragdrop');
       this.scrollbarDD.destroy();
       this.scrollbarDD = null;
 
-      nsWrapper.TmplNode.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
     }
   });
 

@@ -1378,6 +1378,8 @@
           prototype: new SuperClass_()
         };
 
+        var t = newClassProps.className;
+
         // extend newClass prototype
         for (var args = arguments, i = 1; i < args.length; i++)
         {
@@ -1389,6 +1391,7 @@
               : args[i]
           );
         }
+
 
         /** @cut */if (/^function[^(]*\(config\)/.test(newClassProps.prototype.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
 

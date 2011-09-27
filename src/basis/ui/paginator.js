@@ -18,6 +18,7 @@ basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -38,7 +39,8 @@ basis.require('basis.cssom');
   var createEvent = basis.EventObject.createEvent;
   var classList = basis.cssom.classList;
 
-  var nsWrapper = basis.dom.wrapper;
+  var UIControl = basis.ui.Control;
+  var UINode = basis.ui.Node;
 
   //
   // main part
@@ -60,7 +62,7 @@ basis.require('basis.cssom');
   * Base child node class for Paginator
   * @class
   */
-  var PaginatorNode = nsWrapper.TmplNode.subclass({
+  var PaginatorNode = UINode.subclass({
     className: namespace + '.PaginatorNode',
 
     pageGetter: Function.getter('data.pageNumber'),
@@ -87,7 +89,7 @@ basis.require('basis.cssom');
     },
 
     event_update: function(object, delta){
-      nsWrapper.TmplNode.prototype.event_update.call(this, object, delta);
+      UINode.prototype.event_update.call(this, object, delta);
 
       var page = this.pageGetter(this);
       this.tmpl.pageNumber.nodeValue = page + 1;
@@ -117,7 +119,7 @@ basis.require('basis.cssom');
   * Paginator
   * @class
   */
-  var Paginator = nsWrapper.Control.subclass({
+  var Paginator = UIControl.subclass({
     className: namespace + '.Paginator',
 
     childClass: PaginatorNode,
@@ -159,7 +161,7 @@ basis.require('basis.cssom');
     spanStartPage_: -1,
 
     init: function(config){
-      nsWrapper.Control.prototype.init.call(this, config);
+      UIControl.prototype.init.call(this, config);
 
       this.setProperties(config.pageCount || 0, config.pageSpan);
       this.setActivePage(Math.max(config.activePage - 1, 0), true);
@@ -257,7 +259,7 @@ basis.require('basis.cssom');
       this.scrollbarDD.destroy();
       this.scrollbarDD = null;
 
-      nsWrapper.Control.prototype.destroy.call(this);
+      UIControl.prototype.destroy.call(this);
     }
   });
 

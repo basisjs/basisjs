@@ -13,6 +13,7 @@ basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 basis.require('basis.ui.button');
 
 !function(basis){
@@ -25,7 +26,10 @@ basis.require('basis.ui.button');
 
   var namespace = 'basis.ui.window';
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -34,19 +38,22 @@ basis.require('basis.ui.button');
   var classList = basis.cssom.classList;
   var Cleaner = basis.Cleaner;
 
-  var nsWrappers = basis.dom.wrapper;
-  var nsButton = basis.ui.button;
-
   var createEvent = basis.EventObject.createEvent;
 
-  var TmplNode = nsWrappers.TmplNode;
-  var TmplContainer = nsWrappers.TmplContainer;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+  var ButtonPanel = basis.ui.button.ButtonPanel;
+
+
+  //
+  // Main part
+  //
 
  /**
   * @class
-  * @extends basis.DOM.Wrapper.TmplNode
   */
-  var Blocker = Class(TmplNode, {
+  var Blocker = Class(UINode, {
     className: namespace + '.Blocker',
 
     captureElement: null,
@@ -57,7 +64,7 @@ basis.require('basis.ui.button');
       '</div>',
 
     init: function(config){
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       DOM.setStyle(this.element, {
         display: 'none',
@@ -92,7 +99,7 @@ basis.require('basis.ui.button');
     destroy: function(){
       this.release();
       
-      TmplNode.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
       
       Cleaner.remove(this);
     }
@@ -105,7 +112,7 @@ basis.require('basis.ui.button');
  /**
   * @class
   */
-  var Window = Class(TmplContainer, {
+  var Window = Class(UIContainer, {
     className: namespace + '.Window',
 
     template:
@@ -173,7 +180,7 @@ basis.require('basis.ui.button');
 
     init: function(config){
       //this.inherit(config);
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       // make main element invisible by default
       DOM.hide(this.element);
@@ -250,7 +257,7 @@ basis.require('basis.ui.button');
 
       if (buttons.length)
       {
-        this.buttonPanel = new nsButton.ButtonPanel({
+        this.buttonPanel = new ButtonPanel({
           cssClassName: 'Basis-Window-ButtonPlace',
           container: this.tmpl.content,
           childNodes: buttons
@@ -370,7 +377,7 @@ basis.require('basis.ui.button');
         delete this.dde;
       }
 
-      TmplContainer.prototype.destroy.call(this);
+      UIContainer.prototype.destroy.call(this);
 
       this.cssRule.destroy();
       this.cssRule = null;
@@ -384,7 +391,7 @@ basis.require('basis.ui.button');
   //
 
   var wmBlocker = new Blocker();
-  var windowManager = new nsWrappers.Control({
+  var windowManager = new UIControl({
     id: 'Basis-WindowStack',
     childClass: Window
   });
@@ -440,6 +447,7 @@ basis.require('basis.ui.button');
     for (var node = windowManager.firstChild; node; node = node.nextSibling)
       node.realign();
   });
+
 
   //
   // export names

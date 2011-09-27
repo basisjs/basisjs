@@ -18,6 +18,7 @@
   basis.require('basis.session');
   basis.require('basis.net.ajax');
   basis.require('basis.net.soap');
+  basis.require('basis.ui');
   basis.require('basis.ui.button');
   basis.require('basis.ui.label');
   basis.require('basis.ui.tree');

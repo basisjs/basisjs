@@ -15,6 +15,10 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.html');
 basis.require('basis.cssom');
 
+//
+// TODO: migrate to new basis (remove behaviour, events and so on)
+//
+
 !function(basis){
 
   'use strict';
@@ -24,50 +28,49 @@ basis.require('basis.cssom');
   */  
   var namespace = 'basis.ui.toc';
 
+
   // import names
     
   var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
-  var Template = basis.html.Template;
   var cssom = basis.cssom;
 
   var nsWrappers = basis.dom.wrapper;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
 
 
  /**
   * @class
   */
-  var TocControlItemHeader = Class(nsWrappers.TmplNode, {
-    template: new Template(
-      '<div{element} class="TocControl-Item-Header">' +
+  var TocControlItemHeader = Class(UINode, {
+    template:
+      '<div class="TocControl-Item-Header" event-click="scrollTo">' +
         '<span>{titleText}</span>' +
-      '</div>'
-    ),
-    titleGetter: Function.getter('data.title'),
-    behaviour: {
-      update: function(object, delta){
-        this.inherit(object, delta);
-        this.titleText.nodeValue = this.titleGetter(this) || '[no title]';
-      }
-    },
-    init: function(config){
-      this.inherit(config);
-      Event.addHandler(this.element, 'click', function(){
+      '</div>',
+
+    action: {
+      scrollTo: function(){
         if (this.owner && this.owner.parentNode)
           this.owner.parentNode.scrollToNode(this.owner);
+      }
+    },
 
-      }, this)
-    }
+    templateUpdate: function(tmpl, eventName, delta){
+      tmpl.titleText.nodeValue = this.titleGetter(this) || '[no title]';
+    },
+
+    titleGetter: Function.getter('data.title')
   });
 
-  var TocControlItem = Class(nsWrappers.TmplContainer, {
-    template: new Template(
-      '<div{element} class="TocControl-Item">' +
+  var TocControlItem = Class(UIContainer, {
+    template:
+      '<div class="TocControl-Item">' +
         '<span{header}/>' +
         '<div{content|childNodesElement} class="TocControl-Item-Content"/>' +
-      '</div>'
-    ),
+      '</div>',
+
     satelliteConfig: {
       header: {
         delegate: Function.$self,
@@ -77,7 +80,7 @@ basis.require('basis.cssom');
   });
 
   var MW_SUPPORTED = true;
-  var TocControlHeaderList = Class(nsWrappers.TmplContainer, {
+  var TocControlHeaderList = Class(UIContainer, {
     behaviour: {
       click: function(event, node){
         if (node)
@@ -112,11 +115,11 @@ basis.require('basis.cssom');
   var TocControl = Class(nsWrappers.Control, {
     className: namespace + '.Control',
     childClass: TocControlItem,
-    template: new Template(
+    template:
       '<div{element} class="TocControl">' +
         '<div{content|childNodesElement} class="TocControl-Content"/>' +
-      '</div>'
-    ),
+      '</div>',
+
     behaviour: {
       childNodesModified: function(object, delta){
         this.recalc();

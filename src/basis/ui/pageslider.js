@@ -14,6 +14,7 @@
 
 basis.require('basis.dom');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 basis.require('basis.ui.tabs');
 basis.require('basis.ui.scroller');
 
@@ -43,6 +44,8 @@ basis.require('basis.ui.scroller');
   * @class
   */
   var PageSlider = Class(PageControl, {
+    className: namespace + '.PageSlider',
+
     template: 
       '<div class="Basis-PageControl Basis-PageSlider">' +
         '<div/>' +

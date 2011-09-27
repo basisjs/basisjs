@@ -12,6 +12,7 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -29,6 +30,7 @@ basis.require('basis.dom.wrapper');
 
   var namespace = 'basis.ui.table';
 
+
   // import names
 
   var Class = basis.Class;
@@ -40,14 +42,16 @@ basis.require('basis.dom.wrapper');
   var extend = Object.extend;
   var classList = basis.cssom.classList;
 
-  var nsWrappers = basis.dom.wrapper;
-  var TmplNode = nsWrappers.TmplNode;
-  var TmplContainer = nsWrappers.TmplContainer;
-  var TmplControl = nsWrappers.TmplControl;
-  var TmplPartitionNode = nsWrappers.TmplPartitionNode;
-  var TmplGroupingNode = nsWrappers.TmplGroupingNode;
-  var GroupingNode = nsWrappers.GroupingNode;
-  var PartitionNode = nsWrappers.PartitionNode;
+  var nsWrapper = basis.dom.wrapper;
+  var GroupingNode = nsWrapper.GroupingNode;
+  var PartitionNode = nsWrapper.PartitionNode;
+
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+  var UIPartitionNode = basis.ui.PartitionNode;
+  var UIGroupingNode = basis.ui.GroupingNode;
+
 
   //
   // Main part
@@ -64,7 +68,8 @@ basis.require('basis.dom.wrapper');
   // Table Header Grouping
   //
 
-  var HeaderPartitionNode = basis.Class(nsWrappers.TmplNode, {
+  var HeaderPartitionNode = Class(UINode, {
+    className: namespace + '.HeaderPartitionNode',
     template: new Template(
       '<th{element|selected} class="Basis-Table-Header-Cell">' +
         '<div class="Basis-Table-Sort-Direction"></div>' +
@@ -78,7 +83,8 @@ basis.require('basis.dom.wrapper');
     }
   });
 
-  var HeaderGroupingNode = basis.Class(GroupingNode, {
+  var HeaderGroupingNode = Class(GroupingNode, {
+    className: namespace + '.HeaderGroupingNode',
     event_ownerChanged: function(node, oldOwner){
       if (oldOwner)
         DOM.remove(this.headerRow);
@@ -150,7 +156,7 @@ basis.require('basis.dom.wrapper');
   * @class
   */
 
-  var HeaderCell = Class(TmplNode, {
+  var HeaderCell = Class(UINode, {
     className: namespace + '.HeaderCell',
 
     sorting: null,
@@ -180,7 +186,7 @@ basis.require('basis.dom.wrapper');
     },
 
     init: function(config){
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       //DOM.insert(this.content, config.content || '');
 
@@ -196,14 +202,14 @@ basis.require('basis.dom.wrapper');
       if (!this.selected)
         this.order = this.defaultOrder;
 
-      TmplNode.prototype.select.call(this);
+      UINode.prototype.select.call(this);
     }
   });
 
  /**
   * @class
   */
-  var Header = Class(TmplContainer, {
+  var Header = Class(UIContainer, {
     className: namespace + '.Header',
 
     childClass: HeaderCell,
@@ -246,7 +252,7 @@ basis.require('basis.dom.wrapper');
         }
       };
 
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       this.applyConfig_(this.structure)
     },
@@ -279,7 +285,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var FooterCell = Class(TmplNode, {
+  var FooterCell = Class(UINode, {
     className: namespace + '.FooterCell',
 
     colSpan: 1,
@@ -298,7 +304,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var Footer = Class(TmplContainer, {
+  var Footer = Class(UIContainer, {
     className: namespace + '.Footer',
 
     childClass: FooterCell,
@@ -313,7 +319,7 @@ basis.require('basis.dom.wrapper');
     ),
 
     init: function(config){
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       this.applyConfig_(this.structure);
 
@@ -373,7 +379,7 @@ basis.require('basis.dom.wrapper');
   * Base row class
   * @class
   */
-  var Row = Class(TmplNode, {
+  var Row = Class(UINode, {
     className: namespace + '.Row',
     
     canHaveChildren: false,
@@ -425,7 +431,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var Body = Class(TmplPartitionNode, {
+  var Body = Class(UIPartitionNode, {
     className: namespace + '.Body',
 
     template:
@@ -446,13 +452,13 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var Table = Class(TmplControl, {
+  var Table = Class(UIControl, {
     className: namespace + '.Table',
     
     canHaveChildren: true,
     childClass: Row,
 
-    localGroupingClass: Class(TmplGroupingNode, {
+    localGroupingClass: Class(UIGroupingNode, {
       className: namespace + '.TableGroupingNode',
       childClass: Body
     }),
@@ -466,7 +472,7 @@ basis.require('basis.dom.wrapper');
     ),
 
     templateAction: function(actionName, event){
-      TmplControl.prototype.templateAction.call(this, actionName, event);
+      UIControl.prototype.templateAction.call(this, actionName, event);
     },
 
     //canHaveChildren: false,
@@ -475,7 +481,7 @@ basis.require('basis.dom.wrapper');
 
       this.applyConfig_(this.structure);
 
-      TmplControl.prototype.init.call(this, config);
+      UIControl.prototype.init.call(this, config);
 
       this.headerConfig = this.header;
       this.footerConfig = this.footer;
@@ -557,7 +563,7 @@ basis.require('basis.dom.wrapper');
     },
 
     destroy: function(){
-      TmplControl.prototype.destroy.call(this);
+      UIControl.prototype.destroy.call(this);
 
       this.header.destroy();
       this.header = null;

@@ -13,6 +13,7 @@ basis.require('basis.html');
 basis.require('basis.dom');
 basis.require('basis.data');
 basis.require('basis.dom.wrapper');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -31,15 +32,11 @@ basis.require('basis.dom.wrapper');
   var Template = basis.html.Template;
 
   var getter = Function.getter;
-
-  //var createBehaviour = Basis.EventObject.createBehaviour;
   var createEvent = basis.EventObject.createEvent;
 
-
-  var nsWrappers = basis.dom.wrapper;
   var STATE = basis.data.STATE;
 
-  var TmplNode = nsWrappers.TmplNode;
+  var UINode = basis.ui.Node;
 
   //
   // Main part
@@ -63,7 +60,7 @@ basis.require('basis.dom.wrapper');
   * Base class for all labels.
   * @class
   */
-  var NodeLabel = Class(TmplNode, {
+  var NodeLabel = Class(UINode, {
     className: namespace + '.NodeLabel',
 
     cascadeDestroy: true,
@@ -87,7 +84,7 @@ basis.require('basis.dom.wrapper');
       var container = this.container;
       this.container = null;
 
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       if (container)
         this.container = container;
@@ -125,7 +122,7 @@ basis.require('basis.dom.wrapper');
 
     destroy: function(){
       delete this.container;
-      TmplNode.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
     }
   });
 

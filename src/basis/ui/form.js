@@ -16,6 +16,7 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.data');
 basis.require('basis.data.property');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -41,16 +42,14 @@ basis.require('basis.cssom');
   var getter = Function.getter;
   var classList = basis.cssom.classList;
 
-  var nsWrappers = basis.dom.wrapper;
-
-  var Selection = nsWrappers.Selection;       
   var AbstractProperty = basis.data.property.AbstractProperty;
   var Property = basis.data.property.Property;
   var EventObject = basis.EventObject;
 
-  var Control = nsWrappers.Control;         
-  var TmplNode = nsWrappers.TmplNode;        
-  var TmplContainer = nsWrappers.TmplContainer;
+  var Selection = basis.dom.wrapper.Selection;
+  var UIControl = basis.ui.Control;         
+  var UINode = basis.ui.Node;        
+  var UIContainer = basis.ui.Container;
 
   var createEvent = EventObject.createEvent;
 
@@ -81,7 +80,7 @@ basis.require('basis.cssom');
   * Base class for all form field classes
   * @class
   */
-  var Field = Class(TmplNode, {
+  var Field = Class(UINode, {
     className: namespace + '.Field',
 
     canHaveChildren: false,
@@ -93,17 +92,17 @@ basis.require('basis.cssom');
     event_select: function(){
       DOM.focus(this.tmpl.field, true);
 
-      TmplNode.prototype.event_select.call(this);
+      UINode.prototype.event_select.call(this);
     },
     event_enable: function(){
       this.tmpl.field.removeAttribute('disabled');
 
-      TmplNode.prototype.event_enable.call(this);
+      UINode.prototype.event_enable.call(this);
     },
     event_disable: function(){
       this.tmpl.field.setAttribute('disabled', 'disabled');
 
-      TmplNode.prototype.event_disable.call(this);
+      UINode.prototype.event_disable.call(this);
     },
     event_input: createEvent('input'),
     event_change: createEvent('change'),
@@ -138,7 +137,7 @@ basis.require('basis.cssom');
     },
 
     init: function(config){
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       this.name = this.name || '';
 
@@ -278,7 +277,7 @@ basis.require('basis.cssom');
     },
     select: function(){
       this.unselect();
-      TmplNode.prototype.select.apply(this, arguments);
+      UINode.prototype.select.apply(this, arguments);
     },
     setValid: function(valid, message){
       var clsList = classList(this.element);
@@ -331,7 +330,7 @@ basis.require('basis.cssom');
       }
       this.validators.clear();
 
-      TmplNode.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
       //this.inherit();
 
       delete this.sampleElement;
@@ -532,7 +531,7 @@ basis.require('basis.cssom');
   // Complex fields
   //
 
-  var ComplexFieldItem = Class(TmplNode, {
+  var ComplexFieldItem = Class(UINode, {
     className: namespace + '.ComplexField.Item',
 
     canHaveChildren: false,
@@ -559,7 +558,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var ComplexField = Class(Field, TmplContainer, {
+  var ComplexField = Class(Field, UIContainer, {
     className: namespace + '.Field.ComplexField',
 
     template: Field.prototype.template,
@@ -1138,7 +1137,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var FormContent = Class(Control, {
+  var FormContent = Class(UIControl, {
     className: namespace + '.FormContent',
     
     canHaveChildren: true,
@@ -1155,14 +1154,14 @@ basis.require('basis.cssom');
         if (!field.disabled)
           field.event_disable();
 
-       Control.prototype.event_disable.call(this);
+       UIControl.prototype.event_disable.call(this);
     },
     event_enable: function(){
       for (var field = this.firstChild; field; field = field.nextSibling)
         if (!field.disabled)
           field.event_enable();
 
-      Control.prototype.event_enable.call(this);
+      UIControl.prototype.event_enable.call(this);
     },
     
     template: new Template(
@@ -1249,7 +1248,7 @@ basis.require('basis.cssom');
     init: function(config){
       this.selection = false;
 
-      Control.prototype.init.call(this, config);
+      UIControl.prototype.init.call(this, config);
 
       if (this.target)
         this.formElement.target = this.target;
@@ -1391,6 +1390,8 @@ basis.require('basis.cssom');
   * @class
   */
   var Matcher = Class(MatchProperty, {
+    className: namespace + '.Matcher',
+
     event_change: function(value){
       MatchProperty.prototype.event_change.call(this, value);
 
@@ -1414,6 +1415,7 @@ basis.require('basis.cssom');
   */
   var MatchFilter = Class(MatchProperty, {
     className: namespace + '.MatchFilter',
+
     event_change: function(value){
       MatchProperty.prototype.event_change.call(this, value);
 
@@ -1425,6 +1427,8 @@ basis.require('basis.cssom');
   * @class
   */
   var MatchInput = Class(Field.Text, {
+    className: namespace + '.MatchInput',
+
     cssClassName: 'Basis-MatchInput',
 
     matchFilterClass: MatchFilter,

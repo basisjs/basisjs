@@ -26,6 +26,9 @@
   var nsEntity = basis.entity;
   var nsAnimation = basis.animation;
 
+  var uiContainer = basis.ui.Container;
+  var uiNode = basis.ui.Node;
+  
   var nsCore = BasisDoc.Core;
   var nsView = BasisDoc.View;
   var nsNav = BasisDoc.Nav;
@@ -75,7 +78,7 @@
     }
   };
 
-  var targetContent = new nsWrappers.TmplContainer({
+  var targetContent = new uiContainer({
     id: 'ObjectView',
     childClass: nsView.View,
 
@@ -104,7 +107,7 @@
     id: 'PrototypeMapPopup',
     dir: 'center bottom center top',
     selection: {},
-    childClass: Class(nsWrappers.TmplNode,
+    childClass: Class(uiNode,
       nsWrappers.simpleTemplate('<div{element} class="item" event-click="scrollTo">{this_data_key}</div>'),
       {
         templateAction: function(actionName){
@@ -161,7 +164,7 @@
   });
   DOM.insert(prototypeMapPopup.tmpl.content.parentNode, prototypeMapPopupMatchInput.element, DOM.INSERT_BEGIN);
 
-  var targetHeader = new nsWrappers.TmplContainer({
+  var targetHeader = new uiContainer({
     delegate: targetContent,
     dataSource: new nsWrappers.ChildNodesDataset(targetContent),
 

@@ -22,16 +22,23 @@ basis.require('basis.dom.event');
  /**
   * @namespace basis.ui.scroller
   */
+
   var namespace = 'basis.ui.scroller';
+
 
   //
   // import names
   //
 
+  var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
   var EventObject = basis.EventObject;
-  var Class = basis.Class;
+
+
+  //
+  // Main part
+  //
 
   function getComputedStyle(element, styleProp){
     if (window.getComputedStyle)
@@ -121,6 +128,7 @@ basis.require('basis.dom.event');
 
   //class
   var Scroller = Class(EventObject, {
+    className: namespace + '.Scroller',
     /*minScrollDeltaX: 0,
     minScrollDeltaY: 0,*/
     minScrollDelta: 0,

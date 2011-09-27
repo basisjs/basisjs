@@ -76,6 +76,8 @@ basis.require('basis.data');
   //
 
   var Index = basis.Class(null, {
+    className: namespace + '.Index',
+
     init: function(normalize){
       var index = this.index = {};
 

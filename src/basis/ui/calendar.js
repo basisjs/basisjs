@@ -16,6 +16,7 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
 basis.require('basis.html');
 basis.require('basis.data.property');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -27,24 +28,25 @@ basis.require('basis.data.property');
 
   var namespace = 'basis.ui.calendar';
 
+
   // import names
 
   var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
-  var nsWrappers = basis.dom.wrapper;
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
 
   var Template = basis.html.Template;
   var Property = basis.data.property.Property;
-  var TmplNode = nsWrappers.TmplNode;
-  var TmplContainer = nsWrappers.TmplContainer;
-  var TmplControl = nsWrappers.TmplControl;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+
 
   //
-  // CONST
+  // Main part
   //
 
   var YEAR  = 'year';
@@ -174,7 +176,7 @@ basis.require('basis.data.property');
   // SECTIONS
   //
 
-  var CalendarNode = Class(TmplNode, {
+  var CalendarNode = Class(UINode, {
     className: namespace + '.Calendar.Node',
 
     canHaveChildren: false,
@@ -186,16 +188,16 @@ basis.require('basis.data.property');
       if (actionName == 'click')
         this.document.templateAction(actionName, event, this);
       else
-        TmplNode.prototype.templateAction.call(this, actionName, event);
+        UINode.prototype.templateAction.call(this, actionName, event);
     },
 
     event_select: function(){
-      TmplNode.prototype.event_select.call(this);
+      UINode.prototype.event_select.call(this);
 
       DOM.focus(this.element);
     },
     event_update: function(object, delta){
-      TmplNode.prototype.event_update.call(this, object, delta);
+      UINode.prototype.event_update.call(this, object, delta);
 
       if ('periodStart' in delta || 'periodEnd' in delta)
       {
@@ -211,7 +213,7 @@ basis.require('basis.data.property');
     }
   });
 
-  var CalendarSection = Class(TmplContainer, {
+  var CalendarSection = Class(UIContainer, {
     className: namespace + '.CalendarSection',
 
     childClass: CalendarNode,
@@ -227,19 +229,19 @@ basis.require('basis.data.property');
       if (actionName == 'select')
         this.select();
       else
-        TmplContainer.prototype.templateAction.call(this, actionName, event);
+        UIContainer.prototype.templateAction.call(this, actionName, event);
     },*/
 
     event_select: function(){
-      TmplContainer.prototype.event_select.call(this);
+      UIContainer.prototype.event_select.call(this);
       classList(this.tmpl.tabElement).add('selected');
     },
     event_unselect: function(){
-      TmplContainer.prototype.event_unselect.call(this);
+      UIContainer.prototype.event_unselect.call(this);
       classList(this.tmpl.tabElement).remove('selected');
     },
     event_update: function(object, delta){
-      TmplContainer.prototype.event_update.call(this, object, delta);
+      UIContainer.prototype.event_update.call(this, object, delta);
 
       var newData = this.data;
       var newNodes;
@@ -316,7 +318,7 @@ basis.require('basis.data.property');
     selection: {},
 
     init: function(config){
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       classList(this.element).add('Basis-Calendar-Section-' + this.sectionName);
       Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
@@ -475,7 +477,7 @@ basis.require('basis.data.property');
   // Calendar
   //
 
-  var Calendar = Class(TmplControl, {
+  var Calendar = Class(UIControl, {
     className: namespace + '.Calendar',
 
     childClass: CalendarSection,
@@ -517,7 +519,7 @@ basis.require('basis.data.property');
           });
         }
 
-      TmplControl.prototype.event_childNodesModified.call(this, node, delta);
+      UIControl.prototype.event_childNodesModified.call(this, node, delta);
 
       DOM.insert(
         DOM.clear(this.tmpl.sectionTabs),
@@ -528,7 +530,7 @@ basis.require('basis.data.property');
         this.firstChild.select();
     },
     templateAction: function(actionName, event, node){
-      TmplControl.prototype.templateAction.call(this, actionName, event);
+      UIControl.prototype.templateAction.call(this, actionName, event);
 
       if (node instanceof CalendarNode)
       {
@@ -598,7 +600,7 @@ basis.require('basis.data.property');
       };
 
       // inherit
-      TmplControl.prototype.init.call(this, config);
+      UIControl.prototype.init.call(this, config);
 
       // add links
       this.selectedDate.addHandler({
@@ -898,7 +900,7 @@ basis.require('basis.data.property');
     // destruction
 
     destroy: function(){
-      TmplControl.prototype.destroy.call(this);
+      UIControl.prototype.destroy.call(this);
 
       this.date.destroy();
       this.todayDate.destroy();

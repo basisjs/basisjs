@@ -11,8 +11,8 @@
 
 basis.require('basis.dom');
 basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -43,8 +43,11 @@ basis.require('basis.cssom');
   */
 
   var namespace = 'basis.ui.tree';
-  
+
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -52,14 +55,13 @@ basis.require('basis.cssom');
 
   var classList = basis.cssom.classList;
   var getter = Function.getter;
-
-  var nsWrappers = basis.dom.wrapper;
-
-  var TmplContainer = nsWrappers.TmplContainer;
-  var Control = nsWrappers.Control;
-
   var createEvent = basis.EventObject.createEvent;
-  var basisEvent = basis.EventObject.event;
+
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+  var UIPartitionNode = basis.ui.PartitionNode;
+  var UIGroupingNode = basis.ui.GroupingNode;
+
 
   //
   // Main part
@@ -80,14 +82,14 @@ basis.require('basis.cssom');
     * Expand all descendant nodes.
     */
     expandAll: function(){
-      dom.axis(this, dom.AXIS_DESCENDANT_OR_SELF, expand);
+      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, expand);
     },
 
    /**
     * Collapse all descendant nodes.
     */
     collapseAll: function(){
-      dom.axis(this, dom.AXIS_DESCENDANT_OR_SELF, collapse);
+      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, collapse);
     },
 
     expand: Function(),
@@ -108,7 +110,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var PartitionNode = Class(nsWrappers.TmplPartitionNode, {
+  var PartitionNode = Class(UIPartitionNode, {
     className: namespace + '.PartitionNode',
     template: 
       '<li{element} class="Basis-TreePartitionNode">' + 
@@ -122,7 +124,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var GroupingNode = Class(nsWrappers.TmplGroupingNode, {
+  var GroupingNode = Class(UIGroupingNode, {
     className: namespace + '.GroupingNode',
     childClass: PartitionNode
   });
@@ -131,7 +133,7 @@ basis.require('basis.cssom');
   * Base child class for {basis.ui.tree.Tree}
   * @class
   */
-  var Node = Class(TmplContainer, ExpandCollapseMixin, {
+  var Node = Class(UIContainer, ExpandCollapseMixin, {
     className: namespace + '.Node',
 
     canHaveChildren: false,
@@ -278,7 +280,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var Tree = Class(Control, ExpandCollapseMixin, {
+  var Tree = Class(UIControl, ExpandCollapseMixin, {
     className: namespace + '.Tree',
 
     childClass: Node,

@@ -596,6 +596,8 @@ basis.require('basis.data.property');
   * @class
   */
   var IndexMap = Class(MapReduce, {
+    className: namespace + '.IndexMap',
+
     calcs: null,
 
     indexes: null,

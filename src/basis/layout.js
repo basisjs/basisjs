@@ -13,6 +13,7 @@ basis.require('basis.ua');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis, global){
 
@@ -40,7 +41,7 @@ basis.require('basis.cssom');
 
   var nsWrappers = DOM.wrapper;
 
-  var TmplContainer = nsWrappers.TmplContainer;
+  var UIContainer = basis.ui.Container;
 
   //
   // Main part
@@ -547,7 +548,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var VerticalPanel = Class(TmplContainer, {
+  var VerticalPanel = Class(UIContainer, {
     className: namespace + '.VerticalPanel',
 
     template: 
@@ -556,7 +557,7 @@ basis.require('basis.cssom');
     flex: 0,
 
     init: function(config){
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       if (this.flex)
       {
@@ -581,7 +582,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var VerticalPanelStack = Class(TmplContainer, {
+  var VerticalPanelStack = Class(UIContainer, {
     className: namespace + '.VerticalPanelStack',
 
     childClass: VerticalPanel,
@@ -600,7 +601,7 @@ basis.require('basis.cssom');
         this.cssRule.setProperty('overflow', 'auto');
       //}
 
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       if (SUPPORT_DISPLAYBOX === false)
       {
@@ -613,7 +614,7 @@ basis.require('basis.cssom');
       }
     },
     insertBefore: function(newChild, refChild){
-      if (newChild = TmplContainer.prototype.insertBefore.call(this, newChild, refChild))
+      if (newChild = UIContainer.prototype.insertBefore.call(this, newChild, refChild))
       {
         if (newChild.flex && this.cssRule)
           classList(newChild.element).add(this.ruleClassName);
@@ -624,7 +625,7 @@ basis.require('basis.cssom');
       }
     },
     removeChild: function(oldChild){
-      if (TmplContainer.prototype.removeChild.call(this, oldChild))
+      if (UIContainer.prototype.removeChild.call(this, oldChild))
       {
         if (oldChild.flex && this.cssRule)
           classList(oldChild.element).remove(this.ruleClassName);
@@ -640,7 +641,7 @@ basis.require('basis.cssom');
 
       var element = this.element;
       var lastElement = this.lastChild.element;
-      var ruller = this.tmpl.ruller;
+     var ruller = this.tmpl.ruller;
 
       var lastBox = new Box(lastElement, false, element);
       var bottom = (lastBox.bottom - getComputedProperty(element, 'paddingTop') - getComputedProperty(element, 'borderTopWidth')) || 0;

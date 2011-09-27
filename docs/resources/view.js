@@ -21,6 +21,10 @@
   var nsCore = BasisDoc.Core;
   var Scroller = basis.ui.scroller.Scroller;
 
+  var uiNode = basis.ui.Node;
+  var uiContainer = basis.ui.Container;
+  var uiControl = basis.ui.Control;
+
   //
   // functions
   //
@@ -67,7 +71,7 @@
  /**
   * @class
   */
-  var ViewOption = Class(nsWrappers.TmplNode,{
+  var ViewOption = Class(uiNode, {
     className: namespace + '.ViewOption',
 
     template:
@@ -86,7 +90,7 @@
     },
 
     event_select: function(){
-      nsWrappers.TmplNode.prototype.event_select.call(this);
+      uiNode.prototype.event_select.call(this);
 
       if (this.handler)
         this.handler();
@@ -96,7 +100,7 @@
  /**
   * @class
   */
-  var ViewOptions = Class(nsWrappers.TmplContainer,
+  var ViewOptions = Class(uiContainer,
     nsWrappers.simpleTemplate(
       '<div{element} class="viewOptions">' +
         '<span class="title">{this_title}:</span>' +
@@ -113,7 +117,7 @@
  /**
   * @class
   */
-  var View = Class(nsWrappers.TmplContainer, {
+  var View = Class(uiContainer, {
     className: namespace + '.View',
     autoDelegateParent: true,
     isAcceptableObject: Function.$true,
@@ -126,7 +130,7 @@
   });
 
   var tagLabels = ['readonly', 'private'];
-  var JsDocPanel = Class(nsWrappers.TmplNode, {
+  var JsDocPanel = Class(uiNode, {
     className: namespace + '.JsDocPanel',
     active: true,
     template: new Template(
@@ -136,7 +140,7 @@
       '</div>'
     ),
     event_update: function(object, delta){
-      nsWrappers.TmplNode.prototype.event_update.call(this, object, delta);
+      uiNode.prototype.event_update.call(this, object, delta);
       
       var newData = this.data;
 
@@ -303,7 +307,7 @@
         delete this.linksPanel;
       }
 
-      nsWrappers.TmplNode.prototype.destroy.call(this);
+      uiNode.prototype.destroy.call(this);
     }
   });
 
@@ -334,7 +338,7 @@
  /**
   * @class
   */
-  var TemplateTreeNode = nsWrappers.TmplContainer.subclass({
+  var TemplateTreeNode = uiContainer.subclass({
     childFactory: null,
     className: namespace + '.TemplateTreeNode',
     selectable: false,
@@ -378,7 +382,7 @@
           dataSource: function(node){
             return new nsData.Dataset({ items: node.data.attrs });
           },
-          instanceOf: Class(nsWrappers.TmplContainer,
+          instanceOf: Class(uiContainer,
             {
               template: '<span/>',
               childClass: TemplateTreeNode.Attribute
@@ -436,7 +440,7 @@
  /**
   * @class
   */
-  var TemplatePanel = nsWrappers.TmplControl.subclass({
+  var TemplatePanel = uiControl.subclass({
     childFactory: function(config){
       switch (config.data.nodeType)
       {
@@ -608,7 +612,7 @@
     }
   });
 
-  var InheritanceItem = Class(nsWrappers.TmplNode, {
+  var InheritanceItem = Class(uiNode, {
     className: namespace + '.InheritanceItem',
     template: new Template(
       '<li{element} class="item">' +
@@ -772,7 +776,7 @@
  /**
   * @class
   */
-  var PrototypeItem = Class(nsWrappers.TmplNode, {
+  var PrototypeItem = Class(uiNode, {
     template: 
       '<div class="item property">' +
         '<div{content} class="title">' +
@@ -819,7 +823,7 @@
         }
       }, this)
 
-      nsWrappers.TmplNode.prototype.init.call(this, config);
+      uiNode.prototype.init.call(this, config);
 
       DOM.insert(this.element, this.jsDocPanel.element)
     },
@@ -827,7 +831,7 @@
       this.jsDocPanel.destroy();
       delete this.jsDocPanel;
 
-      nsWrappers.TmplNode.prototype.destroy.call(this);
+      uiNode.prototype.destroy.call(this);
     }
   });
 
@@ -973,7 +977,7 @@
   // ===========================
   //
 
-  var JsDocLinksPanel = nsWrappers.TmplContainer.subclass({
+  var JsDocLinksPanel = uiContainer.subclass({
     template:
       '<div class="linksPanel">' +
         '<div class="label">Links:</div>' +
@@ -1024,20 +1028,25 @@
     }
   });
 
-  var clsListDO = clsList.map(function(cls){
-    return new nsData.DataObject({
-      data: Object.slice(cls, ['className', 'docsUid_', 'docsSuperUid_'])
-    })
-  });
 
   var clsSplitBySuper = new nsData.Dataset.Split({
-    source: new nsData.Dataset({ items: clsListDO }),
+    source: new nsData.Dataset({
+      items: clsList.map(function(cls){
+        return new nsData.DataObject({
+          data: {
+            className: cls.className,
+            clsId: cls.docsUid_,
+            superClsId: cls.docsSuperUid_
+          }
+        })
+      })
+    }),
     rule: function(object){
-      return clsListDO[object.data.docsSuperUid_];
+      return object.data.superClsId;
     }
   });
 
-  var ClsNode = nsWrappers.TmplContainer.subclass({
+  var ClsNode = uiContainer.subclass({
     template:
       '<div class="ClassNode">' +
         '<div class="connector"/>' +
@@ -1052,16 +1061,15 @@
         '</div>' +
       '</div>',
 
-    templateUpdate: function(tmpl, event, delta){
+    templateUpdate: function(tmpl, eventName, delta){
       tmpl.title.nodeValue = this.data.className.split(/\./).pop();
       tmpl.title.parentNode.title = this.data.className;
-      if (!event || 'docsUid_' in delta)
-      {
-        this.setDataSource(clsSplitBySuper.getSubset(clsListDO[this.data.docsUid_]));
-      }
+
+      if (!eventName || 'clsId' in delta)
+        this.setDataSource(clsSplitBySuper.getSubset(this.data.clsId));
     },
     event_childNodesModified: function(node, delta){
-      nsWrappers.TmplContainer.prototype.event_childNodesModified.call(this, node, delta);
+      uiContainer.prototype.event_childNodesModified.call(this, node, delta);
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
     },
 
@@ -1072,20 +1080,18 @@
 
   var viewClassMap = new View({
     viewHeader: 'ClassMap',
-    id: 'ClassMap',
     template:
-      '<div class="view">' +
+      '<div class="view" id="ClassMap">' +
         htmlHeader('ClassMap') +
         '<div class="content" style="overflow: hidden; height: 400px; position: relative;padding: 25px">' +
           '<div{childNodesElement} style="position: absolute;"/>' +
         '</div>' +
       '</div>',
-    dataSource: clsSplitBySuper.getSubset(clsListDO[0]),
+    dataSource: clsSplitBySuper.getSubset(0),
     childClass: ClsNode
   });
 
   new Scroller({
-    minScrollDelta: 0,
     targetElement: viewClassMap.childNodesElement
   });
 
