@@ -29,7 +29,9 @@ basis.require('basis.ui');
   var namespace = 'basis.ui.calendar';
 
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -37,6 +39,7 @@ basis.require('basis.ui');
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
+  var createEvent = basis.EventObject.createEvent;
 
   var Template = basis.html.Template;
   var Property = basis.data.property.Property;
@@ -46,7 +49,7 @@ basis.require('basis.ui');
 
 
   //
-  // Main part
+  // main part
   //
 
   var YEAR  = 'year';
@@ -507,7 +510,7 @@ basis.require('basis.ui');
       '</div>'
     })),
 
-    event_change: basis.EventObject.createEvent('change'),
+    event_change: createEvent('change'),
 
     event_childNodesModified: function(node, delta){
       if (delta.inserted)
@@ -907,6 +910,7 @@ basis.require('basis.ui');
     }
 
   });
+
 
   //
   //  export names

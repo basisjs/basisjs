@@ -27,15 +27,22 @@ basis.require('basis.ui');
  /**
   * @namespace basis.ui.resizer
   */
+
   var namespace = 'basis.ui.resizer';
+
+
+  //
+  // import names
+  //
 
   var DOM = basis.dom;
   var cssom = basis.cssom;
   var classList = basis.cssom.classList;
   var DragDropElement = basis.dragdrop.DragDropElement;
 
+
   //
-  // Resizer
+  // main part
   //
 
   function getComputedStyle(element, styleProp){
@@ -162,6 +169,7 @@ basis.require('basis.ui');
       }
     }
   }});
+
 
   //
   // export names

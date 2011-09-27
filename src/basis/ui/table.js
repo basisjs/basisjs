@@ -31,7 +31,9 @@ basis.require('basis.ui');
   var namespace = 'basis.ui.table';
 
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var Event = basis.dom.event;
@@ -54,7 +56,7 @@ basis.require('basis.ui');
 
 
   //
-  // Main part
+  // main part
   //
 
   //
@@ -64,10 +66,9 @@ basis.require('basis.ui');
   var HEADERCELL_CSS_SORTABLE = 'sortable';
   var HEADERCELL_CSS_SORTDESC = 'sort-order-desc';
 
-  //
-  // Table Header Grouping
-  //
-
+ /**
+  * @class
+  */
   var HeaderPartitionNode = Class(UINode, {
     className: namespace + '.HeaderPartitionNode',
     template: new Template(
@@ -83,6 +84,9 @@ basis.require('basis.ui');
     }
   });
 
+ /**
+  * @class
+  */
   var HeaderGroupingNode = Class(GroupingNode, {
     className: namespace + '.HeaderGroupingNode',
     event_ownerChanged: function(node, oldOwner){
@@ -155,7 +159,6 @@ basis.require('basis.ui');
  /**
   * @class
   */
-
   var HeaderCell = Class(UINode, {
     className: namespace + '.HeaderCell',
 
@@ -572,6 +575,7 @@ basis.require('basis.ui');
       this.footer = null;
     }
   });    
+
 
   //
   // export names

@@ -41,7 +41,7 @@ basis.require('basis.ui');
 
 
   //
-  // Main part
+  // main part
   //
 
  /**
@@ -138,6 +138,7 @@ basis.require('basis.ui');
       }
     }
   });
+
 
   //
   // export names

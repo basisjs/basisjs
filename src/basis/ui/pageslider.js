@@ -28,6 +28,7 @@ basis.require('basis.ui.scroller');
 
   var namespace = 'basis.ui.pageslider';
 
+
   //
   // import names
   //
@@ -39,6 +40,11 @@ basis.require('basis.ui.scroller');
   var Scroller = basis.ui.scroller.Scroller;
 
   var classList = basis.cssom.classList;
+
+
+  //
+  // main part
+  //
   
  /**
   * @class
@@ -142,6 +148,11 @@ basis.require('basis.ui.scroller');
       this.scroller = null;
     }
   });
+
+
+  //
+  // export names
+  //
 
   basis.namespace(namespace).extend({
     PageSlider: PageSlider

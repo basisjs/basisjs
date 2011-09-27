@@ -26,10 +26,13 @@ basis.require('basis.cssom');
  /**
   * @namespace basis.ui.toc
   */  
+
   var namespace = 'basis.ui.toc';
 
 
+  //
   // import names
+  //
     
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -39,12 +42,18 @@ basis.require('basis.cssom');
   var nsWrappers = basis.dom.wrapper;
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
+  var Modificator = basis.animation.Modificator;
 
+
+  //
+  // main part
+  //
 
  /**
   * @class
   */
   var TocControlItemHeader = Class(UINode, {
+    className: namespace + '.TocControlItemHeader',
     template:
       '<div class="TocControl-Item-Header" event-click="scrollTo">' +
         '<span>{titleText}</span>' +
@@ -65,6 +74,7 @@ basis.require('basis.cssom');
   });
 
   var TocControlItem = Class(UIContainer, {
+    className: namespace + '.TocControlItem',
     template:
       '<div class="TocControl-Item">' +
         '<span{header}/>' +
@@ -81,6 +91,7 @@ basis.require('basis.cssom');
 
   var MW_SUPPORTED = true;
   var TocControlHeaderList = Class(UIContainer, {
+    className: namespace + '.TocControlHeaderList',
     behaviour: {
       click: function(event, node){
         if (node)
@@ -173,7 +184,7 @@ basis.require('basis.cssom');
         interval: 15
       });
       var self = this;
-      this.modificator = new basis.Animation.Modificator(this.thread, function(value){
+      this.modificator = new Modificator(this.thread, function(value){
         //console.log('set scrollTop ', self.content.scrollTop = parseInt(value));
         self.content.scrollTop = parseInt(value);
         self.recalc();
@@ -318,6 +329,11 @@ basis.require('basis.cssom');
       this.inherit();
     }
   });
+
+
+  //
+  // export names
+  //
 
   basis.namespace(namespace).extend({
     Control: TocControl,

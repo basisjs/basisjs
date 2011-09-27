@@ -1,34 +1,59 @@
-(function(){
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2011 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ *
+ * @author
+ * Vladimir Ratsev <wuzykk@gmail.com>
+ */
+
+basis.require('basis.dom');
+basis.require('basis.dom.event');
+basis.require('basis.cssom');
+basis.require('basis.layout');
+basis.require('basis.ui.table');
+
+!function(basis){
 
  /**
-  * @namespace Basis.Controls.Table
+  * @namespace basis.Controls.Table
   */
 
-  var namespace = 'Basis.Controls.Table';
+  var namespace = 'basis.Controls.Table';
 
+
+  //
   // import names
+  //
 
-  var Class = Basis.Class;
-  var Event = Basis.Event;
-  var DOM = Basis.DOM;
-  var Template = Basis.Html.Template;
+  var Class = basis.Class;
+  var DOM = basis.dom;
+  var Event = basis.dom.event;
 
-  var nsTable = Basis.Controls.Table;
-  var nsWrappers = Basis.DOM.Wrapper;
+  var cssom = basis.cssom;
+  var TimeEventManager = basis.TimeEventManager;
+  var Table = basis.ui.table.Table;
+  var Box = basis.layout.Box;
+  var Viewport = basis.layout.Viewport;
 
-  var Box = Basis.Layout.Box;
-  var Viewport = Basis.Layout.Viewport;
 
-  var TimeEventManager = Basis.TimeEventManager;
+  //
+  // main part
+  //
 
   /* caculate scroll width */
-  var ScrollBarWidth = 17;
+  var SCROLLBAR_WIDTH = 17;
   Event.onLoad(function(){
     var tester = DOM.createElement('');
     DOM.setStyle(tester, { height: '100px', overflow: 'scroll' });
     DOM.insert(document.body, tester);
-    ScrollBarWidth = (new Box(tester)).width - (new Viewport(tester)).width;
-    Basis.DOM.Style.cssRule('.ScrollBarWidthOwner').setStyle({ width: ScrollBarWidth + 'px' });
+    SCROLLBAR_WIDTH = (new Box(tester)).width - (new Viewport(tester)).width;
+    cssom.cssRule('.ScrollBarWidthOwner').setStyle({ width: SCROLLBAR_WIDTH + 'px' });
     DOM.remove(tester);
   });
 
@@ -43,10 +68,10 @@
  /**
   * @class
   */
-  var ScrollTable = Class(nsTable.Table, {
+  var ScrollTable = Class(Table, {
     className: namespace + '.ScrollTable',
 
-    template: new Template(
+    template:
       '<div{element} class="Basis-Table Basis-ScrollTable">' +
         '<div{headerFooterContainer} class="Basis-ScrollTable-HeaderFooterContainer">' +
           //'<div{headerFooterWrapper} style="position: absolute; height: 100%; width: 100%; top: 0; left: 0">' +
@@ -61,20 +86,19 @@
             '</table>' +
           '</div>' +
         '</div>' +
-      '</div>'
-    ),
+      '</div>',
 
     event_childNodesModified: function(node, delta){
-      nsTable.Table.prototype.event_childNodesModified.call(this, node, delta);
+      Table.prototype.event_childNodesModified.call(this, node, delta);
       TimeEventManager.add(this, 'adjust', Date.now());
     },
     event_childUpdated: function(child, delta){
-      nsTable.Table.prototype.event_childUpdated.call(this, child, delta);
+      Table.prototype.event_childUpdated.call(this, child, delta);
       TimeEventManager.add(this, 'adjust', Date.now());
     },
 
     init: function(config){
-      nsTable.Table.prototype.init.call(this, config);
+      Table.prototype.init.call(this, config);
 
       //DOM.insert(this.tmpl.head, this.header.element);
 
@@ -160,7 +184,7 @@
       if (this.tmpl.tableWrapperElement.scrollWidth > this.tmpl.scrollContainer.clientWidth)
       {
         DOM.setStyleProperty(this.tmpl.tableWrapperElement, 'width',  tableWidth + 'px');
-        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'width', tableWidth + ScrollBarWidth + 'px');
+        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'width', tableWidth + SCROLLBAR_WIDTH + 'px');
       }
       else
       {
@@ -171,15 +195,15 @@
       /*adjust cells width*/
       this.cellsAdjustmentInfo.forEach(this.adjustCell);
       /*recalc expanderCell width*/
-      var freeSpaceWidth = Math.max(0, this.tmpl.tableWrapperElement.clientWidth - this.tmpl.tableElement.offsetWidth + ScrollBarWidth);
+      var freeSpaceWidth = Math.max(0, this.tmpl.tableWrapperElement.clientWidth - this.tmpl.tableElement.offsetWidth + SCROLLBAR_WIDTH);
 
       /*recalc header heights*/
       this.headerBox.recalc();
       var headerHeight = this.headerBox.height || 0;
 
-      DOM.setStyleProperty(this.element, 'paddingTop', headerHeight + 'px');
-      DOM.setStyleProperty(this.tmpl.tableElement, 'marginTop', -headerHeight + 'px');
-      DOM.setStyle(this.headerExpandCell, { width: freeSpaceWidth + 'px', height: headerHeight + 'px' });
+      cssom.setStyleProperty(this.element, 'paddingTop', headerHeight + 'px');
+      cssom.setStyleProperty(this.tmpl.tableElement, 'marginTop', -headerHeight + 'px');
+      cssom.setStyle(this.headerExpandCell, { width: freeSpaceWidth + 'px', height: headerHeight + 'px' });
 
       /*recalc footer heights*/
       if (this.footer.useFooter)
@@ -187,10 +211,10 @@
         this.footerBox.recalc();
         var footerHeight = this.footerBox.height || 0;
 
-        DOM.setStyleProperty(this.element, 'paddingBottom', footerHeight + 'px');
-        DOM.setStyleProperty(this.tmpl.tableElement, 'marginBottom', -footerHeight + 'px');
+        cssom.setStyleProperty(this.element, 'paddingBottom', footerHeight + 'px');
+        cssom.setStyleProperty(this.tmpl.tableElement, 'marginBottom', -footerHeight + 'px');
 
-        DOM.setStyle(this.footerExpandCell, { width: freeSpaceWidth + 'px', height: footerHeight + 'px' });
+        cssom.setStyle(this.footerExpandCell, { width: freeSpaceWidth + 'px', height: footerHeight + 'px' });
       }
     },
     sync: function(cellNumber){
@@ -207,14 +231,16 @@
       else
         width = cell.element.clientWidth + 'px';
 
-      DOM.setStyleProperty(cell.boxChangeListener, 'width', width);
+      cssom.setStyleProperty(cell.boxChangeListener, 'width', width);
     }
   });
 
+  //
   // export names
+  //
 
-  Basis.namespace(namespace).extend({
+  basis.namespace(namespace).extend({
     ScrollTable: ScrollTable
   });
  
-})();
+}(basis);

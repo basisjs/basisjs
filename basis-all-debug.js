@@ -3,11 +3,12 @@
 //   src/basis/ua.js
 //   src/basis/dom.js
 //   src/basis/dom/event.js
-//   src/basis/cssom.js
-//   src/basis/html.js
 //   src/basis/data.js
+//   src/basis/html.js
 //   src/basis/dom/wrapper.js
+//   src/basis/cssom.js
 //   src/basis/date.js
+//   src/basis/ui.js
 //   src/basis/layout.js
 //   src/basis/dragdrop.js
 //   src/basis/data/property.js
@@ -24,6 +25,7 @@
 //   src/basis/ui/tree.js
 //   src/basis/ui/popup.js
 //   src/basis/ui/table.js
+//   src/basis/ui/scrolltable.js
 //   src/basis/ui/window.js
 //   src/basis/ui/tabs.js
 //   src/basis/ui/calendar.js
@@ -1480,6 +1482,9 @@
 
         // extend constructor with properties
         extend(newClass, newClassProps);
+
+        //if (!window.classCount) window.classCount = 0; window.classCount++;
+        //if (!window.classList) window.classList = []; window.classList.push(newClass);
         
         return newClass;
       },
@@ -3938,1170 +3943,6 @@ basis.require('basis.dom');
 
 
 //
-// src/basis/cssom.js
-//
-
-/*!
- * Basis javasript library 
- * http://code.google.com/p/basis-js/
- *
- * @copyright
- * Copyright (c) 2006-2011 Roman Dvornov.
- *
- * @license
- * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
- *
- * @author
- * Vladimir Ratsev
- * Roman Dvornov
- */
-
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-
-!function(basis, global){
-
- 'use strict';
-
- /**
-  * @namespace basis.cssom
-  */
-  
-  var namespace = 'basis.cssom';
-
-  //
-  // import names
-  //
-
-  var document = global.document;
-  var dom = basis.dom;
-  var event = basis.dom.event;
-  var Class = basis.Class;
-
-  //
-  // main part
-  //
-
-  var IMPORTANT_REGEXP = /\s*!important/i;
-  var IMPORTANT = String('important');
-  var GENERIC_RULE_SEED = 1;
-  var cssStyleSheets = {};
-
-  //
-  // shortcut
-  //
-  
-  function cssRule(selector, styleSheet){
-    return getStyleSheet(styleSheet, true).getRule(selector, true);
-  }
-
-  function isPropertyImportant(style, property){
-    if (style.getPropertyPriority)
-      return style.getPropertyPriority(property) == IMPORTANT;
-    else
-      return false;
-  }
-
- /**
-  * @func
-  * @param {Element} element
-  */
-  function uniqueRule(element){
-    var token = 'genericRule-' + GENERIC_RULE_SEED++;
-
-    if (element)
-      classList(element).add(token);
-
-    var result = cssRule('.' + token);
-    result.token = token;
-
-    return result;
-  }
-
-  //
-  // working with stylesheets
-  //
-
-  function StyleSheet_insertRule(rule, index){
-    // fetch selector and style from rule description
-    var m = rule.match(/^([^{]+)\{(.*)\}\s*$/);
-    if (m)
-    {
-      var selectors = m[1].trim().split(/\s*,\s*/);
-      for (var i = 0; i < selectors.length; i++)
-        this.addRule(selectors[i], m[2] || null, index++);
-      return index - 1;
-    }
-
-    ;;;throw new Error("Syntax error in CSS rule to be added");
-  }
-
-  function StyleSheet_makeCompatible(style){
-    // FF throws exception if access to cssRules property until stylesheet isn't ready (loaded)
-    try {
-      if (!style.cssRules)
-        style.cssRules = style.rules;
-    }
-    catch(e){
-    }
-
-    // extend style sheet with methods according to W3C spec
-    if (!style.insertRule)
-      style.insertRule = StyleSheet_insertRule;
-
-    if (!style.deleteRule)
-      style.deleteRule = style.removeRule;
-
-    return style;
-  }
-
- /**
-  * Creates <STYLE> or <LINK> node, adds it to document and returns it's stylesheet object.
-  * @param {string=} url Url of css file. In this case <LINK> will created. If this parameter ommited <STYLE> will created
-  * @param {string=} title Value for title attribute.
-  * @return {StyleSheet}
-  */
-  function addStyleSheet(url, title){
-    var element = dom.createElement(!url ? 'STYLE[type="text/css"]' : 'LINK[type="text/css"][rel="{alt}stylesheet"][href={url}]'.format({
-      alt: title ? 'alternate ' : '',
-      url: url.quote('"')
-    }));
-
-    dom.tag(null, 'HEAD')[0].appendChild(element);
-
-    return StyleSheet_makeCompatible(element.sheet || element.styleSheet);
-  }
-
-  var basisId = 1;
-
- /**
-  * Returns generic stylesheet by it's id.
-  * @param {string=} id
-  * @param {boolean=} createIfNotExists
-  * @return {basis.cssom.CssStyleSheetWrapper}
-  */
-  function getStyleSheet(id, createIfNotExists){
-    if (!id)
-      id = 'DefaultGenericStyleSheet';
-
-    if (!cssStyleSheets[id])
-      if (createIfNotExists)
-        cssStyleSheets[id] = new CssStyleSheetWrapper(addStyleSheet())
-
-    return cssStyleSheets[id];
-  }
-
-  //
-  // Style mapping
-  //
-
-  var styleMapping = {};
-  var testElement = dom.createElement('DIV');
-
-  function createStyleMapping(property, names, regSupport, getters){
-    getters = getters || {};
-    names = names.qw();
-
-    for (var i = 0, name; name = names[i]; i++)
-    {
-      if (typeof testElement.style[name] != 'undefined')
-      {
-        if (regSupport)
-          basis.platformFeature['css-' + property] = name;
-
-        styleMapping[property] = {
-          key: name,
-          getter: getters[name]
-        };
-
-        return;
-      }
-    }
-  };
-
-  createStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter', true, {
-    fitler: function(value){ return 'alpha(opacity:' + parseInt(value * 100) + ')' }
-  });
-  createStyleMapping('border-radius', 'borderRadius MozBorderRadius WebkitBorderRadius', true);
-  createStyleMapping('float', 'cssFloat styleFloat');
-
- /**
-  * Apply new style property values for node.
-  * @param {Node} node Node which style to be changed.
-  * @param {object} style Object contains new values for node style properties.
-  * @return {Node} 
-  */
-  function getStylePropertyMapping(key, value){
-    var mapping = styleMapping[key];
-    if (key = mapping ? mapping.key : key.replace(/^-ms-/, 'ms-').camelize())
-      return {
-        key: key,
-        value: mapping && mapping.getter ? mapping.getter(value) : value
-      };
-  }
-
- /**
-  * Apply new style property value for node.
-  * @param {Node} node Node which style to be changed.
-  * @param {string} key Name of property.
-  * @param {string} value Value of property.
-  */
-  function setStyleProperty(node, key, value){
-    if (typeof node.setProperty == 'function')
-      return node.setProperty(key, value);
-
-    var mapping = getStylePropertyMapping(key, value);
-    if (mapping)
-      return node.style[mapping.key] = mapping.value;
-  }
-
- /**
-  * Apply new style properties for node.
-  * @param {Node} node Node which style to be changed.
-  * @param {object} style Object contains new values for node style properties.
-  * @return {Node} 
-  */
-  function setStyle(node, style){
-    for (var key in style)
-      setStyleProperty(node, key, style[key]);
-
-    return node;
-  }
-
-
-  //
-  // dom node styling
-  //
-
- /**
-  * Changes for node display value.
-  * @param {Node} node
-  * @param {boolean|string} display
-  * @return {Node}
-  */
-  function display(node, display){
-    return setStyleProperty(node, 'display', typeof display == 'string' ? display : (display ? '' : 'none'));
-  }
-
- /**
-  * @deprecated use Basis.DOM.display instead.
-  */
-  function show(element){
-    return display(element, 1);
-  }
- /**
-  * @deprecated use Basis.DOM.display instead.
-  */
-  function hide(element){ 
-    return display(element);
-  }
-
- /**
-  * Changes node visibility.
-  * @param {Node} node
-  * @param {boolean} visible
-  * @return {Node}
-  */
-  function visibility(node, visible){
-    return setStyleProperty(node, 'visibility', visible ? '' : 'hidden');
-  }
-
- /**
-  * @deprecated use Basis.DOM.visibility instead.
-  */
-  function visible(element){
-    return visibility(element, 1);
-  }
- /**
-  * @deprecated use Basis.DOM.visibility instead.
-  */
-  function invisible(element){
-    return visibility(element);
-  }
-
-  //
-  // classes
-  //
-
- /**
-  * @class
-  */
-  var CssStyleSheetWrapper = Class(null, {
-    className: namespace + '.CssStyleSheetWrapper',
-
-   /**
-    * Wrapped stylesheet
-    * @type {StyleSheet}
-    */
-    styleSheet: null,
-
-   /**
-    * @type {Array.<CssRuleWrapper|CssRuleWrapperSet>}
-    */
-    rules: null,
-
-   /**
-    * @param {StyleSheet} styleSheet
-    * @constructor
-    */
-    init: function(styleSheet){
-      this.styleSheet = styleSheet;
-      this.rules = [];
-      this.map_ = {};
-    },
-
-   /**
-    * @param {string} selector
-    * @param {boolean=} createIfNotExists
-    * @return {CssRuleWrapper|CssRuleWrapperSet}
-    */
-    getRule: function(selector, createIfNotExists){
-      if (!this.map_[selector])
-      {
-        if (createIfNotExists)
-        {
-          var styleSheet = this.styleSheet;
-          var index = this.rules.length;
-          var newIndex = styleSheet.insertRule(selector + '{}', index);
-
-          for (var i = index; i <= newIndex; i++)
-            this.rules.push(new CssRuleWrapper(styleSheet.cssRules[i]));
-
-          this.map_[selector] = index != newIndex ? new CssRuleWrapperSet(this.rules.splice(index)) : this.rules[index];
-        }
-      }
-
-      return this.map_[selector];
-    },
-
-   /**
-    * @param {string} selector
-    */
-    deleteRule: function(selector){
-      var rule = this.map_[selector];
-      if (rule)
-      {
-        var rules = rule.rules || [rule];
-        for (var i = 0; i < rules.length; i++)
-        {
-          var ruleIndex = this.rules.indexOf(rules[i]);
-          this.stylesheet.deleteRule(ruleIndex);
-          this.rules.splice(ruleIndex, 1);
-        }
-        delete this.map_[selector];
-      }
-    },
-
-   /**
-    * @destructor
-    */
-    destroy: function(){
-      delete this.rules;
-    }
-  });
-
- /**
-  * @class
-  */
-  var CssRuleWrapper = Class(null, {
-    className: namespace + '.CssRuleWrapper',
-
-   /**
-    * type {CSSRule}
-    */
-    rule: null,
-
-   /**
-    * type {string}
-    */
-    selector: '',
-
-   /**
-    * @param {CSSRule} rule
-    * @contructor
-    */
-    init: function(rule){
-      if (rule)
-      {
-        this.rule = rule;
-        this.selector = rule.selectorText;
-      }
-    },
-
-   /**
-    * @param {string} property
-    * @param {any} value
-    */
-    setProperty: function(property, value){
-      var mapping;
-      var imp = !!IMPORTANT_REGEXP.test(value);
-      var style = this.rule.style;
-      if (imp || isPropertyImportant(style, property))
-      {
-        value = value.replace(IMPORTANT_REGEXP, '');
-
-        if (mapping = getStylePropertyMapping(property, value))
-        {
-          var key = mapping.key;
-
-          if (style.setProperty)
-          {
-            // W3C scheme
-
-            // if property exists and important, remove it
-            if (!imp)
-              style.removeProperty(key);
-
-            // set new value for property
-            style.setProperty(key, mapping.value, (imp ? IMPORTANT : ''));
-          }
-          else
-          {
-            // IE8- scheme
-            var newValue = key + ': ' + mapping.value + (imp ? ' !' + IMPORTANT : '') + ';';
-            var rxText = style[key] ? key + '\\s*:\\s*' + style[key] + '(\\s*!' + IMPORTANT + ')?\\s*;?' : '^';
-
-            style.cssText = style.cssText.replace(new RegExp(rxText, 'i'), newValue);
-          }
-        }
-      }
-      else 
-        setStyleProperty(this.rule, property, value);
-    },
-
-   /**
-    * @param {Object} style
-    */
-    setStyle: function(style){
-      Object.iterate(style, this.setProperty, this);
-    },
-
-   /**
-    * Removes all style properties
-    */
-    clear: function(){
-      this.rule.style.cssText = "";
-    },
-
-   /**
-    * @destructor
-    */
-    destroy: function(){
-      delete this.rule;
-    }
-  });
-
- /**
-  * @class
-  */
-  var CssRuleWrapperSet = Class(null, {
-    className: namespace + '.CssRuleWrapperSet',
-
-   /**
-    * @type {Array.<CssRuleWrapper>}
-    */
-    rules: null,
-
-   /**
-    * @param {Array.<CssRuleWrapper>} rules
-    * @constructor
-    */
-    init: function(rules){
-      this.rules = rules;
-    },
-    destroy: function(){
-      delete this.rules;
-    }
-  });
-
-  ['setProperty', 'setStyle', 'clear'].forEach(function(method){
-    CssRuleWrapperSet.prototype[method] = function(){
-      for (var rule, i = 0; rule = this.rules[i]; i++)
-        rule[method].apply(rule, arguments);
-    }
-  });
-
-  var unitFunc = {};
-  ['em', 'ex', 'px', '%'].forEach(function(unit){
-    unitFunc[unit == '%' ? 'percent' : unit] = function(value){
-      return value == 0 || isNaN(value) ? '0' : value + unit;
-    }
-  });
-
-  //
-  // classList
-  //
-
- /**
-  * @func
-  */
-  var classList;
-  var rxCache = {};
-
-  function tokenRegExp(token){
-    return rxCache[token] || (rxCache[token] = new RegExp('\\s*\\b' + token + '\\b'));
-  }
-
-  var ClassList = Class(null, {
-    className: namespace + '.ClassList',
-
-    init: function(element){ 
-      ;;;if (!element) throw new Error(namespace + '.classList: Element ' + element + ' not found!');
-      this.element = element;
-      //this.tokens = this.element.className.qw();
-    },
-    toString: function(){
-      return this.element.className;
-    },
-
-    set: function(tokenList){
-      this.clear();
-      tokenList.qw().forEach(this.add, this);
-    },
-    replace: function(searchFor, replaceFor, prefix){
-      prefix = prefix || '';
-
-      if (typeof searchFor != 'undefined')
-        this.remove(prefix + searchFor);
-      
-      if (typeof replaceFor != 'undefined')
-        this.add(prefix + replaceFor);
-    },
-    bool: function(token, exists) {
-      if (exists)
-        this.add(token);
-      else
-        this.remove(token);
-    },
-    clear: function(){
-      this.element.className = '';
-    },
-
-    contains: function(token){
-      return !!this.element.className.match(tokenRegExp(token));
-    },
-    item: function(index){
-      return this.element.className.qw()[index];
-    },
-    add: function(token){ 
-      ;;;if (arguments.length > 1) console.warn('classList.add accept only one argument');
-      if (!this.element.className.match(tokenRegExp(token)))
-        this.element.className += ' ' + token;
-    },
-    remove: function(token){
-      ;;;if (arguments.length > 1) console.warn('classList.remove accept only one argument');
-      var className = this.element.className;
-      var newClassName = className.replace(tokenRegExp(token), '');
-      if (newClassName != className)
-        this.element.className = newClassName;
-    },
-    toggle: function(token){
-      var exists = this.contains(token);
-
-      if (exists)
-        this.remove(token);
-      else
-        this.add(token);
-
-      return !exists;
-    }
-  });
-
-  if (global.DOMTokenList && document.documentElement.classList)
-  {
-    var proto = ClassList.prototype;
-    Object.extend(global.DOMTokenList.prototype, {
-      set: proto.set,
-      replace: proto.replace,
-      bool: proto.bool,
-      clear: function(){
-        for (var i = this.length; i --> 0;)
-          this.remove(this[i]);
-      }
-    });
-    classList = function(element){
-      return (typeof element == 'string' ? dom.get(element) : element).classList;
-    }
-  }
-  else
-  {
-    classList = function(element){ 
-      return new ClassList(typeof element == 'string' ? dom.get(element) : element);
-    }
-  }
-
-  //
-  // platform specific actions
-  //
-
-  event.onLoad(function(){
-    classList(document.body).bool('opacity-not-support', !basis.platformFeature['css-opacity']);
-  });
-
-  // export names
-
-  dom.extend({
-    // style interface
-    setStyleProperty: setStyleProperty,
-    setStyle: setStyle,
-
-    // node styling
-    display: display,
-    show: show,
-    hide: hide,
-    visibility: visibility,
-    visible: visible,
-    invisible: invisible
-  });
-
-  return basis.namespace(namespace).extend({
-    // style interface
-    setStyleProperty: setStyleProperty,
-    setStyle: setStyle,
-    classList: classList,
-
-    // rule and stylesheet interfaces
-    uniqueRule: uniqueRule,
-    cssRule: cssRule,
-    getStyleSheet: getStyleSheet,
-    addStyleSheet: addStyleSheet,
-
-    // classes
-    CssStyleSheetWrapper: CssStyleSheetWrapper,
-    CssRuleWrapper: CssRuleWrapper,
-    CssRuleWrapperSet: CssRuleWrapperSet
-  }).extend(unitFunc);
-
-}(basis, this);
-
-
-//
-// src/basis/html.js
-//
-
-/*!
- * Basis javasript library 
- * http://code.google.com/p/basis-js/
- *
- * @copyright
- * Copyright (c) 2006-2011 Roman Dvornov.
- *
- * @license
- * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
- */
-
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-
-!function(basis, global){
-
- /**
-  * @namespace basis.html
-  */
-
-  var namespace = 'basis.html';
-
-  // import names
-
-  var document = global.document;
-  var dom = basis.dom;
-  var Class = basis.Class;
-
-  //
-  // Main part
-  //
-
-  var tmplEventListeners = {};
-  var tmplNodeMap = { seed: 1 };
-
-  var tmplPartFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>]*?)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
-  var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
-  var domFragment = dom.createFragment();
-
-  // Test for browser (IE) normalize text nodes during cloning
-  var CLONE_NORMALIZE_TEXT_BUG = (function(){
-    return dom.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
-  })();
-
-  
-  var createFragment = dom.createFragment;
-  var createText = dom.createText;
-  var createComment = function(value){
-    return document.createComment(value);
-  };
-
-  //
-  // PARSE TEXT
-  //
-  function parseText(context, str, nodePath, pos){
-    var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
-    var result = createFragment();
-    var node;
-    for (var i = 0; i < parts.length; i++)
-    {
-      if (i % 2)
-      {
-        var p = parts[i].split(/\|/);
-        context.getters[p[0]] = nodePath + 'childNodes[' + pos + ']';
-        node = p.length > 1 ? p[1] : p[0];
-      }
-      else
-        node = parts[i].length ? parts[i] : null;
-
-      if (node != null)
-      {
-        // Some browsers (Internet Explorer) can normalize text nodes during cloning, that why 
-        // we need to insert comment nodes between text nodes to prevent text node merge
-        if (CLONE_NORMALIZE_TEXT_BUG)
-        {
-          if (result.lastChild)
-            result.appendChild(createComment(''));
-          pos++;
-        }
-        result.appendChild(createText(node));
-        pos++;
-      }
-    }
-    return result;
-  }
-
-  //
-  // PARSE ATTRIBUTES
-  //
-  function createEventHandler(name){
-    return function(event){
-      if (event && event.type == 'click' && event.which == 3)
-        return;
-
-      var cursor = basis.dom.event.sender(event);
-      var attr;
-      var refId;
-
-      // search for nearest node with event-{eventName} attribute
-      do {
-        if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(name)))
-          break;
-      } while (cursor = cursor.parentNode);
-
-      // if not found - exit
-      if (!cursor || !attr)
-        return;
-
-      // search for nearest node refer to basis.Class instance
-      do {
-        if (refId = cursor.basisObjectId)
-        {
-          // if found call templateAction method
-          var node = tmplNodeMap[refId];
-          if (node && node.templateAction)
-          {
-            var actions = attr.nodeValue.qw();
-
-            for (var i = 0, actionName; actionName = actions[i++];)
-              node.templateAction(actionName, basis.dom.event(event));
-
-            break;
-          }
-        }
-      } while (cursor = cursor.parentNode);
-    }
-  }
-
-  function parseAttributes(context, str, nodePath){
-    str = str.trim();
-
-    if (!str)
-      return '';
-
-    var result = '';
-    var m;
-
-    while (m = tmplAttrRx.exec(str))
-    {
-      //    0      1   2     3      4       5
-      // m: match, ns, name, alias, value1, value2
-
-      var name = m[2];
-      var value = m[4] || m[5] || name;
-
-      // store reference for attribute
-      if (m[3])
-        context.getters[m[3]] = nodePath + '.getAttributeNode("' + name + '")';
-
-      // if attribute is event binding, add global event handler
-      var eventMatch = name.match(/^event-([a-z]+)/i);
-      if (eventMatch)
-      {
-        var eventName = eventMatch[1];
-        if (!tmplEventListeners[eventName])
-        {
-          tmplEventListeners[eventName] = true;
-
-          for (var i = 0, names = basis.dom.event.browserEvents(eventName), browserEventName; browserEventName = names[i++];)
-            basis.dom.event.addGlobalHandler(browserEventName, createEventHandler(name));
-        }
-
-        if (!window.__basis_emitEvent)
-        {
-          window.__basis_emitEvent = function(event, actionList){
-            var event = basis.dom.event(event);
-            var cursor = this;
-            var refId;
-            do {
-              if (refId = cursor.basisObjectId)
-              {
-                // if found call templateAction method
-                var node = tmplNodeMap[refId];
-                if (node && node.templateAction)
-                {
-                  var actions = actionList.qw();
-                  for (var i = 0, actionName; actionName = actions[i++];)
-                    node.templateAction(actionName, basis.dom.event(event));
-
-                  break;
-                }
-              }
-            } while (cursor = cursor.parentNode);
-          }
-        }
-          
-        //result += '[on' + eventName + '="alert(\'!\');__basis_emitEvent.call(this, event || window.event, ' + value.quote("'") + ')"]';
-        //continue;
-      }
-
-      result += name == 'class'
-                  ? value.trim().replace(/^(.)|\s+/g, '.$1')
-                  : '[' + name + (value ? '=' + value.quote('"') : '') + ']';
-    }
-
-    return result;
-  }
-
-  //
-  // PARSE HTML
-  //
-  function parseHtml(context, path){
-    if (!context.stack)
-      context.stack = [];
-
-    if (!context.source)
-      context.source = context.str;
-
-    if (!path)
-      path = '.';
-
-    var result = createFragment();
-    var preText;
-    var pos = 0;
-    var m;
-    var stack = context.stack;
-
-    while (m = tmplPartFinderRx.exec(context.str))
-    {
-      //    0      1        2      3           4            5         6        7
-      // m: match, tagName, alias, attributes, isSingleton, closeTag, comment, commentAlias
-
-      preText = RegExp.leftContext;
-      context.str = context.str.substr(preText.length + m[0].length);
-
-      // if something before -> parse text & append result
-      if (preText.length)
-      {
-        result.appendChild(parseText(context, preText, path, pos));
-        pos = result.childNodes.length;
-      }
-
-      // end tag
-      if (m[5])
-      {
-        // if end tag match to last stack tag -> remove last tag from tag and return
-        if (m[5] == stack[stack.length - 1])
-        {
-          stack.pop();
-          return result;
-        }
-        else
-        {
-          ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + context.source.replace(new RegExp('(</' + m[5] + '>)(' + context.str + ')$'), '\n ==[here]=>$1<== \n$2'));
-          throw "Wrong end tag";
-        }
-      }
-
-      // comment
-      if (m[6])
-      {
-        if (m[7])
-          context.getters[m[7]] = path + 'childNodes[' + pos + ']';
-
-        result.appendChild(createComment(m[6]));
-      }
-      // open tag
-      else
-      {
-        var descr = m[0];
-        var tagName = m[1];
-        var name = m[2];
-        var attributes = m[3];
-        var singleton = !!m[4];
-        var nodePath = path + 'childNodes[' + pos + ']';
-        var element = dom.createElement(tagName + parseAttributes(context, attributes, nodePath));
-
-        if (name)
-          context.getters[name] = nodePath;
-
-        if (!singleton)
-        {
-          stack.push(tagName);
-          element.appendChild(parseHtml(context, nodePath + '.'));
-        }
-
-        result.appendChild(element);
-      }
-
-      pos++;
-    }
-    
-    // no tag found, but there can be trailing text -> parse text
-    if (context.str.length)
-      result.appendChild(parseText(context, context.str, path, pos));
-
-    if (stack.length)
-    {
-      ;;;if (typeof console != undefined) console.log('No end tag for ' + stack.reverse() + ' in Html.Template:\n\n' + context.source);
-      throw "No end tag for " + stack.reverse();
-    }
-
-    return result;
-  }
-
-
- /**
-  * Parsing template
-  * @func
-  */
-  function parseTemplate(source){
-    if (this.proto)
-      return;
-
-    var str = this.source;
-
-    if (typeof str == 'function')
-      this.source = str = str();
-
-    var source = str.trim();
-    var context = {
-      str: source,
-      getters: {
-        element: '.childNodes[0]'
-      }
-    };
-
-    // parse html
-    var proto = parseHtml(context);
-
-    // build pathes for references
-    var body = Object.iterate(context.getters, function(name, getter){
-      var names = name.split(/\|/).map(String.format, 'obj_.{0}');
-
-      // optimize path (1)
-      var path = getter.split(/(\.?childNodes\[(\d+)\])/);
-      var cursor = proto;
-      for (var i = 0; i < path.length; i += 3)
-      {
-        var pos = path[i + 2];
-        if (!pos)
-          break;
-
-        path[i + 2] = '';
-        cursor = cursor.childNodes[pos];
-
-        if (!cursor.previousSibling)
-          path[i + 1] = '.firstChild';
-        else
-          if (!cursor.nextSibling)
-            path[i + 1] = '.lastChild';
-      }
-
-      // return body parts
-      return {
-        name:  names[0],
-        alias: names.join('='),
-        path:  'dom_' + path.join('')
-      }
-    }).sortAsObject('path');
-
-    // optimize pathes (2)
-    for (var i = 0; i < body.length; i++)
-    {
-      var pathRx = new RegExp('^' + body[i].path.forRegExp());
-      for (var j = i + 1, nextBodyPart; nextBodyPart = body[j++];)
-        nextBodyPart.path = nextBodyPart.path.replace(pathRx, body[i].name);
-    }
-
-    //
-    // build createInstance function
-    //
-    this.createInstance = new Function('proto_', 'map_', 'var obj_, dom_; return ' + 
-      // mark variable names with dangling _ to avoid renaming by compiler, because
-      // this names using by generated code, and must be unchanged
-
-      // WARN: don't use global scope variables, resulting function has isolated scope
-
-      function(object, node){
-        obj_ = object || {};
-        dom_ = proto_.cloneNode(true);
-
-        // specific code start
-        _code_(); // <-- will be replaced for specific code
-        // specific code end
-
-        if (node && obj_.element)
-        {
-          var id = obj_.element.basisObjectId = map_.seed++;
-          map_[id] = node;
-        }
-
-        return obj_;
-      }
-
-    .toString().replace('_code_()', body.map(String.format,'{alias}={path};\n').join('')))(proto, tmplNodeMap);
-
-    //
-    // build clearInstance function
-    //
-    this.clearInstance = new Function('map_', 'var obj_; return ' +
-
-      function(object, node){
-        obj_ = object;
-        var id = obj_.element && obj_.element.basisObjectId;
-        if (id)
-          delete map_[id];
-
-        // specific code start
-        _code_(); // <-- will be replaced for specific code
-        // specific code end
-
-      }
-
-    .toString().replace('_code_()', body.map(String.format,'{alias}=null;\n').join('')))(tmplNodeMap);
-  };
-
-
- /**
-  * Creates DOM structure template from marked HTML. Use {basis.Html.Template#createInstance}
-  * method to apply template to object. It creates clone of DOM structure and adds
-  * links into object to pointed parts of structure.
-  *
-  * To remove links to DOM structure from object use {basis.Html.Template#clearInstance}
-  * method.
-  * @example
-  *   // create a template
-  *   var template = new basis.Template(
-  *     '<li{element} class="listitem">' +
-  *       '<a href{hrefAttr}="#">{titleText}</a>' + 
-  *       '<span class="description">{descriptionText}</span>' +
-  *     '</li>'
-  *   );
-  *   
-  *   // create 10 DOM elements using template
-  *   for (var i = 0; i < 10; i++)
-  *   {
-  *     var node = template.createInstance();
-  *     basis.CSS.cssClass(node.element).add('item' + i);
-  *     node.hrefAttr.nodeValue = '/foo/bar.html';
-  *     node.titleText.nodeValue = 'some title';
-  *     node.descriptionText.nodeValue = 'description text';
-  *   }
-  *   
-  *   // create and attach DOM structure to existing object
-  *   var dataObject = new basis.Data.DataObject({
-  *     data: { title: 'Some data', value: 123 },
-  *     handlers: {
-  *       update: function(object, delta){
-  *         this.titleText.nodeValue = this.info.title;
-  *         // other DOM manipulations
-  *       }
-  *     }
-  *   });
-  *   // apply template to object
-  *   template.createInstance(dataObject);
-  *   // trigger update event that fill template with data
-  *   dataObject.update(null, true);
-  *   ...
-  *   basis.dom.insert(someElement, dataObject.element);
-  *   ...
-  *   // destroy object
-  *   template.clearInstance(dataObject);
-  *   dataObject.destroy();
-  * @class
-  */
-  var Template = Class(null, {
-    className: namespace + '.Template',
-
-    __extend__: function(value){
-      if (value instanceof Template)
-        return value;
-      else
-        return new Template(value);
-    },
-
-   /**
-    * @param {string|function()} template Template source code that will be parsed
-    * into DOM structure prototype. Parsing will be initiated on first
-    * {basis.Html.Template#createInstance} call. If function passed it be called at
-    * first {basis.Html.Template#createInstance} and it's result will be used as
-    * template source code.
-    * @constructor
-    */
-    init: function(templateSource){
-      this.source = templateSource;
-    },
-
-   /**
-    * Create DOM structure and return object with references for it's nodes.
-    * @param {Object=} object Storage for DOM references.
-    * @param {Object=} node Object which templateAction method will be called on events.
-    * @return {Object}
-    */
-    createInstance: function(object, node){
-      parseTemplate.call(this);
-      return this.createInstance(object, node);
-    },
-    clearInstance: function(object, node){
-      parseTemplate.call(this);
-    }
-  });
-
-  function escape(html){
-    return dom.createElement('DIV', dom.createText(html)).innerHTML;
-  }
-
-  var unescapeElement = document.createElement('DIV');
-  function unescape(escapedHtml){
-    unescapeElement.innerHTML = escapedHtml;
-    return unescapeElement.firstChild.nodeValue;
-  }
-
-  function string2Html(text){
-    unescapeElement.innerHTML = text;
-    return dom.createFragment.apply(null, Array.from(unescapeElement.childNodes));
-  }
-
-  //
-  // export names
-  //
-
-  return basis.namespace(namespace).extend({
-    Template: Template,
-    escape: escape,
-    unescape: unescape,
-    string2Html: string2Html
-  });
-
-}(basis, this);
-
-
-//
 // src/basis/data.js
 //
 
@@ -7530,6 +6371,532 @@ basis.require('basis.dom.event');
 })();
 
 //
+// src/basis/html.js
+//
+
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2011 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+basis.require('basis.dom');
+basis.require('basis.dom.event');
+
+!function(basis, global){
+
+ /**
+  * @namespace basis.html
+  */
+
+  var namespace = 'basis.html';
+
+  // import names
+
+  var document = global.document;
+  var dom = basis.dom;
+  var Class = basis.Class;
+
+  //
+  // Main part
+  //
+
+  var tmplEventListeners = {};
+  var tmplNodeMap = { seed: 1 };
+
+  var tmplPartFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>]*?)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
+  var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
+  var domFragment = dom.createFragment();
+
+  // Test for browser (IE) normalize text nodes during cloning
+  var CLONE_NORMALIZE_TEXT_BUG = (function(){
+    return dom.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
+  })();
+
+  
+  var createFragment = dom.createFragment;
+  var createText = dom.createText;
+  var createComment = function(value){
+    return document.createComment(value);
+  };
+
+  //
+  // PARSE TEXT
+  //
+  function parseText(context, str, nodePath, pos){
+    var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
+    var result = createFragment();
+    var node;
+    for (var i = 0; i < parts.length; i++)
+    {
+      if (i % 2)
+      {
+        var p = parts[i].split(/\|/);
+        context.getters[p[0]] = nodePath + 'childNodes[' + pos + ']';
+        node = p.length > 1 ? p[1] : p[0];
+      }
+      else
+        node = parts[i].length ? parts[i] : null;
+
+      if (node != null)
+      {
+        // Some browsers (Internet Explorer) can normalize text nodes during cloning, that why 
+        // we need to insert comment nodes between text nodes to prevent text node merge
+        if (CLONE_NORMALIZE_TEXT_BUG)
+        {
+          if (result.lastChild)
+            result.appendChild(createComment(''));
+          pos++;
+        }
+        result.appendChild(createText(node));
+        pos++;
+      }
+    }
+    return result;
+  }
+
+  //
+  // PARSE ATTRIBUTES
+  //
+  function createEventHandler(name){
+    return function(event){
+      if (event && event.type == 'click' && event.which == 3)
+        return;
+
+      var cursor = basis.dom.event.sender(event);
+      var attr;
+      var refId;
+
+      // search for nearest node with event-{eventName} attribute
+      do {
+        if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(name)))
+          break;
+      } while (cursor = cursor.parentNode);
+
+      // if not found - exit
+      if (!cursor || !attr)
+        return;
+
+      // search for nearest node refer to basis.Class instance
+      do {
+        if (refId = cursor.basisObjectId)
+        {
+          // if found call templateAction method
+          var node = tmplNodeMap[refId];
+          if (node && node.templateAction)
+          {
+            var actions = attr.nodeValue.qw();
+
+            for (var i = 0, actionName; actionName = actions[i++];)
+              node.templateAction(actionName, basis.dom.event(event));
+
+            break;
+          }
+        }
+      } while (cursor = cursor.parentNode);
+    }
+  }
+
+  function parseAttributes(context, str, nodePath){
+    str = str.trim();
+
+    if (!str)
+      return '';
+
+    var result = '';
+    var m;
+
+    while (m = tmplAttrRx.exec(str))
+    {
+      //    0      1   2     3      4       5
+      // m: match, ns, name, alias, value1, value2
+
+      var name = m[2];
+      var value = m[4] || m[5] || name;
+
+      // store reference for attribute
+      if (m[3])
+        context.getters[m[3]] = nodePath + '.getAttributeNode("' + name + '")';
+
+      // if attribute is event binding, add global event handler
+      var eventMatch = name.match(/^event-([a-z]+)/i);
+      if (eventMatch)
+      {
+        var eventName = eventMatch[1];
+        if (!tmplEventListeners[eventName])
+        {
+          tmplEventListeners[eventName] = true;
+
+          for (var i = 0, names = basis.dom.event.browserEvents(eventName), browserEventName; browserEventName = names[i++];)
+            basis.dom.event.addGlobalHandler(browserEventName, createEventHandler(name));
+        }
+
+        if (!window.__basis_emitEvent)
+        {
+          window.__basis_emitEvent = function(event, actionList){
+            var event = basis.dom.event(event);
+            var cursor = this;
+            var refId;
+            do {
+              if (refId = cursor.basisObjectId)
+              {
+                // if found call templateAction method
+                var node = tmplNodeMap[refId];
+                if (node && node.templateAction)
+                {
+                  var actions = actionList.qw();
+                  for (var i = 0, actionName; actionName = actions[i++];)
+                    node.templateAction(actionName, basis.dom.event(event));
+
+                  break;
+                }
+              }
+            } while (cursor = cursor.parentNode);
+          }
+        }
+          
+        //result += '[on' + eventName + '="alert(\'!\');__basis_emitEvent.call(this, event || window.event, ' + value.quote("'") + ')"]';
+        //continue;
+      }
+
+      result += name == 'class'
+                  ? value.trim().replace(/^(.)|\s+/g, '.$1')
+                  : '[' + name + (value ? '=' + value.quote('"') : '') + ']';
+    }
+
+    return result;
+  }
+
+  //
+  // PARSE HTML
+  //
+  function parseHtml(context, path){
+    if (!context.stack)
+      context.stack = [];
+
+    if (!context.source)
+      context.source = context.str;
+
+    if (!path)
+      path = '.';
+
+    var result = createFragment();
+    var preText;
+    var pos = 0;
+    var m;
+    var stack = context.stack;
+
+    while (m = tmplPartFinderRx.exec(context.str))
+    {
+      //    0      1        2      3           4            5         6        7
+      // m: match, tagName, alias, attributes, isSingleton, closeTag, comment, commentAlias
+
+      preText = RegExp.leftContext;
+      context.str = context.str.substr(preText.length + m[0].length);
+
+      // if something before -> parse text & append result
+      if (preText.length)
+      {
+        result.appendChild(parseText(context, preText, path, pos));
+        pos = result.childNodes.length;
+      }
+
+      // end tag
+      if (m[5])
+      {
+        // if end tag match to last stack tag -> remove last tag from tag and return
+        if (m[5] == stack[stack.length - 1])
+        {
+          stack.pop();
+          return result;
+        }
+        else
+        {
+          ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + context.source.replace(new RegExp('(</' + m[5] + '>)(' + context.str + ')$'), '\n ==[here]=>$1<== \n$2'));
+          throw "Wrong end tag";
+        }
+      }
+
+      // comment
+      if (m[6])
+      {
+        if (m[7])
+          context.getters[m[7]] = path + 'childNodes[' + pos + ']';
+
+        result.appendChild(createComment(m[6]));
+      }
+      // open tag
+      else
+      {
+        var descr = m[0];
+        var tagName = m[1];
+        var name = m[2];
+        var attributes = m[3];
+        var singleton = !!m[4];
+        var nodePath = path + 'childNodes[' + pos + ']';
+        var element = dom.createElement(tagName + parseAttributes(context, attributes, nodePath));
+
+        if (name)
+          context.getters[name] = nodePath;
+
+        if (!singleton)
+        {
+          stack.push(tagName);
+          element.appendChild(parseHtml(context, nodePath + '.'));
+        }
+
+        result.appendChild(element);
+      }
+
+      pos++;
+    }
+    
+    // no tag found, but there can be trailing text -> parse text
+    if (context.str.length)
+      result.appendChild(parseText(context, context.str, path, pos));
+
+    if (stack.length)
+    {
+      ;;;if (typeof console != undefined) console.log('No end tag for ' + stack.reverse() + ' in Html.Template:\n\n' + context.source);
+      throw "No end tag for " + stack.reverse();
+    }
+
+    return result;
+  }
+
+
+ /**
+  * Parsing template
+  * @func
+  */
+  function parseTemplate(source){
+    if (this.proto)
+      return;
+
+    var str = this.source;
+
+    if (typeof str == 'function')
+      this.source = str = str();
+
+    var source = str.trim();
+    var context = {
+      str: source,
+      getters: {
+        element: '.childNodes[0]'
+      }
+    };
+
+    // parse html
+    var proto = parseHtml(context);
+
+    // build pathes for references
+    var body = Object.iterate(context.getters, function(name, getter){
+      var names = name.split(/\|/).map(String.format, 'obj_.{0}');
+
+      // optimize path (1)
+      var path = getter.split(/(\.?childNodes\[(\d+)\])/);
+      var cursor = proto;
+      for (var i = 0; i < path.length; i += 3)
+      {
+        var pos = path[i + 2];
+        if (!pos)
+          break;
+
+        path[i + 2] = '';
+        cursor = cursor.childNodes[pos];
+
+        if (!cursor.previousSibling)
+          path[i + 1] = '.firstChild';
+        else
+          if (!cursor.nextSibling)
+            path[i + 1] = '.lastChild';
+      }
+
+      // return body parts
+      return {
+        name:  names[0],
+        alias: names.join('='),
+        path:  'dom_' + path.join('')
+      }
+    }).sortAsObject('path');
+
+    // optimize pathes (2)
+    for (var i = 0; i < body.length; i++)
+    {
+      var pathRx = new RegExp('^' + body[i].path.forRegExp());
+      for (var j = i + 1, nextBodyPart; nextBodyPart = body[j++];)
+        nextBodyPart.path = nextBodyPart.path.replace(pathRx, body[i].name);
+    }
+
+    //
+    // build createInstance function
+    //
+    this.createInstance = new Function('proto_', 'map_', 'var obj_, dom_; return ' + 
+      // mark variable names with dangling _ to avoid renaming by compiler, because
+      // this names using by generated code, and must be unchanged
+
+      // WARN: don't use global scope variables, resulting function has isolated scope
+
+      function(object, node){
+        obj_ = object || {};
+        dom_ = proto_.cloneNode(true);
+
+        // specific code start
+        _code_(); // <-- will be replaced for specific code
+        // specific code end
+
+        if (node && obj_.element)
+        {
+          var id = obj_.element.basisObjectId = map_.seed++;
+          map_[id] = node;
+        }
+
+        return obj_;
+      }
+
+    .toString().replace('_code_()', body.map(String.format,'{alias}={path};\n').join('')))(proto, tmplNodeMap);
+
+    //
+    // build clearInstance function
+    //
+    this.clearInstance = new Function('map_', 'var obj_; return ' +
+
+      function(object, node){
+        obj_ = object;
+        var id = obj_.element && obj_.element.basisObjectId;
+        if (id)
+          delete map_[id];
+
+        // specific code start
+        _code_(); // <-- will be replaced for specific code
+        // specific code end
+
+      }
+
+    .toString().replace('_code_()', body.map(String.format,'{alias}=null;\n').join('')))(tmplNodeMap);
+  };
+
+
+ /**
+  * Creates DOM structure template from marked HTML. Use {basis.Html.Template#createInstance}
+  * method to apply template to object. It creates clone of DOM structure and adds
+  * links into object to pointed parts of structure.
+  *
+  * To remove links to DOM structure from object use {basis.Html.Template#clearInstance}
+  * method.
+  * @example
+  *   // create a template
+  *   var template = new basis.Template(
+  *     '<li{element} class="listitem">' +
+  *       '<a href{hrefAttr}="#">{titleText}</a>' + 
+  *       '<span class="description">{descriptionText}</span>' +
+  *     '</li>'
+  *   );
+  *   
+  *   // create 10 DOM elements using template
+  *   for (var i = 0; i < 10; i++)
+  *   {
+  *     var node = template.createInstance();
+  *     basis.CSS.cssClass(node.element).add('item' + i);
+  *     node.hrefAttr.nodeValue = '/foo/bar.html';
+  *     node.titleText.nodeValue = 'some title';
+  *     node.descriptionText.nodeValue = 'description text';
+  *   }
+  *   
+  *   // create and attach DOM structure to existing object
+  *   var dataObject = new basis.Data.DataObject({
+  *     data: { title: 'Some data', value: 123 },
+  *     handlers: {
+  *       update: function(object, delta){
+  *         this.titleText.nodeValue = this.info.title;
+  *         // other DOM manipulations
+  *       }
+  *     }
+  *   });
+  *   // apply template to object
+  *   template.createInstance(dataObject);
+  *   // trigger update event that fill template with data
+  *   dataObject.update(null, true);
+  *   ...
+  *   basis.dom.insert(someElement, dataObject.element);
+  *   ...
+  *   // destroy object
+  *   template.clearInstance(dataObject);
+  *   dataObject.destroy();
+  * @class
+  */
+  var Template = Class(null, {
+    className: namespace + '.Template',
+
+    __extend__: function(value){
+      if (value instanceof Template)
+        return value;
+      else
+        return new Template(value);
+    },
+
+   /**
+    * @param {string|function()} template Template source code that will be parsed
+    * into DOM structure prototype. Parsing will be initiated on first
+    * {basis.Html.Template#createInstance} call. If function passed it be called at
+    * first {basis.Html.Template#createInstance} and it's result will be used as
+    * template source code.
+    * @constructor
+    */
+    init: function(templateSource){
+      this.source = templateSource;
+    },
+
+   /**
+    * Create DOM structure and return object with references for it's nodes.
+    * @param {Object=} object Storage for DOM references.
+    * @param {Object=} node Object which templateAction method will be called on events.
+    * @return {Object}
+    */
+    createInstance: function(object, node){
+      parseTemplate.call(this);
+      return this.createInstance(object, node);
+    },
+    clearInstance: function(object, node){
+      parseTemplate.call(this);
+    }
+  });
+
+  function escape(html){
+    return dom.createElement('DIV', dom.createText(html)).innerHTML;
+  }
+
+  var unescapeElement = document.createElement('DIV');
+  function unescape(escapedHtml){
+    unescapeElement.innerHTML = escapedHtml;
+    return unescapeElement.firstChild.nodeValue;
+  }
+
+  function string2Html(text){
+    unescapeElement.innerHTML = text;
+    return dom.createFragment.apply(null, Array.from(unescapeElement.childNodes));
+  }
+
+  //
+  // export names
+  //
+
+  return basis.namespace(namespace).extend({
+    Template: Template,
+    escape: escape,
+    unescape: unescape,
+    string2Html: string2Html
+  });
+
+}(basis, this);
+
+
+//
 // src/basis/dom/wrapper.js
 //
 
@@ -7545,9 +6912,8 @@ basis.require('basis.dom.event');
  */
 
 basis.require('basis.dom');
-basis.require('basis.cssom');
-basis.require('basis.html');
 basis.require('basis.data');
+basis.require('basis.html');
 
 !function(basis){
 
@@ -7561,15 +6927,8 @@ basis.require('basis.data');
   *   {basis.dom.wrapper.AbstractNode}, {basis.dom.wrapper.InteractiveNode},
   *   {basis.dom.wrapper.Node}, {basis.dom.wrapper.PartitionNode},
   *   {basis.dom.wrapper.GroupingNode}
-  * - Visual DOM classes:
-  *   {basis.dom.wrapper.TmplNode}, {basis.dom.wrapper.TmplContainer}, 
-  *   {basis.dom.wrapper.TmplPartitionNode}, {basis.dom.wrapper.TmplGroupingNode},
-  *   {basis.dom.wrapper.TmplControl}
   * - Misc:
   *   {basis.dom.wrapper.Selection}
-  *
-  * Aliases are available:
-  * - {basis.dom.wrapper.Control} for {basis.dom.wrapper.TmplControl}
   *
   * @namespace basis.dom.wrapper
   */
@@ -7582,15 +6941,11 @@ basis.require('basis.data');
   var DOM = basis.dom;
   var nsData = basis.data;
 
-  var Template = basis.html.Template;
   var EventObject = basis.EventObject;
   var Subscription = nsData.Subscription;
   var DataObject = nsData.DataObject;
   var AbstractDataset = nsData.AbstractDataset;
   var Dataset = nsData.Dataset;
-
-  var Cleaner = basis.Cleaner;
-  var TimeEventManager = basis.TimeEventManager;
 
   var STATE = nsData.STATE;
   var AXIS_DESCENDANT = DOM.AXIS_DESCENDANT;
@@ -7599,9 +6954,7 @@ basis.require('basis.data');
   var getter = Function.getter;
   var extend = Object.extend;
   var complete = Object.complete;
-  var classList = basis.cssom.classList;
   var axis = DOM.axis;
-  var createBehaviour = basis.EventObject.createBehaviour;
   var createEvent = basis.EventObject.createEvent;
   var event = basis.EventObject.event;
 
@@ -7726,7 +7079,7 @@ basis.require('basis.data');
 
         owner.satellite[key] = satellite;
 
-        if (replaceElement && satellite instanceof TmplNode && satellite.element)
+        if (replaceElement && satellite instanceof basis.ui.Node && satellite.element)
         {
           DOM.replace(replaceElement, satellite.element);
           satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
@@ -8537,20 +7890,19 @@ basis.require('basis.data');
    /**
     * Function that will be called, when non-instance of childClass insert.
     * @example
-    *   // code with no childFactory
+    *   // example code with no childFactory
     *   function createNode(config){
-    *     return new basis.dom.wrapper.TmplNode(config);
+    *     return new basis.dom.wrapper.Node(config);
     *   }
-    *   var node = new basis.dom.wrapper.TmplContainer();
+    *   var node = new basis.dom.wrapper.Node();
     *   node.appendChild(createNode({ .. config .. }));
     *
-    *   // with childFactory
-    *   var CustomClass = basis.Class(basis.dom.wrapper.TmplContainer, {
+    *   // solution with childFactory
+    *   var node = new basis.dom.wrapper.Node({
     *     childFactory: function(config){
-    *       return new basis.dom.wrapper.TmplNode(config);
+    *       return new basis.dom.wrapper.Node(config);
     *     }
     *   });
-    *   var node = new CustomClass();
     *   node.appendChild({ .. config .. });
     * @type {function():object}
     */
@@ -9810,417 +9162,6 @@ basis.require('basis.data');
 
   AbstractNode.prototype.localGroupingClass = GroupingNode;
 
- /**
-  *
-  */
-  var TEMPLATE_ACTION = Class.ExtensibleProperty();
-
- /**
-  * @mixin
-  */
-  var TemplateMixin = function(super_){
-    return {
-     /**
-      * Template for object.
-      * @type {basis.Html.Template}
-      */
-      template: new Template(
-        '<div/>'
-      ),
-
-     /**
-      * Handlers for template actions.
-      * @type {Object}
-      */
-      action: TEMPLATE_ACTION,
-
-     /**
-      * Classes for template elements.
-      * @type {object}
-      */
-      cssClassName: null,
-
-     /**
-      *
-      */
-      event_update: function(object, delta){
-        super_.event_update.call(this, object, delta);
-
-        this.templateUpdate(this.tmpl, 'update', delta);
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_select: function(node){
-        super_.event_select.call(this, node);
-
-        classList(this.tmpl.selected || this.tmpl.content || this.element).add('selected');
-        //  var element = this.tmpl.selectedElement || this.tmpl.content || this.tmpl.element;
-        //  element.className += ' selected';
-
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_unselect: function(node){
-        super_.event_unselect.call(this, node);
-
-        classList(this.tmpl.selected || this.tmpl.content || this.element).remove('selected');
-        //  var element = this.tmpl.selectedElement || this.tmpl.content || this.tmpl.element;
-        //  element.className = element.className.replace(/(^|\s+)selected(\s+|$)/, '$2');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_disable: function(node){
-        super_.event_disable.call(this, node);
-
-        classList(this.tmpl.disabled || this.element).add('disabled');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_enable: function(node){
-        super_.event_enable.call(this, node);
-
-        classList(this.tmpl.disabled || this.element).remove('disabled');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_match: function(node){
-        super_.event_match.call(this, node);
-
-        DOM.display(this.element, true);
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_unmatch: function(node){
-        super_.event_unmatch.call(this, node);
-
-        DOM.display(this.element, false);
-      },
-
-     /**
-      * @inheritDoc
-      */
-      init: function(config){
-
-        // create dom fragment by template
-        this.tmpl = {};
-        if (this.template)
-        {
-          this.template.createInstance(this.tmpl, this);
-          this.element = this.tmpl.element;
-
-          if (this.tmpl.childNodesHere)
-          {
-            this.tmpl.childNodesElement = this.tmpl.childNodesHere.parentNode;
-            this.tmpl.childNodesElement.insertPoint = this.tmpl.childNodesHere;
-          }
-
-          // insert content
-          if (this.content)
-            DOM.insert(this.tmpl.content || this.element, this.content);
-        }
-        else
-          this.element = this.tmpl.element = DOM.createElement();
-
-        this.childNodesElement = this.tmpl.childNodesElement || this.element;
-
-        // inherit init
-        super_.init.call(this, config);
-
-        // update template
-        if (this.id)
-          this.element.id = this.id;
-
-        var cssClassNames = this.cssClassName;
-        if (cssClassNames)
-        {
-          if (typeof cssClassNames == 'string')
-            cssClassNames = { element: cssClassNames };
-
-          for (var alias in cssClassNames)
-          {
-            var node = this.tmpl[alias];
-            if (node)
-            {
-              var nodeClassName = classList(node);
-              var names = String(cssClassNames[alias]).qw();
-              for (var i = 0, name; name = names[i++];)
-                nodeClassName.add(name);
-            }
-          }
-        }
-
-        /*if (true) // this.template
-        {
-          var delta = {};
-          for (var key in this.data)
-            delta[key] = undefined;
-
-          this.event_update(this, delta);
-        }*/
-        if (this.tmpl)
-          this.templateUpdate(this.tmpl);
-
-        if (this.container)
-          DOM.insert(this.container, this.element);
-      },
-
-     /**
-      * Handler on template actions.
-      * @param {string} actionName
-      * @param {object} event
-      */
-      templateAction: function(actionName, event){
-        // send action to document node
-        //if (this.document && this.document !== this)
-        //  this.document.templateAction(actionName, event, this);
-        if (this.action[actionName])
-          this.action[actionName].call(this, event);
-      },
-
-     /**
-      * Handler on template actions.
-      * @param {string} actionName
-      * @param {object} event
-      */
-      templateUpdate: function(tmpl, event){
-        /** nothing to do, override it in descendant classes */
-      },
-
-     /**
-      * @inheritDoc
-      */
-      destroy: function(){
-        var element = this.element;
-
-        super_.destroy.call(this);
-
-        if (element && element.parentNode)
-          element.parentNode.removeChild(element);
-
-        if (this.template)
-          this.template.clearInstance(this.tmpl, this);
-
-        this.element = null;
-        this.tmpl = null;
-        this.childNodesElement = null;
-      }
-    }
-  };
-
- /**
-  * @class
-  */
-  var TmplNode = Class(Node, TemplateMixin, {
-    className: namespace + '.TmplNode'
-  });
-
- /**
-  * @class
-  */
-  var TmplPartitionNode = Class(PartitionNode, TemplateMixin, {
-    className: namespace + '.TmplPartitionNode',
-
-    titleGetter: getter('data.title'),
-
-    /*template: new Template(
-      '<div{element} class="Basis-PartitionNode">' + 
-        '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
-        '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
-      '</div>'
-    ),*/
-
-    templateUpdate: function(tmpl, eventName, delta){
-      if (tmpl.titleText)
-        tmpl.titleText.nodeValue = String(this.titleGetter(this));
-    }
-  });
-
- /**
-  * Template mixin for containers classes
-  * @mixin
-  */
-  var ContainerTemplateMixin = function(super_){
-    return {
-      // methods
-      insertBefore: function(newChild, refChild){
-        // inherit
-        var newChild = super_.insertBefore.call(this, newChild, refChild);
-
-        var target = newChild.groupNode || this;
-        var nextSibling = newChild.nextSibling;
-        var container = target.childNodesElement || target.element || this.childNodesElement || this.element;
-
-        //var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
-        var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
-
-        var element = newChild.element;
-        var refNode = insertPoint || container.insertPoint || null;
-
-        if (element.parentNode !== container || element.nextSibling !== refNode) // prevent dom update
-          container.insertBefore(element, refNode); // NOTE: null at the end for IE
-          
-        return newChild;
-      },
-      removeChild: function(oldChild){
-        // inherit
-        super_.removeChild.call(this, oldChild);
-
-        // remove from dom
-        var element = oldChild.element;
-        var parent = element.parentNode;
-
-        if (parent)
-          parent.removeChild(element);
-
-        return oldChild;
-      },
-      clear: function(alive){
-        // if not alive mode node element will be removed on node destroy
-        if (alive)
-        {
-          var node = this.firstChild;
-          while (node)
-          {
-            var element = node.element;
-            if (element.parentNode)
-              element.parentNode.removeChild(element);
-
-            node = node.nextSibling;
-          }
-        }
-
-        // inherit
-        super_.clear.call(this, alive);
-      },
-      setChildNodes: function(childNodes, keepAlive){
-        // reallocate childNodesElement to new DocumentFragment
-        var domFragment = DOM.createFragment();
-        var target = this.localGrouping || this;
-        var container = target.childNodesElement || target.element;
-        target.childNodesElement = domFragment;
-
-        // call inherited method
-        // NOTE: make sure that dispatching childNodesModified event handlers are not sensetive
-        // for child node positions at real DOM (html document), because all new child nodes
-        // will be inserted into temporary DocumentFragment that will be inserted into html document
-        // later (after inherited method call)
-        super_.setChildNodes.call(this, childNodes, keepAlive);
-
-        // restore childNodesElement
-        container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
-        target.childNodesElement = container;
-      }
-    }
-  };
-
- /**
-  * @class
-  */
-  var TmplGroupingNode = Class(GroupingNode, ContainerTemplateMixin, {
-    className: namespace + '.TmplGroupingNode',
-
-   /**
-    * @inheritDoc
-    */
-    childClass: TmplPartitionNode,
-
-   /**
-    * @inheritDoc
-    */
-    event_ownerChanged: function(node, oldOwner){
-      var cursor = this;
-      var owner = this.owner;
-      var element = null;
-
-      if (owner)
-        element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement || owner.element;
-
-      do
-      {
-        cursor.element = cursor.childNodesElement = element;
-      }
-      while (cursor = cursor.localGrouping);
-
-      GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
-    }
-  });
-
-  TmplGroupingNode.prototype.localGroupingClass = TmplGroupingNode;
-
- /**
-  * @class
-  */
-  var TmplContainer = Class(TmplNode, ContainerTemplateMixin, {
-    className: namespace + '.TmplContainer',
-
-    childClass: TmplNode,
-    childFactory: function(config){
-      return new this.childClass(config);
-    },
-
-    localGroupingClass: TmplGroupingNode
-  });
-
- /**
-  * @class
-  */
-  var Control = Class(TmplContainer, {
-    className: namespace + '.Control',
-
-   /**
-    * Create selection by default with empty config.
-    */
-    selection: {},
-
-   /**
-    * @param {Object} config
-    * @config {Object|boolean|basis.dom.wrapper.Selection} selection
-    * @constructor
-    */
-    init: function(config){
-      // make document link to itself
-      // NOTE: we make it before inherit because in other way
-      //       child nodes (passed by config.childNodes) will be with no document
-      this.document = this;
-
-      // inherit
-      TmplContainer.prototype.init.call(this, config);
-                   
-      // add to basis.Cleaner
-      Cleaner.add(this);
-    },
-
-   /**
-    * @inheritDoc
-    */
-    destroy: function(){
-      // selection destroy - clean selected nodes
-      if (this.selection)
-      {
-        this.selection.destroy(); // how about shared selection?
-        this.selection = null;
-      }
-
-      // inherit destroy, must be calling after inner objects destroyed
-      TmplContainer.prototype.destroy.call(this);
-
-      // remove from Cleaner
-      Cleaner.remove(this);
-    }
-  });
-
 
   //
   // ChildNodesDataset
@@ -10445,28 +9386,9 @@ basis.require('basis.data');
     }
   });
 
- /**
-  * @func
-  */
-  var simpleTemplate = function(template, config){
-    var refs = template.split(/\{(this_[^}]+)\}/);
-    var lines = [];
-    for (var i = 1; i < refs.length; i += 2)
-    {
-      var name = refs[i].split('|')[0];
-      lines.push('this.tmpl.' + name + '.nodeValue = ' + name.replace(/_/g, '.'));
-    }
-    
-    return Function('tmpl_', 'config_', 'return ' + (function(super_){
-      return Object.extend({
-        template: tmpl_,
-        templateUpdate: function(tmpl, eventName, delta){
-          super_.templateUpdate.call(this, tmpl, eventName, delta);
-          _code_();
-        }
-      }, config_);
-    }).toString().replace('_code_()', lines.join(';\n')))(new Template(template), config);
-  };
+  function simpleTemplate(){
+    return basis.ui.apply(this, arguments);
+  }
 
   //
   // export names
@@ -10479,14 +9401,6 @@ basis.require('basis.data');
     Node: Node,
     GroupingNode: GroupingNode,
     PartitionNode: PartitionNode,
-    Control: Control,
-
-    // template classes
-    TmplGroupingNode: TmplGroupingNode,
-    TmplPartitionNode: TmplPartitionNode,
-    TmplNode: TmplNode,
-    TmplContainer: TmplContainer,
-    TmplControl: Control,
 
     simpleTemplate: simpleTemplate,
 
@@ -10496,6 +9410,644 @@ basis.require('basis.data');
   });
 
 }(basis);
+
+
+//
+// src/basis/cssom.js
+//
+
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2011 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ *
+ * @author
+ * Vladimir Ratsev
+ * Roman Dvornov
+ */
+
+basis.require('basis.dom');
+basis.require('basis.dom.event');
+
+!function(basis, global){
+
+ 'use strict';
+
+ /**
+  * @namespace basis.cssom
+  */
+  
+  var namespace = 'basis.cssom';
+
+  //
+  // import names
+  //
+
+  var document = global.document;
+  var dom = basis.dom;
+  var event = basis.dom.event;
+  var Class = basis.Class;
+
+  //
+  // main part
+  //
+
+  var IMPORTANT_REGEXP = /\s*!important/i;
+  var IMPORTANT = String('important');
+  var GENERIC_RULE_SEED = 1;
+  var cssStyleSheets = {};
+
+  //
+  // shortcut
+  //
+  
+  function cssRule(selector, styleSheet){
+    return getStyleSheet(styleSheet, true).getRule(selector, true);
+  }
+
+  function isPropertyImportant(style, property){
+    if (style.getPropertyPriority)
+      return style.getPropertyPriority(property) == IMPORTANT;
+    else
+      return false;
+  }
+
+ /**
+  * @func
+  * @param {Element} element
+  */
+  function uniqueRule(element){
+    var token = 'genericRule-' + GENERIC_RULE_SEED++;
+
+    if (element)
+      classList(element).add(token);
+
+    var result = cssRule('.' + token);
+    result.token = token;
+
+    return result;
+  }
+
+  //
+  // working with stylesheets
+  //
+
+  function StyleSheet_insertRule(rule, index){
+    // fetch selector and style from rule description
+    var m = rule.match(/^([^{]+)\{(.*)\}\s*$/);
+    if (m)
+    {
+      var selectors = m[1].trim().split(/\s*,\s*/);
+      for (var i = 0; i < selectors.length; i++)
+        this.addRule(selectors[i], m[2] || null, index++);
+      return index - 1;
+    }
+
+    ;;;throw new Error("Syntax error in CSS rule to be added");
+  }
+
+  function StyleSheet_makeCompatible(style){
+    // FF throws exception if access to cssRules property until stylesheet isn't ready (loaded)
+    try {
+      if (!style.cssRules)
+        style.cssRules = style.rules;
+    }
+    catch(e){
+    }
+
+    // extend style sheet with methods according to W3C spec
+    if (!style.insertRule)
+      style.insertRule = StyleSheet_insertRule;
+
+    if (!style.deleteRule)
+      style.deleteRule = style.removeRule;
+
+    return style;
+  }
+
+ /**
+  * Creates <STYLE> or <LINK> node, adds it to document and returns it's stylesheet object.
+  * @param {string=} url Url of css file. In this case <LINK> will created. If this parameter ommited <STYLE> will created
+  * @param {string=} title Value for title attribute.
+  * @return {StyleSheet}
+  */
+  function addStyleSheet(url, title){
+    var element = dom.createElement(!url ? 'STYLE[type="text/css"]' : 'LINK[type="text/css"][rel="{alt}stylesheet"][href={url}]'.format({
+      alt: title ? 'alternate ' : '',
+      url: url.quote('"')
+    }));
+
+    dom.tag(null, 'HEAD')[0].appendChild(element);
+
+    return StyleSheet_makeCompatible(element.sheet || element.styleSheet);
+  }
+
+  var basisId = 1;
+
+ /**
+  * Returns generic stylesheet by it's id.
+  * @param {string=} id
+  * @param {boolean=} createIfNotExists
+  * @return {basis.cssom.CssStyleSheetWrapper}
+  */
+  function getStyleSheet(id, createIfNotExists){
+    if (!id)
+      id = 'DefaultGenericStyleSheet';
+
+    if (!cssStyleSheets[id])
+      if (createIfNotExists)
+        cssStyleSheets[id] = new CssStyleSheetWrapper(addStyleSheet())
+
+    return cssStyleSheets[id];
+  }
+
+  //
+  // Style mapping
+  //
+
+  var styleMapping = {};
+  var testElement = dom.createElement('DIV');
+
+  function createStyleMapping(property, names, regSupport, getters){
+    getters = getters || {};
+    names = names.qw();
+
+    for (var i = 0, name; name = names[i]; i++)
+    {
+      if (typeof testElement.style[name] != 'undefined')
+      {
+        if (regSupport)
+          basis.platformFeature['css-' + property] = name;
+
+        styleMapping[property] = {
+          key: name,
+          getter: getters[name]
+        };
+
+        return;
+      }
+    }
+  };
+
+  createStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter', true, {
+    fitler: function(value){ return 'alpha(opacity:' + parseInt(value * 100) + ')' }
+  });
+  createStyleMapping('border-radius', 'borderRadius MozBorderRadius WebkitBorderRadius', true);
+  createStyleMapping('float', 'cssFloat styleFloat');
+
+ /**
+  * Apply new style property values for node.
+  * @param {Node} node Node which style to be changed.
+  * @param {object} style Object contains new values for node style properties.
+  * @return {Node} 
+  */
+  function getStylePropertyMapping(key, value){
+    var mapping = styleMapping[key];
+    if (key = mapping ? mapping.key : key.replace(/^-ms-/, 'ms-').camelize())
+      return {
+        key: key,
+        value: mapping && mapping.getter ? mapping.getter(value) : value
+      };
+  }
+
+ /**
+  * Apply new style property value for node.
+  * @param {Node} node Node which style to be changed.
+  * @param {string} key Name of property.
+  * @param {string} value Value of property.
+  */
+  function setStyleProperty(node, key, value){
+    if (typeof node.setProperty == 'function')
+      return node.setProperty(key, value);
+
+    var mapping = getStylePropertyMapping(key, value);
+    if (mapping)
+      return node.style[mapping.key] = mapping.value;
+  }
+
+ /**
+  * Apply new style properties for node.
+  * @param {Node} node Node which style to be changed.
+  * @param {object} style Object contains new values for node style properties.
+  * @return {Node} 
+  */
+  function setStyle(node, style){
+    for (var key in style)
+      setStyleProperty(node, key, style[key]);
+
+    return node;
+  }
+
+
+  //
+  // dom node styling
+  //
+
+ /**
+  * Changes for node display value.
+  * @param {Node} node
+  * @param {boolean|string} display
+  * @return {Node}
+  */
+  function display(node, display){
+    return setStyleProperty(node, 'display', typeof display == 'string' ? display : (display ? '' : 'none'));
+  }
+
+ /**
+  * @deprecated use Basis.DOM.display instead.
+  */
+  function show(element){
+    return display(element, 1);
+  }
+ /**
+  * @deprecated use Basis.DOM.display instead.
+  */
+  function hide(element){ 
+    return display(element);
+  }
+
+ /**
+  * Changes node visibility.
+  * @param {Node} node
+  * @param {boolean} visible
+  * @return {Node}
+  */
+  function visibility(node, visible){
+    return setStyleProperty(node, 'visibility', visible ? '' : 'hidden');
+  }
+
+ /**
+  * @deprecated use Basis.DOM.visibility instead.
+  */
+  function visible(element){
+    return visibility(element, 1);
+  }
+ /**
+  * @deprecated use Basis.DOM.visibility instead.
+  */
+  function invisible(element){
+    return visibility(element);
+  }
+
+  //
+  // classes
+  //
+
+ /**
+  * @class
+  */
+  var CssStyleSheetWrapper = Class(null, {
+    className: namespace + '.CssStyleSheetWrapper',
+
+   /**
+    * Wrapped stylesheet
+    * @type {StyleSheet}
+    */
+    styleSheet: null,
+
+   /**
+    * @type {Array.<CssRuleWrapper|CssRuleWrapperSet>}
+    */
+    rules: null,
+
+   /**
+    * @param {StyleSheet} styleSheet
+    * @constructor
+    */
+    init: function(styleSheet){
+      this.styleSheet = styleSheet;
+      this.rules = [];
+      this.map_ = {};
+    },
+
+   /**
+    * @param {string} selector
+    * @param {boolean=} createIfNotExists
+    * @return {CssRuleWrapper|CssRuleWrapperSet}
+    */
+    getRule: function(selector, createIfNotExists){
+      if (!this.map_[selector])
+      {
+        if (createIfNotExists)
+        {
+          var styleSheet = this.styleSheet;
+          var index = this.rules.length;
+          var newIndex = styleSheet.insertRule(selector + '{}', index);
+
+          for (var i = index; i <= newIndex; i++)
+            this.rules.push(new CssRuleWrapper(styleSheet.cssRules[i]));
+
+          this.map_[selector] = index != newIndex ? new CssRuleWrapperSet(this.rules.splice(index)) : this.rules[index];
+        }
+      }
+
+      return this.map_[selector];
+    },
+
+   /**
+    * @param {string} selector
+    */
+    deleteRule: function(selector){
+      var rule = this.map_[selector];
+      if (rule)
+      {
+        var rules = rule.rules || [rule];
+        for (var i = 0; i < rules.length; i++)
+        {
+          var ruleIndex = this.rules.indexOf(rules[i]);
+          this.stylesheet.deleteRule(ruleIndex);
+          this.rules.splice(ruleIndex, 1);
+        }
+        delete this.map_[selector];
+      }
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      delete this.rules;
+    }
+  });
+
+ /**
+  * @class
+  */
+  var CssRuleWrapper = Class(null, {
+    className: namespace + '.CssRuleWrapper',
+
+   /**
+    * type {CSSRule}
+    */
+    rule: null,
+
+   /**
+    * type {string}
+    */
+    selector: '',
+
+   /**
+    * @param {CSSRule} rule
+    * @contructor
+    */
+    init: function(rule){
+      if (rule)
+      {
+        this.rule = rule;
+        this.selector = rule.selectorText;
+      }
+    },
+
+   /**
+    * @param {string} property
+    * @param {any} value
+    */
+    setProperty: function(property, value){
+      var mapping;
+      var imp = !!IMPORTANT_REGEXP.test(value);
+      var style = this.rule.style;
+      if (imp || isPropertyImportant(style, property))
+      {
+        value = value.replace(IMPORTANT_REGEXP, '');
+
+        if (mapping = getStylePropertyMapping(property, value))
+        {
+          var key = mapping.key;
+
+          if (style.setProperty)
+          {
+            // W3C scheme
+
+            // if property exists and important, remove it
+            if (!imp)
+              style.removeProperty(key);
+
+            // set new value for property
+            style.setProperty(key, mapping.value, (imp ? IMPORTANT : ''));
+          }
+          else
+          {
+            // IE8- scheme
+            var newValue = key + ': ' + mapping.value + (imp ? ' !' + IMPORTANT : '') + ';';
+            var rxText = style[key] ? key + '\\s*:\\s*' + style[key] + '(\\s*!' + IMPORTANT + ')?\\s*;?' : '^';
+
+            style.cssText = style.cssText.replace(new RegExp(rxText, 'i'), newValue);
+          }
+        }
+      }
+      else 
+        setStyleProperty(this.rule, property, value);
+    },
+
+   /**
+    * @param {Object} style
+    */
+    setStyle: function(style){
+      Object.iterate(style, this.setProperty, this);
+    },
+
+   /**
+    * Removes all style properties
+    */
+    clear: function(){
+      this.rule.style.cssText = "";
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      delete this.rule;
+    }
+  });
+
+ /**
+  * @class
+  */
+  var CssRuleWrapperSet = Class(null, {
+    className: namespace + '.CssRuleWrapperSet',
+
+   /**
+    * @type {Array.<CssRuleWrapper>}
+    */
+    rules: null,
+
+   /**
+    * @param {Array.<CssRuleWrapper>} rules
+    * @constructor
+    */
+    init: function(rules){
+      this.rules = rules;
+    },
+    destroy: function(){
+      delete this.rules;
+    }
+  });
+
+  ['setProperty', 'setStyle', 'clear'].forEach(function(method){
+    CssRuleWrapperSet.prototype[method] = function(){
+      for (var rule, i = 0; rule = this.rules[i]; i++)
+        rule[method].apply(rule, arguments);
+    }
+  });
+
+  var unitFunc = {};
+  ['em', 'ex', 'px', '%'].forEach(function(unit){
+    unitFunc[unit == '%' ? 'percent' : unit] = function(value){
+      return value == 0 || isNaN(value) ? '0' : value + unit;
+    }
+  });
+
+  //
+  // classList
+  //
+
+ /**
+  * @func
+  */
+  var classList;
+  var rxCache = {};
+
+  function tokenRegExp(token){
+    return rxCache[token] || (rxCache[token] = new RegExp('\\s*\\b' + token + '\\b'));
+  }
+
+  var ClassList = Class(null, {
+    className: namespace + '.ClassList',
+
+    init: function(element){ 
+      ;;;if (!element) throw new Error(namespace + '.classList: Element ' + element + ' not found!');
+      this.element = element;
+      //this.tokens = this.element.className.qw();
+    },
+    toString: function(){
+      return this.element.className;
+    },
+
+    set: function(tokenList){
+      this.clear();
+      tokenList.qw().forEach(this.add, this);
+    },
+    replace: function(searchFor, replaceFor, prefix){
+      prefix = prefix || '';
+
+      if (typeof searchFor != 'undefined')
+        this.remove(prefix + searchFor);
+      
+      if (typeof replaceFor != 'undefined')
+        this.add(prefix + replaceFor);
+    },
+    bool: function(token, exists) {
+      if (exists)
+        this.add(token);
+      else
+        this.remove(token);
+    },
+    clear: function(){
+      this.element.className = '';
+    },
+
+    contains: function(token){
+      return !!this.element.className.match(tokenRegExp(token));
+    },
+    item: function(index){
+      return this.element.className.qw()[index];
+    },
+    add: function(token){ 
+      ;;;if (arguments.length > 1) console.warn('classList.add accept only one argument');
+      if (!this.element.className.match(tokenRegExp(token)))
+        this.element.className += ' ' + token;
+    },
+    remove: function(token){
+      ;;;if (arguments.length > 1) console.warn('classList.remove accept only one argument');
+      var className = this.element.className;
+      var newClassName = className.replace(tokenRegExp(token), '');
+      if (newClassName != className)
+        this.element.className = newClassName;
+    },
+    toggle: function(token){
+      var exists = this.contains(token);
+
+      if (exists)
+        this.remove(token);
+      else
+        this.add(token);
+
+      return !exists;
+    }
+  });
+
+  if (global.DOMTokenList && document.documentElement.classList)
+  {
+    var proto = ClassList.prototype;
+    Object.extend(global.DOMTokenList.prototype, {
+      set: proto.set,
+      replace: proto.replace,
+      bool: proto.bool,
+      clear: function(){
+        for (var i = this.length; i --> 0;)
+          this.remove(this[i]);
+      }
+    });
+    classList = function(element){
+      return (typeof element == 'string' ? dom.get(element) : element).classList;
+    }
+  }
+  else
+  {
+    classList = function(element){ 
+      return new ClassList(typeof element == 'string' ? dom.get(element) : element);
+    }
+  }
+
+  //
+  // platform specific actions
+  //
+
+  event.onLoad(function(){
+    classList(document.body).bool('opacity-not-support', !basis.platformFeature['css-opacity']);
+  });
+
+  // export names
+
+  dom.extend({
+    // style interface
+    setStyleProperty: setStyleProperty,
+    setStyle: setStyle,
+
+    // node styling
+    display: display,
+    show: show,
+    hide: hide,
+    visibility: visibility,
+    visible: visible,
+    invisible: invisible
+  });
+
+  return basis.namespace(namespace).extend({
+    // style interface
+    setStyleProperty: setStyleProperty,
+    setStyle: setStyle,
+    classList: classList,
+
+    // rule and stylesheet interfaces
+    uniqueRule: uniqueRule,
+    cssRule: cssRule,
+    getStyleSheet: getStyleSheet,
+    addStyleSheet: addStyleSheet,
+
+    // classes
+    CssStyleSheetWrapper: CssStyleSheetWrapper,
+    CssRuleWrapper: CssRuleWrapper,
+    CssRuleWrapperSet: CssRuleWrapperSet
+  }).extend(unitFunc);
+
+}(basis, this);
 
 
 //
@@ -10786,6 +10338,514 @@ basis.require('basis.data');
 }(basis);
 
 //
+// src/basis/ui.js
+//
+
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2011 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+basis.require('basis.dom.wrapper');
+basis.require('basis.cssom');
+basis.require('basis.html');
+
+!function(basis){
+
+  'use strict';
+
+ /**
+  * - Visual DOM classes:
+  *   {basis.dom.wrapper.TmplNode}, {basis.dom.wrapper.TmplContainer}, 
+  *   {basis.dom.wrapper.TmplPartitionNode}, {basis.dom.wrapper.TmplGroupingNode},
+  *   {basis.dom.wrapper.TmplControl}
+  * Aliases are available:
+  * - {basis.dom.wrapper.Control} for {basis.dom.wrapper.TmplControl}
+  *
+  * @namespace basis.ui
+  */
+
+  var namespace = 'basis.ui';
+
+  // import names
+
+  var Class = basis.Class;
+  var DOM = basis.dom;
+
+  var Template = basis.html.Template;
+  var classList = basis.cssom.classList;
+  var getter = Function.getter;
+  var Cleaner = basis.Cleaner;
+
+  var Node = basis.dom.wrapper.Node;
+  var PartitionNode = basis.dom.wrapper.PartitionNode;
+  var GroupingNode = basis.dom.wrapper.GroupingNode;
+
+  //
+  // main part
+  //
+
+ /**
+  *
+  */
+  var TEMPLATE_ACTION = Class.ExtensibleProperty();
+
+ /**
+  * @mixin
+  */
+  var TemplateMixin = function(super_){
+    return {
+     /**
+      * Template for object.
+      * @type {basis.Html.Template}
+      */
+      template: new Template(
+        '<div/>'
+      ),
+
+     /**
+      * Handlers for template actions.
+      * @type {Object}
+      */
+      action: TEMPLATE_ACTION,
+
+     /**
+      * Classes for template elements.
+      * @type {object}
+      */
+      cssClassName: null,
+
+     /**
+      *
+      */
+      event_update: function(object, delta){
+        super_.event_update.call(this, object, delta);
+
+        this.templateUpdate(this.tmpl, 'update', delta);
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_select: function(node){
+        super_.event_select.call(this, node);
+
+        classList(this.tmpl.selected || this.tmpl.content || this.element).add('selected');
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_unselect: function(node){
+        super_.event_unselect.call(this, node);
+
+        classList(this.tmpl.selected || this.tmpl.content || this.element).remove('selected');
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_disable: function(node){
+        super_.event_disable.call(this, node);
+
+        classList(this.tmpl.disabled || this.element).add('disabled');
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_enable: function(node){
+        super_.event_enable.call(this, node);
+
+        classList(this.tmpl.disabled || this.element).remove('disabled');
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_match: function(node){
+        super_.event_match.call(this, node);
+
+        DOM.display(this.element, true);
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_unmatch: function(node){
+        super_.event_unmatch.call(this, node);
+
+        DOM.display(this.element, false);
+      },
+
+     /**
+      * @inheritDoc
+      */
+      init: function(config){
+
+        // create dom fragment by template
+        this.tmpl = {};
+        if (this.template)
+        {
+          this.template.createInstance(this.tmpl, this);
+          this.element = this.tmpl.element;
+
+          if (this.tmpl.childNodesHere)
+          {
+            this.tmpl.childNodesElement = this.tmpl.childNodesHere.parentNode;
+            this.tmpl.childNodesElement.insertPoint = this.tmpl.childNodesHere;
+          }
+
+          // insert content
+          if (this.content)
+            DOM.insert(this.tmpl.content || this.element, this.content);
+        }
+        else
+          this.element = this.tmpl.element = DOM.createElement();
+
+        this.childNodesElement = this.tmpl.childNodesElement || this.element;
+
+        // inherit init
+        super_.init.call(this, config);
+
+        // update template
+        if (this.id)
+          this.element.id = this.id;
+
+        var cssClassNames = this.cssClassName;
+        if (cssClassNames)
+        {
+          if (typeof cssClassNames == 'string')
+            cssClassNames = { element: cssClassNames };
+
+          for (var alias in cssClassNames)
+          {
+            var node = this.tmpl[alias];
+            if (node)
+            {
+              var nodeClassName = classList(node);
+              var names = String(cssClassNames[alias]).qw();
+              for (var i = 0, name; name = names[i++];)
+                nodeClassName.add(name);
+            }
+          }
+        }
+
+        /*if (true) // this.template
+        {
+          var delta = {};
+          for (var key in this.data)
+            delta[key] = undefined;
+
+          this.event_update(this, delta);
+        }*/
+        if (this.tmpl)
+          this.templateUpdate(this.tmpl);
+
+        if (this.container)
+          DOM.insert(this.container, this.element);
+      },
+
+     /**
+      * Handler on template actions.
+      * @param {string} actionName
+      * @param {object} event
+      */
+      templateAction: function(actionName, event){
+        var action = this.action[actionName];
+
+        if (action)
+          action.call(this, event);
+      },
+
+     /**
+      * Handler on template actions.
+      * @param {string} actionName
+      * @param {object} event
+      */
+      templateUpdate: function(tmpl, eventName, delta){
+        /** nothing to do, override it in descendant classes */
+      },
+
+     /**
+      * @inheritDoc
+      */
+      destroy: function(){
+        var element = this.element;
+
+        super_.destroy.call(this);
+
+        if (element && element.parentNode)
+          element.parentNode.removeChild(element);
+
+        if (this.template)
+          this.template.clearInstance(this.tmpl, this);
+
+        this.element = null;
+        this.tmpl = null;
+        this.childNodesElement = null;
+      }
+    }
+  };
+
+ /**
+  * @class
+  */
+  var TmplNode = Class(Node, TemplateMixin, {
+    className: namespace + '.TmplNode'
+  });
+
+ /**
+  * @class
+  */
+  var TmplPartitionNode = Class(PartitionNode, TemplateMixin, {
+    className: namespace + '.TmplPartitionNode',
+
+    titleGetter: getter('data.title'),
+
+    /*template: new Template(
+      '<div{element} class="Basis-PartitionNode">' + 
+        '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
+        '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
+      '</div>'
+    ),*/
+
+    templateUpdate: function(tmpl, eventName, delta){
+      if (tmpl.titleText)
+        tmpl.titleText.nodeValue = String(this.titleGetter(this));
+    }
+  });
+
+ /**
+  * Template mixin for containers classes
+  * @mixin
+  */
+  var ContainerTemplateMixin = function(super_){
+    return {
+      // methods
+      insertBefore: function(newChild, refChild){
+        // inherit
+        var newChild = super_.insertBefore.call(this, newChild, refChild);
+
+        var target = newChild.groupNode || this;
+        var nextSibling = newChild.nextSibling;
+        var container = target.childNodesElement || target.element || this.childNodesElement || this.element;
+
+        //var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
+        var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
+
+        var element = newChild.element;
+        var refNode = insertPoint || container.insertPoint || null;
+
+        if (element.parentNode !== container || element.nextSibling !== refNode) // prevent dom update
+          container.insertBefore(element, refNode); // NOTE: null at the end for IE
+          
+        return newChild;
+      },
+      removeChild: function(oldChild){
+        // inherit
+        super_.removeChild.call(this, oldChild);
+
+        // remove from dom
+        var element = oldChild.element;
+        var parent = element.parentNode;
+
+        if (parent)
+          parent.removeChild(element);
+
+        return oldChild;
+      },
+      clear: function(alive){
+        // if not alive mode node element will be removed on node destroy
+        if (alive)
+        {
+          var node = this.firstChild;
+          while (node)
+          {
+            var element = node.element;
+            if (element.parentNode)
+              element.parentNode.removeChild(element);
+
+            node = node.nextSibling;
+          }
+        }
+
+        // inherit
+        super_.clear.call(this, alive);
+      },
+      setChildNodes: function(childNodes, keepAlive){
+        // reallocate childNodesElement to new DocumentFragment
+        var domFragment = DOM.createFragment();
+        var target = this.localGrouping || this;
+        var container = target.childNodesElement || target.element;
+        target.childNodesElement = domFragment;
+
+        // call inherited method
+        // NOTE: make sure that dispatching childNodesModified event handlers are not sensetive
+        // for child node positions at real DOM (html document), because all new child nodes
+        // will be inserted into temporary DocumentFragment that will be inserted into html document
+        // later (after inherited method call)
+        super_.setChildNodes.call(this, childNodes, keepAlive);
+
+        // restore childNodesElement
+        container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
+        target.childNodesElement = container;
+      }
+    }
+  };
+
+ /**
+  * @class
+  */
+  var TmplGroupingNode = Class(GroupingNode, ContainerTemplateMixin, {
+    className: namespace + '.TmplGroupingNode',
+
+   /**
+    * @inheritDoc
+    */
+    childClass: TmplPartitionNode,
+
+   /**
+    * @inheritDoc
+    */
+    event_ownerChanged: function(node, oldOwner){
+      var cursor = this;
+      var owner = this.owner;
+      var element = null;
+
+      if (owner)
+        element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement || owner.element;
+
+      do
+      {
+        cursor.element = cursor.childNodesElement = element;
+      }
+      while (cursor = cursor.localGrouping);
+
+      GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
+    }
+  });
+
+  TmplGroupingNode.prototype.localGroupingClass = TmplGroupingNode;
+
+ /**
+  * @class
+  */
+  var TmplContainer = Class(TmplNode, ContainerTemplateMixin, {
+    className: namespace + '.TmplContainer',
+
+    childClass: TmplNode,
+    childFactory: function(config){
+      return new this.childClass(config);
+    },
+
+    localGroupingClass: TmplGroupingNode
+  });
+
+ /**
+  * @class
+  */
+  var Control = Class(TmplContainer, {
+    className: namespace + '.Control',
+
+   /**
+    * Create selection by default with empty config.
+    */
+    selection: {},
+
+   /**
+    * @inheritDoc
+    */
+    init: function(config){
+      // make document link to itself
+      // NOTE: we make it before inherit because in other way
+      //       child nodes (passed by config.childNodes) will be with no document
+      this.document = this;
+
+      // inherit
+      TmplContainer.prototype.init.call(this, config);
+                   
+      // add to basis.Cleaner
+      Cleaner.add(this);
+    },
+
+   /**
+    * @inheritDoc
+    */
+    destroy: function(){
+      // selection destroy - clean selected nodes
+      if (this.selection)
+      {
+        this.selection.destroy(); // how about shared selection?
+        this.selection = null;
+      }
+
+      // inherit destroy, must be calling after inner objects destroyed
+      TmplContainer.prototype.destroy.call(this);
+
+      // remove from Cleaner
+      Cleaner.remove(this);
+    }
+  });
+
+ /**
+  * @func
+  */
+  var simpleTemplate = function(template, config){
+    var refs = template.match(/\{(this_[^\}]+)\}/g);
+    var lines = [];
+    for (var i = 0; i < refs.length; i++)
+    {
+      var name = refs[i].match(/\{(this_[^\|\}]+)\}/)[1];
+      lines.push('this.tmpl.' + name + '.nodeValue = ' + name.replace(/_/g, '.'));
+    }
+    
+    return Function('tmpl_', 'config_', 'return ' + (function(super_){
+      return Object.extend({
+        template: tmpl_,
+        templateUpdate: function(tmpl, eventName, delta){
+          super_.templateUpdate.call(this, tmpl, eventName, delta);
+          _code_();
+        }
+      }, config_);
+    }).toString().replace('_code_()', lines.join(';\n')))(new Template(template), config);
+  };
+
+  //
+  // export names
+  //
+
+  basis.namespace(namespace, simpleTemplate).extend({
+    simpleTemplate: simpleTemplate,
+
+    Node: TmplNode,
+    Container: TmplContainer,
+    PartitionNode: TmplPartitionNode,
+    GroupingNode: TmplGroupingNode,
+    Control: Control
+  });
+
+  /*
+  basis.namespace('basis.dom.wrapper').extend({
+    Control: Control,
+
+    // template classes
+    TmplGroupingNode: TmplGroupingNode,
+    TmplPartitionNode: TmplPartitionNode,
+    TmplNode: TmplNode,
+    TmplContainer: TmplContainer,
+    TmplControl: Control
+  });*/
+
+}(basis);
+
+//
 // src/basis/layout.js
 //
 
@@ -10804,6 +10864,7 @@ basis.require('basis.ua');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis, global){
 
@@ -10831,7 +10892,7 @@ basis.require('basis.cssom');
 
   var nsWrappers = DOM.wrapper;
 
-  var TmplContainer = nsWrappers.TmplContainer;
+  var UIContainer = basis.ui.Container;
 
   //
   // Main part
@@ -11338,7 +11399,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var VerticalPanel = Class(TmplContainer, {
+  var VerticalPanel = Class(UIContainer, {
     className: namespace + '.VerticalPanel',
 
     template: 
@@ -11347,7 +11408,7 @@ basis.require('basis.cssom');
     flex: 0,
 
     init: function(config){
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       if (this.flex)
       {
@@ -11372,7 +11433,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var VerticalPanelStack = Class(TmplContainer, {
+  var VerticalPanelStack = Class(UIContainer, {
     className: namespace + '.VerticalPanelStack',
 
     childClass: VerticalPanel,
@@ -11391,7 +11452,7 @@ basis.require('basis.cssom');
         this.cssRule.setProperty('overflow', 'auto');
       //}
 
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       if (SUPPORT_DISPLAYBOX === false)
       {
@@ -11404,7 +11465,7 @@ basis.require('basis.cssom');
       }
     },
     insertBefore: function(newChild, refChild){
-      if (newChild = TmplContainer.prototype.insertBefore.call(this, newChild, refChild))
+      if (newChild = UIContainer.prototype.insertBefore.call(this, newChild, refChild))
       {
         if (newChild.flex && this.cssRule)
           classList(newChild.element).add(this.ruleClassName);
@@ -11415,7 +11476,7 @@ basis.require('basis.cssom');
       }
     },
     removeChild: function(oldChild){
-      if (TmplContainer.prototype.removeChild.call(this, oldChild))
+      if (UIContainer.prototype.removeChild.call(this, oldChild))
       {
         if (oldChild.flex && this.cssRule)
           classList(oldChild.element).remove(this.ruleClassName);
@@ -11431,7 +11492,7 @@ basis.require('basis.cssom');
 
       var element = this.element;
       var lastElement = this.lastChild.element;
-      var ruller = this.tmpl.ruller;
+     var ruller = this.tmpl.ruller;
 
       var lastBox = new Box(lastElement, false, element);
       var bottom = (lastBox.bottom - getComputedProperty(element, 'paddingTop') - getComputedProperty(element, 'borderTopWidth')) || 0;
@@ -14378,6 +14439,8 @@ basis.require('basis.data.property');
   * @class
   */
   var IndexMap = Class(MapReduce, {
+    className: namespace + '.IndexMap',
+
     calcs: null,
 
     indexes: null,
@@ -14725,6 +14788,8 @@ basis.require('basis.data');
   //
 
   var Index = basis.Class(null, {
+    className: namespace + '.Index',
+
     init: function(normalize){
       var index = this.index = {};
 
@@ -17484,6 +17549,7 @@ basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
 basis.require('basis.html');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -17496,28 +17562,28 @@ basis.require('basis.html');
 
   var namespace = 'basis.ui.button';
 
-  // import names
 
-  var Class = basis.Class;
-  var Event = basis.dom.event;
-  var DOM = basis.dom;
-  var Template = basis.html.Template;
+  //
+  // import names
+  //
 
   var getter = Function.getter;
 
-  var nsWrapper = basis.dom.wrapper;
+  var Class = basis.Class;
+  var DOM = basis.dom;
 
-  var TmplNode = nsWrapper.TmplNode;
-  var TmplControl = nsWrapper.TmplControl;
+  var UINode = basis.ui.Node;
+  var UIControl = basis.ui.Control;
+
 
   //
-  // Main part
+  // main part
   //
 
  /**
   * @class
   */
-  var Button = Class(TmplNode, {
+  var Button = Class(UINode, {
     className: namespace + '.Button',
 
     captionGetter: getter('caption'),
@@ -17544,15 +17610,15 @@ basis.require('basis.html');
     click: function(){},
 
     event_select: function(){
-      TmplNode.prototype.event_select.call(this);
+      UINode.prototype.event_select.call(this);
       DOM.focus(this.element);
     },
     event_disable: function(){
-      TmplNode.prototype.event_disable.call(this);
+      UINode.prototype.event_disable.call(this);
       this.tmpl.buttonElement.disabled = true;
     },
     event_enable: function(){
-      TmplNode.prototype.event_enable.call(this);
+      UINode.prototype.event_enable.call(this);
       this.tmpl.buttonElement.disabled = false;
     },
 
@@ -17560,7 +17626,7 @@ basis.require('basis.html');
       ;;;if (typeof this.handler == 'function' && typeof console != 'undefined') console.warn(namespace + '.Button: this.handler must be an object. Use this.click instead.')
 
       // inherit
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       //this.setCaption('caption' in config ? config.caption : this.caption);
       this.setCaption(this.caption);
@@ -17579,7 +17645,7 @@ basis.require('basis.html');
  /**
   * @class
   */
-  var ButtonPanel = Class(TmplControl, {
+  var ButtonPanel = Class(UIControl, {
     className: namespace + '.ButtonPanel',
 
     template:
@@ -17608,6 +17674,7 @@ basis.require('basis.html');
       }
     }
   });
+
 
   //
   // export names
@@ -17640,6 +17707,7 @@ basis.require('basis.html');
 basis.require('basis.dom');
 basis.require('basis.data');
 basis.require('basis.dom.wrapper');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -17651,25 +17719,24 @@ basis.require('basis.dom.wrapper');
 
   var namespace = 'basis.ui.label';
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
   var Template = basis.html.Template;
 
   var getter = Function.getter;
-
-  //var createBehaviour = Basis.EventObject.createBehaviour;
   var createEvent = basis.EventObject.createEvent;
 
-
-  var nsWrappers = basis.dom.wrapper;
   var STATE = basis.data.STATE;
 
-  var TmplNode = nsWrappers.TmplNode;
+  var UINode = basis.ui.Node;
+
 
   //
-  // Main part
+  // main part
   //
 
   var stateTemplate = new Template(
@@ -17690,7 +17757,7 @@ basis.require('basis.dom.wrapper');
   * Base class for all labels.
   * @class
   */
-  var NodeLabel = Class(TmplNode, {
+  var NodeLabel = Class(UINode, {
     className: namespace + '.NodeLabel',
 
     cascadeDestroy: true,
@@ -17714,7 +17781,7 @@ basis.require('basis.dom.wrapper');
       var container = this.container;
       this.container = null;
 
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       if (container)
         this.container = container;
@@ -17752,7 +17819,7 @@ basis.require('basis.dom.wrapper');
 
     destroy: function(){
       delete this.container;
-      TmplNode.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
     }
   });
 
@@ -17940,6 +18007,7 @@ basis.require('basis.dom.wrapper');
     content: 'Empty'
   })
 
+
   //
   // export names
   //
@@ -17975,8 +18043,8 @@ basis.require('basis.dom.wrapper');
 
 basis.require('basis.dom');
 basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -18007,8 +18075,11 @@ basis.require('basis.cssom');
   */
 
   var namespace = 'basis.ui.tree';
-  
+
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -18016,17 +18087,16 @@ basis.require('basis.cssom');
 
   var classList = basis.cssom.classList;
   var getter = Function.getter;
-
-  var nsWrappers = basis.dom.wrapper;
-
-  var TmplContainer = nsWrappers.TmplContainer;
-  var Control = nsWrappers.Control;
-
   var createEvent = basis.EventObject.createEvent;
-  var basisEvent = basis.EventObject.event;
+
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+  var UIPartitionNode = basis.ui.PartitionNode;
+  var UIGroupingNode = basis.ui.GroupingNode;
+
 
   //
-  // Main part
+  // main part
   //
 
   function expand(node){
@@ -18044,14 +18114,14 @@ basis.require('basis.cssom');
     * Expand all descendant nodes.
     */
     expandAll: function(){
-      dom.axis(this, dom.AXIS_DESCENDANT_OR_SELF, expand);
+      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, expand);
     },
 
    /**
     * Collapse all descendant nodes.
     */
     collapseAll: function(){
-      dom.axis(this, dom.AXIS_DESCENDANT_OR_SELF, collapse);
+      DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, collapse);
     },
 
     expand: Function(),
@@ -18072,7 +18142,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var PartitionNode = Class(nsWrappers.TmplPartitionNode, {
+  var PartitionNode = Class(UIPartitionNode, {
     className: namespace + '.PartitionNode',
     template: 
       '<li{element} class="Basis-TreePartitionNode">' + 
@@ -18086,7 +18156,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var GroupingNode = Class(nsWrappers.TmplGroupingNode, {
+  var GroupingNode = Class(UIGroupingNode, {
     className: namespace + '.GroupingNode',
     childClass: PartitionNode
   });
@@ -18095,7 +18165,7 @@ basis.require('basis.cssom');
   * Base child class for {basis.ui.tree.Tree}
   * @class
   */
-  var Node = Class(TmplContainer, ExpandCollapseMixin, {
+  var Node = Class(UIContainer, ExpandCollapseMixin, {
     className: namespace + '.Node',
 
     canHaveChildren: false,
@@ -18242,7 +18312,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var Tree = Class(Control, ExpandCollapseMixin, {
+  var Tree = Class(UIControl, ExpandCollapseMixin, {
     className: namespace + '.Tree',
 
     childClass: Node,
@@ -18258,6 +18328,7 @@ basis.require('basis.cssom');
     template:
       '<ul class="Basis-Tree"/>'
   });
+
 
   //
   // export names
@@ -18275,9 +18346,7 @@ basis.require('basis.cssom');
     PartitionNode: PartitionNode
   });
 
-
 }(basis);
-
 
 //
 // src/basis/ui/popup.js
@@ -18298,6 +18367,7 @@ basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
 basis.require('basis.layout');
+basis.require('basis.ui');
 
 !function(){
 
@@ -18308,6 +18378,7 @@ basis.require('basis.layout');
   */
 
   var namespace = 'basis.ui.popup';
+
 
   // import names
 
@@ -18325,13 +18396,15 @@ basis.require('basis.layout');
 
   var createEvent = basis.EventObject.createEvent;
 
-  var TmplNode = nsWrapper.TmplNode;
-  var TmplContainer = nsWrapper.TmplContainer;
-  var TmplControl = nsWrapper.TmplControl;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+  var UIPartitionNode = basis.ui.PartitionNode;
+  var UIGroupingNode = basis.ui.GroupingNode;
 
 
   //
-  // CONST
+  // main part
   //
 
   var LEFT = 'LEFT';
@@ -18376,7 +18449,7 @@ basis.require('basis.layout');
  /**
   * @class
   */
-  var Popup = Class(TmplContainer, {
+  var Popup = Class(UIContainer, {
     className: namespace + '.Popup',
 
     template: 
@@ -18410,7 +18483,7 @@ basis.require('basis.layout');
     cssLayoutPrefix: 'popup-',
 
     init: function(config){
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       // add generic rule
       this.cssRule = cssom.uniqueRule(this.element);
@@ -18637,7 +18710,7 @@ basis.require('basis.layout');
         classList(this.element).remove('pre-transition');
         DOM.visibility(this.element, false);
 
-        PopupManager.appendChild(this);
+        popupManager.appendChild(this);
 
         // dispatch `beforeShow` event, there we can fill popup with content
         this.event_beforeShow();
@@ -18677,14 +18750,14 @@ basis.require('basis.layout');
         // set visible flag to FALSE
         this.visible = false;
         if (this.parentNode)
-          PopupManager.removeChild(this);
+          popupManager.removeChild(this);
 
         // dispatch event
         this.event_hide();
       }
     },
     hideAll: function(){
-      PopupManager.clear();
+      popupManager.clear();
     },
     destroy: function(){
       if (this.thread)
@@ -18695,7 +18768,7 @@ basis.require('basis.layout');
 
       this.hide();
 
-      TmplContainer.prototype.destroy.call(this);
+      UIContainer.prototype.destroy.call(this);
 
       this.cssRule.destroy();
       this.cssRule = null;
@@ -18741,7 +18814,7 @@ basis.require('basis.layout');
  /**
   * @class
   */
-  var MenuItem = Class(TmplContainer, {
+  var MenuItem = Class(UIContainer, {
     className: namespace + '.MenuItem',
 
     //childFactory: function(cfg){ return new this.childClass(cfg) },
@@ -18774,7 +18847,7 @@ basis.require('basis.layout');
 
     init: function(config){
       // inherit
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       this.setCaption(this.caption);
     },
@@ -18801,7 +18874,7 @@ basis.require('basis.layout');
   */
   var MenuItemSet = Class(MenuItem, {
     className: namespace + '.MenuItemSet',
-    event_childNodesModified: TmplNode.prototype.event_childNodesModified,
+    event_childNodesModified: UINode.prototype.event_childNodesModified,
 
     template: 
       '<div class="Basis-Menu-ItemSet"/>'
@@ -18810,7 +18883,7 @@ basis.require('basis.layout');
  /**
   * @class
   */
-  var MenuPartitionNode = Class(nsWrapper.TmplPartitionNode, {
+  var MenuPartitionNode = Class(UIPartitionNode, {
     className: namespace + '.MenuPartitionNode',
 
     template:
@@ -18822,7 +18895,7 @@ basis.require('basis.layout');
  /**
   * @class
   */
-  var MenuGroupControl = Class(nsWrapper.TmplGroupingNode, {
+  var MenuGroupControl = Class(UIGroupingNode, {
     className: namespace + '.MenuGroupControl',
     childClass: MenuPartitionNode
   });
@@ -18855,11 +18928,11 @@ basis.require('basis.layout');
   //  Popup manager
   //
 
-  // NOTE: PopupManager adds global event handlers dynamicaly because click event
+  // NOTE: popupManager adds global event handlers dynamicaly because click event
   // that makes popup visible can also hide it (as click outside of popup).
 
-  var PopupManagerClass = Class(TmplControl, {
-    className: namespace + '.PopupManager',
+  var popupManager = new UIControl({
+    id: 'Basis-PopupStack',
 
     handheldMode: false,
 
@@ -18901,7 +18974,7 @@ basis.require('basis.layout');
       var documentST_ = document.documentElement.scrollTop;
       var bodyST_ = document.body.scrollTop;
 
-      if (TmplControl.prototype.insertBefore.call(this,newChild, refChild))
+      if (UIControl.prototype.insertBefore.call(this,newChild, refChild))
       {
         // store saved scrollTop to popup and scroll viewport to top
         newChild.documentST_ = documentST_;
@@ -18922,7 +18995,7 @@ basis.require('basis.layout');
         if (popup.hideOnAnyClick && popup.nextSibling)
           this.removeChild(popup.nextSibling);
 
-        TmplControl.prototype.removeChild.call(this, popup);
+        UIControl.prototype.removeChild.call(this, popup);
 
         // restore documentElement (IE, mozilla and others) and body (webkit) scrollTop
         if (this.handheldMode)
@@ -19001,17 +19074,13 @@ basis.require('basis.layout');
     }
   });
 
-  var PopupManager = new PopupManagerClass({
-    id: 'Basis-PopupStack'
-  });
-
   Event.onLoad(function(){
-    DOM.insert(document.body, PopupManager.element, DOM.INSERT_BEGIN);
-    PopupManager.realignAll();
+    DOM.insert(document.body, popupManager.element, DOM.INSERT_BEGIN);
+    popupManager.realignAll();
   });
 
   function setHandheldMode(mode){
-    PopupManager.handheldMode = !!mode;
+    popupManager.handheldMode = !!mode;
   }
 
   //
@@ -19056,6 +19125,7 @@ basis.require('basis.layout');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -19073,7 +19143,10 @@ basis.require('basis.dom.wrapper');
 
   var namespace = 'basis.ui.table';
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var Event = basis.dom.event;
@@ -19084,17 +19157,19 @@ basis.require('basis.dom.wrapper');
   var extend = Object.extend;
   var classList = basis.cssom.classList;
 
-  var nsWrappers = basis.dom.wrapper;
-  var TmplNode = nsWrappers.TmplNode;
-  var TmplContainer = nsWrappers.TmplContainer;
-  var TmplControl = nsWrappers.TmplControl;
-  var TmplPartitionNode = nsWrappers.TmplPartitionNode;
-  var TmplGroupingNode = nsWrappers.TmplGroupingNode;
-  var GroupingNode = nsWrappers.GroupingNode;
-  var PartitionNode = nsWrappers.PartitionNode;
+  var nsWrapper = basis.dom.wrapper;
+  var GroupingNode = nsWrapper.GroupingNode;
+  var PartitionNode = nsWrapper.PartitionNode;
+
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+  var UIPartitionNode = basis.ui.PartitionNode;
+  var UIGroupingNode = basis.ui.GroupingNode;
+
 
   //
-  // Main part
+  // main part
   //
 
   //
@@ -19104,11 +19179,11 @@ basis.require('basis.dom.wrapper');
   var HEADERCELL_CSS_SORTABLE = 'sortable';
   var HEADERCELL_CSS_SORTDESC = 'sort-order-desc';
 
-  //
-  // Table Header Grouping
-  //
-
-  var HeaderPartitionNode = basis.Class(nsWrappers.TmplNode, {
+ /**
+  * @class
+  */
+  var HeaderPartitionNode = Class(UINode, {
+    className: namespace + '.HeaderPartitionNode',
     template: new Template(
       '<th{element|selected} class="Basis-Table-Header-Cell">' +
         '<div class="Basis-Table-Sort-Direction"></div>' +
@@ -19122,7 +19197,11 @@ basis.require('basis.dom.wrapper');
     }
   });
 
-  var HeaderGroupingNode = basis.Class(GroupingNode, {
+ /**
+  * @class
+  */
+  var HeaderGroupingNode = Class(GroupingNode, {
+    className: namespace + '.HeaderGroupingNode',
     event_ownerChanged: function(node, oldOwner){
       if (oldOwner)
         DOM.remove(this.headerRow);
@@ -19193,8 +19272,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-
-  var HeaderCell = Class(TmplNode, {
+  var HeaderCell = Class(UINode, {
     className: namespace + '.HeaderCell',
 
     sorting: null,
@@ -19224,7 +19302,7 @@ basis.require('basis.dom.wrapper');
     },
 
     init: function(config){
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       //DOM.insert(this.content, config.content || '');
 
@@ -19240,14 +19318,14 @@ basis.require('basis.dom.wrapper');
       if (!this.selected)
         this.order = this.defaultOrder;
 
-      TmplNode.prototype.select.call(this);
+      UINode.prototype.select.call(this);
     }
   });
 
  /**
   * @class
   */
-  var Header = Class(TmplContainer, {
+  var Header = Class(UIContainer, {
     className: namespace + '.Header',
 
     childClass: HeaderCell,
@@ -19290,7 +19368,7 @@ basis.require('basis.dom.wrapper');
         }
       };
 
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       this.applyConfig_(this.structure)
     },
@@ -19323,7 +19401,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var FooterCell = Class(TmplNode, {
+  var FooterCell = Class(UINode, {
     className: namespace + '.FooterCell',
 
     colSpan: 1,
@@ -19342,7 +19420,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var Footer = Class(TmplContainer, {
+  var Footer = Class(UIContainer, {
     className: namespace + '.Footer',
 
     childClass: FooterCell,
@@ -19357,7 +19435,7 @@ basis.require('basis.dom.wrapper');
     ),
 
     init: function(config){
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       this.applyConfig_(this.structure);
 
@@ -19417,7 +19495,7 @@ basis.require('basis.dom.wrapper');
   * Base row class
   * @class
   */
-  var Row = Class(TmplNode, {
+  var Row = Class(UINode, {
     className: namespace + '.Row',
     
     canHaveChildren: false,
@@ -19469,7 +19547,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var Body = Class(TmplPartitionNode, {
+  var Body = Class(UIPartitionNode, {
     className: namespace + '.Body',
 
     template:
@@ -19490,13 +19568,13 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var Table = Class(TmplControl, {
+  var Table = Class(UIControl, {
     className: namespace + '.Table',
     
     canHaveChildren: true,
     childClass: Row,
 
-    localGroupingClass: Class(TmplGroupingNode, {
+    localGroupingClass: Class(UIGroupingNode, {
       className: namespace + '.TableGroupingNode',
       childClass: Body
     }),
@@ -19510,7 +19588,7 @@ basis.require('basis.dom.wrapper');
     ),
 
     templateAction: function(actionName, event){
-      TmplControl.prototype.templateAction.call(this, actionName, event);
+      UIControl.prototype.templateAction.call(this, actionName, event);
     },
 
     //canHaveChildren: false,
@@ -19519,7 +19597,7 @@ basis.require('basis.dom.wrapper');
 
       this.applyConfig_(this.structure);
 
-      TmplControl.prototype.init.call(this, config);
+      UIControl.prototype.init.call(this, config);
 
       this.headerConfig = this.header;
       this.footerConfig = this.footer;
@@ -19601,7 +19679,7 @@ basis.require('basis.dom.wrapper');
     },
 
     destroy: function(){
-      TmplControl.prototype.destroy.call(this);
+      UIControl.prototype.destroy.call(this);
 
       this.header.destroy();
       this.header = null;
@@ -19610,6 +19688,7 @@ basis.require('basis.dom.wrapper');
       this.footer = null;
     }
   });    
+
 
   //
   // export names
@@ -19628,6 +19707,257 @@ basis.require('basis.dom.wrapper');
     Table: Table
   });
 
+}(basis);
+
+//
+// src/basis/ui/scrolltable.js
+//
+
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2011 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ *
+ * @author
+ * Vladimir Ratsev <wuzykk@gmail.com>
+ */
+
+basis.require('basis.dom');
+basis.require('basis.dom.event');
+basis.require('basis.cssom');
+basis.require('basis.layout');
+basis.require('basis.ui.table');
+
+!function(basis){
+
+ /**
+  * @namespace basis.Controls.Table
+  */
+
+  var namespace = 'basis.Controls.Table';
+
+
+  //
+  // import names
+  //
+
+  var Class = basis.Class;
+  var DOM = basis.dom;
+  var Event = basis.dom.event;
+
+  var cssom = basis.cssom;
+  var TimeEventManager = basis.TimeEventManager;
+  var Table = basis.ui.table.Table;
+  var Box = basis.layout.Box;
+  var Viewport = basis.layout.Viewport;
+
+
+  //
+  // main part
+  //
+
+  /* caculate scroll width */
+  var SCROLLBAR_WIDTH = 17;
+  Event.onLoad(function(){
+    var tester = DOM.createElement('');
+    DOM.setStyle(tester, { height: '100px', overflow: 'scroll' });
+    DOM.insert(document.body, tester);
+    SCROLLBAR_WIDTH = (new Box(tester)).width - (new Viewport(tester)).width;
+    cssom.cssRule('.ScrollBarWidthOwner').setStyle({ width: SCROLLBAR_WIDTH + 'px' });
+    DOM.remove(tester);
+  });
+
+  function createHeaderExpandCell(){
+    return DOM.createElement('.Basis-ScrollTable-ExpandHeaderCell', DOM.createElement('.Basis-ScrollTable-ExpandCell-Content')); 
+  }
+
+  function createFooterExpandCell(){
+    return DOM.createElement('.Basis-ScrollTable-ExpandFooterCell');
+  }
+
+ /**
+  * @class
+  */
+  var ScrollTable = Class(Table, {
+    className: namespace + '.ScrollTable',
+
+    template:
+      '<div{element} class="Basis-Table Basis-ScrollTable">' +
+        '<div{headerFooterContainer} class="Basis-ScrollTable-HeaderFooterContainer">' +
+          //'<div{headerFooterWrapper} style="position: absolute; height: 100%; width: 100%; top: 0; left: 0">' +
+            '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"><!-- {headerElement} --></table>' +
+            '<table{foot} cellspacing="0" border="0" class="Basis-ScrollTable-Footer"></table>' +
+          //'</div>' +
+        '</div>' +
+        '<div{scrollContainer} class="Basis-ScrollTable-ScrollContainer">' +
+          '<div{tableWrapperElement} class="Basis-ScrollTable-TableWrapper">' +
+            '<table{tableElement|groupsElement} class="Basis-Table" cellspacing="0">' +
+              '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
+            '</table>' +
+          '</div>' +
+        '</div>' +
+      '</div>',
+
+    event_childNodesModified: function(node, delta){
+      Table.prototype.event_childNodesModified.call(this, node, delta);
+      TimeEventManager.add(this, 'adjust', Date.now());
+    },
+    event_childUpdated: function(child, delta){
+      Table.prototype.event_childUpdated.call(this, child, delta);
+      TimeEventManager.add(this, 'adjust', Date.now());
+    },
+
+    init: function(config){
+      Table.prototype.init.call(this, config);
+
+      //DOM.insert(this.tmpl.head, this.header.element);
+
+      /*create header clone*/
+      this.headerClone = new nsTable.Header(Object.extend({ 
+        owner: this.header.owner,
+        container: this.tmpl.tableElement, 
+        structure: this.structure
+      }, this.headerConfig));
+
+      /*get header cells including groupCells*/
+      this.originalCells = this.header.childNodes;
+      if (this.header.groupControl)
+        this.originalCells = this.originalCells.concat(this.header.groupControl.childNodes);
+
+      /*get cloned header cells including groupCells*/
+      this.clonedCells   = this.headerClone.childNodes;
+      if (this.headerClone.groupControl)
+        this.clonedCells = this.clonedCells.concat(this.headerClone.groupControl.childNodes);
+        
+      this.headerExpandCell = DOM.insert(this.element, createHeaderExpandCell());
+
+      this.headerBox = new Box(this.header.element);
+
+      if (this.footer.useFooter)
+      {
+        /*create footer clone*/
+        DOM.insert(this.tmpl.foot, this.footer.element);
+        this.footerClone = new nsTable.Footer(Object.extend({ 
+          owner: this.footer.owner,
+          container: this.tmpl.tableElement, 
+          structure: this.structure 
+        }, this.footerConfig));
+
+        this.originalCells = this.originalCells.concat(this.footer.childNodes);
+        this.clonedCells = this.clonedCells.concat(this.footerClone.childNodes)
+        DOM.setStyle(this.footerClone.element, { visibility: 'hidden' });
+
+        //this.footer.expandCell = DOM.insert(this.footer.childNodesElement, createFooterExpandCell());
+        
+        this.footerBox = new Box(this.footer.element);
+
+        this.footerExpandCell = DOM.insert(this.element, createFooterExpandCell());
+      }
+
+      this.cellsAdjustmentInfo = [];
+
+      for (var i = 0, originalCell, clonedCell; originalCell = this.originalCells[i]; i++)
+      {
+        clonedCell = this.clonedCells[i]; 
+        this.cellsAdjustmentInfo.push({
+          element: clonedCell.element,
+          boxChangeListener: originalCell.element,
+          contentSource: originalCell.content,
+          contentDestination: clonedCell.content
+        });
+      }
+
+      this.tableBox = new Box(this.tmpl.tableElement);
+      this.lastScrollLeftPosition = 0;
+
+      Event.addHandler(this.tmpl.scrollContainer, 'scroll', this.onScroll.bind(this));
+      Event.addHandler(window, 'resize', this.adjust.bind(this));
+
+      this.sync();
+      TimeEventManager.add(this, 'adjust', Date.now());
+    },
+    onScroll: function(event){
+      var scrollLeft = this.tmpl.scrollContainer.scrollLeft;
+      if (scrollLeft != this.lastScrollLeftPosition) 
+      {
+        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'left', -scrollLeft + 'px');
+        this.lastScrollLeftPosition = scrollLeft;
+      }
+    },
+    adjust: function(event){
+      this.onScroll();
+
+      /*recalc table width*/
+      this.tableBox.recalc();
+      var tableWidth = this.tableBox.width || 0;
+
+      if (this.tmpl.tableWrapperElement.scrollWidth > this.tmpl.scrollContainer.clientWidth)
+      {
+        DOM.setStyleProperty(this.tmpl.tableWrapperElement, 'width',  tableWidth + 'px');
+        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'width', tableWidth + SCROLLBAR_WIDTH + 'px');
+      }
+      else
+      {
+        DOM.setStyleProperty(this.tmpl.tableWrapperElement, 'width', '100%');
+        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'width', '100%');
+      }
+
+      /*adjust cells width*/
+      this.cellsAdjustmentInfo.forEach(this.adjustCell);
+      /*recalc expanderCell width*/
+      var freeSpaceWidth = Math.max(0, this.tmpl.tableWrapperElement.clientWidth - this.tmpl.tableElement.offsetWidth + SCROLLBAR_WIDTH);
+
+      /*recalc header heights*/
+      this.headerBox.recalc();
+      var headerHeight = this.headerBox.height || 0;
+
+      cssom.setStyleProperty(this.element, 'paddingTop', headerHeight + 'px');
+      cssom.setStyleProperty(this.tmpl.tableElement, 'marginTop', -headerHeight + 'px');
+      cssom.setStyle(this.headerExpandCell, { width: freeSpaceWidth + 'px', height: headerHeight + 'px' });
+
+      /*recalc footer heights*/
+      if (this.footer.useFooter)
+      {
+        this.footerBox.recalc();
+        var footerHeight = this.footerBox.height || 0;
+
+        cssom.setStyleProperty(this.element, 'paddingBottom', footerHeight + 'px');
+        cssom.setStyleProperty(this.tmpl.tableElement, 'marginBottom', -footerHeight + 'px');
+
+        cssom.setStyle(this.footerExpandCell, { width: freeSpaceWidth + 'px', height: footerHeight + 'px' });
+      }
+    },
+    sync: function(cellNumber){
+      /*this.cellsAdjustmentInfo.forEach(function(cell){
+        DOM.insert(DOM.clear(cell.contentDestination), DOM.axis(cell.contentSource, DOM.AXIS_CHILD).map(DOM.clone));
+      });*/
+      this.adjust();
+    },
+    adjustCell: function(cell){
+      var width;
+
+      if (document.defaultView && document.defaultView.getComputedStyle)
+        width = document.defaultView.getComputedStyle(cell.element, null).width;
+      else
+        width = cell.element.clientWidth + 'px';
+
+      cssom.setStyleProperty(cell.boxChangeListener, 'width', width);
+    }
+  });
+
+  //
+  // export names
+  //
+
+  basis.namespace(namespace).extend({
+    ScrollTable: ScrollTable
+  });
+ 
 }(basis);
 
 
@@ -19650,6 +19980,7 @@ basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 basis.require('basis.ui.button');
 
 !function(basis){
@@ -19662,7 +19993,10 @@ basis.require('basis.ui.button');
 
   var namespace = 'basis.ui.window';
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -19671,19 +20005,22 @@ basis.require('basis.ui.button');
   var classList = basis.cssom.classList;
   var Cleaner = basis.Cleaner;
 
-  var nsWrappers = basis.dom.wrapper;
-  var nsButton = basis.ui.button;
-
   var createEvent = basis.EventObject.createEvent;
 
-  var TmplNode = nsWrappers.TmplNode;
-  var TmplContainer = nsWrappers.TmplContainer;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+  var ButtonPanel = basis.ui.button.ButtonPanel;
+
+
+  //
+  // main part
+  //
 
  /**
   * @class
-  * @extends basis.DOM.Wrapper.TmplNode
   */
-  var Blocker = Class(TmplNode, {
+  var Blocker = Class(UINode, {
     className: namespace + '.Blocker',
 
     captureElement: null,
@@ -19694,7 +20031,7 @@ basis.require('basis.ui.button');
       '</div>',
 
     init: function(config){
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       DOM.setStyle(this.element, {
         display: 'none',
@@ -19729,7 +20066,7 @@ basis.require('basis.ui.button');
     destroy: function(){
       this.release();
       
-      TmplNode.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
       
       Cleaner.remove(this);
     }
@@ -19742,7 +20079,7 @@ basis.require('basis.ui.button');
  /**
   * @class
   */
-  var Window = Class(TmplContainer, {
+  var Window = Class(UIContainer, {
     className: namespace + '.Window',
 
     template:
@@ -19810,7 +20147,7 @@ basis.require('basis.ui.button');
 
     init: function(config){
       //this.inherit(config);
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       // make main element invisible by default
       DOM.hide(this.element);
@@ -19887,7 +20224,7 @@ basis.require('basis.ui.button');
 
       if (buttons.length)
       {
-        this.buttonPanel = new nsButton.ButtonPanel({
+        this.buttonPanel = new ButtonPanel({
           cssClassName: 'Basis-Window-ButtonPlace',
           container: this.tmpl.content,
           childNodes: buttons
@@ -20007,7 +20344,7 @@ basis.require('basis.ui.button');
         delete this.dde;
       }
 
-      TmplContainer.prototype.destroy.call(this);
+      UIContainer.prototype.destroy.call(this);
 
       this.cssRule.destroy();
       this.cssRule = null;
@@ -20021,7 +20358,7 @@ basis.require('basis.ui.button');
   //
 
   var wmBlocker = new Blocker();
-  var windowManager = new nsWrappers.Control({
+  var windowManager = new UIControl({
     id: 'Basis-WindowStack',
     childClass: Window
   });
@@ -20078,6 +20415,7 @@ basis.require('basis.ui.button');
       node.realign();
   });
 
+
   //
   // export names
   //
@@ -20109,6 +20447,7 @@ basis.require('basis.ui.button');
 basis.require('basis.dom');
 basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -20121,23 +20460,25 @@ basis.require('basis.cssom');
 
   var namespace = 'basis.ui.tabs';
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var classList = basis.cssom.classList;
   var getter = Function.getter;
-
-  var nsWrappers = basis.dom.wrapper;
-
-  var TmplNode = nsWrappers.TmplNode;
-  var TmplContainer = nsWrappers.TmplContainer;
-
+  var classList = basis.cssom.classList;
   var createEvent = basis.EventObject.createEvent;
 
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+
+
   //
-  //  behaviour handlers
+  // main part
   //
 
   function baseSelectHandler(child){
@@ -20155,18 +20496,14 @@ basis.require('basis.cssom');
     }
   }
 
-  //
-  //  Pages Controls prototype
-  //
-
  /**
   * @class
   */
-  var AbstractTabsControl = Class(nsWrappers.TmplControl, {
+  var AbstractTabsControl = Class(UIControl, {
     className: namespace + '.AbstractTabsControl',
 
     canHaveChildren: true,
-    childClass: TmplNode,
+    childClass: UINode,
 
     event_childEnabled: createEvent('childEnabled') && baseSelectHandler,
     event_childDisabled: createEvent('childDisabled') && baseUnselectHandler,
@@ -20192,8 +20529,9 @@ basis.require('basis.cssom');
     }
   });
 
+
   //
-  // Tab node
+  // Tab
   //
 
   function tabCaptionFormat(value){ 
@@ -20203,26 +20541,26 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var Tab = Class(TmplContainer, {
+  var Tab = Class(UIContainer, {
     className: namespace + '.Tab',
 
     canHaveChildren: false,
 
     event_disable: function(){ 
-      TmplContainer.prototype.event_disable.call(this);
+      UIContainer.prototype.event_disable.call(this);
 
       this.unselect();
       if (this.document)
         this.document.event_childDisabled(this.document, this);
     },
     event_enable: function(){ 
-      TmplContainer.prototype.event_enable.call(this);
+      UIContainer.prototype.event_enable.call(this);
 
       if (this.document)
         this.document.event_childEnabled(this.document, this);
     },
     event_update: function(node, delta){
-      TmplContainer.prototype.event_update.call(this, node, delta);
+      UIContainer.prototype.event_update.call(this, node, delta);
 
       // set new title
       this.tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
@@ -20260,23 +20598,10 @@ basis.require('basis.cssom');
     groupId: 0
   });
 
+
   //
   // Tabs control
   //
-
- /**
-  * @class
-  */
-  var TabsGroupingNode = Class(nsWrappers.TmplGroupingNode, {
-    className: namespace + '.TabsGroupingNode',
-
-    childClass: Class(nsWrappers.TmplPartitionNode, {
-      className: namespace + '.TabsPartitionNode',
-
-      template: 
-        '<div class="Basis-TabControl-TabGroup"/>'
-    })
-  });
 
  /**
   * @class
@@ -20285,7 +20610,15 @@ basis.require('basis.cssom');
     className: namespace + '.TabControl',
 
     childClass: Tab,
-    localGroupingClass: TabsGroupingNode,
+    localGroupingClass: {
+      className: namespace + '.TabsGroupingNode',
+
+      childClass: {
+        className: namespace + '.TabsPartitionNode',
+        template: 
+          '<div class="Basis-TabControl-TabGroup"/>'
+      }
+    },
 
     template: 
       '<div{element} class="Basis-TabControl">' +
@@ -20295,23 +20628,24 @@ basis.require('basis.cssom');
       '</div>'
   });
 
+
   //
-  //  Page Node
+  // Page Node
   //
 
  /**
   * @class
   */
-  var Page = Class(TmplContainer, {
+  var Page = Class(UIContainer, {
     className: namespace + '.Page',
 
     event_select: function(){
       classList(this.element).remove('Basis-Page-Hidden');
-      TmplContainer.prototype.event_select.call(this);
+      UIContainer.prototype.event_select.call(this);
     },
     event_unselect: function(){
       classList(this.element).add('Basis-Page-Hidden');
-      TmplContainer.prototype.event_unselect.call(this);
+      UIContainer.prototype.event_unselect.call(this);
     },
     
     template: 
@@ -20320,8 +20654,9 @@ basis.require('basis.cssom');
       '</div>'
   });
 
+
   //
-  //  Page Control
+  // Page Control
   //
 
  /**
@@ -20336,8 +20671,9 @@ basis.require('basis.cssom');
       '<div class="Basis-PageControl"/>'
   });
 
+
   //
-  //  TabSheet Node
+  // TabSheet Node
   //
 
  /**
@@ -20347,7 +20683,7 @@ basis.require('basis.cssom');
     className: namespace + '.TabSheet',
 
     canHaveChildren: true,
-    childClass: TmplNode,
+    childClass: UINode,
 
     event_select: function(){
       Tab.prototype.event_select.call(this);
@@ -20381,6 +20717,7 @@ basis.require('basis.cssom');
     }
   });
 
+
   //
   // AccordionControl
   //
@@ -20398,6 +20735,7 @@ basis.require('basis.cssom');
         '<div{content|childNodesElement} class="Basis-AccordionControl-Content"/>' +
       '</div>'
   });
+
 
   //
   //  TabSheetControl
@@ -20449,8 +20787,9 @@ basis.require('basis.cssom');
     }
   });
 
+
   //
-  // 
+  // export names
   //
 
   basis.namespace(namespace).extend({
@@ -20492,6 +20831,7 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
 basis.require('basis.html');
 basis.require('basis.data.property');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -20503,24 +20843,28 @@ basis.require('basis.data.property');
 
   var namespace = 'basis.ui.calendar';
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
-  var nsWrappers = basis.dom.wrapper;
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
+  var createEvent = basis.EventObject.createEvent;
 
   var Template = basis.html.Template;
   var Property = basis.data.property.Property;
-  var TmplNode = nsWrappers.TmplNode;
-  var TmplContainer = nsWrappers.TmplContainer;
-  var TmplControl = nsWrappers.TmplControl;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var UIControl = basis.ui.Control;
+
 
   //
-  // CONST
+  // main part
   //
 
   var YEAR  = 'year';
@@ -20650,7 +20994,7 @@ basis.require('basis.data.property');
   // SECTIONS
   //
 
-  var CalendarNode = Class(TmplNode, {
+  var CalendarNode = Class(UINode, {
     className: namespace + '.Calendar.Node',
 
     canHaveChildren: false,
@@ -20662,16 +21006,16 @@ basis.require('basis.data.property');
       if (actionName == 'click')
         this.document.templateAction(actionName, event, this);
       else
-        TmplNode.prototype.templateAction.call(this, actionName, event);
+        UINode.prototype.templateAction.call(this, actionName, event);
     },
 
     event_select: function(){
-      TmplNode.prototype.event_select.call(this);
+      UINode.prototype.event_select.call(this);
 
       DOM.focus(this.element);
     },
     event_update: function(object, delta){
-      TmplNode.prototype.event_update.call(this, object, delta);
+      UINode.prototype.event_update.call(this, object, delta);
 
       if ('periodStart' in delta || 'periodEnd' in delta)
       {
@@ -20687,7 +21031,7 @@ basis.require('basis.data.property');
     }
   });
 
-  var CalendarSection = Class(TmplContainer, {
+  var CalendarSection = Class(UIContainer, {
     className: namespace + '.CalendarSection',
 
     childClass: CalendarNode,
@@ -20703,19 +21047,19 @@ basis.require('basis.data.property');
       if (actionName == 'select')
         this.select();
       else
-        TmplContainer.prototype.templateAction.call(this, actionName, event);
+        UIContainer.prototype.templateAction.call(this, actionName, event);
     },*/
 
     event_select: function(){
-      TmplContainer.prototype.event_select.call(this);
+      UIContainer.prototype.event_select.call(this);
       classList(this.tmpl.tabElement).add('selected');
     },
     event_unselect: function(){
-      TmplContainer.prototype.event_unselect.call(this);
+      UIContainer.prototype.event_unselect.call(this);
       classList(this.tmpl.tabElement).remove('selected');
     },
     event_update: function(object, delta){
-      TmplContainer.prototype.event_update.call(this, object, delta);
+      UIContainer.prototype.event_update.call(this, object, delta);
 
       var newData = this.data;
       var newNodes;
@@ -20792,7 +21136,7 @@ basis.require('basis.data.property');
     selection: {},
 
     init: function(config){
-      TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       classList(this.element).add('Basis-Calendar-Section-' + this.sectionName);
       Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
@@ -20951,7 +21295,7 @@ basis.require('basis.data.property');
   // Calendar
   //
 
-  var Calendar = Class(TmplControl, {
+  var Calendar = Class(UIControl, {
     className: namespace + '.Calendar',
 
     childClass: CalendarSection,
@@ -20981,7 +21325,7 @@ basis.require('basis.data.property');
       '</div>'
     })),
 
-    event_change: basis.EventObject.createEvent('change'),
+    event_change: createEvent('change'),
 
     event_childNodesModified: function(node, delta){
       if (delta.inserted)
@@ -20993,7 +21337,7 @@ basis.require('basis.data.property');
           });
         }
 
-      TmplControl.prototype.event_childNodesModified.call(this, node, delta);
+      UIControl.prototype.event_childNodesModified.call(this, node, delta);
 
       DOM.insert(
         DOM.clear(this.tmpl.sectionTabs),
@@ -21004,7 +21348,7 @@ basis.require('basis.data.property');
         this.firstChild.select();
     },
     templateAction: function(actionName, event, node){
-      TmplControl.prototype.templateAction.call(this, actionName, event);
+      UIControl.prototype.templateAction.call(this, actionName, event);
 
       if (node instanceof CalendarNode)
       {
@@ -21074,7 +21418,7 @@ basis.require('basis.data.property');
       };
 
       // inherit
-      TmplControl.prototype.init.call(this, config);
+      UIControl.prototype.init.call(this, config);
 
       // add links
       this.selectedDate.addHandler({
@@ -21374,13 +21718,14 @@ basis.require('basis.data.property');
     // destruction
 
     destroy: function(){
-      TmplControl.prototype.destroy.call(this);
+      UIControl.prototype.destroy.call(this);
 
       this.date.destroy();
       this.todayDate.destroy();
     }
 
   });
+
 
   //
   //  export names
@@ -21416,6 +21761,7 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.data');
 basis.require('basis.data.property');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -21428,7 +21774,9 @@ basis.require('basis.cssom');
 
   var namespace = 'basis.ui.form';
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var Event = basis.dom.event;
@@ -21441,21 +21789,20 @@ basis.require('basis.cssom');
   var getter = Function.getter;
   var classList = basis.cssom.classList;
 
-  var nsWrappers = basis.dom.wrapper;
-
-  var Selection = nsWrappers.Selection;       
   var AbstractProperty = basis.data.property.AbstractProperty;
   var Property = basis.data.property.Property;
   var EventObject = basis.EventObject;
 
-  var Control = nsWrappers.Control;         
-  var TmplNode = nsWrappers.TmplNode;        
-  var TmplContainer = nsWrappers.TmplContainer;
+  var Selection = basis.dom.wrapper.Selection;
+  var UIControl = basis.ui.Control;         
+  var UINode = basis.ui.Node;        
+  var UIContainer = basis.ui.Container;
 
   var createEvent = EventObject.createEvent;
 
+
   //
-  // Main part
+  // main part
   //
 
   var baseFieldTemplate = new Template(
@@ -21481,7 +21828,7 @@ basis.require('basis.cssom');
   * Base class for all form field classes
   * @class
   */
-  var Field = Class(TmplNode, {
+  var Field = Class(UINode, {
     className: namespace + '.Field',
 
     canHaveChildren: false,
@@ -21493,17 +21840,17 @@ basis.require('basis.cssom');
     event_select: function(){
       DOM.focus(this.tmpl.field, true);
 
-      TmplNode.prototype.event_select.call(this);
+      UINode.prototype.event_select.call(this);
     },
     event_enable: function(){
       this.tmpl.field.removeAttribute('disabled');
 
-      TmplNode.prototype.event_enable.call(this);
+      UINode.prototype.event_enable.call(this);
     },
     event_disable: function(){
       this.tmpl.field.setAttribute('disabled', 'disabled');
 
-      TmplNode.prototype.event_disable.call(this);
+      UINode.prototype.event_disable.call(this);
     },
     event_input: createEvent('input'),
     event_change: createEvent('change'),
@@ -21538,7 +21885,7 @@ basis.require('basis.cssom');
     },
 
     init: function(config){
-      TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       this.name = this.name || '';
 
@@ -21678,7 +22025,7 @@ basis.require('basis.cssom');
     },
     select: function(){
       this.unselect();
-      TmplNode.prototype.select.apply(this, arguments);
+      UINode.prototype.select.apply(this, arguments);
     },
     setValid: function(valid, message){
       var clsList = classList(this.element);
@@ -21731,7 +22078,7 @@ basis.require('basis.cssom');
       }
       this.validators.clear();
 
-      TmplNode.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
       //this.inherit();
 
       delete this.sampleElement;
@@ -21932,7 +22279,7 @@ basis.require('basis.cssom');
   // Complex fields
   //
 
-  var ComplexFieldItem = Class(TmplNode, {
+  var ComplexFieldItem = Class(UINode, {
     className: namespace + '.ComplexField.Item',
 
     canHaveChildren: false,
@@ -21959,7 +22306,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var ComplexField = Class(Field, TmplContainer, {
+  var ComplexField = Class(Field, UIContainer, {
     className: namespace + '.Field.ComplexField',
 
     template: Field.prototype.template,
@@ -22538,7 +22885,7 @@ basis.require('basis.cssom');
  /**
   * @class
   */
-  var FormContent = Class(Control, {
+  var FormContent = Class(UIControl, {
     className: namespace + '.FormContent',
     
     canHaveChildren: true,
@@ -22555,14 +22902,14 @@ basis.require('basis.cssom');
         if (!field.disabled)
           field.event_disable();
 
-       Control.prototype.event_disable.call(this);
+       UIControl.prototype.event_disable.call(this);
     },
     event_enable: function(){
       for (var field = this.firstChild; field; field = field.nextSibling)
         if (!field.disabled)
           field.event_enable();
 
-      Control.prototype.event_enable.call(this);
+      UIControl.prototype.event_enable.call(this);
     },
     
     template: new Template(
@@ -22649,7 +22996,7 @@ basis.require('basis.cssom');
     init: function(config){
       this.selection = false;
 
-      Control.prototype.init.call(this, config);
+      UIControl.prototype.init.call(this, config);
 
       if (this.target)
         this.formElement.target = this.target;
@@ -22791,6 +23138,8 @@ basis.require('basis.cssom');
   * @class
   */
   var Matcher = Class(MatchProperty, {
+    className: namespace + '.Matcher',
+
     event_change: function(value){
       MatchProperty.prototype.event_change.call(this, value);
 
@@ -22814,6 +23163,7 @@ basis.require('basis.cssom');
   */
   var MatchFilter = Class(MatchProperty, {
     className: namespace + '.MatchFilter',
+
     event_change: function(value){
       MatchProperty.prototype.event_change.call(this, value);
 
@@ -22825,6 +23175,8 @@ basis.require('basis.cssom');
   * @class
   */
   var MatchInput = Class(Field.Text, {
+    className: namespace + '.MatchInput',
+
     cssClassName: 'Basis-MatchInput',
 
     matchFilterClass: MatchFilter,
@@ -22846,6 +23198,7 @@ basis.require('basis.cssom');
     }
   });
 
+
   //
   // export names
   //
@@ -22855,6 +23208,7 @@ basis.require('basis.cssom');
       return createFieldTemplate(baseFieldTemplate, template)
     },
     FormContent: FormContent,
+    Form: Form,
     Field: Field,
     Validator: Validator,
     ValidatorError: ValidatorError,
@@ -22898,16 +23252,23 @@ basis.require('basis.dom.event');
  /**
   * @namespace basis.ui.scroller
   */
+
   var namespace = 'basis.ui.scroller';
+
 
   //
   // import names
   //
 
+  var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
   var EventObject = basis.EventObject;
-  var Class = basis.Class;
+
+
+  //
+  // Main part
+  //
 
   function getComputedStyle(element, styleProp){
     if (window.getComputedStyle)
@@ -22997,6 +23358,7 @@ basis.require('basis.dom.event');
 
   //class
   var Scroller = Class(EventObject, {
+    className: namespace + '.Scroller',
     /*minScrollDeltaX: 0,
     minScrollDeltaY: 0,*/
     minScrollDelta: 0,
@@ -23459,6 +23821,7 @@ basis.require('basis.dom.event');
     }
   });
 
+
   //
   // export names
   //
@@ -23491,6 +23854,10 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.html');
 basis.require('basis.cssom');
 
+//
+// TODO: migrate to new basis (remove behaviour, events and so on)
+//
+
 !function(basis){
 
   'use strict';
@@ -23498,52 +23865,61 @@ basis.require('basis.cssom');
  /**
   * @namespace basis.ui.toc
   */  
+
   var namespace = 'basis.ui.toc';
 
+
+  //
   // import names
+  //
     
   var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
-  var Template = basis.html.Template;
   var cssom = basis.cssom;
 
   var nsWrappers = basis.dom.wrapper;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+  var Modificator = basis.animation.Modificator;
 
+
+  //
+  // main part
+  //
 
  /**
   * @class
   */
-  var TocControlItemHeader = Class(nsWrappers.TmplNode, {
-    template: new Template(
-      '<div{element} class="TocControl-Item-Header">' +
+  var TocControlItemHeader = Class(UINode, {
+    className: namespace + '.TocControlItemHeader',
+    template:
+      '<div class="TocControl-Item-Header" event-click="scrollTo">' +
         '<span>{titleText}</span>' +
-      '</div>'
-    ),
-    titleGetter: Function.getter('data.title'),
-    behaviour: {
-      update: function(object, delta){
-        this.inherit(object, delta);
-        this.titleText.nodeValue = this.titleGetter(this) || '[no title]';
-      }
-    },
-    init: function(config){
-      this.inherit(config);
-      Event.addHandler(this.element, 'click', function(){
+      '</div>',
+
+    action: {
+      scrollTo: function(){
         if (this.owner && this.owner.parentNode)
           this.owner.parentNode.scrollToNode(this.owner);
+      }
+    },
 
-      }, this)
-    }
+    templateUpdate: function(tmpl, eventName, delta){
+      tmpl.titleText.nodeValue = this.titleGetter(this) || '[no title]';
+    },
+
+    titleGetter: Function.getter('data.title')
   });
 
-  var TocControlItem = Class(nsWrappers.TmplContainer, {
-    template: new Template(
-      '<div{element} class="TocControl-Item">' +
+  var TocControlItem = Class(UIContainer, {
+    className: namespace + '.TocControlItem',
+    template:
+      '<div class="TocControl-Item">' +
         '<span{header}/>' +
         '<div{content|childNodesElement} class="TocControl-Item-Content"/>' +
-      '</div>'
-    ),
+      '</div>',
+
     satelliteConfig: {
       header: {
         delegate: Function.$self,
@@ -23553,7 +23929,8 @@ basis.require('basis.cssom');
   });
 
   var MW_SUPPORTED = true;
-  var TocControlHeaderList = Class(nsWrappers.TmplContainer, {
+  var TocControlHeaderList = Class(UIContainer, {
+    className: namespace + '.TocControlHeaderList',
     behaviour: {
       click: function(event, node){
         if (node)
@@ -23588,11 +23965,11 @@ basis.require('basis.cssom');
   var TocControl = Class(nsWrappers.Control, {
     className: namespace + '.Control',
     childClass: TocControlItem,
-    template: new Template(
+    template:
       '<div{element} class="TocControl">' +
         '<div{content|childNodesElement} class="TocControl-Content"/>' +
-      '</div>'
-    ),
+      '</div>',
+
     behaviour: {
       childNodesModified: function(object, delta){
         this.recalc();
@@ -23646,7 +24023,7 @@ basis.require('basis.cssom');
         interval: 15
       });
       var self = this;
-      this.modificator = new basis.Animation.Modificator(this.thread, function(value){
+      this.modificator = new Modificator(this.thread, function(value){
         //console.log('set scrollTop ', self.content.scrollTop = parseInt(value));
         self.content.scrollTop = parseInt(value);
         self.recalc();
@@ -23792,6 +24169,11 @@ basis.require('basis.cssom');
     }
   });
 
+
+  //
+  // export names
+  //
+
   basis.namespace(namespace).extend({
     Control: TocControl,
     ControlItem: TocControlItem,
@@ -23827,12 +24209,15 @@ basis.require('basis.dragdrop');
 !function(basis){
 
  /**
-  * @namespace basis.ui
+  * @namespace basis.ui.slider
   */ 
   
   var namespace = 'basis.ui.slider';
 
+
+  //
   // import names
+  //
 
   var DOM = basis.dom;
   var Event = basis.dom.event;
@@ -23840,20 +24225,20 @@ basis.require('basis.dragdrop');
   var createEvent = basis.EventObject.createEvent;
   var classList = basis.cssom.classList;
 
-  var nsWrapper = basis.dom.wrapper;
-
-  var Template = basis.html.Template;
   var DragDropElement = basis.dragdrop.DragDropElement;
   var Box = basis.layout.Box;
+  var UINode = basis.ui.Node;
+  var UIContainer = basis.ui.Container;
+
+
+  //
+  // main part
+  //
 
   var KEY_PLUS = 187;      // +
   var KEY_KP_PLUS = 107;   // KEYPAD +
   var KEY_MINUS = 189;     // -
   var KEY_KP_MINUS = 109;  // KEYPAD -
-
-  //
-  // main part
-  //
 
   function percent(value){
     return (100 * value).toFixed(4) + '%';
@@ -23870,7 +24255,7 @@ basis.require('basis.dragdrop');
  /**
   * @class
   */
-  var Mark = nsWrapper.TmplNode.subclass({
+  var Mark = UINode.subclass({
     className: namespace + '.Slider.Mark',
 
     pos: 0,
@@ -23886,7 +24271,7 @@ basis.require('basis.dragdrop');
       '</div>',
 
     init: function(config){
-      nsWrapper.TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
       DOM.setStyle(this.element, {
         left: (100 * this.pos) + '%',
         width: (100 * this.width) + '%'
@@ -23905,7 +24290,7 @@ basis.require('basis.dragdrop');
  /**
   * @class
   */
-  var MarkLayer = nsWrapper.TmplContainer.subclass({
+  var MarkLayer = UIContainer.subclass({
     className: namespace + '.Slider.MarkLayer',
 
     template: 
@@ -23919,7 +24304,7 @@ basis.require('basis.dragdrop');
     marks: null,
 
     init: function(config){
-      nsWrapper.TmplContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
       this.apply();
     },
 
@@ -24020,7 +24405,7 @@ basis.require('basis.dragdrop');
  /**
   * @class
   */
-  var Slider = nsWrapper.TmplNode.subclass({
+  var Slider = UINode.subclass({
     className: namespace + '.Slider',
 
     event_change: createEvent('change'),
@@ -24061,7 +24446,8 @@ basis.require('basis.dragdrop');
 
     satelliteConfig: {
       marks: {
-        instanceOf: nsWrapper.TmplContainer.subclass({
+        instanceOf: UIContainer.subclass({
+          className: namespace + '.MarkLayers',
           template: '<div class="Basis-Slider-MarkLayers"/>',
           childClass: MarkLayer
         })
@@ -24081,7 +24467,7 @@ basis.require('basis.dragdrop');
       this.value_ = 0;
 
       // inherit
-      nsWrapper.TmplNode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this, config);
 
       // set properties
       this.setProperties(this.min, this.max, step);
@@ -24187,11 +24573,14 @@ basis.require('basis.dragdrop');
       this.scrollbarDD.destroy();
       this.scrollbarDD = null;
 
-      nsWrapper.TmplNode.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
     }
   });
 
+
+  //
   // export names
+  //
 
   Object.extend(Slider, {
     MarkLayer: MarkLayer,
@@ -24203,7 +24592,6 @@ basis.require('basis.dragdrop');
   });
 
 }(basis);
-
 
 //
 // src/basis/ui/resizer.js
@@ -24229,6 +24617,7 @@ basis.require('basis.dragdrop');
 basis.require('basis.dom');
 basis.require('basis.cssom');
 basis.require('basis.dragdrop');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -24237,15 +24626,22 @@ basis.require('basis.dragdrop');
  /**
   * @namespace basis.ui.resizer
   */
+
   var namespace = 'basis.ui.resizer';
+
+
+  //
+  // import names
+  //
 
   var DOM = basis.dom;
   var cssom = basis.cssom;
   var classList = basis.cssom.classList;
   var DragDropElement = basis.dragdrop.DragDropElement;
 
+
   //
-  // Resizer
+  // main part
   //
 
   function getComputedStyle(element, styleProp){
@@ -24373,6 +24769,7 @@ basis.require('basis.dragdrop');
     }
   }});
 
+
   //
   // export names
   //
@@ -24407,6 +24804,7 @@ basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 !function(basis){
 
@@ -24416,9 +24814,12 @@ basis.require('basis.cssom');
   * @namespace basis.ui.paginator
   */ 
   
+
   var namespace = 'basis.ui.paginator';
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -24427,7 +24828,11 @@ basis.require('basis.cssom');
   var createEvent = basis.EventObject.createEvent;
   var classList = basis.cssom.classList;
 
-  var nsWrapper = basis.dom.wrapper;
+  var Box = basis.layout.Box;
+  var DragDropElement = basis.dragdrop.DragDropElement;
+  var UIControl = basis.ui.Control;
+  var UINode = basis.ui.Node;
+
 
   //
   // main part
@@ -24449,7 +24854,7 @@ basis.require('basis.cssom');
   * Base child node class for Paginator
   * @class
   */
-  var PaginatorNode = nsWrapper.TmplNode.subclass({
+  var PaginatorNode = UINode.subclass({
     className: namespace + '.PaginatorNode',
 
     pageGetter: Function.getter('data.pageNumber'),
@@ -24476,7 +24881,7 @@ basis.require('basis.cssom');
     },
 
     event_update: function(object, delta){
-      nsWrapper.TmplNode.prototype.event_update.call(this, object, delta);
+      UINode.prototype.event_update.call(this, object, delta);
 
       var page = this.pageGetter(this);
       this.tmpl.pageNumber.nodeValue = page + 1;
@@ -24506,7 +24911,7 @@ basis.require('basis.cssom');
   * Paginator
   * @class
   */
-  var Paginator = nsWrapper.Control.subclass({
+  var Paginator = UIControl.subclass({
     className: namespace + '.Paginator',
 
     childClass: PaginatorNode,
@@ -24529,7 +24934,7 @@ basis.require('basis.cssom');
     action: {
       jumpTo: function(actionName, event, node){
         var scrollbar = this.tmpl.scrollbar;
-        var pos = (Event.mouseX(event) - (new basis.Layout.Box(scrollbar)).left) / scrollbar.offsetWidth;
+        var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
         this.setSpanStartPage(Math.floor(pos * this.pageCount_) - Math.floor(this.pageSpan_ / 2));
       },
       scroll: function(event){
@@ -24548,12 +24953,12 @@ basis.require('basis.cssom');
     spanStartPage_: -1,
 
     init: function(config){
-      nsWrapper.Control.prototype.init.call(this, config);
+      UIControl.prototype.init.call(this, config);
 
       this.setProperties(config.pageCount || 0, config.pageSpan);
       this.setActivePage(Math.max(config.activePage - 1, 0), true);
 
-      this.scrollbarDD = new basis.DragDrop.DragDropElement({
+      this.scrollbarDD = new DragDropElement({
         element: this.tmpl.scrollTrumb,
         handler: DRAGDROP_HANDLER,
         handlerContext: this
@@ -24646,7 +25051,7 @@ basis.require('basis.cssom');
       this.scrollbarDD.destroy();
       this.scrollbarDD = null;
 
-      nsWrapper.Control.prototype.destroy.call(this);
+      UIControl.prototype.destroy.call(this);
     }
   });
 
@@ -24679,6 +25084,7 @@ basis.require('basis.cssom');
 
 basis.require('basis.dom');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 basis.require('basis.ui.tabs');
 basis.require('basis.ui.scroller');
 
@@ -24692,6 +25098,7 @@ basis.require('basis.ui.scroller');
 
   var namespace = 'basis.ui.pageslider';
 
+
   //
   // import names
   //
@@ -24703,11 +25110,18 @@ basis.require('basis.ui.scroller');
   var Scroller = basis.ui.scroller.Scroller;
 
   var classList = basis.cssom.classList;
+
+
+  //
+  // main part
+  //
   
  /**
   * @class
   */
   var PageSlider = Class(PageControl, {
+    className: namespace + '.PageSlider',
+
     template: 
       '<div class="Basis-PageControl Basis-PageSlider">' +
         '<div/>' +
@@ -24805,6 +25219,11 @@ basis.require('basis.ui.scroller');
     }
   });
 
+
+  //
+  // export names
+  //
+
   basis.namespace(namespace).extend({
     PageSlider: PageSlider
   });
@@ -24826,22 +25245,26 @@ basis.require('basis.ui.scroller');
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom.wrapper');
+basis.require('basis.ui');
 
-!function(){ 
+!function(basis){ 
 
   'use strict';
   
  /**
   * @namespace basis.format.highlight
   */
+
   var namespace = 'basis.format.highlight';
+
 
   //
   // import names
   //
 
-  var TmplNode = basis.dom.wrapper.TmplNode;
+  var Class = basis.Class;
+  var UINode = basis.ui.Node;
+
 
   //
   // Main part
@@ -25033,7 +25456,7 @@ basis.require('basis.dom.wrapper');
  /**
   * @class
   */
-  var SourceCodeNode = basis.Class(TmplNode, {
+  var SourceCodeNode = Class(UINode, {
     className: namespace + '.SourceCodeNode',
 
     template:
@@ -25064,7 +25487,7 @@ basis.require('basis.dom.wrapper');
     SourceCodeNode: SourceCodeNode
   });
 
-}();
+}(basis);
 
 
 //
@@ -25091,11 +25514,13 @@ basis.require('basis.dom.wrapper');
   basis.require('basis.session');
   basis.require('basis.net.ajax');
   basis.require('basis.net.soap');
+  basis.require('basis.ui');
   basis.require('basis.ui.button');
   basis.require('basis.ui.label');
   basis.require('basis.ui.tree');
   basis.require('basis.ui.popup');
   basis.require('basis.ui.table');
+  basis.require('basis.ui.scrolltable');
   basis.require('basis.ui.window');
   basis.require('basis.ui.tabs');
   basis.require('basis.ui.calendar');

@@ -26,7 +26,9 @@ basis.require('basis.dragdrop');
   var namespace = 'basis.ui.slider';
 
 
+  //
   // import names
+  //
 
   var DOM = basis.dom;
   var Event = basis.dom.event;
@@ -386,7 +388,10 @@ basis.require('basis.dragdrop');
     }
   });
 
+
+  //
   // export names
+  //
 
   Object.extend(Slider, {
     MarkLayer: MarkLayer,

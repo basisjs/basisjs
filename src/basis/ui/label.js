@@ -25,7 +25,9 @@ basis.require('basis.ui');
 
   var namespace = 'basis.ui.label';
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -38,8 +40,9 @@ basis.require('basis.ui');
 
   var UINode = basis.ui.Node;
 
+
   //
-  // Main part
+  // main part
   //
 
   var stateTemplate = new Template(
@@ -309,6 +312,7 @@ basis.require('basis.ui');
     },
     content: 'Empty'
   })
+
 
   //
   // export names

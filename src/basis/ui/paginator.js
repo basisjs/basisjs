@@ -28,9 +28,12 @@ basis.require('basis.ui');
   * @namespace basis.ui.paginator
   */ 
   
+
   var namespace = 'basis.ui.paginator';
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -39,8 +42,11 @@ basis.require('basis.ui');
   var createEvent = basis.EventObject.createEvent;
   var classList = basis.cssom.classList;
 
+  var Box = basis.layout.Box;
+  var DragDropElement = basis.dragdrop.DragDropElement;
   var UIControl = basis.ui.Control;
   var UINode = basis.ui.Node;
+
 
   //
   // main part
@@ -142,7 +148,7 @@ basis.require('basis.ui');
     action: {
       jumpTo: function(actionName, event, node){
         var scrollbar = this.tmpl.scrollbar;
-        var pos = (Event.mouseX(event) - (new basis.Layout.Box(scrollbar)).left) / scrollbar.offsetWidth;
+        var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
         this.setSpanStartPage(Math.floor(pos * this.pageCount_) - Math.floor(this.pageSpan_ / 2));
       },
       scroll: function(event){
@@ -166,7 +172,7 @@ basis.require('basis.ui');
       this.setProperties(config.pageCount || 0, config.pageSpan);
       this.setActivePage(Math.max(config.activePage - 1, 0), true);
 
-      this.scrollbarDD = new basis.DragDrop.DragDropElement({
+      this.scrollbarDD = new DragDropElement({
         element: this.tmpl.scrollTrumb,
         handler: DRAGDROP_HANDLER,
         handlerContext: this

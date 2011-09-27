@@ -64,7 +64,7 @@ basis.require('basis.ui');
 
 
   //
-  // Main part
+  // main part
   //
 
   function expand(node){
@@ -297,6 +297,7 @@ basis.require('basis.ui');
       '<ul class="Basis-Tree"/>'
   });
 
+
   //
   // export names
   //
@@ -312,6 +313,5 @@ basis.require('basis.ui');
     GroupingNode: GroupingNode,
     PartitionNode: PartitionNode
   });
-
 
 }(basis);

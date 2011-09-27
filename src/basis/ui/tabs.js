@@ -26,7 +26,9 @@ basis.require('basis.ui');
   var namespace = 'basis.ui.tabs';
 
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -41,7 +43,7 @@ basis.require('basis.ui');
 
 
   //
-  //  behaviour handlers
+  // main part
   //
 
   function baseSelectHandler(child){
@@ -58,10 +60,6 @@ basis.require('basis.ui');
         node.select();
     }
   }
-
-  //
-  //  Pages Controls prototype
-  //
 
  /**
   * @class
@@ -96,8 +94,9 @@ basis.require('basis.ui');
     }
   });
 
+
   //
-  // Tab node
+  // Tab
   //
 
   function tabCaptionFormat(value){ 
@@ -164,10 +163,10 @@ basis.require('basis.ui');
     groupId: 0
   });
 
+
   //
   // Tabs control
   //
-
 
  /**
   * @class
@@ -194,8 +193,9 @@ basis.require('basis.ui');
       '</div>'
   });
 
+
   //
-  //  Page Node
+  // Page Node
   //
 
  /**
@@ -219,8 +219,9 @@ basis.require('basis.ui');
       '</div>'
   });
 
+
   //
-  //  Page Control
+  // Page Control
   //
 
  /**
@@ -235,8 +236,9 @@ basis.require('basis.ui');
       '<div class="Basis-PageControl"/>'
   });
 
+
   //
-  //  TabSheet Node
+  // TabSheet Node
   //
 
  /**
@@ -280,6 +282,7 @@ basis.require('basis.ui');
     }
   });
 
+
   //
   // AccordionControl
   //
@@ -297,6 +300,7 @@ basis.require('basis.ui');
         '<div{content|childNodesElement} class="Basis-AccordionControl-Content"/>' +
       '</div>'
   });
+
 
   //
   //  TabSheetControl
@@ -348,8 +352,9 @@ basis.require('basis.ui');
     }
   });
 
+
   //
-  // 
+  // export names
   //
 
   basis.namespace(namespace).extend({

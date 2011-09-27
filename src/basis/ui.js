@@ -417,9 +417,7 @@ basis.require('basis.html');
     selection: {},
 
    /**
-    * @param {Object} config
-    * @config {Object|boolean|basis.dom.wrapper.Selection} selection
-    * @constructor
+    * @inheritDoc
     */
     init: function(config){
       // make document link to itself

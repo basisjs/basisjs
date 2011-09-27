@@ -24,6 +24,7 @@
   basis.require('basis.ui.tree');
   basis.require('basis.ui.popup');
   basis.require('basis.ui.table');
+  basis.require('basis.ui.scrolltable');
   basis.require('basis.ui.window');
   basis.require('basis.ui.tabs');
   basis.require('basis.ui.calendar');

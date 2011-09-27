@@ -25,6 +25,7 @@ basis.require('basis.ui');
 
   var namespace = 'basis.ui.popup';
 
+
   // import names
 
   var Class = basis.Class;
@@ -47,8 +48,9 @@ basis.require('basis.ui');
   var UIPartitionNode = basis.ui.PartitionNode;
   var UIGroupingNode = basis.ui.GroupingNode;
 
+
   //
-  // CONST
+  // main part
   //
 
   var LEFT = 'LEFT';
@@ -354,7 +356,7 @@ basis.require('basis.ui');
         classList(this.element).remove('pre-transition');
         DOM.visibility(this.element, false);
 
-        PopupManager.appendChild(this);
+        popupManager.appendChild(this);
 
         // dispatch `beforeShow` event, there we can fill popup with content
         this.event_beforeShow();
@@ -394,14 +396,14 @@ basis.require('basis.ui');
         // set visible flag to FALSE
         this.visible = false;
         if (this.parentNode)
-          PopupManager.removeChild(this);
+          popupManager.removeChild(this);
 
         // dispatch event
         this.event_hide();
       }
     },
     hideAll: function(){
-      PopupManager.clear();
+      popupManager.clear();
     },
     destroy: function(){
       if (this.thread)
@@ -572,11 +574,11 @@ basis.require('basis.ui');
   //  Popup manager
   //
 
-  // NOTE: PopupManager adds global event handlers dynamicaly because click event
+  // NOTE: popupManager adds global event handlers dynamicaly because click event
   // that makes popup visible can also hide it (as click outside of popup).
 
-  var PopupManagerClass = Class(UIControl, {
-    className: namespace + '.PopupManager',
+  var popupManager = new UIControl({
+    id: 'Basis-PopupStack',
 
     handheldMode: false,
 
@@ -718,17 +720,13 @@ basis.require('basis.ui');
     }
   });
 
-  var PopupManager = new PopupManagerClass({
-    id: 'Basis-PopupStack'
-  });
-
   Event.onLoad(function(){
-    DOM.insert(document.body, PopupManager.element, DOM.INSERT_BEGIN);
-    PopupManager.realignAll();
+    DOM.insert(document.body, popupManager.element, DOM.INSERT_BEGIN);
+    popupManager.realignAll();
   });
 
   function setHandheldMode(mode){
-    PopupManager.handheldMode = !!mode;
+    popupManager.handheldMode = !!mode;
   }
 
   //

@@ -29,7 +29,9 @@ basis.require('basis.ui');
 
   var namespace = 'basis.ui.form';
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var Event = basis.dom.event;
@@ -53,8 +55,9 @@ basis.require('basis.ui');
 
   var createEvent = EventObject.createEvent;
 
+
   //
-  // Main part
+  // main part
   //
 
   var baseFieldTemplate = new Template(
@@ -1450,6 +1453,7 @@ basis.require('basis.ui');
     }
   });
 
+
   //
   // export names
   //
@@ -1459,6 +1463,7 @@ basis.require('basis.ui');
       return createFieldTemplate(baseFieldTemplate, template)
     },
     FormContent: FormContent,
+    Form: Form,
     Field: Field,
     Validator: Validator,
     ValidatorError: ValidatorError,

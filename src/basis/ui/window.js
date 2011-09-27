@@ -47,7 +47,7 @@ basis.require('basis.ui.button');
 
 
   //
-  // Main part
+  // main part
   //
 
  /**
