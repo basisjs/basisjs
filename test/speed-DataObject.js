@@ -1,5 +1,9 @@
 
-  Basis.Event.onLoad(function(){
+  basis.dom.event.onLoad(function(){
+
+    var createElement = basis.dom.createElement;
+    var DOM = basis.dom;
+    var DataObject = basis.data.DataObject;
 
     var TEST_COUNT = 5;
     var INNER_TEST_COUNT = 10000;
@@ -28,10 +32,10 @@
       stat.total += res;
       stat.count += 1;
 
-      output.appendChild(Basis.DOM.createElement(
+      output.appendChild(createElement(
         'DIV',
         name + ' x ' + count + ': ', 
-        Basis.DOM.createElement('B', res),
+        createElement('B', res),
         ' ms'
       ));
     }
@@ -43,14 +47,14 @@
       var x = [];
 
       speedTest('Create with no config', INNER_TEST_COUNT, function(){
-        x.push(new Basis.Data.DataObject);
+        x.push(new DataObject);
       });
    
       // Test #2
 
       speedTest('Create with data', 1, function(){
         for (var i = 0; i < INNER_TEST_COUNT; i++)
-          x.push(new Basis.Data.DataObject({
+          x.push(new DataObject({
             data: {
               a: 1,
               b: 2,
@@ -69,8 +73,8 @@
       // Test #3
 
       speedTest('Create with delegate', INNER_TEST_COUNT, function(){
-        var delegate = new Basis.Data.DataObject;
-        x.push(new Basis.Data.DataObject({
+        var delegate = new DataObject;
+        x.push(new DataObject({
           data: {
             a: 1,
             b: 2,
@@ -90,8 +94,8 @@
 
       // Test #4
 
-      var a = new Basis.Data.DataObject();
-      var b = new Basis.Data.DataObject({
+      var a = new DataObject();
+      var b = new DataObject({
         data: {
           a: 1,
           b: 2,
@@ -107,7 +111,7 @@
 
       // Test #4
 
-      var c = new Basis.Data.DataObject({
+      var c = new DataObject({
         data: {
           f: 6,
           k: 7,
@@ -116,7 +120,7 @@
           n: 0
         }
       });
-      var d = new Basis.Data.DataObject({
+      var d = new DataObject({
         data: {
           a: 1,
           b: 2,
@@ -130,7 +134,7 @@
         c.setDelegate();
       });
 
-      output.appendChild(Basis.DOM.createElement('hr'));
+      output.appendChild(createElement('hr'));
 
       if (TEST_COUNT-- > 1)
         setTimeout(arguments.callee, 20);
@@ -141,26 +145,26 @@
         Object.values(funcs).sortAsObject('guid').forEach(function(item){
           total += item.total;
           cnt++;
-          output.appendChild(Basis.DOM.createElement(
+          output.appendChild(createElement(
             'DIV',
             item.name + ' x ' + item.count + ': ',
-            Basis.DOM.createElement('B.total', parseInt(item.total/item.count)),
+            createElement('B.total', parseInt(item.total/item.count)),
             ' ms'
           ))
         });
 
-        output.appendChild(Basis.DOM.createElement('hr'));
-        output.appendChild(Basis.DOM.createElement(
+        output.appendChild(createElement('hr'));
+        output.appendChild(createElement(
           'DIV',
           'Total score: ',
-          Basis.DOM.createElement('B.total', parseInt(total/cnt)),
+          createElement('B.total', parseInt(total/cnt)),
           ' ms'
         ));
       }
 
     };
 
-    Basis.DOM.insert(document.body, Basis.DOM.createElement({
+    DOM.insert(document.body, createElement({
       description: 'BUTTON',
       click: function(){
         runTest();

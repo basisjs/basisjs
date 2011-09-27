@@ -83,11 +83,8 @@
   <![endif]-->
 
 
-  <script type="text/javascript"  src="../basis.js"></script>
-  <script type="text/javascript"  src="../data.js"></script>
-  <script type="text/javascript"  src="../dom_wrapper.js"></script>
-  <script type="text/javascript"  src="../tree.js"></script>
-  <script type="text/javascript"  src="../plugins/generator.js"></script>
+  <script type="text/javascript"  src="../basis-all.js"></script>
+  <script type="text/javascript"  src="../src/basis/data/generator.js"></script>
 </head>
 
 <body>
@@ -136,23 +133,18 @@
     if (typeof console == 'undefined')
       console = { log: Function.$null, warn: Function.$null, dir: Function.$null };
 
-
-    with(Basis.Controls.Tree.names('Tree TreeNode TreeFolder'))
-
     (function(){
 
-      var DOM = Basis.DOM;
-      var Data = Basis.Data;
-      var Event = Basis.Event;
-      var cssClass = Basis.CSS.cssClass;
+      var DOM = basis.dom;
+      var Data = basis.data;
+      var Event = basis.dom.event;
+      var cssClass = basis.cssom.cssClass;
 
-      var gString = Basis.Data.Generator.String;
+      var gString = basis.data.generator.String;
 
-      var nsTree = Basis.Controls.Tree;
-
-      var Tree = nsTree.Tree;
-      var TreeNode = nsTree.TreeNode;
-      var TreeFolder = nsTree.TreeFolder;
+      var Tree = basis.ui.tree.Tree;
+      var TreeNode = basis.ui.tree.Node;
+      var TreeFolder = basis.ui.tree.Folder;
 
       function setNodeCount(value){
         DOM.get('nodeCount').value = value;

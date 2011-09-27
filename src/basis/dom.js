@@ -671,7 +671,7 @@ basis.require('basis.ua');
           if (typeof config[event] == 'function')
             basis.dom.event.addHandler(element, event, config[event], element);
           else
-            if (config[event] instanceof Event.Handler)
+            if (config[event] instanceof basis.dom.event.Handler)
               basis.dom.event.addHandler(element, event, config[event].handler, config[event].thisObject);
       }
     }
