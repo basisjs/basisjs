@@ -1226,7 +1226,7 @@ basis.require('basis.html');
 
       // add to group
       // NOTE: we need insert into group here, because we create fake refChild if refChild doesn't exist
-      if (currentNewChildGroup !== group)
+      if (currentNewChildGroup != group)
         group.insert(newChild, refChild);
       
       // insert

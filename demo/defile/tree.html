@@ -42,10 +42,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -63,9 +60,12 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.ui.tree');
     
     // make shortcut
-    var nsTree = Basis.Controls.Tree;
+    var dom = basis.dom;
+    var nsTree = basis.ui.tree;
 
     // data for tree
     var data = [
@@ -98,7 +98,7 @@
     // create a tree
     new nsTree.Tree({
       id: 'DemoTree',
-      container: Basis.DOM.get('demo-container'),
+      container: dom.get('demo-container'),
       localSorting: Function.getter('title'),
       localSortingDesc: true,
       localGrouping: {
@@ -107,9 +107,9 @@
       },
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(config);
+          return new nsTree.Folder(config);
         else
-          return new nsTree.TreeNode(config);
+          return new nsTree.Node(config);
       },
       childNodes: data
     });

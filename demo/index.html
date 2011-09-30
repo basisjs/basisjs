@@ -122,7 +122,8 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../basis-all.js"></script>
+  <script type="text/javascript" src="../src/basis.js"></script>
+  <script type="text/javascript" src="../src/package/all.js"></script>
 </head>
 
 <body>
@@ -137,6 +138,7 @@
       var nsWrappers = basis.dom.wrapper;
       var nsTree = basis.ui.tree;
       var Template = basis.html.Template;
+      var UIContainer = basis.ui.Container;
 
       var data = [
         {
@@ -214,13 +216,11 @@
         }
       ];
 
-      treeDemos = new nsWrappers.TmplContainer({
+      var treeDemos = new UIContainer({
         id: 'DemoList',
         container: document.body,
         template: 
-          '<ul{element}>' +
-            '<!-- {childNodesHere} -->' +
-          '</ul>',
+          '<ul/>',
 
         childClass: {
           className: 'Demo-TreeNode',
@@ -239,30 +239,22 @@
           }
         },
         localGrouping: {
-          childClass: Class(nsWrappers.TmplPartitionNode, {
-            template: new Template(
+          childClass: {
+            template: 
               '<li{element} class="Demo-Group">' +
                 '<div class="Demo-Group-Title"><span>{titleText}</span></div>' +
                 '<ul{childNodesElement} class="Demo-Group-Content"/>' +
               '</li>'
-            )
-          }),
-          //localSorting: function(node){ return node.data.title },
-          groupGetter: Function.getter('data.groupId')/*,
-          //localGroupingClass: nsTree.TreeGroupingNode,
-          localGrouping: {
-            childClass: nsTree.TreePartitionNode,
-            groupGetter: function(x){
-              return x.data.title.length > 4;
-            },
-            localGrouping: {
-              
-            }
-          }*/
+          },
+          groupGetter: Function.getter('data.groupId')
         },
         childNodes: data.map(function(section){
           return section.demos.map(function(demo, idx, array){
-            return { data: Object.extend(demo, { groupId: this.title }) };
+            return {
+              data: Object.extend(demo, {
+                groupId: this.title
+              })
+            };
           }, section);
         }).flatten()
       });

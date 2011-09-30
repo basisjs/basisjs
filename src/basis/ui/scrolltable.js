@@ -21,10 +21,10 @@ basis.require('basis.ui.table');
 !function(basis){
 
  /**
-  * @namespace basis.Controls.Table
+  * @namespace basis.ui.scrolltable
   */
 
-  var namespace = 'basis.Controls.Table';
+  var namespace = 'basis.ui.scrolltable';
 
 
   //

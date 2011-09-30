@@ -55,15 +55,8 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../popup.js"></script>
-  <script type="text/javascript" src="../../form.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
-
+  <script type="text/javascript" src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../../src/basis/ui/form.js"></script>
   <script type="text/javascript" src="../../locale/en/form.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -82,6 +75,14 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+
+    basis.require('basis.dom');
+    basis.require('basis.dom.event');
+    basis.require('basis.data');
+    basis.require('basis.ui.popup');
+    basis.require('basis.ui.form');
+    basis.require('basis.ui.button');
+
     
     // import names
     var getter = Function.getter;

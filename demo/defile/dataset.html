@@ -123,6 +123,7 @@
 
 
   <script type="text/javascript" src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../../src/package/all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -148,6 +149,7 @@
     var nsData = basis.require('basis.data');
     var nsWrapper = basis.require('basis.dom.wrapper');
     var Menu = basis.require('basis.ui.popup').Menu;
+    var UIContainer = basis.ui.Container;
 
     var getter = Function.getter;
 
@@ -199,7 +201,7 @@
     //
     // Custom classes & instances
     //
-    var DatasetViewer = nsWrapper.TmplContainer.subclass(nsWrapper(
+    var DatasetViewer = UIContainer.subclass(nsWrapper(
       '<div class="DemoBlock">' +
         '<span{content}/>' +
         '<!-- {childNodesHere} -->' +
@@ -215,7 +217,7 @@
       }
     ));
 
-    var EditableDatasetViewer = nsWrapper.TmplContainer.subclass(nsWrapper(
+    var EditableDatasetViewer = UIContainer.subclass(nsWrapper(
       '<div class="DemoBlock">' +
         '<!-- {childNodesHere} -->' +
         '<button event-click="add">add</button>' +
@@ -367,7 +369,7 @@
         rule: Function.getter('data.value % 2 ? "odd" : "even"'),
         source: A
       }),
-      childClass: nsWrapper.TmplContainer.subclass(
+      childClass: UIContainer.subclass(
         nsWrapper.simpleTemplate(
           '<span class="dsitem">' +
             '{this_data_title}' +
@@ -376,7 +378,7 @@
           childClass: DatasetViewer.prototype.childClass,
           init: function(config){
             this.dataSource = this.delegate;
-            nsWrapper.TmplContainer.prototype.init.call(this, config);
+            UIContainer.prototype.init.call(this, config);
           }
         }
       )

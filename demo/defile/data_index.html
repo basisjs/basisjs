@@ -71,15 +71,6 @@
 
 
   <script type="text/javascript" src="../../src/basis.js"></script>
-<!--  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../data_index.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../table.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../dragdrop.js"></script>
-  <script type="text/javascript" src="../../plugins/slider.js"></script>-->
 
   <script type="text/javascript" src="../seedrandom.js"></script>
 
@@ -101,16 +92,27 @@
 
   <script type="text/javascript" id="demo-javascript">
 
-    // import names
-    var DOM = basis.require('basis.dom');
-    var nsData = basis.require('basis.data');
-    var nsWrapper = basis.require('basis.dom.wrapper');
-    var nsDataIndex = basis.require('basis.data.index');
+    basis.require('basis.dom');
+    basis.require('basis.data');
+    basis.require('basis.dom.wrapper');
+    basis.require('basis.data.index');
+    basis.require('basis.ui.button');
+    basis.require('basis.ui.table');
+    basis.require('basis.ui.slider');
 
-    var ButtonPanel = basis.require('basis.ui.button').ButtonPanel;
-    var Table = basis.require('basis.ui.table').Table;
-    var Slider = basis.require('basis.ui.slider').Slider;
+    // import names
+    var DOM = basis.dom;
+    var nsData = basis.data;
+    var nsWrapper = basis.dom.wrapper;
+    var nsDataIndex = basis.data.index;
+
     var getter = Function.getter;
+    var ButtonPanel = basis.ui.button.ButtonPanel;
+    var Table = basis.ui.table.Table;
+    var Slider = basis.ui.slider.Slider;
+
+    var UINode = basis.ui.Node;
+    var UIContainer = basis.ui.Container;
 
     var seed = 0;
     Math.seedrandom("basis");
@@ -165,7 +167,7 @@
       }
     });
 
-    var statPanelClass = new nsWrapper.TmplNode.subclass({
+    var statPanelClass = new UINode.subclass({
       container: DOM.get('demo-container'),
       data: Object.slice(indexMap.stat),
       templateUpdate: function(tmpl, eventName, delta){
@@ -310,7 +312,7 @@
       }
     });
 
-    var recordPanel = new nsWrapper.TmplContainer({
+    var recordPanel = new UIContainer({
       container: DOM.get('demo-container'),
       id: 'RecordPanel',
       handler: {

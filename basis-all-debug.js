@@ -8128,7 +8128,7 @@ basis.require('basis.html');
 
       // add to group
       // NOTE: we need insert into group here, because we create fake refChild if refChild doesn't exist
-      if (currentNewChildGroup !== group)
+      if (currentNewChildGroup != group)
         group.insert(newChild, refChild);
       
       // insert
@@ -19736,10 +19736,10 @@ basis.require('basis.ui.table');
 !function(basis){
 
  /**
-  * @namespace basis.Controls.Table
+  * @namespace basis.ui.scrolltable
   */
 
-  var namespace = 'basis.Controls.Table';
+  var namespace = 'basis.ui.scrolltable';
 
 
   //
@@ -20559,12 +20559,6 @@ basis.require('basis.ui');
       if (this.document)
         this.document.event_childEnabled(this.document, this);
     },
-    event_update: function(node, delta){
-      UIContainer.prototype.event_update.call(this, node, delta);
-
-      // set new title
-      this.tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
-    },
 
     template: 
       '<div{element|selected} class="Basis-Tab" event-click="select">' +
@@ -20577,6 +20571,11 @@ basis.require('basis.ui');
         '<span class="Basis-Tab-End"/>' +
       '</div>' +
       '<div{content}/>',
+
+    templateUpdate: function(tmpl, eventName, delta){
+      // set new title
+      this.tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
+    },
     
     action: {
       select: function(){
@@ -20621,7 +20620,7 @@ basis.require('basis.ui');
     },
 
     template: 
-      '<div{element} class="Basis-TabControl">' +
+      '<div class="Basis-TabControl">' +
         '<div class="Basis-TabControl-Start"/>' +
         '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +
         '<div class="Basis-TabControl-End"/>' +
@@ -20731,7 +20730,7 @@ basis.require('basis.ui');
     childClass: TabSheet,
     
     template: 
-      '<div{element} class="Basis-AccordionControl">' +
+      '<div class="Basis-AccordionControl">' +
         '<div{content|childNodesElement} class="Basis-AccordionControl-Content"/>' +
       '</div>'
   });
@@ -20750,7 +20749,7 @@ basis.require('basis.ui');
     childClass: TabSheet,
     
     template: 
-      '<div{element} class="Basis-TabSheetControl">' +
+      '<div class="Basis-TabSheetControl">' +
         '<div{tabsElement} class="Basis-TabControl">' +
           '<div class="Basis-TabControl-Start"/>' +
           '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +

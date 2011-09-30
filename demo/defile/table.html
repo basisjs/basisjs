@@ -53,11 +53,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../date.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../table.js"></script>
+  <script type="text/javascript" src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -75,15 +71,20 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+
+    basis.require('basis.dom');
+    basis.require('basis.date');
+    basis.require('basis.ui.table');
     
     // import names
-    var DOM = basis.dom;
-    var Event = basis.dom.event;
-    var Data = basis.data;
 
     var getter = Function.getter;
-
+    var DOM = basis.dom;
     var Table = basis.ui.table.Table;
+
+    //
+    // Main part
+    //
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
@@ -131,18 +132,17 @@
       }
     });
 
-    var table = new Table({
+    new Table({
+      container: createBlock('table'),
       structure: [
-        { header: 'Company', body: Function.getter('data.title') },
-        { header: 'Price', body: Function.getter('data.price', '${0:.2}') },
+        { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
+        { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price') },
         { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
         { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
         { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
       ],
-
-      childNodes: data,
-      container: createBlock('table')
-    }) 
+      childNodes: data
+    }); 
 
   </script>
 </body>

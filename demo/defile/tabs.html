@@ -58,10 +58,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../tabs.js"></script>
+  <script type="text/javascript" src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -79,15 +76,20 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+
+    basis.require('basis.dom');
+    basis.require('basis.cssom');
+    basis.require('basis.ui.tabs');
     
     // import names
-    var DOM = Basis.DOM;
-    var Event = Basis.Event;
-    var Data = Basis.Data;
-
-    var Tabs = Basis.Controls.Tabs;
-
+    var DOM = basis.dom;
+    var cssom = basis.cssom;
+    var Tabs = basis.ui.tabs;
     var getter = Function.getter;
+
+    //
+    // Main part
+    //
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
@@ -104,19 +106,16 @@
       { data: { title: 'tab7' }, groupId: 3, content: 'content 7' }
     ];
 
-    //
-    // Main part
-    //
 
     // AccordionControl
     new Tabs.AccordionControl({
-      container: DOM.Style.setStyle(createBlock('AccordionControl'), { 'float': 'right', width: '250px' }),
+      container: cssom.setStyle(createBlock('AccordionControl'), { 'float': 'right', width: '250px' }),
       childNodes: data
     });
 
     // AccordionControl with sorting & grouping
     new Tabs.AccordionControl({
-      container: DOM.Style.setStyle(createBlock('AccordionControl with localSorting & localGrouping'), { 'float': 'right', width: '250px' }),
+      container: cssom.setStyle(createBlock('AccordionControl with localSorting & localGrouping'), { 'float': 'right', width: '250px' }),
       localGrouping: {
         groupGetter: getter('groupId'),
         localSorting: getter('data.title')
