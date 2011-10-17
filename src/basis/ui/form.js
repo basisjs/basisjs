@@ -325,7 +325,9 @@ basis.require('basis.ui');
     },
     destroy: function(){
       Event.clearHandlers(this.element);// TODO: remove????
-      Event.clearHandlers(this.tmpl.field);
+      if (this.tmpl.field)
+        Event.clearHandlers(this.tmpl.field);
+
       if (this.button)
       {
         Event.clearHandlers(this.button);
@@ -563,6 +565,7 @@ basis.require('basis.ui');
   */
   var ComplexField = Class(Field, UIContainer, {
     className: namespace + '.Field.ComplexField',
+    childClass: ComplexFieldItem,
 
     template: Field.prototype.template,
 

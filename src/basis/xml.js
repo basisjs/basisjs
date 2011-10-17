@@ -130,6 +130,7 @@ basis.require('basis.dom');
    */
 
   function createAttributeNS(document, nodename, namespace, value){
+    var attr;
     if (namespace)
       attr = isNativeSupport
                ? document.createAttributeNS(namespace, nodename)

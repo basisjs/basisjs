@@ -1087,6 +1087,7 @@
           '<div{childNodesElement} style="position: absolute;"/>' +
         '</div>' +
       '</div>',
+
     dataSource: clsSplitBySuper.getSubset(0),
     childClass: ClsNode
   });

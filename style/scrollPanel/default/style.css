@@ -1,0 +1,71 @@
+
+  .Basis-ScrollPanel
+  {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .Basis-ScrollPanel-Content
+  {
+    position: absolute;
+  }
+
+  .Basis-ScrollPanel-Scrollbar
+  {
+    position: absolute;
+  }
+
+  .Basis-Scrollbar.horizontal
+  {
+    left: 0;
+    right: 0;
+    bottom: 2px;
+    height: 4px;
+  }
+
+  .Basis-Scrollbar.vertical
+  {
+    top: 0;
+    bottom: 0;
+    right: 2px;
+    width: 4px;
+  }
+
+  .Basis-Scrollbar-Track
+  {
+    position: absolute;
+
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+    border-radius: 2px;
+
+    background: rgba(20, 20, 20, 0.6);
+
+    opacity: 0;
+
+      -moz-transition: opacity 0.5s;
+      -webkit-transition: opacity 0.5s;
+    transition: opacity 0.5s;
+  }
+
+  .Basis-Scrollbar.vertical .Basis-Scrollbar-Track
+  {
+    left: 0;
+    width: 100%;
+  }
+
+  .Basis-Scrollbar.horizontal .Basis-Scrollbar-Track
+  {
+    top: 0;
+    height: 100%;
+  }
+
+  .Basis-ScrollPanel.scrollProcess .Basis-Scrollbar-Track
+  {
+    opacity: 1;
+
+      -moz-transition: none;
+      -webkit-transition: none;
+    transition: none;
+  }
+

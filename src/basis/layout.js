@@ -124,6 +124,7 @@ basis.require('basis.ui');
           position: 'absolute',
           width: '100%',
           height: '100%',
+          border: 'none',
           //border: '1px solid red',
           left: 0,
           zIndex: -1,
@@ -691,7 +692,8 @@ basis.require('basis.ui');
     VerticalPanel: VerticalPanel,
     VerticalPanelStack: VerticalPanelStack,
 
-    Helper: Helper
+    Helper: Helper,
+    addBlockResizeHandler: addBlockResizeHandler
   });
 
 }(basis, this);

@@ -10,6 +10,7 @@
  *
  * @author
  * Vladimir Ratsev <wuzykk@gmail.com>
+ *
  */
 
 basis.require('basis.dom');
@@ -23,7 +24,7 @@ basis.require('basis.ui.scroller');
   'use strict';
 
  /**
-  * @namespace basis.ui.pageslider
+  * @namespace Basis.Plugin
   */ 
 
   var namespace = 'basis.ui.pageslider';
@@ -35,9 +36,6 @@ basis.require('basis.ui.scroller');
 
   var DOM = basis.dom;
   var Class = basis.Class;
-  var cssom = basis.cssom;
-  var PageControl = basis.ui.tabs.PageControl;
-  var Scroller = basis.ui.scroller.Scroller;
 
   var classList = basis.cssom.classList;
 
@@ -46,10 +44,9 @@ basis.require('basis.ui.scroller');
   // main part
   //
   
- /**
-  * @class
-  */
-  var PageSlider = Class(PageControl, {
+  var namespace = 'basis.ui';
+
+  var PageSlider = Class(basis.ui.tabs.PageControl, {
     className: namespace + '.PageSlider',
 
     template: 
@@ -69,20 +66,20 @@ basis.require('basis.ui.scroller');
       });*/
 
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        DOM.setStyle(child.element, { left: (100 * i) + '%' });
+        basis.cssom.setStyle(child.element, { left: (100 * i) + '%' });
     },
 
     init: function(config){
       var cssClassName = 'gerericRule_' + this.eventObjectId;
-      this.pageSliderCssRule = cssom.cssRule('.' + cssClassName + ' > .Basis-Page');
+      this.pageSliderCssRule = basis.cssom.cssRule('.' + cssClassName + ' > .Basis-Page');
 
       this.constructor.superClass_.prototype.init.call(this, config);
 
       classList(this.element).add(cssClassName);
 
-      this.scroller = new Scroller({
+      this.scroller = new basis.ui.Scroller({
         targetElement: this.element,
-        preventScrollY: false,
+        preventScrollY: true,
         minScrollDelta: 10,
         handler: {
           startInertia: function(scroller){
@@ -141,11 +138,10 @@ basis.require('basis.ui.scroller');
     destroy: function(){
       this.constructor.superClass_.prototype.init.call(this, config);
 
-      cssom.getStyleSheet().removeCssRule(this.pageSliderCssRule.rule);
+      DOM.Style.getStyleSheet().removeCssRule(this.pageSliderCssRule.rule);
       this.pageSliderCssRule = null;
 
       this.scroller.destroy();
-      this.scroller = null;
     }
   });
 

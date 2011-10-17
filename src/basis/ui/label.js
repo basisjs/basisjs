@@ -159,7 +159,7 @@ basis.require('basis.ui');
     className: namespace + '.ObjectState',
 
     event_stateChanged: function(object, oldState){
-      State.prototype.event_stateChanged.call(object, oldState);
+      State.prototype.event_stateChanged.call(this, object, oldState);
       this.setVisibility(this.visibilityGetter(this.state, oldState));
     }
   });
