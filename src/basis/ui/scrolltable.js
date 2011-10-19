@@ -41,6 +41,8 @@ basis.require('basis.ui.table');
   var Box = basis.layout.Box;
   var Viewport = basis.layout.Viewport;
 
+  var nsTable = basis.ui.table;
+
 
   //
   // main part

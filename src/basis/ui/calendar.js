@@ -64,7 +64,7 @@ basis.require('basis.ui');
   // locale
 
   var LOCALE = function(section){
-    var locale = basis.Locale['Controls.Calendar'];
+    var locale = basis.locale['ui.calendar'];
     return locale ? locale[section] : section;
   };
 
@@ -194,11 +194,25 @@ basis.require('basis.ui');
         UINode.prototype.templateAction.call(this, actionName, event);
     },
 
+    templateUpdate: function(object, actionName, delta){
+      if (!actionName || 'periodStart' in delta || 'periodEnd' in delta)
+      {
+        this.tmpl.title.nodeValue = this.titleGetter(this.data);
+
+        if (this.parentNode)
+        {
+          var clsList = classList(this.element);
+          clsList.bool('before', this.data.periodStart < this.parentNode.data.periodStart);
+          clsList.bool('after', this.data.periodEnd > this.parentNode.data.periodEnd);
+        }
+      }
+    },
+
     event_select: function(){
       UINode.prototype.event_select.call(this);
 
       DOM.focus(this.element);
-    },
+    }/*,
     event_update: function(object, delta){
       UINode.prototype.event_update.call(this, object, delta);
 
@@ -213,7 +227,7 @@ basis.require('basis.ui');
           clsList.bool('after', this.data.periodEnd > this.parentNode.data.periodEnd);
         }
       }
-    }
+    }*/
   });
 
   var CalendarSection = Class(UIContainer, {
