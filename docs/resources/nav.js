@@ -221,7 +221,10 @@
     * @class
     */
     var docNamespace = Class(BaseDocTreeFolder, {
-      nodeType: 'Namespace'
+      nodeType: 'Namespace',
+      views: [
+        nsView.viewNamespaceMap
+      ]
     });
 
    /**

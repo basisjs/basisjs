@@ -39,6 +39,7 @@ basis.require('basis.ui.button');
   var Cleaner = basis.Cleaner;
 
   var createEvent = basis.EventObject.createEvent;
+  var dragdrop = basis.dragdrop; // optional
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -202,9 +203,9 @@ basis.require('basis.ui.button');
       // make window moveable
       if (this.moveable)
       {
-        if (basis.DragDrop)
+        if (dragdrop)
         {
-          this.dde = new basis.DragDrop.MoveableElement({
+          this.dde = new dragdrop.MoveableElement({
             element: this.element,
             trigger: this.tmpl.ddtrigger || titleContainer,
             fixRight: false,

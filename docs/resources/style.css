@@ -1005,27 +1005,27 @@
     font-weight: bold;
   }
 
-  #ClassMap .ClassNode
+  .ClassMap .ClassNode
   {
     margin: 0 0 0 10px;
     padding: 6px 0 6px 10px;
     border-left: 1px solid #666;
     position: relative;
   }
-  #ClassMap .ClassNode:first-child
+  .ClassMap .ClassNode:first-child
   {
     border-left: none;
   }
-  #ClassMap .ClassNode:last-child
+  .ClassMap .ClassNode:last-child
   {
     border-left: none;
   }
-  #ClassMap .ClassNode:first-child:last-child
+  .ClassMap .ClassNode:first-child:last-child
   {
     padding-top: 0px;
     padding-bottom: 0px;
   }
-  #ClassMap .ClassNode .connector
+  .ClassMap .ClassNode .connector
   {
     position: absolute;
     border-top: 1px solid #666;
@@ -1034,12 +1034,12 @@
     top: 50%;
     left: 0;
   }
-  #ClassMap .ClassNode:first-child > .connector
+  .ClassMap .ClassNode:first-child > .connector
   {
     height: 50%;
     border-left: 1px solid #666;
   }
-  #ClassMap .ClassNode:last-child > .connector
+  .ClassMap .ClassNode:last-child > .connector
   {
     top: 0;
     height: 50%;
@@ -1047,18 +1047,18 @@
     border-top: none;
     border-bottom: 1px solid #666;
   }
-  #ClassMap .ClassNode:first-child:last-child > .connector
+  .ClassMap .ClassNode:first-child:last-child > .connector
   {
     border-left: none;
     height: auto;
     top: 50%;
   }
 
-  #ClassMap .sub-connector
+  .ClassMap .sub-connector
   {
     display: none;
   }
-  #ClassMap .has-subclasses > .sub-connector
+  .ClassMap .has-subclasses > .sub-connector
   {
     display: block;
     position: absolute;
@@ -1067,17 +1067,17 @@
     width: 10px;
   }
 
-  #ClassMap .ClassNode-Wrapper
+  .ClassMap .ClassNode-Wrapper
   {
     display: table-row;
   }
 
-  #ClassMap .ClassNode-Header
+  .ClassMap .ClassNode-Header
   {
     display: table-cell;
     vertical-align: middle;
   }
-  #ClassMap .ClassNode-Header-Title
+  .ClassMap .ClassNode-Header-Title
   {
     padding: 4px;
     width: 160px;
@@ -1085,10 +1085,24 @@
     border: 1px solid orange;
     background: #FFFFE0;
   }
-  #ClassMap .ClassNode-SubClassList
+  .ClassMap .ClassNode-SubClassList
   {
     display: table-cell;
   }
-  #ClassMap .ClassNode-SubClassList-Wrapper
+  .ClassMap .ClassNode-SubClassList-Wrapper
   {
+  }
+
+  .ClassMap .firstLevel > .ClassNode
+  {
+    border: none;
+  }
+  .ClassMap .firstLevel > .ClassNode > .connector
+  {
+    display: none;
+  }
+  .ClassMap .ClassNode-Header.side-parent,
+  .ClassMap .ClassNode-Header.side-subclass
+  {
+    opacity: .5;
   }

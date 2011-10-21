@@ -125,7 +125,7 @@ basis.require('basis.data.property');
   * @class
   */
   var IndexedDataset = Class(AbstractDataset, {
-    className: namespace + '.Index',
+    className: namespace + '.IndexedDataset',
 
    /**
     * Ordering items function.

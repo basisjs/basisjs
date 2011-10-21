@@ -21,6 +21,7 @@
   var nsCore = BasisDoc.Core;
   var Scroller = basis.ui.scroller.Scroller;
 
+  var ui = basis.ui;
   var uiNode = basis.ui.Node;
   var uiContainer = basis.ui.Container;
   var uiControl = basis.ui.Control;
@@ -1029,17 +1030,23 @@
   });
 
 
+  //
+  // Class map
+  //
+
+  var clsById = clsList.map(function(cls){
+    return new nsData.DataObject({
+      data: {
+        className: cls.className,
+        clsId: cls.docsUid_,
+        superClsId: cls.docsSuperUid_
+      }
+    })
+  });
+
   var clsSplitBySuper = new nsData.Dataset.Split({
     source: new nsData.Dataset({
-      items: clsList.map(function(cls){
-        return new nsData.DataObject({
-          data: {
-            className: cls.className,
-            clsId: cls.docsUid_,
-            superClsId: cls.docsSuperUid_
-          }
-        })
-      })
+      items: clsById
     }),
     rule: function(object){
       return object.data.superClsId;
@@ -1081,7 +1088,7 @@
   var viewClassMap = new View({
     viewHeader: 'ClassMap',
     template:
-      '<div class="view" id="ClassMap">' +
+      '<div class="view ClassMap">' +
         htmlHeader('ClassMap') +
         '<div class="content" style="overflow: hidden; height: 400px; position: relative;padding: 25px">' +
           '<div{childNodesElement} style="position: absolute;"/>' +
@@ -1094,6 +1101,120 @@
 
   new Scroller({
     targetElement: viewClassMap.childNodesElement
+  });
+
+  //
+  //
+  //
+
+  var namespaceClassDS = new nsData.Dataset();
+  namespaceClsSplitBySuper = new nsData.Dataset.Split({
+    source: namespaceClassDS,
+    rule: function(object){
+      console.log(object.part);
+      return object.part != 'parent' ? object.data.superClsId : 0;
+    }
+  });
+
+  var ViewNSNode = uiContainer.subclass({
+    template:
+      '<div class="ClassNode">' +
+        '<div class="connector"/>' +
+        '<div class="ClassNode-Wrapper">' +
+          '<div{header} class="ClassNode-Header">' +
+            '<div class="ClassNode-Header-Title">{title}</div>' +
+          '</div>' +
+          '<div{container} class="ClassNode-SubClassList">' +
+            '<div class="sub-connector"/>' +
+            '<div{childNodesElement} class="ClassNode-SubClassList-Wrapper"/>' +
+          '</div>' +
+        '</div>' +
+      '</div>',
+
+    templateUpdate: function(tmpl, eventName, delta){
+      tmpl.title.nodeValue = this.data.className.split(/\./).pop();
+      classList(tmpl.header).add('side-' + this.delegate.part);
+
+      if (!eventName || 'clsId' in delta)
+        this.setDataSource(namespaceClsSplitBySuper.getSubset(this.data.clsId));
+    },
+    event_childNodesModified: function(node, delta){
+      uiContainer.prototype.event_childNodesModified.call(this, node, delta);
+      classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
+    },/*,
+    event_update: function(object, delta){
+      uiContainer.prototype.event_update.call(this, object, delta);
+      console.log(this.data.docsUid_, namespaceClsSplitBySuper.getSubset(this.data.docsUid_));
+      this.setDataSource(namespaceClsSplitBySuper.getSubset(this.data.clsId, true));
+    }*/
+  });
+  ViewNSNode.prototype.childClass = ViewNSNode;
+
+  var viewNamespaceMap = new View({
+    handler: {
+      delegateChanged: function(){
+
+        var namespace = this.data.obj;
+        if (namespace)
+        {
+          var clsList = namespace.names();
+          var dsClsList = {};
+
+          for (var cls in clsList)
+          {
+            cls = clsList[cls];
+            if (Class.isClass(cls))
+            {
+              dsClsList[cls.docsUid_] = new nsData.DataObject({
+                part: 'self',
+                delegate: clsById[cls.docsUid_]
+              });
+
+              if (!dsClsList[cls.docsSuperUid_])
+              {
+                dsClsList[cls.docsSuperUid_] = new nsData.DataObject({
+                  part: 'parent',
+                  delegate: clsById[cls.docsSuperUid_]
+                });
+              }
+
+              for (var i = 0; i < clsById.length; i++)
+                if (clsById[i].data.superClsId === cls.docsUid_)
+                  dsClsList[i] = new nsData.DataObject({
+                    part: 'subclass',
+                    delegate: clsById[i]
+                  });
+            }
+          }
+
+          namespaceClassDS.set(Object.values(dsClsList));
+
+          /*
+          var clsList = Object.values(namespace.names()).filter(basis.Class.isClass);
+
+          namespaceClassDS.set(clsList.map(function(cls){ return [clsById[cls.docsUid_], clsById[cls.docsSuperUid_]] }).flatten());
+          */
+        }
+      }
+    },
+    viewHeader: 'Namespace map',
+    template:
+      '<div class="view ClassMap">' +
+        htmlHeader('Namespace map') +
+        '<div class="content">' +
+          '<div{childNodesElement} style="position: absolute;"/>' +
+          '<!-- {classMap} -->' +
+        '</div>' +
+      '</div>',
+    satelliteConfig: {
+      classMap: {
+        instanceOf: uiContainer.subclass({
+          template: '<ul class="firstLevel"/>',
+          dataSource: namespaceClsSplitBySuper.getSubset(0, true),
+          childClass: ViewNSNode
+        })
+      }
+    }
   });
 
   //
@@ -1130,7 +1251,8 @@
     viewTemplate: viewTemplate,
     viewInheritance: viewInheritance,
     viewPrototype: viewPrototype,
-    viewClassMap: viewClassMap
+    viewClassMap: viewClassMap,
+    viewNamespaceMap: viewNamespaceMap
   });
 
 })()

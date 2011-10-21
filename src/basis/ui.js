@@ -19,11 +19,11 @@ basis.require('basis.html');
 
  /**
   * - Visual DOM classes:
-  *   {basis.dom.wrapper.TmplNode}, {basis.dom.wrapper.TmplContainer}, 
-  *   {basis.dom.wrapper.TmplPartitionNode}, {basis.dom.wrapper.TmplGroupingNode},
-  *   {basis.dom.wrapper.TmplControl}
+  *   {basis.dom.wrapper.Node}, {basis.dom.wrapper.Container}, 
+  *   {basis.dom.wrapper.PartitionNode}, {basis.dom.wrapper.GroupingNode},
+  *   {basis.dom.wrapper.Control}
   * Aliases are available:
-  * - {basis.dom.wrapper.Control} for {basis.dom.wrapper.TmplControl}
+  * - {basis.dom.wrapper.Control} for {basis.dom.wrapper.Control}
   *
   * @namespace basis.ui
   */
@@ -40,9 +40,9 @@ basis.require('basis.html');
   var getter = Function.getter;
   var Cleaner = basis.Cleaner;
 
-  var Node = basis.dom.wrapper.Node;
-  var PartitionNode = basis.dom.wrapper.PartitionNode;
-  var GroupingNode = basis.dom.wrapper.GroupingNode;
+  var DWNode = basis.dom.wrapper.Node;
+  var DWPartitionNode = basis.dom.wrapper.PartitionNode;
+  var DWGroupingNode = basis.dom.wrapper.GroupingNode;
 
   //
   // main part
@@ -62,8 +62,8 @@ basis.require('basis.html');
       * Template for object.
       * @type {basis.Html.Template}
       */
-      template: new Template(
-        '<div/>'
+      template: new Template( // NOTE: explicit template constructor here;
+        '<div/>'              //       it could be ommited in subclasses
       ),
 
      /**
@@ -254,15 +254,15 @@ basis.require('basis.html');
  /**
   * @class
   */
-  var TmplNode = Class(Node, TemplateMixin, {
-    className: namespace + '.TmplNode'
+  var Node = Class(DWNode, TemplateMixin, {
+    className: namespace + '.Node'
   });
 
  /**
   * @class
   */
-  var TmplPartitionNode = Class(PartitionNode, TemplateMixin, {
-    className: namespace + '.TmplPartitionNode',
+  var PartitionNode = Class(DWPartitionNode, TemplateMixin, {
+    className: namespace + '.PartitionNode',
 
     titleGetter: getter('data.title'),
 
@@ -360,13 +360,13 @@ basis.require('basis.html');
  /**
   * @class
   */
-  var TmplGroupingNode = Class(GroupingNode, ContainerTemplateMixin, {
-    className: namespace + '.TmplGroupingNode',
+  var GroupingNode = Class(DWGroupingNode, ContainerTemplateMixin, {
+    className: namespace + '.GroupingNode',
 
    /**
     * @inheritDoc
     */
-    childClass: TmplPartitionNode,
+    childClass: PartitionNode,
 
    /**
     * @inheritDoc
@@ -385,30 +385,30 @@ basis.require('basis.html');
       }
       while (cursor = cursor.localGrouping);
 
-      GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
+      DWGroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
     }
   });
 
-  TmplGroupingNode.prototype.localGroupingClass = TmplGroupingNode;
+  GroupingNode.prototype.localGroupingClass = GroupingNode;
 
  /**
   * @class
   */
-  var TmplContainer = Class(TmplNode, ContainerTemplateMixin, {
-    className: namespace + '.TmplContainer',
+  var Container = Class(Node, ContainerTemplateMixin, {
+    className: namespace + '.Container',
 
-    childClass: TmplNode,
+    childClass: Node,
     childFactory: function(config){
       return new this.childClass(config);
     },
 
-    localGroupingClass: TmplGroupingNode
+    localGroupingClass: GroupingNode
   });
 
  /**
   * @class
   */
-  var Control = Class(TmplContainer, {
+  var Control = Class(Container, {
     className: namespace + '.Control',
 
    /**
@@ -426,7 +426,7 @@ basis.require('basis.html');
       this.document = this;
 
       // inherit
-      TmplContainer.prototype.init.call(this, config);
+      Container.prototype.init.call(this, config);
                    
       // add to basis.Cleaner
       Cleaner.add(this);
@@ -444,7 +444,7 @@ basis.require('basis.html');
       }
 
       // inherit destroy, must be calling after inner objects destroyed
-      TmplContainer.prototype.destroy.call(this);
+      Container.prototype.destroy.call(this);
 
       // remove from Cleaner
       Cleaner.remove(this);
@@ -455,7 +455,7 @@ basis.require('basis.html');
   * @func
   */
   var simpleTemplate = function(template, config){
-    var refs = template.match(/\{(this_[^\}]+)\}/g);
+    var refs = template.match(/\{(this_[^\}]+)\}/g) || [];
     var lines = [];
     for (var i = 0; i < refs.length; i++)
     {
@@ -481,10 +481,10 @@ basis.require('basis.html');
   basis.namespace(namespace, simpleTemplate).extend({
     simpleTemplate: simpleTemplate,
 
-    Node: TmplNode,
-    Container: TmplContainer,
-    PartitionNode: TmplPartitionNode,
-    GroupingNode: TmplGroupingNode,
+    Node: Node,
+    Container: Container,
+    PartitionNode: PartitionNode,
+    GroupingNode: GroupingNode,
     Control: Control
   });
 
