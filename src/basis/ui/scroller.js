@@ -1134,13 +1134,26 @@ basis.require('basis.ui');
     useScrollbars: true,
     scrollX: true, 
     scrollY: true,
+    wheelDelta: 40,
 
     event_realign: EventObject.createEvent('realign'),
 
     template: 
-      '<div{element} class="Basis-ScrollPanel">' +
+      '<div{element} class="Basis-ScrollPanel" event-mousewheel="onwheel">' +
         '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content"></div>' +
       '</div>',
+
+
+    action: {
+      onwheel: function(event){
+        var delta = Event.wheelDelta(event);
+
+        if (this.scrollX)
+          this.scroller.setPositionX(this.scroller.viewportTargetX - this.wheelDelta * delta, true);
+        else (this.scrollY)
+          this.scroller.setPositionY(this.scroller.viewportTargetY - this.wheelDelta * delta, true);
+      }
+    },
 
     init: function(config){
       basis.ui.Node.prototype.init.call(this, config);
@@ -1151,6 +1164,9 @@ basis.require('basis.ui');
 
       this.maxPositionX = 0;
       this.maxPositionY = 0;
+
+      this.oldOffsetWidth = 0;
+      this.oldOffsetHeight = 0;
 
       // create scroller
       var scrollerConfig = Object.extend(this.scroller || {}, {
@@ -1261,18 +1277,10 @@ basis.require('basis.ui');
     },
 
     realign: function(){
-      //console.log('realign');
-      var oldMaxPositionX = this.maxPositionX;
-      var oldMaxPositionY = this.maxPositionY;
-
       this.calcDimentions();
-      //console.log(this.maxPositionX);
 
-      if (oldMaxPositionX != this.maxPositionX || oldMaxPositionY != this.maxPositionY)
-      {
-        this.scrollUpdatePosition();
-        this.event_realign();
-      }
+      this.scrollUpdatePosition();
+      this.event_realign();
     },
     
     calcDimentions: function(){
