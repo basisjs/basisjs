@@ -390,6 +390,9 @@ basis.require('basis.ui');
 
       if (this.minLength)
         this.attachValidator(Validator.MinLength);
+
+      if (this.autocomplete)
+        this.tmpl.field.setAttribute('autocomplete', this.autocomplete);
     },
     setMaxLength: function(len){
       this.tmpl.field.setAttribute('maxlength', len, 0);
@@ -858,7 +861,8 @@ basis.require('basis.ui');
       {
 
         this.select();
-        this.parentNode.hide();
+        if (this.parentNode)
+          this.parentNode.hide();
         Event.kill(event);
       }
 
