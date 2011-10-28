@@ -1199,55 +1199,64 @@
       return cursor;
     }
 
-    return typeof require == 'function'
-      ? function(filename){
-          return require(requirePath + filename.replace(/\./g, '/'));
-        }
-      : function(filename, path_){
-          var namespace = filename.match(/^([a-z][a-zA-Z0-9\_]*(\.[a-z][a-zA-Z0-9\_]*)*)?/)[0];
-          var path = filename.substr(namespace.length ? namespace.length + 1 : 0);
-          var result = resolve(namespace, path);
+    var requireFunc;
+    if (typeof require == 'function')
+      requireFunc = function(filename){
+        return require(requirePath + filename.replace(/\./g, '/'));
+      }
+    else
+    {
+      requireFunc = function(filename, path_){
+        var namespace = filename.match(/^([a-z][a-zA-Z0-9\_]*(\.[a-z][a-zA-Z0-9\_]*)*)?/)[0];
+        var path = filename.substr(namespace.length ? namespace.length + 1 : 0);
+        var result = resolve(namespace, path);
 
-          var requirePath = /^basis\./.test(namespace) ? basisRequirePath : (location ? location.href : '').replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/, '');
+        var requirePath = /^basis\./.test(namespace) ? basisRequirePath : (location ? location.href : '').replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/, '');
 
-          if (!namespaces[namespace] || !result)
+        if (!namespaces[namespace] || !result)
+        {
+          if (/^https?:/.test(requirePath))
           {
-            if (/^https?:/.test(requirePath))
+            if (!requested[filename])
             {
-              if (!requested[filename])
+              requested[filename] = 1;
+              var requestUrl = requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js';
+              var req = new XMLHttpRequest();
+              req.open('POST', requestUrl, false);
+              req.send(null);
+              if (req.status == 200)
               {
-                requested[filename] = 1;
-                var req = new XMLHttpRequest();
-                req.open('POST', requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js', false);
-                req.send(null);
-                if (req.status == 200)
-                {
-                  try {
-                    new Function(req.responseText).call(global);
-                  } catch(e) {
-                    ;;;console.log('run ' + requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js' + ' ( ' + filename + ' )');
-                    throw e;
-                  }
+                try {
+                  new Function(req.responseText).call(global);
+                } catch(e) {
+                  ;;;console.log('run ' + requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js' + ' ( ' + filename + ' )');
+                  throw e;
                 }
-                else
-                {
-                  if (req.status == 404 && path)
-                    requireNamespace(namespace);
-                  else
-                    throw '!';
-                }
+                requireFunc.sequence.push(filename.replace(/\./g, '/') + '.js');
               }
               else
               {
-                throw 'Attempt to load namespace, probably cycle require';
+                if (req.status == 404 && path)
+                  requireNamespace(namespace);
+                else
+                  throw '!';
               }
             }
             else
-              throw 'Path `' + filename + '` can\'t be resolved';
+            {
+              throw 'Attempt to load namespace, probably cycle require';
+            }
           }
+          else
+            throw 'Path `' + filename + '` can\'t be resolved';
+        }
 
-          return result || resolve(namespace, path);
-        };
+        return result || resolve(namespace, path);
+      };
+      requireFunc.sequence = [];
+    }
+
+    return requireFunc;
   })();
 
 
