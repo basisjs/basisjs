@@ -1,5 +1,5 @@
 
-  Basis.Locale['Controls.Calendar'] = {
+  basis.locale['ui.calendar'] = {
     QUARTER:  'Квартал',
     TODAY:    'Сегодня',
     SELECTED: 'Выбрано',
