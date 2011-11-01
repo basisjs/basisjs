@@ -1244,55 +1244,64 @@
       return cursor;
     }
 
-    return typeof require == 'function'
-      ? function(filename){
-          return require(requirePath + filename.replace(/\./g, '/'));
-        }
-      : function(filename, path_){
-          var namespace = filename.match(/^([a-z][a-zA-Z0-9\_]*(\.[a-z][a-zA-Z0-9\_]*)*)?/)[0];
-          var path = filename.substr(namespace.length ? namespace.length + 1 : 0);
-          var result = resolve(namespace, path);
+    var requireFunc;
+    if (typeof require == 'function')
+      requireFunc = function(filename){
+        return require(requirePath + filename.replace(/\./g, '/'));
+      }
+    else
+    {
+      requireFunc = function(filename, path_){
+        var namespace = filename.match(/^([a-z][a-zA-Z0-9\_]*(\.[a-z][a-zA-Z0-9\_]*)*)?/)[0];
+        var path = filename.substr(namespace.length ? namespace.length + 1 : 0);
+        var result = resolve(namespace, path);
 
-          var requirePath = /^basis\./.test(namespace) ? basisRequirePath : (location ? location.href : '').replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/, '');
+        var requirePath = /^basis\./.test(namespace) ? basisRequirePath : (location ? location.href : '').replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/, '');
 
-          if (!namespaces[namespace] || !result)
+        if (!namespaces[namespace] || !result)
+        {
+          if (/^https?:/.test(requirePath))
           {
-            if (/^https?:/.test(requirePath))
+            if (!requested[filename])
             {
-              if (!requested[filename])
+              requested[filename] = 1;
+              var requestUrl = requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js';
+              var req = new XMLHttpRequest();
+              req.open('POST', requestUrl, false);
+              req.send(null);
+              if (req.status == 200)
               {
-                requested[filename] = 1;
-                var req = new XMLHttpRequest();
-                req.open('POST', requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js', false);
-                req.send(null);
-                if (req.status == 200)
-                {
-                  try {
-                    new Function(req.responseText).call(global);
-                  } catch(e) {
-                    ;;;console.log('run ' + requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js' + ' ( ' + filename + ' )');
-                    throw e;
-                  }
+                try {
+                  new Function(req.responseText).call(global);
+                } catch(e) {
+                  ;;;console.log('run ' + requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js' + ' ( ' + filename + ' )');
+                  throw e;
                 }
-                else
-                {
-                  if (req.status == 404 && path)
-                    requireNamespace(namespace);
-                  else
-                    throw '!';
-                }
+                requireFunc.sequence.push(filename.replace(/\./g, '/') + '.js');
               }
               else
               {
-                throw 'Attempt to load namespace, probably cycle require';
+                if (req.status == 404 && path)
+                  requireNamespace(namespace);
+                else
+                  throw '!';
               }
             }
             else
-              throw 'Path `' + filename + '` can\'t be resolved';
+            {
+              throw 'Attempt to load namespace, probably cycle require';
+            }
           }
+          else
+            throw 'Path `' + filename + '` can\'t be resolved';
+        }
 
-          return result || resolve(namespace, path);
-        };
+        return result || resolve(namespace, path);
+      };
+      requireFunc.sequence = [];
+    }
+
+    return requireFunc;
   })();
 
 
@@ -22877,13 +22886,13 @@ basis.require('basis.ui');
         return new ValidatorError(field, Validator.LOCALE.Currency.MUST_BE_GREATER_ZERO || Validator.NO_LOCALE);
     },
     Email: function(field){
-      var value = field.getValue();
-      if (value != '' && !value.match(/\s*^[a-z0-9\.\-\_]+\@(([a-z][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})\s*$/i))
+      var value = field.getValue().trim();
+      if (value != '' && !value.match(/^[a-z0-9\.\-\_]+\@(([a-z][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i))
         return new ValidatorError(field, Validator.LOCALE.Email.WRONG_FORMAT || Validator.NO_LOCALE);
     },
     Url: function(field){
-      var value = field.getValue();
-      if (value != '' && !value.match(/^\s*(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z][a-zA-Z\d\-]+\.)+[a-zA-Z]{2,6})(:\d+)?(\/[^\?]*(\?\S(\=\S*))*(\#\S*)?)?\s*$/i))
+      var value = field.getValue().trim();
+      if (value != '' && !value.match(/^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z][a-zA-Z\d\-]+\.)+[a-zA-Z]{2,6})(:\d+)?(\/[^\?]*(\?\S(\=\S*))*(\#\S*)?)?$/i))
         return new ValidatorError(field, Validator.LOCALE.Url.WRONG_FORMAT || Validator.NO_LOCALE);
     },
     MinLength: function(field){
@@ -24386,13 +24395,26 @@ basis.require('basis.ui');
     useScrollbars: true,
     scrollX: true, 
     scrollY: true,
+    wheelDelta: 40,
 
     event_realign: EventObject.createEvent('realign'),
 
     template: 
-      '<div{element} class="Basis-ScrollPanel">' +
+      '<div{element} class="Basis-ScrollPanel" event-mousewheel="onwheel">' +
         '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content"></div>' +
       '</div>',
+
+
+    action: {
+      onwheel: function(event){
+        var delta = Event.wheelDelta(event);
+
+        if (this.scrollX)
+          this.scroller.setPositionX(this.scroller.viewportTargetX - this.wheelDelta * delta, true);
+        else (this.scrollY)
+          this.scroller.setPositionY(this.scroller.viewportTargetY - this.wheelDelta * delta, true);
+      }
+    },
 
     init: function(config){
       basis.ui.Node.prototype.init.call(this, config);
@@ -24403,6 +24425,9 @@ basis.require('basis.ui');
 
       this.maxPositionX = 0;
       this.maxPositionY = 0;
+
+      this.oldOffsetWidth = 0;
+      this.oldOffsetHeight = 0;
 
       // create scroller
       var scrollerConfig = Object.extend(this.scroller || {}, {
@@ -24513,18 +24538,10 @@ basis.require('basis.ui');
     },
 
     realign: function(){
-      //console.log('realign');
-      var oldMaxPositionX = this.maxPositionX;
-      var oldMaxPositionY = this.maxPositionY;
-
       this.calcDimentions();
-      //console.log(this.maxPositionX);
 
-      if (oldMaxPositionX != this.maxPositionX || oldMaxPositionY != this.maxPositionY)
-      {
-        this.scrollUpdatePosition();
-        this.event_realign();
-      }
+      this.scrollUpdatePosition();
+      this.event_realign();
     },
     
     calcDimentions: function(){
