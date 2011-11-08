@@ -550,12 +550,13 @@ basis.require('basis.ui');
         if (this.rowBehaviour)
         {
           var rowBehaviour = this.rowBehaviour;
-          for (var eventName in rowBehaviour){
-            this.childClass.prototype[eventName] = function(){
-              rowBehaviour[eventName].apply(this, arguments);
-              Row.prototype[eventName].apply(this, arguments);
+
+          Object.keys(rowBehaviour).forEach(function(method){
+            this.childClass.prototype[method] = function(){
+              rowBehaviour[method].apply(this, arguments);
+              Row.prototype[method].apply(this, arguments);
             }
-          }
+          }, this);
         }
 
       }
