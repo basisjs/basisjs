@@ -529,10 +529,15 @@ basis.require('basis.ui');
     template: createFieldTemplate(baseFieldTemplate,
       '<label{field}>{fieldValueText}</label>'
     ),
-    setValue: function(newValue){
+    valueGetter: Function.$self,
+    event_change: function(){
+      Field.prototype.event_change.apply(this, arguments);
+      this.tmpl.fieldValueText.nodeValue = this.valueGetter(this.getValue());
+    }
+    /*setValue: function(newValue){
       Field.prototype.setValue.call(this, newValue);
       this.tmpl.fieldValueText.nodeValue = this.tmpl.field.value;
-    }
+    }*/
   });
 
   //

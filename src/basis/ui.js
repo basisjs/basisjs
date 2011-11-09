@@ -374,10 +374,13 @@ basis.require('basis.html');
     event_ownerChanged: function(node, oldOwner){
       var cursor = this;
       var owner = this.owner;
-      var element = null;
+      var element = null;//this.nullElement;
 
       if (owner)
+      {
         element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement || owner.element;
+        element.appendChild(this.nullElement);
+      }
 
       do
       {
@@ -386,6 +389,12 @@ basis.require('basis.html');
       while (cursor = cursor.localGrouping);
 
       DWGroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
+    },
+
+    init: function(config){
+      this.nullElement = DOM.createFragment();
+      this.element = this.childNodesElement = this.nullElement;
+      DWGroupingNode.prototype.init.call(this, config);
     }
   });
 

@@ -158,6 +158,12 @@ basis.require('basis.ui');
   var ObjectState = Class(State, {
     className: namespace + '.ObjectState',
 
+    event_delegateChanged: function(object, oldDelegate){
+      State.prototype.event_delegateChanged.call(this, object, oldDelegate);
+
+      if (this.delegate)
+        this.event_stateChanged(this);
+    },
     event_stateChanged: function(object, oldState){
       State.prototype.event_stateChanged.call(this, object, oldState);
       this.setVisibility(this.visibilityGetter(this.state, oldState));
