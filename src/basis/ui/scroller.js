@@ -1150,7 +1150,7 @@ basis.require('basis.ui');
 
         if (this.scrollX)
           this.scroller.setPositionX(this.scroller.viewportTargetX - this.wheelDelta * delta, true);
-        else (this.scrollY)
+        else if (this.scrollY)
           this.scroller.setPositionY(this.scroller.viewportTargetY - this.wheelDelta * delta, true);
       }
     },

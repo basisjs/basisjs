@@ -109,7 +109,7 @@
         
         this.update({
           error: {
-            code: code || 'TRANSPORT ERROR',
+            code: code || 'TRANSPORT_ERROR',
             message: message
           }
         });
@@ -119,7 +119,11 @@
         if (this.responseEnvelope == undefined)
         {
           var xml = this.xhr.responseXML;
-          if (xml !== undefined || xml.documentElement !== undefined)
+          if (!xml || xml === undefined || xml.documentElement === undefined)
+          {
+            this.responseEnvelope = null;          
+          }
+          else
           {
             // convert to native document for IE
             if (xml.xml && window.DOMParser)
@@ -130,8 +134,6 @@
 
             this.responseEnvelope = new Envelope(xml.documentElement);
           }
-          else
-            this.responseEnvelope = null;          
         }
       },
 

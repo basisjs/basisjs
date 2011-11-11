@@ -661,6 +661,16 @@ basis.require('basis.ui');
       ComplexFieldItem.prototype.event_unselect.call(this);
       //classList(this.element).remove('selected');
     },
+    event_enable: function(){
+      this.tmpl.field.removeAttribute('disabled');
+
+      UINode.prototype.event_enable.call(this);
+    },
+    event_disable: function(){
+      this.tmpl.field.setAttribute('disabled', 'disabled');
+
+      UINode.prototype.event_disable.call(this);
+    },
 
     template: new Template(
       '<label{element} class="Basis-RadioGroup-Item" event-click="select">' + 
@@ -725,6 +735,16 @@ basis.require('basis.ui');
     event_unselect: function(){
       this.tmpl.field.checked = false;
       ComplexFieldItem.prototype.event_unselect.call(this);
+    },
+    event_enable: function(){
+      this.tmpl.field.removeAttribute('disabled');
+
+      UINode.prototype.event_enable.call(this);
+    },
+    event_disable: function(){
+      this.tmpl.field.setAttribute('disabled', 'disabled');
+
+      UINode.prototype.event_disable.call(this);
     },
 
     template: new Template(
@@ -864,7 +884,6 @@ basis.require('basis.ui');
     templateAction: function(actionName, event){
       if (actionName == 'click' && !this.isDisabled())
       {
-
         this.select();
         if (this.parentNode)
           this.parentNode.hide();
