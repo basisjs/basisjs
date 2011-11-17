@@ -587,7 +587,7 @@
       stop: function(){
         if (!this.stopped)
         {
-          this.stoppedRequests = Array.concat(this.inprogressRequests, this.requestQueue);
+          this.stoppedRequests = this.inprogressRequests.concat(this.requestQueue);
           this.abort();
           this.stopped = true;
         }
