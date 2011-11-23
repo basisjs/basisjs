@@ -46,16 +46,11 @@ basis.require('basis.ui');
   // main part
   //
 
-  function baseSelectHandler(child){
-    if (this.selection && !this.selection.itemCount)
-      child.select();
-  }
-
-  function baseUnselectHandler(){
-    if (this.selection && !this.selection.itemCount)
+  function findAndSelectActiveNode(control){
+    if (control.selection && !control.selection.itemCount)
     {
       // select first non-disabled child
-      var node = this.childNodes.search(false, 'disabled');
+      var node = control.childNodes.search(false, 'disabled');
       if (node)
         node.select();
     }
@@ -70,9 +65,22 @@ basis.require('basis.ui');
     canHaveChildren: true,
     childClass: UINode,
 
-    event_childEnabled: createEvent('childEnabled') && baseSelectHandler,
-    event_childDisabled: createEvent('childDisabled') && baseUnselectHandler,
-    event_childNodesModified: baseUnselectHandler,
+    event_childEnabled: createEvent('childEnabled', 'node') && function(node){
+      if (this.selection && !this.selection.itemCount)
+        child.select();
+
+      event.event_childEnabled.call(this, node);
+    },
+    event_childDisabled: createEvent('childDisabled', node) && function(){
+      findAndSelectActiveNode(this);
+
+      event.event_childDisabled.call(this, node);
+    },
+    event_childNodesModified: function(node, delta){
+      findAndSelectActiveNode(this);
+
+      UIControl.prototype.event_childNodesModified.call(this, node, delta);
+    },
 
     //
     //  common methods

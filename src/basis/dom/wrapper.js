@@ -264,8 +264,10 @@ basis.require('basis.html');
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
+    * @param {function()} oldLocalSorting
+    * @param {boolean} oldLocalSortingDesc
     */
-    event_localSortingChanged: createEvent('localSortingChanged', 'node'),
+    event_localSortingChanged: createEvent('localSortingChanged', 'node', 'oldLocalSorting', 'oldLocalSortingDesc'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
@@ -1690,6 +1692,9 @@ basis.require('basis.html');
       // TODO: fix when direction changes only
       if (this.localSorting != sorting || this.localSortingDesc != !!desc)
       {
+        var oldLocalSorting = this.localSorting;
+        var oldLocalSortingDesc = this.localSortingDesc;
+
         this.localSortingDesc = !!desc;
         this.localSorting = sorting || null;
 
@@ -1728,7 +1733,7 @@ basis.require('basis.html');
           fastChildNodesOrder(this, order);
         }
 
-        this.event_localSortingChanged(this);
+        this.event_localSortingChanged(this, oldLocalSorting, oldLocalSortingDesc);
       }
     },
 

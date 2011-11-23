@@ -7175,8 +7175,10 @@ basis.require('basis.html');
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
+    * @param {function()} oldLocalSorting
+    * @param {boolean} oldLocalSortingDesc
     */
-    event_localSortingChanged: createEvent('localSortingChanged', 'node'),
+    event_localSortingChanged: createEvent('localSortingChanged', 'node', 'oldLocalSorting', 'oldLocalSortingDesc'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
@@ -8430,10 +8432,10 @@ basis.require('basis.html');
       // if local grouping, clear groups
       if (this.localGrouping)
       {
-        this.localGrouping.clear();
-        /*var cn = this.localGrouping.childNodes;
+        //this.localGrouping.clear();
+        var cn = this.localGrouping.childNodes;
         for (var i = cn.length - 1, group; group = cn[i]; i--)
-          group.clear(alive);*/
+          group.clear();
       }
     },
 
@@ -8536,18 +8538,23 @@ basis.require('basis.html');
 
         if (this.localGrouping)
         {
-          if (!grouping && this.firstChild)
+          if (!grouping)
           {
+            //NOTE: it's important to clear locaGrouping before calling fastChildNodesOrder
+            //because it sorts nodes in according to localGrouping
             this.localGrouping = null;
 
-            order = this.localSorting
-                      ? sortChildNodes(this)
-                      : this.childNodes;
+            if (this.firstChild)
+            {
+              order = this.localSorting
+                        ? sortChildNodes(this)
+                        : this.childNodes;
 
-            for (var i = order.length; i --> 0;)
-              order[i].groupNode = null;
+              for (var i = order.length; i --> 0;)
+                order[i].groupNode = null;
 
-            fastChildNodesOrder(this, order);
+              fastChildNodesOrder(this, order);
+            }
           }
 
           oldGroupingNode.setOwner();
@@ -8596,6 +8603,9 @@ basis.require('basis.html');
       // TODO: fix when direction changes only
       if (this.localSorting != sorting || this.localSortingDesc != !!desc)
       {
+        var oldLocalSorting = this.localSorting;
+        var oldLocalSortingDesc = this.localSortingDesc;
+
         this.localSortingDesc = !!desc;
         this.localSorting = sorting || null;
 
@@ -8634,7 +8644,7 @@ basis.require('basis.html');
           fastChildNodesOrder(this, order);
         }
 
-        this.event_localSortingChanged(this);
+        this.event_localSortingChanged(this, oldLocalSorting, oldLocalSortingDesc);
       }
     },
 
@@ -10726,10 +10736,13 @@ basis.require('basis.html');
     event_ownerChanged: function(node, oldOwner){
       var cursor = this;
       var owner = this.owner;
-      var element = null;
+      var element = null;//this.nullElement;
 
       if (owner)
+      {
         element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement || owner.element;
+        element.appendChild(this.nullElement);
+      }
 
       do
       {
@@ -10738,6 +10751,12 @@ basis.require('basis.html');
       while (cursor = cursor.localGrouping);
 
       DWGroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
+    },
+
+    init: function(config){
+      this.nullElement = DOM.createFragment();
+      this.element = this.childNodesElement = this.nullElement;
+      DWGroupingNode.prototype.init.call(this, config);
     }
   });
 
@@ -17864,6 +17883,12 @@ basis.require('basis.ui');
   var ObjectState = Class(State, {
     className: namespace + '.ObjectState',
 
+    event_delegateChanged: function(object, oldDelegate){
+      State.prototype.event_delegateChanged.call(this, object, oldDelegate);
+
+      if (this.delegate)
+        this.event_stateChanged(this);
+    },
     event_stateChanged: function(object, oldState){
       State.prototype.event_stateChanged.call(this, object, oldState);
       this.setVisibility(this.visibilityGetter(this.state, oldState));
@@ -18844,8 +18869,10 @@ basis.require('basis.ui');
       }
     },
 
-    event_childNodesModified: function(){
+    event_childNodesModified: function(node, delta){
       classList(this.element).bool('hasSubItems', this.hasChildNodes());
+
+      UIContainer.prototype.event_childNodesModified.call(this, node, delta);
     },
 
     groupId: 0,
@@ -18979,6 +19006,8 @@ basis.require('basis.ui');
         Event.removeGlobalHandler('scroll', this.hideByScroll, this);
         Event.removeHandler(window, 'resize', this.realignAll, this);
       }
+
+      UIControl.prototype.event_childNodesModified.call(this, object, delta);
     },
 
     insertBefore: function(newChild, refChild){
@@ -19250,6 +19279,8 @@ basis.require('basis.ui');
 
         if (this.groupNode)
           this.groupNode.event_childNodesModified.call(this.groupNode, this.groupNode, {});
+
+        GroupingNode.prototype.event_childNodesModified.call(this, object, delta);
       },
       destroy: function(){
         PartitionNode.prototype.destroy.call(this);
@@ -19353,7 +19384,7 @@ basis.require('basis.ui');
 
     listen: {
       owner: {
-        localSortingChanged: function(owner){
+        localSortingChanged: function(owner, oldLocalSorting, oldLocalSortingDesc){
           var cell = this.childNodes.search(owner.localSorting, 'sorting');
           if (cell)
           {
@@ -20498,16 +20529,11 @@ basis.require('basis.ui');
   // main part
   //
 
-  function baseSelectHandler(child){
-    if (this.selection && !this.selection.itemCount)
-      child.select();
-  }
-
-  function baseUnselectHandler(){
-    if (this.selection && !this.selection.itemCount)
+  function findAndSelectActiveNode(control){
+    if (control.selection && !control.selection.itemCount)
     {
       // select first non-disabled child
-      var node = this.childNodes.search(false, 'disabled');
+      var node = control.childNodes.search(false, 'disabled');
       if (node)
         node.select();
     }
@@ -20522,9 +20548,22 @@ basis.require('basis.ui');
     canHaveChildren: true,
     childClass: UINode,
 
-    event_childEnabled: createEvent('childEnabled') && baseSelectHandler,
-    event_childDisabled: createEvent('childDisabled') && baseUnselectHandler,
-    event_childNodesModified: baseUnselectHandler,
+    event_childEnabled: createEvent('childEnabled', 'node') && function(node){
+      if (this.selection && !this.selection.itemCount)
+        child.select();
+
+      event.event_childEnabled.call(this, node);
+    },
+    event_childDisabled: createEvent('childDisabled', node) && function(){
+      findAndSelectActiveNode(this);
+
+      event.event_childDisabled.call(this, node);
+    },
+    event_childNodesModified: function(node, delta){
+      findAndSelectActiveNode(this);
+
+      UIControl.prototype.event_childNodesModified.call(this, node, delta);
+    },
 
     //
     //  common methods
@@ -22304,10 +22343,15 @@ basis.require('basis.ui');
     template: createFieldTemplate(baseFieldTemplate,
       '<label{field}>{fieldValueText}</label>'
     ),
-    setValue: function(newValue){
+    valueGetter: Function.$self,
+    event_change: function(){
+      Field.prototype.event_change.apply(this, arguments);
+      this.tmpl.fieldValueText.nodeValue = this.valueGetter(this.getValue());
+    }
+    /*setValue: function(newValue){
       Field.prototype.setValue.call(this, newValue);
       this.tmpl.fieldValueText.nodeValue = this.tmpl.field.value;
-    }
+    }*/
   });
 
   //
@@ -22431,6 +22475,16 @@ basis.require('basis.ui');
       ComplexFieldItem.prototype.event_unselect.call(this);
       //classList(this.element).remove('selected');
     },
+    event_enable: function(){
+      this.tmpl.field.removeAttribute('disabled');
+
+      UINode.prototype.event_enable.call(this);
+    },
+    event_disable: function(){
+      this.tmpl.field.setAttribute('disabled', 'disabled');
+
+      UINode.prototype.event_disable.call(this);
+    },
 
     template: new Template(
       '<label{element} class="Basis-RadioGroup-Item" event-click="select">' + 
@@ -22495,6 +22549,16 @@ basis.require('basis.ui');
     event_unselect: function(){
       this.tmpl.field.checked = false;
       ComplexFieldItem.prototype.event_unselect.call(this);
+    },
+    event_enable: function(){
+      this.tmpl.field.removeAttribute('disabled');
+
+      UINode.prototype.event_enable.call(this);
+    },
+    event_disable: function(){
+      this.tmpl.field.setAttribute('disabled', 'disabled');
+
+      UINode.prototype.event_disable.call(this);
     },
 
     template: new Template(
@@ -22634,7 +22698,6 @@ basis.require('basis.ui');
     templateAction: function(actionName, event){
       if (actionName == 'click' && !this.isDisabled())
       {
-
         this.select();
         if (this.parentNode)
           this.parentNode.hide();
@@ -24417,7 +24480,7 @@ basis.require('basis.ui');
 
         if (this.scrollX)
           this.scroller.setPositionX(this.scroller.viewportTargetX - this.wheelDelta * delta, true);
-        else (this.scrollY)
+        else if (this.scrollY)
           this.scroller.setPositionY(this.scroller.viewportTargetY - this.wheelDelta * delta, true);
       }
     },
@@ -25906,8 +25969,8 @@ basis.require('basis.ui.scroller');
         '<div/>' +
       '</div>',
 
-    event_childNodesModified: function(){
-      this.constructor.superClass_.prototype.event_childNodesModified.apply(this, arguments);
+    event_childNodesModified: function(node, delta){
+      basis.ui.tabs.PageControl.event_childNodesModified.call(this, node, delta);
 
       /*this.pageSliderCssRule.setStyle({
         width: (100 / this.childNodes.length) + '%'

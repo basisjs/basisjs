@@ -7146,8 +7146,10 @@ basis.require('basis.html');
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
+    * @param {function()} oldLocalSorting
+    * @param {boolean} oldLocalSortingDesc
     */
-    event_localSortingChanged: createEvent('localSortingChanged', 'node'),
+    event_localSortingChanged: createEvent('localSortingChanged', 'node', 'oldLocalSorting', 'oldLocalSortingDesc'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
@@ -8401,10 +8403,10 @@ basis.require('basis.html');
       // if local grouping, clear groups
       if (this.localGrouping)
       {
-        this.localGrouping.clear();
-        /*var cn = this.localGrouping.childNodes;
+        //this.localGrouping.clear();
+        var cn = this.localGrouping.childNodes;
         for (var i = cn.length - 1, group; group = cn[i]; i--)
-          group.clear(alive);*/
+          group.clear();
       }
     },
 
@@ -8507,18 +8509,23 @@ basis.require('basis.html');
 
         if (this.localGrouping)
         {
-          if (!grouping && this.firstChild)
+          if (!grouping)
           {
+            //NOTE: it's important to clear locaGrouping before calling fastChildNodesOrder
+            //because it sorts nodes in according to localGrouping
             this.localGrouping = null;
 
-            order = this.localSorting
-                      ? sortChildNodes(this)
-                      : this.childNodes;
+            if (this.firstChild)
+            {
+              order = this.localSorting
+                        ? sortChildNodes(this)
+                        : this.childNodes;
 
-            for (var i = order.length; i --> 0;)
-              order[i].groupNode = null;
+              for (var i = order.length; i --> 0;)
+                order[i].groupNode = null;
 
-            fastChildNodesOrder(this, order);
+              fastChildNodesOrder(this, order);
+            }
           }
 
           oldGroupingNode.setOwner();
@@ -8567,6 +8574,9 @@ basis.require('basis.html');
       // TODO: fix when direction changes only
       if (this.localSorting != sorting || this.localSortingDesc != !!desc)
       {
+        var oldLocalSorting = this.localSorting;
+        var oldLocalSortingDesc = this.localSortingDesc;
+
         this.localSortingDesc = !!desc;
         this.localSorting = sorting || null;
 
@@ -8605,7 +8615,7 @@ basis.require('basis.html');
           fastChildNodesOrder(this, order);
         }
 
-        this.event_localSortingChanged(this);
+        this.event_localSortingChanged(this, oldLocalSorting, oldLocalSortingDesc);
       }
     },
 

@@ -54,8 +54,8 @@ basis.require('basis.ui.scroller');
         '<div/>' +
       '</div>',
 
-    event_childNodesModified: function(){
-      this.constructor.superClass_.prototype.event_childNodesModified.apply(this, arguments);
+    event_childNodesModified: function(node, delta){
+      basis.ui.tabs.PageControl.event_childNodesModified.call(this, node, delta);
 
       /*this.pageSliderCssRule.setStyle({
         width: (100 / this.childNodes.length) + '%'

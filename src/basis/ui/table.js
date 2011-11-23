@@ -125,6 +125,8 @@ basis.require('basis.ui');
 
         if (this.groupNode)
           this.groupNode.event_childNodesModified.call(this.groupNode, this.groupNode, {});
+
+        GroupingNode.prototype.event_childNodesModified.call(this, object, delta);
       },
       destroy: function(){
         PartitionNode.prototype.destroy.call(this);
@@ -228,7 +230,7 @@ basis.require('basis.ui');
 
     listen: {
       owner: {
-        localSortingChanged: function(owner){
+        localSortingChanged: function(owner, oldLocalSorting, oldLocalSortingDesc){
           var cell = this.childNodes.search(owner.localSorting, 'sorting');
           if (cell)
           {

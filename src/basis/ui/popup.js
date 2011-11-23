@@ -478,8 +478,10 @@ basis.require('basis.ui');
       }
     },
 
-    event_childNodesModified: function(){
+    event_childNodesModified: function(node, delta){
       classList(this.element).bool('hasSubItems', this.hasChildNodes());
+
+      UIContainer.prototype.event_childNodesModified.call(this, node, delta);
     },
 
     groupId: 0,
@@ -613,6 +615,8 @@ basis.require('basis.ui');
         Event.removeGlobalHandler('scroll', this.hideByScroll, this);
         Event.removeHandler(window, 'resize', this.realignAll, this);
       }
+
+      UIControl.prototype.event_childNodesModified.call(this, object, delta);
     },
 
     insertBefore: function(newChild, refChild){
