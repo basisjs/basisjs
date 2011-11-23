@@ -20554,7 +20554,7 @@ basis.require('basis.ui');
 
       event.event_childEnabled.call(this, node);
     },
-    event_childDisabled: createEvent('childDisabled', node) && function(){
+    event_childDisabled: createEvent('childDisabled', 'node') && function(){
       findAndSelectActiveNode(this);
 
       event.event_childDisabled.call(this, node);
@@ -20832,13 +20832,13 @@ basis.require('basis.ui');
         return oldChild;
       }
     },
-    clear: function(){
+    clear: function(keepAlive){
       // put pageElement back to TabSheet root element
       this.childNodes.forEach(function(tabsheet){
         tabsheet.element.appendChild(tabsheet.tmpl.pageElement);
       });
 
-      TabControl.prototype.clear.call(this);
+      TabControl.prototype.clear.call(this, keepAlive);
     }
   });
 

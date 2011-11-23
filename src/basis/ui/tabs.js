@@ -71,7 +71,7 @@ basis.require('basis.ui');
 
       event.event_childEnabled.call(this, node);
     },
-    event_childDisabled: createEvent('childDisabled', node) && function(){
+    event_childDisabled: createEvent('childDisabled', 'node') && function(){
       findAndSelectActiveNode(this);
 
       event.event_childDisabled.call(this, node);
