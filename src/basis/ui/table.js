@@ -126,7 +126,7 @@ basis.require('basis.ui');
         if (this.groupNode)
           this.groupNode.event_childNodesModified.call(this.groupNode, this.groupNode, {});
 
-        GroupingNode.prototype.event_childNodesModified.call(this, object, delta);
+        PartitionNode.prototype.event_childNodesModified.call(this, object, delta);
       },
       destroy: function(){
         PartitionNode.prototype.destroy.call(this);

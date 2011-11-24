@@ -119,7 +119,9 @@ basis.require('basis.html');
   var SATELLITE_DESTROY_HANDLER = {
     ownerChanged: function(sender, oldOwner){
       if (sender.owner !== this)
-        ;// ???
+      {
+        // ???
+      }
     },
     destroy: function(object){
       DOM.replace(object.element, this);

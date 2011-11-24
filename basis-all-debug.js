@@ -7030,7 +7030,9 @@ basis.require('basis.html');
   var SATELLITE_DESTROY_HANDLER = {
     ownerChanged: function(sender, oldOwner){
       if (sender.owner !== this)
-        ;// ???
+      {
+        // ???
+      }
     },
     destroy: function(object){
       DOM.replace(object.element, this);
@@ -19280,7 +19282,7 @@ basis.require('basis.ui');
         if (this.groupNode)
           this.groupNode.event_childNodesModified.call(this.groupNode, this.groupNode, {});
 
-        GroupingNode.prototype.event_childNodesModified.call(this, object, delta);
+        PartitionNode.prototype.event_childNodesModified.call(this, object, delta);
       },
       destroy: function(){
         PartitionNode.prototype.destroy.call(this);
@@ -19854,10 +19856,10 @@ basis.require('basis.ui.table');
       Table.prototype.event_childNodesModified.call(this, node, delta);
       TimeEventManager.add(this, 'adjust', Date.now());
     },
-    event_childUpdated: function(child, delta){
+    /*event_childUpdated: function(child, delta){
       Table.prototype.event_childUpdated.call(this, child, delta);
       TimeEventManager.add(this, 'adjust', Date.now());
-    },
+    },*/
 
     init: function(config){
       Table.prototype.init.call(this, config);
@@ -20519,6 +20521,7 @@ basis.require('basis.ui');
   var getter = Function.getter;
   var classList = basis.cssom.classList;
   var createEvent = basis.EventObject.createEvent;
+  var basisEvent = basis.EventObject.event;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -20548,16 +20551,16 @@ basis.require('basis.ui');
     canHaveChildren: true,
     childClass: UINode,
 
-    event_childEnabled: createEvent('childEnabled', 'node') && function(node){
+    event_childEnabled: createEvent('childEnabled', 'document', 'node') && function(document, node){
       if (this.selection && !this.selection.itemCount)
         child.select();
 
-      event.event_childEnabled.call(this, node);
+      basisEvent.childEnabled.call(this, document, node);
     },
-    event_childDisabled: createEvent('childDisabled', 'node') && function(){
+    event_childDisabled: createEvent('childDisabled', 'document', 'node') && function(document, node){
       findAndSelectActiveNode(this);
 
-      event.event_childDisabled.call(this, node);
+      basisEvent.childDisabled.call(this, document, node);
     },
     event_childNodesModified: function(node, delta){
       findAndSelectActiveNode(this);

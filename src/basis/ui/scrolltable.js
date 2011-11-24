@@ -94,10 +94,10 @@ basis.require('basis.ui.table');
       Table.prototype.event_childNodesModified.call(this, node, delta);
       TimeEventManager.add(this, 'adjust', Date.now());
     },
-    event_childUpdated: function(child, delta){
+    /*event_childUpdated: function(child, delta){
       Table.prototype.event_childUpdated.call(this, child, delta);
       TimeEventManager.add(this, 'adjust', Date.now());
-    },
+    },*/
 
     init: function(config){
       Table.prototype.init.call(this, config);
