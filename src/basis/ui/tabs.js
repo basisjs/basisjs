@@ -36,6 +36,7 @@ basis.require('basis.ui');
   var getter = Function.getter;
   var classList = basis.cssom.classList;
   var createEvent = basis.EventObject.createEvent;
+  var basisEvent = basis.EventObject.event;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -65,16 +66,16 @@ basis.require('basis.ui');
     canHaveChildren: true,
     childClass: UINode,
 
-    event_childEnabled: createEvent('childEnabled', 'node') && function(node){
+    event_childEnabled: createEvent('childEnabled', 'document', 'node') && function(document, node){
       if (this.selection && !this.selection.itemCount)
         child.select();
 
-      event.event_childEnabled.call(this, node);
+      basisEvent.childEnabled.call(this, document, node);
     },
-    event_childDisabled: createEvent('childDisabled', 'node') && function(){
+    event_childDisabled: createEvent('childDisabled', 'document', 'node') && function(document, node){
       findAndSelectActiveNode(this);
 
-      event.event_childDisabled.call(this, node);
+      basisEvent.childDisabled.call(this, document, node);
     },
     event_childNodesModified: function(node, delta){
       findAndSelectActiveNode(this);
