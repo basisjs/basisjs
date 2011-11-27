@@ -173,20 +173,8 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../date.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../entity.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../tabs.js"></script>
-  <script type="text/javascript" src="../../calendar.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
   <script type="text/javascript" src="../../locale/ru/calendar.js"></script>
-  <script type="text/javascript" src="../../dragdrop.js"></script>
-  <script type="text/javascript" src="../../window.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
-  <script type="text/javascript" src="../../form.js"></script>
   <script type="text/javascript" src="../../locale/ru/form.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -206,13 +194,15 @@
 
   <script id="demo-javascript" type="text/javascript">
 
-    Basis.Event.onLoad(function(){
-      var DOM = Basis.DOM;
-      var nsData = Basis.Data;
-      var nsWrapper = Basis.DOM.Wrapper;
-      var nsEntity = Basis.Entity;
-      var nsCalendar = Basis.Controls.Calendar;
-      var nsLayout = Basis.Layout;
+    basis.dom.event.onLoad(function(){
+      var DOM = basis.dom;
+      var nsData = basis.data;
+      var nsUI = basis.ui;
+      var nsEntity = basis.entity;
+      var nsCalendar = basis.ui.calendar;
+      var nsLayout = basis.layout;
+
+      var classList = basis.cssom.classList;
 
       //
       // Data
@@ -246,7 +236,7 @@
       // Classes
       //
 
-      var TaskNode = nsWrapper.TmplNode.subclass({
+      var TaskNode = basis.ui.Node.subclass({
         template:
           '<li event-click="edit">' +
             '<span class="deleteButton" event-click="destroy">delete</span>' +
@@ -269,18 +259,16 @@
           }
         },
 
-        event_update: function(node, delta){
-          nsWrapper.TmplNode.prototype.event_update.call(this, node, delta);
+        templateUpdate: function(tmpl, eventName, delta){
+          tmpl.date.nodeValue = this.data.Date.toFormat('%D.%M.%Y');
+          tmpl.text.nodeValue = this.data.Text;
 
-          this.tmpl.date.nodeValue = this.data.Date.toFormat('%D.%M.%Y');
-          this.tmpl.text.nodeValue = this.data.Text;
-
-          this.tmpl.isDone.checked = this.data.IsDone;
-          Basis.CSS.classList(this.element).bool('IsDone', this.data.IsDone);
+          tmpl.isDone.checked = this.data.IsDone;
+          classList(this.element).bool('IsDone', this.data.IsDone);
         }
       });
 
-      var TaskList = nsWrapper.TmplContainer.subclass({
+      var TaskList = basis.ui.Container.subclass({
         template:
           '<ul class="taskList"/>',
 
@@ -295,7 +283,7 @@
         localSorting: Function.getter('data.Date', Number)
       });
 
-      var todoTabs = new Basis.Controls.Tabs.TabControl({
+      var todoTabs = new basis.ui.tabs.TabControl({
         childClass: {
           titleGetter: function(tab){
             var title = tab.delegate === Task.all
@@ -357,7 +345,7 @@
         ]
       });
 
-      var taskForm = new Basis.Controls.Form.FormContent({
+      var taskForm = new basis.ui.form.FormContent({
         autoDelegateParent: true,
         handler: {
           targetChanged: function(){
@@ -376,7 +364,7 @@
         }
       });
 
-      var taskWindow = new Basis.Controls.Window.Window({
+      var taskWindow = new basis.ui.window.Window({
         title: 'Task editor',
         childNodes: [
           taskForm
@@ -420,7 +408,7 @@
           childNodes: [
             {
               childNodes: [
-                new nsWrapper.TmplNode({
+                new nsUI.Node({
                   id: 'AddTaskButton',
                   template: '<button event-click="add">+</button>',
                   action: {

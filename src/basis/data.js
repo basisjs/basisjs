@@ -9,7 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-(function(){
+!function(){
 
   'use strict';
 
@@ -54,15 +54,12 @@
   var NULL_OBJECT = {};
   var EMPTY_ARRAY = [];
 
-  // States for StateObject
-
   /** @const */ var STATE_UNDEFINED  = 'undefined';
   /** @const */ var STATE_READY      = 'ready';
   /** @const */ var STATE_PROCESSING = 'processing';
   /** @const */ var STATE_ERROR      = 'error';
   /** @const */ var STATE_DEPRECATED = 'deprecated';
 
-  // New events
 
   //
   // Subscription sheme
@@ -2420,4 +2417,4 @@
     Split: Split
   });
 
-})();
+}(basis, this);

@@ -27,7 +27,8 @@
                'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. ' +
                'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.'
               )
-              .replace(/[^a-z]/i, '')
+              .replace(/[^a-z]/gi, ' ')
+              .trim()
               .split(/\s+/);
 
  /**
@@ -74,9 +75,9 @@
   //
 
   basis.namespace(namespace).extend({
-    Number: genNumber,
-    String: genString,
-    Sentence: genSentence
+    number: genNumber,
+    string: genString,
+    sentence: genSentence
   });
 
 }(basis);

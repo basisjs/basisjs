@@ -42,11 +42,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -65,15 +61,15 @@
 
   <script id="demo-javascript" type="text/javascript">
 
-    var DOM = Basis.DOM;
-    var nsData = Basis.Data;
-    var nsWrappers = Basis.DOM.Wrapper;
-    var nsButton = Basis.Controls.Button;
+    var DOM = basis.dom;
+    var nsData = basis.data;
+    var nsWrappers = basis.dom.wrapper;
+    var nsButton = basis.ui.button;
     
-    var property1 = new nsData.Property.Property(0);
-    var property2 = new nsData.Property.Property(0);
+    var property1 = new nsData.property.Property(0);
+    var property2 = new nsData.property.Property(0);
 
-    var dataObjectSet = new nsData.Property.DataObjectSet({
+    var dataObjectSet = new nsData.property.DataObjectSet({
       objects: [property1, property2],
       calculateValue: function(){
         return this.objects.reduce(function(value, object){

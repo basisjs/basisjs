@@ -90,15 +90,8 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../entity.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
-  <script type="text/javascript" src="../../form.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
   <script type="text/javascript" src="../../locale/en/form.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -115,12 +108,10 @@
 
   <script id="demo-javascript" type="text/javascript">
 
-    var nsWrapper = Basis.DOM.Wrapper;
-  
     //
     // Data
     //
-    var Article = new Basis.Entity.EntityType({
+    var Article = new basis.entity.EntityType({
       name: 'Article',
       fields: {
         id: Number,
@@ -140,8 +131,8 @@
     //
     // Define new node class for Article
     //
-    var ArticleNode = Basis.Class(nsWrapper.TmplNode, 
-      nsWrapper.simpleTemplate(
+    var ArticleNode = basis.Class(basis.ui.Node, 
+      basis.ui(
         '<div{element} class="Article" event-click="select">' +
           '<div class="Article-Title">{this_data_title}</div>' +
           '<div class="Article-Content">{this_data_content}</div>' +
@@ -150,13 +141,13 @@
       {
         action: {
           select: function(event){
-            this.select(Basis.Event(event).ctrlKey);
+            this.select(basis.dom.event(event).ctrlKey);
           }
         },
         listen: {
           target: {
             rollbackUpdate: function(object, modifiedDelta){
-              Basis.CSS.classList(this.element).bool('modified', object.modified)
+              basis.cssom.classList(this.element).bool('modified', object.modified)
             }
           }
         }
@@ -166,7 +157,7 @@
     //
     // Article list
     //
-    var articleList = new nsWrapper.TmplContainer({
+    var articleList = new basis.ui.Container({
       id: 'ArticleList',
       dataSource: Article.all,  // set data source
       childClass: ArticleNode,  // set class for child nodes
@@ -190,7 +181,7 @@
         myForm.target.set(this.name, this.getValue(), true);
     }
 
-    var myForm = new Basis.Controls.Form.FormContent({
+    var myForm = new basis.ui.form.FormContent({
       disabled: true,             // desable by default
       autoDelegateParent: true,   // delegate parent
       childNodes: [               // define fields
@@ -230,7 +221,7 @@
       }
     });
 
-    var formPanel = new Basis.Controls.Button.ButtonPanel({
+    var formPanel = new basis.ui.button.ButtonPanel({
       autoDelegateParent: true,
       disabled: true,
       childNodes: [
@@ -268,7 +259,7 @@
       }
     });
 
-    var articleEditor = new nsWrapper.TmplContainer({
+    var articleEditor = new basis.ui.Container({
       id: 'EditForm',
       childNodes: [              // set child nodes
         myForm,
@@ -277,7 +268,7 @@
     });
 
     // insert into document
-    Basis.DOM.insert('demo-container', [
+    basis.dom.insert('demo-container', [
       articleList.element,
       articleEditor.element
     ]);

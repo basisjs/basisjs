@@ -42,15 +42,8 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../entity.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
-  <script type="text/javascript" src="../../form.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
   <script type="text/javascript" src="../../locale/en/form.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -70,7 +63,7 @@
   <script id="demo-javascript" type="text/javascript">
     
     // Определяем новый тип данных.
-    var Article = new Basis.Entity.EntityType({
+    var Article = new basis.entity.EntityType({
       // Необязательное поле, используется в основном для отладки.
       name: 'Article',
       
@@ -98,14 +91,14 @@
     // Создаем новый класс для листьев дерева с переопределеной функцией формирования заголовка.
     // Данный код вынесен отдельно для наглядности и мог бы быть вставлен непосрественно в
     // конструкторе дерева, без заведения переменной для нового класса.
-    var MyTreeNode = Basis.Class.create(Basis.Controls.Tree.TreeNode, {
+    var MyTreeNode = basis.Class.create(basis.ui.tree.Node, {
       titleGetter: function(node){
         return '[{id}] {title}'.format(node.data)
       }
     });
 
     // Создаем дерево
-    var myTree = new Basis.Controls.Tree.Tree({
+    var myTree = new basis.ui.tree.Tree({
       // Определяем класс для дочерних узлов (описан выше)
       childClass: MyTreeNode,
 
@@ -134,7 +127,7 @@
     });
 
     // Создаем форму
-    var myForm = new Basis.Controls.Form.FormContent({
+    var myForm = new basis.ui.form.FormContent({
       // Делаем форму недоступной для редактирования на первоначальном этапе, так как к ней еще
       // не привязаны данные и соответственно нечего редактировать.
       disabled: true,
@@ -187,7 +180,7 @@
     });
 
     // Создаем панель с кнопками
-    var myButtonPanel = new Basis.Controls.Button.ButtonPanel({
+    var myButtonPanel = new basis.ui.button.ButtonPanel({
       childNodes: [
         {
           // Функция сохранения
@@ -217,7 +210,7 @@
     });
 
     // Вставляем компоненты в документ
-    Basis.DOM.insert('demo-container', [
+    basis.dom.insert('demo-container', [
       myTree.element,
       myForm.element,
       myButtonPanel.element

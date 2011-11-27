@@ -45,11 +45,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../entity.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -76,11 +72,11 @@
 
   <script id="demo-javascript" type="text/javascript">
 
-    var DOM = Basis.DOM;
-    var nsData = Basis.Data;
-    var nsEntity = Basis.Entity;
-    var nsWrappers = Basis.DOM.Wrapper;
-    var nsTree = Basis.Controls.Tree;
+    var DOM = basis.dom;
+    var nsData = basis.data;
+    var nsEntity = basis.entity;
+    var nsUI = basis.ui;
+    var nsTree = basis.ui.tree;
 
     //
     // DATA
@@ -146,39 +142,39 @@
     //
    
     var grouping = {
-      childClass: nsWrappers.TmplPartitionNode,
+      childClass: nsUI.PartitionNode,
       groupGetter: function(node){
-        return node instanceof nsTree.TreeFolder == false;
+        return node instanceof nsTree.Folder == false;
       },
       localSorting: Function.getter('data.id')
     };
 
-    var FolderNode = Basis.Class(nsTree.TreeFolder, {
+    var FolderNode = basis.Class(nsTree.Folder, {
       titleGetter: Function.getter('data.name'),
       localSorting: Function.getter('data.name'),
       localGrouping: grouping,
       init: function(config){
-        nsTree.TreeNode.prototype.init.call(this, config);
+        nsTree.Node.prototype.init.call(this, config);
         this.setDataSource(goupingByParentId.getSubset(this.data.path + '' + this.data.name + '/'))
       }
     });
 
-    var LazyFolderNode = Basis.Class(nsTree.TreeFolder, {
+    var LazyFolderNode = basis.Class(nsTree.Folder, {
       titleGetter: Function.getter('data.name'),
       localSorting: Function.getter('data.name'),
       localGrouping: grouping,
       collapsed: true,
       event_expand: function(){
-        nsTree.TreeFolder.prototype.event_expand.call(this);
+        nsTree.Folder.prototype.event_expand.call(this);
         this.setDataSource(goupingByParentId.getSubset(this.data.path + '' + this.data.name + '/'))
       }
     });
 
-    var FileNode = Basis.Class(nsTree.TreeNode, {
+    var FileNode = basis.Class(nsTree.Node, {
       titleGetter: Function.getter('data.name')
     });
 
-    var FileTree = Basis.Class(nsTree.Tree, {
+    var FileTree = basis.Class(nsTree.Tree, {
       dataSource: goupingByParentId.getSubset('/'),
       localSorting: Function.getter('data.name'),
       localGrouping: grouping,

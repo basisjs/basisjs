@@ -144,7 +144,7 @@ for my $pack (@packages){
   unless ($flags{'-nopack'})
   {
     my $fn = "basis-$name.js";
-    my $res = `java -jar c:\\tools\\gcc-20110811.jar --js $fn`;
+    my $res = `java -jar c:\\tools\\gcc.jar --js $fn`;
 
     open F, ">$fn";
     print F <<EOF;

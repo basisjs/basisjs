@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -62,13 +61,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../popup.js"></script>
-
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -88,18 +81,18 @@
   <script type="text/javascript" id="demo-javascript">
     
     // import names
-    var DOM = Basis.DOM;
-    var Event = Basis.Event;
-    var Data = Basis.Data;
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
+    var Data = basis.data;
 
     var getter = Function.getter;
 
-    var nsPopup = Basis.Controls.Popup;
-
-    var Button = Basis.Controls.Button.Button;
+    var nsPopup = basis.ui.popup;
     var Popup = nsPopup.Popup;
     var Balloon = nsPopup.Balloon;
     var Menu = nsPopup.Menu;
+
+    var Button = basis.ui.button.Button;
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
@@ -117,11 +110,12 @@
     });
 
     new Button({
+      container: createBlock('Popup'),
+
       caption: 'Show Popup',
       click: function(){
         popup.show(this.element);
-      },
-      container: createBlock('Popup')
+      }
     });
 
     // Ballon
@@ -136,11 +130,12 @@
     });
 
     new Button({
+      container: createBlock('Balloon'),
+
       caption: 'Show Balloon',
       click: function(){
         balloon.show(this.element);
       },
-      container: createBlock('Balloon')
     });
 
     // Menu
@@ -181,12 +176,13 @@
       ]
     });
 
-    new click({
+    new Button({
+      container: createBlock('Menu'),
+
       caption: 'Show Menu',
-      handler: function(){
+      click: function(){
         menu.show(this.element);
-      },
-      container: createBlock('Menu')
+      }
     });
 
 

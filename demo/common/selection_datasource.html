@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+<!doctype html>
 
 <html>
 
@@ -32,10 +32,7 @@
     }
   </style>
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -69,9 +66,9 @@
   </div>
 
   <script id="demo-javascript" type="text/javascript">
-    var DOM = Basis.DOM;
-    var Event = Basis.Event;
-    var nsTree = Basis.Controls.Tree;
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
+    var nsTree = basis.ui.tree;
 
     //
     // Master tree
@@ -80,13 +77,13 @@
       container: DOM.get('sourceTree'),
       selection: { multiple: true },
       childNodes: Array.create(10, function(i){
-        return new nsTree.TreeFolder({
+        return new nsTree.Folder({
           data: {
             id: i,
             title: 'item #' + i
           },
           childNodes: [
-            new nsTree.TreeNode({
+            new nsTree.Node({
               data: {
                 title: 'child of item #' + i
               }
@@ -110,7 +107,7 @@
     //
     var tree3 = new nsTree.Tree({
       container: DOM.get('selectedItemsByGroupTree'),
-      dataSource: new Basis.Data.Dataset.Split({
+      dataSource: new basis.data.Dataset.Split({
         source: tree1.selection, 
         rule: Function.getter('data.id % 2', {
           'NaN': 'Child items',
@@ -118,14 +115,14 @@
           '1': 'Odd items'
         })
       }),
-      childClass: nsTree.TreeFolder.subclass({
+      childClass: nsTree.Folder.subclass({
         collapsed: true,
         event_expand: function(){
-          nsTree.TreeFolder.prototype.event_expand.call(this);
+          nsTree.Folder.prototype.event_expand.call(this);
           this.setDataSource(this.delegate);
         },
         init: function(config){
-          nsTree.TreeFolder.prototype.init.call(this, config);
+          nsTree.Folder.prototype.init.call(this, config);
 
           this.tmpl.itemCountText = DOM.insert(this.tmpl.title, '');
           this.listen.delegate.datasetChanged.call(this, this.delegate);

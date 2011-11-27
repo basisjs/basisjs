@@ -6,7 +6,7 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
   <link rel="stylesheet" type="text/css" href="../../style/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" href="../../plugins/style/slider/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../../style/slider/default/style.css" media="screen" />
   <link rel="stylesheet" type="text/css" href="../demo.css" media="screen" />
 
   <title>Basis Demos: Dataset</title>
@@ -56,6 +56,10 @@
       width: 250px;
       float: left;
     }
+    .Basis-ButtonPanel
+    {
+      padding-bottom: .5em;
+    }
   </style>
   <!--[if lt IE 7]>
   <style type="text/css">
@@ -70,10 +74,9 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../seedrandom.js"></script>
-
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
@@ -114,27 +117,27 @@
     var UINode = basis.ui.Node;
     var UIContainer = basis.ui.Container;
 
-    var seed = 0;
     Math.seedrandom("basis");
-    function genData(){
-      seed++;
-      return new basis.data.Object({
-        data: {
-          id: seed,
-          title: 'item' + seed,
-          value: parseInt(50 * Math.random()),
-          total: parseInt(150 * Math.random())
-        }
-      });
-    }
 
-    ttt = new Date();
+    var createDataItem = (function(){
+      var seed = 0;
+
+      return function(){
+        seed++;
+        return new basis.data.Object({
+          data: {
+            id: seed,
+            title: 'item' + seed,
+            value: parseInt(50 * Math.random()),
+            total: parseInt(150 * Math.random())
+          }
+        });
+      }
+    })();
 
     var dataset = new basis.data.Dataset({
-      items: Array.create(15, genData)
+      items: Array.create(15, createDataItem)
     });
-
-    console.log(new Date - ttt);
 
     var indexMap = new nsDataIndex.IndexMap({
       source: dataset,
@@ -154,58 +157,22 @@
         percentOfTotalSum: function(data, indexes){
           return data.total/indexes.totalSum;
         }
-      },
-      lock: function(){
-        Object.values(this.indexes).forEach(function(idx){
-          idx.lock();
-        })
-      },
-      unlock: function(){
-        Object.values(this.indexes).forEach(function(idx){
-          idx.unlock();
-        })
       }
     });
-
-    var statPanelClass = new UINode.subclass({
-      container: DOM.get('demo-container'),
-      data: Object.slice(indexMap.stat),
-      templateUpdate: function(tmpl, eventName, delta){
-        if (!delta) delta = {};
-        DOM.insert(DOM.clear(this.element), Object.iterate(this.data, function(key, value){
-          var diff = key in delta ? value - delta[key] : 0;
-          return DOM.createElement(diff ? '.diff' : '', (diff ? '+' + diff + ' ' : '') + key + ': ' + value);
-        }));
-      },
-      sync: function(){
-        this.update(indexMap.stat);
-      }
-    });
-    new statPanelClass;
-
-    console.log(new Date - ttt);
 
     new ButtonPanel({
       container: DOM.get('demo-container'),
       childNodes: [
         {
-          caption: 'sync',
-          click: function(){
-            stat.sync();
-          }
-        },
-        {
           caption: 'add',
           click: function(){
-            dataset.add([genData()]);
-            stat.sync();
+            dataset.add([createDataItem()]);
           }
         },
         {
           caption: 'add 5',
           click: function(){
-            dataset.add(Array.create(5, genData));
-            stat.sync();
+            dataset.add(Array.create(5, createDataItem));
           }
         },
         {
@@ -213,7 +180,6 @@
           click: function(){
             if (table.firstChild)
               dataset.remove([table.firstChild.root]);
-            stat.sync();
           }
         },
         {
@@ -234,8 +200,7 @@
             }
             indexMap.unlock();
 
-            console.log(new Date - t);
-            stat.sync();
+            console.log('stress test time', new Date - t);
           }
         }
       ]
@@ -354,24 +319,6 @@
       ]
     });
     DOM.hide(recordPanel.element);
-
-    var stat = new statPanelClass();
-    stat.sync();
-    DOM.setStyle(stat.element, {
-      position: 'absolute',
-      top: '10px',
-      left: '300px'
-    });
-
-    console.log(new Date - ttt);
-
-            /*indexMap.node.subclass(
-              null,
-              '{value}',
-              function(){
-                this.tmpl.value.nodeValue = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);
-              }
-            )*/
 
     
   </script>

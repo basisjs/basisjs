@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -64,13 +63,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../ajax.js"></script>
-  <script type="text/javascript" src="../../xml.js"></script>
-  <script type="text/javascript" src="../../soap.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -120,8 +113,8 @@
     // So, /w3schools_com/webservices/tempconvert.asmx should be proxed to 
     // http://www.w3schools.com/webservices/tempconvert.asmx
 
-    var $ = Basis.DOM.get;
-    var cssClass = Basis.CSS.cssClass;
+    var $ = basis.dom.get;
+    var classList = basis.cssom.classList;
 
     function setText(block, text){
       block.innerHTML = text;
@@ -130,26 +123,26 @@
     var RESULT_FORMAT = 'Result: {0}' + String.Entity.deg + ' C = {1}' + String.Entity.deg + ' F';
 
     //
-    // Basis.Ajax.Transport
+    // basis.net.ajax.Transport
     //
 
     var nativeResult = $('convertFormNative_Result');
-    var transport = new Basis.Ajax.Transport({
+    var transport = new basis.net.ajax.Transport({
       method: 'POST',
       url: '/w3schools_com/webservices/tempconvert.asmx',
       callback: {
         start: function(){
-          cssClass(nativeResult).add('loading');
+          classList(nativeResult).add('loading');
           setText(nativeResult, 'Converting...');
         },
         complete: function(){
-          cssClass(nativeResult).remove('loading');
+          classList(nativeResult).remove('loading');
         },
         failure: function(){
           setText(nativeResult, 'Error');
         },
         success: function(req){
-          var data = Basis.XML.XML2Object(req.responseXML);
+          var data = basis.xml.XML2Object(req.responseXML);
           setText(nativeResult, RESULT_FORMAT.format(this.reqValue, data['soap:Envelope']['soap:Body'].CelsiusToFahrenheitResponse.CelsiusToFahrenheitResult));
         }
       }
@@ -165,14 +158,14 @@
         transport.reqValue +
         '</Celsius></CelsiusToFahrenheit></soap:Body></soap:Envelope>';
       transport.request();
-      Basis.Event.kill(e);
+      basis.dom.event.kill(e);
     };
 
     //
     // Basis.SOAP (dynamic method)
     // 
 
-    var service = new Basis.SOAP.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
+    var service = new basis.net.soap.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
     
     var dynCallResult = $('convertFormDynamicCall_Result');
     $('convertFormDynamicCall').onsubmit = function(e){
@@ -182,11 +175,11 @@
         },
         callback: {
           start: function(){
-            cssClass(dynCallResult).add('loading');
+            classList(dynCallResult).add('loading');
             setText(dynCallResult, 'Converting...');
           },
           complete: function(){
-            cssClass(dynCallResult).remove('loading');
+            classList(dynCallResult).remove('loading');
           },
           failure: function(){
             setText(dynCallResult, 'Error');
@@ -196,7 +189,7 @@
           }
         }
       });
-      Basis.Event.kill(e);
+      basis.dom.event.kill(e);
     };
 
     //
@@ -205,17 +198,17 @@
 
     var staticCallResult = $('convertFormStaticCall_Result');
 
-    var celsiusValue = new Basis.Data.Property.Property(100);
+    var celsiusValue = new basis.data.property.Property(100);
 
-    var service2 = new Basis.SOAP.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
+    var service2 = new basis.net.soap.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
     var service2_method = service2.createMethodCall('CelsiusToFahrenheit', {
       callback: {
         start: function(){
-          cssClass(staticCallResult).add('loading');
+          classList(staticCallResult).add('loading');
           setText(staticCallResult, 'Converting...');
         },
         complete: function(){
-          cssClass(staticCallResult).remove('loading');
+          classList(staticCallResult).remove('loading');
         },
         failure: function(){
           setText(staticCallResult, 'Error');
@@ -230,7 +223,7 @@
       service2_method.call({
         Celsius: Number($('convertFormStaticCall_Value').value)
       });
-      Basis.Event.kill(e);
+      basis.dom.event.kill(e);
     };
     
   </script>

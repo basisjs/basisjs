@@ -82,6 +82,13 @@ basis.require('basis.ui');
         '</span>' +
       '</td>',
 
+    templateUpdate: function(tmpl, event, delta){
+      var page = this.pageGetter(this);
+
+      tmpl.pageNumber.nodeValue = page + 1;
+      tmpl.link.href = this.urlGetter(page);
+    },
+
     action: {
       click: function(event){
         Event.kill(event);
@@ -93,14 +100,6 @@ basis.require('basis.ui');
     click: function(){
       if (this.parentNode)
         this.parentNode.setActivePage(this.pageGetter(this));
-    },
-
-    event_update: function(object, delta){
-      UINode.prototype.event_update.call(this, object, delta);
-
-      var page = this.pageGetter(this);
-      this.tmpl.pageNumber.nodeValue = page + 1;
-      this.tmpl.link.href = this.urlGetter(page);
     }
   });
 

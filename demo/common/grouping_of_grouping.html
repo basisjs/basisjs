@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -132,7 +131,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -164,7 +163,7 @@
     // make shortcut
     var Data = basis.data;
     var DOM = basis.dom;
-    var nsWrapper = basis.dom.wrapper;
+    var nsUI = basis.ui;
 
     //
     // NUMBER GROUP DEMO
@@ -181,9 +180,9 @@
       });
     }
 
-    var groupingClass = basis.Class(nsWrapper.TmplGroupingNode, {
-      childClass: nsWrapper.simpleTemplate(
-        '<div{element} class="group">' +
+    var groupingClass = basis.Class(nsUI.GroupingNode, {
+      childClass: nsUI(
+        '<div class="group">' +
           '<!-- {childNodesHere} -->' +
           '<div class="group-title">{this_data_title}</div>' +
         '</div>'
@@ -194,10 +193,14 @@
     });
     groupingClass.prototype.localGroupingClass = groupingClass;
 
-    var list = new nsWrapper.TmplContainer({
+    var list = new nsUI.Container({
       container: DOM.get('NumberDemo-Container'),
       childNodes: data,
-      childClass: nsWrapper.simpleTemplate('<span{element} class="item">{this_data_id}</span>'),
+      childClass: nsUI(
+        '<span class="item">' +
+          '{this_data_id}' +
+        '</span>'
+      ),
       localGroupingClass: groupingClass,
       localGrouping: {
         localGrouping: {
@@ -428,13 +431,13 @@
       'Venezuela': 'South America'
     };
 
-    var metroList = new nsWrapper.TmplContainer({
+    var metroList = new nsUI.Container({
       id: 'MetroDemo',
       container: DOM.get('MetroDemo-Container'),
 
       childNodes: Data(metro),  // metro.map(Function.wrapper('data'))
       localSorting: Function.getter('data.name'),
-      childClass: nsWrapper(
+      childClass: nsUI(
         '<li class="metro">' +
           '<span class="metro-name">{this_data_name}</span>' +
           '<span class="metro-city">{this_data_city}</span>' +
@@ -445,7 +448,7 @@
         // group metro by country
         groupGetter: Function.getter('data.country'),
         localSorting: Function.getter('data.title'),
-        childClass: nsWrapper(
+        childClass: nsUI(
           '<div class="metro-country">' +
             '<h4 class="metro-country-title">{this_data_title}</h4>' +
             '<ul{childNodesElement}/>' +
@@ -458,7 +461,7 @@
             return continentByCountry[node.data.id];
           },
           localSorting: Function.getter('data.title'),
-          childClass: nsWrapper(
+          childClass: nsUI(
             '<div class="metro-continent">' +
               '<h3 class="metro-continent-title">{this_data_title}</h3>' +
               '<!-- {childNodesHere} -->' +

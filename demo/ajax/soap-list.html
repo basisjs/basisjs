@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -53,15 +52,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../label.js"></script>
-  <script type="text/javascript" src="../../ajax.js"></script>
-  <script type="text/javascript" src="../../xml.js"></script>
-  <script type="text/javascript" src="../../soap.js"></script>
-  <script type="text/javascript" src="../../entity.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -84,10 +75,10 @@
     // So, /w1service/PublicService.asmx should be proxed to 
     // http://services.w1.ru/10/PublicService.asmx
 
-    var demoContainer = Basis.DOM.get('demo-container');
+    var demoContainer = basis.dom.get('demo-container');
 
     // create provider group data type
-    var ProviderGroup = new Basis.Entity.EntityType({
+    var ProviderGroup = new basis.entity.EntityType({
       name: 'ProviderGroup',
       id: 'ProviderGroupId',
       fields: {
@@ -103,7 +94,7 @@
     }
 
     // create service and it's method
-    var service = new Basis.SOAP.Service('/w1service/PublicService.asmx', 'Wallet.Public.WebService');
+    var service = new basis.net.soap.Service('/w1service/PublicService.asmx', 'Wallet.Public.WebService');
     var getProviderGroup = service.createMethodCall('GetProviderGroups', {
       mapping: {
         // force converting ProviderGroup element to array in response
@@ -116,24 +107,24 @@
       },
       callback: {
         start: function(){ 
-          ProviderGroup.all.setState(Basis.Data.STATE.PROCESSING)
+          ProviderGroup.all.setState(basis.data.STATE.PROCESSING)
         },
         failure: function(){
-          ProviderGroup.all.setState(Basis.Data.STATE.ERROR)
+          ProviderGroup.all.setState(basis.data.STATE.ERROR)
         },
         success: function(envelopeData){
           // synchonize with current dataset
           ProviderGroup.all.sync((getResponseData.call(this)).ProviderGroup);
 
           // change dataset state to READY
-          ProviderGroup.all.setState(Basis.Data.STATE.READY)
+          ProviderGroup.all.setState(basis.data.STATE.READY)
         }
       }
     }, true);
 
     // add trigger button
-    Basis.DOM.insert(demoContainer,
-      Basis.DOM.createElement(
+    basis.dom.insert(demoContainer,
+      basis.dom.createElement(
         {
           description: 'BUTTON',
           click: function(){
@@ -145,7 +136,7 @@
     );
 
     // create provider group list
-    var tree = new Basis.Controls.Tree.Tree({
+    var tree = new basis.ui.tree.Tree({
       container: demoContainer,
 
       // set source dataset
@@ -155,30 +146,17 @@
       delegate: ProviderGroup.all,
 
       // customize item class
-      childClass: Basis.Class(Basis.Controls.Tree.TreeNode, {
+      childClass: {
         titleGetter: Function.getter('data', '{Title} ({ProviderCount})')
-      })
+      }
     });
 
     // add handler for trace state changes
-    new Basis.Controls.Label.DataSourceProcessing({
+    new basis.ui.label.DataSourceProcessing({
       cssClassName: 'loading',
       content: 'loading...',
       delegate: tree
     });
-    /*tree.addHandler({
-      stateChanged: function(object, oldState){
-        if (this.state == Basis.Data.STATE.PROCESSING)
-        {
-          if (!this.loadingLabel)
-            this.loadingLabel = Basis.DOM.createElement('.loading', 'loading...');
-          Basis.DOM.insert(this.element, this.loadingLabel);
-        }  
-
-        if (oldState == Basis.Data.STATE.PROCESSING)
-          Basis.DOM.remove(this.loadingLabel);
-      }
-    });*/
     
   </script>
 </body>

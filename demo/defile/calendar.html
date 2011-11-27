@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -28,13 +27,8 @@
   </style>
   <![endif]-->
   
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../date.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
   <script type="text/javascript" src="../../locale/en/calendar.js"></script>
-  <script type="text/javascript" src="../../calendar.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -53,8 +47,8 @@
 
   <script type="text/javascript" id="demo-javascript">
 
-    new Basis.Controls.Calendar.Calendar({
-      container: Basis.DOM.get('demo-container'),
+    new basis.ui.calendar.Calendar({
+      container: basis.dom.get('demo-container'),
       sections: ['Month', 'Year', 'YearDecade']
     });
 

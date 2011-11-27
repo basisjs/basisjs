@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -60,10 +59,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -83,10 +79,10 @@
   <script type="text/javascript" id="demo-javascript">
     
     // make shortcut
-    var DOM = Basis.DOM;
+    var DOM = basis.dom;
 
-    var nsTree = Basis.Controls.Tree;
-    var Selection = Basis.DOM.Wrapper.Selection;
+    var nsTree = basis.ui.tree;
+    var Selection = basis.dom.wrapper.Selection;
 
     //
     // THIS SECTION FOR AUTOMATIC SELECTION CONTENT OUTPUT AND NOT A PART OF DEMONSTATION
@@ -163,9 +159,9 @@
 
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.TreeFolder(config);
+          return new nsTree.Folder(config);
         else
-          return new nsTree.TreeNode(config);
+          return new nsTree.Node(config);
       },
 
       selection: {

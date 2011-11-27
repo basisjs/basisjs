@@ -35,11 +35,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../ajax_.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 
@@ -69,23 +65,23 @@
 
   <script type="text/javascript" id="demo-javascript">
 
-    var STATE = Basis.Data.STATE;
+    var STATE = basis.data.STATE;
 
-    var titleResolver = new Basis.Ajax.Transport({
+    var titleResolver = new basis.net.ajax.Transport({
       poolHashGetter: function(requestData){
         return requestData.url;
       },
       poolLimit: 1,
       handler: {
         success: function(req){
-          var m = req.data.responseText.match(/<title>([^<]*)<\/title>/i);
+          var m = req.responseText.match(/<title>([^<]*)<\/title>/i);
           if (m && req.influence[0])
             req.influence[0].update({ title: m[1] });
         }
       }
     });
 
-    var UrlDataObject = Basis.Class(Basis.Data.Object, {
+    var UrlDataObject = basis.Class(basis.data.Object, {
       adapter: titleResolver,
       state: STATE.UNDEFINED,
       handler: {
@@ -113,11 +109,11 @@
     });
 
     // create service and it's method
-    var indexTransport = new Basis.Ajax.Transport({
+    var indexTransport = new basis.net.ajax.Transport({
       url: '../index.html',
       handler: {
         success: function(req){
-          var list = req.data.responseText.match(/url:\s*(\"[^\"]+\"|\'[^\']+\')/g);
+          var list = req.responseText.match(/url:\s*(\"[^\"]+\"|\'[^\']+\')/g);
           var result = [];
           for (var i = 0; i < list.length; i++)
           {
@@ -132,26 +128,24 @@
     });
     indexTransport.get();
 
-    var links = new Basis.Data.Dataset();
-    var list = new Basis.DOM.Wrapper.TmplContainer({
-      container: Basis.DOM.get('demo-container'),
+    var links = new basis.data.Dataset();
+    var list = new basis.ui.Container({
+      container: basis.dom.get('demo-container'),
       cssClassName: 'demo-list',
       dataSource: links,
-      childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
-        template: new Basis.Html.Template('<div{element}>{titleText}</div>'),
-        event_update: function(object, delta){
-          Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
-
-          this.tmpl.titleText.nodeValue = this.data.title || this.data.url;
+      childClass: {
+        template: '<div{element}>{titleText}</div>',
+        templateUpdate: function(tmpl){
+          tmpl.titleText.nodeValue = this.data.title || this.data.url;
         },
         event_stateChanged: function(object, oldState){
-          Basis.CSS.classList(this.element).replace(oldState, this.state, 'state-');
+          basis.cssom.classList(this.element).replace(oldState, this.state, 'state-');
         }
-      })
+      }
     });
 
-    var button = new Basis.Controls.Button.Button({
-      container: Basis.DOM.get('demo-container'),
+    var button = new basis.ui.button.Button({
+      container: basis.dom.get('demo-container'),
       caption: 'Set active',
       click: function(){
         for (var i = 0, child; child = list.childNodes[i]; i++)

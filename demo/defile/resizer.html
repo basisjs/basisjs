@@ -7,7 +7,7 @@
 
   <title>Basis Demos: Resizer</title>
 
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../plugins/style/resizer/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/resizer/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -102,12 +102,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../dragdrop.js"></script>
-  <script type="text/javascript" src="../../plugins/resizer.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -125,8 +120,9 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    var DOM = Basis.DOM;
-    var classList = Basis.CSS.classList;
+    var DOM = basis.dom;
+    var classList = basis.cssom.classList;
+    var Resizer = basis.ui.resizer.Resizer;
 
     var horPanel = DOM.createElement('#HorPanel',
       DOM.createElement('H2', 'Vertical panel'),
@@ -149,10 +145,10 @@
       }, 'change side')
     );
 
-    new Basis.Plugin.Resizer({
+    new Resizer({
       element: horPanel
     });
-    new Basis.Plugin.Resizer({
+    new Resizer({
       element: vertPanel,
       property: 'height'
     });

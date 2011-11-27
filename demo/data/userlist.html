@@ -78,13 +78,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../entity.js"></script>
-  <script type="text/javascript" src="../../ajax.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
-  <script type="text/javascript" src="../../label.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -106,15 +100,15 @@
     // import names
     //
 
-    var Data = Basis.Data;
-    var DOM = Basis.DOM;
+    var Data = basis.data;
+    var DOM = basis.dom;
 
-    var nsWrappers = Basis.DOM.Wrapper;
-    var nsEntity = Basis.Entity;
-    var nsTree = Basis.Controls.Tree;
-    var nsLabel = Basis.Controls.Label;
+    var nsUI = basis.ui;
+    var nsEntity = basis.entity;
+    var nsTree = basis.ui.tree;
+    var nsLabel = basis.ui.label;
 
-    var STATE = Basis.Data.STATE;
+    var STATE = basis.data.STATE;
 
     var demoContainer = DOM.get('demo-container');
 
@@ -151,7 +145,7 @@
         handler: colHandler,
         init: function(config){
           this.constructor.prototype.init.call(this, config);
-          this.adapter = new Basis.Ajax.Transport({
+          this.adapter = new basis.net.ajax.Transport({
             url: '../res/data/groups.json',
             influence: [this],
             handler: adapterHandler,
@@ -175,7 +169,7 @@
         handler: colHandler,
         init: function(config){
           this.constructor.prototype.init.call(this, config);
-          this.adapter = new Basis.Ajax.Transport({
+          this.adapter = new basis.net.ajax.Transport({
             url: '../res/data/users.json',
             influence: [this],
             handler: adapterHandler,
@@ -221,14 +215,14 @@
       return node.data.title;
     }
 
-    var tree = new nsWrappers.TmplContainer({
+    var tree = new nsUI.Container({
       id: 'UserList',
       container: demoContainer,
 
       active: true,
       dataSource: User.all,
 
-      childClass: nsWrappers.simpleTemplate(
+      childClass: nsUI(
         '<div class="user">' +
           '{this_data_title}' +
         '</div>'
@@ -245,7 +239,7 @@
         titleGetter: titleGetter,
         localSorting: titleGetter,
 
-        childClass: nsWrappers.simpleTemplate(
+        childClass: nsUI(
           '<div class="PartitionNode">' +
             '<div class="PartitionNode-Title">{this_data_title}</div>' +
             '<!-- {childNodeHere} -->' +

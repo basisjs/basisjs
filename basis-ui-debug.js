@@ -3940,7 +3940,7 @@ basis.require('basis.dom');
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-(function(){
+!function(){
 
   'use strict';
 
@@ -3985,15 +3985,12 @@ basis.require('basis.dom');
   var NULL_OBJECT = {};
   var EMPTY_ARRAY = [];
 
-  // States for StateObject
-
   /** @const */ var STATE_UNDEFINED  = 'undefined';
   /** @const */ var STATE_READY      = 'ready';
   /** @const */ var STATE_PROCESSING = 'processing';
   /** @const */ var STATE_ERROR      = 'error';
   /** @const */ var STATE_DEPRECATED = 'deprecated';
 
-  // New events
 
   //
   // Subscription sheme
@@ -6351,7 +6348,7 @@ basis.require('basis.dom');
     Split: Split
   });
 
-})();
+}(basis, this);
 
 //
 // src/basis/html.js
@@ -11374,6 +11371,7 @@ basis.require('basis.data.property');
       MapReduce.prototype.event_sourceChanged.call(this, dataset, oldSource);
       
       var index;
+
       for (var indexName in this.indexes_)
       {
         index = this.indexes_[indexName];
@@ -11393,27 +11391,23 @@ basis.require('basis.data.property');
         update: function(object, delta){
           MapReduce.prototype.listen.sourceObject.update.call(this, object, delta);
 
-          this.stat.sourceObjectUpdate++;
           this.sourceMap_[object.eventObjectId].updated = true;
           this.fireUpdate();
         }
       },
       index: {
         change: function(value){
-          this.context.indexValues[this.key] = value;
-          this.context.stat.indexUpdate++;
-          this.context.indexUpdated = true;
-          this.context.fireUpdate();
+          var indexMap = this.indexMap;
+
+          indexMap.indexValues[this.key] = value;
+          indexMap.indexUpdated = true;
+          indexMap.fireUpdate();
         }
       },
       member: {
         subscribersChanged: function(object, oldCount){
-          this.stat.subscribersChanged ++;
           if (object.subscriberCount > 0 && oldCount == 0)
-          {
-            this.stat.subscribersChangedSucc ++;
             this.calcMember(object);
-          }
         }
       }
     },
@@ -11456,21 +11450,6 @@ basis.require('basis.data.property');
           }
         }, this.keyMap));
 
-      this.stat = {
-        applyCount: 0,
-        indexUpdate: 0,
-        tryCalcMember: 0,
-        tryUpdateMember: 0,
-        calcCount: 0,
-        updateMember: 0,
-        fireUpdate: 0,
-        fireUpdateSucc: 0,
-        subscribersChanged: 0,
-        subscribersChangedSucc: 0,
-        update: 0,
-        sourceObjectUpdate: 0
-      };
-
       MapReduce.prototype.init.call(this, config);
 
       Object.iterate(indexes, this.addIndex, this);
@@ -11499,7 +11478,7 @@ basis.require('basis.data.property');
           this.indexes[key] = index;
           this.indexesBind_[key] = {
             key: key,
-            context: this
+            indexMap: this
           };
 
           index.addHandler(this.listen.index, this.indexesBind_[key]);
@@ -11530,23 +11509,30 @@ basis.require('basis.data.property');
       this.calcs[name] = calc;
       this.fireUpdate();
     },
-
     removeCalc: function(){
       delete this.calcs[name];
     },
 
+    lock: function(){
+      Object.values(this.indexes).forEach(function(idx){
+        idx.lock();
+      });
+    },
+    unlock: function(){
+      Object.values(this.indexes).forEach(function(idx){
+        idx.unlock();
+      });
+    },
+
     fireUpdate: function(){
-      this.stat.fireUpdate++;
       if (!this.timer_)
       {
-        this.stat.fireUpdateSucc++;
         this.timer_ = true;
         TimeEventManager.add(this, 'apply', Date.now());
       }
     },
 
     apply: function(){
-      this.stat.applyCount++;
       for (var idx in this.item_)
         this.calcMember(this.item_[idx]);
 
@@ -11555,11 +11541,10 @@ basis.require('basis.data.property');
     },
 
     calcMember: function(member){
-      this.stat.tryCalcMember++;
       var sourceObject = this.sourceMap_[this.memberSourceMap[member.eventObjectId]];
+
       if (member.subscriberCount && (sourceObject.updated || this.indexUpdated))
       {
-        this.stat.tryUpdateMember++;
         sourceObject.updated = false;
 
         var data = {};
@@ -11567,7 +11552,6 @@ basis.require('basis.data.property');
         var update;
         for (var calcName in this.calcs)
         {
-          this.stat.calcCount++;
           newValue = this.calcs[calcName](sourceObject.sourceObject.data, this.indexValues);
           if (member.data[calcName] !== newValue && (!isNaN(newValue) || !isNaN(member.data[calcName])))
           {
@@ -11577,10 +11561,7 @@ basis.require('basis.data.property');
         }
             
         if (update)  
-        {
-          this.stat.updateMember++;
           member.update(data);
-        }
       }
     },  
 

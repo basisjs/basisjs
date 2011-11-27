@@ -190,14 +190,7 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../property.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../entity.js"></script>
-  <script type="text/javascript" src="../../tree.js"></script>
-  <script type="text/javascript" src="../../form.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -216,16 +209,16 @@
 
   <script id="demo-javascript" type="text/javascript">
 
-    var Class = Basis.Class;
-    var Event = Basis.Event;
-    var DOM = Basis.DOM;
+    var Class = basis.Class;
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
 
-    var nsWrappers = Basis.DOM.Wrapper;
-    var nsEntity = Basis.Entity;
-    var nsTree = Basis.Controls.Tree;
-    var nsButton = Basis.Controls.Button;
+    var nsEntity = basis.entity;
+    var nsUI = basis.ui;
+    var nsTree = basis.ui.tree;
+    var nsButton = basis.ui.button;
 
-    var classList = Basis.CSS.classList;
+    var classList = basis.cssom.classList;
     
     // Определяем типы данных
     var Field = new nsEntity.EntityType({
@@ -245,7 +238,7 @@
       }
     });
 
-    var Link = new Basis.Entity.EntityType({
+    var Link = new nsEntity.EntityType({
       name: 'Link',
       fields: {
         FieldId: nsEntity.NumberId,
@@ -298,7 +291,7 @@
       localSorting: Function.getter('data.Title'),
 
       // Определяем класс для дочерних узлов
-      childClass: nsTree.TreeFolder.subclass({
+      childClass: nsTree.Folder.subclass({
         template: 
           '<li{element|selected} class="Basis-TreeNode empty" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
@@ -339,13 +332,13 @@
           }
         },
         init: function(config){
-          nsTree.TreeFolder.prototype.init.call(this, config);
+          nsTree.Folder.prototype.init.call(this, config);
           this.setDataSource(Link.getGrouping('FieldId').getSubset(this.data.FieldId, true));
         },
 
-        childClass: nsWrappers.TmplNode.subclass({
+        childClass: nsUI.Node.subclass({
           template: 
-            '<div{element} class="Field-WordLink">' +
+            '<div class="Field-WordLink">' +
               '<!--{word}-->' +
               '<span class="Field-WordLink-DeleteButton" event-click="delete">x</span>' +
             '</div>',
@@ -358,8 +351,8 @@
           satelliteConfig: {
             word: {
               delegate: Function.getter('data.WordId', Word),
-              instanceOf: nsWrappers.TmplNode.subclass(nsWrappers.simpleTemplate(
-                '<span{element} class="Field-WordLink-Title">{this_data_Title}</span>'
+              instanceOf: nsUI.Node.subclass(nsUI(
+                '<span class="Field-WordLink-Title">{this_data_Title}</span>'
               ))
             }
           }
@@ -376,7 +369,7 @@
       }
     });
 
-    var masterButtonPanel = new Basis.Controls.Button.ButtonPanel({
+    var masterButtonPanel = new basis.ui.button.ButtonPanel({
       childNodes: [
         {
           caption: 'Expand all',
@@ -407,17 +400,9 @@
     });
 
     // Зависимый список - список слов
-    var relatedTree = new nsTree.Tree({
+    var relatedTree = new nsUI.Tree({
       id: 'RelatedTree',
 
-      // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
-      localSorting: function(node){
-        return node.satellite.word.data.Title;
-      },
-
-      dataSource: new Basis.Data.Dataset.MapReduce({
-        source: Word.all
-      }),
       event_targetChanged: function(object, delta){
         DOM.visibility(this.element.parentNode, !!this.target);
 
@@ -432,9 +417,17 @@
           });
         }
       },
-      childClass: nsWrappers.TmplNode.subclass({
+
+      // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
+      localSorting: function(node){
+        return node.satellite.word.data.Title;
+      },
+      dataSource: new basis.data.Dataset.MapReduce({
+        source: Word.all
+      }),
+      childClass: nsUI.Node.subclass({
         template: 
-          '<li{element} event-click="toggle">' +
+          '<li event-click="toggle">' +
             '<input{state} type="checkbox"/>' +
             '<!--{word}-->' +
           '</li>',
@@ -454,7 +447,7 @@
         satelliteConfig: {
           word: {
             delegate: Function.getter('data.WordId', Word),
-            instanceOf: nsWrappers.TmplNode.subclass(nsWrappers.simpleTemplate(
+            instanceOf: nsUI.Node.subclass(nsUI(
               '<span{element}>{this_data_Title} <span class="freq">(frequency: {this_data_Freq})</span></span>'
             ))
           }
@@ -462,7 +455,7 @@
       })
     });
 
-    var relatedButtonPanel = new Basis.Controls.Button.ButtonPanel({
+    var relatedButtonPanel = new basis.ui.button.ButtonPanel({
       childNodes: [
         {
           caption: 'Check all',
@@ -510,7 +503,7 @@
           }
         },
         relatedButtonPanel.element,
-        new Basis.Controls.Form.MatchInput({
+        new basis.ui.form.MatchInput({
           matchFilter: {
             node: relatedTree,
             textNodeGetter: Function.getter('satellite.word.tmpl.this_data_Title')

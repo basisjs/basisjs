@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -54,14 +53,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../dragdrop.js"></script>
-  <script type="text/javascript" src="../../window.js"></script>
-
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -81,14 +73,14 @@
   <script type="text/javascript" id="demo-javascript">
     
     // import names
-    var DOM = Basis.DOM;
-    var Event = Basis.Event;
-    var Data = Basis.Data;
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
+    var Data = basis.data;
 
     var getter = Function.getter;
 
-    var nsButton = Basis.Controls.Button;
-    var nsWindow = Basis.Controls.Window;
+    var nsButton = basis.ui.button;
+    var nsWindow = basis.ui.window;
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
@@ -98,7 +90,7 @@
       autocenter: true,
       moveable: true,
       title: 'Simple Window',
-      content: Basis.DOM.createElement({ css: { padding: '1.5em 1ex' } }, 'Basis is great framework!'),
+      content: DOM.createElement({ css: { padding: '1.5em 1ex' } }, 'Basis is great framework!'),
       buttons: [
         {
           caption: 'OK',
@@ -117,21 +109,27 @@
       title: 'Another Window',
       buttonCancel: 'Close',
 
-      childClass: Basis.Class(Basis.DOM.Wrapper.TmplNode, {
-        template: new Basis.Html.Template(
-          '<div{element}>#{idText}. {titleText}</div>'
-        ),
-        event_update: function(object, delta){
-          Basis.DOM.Wrapper.TmplNode.prototype.event_update.call(this, object, delta);
+      childClass: {
+        template: 
+          '<div>' +
+            '#{idText}. {titleText}' +
+          '</div>',
 
-          this.tmpl.idText.nodeValue = this.data.id;
-          this.tmpl.titleText.nodeValue = this.data.title;
+        templateUpdate: function(tmpl, event, delta){
+          tmpl.idText.nodeValue = this.data.id;
+          tmpl.titleText.nodeValue = this.data.title;
         }
-      }),
+      },
 
       localGrouping: {
         groupGetter: getter('data.id % 2'),
-        titleGetter: getter('data.title', { 0: 'even', 1: 'odd' })
+        titleGetter: getter('data.title', { 0: 'even', 1: 'odd' }),
+        childClass: {
+          template:
+            '<div>' +
+              '<b>{titleText}</b>' +
+            '</div>'
+        }
       },
       childNodes: [
         {

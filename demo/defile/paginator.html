@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
 <html>
 
@@ -9,8 +8,8 @@
   <title>Basis Demos: Paginator</title>
 
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../plugins/style/paginator/default/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../plugins/style/resizer/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/paginator/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/resizer/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -77,14 +76,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis.js"></script>
-  <script type="text/javascript" src="../../data.js"></script>
-  <script type="text/javascript" src="../../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../../layout.js"></script>
-  <script type="text/javascript" src="../../dragdrop.js"></script>
-  <script type="text/javascript" src="../../button.js"></script>
-  <script type="text/javascript" src="../../plugins/paginator.js"></script>
-  <script type="text/javascript" src="../../plugins/resizer.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -102,8 +94,11 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    var DOM = Basis.DOM;
-    var nsButton = Basis.Controls.Button;
+    var DOM = basis.dom;
+    var classList = basis.cssom.classList;
+    var ButtonPanel = basis.ui.button.ButtonPanel;
+    var Resizer = basis.ui.resizer.Resizer;
+    var Paginator = basis.ui.paginator.Paginator;
 
 	  function setWidth(w){
 	    demoSection.style.width = w + 'px';
@@ -113,11 +108,11 @@
 	  }
 
 	  var paginators = [ 
-      new Basis.Plugin.Paginator(null, { pageCount: 1024, pageSpan: 10, activePage: 350 }),
-      new Basis.Plugin.Paginator(null, { pageCount: 100, pageSpan: 13, activePage: 70 }),
-      new Basis.Plugin.Paginator(null, { pageCount: 50, pageSpan: 15, activePage: 15 }),
-      new Basis.Plugin.Paginator(null, { pageCount: 5, pageSpan: 5, activePage: 5 }),
-      new Basis.Plugin.Paginator(null, { pageCount: 5, pageSpan: 1, activePage: 5 })
+      new Paginator(null, { pageCount: 1024, pageSpan: 10, activePage: 350 }),
+      new Paginator(null, { pageCount: 100, pageSpan: 13, activePage: 70 }),
+      new Paginator(null, { pageCount: 50, pageSpan: 15, activePage: 15 }),
+      new Paginator(null, { pageCount: 5, pageSpan: 5, activePage: 5 }),
+      new Paginator(null, { pageCount: 5, pageSpan: 1, activePage: 5 })
     ];
 
 	  var demoSection = DOM.createElement('#Demo-Section',
@@ -129,30 +124,30 @@
       })
     );
 
-    new Basis.Plugin.Resizer({
+    new Resizer({
       element: demoSection
     });
 
     DOM.insert(DOM.get('demo-container'), [
-      new nsButton.ButtonPanel({
+      new ButtonPanel({
         childNodes: [
           {
             caption: 'Auto / 100% width',
             click: function(){
-              Basis.CSS.cssClass(document.body).toggle('self_size');
+              classList(document.body).toggle('self_size');
             }
           },
           {
             caption: 'Show / hide bounding box',
             click: function(){
-              Basis.CSS.cssClass(document.body).toggle('show_dimenstion');
+              classList(document.body).toggle('show_dimenstion');
             }
           }
         ]
       }).element,
       DOM.createElement('', 
         'Set paginators container width: ',
-        new nsButton.ButtonPanel({
+        new ButtonPanel({
           childNodes: [300, 450, 600, 750, 900].map(function(width){
             return {
               groupId: 1,
@@ -166,7 +161,7 @@
       ),
       DOM.createElement('', 
         'Set first paginator page count: ',
-        new nsButton.ButtonPanel({
+        new ButtonPanel({
           childNodes: [5, 10, 100, 200, 1024].map(function(pageCount){
             return {
               groupId: 1,
