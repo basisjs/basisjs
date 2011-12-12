@@ -202,7 +202,7 @@ basis.require('basis.dom.event');
   * @param {Node} node Node which style to be changed.
   * @param {string} key Name of property.
   * @param {string} value Value of property.
-  */
+gj   */
   function setStyleProperty(node, key, value){
     if (typeof node.setProperty == 'function')
       return node.setProperty(key, value);
@@ -493,12 +493,15 @@ basis.require('basis.dom.event');
   * @func
   */
   var classList;
-  var rxCache = {};
+  var tokenRxCache = {};
 
   function tokenRegExp(token){
-    return rxCache[token] || (rxCache[token] = new RegExp('\\s*\\b' + token + '\\b'));
+    return tokenRxCache[token] || (tokenRxCache[token] = new RegExp('\\s*\\b' + token + '\\b'));
   }
 
+ /**
+  * @class
+  */
   var ClassList = Class(null, {
     className: namespace + '.ClassList',
 
@@ -524,7 +527,7 @@ basis.require('basis.dom.event');
       if (typeof replaceFor != 'undefined')
         this.add(prefix + replaceFor);
     },
-    bool: function(token, exists) {
+    bool: function(token, exists){
       if (exists)
         this.add(token);
       else
@@ -564,6 +567,67 @@ basis.require('basis.dom.event');
     }
   });
 
+  //
+  // ClassListNS
+  //
+
+  var prefixRxCache = {};
+  function prefixRegExp(prefix, global){
+    var key = (global ? 'g' : 's') + prefix;
+    return prefixRxCache[key] || (prefixRxCache[key] = new RegExp('\\s*\\b' + prefix + '.*\\b'));
+  }
+
+ /**
+  * @class
+  */
+  var ClassListNS = Class(null, {
+    delim: '-',
+
+    init: function(ns, classList){
+      this.classList = classList;
+      this.prefix = ns + this.delim;
+    },
+
+    add: function(value){
+      this.classList.add(this.prefix + value);
+    },
+    remove: function(value){
+      this.classList.remove(this.prefix + value);
+    },
+    items: function(){
+      var classList = this.classList.toString();
+      if (classList)
+        return classList.toString().match(prefixRegExp(this.prefix, true));
+    },
+    set: function(value){
+      var items = this.items();
+      var token = typeof value != 'undefined' ? this.prefix + value : '';
+      var classList = this.classList;
+
+      if (items)
+      {
+        if (items.length == 1)
+        {
+          if (items[0] === token)
+            return;
+
+          classList.remove(items[0]);
+        }
+        else
+          this.clear();
+      }
+
+      if (token)
+        classList.add(token);
+    },
+    clear: function(){
+      this.items().forEach(this.classList.remove, this.classList);
+    }
+  });
+
+  //
+  // Make crossbrowser classList
+  //
   if (global.DOMTokenList && document.documentElement.classList)
   {
     var proto = ClassList.prototype;
@@ -574,7 +638,8 @@ basis.require('basis.dom.event');
       clear: function(){
         for (var i = this.length; i --> 0;)
           this.remove(this[i]);
-      }
+      },
+      setPrefixToken: proto.setPrefixToken
     });
     classList = function(element){
       return (typeof element == 'string' ? dom.get(element) : element).classList;
@@ -585,6 +650,12 @@ basis.require('basis.dom.event');
     classList = function(element){ 
       return new ClassList(typeof element == 'string' ? dom.get(element) : element);
     }
+  }
+
+  var classListProxy = function(element, ns){
+    return ns
+      ? new ClassListNS(ns, classList(element))
+      : classList(element);
   }
 
   //
@@ -615,7 +686,7 @@ basis.require('basis.dom.event');
     // style interface
     setStyleProperty: setStyleProperty,
     setStyle: setStyle,
-    classList: classList,
+    classList: classListProxy,
 
     // rule and stylesheet interfaces
     uniqueRule: uniqueRule,

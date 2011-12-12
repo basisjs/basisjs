@@ -35,4 +35,5 @@
   basis.require('basis.ui.resizer');
   basis.require('basis.ui.paginator');
   basis.require('basis.ui.pageslider');
+  basis.require('basis.ui.canvas');
   basis.require('basis.format.highlight');

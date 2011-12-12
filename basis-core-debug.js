@@ -7636,14 +7636,18 @@ basis.require('basis.html');
     */
     insert: function(newNode, refNode){
       var nodes = this.nodes;
-      var pos = refNode ? nodes.indexOf(refNode) : nodes.length;
+      var pos = refNode ? nodes.indexOf(refNode) : -1;
 
       if (pos == -1)
-        pos = nodes.length;
+      {
+        nodes.push(newNode)
+        this.last = newNode;
+      }
+      else
+        nodes.splice(pos, 0, newNode);
 
-      nodes.splice(pos, 0, newNode);
-      this.first = nodes[0] || null;
-      this.last = nodes[nodes.length - 1] || null;
+      this.first = nodes[0];
+
       newNode.groupNode = this;
 
       this.event_childNodesModified(this, { inserted: [newNode] });
@@ -7801,16 +7805,17 @@ basis.require('basis.html');
   };
 
   function fastChildNodesOrder(node, order){
+    var lastIndex = order.length - 1;
     node.childNodes = order;
     node.firstChild = order[0] || null;
-    node.lastChild = order[order.length - 1] || null;
+    node.lastChild = order[lastIndex] || null;
 
     //DOM.insert(this, order);
-    for (var i = order.length - 1; i >= 0; i--)
+    for (var orderNode, i = lastIndex; orderNode = order[i]; i--)
     {
-      order[i].nextSibling = order[i + 1] || null;
-      order[i].previousSibling = order[i - 1] || null;
-      node.insertBefore(order[i], order[i].nextSibling);
+      orderNode.nextSibling = order[i + 1] || null;
+      orderNode.previousSibling = order[i - 1] || null;
+      node.insertBefore(orderNode, orderNode.nextSibling);
     }
   }
 
@@ -7934,11 +7939,50 @@ basis.require('basis.html');
       var currentNewChildGroup = newChild.groupNode;
       var localGrouping = this.localGrouping;
       var localSorting = this.localSorting;
+      var localSortingDesc;
       var childNodes = this.childNodes;
       var newChildValue;
       var groupNodes;
       var group = null;
       var pos = -1;
+      var correctSortPos = false;
+      var nextSibling;
+      var prevSibling;
+
+      if (isInside)
+      {
+        nextSibling = newChild.nextSibling;
+        prevSibling = newChild.previousSibling;
+      }
+
+      if (localSorting)
+      {
+        // if localSorting is using - refChild is ignore
+        refChild = null; // ignore
+        localSortingDesc = this.localSortingDesc;
+        newChildValue = localSorting(newChild) || 0;
+
+        // some optimizations if node had already inside current node
+        if (isInside)
+        {
+          if (newChildValue === newChild.sortingValue)
+          {
+            correctSortPos = true;
+          }
+          else
+          {
+            if (
+                (!nextSibling || (localSortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue))
+                &&
+                (!prevSibling || (localSortingDesc ? prevSibling.sortingValue >= newChildValue : prevSibling.sortingValue <= newChildValue))
+               )
+            {
+              newChild.sortingValue = newChildValue;
+              correctSortPos = true;
+            }
+          }
+        }
+      }
 
       if (localGrouping)
       {
@@ -7947,16 +7991,26 @@ basis.require('basis.html');
         groupNodes = group.nodes;
 
         // optimization: test node position, possible it on right place
-        if (isInside && newChild.nextSibling === refChild && currentNewChildGroup === group)
-          return newChild;
+        if (currentNewChildGroup === group)
+          if (correctSortPos || (isInside && nextSibling === refChild))
+            return newChild;
 
         // calculate newChild position
         if (localSorting)
         {
-          // when localSorting use binary search
-          newChildValue = localSorting(newChild) || 0;
-          pos = groupNodes.binarySearchPos(newChildValue, sortingSearch, this.localSortingDesc);
-          newChild.sortingValue = newChildValue;
+          if (correctSortPos)
+          {
+            if (nextSibling && nextSibling.groupNode === group)
+              pos = groupNodes.indexOf(nextSibling);
+            else
+              pos = groupNodes.length;
+          }
+          else
+          {
+            // when localSorting use binary search
+            pos = groupNodes.binarySearchPos(newChildValue, sortingSearch, localSortingDesc);
+            newChild.sortingValue = newChildValue;
+          }
         }
         else
         {
@@ -8012,35 +8066,15 @@ basis.require('basis.html');
         if (localSorting)
         {
           // if localSorting is using - refChild is ignore
-          var sortingDesc = this.localSortingDesc;
-          var next = newChild.nextSibling;
-          var prev = newChild.previousSibling;
-
-          newChildValue = localSorting(newChild) || 0;
-
-          // some optimizations if node had already inside current node
-          if (isInside)
-          {
-            if (newChildValue === newChild.localSorting)
-              return newChild;
-
-            if (
-                (!next || (sortingDesc ? next.sortingValue <= newChildValue : next.sortingValue >= newChildValue))
-                &&
-                (!prev || (sortingDesc ? prev.sortingValue >= newChildValue : prev.sortingValue <= newChildValue))
-               )
-            {
-              newChild.sortingValue = newChildValue;
-              return newChild;
-            }
-          }
+          if (correctSortPos)
+            return newChild;
 
           // search for refChild
-          pos = childNodes.binarySearchPos(newChildValue, sortingSearch, sortingDesc);
+          pos = childNodes.binarySearchPos(newChildValue, sortingSearch, localSortingDesc);
           refChild = childNodes[pos];
           newChild.sortingValue = newChildValue; // change sortingValue AFTER search
 
-          if (newChild === refChild || (isInside && next === refChild))
+          if (newChild === refChild || (isInside && nextSibling === refChild))
             return newChild;
         }
         else
@@ -8053,9 +8087,10 @@ basis.require('basis.html');
           if (isInside)
           {
             // already on necessary position
-            if (newChild.nextSibling === refChild)
+            if (nextSibling === refChild)
               return newChild;
 
+            // test make sense only if newChild inside parentNode
             if (newChild === refChild)
               throw EXCEPTION_CANT_INSERT;
           }
@@ -8099,7 +8134,10 @@ basis.require('basis.html');
 
         // remove from old group (always remove for correct order)
         if (currentNewChildGroup)  // initial newChild.groupNode
+        {
           currentNewChildGroup.remove(newChild);
+          currentNewChildGroup = null;
+        }
       }
       else
       {
@@ -9609,7 +9647,7 @@ basis.require('basis.dom.event');
   * @param {Node} node Node which style to be changed.
   * @param {string} key Name of property.
   * @param {string} value Value of property.
-  */
+gj   */
   function setStyleProperty(node, key, value){
     if (typeof node.setProperty == 'function')
       return node.setProperty(key, value);
@@ -9900,12 +9938,15 @@ basis.require('basis.dom.event');
   * @func
   */
   var classList;
-  var rxCache = {};
+  var tokenRxCache = {};
 
   function tokenRegExp(token){
-    return rxCache[token] || (rxCache[token] = new RegExp('\\s*\\b' + token + '\\b'));
+    return tokenRxCache[token] || (tokenRxCache[token] = new RegExp('\\s*\\b' + token + '\\b'));
   }
 
+ /**
+  * @class
+  */
   var ClassList = Class(null, {
     className: namespace + '.ClassList',
 
@@ -9931,7 +9972,7 @@ basis.require('basis.dom.event');
       if (typeof replaceFor != 'undefined')
         this.add(prefix + replaceFor);
     },
-    bool: function(token, exists) {
+    bool: function(token, exists){
       if (exists)
         this.add(token);
       else
@@ -9971,6 +10012,67 @@ basis.require('basis.dom.event');
     }
   });
 
+  //
+  // ClassListNS
+  //
+
+  var prefixRxCache = {};
+  function prefixRegExp(prefix, global){
+    var key = (global ? 'g' : 's') + prefix;
+    return prefixRxCache[key] || (prefixRxCache[key] = new RegExp('\\s*\\b' + prefix + '.*\\b'));
+  }
+
+ /**
+  * @class
+  */
+  var ClassListNS = Class(null, {
+    delim: '-',
+
+    init: function(ns, classList){
+      this.classList = classList;
+      this.prefix = ns + this.delim;
+    },
+
+    add: function(value){
+      this.classList.add(this.prefix + value);
+    },
+    remove: function(value){
+      this.classList.remove(this.prefix + value);
+    },
+    items: function(){
+      var classList = this.classList.toString();
+      if (classList)
+        return classList.toString().match(prefixRegExp(this.prefix, true));
+    },
+    set: function(value){
+      var items = this.items();
+      var token = typeof value != 'undefined' ? this.prefix + value : '';
+      var classList = this.classList;
+
+      if (items)
+      {
+        if (items.length == 1)
+        {
+          if (items[0] === token)
+            return;
+
+          classList.remove(items[0]);
+        }
+        else
+          this.clear();
+      }
+
+      if (token)
+        classList.add(token);
+    },
+    clear: function(){
+      this.items().forEach(this.classList.remove, this.classList);
+    }
+  });
+
+  //
+  // Make crossbrowser classList
+  //
   if (global.DOMTokenList && document.documentElement.classList)
   {
     var proto = ClassList.prototype;
@@ -9981,7 +10083,8 @@ basis.require('basis.dom.event');
       clear: function(){
         for (var i = this.length; i --> 0;)
           this.remove(this[i]);
-      }
+      },
+      setPrefixToken: proto.setPrefixToken
     });
     classList = function(element){
       return (typeof element == 'string' ? dom.get(element) : element).classList;
@@ -9992,6 +10095,12 @@ basis.require('basis.dom.event');
     classList = function(element){ 
       return new ClassList(typeof element == 'string' ? dom.get(element) : element);
     }
+  }
+
+  var classListProxy = function(element, ns){
+    return ns
+      ? new ClassListNS(ns, classList(element))
+      : classList(element);
   }
 
   //
@@ -10022,7 +10131,7 @@ basis.require('basis.dom.event');
     // style interface
     setStyleProperty: setStyleProperty,
     setStyle: setStyle,
-    classList: classList,
+    classList: classListProxy,
 
     // rule and stylesheet interfaces
     uniqueRule: uniqueRule,
