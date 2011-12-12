@@ -371,6 +371,11 @@ basis.require('basis.html');
    /**
     * @inheritDoc
     */
+    localGroupingClass: Class.SELF,
+
+   /**
+    * @inheritDoc
+    */
     event_ownerChanged: function(node, oldOwner){
       var cursor = this;
       var owner = this.owner;
@@ -398,7 +403,7 @@ basis.require('basis.html');
     }
   });
 
-  GroupingNode.prototype.localGroupingClass = GroupingNode;
+  //GroupingNode.prototype.localGroupingClass = GroupingNode;
 
  /**
   * @class

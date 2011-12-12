@@ -1336,6 +1336,11 @@
     var seed = { id: 1 };
 
    /**
+    * Class construct helper: self reference value
+    */
+    var SELF = {};
+
+   /**
     * Test object is it a class.
     * @func
     * @param {Object} object
@@ -1345,6 +1350,15 @@
       return typeof object == 'function' && object.basisClass_;
     };
 
+    var TOSTRING_BUG = (function(){
+      for (var key in { toString: 1 })
+        return;
+      return true;
+    })()
+
+    //
+    // main class object
+    //
     extend(BaseClass, {
       // Base class name
       className: namespace,
@@ -1381,6 +1395,7 @@
         var SuperClass_ = Function();
         SuperClass_.prototype = SuperClass.prototype;
 
+        var newProto = new SuperClass_();
         var newClassProps = {
           className: SuperClass.className + '._SubClass_',
           basisClass_: true,
@@ -1389,7 +1404,7 @@
 
           // class methods
           __extend__: function(value){
-            if (value && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
+            if (value && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))) && value !== SELF)
               return BaseClass.create.call(null, newClass, value);
             else
               return value;
@@ -1400,7 +1415,7 @@
           },
 
           // new class prototype
-          prototype: new SuperClass_()
+          prototype: newProto
         };
 
         // extend newClass prototype
@@ -1415,7 +1430,7 @@
           );
         }
 
-        /** @cut */if (/^function[^(]*\(config\)/.test(newClassProps.prototype.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
+        /** @cut */if (/^function[^(]*\(config\)/.test(newProto.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
@@ -1458,7 +1473,11 @@
             /** @cut for more verbose in dev */ ) + '\n}["' + className + '"]')(seed, NULL_CONFIG);
 
         // add constructor property to prototype
-        newClassProps.prototype.constructor = newClass;
+        newProto.constructor = newClass;
+
+        for (var key in newProto)
+          if (newProto[key] === SELF)
+            newProto[key] = newClass;
 
         // extend constructor with properties
         extend(newClass, newClassProps);
@@ -1484,15 +1503,8 @@
         if (source.prototype)
           source = source.prototype;
 
-        var keys = Object.keys(source);
-        
-        // for browsers that doesn't enum toString
-        if (source.toString !== Object.prototype.toString)
-          keys.add('toString');
-        
-        for (var i = keys.length; i --> 0;)
+        for (var key in source)
         {
-          var key = keys[i];
           var value = source[key];
           var protoValue = proto[key];
 
@@ -1503,6 +1515,10 @@
                            ? protoValue.__extend__(value)
                            : value;
         }
+
+        // for browsers that doesn't enum toString
+        if (TOSTRING_BUG && source[key = 'toString'] !== Object.prototype[key])
+          proto[key] = source[key];
         
         return this;
       }
@@ -1538,6 +1554,7 @@
     };
 
     return getNamespace(namespace, BaseClass.create).extend({
+      SELF: SELF,
       BaseClass: BaseClass,
       create: BaseClass.create,
       isClass: isClass,

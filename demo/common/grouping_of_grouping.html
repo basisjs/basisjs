@@ -189,9 +189,10 @@
       ),
       groupGetter: function(node){
         return node.data.id >> 1;
-      }
+      },
+      localGroupingClass: basis.Class.SELF
     });
-    groupingClass.prototype.localGroupingClass = groupingClass;
+    //groupingClass.prototype.localGroupingClass = groupingClass;
 
     var list = new nsUI.Container({
       container: DOM.get('NumberDemo-Container'),
