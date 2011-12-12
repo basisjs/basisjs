@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE HTML>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Canvas</title>
+  
+  <script type="text/javascript" src="../src/basis.js"></script>
+  <script type="text/javascript" src="../src/basis/data.js"></script>
+  <script type="text/javascript" src="../src/basis/dom.js"></script>
+  <script type="text/javascript" src="../src/basis/dom/wrapper.js"></script>
+  <script type="text/javascript" src="../src/basis/entity.js"></script>
+  <script type="text/javascript" src="../src/basis/ui/canvas.js"></script>
+
+  <style type="text/css">
+    CANVAS
+    {
+      b2ackground: #F0F0F0;
+      b2order: 1px solid #E0E0E0;
+    }
+  </style>
+</head>
+
+<body>
+  <script type="text/javascript">
+    /*var graph = basis.ui.canvas.Shape.subclass({
+      canHaveChildren: true,
+      childClass: basis.dom.wrapper.AbstractNode,
+      childFactory: function(c){
+        return new this.childClass(c);
+      },
+
+      draw: function(context){
+        var cnt = this.childNodes.length;
+
+        if (!cnt)
+          return;
+
+        var w = context.canvas.width;
+        var h = context.canvas.height;
+
+        var H_PADDING = 20;
+        var V_PADDING = 20;
+
+        var step = (w - 2 * H_PADDING)/cnt;
+        var x = H_PADDING;
+        var node = this.firstChild;
+
+        var max = 1.05 * Math.max.apply(null, this.childNodes.map(Function.getter('info.value')));
+
+        context.save();
+        context.strokeStyle = 'blue';
+        context.lineWidth = 2.5;
+        context.lineJoin = 'bevel';
+        context.moveTo(x, V_PADDING + (h - 2 * V_PADDING) * (1-node.info.value/max));
+
+        while (node = node.nextSibling)
+          context.lineTo(x += step, V_PADDING + (h - 2 * V_PADDING) * (1-node.info.value/max));
+
+        context.stroke();
+
+        context.restore();          
+      }
+    });*/
+
+    var Point = basis.dom.wrapper.AbstractNode.subclass({
+      className: 'GraphPoint',
+      event_update: function(object, delta){
+        if (this.parentNode)
+          this.parentNode.updateCount += 1;
+
+        basis.dom.wrapper.AbstractNode.prototype.event_update.call(this, object, delta);
+      }
+    });
+
+
+    var Canvas = basis.ui.canvas.Canvas;
+    var Graph = Canvas.subclass({
+      className: 'Graph',
+      childClass: Point,
+
+      valueGetter: Function.getter('data.value'),
+      
+      event_childNodesModified: function(node, delta){
+        this.updateCount++;
+        Canvas.prototype.event_childNodesModified.call(this, node, delta);
+      },
+      event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
+        this.updateCount++;
+        Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
+      },
+
+      style: {
+        strokeStyle: '#090',
+        lineWidth: 2.5,
+        lineJoin: 'bevel'
+      },
+
+      /*init: function(config){
+        if (config)
+        {
+          if (typeof config.valueGetter == 'function')
+            this.valueGetter = config.valueGetter;
+          if (typeof config.valueGetter2 == 'function')
+            this.valueGetter2 = config.valueGetter2;
+        }
+
+        basis.ui.canvas.Canvas.prototype.init.call(this, config);
+      },*/
+      draw: function(){
+        //this.updateCount++;
+        Canvas.prototype.draw.call(this);
+        /*this.updateCount++;
+        if (typeof aaa == 'undefined')
+        {
+          this.childNodes.forEach(function(v){
+            v.update({ Amount: parseInt(Math.random() * 1000000) });
+          });
+        }/**/
+      },
+      drawThread: function(values, max, left, top, step, height){
+        var context = this.context;
+
+        context.save();
+        context.translate(left, top);
+        context.beginPath();
+        context.moveTo(0, height * (1 - values[0]/max));
+
+        for (var i = 1; i < values.length; i++)
+          context.lineTo(i * step, height * (1 - values[i]/max));
+
+        Object.extend(context, this.style);
+        context.stroke();
+        context.closePath();
+        context.restore();
+      },
+      drawFrame: function(){
+        var cnt = this.childNodes.length;
+
+        if (!cnt)
+          return;
+
+        var context = this.context;
+
+        var w = context.canvas.width;
+        var h = context.canvas.height;
+
+        var TOP = 10;
+        var BOTTOM = 20;
+        var LEFT = 0;
+        var RIGHT = 4;
+
+        var values = this.childNodes.map(this.valueGetter);
+        var max = 1.05 * Math.max.apply(null, values);
+
+        var y_labels = [];
+        var PART_COUNT = 6;
+        var maxtw = 0;
+
+        context.font = '10px tahoma';
+        context.textAlign = 'right';
+
+        for (var i = 0; i < PART_COUNT; i++)
+        {
+          var label = y_labels[i] = {
+            y: TOP + Math.round(i * ((h - TOP - BOTTOM)/PART_COUNT)) + .5,
+            text: Math.round(max * (PART_COUNT - i)/PART_COUNT).group()
+          }
+
+          var tw = context.measureText(label.text).width;
+          if (tw > maxtw)
+            maxtw = tw;
+        }
+
+        LEFT = maxtw + 6;
+
+        context.lineWidth = 1;
+        for (var i = 0; i < y_labels.length; i++)
+        {
+          var label = y_labels[i];
+
+          context.beginPath();
+          context.moveTo(LEFT + .5, label.y);
+          context.lineTo(w - RIGHT, label.y);
+          context.strokeStyle = 'rgba(128,128,128,.25)';
+          context.stroke();
+          context.closePath();
+
+          context.beginPath();
+          context.moveTo(LEFT + .5 - 3, label.y);
+          context.lineTo(LEFT + .5, label.y);
+          context.strokeStyle = 'black';
+          context.stroke();
+          context.closePath();
+
+          context.fillText(label.text, LEFT - 6, label.y + 2.5);
+        }
+
+        var step = (w - LEFT - RIGHT)/(cnt < 2 ? 1 : cnt);
+
+        if (this.valueGetter2)
+        {
+          this.style.strokeStyle = '#6699DD';
+          var values2 = this.childNodes.map(this.valueGetter2);
+          var max2 = 1.05 * Math.max.apply(null, values2);
+          this.drawThread(values2, max2, LEFT + step/2, TOP, step, (h - TOP - BOTTOM));
+        }
+
+        this.style.strokeStyle = '#090';
+        this.drawThread(values, max, LEFT + step/2, TOP, step, (h - TOP - BOTTOM));
+
+        context.beginPath();
+        context.moveTo(LEFT + .5, TOP);
+        context.lineTo(LEFT + .5, h - BOTTOM + .5);
+        context.lineTo(w, h - BOTTOM + .5);
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+        context.closePath();
+
+        context.beginPath();
+        for (var i = 1; i < values.length; i++)
+        {
+          var x = Math.round(LEFT + i * step) + .5;
+          context.moveTo(x, h - BOTTOM + .5);
+          context.lineTo(x, h - BOTTOM + 3);
+        }
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+        context.closePath();
+
+        /*x = H_PADDING;
+        for (var i = 1; i < values.length; i++)
+          context.lineTo(x += step, (h - V_PADDING) * (1 - values[i]/max));*/
+      },
+      setStyle: function(newStyle){
+        Object.extend(this.style, Object.slice(newStyle, ['strokeStyle', 'lineWidth']));
+        this.updateCount++;
+      }
+    });
+
+    var Value = new basis.entity.EntityType({
+      name: 'Value',
+      fields: {
+        Date: String,
+        Count: Number,
+        Amount: Number
+      }
+    });
+
+    //for (var i = 0; i < 75; i++)
+    //  Value({ Id: i, Value: parseInt(Math.random() * 50) });
+
+    var data = [
+      { Date: '2007-06', Count: 74, Amount: 1121994.63 },
+      { Date: '2007-07', Count: 198, Amount: 70962.07 },
+      { Date: '2007-08', Count: 327, Amount: 88081.64 },
+      { Date: '2007-09', Count: 1435, Amount: 200698.7201 },
+      { Date: '2007-10', Count: 2457, Amount: 355995.1301 },
+      { Date: '2007-11', Count: 3120, Amount: 573421.2369 },
+      { Date: '2007-12', Count: 5363, Amount: 1100866.1546 },
+      { Date: '2008-01', Count: 11489, Amount: 2257144.699 },
+      { Date: '2008-02', Count: 6303, Amount: 1471009.255 },
+      { Date: '2008-03', Count: 5350, Amount: 1241891.353 },
+      { Date: '2008-04', Count: 5774, Amount: 1862811.7237 },
+      { Date: '2008-05', Count: 6995, Amount: 2390120.9235 },
+      { Date: '2008-06', Count: 7294, Amount: 3256698.869 },
+      { Date: '2008-07', Count: 6329, Amount: 2693387.0928 },
+      { Date: '2008-08', Count: 7142, Amount: 3548683.748 },
+      { Date: '2008-09', Count: 7810, Amount: 3880152.1971 },
+      { Date: '2008-10', Count: 9862, Amount: 5666892.3515 },
+      { Date: '2008-11', Count: 11221, Amount: 7444031.105 },
+      { Date: '2008-12', Count: 14711, Amount: 9185893.4233 },
+      { Date: '2009-01', Count: 13431, Amount: 7252555.3577 },
+      { Date: '2009-02', Count: 12176, Amount: 6908588.6769 },
+      { Date: '2009-03', Count: 12446, Amount: 7214006.0416 },
+      { Date: '2009-04', Count: 12841, Amount: 6896383.4796 },
+      { Date: '2009-05', Count: 13169, Amount: 7716787.7293 },
+      { Date: '2009-06', Count: 13129, Amount: 7235950.6821 },
+      { Date: '2009-07', Count: 13209, Amount: 7692433.0406 },
+      { Date: '2009-08', Count: 14179, Amount: 7962404.4703 },
+      { Date: '2009-09', Count: 15813, Amount: 9714701.8796 },
+      { Date: '2009-10', Count: 15864, Amount: 9685311.0652 },
+      { Date: '2009-11', Count: 15995, Amount: 9709073.3398 },
+      { Date: '2009-12', Count: 18508, Amount: 12218506.7115 },
+      { Date: '2010-01', Count: 18638, Amount: 10922637.8022 },
+      { Date: '2010-02', Count: 18935, Amount: 12037523.1901 },
+      { Date: '2010-03', Count: 27413, Amount: 14279206.1383 },
+      { Date: '2010-04', Count: 25811, Amount: 13814033.711 },
+      { Date: '2010-05', Count: 27830, Amount: 15885733.0432 },
+      { Date: '2010-06', Count: 24076, Amount: 16612653.6971 },
+      { Date: '2010-07', Count: 21680, Amount: 18416644.8046 },
+      { Date: '2010-08', Count: 22715, Amount: 22899617.5211 },
+      { Date: '2010-09', Count: 24833, Amount: 24641747.4133 }, /**/
+      //{ Date: '2010-10', Count: 11337, Amount: 10062840.6528 }
+    ].repeat(1);
+
+    Value.all.sync(data);
+
+    var gg = new Graph({
+      container: document.body,
+      valueGetter: Function.getter('data.Amount'),
+      valueGetter2: Function.getter('data.Count'),
+      localSorting: Function.getter('data.Date'),
+      //localSortingDesc: true,
+      //localGrouping: Function.getter('data.Count % 3'),
+      //localGrouping: 'info.Id%3',
+      dataSource: Value.all,
+      width: 800,
+      height: 450
+    });
+
+    //document.body.appendChild(canvas.element);
+    //canvas.draw();
+  </script>
+</body>
+
+</html>
