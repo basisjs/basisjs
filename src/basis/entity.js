@@ -10,6 +10,7 @@
  */
 
 basis.require('basis.data');
+basis.require('basis.data.dataset');
 
 !function(basis){
 

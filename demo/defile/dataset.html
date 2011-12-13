@@ -247,7 +247,7 @@
     ));
 
     var newItemPopup = new Menu({
-      dataSource: new nsData.Dataset.Subtract({ minuend: NUMBERS }),
+      dataSource: new nsData.dataset.Subtract({ minuend: NUMBERS }),
       childClass: {
         captionGetter: Function.getter('data.value')
       },
@@ -293,8 +293,8 @@
     new DatasetViewer({
       title: 'Union (A ∪ B ∪ C)',
       content: createImage('union'),
-      dataSource: new nsData.Dataset.Merge({
-        rule: nsData.Dataset.Merge.UNION,  // by default
+      dataSource: new nsData.dataset.Merge({
+        rule: nsData.dataset.Merge.UNION,  // by default
         sources: [A, B, C]
       })
     });
@@ -302,8 +302,8 @@
     new DatasetViewer({
       title: 'Intersection (A ∩ B ∩ C)',
       content: createImage('intersection'),
-      dataSource: I = new nsData.Dataset.Merge({
-        rule: nsData.Dataset.Merge.INTERSECTION,
+      dataSource: I = new nsData.dataset.Merge({
+        rule: nsData.dataset.Merge.INTERSECTION,
         sources: [A, B, C]
       })
     });
@@ -311,8 +311,8 @@
     new DatasetViewer({
       title: 'AtLeastOneExclude (A ∪ B ∪ C) / (A ∩ B ∩ C) [union subtract intersection]',
       content: createImage('atleastoneexclude'),
-      dataSource: new nsData.Dataset.Merge({
-        rule: nsData.Dataset.Merge.AT_LEAST_ONE_EXCLUDE,
+      dataSource: new nsData.dataset.Merge({
+        rule: nsData.dataset.Merge.AT_LEAST_ONE_EXCLUDE,
         sources: [A, B, C]
       })
     });
@@ -320,8 +320,8 @@
     new DatasetViewer({
       title: 'Difference (A ∆ B ∆ C)',
       content: createImage('difference'),
-      dataSource: new nsData.Dataset.Merge({
-        rule: nsData.Dataset.Merge.DIFFERENCE,
+      dataSource: new nsData.dataset.Merge({
+        rule: nsData.dataset.Merge.DIFFERENCE,
         sources: [A, B, C]
       })
     });
@@ -329,8 +329,8 @@
     new DatasetViewer({
       title: 'MoreThanOneInclude (A ∪ B ∪ C) / (A ∆ B ∆ C) [union subtract difference]',
       content: createImage('morethanoneinclude'),
-      dataSource: new nsData.Dataset.Merge({
-        rule: nsData.Dataset.Merge.MORE_THAN_ONE_INCLUDE,
+      dataSource: new nsData.dataset.Merge({
+        rule: nsData.dataset.Merge.MORE_THAN_ONE_INCLUDE,
         sources: [A, B, C]
       })
     });
@@ -338,7 +338,7 @@
     new DatasetViewer({
       title: 'Subtract (A / B)',
       content: createImage('', 'dataset.subtract.svg'),
-      dataSource: new nsData.Dataset.Subtract({
+      dataSource: new nsData.dataset.Subtract({
         minuend: A,
         subtrahend: B
       })
@@ -348,7 +348,7 @@
 
     new DatasetViewer({
       title: 'MapReduce for dataset A: NUMBERS -> WORDS',
-      dataSource: new nsData.Dataset.MapReduce({
+      dataSource: new nsData.dataset.MapReduce({
         map: Function.getter('data.value - 1', data2),
         source: A
       })
@@ -356,7 +356,7 @@
 
     new DatasetViewer({
       title: 'Subset of dataset A: ONLY ODD',
-      dataSource: new nsData.Dataset.Subset({
+      dataSource: new nsData.dataset.Subset({
         rule: Function.getter('data.value % 2'),
         source: A
       })
@@ -364,7 +364,7 @@
 
     new DatasetViewer({
       title: 'Split data A: ODD and EVEN',
-      dataSource: new nsData.Dataset.Split({
+      dataSource: new nsData.dataset.Split({
         rule: Function.getter('data.value % 2 ? "odd" : "even"'),
         source: A
       }),

@@ -107,7 +107,7 @@
     //
     var tree3 = new nsTree.Tree({
       container: DOM.get('selectedItemsByGroupTree'),
-      dataSource: new basis.data.Dataset.Split({
+      dataSource: new basis.data.dataset.Split({
         source: tree1.selection, 
         rule: Function.getter('data.id % 2', {
           'NaN': 'Child items',

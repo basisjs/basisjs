@@ -6,6 +6,7 @@
   basis.require('basis.cssom');
   basis.require('basis.html');
   basis.require('basis.data');
+  basis.require('basis.data.dataset');
   basis.require('basis.data.property');
   basis.require('basis.data.index');
   basis.require('basis.entity');

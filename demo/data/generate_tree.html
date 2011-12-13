@@ -125,8 +125,8 @@
     files.forEach(File);
     folders.forEach(Folder);
 
-    var goupingByParentId = new nsData.Dataset.Split({
-      source: new nsData.Dataset.Merge({
+    var goupingByParentId = new nsData.dataset.Split({
+      source: new nsData.dataset.Merge({
         sources: [
           Folder.all,
           File.all

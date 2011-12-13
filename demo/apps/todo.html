@@ -218,14 +218,14 @@
         }
       });
 
-      var taskByDate = new nsData.Dataset.Split({
+      var taskByDate = new nsData.dataset.Split({
         source: Task.all,
         rule: function(task){
           return task.data.Date.toISODateString();
         }
       });
 
-      var taskByDone = new nsData.Dataset.Split({
+      var taskByDone = new nsData.dataset.Split({
         source: Task.all,
         rule: function(task){
           return task.data.IsDone;

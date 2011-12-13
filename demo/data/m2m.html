@@ -422,7 +422,7 @@
       localSorting: function(node){
         return node.satellite.word.data.Title;
       },
-      dataSource: new basis.data.Dataset.MapReduce({
+      dataSource: new basis.data.dataset.MapReduce({
         source: Word.all
       }),
       childClass: nsUI.Node.subclass({
