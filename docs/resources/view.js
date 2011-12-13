@@ -1044,7 +1044,7 @@
     })
   });
 
-  var clsSplitBySuper = new nsData.Dataset.Split({
+  var clsSplitBySuper = new nsData.dataset.Split({
     source: new nsData.Dataset({
       items: clsById
     }),
@@ -1108,7 +1108,7 @@
   //
 
   var namespaceClassDS = new nsData.Dataset();
-  namespaceClsSplitBySuper = new nsData.Dataset.Split({
+  namespaceClsSplitBySuper = new nsData.dataset.Split({
     source: namespaceClassDS,
     rule: function(object){
       console.log(object.part);

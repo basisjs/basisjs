@@ -2358,20 +2358,6 @@
       return { data: data };
   }
 
-  //
-  // export names
-  //
-
-  Object.extend(Dataset, {
-    // operable datasets
-    Merge: Merge,
-    Subtract: Subtract,
-
-    // transform dataset
-    MapReduce: MapReduce,
-    Subset: Subset,
-    Split: Split
-  });
 
   //
   // export names
@@ -2398,12 +2384,7 @@
     KeyObjectMap: KeyObjectMap,
 
     AbstractDataset: AbstractDataset,
-    Dataset: Dataset,
-
-    // deprecate
-    AggregateDataset: Merge,
-    Collection: Subset,
-    Grouping: Split
+    Dataset: Dataset
   });
 
   basis.namespace('basis.data.dataset').extend({

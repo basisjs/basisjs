@@ -37,9 +37,8 @@ basis.require('basis.data');
   var EventObject = basis.EventObject;
   var AbstractDataset = nsData.AbstractDataset;
   var Dataset = nsData.Dataset;
-  var AggregateDataset = nsData.AggregateDataset;
-  var Collection = nsData.Collection;
-  var Grouping = nsData.Grouping;
+  var Collection = nsData.dataset.Subset;
+  var Grouping = nsData.dataset.Split;
   var DataObject = nsData.DataObject;
   var STATE = nsData.STATE;
 

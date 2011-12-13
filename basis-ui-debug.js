@@ -6306,20 +6306,6 @@ basis.require('basis.dom');
       return { data: data };
   }
 
-  //
-  // export names
-  //
-
-  Object.extend(Dataset, {
-    // operable datasets
-    Merge: Merge,
-    Subtract: Subtract,
-
-    // transform dataset
-    MapReduce: MapReduce,
-    Subset: Subset,
-    Split: Split
-  });
 
   //
   // export names
@@ -6346,12 +6332,7 @@ basis.require('basis.dom');
     KeyObjectMap: KeyObjectMap,
 
     AbstractDataset: AbstractDataset,
-    Dataset: Dataset,
-
-    // deprecate
-    AggregateDataset: Merge,
-    Collection: Subset,
-    Grouping: Split
+    Dataset: Dataset
   });
 
   basis.namespace('basis.data.dataset').extend({
@@ -10039,7 +10020,7 @@ gj   */
   var prefixRxCache = {};
   function prefixRegExp(prefix, global){
     var key = (global ? 'g' : 's') + prefix;
-    return prefixRxCache[key] || (prefixRxCache[key] = new RegExp('\\s*\\b' + prefix + '.*\\b'));
+    return prefixRxCache[key] || (prefixRxCache[key] = new RegExp((global ? '' : '\\s*') + '\\b' + prefix + '.*\\b'));
   }
 
  /**
@@ -10915,7 +10896,7 @@ basis.require('basis.data.property');
   var Property = nsData.property.Property;
 
   var AbstractDataset = nsData.AbstractDataset;
-  var MapReduce = nsData.Dataset.MapReduce;
+  var MapReduce = nsData.dataset.MapReduce;
 
   //
   // IndexedDataset
@@ -11003,7 +10984,7 @@ basis.require('basis.data.property');
     }
 
     if (delta = getDelta(inserted, values(curSet)))
-      AggregateDataset.prototype.event_datasetChanged.call(this, this, delta);
+      AbstractDataset.prototype.event_datasetChanged.call(this, this, delta);
   }
 
  /**
@@ -11078,7 +11059,7 @@ basis.require('basis.data.property');
       this.index_ = [];
 
       // inherit
-      AggregateDataset.prototype.init.call(this, config);
+      AbstractDataset.prototype.init.call(this, config);
     },
 
    /**
@@ -11775,9 +11756,8 @@ basis.require('basis.data');
   var EventObject = basis.EventObject;
   var AbstractDataset = nsData.AbstractDataset;
   var Dataset = nsData.Dataset;
-  var AggregateDataset = nsData.AggregateDataset;
-  var Collection = nsData.Collection;
-  var Grouping = nsData.Grouping;
+  var Collection = nsData.dataset.Subset;
+  var Grouping = nsData.dataset.Split;
   var DataObject = nsData.DataObject;
   var STATE = nsData.STATE;
 
