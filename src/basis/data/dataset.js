@@ -49,7 +49,7 @@ basis.require('basis.data');
   // Main part
   //
 
-  Subscription.regType(
+  subscription.regType(
     'SOURCE',
     {
       sourceChanged: function(object, oldSource){
