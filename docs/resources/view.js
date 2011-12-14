@@ -120,7 +120,7 @@
   */
   var View = Class(uiContainer, {
     className: namespace + '.View',
-    autoDelegateParent: true,
+    autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
     isAcceptableObject: Function.$true,
     action: {
       scrollTo: function(){

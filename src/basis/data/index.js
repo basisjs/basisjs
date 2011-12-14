@@ -660,7 +660,9 @@ basis.require('basis.data.property');
 
     addMemberRef: function(member, sourceObject){
       this.memberSourceMap[member.eventObjectId] = sourceObject.eventObjectId;
-      member.addHandler(this.listen.member, this);
+
+      if (this.listen.member)
+        member.addHandler(this.listen.member, this);
 
       this.sourceMap_[sourceObject.eventObjectId].updated = true;
 
@@ -670,7 +672,9 @@ basis.require('basis.data.property');
 
     removeMemberRef: function(member, sourceObject){
       delete this.memberSourceMap[member.eventObjectId];
-      member.removeHandler(this.listen.member, this);
+
+      if (this.listen.member)
+        member.removeHandler(this.listen.member, this);
     },
 
     init: function(config){
@@ -723,8 +727,14 @@ basis.require('basis.data.property');
             indexMap: this
           };
 
-          index.addHandler(this.listen.index, this.indexesBind_[key]);
-          this.listen.index.change.call(this.indexesBind_[key], index.value);
+          var listenHandler = this.listen.index;
+          if (listenHandler)
+          {
+            index.addHandler(listenHandler, this.indexesBind_[key]);
+
+            if (listenHandler.change)
+              listenHandler.change.call(this.indexesBind_[key], index.value);
+          }
         }
         else
         {
@@ -737,7 +747,7 @@ basis.require('basis.data.property');
     removeIndex: function(key){
       if (this.indexes_[key] || this.indexes[key])
       {
-        if (this.indexes[key])
+        if (this.indexes[key] && this.listen.index)
           this.indexes[key].removeHandler(this.listen.index, this.indexesBind_[key]);
 
         delete this.indexValues[key];

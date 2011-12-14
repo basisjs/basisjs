@@ -366,15 +366,15 @@
     * @event
     */
     event_targetChanged: createEvent('targetChanged', 'object', 'oldTarget') && function(object, oldTarget){
-      var targetHandler = this.listen.target;
+      var listenHandler = this.listen.target;
 
-      if (targetHandler)
+      if (listenHandler)
       {
         if (oldTarget)
-          oldTarget.removeHandler(targetHandler, this);
+          oldTarget.removeHandler(listenHandler, this);
 
         if (this.target)
-          this.target.addHandler(targetHandler, this);
+          this.target.addHandler(listenHandler, this);
       }
 
       event.targetChanged.call(this, object, oldTarget);
@@ -546,9 +546,10 @@
         var oldTarget = this.target;
         var oldRoot = this.root;
         var delta = {};
+        var listenHandler = this.listen.delegate;
 
-        if (oldDelegate)
-          oldDelegate.removeHandler(this.listen.delegate, this);
+        if (oldDelegate && listenHandler)
+          oldDelegate.removeHandler(listenHandler, this);
 
         if (newDelegate)
         {
@@ -559,7 +560,8 @@
           this.state = newDelegate.state;
           this.target = newDelegate.target;
 
-          newDelegate.addHandler(this.listen.delegate, this);
+          if (listenHandler)
+            newDelegate.addHandler(listenHandler, this);
 
           // calculate delta as difference between current data and delegate info
           for (var key in newDelegate.data)
@@ -1090,6 +1092,7 @@
       var delta;
       var memberMap = this.memberMap_;
       var inserted = [];
+      var listenHandler = this.listen.item;
 
       for (var i = 0; i < data.length; i++)
       {
@@ -1100,7 +1103,9 @@
           if (!memberMap[objectId])
           {
             memberMap[objectId] = object;
-            object.addHandler(this.listen.item, this);
+
+            if (listenHandler)
+              object.addHandler(listenHandler, this);
 
             inserted.push(object);
           }
@@ -1122,6 +1127,7 @@
       var delta;
       var memberMap = this.memberMap_;
       var deleted = [];
+      var listenHandler = this.listen.item;
 
       for (var i = 0; i < data.length; i++)
       {
@@ -1131,7 +1137,9 @@
           var objectId = object.eventObjectId;
           if (memberMap[objectId])
           {
-            object.removeHandler(this.listen.item, this);
+            if (listenHandler)
+              object.removeHandler(listenHandler, this);
+
             delete memberMap[objectId];
 
             deleted.push(object);
@@ -1169,6 +1177,7 @@
       var object;
       var objectId;
       var delta;
+      var listenHandler = this.listen.item;
 
       for (var i = 0; i < data.length; i++)
       {
@@ -1183,7 +1192,9 @@
           if (!memberMap[objectId])
           {
             memberMap[objectId] = object;
-            object.addHandler(this.listen.item, this);
+
+            if (listenHandler)
+              object.addHandler(listenHandler, this);
 
             inserted.push(object);
           }
@@ -1197,7 +1208,9 @@
         {
           object = memberMap[objectId];
 
-          object.removeHandler(this.listen.item, this);
+          if (listenHandler)
+            object.removeHandler(listenHandler, this);
+
           delete memberMap[objectId];
 
           deleted.push(object);
@@ -1256,11 +1269,13 @@
     clear: function(){
       var delta;
       var deleted = this.getItems();
+      var listenHandler = this.listen.item;
 
       if (deleted.length)
       {
-        for (var i = deleted.length; i --> 0;)
-          deleted[i].removeHandler(this.listen.item, this);
+        if (listenHandler)
+          for (var i = deleted.length; i --> 0;)
+            deleted[i].removeHandler(listenHandler, this);
 
         this.event_datasetChanged(this, delta = {
           deleted: deleted

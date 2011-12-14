@@ -183,7 +183,7 @@
 
     var myForm = new basis.ui.form.FormContent({
       disabled: true,             // desable by default
-      autoDelegateParent: true,   // delegate parent
+      autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,   // delegate parent
       childNodes: [               // define fields
         {
           type: 'text',           // type of field
@@ -222,7 +222,7 @@
     });
 
     var formPanel = new basis.ui.button.ButtonPanel({
-      autoDelegateParent: true,
+      autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
       disabled: true,
       childNodes: [
         {

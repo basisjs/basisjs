@@ -313,7 +313,8 @@ basis.require('basis.data');
         if (this.sources.add(source))
         {
           // add event listeners to source
-          source.addHandler(this.listen.source, this);
+          if (this.listen.source)
+            source.addHandler(this.listen.source, this);
 
           // process new source objects and update member map
           var memberMap = this.memberMap_;
@@ -361,7 +362,8 @@ basis.require('basis.data');
       if (this.sources.remove(source))
       {
         // remove event listeners from source
-        source.removeHandler(this.listen.source, this);
+        if (this.listen.source)
+          source.removeHandler(this.listen.source, this);
 
         // process removing source objects and update member map
         var memberMap = this.memberMap_;
@@ -592,24 +594,34 @@ basis.require('basis.data');
       if (oldMinuend !== minuend)
       {
         operandsChanged = true;
+        this.minuend = minuend;
 
-        if (oldMinuend)
-          oldMinuend.removeHandler(this.listen.minuend, this);
+        var listenHandler = this.listen.minuend;
+        if (listenHandler)
+        {
+          if (oldMinuend)
+            oldMinuend.removeHandler(listenHandler, this);
 
-        if (this.minuend = minuend)
-          minuend.addHandler(this.listen.minuend, this)
+          if (minuend)
+            minuend.addHandler(listenHandler, this)
+        }
       }
 
       // set new subtrahend if changed
       if (oldSubtrahend !== subtrahend)
       {
         operandsChanged = true;
+        this.subtrahend = subtrahend;
 
-        if (oldSubtrahend)
-          oldSubtrahend.removeHandler(this.listen.subtrahend, this);
+        var listenHandler = this.listen.subtrahend;
+        if (listenHandler)
+        {
+          if (oldSubtrahend)
+            oldSubtrahend.removeHandler(listenHandler, this);
 
-        if (this.subtrahend = subtrahend)
-          subtrahend.addHandler(this.listen.subtrahend, this);
+          if (subtrahend)
+            subtrahend.addHandler(listenHandler, this);
+        }
       }
 
       if (!operandsChanged)
@@ -739,6 +751,7 @@ basis.require('basis.data');
       var sourceObject;
       var sourceObjectId;
       var member;
+      var listenHandler = this.listen.sourceObject;
 
       Dataset.setAccumulateState(true);
 
@@ -751,7 +764,9 @@ basis.require('basis.data');
           if (member instanceof DataObject == false || this.reduce(member))
             member = null;
 
-          sourceObject.addHandler(this.listen.sourceObject, this);
+          if (listenHandler)
+            sourceObject.addHandler(listenHandler, this);
+
           sourceMap[sourceObject.eventObjectId] = {
             sourceObject: sourceObject,
             member: member
@@ -783,7 +798,9 @@ basis.require('basis.data');
           sourceObjectId = sourceObject.eventObjectId;
           member = sourceMap[sourceObjectId].member;
 
-          sourceObject.removeHandler(this.listen.sourceObject, this);
+          if (listenHandler)
+            sourceObject.removeHandler(listenHandler, this);
+
           delete sourceMap[sourceObjectId];
 
           if (member)
@@ -946,21 +963,32 @@ basis.require('basis.data');
       if (this.source !== source)
       {
         var oldSource = this.source;
+        var listenHandler = this.listen.source;
 
-        if (oldSource)
-        {
-          oldSource.removeHandler(this.listen.source, this);
-          this.listen.source.datasetChanged.call(this, oldSource, {
-            deleted: oldSource.getItems()
-          });
-        }
+        this.source = source;
 
-        if (this.source = source)
+        if (listenHandler)
         {
-          source.addHandler(this.listen.source, this);
-          this.listen.source.datasetChanged.call(this, source, {
-            inserted: source.getItems()
-          });
+          var datasetChangedHandler = listenHandler.datasetChanged;
+          if (oldSource)
+          {
+            oldSource.removeHandler(listenHandler, this);
+
+            if (datasetChangedHandler)
+              datasetChangedHandler.call(this, oldSource, {
+                deleted: oldSource.getItems()
+              });
+          }
+
+          if (source)
+          {
+            source.addHandler(listenHandler, this);
+
+            if (datasetChangedHandler)
+              datasetChangedHandler.call(this, source, {
+                inserted: source.getItems()
+              });
+          }
         }
 
         this.event_sourceChanged(this, oldSource);

@@ -4312,15 +4312,15 @@ basis.require('basis.dom');
     * @event
     */
     event_targetChanged: createEvent('targetChanged', 'object', 'oldTarget') && function(object, oldTarget){
-      var targetHandler = this.listen.target;
+      var listenHandler = this.listen.target;
 
-      if (targetHandler)
+      if (listenHandler)
       {
         if (oldTarget)
-          oldTarget.removeHandler(targetHandler, this);
+          oldTarget.removeHandler(listenHandler, this);
 
         if (this.target)
-          this.target.addHandler(targetHandler, this);
+          this.target.addHandler(listenHandler, this);
       }
 
       event.targetChanged.call(this, object, oldTarget);
@@ -4492,9 +4492,10 @@ basis.require('basis.dom');
         var oldTarget = this.target;
         var oldRoot = this.root;
         var delta = {};
+        var listenHandler = this.listen.delegate;
 
-        if (oldDelegate)
-          oldDelegate.removeHandler(this.listen.delegate, this);
+        if (oldDelegate && listenHandler)
+          oldDelegate.removeHandler(listenHandler, this);
 
         if (newDelegate)
         {
@@ -4505,7 +4506,8 @@ basis.require('basis.dom');
           this.state = newDelegate.state;
           this.target = newDelegate.target;
 
-          newDelegate.addHandler(this.listen.delegate, this);
+          if (listenHandler)
+            newDelegate.addHandler(listenHandler, this);
 
           // calculate delta as difference between current data and delegate info
           for (var key in newDelegate.data)
@@ -5036,6 +5038,7 @@ basis.require('basis.dom');
       var delta;
       var memberMap = this.memberMap_;
       var inserted = [];
+      var listenHandler = this.listen.item;
 
       for (var i = 0; i < data.length; i++)
       {
@@ -5046,7 +5049,9 @@ basis.require('basis.dom');
           if (!memberMap[objectId])
           {
             memberMap[objectId] = object;
-            object.addHandler(this.listen.item, this);
+
+            if (listenHandler)
+              object.addHandler(listenHandler, this);
 
             inserted.push(object);
           }
@@ -5068,6 +5073,7 @@ basis.require('basis.dom');
       var delta;
       var memberMap = this.memberMap_;
       var deleted = [];
+      var listenHandler = this.listen.item;
 
       for (var i = 0; i < data.length; i++)
       {
@@ -5077,7 +5083,9 @@ basis.require('basis.dom');
           var objectId = object.eventObjectId;
           if (memberMap[objectId])
           {
-            object.removeHandler(this.listen.item, this);
+            if (listenHandler)
+              object.removeHandler(listenHandler, this);
+
             delete memberMap[objectId];
 
             deleted.push(object);
@@ -5115,6 +5123,7 @@ basis.require('basis.dom');
       var object;
       var objectId;
       var delta;
+      var listenHandler = this.listen.item;
 
       for (var i = 0; i < data.length; i++)
       {
@@ -5129,7 +5138,9 @@ basis.require('basis.dom');
           if (!memberMap[objectId])
           {
             memberMap[objectId] = object;
-            object.addHandler(this.listen.item, this);
+
+            if (listenHandler)
+              object.addHandler(listenHandler, this);
 
             inserted.push(object);
           }
@@ -5143,7 +5154,9 @@ basis.require('basis.dom');
         {
           object = memberMap[objectId];
 
-          object.removeHandler(this.listen.item, this);
+          if (listenHandler)
+            object.removeHandler(listenHandler, this);
+
           delete memberMap[objectId];
 
           deleted.push(object);
@@ -5202,11 +5215,13 @@ basis.require('basis.dom');
     clear: function(){
       var delta;
       var deleted = this.getItems();
+      var listenHandler = this.listen.item;
 
       if (deleted.length)
       {
-        for (var i = deleted.length; i --> 0;)
-          deleted[i].removeHandler(this.listen.item, this);
+        if (listenHandler)
+          for (var i = deleted.length; i --> 0;)
+            deleted[i].removeHandler(listenHandler, this);
 
         this.event_datasetChanged(this, delta = {
           deleted: deleted
@@ -5935,6 +5950,12 @@ basis.require('basis.html');
   /** @const */ var EXCEPTION_NULL_CHILD = namespace + ': Child node is null';
   /** @const */ var EXCEPTION_DATASOURCE_CONFLICT = namespace + ': Operation is not allowed because node is under dataSource control';
 
+  var DELEGATE = {
+    NONE: 'none',
+    PARENT: 'parent',
+    OWNER: 'owner'
+  };
+
   function sortingSearch(node){
     return node.sortingValue || 0; // it's important return zero when sortingValue is undefined,
                                    // because in this case sorting may be broken; it's also not a problem
@@ -6121,7 +6142,7 @@ basis.require('basis.html');
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
-    * @param {basis.Data.AbstractDataset} oldDataSource
+    * @param {basis.data.AbstractDataset} oldDataSource
     */
     event_dataSourceChanged: createEvent('dataSourceChanged', 'node', 'oldDataSource'),
 
@@ -6171,12 +6192,10 @@ basis.require('basis.html');
     },
 
    /**
-    * Flag determines object behaviour when parentNode changing:
-    * - true: set same delegate as parentNode has on insert, or unlink delegate on remove
-    * - false: nothing to do
-    * @type {boolean}
+    * Flag determines object behaviour to delegate some related object
+    * @type {basis.dom.wrapper.DELEGATE}
     */
-    autoDelegateParent: false,
+    autoDelegate: DELEGATE.NONE,
 
    /**
     * @type {string}
@@ -6200,7 +6219,7 @@ basis.require('basis.html');
 
    /**
     * Object that's manage childNodes updates.
-    * @type {basis.Data.AbstractDataset}
+    * @type {basis.data.AbstractDataset}
     */
     dataSource: null,
 
@@ -6332,6 +6351,8 @@ basis.require('basis.html');
       var dataSource = this.dataSource;
       var childNodes = this.childNodes;
       var localGrouping = this.localGrouping;
+
+      ;;;if (('autoDelegateParent' in this) && typeof console != 'undefined') console.warn('autoDelegateParent property is deprecate. Use autoDelegate instead');
 
       if (dataSource)
         this.dataSource = null; // NOTE: reset dataSource before inherit -> prevent double subscription activation
@@ -6490,13 +6511,13 @@ basis.require('basis.html');
     },
 
    /**
-    * @param {basis.Data.AbstractDataset} dataSource
+    * @param {basis.data.AbstractDataset} dataSource
     */
     setDataSource: function(dataSource){
     },
 
    /**
-    *
+    * @param {basis.dom.wrapper.AbstractNode}
     */
     setOwner: function(owner){
       if (!owner || owner instanceof AbstractNode == false)
@@ -6505,14 +6526,23 @@ basis.require('basis.html');
       if (this.owner !== owner)
       {
         var oldOwner = this.owner;
+        var listenHandler = this.listen.owner;
 
-        if (oldOwner)
-          oldOwner.removeHandler(this.listen.owner, this);
+        this.owner = owner;
 
-        if (this.owner = owner)
-          owner.addHandler(this.listen.owner, this);
+        if (listenHandler)
+        {
+          if (oldOwner)
+            oldOwner.removeHandler(listenHandler, this);
+
+          if (owner)
+            owner.addHandler(listenHandler, this);
+        }
 
         this.event_ownerChanged(this, oldOwner);
+
+        if (this.autoDelegate == DELEGATE.OWNER)
+          this.setDelagate(owner);
       }
     },
 
@@ -7233,7 +7263,7 @@ basis.require('basis.html');
           newChild.match(this.matchFunction);
 
         // delegate parentNode automatically, if necessary
-        if (newChild.autoDelegateParent)
+        if (newChild.autoDelegate == DELEGATE.PARENT)
           newChild.setDelegate(this);
 
         // dispatch event
@@ -7338,7 +7368,7 @@ basis.require('basis.html');
       if (!this.dataSource)
         this.event_childNodesModified(this, { deleted: [oldChild] });
 
-      if (oldChild.autoDelegateParent)
+      if (oldChild.autoDelegate == DELEGATE.PARENT)
         oldChild.setDelegate();
 
       // return removed child
@@ -7418,7 +7448,7 @@ basis.require('basis.html');
           child.nextSibling = null;
           child.previousSibling = null;
 
-          if (child.autoDelegateParent)
+          if (child.autoDelegate == DELEGATE.PARENT)
             child.setDelegate();
         }
         else
@@ -7474,14 +7504,17 @@ basis.require('basis.html');
       if (this.dataSource !== dataSource)
       {
         var oldDataSource = this.dataSource;
+        var listenHandler = this.listen.dataSource;
+
+        this.dataSource = dataSource;
 
         // detach
         if (oldDataSource)
         {
-          this.dataSource = null;
           this.colMap_ = null;
 
-          oldDataSource.removeHandler(this.listen.dataSource, this);
+          if (listenHandler)
+            oldDataSource.removeHandler(listenHandler, this);
 
           if (oldDataSource.itemCount)
             this.clear();
@@ -7492,15 +7525,17 @@ basis.require('basis.html');
         // attach
         if (dataSource)
         {
-          this.dataSource = dataSource;
           this.colMap_ = {};
 
-          dataSource.addHandler(this.listen.dataSource, this);
+          if (listenHandler)
+          {
+            dataSource.addHandler(listenHandler, this);
 
-          if (dataSource.itemCount)
-            this.listen.dataSource.datasetChanged.call(this, dataSource, {
-              inserted: dataSource.getItems()
-            });
+            if (dataSource.itemCount && listenHandler.datasetChanged)
+              listenHandler.datasetChanged.call(this, dataSource, {
+                inserted: dataSource.getItems()
+              });
+          }
         }
 
         // TODO: restore localSorting & localGrouping, fast node reorder
@@ -8283,24 +8318,34 @@ basis.require('basis.html');
       if (node !== this.sourceNode)
       {
         var oldSourceNode = this.sourceNode;
-
-        if (oldSourceNode)
-        {
-          oldSourceNode.removeHandler(this.listen.sourceNode, this);
-          this.listen.sourceNode.childNodesModified.call(this, oldSourceNode, {
-            deleted: oldSourceNode.childNodes
-          });
-        }
-
-        if (node)
-        {
-          node.addHandler(this.listen.sourceNode, this);
-          this.listen.sourceNode.childNodesModified.call(this, node, {
-            inserted: node.childNodes
-          });
-        }
+        var listenHandler = this.listen.sourceNode;
 
         this.sourceNode = node;
+
+        if (listenHandler)
+        {
+          var childNodesModifiedHandler = listenHandler.childNodesModified;
+
+          if (oldSourceNode)
+          {
+            oldSourceNode.removeHandler(listenHandler, this);
+
+            if (childNodesModifiedHandler)
+              childNodesModifiedHandler.call(this, oldSourceNode, {
+                deleted: oldSourceNode.childNodes
+              });
+          }
+
+          if (node)
+          {
+            node.addHandler(listenHandler, this);
+
+            if (childNodesModifiedHandler)
+              childNodesModifiedHandler.call(this, node, {
+                inserted: node.childNodes
+              });
+          }
+        }
 
         this.event_sourceNodeChanged(this, oldSourceNode);
       }
@@ -8419,7 +8464,10 @@ basis.require('basis.html');
   //
 
   basis.namespace(namespace, simpleTemplate).extend({
-    // non-template classes
+    // const
+    DELEGATE: DELEGATE,
+
+    // classes
     AbstractNode: AbstractNode,
     InteractiveNode: InteractiveNode,
     Node: Node,
@@ -9464,7 +9512,8 @@ basis.require('basis.data');
         if (this.sources.add(source))
         {
           // add event listeners to source
-          source.addHandler(this.listen.source, this);
+          if (this.listen.source)
+            source.addHandler(this.listen.source, this);
 
           // process new source objects and update member map
           var memberMap = this.memberMap_;
@@ -9512,7 +9561,8 @@ basis.require('basis.data');
       if (this.sources.remove(source))
       {
         // remove event listeners from source
-        source.removeHandler(this.listen.source, this);
+        if (this.listen.source)
+          source.removeHandler(this.listen.source, this);
 
         // process removing source objects and update member map
         var memberMap = this.memberMap_;
@@ -9743,24 +9793,34 @@ basis.require('basis.data');
       if (oldMinuend !== minuend)
       {
         operandsChanged = true;
+        this.minuend = minuend;
 
-        if (oldMinuend)
-          oldMinuend.removeHandler(this.listen.minuend, this);
+        var listenHandler = this.listen.minuend;
+        if (listenHandler)
+        {
+          if (oldMinuend)
+            oldMinuend.removeHandler(listenHandler, this);
 
-        if (this.minuend = minuend)
-          minuend.addHandler(this.listen.minuend, this)
+          if (minuend)
+            minuend.addHandler(listenHandler, this)
+        }
       }
 
       // set new subtrahend if changed
       if (oldSubtrahend !== subtrahend)
       {
         operandsChanged = true;
+        this.subtrahend = subtrahend;
 
-        if (oldSubtrahend)
-          oldSubtrahend.removeHandler(this.listen.subtrahend, this);
+        var listenHandler = this.listen.subtrahend;
+        if (listenHandler)
+        {
+          if (oldSubtrahend)
+            oldSubtrahend.removeHandler(listenHandler, this);
 
-        if (this.subtrahend = subtrahend)
-          subtrahend.addHandler(this.listen.subtrahend, this);
+          if (subtrahend)
+            subtrahend.addHandler(listenHandler, this);
+        }
       }
 
       if (!operandsChanged)
@@ -9890,6 +9950,7 @@ basis.require('basis.data');
       var sourceObject;
       var sourceObjectId;
       var member;
+      var listenHandler = this.listen.sourceObject;
 
       Dataset.setAccumulateState(true);
 
@@ -9902,7 +9963,9 @@ basis.require('basis.data');
           if (member instanceof DataObject == false || this.reduce(member))
             member = null;
 
-          sourceObject.addHandler(this.listen.sourceObject, this);
+          if (listenHandler)
+            sourceObject.addHandler(listenHandler, this);
+
           sourceMap[sourceObject.eventObjectId] = {
             sourceObject: sourceObject,
             member: member
@@ -9934,7 +9997,9 @@ basis.require('basis.data');
           sourceObjectId = sourceObject.eventObjectId;
           member = sourceMap[sourceObjectId].member;
 
-          sourceObject.removeHandler(this.listen.sourceObject, this);
+          if (listenHandler)
+            sourceObject.removeHandler(listenHandler, this);
+
           delete sourceMap[sourceObjectId];
 
           if (member)
@@ -10097,21 +10162,32 @@ basis.require('basis.data');
       if (this.source !== source)
       {
         var oldSource = this.source;
+        var listenHandler = this.listen.source;
 
-        if (oldSource)
-        {
-          oldSource.removeHandler(this.listen.source, this);
-          this.listen.source.datasetChanged.call(this, oldSource, {
-            deleted: oldSource.getItems()
-          });
-        }
+        this.source = source;
 
-        if (this.source = source)
+        if (listenHandler)
         {
-          source.addHandler(this.listen.source, this);
-          this.listen.source.datasetChanged.call(this, source, {
-            inserted: source.getItems()
-          });
+          var datasetChangedHandler = listenHandler.datasetChanged;
+          if (oldSource)
+          {
+            oldSource.removeHandler(listenHandler, this);
+
+            if (datasetChangedHandler)
+              datasetChangedHandler.call(this, oldSource, {
+                deleted: oldSource.getItems()
+              });
+          }
+
+          if (source)
+          {
+            source.addHandler(listenHandler, this);
+
+            if (datasetChangedHandler)
+              datasetChangedHandler.call(this, source, {
+                inserted: source.getItems()
+              });
+          }
         }
 
         this.event_sourceChanged(this, oldSource);

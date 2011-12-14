@@ -346,7 +346,7 @@
       });
 
       var taskForm = new basis.ui.form.FormContent({
-        autoDelegateParent: true,
+        autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
         handler: {
           targetChanged: function(){
             if (this.target)
