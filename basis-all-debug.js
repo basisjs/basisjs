@@ -4024,11 +4024,49 @@ basis.require('basis.dom');
   var NULL_OBJECT = {};
   var EMPTY_ARRAY = [];
 
-  /** @const */ var STATE_UNDEFINED  = 'undefined';
-  /** @const */ var STATE_READY      = 'ready';
-  /** @const */ var STATE_PROCESSING = 'processing';
-  /** @const */ var STATE_ERROR      = 'error';
-  /** @const */ var STATE_DEPRECATED = 'deprecated';
+
+  //
+  // State scheme
+  //
+
+  var STATE_EXISTS = {};
+
+ /**
+  * @enum {string}
+  */
+  var STATE = {
+    PRIORITY: [],
+
+    values_: {},
+
+   /**
+    * Registrate new state
+    */
+    add: function(state, order){
+      var name = state.toUpperCase();
+      var value = state.toLowerCase();
+
+      this[name] = value;
+      STATE_EXISTS[value] = true;
+
+      if (order)
+      {
+        order = this.indexOf(order);
+        if (order == -1)
+          this.PRIORITY.push(value)
+        else
+          this.PRIORITY.splice(order, 0, value);
+      }
+    }
+  };
+
+  // Registrate base states
+
+  STATE.add('READY');
+  STATE.add('DEPRECATED');
+  STATE.add('UNDEFINED');
+  STATE.add('ERROR');
+  STATE.add('PROCESSING');
 
 
   //
@@ -4038,6 +4076,9 @@ basis.require('basis.dom');
   var subscriptionHandlers = {};
   var subscriptionSeed = 1;
 
+ /**
+  * @enum {number}
+  */
   var SUBSCRIPTION = {
     NONE: 0,
     MASK: 0,
@@ -4131,9 +4172,7 @@ basis.require('basis.dom');
     }
   }
 
-  //
   // Registrate base subscription types
-  //
 
   SUBSCRIPTION.add(
     'DELEGATE',
@@ -4163,6 +4202,11 @@ basis.require('basis.dom');
 
 
   //
+  // 
+  //
+
+
+  //
   // DataObject
   //
 
@@ -4177,7 +4221,7 @@ basis.require('basis.dom');
     * State of object. Might be managed by delegate object (if used).
     * @type {basis.data.STATE|string}
     */
-    state: STATE_READY,
+    state: STATE.READY,
 
    /**
     * Using for data storing. Might be managed by delegate object (if used).
@@ -4563,12 +4607,17 @@ basis.require('basis.dom');
       if (root !== this)
         return root.setState(state, data);
 
+      var stateCode = String(state);
+
+      if (!STATE_EXISTS[stateCode])
+        throw new Error('Wrong state value');
+
       // set new state for object
-      if (this.state != String(state) || this.state.data != data)
+      if (this.state != stateCode || this.state.data != data)
       {
         var oldState = this.state;
 
-        this.state = Object(String(state));
+        this.state = Object(stateCode);
         this.state.data = data;
 
         this.event_stateChanged(this, oldState);
@@ -4580,12 +4629,12 @@ basis.require('basis.dom');
     },
 
    /**
-    * Default action on deprecate, set object state to STATE_DEPRECATED,
-    * but only if object isn't in STATE_PROCESSING state.
+    * Default action on deprecate, set object state to basis.data.STATE.DEPRECATED,
+    * but only if object isn't in baiss.data.STATE.PROCESSING state.
     */
     deprecate: function(){
-      if (this.state != STATE_PROCESSING)
-        this.setState(STATE_DEPRECATED);
+      if (this.state != STATE.PROCESSING)
+        this.setState(STATE.DEPRECATED);
     },
 
    /**
@@ -4685,7 +4734,7 @@ basis.require('basis.dom');
 
       // drop data & state
       this.data = NULL_OBJECT;
-      this.state = STATE_UNDEFINED;
+      this.state = STATE.UNDEFINED;
       this.root = null;
       this.target = null;
     }
@@ -4795,7 +4844,7 @@ basis.require('basis.dom');
     * on demand.
     * @inheritDoc
     */
-    state: STATE_UNDEFINED,
+    state: STATE.UNDEFINED,
 
    /**
     * Cardinality of set.
@@ -5284,6 +5333,8 @@ basis.require('basis.dom');
 
 
   //
+  // namespace wrapper
+  //
 
   function wrapper(data){
     if (Array.isArray(data))
@@ -5298,17 +5349,8 @@ basis.require('basis.dom');
   //
 
   basis.namespace(namespace, wrapper).extend({
-   /**
-    * @enum {string}
-    */
-    STATE: {
-      UNDEFINED: STATE_UNDEFINED,
-      READY: STATE_READY,
-      PROCESSING: STATE_PROCESSING,
-      ERROR: STATE_ERROR,
-      DEPRECATED: STATE_DEPRECATED
-    },
-
+    // const
+    STATE: STATE,
     SUBSCRIPTION: SUBSCRIPTION,
 
     // classes
@@ -7638,9 +7680,12 @@ basis.require('basis.html');
     setMatchFunction: function(matchFunction){
       if (this.matchFunction != matchFunction)
       {
+        var oldMatchFunction = this.matchFunction;
         this.matchFunction = matchFunction;
         for (var node = this.lastChild; node; node = node.previousSibling)
           node.match(matchFunction);
+
+        this.event_matchFunctionChanged(this, oldMatchFunction);
       }
     }
   };
@@ -7686,6 +7731,12 @@ basis.require('basis.html');
     * @event
     */
     event_unmatch: createEvent('unmatch', 'node'),
+
+   /**
+    * Occurs after matchFunction property has been changed.
+    * @event
+    */
+    event_matchFunctionChanged: createEvent('matchFunctionChanged', 'node', 'oldMatchFunction'),
 
    /**
     * Indicate could be able node to be selected or not.
@@ -11435,7 +11486,7 @@ basis.require('basis.data');
   //  Property Set
   //
                        // priority: lowest  ------------------------------------------------------------> highest
-  var DataObjectSetStatePriority = [STATE.READY, STATE.DEPRECATED, STATE.UNDEFINED, STATE.ERROR, STATE.PROCESSING];
+  var DataObjectSetStatePriority = STATE.PRIORITY; //[STATE.READY, STATE.DEPRECATED, STATE.UNDEFINED, STATE.ERROR, STATE.PROCESSING];
   var DataObjectSetHandlers = {
     stateChanged: function(){
       this.fire(false, true);
