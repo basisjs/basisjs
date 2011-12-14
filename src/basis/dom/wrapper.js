@@ -1783,9 +1783,12 @@ basis.require('basis.html');
     setMatchFunction: function(matchFunction){
       if (this.matchFunction != matchFunction)
       {
+        var oldMatchFunction = this.matchFunction;
         this.matchFunction = matchFunction;
         for (var node = this.lastChild; node; node = node.previousSibling)
           node.match(matchFunction);
+
+        this.event_matchFunctionChanged(this, oldMatchFunction);
       }
     }
   };
@@ -1831,6 +1834,12 @@ basis.require('basis.html');
     * @event
     */
     event_unmatch: createEvent('unmatch', 'node'),
+
+   /**
+    * Occurs after matchFunction property has been changed.
+    * @event
+    */
+    event_matchFunctionChanged: createEvent('matchFunctionChanged', 'node', 'oldMatchFunction'),
 
    /**
     * Indicate could be able node to be selected or not.
