@@ -14,6 +14,7 @@
   <script type="text/javascript" src="../src/basis/dom/wrapper.js"></script>
   <script type="text/javascript" src="../src/basis/entity.js"></script>
   <script type="text/javascript" src="../src/basis/ui/canvas.js"></script>
+  <script type="text/javascript" src="../locale/ru/calendar.js"></script>
 
   <style type="text/css">
     CANVAS
@@ -95,6 +96,7 @@
       childClass: Point,
 
       valueGetter: Function.getter('data.value'),
+      propGetter: Function.getter('data.prop'),
       
       event_childNodesModified: function(node, delta){
         this.updateCount++;
@@ -116,22 +118,31 @@
         '#090'
       ],
 
-      /*init: function(config){
-        if (config)
+      init: function(config){
+
+        if (!this.threads)
         {
-          if (typeof config.valueGetter == 'function')
-            this.valueGetter = config.valueGetter;
-          if (typeof config.valueGetter2 == 'function')
-            this.valueGetter2 = config.valueGetter2;
+          this.threads = [
+            {
+              valueGetter: this.valueGetter,
+              color: this.color || this.threadColor[0]
+            }
+          ];
+        }
+
+        for (var i = 0; i < this.threads.length; i++)
+        {
+          if (!this.threads[i].color)
+            this.threads[i].color = this.threadColor[i];
         }
 
         basis.ui.canvas.Canvas.prototype.init.call(this, config);
-      },*/
+      },
       draw: function(){
         //this.updateCount++;
         Canvas.prototype.draw.call(this);
-        /*this.updateCount++;
-        if (typeof aaa == 'undefined')
+        //this.updateCount++;
+        /*if (typeof aaa == 'undefined')
         {
           this.childNodes.forEach(function(v){
             v.update({ Amount: parseInt(Math.random() * 1000000) });
@@ -154,43 +165,17 @@
         context.closePath();
         context.restore();
       },
-      /*drawThreads: function(){
-        var max = this.gridProperties.maxValue;
-        var cnt = this.childNodes.length;
-
-        var TOP = this.graphRect.TOP;
-        var LEFT = this.graphRect.LEFT;
-        var RIGHT = this.graphRect.RIGHT;
-        var BOTTOM = this.graphRect.BOTTOM;
-        var WIDTH = context.canvas.width;
-        var HEIGHT = context.canvas.height;
-
-        var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt);
-
-        var rect = this.graphRect;
-
-      },
-      initGraphRect: function(){
-        this.graphRect = {};
-        this.graphRect.TOP = 10;
-        this.graphRect.BOTTOM = 20;
-        this.graphRect.LEFT = 0;
-        this.graphRect.RIGHT = 0;
-      },
-      initGridProperties: function(){
-        var minGridValue = this.getMinGridValue();
-        var maxGridValue = this.getMaxGridValue();
-        var partCount = this.getGridPartCount(minGridValue, maxGridValue);
-
-        this.gridProperties = {
-          minValue: minGridValue,
-          maxValue: maxGridValue,
-          partCount: partCount
-        }
-      },*/
       getMaxValue: function(){
-        var values = this.childNodes.map(this.valueGetter);
-        var max = Math.max.apply(null, values);
+        var values;
+        var max = 0;
+        
+        for (var i = 0, thread; thread = this.threads[i]; i++)
+        {
+          values = this.childNodes.map(thread.valueGetter);
+          values.push(max);
+          max = Math.max.apply(null, values);
+        }
+
         return max;
       },
       getMinGridValue: function(){
@@ -211,18 +196,18 @@
 
         var maxDegree = getDegree(maxValue);
 
-        while (count < MIN_PART_COUNT && canDivide)
+        while (count < MIN_PART_COUNT && divisionCount < maxDegree)
         {
-          canDivide = false;
+          //canDivide = false;
           for (var i = 2; i <= 5; i++)
           {
             step = (maxValue - minValue) / i;
             newVal = (maxValue - step) / Math.pow(10, maxDegree - divisionCount);
-            if (newVal - Math.floor(newVal) == 0 && count*i < MAX_PART_COUNT)
+            if ((newVal - Math.floor(newVal) == 0) && (count*i < MAX_PART_COUNT))
             {
               maxValue = minValue + step;
               count *= i;
-              canDivide = true;
+              //canDivide = true;
               break;
             }
           } 
@@ -242,7 +227,7 @@
 
         var TOP = 10;
         var LEFT = 0;
-        var RIGHT = 0;
+        var RIGHT = 10;
         var BOTTOM = 20;
         var WIDTH = context.canvas.width;
         var HEIGHT = context.canvas.height;
@@ -306,15 +291,37 @@
         context.stroke();
         context.closePath();
 
-        var cnt = this.childNodes.length;
-        var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt);
+        var cnt = this.childNodes.length + 1; 
+        var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt) ;
+
+        // xAxis scale
+        var propValues = this.childNodes.map(this.propGetter);
+        var lastLabelPos = 0;
+
+        context.font = '9px tahoma';
+        context.textAlign = 'center';
 
         context.beginPath();
         for (var i = 1; i < cnt; i++)
         {
           var x = Math.round(LEFT + i * step) + .5;
-          context.moveTo(x, HEIGHT - BOTTOM + .5);
-          context.lineTo(x, HEIGHT - BOTTOM + 3);
+
+          var tw = context.measureText(propValues[i - 1]).width;
+          if (lastLabelPos + 10 < (x - tw /2))
+          {
+            context.fillText(propValues[i - 1], x, HEIGHT - BOTTOM + 15);
+            lastLabelPos = x + tw / 2;
+
+            context.moveTo(x, HEIGHT - BOTTOM + .5);
+            context.lineTo(x, HEIGHT - BOTTOM + 5);
+          }
+          else
+          {
+            context.moveTo(x, HEIGHT - BOTTOM + .5);
+            context.lineTo(x, HEIGHT - BOTTOM + 3);
+          }
+
+          
         }
         context.lineWidth = 1;
         context.strokeStyle = 'black';
@@ -325,17 +332,13 @@
         //
         // Threads
         //
-        if (this.valueGetter2)
+        var values;
+        for (var i = 0, thread; thread = this.threads[i]; i++)
         {
-          this.style.strokeStyle = '#6699DD';
-          var values2 = this.childNodes.map(this.valueGetter2);
-          this.drawThread(values2, maxValue, LEFT + step / 2, TOP, step, (HEIGHT - TOP - BOTTOM));
-        }
-
-        this.style.strokeStyle = '#090';
-        var values = this.childNodes.map(this.valueGetter);
-        this.drawThread(values, maxValue, LEFT + step/2, TOP, step, (HEIGHT - TOP - BOTTOM));
-
+          this.style.strokeStyle = thread.color;
+          values = this.childNodes.map(thread.valueGetter);
+          this.drawThread(values, maxValue, LEFT + step, TOP, step, (HEIGHT - TOP - BOTTOM))
+        }  
       },
       setStyle: function(newStyle){
         Object.extend(this.style, Object.slice(newStyle, ['strokeStyle', 'lineWidth']));
@@ -403,9 +406,24 @@
 
     var gg = new Graph({
       container: document.body,
-      valueGetter: Function.getter('data.Amount'),
-      valueGetter2: Function.getter('data.Count'),
+      //valueGetter: Function.getter('data.Amount'),
+      //valueGetter2: Function.getter('data.Count'),
       localSorting: Function.getter('data.Date'),
+      propGetter: function(object){
+        var date = new Date(object.data.Date);
+        return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+      },
+      //Function.getter('data.Date'),
+      threads: [
+        {
+          valueGetter: Function.getter('data.Amount'),
+          legendText: 'Amount'
+        },
+        {
+          valueGetter: Function.getter('data.Count'),
+          legendText: 'Count'
+        }
+      ],
       //localSortingDesc: true,
       //localGrouping: Function.getter('data.Count % 3'),
       //localGrouping: 'info.Id%3',
