@@ -18,12 +18,10 @@ basis.require('basis.html');
   'use strict';
 
  /**
-  * - Visual DOM classes:
-  *   {basis.dom.wrapper.Node}, {basis.dom.wrapper.Container}, 
-  *   {basis.dom.wrapper.PartitionNode}, {basis.dom.wrapper.GroupingNode},
-  *   {basis.dom.wrapper.Control}
-  * Aliases are available:
-  * - {basis.dom.wrapper.Control} for {basis.dom.wrapper.Control}
+  * Classes:
+  *   {basis.ui.Node}, {basis.ui.Container}, 
+  *   {basis.ui.PartitionNode}, {basis.ui.GroupingNode},
+  *   {basis.ui.Control}
   *
   * @namespace basis.ui
   */

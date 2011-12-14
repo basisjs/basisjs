@@ -123,6 +123,8 @@
 
 
   <script type="text/javascript" src="../../basis-all.js"></script>
+  <!--<script type="text/javascript" src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../../src/package/all.js"></script>-->
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -149,6 +151,7 @@
     var nsWrapper = basis.require('basis.dom.wrapper');
     var Menu = basis.require('basis.ui.popup').Menu;
     var UIContainer = basis.ui.Container;
+    var nsDataset = basis.data.dataset;
 
     var getter = Function.getter;
 
@@ -247,7 +250,7 @@
     ));
 
     var newItemPopup = new Menu({
-      dataSource: new nsData.dataset.Subtract({ minuend: NUMBERS }),
+      dataSource: new nsDataset.Subtract({ minuend: NUMBERS }),
       childClass: {
         captionGetter: Function.getter('data.value')
       },
@@ -293,8 +296,8 @@
     new DatasetViewer({
       title: 'Union (A ∪ B ∪ C)',
       content: createImage('union'),
-      dataSource: new nsData.dataset.Merge({
-        rule: nsData.dataset.Merge.UNION,  // by default
+      dataSource: new nsDataset.Merge({
+        rule: nsDataset.Merge.UNION,  // by default
         sources: [A, B, C]
       })
     });
@@ -302,8 +305,8 @@
     new DatasetViewer({
       title: 'Intersection (A ∩ B ∩ C)',
       content: createImage('intersection'),
-      dataSource: I = new nsData.dataset.Merge({
-        rule: nsData.dataset.Merge.INTERSECTION,
+      dataSource: I = new nsDataset.Merge({
+        rule: nsDataset.Merge.INTERSECTION,
         sources: [A, B, C]
       })
     });
@@ -311,8 +314,8 @@
     new DatasetViewer({
       title: 'AtLeastOneExclude (A ∪ B ∪ C) / (A ∩ B ∩ C) [union subtract intersection]',
       content: createImage('atleastoneexclude'),
-      dataSource: new nsData.dataset.Merge({
-        rule: nsData.dataset.Merge.AT_LEAST_ONE_EXCLUDE,
+      dataSource: new nsDataset.Merge({
+        rule: nsDataset.Merge.AT_LEAST_ONE_EXCLUDE,
         sources: [A, B, C]
       })
     });
@@ -320,8 +323,8 @@
     new DatasetViewer({
       title: 'Difference (A ∆ B ∆ C)',
       content: createImage('difference'),
-      dataSource: new nsData.dataset.Merge({
-        rule: nsData.dataset.Merge.DIFFERENCE,
+      dataSource: new nsDataset.Merge({
+        rule: nsDataset.Merge.DIFFERENCE,
         sources: [A, B, C]
       })
     });
@@ -329,8 +332,8 @@
     new DatasetViewer({
       title: 'MoreThanOneInclude (A ∪ B ∪ C) / (A ∆ B ∆ C) [union subtract difference]',
       content: createImage('morethanoneinclude'),
-      dataSource: new nsData.dataset.Merge({
-        rule: nsData.dataset.Merge.MORE_THAN_ONE_INCLUDE,
+      dataSource: new nsDataset.Merge({
+        rule: nsDataset.Merge.MORE_THAN_ONE_INCLUDE,
         sources: [A, B, C]
       })
     });
@@ -338,7 +341,7 @@
     new DatasetViewer({
       title: 'Subtract (A / B)',
       content: createImage('', 'dataset.subtract.svg'),
-      dataSource: new nsData.dataset.Subtract({
+      dataSource: new nsDataset.Subtract({
         minuend: A,
         subtrahend: B
       })
@@ -348,7 +351,7 @@
 
     new DatasetViewer({
       title: 'MapReduce for dataset A: NUMBERS -> WORDS',
-      dataSource: new nsData.dataset.MapReduce({
+      dataSource: new nsDataset.MapReduce({
         map: Function.getter('data.value - 1', data2),
         source: A
       })
@@ -356,7 +359,7 @@
 
     new DatasetViewer({
       title: 'Subset of dataset A: ONLY ODD',
-      dataSource: new nsData.dataset.Subset({
+      dataSource: new nsDataset.Subset({
         rule: Function.getter('data.value % 2'),
         source: A
       })
@@ -364,7 +367,7 @@
 
     new DatasetViewer({
       title: 'Split data A: ODD and EVEN',
-      dataSource: new nsData.dataset.Split({
+      dataSource: new nsDataset.Split({
         rule: Function.getter('data.value % 2 ? "odd" : "even"'),
         source: A
       }),
@@ -381,6 +384,16 @@
           }
         }
       )
+    });
+
+    new DatasetViewer({
+      title: 'First 3 item of A',
+      localSorting: Function.getter('data.value'),
+      dataSource: new nsDataset.Slice({
+        rule: Function.getter('data.value'),
+        source: A,
+        limit: 3
+      })
     });
     
   </script>
