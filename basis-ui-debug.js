@@ -3967,7 +3967,7 @@ basis.require('basis.dom');
   *
   * Namespace overview:
   * - Const:
-  *   {basis.data.STATE}, {basis.data.Subscription}
+  *   {basis.data.STATE}, {basis.data.SUBSCRIPTION}
   * - Classes:
   *   {basis.data.DataObject}, {basis.data.KeyObjectMap},
   *   {basis.data.AbstractDataset}, {basis.data.Dataset}
@@ -4011,7 +4011,7 @@ basis.require('basis.dom');
   var subscriptionHandlers = {};
   var subscriptionSeed = 1;
 
-  var Subscription = {
+  var SUBSCRIPTION = {
     NONE: 0,
     MASK: 0,
 
@@ -4021,7 +4021,7 @@ basis.require('basis.dom');
     * @param {Object} handler
     * @param {function()} action
     */
-    regType: function(name, handler, action){
+    add: function(name, handler, action){
       subscriptionHandlers[subscriptionSeed] = {
         handler: handler,
         action: action,
@@ -4029,7 +4029,7 @@ basis.require('basis.dom');
           add: function(thisObject, object){
             if (object)
             {
-              var subscriberId = Subscription[name] + '_' + thisObject.eventObjectId;
+              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.eventObjectId;
 
               if (!object.subscribers_)
                 object.subscribers_ = {};
@@ -4050,7 +4050,7 @@ basis.require('basis.dom');
           remove: function(thisObject, object){
             if (object)
             {
-              var subscriberId = Subscription[name] + '_' + thisObject.eventObjectId;
+              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.eventObjectId;
               if (object.subscribers_[subscriberId])
               {
                 var oldSubscriberCount = object.subscriberCount;
@@ -4067,8 +4067,8 @@ basis.require('basis.dom');
         }
       };
 
-      Subscription[name] = subscriptionSeed;
-      Subscription.MASK |= subscriptionSeed;
+      SUBSCRIPTION[name] = subscriptionSeed;
+      SUBSCRIPTION.MASK |= subscriptionSeed;
 
       subscriptionSeed <<= 1;
     }
@@ -4108,7 +4108,7 @@ basis.require('basis.dom');
   // Registrate base subscription types
   //
 
-  Subscription.regType(
+  SUBSCRIPTION.add(
     'DELEGATE',
     {
       delegateChanged: function(object, oldDelegate){
@@ -4121,7 +4121,7 @@ basis.require('basis.dom');
     }
   );
 
-  Subscription.regType(
+  SUBSCRIPTION.add(
     'TARGET',
     {
       targetChanged: function(object, oldTarget){
@@ -4209,9 +4209,9 @@ basis.require('basis.dom');
    /**
     * Subscriber type indicates what sort of influence has currency object on
     * related objects (delegate, source, dataSource etc).
-    * @type {basis.data.Subscription|number}
+    * @type {basis.data.SUBSCRIPTION|number}
     */
-    subscribeTo: Subscription.DELEGATE + Subscription.TARGET,
+    subscribeTo: SUBSCRIPTION.DELEGATE + SUBSCRIPTION.TARGET,
 
    /**
     * Count of subscribed objects. This property can use to determinate
@@ -4364,7 +4364,7 @@ basis.require('basis.dom');
 
       // subscription sheme: activate subscription if active
       if (this.active)
-        applySubscription(this, this.subscribeTo, Subscription.MASK);
+        applySubscription(this, this.subscribeTo, SUBSCRIPTION.MASK);
     },
 
    /**
@@ -4610,7 +4610,7 @@ basis.require('basis.dom');
         this.active = isActive;
         this.event_activeChanged(this);
 
-        applySubscription(this, this.subscribeTo, Subscription.MASK * isActive);
+        applySubscription(this, this.subscribeTo, SUBSCRIPTION.MASK * isActive);
 
         return true;
       }
@@ -4625,7 +4625,7 @@ basis.require('basis.dom');
     */
     setSubscription: function(subscriptionType){
       var curSubscriptionType = this.subscribeTo;
-      var newSubscriptionType = subscriptionType & Subscription.MASK;
+      var newSubscriptionType = subscriptionType & SUBSCRIPTION.MASK;
       var delta = curSubscriptionType ^ newSubscriptionType;
 
       if (delta)
@@ -5282,7 +5282,7 @@ basis.require('basis.dom');
       DEPRECATED: STATE_DEPRECATED
     },
 
-    Subscription: Subscription,
+    SUBSCRIPTION: SUBSCRIPTION,
 
     // classes
     Object: DataObject,
@@ -5868,7 +5868,7 @@ basis.require('basis.html');
   var nsData = basis.data;
 
   var EventObject = basis.EventObject;
-  var Subscription = nsData.Subscription;
+  var SUBSCRIPTION = nsData.SUBSCRIPTION;
   var DataObject = nsData.DataObject;
   var AbstractDataset = nsData.AbstractDataset;
   var Dataset = nsData.Dataset;
@@ -5926,7 +5926,7 @@ basis.require('basis.html');
   // registrate new subscription type
   //
 
-  Subscription.regType(
+  SUBSCRIPTION.add(
     'DATASOURCE',
     {
       dataSourceChanged: function(object, oldDataSource){
@@ -6118,7 +6118,7 @@ basis.require('basis.html');
    /**
     * @inheritDoc
     */
-    subscribeTo: DataObject.prototype.subscribeTo + Subscription.DATASOURCE,
+    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASOURCE,
 
    /**
     * @inheritDoc
@@ -9130,6 +9130,7 @@ basis.require('basis.data');
 
   var namespace = 'basis.data.dataset';
 
+
   //
   // import names
   //
@@ -9142,17 +9143,18 @@ basis.require('basis.data');
   var $false = Function.$false;
   var createEvent = basis.EventObject.createEvent;
 
-  var subscription = basis.data.Subscription;
+  var SUBSCRIPTION = basis.data.SUBSCRIPTION;
   var DataObject = basis.data.DataObject;
   var KeyObjectMap = basis.data.KeyObjectMap;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
 
+
   //
-  // Main part
+  // New subscription types
   //
 
-  Subscription.regType(
+  SUBSCRIPTION.add(
     'SOURCE',
     {
       sourceChanged: function(object, oldSource){
@@ -9178,6 +9180,39 @@ basis.require('basis.data');
         action(object, source);
     }
   );
+
+  SUBSCRIPTION.add(
+    'MINUEND',
+    {
+      operandsChanged: function(object, oldMinuend, oldSubtrahend){
+        if (this.minuend !== oldMinuend)
+        {
+          this.remove(object, oldMinuend);
+          this.add(object, object.minuend);
+        }
+      }
+    },
+    function(action, object){
+      action(object, object.minuend);
+    }
+  );
+
+  SUBSCRIPTION.add(
+    'SUBTRAHEND',
+    {
+      operandsChanged: function(object, oldMinuend, oldSubtrahend){
+        if (this.subtrahend !== oldSubtrahend)
+        {
+          this.remove(object, oldSubtrahend);
+          this.add(object, object.subtrahend);
+        }
+      }
+    },
+    function(action, object){
+      action(object, object.subtrahend);
+    }
+  );
+
   
  /**
   * @func
@@ -9271,7 +9306,7 @@ basis.require('basis.data');
    /**
     * @inheritDoc
     */
-    subscribeTo: subscription.SOURCE,  // ???
+    subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
     * Fires when source set changed.
@@ -9581,37 +9616,6 @@ basis.require('basis.data');
     }
   };
 
-  subscription.regType(
-    'MINUEND',
-    {
-      operandsChanged: function(object, oldMinuend, oldSubtrahend){
-        if (this.minuend !== oldMinuend)
-        {
-          this.remove(object, oldMinuend);
-          this.add(object, object.minuend);
-        }
-      }
-    },
-    function(action, object){
-      action(object, object.minuend);
-    }
-  );
-
-  subscription.regType(
-    'SUBTRAHEND',
-    {
-      operandsChanged: function(object, oldMinuend, oldSubtrahend){
-        if (this.subtrahend !== oldSubtrahend)
-        {
-          this.remove(object, oldSubtrahend);
-          this.add(object, object.subtrahend);
-        }
-      }
-    },
-    function(action, object){
-      action(object, object.subtrahend);
-    }
-  );
 
  /**
   * @class
@@ -9622,7 +9626,7 @@ basis.require('basis.data');
    /**
     * @inheritDoc
     */
-    subscribeTo: subscription.MINUEND + subscription.SUBTRAHEND,
+    subscribeTo: SUBSCRIPTION.MINUEND + SUBSCRIPTION.SUBTRAHEND,
 
    /**
     * @type {basis.data.AbstractDataset}
@@ -9919,7 +9923,7 @@ basis.require('basis.data');
    /**
     * @inheritDoc
     */
-    subscribeTo: subscription.SOURCE,
+    subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
     * Data source.
@@ -10288,6 +10292,7 @@ basis.require('basis.data');
   });
 
 }(basis, this);
+
 
 //
 // src/basis/data/property.js

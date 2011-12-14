@@ -40,7 +40,7 @@ basis.require('basis.html');
   var nsData = basis.data;
 
   var EventObject = basis.EventObject;
-  var Subscription = nsData.Subscription;
+  var SUBSCRIPTION = nsData.SUBSCRIPTION;
   var DataObject = nsData.DataObject;
   var AbstractDataset = nsData.AbstractDataset;
   var Dataset = nsData.Dataset;
@@ -98,7 +98,7 @@ basis.require('basis.html');
   // registrate new subscription type
   //
 
-  Subscription.regType(
+  SUBSCRIPTION.add(
     'DATASOURCE',
     {
       dataSourceChanged: function(object, oldDataSource){
@@ -290,7 +290,7 @@ basis.require('basis.html');
    /**
     * @inheritDoc
     */
-    subscribeTo: DataObject.prototype.subscribeTo + Subscription.DATASOURCE,
+    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASOURCE,
 
    /**
     * @inheritDoc

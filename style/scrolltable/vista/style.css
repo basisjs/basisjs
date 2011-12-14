@@ -68,11 +68,11 @@
     border-left: 1px solid #D5D5D5;
     border-bottom: 1px solid #D5D5D5;
     margin-left: -1px;
-    background: #F1F2F4 url(../../../../style/table/vista/bg.gif) repeat-x;
+    background: #F1F2F4 url(../../table/vista/bg.gif) repeat-x;
   }
   .Basis-ScrollTable .Basis-ScrollTable-ExpandFooterCell 
   {
-    background: white url(../../../../style/table/vista/footer_bg.gif) repeat-x;
+    background: white url(../../table/vista/footer_bg.gif) repeat-x;
     position: absolute;
     right: 0;
     bottom: -1px;

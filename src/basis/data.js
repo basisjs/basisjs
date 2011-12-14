@@ -18,7 +18,7 @@
   *
   * Namespace overview:
   * - Const:
-  *   {basis.data.STATE}, {basis.data.Subscription}
+  *   {basis.data.STATE}, {basis.data.SUBSCRIPTION}
   * - Classes:
   *   {basis.data.DataObject}, {basis.data.KeyObjectMap},
   *   {basis.data.AbstractDataset}, {basis.data.Dataset}
@@ -62,7 +62,7 @@
   var subscriptionHandlers = {};
   var subscriptionSeed = 1;
 
-  var Subscription = {
+  var SUBSCRIPTION = {
     NONE: 0,
     MASK: 0,
 
@@ -72,7 +72,7 @@
     * @param {Object} handler
     * @param {function()} action
     */
-    regType: function(name, handler, action){
+    add: function(name, handler, action){
       subscriptionHandlers[subscriptionSeed] = {
         handler: handler,
         action: action,
@@ -80,7 +80,7 @@
           add: function(thisObject, object){
             if (object)
             {
-              var subscriberId = Subscription[name] + '_' + thisObject.eventObjectId;
+              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.eventObjectId;
 
               if (!object.subscribers_)
                 object.subscribers_ = {};
@@ -101,7 +101,7 @@
           remove: function(thisObject, object){
             if (object)
             {
-              var subscriberId = Subscription[name] + '_' + thisObject.eventObjectId;
+              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.eventObjectId;
               if (object.subscribers_[subscriberId])
               {
                 var oldSubscriberCount = object.subscriberCount;
@@ -118,8 +118,8 @@
         }
       };
 
-      Subscription[name] = subscriptionSeed;
-      Subscription.MASK |= subscriptionSeed;
+      SUBSCRIPTION[name] = subscriptionSeed;
+      SUBSCRIPTION.MASK |= subscriptionSeed;
 
       subscriptionSeed <<= 1;
     }
@@ -159,7 +159,7 @@
   // Registrate base subscription types
   //
 
-  Subscription.regType(
+  SUBSCRIPTION.add(
     'DELEGATE',
     {
       delegateChanged: function(object, oldDelegate){
@@ -172,7 +172,7 @@
     }
   );
 
-  Subscription.regType(
+  SUBSCRIPTION.add(
     'TARGET',
     {
       targetChanged: function(object, oldTarget){
@@ -260,9 +260,9 @@
    /**
     * Subscriber type indicates what sort of influence has currency object on
     * related objects (delegate, source, dataSource etc).
-    * @type {basis.data.Subscription|number}
+    * @type {basis.data.SUBSCRIPTION|number}
     */
-    subscribeTo: Subscription.DELEGATE + Subscription.TARGET,
+    subscribeTo: SUBSCRIPTION.DELEGATE + SUBSCRIPTION.TARGET,
 
    /**
     * Count of subscribed objects. This property can use to determinate
@@ -415,7 +415,7 @@
 
       // subscription sheme: activate subscription if active
       if (this.active)
-        applySubscription(this, this.subscribeTo, Subscription.MASK);
+        applySubscription(this, this.subscribeTo, SUBSCRIPTION.MASK);
     },
 
    /**
@@ -661,7 +661,7 @@
         this.active = isActive;
         this.event_activeChanged(this);
 
-        applySubscription(this, this.subscribeTo, Subscription.MASK * isActive);
+        applySubscription(this, this.subscribeTo, SUBSCRIPTION.MASK * isActive);
 
         return true;
       }
@@ -676,7 +676,7 @@
     */
     setSubscription: function(subscriptionType){
       var curSubscriptionType = this.subscribeTo;
-      var newSubscriptionType = subscriptionType & Subscription.MASK;
+      var newSubscriptionType = subscriptionType & SUBSCRIPTION.MASK;
       var delta = curSubscriptionType ^ newSubscriptionType;
 
       if (delta)
@@ -1333,7 +1333,7 @@
       DEPRECATED: STATE_DEPRECATED
     },
 
-    Subscription: Subscription,
+    SUBSCRIPTION: SUBSCRIPTION,
 
     // classes
     Object: DataObject,

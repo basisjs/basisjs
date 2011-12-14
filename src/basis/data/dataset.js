@@ -27,6 +27,7 @@ basis.require('basis.data');
 
   var namespace = 'basis.data.dataset';
 
+
   //
   // import names
   //
@@ -39,17 +40,18 @@ basis.require('basis.data');
   var $false = Function.$false;
   var createEvent = basis.EventObject.createEvent;
 
-  var subscription = basis.data.Subscription;
+  var SUBSCRIPTION = basis.data.SUBSCRIPTION;
   var DataObject = basis.data.DataObject;
   var KeyObjectMap = basis.data.KeyObjectMap;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
 
+
   //
-  // Main part
+  // New subscription types
   //
 
-  subscription.regType(
+  SUBSCRIPTION.add(
     'SOURCE',
     {
       sourceChanged: function(object, oldSource){
@@ -75,6 +77,39 @@ basis.require('basis.data');
         action(object, source);
     }
   );
+
+  SUBSCRIPTION.add(
+    'MINUEND',
+    {
+      operandsChanged: function(object, oldMinuend, oldSubtrahend){
+        if (this.minuend !== oldMinuend)
+        {
+          this.remove(object, oldMinuend);
+          this.add(object, object.minuend);
+        }
+      }
+    },
+    function(action, object){
+      action(object, object.minuend);
+    }
+  );
+
+  SUBSCRIPTION.add(
+    'SUBTRAHEND',
+    {
+      operandsChanged: function(object, oldMinuend, oldSubtrahend){
+        if (this.subtrahend !== oldSubtrahend)
+        {
+          this.remove(object, oldSubtrahend);
+          this.add(object, object.subtrahend);
+        }
+      }
+    },
+    function(action, object){
+      action(object, object.subtrahend);
+    }
+  );
+
   
  /**
   * @func
@@ -168,7 +203,7 @@ basis.require('basis.data');
    /**
     * @inheritDoc
     */
-    subscribeTo: subscription.SOURCE,  // ???
+    subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
     * Fires when source set changed.
@@ -478,37 +513,6 @@ basis.require('basis.data');
     }
   };
 
-  subscription.regType(
-    'MINUEND',
-    {
-      operandsChanged: function(object, oldMinuend, oldSubtrahend){
-        if (this.minuend !== oldMinuend)
-        {
-          this.remove(object, oldMinuend);
-          this.add(object, object.minuend);
-        }
-      }
-    },
-    function(action, object){
-      action(object, object.minuend);
-    }
-  );
-
-  subscription.regType(
-    'SUBTRAHEND',
-    {
-      operandsChanged: function(object, oldMinuend, oldSubtrahend){
-        if (this.subtrahend !== oldSubtrahend)
-        {
-          this.remove(object, oldSubtrahend);
-          this.add(object, object.subtrahend);
-        }
-      }
-    },
-    function(action, object){
-      action(object, object.subtrahend);
-    }
-  );
 
  /**
   * @class
@@ -519,7 +523,7 @@ basis.require('basis.data');
    /**
     * @inheritDoc
     */
-    subscribeTo: subscription.MINUEND + subscription.SUBTRAHEND,
+    subscribeTo: SUBSCRIPTION.MINUEND + SUBSCRIPTION.SUBTRAHEND,
 
    /**
     * @type {basis.data.AbstractDataset}
@@ -816,7 +820,7 @@ basis.require('basis.data');
    /**
     * @inheritDoc
     */
-    subscribeTo: subscription.SOURCE,
+    subscribeTo: SUBSCRIPTION.SOURCE,
 
    /**
     * Data source.
