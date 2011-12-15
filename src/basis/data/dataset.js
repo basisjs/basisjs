@@ -1452,16 +1452,17 @@ basis.require('basis.data');
             
 
           for (var subsetId in oldList)
-          {
-            var subset = oldList[subsetId];
-            subset.event_datasetChanged(subset, { deleted: [sourceObject] });
-
-            if (!--memberMap[subsetId])
+            if (!newList[subsetId])
             {
-              delete memberMap[subsetId];
-              deleted.push(subset);
+              var subset = oldList[subsetId];
+              subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+
+              if (!--memberMap[subsetId])
+              {
+                delete memberMap[subsetId];
+                deleted.push(subset);
+              }
             }
-          }
 
           if (delta = getDelta(inserted, deleted))
             this.event_datasetChanged(this, delta);

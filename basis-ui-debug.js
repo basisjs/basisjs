@@ -10632,16 +10632,17 @@ basis.require('basis.data');
             
 
           for (var subsetId in oldList)
-          {
-            var subset = oldList[subsetId];
-            subset.event_datasetChanged(subset, { deleted: [sourceObject] });
-
-            if (!--memberMap[subsetId])
+            if (!newList[subsetId])
             {
-              delete memberMap[subsetId];
-              deleted.push(subset);
+              var subset = oldList[subsetId];
+              subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+
+              if (!--memberMap[subsetId])
+              {
+                delete memberMap[subsetId];
+                deleted.push(subset);
+              }
             }
-          }
 
           if (delta = getDelta(inserted, deleted))
             this.event_datasetChanged(this, delta);
@@ -12096,7 +12097,7 @@ basis.require('basis.data.property');
       this.calcs[name] = calc;
       this.fireUpdate();
     },
-    removeCalc: function(){
+    removeCalc: function(name){
       delete this.calcs[name];
     },
 
@@ -12139,7 +12140,7 @@ basis.require('basis.data.property');
         var update;
         for (var calcName in this.calcs)
         {
-          newValue = this.calcs[calcName](sourceObject.sourceObject.data, this.indexValues);
+          newValue = this.calcs[calcName](sourceObject.sourceObject.data, this.indexValues, sourceObject.sourceObject);
           if (member.data[calcName] !== newValue && (!isNaN(newValue) || !isNaN(member.data[calcName])))
           {
             data[calcName] = newValue;

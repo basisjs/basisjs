@@ -1,0 +1,235 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/menu/default/style.css" media="screen" />
+
+  <title>Basis Demos: Dataset</title>
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #demo-container
+    {
+      font-family: Consolas;
+    }
+
+    .img
+    {
+      text-align: center;
+    }
+    OBJECT
+    {
+      height: 100px;
+      width: 135px;
+      margin: -15px 0 0;
+    }
+
+    H2
+    {
+      clear: both;
+      margin: 0 0 .5em;
+      padding-top: 1em;
+      font-size: 100%;
+    }
+
+    .DemoBlock
+    {
+      border: 1px solid #D0D0D0;
+      padding: 15px;
+      margin: 0 10px .5em 0;
+      overflow: hidden;
+      position: relative;
+      float: left;
+      width: 160px;
+      display: inline-block;
+    }
+    .DemoBlock H3
+    {
+      clear: both;
+      font-size: 85%;
+      font-weight: normal;
+      background: #EEE;
+      margin: 10px -15px -15px -15px;
+      padding: 2px 2px 2px 1.5em;
+      /*text-align: center;*/
+    }
+
+    .item
+    {
+      margin: 2px 0 2px 4px;
+      padding: .2em .75ex;
+      text-align: center;
+      display: inline-block;
+      min-width: 3ex;
+      background: #E0E0E0;
+      color: black;
+      border-radius: 3px;
+      position: relative;
+    }
+    .dsitem
+    {
+      margin: 2px;
+      padding: .2em 4px .2em .75ex;
+      text-align: center;
+      display: inline-block;
+      background: #999999;
+      color: white;
+      border-radius: 3px;
+    }
+    .remove
+    {
+      background: #CC0000;
+      color: white;
+      position: absolute;
+      font-size: 60%;
+      padding: 0 4px 2px;
+      line-height: 1;
+      border-radius: 3px;
+      top: -.5em;
+      right: -.75ex;
+      cursor: pointer;
+      opacity: .6;
+    }
+    .remove:hover
+    {
+      opacity: 1;
+    }
+    BUTTON
+    {
+      margin-left: 1ex;
+    }
+
+    .tag
+    {
+      -webkit-transition: font-size .5s;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <!--<script type="text/javascript" src="../../basis-all.js"></script>-->
+  <script type="text/javascript" src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../../src/package/all.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Dataset</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container">
+  </div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    var BlogPost = new basis.entity.EntityType({
+      fields: {
+        id: basis.entity.IntId,
+        tags: String
+      }
+    });
+
+    BlogPost({ id: 1, tags: 'aaa,bbb,cc' });
+    BlogPost({ id: 2, tags: 'aaa,cc' });
+    BlogPost({ id: 3, tags: 'bbb,cc' });
+    BlogPost({ id: 4, tags: 'ddd' });
+    BlogPost({ id: 5, tags: 'aaa' });
+
+    var cloud = new basis.data.dataset.Cloud({
+      source: BlogPost.all,
+      rule: function(item){
+        return item.data.tags.split(/\s*,\s*/);
+      }
+    });
+
+    var indexMap = new basis.data.index.IndexMap({
+      source: cloud,
+      indexes: {
+        itemCountMin: new basis.data.index.Min('itemCount'),
+        itemCountMax: new basis.data.index.Max('itemCount')
+      },
+      calcs: {
+        percentOfMax: function(data, indexes, obj){
+          return (obj.itemCount - indexes.itemCountMin)/(indexes.itemCountMax - indexes.itemCountMin);
+        }
+      },
+      listen: {
+        sourceObject: {
+          datasetChanged: function(object){
+            this.sourceMap_[object.eventObjectId].updated = true;
+            this.fireUpdate();
+          }
+        }
+      }
+    });
+
+    var tagCloud = new basis.ui.Container({
+      container: basis.dom.get('demo-container'),
+      dataSource: cloud,
+      childClass: {
+        template: 
+          '<span style="margin: 0 1ex" class="tag">{titleText} ({countText})</span>',
+
+        templateUpdate: function(tmpl, eventName, delta){
+          tmpl.titleText.nodeValue = this.data.title;
+          tmpl.countText.nodeValue = this.delegate.itemCount;
+        },
+
+        listen: {
+          delegate: {
+            datasetChanged: function(dataset){
+              this.tmpl.countText.nodeValue = dataset.itemCount;
+            }
+          }
+        },
+
+        satelliteConfig: {
+          indexes: {
+            hook: { rootChanged: true },
+            delegate: function(owner){
+              return indexMap.getMember(owner.root);
+            },
+            instanceOf: basis.data.DataObject.subclass({
+              active: true,
+              event_update: function(object, delta){
+                basis.data.DataObject.prototype.event_update.call(this, object, delta);
+
+                this.owner.element.style.fontSize = '{0:.2}%'.format(50 + 150 * this.data.percentOfMax);
+                console.log(this.data.percentOfMax);
+              }
+            })
+          }
+        }
+      }
+    });
+
+  </script>
+</body>
+
+</html>
