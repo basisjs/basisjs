@@ -574,7 +574,7 @@ gj   */
   var prefixRxCache = {};
   function prefixRegExp(prefix, global){
     var key = (global ? 'g' : 's') + prefix;
-    return prefixRxCache[key] || (prefixRxCache[key] = new RegExp((global ? '' : '\\s*') + '\\b' + prefix + '.*\\b'));
+    return prefixRxCache[key] || (prefixRxCache[key] = new RegExp((global ? '' : '\\s*') + '\\b' + prefix + '\\S*\\b'));
   }
 
  /**
