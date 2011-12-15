@@ -395,7 +395,36 @@
         limit: 3
       })
     });
-    
+
+    new DatasetViewer({
+      title: 'Cloud of A: deviders',
+      localSorting: Function.getter('data.title'),
+      dataSource: new nsDataset.Cloud({
+        rule: function(item){
+          var res = [];
+          var val = item.data.value;
+          for (var i = val; i > 1; i--)
+            if ((val % i) == 0)
+              res.push(i);
+          return res;
+        },
+        source: A
+      }),
+      childClass: UIContainer.subclass(
+        nsWrapper.simpleTemplate(
+          '<span class="dsitem">' +
+            '{this_data_title}' +
+          '</span>'
+        ), {
+          childClass: DatasetViewer.prototype.childClass,
+          init: function(config){
+            this.dataSource = this.delegate;
+            UIContainer.prototype.init.call(this, config);
+          }
+        }
+      )
+    });
+
   </script>
 </body>
 

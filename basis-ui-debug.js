@@ -1259,7 +1259,7 @@
                 if (req.status == 404 && path)
                   requireNamespace(namespace);
                 else
-                  throw '!';
+                  throw 'unable to load module ' + filename + ' by basis.require()';
               }
             }
             else
@@ -4838,12 +4838,14 @@ basis.require('basis.dom');
     * Set of all items, even items are not in member set. May be used as storage for
     * members, which provide posibility to avoid dublicates in resultinf set before
     * event_datasetChanged event be fired.
+    * @type {Object}
     * @private
     */
     memberMap_: null,
 
    /**
     * Cache array of members, for getItems method.
+    * @type {Array.<basis.data.DataObject>}
     * @private
     */
     cache_: null,
@@ -4851,7 +4853,7 @@ basis.require('basis.dom');
    /**
     * Fires when items changed.
     * @param {basis.data.AbstractDataset} dataset
-    * @param {object} delta Delta of changes. Must have property `inserted`
+    * @param {Object} delta Delta of changes. Must have property `inserted`
     * or `deleted`, or both of them. `inserted` property is array of new items
     * and `deleted` property is array of removed items.
     * @event
@@ -6121,10 +6123,7 @@ basis.require('basis.html');
       if (parentNode)
       {
         if (parentNode.matchFunction)
-        {
-          this.match();
           this.match(parentNode.matchFunction);
-        }
 
         // re-insert to change position, group, sortingValue etc.
         parentNode.insertBefore(this, this.nextSibling);
@@ -7954,44 +7953,23 @@ basis.require('basis.html');
     */
     match: function(func){
       if (typeof func != 'function')
+        func = null;
+
+      if (this.underMatch_ && !func)
+        this.underMatch_(this, true);
+
+      this.underMatch_ = func;
+
+      var matched = !func || func(this);
+
+      if (this.matched != matched)
       {
-        if (this.matched)
-        {
-          if (this.underMatch_)
-          {
-            // restore init state
-            this.underMatch_(this, true);
-            this.underMatch_ = null;
-          }
-        }
-        else
-        {
-          this.matched = true;
+        this.matched = matched;
+
+        if (matched)
           this.event_match(this)
-        }
-      }
-      else
-      {
-        if (func(this))
-        {
-          // match
-          this.underMatch_ = func;
-          if (!this.matched)
-          {
-            this.matched = true;
-            this.event_match(this);
-          }
-        }
         else
-        {
-          // don't match
-          this.underMatch_ = null;
-          if (this.matched)
-          {
-            this.matched = false;
-            this.event_unmatch(this);
-          }
-        }
+          this.event_unmatch(this)
       }
     },
 
@@ -9067,7 +9045,7 @@ gj   */
   var prefixRxCache = {};
   function prefixRegExp(prefix, global){
     var key = (global ? 'g' : 's') + prefix;
-    return prefixRxCache[key] || (prefixRxCache[key] = new RegExp((global ? '' : '\\s*') + '\\b' + prefix + '.*\\b'));
+    return prefixRxCache[key] || (prefixRxCache[key] = new RegExp((global ? '' : '\\s*') + '\\b' + prefix + '\\S*\\b'));
   }
 
  /**
@@ -9222,7 +9200,7 @@ basis.require('basis.data');
   * - Classes:
   *   {basis.data.dataset.Merge}, {basis.data.dataset.Subtract},
   *   {basis.data.dataset.MapReduce}, {basis.data.dataset.Subset},
-  *   {basis.data.dataset.Split}
+  *   {basis.data.dataset.Split}, {basis.data.dataset.Slice}
   *
   * @namespace basis.data.dataset
   */
@@ -9884,6 +9862,13 @@ basis.require('basis.data');
     source: null,
 
    /**
+    * Map of source objects.
+    * @type {object}
+    * @private
+    */
+    sourceMap_: null,
+
+   /**
     * Fires when source property changed.
     * @param {basis.data.AbstractDataset} dataset Event initiator.
     * @param {basis.data.AbstractDataset} oldSource Previous value for source property.
@@ -9895,6 +9880,8 @@ basis.require('basis.data');
     * @constructor
     */
     init: function(config){
+      this.sourceMap_ = {};
+
       AbstractDataset.prototype.init.call(this, config);
 
       var source = this.source;
@@ -10145,7 +10132,7 @@ basis.require('basis.data');
    /**
     * Helper function.
     */
-    rule: $false,
+    rule: $true,
 
    /**
     * NOTE: Can't be changed after init.
@@ -10162,13 +10149,6 @@ basis.require('basis.data');
     removeMemberRef: null,
 
    /**
-    * Map of source objects.
-    * @type {object}
-    * @private
-    */
-    sourceMap_: null,
-
-   /**
     * @inheritDoc
     */
     listen: {
@@ -10182,8 +10162,6 @@ basis.require('basis.data');
     init: function(config){
       ;;;if (this.sources) throw 'basis.data.dataset.MapReduce instances no more support for sources property, use source property instead.';
       ;;;if (this.dataset) throw 'basis.data.dataset.MapReduce instances no more support for dataset property, use source property instead.';
-
-      this.sourceMap_ = {};
 
       SourceDatasetMixin.init.call(this, config);
     },
@@ -10206,7 +10184,7 @@ basis.require('basis.data');
 
    /**
     * Set new transform function and apply new function to source objects.
-    * @param {function(basis.data.DataObject):basis.data.DataObject} transform
+    * @param {function(basis.data.DataObject):basis.data.DataObject} map
     */
     setMap: function(map){
       if (typeof map != 'function')
@@ -10215,6 +10193,21 @@ basis.require('basis.data');
       if (this.map !== map)
       {
         this.map = map;
+        return this.applyRule();
+      }
+    },
+
+   /**
+    * Set new filter function and apply new function to source objects.
+    * @param {function(basis.data.DataObject):boolean} reduce
+    */
+    setReduce: function(reduce){
+      if (typeof reduce != 'function')
+        reduce = $false;
+
+      if (this.reduce !== reduce)
+      {
+        this.reduce = reduce;
         return this.applyRule();
       }
     },
@@ -10332,12 +10325,7 @@ basis.require('basis.data');
     */
     reduce: function(object){
       return !this.rule(object);
-    },
-
-   /**
-    * @inheritDoc
-    */
-    rule: $true
+    }
   });
 
 
@@ -10359,11 +10347,6 @@ basis.require('basis.data');
     },
 
    /**
-    * @type {function(data):key}
-    */
-    rule: $true,
-
-   /**
     * @type {basis.data.AbstractDataset}
     */
     subsetClass: AbstractDataset,
@@ -10376,26 +10359,21 @@ basis.require('basis.data');
    /**
     * @inheritDoc
     */
-    addMemberRef: function(group, sourceObject){
-      group.event_datasetChanged(group, { inserted: [sourceObject] });
+    addMemberRef: function(subset, sourceObject){
+      subset.event_datasetChanged(subset, { inserted: [sourceObject] });
     },
 
    /**
     * @inheritDoc
     */
-    removeMemberRef: function(group, sourceObject){
-      group.event_datasetChanged(group, { deleted: [sourceObject] });
+    removeMemberRef: function(subset, sourceObject){
+      subset.event_datasetChanged(subset, { deleted: [sourceObject] });
     },
 
    /**
-    * @config {function} filter Group function.
-    * @config {class} groupClass Class for group instances. Should be instance of AbstractDataset.
-    * @config {boolean} destroyEmpty Destroy empty groups automaticaly or not.
     * @constructor
     */ 
     init: function(config){
-      //this.groupMap_ = {};
-
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
         this.keyMap = new KeyObjectMap(extend({
           keyGetter: this.rule,
@@ -10469,13 +10447,15 @@ basis.require('basis.data');
 
    /**
     * Ordering items function.
-    * @type {function}
+    * @type {function(basis.data.DataObject)}
     * @readonly
     */
     rule: $true,
 
    /**
-    *
+    * Calculated source object values
+    * @type {}
+    * @private
     */
     index_: null,
 
@@ -10498,53 +10478,55 @@ basis.require('basis.data');
     */
     listen: {
       sourceObject: {
-        update: function(object){
-          var objectInfo = this.sourceMap_[object.eventObjectId];
-          var newValue = this.rule(object);
+        update: function(sourceObject){
+          var sourceObjectInfo = this.sourceMap_[sourceObject.eventObjectId];
+          var newValue = this.rule(sourceObject);
+          var index_ = this.index_;
 
-          if (newValue !== objectInfo.value)
+          if (newValue !== sourceObjectInfo.value)
           {
-            this.index_.splice(binarySearchPos(this.index_, objectInfo), 1);
-            objectInfo.value = newValue;
-            this.index_.splice(binarySearchPos(this.index_, objectInfo), 0, objectInfo);
-            this.rebuild();
+            index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
+            sourceObjectInfo.value = newValue;
+            index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
+            this.applyRule();
           }
         }
       },
       source: {
-        datasetChanged: function(dataset, delta){
-          var listenHandler = this.listen.sourceObject;
-          var index_ = this.index_;
+        datasetChanged: function(source, delta){
           var sourceMap_ = this.sourceMap_;
+          var index_ = this.index_;
+          var listenHandler = this.listen.sourceObject;
+          var sourceObjectInfo;
           var array;
 
           if (array = delta.inserted)
-            for (var i = 0, object; object = array[i]; i++)
+            for (var i = 0, sourceObject; sourceObject = array[i]; i++)
             {
-              var objectInfo = {
-                object: object,
-                value: this.rule(object)
+              sourceObjectInfo = {
+                object: sourceObject,
+                value: this.rule(sourceObject)
               };
-              index_.splice(binarySearchPos(index_, objectInfo), 0, objectInfo);
+              sourceMap_[sourceObject.eventObjectId] = sourceObjectInfo;
 
-              sourceMap_[object.eventObjectId] = objectInfo;
+              index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
 
               if (listenHandler)
-                object.addHandler(listenHandler, this);
+                sourceObject.addHandler(listenHandler, this);
             }
 
           if (array = delta.deleted)
-            for (var i = 0, object; object = array[i]; i++)
+            for (var i = 0, sourceObject; sourceObject = array[i]; i++)
             {
-              var objectInfo = sourceMap_[object.eventObjectId];
+              sourceObjectInfo = sourceMap_[sourceObject.eventObjectId];
 
-              index_.splice(binarySearchPos(index_, objectInfo), 1);
+              index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
 
               if (listenHandler)
-                object.removeHandler(listenHandler, this);
+                sourceObject.removeHandler(listenHandler, this);
             }
 
-          this.rebuild();
+          this.applyRule();
         }
       }
     },
@@ -10557,7 +10539,6 @@ basis.require('basis.data');
     */
     init: function(config){
       this.index_ = [];
-      this.sourceMap_ = {};
 
       // inherit
       SourceDatasetMixin.init.call(this, config);
@@ -10572,10 +10553,10 @@ basis.require('basis.data');
       this.offset = offset;
       this.limit = limit;
 
-      this.rebuild();
+      this.applyRule();
     },
 
-    rebuild: function(){
+    applyRule: function(){
       var curSet = Object.slice(this.item_);
       var newSet = this.index_.slice(this.offset, this.offset + this.limit);
       var inserted = [];
@@ -10597,6 +10578,170 @@ basis.require('basis.data');
 
 
   //
+  // Cloud
+  //
+
+  var Cloud = Class(AbstractDataset, SourceDatasetMixin, {
+    className: namespace + '.Cloud',
+    
+    rule: $true,
+
+    map: $self,
+
+    subsetClass: AbstractDataset,
+
+    listen: {
+      sourceObject: {
+        update: function(sourceObject, delta){
+          var sourceMap = this.sourceMap_;
+          var memberMap = this.memberMap_;
+          var sourceObjectId = sourceObject.eventObjectId;
+
+          var oldList = sourceMap[sourceObjectId].list;
+          var newList = sourceMap[sourceObjectId].list = {};
+          var list = this.rule(sourceObject);
+          var delta;
+          var inserted = [];
+          var deleted = [];
+          var subset;
+
+          if (Array.isArray(list))
+            for (var j = 0; j < list.length; j++)
+            {
+              subset = this.keyMap.resolve(list[j]);
+
+              if (subset)
+              {
+                subsetId = subset.eventObjectId;
+                newList[subsetId] = subset;
+
+                if (!oldList[subsetId])
+                {
+                  subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+
+                  if (!memberMap[subsetId])
+                  {
+                    inserted.push(subset);
+                    memberMap[subsetId] = 1;
+                  }
+                  else
+                    memberMap[subsetId]++;
+                }
+              }
+            }
+            
+
+          for (var subsetId in oldList)
+          {
+            var subset = oldList[subsetId];
+            subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+
+            if (!--memberMap[subsetId])
+            {
+              delete memberMap[subsetId];
+              deleted.push(subset);
+            }
+          }
+
+          if (delta = getDelta(inserted, deleted))
+            this.event_datasetChanged(this, delta);
+        }
+      },
+      source: {
+        datasetChanged: function(dataset, delta){
+          var sourceMap = this.sourceMap_;
+          var memberMap = this.memberMap_;
+          var listenHandler = this.listen.sourceObject;
+          var objectInfo;
+          var array;
+          var subset;
+          var subsetId;
+          var inserted = [];
+          var deleted = [];
+
+          if (array = delta.inserted)
+            for (var i = 0, sourceObject; sourceObject = array[i]; i++)
+            {
+              var list = this.rule(sourceObject);
+              var sourceObjectInfo = {
+                object: sourceObject,
+                list: {}
+              };
+
+              sourceMap[sourceObject.eventObjectId] = sourceObjectInfo;
+
+              if (Array.isArray(list))
+                for (var j = 0; j < list.length; j++)
+                {
+                  subset = this.keyMap.resolve(list[j]);
+
+                  if (subset)
+                  {
+                    subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+                    subsetId = subset.eventObjectId;
+                    sourceObjectInfo.list[subsetId] = subset;
+
+                    if (!memberMap[subsetId])
+                    {
+                      inserted.push(subset);
+                      memberMap[subsetId] = 1;
+                    }
+                    else
+                      memberMap[subsetId]++;
+                  }
+                }
+
+              if (listenHandler)
+                sourceObject.addHandler(listenHandler, this);
+            }
+
+          if (array = delta.deleted)
+            for (var i = 0, sourceObject; sourceObject = array[i]; i++)
+            {
+              var sourceObjectId = sourceObject.eventObjectId;
+              var list = sourceMap[sourceObjectId].list;
+
+              delete sourceMap[sourceObjectId];
+
+              for (var subsetId in list)
+              {
+                var subset = list[subsetId];
+                subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+
+                if (!--memberMap[subsetId])
+                {
+                  delete memberMap[subsetId];
+                  deleted.push(subset);
+                }
+              }
+
+              if (listenHandler)
+                sourceObject.removeHandler(listenHandler, this);
+            }
+
+          if (delta = getDelta(inserted, deleted))
+            this.event_datasetChanged(this, delta);
+        }
+      }
+    },
+
+   /**
+    * @constructor
+    */ 
+    init: function(config){
+      if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
+        this.keyMap = new KeyObjectMap(extend({
+          keyGetter: this.map,
+          itemClass: this.subsetClass
+        }, this.keyMap));
+
+      // inherit
+      SourceDatasetMixin.init.call(this, config);
+    }
+  });
+
+
+  //
   // export names
   //
 
@@ -10605,13 +10750,14 @@ basis.require('basis.data');
     Merge: Merge,
     Subtract: Subtract,
 
-    // transform dataset
+    // transform datasets
     MapReduce: MapReduce,
     Subset: Subset,
     Split: Split,
 
-    //
-    Slice: Slice
+    // other
+    Slice: Slice,
+    Cloud: Cloud
   });
 
 }(basis, this);
@@ -13445,9 +13591,9 @@ basis.require('basis.html');
       *
       */
       event_update: function(object, delta){
-        super_.event_update.call(this, object, delta);
-
         this.templateUpdate(this.tmpl, 'update', delta);
+
+        super_.event_update.call(this, object, delta);
       },
 
      /**

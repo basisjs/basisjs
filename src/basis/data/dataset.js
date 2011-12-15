@@ -20,7 +20,7 @@ basis.require('basis.data');
   * - Classes:
   *   {basis.data.dataset.Merge}, {basis.data.dataset.Subtract},
   *   {basis.data.dataset.MapReduce}, {basis.data.dataset.Subset},
-  *   {basis.data.dataset.Split}
+  *   {basis.data.dataset.Split}, {basis.data.dataset.Slice}
   *
   * @namespace basis.data.dataset
   */
@@ -1299,7 +1299,7 @@ basis.require('basis.data');
     listen: {
       sourceObject: {
         update: function(sourceObject){
-          var sourceObjectInfo = this.sourceMap_[object.eventObjectId];
+          var sourceObjectInfo = this.sourceMap_[sourceObject.eventObjectId];
           var newValue = this.rule(sourceObject);
           var index_ = this.index_;
 
@@ -1412,13 +1412,65 @@ basis.require('basis.data');
 
     listen: {
       sourceObject: {
-        update: function(){
+        update: function(sourceObject, delta){
+          var sourceMap = this.sourceMap_;
+          var memberMap = this.memberMap_;
+          var sourceObjectId = sourceObject.eventObjectId;
+
+          var oldList = sourceMap[sourceObjectId].list;
+          var newList = sourceMap[sourceObjectId].list = {};
+          var list = this.rule(sourceObject);
+          var delta;
+          var inserted = [];
+          var deleted = [];
+          var subset;
+
+          if (Array.isArray(list))
+            for (var j = 0; j < list.length; j++)
+            {
+              subset = this.keyMap.resolve(list[j]);
+
+              if (subset)
+              {
+                subsetId = subset.eventObjectId;
+                newList[subsetId] = subset;
+
+                if (!oldList[subsetId])
+                {
+                  subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+
+                  if (!memberMap[subsetId])
+                  {
+                    inserted.push(subset);
+                    memberMap[subsetId] = 1;
+                  }
+                  else
+                    memberMap[subsetId]++;
+                }
+              }
+            }
+            
+
+          for (var subsetId in oldList)
+          {
+            var subset = oldList[subsetId];
+            subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+
+            if (!--memberMap[subsetId])
+            {
+              delete memberMap[subsetId];
+              deleted.push(subset);
+            }
+          }
+
+          if (delta = getDelta(inserted, deleted))
+            this.event_datasetChanged(this, delta);
         }
       },
       source: {
         datasetChanged: function(dataset, delta){
-          var sourceMap_ = this.sourceMap_;
-          var memberMap_ = this.memberMap_;
+          var sourceMap = this.sourceMap_;
+          var memberMap = this.memberMap_;
           var listenHandler = this.listen.sourceObject;
           var objectInfo;
           var array;
@@ -1431,21 +1483,31 @@ basis.require('basis.data');
             for (var i = 0, sourceObject; sourceObject = array[i]; i++)
             {
               var list = this.rule(sourceObject);
+              var sourceObjectInfo = {
+                object: sourceObject,
+                list: {}
+              };
+
+              sourceMap[sourceObject.eventObjectId] = sourceObjectInfo;
 
               if (Array.isArray(list))
                 for (var j = 0; j < list.length; j++)
                 {
-                  subset = this.keyMap.resolve(list[i]);
+                  subset = this.keyMap.resolve(list[j]);
 
                   if (subset)
                   {
                     subset.event_datasetChanged(subset, { inserted: [sourceObject] });
-
                     subsetId = subset.eventObjectId;
-                    if (!sourceMap_[subsetId])
+                    sourceObjectInfo.list[subsetId] = subset;
+
+                    if (!memberMap[subsetId])
                     {
-                      sourceMap_[subsetId] = 1;
+                      inserted.push(subset);
+                      memberMap[subsetId] = 1;
                     }
+                    else
+                      memberMap[subsetId]++;
                   }
                 }
 
@@ -1456,6 +1518,22 @@ basis.require('basis.data');
           if (array = delta.deleted)
             for (var i = 0, sourceObject; sourceObject = array[i]; i++)
             {
+              var sourceObjectId = sourceObject.eventObjectId;
+              var list = sourceMap[sourceObjectId].list;
+
+              delete sourceMap[sourceObjectId];
+
+              for (var subsetId in list)
+              {
+                var subset = list[subsetId];
+                subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+
+                if (!--memberMap[subsetId])
+                {
+                  delete memberMap[subsetId];
+                  deleted.push(subset);
+                }
+              }
 
               if (listenHandler)
                 sourceObject.removeHandler(listenHandler, this);
@@ -1478,7 +1556,7 @@ basis.require('basis.data');
         }, this.keyMap));
 
       // inherit
-      SourceDatasetMixin.prototype.init.call(this, config);
+      SourceDatasetMixin.init.call(this, config);
     }
   });
 
@@ -1498,7 +1576,8 @@ basis.require('basis.data');
     Split: Split,
 
     // other
-    Slice: Slice
+    Slice: Slice,
+    Cloud: Cloud
   });
 
 }(basis, this);
