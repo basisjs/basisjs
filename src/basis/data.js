@@ -889,12 +889,14 @@
     * Set of all items, even items are not in member set. May be used as storage for
     * members, which provide posibility to avoid dublicates in resultinf set before
     * event_datasetChanged event be fired.
+    * @type {Object}
     * @private
     */
     memberMap_: null,
 
    /**
     * Cache array of members, for getItems method.
+    * @type {Array.<basis.data.DataObject>}
     * @private
     */
     cache_: null,
@@ -902,7 +904,7 @@
    /**
     * Fires when items changed.
     * @param {basis.data.AbstractDataset} dataset
-    * @param {object} delta Delta of changes. Must have property `inserted`
+    * @param {Object} delta Delta of changes. Must have property `inserted`
     * or `deleted`, or both of them. `inserted` property is array of new items
     * and `deleted` property is array of removed items.
     * @event

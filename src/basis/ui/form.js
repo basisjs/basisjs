@@ -1326,56 +1326,53 @@ basis.require('basis.ui');
     matchFunction: function(child, reset){
       if (!reset)
       {
-        var textNodes = child._m || this.textNodeGetter(child);
+        var textNodes = child._original || this.textNodeGetter(child);
 
-        if (textNodes.constructor != Array)
+        if (!Array.isArray(textNodes))
           textNodes = [ textNodes ];
 
-        var hasMatches = false;
+        child._original = textNodes;
 
-        for (var i = 0; i < textNodes.length; i++)
+        var matchCount = 0;
+
+        for (var i = textNodes.length; i --> 0;)
         {                             
           var textNode = textNodes[i];
+
           if (!textNode)
             continue;
 
-          var hasMatch = false; 
           var p = textNode.nodeValue.split(this.rx);
           if (p.length > 1)
           {
-            if (!child._x) 
-              child._x = [];
-            if (!child._m) 
-              child._m = [];
+            if (!child._replaced) 
+              child._replaced = {};
 
             DOM.replace(
-              child._x[i] || textNode,
-              child._x[i] = DOM.createElement('SPAN.matched', DOM.wrap(p, this.map))
+              child._replaced[i] || textNode,
+              child._replaced[i] = DOM.createElement('SPAN.matched', DOM.wrap(p, this.map))
             );
-            child._m[i] = textNode;
-            hasMatches = true;
-            hasMatch = true;
-          }
 
-          if (child._x && child._x[i] && !hasMatch)
-          { 
-             DOM.replace(child._x[i], child._m[i]);
-             child._x[i] = child._m[i];
+            matchCount++;
           }
+          else
+            if (child._replaced && child._replaced[i])
+            { 
+               DOM.replace(child._replaced[i], textNode);
+               delete child._replaced[i];
+            }
         }
 
-        return hasMatches;
+        return matchCount > 0;
       }
 
-      if (child._x)
+      if (child._replaced)
       {
-        for (var i = 0; i < child._x.length; i++)
-        {                             
-          if (child._x[i])
-             DOM.replace(child._x[i], child._m[i]);
-        }
-        delete child._x;
-        delete child._m;
+        for (var key in child._replaced)
+          DOM.replace(child._replaced[key], child._original[key]);
+
+        delete child._replaced;
+        delete child._original;
       }
 
       return false;

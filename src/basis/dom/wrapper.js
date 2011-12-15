@@ -236,10 +236,7 @@ basis.require('basis.html');
       if (parentNode)
       {
         if (parentNode.matchFunction)
-        {
-          this.match();
           this.match(parentNode.matchFunction);
-        }
 
         // re-insert to change position, group, sortingValue etc.
         parentNode.insertBefore(this, this.nextSibling);
@@ -2069,44 +2066,23 @@ basis.require('basis.html');
     */
     match: function(func){
       if (typeof func != 'function')
+        func = null;
+
+      if (this.underMatch_ && !func)
+        this.underMatch_(this, true);
+
+      this.underMatch_ = func;
+
+      var matched = !func || func(this);
+
+      if (this.matched != matched)
       {
-        if (this.matched)
-        {
-          if (this.underMatch_)
-          {
-            // restore init state
-            this.underMatch_(this, true);
-            this.underMatch_ = null;
-          }
-        }
-        else
-        {
-          this.matched = true;
+        this.matched = matched;
+
+        if (matched)
           this.event_match(this)
-        }
-      }
-      else
-      {
-        if (func(this))
-        {
-          // match
-          this.underMatch_ = func;
-          if (!this.matched)
-          {
-            this.matched = true;
-            this.event_match(this);
-          }
-        }
         else
-        {
-          // don't match
-          this.underMatch_ = null;
-          if (this.matched)
-          {
-            this.matched = false;
-            this.event_unmatch(this);
-          }
-        }
+          this.event_unmatch(this)
       }
     },
 

@@ -1239,7 +1239,7 @@
                 if (req.status == 404 && path)
                   requireNamespace(namespace);
                 else
-                  throw '!';
+                  throw 'unable to load module ' + filename + ' by basis.require()';
               }
             }
             else

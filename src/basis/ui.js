@@ -80,9 +80,9 @@ basis.require('basis.html');
       *
       */
       event_update: function(object, delta){
-        super_.event_update.call(this, object, delta);
-
         this.templateUpdate(this.tmpl, 'update', delta);
+
+        super_.event_update.call(this, object, delta);
       },
 
      /**
