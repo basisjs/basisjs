@@ -89,6 +89,44 @@
       }
     });
 
+    var AbstractNode = basis.dom.wrapper.AbstractNode;
+    var Node = basis.dom.wrapper.Node;
+    var Class = basis.Class;
+
+    var GraphicThread = Class(AbstractNode, {
+      legendGetter: Function.getter('data.legend'),
+      colorGetter: Function.getter('data.color'),
+      valueGetterGetter: Function.getter('data.valueGetter'),
+
+      getValueGetter: function(){
+        return this.valueGetter || this.valueGetterGetter(this);
+      },
+      getColor: function(){
+        return this.color || this.colorGetter(this);
+      },
+      getLegend: function(){
+        return this.legend || this.legendGetter(this)
+      }
+    });
+
+    var GraphicThreadList = Class(Node, {
+      canHaveChildren: true,
+      childClass: GraphicThread,
+      childFactory: function(config){
+        return new this.childClass(config);
+      },
+
+      event_childNodesModified: function(){
+        Node.prototype.event_childNodesModified.apply(this, arguments);
+
+        if (this.owner)
+        {
+          this.owner.updateCount++
+          //this.owner.draw();
+        }
+      }
+    });
+
 
     var Canvas = basis.ui.canvas.Canvas;
     var Graph = Canvas.subclass({
@@ -120,21 +158,27 @@
 
       init: function(config){
 
-        if (!this.threads)
+        if (!this.threadList)
         {
-          this.threads = [
+          this.threadList = [
             {
               valueGetter: this.valueGetter,
-              color: this.color || this.threadColor[0]
+              color: this.color
             }
           ];
         }
 
-        for (var i = 0; i < this.threads.length; i++)
+        if (this.threadList instanceof Array)
         {
-          if (!this.threads[i].color)
-            this.threads[i].color = this.threadColor[i];
+          this.threadList = new GraphicThreadList({
+            owner: this,
+            childNodes: this.threadList.map(function(thread){
+              return (typeof thread == 'function') ? { valueGetter: thread } : thread;
+            })
+          })
         }
+        else
+          this.threadList = new GraphicThreadList(Object.extend({ owner: this }, this.threadList));
 
         basis.ui.canvas.Canvas.prototype.init.call(this, config);
       },
@@ -169,9 +213,9 @@
         var values;
         var max = 0;
         
-        for (var i = 0, thread; thread = this.threads[i]; i++)
+        for (var i = 0, thread; thread = this.threadList.childNodes[i]; i++)
         {
-          values = this.childNodes.map(thread.valueGetter);
+          values = this.childNodes.map(thread.getValueGetter());
           values.push(max);
           max = Math.max.apply(null, values);
         }
@@ -231,7 +275,6 @@
         var BOTTOM = 20;
         var WIDTH = context.canvas.width;
         var HEIGHT = context.canvas.height;
-
 
         var minValue = this.getMinGridValue();
         var maxValue = this.getMaxGridValue();
@@ -333,10 +376,10 @@
         // Threads
         //
         var values;
-        for (var i = 0, thread; thread = this.threads[i]; i++)
+        for (var i = 0, thread; thread = this.threadList.childNodes[i]; i++)
         {
-          this.style.strokeStyle = thread.color;
-          values = this.childNodes.map(thread.valueGetter);
+          this.style.strokeStyle = thread.getColor() || this.threadColor[i];
+          values = this.childNodes.map(thread.getValueGetter());
           this.drawThread(values, maxValue, LEFT + step, TOP, step, (HEIGHT - TOP - BOTTOM))
         }  
       },
@@ -404,32 +447,66 @@
 
     Value.all.sync(data);
 
+
+    var threadDataSource = new basis.data.Dataset({});
+    threadDataSource.set([
+      {
+        data: {
+          valueGetter: Function.getter('data.Amount'),
+          legend: 'Amount'
+        }
+      },
+      {
+        data: {
+          valueGetter: Function.getter('data.Count'),
+          legend: 'Count'
+        }
+      }
+    ].map(function(object){ return new basis.data.DataObject(object) }))
+
+
+
     var gg = new Graph({
       container: document.body,
-      //valueGetter: Function.getter('data.Amount'),
-      //valueGetter2: Function.getter('data.Count'),
+      width: 800,
+      height: 450,
+
+      dataSource: Value.all,
       localSorting: Function.getter('data.Date'),
       propGetter: function(object){
         var date = new Date(object.data.Date);
         return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
-      //Function.getter('data.Date'),
-      threads: [
+      
+      // 1. single thread
+      /*valueGetter: Function.getter('data.Amount'),
+      color: '#222'/**/
+
+      // 2. multi thread with with no config
+      /*threadList: [
+        Function.getter('data.Amount'),
+        Function.getter('data.Count')
+      ]/**/
+      
+      // 3. multi thread with config (color, legend)
+      /*threadList: [
         {
           valueGetter: Function.getter('data.Amount'),
-          legendText: 'Amount'
+          legend: 'Amount',
+          color: '#777'
         },
         {
           valueGetter: Function.getter('data.Count'),
-          legendText: 'Count'
+          legend: 'Count',
+          color: '#0055FF'
         }
-      ],
-      //localSortingDesc: true,
-      //localGrouping: Function.getter('data.Count % 3'),
-      //localGrouping: 'info.Id%3',
-      dataSource: Value.all,
-      width: 800,
-      height: 450
+      ],/**/
+
+      // 4. multi thread with dataSource control 
+      threadList: {
+        dataSource: threadDataSource
+      }/**/
+      
     });
 
     //document.body.appendChild(canvas.element);
