@@ -1227,7 +1227,10 @@
               if (req.status == 200)
               {
                 try {
-                  new Function(req.responseText).call(global);
+                  (global.execScript || function(scriptText){
+                    global["eval"].call(global, scriptText + '//@ sourceURL=' + requestUrl);
+                  })(req.responseText);
+                  //new Function(req.responseText).call(global);
                 } catch(e) {
                   ;;;console.log('run ' + requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js' + ' ( ' + filename + ' )');
                   throw e;

@@ -164,7 +164,7 @@
     var cloud = new basis.data.dataset.Cloud({
       source: BlogPost.all,
       rule: function(item){
-        return item.data.tags.split(/\s*,\s*/);
+        return (item.data.tags || '').split(/\s*,\s*/);
       }
     });
 
@@ -181,8 +181,8 @@
       },
       listen: {
         sourceObject: {
-          datasetChanged: function(object){
-            this.sourceMap_[object.eventObjectId].updated = true;
+          datasetChanged: function(sourceObject){
+            this.sourceMap_[sourceObject.eventObjectId].updated = true;
             this.fireUpdate();
           }
         }
@@ -211,7 +211,7 @@
 
         satelliteConfig: {
           indexes: {
-            hook: { rootChanged: true },
+            hook: { rootChanged: true, update: false },
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },
@@ -221,13 +221,15 @@
                 basis.data.DataObject.prototype.event_update.call(this, object, delta);
 
                 this.owner.element.style.fontSize = '{0:.2}%'.format(50 + 150 * this.data.percentOfMax);
-                console.log(this.data.percentOfMax);
               }
             })
           }
         }
       }
     });
+
+    debugger;
+    BlogPost({ id: 5, tags: 'ddd' });
 
   </script>
 </body>

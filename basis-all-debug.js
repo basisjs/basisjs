@@ -1274,7 +1274,10 @@
               if (req.status == 200)
               {
                 try {
-                  new Function(req.responseText).call(global);
+                  (global.execScript || function(scriptText){
+                    global["eval"].call(global, scriptText + '//@ sourceURL=' + requestUrl);
+                  })(req.responseText);
+                  //new Function(req.responseText).call(global);
                 } catch(e) {
                   ;;;console.log('run ' + requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js' + ' ( ' + filename + ' )');
                   throw e;
@@ -13706,6 +13709,17 @@ basis.require('basis.data');
     event_sourceChanged: createEvent('sourceChanged', 'dataset', 'oldSource'),
 
    /**
+    * @inheritDoc
+    */
+    listen: {
+      source: {
+        destroy: function(){
+          this.setSource();
+        }
+      }
+    },
+
+   /**
     * @constructor
     */
     init: function(config){
@@ -13769,6 +13783,16 @@ basis.require('basis.data');
     */
     clear: function(){
       this.setSource();
+    },
+
+   /**
+    * @inheritDoc
+    */
+    destroy: function(){
+      // inherit
+      AbstractDataset.prototype.destroy.call(this);
+
+      this.sourceMap_ = null;
     }
   };
 
@@ -13777,14 +13801,14 @@ basis.require('basis.data');
   // MapReduce
   //
 
-  var MAPREDUCEDATASET_SOURCEOBJECT_HANDLER = {
-    update: function(object){
-      var newMember = this.map ? this.map(object) : object; // fetch new member ref
+  var MAPREDUCE_SOURCEOBJECT_HANDLER = {
+    update: function(sourceObject){
+      var newMember = this.map ? this.map(sourceObject) : object; // fetch new member ref
       
       if (newMember instanceof DataObject == false || this.reduce(newMember))
         newMember = null;
 
-      var sourceMap = this.sourceMap_[object.eventObjectId];
+      var sourceMap = this.sourceMap_[sourceObject.eventObjectId];
       var curMember = sourceMap.member;
 
       // if member ref is changed
@@ -13805,7 +13829,7 @@ basis.require('basis.data');
 
           // call callback on member ref add
           if (this.removeMemberRef)
-            this.removeMemberRef(curMember, object);
+            this.removeMemberRef(curMember, sourceObject);
 
           // decrease ref count, and check is this ref for member last
           if (--memberMap[curMemberId] == 0)
@@ -13827,7 +13851,7 @@ basis.require('basis.data');
 
           // call callback on member ref add
           if (this.addMemberRef)
-            this.addMemberRef(newMember, object);
+            this.addMemberRef(newMember, sourceObject);
 
           if (memberMap[newMemberId])
           {
@@ -13851,8 +13875,8 @@ basis.require('basis.data');
     }
   };
 
-  var MAPREDUCEDATASET_SOURCE_HANDLER = {
-    datasetChanged: function(dataset, delta){
+  var MAPREDUCE_SOURCE_HANDLER = {
+    datasetChanged: function(source, delta){
       var sourceMap = this.sourceMap_;
       var memberMap = this.memberMap_;
       var inserted = [];
@@ -13931,9 +13955,6 @@ basis.require('basis.data');
 
       if (delta = getDelta(inserted, deleted))
         this.event_datasetChanged(this, delta);
-    },
-    destroy: function(){
-      this.setSource();
     }
   };
 
@@ -13965,14 +13986,14 @@ basis.require('basis.data');
 
    /**
     * NOTE: Can't be changed after init.
-    * @type {function(basis.data.DataObject)}
+    * @type {function(basis.data.DataObject, basis.data.DataObject)}
     * @readonly
     */
     addMemberRef: null,
 
    /**
     * NOTE: Can't be changed after init.
-    * @type {function(basis.data.DataObject)}
+    * @type {function(basis.data.DataObject, basis.data.DataObject)}
     * @readonly
     */
     removeMemberRef: null,
@@ -13981,19 +14002,11 @@ basis.require('basis.data');
     * @inheritDoc
     */
     listen: {
-      sourceObject: MAPREDUCEDATASET_SOURCEOBJECT_HANDLER,
-      source: MAPREDUCEDATASET_SOURCE_HANDLER
+      sourceObject: MAPREDUCE_SOURCEOBJECT_HANDLER,
+      source: MAPREDUCE_SOURCE_HANDLER
     },
 
-   /**
-    * @inheritDoc
-    */
-    init: function(config){
-      ;;;if (this.sources) throw 'basis.data.dataset.MapReduce instances no more support for sources property, use source property instead.';
-      ;;;if (this.dataset) throw 'basis.data.dataset.MapReduce instances no more support for dataset property, use source property instead.';
-
-      SourceDatasetMixin.init.call(this, config);
-    },
+    // no special init
 
    /**
     * Set new filter function.
@@ -14125,17 +14138,9 @@ basis.require('basis.data');
         this.event_datasetChanged(this, delta);
 
       return delta;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    destroy: function(){
-      // inherit
-      AbstractDataset.prototype.destroy.call(this);
-
-      this.sourceMap_ = null;
     }
+
+    // no special destroy
   });
 
 
@@ -14171,8 +14176,8 @@ basis.require('basis.data');
    /**
     * @inheritDoc
     */
-    map: function(object){
-      return this.keyMap.resolve(object);
+    map: function(sourceObject){
+      return this.keyMap.resolve(sourceObject);
     },
 
    /**
@@ -14229,7 +14234,7 @@ basis.require('basis.data');
 
 
   //
-  // SliceDataset
+  // Slice
   //
 
   function binarySearchPos(array, map){ 
@@ -14267,6 +14272,60 @@ basis.require('basis.data');
 
     return pos + (cmpValue < value);
   }
+
+  var SLICE_SOURCEOBJECT_HANDLER = {
+    update: function(sourceObject){
+      var sourceObjectInfo = this.sourceMap_[sourceObject.eventObjectId];
+      var newValue = this.rule(sourceObject);
+      var index_ = this.index_;
+
+      if (newValue !== sourceObjectInfo.value)
+      {
+        index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
+        sourceObjectInfo.value = newValue;
+        index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
+        this.applyRule();
+      }
+    }
+  };
+
+  var SLICE_SOURCE_HANDLER = {
+    datasetChanged: function(source, delta){
+      var sourceMap_ = this.sourceMap_;
+      var index_ = this.index_;
+      var listenHandler = this.listen.sourceObject;
+      var sourceObjectInfo;
+      var array;
+
+      if (array = delta.inserted)
+        for (var i = 0, sourceObject; sourceObject = array[i]; i++)
+        {
+          sourceObjectInfo = {
+            object: sourceObject,
+            value: this.rule(sourceObject)
+          };
+          sourceMap_[sourceObject.eventObjectId] = sourceObjectInfo;
+
+          index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
+
+          if (listenHandler)
+            sourceObject.addHandler(listenHandler, this);
+        }
+
+      if (array = delta.deleted)
+        for (var i = 0, sourceObject; sourceObject = array[i]; i++)
+        {
+          sourceObjectInfo = sourceMap_[sourceObject.eventObjectId];
+
+          index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
+
+          if (listenHandler)
+            sourceObject.removeHandler(listenHandler, this);
+        }
+
+      this.applyRule();
+    }
+  };
 
  /**
   * @class
@@ -14306,58 +14365,8 @@ basis.require('basis.data');
     * @inheritDoc
     */
     listen: {
-      sourceObject: {
-        update: function(sourceObject){
-          var sourceObjectInfo = this.sourceMap_[sourceObject.eventObjectId];
-          var newValue = this.rule(sourceObject);
-          var index_ = this.index_;
-
-          if (newValue !== sourceObjectInfo.value)
-          {
-            index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
-            sourceObjectInfo.value = newValue;
-            index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
-            this.applyRule();
-          }
-        }
-      },
-      source: {
-        datasetChanged: function(source, delta){
-          var sourceMap_ = this.sourceMap_;
-          var index_ = this.index_;
-          var listenHandler = this.listen.sourceObject;
-          var sourceObjectInfo;
-          var array;
-
-          if (array = delta.inserted)
-            for (var i = 0, sourceObject; sourceObject = array[i]; i++)
-            {
-              sourceObjectInfo = {
-                object: sourceObject,
-                value: this.rule(sourceObject)
-              };
-              sourceMap_[sourceObject.eventObjectId] = sourceObjectInfo;
-
-              index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
-
-              if (listenHandler)
-                sourceObject.addHandler(listenHandler, this);
-            }
-
-          if (array = delta.deleted)
-            for (var i = 0, sourceObject; sourceObject = array[i]; i++)
-            {
-              sourceObjectInfo = sourceMap_[sourceObject.eventObjectId];
-
-              index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
-
-              if (listenHandler)
-                sourceObject.removeHandler(listenHandler, this);
-            }
-
-          this.applyRule();
-        }
-      }
+      sourceObject: SLICE_SOURCEOBJECT_HANDLER,
+      source: SLICE_SOURCE_HANDLER
     },
 
    /**
@@ -14402,6 +14411,17 @@ basis.require('basis.data');
 
       if (delta = getDelta(inserted, values(curSet)))
         this.event_datasetChanged(this, delta);
+    },
+
+   /**
+    * @inheritDoc
+    */
+    destroy: function(){
+      // inherit
+      SourceDatasetMixin.destroy.call(this);
+
+      // destroy index
+      this.index_ = null;
     }
   });
 
@@ -14410,29 +14430,86 @@ basis.require('basis.data');
   // Cloud
   //
 
-  var Cloud = Class(AbstractDataset, SourceDatasetMixin, {
-    className: namespace + '.Cloud',
-    
-    rule: $true,
+  var CLOUD_SOURCEOBJECT_HANDLER = {
+    update: function(sourceObject, delta){
+      var sourceMap = this.sourceMap_;
+      var memberMap = this.memberMap_;
+      var sourceObjectId = sourceObject.eventObjectId;
 
-    map: $self,
+      var oldList = sourceMap[sourceObjectId].list;
+      var newList = sourceMap[sourceObjectId].list = {};
+      var list = this.rule(sourceObject);
+      var delta;
+      var inserted = [];
+      var deleted = [];
+      var subset;
 
-    subsetClass: AbstractDataset,
+      if (Array.isArray(list))
+        for (var j = 0; j < list.length; j++)
+        {
+          subset = this.keyMap.resolve(list[j]);
 
-    listen: {
-      sourceObject: {
-        update: function(sourceObject, delta){
-          var sourceMap = this.sourceMap_;
-          var memberMap = this.memberMap_;
-          var sourceObjectId = sourceObject.eventObjectId;
+          if (subset)
+          {
+            subsetId = subset.eventObjectId;
+            newList[subsetId] = subset;
 
-          var oldList = sourceMap[sourceObjectId].list;
-          var newList = sourceMap[sourceObjectId].list = {};
+            if (!oldList[subsetId])
+            {
+              subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+
+              if (!memberMap[subsetId])
+              {
+                inserted.push(subset);
+                memberMap[subsetId] = 1;
+              }
+              else
+                memberMap[subsetId]++;
+            }
+          }
+        }
+        
+
+      for (var subsetId in oldList)
+        if (!newList[subsetId])
+        {
+          var subset = oldList[subsetId];
+          subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+
+          if (!--memberMap[subsetId])
+          {
+            delete memberMap[subsetId];
+            deleted.push(subset);
+          }
+        }
+
+      if (delta = getDelta(inserted, deleted))
+        this.event_datasetChanged(this, delta);
+    }
+  };
+
+  var CLOUD_SOURCE_HANDLER = {
+    datasetChanged: function(dataset, delta){
+      var sourceMap = this.sourceMap_;
+      var memberMap = this.memberMap_;
+      var listenHandler = this.listen.sourceObject;
+      var objectInfo;
+      var array;
+      var subset;
+      var subsetId;
+      var inserted = [];
+      var deleted = [];
+
+      if (array = delta.inserted)
+        for (var i = 0, sourceObject; sourceObject = array[i]; i++)
+        {
           var list = this.rule(sourceObject);
-          var delta;
-          var inserted = [];
-          var deleted = [];
-          var subset;
+          var sourceObjectInfo = {
+            object: sourceObject,
+            list: {}
+          };
+
+          sourceMap[sourceObject.eventObjectId] = sourceObjectInfo;
 
           if (Array.isArray(list))
             for (var j = 0; j < list.length; j++)
@@ -14441,118 +14518,85 @@ basis.require('basis.data');
 
               if (subset)
               {
+                subset.event_datasetChanged(subset, { inserted: [sourceObject] });
                 subsetId = subset.eventObjectId;
-                newList[subsetId] = subset;
+                sourceObjectInfo.list[subsetId] = subset;
 
-                if (!oldList[subsetId])
+                if (!memberMap[subsetId])
                 {
-                  subset.event_datasetChanged(subset, { inserted: [sourceObject] });
-
-                  if (!memberMap[subsetId])
-                  {
-                    inserted.push(subset);
-                    memberMap[subsetId] = 1;
-                  }
-                  else
-                    memberMap[subsetId]++;
+                  inserted.push(subset);
+                  memberMap[subsetId] = 1;
                 }
-              }
-            }
-            
-
-          for (var subsetId in oldList)
-            if (!newList[subsetId])
-            {
-              var subset = oldList[subsetId];
-              subset.event_datasetChanged(subset, { deleted: [sourceObject] });
-
-              if (!--memberMap[subsetId])
-              {
-                delete memberMap[subsetId];
-                deleted.push(subset);
+                else
+                  memberMap[subsetId]++;
               }
             }
 
-          if (delta = getDelta(inserted, deleted))
-            this.event_datasetChanged(this, delta);
+          if (listenHandler)
+            sourceObject.addHandler(listenHandler, this);
         }
-      },
-      source: {
-        datasetChanged: function(dataset, delta){
-          var sourceMap = this.sourceMap_;
-          var memberMap = this.memberMap_;
-          var listenHandler = this.listen.sourceObject;
-          var objectInfo;
-          var array;
-          var subset;
-          var subsetId;
-          var inserted = [];
-          var deleted = [];
 
-          if (array = delta.inserted)
-            for (var i = 0, sourceObject; sourceObject = array[i]; i++)
+      if (array = delta.deleted)
+        for (var i = 0, sourceObject; sourceObject = array[i]; i++)
+        {
+          var sourceObjectId = sourceObject.eventObjectId;
+          var list = sourceMap[sourceObjectId].list;
+
+          delete sourceMap[sourceObjectId];
+
+          for (var subsetId in list)
+          {
+            var subset = list[subsetId];
+            subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+
+            if (!--memberMap[subsetId])
             {
-              var list = this.rule(sourceObject);
-              var sourceObjectInfo = {
-                object: sourceObject,
-                list: {}
-              };
-
-              sourceMap[sourceObject.eventObjectId] = sourceObjectInfo;
-
-              if (Array.isArray(list))
-                for (var j = 0; j < list.length; j++)
-                {
-                  subset = this.keyMap.resolve(list[j]);
-
-                  if (subset)
-                  {
-                    subset.event_datasetChanged(subset, { inserted: [sourceObject] });
-                    subsetId = subset.eventObjectId;
-                    sourceObjectInfo.list[subsetId] = subset;
-
-                    if (!memberMap[subsetId])
-                    {
-                      inserted.push(subset);
-                      memberMap[subsetId] = 1;
-                    }
-                    else
-                      memberMap[subsetId]++;
-                  }
-                }
-
-              if (listenHandler)
-                sourceObject.addHandler(listenHandler, this);
+              delete memberMap[subsetId];
+              deleted.push(subset);
             }
+          }
 
-          if (array = delta.deleted)
-            for (var i = 0, sourceObject; sourceObject = array[i]; i++)
-            {
-              var sourceObjectId = sourceObject.eventObjectId;
-              var list = sourceMap[sourceObjectId].list;
-
-              delete sourceMap[sourceObjectId];
-
-              for (var subsetId in list)
-              {
-                var subset = list[subsetId];
-                subset.event_datasetChanged(subset, { deleted: [sourceObject] });
-
-                if (!--memberMap[subsetId])
-                {
-                  delete memberMap[subsetId];
-                  deleted.push(subset);
-                }
-              }
-
-              if (listenHandler)
-                sourceObject.removeHandler(listenHandler, this);
-            }
-
-          if (delta = getDelta(inserted, deleted))
-            this.event_datasetChanged(this, delta);
+          if (listenHandler)
+            sourceObject.removeHandler(listenHandler, this);
         }
-      }
+
+      if (delta = getDelta(inserted, deleted))
+        this.event_datasetChanged(this, delta);
+    }
+  };
+
+ /**
+  * @class
+  */
+  var Cloud = Class(AbstractDataset, SourceDatasetMixin, {
+    className: namespace + '.Cloud',
+    
+   /**
+    * @type {function(basis.data.DataObject)}
+    */
+    rule: $true,
+
+   /**
+    * @inheritDoc
+    */
+    map: $self,
+
+   /**
+    * @type {basis.data.AbstractDataset}
+    */
+    subsetClass: AbstractDataset,
+
+   /**
+    * @type {basis.data.KeyObjectMap}
+    */
+    keyMap: null,
+
+   /**
+    * @inheritDoc
+    */
+    listen: {
+      sourceObject: CLOUD_SOURCEOBJECT_HANDLER,
+      source: CLOUD_SOURCE_HANDLER
     },
 
    /**
@@ -14567,6 +14611,18 @@ basis.require('basis.data');
 
       // inherit
       SourceDatasetMixin.init.call(this, config);
+    },
+
+   /**
+    * @inheritDoc
+    */
+    destroy: function(){
+      // inherit
+      SourceDatasetMixin.destroy.call(this);
+
+      // destroy keyMap
+      this.keyMap.destroy();
+      this.keyMap = null;
     }
   });
 
@@ -14763,7 +14819,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Sum = Class(Index, {
+  var IndexSum = Class(Index, {
     className: namespace + '.Sum',
     add: function(item, value){
       this.value += value;
@@ -14779,7 +14835,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Avg = Class(Index, {
+  var IndexAvg = Class(Index, {
     className: namespace + '.Avg',
     sum_: 0,
     count_: 0,
@@ -14803,7 +14859,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Count = Class(Index, {
+  var IndexCount = Class(Index, {
     className: namespace + '.Count',
     valueGetter: Function.$true,
     add: function(item, value){
@@ -14822,7 +14878,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Max = Class(Index, {
+  var IndexMax = Class(Index, {
     className: namespace + '.Max',
     init: function(valueGetter, dataSource){
       this.stack = [];
@@ -14847,7 +14903,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Min = Class(Index, {
+  var IndexMin = Class(Index, {
     className: namespace + '.Min',
     init: function(valueGetter, dataSource){
       this.stack = [];
@@ -14871,30 +14927,30 @@ basis.require('basis.data.property');
 
   var indexConstructorCache_= {};
 
-  function IndexConstructor(getter, indexType){
+  function IndexConstructor(getter, indexClass){
     getter = Function.getter(getter);
 
-    var key = indexType + '_' + getter.getterIdx_;
+    var key = indexClass.indexClassId + '_' + getter.getterIdx_;
     var indexConstructor = indexConstructorCache_[key];
 
     if (!indexConstructor)
     {
       indexConstructor = indexConstructorCache_[key] = this;
       
-      this.indexType = indexType;
-      this.indexClass = Index[indexType];
+      this.indexClass = indexClass;
       this.getter = getter;
       this.key = key;
+      
       this.createInstance = function(dataset){
         if (dataset instanceof AbstractDataset)
         {
-          var result = dataset.indexes && dataset.indexes[this.key];
+          var result = dataset.indexes && dataset.indexes[key];
 
           if (!result)
           {
-            result = new this.indexClass(this.getter);
+            result = new indexClass(getter);
             result.addHandler(DATASET_INDEX_HANDLER, dataset);
-            result.key = this.key;
+            result.key = key;
           }
 
           return result;
@@ -14905,17 +14961,19 @@ basis.require('basis.data.property');
     return indexConstructor;
   }
 
-  var createIndexConstructor = function(indexType){
+  var indexClassId = 1;
+  var createIndexConstructor = function(indexClass){
+    indexClass.indexClassId = indexClassId++;
     return function(getter){
-      return new IndexConstructor(getter, indexType);
+      return new IndexConstructor(getter, indexClass);
     }
   }
 
-  var Sum   = createIndexConstructor('Sum');
-  var Avg   = createIndexConstructor('Avg');
-  var Count = createIndexConstructor('Count');
-  var Min   = createIndexConstructor('Min');
-  var Max   = createIndexConstructor('Max');
+  var Sum   = createIndexConstructor(IndexSum);
+  var Avg   = createIndexConstructor(IndexAvg);
+  var Count = createIndexConstructor(IndexCount);
+  var Min   = createIndexConstructor(IndexMin);
+  var Max   = createIndexConstructor(IndexMax);
 
 
 
@@ -14923,32 +14981,6 @@ basis.require('basis.data.property');
     return new indexContructor.indexClass(indexContructor.getter, this);
   } */
 
-
-  var INDEX_ITEM_HANDLER = {
-    update: function(object, delta){
-      var oldValue;
-      var newValue;
-      var index;
-      var objectId = object.eventObjectId;
-
-      for (var i in this.indexes)
-      {
-        index = this.indexes[i];
-        // fetch oldValue
-        oldValue = index.indexCache_[objectId];
-
-        // calc new value
-        newValue = index.valueGetter(object);
-
-        // update if value has changed
-        if (newValue !== oldValue)
-        {
-          index.upd(object, newValue, oldValue);
-          index.indexCache_[objectId] = newValue;
-        }
-      }
-    }
-  };
 
   function applyIndexDelta(index, inserted, deleted){
     var cache = index.indexCache_;
@@ -14971,6 +15003,36 @@ basis.require('basis.data.property');
 
     index.unlock();
   }
+
+
+  var INDEX_ITEM_UPDATE = function(object, delta){
+    var oldValue;
+    var newValue;
+    var index;
+    var objectId = object.eventObjectId;
+
+    for (var i in this.indexes)
+    {
+      index = this.indexes[i];
+      // fetch oldValue
+      oldValue = index.indexCache_[objectId];
+
+      // calc new value
+      newValue = index.valueGetter(object);
+
+      // update if value has changed
+      if (newValue !== oldValue)
+      {
+        index.upd(object, newValue, oldValue);
+        index.indexCache_[objectId] = newValue;
+      }
+    }
+  };
+
+  var INDEX_ITEM_HANDLER = {
+    update: INDEX_ITEM_UPDATE,
+    datasetChanged: INDEX_ITEM_UPDATE
+  };
 
   var DATASET_WITH_INDEX_HANDLER = {
     datasetChanged: function(object, delta){
@@ -15084,10 +15146,10 @@ basis.require('basis.data.property');
 
     listen: {
       sourceObject: {
-        update: function(object, delta){
-          MapReduce.prototype.listen.sourceObject.update.call(this, object, delta);
+        update: function(sourceObject, delta){
+          MapReduce.prototype.listen.sourceObject.update.call(this, sourceObject, delta);
 
-          this.sourceMap_[object.eventObjectId].updated = true;
+          this.sourceMap_[sourceObject.eventObjectId].updated = true;
           this.fireUpdate();
         }
       },

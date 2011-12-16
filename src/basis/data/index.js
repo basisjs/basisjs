@@ -164,7 +164,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Sum = Class(Index, {
+  var IndexSum = Class(Index, {
     className: namespace + '.Sum',
     add: function(item, value){
       this.value += value;
@@ -180,7 +180,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Avg = Class(Index, {
+  var IndexAvg = Class(Index, {
     className: namespace + '.Avg',
     sum_: 0,
     count_: 0,
@@ -204,7 +204,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Count = Class(Index, {
+  var IndexCount = Class(Index, {
     className: namespace + '.Count',
     valueGetter: Function.$true,
     add: function(item, value){
@@ -223,7 +223,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Max = Class(Index, {
+  var IndexMax = Class(Index, {
     className: namespace + '.Max',
     init: function(valueGetter, dataSource){
       this.stack = [];
@@ -248,7 +248,7 @@ basis.require('basis.data.property');
  /**
   * @class
   */
-  Index.Min = Class(Index, {
+  var IndexMin = Class(Index, {
     className: namespace + '.Min',
     init: function(valueGetter, dataSource){
       this.stack = [];
@@ -272,30 +272,30 @@ basis.require('basis.data.property');
 
   var indexConstructorCache_= {};
 
-  function IndexConstructor(getter, indexType){
+  function IndexConstructor(getter, indexClass){
     getter = Function.getter(getter);
 
-    var key = indexType + '_' + getter.getterIdx_;
+    var key = indexClass.indexClassId + '_' + getter.getterIdx_;
     var indexConstructor = indexConstructorCache_[key];
 
     if (!indexConstructor)
     {
       indexConstructor = indexConstructorCache_[key] = this;
       
-      this.indexType = indexType;
-      this.indexClass = Index[indexType];
+      this.indexClass = indexClass;
       this.getter = getter;
       this.key = key;
+      
       this.createInstance = function(dataset){
         if (dataset instanceof AbstractDataset)
         {
-          var result = dataset.indexes && dataset.indexes[this.key];
+          var result = dataset.indexes && dataset.indexes[key];
 
           if (!result)
           {
-            result = new this.indexClass(this.getter);
+            result = new indexClass(getter);
             result.addHandler(DATASET_INDEX_HANDLER, dataset);
-            result.key = this.key;
+            result.key = key;
           }
 
           return result;
@@ -306,17 +306,19 @@ basis.require('basis.data.property');
     return indexConstructor;
   }
 
-  var createIndexConstructor = function(indexType){
+  var indexClassId = 1;
+  var createIndexConstructor = function(indexClass){
+    indexClass.indexClassId = indexClassId++;
     return function(getter){
-      return new IndexConstructor(getter, indexType);
+      return new IndexConstructor(getter, indexClass);
     }
   }
 
-  var Sum   = createIndexConstructor('Sum');
-  var Avg   = createIndexConstructor('Avg');
-  var Count = createIndexConstructor('Count');
-  var Min   = createIndexConstructor('Min');
-  var Max   = createIndexConstructor('Max');
+  var Sum   = createIndexConstructor(IndexSum);
+  var Avg   = createIndexConstructor(IndexAvg);
+  var Count = createIndexConstructor(IndexCount);
+  var Min   = createIndexConstructor(IndexMin);
+  var Max   = createIndexConstructor(IndexMax);
 
 
 
@@ -324,32 +326,6 @@ basis.require('basis.data.property');
     return new indexContructor.indexClass(indexContructor.getter, this);
   } */
 
-
-  var INDEX_ITEM_HANDLER = {
-    update: function(object, delta){
-      var oldValue;
-      var newValue;
-      var index;
-      var objectId = object.eventObjectId;
-
-      for (var i in this.indexes)
-      {
-        index = this.indexes[i];
-        // fetch oldValue
-        oldValue = index.indexCache_[objectId];
-
-        // calc new value
-        newValue = index.valueGetter(object);
-
-        // update if value has changed
-        if (newValue !== oldValue)
-        {
-          index.upd(object, newValue, oldValue);
-          index.indexCache_[objectId] = newValue;
-        }
-      }
-    }
-  };
 
   function applyIndexDelta(index, inserted, deleted){
     var cache = index.indexCache_;
@@ -372,6 +348,36 @@ basis.require('basis.data.property');
 
     index.unlock();
   }
+
+
+  var INDEX_ITEM_UPDATE = function(object, delta){
+    var oldValue;
+    var newValue;
+    var index;
+    var objectId = object.eventObjectId;
+
+    for (var i in this.indexes)
+    {
+      index = this.indexes[i];
+      // fetch oldValue
+      oldValue = index.indexCache_[objectId];
+
+      // calc new value
+      newValue = index.valueGetter(object);
+
+      // update if value has changed
+      if (newValue !== oldValue)
+      {
+        index.upd(object, newValue, oldValue);
+        index.indexCache_[objectId] = newValue;
+      }
+    }
+  };
+
+  var INDEX_ITEM_HANDLER = {
+    update: INDEX_ITEM_UPDATE,
+    datasetChanged: INDEX_ITEM_UPDATE
+  };
 
   var DATASET_WITH_INDEX_HANDLER = {
     datasetChanged: function(object, delta){
@@ -485,10 +491,10 @@ basis.require('basis.data.property');
 
     listen: {
       sourceObject: {
-        update: function(object, delta){
-          MapReduce.prototype.listen.sourceObject.update.call(this, object, delta);
+        update: function(sourceObject, delta){
+          MapReduce.prototype.listen.sourceObject.update.call(this, sourceObject, delta);
 
-          this.sourceMap_[object.eventObjectId].updated = true;
+          this.sourceMap_[sourceObject.eventObjectId].updated = true;
           this.fireUpdate();
         }
       },
