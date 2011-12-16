@@ -22405,6 +22405,7 @@ basis.require('basis.data');
 basis.require('basis.data.property');
 basis.require('basis.cssom');
 basis.require('basis.ui');
+basis.require('basis.ui.popup');
 
 !function(basis){
 
@@ -22437,9 +22438,10 @@ basis.require('basis.ui');
   var EventObject = basis.EventObject;
 
   var Selection = basis.dom.wrapper.Selection;
-  var UIControl = basis.ui.Control;         
-  var UINode = basis.ui.Node;        
+  var UIControl = basis.ui.Control;
+  var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
+  var Popup = basis.ui.popup.Popup;
 
   var createEvent = EventObject.createEvent;
 
@@ -22449,9 +22451,11 @@ basis.require('basis.ui');
   //
 
   var baseFieldTemplate = new Template(
-    '<div{element|selected|sampleContainer} class="Basis-Field">' +
+    '<div{selected|sampleContainer} class="Basis-Field">' +
       '<div class="Basis-Field-Title">' +
-        '<label><span{title}>{titleText}</span></label>' +
+        '<label>' +
+          '<span{title}>{titleText}</span>' +
+        '</label>' +
       '</div>' +
       '<div{content} class="Basis-Field-Container">' +
         '<!-- {fieldPlace} -->' +
@@ -22471,7 +22475,7 @@ basis.require('basis.ui');
   * Base class for all form field classes
   * @class
   */
-  var Field = Class(UINode, {
+  var Field = UINode.subclass({
     className: namespace + '.Field',
 
     canHaveChildren: false,
@@ -22495,33 +22499,29 @@ basis.require('basis.ui');
 
       UINode.prototype.event_disable.call(this);
     },
-    event_input: createEvent('input'),
-    event_change: createEvent('change'),
-    event_keydown: createEvent('keydown'),
-    event_keypress: createEvent('keypress'),
-    event_keyup: createEvent('keyup') && function(event){
+    event_input: createEvent('input', 'event'),
+    event_change: createEvent('change','event'),
+    event_keydown: createEvent('keydown', 'event'),
+    event_keypress: createEvent('keypress', 'event'),
+    event_keyup: createEvent('keyup', 'event') && function(event){
       if (this.nextFieldOnEnter)
-      {
-        var key = Event.key(event);
-       
-        if (key == Event.KEY.ENTER || key == Event.KEY.CTRL_ENTER)
+        if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(Event.key(event)))
         {
           Event.cancelDefault(event);
           this.nextFieldFocus();
         }
         else
           this.setValid();
-      }
 
       EventObject.event.keyup.call(this, event);
     },
-    event_focus: createEvent('focus') && function(event){
+    event_focus: createEvent('focus', 'event') && function(event){
       if (this.valid)
         this.setValid();
 
       EventObject.event.focus.call(this, event);
-    },        
-    event_blur: createEvent('blur') && function(event){
+    },
+    event_blur: createEvent('blur', 'event') && function(event){
       this.validate(true);
 
       EventObject.event.blur.call(this, event);
@@ -22570,8 +22570,10 @@ basis.require('basis.ui');
       this.setSample(this.sample);
       
       // set min/max length
-      if (this.minLength) this.setMinLength(this.minLength);
-      if (this.maxLength) this.setMaxLength(this.maxLength);
+      if (this.minLength)
+        this.setMinLength(this.minLength);
+      if (this.maxLength)
+        this.setMaxLength(this.maxLength);
 
       // set value & default value
       if (this.readOnly)
@@ -22649,7 +22651,7 @@ basis.require('basis.ui');
       this.event_change(event);
     },
     input: function(event){
-      this.event_input(event);       
+      this.event_input(event);
     },
     keydown: function(event){
       this.event_keydown(event);
@@ -22672,6 +22674,7 @@ basis.require('basis.ui');
     },
     setValid: function(valid, message){
       var clsList = classList(this.element);
+
       if (typeof valid == 'boolean')
       {
         clsList.bool('invalid', !valid)
@@ -22691,6 +22694,7 @@ basis.require('basis.ui');
     },
     validate: function(onlyValid){
       var error;
+
       this.setValid();
       for (var i = 0; i < this.validators.length; i++)
         if (error = this.validators[i](this))
@@ -22705,6 +22709,7 @@ basis.require('basis.ui');
     },
     nextFieldFocus: function(event){
       var next = DOM.axis(this, DOM.AXIS_FOLLOWING_SIBLING).search(true, 'selectable');
+
       if (next)
         next.select();
       else
@@ -22724,7 +22729,6 @@ basis.require('basis.ui');
       this.validators.clear();
 
       UINode.prototype.destroy.call(this);
-      //this.inherit();
 
       delete this.sampleElement;
       delete this.sampleContainer;
@@ -22746,6 +22750,7 @@ basis.require('basis.ui');
       throw new Error('Wrong field type `{0}`'.format(fieldType));
   };
 
+
   //
   // Simple fields
   //
@@ -22753,24 +22758,24 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  Field.Hidden = Class(Field, {
+  Field.Hidden = Field.subclass({
     className: namespace + '.Field.Hidden',
 
     selectable: false,
-    
-    template: new Template(
-      '<input{element|field} type="hidden"/>'
-    )
+
+    template:
+      '<input{field} type="hidden" />'
   });
+
 
  /**
   * @class
   */
-  Field.Text = Class(Field, {
+  Field.Text = Field.subclass({
     className: namespace + '.Field.Text',
-    
+
     template: createFieldTemplate(baseFieldTemplate,
-      '<input{field} type="text"/>'
+      '<input{field} type="text" />'
     ),
 
     init: function(config){
@@ -22784,43 +22789,46 @@ basis.require('basis.ui');
     },
     setMaxLength: function(len){
       this.tmpl.field.setAttribute('maxlength', len, 0);
-      
+
       Field.prototype.setMaxLength.call(this, len);
     }
   });
 
- /**
+
+  /**
   * @class
   */
-  Field.Password = Class(Field.Text, {
+  Field.Password = Field.Text.subclass({
     className: namespace + '.Field.Password',
 
     template: createFieldTemplate(baseFieldTemplate,
-      '<input{field} type="password"/>'
+      '<input{field} type="password" />'
     )
   });
+
 
  /**
   * @class
   */
-  Field.File = Class(Field, {
+  Field.File = Field.subclass({
     className: namespace + '.Field.File',
 
     template: createFieldTemplate(baseFieldTemplate,
-      '<input{field} type="file"/>'
+      '<input{field} type="file" />'
     )
   });
+
 
  /**
   * @class
   */
-  Field.Textarea = Class(Field, {
+  Field.Textarea = Field.subclass({
     className: namespace + '.Field.Textarea',
 
     nextFieldOnEnter: false,
 
     template: createFieldTemplate(baseFieldTemplate,
-      '<textarea{field}/>'
+      '<textarea{field} />'
     ),
 
     init: function(config){
@@ -22845,7 +22853,7 @@ basis.require('basis.ui');
           this.contentEditable = true;
           this.contentEditable = false;
         });
-    	}
+      }
     },
     updateCounter: function(){
       var left = this.maxLength - this.getValue().length;
@@ -22868,26 +22876,29 @@ basis.require('basis.ui');
     },
     destroy: function(){
       delete this.counter;
-      
+
       Field.prototype.destroy.call(this);
     }
   });
 
-  Field.Checkbox = Class(Field, {
+
+  /**
+  * @class
+  */
+  Field.Checkbox = Field.subclass({
     className: namespace + '.Field.Checkbox',
 
     value: false,
 
-    template: new Template(
-      '<div{element} class="Basis-Field Basis-Field-Checkbox">' +
+    template:
+      '<div class="Basis-Field Basis-Field-Checkbox">' +
         '<div{content} class="Basis-Field-Container">' +
           '<label>' +
-            '<input{field} type="checkbox"/>' +
+            '<input{field} type="checkbox" />' +
             '<span>{titleText}</span>' +
           '</label>' +
         '</div>' +
-      '</div>'
-    ),
+      '</div>',
 
     /*init: function(config){
       this.value = this.value || false;
@@ -22910,7 +22921,11 @@ basis.require('basis.ui');
     }
   });
 
-  Field.Label = Class(Field, {
+
+  /**
+  * @class
+  */
+  Field.Label = Field.subclass({
     className: namespace + '.Field.Label',
     cssClassName: 'Basis-Field-Label',
 
@@ -22928,16 +22943,17 @@ basis.require('basis.ui');
     }*/
   });
 
+
   //
   // Complex fields
   //
 
-  var ComplexFieldItem = Class(UINode, {
+  var ComplexFieldItem = UINode.subclass({
     className: namespace + '.ComplexField.Item',
 
     canHaveChildren: false,
 
-    titleGetter: function(item){ 
+    titleGetter: function(item){
       return item.title || item.getValue();
     },
     valueGetter: getter('value'),
@@ -22986,7 +23002,9 @@ basis.require('basis.ui');
 
     init: function(config){
 
-      this.selection = new Selection({ multiple: !!this.multipleSelect });
+      this.selection = new Selection({
+        multiple: !!this.multipleSelect
+      });
       this.selection.addHandler(COMPLEXFIELD_SELECTION_HANDLER, this);
 
       //inherit
@@ -23035,7 +23053,7 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var RadioGroupItem = Class(ComplexFieldItem, {
+  var RadioGroupItem = ComplexFieldItem.subclass({
     className: namespace + '.Field.RadioGroup.Item',
 
     event_select: function(){
@@ -23060,12 +23078,11 @@ basis.require('basis.ui');
       UINode.prototype.event_disable.call(this);
     },
 
-    template: new Template(
-      '<label{element} class="Basis-RadioGroup-Item" event-click="select">' + 
+    template:
+      '<label class="Basis-RadioGroup-Item" event-click="select">' + 
         '<input{field} type="radio" class="radio"/>' +
         '<span{content}>{titleText}</span>' +
-      '</label>'
-    ),
+      '</label>',
 
     templateUpdate: function(tmpl, eventName, delta){
       ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
@@ -23074,18 +23091,19 @@ basis.require('basis.ui');
       tmpl.titleText.nodeValue = this.getTitle();
     },
 
-    templateAction: function(actionName, event){
-      if (actionName == 'select' && !this.isDisabled())
-        this.select();
-
-      ComplexFieldItem.prototype.templateAction.call(this, actionName, event);
+    action: {
+      select: function(event){
+        if (!this.isDisabled())
+          this.select();
+      }
     }
   });
+
 
  /**
   * @class
   */
-  Field.RadioGroup = Class(ComplexField, {
+  Field.RadioGroup = ComplexField.subclass({
     className: namespace + '.Field.RadioGroup',
 
     childClass: RadioGroupItem,
@@ -23106,6 +23124,7 @@ basis.require('basis.ui');
 
   Field.RadioGroup.Item = RadioGroupItem;
 
+
   //
   // Check Group
   //
@@ -23113,7 +23132,7 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var CheckGroupItem = Class(ComplexFieldItem, {
+  var CheckGroupItem = ComplexFieldItem.subclass({
     className: namespace + '.Field.CheckGroup.Item',
 
     event_select: function(){
@@ -23135,12 +23154,11 @@ basis.require('basis.ui');
       UINode.prototype.event_disable.call(this);
     },
 
-    template: new Template(
-      '<label{element} event-click="click">' + 
+    template:
+      '<label event-click="click">' + 
         '<input{field} type="checkbox"/>' +
         '<span{content}>{titleText}</span>' +
-      '</label>'
-    ),
+      '</label>',
 
     templateUpdate: function(tmpl, eventName, delta){
       ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
@@ -23149,23 +23167,24 @@ basis.require('basis.ui');
       this.tmpl.titleText.nodeValue = this.getTitle();
     },
 
-    templateAction: function(actionName, event){
-      if (actionName == 'click' && !this.isDisabled())
-      {
-        this.select(this.parentNode.multipleSelect);
+    action: {
+      click: function(event){
+        if (!this.isDisabled())
+        {
+          this.select(this.parentNode.multipleSelect);
 
-        if (Event.sender(event).tagName != 'INPUT')
-          Event.kill(event);
+          if (Event.sender(event).tagName != 'INPUT')
+            Event.kill(event);
+        }
       }
-
-      ComplexFieldItem.prototype.templateAction.call(this, actionName, event);
     }
   });
+
 
  /**
   * @class
   */
-  Field.CheckGroup = Class(ComplexField, {
+  Field.CheckGroup = ComplexField.subclass({
     className: namespace + '.Field.CheckGroup',
 
     childClass: CheckGroupItem,
@@ -23183,7 +23202,7 @@ basis.require('basis.ui');
   // Select
   //
 
-  var SelectItem = Class(ComplexFieldItem, {
+  var SelectItem = ComplexFieldItem.subclass({
     className: namespace + '.Field.Select.Item',
 
     event_select: function(){
@@ -23195,9 +23214,8 @@ basis.require('basis.ui');
         this.parentNode.setValue();
     },
 
-    template: new Template(
-      '<option{element|field}>{titleText}</option>'
-    ),
+    template:
+      '<option{field}>{titleText}</option>',
 
     templateUpdate: function(tmpl, eventName, delta){
       ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
@@ -23207,16 +23225,17 @@ basis.require('basis.ui');
     }
   });
 
+
  /**
   * @class
   */
-  Field.Select = Class(ComplexField, {
+  Field.Select = ComplexField.subclass({
     className: namespace + '.Field.Select',
 
     childClass: SelectItem,
     
     template: createFieldTemplate(baseFieldTemplate,
-      '<select{field|childNodesElement}/>'
+      '<select{field|childNodesElement} />'
     ),
 
     event_keyup: function(object, event){
@@ -23226,8 +23245,8 @@ basis.require('basis.ui');
     },
 
     setValue: function(value){
-    	var item = this.childNodes.search(value, 'getValue()');
-    	
+      var item = this.childNodes.search(value, 'getValue()');
+
       if (item)
         this.selection.set([item]);
       else
@@ -23242,10 +23261,10 @@ basis.require('basis.ui');
   //
 
   var ComboboxPopupHandler = {
-    show: function(){ 
+    show: function(){
       classList(this.tmpl.field).add('Basis-DropdownList-Opened'); 
     },
-    hide: function(){ 
+    hide: function(){
       classList(this.tmpl.field).remove('Basis-DropdownList-Opened'); 
     }
   };
@@ -23254,31 +23273,32 @@ basis.require('basis.ui');
   // Combobox
   //
 
-  var ComboboxItem = Class(ComplexFieldItem, {
+  var ComboboxItem = ComplexFieldItem.subclass({
     className: namespace + '.Field.Combobox.Item',
 
     //titleGetter: Function.getter('data.title'),
     //valueGetter: Function.getter('data.value'),
 
-    template: new Template(
-      '<div{element} class="Basis-Combobox-Item" event-click="click">{titleText}</div>'
-    ),
+    template:
+      '<div class="Basis-Combobox-Item" event-click="click">{titleText}</div>',
 
     templateUpdate: function(tmpl, eventName, delta){
       ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
       tmpl.titleText.nodeValue = this.getTitle();
     },
 
-    templateAction: function(actionName, event){
-      if (actionName == 'click' && !this.isDisabled())
-      {
-        this.select();
-        if (this.parentNode)
-          this.parentNode.hide();
-        Event.kill(event);
-      }
+    action: {
+      click: function(event){
+        if (!this.isDisabled())
+        {
+          this.select();
 
-      ComplexFieldItem.prototype.templateAction.call(this, actionName, event);
+          if (this.parentNode)
+            this.parentNode.hide();
+
+          Event.kill(event);
+        }
+      }
     }
   });
 
@@ -23329,7 +23349,7 @@ basis.require('basis.ui');
     }
   };
   
-  Field.Combobox = Class(ComplexField, {
+  Field.Combobox = ComplexField.subclass({
     className: namespace + '.Field.Combobox',
 
     childClass: ComboboxItem,
@@ -23367,27 +23387,24 @@ basis.require('basis.ui');
     caption: null,
     popup: null,
     property: null,
-    
+
     template: createFieldTemplate(baseFieldTemplate,
       '<span{field} class="Basis-DropdownList" event-click="click" tabindex="0">' +
         '<span class="Basis-DropdownList-Caption"><!--{captionItem}--></span>' +
         '<span class="Basis-DropdownList-Trigger"/>' +
       '</span>' +
-      '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent"/>'
+      '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent" />'
     ),
 
-    templateAction: function(actionName, event){
-      if (actionName == 'click')
-      {
-        if (this.isDisabled() || this.popup.visible) 
-          this.hide() 
+    action: {
+      click: function(event){
+        if (this.isDisabled() || this.popup.visible)
+          this.hide();
         else
           this.show({});
 
         Event.kill(event);
       }
-
-      ComplexField.prototype.templateAction.call(this, actionName, event);
     },
 
     init: function(config){
@@ -23400,10 +23417,14 @@ basis.require('basis.ui');
       this.satelliteConfig = {
         captionItem: {
           instanceOf: this.childClass,
-          delegate: Function.getter('selection.pick()'),
+          delegate: getter('selection.pick()'),
           config: {
-            getTitle: function(){ return this.delegate && this.delegate.getTitle() },
-            getValue: function(){ return this.delegate && this.delegate.getValue() },
+            getTitle: function(){
+              return this.delegate && this.delegate.getTitle();
+            },
+            getValue: function(){
+              return this.delegate && this.delegate.getValue();
+            },
             handler: {
               delegateChanged: function(){
                 this.event_update(this, {});
@@ -23424,7 +23445,7 @@ basis.require('basis.ui');
         DOM.insert(this.tmpl.field, this.hidden = DOM.createElement('INPUT[type=hidden][name={0}]'.format(String(this.name).quote())));
 
       // create items popup
-      this.popup = new basis.ui.popup.Popup(complete({
+      this.popup = new Popup(complete({
         cssClassName: 'Basis-DropdownList-Popup',
         autorotate: 1,
         ignoreClickFor: [this.tmpl.field],
@@ -23441,7 +23462,7 @@ basis.require('basis.ui');
       ComplexField.prototype.select.call(this);
       DOM.focus(this.tmpl.field);
     },*/
-    show: function(){ 
+    show: function(){
       this.popup.show(this.tmpl.field); 
       this.select();
     },
@@ -23559,13 +23580,13 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var FormContent = Class(UIControl, {
+  var FormContent = UIControl.subclass({
     className: namespace + '.FormContent',
     
     canHaveChildren: true,
     childClass: Field,
     childFactory: function(config){
-    	return Field.create(config.type || 'text', config);
+      return Field.create(config.type || 'text', config);
     },
 
     onSubmit: Function.$false,
@@ -23586,15 +23607,14 @@ basis.require('basis.ui');
       UIControl.prototype.event_enable.call(this);
     },
     
-    template: new Template(
-      '<div{element} class="Basis-FormContent"/>'
-    ),
+    template:
+      '<div class="Basis-FormContent" />',
 
     getFieldByName: function(name){
-    	return this.childNodes.search(name, 'name');
+      return this.childNodes.search(name, 'name');
     },
     getFieldById: function(id){
-    	return this.childNodes.search(id, 'id');
+      return this.childNodes.search(id, 'id');
     },
     serialize: function(){
       var result = {};
@@ -23656,14 +23676,13 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var Form = Class(FormContent, {
+  var Form = FormContent.subclass({
     className: namespace + '.Form',
     
-    template: new Template(
-      '<form{element|formElement} class="Basis-Form">' +
-        '<div{content|childNodesElement} class="Basis-FormContent"/>' +
-      '</form>'
-    ),
+    template:
+      '<form{formElement} class="Basis-Form">' +
+        '<div{content|childNodesElement} class="Basis-FormContent" />' +
+      '</form>',
 
     method: 'POST',
 
@@ -23674,17 +23693,17 @@ basis.require('basis.ui');
 
       if (this.target)
         this.formElement.target = this.target;
-        
+
       if (this.action)
         this.formElement.action = this.action;
-        
+
       if (this.enctype)
         this.formElement.enctype = this.enctype;
 
       Event.addHandler(this.formElement, 'submit', this.submit, this);
 
       this.formElement.onsubmit = this.submit;
-              
+
       this.setMethod(this.method);
     },
     setMethod: function(method){
@@ -23698,8 +23717,8 @@ basis.require('basis.ui');
           return false;
         else
           this.formElement.submit();
-      
-      return true;  
+
+      return true;
     }
   });
 
@@ -23708,7 +23727,7 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var MatchProperty = Class(Property, {
+  var MatchProperty = Property.subclass({
     className: namespace + '.MatchProperty',
 
     matchFunction: function(child, reset){
@@ -23724,7 +23743,7 @@ basis.require('basis.ui');
         var matchCount = 0;
 
         for (var i = textNodes.length; i --> 0;)
-        {                             
+        {
           var textNode = textNodes[i];
 
           if (!textNode)
@@ -23765,25 +23784,24 @@ basis.require('basis.ui');
 
       return false;
     },
-    
-    event_change: function(value){
+
+    event_change: function(value, oldValue){
       this.rx = this.regexpGetter(value);
 
-      Property.prototype.event_change.call(this, value);
+      Property.prototype.event_change.call(this, value, oldValue);
     },
-    
+
     extendConstructor_: true,
+
     init: function(config){
       var startPoints = this.startPoints || '';
 
       this.textNodeGetter = getter(this.textNodeGetter || 'tmpl.titleText');
 
       if (typeof this.regexpGetter != 'function')
-      {
         this.regexpGetter = function(value){ 
           return new RegExp('(' + startPoints + ')(' + value.forRegExp() + ')', 'i') 
         };
-      }
 
       this.map = {};
       this.map[this.wrapElement || 'SPAN.match'] = function(v, i){ return (i % 3) == 2 };
@@ -23796,27 +23814,25 @@ basis.require('basis.ui');
   });
 
   var NodeMatchHandler = {
-    childNodesModified: function(obj, delta){
-      if (delta.inserted)
-      {
-        for (var i = 0, child; child = delta.inserted[i]; i++)
-          this.matchFunction(child, this.value == '');
-      }
+    childNodesModified: function(object, delta){
+      delta.inserted && delta.inserted.forEach(function(child){
+        this.matchFunction(child, this.value == '');
+      }, this);
     }
   }
 
  /**
   * @class
   */
-  var Matcher = Class(MatchProperty, {
+  var Matcher = MatchProperty.subclass({
     className: namespace + '.Matcher',
 
-    event_change: function(value){
-      MatchProperty.prototype.event_change.call(this, value);
+    event_change: function(value, oldValue){
+      MatchProperty.prototype.event_change.call(this, value, oldValue);
 
       this.match();
     },
-    
+
     init: function(config){
       MatchProperty.prototype.init.call(this, config);
 
@@ -23824,19 +23840,20 @@ basis.require('basis.ui');
     },
 
     match: function(){
-      for (var child = this.node.firstChild; child; child = child.nextSibling)
+      this.node.childNodes.forEach(function(child){
         this.matchFunction(child, this.value == '');
+      }, this);
     }
   });
 
  /**
   * @class
   */
-  var MatchFilter = Class(MatchProperty, {
+  var MatchFilter = MatchProperty.subclass({
     className: namespace + '.MatchFilter',
 
-    event_change: function(value){
-      MatchProperty.prototype.event_change.call(this, value);
+    event_change: function(value, oldValue){
+      MatchProperty.prototype.event_change.call(this, value, oldValue);
 
       this.node.setMatchFunction(value ? this.matchFunction.bind(this) : null);
     }
@@ -23845,26 +23862,27 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var MatchInput = Class(Field.Text, {
+  var MatchInput = Field.Text.subclass({
     className: namespace + '.MatchInput',
-
     cssClassName: 'Basis-MatchInput',
 
     matchFilterClass: MatchFilter,
 
     event_keyup: function(event){
       this.matchFilter.set(this.tmpl.field.value);
-      Field.Text.prototype.event_keyup.call(this, event);        
+
+      Field.Text.prototype.event_keyup.call(this, event);
     },
 
     event_change: function(event){
       this.matchFilter.set(this.tmpl.field.value);
-      Field.Text.prototype.event_change.call(this, event);        
+
+      Field.Text.prototype.event_change.call(this, event);
     },
 
     init: function(config){
       Field.Text.prototype.init.call(this, config);
-      
+
       this.matchFilter = new this.matchFilterClass(this.matchFilter);
     }
   });
