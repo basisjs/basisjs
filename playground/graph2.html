@@ -93,7 +93,7 @@
     var Node = basis.dom.wrapper.Node;
     var Class = basis.Class;
 
-    var GraphicThread = Node.subclass({
+    var GraphThread = Node.subclass({
       canHaveChildren: true,
       legendGetter: Function.getter('data.legend'),
       colorGetter: Function.getter('data.color'),
@@ -114,9 +114,8 @@
 
       childClass: {
         event_update: function(object, delta){
-          //thread -> threadList -> graph
-          if (this.parentNode && this.parentNode.parentNode && this.parentNode.parentNode.owner)
-            this.parentNode.parentNode.owner.updateCount++; 
+          if (this.parentNode && this.parentNode.parentNode)
+            this.parentNode.parentNode.updateCount++; 
 
           AbstractNode.prototype.event_update.call(this, object, delta);
         }        
@@ -126,9 +125,10 @@
       }
     });
 
-    var GraphicThreadList = Node.subclass({
-      canHaveChildren: true,
-      childClass: GraphicThread,
+    var Canvas = basis.ui.canvas.Canvas;
+    var Graph = Canvas.subclass({
+      className: 'Graph',
+      childClass: GraphThread,
       childFactory: function(config){
         if (config.delegate && config.delegate.data.dataSource)
           config.dataSource = config.delegate.data.dataSource;
@@ -136,31 +136,11 @@
         return new this.childClass(config);
       },
 
-      event_childNodesModified: function(){
-        Node.prototype.event_childNodesModified.apply(this, arguments);
-
-        if (this.owner)
-          this.owner.updateCount++
-      },
-      event_localSortingChanged: function(){
-        Node.prototype.event_localSortingChanged.apply(this, arguments);
-
-        if (this.owner)
-          this.owner.updateCount++
-      }
-    });
-
-
-    var Canvas = basis.ui.canvas.Canvas;
-    var Graph = Canvas.subclass({
-      canHaveChildren: false,
-      className: 'Graph',
-      //childClass: Point,
-
       //valueGetter: Function.getter('data.value'),
       propGetter: Function.getter('data.prop'),
+      showLegend: true,
       
-      /*event_childNodesModified: function(node, delta){
+      event_childNodesModified: function(node, delta){
         this.updateCount++;
         Canvas.prototype.event_childNodesModified.call(this, node, delta);
       },
@@ -168,12 +148,6 @@
         this.updateCount++;
         Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
       },
-      event_dataSourceChanged: function(){
-        Canvas.prototype.event_dataSourceChanged.apply(this, arguments);
-
-        for (var i = 0, thread; thread = this.threadList.childNodes[i]; i++)
-          thread.setDataSource(this.dataSource);
-      },*/
 
       style: {
         strokeStyle: '#090',
@@ -186,25 +160,6 @@
         '#090'
       ],
 
-      init: function(config){
-
-        if (this.threadList)
-        {
-          if (this.threadList instanceof Array)
-          {
-            this.threadList = new GraphicThreadList({
-              owner: this,
-              childNodes: this.threadList.map(function(thread){
-                return (typeof thread == 'function') ? { valueGetter: thread } : thread;
-              })
-            })
-          }
-          else
-            this.threadList = new GraphicThreadList(Object.extend({ owner: this }, this.threadList));
-        }
-
-        basis.ui.canvas.Canvas.prototype.init.call(this, config);
-      },
       draw: function(){
         //this.updateCount++;
         Canvas.prototype.draw.call(this);
@@ -217,7 +172,7 @@
         }/**/
       },
       drawFrame: function(){
-        var propValues = this.getPropValues();//this.threadList.childNodes[0].childNodes.length;
+        var propValues = this.getPropValues();
 
         if (!propValues.length)
           return;
@@ -227,7 +182,7 @@
         var TOP = 10;
         var LEFT = 0;
         var RIGHT = 10;
-        var BOTTOM = 20;
+        var BOTTOM = 0;
         var WIDTH = context.canvas.width;
         var HEIGHT = context.canvas.height;
 
@@ -235,49 +190,91 @@
         var maxValue = this.getMaxGridValue();
         var partCount = this.getGridPartCount(minValue, maxValue); 
 
+
         //
-        // Grid
+        // calc yscale labels max width
         //
         var maxtw = 0;                            
         var y_labels = [];
 
         context.font = '10px tahoma';
-        context.textAlign = 'right';
 
         for (var i = 0; i < partCount; i++)
         {
-          var label = y_labels[i] = {
-            y: TOP + Math.round(i * ((HEIGHT - TOP - BOTTOM) / partCount)) + .5,
-            text: Math.round(maxValue * (partCount - i) / partCount).group()
-          }
+          y_labels[i] = Math.round(maxValue * (partCount - i) / partCount).group();
 
-          var tw = context.measureText(label.text).width;
+          var tw = context.measureText(y_labels[i]).width;
           if (tw > maxtw)
             maxtw = tw;
         }
         
         LEFT =  maxtw + 6;
 
-        context.lineWidth = 1;
-        for (var i = 0; i < y_labels.length; i++)
+        var cnt = propValues.length + 1; 
+        var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt) ;
+        
+        // Legend
+        if (this.showLegend)
         {
-          var label = y_labels[i];
+          var LEGEND_ROW_HEIGHT = 30;
+          var LEGEND_BAR_SIZE = 20;
+
+          maxtw = 0;
+          for (var i = 0, thread; thread = this.childNodes[i]; i++)
+          {
+            var tw = context.measureText(thread.getLegend()).width + LEGEND_BAR_SIZE + 20;
+            if (tw > maxtw)
+              maxtw = tw;
+          }
+
+          var legendColumnCount = Math.floor((WIDTH - LEFT - RIGHT) / maxtw);
+          var legendColumnWidth = (WIDTH - LEFT - RIGHT) / legendColumnCount;
+          var legendRowCount = Math.ceil(this.childNodes.length / legendColumnCount);
+
+          //draw legend
+          BOTTOM += LEGEND_ROW_HEIGHT * legendRowCount; // legend height
+
+          for (var i = 0, thread; thread = this.childNodes[i]; i++)
+          {
+            var lx = LEFT + (i % legendColumnCount) * legendColumnWidth;
+            var ly = HEIGHT - BOTTOM + 5 + (Math.ceil((i + 1) / legendColumnCount) - 1) * LEGEND_ROW_HEIGHT;
+
+            context.fillStyle = thread.getColor() || this.threadColor[i];
+            context.fillRect(lx, ly, LEGEND_BAR_SIZE, LEGEND_BAR_SIZE);
+
+            context.fillStyle = 'black';
+            context.textAlign = 'left';
+            context.fillText(thread.getLegend(), lx + LEGEND_BAR_SIZE + 5, ly + LEGEND_BAR_SIZE / 2 + 3);
+          }
+
+          BOTTOM += 30; //legend margin-top;
+        }
+
+
+        // yscale
+        context.lineWidth = 1;
+        context.fillStyle = 'black';
+        context.textAlign = 'right';
+        var labelStep = (HEIGHT - TOP - BOTTOM) / partCount;
+        for (var i = 0, label; label = y_labels[i]; i++)
+        {
+          var labelY = TOP + Math.round(i * labelStep) + .5;
 
           context.beginPath();
-          context.moveTo(LEFT + .5, label.y);
-          context.lineTo(WIDTH - RIGHT, label.y);
+          context.moveTo(LEFT + .5, labelY);
+          context.lineTo(WIDTH - RIGHT, labelY);
           context.strokeStyle = 'rgba(128, 128, 128, .25)';
           context.stroke();
           context.closePath();
 
           context.beginPath();
-          context.moveTo(LEFT + .5 - 3, label.y);
-          context.lineTo(LEFT + .5, label.y);
+          context.moveTo(LEFT + .5 - 3, labelY);
+          context.lineTo(LEFT + .5, labelY);
           context.strokeStyle = 'black';
           context.stroke();
           context.closePath();
 
-          context.fillText(label.text, LEFT - 6, label.y + 2.5);
+          context.fillText(label, LEFT - 6, labelY + 2.5);
         }
 
         context.beginPath();
@@ -289,11 +286,7 @@
         context.stroke();
         context.closePath();
 
-        var cnt = propValues.length + 1; 
-        var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt) ;
-
-        // xAxis scale
-        //var propValues = this.threadList.childNodes[0].childNodes.map(this.propGetter);
+        // xscale
         var lastLabelPos = 0;
 
         context.font = '9px tahoma';
@@ -318,23 +311,19 @@
             context.moveTo(x, HEIGHT - BOTTOM + .5);
             context.lineTo(x, HEIGHT - BOTTOM + 3);
           }
-
-          
         }
         context.lineWidth = 1;
         context.strokeStyle = 'black';
         context.stroke();
         context.closePath();
 
-
-        //
+        
         // Threads
-        //
         var values;
-        for (var i = 0, thread; thread = this.threadList.childNodes[i]; i++)
+        for (var i = 0, thread; thread = this.childNodes[i]; i++)
         {
           this.style.strokeStyle = thread.getColor() || this.threadColor[i];
-          values = thread.getValues();//this.childNodes.map(thread.getValueGetter());
+          values = thread.getValues();
           this.drawThread(values, maxValue, LEFT + step, TOP, step, (HEIGHT - TOP - BOTTOM))
         }  
       },
@@ -355,13 +344,13 @@
         context.restore();
       },
       getPropValues: function(){
-        return (this.threadList && this.threadList.childNodes[0].childNodes.map(this.propGetter)) || [];
+        return (this.childNodes[0] && this.childNodes[0].childNodes.map(this.propGetter)) || [];
       },
       getMaxValue: function(){
         var values;
         var max = 0;
         
-        for (var i = 0, thread; thread = this.threadList.childNodes[i]; i++)
+        for (var i = 0, thread; thread = this.childNodes[i]; i++)
         {
           values = thread.getValues();
           values.push(max);
@@ -527,14 +516,14 @@
         data: {
           dataSource: Amount.all,
           valueGetter: Function.getter('data.Value'),
-          legend: 'Amount'
+          legend: 'Сумма платежей'
         }
       },
       {
         data: {
           dataSource: Count.all,
           valueGetter: Function.getter('data.Value'),
-          legend: 'Count'
+          legend: 'Количество платежей'
         }
       }
     ].map(function(object){ return new basis.data.DataObject(object) }))
@@ -550,7 +539,7 @@
       },
       
       // 1. single thread
-      /*threadList: [
+      /*childNodes: [
         {
           valueGetter: Function.getter('data.Amount'),
           legend: 'Amount',
@@ -561,7 +550,7 @@
       ],/**/
 
       // 2. multi thread
-      /*threadList: [
+      /*childNodes: [
         {
           valueGetter: Function.getter('data.Amount'),
           legend: 'Amount',
@@ -579,11 +568,9 @@
       ],/**/
 
       // 3. multi thread with dataSource control 
-      threadList: {
-        dataSource: threadDataSource2,//threadDataSource,
-        childClass: {
-          localSorting: Function.getter('data.Date')
-        }
+      dataSource: threadDataSource2,//threadDataSource,
+      childClass: {
+        localSorting: Function.getter('data.Date')
       }/**/
     });
 
