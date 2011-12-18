@@ -131,23 +131,45 @@ for my $pack (@packages){
   print "\n\nBuild package `$name`:\n  ";
   print join "\n  ", @{$build->{files}};
 
-  open F, ">basis-$name-debug.js";
-  print F "// Package basis-$name-debug.js\n//   " . (join "\n//   ", @{$build->{files}});
-  print F $build->{debug};
-  close F;
-
-  open F, ">basis-$name.js";
-  print F "// Package basis-$name.js\n//   " . (join "\n//   ", @{$build->{files}});
-  print F $build->{content};
-  close F;
-
-  unless ($flags{'-nopack'})
+  if (!$flags{'-build'})
   {
-    my $fn = "basis-$name.js";
-    my $res = `java -jar c:\\tools\\gcc.jar --js $fn`;
-
-    open F, ">$fn";
+    open F, ">basis-$name.js";
     print F <<EOF;
+// Package basis-$name.js
+
+!function(){
+  if (typeof document != 'undefined')
+  {
+    var curScript = document.getElementByTagName('script');
+    var curLocation = curScript.src.replace(/[^\\/]+\\.js\$/, '');
+EOF
+
+    for my $file (@{$build->{files}})
+    {
+      print F "\n    document.write('<script src=\"' + curLocation + '$file\"></script>');"
+    }
+    print F "\n  }\n}();";
+    close F;
+  }
+  else
+  {
+    open F, ">basis-$name-debug.js";
+    print F "// Package basis-$name-debug.js\n//   " . (join "\n//   ", @{$build->{files}});
+    print F $build->{debug};
+    close F;
+
+    open F, ">basis-$name.js";
+    print F "// Package basis-$name.js\n//   " . (join "\n//   ", @{$build->{files}});
+    print F $build->{content};
+    close F;
+
+    unless ($flags{'-nopack'})
+    {
+      my $fn = "basis-$name.js";
+      my $res = `java -jar c:\\tools\\gcc.jar --js $fn`;
+
+      open F, ">$fn";
+      print F <<EOF;
 /*!
  * Basis javasript library 
  * http://code.google.com/p/basis-js/
@@ -157,7 +179,8 @@ for my $pack (@packages){
  */
 
 EOF
-    print F $res;
-    close F;
+      print F $res;
+      close F;
+    }
   }
 }

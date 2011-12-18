@@ -31,7 +31,6 @@
   basis.require('basis.ui.calendar');
   basis.require('basis.ui.form');
   basis.require('basis.ui.scroller');
-  basis.require('basis.ui.toc');
   basis.require('basis.ui.slider');
   basis.require('basis.ui.resizer');
   basis.require('basis.ui.paginator');

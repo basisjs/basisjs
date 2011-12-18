@@ -1,0 +1,272 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Basis.js blog</title>
+
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/style.css" media="screen" />
+
+  <style type="text/css">
+    BODY
+    {
+      border-left: 1px solid #E0E0E0;
+      border-right: 1px solid #E0E0E0;
+      width: 800px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+    #sidebar
+    {
+      float: right;
+      height: 100%;
+      width: 200px;
+      border: 1px solid black;
+      padding: 10px;
+    }
+    #content
+    {
+      overflow: hidden;
+    }
+
+    .category-list__header,
+    .tag-cloud__header
+    {
+      font-size: 100%;
+      border-bottom: 1px solid #888;
+    }
+    .category-list__content
+    {
+      margin: 0;
+      padding: 0 0 0 2ex;
+    }
+    .category-list-item
+    {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .category-list-item:hover
+    {
+      color: red;
+    }
+
+    .tag-cloud__content
+    {
+      text-align: center;
+    }
+    .tag-cloud__content .tag
+    {
+      margin: 0 8px;
+    }
+
+    .post-tag-list .tag__title
+    {
+      text-decoration: underline;
+      color: blue;
+      cursor: pointer;
+    }
+    .post-tag-list .tag:last-child .tag__delim
+    {
+      display: none;
+    }
+  </style>
+
+  <script src="../../../basis-all.js"></script>
+  <script src="posts.js"></script>
+  <script>
+    basis.dom.event.onLoad(function(){
+      var BlogPost = new basis.entity.EntityType({
+        name: 'BlogPost',
+        fields: {
+          id: basis.entity.StringId,
+          pubDate: Date.fromISOString,
+          title: String,
+          content: String,
+          category: String,
+          hasCut: Boolean,
+          afterCut: String,
+          tags: String
+        }
+      });
+
+      BlogPost.all.sync(postList);
+      t = new Date();
+
+      var blogThread = new basis.data.dataset.Merge({ sources: [BlogPost.all] });
+      var blogThreadPage = new basis.data.dataset.Slice({
+        source: blogThread,
+        limit: 10,
+        rule: Function.getter('data.pubDate * -1', Number),
+        listen: {
+          source: {
+            datasetChanged: function(source, delta){
+              basis.data.dataset.Slice.prototype.listen.source.datasetChanged.call(this, source, delta);
+            }
+          }
+        }
+      });
+
+      var paginator = new basis.ui.paginator.Paginator({
+        container: basis.dom.get('content'),
+        delegate: blogThread,
+        listen: {
+          delegate: {
+            /*sourcesChanged: {
+              this.setProperties()
+            },*/
+            datasetChanged: function(ds){
+              this.setProperties(Math.ceil(ds.itemCount / 10), 10, 0);
+            }
+          }
+        }
+      });
+
+      var blogList = new basis.ui.Container({
+        container: basis.dom.get('content'),
+        dataSource: blogThreadPage,
+        localSorting: Function.getter('data.pubDate * -1', Number),
+        childClass: {
+          template: 
+            '<div>' +
+              '<h2>#{id}. {title}</h2>' +
+              '<span class="pubDate">{pubDate}</span>' +
+              '<div{content} class="content"/>' +
+              '<div class="footer">' +
+                '<span class="category">Category: <a href="#" event-click="filterByCategory">{category}</a></span>' +
+                '<!--{taglist}-->' +
+              '</div>' +
+            '</div>',
+
+          templateUpdate: function(tmpl, eventName, delta){
+            tmpl.id.nodeValue = this.data.id;
+            tmpl.title.nodeValue = this.data.title;
+            tmpl.pubDate.nodeValue = this.data.pubDate.toFormat('%D/%M/%Y %H:%I:%S');
+            tmpl.content.innerHTML = this.data.content;
+            tmpl.category.nodeValue = this.data.category;
+          },
+
+          satelliteConfig: {
+            taglist: {
+              existsIf: Function.getter('data.tags'),
+              delegate: Function.$self,
+              instanceOf: basis.ui.Container.subclass({
+                template: '<div class="post-tag-list">Tags: <!--{childNodesHere}--></div>',
+                event_update: function(object, delta){
+                  basis.ui.Container.prototype.event_update.call(this, object, delta);
+                  if ('tags' in delta)
+                    this.setChildNodes(this.data.tags.split(/\s*,\s*/).map(function(tag){ return { data: { title: tag }} }));
+                },
+                init: function(config){
+                  basis.ui.Container.prototype.init.call(this, config);
+                  this.setChildNodes(this.data.tags.split(/\s*,\s*/).map(function(tag){ return { data: { title: tag }} }));
+                },
+                childClass: basis.ui('<span class="tag"><span class="tag__title">{this_data_title}</span><span class="tag__delim">, </span></span>')
+              })
+            }
+          }
+        }
+      });
+
+      var categoryList = new basis.ui.Container({
+        container: basis.dom.get('sidebar'),
+        dataSource: new basis.data.dataset.Split({
+          source: BlogPost.all,
+          rule: Function.getter('data.category')
+        }),
+        template:
+          '<div class="category-list">' +
+            '<h2 class="category-list__header">Category</h2>' +
+            '<ul{childNodesElement} class="category-list__content"/>' +
+          '</div>',
+
+        childClass: basis.ui('<li class="category-list-item" event-click="choose">{this_data_title}</li>', { action: { choose: function(){ blogThread.setSources([this.delegate]) } }})
+      });
+
+
+      var cloud = new basis.data.dataset.Cloud({
+        source: BlogPost.all,
+        rule: function(item){
+          return (item.data.tags || '').split(/\s*,\s*/);
+        }
+      });
+
+      var indexMap = new basis.data.index.IndexMap({
+        source: cloud,
+        indexes: {
+          itemCountMin: new basis.data.index.Min('itemCount'),
+          itemCountMax: new basis.data.index.Max('itemCount')
+        },
+        calcs: {
+          percentOfMax: function(data, indexes, obj){
+            return (obj.itemCount - indexes.itemCountMin)/(indexes.itemCountMax - indexes.itemCountMin);
+          }
+        },
+        listen: {
+          sourceObject: {
+            datasetChanged: function(sourceObject){
+              this.sourceMap_[sourceObject.eventObjectId].updated = true;
+              this.fireUpdate();
+            }
+          }
+        }
+      });
+
+      var tagCloud = new basis.ui.Container({
+        container: basis.dom.get('sidebar'),
+        id: 'tag-cloud',
+        dataSource: cloud,
+        localSorting: Function.getter('data.title'),
+        template:
+          '<div class="tag-cloud">' +
+            '<h2 class="tag-cloud__header">Tags</h2>' +
+            '<div{childNodesElement} class="tag-cloud__content"/>' +
+          '</div>',
+
+        childClass: {
+          template: 
+            '<span class="tag">{titleText} </span>',
+
+          templateUpdate: function(tmpl, eventName, delta){
+            tmpl.titleText.nodeValue = this.data.title;
+          },
+
+          satelliteConfig: {
+            indexes: {
+              hook: { rootChanged: true, update: false },
+              delegate: function(owner){
+                return indexMap.getMember(owner.root);
+              },
+              instanceOf: basis.data.DataObject.subclass({
+                active: true,
+                event_update: function(object, delta){
+                  basis.data.DataObject.prototype.event_update.call(this, object, delta);
+
+                  this.owner.element.style.fontSize = '{0:.2}%'.format(80 + 120 * this.data.percentOfMax);
+                }
+              })
+            }
+          }
+        }
+      });
+
+      basis.dom.get('xxx').innerHTML = new Date - t;
+    })
+  </script>
+</head>
+
+<body>
+  <div id="sidebar">
+    sidebar
+  </div>
+  <div id="content">
+    <h1>Basis.js blog</h1>
+    <span id="xxx"></span>
+  </div>
+</body>
+
+</html>

@@ -111,6 +111,7 @@
     .tag
     {
       -webkit-transition: font-size .5s;
+      margin: 0 1ex;
     }
   </style>
   <!--[if lt IE 7]>
@@ -126,9 +127,9 @@
   <![endif]-->
 
 
-  <!--<script type="text/javascript" src="../../basis-all.js"></script>-->
-  <script type="text/javascript" src="../../src/basis.js"></script>
-  <script type="text/javascript" src="../../src/package/all.js"></script>
+  <script type="text/javascript" src="../../basis-all.js"></script>
+  <!--<script type="text/javascript" src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../../src/package/all.js"></script>-->
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -155,11 +156,15 @@
       }
     });
 
-    BlogPost({ id: 1, tags: 'aaa,bbb,cc' });
-    BlogPost({ id: 2, tags: 'aaa,cc' });
-    BlogPost({ id: 3, tags: 'bbb,cc' });
-    BlogPost({ id: 4, tags: 'ddd' });
-    BlogPost({ id: 5, tags: 'aaa' });
+    BlogPost({ id: 1, tags: 'picture, basis, javascript' });
+    BlogPost({ id: 2, tags: 'picture, javascript' });
+    BlogPost({ id: 3, tags: 'basis, javascript' });
+    BlogPost({ id: 4, tags: 'tag' });
+    BlogPost({ id: 5, tags: 'picture' });
+    BlogPost({ id: 6, tags: 'basis, world' });
+    BlogPost({ id: 7, tags: 'javascript, basis' });
+    BlogPost({ id: 8, tags: 'hello' });
+    BlogPost({ id: 9, tags: 'world, basis' });
 
     var cloud = new basis.data.dataset.Cloud({
       source: BlogPost.all,
@@ -192,9 +197,10 @@
     var tagCloud = new basis.ui.Container({
       container: basis.dom.get('demo-container'),
       dataSource: cloud,
+      localSorting: Function.getter('data.title'),
       childClass: {
         template: 
-          '<span style="margin: 0 1ex" class="tag">{titleText} ({countText})</span>',
+          '<span class="tag">{titleText}<sub>{countText}</sub></span>',
 
         templateUpdate: function(tmpl, eventName, delta){
           tmpl.titleText.nodeValue = this.data.title;
@@ -220,16 +226,13 @@
               event_update: function(object, delta){
                 basis.data.DataObject.prototype.event_update.call(this, object, delta);
 
-                this.owner.element.style.fontSize = '{0:.2}%'.format(50 + 150 * this.data.percentOfMax);
+                this.owner.element.style.fontSize = '{0:.2}%'.format(80 + 120 * this.data.percentOfMax);
               }
             })
           }
         }
       }
     });
-
-    debugger;
-    BlogPost({ id: 5, tags: 'ddd' });
 
   </script>
 </body>
