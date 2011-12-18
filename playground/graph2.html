@@ -95,21 +95,30 @@
 
     var GraphThread = Node.subclass({
       canHaveChildren: true,
-      legendGetter: Function.getter('data.legend'),
-      colorGetter: Function.getter('data.color'),
-      valueGetterGetter: Function.getter('data.valueGetter'),
+      legendGetter: Function.getter('legend'),
+      colorGetter: Function.getter('color'),
+      valueGetterGetter: Function.getter('valueGetter'),
+      dataSourceGetter: Function.$null,
 
       getColor: function(){
-        return this.color || this.colorGetter(this);
+        return this.colorGetter(this);
       },
       getLegend: function(){
-        return this.legend || this.legendGetter(this)
+        return this.legendGetter(this)
       },
       getValueGetter: function(){
-        return this.valueGetter || this.valueGetterGetter(this);
+        return this.valueGetterGetter(this);
       },
       getValues: function(){
         return this.childNodes.map(this.getValueGetter());
+      },
+
+      init: function(config){
+        Node.prototype.init.call(this, config);
+
+        if (!this.dataSource)
+          this.setDataSource(this.dataSourceGetter(this));
+
       },
 
       childClass: {
@@ -129,12 +138,6 @@
     var Graph = Canvas.subclass({
       className: 'Graph',
       childClass: GraphThread,
-      childFactory: function(config){
-        if (config.delegate && config.delegate.data.dataSource)
-          config.dataSource = config.delegate.data.dataSource;
-
-        return new this.childClass(config);
-      },
 
       //valueGetter: Function.getter('data.value'),
       propGetter: Function.getter('data.prop'),
@@ -247,9 +250,9 @@
             context.fillText(thread.getLegend(), lx + LEGEND_BAR_SIZE + 5, ly + LEGEND_BAR_SIZE / 2 + 3);
           }
 
-          BOTTOM += 30; //legend margin-top;
         }
 
+        BOTTOM += 30; // space for xscale;
 
         // yscale
         context.lineWidth = 1;
@@ -288,29 +291,47 @@
 
         // xscale
         var lastLabelPos = 0;
+        var xLabelsX = [];
+        var maxSkipCount = 0;
+        var skipCount = 0;
+        var x;
+        var tw;
 
         context.font = '9px tahoma';
         context.textAlign = 'center';
 
-        context.beginPath();
-        for (var i = 1; i < cnt; i++)
+        for (var i = 0; i < cnt - 1; i++)
         {
-          var x = Math.round(LEFT + i * step) + .5;
+          x = xLabelsX[i] = Math.round(LEFT + (i + 1) * step) + .5;
+          tw = context.measureText(propValues[i]).width;
 
-          var tw = context.measureText(propValues[i - 1]).width;
-          if (lastLabelPos + 10 < (x - tw /2))
+          if (lastLabelPos + 10 < (x - tw / 2))
           {
-            context.fillText(propValues[i - 1], x, HEIGHT - BOTTOM + 15);
-            lastLabelPos = x + tw / 2;
+            maxSkipCount = Math.max(maxSkipCount, skipCount);
+            skipCount = 0;
 
-            context.moveTo(x, HEIGHT - BOTTOM + .5);
-            context.lineTo(x, HEIGHT - BOTTOM + 5);
+            lastLabelPos = x + tw / 2;
           }
           else
           {
-            context.moveTo(x, HEIGHT - BOTTOM + .5);
-            context.lineTo(x, HEIGHT - BOTTOM + 3);
+            skipCount++;
           }
+        }
+        skipCount = maxSkipCount ? maxSkipCount + 1 : 0;
+
+        var skip;
+
+        context.beginPath();
+        for (var i = 0; i < cnt - 1; i++)
+        {
+          x = xLabelsX[i];
+          skip = skipCount && (i % skipCount != 0);
+
+          if (!skip)
+            context.fillText(propValues[i], x, HEIGHT - BOTTOM + 15);
+
+          context.moveTo(x, HEIGHT - BOTTOM + .5);
+          context.lineTo(x, HEIGHT - BOTTOM + (skip ? 5 : 3));
         }
         context.lineWidth = 1;
         context.strokeStyle = 'black';
@@ -404,6 +425,10 @@
       }
     });
 
+    //
+    // Example
+    //
+
     var Value = new basis.entity.EntityType({
       name: 'Value',
       fields: {
@@ -474,7 +499,7 @@
       { Date: '2010-08', Count: 22715, Amount: 22899617.5211 },
       { Date: '2010-09', Count: 24833, Amount: 24641747.4133 }, /**/
       //{ Date: '2010-10', Count: 11337, Amount: 10062840.6528 }
-    ].repeat(1);
+    ];
 
     Value.all.sync(data);
 
@@ -491,8 +516,69 @@
       }
     }));
 
+    // terminals
 
-    var threadDataSource = new basis.data.Dataset({});
+    var Terminal = new basis.entity.EntityType({
+      name: 'Terminal',
+      fields: {
+        TerminalId: basis.entity.StringId
+      }
+    });
+
+    var TerminalReport = new basis.entity.EntityType({
+      name: 'TerminalReport',
+      fields: {
+        Date: String,
+        Terminal: Terminal,
+        Count: Number
+      },
+      aliases: {
+        TerminalId: 'Terminal'
+      },
+      groupings: {
+        Terminal: Function.getter('data.Terminal.getId()')
+      }
+    });
+
+
+    var terminalReportData = [
+      { TerminalId: 'africa1', Date: '2007-06', Count: 5363 },
+      { TerminalId: 'africa1', Date: '2007-07', Count: 11489 },
+      { TerminalId: 'africa1', Date: '2007-08', Count: 6303 },
+      { TerminalId: 'africa1', Date: '2007-09', Count: 5350 },
+      { TerminalId: 'africa1', Date: '2007-10', Count: 5774 },
+      { TerminalId: 'africa1', Date: '2007-11', Count: 14711 },
+      { TerminalId: 'africa1', Date: '2007-12', Count: 13431 },
+      { TerminalId: 'africa1', Date: '2008-01', Count: 12176 },
+      { TerminalId: 'africa1', Date: '2008-02', Count: 12446 },
+      { TerminalId: 'africa1', Date: '2008-03', Count: 12841 },
+      { TerminalId: 'africa1', Date: '2008-04', Count: 24076 },
+      { TerminalId: 'africa1', Date: '2008-05', Count: 21680 },
+      { TerminalId: 'africa1', Date: '2008-06', Count: 22715 },
+      { TerminalId: 'africa1', Date: '2008-07', Count: 24833 },/**/
+
+      { TerminalId: 'africa2', Date: '2007-06', Count: 6303 },
+      { TerminalId: 'africa2', Date: '2007-07', Count: 5350 },
+      { TerminalId: 'africa2', Date: '2007-08', Count: 5774 },
+      { TerminalId: 'africa2', Date: '2007-09', Count: 6995 },
+      { TerminalId: 'africa2', Date: '2007-10', Count: 7294 },
+      { TerminalId: 'africa2', Date: '2007-11', Count: 25811 },
+      { TerminalId: 'africa2', Date: '2007-12', Count: 27830 },
+      { TerminalId: 'africa2', Date: '2008-01', Count: 24076 },
+      { TerminalId: 'africa2', Date: '2008-02', Count: 21680 },
+      { TerminalId: 'africa2', Date: '2008-03', Count: 14711 },
+      { TerminalId: 'africa2', Date: '2008-04', Count: 13431 },
+      { TerminalId: 'africa2', Date: '2008-05', Count: 12176 },
+      { TerminalId: 'africa2', Date: '2008-06', Count: 12446 },
+      { TerminalId: 'africa2', Date: '2008-07', Count: 24076 }/**/
+    ]
+
+    terminalReportData.map(TerminalReport.reader).map(TerminalReport);
+
+
+
+
+    /*var threadDataSource = new basis.data.Dataset({});
     threadDataSource.set([
       {
         data: {
@@ -515,18 +601,16 @@
       {
         data: {
           dataSource: Amount.all,
-          valueGetter: Function.getter('data.Value'),
           legend: 'Сумма платежей'
         }
       },
       {
         data: {
           dataSource: Count.all,
-          valueGetter: Function.getter('data.Value'),
           legend: 'Количество платежей'
         }
       }
-    ].map(function(object){ return new basis.data.DataObject(object) }))
+    ].map(function(object){ return new basis.data.DataObject(object) }))*/
 
     var gg = new Graph({
       container: document.body,
@@ -539,10 +623,11 @@
       },
       
       // 1. single thread
-      /*childNodes: [
+      /*showLegend: false,
+      childNodes: [
         {
           valueGetter: Function.getter('data.Amount'),
-          legend: 'Amount',
+          legend: 'Сумма платежей',
           color: '#777',
           dataSource: Value.all,
           localSorting: Function.getter('data.Date')
@@ -552,27 +637,41 @@
       // 2. multi thread
       /*childNodes: [
         {
-          valueGetter: Function.getter('data.Amount'),
-          legend: 'Amount',
+          legend: 'Сумма платежей',
           color: '#777',
-          dataSource: Value.all,
-          localSorting: Function.getter('data.Date')
+          dataSource: Amount.all,
         },
         {
-          valueGetter: Function.getter('data.Count'),
-          legend: 'Count',
+          legend: 'Количество платежей',
           color: '#0055FF',
-          dataSource: Value.all,
-          localSorting: Function.getter('data.Date')
+          dataSource: Count.all,
         }
-      ],/**/
+      ],
+      childClass: {
+        valueGetter: Function.getter('data.Value'),
+        localSorting: Function.getter('data.Date')        
+      }/**/
 
       // 3. multi thread with dataSource control 
-      dataSource: threadDataSource2,//threadDataSource,
+      dataSource: Terminal.all,//threadDataSource,
       childClass: {
+        dataSourceGetter: function(object){
+          return TerminalReport.getGrouping('Terminal').getSubset(object.data.TerminalId);
+        },
+        legendGetter: function(object){
+          return object.data.TerminalId;
+        },
+        valueGetter: Function.getter('data.Count'),
         localSorting: Function.getter('data.Date')
       }/**/
     });
+
+
+    //
+    // Terminal Graph
+    //
+
+
 
     //document.body.appendChild(canvas.element);
     //canvas.draw();
