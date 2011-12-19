@@ -186,7 +186,8 @@
 
       if (readyState == STATE_DONE)
       {
-        TimeEventManager.remove(this, 'timeoutAbort');
+        //TimeEventManager.remove(this, 'timeoutAbort');
+        clearTimeout();
         // clean event handler
         xhr.onreadystatechange = Function.$undef;
 
@@ -353,7 +354,8 @@
         setRequestHeaders(xhr, requestData);
 
         // save transfer start point time & set timeout
-        TimeEventManager.add(this, 'timeoutAbort', Date.now() + this.timeout);
+        this.setTimeout(this.timeout);
+        //TimeEventManager.add(this, 'timeoutAbort', Date.now() + this.timeout);
 
         // prepare post body
         var postBody = requestData.postBody;
@@ -394,7 +396,8 @@
       {
         if (!this.isIdle())
         {
-          TimeEventManager.remove(this, 'timeoutAbort');
+          this.clearTimeout();
+          //TimeEventManager.remove(this, 'timeoutAbort');
           //this.xhr.onreadystatechange = Function.$undef;
           this.xhr.abort();
 
@@ -407,8 +410,24 @@
         }
       },
 
+      setTimeout: function(timeout){
+        if ('ontimeout' in this.xhr)
+        {
+          this.xhr.timeout = timeout;
+          this.xhr.ontimeout = this.timeoutAbort.bind(this);
+        }
+        else
+          TimeEventManager.add(this, 'timeoutAbort', Date.now() + timeout);
+      },
+
+      clearTimeout: function(){
+        if ('ontimeout' in this.xhr == false)
+          TimeEventManager.remove(this, 'timeoutAbort');
+      },
+
       timeoutAbort: function(){
-        this.proxy.event_timeout();
+        console.log('abort');
+        this.proxy.event_timeout(this);
         this.abort();
       },
 
