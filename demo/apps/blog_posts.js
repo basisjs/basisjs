@@ -1,3 +1,4 @@
+window.rawData = (function(){
   var words = (
                'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ' +
                'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. ' +
@@ -18,16 +19,24 @@
   };
 
 
-postList = [];
-catList = ['js', 'basis', 'style', 'usability'];
-for (var i = 1; i <= 5000; i++)
-  postList.push({
-    id: i,
-    pubDate: new Date((new Date()) - (50 - i) * 3600 * 24 * 1000).toISOString(),
-    title: genSentence(1, 10),
-    content: genSentence(10, 50),
-    category: catList[(i * 33847) % catList.length],
-    tags: Array.create(i % 6, function(idx){
-      return words[parseInt(Math.random() * words.length)];
-    }).join(',')
-  });
+  var result = [];
+  var catList = ['javascript', 'basis', 'style', 'usability', 'css', 'html', 'framework', 'browser'];
+  var COUNT = 27500;
+  var offset = 0;
+  for (var i = COUNT; i >= 0; i--)
+  {  
+    result.push({
+      id: i,
+      pubDate: new Date((new Date()) - offset).toISOString(),
+      title: genSentence(1, 10),
+      content: genSentence(10, 50),
+      category: catList[(i * 33847) % catList.length],
+      tags: Array.create(i % 6, function(idx){
+        return words[parseInt(Math.random() * words.length)];
+      }).join(',')
+    });
+    offset += 3600 * 24 * 1000/(1 + Math.random()*(COUNT/200));
+  }
+
+  return result;
+})();

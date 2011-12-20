@@ -242,6 +242,8 @@ basis.require('basis.html');
         if (this.template)
           this.template.clearInstance(this.tmpl, this);
 
+        this.content = null;
+        this.container = null;
         this.element = null;
         this.tmpl = null;
         this.childNodesElement = null;

@@ -25,18 +25,21 @@ basis.require('basis.ui');
 
   var namespace = 'basis.ui.label';
 
+
   //
   // import names
   //
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var Template = basis.html.Template;
 
   var getter = Function.getter;
   var createEvent = basis.EventObject.createEvent;
+  var event = basis.EventObject.event;
+  var classList = basis.cssom.classList;
 
   var STATE = basis.data.STATE;
+  var DELEGATE = basis.dom.wrapper.DELEGATE;
 
   var UINode = basis.ui.Node;
 
@@ -45,19 +48,23 @@ basis.require('basis.ui');
   // main part
   //
 
-  var stateTemplate = new Template(
-    '<div{element|content} class="Basis-Label-State"/>'
-  );
-  var processingTemplate = new Template(
-    '<div{element|content} class="Basis-Label-Processing"/>'
-  );
-  var errorTemplate = new Template(
-    '<div{element|content} class="Basis-Label-Error"/>'
-  );
+  var stateTemplate = '<div class="Basis-Label Basis-Label-State"/>';
+  var processingTemplate = '<div class="Basis-Label Basis-Label-Processing"/>';
+  var errorTemplate = '<div class="Basis-Label Basis-Label-Error"/>';
 
   //
   // NodeLabel
   //
+
+  var HANDLER = function(){
+    var visible = this.owner ? !!this.visibilityGetter(this.owner) : false;
+
+    if (this.visible !== visible)
+    {
+      this.visible = visible;
+      this.event_visibilityChanged(this);
+    }
+  };
 
  /**
   * Base class for all labels.
@@ -66,66 +73,22 @@ basis.require('basis.ui');
   var NodeLabel = Class(UINode, {
     className: namespace + '.NodeLabel',
 
-    cascadeDestroy: true,
-
-    show_: false,
-    visible_: false,
-    visibilityGetter: Function.$false,
-
-    insertPoint: DOM.INSERT_END,
-
+    template: '<div class="Basis-Label"/>',
     content: '[no text]',
 
-    event_delegateChanged: function(object, oldDelegate){
-      var newContainer = oldDelegate ? oldDelegate.element == this.container : !this.container;
-      if (newContainer)
-        this.setContainer(this.delegate && this.delegate.element);
-    },
-    event_visibilityChanged: createEvent('visibilityChanged'),
+    visibilityGetter: Function.$true,
+    visible: null,
 
-    init: function(config){
-      var container = this.container;
-      this.container = null;
+    event_visibilityChanged: createEvent('visibilityChanged', 'node') && function(node){
+      event.visibilityChanged.call(this, node);
 
-      UINode.prototype.init.call(this, config);
-
-      if (container)
-        this.container = container;
-
-      this.traceChanges_();
-
-      return config;
+      DOM.display(this.element, this.visible);
     },
 
-    traceChanges_: function(){
-      if (this.container && this.visible_)
-      {
-        if (this.container != this.element.parentNode)
-          DOM.insert(this.container, this.tmpl.element, this.insertPoint);
-      }
-      else
-        DOM.remove(this.element);
-    },
+    event_ownerChanged: function(node, oldOwner){
+      UINode.prototype.event_ownerChanged.call(this, node, oldOwner);
 
-    setContainer: function(container){
-      if (this.container != container)
-      {
-        this.container = container;
-        this.traceChanges_()
-      }
-    },
-    setVisibility: function(visible){
-      if (this.visible_ != visible)
-      {
-        this.visible_ = visible;
-        this.traceChanges_();
-        this.event_visibilityChanged(this.visible_);
-      }
-    },
-
-    destroy: function(){
-      delete this.container;
-      UINode.prototype.destroy.call(this);
+      HANDLER.call(this);
     }
   });
 
@@ -142,19 +105,14 @@ basis.require('basis.ui');
 
     template: stateTemplate,
 
-    init: function(config){
-      if (this.visibleStates && !this.visibilityGetter)
-      {
-        var map = {};
-        for (var state, i = 0; state = this.visibleStates[i++];)
-          map[state] = true;
-        this.visibilityGetter = getter(Function.$self, map);
+    listen: {
+      owner: {
+        stateChanged: HANDLER
       }
-
-      NodeLabel.prototype.init.call(this, config);
     }
   });
 
+  /*
   var ObjectState = Class(State, {
     className: namespace + '.ObjectState',
 
@@ -168,86 +126,135 @@ basis.require('basis.ui');
       State.prototype.event_stateChanged.call(this, object, oldState);
       this.setVisibility(this.visibilityGetter(this.state, oldState));
     }
-  });
+  });*/
 
  /**
   * Label that shows only when delegate node in processing state.
   * @class
   */
-  var Processing = Class(ObjectState, {
+  var Processing = Class(State, {
     className: namespace + '.Processing',
 
-    visibilityGetter: function(newState){ 
-      return newState == STATE.PROCESSING 
-    },
+    template: processingTemplate,
     content: 'Processing...',
-    template: processingTemplate
+
+    visibilityGetter: function(owner){
+      return owner.state == STATE.PROCESSING;
+    }
   });
-
-  var Error = Class(ObjectState, {
-    className: namespace + '.Error',
-
-    visibilityGetter: function(newState){ 
-      return newState == STATE.ERROR
-    },
-    content: 'Error',
-    template: errorTemplate
-  })
-
-  //
-  // Node dataSource state label
-  //
-
-  var DataSourceState_DataSourceHandler = {
-    stateChanged: function(object, oldState){
-      this.setVisibility(this.visibilityGetter(object.state, oldState));
-    }
-  };
-
-  var DataSourceState_DelegateHandler = {
-    dataSourceChanged: function(object, oldDataSource){
-      if (oldDataSource)
-        oldDataSource.removeHandler(DataSourceState_DataSourceHandler, this);
-
-      if (object.dataSource)
-      {
-        object.dataSource.addHandler(DataSourceState_DataSourceHandler, this);
-        DataSourceState_DataSourceHandler.stateChanged.call(this, object.dataSource, object.dataSource.state);
-      }
-    }
-  };
 
  /**
   * @class
   */
-  var DataSourceState = Class(State, {
+  var Error = Class(State, {
+    className: namespace + '.Error',
+
+    template: errorTemplate,
+    content: 'Error',
+
+    visibilityGetter: function(owner){
+      return owner.state == STATE.ERROR;
+    }
+  })
+
+  //
+  // Node dataSource labels
+  //
+
+ /**
+  * @class
+  */
+  var DataSourceLabel = Class(NodeLabel, {
     className: namespace + '.DataSourceState',
 
-    event_delegateChanged: function(object, oldDelegate){
-      State.prototype.event_delegateChanged.call(this, object, oldDelegate);
+    template: stateTemplate,
 
-      if (oldDelegate)
-        oldDelegate.removeHandler(DataSourceState_DelegateHandler, this);
-
-      if (this.delegate)
-      {
-        this.delegate.addHandler(DataSourceState_DelegateHandler, this);
-        DataSourceState_DelegateHandler.dataSourceChanged.call(this, this.delegate, oldDelegate && oldDelegate.dataSource);
+    listen: {
+      owner: {
+        dataSourceChanged: function(){
+          this.syncOwnerDataSource();
+        }
       }
     },
-    template: stateTemplate
+
+    ownerDataSource: null,
+
+    event_ownerChanged: function(node, oldOwner){
+      UINode.prototype.event_ownerChanged.call(this, node, oldOwner);
+
+      this.syncOwnerDataSource();
+    },
+
+    event_ownerDataSourceChanged: createEvent('ownerDataSourceChanged', 'node', 'oldOwnerDataSource') && function(node, oldOwnerDataSource){
+      event.ownerDataSourceChanged.call(this, node, oldOwnerDataSource);
+
+      HANDLER.call(this);
+    },
+
+    syncOwnerDataSource: function(){
+      var newOwnerDataSource = this.owner && this.owner.dataSource;
+
+      if (this.ownerDataSource != newOwnerDataSource)
+      {
+        var oldOwnerDataSource = this.ownerDataSource;
+        var listenHandler = this.listen.ownerDataSource;
+
+        this.ownerDataSource = newOwnerDataSource;
+
+        if (listenHandler)
+        {
+          if (oldOwnerDataSource)
+            oldOwnerDataSource.removeHandler(listenHandler, this);
+
+          if (newOwnerDataSource)
+            newOwnerDataSource.addHandler(listenHandler, this);
+        }
+
+        this.event_ownerDataSourceChanged(this, oldOwnerDataSource);
+      }
+    }
   });
 
  /**
-  * Label that shows only when delegate's dataSource in processing state.
+  * 
+  */
+  var DataSourceState = Class(DataSourceLabel, {
+    className: namespace + '.DataSourceState',
+
+    template: stateTemplate,
+
+    listen: {
+      ownerDataSource: {
+        stateChanged: HANDLER
+      }
+    }
+  });
+
+ /**
+  * Label that shows only when owner's dataSource in processing state.
   * @class
   */
   var DataSourceProcessing = Class(DataSourceState, {
     className: namespace + '.DataSourceProcessing',
 
-    visibilityGetter: function(newState){ return newState == STATE.PROCESSING },
     content: 'Processing...',
-    template: processingTemplate
+    template: processingTemplate,
+
+    visibilityGetter: function(owner){
+      return owner.dataSource && owner.dataSource.state == STATE.PROCESSING;
+    }
+  });
+
+ /**
+  * Label that shows only when owner's dataSource in error state.
+  * @class
+  */
+  var DataSourceError = Class(DataSourceState, {
+    className: namespace + '.DataSourceProcessing',
+
+    visibilityGetter: function(newState){ return newState == STATE.ERROR },
+    content: 'Error',
+    template: errorTemplate
   });
 
   //
@@ -287,23 +294,14 @@ basis.require('basis.ui');
   var ChildCount = Class(NodeLabel, {
     className: namespace + '.ChildCount',
 
-    event_delegateChanged: function(object, oldDelegate){
-      NodeLabel.prototype.event_delegateChanged.call(this, object, oldDelegate);
-
-      if (oldDelegate)
-        oldDelegate.removeHandler(ChildCount_DelegateHandler, this);
-
-      if (this.delegate)
-      {
-        this.delegate.addHandler(ChildCount_DelegateHandler, this);
-        ChildCount_DelegateHandler.dataSourceChanged.call(this, this.delegate);
+    listen: {
+      owner: {
+        childNodesModified: HANDLER
       }
-
-      CHILD_COUNT_FUNCTION.call(this);
     },
-    template: new Template(
-      '<div{element|content} class="Basis-CountLabel"/>'
-    )
+
+    template:
+      '<div class="Basis-Label Basis-Label-Count"/>'
   });
 
  /**
@@ -317,7 +315,7 @@ basis.require('basis.ui');
       return !childCount && state == STATE.READY;
     },
     content: 'Empty'
-  })
+  });
 
 
   //
@@ -327,13 +325,17 @@ basis.require('basis.ui');
   basis.namespace(namespace).extend({
     NodeLabel: NodeLabel,
     State: State,
-    ObjectState: ObjectState,
+    //ObjectState: ObjectState,
     Processing: Processing,
     Error: Error,
+
+    ChildCount: ChildCount,
+    IsEmpty: IsEmpty,
+
+    DataSourceLabel: DataSourceLabel,
     DataSourceState: DataSourceState,
     DataSourceProcessing: DataSourceProcessing,
-    ChildCount: ChildCount,
-    IsEmpty: IsEmpty
+    DataSourceError: DataSourceError
   });
 
 }(basis);

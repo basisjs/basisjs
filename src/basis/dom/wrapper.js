@@ -657,7 +657,7 @@ basis.require('basis.html');
         this.event_ownerChanged(this, oldOwner);
 
         if (this.autoDelegate == DELEGATE.OWNER)
-          this.setDelagate(owner);
+          this.setDelegate(owner);
       }
     },
 

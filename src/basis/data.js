@@ -61,8 +61,6 @@
   var STATE = {
     PRIORITY: [],
 
-    values_: {},
-
    /**
     * Registrate new state
     */
@@ -71,7 +69,7 @@
       var value = state.toLowerCase();
 
       this[name] = value;
-      STATE_EXISTS[value] = true;
+      STATE_EXISTS[value] = name;
 
       if (order)
       {
@@ -81,6 +79,10 @@
         else
           this.PRIORITY.splice(order, 0, value);
       }
+    },
+
+    getList: function(){
+      return Object.values(STATE_EXISTS);
     }
   };
 
@@ -1085,8 +1087,8 @@
       var items = this.items;
       if (items)
       {
-        this.set(items);
         this.items = null;
+        this.set(items);
       }
     },
 

@@ -10,28 +10,58 @@
   <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/style.css" media="screen" />
 
   <style type="text/css">
+    HTML,
     BODY
     {
-      border-left: 1px solid #E0E0E0;
-      border-right: 1px solid #E0E0E0;
+      background: #F0F0F0;
+      heigh4t: 100%;
+    }
+    BODY
+    {
+      padding: 20px;
+    }
+
+    #page
+    {
+      overflow: hidden;
       width: 800px;
-      margin: 0 auto;
-      padding: 10px;
+      margin: 0px auto 0;
+      border: 1px solid #E0E0E0;
+      background: white;
     }
     #sidebar
     {
       float: right;
       height: 100%;
       width: 200px;
-      border: 1px solid black;
+      border-left: 1px solid #E0E0E0;
       padding: 10px;
+      margin-left: 10px
     }
     #content
     {
       overflow: hidden;
+      padding: 10px;
+    }
+
+    .Basis-Paginator
+    {
+      float: right;
+    }
+    .Basis-Paginator .Basis-PaginatorNode
+    {
+      width: 4ex;
+    }
+
+    .post-category__link
+    {
+      color: blue;
+      cursor: pointer;
+      text-decoration: underline;
     }
 
     .category-list__header,
+    .archive-list__header,
     .tag-cloud__header
     {
       font-size: 100%;
@@ -47,10 +77,51 @@
       list-style: none;
       margin: 0;
       padding: 0;
+      color: blue;
       text-decoration: underline;
       cursor: pointer;
     }
     .category-list-item:hover
+    {
+      color: red;
+    }
+
+    .archive-list-group
+    {
+      list-style: none;
+    }
+    .archive-list-group__title
+    {
+      margin-left: -16px;
+      padding-left: 16px;
+      cursor: pointer;
+    }
+    .archive-list-group__title:hover
+    {
+      background-color: #F0F0F0;
+    }
+    .archive-list-group__content
+    {
+      padding: 0 0 1em 20px;
+      margin: 0;
+    }
+    .archive-list-group_collapsed .archive-list-group__content
+    {
+      display: none;
+    }
+    .archive-list-item__link
+    {
+      color: blue;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .archive-list-item
+    {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .archive-list-item__link:hover
     {
       color: red;
     }
@@ -61,7 +132,7 @@
     }
     .tag-cloud__content .tag
     {
-      margin: 0 8px;
+      margin-right: 8px;
     }
 
     .post-tag-list .tag__title
@@ -76,14 +147,15 @@
     }
   </style>
 
-  <script src="../../../basis-all.js"></script>
-  <script src="posts.js"></script>
+  <script src="../../basis-all.js"></script>
+  <script src="posts-5000.js"></script>
   <script>
-    basis.dom.event.onLoad(function(){
-      var BlogPost = new basis.entity.EntityType({
+    basis.dom.event.onLoad(runApp = function(){
+      var times = [new Date];
+      BlogPost = new basis.entity.EntityType({
         name: 'BlogPost',
         fields: {
-          id: basis.entity.StringId,
+          id: basis.entity.IntId,
           pubDate: Date.fromISOString,
           title: String,
           content: String,
@@ -94,13 +166,17 @@
         }
       });
 
-      BlogPost.all.sync(postList);
-      t = new Date();
+      BlogPost.all.sync(window.rawData);
+      times.push([new Date, 'data load']);
+
+      //console.profile();
+
+      var POST_PER_PAGE = 15;
 
       var blogThread = new basis.data.dataset.Merge({ sources: [BlogPost.all] });
       var blogThreadPage = new basis.data.dataset.Slice({
         source: blogThread,
-        limit: 10,
+        limit: POST_PER_PAGE,
         rule: Function.getter('data.pubDate * -1', Number),
         listen: {
           source: {
@@ -111,25 +187,29 @@
         }
       });
 
+      times.push([new Date, 'thread slice']);
+
       var paginator = new basis.ui.paginator.Paginator({
         container: basis.dom.get('content'),
         delegate: blogThread,
+        pageCount: Math.ceil(blogThread.itemCount / POST_PER_PAGE),
         listen: {
           delegate: {
             /*sourcesChanged: {
               this.setProperties()
             },*/
             datasetChanged: function(ds){
-              this.setProperties(Math.ceil(ds.itemCount / 10), 10, 0);
+              this.setProperties(Math.ceil(ds.itemCount / POST_PER_PAGE), 10, 0);
             }
           }
         }
       });
 
-      var blogList = new basis.ui.Container({
+      var postList = new basis.ui.Container({
         container: basis.dom.get('content'),
         dataSource: blogThreadPage,
-        localSorting: Function.getter('data.pubDate * -1', Number),
+        localSorting: Function.getter('data.pubDate'),
+        localSortingDesc: true,
         childClass: {
           template: 
             '<div>' +
@@ -137,7 +217,7 @@
               '<span class="pubDate">{pubDate}</span>' +
               '<div{content} class="content"/>' +
               '<div class="footer">' +
-                '<span class="category">Category: <a href="#" event-click="filterByCategory">{category}</a></span>' +
+                '<span class="post-category">Category: <span class="post-category__link" event-click="filterByCategory">{category}</span></span>' +
                 '<!--{taglist}-->' +
               '</div>' +
             '</div>',
@@ -148,6 +228,12 @@
             tmpl.pubDate.nodeValue = this.data.pubDate.toFormat('%D/%M/%Y %H:%I:%S');
             tmpl.content.innerHTML = this.data.content;
             tmpl.category.nodeValue = this.data.category;
+          },
+
+          action: {
+            filterByCategory: function(){
+              blogThread.setSources([postByCategory.getSubset(this.data.category)]);
+            }
           },
 
           satelliteConfig: {
@@ -172,12 +258,16 @@
         }
       });
 
+      times.push([new Date, 'post list']);
+
+      var postByCategory = new basis.data.dataset.Split({
+        source: BlogPost.all,
+        rule: Function.getter('data.category')
+      });
+
       var categoryList = new basis.ui.Container({
         container: basis.dom.get('sidebar'),
-        dataSource: new basis.data.dataset.Split({
-          source: BlogPost.all,
-          rule: Function.getter('data.category')
-        }),
+        dataSource: postByCategory,
         template:
           '<div class="category-list">' +
             '<h2 class="category-list__header">Category</h2>' +
@@ -187,6 +277,77 @@
         childClass: basis.ui('<li class="category-list-item" event-click="choose">{this_data_title}</li>', { action: { choose: function(){ blogThread.setSources([this.delegate]) } }})
       });
 
+
+      times.push([new Date, 'category list']);
+
+
+      var MONTH = 'January February March April May June July August September October November December'.qw();
+      var archiveList = new basis.ui.Container({
+        container: basis.dom.get('sidebar'),
+        dataSource: new basis.data.dataset.Split({
+          source: BlogPost.all,
+          rule: function(post){ // Function.getter('data.pubDate.toFormat("%Y%M")')
+            var date = post.data.pubDate;
+            var year = date.getFullYear();
+            var month = date.getMonth();
+            return year + (month > 9 ? '' + month : '0' + month);
+          }
+        }),
+        localSorting: Function.getter('data.id'),
+        localSortingDesc: true,
+        localGrouping: {
+          groupGetter: Function.getter('data.id.substr(0,4)'),
+          localSorting: Function.getter('data.id'),
+          localSortingDesc: true,
+          childClass: {
+            template:
+              '<li class="archive-list-group">' +
+                '<div class="archive-list-group__title" event-click="toggle">{title}</div>' +
+                '<ul{childNodesElement} class="archive-list-group__content"/>' +
+              '</li>',
+
+            templateUpdate: function(tmpl){
+              tmpl.title.nodeValue = this.data.id;
+            },
+
+            action: {
+              toggle: function(){
+                basis.cssom.classList(this.element).toggle('archive-list-group_collapsed');
+              }
+            }
+          }
+        },
+        template:
+          '<div class="archive-list">' +
+            '<h2 class="archive-list__header">Archive</h2>' +
+            '<ul{childNodesElement} class="category-list__content"/>' +
+          '</div>',
+
+        childClass: {
+          template:
+            '<li class="archive-list-item">' +
+              '<span class="archive-list-item__link" event-click="choose">{title}</span> ({count})' +
+            '</li>',
+          templateUpdate: function(tmpl, eventName, delta){
+            tmpl.title.nodeValue = MONTH[+this.data.id.substr(4, 2)] + ' ' + this.data.id.substr(0, 4)
+            tmpl.count.nodeValue = this.delegate.itemCount;
+          },
+          action: {
+            choose: function(){
+              blogThread.setSources([this.delegate]);
+            }
+          },
+          listen: {
+            delegate: {
+              datasetChanged: function(){
+                this.tmpl.count.nodeValue = this.delegate.itemCount;
+              }
+            }
+          }
+        }
+      });
+
+      times.push([new Date, 'archive list']);
 
       var cloud = new basis.data.dataset.Cloud({
         source: BlogPost.all,
@@ -223,7 +384,7 @@
         localSorting: Function.getter('data.title'),
         template:
           '<div class="tag-cloud">' +
-            '<h2 class="tag-cloud__header">Tags</h2>' +
+            '<h2 class="tag-cloud__header">Tags cloud</h2>' +
             '<div{childNodesElement} class="tag-cloud__content"/>' +
           '</div>',
 
@@ -254,18 +415,36 @@
         }
       });
 
-      basis.dom.get('xxx').innerHTML = new Date - t;
-    })
+      times.push([new Date, 'tag cloud']);
+
+      var sdate = times.shift();
+
+      var timelist = basis.dom.get('timelist');
+      var lasttime = sdate;
+      for (var i = 0; i < times.length; i++)
+      {
+        var t = times[i];
+        timelist.appendChild(basis.dom.createElement('LI', (t[0] - sdate) + 'ms, self: ' + (t[0] - (lasttime)) + ' [' + t[1] + ']'));
+        lasttime = t[0];
+      }
+      timelist.appendChild(basis.dom.createElement('B', lasttime - sdate))
+
+      //console.profileEnd();
+
+//      basis.dom.get('asd').src= 'data:text/html;plain,' + JSON.stringify(postList);
+    });
   </script>
 </head>
 
 <body>
-  <div id="sidebar">
-    sidebar
-  </div>
-  <div id="content">
-    <h1>Basis.js blog</h1>
-    <span id="xxx"></span>
+  <div id="page">
+    <!--<iframe id="asd" src="about:blank"></iframe>-->
+    <button onclick="runApp()">runApp</button>
+    <div id="sidebar"></div>
+    <div id="content">
+      <h1>Basis.js blog</h1>
+      <ul id="timelist"></ul>
+    </div>
   </div>
 </body>
 
