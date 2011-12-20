@@ -21,7 +21,7 @@ window.rawData = (function(){
 
   var result = [];
   var catList = ['javascript', 'basis', 'style', 'usability', 'css', 'html', 'framework', 'browser'];
-  var COUNT = 27500;
+  var COUNT = 500;
   var offset = 0;
   for (var i = COUNT; i >= 0; i--)
   {  
@@ -29,9 +29,9 @@ window.rawData = (function(){
       id: i,
       pubDate: new Date((new Date()) - offset).toISOString(),
       title: genSentence(1, 10),
-      content: genSentence(10, 50),
+      content: genSentence(15, 150),
       category: catList[(i * 33847) % catList.length],
-      tags: Array.create(i % 6, function(idx){
+      tags: Array.create(1 + i % 6, function(idx){
         return words[parseInt(Math.random() * words.length)];
       }).join(',')
     });

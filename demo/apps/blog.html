@@ -18,23 +18,33 @@
     }
     BODY
     {
-      padding: 20px;
+      padding: 20px 0;
+    }
+
+    A
+    {
+      color: #06D;
     }
 
     #page
     {
-      overflow: hidden;
-      width: 800px;
+      min-width: 600px;
+      max-width: 1000px;
       margin: 0px auto 0;
-      border: 1px solid #E0E0E0;
       background: white;
+    }
+    #page-wrapper
+    {
+      border: 1px solid #E0E0E0;
+      margin: 0 -1px;
+      overflow: hidden;
     }
     #sidebar
     {
       float: right;
       height: 100%;
-      width: 200px;
-      border-left: 1px solid #E0E0E0;
+      width: 25%;
+      min-width: 180px;
       padding: 10px;
       margin-left: 10px
     }
@@ -42,6 +52,10 @@
     {
       overflow: hidden;
       padding: 10px;
+    }
+    #footer
+    {
+      height: 2em;
     }
 
     .Basis-Paginator
@@ -53,24 +67,88 @@
       width: 4ex;
     }
 
-    .post-category__link
+    #blog-thread
     {
-      color: blue;
+      clear: both;
+    }
+    .blog-post
+    {
+      margin: 1.5em 0 2em;
+    }
+    .blog-post__title
+    {
+      margin: 0;
+      font-size: 160%;
+      color: #2A80EE;
+      font-weight: normal; 
+      font-family: 'Segoe UI', Arial;
+      text-decoration: underline;
+      cursor: pointer;
+      display: inline;
+    }
+    .blog-post__title:hover
+    {
+      color: red;
+    }
+    .blog-post__pubDate
+    {
+      font-size: 80%;
+      color: #666;
+      display: block;
+      margin: .5em 0;
+    }
+    .blog-post__content
+    {
+      margin: .75em 0;
+      color: #333;
+      text-transform: capitalize;
+    }
+    .blog-post__footer
+    {
+      font-size: 90%;
+      border-top: 1px solid #F8F8F8;
+      padding-top: .2em;
+    }
+    .blog-post__category
+    {
+      min-width: 24ex;
+      padding-right: 2ex;
+      white-space: nowrap;
+      float: left;
+    }
+    .blog-post__category-link
+    {
+      color: #2A80EE;
       cursor: pointer;
       text-decoration: underline;
+    }
+    .blog-post__tag-list .tag__title
+    {
+      text-decoration: underline;
+      color: #2A80EE;
+      cursor: pointer;
+    }
+    .blog-post__tag-list .tag:last-child .tag__delim
+    {
+      display: none;
     }
 
     .category-list__header,
     .archive-list__header,
     .tag-cloud__header
     {
-      font-size: 100%;
-      border-bottom: 1px solid #888;
+      font-size: 140%;
+      background: #2A80EE;
+      color: white;
+      margin: 0 -0px;
+      padding: .2em 10px .3em;
+      font-weight: normal;
+      font-family: 'Segoe UI', Arial;
     }
     .category-list__content
     {
       margin: 0;
-      padding: 0 0 0 2ex;
+      padding: 1em 1ex 1em 2ex;
     }
     .category-list-item
     {
@@ -86,6 +164,11 @@
       color: red;
     }
 
+    .archive-list__content
+    {
+      padding: 1em 0 1em 16px;
+      margin: 0;
+    }
     .archive-list-group
     {
       list-style: none;
@@ -93,8 +176,9 @@
     .archive-list-group__title
     {
       margin-left: -16px;
-      padding-left: 16px;
+      padding: .2em 0 .2em 16px;
       cursor: pointer;
+      background: url(arrow_down.png) no-repeat 6px center;
     }
     .archive-list-group__title:hover
     {
@@ -102,8 +186,13 @@
     }
     .archive-list-group__content
     {
-      padding: 0 0 1em 20px;
+      padding: 0 0 1em 2ex;
       margin: 0;
+    }
+    .archive-list-group_collapsed .archive-list-group__title
+    {
+      background-image: url(arrow_right.png);
+      background-position: 8px center;
     }
     .archive-list-group_collapsed .archive-list-group__content
     {
@@ -129,26 +218,23 @@
     .tag-cloud__content
     {
       text-align: center;
+      padding: 1em 0;
     }
-    .tag-cloud__content .tag
+    .cloud-tag
     {
       margin-right: 8px;
-    }
-
-    .post-tag-list .tag__title
-    {
-      text-decoration: underline;
-      color: blue;
       cursor: pointer;
     }
-    .post-tag-list .tag:last-child .tag__delim
+    .cloud-tag:hover
     {
-      display: none;
+      color: red;
     }
+
+
   </style>
 
   <script src="../../basis-all.js"></script>
-  <script src="posts-5000.js"></script>
+  <script src="blog_posts.js"></script>
   <script>
     basis.dom.event.onLoad(runApp = function(){
       var times = [new Date];
@@ -210,14 +296,15 @@
         dataSource: blogThreadPage,
         localSorting: Function.getter('data.pubDate'),
         localSortingDesc: true,
+        id: 'blog-thread',
         childClass: {
           template: 
-            '<div>' +
-              '<h2>#{id}. {title}</h2>' +
-              '<span class="pubDate">{pubDate}</span>' +
-              '<div{content} class="content"/>' +
-              '<div class="footer">' +
-                '<span class="post-category">Category: <span class="post-category__link" event-click="filterByCategory">{category}</span></span>' +
+            '<div class="blog-post">' +
+              '<h2 class="blog-post__title">{title}</h2>' +
+              '<span class="blog-post__pubDate">[#{id}] {pubDate}</span>' +
+              '<div{content} class="blog-post__content"/>' +
+              '<div class="blog-post__footer">' +
+                '<span class="blog-post__category">Category: <span class="blog-post__category-link" event-click="filterByCategory">{category}</span></span>' +
                 '<!--{taglist}-->' +
               '</div>' +
             '</div>',
@@ -241,7 +328,7 @@
               existsIf: Function.getter('data.tags'),
               delegate: Function.$self,
               instanceOf: basis.ui.Container.subclass({
-                template: '<div class="post-tag-list">Tags: <!--{childNodesHere}--></div>',
+                template: '<div class="blog-post__tag-list">Tags: <!--{childNodesHere}--></div>',
                 event_update: function(object, delta){
                   basis.ui.Container.prototype.event_update.call(this, object, delta);
                   if ('tags' in delta)
@@ -251,7 +338,16 @@
                   basis.ui.Container.prototype.init.call(this, config);
                   this.setChildNodes(this.data.tags.split(/\s*,\s*/).map(function(tag){ return { data: { title: tag }} }));
                 },
-                childClass: basis.ui('<span class="tag"><span class="tag__title">{this_data_title}</span><span class="tag__delim">, </span></span>')
+                childClass: basis.ui(
+                  '<span class="tag"><span class="tag__title" event-click="pick">{this_data_title}</span><span class="tag__delim">, </span></span>',
+                  {
+                    action: {
+                      pick: function(){
+                        blogThread.setSources([cloud.keyMap.get(this.data.title)]);
+                      }
+                    }
+                  }
+                )
               })
             }
           }
@@ -320,7 +416,7 @@
         template:
           '<div class="archive-list">' +
             '<h2 class="archive-list__header">Archive</h2>' +
-            '<ul{childNodesElement} class="category-list__content"/>' +
+            '<ul{childNodesElement} class="archive-list__content"/>' +
           '</div>',
 
         childClass: {
@@ -390,10 +486,16 @@
 
         childClass: {
           template: 
-            '<span class="tag">{titleText} </span>',
+            '<span class="cloud-tag" event-click="pick">{titleText} </span>',
 
           templateUpdate: function(tmpl, eventName, delta){
             tmpl.titleText.nodeValue = this.data.title;
+          },
+
+          action: {
+            pick: function(){
+              blogThread.setSources([this.delegate]);
+            }
           },
 
           satelliteConfig: {
@@ -438,14 +540,17 @@
 
 <body>
   <div id="page">
-    <!--<iframe id="asd" src="about:blank"></iframe>-->
-    <button onclick="runApp()">runApp</button>
-    <div id="sidebar"></div>
-    <div id="content">
-      <h1>Basis.js blog</h1>
-      <ul id="timelist"></ul>
+    <div id="page-wrapper">
+      <!--<iframe id="asd" src="about:blank"></iframe>-->
+      <button onclick="runApp()">runApp</button>
+      <div id="sidebar"></div>
+      <div id="content">
+        <h1>Basis.js blog</h1>
+        <ul id="timelist"></ul>
+      </div>
     </div>
   </div>
+  <div id="footer"></div>
 </body>
 
 </html>
