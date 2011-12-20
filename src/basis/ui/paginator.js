@@ -58,7 +58,7 @@ basis.require('basis.ui');
   }
 
   function updateSelection(paginator){
-    var node = paginator.childNodes.search(paginator.activePage_, 'data.pageNumber');
+    var node = paginator.childNodes.search(paginator.activePage, 'data.pageNumber');
     if (node)
       node.select();
     else
@@ -113,7 +113,7 @@ basis.require('basis.ui');
     },
     move: function(config){
       var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
-      this.setSpanStartPage(Math.round(pos * (this.pageCount_ - this.pageSpan_)));
+      this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
       this.tmpl.scrollTrumb.style.left = percent(pos);
     },
     over: function(config){
@@ -149,7 +149,7 @@ basis.require('basis.ui');
       jumpTo: function(actionName, event, node){
         var scrollbar = this.tmpl.scrollbar;
         var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
-        this.setSpanStartPage(Math.floor(pos * this.pageCount_) - Math.floor(this.pageSpan_ / 2));
+        this.setSpanStartPage(Math.floor(pos * this.pageCount) - Math.floor(this.pageSpan / 2));
       },
       scroll: function(event){
         var delta = Event.wheelDelta(event);
@@ -161,16 +161,16 @@ basis.require('basis.ui');
     event_activePageChanged: createEvent('activePageChanged'),
     event_pageCountChanged: createEvent('pageCountChanged'),
 
-    pageSpan_: 0,
-    pageCount_: 0,
-    activePage_: 0,
+    pageSpan: 0,
+    pageCount: 0,
+    activePage: 1,
     spanStartPage_: -1,
 
     init: function(config){
       UIControl.prototype.init.call(this, config);
 
-      this.setProperties(config.pageCount || 0, config.pageSpan);
-      this.setActivePage(Math.max(config.activePage - 1, 0), true);
+      this.setProperties(this.pageCount || 0, this.pageSpan);
+      this.setActivePage(Math.max(this.activePage - 1, 0), true);
 
       this.scrollbarDD = new DragDropElement({
         element: this.tmpl.scrollTrumb,
@@ -188,9 +188,9 @@ basis.require('basis.ui');
       pageCount = pageCount || 1;
       pageSpan = Math.min(pageSpan || 10, pageCount);
 
-      if (pageSpan != this.pageSpan_)
+      if (pageSpan != this.pageSpan)
       {
-        this.pageSpan_ = pageSpan;
+        this.pageSpan = pageSpan;
         this.setChildNodes(Array.create(pageSpan, function(idx){
           return {
             data: {
@@ -200,9 +200,9 @@ basis.require('basis.ui');
         }));
       }
 
-      if (this.pageCount_ != pageCount)
+      if (this.pageCount != pageCount)
       {
-        this.pageCount_ = pageCount;
+        this.pageCount = pageCount;
 
         var rangeWidth = 1 / pageCount;
         var activePageMarkWidth = rangeWidth / (1 - rangeWidth);
@@ -210,7 +210,7 @@ basis.require('basis.ui');
         this.tmpl.activePageMark.style.width = percent(activePageMarkWidth);
         this.tmpl.activePageMarkWrapper.style.width = percent(1 - rangeWidth);
 
-        this.event_pageCountChanged(this.pageCount_);
+        this.event_pageCountChanged(this.pageCount);
       }
 
       // spanWidth : (1 - spanWidth)
@@ -227,27 +227,27 @@ basis.require('basis.ui');
       classList(this.element).bool('Basis-Paginator-WithNoScroll', pageSpan >= pageCount);
 
       this.setSpanStartPage(this.spanStartPage_);
-      this.setActivePage(arguments.length == 3 ? activePage : this.activePage_);
+      this.setActivePage(arguments.length == 3 ? activePage : this.activePage);
     },
     setActivePage: function(newActivePage, spotlightActivePage){
-      newActivePage = newActivePage.fit(0, this.pageCount_ - 1);
-      if (newActivePage != this.activePage_)
+      newActivePage = newActivePage.fit(0, this.pageCount - 1);
+      if (newActivePage != this.activePage)
       {
-        this.activePage_ = Number(newActivePage);
+        this.activePage = Number(newActivePage);
         updateSelection(this);
         this.event_activePageChanged(newActivePage);
       }
 
-      this.tmpl.activePageMark.style.left = percent(newActivePage / Math.max(this.pageCount_ - 1, 1));
+      this.tmpl.activePageMark.style.left = percent(newActivePage / Math.max(this.pageCount - 1, 1));
 
       if (spotlightActivePage)
-        this.spotlightPage(this.activePage_);
+        this.spotlightPage(this.activePage);
     },
     spotlightPage: function(pageNumber){
-      this.setSpanStartPage(pageNumber - Math.round(this.pageSpan_ / 2) + 1);
+      this.setSpanStartPage(pageNumber - Math.round(this.pageSpan / 2) + 1);
     },
     setSpanStartPage: function(pageNumber){
-      pageNumber = pageNumber.fit(0, this.pageCount_ - this.pageSpan_);
+      pageNumber = pageNumber.fit(0, this.pageCount - this.pageSpan);
       if (pageNumber != this.spanStartPage_)
       {
         this.spanStartPage_ = pageNumber;
@@ -258,7 +258,7 @@ basis.require('basis.ui');
         updateSelection(this);
       }
 
-      this.tmpl.scrollTrumb.style.left = percent((pageNumber / Math.max(this.pageCount_ - this.pageSpan_, 1)).fit(0, 1));
+      this.tmpl.scrollTrumb.style.left = percent((pageNumber / Math.max(this.pageCount - this.pageSpan, 1)).fit(0, 1));
     },
 
     destroy: function(){

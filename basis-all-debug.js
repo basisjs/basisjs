@@ -32,7 +32,6 @@
 //   src/basis/ui/calendar.js
 //   src/basis/ui/form.js
 //   src/basis/ui/scroller.js
-//   src/basis/ui/toc.js
 //   src/basis/ui/slider.js
 //   src/basis/ui/resizer.js
 //   src/basis/ui/paginator.js
@@ -14500,6 +14499,8 @@ basis.require('basis.data');
       var inserted = [];
       var deleted = [];
 
+      var subsetDelta = {};
+
       if (array = delta.inserted)
         for (var i = 0, sourceObject; sourceObject = array[i]; i++)
         {
@@ -14518,9 +14519,17 @@ basis.require('basis.data');
 
               if (subset)
               {
-                subset.event_datasetChanged(subset, { inserted: [sourceObject] });
                 subsetId = subset.eventObjectId;
                 sourceObjectInfo.list[subsetId] = subset;
+
+                //subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+                if (!subsetDelta[subsetId])
+                  subsetDelta[subsetId] = {
+                    subset: subset,
+                    inserted: []
+                  };
+
+                subsetDelta[subsetId].inserted.push(sourceObject);
 
                 if (!memberMap[subsetId])
                 {
@@ -14559,6 +14568,12 @@ basis.require('basis.data');
           if (listenHandler)
             sourceObject.removeHandler(listenHandler, this);
         }
+
+      for (var subsetId in subsetDelta)
+      {
+        var subsetConfig = subsetDelta[subsetId]
+        subsetConfig.subset.event_datasetChanged(subsetConfig.subset, { inserted: subsetConfig.inserted });
+      }
 
       if (delta = getDelta(inserted, deleted))
         this.event_datasetChanged(this, delta);
@@ -16633,7 +16648,7 @@ basis.require('basis.data.dataset');
         this.fieldHandlers_ = NULL_INFO;
 
         // delete from index
-        if (this.__id__)
+        if (this.__id__ != null)
           updateIndex(this, this.__id__, null);
 
         // inherit
@@ -25329,356 +25344,6 @@ basis.require('basis.ui');
 
 
 //
-// src/basis/ui/toc.js
-//
-
-/*!
- * Basis javasript library 
- * http://code.google.com/p/basis-js/
- *
- * @copyright
- * Copyright (c) 2006-2011 Roman Dvornov.
- *
- * @license
- * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
- */
-
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
-basis.require('basis.html');
-basis.require('basis.cssom');
-
-//
-// TODO: migrate to new basis (remove behaviour, events and so on)
-//
-
-!function(basis){
-
-  'use strict';
-
- /**
-  * @namespace basis.ui.toc
-  */  
-
-  var namespace = 'basis.ui.toc';
-
-
-  //
-  // import names
-  //
-    
-  var Class = basis.Class;
-  var DOM = basis.dom;
-  var Event = basis.dom.event;
-  var cssom = basis.cssom;
-
-  var nsWrappers = basis.dom.wrapper;
-  var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
-  var Modificator = basis.animation.Modificator;
-
-
-  //
-  // main part
-  //
-
- /**
-  * @class
-  */
-  var TocControlItemHeader = Class(UINode, {
-    className: namespace + '.TocControlItemHeader',
-    template:
-      '<div class="TocControl-Item-Header" event-click="scrollTo">' +
-        '<span>{titleText}</span>' +
-      '</div>',
-
-    action: {
-      scrollTo: function(){
-        if (this.owner && this.owner.parentNode)
-          this.owner.parentNode.scrollToNode(this.owner);
-      }
-    },
-
-    templateUpdate: function(tmpl, eventName, delta){
-      tmpl.titleText.nodeValue = this.titleGetter(this) || '[no title]';
-    },
-
-    titleGetter: Function.getter('data.title')
-  });
-
-  var TocControlItem = Class(UIContainer, {
-    className: namespace + '.TocControlItem',
-    template:
-      '<div class="TocControl-Item">' +
-        '<span{header}/>' +
-        '<div{content|childNodesElement} class="TocControl-Item-Content"/>' +
-      '</div>',
-
-    satelliteConfig: {
-      header: {
-        delegate: Function.$self,
-        instanceOf: TocControlItemHeader
-      }
-    }
-  });
-
-  var MW_SUPPORTED = true;
-  var TocControlHeaderList = Class(UIContainer, {
-    className: namespace + '.TocControlHeaderList',
-    behaviour: {
-      click: function(event, node){
-        if (node)
-          node.delegate.parentNode.scrollToNode(node.delegate);
-      }
-    },
-    init: function(config){
-      this.inherit(config);
-
-      this.document = this;
-
-      if (MW_SUPPORTED)
-      {
-        Event.addHandler(this.element, 'mousewheel', function(event){
-          //console.log('mousewheel')
-          try {
-            this.owner.content.dispatchEvent(event);
-          } catch(e) {
-            MW_SUPPORTED = false;
-            Event.removeHandler(this.element, 'mousewheel');
-          }
-        }, this);
-      }
-
-      this.addEventListener('click');
-    }
-  });
-
- /**
-  * @class
-  */
-  var TocControl = Class(nsWrappers.Control, {
-    className: namespace + '.Control',
-    childClass: TocControlItem,
-    template:
-      '<div{element} class="TocControl">' +
-        '<div{content|childNodesElement} class="TocControl-Content"/>' +
-      '</div>',
-
-    behaviour: {
-      childNodesModified: function(object, delta){
-        this.recalc();
-      }
-    },
-
-    clientHeight_: -1,
-    scrollHeight_: -1,
-    scrollTop_: -1,
-    lastTopPoint: -1,
-    lastBottomPoint: -1,
-    isFit: true,
-
-    init: function(config){
-      this.inherit(Object.complete({ childNodes: null }, config));
-
-      var headerClass = this.childClass.prototype.satelliteConfig.header.instanceOf;
-      this.meterHeader = new headerClass({
-        container: this.element,
-        data: { title: 'meter' }
-      });
-      this.meterElement = this.meterHeader.element;
-      cssom.setStyle(this.meterElement, {
-        position: 'absolute',
-        visibility: 'hidden'
-      });
-
-      this.childNodesDataset = new nsWrappers.ChildNodesDataset(this);
-
-      this.header = new TocControlHeaderList({
-        container: this.element,
-        childClass: headerClass,
-        collection: this.childNodesDataset,
-        cssClassName: 'TocControlHeader'
-      });
-      this.footer = new TocControlHeaderList({
-        container: this.element,
-        childClass: headerClass,
-        collection: this.childNodesDataset,
-        cssClassName: 'TocControlFooter'
-      });
-
-      DOM.hide(this.header.element);
-      DOM.hide(this.footer.element);
-
-      this.header.owner = this;
-      this.footer.owner = this;
-      
-      this.thread = new basis.Animation.Thread({
-        duration: 400,
-        interval: 15
-      });
-      var self = this;
-      this.modificator = new Modificator(this.thread, function(value){
-        //console.log('set scrollTop ', self.content.scrollTop = parseInt(value));
-        self.content.scrollTop = parseInt(value);
-        self.recalc();
-      }, 0, 0, true)
-      this.modificator.timeFunction = function(value){
-        return Math.sin(Math.acos(1 - value));
-      }
-
-      Event.addHandler(this.content, 'scroll', this.recalc, this);
-      Event.addHandler(window, 'resize', this.recalc, this);
-      this.addEventListener('click', 'click', true);
-
-      if (config.childNodes)
-        this.setChildNodes(config.childNodes);
-
-      this.timer_ = setInterval(function(){ self.recalc() }, 500);
-    },
-    scrollToNode: function(node){
-      if (node && node.parentNode === this)
-      {
-        var scrollTop = Math.min(this.content.scrollHeight - this.content.clientHeight, this.topPoints[DOM.index(node)]);
-
-        if (this.thread)
-        {
-          var curScrollTop = this.content.scrollTop;
-          this.modificator.setRange(curScrollTop, curScrollTop);
-          this.thread.stop();
-          this.modificator.setRange(curScrollTop, scrollTop);
-          this.thread.start();
-        }
-        else
-        {
-          this.content.scrollTop = scrollTop;
-          //console.log('set scroll top#2', this.content.scrollTop = scrollTop);
-        }
-      }
-    },
-
-   /**
-    * xx
-    */
-    recalc: function(){
-      //console.log('>>', this.content.scrollTop);
-
-      var content = this.content;
-      var clientHeight = content.clientHeight;
-      var scrollHeight = content.scrollHeight;
-      var scrollTop = content.scrollTop;
-      var isFit = clientHeight == scrollHeight;
-
-      if (this.clientHeight_ != clientHeight || this.scrollHeight_ != scrollHeight)
-      {
-        // save values 
-        this.clientHeight_ = clientHeight;
-        this.scrollHeight_ = scrollHeight;
-
-        var top = [];
-        var bottom = [];
-
-        if (!isFit)
-        {
-          // calc scroll points
-          var headerElementHeight = this.meterElement.offsetHeight;
-          var topHeight = 0;
-          var bottomHeight = headerElementHeight * this.childNodes.length - clientHeight;
-          for (var node, i = 0; node = this.childNodes[i]; i++)
-          {
-            var height = node.element.offsetHeight;
-            var offsetTop = node.element.offsetTop;
-
-            top.push(offsetTop ? offsetTop - topHeight : top[i - 1] || 0);
-            bottom.push(offsetTop ? offsetTop + bottomHeight : bottom[i - 1] || bottomHeight);
-
-            topHeight += headerElementHeight;
-            bottomHeight -= headerElementHeight;
-          }
-        }
-
-        this.topPoints = top;
-        this.bottomPoints = bottom;
-
-        // values that's trigger for update headers
-        this.scrollTop_ = -1;
-        this.lastTopPoint = -1;
-        this.lastBottomPoint = -1;
-      }
-
-      if (this.isFit != isFit)
-      {
-        this.isFit = isFit;
-        DOM.display(this.header.element, !isFit);
-        DOM.display(this.footer.element, !isFit);
-      }
-
-      if (isFit)
-        return;
-
-      if (this.scrollTop_ != scrollTop)
-      {
-        this.scrollTop_ = scrollTop;
-
-        if (!isFit)
-        {
-          var topPoint = this.topPoints.binarySearchPos(scrollTop);
-          var bottomPoint = this.bottomPoints.binarySearchPos(scrollTop);
-          
-          if (this.lastTopPoint != topPoint)
-          {
-            this.lastTopPoint = topPoint;
-            this.header.childNodes.forEach(function(node, index){
-              node.element.style.display = index >= topPoint ? 'none' : '';
-            });
-          }
-
-          if (this.lastBottomPoint != bottomPoint)
-          {
-            this.lastBottomPoint = bottomPoint;
-            this.footer.childNodes.forEach(function(node, index){
-              node.element.style.display = index < bottomPoint ? 'none' : '';
-            });
-          }
-        }
-        else
-        {
-          this.lastTopPoint = 0;
-          this.lastBottomPoint = this.childNodes.length;
-        }
-      }
-    },
-    destroy: function(){
-      clearInterval(this.timer_);
-
-      this.thread.destroy();
-      this.modificator.destroy();
-      this.header.destroy();
-      this.footer.destroy();
-      this.childNodesDataset.destroy();
-
-      Event.removeHandler(this.content, 'scroll', this.recalc, this);
-      Event.removeHandler(window, 'resize', this.recalc, this);
-
-      this.inherit();
-    }
-  });
-
-
-  //
-  // export names
-  //
-
-  basis.namespace(namespace).extend({
-    Control: TocControl,
-    ControlItem: TocControlItem,
-    ControlItemHeader: TocControlItemHeader,
-    ControlHeaderList: TocControlHeaderList
-  });
-
-}(basis);
-
-//
 // src/basis/ui/slider.js
 //
 
@@ -26339,7 +26004,7 @@ basis.require('basis.ui');
   }
 
   function updateSelection(paginator){
-    var node = paginator.childNodes.search(paginator.activePage_, 'data.pageNumber');
+    var node = paginator.childNodes.search(paginator.activePage, 'data.pageNumber');
     if (node)
       node.select();
     else
@@ -26394,7 +26059,7 @@ basis.require('basis.ui');
     },
     move: function(config){
       var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
-      this.setSpanStartPage(Math.round(pos * (this.pageCount_ - this.pageSpan_)));
+      this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
       this.tmpl.scrollTrumb.style.left = percent(pos);
     },
     over: function(config){
@@ -26430,7 +26095,7 @@ basis.require('basis.ui');
       jumpTo: function(actionName, event, node){
         var scrollbar = this.tmpl.scrollbar;
         var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
-        this.setSpanStartPage(Math.floor(pos * this.pageCount_) - Math.floor(this.pageSpan_ / 2));
+        this.setSpanStartPage(Math.floor(pos * this.pageCount) - Math.floor(this.pageSpan / 2));
       },
       scroll: function(event){
         var delta = Event.wheelDelta(event);
@@ -26442,16 +26107,16 @@ basis.require('basis.ui');
     event_activePageChanged: createEvent('activePageChanged'),
     event_pageCountChanged: createEvent('pageCountChanged'),
 
-    pageSpan_: 0,
-    pageCount_: 0,
-    activePage_: 0,
+    pageSpan: 0,
+    pageCount: 0,
+    activePage: 1,
     spanStartPage_: -1,
 
     init: function(config){
       UIControl.prototype.init.call(this, config);
 
-      this.setProperties(config.pageCount || 0, config.pageSpan);
-      this.setActivePage(Math.max(config.activePage - 1, 0), true);
+      this.setProperties(this.pageCount || 0, this.pageSpan);
+      this.setActivePage(Math.max(this.activePage - 1, 0), true);
 
       this.scrollbarDD = new DragDropElement({
         element: this.tmpl.scrollTrumb,
@@ -26469,9 +26134,9 @@ basis.require('basis.ui');
       pageCount = pageCount || 1;
       pageSpan = Math.min(pageSpan || 10, pageCount);
 
-      if (pageSpan != this.pageSpan_)
+      if (pageSpan != this.pageSpan)
       {
-        this.pageSpan_ = pageSpan;
+        this.pageSpan = pageSpan;
         this.setChildNodes(Array.create(pageSpan, function(idx){
           return {
             data: {
@@ -26481,9 +26146,9 @@ basis.require('basis.ui');
         }));
       }
 
-      if (this.pageCount_ != pageCount)
+      if (this.pageCount != pageCount)
       {
-        this.pageCount_ = pageCount;
+        this.pageCount = pageCount;
 
         var rangeWidth = 1 / pageCount;
         var activePageMarkWidth = rangeWidth / (1 - rangeWidth);
@@ -26491,7 +26156,7 @@ basis.require('basis.ui');
         this.tmpl.activePageMark.style.width = percent(activePageMarkWidth);
         this.tmpl.activePageMarkWrapper.style.width = percent(1 - rangeWidth);
 
-        this.event_pageCountChanged(this.pageCount_);
+        this.event_pageCountChanged(this.pageCount);
       }
 
       // spanWidth : (1 - spanWidth)
@@ -26508,27 +26173,27 @@ basis.require('basis.ui');
       classList(this.element).bool('Basis-Paginator-WithNoScroll', pageSpan >= pageCount);
 
       this.setSpanStartPage(this.spanStartPage_);
-      this.setActivePage(arguments.length == 3 ? activePage : this.activePage_);
+      this.setActivePage(arguments.length == 3 ? activePage : this.activePage);
     },
     setActivePage: function(newActivePage, spotlightActivePage){
-      newActivePage = newActivePage.fit(0, this.pageCount_ - 1);
-      if (newActivePage != this.activePage_)
+      newActivePage = newActivePage.fit(0, this.pageCount - 1);
+      if (newActivePage != this.activePage)
       {
-        this.activePage_ = Number(newActivePage);
+        this.activePage = Number(newActivePage);
         updateSelection(this);
         this.event_activePageChanged(newActivePage);
       }
 
-      this.tmpl.activePageMark.style.left = percent(newActivePage / Math.max(this.pageCount_ - 1, 1));
+      this.tmpl.activePageMark.style.left = percent(newActivePage / Math.max(this.pageCount - 1, 1));
 
       if (spotlightActivePage)
-        this.spotlightPage(this.activePage_);
+        this.spotlightPage(this.activePage);
     },
     spotlightPage: function(pageNumber){
-      this.setSpanStartPage(pageNumber - Math.round(this.pageSpan_ / 2) + 1);
+      this.setSpanStartPage(pageNumber - Math.round(this.pageSpan / 2) + 1);
     },
     setSpanStartPage: function(pageNumber){
-      pageNumber = pageNumber.fit(0, this.pageCount_ - this.pageSpan_);
+      pageNumber = pageNumber.fit(0, this.pageCount - this.pageSpan);
       if (pageNumber != this.spanStartPage_)
       {
         this.spanStartPage_ = pageNumber;
@@ -26539,7 +26204,7 @@ basis.require('basis.ui');
         updateSelection(this);
       }
 
-      this.tmpl.scrollTrumb.style.left = percent((pageNumber / Math.max(this.pageCount_ - this.pageSpan_, 1)).fit(0, 1));
+      this.tmpl.scrollTrumb.style.left = percent((pageNumber / Math.max(this.pageCount - this.pageSpan, 1)).fit(0, 1));
     },
 
     destroy: function(){
@@ -27181,7 +26846,6 @@ basis.require('basis.ui');
   basis.require('basis.ui.calendar');
   basis.require('basis.ui.form');
   basis.require('basis.ui.scroller');
-  basis.require('basis.ui.toc');
   basis.require('basis.ui.slider');
   basis.require('basis.ui.resizer');
   basis.require('basis.ui.paginator');

@@ -3,8 +3,8 @@
 !function(){
   if (typeof document != 'undefined')
   {
-    var curScript = document.getElementByTagName('script');
-    var curLocation = curScript.src.replace(/[^\/]+\.js$/, '');
+    var scripts = document.getElementsByTagName('script');
+    var curLocation = scripts[scripts.length - 1].src.replace(/[^\/]+\.js$/, '');
 
     document.write('<script src="' + curLocation + 'src/basis.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/ua.js"></script>');
@@ -16,6 +16,5 @@
     document.write('<script src="' + curLocation + 'src/basis/cssom.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/data/dataset.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/entity.js"></script>');
-    document.write('<script src="' + curLocation + 'src/package/core.js"></script>');
   }
 }();

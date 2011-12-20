@@ -1255,7 +1255,7 @@ basis.require('basis.data.dataset');
         this.fieldHandlers_ = NULL_INFO;
 
         // delete from index
-        if (this.__id__)
+        if (this.__id__ != null)
           updateIndex(this, this.__id__, null);
 
         // inherit

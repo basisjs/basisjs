@@ -45,6 +45,5 @@
     document.write('<script src="' + curLocation + 'src/basis/ui/pageslider.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/ui/canvas.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/format/highlight.js"></script>');
-    document.write('<script src="' + curLocation + 'src/package/all.js"></script>');
   }
 }();

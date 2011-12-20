@@ -119,6 +119,7 @@ sub build{
 
 for my $pack (@packages){
   my $ns = $pack->{path};
+  my $package_filename = $pack->{path};
   $ns =~ s/^src\/|\.js$//g;
   $ns =~ s/\//\./g;
 
@@ -140,12 +141,13 @@ for my $pack (@packages){
 !function(){
   if (typeof document != 'undefined')
   {
-    var curScript = document.getElementByTagName('script');
-    var curLocation = curScript.src.replace(/[^\\/]+\\.js\$/, '');
+    var scripts = document.getElementsByTagName('script');
+    var curLocation = scripts[scripts.length - 1].src.replace(/[^\\/]+\\.js\$/, '');
 EOF
 
     for my $file (@{$build->{files}})
     {
+      next if $package_filename eq $file;
       print F "\n    document.write('<script src=\"' + curLocation + '$file\"></script>');"
     }
     print F "\n  }\n}();";

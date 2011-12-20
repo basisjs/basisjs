@@ -10671,6 +10671,8 @@ basis.require('basis.data');
       var inserted = [];
       var deleted = [];
 
+      var subsetDelta = {};
+
       if (array = delta.inserted)
         for (var i = 0, sourceObject; sourceObject = array[i]; i++)
         {
@@ -10689,9 +10691,17 @@ basis.require('basis.data');
 
               if (subset)
               {
-                subset.event_datasetChanged(subset, { inserted: [sourceObject] });
                 subsetId = subset.eventObjectId;
                 sourceObjectInfo.list[subsetId] = subset;
+
+                //subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+                if (!subsetDelta[subsetId])
+                  subsetDelta[subsetId] = {
+                    subset: subset,
+                    inserted: []
+                  };
+
+                subsetDelta[subsetId].inserted.push(sourceObject);
 
                 if (!memberMap[subsetId])
                 {
@@ -10730,6 +10740,12 @@ basis.require('basis.data');
           if (listenHandler)
             sourceObject.removeHandler(listenHandler, this);
         }
+
+      for (var subsetId in subsetDelta)
+      {
+        var subsetConfig = subsetDelta[subsetId]
+        subsetConfig.subset.event_datasetChanged(subsetConfig.subset, { inserted: subsetConfig.inserted });
+      }
 
       if (delta = getDelta(inserted, deleted))
         this.event_datasetChanged(this, delta);
@@ -13515,7 +13531,7 @@ basis.require('basis.data.dataset');
         this.fieldHandlers_ = NULL_INFO;
 
         // delete from index
-        if (this.__id__)
+        if (this.__id__ != null)
           updateIndex(this, this.__id__, null);
 
         // inherit

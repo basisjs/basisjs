@@ -1506,9 +1506,10 @@ basis.require('basis.data');
 
               if (subset)
               {
-                subset.event_datasetChanged(subset, { inserted: [sourceObject] });
                 subsetId = subset.eventObjectId;
                 sourceObjectInfo.list[subsetId] = subset;
+
+                subset.event_datasetChanged(subset, { inserted: [sourceObject] });
 
                 if (!memberMap[subsetId])
                 {
