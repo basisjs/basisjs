@@ -1163,7 +1163,7 @@ basis.require('basis.ui.popup');
     },
     Email: function(field){
       var value = field.getValue().trim();
-      if (value != '' && !value.match(/^[a-z0-9\.\-\_]+\@(([a-z][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i))
+      if (value != '' && !value.match(/^[a-z0-9\.\-\_]+\@(([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i))
         return new ValidatorError(field, Validator.LOCALE.Email.WRONG_FORMAT || Validator.NO_LOCALE);
     },
     Url: function(field){
