@@ -252,9 +252,12 @@ basis.require('basis.ui');
   var DataSourceError = Class(DataSourceState, {
     className: namespace + '.DataSourceProcessing',
 
-    visibilityGetter: function(newState){ return newState == STATE.ERROR },
     content: 'Error',
-    template: errorTemplate
+    template: errorTemplate,
+
+    visibilityGetter: function(owner){
+      return owner.dataSource && owner.dataSource.state == STATE.ERROR;
+    }
   });
 
   //
@@ -291,7 +294,7 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var ChildCount = Class(NodeLabel, {
+  var ChildNodesCount = Class(NodeLabel, {
     className: namespace + '.ChildCount',
 
     listen: {
@@ -307,14 +310,13 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var IsEmpty = Class(ChildCount, {
-    className: namespace + '.IsEmpty',
+  var Empty = Class(ChildNodesCount, {
+    className: namespace + '.Empty',
 
-    visibilityGetter: function(childCount, object){ 
-      var state = object.dataSource ? object.dataSource.state : object.state;
-      return !childCount && state == STATE.READY;
-    },
-    content: 'Empty'
+    content: 'Empty',
+    visibilityGetter: function(owner){ 
+      return owner.state == STATE.READY && !owner.firstChild;
+    }
   });
 
 
@@ -329,8 +331,8 @@ basis.require('basis.ui');
     Processing: Processing,
     Error: Error,
 
-    ChildCount: ChildCount,
-    IsEmpty: IsEmpty,
+    ChildNodesCount: ChildNodesCount,
+    Empty: Empty,
 
     DataSourceLabel: DataSourceLabel,
     DataSourceState: DataSourceState,

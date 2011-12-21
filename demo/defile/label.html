@@ -7,7 +7,7 @@
 
   <title>Basis Demos: Labels</title>
 
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -15,6 +15,29 @@
     {
       font-size: small;
       font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    #Demo-ControlPanel
+    {
+      overflow: hidden;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #E0E0E0;
+    }
+    .Basis-Field
+    {
+      float: left;
+      margin-right: 4ex;
+    }
+
+    .Basis-Slider
+    {
+      max-width: 300px;
+    }
+
+    .DemoGroup
+    {
+      overflow: hidden;
     }
 
     .DemoBlock
@@ -28,7 +51,7 @@
       overflow: hidden;
       position: relative;
       float: left;
-      width: 30%;
+      width: 28%;
     }
     .DemoBlock H2
     {
@@ -55,6 +78,18 @@
         -moz-border-radius: 3px;
         -webkit-border-radius: 3px;
       border-radius: 3px;
+    }
+    .Basis-Label-Processing
+    {
+      background-color: #FFE8C0;
+      color: #AA6600;
+      border-color: #DD9900;
+    }
+    .Basis-Label-Error
+    {
+      background-color: #FFE8E0;
+      color: #AA0000;
+      border-color: #AA0000;
     }
 
     .DemoBlock-Node
@@ -110,7 +145,6 @@
     * @class
     */
     var DemoBlock = basis.ui.Container.subclass({
-      container: DOM.get('demo-container'),
       template:
         '<div class="DemoBlock">' +
            '<h2>{title}</h2>' +
@@ -135,113 +169,232 @@
     // Main part
     //
 
-    var items = [
-      new DataObject({ data: { value: 1 } }),
-      new DataObject({ data: { value: 2 } }),
-      new DataObject({ data: { value: 3 } }),
-      new DataObject({ data: { value: 4 } }),
-      new DataObject({ data: { value: 5 } })
-    ];
+    var items = Array.create(8, function(idx){
+      return new DataObject({ data: { value: idx + 1 } });
+    });
 
     var commonObject = new DataObject({});
     var commonDataSource = new basis.data.Dataset({
-      items: items
+      //items: items
     });
 
-    new basis.ui.form.RadioGroup({
-      container: DOM.get('demo-container'),
-      title: 'Object state:',
-      childNodes: STATE.getList().map(function(state){
-        return {
-          selected: STATE[state] == commonObject.state,
-          title: state,
-          value: {
-            state: STATE[state],
-            data: state == STATE.ERROR ? 'Some error message' : null
-          }
-        }
-      }),
-      handler: {
-        change: function(){
-          var value = this.getValue();
-          commonObject.setState(value && value.state, value && value.data);
-        }
-      }
-    });
+    // Controls
 
-    new basis.ui.form.RadioGroup({
-      container: DOM.get('demo-container'),
-      title: 'Dataset state:',
-      childNodes: STATE.getList().map(function(state){
-        return {
-          selected: STATE[state] == commonDataSource.state,
-          title: state,
-          value: {
-            state: STATE[state],
-            data: state == STATE.ERROR ? 'Some error message' : null
-          }
-        }
-      }),
-      handler: {
-        change: function(){
-          var value = this.getValue();
-          commonDataSource.setState(value && value.state, value && value.data);
-        }
-      }
-    });
-
-    new DemoBlock({
-      title: 'basis.ui.label.NodeLabel',
-      satelliteConfig: {
-        label: nsLabel.NodeLabel
-      }
-    });
-
-    new DemoBlock({
-      title: 'basis.ui.label.State',
-      delegate: commonObject,
-      satelliteConfig: {
-        label: {
-          instanceOf: nsLabel.State,
-          config: {
-            autoDelegate: DELEGATE.OWNER,
-            handler: {
-              stateChanged: function(){
-                this.templateUpdate(this.tmpl, 'stateChanged');
+    DOM.insert(DOM.get('demo-container'),
+      DOM.createElement('#Demo-ControlPanel',
+        new basis.ui.form.RadioGroup({
+          title: 'Object state:',
+          childNodes: STATE.getList().map(function(state){
+            return {
+              selected: STATE[state] == commonObject.state,
+              title: state,
+              value: {
+                state: STATE[state],
+                data: state == STATE.ERROR ? 'Some error message' : null
               }
-            },
-            templateUpdate: function(tmpl, eventName){
-              if (!eventName || eventName == 'stateChanged')
-                this.element.innerHTML = this.state;
+            }
+          }),
+          handler: {
+            change: function(){
+              var value = this.getValue();
+              commonObject.setState(value && value.state, value && value.data);
             }
           }
+        }).element,
+
+        new basis.ui.form.RadioGroup({
+          title: 'Dataset state:',
+          childNodes: STATE.getList().map(function(state){
+            return {
+              selected: STATE[state] == commonDataSource.state,
+              title: state,
+              value: {
+                state: STATE[state],
+                data: state == STATE.ERROR ? 'Some error message' : null
+              }
+            }
+          }),
+          handler: {
+            change: function(){
+              var value = this.getValue();
+              commonDataSource.setState(value && value.state, value && value.data);
+            }
+          }
+        }).element,
+
+        new basis.ui.slider.Slider({
+          value: 5,
+          max: 8,
+          handler: {
+            change: function(){
+              commonDataSource.set(items.slice(0, this.value));
+            }
+          }
+        }).element
+      )
+    );
+
+    //
+    // Demo blocks
+    //
+
+    new basis.ui.Container({
+      container: DOM.get('demo-container'),
+
+      childClass: DemoBlock,
+
+      localGrouping: {
+        groupGetter: Function.getter('groupId'),
+        childClass: {
+          cssClassName: 'DemoGroup'
         }
-      }
+      },
+
+      childNodes: [
+        new DemoBlock({
+          title: 'basis.ui.label.NodeLabel',
+          groupId: 'Abstract',
+          satelliteConfig: {
+            label: nsLabel.NodeLabel
+          }
+        }),
+
+        new DemoBlock({
+          title: 'basis.ui.label.State with autoDelegate',
+          groupId: 'OwnerState',
+          delegate: commonObject,
+          satelliteConfig: {
+            label: {
+              instanceOf: nsLabel.State,
+              config: {
+                autoDelegate: DELEGATE.OWNER,
+                handler: {
+                  stateChanged: function(){
+                    this.templateUpdate(this.tmpl, 'stateChanged');
+                  }
+                },
+                templateUpdate: function(tmpl, eventName){
+                  if (!eventName || eventName == 'stateChanged')
+                    this.element.innerHTML = this.state;
+                }
+              }
+            }
+          }
+        }),
+
+        new DemoBlock({
+          title: 'basis.ui.label.State w/o autoDelegate',
+          groupId: 'OwnerState',
+          delegate: commonObject,
+          satelliteConfig: {
+            label: {
+              instanceOf: nsLabel.State,
+              config: {
+                handler: {
+                  ownerChanged: function(){
+                    if (this.owner)
+                      this.templateUpdate(this.tmpl, 'ownerStateChanged');
+                  }
+                },
+                listen: {
+                  owner: {
+                    stateChanged: function(){
+                      this.templateUpdate(this.tmpl, 'ownerStateChanged');
+                    }
+                  }
+                },
+                templateUpdate: function(tmpl, eventName){
+                  if (!eventName || eventName == 'ownerStateChanged')
+                    this.element.innerHTML = this.owner.state;
+                }
+              }
+            }
+          }
+        }),
+
+        new DemoBlock({
+          title: 'basis.ui.label.Processing',
+          groupId: 'OwnerState',
+          delegate: commonObject,
+          satelliteConfig: {
+            label: nsLabel.Processing
+          }
+        }),
+
+        new DemoBlock({
+          title: 'basis.ui.label.Error',
+          groupId: 'OwnerState',
+          delegate: commonObject,
+          satelliteConfig: {
+            label: nsLabel.Error
+          }
+        }),
+
+
+        new DemoBlock({
+          title: 'basis.ui.label.DataSourceState',
+          groupId: 'OwnerDataSource',
+          dataSource: commonDataSource,
+          satelliteConfig: {
+            label: {
+              instanceOf: nsLabel.DataSourceState,
+              config: {
+                autoDelegate: DELEGATE.OWNER,
+                listen: {
+                  ownerDataSource: {
+                    stateChanged: function(){
+                      this.templateUpdate(this.tmpl, 'stateChanged');
+                    }
+                  }
+                },
+                templateUpdate: function(tmpl, eventName){
+                  if (!eventName || eventName == 'stateChanged')
+                    this.element.innerHTML = this.ownerDataSource.state;
+                }
+              }
+            }
+          }
+        }),
+
+        new DemoBlock({
+          title: 'basis.ui.label.DataSourceProcessing',
+          groupId: 'OwnerDataSource',
+          dataSource: commonDataSource,
+          satelliteConfig: {
+            label: nsLabel.DataSourceProcessing
+          }
+        }),
+
+        new DemoBlock({
+          title: 'basis.ui.label.DataSourceError',
+          groupId: 'OwnerDataSource',
+          dataSource: commonDataSource,
+          satelliteConfig: {
+            label: nsLabel.DataSourceError
+          }
+        }),
+
+
+        new DemoBlock({
+          title: 'basis.ui.label.ChildNodesCount',
+          groupId: 'OwnerChildNodes',
+          dataSource: commonDataSource,
+          satelliteConfig: {
+            label: nsLabel.ChildNodesCount
+          }
+        }),
+
+        new DemoBlock({
+          title: 'basis.ui.label.Empty',
+          groupId: 'OwnerChildNodes',
+          dataSource: commonDataSource,
+          satelliteConfig: {
+            label: nsLabel.Empty
+          }
+        })
+      ]
     });
 
-    new DemoBlock({
-      title: 'basis.ui.label.Processing',
-      delegate: commonObject,
-      satelliteConfig: {
-        label: nsLabel.Processing
-      }
-    });
-
-    new DemoBlock({
-      title: 'basis.ui.label.Error',
-      delegate: commonObject,
-      satelliteConfig: {
-        label: nsLabel.Error
-      }
-    });
-
-    new DemoBlock({
-      title: 'basis.ui.label.DataSourceProcessing',
-      dataSource: commonDataSource,
-      satelliteConfig: {
-        label: nsLabel.DataSourceProcessing
-      }
-    });
 
   </script>
 </body>

@@ -256,13 +256,11 @@ basis.require('basis.dragdrop');
     },
 
     satelliteConfig: {
-      marks: {
-        instanceOf: UIContainer.subclass({
-          className: namespace + '.MarkLayers',
-          template: '<div class="Basis-Slider-MarkLayers"/>',
-          childClass: MarkLayer
-        })
-      }
+      marks: UIContainer.subclass({
+        className: namespace + '.MarkLayers',
+        template: '<div class="Basis-Slider-MarkLayers"/>',
+        childClass: MarkLayer
+      })
     },
 
     marks: 'auto',
