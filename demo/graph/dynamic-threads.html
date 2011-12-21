@@ -72,62 +72,60 @@
     // Example
     //
 
-    var PaySystem = new nsEntity.EntityType({
-      name: 'PaySystem',
+    var Company = new nsEntity.EntityType({
+      name: 'Company',
       fields: {
         Id: nsEntity.StringId,
         Title: String
       }
     });
 
-    var PaySystemReport = new nsEntity.EntityType({
-      name: 'PaySystemReport',
+    var CompanyReport = new nsEntity.EntityType({
+      name: 'CompanyReport',
       fields: {
         Date: String,
-        PaySystem: PaySystem,
+        Company: Company,
         Amount: Number
       },
       aliases: {
-        PaySystemId: 'PaySystem'
+        CompanyId: 'Company'
       },
       groupings: {
-        PaySystem: Function.getter('data.PaySystem.getId()')
+        Company: Function.getter('data.Company.getId()')
       }
     });
 
-    var paySystems = [
-      { Id: 'xplat', Title: 'X-plat' },
-      { Id: 'qiwi', Title: 'Qiwi' },
-      { Id: 'quickpay', Title: 'Quickpay' },
-      { Id: 'svyaznoy', Title: 'Связной' },
-      { Id: 'comepay', Title: 'Comepay' }/*,
-      { Id: 'novaplat', Title: 'НОВАПЛАТ' },
-      { Id: 'unikassa', Title: 'Уникасса' },
-      { Id: 'telepay', Title: 'TelePay' },
-      { Id: 'mm', Title: 'Money-Money' },
-      { Id: 'eport', Title: 'E-port' }*/
+    var companies = [
+      { Id: 'apple', Title: 'Apple' },
+      { Id: 'intel', Title: 'Intel' },
+      { Id: 'google', Title: 'Google' },
+      { Id: 'microsoft', Title: 'Microsoft' },
+      { Id: 'oracle', Title: 'Oracle' }
     ];
-
-    paySystems.map(PaySystem);
+    companies.map(Company);
 
     var data = [];
-
-    for (var i = 0; i < paySystems.length; i++)
+    var lastValue;
+    var value;
+    for (var i = 0, company; company = companies[i]; i++)
     {
+      lastValue = (5000000 - 100000) * Math.random() + 100000; // 100 000 - 5 000 000
       for (var month = 1; month <= 12; month++)
-      {                                       
+      {
+        value = lastValue + 0.2 * lastValue * (2 * Math.random() - 1); // +/- 20% from last value;
+                         
         data.push({
-          PaySystemId: paySystems[i].Id,
+          Company: company,
           Date: '2011-' + month.lead(2),
-          Amount: (5000000 - 100000) * Math.random() + 100000 // 100 000 - 5 000 000
+          Amount: value
         });
+
+        lastValue = value;
       }
     }
+    data.map(CompanyReport);
 
-    data.map(PaySystemReport.reader).map(PaySystemReport);
-
-    var graphPaySystems = new nsEntity.EntitySet({ wrapper: PaySystem });
-    graphPaySystems.set(PaySystem.all.getItems());
+    var graphCompanies = new nsEntity.EntitySet({ wrapper: Company });
 
     new Graph({
       container: DOM.get('demo-container'),
@@ -139,11 +137,10 @@
         return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
       
-      dataSource: graphPaySystems,
-      //localSorting: Function.getter('data.Title'),
+      dataSource: graphCompanies,
       childClass: {
         dataSourceGetter: function(object){
-          return PaySystemReport.getGrouping('PaySystem').getSubset(object.data.Id);
+          return CompanyReport.getGrouping('Company').getSubset(object.data.Id);
         },
         legendGetter: function(object){
           return object.data.Title;
@@ -153,25 +150,20 @@
       }
     });
 
-    new nsForm.FormContent({
+    new nsForm.CheckGroup({
       container: DOM.get('demo-container'),
-      childNodes: [
-        {
-          type: 'checkgroup',
-          title: 'Платежные системы:',
-          dataSource: PaySystem.all,
-          value: ['xplat', 'qiwi'],
-          childClass: {
-            valueGetter: Function.getter('data.Id'),
-            titleGetter: Function.getter('data.Title')
-          },
-          handler: {
-            change: function(){
-              graphPaySystems.set(this.getValue());
-            }
-          }
+      title: 'Компании:',
+      dataSource: Company.all,
+      value: ['apple', 'microsoft'],
+      childClass: {
+        valueGetter: Function.getter('data.Id'),
+        titleGetter: Function.getter('data.Title')
+      },
+      handler: {
+        change: function(){
+          graphCompanies.set(this.getValue());
         }
-      ]
+      }
     });
   </script>
 </body>
