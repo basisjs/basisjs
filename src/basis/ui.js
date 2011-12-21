@@ -77,7 +77,7 @@ basis.require('basis.html');
       cssClassName: null,
 
      /**
-      *
+      * @inheritDoc
       */
       event_update: function(object, delta){
         this.templateUpdate(this.tmpl, 'update', delta);

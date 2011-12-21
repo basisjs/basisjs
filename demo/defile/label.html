@@ -1,0 +1,249 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Labels</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .DemoBlock
+    {
+      border: 1px solid #D0D0D0;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+      border-radius: 3px;
+      padding: 15px;
+      margin: 0 0 .5em 10px;
+      overflow: hidden;
+      position: relative;
+      float: left;
+      width: 30%;
+    }
+    .DemoBlock H2
+    {
+      font-size: 80%;
+      font-weight: normal;
+      background: #EEE;
+      margin: -15px -15px 10px -15px;
+      padding: 2px;
+      text-align: center;
+    }
+    .DemoBlock-Content
+    {
+      height: 40px;
+    }
+
+    .Basis-Label
+    {
+      width: 50ex;
+      padding: .25em 0;
+      border: 1px solid #E0E0E0;
+      background: #F4F4F4;
+      margin: 0 auto;
+      text-align: center;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+      border-radius: 3px;
+    }
+
+    .DemoBlock-Node
+    {
+      padding: 2px;
+      border: 1px solid #E0E0E0;
+      background: #F0F0F0;
+      margin-right: 1ex;
+    }
+
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis-all.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Labels</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // import names
+    var DOM = basis.dom;
+    var STATE = basis.data.STATE;
+    var DELEGATE = basis.dom.wrapper.DELEGATE;
+    var nsLabel = basis.ui.label;
+
+    var DataObject = basis.data.DataObject;
+
+   /**
+    * @class
+    */
+    var DemoBlock = basis.ui.Container.subclass({
+      container: DOM.get('demo-container'),
+      template:
+        '<div class="DemoBlock">' +
+           '<h2>{title}</h2>' +
+           '<div{childNodesElement} class="DemoBlock-Content"><!--{label}--></div>' +
+        '</div>',
+
+      templateUpdate: function(tmpl){
+        tmpl.title.nodeValue = this.title;
+      },
+
+      childClass: {
+        template:
+          '<span class="DemoBlock-Node">{value}</span>',
+
+        templateUpdate: function(tmpl){
+          tmpl.value.nodeValue = this.data.value;
+        }
+      }
+    });
+
+    //
+    // Main part
+    //
+
+    var items = [
+      new DataObject({ data: { value: 1 } }),
+      new DataObject({ data: { value: 2 } }),
+      new DataObject({ data: { value: 3 } }),
+      new DataObject({ data: { value: 4 } }),
+      new DataObject({ data: { value: 5 } })
+    ];
+
+    var commonObject = new DataObject({});
+    var commonDataSource = new basis.data.Dataset({
+      items: items
+    });
+
+    new basis.ui.form.RadioGroup({
+      container: DOM.get('demo-container'),
+      title: 'Object state:',
+      childNodes: STATE.getList().map(function(state){
+        return {
+          selected: STATE[state] == commonObject.state,
+          title: state,
+          value: {
+            state: STATE[state],
+            data: state == STATE.ERROR ? 'Some error message' : null
+          }
+        }
+      }),
+      handler: {
+        change: function(){
+          var value = this.getValue();
+          commonObject.setState(value && value.state, value && value.data);
+        }
+      }
+    });
+
+    new basis.ui.form.RadioGroup({
+      container: DOM.get('demo-container'),
+      title: 'Dataset state:',
+      childNodes: STATE.getList().map(function(state){
+        return {
+          selected: STATE[state] == commonDataSource.state,
+          title: state,
+          value: {
+            state: STATE[state],
+            data: state == STATE.ERROR ? 'Some error message' : null
+          }
+        }
+      }),
+      handler: {
+        change: function(){
+          var value = this.getValue();
+          commonDataSource.setState(value && value.state, value && value.data);
+        }
+      }
+    });
+
+    new DemoBlock({
+      title: 'basis.ui.label.NodeLabel',
+      satelliteConfig: {
+        label: nsLabel.NodeLabel
+      }
+    });
+
+    new DemoBlock({
+      title: 'basis.ui.label.State',
+      delegate: commonObject,
+      satelliteConfig: {
+        label: {
+          instanceOf: nsLabel.State,
+          config: {
+            autoDelegate: DELEGATE.OWNER,
+            handler: {
+              stateChanged: function(){
+                this.templateUpdate(this.tmpl, 'stateChanged');
+              }
+            },
+            templateUpdate: function(tmpl, eventName){
+              if (!eventName || eventName == 'stateChanged')
+                this.element.innerHTML = this.state;
+            }
+          }
+        }
+      }
+    });
+
+    new DemoBlock({
+      title: 'basis.ui.label.Processing',
+      delegate: commonObject,
+      satelliteConfig: {
+        label: nsLabel.Processing
+      }
+    });
+
+    new DemoBlock({
+      title: 'basis.ui.label.Error',
+      delegate: commonObject,
+      satelliteConfig: {
+        label: nsLabel.Error
+      }
+    });
+
+    new DemoBlock({
+      title: 'basis.ui.label.DataSourceProcessing',
+      dataSource: commonDataSource,
+      satelliteConfig: {
+        label: nsLabel.DataSourceProcessing
+      }
+    });
+
+  </script>
+</body>
+
+</html>

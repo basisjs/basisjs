@@ -237,6 +237,20 @@
   <script src="blog_posts.js"></script>
   <script>
     basis.dom.event.onLoad(runApp = function(){
+      function outStat(){
+        var sdate = times.shift();
+
+        var timelist = basis.dom.get('timelist');
+        var lasttime = sdate;
+        for (var i = 0; i < times.length; i++)
+        {
+          var t = times[i];
+          timelist.appendChild(basis.dom.createElement('LI', (t[0] - sdate) + 'ms, self: ' + (t[0] - (lasttime)) + ' [' + t[1] + ']'));
+          lasttime = t[0];
+        }
+        timelist.appendChild(basis.dom.createElement('B', lasttime - sdate))
+      }
+
       var times = [new Date];
       BlogPost = new basis.entity.EntityType({
         name: 'BlogPost',
@@ -252,7 +266,9 @@
         }
       });
 
+      //console.profile();
       BlogPost.all.sync(window.rawData);
+      //console.profileEnd();
       times.push([new Date, 'data load']);
 
       //console.profile();
@@ -287,6 +303,11 @@
             datasetChanged: function(ds){
               this.setProperties(Math.ceil(ds.itemCount / POST_PER_PAGE), 10, 0);
             }
+          }
+        },
+        handler: {
+          activePageChanged: function(){
+            blogThreadPage.setRange(this.activePage * blogThreadPage.limit, blogThreadPage.limit);
           }
         }
       });
@@ -519,17 +540,7 @@
 
       times.push([new Date, 'tag cloud']);
 
-      var sdate = times.shift();
-
-      var timelist = basis.dom.get('timelist');
-      var lasttime = sdate;
-      for (var i = 0; i < times.length; i++)
-      {
-        var t = times[i];
-        timelist.appendChild(basis.dom.createElement('LI', (t[0] - sdate) + 'ms, self: ' + (t[0] - (lasttime)) + ' [' + t[1] + ']'));
-        lasttime = t[0];
-      }
-      timelist.appendChild(basis.dom.createElement('B', lasttime - sdate))
+      outStat();
 
       //console.profileEnd();
 

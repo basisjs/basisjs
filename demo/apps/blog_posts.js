@@ -23,7 +23,7 @@ window.rawData = (function(){
   var catList = ['javascript', 'basis', 'style', 'usability', 'css', 'html', 'framework', 'browser'];
   var COUNT = 500;
   var offset = 0;
-  for (var i = COUNT; i >= 0; i--)
+  for (var i = COUNT; i > 0; i--)
   {  
     result.push({
       id: i,
