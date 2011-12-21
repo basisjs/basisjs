@@ -1,0 +1,179 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Graph</title>
+
+  <style type="text/css" id="demo-css">
+    BODY, HTML
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    CANVAS
+    {
+      float: left;
+      margin-right: 2em;
+    }
+
+    .Basis-CheckGroup LABEL
+    {
+      display: block;
+      margin-bottom: 0.5em;
+    }
+    .Basis-CheckGroup LABEL INPUT
+    {
+      margin-left: 0;
+    }
+
+
+    .Basis-Field-Title
+    {
+      font-weight: bold;
+      margin-bottom: 0.5em;
+    }
+
+  </style>
+
+  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" src="../../locale/ru/calendar.js"></script>
+  <script type="text/javascript" src="../../src/basis/ui/graph.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+
+
+</head>
+
+<body>
+  <h1>Basic demos: Graph</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+
+    var DOM = basis.dom;
+    var nsEntity = basis.entity;
+    var Graph = basis.ui.graph.Graph;
+
+    var nsForm = basis.ui.form;
+
+    //
+    // Example
+    //
+
+    var PaySystem = new nsEntity.EntityType({
+      name: 'PaySystem',
+      fields: {
+        Id: nsEntity.StringId,
+        Title: String
+      }
+    });
+
+    var PaySystemReport = new nsEntity.EntityType({
+      name: 'PaySystemReport',
+      fields: {
+        Date: String,
+        PaySystem: PaySystem,
+        Amount: Number
+      },
+      aliases: {
+        PaySystemId: 'PaySystem'
+      },
+      groupings: {
+        PaySystem: Function.getter('data.PaySystem.getId()')
+      }
+    });
+
+    var paySystems = [
+      { Id: 'xplat', Title: 'X-plat' },
+      { Id: 'qiwi', Title: 'Qiwi' },
+      { Id: 'quickpay', Title: 'Quickpay' },
+      { Id: 'svyaznoy', Title: 'Связной' },
+      { Id: 'comepay', Title: 'Comepay' }/*,
+      { Id: 'novaplat', Title: 'НОВАПЛАТ' },
+      { Id: 'unikassa', Title: 'Уникасса' },
+      { Id: 'telepay', Title: 'TelePay' },
+      { Id: 'mm', Title: 'Money-Money' },
+      { Id: 'eport', Title: 'E-port' }*/
+    ];
+
+    paySystems.map(PaySystem);
+
+    var data = [];
+
+    for (var i = 0; i < paySystems.length; i++)
+    {
+      for (var month = 1; month <= 12; month++)
+      {                                       
+        data.push({
+          PaySystemId: paySystems[i].Id,
+          Date: '2011-' + month.lead(2),
+          Amount: (5000000 - 100000) * Math.random() + 100000 // 100 000 - 5 000 000
+        });
+      }
+    }
+
+    data.map(PaySystemReport.reader).map(PaySystemReport);
+
+    var graphPaySystems = new nsEntity.EntitySet({ wrapper: PaySystem });
+    graphPaySystems.set(PaySystem.all.getItems());
+
+    new Graph({
+      container: DOM.get('demo-container'),
+      width: 800,
+      height: 450,
+
+      propGetter: function(object){
+        var date = new Date(object.data.Date);
+        return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+      },
+      
+      dataSource: graphPaySystems,
+      //localSorting: Function.getter('data.Title'),
+      childClass: {
+        dataSourceGetter: function(object){
+          return PaySystemReport.getGrouping('PaySystem').getSubset(object.data.Id);
+        },
+        legendGetter: function(object){
+          return object.data.Title;
+        },
+        valueGetter: Function.getter('data.Amount'),
+        localSorting: Function.getter('data.Date')
+      }
+    });
+
+    new nsForm.FormContent({
+      container: DOM.get('demo-container'),
+      childNodes: [
+        {
+          type: 'checkgroup',
+          title: 'Платежные системы:',
+          dataSource: PaySystem.all,
+          value: ['xplat', 'qiwi'],
+          childClass: {
+            valueGetter: Function.getter('data.Id'),
+            titleGetter: Function.getter('data.Title')
+          },
+          handler: {
+            change: function(){
+              graphPaySystems.set(this.getValue());
+            }
+          }
+        }
+      ]
+    });
+  </script>
+</body>
+
+</html>

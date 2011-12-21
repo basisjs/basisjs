@@ -187,7 +187,7 @@
       if (readyState == STATE_DONE)
       {
         //TimeEventManager.remove(this, 'timeoutAbort');
-        clearTimeout();
+        this.clearTimeout();
         // clean event handler
         xhr.onreadystatechange = Function.$undef;
 
@@ -426,7 +426,6 @@
       },
 
       timeoutAbort: function(){
-        console.log('abort');
         this.proxy.event_timeout(this);
         this.abort();
       },
