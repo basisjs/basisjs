@@ -28,8 +28,6 @@ basis.require('basis.ui');
  /**
   * @namespace basis.ui.paginator
   */ 
-  
-
   var namespace = 'basis.ui.paginator';
 
   //

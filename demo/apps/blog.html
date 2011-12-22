@@ -224,6 +224,7 @@
     {
       margin-right: 8px;
       cursor: pointer;
+      -webkit-transition: font-size .5s;
     }
     .cloud-tag:hover
     {
@@ -234,7 +235,7 @@
   </style>
 
   <script src="../../basis-all.js"></script>
-  <script src="blog_posts.js"></script>
+  <script src="blog_posts-5000.js"></script>
   <script>
     basis.dom.event.onLoad(runApp = function(){
       function outStat(){
@@ -391,7 +392,20 @@
             '<ul{childNodesElement} class="category-list__content"/>' +
           '</div>',
 
-        childClass: basis.ui('<li class="category-list-item" event-click="choose">{this_data_title}</li>', { action: { choose: function(){ blogThread.setSources([this.delegate]) } }})
+        childClass: {
+          template:
+            '<li class="category-list-item" event-click="choose">{title}</li>',
+
+          templateUpdate: function(tmpl){
+            tmpl.title.nodeValue = this.data.title;
+          },
+
+          action: {
+            choose: function(){
+              blogThread.setSources([this.delegate]);
+            }
+          }
+        }
       });
 
 

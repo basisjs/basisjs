@@ -173,10 +173,8 @@
       return new DataObject({ data: { value: idx + 1 } });
     });
 
-    var commonObject = new DataObject({});
-    var commonDataSource = new basis.data.Dataset({
-      //items: items
-    });
+    var commonObject = new DataObject;
+    var commonDataSource = new basis.data.Dataset;
 
     // Controls
 
@@ -259,6 +257,11 @@
           }
         }),
 
+
+        //
+        // Owner state labels
+        //
+
         new DemoBlock({
           title: 'basis.ui.label.State with autoDelegate',
           groupId: 'OwnerState',
@@ -330,6 +333,9 @@
           }
         }),
 
+        //
+        // Owner dataSource state labels
+        //
 
         new DemoBlock({
           title: 'basis.ui.label.DataSourceState',
@@ -375,18 +381,62 @@
         }),
 
 
+        //
+        // Owner dataSource items labels
+        //
+
         new DemoBlock({
-          title: 'basis.ui.label.ChildNodesCount',
-          groupId: 'OwnerChildNodes',
+          title: 'basis.ui.label.DataSourceItemCount',
+          groupId: 'OwnerDataSourceItems',
           dataSource: commonDataSource,
           satelliteConfig: {
-            label: nsLabel.ChildNodesCount
+            label: nsLabel.DataSourceItemCount
+          }
+        }),
+
+        new DemoBlock({
+          title: 'basis.ui.label.DataSourceEmpty',
+          groupId: 'OwnerDataSourceItems',
+          dataSource: commonDataSource,
+          satelliteConfig: {
+            label: nsLabel.DataSourceEmpty
+          }
+        }),
+
+
+        //
+        // Owner child nodes label
+        //
+
+        xxx = new DemoBlock({
+          title: 'basis.ui.label.ChildNodesCount',
+          groupId: 'OwnerChildNodes',
+          delegate: commonObject,
+          dataSource: commonDataSource,
+          satelliteConfig: {
+            label: {
+              instanceOf: nsLabel.ChildNodesCount,
+              config: {
+                listen: {
+                  owner: {
+                    childNodesModified: function(){
+                      this.templateUpdate(this.tmpl, 'ownerChildNodesModified');
+                    }
+                  }
+                },
+                templateUpdate: function(tmpl, eventName, delta){
+                  if (!eventName || eventName == 'ownerChildNodesModified')
+                    tmpl.caption.nodeValue = this.owner && this.owner.childNodes.length;
+                }
+              }
+            }
           }
         }),
 
         new DemoBlock({
           title: 'basis.ui.label.Empty',
           groupId: 'OwnerChildNodes',
+          delegate: commonObject,
           dataSource: commonDataSource,
           satelliteConfig: {
             label: nsLabel.Empty

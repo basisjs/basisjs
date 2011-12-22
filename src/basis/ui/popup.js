@@ -22,7 +22,6 @@ basis.require('basis.ui');
  /**
   * @namespace basis.ui.popup
   */
-
   var namespace = 'basis.ui.popup';
 
 

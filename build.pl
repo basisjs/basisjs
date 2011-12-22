@@ -152,6 +152,14 @@ EOF
     }
     print F "\n  }\n}();";
     close F;
+
+    open F, "basis-$name.js";
+    read F, my $buf, -s F;
+    close F;
+
+    open FD, ">basis-$name-debug.js";
+    print FD $buf;
+    close FD;
   }
   else
   {

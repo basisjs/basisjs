@@ -19,7 +19,7 @@
   var nsWrappers = basis.dom.wrapper;
   var nsTree = basis.ui.tree;
   var nsCore = BasisDoc.Core;
-  var Scroller = basis.ui.scroller.Scroller;
+  var nsScroller = basis.ui.scroller;
 
   var ui = basis.ui;
   var uiNode = basis.ui.Node;
@@ -1099,7 +1099,7 @@
     childClass: ClsNode
   });
 
-  new Scroller({
+  new nsScroller.Scroller({
     targetElement: viewClassMap.childNodesElement
   });
 

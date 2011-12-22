@@ -80,6 +80,8 @@ basis.require('basis.ui');
   * @class
   */
   var Resizer = DragDropElement.subclass(function(super_){ return {
+    className: namespace + '.Resizer',
+
    /**
     * Direction of grow depends on delta changes.
     * If value is NaN direction calculate automatically according to related element style.

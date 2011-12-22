@@ -85,10 +85,17 @@ basis.require('basis.ui');
       DOM.display(this.element, this.visible);
     },
 
+    /*event_condChanged: createEvent('condChanged', 'node') && function(node){
+      event.condChanged.call(this, node);
+
+      HANDLER.call(this);
+    },*/
+
     event_ownerChanged: function(node, oldOwner){
       UINode.prototype.event_ownerChanged.call(this, node, oldOwner);
 
       HANDLER.call(this);
+      //this.event_condChanged.call(this)
     }
   });
 
@@ -111,22 +118,6 @@ basis.require('basis.ui');
       }
     }
   });
-
-  /*
-  var ObjectState = Class(State, {
-    className: namespace + '.ObjectState',
-
-    event_delegateChanged: function(object, oldDelegate){
-      State.prototype.event_delegateChanged.call(this, object, oldDelegate);
-
-      if (this.delegate)
-        this.event_stateChanged(this);
-    },
-    event_stateChanged: function(object, oldState){
-      State.prototype.event_stateChanged.call(this, object, oldState);
-      this.setVisibility(this.visibilityGetter(this.state, oldState));
-    }
-  });*/
 
  /**
   * Label that shows only when delegate node in processing state.
@@ -216,7 +207,7 @@ basis.require('basis.ui');
   });
 
  /**
-  * 
+  * @class
   */
   var DataSourceState = Class(DataSourceLabel, {
     className: namespace + '.DataSourceState',
@@ -260,36 +251,36 @@ basis.require('basis.ui');
     }
   });
 
+ /**
+  * @class
+  */
+  var DataSourceItemCount = Class(DataSourceLabel, {
+    className: namespace + '.DataSourceItemCount',
+
+    listen: {
+      ownerDataSource: {
+        stateChanged: HANDLER,
+        datasetChanged: HANDLER
+      }
+    }
+  });
+
+ /**
+  * @class
+  */
+  var DataSourceEmpty = Class(DataSourceItemCount, {
+    className: namespace + '.DataSourceEmpty',
+
+    content: 'Empty',
+    visibilityGetter: function(owner){ 
+      return owner.dataSource && owner.dataSource.state == STATE.READY && !owner.dataSource.itemCount;
+    }
+  });
+
+
   //
   // Child nodes count labels
   //
-
-  var CHILD_COUNT_FUNCTION = function(){
-    this.setVisibility(this.visibilityGetter(this.delegate ? this.delegate.childNodes.length : 0, this.delegate));
-  };
-
-  var ChildCount_DataSourceHandler = {
-    stateChanged: function(object, oldState){
-      this.setVisibility(this.visibilityGetter(object.itemCount, this.delegate));
-    }
-  };
-
-  var ChildCount_DelegateHandler = {
-    childNodesModified: CHILD_COUNT_FUNCTION,
-    dataSourceStateChanged: CHILD_COUNT_FUNCTION,
-    stateChanged: CHILD_COUNT_FUNCTION,
-
-    dataSourceChanged: function(object, oldDataSource){
-      if (oldDataSource)
-        oldDataSource.removeHandler(ChildCount_DataSourceHandler, this);
-
-      if (object.dataSource)
-      {
-        object.dataSource.addHandler(ChildCount_DataSourceHandler, this);
-        ChildCount_DataSourceHandler.stateChanged.call(this, object.dataSource, object.dataSource.state);
-      }
-    }
-  };
 
  /**
   * @class
@@ -299,15 +290,17 @@ basis.require('basis.ui');
 
     listen: {
       owner: {
+        stateChanged: HANDLER,
         childNodesModified: HANDLER
       }
     },
 
     template:
-      '<div class="Basis-Label Basis-Label-Count"/>'
+      '<div class="Basis-Label Basis-Label-Count">{caption|}</div>'
   });
 
  /**
+  * Label that shows only when owner has no child nodes.
   * @class
   */
   var Empty = Class(ChildNodesCount, {
@@ -331,13 +324,16 @@ basis.require('basis.ui');
     Processing: Processing,
     Error: Error,
 
-    ChildNodesCount: ChildNodesCount,
-    Empty: Empty,
-
     DataSourceLabel: DataSourceLabel,
     DataSourceState: DataSourceState,
     DataSourceProcessing: DataSourceProcessing,
-    DataSourceError: DataSourceError
+    DataSourceError: DataSourceError,
+
+    DataSourceItemCount: DataSourceItemCount,
+    DataSourceEmpty: DataSourceEmpty,
+
+    ChildNodesCount: ChildNodesCount,
+    Empty: Empty
   });
 
 }(basis);
