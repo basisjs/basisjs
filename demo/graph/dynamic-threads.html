@@ -43,6 +43,7 @@
   <script type="text/javascript" src="../../locale/ru/calendar.js"></script>
   <script type="text/javascript" src="../../src/basis/ui/graph.js"></script>
 
+  <script type="text/javascript" src="../seedrandom.js"></script>
   <script type="text/javascript" src="../demo.js"></script>
 
 
@@ -91,7 +92,7 @@
         CompanyId: 'Company'
       },
       groupings: {
-        Company: Function.getter('data.Company.getId()')
+        Company: Function.getter('data.Company')
       }
     });
 
@@ -101,15 +102,18 @@
       { Id: 'google', Title: 'Google' },
       { Id: 'microsoft', Title: 'Microsoft' },
       { Id: 'oracle', Title: 'Oracle' }
-    ];
-    companies.map(Company);
+    ].map(Company);
 
     var data = [];
     var lastValue;
     var value;
+
+    Math.seedrandom("graph");
+
     for (var i = 0, company; company = companies[i]; i++)
     {
       lastValue = (5000000 - 100000) * Math.random() + 100000; // 100 000 - 5 000 000
+
       for (var month = 1; month <= 12; month++)
       {
         value = lastValue + 0.2 * lastValue * (2 * Math.random() - 1); // +/- 20% from last value;
@@ -123,7 +127,7 @@
         lastValue = value;
       }
     }
-    data.map(CompanyReport);
+    CompanyReport.all.sync(data);
 
     var graphCompanies = new nsEntity.EntitySet({ wrapper: Company });
 
@@ -140,7 +144,7 @@
       dataSource: graphCompanies,
       childClass: {
         dataSourceGetter: function(object){
-          return CompanyReport.getGrouping('Company').getSubset(object.data.Id);
+          return CompanyReport.getGrouping('Company').getSubset(object.target);
         },
         legendGetter: function(object){
           return object.data.Title;

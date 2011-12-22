@@ -52,7 +52,7 @@ basis.require('basis.ui.canvas');
     legendGetter: Function.getter('legend'),
     colorGetter: Function.getter('color'),
     valueGetterGetter: Function.getter('valueGetter'),
-    dataSourceGetter: Function.$null,
+    dataSourceGetter: Function.$self,
 
     getColor: function(){
       return this.colorGetter(this);
@@ -67,13 +67,6 @@ basis.require('basis.ui.canvas');
       return this.childNodes.map(this.getValueGetter());
     },
 
-    init: function(config){
-      Node.prototype.init.call(this, config);
-
-      if (!this.dataSource)
-        this.setDataSource(this.dataSourceGetter(this));
-    },
-
     childClass: {
       event_update: function(object, delta){
         if (this.parentNode && this.parentNode.parentNode)
@@ -84,7 +77,20 @@ basis.require('basis.ui.canvas');
     },
     childFactory: function(config){
       return new this.childClass(config);
+    },
+
+    event_update: function(object, delta){
+      this.parentNode.updateCount++
+      Node.prototype.event_update.call(this, object, delta);
+    },
+
+    init: function(config){
+      Node.prototype.init.call(this, config);
+
+      if (!this.dataSource)
+        this.setDataSource(this.dataSourceGetter(this));
     }
+
   });
 
   var Graph = Canvas.subclass({
@@ -133,28 +139,19 @@ basis.require('basis.ui.canvas');
 
       var propValues = this.getPropValues();
 
-      if (!propValues.length)
+      if (propValues.length < 2)
       {
-        context.beginPath();
-
-        context.moveTo(LEFT, TOP);
-        context.lineTo(LEFT, HEIGHT - BOTTOM);
-        context.lineTo(WIDTH - RIGHT, HEIGHT - BOTTOM);
-        context.lineWidth = 1;
-        context.strokeStyle = 'black';
-        context.stroke();
-        context.closePath();
-
         context.textAlign = 'center';
         context.fillStyle = '#777';
         context.font = '20px tahoma';
-        context.fillText('No data', WIDTH / 2, HEIGHT / 2);
+        context.fillText(propValues.length == 0 ? 'No data' : 'Not enough data', WIDTH / 2, HEIGHT / 2);
 
         return;
       }
 
+      var max = this.getMaxValue();
+      var maxValue = this.getMaxGridValue(max);
       var minValue = this.getMinGridValue();
-      var maxValue = this.getMaxGridValue();
       var partCount = this.getGridPartCount(minValue, maxValue); 
 
       //
@@ -168,16 +165,20 @@ basis.require('basis.ui.canvas');
       for (var i = 0; i < partCount; i++)
       {
         y_labels[i] = Math.round(maxValue * (partCount - i) / partCount).group();
-
+        
         var tw = context.measureText(y_labels[i]).width;
         if (tw > maxtw)
           maxtw = tw;
       }
       
-      LEFT =  maxtw + 6;
+      var firstXLabelWidth = context.measureText(propValues[0]).width;
+      var lastXLabelWidth = context.measureText(propValues[propValues.length - 1]).width;
 
-      var cnt = propValues.length + 1; 
-      var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt) ;
+      LEFT = Math.max(maxtw, Math.round(firstXLabelWidth / 2)) + 6;
+      RIGHT = lastXLabelWidth / 2;
+
+      var cnt = propValues.length; 
+      var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt - 1) ;
       
       // Legend
       if (this.showLegend)
@@ -202,7 +203,7 @@ basis.require('basis.ui.canvas');
 
         for (var i = 0, thread; thread = this.childNodes[i]; i++)
         {
-          var lx = LEFT + (i % legendColumnCount) * legendColumnWidth;
+          var lx = Math.round(LEFT + (i % legendColumnCount) * legendColumnWidth);
           var ly = HEIGHT - BOTTOM + 5 + (Math.ceil((i + 1) / legendColumnCount) - 1) * LEGEND_ROW_HEIGHT;
 
           context.fillStyle = thread.getColor() || this.threadColor[i];
@@ -246,7 +247,7 @@ basis.require('basis.ui.canvas');
       context.beginPath();
       context.moveTo(LEFT + .5, TOP);
       context.lineTo(LEFT + .5, HEIGHT - BOTTOM + .5);
-      context.lineTo(WIDTH, HEIGHT - BOTTOM + .5);
+      context.lineTo(WIDTH - RIGHT, HEIGHT - BOTTOM + .5);
       context.lineWidth = 1;
       context.strokeStyle = 'black';
       context.stroke();
@@ -260,12 +261,12 @@ basis.require('basis.ui.canvas');
       var x;
       var tw;
 
-      context.font = '9px tahoma';
+      context.font = '10px tahoma';
       context.textAlign = 'center';
 
-      for (var i = 0; i < cnt - 1; i++)
+      for (var i = 0; i < cnt ; i++)
       {
-        x = xLabelsX[i] = Math.round(LEFT + (i + 1) * step) + .5;
+        x = xLabelsX[i] = Math.round(LEFT + (i) * step) + .5;
         tw = context.measureText(propValues[i]).width;
 
         if (lastLabelPos + 10 < (x - tw / 2))
@@ -283,9 +284,8 @@ basis.require('basis.ui.canvas');
       skipCount = maxSkipCount ? maxSkipCount + 1 : 0;
 
       var skip;
-
       context.beginPath();
-      for (var i = 0; i < cnt - 1; i++)
+      for (var i = 0; i < cnt; i++)
       {
         x = xLabelsX[i];
         skip = skipCount && (i % skipCount != 0);
@@ -308,7 +308,7 @@ basis.require('basis.ui.canvas');
       {
         this.style.strokeStyle = thread.getColor() || this.threadColor[i];
         values = thread.getValues();
-        this.drawThread(values, maxValue, LEFT + step, TOP, step, (HEIGHT - TOP - BOTTOM))
+        this.drawThread(values, maxValue, LEFT, TOP, step, (HEIGHT - TOP - BOTTOM))
       }  
     },
     drawThread: function(values, max, left, top, step, height){
@@ -346,9 +346,8 @@ basis.require('basis.ui.canvas');
     getMinGridValue: function(){
       return 0;
     },
-    getMaxGridValue: function(){
-      var maxValue = this.getMaxValue();
-      return Math.ceil(Math.round(maxValue) / Math.pow(10, getDegree(maxValue))) * Math.pow(10, getDegree(maxValue));
+    getMaxGridValue: function(maxValue){
+      return Math.ceil(Math.ceil(maxValue) / Math.pow(10, getDegree(maxValue))) * Math.pow(10, getDegree(maxValue));
     },
     getGridPartCount: function(minValue, maxValue){
       var MIN_PART_COUNT = 5;
@@ -362,7 +361,10 @@ basis.require('basis.ui.canvas');
 
       var maxDegree = getDegree(maxValue);
 
-      while (count < MIN_PART_COUNT && divisionCount < maxDegree)
+      if (maxDegree == 0)
+        return maxValue;
+      
+      while (count < MIN_PART_COUNT && divisionCount <= maxDegree)
       {
         for (var i = 2; i <= 5; i++)
         {
