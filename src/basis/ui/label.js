@@ -51,19 +51,15 @@ basis.require('basis.ui');
   var stateTemplate = '<div class="Basis-Label Basis-Label-State"/>';
   var processingTemplate = '<div class="Basis-Label Basis-Label-Processing"/>';
   var errorTemplate = '<div class="Basis-Label Basis-Label-Error"/>';
+  var countTemplate = '<div class="Basis-Label Basis-Label-Count">{count}</div>';
+  var emptyTemplate = '<div class="Basis-Label Basis-Label-Empty"/>';
 
   //
   // NodeLabel
   //
 
-  var HANDLER = function(){
-    var visible = this.owner ? !!this.visibilityGetter(this.owner) : false;
-
-    if (this.visible !== visible)
-    {
-      this.visible = visible;
-      this.event_visibilityChanged(this);
-    }
+  var condChangedTrigger = function(){
+    this.event_condChanged(this);
   };
 
  /**
@@ -74,27 +70,50 @@ basis.require('basis.ui');
     className: namespace + '.NodeLabel',
 
     template: '<div class="Basis-Label"/>',
-    content: '[no text]',
+    content: null,
 
     visibilityGetter: Function.$true,
     visible: null,
 
+    insertPoint: function(){
+      return this.owner ? this.owner.tmpl.content || this.owner.element : null;
+    },
+
     event_visibilityChanged: createEvent('visibilityChanged', 'node') && function(node){
       event.visibilityChanged.call(this, node);
 
-      DOM.display(this.element, this.visible);
+      if (this.insertPoint)
+      {
+        if (this.visible)
+        {
+          var insertPoint = typeof this.insertPoint == 'function' ? this.insertPoint() : this.insertPoint;
+          var params = Array.isArray(insertPoint) ? insertPoint : [insertPoint];
+          params.splice(1, 0, this.element);
+          DOM.insert.apply(null, params);
+        }
+        else
+          DOM.remove(this.element);
+      }
+      else
+        DOM.display(this.element, this.visible);
     },
 
-    /*event_condChanged: createEvent('condChanged', 'node') && function(node){
+    event_condChanged: createEvent('condChanged', 'node') && function(node){
       event.condChanged.call(this, node);
 
-      HANDLER.call(this);
-    },*/
+      var visible = this.owner ? !!this.visibilityGetter(this.owner) : false;
+
+      if (this.visible !== visible)
+      {
+        this.visible = visible;
+        this.event_visibilityChanged(this);
+      }
+    },
 
     event_ownerChanged: function(node, oldOwner){
       UINode.prototype.event_ownerChanged.call(this, node, oldOwner);
 
-      HANDLER.call(this);
+      condChangedTrigger.call(this);
       //this.event_condChanged.call(this)
     }
   });
@@ -114,7 +133,7 @@ basis.require('basis.ui');
 
     listen: {
       owner: {
-        stateChanged: HANDLER
+        stateChanged: condChangedTrigger
       }
     }
   });
@@ -152,6 +171,29 @@ basis.require('basis.ui');
   // Node dataSource labels
   //
 
+  function syncOwnerDataSource(){
+    var newOwnerDataSource = this.owner && this.owner.dataSource;
+
+    if (this.ownerDataSource != newOwnerDataSource)
+    {
+      var oldOwnerDataSource = this.ownerDataSource;
+      var listenHandler = this.listen.ownerDataSource;
+
+      this.ownerDataSource = newOwnerDataSource;
+
+      if (listenHandler)
+      {
+        if (oldOwnerDataSource)
+          oldOwnerDataSource.removeHandler(listenHandler, this);
+
+        if (newOwnerDataSource)
+          newOwnerDataSource.addHandler(listenHandler, this);
+      }
+
+      this.event_ownerDataSourceChanged(this, oldOwnerDataSource);
+    }
+  }
+
  /**
   * @class
   */
@@ -163,7 +205,7 @@ basis.require('basis.ui');
     listen: {
       owner: {
         dataSourceChanged: function(){
-          this.syncOwnerDataSource();
+          syncOwnerDataSource.call(this);
         }
       }
     },
@@ -173,36 +215,13 @@ basis.require('basis.ui');
     event_ownerChanged: function(node, oldOwner){
       UINode.prototype.event_ownerChanged.call(this, node, oldOwner);
 
-      this.syncOwnerDataSource();
+      syncOwnerDataSource.call(this);
     },
 
     event_ownerDataSourceChanged: createEvent('ownerDataSourceChanged', 'node', 'oldOwnerDataSource') && function(node, oldOwnerDataSource){
       event.ownerDataSourceChanged.call(this, node, oldOwnerDataSource);
 
-      HANDLER.call(this);
-    },
-
-    syncOwnerDataSource: function(){
-      var newOwnerDataSource = this.owner && this.owner.dataSource;
-
-      if (this.ownerDataSource != newOwnerDataSource)
-      {
-        var oldOwnerDataSource = this.ownerDataSource;
-        var listenHandler = this.listen.ownerDataSource;
-
-        this.ownerDataSource = newOwnerDataSource;
-
-        if (listenHandler)
-        {
-          if (oldOwnerDataSource)
-            oldOwnerDataSource.removeHandler(listenHandler, this);
-
-          if (newOwnerDataSource)
-            newOwnerDataSource.addHandler(listenHandler, this);
-        }
-
-        this.event_ownerDataSourceChanged(this, oldOwnerDataSource);
-      }
+      condChangedTrigger.call(this);
     }
   });
 
@@ -216,7 +235,7 @@ basis.require('basis.ui');
 
     listen: {
       ownerDataSource: {
-        stateChanged: HANDLER
+        stateChanged: condChangedTrigger
       }
     }
   });
@@ -257,10 +276,11 @@ basis.require('basis.ui');
   var DataSourceItemCount = Class(DataSourceLabel, {
     className: namespace + '.DataSourceItemCount',
 
+    template: countTemplate,
     listen: {
       ownerDataSource: {
-        stateChanged: HANDLER,
-        datasetChanged: HANDLER
+        stateChanged: condChangedTrigger,
+        datasetChanged: condChangedTrigger
       }
     }
   });
@@ -271,6 +291,7 @@ basis.require('basis.ui');
   var DataSourceEmpty = Class(DataSourceItemCount, {
     className: namespace + '.DataSourceEmpty',
 
+    template: emptyTemplate,
     content: 'Empty',
     visibilityGetter: function(owner){ 
       return owner.dataSource && owner.dataSource.state == STATE.READY && !owner.dataSource.itemCount;
@@ -288,15 +309,13 @@ basis.require('basis.ui');
   var ChildNodesCount = Class(NodeLabel, {
     className: namespace + '.ChildCount',
 
+    template: countTemplate,
     listen: {
       owner: {
-        stateChanged: HANDLER,
-        childNodesModified: HANDLER
+        stateChanged: condChangedTrigger,
+        childNodesModified: condChangedTrigger
       }
-    },
-
-    template:
-      '<div class="Basis-Label Basis-Label-Count">{caption|}</div>'
+    }
   });
 
  /**
@@ -306,6 +325,7 @@ basis.require('basis.ui');
   var Empty = Class(ChildNodesCount, {
     className: namespace + '.Empty',
 
+    template: emptyTemplate,
     content: 'Empty',
     visibilityGetter: function(owner){ 
       return owner.state == STATE.READY && !owner.firstChild;

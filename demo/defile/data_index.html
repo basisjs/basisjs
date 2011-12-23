@@ -236,7 +236,7 @@
         }
       ],
 
-      rowBehaviour: {
+      childClass: {
         templateUpdate: function(tmpl, eventName, delta){
           if (delta)
             for (var key in delta)
@@ -245,9 +245,7 @@
             for (var key in this.data)
               if (key in tmpl)
                 tmpl[key].nodeValue = this.data[key];
-        }
-      },
-      childClass: {
+        },
         satelliteConfig: {
           indexes: {
             hook: { rootChanged: true },

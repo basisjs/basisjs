@@ -108,7 +108,7 @@
     dir: 'center bottom center top',
     selection: {},
     childClass: Class(uiNode,
-      nsWrappers.simpleTemplate('<div{element} class="item" event-click="scrollTo">{this_data_key}</div>'),
+      basis.ui('<div{element} class="item" event-click="scrollTo">{this_data_key}</div>'),
       {
         templateAction: function(actionName){
           if (actionName == 'scrollTo')

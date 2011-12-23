@@ -105,6 +105,19 @@ basis.require('basis.html');
   //
 
   SUBSCRIPTION.add(
+    'OWNER',
+    {
+      ownerChanged: function(object, oldOwner){
+        this.remove(object, oldOwner);
+        this.add(object, object.owner);
+      }
+    },
+    function(action, object){
+      action(object, object.owner);
+    }
+  );
+
+  SUBSCRIPTION.add(
     'DATASOURCE',
     {
       dataSourceChanged: function(object, oldDataSource){
@@ -122,17 +135,6 @@ basis.require('basis.html');
   //
 
   var NULL_SATELLITE_CONFIG = Class.ExtensibleProperty();
-  var SATELLITE_DESTROY_HANDLER = {
-    ownerChanged: function(sender, oldOwner){
-      if (sender.owner !== this)
-      {
-        // ???
-      }
-    },
-    destroy: function(object){
-      DOM.replace(object.element, this);
-    }
-  };
 
   var SATELLITE_UPDATE = function(){
     // this -> {
@@ -144,77 +146,68 @@ basis.require('basis.html');
     var config = this.config;
     var owner = this.owner;
 
-    var exists = typeof config.existsIf != 'function' || config.existsIf(owner);
+    var exists = !config.existsIf || config.existsIf(owner);
     var satellite = owner.satellite[key];
 
     if (exists)
     {
-      var setDelegate = 'delegate' in config;
-      var setDataSource = 'dataSource' in config;
-
-      var delegate = typeof config.delegate == 'function' ? config.delegate(owner) : null;
-      var dataSource = typeof config.dataSource == 'function' ? config.dataSource(owner) : null;
-
       if (satellite)
       {
-        if (setDelegate)
-          satellite.setDelegate(delegate);
+        if (config.delegate)
+          satellite.setDelegate(config.delegate(owner));
 
-        if (setDataSource)
-          satellite.setDataSource(dataSource);
+        if (config.dataSource)
+          satellite.setDataSource(config.dataSource(owner));
       }
       else
       {
-        var replaceElement = owner.tmpl[config.replace || key];
-        var instanceConfig = {
-          owner: owner
-        };
+        var satelliteConfig = (
+            typeof config.config == 'function'
+              ? config.config(owner)
+              : config.config
+          ) || {};
 
-        if (setDelegate)
-          instanceConfig.delegate = delegate;
+        satelliteConfig.owner = owner;
 
-        if (setDataSource)
-          instanceConfig.dataSource = dataSource;
+        if (config.delegate)
+          satelliteConfig.delegate = config.delegate(owner);
 
-        if (config.config)
-          Object.complete(instanceConfig, typeof config.config == 'function' ? config.config(owner) : config.config);
+        if (config.dataSource)
+          satelliteConfig.dataSource = config.dataSource(owner);
 
-        satellite = new config.instanceOf(instanceConfig);
-        //if (satellite.listen.owner)
-        //  owner.addHandler(satellite.listen.owner, satellite);
+        satellite = new config.instanceOf(satelliteConfig);
 
         owner.satellite[key] = satellite;
+        owner.event_satelliteChanged(this, key, null);
 
-        if (replaceElement && satellite instanceof basis.ui.Node && satellite.element)
-        {
-          DOM.replace(replaceElement, satellite.element);
-          satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
-        }
+        if (owner.listen.satellite)
+          satellite.addHandler(owner.listen.satellite, satellite);
       }
     }
     else
     {
       if (satellite)
       {
-        //if (satellite.listen.owner)
-        //  owner.removeHandler(satellite.listen.owner, satellite);
+        delete owner.satellite[key];
+
+        owner.event_satelliteChanged(owner, key, sattelite);
 
         satellite.destroy();
-        satellite.owner = null;
-        delete owner.satellite[key];
       }
     }
   };
 
+  // default satellite hooks
   var SATELLITE_OWNER_HOOK = Class.CustomExtendProperty(
-    {
-      update: true
-    },
+    {},
     function(result, extend){
       for (var key in extend)
-        result[key] = extend[key] ? SATELLITE_UPDATE : null;    
+        result[key] = extend[key] ? SATELLITE_UPDATE : null;
     }
   );
+  var SATELLITE_OWNER_UPDATE_HOOK = SATELLITE_OWNER_HOOK.__extend__({
+    update: true
+  });
 
  /**
   * @class
@@ -281,10 +274,11 @@ basis.require('basis.html');
     event_ownerChanged: createEvent('ownerChanged', 'node', 'oldOwner'),
 
    /**
-    * @param {basis.dom.wrapper.AbstractNode} node
-    * @param {basis.dom.wrapper.AbstractNode} oldOwner
+    * @param {basis.dom.wrapper.AbstractNode} node Initiator of event
+    * @param {string} key
+    * @param {basis.dom.wrapper.AbstractNode} oldSattelite Old satellite for key
     */
-    event_satellitesChanged: createEvent('satellitesChanged', 'node', 'delta'),
+    event_satelliteChanged: createEvent('satelliteChanged', 'node', 'key', 'oldSattelite'),
 
     //
     // properties
@@ -521,26 +515,47 @@ basis.require('basis.html');
           var config = this.satelliteConfig[key];
 
           if (Class.isClass(config))
-            config = { instanceOf: config };
+            config = {
+              instanceOf: config
+            };
 
           if (typeof config == 'object')
           {
+            var hookRequired = false;
+            var contextConfig = {
+              instanceOf: config.instanceOf
+            };
             var context = {
               key: key,
               owner: this,
-              config: config
+              config: contextConfig
             };
 
-            var hook = config.hook
-              ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
-              : SATELLITE_OWNER_HOOK;
+            if (typeof config.config)
+              contextConfig.config = config.config;
 
-            for (var key in hook)
-              if (hook[key] === SATELLITE_UPDATE)
-              {
-                this.addHandler(hook, context);
-                break;
-              }
+            if (typeof config.existsIf == 'function')
+              hookRequired = contextConfig.existsIf = config.existsIf;
+
+            if (typeof config.delegate == 'function')
+              hookRequired = contextConfig.delegate = config.delegate;
+
+            if (typeof config.dataSource == 'function')
+              hookRequired = contextConfig.dataSource = config.dataSource;
+
+            if (hookRequired)
+            {
+              var hook = config.hook
+                ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
+                : SATELLITE_OWNER_UPDATE_HOOK;
+
+              for (var key in hook)
+                if (hook[key] === SATELLITE_UPDATE)
+                {
+                  this.addHandler(hook, context);
+                  break;
+                }
+            }
 
             SATELLITE_UPDATE.call(context)
           }
@@ -706,8 +721,8 @@ basis.require('basis.html');
         for (var key in this.satellite)
         {
           var satellite = this.satellite[key];
+          satellite.owner = null;  // should we drop owner?
           satellite.destroy();
-          satellite.owner = null;
         }
         this.satellite = null;
       }
@@ -2567,8 +2582,6 @@ basis.require('basis.html');
     Node: Node,
     GroupingNode: GroupingNode,
     PartitionNode: PartitionNode,
-
-    simpleTemplate: simpleTemplate,
 
     // datasets
     ChildNodesDataset: ChildNodesDataset,

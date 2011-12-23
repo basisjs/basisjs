@@ -56,6 +56,48 @@ basis.require('basis.html');
   */
   var TemplateMixin = function(super_){
     return {
+      listen: {
+        sattelite: {
+          ownerChanged: function(satellite, oldOwner){
+            if (oldOwner)
+            {
+              if (satellite.ownerReplacedNode_)
+              {
+                DOM.replace(satellite.element, satellite.ownerReplacedNode_);
+                satellite.ownerReplacedNode_ = null;
+              }
+            }
+          },
+          destroy: function(satellite){
+            if (satellite.ownerReplacedNode_)
+            {
+              DOM.replace(satellite.element, satellite.ownerReplacedNode_);
+              satellite.ownerReplacedNode_ = null;
+            }
+          }          
+        }
+      },
+
+      event_satelliteChanged: function(node, key, oldSattelite){
+        super_.event_satelliteChanged.call(this, node, key, oldSattelite);
+
+        var satellite = this.satellite[key];
+
+        if (satellite)
+        {
+          if (satellite instanceof Node && satellite.element)
+          {
+            var config = this.satelliteConfig && this.satelliteConfig[key];
+            var replaceElement = this.tmpl[config.replace || key];
+            if (replaceElement)
+            {
+              DOM.replace(satellite.ownerReplacedNode_ = replaceElement, satellite.element);
+              //satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
+            }
+          }
+        }
+      },
+
      /**
       * Template for object.
       * @type {basis.Html.Template}
@@ -145,33 +187,36 @@ basis.require('basis.html');
       init: function(config){
 
         // create dom fragment by template
-        this.tmpl = {};
+        var tmpl = {};
+        this.tmpl = tmpl;
+
         if (this.template)
         {
-          this.template.createInstance(this.tmpl, this);
-          this.element = this.tmpl.element;
+          this.template.createInstance(tmpl, this);
 
-          if (this.tmpl.childNodesHere)
+          if (tmpl.childNodesHere)
           {
-            this.tmpl.childNodesElement = this.tmpl.childNodesHere.parentNode;
-            this.tmpl.childNodesElement.insertPoint = this.tmpl.childNodesHere;
+            tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
+            tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;
           }
 
           // insert content
           if (this.content)
-            DOM.insert(this.tmpl.content || this.element, this.content);
+            DOM.insert(tmpl.content || tmpl.element, this.content);
         }
         else
-          this.element = this.tmpl.element = DOM.createElement();
+          tmpl.element = DOM.createElement();
 
-        this.childNodesElement = this.tmpl.childNodesElement || this.element;
+        // make shortcuts
+        this.element = tmpl.element;
+        this.childNodesElement = tmpl.childNodesElement || tmpl.element;
 
         // inherit init
         super_.init.call(this, config);
 
         // update template
         if (this.id)
-          this.element.id = this.id;
+          tmpl.element.id = this.id;
 
         var cssClassNames = this.cssClassName;
         if (cssClassNames)
@@ -181,7 +226,7 @@ basis.require('basis.html');
 
           for (var alias in cssClassNames)
           {
-            var node = this.tmpl[alias];
+            var node = tmpl[alias];
             if (node)
             {
               var nodeClassName = classList(node);
@@ -192,19 +237,11 @@ basis.require('basis.html');
           }
         }
 
-        /*if (true) // this.template
-        {
-          var delta = {};
-          for (var key in this.data)
-            delta[key] = undefined;
-
-          this.event_update(this, delta);
-        }*/
-        if (this.tmpl)
-          this.templateUpdate(this.tmpl);
+        if (tmpl)
+          this.templateUpdate(tmpl);
 
         if (this.container)
-          DOM.insert(this.container, this.element);
+          DOM.insert(this.container, tmpl.element);
       },
 
      /**
@@ -225,7 +262,7 @@ basis.require('basis.html');
       * @param {object} event
       */
       templateUpdate: function(tmpl, eventName, delta){
-        /** nothing to do, override it in descendant classes */
+        /** nothing to do, override it in sub classes */
       },
 
      /**
@@ -236,8 +273,9 @@ basis.require('basis.html');
 
         super_.destroy.call(this);
 
-        if (element && element.parentNode)
-          element.parentNode.removeChild(element);
+        var parentNode = element && element.parentNode;
+        if (parentNode && parentNode.nodeType == DOM.ELEMENT_NODE)
+          parentNode.removeChild(element);
 
         if (this.template)
           this.template.clearInstance(this.tmpl, this);

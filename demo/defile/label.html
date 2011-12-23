@@ -64,16 +64,19 @@
     }
     .DemoBlock-Content
     {
-      height: 40px;
+      height: 20px;
+      position: relative;
     }
 
     .Basis-Label
     {
-      width: 50ex;
+      position: absolute;
+      width: 60%;
+      margin-left: -30%;
+      left: 50%;
       padding: .25em 0;
       border: 1px solid #E0E0E0;
       background: #F4F4F4;
-      margin: 0 auto;
       text-align: center;
         -moz-border-radius: 3px;
         -webkit-border-radius: 3px;
@@ -390,7 +393,16 @@
           groupId: 'OwnerDataSourceItems',
           dataSource: commonDataSource,
           satelliteConfig: {
-            label: nsLabel.DataSourceItemCount
+            label: {
+              instanceOf: nsLabel.DataSourceItemCount,
+              config: {
+                handler: {
+                  condChanged: function(){
+                    this.tmpl.count.nodeValue = this.owner && this.owner.dataSource ? this.owner.dataSource.itemCount : 0;
+                  }
+                }
+              }
+            }
           }
         }),
 
@@ -417,16 +429,10 @@
             label: {
               instanceOf: nsLabel.ChildNodesCount,
               config: {
-                listen: {
-                  owner: {
-                    childNodesModified: function(){
-                      this.templateUpdate(this.tmpl, 'ownerChildNodesModified');
-                    }
+                handler: {
+                  condChanged: function(){
+                    this.tmpl.count.nodeValue = this.owner ? this.owner.childNodes.length : 0;
                   }
-                },
-                templateUpdate: function(tmpl, eventName, delta){
-                  if (!eventName || eventName == 'ownerChildNodesModified')
-                    tmpl.caption.nodeValue = this.owner && this.owner.childNodes.length;
                 }
               }
             }

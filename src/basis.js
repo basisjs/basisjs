@@ -1592,9 +1592,16 @@
                 config = handlers[i];
 
                 // handler call
-                func = config.handler[eventName];
-                if (typeof func == 'function')
-                  func.apply(config.thisObject, arguments);
+                if (func = config.handler[eventName])
+                  if (typeof func == 'function')
+                    func.apply(config.thisObject, arguments);
+
+                if (func = config.handler['*'])
+                  if (typeof func == 'function')
+                    func.call(config.thisObject, {
+                      type: eventName,
+                      args: arguments
+                    });
               }
             }
 

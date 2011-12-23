@@ -102,7 +102,7 @@
   * @class
   */
   var ViewOptions = Class(uiContainer,
-    nsWrappers.simpleTemplate(
+    basis.ui(
       '<div{element} class="viewOptions">' +
         '<span class="title">{this_title}:</span>' +
         '<span{childNodesElement} class="options"/>' +
@@ -356,7 +356,7 @@
   * @class
   */
   TemplateTreeNode.Attribute = Class(TemplateTreeNode, 
-    nsWrappers(
+    basis.ui(
       '<span{element} class="Doc-TemplateView-Node Doc-TemplateView-Attribute">' +
         '<span>{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span>="{this_data_nodeValue}"</span>' + 
       '</span>'
@@ -370,7 +370,7 @@
   * @class
   */
   TemplateTreeNode.EmptyElement = Class(TemplateTreeNode,
-    nsWrappers(
+    basis.ui(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
         '<span><{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span><!--{attributes}-->/></span>' + 
       '</div>'
@@ -398,7 +398,7 @@
   * @class
   */
   TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, 
-    nsWrappers(
+    basis.ui(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
         '<span><{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span><!--{attributes}-->></span>' + 
         '<div{childNodesElement} class="Doc-TemplateView-NodeContent"></div>' + 
@@ -414,7 +414,7 @@
   * @class
   */
   TemplateTreeNode.Text = Class(TemplateTreeNode,
-    nsWrappers(
+    basis.ui(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Text">' + 
         '<span><span class="refList">{{this_data_ref}} </span>{this_data_nodeValue}</span>' + 
       '</div>'
@@ -428,7 +428,7 @@
   * @class
   */
   TemplateTreeNode.Comment = Class(TemplateTreeNode,
-    nsWrappers(
+    basis.ui(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Comment">' + 
         '<--<span>{this_data_nodeValue}</span>-->' + 
       '</div>'

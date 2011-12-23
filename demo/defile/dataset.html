@@ -203,7 +203,7 @@
     //
     // Custom classes & instances
     //
-    var DatasetViewer = UIContainer.subclass(nsWrapper(
+    var DatasetViewer = UIContainer.subclass(basis.ui(
       '<div class="DemoBlock">' +
         '<span{content}/>' +
         '<!-- {childNodesHere} -->' +
@@ -211,7 +211,7 @@
       '</div>',
       {
         container: document.getElementById('demo-container'),
-        childClass: nsWrapper(
+        childClass: basis.ui(
           '<span class="item">' +
             '{this_data_value}' +
           '</span>'
@@ -219,7 +219,7 @@
       }
     ));
 
-    var EditableDatasetViewer = UIContainer.subclass(nsWrapper(
+    var EditableDatasetViewer = UIContainer.subclass(basis.ui(
       '<div class="DemoBlock">' +
         '<!-- {childNodesHere} -->' +
         '<button event-click="add">add</button>' +
@@ -233,7 +233,7 @@
             newItemPopup.show(Event.sender(event));
           }
         },
-        childClass: nsWrapper(
+        childClass: basis.ui(
           '<span class="item">' +
             '<span class="remove" event-click="remove">x</span>' +
             '{this_data_value}' +
@@ -372,7 +372,7 @@
         source: A
       }),
       childClass: UIContainer.subclass(
-        nsWrapper.simpleTemplate(
+        basis.ui.simpleTemplate(
           '<span class="dsitem">' +
             '{this_data_title}' +
           '</span>'
@@ -411,7 +411,7 @@
         source: A
       }),
       childClass: UIContainer.subclass(
-        nsWrapper.simpleTemplate(
+        basis.ui.simpleTemplate(
           '<span class="dsitem">' +
             '{this_data_title}' +
           '</span>'

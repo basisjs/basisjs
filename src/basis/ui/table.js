@@ -44,6 +44,8 @@ basis.require('basis.ui');
   var extend = Object.extend;
   var classList = basis.cssom.classList;
 
+  var nsData = basis.data;
+
   var nsWrapper = basis.dom.wrapper;
   var GroupingNode = nsWrapper.GroupingNode;
   var PartitionNode = nsWrapper.PartitionNode;
@@ -542,15 +544,19 @@ basis.require('basis.ui');
           }
         }
 
+        ;;;if (this.rowSatellite && typeof console != 'undefined') console.warn('rowSatellite is deprecated. Move all extensions into childClass');
+
         this.childClass = this.childClass.subclass({
           //behaviour: config.rowBehaviour,
-          satelliteConfig: this.rowSatellite,
+          satelliteConfig: this.rowSatellite || {},
           template: new Template(this.childClass.prototype.template.source.replace('<!--{cells}-->', template)),
           updaters: updaters
         });
 
         if (this.rowBehaviour)
         {
+          ;;;if (typeof console != 'undefined') console.warn('rowBehaviour is deprecated. Move all extensions into childClass');
+
           var rowBehaviour = this.rowBehaviour;
 
           Object.keys(rowBehaviour).forEach(function(method){
@@ -565,7 +571,7 @@ basis.require('basis.ui');
     },
 
     loadData: function(items){
-      this.setChildNodes(items.map(Function.wrapper('data')))
+      this.setChildNodes(nsData(items));
     },
 
     destroy: function(){
