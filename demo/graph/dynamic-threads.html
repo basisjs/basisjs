@@ -114,13 +114,14 @@
     {
       lastValue = (5000000 - 100000) * Math.random() + 100000; // 100 000 - 5 000 000
 
-      for (var month = 1; month <= 12; month++)
+      for (var month = 1; month <= 120; month++)
       {
         value = lastValue + 0.2 * lastValue * (2 * Math.random() - 1); // +/- 20% from last value;
                          
         data.push({
           Company: company,
-          Date: '2011-' + month.lead(2),
+          //Date: '2011-' + month.lead(2),
+          Date: (2011 + Math.floor(month / 12)) + '-' + (1 + month % 12).lead(2),
           Amount: value
         });
 

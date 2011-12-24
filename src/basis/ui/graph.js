@@ -25,10 +25,15 @@ basis.require('basis.ui.canvas');
   //
   // import names
   //
+  var Event = basis.dom.event;
+  var DOM = basis.dom;
 
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var Node = basis.dom.wrapper.Node;
+  var uiNode = basis.ui.Node;
+  var uiContainer = basis.ui.Container;
   var Canvas = basis.ui.canvas.Canvas;
+
 
   //
   // Main part
@@ -47,7 +52,324 @@ basis.require('basis.ui.canvas');
     }
   }
 
+
+  var GraphViewerLabel = uiNode.subclass({
+    template: 
+      '<div style="position: absolute; padding: 3px; font-size: 10px; border: 2px solid; background: #F8F8F8">{titleText}</div>',
+
+    init: function(config){
+      uiNode.prototype.init.call(this, config);
+
+      var color = this.delegate.getColor();
+      DOM.setStyle(this.element, {
+        borderColor: color
+      });
+
+    }
+  });
+
+  /*var GraphViewer = uiContainer.subclass({
+    childClass: GraphViewerLabel,
+    template: 
+      '<div style="position: relative;">' +
+        '<div{positionLine} style="position: absolute; width: 1px; background: #CCC"></div>' +
+        '<div{propElement} style="position: absolute; margin-top: 3px; padding: 2px 4px 4px; font-size: 10px; background: #090; color: white; border-radius: 3px">{propValueText}</div>' +
+        '<div{childNodesElement}></div>' +
+      '</div>',
+
+    event_update: function(object, delta){
+      uiNode.prototype.event_update.call(this, object, delta);
+
+      this.updatePosition(this.mx, this.my);
+    },
+
+    init: function(config){
+      uiContainer.prototype.init.call(this, config);
+
+      if (this.owner)
+      {
+        Event.addHandler(this.owner.element, 'mousemove', this.mousemove, this);
+        Event.addHandler(this.owner.element, 'mouseout', this.mousemove, this);
+      }
+    },
+
+    mousemove: function(event){
+      this.mx = Event.mouseX(event);
+      this.my = Event.mouseY(event);
+
+      this.updatePosition(this.mx, this.my);
+    },
+
+    updatePosition: function(mx, my){
+      var canvasRect = this.owner.element.getBoundingClientRect();
+      var x = mx - canvasRect.left - this.data.left;
+      var y = my - canvasRect.top - this.data.top;
+
+      var show = x > 0 && x < this.data.width && y > 0 && y < this.data.height;
+
+      if (show)
+      {
+        var propValues = this.owner.getPropValues();
+        var step = this.data.width / (propValues.length - 1);
+        var propPosition = Math.round(x / step);
+        var xPosition = Math.round(propPosition * step);
+
+        DOM.setStyle(this.tmpl.positionLine, {
+          left: this.data.left + xPosition + 'px',
+          top: this.data.top + 'px',
+          height: this.data.height + 'px'
+        });
+
+        this.tmpl.propValueText.nodeValue = propValues[propPosition];
+
+        DOM.setStyle(this.tmpl.propElement, {
+          left: this.data.left + xPosition - Math.round(this.tmpl.propElement.offsetWidth / 2) + .5 + 'px',
+          top: this.data.top + this.data.height + 'px'
+        });
+
+        var rightAlign = propPosition > (propValues.length / 2);
+
+        var labelPos = [];
+        var crossingLabelGroups = [];
+        var labelY;
+
+        for (var i = 0, threadLabel; threadLabel = this.childNodes[i]; i++){
+          var values = threadLabel.delegate.getValues();
+          var value = values[propPosition];
+
+          threadLabel.tmpl.titleText.nodeValue = Number(value.toFixed(2)).group();
+
+          var labelY = this.data.top + (1 - value / this.data.max) * this.data.height - (threadLabel.element.offsetHeight / 2);
+          labelY = Math.max(0, Math.min(labelY, this.data.top + this.data.height));
+
+          labelPos[i] = {
+            x: this.data.left + xPosition - (rightAlign ? threadLabel.element.offsetWidth : 0),
+            y: labelY
+          }
+
+        }
+
+        for (var i = 0, threadLabel; threadLabel = this.childNodes[i]; i++){
+          DOM.setStyle(threadLabel.element, {
+            left: labelPos[i].x + 'px',
+            top: labelPos[i].y + 'px'
+          });
+        }
+      }
+
+      DOM.display(this.element, show);
+    }
+  });*/
+
+  var GraphViewer = uiNode.subclass({
+    className: 'GraphViewer',
+
+    template: '<canvas event-mousemove="move" event-mouseout="out" style="position:absolute;left:0;top:0"></canvas>',
+
+    action: {
+      move: function(event){
+        this.mx = Event.mouseX(event);
+        this.my = Event.mouseY(event);
+
+        this.updatePosition(this.mx, this.my);
+      },
+      out: function(){
+        this.mx = null;
+        this.my = null;
+
+        this.reset();
+      }
+    },
+
+    listen: {
+      owner: {
+        draw: function(){
+          if (this.mx)
+            this.updatePosition(this.mx, this.my);
+
+          this.syncSize();
+        }
+      }
+    },
+
+    init: function(config){
+      uiNode.prototype.init.call(this, config);
+
+      if (this.owner)
+        this.syncSize();
+
+      this.context = this.element.getContext('2d');
+    },
+
+    syncSize: function(){
+      this.element.width = this.owner.tmpl.canvas.width;
+      this.element.height = this.owner.tmpl.canvas.height;
+    },
+
+    updatePosition: function(mx, my){
+      this.reset();
+
+      var canvasRect = this.owner.element.getBoundingClientRect();
+      var x = mx - canvasRect.left - this.data.left;
+      var y = my - canvasRect.top - this.data.top;
+
+      var needToDraw = x > 0 && x < this.data.width && y > 0 && y < this.data.height;
+
+      if (needToDraw)
+        this.draw(x);
+    },
+
+    reset: function(){
+      this.element.width = this.element.clientWidth;
+      this.element.height = this.element.clientHeight;
+    },
+
+    draw: function(x){
+      var context = this.context;
+
+      var propValues = this.owner.getPropValues();
+      var step = this.data.width / (propValues.length - 1);
+      var propPosition = Math.round(x / step);
+      var xPosition = Math.round(propPosition * step);
+
+      context.translate(this.data.left, this.data.top);
+
+      context.beginPath();
+      context.moveTo(xPosition + .5, 0);
+      context.lineTo(xPosition + .5, this.data.height);
+      context.strokeStyle = '#CCC';
+      context.stroke();
+      context.closePath();
+
+
+      context.font = "10px tahoma";
+      context.textAlign = "center";
+      var propText = propValues[propPosition];
+      var propTextWidth = context.measureText(propText).width;
+      var propTextHeight = 10;
+
+      context.beginPath();
+      context.moveTo(xPosition + .5, this.data.height + 1 + .5);
+      context.lineTo(xPosition - 3 + .5, this.data.height + 4 + .5);
+      context.lineTo(xPosition - Math.round(propTextWidth / 2) - 5 + .5, this.data.height + 4 + .5);
+      context.lineTo(xPosition - Math.round(propTextWidth / 2) - 5 + .5, this.data.height + 4 + propTextHeight + 5 + .5);
+      context.lineTo(xPosition + Math.round(propTextWidth / 2) + 5 + .5, this.data.height + 4 + propTextHeight + 5 + .5);
+      context.lineTo(xPosition + Math.round(propTextWidth / 2) + 5 + .5, this.data.height + 4 + .5);
+      context.lineTo(xPosition + 3 + .5, this.data.height + 4 + .5);
+      context.lineTo(xPosition + .5, this.data.height + 1);
+      context.fillStyle = '#c29e22';
+      context.strokeStyle = '#070';
+      context.fill();
+      context.stroke();
+      context.closePath();
+
+      context.fillStyle = 'black';
+      context.fillText(propText, xPosition, this.data.top + this.data.height + 5);
+
+
+      var labels = [];
+
+      var labelPadding = 7;
+      var labelHeight = 10 + 2*labelPadding;
+      var labelWidth = 0;
+      for (var i = 0, thread; thread = this.owner.childNodes[i]; i++)
+      {
+        var values = thread.getValues();
+        var value = values[propPosition];
+
+        var valueText = Number(value.toFixed(2)).group();
+        var valueTextWidth = context.measureText(valueText).width;
+
+        if (labelWidth < valueTextWidth)
+          labelWidth = valueTextWidth; 
+
+        var valueY = Math.round((1 - value / this.data.max) * this.data.height);
+        var labelY = Math.max(labelHeight / 2, Math.min(valueY, this.data.height - labelHeight / 2));
+
+        labels[i] = {
+          thread: thread,
+          text: valueText,
+          valueY: valueY,
+          labelY: labelY
+        }
+      }
+
+      labelWidth += 2*labelPadding;
+
+      // adjust label positions 
+      var labels = labels.sortAsObject(Function.getter('valueY'));
+      var crossGroup = labels.map(function(label){
+        return { labels: [label], y: label.labelY, height: labelHeight };
+      })
+      var hasCrossing = true;
+      while (crossGroup.length > 1 && hasCrossing)
+      {
+        var i = 1;
+        while (i < crossGroup.length)
+        {
+          hasCrossing = false;
+          if ((crossGroup[i].y - crossGroup[i].height / 2) < (crossGroup[i - 1].y + crossGroup[i - 1].height / 2))
+          {
+            crossGroup[i].y = crossGroup[i - 1].y + (crossGroup[i].y - crossGroup[i - 1].y) * crossGroup[i].labels.length / crossGroup[i - 1].labels.length / 2;
+            crossGroup[i].labels = crossGroup[i - 1].labels.concat(crossGroup[i].labels);
+            crossGroup[i].height = crossGroup[i].labels.length * labelHeight;
+            crossGroup[i].y = Math.max(crossGroup[i].height / 2, Math.min(crossGroup[i].y, this.data.height - crossGroup[i].height / 2));
+            crossGroup.splice(i - 1, 1);
+            hasCrossing = true;
+          }
+          else
+            i++;
+        }
+      }
+      for (var i = 0; i < crossGroup.length; i++)
+      {
+        for (var j = 0; j < crossGroup[i].labels.length; j++)
+        {
+          var label = crossGroup[i].labels[j];
+          label.labelY = crossGroup[i].y - crossGroup[i].height / 2 + j * labelHeight + labelHeight / 2;
+        }
+      }
+
+      // draw labels
+      var align = propPosition > (propValues.length / 2) ? -1 : 1;
+
+      for (var i = 0, label; label = labels[i]; i++)
+      {
+        context.strokeStyle = label.thread.getColor();
+        context.fillStyle = 'white';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(xPosition + .5, label.valueY + .5, 3, 0, 2*Math.PI);
+        context.stroke();         
+        context.fill();
+        context.closePath();
+
+        
+        context.beginPath();
+        context.moveTo(xPosition + 4*align + .5, label.valueY + .5);
+        context.lineTo(xPosition + 11*align + .5, label.labelY - 5 + .5);
+        context.lineTo(xPosition + 11*align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + 11*align + labelWidth*align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + 11*align + labelWidth*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + 11*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + 11*align + .5, label.labelY + 5 + .5);
+        context.lineTo(xPosition + 4*align + .5, label.valueY + .5);
+        context.fillStyle = label.thread.getColor();
+        context.strokeStyle = '#444';
+        context.lineWidth = 1;
+        context.stroke();
+        context.fill();
+        context.closePath();
+
+        context.fillStyle = 'black';
+        context.textAlign = 'right';
+        context.fillText(label.text, xPosition + (align == 1 ? 10 + labelWidth - labelPadding : -(10 + labelPadding)), label.labelY + 4);
+      }
+    }
+  });
+
   var GraphThread = Node.subclass({
+    className: 'GraphThread',
     canHaveChildren: true,
     legendGetter: Function.getter('legend'),
     colorGetter: Function.getter('color'),
@@ -55,7 +377,7 @@ basis.require('basis.ui.canvas');
     dataSourceGetter: Function.$self,
 
     getColor: function(){
-      return this.colorGetter(this);
+      return this.colorGetter(this) || this.parentNode.threadColor[this.parentNode.childNodes.indexOf(this)];
     },
     getLegend: function(){
       return this.legendGetter(this)
@@ -75,6 +397,7 @@ basis.require('basis.ui.canvas');
         AbstractNode.prototype.event_update.call(this, object, delta);
       }        
     },
+    
     childFactory: function(config){
       return new this.childClass(config);
     },
@@ -90,11 +413,19 @@ basis.require('basis.ui.canvas');
       if (!this.dataSource)
         this.setDataSource(this.dataSourceGetter(this));
     }
-
   });
 
   var Graph = Canvas.subclass({
     className: 'Graph',
+
+    template:
+      '<div style="position:relative">' +
+        '<canvas{canvas}>' +
+          '<div>Canvas doesn\'t support.</div>' +
+        '</canvas>' +
+        '<!-- {graphViewer} -->' +
+      '</div>',
+
     childClass: GraphThread,
 
     propGetter: Function.getter('data.prop'),
@@ -113,7 +444,14 @@ basis.require('basis.ui.canvas');
       '#BB7BF1',
       '#F80'
     ],
-    
+
+    satelliteConfig: {
+      graphViewer: {
+        instanceOf: GraphViewer,
+        delegate: Function.$self
+      }
+    },
+
     event_childNodesModified: function(node, delta){
       this.updateCount++;
       Canvas.prototype.event_childNodesModified.call(this, node, delta);
@@ -123,9 +461,9 @@ basis.require('basis.ui.canvas');
       Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
     },
 
-    draw: function(){
+    /*draw: function(){
       Canvas.prototype.draw.call(this);
-    },
+    },*/
 
     drawFrame: function(){
       var context = this.context;
@@ -206,7 +544,7 @@ basis.require('basis.ui.canvas');
           var lx = Math.round(LEFT + (i % legendColumnCount) * legendColumnWidth);
           var ly = HEIGHT - BOTTOM + 5 + (Math.ceil((i + 1) / legendColumnCount) - 1) * LEGEND_ROW_HEIGHT;
 
-          context.fillStyle = thread.getColor() || this.threadColor[i];
+          context.fillStyle = thread.getColor();// || this.threadColor[i];
           context.fillRect(lx, ly, LEGEND_BAR_SIZE, LEGEND_BAR_SIZE);
 
           context.fillStyle = 'black';
@@ -306,10 +644,20 @@ basis.require('basis.ui.canvas');
       var values;
       for (var i = 0, thread; thread = this.childNodes[i]; i++)
       {
-        this.style.strokeStyle = thread.getColor() || this.threadColor[i];
+        this.style.strokeStyle = thread.getColor();// || this.threadColor[i];
         values = thread.getValues();
         this.drawThread(values, maxValue, LEFT, TOP, step, (HEIGHT - TOP - BOTTOM))
       }  
+
+      this.update({
+        left: LEFT,
+        right: RIGHT,
+        top: TOP,
+        bottom: BOTTOM,
+        width: WIDTH - LEFT - RIGHT,
+        height: HEIGHT - TOP - BOTTOM,
+        max: maxValue
+      });
     },
     drawThread: function(values, max, left, top, step, height){
       var context = this.context;

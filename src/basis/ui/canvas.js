@@ -33,6 +33,8 @@ basis.require('basis.ui');
   var Node = basis.dom.wrapper.Node;
   var UINode = basis.ui.Node;
 
+  var EventObject = basis.EventObject;
+
 
   //
   // Main part
@@ -83,11 +85,13 @@ basis.require('basis.ui');
     drawCount: 0,
     lastDrawUpdateCount: -1,
 
+    event_draw: EventObject.createEvent('draw', 'object'),
+
     init: function(config){
       UINode.prototype.init.call(this, config);
      
-      this.element.width = this.width;
-      this.element.height = this.height;
+      this.tmpl.canvas.width = this.width;
+      this.tmpl.canvas.height = this.height;
       this.updateCount = 0;
 
       var canvasElement = this.tmpl.canvas;
@@ -102,8 +106,8 @@ basis.require('basis.ui');
       ctx.fillStyle = "rgba(255,255,255,0.05)";
       ctx.fillRect(0, 0, this.element.clientWidth, this.element.clientHeight);
       ctx.restore();/**/
-      this.element.width = this.element.clientWidth;
-      this.element.height = this.element.clientHeight;
+      this.tmpl.canvas.width = this.tmpl.canvas.clientWidth;
+      this.tmpl.canvas.height = this.tmpl.canvas.clientHeight;
       /*if (this.context)
       {
         this.context.clearRect(0, 0, this.element.width, this.element.height)
@@ -113,23 +117,25 @@ basis.require('basis.ui');
       return this.context && (
         this.updateCount != this.lastDrawUpdateCount
         ||
-        this.element.width != this.lastDrawWidth
+        this.tmpl.canvas.width != this.lastDrawWidth
         ||
-        this.element.height != this.lastDrawHeight
+        this.tmpl.canvas.height != this.lastDrawHeight
       );
     },
     draw: function(){
       if (!this.isNeedToDraw())
         return false;
 
-      this.lastDrawWidth = this.element.width;
-      this.lastDrawHeight = this.element.height;
+      this.lastDrawWidth = this.tmpl.canvas.width;
+      this.lastDrawHeight = this.tmpl.canvas.height;
       this.lastDrawUpdateCount = this.updateCount;
       this.drawCount = this.drawCount + 1;
 
       this.reset();
 
       this.drawFrame();
+
+      this.event_draw(this);
 
       return true;
     },
