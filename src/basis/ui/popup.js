@@ -462,13 +462,18 @@ basis.require('basis.ui');
   var MenuItem = Class(UIContainer, {
     className: namespace + '.MenuItem',
 
-    //childFactory: function(cfg){ return new this.childClass(cfg) },
+    childClass: Class.SELF,
 
     template:
       '<div{element} class="Basis-Menu-Item" event-click="click">' +
         '<a{content|selected} href="#"><span>{captionText}</span></a>' +
       '</div>'/* +
       '<div{childNodesElement}/>'*/,
+
+    templateUpdate: function(tmpl){
+      if (tmpl.captionText)
+        tmpl.captionText.nodeValue = this.captionGetter(this);
+    },
 
     action: {
       click: function(event){
@@ -478,7 +483,7 @@ basis.require('basis.ui');
     },
 
     event_childNodesModified: function(node, delta){
-      classList(this.element).bool('hasSubItems', this.hasChildNodes());
+      classList(this.element).bool('hasSubItems', this.firstChild);
 
       UIContainer.prototype.event_childNodesModified.call(this, node, delta);
     },
@@ -486,23 +491,16 @@ basis.require('basis.ui');
     groupId: 0,
     caption: '[untitled]',
     captionGetter: getter('caption'),
+
     handler: null,
     defaultHandler: function(node){
       if (this.parentNode)
         this.parentNode.defaultHandler(node);
     },
 
-    init: function(config){
-      // inherit
-      UIContainer.prototype.init.call(this, config);
-
-      this.setCaption(this.caption);
-    },
     setCaption: function(newCaption){
       this.caption = newCaption;
-
-      if (this.tmpl.captionText)
-        this.tmpl.captionText.nodeValue = this.captionGetter(this);
+      this.templateUpdate(this.tmpl);
     },
     click: function(){
       if (!this.isDisabled() && !(this instanceof MenuItemSet))
@@ -514,14 +512,13 @@ basis.require('basis.ui');
       }
     }
   });
-  MenuItem.prototype.childClass = MenuItem;
 
  /**
   * @class
   */
   var MenuItemSet = Class(MenuItem, {
     className: namespace + '.MenuItemSet',
-    event_childNodesModified: UINode.prototype.event_childNodesModified,
+    //event_childNodesModified: UINode.prototype.event_childNodesModified,
 
     template: 
       '<div class="Basis-Menu-ItemSet"/>'
@@ -542,8 +539,8 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var MenuGroupControl = Class(UIGroupingNode, {
-    className: namespace + '.MenuGroupControl',
+  var MenuGroupingNode = Class(UIGroupingNode, {
+    className: namespace + '.MenuGroupingNode',
     childClass: MenuPartitionNode
   });
 
@@ -557,7 +554,7 @@ basis.require('basis.ui');
     defaultDir: [LEFT, BOTTOM, LEFT, TOP].join(' '),
     subMenu: null,
 
-    localGroupingClass: MenuGroupControl,
+    localGroupingClass: MenuGroupingNode,
     localGrouping: getter('groupId'),
 
     defaultHandler: function(){
@@ -570,6 +567,7 @@ basis.require('basis.ui');
         '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
       '</div>'
   });
+
 
   //
   //  Popup manager
@@ -747,7 +745,7 @@ basis.require('basis.ui');
     Popup: Popup,
     Balloon: Balloon,
     Menu: Menu,
-    MenuGroupControl: MenuGroupControl,
+    MenuGroupingNode: MenuGroupingNode,
     MenuPartitionNode: MenuPartitionNode,
     MenuItem: MenuItem,
     MenuItemSet: MenuItemSet

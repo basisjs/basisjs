@@ -135,16 +135,74 @@ basis.require('basis.html');
   //
 
   var NULL_SATELLITE_CONFIG = Class.ExtensibleProperty();
+  /*var NULL_SATELLITE_CONFIG = Class.CustomExtendProperty({}, function(result, extend){
+    for (var key in extend)
+    {
+      var config = extend[key];
+
+      if (Class.isClass(config))
+        config = {
+          instanceOf: config
+        };
+
+      if (typeof config == 'object')
+      {
+        var hookRequired = false;
+        var contextConfig = {
+          instanceOf: config.instanceOf
+        };
+        var context = {
+          key: key,
+          owner: this,
+          config: contextConfig
+        };
+
+        if (typeof config.config)
+          contextConfig.config = config.config;
+
+        if (typeof config.existsIf == 'function')
+          hookRequired = contextConfig.existsIf = config.existsIf;
+
+        if (typeof config.delegate == 'function')
+          hookRequired = contextConfig.delegate = config.delegate;
+
+        if (typeof config.dataSource == 'function')
+          hookRequired = contextConfig.dataSource = config.dataSource;
+
+        if (hookRequired)
+        {
+          var hook = config.hook
+            ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
+            : SATELLITE_OWNER_UPDATE_HOOK;
+
+          for (var key2 in hook)
+            if (hook[key2] === SATELLITE_UPDATE)
+            {
+              context.hook = hook;
+              break;
+            }
+        }
+
+        result[key] = context;
+      }
+      else
+        result[key] = null;
+    }
+  });*/
 
   var SATELLITE_UPDATE = function(){
     // this -> {
-    //   key: satelliteName,
     //   owner: owner,
-    //   config: satelliteConfig
+    //   context: { 
+    //     key: satelliteName,
+    //     config: satelliteConfig
+    //   }
     // }
+    var owner = this.owner;
     var key = this.key;
     var config = this.config;
-    var owner = this.owner;
+    /*var key = this.context.key;
+    var config = this.context.config;*/
 
     var exists = !config.existsIf || config.existsIf(owner);
     var satellite = owner.satellite[key];
@@ -162,10 +220,10 @@ basis.require('basis.html');
       else
       {
         var satelliteConfig = (
-            typeof config.config == 'function'
-              ? config.config(owner)
-              : config.config
-          ) || {};
+          typeof config.config == 'function'
+            ? config.config(owner)
+            : config.config
+        ) || {};
 
         satelliteConfig.owner = owner;
 
@@ -190,7 +248,7 @@ basis.require('basis.html');
       {
         delete owner.satellite[key];
 
-        owner.event_satelliteChanged(owner, key, sattelite);
+        owner.event_satelliteChanged(owner, key, satellite);
 
         satellite.destroy();
       }
@@ -560,7 +618,27 @@ basis.require('basis.html');
             SATELLITE_UPDATE.call(context)
           }
         }
-      }
+      }/*/
+
+      if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
+      {
+        for (var key in this.satelliteConfig)
+        {
+          var context = this.satelliteConfig[key];
+          if (typeof context == 'object')
+          {
+            context = {
+              context: context,
+              owner: this
+            };
+
+            if (context.hook)
+              this.addHandler(context.hook, context);
+
+            SATELLITE_UPDATE.call(context);
+          }
+        }
+      }*/
 
       var owner = this.owner;
       if (owner)

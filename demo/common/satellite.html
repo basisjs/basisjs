@@ -1,0 +1,287 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Using satellites</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .Demo-Section
+    {
+      width: 300px;
+      float: left;
+      border-right: 1px solid #EEE;
+      margin-right: 10px;
+      padding-right: 10px;
+    }
+
+    #UserList,
+    #GroupList
+    {
+      float: left;
+      margin-right: 1ex;
+      border: 1px solid #AAA;
+      height: 400px;
+      width: 300px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+
+    .user
+    {
+      overflow: hidden;
+      border-bottom: 1px solid #E0E0E0;
+    }
+    .user__title
+    {
+      display: block;
+      padding: .5em 1ex;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .groupPanel
+    {
+      float: right;
+      padding-left: 1ex;
+    }
+
+    .group
+    {
+      overflow: hidden;
+      border-bottom: 1px solid #E0E0E0;
+    }
+    .group BUTTON
+    {
+      float: right;
+    }
+    .group .Basis-Field
+    {
+      overflow: hidden;
+    }
+    .group .Basis-Field-Container
+    {
+      margin: 0 10px 0 2px;
+    }
+    .group .Basis-Field INPUT
+    {
+      width: 100%;
+    }
+
+    #demo-changeGroupingList
+    {
+      margin: .5em 0;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis-all.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Using satellites</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // make shortcut
+    var Data = basis.data;
+    var DOM = basis.dom;
+
+    var UserGroup = new basis.entity.EntityType({
+      fields: {
+        groupId: basis.entity.IntId,
+        title: String
+      }
+    });
+
+    var User = new basis.entity.EntityType({
+      fields: {
+        userId: basis.entity.IntId,
+        group: UserGroup,
+        title: String
+      },
+      aliases: {
+        groupId: 'group'
+      }
+    });
+
+    // data
+    UserGroup.all.sync([
+      { groupId: 1, title: 'Red' },
+      { groupId: 2, title: 'Green' },
+      { groupId: 3, title: 'Blue' },
+      { groupId: 4, title: 'Black' },
+      { groupId: 5, title: 'White' },
+      { groupId: 6, title: 'Yellow' }
+    ]);
+
+    User.all.sync(Array.create(1000, function(idx){ return { userId: idx, group: 1 + idx % 6, title: 'user' + idx } }) || [
+      { userId: 1,  groupId: 1, title: "Norman Yuen" },
+      { userId: 2,  groupId: 2, title: "Casto" },
+      { userId: 4,  groupId: 6, title: "Jose Crutcher" },
+      { userId: 5,  groupId: 3, title: "Ralph Peres" },
+      { userId: 6,  groupId: 5, title: "Christopher Klaus" },
+      { userId: 7,  groupId: 5, title: "Tanya Edison" },
+      { userId: 8,  groupId: 5, title: "Paul Seger" },
+      { userId: 9,  groupId: 4, title: "Norma Perri" },
+      { userId: 10, groupId: 4, title: "Juan Ewing" },
+      { userId: 11, groupId: 4, title: "Mark Luevano" },
+      { userId: 12, groupId: 4, title: "Curtis Knoll" },
+      { userId: 13, groupId: 1, title: "Terry Patterson" },
+      { userId: 14, groupId: 2, title: "Monique Castellanos" },
+      { userId: 15, groupId: 2, title: "Bryan Waldo" }
+    ].map(User.reader));
+
+
+    var groupPopup = new basis.ui.popup.Menu({
+      dataSource: UserGroup.all,
+      localSorting: Function.getter('data.title'),
+      childClass: {
+        captionGetter: Function.getter('data.title')
+      },
+      defaultHandler: function(node){
+        if (node)
+        {
+          this.update({ group: node.target });
+          this.hide();
+        }
+      },
+      handler: {
+        hide: function(){
+          this.setDelegate();
+        }
+      }
+    });
+
+    var d = new Date();
+    var userList = new basis.ui.Container({
+      container: DOM.get('demo-container'),
+
+      id: 'UserList',
+
+      dataSource: User.all,
+      localSorting: Function.getter('data.title'),
+      childClass: {
+        template:
+          '<div class="user">' +
+            '<div class="groupPanel"><!--{group}--><button event-click="chooseGroup">...</button></div>' +
+            '<span class="user__title">[{id}] {title}</span>' + 
+          '</div>',
+
+        action: {
+          chooseGroup: function(event){
+            groupPopup.setDelegate(this);
+            groupPopup.show(basis.dom.event.sender(event));
+          }
+        },
+
+        templateUpdate: function(tmpl){
+          tmpl.id.nodeValue = this.data.userId;
+          tmpl.title.nodeValue = this.data.title;
+        },
+
+        satelliteConfig: {
+          group: {
+            existsIf: Function.getter('data.group'),
+            delegate: Function.getter('data.group'),
+            instanceOf: basis.ui.Node.subclass({
+              template:
+                '{title}',
+
+              templateUpdate: function(tmpl){
+                tmpl.title.nodeValue = this.data.title || '[no title]';
+              }
+            })
+          }
+        }
+      }
+    });
+    DOM.insert(DOM.get('demo-container'), DOM.createText(new Date - d));
+
+    var groupList = new basis.ui.Container({
+      container: DOM.get('demo-container'),
+
+      id: 'GroupList',
+      
+      dataSource: UserGroup.all,
+      localSorting: Function.getter('data.groupId'),
+      childClass: {
+        template:
+          '<div class="group">' +
+            '<button event-click="delete">delete</button>' +
+            '<!--{titleEditor}-->' +
+          '</div>',
+
+        action: {
+          'delete': function(){
+            this.target.destroy();
+          }
+        },
+
+        satelliteConfig: {
+          titleEditor: {
+            instanceOf: basis.ui.form.Field.Text,
+            config: {
+              autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
+              maxLength: 32,
+              handler: {
+                update: function(){
+                  this.setValue(this.data.title);
+                },
+                change: function(){
+                  this.update({ title: this.getValue() });
+                },
+                keydown: function(){
+                  this.update({ title: this.getValue() });                  
+                },
+                keypress: function(){
+                  this.update({ title: this.getValue() });                  
+                },
+                keyup: function(){
+                  this.update({ title: this.getValue() });                  
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+  </script>
+</body>
+
+</html>

@@ -57,7 +57,7 @@ basis.require('basis.html');
   var TemplateMixin = function(super_){
     return {
       listen: {
-        sattelite: {
+        satellite: {
           ownerChanged: function(satellite, oldOwner){
             if (oldOwner)
             {
@@ -78,8 +78,8 @@ basis.require('basis.html');
         }
       },
 
-      event_satelliteChanged: function(node, key, oldSattelite){
-        super_.event_satelliteChanged.call(this, node, key, oldSattelite);
+      event_satelliteChanged: function(node, key, oldSatellite){
+        super_.event_satelliteChanged.call(this, node, key, oldSatellite);
 
         var satellite = this.satellite[key];
 
