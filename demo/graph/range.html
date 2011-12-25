@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Graph</title>
+  <title>Basic demos: Range graph</title>
 
   <style type="text/css" id="demo-css">
     BODY, HTML
@@ -43,6 +43,7 @@
       width: 0;
       height: 100%;
       position: relative;
+      overflow: hidden;
     }
     .rangeOver__before .trigger
     {
@@ -53,6 +54,10 @@
       background: rgba(0,0,0,.1);
       cursor: w-resize;
     }
+    .rangeOver__before .trigger:hover
+    {
+      background: rgba(0,0,0,.2);
+    }
     .rangeOver__after
     {
       background: rgba(0,0,0,.1);
@@ -60,10 +65,23 @@
       width: 0;
       height: 100%;
       position: relative;
+      overflow: hidden;
+    }
+    .rangeOver__after .trigger
+    {
+      position: absolute;
+      left: 0;
+      height: 100%;
+      width: 3px;
+      background: rgba(0,0,0,.1);
+      cursor: w-resize;
+    }
+    .rangeOver__after .trigger:hover
+    {
+      background: rgba(0,0,0,.2);
     }
     .rangeOver__window
     {
-      background: rgba(255,0,0,.1);
       height: 100%;
       overflow: hidden;
       position: relative;
@@ -91,7 +109,7 @@
 </head>
 
 <body>
-  <h1>Basic demos: Graph</h1>
+  <h1>Basic demos: Range graph</h1>
   
   <p id="demo-summary">
     ..
@@ -149,7 +167,7 @@
 
       propGetter: function(object){
         var date = object.data.Date;
-        return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+        return date.getDate() + ' ' + basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
       
       childNodes: [
@@ -164,7 +182,7 @@
     new Graph({
       container: DOM.get('demo-container'),
       width: 800,
-      height: 60,
+      height: 50,
       showLegend: false,
       showYLabels: false,
       showXLabels: false,
@@ -185,7 +203,7 @@
               template:
                 '<div class="rangeOver">' +
                   '<div{before} class="rangeOver__before"><div class="trigger"/></div>' +
-                  '<div{after} class="rangeOver__after"/>' +
+                  '<div{after} class="rangeOver__after"><div class="trigger"/></div>' +
                   '<div{win} class="rangeOver__window"/>' +
                 '</div>',
               delegate: reportSlice,
@@ -217,32 +235,54 @@
                 // add drag posibility for slider
                 this.dd1 = new basis.dragdrop.DragDropElement({
                   element: this.tmpl.win,
+                  axisY: false,
                   handler: {
+                    start: function(){
+                      this.offset__ = reportSlice.offset;
+                    },
                     move: function(config){
-                      var scrollbar = this.tmpl.win;
-                      var pos = (basis.dom.event.mouseX(event) - (new basis.layout.Box(this.element)).left) / this.element.offsetWidth;
-                      reportSlice.setRange(parseInt(pos * reportSlice.index_.length).fit(Math.abs(reportSlice.limit), reportSlice.index_.length), reportSlice.limit);
+                      var offset = Math.min(this.offset__, reportSlice.index_.length) + parseInt(reportSlice.index_.length * config.deltaX / this.element.offsetWidth);
+                      reportSlice.setRange(offset.fit(Math.abs(reportSlice.limit), reportSlice.index_.length), reportSlice.limit);
                     }
                   },
                   handlerContext: this
                 });
 
                 this.dd2 = new basis.dragdrop.DragDropElement({
-                  element: this.tmpl.before,
-                  trigger: this.tmpl.before.firstChild,
+                  element: this.tmpl.before.firstChild,
+                  axisY: false,
                   handler: {
+                    start: function(){
+                      this.limit__ = reportSlice.limit;
+                    },
                     move: function(config){
-                      var scrollbar = this.tmpl.win;
-                      var pos = (basis.dom.event.mouseX(event) - (new basis.layout.Box(this.element)).left) / this.element.offsetWidth;
-                      //console.log(pos);
-                      var x = parseInt(pos * reportSlice.index_.length);
-                      var offset = Math.min(reportSlice.offset, reportSlice.index_.length);
-                      reportSlice.setRange(reportSlice.offset, Math.min(-2, x - offset));
+                      var limit = this.limit__ + parseInt(reportSlice.index_.length * config.deltaX / this.element.offsetWidth);
+                      reportSlice.setRange(reportSlice.offset, Math.min(-2, limit));
                     }
                   },
                   handlerContext: this
                 });
 
+                this.dd3 = new basis.dragdrop.DragDropElement({
+                  element: this.tmpl.after.firstChild,
+                  axisY: false,
+                  handler: {
+                    start: function(){
+                      this.offset__ = reportSlice.offset;
+                      this.limit__ = reportSlice.limit;
+                    },
+                    move: function(config){
+                      var length = reportSlice.index_.length;
+                      var offset = Math.min(this.offset__, length) + parseInt(length * config.deltaX / this.element.offsetWidth);
+
+                      offset = offset.fit(Math.min(length, 2), length);
+
+                      var limit = Math.min(2, reportSlice.limit - (offset - reportSlice.offset));
+                      reportSlice.setRange(offset, limit);
+                    }
+                  },
+                  handlerContext: this
+                });
               }
             }
           }
@@ -250,6 +290,25 @@
       }
     });
 
+    var totalCount = new basis.data.property.Property(SeriesValue.all.itemCount);
+    var drawCount = new basis.data.property.Property(reportSlice.itemCount);
+
+    reportSlice.addHandler({
+      datasetChanged: function(dataset){
+        this.set(dataset.itemCount);
+      }
+    }, drawCount);
+
+    SeriesValue.all.addHandler({
+      datasetChanged: function(dataset){
+        this.set(dataset.itemCount);
+      }
+    }, totalCount);
+
+    DOM.insert(DOM.get('demo-container'), [
+      DOM.createElement('', 'Values total count: ', totalCount.addLink(DOM.createText())),
+      DOM.createElement('', 'Values range count: ', drawCount.addLink(DOM.createText())),
+    ])
 
   </script>
 </body>
