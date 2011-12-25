@@ -1357,6 +1357,8 @@ basis.require('basis.data');
       source: SLICE_SOURCE_HANDLER
     },
 
+    event_rangeChanged: createEvent('rangeChanged', 'dataset', 'oldOffset', 'oldLimit'),
+
    /**
     * @config {function} index Function for index value calculation; values are ordering according to this values.
     * @config {number} offset Initial value of range start.
@@ -1376,15 +1378,24 @@ basis.require('basis.data');
     * @param {number} limit Length of range.
     */
     setRange: function(offset, limit){
-      this.offset = offset;
-      this.limit = limit;
+      var oldOffset = this.offset;
+      var oldLimit = this.limit;
 
-      this.applyRule();
+      if (oldOffset != offset || oldLimit != limit)
+      {
+        this.offset = offset;
+        this.limit = limit;
+
+        this.applyRule();
+
+        this.event_rangeChanged(this, oldOffset, oldLimit);
+      }
     },
 
     applyRule: function(){
+      var offset = this.offset.fit(0, this.index_.length);
       var curSet = Object.slice(this.item_);
-      var newSet = this.index_.slice(this.offset, this.offset + this.limit);
+      var newSet = this.index_.slice(Math.min(offset, offset + this.limit), Math.max(offset, offset + this.limit));
       var inserted = [];
       var delta;
 

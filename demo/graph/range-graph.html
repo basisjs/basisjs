@@ -1,0 +1,257 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Graph</title>
+
+  <style type="text/css" id="demo-css">
+    BODY, HTML
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    CANVAS
+    {
+    }
+
+    .Basis-CheckGroup LABEL
+    {
+      display: block;
+      margin-bottom: 0.5em;
+    }
+    .Basis-CheckGroup LABEL INPUT
+    {
+      margin-left: 0;
+    }
+
+    .rangeOver
+    {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .rangeOver__before
+    {
+      background: rgba(0,0,0,.1);
+      float: left;
+      width: 0;
+      height: 100%;
+      position: relative;
+    }
+    .rangeOver__before .trigger
+    {
+      position: absolute;
+      right: 0;
+      height: 100%;
+      width: 3px;
+      background: rgba(0,0,0,.1);
+      cursor: w-resize;
+    }
+    .rangeOver__after
+    {
+      background: rgba(0,0,0,.1);
+      float: right;
+      width: 0;
+      height: 100%;
+      position: relative;
+    }
+    .rangeOver__window
+    {
+      background: rgba(255,0,0,.1);
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      cursor: move;
+    }
+
+
+    .Basis-Field-Title
+    {
+      font-weight: bold;
+      margin-bottom: 0.5em;
+    }
+
+  </style>
+
+  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" src="../../locale/ru/calendar.js"></script>
+  <script type="text/javascript" src="../../src/basis/ui/graph.js"></script>
+  <script type="text/javascript" src="data.json"></script>
+
+  <script type="text/javascript" src="../seedrandom.js"></script>
+  <script type="text/javascript" src="../demo.js"></script>
+
+
+</head>
+
+<body>
+  <h1>Basic demos: Graph</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+
+    var DOM = basis.dom;
+    var nsEntity = basis.entity;
+    var Graph = basis.ui.graph.Graph;
+
+    var nsForm = basis.ui.form;
+
+    //
+    // Example
+    //
+
+    var SeriesValue = new nsEntity.EntityType({
+      name: 'SeriesValue',
+      fields: {
+        Date: Object,
+        Amount: Number
+      }
+    });
+
+    var reportSlice = new basis.data.dataset.Slice({
+      rule: Function.getter('data.Date', Number),
+      source: SeriesValue.all,
+      offset: Number.MAX_VALUE,
+      limit: -60
+    });
+
+    var data = [];
+
+    rawData.dates = rawData.dates.split(';');
+    rawData.amounts = rawData.amounts.split(';');
+
+    for (var i = rawData.dates.length; i --> 0;)
+      data.push({
+        Date: new Date(rawData.dates[i] * 1000),
+        Amount: rawData.amounts[i]
+      });
+    SeriesValue.all.sync(data);
+
+    new Graph({
+      container: DOM.get('demo-container'),
+      width: 800,
+      height: 450,
+      showLegend: false,
+
+      propGetter: function(object){
+        var date = object.data.Date;
+        return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+      },
+      
+      childNodes: [
+        {
+          dataSource: reportSlice,
+          valueGetter: Function.getter('data.Amount'),
+          localSorting: Function.getter('data.Date')
+        }
+      ]
+    });
+
+    new Graph({
+      container: DOM.get('demo-container'),
+      width: 800,
+      height: 60,
+      showLegend: false,
+      showYLabels: false,
+      showXLabels: false,
+      showBoundLines: false,
+      childNodes: [
+        {
+          dataSource: SeriesValue.all,
+          valueGetter: Function.getter('data.Amount'),
+          localSorting: Function.getter('data.Date')
+        }
+      ],
+      satelliteConfig: {
+        period: {
+          instanceOf: basis.ui.Node,
+          config: function(owner){
+            return {
+              container: owner.element,
+              template:
+                '<div class="rangeOver">' +
+                  '<div{before} class="rangeOver__before"><div class="trigger"/></div>' +
+                  '<div{after} class="rangeOver__after"/>' +
+                  '<div{win} class="rangeOver__window"/>' +
+                '</div>',
+              delegate: reportSlice,
+              listen: {
+                delegate: {
+                  rangeChanged: function(){
+                    this.sync();
+                  }
+                }
+              },
+
+              sync: function(){
+                var itemCount = this.delegate.index_.length;
+                var offset_ = this.delegate.offset.fit(0, itemCount);
+                var limit_ = this.delegate.limit;
+
+                var start = Math.min(offset_, offset_ + limit_);
+                var end = Math.max(offset_, offset_ + limit_);
+
+                this.tmpl.before.style.width = 100 * (start/itemCount) + '%';
+                this.tmpl.after.style.width = 100 * (1-end/itemCount) + '%';
+              },
+
+              init: function(config){
+                basis.ui.Node.prototype.init.call(this, config);
+
+                this.sync();
+
+                // add drag posibility for slider
+                this.dd1 = new basis.dragdrop.DragDropElement({
+                  element: this.tmpl.win,
+                  handler: {
+                    move: function(config){
+                      var scrollbar = this.tmpl.win;
+                      var pos = (basis.dom.event.mouseX(event) - (new basis.layout.Box(this.element)).left) / this.element.offsetWidth;
+                      reportSlice.setRange(parseInt(pos * reportSlice.index_.length).fit(Math.abs(reportSlice.limit), reportSlice.index_.length), reportSlice.limit);
+                    }
+                  },
+                  handlerContext: this
+                });
+
+                this.dd2 = new basis.dragdrop.DragDropElement({
+                  element: this.tmpl.before,
+                  trigger: this.tmpl.before.firstChild,
+                  handler: {
+                    move: function(config){
+                      var scrollbar = this.tmpl.win;
+                      var pos = (basis.dom.event.mouseX(event) - (new basis.layout.Box(this.element)).left) / this.element.offsetWidth;
+                      //console.log(pos);
+                      var x = parseInt(pos * reportSlice.index_.length);
+                      var offset = Math.min(reportSlice.offset, reportSlice.index_.length);
+                      reportSlice.setRange(reportSlice.offset, Math.min(-2, x - offset));
+                    }
+                  },
+                  handlerContext: this
+                });
+
+              }
+            }
+          }
+        }
+      }
+    });
+
+
+  </script>
+</body>
+
+</html>

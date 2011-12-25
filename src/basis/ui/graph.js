@@ -277,6 +277,9 @@ basis.require('basis.ui.canvas');
         var values = thread.getValues();
         var value = values[propPosition];
 
+        if (isNaN(value))
+          continue;
+
         var valueText = Number(value.toFixed(2)).group();
         var valueTextWidth = context.measureText(valueText).width;
 
@@ -403,8 +406,18 @@ basis.require('basis.ui.canvas');
     },
 
     event_update: function(object, delta){
-      this.parentNode.updateCount++
+      this.parentNode.updateCount++;
       Node.prototype.event_update.call(this, object, delta);
+    },
+
+    listen: {
+      dataSource: {
+        datasetChanged: function(dataset, delta){
+          Node.prototype.listen.dataSource.datasetChanged.call(this, dataset, delta);
+          if (this.parentNode)
+            this.parentNode.updateCount++;
+        }
+      }
     },
 
     init: function(config){
@@ -419,7 +432,7 @@ basis.require('basis.ui.canvas');
     className: 'Graph',
 
     template:
-      '<div style="position:relative">' +
+      '<div class="Basis-Graph" style="position: relative; display: inline-block">' +
         '<canvas{canvas}>' +
           '<div>Canvas doesn\'t support.</div>' +
         '</canvas>' +
@@ -430,6 +443,9 @@ basis.require('basis.ui.canvas');
 
     propGetter: Function.getter('data.prop'),
     showLegend: true,
+    showYLabels: true,
+    showXLabels: true,
+    showBoundLines: true,
 
     style: {
       strokeStyle: '#090',
@@ -468,7 +484,7 @@ basis.require('basis.ui.canvas');
     drawFrame: function(){
       var context = this.context;
 
-      var TOP = 10;
+      var TOP = 0;
       var LEFT = 0;
       var RIGHT = 10;
       var BOTTOM = 0;
@@ -500,19 +516,30 @@ basis.require('basis.ui.canvas');
 
       context.font = '10px tahoma';
 
-      for (var i = 0; i < partCount; i++)
+      if (this.showYLabels)
       {
-        y_labels[i] = Math.round(maxValue * (partCount - i) / partCount).group();
-        
-        var tw = context.measureText(y_labels[i]).width;
-        if (tw > maxtw)
-          maxtw = tw;
+        TOP += 10;
+
+        for (var i = 0; i < partCount; i++)
+        {
+          y_labels[i] = Math.round(maxValue * (partCount - i) / partCount).group();
+          
+          var tw = context.measureText(y_labels[i]).width + 6;
+          if (tw > maxtw)
+            maxtw = tw;
+        }
       }
       
-      var firstXLabelWidth = context.measureText(propValues[0]).width;
-      var lastXLabelWidth = context.measureText(propValues[propValues.length - 1]).width;
+      var firstXLabelWidth = 0;
+      var lastXLabelWidth = 0;
+      
+      if (this.drawXLabels)
+      {
+        firstXLabelWidth = context.measureText(propValues[0]).width;
+        lastXLabelWidth = context.measureText(propValues[propValues.length - 1]).width;
+      }
 
-      LEFT = Math.max(maxtw, Math.round(firstXLabelWidth / 2)) + 6;
+      LEFT = Math.max(maxtw, Math.round(firstXLabelWidth / 2));
       RIGHT = lastXLabelWidth / 2;
 
       var cnt = propValues.length; 
@@ -554,7 +581,7 @@ basis.require('basis.ui.canvas');
 
       }
 
-      BOTTOM += 30; // space for xscale;
+      BOTTOM += this.showXLabels ? 30 : 1; // space for xscale;
 
       // yscale
       context.lineWidth = 1;
@@ -582,63 +609,68 @@ basis.require('basis.ui.canvas');
         context.fillText(label, LEFT - 6, labelY + 2.5);
       }
 
-      context.beginPath();
-      context.moveTo(LEFT + .5, TOP);
-      context.lineTo(LEFT + .5, HEIGHT - BOTTOM + .5);
-      context.lineTo(WIDTH - RIGHT, HEIGHT - BOTTOM + .5);
-      context.lineWidth = 1;
-      context.strokeStyle = 'black';
-      context.stroke();
-      context.closePath();
+      if (this.showBoundLines)
+      {
+        context.beginPath();
+        context.moveTo(LEFT + .5, TOP);
+        context.lineTo(LEFT + .5, HEIGHT - BOTTOM + .5);
+        context.lineTo(WIDTH - RIGHT, HEIGHT - BOTTOM + .5);
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+        context.closePath();
+      }
 
       // xscale
-      var lastLabelPos = 0;
-      var xLabelsX = [];
-      var maxSkipCount = 0;
-      var skipCount = 0;
-      var x;
-      var tw;
-
-      context.font = '10px tahoma';
-      context.textAlign = 'center';
-
-      for (var i = 0; i < cnt ; i++)
+      if (this.showXLabels)
       {
-        x = xLabelsX[i] = Math.round(LEFT + (i) * step) + .5;
-        tw = context.measureText(propValues[i]).width;
+        var lastLabelPos = 0;
+        var xLabelsX = [];
+        var maxSkipCount = 0;
+        var skipCount = 0;
+        var x;
+        var tw;
 
-        if (lastLabelPos + 10 < (x - tw / 2))
+        context.font = '10px tahoma';
+        context.textAlign = 'center';
+
+        for (var i = 0; i < cnt; i++)
         {
-          maxSkipCount = Math.max(maxSkipCount, skipCount);
-          skipCount = 0;
+          x = xLabelsX[i] = Math.round(LEFT + (i) * step) + .5;
+          tw = context.measureText(propValues[i]).width;
 
-          lastLabelPos = x + tw / 2;
+          if (lastLabelPos + 10 < (x - tw / 2))
+          {
+            maxSkipCount = Math.max(maxSkipCount, skipCount);
+            skipCount = 0;
+
+            lastLabelPos = x + tw / 2;
+          }
+          else
+          {
+            skipCount++;
+          }
         }
-        else
+        skipCount = maxSkipCount ? maxSkipCount + 1 : 0;
+
+        var skip;
+        context.beginPath();
+        for (var i = 0; i < cnt; i++)
         {
-          skipCount++;
+          x = xLabelsX[i];
+          skip = skipCount && (i % skipCount != 0);
+
+          if (!skip)
+            context.fillText(propValues[i], x, HEIGHT - BOTTOM + 15);
+
+          context.moveTo(x, HEIGHT - BOTTOM + .5);
+          context.lineTo(x, HEIGHT - BOTTOM + (skip ? 3 : 5));
         }
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+        context.closePath();
       }
-      skipCount = maxSkipCount ? maxSkipCount + 1 : 0;
-
-      var skip;
-      context.beginPath();
-      for (var i = 0; i < cnt; i++)
-      {
-        x = xLabelsX[i];
-        skip = skipCount && (i % skipCount != 0);
-
-        if (!skip)
-          context.fillText(propValues[i], x, HEIGHT - BOTTOM + 15);
-
-        context.moveTo(x, HEIGHT - BOTTOM + .5);
-        context.lineTo(x, HEIGHT - BOTTOM + (skip ? 3 : 5));
-      }
-      context.lineWidth = 1;
-      context.strokeStyle = 'black';
-      context.stroke();
-      context.closePath();
-
       
       // Threads
       var values;
