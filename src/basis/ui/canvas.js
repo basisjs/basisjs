@@ -47,6 +47,13 @@ basis.require('basis.ui');
       context.fillRect(this.data.value * 10,10,30,30);
       context.restore();
     },
+    listen: {
+      childNode: {
+        update: function(){
+          this.updateCount++;
+        }
+      }
+    }/*
     update: function(){
       var result = Node.prototype.update.apply(this, arguments);
 
@@ -65,7 +72,7 @@ basis.require('basis.ui');
       }
 
       return result;
-    }
+    }*/
   });
 
  /**
@@ -86,6 +93,13 @@ basis.require('basis.ui');
     lastDrawUpdateCount: -1,
 
     event_draw: EventObject.createEvent('draw', 'object'),
+    listen: {
+      childNode: {
+        update: function(){
+          this.updateCount++;
+        }
+      }
+    },
 
     init: function(config){
       UINode.prototype.init.call(this, config);

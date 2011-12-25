@@ -239,6 +239,13 @@
       
       dataSource: UserGroup.all,
       localSorting: Function.getter('data.groupId'),
+      listen: {
+        childNode: {
+          update: function(){
+            console.log('focus!');
+          }
+        }
+      },
       childClass: {
         template:
           '<div class="group">' +

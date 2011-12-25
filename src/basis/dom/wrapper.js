@@ -75,7 +75,7 @@ basis.require('basis.html');
   };
 
   function sortingSearch(node){
-    return node.sortingValue || 0; // it's important return zero when sortingValue is undefined,
+    return node.sortingValue || 0; // it's important return a zero when sortingValue is undefined,
                                    // because in this case sorting may be broken; it's also not a problem
                                    // when zero equivalent values (null, false or empty string) converts to zero
   }
@@ -101,7 +101,7 @@ basis.require('basis.html');
   }
 
   //
-  // registrate new subscription type
+  // registrate new subscription types
   //
 
   SUBSCRIPTION.add(
@@ -130,65 +130,68 @@ basis.require('basis.html');
     }
   );
 
+
   //
-  //  NODE
+  // AbstractNode
   //
 
-  var NULL_SATELLITE_CONFIG = Class.ExtensibleProperty();
-  /*var NULL_SATELLITE_CONFIG = Class.CustomExtendProperty({}, function(result, extend){
-    for (var key in extend)
-    {
-      var config = extend[key];
-
-      if (Class.isClass(config))
-        config = {
-          instanceOf: config
-        };
-
-      if (typeof config == 'object')
+  // default satellite config
+  var NULL_SATELLITE_CONFIG = Class.CustomExtendProperty(
+    {},
+    function(result, extend){
+      for (var key in extend)
       {
-        var hookRequired = false;
-        var contextConfig = {
-          instanceOf: config.instanceOf
-        };
-        var context = {
-          key: key,
-          owner: this,
-          config: contextConfig
-        };
+        var config = extend[key];
 
-        if (typeof config.config)
-          contextConfig.config = config.config;
+        if (Class.isClass(config))
+          config = {
+            instanceOf: config
+          };
 
-        if (typeof config.existsIf == 'function')
-          hookRequired = contextConfig.existsIf = config.existsIf;
-
-        if (typeof config.delegate == 'function')
-          hookRequired = contextConfig.delegate = config.delegate;
-
-        if (typeof config.dataSource == 'function')
-          hookRequired = contextConfig.dataSource = config.dataSource;
-
-        if (hookRequired)
+        if (typeof config == 'object')
         {
-          var hook = config.hook
-            ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
-            : SATELLITE_OWNER_UPDATE_HOOK;
+          var hookRequired = false;
+          var contextConfig = {
+            instanceOf: config.instanceOf
+          };
+          var context = {
+            key: key,
+            config: contextConfig
+          };
 
-          for (var key2 in hook)
-            if (hook[key2] === SATELLITE_UPDATE)
-            {
-              context.hook = hook;
-              break;
-            }
+          if (typeof config.config)
+            contextConfig.config = config.config;
+
+          if (typeof config.existsIf == 'function')
+            hookRequired = contextConfig.existsIf = config.existsIf;
+
+          if (typeof config.delegate == 'function')
+            hookRequired = contextConfig.delegate = config.delegate;
+
+          if (typeof config.dataSource == 'function')
+            hookRequired = contextConfig.dataSource = config.dataSource;
+
+          if (hookRequired)
+          {
+            var hook = config.hook
+              ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
+              : SATELLITE_OWNER_UPDATE_HOOK;
+
+            for (var key2 in hook)
+              if (hook[key2] === SATELLITE_UPDATE)
+              {
+                context.hook = hook;
+                break;
+              }
+          }
+
+          result[key] = context;
         }
-
-        result[key] = context;
+        else
+          result[key] = null;
       }
-      else
-        result[key] = null;
     }
-  });*/
+  );
 
   var SATELLITE_UPDATE = function(){
     // this -> {
@@ -199,10 +202,8 @@ basis.require('basis.html');
     //   }
     // }
     var owner = this.owner;
-    var key = this.key;
-    var config = this.config;
-    /*var key = this.context.key;
-    var config = this.context.config;*/
+    var key = this.context.key;
+    var config = this.context.config;
 
     var exists = !config.existsIf || config.existsIf(owner);
     var satellite = owner.satellite[key];
@@ -239,7 +240,7 @@ basis.require('basis.html');
         owner.event_satelliteChanged(this, key, null);
 
         if (owner.listen.satellite)
-          satellite.addHandler(owner.listen.satellite, satellite);
+          satellite.addHandler(owner.listen.satellite, owner);
       }
     }
     else
@@ -266,6 +267,7 @@ basis.require('basis.html');
   var SATELLITE_OWNER_UPDATE_HOOK = SATELLITE_OWNER_HOOK.__extend__({
     update: true
   });
+
 
  /**
   * @class
@@ -304,7 +306,22 @@ basis.require('basis.html');
     * @param {object} delta Delta of changes.
     * @event
     */
-    event_childNodesModified: createEvent('childNodesModified', 'node', 'delta'),
+    event_childNodesModified: createEvent('childNodesModified', 'node', 'delta') && function(node, delta){
+      event.childNodesModified.call(this, node, delta);
+
+      var listen = this.listen.childNode;
+      var array;
+      if (listen)
+      {
+        if (array = delta.inserted)
+          for (var i = 0, child; child = array[i]; i++)
+            child.addHandler(listen, this);
+
+        if (array = delta.deleted)
+          for (var i = 0, child; child = array[i]; i++)
+            child.removeHandler(listen, this);
+      }
+    },
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
@@ -567,78 +584,23 @@ basis.require('basis.html');
 
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
-        //this.addHandler(SATELLITE_HANDLER);
         for (var key in this.satelliteConfig)
         {
-          var config = this.satelliteConfig[key];
-
-          if (Class.isClass(config))
-            config = {
-              instanceOf: config
-            };
-
-          if (typeof config == 'object')
+          var satelliteConfig = this.satelliteConfig[key];
+          if (typeof satelliteConfig == 'object')
           {
-            var hookRequired = false;
-            var contextConfig = {
-              instanceOf: config.instanceOf
-            };
             var context = {
-              key: key,
-              owner: this,
-              config: contextConfig
-            };
-
-            if (typeof config.config)
-              contextConfig.config = config.config;
-
-            if (typeof config.existsIf == 'function')
-              hookRequired = contextConfig.existsIf = config.existsIf;
-
-            if (typeof config.delegate == 'function')
-              hookRequired = contextConfig.delegate = config.delegate;
-
-            if (typeof config.dataSource == 'function')
-              hookRequired = contextConfig.dataSource = config.dataSource;
-
-            if (hookRequired)
-            {
-              var hook = config.hook
-                ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
-                : SATELLITE_OWNER_UPDATE_HOOK;
-
-              for (var key in hook)
-                if (hook[key] === SATELLITE_UPDATE)
-                {
-                  this.addHandler(hook, context);
-                  break;
-                }
-            }
-
-            SATELLITE_UPDATE.call(context)
-          }
-        }
-      }/*/
-
-      if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
-      {
-        for (var key in this.satelliteConfig)
-        {
-          var context = this.satelliteConfig[key];
-          if (typeof context == 'object')
-          {
-            context = {
-              context: context,
+              context: satelliteConfig,
               owner: this
             };
 
-            if (context.hook)
-              this.addHandler(context.hook, context);
+            if (satelliteConfig.hook)
+              this.addHandler(satelliteConfig.hook, context);
 
             SATELLITE_UPDATE.call(context);
           }
         }
-      }*/
+      }
 
       var owner = this.owner;
       if (owner)
@@ -943,7 +905,6 @@ basis.require('basis.html');
 
   var DOMMIXIN_DATASOURCE_HANDLER = {
     datasetChanged: function(dataset, delta){
-
       var newDelta = {};
       var deleted = [];
 
@@ -1300,6 +1261,7 @@ basis.require('basis.html');
           refChild = childNodes[pos];
           newChild.sortingValue = newChildValue; // change sortingValue AFTER search
 
+          // optimization: if node on right position, than return
           if (newChild === refChild || (isInside && nextSibling === refChild))
             return newChild;
         }
@@ -1324,7 +1286,7 @@ basis.require('basis.html');
       }
 
       //
-      // ======= after this point newChild inserting or moving into new position =======
+      // ======= after this point newChild will be inserted or moved into new position =======
       //
 
       // unlink from old parent
