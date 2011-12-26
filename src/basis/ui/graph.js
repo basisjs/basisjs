@@ -53,114 +53,6 @@ basis.require('basis.ui.canvas');
   }
 
 
-  var GraphViewerLabel = uiNode.subclass({
-    template: 
-      '<div style="position: absolute; padding: 3px; font-size: 10px; border: 2px solid; background: #F8F8F8">{titleText}</div>',
-
-    init: function(config){
-      uiNode.prototype.init.call(this, config);
-
-      var color = this.delegate.getColor();
-      DOM.setStyle(this.element, {
-        borderColor: color
-      });
-
-    }
-  });
-
-  /*var GraphViewer = uiContainer.subclass({
-    childClass: GraphViewerLabel,
-    template: 
-      '<div style="position: relative;">' +
-        '<div{positionLine} style="position: absolute; width: 1px; background: #CCC"></div>' +
-        '<div{propElement} style="position: absolute; margin-top: 3px; padding: 2px 4px 4px; font-size: 10px; background: #090; color: white; border-radius: 3px">{propValueText}</div>' +
-        '<div{childNodesElement}></div>' +
-      '</div>',
-
-    event_update: function(object, delta){
-      uiNode.prototype.event_update.call(this, object, delta);
-
-      this.updatePosition(this.mx, this.my);
-    },
-
-    init: function(config){
-      uiContainer.prototype.init.call(this, config);
-
-      if (this.owner)
-      {
-        Event.addHandler(this.owner.element, 'mousemove', this.mousemove, this);
-        Event.addHandler(this.owner.element, 'mouseout', this.mousemove, this);
-      }
-    },
-
-    mousemove: function(event){
-      this.mx = Event.mouseX(event);
-      this.my = Event.mouseY(event);
-
-      this.updatePosition(this.mx, this.my);
-    },
-
-    updatePosition: function(mx, my){
-      var canvasRect = this.owner.element.getBoundingClientRect();
-      var x = mx - canvasRect.left - this.data.left;
-      var y = my - canvasRect.top - this.data.top;
-
-      var show = x > 0 && x < this.data.width && y > 0 && y < this.data.height;
-
-      if (show)
-      {
-        var propValues = this.owner.getPropValues();
-        var step = this.data.width / (propValues.length - 1);
-        var propPosition = Math.round(x / step);
-        var xPosition = Math.round(propPosition * step);
-
-        DOM.setStyle(this.tmpl.positionLine, {
-          left: this.data.left + xPosition + 'px',
-          top: this.data.top + 'px',
-          height: this.data.height + 'px'
-        });
-
-        this.tmpl.propValueText.nodeValue = propValues[propPosition];
-
-        DOM.setStyle(this.tmpl.propElement, {
-          left: this.data.left + xPosition - Math.round(this.tmpl.propElement.offsetWidth / 2) + .5 + 'px',
-          top: this.data.top + this.data.height + 'px'
-        });
-
-        var rightAlign = propPosition > (propValues.length / 2);
-
-        var labelPos = [];
-        var crossingLabelGroups = [];
-        var labelY;
-
-        for (var i = 0, threadLabel; threadLabel = this.childNodes[i]; i++){
-          var values = threadLabel.delegate.getValues();
-          var value = values[propPosition];
-
-          threadLabel.tmpl.titleText.nodeValue = Number(value.toFixed(2)).group();
-
-          var labelY = this.data.top + (1 - value / this.data.max) * this.data.height - (threadLabel.element.offsetHeight / 2);
-          labelY = Math.max(0, Math.min(labelY, this.data.top + this.data.height));
-
-          labelPos[i] = {
-            x: this.data.left + xPosition - (rightAlign ? threadLabel.element.offsetWidth : 0),
-            y: labelY
-          }
-
-        }
-
-        for (var i = 0, threadLabel; threadLabel = this.childNodes[i]; i++){
-          DOM.setStyle(threadLabel.element, {
-            left: labelPos[i].x + 'px',
-            top: labelPos[i].y + 'px'
-          });
-        }
-      }
-
-      DOM.display(this.element, show);
-    }
-  });*/
-
   var GraphViewer = uiNode.subclass({
     className: 'GraphViewer',
 
@@ -184,10 +76,10 @@ basis.require('basis.ui.canvas');
     listen: {
       owner: {
         draw: function(){
+          this.syncSize();
+
           if (this.mx)
             this.updatePosition(this.mx, this.my);
-
-          this.syncSize();
         }
       }
     },
@@ -210,10 +102,11 @@ basis.require('basis.ui.canvas');
       this.reset();
 
       var canvasRect = this.owner.element.getBoundingClientRect();
-      var x = mx - canvasRect.left - this.data.left;
-      var y = my - canvasRect.top - this.data.top;
+      var clientRect = this.owner.clientRect;
+      var x = mx - canvasRect.left - clientRect.left;
+      var y = my - canvasRect.top - clientRect.top;
 
-      var needToDraw = x > 0 && x < this.data.width && y > 0 && y < this.data.height;
+      var needToDraw = x > 0 && x < clientRect.width && y > 0 && y < clientRect.height;
 
       if (needToDraw)
         this.draw(x);
@@ -227,16 +120,21 @@ basis.require('basis.ui.canvas');
     draw: function(x){
       var context = this.context;
 
+      var clientRect = this.owner.clientRect;
+      context.translate(clientRect.left, clientRect.top);
+
+      var WIDTH = clientRect.width;
+      var HEIGHT = clientRect.height;
+      var MAX = this.owner.maxValue;
+
       var propValues = this.owner.getPropValues();
-      var step = this.data.width / (propValues.length - 1);
+      var step = WIDTH / (propValues.length - 1);
       var propPosition = Math.round(x / step);
       var xPosition = Math.round(propPosition * step);
 
-      context.translate(this.data.left, this.data.top);
-
       context.beginPath();
       context.moveTo(xPosition + .5, 0);
-      context.lineTo(xPosition + .5, this.data.height);
+      context.lineTo(xPosition + .5, HEIGHT);
       context.strokeStyle = '#CCC';
       context.stroke();
       context.closePath();
@@ -249,14 +147,14 @@ basis.require('basis.ui.canvas');
       var propTextHeight = 10;
 
       context.beginPath();
-      context.moveTo(xPosition + .5, this.data.height + 1 + .5);
-      context.lineTo(xPosition - 3 + .5, this.data.height + 4 + .5);
-      context.lineTo(xPosition - Math.round(propTextWidth / 2) - 5 + .5, this.data.height + 4 + .5);
-      context.lineTo(xPosition - Math.round(propTextWidth / 2) - 5 + .5, this.data.height + 4 + propTextHeight + 5 + .5);
-      context.lineTo(xPosition + Math.round(propTextWidth / 2) + 5 + .5, this.data.height + 4 + propTextHeight + 5 + .5);
-      context.lineTo(xPosition + Math.round(propTextWidth / 2) + 5 + .5, this.data.height + 4 + .5);
-      context.lineTo(xPosition + 3 + .5, this.data.height + 4 + .5);
-      context.lineTo(xPosition + .5, this.data.height + 1);
+      context.moveTo(xPosition + .5, HEIGHT + 1 + .5);
+      context.lineTo(xPosition - 3 + .5, HEIGHT + 4 + .5);
+      context.lineTo(xPosition - Math.round(propTextWidth / 2) - 5 + .5, HEIGHT + 4 + .5);
+      context.lineTo(xPosition - Math.round(propTextWidth / 2) - 5 + .5, HEIGHT + 4 + propTextHeight + 5 + .5);
+      context.lineTo(xPosition + Math.round(propTextWidth / 2) + 5 + .5, HEIGHT + 4 + propTextHeight + 5 + .5);
+      context.lineTo(xPosition + Math.round(propTextWidth / 2) + 5 + .5, HEIGHT + 4 + .5);
+      context.lineTo(xPosition + 3 + .5, HEIGHT + 4 + .5);
+      context.lineTo(xPosition + .5, HEIGHT + 1);
       context.fillStyle = '#c29e22';
       context.strokeStyle = '#070';
       context.fill();
@@ -264,7 +162,7 @@ basis.require('basis.ui.canvas');
       context.closePath();
 
       context.fillStyle = 'black';
-      context.fillText(propText, xPosition, this.data.top + this.data.height + 5);
+      context.fillText(propText, xPosition, clientRect.top + HEIGHT + 5);
 
 
       var labels = [];
@@ -286,8 +184,8 @@ basis.require('basis.ui.canvas');
         if (labelWidth < valueTextWidth)
           labelWidth = valueTextWidth; 
 
-        var valueY = Math.round((1 - value / this.data.max) * this.data.height);
-        var labelY = Math.max(labelHeight / 2, Math.min(valueY, this.data.height - labelHeight / 2));
+        var valueY = Math.round((1 - value / MAX) * HEIGHT);
+        var labelY = Math.max(labelHeight / 2, Math.min(valueY, HEIGHT - labelHeight / 2));
 
         labels[i] = {
           thread: thread,
@@ -316,7 +214,7 @@ basis.require('basis.ui.canvas');
             crossGroup[i].y = crossGroup[i - 1].y + (crossGroup[i].y - crossGroup[i - 1].y) * crossGroup[i].labels.length / crossGroup[i - 1].labels.length / 2;
             crossGroup[i].labels = crossGroup[i - 1].labels.concat(crossGroup[i].labels);
             crossGroup[i].height = crossGroup[i].labels.length * labelHeight;
-            crossGroup[i].y = Math.max(crossGroup[i].height / 2, Math.min(crossGroup[i].y, this.data.height - crossGroup[i].height / 2));
+            crossGroup[i].y = Math.max(crossGroup[i].height / 2, Math.min(crossGroup[i].y, HEIGHT - crossGroup[i].height / 2));
             crossGroup.splice(i - 1, 1);
             hasCrossing = true;
           }
@@ -463,8 +361,7 @@ basis.require('basis.ui.canvas');
 
     satelliteConfig: {
       graphViewer: {
-        instanceOf: GraphViewer,
-        delegate: Function.$self
+        instanceOf: GraphViewer
       }
     },
 
@@ -475,6 +372,12 @@ basis.require('basis.ui.canvas');
     event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
       this.updateCount++;
       Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
+    },
+
+    init: function(config){
+      Canvas.prototype.init.call(this, config);
+
+      this.clientRect = {}; 
     },
 
     /*draw: function(){
@@ -533,7 +436,7 @@ basis.require('basis.ui.canvas');
       var firstXLabelWidth = 0;
       var lastXLabelWidth = 0;
       
-      if (this.drawXLabels)
+      if (this.showXLabels)
       {
         firstXLabelWidth = context.measureText(propValues[0]).width;
         lastXLabelWidth = context.measureText(propValues[propValues.length - 1]).width;
@@ -639,7 +542,7 @@ basis.require('basis.ui.canvas');
           x = xLabelsX[i] = Math.round(LEFT + (i) * step) + .5;
           tw = context.measureText(propValues[i]).width;
 
-          if (lastLabelPos + 10 < (x - tw / 2))
+          if (i == 0 || lastLabelPos + 10 < (x - tw / 2))
           {
             maxSkipCount = Math.max(maxSkipCount, skipCount);
             skipCount = 0;
@@ -681,15 +584,14 @@ basis.require('basis.ui.canvas');
         this.drawThread(values, maxValue, LEFT, TOP, step, (HEIGHT - TOP - BOTTOM))
       }  
 
-      this.update({
+      //save graph data
+      Object.extend(this.clientRect, {
         left: LEFT,
-        right: RIGHT,
         top: TOP,
-        bottom: BOTTOM,
         width: WIDTH - LEFT - RIGHT,
         height: HEIGHT - TOP - BOTTOM,
-        max: maxValue
       });
+      this.maxValue = maxValue;
     },
     drawThread: function(values, max, left, top, step, height){
       var context = this.context;
