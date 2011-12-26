@@ -1230,8 +1230,11 @@ basis.require('basis.data');
       return 0;
 
     var pos;
-    var value;
+    var id = map.object.id;
+    var value = map.value || 0;
     var cmpValue;
+    var cmpId;
+    var item;
     var l = 0;
     var r = array.length - 1;
 
@@ -1239,22 +1242,30 @@ basis.require('basis.data');
     {
       pos = (l + r) >> 1;
 
-      cmpValue = array[pos].value || 0;
-      if (cmpValue === value)
+      item = array[pos];
+      cmpValue = item.value;
+
+      /*if (cmpValue === value)
       {
-        cmpValue = array[pos].object.eventObjectId;
-        value = map.object.eventObjectId;
+        cmpId = item.object.id;
+        if (id < cmpId)
+          r = pos - 1;
+        else 
+          if (id > cmpId)
+            l = pos + 1;
+          else
+            return id == cmpId ? pos : 0;  
       }
       else
-        value = map.value || 0;
-
-      if (value < cmpValue)
-        r = pos - 1;
-      else 
-        if (value > cmpValue)
-          l = pos + 1;
-        else
-          return value == cmpValue ? pos : 0;  
+      {*/
+        if (value < cmpValue)
+          r = pos - 1;
+        else 
+          if (value > cmpValue)
+            l = pos + 1;
+          else
+            return value == cmpValue ? pos : 0;  
+      //}
     }
     while (l <= r);
 
@@ -1277,15 +1288,68 @@ basis.require('basis.data');
     }
   };
 
+  function sliceIndexSort(a, b){
+    return +(a.value > b.value)
+        || -(a.value < b.value)
+        || +(a.object.eventObjectId > b.object.eventObjectId)
+        || -(a.object.eventObjectId < b.object.eventObjectId);
+  }
+
   var SLICE_SOURCE_HANDLER = {
     datasetChanged: function(source, delta){
       var sourceMap_ = this.sourceMap_;
       var index_ = this.index_;
       var listenHandler = this.listen.sourceObject;
       var sourceObjectInfo;
+      var sourceObjectId;
       var array;
+      var dropIndex = false;
+      var buildIndex = false;
+
+      //var d = new Date;
+      //console.log(delta.inserted && delta.inserted.length, delta.deleted && delta.deleted.length);
+      //console.profile();
+     
+      // delete comes first to reduce index size -> insert will be faster
+      if (array = delta.deleted)
+      {
+        // opitimization: if delete item count greater than items left -> rebuild index
+        if (array.length > index_.length - array.length)
+        {
+          dropIndex = true;
+          buildIndex = array.length != index_.length;
+          index_.length = 0;
+        }
+
+        for (var i = 0, sourceObject; sourceObject = array[i]; i++)
+        {
+          if (!dropIndex)
+          {
+            sourceObjectInfo = sourceMap_[sourceObject.eventObjectId];
+            index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
+          }
+
+          delete sourceMap_[sourceObject.eventObjectId];
+
+          if (listenHandler)
+            sourceObject.removeHandler(listenHandler, this);
+        }
+
+        if (buildIndex)
+          for (var key in sourceMap_)
+          {
+            sourceObjectInfo = sourceMap_[key];
+            index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
+          }
+      }
 
       if (array = delta.inserted)
+      {
+        // optimization: it makes webkit & gecko slower (2x), but makes ie faster
+        buildIndex = !index_.length;
+        //if (!index_.length)
+        //  index_.length = array.length;
+
         for (var i = 0, sourceObject; sourceObject = array[i]; i++)
         {
           sourceObjectInfo = {
@@ -1294,22 +1358,21 @@ basis.require('basis.data');
           };
           sourceMap_[sourceObject.eventObjectId] = sourceObjectInfo;
 
-          index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
+          if (!buildIndex)
+            index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
+          else
+            index_.push(sourceObjectInfo);
 
           if (listenHandler)
             sourceObject.addHandler(listenHandler, this);
         }
 
-      if (array = delta.deleted)
-        for (var i = 0, sourceObject; sourceObject = array[i]; i++)
-        {
-          sourceObjectInfo = sourceMap_[sourceObject.eventObjectId];
+        if (buildIndex)
+          index_.sort(sliceIndexSort);
+      }
 
-          index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
-
-          if (listenHandler)
-            sourceObject.removeHandler(listenHandler, this);
-        }
+      //console.profileEnd();
+      //console.log('Slice: ', new Date - d, buildIndex);
 
       this.applyRule();
     }
@@ -1357,6 +1420,9 @@ basis.require('basis.data');
       source: SLICE_SOURCE_HANDLER
     },
 
+   /**
+    * @event
+    */
     event_rangeChanged: createEvent('rangeChanged', 'dataset', 'oldOffset', 'oldLimit'),
 
    /**

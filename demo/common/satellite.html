@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Using satellites</title>
+  <title>Basis Demos: Using of satellites</title>
 
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/style.css" media="screen" />
 
@@ -43,6 +43,14 @@
     {
       overflow: hidden;
       border-bottom: 1px solid #E0E0E0;
+    }
+    .user:hover
+    {
+      background: #E8E8E9;
+    }
+    .selected
+    {
+      background: #D9E8FB;
     }
     .user__title
     {
@@ -104,7 +112,7 @@
 </head>
 
 <body>
-  <h1>Basic demos: Using satellites</h1>
+  <h1>Basic demos: Using of satellites</h1>
   
   <p id="demo-summary">
     ..
@@ -149,7 +157,7 @@
       { groupId: 6, title: 'Yellow' }
     ]);
 
-    User.all.sync(Array.create(1000, function(idx){ return { userId: idx, group: 1 + idx % 6, title: 'user' + idx } }) || [
+    User.all.sync(Array.create(100, function(idx){ return { userId: idx, group: 1 + idx % 6, title: 'user' + idx } }) || [
       { userId: 1,  groupId: 1, title: "Norman Yuen" },
       { userId: 2,  groupId: 2, title: "Casto" },
       { userId: 4,  groupId: 6, title: "Jose Crutcher" },
@@ -181,6 +189,12 @@
         }
       },
       handler: {
+        delegateChanged: function(node, oldDelegate){
+          if (oldDelegate)
+            basis.cssom.classList(oldDelegate).remove('menuOpened');
+          if (this.delegate)
+            basis.cssom.classList(this.delegate).add('menuOpened');
+        },
         hide: function(){
           this.setDelegate();
         }
@@ -195,14 +209,18 @@
 
       dataSource: User.all,
       localSorting: Function.getter('data.title'),
+      selection: true,
       childClass: {
         template:
-          '<div class="user">' +
+          '<div class="user" event-click="select">' +
             '<div class="groupPanel"><!--{group}--><button event-click="chooseGroup">...</button></div>' +
             '<span class="user__title">[{id}] {title}</span>' + 
           '</div>',
 
         action: {
+          select: function(){
+            this.select();
+          },
           chooseGroup: function(event){
             groupPopup.setDelegate(this);
             groupPopup.show(basis.dom.event.sender(event));

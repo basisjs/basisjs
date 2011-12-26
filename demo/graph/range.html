@@ -254,10 +254,11 @@
                   handler: {
                     start: function(){
                       this.limit__ = reportSlice.limit;
+                      this.maxLimit__ = -Math.min(reportSlice.offset, reportSlice.index_.length);
                     },
                     move: function(config){
                       var limit = this.limit__ + parseInt(reportSlice.index_.length * config.deltaX / this.element.offsetWidth);
-                      reportSlice.setRange(reportSlice.offset, Math.min(-2, limit));
+                      reportSlice.setRange(reportSlice.offset, Math.min(-2, Math.max(limit, this.maxLimit__)));
                     }
                   },
                   handlerContext: this

@@ -1,55 +1,37 @@
     var MAX_COUNT = 3000;
     var MAX_COUNT_QUATER = MAX_COUNT >> 2;
     
-    var DOM = Basis.DOM;
-    var Data = Basis.Data;
-    var nsWrapers = DOM.Wrapper;
-    var nsEntity = Basis.Entity;
+    var DOM = basis.dom;
+    var Data = basis.data;
+    var nsWrapers = DOM.wrapper;
+    var nsEntity = basis.entity;
 
-    var getter = Function.getter || Basis.Data.getter;
+    var getter = Function.getter;
 
     var eventStat = {};
-    var _dispatch = Basis.EventObject.prototype.dispatch;
-    if (_dispatch)
-    if (!_dispatch.proto)
-    {
-      Basis.EventObject.prototype.dispatch = function(eventName){
-        eventStat[eventName] = (eventStat[eventName] || 0) + 1;
-        _dispatch.apply(this, arguments);
-      }
-      Basis.EventObject.prototype.dispatch.method = Basis.EventObject.prototype.dispatch;
-    }
-    else
-    {
-      _dispatch = _dispatch.method;
-      Basis.EventObject.prototype.dispatch.method = function(eventName){
-        eventStat[eventName] = (eventStat[eventName] || 0) + 1;
-        _dispatch.apply(this, arguments);
-      }
-    }
 
-    if (Basis.EventObject.event)
+    if (basis.EventObject.event)
     {
       function wrapEvent(eventName){
-        var func = Basis.EventObject.event[eventName];
-        Basis.EventObject.event[eventName] = function(){
+        var func = basis.EventObject.event[eventName];
+        basis.EventObject.event[eventName] = function(){
           eventStat[eventName] = (eventStat[eventName] || 0) + 1;
           func.apply(this, arguments);
         }
       }
      
-      Object.keys(Basis.EventObject.event).forEach(wrapEvent);
+      Object.keys(basis.EventObject.event).forEach(wrapEvent);
     }
 
     var addCount = 0;
     var removeCount = 0;
-    /*var _add = Basis.EventObject.prototype.addHandler.method;
-    Basis.EventObject.prototype.addHandler.method = function(){
+    /*var _add = basis.EventObject.prototype.addHandler.method;
+    basis.EventObject.prototype.addHandler.method = function(){
       addCount++;
       return _add.apply(this, arguments);
     }/*
-    var _remove = Basis.EventObject.prototype.removeHandler.method;
-    Basis.EventObject.prototype.removeHandler.method = function(){
+    var _remove = basis.EventObject.prototype.removeHandler.method;
+    basis.EventObject.prototype.removeHandler.method = function(){
       removeCount++;
       _remove.apply(this, arguments);
     }*/
@@ -217,7 +199,7 @@
     }
 
     function fast_clear(){
-      if (1 && Transfer.all.sync)
+      if (Transfer.all.sync)
       {
         var st = Date.now();
         Transfer.all.sync([]);
@@ -361,5 +343,5 @@
 
     if (location.hash == '#autorun')
     {
-      Basis.Event.onLoad(function(){ runBtn.click() });
+      basis.Event.onLoad(function(){ runBtn.click() });
     }
