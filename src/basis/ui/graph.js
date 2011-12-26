@@ -162,7 +162,7 @@ basis.require('basis.ui.canvas');
       context.closePath();
 
       context.fillStyle = 'black';
-      context.fillText(propText, xPosition, clientRect.top + HEIGHT + 5);
+      context.fillText(propText, xPosition +.5, clientRect.top + HEIGHT + 5);
 
 
       var labels = [];
@@ -194,8 +194,6 @@ basis.require('basis.ui.canvas');
           labelY: labelY
         }
       }
-
-      labelWidth += 2*labelPadding;
 
       // adjust label positions 
       var labels = labels.sortAsObject(Function.getter('valueY'));
@@ -236,25 +234,27 @@ basis.require('basis.ui.canvas');
 
       for (var i = 0, label; label = labels[i]; i++)
       {
+        var pointWidth = 3;
         context.strokeStyle = label.thread.getColor();
         context.fillStyle = 'white';
         context.lineWidth = 3;
         context.beginPath();
-        context.arc(xPosition + .5, label.valueY + .5, 3, 0, 2*Math.PI);
+        context.arc(xPosition + .5, label.valueY + .5, pointWidth, 0, 2*Math.PI);
         context.stroke();         
         context.fill();
         context.closePath();
-
         
+        
+        var tongueSize = 10;
         context.beginPath();
-        context.moveTo(xPosition + 4*align + .5, label.valueY + .5);
-        context.lineTo(xPosition + 11*align + .5, label.labelY - 5 + .5);
-        context.lineTo(xPosition + 11*align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
-        context.lineTo(xPosition + 11*align + labelWidth*align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
-        context.lineTo(xPosition + 11*align + labelWidth*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
-        context.lineTo(xPosition + 11*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
-        context.lineTo(xPosition + 11*align + .5, label.labelY + 5 + .5);
-        context.lineTo(xPosition + 4*align + .5, label.valueY + .5);
+        context.moveTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY - 5 + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + (labelWidth + 2*labelPadding)*align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + (labelWidth + 2*labelPadding)*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY + 5 + .5);
+        context.lineTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
         context.fillStyle = label.thread.getColor();
         context.strokeStyle = '#444';
         context.lineWidth = 1;
@@ -264,7 +264,7 @@ basis.require('basis.ui.canvas');
 
         context.fillStyle = 'black';
         context.textAlign = 'right';
-        context.fillText(label.text, xPosition + (align == 1 ? 10 + labelWidth - labelPadding : -(10 + labelPadding)), label.labelY + 4);
+        context.fillText(label.text, xPosition + (pointWidth + tongueSize + labelPadding)*align + (align == 1 ? labelWidth : 0) + .5, label.labelY + 4);
       }
     }
   });
@@ -438,12 +438,12 @@ basis.require('basis.ui.canvas');
       
       if (this.showXLabels)
       {
-        firstXLabelWidth = context.measureText(propValues[0]).width;
-        lastXLabelWidth = context.measureText(propValues[propValues.length - 1]).width;
+        firstXLabelWidth = context.measureText(propValues[0]).width + 12; // 12 - padding + border
+        lastXLabelWidth = context.measureText(propValues[propValues.length - 1]).width + 12;
       }
 
       LEFT = Math.max(maxtw, Math.round(firstXLabelWidth / 2));
-      RIGHT = lastXLabelWidth / 2;
+      RIGHT = Math.round(lastXLabelWidth / 2);
 
       var cnt = propValues.length; 
       var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt - 1) ;
@@ -497,7 +497,7 @@ basis.require('basis.ui.canvas');
 
         context.beginPath();
         context.moveTo(LEFT + .5, labelY);
-        context.lineTo(WIDTH - RIGHT, labelY);
+        context.lineTo(WIDTH - RIGHT + .5, labelY);
         context.strokeStyle = 'rgba(128, 128, 128, .25)';
         context.stroke();
         context.closePath();
@@ -517,7 +517,7 @@ basis.require('basis.ui.canvas');
         context.beginPath();
         context.moveTo(LEFT + .5, TOP);
         context.lineTo(LEFT + .5, HEIGHT - BOTTOM + .5);
-        context.lineTo(WIDTH - RIGHT, HEIGHT - BOTTOM + .5);
+        context.lineTo(WIDTH - RIGHT + .5, HEIGHT - BOTTOM + .5);
         context.lineWidth = 1;
         context.strokeStyle = 'black';
         context.stroke();
@@ -529,8 +529,8 @@ basis.require('basis.ui.canvas');
       {
         var lastLabelPos = 0;
         var xLabelsX = [];
-        var maxSkipCount = 0;
-        var skipCount = 0;
+        var maxSkipLabelCount = 0;
+        var skipLabelCount = 0;
         var x;
         var tw;
 
@@ -539,35 +539,39 @@ basis.require('basis.ui.canvas');
 
         for (var i = 0; i < cnt; i++)
         {
-          x = xLabelsX[i] = Math.round(LEFT + (i) * step) + .5;
+          x = xLabelsX[i] = Math.round(LEFT + i * step) + .5;
           tw = context.measureText(propValues[i]).width;
 
           if (i == 0 || lastLabelPos + 10 < (x - tw / 2))
           {
-            maxSkipCount = Math.max(maxSkipCount, skipCount);
-            skipCount = 0;
+            maxSkipLabelCount = Math.max(maxSkipLabelCount, skipLabelCount);
+            skipLabelCount = 0;
 
             lastLabelPos = x + tw / 2;
           }
           else
           {
-            skipCount++;
+            skipLabelCount++;
           }
         }
-        skipCount = maxSkipCount ? maxSkipCount + 1 : 0;
+        skipLabelCount = maxSkipLabelCount
 
-        var skip;
+        var skipLabel;
+        var skipScale = skipLabelCount > 10;
         context.beginPath();
         for (var i = 0; i < cnt; i++)
         {
           x = xLabelsX[i];
-          skip = skipCount && (i % skipCount != 0);
+          skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
 
-          if (!skip)
+          if (!skipLabel)
             context.fillText(propValues[i], x, HEIGHT - BOTTOM + 15);
 
-          context.moveTo(x, HEIGHT - BOTTOM + .5);
-          context.lineTo(x, HEIGHT - BOTTOM + (skip ? 3 : 5));
+          if (!skipLabel || !skipScale)
+          {
+            context.moveTo(x, HEIGHT - BOTTOM + .5);
+            context.lineTo(x, HEIGHT - BOTTOM + (skipLabel ? 3 : 5));
+          }
         }
         context.lineWidth = 1;
         context.strokeStyle = 'black';
