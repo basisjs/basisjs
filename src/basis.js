@@ -1515,6 +1515,9 @@
     var CustomExtendProperty = function(extension, func){
       return {
         __extend__: function(extension){
+          if (extension && extension.__extend__ === this.__extend__)
+            return extension;
+
           var Base = Function();
           Base.prototype = this;
           var result = new Base;

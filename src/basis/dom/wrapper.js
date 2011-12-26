@@ -1676,8 +1676,6 @@ basis.require('basis.html');
         var oldDataSource = this.dataSource;
         var listenHandler = this.listen.dataSource;
 
-        this.dataSource = dataSource;
-
         // detach
         if (oldDataSource)
         {
@@ -1687,8 +1685,14 @@ basis.require('basis.html');
             oldDataSource.removeHandler(listenHandler, this);
 
           if (oldDataSource.itemCount)
+          {
+            this.dataSource = null;
             this.clear();
+          }
         }
+
+        // NOTE: this assigment must be here, because clear method call requires for dataSource be null
+        this.dataSource = dataSource;
 
         // TODO: switch off localSorting & localGrouping
 

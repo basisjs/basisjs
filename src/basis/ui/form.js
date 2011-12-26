@@ -1026,7 +1026,7 @@ basis.require('basis.ui.popup');
       if (this.property)
         this.value = this.property.value;
 
-      this.satelliteConfig = {
+      this.satelliteConfig = UIContainer.prototype.satelliteConfig.__extend__({
         captionItem: {
           instanceOf: this.childClass,
           delegate: getter('selection.pick()'),
@@ -1044,7 +1044,7 @@ basis.require('basis.ui.popup');
             }
           }
         }
-      };
+      });
 
       // inherit
       ComplexField.prototype.init.call(this, config);
