@@ -593,7 +593,7 @@ basis.require('basis.ui.canvas');
         left: LEFT,
         top: TOP,
         width: WIDTH - LEFT - RIGHT,
-        height: HEIGHT - TOP - BOTTOM,
+        height: HEIGHT - TOP - BOTTOM
       });
       this.maxValue = maxValue;
     },
