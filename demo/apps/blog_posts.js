@@ -21,7 +21,7 @@ window.rawData = (function(){
 
   var result = [];
   var catList = ['javascript', 'basis', 'style', 'usability', 'css', 'html', 'framework', 'browser'];
-  var COUNT = 25000;
+  var COUNT = 5000;
   var offset = 0;
   for (var i = COUNT; i > 0; i--)
   {  

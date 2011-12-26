@@ -299,6 +299,7 @@
         container: basis.dom.get('content'),
         delegate: blogThread,
         pageCount: Math.ceil(blogThread.itemCount / POST_PER_PAGE),
+        pageSpan: 12,
         listen: {
           delegate: {
             /*sourcesChanged: {
@@ -306,6 +307,7 @@
             },*/
             datasetChanged: function(ds){
               this.setProperties(Math.ceil(ds.itemCount / POST_PER_PAGE), 10, 0);
+              this.spotlightPage(0);
             }
           }
         },

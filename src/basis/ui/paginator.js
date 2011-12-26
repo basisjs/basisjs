@@ -39,6 +39,7 @@ basis.require('basis.ui');
   var Event = basis.dom.event;
 
   var createEvent = basis.EventObject.createEvent;
+  var event = basis.EventObject.event;
   var classList = basis.cssom.classList;
 
   var Box = basis.layout.Box;
@@ -56,7 +57,7 @@ basis.require('basis.ui');
   }
 
   function updateSelection(paginator){
-    var node = paginator.childNodes.search(paginator.activePage, 'data.pageNumber');
+    var node = paginator.childNodes.search(paginator.activePage, 'pageNumber');
     if (node)
       node.select();
     else
@@ -70,21 +71,23 @@ basis.require('basis.ui');
   var PaginatorNode = UINode.subclass({
     className: namespace + '.PaginatorNode',
 
-    pageGetter: Function.getter('data.pageNumber'),
-    urlGetter: Function.$self,
+    pageGetter: Function.getter('pageNumber + 1'),
+
+    event_pageNumberChanged: createEvent('pageNumberChanged', 'node', 'oldPageNumber') && function(node, oldPageNumber){
+      event.pageNumberChanged.call(this, node, oldPageNumber);
+
+      this.templateUpdate(this.tmpl, 'pageNumberChanged');
+    },
 
     template:
-      '<td{element} class="Basis-PaginatorNode">' +
+      '<td class="Basis-PaginatorNode">' +
         '<span>' +
           '<a{link|selected} event-click="click" href="#">{pageNumber}</a>' +
         '</span>' +
       '</td>',
 
-    templateUpdate: function(tmpl, event, delta){
-      var page = this.pageGetter(this);
-
-      tmpl.pageNumber.nodeValue = page + 1;
-      tmpl.link.href = this.urlGetter(page);
+    templateUpdate: function(tmpl, eventName, delta){
+      tmpl.pageNumber.nodeValue = this.pageGetter(this);
     },
 
     action: {
@@ -97,7 +100,17 @@ basis.require('basis.ui');
 
     click: function(){
       if (this.parentNode)
-        this.parentNode.setActivePage(this.pageGetter(this));
+        this.parentNode.setActivePage(this.pageNumber);
+    },
+
+    setPageNumber: function(pageNumber){
+      if (this.pageNumber != pageNumber)
+      {
+        var oldPageNumber = this.pageNumber;
+        this.pageNumber = pageNumber;
+
+        this.event_pageNumberChanged(this, oldPageNumber);
+      }
     }
   });
 
@@ -159,16 +172,29 @@ basis.require('basis.ui');
     event_activePageChanged: createEvent('activePageChanged'),
     event_pageCountChanged: createEvent('pageCountChanged'),
 
-    pageSpan: 0,
-    pageCount: 0,
-    activePage: 1,
+    pageSpan: NaN,
+    pageCount: NaN,
+    activePage: NaN,
+
+    defaultPageSpan: 5,
+    defaultPageCount: 1,
+    defaultActivePage: 0,
+
     spanStartPage_: -1,
 
     init: function(config){
       UIControl.prototype.init.call(this, config);
 
-      this.setProperties(this.pageCount || 0, this.pageSpan);
-      this.setActivePage(Math.max(this.activePage - 1, 0), true);
+      var pageSpan = this.pageSpan || this.defaultPageSpan;
+      var pageCount = this.pageCount || this.defaultPageCount;
+      var activePage = this.activePage || this.defaultActivePage;
+
+      this.pageSpan = NaN;
+      this.pageCount = NaN;
+      this.activePage = NaN;
+
+      this.setProperties(pageCount, pageSpan);
+      this.setActivePage(activePage, true);
 
       this.scrollbarDD = new DragDropElement({
         element: this.tmpl.scrollTrumb,
@@ -191,9 +217,7 @@ basis.require('basis.ui');
         this.pageSpan = pageSpan;
         this.setChildNodes(Array.create(pageSpan, function(idx){
           return {
-            data: {
-              pageNumber: idx
-            }
+            pageNumber: idx
           }
         }));
       }
@@ -232,9 +256,10 @@ basis.require('basis.ui');
       if (newActivePage != this.activePage)
       {
         this.activePage = Number(newActivePage);
-        updateSelection(this);
         this.event_activePageChanged(newActivePage);
       }
+
+      updateSelection(this);
 
       this.tmpl.activePageMark.style.left = percent(newActivePage / Math.max(this.pageCount - 1, 1));
 
@@ -251,7 +276,7 @@ basis.require('basis.ui');
         this.spanStartPage_ = pageNumber;
 
         for (var i = this.childNodes.length; i --> 0;)
-          this.childNodes[i].update({ pageNumber: pageNumber + i });
+          this.childNodes[i].setPageNumber(pageNumber + i);
 
         updateSelection(this);
       }
