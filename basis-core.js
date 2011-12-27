@@ -7,6 +7,7 @@
     var curLocation = scripts[scripts.length - 1].src.replace(/[^\/]+\.js$/, '');
 
     document.write('<script src="' + curLocation + 'src/basis.js"></script>');
+    document.write('<script src="' + curLocation + 'src/basis/event.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/ua.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/dom.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/dom/event.js"></script>');

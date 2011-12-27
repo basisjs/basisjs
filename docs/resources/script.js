@@ -575,7 +575,7 @@
 
   var scripts = Array.from(document.getElementsByTagName('SCRIPT'))
                   .map(getter('getAttribute("src")'))
-                  .filter(getter('match(/^\\.\\.\\/[a-z0-9\\_\\-\/]+\\.js$/i)'));
+                  .filter(getter('match(/\\/src\\/basis[a-z0-9\\_\\-\/]*\\.js$/i)'));
    //['../basis.js', '../dom_wraper.js', '../tree.js'];
   //  console.log(DOM.tag(document, 'SCRIPT').map(getter('getAttribute("src")')).filter(getter('match(/^\\.\\.\\/[a-z0-9\\_]+\\.js$/i)')));
 

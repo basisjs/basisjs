@@ -205,7 +205,7 @@
         var filename = newData.file.replace(BASE_URL_RX, '');
         DOM.insert(this.tmpl.content,
           DOM.createElement('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]'.format(filename, newData.line),
-            filename + ':' + newData.line
+            filename.split('src/basis/').pop() + ':' + newData.line
             /*DOM.createElement('SPAN.file', filename),
             DOM.createElement('SPAN.splitter', ':'),
             DOM.createElement('SPAN.line', newData.line)*/

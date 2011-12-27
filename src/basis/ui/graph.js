@@ -7,6 +7,11 @@
  *
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ *
+ * @author
+ * Vladimir Ratsev <wuzykk@gmail.com>
+ * Roman Dvornov <rdvornov@gmail.com>
+ *
  */
 
 basis.require('basis.ui.canvas');

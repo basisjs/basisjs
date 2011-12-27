@@ -10,6 +10,7 @@
  *
  * @author
  * Vladimir Ratsev <wuzykk@gmail.com>
+ *
  */
 
 basis.require('basis.dom');
