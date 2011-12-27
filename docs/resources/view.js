@@ -20,6 +20,7 @@
   var nsTree = basis.ui.tree;
   var nsCore = BasisDoc.Core;
   var nsScroller = basis.ui.scroller;
+  var nsLayout = basis.layout;
 
   var ui = basis.ui;
   var uiNode = basis.ui.Node;
@@ -1058,7 +1059,7 @@
       '<div class="ClassNode">' +
         '<div class="connector"/>' +
         '<div class="ClassNode-Wrapper">' +
-          '<div class="ClassNode-Header">' +
+          '<div{header} class="ClassNode-Header">' +
             '<div class="ClassNode-Header-Title">{title}</div>' +
           '</div>' +
           '<div{container} class="ClassNode-SubClassList">' +
@@ -1085,23 +1086,64 @@
 
   ClsNode.prototype.childClass = ClsNode;
 
+  var classMap = new nsScroller.ScrollPanel({
+    autoDelegate: 'parent',
+    dataSource: clsSplitBySuper.getSubset(0),
+    childClass: ClsNode
+  })
+
   var viewClassMap = new View({
     viewHeader: 'ClassMap',
     template:
       '<div class="view ClassMap">' +
         htmlHeader('ClassMap') +
-        '<div class="content" style="overflow: hidden; height: 400px; position: relative;padding: 25px">' +
-          '<div{childNodesElement} style="position: absolute;"/>' +
-        '</div>' +
+        '<div{childNodesElement} class="content"/>' +
       '</div>',
 
-    dataSource: clsSplitBySuper.getSubset(0),
-    childClass: ClsNode
+    childNodes: classMap
   });
 
-  new nsScroller.Scroller({
-    targetElement: viewClassMap.childNodesElement
+
+  // scroll to class
+  var scrollTimeout;
+  var classNode;
+
+  classMap.addHandler({
+    update: function(object, delta){
+      if ('fullPath' in delta && this.data.fullPath)
+      {
+        clearTimeout(scrollTimeout);
+        classNode = searchClassNode(this, this.delegate.data.obj.className);
+        if (classNode)
+          scrollTimeout = setTimeout(scrollToClassNode, 0);
+      }
+    }     
   });
+
+  function searchClassNode(parent, className){
+    var result = parent.childNodes.search(className, Function.getter('data.className'));
+    if (!result)
+    {
+      for (var i = 0, node; node = parent.childNodes[i]; i++)
+      {
+        result = searchClassNode(node, className);
+        if (result)
+          break;
+      }
+    }
+    return result;
+  }
+
+  function scrollToClassNode(){
+     var classNodeRect = new nsLayout.Box(classNode.tmpl.header, false, classMap.tmpl.scrollElement);
+
+     var x = classNodeRect.left - (classMap.element.offsetWidth / 2) + (classNodeRect.width / 2);
+     var y = classNodeRect.top - (classMap.element.offsetHeight / 2) + (classNodeRect.height / 2);
+
+     classMap.scroller.setPositionX(x, true);
+     classMap.scroller.setPositionY(y, true);   
+  }
+
 
   //
   //

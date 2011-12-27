@@ -38,7 +38,7 @@ basis.require('basis.ui');
 
   var classList = basis.cssom.classList;
 
-
+  var uiNode = basis.ui.Node;
   //
   // Main part
   //
@@ -133,7 +133,7 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var Scroller = Class(EventObject, {
+  var Scroller = EventObject.subclass({
     className: namespace + '.Scroller',
 
     //className: namespace + '.Scroller',
@@ -184,22 +184,7 @@ basis.require('basis.ui');
         Event.addHandler(this.targetElement, 'touchstart', this.onMouseDown, this);
       }
 
-      /*this.onMouseMoveHandler = this.onMouseMove.bind(this);
-      this.onMouseUpHandler = this.onMouseUp.bind(this);*/
       this.onUpdateHandler = this.onUpdate.bind(this);
-
-      /*if (this.scrollPropertyType == 'scroll')
-      {
-        DOM.setStyle(this.targetElement, { overflow: 'hidden' }); 
-        this.updateElementPosition = this.updatePosition_scrollTopLeft;
-        this.calcDimentions = this.calcDimentions_scrollTopLeft;
-      }
-      else
-      {
-        DOM.setStyle(this.targetElement, { position: 'relative' });
-        this.updateElementPosition = TRANSFORM_SUPPORT ? this.updatePosition_styleTransform : this.updatePosition_styleTopLeft;
-        this.calcDimentions = this.calcDimentions_styleTopLeft;
-      }*/
 
       this.updateElementPosition = TRANSFORM_SUPPORT ? this.updatePosition_styleTransform : this.updatePosition_styleTopLeft;
 
@@ -209,14 +194,7 @@ basis.require('basis.ui');
         this.minScrollDeltaXReached = true;
       }
     },
-
-    /*updatePosition_scrollTopLeft: function(){
-      if (this.scrollX)
-        this.targetElement.scrollLeft = this.viewportX;
-      if (this.scrollY)
-        this.targetElement.scrollTop = this.viewportY;
-    },*/
-    
+   
     updatePosition_styleTopLeft: function(){
       if (this.scrollX)
         this.targetElement.style.left = -this.viewportX + 'px';
@@ -227,10 +205,6 @@ basis.require('basis.ui');
     updatePosition_styleTransform: function(){
       var deltaX = -(this.isUpdating ? this.viewportX : Math.round(this.viewportX)) + 'px';
       var deltaY = -(this.isUpdating ? this.viewportY : Math.round(this.viewportY)) + 'px';
-
-      /*var style = {};
-      style[TRANSFORM_PROPERTY_NAME] = 'translate(' + deltaX + ', ' + deltaY + ')' + (TRANSFORM_3D_SUPPORT ? ' translateZ(0)' : '');
-      DOM.setStyle(this.targetElement, style);*/
 
       this.targetElement.style[TRANSFORM_PROPERTY_NAME] = 'translate(' + deltaX + ', ' + deltaY + ')' + (TRANSFORM_3D_SUPPORT ? ' translateZ(0)' : '');
     },
@@ -258,17 +232,9 @@ basis.require('basis.ui');
       if (this.isUpdating)
         return;
 
-      /*if (this.targetElement.offsetWidth)
-        this.calcDimentions();*/
-
-      /*this.startViewportX = this.viewportX;
-      this.startViewportY = this.viewportY;*/
-
       this.isUpdating = true;
       this.updateFrameHandle = this.nextFrame();
       this.lastUpdateTime = Date.now();
-
-      //this.startTime = this.lastUpdateTime;
 
       this.event_start(this);
     },
@@ -302,7 +268,6 @@ basis.require('basis.ui');
       Event.addHandler(document, 'mouseup', this.onMouseUp, this);
       Event.addHandler(document, 'touchend', this.onMouseUp, this);
 
-      //Event.kill(event);
       Event.cancelDefault(event);
     },
 
@@ -325,16 +290,6 @@ basis.require('basis.ui');
         var deltaX = this.lastMouseX - curMouseX;
         this.lastMouseX = curMouseX;
         this.viewportTargetX += deltaX;
-
-        /*if (deltaX)
-        {
-          this.currentVelocityX = Math.abs(deltaX) / deltaTime;
-          this.currentDirectionX = deltaX == 0 ? 0 : (deltaX < 0 ? -1 : 1);
-
-          console.log('deltaX: ' + Math.abs(deltaX));
-          console.log('time: ' + deltaTime);
-          console.log('velocity: ' + this.currentVelocityX);
-        }*/
       }
 
       if (this.minScrollDeltaYReached || !this.minScrollDeltaXReached)
@@ -343,12 +298,6 @@ basis.require('basis.ui');
         var deltaY = this.lastMouseY - curMouseY;
         this.lastMouseY = curMouseY;
         this.viewportTargetY += deltaY;
-        
-        /*if (deltaY)
-        {
-          this.currentVelocityY = Math.abs(deltaY) / deltaTime;
-          this.currentDirectionY = deltaY == 0 ? 0 : (deltaY < 0 ? -1 : 1);
-        }*/
       }
 
       if (this.minScrollDelta > 0)
@@ -385,25 +334,11 @@ basis.require('basis.ui');
       deltaTime = Math.max(10, deltaTime); // low-timer granularity compensation
       this.lastMotionUpdateTime = 0;
       
-
-      //var distance = this.viewportTargetX - this.startViewportX;
-      //var time = timeNow - this.startTime;
-      //console.log('distance: ' + distance);
-      //console.log('time: ' + time);
-      /*if (time)
-        console.log('expected speed: ' + (Math.abs(distance) / time));
-      else
-        console.log('zero time');*/
-
-      //console.log('real speed: ' + this.currentVelocityX);
-
       if (this.scrollX)
       {
         // 100msec is a full hold gesture that complete zeroes out the velocity to be used as inertia
         this.currentVelocityX *= 1 - Math.min(1, Math.max(0, deltaTime / 100));
-        //console.log('inertia speed: ' + this.currentVelocityX);
       }
-
 
       if (this.scrollY)
         this.currentVelocityY *= 1 - Math.min(1, Math.max(0, deltaTime / 100));
@@ -433,8 +368,6 @@ basis.require('basis.ui');
       {
         var delta;
 
-        //console.log('update');
-        //console.log(time);
         if (this.scrollX)
         {
           delta = (this.viewportTargetX - this.lastViewportTargetX);
@@ -444,12 +377,6 @@ basis.require('basis.ui');
           {
             this.currentVelocityX = Math.abs(delta) / deltaTime;
             this.currentDirectionX = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
-
-            /*
-            console.log('deltaX: ' + Math.abs(delta));
-            console.log('time: ' + deltaTime);
-            console.log('velocity: ' + this.currentVelocityX);
-            */
           }
         }
 
@@ -469,42 +396,25 @@ basis.require('basis.ui');
       {
         if (this.scrollX)
         {
-          //console.log(this.currentVelocityX);
           this.viewportTargetX += this.currentDirectionX * (this.currentVelocityX *  deltaTime);
           this.currentVelocityX *= VELOCITY_DECREASE_FACTOR;
-
-          /*if (this.currentVelocityX < 0.001)
-            this.currentVelocityX = 0;*/
         }
-
         if (this.scrollY)
         {
           this.viewportTargetY += this.currentDirectionY * (this.currentVelocityY *  deltaTime);
           this.currentVelocityY *= VELOCITY_DECREASE_FACTOR;
-
-          /*if (this.currentVelocityY < 0.001)
-            this.currentVelocityY = 0;*/
         }
-
-        /*if (this.currentVelocityX == 0 && this.currentVelocityY == 0)
-        {
-          this.processInertia = false;          
-        }*/
       }
 
       var deltaX = 0;
       var deltaY = 0;
 
-      
       if (this.scrollX)
       {
         deltaX = (this.viewportTargetX - this.viewportX);
         var smoothingFactorX = this.panningActive || this.currentVelocityX > 0 ? 1 : 0.12;
         this.viewportX += deltaX * smoothingFactorX;
       }
-      //console.log(this.scrollX);
-      //console.log(this.viewportX);
-
       if (this.scrollY)
       {
         deltaY = (this.viewportTargetY - this.viewportY);
@@ -530,9 +440,6 @@ basis.require('basis.ui');
       this.event_updatePosition(this, time, this.viewportX, this.viewportY);
 
       this.nextFrame();
-
-      /*console.log(this.viewportX);
-      console.log(this.currentVelocityX);*/
     },
 
     nextFrame: function(){
@@ -572,13 +479,6 @@ basis.require('basis.ui');
       }
     },
 
-    /*setTargetPosition: function(targetPositionX, targetPositionY){
-      this.viewportTargetX = targetPositionX || 0;
-      this.viewportTargetY = targetPositionY || 0;
-      this.startUpdate();
-      this.processInertia = true;
-    }, */
-
     calcExpectedPosition: function(axis){
       var expectedInertiaDelta = 0;
 
@@ -611,7 +511,7 @@ basis.require('basis.ui');
  /**
   * @class
   */
-  var Scrollbar = Class(basis.ui.Node, {
+  var Scrollbar = uiNode.subclass({
     className: namespace + '.Scrollbar',
 
     cssClassName: 'Basis-ScrollPanel-Scrollbar',
@@ -621,37 +521,64 @@ basis.require('basis.ui');
         '<div{trackElement} class="Basis-Scrollbar-Track"></div>' +
       '</div>',
 
-    init: function(config){
-      basis.ui.Node.prototype.init.call(this, config);
+    listen: {
+      owner: {
+        realign: function(){
+          var scrollbarSize = this.getScrollbarSize();
+          this.trackSize = scrollbarSize - scrollbarSize * this.getScrollbarPart();
+        },
+        updatePosition: function(){
+          var scrollPosition = this.getScrollbarPosition();
+ 
+          var startPosition = Math.max(0, this.trackSize  * scrollPosition);
+          var endPosition = Math.max(0, this.trackSize - startPosition);
 
-      this.startProperty = this.type == 'horizontal' ? 'left' : 'top';
-      this.endProperty = this.type == 'horizontal' ? 'right' : 'bottom';
-
-      classList(this.element).add(this.type);
+          var style = {};
+          style[this.startProperty] = startPosition + 'px';
+          style[this.endProperty] = endPosition + 'px';
+          
+          DOM.setStyle(this.tmpl.trackElement, style);
+        }
+      }
     },
+    getScrollbarSize: Function.$null,
+    getScrollbarPart: Function.$null,
+    getScrollbarPosition: Function.$null
+  });
 
-    recalcSize: function(sizePercentage){
-      DOM.display(this.element, sizePercentage < 1);
-
-      var scrollbarSize = this.type == 'horizontal' ?  this.element.offsetWidth : this.element.offsetHeight;
-      this.trackSize = scrollbarSize - scrollbarSize * sizePercentage;
+  /**
+   * @class
+   */
+  var HorizontalScrollbar = Scrollbar.subclass({
+    cssClassName: 'horizontal',
+    startProperty: 'left',
+    endProperty: 'right',
+    getScrollbarSize: function(){
+      return this.element.offsetWidth;
     },
+    getScrollbarPart: function(){
+      return this.owner.element.offsetWidth / this.owner.tmpl.scrollElement.scrollWidth;
+    },
+    getScrollbarPosition: function(){
+      return this.owner.scroller.viewportX / this.owner.maxPositionX;      
+    }
+  });
 
-    updatePosition: function(positionPercentage){
-      var startPosition = this.trackSize  * positionPercentage;
-      var endPosition = this.trackSize - this.trackSize  * positionPercentage;
-
-      if (startPosition < 0)
-        startPosition = 0;
-
-      if (endPosition < 0)
-        endPosition = 0;
-
-      var style = {};
-      style[this.startProperty] = startPosition + 'px';
-      style[this.endProperty] = endPosition + 'px';
-      
-      DOM.setStyle(this.tmpl.trackElement, style);
+  /**
+   * @class
+   */
+  var VerticalScrollbar = Scrollbar.subclass({
+    cssClassName: 'vertical',
+    startProperty: 'top',
+    endProperty: 'bottom',
+    getScrollbarSize: function(){
+      return this.element.offsetHeight;
+    },
+    getScrollbarPart: function(){
+      return this.owner.element.offsetHeight / this.owner.tmpl.scrollElement.scrollHeight;
+    },
+    getScrollbarPosition: function(){
+      return this.owner.scroller.viewportY / this.owner.maxPositionY;      
     }
   });
 
@@ -667,21 +594,38 @@ basis.require('basis.ui');
     wheelDelta: 40,
 
     event_realign: createEvent('realign'),
+    event_updatePosition: EventObject.createEvent('updatePosition'),
 
     template: 
       '<div{element} class="Basis-ScrollPanel" event-mousewheel="onwheel">' +
-        '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content"></div>' +
+        '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content"/>' +
+        '<!--{horizontalScrollbar}-->' +
+        '<!--{verticalScrollbar}-->' +
       '</div>',
-
 
     action: {
       onwheel: function(event){
         var delta = Event.wheelDelta(event);
 
-        if (this.scrollX)
-          this.scroller.setPositionX(this.scroller.viewportTargetX - this.wheelDelta * delta, true);
-        else if (this.scrollY)
+        if (this.scrollY)
           this.scroller.setPositionY(this.scroller.viewportTargetY - this.wheelDelta * delta, true);
+        else if (this.scrollX)
+          this.scroller.setPositionX(this.scroller.viewportTargetX - this.wheelDelta * delta, true);
+      }
+    },
+
+    satelliteConfig: {
+      horizontalScrollbar: {
+        instanceOf: HorizontalScrollbar,
+        existsIf: function(object){
+          return object.useScrollbars && object.scrollX;
+        }
+      },
+      verticalScrollbar: {
+        instanceOf: VerticalScrollbar,
+        existsIf: function(object){
+          return object.useScrollbars && object.scrollY;
+        }
       }
     },
 
@@ -695,9 +639,6 @@ basis.require('basis.ui');
       this.maxPositionX = 0;
       this.maxPositionY = 0;
 
-      this.oldOffsetWidth = 0;
-      this.oldOffsetHeight = 0;
-
       // create scroller
       var scrollerConfig = Object.extend(this.scroller || {}, {
         targetElement: this.tmpl.scrollElement,
@@ -708,90 +649,37 @@ basis.require('basis.ui');
       this.scroller = new Scroller(scrollerConfig);
 
       this.scroller.addHandler({
-        updatePosition: this.scrollUpdatePosition
+        updatePosition: this.updatePosition,
+        start: function(){
+          if (!this.maxPositionX && !this.maxPositionY)
+            this.realign();
+
+          classList(this.element).add('scrollProcess');
+        },
+        finish: function(){
+          classList(this.element).remove('scrollProcess');
+        }
       }, this);
 
       // add resize handler
       basis.layout.addBlockResizeHandler(this.tmpl.scrollElement, this.realign.bind(this));
-
-      if (this.useScrollbars)
-      {
-        if (this.scrollX)
-        {
-          this.hScrollbar = new Scrollbar({
-            type: 'horizontal',
-            container: this.element
-          });
-        }
-        
-        if (this.scrollY)
-        {
-          this.vScrollbar = new Scrollbar({
-            type: 'vertical',
-            container: this.element
-          });
-        }
-
-        this.scroller.addHandler({
-          start: function(){
-            classList(this.element).add('scrollProcess');
-          },
-          finish: function(){
-            classList(this.element).remove('scrollProcess');
-          }
-        }, this);
-      }
     },
 
-    scrollUpdatePosition: function(){
+    updatePosition: function(){
       var scroller = this.scroller;
+ 
       if (!scroller.panningActive)
-      {
         this.fixPosition();
-        /*if (scroller.scrollX)
-        {
-          if (scroller.viewportX < this.minPositionX || scroller.viewportX > this.maxPositionX)
-          {
-            scroller.viewportTargetX = Math.min(this.maxPositionX, Math.max(this.minPositionX, scroller.viewportTargetX));
-            scroller.currentVelocityX = 0;
-            scroller.startUpdate();
-          }
-        }
 
-        if (scroller.scrollY)
-        {
-          if (scroller.viewportY < this.minPositionY || scroller.viewportY > this.maxPositionY)
-          {
-            scroller.viewportTargetY = Math.min(this.maxPositionY, Math.max(this.minPositionY, scroller.viewportTargetY));
-            scroller.currentVelocityY = 0;
-            scroller.startUpdate();
-          }          
-        }*/
-
-        //scroller.startUpdate();
-      }
-
-      if (this.useScrollbars)
-      {
-        if (this.scrollX)
-          this.hScrollbar.updatePosition(scroller.viewportX / this.maxPositionX);
-
-        if (this.scrollY)
-          this.vScrollbar.updatePosition(scroller.viewportY / this.maxPositionY);
-      }
+      this.event_updatePosition(this);
     },
 
     fixPosition: function(){
       var scroller = this.scroller;
 
-      /*var positionX = scroller.viewportX;
-      var positionY = scroller.viewportY;
-      var needFix = false;*/
-
       if (this.scrollX && (scroller.viewportX < this.minPositionX || scroller.viewportX > this.maxPositionX))
       {
         var positionX = Math.min(this.maxPositionX, Math.max(this.minPositionX, scroller.viewportX));
-        //needFix = true;
         scroller.setPositionX(positionX, true);
       }
 
@@ -799,18 +687,16 @@ basis.require('basis.ui');
       {
         var positionY = Math.min(this.maxPositionY, Math.max(this.minPositionY, scroller.viewportY));
         scroller.setPositionY(positionY, true);
-        //needFix = true;
       }
-
-      /*if (needFix)
-        scroller.setPosition(positionX, positionY, smooth);*/
     },
 
     realign: function(){
-      this.calcDimentions();
-
-      this.scrollUpdatePosition();
-      this.event_realign();
+      if (this.element.offsetWidth)
+      {
+        this.calcDimentions();
+        this.updatePosition();
+        this.event_realign();
+      }
     },
     
     calcDimentions: function(){
@@ -819,13 +705,9 @@ basis.require('basis.ui');
 
       if (this.scrollX)
       {
-        //DOM.setStyle(this.tmpl.scrollElement, { overflowX: 'hidden' });
-
         var containerWidth = this.element.offsetWidth;
         var scrollWidth = this.tmpl.scrollElement.scrollWidth;
         this.maxPositionX = Math.max(0, scrollWidth - containerWidth);
-
-        //DOM.setStyle(this.tmpl.scrollElement, { overflowX: 'visible' });
       }
 
       if (this.scrollY)
@@ -834,25 +716,6 @@ basis.require('basis.ui');
         var scrollHeight = this.tmpl.scrollElement.scrollHeight;
         this.maxPositionY = Math.max(0, scrollHeight - containerHeight);
       }
-
-      //var scrollX = !this.preventScrollX && this.maxPositionX > 0;
-
-      //var scrollY = !this.preventScrollY && this.maxPositionY > 0;
-
-      if (this.useScrollbars)
-      {
-        /*DOM.display(this.hScrollbar.element, scrollX);
-        DOM.display(this.vScrollbar.element, scrollY);*/
-
-        if (this.scrollX)
-          this.hScrollbar.recalcSize(containerWidth / scrollWidth);
-
-        if (this.scrollY)
-          this.vScrollbar.recalcSize(containerHeight / scrollHeight);
-      }
-
-      /*this.scroller.scrollX = scrollX;
-      this.scroller.scrollY = scrollY;*/
     },
 
     destroy: function(){
@@ -870,7 +733,6 @@ basis.require('basis.ui');
 
   basis.namespace(namespace).extend({
     Scroller: Scroller,
-    Scrollbar: Scrollbar,
     ScrollPanel: ScrollPanel
   });
 

@@ -611,6 +611,26 @@
     padding: 1em 1ex 2em 2ex;
   }
 
+
+  #Content .ClassMap .Basis-ScrollPanel
+  {
+    height: 400px;
+  }
+  #Content .ClassMap .Basis-Scrollbar.horizontal
+  {
+    left: 10px;
+    right: 10px;
+  }
+  #Content .ClassMap .Basis-Scrollbar.vertical
+  {
+    top: 10px;
+    bottom: 10px;
+  }
+  #Content .ClassMap .content
+  {
+    padding: 0;
+  }
+
   .jsDocs P
   {
     margin: .25em 0;
