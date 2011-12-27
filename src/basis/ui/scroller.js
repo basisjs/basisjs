@@ -594,7 +594,7 @@ basis.require('basis.ui');
     wheelDelta: 40,
 
     event_realign: createEvent('realign'),
-    event_updatePosition: EventObject.createEvent('updatePosition'),
+    event_updatePosition: createEvent('updatePosition'),
 
     template: 
       '<div{element} class="Basis-ScrollPanel" event-mousewheel="onwheel">' +
