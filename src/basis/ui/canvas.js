@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
@@ -33,7 +34,7 @@ basis.require('basis.ui');
   var Node = basis.dom.wrapper.Node;
   var UINode = basis.ui.Node;
 
-  var EventObject = basis.EventObject;
+  var createEvent = basis.event.create;
 
 
   //
@@ -79,6 +80,8 @@ basis.require('basis.ui');
   * @class
   */
   var Canvas = UINode.subclass({
+    className: namespace + '.Canvas',
+
     template:
       '<canvas{canvas}>' +
         '<div>Canvas doesn\'t support.</div>' +
@@ -92,7 +95,7 @@ basis.require('basis.ui');
     drawCount: 0,
     lastDrawUpdateCount: -1,
 
-    event_draw: EventObject.createEvent('draw', 'object'),
+    event_draw: createEvent('draw', 'object'),
     listen: {
       childNode: {
         update: function(){

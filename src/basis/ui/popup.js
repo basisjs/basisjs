@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
@@ -39,7 +40,7 @@ basis.require('basis.ui');
   var nsWrapper = basis.dom.wrapper;
   var nsLayout = basis.layout;
 
-  var createEvent = basis.EventObject.createEvent;
+  var createEvent = basis.event.create;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;

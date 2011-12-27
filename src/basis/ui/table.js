@@ -599,8 +599,4 @@ basis.require('basis.ui');
     Footer: Footer
   });
 
-  basis.namespace('basis.ui').extend({
-    Table: Table
-  });
-
 }(basis);

@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.cssom');
 basis.require('basis.data');
@@ -39,10 +40,9 @@ basis.require('basis.data');
   var getter = Function.getter;
   var classList = basis.cssom.classList;
 
-  var EventObject = basis.EventObject;
   var TimeEventManager = basis.TimeEventManager;
-  var event = EventObject.event;
-  var createEvent = EventObject.createEvent;
+  var EventObject = basis.event.EventObject;
+  var createEvent = basis.event.create;
 
   var nsData = basis.data;
   var DataObject = nsData.DataObject;
@@ -249,7 +249,7 @@ basis.require('basis.data');
    /**
     * Adds link to object property or method. Optional parameter format using to
     * convert value to another value or type.
-    * If object instance of {Basis.EventObject}, property attached handler. This handler
+    * If object instance of {basis.event.EventObject}, property attached handler. This handler
     * removes property links to object, when object destroy.
     * @example
     *
@@ -370,7 +370,7 @@ basis.require('basis.data');
     *   ...
     *   property.removeLink(object, linkHandler);
     *
-    *   // for cases when object is instance of {Basis.EventObject} removing link on destroy is not required
+    *   // for cases when object is instance of {basis.event.EventObject} removing link on destroy is not required
     *   var node = new Node();
     *   property.addLink(node, 'title');
     *   ...
@@ -492,7 +492,7 @@ basis.require('basis.data');
     },
 
    /**
-    * @type {Array.<Basis.Data.DataObject>}
+    * @type {Array.<basis.data.DataObject>}
     */
     objects: [],
 
@@ -531,7 +531,7 @@ basis.require('basis.data');
     * @config {boolean} calculateOnInit
     * @config {function()} proxy
     * @config {function()} calculateValue
-    * @config {Array.<Basis.Data.DataObject>} objects
+    * @config {Array.<basis.data.DataObject>} objects
     * @constructor
     */
     init: function(config){
@@ -562,7 +562,7 @@ basis.require('basis.data');
 
    /**
     * Adds one or more DataObject instances to objects collection.
-    * @param {...Basis.Data.DataObject} args
+    * @param {...basis.data.DataObject} args
     */
     add: function(/* dataObject1 .. dataObjectN */){
       for (var i = 0, len = arguments.length; i < len; i++)
@@ -582,7 +582,7 @@ basis.require('basis.data');
 
    /**
     * Removes DataObject instance from objects collection.
-    * @param {Basis.Data.DataObject} object
+    * @param {basis.data.DataObject} object
     */
     remove: function(object){
       if (this.objects.remove(object))

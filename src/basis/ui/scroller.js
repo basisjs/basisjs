@@ -1,4 +1,15 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2011 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
 
+basis.require('basis.event');
 basis.require('basis.ui');
 
 !function() {
@@ -9,19 +20,21 @@ basis.require('basis.ui');
 
   var namespace = 'basis.ui.scroller';
 
-  /*basis.require('basis.layout');
-  basis.require('basis.ui');*/
 
   //
   // import names
   //
 
   var Class = basis.Class;
+
+  var EventObject = basis.event.EventObject;
+  var createEvent = basis.event.create;
+
   var DOM = basis.dom;
-  var EventObject = basis.EventObject;
   var Event = basis.dom.event;
 
   var classList = basis.cssom.classList;
+
 
   //
   // Main part
@@ -125,10 +138,10 @@ basis.require('basis.ui');
     scrollX: true,
     scrollY: true,
 
-    event_start: EventObject.createEvent('start', 'scrollerObject'),
-    event_finish: EventObject.createEvent('finish', 'scrollerObject'),
-    event_startInertia: EventObject.createEvent('startInertia', 'scrollerObject'),
-    event_updatePosition: EventObject.createEvent('updatePosition', 'scrollerObject', 'scrollPosition'),
+    event_start: createEvent('start', 'scrollerObject'),
+    event_finish: createEvent('finish', 'scrollerObject'),
+    event_startInertia: createEvent('startInertia', 'scrollerObject'),
+    event_updatePosition: createEvent('updatePosition', 'scrollerObject', 'scrollPosition'),
 
     init: function(config){
       this.lastMouseX = 0;
@@ -650,7 +663,7 @@ basis.require('basis.ui');
     scrollY: true,
     wheelDelta: 40,
 
-    event_realign: EventObject.createEvent('realign'),
+    event_realign: createEvent('realign'),
 
     template: 
       '<div{element} class="Basis-ScrollPanel" event-mousewheel="onwheel">' +

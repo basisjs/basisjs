@@ -10,6 +10,7 @@
  *
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
@@ -33,7 +34,7 @@ basis.require('basis.dragdrop');
   var DOM = basis.dom;
   var Event = basis.dom.event;
 
-  var createEvent = basis.EventObject.createEvent;
+  var createEvent = basis.event.create;
   var classList = basis.cssom.classList;
 
   var DragDropElement = basis.dragdrop.DragDropElement;

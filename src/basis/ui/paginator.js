@@ -14,6 +14,7 @@
  * Inspired on Paginator 3000 (http://karaboz.ru/?p=12)
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
@@ -38,8 +39,8 @@ basis.require('basis.ui');
   var DOM = basis.dom;
   var Event = basis.dom.event;
 
-  var createEvent = basis.EventObject.createEvent;
-  var event = basis.EventObject.event;
+  var createEvent = basis.event.create;
+  var events = basis.event.events;
   var classList = basis.cssom.classList;
 
   var Box = basis.layout.Box;
@@ -74,7 +75,7 @@ basis.require('basis.ui');
     pageGetter: Function.getter('pageNumber + 1'),
 
     event_pageNumberChanged: createEvent('pageNumberChanged', 'node', 'oldPageNumber') && function(node, oldPageNumber){
-      event.pageNumberChanged.call(this, node, oldPageNumber);
+      events.pageNumberChanged.call(this, node, oldPageNumber);
 
       this.templateUpdate(this.tmpl, 'pageNumberChanged');
     },

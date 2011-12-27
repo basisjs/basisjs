@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.data');
 basis.require('basis.data.dataset');
 
@@ -33,9 +34,11 @@ basis.require('basis.data.dataset');
   var $self = Function.$self;
   var getter = Function.getter;
 
+  var EventObject = basis.event.EventObject;
+  var createEvent = basis.event.create;
+
   var nsData = basis.data;
 
-  var EventObject = basis.EventObject;
   var AbstractDataset = nsData.AbstractDataset;
   var Dataset = nsData.Dataset;
   var Collection = nsData.dataset.Subset;
@@ -823,7 +826,7 @@ basis.require('basis.data.dataset');
   var BaseEntity = Class(DataObject, {
     className: namespace + '.BaseEntity',
     init: EventObject.prototype.init,
-    event_rollbackUpdate: EventObject.createEvent('rollbackUpdate')
+    event_rollbackUpdate: createEvent('rollbackUpdate')
   });
 
  /**

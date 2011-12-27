@@ -9,6 +9,8 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
+
 !function(basis){
 
   'use strict';
@@ -24,9 +26,8 @@
   var Class = basis.Class;
   var extend = Object.extend;
 
-  var EventObject = basis.EventObject;
-
-  var createEvent = EventObject.createEvent;
+  var EventObject = basis.event.EventObject;
+  var createEvent = basis.event.create;
 
   /*
    *  Common
@@ -198,6 +199,7 @@
       }
     }
   });
+
 
   //
   // export names

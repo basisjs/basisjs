@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.dom.wrapper');
@@ -38,7 +39,7 @@ basis.require('basis.ui.button');
   var classList = basis.cssom.classList;
   var Cleaner = basis.Cleaner;
 
-  var createEvent = basis.EventObject.createEvent;
+  var createEvent = basis.event.create;
   var dragdrop = basis.dragdrop; // optional
 
   var UINode = basis.ui.Node;

@@ -1111,7 +1111,7 @@
   namespaceClsSplitBySuper = new nsData.dataset.Split({
     source: namespaceClassDS,
     rule: function(object){
-      console.log(object.part);
+      //console.log(object.part);
       return object.part != 'parent' ? object.data.superClsId : 0;
     }
   });

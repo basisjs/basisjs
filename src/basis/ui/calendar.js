@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.date');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
@@ -39,7 +40,7 @@ basis.require('basis.ui');
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
-  var createEvent = basis.EventObject.createEvent;
+  var createEvent = basis.event.create;
 
   var Template = basis.html.Template;
   var Property = basis.data.property.Property;

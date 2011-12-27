@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.data');
 basis.require('basis.html');
@@ -33,13 +34,19 @@ basis.require('basis.html');
 
   var namespace = 'basis.dom.wrapper';
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
   var nsData = basis.data;
 
-  var EventObject = basis.EventObject;
+  var createEvent = basis.event.create;
+  var events = basis.event.events;
+  var LISTEN = basis.event.LISTEN;
+
   var SUBSCRIPTION = nsData.SUBSCRIPTION;
   var DataObject = nsData.DataObject;
   var AbstractDataset = nsData.AbstractDataset;
@@ -53,8 +60,7 @@ basis.require('basis.html');
   var extend = Object.extend;
   var complete = Object.complete;
   var axis = DOM.axis;
-  var createEvent = basis.EventObject.createEvent;
-  var event = basis.EventObject.event;
+
 
   //
   // Main part
@@ -268,6 +274,12 @@ basis.require('basis.html');
     update: true
   });
 
+  //
+  // reg new type of listen
+  //
+
+  LISTEN.add('owner', 'ownerChanged');
+
 
  /**
   * @class
@@ -307,7 +319,7 @@ basis.require('basis.html');
     * @event
     */
     event_childNodesModified: createEvent('childNodesModified', 'node', 'delta') && function(node, delta){
-      event.childNodesModified.call(this, node, delta);
+      events.childNodesModified.call(this, node, delta);
 
       var listen = this.listen.childNode;
       var array;
@@ -693,21 +705,10 @@ basis.require('basis.html');
       if (!owner || owner instanceof AbstractNode == false)
         owner = null;
 
-      if (this.owner !== owner)
+      var oldOwner = this.owner;
+      if (oldOwner !== owner)
       {
-        var oldOwner = this.owner;
-        var listenHandler = this.listen.owner;
-
         this.owner = owner;
-
-        if (listenHandler)
-        {
-          if (oldOwner)
-            oldOwner.removeHandler(listenHandler, this);
-
-          if (owner)
-            owner.addHandler(listenHandler, this);
-        }
 
         this.event_ownerChanged(this, oldOwner);
 
@@ -2187,7 +2188,7 @@ basis.require('basis.html');
     // events
 
     event_childNodesModified: function(node, delta){
-      event.childNodesModified.call(this, node, delta);
+      events.childNodesModified.call(this, node, delta);
 
       this.nullGroup.nextSibling = this.firstChild;
 
@@ -2209,7 +2210,7 @@ basis.require('basis.html');
       if (this.owner && this.owner.localGrouping !== this)
         this.owner.setLocalGrouping(this);
 
-      event.ownerChanged.call(this, node, oldOwner);
+      events.ownerChanged.call(this, node, oldOwner);
 
       if (!this.owner && this.autoDestroyWithNoOwner)
         this.destroy();
@@ -2439,7 +2440,7 @@ basis.require('basis.html');
     },
 
     event_sourceNodeChanged: createEvent('sourceNodeChanged') && function(object, oldSourceNode){
-      event.sourceNodeChanged.call(this, object, oldSourceNode);
+      events.sourceNodeChanged.call(this, object, oldSourceNode);
 
       if (!this.sourceNode && this.autoDestroy)
         this.destroy();

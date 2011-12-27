@@ -84,7 +84,7 @@ basis.require('basis.data.property');
     valueGetter: Function.$null,
 
    /**
-    * @type {Basis.Data.AbstractDataset}
+    * @type {basis.data.AbstractDataset}
     */
     dataSource: null,
     
@@ -100,7 +100,7 @@ basis.require('basis.data.property');
 
    /**
     * Set data source
-    * @param {Basis.Data.AbstractDataset} dataSource
+    * @param {basis.data.AbstractDataset} dataSource
     */
     /*setDataSource: function(dataSource){
       if (dataSource instanceof AbstractDataset == false)

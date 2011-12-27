@@ -241,13 +241,13 @@ gj   */
   }
 
  /**
-  * @deprecated use Basis.DOM.display instead.
+  * @deprecated use basis.dom.display instead.
   */
   function show(element){
     return display(element, 1);
   }
  /**
-  * @deprecated use Basis.DOM.display instead.
+  * @deprecated use basis.dom.display instead.
   */
   function hide(element){ 
     return display(element);
@@ -264,13 +264,13 @@ gj   */
   }
 
  /**
-  * @deprecated use Basis.DOM.visibility instead.
+  * @deprecated use basis.dom.visibility instead.
   */
   function visible(element){
     return visibility(element, 1);
   }
  /**
-  * @deprecated use Basis.DOM.visibility instead.
+  * @deprecated use basis.dom.visibility instead.
   */
   function invisible(element){
     return visibility(element);

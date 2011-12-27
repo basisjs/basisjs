@@ -8,417 +8,418 @@
  * @license
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
-  basis.require('basis.dom');
-  basis.require('basis.xml');
-  basis.require('basis.net.ajax');
 
-  !function(){
+basis.require('basis.dom');
+basis.require('basis.xml');
+basis.require('basis.net.ajax');
 
-   /**
-    * Interface for communication with SOAP services.
-    *
-    * @link ./demo/ajax/soap-simple.html
-    * @link ./demo/ajax/soap-list.html
-    *
-    * @namespace Basis.SOAP
-    */
+!function(){
 
-    var namespace = 'basis.net.soap';
+ /**
+  * Interface for communication with SOAP services.
+  *
+  * @link ./demo/ajax/soap-simple.html
+  * @link ./demo/ajax/soap-list.html
+  *
+  * @namespace basis.net.soap
+  */
 
-    // import names
+  var namespace = 'basis.net.soap';
 
-    var Class = basis.Class;
-    var DOM = basis.dom;
+  // import names
 
-    var nsAjax = basis.net.ajax;
-    var XML = basis.xml;
+  var Class = basis.Class;
+  var DOM = basis.dom;
+
+  var nsAjax = basis.net.ajax;
+  var XML = basis.xml;
 
 
 
-    var QName = XML.QName;
-    var addNamespace = XML.addNamespace;
-    var XML2Object = XML.XML2Object;
-    var Object2XML = XML.Object2XML;
-    var createElementNS = XML.createElementNS;
-    var NAMESPACE = XML.NAMESPACE;
+  var QName = XML.QName;
+  var addNamespace = XML.addNamespace;
+  var XML2Object = XML.XML2Object;
+  var Object2XML = XML.Object2XML;
+  var createElementNS = XML.createElementNS;
+  var NAMESPACE = XML.NAMESPACE;
 
-    var AjaxProxy = nsAjax.AjaxProxy;
-    var AjaxRequest = nsAjax.AjaxRequest;
+  var AjaxProxy = nsAjax.AjaxProxy;
+  var AjaxRequest = nsAjax.AjaxRequest;
 
-    //
-    // Main part
-    //
+  //
+  // Main part
+  //
 
-    // CONST
+  // CONST
 
-    var SOAP_VERSION   = '1.1';
-    var SOAP_PREFIX    = 'soap';
-    var SOAP_NAMESPACE = String('http://schemas.xmlsoap.org/soap/envelope/');
-    var SOAP_ENCODING  = String('http://schemas.xmlsoap.org/soap/encoding/');
+  var SOAP_VERSION   = '1.1';
+  var SOAP_PREFIX    = 'soap';
+  var SOAP_NAMESPACE = String('http://schemas.xmlsoap.org/soap/envelope/');
+  var SOAP_ENCODING  = String('http://schemas.xmlsoap.org/soap/encoding/');
 
-    var SOAP_ENVELOPE = 'Envelope';
-    var SOAP_HEADER   = 'Header';
-    var SOAP_BODY     = 'Body';
-    var SOAP_FAULT    = 'Fault';
+  var SOAP_ENVELOPE = 'Envelope';
+  var SOAP_HEADER   = 'Header';
+  var SOAP_BODY     = 'Body';
+  var SOAP_FAULT    = 'Fault';
 
-    
-   /**
-    * @class SOAPRequest
-    */ 
+  
+ /**
+  * @class SOAPRequest
+  */ 
 
-    var SOAPRequest = Class(AjaxRequest, {
-      className: namespace + 'SOAPRequest',
+  var SOAPRequest = Class(AjaxRequest, {
+    className: namespace + 'SOAPRequest',
 
-      requestDataGetter: Function.$self,
-      responseDataGetter: Function.$self,
+    requestDataGetter: Function.$self,
+    responseDataGetter: Function.$self,
 
-      errorCodeGetter: function(node){
-        return DOM.tag(node, 'code')[0];
-      },
-      errorMessageGetter: function(node){
-        return DOM.tag(node, 'message')[0];
-      },
+    errorCodeGetter: function(node){
+      return DOM.tag(node, 'code')[0];
+    },
+    errorMessageGetter: function(node){
+      return DOM.tag(node, 'message')[0];
+    },
 
-      isSuccessful: function(){
+    isSuccessful: function(){
+      var xml = this.xhr.responseXML;
+      return AjaxRequest.prototype.isSuccessful.call(this) && (xml !== undefined && xml.documentElement !== undefined);
+    },
+
+    init: function(config){
+      AjaxRequest.prototype.init.call(this, config);
+      this.requestEnvelope = new Envelope();
+    },
+
+    processResponse: Function.$undef,
+
+    processErrorResponse: function(){
+      this.parseResponseXML();
+
+      var code;
+      var message;
+
+      if (this.responseEnvelope)
+      {
+        var element = this.responseEnvelope.element;
+        var codeElement = this.errorCodeGetter(element);
+        var messageElement = this.errorMessageGetter(element);
+
+        code = codeElement ? codeElement.firstChild.nodeValue : 'UNKNOWN_ERROR';
+        message = messageElement ? messageElement.firstChild.nodeValue : 'Unknown error';
+      }
+      
+      this.update({
+        error: {
+          code: code || 'TRANSPORT_ERROR',
+          message: message
+        }
+      });
+    },
+
+    parseResponseXML: function(){
+      if (this.responseEnvelope == undefined)
+      {
         var xml = this.xhr.responseXML;
-        return AjaxRequest.prototype.isSuccessful.call(this) && (xml !== undefined && xml.documentElement !== undefined);
-      },
-
-      init: function(config){
-        AjaxRequest.prototype.init.call(this, config);
-        this.requestEnvelope = new Envelope();
-      },
-
-      processResponse: Function.$undef,
-
-      processErrorResponse: function(){
-        this.parseResponseXML();
-
-        var code;
-        var message;
-
-        if (this.responseEnvelope)
+        if (!xml || xml === undefined || xml.documentElement === undefined)
         {
-          var element = this.responseEnvelope.element;
-          var codeElement = this.errorCodeGetter(element);
-          var messageElement = this.errorMessageGetter(element);
-
-          code = codeElement ? codeElement.firstChild.nodeValue : 'UNKNOWN_ERROR';
-          message = messageElement ? messageElement.firstChild.nodeValue : 'Unknown error';
+          this.responseEnvelope = null;          
         }
-        
-        this.update({
-          error: {
-            code: code || 'TRANSPORT_ERROR',
-            message: message
-          }
-        });
-      },
-
-      parseResponseXML: function(){
-        if (this.responseEnvelope == undefined)
+        else
         {
-          var xml = this.xhr.responseXML;
-          if (!xml || xml === undefined || xml.documentElement === undefined)
+          // convert to native document for IE
+          if (xml.xml && window.DOMParser)
           {
-            this.responseEnvelope = null;          
+            var parser = new DOMParser();
+            xml = parser.parseFromString(xml.xml, "text/xml");
           }
-          else
-          {
-            // convert to native document for IE
-            if (xml.xml && window.DOMParser)
-            {
-              var parser = new DOMParser();
-              xml = parser.parseFromString(xml.xml, "text/xml");
-            }
 
-            this.responseEnvelope = new Envelope(xml.documentElement);
-          }
+          this.responseEnvelope = new Envelope(xml.documentElement);
         }
-      },
-
-      getRequestData: function(){
-        return this.requestDataGetter(this, this.requestEnvelope.getBody().getValue());
-      },
-      getResponseData: function(){
-        this.parseResponseXML();
-        var body = this.responseEnvelope && this.responseEnvelope.getBody();
-        if (body)
-          return this.responseDataGetter(body.getValue(this.mapping));
-      },
-
-      setMapping: function(mapping){
-        this.mapping = mapping;
-      },
-
-      prepareRequestData: function(requestData){
-        delete this.responseEnvelope;
-
-        this.setMapping(requestData.mapping);
-
-        //add SOAPAction header
-        requestData.headers.SOAPAction = requestData.namespace + (!/\/$/.test(requestData.namespace) ? '/' : '') + requestData.methodName;
-
-        //update Envelope
-        if (requestData.soapHeader)
-          this.requestEnvelope.getHeader(true).setValue(requestData.soapHeader, requestData.namespace);
-
-        if (requestData.soapHeaderSections)
-        {
-          var header = this.requestEnvelope.getHeader(true); 
-          for (var i in requestData.soapHeaderSections)
-          {
-            var section = requestData.soapHeaderSections[i];
-            var ns = section.namespace || this.proxy.namespace;
-            var data = section.data || section;
-
-            header.setSection(new QName(i, ns), data);
-          }
-        }
-
-        this.requestEnvelope.getBody(true).setValue(new QName(requestData.methodName, requestData.namespace), requestData.soapBody);
-
-        requestData.postBody = this.requestEnvelope.document;
-
-        return requestData;
-      },
-      destroy: function(){
-        delete this.mapping;
-
-        this.requestEnvelope.destroy();
-        if (this.responseEnvelope)
-          this.responseEnvelope.destroy();
-
-        AjaxRequest.prototype.destroy.call(this);
       }
-    });
+    },
 
-   /**
-    * @class
-    */
-    var SOAPProxy = Class(AjaxProxy, {
-      className: namespace + '.SOAPProxy',
+    getRequestData: function(){
+      return this.requestDataGetter(this, this.requestEnvelope.getBody().getValue());
+    },
+    getResponseData: function(){
+      this.parseResponseXML();
+      var body = this.responseEnvelope && this.responseEnvelope.getBody();
+      if (body)
+        return this.responseDataGetter(body.getValue(this.mapping));
+    },
 
-      requestClass: SOAPRequest,
+    setMapping: function(mapping){
+      this.mapping = mapping;
+    },
 
-      method: 'POST',
-      contentType: 'text/xml',
-      encoding: 'utf-8',
+    prepareRequestData: function(requestData){
+      delete this.responseEnvelope;
 
-      namespace: null,
-      methodName: null,
+      this.setMapping(requestData.mapping);
 
-      mapping: null,
-      soapBody: null,
-      soapHeader: null,
-      soapHeaderSections: null,
+      //add SOAPAction header
+      requestData.headers.SOAPAction = requestData.namespace + (!/\/$/.test(requestData.namespace) ? '/' : '') + requestData.methodName;
 
-      setSoapHeaderSection: function(name, data){
-        this.soapHeaderSections[name] = data;
-      },
+      //update Envelope
+      if (requestData.soapHeader)
+        this.requestEnvelope.getHeader(true).setValue(requestData.soapHeader, requestData.namespace);
 
-      init: function(config){
-        if (!this.soapHeaderSections)
-          this.soapHeaderSections = {};
+      if (requestData.soapHeaderSections)
+      {
+        var header = this.requestEnvelope.getHeader(true); 
+        for (var i in requestData.soapHeaderSections)
+        {
+          var section = requestData.soapHeaderSections[i];
+          var ns = section.namespace || this.proxy.namespace;
+          var data = section.data || section;
 
-        AjaxProxy.prototype.init.call(this, config);
-      },
-
-      prepareRequestData: function(requestData){
-        var requestData = AjaxProxy.prototype.prepareRequestData.call(this, requestData);
-
-        Object.extend(requestData, {
-          namespace: this.namespace,
-          methodName: this.methodName,
-          soapBody: requestData.soapBody || this.soapBody,
-          soapHeader: requestData.soapHeader || this.soapHeader,
-          soapHeaderSections: [this.soapHeaderSections, requestData.soapHeaderSections].merge(),
-          mapping: requestData.mapping || this.mapping
-        });
-
-        return requestData;
+          header.setSection(new QName(i, ns), data);
+        }
       }
-    });
 
-    //
-    // SOAP Envelope
-    //
+      this.requestEnvelope.getBody(true).setValue(new QName(requestData.methodName, requestData.namespace), requestData.soapBody);
 
-   /**
-    * @class
-    */
-    var Envelope = Class(null, {
-      className: namespace + '.Envelope',
+      requestData.postBody = this.requestEnvelope.document;
 
-      header: null,
-      body: null,
+      return requestData;
+    },
+    destroy: function(){
+      delete this.mapping;
 
-      init: function(element){
+      this.requestEnvelope.destroy();
+      if (this.responseEnvelope)
+        this.responseEnvelope.destroy();
 
-        if (!element)
-        {
-          element = XML.createDocument(SOAP_NAMESPACE, SOAP_PREFIX + ':' + SOAP_ENVELOPE).documentElement;
-          addNamespace(element, 'xsd', NAMESPACE.XMLShema);
-          addNamespace(element, 'xsi', NAMESPACE.XMLShemaInstance);
-          if (XML.XMLNS.BAD_SUPPORT) // bad browsers don't set namespace (xmlns attribute)
-            addNamespace(element, SOAP_PREFIX, SOAP_NAMESPACE);
-        }
+      AjaxRequest.prototype.destroy.call(this);
+    }
+  });
 
-        this.document = element.ownerDocument;
-        this.element = element;
-        this.body = this.getBody(true);  // minOccure for body is 1
-      },
+ /**
+  * @class
+  */
+  var SOAPProxy = Class(AjaxProxy, {
+    className: namespace + '.SOAPProxy',
 
-      getElementByName: function(name){
-        return XML.getElementsByTagNameNS(this.element, name, SOAP_NAMESPACE)[0];
-      },
+    requestClass: SOAPRequest,
 
-      // Header
-      getHeader: function(forceCreate){
-        var header = this.header;
+    method: 'POST',
+    contentType: 'text/xml',
+    encoding: 'utf-8',
 
-        if (!header)
-        {
-          var headerElement = this.getElementByName('Header');
+    namespace: null,
+    methodName: null,
 
-          if (headerElement || forceCreate)
-          {
-            header = this.header = new EnvelopeHeader(headerElement, this.document);
+    mapping: null,
+    soapBody: null,
+    soapHeader: null,
+    soapHeaderSections: null,
 
-            if (!headerElement)
-              this.element.insertBefore(header.element, this.element.firstChild);
-          }
-        }
+    setSoapHeaderSection: function(name, data){
+      this.soapHeaderSections[name] = data;
+    },
 
-        return header;
-      },
-      setHeaderSection: function(qname, data){
-        this.getHeader(true).setSection(qname, data);
-      },
+    init: function(config){
+      if (!this.soapHeaderSections)
+        this.soapHeaderSections = {};
 
-      // Body
-      getBody: function(forceCreate){
-        var body = this.body;
+      AjaxProxy.prototype.init.call(this, config);
+    },
 
-        if (!body)
-        {
-          var bodyElement = this.getElementByName('Body');
+    prepareRequestData: function(requestData){
+      var requestData = AjaxProxy.prototype.prepareRequestData.call(this, requestData);
 
-          if (bodyElement || forceCreate)
-          {
-            body = this.body = new EnvelopeBody(bodyElement, this.document);
+      Object.extend(requestData, {
+        namespace: this.namespace,
+        methodName: this.methodName,
+        soapBody: requestData.soapBody || this.soapBody,
+        soapHeader: requestData.soapHeader || this.soapHeader,
+        soapHeaderSections: [this.soapHeaderSections, requestData.soapHeaderSections].merge(),
+        mapping: requestData.mapping || this.mapping
+      });
 
-            if (!bodyElement)
-              this.element.appendChild(body.element);
-          }
-        }
+      return requestData;
+    }
+  });
 
-        return body;
-      },
+  //
+  // SOAP Envelope
+  //
 
-      destroy: function(){
-        if (this.header)
-        {
-          this.header.destroy();
-          delete this.header;
-        }
+ /**
+  * @class
+  */
+  var Envelope = Class(null, {
+    className: namespace + '.Envelope',
 
-        if (this.body)
-        {
-          this.body.destroy();
-          delete this.body;
-        }
+    header: null,
+    body: null,
 
-        delete this.element;
-        delete this.document;
+    init: function(element){
+
+      if (!element)
+      {
+        element = XML.createDocument(SOAP_NAMESPACE, SOAP_PREFIX + ':' + SOAP_ENVELOPE).documentElement;
+        addNamespace(element, 'xsd', NAMESPACE.XMLShema);
+        addNamespace(element, 'xsi', NAMESPACE.XMLShemaInstance);
+        if (XML.XMLNS.BAD_SUPPORT) // bad browsers don't set namespace (xmlns attribute)
+          addNamespace(element, SOAP_PREFIX, SOAP_NAMESPACE);
       }
-    });
 
-    //
-    // Envelope header
-    //
+      this.document = element.ownerDocument;
+      this.element = element;
+      this.body = this.getBody(true);  // minOccure for body is 1
+    },
 
-   /**
-    * @class
-    */
-    var EnvelopeHeader = Class(null, {
-      className: namespace + '.EnvelopeHeader',
+    getElementByName: function(name){
+      return XML.getElementsByTagNameNS(this.element, name, SOAP_NAMESPACE)[0];
+    },
 
-      init: function(element, document){
-        this.element = element || createElementNS(document, 'Header', SOAP_NAMESPACE);
-      },
-      getValue: function(){
-        return XML2Object(this.element);
-      },
-      setValue: function(data, namespace){
-        DOM.clear(this.element);
-        this.appendChild(data, namespace);
-      },
-      appendChild: function(data, namespace){
-        if (data)
-          for (var node in data)
-          {
-            var element = this.element.appendChild(Object2XML(this.element.ownerDocument, node, namespace, data[node]));
-            if (XML.XMLNS.BAD_SUPPORT) // add namespace for bad browsers (xmlns attribute)
-              addNamespace(element, '', namespace); 
-          }
-      },
-      setSection: function(qname, data){
-        var section = XML.getElementsByTagNameNS(this.element, qname, qname.namespace)[0];
-        if (section)
-          DOM.remove(section);
-        this.appendChild(Function.wrapper(qname)(data), qname.namespace);
+    // Header
+    getHeader: function(forceCreate){
+      var header = this.header;
+
+      if (!header)
+      {
+        var headerElement = this.getElementByName('Header');
+
+        if (headerElement || forceCreate)
+        {
+          header = this.header = new EnvelopeHeader(headerElement, this.document);
+
+          if (!headerElement)
+            this.element.insertBefore(header.element, this.element.firstChild);
+        }
       }
-    });
 
-    //
-    // Envelope body
-    //
+      return header;
+    },
+    setHeaderSection: function(qname, data){
+      this.getHeader(true).setSection(qname, data);
+    },
 
-   /**
-    * @class
-    */
-    var EnvelopeBody = Class(null, {
-      className: namespace + '.EnvelopeBody',
+    // Body
+    getBody: function(forceCreate){
+      var body = this.body;
 
-      init: function(element, document){
-        this.element = element || createElementNS(document, 'Body', SOAP_NAMESPACE);
-      },
-      getValue: function(mapping){
-        return XML2Object(this.element, mapping);
-      },
-      setValue: function(method, data, encodingStyle){
-        DOM.clear(this.element);
-        this.appendChild(method, data, encodingStyle);
-      },
-      appendChild: function(method, data, encodingStyle){
-        var child = Object2XML(this.element.ownerDocument, method, method.namespace, Function.$defined(data) ? data : {});
+      if (!body)
+      {
+        var bodyElement = this.getElementByName('Body');
 
-        this.element.appendChild(child);
+        if (bodyElement || forceCreate)
+        {
+          body = this.body = new EnvelopeBody(bodyElement, this.document);
 
-        if (XML.XMLNS.BAD_SUPPORT) // add namespace for bad browsers (xmlns attribute)
-          addNamespace(child.element, '', method.namespace); 
-
-        if (encodingStyle)
-          XML.setAttributeNodeNS(child, XML.createAttributeNS(document, 'encodingStyle', SOAP_ENCODING, encodingStyle));
+          if (!bodyElement)
+            this.element.appendChild(body.element);
+        }
       }
-    });
 
-    //
-    // export names
-    //
+      return body;
+    },
 
-    basis.namespace(namespace).extend({
-      /*Service: Service,
-      ServiceCall: ServiceCall,
-      ServiceCallTransport: ServiceCallTransport,*/
+    destroy: function(){
+      if (this.header)
+      {
+        this.header.destroy();
+        delete this.header;
+      }
 
-      SOAPProxy: SOAPProxy,
-      SOAPRequest: SOAPRequest,
+      if (this.body)
+      {
+        this.body.destroy();
+        delete this.body;
+      }
 
-      Envelope: Envelope,
-      EnvelopeHeader: EnvelopeHeader,
-      EnvelopeBody: EnvelopeBody
-    });
+      delete this.element;
+      delete this.document;
+    }
+  });
 
-  }(basis);
+  //
+  // Envelope header
+  //
+
+ /**
+  * @class
+  */
+  var EnvelopeHeader = Class(null, {
+    className: namespace + '.EnvelopeHeader',
+
+    init: function(element, document){
+      this.element = element || createElementNS(document, 'Header', SOAP_NAMESPACE);
+    },
+    getValue: function(){
+      return XML2Object(this.element);
+    },
+    setValue: function(data, namespace){
+      DOM.clear(this.element);
+      this.appendChild(data, namespace);
+    },
+    appendChild: function(data, namespace){
+      if (data)
+        for (var node in data)
+        {
+          var element = this.element.appendChild(Object2XML(this.element.ownerDocument, node, namespace, data[node]));
+          if (XML.XMLNS.BAD_SUPPORT) // add namespace for bad browsers (xmlns attribute)
+            addNamespace(element, '', namespace); 
+        }
+    },
+    setSection: function(qname, data){
+      var section = XML.getElementsByTagNameNS(this.element, qname, qname.namespace)[0];
+      if (section)
+        DOM.remove(section);
+      this.appendChild(Function.wrapper(qname)(data), qname.namespace);
+    }
+  });
+
+  //
+  // Envelope body
+  //
+
+ /**
+  * @class
+  */
+  var EnvelopeBody = Class(null, {
+    className: namespace + '.EnvelopeBody',
+
+    init: function(element, document){
+      this.element = element || createElementNS(document, 'Body', SOAP_NAMESPACE);
+    },
+    getValue: function(mapping){
+      return XML2Object(this.element, mapping);
+    },
+    setValue: function(method, data, encodingStyle){
+      DOM.clear(this.element);
+      this.appendChild(method, data, encodingStyle);
+    },
+    appendChild: function(method, data, encodingStyle){
+      var child = Object2XML(this.element.ownerDocument, method, method.namespace, Function.$defined(data) ? data : {});
+
+      this.element.appendChild(child);
+
+      if (XML.XMLNS.BAD_SUPPORT) // add namespace for bad browsers (xmlns attribute)
+        addNamespace(child.element, '', method.namespace); 
+
+      if (encodingStyle)
+        XML.setAttributeNodeNS(child, XML.createAttributeNS(document, 'encodingStyle', SOAP_ENCODING, encodingStyle));
+    }
+  });
+
+  //
+  // export names
+  //
+
+  basis.namespace(namespace).extend({
+    /*Service: Service,
+    ServiceCall: ServiceCall,
+    ServiceCallTransport: ServiceCallTransport,*/
+
+    SOAPProxy: SOAPProxy,
+    SOAPRequest: SOAPRequest,
+
+    Envelope: Envelope,
+    EnvelopeHeader: EnvelopeHeader,
+    EnvelopeBody: EnvelopeBody
+  });
+
+}(basis);

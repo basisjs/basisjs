@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.ua');
 basis.require('basis.dom.event');
 basis.require('basis.data');
@@ -37,6 +38,7 @@ basis.require('basis.data');
   var DataObject = nsData.DataObject;
 
   var STATE = nsData.STATE;
+  var createEvent = basis.event.create;
 
   //
   // Main part
@@ -95,7 +97,7 @@ basis.require('basis.data');
   * @function createEvent
   */
   function createEvent(eventName){
-    var event = basis.EventObject.createEvent(eventName);
+    var event = createEvent(eventName);
     var args = [eventName];
     return function(){
       TransportDispatcher.dispatch.apply(this, args.concat(arguments));

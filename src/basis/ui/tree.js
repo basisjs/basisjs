@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
@@ -55,7 +56,7 @@ basis.require('basis.ui');
 
   var classList = basis.cssom.classList;
   var getter = Function.getter;
-  var createEvent = basis.EventObject.createEvent;
+  var createEvent = basis.event.create;
 
   var UIContainer = basis.ui.Container;
   var UIControl = basis.ui.Control;
@@ -301,10 +302,6 @@ basis.require('basis.ui');
   //
   // export names
   //
-
-  basis.namespace('basis.ui').extend({
-    Tree: Tree
-  });
 
   basis.namespace('basis.ui.tree').extend({
     Tree: Tree,

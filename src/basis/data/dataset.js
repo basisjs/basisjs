@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.data');
 
 !function(){
@@ -39,7 +40,7 @@ basis.require('basis.data');
   var $self = Function.$self;
   var $true = Function.$true;
   var $false = Function.$false;
-  var createEvent = basis.EventObject.createEvent;
+  var createEvent = basis.event.create;
 
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
   var DataObject = basis.data.DataObject;

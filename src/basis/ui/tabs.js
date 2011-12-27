@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
@@ -35,8 +36,8 @@ basis.require('basis.ui');
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
-  var createEvent = basis.EventObject.createEvent;
-  var basisEvent = basis.EventObject.event;
+  var createEvent = basis.event.create;
+  var events = basis.event.events;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -70,12 +71,12 @@ basis.require('basis.ui');
       if (this.selection && !this.selection.itemCount)
         child.select();
 
-      basisEvent.childEnabled.call(this, document, node);
+      events.childEnabled.call(this, document, node);
     },
     event_childDisabled: createEvent('childDisabled', 'document', 'node') && function(document, node){
       findAndSelectActiveNode(this);
 
-      basisEvent.childDisabled.call(this, document, node);
+      events.childDisabled.call(this, document, node);
     },
     event_childNodesModified: function(node, delta){
       findAndSelectActiveNode(this);

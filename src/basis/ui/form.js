@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.html');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
@@ -45,17 +46,17 @@ basis.require('basis.ui.popup');
   var getter = Function.getter;
   var classList = basis.cssom.classList;
 
+  var createEvent = basis.event.create;
+  var events = basis.event.events;
+
   var AbstractProperty = basis.data.property.AbstractProperty;
   var Property = basis.data.property.Property;
-  var EventObject = basis.EventObject;
 
   var Selection = basis.dom.wrapper.Selection;
   var UIControl = basis.ui.Control;
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
   var Popup = basis.ui.popup.Popup;
-
-  var createEvent = EventObject.createEvent;
 
 
   //
@@ -125,18 +126,18 @@ basis.require('basis.ui.popup');
         else
           this.setValid();
 
-      EventObject.event.keyup.call(this, event);
+      events.keyup.call(this, event);
     },
     event_focus: createEvent('focus', 'event') && function(event){
       if (this.valid)
         this.setValid();
 
-      EventObject.event.focus.call(this, event);
+      events.focus.call(this, event);
     },
     event_blur: createEvent('blur', 'event') && function(event){
       this.validate(true);
 
-      EventObject.event.blur.call(this, event);
+      events.blur.call(this, event);
     },
 
     init: function(config){

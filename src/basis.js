@@ -1555,14 +1555,19 @@
   })();
 
   // ================================
-  // EventObject
+  // basis.event
   //
 
-  var EventObject = (function(){
+  var basisEventNS = (function(){
 
    /**
-    * @namespace basis
+    * @namespace basis.event
     */
+    var namespace = 'basis.event';
+
+    //
+    // Main part
+    //
 
     var slice = Array.prototype.slice;
     var warnOnDestroy = function(){ throw 'Object had beed destroed before. Destroy method shouldn\'t be call more than once.' }
@@ -1572,18 +1577,49 @@
     var events = {};
     var destroyEvent;
 
+    // listen scheme
+    var LISTEN_MAP = {};
+    var LISTEN = {
+      add: function(listenName, eventName, propertyName, handler){
+        if (!propertyName)
+          propertyName = listenName;
+
+        LISTEN_MAP[eventName] = {
+          listenName: listenName,
+          listen: handler || function(listen, args){
+            var object;
+
+            if (object = args[1])  // second argument is oldObject
+              object.removeHandler(listen, this);
+
+            if (object = this[propertyName])
+              object.addHandler(listen, this);
+          }
+        };
+
+        var eventFunction = events[eventName];
+        if (eventFunction)
+          extend(LISTEN_MAP[eventName]);
+      }
+    };
+
     function dispatchEvent(eventName){
       var eventFunction = events[eventName];
 
       if (!eventFunction)
       {
         eventFunction = events[eventName] = 
-          /** @cut for more verbose in dev */ Function('eventName', 'slice', 'return function _event_' + eventName + '(){' + (
+          /** @cut for more verbose in dev */ Function('eventName', 'slice', 'self', 'return self = function _event_' + eventName + '(){' + (
 
             function(){
               var handlers = this.handlers_;
+              var listenHandler;
               var config;
               var func;
+
+              if (self.listen)
+                if (listenHandler = this.listen[self.listenName])
+                  self.listen.call(this, listenHandler, arguments);
 
               if (!handlers || !handlers.length)
                 return;
@@ -1599,6 +1635,7 @@
                   if (typeof func == 'function')
                     func.apply(config.thisObject, arguments);
 
+                // any event handler
                 if (func = config.handler['*'])
                   if (typeof func == 'function')
                     func.call(config.thisObject, {
@@ -1611,6 +1648,9 @@
           /** @cut for more verbose in dev */ ).toString().replace(/^\(?function[^(]*\(\)[^{]*\{|\}\)?$/g, '') + '}')(eventName, slice);
 
         /** @cut for more verbose in dev */;;;if (arguments.length > 1){ var text = eventFunction.toString().replace(/\(\)/, '(' + Array.from(arguments, 1).join(', ') + ')'); eventFunction.toString = function(){ return text } };
+
+        if (LISTEN_MAP[eventName])
+          extend(eventFunction, LISTEN_MAP[eventName]);
       }
 
       return eventFunction;
@@ -1753,15 +1793,19 @@
       }
     });
 
-    EventObject.createEvent = dispatchEvent;
-    EventObject.event = events;
+    //EventObject.createEvent = dispatchEvent;
+    //EventObject.event = events;
 
-    return EventObject;
+    return {
+      create: dispatchEvent,
+      events: events,
+      LISTEN: LISTEN,
+
+      EventObject: EventObject
+    };
   })();
 
 
-
- 
   // =====================================================================
   // Cleaner
   // Description: Singleton that is destroy registred objects when page unload
@@ -2033,13 +2077,15 @@
 
     platformFeature: {},
 
-    EventObject: EventObject,
+    //EventObject: basisEventNS.EventObject,
     TimeEventManager: TimeEventManager,
 
     Cleaner: Cleaner,
 
     require: requireNamespace
   });
+
+  getNamespace('basis.event').extend(basisEventNS);
 
   global.basis.locale = {};
 

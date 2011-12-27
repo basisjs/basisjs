@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.dom');
 basis.require('basis.dom.wrapper');
 basis.require('basis.data.property');
@@ -31,7 +32,7 @@ basis.require('basis.data.property');
   var nsWrappers = basis.dom.wrapper;
   var Property = basis.data.property.Property;
 
-  var createEvent = basis.EventObject.createEvent;
+  var createEvent = basis.event.create;
 
   // MAIN PART
 

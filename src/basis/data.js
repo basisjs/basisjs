@@ -9,6 +9,8 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
+
 !function(){
 
   'use strict';
@@ -28,18 +30,21 @@
 
   var namespace = 'basis.data';
 
+
   //
   // import names
   //
 
   var Class = basis.Class;
 
-  var EventObject = basis.EventObject;
-
   var values = Object.values;
   var $self = Function.$self;
-  var createEvent = EventObject.createEvent;
-  var event = EventObject.event;
+
+  var EventObject = basis.event.EventObject;
+  var LISTEN = basis.event.LISTEN;
+  var createEvent = basis.event.create;
+  var events = basis.event.events;
+
 
   //
   // Main part
@@ -226,6 +231,13 @@
     }
   );
 
+  //
+  // reg new type of listen
+  //
+
+  LISTEN.add('delegate', 'delegateChanged');
+  LISTEN.add('target', 'targetChanged');
+
 
   //
   // DataObject
@@ -362,20 +374,7 @@
     * @param {basis.data.DataObject} oldTarget Object before changes.
     * @event
     */
-    event_targetChanged: createEvent('targetChanged', 'object', 'oldTarget') && function(object, oldTarget){
-      var listenHandler = this.listen.target;
-
-      if (listenHandler)
-      {
-        if (oldTarget)
-          oldTarget.removeHandler(listenHandler, this);
-
-        if (this.target)
-          this.target.addHandler(listenHandler, this);
-      }
-
-      event.targetChanged.call(this, object, oldTarget);
-    },
+    event_targetChanged: createEvent('targetChanged', 'object', 'oldTarget'),
 
    /**
     * Fires when count of subscribers (subscriberCount property) was changed.
@@ -543,10 +542,6 @@
         var oldTarget = this.target;
         var oldRoot = this.root;
         var delta = {};
-        var listenHandler = this.listen.delegate;
-
-        if (oldDelegate && listenHandler)
-          oldDelegate.removeHandler(listenHandler, this);
 
         if (newDelegate)
         {
@@ -556,9 +551,6 @@
           this.data = newDelegate.data;
           this.state = newDelegate.state;
           this.target = newDelegate.target;
-
-          if (listenHandler)
-            newDelegate.addHandler(listenHandler, this);
 
           // calculate delta as difference between current data and delegate info
           for (var key in newDelegate.data)
@@ -940,7 +932,7 @@
       this.cache_ = null;
 
       // call event 
-      event.datasetChanged.call(this, dataset, delta);
+      events.datasetChanged.call(this, dataset, delta);
     },
 
    /**

@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.ua');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
@@ -37,9 +38,8 @@ basis.require('basis.layout');
   var addGlobalHandler = Event.addGlobalHandler;
   var removeGlobalHandler = Event.removeGlobalHandler;
 
-  var EventObject = basis.EventObject;
-
-  var createEvent = EventObject.createEvent;
+  var EventObject = basis.event.EventObject;
+  var createEvent = basis.event.create;
 
   var nsWrappers = basis.dom.wrapper;
   var nsLayout = basis.layout;

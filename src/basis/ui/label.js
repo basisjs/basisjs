@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.event');
 basis.require('basis.html');
 basis.require('basis.dom');
 basis.require('basis.data');
@@ -34,8 +35,8 @@ basis.require('basis.ui');
   var DOM = basis.dom;
 
   var getter = Function.getter;
-  var createEvent = basis.EventObject.createEvent;
-  var event = basis.EventObject.event;
+  var createEvent = basis.event.create;
+  var events = basis.event.events;
   var classList = basis.cssom.classList;
 
   var STATE = basis.data.STATE;
@@ -80,7 +81,7 @@ basis.require('basis.ui');
     },
 
     event_visibilityChanged: createEvent('visibilityChanged', 'node') && function(node){
-      event.visibilityChanged.call(this, node);
+      events.visibilityChanged.call(this, node);
 
       if (this.insertPoint)
       {
@@ -99,7 +100,7 @@ basis.require('basis.ui');
     },
 
     event_condChanged: createEvent('condChanged', 'node') && function(node){
-      event.condChanged.call(this, node);
+      events.condChanged.call(this, node);
 
       var visible = this.owner ? !!this.visibilityGetter(this.owner) : false;
 
@@ -219,7 +220,7 @@ basis.require('basis.ui');
     },
 
     event_ownerDataSourceChanged: createEvent('ownerDataSourceChanged', 'node', 'oldOwnerDataSource') && function(node, oldOwnerDataSource){
-      event.ownerDataSourceChanged.call(this, node, oldOwnerDataSource);
+      events.ownerDataSourceChanged.call(this, node, oldOwnerDataSource);
 
       condChangedTrigger.call(this);
     }

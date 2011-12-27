@@ -24,7 +24,7 @@ basis.require('basis.ui.scroller');
   'use strict';
 
  /**
-  * @namespace Basis.Plugin
+  * @namespace basis.ui.pageslider
   */ 
 
   var namespace = 'basis.ui.pageslider';
