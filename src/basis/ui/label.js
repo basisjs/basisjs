@@ -34,9 +34,11 @@ basis.require('basis.ui');
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var getter = Function.getter;
   var createEvent = basis.event.create;
   var events = basis.event.events;
+  var LISTEN = basis.event.LISTEN;
+
+  var getter = Function.getter;
   var classList = basis.cssom.classList;
 
   var STATE = basis.data.STATE;
@@ -76,8 +78,8 @@ basis.require('basis.ui');
     visibilityGetter: Function.$true,
     visible: null,
 
-    insertPoint: function(){
-      return this.owner ? this.owner.tmpl.content || this.owner.element : null;
+    insertPoint: function(owner){
+      return owner.tmpl.content || owner.element;
     },
 
     event_visibilityChanged: createEvent('visibilityChanged', 'node') && function(node){
@@ -87,7 +89,7 @@ basis.require('basis.ui');
       {
         if (this.visible)
         {
-          var insertPoint = typeof this.insertPoint == 'function' ? this.insertPoint() : this.insertPoint;
+          var insertPoint = typeof this.insertPoint == 'function' ? this.insertPoint(this.owner) : this.insertPoint;
           var params = Array.isArray(insertPoint) ? insertPoint : [insertPoint];
           params.splice(1, 0, this.element);
           DOM.insert.apply(null, params);
@@ -175,25 +177,15 @@ basis.require('basis.ui');
   function syncOwnerDataSource(){
     var newOwnerDataSource = this.owner && this.owner.dataSource;
 
-    if (this.ownerDataSource != newOwnerDataSource)
+    var oldOwnerDataSource = this.ownerDataSource;
+    if (oldOwnerDataSource != newOwnerDataSource)
     {
-      var oldOwnerDataSource = this.ownerDataSource;
-      var listenHandler = this.listen.ownerDataSource;
-
       this.ownerDataSource = newOwnerDataSource;
-
-      if (listenHandler)
-      {
-        if (oldOwnerDataSource)
-          oldOwnerDataSource.removeHandler(listenHandler, this);
-
-        if (newOwnerDataSource)
-          newOwnerDataSource.addHandler(listenHandler, this);
-      }
-
       this.event_ownerDataSourceChanged(this, oldOwnerDataSource);
     }
   }
+
+  LISTEN.add('ownerDataSource', 'ownerDataSourceChanged');
 
  /**
   * @class
@@ -294,6 +286,7 @@ basis.require('basis.ui');
 
     template: emptyTemplate,
     content: 'Empty',
+
     visibilityGetter: function(owner){ 
       return owner.dataSource && owner.dataSource.state == STATE.READY && !owner.dataSource.itemCount;
     }
@@ -328,6 +321,7 @@ basis.require('basis.ui');
 
     template: emptyTemplate,
     content: 'Empty',
+
     visibilityGetter: function(owner){ 
       return owner.state == STATE.READY && !owner.firstChild;
     }
@@ -339,20 +333,27 @@ basis.require('basis.ui');
   //
 
   basis.namespace(namespace).extend({
+    // Owner
     NodeLabel: NodeLabel,
+
+    // Owner state
     State: State,
-    //ObjectState: ObjectState,
     Processing: Processing,
     Error: Error,
 
+    // Owner dataSource
     DataSourceLabel: DataSourceLabel,
+
+    // Owner dataSource state
     DataSourceState: DataSourceState,
     DataSourceProcessing: DataSourceProcessing,
     DataSourceError: DataSourceError,
 
+    // Owner dataSource items
     DataSourceItemCount: DataSourceItemCount,
     DataSourceEmpty: DataSourceEmpty,
 
+    // Owner childNodes
     ChildNodesCount: ChildNodesCount,
     Empty: Empty
   });
