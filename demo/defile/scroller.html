@@ -1,0 +1,238 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Scroller</title>
+
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/scrollPanel/default/style.css" media="screen" />
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .DemoBlock
+    {
+      border: 1px solid #D0D0D0;
+      border-radius: 3px;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+      margin: 0 1% .5em 0;
+      overflow: hidden;
+      position: relative;
+      width: 48%;
+      float: left;
+    }
+    .DemoBlock H2
+    {
+      font-size: 80%;
+      font-weight: normal;
+      background: #EEE;
+      margin: 0;
+      padding: 2px;
+      text-align: center;
+      border-bottom: 1px solid #D0D0D0;
+    }
+
+    #WorldMapPanel
+    {
+      height: 400px;
+      cursor: move;
+    }
+
+    #CountriesPanel
+    {
+      border-top: 1px solid #D0D0D0;
+    }
+    #CountriesPanel .Country
+    {
+      display: inline-block;
+      padding: 7px;
+      color: #0066CC;
+    }
+    #CountriesPanel .Country:hover
+    {
+      color: #6699DD;
+      text-decoration: none;
+    }
+
+    #BallContainer
+    {
+      height: 431px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #Ball
+    {
+      width: 70px;
+      height: 70px;
+      border-radius: 70px;
+      border: 2px solid #444;
+      box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.15);
+      position: absolute;
+      cursor: move;
+    }
+
+
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <!--[if IE 7]>
+  <![endif]-->
+
+
+  <script type="text/javascript" src="../../basis-all.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <h1>Basic demos: Scroller</h1>
+  
+  <p id="demo-summary">
+    ..
+  </p>
+  <div id="demo-description">
+    ..
+  </div>
+
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    
+    // import names
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
+    var Data = basis.data;
+
+    var Scroller = basis.ui.scroller.Scroller;
+    var ScrollPanel = basis.ui.scroller.ScrollPanel;
+    var uiContainer = basis.ui.Container;
+
+    var nsEntity = basis.entity;
+    
+    var getter = Function.getter;
+
+    function createBlock(header){
+      return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
+    }
+
+
+    //
+    // World Map
+    //
+    var Country = new nsEntity.EntityType({
+      name: 'Country',
+      fields: {
+        Title: nsEntity.StringId,
+        PositionX: Number,
+        PositionY: Number
+      }
+    });
+    var countries = [
+      { Title: 'Russia', PositionX: '2577', PositionY: '212' },
+      { Title: 'China', PositionX: '2725', PositionY: '551' },
+      { Title: 'Kazakhstan', PositionX: '2342', PositionY: '366' },
+      { Title: 'Ukraine', PositionX: '2027', PositionY: '357' },
+      { Title: 'USA', PositionX: '792', PositionY: '474' },
+      { Title: 'Canada', PositionX: '904', PositionY: '259' }
+    ];
+    Country.all.sync(countries);
+
+    var worldMapBlock = createBlock('World Map on ScrollPanel');
+
+    var worldMap = new ScrollPanel({
+      id: 'WorldMapPanel',
+      container: worldMapBlock,
+      content: DOM.createElement('img[src="../res/img/world_map.jpg"]')
+    });
+
+    new uiContainer({
+      id: 'CountriesPanel',
+      container: worldMapBlock,
+
+      dataSource: Country.all,
+      childClass: {
+        template:
+          '<a href="#" class="Country" event-click="scrollTo">{titleText}</a>',
+
+        action: {
+          scrollTo: function(event){
+            scrollToCountry(this.data.Title);
+
+            Event.kill(event);
+          }
+        },
+
+        templateUpdate: function(tmpl){
+          tmpl.titleText.nodeValue = this.data.Title;
+        }
+      }
+    });
+
+    function scrollToCountry(countryName){
+      var country = Country(countryName);
+      var x = country.data.PositionX - worldMap.element.offsetWidth / 2;
+      var y = country.data.PositionY - worldMap.element.offsetHeight / 2;
+      worldMap.scroller.setPosition(x, y);
+    }
+
+    setTimeout(function(){
+      scrollToCountry('Russia');
+    }, 100);
+
+
+    //
+    // Crazy Ball
+    //
+
+    var block = createBlock('Crazy Ball');
+    var ballContainer = DOM.insert(block, DOM.createElement('#BallContainer'));
+    var ball = DOM.insert(ballContainer, DOM.createElement('#Ball'));
+
+    new Scroller({
+      targetElement: ball,
+      handler: {
+        updatePosition: function(){
+          var x = -this.viewportX;
+          var y = -this.viewportY;
+
+          if (x + ball.offsetWidth > ballContainer.offsetWidth || x < 0)
+          {
+            var fixX = Math.max(0, Math.min(x, ballContainer.offsetWidth - ball.offsetWidth));
+            this.viewportTargetX = -fixX;
+            this.viewportX = -fixX;
+            this.currentVelocityX = -this.currentVelocityX;
+
+          }
+
+          if (y + ball.offsetHeight > ballContainer.offsetHeight || y < 0)
+          {
+            var fixY = Math.max(0, Math.min(y, ballContainer.offsetHeight - ball.offsetHeight));
+            this.viewportTargetY = -fixY;
+            this.viewportY = -fixY;
+            this.currentVelocityY = -this.currentVelocityY;
+          }
+        }
+      }
+    });
+
+
+  </script>
+</body>
+
+</html>

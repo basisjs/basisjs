@@ -1140,8 +1140,7 @@
      var x = classNodeRect.left - (classMap.element.offsetWidth / 2) + (classNodeRect.width / 2);
      var y = classNodeRect.top - (classMap.element.offsetHeight / 2) + (classNodeRect.height / 2);
 
-     classMap.scroller.setPositionX(x, true);
-     classMap.scroller.setPositionY(y, true);   
+     classMap.scroller.setPosition(x, y);
   }
 
 

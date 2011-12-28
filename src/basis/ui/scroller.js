@@ -233,8 +233,8 @@ basis.require('basis.ui');
         return;
 
       this.isUpdating = true;
-      this.updateFrameHandle = this.nextFrame();
       this.lastUpdateTime = Date.now();
+      this.updateFrameHandle = this.nextFrame();
 
       this.event_start(this);
     },
@@ -445,6 +445,11 @@ basis.require('basis.ui');
     nextFrame: function(){
       if (this.isUpdating)
         this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler, this.targetElement);
+    },
+
+    setPosition: function(positionX, positionY, instantly){
+      this.setPositionX(positionX, !instantly);
+      this.setPositionY(positionY, !instantly);      
     },
 
     setPositionX: function(positionX, smooth){
