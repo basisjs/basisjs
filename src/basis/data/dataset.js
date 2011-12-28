@@ -1346,10 +1346,8 @@ basis.require('basis.data');
 
       if (array = delta.inserted)
       {
-        // optimization: it makes webkit & gecko slower (2x), but makes ie faster
+        // optimization: it makes webkit & gecko slower (depends on object count, up to 2x), but makes ie faster
         buildIndex = !index_.length;
-        //if (!index_.length)
-        //  index_.length = array.length;
 
         for (var i = 0, sourceObject; sourceObject = array[i]; i++)
         {
@@ -1398,6 +1396,13 @@ basis.require('basis.data');
     * @private
     */
     index_: null,
+
+   /**
+    * Direction of range.
+    * @type {boolean}
+    * @readonly
+    */
+    orderDesc: false,
 
    /**
     * Start of range.
@@ -1460,9 +1465,17 @@ basis.require('basis.data');
     },
 
     applyRule: function(){
-      var offset = this.offset.fit(0, this.index_.length);
+      var start = this.offset;
+      var end = start + this.limit;
+
+      if (this.orderDesc)
+      {
+        start = this.index_.length - end;
+        end = start + this.limit;
+      }
+
       var curSet = Object.slice(this.item_);
-      var newSet = this.index_.slice(Math.min(offset, offset + this.limit), Math.max(offset, offset + this.limit));
+      var newSet = this.index_.slice(Math.max(0, start), Math.max(0, end));
       var inserted = [];
       var delta;
 
@@ -1566,6 +1579,8 @@ basis.require('basis.data');
       var inserted = [];
       var deleted = [];
 
+      Dataset.setAccumulateState(true);
+
       if (array = delta.inserted)
         for (var i = 0, sourceObject; sourceObject = array[i]; i++)
         {
@@ -1626,6 +1641,8 @@ basis.require('basis.data');
           if (listenHandler)
             sourceObject.removeHandler(listenHandler, this);
         }
+
+      Dataset.setAccumulateState(false);
 
       if (delta = getDelta(inserted, deleted))
         this.event_datasetChanged(this, delta);

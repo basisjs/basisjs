@@ -143,8 +143,8 @@
     var reportSlice = new basis.data.dataset.Slice({
       rule: Function.getter('data.Date', Number),
       source: SeriesValue.all,
-      offset: Number.MAX_VALUE,
-      limit: -60
+      orderDesc: true,
+      limit: 60
     });
 
     var data = [];
@@ -217,11 +217,17 @@
 
               sync: function(){
                 var itemCount = this.delegate.index_.length;
-                var offset_ = this.delegate.offset.fit(0, itemCount);
-                var limit_ = this.delegate.limit;
+                var start = this.delegate.offset;
+                var end = start + this.delegate.limit;
 
-                var start = Math.min(offset_, offset_ + limit_);
-                var end = Math.max(offset_, offset_ + limit_);
+                if (this.delegate.orderDesc)
+                {
+                  start = itemCount - end;
+                  end = start + this.delegate.limit;
+                }
+
+                start = Math.max(0, start);
+                end = Math.max(0, end);
 
                 this.tmpl.before.style.width = 100 * (start/itemCount) + '%';
                 this.tmpl.after.style.width = 100 * (1-end/itemCount) + '%';
@@ -241,8 +247,9 @@
                       this.offset__ = reportSlice.offset;
                     },
                     move: function(config){
-                      var offset = Math.min(this.offset__, reportSlice.index_.length) + parseInt(reportSlice.index_.length * config.deltaX / this.element.offsetWidth);
-                      reportSlice.setRange(offset.fit(Math.abs(reportSlice.limit), reportSlice.index_.length), reportSlice.limit);
+                      var itemCount = reportSlice.index_.length;
+                      var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                      reportSlice.setRange(offset.fit(0, itemCount - reportSlice.limit), reportSlice.limit);
                     }
                   },
                   handlerContext: this
@@ -254,11 +261,11 @@
                   handler: {
                     start: function(){
                       this.limit__ = reportSlice.limit;
-                      this.maxLimit__ = -Math.min(reportSlice.offset, reportSlice.index_.length);
                     },
                     move: function(config){
-                      var limit = this.limit__ + parseInt(reportSlice.index_.length * config.deltaX / this.element.offsetWidth);
-                      reportSlice.setRange(reportSlice.offset, Math.min(-2, Math.max(limit, this.maxLimit__)));
+                      var itemCount = reportSlice.index_.length;
+                      var limit = this.limit__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                      reportSlice.setRange(reportSlice.offset, Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
                     }
                   },
                   handlerContext: this
@@ -273,12 +280,9 @@
                       this.limit__ = reportSlice.limit;
                     },
                     move: function(config){
-                      var length = reportSlice.index_.length;
-                      var offset = Math.min(this.offset__, length) + parseInt(length * config.deltaX / this.element.offsetWidth);
-
-                      offset = offset.fit(Math.min(length, 2), length);
-
-                      var limit = Math.min(2, reportSlice.limit - (offset - reportSlice.offset));
+                      var itemCount = reportSlice.index_.length;
+                      var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
+                      var limit = reportSlice.limit - (offset - reportSlice.offset);
                       reportSlice.setRange(offset, limit);
                     }
                   },

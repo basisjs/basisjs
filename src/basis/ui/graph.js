@@ -21,7 +21,7 @@ basis.require('basis.ui.canvas');
   'use strict';
 
  /**
-  * @namespace basis.ui.canvas
+  * @namespace basis.ui.graph
   */
 
   var namespace = 'basis.ui.graph';
@@ -58,8 +58,11 @@ basis.require('basis.ui.canvas');
   }
 
 
+ /**
+  * @class
+  */
   var GraphViewer = uiNode.subclass({
-    className: 'GraphViewer',
+    className: namespace + '.GraphViewer',
 
     template: '<canvas event-mousemove="move" event-mouseout="out" style="position:absolute;left:0;top:0"></canvas>',
 
@@ -274,8 +277,11 @@ basis.require('basis.ui.canvas');
     }
   });
 
+ /**
+  * @class
+  */
   var GraphThread = Node.subclass({
-    className: 'GraphThread',
+    className: namespace + '.GraphThread',
     canHaveChildren: true,
     legendGetter: Function.getter('legend'),
     colorGetter: Function.getter('color'),
@@ -331,8 +337,12 @@ basis.require('basis.ui.canvas');
     }
   });
 
+
+ /**
+  * @class
+  */
   var Graph = Canvas.subclass({
-    className: 'Graph',
+    className: namespace + '.Graph',
 
     template:
       '<div class="Basis-Graph" style="position: relative; display: inline-block">' +
@@ -687,6 +697,8 @@ basis.require('basis.ui.canvas');
   //
 
   basis.namespace(namespace).extend({
+    GraphViewer: GraphViewer,
+    GraphThread: GraphThread,
     Graph: Graph
   });
 

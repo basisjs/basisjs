@@ -1518,6 +1518,9 @@
     var CustomExtendProperty = function(extension, func){
       return {
         __extend__: function(extension){
+          if (!extension)
+            return extension;
+
           if (extension && extension.__extend__ === this.__extend__)
             return extension;
 
@@ -1527,9 +1530,8 @@
           func(result, extension);
           return result;
         }
-      }.__extend__(extension);
+      }.__extend__(extension || {});
     };
-
 
    /**
     * @func
