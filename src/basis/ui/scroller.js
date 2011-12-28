@@ -536,7 +536,7 @@ basis.require('basis.ui');
           var scrollPosition = this.getScrollbarPosition();
  
           var startPosition = Math.max(0, this.trackSize  * scrollPosition);
-          var endPosition = Math.max(0, this.trackSize - startPosition);
+          var endPosition = Math.max(0, this.trackSize - this.trackSize  * scrollPosition);
 
           var style = {};
           style[this.startProperty] = startPosition + 'px';

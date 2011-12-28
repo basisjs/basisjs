@@ -135,66 +135,55 @@
     //
     // World Map
     //
-    var Country = new nsEntity.EntityType({
-      name: 'Country',
-      fields: {
-        Title: nsEntity.StringId,
-        PositionX: Number,
-        PositionY: Number
-      }
-    });
-    var countries = [
-      { Title: 'Russia', PositionX: '2577', PositionY: '212' },
-      { Title: 'China', PositionX: '2725', PositionY: '551' },
-      { Title: 'Kazakhstan', PositionX: '2342', PositionY: '366' },
-      { Title: 'Ukraine', PositionX: '2027', PositionY: '357' },
-      { Title: 'USA', PositionX: '792', PositionY: '474' },
-      { Title: 'Canada', PositionX: '904', PositionY: '259' }
-    ];
-    Country.all.sync(countries);
-
     var worldMapBlock = createBlock('World Map on ScrollPanel');
 
     var worldMap = new ScrollPanel({
       id: 'WorldMapPanel',
       container: worldMapBlock,
-      content: DOM.createElement('img[src="../res/img/world_map.jpg"]')
+      content: DOM.createElement('img[src="../res/img/world_map.jpg"][width="3669"][height="1862"]'),
+
+      scrollTo: function(x, y){
+        this.scroller.setPosition(x - this.element.offsetWidth / 2, y - this.element.offsetHeight / 2);
+      }
     });
 
     new uiContainer({
       id: 'CountriesPanel',
       container: worldMapBlock,
 
-      dataSource: Country.all,
       childClass: {
         template:
-          '<a href="#" class="Country" event-click="scrollTo">{titleText}</a>',
+          '<a href="#" class="Country" event-click="select">{titleText}</a>',
 
         action: {
-          scrollTo: function(event){
-            scrollToCountry(this.data.Title);
-
-            Event.kill(event);
+          select: function(){
+            this.select();
           }
         },
 
         templateUpdate: function(tmpl){
           tmpl.titleText.nodeValue = this.data.Title;
         }
-      }
+      },
+      
+      selection: {
+        handler: {
+          datasetChanged: function(){
+            var item = this.pick();
+            worldMap.scrollTo(item.data.PositionX, item.data.PositionY);
+          }
+        }
+      },
+
+      childNodes: [
+        { data: { Title: 'Russia', PositionX: '2577', PositionY: '212' } },
+        { data: { Title: 'China', PositionX: '2725', PositionY: '551' } },
+        { data: { Title: 'Kazakhstan', PositionX: '2342', PositionY: '366' } },
+        { data: { Title: 'Ukraine', PositionX: '2027', PositionY: '357' } },
+        { data: { Title: 'USA', PositionX: '792', PositionY: '474' } },
+        { data: { Title: 'Canada', PositionX: '904', PositionY: '259' } }
+      ]
     });
-
-    function scrollToCountry(countryName){
-      var country = Country(countryName);
-      var x = country.data.PositionX - worldMap.element.offsetWidth / 2;
-      var y = country.data.PositionY - worldMap.element.offsetHeight / 2;
-      worldMap.scroller.setPosition(x, y);
-    }
-
-    setTimeout(function(){
-      scrollToCountry('Russia');
-    }, 100);
-
 
     //
     // Crazy Ball
