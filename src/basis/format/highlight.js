@@ -34,58 +34,34 @@ basis.require('basis.ui');
   // Main part
   //
 
-  var keywords = 
-    'break case catch continue ' +
-    'default delete do else false ' +
-    'for function if in instanceof ' +
-    'new null return super switch ' +
-    'this throw true try typeof var while with';
-
-  var keywordRegExp = new RegExp('\\b(' + keywords.qw().join('|') + ')\\b', 'g');
-
- /**
-  * @func
-  */
-  function highlight(code, keepFormat){
-
-    function normalize(code, offset){
-      code = code
-               .trimRight()
-               .replace(/\r\n|\n\r|\r/g, '\n')
-
-      if (!keepFormat)
-        code = code.replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
-
-      // fix empty strings
-      code = code
-               .replace(/\n[ \t]+/g, function(m){ return m.replace(/\t/g, '  '); })
-               .replace(/\n[ \t]+\n/g, '\n\n');
-
-      if (!keepFormat)
-      {
-        // normalize code offset
-        var minOffset = 1000;
-        var lines = code.split(/\n+/);
-        var startLine = Number(code.match(/^function/) != null); // hotfix for function.toString()
-        for (var i = startLine; i < lines.length; i++)
-        {
-          var m = lines[i].match(/^\s*/);
-          if (m[0].length < minOffset)
-            minOffset = m[0].length;
-          if (minOffset == 0)
-            break;
-        }
-
-        if (minOffset > 0)
-          code = code.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
-      }
-
-      code = code.replace(new RegExp('(^|\\n)( +)', 'g'), function(m, a, b){ return a + '\xA0'.repeat(b.length)});
-
-      return code; 
+  var LANG_PARSER = {};
+  var PARSER = {
+    add: function(lang, fn){
+      LANG_PARSER[lang] = fn;
     }
+  };
 
-    function getMatches(code){
+  //
+  // default parser
+  //
+
+  PARSER.add('text', Array.from);
+
+  //
+  // javascript parser
+  //
+
+  PARSER.add('js', (function(){
+    var keywords = 
+      'break case catch continue ' +
+      'default delete do else false ' +
+      'for function if in instanceof ' +
+      'new null return super switch ' +
+      'this throw true try typeof var while with';
+
+    var keywordRegExp = new RegExp('\\b(' + keywords.qw().join('|') + ')\\b', 'g');
+
+    return function(code){
       function addMatch(kind, start, end, rn){
         if (lastMatchPos != start)
           result.push(code.substring(lastMatchPos, start).replace(keywordRegExp, '<span class="token-keyword">$1</span>'));
@@ -191,10 +167,55 @@ basis.require('basis.ui');
 
       return result;
     }
+  })());
+
+
+ /**
+  * @func
+  */
+  function highlight(lang, code, keepFormat){
+
+    function normalize(code, offset){
+      code = code
+               .trimRight()
+               .replace(/\r\n|\n\r|\r/g, '\n')
+
+      if (!keepFormat)
+        code = code.replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
+
+      // fix empty strings
+      code = code
+               .replace(/\n[ \t]+/g, function(m){ return m.replace(/\t/g, '  '); })
+               .replace(/\n[ \t]+\n/g, '\n\n');
+
+      if (!keepFormat)
+      {
+        // normalize code offset
+        var minOffset = 1000;
+        var lines = code.split(/\n+/);
+        var startLine = Number(code.match(/^function/) != null); // hotfix for function.toString()
+        for (var i = startLine; i < lines.length; i++)
+        {
+          var m = lines[i].match(/^\s*/);
+          if (m[0].length < minOffset)
+            minOffset = m[0].length;
+          if (minOffset == 0)
+            break;
+        }
+
+        if (minOffset > 0)
+          code = code.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
+      }
+
+      code = code.replace(new RegExp('(^|\\n)( +)', 'g'), function(m, a, b){ return a + '\xA0'.repeat(b.length)});
+
+      return code; 
+    }
 
     //  MAIN PART
 
-    var html = getMatches(normalize(code).replace(/</g, '&lt;'));
+    var parser = LANG_PARSER[lang] || LANG_PARSER['text'];
+    var html = parser(normalize(code).replace(/</g, '&lt;'));
 
     //console.log('getmatches ' + (new Date - t));
 
@@ -224,17 +245,18 @@ basis.require('basis.ui');
     className: namespace + '.SourceCodeNode',
 
     template:
-      '<pre{element|codeElement} class="Basis-SyntaxHighlight"/>',
+      '<pre{code} class="Basis-SyntaxHighlight"/>',
 
     codeGetter: Function.getter('data.code'),
     normalize: true,
+    lang: 'text',
 
     templateUpdate: function(tmpl, event, delta){
       var code = this.codeGetter(this);
       if (code != this.code_)
       {
         this.code_ = code;
-        this.tmpl.codeElement.innerHTML = highlight(code, !this.normalize);
+        this.tmpl.code.innerHTML = highlight(this.lang, code, !this.normalize);
       }
     }
   });

@@ -22,6 +22,8 @@
   var nsScroller = basis.ui.scroller;
   var nsLayout = basis.layout;
 
+  var DELEGATE = basis.dom.wrapper.DELEGATE;
+
   var ui = basis.ui;
   var uiNode = basis.ui.Node;
   var uiContainer = basis.ui.Container;
@@ -66,10 +68,6 @@
            '</h3>';
   }
 
-  //
-  // View
-  //
-
  /**
   * @class
   */
@@ -86,42 +84,48 @@
     },
 
     action: {
-      select: function(){
+      select: function(event){
         this.select();
       }
-    },
-
-    event_select: function(){
-      uiNode.prototype.event_select.call(this);
-
-      if (this.handler)
-        this.handler();
     }
   });
 
  /**
   * @class
   */
-  var ViewOptions = Class(uiContainer,
-    basis.ui(
-      '<div{element} class="viewOptions">' +
-        '<span class="title">{this_title}:</span>' +
+  var ViewOptions = Class(uiContainer, {
+    className: namespace + '.ViewOptions',
+
+    childClass: ViewOption,
+
+    template:
+      '<div class="viewOptions">' +
+        '<span class="title">{title}:</span>' +
         '<span{childNodesElement} class="options"/>' +
-      '</div>'
-    ),
-    {
-      className: namespace + '.ViewOptions',
-      childClass: ViewOption,
-      selection: true
+      '</div>',
+
+    templateUpdate: function(tmpl){
+      tmpl.title.nodeValue = this.title;
+    },
+
+    selection: {
+      handler: {
+        datasetChanged: function(){
+          var node = this.pick();
+
+          if (node && node.handler)
+            node.handler();
+        }
+      }
     }
-  );
+  });
 
  /**
   * @class
   */
   var View = Class(uiContainer, {
     className: namespace + '.View',
-    autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
+    autoDelegate: DELEGATE.PARENT,
     isAcceptableObject: Function.$true,
     action: {
       scrollTo: function(){
@@ -135,15 +139,22 @@
   var JsDocPanel = Class(uiNode, {
     className: namespace + '.JsDocPanel',
     active: true,
-    template: new Template(
-      '<div{element|content} class="jsDocs">' +
+    template:
+      '<div{content} class="jsDocs">' +
         '<div{description} class="description"/>' +
         '<div{link} class="links"/>' +
-      '</div>'
-    ),
+      '</div>',
+
     event_update: function(object, delta){
       uiNode.prototype.event_update.call(this, object, delta);
-      
+      this.parse();
+    },
+    event_targetChanged: function(object, oldTarget){
+      uiNode.prototype.event_targetChanged.call(this, object, oldTarget);
+      this.parse();
+    },
+
+    parse: function(object, delta){
       var newData = this.data;
 
       DOM.clear(this.tmpl.content);
@@ -207,9 +218,6 @@
         DOM.insert(this.tmpl.content,
           DOM.createElement('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]'.format(filename, newData.line),
             filename.split('src/basis/').pop() + ':' + newData.line
-            /*DOM.createElement('SPAN.file', filename),
-            DOM.createElement('SPAN.splitter', ':'),
-            DOM.createElement('SPAN.line', newData.line)*/
           )
         );
       }
@@ -217,9 +225,6 @@
       if (newData.tags)
       {
         var tags = DOM.wrap(Object.keys(Object.slice(newData.tags, tagLabels)), { 'SPAN.tag': Function.$true });
-        /*Object.iterate(Object.slice(newData.tags, tagLabels), function(key, value){
-          tags.push(DOM.createElement('SPAN.tag', key));
-        });*/
         if (tags.length)
           DOM.insert(this.tmpl.content, DOM.createElement('.tags', tags));
         
@@ -289,19 +294,16 @@
             DOM.createElement('DIV.label', 'Example:'),
             code = DOM.createElement('PRE.Basis-SyntaxHighlight')
           ]);
-          code.innerHTML = nsHighlight.highlight(newData.tags.example);
-          //code.className = 'brush: javascript';
-          //SyntaxHighlighter.highlight({}, code);
+          code.innerHTML = nsHighlight.highlight('js', newData.tags.example);
         }
       }
 
       DOM.display(this.element, !!newData.text)
     },
+
     destroy: function(){
       if (this.data.tags && this.data.tags.description_)
-      {
         delete this.data.tags.description_;
-      }
 
       if (this.linksPanel)
       {
@@ -316,18 +318,20 @@
   var JsDocView = Class(View, {
     className: namespace + '.JsDocView',
     viewHeader: 'Description',
-    template: new Template(
-      '<div{element} class="view viewJsDoc">' +
+    template:
+      '<div class="view viewJsDoc">' +
         htmlHeader('Description') +
         '<div{content} class="content">' +
           '<!-- {contentPanel} -->' +
         '</div>' +
-      '</div>'
-    ),
+      '</div>',
+
     satelliteConfig: {
       contentPanel: {
         existsIf: getter('data.fullPath'),
-        delegate: getter('data.fullPath', nsCore.JsDocEntity),
+        delegate: function(owner){
+          return nsCore.JsDocEntity.getSlot(owner.data.fullPath);
+        },
         instanceOf: JsDocPanel
       }
     }
@@ -343,12 +347,20 @@
   var TemplateTreeNode = uiContainer.subclass({
     childFactory: null,
     className: namespace + '.TemplateTreeNode',
-    selectable: false,
     templateUpdate: function(tmpl){
       if (this.data.ref)
-      {
-        //DOM.insert(this.element, [DOM.createElement('SPAN.refList', DOM.wrap(this.data.ref, { 'span.ref': Function.$true }))], 0);
         classList(this.element).add('hasRefs');
+    },
+    satelliteConfig: {
+      refList: {
+        existsIf: getter('data.ref'),
+        instanceOf: uiNode.subclass({
+          template: 
+            '<span class="refList"><b>{</b>{ref}<b>}</b></span>',
+          templateUpdate: function(tmpl){
+            tmpl.ref.nodeValue = this.owner.data.ref;
+          }
+        })
       }
     }
   });
@@ -359,7 +371,7 @@
   TemplateTreeNode.Attribute = Class(TemplateTreeNode, 
     basis.ui(
       '<span{element} class="Doc-TemplateView-Node Doc-TemplateView-Attribute">' +
-        '<span>{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span>="{this_data_nodeValue}"</span>' + 
+        '<span>{this_data_nodeName}<!--{refList}-->="{this_data_nodeValue}"</span>' + 
       '</span>'
     ),
     {
@@ -373,7 +385,7 @@
   TemplateTreeNode.EmptyElement = Class(TemplateTreeNode,
     basis.ui(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
-        '<span><{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span><!--{attributes}-->/></span>' + 
+        '<span><{this_data_nodeName}<!--{refList}--><!--{attributes}-->/></span>' + 
       '</div>'
     ),
     {
@@ -401,7 +413,7 @@
   TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, 
     basis.ui(
       '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
-        '<span><{this_data_nodeName}<span class="refList"><b>{</b>{this_data_ref}<b>}</b></span><!--{attributes}-->></span>' + 
+        '<span><{this_data_nodeName}<!--{refList}--><!--{attributes}-->></span>' + 
         '<div{childNodesElement} class="Doc-TemplateView-NodeContent"></div>' + 
         '<span></{this_data_nodeName2}></span>' +
       '</div>'
@@ -566,7 +578,7 @@
       viewOptions: {
         instanceOf: ViewOptions,
         config: function(owner){
-          var contentClassList = classList(owner.tmpl.content);
+          var contentClassList = classList(owner.tmpl.content, 'show');
 
           return {
             title: 'References',
@@ -575,22 +587,19 @@
                 title: 'Schematic',
                 selected: true,
                 handler: function(){
-                  contentClassList.add('show-references');
-                  contentClassList.remove('show-realReferences');
+                  contentClassList.set('references');
                 }
               },
               {
                 title: 'Highlight',
                 handler: function(){
-                  contentClassList.remove('show-references');
-                  contentClassList.add('show-realReferences');
+                  contentClassList.set('realReferences');
                 }
               },
               {
                 title: 'Hide',
                 handler: function(){
-                  contentClassList.remove('show-references');
-                  contentClassList.remove('show-realReferences');
+                  contentClassList.clear();
                 }
               }
             ]
@@ -601,7 +610,7 @@
         existsIf: function(node){
           return node.data.obj && node.data.obj.prototype && node.data.obj.prototype.template;
         },
-        delegate: getter('delegate'),
+        delegate: Function.$self,
         instanceOf: TemplatePanel
       }
     }
@@ -617,10 +626,10 @@
   var InheritanceItem = Class(uiNode, {
     className: namespace + '.InheritanceItem',
     template: new Template(
-      '<li{element} class="item">' +
+      '<li class="item">' +
         '<div{content} class="title"><a href{refAttr}="#">{classNameText}</a></div>' +
         '<span class="namespace">{namespaceText}</span>' +
-        '<ul{childNodesElement}></ul>' +
+        '<ul{childNodesElement}/>' +
       '</li>'
     ),
     templateUpdate: function(tmpl, event, delta){
@@ -644,12 +653,10 @@
     childClass: InheritanceItem,
 
     template:
-      '<div{element} class="view viewInheritance">' +
+      '<div class="view viewInheritance">' +
         htmlHeader('Inheritance') +
         '<!-- {viewOptions} -->' +
-        '<ul{content} class="content">' +
-          '<!-- {childNodesHere} -->' +
-        '</ul>' +
+        '<ul{childNodesElement|content} class="content"/>' +
       '</div>',
 
     localGroupingClass: {
@@ -788,52 +795,42 @@
         '<a{trigger} href="#" class="trigger">...</a>' +
       '</div>',
 
-    templateUpdate: function(tmpl, event, delta){
-      if (!event || 'fullPath' in delta)
+    templateUpdate: function(tmpl, eventName, delta){
+      if (!eventName || (eventName == 'update' && 'fullPath' in delta))
       {
         var fullPath = this.data.host.fullPath + '.prototype.' + this.data.key;
         tmpl.titleText.nodeValue = this.data.obj.title;
         tmpl.refAttr.nodeValue = '#' + fullPath;
-        
-        this.jsDocPanel.setDelegate(nsCore.JsDocEntity(this.data.cls.className + '.prototype.' + this.data.key));
       }
     },
 
-    /*satelliteConfig: {
+    satelliteConfig: {
       jsdocs: {
-        instanceOf: JsDocPanel
-      }
-    }*/
-
-    init: function(config){
-      this.jsDocPanel = new JsDocPanel();
-      this.jsDocPanel.addHandler({
-        update: function(object, delta){
-          var tags = object.data.tags;
-          if (tags)
-          {
-            classList(this.element).add('hasJsDoc');
-            var type = tags.type || (tags.returns && tags.returns.type);
-            if (type)
-            {
-              DOM.insert(this.tmpl.types, [
-                DOM.createElement('SPAN.splitter', ':'),
-                parseTypes(type.replace(/^\s*\{|\}\s*$/g, ''))
-              ]);
+        instanceOf: JsDocPanel,
+        delegate: function(owner){
+          return nsCore.JsDocEntity.getSlot(owner.data.cls.className + '.prototype.' + owner.data.key);
+        },
+        config: {
+          handler: {
+            update: function(object, delta){
+              var owner = this.owner;
+              var tags = this.data.tags;
+              if (tags)
+              {
+                classList(owner.element).add('hasJsDoc');
+                var type = tags.type || (tags.returns && tags.returns.type);
+                if (type)
+                {
+                  DOM.insert(owner.tmpl.types, [
+                    DOM.createElement('SPAN.splitter', ':'),
+                    parseTypes(type.replace(/^\s*\{|\}\s*$/g, ''))
+                  ]);
+                }
+              }
             }
           }
         }
-      }, this)
-
-      uiNode.prototype.init.call(this, config);
-
-      DOM.insert(this.element, this.jsDocPanel.element)
-    },
-    destroy: function(){
-      this.jsDocPanel.destroy();
-      delete this.jsDocPanel;
-
-      uiNode.prototype.destroy.call(this);
+      }
     }
   });
 
@@ -890,16 +887,23 @@
     event_update: function(object, delta){
       ViewList.prototype.event_update.call(this, object, delta);
 
-      var newData = this.data;
-      if (newData.obj)
+      if (this.data.obj)
       {
+        var d = new Date();
         this.setChildNodes(
           Object
-            .values(mapDO[newData.fullPath].data.obj.docsProto_)
-            .map(function(val){ return typeof val == 'object' ? { data: Object.extend({ host: this }, val) } : null }, newData)
+            .values(mapDO[this.data.fullPath].data.obj.docsProto_)
+            .map(function(val){ return typeof val == 'object' ? { data: Object.extend({ host: this }, val) } : null }, this.data)
             .filter(Boolean)
         );
+        console.log('time: ', new Date - d);
       }
+    },
+
+    event_localGroupingChanged: function(node, oldGrouping){
+      ViewList.prototype.event_localGroupingChanged.call(this, node, oldGrouping);
+
+      classList(this.tmpl.content, 'grouping').set(this.localGrouping ? this.localGrouping.type : undefined);
     },
 
     childClass: PrototypeItem,
@@ -921,7 +925,7 @@
       childClass: {
         className: namespace + '.ViewPrototypePartitionNode',
         template:
-          '<div{element} class="Basis-PartitionNode">' +
+          '<div class="Basis-PartitionNode">' +
             '<div class="Basis-PartitionNode-Title">' +
               '{titleText}' +
             '</div>' +
@@ -941,9 +945,9 @@
                 title: 'Type',
                 selected: true,
                 handler: function(){
-                  classList(owner.tmpl.content).remove('classGrouping');
                   owner.setLocalSorting('data.obj.title');
                   owner.setLocalGrouping({
+                    type: 'type',
                     groupGetter: getter('data.obj.kind'),
                     titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE),
                     localSorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT)
@@ -953,13 +957,39 @@
               {
                 title: 'Implementation',
                 handler: function(){
-                  classList(owner.tmpl.content).add('classGrouping');
                   owner.setLocalSorting(function(node){
                     return (PROTOTYPE_ITEM_WEIGHT[node.data.kind] || 0) + '_' + node.data.title;
                   });
                   owner.setLocalGrouping({
+                    type: 'class',
                     groupGetter: function(node){
-                      return mapDO[node.data.cls.className] || mapDO['basis.Class'];
+                      console.log(node.data, node.data.key, node.data.cls.className, mapDO[node.data.cls.className]);
+                      var key = node.data.key;
+                      var tag = node.data.tag;
+                      var cls;
+                      if (tag == 'override')
+                      {
+                        cls = node.data.implementCls;
+                        if (!cls)
+                        {
+                          var cursor = node.data.cls.superClass_;
+                          var x = 10;
+                          while (cursor && x-- > 0)
+                          {
+                            var cfg = cursor.docsProto_ && cursor.docsProto_[key];
+                            if (cfg && cfg.tag == 'implement')
+                            { 
+                              cls = mapDO[cursor.className];
+                              node.data.implementCls = cls;
+                              break;
+                            }
+                            cursor = cursor.superClass_;
+                          }
+                        }
+                      }
+                      else
+                        cls = mapDO[node.data.cls.className] || mapDO['basis.Class'];
+                      return cls;
                     },
                     titleGetter: getter('data.fullPath'),
                     localSorting: function(group){
@@ -1004,7 +1034,9 @@
     satelliteConfig: {
       contentPanel: {
         existsIf: getter('data.fullPath'),
-        delegate: getter('data.fullPath + ".prototype.init"', nsCore.JsDocEntity),
+        delegate: function(owner){
+          return nsCore.JsDocEntity.getSlot(owner.data.fullPath + '.prototype.init');
+        },
         instanceOf: JsDocPanel
       }
     }
@@ -1021,12 +1053,11 @@
       '</div>',
 
     satelliteConfig: {
-      sourceCode: {
-        delegate: Function.$self,
-        instanceOf: nsHighlight.SourceCodeNode.subclass({
-          codeGetter: getter('data.obj || ""', String)
-        })
-      }
+      sourceCode: nsHighlight.SourceCodeNode.subclass({
+        autoDelegate: DELEGATE.OWNER,
+        lang: 'js',
+        codeGetter: getter('data.obj || ""', String)
+      })
     }
   });
 
@@ -1182,14 +1213,9 @@
     event_childNodesModified: function(node, delta){
       uiContainer.prototype.event_childNodesModified.call(this, node, delta);
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
-    },/*,
-    event_update: function(object, delta){
-      uiContainer.prototype.event_update.call(this, object, delta);
-      console.log(this.data.docsUid_, namespaceClsSplitBySuper.getSubset(this.data.docsUid_));
-      this.setDataSource(namespaceClsSplitBySuper.getSubset(this.data.clsId, true));
-    }*/
+    },
+    childClass: Class.SELF
   });
-  ViewNSNode.prototype.childClass = ViewNSNode;
 
   var viewNamespaceMap = new View({
     handler: {
@@ -1229,12 +1255,6 @@
           }
 
           namespaceClassDS.set(Object.values(dsClsList));
-
-          /*
-          var clsList = Object.values(namespace.names()).filter(basis.Class.isClass);
-
-          namespaceClassDS.set(clsList.map(function(cls){ return [clsById[cls.docsUid_], clsById[cls.docsSuperUid_]] }).flatten());
-          */
         }
       }
     },

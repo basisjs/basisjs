@@ -38,6 +38,7 @@
           //t = new Date;
           var node = new basis.format.highlight.SourceCodeNode({
             container: document.body,
+            lang: 'js',
             normalize: false,
             data: {
               code: req.responseText//.replace(/^\s*\n/, function(m){ return '.' + m })

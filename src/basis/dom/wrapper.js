@@ -699,7 +699,7 @@ basis.require('basis.html');
     },
 
    /**
-    * @param {basis.dom.wrapper.AbstractNode}
+    * @param {basis.dom.wrapper.AbstractNode} owner
     */
     setOwner: function(owner){
       if (!owner || owner instanceof AbstractNode == false)

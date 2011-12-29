@@ -1231,7 +1231,7 @@ basis.require('basis.data');
       return 0;
 
     var pos;
-    var id = map.object.id;
+    var id = map.object.eventObjectId;
     var value = map.value || 0;
     var cmpValue;
     var cmpId;
@@ -1246,9 +1246,9 @@ basis.require('basis.data');
       item = array[pos];
       cmpValue = item.value;
 
-      /*if (cmpValue === value)
+      if (cmpValue === value)
       {
-        cmpId = item.object.id;
+        cmpId = item.object.eventObjectId;
         if (id < cmpId)
           r = pos - 1;
         else 
@@ -1258,7 +1258,7 @@ basis.require('basis.data');
             return id == cmpId ? pos : 0;  
       }
       else
-      {*/
+      {
         if (value < cmpValue)
           r = pos - 1;
         else 
@@ -1266,7 +1266,7 @@ basis.require('basis.data');
             l = pos + 1;
           else
             return value == cmpValue ? pos : 0;  
-      //}
+      }
     }
     while (l <= r);
 

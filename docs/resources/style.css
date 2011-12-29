@@ -500,7 +500,7 @@
   {
     margin: 1em .5ex .2em 0;
   }
-  #Content .viewPrototype .classGrouping .Basis-PartitionNode-Title
+  #Content .viewPrototype .grouping-class .Basis-PartitionNode-Title
   {
     background: url(img/bullet_square_red.png) no-repeat 2px center;
     padding-left: 20px;

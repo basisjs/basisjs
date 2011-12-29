@@ -114,7 +114,7 @@
         if (!p)
         {
           if (typeof console != 'undefined')
-            console.warn('jsdoc parse error: ', value, p);
+            console.warn('jsdoc parse error: ', value, text);
         }
         else
         {
@@ -159,22 +159,6 @@
           };
         }
       }
-      /*else if (key == 'type')
-      {
-        var typ = value.match(/\{([^}]+)\}/)[1];
-        var ref = map[typ];
-        if (ref && ref.kind == 'class')
-        {
-          var obj = map[this.data.path];
-          var objHolder = map[this.data.path.replace(/\.prototype\.[a-z0-9\_]+$/i, '')];
-          //if (/childClass/.test(this.data.path)) debugger;
-          if (obj && obj.kind == 'property')
-          {
-            console.log(this.data.path + ': ' + objHolder.fullPath + ' -' + obj.title + '-> ' + ref.fullPath);
-          }
-        }
-        tags[key] = value;
-      }*/
       else
         tags[key] = value;
     }
@@ -193,7 +177,7 @@
       {
         var self = this;
         setTimeout(function(){
-          self.parseText(self.data.text)
+          self.parseText(self.data.text);
         }, 0);
       }
     },
@@ -203,24 +187,10 @@
         var self = this;
         //debugger;
         setTimeout(function(){
-          self.parseText(self.data.text)
+          self.parseText(self.data.text);
         }, 0);
       }
-    }/*,
-    init: function(){
-      this.inherit.apply(this, arguments);
-
-      var fullPath = this.data.path;
-      var objData = map[fullPath];
-
-      if (objData && /class|property|method/.test(objData.kind))
-      {
-        if (!fetchInheritedJsDocs(fullPath, this))
-        {
-          awaitingUpdateQueue[this.data.path] = this;
-        }
-      }
-    }*/,
+    },
     parseText: function(text){
       if (this.parsedText_ != text)
       {

@@ -241,7 +241,7 @@
       nodeType: 'Class',
 
       views: [
-        nsView.viewClassMap,
+        //nsView.viewClassMap,
         nsView.viewInheritance,
         nsView.viewTemplate,
         //nsView.viewConstructor,
