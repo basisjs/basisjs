@@ -37,7 +37,7 @@ basis.require('basis.ua');
   * - Attribute setters/getters:
   *     {basis.dom.setAttribute}
   * - Checkers:
-  *     {basis.dom.is}, {basis.dom.parentOf}, {basis.dom.isInside}
+  *     {basis.dom.parentOf}, {basis.dom.isInside}
   * - Input interface:
   *     {basis.dom.focus}, {basis.dom.setSelectionRange},
   *     {basis.dom.getSelectionStart}, {basis.dom.getSelectionEnd}

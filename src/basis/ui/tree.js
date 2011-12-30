@@ -137,7 +137,14 @@ basis.require('basis.ui');
   var Node = Class(UIContainer, ExpandCollapseMixin, {
     className: namespace + '.Node',
 
+   /**
+    * @inheritDoc
+    */
     canHaveChildren: false,
+
+   /**
+    * @inheritDoc
+    */
     childFactory: null,
 
     event_collapse: createEvent('collapse'),
@@ -189,8 +196,19 @@ basis.require('basis.ui');
   var Folder = Class(Node, {
     className: namespace + '.Folder',
 
+   /**
+    * @inheritDoc
+    */
     canHaveChildren: true,
+
+   /**
+    * @inheritDoc
+    */
     childClass: Node,
+
+   /**
+    * @inheritDoc
+    */
     localGroupingClass: GroupingNode,
 
     event_expand: function(){
@@ -284,7 +302,14 @@ basis.require('basis.ui');
   var Tree = Class(UIControl, ExpandCollapseMixin, {
     className: namespace + '.Tree',
 
+   /**
+    * @inheritDoc
+    */
     childClass: Node,
+
+   /**
+    * @inheritDoc
+    */
     localGroupingClass: GroupingNode,
 
     //childFactory: treeChildFactory,

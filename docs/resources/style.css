@@ -195,6 +195,7 @@
   #Content H2.kind-method    { background-image: url(img/node_function_big.png) }
   #Content H2.kind-namespace { background-image: url(img/node_module_big.png)   }
   #Content H2.kind-constant  { background-image: url(img/node_const_big.png)    }
+  #Content H2.kind-event     { background-image: url(img/node_event.png)    }
 
   #Content H2 SPAN
   {
@@ -495,6 +496,12 @@
   #Content .viewPrototype .Basis-PartitionNode-Content
   {
     border-top: 1px solid #E0E0E0;
+  }
+  #Content .viewPrototype .Basis-PartitionNode-Content .empty
+  {
+    margin: 1em 0 2em;
+    color: #888;
+    font-style: italic;
   }
   #Content .viewPrototype .Basis-PartitionNode-Title
   {

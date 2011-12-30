@@ -2187,6 +2187,9 @@ basis.require('basis.html');
 
     // events
 
+   /**
+    * @inheritDoc
+    */
     event_childNodesModified: function(node, delta){
       events.childNodesModified.call(this, node, delta);
 
@@ -2201,6 +2204,9 @@ basis.require('basis.html');
       }
     },
 
+   /**
+    * @inheritDoc
+    */
     event_ownerChanged: function(node, oldOwner){
       // detach from old owner, if it still connected
       if (oldOwner && oldOwner.localGrouping === this)
@@ -2359,11 +2365,17 @@ basis.require('basis.html');
       return oldChild;
     },
 
+   /**
+    * @inheritDoc
+    */
     clear: function(alive){
       DomMixin.clear.call(this);
       this.map_ = {};
     },
 
+   /**
+    * @inheritDoc
+    */
     destroy: function(){
       this.setOwner();
 

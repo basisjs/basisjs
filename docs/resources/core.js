@@ -123,14 +123,14 @@
             description: p[3]
           };
 
-          if (key == 'config')
+          /*if (key == 'config')
           {
             JsDocConfigOption({
               path: this.data.path + ':' + p[2],
               type: p[1],
               description: p[3] || ''
             });
-          }
+          }*/
         }
       }
       else if (key == 'see' || key == 'link')
@@ -163,6 +163,23 @@
         tags[key] = value;
     }
 
+    if (tags.inheritDoc)
+    {
+      var path = this.data.path;
+      var p = path.split('.prototype.');
+      var sup = mapDO[p[0]].data.obj.superClass_;
+      if (sup)
+      {
+        var desc = sup.docsProto_[p[1]];
+        if (desc)
+        {
+          //console.log(path + ' -> ' + desc.cls.className);
+          this.setInheritDoc(JsDocEntity(desc.cls.className + '.prototype.' + p[1]))
+        }
+      }
+      return;
+    }
+
     delete tags.inheritDoc;
     if (tags.description.trim() == '')
       delete tags.description;
@@ -170,7 +187,36 @@
     this.set('tags', Object.keys(tags).length ? tags : null);
   }
 
+
+  basis.data.SUBSCRIPTION.add(
+    'INHERIT_DOCS',
+    {
+      inheritDocChanged: function(object, oldInheritDoc){
+        this.remove(object, oldInheritDoc);
+        this.add(object, object.inheritDoc);
+      }
+    },
+    function(action, object){
+      action(object, object.inheritDoc);
+    }
+  );
+
+  
+  basis.event.LISTEN.add('inheritDoc', 'inheritDocChanged');
+
+  var destroyJsDocEntity = JsDocEntity.entityType.entityClass.prototype.destroy;
   JsDocEntity.entityType.entityClass.extend({
+    subscribeTo: basis.data.SUBSCRIPTION.INHERIT_DOCS,
+    event_inheritDocChanged: basis.event.create('inheritDocChanged'),
+    inheritDoc: null,
+    listen: {
+      inheritDoc: {
+        update: function(inheritDoc, delta){
+          if ('tags' in delta)
+            this.set('tags', inheritDoc.data.tags);
+        }
+      }
+    },
     event_update: function(object, delta){
       nsData.DataObject.prototype.event_update.call(this, object, delta);
       if (this.subscriberCount && 'text' in delta)
@@ -180,16 +226,17 @@
           self.parseText(self.data.text);
         }, 0);
       }
+      this.setActive(!!this.subscriberCount);
     },
     event_subscribersChanged: function(){
       if (this.subscriberCount && this.data.text)
       {
         var self = this;
-        //debugger;
         setTimeout(function(){
           self.parseText(self.data.text);
         }, 0);
       }
+      this.setActive(!!this.subscriberCount);
     },
     parseText: function(text){
       if (this.parsedText_ != text)
@@ -197,6 +244,24 @@
         this.parsedText_ = text;
         parseJsDocText.call(this, text);
       }
+    },
+    setInheritDoc: function(doc){
+      var oldInherit = this.inheritDoc;
+      if (oldInherit != doc)
+      {
+        this.inheritDoc = doc;
+
+        if (doc)
+          this.set('tags', doc.data.tags);
+
+        this.event_inheritDocChanged(this, oldInherit);
+      }
+    },
+    destroy: function(){
+      if (this.inheritDoc)
+        this.setInheritDoc(null);
+
+      destroyJsDocEntity.call(this);
     }
   });
 
@@ -361,6 +426,7 @@
         if (tag)
         {
           clsProto[key] = {
+            path: fullPath,
             key: key,
             cls: cls,
             obj: data,

@@ -792,15 +792,13 @@
           '<a href{refAttr}="#">{titleText}</a><span{types} class="types"/>' +
         '</div>' +
         '<!-- {jsdocs} -->' +
-        '<a{trigger} href="#" class="trigger">...</a>' +
       '</div>',
 
     templateUpdate: function(tmpl, eventName, delta){
       if (!eventName || (eventName == 'update' && 'fullPath' in delta))
       {
-        var fullPath = this.data.host.fullPath + '.prototype.' + this.data.key;
-        tmpl.titleText.nodeValue = this.data.obj.title;
-        tmpl.refAttr.nodeValue = '#' + fullPath;
+        tmpl.titleText.nodeValue = this.data.key;
+        tmpl.refAttr.nodeValue = '#' + this.data.path;
       }
     },
 
@@ -808,7 +806,7 @@
       jsdocs: {
         instanceOf: JsDocPanel,
         delegate: function(owner){
-          return nsCore.JsDocEntity.getSlot(owner.data.cls.className + '.prototype.' + owner.data.key);
+          return nsCore.JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
         },
         config: {
           handler: {
@@ -843,6 +841,7 @@
         '<div{content} class="title">' +
           '<a href{refAttr}="#">{titleText}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
         '</div>' +
+        '<!-- {jsdocs} -->' +
       '</div>',
 
     templateUpdate: function(tmpl, event, delta){
@@ -860,6 +859,7 @@
         '<div{content} class="title">' +
           '<a href{refAttr}="#">{titleText}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
         '</div>' +
+        '<!-- {jsdocs} -->' +
       '</div>',
 
     templateUpdate: function(tmpl, event, delta){
@@ -890,10 +890,23 @@
       if (this.data.obj)
       {
         var d = new Date();
+
+        var clsVector = nsCore.getInheritance(this.data.obj);
+        if (!this.clsVector)
+          this.clsVector = new basis.data.Dataset();
+
+        this.clsVector.set(clsVector.map(function(item){
+          return mapDO[item.cls.className];
+        }));
+
         this.setChildNodes(
           Object
             .values(mapDO[this.data.fullPath].data.obj.docsProto_)
-            .map(function(val){ return typeof val == 'object' ? { data: Object.extend({ host: this }, val) } : null }, this.data)
+            .map(function(val){
+              return typeof val == 'object'
+                ? { data: Object.extend({ host: this }, val) }
+                : null
+             }, this.data)
             .filter(Boolean)
         );
         console.log('time: ', new Date - d);
@@ -924,12 +937,19 @@
       className: namespace + '.ViewPrototypeGroupingNode',
       childClass: {
         className: namespace + '.ViewPrototypePartitionNode',
+        handler: {
+          childNodesModified: function(){
+            DOM.display(this.tmpl.empty, !this.first);
+          }
+        },
         template:
           '<div class="Basis-PartitionNode">' +
             '<div class="Basis-PartitionNode-Title">' +
               '{titleText}' +
             '</div>' +
-            '<div{childNodesElement|content} class="Basis-PartitionNode-Content"/>' +
+            '<div{childNodesElement|content} class="Basis-PartitionNode-Content">' +
+              '<div{empty} class="empty">Implement nothing</div>' +
+            '</div>' +
           '</div>'
       }
     },
@@ -943,7 +963,6 @@
             childNodes: [
               {
                 title: 'Type',
-                selected: true,
                 handler: function(){
                   owner.setLocalSorting('data.obj.title');
                   owner.setLocalGrouping({
@@ -956,14 +975,20 @@
               },
               {
                 title: 'Implementation',
+                selected: true,
                 handler: function(){
                   owner.setLocalSorting(function(node){
-                    return (PROTOTYPE_ITEM_WEIGHT[node.data.kind] || 0) + '_' + node.data.title;
+                    return (PROTOTYPE_ITEM_WEIGHT[node.data.obj.kind] || 0) + '_' + node.data.key;
                   });
+
+                  if (!owner.clsVector)
+                    owner.clsVector = new basis.data.Dataset();
+
                   owner.setLocalGrouping({
                     type: 'class',
+                    dataSource: owner.clsVector,
                     groupGetter: function(node){
-                      console.log(node.data, node.data.key, node.data.cls.className, mapDO[node.data.cls.className]);
+                      //console.log(node.data, node.data.key, node.data.cls.className, mapDO[node.data.cls.className]);
                       var key = node.data.key;
                       var tag = node.data.tag;
                       var cls;
@@ -973,13 +998,12 @@
                         if (!cls)
                         {
                           var cursor = node.data.cls.superClass_;
-                          var x = 10;
-                          while (cursor && x-- > 0)
+                          while (cursor)
                           {
                             var cfg = cursor.docsProto_ && cursor.docsProto_[key];
                             if (cfg && cfg.tag == 'implement')
                             { 
-                              cls = mapDO[cursor.className];
+                              cls = mapDO[cfg.cls.className];
                               node.data.implementCls = cls;
                               break;
                             }
@@ -988,8 +1012,9 @@
                         }
                       }
                       else
-                        cls = mapDO[node.data.cls.className] || mapDO['basis.Class'];
-                      return cls;
+                        cls = mapDO[node.data.cls.className];
+
+                      return cls || mapDO['basis.Class'];
                     },
                     titleGetter: getter('data.fullPath'),
                     localSorting: function(group){
