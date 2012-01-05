@@ -18,6 +18,7 @@
   .Basis-Scrollbar.horizontal
   {
     left: 0;
+    rig1ht: 10px;
     right: 0;
     bottom: 2px;
     height: 4px;
@@ -26,10 +27,21 @@
   .Basis-Scrollbar.vertical
   {
     top: 0;
+    b1ottom: 10px;
     bottom: 0;
     right: 2px;
     width: 4px;
   }
+
+  .bothScrollbars .Basis-Scrollbar.horizontal
+  {
+    right: 10px;
+  }
+  .bothScrollbars .Basis-Scrollbar.vertical
+  {
+    bottom: 10px;
+  }
+
 
   .Basis-Scrollbar-Track
   {

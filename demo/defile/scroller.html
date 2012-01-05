@@ -8,6 +8,7 @@
   <title>Basis Demos: Scroller</title>
 
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/scrollPanel/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/pageslider/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -17,18 +18,30 @@
       font-family: Tahoma, Verdana, Arial, sans-serif;
     }
 
-    .DemoBlock
+    .DemoBlock-Wrapper
     {
-      border: 1px solid #D0D0D0;
-      border-radius: 3px;
-        -moz-border-radius: 3px;
-        -webkit-border-radius: 3px;
-      margin: 0 1% .5em 0;
-      overflow: hidden;
-      position: relative;
-      width: 48%;
+      margin-bottom: .5em;
+      width: 50%;
       float: left;
     }
+    .DemoBlock-Wrapper.short
+    {
+      width: 25%;
+    }
+
+
+    .DemoBlock
+    {
+      margin-right: 1ex;
+
+      border: 1px solid #D0D0D0;
+        -moz-border-radius: 3px;
+        -webkit-border-radius: 3px;
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
     .DemoBlock H2
     {
       font-size: 80%;
@@ -80,6 +93,102 @@
       cursor: move;
     }
 
+    /* Hor Image Gallery*/
+    .HImageGallery
+    {
+      height: 250px;
+    }
+    
+    .HImageGallery .Basis-ScrollPanel-Content
+    {
+      height: 100%;
+      white-space: nowrap;
+    }
+
+    .HImageGallery .ImageItem
+    {
+      display: inline-block;
+      text-align: center;
+      width: 150px;
+      height: 100%;
+    }
+
+    .HImageGallery .ImageItem IMG,
+    .VImageGallery .ImageItem IMG
+    {
+      padding: 10px;
+      vertical-align: middle;
+
+      border: 1px solid #DDDDDD;
+
+        -moz-border-radius: 10px;
+        -webki-border-radius: 10px;
+      border-radius: 10px;
+
+      box-shadow: 2px 1px 5px 0 rgba(0, 0, 0, 0.15);
+    }
+    .HImageGallery .aligner,
+    .VImageGallery .aligner
+    {
+      height: 100%;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .VImageGallery
+    {
+      height: 250px;
+    }
+
+    .VImageGallery .Basis-ScrollPanel-Content
+    {
+      width: 100%;
+    }
+
+    .VImageGallery .ImageItem
+    {
+      height: 100px;
+      text-align: center;
+    }
+
+    .ScrollList
+    {
+      height: 250px;
+      width: 100%;
+    }
+
+    .ScrollList .Basis-ScrollPanel-Content
+    {
+      width: 100%;
+    }
+
+    .ScrollList-Item
+    {
+
+      font-size: 140%;
+      padding: 1em;
+      border-bottom: 1px solid #EEE;
+    }
+
+
+    .PageSlider
+    {
+      height: 250px;
+
+    }
+    .PageSlider .Basis-Page
+    {
+      background: #DDD;
+    }
+    .PageSlider .PageContent
+    {
+      margin-top: 75px;
+
+      text-align: center;
+      font-size: 430%;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    }
 
   </style>
   <!--[if lt IE 7]>
@@ -121,14 +230,18 @@
 
     var Scroller = basis.ui.scroller.Scroller;
     var ScrollPanel = basis.ui.scroller.ScrollPanel;
+    var ScrollGallery = basis.ui.scroller.ScrollGallery;
+    var PageSlider = basis.ui.pageslider.PageSlider;
     var uiContainer = basis.ui.Container;
 
     var nsEntity = basis.entity;
     
     var getter = Function.getter;
 
-    function createBlock(header){
-      return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
+    function createBlock(header, cssClassName){
+      var demoBlock = DOM.createElement('.DemoBlock', DOM.createElement('H2', header));
+      DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock-Wrapper' + (cssClassName ? '.' + cssClassName : ''), demoBlock));
+      return demoBlock;
     }
 
 
@@ -153,11 +266,11 @@
 
       childClass: {
         template:
-          '<a href="#" class="Country" event-click="select">{titleText}</a>',
+          '<a href="#" class="Country" event-click="scrollTo">{titleText}</a>',
 
         action: {
-          select: function(){
-            this.select();
+          scrollTo: function(){
+            worldMap.scrollTo(this.data.PositionX, this.data.PositionY);
           }
         },
 
@@ -165,23 +278,14 @@
           tmpl.titleText.nodeValue = this.data.Title;
         }
       },
-      
-      selection: {
-        handler: {
-          datasetChanged: function(){
-            var item = this.pick();
-            worldMap.scrollTo(item.data.PositionX, item.data.PositionY);
-          }
-        }
-      },
 
       childNodes: [
-        { data: { Title: 'Russia', PositionX: '2577', PositionY: '212' } },
-        { data: { Title: 'China', PositionX: '2725', PositionY: '551' } },
-        { data: { Title: 'Kazakhstan', PositionX: '2342', PositionY: '366' } },
-        { data: { Title: 'Ukraine', PositionX: '2027', PositionY: '357' } },
-        { data: { Title: 'USA', PositionX: '792', PositionY: '474' } },
-        { data: { Title: 'Canada', PositionX: '904', PositionY: '259' } }
+        { data: { Title: 'Russia', PositionX: 2577, PositionY: 212 } },
+        { data: { Title: 'China', PositionX: 2725, PositionY: 551 } },
+        { data: { Title: 'Kazakhstan', PositionX: 2342, PositionY: 366 } },
+        { data: { Title: 'Ukraine', PositionX: 2027, PositionY: 357 } },
+        { data: { Title: 'USA', PositionX: 792, PositionY: 474 } },
+        { data: { Title: 'Canada', PositionX: 904, PositionY: 259 } }
       ]
     });
 
@@ -220,6 +324,113 @@
       }
     });
 
+    //
+    // Scroll List
+    //
+
+    new ScrollPanel({
+      scrollX: false,
+      cssClassName: 'ScrollList',
+      container: createBlock('Scroll List', 'short'),
+
+      childClass: {
+        template: 
+          '<div class="ScrollList-Item">{titleText}</div>',
+
+        templateUpdate: function(){
+          this.tmpl.titleText.nodeValue = this.title;
+        }
+      },
+
+      childNodes: [
+        { title: 'List Item 1' },
+        { title: 'List Item 2' },
+        { title: 'List Item 3' },
+        { title: 'List Item 4' },
+        { title: 'List Item 5' },
+        { title: 'List Item 6' },
+        { title: 'List Item 7' },
+        { title: 'List Item 8' },
+        { title: 'List Item 9' },
+        { title: 'List Item 10' }
+      ]
+    });
+
+    //
+    // Page Slider
+    //
+
+    new PageSlider({
+      cssClassName: 'PageSlider',
+      container: createBlock('Page Slider', 'short'),
+
+      childNodes: [
+        { content: DOM.createElement('.PageContent', 'Page 1') },
+        { content: DOM.createElement('.PageContent', 'Page 2') },
+        { content: DOM.createElement('.PageContent', 'Page 3') }
+      ]
+    });
+
+    //
+    // Image Gallery
+    //
+
+    var ImageGallery = ScrollGallery.subclass({
+      cssClassName: 'ImageGallery',
+      childClass: {
+        template: 
+          '<div{content} class="ImageItem" event-click="select">' +
+            '<img{image} src=""/>' +
+            '<span class="aligner"/>' +
+          '</div>',
+
+        templateUpdate: function(){
+          this.tmpl.image.src = this.src;
+        }
+      },
+
+      childTransform: function(child, closeness){
+        DOM.setStyle(child.tmpl.image, {
+          width: (60 + 40 * closeness) + 'px'
+        });
+      },
+    });
+
+    new ImageGallery({
+      scrollX: true,
+      container: createBlock('Horizontal Image Gallery', 'short'),
+      cssClassName: 'HImageGallery',
+
+      childNodes: [
+        { src: 'button.png' },
+        { src: 'calendar.png' },
+        { src: 'data_index.png' },
+        { src: 'dataset.png' },
+        { src: 'form.png' },
+        { src: 'label.png' },
+        { src: 'paginator.png' },
+        { src: 'popup.png' },
+        { src: 'resizer.png' }
+      ]
+    });
+
+    new ImageGallery({
+      scrollY: true,
+      container: createBlock('Vertical Image Gallery', 'short'),
+      cssClassName: 'VImageGallery',
+
+      childNodes: [
+        { src: 'button.png' },
+        { src: 'calendar.png' },
+        { src: 'data_index.png' },
+        { src: 'dataset.png' },
+        { src: 'form.png' },
+        { src: 'label.png' },
+        { src: 'paginator.png' },
+        { src: 'popup.png' },
+        { src: 'resizer.png' }
+      ]
+    });
 
   </script>
 </body>

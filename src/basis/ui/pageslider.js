@@ -37,6 +37,8 @@ basis.require('basis.ui.scroller');
   var DOM = basis.dom;
   var Class = basis.Class;
 
+  var PageControl = basis.ui.tabs.PageControl;
+  var Scroller = basis.ui.scroller.Scroller;
   var classList = basis.cssom.classList;
 
 
@@ -44,99 +46,84 @@ basis.require('basis.ui.scroller');
   // main part
   //
   
-  var namespace = 'basis.ui';
-
-  var PageSlider = Class(basis.ui.tabs.PageControl, {
+  var PageSlider = Class(PageControl, {
     className: namespace + '.PageSlider',
 
     template: 
       '<div class="Basis-PageControl Basis-PageSlider">' +
-        '<div/>' +
+        '<div{childNodesElement} class="Basis-PageSlider-Content"/>' +
       '</div>',
 
+    childClass: {
+      event_select: function(){
+        this.constructor.superClass_.prototype.event_select.apply(this, arguments);
+        this.parentNode.scrollToPage(this);
+      }
+    },
+
     event_childNodesModified: function(node, delta){
-      basis.ui.tabs.PageControl.event_childNodesModified.call(this, node, delta);
-
-      /*this.pageSliderCssRule.setStyle({
-        width: (100 / this.childNodes.length) + '%'
-      });*/
-
-      /*DOM.setStyle(this.element, {
-        width: (100 * this.childNodes.length) + '%'
-      });*/
+      PageControl.prototype.event_childNodesModified.call(this, node, delta);
 
       for (var i = 0, child; child = this.childNodes[i]; i++)
         basis.cssom.setStyle(child.element, { left: (100 * i) + '%' });
     },
 
     init: function(config){
+      PageControl.prototype.init.call(this, config);
+
       var cssClassName = 'gerericRule_' + this.eventObjectId;
       this.pageSliderCssRule = basis.cssom.cssRule('.' + cssClassName + ' > .Basis-Page');
-
-      this.constructor.superClass_.prototype.init.call(this, config);
-
       classList(this.element).add(cssClassName);
 
-      this.scroller = new basis.ui.Scroller({
-        targetElement: this.element,
-        preventScrollY: true,
+      this.scroller = new Scroller({
+        targetElement: this.tmpl.childNodesElement,
+        scrollY: false,
         minScrollDelta: 10,
         handler: {
-          startInertia: function(scroller){
-            var selectedItem = this.selection.pick();
-            if (selectedItem)
-            {
-              var slideToItem = selectedItem;
-              if (scroller.currentDirectionX == 0 || 
-                (scroller.currentDirectionX == 1 && scroller.viewportX < selectedItem.element.offsetLeft) || 
-                (scroller.currentDirectionX == -1 && scroller.viewportX > selectedItem.element.offsetLeft)
-              )
-              {
-                scroller.minScrollDeltaXReached = true;
-                var slideToItemPosition = Math.round(scroller.viewportX / selectedItem.element.offsetWidth);
-                slideToItem = this.childNodes[slideToItemPosition];
-              }
-              else
-                slideToItem = scroller.currentDirectionX == 1 ? selectedItem.nextSibling : selectedItem.previousSibling;
-
-              if (!slideToItem)
-                slideToItem = selectedItem;
-
-              if (slideToItem == selectedItem)
-                this.slideToPage(selectedItem);
-              else
-                slideToItem.select();
-            }
-
-            scroller.currentVelocityX = 0;
-          }
+          startInertia: this.setPage
         },
         handlerContext: this
       });
 
-      this.selection.addHandler({
-        datasetChanged: function(){
-          var item = this.pick();
-          if (item)
-            item.parentNode.slideToPage(item);
-        }
-      });
-
       if (this.selection.itemCount)
+        this.scrollToPage(this.selection.pick())
+    },
+
+    setPage: function(scroller){
+      var currentPage = this.selection.pick();
+      if (!currentPage)
+        return;
+
+        var scroller = this.scroller;
+        var pageWidth = currentPage.element.offsetWidth;
+        var pagePosition = currentPage.element.offsetLeft
+
+        var pageScrollTo = currentPage;
+        if (scroller.currentVelocityX)
+        {
+          pageScrollTo = (scroller.currentVelocityX > 0 ? currentPage.nextSibling : currentPage.previousSibling) || currentPage;
+        }
+        else if ((scroller.viewportX > (pagePosition + pageWidth / 2)) 
+          || (scroller.viewportX < (pagePosition - pageWidth / 2))
+        )
+        {
+          var dir = scroller.viewportX - pagePosition;
+          pageScrollTo = (dir > 0 ? currentPage.nextSibling : currentPage.previousSibling) || currentPage;
+        }
+
+        this.scrollToPage(pageScrollTo);
+    },
+
+    scrollToPage: function(page){
+      if (this.scroller)
       {
-        var self = this;
-        setTimeout(function(){
-          self.slideToPage(self.selection.pick())
-        }, 0);
+        page.select();
+        this.scroller.setPositionX(page.element.offsetLeft, true);
       }
     },
 
-    slideToPage: function(page){
-      this.scroller.setTargetPosition(page.element.offsetLeft);
-    },
-
     destroy: function(){
-      this.constructor.superClass_.prototype.init.call(this, config);
+      PageControl.prototype.init.call(this, config);
 
       DOM.Style.getStyleSheet().removeCssRule(this.pageSliderCssRule.rule);
       this.pageSliderCssRule = null;

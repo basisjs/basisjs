@@ -7,6 +7,11 @@
     border: none;
   }
 
+  .Basis-PageSlider-Content
+  {
+    height: 100%;
+  }
+
   .Basis-PageSlider .Basis-Page
   {
     position: absolute;
