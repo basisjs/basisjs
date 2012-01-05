@@ -31,6 +31,7 @@
       'property': 'Property',
       'classMember': 'ClassMember',
       'constant': 'Constant',
+      'constantObject': 'ConstantObject',
       'htmlElement': 'HtmlElement',
       'class': 'Class',
       'object': 'Object',
@@ -43,6 +44,7 @@
       Function: 'Functions',
       Property: 'Properties',
       Constant: 'Constants',
+      ConstantObject: 'Constants',
       Class: 'Classes',
       Object: 'Objects',
       HtmlElement: 'DOM elements',
@@ -179,7 +181,10 @@
       collapsed: true,
 
       childFactory: function(config){
-        return new kindNodeClass[config.delegate.data.kind](config);
+        var kind = config.delegate.data.kind;
+        if (kind == 'constant' && typeof config.delegate.data.obj == 'object' && !Array.isArray(config.delegate.data.obj))
+          kind = 'constantObject';
+        return new kindNodeClass[kind](config);
       },
       localSorting: function(node){
         return groupWeight[node.nodeType] + '_' + node.data.title;
@@ -215,6 +220,13 @@
       selectable: false,
       localGrouping: false,
       expand: nsTree.Folder.prototype.expand
+    });
+
+   /**
+    * @class
+    */
+    var docConstantObject = Class(BaseDocTreeFolder, {
+      nodeType: 'ConstantObject'
     });
 
    /**
@@ -274,6 +286,7 @@
       'property': docProperty,
       'classMember': docClassMember,
       'constant': docConstant,
+      'constantObject': docConstantObject,
       'htmlElement': docHtmlElement,
       'class': docClass,
       'object': docObject

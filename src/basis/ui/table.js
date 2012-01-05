@@ -109,6 +109,7 @@ basis.require('basis.ui');
     },
 
     childClass: {
+      className: namespace + '.HeaderPartitionNode',
       init: function(config){
         PartitionNode.prototype.init.call(this, config);
         this.cell = new HeaderPartitionNode({ titleGetter: this.titleGetter, delegate: this });

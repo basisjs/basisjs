@@ -1443,7 +1443,7 @@ basis.require('basis.ui.popup');
     event_change: function(value, oldValue){
       MatchProperty.prototype.event_change.call(this, value, oldValue);
 
-      this.match();
+      this.applyMatch();
     },
 
     init: function(config){
@@ -1452,7 +1452,7 @@ basis.require('basis.ui.popup');
       this.node.addHandler(NodeMatchHandler, this);
     },
 
-    match: function(){
+    applyMatch: function(){
       this.node.childNodes.forEach(function(child){
         this.matchFunction(child, this.value == '');
       }, this);
@@ -1519,6 +1519,7 @@ basis.require('basis.ui.popup');
     Combobox: Field.Combobox,
     ComplexField: ComplexField,
     Matcher: Matcher,
+    MatchProperty: MatchProperty,
     MatchFilter: MatchFilter,
     MatchInput: MatchInput
   });

@@ -112,7 +112,7 @@ basis.require('basis.event');
   */
   var SUBSCRIPTION = {
     NONE: 0,
-    MASK: 0,
+    ALL: 0,
 
    /**
     * Registrate new type of subscription
@@ -167,7 +167,7 @@ basis.require('basis.event');
       };
 
       SUBSCRIPTION[name] = subscriptionSeed;
-      SUBSCRIPTION.MASK |= subscriptionSeed;
+      SUBSCRIPTION.ALL |= subscriptionSeed;
 
       subscriptionSeed <<= 1;
     }
@@ -311,7 +311,7 @@ basis.require('basis.event');
     active: false,
 
    /**
-    * Subscriber type indicates what sort of influence has currency object on
+    * Subscriber type indicates what sort of influence has current object on
     * related objects (delegate, source, dataSource etc).
     * @type {basis.data.SUBSCRIPTION|number}
     */
@@ -455,7 +455,7 @@ basis.require('basis.event');
 
       // subscription sheme: activate subscription if active
       if (this.active)
-        applySubscription(this, this.subscribeTo, SUBSCRIPTION.MASK);
+        applySubscription(this, this.subscribeTo, SUBSCRIPTION.ALL);
     },
 
    /**
@@ -521,7 +521,7 @@ basis.require('basis.event');
         if (newDelegate.delegate && this.isConnected(newDelegate))
         {
           // DEBUG: show warning in debug mode that we drop delegate because it is already connected with object
-          ;;;if (newDelegate && typeof console != 'undefined') console.warn('(debug) New delegate has already connected to object. Delegate assign has been ignored.', this, newDelegate);
+          ;;;if (typeof console != 'undefined') console.warn('(debug) New delegate has already connected to object. Delegate assign has been ignored.', this, newDelegate);
 
           // newDelegate can't be assigned
           return false;
@@ -644,8 +644,8 @@ basis.require('basis.event');
     },
 
    /**
-    * Default action on deprecate, set object state to basis.data.STATE.DEPRECATED,
-    * but only if object isn't in baiss.data.STATE.PROCESSING state.
+    * Default action on deprecate, set object state to {basis.data.STATE.DEPRECATED},
+    * but only if object isn't in {basis.data.STATE.PROCESSING} state.
     */
     deprecate: function(){
       if (this.state != STATE.PROCESSING)
@@ -690,8 +690,8 @@ basis.require('basis.event');
 
    /**
     * Set new value for isActiveSubscriber property.
-    * @param {boolean} isActive New value for {basis.data.DataObject#isActiveSubscriber} property.
-    * @return {boolean} Returns true if {basis.data.DataObject#isActiveSubscriber} was changed.
+    * @param {boolean} isActive New value for {basis.data.DataObject#active} property.
+    * @return {boolean} Returns true if {basis.data.DataObject#active} was changed.
     */
     setActive: function(isActive){
       isActive = !!isActive;
@@ -701,7 +701,7 @@ basis.require('basis.event');
         this.active = isActive;
         this.event_activeChanged(this);
 
-        applySubscription(this, this.subscribeTo, SUBSCRIPTION.MASK * isActive);
+        applySubscription(this, this.subscribeTo, SUBSCRIPTION.ALL * isActive);
 
         return true;
       }
@@ -711,12 +711,12 @@ basis.require('basis.event');
 
    /**
     * Set new value for subscriptionType property.
-    * @param {number} subscriptionType New value for {basis.data.DataObject#subscriptionType} property.
+    * @param {number} subscriptionType New value for {basis.data.DataObject#subscribeTo} property.
     * @return {boolean} Returns true if {basis.data.DataObject#subscribeTo} was changed.
     */
     setSubscription: function(subscriptionType){
       var curSubscriptionType = this.subscribeTo;
-      var newSubscriptionType = subscriptionType & SUBSCRIPTION.MASK;
+      var newSubscriptionType = subscriptionType & SUBSCRIPTION.ALL;
       var delta = curSubscriptionType ^ newSubscriptionType;
 
       if (delta)

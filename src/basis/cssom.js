@@ -581,6 +581,7 @@ gj   */
   * @class
   */
   var ClassListNS = Class(null, {
+    className: namespace + '.ClassListNS',
     delim: '-',
 
     init: function(ns, classList){

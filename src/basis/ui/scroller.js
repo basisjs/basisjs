@@ -555,6 +555,7 @@ basis.require('basis.ui');
    * @class
    */
   var HorizontalScrollbar = Scrollbar.subclass({
+    className: namespace + '.HorizontalScrollbar',
     cssClassName: 'horizontal',
     startProperty: 'left',
     endProperty: 'right',
@@ -573,6 +574,7 @@ basis.require('basis.ui');
    * @class
    */
   var VerticalScrollbar = Scrollbar.subclass({
+    className: namespace + '.VerticalScrollbar',
     cssClassName: 'vertical',
     startProperty: 'top',
     endProperty: 'bottom',

@@ -68,11 +68,11 @@
 
   function fetchInheritedJsDocs(path, entity){
     var fullPath = path;
-    var objData = map[fullPath];
+    var objData = mapDO[fullPath].data;
     if (/class|property|method/.test(objData.kind))
     {
       var postPath = objData.kind == 'class' ? '' : '.prototype.' + objData.title;
-      var inheritance = getInheritance(objData.kind == 'class' ? objData.obj : map[objData.path.replace(/.prototype$/, '')].obj, objData.kind == 'class' ? null : objData.title);
+      var inheritance = getInheritance(objData.kind == 'class' ? objData.obj : mapDO[objData.path.replace(/.prototype$/, '')].data.obj, objData.kind == 'class' ? null : objData.title);
       for (var i = inheritance.length, inherit; inherit = inheritance[--i];)
       {
         //console.log(inherit.cls.className + postFix);
@@ -122,15 +122,6 @@
             type: p[1],
             description: p[3]
           };
-
-          /*if (key == 'config')
-          {
-            JsDocConfigOption({
-              path: this.data.path + ':' + p[2],
-              type: p[1],
-              description: p[3] || ''
-            });
-          }*/
         }
       }
       else if (key == 'see' || key == 'link')
@@ -271,12 +262,9 @@
   // Analize object structure
   //
 
-  map = {};
   mapDO = {};
   var members = {};
-  var searchIndex = {};
   var searchValues = [];
-  rootClasses = {};
 
   var walkThroughCount = 0;
   var clsSeed = 1;
@@ -323,7 +311,7 @@
     if (isPrototype)
     {
       var clsPath = path.replace(/\.prototype$/, '');
-      var cls = map[clsPath] && map[clsPath].obj;
+      var cls = mapDO[clsPath] && mapDO[clsPath].data.obj;
       var clsProtoDescr = getClassDocsProtoDescr(cls);
       var clsProto = cls.docsProto_;
       var superClsPrototype = cls && cls.superClass_ && cls.superClass_.prototype;
@@ -353,7 +341,7 @@
       var kind;
       var tag;
 
-      if (map[fullPath])
+      if (mapDO[fullPath])
       {
         console.log('double scan: ', fullPath);
         continue;
@@ -405,16 +393,16 @@
             kind = /[^A-Z0-9\_]/.test(key) ? 'object' : 'constant';
       };
 
-      var data = map[fullPath] = {
-        //isClassMember: context == 'class',
-        path: path,
-        fullPath: fullPath,
-        key: key,
-        title: title,
-        kind: kind,
-        obj: obj,
-        members: []
-      };
+      var dataObject = mapDO[fullPath] = new nsData.DataObject({
+        data: {
+          path: path,
+          fullPath: fullPath,
+          key: key,
+          title: title,
+          kind: kind,
+          obj: obj
+        }
+      });
 
       if (isPrototype)
       {
@@ -429,59 +417,22 @@
             path: fullPath,
             key: key,
             cls: cls,
-            obj: data,
+            kind: kind,
             tag: tag
           };
         }
       }
       
-      var dataObject = mapDO[fullPath] = new nsData.DataObject({
-        data: data
-      });
       members[path].push(dataObject);
 
       if (/^(function|class|constant|namespace)$/.test(kind))
-      {
-        if (!searchIndex[fullPath])
-        {
-          searchIndex[fullPath] = data;
-          searchValues.push(data);
-        }
-      }
+        searchValues.push(dataObject);
 
       // go deeper
       switch (kind)
       {
         case 'class':
-          data.namespace = ns;
-
-          /*if (obj.classMap_)
-          {
-            //if (window.console) console.log('>>', fullPath);
-          }
-          else
-            obj.classMap_ = {
-              childNodes: []
-            };
-
-          if (!obj.classMap_.data)
-          {
-            obj.classMap_.data = { path: fullPath, title: fullPath, obj: obj };
-            if (obj.superClass_)
-            {
-              if (!obj.superClass_.classMap_)
-              {
-                //if (window.console) console.log('!', fullPath);
-                obj.superClass_.classMap_ = { childNodes: [obj.classMap_] };
-              }
-              else
-              {
-                obj.superClass_.classMap_.childNodes.push(obj.classMap_);
-              }
-            }
-            else
-              rootClasses[fullPath] = obj;
-          }*/
+          dataObject.data.namespace = ns;
 
           //walk(obj, fullPath, kind, d + 1, ns);
           walk({
@@ -512,6 +463,7 @@
           });
 
         break;
+        case 'constant':
         case 'object':
           if (obj && typeof obj == 'object')
           {
@@ -770,10 +722,7 @@
     getInheritance: getInheritance,
     loadResource: resourceLoader.addResource.bind(resourceLoader),
 
-    Search: {
-      index: searchIndex,
-      values: searchValues
-    }
+    searchIndex: new basis.data.Dataset({ items: searchValues })
   });
 
 })();

@@ -25,14 +25,7 @@
  *   o Number
  *   o Date (you can find other extensions for Date in date.js)
  * - Namespace sheme (module subsystem)
- * - Basis.Browser namespace (version detections & Cookies interface)
  * - Basis.Class namespace (provides inheritance)
- * - class EventObject
- * - Basis.DOM namespace
- * - Basis.DOM.Style namespace
- * - Basis.Event namespace
- * - Basis.Html namespace (generaly template)
- * - Basis.CSS namespace (generaly className interface)
  * - Cleaner
  * - TimeEventManager
  */
@@ -1311,6 +1304,7 @@
 
     var namespace = 'basis.Class';
 
+
    /**
     * Root class for all classes created by Basis class model.
     * @type {function()}
@@ -1321,6 +1315,8 @@
     * Global instances seed.
     */
     var seed = { id: 1 };
+
+    var classSeed = 1;
 
    /**
     * Class construct helper: self reference value
@@ -1383,8 +1379,9 @@
         SuperClass_.prototype = SuperClass.prototype;
 
         var newProto = new SuperClass_();
+        var genericClassName = SuperClass.className + '.UnknownClass' + (classSeed++);
         var newClassProps = {
-          className: SuperClass.className + '._SubClass_',
+          className: genericClassName,
           basisClass_: true,
           superClass_: SuperClass,
           extendConstructor_: !!SuperClass.extendConstructor_,
@@ -1418,6 +1415,7 @@
         }
 
         /** @cut */if (/^function[^(]*\(config\)/.test(newProto.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
+        /** @cut *///if (genericClassName == newClassProps.className) { console.warn('Class has no className'); }
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
@@ -1474,10 +1472,6 @@
         
         return newClass;
       },
-
-      // isn't need for complete method, because existing prototype methods aren't overriding and new methods aren't required to be wrapped
-      // complete: function(source){
-      // },
 
      /**
       * Extend class prototype

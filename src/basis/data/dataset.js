@@ -12,7 +12,7 @@
 basis.require('basis.event');
 basis.require('basis.data');
 
-!function(){
+!function(basis){
 
   'use strict';
 
@@ -192,9 +192,6 @@ basis.require('basis.data');
     }
   };
 
- /**
-  * @namespace basis.data.Dataset
-  */
 
  /**
   * @class
@@ -1597,7 +1594,7 @@ basis.require('basis.data');
             {
               subset = this.keyMap.resolve(list[j]);
 
-              if (subset)
+              if (subset && !subset.has(sourceObject))
               {
                 subsetId = subset.eventObjectId;
                 sourceObjectInfo.list[subsetId] = subset;
@@ -1695,6 +1692,10 @@ basis.require('basis.data');
 
       // inherit
       SourceDatasetMixin.init.call(this, config);
+    },
+
+    getSubset: function(data, autocreate){
+      return this.keyMap.get(data, autocreate);
     },
 
    /**

@@ -42,6 +42,7 @@ basis.require('basis.ui');
   //
 
   var Shape = Node.subclass({
+    className: namespace + '.Shape',
     draw: function(context){
       context.save();
       context.fillStyle = 'red';

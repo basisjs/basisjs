@@ -1746,8 +1746,8 @@ basis.require('basis.html');
         {
           if (!grouping)
           {
-            //NOTE: it's important to clear locaGrouping before calling fastChildNodesOrder
-            //because it sorts nodes in according to localGrouping
+            // NOTE: it's important to clear locaGrouping before calling fastChildNodesOrder
+            // because it sorts nodes in according to localGrouping
             this.localGrouping = null;
 
             if (this.firstChild)

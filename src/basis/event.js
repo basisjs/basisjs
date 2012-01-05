@@ -81,7 +81,7 @@
             }
           }
 
-        /** @cut for more verbose in dev */ ).toString().replace(/^\(?function[^(]*\(\)[^{]*\{|\}\)?$/g, '') + '}')(eventName, slice);
+        /** @cut for more verbose in dev */ ).toString().replace(/\beventName\b/g, '\'' + eventName + '\'').replace(/^\(?function[^(]*\(\)[^{]*\{|\}\)?$/g, '') + '}')(eventName, slice);
 
       /** @cut for more verbose in dev */;;;if (arguments.length > 1){ var text = eventFunction.toString().replace(/\(\)/, '(' + Array.from(arguments, 1).join(', ') + ')'); eventFunction.toString = function(){ return text } };
 

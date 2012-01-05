@@ -45,14 +45,14 @@
       if (i)
         result.appendChild(typeSplitter.cloneNode(true));
 
-      var descr = map[parts[i]];
+      var descr = mapDO[parts[i]];
       if (descr)
-        node = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr), parts[i]);
+        node = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr.data), parts[i]);
       else
       {
         var m = parts[i].match(/^Array\.\<(.+)\>/);
-        if (m && (descr = map[m[1]]))
-          node = DOM.createFragment('Array.<', DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr), m[1]), '>');
+        if (m && (descr = mapDO[m[1]]))
+          node = DOM.createFragment('Array.<', DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr.data), m[1]), '>');
         else
           node = DOM.createText(parts[i]);
       }
@@ -180,9 +180,9 @@
           for (var i = 1; i < parts.length; i += 2)
           {
             var mapPath = parts[i].replace(/#/, '.prototype.');
-            var descr = map[mapPath];
+            var descr = mapDO[mapPath];
             if (descr)
-              parts[i] = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr), descr.title);
+              parts[i] = DOM.createElement('A[href=#{fullPath}].doclink-{kind}'.format(descr.data), descr.data.title);
             else
               parts[i] = parts[i].quote('{');
           }
@@ -294,7 +294,7 @@
             DOM.createElement('DIV.label', 'Example:'),
             code = DOM.createElement('PRE.Basis-SyntaxHighlight')
           ]);
-          code.innerHTML = nsHighlight.highlight('js', newData.tags.example);
+          code.innerHTML = nsHighlight.highlight(newData.tags.example, 'js');
         }
       }
 
@@ -471,11 +471,11 @@
       return new childClass(config);
     },
     templateUpdate: function(tmpl, object, oldDelegate){
-      function findRefs(map, node){
+      function findRefs(refMap, node){
         var result = [];
 
         for (var key in map)
-          if (map[key] === node)
+          if (refMap[key] === node)
             result.push(key);
 
         return result.length ? result.join(' | ') : null;
@@ -693,7 +693,7 @@
         if (key)
         {
           var isClass = this.data.kind == 'class';
-          var cursor = isClass ? this.data.obj : (map[this.data.path.replace(/.prototype$/, '')] || { obj: null }).obj;
+          var cursor = isClass ? this.data.obj : (mapDO[this.data.path.replace(/.prototype$/, '')] || { data: { obj: null } }).data.obj;
           var groupId = 0;
           var lastNamespace;
           var list = [];
@@ -846,7 +846,7 @@
 
     templateUpdate: function(tmpl, event, delta){
       PrototypeItem.prototype.templateUpdate.call(this, tmpl, event, delta);
-      tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj.obj).args;
+      tmpl.argsText.nodeValue = nsCore.getFunctionDescription(mapDO[this.data.path].data.obj).args;
     }
   });
   
@@ -865,12 +865,58 @@
     templateUpdate: function(tmpl, event, delta){
       PrototypeItem.prototype.templateUpdate.call(this, tmpl, event, delta);
 
-      tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj.obj).args;
+      tmpl.argsText.nodeValue = nsCore.getFunctionDescription(mapDO[this.data.path].data.obj).args;
 
-      if (/^(init|destroy)$/.test(this.data.title))
-        DOM.insert(tmpl.content, DOM.createElement('SPAN.method_mark', this.data.title == 'init' ? 'constructor' : 'destructor'), 0);
+      if (/^(init|destroy)$/.test(this.data.key))
+        DOM.insert(tmpl.content, DOM.createElement('SPAN.method_mark', this.data.key == 'init' ? 'constructor' : 'destructor'), 0);
     }
   });
+
+
+  var PROTOTYPE_GROUPING_TYPE = {
+    type: 'type',
+    groupGetter: getter('data.kind'),
+    titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE),
+    localSorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT)
+  };
+
+  var PROTOTYPE_GROUPING_IMPLEMENTATION = {
+    type: 'class',
+//    dataSource: owner.clsVector,
+    groupGetter: function(node){
+      //console.log(node.data, node.data.key, node.data.cls.className, mapDO[node.data.cls.className]);
+      var key = node.data.key;
+      var tag = node.data.tag;
+      var cls;
+      if (tag == 'override')
+      {
+        cls = node.data.implementCls;
+        if (!cls)
+        {
+          var cursor = node.data.cls.superClass_;
+          while (cursor)
+          {
+            var cfg = cursor.docsProto_ && cursor.docsProto_[key];
+            if (cfg && cfg.tag == 'implement')
+            { 
+              cls = mapDO[cfg.cls.className];
+              node.data.implementCls = cls;
+              break;
+            }
+            cursor = cursor.superClass_;
+          }
+        }
+      }
+      else
+        cls = mapDO[node.data.cls.className];
+
+      return cls || mapDO['basis.Class'];
+    },
+    titleGetter: getter('data.fullPath'),
+    localSorting: function(group){
+      return group.delegate && group.delegate.eventObjectId;
+    }
+  };
 
  /**
   * @class
@@ -904,7 +950,7 @@
             .values(mapDO[this.data.fullPath].data.obj.docsProto_)
             .map(function(val){
               return typeof val == 'object'
-                ? { data: Object.extend({ host: this }, val) }
+                ? { data: val }
                 : null
              }, this.data)
             .filter(Boolean)
@@ -923,7 +969,7 @@
     childFactory: function(config){
       var childClass;
 
-      switch (config.data.obj.kind){
+      switch (config.data.kind){
         case 'event': childClass = PrototypeEvent; break;
         case 'method': childClass = PrototypeMethod; break;
         default:
@@ -965,12 +1011,7 @@
                 title: 'Type',
                 handler: function(){
                   owner.setLocalSorting('data.obj.title');
-                  owner.setLocalGrouping({
-                    type: 'type',
-                    groupGetter: getter('data.obj.kind'),
-                    titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE),
-                    localSorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT)
-                  });
+                  owner.setLocalGrouping(PROTOTYPE_GROUPING_TYPE);
                 }
               },
               {
@@ -978,49 +1019,9 @@
                 selected: true,
                 handler: function(){
                   owner.setLocalSorting(function(node){
-                    return (PROTOTYPE_ITEM_WEIGHT[node.data.obj.kind] || 0) + '_' + node.data.key;
+                    return (PROTOTYPE_ITEM_WEIGHT[node.data.kind] || 0) + '_' + node.data.key;
                   });
-
-                  if (!owner.clsVector)
-                    owner.clsVector = new basis.data.Dataset();
-
-                  owner.setLocalGrouping({
-                    type: 'class',
-                    dataSource: owner.clsVector,
-                    groupGetter: function(node){
-                      //console.log(node.data, node.data.key, node.data.cls.className, mapDO[node.data.cls.className]);
-                      var key = node.data.key;
-                      var tag = node.data.tag;
-                      var cls;
-                      if (tag == 'override')
-                      {
-                        cls = node.data.implementCls;
-                        if (!cls)
-                        {
-                          var cursor = node.data.cls.superClass_;
-                          while (cursor)
-                          {
-                            var cfg = cursor.docsProto_ && cursor.docsProto_[key];
-                            if (cfg && cfg.tag == 'implement')
-                            { 
-                              cls = mapDO[cfg.cls.className];
-                              node.data.implementCls = cls;
-                              break;
-                            }
-                            cursor = cursor.superClass_;
-                          }
-                        }
-                      }
-                      else
-                        cls = mapDO[node.data.cls.className];
-
-                      return cls || mapDO['basis.Class'];
-                    },
-                    titleGetter: getter('data.fullPath'),
-                    localSorting: function(group){
-                      return group.delegate && group.delegate.eventObjectId;
-                    }
-                  });
+                  owner.setLocalGrouping(PROTOTYPE_GROUPING_IMPLEMENTATION);
                 }
               }
             ]
@@ -1116,7 +1117,7 @@
         '<div class="connector"/>' +
         '<div class="ClassNode-Wrapper">' +
           '<div{header} class="ClassNode-Header">' +
-            '<div class="ClassNode-Header-Title">{title}</div>' +
+            '<div class="ClassNode-Header-Title"><a href{link}="#">{title}</a></div>' +
           '</div>' +
           '<div{container} class="ClassNode-SubClassList">' +
             '<div class="sub-connector"/>' +
@@ -1127,7 +1128,8 @@
 
     templateUpdate: function(tmpl, eventName, delta){
       tmpl.title.nodeValue = this.data.className.split(/\./).pop();
-      tmpl.title.parentNode.title = this.data.className;
+      tmpl.header.title = this.data.className;
+      tmpl.link.nodeValue = '#' + this.data.className;
 
       if (!eventName || 'clsId' in delta)
         this.setDataSource(clsSplitBySuper.getSubset(this.data.clsId));
@@ -1219,7 +1221,10 @@
         '<div class="connector"/>' +
         '<div class="ClassNode-Wrapper">' +
           '<div{header} class="ClassNode-Header">' +
-            '<div class="ClassNode-Header-Title">{title}</div>' +
+            '<div class="ClassNode-Header-Title">' +
+              '<a href{link}="#">{title}</a>' +
+              '<span class="ns">{namespace}</span>' +
+            '</div>' +
           '</div>' +
           '<div{container} class="ClassNode-SubClassList">' +
             '<div class="sub-connector"/>' +
@@ -1229,7 +1234,10 @@
       '</div>',
 
     templateUpdate: function(tmpl, eventName, delta){
-      tmpl.title.nodeValue = this.data.className.split(/\./).pop();
+      var p = this.data.className.split('.');
+      tmpl.title.nodeValue = p.pop();
+      tmpl.namespace.nodeValue = p.join('.');
+      tmpl.link.nodeValue = '#' + this.data.className;
       classList(tmpl.header).add('side-' + this.delegate.part);
 
       if (!eventName || 'clsId' in delta)
@@ -1239,6 +1247,8 @@
       uiContainer.prototype.event_childNodesModified.call(this, node, delta);
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
     },
+    localSorting: getter('data.className.split(".").pop()'),
+
     childClass: Class.SELF
   });
 
@@ -1283,12 +1293,12 @@
         }
       }
     },
-    viewHeader: 'Namespace map',
+    viewHeader: 'Namespace class map',
     template:
       '<div class="view ClassMap">' +
-        htmlHeader('Namespace map') +
+        htmlHeader('Namespace class map') +
         '<div class="content">' +
-          '<div{childNodesElement} style="position: absolute;"/>' +
+          //'<div{childNodesElement} style="position: absolute;"/>' +
           '<!-- {classMap} -->' +
         '</div>' +
       '</div>',

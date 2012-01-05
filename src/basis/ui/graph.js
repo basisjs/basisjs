@@ -302,6 +302,7 @@ basis.require('basis.ui.canvas');
     },
 
     childClass: {
+      className: namespace + '.GraphNode',
       event_update: function(object, delta){
         if (this.parentNode && this.parentNode.parentNode)
           this.parentNode.parentNode.updateCount++; 

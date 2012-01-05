@@ -107,10 +107,21 @@ basis.require('basis.html');
       ),
 
      /**
+      * Contains references to template nodes.
+      * @type {Object}
+      */
+      tmpl: null,
+
+     /**
       * Handlers for template actions.
       * @type {Object}
       */
       action: TEMPLATE_ACTION,
+
+     /**
+      * @type
+      */
+      id: null,
 
      /**
       * Classes for template elements.
@@ -257,9 +268,10 @@ basis.require('basis.html');
       },
 
      /**
-      * Handler on template actions.
-      * @param {string} actionName
-      * @param {object} event
+      * Template update function. It calls on init and on update event by default.
+      * @param {Object} tmpl
+      * @param {string} eventName
+      * @param {Object} delta
       */
       templateUpdate: function(tmpl, eventName, delta){
         /** nothing to do, override it in sub classes */

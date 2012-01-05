@@ -601,11 +601,12 @@ basis.require('basis.dom');
     addHandler(global, 'unload', handler, thisObject);
   }
 
+
   //
   // export names
   //
 
-  return basis.namespace(namespace, wrap).extend({
+  basis.namespace(namespace, wrap).extend({
     KEY: KEY,
 
     MOUSE_LEFT: MOUSE_LEFT,

@@ -191,7 +191,7 @@ basis.require('basis.ui');
   * @class
   */
   var DataSourceLabel = Class(NodeLabel, {
-    className: namespace + '.DataSourceState',
+    className: namespace + '.DataSourceLabel',
 
     template: stateTemplate,
 

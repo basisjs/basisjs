@@ -17,14 +17,15 @@
   //document.write('<script type="text/javascript" src="../../plugins/highlight.js"></sc'+'ript>');
   
   basis.dom.event.onLoad(function(){
-    
+
     var DOM = basis.dom;
     var Event = basis.dom.event;
     var Data = basis.data;
     var classList = basis.cssom.classList;
 
     var highlight = Function.runOnce(function(){
-      DOM.get('javascript').innerHTML = basis.format.highlight.highlight(DOM.get('javascript').innerHTML);
+      DOM.get('javascript').innerHTML = basis.format.highlight.highlight(DOM.get('javascript').innerHTML, 'js');
+      DOM.get('css').innerHTML = basis.format.highlight.highlight(DOM.get('css').innerHTML, 'css');
       //SyntaxHighlighter.highlight({}, DOM.get('css'));
     });
 
@@ -41,7 +42,7 @@
       {
         title: DemoLocale.TABS.SOURCE,
         element: DOM.createElement('#Demo-SourcePage',
-          DOM.createElement('H2', 'Included resources'),
+          /*DOM.createElement('H2', 'Included resources'),
           DOM.createElement('UL',
             DOM.wrap(
               DOM
@@ -52,21 +53,19 @@
                 .map(function(value){ return DOM.createElement('A[href={0}]'.format(value.quote()), value.replace(/^([\.]+\/)+/, '')) }),
               { 'LI': Function.$true }
             )
-          ),
+          ),*/
           DOM.createElement('H2', 'CSS'),
-          cssSource = DOM.createElement('PRE#css', DOM.get('demo-css').innerHTML),
+          cssSource = DOM.createElement('PRE#css.Basis-SyntaxHighlight', DOM.get('demo-css').innerHTML),
           DOM.createElement('H2', 'Javascript'),
-          jsSource = DOM.createElement('PRE#javascript', DOM.get('demo-javascript').innerHTML)
+          jsSource = DOM.createElement('PRE#javascript.Basis-SyntaxHighlight', DOM.get('demo-javascript').innerHTML)
         )
       }
     ];
     var tabs = DOM.createElement('#DemoTabs', DOM.wrap(pages, { '.DemoWrapper-Tab': Function.$true }, 'title'));
     classList(tabs.firstChild).add('selected');
-    
-    cssSource.className = 'brush: css';
-    jsSource.className = 'Basis-SyntaxHighlight';
 
-    Event.addHandler(tabs, 'click', function(event){
+    var xxx;
+    Event.addHandler(tabs, 'click', xxx = function(event){
       var sender = Event.sender(event);
       var classListSender = classList(sender);
       if (classListSender.contains('DemoWrapper-Tab'))
@@ -75,7 +74,7 @@
           classList(tab).bool('selected', tab == sender);
           DOM.display(pages[idx].element, tab == sender);
         });
-        if (sender == sender.parentNode.lastChild)
+        if (!sender.nextSibling)
           highlight();
       }
     });
@@ -97,4 +96,5 @@
     ]);
 
     classList(document.body).add('show');
+    xxx({ target: tabs.lastChild });
   });

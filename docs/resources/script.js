@@ -205,8 +205,46 @@
   // NavTree
   //
 
-  var NavTree = Class(nsTree.Tree, {
+  var navTree = new nsTree.Tree({
+    selection: {
+      handler: {
+        datasetChanged: function(dataset, delta){
+          var selected = this.pick();
+          if (selected)
+          {
+            navTree.open(selected.data.fullPath, true);
+            location.hash = '#' + selected.data.fullPath;
+          }
+
+          targetContent.setDelegate(selected);
+        }
+      }
+    },
     childClass: nsNav.docSection,
+    childNodes: [
+      {
+        data: { title: 'Buildin class extensions', fullPath: 'window' },
+        collapsed: true,
+        childNodes: Object.iterate(buildin, function(key, value){
+          return new nsNav.docClass({
+            data: {
+              kind: 'Class',
+              title: key,
+              path: '',
+              fullPath: key,
+              obj: value
+            }
+          });
+        })
+      },
+      {
+        data: { title: 'basis', fullPath: 'basis' },
+        childNodes: Object.iterate(basis.namespaces_, function(key){
+          return mapDO[key];
+        })
+      }
+    ],
+
     open: function(path, noScroll){
       path = path.replace(/^#/, '');
 
@@ -269,68 +307,27 @@
     }
   });
 
-  var navTree = new NavTree({
-    selection: {
-      event_datasetChanged: function(dataset, delta){
-        this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
-
-        var selected = this.pick();
-        targetContent.setDelegate(selected);
-        if (selected)
-        {
-          navTree.open(selected.data.fullPath, true);
-          location.hash = '#' + (selected ? selected.data.fullPath : null);
-        }
-      }
-    },
-    childNodes: [
-      {
-        data: { title: 'Buildin class extensions', fullPath: 'window' },
-        collapsed: true,
-        childNodes: Object.iterate(buildin, function(key, value){
-          return new nsNav.docClass({
-            data: {
-              kind: 'Class',
-              title: key,
-              path: '',
-              fullPath: key,
-              obj: value
-            }
-          });
-        })
-      },
-      {
-        data: { title: 'basis', fullPath: 'basis' },
-        childNodes: Object.iterate(basis.namespaces_, function(key){
-          return new nsNav.docNamespace({
-            data: map[key]
-          })
-        })
-      }
-    ]
-  });
-
   var searchTree = new nsTree.Tree({
     id: 'SearchTree',
     localSorting: getter('data.title', String.toLowerCase),
     localGrouping: nsNav.nodeTypeGrouping,
     childClass: Class(nsTree.Node, {
-      template: new Template(
-        '<li{element} class="Basis-TreeNode">' +
+      template:
+        '<li class="Basis-TreeNode">' +
           '<div{content} class="Basis-TreeNode-Title">' +
             '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
               '<span class="namespace">{namespaceText}</span>' +
               '<span{label} class="label">{titleText}</span>' +
             '</span>' +
           '</div>' +
-        '</li>'
-      ),
-      templateAction: function(actionName, event){
-        if (actionName == 'select')
-          navTree.open(this.data.fullPath);
+        '</li>',
 
-        nsTree.Node.prototype.templateAction.call(this, actionName, event);
+      action: {
+        select: function(){
+          navTree.open(this.data.fullPath);
+        }
       },
+
       init: function(config){
         nsTree.Node.prototype.init.call(this, config);
 
@@ -342,7 +339,9 @@
 
         this.tmpl.title.href = '#' + this.data.fullPath;
         this.tmpl.namespaceText.nodeValue = this.data.kind != 'namespace' ? this.data.path : '';
-      }
+      }/*,
+      event_match: function(){},
+      event_unmatch: function(){}*/
     })
   });
 
@@ -361,15 +360,17 @@
 
   var SearchMatchInput = Class(nsForm.MatchInput, {
     matchFilterClass: Class(nsForm.MatchFilter, {
-      changeHandler: function(value){
+      event_change: function(value, oldValue){
+        nsForm.MatchProperty.prototype.event_change.call(this, value, oldValue);
+
         var fc = value.charAt(0);
         var v = value.substr(1).replace(/./g, function(m){ return '[' + m.toUpperCase() + m.toLowerCase() + ']' });
         var rx = new RegExp('(^|[^a-zA-Z])([' + fc.toLowerCase() + fc.toUpperCase() +']' + v + ')|([a-z])(' + fc.toUpperCase() + v + ')');
         //console.log(rx.source);
         var textNodeGetter = this.textNodeGetter;
-        var map = this.map;
+        var wrapMap = this.map;
 
-        map['SPAN.match'] = function(s, i){ return s && (i % 5 == 2 || i % 5 == 4) };
+        wrapMap['SPAN.match'] = function(s, i){ return s && (i % 5 == 2 || i % 5 == 4) };
 
         this.node.setMatchFunction(x = value ? function(child, reset){
           if (!reset)
@@ -380,7 +381,7 @@
             {
               DOM.replace(
                 child._x || textNode,
-                child._x = DOM.createElement('SPAN.matched', DOM.wrap(p, map))
+                child._x = DOM.createElement('SPAN.matched', DOM.wrap(p, wrapMap))
               );
               child._m = textNode;
               return true;
@@ -397,37 +398,68 @@
           return false;
         } : null);
 
-        this.node.element.scrollTop = 0;
+        DOM.get('SidebarContent').scrollTop = 0;
       }
     })
   });
 
-  var loadSearchIndex = Function.runOnce(function(){
-    searchTree.setChildNodes(nsCore.Search.values.map(Function.wrapper('data')));
+  var searchCloud = new basis.data.dataset.Cloud({
+    rule: function(obj){
+      var res = obj.data.title
+        .replace(/(?:^|[\.\_])?([A-Z])(?:[A-Z]+|[a-z]+)|(?:^|[\.\_])(?:([a-z])[a-z]+|([A-Z])[A-Z]+)|[^a-zA-Z]/g, '$1$2$3')
+        .toUpperCase()
+        .split('')
+        .sort()
+        .join('')
+        .replace(/([A-Z])\1+/g, '$1');
+      return res.split('');
+    }
   });
+  /*console.log('build search cloud', new Date - t, nsCore.searchIndex.itemCount);
+  console.log(searchCloud.getItems().map(function(item){
+    return item.data.id + ': ' + item.itemCount;
+  }));*/
+
 
   var searchInputFocused = false;
   var searchInput = new SearchMatchInput({
+    cssClassName: 'empty Basis-MatchInput',
+    action: {
+      clear: function(){
+        this.setValue();
+      }
+    },
     matchFilter: {
       node: searchTree,
       regexpGetter: function(value){
         return new RegExp('(^|[^a-z])(' + value.forRegExp() + ')', 'i');
       },
-      event_change: function(value, oldValue){
-        this.constructor.prototype.event_change.call(this, value, oldValue);
-        if (value != '')
-          loadSearchIndex();
+      handler: {
+        change: function(value, oldValue){
+          classList(searchInput.element).bool('empty', !value);
 
-        sidebarPages.item(value != '' ? 'search' : 'tree').select();
-        if (!value)
-        {
-          var selected = navTree.selection.pick();
-          if (selected)
-            selected.element.scrollIntoView(true);
+          if (value)
+          {
+            if (!oldValue)
+            {
+              searchCloud.setSource(nsCore.searchIndex);
+              sidebarPages.item('search').select();
+            }
+
+            searchTree.setDataSource(searchCloud.getSubset(value.charAt(0).toUpperCase()));
+          }
+          else
+          {
+            sidebarPages.item('tree').select();
+            var selected = navTree.selection.pick();
+            if (selected)
+              selected.element.scrollIntoView(true);
+          }
         }
       }
     }
   });
+  DOM.insert(searchInput.element, DOM.createElement('#CancelSearchButton[event-click="clear"]', 'x'));
 
   Event.addHandlers(searchInput.tmpl.field, {
     keyup: function(event){
@@ -456,6 +488,16 @@
           if (selected)
             navTree.open(selected.data.fullPath);
     },
+    keydown: function(event){
+      var key = Event.key(event);
+      var chr = String.fromCharCode(key);
+
+      if (key == 27)
+        return searchInput.setValue();
+
+      if (!/[a-z\_0-9\x08\x09\x0A\x0D\x23-\x28]/i.test(chr))
+        Event.kill(event);
+    },
     focus: function(){
       searchInputFocused = true;
     },
@@ -464,14 +506,6 @@
     }
   }, searchInput);
 
-
-  /*
-  var clsTree = new nsTree.Tree({
-    childFactory: function(cfg){
-      return new nsTree.TreeFolder([{ document: this.document }].merge(cfg));
-    },
-    childNodes: Object.values(rootClasses).map(getter('classMap_'))
-  })*/
 
   //
   // Source view
@@ -533,6 +567,10 @@
 
   targetContent.scrollTo = smoothScroll(contentLayout.lastChild.element).scrollTo;
 
+  //
+  // Global events
+  //
+
   Event.addGlobalHandler('click', function(e){
     if (!Event.mouseButton(e, Event.MOUSE_LEFT))
       return;
@@ -544,8 +582,6 @@
 
     if (sender && sender.pathname == location.pathname && sender.hash != '')
       navTree.open(sender.hash, DOM.parentOf(navTree.element, sender));
-
-    //DOM.focus(searchInput.field, true);
   });
 
   Event.addGlobalHandler('keydown', function(e){
