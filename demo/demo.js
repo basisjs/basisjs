@@ -64,8 +64,7 @@
     var tabs = DOM.createElement('#DemoTabs', DOM.wrap(pages, { '.DemoWrapper-Tab': Function.$true }, 'title'));
     classList(tabs.firstChild).add('selected');
 
-    var xxx;
-    Event.addHandler(tabs, 'click', xxx = function(event){
+    Event.addHandler(tabs, 'click', function(event){
       var sender = Event.sender(event);
       var classListSender = classList(sender);
       if (classListSender.contains('DemoWrapper-Tab'))
@@ -96,5 +95,4 @@
     ]);
 
     classList(document.body).add('show');
-    xxx({ target: tabs.lastChild });
   });

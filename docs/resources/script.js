@@ -84,7 +84,22 @@
         '<div{content|childNodesElement} class="XControl-Content"/>' +
       '</div>',
 
-    handler: {
+    setDelegate: function(delegate){
+      this.clear(true);
+
+      uiContainer.prototype.setDelegate.call(this, delegate);
+
+      if (this.delegate)
+      {
+        this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
+          return view.isAcceptableObject(this.data);
+        }, this), true);
+
+        this.scrollTo(this.firstChild.element, true);
+      }
+    },
+
+    handler1: {
       delegateChanged: function(object, oldDelegate){
         if (this.delegate)
         {

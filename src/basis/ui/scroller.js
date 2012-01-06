@@ -18,7 +18,7 @@ basis.require('basis.ui');
 !function() {
 
  /**
-  * @namespace App.Ext
+  * @namespace basis.ui.scroller
   */
 
   var namespace = 'basis.ui.scroller';
@@ -749,6 +749,7 @@ basis.require('basis.ui');
   });
 
   var ScrollGallery = ScrollPanel.subclass({
+    className: namespace + '.ScrollGallery',
     scrollX: false,
     scrollY: false,
     childTransform: Function.$null,
@@ -856,7 +857,7 @@ basis.require('basis.ui');
       var childPosition = this.scrollX ? child.element.offsetLeft : child.element.offsetTop;
       var childSize = this.scrollX ? child.element.offsetWidth : child.element.offsetHeight;
 
-      console.log(childPosition + childSize / 2 - startPosition);
+      //console.log(childPosition + childSize / 2 - startPosition);
       this.setPosition(childPosition + childSize / 2 - startPosition, instantly);
     },
 
@@ -889,6 +890,7 @@ basis.require('basis.ui');
 
   basis.namespace(namespace).extend({
     Scroller: Scroller,
+    Scrollbar: Scrollbar,
     ScrollPanel: ScrollPanel,
     ScrollGallery: ScrollGallery
   });
