@@ -11,7 +11,6 @@
   var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
-  var Template = basis.html.Template;
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
@@ -62,18 +61,16 @@
       return Math.sin(Math.acos(1 - value));
     }
 
-    return {
-      scrollTo: function(relElement, jump){
-        var curScrollTop = element.scrollTop;
-        modificator.setRange(curScrollTop, curScrollTop);
-        thread.stop();
-        if (jump)
-          element.scrollTop = relElement.offsetTop;
-        else
-        {
-          modificator.setRange(curScrollTop, relElement.offsetTop);
-          thread.start();
-        }
+    return function(relElement, jump){
+      var curScrollTop = element.scrollTop;
+      modificator.setRange(curScrollTop, curScrollTop);
+      thread.stop();
+      if (jump)
+        element.scrollTop = relElement.offsetTop;
+      else
+      {
+        modificator.setRange(curScrollTop, relElement.offsetTop);
+        thread.start();
       }
     }
   };
@@ -82,23 +79,23 @@
     id: 'ObjectView',
     childClass: nsView.View,
 
-    template: new Template(
-      '<div{element} class="XControl">' +
+    template:
+      '<div class="XControl">' +
         '<div{content|childNodesElement} class="XControl-Content"/>' +
-      '</div>'
-    ),
-    event_delegateChanged: function(object, oldDelegate){
-      this.constructor.prototype.event_delegateChanged.call(this, object, oldDelegate);
+      '</div>',
 
-      if (this.delegate)
-      {
-        this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
-          return view.isAcceptableObject(this.data);
-        }, this), true);
-        this.scrollTo(this.firstChild.element, true);
+    handler: {
+      delegateChanged: function(object, oldDelegate){
+        if (this.delegate)
+        {
+          this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
+            return view.isAcceptableObject(this.data);
+          }, this), true);
+          this.scrollTo(this.firstChild.element, true);
+        }
+        else
+          this.clear(true);
       }
-      else
-        this.clear(true);
     }
   });
 
@@ -110,9 +107,8 @@
     childClass: Class(uiNode,
       basis.ui('<div{element} class="item" event-click="scrollTo">{this_data_key}</div>'),
       {
-        templateAction: function(actionName){
-          if (actionName == 'scrollTo')
-          {
+        action: {
+          scrollTo: function(event){
             var element = this.delegate.element;
             targetContent.scrollTo(element);
             this.parentNode.hide();
@@ -180,22 +176,20 @@
       }
     }),
 
-    template: new Template(
-      '<div{element}>' +
+    template:
+      '<div>' +
         '<h2 class="view viewTitle">' +
           '<span class="title">{contentText}</span>' +
           '<span class="path">{pathText}</span>' +
         '</h2>' +
         '<div{childNodesElement} class="QuickNavBar" />' +
-      '</div>'
-    ),
-    event_update: function(object, delta){
-      this.constructor.prototype.event_update.call(this, object, delta);
+      '</div>',
 
-      this.tmpl.contentText.nodeValue = (this.data.title || '') + (/^(method|function|class)$/.test(this.data.kind) ? nsCore.getFunctionDescription(this.data.obj).args.quote('(') : '');
-      this.tmpl.pathText.nodeValue = (this.data.path || '');
+    templateUpdate: function(tmpl, eventName, delta){
+      tmpl.contentText.nodeValue = (this.data.title || '') + (/^(method|function|class)$/.test(this.data.kind) ? nsCore.getFunctionDescription(this.data.obj).args.quote('(') : '');
+      tmpl.pathText.nodeValue = this.data.path || '';
 
-      if ('kind' in delta)
+      if (delta && 'kind' in delta)
         classList(this.element.firstChild).replace(delta.kind, this.data.kind, 'kind-');
     }
   });
@@ -513,14 +507,13 @@
 
   /*
   var sourceView = new basis.DOM.Wrapper.TmplContainer({
-    template: new basis.Html.Template(
+    template:
       '<div{element} id="SourceCodeViewer">' +
         '<div class="layout">' +
           '<div class="header">Header</div>' +
           '<div{content} class="content"></div>' +
         '</div>' +
       '</div>'
-    )
   });
 
   DOM.insert(document.body, sourceView.element);
@@ -565,7 +558,7 @@
     ]
   });
 
-  targetContent.scrollTo = smoothScroll(contentLayout.lastChild.element).scrollTo;
+  targetContent.scrollTo = smoothScroll(contentLayout.lastChild.element);
 
   //
   // Global events

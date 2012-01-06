@@ -393,17 +393,6 @@
             kind = /[^A-Z0-9\_]/.test(key) ? 'object' : 'constant';
       };
 
-      var dataObject = mapDO[fullPath] = new nsData.DataObject({
-        data: {
-          path: path,
-          fullPath: fullPath,
-          key: key,
-          title: title,
-          kind: kind,
-          obj: obj
-        }
-      });
-
       if (isPrototype)
       {
         if (superClsPrototype && key in superClsPrototype)
@@ -420,8 +409,25 @@
             kind: kind,
             tag: tag
           };
+          //if (!window.yyy_) window.yyy_ = 1; else window.yyy_ += 1;
+        }
+        else
+        {
+          //if (!window.xxx_) window.xxx_ = 1; else window.xxx_ += 1;
+          //return;
         }
       }
+
+      var dataObject = mapDO[fullPath] = new nsData.DataObject({
+        data: {
+          path: path,
+          fullPath: fullPath,
+          key: key,
+          title: title,
+          kind: kind,
+          obj: obj
+        }
+      });
       
       members[path].push(dataObject);
 
@@ -537,6 +543,8 @@
   }
 
   function getMembers(path){
+    //var objData = mapDO[path] && mapDO[path].data;
+    //return objData.kind == 'class' ? Object.iterate(objData.obj.docsProto_, function(key, value){ return mapDO[value.path] }) : 
     return members[path];
   }
 

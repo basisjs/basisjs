@@ -797,8 +797,8 @@
     templateUpdate: function(tmpl, eventName, delta){
       if (!eventName || (eventName == 'update' && 'fullPath' in delta))
       {
-        tmpl.titleText.nodeValue = this.data.key;
-        tmpl.refAttr.nodeValue = '#' + this.data.path;
+        tmpl.titleText.nodeValue = this.data.key.replace(/^event_/, '');
+        tmpl.refAttr.nodeValue = '#' + this.host.data.fullPath + '.prototype.' + this.data.key;
       }
     },
 
@@ -882,7 +882,6 @@
 
   var PROTOTYPE_GROUPING_IMPLEMENTATION = {
     type: 'class',
-//    dataSource: owner.clsVector,
     groupGetter: function(node){
       //console.log(node.data, node.data.key, node.data.cls.className, mapDO[node.data.cls.className]);
       var key = node.data.key;
@@ -949,10 +948,11 @@
           Object
             .values(mapDO[this.data.fullPath].data.obj.docsProto_)
             .map(function(val){
-              return typeof val == 'object'
-                ? { data: val }
-                : null
-             }, this.data)
+              return {
+                data: val,
+                host: this
+              }
+            }, this)
             .filter(Boolean)
         );
         console.log('time: ', new Date - d);
@@ -1010,7 +1010,7 @@
               {
                 title: 'Type',
                 handler: function(){
-                  owner.setLocalSorting('data.obj.title');
+                  owner.setLocalSorting('data.key');
                   owner.setLocalGrouping(PROTOTYPE_GROUPING_TYPE);
                 }
               },

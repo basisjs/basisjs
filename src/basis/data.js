@@ -353,7 +353,7 @@ basis.require('basis.event');
     event_stateChanged: createEvent('stateChanged', 'object', 'oldState'),
 
    /**
-    * Fires when state or state.data was changed.
+    * Fires when delegate was changed.
     * @param {basis.data.DataObject} object Object which state was changed.
     * @param {basis.data.DataObject} oldDelegate Object delegate before changes.
     * @event
@@ -560,6 +560,20 @@ basis.require('basis.event');
           for (var key in oldData)
             if (oldData[key] !== newDelegate.data[key])
               delta[key] = oldData[key];
+
+          // update & stateChanged can be fired only if new delegate was assigned;
+          // otherwise (delegate drop) do nothing -> performance benefits
+
+          // fire update event if any key in delta (data changed)
+          for (var key in delta)
+          {
+            this.event_update(this, delta);
+            break;
+          }
+
+          // fire stateChanged event if state was changed
+          if (oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
+            this.event_stateChanged(this, oldState);
         }
         else
         {
@@ -574,9 +588,6 @@ basis.require('basis.event');
             this.data[key] = oldData[key];
         }
 
-        // fire event if delegate changed
-        this.event_delegateChanged(this, oldDelegate);
-
         // fire event if target changed
         if (this.root !== oldRoot)
           this.event_rootChanged(this, oldRoot);
@@ -585,21 +596,8 @@ basis.require('basis.event');
         if (this.target !== oldTarget)
           this.event_targetChanged(this, oldTarget);
 
-        // update & stateChanged can be fired only if new delegate was assigned;
-        // otherwise (delegate drop) do nothing -> performance benefits
-        if (newDelegate)
-        {
-          // fire update event if any key in delta (data changed)
-          for (var key in delta)
-          {
-            this.event_update(this, delta);
-            break;
-          }
-
-          // fire stateChanged event if state was changed
-          if (oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
-            this.event_stateChanged(this, oldState);
-        }
+        // fire event if delegate changed
+        this.event_delegateChanged(this, oldDelegate);
 
         // delegate was changed
         return true;
