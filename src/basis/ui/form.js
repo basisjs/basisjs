@@ -1196,7 +1196,6 @@ basis.require('basis.ui.popup');
   var FormContent = UIControl.subclass({
     className: namespace + '.FormContent',
     
-    canHaveChildren: true,
     childClass: Field,
     childFactory: function(config){
       return Field.create(config.type || 'text', config);

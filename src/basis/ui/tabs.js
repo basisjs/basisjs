@@ -64,11 +64,8 @@ basis.require('basis.ui');
   var AbstractTabsControl = Class(UIControl, {
     className: namespace + '.AbstractTabsControl',
 
-    canHaveChildren: true,
     childClass: UINode,
 
-    event_childEnabled: createEvent('childEnabled', 'document', 'node'),
-    event_childDisabled: createEvent('childDisabled', 'document', 'node'),
     event_childNodesModified: function(node, delta){
       findAndSelectActiveNode(this);
       UIControl.prototype.event_childNodesModified.call(this, node, delta);
@@ -78,11 +75,9 @@ basis.require('basis.ui');
       childNode: {
         enable: function(childNode){
           findAndSelectActiveNode(this);
-          this.event_childEnabled(this, childNode);
         },
         disable: function(childNode){
           findAndSelectActiveNode(this);
-          this.event_childDisabled(this, childNode);
         }
       }
     },
@@ -217,7 +212,7 @@ basis.require('basis.ui');
     },
     
     template: 
-      '<div{element|selected} class="Basis-Page Basis-Page-Hidden">' + 
+      '<div{selected} class="Basis-Page Basis-Page-Hidden">' + 
         '<div{content|childNodesElement} class="Basis-Page-Content"/>' +
       '</div>'
   });
@@ -250,7 +245,6 @@ basis.require('basis.ui');
   var TabSheet = Class(Tab, {
     className: namespace + '.TabSheet',
 
-    canHaveChildren: true,
     childClass: UINode,
 
     event_select: function(){
@@ -263,7 +257,7 @@ basis.require('basis.ui');
     },
     
     template: 
-      '<div{element|selected} class="Basis-TabSheet" event-click="select">' +
+      '<div{selected} class="Basis-TabSheet" event-click="select">' +
         '<div{tabElement} class="Basis-Tab">' +
           '<span class="Basis-Tab-Start"/>' +
           '<span class="Basis-Tab-Content">' +

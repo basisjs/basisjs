@@ -463,7 +463,6 @@ basis.require('basis.ui');
   var Table = Class(UIControl, {
     className: namespace + '.Table',
     
-    canHaveChildren: true,
     childClass: Row,
 
     localGroupingClass: Class(UIGroupingNode, {
@@ -482,8 +481,6 @@ basis.require('basis.ui');
     templateAction: function(actionName, event){
       UIControl.prototype.templateAction.call(this, actionName, event);
     },
-
-    //canHaveChildren: false,
 
     init: function(config){
 

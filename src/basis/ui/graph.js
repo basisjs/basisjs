@@ -282,7 +282,6 @@ basis.require('basis.ui.canvas');
   */
   var GraphThread = Node.subclass({
     className: namespace + '.GraphThread',
-    canHaveChildren: true,
     legendGetter: Function.getter('legend'),
     colorGetter: Function.getter('color'),
     valueGetterGetter: Function.getter('valueGetter'),
