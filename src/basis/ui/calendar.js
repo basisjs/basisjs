@@ -185,18 +185,21 @@ basis.require('basis.ui');
 
     canHaveChildren: false,
 
-    template: new Template(
-      '<a{element} class="Basis-Calendar-Node" event-click="click">{title|-}</a>'
-    ),
-    templateAction: function(actionName, event){
-      if (actionName == 'click')
-        this.document.templateAction(actionName, event, this);
-      else
-        UINode.prototype.templateAction.call(this, actionName, event);
+    template:
+      '<a class="Basis-Calendar-Node" event-click="click">' +
+        '{title|-}' +
+      '</a>',
+
+    action: {
+      click: function(event){
+        var calendar = this.parentNode && this.parentNode.parentNode;
+        if (calendar)
+          calendar.templateAction('click', event, this);
+      }
     },
 
-    templateUpdate: function(object, actionName, delta){
-      if (!actionName || 'periodStart' in delta || 'periodEnd' in delta)
+    templateUpdate: function(object, eventName, delta){
+      if (!eventName || 'periodStart' in delta || 'periodEnd' in delta)
       {
         this.tmpl.title.nodeValue = this.titleGetter(this.data);
 
@@ -213,22 +216,7 @@ basis.require('basis.ui');
       UINode.prototype.event_select.call(this);
 
       DOM.focus(this.element);
-    }/*,
-    event_update: function(object, delta){
-      UINode.prototype.event_update.call(this, object, delta);
-
-      if ('periodStart' in delta || 'periodEnd' in delta)
-      {
-        this.tmpl.title.nodeValue = this.titleGetter(this.data);
-
-        if (this.parentNode)
-        {
-          var clsList = classList(this.element);
-          clsList.bool('before', this.data.periodStart < this.parentNode.data.periodStart);
-          clsList.bool('after', this.data.periodEnd > this.parentNode.data.periodEnd);
-        }
-      }
-    }*/
+    }
   });
 
   var CalendarSection = Class(UIContainer, {

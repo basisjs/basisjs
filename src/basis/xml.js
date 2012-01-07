@@ -451,7 +451,7 @@ basis.require('basis.dom');
     //removeAttributeNodeNS: removeAttributeNodeNS,
     createText: createText,
     createCDATA: createCDATA,
-    XML2Object: XML2Object, //function(){  var d = new Date(); var r = XML2Object.apply(this, arguments); console.log('xml2object', new Date - d, arguments); return r },
+    XML2Object: XML2Object,
     XML2String: XML2String,
     Object2XML: Object2XML
   });

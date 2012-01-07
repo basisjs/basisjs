@@ -1036,6 +1036,7 @@ basis.require('basis.html');
     if (factory)
     {
       child = factory.call(node, config);
+
       if (child instanceof node.childClass)
         return child;
     }

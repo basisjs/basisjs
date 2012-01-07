@@ -67,21 +67,24 @@ basis.require('basis.ui');
     canHaveChildren: true,
     childClass: UINode,
 
-    event_childEnabled: createEvent('childEnabled', 'document', 'node') && function(document, node){
-      if (this.selection && !this.selection.itemCount)
-        child.select();
-
-      events.childEnabled.call(this, document, node);
-    },
-    event_childDisabled: createEvent('childDisabled', 'document', 'node') && function(document, node){
-      findAndSelectActiveNode(this);
-
-      events.childDisabled.call(this, document, node);
-    },
+    event_childEnabled: createEvent('childEnabled', 'document', 'node'),
+    event_childDisabled: createEvent('childDisabled', 'document', 'node'),
     event_childNodesModified: function(node, delta){
       findAndSelectActiveNode(this);
-
       UIControl.prototype.event_childNodesModified.call(this, node, delta);
+    },
+
+    listen: {
+      childNode: {
+        enable: function(childNode){
+          findAndSelectActiveNode(this);
+          this.event_childEnabled(this, childNode);
+        },
+        disable: function(childNode){
+          findAndSelectActiveNode(this);
+          this.event_childDisabled(this, childNode);
+        }
+      }
     },
 
     //
@@ -89,7 +92,7 @@ basis.require('basis.ui');
     //
     item: function(indexOrName){
       var index = isNaN(indexOrName) ? this.indexOf(indexOrName) : parseInt(indexOrName);
-      return index.between(0, this.childNodes.length - 1) ? this.childNodes[index] : null;
+      return this.childNodes[index];
     },
     indexOf: function(objectOrName){
       // search for object
@@ -121,22 +124,13 @@ basis.require('basis.ui');
 
     canHaveChildren: false,
 
-    event_disable: function(){ 
-      UIContainer.prototype.event_disable.call(this);
-
+    event_disable: function(node){
       this.unselect();
-      if (this.document)
-        this.document.event_childDisabled(this.document, this);
-    },
-    event_enable: function(){ 
-      UIContainer.prototype.event_enable.call(this);
-
-      if (this.document)
-        this.document.event_childEnabled(this.document, this);
+      UIContainer.prototype.event_disable.call(this, node);
     },
 
     template: 
-      '<div{element|selected} class="Basis-Tab" event-click="select">' +
+      '<div{selected} class="Basis-Tab" event-click="select">' +
         '<span class="Basis-Tab-Start"/>' +
         '<span class="Basis-Tab-Content">' +
           '<span class="Basis-Tab-Caption">' +
@@ -149,7 +143,7 @@ basis.require('basis.ui');
 
     templateUpdate: function(tmpl, eventName, delta){
       // set new title
-      this.tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
+      tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
     },
     
     action: {
