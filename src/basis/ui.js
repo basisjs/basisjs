@@ -56,48 +56,6 @@ basis.require('basis.html');
   */
   var TemplateMixin = function(super_){
     return {
-      listen: {
-        satellite: {
-          ownerChanged: function(satellite, oldOwner){
-            if (oldOwner)
-            {
-              if (satellite.ownerReplacedNode_)
-              {
-                DOM.replace(satellite.element, satellite.ownerReplacedNode_);
-                satellite.ownerReplacedNode_ = null;
-              }
-            }
-          },
-          destroy: function(satellite){
-            if (satellite.ownerReplacedNode_)
-            {
-              DOM.replace(satellite.element, satellite.ownerReplacedNode_);
-              satellite.ownerReplacedNode_ = null;
-            }
-          }          
-        }
-      },
-
-      event_satelliteChanged: function(node, key, oldSatellite){
-        super_.event_satelliteChanged.call(this, node, key, oldSatellite);
-
-        var satellite = this.satellite[key];
-
-        if (satellite)
-        {
-          if (satellite instanceof Node && satellite.element)
-          {
-            var config = this.satelliteConfig && this.satelliteConfig[key];
-            var replaceElement = this.tmpl[config.replace || key];
-            if (replaceElement)
-            {
-              DOM.replace(satellite.ownerReplacedNode_ = replaceElement, satellite.element);
-              //satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
-            }
-          }
-        }
-      },
-
      /**
       * Template for object.
       * @type {basis.Html.Template}
@@ -128,6 +86,54 @@ basis.require('basis.html');
       * @type {object}
       */
       cssClassName: null,
+
+     /**
+      * @inheritDoc
+      */
+      listen: {
+        satellite: {
+          ownerChanged: function(satellite, oldOwner){
+            if (oldOwner)
+            {
+              if (satellite.ownerReplacedNode_)
+              {
+                DOM.replace(satellite.element, satellite.ownerReplacedNode_);
+                satellite.ownerReplacedNode_ = null;
+              }
+            }
+          },
+          destroy: function(satellite){
+            if (satellite.ownerReplacedNode_)
+            {
+              DOM.replace(satellite.element, satellite.ownerReplacedNode_);
+              satellite.ownerReplacedNode_ = null;
+            }
+          }          
+        }
+      },
+
+     /**
+      * @inheritDoc
+      */
+      event_satelliteChanged: function(node, key, oldSatellite){
+        super_.event_satelliteChanged.call(this, node, key, oldSatellite);
+
+        var satellite = this.satellite[key];
+
+        if (satellite)
+        {
+          if (satellite instanceof Node && satellite.element)
+          {
+            var config = this.satelliteConfig && this.satelliteConfig[key];
+            var replaceElement = this.tmpl[config.replace || key];
+            if (replaceElement)
+            {
+              DOM.replace(satellite.ownerReplacedNode_ = replaceElement, satellite.element);
+              //satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
+            }
+          }
+        }
+      },
 
      /**
       * @inheritDoc
@@ -213,7 +219,10 @@ basis.require('basis.html');
 
           // insert content
           if (this.content)
+          {
             DOM.insert(tmpl.content || tmpl.element, this.content);
+            this.content = null;
+          }
         }
         else
           tmpl.element = DOM.createElement();
@@ -252,7 +261,10 @@ basis.require('basis.html');
           this.templateUpdate(tmpl);
 
         if (this.container)
+        {
           DOM.insert(this.container, tmpl.element);
+          this.container = null;
+        }
       },
 
      /**
@@ -292,10 +304,8 @@ basis.require('basis.html');
         if (this.template)
           this.template.clearInstance(this.tmpl, this);
 
-        this.content = null;
-        this.container = null;
-        this.element = null;
         this.tmpl = null;
+        this.element = null;
         this.childNodesElement = null;
       }
     }
@@ -305,7 +315,8 @@ basis.require('basis.html');
   * @class
   */
   var Node = Class(DWNode, TemplateMixin, {
-    className: namespace + '.Node'
+    className: namespace + '.Node',
+    childClass: null
   });
 
  /**
@@ -341,9 +352,9 @@ basis.require('basis.html');
         var newChild = super_.insertBefore.call(this, newChild, refChild);
 
         var target = newChild.groupNode || this;
-        var nextSibling = newChild.nextSibling;
         var container = target.childNodesElement || target.element || this.childNodesElement || this.element;
 
+        var nextSibling = newChild.nextSibling;
         //var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
         var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
 
@@ -376,8 +387,10 @@ basis.require('basis.html');
           while (node)
           {
             var element = node.element;
-            if (element.parentNode)
-              element.parentNode.removeChild(element);
+            var parent = element.parentNode;
+
+            if (parent)
+              parent.removeChild(element);
 
             node = node.nextSibling;
           }

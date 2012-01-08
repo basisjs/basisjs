@@ -61,23 +61,13 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../basis.js"></script>
-  <script type="text/javascript" src="../plugins/generator.js"></script>
-  <script type="text/javascript" src="../data.js"></script>
-  <script type="text/javascript" src="../dom_wrapper.js"></script>
-  <script type="text/javascript" src="../property.js"></script>
-  <script type="text/javascript" src="../dom_register.js"></script>
-  <script type="text/javascript" src="../layout.js"></script>
-  <script type="text/javascript" src="../table.js"></script>
-  <script type="text/javascript" src="../form.js"></script>
+  <script type="text/javascript" src="../basis-all.js"></script>
 </head>
 
 <body>
   <div id="control_panel" style="border: 2px solid #808080; background: #F0F0F0; margin: .25em; padding: .5em">
     <input type="text" id="rowCount"/><button onclick="setRowCount(Basis.DOM.get('rowCount').value)">gen rows</button><span id="time"></span><br/>
     <button onclick="TestTable.clear()">clear</button>
-    <button onclick="var tt = Date.now();TestTable.childNodesElement.parentNode.removeChild(TestTable.childNodesElement);TestTable.childNodes.reverse().forEach(function(node){node.element.parentNode.removeChild(node.element)});alert(Date.now()-tt)">clear test</button>
-    <button onclick="var tt = Date.now();TestTable.childNodesElement.parentNode.removeChild(TestTable.childNodesElement);alert(Date.now()-tt)">clear test</button>
     <div>
       <label><input type="checkbox" id="logEvents"/> log events</label>
       <label><input type="checkbox" id="multipleSelection"/> multiple selection (using CTRL)</label>
@@ -89,13 +79,13 @@
   <script type="text/javascript">
     
     (function(){
-      var Data = Basis.Data;
-      var DOM = Basis.DOM;
-      var Event = Basis.Event;
+      var Data = basis.data;
+      var DOM = basis.dom;
+      var Event = basis.dom.event;
 
-      var Sum = Basis.DOM.Wrapper.Register.Sum;
+      /*var Sum = Basis.DOM.Wrapper.Register.Sum;
       var Max = Basis.DOM.Wrapper.Register.Max;
-      var Count = Basis.DOM.Wrapper.Register.Count;
+      var Count = Basis.DOM.Wrapper.Register.Count;*/
 
       setRowCount = function(value){
         DOM.get('rowCount').value = value;
@@ -138,28 +128,20 @@
       };
           
       //testAMax  = new Max(Function.getter('count', Number));
-      TestTable = new Basis.Controls.Table.Table({
+      TestTable = new basis.ui.table.Table({
         id: 'table',
         container: document.body,
         registers: [
-          testAOddCount = new Count('count % 2'),
-          testASum  = new Sum(Function.getter('amount', Number)),
-          testASum2 = new Sum(Function.getter('count', Number))
+          //testAOddCount = new Count('count % 2'),
+          //testASum  = new Sum(Function.getter('amount', Number)),
+          //testASum2 = new Sum(Function.getter('count', Number))
         ],
-        positionDependent: true,
-        rowBehaviour: {
-          updatePosition: function(pos, gpos){
-            this.posText.nodeValue = pos + 1;
-            this.groupPosText.nodeValue = gpos + 1;
-            this.repaintCountText.nodeValue = Number(this.repaintCountText.nodeValue) + 1;
-          }
-        },
         selection: {
           multiple: multipleSelection.checked
         },
         localGrouping: useGrouping.checked ? localGrouping : null,
-        handlers: {
-          any: function(){
+        handler: {
+          '*': function(){
             if (logEventCheckbox.checked)
               if (typeof console != 'undefined')
                 console.log(arguments);
@@ -218,13 +200,13 @@
 
             body: {
               content: function(node){
-                return '{0:.4}'.format(node.parentNode ? DOM.index(node) : Math.random());
+                return '{0:.4}'.format(Math.random());
               }
             },
 
             footer: {
               cssClassName: 'right',
-              content: testAOddCount.addLink(DOM.createText(), null, 'odd count: {0}')
+              content: '-' //testAOddCount.addLink(DOM.createText(), null, 'odd count: {0}')
             }
           },
           { 
@@ -253,7 +235,7 @@
             },
 
             footer: {
-              content: testASum.addLink(DOM.createText(), null, '{0:.2} ð.')
+              content: '-' // testASum.addLink(DOM.createText(), null, '{0:.2} ð.')
             }
           },
           { 
@@ -269,7 +251,7 @@
             },
 
             footer: {
-              content: testASum2.addLink(DOM.createText(), null)
+              content: '-' //testASum2.addLink(DOM.createText(), null)
             }
           }/*,
           {
@@ -293,10 +275,10 @@
         var data = [];
         for (var i = 0; i < count; i++)
           data.push({ 
-            id:     Basis.Data.Generator.Number(0, 0, 10000), 
-            title:  stringcache[i] || (stringcache[i] = Basis.Data.Generator.String(2, 50)), 
-            amount: Basis.Data.Generator.Number(2, -1000, 1000), 
-            count:  Basis.Data.Generator.Number(0, -10, 10)
+            id:     basis.data.generator.number(0, 0, 10000), 
+            title:  stringcache[i] || (stringcache[i] = basis.data.generator.string(2, 50)), 
+            amount: basis.data.generator.number(2, -1000, 1000), 
+            count:  basis.data.generator.number(0, -10, 10)
           });
         // console.log(data.last().count);
 
@@ -358,7 +340,7 @@
         }
       }), DOM.INSERT_BEFORE, TestTable.element);*/
 
-      var field = new Basis.Controls.Form.MatchInput({
+      var field = new basis.ui.form.MatchInput({
         matchFilter: {
           node: TestTable,
           textNodeGetter: 'element.childNodes[5].firstChild'

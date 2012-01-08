@@ -390,7 +390,7 @@ basis.require('basis.ui');
   var Row = Class(UINode, {
     className: namespace + '.Row',
     
-    canHaveChildren: false,
+    childClas: null,
 
     repaintCount: 0,
     getters: [],

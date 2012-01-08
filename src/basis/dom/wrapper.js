@@ -106,6 +106,38 @@ basis.require('basis.html');
     );
   }
 
+  var SELECTION_NULL_SET_THIS = function(node){
+    if (!node.contextSelection)
+    {
+      if (node.selected)
+        node.unselect();
+
+      node.contextSelection = this;
+    }
+  };
+
+  var SELECTION_DROP_THIS = function(node){
+    //node.unselect();
+    if (node.contextSelection === this)
+    {
+      if (node.selected)
+        this.remove([node]);
+      node.contextSelection = null;
+    }
+  };
+
+  var SELECTION_SET_NEW = function(node){
+    if (node.contextSelection == this.old)
+    {
+      if (node.selected)
+      {
+        if (this.old)
+          this.old.remove([node]);
+      }
+      node.contextSelection = this.cur;
+    }
+  };
+
   //
   // registrate new subscription types
   //
@@ -400,18 +432,18 @@ basis.require('basis.html');
     nodeType: 'DOMWrapperNode',
 
    /**
-    * @type {boolean}
-    * @readonly
-    */
-    canHaveChildren: false,
-
-   /**
     * A list that contains all children of this node. If there are no children,
     * this is a list containing no nodes.
     * @type {Array.<basis.dom.wrapper.AbstractNode>}
     * @readonly
     */
     childNodes: null,
+
+   /**
+    * All child nodes must be instances of childClass.
+    * @type {Class}
+    */
+    childClass: AbstractNode,
 
    /**
     * Object that's manage childNodes updates.
@@ -558,7 +590,7 @@ basis.require('basis.html');
       }
 
       // init properties
-      if (this.canHaveChildren)
+      if (this.childClass)
       {
         // init child nodes storage
         this.childNodes = [];
@@ -661,14 +693,6 @@ basis.require('basis.html');
     * Returns whether this node has any children. 
     * @return {boolean} Returns true if this node has any children, false otherwise.
     */
-    hasChildNodes: function(){
-      return this.childNodes.length > 0;
-    },
-
-   /**
-    * Returns whether this node has any children. 
-    * @return {boolean} Returns true if this node has any children, false otherwise.
-    */
     setChildNodes: function(){
     },
 
@@ -717,7 +741,7 @@ basis.require('basis.html');
     destroy: function(){
       // This order of actions is better for perfomance: 
       // inherit destroy -> clear childNodes -> remove from parent
-      // DON'T CHANGE WITH NO ANALIZE AND TESTS
+      // DON'T CHANGE ORDER WITH NO ANALIZE AND TESTS
 
       // inherit (fire destroy event & remove handlers)
       DataObject.prototype.destroy.call(this);
@@ -742,7 +766,7 @@ basis.require('basis.html');
       // destroy group control
       if (this.localGrouping)
       {
-        this.localGrouping.destroy();
+        this.localGrouping.setOwner();
         this.localGrouping = null;
       }
 
@@ -1040,11 +1064,6 @@ basis.require('basis.html');
   */
   var DomMixin = {
    /**
-    * @inheritDoc
-    */
-    canHaveChildren: true,
-
-   /**
     * All child nodes must be instances of childClass.
     * @type {Class}
     */
@@ -1089,7 +1108,7 @@ basis.require('basis.html');
     * @inheritDoc
     */
     insertBefore: function(newChild, refChild){
-      if (!this.canHaveChildren)
+      if (!this.childClass)
         throw EXCEPTION_CANT_INSERT;
 
       if (newChild.firstChild)
@@ -1390,15 +1409,7 @@ basis.require('basis.html');
         }
 
         if (!newChild.selection && newChild.firstChild)
-          axis(newChild, AXIS_DESCENDANT).forEach(function(node){
-            if (!node.contextSelection)
-            {
-              if (node.selected)
-                node.unselect();
-
-              node.contextSelection = newChildSelection;
-            }
-          });
+          axis(newChild, AXIS_DESCENDANT).forEach(SELECTION_NULL_SET_THIS, newChildSelection);
       }
 
       // if node doesn't move inside the same parent (parentNode changed)
@@ -1564,19 +1575,9 @@ basis.require('basis.html');
 
         if (alive)
         {
-          // clear document/selection
+          // clear selection
           if (child.contextSelection)
-          {
-            axis(child, DOM.AXIS_DESCENDANT_OR_SELF).forEach(function(node){
-              //node.unselect();
-              if (node.contextSelection === this)
-              {
-                if (node.selected)
-                  this.remove([node]);
-                node.contextSelection = null;
-              }
-            }, child.contextSelection);
-          }
+            axis(child, DOM.AXIS_DESCENDANT_OR_SELF).forEach(SELECTION_DROP_THIS, child.contextSelection);
 
           child.nextSibling = null;
           child.previousSibling = null;
@@ -1592,8 +1593,7 @@ basis.require('basis.html');
       if (this.localGrouping)
       {
         //this.localGrouping.clear();
-        var cn = this.localGrouping.childNodes;
-        for (var i = cn.length - 1, group; group = cn[i]; i--)
+        for (var childNodes = this.localGrouping.childNodes, i = childNodes.length - 1, group; group = childNodes[i]; i--)
           group.clear();
       }
     },
@@ -1631,7 +1631,7 @@ basis.require('basis.html');
     * @inheritDoc
     */
     setDataSource: function(dataSource){
-      if (!dataSource || !this.canHaveChildren || dataSource instanceof AbstractDataset == false)
+      if (!dataSource || !this.childClass || dataSource instanceof AbstractDataset == false)
         dataSource = null;
 
       if (this.dataSource !== dataSource)
@@ -1967,17 +1967,9 @@ basis.require('basis.html');
       if (this.selection == selection)
         return false;
         
-      var oldSelection = this.selection;
-      axis(this, AXIS_DESCENDANT, function(node){
-        if (node.contextSelection == oldSelection)
-        {
-          if (node.selected)
-          {
-            if (oldSelection)
-              oldSelection.remove([node]);
-          }
-          node.contextSelection = selection;
-        }
+      axis(this, AXIS_DESCENDANT).forEach(SELECTION_SET_NEW, {
+        cur: selection,
+        old: this.selection
       });
       this.selection = selection;
         

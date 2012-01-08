@@ -140,7 +140,7 @@ basis.require('basis.ui');
    /**
     * @inheritDoc
     */
-    canHaveChildren: false,
+    childClass: null,
 
    /**
     * @inheritDoc
@@ -195,11 +195,6 @@ basis.require('basis.ui');
   */
   var Folder = Class(Node, {
     className: namespace + '.Folder',
-
-   /**
-    * @inheritDoc
-    */
-    canHaveChildren: true,
 
    /**
     * @inheritDoc

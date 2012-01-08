@@ -91,7 +91,7 @@ basis.require('basis.ui.popup');
   var Field = UINode.subclass({
     className: namespace + '.Field',
 
-    canHaveChildren: false,
+    childClass: null,
     template: baseFieldTemplate,
 
     nextFieldOnEnter: true,
@@ -564,7 +564,7 @@ basis.require('basis.ui.popup');
   var ComplexFieldItem = UINode.subclass({
     className: namespace + '.ComplexField.Item',
 
-    canHaveChildren: false,
+    childClass: null,
 
     titleGetter: function(item){
       return item.title || item.getValue();

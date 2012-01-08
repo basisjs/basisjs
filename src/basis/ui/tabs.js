@@ -113,7 +113,7 @@ basis.require('basis.ui');
   var Tab = Class(UIContainer, {
     className: namespace + '.Tab',
 
-    canHaveChildren: false,
+    childClass: null,
 
     event_disable: function(node){
       this.unselect();

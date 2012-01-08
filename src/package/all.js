@@ -14,6 +14,7 @@
   basis.require('basis.crypt');
   basis.require('basis.data');
   basis.require('basis.data.dataset');
+  basis.require('basis.data.generator');
   basis.require('basis.data.property');
   basis.require('basis.data.index');
   basis.require('basis.entity');

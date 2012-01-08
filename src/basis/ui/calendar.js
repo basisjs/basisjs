@@ -183,7 +183,7 @@ basis.require('basis.ui');
   var CalendarNode = Class(UINode, {
     className: namespace + '.Calendar.Node',
 
-    canHaveChildren: false,
+    childClass: null,
 
     template:
       '<a class="Basis-Calendar-Node" event-click="click">' +

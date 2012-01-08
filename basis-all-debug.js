@@ -24,6 +24,7 @@
     document.write('<script src="' + curLocation + 'src/basis/xml.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/crypt.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/data/dataset.js"></script>');
+    document.write('<script src="' + curLocation + 'src/basis/data/generator.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/data/index.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/entity.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/session.js"></script>');
