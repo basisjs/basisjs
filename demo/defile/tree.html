@@ -106,7 +106,7 @@
       },
       childFactory: function(config){
         if (config.childNodes)
-          return new nsTree.Folder(config);
+          return new nsTree.Folder(Object.extend({ childFactory: this.childFactory }, config));
         else
           return new nsTree.Node(config);
       },

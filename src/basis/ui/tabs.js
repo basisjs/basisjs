@@ -107,10 +107,6 @@ basis.require('basis.ui');
   // Tab
   //
 
-  function tabCaptionFormat(value){ 
-    return value == null || String(value) == '' ? '[no title]' : value;
-  };
-
  /**
   * @class
   */
@@ -138,7 +134,8 @@ basis.require('basis.ui');
 
     templateUpdate: function(tmpl, eventName, delta){
       // set new title
-      tmpl.titleText.nodeValue = tabCaptionFormat(this.titleGetter(this));
+      var title = this.titleGetter(this);
+      tmpl.titleText.nodeValue = title == null || String(title) == '' ? '[no title]' : title;
     },
     
     action: {

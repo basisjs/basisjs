@@ -96,7 +96,7 @@
 
     var treeChildFactory = function(config){
       if (config.childNodes)
-        return new nsTree.Folder(config);
+        return new nsTree.Folder(Object.extend({ childFactory: this.childFactory }, config));
       else
         return new nsTree.Node(config);
     };
@@ -137,7 +137,7 @@
     DOM.insert(demoContainer, DOM.createElement('', DOM.createElement('LABEL', 'Selection contains: '), contentText));
     treeSelection.addHandler({
       datasetChanged: function(){
-        contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(node.document.element.id, node.data.title) }).join(', ') || 'nothing';
+        contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(DOM.axis(node, DOM.AXIS_ANCESTOR).pop().element.id, node.data.title) }).join(', ') || 'nothing';
       }
     });
 

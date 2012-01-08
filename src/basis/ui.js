@@ -484,11 +484,6 @@ basis.require('basis.html');
     * @inheritDoc
     */
     init: function(config){
-      // make document link to itself
-      // NOTE: we make it before inherit because in other way
-      //       child nodes (passed by config.childNodes) will be with no document
-      this.document = this;
-
       // inherit
       Container.prototype.init.call(this, config);
                    

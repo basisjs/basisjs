@@ -311,7 +311,7 @@ basis.require('basis.html');
     // new events
 
    /**
-    * This is a general event for notification of childs changes to the document.
+    * This is a general event for notification of childs changes to the parent node.
     * It may be dispatched after a single modification to the childNodes or after
     * multiple changes have occurred. 
     * @param {basis.dom.wrapper.AbstractNode} node
@@ -430,12 +430,6 @@ basis.require('basis.html');
     * @type {Boolean}
     */
     destroyDataSourceMember: true,
-
-   /**
-    * @type {basis.dom.wrapper.AbstractNode}
-    * @readonly
-    */
-    document: null,
 
    /**
     * The parent of this node. All nodes may have a parent. However, if a node
@@ -769,7 +763,6 @@ basis.require('basis.html');
       }
 
       // remove pointers
-      this.document = null;
       this.childNodes = null;
       this.parentNode = null;
       this.previousSibling = null;
@@ -1024,17 +1017,13 @@ basis.require('basis.html');
   }
 
   function createChildByFactory(node, config){
-    var factory = node.childFactory || (node.document && node.document.childFactory);
     var child;
 
-    config = Object.extend({
-      document: node.document,
-      contextSelection: node.selection || node.contextSelection
-    }, config);
-
-    if (factory)
+    if (typeof node.childFactory == 'function')
     {
-      child = factory.call(node, config);
+      child = node.childFactory(Object.extend({
+        contextSelection: node.selection || node.contextSelection
+      }, config));
 
       if (child instanceof node.childClass)
         return child;
@@ -1376,7 +1365,6 @@ basis.require('basis.html');
 
       // update newChild
       newChild.parentNode = this;
-      //newChild.document = this.document;
       newChild.previousSibling = refChild.previousSibling;
 
       // not need update this.lastChild, insert always before some node
@@ -1389,42 +1377,29 @@ basis.require('basis.html');
       // update refChild
       refChild.previousSibling = newChild;
 
-      // update document & selection
-      var updateDocument = false;
-      var updateSelection = false;
+      // update selection
       var newChildSelection = this.selection || this.contextSelection;
-
-      if (!newChild.document && newChild.document !== this.document)
-      {
-        updateDocument = this.document;
-        newChild.document = this.document;
-      }
 
       if (!newChild.contextSelection && newChild.contextSelection !== newChildSelection)
       {
         newChild.contextSelection = newChildSelection;
-        updateSelection = !newChild.selection;
-
         if (newChild.selected)
         {
           //newChild.unselect();
           newChildSelection.add([newChild]);
         }
+
+        if (!newChild.selection && newChild.firstChild)
+          axis(newChild, AXIS_DESCENDANT).forEach(function(node){
+            if (!node.contextSelection)
+            {
+              if (node.selected)
+                node.unselect();
+
+              node.contextSelection = newChildSelection;
+            }
+          });
       }
-
-      if (newChild.firstChild && (updateDocument || updateSelection))
-        axis(newChild, AXIS_DESCENDANT).forEach(function(node){
-          if (updateDocument && !node.document)
-            node.document = updateDocument;
-
-          if (updateSelection && !node.contextSelection)
-          {
-            if (node.selected)
-              node.unselect();
-
-            node.contextSelection = newChildSelection;
-          }
-        });
 
       // if node doesn't move inside the same parent (parentNode changed)
       if (!isInside)
@@ -1480,17 +1455,6 @@ basis.require('basis.html');
         
       oldChild.nextSibling = null;
       oldChild.previousSibling = null;
-
-      //
-      // update document
-      //
-      if (oldChild.document === this.document)
-      {
-        axis(oldChild, AXIS_DESCENDANT_OR_SELF).forEach(function(node){
-          if (node.document == this.document)
-            node.document = null;
-        }, this);
-      }
 
       //
       // update selection
@@ -1601,19 +1565,17 @@ basis.require('basis.html');
         if (alive)
         {
           // clear document/selection
-          if (child.selection || child.document)
+          if (child.contextSelection)
           {
             axis(child, DOM.AXIS_DESCENDANT_OR_SELF).forEach(function(node){
               //node.unselect();
-              if (this.selection && node.selection === this.selection)
+              if (node.contextSelection === this)
               {
                 if (node.selected)
-                  node.selection.remove([node]);
-                node.selection = null;
+                  this.remove([node]);
+                node.contextSelection = null;
               }
-              if (node.document === this.document)
-                node.document = null;
-            }, this);
+            }, child.contextSelection);
           }
 
           child.nextSibling = null;
@@ -2119,8 +2081,8 @@ basis.require('basis.html');
     */
     isDisabled: function(){
       return this.disabled 
-             || (this.document && this.document.disabled)
              || !!DOM.findAncestor(this, getter('disabled'));
+             // TODO: add check for groupNode, when groupNode will support for disabled
     },
 
    /**

@@ -218,7 +218,7 @@
 
             body: {
               content: function(node){
-                return '{0:.4}'.format(node.document ? DOM.index(node) : Math.random());
+                return '{0:.4}'.format(node.parentNode ? DOM.index(node) : Math.random());
               }
             },
 

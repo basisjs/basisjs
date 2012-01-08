@@ -336,6 +336,7 @@
           this.setDataSource(Link.getGrouping('FieldId').getSubset(this.data.FieldId, true));
         },
 
+        childFactory: basis.ui.Container.prototype.childFactory,
         childClass: nsUI.Node.subclass({
           template: 
             '<div class="Field-WordLink">' +
@@ -400,7 +401,7 @@
     });
 
     // Зависимый список - список слов
-    var relatedTree = new nsUI.Tree({
+    var relatedTree = new nsTree.Tree({
       id: 'RelatedTree',
 
       event_targetChanged: function(object, delta){

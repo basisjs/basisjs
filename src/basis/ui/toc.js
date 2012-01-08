@@ -101,8 +101,6 @@ basis.require('basis.cssom');
     init: function(config){
       this.inherit(config);
 
-      this.document = this;
-
       if (MW_SUPPORTED)
       {
         Event.addHandler(this.element, 'mousewheel', function(event){

@@ -80,8 +80,8 @@
             return 'child #' + i + ' has wrong previousSibling ref';
           if (child.nextSibling != (node.childNodes[i + 1] || null))
             return 'child #' + i + ' has wrong nextSibling ref';
-          if (child.document != node.document)
-            return 'child #' + i + ' has wrong document ref';
+          //if (child.document != node.document)
+          //  return 'child #' + i + ' has wrong document ref';
         }
         return false;
       }
