@@ -17,18 +17,16 @@
 
   .Basis-Scrollbar.horizontal
   {
-    left: 0;
-    rig1ht: 10px;
-    right: 0;
+    left: 2px;
+    right: 2px;
     bottom: 2px;
     height: 4px;
   }
 
   .Basis-Scrollbar.vertical
   {
-    top: 0;
-    b1ottom: 10px;
-    bottom: 0;
+    top: 2px;
+    bottom: 2px;
     right: 2px;
     width: 4px;
   }

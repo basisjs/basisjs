@@ -71,9 +71,9 @@ basis.require('basis.ui.scroller');
     init: function(config){
       PageControl.prototype.init.call(this, config);
 
-      var cssClassName = 'gerericRule_' + this.eventObjectId;
+      /*var cssClassName = 'gerericRule_' + this.eventObjectId;
       this.pageSliderCssRule = basis.cssom.cssRule('.' + cssClassName + ' > .Basis-Page');
-      classList(this.element).add(cssClassName);
+      classList(this.element).add(cssClassName);*/
 
       this.scroller = new Scroller({
         targetElement: this.tmpl.childNodesElement,
@@ -125,8 +125,8 @@ basis.require('basis.ui.scroller');
     destroy: function(){
       PageControl.prototype.init.call(this, config);
 
-      DOM.Style.getStyleSheet().removeCssRule(this.pageSliderCssRule.rule);
-      this.pageSliderCssRule = null;
+      /*DOM.Style.getStyleSheet().removeCssRule(this.pageSliderCssRule.rule);
+      this.pageSliderCssRule = null;*/
 
       this.scroller.destroy();
     }

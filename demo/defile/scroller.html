@@ -55,13 +55,14 @@
 
     #WorldMapPanel
     {
-      height: 400px;
+      height: 365px;
       cursor: move;
     }
 
     #CountriesPanel
     {
       border-top: 1px solid #D0D0D0;
+      height: 34px;
     }
     #CountriesPanel .Country
     {
@@ -153,7 +154,7 @@
 
     .ScrollList
     {
-      height: 250px;
+      height: 400px;
       width: 100%;
     }
 
@@ -173,8 +174,7 @@
 
     .PageSlider
     {
-      height: 250px;
-
+      height: 400px;
     }
     .PageSlider .Basis-Page
     {
@@ -182,7 +182,7 @@
     }
     .PageSlider .PageContent
     {
-      margin-top: 75px;
+      margin-top: 125px;
 
       text-align: center;
       font-size: 430%;
@@ -273,7 +273,7 @@
             worldMap.scrollTo(this.data.PositionX, this.data.PositionY);
           }
         },
-
+ 
         templateUpdate: function(tmpl){
           tmpl.titleText.nodeValue = this.data.Title;
         }
@@ -293,7 +293,7 @@
     // Crazy Ball
     //
 
-    var block = createBlock('Crazy Ball');
+    /*var block = createBlock('Crazy Ball');
     var ballContainer = DOM.insert(block, DOM.createElement('#BallContainer'));
     var ball = DOM.insert(ballContainer, DOM.createElement('#Ball'));
 
@@ -322,7 +322,7 @@
           }
         }
       }
-    });
+    });*/
 
     //
     // Scroll List
@@ -352,7 +352,12 @@
         { title: 'List Item 7' },
         { title: 'List Item 8' },
         { title: 'List Item 9' },
-        { title: 'List Item 10' }
+        { title: 'List Item 10'},
+        { title: 'List Item 11' },
+        { title: 'List Item 12' },
+        { title: 'List Item 13' },
+        { title: 'List Item 14' },
+        { title: 'List Item 15' }
       ]
     });
 
