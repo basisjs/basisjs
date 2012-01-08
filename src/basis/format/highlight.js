@@ -1,5 +1,5 @@
 /*!
- * Basis javasript library 
+ * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
  * @copyright
