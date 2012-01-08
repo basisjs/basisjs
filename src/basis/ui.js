@@ -500,13 +500,6 @@ basis.require('basis.html');
     * @inheritDoc
     */
     destroy: function(){
-      // selection destroy - clean selected nodes
-      if (this.selection)
-      {
-        this.selection.destroy(); // how about shared selection?
-        this.selection = null;
-      }
-
       // inherit destroy, must be calling after inner objects destroyed
       Container.prototype.destroy.call(this);
 

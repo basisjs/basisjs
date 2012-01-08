@@ -23,7 +23,7 @@ basis.require('basis.html');
   *
   * Namespace overview:
   * - Non-visual DOM classes:
-  *   {basis.dom.wrapper.AbstractNode}, {basis.dom.wrapper.InteractiveNode},
+  *   {basis.dom.wrapper.AbstractNode},
   *   {basis.dom.wrapper.Node}, {basis.dom.wrapper.PartitionNode},
   *   {basis.dom.wrapper.GroupingNode}
   * - Misc:
@@ -905,7 +905,7 @@ basis.require('basis.html');
    */
 
   var DOMMIXIN_DATASOURCE_HANDLER = {
-    datasetChanged: function(dataset, delta){
+    datasetChanged: function(dataSource, delta){
       var newDelta = {};
       var deleted = [];
 
@@ -985,9 +985,8 @@ basis.require('basis.html');
           item.destroy();
       }
     },
-    destroy: function(object){
-      //this.clear();
-      if (this.dataSource === object)
+    destroy: function(dataSource){
+      if (this.dataSource === dataSource)
         this.setDataSource();
     }
   };
@@ -1554,7 +1553,7 @@ basis.require('basis.html');
       if (this.dataSource)
         throw EXCEPTION_DATASOURCE_CONFLICT;
 
-      if (oldChild == null || oldChild.parentNode !== this) // this.childNodes.absent(oldChild) truly but speedless
+      if (oldChild == null || oldChild.parentNode !== this)
         throw EXCEPTION_NODE_NOT_FOUND;
 
       // insert newChild before oldChild
@@ -1856,13 +1855,15 @@ basis.require('basis.html');
     },
 
    /**
-    * @inheritDoc
+    * Set match function for child nodes.
+    * @param {function(node):boolean} func
     */
     setMatchFunction: function(matchFunction){
       if (this.matchFunction != matchFunction)
       {
         var oldMatchFunction = this.matchFunction;
         this.matchFunction = matchFunction;
+
         for (var node = this.lastChild; node; node = node.previousSibling)
           node.match(matchFunction);
 
@@ -1871,12 +1872,13 @@ basis.require('basis.html');
     }
   };
 
+
  /**
   * @class
   */
-  var InteractiveNode = Class(AbstractNode, {
-    className: namespace + '.InteractiveNode',
-  
+  var Node = Class(AbstractNode, DomMixin, {
+    className: namespace + '.Node',
+
    /**
     * Occurs after disabled property has been set to false.
     * @event
@@ -2148,20 +2150,13 @@ basis.require('basis.html');
     },
 
    /**
-    * Set match function for child nodes.
-    * @param {function(node):bollean} func
-    */
-    setMatchFunction: function(func){
-    },
-
-   /**
     * @destructor
     */
     destroy: function(){
       if (this.hasOwnSelection())
       {
         this.selection.destroy(); // how about shared selection?
-        delete this.selection;
+        this.selection = null;
       }
 
       this.unselect();
@@ -2169,13 +2164,6 @@ basis.require('basis.html');
       // inherit
       AbstractNode.prototype.destroy.call(this);
     }
-  });
-
- /**
-  * @class
-  */
-  var Node = Class(InteractiveNode, DomMixin, {
-    className: namespace + '.Node'
   });
 
  /**
@@ -2636,7 +2624,6 @@ basis.require('basis.html');
 
     // classes
     AbstractNode: AbstractNode,
-    InteractiveNode: InteractiveNode,
     Node: Node,
     GroupingNode: GroupingNode,
     PartitionNode: PartitionNode,

@@ -761,7 +761,7 @@ basis.require('basis.ui');
         var delta = Event.wheelDelta(event);
 
         var selected = this.selection.pick();
-        var nextChild = delta == 1 ? selected.nextSibling : selected.previousSibling;
+        var nextChild = delta == -1 ? selected.nextSibling : selected.previousSibling;
         
         if (nextChild)
           nextChild.select();
