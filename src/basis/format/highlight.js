@@ -86,6 +86,17 @@ basis.require('basis.ui');
           start = i;
           while (++i < sym.length)
           {
+            if (sym[i] == '\\')
+            {
+              if (sym[i + 1] == '\n')
+              {
+                addMatch('string', start, i);
+                start = ++i + 1;
+              }
+              else
+                i += 2;
+            }
+
             if (sym[i] == strSym)
             {
               addMatch('string', start, i);
@@ -94,12 +105,6 @@ basis.require('basis.ui');
 
             if (sym[i] == '\n')
               break;
-
-            if (sym[i] == '\\' && sym[i + 1] == '\n')
-            {
-              addMatch('string', start, i);
-              start = ++i + 1;
-            }
           }
         }
         else if (sym[i] == '/')

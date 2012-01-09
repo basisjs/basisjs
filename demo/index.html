@@ -237,10 +237,16 @@
           template:
             '<li{element} class="Demo-TreeNode" event-click="select">' +
               '<a{content|title} href="#">' +
-                '<img src{imageUrl}="box.png" width="100" height="75"/>' +
+                '<img src{imageUrl}="" event-error="setDefaultImage" width="100" height="75"/>' +
                 '<span class="title">{titleText}</span>' +
               '</a>' +
             '</li>',
+
+          action: {
+            setDefaultImage: function(){
+              this.tmpl.imageUrl.nodeValue = 'res/img/noimg.png';
+            }
+          },
 
           templateUpdate: function(tmpl, eventName, delta){
             tmpl.titleText.nodeValue = this.data.title;

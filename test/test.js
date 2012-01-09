@@ -1,31 +1,34 @@
-//
-// Basis JavaSript library 
-// ---------------------------------
-// Homepage: basis.et-lab.ru
-// copyright (c) 2006-2010
-// Author:   Dvornov lahmatiy Roman <rdvornov@gmail.com>
-//
+/*!
+ * Basis javascript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2012 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
 
   (function(){
 
-    var namespace = 'Basis.Test';
+    var namespace = 'basis.test';
 
     // import names
 
-    var DOM = Basis.DOM;
-    var CSS = Basis.CSS;
-    var Browser = Basis.Browser;
-    var Event = Basis.Event;
-    var cssClass = Basis.CSS.cssClass;
+    var DOM = basis.dom;
+    var CSS = basis.cssom;
+    var Browser = basis.ua;
+    var Event = basis.dom.event;
+    var cssClass = basis.cssom.classList;
     var extend = Object.extend;
-    var Class = Basis.Class;
+    var Class = basis.Class;
 
-    var nsWrappers = Basis.DOM.Wrapper;
-    var EventObject = Basis.EventObject;
-    var Property = Basis.Data.Property.Property;
+    var nsWrappers = basis.dom.wrapper;
+    var EventObject = basis.event.EventObject;
+    var Property = basis.data.property.Property;
 
-    var event = EventObject.event;
-    var createEvent = EventObject.createEvent;
+    var event = basis.event.events;
+    var createEvent = basis.event.create;
 
     // const
 
@@ -630,7 +633,7 @@
     // Export
     //
 
-    Basis.namespace(namespace).extend({
+    basis.namespace(namespace).extend({
       Tester: Tester
     });
 

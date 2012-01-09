@@ -19,9 +19,7 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis.js"></script>
-  <script type="text/javascript"  src="../dom.js"></script>
-  <script type="text/javascript"  src="../dom_wrapper.js"></script>
+  <script type="text/javascript"  src="../basis-all.js"></script>
   <script type="text/javascript"  src="test.js"></script>
   <script type="text/javascript"  src="common.js"></script>
 </head>
@@ -31,11 +29,11 @@
 
   <script type="text/javascript">
     loadTest((function(){
-      var DOM = Basis.DOM;
+      var DOM = basis.dom;
 
-      var CSS = Basis.CSS;
-      var Event = Basis.Event;
-      var Tester = Basis.Test.Tester;
+      var CSS = basis.cssom;
+      var Event = basis.dom.event;
+      var Tester = basis.test.Tester;
 
       var CookieName;
       var TestProperty;
@@ -69,6 +67,9 @@
       var a3 = 'n1 n2 n3 n4 n5 n6 n7 n8 n9 n10';
       var a4 = 'n1 n10 9 n3 8 n4 n7 7 n8 n9 6 5 n6 4 n5 3 2 n2 1';
 
+      var IS_TEXT_NODE = function(node){ return node.nodeType == 3 };
+      var IS_ELEMENT_NODE = function(node){ return node.nodeType == 1 };
+
       return [
         {
           name: 'TreeWalker',
@@ -81,7 +82,7 @@
                 w.setDirection(DOM.TreeWalker.BACKWARD);
                 this.is(a4, resolveNodes(w.nodes()));
 
-                var w = new DOM.TreeWalker(pg, DOM.IS_TEXT_NODE);
+                var w = new DOM.TreeWalker(pg, IS_TEXT_NODE);
                 this.is(a2, resolveNodes(w.nodes()));
                 this.is(a1, resolveNodes(w.nodes(Function.$true)));
                 w.next();
@@ -89,10 +90,10 @@
                 this.is(a2, resolveNodes(w.nodes()));
 
                 var w = new DOM.TreeWalker(pg);
-                this.is(a2, resolveNodes(w.nodes(DOM.IS_TEXT_NODE)));
+                this.is(a2, resolveNodes(w.nodes(IS_TEXT_NODE)));
                 this.is(a1, resolveNodes(w.nodes()));
                 
-                this.is(a3, resolveNodes(new DOM.TreeWalker(pg, DOM.IS_ELEMENT_NODE).nodes()));
+                this.is(a3, resolveNodes(new DOM.TreeWalker(pg, IS_ELEMENT_NODE).nodes()));
 
                 this.is(a4, resolveNodes(new DOM.TreeWalker(pg, null, DOM.TreeWalker.BACKWARD).nodes()));
               }
@@ -120,9 +121,9 @@
                 this.is(DOM.get('n2'), w.cursor_);
                 w.reset();
                 this.is(null, w.cursor_);
-                this.is('1', resolveNodes(w.next(DOM.IS_TEXT_NODE)));
-                this.is(true, w.filter != DOM.IS_TEXT_NODE);
-                this.is('2', resolveNodes(w.next(DOM.IS_TEXT_NODE)));
+                this.is('1', resolveNodes(w.next(IS_TEXT_NODE)));
+                this.is(true, w.filter != IS_TEXT_NODE);
+                this.is('2', resolveNodes(w.next(IS_TEXT_NODE)));
               }
             },
             {
@@ -134,9 +135,9 @@
                 this.is(DOM.get('n10'), w.cursor_);
                 w.reset();
                 this.is(null, w.cursor_);
-                this.is('9', resolveNodes(w.next(DOM.IS_TEXT_NODE)));
-                this.is(true, w.filter != DOM.IS_TEXT_NODE);
-                this.is('8', resolveNodes(w.next(DOM.IS_TEXT_NODE)));
+                this.is('9', resolveNodes(w.next(IS_TEXT_NODE)));
+                this.is(true, w.filter != IS_TEXT_NODE);
+                this.is('8', resolveNodes(w.next(IS_TEXT_NODE)));
               }
             },
             {
@@ -148,9 +149,9 @@
                 this.is(DOM.get('n10'), w.cursor_);
                 w.reset();
                 this.is(null, w.cursor_);
-                this.is('9', resolveNodes(w.prev(DOM.IS_TEXT_NODE)));
-                this.is(true, w.filter != DOM.IS_TEXT_NODE);
-                this.is('8', resolveNodes(w.prev(DOM.IS_TEXT_NODE)));
+                this.is('9', resolveNodes(w.prev(IS_TEXT_NODE)));
+                this.is(true, w.filter != IS_TEXT_NODE);
+                this.is('8', resolveNodes(w.prev(IS_TEXT_NODE)));
               }
             },
             {
@@ -162,9 +163,9 @@
                 this.is(DOM.get('n2'), w.cursor_);
                 w.reset();
                 this.is(null, w.cursor_);
-                this.is('1', resolveNodes(w.prev(DOM.IS_TEXT_NODE)));
-                this.is(true, w.filter != DOM.IS_TEXT_NODE);
-                this.is('2', resolveNodes(w.prev(DOM.IS_TEXT_NODE)));
+                this.is('1', resolveNodes(w.prev(IS_TEXT_NODE)));
+                this.is(true, w.filter != IS_TEXT_NODE);
+                this.is('2', resolveNodes(w.prev(IS_TEXT_NODE)));
               }
             },
             {
@@ -179,10 +180,10 @@
                 
                 w.reset();
                 this.is(null, w.cursor_);
-                this.is('1', resolveNodes(w.first(DOM.IS_TEXT_NODE)));
-                this.is(true, w.filter != DOM.IS_TEXT_NODE);
+                this.is('1', resolveNodes(w.first(IS_TEXT_NODE)));
+                this.is(true, w.filter != IS_TEXT_NODE);
                 w.next();
-                this.is('1', resolveNodes(w.first(DOM.IS_TEXT_NODE)));
+                this.is('1', resolveNodes(w.first(IS_TEXT_NODE)));
               }
             },
             {
@@ -197,10 +198,10 @@
                 
                 w.reset();
                 this.is(null, w.cursor_);
-                this.is('9', resolveNodes(w.first(DOM.IS_TEXT_NODE)));
-                this.is(true, w.filter != DOM.IS_TEXT_NODE);
+                this.is('9', resolveNodes(w.first(IS_TEXT_NODE)));
+                this.is(true, w.filter != IS_TEXT_NODE);
                 w.next();
-                this.is('9', resolveNodes(w.first(DOM.IS_TEXT_NODE)));
+                this.is('9', resolveNodes(w.first(IS_TEXT_NODE)));
               }
             },
             {
@@ -216,10 +217,10 @@
                 
                 w.reset();
                 this.is(null, w.cursor_);
-                this.is('n10', resolveNodes(w.last(DOM.IS_ELEMENT_NODE)));
-                this.is(true, w.filter != DOM.IS_ELEMENT_NODE);
+                this.is('n10', resolveNodes(w.last(IS_ELEMENT_NODE)));
+                this.is(true, w.filter != IS_ELEMENT_NODE);
                 w.next();
-                this.is('n10', resolveNodes(w.last(DOM.IS_ELEMENT_NODE)));
+                this.is('n10', resolveNodes(w.last(IS_ELEMENT_NODE)));
               }
             },
             {
@@ -235,10 +236,10 @@
 
                 w.reset();
                 this.is(null, w.cursor_);
-                this.is('n2', resolveNodes(w.last(DOM.IS_ELEMENT_NODE)));
-                this.is(true, w.filter != DOM.IS_ELEMENT_NODE);
+                this.is('n2', resolveNodes(w.last(IS_ELEMENT_NODE)));
+                this.is(true, w.filter != IS_ELEMENT_NODE);
                 w.next();
-                this.is('n2', resolveNodes(w.last(DOM.IS_ELEMENT_NODE)));
+                this.is('n2', resolveNodes(w.last(IS_ELEMENT_NODE)));
               }
             }
           ]
@@ -290,7 +291,7 @@
                   node = node.nextSibling;
                 }
                 this.is(r1, DOM.axis(root, DOM.AXIS_CHILD));
-                this.is(r1.filter(DOM.IS_TEXT_NODE), DOM.axis(root, DOM.AXIS_CHILD, DOM.IS_TEXT_NODE));
+                this.is(r1.filter(IS_TEXT_NODE), DOM.axis(root, DOM.AXIS_CHILD, IS_TEXT_NODE));
               }
             },
             {

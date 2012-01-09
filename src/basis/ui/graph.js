@@ -390,9 +390,9 @@ basis.require('basis.ui.canvas');
     },
 
     init: function(config){
-      Canvas.prototype.init.call(this, config);
-
       this.clientRect = {}; 
+
+      Canvas.prototype.init.call(this, config);
     },
 
     /*draw: function(){

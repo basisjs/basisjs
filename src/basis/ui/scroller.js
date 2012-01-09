@@ -801,7 +801,7 @@ basis.require('basis.ui');
       ScrollPanel.prototype.init.call(this, config);
 
       this.scroller.addHandler({
-        startInertia: this.adjustPosition,
+        startInertia: this.adjustPosition
       }, this);
 
       if (this.childTransform != Function.$null)

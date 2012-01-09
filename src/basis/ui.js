@@ -205,7 +205,6 @@ basis.require('basis.html');
 
         // create dom fragment by template
         var tmpl = {};
-        this.tmpl = tmpl;
 
         if (this.template)
         {
@@ -228,6 +227,7 @@ basis.require('basis.html');
           tmpl.element = DOM.createElement();
 
         // make shortcuts
+        this.tmpl = tmpl;
         this.element = tmpl.element;
         this.childNodesElement = tmpl.childNodesElement || tmpl.element;
 
@@ -257,8 +257,7 @@ basis.require('basis.html');
           }
         }
 
-        if (tmpl)
-          this.templateUpdate(tmpl);
+        this.templateUpdate(tmpl);
 
         if (this.container)
         {
@@ -310,35 +309,6 @@ basis.require('basis.html');
       }
     }
   };
-
- /**
-  * @class
-  */
-  var Node = Class(DWNode, TemplateMixin, {
-    className: namespace + '.Node',
-    childClass: null
-  });
-
- /**
-  * @class
-  */
-  var PartitionNode = Class(DWPartitionNode, TemplateMixin, {
-    className: namespace + '.PartitionNode',
-
-    titleGetter: getter('data.title'),
-
-    /*template: new Template(
-      '<div{element} class="Basis-PartitionNode">' + 
-        '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
-        '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
-      '</div>'
-    ),*/
-
-    templateUpdate: function(tmpl, eventName, delta){
-      if (tmpl.titleText)
-        tmpl.titleText.nodeValue = String(this.titleGetter(this));
-    }
-  });
 
  /**
   * Template mixin for containers classes
@@ -423,6 +393,28 @@ basis.require('basis.html');
  /**
   * @class
   */
+  var PartitionNode = Class(DWPartitionNode, TemplateMixin, {
+    className: namespace + '.PartitionNode',
+
+    titleGetter: getter('data.title'),
+
+    /*template: new Template(
+      '<div{element} class="Basis-PartitionNode">' + 
+        '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
+        '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
+      '</div>'
+    ),*/
+
+    templateUpdate: function(tmpl, eventName, delta){
+      if (tmpl.titleText)
+        tmpl.titleText.nodeValue = String(this.titleGetter(this));
+    }
+  });
+
+
+ /**
+  * @class
+  */
   var GroupingNode = Class(DWGroupingNode, ContainerTemplateMixin, {
     className: namespace + '.GroupingNode',
 
@@ -466,7 +458,16 @@ basis.require('basis.html');
     }
   });
 
-  //GroupingNode.prototype.localGroupingClass = GroupingNode;
+
+ /**
+  * @class
+  */
+  var Node = Class(DWNode, TemplateMixin, {
+    className: namespace + '.Node',
+
+    childClass: null
+  });
+
 
  /**
   * @class
@@ -474,7 +475,7 @@ basis.require('basis.html');
   var Container = Class(Node, ContainerTemplateMixin, {
     className: namespace + '.Container',
 
-    childClass: Node,
+    childClass: Class.SELF,
     childFactory: function(config){
       return new this.childClass(config);
     },
@@ -516,6 +517,7 @@ basis.require('basis.html');
     }
   });
 
+
  /**
   * @func
   */
@@ -539,6 +541,7 @@ basis.require('basis.html');
     }).toString().replace('_code_()', lines.join(';\n')))(new Template(template), config);
   };
 
+
   //
   // export names
   //
@@ -552,17 +555,5 @@ basis.require('basis.html');
     GroupingNode: GroupingNode,
     Control: Control
   });
-
-  /*
-  basis.namespace('basis.dom.wrapper').extend({
-    Control: Control,
-
-    // template classes
-    TmplGroupingNode: TmplGroupingNode,
-    TmplPartitionNode: TmplPartitionNode,
-    TmplNode: TmplNode,
-    TmplContainer: TmplContainer,
-    TmplControl: Control
-  });*/
 
 }(basis);

@@ -456,7 +456,7 @@ basis.require('basis.html');
     * @type {Object}
     * @private
     */
-    colMap_: null,
+    dataSourceMap_: null,
 
    /**
     * @type {Boolean}
@@ -943,16 +943,16 @@ basis.require('basis.html');
           this.dataSource = null;
           this.clear(true);   // keep alive, event fires
           this.dataSource = tmp;
-          this.colMap_ = {};
+          this.dataSourceMap_ = {};
         }
         else
         {
           for (var i = 0, item; item = delta.deleted[i]; i++)
           {
             var delegateId = item.eventObjectId;
-            var oldChild = this.colMap_[delegateId];
+            var oldChild = this.dataSourceMap_[delegateId];
 
-            delete this.colMap_[delegateId];
+            delete this.dataSourceMap_[delegateId];
             oldChild.canHaveDelegate = true; // allow delegate drop
             this.removeChild(oldChild);
 
@@ -979,7 +979,7 @@ basis.require('basis.html');
           newChild.canHaveDelegate = false; // prevent delegate override
 
           // insert
-          this.colMap_[item.eventObjectId] = newChild;
+          this.dataSourceMap_[item.eventObjectId] = newChild;
           newDelta.inserted.push(newChild);
 
           // optimization: insert child only if node has at least one child, otherwise setChildNodes method
@@ -1241,7 +1241,7 @@ basis.require('basis.html');
           }
         }
 
-        if (newChild === refChild || (isInside && newChild.nextSibling === refChild))
+        if (newChild === refChild || (isInside && nextSibling === refChild))
         {
           if (currentNewChildGroup !== group)
           {
@@ -1304,20 +1304,22 @@ basis.require('basis.html');
         // emulate removeChild if parentNode doesn't change (no events, speed benefits)
 
         // update nextSibling/lastChild
-        if (newChild.nextSibling)
-          newChild.nextSibling.previousSibling = newChild.previousSibling;
+        if (nextSibling)
+        {
+          nextSibling.previousSibling = prevSibling;
+          newChild.nextSibling = null;
+        }
         else
-          this.lastChild = newChild.previousSibling;
+          this.lastChild = prevSibling;
 
         // update previousSibling/firstChild
-        if (newChild.previousSibling) 
-          newChild.previousSibling.nextSibling = newChild.nextSibling;      
+        if (prevSibling) 
+        {
+          prevSibling.nextSibling = nextSibling;
+          newChild.previousSibling = null;
+        }
         else
-          this.firstChild = newChild.nextSibling;
-
-        // don't move this, this values using above to update first/last child
-        newChild.previousSibling = null;
-        newChild.nextSibling = null;
+          this.firstChild = nextSibling;
 
         if (pos == -1)
           childNodes.remove(newChild);
@@ -1325,8 +1327,7 @@ basis.require('basis.html');
         {
           var oldPos = childNodes.indexOf(newChild);
           childNodes.splice(oldPos, 1);
-          if (oldPos < pos)
-            pos--;
+          pos -= oldPos < pos;
         }
 
         // remove from old group (always remove for correct order)
@@ -1642,7 +1643,7 @@ basis.require('basis.html');
         // detach
         if (oldDataSource)
         {
-          this.colMap_ = null;
+          this.dataSourceMap_ = null;
 
           if (listenHandler)
             oldDataSource.removeHandler(listenHandler, this);
@@ -1662,7 +1663,7 @@ basis.require('basis.html');
         // attach
         if (dataSource)
         {
-          this.colMap_ = {};
+          this.dataSourceMap_ = {};
 
           if (listenHandler)
           {
@@ -2280,8 +2281,8 @@ basis.require('basis.html');
           childNodes.splice.apply(childNodes, insertArgs);
 
           // firstChild/lastChild are present anyway
-          first.previousSibling = prevGroupLast;
-          last.nextSibling = nextGroupFirst;
+          first.previousSibling = prevGroupLast || null;
+          last.nextSibling = nextGroupFirst || null;
 
           if (prevGroupLast)
             prevGroupLast.nextSibling = first;
