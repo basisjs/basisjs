@@ -1336,7 +1336,8 @@ basis.require('basis.event');
       setAccumulateState(false);
     }
 
-    return function setAccumulateState(state){
+    var setAccumulateState;
+    return setAccumulateState = function(state){
       if (state)
       {
         if (setStateCount == 0)

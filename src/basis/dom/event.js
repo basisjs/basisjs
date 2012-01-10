@@ -307,11 +307,11 @@ basis.require('basis.dom');
     }
     else
     {
-      if (document.addEventListener)
-        document.addEventListener(eventType, observeGlobalEvents, true);
-      else
+      if (noCaptureSheme)
         // nothing to do, but it will provide observeGlobalEvents calls if other one doesn't
         addHandler(document, eventType, $null);
+      else
+        document.addEventListener(eventType, observeGlobalEvents, true);
 
       handlers = globalHandlers[eventType] = new Array();
     }
@@ -342,10 +342,10 @@ basis.require('basis.dom');
           if (!handlers.length)
           {
             delete globalHandlers[eventType];
-            if (document.removeEventListener)
-              document.removeEventListener(eventType, observeGlobalEvents, true);
-            else
+            if (noCaptureSheme)
               removeHandler(document, eventType, $null);
+            else
+              document.removeEventListener(eventType, observeGlobalEvents, true);
           }
 
           return;
@@ -391,7 +391,7 @@ basis.require('basis.dom');
       eventTypeHandlers.fireEvent = function(event){ // closure
         // simulate capture phase for old browsers
         event = wrap(event);
-        if (noCaptureSheme && event)
+        if (noCaptureSheme && event && globalHandlers[eventType])
         {
           if (typeof event.returnValue == 'undefined')
           {
