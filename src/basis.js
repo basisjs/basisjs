@@ -1708,7 +1708,7 @@
           channel.port1.onmessage = function(){
             runTask(taskId);
           };
-          channel.port2.postMessage();
+          channel.port2.postMessage(""); // broken in Opera if no value
         };
       }
       else
