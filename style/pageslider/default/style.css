@@ -10,6 +10,7 @@
   .Basis-PageSlider-Content
   {
     height: 100%;
+    position: relative;
   }
 
   .Basis-PageSlider .Basis-Page

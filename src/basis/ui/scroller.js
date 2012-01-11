@@ -292,6 +292,7 @@ basis.require('basis.ui');
      
       if (this.minScrollDeltaXReached || !this.minScrollDeltaYReached)
       {
+
         var curMouseX = Event.mouseX(event)
         var deltaX = this.lastMouseX - curMouseX;
         this.lastMouseX = curMouseX;
@@ -335,6 +336,8 @@ basis.require('basis.ui');
           }
         }
       }
+
+      Event.kill(event);
     },
 
     onMouseUp: function(){
@@ -541,10 +544,12 @@ basis.require('basis.ui');
     listen: {
       owner: {
         realign: function(){
-          this.scrollbarSize = this.getScrollbarSize();
-          this.trackSize = this.scrollbarSize - this.scrollbarSize * this.getScrollbarPart();
+          this.realign();
         },
         updatePosition: function(){
+          if (!this.trackSize)
+            this.realign();
+
           var scrollPosition = this.getScrollbarPosition();
  
           if (scrollPosition > 1)
@@ -562,6 +567,10 @@ basis.require('basis.ui');
           DOM.setStyle(this.tmpl.trackElement, style);
         }
       }
+    },
+    realign: function(){
+      this.scrollbarSize = this.getScrollbarSize();
+      this.trackSize = this.scrollbarSize - this.scrollbarSize * this.getScrollbarPart();
     },
     getScrollbarSize: Function.$null,
     getScrollbarPart: Function.$null,

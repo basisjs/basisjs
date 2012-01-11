@@ -49,9 +49,11 @@
       -webkit-border-radius: 2px;
     border-radius: 2px;
 
+    background: #444;
     background: rgba(20, 20, 20, 0.6);
 
     opacity: 0;
+    visibility: hidden;
 
       -moz-transition: opacity 0.5s;
       -webkit-transition: opacity 0.5s;
@@ -76,6 +78,7 @@
   .Basis-ScrollPanel.scrollProcess .Basis-Scrollbar-Track
   {
     opacity: 1;
+    visibility: visible;
 
       -moz-transition: none;
       -webkit-transition: none;
