@@ -27,6 +27,8 @@ basis.require('basis.dom');
   var dom = basis.dom;
   var $null = Function.$null;
 
+  var W3CSUPPORT = !!document.addEventListener;
+
   //
   // Const
   //
@@ -601,12 +603,46 @@ basis.require('basis.dom');
     addHandler(global, 'unload', handler, thisObject);
   }
 
+  //
+  //
+  //
+
+  var tagNameEventMap = {};
+  function getEventInfo(tagName, eventName){
+    var id = tagName + '-' + eventName;
+
+    if (tagNameEventMap[id])
+      return tagNameEventMap[id];
+    else
+    {
+      var onevent = 'on' + eventName;
+      var target = dom.createElement(tagName);
+      var host = dom.createElement('div', target);
+      var bubble = false;
+      var supported = false;
+
+      host[onevent] = function(){ bubble = true; };
+
+      try {
+        target.fireEvent(onevent);
+        supported = true;
+      } catch(e){}
+      
+      return tagNameEventMap[id] = {
+        supported: supported,
+        bubble: bubble
+      }
+    }
+  }
+
 
   //
   // export names
   //
 
   basis.namespace(namespace, wrap).extend({
+    W3CSUPPORT: W3CSUPPORT,
+
     KEY: KEY,
 
     MOUSE_LEFT: MOUSE_LEFT,
@@ -641,7 +677,9 @@ basis.require('basis.dom');
     fireEvent: fireEvent,
 
     onLoad: onLoad,
-    onUnload: onUnload
+    onUnload: onUnload,
+
+    getEventInfo: getEventInfo
   });
 
 }(basis, this);

@@ -154,7 +154,7 @@
           genNodes(Number(value)); 
       }
 
-      DOM.insert(DOM.get('nodeCount').parentNode, [1, 10, 100, 250, 500, 1000, 2000].map(function(item){ 
+      DOM.insert(DOM.get('nodeCount').parentNode, [1, 10, 100, 250, 500, 1000, 2000, 5000].map(function(item){ 
         var btn = DOM.createElement('button', item); 
         Event.addHandler(btn, 'click', function(){ setNodeCount(item) });
         Event.onUnload(function(){ Event.clearHandlers(btn) });

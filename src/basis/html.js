@@ -23,8 +23,9 @@ basis.require('basis.dom.event');
   // import names
 
   var document = global.document;
-  var dom = basis.dom;
   var Class = basis.Class;
+  var dom = basis.dom;
+  var domEvent = basis.dom.event;
 
   //
   // Main part
@@ -92,7 +93,7 @@ basis.require('basis.dom.event');
       if (event && event.type == 'click' && event.which == 3)
         return;
 
-      var cursor = basis.dom.event.sender(event);
+      var cursor = domEvent.sender(event);
       var attr;
       var refId;
 
@@ -117,7 +118,7 @@ basis.require('basis.dom.event');
             var actions = attr.nodeValue.qw();
 
             for (var i = 0, actionName; actionName = actions[i++];)
-              node.templateAction(actionName, basis.dom.event(event));
+              node.templateAction(actionName, domEvent(event));
 
             break;
           }
@@ -126,13 +127,14 @@ basis.require('basis.dom.event');
     }
   }
 
-  function parseAttributes(context, str, nodePath){
+  function parseAttributes(context, str, nodePath, tagName){
     str = str.trim();
 
     if (!str)
-      return '';
+      return { text: '', events: [] };
 
     var result = '';
+    var events = [];
     var m;
 
     while (m = tmplAttrRx.exec(str))
@@ -154,16 +156,16 @@ basis.require('basis.dom.event');
         var eventName = eventMatch[1];
         if (!tmplEventListeners[eventName])
         {
-          tmplEventListeners[eventName] = true;
+          tmplEventListeners[eventName] = createEventHandler(name);
 
-          for (var i = 0, names = basis.dom.event.browserEvents(eventName), browserEventName; browserEventName = names[i++];)
-            basis.dom.event.addGlobalHandler(browserEventName, createEventHandler(name));
+          for (var i = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[i++];)
+            domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
         }
 
-        if (!window.__basis_emitEvent)
+        /*if (!window.__basis_emitEvent)
         {
           window.__basis_emitEvent = function(event, actionList){
-            var event = basis.dom.event(event);
+            var event = domEvent(event);
             var cursor = this;
             var refId;
             do {
@@ -175,13 +177,22 @@ basis.require('basis.dom.event');
                 {
                   var actions = actionList.qw();
                   for (var i = 0, actionName; actionName = actions[i++];)
-                    node.templateAction(actionName, basis.dom.event(event));
+                    node.templateAction(actionName, domEvent(event));
 
                   break;
                 }
               }
             } while (cursor = cursor.parentNode);
           }
+        }*/
+
+        // hack for non-bubble events in IE<=8
+        if (!domEvent.W3CSUPPORT)
+        {
+          var eventInfo = domEvent.getEventInfo(tagName, eventName);
+          if (eventInfo.supported && !eventInfo.bubble)
+            events.push(eventName);
+            //result += '[on' + eventName + '="basis.dom.event.fireEvent(document,\'' + eventName + '\')"]';
         }
           
         //result += '[on' + eventName + '="alert(\'!\');__basis_emitEvent.call(this, event || window.event, ' + value.quote("'") + ')"]';
@@ -193,7 +204,10 @@ basis.require('basis.dom.event');
                   : '[' + name + (value ? '=' + value.quote('"') : '') + ']';
     }
 
-    return result;
+    return {
+      text: result,
+      events: events
+    };
   }
 
   //
@@ -263,8 +277,17 @@ basis.require('basis.dom.event');
         var attributes = m[3];
         var singleton = !!m[4];
         var nodePath = path + 'childNodes[' + pos + ']';
-        var element = dom.createElement(tagName + parseAttributes(context, attributes, nodePath));
+        var attrs = parseAttributes(context, attributes, nodePath, tagName);
+        var element = dom.createElement(tagName + attrs.text);
 
+        // hack for non-bubble events in IE<=8
+        for (var i = 0, eventName; eventName = attrs.events[i]; i++)
+          element.attachEvent('on' + eventName, function(eventName){
+            return function(){
+              domEvent.fireEvent(document, eventName);
+            }
+          }(eventName));
+          
         if (name)
           context.getters[name] = nodePath;
 
@@ -374,7 +397,7 @@ basis.require('basis.dom.event');
         _code_(); // <-- will be replaced for specific code
         // specific code end
 
-        if (node && obj_.element)
+        if (node)
         {
           var id = obj_.element.basisObjectId = map_.seed++;
           map_[id] = node;
@@ -383,7 +406,7 @@ basis.require('basis.dom.event');
         return obj_;
       }
 
-    .toString().replace('_code_()', body.map(String.format,'{alias}={path};\n').join('')))(proto, tmplNodeMap);
+    .toString().replace('_code_()', body.map(String.format, '{alias}={path};\n').join('')))(proto, tmplNodeMap);
 
     //
     // build clearInstance function
