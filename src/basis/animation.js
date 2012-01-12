@@ -34,6 +34,30 @@ basis.require('basis.data.property');
 
   var createEvent = basis.event.create;
 
+  //requestAnimationFrame features
+  var prefixes = ['webkit', 'moz', 'o', 'ms'];
+
+  function createMethod(name, fallback){
+    if (window[name])
+      return window[name];
+
+    name = name.charAt(0).toUpperCase() + name.substr(1);
+    for (var i = 0, prefix; prefix = prefixes[i++];)
+      if (window[prefix + name])
+        return window[prefix + name];
+
+    return fallback;
+  }
+
+  window.requestAnimationFrame = createMethod('requestAnimationFrame',
+    function(callback){
+      return window.setTimeout(callback, 15);
+    }
+  );
+
+  window.cancelAnimationFrame = createMethod('cancelRequestAnimFrame') || createMethod('cancelAnimationFrame', clearTimeout);
+
+  
   // MAIN PART
 
   function timePosition(startTime, duration){
@@ -48,7 +72,7 @@ basis.require('basis.data.property');
     className: namespace + '.Thread',
 
     duration: 1000,
-    interval: 50,
+    //interval: 50,
     startTime: 0,
     timer: null,
     started: false,
@@ -84,7 +108,7 @@ basis.require('basis.data.property');
           this.invert();
     },
     run: function(){
-      clearTimeout(this.timer);
+      cancelAnimationFrame(this.timer);
       if (this.started)
       {
         var progress = timePosition(this.startTime, this.duration);
@@ -94,7 +118,7 @@ basis.require('basis.data.property');
         else
         {
           this.set(progress);
-          this.timer = setTimeout(this.run, this.interval);
+          this.timer = requestAnimationFrame(this.run);
         }
       }
     },
@@ -109,13 +133,14 @@ basis.require('basis.data.property');
       }
     },
     stop: function(){
-      clearTimeout(this.timer);
+      cancelAnimationFrame(this.timer);
+
       if (this.started)
       {
         this.started = false;
         this.set(1.0);
       }
-    },
+    },        
     destroy: function(){
       this.stop();
       this.clear();

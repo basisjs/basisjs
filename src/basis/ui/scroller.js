@@ -14,6 +14,7 @@
 
 basis.require('basis.event');
 basis.require('basis.ui');
+basis.require('basis.animation');
 
 !function() {
 
@@ -42,20 +43,6 @@ basis.require('basis.ui');
   //
   // Main part
   //
-
-  function getComputedStyle(element, styleProp){
-    if (window.getComputedStyle)
-    {
-      var computedStyle = document.defaultView.getComputedStyle(element, null);
-      if (computedStyle)
-        return computedStyle.getPropertyValue(styleProp);
-    }
-    else
-    {
-      if (element.currentStyle)
-        return element.currentStyle[styleProp];
-    }
-  }
 
   //css transform/transform3d feature detection
   var TRANSFORM_SUPPORT = false;
@@ -102,28 +89,6 @@ basis.require('basis.ui');
     }
   })();
 
-  //requestAnimationFrame features
-  var prefixes = ['webkit', 'moz', 'o', 'ms'];
-
-  function createMethod(name, fallback){
-    if (window[name])
-      return window[name];
-
-    name = name.charAt(0).toUpperCase() + name.substr(1);
-    for (var i = 0, prefix; prefix = prefixes[i++];)
-      if (window[prefix + name])
-        return window[prefix + name];
-
-    return fallback;
-  }
-
-  var requestAnimFrame = createMethod('requestAnimationFrame',
-    function(callback, element){
-      return window.setTimeout(callback, 15);
-    }
-  );
-
-  var cancelRequestAnimFrame = createMethod('cancelRequestAnimFrame', clearInterval);
 
   //consts
   var AVARAGE_TICK_TIME_INTERVAl = 15;
@@ -251,7 +216,7 @@ basis.require('basis.ui');
       this.resetVariables();
 
       this.isUpdating = false;
-      cancelRequestAnimFrame(this.updateFrameHandle);
+      cancelAnimationFrame(this.updateFrameHandle);
 
       this.updateElementPosition();
 
@@ -337,7 +302,7 @@ basis.require('basis.ui');
         }
       }
 
-      Event.kill(event);
+      Event.cancelDefault(event);
     },
 
     onMouseUp: function(){
@@ -459,7 +424,7 @@ basis.require('basis.ui');
 
     nextFrame: function(){
       if (this.isUpdating)
-        this.updateFrameHandle = requestAnimFrame(this.onUpdateHandler, this.targetElement);
+        this.updateFrameHandle = requestAnimationFrame(this.onUpdateHandler, this.targetElement);
     },
 
     setPosition: function(positionX, positionY, instantly){
