@@ -619,6 +619,20 @@ basis.require('basis.html');
       // process satellite
       if (!this.satellite)
         this.satellite = {};
+      else
+      {
+        var satelliteListen = this.listen.satellite;
+        for (var key in this.satellite)
+        {
+          var satellite = this.satellite[key];
+
+          satellite.setOwner(this);
+          this.event_satelliteChanged(this, key, null);
+
+          if (satelliteListen)
+            satellite.addHandler(satelliteListen, this);
+        }  
+      }
 
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {

@@ -234,17 +234,20 @@
 
   </style>
 
+  <script>var firstTime = new Date;</script>
   <script src="../../basis-all.js"></script>
   <script src="../seedrandom.js"></script>
   <script>Math.seedrandom("basis");</script>
-  <script src="blog_posts.js"></script>
+  <script src="blog_posts-5000.js"></script>
   <script>
 
     basis.dom.event.onLoad(runApp = function(){
+      var statOutElement = basis.dom.get('timelist');
+
       function outStat(){
         var sdate = times.shift();
 
-        var timelist = basis.dom.get('timelist');
+        var timelist = statOutElement;
         var lasttime = sdate;
         for (var i = 0; i < times.length; i++)
         {
@@ -252,26 +255,28 @@
           timelist.appendChild(basis.dom.createElement('LI', (t[0] - sdate) + 'ms, self: ' + (t[0] - (lasttime)) + ' [' + t[1] + ']'));
           lasttime = t[0];
         }
-        timelist.appendChild(basis.dom.createElement('B', lasttime - sdate))
+        timelist.appendChild(basis.dom.createElement('B', lasttime - sdate));
+        timelist.appendChild(basis.dom.createElement('SPAN', ' (' + (lasttime - firstTime) + ')'));
       }
 
       var times = [new Date];
-      BlogPost = new basis.entity.EntityType({
-        name: 'BlogPost',
-        fields: {
-          id: basis.entity.IntId,
-          pubDate: Date.fromISOString,
-          title: String,
-          content: String,
-          category: String,
-          hasCut: Boolean,
-          afterCut: String,
-          tags: String
-        }
-      });
 
       //console.profile();
-      BlogPost.all.sync(window.rawData);
+
+      var DataObject = basis.data.DataObject;
+      var allPostDataset = new basis.data.Dataset({
+        items: window.rawData.map(function(data){
+          data.tags = data.tags.split(/\s*,\s*/);
+
+          if (data.tags[0] == '')
+            data.tags.shift();
+
+          return new DataObject({
+            data: data
+          });
+        })
+      });
+
       //console.profileEnd();
       times.push([new Date, 'data load']);
 
@@ -279,47 +284,33 @@
 
       var POST_PER_PAGE = 15;
 
-      var blogThread = new basis.data.dataset.Merge({ sources: [BlogPost.all] });
       var blogThreadPage = new basis.data.dataset.Slice({
-        source: blogThread,
+        source: allPostDataset,
+        orderDesc: true,
         limit: POST_PER_PAGE,
-        rule: Function.getter('data.pubDate * -1', Number),
-        listen: {
-          source: {
-            datasetChanged: function(source, delta){
-              basis.data.dataset.Slice.prototype.listen.source.datasetChanged.call(this, source, delta);
-            }
-          }
-        }
+        rule: Function.getter('data.pubDate')
       });
 
       times.push([new Date, 'thread slice']);
 
       var paginator = new basis.ui.paginator.Paginator({
-        container: basis.dom.get('content'),
-        delegate: blogThread,
-        pageCount: Math.ceil(blogThread.itemCount / POST_PER_PAGE),
+        pageCount: Math.ceil(allPostDataset.itemCount / POST_PER_PAGE),
         pageSpan: 12,
-        listen: {
-          delegate: {
-            /*sourcesChanged: {
-              this.setProperties()
-            },*/
-            datasetChanged: function(ds){
-              this.setProperties(Math.ceil(ds.itemCount / POST_PER_PAGE), 10, 0);
-              this.spotlightPage(0);
-            }
-          }
-        },
         handler: {
           activePageChanged: function(){
-            blogThreadPage.setRange(this.activePage * blogThreadPage.limit, blogThreadPage.limit);
+            blogThreadPage.setRange(this.activePage * POST_PER_PAGE, POST_PER_PAGE);
           }
         }
       });
 
+      blogThreadPage.addHandler({
+        sourceChanged: function(ds){
+          this.setProperties(ds.source ? Math.ceil(ds.source.itemCount / POST_PER_PAGE) : 0, 10, 0);
+          this.spotlightPage(0);
+        }
+      }, paginator);
+
       var postList = new basis.ui.Container({
-        container: basis.dom.get('content'),
         dataSource: blogThreadPage,
         localSorting: Function.getter('data.pubDate'),
         localSortingDesc: true,
@@ -331,7 +322,10 @@
               '<span class="blog-post__pubDate">[#{id}] {pubDate}</span>' +
               '<div{content} class="blog-post__content"/>' +
               '<div class="blog-post__footer">' +
-                '<span class="blog-post__category">Category: <span class="blog-post__category-link" event-click="filterByCategory">{category}</span></span>' +
+                '<span class="blog-post__category">' +
+                  'Category: ' +
+                  '<span class="blog-post__category-link" event-click="filterByCategory">{category}</span>' +
+                '</span>' +
                 '<!--{taglist}-->' +
               '</div>' +
             '</div>',
@@ -339,38 +333,38 @@
           templateUpdate: function(tmpl, eventName, delta){
             tmpl.id.nodeValue = this.data.id;
             tmpl.title.nodeValue = this.data.title;
-            tmpl.pubDate.nodeValue = this.data.pubDate.toFormat('%D/%M/%Y %H:%I:%S');
+            tmpl.pubDate.nodeValue = Date.fromISOString(this.data.pubDate).toFormat('%D/%M/%Y %H:%I:%S');
             tmpl.content.innerHTML = this.data.content;
             tmpl.category.nodeValue = this.data.category;
           },
 
           action: {
             filterByCategory: function(){
-              blogThread.setSources([postByCategory.getSubset(this.data.category)]);
+              blogThread.setSource(postByCategory.getSubset(this.data.category));
             }
           },
 
           satelliteConfig: {
             taglist: {
-              existsIf: Function.getter('data.tags'),
+              existsIf: function(owner){
+                return owner.data.tags && owner.data.tags.length;
+              },
               delegate: Function.$self,
               instanceOf: basis.ui.Container.subclass({
                 template: '<div class="blog-post__tag-list">Tags: <!--{childNodesHere}--></div>',
-                event_update: function(object, delta){
-                  basis.ui.Container.prototype.event_update.call(this, object, delta);
-                  if ('tags' in delta)
-                    this.setChildNodes(this.data.tags.split(/\s*,\s*/).map(function(tag){ return { data: { title: tag }} }));
-                },
-                init: function(config){
-                  basis.ui.Container.prototype.init.call(this, config);
-                  this.setChildNodes(this.data.tags.split(/\s*,\s*/).map(function(tag){ return { data: { title: tag }} }));
+                templateUpdate: function(object, eventName, delta){
+                  this.setChildNodes(this.data.tags.map(function(tag){
+                    return {
+                      data: { title: tag }
+                    };
+                  }));
                 },
                 childClass: basis.ui(
                   '<span class="tag"><span class="tag__title" event-click="pick">{this_data_title}</span><span class="tag__delim">, </span></span>',
                   {
                     action: {
                       pick: function(){
-                        blogThread.setSources([cloud.keyMap.get(this.data.title)]);
+                        blogThreadPage.setSource(cloud.getSubset(this.data.title));
                       }
                     }
                   }
@@ -381,15 +375,16 @@
         }
       });
 
+
       times.push([new Date, 'post list']);
 
+
       var postByCategory = new basis.data.dataset.Split({
-        source: BlogPost.all,
+        source: allPostDataset,
         rule: Function.getter('data.category')
       });
 
       var categoryList = new basis.ui.Container({
-        container: basis.dom.get('sidebar'),
         dataSource: postByCategory,
         template:
           '<div class="category-list">' +
@@ -407,7 +402,7 @@
 
           action: {
             choose: function(){
-              blogThread.setSources([this.delegate]);
+              blogThreadPage.setSource(this.delegate);
             }
           }
         }
@@ -419,15 +414,9 @@
 
       var MONTH = 'January February March April May June July August September October November December'.qw();
       var archiveList = new basis.ui.Container({
-        container: basis.dom.get('sidebar'),
         dataSource: new basis.data.dataset.Split({
-          source: BlogPost.all,
-          rule: function(post){ // Function.getter('data.pubDate.toFormat("%Y%M")')
-            var date = post.data.pubDate;
-            var year = date.getFullYear();
-            var month = date.getMonth();
-            return year + (month > 9 ? '' + month : '0' + month);
-          }
+          source: allPostDataset,
+          rule: Function.getter('data.pubDate.substr(0, 7)')
         }),
         localSorting: Function.getter('data.id'),
         localSortingDesc: true,
@@ -465,18 +454,19 @@
               '<span class="archive-list-item__link" event-click="choose">{title}</span> ({count})' +
             '</li>',
           templateUpdate: function(tmpl, eventName, delta){
-            tmpl.title.nodeValue = MONTH[+this.data.id.substr(4, 2)] + ' ' + this.data.id.substr(0, 4)
+            var p = this.data.id.split('-');
+            tmpl.title.nodeValue = MONTH[p[1] - 1];
             tmpl.count.nodeValue = this.delegate.itemCount;
           },
           action: {
             choose: function(){
-              blogThread.setSources([this.delegate]);
+              blogThreadPage.setSource(this.delegate);
             }
           },
           listen: {
             delegate: {
               datasetChanged: function(){
-                this.tmpl.count.nodeValue = this.delegate.itemCount;
+                this.templateUpdate(this.tmpl);
               }
             }
           }
@@ -486,13 +476,13 @@
       times.push([new Date, 'archive list']);
 
       var cloud = new basis.data.dataset.Cloud({
-        source: BlogPost.all,
+        source: allPostDataset,
         rule: function(item){
-          return (item.data.tags || '').split(/\s*,\s*/);
+          return item.data.tags;
         }
       });
 
-      var indexMap = new basis.data.index.IndexMap({
+      var cloudCalcs = new basis.data.index.IndexMap({
         source: cloud,
         indexes: {
           itemCountMin: new basis.data.index.Min('itemCount'),
@@ -500,7 +490,10 @@
         },
         calcs: {
           percentOfMax: function(data, indexes, obj){
-            return (obj.itemCount - indexes.itemCountMin)/(indexes.itemCountMax - indexes.itemCountMin);
+            return (obj.itemCount - indexes.itemCountMin) / (indexes.itemCountMax - indexes.itemCountMin);
+          },
+          source: function(data, indexes, obj){
+            return obj;
           }
         },
         listen: {
@@ -514,9 +507,8 @@
       });
 
       var tagCloud = new basis.ui.Container({
-        container: basis.dom.get('sidebar'),
         id: 'tag-cloud',
-        dataSource: cloud,
+        dataSource: cloudCalcs,
         localSorting: Function.getter('data.title'),
         template:
           '<div class="tag-cloud">' +
@@ -525,39 +517,65 @@
           '</div>',
 
         childClass: {
-          template: 
-            '<span class="cloud-tag" event-click="pick">{titleText} </span>',
+          active: true,
 
-          templateUpdate: function(tmpl, eventName, delta){
-            tmpl.titleText.nodeValue = this.data.title;
+          template: 
+            '<span class="cloud-tag" event-click="pick"> {titleText} </span>',
+
+          templateUpdate: function(tmpl){
+            tmpl.titleText.nodeValue = this.data.source.data.title;
+            this.element.style.fontSize = '{0:.2}%'.format(80 + 120 * this.data.percentOfMax);
           },
 
           action: {
             pick: function(){
-              blogThread.setSources([this.delegate]);
-            }
-          },
-
-          satelliteConfig: {
-            indexes: {
-              hook: { rootChanged: true, update: false },
-              delegate: function(owner){
-                return indexMap.getMember(owner.root);
-              },
-              instanceOf: basis.data.DataObject.subclass({
-                active: true,
-                event_update: function(object, delta){
-                  basis.data.DataObject.prototype.event_update.call(this, object, delta);
-
-                  this.owner.element.style.fontSize = '{0:.2}%'.format(80 + 120 * this.data.percentOfMax);
-                }
-              })
+              blogThreadPage.setSource(this.data.source);
             }
           }
         }
       });
 
       times.push([new Date, 'tag cloud']);
+
+      var app = new basis.ui.Node({
+        container: document.body,
+
+        template: 
+          '<div id="page">' +
+            '<div id="page-wrapper">' +
+              '<div id="sidebar">' +
+                '<!--{categoryList}-->' +
+                '<!--{archiveList}-->' +
+                '<!--{tagCloud}-->' +
+              '</div>' +
+              '<div{content} id="content">' +
+                '<h1>Basis.js blog</h1>' +
+                '<button event-click="reset">Show all posts</button>' +
+                '<!--{paginator}-->' +
+                '<!--{postList}-->' +
+              '</div>' +
+            '</div>' +
+          '</div>',
+
+        action: {
+          reset: function(){
+            blogThreadPage.setSource(allPostDataset);
+          }
+        },
+
+        satellite: {
+          paginator: paginator,
+          postList: postList,
+
+          categoryList: categoryList,
+          archiveList: archiveList,
+          tagCloud: tagCloud
+        }
+      });
+
+      basis.dom.insert(app.tmpl.content, statOutElement, 1);
+
+      times.push([new Date, 'app']);
 
       outStat();
 
@@ -569,17 +587,6 @@
 </head>
 
 <body>
-  <div id="page">
-    <div id="page-wrapper">
-      <!--<iframe id="asd" src="about:blank"></iframe>-->
-      <button onclick="runApp()">runApp</button>
-      <div id="sidebar"></div>
-      <div id="content">
-        <h1>Basis.js blog</h1>
-        <ul id="timelist"></ul>
-      </div>
-    </div>
-  </div>
   <div id="footer"></div>
 </body>
 

@@ -757,6 +757,12 @@ basis.require('basis.event');
   // KeyObjectMap
   //
 
+  var KEYOBJECTMAP_MEMBER_HANDLER = {
+    destroy: function(){
+      delete this.map_[itemId];
+    }
+  };
+
  /**
   * @class
   */
@@ -794,18 +800,13 @@ basis.require('basis.event');
       return new this.itemClass(itemConfig);
     },
     get: function(key, object){
-      var isDataObject = key instanceof DataObject;
-      var itemId = isDataObject ? key.eventObjectId : key;
+      var itemId = key instanceof DataObject ? key.eventObjectId : key;
       var item = this.map_[itemId];
 
       if (!item && object)
       {
         item = this.map_[itemId] = this.create(key, object);
-        item.addHandler({
-          destroy: function(){
-            delete this.map_[itemId];
-          }
-        }, this);
+        item.addHandler(KEYOBJECTMAP_MEMBER_HANDLER, this);
       }
 
       return item;
@@ -1332,12 +1333,17 @@ basis.require('basis.event');
 
     function urgentFlush(){
       ;;;if (typeof console != 'undefined') console.warn('(debug) Urgent flush dataset changes');
-      setStateCount = 1;
-      setAccumulateState(false);
+      setStateCount = 0;
+      setAccumulateStateOff();
     }
 
-    var setAccumulateState;
-    return setAccumulateState = function(state){
+    function setAccumulateStateOff(){
+      clearTimeout(urgentTimer);
+      proto.event_datasetChanged = realEvent;
+      flushAllDataset();
+    }
+
+    return function(state){
       if (state)
       {
         if (setStateCount == 0)
@@ -1351,11 +1357,7 @@ basis.require('basis.event');
       {
         setStateCount -= setStateCount > 0;
         if (setStateCount == 0)
-        {
-          clearTimeout(urgentTimer);
-          proto.event_datasetChanged = realEvent;
-          flushAllDataset();
-        }
+          setAccumulateStateOff();
       }
     }
   })();

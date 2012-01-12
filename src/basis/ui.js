@@ -125,7 +125,7 @@ basis.require('basis.html');
           if (satellite instanceof Node && satellite.element)
           {
             var config = this.satelliteConfig && this.satelliteConfig[key];
-            var replaceElement = this.tmpl[config.replace || key];
+            var replaceElement = this.tmpl[(config && config.replace) || key];
             if (replaceElement)
             {
               DOM.replace(satellite.ownerReplacedNode_ = replaceElement, satellite.element);

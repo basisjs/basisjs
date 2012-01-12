@@ -662,11 +662,13 @@ basis.require('basis.data.property');
 
         var data = {};
         var newValue;
+        var oldValue;
         var update;
         for (var calcName in this.calcs)
         {
           newValue = this.calcs[calcName](sourceObject.sourceObject.data, this.indexValues, sourceObject.sourceObject);
-          if (member.data[calcName] !== newValue && (!isNaN(newValue) || !isNaN(member.data[calcName])))
+          oldValue = member.data[calcName];
+          if (member.data[calcName] !== newValue && (typeof newValue != 'number' || typeof oldValue != 'number' || !isNaN(newValue) || !isNaN(oldValue)))
           {
             data[calcName] = newValue;
             update = true;
