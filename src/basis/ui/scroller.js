@@ -722,6 +722,9 @@ basis.require('basis.animation');
     }
   });
 
+ /**
+  * @class
+  */
   var ScrollGallery = ScrollPanel.subclass({
     className: namespace + '.ScrollGallery',
     scrollX: false,
@@ -855,7 +858,6 @@ basis.require('basis.animation');
       return this.scroller.calcExpectedPosition(this.scrollX ? 'x' : 'y');
     }
   });
-
 
 
   //

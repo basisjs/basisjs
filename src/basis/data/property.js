@@ -225,6 +225,9 @@ basis.require('basis.data');
     */
     links_: null,
 
+   /**
+    * @event
+    */
     event_change: function(value, oldValue){
       AbstractProperty.prototype.event_change.call(this, value, oldValue);
 

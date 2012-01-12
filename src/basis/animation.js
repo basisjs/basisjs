@@ -10,11 +10,10 @@
  */
 
 basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.dom.wrapper');
+basis.require('basis.cssom');
 basis.require('basis.data.property');
 
-!function(basis){
+!function(global, basis){
 
   'use strict';
 
@@ -24,50 +23,56 @@ basis.require('basis.data.property');
 
   var namespace = 'basis.animation';
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
-
-  var nsWrappers = basis.dom.wrapper;
   var Property = basis.data.property.Property;
 
+  var setStyle = basis.cssom.setStyle;
   var createEvent = basis.event.create;
 
-  //requestAnimationFrame features
+  
+  //
+  // MAIN PART
+  //
+
+  function timePosition(startTime, duration){
+    return (Date.now() - startTime).fit(0, 1) / duration;
+  }
+
+  //
+  // Add requestAnimationFrame/cancelAnimationFrame support
+  //
+
   var prefixes = ['webkit', 'moz', 'o', 'ms'];
 
   function createMethod(name, fallback){
-    if (window[name])
-      return window[name];
+    if (global[name])
+      return global[name];
 
     name = name.charAt(0).toUpperCase() + name.substr(1);
     for (var i = 0, prefix; prefix = prefixes[i++];)
-      if (window[prefix + name])
-        return window[prefix + name];
+      if (global[prefix + name])
+        return global[prefix + name];
 
     return fallback;
   }
 
-  window.requestAnimationFrame = createMethod('requestAnimationFrame',
+  var requestAnimationFrame = createMethod('requestAnimationFrame',
     function(callback){
-      return window.setTimeout(callback, 15);
+      return setTimeout(callback, 1000 / 60);
     }
   );
 
-  window.cancelAnimationFrame = createMethod('cancelRequestAnimFrame') || createMethod('cancelAnimationFrame', clearTimeout);
+  var cancelAnimationFrame = createMethod('cancelRequestAnimFrame') || createMethod('cancelAnimationFrame', clearTimeout);
 
-  
-  // MAIN PART
 
-  function timePosition(startTime, duration){
-    var elapsed = Date.now() - startTime;
-    if (elapsed >= duration)
-      return 1.0;
-    else
-      return elapsed/duration;
-  }
-
+ /**
+  * @class
+  */
   var Thread = Class(Property, {
     className: namespace + '.Thread',
 
@@ -94,9 +99,9 @@ basis.require('basis.data.property');
     init: function(config){
       this.run = this.run.bind(this);
 
-      Property.prototype.init.call(this, config);
+      Property.prototype.init.call(this, 0);
     },
-    start: function(invertOnStarted){
+    start: function(invertIfRun){
       if (!this.started)
       {
         this.startTime = Date.now();
@@ -104,7 +109,7 @@ basis.require('basis.data.property');
         this.run();
       }
       else
-        if (invertOnStarted)
+        if (invertIfRun)
           this.invert();
     },
     run: function(){
@@ -143,12 +148,15 @@ basis.require('basis.data.property');
     },        
     destroy: function(){
       this.stop();
-      this.clear();
 
       Property.prototype.destroy.call();
     }
   });
 
+
+ /**
+  * @class
+  */
   var Modificator = Class(null, {
     className: namespace + '.Modificator',
     thread: null,
@@ -200,20 +208,28 @@ basis.require('basis.data.property');
     }
   });
 
+
+ /**
+  * @enum
+  */
   var FX = {
     CSS: {
       FadeIn: function(thread, element){
-        return new Modificator(thread, function(value){ DOM.setStyle(element, { opacity: value }) }, 0, 1);
+        return new Modificator(thread, function(value){ setStyle(element, { opacity: value }) }, 0, 1);
       },
       FadeOut: function(thread, element){
-        return new Modificator(thread, function(value){ DOM.setStyle(element, { opacity: value }) }, 1, 0);
+        return new Modificator(thread, function(value){ setStyle(element, { opacity: value }) }, 1, 0);
       }
     }
   };
 
+
   //
   // export names
   //
+
+  global.requestAnimationFrame = requestAnimationFrame;
+  global.cancelAnimationFrame = cancelAnimationFrame;
 
   basis.namespace(namespace).extend({
     Thread: Thread,
@@ -221,4 +237,4 @@ basis.require('basis.data.property');
     FX: FX
   });
 
-}(basis);
+}(this, basis);
