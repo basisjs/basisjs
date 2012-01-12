@@ -15,7 +15,7 @@
   var nsEntity = basis.entity;
   var nsAjax = basis.net.ajax;
 
-  var TimeEventManager = basis.TimeEventManager;
+  var TimeEventManager = basis.timer.TimeEventManager;
 
   // main part
 
