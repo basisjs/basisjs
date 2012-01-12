@@ -22,6 +22,9 @@ basis.require('basis.data');
   *   {basis.data.dataset.Merge}, {basis.data.dataset.Subtract},
   *   {basis.data.dataset.MapReduce}, {basis.data.dataset.Subset},
   *   {basis.data.dataset.Split}, {basis.data.dataset.Slice}
+  *   {basis.data.dataset.Cloud}
+  *
+  * @see ./demo/defile/dataset.html
   *
   * @namespace basis.data.dataset
   */

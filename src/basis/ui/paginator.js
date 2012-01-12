@@ -27,6 +27,7 @@ basis.require('basis.ui');
   'use strict';
 
  /**
+  * @see ./demo/defile/paginator.html
   * @namespace basis.ui.paginator
   */ 
   var namespace = 'basis.ui.paginator';

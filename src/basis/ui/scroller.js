@@ -19,6 +19,7 @@ basis.require('basis.animation');
 !function() {
 
  /**
+  * @see ./demo/defile/scroller.html
   * @namespace basis.ui.scroller
   */
 
@@ -731,7 +732,7 @@ basis.require('basis.animation');
     scrollY: false,
     childTransform: Function.$null,
   
-    selection: {},
+    selection: true,
 
     action: {
       onwheel: function(event){

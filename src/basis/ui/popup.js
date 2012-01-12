@@ -21,6 +21,7 @@ basis.require('basis.ui');
   'use strict';
 
  /**
+  * @see ./demo/defile/popup.html
   * @namespace basis.ui.popup
   */
   var namespace = 'basis.ui.popup';
@@ -124,7 +125,7 @@ basis.require('basis.ui');
 
     hideOnAnyClick: true,
     hideOnKey: false,
-    ignoreClickFor: [],
+    ignoreClickFor: null,
 
     cssLayoutPrefix: 'popup-',
 

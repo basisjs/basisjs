@@ -498,7 +498,7 @@ basis.require('basis.data');
    /**
     * @type {Array.<basis.data.DataObject>}
     */
-    objects: [],
+    objects: null,
 
    /**
     * @type {number}

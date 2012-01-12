@@ -25,6 +25,7 @@ basis.require('basis.ui');
   'use strict';
 
  /**
+  * @see ./demo/defile/resizer.html
   * @namespace basis.ui.resizer
   */
 

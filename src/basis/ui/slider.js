@@ -21,6 +21,7 @@ basis.require('basis.dragdrop');
 !function(basis){
 
  /**
+  * @see ./demo/defile/slider.html
   * @namespace basis.ui.slider
   */ 
   

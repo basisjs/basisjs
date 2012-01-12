@@ -22,6 +22,7 @@ basis.require('basis.ui.button');
   'use strict';
 
  /**
+  * @see ./demo/defile/window.html
   * @namespace basis.ui.window
   */
 

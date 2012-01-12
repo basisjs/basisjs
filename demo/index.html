@@ -244,7 +244,8 @@
 
           action: {
             setDefaultImage: function(){
-              this.tmpl.imageUrl.nodeValue = 'res/img/noimg.png';
+              if (this.tmpl.imageUrl.nodeValue != 'res/img/noimg.png')
+                this.tmpl.imageUrl.nodeValue = 'res/img/noimg.png';
             }
           },
 

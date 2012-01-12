@@ -1498,9 +1498,15 @@
           if (key == 'className' || key == 'extendConstructor_')
             this[key] = value;
           else
-            proto[key] = protoValue && protoValue.__extend__ 
-                           ? protoValue.__extend__(value)
-                           : value;
+          {
+            if (protoValue && protoValue.__extend__)
+              proto[key] = protoValue.__extend__(value);
+            else
+            {
+              proto[key] = value;
+              //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ console.warn('!' + key); }
+            }
+          }
         }
 
         // for browsers that doesn't enum toString

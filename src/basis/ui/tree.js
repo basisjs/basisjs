@@ -37,7 +37,6 @@ basis.require('basis.ui');
   * and this one just contains templates and collapse/expand implementation.
   *
   * @see ./test/speed-tree.html
-  * @see ./demo/simple/tree.html
   * @see ./demo/data/entity.html
   *
   * @namespace basis.ui.tree

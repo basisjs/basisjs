@@ -226,7 +226,7 @@ basis.require('basis.net.ajax');
   */
   var ServiceCallTransport = Class(Transport, {
     className: namespace + '.ServiceCallTransport',
-    callback: {},
+    callback: null,
     mapping: null,
 
     method: 'POST',

@@ -19,9 +19,16 @@ basis.require('basis.data.property');
   'use strict';
 
  /**
+  * @see ./demo/defile/data_index.html
   * @namespace basis.data.index
   */
+
   var namespace = 'basis.data.index';
+
+
+  //
+  // import names
+  //
 
   var Class = basis.Class;
   

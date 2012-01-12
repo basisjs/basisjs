@@ -24,6 +24,7 @@ basis.require('basis.ui');
   'use strict';
 
  /**
+  * @see ./demo/defile/calendar.html
   * @namespace basis.ui.calendar
   */
 
@@ -321,7 +322,7 @@ basis.require('basis.ui');
     nodePeriodUnit: '-',
     nodePeriodUnitCount: 1,
 
-    selection: {},
+    selection: true,
 
     init: function(config){
       UIContainer.prototype.init.call(this, config);

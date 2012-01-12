@@ -21,6 +21,7 @@ basis.require('basis.ui');
   'use strict';
 
  /**
+  * @see ./demo/defile/label.html
   * @namespace basis.ui.label
   */
 

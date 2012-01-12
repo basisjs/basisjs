@@ -21,6 +21,8 @@ basis.require('basis.ui.canvas');
   'use strict';
 
  /**
+  * @see ./demo/graph/range.html
+  * @see ./demo/graph/dynamic-threads.html
   * @namespace basis.ui.graph
   */
 

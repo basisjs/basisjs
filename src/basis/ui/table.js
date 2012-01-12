@@ -390,11 +390,8 @@ basis.require('basis.ui');
   var Row = Class(UINode, {
     className: namespace + '.Row',
     
-    childClas: null,
-
+    childClass: null,
     repaintCount: 0,
-    getters: [],
-    classNames: [],
 
     template:
       '<tr class="Basis-Table-Row" event-click="select">' +

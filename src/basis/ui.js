@@ -492,7 +492,7 @@ basis.require('basis.html');
    /**
     * Create selection by default with empty config.
     */
-    selection: {},
+    selection: true,
 
    /**
     * @inheritDoc
