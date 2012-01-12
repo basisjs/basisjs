@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.timer');
 basis.require('basis.event');
 basis.require('basis.ua');
 basis.require('basis.dom.event');
@@ -31,7 +32,7 @@ basis.require('basis.data');
   var Cookies = basis.ua.Cookies;
   var Cleaner = basis.Cleaner;
 
-  var TimeEventManager = basis.TimeEventManager;
+  var TimeEventManager = basis.timer.TimeEventManager;
 
   var nsData = basis.data;
 

@@ -13,6 +13,7 @@
  *
  */
 
+basis.require('basis.timer');
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
@@ -37,7 +38,7 @@ basis.require('basis.ui.table');
   var Event = basis.dom.event;
 
   var cssom = basis.cssom;
-  var TimeEventManager = basis.TimeEventManager;
+  var TimeEventManager = basis.timer.TimeEventManager;
   var Table = basis.ui.table.Table;
   var Box = basis.layout.Box;
   var Viewport = basis.layout.Viewport;

@@ -19,6 +19,7 @@
 
   var namespace = 'basis.ua';
 
+
   //
   // main part
   //
@@ -162,6 +163,7 @@
   // enable background image cache for IE6
   if (testBrowser('IE7-')) 
     try { document.execCommand("BackgroundImageCache", false, true) } catch(e) {};
+
 
   //
   // export names

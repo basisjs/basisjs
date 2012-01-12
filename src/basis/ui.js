@@ -475,7 +475,7 @@ basis.require('basis.html');
   var Container = Class(Node, ContainerTemplateMixin, {
     className: namespace + '.Container',
 
-    childClass: Class.SELF,
+    childClass: Node,//Class.SELF,
     childFactory: function(config){
       return new this.childClass(config);
     },

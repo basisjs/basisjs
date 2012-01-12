@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
+basis.require('basis.timer');
 basis.require('basis.data');
 basis.require('basis.data.dataset');
 basis.require('basis.data.property');
@@ -23,7 +24,6 @@ basis.require('basis.data.property');
   var namespace = 'basis.data.index';
 
   var Class = basis.Class;
-  var TimeEventManager = basis.TimeEventManager;
   
   var nsData = basis.data;
   var DataObject = nsData.DataObject;
@@ -465,7 +465,7 @@ basis.require('basis.data.property');
     indexes: null,
     indexes_: null,
 
-    timer_: null,
+    timer_: undefined,
     indexUpdated: null,
     memberSourceMap: null,
     keyMap: null,
@@ -539,6 +539,8 @@ basis.require('basis.data.property');
     },
 
     init: function(config){
+      this.apply = this.apply.bind(this);
+
       this.indexUpdated = false;
       this.indexesBind_ = {};
       this.memberSourceMap = {};
@@ -639,10 +641,7 @@ basis.require('basis.data.property');
 
     fireUpdate: function(){
       if (!this.timer_)
-      {
-        this.timer_ = true;
-        TimeEventManager.add(this, 'apply', Date.now());
-      }
+        this.timer_ = setTimeout(this.apply, 0);
     },
 
     apply: function(){
@@ -650,7 +649,7 @@ basis.require('basis.data.property');
         this.calcMember(this.item_[idx]);
 
       this.indexUpdated = false;
-      this.timer_ = false;
+      this.timer_ = clearTimeout(this.timer_);
     },
 
     calcMember: function(member){
@@ -685,7 +684,7 @@ basis.require('basis.data.property');
     },
 
     destroy: function(){
-      this.timer_ = null;
+      this.timer_ = clearTimeout(this.timer_);
       this.calcs = null;
       this.indexUpdated = null;
       this.memberSourceMap = null;
