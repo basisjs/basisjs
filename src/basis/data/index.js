@@ -497,14 +497,17 @@ basis.require('basis.data.property');
     },
 
     listen: {
-      sourceObject: {
-        update: function(sourceObject, delta){
+      sourceObject: Class.OneFunctionProperty(
+        function(sourceObject, delta){
           MapReduce.prototype.listen.sourceObject.update.call(this, sourceObject, delta);
 
           this.sourceMap_[sourceObject.eventObjectId].updated = true;
           this.fireUpdate();
+        },
+        {
+          update: true
         }
-      },
+      ),
       index: {
         change: function(value){
           var indexMap = this.indexMap;

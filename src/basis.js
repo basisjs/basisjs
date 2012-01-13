@@ -1539,6 +1539,7 @@
       }.__extend__(extension || {});
     };
 
+
    /**
     * @func
     */
@@ -1546,10 +1547,11 @@
       return CustomExtendProperty(extension, extend);
     };
 
+
    /**
     * @func
     */
-    var NestedExtProperty = function(extension){
+    var NestedExtendProperty = function(extension){
       return CustomExtendProperty(extension, function(result, extension){
         for (var key in extension)
         {
@@ -1561,6 +1563,28 @@
       });
     };
 
+    var OneFunctionProperty = function(fn, keys){
+      var create = function(keys){
+        var result = {
+          __extend__: create
+        };
+
+        if (keys)
+          for (var key in keys)
+            if (keys[key])
+              result[key] = fn;
+
+        return result;
+      };
+
+      return create(keys || {});
+    }
+
+
+    //
+    // export names
+    //
+
     return getNamespace(namespace, BaseClass.create).extend({
       SELF: SELF,
       BaseClass: BaseClass,
@@ -1568,7 +1592,8 @@
       isClass: isClass,
       CustomExtendProperty: CustomExtendProperty,
       ExtensibleProperty: ExtensibleProperty,
-      NestedExtProperty: NestedExtProperty
+      NestedExtendProperty: NestedExtendProperty,
+      OneFunctionProperty: OneFunctionProperty
     });
   })();
 

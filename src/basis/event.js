@@ -19,7 +19,7 @@
 
 
   //
-  // inport names
+  // import names
   //
 
   var Class = basis.Class;
@@ -33,13 +33,22 @@
 
   var eventObjectId = 1; // EventObject seed ID
   var events = {};
-  var destroyEvent;
 
+
+ /**
+  * @func
+  */
   var warnOnDestroy = function(){
     throw 'Object had beed destroed before. Destroy method shouldn\'t be call more than once.'
   };
 
-  function dispatchEvent(eventName){
+
+ /**
+  * Creates new type of event or returns existing one, if it was created before.
+  * @param {string} eventName
+  * @func
+  */
+  function createEvent(eventName){
     var eventFunction = events[eventName];
 
     if (!eventFunction)
@@ -47,7 +56,7 @@
       eventFunction = events[eventName] = 
         /** @cut for more verbose in dev */ Function('eventName', 'slice', 'self', 'return self = function _event_' + eventName + '(' + Array.from(arguments, 1).join(', ') + '){' + 
 
-          function(){
+          function dispatchEvent(){
             var handlers = this.handlers_;
             var listenHandler;
             var config;
@@ -60,6 +69,7 @@
             if (!handlers || !handlers.length)
               return;
 
+            // prevent handlers list from changes
             handlers = slice.call(handlers);
 
             for (var i = handlers.length; i --> 0;)
@@ -127,12 +137,6 @@
   * @class
   */
   var EventObject = Class(null, {
-
-   /**
-    * Name of class.
-    * @type {string}
-    * @readonly
-    */
     className: namespace + '.EventObject',
 
    /**
@@ -148,12 +152,12 @@
     * @param {Basis.EventObject} object Reference for object wich is destroing.
     * @event
     */
-    event_destroy: destroyEvent = dispatchEvent('destroy', 'object'),
+    event_destroy: createEvent('destroy', 'object'),
 
    /**
     * Related object listeners.
     */
-    listen: Class.NestedExtProperty(),
+    listen: Class.NestedExtendProperty(),
 
    /** use extend constructor */
     extendConstructor_: true,
@@ -244,13 +248,13 @@
     * @destructor
     */
     destroy: function(){
-      // warn on destroy method call (only in debug)
+      // warn on destroy method call (only in debug mode)
       ;;;this.destroy = warnOnDestroy;
 
       if (this.handlers_)
       {
         // fire object destroy event handlers
-        destroyEvent.call(this, this);
+        events.destroy.call(this, this);
 
         // remove all event handler sets
         this.handlers_ = null;
@@ -266,7 +270,7 @@
   basis.namespace('basis.event').extend({
     LISTEN: LISTEN,
 
-    create: dispatchEvent,
+    create: createEvent,
     events: events,
 
     EventObject: EventObject

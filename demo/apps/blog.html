@@ -498,10 +498,7 @@
         },
         listen: {
           sourceObject: {
-            datasetChanged: function(sourceObject){
-              this.sourceMap_[sourceObject.eventObjectId].updated = true;
-              this.fireUpdate();
-            }
+            datasetChanged: true
           }
         }
       });

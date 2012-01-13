@@ -20,12 +20,16 @@ basis.require('basis.dom.event');
 
   var namespace = 'basis.html';
 
+
+  //
   // import names
+  //
 
   var document = global.document;
   var Class = basis.Class;
   var dom = basis.dom;
   var domEvent = basis.dom.event;
+
 
   //
   // Main part
@@ -70,7 +74,7 @@ basis.require('basis.dom.event');
 
       if (node != null)
       {
-        // Some browsers (Internet Explorer) can normalize text nodes during cloning, that why 
+        // Some browsers (Internet Explorer) may normalize text nodes during cloning, that's why 
         // we need to insert comment nodes between text nodes to prevent text node merge
         if (CLONE_NORMALIZE_TEXT_BUG)
         {
@@ -96,6 +100,10 @@ basis.require('basis.dom.event');
       var cursor = domEvent.sender(event);
       var attr;
       var refId;
+
+      // IE events may have no source
+      if (!cursor)
+        return;
 
       // search for nearest node with event-{eventName} attribute
       do {
@@ -162,30 +170,6 @@ basis.require('basis.dom.event');
             domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
         }
 
-        /*if (!window.__basis_emitEvent)
-        {
-          window.__basis_emitEvent = function(event, actionList){
-            var event = domEvent(event);
-            var cursor = this;
-            var refId;
-            do {
-              if (refId = cursor.basisObjectId)
-              {
-                // if found call templateAction method
-                var node = tmplNodeMap[refId];
-                if (node && node.templateAction)
-                {
-                  var actions = actionList.qw();
-                  for (var i = 0, actionName; actionName = actions[i++];)
-                    node.templateAction(actionName, domEvent(event));
-
-                  break;
-                }
-              }
-            } while (cursor = cursor.parentNode);
-          }
-        }*/
-
         // hack for non-bubble events in IE<=8
         if (!domEvent.W3CSUPPORT)
         {
@@ -194,9 +178,6 @@ basis.require('basis.dom.event');
             events.push(eventName);
             //result += '[on' + eventName + '="basis.dom.event.fireEvent(document,\'' + eventName + '\')"]';
         }
-          
-        //result += '[on' + eventName + '="alert(\'!\');__basis_emitEvent.call(this, event || window.event, ' + value.quote("'") + ')"]';
-        //continue;
       }
 
       result += name == 'class'
@@ -514,20 +495,31 @@ basis.require('basis.dom.event');
     }
   });
 
+
+ /**
+  * @func
+  */
   function escape(html){
-    return dom.createElement('DIV', dom.createText(html)).innerHTML;
+    return dom.createElement('div', dom.createText(html)).innerHTML;
   }
 
-  var unescapeElement = document.createElement('DIV');
+ /**
+  * @func
+  */
+  var unescapeElement = document.createElement('div');
   function unescape(escapedHtml){
     unescapeElement.innerHTML = escapedHtml;
     return unescapeElement.firstChild.nodeValue;
   }
 
+ /**
+  * @func
+  */
   function string2Html(text){
     unescapeElement.innerHTML = text;
     return dom.createFragment.apply(null, Array.from(unescapeElement.childNodes));
   }
+
 
   //
   // export names
