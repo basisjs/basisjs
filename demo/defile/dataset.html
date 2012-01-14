@@ -227,7 +227,7 @@
         container: document.getElementById('demo-container'),
         action: {
           add: function(){
-            newItemPopup.dataSource.setOperands(newItemPopup.dataSource.minuend, this.dataSource);
+            newItemPopup.dataSource.setSubtrahend(this.dataSource);
             newItemPopup.show(Event.sender(event));
           }
         },

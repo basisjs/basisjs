@@ -497,17 +497,6 @@ basis.require('basis.data.property');
     },
 
     listen: {
-      sourceObject: Class.OneFunctionProperty(
-        function(sourceObject, delta){
-          MapReduce.prototype.listen.sourceObject.update.call(this, sourceObject, delta);
-
-          this.sourceMap_[sourceObject.eventObjectId].updated = true;
-          this.fireUpdate();
-        },
-        {
-          update: true
-        }
-      ),
       index: {
         change: function(value){
           var indexMap = this.indexMap;
@@ -524,6 +513,19 @@ basis.require('basis.data.property');
         }
       }
     },
+
+    updateEvents: Class.OneFunctionProperty(
+      function(sourceObject, delta){
+        MapReduce.prototype.updateEvents.update.call(this, sourceObject, delta);
+
+        this.sourceMap_[sourceObject.eventObjectId].updated = true;
+        this.fireUpdate();
+      },
+      {
+        update: true
+      }
+    ),
+
 
     map: function(item){
       return this.keyMap.get(item, true);

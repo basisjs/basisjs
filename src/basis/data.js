@@ -898,7 +898,6 @@ basis.require('basis.event');
     * @event
     */
     event_datasetChanged: createEvent('datasetChanged', 'dataset', 'delta') && function(dataset, delta){
-      // before event
       var items;
       var insertCount = 0;
       var deleteCount = 0;
@@ -1056,8 +1055,7 @@ basis.require('basis.event');
     listen: {
       item: {
         destroy: function(object){
-          if (this.memberMap_[object.eventObjectId])
-            this.remove([object]);
+          this.remove([object]);
         }
       }
     },

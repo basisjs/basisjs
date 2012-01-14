@@ -132,33 +132,30 @@
     // Example
     //
 
-    var SeriesValue = new nsEntity.EntityType({
-      name: 'SeriesValue',
-      fields: {
-        Date: Object,
-        Amount: Number
-      }
+    var data = [];
+
+    var dates = rawData.dates.split(';');
+    var amounts = rawData.amounts.split(';');
+
+    for (var i = dates.length; i --> 0;)
+      data.push(new basis.data.DataObject({
+        data: {
+          Date: new Date(dates[i] * 1000),
+          Amount: amounts[i]
+        }
+      }));
+
+    var graphValues = new basis.data.Dataset({
+      items: data
     });
 
     var reportSlice = new basis.data.dataset.Slice({
       rule: Function.getter('data.Date', Number),
-      source: SeriesValue.all,
+      source: graphValues,
       orderDesc: true,
       offset: 450,
       limit: 300
     });
-
-    var data = [];
-
-    rawData.dates = rawData.dates.split(';');
-    rawData.amounts = rawData.amounts.split(';');
-
-    for (var i = rawData.dates.length; i --> 0;)
-      data.push({
-        Date: new Date(rawData.dates[i] * 1000),
-        Amount: rawData.amounts[i]
-      });
-    SeriesValue.all.sync(data);
 
     new Graph({
       container: DOM.get('demo-container'),
@@ -190,7 +187,7 @@
       showBoundLines: false,
       childNodes: [
         {
-          dataSource: SeriesValue.all,
+          dataSource: graphValues,
           valueGetter: Function.getter('data.Amount'),
           localSorting: Function.getter('data.Date')
         }
@@ -250,7 +247,7 @@
                     move: function(config){
                       var itemCount = reportSlice.index_.length;
                       var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
-                      reportSlice.setRange(offset.fit(0, itemCount - reportSlice.limit), reportSlice.limit);
+                      reportSlice.setOffset(offset.fit(0, itemCount - reportSlice.limit));
                     }
                   },
                   handlerContext: this
@@ -266,7 +263,7 @@
                     move: function(config){
                       var itemCount = reportSlice.index_.length;
                       var limit = this.limit__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
-                      reportSlice.setRange(reportSlice.offset, Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
+                      reportSlice.setLimit(Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
                     }
                   },
                   handlerContext: this
@@ -296,7 +293,7 @@
       }
     });
 
-    var totalCount = new basis.data.property.Property(SeriesValue.all.itemCount);
+    var totalCount = new basis.data.property.Property(graphValues.itemCount);
     var drawCount = new basis.data.property.Property(reportSlice.itemCount);
 
     reportSlice.addHandler({
@@ -305,7 +302,7 @@
       }
     }, drawCount);
 
-    SeriesValue.all.addHandler({
+    graphValues.addHandler({
       datasetChanged: function(dataset){
         this.set(dataset.itemCount);
       }

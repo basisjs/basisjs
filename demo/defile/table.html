@@ -8,6 +8,7 @@
   <title>Basis Demos: Tables</title>
 
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/table/vista/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/scrolltable/vista/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -36,6 +37,11 @@
       margin: -15px -15px 10px -15px;
       padding: 2px;
       text-align: center;
+    }
+    .scrollTableContainer
+    {
+      height: 600px;
+      position: relative;
     }
 
   </style>
@@ -80,6 +86,7 @@
     var getter = Function.getter;
     var DOM = basis.dom;
     var Table = basis.ui.table.Table;
+    var ScrollTable = basis.ui.scrolltable.ScrollTable;
 
     //
     // Main part
@@ -131,7 +138,7 @@
       }
     });
 
-    new Table({
+    /*new Table({
       container: createBlock('table'),
       structure: [
         { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
@@ -141,7 +148,20 @@
         { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
       ],
       childNodes: data
+    }); */
+
+    new ScrollTable({
+      container: createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer')),
+      structure: [
+        { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
+        { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },
+        { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
+        { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
+        { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+      ],
+      childNodes: data
     }); 
+
 
   </script>
 </body>

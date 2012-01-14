@@ -1565,14 +1565,21 @@
 
     var OneFunctionProperty = function(fn, keys){
       var create = function(keys){
-        var result = {
-          __extend__: create
-        };
+        var result;
 
         if (keys)
+        {
+          if (keys.__extend__)
+            return keys;
+
+          result = {
+            __extend__: create
+          };
+
           for (var key in keys)
             if (keys[key])
               result[key] = fn;
+        }
 
         return result;
       };
