@@ -91,8 +91,23 @@
         tabs,
         DOM.wrap(pages, { '.DemoWrapper-Page': Function.$true }, 'element')
       ),
-      DOM.createElement('#DemoCopy', DOM.createElement('P', 'basis.js ' + String.Entity.copy + ' 2006-2012, ', DOM.createElement('A[href="http://code.google.com/p/basis-js"][target="_blank"]', 'Project page')))
+      DOM.createElement('#DemoCopy', DOM.createElement('P', 'basis.js ' + String.Entity.copy + ' 2006-2011, ', DOM.createElement('A[href="http://code.google.com/p/basis-js"][target="_blank"]', 'Project page')))
     ]);
 
     classList(document.body).add('show');
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+     (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ga);
+    })();
   });
+
+  var _gaq = _gaq || [];
+ _gaq.push(
+ ['siteTracker._setAccount', 'UA-18071-1'],
+ ['siteTracker._trackPageview']);
+ 
+ _gaq.push(
+ ['projectTracker._setAccount', 'UA-16275563-1'],
+ ['projectTracker._trackPageview']);
