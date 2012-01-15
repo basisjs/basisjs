@@ -18,7 +18,9 @@ basis.require('basis.html');
 basis.require('basis.layout');
 basis.require('basis.dragdrop');
 
-!function(basis){
+(function(basis){
+
+  'use strict';
 
  /**
   * @see ./demo/defile/slider.html
@@ -35,13 +37,16 @@ basis.require('basis.dragdrop');
   var DOM = basis.dom;
   var Event = basis.dom.event;
 
+  var events = basis.event.events;
   var createEvent = basis.event.create;
+  var cssom = basis.cssom;
   var classList = basis.cssom.classList;
 
-  var DragDropElement = basis.dragdrop.DragDropElement;
-  var Box = basis.layout.Box;
+  var AbstractNode = basis.dom.wrapper.AbstractNode;
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
+  var DragDropElement = basis.dragdrop.DragDropElement;
+  var Box = basis.layout.Box;
 
 
   //
@@ -57,22 +62,15 @@ basis.require('basis.dragdrop');
     return (100 * value).toFixed(4) + '%';
   }
 
-  function updateSelection(paginator){
-    var node = paginator.childNodes.search(paginator.activePage_, 'data.pageNumber');
-    if (node)
-      node.select();
-    else
-      paginator.selection.clear();
-  }
 
  /**
   * @class
   */
   var Mark = UINode.subclass({
-    className: namespace + '.Slider.Mark',
+    className: namespace + '.Mark',
 
     pos: 0,
-    caption: String.Entity.nbsp,
+    caption: '\xA0',
 
     template:
       '<div class="Basis-Slider-Mark">' +
@@ -83,14 +81,15 @@ basis.require('basis.dragdrop');
         '</span>' +
       '</div>',
 
-    init: function(config){
-      UINode.prototype.init.call(this, config);
-      DOM.setStyle(this.element, {
-        left: (100 * this.pos) + '%',
-        width: (100 * this.width) + '%'
-      });
+    templateUpdate: function(tmpl){
+      var element = tmpl.element;
 
-      this.tmpl.text.nodeValue = this.caption;
+      tmpl.text.nodeValue = this.caption;
+
+      cssom.setStyle(this.element, {
+        left: percent(this.pos),
+        width: percent(this.width)
+      });
 
       if (this.isLast)
         classList(this.element).add('last');
@@ -104,7 +103,7 @@ basis.require('basis.dragdrop');
   * @class
   */
   var MarkLayer = UIContainer.subclass({
-    className: namespace + '.Slider.MarkLayer',
+    className: namespace + '.MarkLayer',
 
     template: 
       '<div class="Basis-Slider-MarkLayer"/>',
@@ -123,30 +122,34 @@ basis.require('basis.dragdrop');
 
     apply: function(){
       var marks = this.marks || [];
+      var owner = this.owner_;
+
+      if (!owner)
+        return;
+
       if (this.count > 0)
       {
-        var self = this;
-        marks.push.apply(marks, Array.create(this.count, function(idx){
-          var p = (idx + 1) / self.count;
-          var value = this.closest(p);
-          var pos = ((value - this.min) / this.range_);
+        for (var i = 1, count = this.count; i <= count; i++)
+        {
+          var value = owner.closest(i / count);
 
-          return {
-            pos: pos,
-            caption: self.captionFormat(value),
-            isLast: self.count == idx + 1
-          }
-        }, this.owner_));
+          marks.push({
+            pos: owner.value2pos(value),
+            caption: this.captionFormat(value),
+            isLast: count == i
+          });
+        }
       }
 
+      marks = marks.filter(Function.$isNotNull).sortAsObject('pos');
+
       var pos = 0;
-      marks = marks.filter(Function.$isNotNull).sortAsObject('pos').map(function(mark){
-        var s = mark.pos;
+      for (var i = 0, mark; mark = marks[i]; i++)
+      {
         mark.width = mark.pos - pos;
         mark.pos = pos;
-        pos = s;
-        return mark;
-      }, this);
+        pos += mark.width;
+      }
 
       if (pos != 1)
         marks.push({
@@ -164,56 +167,17 @@ basis.require('basis.dragdrop');
   // Slider
   //
 
-  var DRAGDROP_HANDLER = {
-    move: function(config){
-      var scrollbar = this.tmpl.scrollbar;
-      var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
-      this.setValue_(pos * this.count_);
-    }
+  var eventToValue = function(event){
+    var scrollbar = this.tmpl.scrollbar;
+    var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
+    this.setStepValue(pos * this.stepCount);
   };
 
-  function stepAction(event){
-    var delta = Event.wheelDelta(event);
-
-    if (delta)
-    {
-      DOM.focus(this.element);
-      if (delta < 0)
-        this.stepDown();
-      else
-        this.stepUp();
+  var DRAGDROP_HANDLER = {
+    move: function(config, event){
+      eventToValue.call(this, event);
     }
-    else
-    {
-      var key = Event.key(event);
-      switch(key){
-        case Event.KEY.DOWN:
-        case Event.KEY.LEFT:
-        case KEY_MINUS:
-        case KEY_KP_MINUS:
-          this.stepDown();
-        break;
-        case Event.KEY.UP:
-        case Event.KEY.RIGHT:
-        case KEY_PLUS:
-        case KEY_KP_PLUS:
-          this.stepUp();
-        break;
-        case Event.KEY.PAGEDOWN:
-          this.stepDown(10);
-        break;
-        case Event.KEY.PAGEUP:
-          this.stepUp(10);
-        break;
-        case Event.KEY.HOME:
-          this.setValue(this.min);
-        break;
-        case Event.KEY.END:
-          this.setValue(this.max);
-        break;
-      }
-    }
-  }
+  };
 
  /**
   * @class
@@ -221,42 +185,101 @@ basis.require('basis.dragdrop');
   var Slider = UINode.subclass({
     className: namespace + '.Slider',
 
-    event_change: createEvent('change'),
+    event_change: createEvent('change', 'oldValue') && function(sender, oldValue){
+      events.change.call(this, sender, oldValue);
+      this.templateUpdate(this.tmpl, 'change');
+    },
+
+    event_rangeChanged: createEvent('rangeChanged') && function(sender){
+      events.rangeChanged.call(this, sender);
+      this.templateUpdate(this.tmpl, 'rangeChanged');
+    },
 
     captionFormat: function(value){
       return Math.round(Number(value));
     },
 
+    marks: 'auto',
+
     min: 0,
     max: 100,
-    step: 1,
+    step: NaN,
     value: NaN,
-    value_: NaN,
 
+    stepCount: NaN,
+    stepValue: NaN,
+
+   /**
+    * @inheritDoc
+    */
     template:
-    	'<div{element} class="Basis-Slider Basis-Slider-MinMaxInside" event-mousewheel="step" event-keyup="step" event-mousedown="focus" tabindex="0">' +
+    	'<div class="Basis-Slider" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">' +
         '<div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>' +
         '<div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>' +
-        '<div{scrollbarContainer} class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
-      	  '<div{marks} class="Basis-Slider-MarkLayers"/>' +
+        '<div class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
+      	  '<!--{marks}-->' +
           '<div{scrollbar} class="Basis-Slider-Scrollbar">' +
-            '<div{scrollTrumb} class="Basis-Slider-ScrollbarSlider"></div>' +
+            '<div{valueBar} class="Basis-Slider-ValueBar">' +
+              '<div{scrollTrumb} class="Basis-Slider-Thumb"/>' +
+            '</div>' +
+            '<div{leftBar} class="Basis-Slider-LeftBar"/>' +
           '</div>' +
         '</div>' +
     	'</div>',
 
+   /**
+    * @inheritDoc
+    */
     action: {
-      jumpTo: function(event){
-        var scrollbar = this.tmpl.scrollbar;
-        var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
-        this.setValue_(pos * this.count_);
-      },
+      jumpTo: eventToValue,
       focus: function(){
         DOM.focus(this.element);
       },
-      step: stepAction
+      keyStep: function(event){
+        switch(Event.key(event))
+        {
+          case Event.KEY.DOWN:
+          case Event.KEY.LEFT:
+          case KEY_MINUS:
+          case KEY_KP_MINUS:
+            this.stepDown();
+          break;
+          
+          case Event.KEY.UP:
+          case Event.KEY.RIGHT:
+          case KEY_PLUS:
+          case KEY_KP_PLUS:
+            this.stepUp();
+          break;
+
+          case Event.KEY.PAGEDOWN:
+            this.stepDown(10);
+          break;
+          
+          case Event.KEY.PAGEUP:
+            this.stepUp(10);
+          break;
+          
+          case Event.KEY.HOME:
+            this.setValue(this.min);
+          break;
+          
+          case Event.KEY.END:
+            this.setValue(this.max);
+          break;
+        }
+      },
+      wheelStep: function(event){
+        if (Event.wheelDelta(event) < 0)
+          this.stepDown();
+        else
+          this.stepUp();
+      }
     },
 
+   /**
+    * @inheritDoc
+    */
     satelliteConfig: {
       marks: UIContainer.subclass({
         className: namespace + '.MarkLayers',
@@ -265,23 +288,43 @@ basis.require('basis.dragdrop');
       })
     },
 
-    marks: 'auto',
+   /**
+    * @inheritDoc
+    */
+    templateUpdate: function(tmpl, eventName){
+      if (!eventName || eventName == 'rangeChanged')
+      {
+        tmpl.minValue.nodeValue = this.captionFormat(this.min);
+        tmpl.maxValue.nodeValue = this.captionFormat(this.max);
 
+        classList(this.element).bool('NoMax', this.max == this.min);
+      }
+
+      if (!eventName || eventName == 'change')
+      {
+        cssom.setStyle(tmpl.valueBar, {
+          width: percent(this.value2pos(this.value))
+        });
+      }
+    },
+
+   /**
+    * @inheritDoc
+    */
     init: function(config){
       // save init values
       var step = this.step;
       var value = this.value;
 
       // make new values possible
-      this.step = 0;
-      this.value = this.min;
-      this.value_ = 0;
+      this.step = NaN;
+      this.value = NaN;
 
       // inherit
       UINode.prototype.init.call(this, config);
 
       // set properties
-      this.setProperties(this.min, this.max, step);
+      this.setRange(this.min, this.max, step || 1);
       this.setValue(isNaN(value) ? this.min : value);
 
       // add drag posibility for slider
@@ -293,11 +336,11 @@ basis.require('basis.dragdrop');
     },
 
    /**
-    * @param {number} pageCount
-    * @param {number} pageSpan
-    * @param {number} activePage
+    * @param {number} min
+    * @param {number} max
+    * @param {number} step
     */
-    setProperties: function(min, max, step){
+    setRange: function(min, max, step){
       if (min > max)
       {
         var t = min;
@@ -310,19 +353,19 @@ basis.require('basis.dragdrop');
 
       if (this.min != min || this.max != max || this.step != step)
       {
-        this.count_ = Math.ceil((max - min) / step);
+        this.stepCount = Math.ceil((max - min) / step);
 
         this.step = step;
         this.min = min;
-        this.max = this.min + this.count_ * this.step;
+        this.max = this.min + this.stepCount * this.step;
 
-        this.range_ = this.max - this.min;
+        this.setValue(this.value || this.min);
 
-        this.tmpl.minValue.nodeValue = this.captionFormat(this.min);
-        this.tmpl.maxValue.nodeValue = this.captionFormat(this.max);
-        classList(this.element).bool('NoMax', this.max == this.min);
+        //
+        // update marks
+        //
 
-        if (this.marks)
+        if (this.marks && this.satellite.marks instanceof AbstractNode)
         {
           var marks = Array.isArray(this.marks) ? this.marks : [this.marks];
           this.satellite.marks.setChildNodes(marks.map(function(layer){
@@ -335,18 +378,33 @@ basis.require('basis.dragdrop');
             }, layer);
 
             if (layerConfig.count == 'auto')
-              layerConfig.count = Math.min(this.count_, 20);
+              layerConfig.count = Math.min(this.stepCount, 20);
 
             return layerConfig;
           }, this));
         }
-
-        this.setValue(this.value || this.min);
       }
     },
+
+   /**
+    * @param {number} pos Float value between 0 and 1.
+    * @return {number} Closest to pos value.
+    */
     closest: function(pos){
-      return this.normalize(this.min + this.range_ * pos.fit(0, 1) + (this.step / 2));
+      return this.normalize(this.min + (this.max - this.min) * pos.fit(0, 1) + (this.step / 2));
     },
+
+   /**
+    */
+    value2pos: function(value){     
+      return (value.fit(this.min, this.max) - this.min) / (this.max - this.min);
+    },
+
+   /**
+    * Returns valid value according to min, max and step.
+    * @param {number} value Value to normalize.
+    * @return {number} Normalized value
+    */
     normalize: function(value){
       if (value < this.min)
         value = this.min;
@@ -356,30 +414,52 @@ basis.require('basis.dragdrop');
 
       return this.min + Math.floor(0.00001 + (value - this.min) / this.step) * this.step;
     },
+
+   /**
+    * Adds count steps to value.
+    * @param {number} count
+    */
     stepUp: function(count){
-      this.setValue_(this.value_ + parseInt(count || 1));
+      this.setStepValue(this.stepValue + parseInt(count || 1));
     },
+
+   /**
+    * Subtracts count steps to value.
+    * @param {number} count
+    */
     stepDown: function(count){
-      this.setValue_(this.value_ - parseInt(count || 1));
+      this.setStepValue(this.stepValue - parseInt(count || 1));
     },
-    setValue_: function(newValue){
-      newValue = Math.round(newValue).fit(0, this.count_);
 
-      if (this.value_ != newValue)
+   /**
+    * Set value in step count
+    * @param {number} stepCount
+    */
+    setStepValue: function(stepValue){
+      stepValue = Math.round(stepValue).fit(0, this.stepCount);
+
+      if (this.stepValue != stepValue)
       {
-        this.value_ = newValue;
-
         var oldValue = this.value;
 
-        this.value = this.normalize(this.min + newValue * this.step);
-        this.tmpl.scrollTrumb.style.left = percent(newValue / this.count_);
+        this.value = this.normalize(this.min + stepValue * this.step);
+        this.stepValue = stepValue;
 
         this.event_change(this, oldValue);
       }
     },
+
+   /**
+    * Set new value
+    * @param {number} newValue
+    */
     setValue: function(newValue){
-      this.setValue_((newValue - this.min) / this.step);
+      this.setStepValue((newValue - this.min) / this.step);
     },
+
+   /**
+    * @inheritDoc
+    */
     destroy: function(){
       this.scrollbarDD.destroy();
       this.scrollbarDD = null;
@@ -393,13 +473,10 @@ basis.require('basis.dragdrop');
   // export names
   //
 
-  Object.extend(Slider, {
+  basis.namespace(namespace).extend({
+    Slider: Slider,
     MarkLayer: MarkLayer,
     Mark: Mark
   });
 
-  basis.namespace(namespace).extend({
-    Slider: Slider
-  });
-
-}(basis);
+})(basis);

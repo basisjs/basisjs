@@ -114,12 +114,18 @@
   {
     float: left;
     border-right: 1px solid #888;
+  }
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MinLabel
+  {
     padding-right: 3px;
   }
   .Basis-Slider-MaxLabel
   {
     float: right;
     border-left: 1px solid #888;
+  }
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MaxLabel
+  {
     padding-left: 3px;
   }
   .Basis-Slider-MinLabel .caption,
@@ -127,24 +133,25 @@
   {
     text-align: center;
     white-space: nowrap;
-    position: relative;
     top: -1.2em;
+    position: absolute;
   }
 
-  .Basis-Slider-MinMaxInside .Basis-Slider-MinLabel,
-  .Basis-Slider-MinMaxInside .Basis-Slider-MaxLabel
+  .Basis-Slider-MinLabel .caption
   {
-    padding: 0;
-  }
-  .Basis-Slider-MinMaxInside .Basis-Slider-MinLabel .caption
-  {
-    position: absolute;
     left: 0;
   }
-  .Basis-Slider-MinMaxInside .Basis-Slider-MaxLabel .caption
+  .Basis-Slider-MaxLabel .caption
   {
-    position: absolute;
     right: 0;
+  }
+
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MinLabel .caption,
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MaxLabel .caption
+  {
+    left: auto;
+    right: auto;
+    position: relative;
   }
 
 
@@ -163,14 +170,24 @@
     border-left: 1px solid #888;
     border-right: 1px solid #888;
   }
-  .Basis-Slider-ScrollbarSlider
+  .Basis-Slider-ValueBar
+  {
+    float: left;
+    position: relative;
+    height: 100%;
+  }
+  .Basis-Slider-LeftBar
+  {
+    height: 100%;
+  }
+  .Basis-Slider-Thumb
   {
     position: absolute;
     z-index: 21;
 
     top: -7px;
-    left: 0;
-    margin-left: -8px;
+    right: 0;
+    margin-right: -8px;
 
     font-size: 1px;
     width: 16px;

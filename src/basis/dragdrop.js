@@ -78,7 +78,7 @@ basis.require('basis.layout');
       Event.cancelDefault(event);
 
       // ready to drag start, make other preparations if need
-      this.event_prepare(DDEConfig.event);
+      this.event_prepare(DDEConfig.event, event);
     },
     move: function(event){  // `this` store DDE config
       var dde = DDEConfig.dde;
@@ -99,7 +99,7 @@ basis.require('basis.layout');
       if (dde.axisY)
         DDEConfig.event.deltaY = dde.axisYproxy(Event.mouseY(event) - DDEConfig.event.initY);
 
-      dde.event_move(DDEConfig.event);
+      dde.event_move(DDEConfig.event, event);
     },
     over: function(event){  // `this` store DDE config
       var dde = DDEConfig.dde;
@@ -112,7 +112,7 @@ basis.require('basis.layout');
       dde.draging = false;
 
       if (DDEConfig.run)
-        dde.event_over(DDEConfig.event);
+        dde.event_over(DDEConfig.event, event);
       
       DDEConfig = null;
       Event.kill(event);
