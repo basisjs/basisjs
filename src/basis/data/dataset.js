@@ -894,7 +894,7 @@ basis.require('basis.data');
       var sourceObject;
       var sourceObjectId;
       var member;
-      var updateHandler = this.updateEvents;
+      var updateHandler = this.ruleEvents;
 
       Dataset.setAccumulateState(true);
 
@@ -1018,7 +1018,7 @@ basis.require('basis.data');
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    updateEvents: OneFunctionProperty(
+    ruleEvents: OneFunctionProperty(
       MAPREDUCE_SOURCEOBJECT_UPDATE,
       {
         update: true
@@ -1335,7 +1335,7 @@ basis.require('basis.data');
     datasetChanged: function(source, delta){
       var sourceMap = this.sourceMap_;
       var index = this.index_;
-      var updateHandler = this.updateEvents;
+      var updateHandler = this.ruleEvents;
       var dropIndex = false;
       var buildIndex = false;
       var sourceObjectInfo;
@@ -1464,7 +1464,7 @@ basis.require('basis.data');
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    updateEvents: OneFunctionProperty(
+    ruleEvents: OneFunctionProperty(
       SLICE_SOURCEOBJECT_UPDATE,
       {
         update: true
@@ -1640,7 +1640,7 @@ basis.require('basis.data');
     datasetChanged: function(dataset, delta){
       var sourceMap = this.sourceMap_;
       var memberMap = this.memberMap_;
-      var updateHandler = this.updateEvents;
+      var updateHandler = this.ruleEvents;
       var objectInfo;
       var array;
       var subset;
@@ -1754,7 +1754,7 @@ basis.require('basis.data');
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    updateEvents: OneFunctionProperty(
+    ruleEvents: OneFunctionProperty(
       CLOUD_SOURCEOBJECT_UPDATE,
       {
         update: true

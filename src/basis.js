@@ -287,16 +287,13 @@
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
-    var getterIdx = 1;
+    var getterSeed = 1;
     var getterCache = {};
     var getterPathCache = {};
 
-    var mGetter = function(item){ return item.modificator };
-    mGetter.getter = mGetter;
-    mGetter.getterIdx_ = getterIdx++;
-
     return function(path, modificator){
-      var func, result;
+      var func;
+      var result;
 
       if (!modificator)
       {
@@ -309,25 +306,26 @@
 
       if (typeof path != 'function')
       {
-        if (getterPathCache[path])
-          func = getterPathCache[path];
-        else
+        func = getterPathCache[path];
+
+        if (!func)
         {
           func = new Function('object', 'return object != null ? object.' + path + ' : object');
           func.path = path;
-          func.getterIdx_ = getterIdx++;
+          func.basisGetterId_ = getterSeed++;
           getterPathCache[path] = func;
         }
       }
       else
       {
         func = path;
-        if (!func.getterIdx_)
-          func.getterIdx_ = getterIdx++;
+        if (!func.basisGetterId_)
+          func.basisGetterId_ = getterSeed++;
       }
 
-      var getterIdx_ = func.getterIdx_;
-      var modList = getterCache[getterIdx_];
+      var getterId = func.basisGetterId_;
+      var modList = getterCache[getterId];
+
       if (modList)
       {
         if (typeof modificator == 'undefined')
@@ -343,7 +341,7 @@
         }
       }
       else
-        modList = getterCache[getterIdx_] = [];
+        modList = getterCache[getterId] = [];
 
       var cacheResult = true;
       switch (modificator && typeof modificator)
@@ -1527,7 +1525,7 @@
           if (!extension)
             return extension;
 
-          if (extension && extension.__extend__ === this.__extend__)
+          if (extension && extension.__extend__)
             return extension;
 
           var Base = Function();
@@ -1563,6 +1561,9 @@
       });
     };
 
+   /**
+    * @func
+    */
     var OneFunctionProperty = function(fn, keys){
       var create = function(keys){
         var result;

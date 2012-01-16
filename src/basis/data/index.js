@@ -282,7 +282,7 @@ basis.require('basis.data.property');
   function IndexConstructor(getter, indexClass){
     getter = Function.getter(getter);
 
-    var key = indexClass.indexClassId + '_' + getter.getterIdx_;
+    var key = indexClass.indexClassId + '_' + getter.basisGetterId_;
     var indexConstructor = indexConstructorCache_[key];
 
     if (!indexConstructor)
@@ -514,9 +514,9 @@ basis.require('basis.data.property');
       }
     },
 
-    updateEvents: Class.OneFunctionProperty(
+    ruleEvents: Class.OneFunctionProperty(
       function(sourceObject, delta){
-        MapReduce.prototype.updateEvents.update.call(this, sourceObject, delta);
+        MapReduce.prototype.ruleEvents.update.call(this, sourceObject, delta);
 
         this.sourceMap_[sourceObject.eventObjectId].updated = true;
         this.fireUpdate();
