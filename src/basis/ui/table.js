@@ -500,18 +500,16 @@ basis.require('basis.ui');
     }),
 
     template:
-      '<table{groupsElement} class="Basis-Table" cellspacing="0" event-click="click">' +
+      '<table{groupsElement} class="Basis-Table" cellspacing="0">' +
         '<!--{header}-->' +
         '<tbody{content|childNodesElement} class="Basis-Table-Body"/>' +
         '<!--{footer}-->' +
       '</table>',
 
-    templateAction: function(actionName, event){
-      UIControl.prototype.templateAction.call(this, actionName, event);
-    },
-
     headerClass: Header,
     footerClass: Footer,
+
+    columnCount: 0,
 
     init: function(config){
 
@@ -566,6 +564,8 @@ basis.require('basis.ui');
             });
           }
         }
+
+        this.columnCount = i;
 
         this.childClass = this.childClass.subclass({
           template: this.childClass.prototype.template.source.replace('<!--{cells}-->', template),

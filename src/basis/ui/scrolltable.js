@@ -44,6 +44,7 @@ basis.require('basis.ui.table');
   var Table = basis.ui.table.Table;
   var Box = basis.layout.Box;
   var Viewport = basis.layout.Viewport;
+  var layout = basis.layout;
 
   var nsTable = basis.ui.table;
 
@@ -77,6 +78,12 @@ basis.require('basis.ui.table');
     cssom.setStyleProperty(cell.boxChangeListener, 'width', width);
   }
 
+  var mhtml = '<td style="padding:0;margin:0;border:0"><div style="border:0;margin:0;padding:0;width:auto;position:relative;border: 1px solid red;height:2px"><iframe style="border:0;margin:0;padding:0;width:100%;position:absolute" event-load="log"></iframe></div></td>';
+  var measureCell = DOM.createElement('tr');
+  measureCell.innerHTML = mhtml;
+  measureCell = measureCell.firstChild;
+
+
  /**
   * @class
   */
@@ -87,18 +94,20 @@ basis.require('basis.ui.table');
 
     template:
       '<div{element} class="Basis-Table Basis-ScrollTable">' +
+        '<frame event-load="fireRecalc" src="about:blank" event-resize="log"/>' +
         '<div{headerFooterContainer} class="Basis-ScrollTable-HeaderFooterContainer">' +
-          '<frame event-load="fireRecalc" src="about:blank"/>' +
-          //'<div{headerFooterWrapper} style="position: absolute; height: 100%; width: 100%; top: 0; left: 0">' +
-            '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"><!--{header}--></table>' +
-            '<table{foot} cellspacing="0" border="0" class="Basis-ScrollTable-Footer"><!--{footer}--></table>' +
-          //'</div>' +
+          '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"><!--{header}--></table>' +
+          '<table{foot} cellspacing="0" border="0" class="Basis-ScrollTable-Footer"><!--{footer}--></table>' +
         '</div>' +
         '<div{scrollContainer} class="Basis-ScrollTable-ScrollContainer" event-scroll="scroll">' +
           '<div{tableWrapperElement} class="Basis-ScrollTable-TableWrapper">' +
-            '<table{tableElement|groupsElement} class="Basis-Table" cellspacing="0">' +
-              '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
-            '</table>' +
+            '<div{xx} style="float: left; position: relative">' +
+              '<table{tableElement|groupsElement} cellspacing="0">' +
+                '<!--{shadowHeader}-->' +
+                '<!--{measureRow}-->' +
+                '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
+              '</table>' +
+            '</div>' +
           '</div>' +
         '</div>' +
         '<div{headerExpandCell} class="Basis-ScrollTable-ExpandHeaderCell"><div class="Basis-ScrollTable-ExpandCell-Content"/></div>' +
@@ -112,12 +121,26 @@ basis.require('basis.ui.table');
       },
       scroll: function(){
         this.onScroll();
+      },
+      log: function(event){
+        console.log('event:', event.type);
+        if (event.type == 'load')
+        {
+          var sender = basis.dom.event.sender(event);
+          sender.contentWindow.onresize = this.action.log.bind(this);
+        }
       }
     },
 
-    event_childNodesModified: function(node, delta){
-      Table.prototype.event_childNodesModified.call(this, node, delta);
-      //TimeEventManager.add(this, 'adjust', Date.now());
+    headerClass: {
+      listen: {
+        childNode: {
+          '*': function(){
+            if (this.owner)
+              setImmediate(this.owner.adjust.bind(this.owner));
+          }
+        }
+      }
     },
 
     init: function(config){
@@ -128,19 +151,36 @@ basis.require('basis.ui.table');
       var header = this.header;
       var footer = this.footer;
 
-      /*create header clone*/
+      header.addHandler({
+        '*': function(){
+          //console.log('adjust');
+          this.adjust();
+        }
+      }, this);
+
+      /*DOM.replace(this.tmpl.measureRow,
+        DOM.createElement('tbody',
+          DOM.createElement('tr',
+            Array.create(this.columnCount, function(){
+              return measureCell.cloneNode(true);
+            })
+          )
+        )
+      );*/
+
+      // create header clone
       this.headerClone = new nsTable.Header(Object.extend({ 
         owner: header.owner,
         container: this.tmpl.tableElement, 
         structure: this.structure
       }, this.headerConfig));
 
-      /*get header cells including groupCells*/
+      // get header cells including groupCells
       this.originalCells = header.childNodes;
       if (this.header.groupControl)
         this.originalCells = this.originalCells.concat(header.groupControl.childNodes);
 
-      /*get cloned header cells including groupCells*/
+      // get cloned header cells including groupCells
       this.clonedCells   = this.headerClone.childNodes;
       if (this.headerClone.groupControl)
         this.clonedCells = this.clonedCells.concat(this.headerClone.groupControl.childNodes);
@@ -183,6 +223,8 @@ basis.require('basis.ui.table');
 
       this.tableBox = new Box(this.tmpl.tableElement);
 
+      layout.addBlockResizeHandler(this.tmpl.xx, this.adjust.bind(this));
+
       //Event.addHandler(this.tmpl.scrollContainer, 'scroll', this.onScroll.bind(this));
       Event.addHandler(window, 'resize', this.adjust.bind(this));
     },
@@ -195,7 +237,20 @@ basis.require('basis.ui.table');
       }
     },
     adjust: function(event){
+      console.log('adjust');
       this.onScroll();
+
+      /*var headerClone = this.header.element.cloneNode(true)
+      var headerOuterHTML = DOM.createElement('', headerClone).innerHTML;
+      var yy;
+
+      if (this.headerHtml_ != headerOuterHTML)
+      {
+        console.log('update header');
+        this.headerHtml_ = headerOuterHTML;
+        DOM.replace(this.tmpl.shadowHeader, headerClone);
+        this.tmpl.shadowHeader = headerClone;
+      }*/
 
       /*recalc table width*/
       this.tableBox.recalc();

@@ -28,7 +28,7 @@
       margin: 0 0 .5em 10px;
       overflow: hidden;
       position: relative;
-      width: 45%;
+      width: 75%;
       float: left;
     }
     .DemoBlock H2
@@ -42,7 +42,7 @@
     }
     .scrollTableContainer
     {
-      height: 600px;
+      height: 400px;
       position: relative;
     }
     TD
@@ -152,7 +152,7 @@
     });
 
     new Table({
-      container: createBlock('table'),
+      //container: createBlock('table'),
       structure: [
         { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
         { header: 'Price', body: Function.getter('data.price', '${0:.2}'), autosorting: true, sorting: Function.getter('data.price') },
@@ -165,7 +165,7 @@
 
     basis.dom.event.onLoad(function(){
     var container = createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer'));
-    var table = new ScrollTable({
+     table = new ScrollTable({
       header: { localGrouping: Function.getter('groupId') },
       structure: [
         { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
@@ -173,9 +173,11 @@
         { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
         { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
         { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
-      ],
-      childNodes: data
+      ]//,
+      //childNodes: data
     }); 
+    setTimeout(function(){
+    table.setChildNodes(data);}, 10);
       basis.dom.insert(container, table.element);
     })
 
