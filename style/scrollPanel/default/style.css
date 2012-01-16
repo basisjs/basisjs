@@ -55,10 +55,10 @@
     opacity: 0;
     visibility: hidden;
 
-      -moz-transition: opacity 0.5s;
-      -webkit-transition: opacity 0.5s;
-      -o-transition: opacity 0.5s;
-    transition: opacity 0.5s;
+      -moz-transition: opacity 0.5s, visibility 0.5s;
+      -webkit-transition: opacity 0.5s, visibility 0.5s;
+      -o-transition: opacity 0.5s, visibility 0.5s;
+    transition: opacity 0.5s, visibility 0.5s;
 
     box-shadow: 0 0 1px 1px rgba(255, 255, 255, .33);
   }

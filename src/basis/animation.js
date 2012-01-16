@@ -1,5 +1,5 @@
 /*!
- * Basis javascript library 
+* Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
  * @copyright
@@ -40,7 +40,7 @@ basis.require('basis.data.property');
   //
 
   function timePosition(startTime, duration){
-    return (Date.now() - startTime).fit(0, 1) / duration;
+    return (Date.now() - startTime).fit(0, duration) / duration;
   }
 
   //

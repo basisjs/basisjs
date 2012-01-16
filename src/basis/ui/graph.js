@@ -240,7 +240,7 @@ basis.require('basis.ui.canvas');
       }
 
       // draw labels
-      var align = propPosition > (propValues.length / 2) ? -1 : 1;
+      var align = propPosition >= (propValues.length / 2) ? -1 : 1;
 
       for (var i = 0, label; label = labels[i]; i++)
       {
@@ -361,6 +361,7 @@ basis.require('basis.ui.canvas');
     showYLabels: true,
     showXLabels: true,
     showBoundLines: true,
+    scaleValuesOnEdges: true,
 
     style: {
       strokeStyle: '#090',
@@ -455,7 +456,7 @@ basis.require('basis.ui.canvas');
       
       if (this.showXLabels)
       {
-        firstXLabelWidth = context.measureText(propValues[0]).width + 12; // 12 - padding + border
+        firstXLabelWidth = context.measureText(propValues[0]).width + 12; // 12 = padding + border
         lastXLabelWidth = context.measureText(propValues[propValues.length - 1]).width + 12;
       }
 
@@ -463,7 +464,7 @@ basis.require('basis.ui.canvas');
       RIGHT = Math.round(lastXLabelWidth / 2);
 
       var cnt = propValues.length; 
-      var step = (WIDTH - LEFT - RIGHT) / (cnt < 2 ? 1 : cnt - 1) ;
+      var step = (WIDTH - LEFT - RIGHT) / (cnt - (this.scaleValuesOnEdges ? 1 : 0)) ;
       
       // Legend
       if (this.showLegend)
@@ -556,7 +557,7 @@ basis.require('basis.ui.canvas');
 
         for (var i = 0; i < cnt; i++)
         {
-          x = xLabelsX[i] = Math.round(LEFT + i * step) + .5;
+          x = xLabelsX[i] = Math.round(LEFT + i * step + (this.scaleValuesOnEdges ? 0 : step / 2)) + .5;
           tw = context.measureText(propValues[i]).width;
 
           if (i == 0 || lastLabelPos + 10 < (x - tw / 2))
@@ -600,9 +601,7 @@ basis.require('basis.ui.canvas');
       var values;
       for (var i = 0, thread; thread = this.childNodes[i]; i++)
       {
-        this.style.strokeStyle = thread.getColor();// || this.threadColor[i];
-        values = thread.getValues();
-        this.drawThread(values, maxValue, LEFT, TOP, step, (HEIGHT - TOP - BOTTOM))
+        this.drawThread(thread, i, maxValue, LEFT + (this.scaleValuesOnEdges ? 0 : step / 2), TOP, step, (HEIGHT - TOP - BOTTOM));
       }  
 
       //save graph data
@@ -614,8 +613,11 @@ basis.require('basis.ui.canvas');
       });
       this.maxValue = maxValue;
     },
-    drawThread: function(values, max, left, top, step, height){
+    drawThread: function(thread, pos, max, left, top, step, height){
       var context = this.context;
+
+      this.style.strokeStyle = thread.getColor();// || this.threadColor[i];
+      var values = thread.getValues();
 
       context.save();
       context.translate(left, top);
@@ -691,7 +693,47 @@ basis.require('basis.ui.canvas');
       this.updateCount++;
     }
   });
-  
+
+  var BarChart = Graph.subclass({
+    scaleValuesOnEdges: false,
+
+    satelliteConfig: {
+      graphViewer: {
+        instanceOf: uiNode
+      }
+    },
+
+    drawThread: function(thread, pos, max, left, top, step, height){
+      var context = this.context;
+
+      var values = thread.getValues();
+      var color = thread.getColor();
+
+      var cnt = this.childNodes.length;
+      var barWidth = Math.round(0.7 * step / cnt);
+      //var startPosition = step / 2 + 0.15 * step + pos * barWidth;
+
+      context.save();
+      context.translate(left, top);
+      context.fillStyle = color;
+
+      Object.extend(context, this.style);
+      context.strokeStyle = 'black';
+      context.lineWidth = 1;
+
+      var x;
+      var barHeight;
+      for (var i = 0; i < values.length; i++)
+      {
+        x = Math.round(i * step - barWidth * cnt / 2 + pos * barWidth);
+        barHeight = Math.round(height * values[i] / max);
+        context.strokeRect(x + .5, height - barHeight + .5, barWidth, barHeight);
+        context.fillRect(x + .5, height - barHeight + .5, barWidth, barHeight);
+      }
+
+      context.restore();
+    }
+  });
   
   
   //
@@ -701,7 +743,8 @@ basis.require('basis.ui.canvas');
   basis.namespace(namespace).extend({
     GraphViewer: GraphViewer,
     GraphThread: GraphThread,
-    Graph: Graph
+    Graph: Graph,
+    BarChart: BarChart
   });
 
 }(basis);
