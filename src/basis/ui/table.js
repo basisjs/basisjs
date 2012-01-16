@@ -58,11 +58,7 @@ basis.require('basis.ui');
 
 
   //
-  // main part
-  //
-
-  //
-  // Table Header
+  // Table header
   //
 
   var HEADERCELL_CSS_SORTABLE = 'sortable';
@@ -73,14 +69,15 @@ basis.require('basis.ui');
   */
   var HeaderPartitionNode = Class(UINode, {
     className: namespace + '.HeaderPartitionNode',
-    template: new Template(
-      '<th{element|selected} class="Basis-Table-Header-Cell">' +
-        '<div class="Basis-Table-Sort-Direction"></div>' +
+
+    template: 
+      '<th{selected} class="Basis-Table-Header-Cell">' +
+        '<div class="Basis-Table-Sort-Direction"/>' +
         '<div class="Basis-Table-Header-Cell-Content">' + 
           '<span{content} class="Basis-Table-Header-Cell-Title">{titleText}</span>' +
         '</div>' +
-      '</th>'
-    ),
+      '</th>',
+
     templateUpdate: function(tmpl, eventName, delta){
       tmpl.titleText.nodeValue = this.titleGetter(this);
     }
@@ -108,11 +105,17 @@ basis.require('basis.ui');
       GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
     },
 
+   /**
+    * @inheritDoc
+    */
     childClass: {
       className: namespace + '.HeaderPartitionNode',
       init: function(config){
         PartitionNode.prototype.init.call(this, config);
-        this.cell = new HeaderPartitionNode({ titleGetter: this.titleGetter, delegate: this });
+        this.cell = new HeaderPartitionNode({
+          titleGetter: this.titleGetter,
+          delegate: this
+        });
       },
       event_childNodesModified: function(object, delta){
         var colSpan = 0;
@@ -138,10 +141,22 @@ basis.require('basis.ui');
       }
     },
 
+   /**
+    * @inheritDoc
+    */
+    localGroupingClass: Class.SELF,
+
+   /**
+    * @inheritDoc
+    */
     init: function(config){
       GroupingNode.prototype.init.call(this, config);
       this.element = this.childNodesElement = this.headerRow = DOM.createElement('tr.Basis-Table-Header-GroupContent');
     },
+
+   /**
+    * @inheritDoc
+    */
     insertBefore: function(newChild, refChild){
       var newChild = GroupingNode.prototype.insertBefore.call(this, newChild, refChild);
 
@@ -150,16 +165,23 @@ basis.require('basis.ui');
 
       return newChild;
     },
+
+   /**
+    * @inheritDoc
+    */
     removeChild: function(oldChild){
       DOM.remove(oldChild.cell.element);
       GroupingNode.prototype.removeChild.call(oldChild);
     },
+
+   /**
+    * @inheritDoc
+    */
     destroy: function(){
       GroupingNode.prototype.destroy.call(this);
       this.headerRow = null;
     }
   });
-  HeaderGroupingNode.prototype.localGroupingClass = HeaderGroupingNode;
 
  /**
   * @class
@@ -171,14 +193,13 @@ basis.require('basis.ui');
     defaultOrder: false,
     groupId: 0,
 
-    template: new Template(
-      '<th{element|selected} class="Basis-Table-Header-Cell" event-click="click">' +
+    template:
+      '<th{selected} class="Basis-Table-Header-Cell" event-click="click">' +
         '<div class="Basis-Table-Sort-Direction"/>' +
         '<div class="Basis-Table-Header-Cell-Content">' + 
           '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
         '</div>' +
-      '</th>'
-    ),
+      '</th>',
 
     action: {
       click: function(event){
@@ -193,12 +214,14 @@ basis.require('basis.ui');
       }
     },
 
+   /**
+    * @inheritDoc
+    */
     init: function(config){
       UINode.prototype.init.call(this, config);
 
-      //DOM.insert(this.content, config.content || '');
-
       this.selectable = !!this.sorting;
+
       if (this.sorting)
       {
         this.sorting = Function.getter(this.sorting);
@@ -206,6 +229,10 @@ basis.require('basis.ui');
         classList(this.element).add(HEADERCELL_CSS_SORTABLE);
       }
     },
+
+   /**
+    * @inheritDoc
+    */
     select: function(){
       if (!this.selected)
         this.order = this.defaultOrder;
@@ -213,6 +240,7 @@ basis.require('basis.ui');
       UINode.prototype.select.call(this);
     }
   });
+
 
  /**
   * @class
@@ -224,12 +252,11 @@ basis.require('basis.ui');
 
     localGroupingClass: HeaderGroupingNode,
 
-    template: new Template(
-      '<thead{element} class="Basis-Table-Header">' +
-        '<tr{groupsElement} class="Basis-Table-Header-GroupContent" />' +
-        '<tr{childNodesElement|content} />' +
-      '</thead>'
-    ),
+    template:
+      '<thead class="Basis-Table-Header">' +
+        '<tr{groupsElement} class="Basis-Table-Header-GroupContent />' +
+        '<tr{childNodesElement|content}/>' +
+      '</thead>',
 
     listen: {
       owner: {
@@ -267,7 +294,12 @@ basis.require('basis.ui');
     applyConfig_: function(structure){
       if (structure)
       {
-        this.setChildNodes(structure.map(function(colConfig){
+        var cells = [];
+        var autosorting;
+        
+        for (var i = 0; i < structure.length; i++)
+        {
+          var colConfig = structure[i];
           var headerConfig = colConfig.header;
           var config = Object.slice(colConfig, ['sorting', 'defaultOrder', 'groupId']);
 
@@ -279,15 +311,21 @@ basis.require('basis.ui');
             config.content = config.content.call(this);
 
           config.cssClassName = (headerConfig.cssClassName || '') + ' ' + (colConfig.cssClassName || '');
+          
+          if (!autosorting)
+            autosorting = config.selected = config.sorting && config.autosorting;
 
-          return config;
-        }, this));
+          cells.push(config);
+        };
+
+        this.setChildNodes(cells);
       }
     }
   });
 
+
   //
-  // Table Footer
+  // Table footer
   //
 
  /**
@@ -298,11 +336,10 @@ basis.require('basis.ui');
 
     colSpan: 1,
 
-    template: new Template(
-      '<td{element} class="Basis-Table-Footer-Cell">' +
+    template:
+      '<td class="Basis-Table-Footer-Cell">' +
         '<div{content}>\xA0</div>' +
-      '</td>'
-    ),
+      '</td>',
 
     setColSpan: function(colSpan){
       this.element.colSpan = this.colSpan = colSpan || 1;
@@ -316,27 +353,21 @@ basis.require('basis.ui');
     className: namespace + '.Footer',
 
     childClass: FooterCell,
-    childFactory: function(config){
-      return new this.childClass(config);
-    },
 
-    template: new Template(
-      '<tfoot{element} class="Basis-Table-Footer">' +
-        '<tr{content|childNodesElement}></tr>' +
-      '</tfoot>'
-    ),
+    template:
+      '<tfoot class="Basis-Table-Footer">' +
+        '<tr{content|childNodesElement}/>' +
+      '</tfoot>',
 
     init: function(config){
       UIContainer.prototype.init.call(this, config);
 
       this.applyConfig_(this.structure);
 
-      if (this.useFooter)
-        DOM.insert(this.container || this.owner.element, this.element, 1);
+      DOM.display(this.element, this.useFooter);
     },
 
     applyConfig_: function(structure){
-      //console.dir(this);
       if (structure)
       {
         var prevCell = null;
@@ -378,6 +409,7 @@ basis.require('basis.ui');
       }
     }
   });
+
 
   //
   // Table
@@ -440,8 +472,8 @@ basis.require('basis.ui');
     className: namespace + '.Body',
 
     template:
-      '<tbody class="Basis-Table-Body" event-click="click">' +
-        '<tr class="Basis-Table-GroupHeader">' +
+      '<tbody class="Basis-Table-Body">' +
+        '<tr class="Basis-Table-GroupHeader" event-click="click">' +
           '<td{content} colspan="100"><span class="expander"/>{titleText}</td>'+ 
         '</tr>' +
         '<!-- {childNodesHere} -->' +
@@ -467,19 +499,24 @@ basis.require('basis.ui');
       childClass: Body
     }),
 
-    template: new Template(
-      '<table{element|groupsElement} class="Basis-Table" cellspacing="0" event-click="click">' +
-        '<!-- {headerElement} -->' +
-        '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
-        '<!-- {footerElement} -->' +
-      '</table>'
-    ),
+    template:
+      '<table{groupsElement} class="Basis-Table" cellspacing="0" event-click="click">' +
+        '<!--{header}-->' +
+        '<tbody{content|childNodesElement} class="Basis-Table-Body"/>' +
+        '<!--{footer}-->' +
+      '</table>',
 
     templateAction: function(actionName, event){
       UIControl.prototype.templateAction.call(this, actionName, event);
     },
 
+    headerClass: Header,
+    footerClass: Footer,
+
     init: function(config){
+
+      ;;;if (this.rowSatellite && typeof console != 'undefined') console.warn('rowSatellite is deprecated. Move all extensions into childClass');
+      ;;;if (this.rowBehaviour && typeof console != 'undefined') console.warn('rowBehaviour is deprecated. Move all extensions into childClass');
 
       this.applyConfig_(this.structure);
 
@@ -488,20 +525,11 @@ basis.require('basis.ui');
       this.headerConfig = this.header;
       this.footerConfig = this.footer;
 
-      this.header = new Header(Object.extend({ owner: this, structure: this.structure }, this.header));
-      this.footer = new Footer(Object.extend({ owner: this, structure: this.structure }, this.footer));
+      this.header = new this.headerClass(Object.extend({ owner: this, structure: this.structure }, this.header));
+      this.footer = new this.footerClass(Object.extend({ owner: this, structure: this.structure }, this.footer));
 
-      DOM.replace(this.tmpl.headerElement, this.header.element);
-    
-      if (!this.localSorting && this.structure && this.structure.search(true, function(item){ return item.sorting && ('autosorting' in item) }))
-      {
-        var col = this.structure[Array.lastSearchIndex];
-        this.setLocalSorting(col.sorting, col.defaultOrder == 'desc');
-      }
-
-      // add event handlers
-      /*this.addEventListener('click');
-      this.addEventListener('contextmenu', 'contextmenu', true);*/
+      DOM.replace(this.tmpl.header, this.header.element);
+      DOM.replace(this.tmpl.footer, this.footer.element);
     },
 
     applyConfig_: function(structure){
@@ -539,29 +567,10 @@ basis.require('basis.ui');
           }
         }
 
-        ;;;if (this.rowSatellite && typeof console != 'undefined') console.warn('rowSatellite is deprecated. Move all extensions into childClass');
-
         this.childClass = this.childClass.subclass({
-          //behaviour: config.rowBehaviour,
-          satelliteConfig: this.rowSatellite || {},
-          template: new Template(this.childClass.prototype.template.source.replace('<!--{cells}-->', template)),
+          template: this.childClass.prototype.template.source.replace('<!--{cells}-->', template),
           updaters: updaters
         });
-
-        if (this.rowBehaviour)
-        {
-          ;;;if (typeof console != 'undefined') console.warn('rowBehaviour is deprecated. Move all extensions into childClass');
-
-          var rowBehaviour = this.rowBehaviour;
-
-          Object.keys(rowBehaviour).forEach(function(method){
-            this.childClass.prototype[method] = function(){
-              rowBehaviour[method].apply(this, arguments);
-              Row.prototype[method].apply(this, arguments);
-            }
-          }, this);
-        }
-
       }
     },
 

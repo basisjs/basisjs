@@ -535,62 +535,62 @@ basis.require('basis.dom');
     // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig and Me :)
 
     var fired = false;
-    var loadHandler = new Array();
+    var loadHandler = [];
 
-    function fireHandlers(){
+    function fireHandlers(e){
       if (!fired++)
-        setTimeout(function(){
-          for (var i = 0; i < loadHandler.length; i++)
-            loadHandler[i].callback.call(loadHandler[i].thisObject);
-        }, 10);
+        for (var i = 0; i < loadHandler.length; i++)
+          loadHandler[i].callback.call(loadHandler[i].thisObject);
     }
 
-    if (basis.ua.is('ie7-'))
+    // The DOM ready check for Internet Explorer
+    function doScrollCheck() {
+      try {
+        // If IE is used, use the trick by Diego Perini
+        // http://javascript.nwbox.com/IEContentLoaded/
+        document.documentElement.doScroll("left");
+        fireHandlers();
+      } catch(e) {
+        setTimeout(doScrollCheck, 1);
+      }
+    }
+
+    if (W3CSUPPORT)
     {
-      (function(){
-        var secretId = '_' + Date.now();
-        document.write('<script id="' + secretId + '" defer src="//:"><\/script>');
-        getNode(secretId).onreadystatechange = function(){
-          if (this.readyState == 'complete')
-          {
-            dom.remove(this);
-            fireHandlers(); 
-          }
-        };
-      })();
+      // use the real event for browsers that support it (all modern browsers support it)
+      addHandler(document, "DOMContentLoaded", fireHandlers);
     }
     else
-      /* WebKit for */ 
-      if (basis.ua.is('safari525-'))
-      {
-        var _timer = setInterval(function(){
-          if (/loaded|complete/.test(document.readyState))
-          {
-            clearInterval(_timer);
-            fireHandlers();
-          }
-        }, 15);
-      }
-      else
-        // use the real event for browsers that support it (opera & firefox)
-        addHandler(document, "DOMContentLoaded", fireHandlers, false);
+    {
+      // ensure firing before onload,
+			// maybe late but safe also for iframes
+      addHandler(document, "readystatechange", fireHandlers);
 
-    // if all else fails fall back on window.onload/document.onload
-    addHandler(document, "load", fireHandlers, false);
-    addHandler(global, "load", fireHandlers, false);
+      // If IE and not a frame
+			// continually check to see if the document is ready
+			try {
+				if (window.frameElement == null && document.documentElement.doScroll)
+          doScrollCheck();
+			} catch(e) {
+			}
+    }
+
+    // A fallback to window.onload, that will always work
+    addHandler(global, "load", fireHandlers);
 
     // return attach function
     return function(callback, thisObject){
-      if (fired)
+      if (!fired)
+      {
+        loadHandler.push({
+          callback: callback,
+          thisObject: thisObject
+        });
+      }
+      else
       {
         ;;;if (typeof console != 'undefined') console.warn('Event.onLoad(): Can\'t attach handler to onload event, because it\'s already fired!');
-        return;
       }
-
-      loadHandler.push({
-        callback: callback,
-        thisObject: thisObject
-      });
     }
   })();
 

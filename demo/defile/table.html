@@ -28,6 +28,8 @@
       margin: 0 0 .5em 10px;
       overflow: hidden;
       position: relative;
+      width: 45%;
+      float: left;
     }
     .DemoBlock H2
     {
@@ -42,6 +44,10 @@
     {
       height: 600px;
       position: relative;
+    }
+    TD
+    {
+      white-space: nowrap;
     }
 
   </style>
@@ -73,7 +79,14 @@
     ..
   </div>
 
-  <div id="demo-container"></div>
+  <div id="demo-container">
+    <div style="width: 300px; height: 200px; border: 1px solid red; padding: 20px 0">
+      <div style="height: 20px; margin-top: -20px; background: green">
+        <div style="background: blue">header</div>
+      </div>
+      <div style="height: 150px; overflow: scroll">content</div>
+    </div>
+  </div>
 
   <script type="text/javascript" id="demo-javascript">
 
@@ -106,7 +119,7 @@
       ['Boeing Co.',                          75.43, 0.53,  0.71,  '2010/9/1 12:00'],
       ['Caterpillar Inc.',                    67.27, 0.92,  1.39,  '2010/9/1 12:00'],
       ['Citigroup, Inc.',                     49.37, 0.02,  0.04,  '2010/9/1 12:00'],
-      ['E.I. du Pont de Nemours and Company', 40.48, 0.51,  1.28,  '2010/9/1 12:00'],
+      ['E.I. du Pont de Nemours and  fsfds dffd 3423424 243 234', 40.48, 0.51,  1.28,  '2010/9/1 12:00'],
       ['Exxon Mobil Corp',                    68.1,  -0.43, -0.64, '2010/9/1 12:00'],
       ['General Electric Company',            34.14, -0.08, -0.23, '2010/9/1 12:00'],
       ['General Motors Corporation',          30.27, 1.09,  3.74,  '2010/9/1 12:00'],
@@ -138,22 +151,24 @@
       }
     });
 
-    /*new Table({
+    new Table({
       container: createBlock('table'),
       structure: [
         { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
-        { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price') },
+        { header: 'Price', body: Function.getter('data.price', '${0:.2}'), autosorting: true, sorting: Function.getter('data.price') },
         { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
         { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
         { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
       ],
       childNodes: data
-    }); */
+    });
 
-    new ScrollTable({
-      container: createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer')),
+    basis.dom.event.onLoad(function(){
+    var container = createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer'));
+    var table = new ScrollTable({
+      header: { localGrouping: Function.getter('groupId') },
       structure: [
-        { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
+        { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
         { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },
         { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
         { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
@@ -161,6 +176,12 @@
       ],
       childNodes: data
     }); 
+      basis.dom.insert(container, table.element);
+    })
+
+    basis.dom.insert('demo-container', basis.dom.createElement('button', 'asfd')).onclick = function(){
+      basis.dom.insert(container, table.element);
+    };
 
 
   </script>

@@ -22,6 +22,8 @@ basis.require('basis.ui.table');
 
 !function(basis){
 
+  'use strict';
+
  /**
   * @namespace basis.ui.scrolltable
   */
@@ -54,19 +56,25 @@ basis.require('basis.ui.table');
   var SCROLLBAR_WIDTH = 17;
   Event.onLoad(function(){
     var tester = DOM.createElement('');
-    DOM.setStyle(tester, { height: '100px', overflow: 'scroll' });
+    cssom.setStyle(tester, { height: '100px', overflow: 'scroll' });
     DOM.insert(document.body, tester);
     SCROLLBAR_WIDTH = (new Box(tester)).width - (new Viewport(tester)).width;
-    cssom.cssRule('.ScrollBarWidthOwner').setStyle({ width: SCROLLBAR_WIDTH + 'px' });
     DOM.remove(tester);
   });
 
-  function createHeaderExpandCell(){
-    return DOM.createElement('.Basis-ScrollTable-ExpandHeaderCell', DOM.createElement('.Basis-ScrollTable-ExpandCell-Content')); 
-  }
-
   function createFooterExpandCell(){
     return DOM.createElement('.Basis-ScrollTable-ExpandFooterCell');
+  }
+
+  function adjustCell(cell){
+    var width;
+
+    if (document.defaultView && document.defaultView.getComputedStyle)
+      width = document.defaultView.getComputedStyle(cell.element, null).width;
+    else
+      width = cell.element.clientWidth + 'px';
+
+    cssom.setStyleProperty(cell.boxChangeListener, 'width', width);
   }
 
  /**
@@ -75,75 +83,87 @@ basis.require('basis.ui.table');
   var ScrollTable = Class(Table, {
     className: namespace + '.ScrollTable',
 
+    scrollLeft_: 0,
+
     template:
       '<div{element} class="Basis-Table Basis-ScrollTable">' +
         '<div{headerFooterContainer} class="Basis-ScrollTable-HeaderFooterContainer">' +
+          '<frame event-load="fireRecalc" src="about:blank"/>' +
           //'<div{headerFooterWrapper} style="position: absolute; height: 100%; width: 100%; top: 0; left: 0">' +
-            '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"><!-- {headerElement} --></table>' +
-            '<table{foot} cellspacing="0" border="0" class="Basis-ScrollTable-Footer"></table>' +
+            '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"><!--{header}--></table>' +
+            '<table{foot} cellspacing="0" border="0" class="Basis-ScrollTable-Footer"><!--{footer}--></table>' +
           //'</div>' +
         '</div>' +
-        '<div{scrollContainer} class="Basis-ScrollTable-ScrollContainer">' +
+        '<div{scrollContainer} class="Basis-ScrollTable-ScrollContainer" event-scroll="scroll">' +
           '<div{tableWrapperElement} class="Basis-ScrollTable-TableWrapper">' +
             '<table{tableElement|groupsElement} class="Basis-Table" cellspacing="0">' +
               '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
             '</table>' +
           '</div>' +
         '</div>' +
+        '<div{headerExpandCell} class="Basis-ScrollTable-ExpandHeaderCell"><div class="Basis-ScrollTable-ExpandCell-Content"/></div>' +
       '</div>',
+
+    action: {
+      fireRecalc: function(event){
+        setImmediate(
+          this.adjust.bind(this)
+        );
+      },
+      scroll: function(){
+        this.onScroll();
+      }
+    },
 
     event_childNodesModified: function(node, delta){
       Table.prototype.event_childNodesModified.call(this, node, delta);
-      TimeEventManager.add(this, 'adjust', Date.now());
+      //TimeEventManager.add(this, 'adjust', Date.now());
     },
-    /*event_childUpdated: function(child, delta){
-      Table.prototype.event_childUpdated.call(this, child, delta);
-      TimeEventManager.add(this, 'adjust', Date.now());
-    },*/
 
     init: function(config){
       Table.prototype.init.call(this, config);
 
       //DOM.insert(this.tmpl.head, this.header.element);
 
+      var header = this.header;
+      var footer = this.footer;
+
       /*create header clone*/
       this.headerClone = new nsTable.Header(Object.extend({ 
-        owner: this.header.owner,
+        owner: header.owner,
         container: this.tmpl.tableElement, 
         structure: this.structure
       }, this.headerConfig));
 
       /*get header cells including groupCells*/
-      this.originalCells = this.header.childNodes;
+      this.originalCells = header.childNodes;
       if (this.header.groupControl)
-        this.originalCells = this.originalCells.concat(this.header.groupControl.childNodes);
+        this.originalCells = this.originalCells.concat(header.groupControl.childNodes);
 
       /*get cloned header cells including groupCells*/
       this.clonedCells   = this.headerClone.childNodes;
       if (this.headerClone.groupControl)
         this.clonedCells = this.clonedCells.concat(this.headerClone.groupControl.childNodes);
-        
-      this.headerExpandCell = DOM.insert(this.element, createHeaderExpandCell());
 
-      this.headerBox = new Box(this.header.element);
+      this.headerBox = new Box(header.element);
 
-      if (this.footer.useFooter)
+      if (footer.useFooter)
       {
         /*create footer clone*/
-        DOM.insert(this.tmpl.foot, this.footer.element);
+        DOM.insert(this.tmpl.foot, footer.element);
         this.footerClone = new nsTable.Footer(Object.extend({ 
-          owner: this.footer.owner,
+          owner: footer.owner,
           container: this.tmpl.tableElement, 
           structure: this.structure 
         }, this.footerConfig));
 
-        this.originalCells = this.originalCells.concat(this.footer.childNodes);
+        this.originalCells = this.originalCells.concat(footer.childNodes);
         this.clonedCells = this.clonedCells.concat(this.footerClone.childNodes)
-        DOM.setStyle(this.footerClone.element, { visibility: 'hidden' });
+        cssom.setStyle(this.footerClone.element, { visibility: 'hidden' });
 
         //this.footer.expandCell = DOM.insert(this.footer.childNodesElement, createFooterExpandCell());
         
-        this.footerBox = new Box(this.footer.element);
+        this.footerBox = new Box(footer.element);
 
         this.footerExpandCell = DOM.insert(this.element, createFooterExpandCell());
       }
@@ -162,20 +182,16 @@ basis.require('basis.ui.table');
       }
 
       this.tableBox = new Box(this.tmpl.tableElement);
-      this.lastScrollLeftPosition = 0;
 
-      Event.addHandler(this.tmpl.scrollContainer, 'scroll', this.onScroll.bind(this));
+      //Event.addHandler(this.tmpl.scrollContainer, 'scroll', this.onScroll.bind(this));
       Event.addHandler(window, 'resize', this.adjust.bind(this));
-
-      this.sync();
-      TimeEventManager.add(this, 'adjust', Date.now());
     },
     onScroll: function(event){
       var scrollLeft = this.tmpl.scrollContainer.scrollLeft;
-      if (scrollLeft != this.lastScrollLeftPosition) 
+      if (this.scrollLeft_ != scrollLeft)
       {
-        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'left', -scrollLeft + 'px');
-        this.lastScrollLeftPosition = scrollLeft;
+        this.scrollLeft_ = scrollLeft;
+        cssom.setStyleProperty(this.tmpl.headerFooterContainer, 'left', -scrollLeft + 'px');
       }
     },
     adjust: function(event){
@@ -187,17 +203,17 @@ basis.require('basis.ui.table');
 
       if (this.tmpl.tableWrapperElement.scrollWidth > this.tmpl.scrollContainer.clientWidth)
       {
-        DOM.setStyleProperty(this.tmpl.tableWrapperElement, 'width',  tableWidth + 'px');
-        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'width', tableWidth + SCROLLBAR_WIDTH + 'px');
+        cssom.setStyleProperty(this.tmpl.tableWrapperElement, 'width',  tableWidth + 'px');
+        cssom.setStyleProperty(this.tmpl.headerFooterContainer, 'width', tableWidth + SCROLLBAR_WIDTH + 'px');
       }
       else
       {
-        DOM.setStyleProperty(this.tmpl.tableWrapperElement, 'width', '100%');
-        DOM.setStyleProperty(this.tmpl.headerFooterContainer, 'width', '100%');
+        cssom.setStyleProperty(this.tmpl.tableWrapperElement, 'width', '100%');
+        cssom.setStyleProperty(this.tmpl.headerFooterContainer, 'width', '100%');
       }
 
       /*adjust cells width*/
-      this.cellsAdjustmentInfo.forEach(this.adjustCell);
+      this.cellsAdjustmentInfo.forEach(adjustCell);
       /*recalc expanderCell width*/
       var freeSpaceWidth = Math.max(0, this.tmpl.tableWrapperElement.clientWidth - this.tmpl.tableElement.offsetWidth + SCROLLBAR_WIDTH);
 
@@ -207,10 +223,10 @@ basis.require('basis.ui.table');
 
       cssom.setStyleProperty(this.element, 'paddingTop', headerHeight + 'px');
       cssom.setStyleProperty(this.tmpl.tableElement, 'marginTop', -headerHeight + 'px');
-      cssom.setStyle(this.headerExpandCell, { width: freeSpaceWidth + 'px', height: headerHeight + 'px' });
+      cssom.setStyle(this.tmpl.headerExpandCell, { width: freeSpaceWidth + 'px', height: headerHeight + 'px' });
 
       /*recalc footer heights*/
-      if (this.footer.useFooter)
+      if (this.footerClone)
       {
         this.footerBox.recalc();
         var footerHeight = this.footerBox.height || 0;
@@ -220,22 +236,6 @@ basis.require('basis.ui.table');
 
         cssom.setStyle(this.footerExpandCell, { width: freeSpaceWidth + 'px', height: footerHeight + 'px' });
       }
-    },
-    sync: function(cellNumber){
-      /*this.cellsAdjustmentInfo.forEach(function(cell){
-        DOM.insert(DOM.clear(cell.contentDestination), DOM.axis(cell.contentSource, DOM.AXIS_CHILD).map(DOM.clone));
-      });*/
-      this.adjust();
-    },
-    adjustCell: function(cell){
-      var width;
-
-      if (document.defaultView && document.defaultView.getComputedStyle)
-        width = document.defaultView.getComputedStyle(cell.element, null).width;
-      else
-        width = cell.element.clientWidth + 'px';
-
-      cssom.setStyleProperty(cell.boxChangeListener, 'width', width);
     }
   });
 
