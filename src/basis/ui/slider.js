@@ -213,7 +213,7 @@ basis.require('basis.dragdrop');
     * @inheritDoc
     */
     template:
-    	'<div class="Basis-Slider" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">' +
+    	'<div class="Basis-Slider Basis-Slider-MinMaxOutside" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">' +
         '<div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>' +
         '<div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>' +
         '<div class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
