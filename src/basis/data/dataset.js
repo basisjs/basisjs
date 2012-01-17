@@ -1353,7 +1353,7 @@ basis.require('basis.data');
         if (deleted.length > index.length - deleted.length)
         {
           dropIndex = true;
-          buildIndex = array.length != index.length;
+          buildIndex = deleted.length != index.length;
           index.length = 0;
         }
 

@@ -86,6 +86,7 @@
       overflow: hidden;
       position: relative;
       cursor: move;
+      background-image: url(#); /* IE fix */
     }
 
 
@@ -193,6 +194,7 @@
         }
       ],
       satelliteConfig: {
+        graphViewer: null,
         period: {
           instanceOf: basis.ui.Node,
           config: function(owner){

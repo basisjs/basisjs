@@ -186,7 +186,7 @@ basis.require('basis.html');
             instanceOf: config
           };
 
-        if (typeof config == 'object')
+        if (config && typeof config == 'object')
         {
           var hookRequired = false;
           var contextConfig = {
@@ -639,7 +639,7 @@ basis.require('basis.html');
         for (var key in this.satelliteConfig)
         {
           var satelliteConfig = this.satelliteConfig[key];
-          if (typeof satelliteConfig == 'object')
+          if (satelliteConfig && typeof satelliteConfig == 'object')
           {
             var context = {
               context: satelliteConfig,
