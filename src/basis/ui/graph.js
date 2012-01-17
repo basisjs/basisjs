@@ -41,6 +41,7 @@ basis.require('basis.ui.canvas');
   var uiContainer = basis.ui.Container;
   var Canvas = basis.ui.canvas.Canvas;
 
+  var createEvent = basis.event.create;
 
   //
   // Main part
@@ -58,6 +59,44 @@ basis.require('basis.ui.canvas');
       return (-1) * (RegExp.$1 || '').length - 1;
     }
   }
+
+
+  //generate random color func
+
+  function generateColor(){
+    var golden_ratio_conjugate = 0.618033988749895;
+
+    var h = Math.random();
+    h += golden_ratio_conjugate;
+    h %= 1;
+
+    var rgb = hsv_to_rgb(h, 0.6, 0.95);
+ 
+    return '#' + rgb[0].toString(16) + rgb[1].toString(16) + rgb[2].toString(16);
+  }
+  function hsv_to_rgb(h, s, v)
+  {
+    var h1 = h * 6;
+    var c = v * s;
+    var x = c * (1 - Math.abs(h1 % 2 - 1));
+    var rgb;
+    switch(Math.floor(h1))
+    { 
+      case 0: rgb = [c, x, 0]; break;
+      case 1: rgb = [x, c, 0]; break;
+      case 2: rgb = [0, c, x]; break;
+      case 3: rgb = [0, x, c]; break;
+      case 4: rgb = [x, 0, c]; break;
+      case 5: rgb = [c, 0, x]; break;
+    }
+    var m = v - c; 
+    return [
+      Math.floor((rgb[0] + m) * 256), 
+      Math.floor((rgb[1] + m) * 256), 
+      Math.floor((rgb[2] + m) * 256) 
+    ];
+  }
+
 
 
  /**
@@ -284,29 +323,44 @@ basis.require('basis.ui.canvas');
   */
   var GraphThread = Node.subclass({
     className: namespace + '.GraphThread',
-    legendGetter: Function.getter('legend'),
-    colorGetter: Function.getter('color'),
-    valueGetterGetter: Function.getter('valueGetter'),
-    dataSourceGetter: Function.$self,
 
-    getColor: function(){
-      return this.colorGetter(this) || this.parentNode.threadColor[this.parentNode.childNodes.indexOf(this)];
-    },
+    dataSourceGetter: Function.$null,
+
+    legendGetter: Function.getter('legend'),
     getLegend: function(){
       return this.legendGetter(this)
     },
-    getValueGetter: function(){
-      return this.valueGetterGetter(this);
+
+    colorGetter: Function.getter('color'),
+    getColor: function(){
+      return this.colorGetter(this);
     },
+
+    valueGetter: Function.$const(0),
     getValues: function(){
-      return this.childNodes.map(this.getValueGetter());
+      return this.childNodes.map(this.valueGetter);
+    },
+
+    //events
+    event_redrawRequest: createEvent('redrawRequest'),
+
+    event_update: function(object, delta){
+      Node.prototype.event_update.call(this, object, delta);
+      this.parentNode.updateCount++;
+    },
+
+    event_childNodesModified: function(object, delta){
+      Node.prototype.event_childNodesModified.call(this, object, delta);
+
+      if (this.parentNode)
+        this.parentNode.updateCount++;
     },
 
     childClass: {
       className: namespace + '.GraphNode',
       event_update: function(object, delta){
-        if (this.parentNode && this.parentNode.parentNode)
-          this.parentNode.parentNode.updateCount++; 
+        if (this.parentNode)
+          this.parentNode.event_redrawRequest(); 
 
         AbstractNode.prototype.event_update.call(this, object, delta);
       }        
@@ -316,21 +370,7 @@ basis.require('basis.ui.canvas');
       return new this.childClass(config);
     },
 
-    event_update: function(object, delta){
-      this.parentNode.updateCount++;
-      Node.prototype.event_update.call(this, object, delta);
-    },
-
-    listen: {
-      dataSource: {
-        datasetChanged: function(dataset, delta){
-          Node.prototype.listen.dataSource.datasetChanged.call(this, dataset, delta);
-          if (this.parentNode)
-            this.parentNode.updateCount++;
-        }
-      }
-    },
-
+    //init
     init: function(config){
       Node.prototype.init.call(this, config);
 
@@ -369,12 +409,13 @@ basis.require('basis.ui.canvas');
       lineJoin: 'bevel'
     },
 
-    threadColor: [
-      '#6699DD',
-      '#090',
-      '#FF3030',
+    usedColors: {},
+    presetColors: [
+      '#F80',
       '#BB7BF1',
-      '#F80'
+      '#FF3030',
+      '#090',
+      '#6699DD'
     ],
 
     satelliteConfig: {
@@ -383,24 +424,61 @@ basis.require('basis.ui.canvas');
       }
     },
 
-    event_childNodesModified: function(node, delta){
-      this.updateCount++;
-      Canvas.prototype.event_childNodesModified.call(this, node, delta);
-    },
-    event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
-      this.updateCount++;
-      Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
+    listen: {
+      childNode: {
+        redrawRequest: function(){
+          this.updateCount++;
+        }
+      }
     },
 
+    event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
+      Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
+      this.updateCount++;
+    },
+    event_childNodesModified: function(node, delta){
+      Canvas.prototype.event_childNodesModified.call(this, node, delta);
+      
+      if (delta.deleted)
+        delta.deleted.forEach(this.releaseColorFromThread, this);
+
+      if (delta.inserted)
+        delta.inserted.forEach(this.setColorForThread, this);
+
+      this.updateCount++;
+    },
+
+    //init
     init: function(config){
-      this.clientRect = {}; 
+      this.clientRect = {};
+      this.presetColors = Array.from(this.presetColors);
+      this.usedColors = {}; 
 
       Canvas.prototype.init.call(this, config);
     },
 
-    /*draw: function(){
-      Canvas.prototype.draw.call(this);
-    },*/
+    setColorForThread: function(thread){
+      if (!thread.color)
+        thread.color = this.getColor();
+
+      this.usedColors[thread.color] = true;
+    },
+    releaseColorFromThread: function(thread){
+      delete this.usedColors[thread.color];
+      this.presetColors.push(thread.color);
+    },
+    getColor: function(){
+      var color = this.presetColors.pop();
+      if (!color)
+      {
+        do
+        {
+          color = generateColor();
+        }
+        while (this.usedColors[color])
+      }
+      return color;
+    },
 
     drawFrame: function(){
       var context = this.context;
@@ -694,7 +772,12 @@ basis.require('basis.ui.canvas');
     }
   });
 
+  /**
+   * @class
+   */
   var BarChart = Graph.subclass({
+    className: namespace + '.BarChart',
+    
     scaleValuesOnEdges: false,
 
     satelliteConfig: {
