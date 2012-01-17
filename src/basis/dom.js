@@ -369,7 +369,7 @@ basis.require('basis.ua');
   * @return {string}
   */
   function outerHTML(node){
-    return createElement('', node.cloneNode(true)).innerHTML;
+    return node.outerHTML || createElement('', node.cloneNode(true)).innerHTML;
   };
 
  /**

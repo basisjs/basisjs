@@ -78,10 +78,15 @@ basis.require('basis.ui.table');
     cssom.setStyleProperty(cell.boxChangeListener, 'width', width);
   }
 
-  var mhtml = '<td style="padding:0;margin:0;border:0"><div style="border:0;margin:0;padding:0;width:auto;position:relative;border: 1px solid red;height:2px"><iframe style="border:0;margin:0;padding:0;width:100%;position:absolute" event-load="log"></iframe></div></td>';
+  var mhtml = '<td style="padding:0;margin:0;border:0;width:auto;height:auto"><div style="border:0;margin:0;padding:0;width:auto;height:auto;position:relative;"><iframe style="border:0;margin:0;padding:0;width:100%;position:absolute;visibility:hidden" event-load="log"></iframe></div></td>';
   var measureCell = DOM.createElement('tr');
   measureCell.innerHTML = mhtml;
   measureCell = measureCell.firstChild;
+
+  var ehtml = '<td style="padding:0;margin:0;border:0"><div style="border:0;margin:0;padding:0;width:auto;position:relative;"></div></td>';
+  var expanderCell = DOM.createElement('tr');
+  expanderCell.innerHTML = ehtml;
+  expanderCell = expanderCell.firstChild;
 
 
  /**
@@ -96,8 +101,8 @@ basis.require('basis.ui.table');
       '<div{element} class="Basis-Table Basis-ScrollTable">' +
         '<frame event-load="fireRecalc" src="about:blank" event-resize="log"/>' +
         '<div{headerFooterContainer} class="Basis-ScrollTable-HeaderFooterContainer">' +
-          '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"><!--{header}--></table>' +
-          '<table{foot} cellspacing="0" border="0" class="Basis-ScrollTable-Footer"><!--{footer}--></table>' +
+          '<table{head} cellspacing="0" border="0" class="Basis-ScrollTable-Header"><!--{header}--><!--{headerExpanders}--></table>' +
+          '<table{foot} cellspacing="0" border="0" class="Basis-ScrollTable-Footer"><!--{footer}--><!--{footerExpanders}--></table>' +
         '</div>' +
         '<div{scrollContainer} class="Basis-ScrollTable-ScrollContainer" event-scroll="scroll">' +
           '<div{tableWrapperElement} class="Basis-ScrollTable-TableWrapper">' +
@@ -124,11 +129,17 @@ basis.require('basis.ui.table');
       },
       log: function(event){
         console.log('event:', event.type);
+
+        var sender = basis.dom.event.sender(event);
+        var self = this;
         if (event.type == 'load')
         {
-          var sender = basis.dom.event.sender(event);
-          sender.contentWindow.onresize = this.action.log.bind(this);
+          sender.contentWindow.onresize = function(){
+            console.log('iframe resize');
+            self.adjust();
+          }
         }
+        self.adjust();
       }
     },
 
@@ -158,15 +169,26 @@ basis.require('basis.ui.table');
         }
       }, this);
 
-      /*DOM.replace(this.tmpl.measureRow,
-        DOM.createElement('tbody',
+      DOM.replace(this.tmpl.measureRow,
+        this.tmpl.measureRow = DOM.createElement('tbody',
           DOM.createElement('tr',
             Array.create(this.columnCount, function(){
               return measureCell.cloneNode(true);
             })
           )
         )
-      );*/
+      );
+
+
+      var expanders = DOM.createElement('tbody',
+        DOM.createElement('tr',
+          Array.create(this.columnCount, function(){
+            return expanderCell.cloneNode(true);
+          })
+        )
+      );
+      DOM.replace(this.tmpl.headerExpanders, expanders);
+      this.tmpl.headerExpanders = expanders.firstChild;
 
       // create header clone
       this.headerClone = new nsTable.Header(Object.extend({ 
@@ -196,6 +218,10 @@ basis.require('basis.ui.table');
           container: this.tmpl.tableElement, 
           structure: this.structure 
         }, this.footerConfig));
+
+        
+        DOM.replace(this.tmpl.footerExpanders, expanders = expanders.cloneNode(true));
+        this.tmpl.footerExpanders = expanders.firstChild;
 
         this.originalCells = this.originalCells.concat(footer.childNodes);
         this.clonedCells = this.clonedCells.concat(this.footerClone.childNodes)
@@ -239,6 +265,17 @@ basis.require('basis.ui.table');
     adjust: function(event){
       console.log('adjust');
       this.onScroll();
+
+      var measureRow = this.tmpl.measureRow.firstChild.childNodes;
+      for (var i = 0; i < this.columnCount; i++)
+      {
+        var cell = measureRow[i].firstChild;
+        var w = cell.offsetWidth;
+
+        this.tmpl.headerExpanders.childNodes[i].firstChild.style.width = w + 'px';
+        if (this.tmpl.footerExpanders)
+          this.tmpl.footerExpanders.childNodes[i].firstChild.style.width = w + 'px';
+      }
 
       /*var headerClone = this.header.element.cloneNode(true)
       var headerOuterHTML = DOM.createElement('', headerClone).innerHTML;
