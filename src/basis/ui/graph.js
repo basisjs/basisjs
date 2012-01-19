@@ -125,7 +125,7 @@ basis.require('basis.ui.canvas');
     listen: {
       owner: {
         draw: function(){
-          this.syncSize();
+          this.recalc();
 
           if (this.mx)
             this.updatePosition(this.mx, this.my);
@@ -136,45 +136,46 @@ basis.require('basis.ui.canvas');
     init: function(config){
       uiNode.prototype.init.call(this, config);
 
-      if (this.owner)
-        this.syncSize();
-
       this.context = this.element.getContext('2d');
+
+      if (this.owner)
+        this.recalc();
     },
 
-    syncSize: function(){
+    recalc: function(){
       this.element.width = this.owner.tmpl.canvas.width;
       this.element.height = this.owner.tmpl.canvas.height;
-    },
 
-    updatePosition: function(mx, my){
-      this.reset();
-
-      var canvasRect = this.owner.element.getBoundingClientRect();
-      var clientRect = this.owner.clientRect;
-      var x = mx - canvasRect.left - clientRect.left;
-      var y = my - canvasRect.top - clientRect.top;
-
-      var needToDraw = x > 0 && x < clientRect.width && y > 0 && y < clientRect.height;
-
-      if (needToDraw)
-        this.draw(x);
+      this.clientRect = this.owner.clientRect;
+      this.max = this.owner.maxValue;
     },
 
     reset: function(){
       this.element.width = this.element.clientWidth;
       this.element.height = this.element.clientHeight;
+      this.context.translate(this.clientRect.left, this.clientRect.top);
     },
 
-    draw: function(x){
+    updatePosition: function(mx, my){
+      this.reset();
+
+      var canvasRect = this.element.getBoundingClientRect();
+      var x = mx - canvasRect.left - this.clientRect.left;
+      var y = my - canvasRect.top - this.clientRect.top;
+
+      var needToDraw = x > 0 && x < this.clientRect.width && y > 0 && y < this.clientRect.height;
+
+      if (needToDraw)
+        this.draw(x, y);
+    },
+
+    draw: function(x, y){
       var context = this.context;
 
-      var clientRect = this.owner.clientRect;
-      context.translate(clientRect.left, clientRect.top);
-
-      var WIDTH = clientRect.width;
-      var HEIGHT = clientRect.height;
-      var MAX = this.owner.maxValue;
+      var TOP = this.clientRect.top;
+      var WIDTH = this.clientRect.width;
+      var HEIGHT = this.clientRect.height;
+      var MAX = this.max;
 
       var propValues = this.owner.getPropValues();
       var step = WIDTH / (propValues.length - 1);
@@ -187,7 +188,6 @@ basis.require('basis.ui.canvas');
       context.strokeStyle = '#CCC';
       context.stroke();
       context.closePath();
-
 
       context.font = "10px tahoma";
       context.textAlign = "center";
@@ -211,8 +211,7 @@ basis.require('basis.ui.canvas');
       context.closePath();
 
       context.fillStyle = 'black';
-      context.fillText(propText, xPosition +.5, clientRect.top + HEIGHT + 5);
-
+      context.fillText(propText, xPosition +.5, TOP + HEIGHT + 5);
 
       var labels = [];
 
@@ -346,14 +345,12 @@ basis.require('basis.ui.canvas');
 
     event_update: function(object, delta){
       Node.prototype.event_update.call(this, object, delta);
-      this.parentNode.updateCount++;
+      this.event_redrawRequest();
     },
 
     event_childNodesModified: function(object, delta){
       Node.prototype.event_childNodesModified.call(this, object, delta);
-
-      if (this.parentNode)
-        this.parentNode.updateCount++;
+      this.event_redrawRequest();
     },
 
     childClass: {
@@ -409,7 +406,7 @@ basis.require('basis.ui.canvas');
       lineJoin: 'bevel'
     },
 
-    usedColors: {},
+    usedColors: null,
     presetColors: [
       '#F80',
       '#BB7BF1',
@@ -679,7 +676,7 @@ basis.require('basis.ui.canvas');
       var values;
       for (var i = 0, thread; thread = this.childNodes[i]; i++)
       {
-        this.drawThread(thread, i, maxValue, LEFT + (this.scaleValuesOnEdges ? 0 : step / 2), TOP, step, (HEIGHT - TOP - BOTTOM));
+        this.drawThread(thread, i, maxValue, LEFT, TOP, step, (HEIGHT - TOP - BOTTOM));
       }  
 
       //save graph data
@@ -693,6 +690,9 @@ basis.require('basis.ui.canvas');
     },
     drawThread: function(thread, pos, max, left, top, step, height){
       var context = this.context;
+
+      if (!this.scaleValuesOnEdges)
+        left += step / 2;
 
       this.style.strokeStyle = thread.getColor();// || this.threadColor[i];
       var values = thread.getValues();
@@ -772,18 +772,100 @@ basis.require('basis.ui.canvas');
     }
   });
 
+  //
+  // Bar Chart
+  //
+
+  var BAR_WIDTH_PART = 0.7;
+  
+  /**
+   * @class
+   */
+  var BarGraphViewer = GraphViewer.subclass({
+    draw: function(x, y){
+      var context = this.context;
+
+      var clientRect = this.owner.clientRect;
+      var bars = this.owner.bars;
+      var threads = this.owner.childNodes;
+      var propValues = this.owner.getPropValues();
+            
+      var WIDTH = clientRect.width;
+      var HEIGHT = clientRect.height;
+
+      var step = WIDTH / bars[0].length;
+      var barPosition = Math.floor(x / step);
+      
+      var legendText;
+      var hoveredBar;
+      var bar;
+      for (var i = 0; i < bars.length; i++)
+      {
+        bar = bars[i][barPosition];
+        if (x > bar.x && x < (bar.x + bar.width) && y > bar.y && y < (bar.y + bar.height))
+        {
+          hoveredBar = bar;
+          legendText = threads[i].getLegend();
+          break;
+        }
+      }
+
+      if (!hoveredBar)
+        return;
+
+      var TOOLTIP_PADDING = 5;
+
+      var tooltipText = propValues[barPosition] + ', ' + legendText + ', ' + Number(hoveredBar.value.toFixed(2)).group();
+      context.font = "10px Tahoma";
+      
+      var tooltipTextWidth = context.measureText(tooltipText).width;
+      var tooltipWidth = tooltipTextWidth + 2*TOOLTIP_PADDING;
+      var tooltipHeight = 10 + 2*TOOLTIP_PADDING;
+
+      var tooltipX = Math.round(Math.max(0, Math.min(this.clientRect.width - tooltipWidth, x - tooltipWidth / 2)));
+      var tooltipY = Math.round(y - tooltipHeight - 5);
+
+      if (tooltipY < 0) //show under cursor
+        tooltipY = Math.round(y + 20); 
+
+      context.strokeStyle = 'black';
+      context.lineWidth = 1.5;
+      context.shadowColor = '#000';
+      context.shadowBlur = 5;
+      context.strokeRect(hoveredBar.x + .5, hoveredBar.y + .5, hoveredBar.width, hoveredBar.height);
+      context.clearRect(hoveredBar.x + .5, hoveredBar.y + .5, hoveredBar.width, hoveredBar.height);
+
+      context.strokeStyle = '#333';
+      context.fillStyle = 'white';
+      context.lineWidth = 1;
+      context.shadowBlur = 3;
+      context.fillRect(tooltipX + .5, tooltipY + .5, tooltipWidth, tooltipHeight);        
+      context.shadowBlur = 0;
+      context.strokeRect(tooltipX + .5, tooltipY + .5, tooltipWidth, tooltipHeight);
+
+      context.fillStyle = 'black';
+      context.fillText(tooltipText, tooltipX + TOOLTIP_PADDING, tooltipY + tooltipHeight - TOOLTIP_PADDING);
+    }
+  });
+
   /**
    * @class
    */
   var BarChart = Graph.subclass({
     className: namespace + '.BarChart',
     
+    bars: null,
     scaleValuesOnEdges: false,
 
     satelliteConfig: {
       graphViewer: {
-        instanceOf: uiNode
+        instanceOf: BarGraphViewer
       }
+    },
+
+    drawFrame: function(){
+      this.bars = [];
+      Graph.prototype.drawFrame.call(this);
     },
 
     drawThread: function(thread, pos, max, left, top, step, height){
@@ -793,7 +875,7 @@ basis.require('basis.ui.canvas');
       var color = thread.getColor();
 
       var cnt = this.childNodes.length;
-      var barWidth = Math.round(0.7 * step / cnt);
+      var barWidth = Math.round(BAR_WIDTH_PART * step / cnt);
       //var startPosition = step / 2 + 0.15 * step + pos * barWidth;
 
       context.save();
@@ -801,17 +883,30 @@ basis.require('basis.ui.canvas');
       context.fillStyle = color;
 
       Object.extend(context, this.style);
-      context.strokeStyle = 'black';
+      context.strokeStyle = '#333';
       context.lineWidth = 1;
 
-      var x;
+      this.bars[pos] = [];
+
+      var barX, barY;
       var barHeight;
       for (var i = 0; i < values.length; i++)
       {
-        x = Math.round(i * step - barWidth * cnt / 2 + pos * barWidth);
         barHeight = Math.round(height * values[i] / max);
-        context.strokeRect(x + .5, height - barHeight + .5, barWidth, barHeight);
-        context.fillRect(x + .5, height - barHeight + .5, barWidth, barHeight);
+ 
+        barX = Math.round(step / 2 + i * step - barWidth * cnt / 2 + pos * barWidth);
+        barY = height - barHeight;
+
+        context.fillRect(barX + .5, barY + .5, barWidth, barHeight);
+        context.strokeRect(barX + .5, barY + .5, barWidth, barHeight);
+
+        this.bars[pos].push({
+          x: barX,
+          y: barY,
+          width: barWidth,
+          height: barHeight,
+          value: values[i]
+        });
       }
 
       context.restore();
