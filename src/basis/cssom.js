@@ -26,6 +26,7 @@ basis.require('basis.dom.event');
   
   var namespace = 'basis.cssom';
 
+
   //
   // import names
   //
@@ -35,6 +36,7 @@ basis.require('basis.dom.event');
   var event = basis.dom.event;
   var Class = basis.Class;
 
+
   //
   // main part
   //
@@ -43,6 +45,17 @@ basis.require('basis.dom.event');
   var IMPORTANT = String('important');
   var GENERIC_RULE_SEED = 1;
   var cssStyleSheets = {};
+
+  var SET_STYLE_EXCEPTION_BUG = (function(){
+    var element = dom.createElement();
+    try {
+      element.style.width = 'badvalue';
+    } catch(e){
+      return true;
+    }
+    return false;
+  })();
+
 
   //
   // shortcut
@@ -202,14 +215,32 @@ basis.require('basis.dom.event');
   * @param {Node} node Node which style to be changed.
   * @param {string} key Name of property.
   * @param {string} value Value of property.
-gj   */
+  * @return Returns style property value after assignment.
+  */
   function setStyleProperty(node, key, value){
     if (typeof node.setProperty == 'function')
       return node.setProperty(key, value);
 
     var mapping = getStylePropertyMapping(key, value);
     if (mapping)
-      return node.style[mapping.key] = mapping.value;
+    {
+      if (SET_STYLE_EXCEPTION_BUG)
+      {
+        // IE6-8 throw exception when assign wrong value to style, but standart
+        // says just ignore this assigments
+        // try/catch is speedless, therefore wrap this statement only for ie
+        // it makes code safe and more compatible
+        try {
+          node.style[mapping.key] = mapping.value;
+        } catch(e) {
+          ;;;if (typeof console != 'undefined') console.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
+        }
+      }
+      else
+        node.style[mapping.key] = mapping.value;
+
+      return node.style[mapping.key];
+    }
   }
 
  /**
