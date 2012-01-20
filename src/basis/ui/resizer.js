@@ -48,6 +48,31 @@ basis.require('basis.ui');
 
   var getComputedStyle;
 
+  function getPixelValue(element, value) {
+    if (IS_PIXEL.test(value))
+      return parseInt(value) + 'px';
+
+    // The awesome hack by Dean Edwards
+    // @see http://erik.eae.net/archives/2007/07/27/18.54.15/#comment-102291
+
+    var style = element.style.left;
+    var runtimeStyle = element.runtimeStyle.left;
+
+    // set new values
+    element.runtimeStyle.left = element.currentStyle.left;
+    element.style.left = value || 0;
+
+    // fetch new value
+    value = element.style.pixelLeft;
+
+    // restore values
+    element.style.left = style;
+    element.runtimeStyle.left = runtimeStyle;
+
+    // return value in pixels
+    return value + 'px';
+  };
+
   if ('getComputedStyle' in global)
   {
     // Gecko's getComputedStyle returns computed values for top/bottom/left/right/height/width, but 
@@ -106,27 +131,26 @@ basis.require('basis.ui');
     }
   }
   else
+  {
+    var VALUE_UNIT = /^-?(\d*\.)?\d+([a-z]+|%)?$/i;
+    var IS_PIXEL = /\dpx$/i;
+
     // getComputedStyle function for non-W3C spec browsers (Internet Explorer 6-8)
     getComputedStyle = function(element, styleProp){
       var style = element.currentStyle;
-      if (style)
-        return style[styleProp];
-    }
 
-    /*
-  function getComputedStyle(element, styleProp){
-    if ('getComputedStyle' in global)
-    {
-      var computedStyle = document.defaultView.getComputedStyle(element, null);
-      if (computedStyle)
-        return computedStyle.getPropertyValue(styleProp);
+      if (style)
+      {
+        var value = style[styleProp];
+        var unit = value.match(VALUE_UNIT);
+
+        if (unit && unit[2] && unit[2] != 'px')
+          value = getPixelValue(element, value);
+
+        return value;
+      }
     }
-    else
-    {
-      if (element.currentStyle)
-        return element.currentStyle[styleProp];
-    }
-  }*/
+  }
 
   var resizerDisableRule = cssom.cssRule('IFRAME');
 
@@ -175,26 +199,38 @@ basis.require('basis.ui');
       cfg.delta = PROPERTY_DELTA[this.property];
       cfg.factor = this.factor;
 
-      var parentNode = this.element.parentNode;
-      var parentNodeSize;
-
       // determine dir
       var cssFloat = getComputedStyle(this.element, 'float');
       var cssPosition = getComputedStyle(this.element, 'position');
+
+      var relToOffsetParent = cssPosition == 'absolute' || cssPosition == 'fixed';
+      var parentNode = relToOffsetParent ? this.element.offsetParent : this.element.parentNode;
+      var parentNodeSize;
       
       if (cfg.delta == 'deltaY')
       {
-        parentNodeSize = parentNode.clientHeight - parseFloat(getComputedStyle(parentNode, 'padding-top')) - parseFloat(getComputedStyle(parentNode, 'padding-bottom'));
-        cfg.offsetStart = this.element.offsetHeight;
+        cfg.offsetStart = this.element.clientHeight
+          - parseFloat(getComputedStyle(this.element, 'padding-top'))
+          - parseFloat(getComputedStyle(this.element, 'padding-bottom'));
+
+        parentNodeSize = parentNode.clientHeight;
+        if (!relToOffsetParent)
+          parentNodeSize -= parseFloat(getComputedStyle(parentNode, 'padding-top')) + parseFloat(getComputedStyle(parentNode, 'padding-bottom'));
+
         if (isNaN(cfg.factor))
-          cfg.factor = cssPosition != 'static' && getComputedStyle(this.element, 'bottom') != 'auto'
+          cfg.factor = relToOffsetParent && getComputedStyle(this.element, 'bottom') != 'auto'
             ? -1
             : 1;
       }
       else
       {
-        parentNodeSize = parentNode.clientWidth - parseFloat(getComputedStyle(parentNode, 'padding-left')) - parseFloat(getComputedStyle(parentNode, 'padding-right'));
-        cfg.offsetStart = this.element.offsetWidth;
+        cfg.offsetStart = this.element.clientWidth
+          - parseFloat(getComputedStyle(this.element, 'padding-left'))
+          - parseFloat(getComputedStyle(this.element, 'padding-right'));
+
+        parentNodeSize = parentNode.clientWidth;
+        if (!relToOffsetParent)
+          parentNodeSize -= parseFloat(getComputedStyle(parentNode, 'padding-left')) + parseFloat(getComputedStyle(parentNode, 'padding-right'));
 
         if (isNaN(cfg.factor))
         {
@@ -204,7 +240,7 @@ basis.require('basis.ui');
             if (cssFloat == 'left')
               cfg.factor = 1;
             else
-              cfg.factor = cssPosition != 'static' && getComputedStyle(this.element, 'right') != 'auto'
+              cfg.factor = relToOffsetParent && getComputedStyle(this.element, 'right') != 'auto'
                 ? -1
                 : 1;
         }
