@@ -42,17 +42,40 @@ basis.require('basis.dom.event');
   var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
   var domFragment = dom.createFragment();
 
+  //
+  // Feature detection tests
+  //
+
+  // Test for appendChild bugs (old IE browsers has a problem with some tags like <script> and <style>)
+  function appendTest(tagName){
+    try {
+      return !dom.createElement(tagName, '');
+    } catch(e) {
+      return true;
+    }
+  }
+
+  var SCRIPT_APPEND_BUGGY = appendTest('script');
+  var STYLE_APPEND_BUGGY = appendTest('style');
+
   // Test for browser (IE) normalize text nodes during cloning
   var CLONE_NORMALIZE_TEXT_BUG = (function(){
     return dom.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
   })();
 
+  //
+  // Helpers
+  //
   
   var createFragment = dom.createFragment;
   var createText = dom.createText;
   var createComment = function(value){
     return document.createComment(value);
   };
+
+  function documentFragmentToText(fragment){
+    return dom.outerHTML(fragment, true);
+  }
 
   //
   // PARSE TEXT
@@ -173,7 +196,7 @@ basis.require('basis.dom.event');
         // hack for non-bubble events in IE<=8
         if (!domEvent.W3CSUPPORT)
         {
-          var eventInfo = domEvent.getEventInfo(tagName, eventName);
+          var eventInfo = domEvent.getEventInfo(eventName, tagName);
           if (eventInfo.supported && !eventInfo.bubble)
             events.push(eventName);
             //result += '[on' + eventName + '="basis.dom.event.fireEvent(document,\'' + eventName + '\')"]';
@@ -275,7 +298,17 @@ basis.require('basis.dom.event');
         if (!singleton)
         {
           stack.push(tagName);
-          element.appendChild(parseHtml(context, nodePath + '.'));
+
+          var elementContent = parseHtml(context, nodePath + '.');
+          tagName = element.tagName.toLowerCase();
+
+          if (SCRIPT_APPEND_BUGGY && tagName == 'script')
+            element.text = documentFragmentToText(elementContent);
+          else
+            if (STYLE_APPEND_BUGGY && tagName == 'style')
+              element.styleSheet.cssText = documentFragmentToText(elementContent);
+            else
+              element.appendChild(elementContent);
         }
 
         result.appendChild(element);

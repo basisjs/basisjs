@@ -59,7 +59,7 @@ basis.require('basis.dragdrop');
   var KEY_KP_MINUS = 109;  // KEYPAD -
 
   function percent(value){
-    return (100 * value).toFixed(4) + '%';
+    return (100 * value || 0).toFixed(4) + '%';
   }
 
 

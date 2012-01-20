@@ -20,7 +20,7 @@ basis.require('basis.cssom');
 basis.require('basis.dragdrop');
 basis.require('basis.ui');
 
-!function(basis){
+!function(basis, global){
 
   'use strict';
 
@@ -46,8 +46,76 @@ basis.require('basis.ui');
   // main part
   //
 
+  var getComputedStyle;
+
+  if ('getComputedStyle' in global)
+  {
+    // Gecko's getComputedStyle returns computed values for top/bottom/left/right/height/width, but 
+    // according to W3C spec getComputedStyle should returns used values.
+    //
+    // https://developer.mozilla.org/en/DOM/window.getComputedStyle:
+    //   The returned object actually represents the CSS 2.1 used values, not the computed values.
+    //   Originally, CSS 2.0 defined the computed values to be the "ready to be used" values of properties
+    //   after cascading and inheritance, but CSS 2.1 redefined computed values as pre-layout, and used
+    //   values as post-layout. The getComputedStyle function returns the old meaning of computed values,
+    //   now called used values. There is no DOM API to get CSS 2.1 computed values.
+    // 
+    // This workaround helps fetch used values instead of computed. It doesn't work with some pseudo-classes
+    // like :empty, :only-child, :nth-child and so on, but in general cases it should works fine.
+    // The main idea that getComputedStyle returns used values for elements which not in document, because layout
+    // properties can't calculated outside of document. But it still returns style according rule set that will be
+    // applied to element when it in document. Based on this, we clone element's ancestor vector and get computed
+    // style on cloned element. Ancestor cloning is necessary, because it influence on rule set that apply to element.
+    var GETCOMPUTEDSTYLE_BUGGY = {};
+    basis.dom.event.onLoad(function(){
+      var element = DOM.insert(document.body, DOM.createElement('[style="position:absolute;top:auto"]'));
+
+      if (getComputedStyle(element, 'top') != 'auto')
+        GETCOMPUTEDSTYLE_BUGGY = {
+          top: true,
+          bottom: true,
+          left: true,
+          right: true,
+          height: true,
+          width: true
+        };
+
+      DOM.remove(element);
+    });
+
+    // getComputedStyle function using W3C spec
+    getComputedStyle = function(element, styleProp){
+      if (GETCOMPUTEDSTYLE_BUGGY[styleProp])
+      {
+        // clone ancestor vector
+        var axis = [];
+        while (element && element.nodeType == 1)
+        {
+          axis.push(element.cloneNode(false));
+          element = element.parentNode;
+        }
+
+        element = axis.pop();
+        while (axis.length)
+          element = element.appendChild(axis.pop());
+      }
+
+      var style = global.getComputedStyle(element, null);
+      if (style)
+        return style.getPropertyValue(styleProp);
+    }
+  }
+  else
+    // getComputedStyle function for non-W3C spec browsers (Internet Explorer 6-8)
+    getComputedStyle = function(element, styleProp){
+      var style = element.currentStyle;
+      if (style)
+        return style[styleProp];
+    }
+
+    /*
   function getComputedStyle(element, styleProp){
-    if (window.getComputedStyle)
+    if ('getComputedStyle' in global)
     {
       var computedStyle = document.defaultView.getComputedStyle(element, null);
       if (computedStyle)
@@ -58,7 +126,7 @@ basis.require('basis.ui');
       if (element.currentStyle)
         return element.currentStyle[styleProp];
     }
-  }
+  }*/
 
   var resizerDisableRule = cssom.cssRule('IFRAME');
 
@@ -129,12 +197,20 @@ basis.require('basis.ui');
         cfg.offsetStart = this.element.offsetWidth;
 
         if (isNaN(cfg.factor))
-          cfg.factor = cssFloat == 'right' || (cssPosition != 'static' && getComputedStyle(this.element, 'right') != 'auto')
-            ? -1
-            : 1;
+        {
+          if (cssFloat == 'right')
+            cfg.factor = -1;
+          else
+            if (cssFloat == 'left')
+              cfg.factor = 1;
+            else
+              cfg.factor = cssPosition != 'static' && getComputedStyle(this.element, 'right') != 'auto'
+                ? -1
+                : 1;
+        }
       }
 
-      cfg.offsetStartInPercent = 100/parentNodeSize;
+      cfg.offsetStartInPercent = 100 / parentNodeSize;
       classList(this.resizer).add('selected');
     },
     event_move: function(cfg){
@@ -182,4 +258,4 @@ basis.require('basis.ui');
     Resizer: Resizer
   });
 
-}(basis);
+}(basis, this);

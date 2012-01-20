@@ -25,6 +25,7 @@ basis.require('basis.layout');
   */
   var namespace = 'basis.dragdrop';
 
+
   //
   // import names
   //
@@ -45,11 +46,12 @@ basis.require('basis.layout');
   var nsLayout = basis.layout;
   var ua = basis.ua;
   
+
   //
   // Main part
   //
 
-  var isIE = basis.ua.is('IE9-');
+  var SELECTSTART_SUPPORTED = Event.getEventInfo('selectstart').supported;
 
   var DDEConfig;
   var DDEHandler = {
@@ -69,10 +71,12 @@ basis.require('basis.layout');
         }
       };
 
-      // set handlers
+      // add global handlers
       addGlobalHandler('mousemove', DDEHandler.move, DDEConfig);
       addGlobalHandler('mouseup',   DDEHandler.over, DDEConfig);
       addGlobalHandler('mousedown', DDEHandler.over, DDEConfig);
+      if (SELECTSTART_SUPPORTED)
+        addGlobalHandler('selectstart', Event.kill, DDEConfig);
 
       // kill event
       Event.cancelDefault(event);
@@ -104,10 +108,12 @@ basis.require('basis.layout');
     over: function(event){  // `this` store DDE config
       var dde = DDEConfig.dde;
 
-      // remove document handler if exists
+      // remove global handlers
       removeGlobalHandler('mousemove', DDEHandler.move, DDEConfig);
       removeGlobalHandler('mouseup',   DDEHandler.over, DDEConfig);
       removeGlobalHandler('mousedown', DDEHandler.over, DDEConfig);
+      if (SELECTSTART_SUPPORTED)
+        removeGlobalHandler('selectstart', Event.kill, DDEConfig);
 
       dde.draging = false;
 
@@ -183,21 +189,12 @@ basis.require('basis.layout');
       if (this.trigger != trigger)
       {
         if (this.trigger)
-        {
           Event.removeHandler(this.trigger, 'mousedown', DDEHandler.start, this);
-          if (isIE)
-            Event.removeHandler(this.trigger, 'selectstart', DDEHandler.start, this);
-        }
 
         this.trigger = trigger;
 
         if (this.trigger)
-        {
-          //if (isIE) Event.kill(this.trigger, 'selectstart'); // ?
           Event.addHandler(this.trigger, 'mousedown', DDEHandler.start, this);
-          if (isIE)
-            Event.addHandler(this.trigger, 'selectstart', DDEHandler.start, this);
-        }
       }
 
 

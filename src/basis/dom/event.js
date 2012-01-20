@@ -156,7 +156,7 @@ basis.require('basis.dom');
     node = getNode(node);
 
     if (node)
-      addHandler(node, event, Event.kill);
+      addHandler(node, event, kill);
     else
     {
       cancelDefault(event);
@@ -603,30 +603,46 @@ basis.require('basis.dom');
     addHandler(global, 'unload', handler, thisObject);
   }
 
+
   //
-  //
+  // Event tests
   //
 
   var tagNameEventMap = {};
-  function getEventInfo(tagName, eventName){
+
+ /**
+  * @param {string} eventName
+  * @param {string?} tagName
+  * @func
+  */
+  function getEventInfo(eventName, tagName){
+    if (!tagName)
+      tagName = 'div';
+
     var id = tagName + '-' + eventName;
 
     if (tagNameEventMap[id])
       return tagNameEventMap[id];
     else
     {
-      var onevent = 'on' + eventName;
-      var target = dom.createElement(tagName);
-      var host = dom.createElement('div', target);
-      var bubble = false;
       var supported = false;
+      var bubble = false;
 
-      host[onevent] = function(){ bubble = true; };
+      if (!W3CSUPPORT)
+      {
+        var onevent = 'on' + eventName;
+        var target = dom.createElement(tagName);
+        var host = dom.createElement('div', target);
 
-      try {
-        target.fireEvent(onevent);
-        supported = true;
-      } catch(e){}
+        host[onevent] = function(){ bubble = true; };
+
+        try {
+          target.fireEvent(onevent);
+          supported = true;
+        } catch(e){
+          // if exception event doesn't support
+        }
+      }
       
       return tagNameEventMap[id] = {
         supported: supported,

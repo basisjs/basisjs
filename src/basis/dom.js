@@ -366,10 +366,11 @@ basis.require('basis.ua');
  /**
   * Returns outerHTML for node, even for browser doesn't support this property (only IE support)
   * @param {Node} node
+  * @param {boolean} noClone
   * @return {string}
   */
-  function outerHTML(node){
-    return node.outerHTML || createElement('', node.cloneNode(true)).innerHTML;
+  function outerHTML(node, noClone){
+    return node.outerHTML || createElement('', noClone ? node : node.cloneNode(true)).innerHTML;
   };
 
  /**

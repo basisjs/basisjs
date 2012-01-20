@@ -96,7 +96,7 @@
 
     classList(document.body).add('show');
 
-    if (/google/.test(location.domain))
+    if (/google/.test(location.host))
       (function() {
         var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
         ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
