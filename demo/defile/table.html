@@ -9,6 +9,7 @@
 
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/table/vista/style.css" media="screen" />
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/scrolltable/vista/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/resizer/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -42,7 +43,7 @@
     }
     .scrollTableContainer
     {
-      height: 400px;
+      height: 300px;
       position: relative;
     }
     TD
@@ -79,14 +80,7 @@
     ..
   </div>
 
-  <div id="demo-container">
-    <div style="width: 300px; height: 200px; border: 1px solid red; padding: 20px 0">
-      <div style="height: 20px; margin-top: -20px; background: green">
-        <div style="background: blue">header</div>
-      </div>
-      <div style="height: 150px; overflow: scroll">content</div>
-    </div>
-  </div>
+  <div id="demo-container"><textarea id="eventlog" style="position: fixed; bottom: 0; right: 20px; height: 50%; width: 50%; z-index: 1000"></textarea></div>
 
   <script type="text/javascript" id="demo-javascript">
 
@@ -164,26 +158,56 @@
     });
 
     basis.dom.event.onLoad(function(){
-    var container = createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer'));
-     table = new ScrollTable({
-      header: { localGrouping: Function.getter('groupId') },
-      structure: [
-        { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
-        { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },
-        { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
-        { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
-        { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
-      ]//,
-      //childNodes: data
-    }); 
-    setTimeout(function(){
-    table.setChildNodes(data);}, 10);
+      container = createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer'));
+      table = new ScrollTable({
+        cssClassName: 'FitToContainer',
+        header: { localGrouping: Function.getter('groupId') },
+        structure: [
+          { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
+          { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },
+          { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
+          { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
+          { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+        ],
+        childNodes: data
+      }); 
+      /*setTimeout(function(){
+        table.setChildNodes(data);
+      }, 10);*/
       basis.dom.insert(container, table.element);
+
+      var r = new basis.ui.resizer.Resizer({ element: container.parentNode });
+      basis.cssom.setStyle(r.resizer, {
+        height: '100%',
+        width: '5px',
+        top: 0,
+        right: 0
+      });
+
+
+      var container2 = createBlock('table');
+      table2 = new ScrollTable({
+        //container: container2,
+        header: { localGrouping: Function.getter('groupId') },
+        structure: [
+          { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
+          { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },
+          { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
+          { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
+          { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+        ],
+        childNodes: data
+      }); 
+
     })
 
     basis.dom.insert('demo-container', basis.dom.createElement('button', 'asfd')).onclick = function(){
+      basis.dom.remove(table.element);
+    };
+    basis.dom.insert('demo-container', basis.dom.createElement('button', 'asfd')).onclick = function(){
       basis.dom.insert(container, table.element);
     };
+
 
 
   </script>

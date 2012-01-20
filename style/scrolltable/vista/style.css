@@ -1,4 +1,11 @@
+
   .Basis-ScrollTable
+  {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .Basis-ScrollTable.FitToContainer
   {
     position: absolute;
     top: 0;
@@ -38,47 +45,80 @@
   {
     width: auto !important;
   }
-  .Basis-ScrollTable-Header,
-  .Basis-ScrollTable-Footer
+  .Basis-ScrollTable-Header-Container
   {
-    position: absolute;
-    left: 0;
-    b3order-left: 1px solid #d5d5d5;
+    dire2ction: rtl;
+    position: relative;
+  }
+  .Basis-ScrollTable-Header-Container TABLE
+  {
+    direc2tion: rtl;
+  }
+  .Basis-ScrollTable-Footer-Container
+  {
+    position: relative;
   }
   .Basis-ScrollTable-Header,
   .Basis-ScrollTable-Footer
   {
     border-spacing: 0;
-  }
-  .Basis-ScrollTable-Header
-  {
-    top: 0;
-  }
-  .Basis-ScrollTable-Footer
-  {
-    bottom: 0;
+    position: relative;
   }
 
   /*expand cells*/
   .Basis-ScrollTable .Basis-ScrollTable-ExpandHeaderCell 
   {
+    direction: rtl;
+    overflow: visible;
+    position: absolute;
+    ov3erflow: hidden;
+    height: 100%;
+    right: 0;
+    top: 0;
+  }
+  .Basis-ScrollTable-ExpandHeaderCell-B1
+  {
+    height: 100%;
     position: absolute;
     right: 0;
     top: -2px;
+    min-width: 100%;
+    background: #F1F2F4 url(../../table/vista/bg.gif) repeat-x;
     border-left: 1px solid #D5D5D5;
     border-bottom: 1px solid #D5D5D5;
-    margin-left: -1px;
-    background: #F1F2F4 url(../../table/vista/bg.gif) repeat-x;
   }
-  .Basis-ScrollTable .Basis-ScrollTable-ExpandFooterCell 
+  .Basis-ScrollTable-ExpandHeaderCell-B2
   {
-    background: white url(../../table/vista/footer_bg.gif) repeat-x;
+    float: left;
+    overflow: scroll;
+    visibility: hidden;
+  }
+
+  .Basis-ScrollTable-ExpandFooterCell
+  {
+    direction: rtl;
+    overflow: visible;
+    position: absolute;
+    height: 100%;
+    top: 0;
+    right: 0;
+  }
+  .Basis-ScrollTable-ExpandFooterCell-B1
+  {
+    height: 100%;
     position: absolute;
     right: 0;
     bottom: -1px;
-    margin-left:  -1px;
+    min-width: 100%;
+    background: white url(../../table/vista/footer_bg.gif) repeat-x;
     border-left: 1px solid #E8E8E8;
     border-top: 1px solid #E8E8E8;
+  }
+  .Basis-ScrollTable-ExpandFooterCell-B2
+  {
+    float: left;
+    overflow: scroll;
+    visibility: hidden;
   }
 
   .Basis-ScrollTable .Basis-ScrollTable-ExpandCell-Content
