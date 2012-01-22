@@ -114,9 +114,10 @@ basis.require('basis.ui');
 
       var canvasElement = this.tmpl.canvas;
       if (canvasElement && canvasElement.getContext)
+      {
         this.context = canvasElement.getContext('2d');
-
-      this.updateTimer_ = setInterval(this.draw.bind(this), 1000/60);
+        this.updateTimer_ = setInterval(this.draw.bind(this), 1000/60);
+      }
     },
     reset: function(){
       /*var ctx = this.context;

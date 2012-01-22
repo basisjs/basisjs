@@ -98,6 +98,516 @@ basis.require('basis.ui.canvas');
   }
 
 
+ /**
+  * @class
+  */
+  var GraphComponent = Node.subclass({
+    className: namespace + '.GraphComponent',
+
+    legendGetter: Function.getter('legend'),
+    getLegend: function(){
+      return this.legendGetter(this)
+    },
+
+    colorGetter: Function.getter('color'),
+    getColor: function(){
+      return this.colorGetter(this);
+    },
+
+    valueGetter: Function.$const(0),
+
+    //events
+    event_redrawRequest: createEvent('redrawRequest'),
+
+    event_update: function(object, delta){
+      Node.prototype.event_update.call(this, object, delta);
+      this.event_redrawRequest();
+    }
+  });
+
+
+ /**
+  * @class
+  */
+  var Graph = Canvas.subclass({
+    className: namespace + '.Graph',
+
+    childClass: GraphComponent,
+
+    template:
+      '<div class="Basis-Graph" style="position: relative; display: inline-block">' +
+        '<canvas{canvas}>' +
+          '<div>Canvas doesn\'t support.</div>' +
+        '</canvas>' +
+        '<!-- {graphViewer} -->' +
+      '</div>',
+
+    style: {},
+
+    usedColors: null,
+    presetColors: [
+      '#F80',
+      '#BB7BF1',
+      '#FF3030',
+      '#090',
+      '#6699DD'
+    ],
+
+    listen: {
+      childNode: {
+        redrawRequest: function(){
+          this.updateCount++;
+        }
+      }
+    },
+
+    event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
+      Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
+      this.updateCount++;
+    },
+    event_childNodesModified: function(node, delta){
+      Canvas.prototype.event_childNodesModified.call(this, node, delta);
+      
+      if (delta.deleted)
+        delta.deleted.forEach(this.releaseColorFromComponent, this);
+
+      if (delta.inserted)
+        delta.inserted.forEach(this.setColorForComponent, this);
+
+      this.updateCount++;
+    },
+
+    //init
+    init: function(config){
+      this.presetColors = Array.from(this.presetColors);
+      this.usedColors = {}; 
+
+      Canvas.prototype.init.call(this, config);
+    },
+
+    setStyle: function(newStyle){
+      Object.extend(this.style, Object.slice(newStyle, ['strokeStyle', 'lineWidth']));
+      this.updateCount++;
+    },
+    setColorForComponent: function(component){
+      if (!component.color)
+        component.color = this.getColor();
+
+      this.usedColors[component.color] = true;
+    },
+    releaseColorFromComponent: function(component){
+      delete this.usedColors[component.color];
+      this.presetColors.push(component.color);
+    },
+    getColor: function(){
+      var color = this.presetColors.pop();
+      if (!color)
+      {
+        do
+        {
+          color = generateColor();
+        }
+        while (this.usedColors[color])
+      }
+      return color;
+    },
+
+    drawFrame: Function.$undef
+  });
+
+ /**
+  * @class
+  */
+  var AxisGraphThread = GraphComponent.subclass({
+    className: namespace + '.AxisGraphThread',
+
+    dataSourceGetter: Function.$null,
+
+    getValues: function(){
+      return this.childNodes.map(this.valueGetter);
+    },
+
+    event_childNodesModified: function(object, delta){
+      GraphComponent.prototype.event_childNodesModified.call(this, object, delta);
+      this.event_redrawRequest();
+    },
+
+    childClass: {
+      className: namespace + '.AxisGraphNode',
+      event_update: function(object, delta){
+        if (this.parentNode)
+          this.parentNode.event_redrawRequest(); 
+
+        AbstractNode.prototype.event_update.call(this, object, delta);
+      }        
+    },
+    
+    childFactory: function(config){
+      return new this.childClass(config);
+    },
+
+    //init
+    init: function(config){
+      Node.prototype.init.call(this, config);
+
+      if (!this.dataSource)
+        this.setDataSource(this.dataSourceGetter(this));
+    }
+  });
+
+ /**
+  * @class
+  */
+  var AxisGraph = Graph.subclass({
+    className: namespace + '.AxisGraph',
+
+    childClass: AxisGraphThread,
+
+    propGetter: Function.getter('data.prop'),
+    showLegend: true,
+    showYLabels: true,
+    showXLabels: true,
+    showBoundLines: true,
+    showGrid: true,
+    propValuesOnEdges: true,
+    invertAxis: false,
+
+    //init
+    init: function(config){
+      this.clientRect = {};
+      Graph.prototype.init.call(this, config);
+    },
+
+    drawFrame: function(){
+      var context = this.context;
+
+      var TOP = 0;
+      var LEFT = 0;
+      var RIGHT = 10;
+      var BOTTOM = 0;
+      var WIDTH = context.canvas.width;
+      var HEIGHT = context.canvas.height;
+
+      var propValues = this.getPropValues();
+
+      if (propValues.length < 2)
+      {
+        context.textAlign = 'center';
+        context.fillStyle = '#777';
+        context.font = '20px tahoma';
+        context.fillText(propValues.length == 0 ? 'No data' : 'Not enough data', WIDTH / 2, HEIGHT / 2);
+
+        return;
+      }
+
+      var max = this.getMaxValue();
+      var maxValue = this.getMaxGridValue(max);
+      var minValue = this.getMinGridValue();
+      var partCount = this.getGridPartCount(minValue, maxValue); 
+      var propCount = propValues.length;
+
+
+      // prepare labels
+      context.font = '10px tahoma';
+
+      var xLabels = [];
+      var yLabels = [];
+
+      var maxValueTextWidth = 0;
+      var maxPropTextWidth = 0;
+
+      var showValueAxis = this.invertAxis ? this.showXLabels : this.showYLabels;
+      var showPropAxis = this.invertAxis ? this.showYLabels : this.showXLabels;
+
+      // calc y labels max width
+      if (showValueAxis)
+      {
+        var valueLabels = this.invertAxis ? xLabels : yLabels;
+        
+        var tw;
+        for (var i = 0; i < partCount + 1; i++)
+        {
+          valueLabels[i] = Math.round(maxValue *  i / partCount).group();
+          tw = context.measureText(valueLabels[i]).width;
+
+          if (tw > maxValueTextWidth)
+            maxValueTextWidth = tw;
+        }
+
+        TOP += 10;
+      }
+
+      // calc x labels max width
+      if (showPropAxis)
+      {
+        var propLabels = this.invertAxis ? yLabels : xLabels;
+
+        var tw;
+        for (var i = 0; i < propCount; i++)
+        {
+          propLabels[i] = propValues[i];
+          tw = context.measureText(propLabels[i]).width;
+
+          if (tw > maxPropTextWidth)
+            maxPropTextWidth = tw;
+        }
+      }
+
+      // calc left offset
+      var firstXLabelWidth = 0;
+      var lastXLabelWidth = 0;
+      if (this.showXLabels)
+      {
+        firstXLabelWidth = context.measureText(xLabels[0]).width + 12; // 12 = padding + border
+        lastXLabelWidth = context.measureText(xLabels[(this.invertAxis ? partCount : propCount) - 1]).width + 12;
+      }
+
+      var maxXLabelWidth = this.invertAxis ? maxPropTextWidth : maxValueTextWidth;
+      var maxYLabelWidth = this.invertAxis ? maxValueTextWidth : maxPropTextWidth;
+
+      LEFT = Math.max(maxXLabelWidth + 6, Math.round(firstXLabelWidth / 2));
+      RIGHT = Math.round(lastXLabelWidth / 2);
+
+      // Legend
+      if (this.showLegend)
+      {
+        var LEGEND_ROW_HEIGHT = 30;
+        var LEGEND_BAR_SIZE = 20;
+
+        var maxtw = 0;
+        for (var i = 0, thread; thread = this.childNodes[i]; i++)
+        {
+          var tw = context.measureText(thread.getLegend()).width + LEGEND_BAR_SIZE + 20;
+          if (tw > maxtw)
+            maxtw = tw;
+        }
+
+        var legendColumnCount = Math.floor((WIDTH - LEFT - RIGHT) / maxtw);
+        var legendColumnWidth = (WIDTH - LEFT - RIGHT) / legendColumnCount;
+        var legendRowCount = Math.ceil(this.childNodes.length / legendColumnCount);
+
+        //draw legend
+        BOTTOM += LEGEND_ROW_HEIGHT * legendRowCount; // legend height
+
+        for (var i = 0, thread; thread = this.childNodes[i]; i++)
+        {
+          var lx = Math.round(LEFT + (i % legendColumnCount) * legendColumnWidth);
+          var ly = HEIGHT - BOTTOM + 5 + (Math.ceil((i + 1) / legendColumnCount) - 1) * LEGEND_ROW_HEIGHT;
+
+          context.fillStyle = thread.getColor();// || this.threadColor[i];
+          context.fillRect(lx, ly, LEGEND_BAR_SIZE, LEGEND_BAR_SIZE);
+
+          context.fillStyle = 'black';
+          context.textAlign = 'left';
+          context.fillText(thread.getLegend(), lx + LEGEND_BAR_SIZE + 5, ly + LEGEND_BAR_SIZE / 2 + 3);
+        }
+      }
+
+      BOTTOM += this.showXLabels ? 30 : 1; // space for xscale;
+
+      // yscale
+      var yStep = (HEIGHT - TOP - BOTTOM) / (this.invertAxis ? propCount - (this.propValuesOnEdges ? 1 : 0) : partCount);
+      if (this.showYLabels)
+      {
+        context.lineWidth = 1;
+        context.fillStyle = 'black';
+        context.textAlign = 'right';
+
+        var topOffset = !this.propValuesOnEdges && this.invertAxis ? yStep / 2 : 0;
+        
+        for (var i = this.invertAxis ? 0 : 1, label; label = yLabels[i]; i++)
+        {
+          var labelY = HEIGHT - BOTTOM - topOffset - Math.round(i * yStep) + .5;
+
+          context.beginPath();
+          context.moveTo(LEFT + .5 - 3, labelY);
+          context.lineTo(LEFT + .5, labelY);
+          context.strokeStyle = 'black';
+          context.stroke();
+          context.closePath();
+
+          context.fillText(label, LEFT - 6, labelY + 2.5);
+        }
+      }
+
+      // xscale
+      var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : propCount - (this.propValuesOnEdges ? 1 : 0)) 
+      if (this.showXLabels)
+      {
+        var lastLabelPos = 0;
+        var xLabelsX = [];
+        var maxSkipLabelCount = 0;
+        var skipLabelCount = 0;
+        var x;
+        var tw;
+
+        context.font = '10px tahoma';
+        context.textAlign = 'center';
+
+        for (var i = 0; i < propCount; i++)
+        {
+          x = xLabelsX[i] = Math.round(LEFT + i * xStep + (this.propValuesOnEdges ? 0 : xStep / 2)) + .5;
+          tw = context.measureText(propValues[i]).width;
+
+          if (i == 0 || lastLabelPos + 10 < (x - tw / 2))
+          {
+            maxSkipLabelCount = Math.max(maxSkipLabelCount, skipLabelCount);
+            skipLabelCount = 0;
+
+            lastLabelPos = x + tw / 2;
+          }
+          else
+          {
+            skipLabelCount++;
+          }
+        }
+        skipLabelCount = maxSkipLabelCount
+
+        var skipLabel;
+        var skipScale = skipLabelCount > 10;
+        
+        context.beginPath();
+        
+        var leftOffset = !this.propValuesOnEdges && !this.invertAxis ? xStep / 2 : 0;
+        for (var i = this.invertAxis ? 1 : 0; i < xLabels.length; i++)
+        {
+          x = Math.round(leftOffset + LEFT + i * xStep) + .5;//xLabelsX[i];
+          skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
+
+          if (!skipLabel)
+            context.fillText(xLabels[i], x, HEIGHT - BOTTOM + 15);
+
+          if (!skipLabel || !skipScale)
+          {
+            context.moveTo(x, HEIGHT - BOTTOM + .5);
+            context.lineTo(x, HEIGHT - BOTTOM + (skipLabel ? 3 : 5));
+          }
+        }
+        
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+        context.closePath();
+      }
+
+      // draw grid
+      if (this.showGrid)
+      {
+        context.beginPath();
+
+        var labelX, labelY;
+        var gridStep = this.invertAxis ? xStep : yStep;
+        for (var i = 0; i < partCount; i++)
+        {
+          if (this.invertAxis)
+          {
+            labelX = WIDTH - RIGHT - Math.round(i * gridStep) + .5;
+            context.moveTo(labelX, TOP + .5);
+            context.lineTo(labelX, HEIGHT - BOTTOM + .5);
+          }
+          else
+          {
+            labelY = TOP + Math.round(i * gridStep) + .5;
+            context.moveTo(LEFT + .5, labelY);
+            context.lineTo(WIDTH - RIGHT + .5, labelY);
+          }
+        }
+
+        context.strokeStyle = 'rgba(128, 128, 128, .25)';
+        context.stroke();
+        context.closePath();
+      }
+
+      // draw bounds lines
+      if (this.showBoundLines)
+      {
+        context.beginPath();
+        context.moveTo(LEFT + .5, TOP);
+        context.lineTo(LEFT + .5, HEIGHT - BOTTOM + .5);
+        context.lineTo(WIDTH - RIGHT + .5, HEIGHT - BOTTOM + .5);
+        context.lineWidth = 1;
+        context.strokeStyle = 'black';
+        context.stroke();
+        context.closePath();
+      }
+      
+      // Threads
+      var step = this.invertAxis ? yStep : xStep;
+      for (var i = 0, thread; thread = this.childNodes[i]; i++)
+      {
+        this.drawThread(thread, i, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
+      }  
+
+      //save graph data
+      Object.extend(this.clientRect, {
+        left: LEFT,
+        top: TOP,
+        width: WIDTH - LEFT - RIGHT,
+        height: HEIGHT - TOP - BOTTOM
+      });
+      this.maxValue = maxValue;
+    },
+
+    drawThread: Function.$undef,
+
+    getPropValues: function(){
+      return (this.childNodes[0] && this.childNodes[0].childNodes.map(this.propGetter)) || [];
+    },
+    getMaxValue: function(){
+      var values;
+      var max = 0;
+      
+      for (var i = 0, thread; thread = this.childNodes[i]; i++)
+      {
+        values = thread.getValues();
+        values.push(max);
+        max = Math.max.apply(null, values);
+      }
+
+      return max;
+    },
+    getMinGridValue: function(){
+      return 0;
+    },
+    getMaxGridValue: function(maxValue){
+      return Math.ceil(Math.ceil(maxValue) / Math.pow(10, getDegree(maxValue))) * Math.pow(10, getDegree(maxValue));
+    },
+    getGridPartCount: function(minValue, maxValue){
+      var MIN_PART_COUNT = 5;
+      var MAX_PART_COUNT = 20;
+
+      var count = 1;
+      var canDivide = true;
+      var step;
+      var newVal;
+      var divisionCount = 0;
+
+      var maxDegree = getDegree(maxValue);
+
+      if (maxDegree == 0)
+        return maxValue;
+      
+      while (count < MIN_PART_COUNT && divisionCount <= maxDegree)
+      {
+        for (var i = 2; i <= 5; i++)
+        {
+          step = (maxValue - minValue) / i;
+          newVal = (maxValue - step) / Math.pow(10, maxDegree - divisionCount);
+          if ((newVal - Math.floor(newVal) == 0) && (count*i < MAX_PART_COUNT))
+          {
+            maxValue = minValue + step;
+            count *= i;
+            break;
+          }
+        } 
+
+        divisionCount++;
+      }
+
+      return count;
+    }
+  });
+  
 
  /**
   * @class
@@ -136,7 +646,8 @@ basis.require('basis.ui.canvas');
     init: function(config){
       uiNode.prototype.init.call(this, config);
 
-      this.context = this.element.getContext('2d');
+      if (this.element.getContext)
+        this.context = this.element.getContext('2d');
 
       if (this.owner)
         this.recalc();
@@ -178,6 +689,9 @@ basis.require('basis.ui.canvas');
       var MAX = this.max;
 
       var propValues = this.owner.getPropValues();
+      if (propValues.length < 2)
+        return;
+
       var step = WIDTH / (propValues.length - 1);
       var propPosition = Math.round(x / step);
       var xPosition = Math.round(propPosition * step);
@@ -320,85 +834,8 @@ basis.require('basis.ui.canvas');
  /**
   * @class
   */
-  var GraphThread = Node.subclass({
-    className: namespace + '.GraphThread',
-
-    dataSourceGetter: Function.$null,
-
-    legendGetter: Function.getter('legend'),
-    getLegend: function(){
-      return this.legendGetter(this)
-    },
-
-    colorGetter: Function.getter('color'),
-    getColor: function(){
-      return this.colorGetter(this);
-    },
-
-    valueGetter: Function.$const(0),
-    getValues: function(){
-      return this.childNodes.map(this.valueGetter);
-    },
-
-    //events
-    event_redrawRequest: createEvent('redrawRequest'),
-
-    event_update: function(object, delta){
-      Node.prototype.event_update.call(this, object, delta);
-      this.event_redrawRequest();
-    },
-
-    event_childNodesModified: function(object, delta){
-      Node.prototype.event_childNodesModified.call(this, object, delta);
-      this.event_redrawRequest();
-    },
-
-    childClass: {
-      className: namespace + '.GraphNode',
-      event_update: function(object, delta){
-        if (this.parentNode)
-          this.parentNode.event_redrawRequest(); 
-
-        AbstractNode.prototype.event_update.call(this, object, delta);
-      }        
-    },
-    
-    childFactory: function(config){
-      return new this.childClass(config);
-    },
-
-    //init
-    init: function(config){
-      Node.prototype.init.call(this, config);
-
-      if (!this.dataSource)
-        this.setDataSource(this.dataSourceGetter(this));
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Graph = Canvas.subclass({
-    className: namespace + '.Graph',
-
-    template:
-      '<div class="Basis-Graph" style="position: relative; display: inline-block">' +
-        '<canvas{canvas}>' +
-          '<div>Canvas doesn\'t support.</div>' +
-        '</canvas>' +
-        '<!-- {graphViewer} -->' +
-      '</div>',
-
-    childClass: GraphThread,
-
-    propGetter: Function.getter('data.prop'),
-    showLegend: true,
-    showYLabels: true,
-    showXLabels: true,
-    showBoundLines: true,
-    scaleValuesOnEdges: true,
+  var LinearGraph = AxisGraph.subclass({
+    className: namespace + '.LinearGraph',
 
     style: {
       strokeStyle: '#090',
@@ -406,292 +843,16 @@ basis.require('basis.ui.canvas');
       lineJoin: 'bevel'
     },
 
-    usedColors: null,
-    presetColors: [
-      '#F80',
-      '#BB7BF1',
-      '#FF3030',
-      '#090',
-      '#6699DD'
-    ],
-
     satelliteConfig: {
       graphViewer: {
         instanceOf: GraphViewer
       }
     },
 
-    listen: {
-      childNode: {
-        redrawRequest: function(){
-          this.updateCount++;
-        }
-      }
-    },
-
-    event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
-      Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
-      this.updateCount++;
-    },
-    event_childNodesModified: function(node, delta){
-      Canvas.prototype.event_childNodesModified.call(this, node, delta);
-      
-      if (delta.deleted)
-        delta.deleted.forEach(this.releaseColorFromThread, this);
-
-      if (delta.inserted)
-        delta.inserted.forEach(this.setColorForThread, this);
-
-      this.updateCount++;
-    },
-
-    //init
-    init: function(config){
-      this.clientRect = {};
-      this.presetColors = Array.from(this.presetColors);
-      this.usedColors = {}; 
-
-      Canvas.prototype.init.call(this, config);
-    },
-
-    setColorForThread: function(thread){
-      if (!thread.color)
-        thread.color = this.getColor();
-
-      this.usedColors[thread.color] = true;
-    },
-    releaseColorFromThread: function(thread){
-      delete this.usedColors[thread.color];
-      this.presetColors.push(thread.color);
-    },
-    getColor: function(){
-      var color = this.presetColors.pop();
-      if (!color)
-      {
-        do
-        {
-          color = generateColor();
-        }
-        while (this.usedColors[color])
-      }
-      return color;
-    },
-
-    drawFrame: function(){
+    drawThread: function(thread, pos, max, step, left, top, width, height){
       var context = this.context;
 
-      var TOP = 0;
-      var LEFT = 0;
-      var RIGHT = 10;
-      var BOTTOM = 0;
-      var WIDTH = context.canvas.width;
-      var HEIGHT = context.canvas.height;
-
-      var propValues = this.getPropValues();
-
-      if (propValues.length < 2)
-      {
-        context.textAlign = 'center';
-        context.fillStyle = '#777';
-        context.font = '20px tahoma';
-        context.fillText(propValues.length == 0 ? 'No data' : 'Not enough data', WIDTH / 2, HEIGHT / 2);
-
-        return;
-      }
-
-      var max = this.getMaxValue();
-      var maxValue = this.getMaxGridValue(max);
-      var minValue = this.getMinGridValue();
-      var partCount = this.getGridPartCount(minValue, maxValue); 
-
-      //
-      // calc yscale labels max width
-      //
-      var maxtw = 0;                            
-      var y_labels = [];
-
-      context.font = '10px tahoma';
-
-      if (this.showYLabels)
-      {
-        TOP += 10;
-
-        for (var i = 0; i < partCount; i++)
-        {
-          y_labels[i] = Math.round(maxValue * (partCount - i) / partCount).group();
-          
-          var tw = context.measureText(y_labels[i]).width + 6;
-          if (tw > maxtw)
-            maxtw = tw;
-        }
-      }
-      
-      var firstXLabelWidth = 0;
-      var lastXLabelWidth = 0;
-      
-      if (this.showXLabels)
-      {
-        firstXLabelWidth = context.measureText(propValues[0]).width + 12; // 12 = padding + border
-        lastXLabelWidth = context.measureText(propValues[propValues.length - 1]).width + 12;
-      }
-
-      LEFT = Math.max(maxtw, Math.round(firstXLabelWidth / 2));
-      RIGHT = Math.round(lastXLabelWidth / 2);
-
-      var cnt = propValues.length; 
-      var step = (WIDTH - LEFT - RIGHT) / (cnt - (this.scaleValuesOnEdges ? 1 : 0)) ;
-      
-      // Legend
-      if (this.showLegend)
-      {
-        var LEGEND_ROW_HEIGHT = 30;
-        var LEGEND_BAR_SIZE = 20;
-
-        maxtw = 0;
-        for (var i = 0, thread; thread = this.childNodes[i]; i++)
-        {
-          var tw = context.measureText(thread.getLegend()).width + LEGEND_BAR_SIZE + 20;
-          if (tw > maxtw)
-            maxtw = tw;
-        }
-
-        var legendColumnCount = Math.floor((WIDTH - LEFT - RIGHT) / maxtw);
-        var legendColumnWidth = (WIDTH - LEFT - RIGHT) / legendColumnCount;
-        var legendRowCount = Math.ceil(this.childNodes.length / legendColumnCount);
-
-        //draw legend
-        BOTTOM += LEGEND_ROW_HEIGHT * legendRowCount; // legend height
-
-        for (var i = 0, thread; thread = this.childNodes[i]; i++)
-        {
-          var lx = Math.round(LEFT + (i % legendColumnCount) * legendColumnWidth);
-          var ly = HEIGHT - BOTTOM + 5 + (Math.ceil((i + 1) / legendColumnCount) - 1) * LEGEND_ROW_HEIGHT;
-
-          context.fillStyle = thread.getColor();// || this.threadColor[i];
-          context.fillRect(lx, ly, LEGEND_BAR_SIZE, LEGEND_BAR_SIZE);
-
-          context.fillStyle = 'black';
-          context.textAlign = 'left';
-          context.fillText(thread.getLegend(), lx + LEGEND_BAR_SIZE + 5, ly + LEGEND_BAR_SIZE / 2 + 3);
-        }
-
-      }
-
-      BOTTOM += this.showXLabels ? 30 : 1; // space for xscale;
-
-      // yscale
-      context.lineWidth = 1;
-      context.fillStyle = 'black';
-      context.textAlign = 'right';
-      var labelStep = (HEIGHT - TOP - BOTTOM) / partCount;
-      for (var i = 0, label; label = y_labels[i]; i++)
-      {
-        var labelY = TOP + Math.round(i * labelStep) + .5;
-
-        context.beginPath();
-        context.moveTo(LEFT + .5, labelY);
-        context.lineTo(WIDTH - RIGHT + .5, labelY);
-        context.strokeStyle = 'rgba(128, 128, 128, .25)';
-        context.stroke();
-        context.closePath();
-
-        context.beginPath();
-        context.moveTo(LEFT + .5 - 3, labelY);
-        context.lineTo(LEFT + .5, labelY);
-        context.strokeStyle = 'black';
-        context.stroke();
-        context.closePath();
-
-        context.fillText(label, LEFT - 6, labelY + 2.5);
-      }
-
-      if (this.showBoundLines)
-      {
-        context.beginPath();
-        context.moveTo(LEFT + .5, TOP);
-        context.lineTo(LEFT + .5, HEIGHT - BOTTOM + .5);
-        context.lineTo(WIDTH - RIGHT + .5, HEIGHT - BOTTOM + .5);
-        context.lineWidth = 1;
-        context.strokeStyle = 'black';
-        context.stroke();
-        context.closePath();
-      }
-
-      // xscale
-      if (this.showXLabels)
-      {
-        var lastLabelPos = 0;
-        var xLabelsX = [];
-        var maxSkipLabelCount = 0;
-        var skipLabelCount = 0;
-        var x;
-        var tw;
-
-        context.font = '10px tahoma';
-        context.textAlign = 'center';
-
-        for (var i = 0; i < cnt; i++)
-        {
-          x = xLabelsX[i] = Math.round(LEFT + i * step + (this.scaleValuesOnEdges ? 0 : step / 2)) + .5;
-          tw = context.measureText(propValues[i]).width;
-
-          if (i == 0 || lastLabelPos + 10 < (x - tw / 2))
-          {
-            maxSkipLabelCount = Math.max(maxSkipLabelCount, skipLabelCount);
-            skipLabelCount = 0;
-
-            lastLabelPos = x + tw / 2;
-          }
-          else
-          {
-            skipLabelCount++;
-          }
-        }
-        skipLabelCount = maxSkipLabelCount
-
-        var skipLabel;
-        var skipScale = skipLabelCount > 10;
-        context.beginPath();
-        for (var i = 0; i < cnt; i++)
-        {
-          x = xLabelsX[i];
-          skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
-
-          if (!skipLabel)
-            context.fillText(propValues[i], x, HEIGHT - BOTTOM + 15);
-
-          if (!skipLabel || !skipScale)
-          {
-            context.moveTo(x, HEIGHT - BOTTOM + .5);
-            context.lineTo(x, HEIGHT - BOTTOM + (skipLabel ? 3 : 5));
-          }
-        }
-        context.lineWidth = 1;
-        context.strokeStyle = 'black';
-        context.stroke();
-        context.closePath();
-      }
-      
-      // Threads
-      var values;
-      for (var i = 0, thread; thread = this.childNodes[i]; i++)
-      {
-        this.drawThread(thread, i, maxValue, LEFT, TOP, step, (HEIGHT - TOP - BOTTOM));
-      }  
-
-      //save graph data
-      Object.extend(this.clientRect, {
-        left: LEFT,
-        top: TOP,
-        width: WIDTH - LEFT - RIGHT,
-        height: HEIGHT - TOP - BOTTOM
-      });
-      this.maxValue = maxValue;
-    },
-    drawThread: function(thread, pos, max, left, top, step, height){
-      var context = this.context;
-
-      if (!this.scaleValuesOnEdges)
+      if (!this.propValuesOnEdges)
         left += step / 2;
 
       this.style.strokeStyle = thread.getColor();// || this.threadColor[i];
@@ -709,75 +870,13 @@ basis.require('basis.ui.canvas');
       context.stroke();
       context.closePath();
       context.restore();
-    },
-    getPropValues: function(){
-      return (this.childNodes[0] && this.childNodes[0].childNodes.map(this.propGetter)) || [];
-    },
-    getMaxValue: function(){
-      var values;
-      var max = 0;
-      
-      for (var i = 0, thread; thread = this.childNodes[i]; i++)
-      {
-        values = thread.getValues();
-        values.push(max);
-        max = Math.max.apply(null, values);
-      }
-
-      return max;
-    },
-    getMinGridValue: function(){
-      return 0;
-    },
-    getMaxGridValue: function(maxValue){
-      return Math.ceil(Math.ceil(maxValue) / Math.pow(10, getDegree(maxValue))) * Math.pow(10, getDegree(maxValue));
-    },
-    getGridPartCount: function(minValue, maxValue){
-      var MIN_PART_COUNT = 5;
-      var MAX_PART_COUNT = 20;
-
-      var count = 1;
-      var canDivide = true;
-      var step;
-      var newVal;
-      var divisionCount = 0;
-
-      var maxDegree = getDegree(maxValue);
-
-      if (maxDegree == 0)
-        return maxValue;
-      
-      while (count < MIN_PART_COUNT && divisionCount <= maxDegree)
-      {
-        for (var i = 2; i <= 5; i++)
-        {
-          step = (maxValue - minValue) / i;
-          newVal = (maxValue - step) / Math.pow(10, maxDegree - divisionCount);
-          if ((newVal - Math.floor(newVal) == 0) && (count*i < MAX_PART_COUNT))
-          {
-            maxValue = minValue + step;
-            count *= i;
-            break;
-          }
-        } 
-
-        divisionCount++;
-      }
-
-      return count;
-    },
-    setStyle: function(newStyle){
-      Object.extend(this.style, Object.slice(newStyle, ['strokeStyle', 'lineWidth']));
-      this.updateCount++;
     }
   });
 
   //
-  // Bar Chart
+  // Bar Graph
   //
 
-  var BAR_WIDTH_PART = 0.7;
-  
   /**
    * @class
    */
@@ -790,11 +889,13 @@ basis.require('basis.ui.canvas');
       var threads = this.owner.childNodes;
       var propValues = this.owner.getPropValues();
             
+      var invertAxis = this.owner.invertAxis; 
       var WIDTH = clientRect.width;
       var HEIGHT = clientRect.height;
 
-      var step = WIDTH / bars[0].length;
-      var barPosition = Math.floor(x / step);
+      var step = (invertAxis ? HEIGHT : WIDTH) / bars[0].length;
+      var position = invertAxis ? HEIGHT - y : x;
+      var barPosition = Math.floor(position / step);
       
       var legendText;
       var hoveredBar;
@@ -848,14 +949,15 @@ basis.require('basis.ui.canvas');
     }
   });
 
+
   /**
    * @class
    */
-  var BarChart = Graph.subclass({
-    className: namespace + '.BarChart',
+  var BarGraph = AxisGraph.subclass({
+    className: namespace + '.BarGraph',
     
     bars: null,
-    scaleValuesOnEdges: false,
+    propValuesOnEdges: false,
 
     satelliteConfig: {
       graphViewer: {
@@ -865,18 +967,14 @@ basis.require('basis.ui.canvas');
 
     drawFrame: function(){
       this.bars = [];
-      Graph.prototype.drawFrame.call(this);
+      AxisGraph.prototype.drawFrame.call(this);
     },
 
-    drawThread: function(thread, pos, max, left, top, step, height){
+    drawThread: function(thread, pos, max, step, left, top, width, height){
       var context = this.context;
 
       var values = thread.getValues();
       var color = thread.getColor();
-
-      var cnt = this.childNodes.length;
-      var barWidth = Math.round(BAR_WIDTH_PART * step / cnt);
-      //var startPosition = step / 2 + 0.15 * step + pos * barWidth;
 
       context.save();
       context.translate(left, top);
@@ -888,14 +986,28 @@ basis.require('basis.ui.canvas');
 
       this.bars[pos] = [];
 
+      var size = this.invertAxis ? width : height;
+      var cnt = this.childNodes.length;
+      var barSize = Math.round(0.7 * step / cnt);
+
       var barX, barY;
-      var barHeight;
+      var barWidth, barHeight;
       for (var i = 0; i < values.length; i++)
       {
-        barHeight = Math.round(height * values[i] / max);
- 
-        barX = Math.round(step / 2 + i * step - barWidth * cnt / 2 + pos * barWidth);
-        barY = height - barHeight;
+        if (this.invertAxis)
+        {
+          barHeight = barSize;
+          barWidth = Math.round(size * values[i] / max);
+          barX = 0;
+          barY = height - Math.round(step / 2 + i * step + barHeight * cnt / 2 - pos * barHeight);
+        }
+        else
+        {
+          barWidth = barSize;
+          barHeight = Math.round(size * values[i] / max);
+          barX = Math.round(step / 2 + i * step - barWidth * cnt / 2 + pos * barWidth);
+          barY = size - barHeight;
+        }
 
         context.fillRect(barX + .5, barY + .5, barWidth, barHeight);
         context.strokeRect(barX + .5, barY + .5, barWidth, barHeight);
@@ -919,10 +1031,8 @@ basis.require('basis.ui.canvas');
   //
 
   basis.namespace(namespace).extend({
-    GraphViewer: GraphViewer,
-    GraphThread: GraphThread,
-    Graph: Graph,
-    BarChart: BarChart
+    LinearGraph: LinearGraph,
+    BarGraph: BarGraph
   });
 
 }(basis);

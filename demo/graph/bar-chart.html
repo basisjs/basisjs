@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Bar Chart</title>
+  <title>Basis Demos: Bar Graph</title>
 
   <style type="text/css" id="demo-css">
     BODY, HTML
@@ -23,7 +23,7 @@
 </head>
 
 <body>
-  <h1>Basis Demos: Bar Chart</h1>
+  <h1>Basis Demos: Bar Graph</h1>
   
   <p id="demo-summary">
     ..
@@ -38,8 +38,7 @@
 
     var DOM = basis.dom;
     var nsEntity = basis.entity;
-    var BarChart = basis.ui.graph.BarChart;
-    var Graph = basis.ui.graph.Graph;
+    var BarGraph = basis.ui.graph.BarGraph;
 
     //
     // Example
@@ -51,7 +50,7 @@
     var lastValue;
     var value;
 
-    Math.seedrandom("barchart");
+    Math.seedrandom("bargraph");
 
     for (var i = 0, countries; country = countries[i]; i++)
     {
@@ -69,9 +68,36 @@
     }
     data = basis.data(data);
 
-    new BarChart({
+    new BarGraph({
       container: DOM.get('demo-container'),
-      width: 800,
+      width: 500,
+      height: 450,
+
+      propGetter: Function.getter('data.Country'),
+
+      childNodes: [
+        {
+          legend: '2010',
+          valueGetter: Function.getter('data[2010]'),
+          childNodes: data
+        },
+        {
+          legend: '2011',
+          valueGetter: Function.getter('data[2011]'),
+          childNodes: data
+        },
+        {
+          legend: '2012',
+          valueGetter: Function.getter('data[2012]'),
+          childNodes: data
+        }
+      ]
+    });
+
+    new BarGraph({
+      invertAxis: true,
+      container: DOM.get('demo-container'),
+      width: 500,
       height: 450,
 
       propGetter: Function.getter('data.Country'),

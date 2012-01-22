@@ -65,7 +65,7 @@
 
     var DOM = basis.dom;
     var nsEntity = basis.entity;
-    var Graph = basis.ui.graph.Graph;
+    var LinearGraph = basis.ui.graph.LinearGraph;
 
     var nsForm = basis.ui.form;
 
@@ -131,7 +131,7 @@
 
     var graphCompanies = new nsEntity.EntitySet({ wrapper: Company });
 
-    new Graph({
+    new LinearGraph({
       container: DOM.get('demo-container'),
       width: 800,
       height: 450,
