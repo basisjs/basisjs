@@ -8,11 +8,13 @@
   .Basis-ScrollTable.FitToContainer
   {
     position: absolute;
+    left: 0;
+    right: 0;
     top: 0;
     bottom: 0;
-    width: 100%;
-    /*height: 200px;*/
-    border: none;
+    margin: -1px;
+    border: 1px solid;
+    border-color: #D5D5D5 #D5D5D5 #E8E8E8 #E8E8E8;
     overflow: hidden;
   }
   .Basis-ScrollTable .Basis-Table
@@ -23,6 +25,8 @@
   .Basis-ScrollTable-TableWrapper
   {
     overflow: hidden;
+    float: left;
+    position: relative;
   }
   .Basis-ScrollTable-ScrollContainer
   {
@@ -49,6 +53,7 @@
   {
     dire2ction: rtl;
     position: relative;
+    margin-top: -1px;
   }
   .Basis-ScrollTable-Header-Container TABLE
   {
@@ -57,6 +62,7 @@
   .Basis-ScrollTable-Footer-Container
   {
     position: relative;
+    margin-top: 1px;
   }
   .Basis-ScrollTable-Header,
   .Basis-ScrollTable-Footer
@@ -83,7 +89,7 @@
     right: 0;
     top: -2px;
     min-width: 100%;
-    background: #F1F2F4 url(../../table/vista/bg.gif) repeat-x;
+    background: #F1F2F4 url(../../table/vista/bg.gif) repeat-x 0 2px;
     border-left: 1px solid #D5D5D5;
     border-bottom: 1px solid #D5D5D5;
   }
@@ -92,6 +98,7 @@
     float: left;
     overflow: scroll;
     visibility: hidden;
+    /*margin-right: -1px;*/
   }
 
   .Basis-ScrollTable-ExpandFooterCell

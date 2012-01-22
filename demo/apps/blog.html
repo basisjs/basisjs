@@ -122,15 +122,27 @@
       cursor: pointer;
       text-decoration: underline;
     }
+    .blog-post__category-link:hover
+    {
+      color: red;
+    }
     .blog-post__tag-list .tag__title
     {
       text-decoration: underline;
       color: #2A80EE;
       cursor: pointer;
     }
-    .blog-post__tag-list .tag:last-child .tag__delim
+    .blog-post__tag-list .tag__title:hover
     {
-      display: none;
+      color: red;
+    }
+    .blog-post__tag-list .tag:after
+    {
+      content: ', ';
+    }
+    .blog-post__tag-list .tag:last-child:after
+    {
+      content: '';
     }
 
     .category-list__header,
@@ -351,7 +363,10 @@
               },
               delegate: Function.$self,
               instanceOf: basis.ui.Container.subclass({
-                template: '<div class="blog-post__tag-list">Tags: <!--{childNodesHere}--></div>',
+                template:
+                  '<div class="blog-post__tag-list">' +
+                    'Tags: <!--{childNodesHere}-->' +
+                  '</div>',
                 templateUpdate: function(object, eventName, delta){
                   this.setChildNodes(this.data.tags.map(function(tag){
                     return {
@@ -360,7 +375,9 @@
                   }));
                 },
                 childClass: basis.ui(
-                  '<span class="tag"><span class="tag__title" event-click="pick">{this_data_title}</span><span class="tag__delim">, </span></span>',
+                  '<span class="tag">' +
+                    '<span class="tag__title" event-click="pick">{this_data_title}</span>' +
+                  '</span>',
                   {
                     action: {
                       pick: function(){
@@ -421,7 +438,7 @@
         localSorting: Function.getter('data.id'),
         localSortingDesc: true,
         localGrouping: {
-          groupGetter: Function.getter('data.id.substr(0,4)'),
+          groupGetter: Function.getter('data.id.substr(0, 4)'),
           localSorting: Function.getter('data.id'),
           localSortingDesc: true,
           childClass: {
@@ -454,8 +471,7 @@
               '<span class="archive-list-item__link" event-click="choose">{title}</span> ({count})' +
             '</li>',
           templateUpdate: function(tmpl, eventName, delta){
-            var p = this.data.id.split('-');
-            tmpl.title.nodeValue = MONTH[p[1] - 1];
+            tmpl.title.nodeValue = MONTH[this.data.id.substr(5) - 1];
             tmpl.count.nodeValue = this.delegate.itemCount;
           },
           action: {

@@ -158,8 +158,9 @@
     });
 
     basis.dom.event.onLoad(function(){
-      container = createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer'));
+      container = createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer[style="outline:red 1px solid"]'));
       table = new ScrollTable({
+        //container: container,
         cssClassName: 'FitToContainer',
         header: { localGrouping: Function.getter('groupId') },
         structure: [
@@ -187,7 +188,7 @@
 
       var container2 = createBlock('table');
       table2 = new ScrollTable({
-        //container: container2,
+        container: container2,
         header: { localGrouping: Function.getter('groupId') },
         structure: [
           { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },

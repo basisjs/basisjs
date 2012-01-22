@@ -53,53 +53,23 @@ basis.require('basis.ui.table');
   // main part
   //
 
-  /* caculate scroll width */
-  var SCROLLBAR_WIDTH = 17;
-  Event.onLoad(function(){
-    var tester = DOM.createElement('');
-    cssom.setStyle(tester, { height: '100px', overflow: 'scroll' });
-    DOM.insert(document.body, tester);
-    SCROLLBAR_WIDTH = (new Box(tester)).width - (new Viewport(tester)).width;
-    DOM.remove(tester);
-  });
-
   function createFooterExpandCell(){
     return DOM.createElement('.Basis-ScrollTable-ExpandFooterCell');
   }
 
-  function adjustCell(cell){
-    var width;
-
-    if (document.defaultView && document.defaultView.getComputedStyle)
-      width = document.defaultView.getComputedStyle(cell.element, null).width;
-    else
-      width = cell.element.clientWidth + 'px';
-
-    cssom.setStyleProperty(cell.boxChangeListener, 'width', width);
-  }
-
-//  var mhtml = '<td style="padding:0;margin:0;border:0;width:auto;height:auto"><div style="border:0;margin:0;padding:0;width:auto;height:auto;position:relative;"><iframe style="border:0;margin:0;padding:0;width:100%;position:absolute;visibility:hidden" event-load="log"></iframe></div></td>';
-//  var measureCell = DOM.createElement('tr');
-//  measureCell.innerHTML = mhtml;
-//  measureCell = measureCell.firstChild;
-
   var measureCell = DOM.createElement('td[style="padding:0;margin:0;border:0;width:auto;height:auto"]',
-                      DOM.createElement('[style="padding:0;margin:0;border:0;width:auto;position:relative;"]',
+                      DOM.createElement('[style="padding:0;margin:0;border:0;width:auto;height:auto;position:relative;"]',
                         DOM.createElement('IFRAME[style="border:0;margin:0;padding:0;width:100%;position:absolute;visibility:hidden"][event-load="log"]')
                       )
                     );
 
-  var expanderCell = DOM.createElement('td[style="padding:0;margin:0;border:0;width:auto;height:auto"]', DOM.createElement('[style="border:0;margin:0;padding:0;width:auto;position:relative;"]'));
-
-  //var src = DOM.createElement('style');
-  //src.innerHTML = 'alert(123)';
-  //console.log(src.outerHTML);
-
+  var expanderCell = DOM.createElement('td[style="padding:0;margin:0;border:0;width:auto;height:auto"]',
+                       DOM.createElement('[style="padding:0;margin:0;border:0;width:auto;height:auto"]')
+                     );
 
  /**
   * @class
   */
-  var srcReplaced = false;
   var ScrollTable = Class(Table, {
     className: namespace + '.ScrollTable',
 
@@ -110,24 +80,25 @@ basis.require('basis.ui.table');
         //'<frame event-load="fireRecalc" src="about:blank" event-load="log"/>' +
         '<div class="Basis-ScrollTable-Header-Container">' +
           '<table{head|headerScroll} class="Basis-ScrollTable-Header"><!--{header}--><!--{headerExpanders}--></table>' +
-          '<div{headerExpandCell} style="overflow: visible;" class="Basis-ScrollTable-ExpandHeaderCell">' +
+          '<div{headerExpandCell} class="Basis-ScrollTable-ExpandHeaderCell">' +
             '<div class="Basis-ScrollTable-ExpandHeaderCell-B1">' +
               '<div class="Basis-ScrollTable-ExpandHeaderCell-B2"/>' +
             '</div>' +
           '</div>'+
         '</div>' +
         '<div{scrollContainer} class="Basis-ScrollTable-ScrollContainer" event-scroll="scroll">' +
-          '<div{xx|tableWrapperElement} class="Basis-ScrollTable-TableWrapper" style="float: left; position: relative">' +
+          '<div{tableWrapperElement} class="Basis-ScrollTable-TableWrapper">' +
             '<table{tableElement|groupsElement} cellspacing="0">' +
               '<!--{shadowHeader}-->' +
               '<!--{measureRow}-->' +
               '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
+              '<!--{shadowFooter}-->' +
             '</table>' +
           '</div>' +
         '</div>' +
         '<div{headerFooterContainer} class="Basis-ScrollTable-Footer-Container">' +
           '<table{foot|footerScroll} class="Basis-ScrollTable-Footer"><!--{footer}--><!--{footerExpanders}--></table>' +
-          '<div{footerExpandCell} style="overflow: visible;" class="Basis-ScrollTable-ExpandFooterCell">' +
+          '<div{footerExpandCell} class="Basis-ScrollTable-ExpandFooterCell">' +
             '<div class="Basis-ScrollTable-ExpandFooterCell-B1">' +
               '<div class="Basis-ScrollTable-ExpandFooterCell-B2"/>' +
             '</div>' +
@@ -173,10 +144,6 @@ basis.require('basis.ui.table');
       Table.prototype.init.call(this, config);
 
       this.requestRelayout = this.requestRelayout.bind(this);
-      this.genericRule = cssom.uniqueRule(this.element);
-      //this.element.appendChild(DOM.createElement('STYLE', '.' + this.genericRule.token + '{border: 5px solid red !important}'));
-
-      //DOM.insert(this.tmpl.head, this.header.element);
 
       var header = this.header;
       var footer = this.footer;
@@ -212,35 +179,23 @@ basis.require('basis.ui.table');
 
       if (footer.useFooter)
       {
-        /*create footer clone*/
-        DOM.insert(this.tmpl.foot, footer.element);
-        this.footerClone = new nsTable.Footer(Object.extend({ 
-          owner: footer.owner,
-          container: this.tmpl.tableElement, 
-          structure: this.structure 
-        }, this.footerConfig));
-
-        
         DOM.replace(this.tmpl.footerExpanders, expanders = expanders.cloneNode(true));
         this.tmpl.footerExpanders = expanders.firstChild;
 
-        cssom.setStyle(this.footerClone.element, { visibility: 'hidden' });
-
-        this.footerBox = new Box(footer.element);
+        this.footerBox = new Box(this.tmpl.foot);
       }
 
       this.tableBox = new Box(this.tmpl.tableElement);
 
       var self = this;
-      layout.addBlockResizeHandler(this.tmpl.xx, function(){
-        self.requestRelayout('xx resize')
+      layout.addBlockResizeHandler(this.tmpl.tableWrapperElement, function(){
+        self.requestRelayout('tableWrapperElement resize')
       });
 
-      //Event.addHandler(this.tmpl.scrollContainer, 'scroll', this.onScroll.bind(this));
-      Event.addHandler(window, 'resize', this.adjust.bind(this));
-      setTimeout(function(){
+      Event.addHandler(window, 'resize', this.requestRelayout);
+      /*setTimeout(function(){
         self.requestRelayout('timer')
-      },1);
+      },1);*/
     },
     onScroll: function(event){
       var scrollLeft = this.tmpl.scrollContainer.scrollLeft;
@@ -252,15 +207,15 @@ basis.require('basis.ui.table');
       }
     },
     requestRelayout: function(name){
-      console.log('request:', name);
-      DOM.get('eventlog').value = (new Date).toFormat('%H:%M:%I.%S') + ' request: ' + name + '\n' + DOM.get('eventlog').value;
+      //console.log('request:', name);
+      //DOM.get('eventlog').value = (new Date).toFormat('%H:%M:%I.%S') + ' request: ' + name + '\n' + DOM.get('eventlog').value;
+
       if (!this.timer_)
         this.timer_ = setTimeout(this.adjust.bind(this), 0);
     },
     adjust: function(event){
       console.log('adjust');
       this.timer_ = clearTimeout(this.timer_);
-      this.onScroll();
 
       var measureRow = this.tmpl.measureRow.firstChild.childNodes;
       for (var i = 0; i < this.columnCount; i++)
@@ -273,44 +228,45 @@ basis.require('basis.ui.table');
           this.tmpl.footerExpanders.childNodes[i].firstChild.style.width = w + 'px';
       }
 
-      var headerClone = this.header.element.cloneNode(true)
-      var headerOuterHTML = DOM.createElement('', headerClone).innerHTML;
-      var yy;
+      var headerOuterHTML = DOM.outerHTML(this.header.element);
 
       if (this.headerHtml_ != headerOuterHTML)
       {
-        console.log('update header');
+        //console.log('update header');
         this.headerHtml_ = headerOuterHTML;
-        DOM.replace(this.tmpl.shadowHeader, headerClone);
-        this.tmpl.shadowHeader = headerClone;
+        DOM.replace(this.tmpl.shadowHeader, this.tmpl.shadowHeader = this.header.element.cloneNode(true));
       }
 
       /*recalc table width*/
       this.tableBox.recalc();
-      var tableWidth = this.tableBox.width || 0;
-
-      var exp = this.tmpl.headerExpandCell;
-      exp.style.left = tableWidth + 'px';
-
-      /*recalc header heights*/
       this.headerBox.recalc();
+
+      var tableWidth = this.tableBox.width || 0;
       var headerHeight = this.headerBox.height || 0;
       var footerHeight = 0;
 
-      cssom.setStyleProperty(this.tmpl.tableElement, 'marginTop', -headerHeight + 'px');
-
       /*recalc footer heights*/
-      if (this.footerClone)
+      if (this.footer.useFooter)
       {
+        var footerOuterHTML = DOM.outerHTML(this.footer.element);
+
+        if (this.footerHtml_ != footerOuterHTML)
+        {
+          //console.log('update footer');
+          this.footerHtml_ = footerOuterHTML;
+          DOM.replace(this.tmpl.shadowFooter, this.tmpl.shadowFooter = this.footer.element.cloneNode(true));
+        }
+
         this.footerBox.recalc();
         footerHeight = this.footerBox.height;
-
-        cssom.setStyleProperty(this.tmpl.tableElement, 'marginBottom', -footerHeight + 'px');
 
         this.tmpl.footerExpandCell.style.left = tableWidth + 'px';
       }
 
-      cssom.setStyleProperty(this.element, 'paddingBottom', (headerHeight + footerHeight) + 'px');
+      this.tmpl.headerExpandCell.style.left = tableWidth + 'px';
+
+      cssom.setStyleProperty(this.tmpl.tableElement, 'margin', '-{0}px 0 -{1}px'.format(headerHeight, footerHeight));
+      cssom.setStyleProperty(this.element, 'paddingBottom', (headerHeight + footerHeight + 1) + 'px');
     },
     destroy: function(){
       this.timer_ = clearTimeout(this.timer_);
