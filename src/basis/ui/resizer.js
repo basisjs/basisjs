@@ -152,7 +152,7 @@ basis.require('basis.ui');
     }
   }
 
-  var resizerDisableRule = cssom.cssRule('IFRAME');
+  var resizerDisableRule = cssom.createRule('IFRAME');
 
   var PROPERTY_DELTA = {
     width: 'deltaX',/*
@@ -192,6 +192,8 @@ basis.require('basis.ui');
       }
 
       resizerDisableRule.setProperty('pointerEvents', 'none'); // disable iframes to catch mouse events
+      this.cursorOverloadRule_ = cssom.createRule('*');
+      this.cursorOverloadRule_.setProperty('cursor', this.cursor + ' !important');
     },
     event_start: function(cfg){
       super_.event_start.call(this, cfg);
@@ -259,6 +261,9 @@ basis.require('basis.ui');
 
       classList(this.resizer).remove('selected');
       resizerDisableRule.setProperty('pointerEvents', 'auto');
+
+      this.cursorOverloadRule_.destroy();
+      this.cursorOverloadRule_ = null;
     },
 
    /**
@@ -266,7 +271,8 @@ basis.require('basis.ui');
     */
     init: function(config){
       this.resizer = DOM.createElement('.Basis-Resizer');
-      this.resizer.style.cursor = PROPERTY_CURSOR[this.property][1];
+      this.cursor = PROPERTY_CURSOR[this.property][1];
+      this.resizer.style.cursor = this.cursor;
       
       super_.init.call(this, config);
     },
@@ -281,6 +287,15 @@ basis.require('basis.ui');
           DOM.remove(this.resizer);
         if (this.element)
           DOM.insert(this.element, this.resizer);
+      }
+    },
+    destroy: function(){
+      super_.destroy.call(this);
+
+      if (this.cursorOverloadRule_)
+      {
+        this.cursorOverloadRule_.destroy();
+        this.cursorOverloadRule_ = null;
       }
     }
   }});

@@ -29,7 +29,7 @@
       margin: 0 0 .5em 10px;
       overflow: hidden;
       position: relative;
-      width: 75%;
+      width: 45%;
       float: left;
     }
     .DemoBlock H2
@@ -80,7 +80,7 @@
     ..
   </div>
 
-  <div id="demo-container"><textarea id="eventlog" style="position: fixed; bottom: 0; right: 20px; height: 50%; width: 50%; z-index: 1000"></textarea></div>
+  <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
 
@@ -113,7 +113,7 @@
       ['Boeing Co.',                          75.43, 0.53,  0.71,  '2010/9/1 12:00'],
       ['Caterpillar Inc.',                    67.27, 0.92,  1.39,  '2010/9/1 12:00'],
       ['Citigroup, Inc.',                     49.37, 0.02,  0.04,  '2010/9/1 12:00'],
-      ['E.I. du Pont de Nemours and  fsfds dffd 3423424 243 234', 40.48, 0.51,  1.28,  '2010/9/1 12:00'],
+      ['E.I. du Pont de Nemours',             40.48, 0.51,  1.28,  '2010/9/1 12:00'],
       ['Exxon Mobil Corp',                    68.1,  -0.43, -0.64, '2010/9/1 12:00'],
       ['General Electric Company',            34.14, -0.08, -0.23, '2010/9/1 12:00'],
       ['General Motors Corporation',          30.27, 1.09,  3.74,  '2010/9/1 12:00'],
@@ -146,9 +146,9 @@
     });
 
     new Table({
-      //container: createBlock('table'),
+      container: createBlock('table'),
       structure: [
-        { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
+        { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title'), autosorting: true },
         { header: 'Price', body: Function.getter('data.price', '${0:.2}'), autosorting: true, sorting: Function.getter('data.price') },
         { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
         { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
@@ -158,14 +158,15 @@
     });
 
     basis.dom.event.onLoad(function(){
-      container = createBlock('table').appendChild(basis.dom.createElement('.scrollTableContainer[style="outline:red 1px solid"]'));
+      container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));
       table = new ScrollTable({
+        selection: {multiple:true},
         //container: container,
         cssClassName: 'FitToContainer',
         header: { localGrouping: Function.getter('groupId') },
         structure: [
           { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
-          { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },
+          { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: { content: 'footer' } },
           { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
           { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
           { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
@@ -186,7 +187,7 @@
       });
 
 
-      var container2 = createBlock('table');
+      var container2 = createBlock('basis.ui.scrolltable.ScrollTable');
       table2 = new ScrollTable({
         container: container2,
         header: { localGrouping: Function.getter('groupId') },
@@ -202,10 +203,10 @@
 
     })
 
-    basis.dom.insert('demo-container', basis.dom.createElement('button', 'asfd')).onclick = function(){
+    basis.dom.insert('demo-container', basis.dom.createElement('button', 'remove')).onclick = function(){
       basis.dom.remove(table.element);
     };
-    basis.dom.insert('demo-container', basis.dom.createElement('button', 'asfd')).onclick = function(){
+    basis.dom.insert('demo-container', basis.dom.createElement('button', 'insert')).onclick = function(){
       basis.dom.insert(container, table.element);
     };
 

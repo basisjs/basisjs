@@ -531,12 +531,12 @@ basis.require('basis.ui');
 
   var stackPanelId = 0;
 
-  var VerticalPanelRule = cssom.cssRule('.Basis-VerticalPanel');
+  var VerticalPanelRule = cssom.createRule('.Basis-VerticalPanel');
   VerticalPanelRule.setStyle({
     position: 'relative'
   });
 
-  var VerticalPanelStackRule = cssom.cssRule('.Basis-VerticalPanelStack');
+  var VerticalPanelStackRule = cssom.createRule('.Basis-VerticalPanelStack');
   VerticalPanelStackRule.setStyle({
     overflow: 'hidden'
   });
@@ -642,7 +642,7 @@ basis.require('basis.ui');
 
       var element = this.element;
       var lastElement = this.lastChild.element;
-     var ruller = this.tmpl.ruller;
+      var ruller = this.tmpl.ruller;
 
       var lastBox = new Box(lastElement, false, element);
       var bottom = (lastBox.bottom - getComputedProperty(element, 'paddingTop') - getComputedProperty(element, 'borderTopWidth')) || 0;
@@ -677,6 +677,12 @@ basis.require('basis.ui');
 
       if (flexNodeCount)
         this.cssRule.setProperty('height', Math.max(0, flexHeight/flexNodeCount) + 'px');
+    },
+    destroy: function(){
+      UIContainer.prototype.destroy.call(this);
+
+      this.cssRule.destroy();
+      this.cssRule = null;
     }
   });
 

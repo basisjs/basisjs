@@ -61,7 +61,7 @@ basis.require('basis.ui');
   // Table header
   //
 
-  var HEADERCELL_CSS_SORTABLE = 'sortable';
+  var HEADERCELL_CSS_SORTABLE = 'Basis-Table-Header-SortableCell';
   var HEADERCELL_CSS_SORTDESC = 'sort-order-desc';
 
  /**
@@ -194,7 +194,7 @@ basis.require('basis.ui');
     groupId: 0,
 
     template:
-      '<th{selected} class="Basis-Table-Header-Cell" event-click="click">' +
+      '<th{selected} class="Basis-Table-Header-Cell" event-click="sort">' +
         '<div class="Basis-Table-Sort-Direction"/>' +
         '<div class="Basis-Table-Header-Cell-Content">' + 
           '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
@@ -202,7 +202,7 @@ basis.require('basis.ui');
       '</th>',
 
     action: {
-      click: function(event){
+      sort: function(event){
         if (this.selected)
         {
           var owner = this.parentNode && this.parentNode.owner;
@@ -253,8 +253,7 @@ basis.require('basis.ui');
     localGroupingClass: HeaderGroupingNode,
 
     template:
-      '<thead class="Basis-Table-Header">' +
-        '<tr{groupsElement} class="Basis-Table-Header-GroupContent />' +
+      '<thead{groupsElement} class="Basis-Table-Header">' +
         '<tr{childNodesElement|content}/>' +
       '</thead>',
 
@@ -313,7 +312,7 @@ basis.require('basis.ui');
           config.cssClassName = (headerConfig.cssClassName || '') + ' ' + (colConfig.cssClassName || '');
           
           if (!autosorting)
-            autosorting = config.selected = config.sorting && config.autosorting;
+            autosorting = config.selected = config.sorting && colConfig.autosorting;
 
           cells.push(config);
         };
@@ -474,9 +473,12 @@ basis.require('basis.ui');
     template:
       '<tbody class="Basis-Table-Body">' +
         '<tr class="Basis-Table-GroupHeader" event-click="click">' +
-          '<td{content} colspan="100"><span class="expander"/>{titleText}</td>'+ 
+          '<td colspan="100">' +
+            '<span class="expander"/>' +
+            '<span{content} class="Basis-Table-GroupHeader-Title">{titleText}</span>' +
+          '</td>'+ 
         '</tr>' +
-        '<!-- {childNodesHere} -->' +
+        '<!--{childNodesHere}-->' +
       '</tbody>',
 
     action: {
@@ -494,10 +496,10 @@ basis.require('basis.ui');
     
     childClass: Row,
 
-    localGroupingClass: Class(UIGroupingNode, {
+    localGroupingClass: {
       className: namespace + '.TableGroupingNode',
       childClass: Body
-    }),
+    },
 
     template:
       '<table{groupsElement} class="Basis-Table" cellspacing="0">' +

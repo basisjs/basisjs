@@ -4,6 +4,11 @@
     position: relative;
     overflow: hidden;
   }
+  .Basis-ScrollTable-ContentTable
+  {
+    border-spacing: 0;
+    empty-cells: show;
+  }
 
   .Basis-ScrollTable.FitToContainer
   {
@@ -17,7 +22,7 @@
     border-color: #D5D5D5 #D5D5D5 #E8E8E8 #E8E8E8;
     overflow: hidden;
   }
-  .Basis-ScrollTable .Basis-Table
+  .Basis-ScrollTable-ContentTable
   {
     border-left: none;
     border-bottom: none;
@@ -37,18 +42,6 @@
   }
   
   /* head, foot*/
-  .Basis-ScrollTable-HeaderFooterContainer
-  {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-  }
-  .Basis-ScrollTable-HeaderFooterContainer TABLE
-  {
-    width: auto !important;
-  }
   .Basis-ScrollTable-Header-Container
   {
     dire2ction: rtl;
@@ -68,6 +61,7 @@
   .Basis-ScrollTable-Footer
   {
     border-spacing: 0;
+    empty-cells: show;
     position: relative;
   }
 
@@ -126,16 +120,4 @@
     float: left;
     overflow: scroll;
     visibility: hidden;
-  }
-
-  .Basis-ScrollTable .Basis-ScrollTable-ExpandCell-Content
-  {
-    position: relative;
-    top: 2px;
-    border-top: 1px solid #D5D5D5;
-  }
-
-  .Basis-ScrollTable TD.Basis-Table-Footer-Cell
-  {
-    background-color: white;
   }

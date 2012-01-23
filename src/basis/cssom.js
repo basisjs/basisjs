@@ -61,8 +61,8 @@ basis.require('basis.dom.event');
   // shortcut
   //
   
-  function cssRule(selector, styleSheet){
-    return getStyleSheet(styleSheet, true).getRule(selector, true);
+  function createRule(selector, styleSheet){
+    return getStyleSheet(styleSheet, true).createRule(selector);
   }
 
   function isPropertyImportant(style, property){
@@ -82,7 +82,7 @@ basis.require('basis.dom.event');
     if (element)
       classList(element).add(token);
 
-    var result = cssRule('.' + token);
+    var result = createRule('.' + token);
     result.token = token;
 
     return result;
@@ -148,7 +148,7 @@ basis.require('basis.dom.event');
   * Returns generic stylesheet by it's id.
   * @param {string=} id
   * @param {boolean=} createIfNotExists
-  * @return {basis.cssom.CssStyleSheetWrapper}
+  * @return {basis.cssom.StyleSheet}
   */
   function getStyleSheet(id, createIfNotExists){
     if (!id)
@@ -156,7 +156,7 @@ basis.require('basis.dom.event');
 
     if (!cssStyleSheets[id])
       if (createIfNotExists)
-        cssStyleSheets[id] = new CssStyleSheetWrapper(addStyleSheet())
+        cssStyleSheets[id] = new StyleSheet(addStyleSheet())
 
     return cssStyleSheets[id];
   }
@@ -314,8 +314,8 @@ basis.require('basis.dom.event');
  /**
   * @class
   */
-  var CssStyleSheetWrapper = Class(null, {
-    className: namespace + '.CssStyleSheetWrapper',
+  var StyleSheet = Class(null, {
+    className: namespace + '.StyleSheet',
 
    /**
     * Wrapped stylesheet
@@ -324,7 +324,7 @@ basis.require('basis.dom.event');
     styleSheet: null,
 
    /**
-    * @type {Array.<CssRuleWrapper|CssRuleWrapperSet>}
+    * @type {Array.<Rule|RuleSet>}
     */
     rules: null,
 
@@ -335,64 +335,65 @@ basis.require('basis.dom.event');
     init: function(styleSheet){
       this.styleSheet = styleSheet;
       this.rules = [];
-      this.map_ = {};
     },
 
    /**
     * @param {string} selector
-    * @param {boolean=} createIfNotExists
-    * @return {CssRuleWrapper|CssRuleWrapperSet}
+    * @return {Rule|RuleSet}
     */
-    getRule: function(selector, createIfNotExists){
-      if (!this.map_[selector])
-      {
-        if (createIfNotExists)
-        {
-          var styleSheet = this.styleSheet;
-          var index = this.rules.length;
-          var newIndex = styleSheet.insertRule(selector + '{}', index);
+    createRule: function(selector){
+      var styleSheet = this.styleSheet;
+      var index = this.rules.length;
+      var newIndex = styleSheet.insertRule(selector + '{}', index);
+      var cssRules = Array.from(styleSheet.cssRules, index);
 
-          for (var i = index; i <= newIndex; i++)
-            this.rules.push(new CssRuleWrapper(styleSheet.cssRules[i]));
+      var ruleWrapper = cssRules[1]
+        ? new RuleSet(cssRules, this)
+        : new Rule(cssRules[0], this);
 
-          this.map_[selector] = index != newIndex ? new CssRuleWrapperSet(this.rules.splice(index)) : this.rules[index];
-        }
-      }
+      this.rules.push.apply(this.rules, ruleWrapper.rules || [ruleWrapper]);
 
-      return this.map_[selector];
+      return ruleWrapper;
     },
 
    /**
-    * @param {string} selector
+    * @param {Rule|RuleSet} rule
     */
-    deleteRule: function(selector){
-      var rule = this.map_[selector];
-      if (rule)
+    deleteRule: function(rule){
+      if (rule instanceof RuleSet)
+        rule.rules.forEach(this.deleteRule, this);
+      else
       {
-        var rules = rule.rules || [rule];
-        for (var i = 0; i < rules.length; i++)
+        var ruleIndex = this.rules.indexOf(rule);
+        if (ruleIndex != -1)
         {
-          var ruleIndex = this.rules.indexOf(rules[i]);
-          this.stylesheet.deleteRule(ruleIndex);
           this.rules.splice(ruleIndex, 1);
+          this.styleSheet.deleteRule(ruleIndex);
         }
-        delete this.map_[selector];
       }
+
+      rule.owner = null;
+      rule.destroy();
     },
 
    /**
     * @destructor
     */
     destroy: function(){
-      delete this.rules;
+      this.rules.forEach(function(item){
+        item.destroy();
+      });
+
+      this.styleSheet = null;
+      this.rules = null;
     }
   });
 
  /**
   * @class
   */
-  var CssRuleWrapper = Class(null, {
-    className: namespace + '.CssRuleWrapper',
+  var Rule = Class(null, {
+    className: namespace + '.Rule',
 
    /**
     * type {CSSRule}
@@ -408,12 +409,10 @@ basis.require('basis.dom.event');
     * @param {CSSRule} rule
     * @contructor
     */
-    init: function(rule){
-      if (rule)
-      {
-        this.rule = rule;
-        this.selector = rule.selectorText;
-      }
+    init: function(rule, owner){
+      this.owner = owner;
+      this.rule = rule;
+      this.selector = rule.selectorText;
     },
 
    /**
@@ -475,35 +474,65 @@ basis.require('basis.dom.event');
     * @destructor
     */
     destroy: function(){
-      delete this.rule;
+      if (this.owner)
+        this.owner.deleteRule(this);
+
+      this.owner = null;
+      this.rule = null;
     }
   });
 
  /**
   * @class
   */
-  var CssRuleWrapperSet = Class(null, {
-    className: namespace + '.CssRuleWrapperSet',
+  var RuleSet = Class(null, {
+    className: namespace + '.RuleSet',
 
    /**
-    * @type {Array.<CssRuleWrapper>}
+    * @type {Array.<Rule>}
     */
     rules: null,
 
    /**
-    * @param {Array.<CssRuleWrapper>} rules
+    * @param {Array.<Rule>} rules
     * @constructor
     */
-    init: function(rules){
-      this.rules = rules;
+    init: function(rules, owner){
+      this.owner = owner;
+      this.rules = rules.map(function(){
+        return new Rule(rule, this);
+      }, this);
     },
+
+    createRule: function(selector){
+      var rule = this.owner.createRule(selector);
+      this.rules.push(rule);
+      rule.owner = this;
+      return rule;
+    },
+
+    deleteRule: function(rule){
+      var ruleIndex = this.rules.indexOf(rule);
+      if (ruleIndex != -1)
+      {
+        this.rules.splice(ruleIndex, 1);
+        this.owner.deleteRule(rule);
+      }
+    },
+
+   /**
+    */
     destroy: function(){
-      delete this.rules;
+      if (this.owner)
+        this.owner.deleteRule(this);
+
+      this.owner = null;
+      this.rules = null;
     }
   });
 
   ['setProperty', 'setStyle', 'clear'].forEach(function(method){
-    CssRuleWrapperSet.prototype[method] = function(){
+    RuleSet.prototype[method] = function(){
       for (var rule, i = 0; rule = this.rules[i]; i++)
         rule[method].apply(rule, arguments);
     }
@@ -722,14 +751,14 @@ basis.require('basis.dom.event');
 
     // rule and stylesheet interfaces
     uniqueRule: uniqueRule,
-    cssRule: cssRule,
+    createRule: createRule,
     getStyleSheet: getStyleSheet,
     addStyleSheet: addStyleSheet,
 
     // classes
-    CssStyleSheetWrapper: CssStyleSheetWrapper,
-    CssRuleWrapper: CssRuleWrapper,
-    CssRuleWrapperSet: CssRuleWrapperSet
+    StyleSheet: StyleSheet,
+    Rule: Rule,
+    RuleSet: RuleSet
   }).extend(unitFunc);
 
 }(basis, this);

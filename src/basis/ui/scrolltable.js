@@ -9,6 +9,7 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  *
  * @author
+ * Roman Dvornov <rdvornov@gmail.com>
  * Vladimir Ratsev <wuzykk@gmail.com>
  *
  */
@@ -37,35 +38,46 @@ basis.require('basis.ui.table');
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var Event = basis.dom.event;
+  var sender = basis.dom.event.sender;
 
   var cssom = basis.cssom;
-  var TimeEventManager = basis.timer.TimeEventManager;
   var Table = basis.ui.table.Table;
-  var Box = basis.layout.Box;
-  var Viewport = basis.layout.Viewport;
   var layout = basis.layout;
-
-  var nsTable = basis.ui.table;
 
 
   //
   // main part
   //
 
-  function createFooterExpandCell(){
-    return DOM.createElement('.Basis-ScrollTable-ExpandFooterCell');
+  function resetStyle(extraStyle){
+    return '[style="padding:0;margin:0;border:0;width:auto;height:0;font-size:0;' + (extraStyle || '') + '"]';
   }
 
-  var measureCell = DOM.createElement('td[style="padding:0;margin:0;border:0;width:auto;height:auto"]',
-                      DOM.createElement('[style="padding:0;margin:0;border:0;width:auto;height:auto;position:relative;"]',
-                        DOM.createElement('IFRAME[style="border:0;margin:0;padding:0;width:100%;position:absolute;visibility:hidden"][event-load="log"]')
-                      )
-                    );
+  function buildCellsSection(owner, property){
+    return DOM.createElement('tbody' + resetStyle(),
+      DOM.createElement('tr' + resetStyle(),
+        owner.columnWidthSync_.map(Function.getter(property))
+      )
+    );
+  }
 
-  var expanderCell = DOM.createElement('td[style="padding:0;margin:0;border:0;width:auto;height:auto"]',
-                       DOM.createElement('[style="padding:0;margin:0;border:0;width:auto;height:auto"]')
-                     );
+  function replaceTemplateNode(owner, refName, newNode){
+    DOM.replace(owner.tmpl[refName],
+      owner.tmpl[refName] = newNode
+    );
+  }
+
+  // Cells proto
+  var measureCell = DOM.createElement('td' + resetStyle(),
+    DOM.createElement(resetStyle('position:relative'),
+      DOM.createElement('iframe[event-load="measureInit"]' + resetStyle('width:100%;position:absolute;visibility:hidden'))
+    )
+  );
+
+  var expanderCell = DOM.createElement('td' + resetStyle(),
+    DOM.createElement(resetStyle())
+  );
+
 
  /**
   * @class
@@ -73,13 +85,23 @@ basis.require('basis.ui.table');
   var ScrollTable = Class(Table, {
     className: namespace + '.ScrollTable',
 
-    scrollLeft_: 0,
+    timer_: false,
 
+   /**
+    * Column width sync cells
+    */
+    columnWidthSync_: null,
+
+   /**
+    * @inheritDoc
+    */
     template:
-      '<div{element} class="Basis-Table Basis-ScrollTable">' +
-        //'<frame event-load="fireRecalc" src="about:blank" event-load="log"/>' +
+      '<div class="Basis-Table Basis-ScrollTable" event-load="">' +
         '<div class="Basis-ScrollTable-Header-Container">' +
-          '<table{head|headerScroll} class="Basis-ScrollTable-Header"><!--{header}--><!--{headerExpanders}--></table>' +
+          '<table{headerOffset} class="Basis-ScrollTable-Header" cellspacing="0">' +
+            '<!--{header}-->' +
+            '<!--{headerExpandRow}-->' +
+          '</table>' +
           '<div{headerExpandCell} class="Basis-ScrollTable-ExpandHeaderCell">' +
             '<div class="Basis-ScrollTable-ExpandHeaderCell-B1">' +
               '<div class="Basis-ScrollTable-ExpandHeaderCell-B2"/>' +
@@ -87,17 +109,20 @@ basis.require('basis.ui.table');
           '</div>'+
         '</div>' +
         '<div{scrollContainer} class="Basis-ScrollTable-ScrollContainer" event-scroll="scroll">' +
-          '<div{tableWrapperElement} class="Basis-ScrollTable-TableWrapper">' +
-            '<table{tableElement|groupsElement} cellspacing="0">' +
+          '<div{boundElement} class="Basis-ScrollTable-TableWrapper">' +
+            '<table{tableElement|groupsElement} class="Basis-ScrollTable-ContentTable" cellspacing="0">' +
               '<!--{shadowHeader}-->' +
               '<!--{measureRow}-->' +
-              '<tbody{content|childNodesElement} class="Basis-Table-Body"></tbody>' +
+              '<tbody{content|childNodesElement} class="Basis-Table-Body"/>' +
               '<!--{shadowFooter}-->' +
             '</table>' +
           '</div>' +
         '</div>' +
-        '<div{headerFooterContainer} class="Basis-ScrollTable-Footer-Container">' +
-          '<table{foot|footerScroll} class="Basis-ScrollTable-Footer"><!--{footer}--><!--{footerExpanders}--></table>' +
+        '<div class="Basis-ScrollTable-Footer-Container">' +
+          '<table{footerOffset} class="Basis-ScrollTable-Footer" cellspacing="0">' +
+            '<!--{footer}-->' +
+            '<!--{footerExpandRow}-->' +
+          '</table>' +
           '<div{footerExpandCell} class="Basis-ScrollTable-ExpandFooterCell">' +
             '<div class="Basis-ScrollTable-ExpandFooterCell-B1">' +
               '<div class="Basis-ScrollTable-ExpandFooterCell-B2"/>' +
@@ -107,25 +132,17 @@ basis.require('basis.ui.table');
       '</div>',
 
     action: {
-      fireRecalc: function(event){
-        this.requestRelayout('fireRecalc');
-      },
       scroll: function(){
-        this.onScroll();
-      },
-      log: function(event){
-        console.log('event:', event.type);
+        var scrollLeft = -this.tmpl.scrollContainer.scrollLeft + 'px';
 
-        var sender = basis.dom.event.sender(event);
-        var self = this;
-        if (event.type == 'load')
+        if (this.tmpl.headerOffset.style.left != scrollLeft)
         {
-          sender.contentWindow.onresize = function(){
-            console.log('iframe resize');
-            self.requestRelayout('onresize')
-          }
+          this.tmpl.headerOffset.style.left = scrollLeft;
+          this.tmpl.footerOffset.style.left = scrollLeft;
         }
-        this.requestRelayout('onload');
+      },
+      measureInit: function(event){
+        (sender(event).contentWindow.onresize = this.requestRelayout)();
       }
     },
 
@@ -134,142 +151,136 @@ basis.require('basis.ui.table');
         childNode: {
           '*': function(event){
             if (this.owner)
-              this.owner.requestRelayout('header.ChildNode ' + event.type);
+              this.owner.requestRelayout();
           }
         }
       }
     },
 
+   /**
+    * @inheritDoc
+    */
     init: function(config){
+      this.requestRelayout = this.requestRelayout.bind(this);
+      this.relayout = this.relayout.bind(this);
+
+      // inherit
       Table.prototype.init.call(this, config);
 
-      this.requestRelayout = this.requestRelayout.bind(this);
-
-      var header = this.header;
-      var footer = this.footer;
-
-      header.addHandler({
-        '*': function(){
-          //console.log('adjust');
-          this.requestRelayout('header ' + event.type);
-        }
+      // add request to relayout on any header events
+      this.header.addHandler({
+        '*': this.requestRelayout
       }, this);
 
-      DOM.replace(this.tmpl.measureRow,
-        this.tmpl.measureRow = DOM.createElement('tbody',
-          DOM.createElement('tr',
-            Array.create(this.columnCount, function(){
-              return measureCell.cloneNode(true);
-            })
-          )
-        )
-      );
-
-      var expanders = DOM.createElement('tbody',
-        DOM.createElement('tr',
-          Array.create(this.columnCount, function(){
-            return expanderCell.cloneNode(true);
-          })
-        )
-      );
-      DOM.replace(this.tmpl.headerExpanders, expanders);
-      this.tmpl.headerExpanders = expanders.firstChild;
-
-      this.headerBox = new Box(this.tmpl.head);
-
-      if (footer.useFooter)
-      {
-        DOM.replace(this.tmpl.footerExpanders, expanders = expanders.cloneNode(true));
-        this.tmpl.footerExpanders = expanders.firstChild;
-
-        this.footerBox = new Box(this.tmpl.foot);
-      }
-
-      this.tableBox = new Box(this.tmpl.tableElement);
-
-      var self = this;
-      layout.addBlockResizeHandler(this.tmpl.tableWrapperElement, function(){
-        self.requestRelayout('tableWrapperElement resize')
+      // column width sync cells
+      this.columnWidthSync_ = Array.create(this.columnCount, function(){
+        return {
+          measure: measureCell.cloneNode(true),
+          header: expanderCell.cloneNode(true),
+          footer: expanderCell.cloneNode(true)
+        }
       });
 
-      Event.addHandler(window, 'resize', this.requestRelayout);
-      /*setTimeout(function(){
-        self.requestRelayout('timer')
-      },1);*/
-    },
-    onScroll: function(event){
-      var scrollLeft = this.tmpl.scrollContainer.scrollLeft;
-      if (this.scrollLeft_ != scrollLeft)
-      {
-        this.scrollLeft_ = scrollLeft;
-        cssom.setStyleProperty(this.tmpl.headerScroll, 'left', -scrollLeft + 'px');
-        cssom.setStyleProperty(this.tmpl.footerScroll, 'left', -scrollLeft + 'px');
-      }
-    },
-    requestRelayout: function(name){
-      //console.log('request:', name);
-      //DOM.get('eventlog').value = (new Date).toFormat('%H:%M:%I.%S') + ' request: ' + name + '\n' + DOM.get('eventlog').value;
+      // insert measure row
+      replaceTemplateNode(this, 'measureRow', buildCellsSection(this, 'measure'));
 
+      // insert header expander row
+      replaceTemplateNode(this, 'headerExpandRow', buildCellsSection(this, 'header'));
+
+      // insert footer expander row
+      replaceTemplateNode(this, 'footerExpandRow', buildCellsSection(this, 'footer'));
+
+      //
+      layout.addBlockResizeHandler(this.tmpl.boundElement, this.requestRelayout);
+
+      // hack for ie, trigger relayout on 
+      if (basis.ua.is('IE9-')) // TODO: remove this hack
+        setTimeout(this.requestRelayout, 1);
+    },
+
+   /**
+    * Notify table that it must be relayout.
+    */
+    requestRelayout: function(){
       if (!this.timer_)
-        this.timer_ = setTimeout(this.adjust.bind(this), 0);
+        this.timer_ = setTimeout(this.relayout, 0);
     },
-    adjust: function(event){
-      console.log('adjust');
-      this.timer_ = clearTimeout(this.timer_);
 
-      var measureRow = this.tmpl.measureRow.firstChild.childNodes;
-      for (var i = 0; i < this.columnCount; i++)
+   /**
+    * Make relayout of table. Should never be used in common cases. Call requestRelayout instead.
+    */
+    relayout: function(){
+      //console.log('relayout');
+
+      var headerElement = this.header.element;
+      var footerElement = this.footer.element;
+
+      //
+      // Sync header html
+      //
+      var headerOuterHTML = DOM.outerHTML(headerElement);
+      if (this.shadowHeaderHTML_ != headerOuterHTML)
       {
-        var cell = measureRow[i].firstChild;
-        var w = cell.offsetWidth;
-
-        this.tmpl.headerExpanders.childNodes[i].firstChild.style.width = w + 'px';
-        if (this.tmpl.footerExpanders)
-          this.tmpl.footerExpanders.childNodes[i].firstChild.style.width = w + 'px';
+        this.shadowHeaderHTML_ = headerOuterHTML;
+        replaceTemplateNode(this, 'shadowHeader', headerElement.cloneNode(true));
       }
 
-      var headerOuterHTML = DOM.outerHTML(this.header.element);
-
-      if (this.headerHtml_ != headerOuterHTML)
-      {
-        //console.log('update header');
-        this.headerHtml_ = headerOuterHTML;
-        DOM.replace(this.tmpl.shadowHeader, this.tmpl.shadowHeader = this.header.element.cloneNode(true));
-      }
-
-      /*recalc table width*/
-      this.tableBox.recalc();
-      this.headerBox.recalc();
-
-      var tableWidth = this.tableBox.width || 0;
-      var headerHeight = this.headerBox.height || 0;
-      var footerHeight = 0;
-
-      /*recalc footer heights*/
+      //
+      // Update footer
+      //
       if (this.footer.useFooter)
       {
-        var footerOuterHTML = DOM.outerHTML(this.footer.element);
-
-        if (this.footerHtml_ != footerOuterHTML)
+        //
+        // Sync footer html
+        //
+        var footerOuterHTML = DOM.outerHTML(footerElement);
+        if (this.shadowFooterHtml_ != footerOuterHTML)
         {
-          //console.log('update footer');
-          this.footerHtml_ = footerOuterHTML;
-          DOM.replace(this.tmpl.shadowFooter, this.tmpl.shadowFooter = this.footer.element.cloneNode(true));
+          this.shadowFooterHtml_ = footerOuterHTML;
+          replaceTemplateNode(this, 'shadowFooter', footerElement.cloneNode(true));
         }
-
-        this.footerBox.recalc();
-        footerHeight = this.footerBox.height;
-
-        this.tmpl.footerExpandCell.style.left = tableWidth + 'px';
       }
 
-      this.tmpl.headerExpandCell.style.left = tableWidth + 'px';
+      //
+      // Sync column width
+      //
+      for (var i = 0, column, columnWidth; column = this.columnWidthSync_[i]; i++)
+      {
+        columnWidth = column.measure.offsetWidth + 'px';
+        column.header.firstChild.style.width = columnWidth;
+        column.footer.firstChild.style.width = columnWidth;
+      }
 
-      cssom.setStyleProperty(this.tmpl.tableElement, 'margin', '-{0}px 0 -{1}px'.format(headerHeight, footerHeight));
-      cssom.setStyleProperty(this.element, 'paddingBottom', (headerHeight + footerHeight + 1) + 'px');
+      //
+      // Calc metrics boxes
+      //
+      var tableWidth = this.tmpl.boundElement.offsetWidth || 0;
+      var headerHeight = headerElement.offsetHeight || 0;
+      var footerHeight = footerElement.offsetHeight || 0;
+
+      //
+      // Update style properties
+      //
+      this.tmpl.headerExpandCell.style.left = tableWidth + 'px';
+      this.tmpl.footerExpandCell.style.left = tableWidth + 'px';
+      this.tmpl.tableElement.style.margin = '-{0}px 0 -{1}px'.format(headerHeight, footerHeight);
+      this.element.style.paddingBottom = (headerHeight + footerHeight) + 'px';
+
+      // reset timer
+      // it should be at the end of relayout to prevent relayout call while relayout
+      this.timer_ = clearTimeout(this.timer_);
     },
+
+   /**
+    * @inheritDoc
+    */
     destroy: function(){
       this.timer_ = clearTimeout(this.timer_);
+      this.timer_ = true; // prevent relayout call
+
+      this.columnWidthSync_ = null;
+      this.shadowHeaderHtml_ = null;
+      this.shadowFooterHtml_ = null;
 
       Table.prototype.destroy.call(this);
     }
