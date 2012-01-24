@@ -213,16 +213,49 @@ basis.require('basis.dom.event');
  /**
   * Apply new style property value for node.
   * @param {Node} node Node which style to be changed.
-  * @param {string} key Name of property.
+  * @param {string} property Name of property.
   * @param {string} value Value of property.
   * @return Returns style property value after assignment.
   */
-  function setStyleProperty(node, key, value){
-    if (typeof node.setProperty == 'function')
-      return node.setProperty(key, value);
+  function setStyleProperty(node, property, value){
+    var mapping = getStylePropertyMapping(property, value);
 
-    var mapping = getStylePropertyMapping(key, value);
-    if (mapping)
+    if (!mapping)
+      return;
+
+    var key = mapping.key;
+    var imp = !!IMPORTANT_REGEXP.test(value);
+    var style = node.style;
+
+    if (imp || isPropertyImportant(style, property))
+    {
+      value = value.replace(IMPORTANT_REGEXP, '');
+
+      if (style.setProperty)
+      {
+        // W3C scheme
+
+        // if property exists and important, remove it
+        if (!imp)
+          style.removeProperty(key);
+
+        // set new value for property
+        style.setProperty(key, mapping.value, (imp ? IMPORTANT : ''));
+      }
+      else
+      {
+        // IE8- scheme
+        var newValue = key + ': ' + mapping.value + (imp ? ' !' + IMPORTANT : '') + ';';
+        var rxText = style[key] ? key + '\\s*:\\s*' + style[key] + '(\\s*!' + IMPORTANT + ')?\\s*;?' : '^';
+
+        try {
+          style.cssText = style.cssText.replace(new RegExp(rxText, 'i'), newValue);
+        } catch(e) {
+          ;;;if (typeof console != 'undefined') console.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
+        }
+      }
+    }
+    else
     {
       if (SET_STYLE_EXCEPTION_BUG)
       {
@@ -420,40 +453,7 @@ basis.require('basis.dom.event');
     * @param {any} value
     */
     setProperty: function(property, value){
-      var mapping;
-      var imp = !!IMPORTANT_REGEXP.test(value);
-      var style = this.rule.style;
-      if (imp || isPropertyImportant(style, property))
-      {
-        value = value.replace(IMPORTANT_REGEXP, '');
-
-        if (mapping = getStylePropertyMapping(property, value))
-        {
-          var key = mapping.key;
-
-          if (style.setProperty)
-          {
-            // W3C scheme
-
-            // if property exists and important, remove it
-            if (!imp)
-              style.removeProperty(key);
-
-            // set new value for property
-            style.setProperty(key, mapping.value, (imp ? IMPORTANT : ''));
-          }
-          else
-          {
-            // IE8- scheme
-            var newValue = key + ': ' + mapping.value + (imp ? ' !' + IMPORTANT : '') + ';';
-            var rxText = style[key] ? key + '\\s*:\\s*' + style[key] + '(\\s*!' + IMPORTANT + ')?\\s*;?' : '^';
-
-            style.cssText = style.cssText.replace(new RegExp(rxText, 'i'), newValue);
-          }
-        }
-      }
-      else 
-        setStyleProperty(this.rule, property, value);
+      setStyleProperty(this.rule, property, value);
     },
 
    /**

@@ -513,12 +513,12 @@ basis.require('basis.dom');
  /**
   * Fires eventType 
   */
-  function fireEvent(node, eventType){
+  function fireEvent(node, eventType, event){
     node = getNode(node);
 
     var handlers = node[EVENT_HOLDER];
     if (handlers && handlers[eventType])
-        handlers[eventType].fireEvent();
+        handlers[eventType].fireEvent(event);
   };
 
   //

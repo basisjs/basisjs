@@ -23,7 +23,7 @@ basis.require('basis.ui.table');
 
 !function(basis){
 
-//  'use strict';
+  'use strict';
 
  /**
   * @namespace basis.ui.scrolltable
@@ -50,7 +50,7 @@ basis.require('basis.ui.table');
   //
 
   function resetStyle(extraStyle){
-    return '[style="padding:0;margin:0;border:0;width:auto;height:0;font-size:0;' + (extraStyle || '') + '"]';
+    return '[style="padding:0!important;margin:0!important;border:0!important;width:auto!important;height:0!important;font-size:0!important;' + (extraStyle || '') + '"]';
   }
 
   function buildCellsSection(owner, property){
@@ -69,8 +69,8 @@ basis.require('basis.ui.table');
 
   // Cells proto
   var measureCell = DOM.createElement('td' + resetStyle(),
-    DOM.createElement(resetStyle('position:relative'),
-      DOM.createElement('iframe[event-load="measureInit"]' + resetStyle('width:100%;position:absolute;visibility:hidden'))
+    DOM.createElement(resetStyle('position:relative!important'),
+      DOM.createElement('iframe[event-load="measureInit"]' + resetStyle('width:100%!important;position:absolute!important;visibility:hidden!important;behavior:expression(basis.dom.event.fireEvent(window,\\"load\\",{type:\\"load\\",target:this}),(runtimeStyle.behavior=\\"none\\"))'))
     )
   );
 
@@ -142,6 +142,7 @@ basis.require('basis.ui.table');
         }
       },
       measureInit: function(event){
+        //console.log('load');
         (sender(event).contentWindow.onresize = this.requestRelayout)();
       }
     },
@@ -193,8 +194,8 @@ basis.require('basis.ui.table');
       //
       layout.addBlockResizeHandler(this.tmpl.boundElement, this.requestRelayout);
 
-      // hack for ie, trigger relayout on 
-      if (basis.ua.is('IE9-')) // TODO: remove this hack
+      // hack for ie, trigger relayout on create
+      if (basis.ua.is('IE8')) // TODO: remove this hack
         setTimeout(this.requestRelayout, 1);
     },
 
@@ -226,19 +227,13 @@ basis.require('basis.ui.table');
       }
 
       //
-      // Update footer
+      // Sync footer html
       //
-      if (this.footer.useFooter)
+      var footerOuterHTML = DOM.outerHTML(footerElement);
+      if (this.shadowFooterHtml_ != footerOuterHTML)
       {
-        //
-        // Sync footer html
-        //
-        var footerOuterHTML = DOM.outerHTML(footerElement);
-        if (this.shadowFooterHtml_ != footerOuterHTML)
-        {
-          this.shadowFooterHtml_ = footerOuterHTML;
-          replaceTemplateNode(this, 'shadowFooter', footerElement.cloneNode(true));
-        }
+        this.shadowFooterHtml_ = footerOuterHTML;
+        replaceTemplateNode(this, 'shadowFooter', footerElement.cloneNode(true));
       }
 
       //
@@ -247,8 +242,10 @@ basis.require('basis.ui.table');
       for (var i = 0, column, columnWidth; column = this.columnWidthSync_[i]; i++)
       {
         columnWidth = column.measure.offsetWidth + 'px';
-        column.header.firstChild.style.width = columnWidth;
-        column.footer.firstChild.style.width = columnWidth;
+        cssom.setStyleProperty(column.header.firstChild, 'width', columnWidth);
+        cssom.setStyleProperty(column.footer.firstChild, 'width', columnWidth);
+        //column.header.firstChild.style.width = columnWidth;
+        //column.footer.firstChild.style.width = columnWidth;
       }
 
       //

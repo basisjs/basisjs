@@ -628,7 +628,7 @@ basis.require('basis.ua');
           else
           {           // attribute
             if (entryName != 'class')
-              attributes[entryName] = m[4] ? coalesce(m[5], m[6], m[7]) : entryName;
+              attributes[entryName] = m[4] ? m[5] || m[6] || m[7] || '' : entryName;
           }
       }
 

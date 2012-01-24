@@ -336,8 +336,8 @@ basis.require('basis.ui');
     colSpan: 1,
 
     template:
-      '<td class="Basis-Table-Footer-Cell">' +
-        '<div{content}>\xA0</div>' +
+      '<td{content} class="Basis-Table-Footer-Cell">' +
+        '\xA0' +
       '</td>',
 
     setColSpan: function(colSpan){
@@ -473,9 +473,9 @@ basis.require('basis.ui');
     template:
       '<tbody class="Basis-Table-Body">' +
         '<tr class="Basis-Table-GroupHeader" event-click="click">' +
-          '<td colspan="100">' +
+          '<td{content} colspan="100">' +
             '<span class="expander"/>' +
-            '<span{content} class="Basis-Table-GroupHeader-Title">{titleText}</span>' +
+            '<span class="Basis-Table-GroupHeader-Title">{titleText}</span>' +
           '</td>'+ 
         '</tr>' +
         '<!--{childNodesHere}-->' +

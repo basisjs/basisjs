@@ -155,7 +155,7 @@
   }
 
   .Basis-Table-Row:hover TD,
-  .Basis-Table-Body .selected TD
+  .Basis-Table-Row.selected TD
   {
     border-top: 1px solid;
     border-bottom: 1px solid;
@@ -167,14 +167,11 @@
 
   .Basis-Table-Row:hover TD
   {              
-    background-color: #E8F5FD;
+    background-color: #E8F5FD !important;
     border-top-color: #D8F0FA;
     border-bottom-color: #D8F0FA;
-    /*border-top-color: rgba(0,0,0,.075);
-    border-bottom-color: rgba(0,0,0,.075);*/
-
   }
-  .Basis-Table-Body .selected TD
+  .Basis-Table-Row.selected TD
   {
     background-color: #D5EFFC !important;
     border-right-color: #D5EFFC;
@@ -225,12 +222,8 @@
 
   .Basis-Table-Footer-Cell
   {
-    padding: 0 !important; /* IMPORTANT: cell must has no padding */
+    padding: .22em .25em .22em .5em;
     border-top: 1px solid #E8E8E8;
     border-right: 1px solid #E8E8E8;
     background: url(footer_bg.gif) repeat-x;
-  }
-  .Basis-Table-Footer-Cell DIV
-  {
-    padding: .22em .25em .22em .5em;
   }
