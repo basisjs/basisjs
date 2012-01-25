@@ -188,7 +188,7 @@ basis.require('basis.ui');
 
     template:
       '<a class="Basis-Calendar-Node" event-click="click">' +
-        '{title|-}' +
+        '{title}' +
       '</a>',
 
     action: {

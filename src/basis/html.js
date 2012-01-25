@@ -81,34 +81,40 @@ basis.require('basis.dom.event');
   // PARSE TEXT
   //
   function parseText(context, str, nodePath, pos){
-    var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
     var result = createFragment();
-    var node;
-    for (var i = 0; i < parts.length; i++)
-    {
-      if (i % 2)
-      {
-        var p = parts[i].split(/\|/);
-        context.getters[p[0]] = nodePath + 'childNodes[' + pos + ']';
-        node = p.length > 1 ? p[1] : p[0];
-      }
-      else
-        node = parts[i].length ? parts[i] : null;
 
-      if (node != null)
+    if (str)
+    {
+      var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
+      var text;
+
+      for (var i = 0; i < parts.length; i++)
       {
-        // Some browsers (Internet Explorer) may normalize text nodes during cloning, that's why 
-        // we need to insert comment nodes between text nodes to prevent text node merge
-        if (CLONE_NORMALIZE_TEXT_BUG)
+        text = parts[i];
+
+        if (i & 1)
         {
-          if (result.lastChild)
-            result.appendChild(createComment(''));
+          for (var j = 0, refs = text.split(/\|/), refName; refName = refs[j]; j++)
+            context.getters[refName] = nodePath + 'childNodes[' + pos + ']';
+        }
+
+        if (text) // don't add an empty strings
+        {
+          // Some browsers (Internet Explorer) may normalize text nodes during cloning, that's why 
+          // we need to insert comment nodes between text nodes to prevent text node merge
+          if (CLONE_NORMALIZE_TEXT_BUG)
+          {
+            if (result.lastChild)
+              result.appendChild(createComment(''));
+            pos++;
+          }
+
+          result.appendChild(createText(text));
           pos++;
         }
-        result.appendChild(createText(node));
-        pos++;
       }
     }
+
     return result;
   }
 
