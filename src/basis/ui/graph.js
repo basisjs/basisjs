@@ -271,6 +271,8 @@ basis.require('basis.ui.canvas');
     showGrid: true,
     propValuesOnEdges: true,
     invertAxis: false,
+    autoRotateScale: false,
+    scaleAngle: 0,
 
     //init
     init: function(config){
@@ -362,10 +364,10 @@ basis.require('basis.ui.canvas');
         lastXLabelWidth = context.measureText(xLabels[(this.invertAxis ? partCount : propCount) - 1]).width + 12;
       }
 
-      var maxXLabelWidth = this.invertAxis ? maxPropTextWidth : maxValueTextWidth;
-      var maxYLabelWidth = this.invertAxis ? maxValueTextWidth : maxPropTextWidth;
+      var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxPropTextWidth;
+      var maxYLabelWidth = this.invertAxis ? maxPropTextWidth : maxValueTextWidth;
 
-      LEFT = Math.max(maxXLabelWidth + 6, Math.round(firstXLabelWidth / 2));
+      LEFT = Math.max(maxYLabelWidth + 6, Math.round(firstXLabelWidth / 2));
       RIGHT = Math.round(lastXLabelWidth / 2);
 
       // Legend
@@ -405,78 +407,57 @@ basis.require('basis.ui.canvas');
 
       BOTTOM += this.showXLabels ? 30 : 1; // space for xscale;
 
-      // yscale
-      var yStep = (HEIGHT - TOP - BOTTOM) / (this.invertAxis ? propCount - (this.propValuesOnEdges ? 1 : 0) : partCount);
-      if (this.showYLabels)
-      {
-        context.lineWidth = 1;
-        context.fillStyle = 'black';
-        context.textAlign = 'right';
+      //
+      // Draw Scales
+      //
+      context.font = '10px tahoma';
+      context.lineWidth = 1;
+      context.fillStyle = 'black';
+      context.strokeStyle = 'black';
 
-        var topOffset = !this.propValuesOnEdges && this.invertAxis ? yStep / 2 : 0;
-        
-        for (var i = this.invertAxis ? 0 : 1, label; label = yLabels[i]; i++)
-        {
-          var labelY = HEIGHT - BOTTOM - topOffset - Math.round(i * yStep) + .5;
-
-          context.beginPath();
-          context.moveTo(LEFT + .5 - 3, labelY);
-          context.lineTo(LEFT + .5, labelY);
-          context.strokeStyle = 'black';
-          context.stroke();
-          context.closePath();
-
-          context.fillText(label, LEFT - 6, labelY + 2.5);
-        }
-      }
+      var textHeight = 10;
+      var skipLabel;
+      var skipScale;
+      var skipLabelCount;
 
       // xscale
       var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : propCount - (this.propValuesOnEdges ? 1 : 0)) 
       if (this.showXLabels)
       {
-        var lastLabelPos = 0;
-        var xLabelsX = [];
-        var maxSkipLabelCount = 0;
-        var skipLabelCount = 0;
-        var x;
-        var tw;
-
-        context.font = '10px tahoma';
-        context.textAlign = 'center';
-
-        for (var i = 0; i < propCount; i++)
+        var angle;
+        if (this.autoRotateScale)
         {
-          x = xLabelsX[i] = Math.round(LEFT + i * xStep + (this.propValuesOnEdges ? 0 : xStep / 2)) + .5;
-          tw = context.measureText(propValues[i]).width;
-
-          if (i == 0 || lastLabelPos + 10 < (x - tw / 2))
-          {
-            maxSkipLabelCount = Math.max(maxSkipLabelCount, skipLabelCount);
-            skipLabelCount = 0;
-
-            lastLabelPos = x + tw / 2;
-          }
-          else
-          {
-            skipLabelCount++;
-          }
+          skipLabelCount = Math.ceil((textHeight + 3) / xStep) - 1;
+          angle = (skipLabelCount + 1) * xStep < maxXLabelWidth ? Math.asin((textHeight + 3) / ((skipLabelCount + 1) * xStep)) : 0;
         }
-        skipLabelCount = maxSkipLabelCount
-
-        var skipLabel;
-        var skipScale = skipLabelCount > 10;
+        else
+        {
+          angle = (this.scaleAngle % 180) * Math.PI / 180;
+          var optimalLabelSpace = angle ? Math.min(textHeight / Math.sin(angle), maxXLabelWidth) : maxXLabelWidth;
+          skipLabelCount = Math.ceil((optimalLabelSpace + 3) / xStep) - 1;
+        }
         
+        BOTTOM += Math.round(maxXLabelWidth * Math.sin(angle));
+
+        skipScale = skipLabelCount > 10 || xStep < 4;
+        context.textAlign = angle ? 'right' : 'center';        
         context.beginPath();
         
         var leftOffset = !this.propValuesOnEdges && !this.invertAxis ? xStep / 2 : 0;
         for (var i = this.invertAxis ? 1 : 0; i < xLabels.length; i++)
         {
-          x = Math.round(leftOffset + LEFT + i * xStep) + .5;//xLabelsX[i];
+          var x = Math.round(leftOffset + LEFT + i * xStep) + .5;//xLabelsX[i];
           skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
 
+          context.save();
           if (!skipLabel)
-            context.fillText(xLabels[i], x, HEIGHT - BOTTOM + 15);
-
+          {
+            context.translate(x + 3, HEIGHT - BOTTOM + 15);
+            context.rotate(-angle);
+            context.fillText(xLabels[i], 0, 0);
+          }
+          context.restore();
+ 
           if (!skipLabel || !skipScale)
           {
             context.moveTo(x, HEIGHT - BOTTOM + .5);
@@ -484,8 +465,42 @@ basis.require('basis.ui.canvas');
           }
         }
         
-        context.lineWidth = 1;
-        context.strokeStyle = 'black';
+        context.stroke();
+        context.closePath();
+      }
+
+      // yscale
+      var yStep = (HEIGHT - TOP - BOTTOM) / (this.invertAxis ? propCount - (this.propValuesOnEdges ? 1 : 0) : partCount);
+      if (this.showYLabels)
+      {
+        context.textAlign = 'right';
+
+        var topOffset = !this.propValuesOnEdges && this.invertAxis ? yStep / 2 : 0;
+
+        skipLabelCount = Math.ceil(15 / yStep) - 1;
+        //skipLabelCount = 0;
+        skipScale = skipLabelCount > 10 || yStep < 4;
+ 
+        context.beginPath();        
+        
+        for (var i = this.invertAxis ? 0 : 1, label; label = yLabels[i]; i++)
+        {
+          var labelY = Math.round(HEIGHT - BOTTOM - topOffset - i * yStep) + .5;
+
+          /*context.fillText(label, LEFT - 6, labelY + 2.5);*/
+
+          skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
+
+          if (!skipLabel)
+            context.fillText(label, LEFT - 6, labelY + 2.5);
+
+          if (!skipLabel || !skipScale)
+          {
+            context.moveTo(LEFT + .5 - 3, labelY);
+            context.lineTo(LEFT + .5, labelY);
+          }
+        }
+
         context.stroke();
         context.closePath();
       }
@@ -586,7 +601,16 @@ basis.require('basis.ui.canvas');
 
       if (maxDegree == 0)
         return maxValue;
-      
+
+
+      if (maxValue % Math.pow(10, maxDegree) == 0)
+      {
+        var result = maxValue / Math.pow(10, maxDegree);
+        if (result >= MIN_PART_COUNT)
+          return result;
+      }
+
+
       while (count < MIN_PART_COUNT && divisionCount <= maxDegree)
       {
         for (var i = 2; i <= 5; i++)
@@ -903,7 +927,7 @@ basis.require('basis.ui.canvas');
       for (var i = 0; i < bars.length; i++)
       {
         bar = bars[i][barPosition];
-        if (x > bar.x && x < (bar.x + bar.width) && y > bar.y && y < (bar.y + bar.height))
+        if (x >= bar.x && x <= (bar.x + bar.width) && y >= bar.y && y <= (bar.y + bar.height))
         {
           hoveredBar = bar;
           legendText = threads[i].getLegend();
@@ -989,6 +1013,7 @@ basis.require('basis.ui.canvas');
       var size = this.invertAxis ? width : height;
       var cnt = this.childNodes.length;
       var barSize = Math.round(0.7 * step / cnt);
+      var needStroke = barSize > 10;
 
       var barX, barY;
       var barWidth, barHeight;
@@ -1010,7 +1035,8 @@ basis.require('basis.ui.canvas');
         }
 
         context.fillRect(barX + .5, barY + .5, barWidth, barHeight);
-        context.strokeRect(barX + .5, barY + .5, barWidth, barHeight);
+        if(needStroke)
+          context.strokeRect(barX + .5, barY + .5, barWidth, barHeight);
 
         this.bars[pos].push({
           x: barX,
