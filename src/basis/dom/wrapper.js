@@ -1417,15 +1417,13 @@ basis.require('basis.html');
       if (!newChild.contextSelection && newChild.contextSelection !== newChildSelection)
       {
         newChild.contextSelection = newChildSelection;
-        if (newChild.selected)
-        {
-          //newChild.unselect();
-          newChildSelection.add([newChild]);
-        }
 
         if (!newChild.selection && newChild.firstChild)
           axis(newChild, AXIS_DESCENDANT).forEach(SELECTION_NULL_SET_THIS, newChildSelection);
       }
+
+      if (newChildSelection && newChild.selected)
+        newChildSelection.add([newChild]);
 
       // if node doesn't move inside the same parent (parentNode changed)
       if (!isInside)
