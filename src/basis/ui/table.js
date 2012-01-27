@@ -312,10 +312,7 @@ basis.require('basis.ui');
           config.cssClassName = (headerConfig.cssClassName || '') + ' ' + (colConfig.cssClassName || '');
           
           if (!autosorting)
-          {
             autosorting = config.selected = config.sorting && colConfig.autosorting;
-            if (autosorting) debugger;
-          }
 
           cells.push(config);
         };

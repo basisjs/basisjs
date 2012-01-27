@@ -1059,9 +1059,7 @@ basis.require('basis.html');
 
     if (typeof node.childFactory == 'function')
     {
-      child = node.childFactory(Object.extend({
-        contextSelection: node.selection || node.contextSelection
-      }, config));
+      child = node.childFactory(config);
 
       if (child instanceof node.childClass)
         return child;
@@ -1070,7 +1068,8 @@ basis.require('basis.html');
     if (!child)
       throw EXCEPTION_NULL_CHILD;
 
-    throw (EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
+    ;;;if (typeof console != 'undefined') console.warn(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
+    throw EXCEPTION_BAD_CHILD_CLASS;
   }
 
  /**
@@ -1418,12 +1417,12 @@ basis.require('basis.html');
       {
         newChild.contextSelection = newChildSelection;
 
+        if (newChildSelection && newChild.selected)
+          newChildSelection.add([newChild]);
+
         if (!newChild.selection && newChild.firstChild)
           axis(newChild, AXIS_DESCENDANT).forEach(SELECTION_NULL_SET_THIS, newChildSelection);
       }
-
-      if (newChildSelection && newChild.selected)
-        newChildSelection.add([newChild]);
 
       // if node doesn't move inside the same parent (parentNode changed)
       if (!isInside)
