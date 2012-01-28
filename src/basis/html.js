@@ -14,6 +14,8 @@ basis.require('basis.dom.event');
 
 !function(basis, global){
 
+  'use strict';
+
  /**
   * @namespace basis.html
   */

@@ -18,6 +18,8 @@ basis.require('basis.animation');
 
 !function() {
 
+  'use strict';
+
  /**
   * @see ./demo/defile/scroller.html
   * @namespace basis.ui.scroller

@@ -27,7 +27,9 @@ basis.require('basis.ui');
   var namespace = 'basis.ui.popup';
 
 
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;

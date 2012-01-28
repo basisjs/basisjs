@@ -11,6 +11,8 @@
 
 !function(){
 
+  'use strict';
+
  /**
   * @namespace basis.event
   */

@@ -11,6 +11,8 @@
 
 !function(basis){
 
+  'use strict';
+
  /**
   * @namespace basis.crypt
   */

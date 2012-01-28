@@ -15,6 +15,8 @@ basis.require('basis.net.ajax');
 
 !function(){
 
+ 'use strict';
+
  /**
   * Interface for communication with SOAP services.
   *
