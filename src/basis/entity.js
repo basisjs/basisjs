@@ -305,7 +305,7 @@ basis.require('basis.data.dataset');
     {
       var entitySetType = new EntitySetConstructor(wrapper || $self);
 
-      return function(data, entitySet){
+      var result = function(data, entitySet){
         if (data != null)
         {
           if (!(entitySet instanceof EntitySet))
@@ -318,6 +318,10 @@ basis.require('basis.data.dataset');
         else
           return null;
       };
+
+      result.entitySetType = entitySetType;
+
+      return result;
     }
   };
   EntitySetWrapper.className = namespace + '.EntitySetWrapper';
@@ -332,11 +336,13 @@ basis.require('basis.data.dataset');
   var EntitySetConstructor = Class(null, {
     className: namespace + '.EntitySetConstructor',
 
+    entitySetClass: EntitySet,
+
     init: function(wrapper){
       this.wrapper = wrapper;
     },
     createEntitySet: function(){
-      return new EntitySet({
+      return new this.entitySetClass({
         wrapper: this.wrapper,
         name: 'Set of ' + ((this.wrapper.entityType || this.wrapper).name || '').quote('{')
       });
