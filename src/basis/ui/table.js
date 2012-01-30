@@ -340,8 +340,13 @@ basis.require('basis.ui');
         '\xA0' +
       '</td>',
 
+    templateUpdate: function(tmpl){
+      this.element.colSpan = this.colSpan;
+    },
+
     setColSpan: function(colSpan){
-      this.element.colSpan = this.colSpan = colSpan || 1;
+      this.colSpan = colSpan || 1;
+      this.templateUpdate(this.tmpl);
     }
   });
 
@@ -379,9 +384,10 @@ basis.require('basis.ui');
           var colConfig = structure[i];
           var cell;
 
-          if (colConfig.footer)
+          if ('footer' in colConfig)
           {
-            var content = colConfig.footer.content;
+            var footerConfig = colConfig.footer != null ? colConfig.footer : {};
+            var content = footerConfig.content;
 
             if (typeof content == 'function')
               content = content.call(this);
@@ -389,9 +395,10 @@ basis.require('basis.ui');
             this.useFooter = true;
             
             cell = this.appendChild({
-              cssClassName: (colConfig.cssClassName || '') + ' ' + (colConfig.footer.cssClassName || ''),
+              //colSpan: footerConfig.colSpan || 1,
+              cssClassName: (colConfig.cssClassName || '') + ' ' + (footerConfig.cssClassName || ''),
               content: content,
-              template: colConfig.footer.template || FooterCell.prototype.template
+              template: footerConfig.template || FooterCell.prototype.template
             });
           }
           else

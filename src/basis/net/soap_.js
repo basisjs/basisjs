@@ -141,7 +141,9 @@ basis.require('basis.net.ajax');
     },
 
     getRequestData: function(){
-      return this.requestDataGetter(this, this.requestEnvelope.getBody().getValue());
+      var body = this.requestEnvelope.getBody();
+      if (body)
+        return this.requestDataGetter(body.getValue());
     },
     getResponseData: function(){
       this.parseResponseXML();
