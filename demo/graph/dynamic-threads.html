@@ -46,6 +46,9 @@
   <script type="text/javascript" src="../seedrandom.js"></script>
   <script type="text/javascript" src="../demo.js"></script>
 
+  <!--[if lt IE 9]>
+  <script type="text/javascript" src="../../src/basis/ext/flashcanvas.js"></script>
+  <![endif]-->
 
 </head>
 
@@ -110,10 +113,12 @@
 
     Math.seedrandom("graph");
 
+    var min = 100000;
+    var max = 5000000;
     for (var i = 0, company; company = companies[i]; i++)
     {
-      lastValue = (5000000 - 100000) * Math.random() + 100000; // 100 000 - 5 000 000
-
+      lastValue = (max - min) * Math.random() + min; // 100 000 - 5 000 000
+      
       for (var month = 0; month < 120; month++)
       {
         value = lastValue + 0.2 * lastValue * (2 * Math.random() - 1); // +/- 20% from last value;

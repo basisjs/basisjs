@@ -13,7 +13,6 @@
  * Roman Dvornov <rdvornov@gmail.com>
  *
  */
-
 basis.require('basis.ui.canvas');
 
 !function(basis){
@@ -49,6 +48,7 @@ basis.require('basis.ui.canvas');
 
 
   function getDegree(number){
+    var number = Math.abs(number);
     if (Math.abs(number) > 1)
     {
       return String(Math.floor(number)).length - 1;
@@ -135,7 +135,7 @@ basis.require('basis.ui.canvas');
     childClass: GraphComponent,
 
     template:
-      '<div class="Basis-Graph" style="position: relative; display: inline-block">' +
+      '<div class="Basis-Graph" style="position: relative; display: inline; display: inline-block; zoom: 1">' +
         '<canvas{canvas}>' +
           '<div>Canvas doesn\'t support.</div>' +
         '</canvas>' +
@@ -274,6 +274,9 @@ basis.require('basis.ui.canvas');
     autoRotateScale: false,
     scaleAngle: 0,
 
+    min: 0,
+    max: 'auto',
+
     //init
     init: function(config){
       this.clientRect = {};
@@ -291,23 +294,29 @@ basis.require('basis.ui.canvas');
       var HEIGHT = context.canvas.height;
 
       var propValues = this.getPropValues();
+      var propCount = propValues.length;
 
-      if (propValues.length < 2)
+      if (propCount < 2)
       {
         context.textAlign = 'center';
         context.fillStyle = '#777';
         context.font = '20px tahoma';
-        context.fillText(propValues.length == 0 ? 'No data' : 'Not enough data', WIDTH / 2, HEIGHT / 2);
+        context.fillText(propCount == 0 ? 'No data' : 'Not enough data', WIDTH / 2, HEIGHT / 2);
 
         return;
       }
 
-      var max = this.getMaxValue();
-      var maxValue = this.getMaxGridValue(max);
+      var maxValue = this.getMaxGridValue();
       var minValue = this.getMinGridValue();
-      var partCount = this.getGridPartCount(minValue, maxValue); 
-      var propCount = propValues.length;
+      var gridPart = this.getGridPart(Math.max(Math.abs(minValue), Math.abs(maxValue))); 
 
+      //correct min/max
+      if (Math.abs(minValue) > Math.abs(maxValue))
+        maxValue = Math.ceil(maxValue / gridPart) * gridPart;
+      else 
+        minValue = Math.floor(minValue / gridPart) * gridPart;
+
+      var partCount = (maxValue - minValue) / gridPart;
 
       // prepare labels
       context.font = '10px tahoma';
@@ -329,7 +338,7 @@ basis.require('basis.ui.canvas');
         var tw;
         for (var i = 0; i < partCount + 1; i++)
         {
-          valueLabels[i] = Math.round(maxValue *  i / partCount).group();
+          valueLabels[i] = Math.round(minValue + gridPart * i).group();
           tw = context.measureText(valueLabels[i]).width;
 
           if (tw > maxValueTextWidth)
@@ -444,7 +453,7 @@ basis.require('basis.ui.canvas');
         context.beginPath();
         
         var leftOffset = !this.propValuesOnEdges && !this.invertAxis ? xStep / 2 : 0;
-        for (var i = this.invertAxis ? 1 : 0; i < xLabels.length; i++)
+        for (var i = 0; i < xLabels.length; i++)
         {
           var x = Math.round(leftOffset + LEFT + i * xStep) + .5;//xLabelsX[i];
           skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
@@ -483,7 +492,7 @@ basis.require('basis.ui.canvas');
  
         context.beginPath();        
         
-        for (var i = this.invertAxis ? 0 : 1, label; label = yLabels[i]; i++)
+        for (var i = 0, label; label = yLabels[i]; i++)
         {
           var labelY = Math.round(HEIGHT - BOTTOM - topOffset - i * yStep) + .5;
 
@@ -536,9 +545,13 @@ basis.require('basis.ui.canvas');
       // draw bounds lines
       if (this.showBoundLines)
       {
+        //var zeroOffsetX = minValue < 0 && this.invertAxis ? Math.round(WIDTH * -minValue / (maxValue - minValue)) : 0;
+        //var zeroOffsetY = minValue < 0 && ! this.invertAxis ? Math.round(HEIGHT * -minValue / (maxValue - minValue)) : 0;
+
         context.beginPath();
         context.moveTo(LEFT + .5, TOP);
         context.lineTo(LEFT + .5, HEIGHT - BOTTOM + .5);
+        context.moveTo(LEFT + .5, HEIGHT - BOTTOM + .5);
         context.lineTo(WIDTH - RIGHT + .5, HEIGHT - BOTTOM + .5);
         context.lineWidth = 1;
         context.strokeStyle = 'black';
@@ -550,7 +563,7 @@ basis.require('basis.ui.canvas');
       var step = this.invertAxis ? yStep : xStep;
       for (var i = 0, thread; thread = this.childNodes[i]; i++)
       {
-        this.drawThread(thread, i, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
+        this.drawThread(thread, i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
       }  
 
       //save graph data
@@ -560,6 +573,7 @@ basis.require('basis.ui.canvas');
         width: WIDTH - LEFT - RIGHT,
         height: HEIGHT - TOP - BOTTOM
       });
+      this.minValue = minValue;
       this.maxValue = maxValue;
     },
 
@@ -568,67 +582,96 @@ basis.require('basis.ui.canvas');
     getPropValues: function(){
       return (this.childNodes[0] && this.childNodes[0].childNodes.map(this.propGetter)) || [];
     },
-    getMaxValue: function(){
+
+    setMin: function(min){
+      this.min = min;
+      this.updateCount++;
+    },
+    setMax: function(max){
+      this.max = max;
+      this.updateCount++;
+    },
+    getMinValue: function(){
       var values;
-      var max = 0;
+      var min;
       
       for (var i = 0, thread; thread = this.childNodes[i]; i++)
       {
         values = thread.getValues();
-        values.push(max);
+        if (min)
+          values.push(min);
+        min = Math.min.apply(null, values);
+      }
+      return min;
+    },
+    getMaxValue: function(){
+      var values;
+      var max;
+      
+      for (var i = 0, thread; thread = this.childNodes[i]; i++)
+      {
+        values = thread.getValues();
+        if (max)
+          values.push(max);
         max = Math.max.apply(null, values);
       }
-
       return max;
     },
     getMinGridValue: function(){
-      return 0;
+      var minValue = this.min == 'auto' ? this.getMinValue() : this.min;
+      return Math.floor(Math.ceil(minValue) / Math.pow(10, getDegree(minValue))) * Math.pow(10, getDegree(minValue));
     },
-    getMaxGridValue: function(maxValue){
+    getMaxGridValue: function(){
+      var maxValue = this.max == 'auto' ? this.getMaxValue() : this.max;
       return Math.ceil(Math.ceil(maxValue) / Math.pow(10, getDegree(maxValue))) * Math.pow(10, getDegree(maxValue));
     },
-    getGridPartCount: function(minValue, maxValue){
+    getGridPart: function(maxGridValue){
       var MIN_PART_COUNT = 5;
       var MAX_PART_COUNT = 20;
 
-      var count = 1;
-      var canDivide = true;
-      var step;
-      var newVal;
-      var divisionCount = 0;
-
-      var maxDegree = getDegree(maxValue);
+      var result;
+      var maxDegree = getDegree(maxGridValue);
 
       if (maxDegree == 0)
-        return maxValue;
+        result = maxGridValue;
 
-
-      if (maxValue % Math.pow(10, maxDegree) == 0)
+      if (maxGridValue % Math.pow(10, maxDegree) == 0)
       {
-        var result = maxValue / Math.pow(10, maxDegree);
-        if (result >= MIN_PART_COUNT)
-          return result;
+        var res = maxGridValue / Math.pow(10, maxDegree);
+        if (res >= MIN_PART_COUNT)
+          result = res;
       }
 
-
-      while (count < MIN_PART_COUNT && divisionCount <= maxDegree)
+      if (!result)
       {
-        for (var i = 2; i <= 5; i++)
+        var count = 1;
+        var canDivide = true;
+        var step;
+        var newVal;
+        var curVal = maxGridValue;
+        var divisionCount = 0;
+
+        while (count < MIN_PART_COUNT && divisionCount <= maxDegree)
         {
-          step = (maxValue - minValue) / i;
-          newVal = (maxValue - step) / Math.pow(10, maxDegree - divisionCount);
-          if ((newVal - Math.floor(newVal) == 0) && (count*i < MAX_PART_COUNT))
+          for (var i = 2; i <= 5; i++)
           {
-            maxValue = minValue + step;
-            count *= i;
-            break;
-          }
-        } 
+            step = curVal / i;
+            newVal = (curVal - step) / Math.pow(10, maxDegree - divisionCount);
+            if ((newVal - Math.floor(newVal) == 0) && (count*i < MAX_PART_COUNT))
+            {
+              curVal = step;
+              count *= i;
+              break;
+            }
+          } 
 
-        divisionCount++;
+          divisionCount++;
+        }
+
+        result = count;
       }
 
-      return count;
+      return maxGridValue / result;
     }
   });
   
@@ -670,6 +713,10 @@ basis.require('basis.ui.canvas');
     init: function(config){
       uiNode.prototype.init.call(this, config);
 
+      if (typeof FlashCanvas != "undefined") {
+        FlashCanvas.initElement(this.element);
+      }
+
       if (this.element.getContext)
         this.context = this.element.getContext('2d');
 
@@ -683,6 +730,7 @@ basis.require('basis.ui.canvas');
 
       this.clientRect = this.owner.clientRect;
       this.max = this.owner.maxValue;
+      this.min = this.owner.minValue;
     },
 
     reset: function(){
@@ -711,6 +759,7 @@ basis.require('basis.ui.canvas');
       var WIDTH = this.clientRect.width;
       var HEIGHT = this.clientRect.height;
       var MAX = this.max;
+      var MIN = this.min;
 
       var propValues = this.owner.getPropValues();
       if (propValues.length < 2)
@@ -770,7 +819,7 @@ basis.require('basis.ui.canvas');
         if (labelWidth < valueTextWidth)
           labelWidth = valueTextWidth; 
 
-        var valueY = Math.round((1 - value / MAX) * HEIGHT);
+        var valueY = Math.round((1 - (value - MIN) / (MAX - MIN)) * HEIGHT);
         var labelY = Math.max(labelHeight / 2, Math.min(valueY, HEIGHT - labelHeight / 2));
 
         labels[i] = {
@@ -861,6 +910,7 @@ basis.require('basis.ui.canvas');
   var LinearGraph = AxisGraph.subclass({
     className: namespace + '.LinearGraph',
 
+    points: [],
     style: {
       strokeStyle: '#090',
       lineWidth: 2.5,
@@ -873,7 +923,12 @@ basis.require('basis.ui.canvas');
       }
     },
 
-    drawThread: function(thread, pos, max, step, left, top, width, height){
+    drawFrame: function(){
+      this.points = [];
+      AxisGraph.prototype.drawFrame.call(this);
+    },
+
+    drawThread: function(thread, pos, min, max, step, left, top, width, height){
       var context = this.context;
 
       if (!this.propValuesOnEdges)
@@ -885,10 +940,26 @@ basis.require('basis.ui.canvas');
       context.save();
       context.translate(left, top);
       context.beginPath();
-      context.moveTo(0, height * (1 - values[0] / max));
 
-      for (var i = 1; i < values.length; i++)
-        context.lineTo(i * step, height * (1 - values[i] / max));
+
+      this.points[pos] = [];
+      var x, y;
+      for (var i = 0; i < values.length; i++)
+      {
+        x = i * step;
+        y = height * (1 - (values[i] - min) / (max - min))
+        
+        if (i == 0)
+          context.moveTo(x, y);
+        else
+          context.lineTo(x, y);
+
+        this.points[pos].push({
+          x: x,
+          y: y,
+          value: values[i]
+        });
+      }
 
       Object.extend(context, this.style);
       context.stroke();
@@ -994,7 +1065,7 @@ basis.require('basis.ui.canvas');
       AxisGraph.prototype.drawFrame.call(this);
     },
 
-    drawThread: function(thread, pos, max, step, left, top, width, height){
+    drawThread: function(thread, pos, min, max, step, left, top, width, height){
       var context = this.context;
 
       var values = thread.getValues();
@@ -1014,6 +1085,7 @@ basis.require('basis.ui.canvas');
       var cnt = this.childNodes.length;
       var barSize = Math.round(0.7 * step / cnt);
       var needStroke = barSize > 10;
+      var zeroOffset = min < 0 ? Math.abs(min / (max - min) * size) : 0;
 
       var barX, barY;
       var barWidth, barHeight;
@@ -1021,17 +1093,21 @@ basis.require('basis.ui.canvas');
       {
         if (this.invertAxis)
         {
-          barHeight = barSize;
-          barWidth = Math.round(size * values[i] / max);
-          barX = 0;
-          barY = height - Math.round(step / 2 + i * step + barHeight * cnt / 2 - pos * barHeight);
+          barHeight = barSize;          
+          barY = height - Math.round((i + 1) * step - pos * barHeight - barHeight / 2);
+
+          var x = (values[i] - min) / (max - min) * size;
+          barWidth = (x - zeroOffset) * (values[i] > 0 ? 1 : -1);
+          barX = values[i] > 0 ? zeroOffset : zeroOffset - barWidth;
         }
         else
         {
-          barWidth = barSize;
-          barHeight = Math.round(size * values[i] / max);
+          barWidth = barSize;          
           barX = Math.round(step / 2 + i * step - barWidth * cnt / 2 + pos * barWidth);
-          barY = size - barHeight;
+
+          var y = (values[i] - min) / (max - min) * size;
+          barHeight = (y - zeroOffset) * (values[i] > 0 ? 1 : -1);
+          barY = values[i] > 0 ? size - y : size - zeroOffset;
         }
 
         context.fillRect(barX + .5, barY + .5, barWidth, barHeight);

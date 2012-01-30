@@ -106,6 +106,10 @@
   <script type="text/javascript" src="../seedrandom.js"></script>
   <script type="text/javascript" src="../demo.js"></script>
 
+  <!--[if lt IE 9]>
+  <script type="text/javascript" src="../../src/basis/ext/flashcanvas.js"></script>
+  <![endif]-->
+
 
 </head>
 
@@ -138,6 +142,8 @@
     var dates = rawData.dates.split(';');
     var amounts = rawData.amounts.split(';');
 
+    var max = Math.max.apply(null, amounts.map(Number));
+
     for (var i = dates.length; i --> 0;)
       data.push(new basis.data.DataObject({
         data: {
@@ -159,12 +165,13 @@
     });
 
     new LinearGraph({
-      scaleAngle: 45,
       autoRotateScale: true,
       container: DOM.get('demo-container'),
       width: 800,
       height: 450,
       showLegend: false,
+
+      max: max,
 
       propGetter: function(object){
         var date = object.data.Date;

@@ -16,6 +16,12 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.html');
 basis.require('basis.ui');
 
+/*window.FlashCanvasOptions = {
+  swfPath: "../../src/basis/ext/"
+};
+basis.require('basis.ext.flashcanvas');*/
+
+
 !function(basis){
 
   'use strict';
@@ -113,6 +119,11 @@ basis.require('basis.ui');
       this.updateCount = 0;
 
       var canvasElement = this.tmpl.canvas;
+
+      if (typeof FlashCanvas != "undefined") {
+        FlashCanvas.initElement(canvasElement);
+      }
+      
       if (canvasElement && canvasElement.getContext)
       {
         this.context = canvasElement.getContext('2d');
