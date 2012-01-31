@@ -910,7 +910,7 @@ basis.require('basis.ui.canvas');
   var LinearGraph = AxisGraph.subclass({
     className: namespace + '.LinearGraph',
 
-    points: [],
+    fillArea: true,
     style: {
       strokeStyle: '#090',
       lineWidth: 2.5,
@@ -923,26 +923,20 @@ basis.require('basis.ui.canvas');
       }
     },
 
-    drawFrame: function(){
-      this.points = [];
-      AxisGraph.prototype.drawFrame.call(this);
-    },
-
     drawThread: function(thread, pos, min, max, step, left, top, width, height){
       var context = this.context;
 
       if (!this.propValuesOnEdges)
         left += step / 2;
 
-      this.style.strokeStyle = thread.getColor();// || this.threadColor[i];
+      var color = thread.getColor();
+      this.style.strokeStyle = color;// || this.threadColor[i];
       var values = thread.getValues();
 
       context.save();
       context.translate(left, top);
       context.beginPath();
 
-
-      this.points[pos] = [];
       var x, y;
       for (var i = 0; i < values.length; i++)
       {
@@ -953,16 +947,22 @@ basis.require('basis.ui.canvas');
           context.moveTo(x, y);
         else
           context.lineTo(x, y);
-
-        this.points[pos].push({
-          x: x,
-          y: y,
-          value: values[i]
-        });
       }
 
       Object.extend(context, this.style);
       context.stroke();
+
+      if (this.fillArea && this.childNodes.length == 1)
+      {
+        context.lineWidth = 0;
+        var zeroPosition = min < 0 ? Math.max(0, max) / (max - min) * height : height;
+        context.lineTo(width, zeroPosition);
+        context.lineTo(0, zeroPosition);
+        context.globalAlpha = .15;
+        context.fillStyle = color;
+        context.fill();
+      }
+
       context.closePath();
       context.restore();
     }
@@ -1126,8 +1126,7 @@ basis.require('basis.ui.canvas');
       context.restore();
     }
   });
-  
-  
+
   //
   // export names
   //
