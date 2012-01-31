@@ -56,7 +56,7 @@
     if (!eventFunction)
     {
       eventFunction = events[eventName] = 
-        /** @cut for more verbose in dev */ Function('eventName', 'slice', 'self', 'return self = function _event_' + eventName + '(' + Array.from(arguments, 1).join(', ') + '){' + 
+        /** @cut for more verbose in dev */ Function('eventName', 'slice', 'eventFunction', 'return eventFunction = function _event_' + eventName + '(' + Array.from(arguments, 1).join(', ') + '){' + 
 
           function dispatchEvent(){
             var handlers = this.handlers_;
@@ -64,9 +64,9 @@
             var config;
             var func;
 
-            if (self.listen)
-              if (listenHandler = this.listen[self.listenName])
-                self.listen.call(this, listenHandler, arguments);
+            if (eventFunction.listen)
+              if (listenHandler = this.listen[eventFunction.listenName])
+                eventFunction.listen.call(this, listenHandler, arguments);
 
             if (!handlers || !handlers.length)
               return;
@@ -128,7 +128,7 @@
 
       var eventFunction = events[eventName];
       if (eventFunction)
-        extend(LISTEN_MAP[eventName]);
+        extend(eventFunction, LISTEN_MAP[eventName]);
     }
   };
 
