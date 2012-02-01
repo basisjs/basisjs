@@ -303,7 +303,15 @@ basis.require('basis.data.dataset');
   var EntitySetWrapper = function(wrapper){
     if (this instanceof EntitySetWrapper)
     {
-      var entitySetType = new EntitySetConstructor(wrapper || $self);
+      if (!wrapper)
+        wrapper = $self;
+
+      var entitySetType = new EntitySetConstructor({
+        entitySetClass: {
+          name: 'Set of {' + ((wrapper.entityType || wrapper).name || 'UnknownWrapper') + '}',
+          wrapper: wrapper
+        }
+      });
 
       var result = function(data, entitySet){
         if (data != null)
@@ -338,14 +346,9 @@ basis.require('basis.data.dataset');
 
     entitySetClass: EntitySet,
 
-    init: function(wrapper){
-      this.wrapper = wrapper;
-    },
+    extendConstructor_: true,
     createEntitySet: function(){
-      return new this.entitySetClass({
-        wrapper: this.wrapper,
-        name: 'Set of ' + ((this.wrapper.entityType || this.wrapper).name || '').quote('{')
-      });
+      return new this.entitySetClass();
     }
   });
 

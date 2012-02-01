@@ -42,6 +42,7 @@ basis.require('basis.dom.event');
 
   var tmplPartFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>]*?)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
   var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
+  var classNameRx = /^(.)|\s+/g;
   var domFragment = dom.createFragment();
 
   //
@@ -212,7 +213,7 @@ basis.require('basis.dom.event');
       }
 
       result += name == 'class'
-                  ? value.trim().replace(/^(.)|\s+/g, '.$1')
+                  ? value.trim().replace(classNameRx, '.$1')
                   : '[' + name + (value ? '=' + value.quote('"') : '') + ']';
     }
 
@@ -365,7 +366,11 @@ basis.require('basis.dom.event');
 
     // build pathes for references
     var body = Object.iterate(context.getters, function(name, getter){
-      var names = name.split(/\|/).map(String.format, 'obj_.{0}');
+      var names = name.split(/\|/);
+      
+      // .map(String.format, 'obj_.{0}')
+      for (var i = 0; i < names.length; i++)
+        names[i] = 'obj_.' + names[i];
 
       // optimize path (1)
       var path = getter.split(/(\.?childNodes\[(\d+)\])/);
@@ -395,11 +400,19 @@ basis.require('basis.dom.event');
     }).sortAsObject('path');
 
     // optimize pathes (2)
-    for (var i = 0; i < body.length; i++)
+    for (var i = 0, line; line = body[i]; i++)
     {
-      var pathRx = new RegExp('^' + body[i].path.forRegExp());
+      var pathRx = new RegExp('^' + line.path.forRegExp());
       for (var j = i + 1, nextBodyPart; nextBodyPart = body[j++];)
-        nextBodyPart.path = nextBodyPart.path.replace(pathRx, body[i].name);
+        nextBodyPart.path = nextBodyPart.path.replace(pathRx, line.name);
+    }
+
+    var createBody = [];
+    var clearBody = [];
+    for (var i = 0, line; line = body[i]; i++)
+    {
+      createBody[i] = line.alias + '=' + line.path + '\n';
+      clearBody[i] = line.alias + '=null\n';
     }
 
     //
@@ -428,7 +441,7 @@ basis.require('basis.dom.event');
         return obj_;
       }
 
-    .toString().replace('_code_()', body.map(String.format, '{alias}={path};\n').join('')))(proto, tmplNodeMap);
+    .toString().replace('_code_()', createBody))(proto, tmplNodeMap); // body.map(String.format, '{alias}={path};\n').join('')
 
     //
     // build clearInstance function
@@ -447,7 +460,7 @@ basis.require('basis.dom.event');
 
       }
 
-    .toString().replace('_code_()', body.map(String.format,'{alias}=null;\n').join('')))(tmplNodeMap);
+    .toString().replace('_code_()', clearBody))(tmplNodeMap);  // body.map(String.format, '{alias}=null;\n').join('')
   };
 
 

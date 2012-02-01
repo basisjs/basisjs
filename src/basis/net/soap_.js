@@ -119,7 +119,7 @@ basis.require('basis.net.ajax');
     },
 
     parseResponseXML: function(){
-      if (this.responseEnvelope == undefined)
+      if (this.responseEnvelope == undefined)  // NOTE: responseEnvelope must be undefined before parse
       {
         var xml = this.xhr.responseXML;
         if (!xml || xml === undefined || xml.documentElement === undefined)
@@ -130,10 +130,7 @@ basis.require('basis.net.ajax');
         {
           // convert to native document for IE
           if (xml.xml && window.DOMParser)
-          {
-            var parser = new DOMParser();
-            xml = parser.parseFromString(xml.xml, "text/xml");
-          }
+            xml = new DOMParser().parseFromString(xml.xml, "text/xml");
 
           this.responseEnvelope = new Envelope(xml.documentElement);
         }

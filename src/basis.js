@@ -845,6 +845,9 @@
   */
 
   var STRING_QUOTE_PAIRS = { '<': '>', '[': ']', '(': ')', '{': '}', '\xAB': '\xBB' };
+  var ESCAPE_FOR_REGEXP = /[\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$]/g;
+  var FORMAT_REGEXP = /\{([a-z\d\_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
+  var QUOTE_REGEXP_CACHE = {};
 
   String.Entity = {
     laquo:  '\xAB',
@@ -928,7 +931,7 @@
       return trimed ? trimed.split(/\s+/) : [];
     },
     forRegExp: function(){
-      return this.replace(/[\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$]/g, "\\$&");
+      return this.replace(ESCAPE_FOR_REGEXP, "\\$&");
     },
     format: function(first){
       var data = {};
@@ -939,7 +942,7 @@
       if (typeof first == 'object')
         extend(data, first);
 
-      return this.replace(/\{([a-z\d\_]+)(?::([\.0])(\d+)|:(\?))?\}/gi,
+      return this.replace(FORMAT_REGEXP,
         function(m, key, numFormat, num, noNull){ 
           var value = key in data ? data[key] : (noNull ? '' : m);
           if (numFormat && !isNaN(value))
@@ -957,7 +960,7 @@
       quoteS = quoteS || '"';
       quoteE = quoteE || STRING_QUOTE_PAIRS[quoteS] || quoteS;
       var rx = (quoteS.length == 1 ? quoteS : '') + (quoteE.length == 1 ? quoteE : '');
-      return quoteS + (rx ? this.replace(new RegExp('[' + rx.forRegExp() + ']', 'g'), "\\$&") : this) + quoteE;
+      return quoteS + (rx ? this.replace(QUOTE_REGEXP_CACHE[rx] || (QUOTE_REGEXP_CACHE[rx] = new RegExp('[' + rx.forRegExp() + ']', 'g'), "\\$&")) : this) + quoteE;
     },
     capitalize: function(){
       return this.charAt(0).toUpperCase() + this.substr(1).toLowerCase();
@@ -1343,6 +1346,8 @@
       return true;
     })()
 
+    var NULL_FUNCTION = Function();
+
     //
     // main class object
     //
@@ -1355,7 +1360,7 @@
       // prototype defaults
       prototype: { 
         constructor: null,
-        init: Function(),
+        init: NULL_FUNCTION,
         toString: function(){
           return '[object ' + (this.constructor || this).className + ']';
         },
@@ -1418,7 +1423,7 @@
           );
         }
 
-        /** @cut */if (/^function[^(]*\(config\)/.test(newProto.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
+        /** @cut */if (newProto.init != NULL_FUNCTION && /^function[^(]*\(config\)/.test(newProto.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
         /** @cut *///if (genericClassName == newClassProps.className) { console.warn('Class has no className'); }
 
         // new class constructor

@@ -1296,7 +1296,8 @@ basis.require('basis.event');
     function flushAllDataset(){
       var eventCacheCopy = eventCache;
       eventCache = {};
-      values(eventCacheCopy).forEach(flushCache);
+      for (var datasetId in eventCacheCopy)
+        flushCache(eventCacheCopy[datasetId]);
     }
 
     function storeDatasetDelta(dataset, delta){
@@ -1330,13 +1331,16 @@ basis.require('basis.event');
     }
 
     function urgentFlush(){
-      ;;;if (typeof console != 'undefined') console.warn('(debug) Urgent flush dataset changes');
-      setStateCount = 0;
-      setAccumulateStateOff();
+      urgentTimer = null;
+      if (setStateCount)
+      {
+        ;;;if (typeof console != 'undefined') console.warn('(debug) Urgent flush dataset changes');
+        setStateCount = 0;
+        setAccumulateStateOff();
+      }
     }
 
     function setAccumulateStateOff(){
-      clearTimeout(urgentTimer);
       proto.event_datasetChanged = realEvent;
       flushAllDataset();
     }
@@ -1347,7 +1351,8 @@ basis.require('basis.event');
         if (setStateCount == 0)
         {
           proto.event_datasetChanged = storeDatasetDelta;
-          urgentTimer = setTimeout(urgentFlush, 0);
+          if (!urgentTimer)
+            urgentTimer = setTimeout(urgentFlush, 0);
         }
         setStateCount++;
       }

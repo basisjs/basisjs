@@ -273,7 +273,7 @@ basis.require('basis.ui.button');
         DOM.insert(
           titleContainer,
           DOM.createElement('SPAN.Basis-Window-Title-ButtonPlace', 
-            DOM.createElement('A[href=#].Basis-Window-Title-CloseButton[event-click="close"]',
+            DOM.createElement('SPAN.Basis-Window-Title-CloseButton[event-click="close"]',
               DOM.createElement('SPAN', 'Close')
             )
           ),
