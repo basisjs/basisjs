@@ -345,6 +345,7 @@ basis.require('basis.ui.canvas');
             maxValueTextWidth = tw;
         }
 
+        maxValueTextWidth += 6;
         TOP += 10;
       }
 
@@ -362,6 +363,8 @@ basis.require('basis.ui.canvas');
           if (tw > maxPropTextWidth)
             maxPropTextWidth = tw;
         }
+
+        maxPropTextWidth += 6;
       }
 
       // calc left offset
@@ -376,7 +379,7 @@ basis.require('basis.ui.canvas');
       var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxPropTextWidth;
       var maxYLabelWidth = this.invertAxis ? maxPropTextWidth : maxValueTextWidth;
 
-      LEFT = Math.max(maxYLabelWidth + 6, Math.round(firstXLabelWidth / 2));
+      LEFT = Math.max(maxYLabelWidth, Math.round(firstXLabelWidth / 2));
       RIGHT = Math.round(lastXLabelWidth / 2);
 
       // Legend
@@ -494,9 +497,7 @@ basis.require('basis.ui.canvas');
         
         for (var i = 0, label; label = yLabels[i]; i++)
         {
-          var labelY = Math.round(HEIGHT - BOTTOM - topOffset - i * yStep) + .5;
-
-          /*context.fillText(label, LEFT - 6, labelY + 2.5);*/
+          var labelY = Math.round(this.invertAxis ? (TOP + topOffset + i * yStep) : (HEIGHT - BOTTOM - topOffset - i * yStep)) + .5;
 
           skipLabel = skipLabelCount && (i % (skipLabelCount + 1) != 0);
 
@@ -989,7 +990,7 @@ basis.require('basis.ui.canvas');
       var HEIGHT = clientRect.height;
 
       var step = (invertAxis ? HEIGHT : WIDTH) / bars[0].length;
-      var position = invertAxis ? HEIGHT - y : x;
+      var position = invertAxis ? y : x;
       var barPosition = Math.floor(position / step);
       
       var legendText;
@@ -1079,51 +1080,95 @@ basis.require('basis.ui.canvas');
       context.strokeStyle = '#333';
       context.lineWidth = 1;
 
+      var zeroLinePosition = min >= 0 ? 0 : (max <= 0 ? height : Math.abs(min / (max - min) * height));
+
+      var bar;
       this.bars[pos] = [];
-
-      var size = this.invertAxis ? width : height;
-      var cnt = this.childNodes.length;
-      var barSize = Math.round(0.7 * step / cnt);
-      var needStroke = barSize > 10;
-      var zeroOffset = min < 0 ? Math.abs(min / (max - min) * size) : 0;
-
-      var barX, barY;
-      var barWidth, barHeight;
       for (var i = 0; i < values.length; i++)
       {
-        if (this.invertAxis)
-        {
-          barHeight = barSize;          
-          barY = height - Math.round((i + 1) * step - pos * barHeight - barHeight / 2);
+        bar = this.getBarRect(values[i], pos, i, min, max, step, width, height, zeroLinePosition);
 
-          var x = (values[i] - min) / (max - min) * size;
-          barWidth = (x - zeroOffset) * (values[i] > 0 ? 1 : -1);
-          barX = values[i] > 0 ? zeroOffset : zeroOffset - barWidth;
-        }
-        else
-        {
-          barWidth = barSize;          
-          barX = Math.round(step / 2 + i * step - barWidth * cnt / 2 + pos * barWidth);
+        bar.value = values[i];
+        this.bars[pos].push(bar);
 
-          var y = (values[i] - min) / (max - min) * size;
-          barHeight = (y - zeroOffset) * (values[i] > 0 ? 1 : -1);
-          barY = values[i] > 0 ? size - y : size - zeroOffset;
-        }
+        bar.x = Math.round(bar.x);
+        bar.y = Math.round(bar.y);
+        bar.width = Math.round(bar.width);
+        bar.height = Math.round(bar.height);
 
-        context.fillRect(barX + .5, barY + .5, barWidth, barHeight);
-        if(needStroke)
-          context.strokeRect(barX + .5, barY + .5, barWidth, barHeight);
-
-        this.bars[pos].push({
-          x: barX,
-          y: barY,
-          width: barWidth,
-          height: barHeight,
-          value: values[i]
-        });
+        this.drawBar(bar);
       }
 
       context.restore();
+    },
+    getBarRect: function(value, threadPos, barPos, min, max, step, width, height, zeroLinePosition){                                                                        
+      var cnt = this.childNodes.length;
+      var barSize = Math.round(0.7 * step / cnt);
+
+      var bar = {};
+      if (this.invertAxis)
+      {
+        bar.height = barSize;          
+        bar.y = step / 2 + barPos * step - bar.height * cnt / 2 + threadPos * bar.height;
+
+        var x = (value - min) / (max - min) * width;
+        bar.width = (x - zeroLinePosition) * (value > 0 ? 1 : -1);
+        bar.x = zeroLinePosition - (value < 0 ? bar.width : 0);
+      }
+      else
+      {
+        bar.width = barSize;          
+        bar.x = step / 2 + barPos * step - bar.width * cnt / 2 + threadPos * bar.width;
+        var y = (value - min) / (max - min) * height;
+        bar.height = (y - zeroLinePosition) * (value > 0 ? 1 : -1);
+        bar.y = height - zeroLinePosition - (value > 0 ? bar.height : 0);
+      }
+
+      return bar;
+    },
+    drawBar: function(bar){
+      this.context.fillRect(bar.x + .5, bar.y + .5, bar.width, bar.height);
+      if(bar.width > 10 && bar.height > 10)
+        this.context.strokeRect(bar.x + .5, bar.y + .5, bar.width, bar.height);
+    }
+  });
+
+  /**
+   * @class
+   */
+  var StackedBarGraph = BarGraph.subclass({
+    getMaxValue: function(){
+      var values = this.childNodes[0].getValues();
+      for (var i = 1, thread; thread = this.childNodes[i]; i++)
+      {
+        thread.getValues().forEach(function(value, pos) { values[pos] += value });
+      }
+
+      return Math.max.apply(null, values);
+    },
+    getBarRect: function(value, threadPos, barPos, min, max, step, width, height, zeroLinePosition){
+      var bar = {};
+      var previousBar = threadPos > 0 && this.bars[threadPos - 1][barPos];
+      var barSize = 0.7 * step;
+            
+      if (this.invertAxis)
+      {
+        bar.height = barSize;          
+        bar.y = step / 2 + barPos * step - barSize / 2;
+
+        bar.width = value / max * width;
+        bar.x = (previousBar && (previousBar.x + previousBar.width)) || 0;
+      }
+      else
+      {
+        bar.width = barSize;          
+        bar.x = step / 2 + barPos * step - bar.width / 2;
+
+        bar.height = value / max * height;
+        bar.y = height - bar.height - (previousBar && (height - previousBar.y));
+      }
+
+      return bar;
     }
   });
 
@@ -1133,7 +1178,8 @@ basis.require('basis.ui.canvas');
 
   basis.namespace(namespace).extend({
     LinearGraph: LinearGraph,
-    BarGraph: BarGraph
+    BarGraph: BarGraph,
+    StackedBarGraph: StackedBarGraph
   });
 
 }(basis);

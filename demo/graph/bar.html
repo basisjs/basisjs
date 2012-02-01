@@ -44,6 +44,8 @@
     var DOM = basis.dom;
     var nsEntity = basis.entity;
     var BarGraph = basis.ui.graph.BarGraph;
+    var StackedBarGraph = basis.ui.graph.StackedBarGraph;
+
 
     //
     // Example
@@ -57,13 +59,15 @@
 
     Math.seedrandom("bar graph");
 
+    var min = 10000;
+    var max = 50000;
     for (var i = 0, countries; country = countries[i]; i++)
     {
       var row = {
         Country: country
       }
       
-      lastValue = (50000 - 10000) * Math.random() + 10000; // 10 000 - 50 000
+      lastValue = (max - min) * Math.random() + min; // 10 000 - 50 000
       for (var year = 2010; year <= 2012; year++)
       {
         lastValue = row[year] = lastValue + 0.2 * lastValue * (2 * Math.random() - 1); // +/- 20% from last value;
@@ -73,11 +77,10 @@
     }
     data = basis.data(data);
 
-    new BarGraph({
+    var barGraphConfig = {
       container: DOM.get('demo-container'),
       width: 500,
       height: 450,
-      min: 'auto',
 
       propGetter: Function.getter('data.Country'),
 
@@ -98,33 +101,19 @@
           childNodes: data
         }
       ]
-    });
+    }
 
-    new BarGraph({
-      invertAxis: true,
-      container: DOM.get('demo-container'),
-      width: 500,
-      height: 450,
-      propGetter: Function.getter('data.Country'),
+    new BarGraph(barGraphConfig);
 
-      childNodes: [
-        {
-          legend: '2010',
-          valueGetter: Function.getter('data[2010]'),
-          childNodes: data
-        },
-        {
-          legend: '2011',
-          valueGetter: Function.getter('data[2011]'),
-          childNodes: data
-        },
-        {
-          legend: '2012',
-          valueGetter: Function.getter('data[2012]'),
-          childNodes: data
-        }
-      ]
-    });
+    new BarGraph(Object.extend({
+      invertAxis: true
+    }, barGraphConfig));
+
+    new StackedBarGraph(barGraphConfig);
+
+    new StackedBarGraph(Object.extend({
+      invertAxis: true
+    }, barGraphConfig));
 
   </script>
 </body>
