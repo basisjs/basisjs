@@ -19,7 +19,7 @@ basis.require('basis.ui');
 /*window.FlashCanvasOptions = {
   swfPath: "../../src/basis/ext/"
 };
-basis.require('basis.ext.flashcanvas');*/
+basis_require('basis.ext.flashcanvas');*/
 
 
 !function(basis){

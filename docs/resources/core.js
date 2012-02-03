@@ -331,6 +331,7 @@
           //|| (key == 'init' && context == 'prototype')
           || (key == 'className' && context == 'class')
           || (key == 'subclass' && context == 'class')
+          || (key == 'isSubclassOf' && context == 'class')
           || (key == 'toString' && (Object.prototype.toString === obj || basis.Class.BaseClass.prototype.toString === obj)))
         continue;
 

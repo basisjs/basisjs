@@ -1291,11 +1291,11 @@
     *   var classB = basis.Class(classA, {
     *     age: 0,
     *     init: function(title, age){
-    *       this.inherit(title);
+    *       classA.prototype.init.call(this, title);
     *       this.age = age;
     *     },
     *     say: function(){
-    *       return this.inherit() + ' I\'m {0} year old.'.format(this.age);
+    *       return classA.prototype.say.call(this) + ' I\'m {0} year old.'.format(this.age);
     *     }
     *   });
     *
@@ -1322,8 +1322,8 @@
     * Global instances seed.
     */
     var seed = { id: 1 };
-
     var classSeed = 1;
+    var NULL_FUNCTION = Function();
 
    /**
     * Class construct helper: self reference value
@@ -1337,16 +1337,26 @@
     * @return {boolean} Returns true if object is class.
     */
     function isClass(object){
-      return typeof object == 'function' && object.basisClass_;
+      return typeof object == 'function' && !!object.basisClassId_;
     };
 
+   /**
+    * @func
+    */
+    function isSubclassOf(superClass){
+      var cursor = this;
+      while (cursor && cursor !== superClass)
+        cursor = cursor.superClass_;
+      return cursor === superClass;
+    }
+
+    // test is toString property enumerable
     var TOSTRING_BUG = (function(){
       for (var key in { toString: 1 })
         return;
       return true;
     })()
 
-    var NULL_FUNCTION = Function();
 
     //
     // main class object
@@ -1388,23 +1398,26 @@
         SuperClass_.prototype = SuperClass.prototype;
 
         var newProto = new SuperClass_();
-        var genericClassName = SuperClass.className + '.UnknownClass' + (classSeed++);
+        var classId = classSeed++;
+        var genericClassName = SuperClass.className + '._Class' + classId;
         var newClassProps = {
           className: genericClassName,
-          basisClass_: true,
+          basisClassId_: classId,
           superClass_: SuperClass,
           extendConstructor_: !!SuperClass.extendConstructor_,
 
           // class methods
+          isSubclassOf: isSubclassOf,
+          subclass: function(){
+            return BaseClass.create.apply(null, [newClass].concat(Array.from(arguments)));
+          },
+          extend: BaseClass.extend,
+          // auto extend creates a subclass
           __extend__: function(value){
             if (value && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))) && value !== SELF)
               return BaseClass.create.call(null, newClass, value);
             else
               return value;
-          },
-          extend: BaseClass.extend,
-          subclass: function(){
-            return BaseClass.create.apply(null, [newClass].concat(Array.from(arguments)));
           },
 
           // new class prototype
@@ -1412,16 +1425,15 @@
         };
 
         // extend newClass prototype
-        for (var args = arguments, i = 1; i < args.length; i++)
+        for (var i = 1, extension; extension = arguments[i]; i++)
         {
-          //if (typeof args[i] == 'function' && !args[i].className)
-          //  console.log(args[i]);
           newClassProps.extend(
-            typeof args[i] == 'function' && !isClass(args[i])
-              ? args[i](SuperClass.prototype)
-              : args[i]
+            typeof extension == 'function' && !isClass(extension)
+              ? extension(SuperClass.prototype)
+              : extension
           );
         }
+
 
         /** @cut */if (newProto.init != NULL_FUNCTION && /^function[^(]*\(config\)/.test(newProto.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
         /** @cut *///if (genericClassName == newClassProps.className) { console.warn('Class has no className'); }

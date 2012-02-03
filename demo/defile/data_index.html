@@ -142,10 +142,10 @@
     var indexMap = new nsDataIndex.IndexMap({
       source: dataset,
       indexes: {
-        valueMax: new nsDataIndex.Max('data.value'),
-        totalMax: new nsDataIndex.Max('data.total'),
-        totalMin: new nsDataIndex.Min('data.total'),
-        totalSum: new nsDataIndex.Sum('data.total')
+        valueMax: nsDataIndex.max('data.value'),
+        totalMax: nsDataIndex.max('data.total'),
+        totalMin: nsDataIndex.min('data.total'),
+        totalSum: nsDataIndex.sum('data.total')
       },
       calcs: {
         percentOfValueMax: function(data, indexes){
@@ -317,6 +317,7 @@
       ]
     });
     DOM.hide(recordPanel.element);
+
 
     
   </script>

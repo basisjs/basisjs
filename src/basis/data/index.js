@@ -1,4 +1,4 @@
-/*!
+/**
  * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
@@ -14,7 +14,7 @@ basis.require('basis.data');
 basis.require('basis.data.dataset');
 basis.require('basis.data.property');
 
-!function(basis){
+(function(basis){
 
   'use strict';
 
@@ -35,13 +35,14 @@ basis.require('basis.data.property');
   var nsData = basis.data;
   var DataObject = nsData.DataObject;
   var KeyObjectMap = nsData.KeyObjectMap;
-  var Property = nsData.property.Property;
-
   var AbstractDataset = nsData.AbstractDataset;
-  var MapReduce = nsData.dataset.MapReduce;
+
+  var Property = basis.data.property.Property;
+  var MapReduce = basis.data.dataset.MapReduce;
+
 
   //
-  // IndexedDataset
+  // Main part
   //
 
   function binarySearchPos(array, value){ 
@@ -56,7 +57,6 @@ basis.require('basis.data.property');
     do 
     {
       pos = (l + r) >> 1;
-
       cmpValue = array[pos] || 0;
 
       if (value < cmpValue)
@@ -86,380 +86,466 @@ basis.require('basis.data.property');
     autoDestroy: true,
 
    /**
+    * Map of current values 
+    * @type {Object}
+    * @private
+    */
+    indexCache_: null,
+
+   /**
     * @type {function(object):any}
     */
     valueGetter: Function.$null,
 
    /**
-    * @type {basis.data.AbstractDataset}
+    * Event names map when index must check for updates.
+    * @type {Object}
     */
-    dataSource: null,
-    
+    updateEvents: {},
+   
    /**
     * @constructor
     */
-    init: function(valueGetter){
-      Property.prototype.init.call(this, this.value || 0);
-
+    init: function(){
       this.indexCache_ = {};
-      this.valueGetter = valueGetter;
+
+      Property.prototype.init.call(this, 0);
     },
-
-   /**
-    * Set data source
-    * @param {basis.data.AbstractDataset} dataSource
-    */
-    /*setDataSource: function(dataSource){
-      if (dataSource instanceof AbstractDataset == false)
-        dataSource = null;
-
-      if (this.dataSource !== dataSource)
-      {
-        var oldDataSource = this.dataSource;
-        this.dataSource = dataSource;
-
-        if (oldDataSource)
-        {
-          this.indexCache_ = null;
-          getIndexController(oldDataSource).remove(this);
-          this.reset();  // Q: should we avoid unnecessary updates?
-        }
-
-        if (dataSource)
-        {
-          this.indexCache_ = {};
-          getIndexController(dataSource).add(this);
-        }
-        else
-        {
-          if (this.autoDestroy)
-            this.destroy();
-        }
-
-        // data source changed event?
-      }
-    },*/
 
    /**
     * Add value to index
     */
-    add: function(item, value){
+    add_: function(value){
     },
+
    /**
     * Remove value to index
     */
-    remove: function(item, value){
+    remove_: function(value){
     },
 
    /**
     * Change value
     */
-    upd: function(item, newValue, oldValue){
-    }
+    update_: function(newValue, oldValue){
+    },
 
-   /**
-    * @destructor
-    */
-    /*destroy: function(){
+    destroy: function(){
       Property.prototype.destroy.call(this);
 
-      // drop datasource
-      this.setDataSource();
-    }*/
-  });
-
- /**
-  * @class
-  */
-  var IndexSum = Class(Index, {
-    className: namespace + '.Sum',
-    add: function(item, value){
-      this.value += value;
-    },
-    remove: function(item, value){
-      this.value -= value;
-    },
-    upd: function(item, newValue, oldValue){
-      this.set(this.value + newValue - oldValue);
+      this.indexCache_ = null;
     }
   });
 
+
  /**
   * @class
   */
-  var IndexAvg = Class(Index, {
+  var Sum = Class(Index, {
+    className: namespace + '.Sum',
+
+   /**
+    * @inheritDoc
+    */
+    add_: function(value){
+      this.value += value;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    remove_: function(value){
+      this.value -= value;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    update_: function(newValue, oldValue){
+      this.set(this.value - oldValue + newValue);
+    }
+  });
+
+
+ /**
+  * @class
+  */
+  var Count = Class(Index, {
+    className: namespace + '.Count',
+
+   /**
+    * @inheritDoc
+    */
+    valueGetter: Function.$true,
+
+   /**
+    * @inheritDoc
+    */
+    add_: function(value){
+      this.value += !!value;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    remove_: function(value){
+      this.value -= !!value;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    update_: function(newValue, oldValue){
+      this.set(this.value - !!oldValue + !!newValue);
+    }
+  });
+
+
+ /**
+  * @class
+  */
+  var Avg = Class(Index, {
     className: namespace + '.Avg',
     sum_: 0,
     count_: 0,
 
-    add: function(item, value){
+   /**
+    * @inheritDoc
+    */
+    add_: function(value){
       this.sum_ += value;
       this.count_ += 1;
-      this.value = this.sum_/this.count_;
+      this.value = this.sum_ / this.count_;
     },
-    remove: function(item, value){
+
+   /**
+    * @inheritDoc
+    */
+    remove_: function(value){
       this.sum_ -= value;
       this.count_ -= 1;
-      this.value = this.count_ ? this.sum_/this.count_ : 0;
+      this.value = this.count_ ? this.sum_ / this.count_ : 0;
     },
-    upd: function(item, newValue, oldValue){
+
+   /**
+    * @inheritDoc
+    */
+    update_: function(newValue, oldValue){
       this.sum_ += newValue - oldValue;
-      this.set(this.sum_/this.count_);
+      this.set(this.sum_ / this.count_);
     }
   });
+
 
  /**
   * @class
   */
-  var IndexCount = Class(Index, {
-    className: namespace + '.Count',
-    valueGetter: Function.$true,
-    add: function(item, value){
-      if (value)
-        this.value += 1;
+  var VectorIndex = Class(Index, {
+    className: namespace + '.VectorIndex',
+
+   /**
+    * function to fetch item from vector
+    * @type {function(vector)}
+    */
+    itemGetter: Function.$null,
+
+   /**
+    * Values vector
+    * @type {Array.<any>}
+    */
+    vector_: null,
+
+   /**
+    * @inheritDoc
+    */
+    init: function(){
+      this.vector_ = [];
+      Index.prototype.init.call(this);
     },
-    remove: function(item, value){
-      if (value)
-        this.value -= 1;
+
+   /**
+    * @inheritDoc
+    */
+    add_: function(value){
+      this.vector_.splice(binarySearchPos(this.vector_, value), 0, value);
+      this.value = this.vectorGetter(this.vector_);
     },
-    upd: function(item, newValue, oldValue){
-      this.set(this.value + (newValue ? 1 : -1));
+
+   /**
+    * @inheritDoc
+    */
+    remove_: function(value){
+      this.vector_.splice(binarySearchPos(this.vector_, value), 1);
+      this.value = this.vectorGetter(this.vector_);
+    },
+
+   /**
+    * @inheritDoc
+    */
+    update_: function(newValue, oldValue){
+      this.vector_.splice(binarySearchPos(this.vector_, oldValue), 1);
+      this.vector_.splice(binarySearchPos(this.vector_, newValue), 0, newValue);
+      this.set(this.vectorGetter(this.vector_));
+    },
+
+   /**
+    * @inheritDoc
+    */
+    destroy: function(){
+      Index.prototype.destroy.call(this)
+      this.vector_ = null;
     }
   });
+
 
  /**
   * @class
   */
-  var IndexMax = Class(Index, {
-    className: namespace + '.Max',
-    init: function(valueGetter, dataSource){
-      this.stack = [];
-      Index.prototype.init.call(this, valueGetter, dataSource);
-    },
-    add: function(item, value){
-      this.stack.splice(binarySearchPos(this.stack, value), 0, value);
-      this.value = this.stack[this.stack.length - 1];
-    },
-    remove: function(item, value){
-      this.stack.remove(value);
-      this.value = this.stack[this.stack.length - 1];
-    },
-    upd: function(item, newValue, oldValue){
-      //this.stack.remove(oldValue);
-      this.stack.splice(binarySearchPos(this.stack, oldValue), 1);
-      this.stack.splice(binarySearchPos(this.stack, newValue), 0, newValue);
-      this.set(this.stack[this.stack.length - 1]);
-    }
-  });
-
- /**
-  * @class
-  */
-  var IndexMin = Class(Index, {
+  var Min = Class(VectorIndex, {
     className: namespace + '.Min',
-    init: function(valueGetter, dataSource){
-      this.stack = [];
-      Index.prototype.init.call(this, valueGetter, dataSource);
-    },
-    add: function(item, value){
-      this.stack.splice(binarySearchPos(this.stack, value), 0, value);
-      this.value = this.stack[0];
-    },
-    remove: function(item, value){
-      this.stack.remove(value);
-      this.value = this.stack[0];
-    },
-    upd: function(item, newValue, oldValue){
-      //this.stack.remove(oldValue);
-      this.stack.splice(binarySearchPos(this.stack, oldValue), 1);
-      this.stack.splice(binarySearchPos(this.stack, newValue), 0, newValue);
-      this.set(this.stack[0]);
+    vectorGetter: function(vector){
+      return vector[0];
     }
   });
 
-  var indexConstructorCache_= {};
 
-  function IndexConstructor(getter, indexClass){
+ /**
+  * @class
+  */
+  var Max = Class(VectorIndex, {
+    className: namespace + '.Max',
+    vectorGetter: function(vector){
+      return vector[vector.length - 1];
+    }
+  });
+
+
+  //
+  // Index builder
+  //
+
+  var indexConstructors_= {};
+
+  var DATASET_INDEX_HANDLER = {
+    destroy: function(object){
+      this.deleteIndex(object);
+    }
+  };
+
+  function IndexConstructor(BaseClass, getter, events){
+    if (!Class.isClass(BaseClass) || !BaseClass.isSubclassOf(Index))
+      throw 'Wrong class for index constructor';
+
     getter = Function.getter(getter);
+    events = events || 'update';
 
-    var key = indexClass.indexClassId + '_' + getter.basisGetterId_;
-    var indexConstructor = indexConstructorCache_[key];
+    if (typeof events != 'string')
+      throw 'Events must be a event names space separated string';
 
-    if (!indexConstructor)
-    {
-      indexConstructor = indexConstructorCache_[key] = this;
-      
-      this.indexClass = indexClass;
-      this.getter = getter;
-      this.key = key;
-      
-      this.createInstance = function(dataset){
-        if (dataset instanceof AbstractDataset)
-        {
-          var result = dataset.indexes && dataset.indexes[key];
+    events = events.qw().sort();
 
-          if (!result)
-          {
-            result = new indexClass(getter);
-            result.addHandler(DATASET_INDEX_HANDLER, dataset);
-            result.key = key;
-          }
+    var indexId = [BaseClass.basisClassId_, getter.basisGetterId_, events].join('_');
+    var indexConstructor = indexConstructors_[indexId];
 
-          return result;
-        }
-      }
+    if (indexConstructor)
+      return indexConstructor.owner;
+
+    //
+    // Create new constructor
+    //
+
+    var events_ = {};
+    for (var i = 0; i < events.length; i++)
+      events_[events[i]] = true;
+
+    indexConstructors_[indexId] = {
+      owner: this,
+      indexClass: BaseClass.subclass({
+        indexId: indexId,
+        updateEvents: events_,
+        valueGetter: getter
+      })
+    };
+
+    this.indexId = indexId;
+  };
+
+  var createIndexConstructor = function(IndexClass){
+    return function(getter, events){
+      return new IndexConstructor(IndexClass, getter, events);
     }
-
-    return indexConstructor;
   }
 
-  var indexClassId = 1;
-  var createIndexConstructor = function(indexClass){
-    indexClass.indexClassId = indexClassId++;
-    return function(getter){
-      return new IndexConstructor(getter, indexClass);
-    }
-  }
+  //
+  // Build basic index constructors
+  //
 
-  var Sum   = createIndexConstructor(IndexSum);
-  var Avg   = createIndexConstructor(IndexAvg);
-  var Count = createIndexConstructor(IndexCount);
-  var Min   = createIndexConstructor(IndexMin);
-  var Max   = createIndexConstructor(IndexMax);
+  var count = createIndexConstructor(Count);
+  var sum = createIndexConstructor(Sum);
+  var avg = createIndexConstructor(Avg);
+  var min = createIndexConstructor(Min);
+  var max = createIndexConstructor(Max);
 
 
-
-  /*AbstractDataset.prototype.createIndex = function(indexContructor){
-    return new indexContructor.indexClass(indexContructor.getter, this);
-  } */
-
+  //
+  // Extend datasets to support aggregates
+  //
 
   function applyIndexDelta(index, inserted, deleted){
-    var cache = index.indexCache_;
+    var indexCache = index.indexCache_;
+    var objectId;
+
+    // lock index to prevent multiple events
     index.lock();
 
     if (inserted)
       for (var i = 0, object; object = inserted[i++];)
       {
         var newValue = index.valueGetter(object);
-        cache[object.eventObjectId] = newValue;
-        index.add(object, newValue);
+        indexCache[object.eventObjectId] = newValue;
+        index.add_(newValue);
       }
 
     if (deleted)
       for (var i = 0, object; object = deleted[i++];)
       {
-        index.remove(object, cache[object.eventObjectId]);
-        delete cache[object.eventObjectId];
+        objectId = object.eventObjectId;
+        index.remove_(indexCache[objectId]);
+        delete indexCache[objectId];
       }
 
+    // unlock index - fire event if value was changed
     index.unlock();
   }
 
+  var ITEM_INDEX_HANDLER = {
+    '*': function(event){
+      var oldValue;
+      var newValue;
+      var index;
+      var eventType = event.type;
+      var object = event.args[0];
+      var objectId = object.eventObjectId;
 
-  var INDEX_ITEM_UPDATE = function(object, delta){
-    var oldValue;
-    var newValue;
-    var index;
-    var objectId = object.eventObjectId;
-
-    for (var i in this.indexes)
-    {
-      index = this.indexes[i];
-      // fetch oldValue
-      oldValue = index.indexCache_[objectId];
-
-      // calc new value
-      newValue = index.valueGetter(object);
-
-      // update if value has changed
-      if (newValue !== oldValue)
+      for (var indexId in this.indexes)
       {
-        index.upd(object, newValue, oldValue);
-        index.indexCache_[objectId] = newValue;
+        index = this.indexes[indexId];
+
+        if (index.updateEvents[eventType])
+        {
+          // fetch oldValue
+          oldValue = index.indexCache_[objectId];
+
+          // calc new value
+          newValue = index.valueGetter(object);
+
+          // update if value has changed
+          if (newValue !== oldValue)
+          {
+            index.update_(newValue, oldValue);
+            index.indexCache_[objectId] = newValue;
+          }
+        }
       }
-    }
-  };
-
-  var INDEX_ITEM_HANDLER = {
-    update: INDEX_ITEM_UPDATE,
-    datasetChanged: INDEX_ITEM_UPDATE
-  };
-
-  var DATASET_WITH_INDEX_HANDLER = {
-    datasetChanged: function(object, delta){
-      // add handler to new source object
-      if (delta.inserted)
-        for (var i = 0, object; object = delta.inserted[i++];)
-          object.addHandler(INDEX_ITEM_HANDLER, this);
-
-      // remove handler from old source object
-      if (delta.deleted)
-        for (var i = 0, object; object = delta.deleted[i++];)
-          object.removeHandler(INDEX_ITEM_HANDLER, this);
-
-      // apply changes for indexes
-      for (var j in this.indexes)
-        applyIndexDelta(this.indexes[j], delta.inserted, delta.deleted);
-    },
-    
-    destroy: function(){
-      for (var i in this.indexes)
-        this.indexes[i].destroy();
     }
   };
 
   var DATASET_INDEX_HANDLER = {
-    destroy: function(object){
-      this.removeIndex(object);
+    datasetChanged: function(object, delta){
+      var array;
+
+      // add handler to new source object
+      if (array = delta.inserted)
+        for (var i = array.length; i --> 0;)
+          array[i].addHandler(ITEM_INDEX_HANDLER, this);
+
+      // remove handler from old source object
+      if (array = delta.deleted)
+        for (var i = array.length; i --> 0;)
+          array[i].removeHandler(ITEM_INDEX_HANDLER, this);
+
+      // apply changes for indexes
+      for (var indexId in this.indexes)
+        applyIndexDelta(this.indexes[indexId], delta.inserted, delta.deleted);
+    },
+    
+    destroy: function(){
+      for (var indexId in this.indexes)
+        this.indexes[indexId].destroy();
     }
   };
 
-  AbstractDataset.prototype.createIndex = function(indexConstructor){
-    if (indexConstructor instanceof IndexConstructor == false)
-    {
-      /** @cut */ if (typeof console != 'undefined') console.warn('indexConstructor must be an instance of IndexConstructor');
-      return;
-    }
 
-    if (!this.indexes)
-    {
-      this.indexes = {};
-      this.addHandler(DATASET_WITH_INDEX_HANDLER);
+ /**
+  * Extend for basis.data.AbstractDataset
+  * @namespace basis.data.AbstractDataset
+  */
+  AbstractDataset.extend({
+   /**
+    * @type {Object}
+    */
+    indexes: null,
 
-      DATASET_WITH_INDEX_HANDLER.datasetChanged.call(this, this, {
-        inserted: this.getItems()
-      });
-    }
-
-    var key = indexConstructor.key;
-    if (!this.indexes[key])
-    {
-      var index = indexConstructor.createInstance(this);
-
-      this.indexes[key] = index;
-
-      applyIndexDelta(index, this.getItems());
-    }
-
-    return this.indexes[key]; 
-  }
-
-  AbstractDataset.prototype.removeIndex = function(index){
-    if (this.indexes && this.indexes[index.key])
-    {
-      delete this.indexes[index.key];
-
-      //index.removeHandler(DATASET_INDEX_HANDLER);
-      index.destroy();
-
-      for (var key in this.indexes)
+   /**
+    * @param
+    */ 
+    getIndex: function(indexConstructor){
+      if (indexConstructor instanceof IndexConstructor == false)
+      {
+        ;;;if (typeof console != 'undefined') console.warn('indexConstructor must be an instance of IndexConstructor');
         return;
+      }
 
-      this.removeHandler(DATASET_WITH_INDEX_HANDLER);
-      delete this.indexes;
+      if (!this.indexes)
+      {
+        this.indexes = {};
+
+        this.addHandler(DATASET_INDEX_HANDLER);
+        DATASET_INDEX_HANDLER.datasetChanged.call(this, this, {
+          inserted: this.getItems()
+        });
+      }
+
+      var indexId = indexConstructor.indexId;
+      var index = this.indexes[indexId];
+
+      if (!index)
+      {
+        var indexConstructor = indexConstructors_[indexId];
+        if (!indexConstructor)
+          throw 'Wrong index constructor';
+
+        index = new indexConstructor.indexClass();
+        index.addHandler(DATASET_INDEX_HANDLER, this);
+
+        this.indexes[indexId] = index;
+        applyIndexDelta(index, this.getItems());
+      }
+
+      return index; 
+    },
+
+   /**
+    * @param {basis.data.index.IndexConstructor|basis.data.index.Index}
+    */
+    deleteIndex: function(index){
+      if (this.indexes && this.indexes[index.indexId])
+      {
+        delete this.indexes[index.indexId];
+        index.removeHandler(DATASET_INDEX_HANDLER, this);
+        index.destroy();
+
+        // if any index in dataset nothing to do
+        for (var key in this.indexes)
+          return;
+
+        // if no indexes - delete indexes storage and remove handlers
+        this.removeHandler(DATASET_INDEX_HANDLER);
+        this.indexes = null;
+      }
     }
-  }
+  });
+
 
  /**
   * @class
@@ -476,56 +562,6 @@ basis.require('basis.data.property');
     indexUpdated: null,
     memberSourceMap: null,
     keyMap: null,
-
-    event_sourceChanged: function(dataset, oldSource){
-      MapReduce.prototype.event_sourceChanged.call(this, dataset, oldSource);
-      
-      var index;
-
-      for (var indexName in this.indexes_)
-      {
-        index = this.indexes_[indexName];
-        if (oldSource)
-        { 
-          this.removeIndex(indexName);
-          oldSource.removeIndex(this.indexes[indexName]);
-        }
-
-        if (this.source)
-          this.addIndex(indexName, this.source.createIndex(index));
-      }
-    },
-
-    listen: {
-      index: {
-        change: function(value){
-          var indexMap = this.indexMap;
-
-          indexMap.indexValues[this.key] = value;
-          indexMap.indexUpdated = true;
-          indexMap.fireUpdate();
-        }
-      },
-      member: {
-        subscribersChanged: function(object, oldCount){
-          if (object.subscriberCount > 0 && oldCount == 0)
-            this.calcMember(object);
-        }
-      }
-    },
-
-    ruleEvents: Class.OneFunctionProperty(
-      function(sourceObject, delta){
-        MapReduce.prototype.ruleEvents.update.call(this, sourceObject, delta);
-
-        this.sourceMap_[sourceObject.eventObjectId].updated = true;
-        this.fireUpdate();
-      },
-      {
-        update: true
-      }
-    ),
-
 
     map: function(item){
       return this.keyMap.get(item, true);
@@ -550,8 +586,58 @@ basis.require('basis.data.property');
         member.removeHandler(this.listen.member, this);
     },
 
+    event_sourceChanged: function(dataset, oldSource){
+      MapReduce.prototype.event_sourceChanged.call(this, dataset, oldSource);
+      
+      var index;
+
+      for (var indexName in this.indexes_)
+      {
+        index = this.indexes_[indexName];
+        if (oldSource)
+        { 
+          this.deleteIndex(indexName);
+          oldSource.deleteIndex(this.indexes[indexName]);
+        }
+
+        if (this.source)
+          this.addIndex(indexName, this.source.getIndex(index));
+      }
+    },
+
+    listen: {
+      index: {
+        change: function(value){
+          var indexMap = this.indexMap;
+
+          indexMap.indexValues[this.key] = value;
+          indexMap.indexUpdated = true;
+          indexMap.recalcRequest();
+        }
+      },
+      member: {
+        subscribersChanged: function(object, oldCount){
+          if (object.subscriberCount > 0 && oldCount == 0)
+            this.calcMember(object);
+        }
+      }
+    },
+
+    ruleEvents: Class.OneFunctionProperty(
+      function(sourceObject, delta){
+        MapReduce.prototype.ruleEvents.update.call(this, sourceObject, delta);
+
+        this.sourceMap_[sourceObject.eventObjectId].updated = true;
+        this.recalcRequest();
+      },
+      {
+        update: true
+      }
+    ),
+
+
     init: function(config){
-      this.apply = this.apply.bind(this);
+      this.recalc = this.recalc.bind(this);
 
       this.indexUpdated = false;
       this.indexesBind_ = {};
@@ -584,7 +670,7 @@ basis.require('basis.data.property');
           if (!this.indexes_[key])
           {
             this.indexes_[key] = index;
-            index = this.source && this.source.createIndex(index);
+            index = this.source && this.source.getIndex(index);
           }
           else
           {
@@ -634,29 +720,27 @@ basis.require('basis.data.property');
 
     addCalc: function(name, calc){
       this.calcs[name] = calc;
-      this.fireUpdate();
+      this.recalcRequest();
     },
     removeCalc: function(name){
       delete this.calcs[name];
     },
 
     lock: function(){
-      Object.values(this.indexes).forEach(function(idx){
-        idx.lock();
-      });
+      for (var indexId in this.indexes)
+        this.indexes[indexId].lock();
     },
     unlock: function(){
-      Object.values(this.indexes).forEach(function(idx){
-        idx.unlock();
-      });
+      for (var indexId in this.indexes)
+        this.indexes[indexId].unlock();
     },
 
-    fireUpdate: function(){
+    recalcRequest: function(){
       if (!this.timer_)
-        this.timer_ = setTimeout(this.apply, 0);
+        this.timer_ = setTimeout(this.recalc, 0);
     },
 
-    apply: function(){
+    recalc: function(){
       for (var idx in this.item_)
         this.calcMember(this.item_[idx]);
 
@@ -706,7 +790,7 @@ basis.require('basis.data.property');
       this.keyMap = null;
 
       for (var indexName in this.indexes)
-        this.removeIndexConstructor(indexName);
+        this.removeIndex(indexName);
 
       MapReduce.prototype.destroy.call(this);
     }
@@ -719,13 +803,23 @@ basis.require('basis.data.property');
 
   basis.namespace(namespace).extend({
     IndexConstructor: IndexConstructor,
+    createIndexConstructor: createIndexConstructor,
+
     Index: Index,
+    Count: Count,
     Sum: Sum,
     Avg: Avg,
-    Count: Count,
-    Max: Max,
+    VectorIndex: VectorIndex,
     Min: Min,
+    Max: Max,
+
+    count: count,
+    sum: sum,
+    avg: avg,
+    max: max,
+    min: min,
+
     IndexMap: IndexMap
   });
 
-}(basis);
+})(basis);

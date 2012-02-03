@@ -1,4 +1,4 @@
-/*!
+/**
  * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
@@ -14,7 +14,7 @@ basis.require('basis.dom');
 basis.require('basis.data');
 basis.require('basis.html');
 
-!function(basis){
+(function(basis){
 
   'use strict';
 
@@ -2576,15 +2576,12 @@ basis.require('basis.html');
     }
   });
 
-  function simpleTemplate(){
-    return basis.ui.apply(this, arguments);
-  }
 
   //
   // export names
   //
 
-  basis.namespace(namespace, simpleTemplate).extend({
+  basis.namespace(namespace).extend({
     // const
     DELEGATE: DELEGATE,
 
@@ -2599,4 +2596,4 @@ basis.require('basis.html');
     Selection: Selection
   });
 
-}(basis);
+})(basis);
