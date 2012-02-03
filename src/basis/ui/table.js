@@ -387,6 +387,10 @@ basis.require('basis.ui');
           if ('footer' in colConfig)
           {
             var footerConfig = colConfig.footer != null ? colConfig.footer : {};
+
+            if (typeof footerConfig != 'object')
+              footerConfig = { content: footerConfig };
+
             var content = footerConfig.content;
 
             if (typeof content == 'function')

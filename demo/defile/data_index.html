@@ -213,7 +213,15 @@
       structure: [
         {
           header: '#',
-          body: '{id}'
+          body: '{id}',
+          footer: function(){
+            return [
+              'min/max: ',
+              dataset.getIndex(basis.data.index.min('data.value')).addLink(basis.dom.createText()),
+              '/',
+              dataset.getIndex(basis.data.index.max('data.value')).addLink(basis.dom.createText())
+            ];
+          }
         },
         {
           sorting: 'data.title',
@@ -222,17 +230,29 @@
         },
         {
           sorting: Function.getter('data.value', Number),
+          cssClassName: 'right',
           header: 'Value',
-          body: '<div class="barWrapper"><div{percentOfValueMax} class="bar"/><span class="label">{value}</span></div>'
+          body: '<div class="barWrapper"><div{percentOfValueMax} class="bar"/><span class="label">{value}</span></div>',
+          footer: function(){
+            return dataset.getIndex(basis.data.index.count(Function.$true)).addLink(basis.dom.createText());
+          }
         },
         {
           sorting: Function.getter('data.total', Number),
+          cssClassName: 'right',
           header: 'Total',
-          body: '<div class="barWrapper"><div{percentOfTotalMax} class="bar"/><span class="label">{total}</span></div>'
+          body: '<div class="barWrapper"><div{percentOfTotalMax} class="bar"/><span class="label">{total}</span></div>',
+          footer: function(){
+            return dataset.getIndex(basis.data.index.sum('data.total')).addLink(basis.dom.createText());
+          }
         },
         {
           header: 'Total, %',
-          body: '{percentOfTotalSum}'
+          cssClassName: 'right',
+          body: '{percentOfTotalSum}',
+          footer: function(){
+            return indexMap.getIndex(basis.data.index.avg('data.percentOfTotalSum * 100')).addLink(basis.dom.createText(), null, '{0:.2}%');
+          }
         }
       ],
 
@@ -258,9 +278,10 @@
                 //console.log(count++, delta);
                 nsData.Object.prototype.event_update.call(this, object, delta);
 
-                this.owner.tmpl.percentOfTotalSum.nodeValue = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);
-                this.owner.tmpl.percentOfTotalMax.style.width = '{0:.2}%'.format(100 * this.data.percentOfTotalMax);
-                this.owner.tmpl.percentOfValueMax.style.width = '{0:.2}%'.format(100 * this.data.percentOfValueMax);
+                var tmpl = this.owner.tmpl;
+                tmpl.percentOfTotalSum.nodeValue = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);
+                tmpl.percentOfTotalMax.style.width = '{0:.2}%'.format(100 * this.data.percentOfTotalMax);
+                tmpl.percentOfValueMax.style.width = '{0:.2}%'.format(100 * this.data.percentOfValueMax);
               }
             })
           }

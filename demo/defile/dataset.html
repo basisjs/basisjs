@@ -159,7 +159,7 @@
 
     function createImage(type, url){
       return DOM.createElement('.img',
-        DOM.createElement('object[type="image/svg+xml"][data="' + (url || 'dataset.svg?') + type + '"]')
+        DOM.createElement('IMG[src="dataset_' + type + '.png"][width=120][height=80]')
       );
     }
 
@@ -338,7 +338,7 @@
 
     new DatasetViewer({
       title: 'Subtract (A / B)',
-      content: createImage('', 'dataset.subtract.svg'),
+      content: createImage('subtract'),
       dataSource: new nsDataset.Subtract({
         minuend: A,
         subtrahend: B

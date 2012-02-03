@@ -177,6 +177,10 @@
         var date = object.data.Date;
         return date.getDate() + ' ' + basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
+
+      style: {
+        lineWidth: 1.5
+      },
       
       childNodes: [
         {
@@ -199,10 +203,14 @@
       childNodes: [
         {
           dataSource: graphValues,
+          color: 'red',
           valueGetter: Function.getter('data.Amount'),
           localSorting: Function.getter('data.Date')
         }
       ],
+      style: {
+        lineWidth: .5
+      },
       satelliteConfig: {
         graphViewer: null,
         period: {
