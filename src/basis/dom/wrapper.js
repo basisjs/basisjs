@@ -2593,7 +2593,8 @@ basis.require('basis.html');
 
     // datasets
     ChildNodesDataset: ChildNodesDataset,
-    Selection: Selection
+    Selection: Selection,
+    NullSelection: new AbstractDataset
   });
 
 })(basis);
