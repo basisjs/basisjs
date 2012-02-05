@@ -26,8 +26,8 @@ basis.require('basis.html');
   *   {basis.dom.wrapper.AbstractNode},
   *   {basis.dom.wrapper.Node}, {basis.dom.wrapper.PartitionNode},
   *   {basis.dom.wrapper.GroupingNode}
-  * - Misc:
-  *   {basis.dom.wrapper.Selection}
+  * - Datasets:
+  *   {basis.dom.wrapper.ChildNodesDataset}, {basis.dom.wrapper.Selection}
   *
   * @namespace basis.dom.wrapper
   */
@@ -53,13 +53,10 @@ basis.require('basis.html');
   var Dataset = nsData.Dataset;
 
   var STATE = nsData.STATE;
-  var AXIS_DESCENDANT = DOM.AXIS_DESCENDANT;
-  var AXIS_DESCENDANT_OR_SELF = DOM.AXIS_DESCENDANT_OR_SELF;
 
   var getter = Function.getter;
   var extend = Object.extend;
   var complete = Object.complete;
-  var axis = DOM.axis;
 
 
   //
@@ -106,37 +103,74 @@ basis.require('basis.html');
     );
   }
 
-  var SELECTION_NULL_SET_THIS = function(node){
-    if (!node.contextSelection)
-    {
-      if (node.selected)
-        node.unselect();
 
-      node.contextSelection = this;
+  function updateNodeContextSelection(root, oldSelection, newSelection, rootUpdate, ignoreRootSelection){
+    // exit if no changes
+    if (oldSelection === newSelection)
+      return;
+
+    // main part
+    var nextNode;
+    var cursor = root;
+    var selected = [];
+
+    // update root context selection if necessary
+    if (rootUpdate)
+    {
+      root.contextSelection = newSelection;
+      if (root.selected)
+        selected.push(root);
     }
-  };
 
-  var SELECTION_DROP_THIS = function(node){
-    //node.unselect();
-    if (node.contextSelection === this)
+    while (cursor)
     {
-      if (node.selected)
-        this.remove([node]);
-      node.contextSelection = null;
-    }
-  };
+      // go into deep
+      // if node has selection and node is not root, don't go into deep
+      nextNode = !cursor.selection || (ignoreRootSelection && cursor === root)
+        ? cursor.firstChild
+        : null;
 
-  var SELECTION_SET_NEW = function(node){
-    if (node.contextSelection == this.old)
-    {
-      if (node.selected)
+      if (nextNode && nextNode.contextSelection !== oldSelection)
+        throw 'Try change wrong context selection';
+
+      while (!nextNode)
       {
-        if (this.old)
-          this.old.remove([node]);
+        // stop traversal if cursor on root again
+        if (cursor === root)
+        {
+          // remove selected nodes from old selection, or add to new one
+          if (selected.length)
+          {
+            if (oldSelection)
+              oldSelection.remove(selected);
+
+            if (newSelection)
+              newSelection.add(selected);
+          }
+
+          return;
+        }
+
+        // go to next sibling
+        nextNode = cursor.nextSibling;
+
+        // if no sibling, going up
+        if (!nextNode)
+          cursor = cursor.parentNode;
       }
-      node.contextSelection = this.cur;
+
+      // update cursor
+      cursor = nextNode;
+
+      // store selected nodes
+      if (cursor.selected)
+        selected.push(cursor);
+
+      // change context selection
+      cursor.contextSelection = newSelection;
     }
-  };
+  }
+
 
   //
   // registrate new subscription types
@@ -1411,18 +1445,7 @@ basis.require('basis.html');
       refChild.previousSibling = newChild;
 
       // update selection
-      var newChildSelection = this.selection || this.contextSelection;
-
-      if (!newChild.contextSelection && newChild.contextSelection !== newChildSelection)
-      {
-        newChild.contextSelection = newChildSelection;
-
-        if (newChildSelection && newChild.selected)
-          newChildSelection.add([newChild]);
-
-        if (!newChild.selection && newChild.firstChild)
-          axis(newChild, AXIS_DESCENDANT).forEach(SELECTION_NULL_SET_THIS, newChildSelection);
-      }
+      updateNodeContextSelection(newChild, newChild.contextSelection, this.selection || this.contextSelection, true);
 
       // if node doesn't move inside the same parent (parentNode changed)
       if (!isInside)
@@ -1479,46 +1502,10 @@ basis.require('basis.html');
       oldChild.nextSibling = null;
       oldChild.previousSibling = null;
 
-      //
       // update selection
-      //
-      if (oldChild.contextSelection)
-      {
-        var contextSelection = oldChild.contextSelection;
-        var cursor = oldChild;
-        var unselect = [];
-        while (cursor)  // cursor will be null at the end, because oldChild.parentNode == null
-        {
-          if (cursor.contextSelection === contextSelection)
-          {
-            if (cursor.selected)
-              unselect.push(cursor);
-            cursor.contextSelection = null;
-          }
+      updateNodeContextSelection(oldChild, oldChild.contextSelection, null, true);
 
-          if (!cursor.selection && cursor.firstChild)
-            cursor = cursor.firstChild;
-          else
-          {
-            if (cursor.nextSibling)
-              cursor = cursor.nextSibling;
-            else
-            {
-              while (cursor = cursor.parentNode)
-              {
-                if (cursor.nextSibling)
-                {
-                  cursor = cursor.nextSibling;
-                  break;
-                }
-              }
-            }
-          }
-        }
-
-        contextSelection.remove(unselect);
-      }
-
+      // remove from group if any
       if (oldChild.groupNode)
         oldChild.groupNode.remove(oldChild);
 
@@ -1566,6 +1553,10 @@ basis.require('basis.html');
       if (!this.firstChild)
         return;
 
+      // clear selection context for child for alive mode
+      if (alive)
+        updateNodeContextSelection(this, this.selection || this.contextSelection, null, false, true);
+
       // store childs
       var childNodes = this.childNodes;
 
@@ -1587,10 +1578,6 @@ basis.require('basis.html');
 
         if (alive)
         {
-          // clear selection
-          if (child.contextSelection)
-            axis(child, DOM.AXIS_DESCENDANT_OR_SELF).forEach(SELECTION_DROP_THIS, child.contextSelection);
-
           child.nextSibling = null;
           child.previousSibling = null;
 
@@ -1976,16 +1963,16 @@ basis.require('basis.html');
     * @return {boolean} Returns true if selection was changed.
     */
     setSelection: function(selection){
-      if (this.selection == selection)
-        return false;
-        
-      axis(this, AXIS_DESCENDANT).forEach(SELECTION_SET_NEW, {
-        cur: selection,
-        old: this.selection
-      });
-      this.selection = selection;
-        
-      return true;
+      if (this.selection !== selection)
+      {
+        // change context selection for child nodes
+        updateNodeContextSelection(this, this.selection || this.contextSelection, selection || this.contextSelection, false, true);
+
+        // update selection
+        this.selection = selection;
+
+        return true;
+      }
     },
     
    /**
@@ -2594,7 +2581,7 @@ basis.require('basis.html');
     // datasets
     ChildNodesDataset: ChildNodesDataset,
     Selection: Selection,
-    NullSelection: new AbstractDataset
+    nullSelection: new AbstractDataset
   });
 
 })(basis);
