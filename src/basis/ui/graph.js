@@ -299,7 +299,7 @@ basis.require('basis.ui.canvas');
       else
       {
         this.owner.addHandler(SERIA_OWNER_HANDLER, this);
-        SERIA_OWNER_HANDLER.childNodesModified.call(this, this.owner, { inserted: this.owner.childNodes });
+        //SERIA_OWNER_HANDLER.childNodesModified.call(this, this.owner, { inserted: this.owner.childNodes });
       }
     },
 
