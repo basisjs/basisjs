@@ -34,11 +34,13 @@ basis.require('basis.ui.canvas');
   var Event = basis.dom.event;
   var DOM = basis.dom;
 
+  var DataObject = basis.data.DataObject;
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var Node = basis.dom.wrapper.Node;
   var uiNode = basis.ui.Node;
   var uiContainer = basis.ui.Container;
   var Canvas = basis.ui.canvas.Canvas;
+  var ChildNodesDataset = basis.dom.wrapper.ChildNodesDataset;
 
   var createEvent = basis.event.create;
 
@@ -101,49 +103,7 @@ basis.require('basis.ui.canvas');
  /**
   * @class
   */
-  var GraphComponent = Node.subclass({
-    className: namespace + '.GraphComponent',
-
-    legendGetter: Function.getter('legend'),
-    getLegend: function(){
-      return this.legendGetter(this)
-    },
-
-    colorGetter: Function.getter('color'),
-    getColor: function(){
-      return this.colorGetter(this);
-    },
-
-    valueGetter: Function.$const(0),
-
-    //events
-    event_redrawRequest: createEvent('redrawRequest'),
-
-    event_update: function(object, delta){
-      Node.prototype.event_update.call(this, object, delta);
-      this.event_redrawRequest();
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var Graph = Canvas.subclass({
-    className: namespace + '.Graph',
-
-    childClass: GraphComponent,
-
-    template:
-      '<div class="Basis-Graph" style="position: relative; display: inline; display: inline-block; zoom: 1">' +
-        '<canvas{canvas}>' +
-          '<div>Canvas doesn\'t support.</div>' +
-        '</canvas>' +
-        '<!-- {graphViewer} -->' +
-      '</div>',
-
-    style: {},
-
+  var ColorPicker = Node.subclass({
     usedColors: null,
     presetColors: [
       '#F80',
@@ -154,50 +114,32 @@ basis.require('basis.ui.canvas');
     ],
 
     listen: {
-      childNode: {
-        redrawRequest: function(){
-          this.updateCount++;
+      owner: {
+        childNodesModified: function(object, delta){
+          if (delta.deleted)
+            delta.deleted.forEach(this.releaseColor, this);
+
+          if (delta.inserted)
+            delta.inserted.forEach(this.setColor, this);
         }
       }
     },
 
-    event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
-      Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
-      this.updateCount++;
-    },
-    event_childNodesModified: function(node, delta){
-      Canvas.prototype.event_childNodesModified.call(this, node, delta);
-      
-      if (delta.deleted)
-        delta.deleted.forEach(this.releaseColorFromComponent, this);
-
-      if (delta.inserted)
-        delta.inserted.forEach(this.setColorForComponent, this);
-
-      this.updateCount++;
-    },
-
-    //init
     init: function(config){
       this.presetColors = Array.from(this.presetColors);
-      this.usedColors = {}; 
-
-      Canvas.prototype.init.call(this, config);
+      this.usedColors = {};
+      Node.prototype.init.call(this, config);
     },
 
-    setStyle: function(newStyle){
-      Object.extend(this.style, Object.slice(newStyle, ['strokeStyle', 'lineWidth']));
-      this.updateCount++;
-    },
-    setColorForComponent: function(component){
-      if (!component.color)
-        component.color = this.getColor();
+    setColor: function(object){
+      if (!object.color)
+        object.color = this.getColor();
 
-      this.usedColors[component.color] = true;
+      this.usedColors[object.color] = true;
     },
-    releaseColorFromComponent: function(component){
-      delete this.usedColors[component.color];
-      this.presetColors.push(component.color);
+    releaseColor: function(object){
+      delete this.usedColors[object.color];
+      this.presetColors.push(object.color);
     },
     getColor: function(){
       var color = this.presetColors.pop();
@@ -210,48 +152,204 @@ basis.require('basis.ui.canvas');
         while (this.usedColors[color])
       }
       return color;
-    },
+    }
+  });
 
-    drawFrame: Function.$undef
+
+ /**
+  * @class
+  */
+  var GraphNode = Node.subclass({
+    event_update: function(object, delta){
+      Node.prototype.event_update.call(this, object, delta);
+      this.parentNode.redraw();
+    }
   });
 
  /**
   * @class
   */
-  var AxisGraphThread = GraphComponent.subclass({
-    className: namespace + '.AxisGraphThread',
+  var Graph = Canvas.subclass({
+    className: namespace + '.Graph',
 
-    dataSourceGetter: Function.$null,
+    childClass: GraphNode,
 
-    getValues: function(){
-      return this.childNodes.map(this.valueGetter);
+    template:
+      '<div class="Basis-Graph" style="position: relative; display: inline; display: inline-block; zoom: 1;">' +
+        '<canvas{canvas} style="vertical-align: top">' +
+          '<div>Canvas doesn\'t support.</div>' +
+        '</canvas>' +
+        '<!-- {graphViewer} -->' +
+      '</div>',
+
+    style: {},
+
+    event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
+      Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
+      this.redraw();
+    },
+    event_childNodesModified: function(node, delta){
+      Canvas.prototype.event_childNodesModified.call(this, node, delta);
+      this.redraw();
     },
 
-    event_childNodesModified: function(object, delta){
-      GraphComponent.prototype.event_childNodesModified.call(this, object, delta);
+    redraw: function(){
+      this.updateCount++;
+    },
+
+    setStyle: function(newStyle){
+      Object.extend(this.style, Object.slice(newStyle, ['strokeStyle', 'lineWidth']));
+      this.updateCount++;
+    },
+
+    drawFrame: Function.$undef
+  });
+
+  //
+  // Axis Graph with series
+  //
+
+
+  var updateSeriaMapHandler = function(object, delta){
+    if (delta.inserted)
+      for (var i = 0, object; object = delta.inserted[i]; i++)
+      {
+        this.valuesMap[this.keyGetter(object)] = this.valueGetter(object);
+        object.addHandler(SERIA_ITEM_HANDLER, this);
+      }
+
+    if (delta.deleted)
+      for (var i = 0, object; object = delta.deleted[i]; i++)
+      {
+        this.valuesMap[this.keyGetter(object)] = null;
+        object.removeHandler(SERIA_ITEM_HANDLER, this);
+      }
+
+    this.event_redrawRequest();
+  } 
+
+  var SERIA_SOURCE_HANDLER = {
+    datasetChanged: updateSeriaMapHandler
+  }
+
+  var SERIA_OWNER_HANDLER = {
+    childNodesModified: updateSeriaMapHandler
+  }
+
+  var SERIA_ITEM_HANDLER = {
+    update: function(object, delta){
+      this.valuesMap[this.keyGetter(object)] = this.valueGetter(object);
+      this.event_redrawRequest();
+    }
+  }
+
+ /**
+  * @class
+  */
+  var GraphSeria = Node.subclass({
+    className: namespace + '.GraphSeria',
+
+    valuesMap: {},
+
+    sourceGetter: Function.$undef,
+    keyGetter: Function.$undef,
+    valueGetter: Function.$const(0),
+
+    getValue: function(key){
+      return this.valuesMap[key] || 0;
+    },
+    getValues: function(keys){
+      return keys.map(this.getValue, this);
+    },
+
+    legendGetter: Function.getter('legend'),
+    getLegend: function(){
+      return this.legendGetter(this)
+    },
+
+    colorGetter: Function.getter('color'),
+    getColor: function(){
+      return this.colorGetter(this);
+    },
+
+    //events
+    event_redrawRequest: createEvent('redrawRequest'),
+
+    event_update: function(object, delta){
+      Node.prototype.event_update.call(this, object, delta);
       this.event_redrawRequest();
     },
 
-    childClass: {
-      className: namespace + '.AxisGraphNode',
-      event_update: function(object, delta){
-        if (this.parentNode)
-          this.parentNode.event_redrawRequest(); 
-
-        AbstractNode.prototype.event_update.call(this, object, delta);
-      }        
-    },
-    
-    childFactory: function(config){
-      return new this.childClass(config);
-    },
-
-    //init
     init: function(config){
       Node.prototype.init.call(this, config);
 
-      if (!this.dataSource)
-        this.setDataSource(this.dataSourceGetter(this));
+      this.valuesMap = {};
+
+      if (this.keyGetter == Function.$undef)
+        this.keyGetter = this.owner.keyGetter;
+
+      if (!this.source)
+        this.source = this.sourceGetter(this);
+
+      if (this.source)
+      {
+        this.source.addHandler(SERIA_SOURCE_HANDLER, this);
+        SERIA_SOURCE_HANDLER.datasetChanged.call(this, this.source, { inserted: this.source.getItems() });
+      }
+      else
+      {
+        this.owner.addHandler(SERIA_OWNER_HANDLER, this);
+        SERIA_OWNER_HANDLER.childNodesModified.call(this, this.owner, { inserted: this.owner.childNodes });
+      }
+    },
+
+    destroy: function(){
+      if (this.source)
+        this.source.removeHandler(SERIA_SOURCE_HANDLER, this);
+      else
+        this.owner.removeHanlder(SERIA_OWNER_HANDLER, this);
+
+      delete this.source;
+      delete this.valuesMap;
+
+      Node.prototype.destroy.call(this);
+    }
+  });
+
+ /**
+  * @class
+  */
+  var GraphSeriesList = Node.subclass({
+    childClass: GraphSeria,
+
+    childFactory: function(config){
+      config.owner = this.owner;
+      return new this.childClass(config);
+    },
+
+    event_childNodesModified: function(object, delta){
+      Node.prototype.event_childNodesModified.call(this, object, delta);
+      this.owner.redraw();
+    },
+
+    listen: {
+      childNode: {
+        redrawRequest: function(){
+          this.owner.redraw();
+        }
+      }
+    },
+
+    init: function(config){
+      this.colorPicker = new ColorPicker(Object.extend({ owner: this }, this.colorPicker));
+      Node.prototype.init.call(this, config);
+    },
+
+    destroy: function(){
+      this.colorPicker.destroy();
+      delete this.colorPicker;
+      
+      Node.prototype.destroy.call(this);
     }
   });
 
@@ -259,17 +357,13 @@ basis.require('basis.ui.canvas');
   * @class
   */
   var AxisGraph = Graph.subclass({
-    className: namespace + '.AxisGraph',
-
-    childClass: AxisGraphThread,
-
-    propGetter: Function.getter('data.prop'),
+    keyGetter: Function.getter('key'),
     showLegend: true,
     showYLabels: true,
     showXLabels: true,
     showBoundLines: true,
     showGrid: true,
-    propValuesOnEdges: true,
+    keyValuesOnEdges: true,
     invertAxis: false,
     autoRotateScale: false,
     scaleAngle: 0,
@@ -280,6 +374,28 @@ basis.require('basis.ui.canvas');
     //init
     init: function(config){
       this.clientRect = {};
+
+      if (this.series instanceof Array)
+      {
+        var series = [];
+
+        for (var i = 0; i < this.series.length; i++)
+        {
+          if (this.series[i] instanceof Function)
+          {
+            this.series[i] = {
+              valueGetter: this.series[i]
+            }
+          }
+        }
+        
+        this.series = {
+          childNodes: this.series
+        }
+      }
+
+      this.seriesList = new GraphSeriesList(Object.extend({ owner: this }, this.series));
+
       Graph.prototype.init.call(this, config);
     },
 
@@ -293,15 +409,16 @@ basis.require('basis.ui.canvas');
       var WIDTH = context.canvas.width;
       var HEIGHT = context.canvas.height;
 
-      var propValues = this.getPropValues();
-      var propCount = propValues.length;
+      var series = this.seriesList.childNodes;
+      var keys = this.getKeys();
+      var keysCount = keys.length;
 
-      if (propCount < 2)
+      if (keysCount < 2 || !series.length)
       {
         context.textAlign = 'center';
         context.fillStyle = '#777';
         context.font = '20px tahoma';
-        context.fillText(propCount == 0 ? 'No data' : 'Not enough data', WIDTH / 2, HEIGHT / 2);
+        context.fillText(keysCount == 0 ? 'No data' : 'Not enough data', WIDTH / 2, HEIGHT / 2);
 
         return;
       }
@@ -325,10 +442,10 @@ basis.require('basis.ui.canvas');
       var yLabels = [];
 
       var maxValueTextWidth = 0;
-      var maxPropTextWidth = 0;
+      var maxKeyTextWidth = 0;
 
       var showValueAxis = this.invertAxis ? this.showXLabels : this.showYLabels;
-      var showPropAxis = this.invertAxis ? this.showYLabels : this.showXLabels;
+      var showKeyAxis = this.invertAxis ? this.showYLabels : this.showXLabels;
 
       // calc y labels max width
       if (showValueAxis)
@@ -350,21 +467,21 @@ basis.require('basis.ui.canvas');
       }
 
       // calc x labels max width
-      if (showPropAxis)
+      if (showKeyAxis)
       {
-        var propLabels = this.invertAxis ? yLabels : xLabels;
+        var keyLabels = this.invertAxis ? yLabels : xLabels;
 
         var tw;
-        for (var i = 0; i < propCount; i++)
+        for (var i = 0; i < keysCount; i++)
         {
-          propLabels[i] = propValues[i];
-          tw = context.measureText(propLabels[i]).width;
+          keyLabels[i] = keys[i];
+          tw = context.measureText(keyLabels[i]).width;
 
-          if (tw > maxPropTextWidth)
-            maxPropTextWidth = tw;
+          if (tw > maxKeyTextWidth)
+            maxKeyTextWidth = tw;
         }
 
-        maxPropTextWidth += 6;
+        maxKeyTextWidth += 6;
       }
 
       // calc left offset
@@ -373,11 +490,11 @@ basis.require('basis.ui.canvas');
       if (this.showXLabels)
       {
         firstXLabelWidth = context.measureText(xLabels[0]).width + 12; // 12 = padding + border
-        lastXLabelWidth = context.measureText(xLabels[(this.invertAxis ? partCount : propCount) - 1]).width + 12;
+        lastXLabelWidth = context.measureText(xLabels[(this.invertAxis ? partCount : keysCount) - 1]).width + 12;
       }
 
-      var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxPropTextWidth;
-      var maxYLabelWidth = this.invertAxis ? maxPropTextWidth : maxValueTextWidth;
+      var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxKeyTextWidth;
+      var maxYLabelWidth = this.invertAxis ? maxKeyTextWidth : maxValueTextWidth;
 
       LEFT = Math.max(maxYLabelWidth, Math.round(firstXLabelWidth / 2));
       RIGHT = Math.round(lastXLabelWidth / 2);
@@ -389,31 +506,31 @@ basis.require('basis.ui.canvas');
         var LEGEND_BAR_SIZE = 20;
 
         var maxtw = 0;
-        for (var i = 0, thread; thread = this.childNodes[i]; i++)
+        for (var i = 0, seria; seria = series[i]; i++)
         {
-          var tw = context.measureText(thread.getLegend()).width + LEGEND_BAR_SIZE + 20;
+          var tw = context.measureText(seria.getLegend()).width + LEGEND_BAR_SIZE + 20;
           if (tw > maxtw)
             maxtw = tw;
         }
 
         var legendColumnCount = Math.floor((WIDTH - LEFT - RIGHT) / maxtw);
         var legendColumnWidth = (WIDTH - LEFT - RIGHT) / legendColumnCount;
-        var legendRowCount = Math.ceil(this.childNodes.length / legendColumnCount);
+        var legendRowCount = Math.ceil(series.length / legendColumnCount);
 
         //draw legend
         BOTTOM += LEGEND_ROW_HEIGHT * legendRowCount; // legend height
 
-        for (var i = 0, thread; thread = this.childNodes[i]; i++)
+        for (var i = 0, seria; seria = series[i]; i++)
         {
           var lx = Math.round(LEFT + (i % legendColumnCount) * legendColumnWidth);
           var ly = HEIGHT - BOTTOM + 5 + (Math.ceil((i + 1) / legendColumnCount) - 1) * LEGEND_ROW_HEIGHT;
 
-          context.fillStyle = thread.getColor();// || this.threadColor[i];
+          context.fillStyle = seria.getColor();
           context.fillRect(lx, ly, LEGEND_BAR_SIZE, LEGEND_BAR_SIZE);
 
           context.fillStyle = 'black';
           context.textAlign = 'left';
-          context.fillText(thread.getLegend(), lx + LEGEND_BAR_SIZE + 5, ly + LEGEND_BAR_SIZE / 2 + 3);
+          context.fillText(seria.getLegend(), lx + LEGEND_BAR_SIZE + 5, ly + LEGEND_BAR_SIZE / 2 + 3);
         }
       }
 
@@ -433,7 +550,7 @@ basis.require('basis.ui.canvas');
       var skipLabelCount;
 
       // xscale
-      var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : propCount - (this.propValuesOnEdges ? 1 : 0)) 
+      var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : keysCount - (this.keyValuesOnEdges ? 1 : 0)) 
       if (this.showXLabels)
       {
         var angle;
@@ -455,7 +572,7 @@ basis.require('basis.ui.canvas');
         context.textAlign = angle ? 'right' : 'center';        
         context.beginPath();
         
-        var leftOffset = !this.propValuesOnEdges && !this.invertAxis ? xStep / 2 : 0;
+        var leftOffset = !this.keyValuesOnEdges && !this.invertAxis ? xStep / 2 : 0;
         for (var i = 0; i < xLabels.length; i++)
         {
           var x = Math.round(leftOffset + LEFT + i * xStep) + .5;//xLabelsX[i];
@@ -482,12 +599,12 @@ basis.require('basis.ui.canvas');
       }
 
       // yscale
-      var yStep = (HEIGHT - TOP - BOTTOM) / (this.invertAxis ? propCount - (this.propValuesOnEdges ? 1 : 0) : partCount);
+      var yStep = (HEIGHT - TOP - BOTTOM) / (this.invertAxis ? keysCount - (this.keyValuesOnEdges ? 1 : 0) : partCount);
       if (this.showYLabels)
       {
         context.textAlign = 'right';
 
-        var topOffset = !this.propValuesOnEdges && this.invertAxis ? yStep / 2 : 0;
+        var topOffset = !this.keyValuesOnEdges && this.invertAxis ? yStep / 2 : 0;
 
         skipLabelCount = Math.ceil(15 / yStep) - 1;
         //skipLabelCount = 0;
@@ -560,11 +677,11 @@ basis.require('basis.ui.canvas');
         context.closePath();
       }
       
-      // Threads
+      // Series
       var step = this.invertAxis ? yStep : xStep;
-      for (var i = 0, thread; thread = this.childNodes[i]; i++)
+      for (var i = 0, seria; seria = series[i]; i++)
       {
-        this.drawThread(thread, i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
+        this.drawSeria(seria, keys, i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
       }  
 
       //save graph data
@@ -578,10 +695,8 @@ basis.require('basis.ui.canvas');
       this.maxValue = maxValue;
     },
 
-    drawThread: Function.$undef,
-
-    getPropValues: function(){
-      return (this.childNodes[0] && this.childNodes[0].childNodes.map(this.propGetter)) || [];
+    getKeys: function(){
+      return this.childNodes.map(this.keyGetter);
     },
 
     setMin: function(min){
@@ -595,10 +710,11 @@ basis.require('basis.ui.canvas');
     getMinValue: function(){
       var values;
       var min;
-      
-      for (var i = 0, thread; thread = this.childNodes[i]; i++)
+
+      var keys = this.getKeys();
+      for (var i = 0, seria; seria = this.seriesList.childNodes[i]; i++)
       {
-        values = thread.getValues();
+        values = seria.getValues(keys);
         if (min)
           values.push(min);
         min = Math.min.apply(null, values);
@@ -608,10 +724,11 @@ basis.require('basis.ui.canvas');
     getMaxValue: function(){
       var values;
       var max;
-      
-      for (var i = 0, thread; thread = this.childNodes[i]; i++)
+
+      var keys = this.getKeys();
+      for (var i = 0, seria; seria = this.seriesList.childNodes[i]; i++)
       {
-        values = thread.getValues();
+        values = seria.getValues(keys);
         if (max)
           values.push(max);
         max = Math.max.apply(null, values);
@@ -673,9 +790,19 @@ basis.require('basis.ui.canvas');
       }
 
       return maxGridValue / result;
-    }
+    },
+
+    destroy: function(){
+      this.seriesList.destroy();
+      delete this.seriesList;
+
+      Graph.prototype.destroy.call(this);
+    },
+
+    // abstract methods
+    drawSeria: Function.$undef
   });
-  
+
 
  /**
   * @class
@@ -714,12 +841,7 @@ basis.require('basis.ui.canvas');
     init: function(config){
       uiNode.prototype.init.call(this, config);
 
-      if (typeof FlashCanvas != "undefined") {
-        FlashCanvas.initElement(this.element);
-      }
-
-      if (this.element.getContext)
-        this.context = this.element.getContext('2d');
+      this.context = this.element.getContext('2d');
 
       if (this.owner)
         this.recalc();
@@ -731,7 +853,6 @@ basis.require('basis.ui.canvas');
 
       this.clientRect = this.owner.clientRect;
       this.max = this.owner.maxValue;
-      this.min = this.owner.minValue;
     },
 
     reset: function(){
@@ -760,15 +881,12 @@ basis.require('basis.ui.canvas');
       var WIDTH = this.clientRect.width;
       var HEIGHT = this.clientRect.height;
       var MAX = this.max;
-      var MIN = this.min;
 
-      var propValues = this.owner.getPropValues();
-      if (propValues.length < 2)
-        return;
-
-      var step = WIDTH / (propValues.length - 1);
-      var propPosition = Math.round(x / step);
-      var xPosition = Math.round(propPosition * step);
+      var series = this.owner.seriesList.childNodes;
+      var keys = this.owner.getKeys();
+      var step = WIDTH / (keys.length - 1);
+      var keyPosition = Math.round(x / step);
+      var xPosition = Math.round(keyPosition * step);
 
       context.beginPath();
       context.moveTo(xPosition + .5, 0);
@@ -779,17 +897,17 @@ basis.require('basis.ui.canvas');
 
       context.font = "10px tahoma";
       context.textAlign = "center";
-      var propText = propValues[propPosition];
-      var propTextWidth = context.measureText(propText).width;
-      var propTextHeight = 10;
+      var keyText = keys[keyPosition];
+      var keyTextWidth = context.measureText(keyText).width;
+      var keyTextHeight = 10;
 
       context.beginPath();
       context.moveTo(xPosition + .5, HEIGHT + 1 + .5);
       context.lineTo(xPosition - 3 + .5, HEIGHT + 4 + .5);
-      context.lineTo(xPosition - Math.round(propTextWidth / 2) - 5 + .5, HEIGHT + 4 + .5);
-      context.lineTo(xPosition - Math.round(propTextWidth / 2) - 5 + .5, HEIGHT + 4 + propTextHeight + 5 + .5);
-      context.lineTo(xPosition + Math.round(propTextWidth / 2) + 5 + .5, HEIGHT + 4 + propTextHeight + 5 + .5);
-      context.lineTo(xPosition + Math.round(propTextWidth / 2) + 5 + .5, HEIGHT + 4 + .5);
+      context.lineTo(xPosition - Math.round(keyTextWidth / 2) - 5 + .5, HEIGHT + 4 + .5);
+      context.lineTo(xPosition - Math.round(keyTextWidth / 2) - 5 + .5, HEIGHT + 4 + keyTextHeight + 5 + .5);
+      context.lineTo(xPosition + Math.round(keyTextWidth / 2) + 5 + .5, HEIGHT + 4 + keyTextHeight + 5 + .5);
+      context.lineTo(xPosition + Math.round(keyTextWidth / 2) + 5 + .5, HEIGHT + 4 + .5);
       context.lineTo(xPosition + 3 + .5, HEIGHT + 4 + .5);
       context.lineTo(xPosition + .5, HEIGHT + 1);
       context.fillStyle = '#c29e22';
@@ -799,17 +917,18 @@ basis.require('basis.ui.canvas');
       context.closePath();
 
       context.fillStyle = 'black';
-      context.fillText(propText, xPosition +.5, TOP + HEIGHT + 5);
+      context.fillText(keyText, xPosition +.5, TOP + HEIGHT + 5);
 
       var labels = [];
 
       var labelPadding = 7;
       var labelHeight = 10 + 2*labelPadding;
       var labelWidth = 0;
-      for (var i = 0, thread; thread = this.owner.childNodes[i]; i++)
+
+      var key = this.owner.getKeys()[keyPosition];
+      for (var i = 0, seria; seria = series[i]; i++)
       {
-        var values = thread.getValues();
-        var value = values[propPosition];
+        var value = seria.getValue(key);
 
         if (isNaN(value))
           continue;
@@ -820,11 +939,11 @@ basis.require('basis.ui.canvas');
         if (labelWidth < valueTextWidth)
           labelWidth = valueTextWidth; 
 
-        var valueY = Math.round((1 - (value - MIN) / (MAX - MIN)) * HEIGHT);
+        var valueY = Math.round((1 - value / MAX) * HEIGHT);
         var labelY = Math.max(labelHeight / 2, Math.min(valueY, HEIGHT - labelHeight / 2));
 
         labels[i] = {
-          thread: thread,
+          color: seria.getColor(),
           text: valueText,
           valueY: valueY,
           labelY: labelY
@@ -866,12 +985,12 @@ basis.require('basis.ui.canvas');
       }
 
       // draw labels
-      var align = propPosition >= (propValues.length / 2) ? -1 : 1;
+      var align = keyPosition >= (keys.length / 2) ? -1 : 1;
 
       for (var i = 0, label; label = labels[i]; i++)
       {
         var pointWidth = 3;
-        context.strokeStyle = label.thread.getColor();
+        context.strokeStyle = label.color;
         context.fillStyle = 'white';
         context.lineWidth = 3;
         context.beginPath();
@@ -891,7 +1010,7 @@ basis.require('basis.ui.canvas');
         context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
         context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY + 5 + .5);
         context.lineTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
-        context.fillStyle = label.thread.getColor();
+        context.fillStyle = label.color;
         context.strokeStyle = '#444';
         context.lineWidth = 1;
         context.stroke();
@@ -924,15 +1043,15 @@ basis.require('basis.ui.canvas');
       }
     },
 
-    drawThread: function(thread, pos, min, max, step, left, top, width, height){
+    drawSeria: function(seria, keys, pos, min, max, step, left, top, width, height){
       var context = this.context;
 
-      if (!this.propValuesOnEdges)
+      if (!this.keyValuesOnEdges)
         left += step / 2;
 
-      var color = thread.getColor();
-      this.style.strokeStyle = color;// || this.threadColor[i];
-      var values = thread.getValues();
+      var color = seria.getColor();
+      this.style.strokeStyle = color;
+      var values = seria.getValues(keys);
 
       context.save();
       context.translate(left, top);
@@ -982,8 +1101,8 @@ basis.require('basis.ui.canvas');
 
       var clientRect = this.owner.clientRect;
       var bars = this.owner.bars;
-      var threads = this.owner.childNodes;
-      var propValues = this.owner.getPropValues();
+      var series = this.owner.seriesList.childNodes;
+      var keys = this.owner.getKeys();
             
       var invertAxis = this.owner.invertAxis; 
       var WIDTH = clientRect.width;
@@ -1002,7 +1121,7 @@ basis.require('basis.ui.canvas');
         if (x >= bar.x && x <= (bar.x + bar.width) && y >= bar.y && y <= (bar.y + bar.height))
         {
           hoveredBar = bar;
-          legendText = threads[i].getLegend();
+          legendText = series[i].getLegend();
           break;
         }
       }
@@ -1012,7 +1131,7 @@ basis.require('basis.ui.canvas');
 
       var TOOLTIP_PADDING = 5;
 
-      var tooltipText = propValues[barPosition] + ', ' + legendText + ', ' + Number(hoveredBar.value.toFixed(2)).group();
+      var tooltipText = keys[barPosition] + ', ' + legendText + ', ' + Number(hoveredBar.value.toFixed(2)).group();
       context.font = "10px Tahoma";
       
       var tooltipTextWidth = context.measureText(tooltipText).width;
@@ -1053,7 +1172,7 @@ basis.require('basis.ui.canvas');
     className: namespace + '.BarGraph',
     
     bars: null,
-    propValuesOnEdges: false,
+    keyValuesOnEdges: false,
 
     satelliteConfig: {
       graphViewer: {
@@ -1066,11 +1185,11 @@ basis.require('basis.ui.canvas');
       AxisGraph.prototype.drawFrame.call(this);
     },
 
-    drawThread: function(thread, pos, min, max, step, left, top, width, height){
+    drawSeria: function(seria, keys, pos, min, max, step, left, top, width, height){
       var context = this.context;
 
-      var values = thread.getValues();
-      var color = thread.getColor();
+      var values = seria.getValues(keys);
+      var color = seria.getColor();
 
       context.save();
       context.translate(left, top);
@@ -1101,15 +1220,15 @@ basis.require('basis.ui.canvas');
 
       context.restore();
     },
-    getBarRect: function(value, threadPos, barPos, min, max, step, width, height, zeroLinePosition){                                                                        
-      var cnt = this.childNodes.length;
+    getBarRect: function(value, seriaPos, barPos, min, max, step, width, height, zeroLinePosition){                                                                        
+      var cnt = this.seriesList.childNodes.length;
       var barSize = Math.round(0.7 * step / cnt);
 
       var bar = {};
       if (this.invertAxis)
       {
         bar.height = barSize;          
-        bar.y = step / 2 + barPos * step - bar.height * cnt / 2 + threadPos * bar.height;
+        bar.y = step / 2 + barPos * step - bar.height * cnt / 2 + seriaPos * bar.height;
 
         var x = (value - min) / (max - min) * width;
         bar.width = (x - zeroLinePosition) * (value > 0 ? 1 : -1);
@@ -1118,7 +1237,7 @@ basis.require('basis.ui.canvas');
       else
       {
         bar.width = barSize;          
-        bar.x = step / 2 + barPos * step - bar.width * cnt / 2 + threadPos * bar.width;
+        bar.x = step / 2 + barPos * step - bar.width * cnt / 2 + seriaPos * bar.width;
         var y = (value - min) / (max - min) * height;
         bar.height = (y - zeroLinePosition) * (value > 0 ? 1 : -1);
         bar.y = height - zeroLinePosition - (value > 0 ? bar.height : 0);
@@ -1138,17 +1257,19 @@ basis.require('basis.ui.canvas');
    */
   var StackedBarGraph = BarGraph.subclass({
     getMaxValue: function(){
-      var values = this.childNodes[0].getValues();
-      for (var i = 1, thread; thread = this.childNodes[i]; i++)
+      var keys = this.getKeys();
+      var series = this.seriesList.childNodes;
+      var values = series[0].getValues(keys);
+      for (var i = 1, seria; seria = series[i]; i++)
       {
-        thread.getValues().forEach(function(value, pos) { values[pos] += value });
+        seria.getValues(keys).forEach(function(value, pos) { values[pos] += value });
       }
 
       return Math.max.apply(null, values);
     },
-    getBarRect: function(value, threadPos, barPos, min, max, step, width, height, zeroLinePosition){
+    getBarRect: function(value, seriaPos, barPos, min, max, step, width, height, zeroLinePosition){
       var bar = {};
-      var previousBar = threadPos > 0 && this.bars[threadPos - 1][barPos];
+      var previousBar = seriaPos > 0 && this.bars[seriaPos - 1][barPos];
       var barSize = 0.7 * step;
             
       if (this.invertAxis)
@@ -1182,4 +1303,4 @@ basis.require('basis.ui.canvas');
     StackedBarGraph: StackedBarGraph
   });
 
-}(basis);
+}(basis);                                  

@@ -75,32 +75,30 @@
 
       data.push(row);
     }
-    data = basis.data(data);
 
     var barGraphConfig = {
       container: DOM.get('demo-container'),
       width: 500,
       height: 450,
 
-      propGetter: Function.getter('data.Country'),
-
-      childNodes: [
-        {
-          legend: '2010',
-          valueGetter: Function.getter('data[2010]'),
-          childNodes: data
-        },
-        {
-          legend: '2011',
-          valueGetter: Function.getter('data[2011]'),
-          childNodes: data
-        },
-        {
-          legend: '2012',
-          valueGetter: Function.getter('data[2012]'),
-          childNodes: data
-        }
-      ]
+      keyGetter: Function.getter('data.Country'),
+      childNodes: basis.data(data),
+      series: {
+        childNodes: [
+          {
+            legend: '2010',
+            valueGetter: Function.getter('data[2010]')
+          },
+          {
+            legend: '2011',
+            valueGetter: Function.getter('data[2011]')
+          },
+          {
+            legend: '2012',
+            valueGetter: Function.getter('data[2012]')
+          }
+        ]
+      }
     }
 
     new BarGraph(barGraphConfig);

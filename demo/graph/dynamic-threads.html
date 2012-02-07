@@ -136,7 +136,7 @@
 
     var graphCompanies = new nsEntity.EntitySet({ wrapper: Company });
 
-    new LinearGraph({
+    /*new LinearGraph({
       container: DOM.get('demo-container'),
       width: 800,
       height: 450,
@@ -156,6 +156,32 @@
         },
         valueGetter: Function.getter('data.Amount'),
         localSorting: Function.getter('data.Date')
+      }
+    });*/
+
+    var graph = new LinearGraph({
+      container: DOM.get('demo-container'),
+      width: 800,
+      height: 450,
+
+      dataSource: CompanyReport.getGrouping('Company').getSubset(Company('microsoft')),
+      localSorting: Function.getter('data.Date'),
+      keyGetter: function(object){
+        var date = new Date(object.data.Date);
+        return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+      },
+
+      series: {
+        dataSource: graphCompanies,
+        childClass: {
+          sourceGetter: function(object){
+            return CompanyReport.getGrouping('Company').getSubset(object.target);
+          },
+          legendGetter: function(object){
+            return object.data.Title;
+          },
+          valueGetter: Function.getter('data.Amount')
+        }
       }
     });
 

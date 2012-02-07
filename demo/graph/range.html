@@ -172,21 +172,19 @@
       showLegend: false,
 
       max: max,
-
-      propGetter: function(object){
-        var date = object.data.Date;
-        return date.getDate() + ' ' + basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
-      },
-
       style: {
         lineWidth: 1.5
       },
-      
-      childNodes: [
+      dataSource: reportSlice,
+      keyGetter: function(object){
+        var date = object.data.Date;
+        return date.getDate() + ' ' + basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+      },
+      localSorting: Function.getter('data.Date'),
+      series: [
         {
-          dataSource: reportSlice,
-          valueGetter: Function.getter('data.Amount'),
-          localSorting: Function.getter('data.Date')
+          color: 'red',
+          valueGetter: Function.getter('data.Amount')
         }
       ]
     });
@@ -200,13 +198,11 @@
       showXLabels: false,
       showBoundLines: false,
       showGrid: false,
-      childNodes: [
-        {
-          dataSource: graphValues,
-          color: 'red',
-          valueGetter: Function.getter('data.Amount'),
-          localSorting: Function.getter('data.Date')
-        }
+      keyGetter: Function.getter('data.Date'),
+      dataSource: graphValues,
+      localSorting: Function.getter('data.Date'),
+      series: [
+        Function.getter('data.Amount')
       ],
       style: {
         lineWidth: .5
