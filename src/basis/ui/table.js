@@ -79,6 +79,8 @@ basis.require('basis.ui');
         '</div>' +
       '</th>',
 
+    titleGetter: getter('data.title'),
+
     templateUpdate: function(tmpl, eventName, delta){
       tmpl.titleText.nodeValue = this.titleGetter(this);
     }

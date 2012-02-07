@@ -56,7 +56,7 @@ basis.require('basis.html');
 
   var getter = Function.getter;
   var nullGetter = Function.nullGetter;
-  var extend = Object.extend;
+  var $undef = Function.$undef;
   var complete = Object.complete;
 
 
@@ -1604,14 +1604,14 @@ basis.require('basis.html');
 
       if (newChildNodes)
       {
-        if ('length' in newChildNodes == false) // we don't use Array.from here to avoid make a copy of array
+        if ('length' in newChildNodes == false) // NOTE: we don't use Array.from here to avoid make a copy of array
           newChildNodes = [newChildNodes];
 
         if (newChildNodes.length)
         {
           // switch off dispatch
           var tmp = this.event_childNodesModified;
-          this.event_childNodesModified = Function.$undef;
+          this.event_childNodesModified = $undef;
 
           // insert nodes
           for (var i = 0, len = newChildNodes.length; i < len; i++)
@@ -1684,15 +1684,13 @@ basis.require('basis.html');
     setGrouping: function(grouping, alive){
       if (typeof grouping == 'function' || typeof grouping == 'string')
         grouping = {
-          groupGetter: getter(grouping)
+          groupGetter: grouping
         };
 
       if (grouping instanceof GroupingNode == false)
       {
-        grouping = grouping != null && typeof grouping == 'object'
-          ? new this.groupingClass(Object.complete({
-              //owner: this
-            }, grouping))
+        grouping = grouping && typeof grouping == 'object'
+          ? new this.groupingClass(grouping)
           : null;
       }
 
@@ -2172,25 +2170,27 @@ basis.require('basis.html');
 
     autoDestroyWithNoOwner: true,
     autoDestroyEmptyGroups: true,
-    titleGetter: getter('data.title'),
-    groupGetter: Function.$undef,
+    //titleGetter: getter('data.title'),
+    groupGetter: nullGetter,
 
     childClass: PartitionNode,
     childFactory: function(config){
-      return new this.childClass(complete(config, {
-        titleGetter: this.titleGetter,
+      //return new this.childClass(complete(config, {
+      //  titleGetter: this.titleGetter,
+      //  autoDestroyIfEmpty: this.dataSource ? false : this.autoDestroyEmptyGroups
+      //}));
+      return new this.childClass(complete({
         autoDestroyIfEmpty: this.dataSource ? false : this.autoDestroyEmptyGroups
-      }));
+      }, config));
     },
 
     // methods
 
     init: function(config){
       this.map_ = {};
+      this.nullGroup = new PartitionNode();
 
-      this.nullGroup = new PartitionNode({
-        autoDestroyIfEmpty: false
-      });
+      ;;;if ('titleGetter' in this) console.warn(namespace + '.GroupingNode: titleGetter is not support anymore for GroupingNode; extend partition nodes with titleGetter instead');
 
       AbstractNode.prototype.init.call(this, config);
     },

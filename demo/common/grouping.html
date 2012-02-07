@@ -136,9 +136,11 @@
         {
           title: 'Group by first letter',
           value: {
+            sorting: Function.getter('data.title'),
             groupGetter: Function.getter('data.title.charAt(0)'),
-            titleGetter: Function.getter('data.title', 'Group for letter <{0}>'),
-            sorting: Function.getter('data.title')
+            childClass: {
+              titleGetter: Function.getter('data.title', 'Group for letter <{0}>')
+            }
           }
         }
       ]

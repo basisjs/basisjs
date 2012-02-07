@@ -123,8 +123,8 @@
 
       grouping: {
         groupGetter: getter('data.id % 2'),
-        titleGetter: getter('data.title', { 0: 'even', 1: 'odd' }),
         childClass: {
+          titleGetter: getter('data.title', { 0: 'even', 1: 'odd' }),
           template:
             '<div>' +
               '<b>{titleText}</b>' +

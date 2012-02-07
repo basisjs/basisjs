@@ -134,7 +134,7 @@
       }
     ),
     sorting: Function.getter('data.title'),
-    grouping: Object.slice(nsView.viewPrototype.grouping, 'groupGetter sorting titleGetter'.qw()),
+    grouping: Object.slice(nsView.viewPrototype.grouping, 'groupGetter sorting childClass'.qw()),
     event_beforeShow: function(){
       this.constructor.prototype.event_beforeShow.call(this);
       this.setDataSource(prototypeDataset);

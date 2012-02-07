@@ -66,11 +66,13 @@
     };
 
     var nodeTypeGrouping = {
+      sorting: getter('data.id', groupWeight),
       groupGetter: function(node){
         return node.data.isClassMember ? 'ClassMember' : node.nodeType;
       },
-      titleGetter: getter('data.id', groupTitle),
-      sorting: getter('data.id', groupWeight)
+      childClass: {
+        titleGetter: getter('data.id', groupTitle)
+      }
     };
 
     //

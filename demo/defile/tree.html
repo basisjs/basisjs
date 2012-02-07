@@ -102,7 +102,9 @@
       sortingDesc: true,
       grouping: {
         groupGetter: Function.getter('data.id % 2'),
-        titleGetter: Function.getter('data.id', { 0: 'even', 1: 'odd' })
+        childClass: {
+          titleGetter: Function.getter('data.id', { 0: 'even', 1: 'odd' })
+        }
       },
       childFactory: function(config){
         if (config.childNodes)

@@ -748,7 +748,9 @@
                 handler: function(){
                   owner.setGrouping({
                     groupGetter: getter('delegate.group'),
-                    titleGetter: getter('data.title')
+                    childClass: {
+                      titleGetter: getter('data.title')
+                    }
                   });
                 }
               },
@@ -876,7 +878,9 @@
   var PROTOTYPE_GROUPING_TYPE = {
     type: 'type',
     groupGetter: getter('data.kind'),
-    titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE),
+    childClass: {
+      titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE)
+    },
     sorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT)
   };
 
@@ -911,7 +915,9 @@
 
       return cls || mapDO['basis.Class'];
     },
-    titleGetter: getter('data.fullPath'),
+    childClass: {
+      titleGetter: getter('data.fullPath')
+    },
     sorting: function(group){
       return group.delegate && group.delegate.eventObjectId;
     }
