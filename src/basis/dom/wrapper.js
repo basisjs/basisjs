@@ -247,10 +247,10 @@ basis.require('basis.html');
           {
             var hook = config.hook
               ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
-              : SATELLITE_OWNER_UPDATE_HOOK;
+              : SATELLITE_OWNER_HOOK;
 
-            for (var key2 in hook)
-              if (hook[key2] === SATELLITE_UPDATE)
+            for (var hookEvent in hook)
+              if (hook[hookEvent] === SATELLITE_UPDATE)
               {
                 context.hook = hook;
                 break;
@@ -329,16 +329,13 @@ basis.require('basis.html');
   };
 
   // default satellite hooks
-  var SATELLITE_OWNER_HOOK = Class.CustomExtendProperty(
-    {},
-    function(result, extend){
-      for (var key in extend)
-        result[key] = extend[key] ? SATELLITE_UPDATE : null;
+  var SATELLITE_OWNER_HOOK = Class.OneFunctionProperty(
+    SATELLITE_UPDATE,
+    {
+      update: true
     }
   );
-  var SATELLITE_OWNER_UPDATE_HOOK = SATELLITE_OWNER_HOOK.__extend__({
-    update: true
-  });
+
 
   //
   // reg new type of listen
@@ -1713,13 +1710,17 @@ basis.require('basis.html');
 
             if (this.firstChild)
             {
-              order = this.localSorting
-                        ? sortChildNodes(this)
-                        : this.childNodes;
+              // new order
+              if (this.localSorting)
+                order = sortChildNodes(this);
+              else
+                order = this.childNodes;
 
+              // reset reference to group node
               for (var i = order.length; i --> 0;)
                 order[i].groupNode = null;
 
+              // apply new order
               fastChildNodesOrder(this, order);
             }
           }

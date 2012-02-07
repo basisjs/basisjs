@@ -279,7 +279,6 @@
   var $undef = function(){
   }
 
-
  /**
   * @function
   * @param  {function(object)|string} path
@@ -288,102 +287,155 @@
   */
   var getter = (function(){
     var getterSeed = 1;
-    var getterCache = {};
-    var getterPathCache = {};
+    var modificatorSeed = 1;
+
+    var getterMap = [null];
+    var pathCache = {};
+    var modCache = {};
 
     return function(path, modificator){
       var func;
       var result;
+      var getterId;
 
-      if (!modificator)
+      // return nullGetter if no path
+      if (!path)
+        return nullGetter;
+
+      // resolve getter by path
+      if (typeof path == 'function')
       {
-        if (path.getter)
-          return path.getter;
-        
-        if (typeof path == 'function')
-          return path;
-      }
+        getterId = path.basisGetterId_;
 
-      if (typeof path != 'function')
-      {
-        func = getterPathCache[path];
-
-        if (!func)
+        // path is function
+        if (getterId)
         {
-          func = new Function('object', 'return object != null ? object.' + path + ' : object');
-          func.path = path;
-          func.basisGetterId_ = getterSeed++;
-          getterPathCache[path] = func;
-        }
-      }
-      else
-      {
-        func = path;
-        if (!func.basisGetterId_)
-          func.basisGetterId_ = getterSeed++;
-      }
-
-      var getterId = func.basisGetterId_;
-      var modList = getterCache[getterId];
-
-      if (modList)
-      {
-        if (typeof modificator == 'undefined')
-        {
-          if (modList.nmg)
-            return modList.nmg;
+          // this function used for getter before
+          func = getterMap[getterId - 1];
         }
         else
         {
-          for (var i = 0; i < modList.length; i++) 
-            if (modList[i].modificator === modificator)
-              return modList[i].getter;
+          // this function never used for getter before, wrap and cache it
+
+          // wrap function to prevent function properties rewrite
+          func = function(object){ return path(object) };
+          func.base = path;
+          func.__extend__ = getter;
+
+          // add to cache
+          getterId = getterMap.push(func);
+          path.basisGetterId_ = getterId;
+          func.basisGetterId_ = getterId;
         }
       }
       else
-        modList = getterCache[getterId] = [];
-
-      var cacheResult = true;
-      switch (modificator && typeof modificator)
       {
-        case 'string': 
-          result = function(object){ return modificator.format(func(object)) };
-          break;
+        // thread path as string, search in cache
+        func = pathCache[path];
 
-        case 'function': 
+        if (func)
+        {
+          // resolve getter id
+          getterId = func.basisGetterId_;
+        }
+        else
+        {
+          // create getter function
+          func = new Function('object', 'return object != null ? object.' + path + ' : object');
+          func.base = path;
+          func.__extend__ = getter;
+
+          // add to cache
+          getterId = getterMap.push(func);
+          func.basisGetterId_ = getterId;
+          pathCache[path] = func;
+        }
+      }
+
+      // resolve getter with modificator
+      var modType = modificator != null && typeof modificator;
+
+      // if no modificator, return func
+      if (!modType)
+        return func;
+
+      var modList = modCache[getterId];
+      var modId;
+
+      // resolve modificator id if possible
+      if (modType == 'string')
+        modId = modType + modificator;
+      else
+        if (modType == 'function')
+          modId = modificator.basisModId_;
+        else
+          if (modType != 'object')
+          {
+            // only string, function and objects are support as modificator
+            ;;;console.warn('Function.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
+            return func;
+          }
+
+      // try fetch getter from cache
+      if (modId && modList && modList[modId])
+        return modList[modId];
+
+      // recover original function, reduce functions call deep
+      if (typeof func.base == 'function')
+        func = func.base;
+
+      switch (modType)
+      {
+        case 'string':
+          result = function(object){ return modificator.format(func(object)) };
+        break;
+
+        case 'function':
+          if (!modId)
+          {
+            // mark function with modificator id
+            modId = modType + modificatorSeed++;
+            modificator.basisModId_ = modId;
+          }
+
           result = function(object){ return modificator(func(object)) };
-          break;
+        break;
 
         case 'object':
-          cacheResult = false;
           result = function(object){ return modificator[func(object)] }; 
-          break;
-
-        default:
-          if (!func.path)
-            result = function(object){ return func(object) };
-          else
-            result = func;
+        break;
       }
 
-      if (cacheResult)
+      result.__extend__ = getter;
+
+      if (modId)
       {
-        modList.push({
-          getter: result,
-          modificator: modificator
-        });
+        if (!modList)
+        {
+          // create new modificator list if it not exists yet
+          modList = {};
+          modCache[getterId] = modList;
+        }
 
-        // save null modificator getter
-        if (typeof modificator == 'undefined')
-          modList.nmg = result;
+        // cache getter with modificator
+        modList[modId] = result;
+
+        // cache new getter
+        result.basisGetterId_ = getterMap.push(result);
       }
-
-      result.getter = result;
+      else
+      {
+        // only object modificators has no modId
+        // getters with object modificator are not caching
+        // this prevents of storing (in closure) object that can't be released by gabage collectors
+      }
 
       return result;
     };
 
   })();
+
+  var nullGetter = getter('null');
 
  /**
   * @param {function(object)|string|object} getter
@@ -431,6 +483,7 @@
 
     // getters and modificators
     getter:     getter,
+    nullGetter: nullGetter,
     def:        def,
     wrapper:    wrapper,
 
