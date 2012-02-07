@@ -299,7 +299,7 @@ basis.require('basis.ui.canvas');
       else
       {
         this.owner.addHandler(SERIA_OWNER_HANDLER, this);
-        //SERIA_OWNER_HANDLER.childNodesModified.call(this, this.owner, { inserted: this.owner.childNodes });
+        SERIA_OWNER_HANDLER.childNodesModified.call(this, this.owner, { inserted: this.owner.childNodes });
       }
     },
 
@@ -375,6 +375,8 @@ basis.require('basis.ui.canvas');
     init: function(config){
       this.clientRect = {};
 
+      Graph.prototype.init.call(this, config);
+
       if (this.series instanceof Array)
       {
         var series = [];
@@ -395,8 +397,6 @@ basis.require('basis.ui.canvas');
       }
 
       this.seriesList = new GraphSeriesList(Object.extend({ owner: this }, this.series));
-
-      Graph.prototype.init.call(this, config);
     },
 
     drawFrame: function(){
