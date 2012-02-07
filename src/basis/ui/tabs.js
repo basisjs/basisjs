@@ -170,7 +170,7 @@ basis.require('basis.ui');
     className: namespace + '.TabControl',
 
     childClass: Tab,
-    localGroupingClass: {
+    groupingClass: {
       className: namespace + '.TabsGroupingNode',
 
       childClass: {

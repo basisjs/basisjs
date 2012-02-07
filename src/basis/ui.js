@@ -372,7 +372,7 @@ basis.require('basis.html');
       setChildNodes: function(childNodes, keepAlive){
         // reallocate childNodesElement to new DocumentFragment
         var domFragment = DOM.createFragment();
-        var target = this.localGrouping || this;
+        var target = this.grouping || this;
         var container = target.childNodesElement || target.element;
         target.childNodesElement = domFragment;
 
@@ -426,7 +426,7 @@ basis.require('basis.html');
    /**
     * @inheritDoc
     */
-    localGroupingClass: Class.SELF,
+    groupingClass: Class.SELF,
 
    /**
     * @inheritDoc
@@ -446,7 +446,7 @@ basis.require('basis.html');
       {
         cursor.element = cursor.childNodesElement = element;
       }
-      while (cursor = cursor.localGrouping);
+      while (cursor = cursor.grouping);
 
       DWGroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
     },
@@ -480,7 +480,7 @@ basis.require('basis.html');
       return new this.childClass(config);
     },
 
-    localGroupingClass: GroupingNode
+    groupingClass: GroupingNode
   });
 
  /**

@@ -288,7 +288,7 @@
       dataSource: Field.all,
 
       // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
-      localSorting: Function.getter('data.Title'),
+      sorting: Function.getter('data.Title'),
 
       // Определяем класс для дочерних узлов
       childClass: nsTree.Folder.subclass({
@@ -305,7 +305,7 @@
 
         freqSum: 0,
         titleGetter: Function.getter('data.Title'),
-        localSorting: function(node){
+        sorting: function(node){
           return Word.get(node.data.WordId).data.Title;
         },
         handler: {
@@ -420,7 +420,7 @@
       },
 
       // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
-      localSorting: function(node){
+      sorting: function(node){
         return node.satellite.word.data.Title;
       },
       dataSource: new basis.data.dataset.MapReduce({
@@ -518,7 +518,7 @@
         // NOTE: для отладки - список всех связей
         new nsTree.Tree({
           dataSource: Link.all,
-          localSorting: Function.getter('data.FieldId'),
+          sorting: Function.getter('data.FieldId'),
 
           // Определяем класс для дочерних узлов (описан выше)
           childClass: {

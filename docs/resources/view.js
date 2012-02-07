@@ -659,7 +659,7 @@
         '<ul{childNodesElement|content} class="content"/>' +
       '</div>',
 
-    localGroupingClass: {
+    groupingClass: {
       childClass: {
         template:
           '<div class="Basis-PartitionNode">' +
@@ -683,8 +683,8 @@
     },
 
     handler: {
-      localGroupingChanged: function(){
-        classList(this.tmpl.content).bool('show-namespace', !this.localGrouping);
+      groupingChanged: function(){
+        classList(this.tmpl.content).bool('show-namespace', !this.grouping);
       },
       update: function(){
         this.clear();
@@ -746,7 +746,7 @@
                 title: 'Namespace',
                 selected: true,
                 handler: function(){
-                  owner.setLocalGrouping({
+                  owner.setGrouping({
                     groupGetter: getter('delegate.group'),
                     titleGetter: getter('data.title')
                   });
@@ -755,7 +755,7 @@
               {
                 title: 'None',
                 handler: function(){
-                  owner.setLocalGrouping();
+                  owner.setGrouping();
                 }
               }
             ]
@@ -877,7 +877,7 @@
     type: 'type',
     groupGetter: getter('data.kind'),
     titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE),
-    localSorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT)
+    sorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT)
   };
 
   var PROTOTYPE_GROUPING_IMPLEMENTATION = {
@@ -912,7 +912,7 @@
       return cls || mapDO['basis.Class'];
     },
     titleGetter: getter('data.fullPath'),
-    localSorting: function(group){
+    sorting: function(group){
       return group.delegate && group.delegate.eventObjectId;
     }
   };
@@ -959,10 +959,10 @@
       }
     },
 
-    event_localGroupingChanged: function(node, oldGrouping){
-      ViewList.prototype.event_localGroupingChanged.call(this, node, oldGrouping);
+    event_groupingChanged: function(node, oldGrouping){
+      ViewList.prototype.event_groupingChanged.call(this, node, oldGrouping);
 
-      classList(this.tmpl.content, 'grouping').set(this.localGrouping ? this.localGrouping.type : undefined);
+      classList(this.tmpl.content, 'grouping').set(this.grouping ? this.grouping.type : undefined);
     },
 
     childClass: PrototypeItem,
@@ -979,7 +979,7 @@
       return new childClass(config);
     },
 
-    localGroupingClass: {
+    groupingClass: {
       className: namespace + '.ViewPrototypeGroupingNode',
       childClass: {
         className: namespace + '.ViewPrototypePartitionNode',
@@ -1010,18 +1010,18 @@
               {
                 title: 'Type',
                 handler: function(){
-                  owner.setLocalSorting('data.key');
-                  owner.setLocalGrouping(PROTOTYPE_GROUPING_TYPE);
+                  owner.setSorting('data.key');
+                  owner.setGrouping(PROTOTYPE_GROUPING_TYPE);
                 }
               },
               {
                 title: 'Implementation',
                 selected: true,
                 handler: function(){
-                  owner.setLocalSorting(function(node){
+                  owner.setSorting(function(node){
                     return (PROTOTYPE_ITEM_WEIGHT[node.data.kind] || 0) + '_' + node.data.key;
                   });
-                  owner.setLocalGrouping(PROTOTYPE_GROUPING_IMPLEMENTATION);
+                  owner.setGrouping(PROTOTYPE_GROUPING_IMPLEMENTATION);
                 }
               }
             ]
@@ -1139,7 +1139,7 @@
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
     },
 
-    localSorting: getter('data.className')
+    sorting: getter('data.className')
   });
 
   ClsNode.prototype.childClass = ClsNode;
@@ -1247,7 +1247,7 @@
       uiContainer.prototype.event_childNodesModified.call(this, node, delta);
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
     },
-    localSorting: getter('data.className.split(".").pop()'),
+    sorting: getter('data.className.split(".").pop()'),
 
     childClass: Class.SELF
   });

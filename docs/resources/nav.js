@@ -70,7 +70,7 @@
         return node.data.isClassMember ? 'ClassMember' : node.nodeType;
       },
       titleGetter: getter('data.id', groupTitle),
-      localSorting: getter('data.id', groupWeight)
+      sorting: getter('data.id', groupWeight)
     };
 
     //
@@ -186,10 +186,10 @@
           kind = 'constantObject';
         return new kindNodeClass[kind](config);
       },
-      localSorting: function(node){
+      sorting: function(node){
         return groupWeight[node.nodeType] + '_' + node.data.title;
       },
-      localGrouping: nodeTypeGrouping,
+      grouping: nodeTypeGrouping,
 
       init: function(config){
         BaseDocTreeNode.prototype.init.call(this, config);
@@ -218,7 +218,7 @@
 
       collapsed: false,
       selectable: false,
-      localGrouping: false,
+      grouping: false,
       expand: nsTree.Folder.prototype.expand
     });
 

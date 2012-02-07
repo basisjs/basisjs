@@ -73,15 +73,15 @@
       };
 
       function getGroups(node, withNull){
-        var res = Array.from(node.localGrouping.childNodes);
+        var res = Array.from(node.grouping.childNodes);
         if (withNull)
-          res.unshift(node.localGrouping.nullGroup);
+          res.unshift(node.grouping.nullGroup);
         return res;
       }
 
       function checkOrder(nodes, host){
-        var sortingValue = host.localSorting;
-        var desc = host.localSortingDesc;
+        var sortingValue = host.sorting;
+        var desc = host.sortingDesc;
 
         for (var i = 0; i < nodes.length; i++)
           if (nodes[i].sortingValue !== sortingValue(nodes[i]))
@@ -126,9 +126,9 @@
             //  return 'child #' + i + ' has wrong document ref';
           }
 
-          if (node.localSorting)
+          if (node.sorting !== Function.nullGetter)
           {
-            if (node.localGrouping)
+            if (node.grouping)
             {
               var groups = getGroups(node, true);
               for (var i = 0; i < groups.length; i++)
@@ -140,9 +140,9 @@
                 return 'Sorting: ' + res;
           }
 
-          if (node.localGrouping)
+          if (node.grouping)
           {
-            if (res = checkNode(node.localGrouping))
+            if (res = checkNode(node.grouping))
               return res;
 
             var groups = getGroups(node, true);
@@ -163,7 +163,7 @@
 
         if (node instanceof nsWrappers.GroupingNode)
         {
-          if (node.owner && node.owner.localGrouping !== node)
+          if (node.owner && node.owner.grouping !== node)
               return 'wrong GroupingNode.owner ref';
         }
 
@@ -199,213 +199,6 @@
       }
 
       return [
-        {
-          name: 'Property',
-          testcase: [
-            {
-              name: 'create',
-              test: function(){
-                TestProperty = new Property(123);
-                this.is(123, TestProperty.value);
-              }
-            },
-            {
-              name: 'addLink/removeLink',
-              test: function(){
-
-
-              }
-            },
-            {
-              name: 'set #1',
-              test: function(){
-                var t = {};
-                var value = Math.random();
-
-                TestProperty.addLink(t, 'saved');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(value, t.saved);
-
-                // not fire on existing value set
-                t.saved = 0;
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(0, t.saved);
-
-                // fire on existing value set, with forced flag
-                t.saved = 0;
-                TestProperty.set(value, true);
-                this.is(value, TestProperty.value);
-                this.is(value, t.saved);
-
-                TestProperty.clear();
-              }
-            },
-            {
-              name: 'set #2',
-              test: function(){
-                var t = {};
-                var value = Math.random();
-                TestProperty.addLink(t, 'saved');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(value, t.saved);
-                TestProperty.clear();
-
-                var t = {};
-                var value = Math.random();
-                TestProperty.addLink(t, 'saved', '{0:.2}');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(value.toFixed(2), t.saved);
-                TestProperty.clear();
-
-                var t = {};
-                var value = Math.random();
-                TestProperty.addLink(t, function(value){ this.saved = value * 2 });
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(value * 2, t.saved);
-                TestProperty.clear();
-              }
-            },
-            {
-              name: 'set #3',
-              test: function(){
-                var t = DOM.createElement('DIV');
-                var value = Math.random();
-                TestProperty.addLink(t);
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(String(value), t.innerHTML);
-                TestProperty.clear();
-
-                var t = DOM.createElement('DIV');
-                var value = Math.random();
-                TestProperty.addLink(t, 'title');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(String(value), t.title);
-                TestProperty.clear();
-
-                var t = DOM.createText('#text');
-                var value = Math.random();
-                TestProperty.addLink(t);
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(String(value), t.nodeValue);
-                TestProperty.clear();
-
-                var t = DOM.createText('#text');
-                var value = Math.random();
-                TestProperty.addLink(t, null, '{0:.2}');
-                TestProperty.set(value);
-                this.is(value, TestProperty.value);
-                this.is(value.toFixed(2), t.nodeValue);
-                TestProperty.clear();
-              }
-            },
-            {
-              name: 'get',
-              test: function(){
-              }
-            }/*,
-            {
-              name: 'Property with proxy',
-              test: function(){
-                var a = new Property(0, null, Data.validator(function(value){ return !isNaN(value) && value }));
-                a.set(3);
-                this.is(3, a.value);
-                a.set('hello');
-                this.is(3, a.value);
-              }
-            }*/
-          ]
-        },
-        {
-          name: 'PropertySet',
-          testcase: [
-            {
-              name: 'test #1',
-              test: function(){
-                s = new PropertySet();
-                s.a = new Property(1);
-                s.b = new Property(2);
-
-                updateCount = 0;
-                s.add(s.a);
-                s.add(s.b);
-
-                s.addHandler({
-                  change: function(){
-                    updateCount++;
-                  }
-                });
-
-                s.a.set(11);
-                s.b.set(11);
-
-                this.is(0,0); // WTF?
-
-                s.a.set('test');
-              }
-            },
-            {
-              name: 'checkout',
-              test: function(){
-                this.is(1, updateCount);
-                this.is('test', s.a.value);
-                this.is(11, s.b.value);
-              }
-            },
-            {
-              name: 'destroyed property unlink',
-              test: function(){
-                s = new PropertySet();
-                s.a = new Property(1);
-                s.b = new Property(2);
-
-                updateCount = 0;
-                s.add(s.a);
-                s.add(s.b);
-
-                s.addHandler({
-                  change: function(){
-                    updateCount++;
-                  }
-                });
-
-                this.is(2, s.objects.length);
-                this.is(0, updateCount);
-
-                s.a.destroy();
-
-                this.is(1, s.objects.length);
-                this.is(0, updateCount);
-              }
-            },
-            {
-              name: 'destroyed PropertySet unlink',
-              test: function(){
-                var result = 0;
-                s = new PropertySet();
-                s.a = new Property(1),
-                s.b = new Property(2);
-
-                s.addHandler({
-                  change: function(){
-                    result = a.value + b.value;
-                  }
-                });
-
-                s.a.destroy();
-
-                this.is(0, result);
-              }
-            }
-          ]
-        },
         {
           name: 'DOM wrappers',
           testcase: [
@@ -493,19 +286,19 @@
               ]
             },
             {
-              name: 'localSorting',
+              name: 'sorting',
               testcase: []
             },
             {
-              name: 'localGrouping',
+              name: 'grouping',
               testcase: [
                 {
-                  name: 'localGrouping in config',
+                  name: 'grouping in config',
                   test: function(){
                     var testSet = getTestSet();
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localGrouping: 'data.group'
+                      grouping: 'data.group'
                     });
 
                     for (var i = 0; i < testSet.length; i++)
@@ -518,10 +311,10 @@
                     var testSet = getTestSet();
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localGrouping: {
+                      grouping: {
                         groupGetter: Function.getter('data.group'),
-                        localSorting: Function.getter('data.id'),
-                        localSortingDesc: true
+                        sorting: Function.getter('data.id'),
+                        sortingDesc: true
                       }
                     });
 
@@ -535,12 +328,12 @@
                     var testSet = getTestSet();
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: Function.getter('data.value'),
-                      localSortingDesc: true,
-                      localGrouping: {
+                      sorting: Function.getter('data.value'),
+                      sortingDesc: true,
+                      grouping: {
                         groupGetter: Function.getter('data.group'),
-                        localSorting: Function.getter('data.id'),
-                        localSortingDesc: true
+                        sorting: Function.getter('data.id'),
+                        sortingDesc: true
                       },
                       childNodes: testSet
                     });
@@ -556,12 +349,12 @@
                     var testSet = getTestSet();
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: Function.getter('data.value'),
-                      localSortingDesc: true,
-                      localGrouping: {
+                      sorting: Function.getter('data.value'),
+                      sortingDesc: true,
+                      grouping: {
                         groupGetter: Function.getter('data.group'),
-                        localSorting: Function.getter('data.title', String),
-                        localSortingDesc: true
+                        sorting: Function.getter('data.title', String),
+                        sortingDesc: true
                       },
                       childNodes: testSet
                     });
@@ -607,12 +400,12 @@
                     // ======================================
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: Function.getter('data.value'),
-                      localSortingDesc: true,
-                      localGrouping: {
+                      sorting: Function.getter('data.value'),
+                      sortingDesc: true,
+                      grouping: {
                         groupGetter: Function.getter('data.group', groupNodes),
-                        localSorting: Function.getter('data.title'),
-                        localSortingDesc: true
+                        sorting: Function.getter('data.title'),
+                        sortingDesc: true
                       },
                       childNodes: testSet//.filter(Function.getter('data.group >= 3'))
                     });
@@ -644,7 +437,7 @@
                   }
                 },
                 {
-                  name: 'setLocalGrouping after create and update PartitionNode with delegate',
+                  name: 'setGrouping after create and update PartitionNode with delegate',
                   test: function(){
 
                     var groupNodes = {};
@@ -658,17 +451,17 @@
 
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: Function.getter('data.value'),
-                      localSortingDesc: true,
+                      sorting: Function.getter('data.value'),
+                      sortingDesc: true,
                       childNodes: testSet//.filter(Function.getter('data.group >= 3'))
                     });
 
                     this.is(false, checkNode(node));
 
-                    node.setLocalGrouping({
+                    node.setGrouping({
                       groupGetter: Function.getter('data.group', groupNodes),
-                      localSorting: Function.getter('data.title'),
-                      localSortingDesc: true
+                      sorting: Function.getter('data.title'),
+                      sortingDesc: true
                     });
 
                     this.is(false, checkNode(node));
@@ -697,7 +490,7 @@
                   }
                 },
                 {
-                  name: 'setLocalGrouping after create and update PartitionNode with delegate & subscription',
+                  name: 'setGrouping after create and update PartitionNode with delegate & subscription',
                   test: function(){
 
                     var groupDelegateClass = Class(nsWrappers.Node, {
@@ -720,9 +513,9 @@
 
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: Function.getter('data.value'),
-                      localSortingDesc: true,
-                      localGroupingClass: {
+                      sorting: Function.getter('data.value'),
+                      sortingDesc: true,
+                      groupingClass: {
                         childClass: {
                           active: true
                         }
@@ -732,10 +525,10 @@
 
                     this.is(false, checkNode(node));
 
-                    node.setLocalGrouping({
+                    node.setGrouping({
                       groupGetter: Function.getter('data.group', groupNodes),
-                      localSorting: Function.getter('data.title'),
-                      localSortingDesc: true
+                      sorting: Function.getter('data.title'),
+                      sortingDesc: true
                     });
 
                     this.is(false, checkNode(node));
@@ -758,18 +551,18 @@
 
                     this.is(false, checkNode(node));
 
-                    node.setLocalSorting(Function.getter('data.value'));
+                    node.setSorting(Function.getter('data.value'));
                     this.is(false, checkNode(node));
 
                     var order = Array.from(node.childNodes);
-                    node.setLocalSorting(Function.getter('data.value * -1'), true);
+                    node.setSorting(Function.getter('data.value * -1'), true);
                     this.is(false, checkNode(node));
                     this.is(order, node.childNodes);
 
-                    node.setLocalSorting();
+                    node.setSorting();
                     this.is(false, checkNode(node));
 
-                    node.setLocalSorting(Function.getter('data.value'), true);
+                    node.setSorting(Function.getter('data.value'), true);
                     this.is(false, checkNode(node));
 
                     var order = Array.from(node.childNodes);
@@ -784,23 +577,23 @@
                   test: function(){
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: Function.getter('data.value'),
+                      sorting: Function.getter('data.value'),
                       childNodes: getTestSet()
                     });
                     this.is(false, checkNode(node));
 
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: Function.getter('data.value'),
-                      localSortingDesc: true,
+                      sorting: Function.getter('data.value'),
+                      sortingDesc: true,
                       childNodes: getTestSet()
                     });
                     this.is(false, checkNode(node));
 
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localSorting: Function.getter('data.value'),
-                      localSortingDesc: true
+                      sorting: Function.getter('data.value'),
+                      sortingDesc: true
                     });
                     this.is(false, checkNode(node));
                     node.setChildNodes(getTestSet());
@@ -820,35 +613,35 @@
                     });
                     this.is(false, checkNode(node));
 
-                    node.setLocalGrouping(Function.getter('data.group'));
+                    node.setGrouping(Function.getter('data.group'));
                     this.is(false, checkNode(node));
                     this.is(4, getGroups(node).length);
 
                     // change grouping
-                    node.setLocalGrouping(Function.getter('data.value'));
+                    node.setGrouping(Function.getter('data.value'));
                     this.is(false, checkNode(node));
                     this.is(10, getGroups(node).length);
 
                     // drop grouping
                     var order = Array.from(node.childNodes);
-                    node.setLocalGrouping();
+                    node.setGrouping();
                     this.is(false, checkNode(node));
-                    this.is(null, node.localGrouping);
+                    this.is(null, node.grouping);
                     this.is(order, node.childNodes);
 
-                    node.setLocalGrouping({
+                    node.setGrouping({
                       groupGetter: Function.getter('data.value'),
-                      localSorting: Function.getter('data.title')
+                      sorting: Function.getter('data.title')
                     });
                     this.is(false, checkNode(node));
 
                     var order = Array.from(node.childNodes);
                     // nothing changed
-                    node.localGrouping.setLocalSorting(node.localGrouping.localSorting);
+                    node.grouping.setSorting(node.grouping.sorting);
                     this.is(false, checkNode(node));
                     this.is(order, node.childNodes);
                     // reverse order
-                    node.localGrouping.setLocalSorting(node.localGrouping.localSorting, true);
+                    node.grouping.setSorting(node.grouping.sorting, true);
                     this.is(false, checkNode(node));
                     this.is(order.reverse(), node.childNodes);
                   }
@@ -858,7 +651,7 @@
                   test: function(){
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localGrouping: {
+                      grouping: {
                         groupGetter: Function.getter('data.value')
                       }
                     });
@@ -877,45 +670,45 @@
                     // 1 set, remove one by one, and add one by one
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localGrouping: {
+                      grouping: {
                         groupGetter: Function.getter('data.value'),
-                        localGrouping: {
+                        grouping: {
                           groupGetter: Function.getter('data.id % 4'),
-                          localGrouping: Function.getter('data.id % 2')
+                          grouping: Function.getter('data.id % 2')
                         }
                       },
                       childNodes: getTestSet()
                     });
 
                     this.is(false, checkNode(node));
-                    node.localGrouping.localGrouping.setLocalGrouping();
+                    node.grouping.grouping.setGrouping();
                     this.is(false, checkNode(node));
-                    node.localGrouping.setLocalGrouping();
+                    node.grouping.setGrouping();
                     this.is(false, checkNode(node));
-                    node.setLocalGrouping();
+                    node.setGrouping();
                     this.is(false, checkNode(node));
-                    node.setLocalGrouping('data.value');
+                    node.setGrouping('data.value');
                     this.is(false, checkNode(node));
-                    node.localGrouping.setLocalGrouping('data.id % 4');
+                    node.grouping.setGrouping('data.id % 4');
                     this.is(false, checkNode(node));
-                    node.localGrouping.localGrouping.setLocalGrouping('data.id % 2');
+                    node.grouping.grouping.setGrouping('data.id % 2');
                     this.is(false, checkNode(node));
 
                     // 2 set child node after all
 
                     var node = new nsWrappers.Node({
                       childFactory: nodeFactory,
-                      localGrouping: {
+                      grouping: {
                         groupGetter: Function.getter('data.value'),
-                        localGrouping: {
+                        grouping: {
                           groupGetter: Function.getter('data.id % 4'),
-                          localGrouping: Function.getter('data.id % 2')
+                          grouping: Function.getter('data.id % 2')
                         }
                       }
                     });
                     node.setChildNodes(getTestSet());
                     this.is(false, checkNode(node));
-                    node.setLocalGrouping();
+                    node.setGrouping();
                     this.is(false, checkNode(node));
 
                     // 3 increase grouping and drop
@@ -925,13 +718,13 @@
                       childNodes: getTestSet()
                     });
                     this.is(false, checkNode(node));
-                    node.setLocalGrouping('data.value');
+                    node.setGrouping('data.value');
                     this.is(false, checkNode(node));
-                    node.localGrouping.setLocalGrouping('data.id % 4');
+                    node.grouping.setGrouping('data.id % 4');
                     this.is(false, checkNode(node));
-                    node.localGrouping.localGrouping.setLocalGrouping('data.id % 2');
+                    node.grouping.grouping.setGrouping('data.id % 2');
                     this.is(false, checkNode(node));
-                    node.setLocalGrouping();
+                    node.setGrouping();
                     this.is(false, checkNode(node));
 
                     // 4 set nested grouping
@@ -940,25 +733,25 @@
                       childFactory: nodeFactory,
                       childNodes: getTestSet()
                     });
-                    node.setLocalGrouping({
+                    node.setGrouping({
                       groupGetter: Function.getter('data.value'),
-                      localGrouping: {
+                      grouping: {
                         groupGetter: Function.getter('data.id % 4'),
-                        localGrouping: Function.getter('data.id % 2')
+                        grouping: Function.getter('data.id % 2')
                       }
                     });
                     this.is(false, checkNode(node));
-                    node.setLocalGrouping('data.value');
-                    this.is(true, node.localGrouping != null);
-                    node.setLocalGrouping({
+                    node.setGrouping('data.value');
+                    this.is(true, node.grouping != null);
+                    node.setGrouping({
                       groupGetter: Function.getter('data.value'),
-                      localGrouping: {
+                      grouping: {
                         groupGetter: Function.getter('data.id % 4'),
-                        localGrouping: Function.getter('data.id % 2')
+                        grouping: Function.getter('data.id % 2')
                       }
                     });
                     this.is(false, checkNode(node));
-                    node.setLocalGrouping();
+                    node.setGrouping();
                     this.is(false, checkNode(node));
                   }
                 },
@@ -970,32 +763,32 @@
                       childNodes: getTestSet()
                     });
 
-                    node.setLocalGrouping(Function.getter('data.group'));
+                    node.setGrouping(Function.getter('data.group'));
                     this.is(false, checkNode(node));
 
-                    node.setLocalSorting(Function.getter('data.value'));
+                    node.setSorting(Function.getter('data.value'));
                     this.is(false, checkNode(node));
 
-                    node.setLocalGrouping({
+                    node.setGrouping({
                       groupGetter: Function.getter('data.group'),
-                      localSorting: Function.getter('data.id'),
-                      localSortingDesc: true
+                      sorting: Function.getter('data.id'),
+                      sortingDesc: true
                     });
                     this.is(false, checkNode(node));
 
-                    node.setLocalGrouping();
+                    node.setGrouping();
                     this.is(false, checkNode(node));
 
-                    node.setLocalSorting(Function.getter('data.group'), true);
+                    node.setSorting(Function.getter('data.group'), true);
                     this.is(false, checkNode(node));
 
-                    node.setLocalGrouping(Function.getter('data.group'));
+                    node.setGrouping(Function.getter('data.group'));
                     this.is(false, checkNode(node));
 
                     var order = Array.from(node.childNodes);
-                    node.setLocalSorting();
+                    node.setSorting();
                     this.is(false, checkNode(node));
-                    node.setLocalGrouping();
+                    node.setGrouping();
                     this.is(false, checkNode(node));
                     this.is(order, node.childNodes);
                   }

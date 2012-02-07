@@ -184,8 +184,8 @@ basis.require('basis.ui.canvas');
 
     style: {},
 
-    event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
-      Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
+    event_sortingChanged: function(node, oldSorting, oldSortingDesc){
+      Canvas.prototype.event_sortingChanged.call(this, node, oldSorting, oldSortingDesc);
       this.redraw();
     },
     event_childNodesModified: function(node, delta){

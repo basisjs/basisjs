@@ -252,7 +252,7 @@
       childClass: {
         captionGetter: Function.getter('data.value')
       },
-      localSorting: Function.getter('data.value'),
+      sorting: Function.getter('data.value'),
       defaultHandler: function(node){
         if (node)
           this.dataSource.subtrahend.add([node.root]);
@@ -386,7 +386,7 @@
 
     new DatasetViewer({
       title: 'First 3 item of A',
-      localSorting: Function.getter('data.value'),
+      sorting: Function.getter('data.value'),
       dataSource: new nsDataset.Slice({
         rule: Function.getter('data.value'),
         source: A,
@@ -396,7 +396,7 @@
 
     new DatasetViewer({
       title: 'Cloud of A: deviders',
-      localSorting: Function.getter('data.title'),
+      sorting: Function.getter('data.title'),
       dataSource: new nsDataset.Cloud({
         rule: function(item){
           var res = [];

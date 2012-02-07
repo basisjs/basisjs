@@ -405,6 +405,7 @@
         break;
       }
 
+      result.base = func.base;
       result.__extend__ = getter;
 
       if (modId)
@@ -418,6 +419,7 @@
 
         // cache getter with modificator
         modList[modId] = result;
+        result.mod = modificator;
 
         // cache new getter
         result.basisGetterId_ = getterMap.push(result);
@@ -434,7 +436,8 @@
 
   })();
 
-  var nullGetter = getter('null');
+  var nullGetter = Function();
+  nullGetter.__extend__ = getter;
 
  /**
   * @param {function(object)|string|object} getter
@@ -1536,6 +1539,8 @@
         for (var key in newProto)
           if (newProto[key] === SELF)
             newProto[key] = newClass;
+          //else
+          //  newProto[key] = newProto[key];
 
         // extend constructor with properties
         extend(newClass, newClassProps);

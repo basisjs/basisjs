@@ -547,16 +547,15 @@ basis.require('basis.data');
       /*if (typeof config.calculateValue == 'function')
         this.calculateValue = config.calculateValue;*/
 
-      if (this.objects.length)
+      var objects = this.objects;
+      this.objects = [];
+
+      if (objects && Array.isArray(objects))
       {
-        var objects = this.objects;
-        this.objects = [];
         this.lock();
         this.add.apply(this, objects);
         this.unlock();
       }
-      else
-        this.objects = [];
 
       this.valueChanged_ = this.stateChanged_ = !!this.calculateOnInit;
       this.update();

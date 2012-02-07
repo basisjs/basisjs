@@ -41,6 +41,7 @@ basis.require('basis.ui');
   var Template = basis.html.Template;
 
   var getter = Function.getter;
+  var nullGetter = Function.nullGetter;
   var extend = Object.extend;
   var classList = basis.cssom.classList;
 
@@ -99,7 +100,7 @@ basis.require('basis.ui');
         do
         {
           DOM.insert(element, cursor.headerRow, DOM.INSERT_BEGIN);
-        } while (cursor = cursor.localGrouping);
+        } while (cursor = cursor.grouping);
       }
       
       GroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
@@ -144,7 +145,7 @@ basis.require('basis.ui');
    /**
     * @inheritDoc
     */
-    localGroupingClass: Class.SELF,
+    groupingClass: Class.SELF,
 
    /**
     * @inheritDoc
@@ -189,7 +190,7 @@ basis.require('basis.ui');
   var HeaderCell = Class(UINode, {
     className: namespace + '.HeaderCell',
 
-    sorting: null,
+    colSorting: null,
     defaultOrder: false,
     groupId: 0,
 
@@ -207,7 +208,7 @@ basis.require('basis.ui');
         {
           var owner = this.parentNode && this.parentNode.owner;
           if (owner)
-            owner.setLocalSorting(owner.localSorting, !owner.localSortingDesc);
+            owner.setSorting(owner.sorting, !owner.sortingDesc);
         }
         else
           this.select();         
@@ -220,11 +221,11 @@ basis.require('basis.ui');
     init: function(config){
       UINode.prototype.init.call(this, config);
 
-      this.selectable = !!this.sorting;
+      this.selectable = !!this.colSorting;
 
-      if (this.sorting)
+      if (this.colSorting)
       {
-        this.sorting = Function.getter(this.sorting);
+        //this.colSorting = getter(this.colSorting);
         this.defaultOrder = this.defaultOrder == 'desc';
         classList(this.element).add(HEADERCELL_CSS_SORTABLE);
       }
@@ -250,7 +251,7 @@ basis.require('basis.ui');
 
     childClass: HeaderCell,
 
-    localGroupingClass: HeaderGroupingNode,
+    groupingClass: HeaderGroupingNode,
 
     template:
       '<thead{groupsElement} class="Basis-Table-Header">' +
@@ -259,12 +260,12 @@ basis.require('basis.ui');
 
     listen: {
       owner: {
-        localSortingChanged: function(owner, oldLocalSorting, oldLocalSortingDesc){
-          var cell = this.childNodes.search(owner.localSorting, 'sorting');
+        sortingChanged: function(owner, oldSorting, oldSortingDesc){
+          var cell = this.childNodes.search(owner.sorting, 'colSorting');
           if (cell)
           {
             cell.select();
-            cell.order = owner.localSortingDesc;
+            cell.order = owner.sortingDesc;
             classList(this.tmpl.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
           }
           else
@@ -281,7 +282,7 @@ basis.require('basis.ui');
           datasetChanged: function(dataset, delta){
             var cell = dataset.pick();
             if (cell && this.owner)
-              this.owner.setLocalSorting(cell.sorting, cell.order);
+              this.owner.setSorting(cell.colSorting, cell.order);
           }
         }
       };
@@ -294,14 +295,19 @@ basis.require('basis.ui');
       if (structure)
       {
         var cells = [];
-        var autosorting;
+        var autosorting = [];
+        var ownerSorting = this.owner && this.owner.sorting;
         
         for (var i = 0; i < structure.length; i++)
         {
           var colConfig = structure[i];
           var headerConfig = colConfig.header;
-          var config = Object.slice(colConfig, ['sorting', 'defaultOrder', 'groupId']);
+          var config = {};
+          
+          if ('groupId' in colConfig)
+            config.groupId = colConfig.groupId;
 
+          // content
           config.content = (headerConfig == null || typeof headerConfig != 'object'
             ? headerConfig 
             : headerConfig.content) || String.Entity.nbsp;
@@ -309,13 +315,27 @@ basis.require('basis.ui');
           if (typeof config.content == 'function')
             config.content = config.content.call(this);
 
+          // css classes
           config.cssClassName = (headerConfig.cssClassName || '') + ' ' + (colConfig.cssClassName || '');
-          
-          if (!autosorting)
-            autosorting = config.selected = config.sorting && colConfig.autosorting;
 
+          // sorting
+          var sorting = getter(colConfig.colSorting || colConfig.sorting);
+
+          if (sorting !== nullGetter)
+          {
+            config.colSorting = sorting;
+            config.defaultOrder = colConfig.defaultOrder;
+          
+            if (colConfig.autosorting || sorting === ownerSorting)
+              autosorting.push(config);
+          }
+
+          // store cell
           cells.push(config);
         };
+
+        if (autosorting.length)
+          autosorting[0].selected = true;
 
         this.setChildNodes(cells);
       }
@@ -507,7 +527,7 @@ basis.require('basis.ui');
     
     childClass: Row,
 
-    localGroupingClass: {
+    groupingClass: {
       className: namespace + '.TableGroupingNode',
       childClass: Body
     },
@@ -536,8 +556,8 @@ basis.require('basis.ui');
       this.headerConfig = this.header;
       this.footerConfig = this.footer;
 
-      this.header = new this.headerClass(Object.extend({ owner: this, structure: this.structure }, this.header));
-      this.footer = new this.footerClass(Object.extend({ owner: this, structure: this.structure }, this.footer));
+      this.header = new this.headerClass(extend({ owner: this, structure: this.structure }, this.header));
+      this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
 
       DOM.replace(this.tmpl.header, this.header.element);
       DOM.replace(this.tmpl.footer, this.footer.element);

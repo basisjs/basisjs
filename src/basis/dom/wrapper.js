@@ -55,6 +55,7 @@ basis.require('basis.html');
   var STATE = nsData.STATE;
 
   var getter = Function.getter;
+  var nullGetter = Function.nullGetter;
   var extend = Object.extend;
   var complete = Object.complete;
 
@@ -97,7 +98,7 @@ basis.require('basis.html');
 
   function sortChildNodes(obj){
     return obj.childNodes.sort(
-      obj.localSortingDesc
+      obj.sortingDesc
         ? sortDesc
         : sortAsc
     );
@@ -408,14 +409,14 @@ basis.require('basis.html');
     * @param {basis.dom.wrapper.AbstractNode} node
     * @param {basis.dom.wrapper.GroupingNode} oldGroupingNode
     */
-    event_localGroupingChanged: createEvent('localGroupingChanged', 'node', 'oldGroupingNode'),
+    event_groupingChanged: createEvent('groupingChanged', 'node', 'oldGroupingNode'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
-    * @param {function()} oldLocalSorting
-    * @param {boolean} oldLocalSortingDesc
+    * @param {function()} oldSorting
+    * @param {boolean} oldSortingDesc
     */
-    event_localSortingChanged: createEvent('localSortingChanged', 'node', 'oldLocalSorting', 'oldLocalSortingDesc'),
+    event_sortingChanged: createEvent('sortingChanged', 'node', 'oldSorting', 'oldSortingDesc'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
@@ -535,15 +536,15 @@ basis.require('basis.html');
 
    /**
     * Sorting function
-    * @type {Function}
+    * @type {function(node)}
     */
-    localSorting: null,
+    sorting: nullGetter,
 
    /**
     * Sorting direction
     * @type {boolean}
     */
-    localSortingDesc: false,
+    sortingDesc: false,
 
    /**
     * GroupingNode config
@@ -551,16 +552,16 @@ basis.require('basis.html');
     * @see ./demo/common/grouping_of_grouping.html
     * @type {basis.dom.wrapper.GroupingNode}
     */
-    localGrouping: null,
+    grouping: null,
 
    /**
     * Class for grouping control. Class should be inherited from {basis.dom.wrapper.GroupingNode}
     * @type {Class}
     */
-    localGroupingClass: null,
+    groupingClass: null,
 
    /**
-    * Reference to group node in localGrouping
+    * Reference to group node in grouping
     * @type {basis.dom.wrapper.AbstractNode}
     * @readonly
     */
@@ -590,7 +591,7 @@ basis.require('basis.html');
 
    /**
     * Process on init:
-    *   - localGrouping
+    *   - grouping
     *   - childNodes
     *   - dataSource
     *   - satelliteConfig
@@ -603,7 +604,7 @@ basis.require('basis.html');
 
       var dataSource = this.dataSource;
       var childNodes = this.childNodes;
-      var localGrouping = this.localGrouping;
+      var grouping = this.grouping;
 
       ;;;if (('autoDelegateParent' in this) && typeof console != 'undefined') console.warn('autoDelegateParent property is deprecate. Use autoDelegate instead');
 
@@ -614,10 +615,10 @@ basis.require('basis.html');
       // inherit
       DataObject.prototype.init.call(this, config);
 
-      if (localGrouping)
+      if (grouping)
       {
-        this.localGrouping = null;
-        this.setLocalGrouping(localGrouping);
+        this.grouping = null;
+        this.setGrouping(grouping);
       }
 
       // init properties
@@ -743,16 +744,16 @@ basis.require('basis.html');
 
    /**
     * @param {Object|function()|string} grouping
-    * @param {boolean} alive Keep localGrouping alive after unlink
+    * @param {boolean} alive Keep grouping node alive after unlink
     */
-    setLocalGrouping: function(grouping, alive){
+    setGrouping: function(grouping, alive){
     },
 
    /**
     * @param {function()|string} sorting
     * @param {boolean} desc
     */
-    setLocalSorting: function(sorting, desc){
+    setSorting: function(sorting, desc){
     },
 
    /**
@@ -809,10 +810,10 @@ basis.require('basis.html');
         this.parentNode.removeChild(this);
 
       // destroy group control
-      if (this.localGrouping)
+      if (this.grouping)
       {
-        this.localGrouping.setOwner();
-        this.localGrouping = null;
+        this.grouping.setOwner();
+        this.grouping = null;
       }
 
       // drop owner
@@ -1073,7 +1074,7 @@ basis.require('basis.html');
       child.groupNode.nodes.push(child);
 
     order.length = 0;
-    for (var group = node.localGrouping.nullGroup; group; group = group.nextSibling)
+    for (var group = node.grouping.nullGroup; group; group = group.nextSibling)
     {
       var nodes = group.nodes;
       group.first = nodes[0] || null;
@@ -1177,9 +1178,9 @@ basis.require('basis.html');
       // search for insert point
       var isInside = newChild.parentNode === this;
       var currentNewChildGroup = newChild.groupNode;
-      var localGrouping = this.localGrouping;
-      var localSorting = this.localSorting;
-      var localSortingDesc;
+      var grouping = this.grouping;
+      var sorting = this.sorting;
+      var sortingDesc;
       var childNodes = this.childNodes;
       var newChildValue;
       var groupNodes;
@@ -1195,12 +1196,12 @@ basis.require('basis.html');
         prevSibling = newChild.previousSibling;
       }
 
-      if (localSorting)
+      if (sorting !== nullGetter)
       {
-        // if localSorting is using - refChild is ignore
+        // if sorting is using - refChild is ignore
         refChild = null; // ignore
-        localSortingDesc = this.localSortingDesc;
-        newChildValue = localSorting(newChild) || 0;
+        sortingDesc = this.sortingDesc;
+        newChildValue = sorting(newChild) || 0;
 
         // some optimizations if node had already inside current node
         if (isInside)
@@ -1212,9 +1213,9 @@ basis.require('basis.html');
           else
           {
             if (
-                (!nextSibling || (localSortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue))
+                (!nextSibling || (sortingDesc ? nextSibling.sortingValue <= newChildValue : nextSibling.sortingValue >= newChildValue))
                 &&
-                (!prevSibling || (localSortingDesc ? prevSibling.sortingValue >= newChildValue : prevSibling.sortingValue <= newChildValue))
+                (!prevSibling || (sortingDesc ? prevSibling.sortingValue >= newChildValue : prevSibling.sortingValue <= newChildValue))
                )
             {
               newChild.sortingValue = newChildValue;
@@ -1224,10 +1225,10 @@ basis.require('basis.html');
         }
       }
 
-      if (localGrouping)
+      if (grouping)
       {
         var cursor;
-        group = localGrouping.getGroupNode(newChild);
+        group = grouping.getGroupNode(newChild);
         groupNodes = group.nodes;
 
         // optimization: test node position, possible it on right place
@@ -1236,7 +1237,7 @@ basis.require('basis.html');
             return newChild;
 
         // calculate newChild position
-        if (localSorting)
+        if (sorting !== nullGetter)
         {
           if (correctSortPos)
           {
@@ -1247,8 +1248,8 @@ basis.require('basis.html');
           }
           else
           {
-            // when localSorting use binary search
-            pos = groupNodes.binarySearchPos(newChildValue, sortingSearch, localSortingDesc);
+            // when sorting use binary search
+            pos = groupNodes.binarySearchPos(newChildValue, sortingSearch, sortingDesc);
             newChild.sortingValue = newChildValue;
           }
         }
@@ -1303,14 +1304,14 @@ basis.require('basis.html');
       }
       else
       {
-        if (localSorting)
+        if (sorting !== nullGetter)
         {
-          // if localSorting is using - refChild is ignore
+          // if sorting is using - refChild is ignore
           if (correctSortPos)
             return newChild;
 
           // search for refChild
-          pos = childNodes.binarySearchPos(newChildValue, sortingSearch, localSortingDesc);
+          pos = childNodes.binarySearchPos(newChildValue, sortingSearch, sortingDesc);
           refChild = childNodes[pos];
           newChild.sortingValue = newChildValue; // change sortingValue AFTER search
 
@@ -1396,7 +1397,7 @@ basis.require('basis.html');
       if (refChild) 
       {
         // search for refChild position
-        // NOTE: if position is not equal -1 than position was found before (localSorting, logN)
+        // NOTE: if position is not equal -1 than position was found before (sorting, logN)
         if (pos == -1)
           pos = childNodes.indexOf(refChild);
 
@@ -1586,10 +1587,10 @@ basis.require('basis.html');
       }
 
       // if local grouping, clear groups
-      if (this.localGrouping)
+      if (this.grouping)
       {
-        //this.localGrouping.clear();
-        for (var childNodes = this.localGrouping.childNodes, i = childNodes.length - 1, group; group = childNodes[i]; i--)
+        //this.grouping.clear();
+        for (var childNodes = this.grouping.childNodes, i = childNodes.length - 1, group; group = childNodes[i]; i--)
           group.clear();
       }
     },
@@ -1653,7 +1654,7 @@ basis.require('basis.html');
         // NOTE: this assigment must be here, because clear method call requires for dataSource be null
         this.dataSource = dataSource;
 
-        // TODO: switch off localSorting & localGrouping
+        // TODO: switch off sorting & grouping
 
         // attach
         if (dataSource)
@@ -1671,7 +1672,7 @@ basis.require('basis.html');
           }
         }
 
-        // TODO: restore localSorting & localGrouping, fast node reorder
+        // TODO: restore sorting & grouping, fast node reorder
 
         this.event_dataSourceChanged(this, oldDataSource);
       }
@@ -1680,7 +1681,7 @@ basis.require('basis.html');
    /**
     * @inheritDoc
     */
-    setLocalGrouping: function(grouping, alive){
+    setGrouping: function(grouping, alive){
       if (typeof grouping == 'function' || typeof grouping == 'string')
         grouping = {
           groupGetter: getter(grouping)
@@ -1689,29 +1690,29 @@ basis.require('basis.html');
       if (grouping instanceof GroupingNode == false)
       {
         grouping = grouping != null && typeof grouping == 'object'
-          ? new this.localGroupingClass(Object.complete({
+          ? new this.groupingClass(Object.complete({
               //owner: this
             }, grouping))
           : null;
       }
 
-      if (this.localGrouping !== grouping)
+      if (this.grouping !== grouping)
       {
-        var oldGroupingNode = this.localGrouping;
+        var oldGroupingNode = this.grouping;
         var order;
 
-        if (this.localGrouping)
+        if (this.grouping)
         {
           if (!grouping)
           {
             // NOTE: it's important to clear locaGrouping before calling fastChildNodesOrder
-            // because it sorts nodes in according to localGrouping
-            this.localGrouping = null;
+            // because it sorts nodes in according to grouping
+            this.grouping = null;
 
             if (this.firstChild)
             {
               // new order
-              if (this.localSorting)
+              if (this.sorting !== nullGetter)
                 order = sortChildNodes(this);
               else
                 order = this.childNodes;
@@ -1730,24 +1731,24 @@ basis.require('basis.html');
 
         if (grouping)
         {
-          // NOTE: it important set localGrouping before set owner for grouping,
-          // because grouping will try set localGrouping property on owner change
+          // NOTE: it important set grouping before set owner for grouping,
+          // because grouping will try set grouping property on owner change
           // for it's new owner and it fall in recursion
-          this.localGrouping = grouping;
+          this.grouping = grouping;
           grouping.setOwner(this);
 
           // if there is child nodes - reorder it
           if (this.firstChild)
           {
             // new order
-            if (this.localSorting)
+            if (this.sorting !== nullGetter)
               order = sortChildNodes(this);
             else
               order = this.childNodes;
 
             // split nodes by new groups
             for (var i = 0, child; child = order[i]; i++)
-              child.groupNode = this.localGrouping.getGroupNode(child);
+              child.groupNode = this.grouping.getGroupNode(child);
 
             // fill groups
             order = fastChildNodesGroupOrder(this, order);
@@ -1757,28 +1758,28 @@ basis.require('basis.html');
           }
         }
 
-        this.event_localGroupingChanged(this, oldGroupingNode);
+        this.event_groupingChanged(this, oldGroupingNode);
       }
     },
 
    /**
     * @inheritDoc
     */
-    setLocalSorting: function(sorting, desc){
-      if (sorting)
-        sorting = getter(sorting);
+    setSorting: function(sorting, sortingDesc){
+      sorting = getter(sorting);
+      sortingDesc = !!sortingDesc;
 
       // TODO: fix when direction changes only
-      if (this.localSorting != sorting || this.localSortingDesc != !!desc)
+      if (this.sorting !== sorting || this.sortingDesc != !!sortingDesc)
       {
-        var oldLocalSorting = this.localSorting;
-        var oldLocalSortingDesc = this.localSortingDesc;
+        var oldSorting = this.sorting;
+        var oldSortingDesc = this.sortingDesc;
 
-        this.localSortingDesc = !!desc;
-        this.localSorting = sorting || null;
+        this.sorting = sorting;
+        this.sortingDesc = !!sortingDesc;
 
         // reorder nodes only if sorting and child nodes exists
-        if (sorting && this.firstChild)
+        if (sorting !== nullGetter && this.firstChild)
         {
           var order = [];
           var nodes;
@@ -1791,12 +1792,12 @@ basis.require('basis.html');
           // count of top level elements (if used). No events dispatching (time benefits).
           // Sorting time of Wrappers (AbstractNodes) equals N*log(N) + N (reference update).
           // NOTE: Nodes selected state will remain (sometimes it can be important)
-          if (this.localGrouping)
+          if (this.grouping)
           {
-            for (var group = this.localGrouping.nullGroup; group; group = group.nextSibling)
+            for (var group = this.grouping.nullGroup; group; group = group.nextSibling)
             {
               // sort, clear and set new order, no override childNodes
-              nodes = group.nodes = sortChildNodes({ childNodes: group.nodes, localSortingDesc: this.localSortingDesc });
+              nodes = group.nodes = sortChildNodes({ childNodes: group.nodes, sortingDesc: this.sortingDesc });
 
               group.first = nodes[0] || null;
               group.last = nodes[nodes.length - 1] || null;
@@ -1812,7 +1813,7 @@ basis.require('basis.html');
           fastChildNodesOrder(this, order);
         }
 
-        this.event_localSortingChanged(this, oldLocalSorting, oldLocalSortingDesc);
+        this.event_sortingChanged(this, oldSorting, oldSortingDesc);
       }
     },
 
@@ -2152,12 +2153,12 @@ basis.require('basis.html');
     */
     event_ownerChanged: function(node, oldOwner){
       // detach from old owner, if it still connected
-      if (oldOwner && oldOwner.localGrouping === this)
-        oldOwner.setLocalGrouping(null, true);
+      if (oldOwner && oldOwner.grouping === this)
+        oldOwner.setGrouping(null, true);
 
       // attach to new owner, if any and doesn't connected
-      if (this.owner && this.owner.localGrouping !== this)
-        this.owner.setLocalGrouping(this);
+      if (this.owner && this.owner.grouping !== this)
+        this.owner.setGrouping(this);
 
       events.ownerChanged.call(this, node, oldOwner);
 
@@ -2328,7 +2329,7 @@ basis.require('basis.html');
     }
   });
 
-  AbstractNode.prototype.localGroupingClass = GroupingNode;
+  AbstractNode.prototype.groupingClass = GroupingNode;
 
 
   //

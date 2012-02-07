@@ -161,7 +161,7 @@
       id: 'ArticleList',
       dataSource: Article.all,  // set data source
       childClass: ArticleNode,  // set class for child nodes
-      localSorting: Function.getter('data.title', String.toLowerCase),  // sorting for child nodes
+      sorting: Function.getter('data.title', String.toLowerCase),  // sorting for child nodes
       selection: {              // we need for selection, define config for it
         handler: {
           datasetChanged: function(dataset, delta){ // dataset -> articleList.selection

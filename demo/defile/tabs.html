@@ -114,12 +114,12 @@
 
     // AccordionControl with sorting & grouping
     new Tabs.AccordionControl({
-      container: cssom.setStyle(createBlock('AccordionControl with localSorting & localGrouping'), { 'float': 'right', width: '250px' }),
-      localGrouping: {
+      container: cssom.setStyle(createBlock('AccordionControl with sorting & grouping'), { 'float': 'right', width: '250px' }),
+      grouping: {
         groupGetter: getter('groupId'),
-        localSorting: getter('data.title')
+        sorting: getter('data.title')
       },
-      localSorting: getter('data.title'),
+      sorting: getter('data.title'),
       childNodes: data
     });
 
@@ -131,12 +131,12 @@
 
     // TabControl with sorting & grouping
     new Tabs.TabControl({
-      container: createBlock('TabControl with localSorting & localGrouping'),
-      localGrouping: {
+      container: createBlock('TabControl with sorting & grouping'),
+      grouping: {
         groupGetter: getter('groupId'),
-        localSorting: getter('data.title')
+        sorting: getter('data.title')
       },
-      localSorting: getter('data.title'),
+      sorting: getter('data.title'),
       childNodes: data
     });
 
@@ -185,12 +185,12 @@
 
     // TabSheetControl with sorting & grouping
     new Tabs.TabSheetControl({
-      container: createBlock('TabSheetControl with localSorting & localGrouping'),
-      localGrouping: {
+      container: createBlock('TabSheetControl with sorting & grouping'),
+      grouping: {
         groupGetter: getter('groupId'),
-        localSorting: getter('data.title')
+        sorting: getter('data.title')
       },
-      localSorting: getter('data.title'),
+      sorting: getter('data.title'),
       childNodes: data
     });
 

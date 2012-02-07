@@ -133,8 +133,8 @@
         }
       }
     ),
-    localSorting: Function.getter('data.title'),
-    localGrouping: Object.slice(nsView.viewPrototype.localGrouping, 'groupGetter localSorting titleGetter'.qw()),
+    sorting: Function.getter('data.title'),
+    grouping: Object.slice(nsView.viewPrototype.grouping, 'groupGetter sorting titleGetter'.qw()),
     event_beforeShow: function(){
       this.constructor.prototype.event_beforeShow.call(this);
       this.setDataSource(prototypeDataset);
@@ -318,8 +318,8 @@
 
   var searchTree = new nsTree.Tree({
     id: 'SearchTree',
-    localSorting: getter('data.title', String.toLowerCase),
-    localGrouping: nsNav.nodeTypeGrouping,
+    sorting: getter('data.title', String.toLowerCase),
+    grouping: nsNav.nodeTypeGrouping,
     childClass: Class(nsTree.Node, {
       template:
         '<li class="Basis-TreeNode">' +

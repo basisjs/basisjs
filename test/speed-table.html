@@ -109,7 +109,7 @@
       var multipleSelection = DOM.get('multipleSelection');
 
       Event.addHandler(useGrouping, 'click', function(){
-        TestTable.setLocalGrouping(this.checked ? localGrouping : null);
+        TestTable.setGrouping(this.checked ? grouping : null);
       }, useGrouping);
 
       Event.addHandler(multipleSelection, 'click', function(){
@@ -117,14 +117,14 @@
         TestTable.selection.multiple = this.checked;
       }, multipleSelection);
 
-      var localGrouping = {
+      var grouping = {
         groupGetter: function(node){
           if (node.data.count >= 0)
             return 'greates or equal 0';
           else
             return ' less than 0';
         },
-        localSorting: 'data.title'
+        sorting: 'data.title'
       };
           
       //testAMax  = new Max(Function.getter('count', Number));
@@ -139,7 +139,7 @@
         selection: {
           multiple: multipleSelection.checked
         },
-        localGrouping: useGrouping.checked ? localGrouping : null,
+        grouping: useGrouping.checked ? grouping : null,
         handler: {
           '*': function(){
             if (logEventCheckbox.checked)
@@ -147,7 +147,7 @@
                 console.log(arguments);
           }
         },
-        //localSorting: Function.getter('data.id', Number),
+        //sorting: Function.getter('data.id', Number),
         structure: [
           { 
             header: {
@@ -349,7 +349,7 @@
       DOM.insert(document.body, field.element, DOM.INSERT_BEFORE, TestTable.element);
 
 /*
-TestTable.header.setLocalGrouping({
+TestTable.header.setGrouping({
   groupGetter: function(node){
     return !!node.sorting;
   },

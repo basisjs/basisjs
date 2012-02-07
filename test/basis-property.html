@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="ru" xml:lang="ru">
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Test Suite - DOM Wrapers</title>
+
+  <style type="text/css">
+    @import "style/default/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript"  src="../basis-all.js"></script>
+  <script type="text/javascript"  src="test.js"></script>
+  <script type="text/javascript"  src="common.js"></script>
+</head>
+
+<body>
+
+  <script type="text/javascript">
+    loadTest((function(){
+
+      var Class = basis.Class;
+      var DOM = basis.dom;
+      var Data = basis.data;
+      var CSS = basis.cssom;
+      var Event = basis.dom.event;
+      var Tester = basis.test.Tester;
+
+      var nsWrappers = basis.dom.wrapper;
+      var Property = basis.data.property.Property;
+      var PropertySet = basis.data.property.DataObjectSet;
+
+      var TestProperty;
+
+      var updateCount = 0;
+
+
+      function $values(ar){
+        return ar.map(function(node){
+          return node.data.value + '(' + node.data.group + ')';
+        })
+      }
+
+      return [
+        {
+          name: 'Property',
+          testcase: [
+            {
+              name: 'create',
+              test: function(){
+                TestProperty = new Property(123);
+                this.is(123, TestProperty.value);
+              }
+            },
+            {
+              name: 'addLink/removeLink',
+              test: function(){
+
+
+              }
+            },
+            {
+              name: 'set #1',
+              test: function(){
+                var t = {};
+                var value = Math.random();
+
+                TestProperty.addLink(t, 'saved');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value, t.saved);
+
+                // not fire on existing value set
+                t.saved = 0;
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(0, t.saved);
+
+                // fire on existing value set, with forced flag
+                t.saved = 0;
+                TestProperty.set(value, true);
+                this.is(value, TestProperty.value);
+                this.is(value, t.saved);
+
+                TestProperty.clear();
+              }
+            },
+            {
+              name: 'set #2',
+              test: function(){
+                var t = {};
+                var value = Math.random();
+                TestProperty.addLink(t, 'saved');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value, t.saved);
+                TestProperty.clear();
+
+                var t = {};
+                var value = Math.random();
+                TestProperty.addLink(t, 'saved', '{0:.2}');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value.toFixed(2), t.saved);
+                TestProperty.clear();
+
+                var t = {};
+                var value = Math.random();
+                TestProperty.addLink(t, function(value){ this.saved = value * 2 });
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value * 2, t.saved);
+                TestProperty.clear();
+              }
+            },
+            {
+              name: 'set #3',
+              test: function(){
+                var t = DOM.createElement('DIV');
+                var value = Math.random();
+                TestProperty.addLink(t);
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(String(value), t.innerHTML);
+                TestProperty.clear();
+
+                var t = DOM.createElement('DIV');
+                var value = Math.random();
+                TestProperty.addLink(t, 'title');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(String(value), t.title);
+                TestProperty.clear();
+
+                var t = DOM.createText('#text');
+                var value = Math.random();
+                TestProperty.addLink(t);
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(String(value), t.nodeValue);
+                TestProperty.clear();
+
+                var t = DOM.createText('#text');
+                var value = Math.random();
+                TestProperty.addLink(t, null, '{0:.2}');
+                TestProperty.set(value);
+                this.is(value, TestProperty.value);
+                this.is(value.toFixed(2), t.nodeValue);
+                TestProperty.clear();
+              }
+            },
+            {
+              name: 'get',
+              test: function(){
+              }
+            }/*,
+            {
+              name: 'Property with proxy',
+              test: function(){
+                var a = new Property(0, null, Data.validator(function(value){ return !isNaN(value) && value }));
+                a.set(3);
+                this.is(3, a.value);
+                a.set('hello');
+                this.is(3, a.value);
+              }
+            }*/
+          ]
+        },
+        {
+          name: 'PropertySet',
+          testcase: [
+            {
+              name: 'test #1',
+              test: function(){
+                s = new PropertySet();
+                s.a = new Property(1);
+                s.b = new Property(2);
+
+                updateCount = 0;
+                s.add(s.a);
+                s.add(s.b);
+
+                s.addHandler({
+                  change: function(){
+                    updateCount++;
+                  }
+                });
+
+                s.a.set(11);
+                s.b.set(11);
+
+                this.is(0, 0); // WTF?
+
+                s.a.set('test');
+              }
+            },
+            {
+              name: 'checkout',
+              test: function(){
+                this.is(1, updateCount);
+                this.is('test', s.a.value);
+                this.is(11, s.b.value);
+              }
+            },
+            {
+              name: 'destroyed property unlink',
+              test: function(){
+                s = new PropertySet();
+                s.a = new Property(1);
+                s.b = new Property(2);
+
+                updateCount = 0;
+                s.add(s.a);
+                s.add(s.b);
+
+                s.addHandler({
+                  change: function(){
+                    updateCount++;
+                  }
+                });
+
+                this.is(2, s.objects.length);
+                this.is(0, updateCount);
+
+                s.a.destroy();
+
+                this.is(1, s.objects.length);
+                this.is(0, updateCount);
+              }
+            },
+            {
+              name: 'destroyed PropertySet unlink',
+              test: function(){
+                var result = 0;
+                s = new PropertySet();
+                s.a = new Property(1),
+                s.b = new Property(2);
+
+                s.addHandler({
+                  change: function(){
+                    result = a.value + b.value;
+                  }
+                });
+
+                s.a.destroy();
+
+                this.is(0, result);
+              }
+            }
+          ]
+        }
+      ];
+
+    })());
+
+
+  </script>
+</body>
+
+</html>

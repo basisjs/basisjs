@@ -122,8 +122,8 @@ basis.require('basis.ui');
       return this.childNodes.search(name, getter('name'));
     },
 
-    localGrouping: {},
-    localGroupingClass: {
+    grouping: {},
+    groupingClass: {
       className: namespace + '.ButtonGroupingNode',
 
       groupGetter: function(button){

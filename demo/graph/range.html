@@ -180,7 +180,7 @@
         var date = object.data.Date;
         return date.getDate() + ' ' + basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
-      localSorting: Function.getter('data.Date'),
+      sorting: Function.getter('data.Date'),
       series: [
         {
           color: 'red',
@@ -200,7 +200,7 @@
       showGrid: false,
       keyGetter: Function.getter('data.Date'),
       dataSource: graphValues,
-      localSorting: Function.getter('data.Date'),
+      sorting: Function.getter('data.Date'),
       series: [
         Function.getter('data.Amount')
       ],

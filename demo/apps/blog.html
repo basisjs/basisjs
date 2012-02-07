@@ -324,8 +324,8 @@
 
       var postList = new basis.ui.Container({
         dataSource: blogThreadPage,
-        localSorting: Function.getter('data.pubDate'),
-        localSortingDesc: true,
+        sorting: Function.getter('data.pubDate'),
+        sortingDesc: true,
         id: 'blog-thread',
         childClass: {
           template: 
@@ -435,12 +435,12 @@
           source: allPostDataset,
           rule: Function.getter('data.pubDate.substr(0, 7)')
         }),
-        localSorting: Function.getter('data.id'),
-        localSortingDesc: true,
-        localGrouping: {
+        sorting: Function.getter('data.id'),
+        sortingDesc: true,
+        grouping: {
           groupGetter: Function.getter('data.id.substr(0, 4)'),
-          localSorting: Function.getter('data.id'),
-          localSortingDesc: true,
+          sorting: Function.getter('data.id'),
+          sortingDesc: true,
           childClass: {
             template:
               '<li class="archive-list-group">' +
@@ -520,7 +520,7 @@
       var tagCloud = new basis.ui.Container({
         id: 'tag-cloud',
         dataSource: cloudCalcs,
-        localSorting: Function.getter('data.title'),
+        sorting: Function.getter('data.title'),
         template:
           '<div class="tag-cloud">' +
             '<h2 class="tag-cloud__header">Tags cloud</h2>' +

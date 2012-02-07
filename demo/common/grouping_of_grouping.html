@@ -190,9 +190,9 @@
       groupGetter: function(node){
         return node.data.id >> 1;
       },
-      localGroupingClass: basis.Class.SELF
+      groupingClass: basis.Class.SELF
     });
-    //groupingClass.prototype.localGroupingClass = groupingClass;
+    //groupingClass.prototype.groupingClass = groupingClass;
 
     var list = new nsUI.Container({
       container: DOM.get('NumberDemo-Container'),
@@ -202,12 +202,12 @@
           '{this_data_id}' +
         '</span>'
       ),
-      localGroupingClass: groupingClass,
-      localGrouping: {
-        localGrouping: {
-          localGrouping: {
-            localGrouping: {
-              localGrouping: {
+      groupingClass: groupingClass,
+      grouping: {
+        grouping: {
+          grouping: {
+            grouping: {
+              grouping: {
                 // 5 level grouping ;)
               }
             }
@@ -437,7 +437,7 @@
       container: DOM.get('MetroDemo-Container'),
 
       childNodes: Data(metro),  // metro.map(Function.wrapper('data'))
-      localSorting: Function.getter('data.name'),
+      sorting: Function.getter('data.name'),
       childClass: nsUI(
         '<li class="metro">' +
           '<span class="metro-name">{this_data_name}</span>' +
@@ -445,10 +445,10 @@
         '</li>'
       ),
 
-      localGrouping: {
+      grouping: {
         // group metro by country
         groupGetter: Function.getter('data.country'),
-        localSorting: Function.getter('data.title'),
+        sorting: Function.getter('data.title'),
         childClass: nsUI(
           '<div class="metro-country">' +
             '<h4 class="metro-country-title">{this_data_title}</h4>' +
@@ -456,12 +456,12 @@
           '</div>'
         ),
 
-        localGrouping: {
+        grouping: {
           // .. than group country by continent
           groupGetter: function(node){
             return continentByCountry[node.data.id];
           },
-          localSorting: Function.getter('data.title'),
+          sorting: Function.getter('data.title'),
           childClass: nsUI(
             '<div class="metro-continent">' +
               '<h3 class="metro-continent-title">{this_data_title}</h3>' +

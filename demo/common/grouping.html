@@ -120,8 +120,8 @@
         this.constructor.prototype.event_change.call(this);
 
         var grouping = this.getValue();
-        tree.setLocalGrouping(grouping);
-        table.setLocalGrouping(grouping);
+        tree.setGrouping(grouping);
+        table.setGrouping(grouping);
       },
       childNodes: [
         {
@@ -138,7 +138,7 @@
           value: {
             groupGetter: Function.getter('data.title.charAt(0)'),
             titleGetter: Function.getter('data.title', 'Group for letter <{0}>'),
-            localSorting: Function.getter('data.title')
+            sorting: Function.getter('data.title')
           }
         }
       ]

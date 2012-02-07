@@ -88,9 +88,9 @@
         this.updateCount++;
         Canvas.prototype.event_childNodesModified.call(this, node, delta);
       },
-      event_localSortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
+      event_sortingChanged: function(node, oldLocalSorting, oldLocalSortingDesc){
         this.updateCount++;
-        Canvas.prototype.event_localSortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
+        Canvas.prototype.event_sortingChanged.call(this, node, oldLocalSorting, oldLocalSortingDesc);
       },
 
       style: {
@@ -305,8 +305,8 @@
       container: document.body,
       valueGetter: Function.getter('data.Amount'),
       valueGetter2: Function.getter('data.Count'),
-      localSorting: Function.getter('data.Date'),
-      //localSortingDesc: true,
+      sorting: Function.getter('data.Date'),
+      //sortingDesc: true,
       //localGrouping: Function.getter('data.Count % 3'),
       //localGrouping: 'info.Id%3',
       dataSource: Value.all,

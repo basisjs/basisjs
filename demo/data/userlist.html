@@ -228,8 +228,8 @@
         '</div>'
       ),
 
-      localSorting: titleGetter,
-      localGrouping: {
+      sorting: titleGetter,
+      grouping: {
         active: true,
         dataSource: UserGroup.all,
 
@@ -237,7 +237,7 @@
           return node.data.group;
         },
         titleGetter: titleGetter,
-        localSorting: titleGetter,
+        sorting: titleGetter,
 
         childClass: nsUI(
           '<div class="PartitionNode">' +

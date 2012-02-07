@@ -177,7 +177,7 @@
 
     var groupPopup = new basis.ui.popup.Menu({
       dataSource: UserGroup.all,
-      localSorting: Function.getter('data.title'),
+      sorting: Function.getter('data.title'),
       childClass: {
         captionGetter: Function.getter('data.title')
       },
@@ -208,7 +208,7 @@
       id: 'UserList',
 
       dataSource: User.all,
-      localSorting: Function.getter('data.title'),
+      sorting: Function.getter('data.title'),
       selection: true,
       childClass: {
         template:
@@ -256,7 +256,7 @@
       id: 'GroupList',
       
       dataSource: UserGroup.all,
-      localSorting: Function.getter('data.groupId'),
+      sorting: Function.getter('data.groupId'),
       listen: {
         childNode: {
           update: function(){

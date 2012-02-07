@@ -98,9 +98,9 @@
     new nsTree.Tree({
       id: 'DemoTree',
       container: dom.get('demo-container'),
-      localSorting: Function.getter('title'),
-      localSortingDesc: true,
-      localGrouping: {
+      sorting: Function.getter('title'),
+      sortingDesc: true,
+      grouping: {
         groupGetter: Function.getter('data.id % 2'),
         titleGetter: Function.getter('data.id', { 0: 'even', 1: 'odd' })
       },

@@ -558,8 +558,8 @@ basis.require('basis.ui');
     defaultDir: [LEFT, BOTTOM, LEFT, TOP].join(' '),
     subMenu: null,
 
-    localGroupingClass: MenuGroupingNode,
-    localGrouping: getter('groupId'),
+    groupingClass: MenuGroupingNode,
+    grouping: getter('groupId'),
 
     defaultHandler: function(){
       this.hide();

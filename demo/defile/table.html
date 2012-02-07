@@ -163,7 +163,7 @@
         selection: {multiple:true},
         //container: container,
         cssClassName: 'FitToContainer',
-        header: { localGrouping: Function.getter('groupId') },
+        header: { grouping: Function.getter('groupId') },
         structure: [
           { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
           { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: { content: 'footer' } },
@@ -190,7 +190,7 @@
       var container2 = createBlock('basis.ui.scrolltable.ScrollTable');
       table2 = new ScrollTable({
         container: container2,
-        header: { localGrouping: Function.getter('groupId') },
+        header: { grouping: Function.getter('groupId') },
         structure: [
           { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
           { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },

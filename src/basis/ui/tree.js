@@ -203,7 +203,7 @@ basis.require('basis.ui');
    /**
     * @inheritDoc
     */
-    localGroupingClass: GroupingNode,
+    groupingClass: GroupingNode,
 
     event_expand: function(){
       Node.prototype.event_expand.call(this);
@@ -304,7 +304,7 @@ basis.require('basis.ui');
    /**
     * @inheritDoc
     */
-    localGroupingClass: GroupingNode,
+    groupingClass: GroupingNode,
 
     //childFactory: treeChildFactory,
 

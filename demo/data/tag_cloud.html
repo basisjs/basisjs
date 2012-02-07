@@ -194,7 +194,7 @@
     var tagCloud = new basis.ui.Container({
       container: basis.dom.get('demo-container'),
       dataSource: cloud,
-      localSorting: Function.getter('data.title'),
+      sorting: Function.getter('data.title'),
       childClass: {
         template: 
           '<span class="tag">{titleText}<sub>{countText}</sub></span>',
