@@ -286,10 +286,9 @@
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
-    var getterSeed = 1;
     var modificatorSeed = 1;
 
-    var getterMap = [null];
+    var getterMap = [];
     var pathCache = {};
     var modCache = {};
 
