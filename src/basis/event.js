@@ -62,11 +62,11 @@
             var handlers = this.handlers_;
             var listenHandler;
             var config;
-            var func;
+            var fn;
 
             if (eventFunction.listen)
-              if (listenHandler = this.listen[eventFunction.listenName])
-                eventFunction.listen.call(this, listenHandler, arguments);
+              if (fn = this.listen[eventFunction.listenName])
+                eventFunction.listen.call(this, fn, arguments);
 
             if (!handlers || !handlers.length)
               return;
@@ -79,18 +79,21 @@
               config = handlers[i];
 
               // handler call
-              if (func = config.handler[eventName])
-                if (typeof func == 'function')
-                  func.apply(config.thisObject, arguments);
+              if (fn = config.handler[eventName])
+                if (typeof fn == 'function')
+                  fn.apply(config.thisObject, arguments);
 
               // any event handler
               if (func = config.handler['*'])
                 if (typeof func == 'function')
                   func.call(config.thisObject, {
+                    sender: this,
                     type: eventName,
                     args: arguments
                   });
             }
+
+            ;;;if (this.event_debug) this.event_debug({ type: eventName, sender: this, args: arguments });
           }
 
         /** @cut for more verbose in dev */ .toString().replace(/\beventName\b/g, '\'' + eventName + '\'').replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + '}')(eventName, slice);
@@ -147,6 +150,14 @@
     * @private
     */
     handlers_: null,
+
+   /**
+    * Function that call on any event. Use it to debug purposes only.
+    * WARN: This functionality is not supported in build version.
+    * @type {function(event)}
+    * @debug
+    */
+    event_debug: null,
 
    /**
     * Fires when object is destroing.

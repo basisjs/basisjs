@@ -45,6 +45,10 @@
 
       var updateCount = 0;
 
+      //basis.event.EventObject.prototype.event_debug = function(e){
+      //  console.log(e.sender.eventObjectId, e.type, e.args);
+      //}
+
       var groupDatasetByGroupMap = {};
       var groupDatasetByGroup10 = new basis.data.Dataset({
         items: Array.create(10, function(idx){
@@ -210,7 +214,7 @@
                   return 'Wrong order: childs not reflect groups order';
 
             if (k != childCount)
-              return 'Count of child in groups is not equal to child count';
+              return 'Count of child in groups (' + k + ') is not equal to child count (' + childCount + ')';
 
             var childNodes = Array.from(node.childNodes);
 
@@ -838,7 +842,7 @@
                     // reverse order
                     node.grouping.setSorting(node.grouping.sorting, true);
                     this.is(false, checkNode(node));
-                    this.is(order.reverse(), node.childNodes);
+                    this.is($values(order).reverse(), $values(node.childNodes));
                   }
                 },
                 {
@@ -1034,126 +1038,143 @@
                 },
                 {
                   name: 'grouping & dataSource',
-                  test: function(){
-                    ////////////////////////////////////////////////////
-                    // childNodes + group dataset
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet()
-                    });
+                  testcase: [
+                    {
+                      name: 'childNodes + group dataset',
+                      test: function(){
+                        var node = new nsWrappers.Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet()
+                        });
 
-                    node.setGrouping({
-                      groupGetter: Function.getter('data.groupObj'),
-                      dataSource: groupDatasetByGroup
-                    });
-                    this.is(false, checkNode(node));
+                        node.setGrouping({
+                          groupGetter: Function.getter('data.groupObj'),
+                          dataSource: groupDatasetByGroup
+                        });
+                        this.is(false, checkNode(node));
 
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
 
-                    node.setGrouping({
-                      groupGetter: Function.getter('data.groupObj'),
-                      dataSource: groupDatasetByGroup
-                    });
-                    this.is(false, checkNode(node));
+                        node.setGrouping({
+                          groupGetter: Function.getter('data.groupObj'),
+                          dataSource: groupDatasetByGroup
+                        });
+                        this.is(false, checkNode(node));
 
-                    node.grouping.setDataSource();
-                    this.is(false, checkNode(node));
-
-                    ////////////////////////////////////////////////////
-                    // childNodes + group dataset
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet(),
-                      grouping: {
-                        groupGetter: Function.getter('data.groupObj')
+                        node.grouping.setDataSource();
+                        this.is(false, checkNode(node));
                       }
-                    });
-                    this.is(false, checkNode(node));
+                    },
+                    {
+                      name: 'childNodes + group dataset #2',
+                      test: function(){
+                        var node = new nsWrappers.Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet(),
+                          grouping: {
+                            groupGetter: Function.getter('data.groupObj')
+                          }
+                        });
+                        this.is(false, checkNode(node));
 
-                    node.grouping.setDataSource(groupDatasetByGroup);
-                    this.is(false, checkNode(node));
+                        node.grouping.setDataSource(groupDatasetByGroup);
+                        this.is(false, checkNode(node));
 
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
 
-                    ////////////////////////////////////////////////////
-                    // childNodes + empty group dataset + fill/clear the dataset
-                    var groupDataSource = new basis.data.Dataset();
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet(),
-                      grouping: {
-                        groupGetter: Function.getter('data.groupObj'),
-                        dataSource: groupDataSource
                       }
-                    });
-                    this.is(false, checkNode(node));
+                    },
+                    {
+                      name: 'childNodes + empty group dataset + fill/clear the dataset',
+                      test: function(){
+                        var groupDataSource = new basis.data.Dataset();
+                        var node = new nsWrappers.Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet(),
+                          grouping: {
+                            groupGetter: Function.getter('data.groupObj'),
+                            dataSource: groupDataSource
+                          }
+                        });
+                        this.is(false, checkNode(node));
 
-                    groupDataSource.add(groupDatasetByGroup.getItems());
-                    this.is(false, checkNode(node));
+                        groupDataSource.add(groupDatasetByGroup.getItems());
+                        this.is(false, checkNode(node));
 
-                    groupDataSource.clear();
-                    this.is(false, checkNode(node));
+                        debugger;
+                        groupDataSource.clear();
+                        this.is(false, checkNode(node));
 
-
-                    ////////////////////////////////////////////////////
-                    // childNodes + group dataset 10
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet()
-                    });
-
-                    node.setGrouping({
-                      groupGetter: Function.getter('data.groupObj'),
-                      dataSource: groupDatasetByGroup10
-                    });
-                    this.is(false, checkNode(node));
-
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
-
-                    node.setGrouping({
-                      groupGetter: Function.getter('data.groupObj'),
-                      dataSource: groupDatasetByGroup10
-                    });
-                    this.is(false, checkNode(node));
-
-                    node.grouping.setDataSource();
-                    this.is(false, checkNode(node));
-
-                    ////////////////////////////////////////////////////
-                    // group dataset + child nodes on init
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet(),
-                      grouping: {
-                        groupGetter: Function.getter('data.groupObj'),
-                        dataSource: groupDatasetByGroup
                       }
-                    });
-                    this.is(false, checkNode(node));
+                    },
+                    {
+                      name: 'childNodes + group dataset 10',
+                      test: function(){
+                        var node = new nsWrappers.Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet()
+                        });
 
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
+                        node.setGrouping({
+                          groupGetter: Function.getter('data.groupObj'),
+                          dataSource: groupDatasetByGroup10
+                        });
+                        this.is(false, checkNode(node));
 
-                    ////////////////////////////////////////////////////
-                    // group dataset + child nodes after init
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      grouping: {
-                        groupGetter: Function.getter('data.groupObj'),
-                        dataSource: groupDatasetByGroup
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
+
+                        node.setGrouping({
+                          groupGetter: Function.getter('data.groupObj'),
+                          dataSource: groupDatasetByGroup10
+                        });
+                        this.is(false, checkNode(node));
+
+                        node.grouping.setDataSource();
+                        this.is(false, checkNode(node));
+
                       }
-                    });
-                    this.is(false, checkNode(node));
+                    },
+                    {
+                      name: 'group dataset + child nodes on init',
+                      test: function(){
+                        var node = new nsWrappers.Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet(),
+                          grouping: {
+                            groupGetter: Function.getter('data.groupObj'),
+                            dataSource: groupDatasetByGroup
+                          }
+                        });
+                        this.is(false, checkNode(node));
 
-                    node.setChildNodes(getTestSet());
-                    this.is(false, checkNode(node));
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
 
-                    node.setChildNodes();
-                    this.is(false, checkNode(node));
-                  }
+                      }
+                    },
+                    {
+                      name: 'group dataset + child nodes after init',
+                      test: function(){
+                        var node = new nsWrappers.Node({
+                          childFactory: nodeFactory,
+                          grouping: {
+                            groupGetter: Function.getter('data.groupObj'),
+                            dataSource: groupDatasetByGroup
+                          }
+                        });
+                        this.is(false, checkNode(node));
+
+                        node.setChildNodes(getTestSet());
+                        this.is(false, checkNode(node));
+
+                        node.setChildNodes();
+                        this.is(false, checkNode(node));
+                      }
+                    }
+                  ]
                 }
               ]
             }

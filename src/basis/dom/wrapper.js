@@ -2331,7 +2331,7 @@ basis.require('basis.html');
     * @inheritDoc
     */
     clear: function(alive){
-      DomMixin.clear.call(this);
+      DomMixin.clear.call(this, alive);
       this.map_ = {};
     },
 

@@ -51,7 +51,7 @@
         case 'string':
           return value.quote("'");
         case 'function':
-          return value.toString();
+          return !linear ? value.toString() : value.toString().replace(/\{([\r\n]|.)*\}/, '{..}');
         case 'object':
           if (value === null)
             return 'null';
@@ -266,6 +266,10 @@
           this.test.call(Tester);
         } catch(e) {
           console.log(e);
+
+          if (typeof e == 'string')
+            e = { message: e };
+
           error = e;
           this.broken = ['Wrong answer', 'Type mismatch'].has(e.message);
         } finally {
