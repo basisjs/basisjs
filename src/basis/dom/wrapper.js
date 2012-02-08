@@ -982,7 +982,7 @@ basis.require('basis.html');
         if (this.childNodes.length == delta.deleted.length)
         {
           // copy childNodes to deleted
-          deleted.push.apply(deleted, this.childNodes);
+          deleted = Array.from(this.childNodes);
 
           // optimization: if all old nodes deleted -> clear childNodes
           var tmp = this.dataSource;
@@ -1650,6 +1650,8 @@ basis.require('basis.html');
             this.clear();
           }
         }
+        else
+          this.clear();
 
         // NOTE: this assigment must be here, because clear method call requires for dataSource be null
         this.dataSource = dataSource;

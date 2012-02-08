@@ -18,44 +18,33 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis.js"></script>
-  <script type="text/javascript"  src="../data.js"></script>
-  <script type="text/javascript"  src="../property.js"></script>
-  <script type="text/javascript"  src="../dom_wrapper.js"></script>
-  <script type="text/javascript"  src="../tree.js"></script>
+  <script type="text/javascript"  src="../basis-all.js"></script>
   <script type="text/javascript">
     (function(){
-      var init_ = Basis.Data.Object.prototype.init;
-      Basis.Data.Object.prototype.init = function(){
+      var proto = basis.data.DataObject.prototype;
+      var init_ = proto.init;
+      proto.init = function(){
         this.history_ = [];
         this.historyAll_ = [];
         init_.apply(this, arguments);
       };
 
-      var dispatch_ = Basis.DataObject.prototype.event_update;
-      Basis.EventObject.prototype.event_update = function(obj, delta){
+      var dispatch_ = proto.event_update;
+      proto.event_update = function(obj, delta){
         this.history_.push(delta);
         this.historyAll_.push(arguments);
         dispatch_.apply(this, arguments);
       }
-      var dispatch_2 = Basis.EventObject.prototype.event_delegateChanged;
-      Basis.EventObject.prototype.event_delegateChanged = function(obj, delta){
-        this.history_.push(delta);
+      var dispatch_2 = proto.event_delegateChanged;
+      proto.event_delegateChanged = function(obj, delta){
         this.historyAll_.push(arguments);
         dispatch_2.apply(this, arguments);
       }
-      var dispatch_3 = Basis.EventObject.prototype.event_subscribersChanged;
-      Basis.EventObject.prototype.event_subscribersChanged = function(obj, delta){
-        this.history_.push(delta);
+      var dispatch_3 = proto.event_subscribersChanged;
+      proto.event_subscribersChanged = function(obj, delta){
         this.historyAll_.push(arguments);
         dispatch_3.apply(this, arguments);
       }
-      /*Basis.EventObject.prototype.dispatch = function(event, obj, delta){
-        if (event == 'update')
-          this.history_.push(delta);
-        this.historyAll_.push(arguments);
-        dispatch_.apply(this, arguments);
-      };*/
     })();
   </script>
   <script type="text/javascript"  src="test.js"></script>
@@ -66,19 +55,10 @@
   <script type="text/javascript">
     loadTest((function(){
 
-      var nsData = Basis.Data;
+      var nsData = basis.data;
 
       var data = [
       ];
-
-      var a = new Basis.Controls.Tree.Tree({ data: { d: 1 } });
-      a.setChildNodes([
-        new Basis.Controls.Tree.TreeNode({ data: { c: 1} }),
-        { data: { x: 1, y: 2 } },
-        { data: { x: 3, asd: 'asd'} }
-      ]);
-      a.appendChild({ data: { d: 1} });
-      a.childNodes[1].data;
       
       return [
         {
@@ -156,8 +136,8 @@
                 {
                   name: 'set delegate #1',
                   test: function(){
-                    var a = new Basis.Data.DataObject({ data: { a: 1, b: 2 } });
-                    var b = new Basis.Data.DataObject({ data: { b: 2, c: 3 } });
+                    var a = new nsData.DataObject({ data: { a: 1, b: 2 } });
+                    var b = new nsData.DataObject({ data: { b: 2, c: 3 } });
                     b.setDelegate(a);
 
                     this.is(2, b.history_.length);
@@ -407,7 +387,7 @@
                     var objectB = new nsData.DataObject({
                       delegate: objectA,
                       active: true,
-                      subscribeTo: nsData.Subscription.DELEGATE
+                      subscribeTo: nsData.SUBSCRIPTION.DELEGATE
                     });
 
                     this.is(1, objectA.subscriberCount);
@@ -420,7 +400,7 @@
                     var objectA = new nsData.DataObject;
                     var objectB = new nsData.DataObject({
                       active: false,
-                      subscribeTo: nsData.Subscription.DELEGATE
+                      subscribeTo: nsData.SUBSCRIPTION.DELEGATE
                     });
 
                     this.is(0, objectA.subscriberCount);
@@ -456,7 +436,7 @@
                     var objectA = new nsData.DataObject;
                     var objectB = new nsData.DataObject({
                       active: true,
-                      subscribeTo: nsData.Subscription.NONE
+                      subscribeTo: nsData.SUBSCRIPTION.NONE
                     });
 
                     this.is(0, objectA.subscriberCount);
@@ -468,19 +448,19 @@
                     this.is(0, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
 
                     // switch on
-                    objectB.setSubscription(nsData.Subscription.DELEGATE);
+                    objectB.setSubscription(nsData.SUBSCRIPTION.DELEGATE);
 
                     this.is(1, objectA.subscriberCount);
                     this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
 
                     // nothing changed
-                    objectB.setSubscription(nsData.Subscription.DELEGATE);
+                    objectB.setSubscription(nsData.SUBSCRIPTION.DELEGATE);
 
                     this.is(1, objectA.subscriberCount);
                     this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
 
                     // switch off
-                    objectB.setSubscription(nsData.Subscription.NONE);
+                    objectB.setSubscription(nsData.SUBSCRIPTION.NONE);
 
                     this.is(0, objectA.subscriberCount);
                     this.is(2, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
@@ -492,7 +472,7 @@
                     var objectA = new nsData.DataObject;
                     var objectB = new nsData.DataObject({
                       active: true,
-                      subscribeTo: nsData.Subscription.DELEGATE,
+                      subscribeTo: nsData.SUBSCRIPTION.DELEGATE,
                       delegate: objectA
                     });
 

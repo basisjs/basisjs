@@ -89,6 +89,16 @@
         });
       }
 
+      function getDataset(){
+        return new basis.data.Dataset({
+          items: testSet.map(function(item){
+            return new basis.data.DataObject({
+              data: Object.slice(item.data)
+            })
+          })
+        });
+      }
+
       function nodeFactory(cfg){
         return new nsWrappers.Node(cfg);
       };
@@ -370,6 +380,102 @@
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
+                  }
+                }
+              ]
+            },
+            {
+              name: 'dataSource',
+              testcase: [
+                {
+                  name: 'dataSource in config',
+                  test: function(){
+                    /////////////////////////////////////
+                    // simple test
+                    var testSet = getTestSet();
+                    var dataset = getDataset();
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(true, testSet.length > 0);
+                    this.is(dataset, node.dataSource);
+                    this.is(testSet.length, node.childNodes.length);
+                    this.is(testSet.length, dataset.itemCount);
+
+                    //////////////////////////////////
+                    // childNodes must be ignored
+                    var testSet = getTestSet();
+                    var dataset = getDataset();
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      childNodes: testSet,
+                      dataSource: dataset
+                    });
+
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+                  }
+                },
+                {
+                  name: 'dynamic dataSource',
+                  test: function(){
+                    /////////////////////////////////////
+                    // simple test
+                    var testSet = getTestSet();
+                    var dataset = getDataset();
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory
+                    });
+
+                    node.setDataSource(dataset);
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+
+                    node.setDataSource();
+                    this.is(false, checkNode(node));
+                    this.is(null, node.dataSource);
+                    this.is(0, node.childNodes.length);
+
+                    node.setDataSource(dataset);
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+
+                    /////////////////////////////////////
+                    // simple test
+                    var testSet = getTestSet();
+                    var dataset = getDataset();
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      childNodes: testSet
+                    });
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+
+                    node.setDataSource(dataset);
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+
+                    node.setDataSource();
+                    this.is(false, checkNode(node));
+                    this.is(null, node.dataSource);
+                    this.is(0, node.childNodes.length);
+
+                    node.setChildNodes(testSet);
+                    this.is(false, checkNode(node));
+                    this.is(testSet.length, node.childNodes.length);
+
+                    node.setDataSource(dataset);
+                    this.is(false, checkNode(node));
+                    this.is(dataset, node.dataSource);
+                    this.is(dataset.itemCount, node.childNodes.length);
+
                   }
                 }
               ]
