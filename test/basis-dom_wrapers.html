@@ -45,6 +45,24 @@
 
       var updateCount = 0;
 
+      var groupDatasetByGroupMap = {};
+      var groupDatasetByGroup10 = new basis.data.Dataset({
+        items: Array.create(10, function(idx){
+          return groupDatasetByGroupMap[idx + 1] = new basis.data.DataObject({
+            data: {
+              id: idx + 1,
+              title: idx + 1
+            }
+          })
+        })
+      });
+      var groupDatasetByGroup = new basis.data.Dataset({
+        items: Array.create(4, function(idx){
+          return groupDatasetByGroupMap[idx + 1]
+        })
+      });
+
+
       var testSet = [
         { data: { title: 'node0', value: 0, group: 1 } },
         { data: { title: 'node1', value: 1, group: 2 } },
@@ -56,7 +74,10 @@
         { data: { title: 'node7', value: 7, group: 1 } },
         { data: { title: 'node8', value: 8, group: 3 } },
         { data: { title: 'node9', value: 9, group: 1 } }
-      ];
+      ].map(function(item){
+        item.data.groupObj = groupDatasetByGroupMap[item.data.group];
+        return item;
+      });
 
       var convertToNode = Function.getter(Function.$self, testSet);
 
@@ -115,13 +136,34 @@
 
           for (var i = 0; i < childCount; i++)
           {
-            child = node.childNodes[i];
+            var child = node.childNodes[i];
+
             if (child.parentNode !== node)
               return 'child #' + i + ' has wrong parentNode ref';
-            if (child.previousSibling !== (node.childNodes[i - 1] || null))
-              return 'child #' + i + ' has wrong previousSibling ref';
-            if (child.nextSibling !== (node.childNodes[i + 1] || null))
-              return 'child #' + i + ' has wrong nextSibling ref';
+
+            if (i > 0)
+            {
+              if (child.previousSibling !== node.childNodes[i - 1])
+              {
+                return 'child #' + i + ' has wrong previousSibling ref';
+              }
+            }
+            else
+            {
+              if (child.previousSibling !== null)
+                return 'child #' + i + ' has wrong previousSibling ref, must be a null';
+            }
+
+            if (i < childCount - 1)
+            {
+              if (child.nextSibling !== node.childNodes[i + 1])
+                return 'child #' + i + ' has wrong nextSibling ref';
+            }
+            else
+            {
+              if (child.nextSibling !== null)
+                return 'child #' + i + ' has wrong nextSibling ref, must be a null';
+            }
             //if (child.document != node.document)
             //  return 'child #' + i + ' has wrong document ref';
           }
@@ -151,13 +193,50 @@
               if (res = checkNode(groups[i]))
                 return 'group #' + i + ': ' + res;
             }
+
+            for (var i = 0, k = 0, group; group = groups[i++];)
+              for (var j = 0, groupNode; groupNode = group.nodes[j++];)
+                if (node.childNodes[k++] !== groupNode)
+                  return 'Wrong order: childs not reflect groups order';
+
+            if (k != childCount)
+              return 'Count of child in groups is not equal to child count';
+
+            var childNodes = Array.from(node.childNodes);
+
+            // check for child groupNode reference
+            for (var i = 0, child; child = node.childNodes[i++];)
+              if (node.grouping.getGroupNode(child) !== child.groupNode)
+                return 'child node has wrong groupNode ref';
+
+            // after getGroupNode node.childNodes and groups must not be changed
+            var currentGroups = getGroups(node, true);
+
+            if (childCount !== node.childNodes.length)
+              return 'childNodes broken after getGroupNode for childs';
+            if (currentGroups.length !== groups.length)
+              return 'groups broken after getGroupNode for childs';
+
+            for (var i = 0; i < childNodes.length; i++)
+              if (childNodes[i] !== node.childNodes[i])
+                return 'childNodes broken after getGroupNode for childs';
+
+            for (var i = 0; i < groups.length; i++)
+              if (groups[i] !== currentGroups[i])
+                return 'groups broken after getGroupNode for childs';
+          }
+          else
+          {
+            for (var i = 0, child; child = node.childNodes[i++];)
+              if (child.groupNode !== null)
+                return 'child node has wrong groupNode ref, must be a null';
           }
         }
         else
         {
-          if (node.firstChild)
+          if (node.firstChild !== null)
             return 'Wrong firstChild ref';
-          if (node.lastChild)
+          if (node.lastChild !== null)
             return 'Wrong lastChild ref';
         }
 
@@ -169,23 +248,33 @@
 
         if (node instanceof nsWrappers.PartitionNode)
         {
-          if (node.nodes)
-          {
-            var nodeCount = node.nodes.length;
+          if (!node.nodes)
+            return 'PartitionNode has no child nodes';
 
-            if (node.first !== (node.nodes[0] || null))
+          var nodeCount = node.nodes.length;
+
+          if (nodeCount)
+          {
+            if (node.first !== node.nodes[0])
               return 'wrong PartitionNode.first ref';
-            if (node.last !== (node.nodes[nodeCount - 1] || null))
+
+            if (node.last !== node.nodes[nodeCount - 1])
               return 'wrong PartitionNode.last ref';
 
-            if (node.first)
-            {
-              var hostNode = node.first.parentNode;
-              var childNodesIndex = hostNode.childNodes.indexOf(node.first);
-              for (var i = 0; i < node.nodes.length; i++)
-                if (node.nodes[i] !== hostNode.childNodes[childNodesIndex + i])
-                  return 'wrong PartitionNode.nodes order';
-            }
+            var hostNode = node.first.parentNode;
+            var childNodesIndex = hostNode.childNodes.indexOf(node.first);
+
+            for (var i = 0; i < node.nodes.length; i++)
+              if (node.nodes[i] !== hostNode.childNodes[childNodesIndex + i])
+                return 'wrong PartitionNode.nodes order';
+          }
+          else
+          {
+            if (node.first !== null)
+              return 'wrong PartitionNode.first ref, must be a null';
+
+            if (node.last !== null)
+              return 'wrong PartitionNode.last ref, must be a null';
           }
         }
 
@@ -791,6 +880,173 @@
                     node.setGrouping();
                     this.is(false, checkNode(node));
                     this.is(order, node.childNodes);
+                  }
+                },
+                {
+                  name: 'partition manipulations',
+                  test: function(){
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      grouping: {
+                        groupGetter: Function.getter('data.group')
+                      },
+                      childNodes: getTestSet()
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.grouping.appendChild(node.grouping.firstChild);
+                    this.is(false, checkNode(node));
+                    node.grouping.appendChild(node.grouping.firstChild);
+                    this.is(false, checkNode(node));
+                    node.grouping.appendChild(node.grouping.firstChild);
+                    this.is(false, checkNode(node));
+                    node.grouping.appendChild(node.grouping.firstChild);
+                    this.is(false, checkNode(node));
+
+                    node.grouping.insertBefore(node.grouping.lastChild, node.grouping.firstChild);
+                    this.is(false, checkNode(node));
+                    node.grouping.insertBefore(node.grouping.lastChild, node.grouping.firstChild);
+                    this.is(false, checkNode(node));
+                    node.grouping.insertBefore(node.grouping.lastChild, node.grouping.firstChild);
+                    this.is(false, checkNode(node));
+                    node.grouping.insertBefore(node.grouping.lastChild, node.grouping.firstChild);
+                    this.is(false, checkNode(node));
+
+                    node.grouping.insertBefore(node.grouping.childNodes[1], node.grouping.childNodes[2]);
+                    this.is(false, checkNode(node));
+                    node.grouping.insertBefore(node.grouping.childNodes[1], node.grouping.childNodes[3]);
+                    this.is(false, checkNode(node));
+                    node.grouping.insertBefore(node.grouping.childNodes[1], node.grouping.childNodes[0]);
+                    this.is(false, checkNode(node));
+                    node.grouping.insertBefore(node.grouping.childNodes[2], node.grouping.childNodes[3]);
+                    this.is(false, checkNode(node));
+                    node.grouping.insertBefore(node.grouping.childNodes[3], node.grouping.childNodes[2]);
+                    this.is(false, checkNode(node));
+                    node.grouping.insertBefore(node.grouping.childNodes[3], node.grouping.childNodes[1]);
+                    this.is(false, checkNode(node));
+                  }
+                },
+                {
+                  name: 'grouping & dataSource',
+                  test: function(){
+                    ////////////////////////////////////////////////////
+                    // childNodes + group dataset
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet()
+                    });
+
+                    node.setGrouping({
+                      groupGetter: Function.getter('data.groupObj'),
+                      dataSource: groupDatasetByGroup
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.setGrouping();
+                    this.is(false, checkNode(node));
+
+                    node.setGrouping({
+                      groupGetter: Function.getter('data.groupObj'),
+                      dataSource: groupDatasetByGroup
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.grouping.setDataSource();
+                    this.is(false, checkNode(node));
+
+                    ////////////////////////////////////////////////////
+                    // childNodes + group dataset
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet(),
+                      grouping: {
+                        groupGetter: Function.getter('data.groupObj')
+                      }
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.grouping.setDataSource(groupDatasetByGroup);
+                    this.is(false, checkNode(node));
+
+                    node.setGrouping();
+                    this.is(false, checkNode(node));
+
+                    ////////////////////////////////////////////////////
+                    // childNodes + empty group dataset + fill/clear the dataset
+                    var groupDataSource = new basis.data.Dataset();
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet(),
+                      grouping: {
+                        groupGetter: Function.getter('data.groupObj'),
+                        dataSource: groupDataSource
+                      }
+                    });
+                    this.is(false, checkNode(node));
+
+                    groupDataSource.add(groupDatasetByGroup.getItems());
+                    this.is(false, checkNode(node));
+
+                    groupDataSource.clear();
+                    this.is(false, checkNode(node));
+
+
+                    ////////////////////////////////////////////////////
+                    // childNodes + group dataset 10
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet()
+                    });
+
+                    node.setGrouping({
+                      groupGetter: Function.getter('data.groupObj'),
+                      dataSource: groupDatasetByGroup10
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.setGrouping();
+                    this.is(false, checkNode(node));
+
+                    node.setGrouping({
+                      groupGetter: Function.getter('data.groupObj'),
+                      dataSource: groupDatasetByGroup10
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.grouping.setDataSource();
+                    this.is(false, checkNode(node));
+
+                    ////////////////////////////////////////////////////
+                    // group dataset + child nodes on init
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet(),
+                      grouping: {
+                        groupGetter: Function.getter('data.groupObj'),
+                        dataSource: groupDatasetByGroup
+                      }
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.setGrouping();
+                    this.is(false, checkNode(node));
+
+                    ////////////////////////////////////////////////////
+                    // group dataset + child nodes after init
+                    var node = new nsWrappers.Node({
+                      childFactory: nodeFactory,
+                      grouping: {
+                        groupGetter: Function.getter('data.groupObj'),
+                        dataSource: groupDatasetByGroup
+                      }
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.setChildNodes(getTestSet());
+                    this.is(false, checkNode(node));
+
+                    node.setChildNodes();
+                    this.is(false, checkNode(node));
                   }
                 }
               ]

@@ -2137,12 +2137,22 @@ basis.require('basis.html');
 
       this.nullGroup.nextSibling = this.firstChild;
 
-      if (delta.inserted && this.dataSource && this.nullGroup.first)
+      var array;
+      if (array = delta.inserted)
       {
-        var parentNode = this.owner;
-        var nodes = Array.from(this.nullGroup.nodes); // ??? Array.from?
-        for (var i = nodes.length; i --> 0;)
-          parentNode.insertBefore(nodes[i], nodes[i].nextSibling);
+        for (var i = 0, child; child = array[i++];)
+        {
+          child.groupId_ = child.delegate ? child.delegate.eventObjectId : child.data.id;
+          this.map_[child.groupId_] = child;
+        }
+
+        /*if (this.dataSource && this.nullGroup.first)
+        {
+          var parentNode = this.owner;
+          var nodes = Array.from(this.nullGroup.nodes); // Array.from, because nullGroup.nodes may be transformed
+          for (var i = nodes.length; i --> 0;)
+            parentNode.insertBefore(nodes[i], nodes[i].nextSibling);
+        }*/
       }
     },
 
@@ -2226,72 +2236,78 @@ basis.require('basis.html');
     insertBefore: function(newChild, refChild){
       newChild = DomMixin.insertBefore.call(this, newChild, refChild);
 
-      if ('groupId_' in newChild == false)
+      var firstNode = newChild.first;
+
+      if (firstNode)
       {
-        newChild.groupId_ = newChild.delegate ? newChild.delegate.eventObjectId : newChild.data.id;
-        this.map_[newChild.groupId_] = newChild;
-      }
+        var parent = firstNode.parentNode;
+        var lastNode = newChild.last;
 
-      if (newChild.first)
-      {
-        var owner = this.owner;
-        var childNodes = owner.childNodes;
-
-        var first = newChild.first;
-        var last = newChild.last;
-
-        var cursor;
-        var insertArgs;
-        var nextGroupFirst;
-        var prevGroupLast;
-
-        // search for prev group lastChild
-        cursor = newChild;
-        while (cursor = cursor.previousSibling)
-        {
-          if (prevGroupLast = cursor.last)
-            break;
-        }
-
-        if (!prevGroupLast)
-          prevGroupLast = this.nullGroup.last;
+        var beforePrev;
+        var beforeNext;
+        var afterPrev;
+        var afterNext = null;
 
         // search for next group firstChild
-        cursor = newChild;
+        // we can't get newChild.nextSibling.first, because next sibling group may be empty
+        var cursor = newChild;
         while (cursor = cursor.nextSibling)
         {
-          if (nextGroupFirst = cursor.first)
+          if (afterNext = cursor.first)
             break;
         }
 
-        if (first.previousSibling !== prevGroupLast || last.nextSibling !== nextGroupFirst)
+        afterPrev = afterNext ? afterNext.previousSibling : parent.lastChild;
+
+        beforePrev = firstNode.previousSibling;
+        beforeNext = lastNode.nextSibling;
+
+        if (beforeNext !== afterNext)
         {
-          // cut nodes from old position
-          if (first.previousSibling)
-            first.previousSibling.nextSibling = last.nextSibling;
-          if (last.nextSibling)
-            last.nextSibling.previousSibling = first.previousSibling;
+          var parentChildNodes = parent.childNodes;
+          var nodes = newChild.nodes;
+          var nodesCount = nodes.length;
 
-          // remove group nodes from childNodes
-          insertArgs = childNodes.splice(childNodes.indexOf(first), newChild.nodes.length);
+          // update previousSibling/nextSibling references
+          if (beforePrev)
+            beforePrev.nextSibling = beforeNext;
+          if (beforeNext)
+            beforeNext.previousSibling = beforePrev;
 
-          // insert nodes on new position and link edge nodes
-          var pos = childNodes.indexOf(nextGroupFirst);
-          insertArgs.unshift(pos != -1 ? pos : childNodes.length, 0);
-          childNodes.splice.apply(childNodes, insertArgs);
+          if (afterPrev)
+            afterPrev.nextSibling = firstNode;
+          if (afterNext)
+            afterNext.previousSibling = lastNode;
 
-          // firstChild/lastChild are present anyway
-          first.previousSibling = prevGroupLast || null;
-          last.nextSibling = nextGroupFirst || null;
+          firstNode.previousSibling = afterPrev;
+          lastNode.nextSibling = afterNext;
 
-          if (prevGroupLast)
-            prevGroupLast.nextSibling = first;
-          if (nextGroupFirst)
-            nextGroupFirst.previousSibling = last;
+          // search position for cut and
+          var firstPos = parentChildNodes.indexOf(firstNode);
+          var afterNextPos = afterNext
+            ? parentChildNodes.indexOf(afterNext)
+            : parentChildNodes.length;
 
-          // update firstChild/lastChild of owner
-          owner.firstChild = childNodes[0];
-          owner.lastChild = childNodes[childNodes.length - 1];
+          if (afterNextPos > firstPos)
+            afterNextPos -= nodesCount;
+
+          // cut nodes from parent childNodes and insert on new position
+          parentChildNodes.splice(firstPos, nodesCount);
+          parentChildNodes.splice.apply(parentChildNodes, [afterNextPos, 0].concat(nodes));
+
+          // update first/last child ref for parent
+          if (!afterPrev || !beforePrev)
+            parent.firstChild = parentChildNodes[0];
+          if (!afterNext || !beforeNext)
+            parent.lastChild = parentChildNodes[parentChildNodes.length - 1];
+
+          // re-insert partition nodes
+          if (firstNode instanceof PartitionNode)
+            for (var i = nodesCount, refChild = afterNext; i --> 0;)
+            {
+              parent.insertBefore(nodes[i], refChild);
+              refChild = nodes[i];
+            }
         }
       }
 

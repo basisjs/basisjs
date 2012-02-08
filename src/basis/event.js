@@ -41,7 +41,7 @@
   * @func
   */
   var warnOnDestroy = function(){
-    throw 'Object had beed destroed before. Destroy method shouldn\'t be call more than once.'
+    throw 'Object had been destroed before. Destroy method shouldn\'t be call more than once.'
   };
 
 

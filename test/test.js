@@ -201,6 +201,17 @@
         s = s.replace(/^\s*function\s*\([^)]*\)\s*\{\s*[\r\n]+/, '')
              .replace(/\s*\}\s*$/, '');
 
+        // remove leading space
+        var ss = s.match(/(^|[\r\n]) +/g);
+        if (ss)
+        {
+          ss = ss.sort();
+          var scount = !/^[\r\n]/.test(ss.item(-1).charAt(0)) ? ss.item(-1).length : 0;
+          scount = Math.min(scount, ss.item().length - 1);
+          if (scount)
+            s = s.replace(new RegExp('(^|[\r\n]) {' + scount + '}', 'g'), '$1');
+        }
+
         // remove & store string
         s = s.replace(/"(\\.|[^"])*?"|'(\\.|[^'])*?'|\/\/.+|\/\*(.|\s)*?\*\/|([^\)a-zA-Z0-9]\s*)\/([^\*\/](\\.|[^\/])*)\//g, 
                       function(m, p1, p2, p3, p4, p5){
@@ -212,17 +223,6 @@
         while (s != (t = s.replace(/\([^\(\)]*\)/, function(m){ parenthesis.push(m); return '\u0002' })))
           s = t;
         //console.log(s);
-
-        // remove leading space
-        var ss = s.match(/(^|[\r\n]) +/g);
-        if (ss)
-        {
-          ss = ss.sort();
-          var scount = !/^[\r\n]/.test(ss.item(-1).charAt(0)) ? ss.item(-1).length : 0;
-          scount = Math.min(scount, ss.item().length - 1);
-          if (scount)
-            s = s.replace(new RegExp('(^|[\r\n]) {' + scount + '}', 'g'), '$1');
-        }
 
         // break into lines
         lines = s.split(/\r?\n|\n?\r/);
