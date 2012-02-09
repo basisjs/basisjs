@@ -68,32 +68,33 @@
               if (fn = this.listen[eventFunction.listenName])
                 eventFunction.listen.call(this, fn, arguments);
 
-            if (!handlers || !handlers.length)
-              return;
-
-            // prevent handlers list from changes
-            handlers = slice.call(handlers);
-
-            for (var i = handlers.length; i --> 0;)
+            if (handlers && handlers.length)
             {
-              config = handlers[i];
+              // prevent handlers list from changes
+              handlers = slice.call(handlers);
 
-              // handler call
-              if (fn = config.handler[eventName])
-                if (typeof fn == 'function')
-                  fn.apply(config.thisObject, arguments);
+              for (var i = handlers.length; i --> 0;)
+              {
+                config = handlers[i];
 
-              // any event handler
-              if (func = config.handler['*'])
-                if (typeof func == 'function')
-                  func.call(config.thisObject, {
-                    sender: this,
-                    type: eventName,
-                    args: arguments
-                  });
+                // handler call
+                if (fn = config.handler[eventName])
+                  if (typeof fn == 'function')
+                    fn.apply(config.thisObject, arguments);
+
+                // any event handler
+                if (func = config.handler['*'])
+                  if (typeof func == 'function')
+                    func.call(config.thisObject, {
+                      sender: this,
+                      type: eventName,
+                      args: arguments
+                    });
+              }
             }
 
-            ;;;if (this.event_debug) this.event_debug({ type: eventName, sender: this, args: arguments });
+            // WARN: this feature is not available in producation
+            ;;;if (this.event_debug) this.event_debug({ sender: this, type: eventName, args: arguments });
           }
 
         /** @cut for more verbose in dev */ .toString().replace(/\beventName\b/g, '\'' + eventName + '\'').replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + '}')(eventName, slice);
@@ -153,11 +154,11 @@
 
    /**
     * Function that call on any event. Use it to debug purposes only.
-    * WARN: This functionality is not supported in build version.
+    * WARN: This functionality is not supported in producation.
     * @type {function(event)}
     * @debug
     */
-    event_debug: null,
+    /** @cut */event_debug: null,
 
    /**
     * Fires when object is destroing.

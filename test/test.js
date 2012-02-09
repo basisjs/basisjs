@@ -36,6 +36,15 @@
     var TESTCASE_NUMBER = 0;
     var TestFaultError = new Error('Test fault');
 
+    function sliceOwnOnly(obj){
+      var res = {};
+      for (var key in obj)
+        if (obj.hasOwnProperty(key))
+          res[key] = obj[key];
+      console.log(res);
+      return res;
+    }
+
     /*
      *  Tools
      */
@@ -46,7 +55,6 @@
         case 'boolean':
         case 'number':
         case 'undefined':
-        case 'null':
           return String(value);
         case 'string':
           return value.quote("'");
@@ -64,9 +72,12 @@
 
           if (!linear)
           {
-            return '{' + Object.iterate(value, function(key, value){
-              return key + ': ' + value2string(value, true);
-            }).join(', ') + '}'
+            var res = [];
+            for (var key in value)
+              if (value.hasOwnProperty(key))
+                res.push(key + ': ' + value2string(value[key], true))
+              
+            return '{ ' + res.join(', ') + ' }'
           }
           else
             return '{object}';
@@ -382,8 +393,8 @@
       fault: function(error, answer, result){
         this.errorLines[this.testCount] = {
           error: error,
-          answer: answer && typeof answer == 'object' ? (Array.isArray(answer) ? Array.from(answer) : Object.slice(answer)) : answer,
-          result: result && typeof result == 'object' ? (Array.isArray(result) ? Array.from(result) : Object.slice(result)) : result
+          answer: answer && typeof answer == 'object' ? (Array.isArray(answer) ? Array.from(answer) : sliceOwnOnly(answer)) : answer,
+          result: result && typeof result == 'object' ? (Array.isArray(result) ? Array.from(result) : sliceOwnOnly(result)) : result
         };
         this.testCount++;
       }

@@ -409,6 +409,7 @@ basis.require('basis.event');
         },
         rootChanged: function(object, oldRoot){
           this.data = object.data;
+          this.root = object.root;
           this.event_rootChanged(this, oldRoot);
         },
         destroy: function(){

@@ -21,29 +21,40 @@
   <script type="text/javascript"  src="../basis-all.js"></script>
   <script type="text/javascript">
     (function(){
+      var eventTypeFilter = function(event){ return event.type == this };
       var proto = basis.data.DataObject.prototype;
-      var init_ = proto.init;
-      proto.init = function(){
-        this.history_ = [];
-        this.historyAll_ = [];
-        init_.apply(this, arguments);
+      var eventsMap = {};
+      var seed = 1;
+
+      proto.event_debug = function(event){
+        if (!this.testEventId_)
+        {
+          this.testEventId_ = seed++;
+          eventsMap[this.testEventId_] = [];
+        }
+
+        eventsMap[this.testEventId_].push(event);
       };
 
-      var dispatch_ = proto.event_update;
-      proto.event_update = function(obj, delta){
-        this.history_.push(delta);
-        this.historyAll_.push(arguments);
-        dispatch_.apply(this, arguments);
+      window.getEvents = function(object, type){
+        var events = eventsMap[object.testEventId_];
+
+        if (events && type)
+          events = events.filter(eventTypeFilter, type);
+
+        return events;
       }
-      var dispatch_2 = proto.event_delegateChanged;
-      proto.event_delegateChanged = function(obj, delta){
-        this.historyAll_.push(arguments);
-        dispatch_2.apply(this, arguments);
+
+      window.eventCount = function(object, type){
+        var events = getEvents(object, type);
+
+        return events ? events.length : 0;
       }
-      var dispatch_3 = proto.event_subscribersChanged;
-      proto.event_subscribersChanged = function(obj, delta){
-        this.historyAll_.push(arguments);
-        dispatch_3.apply(this, arguments);
+
+      window.getLastEvent = function(object, type){
+        var events = getEvents(object, type);
+
+        return events && events[events.length - 1];
       }
     })();
   </script>
@@ -56,9 +67,57 @@
     loadTest((function(){
 
       var nsData = basis.data;
+      var DataObject = nsData.DataObject;
 
       var data = [
       ];
+
+      function checkObject(object){
+
+        if (object.delegate)
+        {
+          var chain = [];
+          var cursor = object;
+          while (cursor.delegate && cursor.delegate !== cursor)
+          {
+            cursor = cursor.delegate;
+            chain.push(cursor);
+          }
+
+          var target = object.target;
+          var root = chain[chain.length - 1];
+
+          for (var i = 0, chainObject; chainObject = chain[i]; i++)
+          {
+            if (chainObject.isTarget)
+              target = chainObject.target;
+
+            if (chainObject.data !== object.data)
+              return 'Data are not equal in chain (' + (i + 1) + ')';
+
+            if (chainObject.state !== object.state)
+              return 'States are not equal in chain (' + (i + 1) + ')';
+
+            if (chainObject.root !== root)
+              return 'Wrong root reference in chain (' + (i + 1) + ')';
+
+            if (chainObject.target !== target)
+              return 'Wrong target referece in chain (' + (i + 1) + ')';
+          }
+
+          if (object.root !== root)
+            return 'Wrong root reference';
+        }
+        else
+        {
+          if (object.root !== object)
+            return 'root must point to it self';
+          if (object.target !== null)
+            return 'target must point to it self';
+        }
+
+        return false;
+      }
       
       return [
         {
@@ -70,292 +129,198 @@
                 {
                   name: 'simple create',
                   test: function(){
-                    var objectA = new nsData.DataObject;
+                    var objectA = new DataObject;
                     this.is({}, objectA.data);
-                    this.is(0, objectA.history_.length);
+                    this.is(0, eventCount(objectA));
 
-                    var objectB = new nsData.DataObject({ data: { a: 1, b: 2 } });
+                    var objectB = new DataObject({ data: { a: 1, b: 2 } });
                     this.is({ a: 1, b: 2 }, objectB.data);
-                    this.is(0, objectB.history_.length);
-                    this.is(0, objectB.historyAll_.length);
+                    this.is(0, eventCount(objectB));
+                    this.is(0, eventCount(objectB));
                   }
                 },
                 {
                   name: 'create with delegate',
                   test: function(){
-                    var objectA = new nsData.DataObject({ data: { a: 1, b: 2 } });
-                    var objectB = new nsData.DataObject({ data: { a: 3, b: 4 }, delegate: objectA });
+                    var objectA = new DataObject({ data: { a: 1, b: 2 } });
+                    var objectB = new DataObject({ data: { a: 3, b: 4 }, delegate: objectA });
                     this.is({ a: 1, b: 2 }, objectA.data);
                     this.is({ a: 1, b: 2 }, objectB.data);
                     this.is(true, objectA.data === objectB.data);
-                    this.is(0, objectA.history_.length);
-                    this.is(0, objectB.history_.length);
-                    this.is(0, objectA.historyAll_.length);
-                    this.is(1, objectB.historyAll_.length);
+                    this.is(true, objectA.state === objectB.state);
+                    this.is(0, eventCount(objectA));
+                    this.is(0, eventCount(objectB, 'update'));
+                    this.is(1, eventCount(objectB, 'delegateChanged'));
+
+                    this.is(false, checkObject(objectA));
+                    this.is(false, checkObject(objectB));
 
                     objectB.setDelegate();
                     this.is({ a: 1, b: 2 }, objectB.data);
-                    this.is(1, objectB.history_.length);
+                    this.is(0, eventCount(objectB, 'update'));
+                    this.is(false, checkObject(objectA));
+                    this.is(false, checkObject(objectB));
                   }
-                },
-                {
-                  name: 'create with delegate and defaults',
-                  test: function(){
-                    var objectA = new nsData.DataObject({ defaults: { a: 1, b: 2 }, data: { b: 3, c: 4 } });
-                    var objectB = new nsData.DataObject({ defaults: { a: 0, d: 5 }, data: { a: 6, e: 7 }, delegate: objectA });
-                    this.is({ a: 1, b: 3, c: 4 }, objectB.data);
-                    this.is(1, objectB.history_.length);
-                    this.is({ a: undefined, b: undefined, c: undefined }, objectB.history_[0]);
-
-                    objectB.setDelegate();
-                    this.is({ a: 0, d: 5 }, objectB.data);
-                    this.is(2, objectB.history_.length);
-                    this.is({ a: 1, b: 3, c: 4, d: undefined }, objectB.history_[1]);
-                  }
-                }/*,
-                {
-                  name: 'create with delegate via config.data and defaults',
-                  test: function(){
-                    var objectA = new nsData.DataObject({ extend: { defaults: { a: 1, b: 2 } }, data: { b: 3, c: 4 } });
-                    var objectB = new nsData.DataObject({ extend: { defaults: { a: 0, d: 5 } }, data: objectA });
-                    this.is({ a: 1, b: 3, c: 4 }, objectB.data);
-                    this.is(1, objectB.history_.length);
-                    this.is({ a: undefined, b: undefined, c: undefined }, objectB.history_[0]);
-
-                    objectB.setDelegate();
-                    this.is({ a: 0, d: 5 }, objectB.data);
-                    this.is(2, objectB.history_.length);
-                    this.is({ a: 1, b: 3, c: 4, d: undefined }, objectB.history_[1]);
-                  }
-                }*/
+                }
               ]
             },
             {
               name: 'delegate subsystem',
               testcase: [
                 {
-                  name: 'set delegate #1',
-                  test: function(){
-                    var a = new nsData.DataObject({ data: { a: 1, b: 2 } });
-                    var b = new nsData.DataObject({ data: { b: 2, c: 3 } });
-                    b.setDelegate(a);
+                  name: 'set delegate',
+                  testcase: [
+                    {
+                      name: 'set delegate #1',
+                      test: function(){
+                        var a = new DataObject({ data: { a: 1, b: 2 } });
+                        var b = new DataObject({ data: { b: 2, c: 3 } });
 
-                    this.is(2, b.history_.length);
-                    this.is({ a: undefined, c: 3 }, b.history_[1]);
+                        this.is(0, eventCount(b, 'update'));
 
-                    var objectA = new nsData.DataObject({ defaults: { a: 1, b: 2, c: 3 } });
-                    var objectB = new nsData.DataObject({ defaults: { a: 1 }, data: { b: 2, c: 3 } });
-                    var objectC = new nsData.DataObject({ data: { x: 1, y: 2, z: 3 } });
+                        b.setDelegate(a);
+                        this.is(1, eventCount(b, 'update'));
+                        this.is({ a: undefined, c: 3 }, getLastEvent(b, 'update').args[1]);
+                      }
+                    },
+                    {
+                      name: 'set delegate #2',
+                      test: function(){
+                        var objectA = new DataObject({ data: { a: 1, b: 2, c: 3 } });
+                        var objectB = new DataObject({ data: { a: 1, b: 2, c: 3 } });
+                        var objectC = new DataObject({ data: { x: 1, y: 2, z: 3 } });
 
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is({ a: 1, b: 2, c: 3 }, objectB.data);
-                    this.is({ x: 1, y: 2, z: 3 }, objectC.data);
+                        objectA.setDelegate(objectB); // no update event
+                        this.is({ a: 1, b: 2, c: 3 }, objectA.data);
+                        this.is(0, eventCount(objectA, 'update'));
+                        this.is(0, eventCount(objectB, 'update'));
 
-                    this.is(1, objectA.history_.length);
-                    this.is(1, objectB.history_.length);
-                    this.is(1, objectC.history_.length);
+                        objectA.setDelegate(objectC);
+                        this.is({ x: 1, y: 2, z: 3 }, objectA.data);
+                        this.is(1, eventCount(objectA, 'update'));
+                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[1]);
 
+                        objectA.setDelegate(objectB);
+                        this.is({ a: 1, b: 2, c: 3 }, objectA.data);
+                        this.is(2, eventCount(objectA, 'update'));
+                        this.is({ a: undefined, b: undefined, c: undefined, x: 1, y: 2, z: 3 }, getLastEvent(objectA, 'update').args[1]);
 
-                    objectA.setDelegate(objectB); // no update event
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is(1, objectB.history_.length);
+                        objectA.setDelegate();
+                        this.is({ a: 1, b: 2, c: 3 }, objectA.data);
+                        //this.is(3, objectA.history_.last());
+                        this.is(2, eventCount(objectA, 'update'));
+                      }
+                    },
+                    {
+                      name: 'set delegate #3',
+                      test: function(){
+                        var objectA = new DataObject({ data: { a: 1, b: 2, c: 3 } });
+                        var objectB = new DataObject({ data: { a: 1, b: 2, c: 3 } });
+                        var objectC = new DataObject({ data: { x: 1, y: 2, z: 3 } });
+                        // data tested in previous test, see above
 
+                        objectA.setDelegate(objectB);
+                        this.is(true, objectA.delegate === objectB);
+                        this.is({ a: 1, b: 2, c: 3 }, objectA.data);
+                        this.is(0, eventCount(objectA, 'update'));
+                        this.is(1, eventCount(objectA, 'delegateChanged'));
+                        this.is(false, checkObject(objectA));
+                        this.is(false, checkObject(objectB));
 
-                    objectA.setDelegate(objectC);
-                    this.is({ x: 1, y: 2, z: 3 }, objectA.data);
-                    this.is(2, objectA.history_.length);
-                    this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, objectA.history_[1]);
+                        objectB.setDelegate(objectC);
+                        this.is(true, objectB.delegate === objectC);
+                        this.is({ x: 1, y: 2, z: 3 }, objectA.data);
+                        this.is(1, eventCount(objectA, 'update'));
+                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[1]);
+                        this.is(1, eventCount(objectA, 'delegateChanged'));
+                        this.is(false, checkObject(objectA));
+                        this.is(false, checkObject(objectB));
+                        this.is(false, checkObject(objectC));
 
+                        objectB.setDelegate();
+                        this.is(true, objectB.delegate == null);
+                        this.is({ x: 1, y: 2, z: 3 }, objectA.data);
+                        this.is(true, objectB.data !== objectC.data);
+                        this.is(1, eventCount(objectA, 'update'));
+                        this.is(1, eventCount(objectA, 'delegateChanged'));
+                        this.is(2, eventCount(objectB, 'delegateChanged'));
+                        this.is(false, checkObject(objectA));
+                        this.is(false, checkObject(objectB));
+                        this.is(false, checkObject(objectC));
 
-                    objectA.setDelegate(objectB);
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is(3, objectA.history_.length);
-                    this.is({ a: undefined, b: undefined, c: undefined, x: 1, y: 2, z: 3 }, objectA.history_[2]);
+                        objectA.setDelegate();
+                        this.is(true, objectA.delegate == null);
+                        this.is({ x: 1, y: 2, z: 3 }, objectA.data);
+                        this.is(1, eventCount(objectA, 'update'));
+                        this.is(2, eventCount(objectA, 'delegateChanged'));
+                        this.is(false, checkObject(objectA));
+                        this.is(false, checkObject(objectB));
+                      }
+                    },
+                    {
+                      name: 'set delegate #4',
+                      test: function(){
+                        var objectB = new DataObject({ data: { a: 1, b: 2, c: 3 } });
+                        var objectC = new DataObject({ data: { x: 1, y: 2, z: 3 } });
+                        // data tested in previous test, see above
 
+                        objectB.setDelegate(objectC);
+                        this.is(true, objectB.delegate === objectC);
+                        this.is({ x: 1, y: 2, z: 3 }, objectB.data);
+                        this.is(1, eventCount(objectB, 'update'));
+                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectB, 'update').args[1]);
+                        this.is(1, eventCount(objectB, 'delegateChanged'));
 
-                    objectA.setDelegate();
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    //this.is(3, objectA.history_.last());
-                    this.is(3, objectA.history_.length);
-                  }
-                },
-                {
-                  name: 'set delegate #2',
-                  test: function(){
-                    var objectA = new nsData.DataObject({ defaults: { a: 1, b: 2, c: 3 } });
-                    var objectB = new nsData.DataObject({ defaults: { a: 1 }, data: { b: 2, c: 3 } });
-                    var objectC = new nsData.DataObject({ data: { x: 1, y: 2, z: 3 } });
-                    // data tested in previous test, see above
+                        objectB.setDelegate('not a delegate');
+                        this.is(true, objectB.delegate === null);
+                        this.is({ x: 1, y: 2, z: 3 }, objectB.data);
+                        this.is(1, eventCount(objectB, 'update'));
+                        this.is(2, eventCount(objectB, 'delegateChanged'));
 
-                    objectA.setDelegate(objectB);
-                    this.is(true, objectA.delegate === objectB);
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is(1, objectA.history_.length);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
+                        objectB.setDelegate('not a delegate #2');
+                        this.is(true, objectB.delegate === null);
+                        this.is({ x: 1, y: 2, z: 3 }, objectB.data);
+                        this.is(1, eventCount(objectB, 'update'));
+                        this.is(2, eventCount(objectB, 'delegateChanged'));
 
-                    objectB.setDelegate(objectC);
-                    this.is(true, objectB.delegate === objectC);
-                    this.is({ x: 1, y: 2, z: 3 }, objectA.data);
-                    this.is(2, objectA.history_.length);
-                    this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, objectA.history_[1]);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectB.setDelegate();
-                    this.is(true, objectB.delegate == null);
-                    this.is({ a: 1 }, objectA.data);
-                    this.is(3, objectA.history_.length);
-                    this.is({ a: undefined, x: 1, y: 2, z: 3 }, objectA.history_[2]);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectA.setDelegate();
-                    this.is(true, objectA.delegate == null);
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is(4, objectA.history_.length);
-                    this.is({ b: undefined, c: undefined }, objectA.history_[3]);
-                    this.is(2, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-                  }
-                },
-                {
-                  name: 'set delegate #3',
-                  test: function(){
-                    var objectB = new nsData.DataObject({ defaults: { a: 1 }, data: { b: 2, c: 3 } });
-                    var objectC = new nsData.DataObject({ data: { x: 1, y: 2, z: 3 } });
-                    // data tested in previous test, see above
-
-                    objectB.setDelegate(objectC);
-                    this.is(true, objectB.delegate === objectC);
-                    this.is({ x: 1, y: 2, z: 3 }, objectB.data);
-                    this.is(2, objectB.history_.length);
-                    this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, objectB.history_[1]);
-                    this.is(1, objectB.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectB.setDelegate('not a delegate');
-                    this.is(true, objectB.delegate === null);
-                    this.is({ a: 1 }, objectB.data);
-                    this.is(3, objectB.history_.length);
-                    this.is({ a: undefined, x: 1, y: 2, z: 3 }, objectB.history_[2]);
-                    this.is(2, objectB.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectB.setDelegate('not a delegate #2');
-                    this.is(true, objectB.delegate === null);
-                    this.is({ a: 1 }, objectB.data);
-                    this.is(3, objectB.history_.length);
-                    this.is(2, objectB.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectB.setDelegate(objectC);
-                    this.is(true, objectB.delegate === objectC);
-                    this.is({ x: 1, y: 2, z: 3 }, objectB.data);
-                    this.is(4, objectB.history_.length);
-                    this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, objectB.history_[1]);
-                    this.is(3, objectB.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-                  }
-                },
-                {
-                  name: 'set delegate #4',
-                  test: function(){
-                    var objectA = new nsData.DataObject({ defaults: { a: 1, b: 2, c: 3 } });
-                    var objectB = new nsData.DataObject({ defaults: { a: 1 }, data: { b: 2, c: 3 } });
-                    var objectC = new nsData.DataObject({ data: { x: 1, y: 2, z: 3 } });
-                    // data tested in previous test, see above
-
-                    objectA.setDelegate(objectB);
-                    this.is(true, objectA.delegate === objectB);
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is(1, objectA.history_.length);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectA.setDelegate(objectC);
-                    this.is(true, objectA.delegate === objectC);
-                    this.is({ x: 1, y: 2, z: 3 }, objectA.data);
-                    this.is(2, objectA.history_.length);
-                    this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, objectA.history_[1]);
-                    this.is(2, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectA.setDelegate('not a delegate');
-                    this.is(true, objectA.delegate == null);
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is(3, objectA.history_.length);
-                    this.is({ a: undefined, b: undefined, c: undefined, x: 1, y: 2, z: 3 }, objectA.history_[2]);
-                    this.is(3, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectA.setDelegate();
-                    this.is(true, objectA.delegate == null);
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is(3, objectA.history_.length);
-                    this.is(3, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                  }
-                },
-                {
-                  name: 'set delegate #5',
-                  test: function(){
-                    var objectA = new nsData.DataObject({ defaults: { a: 1, b: 2, c: 3 } });
-                    var objectB = new nsData.DataObject({ defaults: { a: 1 }, data: { b: 2, c: 3 } });
-                    var objectC = new nsData.DataObject({ data: { x: 1, y: 2, z: 3 } });
-                    var objectD = new nsData.DataObject({ data: { a: 1, b: 2, c: 3 } });
-                    // data tested in previous test, see above
-
-                    objectC.setDelegate(objectA); // objectC +update +delegateChanged
-                    objectA.setDelegate(objectB); // objectB +delegateChanged
-
-                    // 
-                    this.is(2, objectC.history_.length);
-                    this.is(1, objectA.history_.length);
-                    this.is({ a: 1, b: 2, c: 3 }, objectC.data);
-                    this.is({ a: 1, b: 2, c: 3 }, objectA.data);
-                    this.is(objectB.data, objectC.data);
-                    this.is(objectB.data, objectA.data);
-                    this.is(true, objectC.data === objectB.data);
-                    this.is(true, objectA.data === objectB.data);
-                    this.is(1, objectC.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectB.setDelegate(objectA);
-                    this.is({ a: 1, b: 2, c: 3 }, objectB.data);
-                    this.is(1, objectB.history_.length);
-                    this.is(0, objectB.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    objectB.setDelegate(objectD);
-                    this.is({ a: 1, b: 2, c: 3 }, objectB.data);
-                    this.is(1, objectB.history_.length);
-                    this.is(1, objectB.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-
-                    // should drop delegate because objectB is connected with objectA
-                    objectB.setDelegate(objectA); 
-                    this.is({ a: 1 }, objectB.data);
-                    this.is(2, objectB.history_.length);
-                    this.is(2, objectB.historyAll_.filter(function(arg){ return arg[0] == 'delegateChanged' }).length);
-                  }
+                        objectB.setDelegate(objectC);
+                        this.is(true, objectB.delegate === objectC);
+                        this.is({ x: 1, y: 2, z: 3 }, objectB.data);
+                        this.is(1, eventCount(objectB, 'update'));
+                        this.is(3, eventCount(objectB, 'delegateChanged'));
+                      }
+                    }
+                  ]
                 },
                 {
                   name: 'sets with no data',
                   test: function(){
-                    var objectA = new nsData.DataObject;
-                    var objectB = new nsData.DataObject;
+                    var objectA = new DataObject;
+                    var objectB = new DataObject;
 
-                    this.is(0, objectA.history_.length); // should be no update events
+                    this.is(0, eventCount(objectA, 'update')); // should be no update events
 
                     objectA.setDelegate(objectB); // no update event
                     this.is(true, objectA.delegate === objectB);
                     this.is(true, objectA.data === objectB.data);
                     this.is({}, objectA.data);
 
-                    this.is(0, objectA.history_.length); // should be no update events
+                    this.is(0, eventCount(objectA, 'update')); // should be no update events
 
                     objectA.setDelegate(); // no update event
                     this.is(true, objectA.delegate === null);
                     this.is(true, objectA.data !== objectB.data);
                     this.is({}, objectA.data);
 
-                    this.is(0, objectA.history_.length); // should be no update events
+                    this.is(0, eventCount(objectA, 'update')); // should be no update events
                   }
                 },
                 {
                   name: 'set as delegate connected objects',
                   test: function(){
-                    var objectA = new nsData.DataObject;
-                    var objectB = new nsData.DataObject;
-                    var objectC = new nsData.DataObject;
+                    var objectA = new DataObject;
+                    var objectB = new DataObject;
+                    var objectC = new DataObject;
 
                     objectA.setDelegate(objectB);
                     this.is(true, objectA.delegate === objectB);
@@ -383,106 +348,106 @@
                 {
                   name: '(delegate) during creation',
                   test: function(){
-                    var objectA = new nsData.DataObject;
-                    var objectB = new nsData.DataObject({
+                    var objectA = new DataObject;
+                    var objectB = new DataObject({
                       delegate: objectA,
                       active: true,
                       subscribeTo: nsData.SUBSCRIPTION.DELEGATE
                     });
 
                     this.is(1, objectA.subscriberCount);
-                    this.is(true, objectA.historyAll_.some(function(arg){ return arg[0] == 'subscribersChanged' }));
+                    this.is(1, eventCount(objectA, 'subscribersChanged'));
                   }
                 },
                 {
                   name: '(delegate) switch on/off via active',
                   test: function(){
-                    var objectA = new nsData.DataObject;
-                    var objectB = new nsData.DataObject({
+                    var objectA = new DataObject;
+                    var objectB = new DataObject({
                       active: false,
                       subscribeTo: nsData.SUBSCRIPTION.DELEGATE
                     });
 
                     this.is(0, objectA.subscriberCount);
-                    this.is(0, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(0, eventCount(objectA, 'subscribersChanged'));
 
                     objectB.setDelegate(objectA);
 
                     this.is(0, objectA.subscriberCount);
-                    this.is(0, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(0, eventCount(objectA, 'subscribersChanged'));
 
                     // switch on
                     objectB.setActive(true);
 
                     this.is(1, objectA.subscriberCount);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(1, eventCount(objectA, 'subscribersChanged'));
 
                     // nothing changed
                     objectB.setActive(true); 
 
                     this.is(1, objectA.subscriberCount);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(1, eventCount(objectA, 'subscribersChanged'));
 
                     // switch off
                     objectB.setActive(false);
 
                     this.is(0, objectA.subscriberCount);
-                    this.is(2, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(2, eventCount(objectA, 'subscribersChanged'));
                   }
                 },
                 {
                   name: '(delegate) switch on/off via subscribeTo',
                   test: function(){
-                    var objectA = new nsData.DataObject;
-                    var objectB = new nsData.DataObject({
+                    var objectA = new DataObject;
+                    var objectB = new DataObject({
                       active: true,
                       subscribeTo: nsData.SUBSCRIPTION.NONE
                     });
 
                     this.is(0, objectA.subscriberCount);
-                    this.is(0, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(0, eventCount(objectA, 'subscribersChanged'));
 
                     objectB.setDelegate(objectA);
 
                     this.is(0, objectA.subscriberCount);
-                    this.is(0, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(0, eventCount(objectA, 'subscribersChanged'));
 
                     // switch on
                     objectB.setSubscription(nsData.SUBSCRIPTION.DELEGATE);
 
                     this.is(1, objectA.subscriberCount);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(1, eventCount(objectA, 'subscribersChanged'));
 
                     // nothing changed
                     objectB.setSubscription(nsData.SUBSCRIPTION.DELEGATE);
 
                     this.is(1, objectA.subscriberCount);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(1, eventCount(objectA, 'subscribersChanged'));
 
                     // switch off
                     objectB.setSubscription(nsData.SUBSCRIPTION.NONE);
 
                     this.is(0, objectA.subscriberCount);
-                    this.is(2, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(2, eventCount(objectA, 'subscribersChanged'));
                   }
                 },
                 {
                   name: '(delegate) unsubscribe on destroy',
                   test: function(){
-                    var objectA = new nsData.DataObject;
-                    var objectB = new nsData.DataObject({
+                    var objectA = new DataObject;
+                    var objectB = new DataObject({
                       active: true,
                       subscribeTo: nsData.SUBSCRIPTION.DELEGATE,
                       delegate: objectA
                     });
 
                     this.is(1, objectA.subscriberCount);
-                    this.is(1, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(1, eventCount(objectA, 'subscribersChanged'));
 
                     objectB.destroy();
 
                     this.is(0, objectA.subscriberCount);
-                    this.is(2, objectA.historyAll_.filter(function(arg){ return arg[0] == 'subscribersChanged' }).length);
+                    this.is(2, eventCount(objectA, 'subscribersChanged'));
                   }
                 }
               ]

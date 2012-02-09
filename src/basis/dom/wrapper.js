@@ -1160,19 +1160,23 @@ basis.require('basis.html');
       {
         // newChild can't be ancestor of current node
         var cursor = this;
-        do {
-          if (cursor == newChild)
+        while (cursor = cursor.parentNode){
+          if (cursor === newChild)
             throw EXCEPTION_CANT_INSERT;
         }
-        while (cursor = cursor.parentNode)
       }
 
+      var isChildClassInstance = newChild && newChild instanceof this.childClass;
+
       // check for dataSource
-      if (this.dataSource && !this.dataSource.has(newChild.delegate))
-        throw EXCEPTION_DATASOURCE_CONFLICT;
+      if (this.dataSource)
+      {
+        if (!isChildClassInstance || this.dataSourceMap_[newChild.delegate.eventObjectId] !== newChild)
+          throw EXCEPTION_DATASOURCE_CONFLICT;
+      }
 
       // construct new childClass instance if newChild is not instance of childClass
-      if (newChild instanceof this.childClass == false)
+      if (!isChildClassInstance)
         newChild = createChildByFactory(this, newChild instanceof DataObject ? { delegate: newChild } : newChild);
 
       // search for insert point
@@ -1228,7 +1232,7 @@ basis.require('basis.html');
       if (grouping)
       {
         var cursor;
-        group = grouping.getGroupNode(newChild);
+        group = grouping.getGroupNode(newChild, true);
         groupNodes = group.nodes;
 
         // optimization: test node position, possible it on right place
@@ -1293,7 +1297,7 @@ basis.require('basis.html');
             if (currentNewChildGroup)
               currentNewChildGroup.remove(newChild);
 
-            group.insert(newChild);
+            group.insert(newChild, refChild);
           }
 
           return newChild;
@@ -1469,17 +1473,21 @@ basis.require('basis.html');
     * @inheritDoc
     */
     removeChild: function(oldChild){
-      if (oldChild == null || oldChild.parentNode !== this) // this.childNodes.absent(oldChild) truly but speedless
+      if (!oldChild || oldChild.parentNode !== this) // this.childNodes.absent(oldChild) truly but speedless
         throw EXCEPTION_NODE_NOT_FOUND;
 
       if (oldChild instanceof this.childClass == false)
         throw EXCEPTION_BAD_CHILD_CLASS;
 
-      if (this.dataSource && this.dataSource.has(oldChild))
+      if (this.dataSource && this.dataSource.has(oldChild.delegate))
         throw EXCEPTION_DATASOURCE_CONFLICT;
 
       // update this
       var pos = this.childNodes.indexOf(oldChild);
+
+      if (pos == -1)
+        throw EXCEPTION_NODE_NOT_FOUND;        
+
       this.childNodes.splice(pos, 1);
         
       // update oldChild and this.lastChild & this.firstChild
@@ -1539,13 +1547,9 @@ basis.require('basis.html');
     * @inheritDoc
     */
     clear: function(alive){
-
-      // drop dataSource
-      if (this.dataSource)
-      {
-        this.setDataSource(); // it'll call clear again, but with no this.dataSource
-        return;
-      }
+      // clear possible only if dataSource is empty
+      if (this.dataSource && this.dataSource.itemCount)
+        throw EXCEPTION_DATASOURCE_CONFLICT;
 
       // if node haven't childs nothing to do (event don't fire)
       if (!this.firstChild)
@@ -1600,7 +1604,7 @@ basis.require('basis.html');
     */
     setChildNodes: function(newChildNodes, keepAlive){
       if (!this.dataSource)
-        this.clear(!!keepAlive);
+        this.clear(keepAlive);
 
       if (newChildNodes)
       {
@@ -1748,7 +1752,7 @@ basis.require('basis.html');
 
             // split nodes by new groups
             for (var i = 0, child; child = order[i]; i++)
-              child.groupNode = this.grouping.getGroupNode(child);
+              child.groupNode = this.grouping.getGroupNode(child, true);
 
             // fill groups
             order = fastChildNodesGroupOrder(this, order);
@@ -2148,13 +2152,13 @@ basis.require('basis.html');
           this.map_[child.groupId_] = child;
         }
 
-        /*if (this.dataSource && this.nullGroup.first)
+        if (this.dataSource && this.nullGroup.first)
         {
           var parentNode = this.owner;
           var nodes = Array.from(this.nullGroup.nodes); // Array.from, because nullGroup.nodes may be transformed
           for (var i = nodes.length; i --> 0;)
             parentNode.insertBefore(nodes[i], nodes[i].nextSibling);
-        }*/
+        }
       }
     },
 
@@ -2211,17 +2215,21 @@ basis.require('basis.html');
     * @param {basis.dom.wrapper.AbstractNode} node
     * @return {basis.dom.wrapper.PartitionNode}
     */
-    getGroupNode: function(node){
+    getGroupNode: function(node, autocreate){
       var groupRef = this.groupGetter(node);
       var isDelegate = groupRef instanceof DataObject;
       var group = this.map_[isDelegate ? groupRef.eventObjectId : groupRef];
 
-      if (!group && !this.dataSource)
+      if (this.dataSource)
+        autocreate = false;
+
+      if (!group && autocreate)
       {
         group = this.appendChild(
           isDelegate
-            ? { delegate: groupRef }
-            : { data: {
+            ? groupRef
+            : { 
+                data: {
                   id: groupRef,
                   title: groupRef
                 }
@@ -2320,9 +2328,13 @@ basis.require('basis.html');
     * @inheritDoc
     */
     removeChild: function(oldChild){
-      DomMixin.removeChild.call(this, oldChild);
+      if (oldChild = DomMixin.removeChild.call(this, oldChild))
+      {
+        delete this.map_[oldChild.groupId_];
 
-      delete this.map_[oldChild.groupId_];
+        for (var i = 0, node; node = oldChild.nodes[i]; i++)
+          node.parentNode.insertBefore(node);
+      }
 
       return oldChild;
     },
@@ -2331,17 +2343,41 @@ basis.require('basis.html');
     * @inheritDoc
     */
     clear: function(alive){
+      var nodes = [];
+      var getGroupNode = this.getGroupNode;
+      var nullGroup = this.nullGroup;
+
+      this.getGroupNode = function(){ return nullGroup };
+
+      for (var group = this.firstChild; group; group = group.nextSibling)
+        nodes.push.apply(nodes, group.nodes);
+
+      for (var i = 0, child; child = nodes[i]; i++)
+        child.parentNode.insertBefore(child);
+
+      this.getGroupNode = getGroupNode;
+
       DomMixin.clear.call(this, alive);
+
       this.map_ = {};
+      /*for (var i = 0, node; node = nodes[i]; i++)
+      {
+        node.groupNode = null;
+        node.parentNode.insertBefore(node);
+      }*/
     },
 
    /**
     * @inheritDoc
     */
     destroy: function(){
-      this.setOwner();
+      this.autoDestroyWithNoOwner = false;
+      //this.setOwner();
 
       AbstractNode.prototype.destroy.call(this);
+
+      this.nullGroup.destroy();
+      this.nullGroup = null;
 
       this.map_ = null;
     }

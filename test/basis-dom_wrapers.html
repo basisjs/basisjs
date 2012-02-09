@@ -40,6 +40,8 @@
       var Property = basis.data.property.Property;
       var PropertySet = basis.data.property.DataObjectSet;
 
+      var Node = nsWrappers.Node;
+
       var CookieName;
       var TestProperty;
 
@@ -104,7 +106,7 @@
       }
 
       function nodeFactory(cfg){
-        return new nsWrappers.Node(cfg);
+        return new Node(cfg);
       };
 
       function getGroups(node, withNull){
@@ -214,7 +216,9 @@
                   return 'Wrong order: childs not reflect groups order';
 
             if (k != childCount)
+            {
               return 'Count of child in groups (' + k + ') is not equal to child count (' + childCount + ')';
+            }
 
             var childNodes = Array.from(node.childNodes);
 
@@ -252,6 +256,24 @@
             return 'Wrong firstChild ref';
           if (node.lastChild !== null)
             return 'Wrong lastChild ref';
+        }
+
+        if (node.dataSource !== null && node.dataSource instanceof basis.data.AbstractDataset === false)
+          return 'dataSource has wrong value (must be null or instance of basis.data.AbstractDataset)';
+
+        if (node.dataSource)
+        {
+          if (node.dataSource.itemCount !== node.childNodes.length)
+            return 'child node count (' + node.childNodes.length + ') is not equal to dataset item count (' + node.dataSource.itemCount + ')';
+
+          for (var i = 0, child; child = node.childNodes[i]; i++)
+          {
+            if (!child.delegate)
+              return 'child #' + i + ' has not delegate to dataSource member';
+
+            if (!node.dataSource.has(child.delegate))
+              return 'child #' + i + ' delegate not found in dataSource';
+          }
         }
 
         if (node instanceof nsWrappers.GroupingNode)
@@ -295,6 +317,22 @@
         return false;
       }
 
+      function checkDestroyedObject(object){
+        var proto = object.constructor.prototype;
+        var properties = [];
+
+        for (var key in object)
+        {
+          var value = object[key];
+          if (key !== 'data' && value !== proto[key] && typeof value == 'object' && value !== null)
+            properties.push(key);
+        }
+
+        return properties.length
+          ? 'properties are not reset in destroyed object: ' + properties.join(', ')
+          : false;
+      }
+
       function $values(ar){
         return ar.map(function(node){
           return node.data.value + '(' + node.data.group + ')';
@@ -311,10 +349,10 @@
                 {
                   name: 'create',
                   test: function(){
-                    var node = new nsWrappers.Node();
+                    var node = new Node();
                     this.is(false, checkNode(node));
 
-                    var node = new nsWrappers.Node({ data: { a: 1, b: 2 } });
+                    var node = new Node({ data: { a: 1, b: 2 } });
                     this.is({ a: 1, b: 2}, node.data);
                   }
                 },
@@ -322,13 +360,13 @@
                   name: 'create with childNodes',
                   test: function(){
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node({ childNodes: testSet.map(nodeFactory) });
+                    var node = new Node({ childNodes: testSet.map(nodeFactory) });
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
 
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node({ childFactory: nodeFactory, childNodes: testSet });
+                    var node = new Node({ childFactory: nodeFactory, childNodes: testSet });
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
@@ -337,10 +375,10 @@
                 {
                   name: 'appendChild',
                   test: function(){
-                    var node = new nsWrappers.Node();
+                    var node = new Node();
                     var testSet = getTestSet();
                     for (var i = 0; i < testSet.length; i++)
-                      node.appendChild(new nsWrappers.Node(testSet[i]));
+                      node.appendChild(new Node(testSet[i]));
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
@@ -350,18 +388,18 @@
                   name: 'insertBefore',
                   test: function(){
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node();
+                    var node = new Node();
                     for (var i = 0; i < testSet.length; i++)
-                      node.insertBefore(new nsWrappers.Node(testSet[i]));
+                      node.insertBefore(new Node(testSet[i]));
 
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
 
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node();
+                    var node = new Node();
                     for (var i = 0; i < testSet.length; i++)
-                      node.insertBefore(new nsWrappers.Node(testSet[i]), node.firstChild);
+                      node.insertBefore(new Node(testSet[i]), node.firstChild);
 
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
@@ -372,14 +410,14 @@
                   name: 'DOM.insert',
                   test: function(){
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node();
+                    var node = new Node();
                     DOM.insert(node, testSet.map(nodeFactory))
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
 
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node({ childFactory: nodeFactory });
+                    var node = new Node({ childFactory: nodeFactory });
                     DOM.insert(node, testSet)
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
@@ -394,11 +432,9 @@
                 {
                   name: 'dataSource in config',
                   test: function(){
-                    /////////////////////////////////////
-                    // simple test
                     var testSet = getTestSet();
                     var dataset = getDataset();
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       dataSource: dataset
                     });
@@ -408,12 +444,14 @@
                     this.is(dataset, node.dataSource);
                     this.is(testSet.length, node.childNodes.length);
                     this.is(testSet.length, dataset.itemCount);
-
-                    //////////////////////////////////
-                    // childNodes must be ignored
+                  }
+                },
+                {
+                  name: 'if dataSource in config, childNodes must be ignored',
+                  test: function(){
                     var testSet = getTestSet();
                     var dataset = getDataset();
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       childNodes: testSet,
                       dataSource: dataset
@@ -425,13 +463,179 @@
                   }
                 },
                 {
-                  name: 'dynamic dataSource',
+                  name: 'if dataSource set than node modify methods must throw an exception and must not to change childNodes or dataSource',
                   test: function(){
-                    /////////////////////////////////////
-                    // simple test
+                    var dataset = getDataset();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+
+                    this.is(dataset, node.dataSource);
+
+                    var itemCount = dataset.itemCount;
+                    var childNodes = Array.from(node.childNodes);
+
+                    var exceptionHere = false;
+                    try {
+                      node.appendChild(new Node)
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    var exceptionHere = false;
+                    try {
+                      node.insertBefore(new Node)
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    var exceptionHere = false;
+                    try {
+                      node.removeChild(node.firstChild)
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    var exceptionHere = false;
+                    try {
+                      node.replaceChild(new Node, node.firstChild)
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+                  }
+                },
+                {
+                  name: 'clear with dataSource',
+                  test: function(){
+                    var dataset = getDataset();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+
+                    var itemCount = dataset.itemCount;
+
+                    this.is(dataset, node.dataSource);
+
+                    var exceptionHere = false;
+                    try {
+                      node.clear();
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    // no exception if dataSource is empty
+                    dataset.clear();
+                    var exceptionHere = false;
+                    try {
+                      node.clear();
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(0, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(false, exceptionHere);
+                  }
+                },
+                {
+                  name: 'setChildNodes with dataSource',
+                  test: function(){
+                    var dataset = getDataset();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+
+                    var itemCount = dataset.itemCount;
+                    this.is(dataset, node.dataSource);
+
+                    var exceptionHere = false;
+                    try {
+                      node.setChildNodes([new Node]);
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+                  }
+                },
+                {
+                  name: 'insertBefore(node/config) must throw exception if child with delegate->dataSource.item already exists',
+                  test: function(){
+                    var dataset = getDataset();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+                    
+                    var itemCount = dataset.itemCount;
+                    this.is(dataset, node.dataSource);
+                    this.is(true, itemCount > 0);
+                    
+                    var exceptionHere = false;
+                    try {
+                      node.insertBefore(dataset.pick());
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    var exceptionHere = false;
+                    try {
+                      node.insertBefore({ delegate: dataset.pick() });
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+
+                    var exceptionHere = false;
+                    try {
+                      node.insertBefore(new Node({ delegate: dataset.pick() }));
+                    } catch(e){
+                      exceptionHere = true;
+                    }
+                    this.is(dataset, node.dataSource);
+                    this.is(itemCount, dataset.itemCount);
+                    this.is(false, checkNode(node));
+                    this.is(true, exceptionHere);
+                  }
+                },
+                {
+                  name: 'set/reset/set dataSource',
+                  test: function(){
                     var testSet = getTestSet();
                     var dataset = getDataset();
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory
                     });
 
@@ -449,12 +653,14 @@
                     this.is(false, checkNode(node));
                     this.is(dataset, node.dataSource);
                     this.is(dataset.itemCount, node.childNodes.length);
-
-                    /////////////////////////////////////
-                    // simple test
+                  }
+                },
+                {
+                  name: 'set/reset dataSource/childNodes',
+                  test: function(){
                     var testSet = getTestSet();
                     var dataset = getDataset();
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       childNodes: testSet
                     });
@@ -495,7 +701,7 @@
                   name: 'grouping in config',
                   test: function(){
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       grouping: 'data.group'
                     });
@@ -508,7 +714,7 @@
 
                     // =======================================
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       grouping: {
                         groupGetter: Function.getter('data.group'),
@@ -525,7 +731,7 @@
 
                     // ======================================
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       sorting: Function.getter('data.value'),
                       sortingDesc: true,
@@ -546,7 +752,7 @@
                   test: function(){
                     // ======================================
                     var testSet = getTestSet();
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       sorting: Function.getter('data.value'),
                       sortingDesc: true,
@@ -590,14 +796,14 @@
                   test: function(){
                     var groupNodes = {};
                     for (var i = 1; i <= 4; i++)
-                      groupNodes[i] = new nsWrappers.Node({
+                      groupNodes[i] = new Node({
                         data: {
                           title: i
                         }
                       });
 
                     // ======================================
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       sorting: Function.getter('data.value'),
                       sortingDesc: true,
@@ -641,14 +847,14 @@
 
                     var groupNodes = {};
                     for (var i = 1; i <= 4; i++)
-                      groupNodes[i] = new nsWrappers.Node({
+                      groupNodes[i] = new Node({
                         data: {
                           title: i
                         }
                       });
 
 
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       sorting: Function.getter('data.value'),
                       sortingDesc: true,
@@ -692,9 +898,9 @@
                   name: 'setGrouping after create and update PartitionNode with delegate & subscription',
                   test: function(){
 
-                    var groupDelegateClass = Class(nsWrappers.Node, {
+                    var groupDelegateClass = Class(Node, {
                       event_subscribersChanged: function(obj){
-                        nsWrappers.Node.prototype.event_subscribersChanged.call(this, obj);
+                        Node.prototype.event_subscribersChanged.call(this, obj);
                         if (this.subscriberCount)
                           this.update({ title: this.data.title_ });
                       }
@@ -710,7 +916,7 @@
                       });
 
 
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       sorting: Function.getter('data.value'),
                       sortingDesc: true,
@@ -743,7 +949,7 @@
                 {
                   name: 'set sorting',
                   test: function(){
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       childNodes: getTestSet()
                     });
@@ -774,14 +980,14 @@
                 {
                   name: 'set sorting #2',
                   test: function(){
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       sorting: Function.getter('data.value'),
                       childNodes: getTestSet()
                     });
                     this.is(false, checkNode(node));
 
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       sorting: Function.getter('data.value'),
                       sortingDesc: true,
@@ -789,7 +995,7 @@
                     });
                     this.is(false, checkNode(node));
 
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       sorting: Function.getter('data.value'),
                       sortingDesc: true
@@ -805,159 +1011,231 @@
                 },
                 {
                   name: 'set grouping',
-                  test: function(){
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet()
-                    });
-                    this.is(false, checkNode(node));
+                  testcase: [
+                    {
+                      name: 'set/remove, change grouping',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet()
+                        });
+                        this.is(false, checkNode(node));
 
-                    node.setGrouping(Function.getter('data.group'));
-                    this.is(false, checkNode(node));
-                    this.is(4, getGroups(node).length);
+                        node.setGrouping(Function.getter('data.group'));
+                        this.is(false, checkNode(node));
+                        this.is(4, getGroups(node).length);
 
-                    // change grouping
-                    node.setGrouping(Function.getter('data.value'));
-                    this.is(false, checkNode(node));
-                    this.is(10, getGroups(node).length);
+                        // change grouping
+                        node.setGrouping(Function.getter('data.value'));
+                        this.is(false, checkNode(node));
+                        this.is(10, getGroups(node).length);
 
-                    // drop grouping
-                    var order = Array.from(node.childNodes);
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
-                    this.is(null, node.grouping);
-                    this.is(order, node.childNodes);
+                        // drop grouping
+                        var order = Array.from(node.childNodes);
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
+                        this.is(null, node.grouping);
+                        this.is(order, node.childNodes);
 
-                    node.setGrouping({
-                      groupGetter: Function.getter('data.value'),
-                      sorting: Function.getter('data.title')
-                    });
-                    this.is(false, checkNode(node));
+                        node.setGrouping({
+                          groupGetter: Function.getter('data.value'),
+                          sorting: Function.getter('data.title')
+                        });
+                        this.is(false, checkNode(node));
 
-                    var order = Array.from(node.childNodes);
-                    // nothing changed
-                    node.grouping.setSorting(node.grouping.sorting);
-                    this.is(false, checkNode(node));
-                    this.is(order, node.childNodes);
-                    // reverse order
-                    node.grouping.setSorting(node.grouping.sorting, true);
-                    this.is(false, checkNode(node));
-                    this.is($values(order).reverse(), $values(node.childNodes));
-                  }
-                },
-                {
-                  name: 'set grouping #2',
-                  test: function(){
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      grouping: {
-                        groupGetter: Function.getter('data.value')
+                        var order = Array.from(node.childNodes);
+                        // nothing changed
+                        node.grouping.setSorting(node.grouping.sorting);
+                        this.is(false, checkNode(node));
+                        this.is(order, node.childNodes);
+                        // reverse order
+                        node.grouping.setSorting(node.grouping.sorting, true);
+                        this.is(false, checkNode(node));
+                        this.is($values(order).reverse(), $values(node.childNodes));
                       }
-                    });
-                    this.is(false, checkNode(node));
-                    node.setChildNodes(getTestSet());
-                    this.is(false, checkNode(node));
-                    node.clear();
-                    this.is(false, checkNode(node));
-                    node.setChildNodes(getTestSet());
-                    this.is(false, checkNode(node));
-                  }
+                    },
+                    {
+                      name: 'set grouping and clear childNodes',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          grouping: {
+                            groupGetter: Function.getter('data.value')
+                          }
+                        });
+                        this.is(false, checkNode(node));
+
+                        node.setChildNodes(getTestSet());
+                        this.is(false, checkNode(node));
+
+                        node.clear();
+                        this.is(false, checkNode(node));
+
+                        node.setChildNodes(getTestSet());
+                        this.is(false, checkNode(node));
+                      }
+                    },
+                    {
+                      name: 'create with grouping and destroy grouping',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          grouping: {
+                            groupGetter: Function.getter('data.value')
+                          }
+                        });
+
+                        var grouping = node.grouping;
+                        grouping.destroy();
+                        this.is(true, node.grouping === null);
+                        this.is(false, checkNode(node));
+                        this.is(false, checkDestroyedObject(grouping));
+                      }
+                    },
+                    {
+                      name: 'set grouping and destroy grouping',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory
+                        });
+
+                        node.setGrouping('data.value');
+                        this.is(true, node.grouping !== null);
+
+                        var grouping = node.grouping;
+                        grouping.destroy();
+                        this.is(true, node.grouping === null);
+                        this.is(false, checkNode(node));
+                        this.is(false, checkDestroyedObject(grouping));
+                      }
+                    }
+                  ]
                 },
                 {
                   name: 'nesting grouping',
-                  test: function(){
-                    // 1 set, remove one by one, and add one by one
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      grouping: {
-                        groupGetter: Function.getter('data.value'),
-                        grouping: {
-                          groupGetter: Function.getter('data.id % 4'),
-                          grouping: Function.getter('data.id % 2')
-                        }
-                      },
-                      childNodes: getTestSet()
-                    });
+                  testcase: [
+                    {
+                      name: 'create with nested grouping, decrease deep step by step, and increase back step by step',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          grouping: {
+                            groupGetter: Function.getter('data.value'),
+                            grouping: {
+                              groupGetter: Function.getter('data.id % 4'),
+                              grouping: Function.getter('data.id % 2')
+                            }
+                          },
+                          childNodes: getTestSet()
+                        });
+                        this.is(false, checkNode(node));
 
-                    this.is(false, checkNode(node));
-                    node.grouping.grouping.setGrouping();
-                    this.is(false, checkNode(node));
-                    node.grouping.setGrouping();
-                    this.is(false, checkNode(node));
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
-                    node.setGrouping('data.value');
-                    this.is(false, checkNode(node));
-                    node.grouping.setGrouping('data.id % 4');
-                    this.is(false, checkNode(node));
-                    node.grouping.grouping.setGrouping('data.id % 2');
-                    this.is(false, checkNode(node));
+                        node.grouping.grouping.setGrouping();
+                        this.is(false, checkNode(node));
 
-                    // 2 set child node after all
+                        node.grouping.setGrouping();
+                        this.is(false, checkNode(node));
 
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      grouping: {
-                        groupGetter: Function.getter('data.value'),
-                        grouping: {
-                          groupGetter: Function.getter('data.id % 4'),
-                          grouping: Function.getter('data.id % 2')
-                        }
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
+
+                        node.setGrouping('data.value');
+                        this.is(false, checkNode(node));
+
+                        node.grouping.setGrouping('data.id % 4');
+                        this.is(false, checkNode(node));
+
+                        node.grouping.grouping.setGrouping('data.id % 2');
+                        this.is(false, checkNode(node));
                       }
-                    });
-                    node.setChildNodes(getTestSet());
-                    this.is(false, checkNode(node));
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
+                    },
+                    {
+                      name: 'set childs for node with nested grouping',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          grouping: {
+                            groupGetter: Function.getter('data.value'),
+                            grouping: {
+                              groupGetter: Function.getter('data.id % 4'),
+                              grouping: Function.getter('data.id % 2')
+                            }
+                          }
+                        });
 
-                    // 3 increase grouping and drop
+                        node.setChildNodes(getTestSet());
+                        this.is(false, checkNode(node));
 
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet()
-                    });
-                    this.is(false, checkNode(node));
-                    node.setGrouping('data.value');
-                    this.is(false, checkNode(node));
-                    node.grouping.setGrouping('data.id % 4');
-                    this.is(false, checkNode(node));
-                    node.grouping.grouping.setGrouping('data.id % 2');
-                    this.is(false, checkNode(node));
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
+                        node.clear();
+                        this.is(false, checkNode(node));
 
-                    // 4 set nested grouping
+                        node.setChildNodes(getTestSet());
+                        this.is(false, checkNode(node));
 
-                    var node = new nsWrappers.Node({
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet()
-                    });
-                    node.setGrouping({
-                      groupGetter: Function.getter('data.value'),
-                      grouping: {
-                        groupGetter: Function.getter('data.id % 4'),
-                        grouping: Function.getter('data.id % 2')
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
                       }
-                    });
-                    this.is(false, checkNode(node));
-                    node.setGrouping('data.value');
-                    this.is(true, node.grouping != null);
-                    node.setGrouping({
-                      groupGetter: Function.getter('data.value'),
-                      grouping: {
-                        groupGetter: Function.getter('data.id % 4'),
-                        grouping: Function.getter('data.id % 2')
+                    },
+                    {
+                      name: 'increase deep of nested grouping step by step and reset',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet()
+                        });
+                        this.is(false, checkNode(node));
+
+                        node.setGrouping('data.value');
+                        this.is(false, checkNode(node));
+
+                        node.grouping.setGrouping('data.id % 4');
+                        this.is(false, checkNode(node));
+
+                        node.grouping.grouping.setGrouping('data.id % 2');
+                        this.is(false, checkNode(node));
+
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
                       }
-                    });
-                    this.is(false, checkNode(node));
-                    node.setGrouping();
-                    this.is(false, checkNode(node));
-                  }
+                    },
+                    {
+                      name: 'replace nested grouping by other',
+                      test: function(){
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet()
+                        });
+                        node.setGrouping({
+                          groupGetter: Function.getter('data.value'),
+                          grouping: {
+                            groupGetter: Function.getter('data.id % 4'),
+                            grouping: Function.getter('data.id % 2')
+                          }
+                        });
+                        this.is(false, checkNode(node));
+
+                        node.setGrouping('data.value');
+                        this.is(true, node.grouping !== null);
+
+                        node.setGrouping({
+                          groupGetter: Function.getter('data.value'),
+                          grouping: {
+                            groupGetter: Function.getter('data.id % 4'),
+                            grouping: Function.getter('data.id % 2')
+                          }
+                        });
+                        this.is(false, checkNode(node));
+
+                        node.setGrouping();
+                        this.is(false, checkNode(node));
+                      }
+                    }
+                  ]
                 },
                 {
                   name: 'mixing sorting & grouping',
                   test: function(){
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       childNodes: getTestSet()
                     });
@@ -995,7 +1273,7 @@
                 {
                   name: 'partition manipulations',
                   test: function(){
-                    var node = new nsWrappers.Node({
+                    var node = new Node({
                       childFactory: nodeFactory,
                       grouping: {
                         groupGetter: Function.getter('data.group')
@@ -1042,7 +1320,7 @@
                     {
                       name: 'childNodes + group dataset',
                       test: function(){
-                        var node = new nsWrappers.Node({
+                        var node = new Node({
                           childFactory: nodeFactory,
                           childNodes: getTestSet()
                         });
@@ -1069,7 +1347,7 @@
                     {
                       name: 'childNodes + group dataset #2',
                       test: function(){
-                        var node = new nsWrappers.Node({
+                        var node = new Node({
                           childFactory: nodeFactory,
                           childNodes: getTestSet(),
                           grouping: {
@@ -1090,7 +1368,7 @@
                       name: 'childNodes + empty group dataset + fill/clear the dataset',
                       test: function(){
                         var groupDataSource = new basis.data.Dataset();
-                        var node = new nsWrappers.Node({
+                        var node = new Node({
                           childFactory: nodeFactory,
                           childNodes: getTestSet(),
                           grouping: {
@@ -1103,7 +1381,6 @@
                         groupDataSource.add(groupDatasetByGroup.getItems());
                         this.is(false, checkNode(node));
 
-                        debugger;
                         groupDataSource.clear();
                         this.is(false, checkNode(node));
 
@@ -1112,7 +1389,7 @@
                     {
                       name: 'childNodes + group dataset 10',
                       test: function(){
-                        var node = new nsWrappers.Node({
+                        var node = new Node({
                           childFactory: nodeFactory,
                           childNodes: getTestSet()
                         });
@@ -1140,7 +1417,7 @@
                     {
                       name: 'group dataset + child nodes on init',
                       test: function(){
-                        var node = new nsWrappers.Node({
+                        var node = new Node({
                           childFactory: nodeFactory,
                           childNodes: getTestSet(),
                           grouping: {
@@ -1158,7 +1435,7 @@
                     {
                       name: 'group dataset + child nodes after init',
                       test: function(){
-                        var node = new nsWrappers.Node({
+                        var node = new Node({
                           childFactory: nodeFactory,
                           grouping: {
                             groupGetter: Function.getter('data.groupObj'),
