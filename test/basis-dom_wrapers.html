@@ -224,7 +224,7 @@
 
             // check for child groupNode reference
             for (var i = 0, child; child = node.childNodes[i++];)
-              if (node.grouping.getGroupNode(child) !== child.groupNode)
+              if (node.grouping.getGroupNode(child, true) !== child.groupNode)
                 return 'child node has wrong groupNode ref';
 
             // after getGroupNode node.childNodes and groups must not be changed
@@ -686,6 +686,27 @@
                     this.is(dataset, node.dataSource);
                     this.is(dataset.itemCount, node.childNodes.length);
 
+                  }
+                },
+                {
+                  name: 'set dataSource and destroy dataSource',
+                  test: function(){
+                    var dataset = getDataset();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+
+                    var itemCount = dataset.itemCount;
+
+                    this.is(dataset, node.dataSource);
+                    this.is(true, itemCount > 0);
+                    this.is(false, checkNode(node));
+
+                    dataset.destroy();
+
+                    this.is(null, node.dataSource);
+                    this.is(false, checkNode(node));
                   }
                 }
               ]
@@ -1383,7 +1404,44 @@
 
                         groupDataSource.clear();
                         this.is(false, checkNode(node));
+                      }
+                    },
+                    {
+                      name: 'childNodes + empty group dataset + fill/clear the dataset + destroy dataset',
+                      test: function(){
+                        var groupDataSource = new basis.data.Dataset();
+                        var node = new Node({
+                          childFactory: nodeFactory,
+                          childNodes: getTestSet(),
+                          grouping: {
+                            groupGetter: Function.getter('data.groupObj'),
+                            dataSource: groupDataSource
+                          }
+                        });
+                        this.is(false, checkNode(node));
 
+                        groupDataSource.add(groupDatasetByGroup.getItems());
+                        this.is(false, checkNode(node));
+
+                        groupDataSource.destroy();
+                        this.is(null, node.grouping.dataSource);
+                        this.is(true, node.grouping.childNodes.length);
+                        this.is(false, checkNode(node));
+
+                        var dataset2 = new basis.data.Dataset({ items: groupDatasetByGroup.getItems() });
+                        var itemCount = dataset2.itemCount;
+                        this.is(true, itemCount > 0);
+
+                        node.grouping.setDataSource(dataset2);
+                        this.is(dataset2, node.grouping.dataSource);
+                        this.is(itemCount, dataset2.itemCount);
+                        this.is(false, checkNode(node));
+
+                        node.clear();
+                        this.is(dataset2, node.grouping.dataSource);
+                        this.is(itemCount, dataset2.itemCount);
+                        this.is(0, node.childNodes.length);
+                        this.is(false, checkNode(node));
                       }
                     },
                     {

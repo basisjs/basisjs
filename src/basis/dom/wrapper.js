@@ -71,6 +71,7 @@ basis.require('basis.html');
   /** @const */ var EXCEPTION_BAD_CHILD_CLASS = namespace + ': Child node has wrong class';
   /** @const */ var EXCEPTION_NULL_CHILD = namespace + ': Child node is null';
   /** @const */ var EXCEPTION_DATASOURCE_CONFLICT = namespace + ': Operation is not allowed because node is under dataSource control';
+  /** @const */ var EXCEPTION_PARENTNODE_OWNER_CONFLICT = namespace + ': Node can\'t has owner and parentNode';
 
   var DELEGATE = {
     NONE: 'none',
@@ -343,6 +344,7 @@ basis.require('basis.html');
   //
 
   LISTEN.add('owner', 'ownerChanged');
+  LISTEN.add('dataSource', 'dataSourceChanged');
 
 
  /**
@@ -769,6 +771,9 @@ basis.require('basis.html');
       if (!owner || owner instanceof AbstractNode == false)
         owner = null;
 
+      //if (owner && this.parentNode)
+      //  throw EXCEPTION_PARENTNODE_OWNER_CONFLICT;
+
       var oldOwner = this.owner;
       if (oldOwner !== owner)
       {
@@ -1178,6 +1183,9 @@ basis.require('basis.html');
       // construct new childClass instance if newChild is not instance of childClass
       if (!isChildClassInstance)
         newChild = createChildByFactory(this, newChild instanceof DataObject ? { delegate: newChild } : newChild);
+
+      //if (newChild.owner)
+      //  throw EXCEPTION_PARENTNODE_OWNER_CONFLICT;
 
       // search for insert point
       var isInside = newChild.parentNode === this;
@@ -1644,20 +1652,13 @@ basis.require('basis.html');
         if (oldDataSource)
         {
           this.dataSourceMap_ = null;
-
-          if (listenHandler)
-            oldDataSource.removeHandler(listenHandler, this);
-
-          if (oldDataSource.itemCount)
-          {
-            this.dataSource = null;
-            this.clear();
-          }
+          this.dataSource = null;
         }
-        else
+
+        // remove old childs
+        if (this.firstChild)
           this.clear();
 
-        // NOTE: this assigment must be here, because clear method call requires for dataSource be null
         this.dataSource = dataSource;
 
         // TODO: switch off sorting & grouping
@@ -1669,8 +1670,6 @@ basis.require('basis.html');
 
           if (listenHandler)
           {
-            dataSource.addHandler(listenHandler, this);
-
             if (dataSource.itemCount && listenHandler.datasetChanged)
               listenHandler.datasetChanged.call(this, dataSource, {
                 inserted: dataSource.getItems()
