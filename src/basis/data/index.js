@@ -450,7 +450,7 @@ basis.require('basis.data.property');
     }
   };
 
-  var DATASET_INDEX_HANDLER = {
+  var DATASET_WITH_INDEX_HANDLER = {
     datasetChanged: function(object, delta){
       var array;
 
@@ -470,8 +470,9 @@ basis.require('basis.data.property');
     },
     
     destroy: function(){
-      for (var indexId in this.indexes)
-        this.indexes[indexId].destroy();
+      var indexes = Object.values(this.indexes);
+      for (var indexId in indexes)
+        this.deleteIndex(indexes[indexId]);
     }
   };
 
@@ -500,8 +501,8 @@ basis.require('basis.data.property');
       {
         this.indexes = {};
 
-        this.addHandler(DATASET_INDEX_HANDLER);
-        DATASET_INDEX_HANDLER.datasetChanged.call(this, this, {
+        this.addHandler(DATASET_WITH_INDEX_HANDLER);
+        DATASET_WITH_INDEX_HANDLER.datasetChanged.call(this, this, {
           inserted: this.getItems()
         });
       }
@@ -540,7 +541,7 @@ basis.require('basis.data.property');
           return;
 
         // if no indexes - delete indexes storage and remove handlers
-        this.removeHandler(DATASET_INDEX_HANDLER);
+        this.removeHandler(DATASET_WITH_INDEX_HANDLER);
         this.indexes = null;
       }
     }

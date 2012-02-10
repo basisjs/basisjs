@@ -1262,7 +1262,8 @@ basis.require('basis.data.dataset');
 
         // unlink attached handlers
         for (var key in this.fieldHandlers_)
-          this.data[key].removeHandler(fieldDestroyHandlers[key], this);
+          if (this.fieldHandlers_[key])
+            this.data[key].removeHandler(fieldDestroyHandlers[key], this);
 
         this.fieldHandlers_ = NULL_INFO;
 
