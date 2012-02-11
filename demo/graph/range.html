@@ -164,7 +164,7 @@
       limit: 300
     });
 
-    new LinearGraph({
+    var graph = new LinearGraph({
       autoRotateScale: true,
       container: DOM.get('demo-container'),
       width: 800,
@@ -176,7 +176,8 @@
         lineWidth: 1.5
       },
       dataSource: reportSlice,
-      keyGetter: function(object){
+      keyGetter: Function.getter('data.Date'),
+      keyTitleGetter: function(object){
         var date = object.data.Date;
         return date.getDate() + ' ' + basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },

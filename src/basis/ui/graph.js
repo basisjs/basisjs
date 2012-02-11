@@ -31,6 +31,9 @@ basis.require('basis.ui.canvas');
   //
   // import names
   //
+  var OneFunctionProperty = basis.Class.OneFunctionProperty;
+
+
   var Event = basis.dom.event;
   var DOM = basis.dom;
 
@@ -160,10 +163,7 @@ basis.require('basis.ui.canvas');
   * @class
   */
   var GraphNode = Node.subclass({
-    event_update: function(object, delta){
-      Node.prototype.event_update.call(this, object, delta);
-      this.parentNode.redraw();
-    }
+    event_requestRedraw: createEvent('requestRedraw'),
   });
 
  /**
@@ -193,6 +193,14 @@ basis.require('basis.ui.canvas');
       this.redraw();
     },
 
+    listen: {
+      childNode: {
+        requestRedraw: function(){
+          this.redraw();
+        }
+      }
+    },
+
     redraw: function(){
       this.updateCount++;
     },
@@ -205,61 +213,69 @@ basis.require('basis.ui.canvas');
     drawFrame: Function.$undef
   });
 
+  
+  
   //
-  // Axis Graph with series
+  // Series Graph
   //
+  var SERIES_SOURCE_HANDLER = {
+    datasetChanged: function(object, delta){
+      var key;
+      var value;
+      var valuesDelta = [];
 
+      if (delta.inserted)
+        for (var i = 0, child; child = delta.inserted[i]; i++)
+        {
+          key = this.keyGetter(child);
+          value = this.valueGetter(child);
 
-  var updateSeriaMapHandler = function(object, delta){
-    if (delta.inserted)
-      for (var i = 0, object; object = delta.inserted[i]; i++)
-      {
-        this.valuesMap[this.keyGetter(object)] = this.valueGetter(object);
-        object.addHandler(SERIA_ITEM_HANDLER, this);
-      }
+          valuesDelta[key] = value;
+          this.valuesMap[key] = value;
 
-    if (delta.deleted)
-      for (var i = 0, object; object = delta.deleted[i]; i++)
-      {
-        this.valuesMap[this.keyGetter(object)] = null;
-        object.removeHandler(SERIA_ITEM_HANDLER, this);
-      }
+          child.addHandler(SERIES_ITEM_HANDLER, this);
+        }
 
-    this.event_redrawRequest();
-  } 
+      if (delta.deleted)
+        for (var i = 0, child; child = delta.deleted[i]; i++)
+        {
+          key = this.keyGetter(child);
+          valuesDelta[key] = null
+          this.valuesMap[key] = null;
 
-  var SERIA_SOURCE_HANDLER = {
-    datasetChanged: updateSeriaMapHandler
+          child.removeHandler(SERIES_ITEM_HANDLER, this);
+        }
+
+      this.event_valuesChanged(this, valuesDelta);
+    } 
   }
 
-  var SERIA_OWNER_HANDLER = {
-    childNodesModified: updateSeriaMapHandler
-  }
+  var SERIES_ITEM_HANDLER = {
+    update: function(object, delta){ 
+      var key = this.keyGetter(object);
+      var value = this.valueGetter(object);
 
-  var SERIA_ITEM_HANDLER = {
-    update: function(object, delta){
-      this.valuesMap[this.keyGetter(object)] = this.valueGetter(object);
-      this.event_redrawRequest();
+      var valuesDelta = {};
+      this.valuesMap[key] = value;
+      valuesDelta[key] = value;
+
+      this.event_valuesChanged(this, valuesDelta);
     }
   }
 
  /**
   * @class
   */
-  var GraphSeria = Node.subclass({
-    className: namespace + '.GraphSeria',
+  var GraphSeries = Node.subclass({
+    className: namespace + '.GraphSeries',
 
-    valuesMap: {},
+    valuesMap: null,
 
     sourceGetter: Function.$undef,
     keyGetter: Function.$undef,
     valueGetter: Function.$const(0),
-
-    getValue: function(key){
-      return this.valuesMap[key] || 0;
-    },
-    getValues: function(keys){
-      return keys.map(this.getValue, this);
+    getValue: function(object, key){
+      return this.source ? this.valuesMap[key] : this.valueGetter(object);
     },
 
     legendGetter: Function.getter('legend'),
@@ -273,69 +289,86 @@ basis.require('basis.ui.canvas');
     },
 
     //events
-    event_redrawRequest: createEvent('redrawRequest'),
-
-    event_update: function(object, delta){
-      Node.prototype.event_update.call(this, object, delta);
-      this.event_redrawRequest();
-    },
+    event_valuesChanged: createEvent('valuesChanged', 'object', 'delta'),
 
     init: function(config){
       Node.prototype.init.call(this, config);
 
       this.valuesMap = {};
 
-      if (this.keyGetter == Function.$undef)
-        this.keyGetter = this.owner.keyGetter;
-
       if (!this.source)
         this.source = this.sourceGetter(this);
 
       if (this.source)
       {
-        this.source.addHandler(SERIA_SOURCE_HANDLER, this);
-        SERIA_SOURCE_HANDLER.datasetChanged.call(this, this.source, { inserted: this.source.getItems() });
+        var source = this.source;
+        this.source = null;
+        this.setSource(source);
       }
-      else
+    },
+
+    setSource: function(source){
+      var oldSource;
+      if (this.source != source)
       {
-        this.owner.addHandler(SERIA_OWNER_HANDLER, this);
-        SERIA_OWNER_HANDLER.childNodesModified.call(this, this.owner, { inserted: this.owner.childNodes });
+        oldSource = this.source;
+        this.source = source;
+      }
+
+      if (oldSource)
+      {
+        oldSource.removeHandler(SERIES_SOURCE_HANDLER, this);
+        SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { deleted: oldSource.getItems() });
+      }
+
+      if (this.source)
+      {
+        this.source.addHandler(SERIES_SOURCE_HANDLER, this);
+        SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { inserted: this.source.getItems() });
       }
     },
 
     destroy: function(){
-      if (this.source)
-        this.source.removeHandler(SERIA_SOURCE_HANDLER, this);
-      else
-        this.owner.removeHanlder(SERIA_OWNER_HANDLER, this);
-
-      delete this.source;
-      delete this.valuesMap;
-
+      this.setSource(null);
       Node.prototype.destroy.call(this);
     }
   });
+
 
  /**
   * @class
   */
   var GraphSeriesList = Node.subclass({
-    childClass: GraphSeria,
+    childClass: GraphSeries,
 
     childFactory: function(config){
-      config.owner = this.owner;
       return new this.childClass(config);
-    },
-
-    event_childNodesModified: function(object, delta){
-      Node.prototype.event_childNodesModified.call(this, object, delta);
-      this.owner.redraw();
     },
 
     listen: {
       childNode: {
-        redrawRequest: function(){
-          this.owner.redraw();
+        valuesChanged: function(seria, delta){
+          if (!this.owner)
+            return;
+
+          var needRedraw = false;
+
+          var key;
+          for (var i = 0, child; child = this.owner.childNodes[i]; i++)
+          {
+            key = this.owner.keyGetter(child);
+            if (delta[key]){
+              if (delta[key])
+                child.values[seria.eventObjectId] = delta[key];
+              else
+                delete child.values[seria.eventObjectId];
+
+              needRedraw = true;
+            }
+          }
+
+          if (needRedraw)
+            this.owner.redraw();
         }
       }
     },
@@ -347,17 +380,138 @@ basis.require('basis.ui.canvas');
 
     destroy: function(){
       this.colorPicker.destroy();
-      delete this.colorPicker;
-      
+      this.colorPicker = null;
+
       Node.prototype.destroy.call(this);
+    }
+  });
+
+  var GRAPH_SERIES_HANDLER = {
+    childNodesModified: function(object, delta){
+      if (delta.inserted)
+        for (var i = 0, seria; seria = delta.inserted[i]; i++)
+        {
+          for (var j = 0, child; child = this.childNodes[j]; j++)
+            child.values[seria.eventObjectId] = seria.getValue(child, this.keyGetter(child));
+        }
+
+      if (delta.deleted)
+        for (var i = 0, seria; seria = delta.deleted[i]; i++)
+        {
+          for (var j = 0, child; child = this.childNodes[j]; j++)
+            child.values[seria.eventObjectId] = null;
+        }
+
+      this.redraw();
+    }
+  }
+
+  var GRAPH_NODE_UPDATE_HANDLER = function(object){
+    for (var i = 0, seria; seria = this.series.childNides[i]; i++)
+      object.values[seria.eventObjectId] = seria.getValue(object, this.keyGetter(object));
+
+    this.redraw();
+  }
+
+ /**
+  * @class
+  */
+  var SeriesGraphNode = GraphNode.subclass({
+    values: {},
+
+    valueChangeEvents: OneFunctionProperty(
+      GRAPH_NODE_UPDATE_HANDLER,
+      {
+        update: true
+      }
+    ),
+
+    init: function(config){
+      GraphNode.prototype.init.call(this, config);
+      this.values = {};
     }
   });
 
  /**
   * @class
   */
-  var AxisGraph = Graph.subclass({
-    keyGetter: Function.getter('key'),
+  var SeriesGraph = Graph.subclass({
+    childClass: SeriesGraphNode,    
+
+    keyGetter: Function.$self,
+    keyTitleGetter: function(object){
+      return this.keyGetter(object); 
+    },
+    
+    event_childNodesModified: function(object, delta){
+      Graph.prototype.event_childNodesModified.call(this, object, delta);
+
+      if (!this.series || !this.series.childNodes)
+        return;
+    
+      if (delta.inserted)
+        for (var i = 0, child; child = delta.inserted[i]; i++)
+        {
+          for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
+            if (seria.getValue)
+              child.values[seria.eventObjectId] = seria.getValue(child, this.keyGetter(child));
+
+          child.addHandler(child.valueChangeEvents, this);
+        }
+
+      if (delta.deleted)
+        for (var i = 0, child; child = delta.deleted[i]; i++)
+        {
+          for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
+            child.values[seria.eventObjectId] = null;
+
+          child.removeHandler(child.valueChangeEvents, this);
+        }
+
+      this.redraw();
+    },
+
+    //init
+    init: function(config){
+      Graph.prototype.init.call(this, config);
+
+      if (Array.isArray(this.series))
+      {
+        var series = [];
+        for (var i = 0, seria; seria = this.series[i]; i++)
+          series[i] = (seria instanceof Function) ? { valueGetter: seria } : seria;
+        
+        this.series = {
+          childNodes: series
+        }
+      }
+
+      this.series = new GraphSeriesList(Object.extend({ owner: this }, this.series));
+      this.series.addHandler(GRAPH_SERIES_HANDLER, this);
+      GRAPH_SERIES_HANDLER.childNodesModified.call(this, this.series, { inserted: this.series.childNodes });
+    },
+
+    getValuesForSeria: function(seria){
+      var values = [];
+      for (var i = 0, child; child = this.childNodes[i]; i++)
+        values.push(child.values[seria.eventObjectId])
+      return values;
+    },
+
+    destroy: function(){
+      this.series.removeHandler(GRAPH_SERIES_HANDLER, this);
+      this.series.destroy();
+      delete this.series;
+
+      Graph.prototype.destroy.call(this);
+    }
+  });
+
+
+ /**
+  * @class
+  */
+  var AxisGraph = SeriesGraph.subclass({
     showLegend: true,
     showYLabels: true,
     showXLabels: true,
@@ -375,28 +529,7 @@ basis.require('basis.ui.canvas');
     init: function(config){
       this.clientRect = {};
 
-      Graph.prototype.init.call(this, config);
-
-      if (this.series instanceof Array)
-      {
-        var series = [];
-
-        for (var i = 0; i < this.series.length; i++)
-        {
-          if (this.series[i] instanceof Function)
-          {
-            this.series[i] = {
-              valueGetter: this.series[i]
-            }
-          }
-        }
-        
-        this.series = {
-          childNodes: this.series
-        }
-      }
-
-      this.seriesList = new GraphSeriesList(Object.extend({ owner: this }, this.series));
+      SeriesGraph.prototype.init.call(this, config);
     },
 
     drawFrame: function(){
@@ -409,8 +542,8 @@ basis.require('basis.ui.canvas');
       var WIDTH = context.canvas.width;
       var HEIGHT = context.canvas.height;
 
-      var series = this.seriesList.childNodes;
-      var keys = this.getKeys();
+      var series = this.series.childNodes;
+      var keys = this.childNodes.map(this.keyTitleGetter, this);
       var keysCount = keys.length;
 
       if (keysCount < 2 || !series.length)
@@ -681,7 +814,7 @@ basis.require('basis.ui.canvas');
       var step = this.invertAxis ? yStep : xStep;
       for (var i = 0, seria; seria = series[i]; i++)
       {
-        this.drawSeria(seria, keys, i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
+        this.drawSeria(this.getValuesForSeria(seria), seria.getColor(), i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
       }  
 
       //save graph data
@@ -695,10 +828,6 @@ basis.require('basis.ui.canvas');
       this.maxValue = maxValue;
     },
 
-    getKeys: function(){
-      return this.childNodes.map(this.keyGetter);
-    },
-
     setMin: function(min){
       this.min = min;
       this.updateCount++;
@@ -708,7 +837,7 @@ basis.require('basis.ui.canvas');
       this.updateCount++;
     },
     getMinValue: function(){
-      var values;
+      /*var values;
       var min;
 
       var keys = this.getKeys();
@@ -719,10 +848,18 @@ basis.require('basis.ui.canvas');
           values.push(min);
         min = Math.min.apply(null, values);
       }
+      return min;*/
+      var min;
+      for (var i = 0, child; child = this.childNodes[i]; i++)
+      {
+        for (var j in child.values)
+          if (child.values[j] < min || min == null)
+            min = child.values[j]
+      }
       return min;
     },
     getMaxValue: function(){
-      var values;
+      /*var values;
       var max;
 
       var keys = this.getKeys();
@@ -732,6 +869,14 @@ basis.require('basis.ui.canvas');
         if (max)
           values.push(max);
         max = Math.max.apply(null, values);
+      }
+      return max;*/
+      var max;
+      for (var i = 0, child; child = this.childNodes[i]; i++)
+      {
+        for (var j in child.values)
+          if (child.values[j] > max || max == null)
+            max = child.values[j]
       }
       return max;
     },
@@ -790,13 +935,6 @@ basis.require('basis.ui.canvas');
       }
 
       return maxGridValue / result;
-    },
-
-    destroy: function(){
-      this.seriesList.destroy();
-      delete this.seriesList;
-
-      Graph.prototype.destroy.call(this);
     },
 
     // abstract methods
@@ -882,9 +1020,9 @@ basis.require('basis.ui.canvas');
       var HEIGHT = this.clientRect.height;
       var MAX = this.max;
 
-      var series = this.owner.seriesList.childNodes;
-      var keys = this.owner.getKeys();
-      var step = WIDTH / (keys.length - 1);
+      var series = this.owner.series.childNodes;
+      var keyCount = this.owner.childNodes.length;
+      var step = WIDTH / (keyCount - 1);
       var keyPosition = Math.round(x / step);
       var xPosition = Math.round(keyPosition * step);
 
@@ -897,7 +1035,7 @@ basis.require('basis.ui.canvas');
 
       context.font = "10px tahoma";
       context.textAlign = "center";
-      var keyText = keys[keyPosition];
+      var keyText = this.owner.keyTitleGetter(this.owner.childNodes[keyPosition]);
       var keyTextWidth = context.measureText(keyText).width;
       var keyTextHeight = 10;
 
@@ -925,10 +1063,10 @@ basis.require('basis.ui.canvas');
       var labelHeight = 10 + 2*labelPadding;
       var labelWidth = 0;
 
-      var key = this.owner.getKeys()[keyPosition];
+      //var key = this.owner.keyGetter(this.owner.childNodes[keyPosition]);
       for (var i = 0, seria; seria = series[i]; i++)
       {
-        var value = seria.getValue(key);
+        var value = this.owner.childNodes[keyPosition].values[seria.eventObjectId];
 
         if (isNaN(value))
           continue;
@@ -985,7 +1123,7 @@ basis.require('basis.ui.canvas');
       }
 
       // draw labels
-      var align = keyPosition >= (keys.length / 2) ? -1 : 1;
+      var align = keyPosition >= (keyCount / 2) ? -1 : 1;
 
       for (var i = 0, label; label = labels[i]; i++)
       {
@@ -1043,15 +1181,15 @@ basis.require('basis.ui.canvas');
       }
     },
 
-    drawSeria: function(seria, keys, pos, min, max, step, left, top, width, height){
+    drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
       var context = this.context;
 
       if (!this.keyValuesOnEdges)
         left += step / 2;
 
-      var color = seria.getColor();
+      //var color = seria.getColor();
       this.style.strokeStyle = color;
-      var values = seria.getValues(keys);
+      //var values = seria.getValues(keys);
 
       context.save();
       context.translate(left, top);
@@ -1101,8 +1239,8 @@ basis.require('basis.ui.canvas');
 
       var clientRect = this.owner.clientRect;
       var bars = this.owner.bars;
-      var series = this.owner.seriesList.childNodes;
-      var keys = this.owner.getKeys();
+      var series = this.owner.series.childNodes;
+      //var keys = this.owner.getKeys();
             
       var invertAxis = this.owner.invertAxis; 
       var WIDTH = clientRect.width;
@@ -1111,6 +1249,8 @@ basis.require('basis.ui.canvas');
       var step = (invertAxis ? HEIGHT : WIDTH) / bars[0].length;
       var position = invertAxis ? y : x;
       var barPosition = Math.floor(position / step);
+
+      var keyTitle = this.owner.keyTitleGetter(this.owner.childNodes[barPosition]);
       
       var legendText;
       var hoveredBar;
@@ -1131,7 +1271,7 @@ basis.require('basis.ui.canvas');
 
       var TOOLTIP_PADDING = 5;
 
-      var tooltipText = keys[barPosition] + ', ' + legendText + ', ' + Number(hoveredBar.value.toFixed(2)).group();
+      var tooltipText = keyTitle + ', ' + legendText + ', ' + Number(hoveredBar.value.toFixed(2)).group();
       context.font = "10px Tahoma";
       
       var tooltipTextWidth = context.measureText(tooltipText).width;
@@ -1185,11 +1325,11 @@ basis.require('basis.ui.canvas');
       AxisGraph.prototype.drawFrame.call(this);
     },
 
-    drawSeria: function(seria, keys, pos, min, max, step, left, top, width, height){
+    drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
       var context = this.context;
 
-      var values = seria.getValues(keys);
-      var color = seria.getColor();
+      //var values = seria.getValues(keys);
+      //var color = seria.getColor();
 
       context.save();
       context.translate(left, top);
@@ -1221,7 +1361,7 @@ basis.require('basis.ui.canvas');
       context.restore();
     },
     getBarRect: function(value, seriaPos, barPos, min, max, step, width, height, zeroLinePosition){                                                                        
-      var cnt = this.seriesList.childNodes.length;
+      var cnt = this.series.childNodes.length;
       var barSize = Math.round(0.7 * step / cnt);
 
       var bar = {};
@@ -1257,7 +1397,20 @@ basis.require('basis.ui.canvas');
    */
   var StackedBarGraph = BarGraph.subclass({
     getMaxValue: function(){
-      var keys = this.getKeys();
+      var max;
+      var sum;
+      for (var i = 0, child; child = this.childNodes[i]; i++)
+      {
+        sum = 0;
+        for (var j in child.values)
+          sum += child.values[j];
+
+        if (sum > max || max == null)
+          max = sum
+      }
+      return max;
+
+      /*var keys = this.getKeys();
       var series = this.seriesList.childNodes;
       var values = series[0].getValues(keys);
       for (var i = 1, seria; seria = series[i]; i++)
@@ -1265,7 +1418,7 @@ basis.require('basis.ui.canvas');
         seria.getValues(keys).forEach(function(value, pos) { values[pos] += value });
       }
 
-      return Math.max.apply(null, values);
+      return Math.max.apply(null, values);*/
     },
     getBarRect: function(value, seriaPos, barPos, min, max, step, width, height, zeroLinePosition){
       var bar = {};

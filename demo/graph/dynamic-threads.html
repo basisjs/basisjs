@@ -167,6 +167,9 @@
       dataSource: CompanyReport.getGrouping('Company').getSubset(Company('microsoft')),
       sorting: Function.getter('data.Date'),
       keyGetter: function(object){
+        return object.data.Date;
+      },
+      keyTitleGetter: function(object){
         var date = new Date(object.data.Date);
         return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
@@ -180,6 +183,7 @@
           legendGetter: function(object){
             return object.data.Title;
           },
+          keyGetter: Function.getter('data.Date'),
           valueGetter: Function.getter('data.Amount')
         }
       }
