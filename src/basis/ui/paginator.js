@@ -145,7 +145,7 @@ basis.require('basis.ui');
     childClass: PaginatorNode,
 
     template:
-    	'<div{element} class="Basis-Paginator" event-mousewheel="scroll">' +
+    	'<div class="Basis-Paginator" event-mousewheel="scroll">' +
         '<table><tbody><tr{childNodesElement}/></tbody></table>' +
         '<div{scrollbarContainer} class="Basis-Paginator-ScrollbarContainer">' +
           '<div{scrollbar} class="Basis-Paginator-Scrollbar" event-click="jumpTo">' +

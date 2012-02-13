@@ -15,12 +15,9 @@
   .Basis-Popup
   {
     position: absolute;
-    background-color: #FFFF99;
-    border: 1px solid #F2C261;/*
-    opacity: 0.9;
-    -moz-opacity: 0.9;
-    -khtml-opacity: 0.9;
-    filter: alpha(opacity: 90);*/
+    background-color: white;
+    border: 1px solid #CCC;
+    box-shadow: 1px 1px 5px rgba(0,0,0,.2);
   }
 
   .Basis-Popup-Content

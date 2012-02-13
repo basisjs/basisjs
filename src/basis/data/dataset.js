@@ -823,7 +823,7 @@ basis.require('basis.data');
     var curMember = sourceMap.member;
 
     // if member ref is changed
-    if (curMember != newMember)
+    if (curMember !== newMember)
     {
       var memberMap = this.memberMap_;
       var delta;
@@ -995,6 +995,16 @@ basis.require('basis.data');
     rule: $true,
 
    /**
+    * Events list when dataset should recompute rule for source item.
+    */
+    ruleEvents: OneFunctionProperty(
+      MAPREDUCE_SOURCEOBJECT_UPDATE,
+      {
+        update: true
+      }
+    ),
+
+   /**
     * NOTE: Can't be changed after init.
     * @type {function(basis.data.DataObject, basis.data.DataObject)}
     * @readonly
@@ -1015,33 +1025,7 @@ basis.require('basis.data');
       source: MAPREDUCE_SOURCE_HANDLER
     },
 
-   /**
-    * Events list when dataset should recompute rule for source item.
-    */
-    ruleEvents: OneFunctionProperty(
-      MAPREDUCE_SOURCEOBJECT_UPDATE,
-      {
-        update: true
-      }
-    ),
-
     // no special init
-
-   /**
-    * Set new filter function.
-    * @param {function(basis.data.DataObject):boolean} filter
-    * @return {Object} Delta of member changes.
-    */
-    setRule: function(rule){
-      if (typeof rule != 'function')
-        rule = $true;
-
-      if (this.rule !== rule)
-      {
-        this.rule = rule;
-        return this.applyRule();
-      }
-    },
 
    /**
     * Set new transform function and apply new function to source objects.
@@ -1069,6 +1053,22 @@ basis.require('basis.data');
       if (this.reduce !== reduce)
       {
         this.reduce = reduce;
+        return this.applyRule();
+      }
+    },
+
+   /**
+    * Set new filter function.
+    * @param {function(basis.data.DataObject):boolean} filter
+    * @return {Object} Delta of member changes.
+    */
+    setRule: function(rule){
+      if (typeof rule != 'function')
+        rule = $true;
+
+      if (this.rule !== rule)
+      {
+        this.rule = rule;
         return this.applyRule();
       }
     },
@@ -1191,13 +1191,6 @@ basis.require('basis.data');
     className: namespace + '.Split',
 
    /**
-    * @inheritDoc
-    */
-    map: function(sourceObject){
-      return this.keyMap.resolve(sourceObject);
-    },
-
-   /**
     * @type {basis.data.AbstractDataset}
     */
     subsetClass: AbstractDataset,
@@ -1206,6 +1199,13 @@ basis.require('basis.data');
     * @type {basis.data.KeyObjectMap}
     */
     keyMap: null,
+
+   /**
+    * @inheritDoc
+    */
+    map: function(sourceObject){
+      return this.keyMap.resolve(sourceObject);
+    },
 
    /**
     * @inheritDoc
@@ -1427,6 +1427,16 @@ basis.require('basis.data');
     rule: $true,
 
    /**
+    * Events list when dataset should recompute rule for source item.
+    */
+    ruleEvents: OneFunctionProperty(
+      SLICE_SOURCEOBJECT_UPDATE,
+      {
+        update: true
+      }
+    ),
+
+   /**
     * Calculated source object values
     * @type {Array.<basis.data.DataSource>}
     * @private
@@ -1460,16 +1470,6 @@ basis.require('basis.data');
     listen: {
       source: SLICE_SOURCE_HANDLER
     },
-
-   /**
-    * Events list when dataset should recompute rule for source item.
-    */
-    ruleEvents: OneFunctionProperty(
-      SLICE_SOURCEOBJECT_UPDATE,
-      {
-        update: true
-      }
-    ),
 
    /**
     * @event
@@ -1723,33 +1723,16 @@ basis.require('basis.data');
   */
   var Cloud = Class(AbstractDataset, SourceDatasetMixin, {
     className: namespace + '.Cloud',
-    
-   /**
-    * @type {function(basis.data.DataObject)}
-    */
-    rule: $true,
-
-   /**
-    * @inheritDoc
-    */
-    map: $self,
 
    /**
     * @type {basis.data.AbstractDataset}
     */
     subsetClass: AbstractDataset,
-
+    
    /**
-    * @type {basis.data.KeyObjectMap}
+    * @type {function(basis.data.DataObject)}
     */
-    keyMap: null,
-
-   /**
-    * @inheritDoc
-    */
-    listen: {
-      source: CLOUD_SOURCE_HANDLER
-    },
+    rule: $false,
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -1760,6 +1743,23 @@ basis.require('basis.data');
         update: true
       }
     ),
+
+   /**
+    * @type {basis.data.KeyObjectMap}
+    */
+    keyMap: null,
+
+   /**
+    * @inheritDoc
+    */
+    map: $self,
+
+   /**
+    * @inheritDoc
+    */
+    listen: {
+      source: CLOUD_SOURCE_HANDLER
+    },
 
    /**
     * @constructor

@@ -102,7 +102,7 @@ basis.require('basis.ui');
     className: namespace + '.Popup',
 
     template: 
-      '<div{element|selected} class="Basis-Popup">' +
+      '<div{selected} class="Basis-Popup">' +
         '<div{closeButton} class="Basis-Popup-CloseButton"><span>Close</span></div>' +
         '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
       '</div>',
@@ -435,7 +435,7 @@ basis.require('basis.ui');
     cssLayoutPrefix: 'mode-',
 
     template: 
-      '<div{element|selected} class="Basis-Balloon" event-click="click">' +
+      '<div{selected} class="Basis-Balloon" event-click="click">' +
         '<div class="Basis-Balloon-Canvas">' +
           '<div class="corner-left-top"/>' +
           '<div class="corner-right-top"/>' +
@@ -469,7 +469,7 @@ basis.require('basis.ui');
     childClass: Class.SELF,
 
     template:
-      '<div{element} class="Basis-Menu-Item" event-click="click">' +
+      '<div class="Basis-Menu-Item" event-click="click">' +
         '<a{content|selected} href="#"><span>{captionText}</span></a>' +
       '</div>'/* +
       '<div{childNodesElement}/>'*/,
@@ -535,7 +535,7 @@ basis.require('basis.ui');
     className: namespace + '.MenuPartitionNode',
 
     template:
-      '<div{element} class="Basis-Menu-ItemGroup">' +
+      '<div class="Basis-Menu-ItemGroup">' +
         '<div{childNodesElement|content} class="Basis-Menu-ItemGroup-Content"></div>' +
       '</div>'
   });
@@ -566,7 +566,7 @@ basis.require('basis.ui');
     },
 
     template:
-      '<div{element|selected} class="Basis-Menu">' +
+      '<div{selected} class="Basis-Menu">' +
         '<div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>' +
         '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
       '</div>'

@@ -49,7 +49,7 @@ basis.require('basis.ui');
   //
 
   function findAndSelectActiveNode(control){
-    if (control.selection && !control.selection.itemCount)
+    if (control.autoSelectChild && control.selection && !control.selection.itemCount)
     {
       // select first non-disabled child
       var node = control.childNodes.search(false, 'disabled');
@@ -65,6 +65,8 @@ basis.require('basis.ui');
     className: namespace + '.AbstractTabsControl',
 
     childClass: UINode,
+
+    autoSelectChild: true,
 
     event_childNodesModified: function(node, delta){
       findAndSelectActiveNode(this);

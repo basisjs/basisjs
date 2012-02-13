@@ -598,7 +598,7 @@ basis.require('basis.animation');
     event_updatePosition: createEvent('updatePosition'),
 
     template: 
-      '<div{element} class="Basis-ScrollPanel" event-mousewheel="onwheel">' +
+      '<div class="Basis-ScrollPanel" event-mousewheel="onwheel">' +
         '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content"/>' +
         '<!--{horizontalScrollbar}-->' +
         '<!--{verticalScrollbar}-->' +

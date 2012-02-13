@@ -125,7 +125,7 @@ basis.require('basis.cssom');
     className: namespace + '.Control',
     childClass: TocControlItem,
     template:
-      '<div{element} class="TocControl">' +
+      '<div class="TocControl">' +
         '<div{content|childNodesElement} class="TocControl-Content"/>' +
       '</div>',
 

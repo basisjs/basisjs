@@ -83,9 +83,9 @@
                     fn.apply(config.thisObject, arguments);
 
                 // any event handler
-                if (func = config.handler['*'])
-                  if (typeof func == 'function')
-                    func.call(config.thisObject, {
+                if (fn = config.handler['*'])
+                  if (typeof fn == 'function')
+                    fn.call(config.thisObject, {
                       sender: this,
                       type: eventName,
                       args: arguments
