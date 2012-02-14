@@ -46,6 +46,7 @@ basis.require('basis.ui.canvas');
   var ChildNodesDataset = basis.dom.wrapper.ChildNodesDataset;
 
   var createEvent = basis.event.create;
+  var getter = Function.getter;
 
   //
   // Main part
@@ -186,27 +187,27 @@ basis.require('basis.ui.canvas');
 
     event_sortingChanged: function(node, oldSorting, oldSortingDesc){
       Canvas.prototype.event_sortingChanged.call(this, node, oldSorting, oldSortingDesc);
-      this.redraw();
+      this.redrawRequest();
     },
     event_childNodesModified: function(node, delta){
       Canvas.prototype.event_childNodesModified.call(this, node, delta);
-      this.redraw();
+      this.redrawRequest();
     },
 
     listen: {
       childNode: {
         requestRedraw: function(){
-          this.redraw();
+          this.redrawRequest();
         }
       }
     },
 
-    redraw: function(){
-      this.updateCount++;
-    },
-
     setStyle: function(newStyle){
       Object.extend(this.style, Object.slice(newStyle, ['strokeStyle', 'lineWidth']));
+      this.redrawRequest();
+    },
+
+    redrawRequest: function(){
       this.updateCount++;
     },
 
@@ -266,38 +267,39 @@ basis.require('basis.ui.canvas');
  /**
   * @class
   */
-  var GraphSeries = Node.subclass({
+  var GraphSeries = AbstractNode.subclass({
     className: namespace + '.GraphSeries',
 
     valuesMap: null,
 
-    sourceGetter: Function.$undef,
+    sourceGetter: getter('source'),
     keyGetter: Function.$undef,
+    
     valueGetter: Function.$const(0),
     getValue: function(object, key){
       return this.source ? this.valuesMap[key] : this.valueGetter(object);
     },
 
-    legendGetter: Function.getter('legend'),
+    legendGetter: getter('legend'),
     getLegend: function(){
       return this.legendGetter(this)
     },
 
-    colorGetter: Function.getter('color'),
+    colorGetter: getter('color'),
     getColor: function(){
       return this.colorGetter(this);
     },
 
     //events
     event_valuesChanged: createEvent('valuesChanged', 'object', 'delta'),
+    event_sourceChanged: createEvent('sourceChanged', 'object', 'oldSource'),
 
     init: function(config){
-      Node.prototype.init.call(this, config);
-
       this.valuesMap = {};
 
-      if (!this.source)
-        this.source = this.sourceGetter(this);
+      Node.prototype.init.call(this, config);
+
+      this.source = this.sourceGetter(this);
 
       if (this.source)
       {
@@ -308,23 +310,23 @@ basis.require('basis.ui.canvas');
     },
 
     setSource: function(source){
-      var oldSource;
-      if (this.source != source)
+      if (this.source !== source);
       {
-        oldSource = this.source;
+        var oldSource = this.source;
+        if (oldSource)
+        {
+          oldSource.removeHandler(SERIES_SOURCE_HANDLER, this);
+          SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { deleted: oldSource.getItems() });
+        }
+
         this.source = source;
-      }
+        if (this.source)
+        {
+          this.source.addHandler(SERIES_SOURCE_HANDLER, this);
+          SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { inserted: this.source.getItems() });
+        }
 
-      if (oldSource)
-      {
-        oldSource.removeHandler(SERIES_SOURCE_HANDLER, this);
-        SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { deleted: oldSource.getItems() });
-      }
-
-      if (this.source)
-      {
-        this.source.addHandler(SERIES_SOURCE_HANDLER, this);
-        SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { inserted: this.source.getItems() });
+        this.event_sourceChanged(this, oldSource);
       }
     },
 
@@ -348,27 +350,7 @@ basis.require('basis.ui.canvas');
     listen: {
       childNode: {
         valuesChanged: function(seria, delta){
-          if (!this.owner)
-            return;
-
-          var needRedraw = false;
-
-          var key;
-          for (var i = 0, child; child = this.owner.childNodes[i]; i++)
-          {
-            key = this.owner.keyGetter(child);
-            if (delta[key]){
-              if (delta[key])
-                child.values[seria.eventObjectId] = delta[key];
-              else
-                delete child.values[seria.eventObjectId];
-
-              needRedraw = true;
-            }
-          }
-
-          if (needRedraw)
-            this.owner.redraw();
+          this.event_valuesChanged(seria, delta);
         }
       }
     },
@@ -399,10 +381,31 @@ basis.require('basis.ui.canvas');
         for (var i = 0, seria; seria = delta.deleted[i]; i++)
         {
           for (var j = 0, child; child = this.childNodes[j]; j++)
-            child.values[seria.eventObjectId] = null;
+            delete child.values[seria.eventObjectId];
         }
 
-      this.redraw();
+      this.redrawRequest();
+    },
+    valuesChanged: function(seria, delta){
+      var needRedraw = false;
+
+      var key;
+      for (var i = 0, child; child = this.childNodes[i]; i++)
+      {
+        key = this.keyGetter(child);
+        if (delta[key])
+        {
+          if (delta[key])
+            child.values[seria.eventObjectId] = delta[key];
+          else
+            delete child.values[seria.eventObjectId];
+
+          needRedraw = true;
+        }
+      }
+
+      if (needRedraw)
+        this.redrawRequest();
     }
   }
 
@@ -410,7 +413,7 @@ basis.require('basis.ui.canvas');
     for (var i = 0, seria; seria = this.series.childNides[i]; i++)
       object.values[seria.eventObjectId] = seria.getValue(object, this.keyGetter(object));
 
-    this.redraw();
+    this.redrawRequest();
   }
 
  /**
@@ -427,8 +430,8 @@ basis.require('basis.ui.canvas');
     ),
 
     init: function(config){
-      GraphNode.prototype.init.call(this, config);
       this.values = {};
+      GraphNode.prototype.init.call(this, config);
     }
   });
 
@@ -468,7 +471,7 @@ basis.require('basis.ui.canvas');
           child.removeHandler(child.valueChangeEvents, this);
         }
 
-      this.redraw();
+      this.redrawRequest();
     },
 
     //init
@@ -479,7 +482,7 @@ basis.require('basis.ui.canvas');
       {
         var series = [];
         for (var i = 0, seria; seria = this.series[i]; i++)
-          series[i] = (seria instanceof Function) ? { valueGetter: seria } : seria;
+          series[i] = (typeof seria == 'function') ? { valueGetter: seria } : seria;
         
         this.series = {
           childNodes: series
@@ -494,12 +497,12 @@ basis.require('basis.ui.canvas');
     getValuesForSeria: function(seria){
       var values = [];
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        values.push(child.values[seria.eventObjectId])
+        values.push(child.values[seria.eventObjectId]);
+      
       return values;
     },
 
     destroy: function(){
-      this.series.removeHandler(GRAPH_SERIES_HANDLER, this);
       this.series.destroy();
       delete this.series;
 
@@ -837,18 +840,6 @@ basis.require('basis.ui.canvas');
       this.updateCount++;
     },
     getMinValue: function(){
-      /*var values;
-      var min;
-
-      var keys = this.getKeys();
-      for (var i = 0, seria; seria = this.seriesList.childNodes[i]; i++)
-      {
-        values = seria.getValues(keys);
-        if (min)
-          values.push(min);
-        min = Math.min.apply(null, values);
-      }
-      return min;*/
       var min;
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
@@ -859,18 +850,6 @@ basis.require('basis.ui.canvas');
       return min;
     },
     getMaxValue: function(){
-      /*var values;
-      var max;
-
-      var keys = this.getKeys();
-      for (var i = 0, seria; seria = this.seriesList.childNodes[i]; i++)
-      {
-        values = seria.getValues(keys);
-        if (max)
-          values.push(max);
-        max = Math.max.apply(null, values);
-      }
-      return max;*/
       var max;
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
@@ -1089,7 +1068,7 @@ basis.require('basis.ui.canvas');
       }
 
       // adjust label positions 
-      var labels = labels.sortAsObject(Function.getter('valueY'));
+      var labels = labels.sortAsObject(getter('valueY'));
       var crossGroup = labels.map(function(label){
         return { labels: [label], y: label.labelY, height: labelHeight };
       })
