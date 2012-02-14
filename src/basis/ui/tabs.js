@@ -201,13 +201,13 @@ basis.require('basis.ui');
   var Page = Class(UIContainer, {
     className: namespace + '.Page',
 
-    event_select: function(){
+    event_select: function(node){
       classList(this.element).remove('Basis-Page-Hidden');
-      UIContainer.prototype.event_select.call(this);
+      UIContainer.prototype.event_select.call(this, node);
     },
-    event_unselect: function(){
+    event_unselect: function(node){
       classList(this.element).add('Basis-Page-Hidden');
-      UIContainer.prototype.event_unselect.call(this);
+      UIContainer.prototype.event_unselect.call(this, node);
     },
     
     template: 
@@ -246,12 +246,12 @@ basis.require('basis.ui');
 
     childClass: UINode,
 
-    event_select: function(){
-      Tab.prototype.event_select.call(this);
+    event_select: function(node){
+      Tab.prototype.event_select.call(this, node);
       classList(this.tmpl.pageElement).remove('Basis-Page-Hidden');
     },
-    event_unselect: function(){
-      Tab.prototype.event_unselect.call(this);
+    event_unselect: function(node){
+      Tab.prototype.event_unselect.call(this, node);
       classList(this.tmpl.pageElement).add('Basis-Page-Hidden');
     },
     

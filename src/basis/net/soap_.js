@@ -227,7 +227,7 @@ basis.require('basis.net.ajax');
     },
 
     prepareRequestData: function(requestData){
-      var requestData = AjaxProxy.prototype.prepareRequestData.call(this, requestData);
+      requestData = AjaxProxy.prototype.prepareRequestData.call(this, requestData);
 
       Object.extend(requestData, {
         namespace: this.namespace,

@@ -2561,7 +2561,7 @@ basis.require('basis.html');
           if (!node.selected)
           {
             node.selected = true;
-            node.event_select();
+            node.event_select(node);
           }
         }
       }
@@ -2573,7 +2573,7 @@ basis.require('basis.html');
           if (node.selected)
           {
             node.selected = false;
-            node.event_unselect();
+            node.event_unselect(node);
           }
         }
       }
