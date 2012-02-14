@@ -94,24 +94,23 @@ basis.require('basis.ui.scroller');
       if (!currentPage)
         return;
 
-        var scroller = this.scroller;
-        var pageWidth = currentPage.element.offsetWidth;
-        var pagePosition = currentPage.element.offsetLeft
+      var pageWidth = currentPage.element.offsetWidth;
+      var pagePosition = currentPage.element.offsetLeft
+      var pageScrollTo = currentPage;
 
-        var pageScrollTo = currentPage;
-        if (scroller.currentVelocityX)
-        {
-          pageScrollTo = (scroller.currentVelocityX > 0 ? currentPage.nextSibling : currentPage.previousSibling) || currentPage;
-        }
-        else if ((scroller.viewportX > (pagePosition + pageWidth / 2)) 
-          || (scroller.viewportX < (pagePosition - pageWidth / 2))
-        )
-        {
-          var dir = scroller.viewportX - pagePosition;
-          pageScrollTo = (dir > 0 ? currentPage.nextSibling : currentPage.previousSibling) || currentPage;
-        }
+      if (this.scroller.currentVelocityX)
+      {
+        pageScrollTo = (this.scroller.currentVelocityX > 0 ? currentPage.nextSibling : currentPage.previousSibling) || currentPage;
+      }
+      else if ((this.scroller.viewportX > (pagePosition + pageWidth / 2)) 
+        || (this.scroller.viewportX < (pagePosition - pageWidth / 2))
+      )
+      {
+        var dir = this.scroller.viewportX - pagePosition;
+        pageScrollTo = (dir > 0 ? currentPage.nextSibling : currentPage.previousSibling) || currentPage;
+      }
 
-        this.scrollToPage(pageScrollTo);
+      this.scrollToPage(pageScrollTo);
     },
 
     scrollToPage: function(page){

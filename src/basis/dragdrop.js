@@ -183,8 +183,8 @@ basis.require('basis.layout');
     //
 
     setElement: function(element, trigger){
-      var element = element && DOM.get(element);
-      var trigger = (trigger && DOM.get(trigger)) || element;
+      element = element && DOM.get(element);
+      trigger = (trigger && DOM.get(trigger)) || element;
 
       if (this.trigger != trigger)
       {

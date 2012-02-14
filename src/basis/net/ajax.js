@@ -97,7 +97,7 @@ basis.require('basis.data');
  /**
   * @function createEvent
   */
-  function createEvent(eventName){
+  function createProxyEvent(eventName){
     var event = createEvent(eventName);
     var args = [eventName];
     return function(){
@@ -437,14 +437,14 @@ basis.require('basis.data');
 
     state:     STATE.UNDEFINED,
 
-    event_start: createEvent('start'),
-    event_readyStateChanged: createEvent('readyStateChanged'),
-    event_timeout: createEvent('timeout'),
-    event_abort: createEvent('abort'),
-    event_success: createEvent('success'),
-    event_failure: createEvent('failure'),
-    event_httpStatus: createEvent('httpStatus'),
-    event_complete: createEvent('complete'),
+    event_start: createProxyEvent('start'),
+    event_readyStateChanged: createProxyEvent('readyStateChanged'),
+    event_timeout: createProxyEvent('timeout'),
+    event_abort: createProxyEvent('abort'),
+    event_success: createProxyEvent('success'),
+    event_failure: createProxyEvent('failure'),
+    event_httpStatus: createProxyEvent('httpStatus'),
+    event_complete: createProxyEvent('complete'),
 
     event_stateChanged: function(object, oldState){
       DataObject.prototype.event_stateChanged.call(this, object, oldState);
@@ -708,7 +708,7 @@ basis.require('basis.data');
   basis.namespace(namespace).extend({
     Transport: Transport,
     TransportDispatcher: TransportDispatcher,
-    createEvent: createEvent
+    createEvent: createProxyEvent
   });
 
 }(basis);

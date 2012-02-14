@@ -58,6 +58,7 @@ basis.require('basis.html');
   var nullGetter = Function.nullGetter;
   var $undef = Function.$undef;
   var complete = Object.complete;
+  var oneFunctionProperty = Class.oneFunctionProperty;
 
 
   //
@@ -210,7 +211,7 @@ basis.require('basis.html');
   //
 
   // default satellite config
-  var NULL_SATELLITE_CONFIG = Class.CustomExtendProperty(
+  var NULL_SATELLITE_CONFIG = Class.customExtendProperty(
     {},
     function(result, extend){
       for (var key in extend)
@@ -331,7 +332,7 @@ basis.require('basis.html');
   };
 
   // default satellite hooks
-  var SATELLITE_OWNER_HOOK = Class.OneFunctionProperty(
+  var SATELLITE_OWNER_HOOK = oneFunctionProperty(
     SATELLITE_UPDATE,
     {
       update: true
@@ -2017,7 +2018,7 @@ basis.require('basis.html');
         }
       }
       else
-        if (!selected && this.selectable && !this.isDisabled())
+        if (!selected && this.selectable/* && !this.isDisabled()*/)
         {
           this.selected = true;
           this.event_select(this);
@@ -2312,9 +2313,9 @@ basis.require('basis.html');
 
           // re-insert partition nodes
           if (firstNode instanceof PartitionNode)
-            for (var i = nodesCount, refChild = afterNext; i --> 0;)
+            for (var i = nodesCount, insertBefore = afterNext; i --> 0;)
             {
-              parent.insertBefore(nodes[i], refChild);
+              parent.insertBefore(nodes[i], insertBefore);
               refChild = nodes[i];
             }
         }
@@ -2390,7 +2391,7 @@ basis.require('basis.html');
   //
 
   var CHILDNODESDATASET_HANDLER = {
-    childNodesModified: function(node, delta){
+    childNodesModified: function(sender, delta){
       var memberMap = this.memberMap_;
       var newDelta = {};
       var node;

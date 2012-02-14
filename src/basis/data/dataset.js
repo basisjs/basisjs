@@ -37,7 +37,7 @@ basis.require('basis.data');
   //
 
   var Class = basis.Class;
-  var OneFunctionProperty = Class.OneFunctionProperty;
+  var oneFunctionProperty = Class.oneFunctionProperty;
 
   var extend = Object.extend;
   var values = Object.values;
@@ -997,7 +997,7 @@ basis.require('basis.data');
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    ruleEvents: OneFunctionProperty(
+    ruleEvents: oneFunctionProperty(
       MAPREDUCE_SOURCEOBJECT_UPDATE,
       {
         update: true
@@ -1429,7 +1429,7 @@ basis.require('basis.data');
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    ruleEvents: OneFunctionProperty(
+    ruleEvents: oneFunctionProperty(
       SLICE_SOURCEOBJECT_UPDATE,
       {
         update: true
@@ -1737,7 +1737,7 @@ basis.require('basis.data');
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    ruleEvents: OneFunctionProperty(
+    ruleEvents: oneFunctionProperty(
       CLOUD_SOURCEOBJECT_UPDATE,
       {
         update: true

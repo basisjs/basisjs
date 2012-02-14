@@ -10,6 +10,7 @@
  */
 
 basis.require('basis.dom');
+basis.require('basis.cssom');
 basis.require('basis.dom.event');
 
 !function(basis, global){
@@ -31,6 +32,7 @@ basis.require('basis.dom.event');
   var Class = basis.Class;
   var dom = basis.dom;
   var domEvent = basis.dom.event;
+  var classList = basis.cssom.classList;
 
 
   //
@@ -41,7 +43,7 @@ basis.require('basis.dom.event');
   var tmplNodeMap = { seed: 1 };
 
   var tmplPartFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>]*?)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
-  var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
+  var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?(event-)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
   var classNameRx = /^(.)|\s+/g;
   var domFragment = dom.createFragment();
 
@@ -124,7 +126,7 @@ basis.require('basis.dom.event');
   //
   // PARSE ATTRIBUTES
   //
-  function createEventHandler(name){
+  function createEventHandler(attrName){
     return function(event){
       if (event && event.type == 'click' && event.which == 3)
         return;
@@ -139,7 +141,7 @@ basis.require('basis.dom.event');
 
       // search for nearest node with event-{eventName} attribute
       do {
-        if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(name)))
+        if (attr = (cursor.getAttributeNode && cursor.getAttributeNode(attrName)))
           break;
       } while (cursor = cursor.parentNode);
 
@@ -179,42 +181,78 @@ basis.require('basis.dom.event');
 
     while (m = tmplAttrRx.exec(str))
     {
-      //    0      1   2     3      4       5
-      // m: match, ns, name, alias, value1, value2
+      //    0      1   2       3     4      5       6
+      // m: match, ns, prefix, name, alias, value1, value2
 
-      var name = m[2];
-      var value = m[4] || m[5] || name;
+      var prefix = m[2] || '';
+      var name = m[3];
+      var attrName = prefix + name;
+      var value = m[5] || m[6] || name;
 
       // store reference for attribute
-      if (m[3])
-        context.getters[m[3]] = nodePath + '.getAttributeNode("' + name + '")';
+      if (m[4])
+        context.getters[m[4]] = nodePath + '.getAttributeNode("' + name + '")';
 
       // if attribute is event binding, add global event handler
-      var eventMatch = name.match(/^event-([a-z]+)/i);
-      if (eventMatch)
+      if (prefix == 'event-')
       {
-        var eventName = eventMatch[1];
-        if (!tmplEventListeners[eventName])
+        if (!tmplEventListeners[name])
         {
-          tmplEventListeners[eventName] = createEventHandler(name);
+          tmplEventListeners[name] = createEventHandler(attrName);
 
-          for (var i = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[i++];)
-            domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
+          for (var i = 0, names = domEvent.browserEvents(name), browserEventName; browserEventName = names[i++];)
+            domEvent.addGlobalHandler(browserEventName, tmplEventListeners[name]);
         }
 
         // hack for non-bubble events in IE<=8
         if (!domEvent.W3CSUPPORT)
         {
-          var eventInfo = domEvent.getEventInfo(eventName, tagName);
+          var eventInfo = domEvent.getEventInfo(name, tagName);
           if (eventInfo.supported && !eventInfo.bubble)
-            events.push(eventName);
+            events.push(name);
             //result += '[on' + eventName + '="basis.dom.event.fireEvent(document,\'' + eventName + '\')"]';
         }
       }
+      /*else
+      {
+        if (prefix == 'bind-')
+        {
+          value = String(value || name);
 
-      result += name == 'class'
+          if (!value.match(/^(([a-z0-9\_\-]*\:)?[a-z0-9\_\-]+)(\|([a-z0-9\_\-]*\:)?[a-z0-9\_\-]+)*$/i))
+            throw 'wrong value for binding ' + attrName + ': ' + value;
+
+          var parts = value.split(/\|/);
+          for (var i = 0; i < parts.length; i++)
+          {
+            
+          }
+
+          var firstChar = value.charAt(0);
+          var binding = [
+            'newValue = Boolean(value);\n',
+            'if (this.' + name + ' !== newValue)',
+            '{',
+            '  elementClassList = classList(tmpl' + nodePath.replace(/^\.childNodes\[0\]/, '.element') + ');',
+            '  if (this.' + name + ' = newValue)',
+            '    elementClassList.add(' + value.quote() + ');',
+            '  else',
+            '    elementClassList.remove(' + value.quote() + ');',
+            '};\n'
+          ].join('\n');
+
+          context.bindings[name] = {
+            default: false,
+            code: binding
+          };
+
+          continue;
+        }
+      }*/
+
+      result += attrName == 'class'
                   ? value.trim().replace(classNameRx, '.$1')
-                  : '[' + name + (value ? '=' + value.quote('"') : '') + ']';
+                  : '[' + attrName + (value ? '=' + value.quote('"') : '') + ']';
     }
 
     return {
@@ -344,20 +382,25 @@ basis.require('basis.dom.event');
   * Parsing template
   * @func
   */
-  function parseTemplate(source){
+  function parseTemplate(){
     if (this.proto)
       return;
 
-    var str = this.source;
+    var source = this.source;
 
-    if (typeof str == 'function')
-      this.source = str = str();
+    if (typeof source == 'function')
+      source = source();
 
-    var source = str.trim();
+    source = source.trim();
+
+    this.source = source;
+
     var context = {
       str: source,
       getters: {
         element: '.childNodes[0]'
+      },
+      bindings: {
       }
     };
 
@@ -411,14 +454,50 @@ basis.require('basis.dom.event');
     var clearBody = [];
     for (var i = 0, line; line = body[i]; i++)
     {
-      createBody[i] = line.alias + '=' + line.path + '\n';
+      createBody[i] = '\n' + line.alias + '=' + line.path;
       clearBody[i] = line.alias + '=null\n';
     }
+
+    var defaultValues = function(){};
+    var hasBindings = false;
+    var setCode = '';
+    for (var key in context.bindings)
+    {
+      //console.log(key, context.bindings[key].code);
+      defaultValues.prototype[key] = context.bindings[key].default;
+
+      setCode += 'case "' + key + '":\n' + context.bindings[key].code + '\nbreak;\n';
+
+      hasBindings = true;
+    }
+
+    /*var setFunction = function(){};
+    if (hasBindings)
+    {
+      setFunction = new Function('classList', 'return ' + 
+        function(tmpl, key, value){
+          var newValue;
+          // specific code start
+          _code_(); // <-- will be replaced for specific code
+          // specific code end
+        }
+      .toString().replace('_code_()', 'switch(key){\n' + setCode + '\n}'))(classList);
+
+      console.log(setFunction.toString());
+      createBody.push('\nobj_.setValue=setValue_.bind(new defs_, obj_)');
+      //createBody.push('\nobj_.setValue=setValue_.bind(new defs_, obj_)');
+      //createBody.push('\nobj_.sync=sync.bind(new defs_, obj_)');
+      console.log(createBody);
+    }
+    else
+    {
+      createBody.push('\nobj_.setValue=setValue_');
+    }*/
 
     //
     // build createInstance function
     //
-    this.createInstance = new Function('proto_', 'map_', 'var obj_, dom_; return ' + 
+    this.createInstance = new Function('proto_', 'map_', 'setValue_', 'defs_', 'var obj_, dom_; return ' + 
       // mark variable names with dangling _ to avoid renaming by compiler, because
       // this names using by generated code, and must be unchanged
 
@@ -441,7 +520,10 @@ basis.require('basis.dom.event');
         return obj_;
       }
 
-    .toString().replace('_code_()', createBody))(proto, tmplNodeMap); // body.map(String.format, '{alias}={path};\n').join('')
+    .toString().replace('_code_()', createBody))(proto, tmplNodeMap/*, setFunction, defaultValues*/); // body.map(String.format, '{alias}={path};\n').join('')
+
+    /*if (hasBindings)
+      console.log(this.createInstance.toString())*/
 
     //
     // build clearInstance function

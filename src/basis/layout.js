@@ -399,7 +399,8 @@ basis.require('basis.ui');
       if (!this.defined)
         return false;
 
-      var element = DOM.get(element) || this.element;
+      element = DOM.get(element) || this.element;
+
       if (element)
       {
         DOM.setStyle(element, {

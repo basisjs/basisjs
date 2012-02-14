@@ -96,8 +96,8 @@ basis.require('basis.net.ajax');
     * @param {string} method
     * @param {object} config
     */
-    call: function(method, config){
-      var method = this.createMethodCall(method, config, false);
+    call: function(methodName, config){
+      method = this.createMethodCall(methodName, config, false);
       method.transport.abort();
       method.invoke(config.header, config.body, config.callback, config.mapping);
     },
@@ -107,8 +107,8 @@ basis.require('basis.net.ajax');
     * @param {object} config
     * @return {basis.soap.ServiceCall} Return new ServiceCall instance
     */
-    createMethodCall: function(method, config, staticData){
-      return new ServiceCall(this, new QName(method, this.namespace), config, staticData);
+    createMethodCall: function(methodName, config, staticData){
+      return new ServiceCall(this, new QName(methodName, this.namespace), config, staticData);
     }
 
    /**

@@ -31,7 +31,7 @@ basis.require('basis.ui.canvas');
   //
   // import names
   //
-  var OneFunctionProperty = basis.Class.OneFunctionProperty;
+  var oneFunctionProperty = basis.Class.oneFunctionProperty;
 
 
   var Event = basis.dom.event;
@@ -54,7 +54,7 @@ basis.require('basis.ui.canvas');
 
 
   function getDegree(number){
-    var number = Math.abs(number);
+    number = Math.abs(number);
     if (Math.abs(number) > 1)
     {
       return String(Math.floor(number)).length - 1;
@@ -422,7 +422,7 @@ basis.require('basis.ui.canvas');
   var SeriesGraphNode = GraphNode.subclass({
     values: {},
 
-    valueChangeEvents: OneFunctionProperty(
+    valueChangeEvents: oneFunctionProperty(
       GRAPH_NODE_UPDATE_HANDLER,
       {
         update: true

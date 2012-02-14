@@ -171,7 +171,7 @@
    /**
     * Related object listeners.
     */
-    listen: Class.NestedExtendProperty(),
+    listen: Class.nestedExtendProperty(),
 
    /** use extend constructor */
     extendConstructor_: true,

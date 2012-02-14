@@ -1593,7 +1593,7 @@
    /**
     * @func
     */
-    var CustomExtendProperty = function(extension, func){
+    var customExtendProperty = function(extension, func){
       return {
         __extend__: function(extension){
           if (!extension)
@@ -1615,22 +1615,22 @@
    /**
     * @func
     */
-    var ExtensibleProperty = function(extension){
-      return CustomExtendProperty(extension, extend);
+    var extensibleProperty = function(extension){
+      return customExtendProperty(extension, extend);
     };
 
 
    /**
     * @func
     */
-    var NestedExtendProperty = function(extension){
-      return CustomExtendProperty(extension, function(result, extension){
+    var nestedExtendProperty = function(extension){
+      return customExtendProperty(extension, function(result, extension){
         for (var key in extension)
         {
           var value = result[key];
           result[key] = value && value.__extend__
                        ? value.__extend__(extension[key])
-                       : ExtensibleProperty(extension[key]);
+                       : extensibleProperty(extension[key]);
         }
       });
     };
@@ -1638,7 +1638,7 @@
    /**
     * @func
     */
-    var OneFunctionProperty = function(fn, keys){
+    var oneFunctionProperty = function(fn, keys){
       var create = function(keys){
         var result;
 
@@ -1672,10 +1672,10 @@
       BaseClass: BaseClass,
       create: BaseClass.create,
       isClass: isClass,
-      CustomExtendProperty: CustomExtendProperty,
-      ExtensibleProperty: ExtensibleProperty,
-      NestedExtendProperty: NestedExtendProperty,
-      OneFunctionProperty: OneFunctionProperty
+      customExtendProperty: customExtendProperty,
+      extensibleProperty: extensibleProperty,
+      nestedExtendProperty: nestedExtendProperty,
+      oneFunctionProperty: oneFunctionProperty
     });
   })();
 

@@ -161,7 +161,7 @@ basis.require('basis.ui');
     * @inheritDoc
     */
     insertBefore: function(newChild, refChild){
-      var newChild = GroupingNode.prototype.insertBefore.call(this, newChild, refChild);
+      newChild = GroupingNode.prototype.insertBefore.call(this, newChild, refChild);
 
       var refElement = newChild.nextSibling && newChild.nextSibling.cell.element;
       DOM.insert(this.headerRow, newChild.cell.element, DOM.INSERT_BEFORE, refElement);

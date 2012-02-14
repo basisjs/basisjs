@@ -223,7 +223,7 @@ basis.require('basis.ui');
         var width  = this.element.offsetWidth;
         var height = this.element.offsetHeight;
 
-        var dir = String(dir || this.dir).toUpperCase().qw();
+        dir = String(dir || this.dir).toUpperCase().qw();
 
         var pointX = dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()];
         var pointY = dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()];

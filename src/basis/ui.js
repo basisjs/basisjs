@@ -49,7 +49,7 @@ basis.require('basis.html');
  /**
   *
   */
-  var TEMPLATE_ACTION = Class.ExtensibleProperty();
+  var TEMPLATE_ACTION = Class.extensibleProperty();
 
  /**
   * @mixin
@@ -319,7 +319,7 @@ basis.require('basis.html');
       // methods
       insertBefore: function(newChild, refChild){
         // inherit
-        var newChild = super_.insertBefore.call(this, newChild, refChild);
+        newChild = super_.insertBefore.call(this, newChild, refChild);
 
         var target = newChild.groupNode || this;
         var container = target.childNodesElement || target.element || this.childNodesElement || this.element;

@@ -258,11 +258,12 @@
     } 
     
     function decode(input, useUTF8){
+      input = input.replace(/[^a-z0-9\+\/]/ig, '');
+
       var output = new Array();
       var chr1, chr2, chr3;
       var enc1, enc2, enc3, enc4;
       var i = 0;
-      var input = input.replace(/[^a-z0-9\+\/]/ig, '');
       var len = input.length;
       
       // decode 

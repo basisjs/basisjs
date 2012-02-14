@@ -512,7 +512,7 @@ basis.require('basis.data.property');
 
       if (!index)
       {
-        var indexConstructor = indexConstructors_[indexId];
+        indexConstructor = indexConstructors_[indexId];
         if (!indexConstructor)
           throw 'Wrong index constructor';
 
@@ -624,7 +624,7 @@ basis.require('basis.data.property');
       }
     },
 
-    ruleEvents: Class.OneFunctionProperty(
+    ruleEvents: Class.oneFunctionProperty(
       function(sourceObject, delta){
         MapReduce.prototype.ruleEvents.update.call(this, sourceObject, delta);
 

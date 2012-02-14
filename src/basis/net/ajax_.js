@@ -475,8 +475,9 @@ basis.require('basis.data');
   * @function createEvent
   */
 
-  function createEvent(eventName) {
+  function createProxyEvent(eventName) {
     var event = createEvent(eventName);
+
     return function(){
       event.apply(ProxyDispatcher, arguments);
 
@@ -521,12 +522,12 @@ basis.require('basis.data');
 
     poolHashGetter: Function.$true,
 
-    event_start: createEvent('start'),
-    event_timeout: createEvent('timeout'),
-    event_abort: createEvent('abort'),
-    event_success: createEvent('success'),
-    event_failure: createEvent('failure'),
-    event_complete: createEvent('complete'),
+    event_start: createProxyEvent('start'),
+    event_timeout: createProxyEvent('timeout'),
+    event_abort: createProxyEvent('abort'),
+    event_success: createProxyEvent('success'),
+    event_failure: createProxyEvent('failure'),
+    event_complete: createProxyEvent('complete'),
 
     init: function(config){
       this.requests = {};
@@ -645,7 +646,7 @@ basis.require('basis.data');
     }
   });
 
-  Proxy.createEvent = createEvent;
+  Proxy.createEvent = createProxyEvent;
 
 
  /**
@@ -656,7 +657,7 @@ basis.require('basis.data');
 
     requestClass: AjaxRequest,
 
-    event_readyStateChanged: createEvent('readyStateChanged'),
+    event_readyStateChanged: createProxyEvent('readyStateChanged'),
 
     // transport properties
     asynchronous: true,
@@ -854,7 +855,7 @@ basis.require('basis.data');
   basis.namespace(namespace).extend({
     Transport: AjaxProxy,
     TransportDispatcher: ProxyDispatcher,
-    createEvent: createEvent,
+    createEvent: createProxyEvent,
 
     Proxy: Proxy,
     AjaxProxy: AjaxProxy,
