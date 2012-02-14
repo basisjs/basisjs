@@ -737,14 +737,15 @@ basis.require('basis.data');
     init: function(config){
       this.sourceMap_ = {};
 
-      AbstractDataset.prototype.init.call(this, config);
-
       var source = this.source;
       if (source)
-      {
-        this.source = null;
+        this.source = null;     // NOTE: reset source before inherit -> prevent double subscription activation
+                                // when this.active == true and source is assigned
+
+      AbstractDataset.prototype.init.call(this, config);
+
+      if (source)
         this.setSource(source);
-      }
     },
 
    /**
