@@ -53,7 +53,7 @@ basis.require('basis.html');
   var bindingSeed = 1;
 
   function extendBinding(binding, extension){
-    binding.bindingId = bindingSeed;
+    binding.bindingId = bindingSeed++;
     for (var key in extension)
     {
       var def = null;
@@ -338,7 +338,7 @@ basis.require('basis.html');
 
         if (this.template)
         {
-          var binding = this.template.getBinding(this.binding)
+          var binding = this.template.getBinding(this.binding, this);
           if (binding && binding.names.length)
           {
             if (binding.handler)
@@ -478,19 +478,23 @@ basis.require('basis.html');
   var PartitionNode = Class(DWPartitionNode, TemplateMixin, {
     className: namespace + '.PartitionNode',
 
-    titleGetter: getter('data.title'),
+    //titleGetter: getter('data.title'),
+
+    binding: {
+      title: ['data.title', 'update']
+    }
 
     /*template: new Template(
       '<div{element} class="Basis-PartitionNode">' + 
         '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
         '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
       '</div>'
-    ),*/
+    ),*//*
 
     templateUpdate: function(tmpl, eventName, delta){
       if (tmpl.titleText)
         tmpl.titleText.nodeValue = String(this.titleGetter(this));
-    }
+    }*/
   });
 
 

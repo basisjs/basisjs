@@ -174,7 +174,6 @@ basis.require('basis.ui');
     childClass: Tab,
     groupingClass: {
       className: namespace + '.TabsGroupingNode',
-
       childClass: {
         className: namespace + '.TabsPartitionNode',
         template: 

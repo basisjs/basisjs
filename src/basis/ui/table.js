@@ -116,7 +116,6 @@ basis.require('basis.ui');
       init: function(config){
         PartitionNode.prototype.init.call(this, config);
         this.cell = new HeaderPartitionNode({
-          titleGetter: this.titleGetter,
           delegate: this
         });
       },
@@ -508,7 +507,7 @@ basis.require('basis.ui');
         '<tr class="Basis-Table-GroupHeader" event-click="click">' +
           '<td{content} colspan="100">' +
             '<span class="expander"/>' +
-            '<span class="Basis-Table-GroupHeader-Title">{titleText}</span>' +
+            '<span class="Basis-Table-GroupHeader-Title">{title}</span>' +
           '</td>'+ 
         '</tr>' +
         '<!--{childNodesHere}-->' +

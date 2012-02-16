@@ -115,7 +115,7 @@ basis.require('basis.ui');
     template: 
       '<li class="Basis-TreePartitionNode">' + 
         '<div class="Basis-TreePartitionNode-Title">' +
-          '<span>{titleText}</span>' +
+          '<span>{title}</span>' +
         '</div>' +
         '<ul{childNodesElement} class="Basis-TreePartitionNode-Content"/>' +
       '</li>'
@@ -222,7 +222,7 @@ basis.require('basis.ui');
     template: 
       '<li class="Basis-TreeNode">' +
         '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
-          '<div{expander} class="Basis-TreeNode-Expander" event-click="toggle"/>' +
+          '<div class="Basis-TreeNode-Expander" event-click="toggle"/>' +
           '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
             '{titleText}' +
           '</span>' +

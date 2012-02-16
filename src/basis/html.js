@@ -138,7 +138,7 @@ basis.require('basis.dom.event');
 
   function getBindingFactory(templateBindings){
     var bindingCache = {};
-    return function(bindings){
+    return function(bindings, testNode){
       var cacheId = 'bindingId' in bindings ? bindings.bindingId : null;
 
       ;;;if (!cacheId) console.warn('basis.html.Template.getBinding: bindings has no id property, cache not used');
@@ -163,6 +163,7 @@ basis.require('basis.dom.event');
               var eventList = String(binding.events).qw();
               for (var i = 0, eventName; eventName = eventList[i]; i++)
               {
+                ;;;if (testNode && ('event_' + eventName) in testNode == false && typeof console != 'undefined') console.warn('basis.html.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
                 if (events[eventName])
                   events[eventName].push(key);
                 else

@@ -1170,3 +1170,17 @@
   {
     opacity: .5;
   }
+
+  .bindingList .binding
+  {
+    margin: 1px;
+    border-radius: 3px;
+    background: #E0E0E0;
+    opacity: .33;
+    padding: 2px 4px;
+  }
+  .bindingList .binding.used
+  {
+    background: #88CC66;
+    opacity: 1;
+  }

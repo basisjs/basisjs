@@ -181,27 +181,32 @@
     }
 
     var groupingClass = basis.Class(nsUI.GroupingNode, {
-      childClass: nsUI(
-        '<div class="group">' +
-          '<!-- {childNodesHere} -->' +
-          '<div class="group-title">{this_data_title}</div>' +
-        '</div>'
-      ),
       groupGetter: function(node){
         return node.data.id >> 1;
       },
-      groupingClass: basis.Class.SELF
+      groupingClass: basis.Class.SELF,
+      childClass: {
+        template:
+          '<div class="group">' +
+            '<!-- {childNodesHere} -->' +
+            '<div class="group-title">{title}</div>' +
+          '</div>'
+      }
     });
     //groupingClass.prototype.groupingClass = groupingClass;
 
     var list = new nsUI.Container({
       container: DOM.get('NumberDemo-Container'),
       childNodes: data,
-      childClass: nsUI(
-        '<span class="item">' +
-          '{this_data_id}' +
-        '</span>'
-      ),
+      childClass: {
+        template:
+          '<span class="item">' +
+            '{value}' +
+          '</span>',
+        binding: {
+          value: 'data.id'
+        }
+      },
       groupingClass: groupingClass,
       grouping: {
         grouping: {
@@ -437,37 +442,45 @@
       container: DOM.get('MetroDemo-Container'),
 
       childNodes: Data(metro),  // metro.map(Function.wrapper('data'))
-      sorting: Function.getter('data.name'),
-      childClass: nsUI(
-        '<li class="metro">' +
-          '<span class="metro-name">{this_data_name}</span>' +
-          '<span class="metro-city">{this_data_city}</span>' +
-        '</li>'
-      ),
+      sorting: 'data.name',
+      childClass: {
+        template:
+          '<li class="metro">' +
+            '<span class="metro-name">{name}</span>' +
+            '<span class="metro-city">{city}</span>' +
+          '</li>',
+
+        binding: {
+          name: 'data.name',
+          city: 'data.city'
+        }
+      },
 
       grouping: {
         // group metro by country
         groupGetter: Function.getter('data.country'),
-        sorting: Function.getter('data.title'),
-        childClass: nsUI(
-          '<div class="metro-country">' +
-            '<h4 class="metro-country-title">{this_data_title}</h4>' +
-            '<ul{childNodesElement}/>' +
-          '</div>'
-        ),
+        sorting: 'data.title',
+        childClass: {
+          template:
+            '<div class="metro-country">' +
+              '<h4 class="metro-country-title">{title}</h4>' +
+              '<ul{childNodesElement}/>' +
+            '</div>'
+        },
 
         grouping: {
           // .. than group country by continent
           groupGetter: function(node){
             return continentByCountry[node.data.id];
           },
-          sorting: Function.getter('data.title'),
-          childClass: nsUI(
-            '<div class="metro-continent">' +
-              '<h3 class="metro-continent-title">{this_data_title}</h3>' +
-              '<!-- {childNodesHere} -->' +
-            '</div>'
-          )
+          sorting: 'data.title',
+          childClass: {
+            template:
+              '<div class="metro-continent">' +
+                '<h3 class="metro-continent-title">{title}</h3>' +
+                '<!-- {childNodesHere} -->' +
+              '</div>'
+          }
         }
       }
     });

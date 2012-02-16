@@ -293,9 +293,9 @@
       // Определяем класс для дочерних узлов
       childClass: nsTree.Folder.subclass({
         template: 
-          '<li{element|selected} class="Basis-TreeNode empty" event-click="select">' +
+          '<li{selected} class="Basis-TreeNode empty" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
-              '<div{expander} class="Basis-TreeNode-Expander" event-click="toggle"/>' +
+              '<div class="Basis-TreeNode-Expander" event-click="toggle"/>' +
               '<span{title} class="Basis-TreeNode-Caption">{titleText}<span class="count">(Word count: {countText}, Frequency: {freqText})</span></span>' +
             '</div>' + 
             '<div{childNodesElement} class="Basis-TreeNode-Content">' + 

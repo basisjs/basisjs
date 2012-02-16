@@ -668,7 +668,7 @@ basis.require('basis.ui');
       var sender = Event.sender(event);
       var ancestorAxis;
 
-      var popups = this.childNodes.filter(Function.getter('hideOnAnyClick')).reverse();
+      var popups = this.childNodes.filter(getter('hideOnAnyClick')).reverse();
 
       for (var i = 0, popup; popup = popups[i]; i++)
       {

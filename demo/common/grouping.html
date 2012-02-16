@@ -103,8 +103,8 @@
     var table = new nsTable.Table({
       childNodes: data,
       structure: [
-        { header: 'Title', body: { content: Function.getter('data.title') } },
-        { header: 'Content', body: { content: Function.getter('data.content') } }
+        { header: 'Title', body: Function.getter('data.title') },
+        { header: 'Content', body: Function.getter('data.content') }
       ]
     });
 
@@ -117,7 +117,7 @@
     var groupigList = new nsForm.RadioGroup({
       container: DOM.get('demo-changeGroupingList'),
       event_change: function(){
-        this.constructor.prototype.event_change.call(this);
+        nsForm.RadioGroup.prototype.event_change.call(this);
 
         var grouping = this.getValue();
         tree.setGrouping(grouping);
@@ -131,15 +131,17 @@
         },
         {
           title: 'Group by title',
-          value: Function.getter('data.title')
+          value: 'data.title'
         },
         {
           title: 'Group by first letter',
           value: {
-            sorting: Function.getter('data.title'),
-            groupGetter: Function.getter('data.title.charAt(0)'),
+            groupGetter: 'data.title.charAt(0)',
+            sorting: 'data.title',
             childClass: {
-              titleGetter: Function.getter('data.title', 'Group for letter <{0}>')
+              binding: {
+                title: Function.getter('data.title', 'Group for letter <{0}>')
+              }
             }
           }
         }

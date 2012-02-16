@@ -297,8 +297,8 @@
       var result;
       var getterId;
 
-      // return nullGetter if no path
-      if (!path)
+      // return nullGetter if no path or nullGetter passed
+      if (!path || path === nullGetter)
         return nullGetter;
 
       // resolve getter by path

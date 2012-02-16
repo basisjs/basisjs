@@ -9,7 +9,6 @@
   var Class = basis.Class;
   var DOM = basis.dom;
   var Event = basis.dom.event;
-  var Template = basis.html.Template;
   var nsHighlight = basis.format.highlight;
   var nsData = basis.data;
 
@@ -440,6 +439,7 @@
   * @class
   */
   var TemplatePanel = uiControl.subclass({
+    template: '<div style="overflow-y: hidden"/>',
     childFactory: function(config){
       switch (config.data.nodeType)
       {
@@ -539,6 +539,48 @@
     }
   });
 
+
+  var BindingsPanel = basis.ui.Container.subclass({
+    templateUpdate: function(){
+      var template = this.data.obj.prototype.template;
+      var binding;
+      if (template)
+      {
+        var matchBinding = template.getBinding(this.data.obj.prototype.binding);
+        binding = Object.iterate(this.data.obj.prototype.binding, function(key, value){
+          return typeof value == 'object' ? {
+            name: key,
+            getter: value.getter,
+            events: value.events,
+            used: matchBinding && matchBinding.names.indexOf(key) != -1
+          } : null
+        }).filter(Boolean);
+      }
+
+      this.setChildNodes(binding);
+    },
+
+    template: '<div class="bindingList" style="float: left;"/>',
+    sorting: 'name',
+
+    childClass: {
+      template: 
+        '<div class="binding {used}">{name} on {events} [{used}]</div>',
+      binding: {
+        name: 'name',
+        events: 'events || ""',
+        used: function(node){
+          return node.used ? 'used' : '';
+        }
+      }
+    }
+  })
+
+
+  function hasTemplate(node){
+    return node.data.obj && node.data.obj.prototype && node.data.obj.prototype.template instanceof basis.html.Template;
+  }
+
  /**
   * @class
   */
@@ -546,7 +588,7 @@
     className: namespace + '.ViewTemplate',
     viewHeader: 'Template',
     isAcceptableObject: function(data){
-      return !!(data.obj.prototype && data.obj.prototype.template);
+      return hasTemplate({ data: data });
     },
 
     template: 
@@ -554,6 +596,7 @@
         htmlHeader('Template') +
         '<!-- {viewOptions} -->' +
         '<div{content} class="content">' +
+          '<!-- {bindings} -->' +
           '<!-- {template} -->' +
         '</div>' +
       '</div>',
@@ -591,11 +634,14 @@
         }
       },
       template: {
-        existsIf: function(node){
-          return node.data.obj && node.data.obj.prototype && node.data.obj.prototype.template;
-        },
+        existsIf: hasTemplate,
         delegate: Function.$self,
         instanceOf: TemplatePanel
+      },
+      bindings: {
+        existsIf: hasTemplate,
+        delegate: Function.$self,
+        instanceOf: BindingsPanel
       }
     }
   });
@@ -773,15 +819,17 @@
   * @class
   */
   var PrototypeItem = Class(uiNode, {
+    nodeType: 'property',
     template: 
-      '<div class="item property">' +
-        '<div{content} class="title">' +
-          '<a href{refAttr}="#{path}">{title}</a><span{types} class="types"/>' +
+      '<div class="item {nodeType}">' +
+        '<div class="title">' +
+          '<a href="#{path}">{title}</a><span{types} class="types"/>' +
         '</div>' +
         '<!-- {jsdocs} -->' +
       '</div>',
 
     binding: {
+      nodeType: 'nodeType',
       title: 'data.key.replace(/^event_/, "")',
       path: {
         events: 'update',
@@ -820,13 +868,19 @@
     }
   });
 
+  var specialMethod = {
+    init: 'constructor',
+    destroy: 'destructor'
+  };
+
  /**
   * @class
   */
-  var PrototypeEvent = Class(PrototypeItem, {
+  var PrototypeMethod = Class(PrototypeItem, {
+    nodeType: 'method',
     template:
-      '<div class="item event">' +
-        '<div{content} class="title">' +
+      '<div class="item {nodeType}">' +
+        '<div class="title">' +
           '<a href="#{path}">{title}</a><span class="args">({args})</span><span{types} class="types"/>' +
         '</div>' +
         '<!-- {jsdocs} -->' +
@@ -835,34 +889,39 @@
     binding: {
       args: function(node){
         return nsCore.getFunctionDescription(mapDO[node.data.path].data.obj).args;
+      },
+      mark: function(node){
+        return specialMethod[node.data.key];
       }
     }
   });
-  
+
  /**
   * @class
   */
-  var PrototypeMethod = Class(PrototypeItem, {
+  var PrototypeSpecialMethod = Class(PrototypeMethod, {
     template:
-      '<div class="item method">' +
-        '<div{content} class="title">' +
-          '<a href="#{path}">{title}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
+      '<div class="item {nodeType}">' +
+        '<div class="title">' +
+          '<span class="method_mark">{mark}</span>' +
+          '<a href="#{path}">{title}</a><span class="args">({args})</span><span{types} class="types"/>' +
         '</div>' +
         '<!-- {jsdocs} -->' +
-      '</div>',
+      '</div>'
+  });
 
-    binding: {
-      args: function(node){
-        return nsCore.getFunctionDescription(mapDO[node.data.path].data.obj).args;
-      }
-    },
-
-    templateUpdate: function(tmpl, event, delta){
-      PrototypeItem.prototype.templateUpdate.call(this, tmpl, event, delta);
-
-      if (/^(init|destroy)$/.test(this.data.key))
-        DOM.insert(tmpl.content, DOM.createElement('SPAN.method_mark', this.data.key == 'init' ? 'constructor' : 'destructor'), 0);
-    }
+ /**
+  * @class
+  */
+  var PrototypeEvent = Class(PrototypeMethod, {
+    nodeType: 'event',
+    template:
+      '<div class="item {nodeType}">' +
+        '<div class="title">' +
+          '<a href="#{path}">{title}</a><span class="args">({args})</span><span{types} class="types"/>' +
+        '</div>' +
+        '<!-- {jsdocs} -->' +
+      '</div>'
   });
 
 
@@ -971,7 +1030,7 @@
 
       switch (config.data.kind){
         case 'event': childClass = PrototypeEvent; break;
-        case 'method': childClass = PrototypeMethod; break;
+        case 'method': childClass = specialMethod[config.data.key] ? PrototypeSpecialMethod : PrototypeMethod; break;
         default:
           childClass = PrototypeItem;
       };
@@ -991,7 +1050,7 @@
         template:
           '<div class="Basis-PartitionNode">' +
             '<div class="Basis-PartitionNode-Title">' +
-              '{titleText}' +
+              '{title}' +
             '</div>' +
             '<div{childNodesElement|content} class="Basis-PartitionNode-Content">' +
               '<div{empty} class="empty">Implement nothing</div>' +
