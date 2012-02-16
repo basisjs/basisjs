@@ -455,6 +455,12 @@ basis.require('basis.event');
       }
 
       // subscription sheme: activate subscription if active
+      //if (this.active)
+      //  applySubscription(this, this.subscribeTo, SUBSCRIPTION.ALL);
+    },
+
+    postInit: function(){
+      // subscription sheme: activate subscription if active
       if (this.active)
         applySubscription(this, this.subscribeTo, SUBSCRIPTION.ALL);
     },

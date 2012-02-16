@@ -1426,6 +1426,7 @@
       prototype: { 
         constructor: null,
         init: NULL_FUNCTION,
+        postInit: NULL_FUNCTION,
         toString: function(){
           return '[object ' + (this.constructor || this).className + ']';
         },
@@ -1452,7 +1453,7 @@
         var SuperClass_ = Function();
         SuperClass_.prototype = SuperClass.prototype;
 
-        var newProto = new SuperClass_();
+        var newProto = new SuperClass_;
         var classId = classSeed++;
         var genericClassName = SuperClass.className + '._Class' + classId;
         var newClassProps = {
@@ -1469,7 +1470,7 @@
           extend: BaseClass.extend,
           // auto extend creates a subclass
           __extend__: function(value){
-            if (value && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))) && value !== SELF)
+            if (value && value !== SELF && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
               return BaseClass.create.call(null, newClass, value);
             else
               return value;
@@ -1514,12 +1515,15 @@
                     {
                       prop = this[key];
                       this[key] = prop && prop.__extend__ 
-                                    ? prop.__extend__(extend[key])
-                                    : extend[key];
+                        ? prop.__extend__(extend[key])
+                        : extend[key];
                     }
 
                     // call constructor
                     this.init(config || NULL_CONFIG);
+
+                    // post init
+                    this.postInit();
                   }
 
                 // simple constructor
@@ -1529,6 +1533,9 @@
 
                     // call constructor
                     this.init.apply(this, arguments);
+
+                    // post init
+                    this.postInit();
                   }
 
             /** @cut for more verbose in dev */ ) + '\n}["' + className + '"]')(seed, NULL_CONFIG);
@@ -1629,8 +1636,8 @@
         {
           var value = result[key];
           result[key] = value && value.__extend__
-                       ? value.__extend__(extension[key])
-                       : extensibleProperty(extension[key]);
+            ? value.__extend__(extension[key])
+            : extensibleProperty(extension[key]);
         }
       });
     };
@@ -1753,3 +1760,4 @@
   global.basis.locale = {};
 
 }(this);
+//alert(document.getElementsByTagName('script').length + '/' + document.scripts.length);

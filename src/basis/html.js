@@ -13,7 +13,7 @@ basis.require('basis.dom');
 basis.require('basis.cssom');
 basis.require('basis.dom.event');
 
-!function(basis, global){
+(function(basis, global){
 
   'use strict';
 
@@ -47,6 +47,7 @@ basis.require('basis.dom.event');
   var classNameRx = /^(.)|\s+/g;
   var domFragment = dom.createFragment();
 
+
   //
   // Feature detection tests
   //
@@ -76,10 +77,117 @@ basis.require('basis.dom.event');
   var createText = dom.createText;
   var createComment = function(value){
     return document.createComment(value);
-  };
+  }
 
   function documentFragmentToText(fragment){
     return dom.outerHTML(fragment, true);
+  }
+
+  //
+  // path
+  //
+  function addPath(context, path){
+    var index = context.path.indexOf(path);
+
+    if (index == -1)
+      index = context.path.push(path) - 1;
+
+    return index;
+  }
+
+  //
+  // ref
+  //
+  function addRefList(context, refs, path){
+    var pathId = addPath(context, path);
+
+    refs = refs.split('|');
+    for (var i = 0, refName; refName = refs[i]; i++)
+    {
+      ;;;if (context.refMap[refName] && typeof console != 'undefined') console.warn('Template.parse: dublicate reference `' + refName + '` in template');
+
+      // save last ref for backward capability
+      context.refMap[refName] = pathId;
+    }
+  }
+
+  //
+  // bindings
+  //
+  function addBinding(context, name, ref, code){
+    var bindings = context.bindings;
+
+    context.bindRef[ref] = true;
+
+    if (!bindings[name])
+      bindings[name] = [code];
+    else
+      bindings[name].push(code);
+  }
+
+  //
+  //
+  //
+
+  function syncTemplate(names, getters){
+    return function(){
+      for (var i = 0, bindingName; bindingName = names[i]; i++)
+        this.tmpl.updateBind(bindingName, getters[bindingName](this));
+    }
+  }
+
+  function getBindingFactory(templateBindings){
+    var bindingCache = {};
+    return function(bindings){
+      var cacheId = 'bindingId' in bindings ? bindings.bindingId : null;
+
+      ;;;if (!cacheId) console.warn('basis.html.Template.getBinding: bindings has no id property, cache not used');
+
+      var result = bindingCache[cacheId];
+      if (!result)
+      {
+        var names = [];
+        var events = {};
+        var handler = {};
+        var getters = {};
+        for (var key in templateBindings)
+        {
+          var binding = bindings[key];
+          if (binding && binding.getter)
+          {
+            getters[key] = binding.getter;
+            names.push(key);
+
+            if (binding.events)
+            {
+              var eventList = String(binding.events).qw();
+              for (var i = 0, eventName; eventName = eventList[i]; i++)
+              {
+                if (events[eventName])
+                  events[eventName].push(key);
+                else
+                {
+                  events[eventName] = [key];
+                  handler[eventName] = syncTemplate(events[eventName], getters);
+                }
+              }
+            }
+          }
+        }
+
+        result = {
+          names: names,
+          events: events,
+          sync: syncTemplate(names, getters),
+          handler: events.length ? handler : null
+        };
+
+        if (cacheId)
+          bindingCache[cacheId] = result;
+      }
+
+      return result;
+    }
   }
 
   //
@@ -90,7 +198,7 @@ basis.require('basis.dom.event');
 
     if (str)
     {
-      var parts = str.split(/\{([a-z0-9\_]+(?:\|[^}]*)?)\}/i);
+      var parts = str.split(/\{([a-z0-9\_]+(?:\|[a-z0-9\_]+)*)\}/i);
       var text;
 
       for (var i = 0; i < parts.length; i++)
@@ -99,8 +207,13 @@ basis.require('basis.dom.event');
 
         if (i & 1)
         {
-          for (var j = 0, refs = text.split(/\|/), refName; refName = refs[j]; j++)
-            context.getters[refName] = nodePath + 'childNodes[' + pos + ']';
+          var path = nodePath + 'childNodes[' + pos + ']';
+          addRefList(context, text, path);
+          if (text.indexOf('|') == -1)
+          {
+            var ref = 'r' + addPath(context, path);
+            addBinding(context, text, ref, ref + '.nodeValue=""+newValue');
+          }
         }
 
         if (text) // don't add an empty strings
@@ -188,10 +301,11 @@ basis.require('basis.dom.event');
       var name = m[3];
       var attrName = prefix + name;
       var value = m[5] || m[6] || name;
+      var refList = m[4];
 
       // store reference for attribute
-      if (m[4])
-        context.getters[m[4]] = nodePath + '.getAttributeNode("' + name + '")';
+      if (refList)
+        addRefList(context, refList, nodePath + '.getAttributeNode("' + attrName + '")');
 
       // if attribute is event binding, add global event handler
       if (prefix == 'event-')
@@ -213,42 +327,84 @@ basis.require('basis.dom.event');
             //result += '[on' + eventName + '="basis.dom.event.fireEvent(document,\'' + eventName + '\')"]';
         }
       }
-      /*else
+      else
       {
-        if (prefix == 'bind-')
+        if (value)
         {
-          value = String(value || name);
-
-          if (!value.match(/^(([a-z0-9\_\-]*\:)?[a-z0-9\_\-]+)(\|([a-z0-9\_\-]*\:)?[a-z0-9\_\-]+)*$/i))
-            throw 'wrong value for binding ' + attrName + ': ' + value;
-
-          var parts = value.split(/\|/);
-          for (var i = 0; i < parts.length; i++)
+          if (attrName == 'class')
           {
+            var parts = value.qw();
+            var newValue = [];
+
+            for (var i = 0, part; part = parts[i]; i++)
+            {
+              var m = part.match(/^([a-z0-9\-\_]+)?\{([a-z0-9\_]+)\}$/i);
+              if (m)
+              {
+                var prefix = m[1] || '';
+                var bindName = m[2];
+                var ref = 'r' + addPath(context, nodePath);
+
+                expression =
+                  'var oldClass = oldValue ? ' + prefix.quote() + ' + oldValue : "";\n' +
+                  'var newClass = newValue ? ' + prefix.quote() + ' + newValue : "";\n' +
+                  'if (oldClass || newClass)\n' +
+                  '{\n' +
+                  '  var cl = classList(' + ref + ');\n' +
+                  '  if (oldClass) cl.remove(oldClass);\n' +
+                  '  if (newClass) cl.add(newClass);\n' +
+                  '}';
+                //console.log(ref, expression)
+
+                addBinding(context, bindName, ref, expression);
+              }
+              else
+              {
+                newValue.push(part);
+              }
+            }
             
+            // compile
+            value = newValue.join(' ');
           }
+          else
+          {
+            var slots = value.split(/\{([a-z0-9\_]+)\}/i);
+            if (slots.length > 1)
+            {
+              var binds = [];
+              var expression = [];
+              var ref = 'r' + addPath(context, nodePath);
 
-          var firstChar = value.charAt(0);
-          var binding = [
-            'newValue = Boolean(value);\n',
-            'if (this.' + name + ' !== newValue)',
-            '{',
-            '  elementClassList = classList(tmpl' + nodePath.replace(/^\.childNodes\[0\]/, '.element') + ');',
-            '  if (this.' + name + ' = newValue)',
-            '    elementClassList.add(' + value.quote() + ');',
-            '  else',
-            '    elementClassList.remove(' + value.quote() + ');',
-            '};\n'
-          ].join('\n');
+              for (var i = 0; i < slots.length; i++)
+              {
+                if (i % 2)
+                {
+                  expression.push('values_.' + slots[i]);
+                  binds.push(slots[i]);
+                }
+                else
+                {
+                  if (slots[i])
+                    expression.push(slots[i].quote('"'));
+                }
+              }
+              
+              // compile
+              expression = ref + '.setAttribute("' + attrName + '", ' + expression.join('+') + ');';
 
-          context.bindings[name] = {
-            default: false,
-            code: binding
-          };
+              // add bindings
+              for (var i = 0, bindName; bindName = binds[i]; i++)
+              {
+                addBinding(context, bindName, ref, expression);
+                //console.log(name, expression)
+              }
 
-          continue;
+              continue;
+            }
+          }
         }
-      }*/
+      }
 
       result += attrName == 'class'
                   ? value.trim().replace(classNameRx, '.$1')
@@ -279,11 +435,13 @@ basis.require('basis.dom.event');
     var pos = 0;
     var m;
     var stack = context.stack;
+    var closeTag;
+    var commentRefList;
 
     while (m = tmplPartFinderRx.exec(context.str))
     {
       //    0      1        2      3           4            5         6        7
-      // m: match, tagName, alias, attributes, isSingleton, closeTag, comment, commentAlias
+      // m: match, tagName, alias, attributes, isSingleton, closeTag, comment, commentRefList
 
       preText = RegExp.leftContext;
       context.str = context.str.substr(preText.length + m[0].length);
@@ -296,17 +454,17 @@ basis.require('basis.dom.event');
       }
 
       // end tag
-      if (m[5])
+      if (closeTag = m[5])
       {
         // if end tag match to last stack tag -> remove last tag from tag and return
-        if (m[5] == stack[stack.length - 1])
+        if (closeTag == stack[stack.length - 1])
         {
           stack.pop();
           return result;
         }
         else
         {
-          ;;;if (typeof console != undefined) console.log('Wrong end tag </' + m[5] + '> in Html.Template (ignored)\n\n' + context.source.replace(new RegExp('(</' + m[5] + '>)(' + context.str + ')$'), '\n ==[here]=>$1<== \n$2'));
+          ;;;if (typeof console != undefined) console.warn('Wrong end tag </' + closeTag + '> in Html.Template (ignored)\n\n' + context.source.replace(new RegExp('(</' + closeTag + '>)(' + context.str + ')$'), '\n ==[here]=>$1<== \n$2'));
           throw "Wrong end tag";
         }
       }
@@ -314,8 +472,8 @@ basis.require('basis.dom.event');
       // comment
       if (m[6])
       {
-        if (m[7])
-          context.getters[m[7]] = path + 'childNodes[' + pos + ']';
+        if (commentRefList = m[7])
+          addRefList(context, commentRefList, path + 'childNodes[' + pos + ']');
 
         result.appendChild(createComment(m[6]));
       }
@@ -324,7 +482,7 @@ basis.require('basis.dom.event');
       {
         var descr = m[0];
         var tagName = m[1];
-        var name = m[2];
+        var refList = m[2];
         var attributes = m[3];
         var singleton = !!m[4];
         var nodePath = path + 'childNodes[' + pos + ']';
@@ -339,8 +497,9 @@ basis.require('basis.dom.event');
             }
           }(eventName));
           
-        if (name)
-          context.getters[name] = nodePath;
+        if (refList)
+          addRefList(context, refList, nodePath);
+
 
         if (!singleton)
         {
@@ -370,7 +529,7 @@ basis.require('basis.dom.event');
 
     if (stack.length)
     {
-      ;;;if (typeof console != undefined) console.log('No end tag for ' + stack.reverse() + ' in Html.Template:\n\n' + context.source);
+      ;;;if (typeof console != undefined) console.warn('No end tag for ' + stack.reverse() + ' in Html.Template:\n\n' + context.source);
       throw "No end tag for " + stack.reverse();
     }
 
@@ -397,133 +556,151 @@ basis.require('basis.dom.event');
 
     var context = {
       str: source,
-      getters: {
-        element: '.childNodes[0]'
-      },
-      bindings: {
-      }
+      refMap: {},
+      path: [],
+      bindings: {},
+      bindRef: {}
     };
+
+    // element reference by default points to first child
+    addRefList(context, 'element', '.childNodes[0]')
 
     // parse html
     var proto = parseHtml(context);
 
-    // build pathes for references
-    var body = Object.iterate(context.getters, function(name, getter){
-      var names = name.split(/\|/);
-      
-      // .map(String.format, 'obj_.{0}')
-      for (var i = 0; i < names.length; i++)
-        names[i] = 'obj_.' + names[i];
+    //
+    // build function bodies
+    //
+    var createBody_refInit = [];
+    var createBody_resObject = [];
+    var clearBody_objClear = ['obj_.updateBind'];
+    var pathList = context.path;
 
-      // optimize path (1)
-      var path = getter.split(/(\.?childNodes\[(\d+)\])/);
+    // optimize pathes: replace for references
+    for (var i = 0, path; path = pathList[i]; i++)
+    {
+      var pathParts = path.split(/(\.?childNodes\[(\d+)\])/);
       var cursor = proto;
-      for (var i = 0; i < path.length; i += 3)
+      for (var j = 2, pos; pos = pathParts[j]; j += 3)
       {
-        var pos = path[i + 2];
-        if (!pos)
-          break;
-
-        path[i + 2] = '';
+        pathParts[j] = '';
         cursor = cursor.childNodes[pos];
 
         if (!cursor.previousSibling)
-          path[i + 1] = '.firstChild';
+          pathParts[j - 1] = '.firstChild';
         else
           if (!cursor.nextSibling)
-            path[i + 1] = '.lastChild';
+            pathParts[j - 1] = '.lastChild';
       }
+      pathList[i] = 'dom_' + pathParts.join('');
+    }
 
-      // return body parts
-      return {
-        name:  names[0],
-        alias: names.join('='),
-        path:  'dom_' + path.join('')
-      }
-    }).sortAsObject('path');
+    // optimize pathes: make pathes shorter
+    for (var i = 0, path; path = pathList[i]; i++)
+    {
+      var varName = 'r' + i;
+      createBody_refInit.push(varName + '=' + path);
+
+      // make next pathes shorter
+      var pathRx = new RegExp('^' + path.forRegExp());
+      for (var j = i + 1, nextPath; nextPath = pathList[j]; j++)
+        pathList[j] = nextPath.replace(pathRx, varName);
+    }
+
+    // build bodies
+    for (var refName in context.refMap)
+    {
+      createBody_resObject.push(refName + ':r' + context.refMap[refName]);
+      clearBody_objClear.push('obj_.' + refName);
+    }
+
+    clearBody_objClear.push('null');
+
+    // 
 
     // optimize pathes (2)
-    for (var i = 0, line; line = body[i]; i++)
-    {
-      var pathRx = new RegExp('^' + line.path.forRegExp());
-      for (var j = i + 1, nextBodyPart; nextBodyPart = body[j++];)
-        nextBodyPart.path = nextBodyPart.path.replace(pathRx, line.name);
-    }
+    //console.log('-'.repeat(20));
+    //console.log('var ' + createBody_refInit + ';' + createBody_resObject);
+    //console.log(clearBody_objClear);
 
-    var createBody = [];
-    var clearBody = [];
-    for (var i = 0, line; line = body[i]; i++)
-    {
-      createBody[i] = '\n' + line.alias + '=' + line.path;
-      clearBody[i] = line.alias + '=null\n';
-    }
-
-    var defaultValues = function(){};
-    var hasBindings = false;
-    var setCode = '';
+    var getBindFunction;
+    var getBindFunctionBody = '';
+    var bindArgs = Object.keys(context.bindRef);
+    var defObject = [];
     for (var key in context.bindings)
     {
       //console.log(key, context.bindings[key].code);
-      defaultValues.prototype[key] = context.bindings[key].default;
+      defObject.push(key + ':' + context.bindings[key]['default']);
 
-      setCode += 'case "' + key + '":\n' + context.bindings[key].code + '\nbreak;\n';
-
-      hasBindings = true;
+      getBindFunctionBody +=
+        'case "' + key + '":\n' +
+          'if (values_.' + key + '!==newValue){\n' +
+          '  oldValue=values_.' + key + ';\n' +
+          '  values_.' + key + '=newValue;\n'+
+          context.bindings[key].join('\n') + '\n}' +
+        'break;\n';
     }
 
-    /*var setFunction = function(){};
-    if (hasBindings)
+    if (getBindFunctionBody)
     {
-      setFunction = new Function('classList', 'return ' + 
-        function(tmpl, key, value){
-          var newValue;
-          // specific code start
-          _code_(); // <-- will be replaced for specific code
-          // specific code end
-        }
-      .toString().replace('_code_()', 'switch(key){\n' + setCode + '\n}'))(classList);
+      //bindArgs.unshift('values_');
 
-      console.log(setFunction.toString());
-      createBody.push('\nobj_.setValue=setValue_.bind(new defs_, obj_)');
-      //createBody.push('\nobj_.setValue=setValue_.bind(new defs_, obj_)');
-      //createBody.push('\nobj_.sync=sync.bind(new defs_, obj_)');
-      console.log(createBody);
+      getBindFunction = new Function(bindArgs, 'var classList=basis.cssom.classList,values_={' + defObject + '};return ' + 
+        function(key, newValue){
+          var oldValue;
+
+          // generated code start
+          _generated_code_(); // <-- will be replaced for generated code
+          // generated code end
+        }
+      .toString().replace('_generated_code_()', 'switch(key){\n' + getBindFunctionBody + '\n}'));
+
+      //console.log(getBindFunction.toString());
+
+      //bindArgs[0] = 'new defs_';
+      createBody_resObject.push('updateBind:getBindFunction(' + bindArgs + ')');
+
+      // build get getBinding method
+      this.getBinding = getBindingFactory(context.bindings)
     }
     else
     {
-      createBody.push('\nobj_.setValue=setValue_');
-    }*/
+      createBody_resObject.push('updateBind:Function()');
+      this.getBinding = Function.$undef;
+    }
+
+    createBody_refInit.push('\nobj_={' + createBody_resObject + '}');
 
     //
     // build createInstance function
     //
-    this.createInstance = new Function('proto_', 'map_', 'setValue_', 'defs_', 'var obj_, dom_; return ' + 
+    this.createInstance = new Function('proto_', 'map_', 'getBindFunction', 'var dom_; return ' + 
       // mark variable names with dangling _ to avoid renaming by compiler, because
       // this names using by generated code, and must be unchanged
 
       // WARN: don't use global scope variables, resulting function has isolated scope
 
-      function(object, node){
-        obj_ = object || {};
+      function(node){
         dom_ = proto_.cloneNode(true);
 
-        // specific code start
-        _code_(); // <-- will be replaced for specific code
-        // specific code end
+        // generated code start
+        _generated_code_();
+        // generated code end
 
         if (node)
         {
-          var id = obj_.element.basisObjectId = map_.seed++;
+          var id = map_.seed++;
+          r0.basisObjectId = id;
           map_[id] = node;
         }
 
         return obj_;
       }
 
-    .toString().replace('_code_()', createBody))(proto, tmplNodeMap/*, setFunction, defaultValues*/); // body.map(String.format, '{alias}={path};\n').join('')
+    .toString().replace('_generated_code_()', 'var ' + createBody_refInit))(proto, tmplNodeMap, getBindFunction); // body.map(String.format, '{alias}={path};\n').join('')
 
     /*if (hasBindings)
-      console.log(this.createInstance.toString())*/
+      console.log(this.createInstance.toString())/**/
 
     //
     // build clearInstance function
@@ -531,18 +708,18 @@ basis.require('basis.dom.event');
     this.clearInstance = new Function('map_', 'var obj_; return ' +
 
       function(object, node){
-        obj_ = object;
+        obj_ = object; // prevent renaming
+
         var id = obj_.element && obj_.element.basisObjectId;
         if (id)
           delete map_[id];
 
-        // specific code start
-        _code_(); // <-- will be replaced for specific code
-        // specific code end
-
+        // generated code start
+        _generated_code_();
+        // generated code end
       }
 
-    .toString().replace('_code_()', clearBody))(tmplNodeMap);  // body.map(String.format, '{alias}=null;\n').join('')
+    .toString().replace('_generated_code_()', clearBody_objClear.join('=')))(tmplNodeMap);  // body.map(String.format, '{alias}=null;\n').join('')
   };
 
 
@@ -555,7 +732,7 @@ basis.require('basis.dom.event');
   * method.
   * @example
   *   // create a template
-  *   var template = new basis.Template(
+  *   var template = new basis.html.Template(
   *     '<li{element} class="listitem">' +
   *       '<a href{hrefAttr}="#">{titleText}</a>' + 
   *       '<span class="description">{descriptionText}</span>' +
@@ -565,33 +742,13 @@ basis.require('basis.dom.event');
   *   // create 10 DOM elements using template
   *   for (var i = 0; i < 10; i++)
   *   {
-  *     var node = template.createInstance();
-  *     basis.CSS.cssClass(node.element).add('item' + i);
-  *     node.hrefAttr.nodeValue = '/foo/bar.html';
-  *     node.titleText.nodeValue = 'some title';
-  *     node.descriptionText.nodeValue = 'description text';
+  *     var tmpl = template.createInstance();
+  *     basis.cssom.classList(tmpl.element).add('item' + i);
+  *     tmpl.hrefAttr.nodeValue = '/foo/bar.html';
+  *     tmpl.titleText.nodeValue = 'some title';
+  *     tmpl.descriptionText.nodeValue = 'description text';
   *   }
   *   
-  *   // create and attach DOM structure to existing object
-  *   var dataObject = new basis.Data.DataObject({
-  *     data: { title: 'Some data', value: 123 },
-  *     handlers: {
-  *       update: function(object, delta){
-  *         this.titleText.nodeValue = this.info.title;
-  *         // other DOM manipulations
-  *       }
-  *     }
-  *   });
-  *   // apply template to object
-  *   template.createInstance(dataObject);
-  *   // trigger update event that fill template with data
-  *   dataObject.update(null, true);
-  *   ...
-  *   basis.dom.insert(someElement, dataObject.element);
-  *   ...
-  *   // destroy object
-  *   template.clearInstance(dataObject);
-  *   dataObject.destroy();
   * @class
   */
   var Template = Class(null, {
@@ -622,12 +779,23 @@ basis.require('basis.dom.event');
     * @param {Object=} node Object which templateAction method will be called on events.
     * @return {Object}
     */
-    createInstance: function(object, node){
+    createInstance: function(node){
       parseTemplate.call(this);
-      return this.createInstance(object, node);
+      return this.createInstance(node);
     },
+
+   /**
+    * Remove reference from DOM structure
+    * @param {Object=} object Storage of DOM references.
+    * @param {Object=} node Object which templateAction method.
+    */
     clearInstance: function(object, node){
       parseTemplate.call(this);
+    },
+
+    getBinding: function(bindings){
+      parseTemplate.call(this);
+      return this.getBinding(bindings);
     }
   });
 
@@ -668,4 +836,4 @@ basis.require('basis.dom.event');
     string2Html: string2Html
   });
 
-}(basis, this);
+})(basis, this);

@@ -28,7 +28,10 @@ basis.require('basis.html');
 
   var namespace = 'basis.ui';
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var DOM = basis.dom;
@@ -42,14 +45,67 @@ basis.require('basis.html');
   var DWPartitionNode = basis.dom.wrapper.PartitionNode;
   var DWGroupingNode = basis.dom.wrapper.GroupingNode;
 
+
   //
   // main part
   //
+
+  var bindingSeed = 1;
+
+  function extendBinding(binding, extension){
+    binding.bindingId = bindingSeed;
+    for (var key in extension)
+    {
+      var def = null;
+      var value = extension[key];
+      if (!value)
+        def = null
+      else
+      {
+        if (typeof value != 'object')
+          def = {
+            getter: getter(value)
+          };
+        else
+          if (Array.isArray(value))
+            def = {
+              getter: getter(value[0]),
+              events: value[1]
+            };
+          else
+            def = {
+              getter: getter(value.getter),
+              events: value.events
+            };
+      }
+
+      binding[key] = def;
+    }
+  }
 
  /**
   *
   */
   var TEMPLATE_ACTION = Class.extensibleProperty();
+
+  var TEMPLATE_BINDING = Class.customExtendProperty({
+    selected: {
+      getter: function(node){
+        return node.selected ? 'selected' : '';
+      },
+      events: 'select unselect'
+    },
+    disabled: {
+      getter: function(node){
+        return node.disabled ? 'disabled' : '';
+      },
+      events: 'disable enable'
+    },
+    state: {
+      getter: 'state',
+      events: 'stateChanged'
+    },
+  }, extendBinding);
 
  /**
   * @mixin
@@ -60,8 +116,8 @@ basis.require('basis.html');
       * Template for object.
       * @type {basis.Html.Template}
       */
-      template: new Template( // NOTE: explicit template constructor here;
-        '<div/>'              //       it could be ommited in subclasses
+      template: new Template(  // NOTE: explicit template constructor here;
+        '<div/>'               //       it could be ommited in subclasses
       ),
 
      /**
@@ -75,6 +131,11 @@ basis.require('basis.html');
       * @type {Object}
       */
       action: TEMPLATE_ACTION,
+
+     /**
+      * @type {Object}
+      */
+      binding: TEMPLATE_BINDING,
 
      /**
       * @type
@@ -204,11 +265,12 @@ basis.require('basis.html');
       init: function(config){
 
         // create dom fragment by template
-        var tmpl = {};
+        var tmpl;
+        var bindings;
 
         if (this.template)
         {
-          this.template.createInstance(tmpl, this);
+          tmpl = this.template.createInstance(this);
 
           if (tmpl.childNodesHere)
           {
@@ -224,7 +286,9 @@ basis.require('basis.html');
           }
         }
         else
-          tmpl.element = DOM.createElement();
+          tmpl = {
+            element: DOM.createElement()
+          };
 
         // make shortcuts
         this.tmpl = tmpl;
@@ -263,6 +327,24 @@ basis.require('basis.html');
         {
           DOM.insert(this.container, tmpl.element);
           this.container = null;
+        }
+      },
+
+     /**
+      * 
+      */
+      postInit: function(){
+        super_.postInit.call(this);
+
+        if (this.template)
+        {
+          var binding = this.template.getBinding(this.binding)
+          if (binding && binding.names.length)
+          {
+            if (binding.handler)
+              this.addHandler(binding.handler);
+            binding.sync.call(this);
+          }
         }
       },
 
