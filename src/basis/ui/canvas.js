@@ -47,6 +47,37 @@ basis_require('basis.ext.flashcanvas');*/
   // Main part
   //
 
+  var CanvasLayer = UINode.subclass({
+    className: namespace + '.CanvasLayer',
+
+    template:
+      '<canvas{canvas}>' +
+        '<div>Canvas doesn\'t support.</div>' +
+      '</canvas>',
+
+    init: function(config){
+      UINode.prototype.init.call(this, config);
+     
+      this.tmpl.canvas.width = this.width || 600;
+      this.tmpl.canvas.height = this.height || 400;
+
+      var canvasElement = this.tmpl.canvas;
+
+      if (typeof FlashCanvas != "undefined") {
+        FlashCanvas.initElement(canvasElement);
+      }
+      
+      if (canvasElement && canvasElement.getContext)
+        this.context = canvasElement.getContext('2d');
+    },
+    reset: function(){
+      if (this.context)
+        this.context.clearRect(0, 0, this.element.offsetWidth, this.element.offsetHeight)
+    },
+
+    draw: Function.undef
+  });
+
   var Shape = Node.subclass({
     className: namespace + '.Shape',
     draw: function(context){
@@ -86,13 +117,8 @@ basis_require('basis.ext.flashcanvas');*/
  /**
   * @class
   */
-  var Canvas = UINode.subclass({
+  var Canvas = CanvasLayer.subclass({
     className: namespace + '.Canvas',
-
-    template:
-      '<canvas{canvas}>' +
-        '<div>Canvas doesn\'t support.</div>' +
-      '</canvas>',
 
     childFactory: function(config){
       return new this.childClass(config);
@@ -112,36 +138,13 @@ basis_require('basis.ext.flashcanvas');*/
     },
 
     init: function(config){
-      UINode.prototype.init.call(this, config);
+      CanvasLayer.prototype.init.call(this, config);
      
-      this.tmpl.canvas.width = this.width;
-      this.tmpl.canvas.height = this.height;
       this.updateCount = 0;
 
       var canvasElement = this.tmpl.canvas;
-
-      if (typeof FlashCanvas != "undefined") {
-        FlashCanvas.initElement(canvasElement);
-      }
-      
       if (canvasElement && canvasElement.getContext)
-      {
-        this.context = canvasElement.getContext('2d');
         this.updateTimer_ = setInterval(this.draw.bind(this), 1000/60);
-      }
-    },
-    reset: function(){
-      /*var ctx = this.context;
-      ctx.save();
-      ctx.fillStyle = "rgba(255,255,255,0.05)";
-      ctx.fillRect(0, 0, this.element.clientWidth, this.element.clientHeight);
-      ctx.restore();/**/
-      this.tmpl.canvas.width = this.tmpl.canvas.clientWidth;
-      this.tmpl.canvas.height = this.tmpl.canvas.clientHeight;
-      /*if (this.context)
-      {
-        this.context.clearRect(0, 0, this.element.width, this.element.height)
-      }*/
     },
     isNeedToDraw: function(){
       return this.context && (
@@ -176,7 +179,7 @@ basis_require('basis.ext.flashcanvas');*/
     destroy: function(){
       clearInterval(this.updateTimer_);
 
-      UINode.prototype.destroy.call(this);
+      CanvasLayer.prototype.destroy.call(this);
     }
   });
 
@@ -186,6 +189,7 @@ basis_require('basis.ext.flashcanvas');*/
   //
 
   basis.namespace(namespace).extend({
+    CanvasLayer: CanvasLayer,
     Canvas: Canvas,
     Shape: Shape
   });

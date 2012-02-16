@@ -43,7 +43,9 @@ basis.require('basis.ui.canvas');
   var uiNode = basis.ui.Node;
   var uiContainer = basis.ui.Container;
   var Canvas = basis.ui.canvas.Canvas;
+  var CanvasLayer = basis.ui.canvas.CanvasLayer;
   var ChildNodesDataset = basis.dom.wrapper.ChildNodesDataset;
+  var Selection = basis.dom.wrapper.Selection;
 
   var createEvent = basis.event.create;
   var getter = Function.getter;
@@ -176,8 +178,9 @@ basis.require('basis.ui.canvas');
     childClass: GraphNode,
 
     template:
-      '<div class="Basis-Graph" style="position: relative; display: inline; display: inline-block; zoom: 1;">' +
-        '<canvas{canvas} style="vertical-align: top">' +
+      '<div class="Basis-Graph" style="position: relative; display: inline; display: inline-block; zoom: 1; outline: none">' +
+        '<!-- {graphSelection} -->' +
+        '<canvas{canvas} style="vertical-align: top; position:relative">' +
           '<div>Canvas doesn\'t support.</div>' +
         '</canvas>' +
         '<!-- {graphViewer} -->' +
@@ -187,6 +190,10 @@ basis.require('basis.ui.canvas');
 
     event_sortingChanged: function(node, oldSorting, oldSortingDesc){
       Canvas.prototype.event_sortingChanged.call(this, node, oldSorting, oldSortingDesc);
+      this.redrawRequest();
+    },
+    event_groupingChanged: function(node, oldGrouping){
+      Canvas.prototype.event_groupingChanged.call(this, node, oldGrouping);
       this.redrawRequest();
     },
     event_childNodesModified: function(node, delta){
@@ -214,8 +221,6 @@ basis.require('basis.ui.canvas');
     drawFrame: Function.$undef
   });
 
-  
-  
   //
   // Series Graph
   //
@@ -921,13 +926,233 @@ basis.require('basis.ui.canvas');
   });
 
 
+  //
+  // GraphSelection
+  // 
+  var ctrlPressed = false;
+  var shiftPressed = false;
+  var selectionStart = false;
+  var lastItemPosition = -1;
+  var startItemPosition = -1;
+
+  function getGraphXByMouseX(graph, globalX){
+    var graphRect = graph.element.getBoundingClientRect();
+    return globalX - graphRect.left - graph.clientRect.left;
+  }
+  function getGraphYByMouseY(graph, globalY){
+    var graphRect = graph.element.getBoundingClientRect();
+    return globalY - graphRect.top - graph.clientRect.top;
+  }
+  function getGraphItemPositionByMouseX(graph, mouseX){
+    var width = graph.clientRect.width;
+    var itemCount = graph.childNodes.length;
+    var x = getGraphXByMouseX(graph, mouseX);
+    return Math.max(0, Math.min(itemCount - 1, Math.round(x / (width / (itemCount - 1)))));
+  }
+
+  function rebuildGraphSelection(graph, curItemPosition, startItemPosition)
+  {
+    var curItem = graph.childNodes[curItemPosition];
+    var applyItems = graph.childNodes.slice(Math.min(startItemPosition, curItemPosition), Math.max(startItemPosition, curItemPosition) + 1);
+
+    var selectedItems = Array.from(graph.selection.getItems());
+    if (ctrlPressed && selectedItems.indexOf(curItem) != -1)
+    {
+      var pos;
+      for (var i = 0, item; item = applyItems[i]; i++)
+      {
+        if ((pos = selectedItems.indexOf(item)) != -1)
+          selectedItems.splice(pos, 1); 
+      }
+    }
+    else
+    {
+      selectedItems = selectedItems.concat(applyItems);
+    }
+    
+    return selectedItems;
+  }
+
+  var GRAPH_ELEMENT_HANDLER = {
+    mousedown: function(event){
+      var graph = this.owner; 
+      var x = getGraphXByMouseX(graph, Event.mouseX(event));
+      var y = getGraphYByMouseY(graph, Event.mouseY(event));
+
+      if (x > 0 && x < this.clientRect.width && y > 0 && y < this.clientRect.height)
+      {
+        for (var i in GRAPH_SELECTION_GLOBAL_HANDLER)
+          Event.addGlobalHandler(i, GRAPH_SELECTION_GLOBAL_HANDLER[i], this);
+
+        var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
+
+        if (!ctrlPressed)
+          graph.selection.clear();
+
+        if (!shiftPressed || !startItemPosition)
+          startItemPosition = curItemPosition;
+
+        lastItemPosition = curItemPosition;
+
+        var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
+        this.draw(selectedItems);
+      }
+
+      this.owner.element.focus();
+      Event.kill(event);
+    },
+    keydown: function(event){
+      if (Event.key(event) == Event.KEY.CTRL)
+        ctrlPressed = true;
+
+      if (Event.key(event) == Event.KEY.SHIFT)
+        shiftPressed = true;
+    },
+    keyup: function(event){
+      if (Event.key(event) == Event.KEY.CTRL)
+        ctrlPressed = false;
+
+      if (Event.key(event) == Event.KEY.SHIFT)
+        shiftPressed = false;
+    },
+    blur: function(){
+      lastItemPosition = -1;
+      startItemPosition = -1;
+      ctrlPressed = false;
+      shiftPressed = false;
+    }
+  }
+
+  var GRAPH_SELECTION_GLOBAL_HANDLER = {
+    mousemove: function(event){
+      var graph = this.owner; 
+      
+      var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
+  
+      if (curItemPosition != lastItemPosition)
+      {
+        lastItemPosition = curItemPosition;
+        var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
+        this.draw(selectedItems);
+      }
+    },
+    mouseup: function(event){
+      var graph = this.owner; 
+
+      var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
+      var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
+      
+      graph.selection.set(selectedItems);
+
+      for (var i in GRAPH_SELECTION_GLOBAL_HANDLER)
+        Event.removeGlobalHandler(i, GRAPH_SELECTION_GLOBAL_HANDLER[i], this);
+    }
+  }
+
+  var GRAPH_SELECTION_HANDLER = {
+    datasetChanged: function(object, delta){
+      this.draw();
+    }
+  }
+
  /**
   * @class
   */
-  var GraphViewer = uiNode.subclass({
+  var GraphSelection = CanvasLayer.subclass({
+    className: namespace + '.GraphSelection',
+
+    template: '<canvas{canvas} style="position:absolute;left:0;top:0"/>',
+
+    listen: {
+      owner: {
+        draw: function(){
+          this.recalc();
+          this.draw();
+        }
+      }
+    },
+
+    event_ownerChanged: function(object, oldOwner){
+      CanvasLayer.prototype.event_ownerChanged.call(this, object, oldOwner);
+      
+      if (oldOwner && oldOwner.selection)
+      {
+        oldOwner.selection.removeHandler(GRAPH_SELECTION_HANDLER, this);
+        Event.removeHandlers(oldOwner.element, GRAPH_ELEMENT_HANDLER, this);
+      }
+
+      if (this.owner && this.owner.selection)
+      {
+        this.recalc();
+        this.owner.selection.addHandler(GRAPH_SELECTION_HANDLER, this);
+
+        this.owner.element.setAttribute('tabindex', 1);
+        Event.addHandlers(this.owner.element, GRAPH_ELEMENT_HANDLER, this);
+      }
+    },
+
+    recalc: function(){
+      this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
+      this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+
+      this.clientRect = this.owner.clientRect;
+    },
+
+    draw: function(selectedItems){
+      this.reset();
+
+      this.context.save();
+      this.context.translate(this.clientRect.left, this.clientRect.top);
+
+      var selectionBarWidth = this.clientRect.width / (this.owner.childNodes.length - 1);
+
+      if (!selectedItems)
+        selectedItems = this.owner.selection.getItems();
+
+      var selectedItemsMap = {};
+
+      for (var i = 0; i < selectedItems.length; i++)
+        selectedItemsMap[selectedItems[i].eventObjectId] = true;
+
+      var left, right;
+      var lastPos = -1;
+
+      this.context.globalAlpha = .7;
+      this.context.fillStyle = '#dfdaff';
+      this.context.strokeStyle = '#9a89ff';
+
+      for (var i = 0; i < this.owner.childNodes.length + 1; i++)
+      {
+        var child = this.owner.childNodes[i];
+        if (child && selectedItemsMap[child.eventObjectId])
+        {
+          if (lastPos == -1)
+            lastPos = i;
+        }
+        else
+        {
+          if (lastPos != -1)
+          {
+            left = Math.round(lastPos * selectionBarWidth - selectionBarWidth / 2);
+            right = Math.round(i * selectionBarWidth - selectionBarWidth / 2);
+            this.context.fillRect(left + .5, .5, right - left, this.clientRect.height);
+            this.context.strokeRect(left + .5, .5, right - left, this.clientRect.height);
+            lastPos = -1;
+          }
+        }
+      }
+
+      this.context.restore();
+    }
+  });
+
+ /**
+  * @class
+  */
+  var GraphViewer = CanvasLayer.subclass({
     className: namespace + '.GraphViewer',
 
-    template: '<canvas event-mousemove="move" event-mouseout="out" style="position:absolute;left:0;top:0"></canvas>',
+    template: '<canvas{canvas} event-mousemove="move" event-mouseout="out" style="position:absolute;left:0;top:0"/>',
 
     action: {
       move: function(event){
@@ -955,10 +1180,8 @@ basis.require('basis.ui.canvas');
       }
     },
 
-    init: function(config){
-      uiNode.prototype.init.call(this, config);
-
-      this.context = this.element.getContext('2d');
+    event_ownerChanged: function(object, oldOwner){
+      CanvasLayer.prototype.event_ownerChanged.call(this, object, oldOwner);
 
       if (this.owner)
         this.recalc();
@@ -970,12 +1193,6 @@ basis.require('basis.ui.canvas');
 
       this.clientRect = this.owner.clientRect;
       this.max = this.owner.maxValue;
-    },
-
-    reset: function(){
-      this.element.width = this.element.clientWidth;
-      this.element.height = this.element.clientHeight;
-      this.context.translate(this.clientRect.left, this.clientRect.top);
     },
 
     updatePosition: function(mx, my){
@@ -993,6 +1210,9 @@ basis.require('basis.ui.canvas');
 
     draw: function(x, y){
       var context = this.context;
+
+      this.context.save();
+      this.context.translate(this.clientRect.left, this.clientRect.top);
 
       var TOP = this.clientRect.top;
       var WIDTH = this.clientRect.width;
@@ -1138,6 +1358,8 @@ basis.require('basis.ui.canvas');
         context.textAlign = 'right';
         context.fillText(label.text, xPosition + (pointWidth + tongueSize + labelPadding)*align + (align == 1 ? labelWidth : 0) + .5, label.labelY + 4);
       }
+
+      context.restore();
     }
   });
 
@@ -1157,7 +1379,18 @@ basis.require('basis.ui.canvas');
     satelliteConfig: {
       graphViewer: {
         instanceOf: GraphViewer
+      },
+      graphSelection: {
+        instanceOf: GraphSelection,
+        existsIf: getter('selection')
       }
+    },
+
+    init: function(config){
+      if (this.selection && !(this.selection instanceof Selection))
+        this.selection = Object.complete({ multiple: true }, this.selection)
+
+      AxisGraph.prototype.init.call(this, config);
     },
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
@@ -1215,6 +1448,9 @@ basis.require('basis.ui.canvas');
   var BarGraphViewer = GraphViewer.subclass({
     draw: function(x, y){
       var context = this.context;
+
+      this.context.save();
+      this.context.translate(this.clientRect.left, this.clientRect.top);
 
       var clientRect = this.owner.clientRect;
       var bars = this.owner.bars;
@@ -1280,9 +1516,11 @@ basis.require('basis.ui.canvas');
 
       context.fillStyle = 'black';
       context.fillText(tooltipText, tooltipX + TOOLTIP_PADDING, tooltipY + tooltipHeight - TOOLTIP_PADDING);
+
+      context.restore();
     }
   });
-
+  
 
   /**
    * @class

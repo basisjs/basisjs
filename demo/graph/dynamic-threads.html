@@ -37,6 +37,13 @@
       margin-bottom: 0.5em;
     }
 
+    .selectionContainer
+    {                 
+      float: left;
+
+      font-size: 75%;
+    }
+
   </style>
 
   <script type="text/javascript" src="../../basis-all.js"></script>
@@ -164,6 +171,8 @@
       width: 800,
       height: 450,
 
+      selection: true,
+
       dataSource: CompanyReport.getGrouping('Company').getSubset(Company('microsoft')),
       sorting: Function.getter('data.Date'),
       keyGetter: function(object){
@@ -204,6 +213,21 @@
         }
       }
     });
+
+
+    new basis.ui.Container({
+      cssClassName: 'selectionContainer',
+      container: DOM.get('demo-container'),
+      dataSource: graph.selection,
+      childClass: {
+        template: 
+          '<div>{titleText}</div>',
+        templateUpdate: function(){
+          this.tmpl.titleText.nodeValue = (new Date(this.data.Date)).toFormat('%D.%M.%Y'); 
+        }
+      }
+    })
+
   </script>
 </body>
 
