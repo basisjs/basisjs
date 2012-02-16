@@ -1,4 +1,4 @@
-/*!
+/**
  * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
@@ -13,7 +13,7 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
 basis.require('basis.html');
 
-!function(basis){
+(function(basis){
 
   'use strict';
 
@@ -104,7 +104,7 @@ basis.require('basis.html');
     state: {
       getter: 'state',
       events: 'stateChanged'
-    },
+    }
   }, extendBinding);
 
  /**
@@ -638,4 +638,4 @@ basis.require('basis.html');
     Control: Control
   });
 
-}(basis);
+})(basis);

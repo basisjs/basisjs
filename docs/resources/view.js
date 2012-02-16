@@ -79,8 +79,8 @@
         '{title}' +
       '</span>',
 
-    templateUpdate: function(tmpl){
-      tmpl.title.nodeValue = this.title;
+    binding: {
+      title: 'title'
     },
 
     action: {
@@ -104,8 +104,8 @@
         '<span{childNodesElement} class="options"/>' +
       '</div>',
 
-    templateUpdate: function(tmpl){
-      tmpl.title.nodeValue = this.title;
+    binding: {
+      title: 'title'
     },
 
     selection: {
@@ -345,21 +345,57 @@
   * @class
   */
   var TemplateTreeNode = uiContainer.subclass({
-    childFactory: null,
     className: namespace + '.TemplateTreeNode',
-    templateUpdate: function(tmpl){
-      if (this.data.ref)
-        classList(this.element).add('hasRefs');
-    },
     satelliteConfig: {
       refList: {
         existsIf: getter('data.ref'),
         instanceOf: uiNode.subclass({
           template: 
             '<span class="refList"><b>{</b>{ref}<b>}</b></span>',
-          templateUpdate: function(tmpl){
-            tmpl.ref.nodeValue = this.owner.data.ref;
+
+          binding: {
+            ref: 'owner.data.ref'
           }
+        })
+      }
+    },
+    binding: {
+      nodeName: 'data.nodeName',
+      nodeValue: 'data.nodeValue',
+      hasRefs: function(node){
+        return node.data.ref ? 'hasRefs' : '';
+      }
+    }
+  });
+
+ /**
+  * @class
+  */
+  TemplateTreeNode.Attribute = Class(TemplateTreeNode, {
+    className: namespace + '.TemplateTreeNode.Attribute',
+    template:
+      '<span class="Doc-TemplateView-Node Doc-TemplateView-Attribute {hasRefs}">' +
+        '<span>{nodeName}<!--{refList}-->="{nodeValue}"</span>' + 
+      '</span>'
+  });
+
+ /**
+  * @class
+  */
+  TemplateTreeNode.EmptyElement = Class(TemplateTreeNode, {
+    className: namespace + '.TemplateTreeNode.EmptyElement',
+    template:
+      '<div class="Doc-TemplateView-Node Doc-TemplateView-Element {hasRefs}">' + 
+        '<span><{nodeName}<!--{refList}--><!--{attributes}-->/></span>' + 
+      '</div>',
+
+    satelliteConfig: {
+      attributes: {
+        existsIf: getter('data.attrs'),
+        dataSource: getter('data.attrs'),
+        instanceOf: uiContainer.subclass({
+          childClass: TemplateTreeNode.Attribute,
+          template: '<span/>'
         })
       }
     }
@@ -368,88 +404,37 @@
  /**
   * @class
   */
-  TemplateTreeNode.Attribute = Class(TemplateTreeNode, 
-    basis.ui(
-      '<span{element} class="Doc-TemplateView-Node Doc-TemplateView-Attribute">' +
-        '<span>{this_data_nodeName}<!--{refList}-->="{this_data_nodeValue}"</span>' + 
-      '</span>'
-    ),
-    {
-      className: namespace + '.TemplateTreeNode.Attribute'
-    }
-  );
-
- /**
-  * @class
-  */
-  TemplateTreeNode.EmptyElement = Class(TemplateTreeNode,
-    basis.ui(
-      '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
-        '<span><{this_data_nodeName}<!--{refList}--><!--{attributes}-->/></span>' + 
-      '</div>'
-    ),
-    {
-      className: namespace + '.TemplateTreeNode.EmptyElement',
-      satelliteConfig: {
-        attributes: {
-          existsIf: getter('data.attrs'),
-          dataSource: function(node){
-            return new nsData.Dataset({ items: node.data.attrs });
-          },
-          instanceOf: Class(uiContainer,
-            {
-              template: '<span/>',
-              childClass: TemplateTreeNode.Attribute
-            }
-          )
-        }
-      }
-    }
-  );
-
- /**
-  * @class
-  */
-  TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, 
-    basis.ui(
-      '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Element">' + 
-        '<span><{this_data_nodeName}<!--{refList}--><!--{attributes}-->></span>' + 
+  TemplateTreeNode.Element = Class(TemplateTreeNode.EmptyElement, {
+    className: namespace + '.TemplateTreeNode.Element',
+    template:
+      '<div class="Doc-TemplateView-Node Doc-TemplateView-Element {hasRefs}">' + 
+        '<span><{nodeName}<!--{refList}--><!--{attributes}-->></span>' + 
         '<div{childNodesElement} class="Doc-TemplateView-NodeContent"></div>' + 
-        '<span></{this_data_nodeName2}></span>' +
+        '<span></{nodeName}></span>' +
       '</div>'
-    ),
-    {
-      className: namespace + '.TemplateTreeNode.Element'
-    }
-  );
+  });
 
  /**
   * @class
   */
-  TemplateTreeNode.Text = Class(TemplateTreeNode,
-    basis.ui(
-      '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Text">' + 
-        '<span><span class="refList">{{this_data_ref}} </span>{this_data_nodeValue}</span>' + 
+  TemplateTreeNode.Text = Class(TemplateTreeNode, {
+    className: namespace + '.TemplateTreeNode.Text',
+    template:
+      '<div class="Doc-TemplateView-Node Doc-TemplateView-Text {hasRefs}">' + 
+        '<span><span class="refList">{{nodeValue}}</span></span>' + 
       '</div>'
-    ),
-    {
-      className: namespace + '.TemplateTreeNode.Text'
-    }
-  );
+  });
 
  /**
   * @class
   */
-  TemplateTreeNode.Comment = Class(TemplateTreeNode,
-    basis.ui(
-      '<div{element} class="Doc-TemplateView-Node Doc-TemplateView-Comment">' + 
-        '<--<span>{this_data_nodeValue}</span>-->' + 
+  TemplateTreeNode.Comment = Class(TemplateTreeNode, {
+    className: namespace + '.TemplateTreeNode.Comment',
+    template:
+      '<div class="Doc-TemplateView-Node Doc-TemplateView-Comment {hasRefs}">' + 
+        '<--<span>{nodeValue}</span>-->' + 
       '</div>'
-    ),
-    {
-      className: namespace + '.TemplateTreeNode.Comment'
-    }
-  );
+  });
 
  /**
   * @class
@@ -528,11 +513,10 @@
                 childFactory: this.childFactory,
                 data: {
                   nodeName: nodeName,
-                  nodeName2: nodeName,
                   nodeType: node.nodeType,
                   nodeValue: nodeValue,
                   ref: findRefs(map, node),
-                  attrs: attrs.length ? attrs : null
+                  attrs: attrs.length ? new nsData.Dataset({ items: attrs }) : null
                 },
                 childNodes: []
               };
@@ -625,21 +609,23 @@
 
   var InheritanceItem = Class(uiNode, {
     className: namespace + '.InheritanceItem',
-    template: new Template(
+    template:
       '<li class="item">' +
-        '<div{content} class="title"><a href{refAttr}="#">{classNameText}</a></div>' +
-        '<span class="namespace">{namespaceText}</span>' +
+        '<div{content} class="title">' +
+          '<a href="#{fullPath}">{className}</a>' +
+          '<span class="tag tag-{tag}">{tag}</span>' +
+        '</div>' +
+        '<span class="namespace">{namespace}</span>' +
         '<ul{childNodesElement}/>' +
-      '</li>'
-    ),
-    templateUpdate: function(tmpl, event, delta){
-      tmpl.classNameText.nodeValue = this.data.title;
-      tmpl.namespaceText.nodeValue = this.data.namespace;
-      tmpl.refAttr.nodeValue = '#' + this.data.fullPath;
-      
-      if (this.data.tag)
-        DOM.insert(tmpl.content, DOM.createElement('SPAN.tag.tag-' + this.data.tag, this.data.tag));
+      '</li>',
+
+    binding: {
+      className: 'data.title',
+      namespace: 'data.namespace',
+      fullPath: 'data.fullPath',
+      tag: 'data.tag || "none"'
     },
+
     event_match: function(){
       classList(this.tmpl.content).remove('absent');
     },
@@ -664,16 +650,15 @@
         template:
           '<div class="Basis-PartitionNode">' +
             '<div class="Basis-PartitionNode-Title">' +
-              '<a href{hrefAttr}="#">{titleText}</a>' +
+              '<a href="#{title}">{title}</a>' +
             '</div>' +
             '<div class="Basis-PartitionNode-Content">' +
               '<!--{childNodesHere}-->' +
             '</div>' +
           '</div>',
 
-        templateUpdate: function(tmpl){
-          tmpl.titleText.nodeValue = this.data.title;
-          tmpl.hrefAttr.nodeValue = '#' + this.data.title;
+        binding: {
+          title: 'data.title'
         }
       }
     },
@@ -791,45 +776,46 @@
     template: 
       '<div class="item property">' +
         '<div{content} class="title">' +
-          '<a href{refAttr}="#">{titleText}</a><span{types} class="types"/>' +
+          '<a href{refAttr}="#{path}">{title}</a><span{types} class="types"/>' +
         '</div>' +
         '<!-- {jsdocs} -->' +
       '</div>',
 
-    templateUpdate: function(tmpl, eventName, delta){
-      if (!eventName || (eventName == 'update' && 'fullPath' in delta))
-      {
-        tmpl.titleText.nodeValue = this.data.key.replace(/^event_/, '');
-        tmpl.refAttr.nodeValue = '#' + this.host.data.fullPath + '.prototype.' + this.data.key;
+    binding: {
+      title: 'data.key.replace(/^event_/, "")',
+      path: {
+        events: 'update',
+        getter: function(node){
+          return node.host.data.fullPath + '.prototype.' + node.data.key;
+        }
       }
     },
 
     satelliteConfig: {
       jsdocs: {
-        instanceOf: JsDocPanel,
         delegate: function(owner){
           return nsCore.JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
         },
-        config: {
-          handler: {
-            update: function(object, delta){
-              var owner = this.owner;
-              var tags = this.data.tags;
-              if (tags)
+        instanceOf: JsDocPanel.subclass({
+          event_update: function(object, delta){
+            JsDocPanel.prototype.event_update.call(this, object, delta);
+
+            var owner = this.owner;
+            var tags = this.data.tags;
+            if (tags)
+            {
+              classList(owner.element).add('hasJsDoc');
+              var type = tags.type || (tags.returns && tags.returns.type);
+              if (type)
               {
-                classList(owner.element).add('hasJsDoc');
-                var type = tags.type || (tags.returns && tags.returns.type);
-                if (type)
-                {
-                  DOM.insert(owner.tmpl.types, [
-                    DOM.createElement('SPAN.splitter', ':'),
-                    parseTypes(type.replace(/^\s*\{|\}\s*$/g, ''))
-                  ]);
-                }
+                DOM.insert(owner.tmpl.types, [
+                  DOM.createElement('SPAN.splitter', ':'),
+                  parseTypes(type.replace(/^\s*\{|\}\s*$/g, ''))
+                ]);
               }
             }
           }
-        }
+        })
       }
     }
   });
@@ -841,14 +827,15 @@
     template:
       '<div class="item event">' +
         '<div{content} class="title">' +
-          '<a href{refAttr}="#">{titleText}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
+          '<a href="#{path}">{title}</a><span class="args">({args})</span><span{types} class="types"/>' +
         '</div>' +
         '<!-- {jsdocs} -->' +
       '</div>',
 
-    templateUpdate: function(tmpl, event, delta){
-      PrototypeItem.prototype.templateUpdate.call(this, tmpl, event, delta);
-      tmpl.argsText.nodeValue = nsCore.getFunctionDescription(mapDO[this.data.path].data.obj).args;
+    binding: {
+      args: function(node){
+        return nsCore.getFunctionDescription(mapDO[node.data.path].data.obj).args;
+      }
     }
   });
   
@@ -859,15 +846,19 @@
     template:
       '<div class="item method">' +
         '<div{content} class="title">' +
-          '<a href{refAttr}="#">{titleText}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
+          '<a href="#{path}">{title}</a><span class="args">({argsText})</span><span{types} class="types"/>' +
         '</div>' +
         '<!-- {jsdocs} -->' +
       '</div>',
 
+    binding: {
+      args: function(node){
+        return nsCore.getFunctionDescription(mapDO[node.data.path].data.obj).args;
+      }
+    },
+
     templateUpdate: function(tmpl, event, delta){
       PrototypeItem.prototype.templateUpdate.call(this, tmpl, event, delta);
-
-      tmpl.argsText.nodeValue = nsCore.getFunctionDescription(mapDO[this.data.path].data.obj).args;
 
       if (/^(init|destroy)$/.test(this.data.key))
         DOM.insert(tmpl.content, DOM.createElement('SPAN.method_mark', this.data.key == 'init' ? 'constructor' : 'destructor'), 0);
@@ -878,10 +869,10 @@
   var PROTOTYPE_GROUPING_TYPE = {
     type: 'type',
     groupGetter: getter('data.kind'),
+    sorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT),
     childClass: {
       titleGetter: getter('data.id', PROTOTYPE_ITEM_TITLE)
-    },
-    sorting: getter('data.id', PROTOTYPE_ITEM_WEIGHT)
+    }
   };
 
   var PROTOTYPE_GROUPING_IMPLEMENTATION = {
@@ -932,8 +923,17 @@
       '<div class="view viewPrototype">' +
         htmlHeader('Prototype') +
         '<!-- {viewOptions} -->' +
-        '<div{content|childNodesElement} class="content"/>' +
+        '<div{content|childNodesElement} class="content grouping-{groupingType}"/>' +
       '</div>',
+
+    binding: {
+      groupingType: {
+        events: 'groupingChanged',
+        getter: function(node){
+          return node.grouping ? node.grouping.type : '';
+        }
+      }
+    },
 
     event_update: function(object, delta){
       ViewList.prototype.event_update.call(this, object, delta);
@@ -965,12 +965,6 @@
       }
     },
 
-    event_groupingChanged: function(node, oldGrouping){
-      ViewList.prototype.event_groupingChanged.call(this, node, oldGrouping);
-
-      classList(this.tmpl.content, 'grouping').set(this.grouping ? this.grouping.type : undefined);
-    },
-
     childClass: PrototypeItem,
     childFactory: function(config){
       var childClass;
@@ -979,7 +973,7 @@
         case 'event': childClass = PrototypeEvent; break;
         case 'method': childClass = PrototypeMethod; break;
         default:
-          childClass = PrototypeItem
+          childClass = PrototypeItem;
       };
 
       return new childClass(config);
@@ -1051,12 +1045,17 @@
     childClass: {
       template:
         '<li class="item">' +
-          '<a{link} target="_blank">{titleText}</a>' +
+          '<a target="_blank" href="{url}">{title}</a>' +
         '</li>',
 
-      templateUpdate: function(tmpl){
-        tmpl.titleText.nodeValue = this.data.title || this.data.url;
-        tmpl.link.href = this.data.url;
+      binding: {
+        title: {
+          events: 'update',
+          getter: function(node){
+            return node.data.title || node.data.url;
+          }
+        },
+        url: 'data.url'
       }
     }
   });

@@ -1,4 +1,4 @@
-/*!
+/**
  * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
@@ -179,7 +179,7 @@ basis.require('basis.dom.event');
           names: names,
           events: events,
           sync: syncTemplate(names, getters),
-          handler: events.length ? handler : null
+          handler: Object.keys(events).length ? handler : null
         };
 
         if (cacheId)

@@ -340,7 +340,10 @@
       -moz-border-radius: 3px;
       -webkit-border-radius: 3px;
   }
-
+  #Content .viewInheritance .tag-none
+  {
+    display: none;
+  }
 
   #Content .viewTemplate .Basis-Tree
   {
