@@ -166,7 +166,7 @@ basis.require('basis.ui.canvas');
   * @class
   */
   var GraphNode = Node.subclass({
-    event_requestRedraw: createEvent('requestRedraw'),
+    event_requestRedraw: createEvent('requestRedraw')
   });
 
  /**
@@ -315,7 +315,7 @@ basis.require('basis.ui.canvas');
     },
 
     setSource: function(source){
-      if (this.source !== source);
+      if (this.source !== source)
       {
         var oldSource = this.source;
         if (oldSource)

@@ -180,8 +180,10 @@
     dataSource: new nsWrappers.ChildNodesDataset(targetContent),
 
     childClass: Class(nsButton.Button, {
-      captionGetter: function(button){
-        return button.delegate.viewHeader;
+      binding: {
+        caption: function(button){
+          return button.delegate.viewHeader;
+        }
       },
       click: function(){
         if (this.delegate === nsView.viewPrototype)
@@ -193,12 +195,23 @@
 
     template:
       '<div>' +
-        '<h2 class="view viewTitle">' +
-          '<span class="title">{contentText}</span>' +
-          '<span class="path">{pathText}</span>' +
+        '<h2 class="view viewTitle kind-{kind}">' +
+          '<span class="title">{title}</span>' +
+          '<span class="path">{path}</span>' +
         '</h2>' +
         '<div{childNodesElement} class="QuickNavBar" />' +
       '</div>',
+
+    binding: {
+      kind: ['data.kind', 'update'],
+      path: ['data.path || ""', 'update'],
+      title: {
+        events: 'update',
+        getter: function(node){
+          return (node.data.title || '') + (/^(method|function|class)$/.test(node.data.kind) ? nsCore.getFunctionDescription(node.data.obj).args.quote('(') : '');
+        }
+      }
+    }/*,
 
     templateUpdate: function(tmpl, eventName, delta){
       tmpl.contentText.nodeValue = (this.data.title || '') + (/^(method|function|class)$/.test(this.data.kind) ? nsCore.getFunctionDescription(this.data.obj).args.quote('(') : '');
@@ -206,7 +219,7 @@
 
       if (delta && 'kind' in delta)
         classList(this.element.firstChild).replace(delta.kind, this.data.kind, 'kind-');
-    }
+    }*/
   });
 
 

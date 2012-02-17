@@ -1,4 +1,4 @@
-/*!
+/**
  * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
@@ -16,7 +16,7 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 
-!function(basis, global){
+(function(basis, global){
 
   'use strict';
 
@@ -41,6 +41,7 @@ basis.require('basis.dom.event');
   // main part
   //
 
+  var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
   var IMPORTANT_REGEXP = /\s*!important/i;
   var IMPORTANT = String('important');
   var GENERIC_RULE_SEED = 1;
@@ -689,7 +690,7 @@ basis.require('basis.dom.event');
   //
   // Make crossbrowser classList
   //
-  if (global.DOMTokenList && document.documentElement.classList)
+  if (CLASSLIST_SUPPORTED)
   {
     var proto = ClassList.prototype;
     Object.extend(global.DOMTokenList.prototype, {
@@ -761,4 +762,4 @@ basis.require('basis.dom.event');
     RuleSet: RuleSet
   }).extend(unitFunc);
 
-}(basis, this);
+})(basis, this);

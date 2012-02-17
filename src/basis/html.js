@@ -10,7 +10,6 @@
  */
 
 basis.require('basis.dom');
-basis.require('basis.cssom');
 basis.require('basis.dom.event');
 
 (function(basis, global){
@@ -32,7 +31,6 @@ basis.require('basis.dom.event');
   var Class = basis.Class;
   var dom = basis.dom;
   var domEvent = basis.dom.event;
-  var classList = basis.cssom.classList;
 
 
   //
@@ -41,6 +39,7 @@ basis.require('basis.dom.event');
 
   var tmplEventListeners = {};
   var tmplNodeMap = { seed: 1 };
+  var templateSeed = 1;
 
   var tmplPartFinderRx = /<([a-z0-9\_]+)(?:\{([a-z0-9\_\|]+)\})?([^>]*?)(\/?)>|<\/([a-z0-9\_]+)>|<!--(\s*\{([a-z0-9\_\|]+)\}\s*|.*?)-->/i;
   var tmplAttrRx = /(?:([a-z0-9\_\-]+):)?(event-)?([a-z0-9\_\-]+)(?:\{([a-z0-9\_\|]+)\})?(?:="((?:\\.|[^"])*?)"|='((?:\\.|[^'])*?)')?\s*/gi;
@@ -51,6 +50,15 @@ basis.require('basis.dom.event');
   //
   // Feature detection tests
   //
+
+  var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
+
+  var removeClassCode = CLASSLIST_SUPPORTED
+    ? '.classList.remove(oldClass)'
+    : '.className.replace(new RegExp("(^|\\\\s+)" + oldClass.forRegExp() + "(\\\\s+|$)"), function(m, pre, post){ return pre && post ? " " : "" })';
+  var addClassCode = CLASSLIST_SUPPORTED
+    ? '.classList.add(newClass)'
+    : '.className += " " + newClass';
 
   // Test for appendChild bugs (old IE browsers has a problem with some tags like <script> and <style>)
   function appendTest(tagName){
@@ -129,8 +137,8 @@ basis.require('basis.dom.event');
   //
   //
 
-  function syncTemplate(names, getters){
-    return function(){
+  function templateBindingUpdateFactory(names, getters){
+    return function templateBindingUpdate(){
       for (var i = 0, bindingName; bindingName = names[i]; i++)
         this.tmpl.updateBind(bindingName, getters[bindingName](this));
     }
@@ -138,7 +146,7 @@ basis.require('basis.dom.event');
 
   function getBindingFactory(templateBindings){
     var bindingCache = {};
-    return function(bindings, testNode){
+    return function getBinding(bindings, testNode){
       var cacheId = 'bindingId' in bindings ? bindings.bindingId : null;
 
       ;;;if (!cacheId) console.warn('basis.html.Template.getBinding: bindings has no id property, cache not used');
@@ -169,7 +177,7 @@ basis.require('basis.dom.event');
                 else
                 {
                   events[eventName] = [key];
-                  handler[eventName] = syncTemplate(events[eventName], getters);
+                  handler[eventName] = templateBindingUpdateFactory(events[eventName], getters);
                 }
               }
             }
@@ -179,7 +187,7 @@ basis.require('basis.dom.event');
         result = {
           names: names,
           events: events,
-          sync: syncTemplate(names, getters),
+          sync: templateBindingUpdateFactory(names, getters),
           handler: Object.keys(events).length ? handler : null
         };
 
@@ -213,7 +221,7 @@ basis.require('basis.dom.event');
           if (text.indexOf('|') == -1)
           {
             var ref = 'r' + addPath(context, path);
-            addBinding(context, text, ref, ref + '.nodeValue=""+newValue');
+            addBinding(context, text, ref, '  ' + ref + '.nodeValue=""+newValue;');
           }
         }
 
@@ -347,14 +355,13 @@ basis.require('basis.dom.event');
                 var ref = 'r' + addPath(context, nodePath);
 
                 expression =
-                  'var oldClass = oldValue ? ' + prefix.quote() + ' + oldValue : "";\n' +
-                  'var newClass = newValue ? ' + prefix.quote() + ' + newValue : "";\n' +
-                  'if (oldClass || newClass)\n' +
-                  '{\n' +
-                  '  var cl = classList(' + ref + ');\n' +
-                  '  if (oldClass) cl.remove(oldClass);\n' +
-                  '  if (newClass) cl.add(newClass);\n' +
-                  '}';
+                  '  var oldClass = oldValue ? ' + prefix.quote() + ' + oldValue : "";\n' +
+                  '  var newClass = newValue ? ' + prefix.quote() + ' + newValue : "";\n' +
+                  '  if ((oldClass || newClass) && oldClass != newClass)\n' +
+                  '  {\n' +
+                  '    if (oldClass) ' + ref + (CLASSLIST_SUPPORTED ? '' : '.className = ' + ref) + removeClassCode + ';\n' +
+                  '    if (newClass) ' + ref + addClassCode + ';\n' +
+                  '  }';
                 //console.log(ref, expression)
 
                 addBinding(context, bindName, ref, expression);
@@ -381,7 +388,7 @@ basis.require('basis.dom.event');
               {
                 if (i % 2)
                 {
-                  expression.push('values_.' + slots[i]);
+                  expression.push('local_' + slots[i]);
                   binds.push(slots[i]);
                 }
                 else
@@ -392,7 +399,7 @@ basis.require('basis.dom.event');
               }
               
               // compile
-              expression = ref + '.setAttribute("' + attrName + '", ' + expression.join('+') + ');';
+              expression = '  ' + ref + '.setAttribute("' + attrName + '", ' + expression.join('+') + ');';
 
               // add bindings
               for (var i = 0, bindName; bindName = binds[i]; i++)
@@ -555,6 +562,7 @@ basis.require('basis.dom.event');
 
     this.source = source;
 
+    var templateName = namespace + '.templateBuilder' + (templateSeed++);
     var context = {
       str: source,
       refMap: {},
@@ -627,38 +635,38 @@ basis.require('basis.dom.event');
     var getBindFunction;
     var getBindFunctionBody = '';
     var bindArgs = Object.keys(context.bindRef);
-    var defObject = [];
+    var scopedValues = [];
+    var bindingCode;
     for (var key in context.bindings)
     {
       //console.log(key, context.bindings[key].code);
-      defObject.push(key + ':' + context.bindings[key]['default']);
+      scopedValues.push('local_' + key/* + '=' + context.bindings[key]['default']*/);
 
+      bindingCode = context.bindings[key].join('\n');
       getBindFunctionBody +=
-        'case "' + key + '":\n' +
-          'if (values_.' + key + '!==newValue){\n' +
-          '  oldValue=values_.' + key + ';\n' +
-          '  values_.' + key + '=newValue;\n'+
-          context.bindings[key].join('\n') + '\n}' +
+        '\ncase "' + key + '":\n' +
+          'if (local_' + key + '!==newValue){\n' +
+          (bindingCode.indexOf('oldValue') != -1 ? '  oldValue=local_' + key + ';\n' : '') +
+          '  local_' + key + '=newValue;\n'+
+             bindingCode + '\n' +
+          '}\n' +
         'break;\n';
     }
 
     if (getBindFunctionBody)
     {
-      //bindArgs.unshift('values_');
-
-      getBindFunction = new Function(bindArgs, 'var classList=basis.cssom.classList,values_={' + defObject + '};return ' + 
-        function(key, newValue){
-          var oldValue;
-
-          // generated code start
-          _generated_code_(); // <-- will be replaced for generated code
-          // generated code end
-        }
-      .toString().replace('_generated_code_()', 'switch(key){\n' + getBindFunctionBody + '\n}'));
+      scopedValues.push('oldValue');
+      getBindFunction = new Function(bindArgs,
+        'var ' + scopedValues + ';\n'+
+        'return function(key, newValue){\n' +
+        '  switch(key){\n' + 
+        getBindFunctionBody + 
+        '  }\n' +
+        '}'
+      );
 
       //console.log(getBindFunction.toString());
 
-      //bindArgs[0] = 'new defs_';
       createBody_resObject.push('updateBind:getBindFunction(' + bindArgs + ')');
 
       // build get getBinding method
@@ -675,7 +683,7 @@ basis.require('basis.dom.event');
     //
     // build createInstance function
     //
-    this.createInstance = new Function('proto_', 'map_', 'getBindFunction', 'var dom_; return ' + 
+    this.createInstance = new Function('proto_', 'map_', 'getBindFunction', 'var dom_;return{"' + templateName + '":' + 
       // mark variable names with dangling _ to avoid renaming by compiler, because
       // this names using by generated code, and must be unchanged
 
@@ -689,16 +697,12 @@ basis.require('basis.dom.event');
         // generated code end
 
         if (node)
-        {
-          var id = map_.seed++;
-          r0.basisObjectId = id;
-          map_[id] = node;
-        }
+          map_[r0.basisObjectId = map_.seed++] = node;
 
         return obj_;
       }
 
-    .toString().replace('_generated_code_()', 'var ' + createBody_refInit))(proto, tmplNodeMap, getBindFunction); // body.map(String.format, '{alias}={path};\n').join('')
+    .toString().replace('_generated_code_()', 'var ' + createBody_refInit) + '}["' + templateName + '"]')(proto, tmplNodeMap, getBindFunction); // body.map(String.format, '{alias}={path};\n').join('')
 
     /*if (hasBindings)
       console.log(this.createInstance.toString())/**/

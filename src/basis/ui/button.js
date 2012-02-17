@@ -1,4 +1,4 @@
-/*!
+/**
  * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
@@ -15,7 +15,7 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.html');
 basis.require('basis.ui');
 
-!function(basis){
+(function(basis){
 
   'use strict';
 
@@ -50,17 +50,69 @@ basis.require('basis.ui');
   var Button = Class(UINode, {
     className: namespace + '.Button',
 
-    captionGetter: getter('caption'),
+   /**
+    * @inheritDoc
+    */
+    event_select: function(){
+      UINode.prototype.event_select.call(this);
+      DOM.focus(this.element);
+    },
+
+   /**
+    * @inheritDoc
+    */
+    event_disable: function(){
+      UINode.prototype.event_disable.call(this);
+      this.tmpl.buttonElement.disabled = true;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    event_enable: function(){
+      UINode.prototype.event_enable.call(this);
+      this.tmpl.buttonElement.disabled = false;
+    },
+
+   /**
+    * Button caption text.
+    * @type {string}
+    */
     caption: '[no caption]',
+
+   /**
+    * Group indificator, using for grouping.
+    * @type {any}
+    */
     groupId: 0,
+
+   /**
+    * Name of button. Using by parent to fetch child button by name.
+    * @type {string}
+    */
     name: null,
 
+   /**
+    * @inheritDoc
+    */
     template:
       '<button{buttonElement} class="Basis-Button" event-click="click">' +
         '<span class="Basis-Button-Back"/>' +
-        '<div class="Basis-Button-Caption">{captionText}</div>' +
+        '<span class="Basis-Button-Caption">' +
+          '{caption}' +
+        '</span>' +
       '</button>',
 
+   /**
+    * @inheritDoc
+    */
+    binding: {
+      caption: 'caption'
+    },
+
+   /**
+    * @inheritDoc
+    */
     action: {
       click: function(event){
         if (!this.isDisabled())
@@ -73,31 +125,18 @@ basis.require('basis.ui');
     */
     click: function(){},
 
-    event_select: function(){
-      UINode.prototype.event_select.call(this);
-      DOM.focus(this.element);
-    },
-    event_disable: function(){
-      UINode.prototype.event_disable.call(this);
-      this.tmpl.buttonElement.disabled = true;
-    },
-    event_enable: function(){
-      UINode.prototype.event_enable.call(this);
-      this.tmpl.buttonElement.disabled = false;
-    },
-
+   /**
+    * @inheritDoc
+    */
     init: function(config){
       ;;;if (typeof this.handler == 'function' && typeof console != 'undefined') console.warn(namespace + '.Button: this.handler must be an object. Use this.click instead.')
 
       // inherit
       UINode.prototype.init.call(this, config);
-
-      //this.setCaption('caption' in config ? config.caption : this.caption);
-      this.setCaption(this.caption);
     },
     setCaption: function(newCaption){
       this.caption = newCaption;
-      this.tmpl.captionText.nodeValue = this.captionGetter(this);
+      this.tmpl.updateBind('caption', this.binding.caption.getter(this));
     }
   });
 
@@ -118,11 +157,7 @@ basis.require('basis.ui');
       '</div>',
 
     childClass: Button,
-    getButtonByName: function(name){
-      return this.childNodes.search(name, getter('name'));
-    },
 
-    grouping: {},
     groupingClass: {
       className: namespace + '.ButtonGroupingNode',
 
@@ -136,6 +171,17 @@ basis.require('basis.ui');
         template:
           '<div class="Basis-ButtonGroup"/>'
       }
+    },
+
+    grouping: {}, // use grouping by default
+
+   /**
+    * Fetch button by name.
+    * @param {string} name Name value of button.
+    * @return {basis.ui.button.Button}
+    */
+    getButtonByName: function(name){
+      return this.childNodes.search(name, getter('name'));
     }
   });
 
@@ -149,4 +195,4 @@ basis.require('basis.ui');
     ButtonPanel: ButtonPanel
   });
 
-}(basis);
+})(basis);

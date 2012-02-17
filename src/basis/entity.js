@@ -332,7 +332,7 @@ basis.require('basis.data.dataset');
       return result;
     }
   };
-  EntitySetWrapper.className = namespace + '.EntitySetWrapper';
+  ;;;EntitySetWrapper.className = namespace + '.EntitySetWrapper';
 
   //
   // EntitySetConstructor
@@ -484,7 +484,7 @@ basis.require('basis.data.dataset');
     //else
     //  return namedEntityTypes.get(config);
   };
-  EntityTypeWrapper.className = namespace + '.EntityTypeWrapper';
+  ;;;EntityTypeWrapper.className = namespace + '.EntityTypeWrapper';
 
   //
   // Entity type constructor
@@ -757,7 +757,7 @@ basis.require('basis.data.dataset');
           this.compositeKey = wrapper;
 
         this.fields[key] = function(value, oldValue){
-          if (typeof console != 'undefined') console.log('Calculate fields are readonly');
+          ;;;if (typeof console != 'undefined') console.log('Calculate fields are readonly');
           return oldValue;
         }
       }

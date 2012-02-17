@@ -900,7 +900,7 @@
   */
 
   var STRING_QUOTE_PAIRS = { '<': '>', '[': ']', '(': ')', '{': '}', '\xAB': '\xBB' };
-  var ESCAPE_FOR_REGEXP = /[\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$]/g;
+  var ESCAPE_FOR_REGEXP = /([\/\\\(\)\[\]\?\{\}\|\*\+\-\.\^\$])/g;
   var FORMAT_REGEXP = /\{([a-z\d\_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
   var QUOTE_REGEXP_CACHE = {};
 
@@ -986,7 +986,7 @@
       return trimed ? trimed.split(/\s+/) : [];
     },
     forRegExp: function(){
-      return this.replace(ESCAPE_FOR_REGEXP, "\\$&");
+      return this.replace(ESCAPE_FOR_REGEXP, "\\$1");
     },
     format: function(first){
       var data = {};

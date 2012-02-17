@@ -53,6 +53,7 @@
 
   .Basis-Button-Caption
   {
+    display: block;
     position: relative;
     padding: .4em 0 .45em;
     margin: 0 1.5ex;
@@ -79,10 +80,11 @@
     background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(255, 255, 255, .7)), color-stop(50%, rgba(255, 255, 255, .5)), color-stop(50%, rgba(255, 255, 255, .2)), to(rgba(255, 255, 255, 0)));
 
     /* modern browsers */
-    background-image: -moz-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
-    background-image: -webkit-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
-    background-image: -o-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
-    background-image: -ms-linear-gradient(top, rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
+    background-image: -moz-linear-gradient(rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
+    background-image: -webkit-linear-gradient(rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
+    background-image: -o-linear-gradient(rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
+    background-image: -ms-linear-gradient(rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
+    background-image: linear-gradient(rgba(255, 255, 255, .7), rgba(255, 255, 255, .5) 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, 0));
 
     /* IE5.5 - IE7 */
     /*filter: progid:DXImageTransform.Microsoft.Gradient(GradientType=0,StartColorStr=#F2F2F2,EndColorStr=#CFCFCF);*/
@@ -120,20 +122,15 @@
     z-index: 2;
   }
 
-  .Basis-Button:hover .Basis-Button-Back,
-  .Basis-Button:focus .Basis-Button-Back,
-  .Basis-Button:active .Basis-Button-Back
-  {
-    border-color: #888;  
-  }
-
   .Basis-Button:hover .Basis-Button-Back
   {
     background-color: #BCD7F2;
+    border-color: #888;
   }
 
   .Basis-Button:focus .Basis-Button-Back
   {
+    border-color: #888;
       -webkit-box-shadow: 0 0 3px 1px #B7D9FE inset;
       -moz-box-shadow: 0 0 3px 1px #B7D9FE inset;
     box-shadow: 0 0 3px 1px #B7D9FE inset;
@@ -142,6 +139,7 @@
   .Basis-Button:active .Basis-Button-Back
   {
     background-color: #BCD7F2;
+    border-color: #888;
 
       -webkit-box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;
       -moz-box-shadow: 0 0 3px 1px rgba(0, 0, 0, 0.15) inset;

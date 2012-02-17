@@ -14,6 +14,7 @@
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
+  var createEvent = basis.event.create;
 
   var nsWrappers = basis.dom.wrapper;
   var nsTree = basis.ui.tree;
@@ -393,8 +394,9 @@
         existsIf: getter('data.attrs'),
         dataSource: getter('data.attrs'),
         instanceOf: uiContainer.subclass({
+          template: '<span/>',
           childClass: TemplateTreeNode.Attribute,
-          template: '<span/>'
+          sorting: 'data.nodeName'
         })
       }
     }
@@ -438,8 +440,112 @@
  /**
   * @class
   */
+  var BindingsPanel = basis.ui.Container.subclass({
+    templateUpdate: function(){
+      var template = this.delegate.templateView;
+      var binding;
+      if (template)
+      {
+        var matchBinding = template.getBinding(this.data.obj.prototype.binding);
+        binding = Object.iterate(this.data.obj.prototype.binding, function(key, value){
+          return typeof value == 'object' ? {
+            name: key,
+            getter: value.getter,
+            events: value.events,
+            used: matchBinding && matchBinding.names.indexOf(key) != -1
+          } : null
+        }).filter(Boolean);
+      }
+
+      this.setChildNodes(binding);
+    },
+
+    template:
+      '<div class="bindingList">' +
+        '<div class="bindingList_header">Bindings</div>' +
+        '<!--{childNodesHere}-->' +
+      '</div>',
+
+    sorting: 'name',
+
+    childClass: {
+      template: 
+        '<div class="binding {used}">{name} on {events} [{used}]</div>',
+
+      binding: {
+        name: 'name',
+        events: 'events || ""',
+        used: function(node){
+          return node.used ? 'used' : '';
+        }
+      }
+    }
+  });
+
+ /**
+  * @class
+  */
+  var ActionsPanel = basis.ui.Container.subclass({
+    templateUpdate: function(){
+      var cls = this.data.obj;
+
+      if (cls && basis.Class.isClass(cls))
+      {
+        console.dir(cls);
+
+        var action = cls.prototype.action;
+        var childNodes = [];
+        if (action)
+        {
+          for (var actionName in action)
+            if (actionName != '__extend__' && typeof action[actionName] == 'function')
+            {
+              childNodes.push({
+                data: {
+                  name: actionName,
+                  action: action[actionName]
+                }
+              });
+            }
+        }
+
+        this.setChildNodes(childNodes);
+      }
+    },
+
+    template:
+      '<div class="actionsList">' +
+        '<div class="actionsList_header">Actions</div>' +
+        '<!--{childNodesHere}-->' +
+      '</div>',
+
+    sorting: 'name',
+
+    childClass: {
+      template: 
+        '<div class="action {used}">{name} [{used}]</div>',
+
+      binding: {
+        name: 'data.name',
+        used: function(node){
+          return node.data.used ? 'used' : '';
+        }
+      }
+    }
+  });
+
+
+ /**
+  * @class
+  */
   var TemplatePanel = uiControl.subclass({
-    template: '<div style="overflow-y: hidden"/>',
+    template:
+      '<div class="templatePanel">' +
+        '<div{childNodesElement} class="templateHtml"/>' +
+        '<!--{bindings}-->' +
+        '<!--{actions}-->' +
+      '</div>',
+
     childFactory: function(config){
       switch (config.data.nodeType)
       {
@@ -455,6 +561,9 @@
 
       return new childClass(config);
     },
+
+    event_templateViewChanged: createEvent('templateViewChanged'),
+
     templateUpdate: function(tmpl, object, oldDelegate){
       function findRefs(refMap, node){
         var result = [];
@@ -469,6 +578,10 @@
       var rootCfg = {};
 
       var template = this.data.obj.prototype.template;
+
+      if (this.templateView === template)
+        return;
+
       if (template)
       {
         rootCfg.childNodes = template.docsCache_;
@@ -536,45 +649,27 @@
 
       if (template)
         template.docsCache_ = Array.from(this.childNodes);
-    }
-  });
 
-
-  var BindingsPanel = basis.ui.Container.subclass({
-    templateUpdate: function(){
-      var template = this.data.obj.prototype.template;
-      var binding;
-      if (template)
-      {
-        var matchBinding = template.getBinding(this.data.obj.prototype.binding);
-        binding = Object.iterate(this.data.obj.prototype.binding, function(key, value){
-          return typeof value == 'object' ? {
-            name: key,
-            getter: value.getter,
-            events: value.events,
-            used: matchBinding && matchBinding.names.indexOf(key) != -1
-          } : null
-        }).filter(Boolean);
-      }
-
-      this.setChildNodes(binding);
+      var oldTemplate = this.templateView;
+      this.templateView = template;
+      this.event_templateViewChanged(this, oldTemplate);
     },
 
-    template: '<div class="bindingList" style="float: left;"/>',
-    sorting: 'name',
-
-    childClass: {
-      template: 
-        '<div class="binding {used}">{name} on {events} [{used}]</div>',
-      binding: {
-        name: 'name',
-        events: 'events || ""',
-        used: function(node){
-          return node.used ? 'used' : '';
-        }
+    satelliteConfig: {
+      bindings: {
+        hook: { templateViewChanged: true },
+        existsIf: getter('templateView'),
+        delegate: Function.$self,
+        instanceOf: BindingsPanel
+      },
+      actions: {
+        hook: { templateViewChanged: true },
+        existsIf: getter('templateView'),
+        delegate: Function.$self,
+        instanceOf: ActionsPanel
       }
     }
-  })
+  });
 
 
   function hasTemplate(node){
@@ -637,11 +732,6 @@
         existsIf: hasTemplate,
         delegate: Function.$self,
         instanceOf: TemplatePanel
-      },
-      bindings: {
-        existsIf: hasTemplate,
-        delegate: Function.$self,
-        instanceOf: BindingsPanel
       }
     }
   });
@@ -819,6 +909,7 @@
   * @class
   */
   var PrototypeItem = Class(uiNode, {
+    className: 'PrototypeProperty',
     nodeType: 'property',
     template: 
       '<div class="item {nodeType}">' +
@@ -877,6 +968,7 @@
   * @class
   */
   var PrototypeMethod = Class(PrototypeItem, {
+    className: 'PrototypeMethod',
     nodeType: 'method',
     template:
       '<div class="item {nodeType}">' +
@@ -900,6 +992,7 @@
   * @class
   */
   var PrototypeSpecialMethod = Class(PrototypeMethod, {
+    className: 'PrototypeSpecialMethod',
     template:
       '<div class="item {nodeType}">' +
         '<div class="title">' +
@@ -914,14 +1007,8 @@
   * @class
   */
   var PrototypeEvent = Class(PrototypeMethod, {
-    nodeType: 'event',
-    template:
-      '<div class="item {nodeType}">' +
-        '<div class="title">' +
-          '<a href="#{path}">{title}</a><span class="args">({args})</span><span{types} class="types"/>' +
-        '</div>' +
-        '<!-- {jsdocs} -->' +
-      '</div>'
+    className: 'PrototypeEvent',
+    nodeType: 'event'
   });
 
 
@@ -1001,6 +1088,7 @@
       {
         var d = new Date();
 
+        //console.profile();
         var clsVector = nsCore.getInheritance(this.data.obj);
         if (!this.clsVector)
           this.clsVector = new basis.data.Dataset();
@@ -1020,7 +1108,8 @@
             }, this)
             .filter(Boolean)
         );
-        console.log('time: ', new Date - d);
+        //console.profileEnd();
+        console.log('time: ', new Date - d, ' for ', this.childNodes.length);
       }
     },
 
