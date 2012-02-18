@@ -426,15 +426,16 @@
   });
 
   var searchCloud = new basis.data.dataset.Cloud({
+    ruleEvents: false,
     rule: function(obj){
-      var res = obj.data.title
+      return obj.data.title
         .replace(/(?:^|[\.\_])?([A-Z])(?:[A-Z]+|[a-z]+)|(?:^|[\.\_])(?:([a-z])[a-z]+|([A-Z])[A-Z]+)|[^a-zA-Z]/g, '$1$2$3')
         .toUpperCase()
         .split('')
         .sort()
         .join('')
-        .replace(/([A-Z])\1+/g, '$1');
-      return res.split('');
+        .replace(/([A-Z])\1+/g, '$1')
+        .split('');
     }
   });
   /*console.log('build search cloud', new Date - t, nsCore.searchIndex.itemCount);
@@ -630,7 +631,7 @@
   // jsDocs parse
   //
 
-  var scripts = Array.from(document.getElementsByTagName('SCRIPT'))
+  var scripts = []||Array.from(document.getElementsByTagName('SCRIPT'))
                   .map(getter('getAttribute("src")'))
                   .filter(getter('match(/\\/src\\/basis[a-z0-9\\_\\-\/]*\\.js$/i)'));
    //['../basis.js', '../dom_wraper.js', '../tree.js'];

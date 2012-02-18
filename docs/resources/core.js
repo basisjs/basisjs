@@ -731,7 +731,7 @@
     getInheritance: getInheritance,
     loadResource: resourceLoader.addResource.bind(resourceLoader),
 
-    searchIndex: new basis.data.Dataset({ items: searchValues })
+    searchIndex: new basis.data.Dataset({ items: searchValues, listen: { item: null } })
   });
 
 })();

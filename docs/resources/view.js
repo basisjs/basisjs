@@ -691,7 +691,6 @@
         htmlHeader('Template') +
         '<!-- {viewOptions} -->' +
         '<div{content} class="content">' +
-          '<!-- {bindings} -->' +
           '<!-- {template} -->' +
         '</div>' +
       '</div>',
