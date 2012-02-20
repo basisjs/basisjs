@@ -337,7 +337,7 @@ basis.require('basis.ui.canvas');
 
     destroy: function(){
       this.setSource(null);
-      Node.prototype.destroy.call(this);
+      AbstractNode.prototype.destroy.call(this);
     }
   });
 
@@ -934,6 +934,7 @@ basis.require('basis.ui.canvas');
   var selectionStart = false;
   var lastItemPosition = -1;
   var startItemPosition = -1;
+  var addSelectionMode = true;
 
   function getGraphXByMouseX(graph, globalX){
     var graphRect = graph.element.getBoundingClientRect();
@@ -956,18 +957,18 @@ basis.require('basis.ui.canvas');
     var applyItems = graph.childNodes.slice(Math.min(startItemPosition, curItemPosition), Math.max(startItemPosition, curItemPosition) + 1);
 
     var selectedItems = Array.from(graph.selection.getItems());
-    if (ctrlPressed && selectedItems.indexOf(curItem) != -1)
+    if (addSelectionMode)
+    {
+      selectedItems = selectedItems.concat(applyItems);
+    }
+    else
     {
       var pos;
       for (var i = 0, item; item = applyItems[i]; i++)
       {
         if ((pos = selectedItems.indexOf(item)) != -1)
           selectedItems.splice(pos, 1); 
-      }
-    }
-    else
-    {
-      selectedItems = selectedItems.concat(applyItems);
+      }      
     }
     
     return selectedItems;
@@ -984,42 +985,49 @@ basis.require('basis.ui.canvas');
         for (var i in GRAPH_SELECTION_GLOBAL_HANDLER)
           Event.addGlobalHandler(i, GRAPH_SELECTION_GLOBAL_HANDLER[i], this);
 
+        addSelectionMode = Event.mouseButton(event, Event.MOUSE_LEFT);
+
         var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
-
-        if (!ctrlPressed)
-          graph.selection.clear();
-
-        if (!shiftPressed || !startItemPosition)
+        //if (/*!shiftPressed || */!startItemPosition)
           startItemPosition = curItemPosition;
 
-        lastItemPosition = curItemPosition;
-
+        //lastItemPosition = curItemPosition;
         var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
+
+        if (!ctrlPressed && addSelectionMode)
+          graph.selection.clear();
+
         this.draw(selectedItems);
       }
 
+      this.owner.element.setAttribute('tabindex', 1);
       this.owner.element.focus();
+      
+      Event.kill(event);
+    },
+    contextmenu: function(event){
       Event.kill(event);
     },
     keydown: function(event){
       if (Event.key(event) == Event.KEY.CTRL)
         ctrlPressed = true;
 
-      if (Event.key(event) == Event.KEY.SHIFT)
-        shiftPressed = true;
+      /*if (Event.key(event) == Event.KEY.SHIFT)
+        shiftPressed = true;*/
     },
     keyup: function(event){
       if (Event.key(event) == Event.KEY.CTRL)
         ctrlPressed = false;
 
-      if (Event.key(event) == Event.KEY.SHIFT)
-        shiftPressed = false;
+      /*if (Event.key(event) == Event.KEY.SHIFT)
+        shiftPressed = false;*/
     },
     blur: function(){
-      lastItemPosition = -1;
+      //lastItemPosition = -1;
       startItemPosition = -1;
+      addSelectionMode = true;
       ctrlPressed = false;
-      shiftPressed = false;
+      //shiftPressed = false;
     }
   }
 
@@ -1029,12 +1037,12 @@ basis.require('basis.ui.canvas');
       
       var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
   
-      if (curItemPosition != lastItemPosition)
-      {
-        lastItemPosition = curItemPosition;
+      /*if (curItemPosition != lastItemPosition)
+      {*/
+        //lastItemPosition = curItemPosition;
         var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
         this.draw(selectedItems);
-      }
+      //}
     },
     mouseup: function(event){
       var graph = this.owner; 
@@ -1061,6 +1069,12 @@ basis.require('basis.ui.canvas');
   var GraphSelection = CanvasLayer.subclass({
     className: namespace + '.GraphSelection',
 
+    style: {
+      fillStyle: '#dfdaff', 
+      strokeStyle: '#9a89ff',
+      alpha: '.7'
+    },
+
     template: '<canvas{canvas} style="position:absolute;left:0;top:0"/>',
 
     listen: {
@@ -1086,7 +1100,6 @@ basis.require('basis.ui.canvas');
         this.recalc();
         this.owner.selection.addHandler(GRAPH_SELECTION_HANDLER, this);
 
-        this.owner.element.setAttribute('tabindex', 1);
         Event.addHandlers(this.owner.element, GRAPH_ELEMENT_HANDLER, this);
       }
     },
@@ -1117,9 +1130,7 @@ basis.require('basis.ui.canvas');
       var left, right;
       var lastPos = -1;
 
-      this.context.globalAlpha = .7;
-      this.context.fillStyle = '#dfdaff';
-      this.context.strokeStyle = '#9a89ff';
+      Object.extend(this.context, this.style);
 
       for (var i = 0; i < this.owner.childNodes.length + 1; i++)
       {
@@ -1133,8 +1144,8 @@ basis.require('basis.ui.canvas');
         {
           if (lastPos != -1)
           {
-            left = Math.round(lastPos * selectionBarWidth - selectionBarWidth / 2);
-            right = Math.round(i * selectionBarWidth - selectionBarWidth / 2);
+            left = Math.round(lastPos * selectionBarWidth - (lastPos == i - 1 ? 1 : 0));
+            right = Math.round((i - 1) * selectionBarWidth + (lastPos == i - 1 ? 1 : 0));
             this.context.fillRect(left + .5, .5, right - left, this.clientRect.height);
             this.context.strokeRect(left + .5, .5, right - left, this.clientRect.height);
             lastPos = -1;
@@ -1211,8 +1222,8 @@ basis.require('basis.ui.canvas');
     draw: function(x, y){
       var context = this.context;
 
-      this.context.save();
-      this.context.translate(this.clientRect.left, this.clientRect.top);
+      context.save();
+      context.translate(this.clientRect.left, this.clientRect.top);
 
       var TOP = this.clientRect.top;
       var WIDTH = this.clientRect.width;
@@ -1449,8 +1460,8 @@ basis.require('basis.ui.canvas');
     draw: function(x, y){
       var context = this.context;
 
-      this.context.save();
-      this.context.translate(this.clientRect.left, this.clientRect.top);
+      context.save();
+      context.translate(this.clientRect.left, this.clientRect.top);
 
       var clientRect = this.owner.clientRect;
       var bars = this.owner.bars;
@@ -1482,7 +1493,10 @@ basis.require('basis.ui.canvas');
       }
 
       if (!hoveredBar)
+      {
+        context.restore();
         return;
+      }
 
       var TOOLTIP_PADDING = 5;
 
