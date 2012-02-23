@@ -300,7 +300,7 @@
         source: allPostDataset,
         orderDesc: true,
         limit: POST_PER_PAGE,
-        rule: Function.getter('data.pubDate')
+        rule: 'data.pubDate'
       });
 
       times.push([new Date, 'thread slice']);
@@ -324,7 +324,7 @@
 
       var postList = new basis.ui.Container({
         dataSource: blogThreadPage,
-        sorting: Function.getter('data.pubDate'),
+        sorting: 'data.pubDate',
         sortingDesc: true,
         id: 'blog-thread',
         childClass: {
@@ -342,12 +342,25 @@
               '</div>' +
             '</div>',
 
+          binding: {
+            id: 'data:id',
+            title: 'data:title',
+            category: 'data:category',
+            pubDate: {
+              events: 'update',
+              getter: function(node){
+                return Date.fromISOString(node.data.pubDate).toFormat('%D/%M/%Y %H:%I:%S');
+              }
+            },
+            taglist: 'satellite:tagList'
+          },
+
           templateUpdate: function(tmpl, eventName, delta){
-            tmpl.id.nodeValue = this.data.id;
+            /*tmpl.id.nodeValue = this.data.id;
             tmpl.title.nodeValue = this.data.title;
-            tmpl.pubDate.nodeValue = Date.fromISOString(this.data.pubDate).toFormat('%D/%M/%Y %H:%I:%S');
+            tmpl.pubDate.nodeValue = Date.fromISOString(this.data.pubDate).toFormat('%D/%M/%Y %H:%I:%S');*/
             tmpl.content.innerHTML = this.data.content;
-            tmpl.category.nodeValue = this.data.category;
+            //tmpl.category.nodeValue = this.data.category;
           },
 
           action: {
@@ -357,7 +370,7 @@
           },
 
           satelliteConfig: {
-            taglist: {
+            tagList: {
               existsIf: function(owner){
                 return owner.data.tags && owner.data.tags.length;
               },
@@ -367,6 +380,7 @@
                   '<div class="blog-post__tag-list">' +
                     'Tags: <!--{childNodesHere}-->' +
                   '</div>',
+
                 templateUpdate: function(object, eventName, delta){
                   this.setChildNodes(this.data.tags.map(function(tag){
                     return {
@@ -374,18 +388,23 @@
                     };
                   }));
                 },
-                childClass: basis.ui(
-                  '<span class="tag">' +
-                    '<span class="tag__title" event-click="pick">{this_data_title}</span>' +
-                  '</span>',
-                  {
-                    action: {
-                      pick: function(){
-                        blogThreadPage.setSource(cloud.getSubset(this.data.title));
-                      }
+
+                childClass: {
+                  template:
+                    '<span class="tag">' +
+                      '<span class="tag__title" event-click="pick">{title}</span>' +
+                    '</span>',
+
+                  binding: {
+                    title: 'data:title'
+                  },
+
+                  action: {
+                    pick: function(){
+                      blogThreadPage.setSource(cloud.getSubset(this.data.title));
                     }
                   }
-                )
+                }
               })
             }
           }
@@ -398,7 +417,7 @@
 
       var postByCategory = new basis.data.dataset.Split({
         source: allPostDataset,
-        rule: Function.getter('data.category')
+        rule: 'data.category'
       });
 
       var categoryList = new basis.ui.Container({
@@ -413,8 +432,8 @@
           template:
             '<li class="category-list-item" event-click="choose">{title}</li>',
 
-          templateUpdate: function(tmpl){
-            tmpl.title.nodeValue = this.data.title;
+          binding: {
+            title: 'data:title'
           },
 
           action: {
@@ -430,16 +449,16 @@
 
 
       var MONTH = 'January February March April May June July August September October November December'.qw();
-      var archiveList = new basis.ui.Container({
+      archiveList = new basis.ui.Container({
         dataSource: new basis.data.dataset.Split({
           source: allPostDataset,
-          rule: Function.getter('data.pubDate.substr(0, 7)')
+          rule: 'data.pubDate.substr(0, 7)'
         }),
-        sorting: Function.getter('data.id'),
+        sorting: 'data.id',
         sortingDesc: true,
         grouping: {
-          groupGetter: Function.getter('data.id.substr(0, 4)'),
-          sorting: Function.getter('data.id'),
+          groupGetter: 'data.id.substr(0, 4)',
+          sorting: 'data.id',
           sortingDesc: true,
           childClass: {
             template:
@@ -447,10 +466,6 @@
                 '<div class="archive-list-group__title" event-click="toggle">{title}</div>' +
                 '<ul{childNodesElement} class="archive-list-group__content"/>' +
               '</li>',
-
-            templateUpdate: function(tmpl){
-              tmpl.title.nodeValue = this.data.id;
-            },
 
             action: {
               toggle: function(){
@@ -470,19 +485,24 @@
             '<li class="archive-list-item">' +
               '<span class="archive-list-item__link" event-click="choose">{title}</span> ({count})' +
             '</li>',
-          templateUpdate: function(tmpl, eventName, delta){
-            tmpl.title.nodeValue = MONTH[this.data.id.substr(5) - 1];
-            tmpl.count.nodeValue = this.delegate.itemCount;
+
+          binding: {
+            count: 'delegate.itemCount',
+            title: function(node){
+              return MONTH[node.data.id.substr(5) - 1];
+            }
           },
+
           action: {
             choose: function(){
               blogThreadPage.setSource(this.delegate);
             }
           },
+
           listen: {
             delegate: {
               datasetChanged: function(){
-                this.templateUpdate(this.tmpl);
+                this.tmpl.set('count', this.delegate.itemCount);
               }
             }
           }
@@ -493,9 +513,7 @@
 
       var cloud = new basis.data.dataset.Cloud({
         source: allPostDataset,
-        rule: function(item){
-          return item.data.tags;
-        }
+        rule: 'data.tags'
       });
 
       var cloudCalcs = new basis.data.index.IndexMap({
@@ -520,7 +538,7 @@
       var tagCloud = new basis.ui.Container({
         id: 'tag-cloud',
         dataSource: cloudCalcs,
-        sorting: Function.getter('data.title'),
+        sorting: 'data.title',
         template:
           '<div class="tag-cloud">' +
             '<h2 class="tag-cloud__header">Tags cloud</h2>' +
@@ -531,10 +549,13 @@
           active: true,
 
           template: 
-            '<span class="cloud-tag" event-click="pick"> {titleText} </span>',
+            '<span class="cloud-tag" event-click="pick"> {title} </span>',
+
+          binding: {
+            title: 'data.source.data.title'
+          },
 
           templateUpdate: function(tmpl){
-            tmpl.titleText.nodeValue = this.data.source.data.title;
             this.element.style.fontSize = '{0:.2}%'.format(80 + 120 * this.data.percentOfMax);
           },
 
@@ -567,6 +588,15 @@
               '</div>' +
             '</div>' +
           '</div>',
+
+        binding: {
+          paginator: 'satellite:paginator',
+          postList: 'satellite:postList',
+
+          categoryList: 'satellite:categoryList',
+          tagCloud: 'satellite:tagCloud',
+          archiveList: 'satellite:archiveList'
+        },
 
         action: {
           reset: function(){

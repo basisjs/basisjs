@@ -13,7 +13,7 @@ basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
 basis.require('basis.html');
 
-(function(basis){
+(function(basis, global){
 
   'use strict';
 
@@ -33,13 +33,15 @@ basis.require('basis.html');
   // import names
   //
 
+  var document = global.document;
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var Template = basis.html.Template;
+  var Cleaner = basis.Cleaner;
+  var Template = basis.template.Template;
   var classList = basis.cssom.classList;
   var getter = Function.getter;
-  var Cleaner = basis.Cleaner;
+  var createEvent = basis.event.create;
 
   var DWNode = basis.dom.wrapper.Node;
   var DWPartitionNode = basis.dom.wrapper.PartitionNode;
@@ -50,18 +52,29 @@ basis.require('basis.html');
   // main part
   //
 
+  //
+  // Binding
+  //
+
   var bindingSeed = 1;
 
+ /**
+  * Function that extends list of binding by extension.
+  * @func
+  */
   function extendBinding(binding, extension){
     binding.bindingId = bindingSeed++;
     for (var key in extension)
     {
       var def = null;
       var value = extension[key];
+
       if (!value)
         def = null
       else
       {
+        value = BINDING_PRESET.process(value);
+
         if (typeof value != 'object')
           def = {
             getter: getter(value)
@@ -81,13 +94,65 @@ basis.require('basis.html');
 
       binding[key] = def;
     }
-  }
+  };
+
+  // binding preset
+
+  var BINDING_PRESET = (function(){
+    var presets = {};
+    var prefixRegExp = /^([a-z\_][a-z0-9\_]*)\:(.+)/i;
+
+    return {
+      add: function(prefix, func){
+        if (!presets[prefix])
+          presets[prefix] = func;
+
+        /** @cut */else console.warn('Preset `' + prefix + '` already exists, new definition ignored');
+      },
+      process: function(value){
+        var preset;
+
+        if (typeof value == 'string')
+        {
+          var m = value.match(prefixRegExp);
+
+          if (m)
+          {
+            preset = presets[m[1]];
+            value = m[2];
+          }
+        }
+
+        return preset
+          ? preset(value)
+          : value;
+      }
+    }
+  })();
+
+  //
+  // Default binding presets
+  //
+
+  BINDING_PRESET.add('data', function(path){
+    return ['data.' + path, 'update'];
+  });
+
+  BINDING_PRESET.add('satellite', function(satelliteName){
+    return {
+      events: 'satelliteChanged',
+      getter: function(node){
+        return node.satellite[satelliteName]
+          ? node.satellite[satelliteName].element
+          : null;
+      }
+    };
+  });
+
 
  /**
-  *
+  * Base binding
   */
-  var TEMPLATE_ACTION = Class.extensibleProperty();
-
   var TEMPLATE_BINDING = Class.customExtendProperty({
     selected: {
       getter: function(node){
@@ -107,6 +172,19 @@ basis.require('basis.html');
     }
   }, extendBinding);
 
+
+ /**
+  * Base action
+  */
+  var EMPTY_TEMPLATE_ACTION = Class.extensibleProperty();
+
+
+ /**
+  * Base template for TemplateMixin
+  */
+  var EMPTY_TEMPLATE = new Template('<div/>');
+
+
  /**
   * @mixin
   */
@@ -116,9 +194,8 @@ basis.require('basis.html');
       * Template for object.
       * @type {basis.Html.Template}
       */
-      template: new Template(  // NOTE: explicit template constructor here;
-        '<div/>'               //       it could be ommited in subclasses
-      ),
+      template: EMPTY_TEMPLATE,   // NOTE: explicit template constructor here;
+                                  // it could be ommited in subclasses
 
      /**
       * Contains references to template nodes.
@@ -130,7 +207,7 @@ basis.require('basis.html');
       * Handlers for template actions.
       * @type {Object}
       */
-      action: TEMPLATE_ACTION,
+      action: EMPTY_TEMPLATE_ACTION,
 
      /**
       * @type {Object}
@@ -174,6 +251,18 @@ basis.require('basis.html');
       },
 
      /**
+      * Fires when template had changed.
+      * @event
+      */
+      event_templateChanged: createEvent('templateChanged'),
+
+     /**
+      * Fires when template parse it source.
+      * @event
+      */
+      event_templateUpdate: createEvent('templateUpdate'),
+
+     /**
       * @inheritDoc
       */
       event_satelliteChanged: function(node, key, oldSatellite){
@@ -189,8 +278,7 @@ basis.require('basis.html');
             var replaceElement = this.tmpl[(config && config.replace) || key];
             if (replaceElement)
             {
-              DOM.replace(satellite.ownerReplacedNode_ = replaceElement, satellite.element);
-              //satellite.addHandler(SATELLITE_DESTROY_HANDLER, replaceElement);
+              //DOM.replace(satellite.ownerReplacedNode_ = replaceElement, satellite.element);
             }
           }
         }
@@ -263,71 +351,16 @@ basis.require('basis.html');
       * @inheritDoc
       */
       init: function(config){
-
         // create dom fragment by template
-        var tmpl;
-        var bindings;
-
-        if (this.template)
+        var template = this.template;
+        if (template)
         {
-          tmpl = this.template.createInstance(this);
-
-          if (tmpl.childNodesHere)
-          {
-            tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
-            tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;
-          }
-
-          // insert content
-          if (this.content)
-          {
-            DOM.insert(tmpl.content || tmpl.element, this.content);
-            this.content = null;
-          }
+          this.template = null;
+          this.setTemplate(template);
         }
-        else
-          tmpl = {
-            element: DOM.createElement()
-          };
-
-        // make shortcuts
-        this.tmpl = tmpl;
-        this.element = tmpl.element;
-        this.childNodesElement = tmpl.childNodesElement || tmpl.element;
 
         // inherit init
         super_.init.call(this, config);
-
-        // update template
-        if (this.id)
-          tmpl.element.id = this.id;
-
-        var cssClassNames = this.cssClassName;
-        if (cssClassNames)
-        {
-          if (typeof cssClassNames == 'string')
-            cssClassNames = { element: cssClassNames };
-
-          for (var alias in cssClassNames)
-          {
-            var node = tmpl[alias];
-            if (node)
-            {
-              var nodeClassName = classList(node);
-              var names = String(cssClassNames[alias]).qw();
-              for (var i = 0, name; name = names[i++];)
-                nodeClassName.add(name);
-            }
-          }
-        }
-
-        this.templateUpdate(tmpl);
-
-        if (this.container)
-        {
-          DOM.insert(this.container, tmpl.element);
-          this.container = null;
-        }
       },
 
      /**
@@ -338,13 +371,154 @@ basis.require('basis.html');
 
         if (this.template)
         {
-          var binding = this.template.getBinding(this.binding, this);
+          this.templateSync(true);
+
+          if (this.container)
+          {
+            DOM.insert(this.container, this.element);
+            this.container = null;
+          }
+        }
+      },
+
+      templateSync: function(noRecreate){
+        var template = this.template;
+        var binding = template.getBinding(this.binding, this) || null;
+        var oldBinding = this.templateBinding_;
+        var tmpl = this.tmpl;
+        var oldElement = this.element;
+
+        if (binding !== oldBinding)
+        {
+          if (oldBinding && oldBinding.handler)
+            this.removeHandler(oldBinding.handler);
+
+          if (!noRecreate)
+          {
+            if (this.tmpl)
+              this.tmpl.destroy();
+     
+            tmpl = template.createInstance(this, this.templateAction, this.templateSync);
+
+            if (tmpl.childNodesHere)
+            {
+              tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
+              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;
+            }
+
+            this.tmpl = tmpl;
+            this.element = tmpl.element;
+            this.childNodesElement = tmpl.childNodesElement || tmpl.element;
+          }
+
+          // insert content
+          if (this.content)
+            DOM.insert(tmpl.content || tmpl.element, this.content);
+
+          // update template
+          if (this.id)
+            tmpl.element.id = this.id;
+
+          var cssClassNames = this.cssClassName;
+          if (cssClassNames)
+          {
+            if (typeof cssClassNames == 'string')
+              cssClassNames = { element: cssClassNames };
+
+            for (var alias in cssClassNames)
+            {
+              var node = tmpl[alias];
+              if (node)
+              {
+                var nodeClassName = classList(node);
+                var names = String(cssClassNames[alias]).qw();
+                for (var i = 0, name; name = names[i++];)
+                  nodeClassName.add(name);
+              }
+            }
+          }
+
+          this.templateUpdate(this.tmpl);
           if (binding && binding.names.length)
           {
             if (binding.handler)
               this.addHandler(binding.handler);
+
             binding.sync.call(this);
           }
+
+          if (oldElement)
+          {
+            var parentNode = oldElement && oldElement.parentNode;
+            if (parentNode)
+            {
+              if (this.element)
+              {
+                parentNode.replaceChild(this.element, oldElement);
+              }
+              else
+              {
+                if (parentNode.nodeType == DOM.ELEMENT_NODE)
+                  parentNode.removeChild(oldElement);
+              }
+            }
+          }
+
+          for (var child = this.lastChild; child; child = child.previousSibling)
+            this.insertBefore(child, child.nextSibling);
+
+          this.templateBinding_ = binding;
+        }
+      },
+
+     /**
+      *
+      */
+      setTemplate: function(template){
+        if (template instanceof Template == false)
+          template = null;
+
+        if (this.template !== template)
+        {
+          var tmpl;
+          var oldTemplate = this.template;
+          var oldElement = this.element;
+
+          // drop old template
+          if (oldTemplate)
+          {
+            oldTemplate.clearInstance(this.tmpl, this);
+
+            var oldBinding = oldTemplate.getBinding(this.binding, this);
+            if (oldBinding && oldBinding.handler)
+              this.removeHandler(oldBinding.handler);
+          }
+
+          this.template = template;
+
+          // set new template
+          if (template)
+          {
+            tmpl = template.createInstance(this, this.templateAction, this.templateSync);
+
+            this.tmpl = tmpl;
+            this.element = tmpl.element;
+            this.childNodesElement = tmpl.childNodesElement || tmpl.element;
+
+            if (oldTemplate)
+              this.templateSync(true);
+          }
+          else
+          {
+            this.tmpl = null;
+            this.element = null;
+            this.childNodesElement = null;
+          }
+
+
+          // ??? fire event
+          if (oldTemplate && template)
+            this.event_templateChanged(this);
         }
       },
 
@@ -374,20 +548,9 @@ basis.require('basis.html');
       * @inheritDoc
       */
       destroy: function(){
-        var element = this.element;
-
         super_.destroy.call(this);
 
-        var parentNode = element && element.parentNode;
-        if (parentNode && parentNode.nodeType == DOM.ELEMENT_NODE)
-          parentNode.removeChild(element);
-
-        if (this.template)
-          this.template.clearInstance(this.tmpl, this);
-
-        this.tmpl = null;
-        this.element = null;
-        this.childNodesElement = null;
+        this.setTemplate();
       }
     }
   };
@@ -518,6 +681,27 @@ basis.require('basis.html');
     * @inheritDoc
     */
     event_ownerChanged: function(node, oldOwner){
+      this.syncDomRefs();
+      DWGroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
+    },
+
+    listen: {
+      owner: {
+        templateChanged: function(){
+          this.syncDomRefs();
+          for (var child = this.lastChild; child; child = child.previousSibling)
+            this.insertBefore(child, child.nextSibling);
+        }
+      }
+    },
+
+    init: function(config){
+      this.nullElement = DOM.createFragment();
+      this.element = this.childNodesElement = this.nullElement;
+      DWGroupingNode.prototype.init.call(this, config);
+    },
+
+    syncDomRefs: function(){
       var cursor = this;
       var owner = this.owner;
       var element = null;//this.nullElement;
@@ -533,14 +717,6 @@ basis.require('basis.html');
         cursor.element = cursor.childNodesElement = element;
       }
       while (cursor = cursor.grouping);
-
-      DWGroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
-    },
-
-    init: function(config){
-      this.nullElement = DOM.createFragment();
-      this.element = this.childNodesElement = this.nullElement;
-      DWGroupingNode.prototype.init.call(this, config);
     }
   });
 
@@ -634,6 +810,7 @@ basis.require('basis.html');
 
   basis.namespace(namespace, simpleTemplate).extend({
     simpleTemplate: simpleTemplate,
+    BINDING_PRESET: BINDING_PRESET,
 
     Node: Node,
     Container: Container,
@@ -642,4 +819,4 @@ basis.require('basis.html');
     Control: Control
   });
 
-})(basis);
+})(basis, this);

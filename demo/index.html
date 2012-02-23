@@ -236,25 +236,32 @@
         childClass: {
           className: 'Demo-TreeNode',
           template:
-            '<li{element} class="Demo-TreeNode" event-click="select">' +
-              '<a{content|title} href="#">' +
-                '<img src{imageUrl}="" event-error="setDefaultImage" width="100" height="75"/>' +
-                '<span class="title">{titleText}</span>' +
+            '<li class="Demo-TreeNode" event-click="select">' +
+              '<a{content} href="{url}">' +
+                '<img src="{imageUrl}" event-error="setDefaultImage" width="100" height="75"/>' +
+                '<span class="title">{title}</span>' +
               '</a>' +
             '</li>',
 
-          action: {
-            setDefaultImage: function(){
-              if (this.tmpl.imageUrl.nodeValue != 'res/img/noimg.png')
-                this.tmpl.imageUrl.nodeValue = 'res/img/noimg.png';
+          binding: {
+            title: 'data:title',
+            url: 'data:url',
+            imageUrl: function(node){
+              return node.data.image || node.data.url.replace('.html', '.png');
             }
           },
+
+          action: {
+            setDefaultImage: function(){
+              this.tmpl.set('imageUrl', 'res/img/noimg.png');
+            }
+          }/*,
 
           templateUpdate: function(tmpl, eventName, delta){
             tmpl.titleText.nodeValue = this.data.title;
             tmpl.title.href = this.data.url;
             tmpl.imageUrl.nodeValue = this.data.image || this.data.url.replace('.html', '.png');
-          }
+          }*/
         },
         grouping: {
           childClass: {

@@ -631,7 +631,7 @@
   // jsDocs parse
   //
 
-  var scripts = []||Array.from(document.getElementsByTagName('SCRIPT'))
+  var scripts = Array.from(document.getElementsByTagName('SCRIPT'))
                   .map(getter('getAttribute("src")'))
                   .filter(getter('match(/\\/src\\/basis[a-z0-9\\_\\-\/]*\\.js$/i)'));
    //['../basis.js', '../dom_wraper.js', '../tree.js'];

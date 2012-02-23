@@ -38,7 +38,7 @@ basis.require('basis.ui.popup');
   var Class = basis.Class;
   var Event = basis.dom.event;
   var DOM = basis.dom;
-  var Template = basis.html.Template;
+  var Template = basis.template.Template;
   var Cleaner = basis.Cleaner;
 
   var complete = Object.complete;

@@ -38,7 +38,6 @@ basis.require('basis.ui');
   var Class = basis.Class;
   var Event = basis.dom.event;
   var DOM = basis.dom;
-  var Template = basis.html.Template;
 
   var getter = Function.getter;
   var nullGetter = Function.nullGetter;

@@ -993,7 +993,7 @@ basis.require('basis.data');
    /**
     * Helper function.
     */
-    rule: $true,
+    rule: Function.getter($true),
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -1328,8 +1328,7 @@ basis.require('basis.data');
   function sliceIndexSort(a, b){
     return +(a.value > b.value)
         || -(a.value < b.value)
-        || +(a.object.eventObjectId > b.object.eventObjectId)
-        || -(a.object.eventObjectId < b.object.eventObjectId);
+        ||  (a.object.eventObjectId - b.object.eventObjectId);
   }
 
   var SLICE_SOURCE_HANDLER = {
@@ -1425,7 +1424,7 @@ basis.require('basis.data');
     * @type {function(basis.data.DataObject)}
     * @readonly
     */
-    rule: $true,
+    rule: Function.getter($true),
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -1733,7 +1732,7 @@ basis.require('basis.data');
    /**
     * @type {function(basis.data.DataObject)}
     */
-    rule: $false,
+    rule: Function.getter($false),
 
    /**
     * Events list when dataset should recompute rule for source item.

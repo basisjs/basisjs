@@ -24,6 +24,7 @@
 
   var DELEGATE = basis.dom.wrapper.DELEGATE;
 
+  var Template = basis.template.Template;
   var ui = basis.ui;
   var uiNode = basis.ui.Node;
   var uiContainer = basis.ui.Container;
@@ -75,7 +76,7 @@
     className: namespace + '.ViewOption',
 
     template:
-      '<span class="option" event-click="select">' +
+      '<span class="option {selected}" event-click="select">' +
         '{title}' +
       '</span>',
 
@@ -127,6 +128,9 @@
     className: namespace + '.View',
     autoDelegate: DELEGATE.PARENT,
     isAcceptableObject: Function.$true,
+    binding: {
+      viewOptions: 'satellite:viewOptions'
+    },
     action: {
       scrollTo: function(){
         if (this.parentNode)
@@ -321,13 +325,17 @@
     template:
       '<div class="view viewJsDoc">' +
         htmlHeader('Description') +
-        '<div{content} class="content">' +
-          '<!-- {contentPanel} -->' +
+        '<div class="content">' +
+          '<!--{docsView}-->' +
         '</div>' +
       '</div>',
 
+    binding: {
+      docsView: 'satellite:content'
+    },
+
     satelliteConfig: {
-      contentPanel: {
+      content: {
         existsIf: getter('data.fullPath'),
         delegate: function(owner){
           return nsCore.JsDocEntity.getSlot(owner.data.fullPath);
@@ -346,6 +354,16 @@
   */
   var TemplateTreeNode = uiContainer.subclass({
     className: namespace + '.TemplateTreeNode',
+
+    binding: {
+      refList: 'satellite:refList',
+      nodeName: 'data.nodeName',
+      nodeValue: 'data.nodeValue',
+      hasRefs: function(node){
+        return node.data.ref ? 'hasRefs' : '';
+      }
+    },
+
     satelliteConfig: {
       refList: {
         existsIf: getter('data.ref'),
@@ -357,13 +375,6 @@
             ref: 'owner.data.ref'
           }
         })
-      }
-    },
-    binding: {
-      nodeName: 'data.nodeName',
-      nodeValue: 'data.nodeValue',
-      hasRefs: function(node){
-        return node.data.ref ? 'hasRefs' : '';
       }
     }
   });
@@ -388,6 +399,10 @@
       '<div class="Doc-TemplateView-Node Doc-TemplateView-Element {hasRefs}">' + 
         '<span><{nodeName}<!--{refList}--><!--{attributes}-->/></span>' + 
       '</div>',
+
+    binding: {
+      attributes: 'satellite:attributes'
+    },
 
     satelliteConfig: {
       attributes: {
@@ -422,7 +437,7 @@
     className: namespace + '.TemplateTreeNode.Text',
     template:
       '<div class="Doc-TemplateView-Node Doc-TemplateView-Text {hasRefs}">' + 
-        '<span><span class="refList">{{nodeValue}}</span></span>' + 
+        '<span><span class="refList">{nodeValue}</span></span>' + 
       '</div>'
   });
 
@@ -545,6 +560,11 @@
         '<!--{bindings}-->' +
         '<!--{actions}-->' +
       '</div>',
+
+    binding: {
+      bindings: 'satellite:bindings',
+      actions: 'satellite:actions'
+    },
 
     childFactory: function(config){
       switch (config.data.nodeType)
@@ -673,7 +693,7 @@
 
 
   function hasTemplate(node){
-    return node.data.obj && node.data.obj.prototype && node.data.obj.prototype.template instanceof basis.html.Template;
+    return node.data.obj && node.data.obj.prototype && node.data.obj.prototype.template instanceof Template;
   }
 
  /**
@@ -694,6 +714,10 @@
           '<!-- {template} -->' +
         '</div>' +
       '</div>',
+
+    binding: {
+      template: 'satellite:template'
+    },
 
     satelliteConfig: {
       viewOptions: {
@@ -919,6 +943,7 @@
       '</div>',
 
     binding: {
+      jsdocs: 'satellite:jsdocs',
       nodeType: 'nodeType',
       title: 'data.key.replace(/^event_/, "")',
       path: {
@@ -1207,18 +1232,6 @@
     }
   });
 
-  var viewConstructor = new JsDocView({
-    viewHeader: 'Constructor',
-    satelliteConfig: {
-      contentPanel: {
-        existsIf: getter('data.fullPath'),
-        delegate: function(owner){
-          return nsCore.JsDocEntity.getSlot(owner.data.fullPath + '.prototype.init');
-        },
-        instanceOf: JsDocPanel
-      }
-    }
-  });
 
   var viewSourceCode = new View({
     viewHeader: 'Source code',
@@ -1229,6 +1242,10 @@
           '<!--{sourceCode}-->' +
         '</div>' +
       '</div>',
+
+    binding: {
+      sourceCode: 'satellite:sourceCode'
+    },
 
     satelliteConfig: {
       sourceCode: nsHighlight.SourceCodeNode.subclass({
@@ -1454,6 +1471,11 @@
           '<!-- {classMap} -->' +
         '</div>' +
       '</div>',
+
+    binding: {
+      classMap: 'satellite:classMap'
+    },
+
     satelliteConfig: {
       classMap: {
         instanceOf: uiContainer.subclass({
@@ -1494,7 +1516,6 @@
     ViewPrototype: ViewPrototype,
 
     viewJsDoc: viewJsDoc,
-    viewConstructor: viewConstructor,
     viewSourceCode: viewSourceCode,
     viewTemplate: viewTemplate,
     viewInheritance: viewInheritance,

@@ -43,7 +43,6 @@ basis.require('basis.ui');
   var classList = basis.cssom.classList;
   var createEvent = basis.event.create;
 
-  var Template = basis.html.Template;
   var Property = basis.data.property.Property;
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -225,13 +224,13 @@ basis.require('basis.ui');
 
     childClass: CalendarNode,
 
-    template: new Template(
+    template:
       '<div{selected} class="Basis-Calendar-Section">' +
         '<div class="Basis-Calendar-SectionTitle">{titleText}</div>' +
         '<div{content|childNodesElement} class="Basis-Calendar-SectionContent"/>' +
       '</div>' +
-      TAB_TEMPLATE
-    ),
+      TAB_TEMPLATE,
+
     /*templateAction: function(actionName, event){
       if (actionName == 'select')
         this.select();
@@ -372,7 +371,7 @@ basis.require('basis.ui');
     sectionName: 'Month',
     periodName: MONTH,
 
-    template: new Template(Function.lazyInit(function(){
+    template: Function.lazyInit(function(){
       return '' +
       '<div{selected} class="Basis-Calendar-Section">' +
         '<div class="Basis-Calendar-SectionTitle">{titleText}</div>' +
@@ -383,7 +382,7 @@ basis.require('basis.ui');
         '</div>' +
       '</div>' +
       TAB_TEMPLATE
-    })),
+    }),
 
     nodeCount: 6 * 7,       // 6 weeks
     nodePeriodName: DAY,
@@ -490,7 +489,7 @@ basis.require('basis.ui');
     childClass: CalendarSection,
     childFactory: Function(),
 
-    template: new Template(Function.lazyInit(function(){
+    template: Function.lazyInit(function(){
       return '' +
       '<div class="Basis-Calendar">' +
         '<div class="Basis-Calendar-Header">' +
@@ -512,7 +511,7 @@ basis.require('basis.ui');
           '</div>' +
         '</div>' +
       '</div>'
-    })),
+    }),
 
     event_change: createEvent('change'),
 

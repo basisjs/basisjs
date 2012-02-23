@@ -6,6 +6,7 @@
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
+  basis.require('basis.template');
   basis.require('basis.html');
   basis.require('basis.data');
   basis.require('basis.data.dataset');

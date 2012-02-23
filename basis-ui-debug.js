@@ -16,6 +16,7 @@
     document.write('<script src="' + curLocation + 'src/basis/html.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/dom/wrapper.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/cssom.js"></script>');
+    document.write('<script src="' + curLocation + 'src/basis/template.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/data/dataset.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/data/property.js"></script>');
     document.write('<script src="' + curLocation + 'src/basis/data/index.js"></script>');
