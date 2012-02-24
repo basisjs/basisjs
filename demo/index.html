@@ -244,8 +244,8 @@
             '</li>',
 
           binding: {
-            title: 'data:title',
-            url: 'data:url',
+            title: 'data:',
+            url: 'data:',
             imageUrl: function(node){
               return node.data.image || node.data.url.replace('.html', '.png');
             }
@@ -267,7 +267,7 @@
           childClass: {
             template: 
               '<li{element} class="Demo-Group">' +
-                '<div class="Demo-Group-Title"><span>{titleText}</span></div>' +
+                '<div class="Demo-Group-Title"><span>{title}</span></div>' +
                 '<ul{childNodesElement} class="Demo-Group-Content"/>' +
               '</li>'
           },

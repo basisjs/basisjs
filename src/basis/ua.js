@@ -182,7 +182,8 @@
     is: function(name){ return testBrowser(name) },  // single test
 
     // Cookie interface
-    Cookies: cookies
+    cookies: cookies,
+    Cookies: cookies /* deprecated */
   });
 
 }(basis, this);

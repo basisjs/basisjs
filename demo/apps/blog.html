@@ -338,21 +338,21 @@
                   'Category: ' +
                   '<span class="blog-post__category-link" event-click="filterByCategory">{category}</span>' +
                 '</span>' +
-                '<!--{taglist}-->' +
+                '<!--{tagList}-->' +
               '</div>' +
             '</div>',
 
           binding: {
-            id: 'data:id',
-            title: 'data:title',
-            category: 'data:category',
+            id: 'data:',
+            title: 'data:',
+            category: 'data:',
             pubDate: {
               events: 'update',
               getter: function(node){
                 return Date.fromISOString(node.data.pubDate).toFormat('%D/%M/%Y %H:%I:%S');
               }
             },
-            taglist: 'satellite:tagList'
+            tagList: 'satellite:'
           },
 
           templateUpdate: function(tmpl, eventName, delta){

@@ -506,7 +506,7 @@
 
       if (cls && basis.Class.isClass(cls))
       {
-        console.dir(cls);
+        //console.dir(cls);
 
         var action = cls.prototype.action;
         var childNodes = [];

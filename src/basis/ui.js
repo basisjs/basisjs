@@ -73,7 +73,7 @@ basis.require('basis.html');
         def = null
       else
       {
-        value = BINDING_PRESET.process(value);
+        value = BINDING_PRESET.process(key, value);
 
         if (typeof value != 'object')
           def = {
@@ -100,7 +100,7 @@ basis.require('basis.html');
 
   var BINDING_PRESET = (function(){
     var presets = {};
-    var prefixRegExp = /^([a-z\_][a-z0-9\_]*)\:(.+)/i;
+    var prefixRegExp = /^([a-z\_][a-z0-9\_]*)\:(.*)/i;
 
     return {
       add: function(prefix, func){
@@ -109,7 +109,7 @@ basis.require('basis.html');
 
         /** @cut */else console.warn('Preset `' + prefix + '` already exists, new definition ignored');
       },
-      process: function(value){
+      process: function(key, value){
         var preset;
 
         if (typeof value == 'string')
@@ -119,7 +119,7 @@ basis.require('basis.html');
           if (m)
           {
             preset = presets[m[1]];
-            value = m[2];
+            value = m[2] || key;
           }
         }
 
