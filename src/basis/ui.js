@@ -491,6 +491,12 @@ basis.require('basis.html');
           {
             tmpl = template.createInstance(this, this.templateAction, this.templateSync);
 
+            if (tmpl.childNodesHere)
+            {
+              tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
+              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;
+            }
+
             this.tmpl = tmpl;
             this.element = tmpl.element;
             this.childNodesElement = tmpl.childNodesElement || tmpl.element;
