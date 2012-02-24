@@ -119,7 +119,7 @@ basis.require('basis.ui.button');
     className: namespace + '.Window',
 
     template:
-      '<div class="Basis-Window" event-mousedown="mousedown" event-keypress="keypress">' +
+      '<div class="Basis-Window {selected} {disabled}" event-mousedown="mousedown" event-keypress="keypress">' +
         '<div class="Basis-Window-Canvas">' +
           '<div class="corner-left-top"/>' +
           '<div class="corner-right-top"/>' +

@@ -336,7 +336,7 @@
     childClass: Class(nsTree.Node, {
       template:
         '<li class="Basis-TreeNode">' +
-          '<div{content} class="Basis-TreeNode-Title">' +
+          '<div{content} class="Basis-TreeNode-Title {selected} {disabled}">' +
             '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
               '<span class="namespace">{namespaceText}</span>' +
               '<span{label} class="label">{titleText}</span>' +
@@ -493,15 +493,15 @@
       if ([Event.KEY.UP, Event.KEY.DOWN].has(key))
       {
         var cn = ctrl.childNodes;
-        var pos, node;
+        var pos = -1, node;
         
         if (selected && selected.matched)
           pos = cn.indexOf(selected);
         
         if (key == Event.KEY.UP)
-          node = cn.lastSearch(true, 'matched', pos ? pos : null);
+          node = cn.lastSearch(true, 'matched', pos == -1 ? cn.length : pos);
         else
-          node = cn.search(true, 'matched', pos ? pos + 1 : null);
+          node = cn.search(true, 'matched', pos + 1);
 
         if (node)
           node.select();

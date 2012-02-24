@@ -51,7 +51,7 @@ basis_require('basis.ext.flashcanvas');*/
     className: namespace + '.CanvasLayer',
 
     template:
-      '<canvas{canvas}>' +
+      '<canvas{canvas} class="{selected} {disabled}">' +
         '<div>Canvas doesn\'t support.</div>' +
       '</canvas>',
 

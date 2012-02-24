@@ -50,7 +50,7 @@ basis.require('basis.ui.scroller');
     className: namespace + '.PageSlider',
 
     template: 
-      '<div class="Basis-PageControl Basis-PageSlider">' +
+      '<div class="Basis-PageControl Basis-PageSlider {selected} {disabled}">' +
         '<div{childNodesElement} class="Basis-PageSlider-Content"/>' +
       '</div>',
 

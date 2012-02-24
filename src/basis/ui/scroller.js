@@ -505,7 +505,7 @@ basis.require('basis.animation');
     cssClassName: 'Basis-ScrollPanel-Scrollbar',
 
     template: 
-      '<div class="Basis-Scrollbar">' +
+      '<div class="Basis-Scrollbar {selected} {disabled}">' +
         '<div{trackElement} class="Basis-Scrollbar-Track"></div>' +
       '</div>',
 
@@ -599,7 +599,7 @@ basis.require('basis.animation');
 
     template: 
       '<div class="Basis-ScrollPanel" event-mousewheel="onwheel">' +
-        '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content"/>' +
+        '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content {selected} {disabled}"/>' +
         '<!--{horizontalScrollbar}-->' +
         '<!--{verticalScrollbar}-->' +
       '</div>',
@@ -762,7 +762,7 @@ basis.require('basis.animation');
 
     childClass: uiNode.subclass({
       template: 
-        '<div event-click="select"/>',
+        '<div class="{selected} {disabled}" event-click="select"/>',
 
       action: {
         select: function(){

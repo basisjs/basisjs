@@ -123,7 +123,7 @@ basis.require('basis.ui');
     },
 
     template: 
-      '<div{selected} class="Basis-Tab" event-click="select">' +
+      '<div class="Basis-Tab {selected} {disabled}" event-click="select">' +
         '<span class="Basis-Tab-Start"/>' +
         '<span class="Basis-Tab-Content">' +
           '<span class="Basis-Tab-Caption">' +
@@ -177,12 +177,12 @@ basis.require('basis.ui');
       childClass: {
         className: namespace + '.TabsPartitionNode',
         template: 
-          '<div class="Basis-TabControl-TabGroup"/>'
+          '<div class="Basis-TabControl-TabGroup {selected} {disabled}"/>'
       }
     },
 
     template: 
-      '<div class="Basis-TabControl">' +
+      '<div class="Basis-TabControl {selected} {disabled}">' +
         '<div class="Basis-TabControl-Start"/>' +
         '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +
         '<div class="Basis-TabControl-End"/>' +
@@ -210,7 +210,7 @@ basis.require('basis.ui');
     },
     
     template: 
-      '<div{selected} class="Basis-Page Basis-Page-Hidden">' + 
+      '<div class="Basis-Page Basis-Page-Hidden {selected} {disabled}">' + 
         '<div{content|childNodesElement} class="Basis-Page-Content"/>' +
       '</div>'
   });
@@ -229,7 +229,7 @@ basis.require('basis.ui');
     childClass: Page,
     
     template: 
-      '<div class="Basis-PageControl"/>'
+      '<div class="Basis-PageControl {selected} {disabled}"/>'
   });
 
 
@@ -255,7 +255,7 @@ basis.require('basis.ui');
     },
     
     template: 
-      '<div{selected} class="Basis-TabSheet" event-click="select">' +
+      '<div class="Basis-TabSheet {selected} {disabled}" event-click="select">' +
         '<div{tabElement} class="Basis-Tab">' +
           '<span class="Basis-Tab-Start"/>' +
           '<span class="Basis-Tab-Content">' +
@@ -291,7 +291,7 @@ basis.require('basis.ui');
     childClass: TabSheet,
     
     template: 
-      '<div class="Basis-AccordionControl">' +
+      '<div class="Basis-AccordionControl {selected} {disabled}">' +
         '<div{content|childNodesElement} class="Basis-AccordionControl-Content"/>' +
       '</div>'
   });
@@ -310,7 +310,7 @@ basis.require('basis.ui');
     childClass: TabSheet,
     
     template: 
-      '<div class="Basis-TabSheetControl">' +
+      '<div class="Basis-TabSheetControl {selected} {disabled}">' +
         '<div{tabsElement} class="Basis-TabControl">' +
           '<div class="Basis-TabControl-Start"/>' +
           '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +

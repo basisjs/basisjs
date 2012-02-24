@@ -71,7 +71,7 @@ basis.require('basis.ui');
     className: namespace + '.HeaderPartitionNode',
 
     template: 
-      '<th{selected} class="Basis-Table-Header-Cell">' +
+      '<th class="Basis-Table-Header-Cell {selected} {disabled}">' +
         '<div class="Basis-Table-Sort-Direction"/>' +
         '<div class="Basis-Table-Header-Cell-Content">' + 
           '<span{content} class="Basis-Table-Header-Cell-Title">{titleText}</span>' +
@@ -195,7 +195,7 @@ basis.require('basis.ui');
     groupId: 0,
 
     template:
-      '<th{selected} class="Basis-Table-Header-Cell" event-click="sort">' +
+      '<th class="Basis-Table-Header-Cell {selected} {disabled}" event-click="sort">' +
         '<div class="Basis-Table-Sort-Direction"/>' +
         '<div class="Basis-Table-Header-Cell-Content">' + 
           '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
@@ -254,7 +254,7 @@ basis.require('basis.ui');
     groupingClass: HeaderGroupingNode,
 
     template:
-      '<thead{groupsElement} class="Basis-Table-Header">' +
+      '<thead{groupsElement} class="Basis-Table-Header {selected} {disabled}">' +
         '<tr{childNodesElement|content}/>' +
       '</thead>',
 
@@ -356,7 +356,7 @@ basis.require('basis.ui');
     colSpan: 1,
 
     template:
-      '<td{content} class="Basis-Table-Footer-Cell">' +
+      '<td{content} class="Basis-Table-Footer-Cell {selected} {disabled}">' +
         '\xA0' +
       '</td>',
 
@@ -379,7 +379,7 @@ basis.require('basis.ui');
     childClass: FooterCell,
 
     template:
-      '<tfoot class="Basis-Table-Footer">' +
+      '<tfoot class="Basis-Table-Footer {selected} {disabled}">' +
         '<tr{content|childNodesElement}/>' +
       '</tfoot>',
 
@@ -456,7 +456,7 @@ basis.require('basis.ui');
     repaintCount: 0,
 
     template:
-      '<tr class="Basis-Table-Row" event-click="select">' +
+      '<tr class="Basis-Table-Row {selected} {disabled}" event-click="select">' +
         '<!--{cells}-->' +
       '</tr>',
 
@@ -502,7 +502,7 @@ basis.require('basis.ui');
     className: namespace + '.Body',
 
     template:
-      '<tbody class="Basis-Table-Body">' +
+      '<tbody class="Basis-Table-Body {selected} {disabled}">' +
         '<tr class="Basis-Table-GroupHeader" event-click="click">' +
           '<td{content} colspan="100">' +
             '<span class="expander"/>' +
@@ -533,7 +533,7 @@ basis.require('basis.ui');
     },
 
     template:
-      '<table{groupsElement} class="Basis-Table" cellspacing="0">' +
+      '<table{groupsElement} class="Basis-Table {selected} {disabled}" cellspacing="0">' +
         '<!--{header}-->' +
         '<tbody{content|childNodesElement} class="Basis-Table-Body"/>' +
         '<!--{footer}-->' +

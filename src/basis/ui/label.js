@@ -52,11 +52,11 @@ basis.require('basis.ui');
   // main part
   //
 
-  var stateTemplate = '<div class="Basis-Label Basis-Label-State"/>';
-  var processingTemplate = '<div class="Basis-Label Basis-Label-Processing"/>';
-  var errorTemplate = '<div class="Basis-Label Basis-Label-Error"/>';
-  var countTemplate = '<div class="Basis-Label Basis-Label-Count">{count}</div>';
-  var emptyTemplate = '<div class="Basis-Label Basis-Label-Empty"/>';
+  var stateTemplate = '<div class="Basis-Label Basis-Label-State {selected} {disabled}"/>';
+  var processingTemplate = '<div class="Basis-Label Basis-Label-Processing {selected} {disabled}"/>';
+  var errorTemplate = '<div class="Basis-Label Basis-Label-Error {selected} {disabled}"/>';
+  var countTemplate = '<div class="Basis-Label Basis-Label-Count {selected} {disabled}">{count}</div>';
+  var emptyTemplate = '<div class="Basis-Label Basis-Label-Empty {selected} {disabled}"/>';
 
   //
   // NodeLabel
@@ -73,7 +73,7 @@ basis.require('basis.ui');
   var NodeLabel = Class(UINode, {
     className: namespace + '.NodeLabel',
 
-    template: '<div class="Basis-Label"/>',
+    template: '<div class="Basis-Label {selected} {disabled}"/>',
     content: null,
 
     visibilityGetter: Function.$true,

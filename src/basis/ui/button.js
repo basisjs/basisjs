@@ -96,7 +96,7 @@ basis.require('basis.ui');
     * @inheritDoc
     */
     template:
-      '<button{buttonElement} class="Basis-Button" event-click="click">' +
+      '<button{buttonElement} class="Basis-Button {selected} {disabled}" event-click="click">' +
         '<span class="Basis-Button-Back"/>' +
         '<span class="Basis-Button-Caption">' +
           '{caption}' +
@@ -152,7 +152,7 @@ basis.require('basis.ui');
     className: namespace + '.ButtonPanel',
 
     template:
-      '<div class="Basis-ButtonPanel">' +
+      '<div class="Basis-ButtonPanel {disabled}">' +
         '<div{childNodesElement|content} class="Basis-ButtonPanel-Content"/>' +
       '</div>',
 
@@ -169,7 +169,7 @@ basis.require('basis.ui');
         className: namespace + '.ButtonPartitionNode',
 
         template:
-          '<div class="Basis-ButtonGroup"/>'
+          '<div class="Basis-ButtonGroup {disabled}"/>'
       }
     },
 

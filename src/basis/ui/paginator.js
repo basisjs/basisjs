@@ -85,7 +85,7 @@ basis.require('basis.ui');
     template:
       '<td class="Basis-PaginatorNode">' +
         '<span>' +
-          '<a{link|selected} event-click="click" href="#">{pageNumber}</a>' +
+          '<a{link} class="{selected} {disabled}" event-click="click" href="#">{pageNumber}</a>' +
         '</span>' +
       '</td>',
 
@@ -145,7 +145,7 @@ basis.require('basis.ui');
     childClass: PaginatorNode,
 
     template:
-    	'<div class="Basis-Paginator" event-mousewheel="scroll">' +
+    	'<div class="Basis-Paginator {selected} {disabled}" event-mousewheel="scroll">' +
         '<table><tbody><tr{childNodesElement}/></tbody></table>' +
         '<div{scrollbarContainer} class="Basis-Paginator-ScrollbarContainer">' +
           '<div{scrollbar} class="Basis-Paginator-Scrollbar" event-click="jumpTo">' +

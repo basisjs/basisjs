@@ -186,7 +186,7 @@ basis.require('basis.ui');
     childClass: null,
 
     template:
-      '<a class="Basis-Calendar-Node" event-click="click">' +
+      '<a class="Basis-Calendar-Node {selected} {disabled}" event-click="click">' +
         '{title}' +
       '</a>',
 
@@ -225,9 +225,9 @@ basis.require('basis.ui');
     childClass: CalendarNode,
 
     template:
-      '<div{selected} class="Basis-Calendar-Section">' +
+      '<div class="Basis-Calendar-Section {selected} {disabled}">' +
         '<div class="Basis-Calendar-SectionTitle">{titleText}</div>' +
-        '<div{content|childNodesElement} class="Basis-Calendar-SectionContent"/>' +
+        '<div{childNodesElement} class="Basis-Calendar-SectionContent"/>' +
       '</div>' +
       TAB_TEMPLATE,
 
@@ -373,7 +373,7 @@ basis.require('basis.ui');
 
     template: Function.lazyInit(function(){
       return '' +
-      '<div{selected} class="Basis-Calendar-Section">' +
+      '<div class="Basis-Calendar-Section {selected} {disabled}">' +
         '<div class="Basis-Calendar-SectionTitle">{titleText}</div>' +
         '<div{content|childNodesElement} class="Basis-Calendar-SectionContent">' +
           '<div class="Basis-Calendar-MonthWeekDays">' +
@@ -491,7 +491,7 @@ basis.require('basis.ui');
 
     template: Function.lazyInit(function(){
       return '' +
-      '<div class="Basis-Calendar">' +
+      '<div class="Basis-Calendar {selected} {disabled}">' +
         '<div class="Basis-Calendar-Header">' +
           '<div{sectionTabs} class="Basis-Calendar-SectionTabs" />' +
         '</div>' +

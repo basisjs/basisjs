@@ -73,7 +73,7 @@ basis.require('basis.dragdrop');
     caption: '\xA0',
 
     template:
-      '<div class="Basis-Slider-Mark">' +
+      '<div class="Basis-Slider-Mark {selected} {disabled}">' +
         '<span class="Basis-Slider-Mark-CaptionWrapper">' +
           '<span class="Basis-Slider-Mark-Caption">' +
             '{text}' +
@@ -106,7 +106,7 @@ basis.require('basis.dragdrop');
     className: namespace + '.MarkLayer',
 
     template: 
-      '<div class="Basis-Slider-MarkLayer"/>',
+      '<div class="Basis-Slider-MarkLayer {selected} {disabled}"/>',
 
     childClass: Mark,
 
@@ -213,7 +213,7 @@ basis.require('basis.dragdrop');
     * @inheritDoc
     */
     template:
-    	'<div class="Basis-Slider Basis-Slider-MinMaxOutside" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">' +
+    	'<div class="Basis-Slider Basis-Slider-MinMaxOutside {selected} {disabled}" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">' +
         '<div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>' +
         '<div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>' +
         '<div class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
@@ -283,7 +283,7 @@ basis.require('basis.dragdrop');
     satelliteConfig: {
       marks: UIContainer.subclass({
         className: namespace + '.MarkLayers',
-        template: '<div class="Basis-Slider-MarkLayers"/>',
+        template: '<div class="Basis-Slider-MarkLayers {selected} {disabled}"/>',
         childClass: MarkLayer
       })
     },

@@ -96,7 +96,7 @@ basis.require('basis.ui.table');
     * @inheritDoc
     */
     template:
-      '<div class="Basis-Table Basis-ScrollTable" event-load="">' +
+      '<div class="Basis-Table Basis-ScrollTable {selected} {disabled}" event-load="">' +
         '<div class="Basis-ScrollTable-Header-Container">' +
           '<table{headerOffset} class="Basis-ScrollTable-Header" cellspacing="0">' +
             '<!--{header}-->' +

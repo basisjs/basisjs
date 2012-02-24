@@ -64,7 +64,7 @@ basis.require('basis.ui.popup');
   //
 
   var baseFieldTemplate = new Template(
-    '<div{selected|sampleContainer} class="Basis-Field">' +
+    '<div{sampleContainer} class="Basis-Field {selected} {disabled}">' +
       '<div class="Basis-Field-Title">' +
         '<label>' +
           '<span{title}>{titleText}</span>' +
@@ -505,7 +505,7 @@ basis.require('basis.ui.popup');
 
     template:
       '<div class="Basis-Field Basis-Field-Checkbox">' +
-        '<div{content} class="Basis-Field-Container">' +
+        '<div{content} class="Basis-Field-Container {selected} {disabled}">' +
           '<label>' +
             '<input{field} type="checkbox" />' +
             '<span>{titleText}</span>' +
@@ -692,7 +692,7 @@ basis.require('basis.ui.popup');
     },
 
     template:
-      '<label class="Basis-RadioGroup-Item" event-click="select">' + 
+      '<label class="Basis-RadioGroup-Item {selected} {disabled}" event-click="select">' + 
         '<input{field} type="radio" class="radio"/>' +
         '<span{content}>{titleText}</span>' +
       '</label>',
@@ -768,7 +768,7 @@ basis.require('basis.ui.popup');
     },
 
     template:
-      '<label event-click="click">' + 
+      '<label event-click="click" class="{selected} {disabled}">' + 
         '<input{field} type="checkbox"/>' +
         '<span{content}>{titleText}</span>' +
       '</label>',
@@ -893,7 +893,7 @@ basis.require('basis.ui.popup');
     //valueGetter: Function.getter('data.value'),
 
     template:
-      '<div class="Basis-Combobox-Item" event-click="click">{titleText}</div>',
+      '<div class="Basis-Combobox-Item {selected} {disabled}" event-click="click">{titleText}</div>',
 
     templateUpdate: function(tmpl, eventName, delta){
       ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
@@ -1220,7 +1220,7 @@ basis.require('basis.ui.popup');
     },
     
     template:
-      '<div class="Basis-FormContent" />',
+      '<div class="Basis-FormContent {selected} {disabled}" />',
 
     getFieldByName: function(name){
       return this.childNodes.search(name, 'name');
@@ -1292,7 +1292,7 @@ basis.require('basis.ui.popup');
     className: namespace + '.Form',
     
     template:
-      '<form{formElement} class="Basis-Form">' +
+      '<form{formElement} class="Basis-Form {selected} {disabled}">' +
         '<div{content|childNodesElement} class="Basis-FormContent" />' +
       '</form>',
 

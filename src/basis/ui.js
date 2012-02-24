@@ -296,42 +296,6 @@ basis.require('basis.html');
      /**
       * @inheritDoc
       */
-      event_select: function(node){
-        super_.event_select.call(this, node);
-
-        classList(this.tmpl.selected || this.tmpl.content || this.element).add('selected');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_unselect: function(node){
-        super_.event_unselect.call(this, node);
-
-        classList(this.tmpl.selected || this.tmpl.content || this.element).remove('selected');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_disable: function(node){
-        super_.event_disable.call(this, node);
-
-        classList(this.tmpl.disabled || this.element).add('disabled');
-      },
-
-     /**
-      * @inheritDoc
-      */
-      event_enable: function(node){
-        super_.event_enable.call(this, node);
-
-        classList(this.tmpl.disabled || this.element).remove('disabled');
-      },
-
-     /**
-      * @inheritDoc
-      */
       event_match: function(node){
         super_.event_match.call(this, node);
 
