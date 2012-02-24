@@ -637,7 +637,7 @@ basis.require('basis.ui');
         }
 
         // set zIndex
-        newChild.element.style.zIndex = basis.ui.Window ? basis.ui.Window.getWindowTopZIndex() : 2001;
+        newChild.element.style.zIndex = basis.ui.window ? basis.ui.window.getWindowTopZIndex() : 2001;
       }
     },
     removeChild: function(popup){
