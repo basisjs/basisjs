@@ -337,12 +337,22 @@
       template:
         '<li class="Basis-TreeNode">' +
           '<div{content} class="Basis-TreeNode-Title {selected} {disabled}">' +
-            '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
+            '<span class="Basis-TreeNode-Caption" event-click="select">' +
               '<span class="namespace">{namespaceText}</span>' +
-              '<span{label} class="label">{titleText}</span>' +
+              '<span{label} class="label">{title}{args}</span>' +
             '</span>' +
           '</div>' +
         '</li>',
+
+      binding: {
+        args: function(){
+          if (/^(function|method|class)$/.test(node.data.kind))
+            return DOM.createElement('SPAN.args', nsCore.getFunctionDescription(node.data.obj).args.quote('('));
+        },
+        namespace: function(node){
+          return node.data.kind != 'namespace' ? node.data.path : '';
+        }
+      },
 
       action: {
         select: function(){
@@ -355,12 +365,6 @@
 
         classList(this.tmpl.content).add(this.data.kind.capitalize() + '-Content');
         this.nodeType = nsNav.kindNodeType[this.data.kind];
-
-        if (/^(function|method|class)$/.test(this.data.kind))
-          DOM.insert(this.tmpl.label, DOM.createElement('SPAN.args', nsCore.getFunctionDescription(this.data.obj).args.quote('(')));
-
-        this.tmpl.title.href = '#' + this.data.fullPath;
-        this.tmpl.namespaceText.nodeValue = this.data.kind != 'namespace' ? this.data.path : '';
       }/*,
       event_match: function(){},
       event_unmatch: function(){}*/

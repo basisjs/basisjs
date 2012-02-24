@@ -112,23 +112,26 @@
       childClass: {
         template: 
           '<div>' +
-            '#{idText}. {titleText}' +
+            '#{id}. {title}' +
           '</div>',
 
-        templateUpdate: function(tmpl, event, delta){
-          tmpl.idText.nodeValue = this.data.id;
-          tmpl.titleText.nodeValue = this.data.title;
+        binding: {
+          id: 'data:',
+          title: 'data:'
         }
       },
 
       grouping: {
-        groupGetter: getter('data.id % 2'),
+        groupGetter: 'data.id % 2',
         childClass: {
-          titleGetter: getter('data.title', { 0: 'even', 1: 'odd' }),
           template:
             '<div>' +
-              '<b>{titleText}</b>' +
-            '</div>'
+              '<b>{title}</b>' +
+            '</div>',
+
+          binding: {
+            title: getter('data.title', { 0: 'even', 1: 'odd' })
+          }
         }
       },
       childNodes: [

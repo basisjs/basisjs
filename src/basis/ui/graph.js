@@ -186,6 +186,11 @@ basis.require('basis.ui.canvas');
         '<!-- {graphViewer} -->' +
       '</div>',
 
+    binding: {
+      graphSelection: 'satellite:',
+      graphViewer: 'satellite:'
+    },
+
     style: {},
 
     event_sortingChanged: function(node, oldSorting, oldSortingDesc){
@@ -1546,9 +1551,7 @@ basis.require('basis.ui.canvas');
     keyValuesOnEdges: false,
 
     satelliteConfig: {
-      graphViewer: {
-        instanceOf: BarGraphViewer
-      }
+      graphViewer: BarGraphViewer
     },
 
     drawFrame: function(){

@@ -150,7 +150,9 @@
     };
 
     var FolderNode = basis.Class(nsTree.Folder, {
-      titleGetter: Function.getter('data.name'),
+      binding: {
+        title: 'data:name'
+      },
       sorting: Function.getter('data.name'),
       grouping: grouping,
       init: function(config){
@@ -160,7 +162,9 @@
     });
 
     var LazyFolderNode = basis.Class(nsTree.Folder, {
-      titleGetter: Function.getter('data.name'),
+      binding: {
+        title: 'data:name'
+      },
       sorting: Function.getter('data.name'),
       grouping: grouping,
       collapsed: true,
@@ -171,7 +175,9 @@
     });
 
     var FileNode = basis.Class(nsTree.Node, {
-      titleGetter: Function.getter('data.name')
+      binding: {
+        title: 'data:name'
+      }
     });
 
     var FileTree = basis.Class(nsTree.Tree, {

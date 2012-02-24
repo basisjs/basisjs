@@ -81,6 +81,10 @@ basis.require('basis.cssom');
         '<div{content|childNodesElement} class="TocControl-Item-Content"/>' +
       '</div>',
 
+    binding: {
+      header: 'satellite:'
+    },
+
     satelliteConfig: {
       header: {
         delegate: Function.$self,

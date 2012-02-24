@@ -2588,7 +2588,7 @@ basis.require('basis.html');
         if (this.itemCount)
           return this.set(nodes);
         else
-          nodes.splice(1);
+          nodes = [nodes[0]];
       }
 
       var items = [];
@@ -2613,7 +2613,7 @@ basis.require('basis.html');
       }
 
       if (!this.multiple)
-        nodes.splice(1);
+        items.splice(1);
 
       return Dataset.prototype.set.call(this, items);
     }

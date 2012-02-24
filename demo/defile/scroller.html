@@ -257,16 +257,16 @@
 
       childClass: {
         template:
-          '<a href="#" class="Country" event-click="scrollTo">{titleText}</a>',
+          '<a href="#" class="Country" event-click="scrollTo">{title}</a>',
+
+        binding: {
+          title: 'data:Title'
+        },
 
         action: {
           scrollTo: function(){
             worldMap.scrollTo(this.data.PositionX, this.data.PositionY);
           }
-        },
- 
-        templateUpdate: function(tmpl){
-          tmpl.titleText.nodeValue = this.data.Title;
         }
       },
 
@@ -326,10 +326,10 @@
 
       childClass: {
         template: 
-          '<div class="ScrollList-Item">{titleText}</div>',
+          '<div class="ScrollList-Item">{title}</div>',
 
-        templateUpdate: function(){
-          this.tmpl.titleText.nodeValue = this.title;
+        binding: {
+          title: 'title'
         }
       },
 

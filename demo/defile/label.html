@@ -152,19 +152,20 @@
       template:
         '<div class="DemoBlock">' +
            '<h2>{title}</h2>' +
-           '<div{childNodesElement} class="DemoBlock-Content"></div>' +
+           '<div{childNodesElement} class="DemoBlock-Content"><!--{label}--></div>' +
         '</div>',
 
-      templateUpdate: function(tmpl){
-        tmpl.title.nodeValue = this.title;
+      binding: {
+        title: 'title',
+        label: 'satellite:'
       },
 
       childClass: {
         template:
           '<span class="DemoBlock-Node">{value}</span>',
 
-        templateUpdate: function(tmpl){
-          tmpl.value.nodeValue = this.data.value;
+        binding: {
+          value: 'data:value'
         }
       }
     });

@@ -147,7 +147,12 @@
 
       // customize item class
       childClass: {
-        titleGetter: Function.getter('data', '{Title} ({ProviderCount})')
+        binding: {
+          title: {
+            events: 'update',
+            getter: Function.getter('data', '{Title} ({ProviderCount})')
+          }
+        }
       }
     });
 

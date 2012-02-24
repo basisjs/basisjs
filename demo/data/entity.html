@@ -92,8 +92,9 @@
     // Данный код вынесен отдельно для наглядности и мог бы быть вставлен непосрественно в
     // конструкторе дерева, без заведения переменной для нового класса.
     var MyTreeNode = basis.Class.create(basis.ui.tree.Node, {
-      titleGetter: function(node){
-        return '[{id}] {title}'.format(node.data)
+      binding: {
+        events: 'update',
+        getter: Function.getter('data', '[{id}] {title}')
       }
     });
 

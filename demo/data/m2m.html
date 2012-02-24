@@ -296,7 +296,7 @@
           '<li{selected} class="Basis-TreeNode empty" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
               '<div class="Basis-TreeNode-Expander" event-click="toggle"/>' +
-              '<span{title} class="Basis-TreeNode-Caption">{titleText}<span class="count">(Word count: {countText}, Frequency: {freqText})</span></span>' +
+              '<span{title} class="Basis-TreeNode-Caption">{title}<span class="count">(Word count: {countText}, Frequency: {freqText})</span></span>' +
             '</div>' + 
             '<div{childNodesElement} class="Basis-TreeNode-Content">' + 
               '<span class="emptyLabel">No words</span>' +
@@ -304,7 +304,9 @@
           '</li>',
 
         freqSum: 0,
-        titleGetter: Function.getter('data.Title'),
+        binding: {
+          title: 'data:Title'
+        },
         sorting: function(node){
           return Word.get(node.data.WordId).data.Title;
         },
@@ -344,17 +346,27 @@
               '<span class="Field-WordLink-DeleteButton" event-click="delete">x</span>' +
             '</div>',
 
+          binding: {
+            word: 'satellite:'
+          },
+
           action: {
             delete: function(event){
               this.target.destroy();
             }
           },
+
           satelliteConfig: {
             word: {
               delegate: Function.getter('data.WordId', Word),
-              instanceOf: nsUI.Node.subclass(nsUI(
-                '<span class="Field-WordLink-Title">{this_data_Title}</span>'
-              ))
+              instanceOf: nsUI.Node.subclass({
+                template:
+                  '<span class="Field-WordLink-Title">{title}</span>',
+
+                binding: {
+                  title: 'data:Title'
+                }
+              })
             }
           }
         })
@@ -433,6 +445,10 @@
             '<!--{word}-->' +
           '</li>',
 
+        binding: {
+          word: 'satellite:'
+        },
+
         action: {
           toggle: function(event){
             if (this.target)
@@ -448,9 +464,18 @@
         satelliteConfig: {
           word: {
             delegate: Function.getter('data.WordId', Word),
-            instanceOf: nsUI.Node.subclass(nsUI(
-              '<span{element}>{this_data_Title} <span class="freq">(frequency: {this_data_Freq})</span></span>'
-            ))
+            instanceOf: nsUI.Node.subclass({
+              template:
+                '<span>' +
+                   '{title} ' +
+                   '<span class="freq">(frequency: {freq})</span>' +
+                '</span>',
+
+              binding: {
+                title: 'data:Title',
+                freq: 'data:Freq'
+              }
+            })
           }
         }
       })
@@ -522,10 +547,12 @@
 
           // Определяем класс для дочерних узлов (описан выше)
           childClass: {
-            titleGetter: function(node){
-              var field = Field.get(node.data.FieldId);
-              var property = Word.get(node.data.WordId);
-              return (field ? field.data.Title : '[no field]') + ' <-> ' + (property ? property.data.Title : '[no property]');
+            binding: {
+              title: function(node){
+                var field = Field.get(node.data.FieldId);
+                var property = Word.get(node.data.WordId);
+                return (field ? field.data.Title : '[no field]') + ' <-> ' + (property ? property.data.Title : '[no property]');
+              }
             }
           }
         }).element

@@ -147,7 +147,7 @@
 
     new Tabs.PageControl({
       container: container,
-      handlers: {
+      handler: {
         childNodesModified: function(){
           var pagecontrol = this;
           DOM.insert(DOM.clear(buttonPanel), this.childNodes.map(function(page, index){

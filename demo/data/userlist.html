@@ -38,6 +38,10 @@
     {
       background: #E8E8E8;
     }
+    #UserList .selected
+    {
+      background: gold !important;
+    }
 
     .Basis-Label-Processing
     {
@@ -211,10 +215,6 @@
     // User list
     //
 
-    function titleGetter(node){
-      return node.data.title;
-    }
-
     var tree = new nsUI.Container({
       id: 'UserList',
       container: demoContainer,
@@ -222,28 +222,52 @@
       active: true,
       dataSource: User.all,
 
-      childClass: nsUI(
-        '<div class="user">' +
-          '{this_data_title}' +
-        '</div>'
-      ),
+      selection: {
+        multiple: true
+      },
 
-      sorting: titleGetter,
+      childClass: {
+        template:
+          '<div class="user {selected}" event-click="select">' +
+            '{title}' +
+          '</div>',
+
+        binding: {
+          title: 'data:'
+        },
+
+        action: {
+          select: function(event){
+            this.select(basis.dom.event(event).ctrlKey);
+          }
+        }
+      },
+
+      sorting: 'data.title',
       grouping: {
         active: true,
         dataSource: UserGroup.all,
 
-        groupGetter: function(node){
-          return node.data.group;
-        },
-        sorting: titleGetter,
+        groupGetter: 'data.group',
+        sorting: 'data.title',
 
-        childClass: nsUI(
-          '<div class="PartitionNode">' +
-            '<div class="PartitionNode-Title">{this_data_title}</div>' +
-            '<!-- {childNodeHere} -->' +
-          '</div>'
-        )
+        childClass: {
+          template:
+            '<div class="PartitionNode" event-click="selectAll">' +
+              '<div class="PartitionNode-Title">{title}</div>' +
+              '<!-- {childNodeHere} -->' +
+            '</div>',
+
+          binding: {
+            title: 'data:'
+          },
+
+          action: {
+            selectAll: function(){
+              this.parentNode.owner.selection.set(this.nodes);
+            }
+          }
+        }
       }
     });
 

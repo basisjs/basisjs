@@ -227,6 +227,10 @@ basis.require('basis.dragdrop');
         '</div>' +
     	'</div>',
 
+    binding: {
+      marks: 'satellite:'
+    },
+
    /**
     * @inheritDoc
     */

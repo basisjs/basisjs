@@ -604,6 +604,11 @@ basis.require('basis.animation');
         '<!--{verticalScrollbar}-->' +
       '</div>',
 
+    binding: {
+      horizontalScrollbar: 'satellite:',
+      verticalScrollbar: 'satellite:'
+    },
+
     action: {
       onwheel: function(event){
         var delta = Event.wheelDelta(event);

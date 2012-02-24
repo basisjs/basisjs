@@ -217,6 +217,12 @@
             '<span class="user__title">[{id}] {title}</span>' + 
           '</div>',
 
+        binding: {
+          group: 'satellite:'
+          id: 'data:userId',
+          title: 'data:'
+        },
+
         action: {
           select: function(){
             this.select();
@@ -225,11 +231,6 @@
             groupPopup.setDelegate(this);
             groupPopup.show(basis.dom.event.sender(event));
           }
-        },
-
-        templateUpdate: function(tmpl){
-          tmpl.id.nodeValue = this.data.userId;
-          tmpl.title.nodeValue = this.data.title;
         },
 
         satelliteConfig: {
@@ -270,6 +271,10 @@
             '<button event-click="delete">delete</button>' +
             '<!--{titleEditor}-->' +
           '</div>',
+
+        binding: {
+          titleEditor: 'satellite:'
+        },
 
         action: {
           'delete': function(){

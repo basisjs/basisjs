@@ -197,17 +197,17 @@
       sorting: Function.getter('data.title'),
       childClass: {
         template: 
-          '<span class="tag">{titleText}<sub>{countText}</sub></span>',
+          '<span class="tag">{title}<sub>{count}</sub></span>',
 
-        templateUpdate: function(tmpl, eventName, delta){
-          tmpl.titleText.nodeValue = this.data.title;
-          tmpl.countText.nodeValue = this.delegate.itemCount;
+        binding: {
+          title: 'data:',
+          count: 'delegate.itemCount'
         },
 
         listen: {
           delegate: {
             datasetChanged: function(dataset){
-              this.tmpl.countText.nodeValue = dataset.itemCount;
+              this.tmpl.set('count', dataset.itemCount);
             }
           }
         },

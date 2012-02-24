@@ -1009,6 +1009,10 @@ basis.require('basis.ui.popup');
       '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent" />'
     ),
 
+    binding: {
+      captionItem: 'satellite:'
+    },
+
     action: {
       click: function(event){
         if (this.isDisabled() || this.popup.visible)

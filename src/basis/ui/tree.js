@@ -157,15 +157,20 @@ basis.require('basis.ui');
     template: 
       '<li class="Basis-TreeNode">' +
         '<div{content} class="Basis-TreeNode-Title {selected} {disabled}">' +
-          '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
-            '{titleText}' +
+          '<span{titleElement} class="Basis-TreeNode-Caption" event-click="select">' +
+            '{title}' +
           '</span>' +
         '</div>' +
       '</li>',
 
-    templateUpdate: function(tmpl, eventName, delta){
-      // set new title
-      tmpl.titleText.nodeValue = String(this.titleGetter(this)) || '[no title]';
+    binding: {
+      title: 'data:title || "[no title]"',
+      collapsed: {
+        events: 'expand collapse',
+        getter: function(node){
+          return node.collapsed ? 'collapsed' : '';
+        }
+      }
     },
 
    /**
@@ -179,12 +184,7 @@ basis.require('basis.ui');
       toggle: function(event){
         this.toggle();
       }
-    },
-
-   /**
-    * @type {function()}
-    */
-    titleGetter: getter('data.title')
+    }
   });
 
  /**
@@ -205,26 +205,17 @@ basis.require('basis.ui');
     */
     groupingClass: GroupingNode,
 
-    event_expand: function(){
-      Node.prototype.event_expand.call(this);
-      classList(this.element).remove('collapsed');
-    },
-    event_collapse: function(){
-      Node.prototype.event_collapse.call(this);
-      classList(this.element).add('collapsed');
-    },
-
    /**
     * Template for node element. 
     * @type {basis.Html.Template}
     * @private
     */
     template: 
-      '<li class="Basis-TreeNode">' +
+      '<li class="Basis-TreeNode {collapsed}">' +
         '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected} {disabled}">' +
           '<div class="Basis-TreeNode-Expander" event-click="toggle"/>' +
-          '<span{title} class="Basis-TreeNode-Caption" event-click="select">' +
-            '{titleText}' +
+          '<span{titleElement} class="Basis-TreeNode-Caption" event-click="select">' +
+            '{title}' +
           '</span>' +
         '</div>' + 
         '<ul{childNodesElement} class="Basis-TreeNode-Content"/>' + 

@@ -221,9 +221,15 @@
       dataSource: graph.selection,
       childClass: {
         template: 
-          '<div>{titleText}</div>',
-        templateUpdate: function(){
-          this.tmpl.titleText.nodeValue = (new Date(this.data.Date)).toFormat('%D.%M.%Y'); 
+          '<div>{title}</div>',
+
+        binding: {
+          title: {
+            events: 'update',
+            getter: function(){
+              return (new Date(this.data.Date)).toFormat('%D.%M.%Y');
+            }
+          }
         }
       }
     })

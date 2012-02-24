@@ -19,6 +19,10 @@
       font-family: Tahoma, Verdana, Arial, sans-serif;
     }
 
+    .state-error
+    {
+      color: red;
+    }
 
   </style>
   <!--[if lt IE 7]>
@@ -36,6 +40,7 @@
 
 
   <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" src="../../src/basis/net/ajax_.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 
@@ -74,9 +79,12 @@
       poolLimit: 1,
       handler: {
         success: function(req){
-          var m = req.responseText.match(/<title>([^<]*)<\/title>/i);
+          var m = req.data.responseText.match(/<title>([^<]*)<\/title>/i);
           if (m && req.influence[0])
             req.influence[0].update({ title: m[1] });
+        },
+        failure: function(req){
+          req.influence[0].update({ title: 'Fault to load ' + req.requestData.url })
         }
       }
     });
@@ -92,18 +100,16 @@
               url: '../' + this.data.url,
               influence: [this]
             });
+          }
+        },
+        stateChanged: function(){
+          if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
+          {
             this.adapter.request({
               url: '../' + this.data.url,
               influence: [this]
             });
           }
-        },
-        stateChanged: function(){
-          if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
-            this.adapter.request({
-              url: '../' + this.data.url,
-              influence: [this]
-            });
         }
       }
     });
@@ -113,8 +119,9 @@
       url: '../index.html',
       handler: {
         success: function(req){
-          var list = req.responseText.match(/url:\s*(\"[^\"]+\"|\'[^\']+\')/g);
+          var list = req.data.responseText.match(/url:\s*(\"[^\"]+\"|\'[^\']+\')/g);
           var result = [];
+
           for (var i = 0; i < list.length; i++)
           {
             var m = list[i].match(/\"([^\"]+)\"|\'([^\']+)\'/);
@@ -122,27 +129,12 @@
               data: { url: m[1] || m[2] }
             }));
           }
+
           links.set(result);
         }
       }
     });
     indexTransport.get();
-
-    var links = new basis.data.Dataset();
-    var list = new basis.ui.Container({
-      container: basis.dom.get('demo-container'),
-      cssClassName: 'demo-list',
-      dataSource: links,
-      childClass: {
-        template: '<div{element}>{titleText}</div>',
-        templateUpdate: function(tmpl){
-          tmpl.titleText.nodeValue = this.data.title || this.data.url;
-        },
-        event_stateChanged: function(object, oldState){
-          basis.cssom.classList(this.element).replace(oldState, this.state, 'state-');
-        }
-      }
-    });
 
     var button = new basis.ui.button.Button({
       container: basis.dom.get('demo-container'),
@@ -150,6 +142,26 @@
       click: function(){
         for (var i = 0, child; child = list.childNodes[i]; i++)
           child.setActive(true);
+      }
+    });
+
+    var links = new basis.data.Dataset();
+    var list = new basis.ui.Container({
+      container: basis.dom.get('demo-container'),
+      cssClassName: 'demo-list',
+      dataSource: links,
+      childClass: {
+        template:
+          '<div class="state-{state}">{title}</div>',
+
+        binding: {
+          title: {
+            events: 'update',
+            getter: function(node){
+              return node.data.title || node.data.url;
+            }
+          }
+        }
       }
     });
     

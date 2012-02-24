@@ -226,31 +226,6 @@ basis.require('basis.html');
       cssClassName: null,
 
      /**
-      * @inheritDoc
-      */
-      listen: {
-        satellite: {
-          ownerChanged: function(satellite, oldOwner){
-            if (oldOwner)
-            {
-              if (satellite.ownerReplacedNode_)
-              {
-                DOM.replace(satellite.element, satellite.ownerReplacedNode_);
-                satellite.ownerReplacedNode_ = null;
-              }
-            }
-          },
-          destroy: function(satellite){
-            if (satellite.ownerReplacedNode_)
-            {
-              DOM.replace(satellite.element, satellite.ownerReplacedNode_);
-              satellite.ownerReplacedNode_ = null;
-            }
-          }          
-        }
-      },
-
-     /**
       * Fires when template had changed.
       * @event
       */
@@ -261,28 +236,6 @@ basis.require('basis.html');
       * @event
       */
       event_templateUpdate: createEvent('templateUpdate'),
-
-     /**
-      * @inheritDoc
-      */
-      event_satelliteChanged: function(node, key, oldSatellite){
-        super_.event_satelliteChanged.call(this, node, key, oldSatellite);
-
-        var satellite = this.satellite[key];
-
-        if (satellite)
-        {
-          if (satellite instanceof Node && satellite.element)
-          {
-            var config = this.satelliteConfig && this.satelliteConfig[key];
-            var replaceElement = this.tmpl[(config && config.replace) || key];
-            if (replaceElement)
-            {
-              //DOM.replace(satellite.ownerReplacedNode_ = replaceElement, satellite.element);
-            }
-          }
-        }
-      },
 
      /**
       * @inheritDoc
