@@ -203,7 +203,7 @@
       '</div>',
 
     binding: {
-      kind: 'data:kind',
+      kind: 'data:',
       path: 'data:path || ""',
       title: {
         events: 'update',

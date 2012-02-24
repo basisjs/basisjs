@@ -129,7 +129,7 @@
     autoDelegate: DELEGATE.PARENT,
     isAcceptableObject: Function.$true,
     binding: {
-      viewOptions: 'satellite:viewOptions'
+      viewOptions: 'satellite:'
     },
     action: {
       scrollTo: function(){
@@ -356,9 +356,9 @@
     className: namespace + '.TemplateTreeNode',
 
     binding: {
-      refList: 'satellite:refList',
-      nodeName: 'data.nodeName',
-      nodeValue: 'data.nodeValue',
+      refList: 'satellite:',
+      nodeName: 'data:',
+      nodeValue: 'data:',
       hasRefs: function(node){
         return node.data.ref ? 'hasRefs' : '';
       }
@@ -401,7 +401,7 @@
       '</div>',
 
     binding: {
-      attributes: 'satellite:attributes'
+      attributes: 'satellite:'
     },
 
     satelliteConfig: {
@@ -541,7 +541,7 @@
         '<div class="action {used}">{name} [{used}]</div>',
 
       binding: {
-        name: 'data.name',
+        name: 'data:',
         used: function(node){
           return node.data.used ? 'used' : '';
         }
@@ -562,8 +562,8 @@
       '</div>',
 
     binding: {
-      bindings: 'satellite:bindings',
-      actions: 'satellite:actions'
+      bindings: 'satellite:',
+      actions: 'satellite:'
     },
 
     childFactory: function(config){
@@ -716,7 +716,7 @@
       '</div>',
 
     binding: {
-      template: 'satellite:template'
+      template: 'satellite:'
     },
 
     satelliteConfig: {
@@ -779,10 +779,10 @@
       '</li>',
 
     binding: {
-      className: 'data.title',
-      namespace: 'data.namespace',
-      fullPath: 'data.fullPath',
-      tag: 'data.tag || "none"'
+      className: 'data:title',
+      namespace: 'data:',
+      fullPath: 'data:',
+      tag: 'data:tag || "none"'
     },
 
     event_match: function(){
@@ -817,7 +817,7 @@
           '</div>',
 
         binding: {
-          title: 'data.title'
+          title: 'data:'
         }
       }
     },
@@ -943,9 +943,9 @@
       '</div>',
 
     binding: {
-      jsdocs: 'satellite:jsdocs',
+      jsdocs: 'satellite:',
       nodeType: 'nodeType',
-      title: 'data.key.replace(/^event_/, "")',
+      title: 'data:key.replace(/^event_/, "")',
       path: {
         events: 'update',
         getter: function(node){
@@ -1227,7 +1227,7 @@
             return node.data.title || node.data.url;
           }
         },
-        url: 'data.url'
+        url: 'data:'
       }
     }
   });
@@ -1244,7 +1244,7 @@
       '</div>',
 
     binding: {
-      sourceCode: 'satellite:sourceCode'
+      sourceCode: 'satellite:'
     },
 
     satelliteConfig: {
@@ -1473,7 +1473,7 @@
       '</div>',
 
     binding: {
-      classMap: 'satellite:classMap'
+      classMap: 'satellite:'
     },
 
     satelliteConfig: {
@@ -1494,13 +1494,7 @@
 
   var viewJsDoc = new JsDocView();
 
-  //var viewConstructor = new JsDocConstructorView();
-
-  //var viewSourceCode = new SourceCodeView();
-
   var viewTemplate = new ViewTemplate();
-
-  //var viewInheritance = new ViewInheritance();
 
   var viewPrototype = new ViewPrototype();
 

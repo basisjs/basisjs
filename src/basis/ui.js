@@ -447,21 +447,11 @@ basis.require('basis.html');
             binding.sync.call(this);
           }
 
-          if (oldElement)
+          if (oldElement && this.element)
           {
             var parentNode = oldElement && oldElement.parentNode;
             if (parentNode)
-            {
-              if (this.element)
-              {
-                parentNode.replaceChild(this.element, oldElement);
-              }
-              else
-              {
-                if (parentNode.nodeType == DOM.ELEMENT_NODE)
-                  parentNode.removeChild(oldElement);
-              }
-            }
+              parentNode.replaceChild(this.element, oldElement);
           }
 
           for (var child = this.lastChild; child; child = child.previousSibling)
@@ -513,6 +503,13 @@ basis.require('basis.html');
             this.tmpl = null;
             this.element = null;
             this.childNodesElement = null;
+          }
+
+          if (oldElement && !this.element)
+          {
+            var parentNode = oldElement && oldElement.parentNode;
+            if (parentNode && parentNode.nodeType == DOM.ELEMENT_NODE)
+              parentNode.removeChild(oldElement);
           }
 
 
