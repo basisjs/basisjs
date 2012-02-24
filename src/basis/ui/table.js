@@ -195,7 +195,7 @@ basis.require('basis.ui');
     groupId: 0,
 
     template:
-      '<th class="Basis-Table-Header-Cell {selected} {disabled}" event-click="sort">' +
+      '<th class="Basis-Table-Header-Cell {selected} {disabled}" event-click="setColumnSorting">' +
         '<div class="Basis-Table-Sort-Direction"/>' +
         '<div class="Basis-Table-Header-Cell-Content">' + 
           '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
@@ -203,7 +203,7 @@ basis.require('basis.ui');
       '</th>',
 
     action: {
-      sort: function(event){
+      setColumnSorting: function(event){
         if (this.selected)
         {
           var owner = this.parentNode && this.parentNode.owner;
@@ -503,7 +503,7 @@ basis.require('basis.ui');
 
     template:
       '<tbody class="Basis-Table-Body {selected} {disabled}">' +
-        '<tr class="Basis-Table-GroupHeader" event-click="click">' +
+        '<tr class="Basis-Table-GroupHeader" event-click="toggle">' +
           '<td{content} colspan="100">' +
             '<span class="expander"/>' +
             '<span class="Basis-Table-GroupHeader-Title">{title}</span>' +
@@ -513,7 +513,7 @@ basis.require('basis.ui');
       '</tbody>',
 
     action: {
-      click: function(){
+      toggle: function(){
         classList(this.element).toggle('collapsed');
       }
     }

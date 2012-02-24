@@ -110,7 +110,7 @@
       init: function(config){
         BaseDocTreeNode.prototype.init.call(this, config);
 
-        DOM.insert(this.tmpl.title.parentNode, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
+        DOM.insert(this.tmpl.titleElement, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
         this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj).args;
       }
     });
@@ -265,7 +265,7 @@
       init: function(config){
         BaseDocTreeFolder.prototype.init.call(this, config);
 
-        DOM.insert(this.tmpl.title.parentNode, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
+        DOM.insert(this.tmpl.titleElement, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
         this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj).args;
       },
       getMembers: function(){

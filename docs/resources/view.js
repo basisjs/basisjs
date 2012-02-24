@@ -1,5 +1,7 @@
 (function(){
 
+  'use strict';
+
   var namespace = 'BasisDoc.View';
 
   //
@@ -379,15 +381,51 @@
     }
   });
 
+  TemplateTreeNode.AttributeValueText = Class(uiNode, {
+    template:
+      '<span class="Doc-TemplateView-Attribute-Text">{text}</span>',
+
+    binding: {
+      text: 'data:text'
+    }
+  });
+
+  TemplateTreeNode.AttributeValueBinding = Class(uiNode, {
+    template:
+      '<span class="Doc-TemplateView-Attribute-Binding">{text}</span>',
+
+    binding: {
+      text: 'data:text'
+    }
+  });
+
+  TemplateTreeNode.AttributeClassBinding = Class(uiNode, {
+    template:
+      '<span class="Doc-TemplateView-Attribute-ClassBinding">{text}</span>',
+
+    binding: {
+      text: 'data:text'
+    }
+  });
+
  /**
   * @class
   */
   TemplateTreeNode.Attribute = Class(TemplateTreeNode, {
     className: namespace + '.TemplateTreeNode.Attribute',
     template:
-      '<span class="Doc-TemplateView-Node Doc-TemplateView-Attribute {hasRefs}">' +
-        '<span>{nodeName}<!--{refList}-->="{nodeValue}"</span>' + 
-      '</span>'
+      '<span class="Doc-TemplateView-Node Doc-TemplateView-Attribute Doc-TemplateView-Attribute__{isEvent} {hasRefs}">' +
+        '<span>{nodeName}<!--{refList}-->="<!--{childNodesHere}-->"</span>' + 
+      '</span>',
+
+    binding: {
+      isEvent: {
+        events: 'update',
+        getter: function(node){
+          return node.data.isEvent ? 'isEvent' : '';
+        }
+      }
+    }
   });
 
  /**
@@ -407,12 +445,15 @@
     satelliteConfig: {
       attributes: {
         existsIf: getter('data.attrs'),
-        dataSource: getter('data.attrs'),
         instanceOf: uiContainer.subclass({
           template: '<span/>',
-          childClass: TemplateTreeNode.Attribute,
-          sorting: 'data.nodeName'
-        })
+          childClass: TemplateTreeNode.Attribute
+        }),
+        config: function(owner){
+          return {
+            childNodes: owner.data.attrs
+          }
+        }
       }
     }
   });
@@ -437,7 +478,7 @@
     className: namespace + '.TemplateTreeNode.Text',
     template:
       '<div class="Doc-TemplateView-Node Doc-TemplateView-Text {hasRefs}">' + 
-        '<span><span class="refList">{nodeValue}</span></span>' + 
+        '<span><!--{refList}-->{nodeValue}</span>' + 
       '</div>'
   });
 
@@ -448,7 +489,7 @@
     className: namespace + '.TemplateTreeNode.Comment',
     template:
       '<div class="Doc-TemplateView-Node Doc-TemplateView-Comment {hasRefs}">' + 
-        '<--<span>{nodeValue}</span>-->' + 
+        '< !--<span>{nodeValue}</span>-->' + 
       '</div>'
   });
 
@@ -464,6 +505,12 @@
         var matchBinding = template.getBinding(this.data.obj.prototype.binding);
         binding = Object.iterate(this.data.obj.prototype.binding, function(key, value){
           return typeof value == 'object' ? {
+            data: {
+              name: key,
+              getter: value.getter,
+              events: value.events,
+              used: matchBinding && matchBinding.names.indexOf(key) != -1
+            },
             name: key,
             getter: value.getter,
             events: value.events,
@@ -484,14 +531,48 @@
     sorting: 'name',
 
     childClass: {
+      expanded: false,
+      event_toggle: basis.event.create('toggle'),
+
       template: 
-        '<div class="binding {used}">{name} on {events} [{used}]</div>',
+        '<div class="binding {used} binding__{expanded}">' +
+          '<div class="binding-header" event-click="toggle">{name} on {events}</div>' +
+          '<div class="binding-content">' +
+            '<!--{source}-->' +
+          '</div>' +
+        '</div>',
 
       binding: {
         name: 'name',
         events: 'events || ""',
         used: function(node){
           return node.used ? 'used' : '';
+        },
+        expanded: {
+          events: 'toggle',
+          getter: function(node){
+            return node.expanded ? 'expanded' : '';
+          }
+        },
+        source: 'satellite:'
+      },
+
+      action: {
+        toggle: function(){
+          this.expanded = !this.expanded;
+          this.event_toggle(this);
+        }
+      },
+
+      satelliteConfig: {
+        source: {
+          hook: { toggle: true },
+          existsIf: Function.getter('expanded'),
+          instanceOf: nsHighlight.SourceCodeNode.subclass({
+            autoDelegate: DELEGATE.OWNER,
+            lang: 'js',
+            codeGetter: getter('data.getter || ""', String)
+          })
         }
       }
     }
@@ -518,7 +599,8 @@
               childNodes.push({
                 data: {
                   name: actionName,
-                  action: action[actionName]
+                  action: action[actionName],
+                  used: true
                 }
               });
             }
@@ -537,18 +619,206 @@
     sorting: 'name',
 
     childClass: {
+      expanded: false,
+      event_toggle: basis.event.create('toggle'),
+
       template: 
-        '<div class="action {used}">{name} [{used}]</div>',
+        '<div class="action action__{expanded} {used}">' +
+          '<div class="action-header" event-click="toggle">{name}</div>' +
+          '<div class="action-content">' +
+            '<!--{source}-->' +
+          '</div>' +
+        '</div>',
 
       binding: {
         name: 'data:',
         used: function(node){
           return node.data.used ? 'used' : '';
+        },
+        expanded: {
+          events: 'toggle',
+          getter: function(node){
+            return node.expanded ? 'expanded' : '';
+          }
+        },
+        source: 'satellite:'
+      },
+
+      action: {
+        toggle: function(){
+          this.expanded = !this.expanded;
+          this.event_toggle(this);
+        }
+      },
+
+      satelliteConfig: {
+        source: {
+          hook: { toggle: true },
+          existsIf: Function.getter('expanded'),
+          instanceOf: nsHighlight.SourceCodeNode.subclass({
+            autoDelegate: DELEGATE.OWNER,
+            lang: 'js',
+            codeGetter: getter('data.action || ""', String)
+          })
         }
       }
     }
   });
 
+
+  // token types
+  /** @const */ var TYPE_ELEMENT = 1;
+  /** @const */ var TYPE_ATTRIBUTE = 2;
+  /** @const */ var TYPE_TEXT = 3;
+  /** @const */ var TYPE_COMMENT = 8;
+
+  // references on fields in declaration
+  /** @const */ var TOKEN_TYPE = 0
+  /** @const */ var TOKEN_BINDINGS = 1;
+  /** @const */ var TOKEN_REFS = 2;
+
+  /** @const */ var ATTR_NAME = 3;
+  /** @const */ var ATTR_VALUE = 4;
+
+  /** @const */ var ELEMENT_NAME = 3;
+  /** @const */ var ELEMENT_ATTRS = 4;
+  /** @const */ var ELEMENT_CHILDS = 5;
+
+  /** @const */ var TEXT_VALUE = 3;
+  /** @const */ var COMMENT_VALUE = 3;
+
+  function buildTemplate(tokens){
+    var result = [];
+
+    function refList(token){
+      var refs = token[TOKEN_REFS];
+
+      if (refs && refs.length)
+        return refs.join(' | ');
+
+      return null;
+    }
+
+    var nodeConfig;
+    var nodeClass;
+    for (var i = 0, token; token = tokens[i]; i++)
+    {
+      switch(token[TOKEN_TYPE]){
+        case TYPE_ELEMENT:
+          var childs = buildTemplate(token[ELEMENT_CHILDS]);
+          var attrs = token[ELEMENT_ATTRS];
+          var attrNodes = [];
+
+          for (var j = 0, attr; attr = attrs[j]; j++)
+          {
+            var attrParts = [];
+            var addValue = !attr[TOKEN_BINDINGS];
+
+            if (attr[TOKEN_BINDINGS])
+            {
+              if (attr[ATTR_NAME] == 'class')
+              {
+                if (attr[ATTR_VALUE])
+                  addValue = true;
+
+                var bindings = attr[TOKEN_BINDINGS];
+                var list = bindings[0];
+                for (var b = 0; b < list.length; b++)
+                  for (var p = 0; p < bindings[b + 1].length; p++)
+                    attrParts.push(new TemplateTreeNode.AttributeClassBinding({
+                      data: {
+                        text: bindings[b + 1][p] + '{' + list[b] + '}'
+                      }
+                    }));
+              }
+              else
+              {
+                var bindings = attr[TOKEN_BINDINGS];
+                var dict = bindings[0];
+                var list = bindings[1];
+                for (var b = 0; b < list.length; b++)
+                {
+                  if (typeof list[b] == 'string')
+                    attrParts.push(new TemplateTreeNode.AttributeValueText({
+                      data: {
+                        text: list[b]
+                      }
+                    }));
+                  else
+                    attrParts.push(new TemplateTreeNode.AttributeValueBinding({
+                      data: {
+                        text: '{' + dict[list[b]] + '}'
+                      }
+                    }));
+                }
+              }
+            }
+
+            if (addValue && attr[ATTR_VALUE])
+              attrParts.unshift(new TemplateTreeNode.AttributeValueText({
+                data: {
+                  text: attr[ATTR_VALUE]
+                }
+              }));
+
+            attrNodes.push(new TemplateTreeNode.Attribute({
+              data: {
+                nodeName: attr[ATTR_NAME],
+                ref: refList(attr),
+                isEvent: /^event-/.test(attr[ATTR_NAME])
+              },
+              childNodes: attrParts
+            }));
+          }
+
+          nodeClass = TemplateTreeNode.EmptyElement;
+          nodeConfig = {
+            data: {
+              nodeName: token[ELEMENT_NAME],
+              nodeType: TYPE_ELEMENT,
+              ref: refList(token),
+              attrs: attrNodes.length ? attrNodes : null
+            }
+          };
+
+          if (childs.length)
+          {
+            nodeClass = TemplateTreeNode.Element;
+            nodeConfig.childNodes = childs; 
+          }
+
+          break;
+
+        case TYPE_TEXT:
+          nodeClass = TemplateTreeNode.Text;
+          nodeConfig = {
+            data: {
+              nodeType: TYPE_TEXT,
+              nodeValue: token[TEXT_VALUE] || '?',
+              ref: refList(token)
+            }
+          };
+
+          break;
+
+        case TYPE_COMMENT:
+          nodeClass = TemplateTreeNode.Comment;
+          nodeConfig = {
+            data: {
+              nodeType: TYPE_COMMENT,
+              nodeValue: token[COMMENT_VALUE],
+              ref: refList(token)
+            }
+          };
+
+          break;
+      }
+
+      result.push(new nodeClass(nodeConfig));
+    }
+
+    return result;
+  }
 
  /**
   * @class
@@ -557,29 +827,15 @@
     template:
       '<div class="templatePanel">' +
         '<div{childNodesElement} class="templateHtml"/>' +
-        '<!--{bindings}-->' +
-        '<!--{actions}-->' +
+        '<div>' +
+          '<!--{bindings}-->' +
+          '<!--{actions}-->' +
+        '</div>' +
       '</div>',
 
     binding: {
       bindings: 'satellite:',
       actions: 'satellite:'
-    },
-
-    childFactory: function(config){
-      switch (config.data.nodeType)
-      {
-        case DOM.ELEMENT_NODE:
-          childClass = config.childNodes.length ? TemplateTreeNode.Element : TemplateTreeNode.EmptyElement;
-        break;
-        case DOM.TEXT_NODE:
-          childClass = TemplateTreeNode.Text;
-        break;
-        default:
-          childClass = TemplateTreeNode.Comment;
-      }
-
-      return new childClass(config);
     },
 
     event_templateViewChanged: createEvent('templateViewChanged'),
@@ -610,58 +866,10 @@
         {
           rootCfg.childNodes = [];
 
-          var map = template.createInstance();
-          
-          var root = map.element.parentNode;
-          var dw = new DOM.TreeWalker(root);
-          var node = root;
-          node.c = rootCfg;
+          var source = String(typeof template.source == 'function' ? template.source() : template.source);
+          var decl = basis.template.makeDeclaration(source);
 
-          do
-          {
-            if ([DOM.ELEMENT_NODE, DOM.TEXT_NODE, DOM.COMMENT_NODE].has(node.nodeType))
-            {
-              var attrs = [];
-              var nodeName = '';
-              var nodeValue = '';
-
-              if (node.nodeType == DOM.ELEMENT_NODE)
-              {
-                nodeName = node.tagName.toLowerCase();
-                for (var i = 0, attr; attr = node.attributes[i]; i++)
-                {
-                  attrs.push(new nsData.DataObject({
-                    data: {
-                      nodeName: attr.nodeName,
-                      nodeValue: attr.nodeValue,
-                      ref: findRefs(map, attr)
-                    }
-                  }));
-                }
-              }
-              else
-                nodeValue = node.nodeValue;
-
-              var cfg = {
-                childFactory: this.childFactory,
-                data: {
-                  nodeName: nodeName,
-                  nodeType: node.nodeType,
-                  nodeValue: nodeValue,
-                  ref: findRefs(map, node),
-                  attrs: attrs.length ? new nsData.Dataset({ items: attrs }) : null
-                },
-                childNodes: []
-              };
-
-              if (node.parentNode && node.parentNode.c)
-                node.parentNode.c.childNodes.push(cfg);
-
-              if (node.nodeType == DOM.ELEMENT_NODE)
-                node.c = cfg;
-            }
-          }
-          while (node = dw.next());
+          rootCfg.childNodes = buildTemplate(decl);
         }
       }
 
@@ -839,6 +1047,7 @@
           var isClass = this.data.kind == 'class';
           var cursor = isClass ? this.data.obj : (mapDO[this.data.path.replace(/.prototype$/, '')] || { data: { obj: null } }).data.obj;
           var groupId = 0;
+          var group;
           var lastNamespace;
           var list = [];
           while (cursor)
@@ -1376,7 +1585,7 @@
   //
 
   var namespaceClassDS = new nsData.Dataset();
-  namespaceClsSplitBySuper = new nsData.dataset.Split({
+  var namespaceClsSplitBySuper = new nsData.dataset.Split({
     source: namespaceClassDS,
     rule: function(object){
       //console.log(object.part);

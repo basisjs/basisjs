@@ -293,6 +293,7 @@ basis.require('basis.dom.event');
               if (token.type == TYPE_TEXT)
               {
                 token.value = source.substring(bufferPos, pos);
+                pos = startPos + m[1].length + 1;
                 state = TEXT;
               }
               else if (token.type == TYPE_COMMENT)

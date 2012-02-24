@@ -113,7 +113,7 @@ basis.require('basis.ui');
   var PartitionNode = Class(UIPartitionNode, {
     className: namespace + '.PartitionNode',
     template: 
-      '<li class="Basis-TreePartitionNode {selected} {disabled}">' + 
+      '<li class="Basis-TreePartitionNode">' + 
         '<div class="Basis-TreePartitionNode-Title">' +
           '<span>{title}</span>' +
         '</div>' +
@@ -151,7 +151,7 @@ basis.require('basis.ui');
 
    /**
     * Template for node element. 
-    * @type {basis.Html.Template}
+    * @type {basis.template.Template}
     * @private
     */
     template: 
@@ -207,7 +207,7 @@ basis.require('basis.ui');
 
    /**
     * Template for node element. 
-    * @type {basis.Html.Template}
+    * @type {basis.template.Template}
     * @private
     */
     template: 
@@ -288,6 +288,14 @@ basis.require('basis.ui');
     className: namespace + '.Tree',
 
    /**
+    * Template for node element. 
+    * @type {basis.template.Template}
+    * @private
+    */
+    template:
+      '<ul class="Basis-Tree {selected} {disabled}"/>',
+
+   /**
     * @inheritDoc
     */
     childClass: Node,
@@ -295,17 +303,7 @@ basis.require('basis.ui');
    /**
     * @inheritDoc
     */
-    groupingClass: GroupingNode,
-
-    //childFactory: treeChildFactory,
-
-   /**
-    * Template for node element. 
-    * @type {basis.Html.Template}
-    * @private
-    */
-    template:
-      '<ul class="Basis-Tree {selected} {disabled}"/>'
+    groupingClass: GroupingNode
   });
 
 
