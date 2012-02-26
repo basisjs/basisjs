@@ -410,9 +410,25 @@ basis.require('basis.dom.event');
     var CLASS_ATTR_PARTS = /(\S+)/g;
     var CLASS_ATTR_BINDING = /^([a-z\_][a-z0-9\-\_]*)?\{([a-z\_][a-z0-9\-\_]*)\}$/i;
     var ATTR_BINDING = /\{([a-z\_][a-z0-9\_]*)\}/i;
+    var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
+    var tokenMap = {};
+    var tokenElement = document.createElement('div');
 
     function name(token){
       return (token.prefix ? token.prefix + ':' : '') + token.name;
+    }
+
+    function namedCharReplace(m, token){
+      if (!tokenMap[token])
+      {
+        tokenElement.innerHTML = m;
+        tokenMap[token] = tokenElement.firstChild.nodeValue;
+      }
+      return tokenMap[token];
+    }
+
+    function untoken(value){
+      return value.replace(NAMED_CHARACTER_REF, namedCharReplace);
     }
 
     function refList(token){
@@ -497,11 +513,13 @@ basis.require('basis.dom.event');
                 else
                 {
                   if (parts[j])
-                    expression.push(parts[j]);
+                    expression.push(untoken(parts[j]));
                 }
 
               bindings = [names, expression];
             }
+            else
+              attr.value = untoken(attr.value);
           }
         }
 
@@ -544,7 +562,7 @@ basis.require('basis.dom.event');
               3,                       // TOKEN_TYPE = 0
               bindings,                // TOKEN_BINDINGS = 1
               refs,                    // TOKEN_REFS = 2
-              token.value              // TEXT_VALUE = 3
+              untoken(token.value)     // TEXT_VALUE = 3
             ];
 
             break;
@@ -554,7 +572,7 @@ basis.require('basis.dom.event');
               8,                       // TOKEN_TYPE = 0
               bindings,                // TOKEN_BINDINGS = 1
               refs,                    // TOKEN_REFS = 2
-              token.value              // COMMENT_VALUE = 3
+              untoken(token.value)     // COMMENT_VALUE = 3
             ];
 
             break;
