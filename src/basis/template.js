@@ -65,7 +65,7 @@ basis.require('basis.dom.event');
   var TEXT = /((?:.|[\r\n])*?)(\{|<(\/|!--(\s*\{)?)?|$)/g;
   var TAG_NAME = /([a-z\_][a-z0-9\-\_]*)(\:|\{|\s*(\/?>)?)/ig;
   var ATTRIBUTE_NAME_OR_END = /([a-z\_][a-z0-9\-\_]*)(\:|\{|=|\s*)|(\/?>)/ig;
-  var COMMENT = /.*?-->/ig;
+  var COMMENT = /(.|[\r\n])*?-->/ig;
   var CLOSE_TAG = /([a-z\_][a-z0-9\-\_]*(?:\:[a-z\_][a-z0-9\-\_]*)?)>/ig;
   var REFERENCE = /([a-z\_][a-z0-9\_]*)(\||\}\s*)/ig;
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
@@ -100,8 +100,10 @@ basis.require('basis.dom.event');
     var pos = 0;
     var m;
 
+    source = source.trim();
+
     try {
-      while (pos < source.length)
+      while (pos < source.length || state != TEXT)
       {
         state.lastIndex = pos;
         startPos = pos;
@@ -140,12 +142,19 @@ basis.require('basis.dom.event');
             textEndPos = startPos + m[1].length;
 
             if (textStateEndPos != textEndPos)
-              lastTag.childs.push({
-                type: TYPE_TEXT,
-                value: textStateEndPos == startPos
+            {
+              token = (
+                textStateEndPos == startPos
                   ? m[1]
                   : source.substring(textStateEndPos, textEndPos)
-              });
+              ).replace(/\s*(\r\n?|\n\r?)\s*/g, '');
+
+              if (token)
+                lastTag.childs.push({
+                  type: TYPE_TEXT,
+                  value: token
+                });
+            }
 
             textStateEndPos = textEndPos;
 
@@ -345,28 +354,11 @@ basis.require('basis.dom.event');
           textStateEndPos = pos;
       }
 
-      if (state != TEXT)    // must end on text parsing
-      {
-        //throw SYNTAX_ERROR;
-        if (parseTag)
-          lastTag = tagStack.pop();
-
-        if (token)
-          lastTag.childs.pop();
-
-        if (token = lastTag.childs.pop())
-        {
-          if (token.type == TYPE_TEXT && !token.refs)
-            textStateEndPos -= token.value.length;
-          else
-            lastTag.childs.push(token);
-        }
-
+      if (textStateEndPos != pos)
         lastTag.childs.push({
           type: TYPE_TEXT,
           value: source.substring(textStateEndPos, pos)
         });
-      }
 
       if (!result.length)   // there must be at least one token in result
         result.push({ type: TYPE_TEXT, value: '' });
@@ -634,15 +626,20 @@ basis.require('basis.dom.event');
       var explicitRef;
       var bindings;
 
-      for (var i = 0, token; token = tokens[i]; i++, explicitRef = false)
+      for (var i = 0, cp = 0, token; token = tokens[i]; i++, cp++, explicitRef = false)
       {
         if (!i)
           localPath = path + '.firstChild';
         else
+        {
           if (!tokens[i + 1])
             localPath = path + '.lastChild';
           else
-            localPath = path + '.childNodes[' + i + ']';
+          {
+            //if (tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT) cp++;
+            localPath = path + '.childNodes[' + cp + ']';
+          }
+        }
 
         if (refs = token[TOKEN_REFS])
         {
@@ -718,6 +715,10 @@ basis.require('basis.dom.event');
   * Build functions for creating instance of template.
   */
   var makeFunctions = (function(){
+
+    var WHITESPACE = /\s+/;
+    var W3C_DOM_NODE_SUPPORTED = typeof Node == 'function' && document instanceof Node;
+    var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
 
    /**
     * @func
@@ -797,43 +798,95 @@ basis.require('basis.dom.event');
    /**
     * @func
     */
-    function bind_node(domRef, oldNode, newValue){
-      var newNode = newValue instanceof Node ? newValue : domRef;
+    var bind_node = W3C_DOM_NODE_SUPPORTED
+      // W3C DOM way
+      ? function(domRef, oldNode, newValue){
+          var newNode = newValue instanceof Node ? newValue : domRef;
 
-      if (newNode !== oldNode)
-        oldNode.parentNode.replaceChild(newNode, oldNode);
+          if (newNode !== oldNode)
+            oldNode.parentNode.replaceChild(newNode, oldNode);
 
-      return newNode;
-    }
+          return newNode;
+        }
+      // Old browsers way (IE6-8 and other)
+      : function(domRef, oldNode, newValue){
+          var newNode = newValue && typeof newValue == 'object' ? newValue : domRef;
+
+          if (newNode !== oldNode)
+            try {
+              oldNode.parentNode.replaceChild(newNode, oldNode);
+            } catch(e) {
+              newNode = domRef;
+              if (oldNode !== newNode)
+                oldNode.parentNode.replaceChild(newNode, oldNode);
+            }
+
+          return newNode;
+        };
 
    /**
     * @func
     */
-    function bind_nodeValue(domRef, oldNode, newValue){
-      var newNode = newValue instanceof Node ? newValue : domRef;
+    var bind_nodeValue = W3C_DOM_NODE_SUPPORTED
+      // W3C DOM way
+      ? function(domRef, oldNode, newValue){
+          var newNode = newValue instanceof Node ? newValue : domRef;
 
-      if (newNode !== oldNode)
-        oldNode.parentNode.replaceChild(newNode, oldNode);
-      if (newNode === domRef)
-        newNode.nodeValue = newValue;
+          if (newNode !== oldNode)
+            oldNode.parentNode.replaceChild(newNode, oldNode);
 
-      return newNode;
-    }
+          if (newNode === domRef)
+            newNode.nodeValue = newValue;
+
+          return newNode;
+        }
+      : function(domRef, oldNode, newValue){
+          var newNode = bind_node(domRef, oldNode, newValue);
+
+          if (newNode === domRef)
+            newNode.nodeValue = newValue;
+
+          return newNode;
+        };
 
    /**
     * @func
     */
-    function bind_attrClass(domRef, oldClass, newValue, prefix){
-      var newClass = newValue ? prefix + newValue : "";
+    var bind_attrClass = CLASSLIST_SUPPORTED
+      // classList supported
+      ? function(domRef, oldClass, newValue, prefix){
+          var newClass = newValue ? prefix + newValue : "";
 
-      if (newClass != oldClass)
-      {
-        if (oldClass) domRef.classList.remove(oldClass);
-        if (newClass) domRef.classList.add(newClass);
-      }
+          if (newClass != oldClass)
+          {
+            if (oldClass)
+              domRef.classList.remove(oldClass);
 
-      return newClass;
-    }
+            if (newClass)
+              domRef.classList.add(newClass);
+          }
+
+          return newClass;
+        }
+      // old browsers are not support for classList
+      : function(domRef, oldClass, newValue, prefix){
+          var newClass = newValue ? prefix + newValue : "";
+
+          if (newClass != oldClass)
+          {
+            var classList = domRef.className.split(WHITESPACE);
+
+            if (oldClass)
+              classList.remove(oldClass);
+
+            if (newClass)
+              classList.push(newClass);
+
+            domRef.className = classList.join(' ');
+          }
+
+          return newClass;
+        };
 
    /**
     * @func
@@ -1078,6 +1131,9 @@ basis.require('basis.dom.event');
           break;
 
         case TYPE_TEXT:
+          //if (i && tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT)
+          //  result.appendChild(document.createComment(''));
+
           result.appendChild(document.createTextNode(token[TEXT_VALUE]));
           break;
       }
@@ -1105,27 +1161,54 @@ basis.require('basis.dom.event');
     this.instances_ = funcs.map;
   }
 
-  function sourceFromFile(){
+
+  //
+  // source from external file
+  //
+
+
+  function sourceFromFile(url){
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, false);
+    xhr.send('');
+    if (xhr.status == 200)
+      return xhr.responseText;
+    else
+      return '<!--template `' + url + '` load fault-->';
   }
 
-  //
-  // source by id
-  //
-
-  function sourceById(){
-    var host = document.getElementById(sourceId);
-    if (host && host.tagName == 'SCRIPT')
-    {
-      switch(host.type){
-        case 'basis/template':
-          break
-        default:
-          return ;
-      }
+  function resolveSourceByUrl(sourceUrl){
+    return function(){
+      return sourceFromFile(sourceUrl);
     }
   }
 
-  function resolveSourceById(source){
+
+  //
+  // source from script by id
+  //
+
+  function sourceById(sourceId){
+    var host = document.getElementById(sourceId);
+    if (host && host.tagName == 'SCRIPT')
+    {
+      var content = host.textContent || host.text;
+
+      switch (host.type)
+      {
+        case 'text/basis-template':
+        default:
+          return content;
+      }
+    }
+
+    ;;;if (typeof console != 'undefined') console.warn('Template script element with id `' + sourceId + '` not found');
+  }
+
+  function resolveSourceById(sourceId){
+    return function(){
+      return sourceById(sourceId);
+    }
   }
 
  /**

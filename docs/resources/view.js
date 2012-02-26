@@ -532,7 +532,7 @@
     className: namespace + '.TemplateTreeNode.Comment',
     template:
       '<div class="Doc-TemplateView-Node Doc-TemplateView-Comment {hasRefs}">' + 
-        '< !--<span>{nodeValue}</span>-->' + 
+        '&lt;!--<span>{nodeValue}</span>-->' + 
       '</div>'
   });
 

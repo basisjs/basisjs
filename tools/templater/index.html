@@ -14,7 +14,29 @@
 <body>
   <script type="text/javascript" src="../../basis-all.js"></script>
   <script type="text/javascript" src="../../locale/ru/form.js"></script>
+
+  <script type="text/basis-template" id="commentNode">
+    <li class="Basis-TreeNode Comment {selected} {disabled}" event-click="select" event-dblclick="edit">
+      <div class="Basis-TreeNode-Title">
+        &lt;!--
+        <span class="Basis-TreeNode-Caption">{title}</span>
+        --&gt;
+        <!--{refList}-->
+      </div>
+    </li>
+  </script>
+  <script type="text/basis-template" id="textNode">
+    <li class="Basis-TreeNode Text {selected} {disabled} {hasRefs}" event-click="select" event-dblclick="edit">
+      <div class="Basis-TreeNode-Title">
+        <span class="Basis-TreeNode-Caption">{value}</span>
+      </div>
+    </li>
+  </script>
+
   <script type="text/javascript" src="script.js"></script>
+  <script type="text/basis-template" id="test">
+    test <a href="asd">sdf</a> &lt;
+  </script>
 </body>
 
 </html>

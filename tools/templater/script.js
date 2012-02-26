@@ -14,6 +14,7 @@ basis.require('basis.layout');
   var DOM = basis.dom;
   var isInside = basis.dom.isInside;
   var Event = basis.dom.event;
+  var classList = basis.cssom.classList;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -187,7 +188,10 @@ basis.require('basis.layout');
     },
 
     binding: {
-      refList: 'satellite:'
+      refList: 'satellite:',
+      hasRefs: function(node){
+        return node.data[TOKEN_REFS] ? 'hasRefs' : '';
+      }
     },
 
     satelliteConfig: {
@@ -201,10 +205,10 @@ basis.require('basis.layout');
 
           childClass: {
             template:
-              '<span class="Reference {selected} {disabled}">{titleText}</span>',
+              '<span class="Reference {selected} {disabled}">{title}</span>',
 
             binding: {
-              titleText: 'title'
+              title: 'title'
             }
           }
         }),
@@ -217,20 +221,22 @@ basis.require('basis.layout');
     }
   });
 
-  var TagNode = TemplateNode.subclass({
-    template:
-      '<li class="Basis-TreeNode Tag {selected} {disabled}" event-click="select" event-dblclick="edit">' +
+  TagNode = TemplateNode.subclass({
+    template: 'file:tagNode.tmpl',
+      /*'<li class="Basis-TreeNode Tag {selected} {disabled}" event-click="select" event-dblclick="edit">' +
         '<div class="Basis-TreeNode-Title">' +
-          '<span class="Basis-TreeNode-Caption">{titleText}</span>' +
+          '&lt;' +
+          '<span class="Basis-TreeNode-Caption">{title}</span>' +
           '<!--{refList}-->' +
           '<!--{attributeList}-->' +
+          '&gt;' +
         '</div>' +
         '<ul{childNodesElement} class="Basis-TreeNode-Content" />' + 
-      '</li>',
+      '</li>',*/
 
     binding: {
       attributeList: 'satellite:',
-      titleText: function(object){
+      title: function(object){
         return object.data[ELEMENT_NAME];
       }
     },
@@ -246,28 +252,25 @@ basis.require('basis.layout');
 
           childClass: {
             template:
-              '<span class="Attribute {event} {selected} {disabled}">' +
-                '<span class="AttributeTitle">{titleText}</span>' +
-                '{openQuote}' +
-                '<span class="AttributeValue">{valueText}</span>' +
-                '{closeQuote}' +
+              '<span> ' +
+                '<span class="Attribute {selected} {disabled} {hasValue} {isEvent}">' +
+                  '<span class="AttributeTitle">{name}</span>' +
+                  '<span class="AttributeValue">="{value}"</span>' +
+                '</span>' +
               '</span>',
 
             binding: {
-              titleText: function(object){
+              name: function(object){
                 return object[ATTR_NAME];
               },
-              valueText: function(object){
+              value: function(object){
                 return object[ATTR_VALUE];
               },
-              openQuote: function(object){
-                return object[ATTR_VALUE] ? '="' : '';
+              hasValue: function(object){
+                return object[ATTR_VALUE] ? 'hasValue' : '';
               },
-              closeQuote: function(object){
-                return object[ATTR_VALUE] ? '"' : '';
-              },
-              event: function(object){
-                return /^event-(.+)+/.test(object[ATTR_NAME]) ? 'event' : '';
+              isEvent: function(object){
+                return /^event-(.+)+/.test(object[ATTR_NAME]) ? 'isEvent' : '';
               }
             }
           }
@@ -281,33 +284,34 @@ basis.require('basis.layout');
     }
   });
 
-  var TextNode = TemplateNode.subclass({
-    template:
-      '<li class="Basis-TreeNode Text {selected} {disabled}" event-click="select" event-dblclick="edit">' +
+  TextNode = TemplateNode.subclass({
+    template: 'id:textNode',
+      /*'<li class="Basis-TreeNode Text {selected} {disabled} {hasRefs}" event-click="select" event-dblclick="edit">' +
         '<div class="Basis-TreeNode-Title">' +
-          '<span class="Basis-TreeNode-Caption">{titleText}</span>' +
-          '<!--{refList}-->' +
+          '<span class="Basis-TreeNode-Caption">{value}</span>' +
         '</div>' +
-      '</li>',
+      '</li>',*/
 
     binding: {
-      titleText: function(object){
-        return object.data[TEXT_VALUE];
+      value: function(object){
+        return object.data[TEXT_VALUE].replace(/\r\n?|\n\r?/g, '\u21b5');
       }
     }
   });
 
   var CommentNode = TemplateNode.subclass({
-    template:
-      '<li class="Basis-TreeNode Comment {selected} {disabled}" event-click="select" event-dblclick="edit">' +
+    template: 'id:commentNode',
+      /*'<li class="Basis-TreeNode Comment {selected} {disabled}" event-click="select" event-dblclick="edit">' +
         '<div class="Basis-TreeNode-Title">' +
-          '< !--' + '<span class="Basis-TreeNode-Caption">{titleText}</span>' + '-- >' +
+          '&lt;!--' +
+          '<span class="Basis-TreeNode-Caption">{title}</span>' +
+          '--&gt;' +
           '<!--{refList}-->' +
         '</div>' +
-      '</li>',
+      '</li>',*/
 
     binding: {
-      titleText: function(object){
+      title: function(object){
         return object.data[COMMENT_VALUE];
       }
     }
@@ -330,9 +334,15 @@ basis.require('basis.layout');
 
   var tree = new basis.ui.tree.Tree({
     template:
-      '<ul tabindex="1" class="Basis-Tree" event-keydown="keydown" />',
+      '<ul tabindex="0" class="Basis-Tree" event-keydown="keydown" event-focus="focus" event-blur="blur" />',
 
     action: {
+      focus: function(){
+        classList(this.element.parentNode.parentNode).add('focus');
+      },
+      blur: function(){
+        classList(this.element.parentNode.parentNode).remove('focus');
+      },
       keydown: function(event){
         var key = Event.key(event);
         var selected = this.selection.pick();
@@ -418,15 +428,15 @@ basis.require('basis.layout');
       type: 'textarea',
       name: 'Source',
       value: 
-        '<li class="Basis-TreeNode {collapsed}">' +
-          '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected} {disabled}">' +
-            '<div class="Basis-TreeNode-Expander" event-click="toggle"/>' +
-            '<span{titleElement} class="Basis-TreeNode-Caption" event-click="select">' +
-              '{title} ({childCount})' +
-            '</span>' +
-          '</div>' + 
-          '<ul{childNodesElement} class="Basis-TreeNode-Content"/>' + 
-        '</li>',
+        '<li class="Basis-TreeNode {collapsed}">\n\
+          <div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected} {disabled}">\n\
+            <div class="Basis-TreeNode-Expander" event-click="toggle"/>\n\
+            <span{titleElement} class="Basis-TreeNode-Caption" event-click="select">\n\
+              <!--{preTitle} sdf-->{title} ({childCount})<!--just a comment-->\n\
+            </span>\n\
+          </div>\n\
+          <ul{childNodesElement} class="Basis-TreeNode-Content"/>\n\
+        </li>',
 /*
       '<div class="Basis-Table Basis-ScrollTable" event-load="">' +
               '<namespace:div class="Basis-ScrollTable-Header-Container">' +
@@ -469,7 +479,13 @@ basis.require('basis.layout');
       cssClassName: 'Field-Source',
       handler: {
         input: sourceChangedHandler,
-        change: sourceChangedHandler
+        change: sourceChangedHandler,
+        focus: function(){
+          classList(document.getElementById('Editor')).add('focus');
+        },
+        blur: function(){
+          classList(document.getElementById('Editor')).remove('focus');
+        }
       }
     }
   });

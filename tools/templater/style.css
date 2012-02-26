@@ -25,8 +25,8 @@
   }
   #Layout .Basis-VerticalPanelStack
   {
-    border-width: 3px;
-    border-style: solid;
+    border: 3px solid #DDD;
+    background: #F8F8F8;
       -webkit-border-radius: 4px;
       -moz-border-radius: 4px;
     border-radius: 4px;
@@ -44,9 +44,12 @@
     float: left;
     margin-right: 5px;
     width: 50%;
-    border-color: #DDD;
     min-width: 300px;
     max-width: 75%;
+  }
+  #Editor.focus
+  {
+    border-color: #ACF;
   }
   #Editor .Basis-VerticalPanel
   {
@@ -110,8 +113,12 @@
   #Viewer
   {
     overflow: hidden;
-    border-color: #ACF;
     font-family: Consolas;
+  }
+  #Viewer.focus
+  {
+    border-color: #ACF;
+    background: white;
   }
 
   #Viewer .Basis-Tree,
@@ -130,13 +137,12 @@
     bottom: 0;
     left: 0;
     outline: none;
-    margin-left: -.5em;
   }
 
   #Viewer .Basis-TreeNode
   {
     position: relative;
-    margin: 0 0 0 1em;
+    margin: 0;
     padding: 0;
   }
 
@@ -147,11 +153,15 @@
     padding: 2px;
     border-radius: 2px;
   }
+  #Viewer .Basis-TreeNode.Text.hasRefs .Basis-TreeNode-Caption
+  {
+    background: #CDEB8B;
+  }
 
   #Viewer .Basis-TreeNode-Title
   {
-    padding: .2em .5em;
-    font-size: 85%;
+    padding: .1em .5em;
+    font-size: 90%;
     line-height: 1.6;
     cursor: pointer;
   }
@@ -169,10 +179,10 @@
     box-shadow: 0 -1px 3px #AAA;
   }
 
-  #Viewer .Basis-TreeNode-Title,
-  #Viewer .Basis-TreeNode-Content
+  #Viewer .Basis-TreeNode-Content .Basis-TreeNode-Title,
+  #Viewer .Basis-TreeNode-Content .Basis-TreeNode-Content
   {
-    margin-left: -401px;
+    margin-left: -375px;
     padding-left: 400px;
   }
 
@@ -186,7 +196,7 @@
 
   #Viewer .Basis-TreeNode.Comment > .Basis-TreeNode-Title
   {
-    color: #777;
+    color: #444;
   }
 
   #Viewer .Basis-TreeNode-Prefix,
@@ -197,9 +207,7 @@
 
 
   #Viewer .ReferenceList,
-  #Viewer .AttributeList,
-  #Viewer .Reference,
-  #Viewer .Attribute
+  #Viewer .AttributeList
   {
     display: inline-block;
   }
@@ -215,53 +223,47 @@
   #Viewer .Reference
   {
     border-left: 1px solid #050;
-    padding: 0 .5em;
+    padding: 2px .35em;
     background-color: #CDEB8B;
   }
   #Viewer .Reference:first-child
   {
     border-left: none;
-      -webkit-border-radius: 3px 0 0 3px;
-      -moz-border-radius: 3px 0 0 3px;
-    border-radius: 3px 0 0 3px;
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
   }
   #Viewer .Reference:last-child
   {
-      -webkit-border-radius: 0 3px 3px 0;
-      -moz-border-radius: 0 3px 3px 0;
-    border-radius: 0 3px 3px 0;
-  }
-  #Viewer .Reference:first-child:last-child
-  {
-      -webkit-border-radius: 3px;
-      -moz-border-radius: 3px;
-    border-radius: 3px;
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
   }
 
   #Viewer .AttributeList
   {
-    margin-left: .5em;
     color: #333;
+    margin-left: .5em;
   }
   #Viewer .Attribute
   {
-    margin-left: 0.25em;
-    padding: 0 .5em;
+    padding: 2px .25em;
+    white-space: nowrap;
   }
-  #Viewer .Attribute:first-child
+  #Viewer .AttributeValue
   {
-    margin-left: 0;
+    display: none;
   }
-  #Viewer .Attribute.event
+  #Viewer .Attribute.hasValue .AttributeValue
   {
-      -webkit-border-radius: 3px;
-      -moz-border-radius: 3px;
-    border-radius: 3px;
+    display: inline;
+  }
+  #Viewer .Attribute.isEvent
+  {
+    border-radius: 2px;
     background-color: #FE8;
     color: #530;
-    text-shadow: 0 1px #FFF;
+    text-shadow: 0 1px rgba(255, 255, 255, .75);
   }
-  #Viewer .Attribute.event:hover
+  #Viewer .Attribute.isEvent:hover
   {
     background-color: #FFE000;
     color: #000;

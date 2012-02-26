@@ -56,7 +56,7 @@ basis.require('basis.ui');
   //
 
   function percent(value){
-    return (100 * value).toFixed(4) + '%';
+    return (100 * value || 0).toFixed(4) + '%';
   }
 
   function updateSelection(paginator){
