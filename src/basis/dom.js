@@ -74,15 +74,15 @@ basis.require('basis.ua');
   // axis
   /** @const */ var AXIS_ANCESTOR = 1;
   /** @const */ var AXIS_ANCESTOR_OR_SELF = 2;
-  /** @const */ var AXIS_DESCENDANT = 4;
-  /** @const */ var AXIS_DESCENDANT_OR_SELF = 8;
-  /** @const */ var AXIS_SELF = 16;
-  /** @const */ var AXIS_PARENT = 32;
-  /** @const */ var AXIS_CHILD = 64;
-  /** @const */ var AXIS_FOLLOWING = 128;
-  /** @const */ var AXIS_FOLLOWING_SIBLING = 256;
-  /** @const */ var AXIS_PRESCENDING = 512;
-  /** @const */ var AXIS_PRESCENDING_SIBLING = 1024;
+  /** @const */ var AXIS_DESCENDANT = 3;
+  /** @const */ var AXIS_DESCENDANT_OR_SELF = 4;
+  /** @const */ var AXIS_SELF = 5;
+  /** @const */ var AXIS_PARENT = 6;
+  /** @const */ var AXIS_CHILD = 7;
+  /** @const */ var AXIS_FOLLOWING = 8;
+  /** @const */ var AXIS_FOLLOWING_SIBLING = 9;
+  /** @const */ var AXIS_PRESCENDING = 10;
+  /** @const */ var AXIS_PRESCENDING_SIBLING = 11;
 
   // nodes compare support
   /** @const */ var POSITION_DISCONNECTED = 1;

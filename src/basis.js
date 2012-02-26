@@ -310,7 +310,7 @@
         if (getterId)
         {
           // this function used for getter before
-          func = getterMap[getterId - 1];
+          func = getterMap[Math.abs(getterId) - 1];
         }
         else
         {
@@ -323,7 +323,7 @@
 
           // add to cache
           getterId = getterMap.push(func);
-          path.basisGetterId_ = getterId;
+          path.basisGetterId_ = -getterId;
           func.basisGetterId_ = getterId;
         }
       }
@@ -405,7 +405,7 @@
         break;
       }
 
-      result.base = func.base;
+      result.base = func.base || func;
       result.__extend__ = getter;
 
       if (modId)

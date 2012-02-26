@@ -26,7 +26,7 @@
   #Content .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs
   {
     border: 2px solid #CEE1EB;
-    margin: 1.4em 4px .2em -4px;
+    margin: 1.4em 2px .2em -4px;
     padding-left: 2px;
     padding-bottom: 1px;
     position: relative;
@@ -64,20 +64,20 @@
     margin-top: -7px;
     margin-left: -4px;
     padding: 3px 1ex 2px;
-    font-size: 85%;
+    font-size: 90%;
       -moz-border-radius: 4px 4px 0 0;
     border-radius: 4px 4px 0 0;
     background: #CEE1EB;
   }
   #Content .viewTemplate .Doc-TemplateView-Element .Doc-TemplateView-Attribute
   {
-    margin-left: 1ex;
+    /*margin-left: 1ex;*/
     position: relative;
     white-space: nowrap;
   }
   #Content .viewTemplate .show-references .Doc-TemplateView-Element .Doc-TemplateView-Attribute.hasRefs
   {
-    border: 2px solid #CDEB8B; /*!!*/
+    border: 2px solid #CDEB8B;
     display: inline-block;
     margin-top: 1.4em;
       -moz-border-radius: 0 4px 4px 4px;
@@ -97,7 +97,7 @@
     font-size: 85%;
       -moz-border-radius: 4px 4px 0 0;
     border-radius: 4px 4px 0 0;
-    background: #CDEB8B; /*!!*/
+    background: #CDEB8B;
   }
   #Content .viewTemplate .show-realReferences .Doc-TemplateView-Element .Doc-TemplateView-Attribute SPAN .refList,
   #Content .viewTemplate .show-references .Doc-TemplateView-Element .Doc-TemplateView-Attribute SPAN .refList
@@ -110,7 +110,7 @@
   }
   #Content .viewTemplate .Doc-TemplateView-Attribute .refList
   {
-    background: #CDEB8B !important; /*!!*/
+    background: #CDEB8B !important;
   }
   #Content .viewTemplate .ref
   {
@@ -121,49 +121,50 @@
   #Content .viewTemplate .Doc-TemplateView-Text
   {
     display: inline;
-    padding: 1px 0px 2px 0px;
+    padding: 1px 2px 2px 2px;
     font-size: 90%;
       -moz-border-radius: 3px;
       -webkit-border-radius: 3px;
     border-radius: 3px;
+    margin-right: 2px;
   }
   #Content .viewTemplate .Doc-TemplateView-Text.hasRefs
   {
     background: #CDEB8B;
     color: #006600;
-    margin: 0 2px 0 1px;
-    padding-left: 4px;
-    padding-right: 4px;
+    m1argin: 0 2px 0 1px;
   }
 
   #Content .viewTemplate .Doc-TemplateView-Comment
   {
     display: inline;
-    padding: 1px 0px 2px 0px;
-    font-size: 85%;
+    padding: 1px 2px 2px 2px;
+    font-size: 90%;
       -moz-border-radius: 3px;
       -webkit-border-radius: 3px;
     border-radius: 3px;
+    margin-right: 2px;
   }
   #Content .viewTemplate .Doc-TemplateView-Comment.hasRefs
   {
     background: #FFF0B0;
     color: #996600;
-    margin-left: -4px;
-    padding-left: 4px;
-    padding-right: 4px;
   }
   #Content .viewTemplate .Doc-TemplateView-Comment.hasRefs .ref
   {
     display: none;
   }
 
-  .bindingList,
-  .actionsList
+  .bindingList
   {
     float: left;
-    margin-left: 1em;
+    margin-right: 1em;
     min-width: 25em;
+    width: 50%;
+  }
+  .actionsList
+  {
+    overflow: hidden;
   }
   .bindingList .binding,
   .actionsList .action
@@ -204,16 +205,42 @@
     background-image: url(img/minus.gif);
     background-image: url(data:image/gif;base64,R0lGODlhCQAJAMQXAM/PzvHy8vr6+uDf3/n6+vn5+uDg387Oz9fW18/OzvLx8tfW1s7Ozvr6+c7Pzunp6fn6+fLy8tbW1jAwMN/f3////01NTf///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAJAAkAAAUv4GWNpCVWaFqNDVQIUEOMShDdSjQ+U98/owHFQClSRhLJArFIjhgOwCEBNZVIlxAAOw==);
   }
+  .bindingList .Basis-SyntaxHighlight,
+  .actionsList .Basis-SyntaxHighlight
+  {
+    background: white;
+    margin: 2px -3px -1px;
+    color: black;
+  }
+  .bindingList .Basis-SyntaxHighlight .lineContent,
+  .actionsList .Basis-SyntaxHighlight .lineContent
+  {
+    border: none;
+  }
 
   .templatePanel
   {
     overflow: hidden;
     clear: both;
-    padding-left: 1em;
+    margin-top: 1.5em;
+  }
+  .show-references .templatePanel
+  {
+    margin-top: 0;
   }
   .templateHtml
   {
-    float: left;
+    font-family: Consolas;
+    color: #333;
+    margin: 0 auto 1em;
+    border-radius: 3px;
+    background: #F8F8F8;
+    padding: 5px;
+  }
+  .show-references .templateHtml
+  {
+    background: white;
+    margin-right: -6px;
   }
 
   .Doc-TemplateView-Attribute-Binding,

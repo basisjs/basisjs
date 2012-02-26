@@ -68,14 +68,14 @@
     display: none;
   }
 
-  .Basis-TreeNode.disabled .Basis-TreeNode-Caption
+  .disabled .Basis-TreeNode-Caption
   {
     color: #B0B0B0;
     background-color: white;
     cursor: default;
   }
   .Basis-TreeNode-Title:hover .Basis-TreeNode-Caption,
-  .Basis-TreeNode.disabled .Basis-TreeNode-Caption:hover
+  .disabled .Basis-TreeNode-Caption:hover
   {
     background-color: #EEEEEE;
   }

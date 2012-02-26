@@ -71,13 +71,18 @@
 
   .Basis-SyntaxHighlight .lineContent
   {
-    margin-left: 7ex;
-    padding-left: 2.5ex;
+    padding-left: 1ex;
+    padding-right: 1ex;
     border-left: 2px solid #33BB66;
     display: block;
     white-space: pre-wrap;      /* сохраняем форматирование, но оставляем возможность переносить по словам */
   }
 
+  .Basis-SyntaxHighlight .hasLineNumber .lineContent
+  {
+    margin-left: 7ex;
+    padding-left: 2.5ex;
+  }
 
   .Basis-SyntaxHighlight .token-string
   {

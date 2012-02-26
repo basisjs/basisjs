@@ -296,6 +296,12 @@
 
   function walk(ctx){
     var scope = ctx.scope;
+
+    if (scope.basisDocsVisited_)
+      return;
+
+    scope.basisDocsVisited_ = true;
+
     var path = ctx.path || '';
     var context = ctx.context;
     var deep = 1 + (ctx.deep || 0);
@@ -486,6 +492,8 @@
         break;
       }
     }
+
+    delete scope.basisDocsVisited_;
   }
 
   var buildin = {
@@ -506,8 +514,8 @@
 
   Object.iterate(buildin, function(name, value){
     value.className = name;
-    walk(value, name, 'class');
-    walk(value.prototype, name + '.prototype', 'prototype');
+    walk({ scope: value, path: name, context: 'class' });
+    walk({ scope: value.prototype, path: name + '.prototype', context: 'prototype' });
   });
 
   basis.namespaces_['basis'] = basis;

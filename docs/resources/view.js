@@ -65,6 +65,45 @@
     return result;
   }
 
+  function resolveFunction(fn){
+    function resolveGetter(getter){
+      if (getter.basisGetterId_ > 0)
+      {
+        var result = 'getter(';
+
+        if (typeof getter.base == 'string')
+          result += '"' + getter.base.replace(/"/g, '\\"') + '"';
+        else
+        {
+          if (!getter.mod)
+            return resolveGetter(getter.base);
+          else
+            result += resolveGetter(getter.base);
+        }
+
+        if (getter.mod)
+        {
+          if (typeof getter.mod == 'string')
+            result += ', "' + getter.mod.replace(/"/g, '\\"') + '"';
+          else
+            result += ', ' + resolveGetter(getter.mod);
+        }
+
+        return result + ')';
+      }
+      else
+        return getter.toString();
+    }
+
+    var result = { asIs: fn.toString() };
+    var getter = resolveGetter(fn);
+
+    if (result.asIs != getter)
+      result.getter = getter;
+
+    return result;
+  };
+
   function htmlHeader(title){
     return '<h3 class="Content-Header" event-click="scrollTo">' +
              '<span>' + title + '</span>' +
@@ -362,19 +401,20 @@
       nodeName: 'data:',
       nodeValue: 'data:',
       hasRefs: function(node){
-        return node.data.ref ? 'hasRefs' : '';
+        return node.data.refs ? 'hasRefs' : '';
       }
     },
 
     satelliteConfig: {
       refList: {
-        existsIf: getter('data.ref'),
+        existsIf: getter('data.refs'),
+        delegate: Function.$self,
         instanceOf: uiNode.subclass({
           template: 
-            '<span class="refList"><b>{</b>{ref}<b>}</b></span>',
+            '<span class="refList"><b>{</b>{refs}<b>}</b></span>',
 
           binding: {
-            ref: 'owner.data.ref'
+            refs: 'data:'
           }
         })
       }
@@ -386,7 +426,7 @@
       '<span class="Doc-TemplateView-Attribute-Text">{text}</span>',
 
     binding: {
-      text: 'data:text'
+      text: 'data:'
     }
   });
 
@@ -395,7 +435,7 @@
       '<span class="Doc-TemplateView-Attribute-Binding">{text}</span>',
 
     binding: {
-      text: 'data:text'
+      text: 'data:'
     }
   });
 
@@ -404,7 +444,7 @@
       '<span class="Doc-TemplateView-Attribute-ClassBinding">{text}</span>',
 
     binding: {
-      text: 'data:text'
+      text: 'data:'
     }
   });
 
@@ -414,9 +454,12 @@
   TemplateTreeNode.Attribute = Class(TemplateTreeNode, {
     className: namespace + '.TemplateTreeNode.Attribute',
     template:
-      '<span class="Doc-TemplateView-Node Doc-TemplateView-Attribute Doc-TemplateView-Attribute__{isEvent} {hasRefs}">' +
-        '<span>{nodeName}<!--{refList}-->="<!--{childNodesHere}-->"</span>' + 
+      '<span> ' +
+        '<span class="Doc-TemplateView-Node Doc-TemplateView-Attribute Doc-TemplateView-Attribute__{isEvent} {hasRefs}">' +
+          '<span>{nodeName}<!--{refList}-->="<!--{childNodesHere}-->"</span>' + 
+        '</span>' +
       '</span>',
+
 
     binding: {
       isEvent: {
@@ -510,11 +553,7 @@
               getter: value.getter,
               events: value.events,
               used: matchBinding && matchBinding.names.indexOf(key) != -1
-            },
-            name: key,
-            getter: value.getter,
-            events: value.events,
-            used: matchBinding && matchBinding.names.indexOf(key) != -1
+            }
           } : null
         }).filter(Boolean);
       }
@@ -543,10 +582,10 @@
         '</div>',
 
       binding: {
-        name: 'name',
-        events: 'events || ""',
+        name: 'data:name',
+        events: 'data:events || ""',
         used: function(node){
-          return node.used ? 'used' : '';
+          return node.data.used ? 'used' : '';
         },
         expanded: {
           events: 'toggle',
@@ -571,7 +610,11 @@
           instanceOf: nsHighlight.SourceCodeNode.subclass({
             autoDelegate: DELEGATE.OWNER,
             lang: 'js',
-            codeGetter: getter('data.getter || ""', String)
+            lineNumber: false,
+            codeGetter: function(node){
+              var code = resolveFunction(node.data.getter);
+              return code.getter || code.asIs;
+            }
           })
         }
       }
@@ -658,7 +701,11 @@
           instanceOf: nsHighlight.SourceCodeNode.subclass({
             autoDelegate: DELEGATE.OWNER,
             lang: 'js',
-            codeGetter: getter('data.action || ""', String)
+            lineNumber: false,
+            codeGetter: function(node){
+              var code = resolveFunction(node.data.action);
+              return code.getter || code.asIs;
+            }
           })
         }
       }
@@ -694,7 +741,7 @@
       var refs = token[TOKEN_REFS];
 
       if (refs && refs.length)
-        return refs.join(' | ');
+        return refs.join('|');
 
       return null;
     }
@@ -764,7 +811,7 @@
             attrNodes.push(new TemplateTreeNode.Attribute({
               data: {
                 nodeName: attr[ATTR_NAME],
-                ref: refList(attr),
+                refs: refList(attr),
                 isEvent: /^event-/.test(attr[ATTR_NAME])
               },
               childNodes: attrParts
@@ -776,7 +823,7 @@
             data: {
               nodeName: token[ELEMENT_NAME],
               nodeType: TYPE_ELEMENT,
-              ref: refList(token),
+              refs: refList(token),
               attrs: attrNodes.length ? attrNodes : null
             }
           };
@@ -795,7 +842,7 @@
             data: {
               nodeType: TYPE_TEXT,
               nodeValue: token[TEXT_VALUE] || '?',
-              ref: refList(token)
+              refs: refList(token)
             }
           };
 
@@ -807,7 +854,7 @@
             data: {
               nodeType: TYPE_COMMENT,
               nodeValue: token[COMMENT_VALUE],
-              ref: refList(token)
+              refs: refList(token)
             }
           };
 
@@ -841,16 +888,6 @@
     event_templateViewChanged: createEvent('templateViewChanged'),
 
     templateUpdate: function(tmpl, object, oldDelegate){
-      function findRefs(refMap, node){
-        var result = [];
-
-        for (var key in map)
-          if (refMap[key] === node)
-            result.push(key);
-
-        return result.length ? result.join(' | ') : null;
-      }
-
       var rootCfg = {};
 
       var template = this.data.obj.prototype.template;
@@ -938,13 +975,13 @@
             childNodes: [
               {
                 title: 'Schematic',
-                selected: true,
                 handler: function(){
                   contentClassList.set('references');
                 }
               },
               {
                 title: 'Highlight',
+                selected: true,
                 handler: function(){
                   contentClassList.set('realReferences');
                 }

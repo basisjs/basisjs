@@ -1,4 +1,4 @@
-/**
+/*!
  * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
@@ -155,20 +155,30 @@ basis.require('basis.html');
   */
   var TEMPLATE_BINDING = Class.customExtendProperty({
     selected: {
-      getter: function(node){
-        return node.selected ? 'selected' : '';
-      },
-      events: 'select unselect'
+      events: 'select unselect',
+      getter: 'selected && "selected"'
     },
     disabled: {
+      events: 'disable enable',
       getter: function(node){
         return node.disabled ? 'disabled' : '';
-      },
-      events: 'disable enable'
+      }
     },
     state: {
-      getter: 'state',
-      events: 'stateChanged'
+      events: 'stateChanged',
+      getter: 'state'
+    },
+    childCount: {
+      events: 'childNodesModified',
+      getter: function(node){
+        return node.childNodes ? node.childNodes.length : 0;
+      }
+    },
+    hasChilds: {
+      events: 'childNodesModified',
+      getter: function(node){
+        return node.childNodes && node.childNodes.length ? 'hasChilds' : '';
+      }
     }
   }, extendBinding);
 
@@ -364,7 +374,7 @@ basis.require('basis.html');
             binding.sync.call(this);
           }
 
-          if (oldElement && this.element)
+          if (oldElement && this.element && oldElement !== this.element)
           {
             var parentNode = oldElement && oldElement.parentNode;
             if (parentNode)
@@ -399,6 +409,8 @@ basis.require('basis.html');
             var oldBinding = oldTemplate.getBinding(this.binding, this);
             if (oldBinding && oldBinding.handler)
               this.removeHandler(oldBinding.handler);
+
+            this.templateBinding_ = null;
           }
 
           this.template = template;
@@ -564,7 +576,7 @@ basis.require('basis.html');
     //titleGetter: getter('data.title'),
 
     binding: {
-      title: ['data.title', 'update']
+      title: 'data:'
     }
 
     /*template: new Template(

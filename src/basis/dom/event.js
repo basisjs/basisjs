@@ -371,10 +371,10 @@ basis.require('basis.dom');
     node = getNode(node);
 
     if (!node)
-      throw new Error('Event.addHandler: can\'t attach event listener to undefined');
+      throw 'basis.event.addHandler: can\'t attach event listener to undefined';
 
     if (typeof handler != 'function')
-      throw new Error('Event.addHandler: handler must be a function');
+      throw 'basis.event.addHandler: handler is not a function';
 
     if (!node[EVENT_HOLDER])
       node[EVENT_HOLDER] = {};

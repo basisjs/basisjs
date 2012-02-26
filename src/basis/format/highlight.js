@@ -342,14 +342,14 @@ basis.require('basis.ui');
  /**
   * @func
   */
-  function highlight(text, lang, keepFormat){
+  function highlight(text, lang, options){
 
     function normalize(text, offset){
       text = text
                .trimRight()
                .replace(/\r\n|\n\r|\r/g, '\n')
 
-      if (!keepFormat)
+      if (!options.keepFormat)
         text = text.replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
 
       // fix empty strings
@@ -357,7 +357,7 @@ basis.require('basis.ui');
                .replace(/\n[ \t]+/g, function(m){ return m.replace(/\t/g, '  '); })
                .replace(/\n[ \t]+\n/g, '\n\n');
 
-      if (!keepFormat)
+      if (!options.keepFormat)
       {
         // normalize text offset
         var minOffset = 1000;
@@ -383,27 +383,32 @@ basis.require('basis.ui');
 
     //  MAIN PART
 
+    if (!options)
+      options = {};
+
     var parser = LANG_PARSER[lang] || LANG_PARSER['text'];
     var html = parser(normalize(text || '').replace(/</g, '&lt;'));
 
-    //console.log('getmatches ' + (new Date - t));
-
     var lines = html.join('').split('\n');
-    var numberWidth = String(lines.length >> 1).length;
+    var numberWidth = String(lines.length).length;
     var res = [];
+    var lineClass = (options.noLineNumber ? '' : ' hasLineNumber');
     for (var i = 0; i < lines.length; i++)
     {
       res.push(
-        '<div class="line ' + (i % 2 ? 'odd' : 'even') + '">' +
+        '<div class="line ' + (i % 2 ? 'odd' : 'even') + lineClass + '">' +
           '<span class="lineContent">' + 
-            '<input class="lineNumber" value="' + (i + 1).lead(numberWidth) + '" type="none" unselectable="on" readonly="readonly" tabindex="-1" />' +
-            '<span class="over"></span>' +
+            (!options.noLineNumber
+              ? '<input class="lineNumber" value="' + (i + 1).lead(numberWidth) + '" type="none" unselectable="on" readonly="readonly" tabindex="-1" />' +
+                '<span class="over"></span>'
+              : ''
+            ) +
             (lines[i] + '\r\n') + 
           '</span>' +
         '</div>'
       )
     }
-    //console.log('build html ' + (new Date - t));
+
     return res.join('');
   }
 
@@ -418,6 +423,7 @@ basis.require('basis.ui');
 
     codeGetter: Function.getter('data.code'),
     normalize: true,
+    lineNumber: true,
     lang: 'text',
 
     templateUpdate: function(tmpl, event, delta){
@@ -425,7 +431,10 @@ basis.require('basis.ui');
       if (code != this.code_)
       {
         this.code_ = code;
-        this.tmpl.code.innerHTML = highlight(code, this.lang, !this.normalize);
+        this.tmpl.code.innerHTML = highlight(code, this.lang, {
+          keepFormat: !this.normalize,
+          noLineNumber: !this.lineNumber
+        });
       }
     }
   });

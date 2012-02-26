@@ -338,14 +338,14 @@
         '<li class="Basis-TreeNode">' +
           '<div{content} class="Basis-TreeNode-Title {selected} {disabled}">' +
             '<span class="Basis-TreeNode-Caption" event-click="select">' +
-              '<span class="namespace">{namespaceText}</span>' +
-              '<span{label} class="label">{title}{args}</span>' +
+              '<span class="namespace">{namespace}</span>' +
+              '<span class="label">{title}<!--{args}--></span>' +
             '</span>' +
           '</div>' +
         '</li>',
 
       binding: {
-        args: function(){
+        args: function(node){
           if (/^(function|method|class)$/.test(node.data.kind))
             return DOM.createElement('SPAN.args', nsCore.getFunctionDescription(node.data.obj).args.quote('('));
         },
@@ -363,11 +363,9 @@
       init: function(config){
         nsTree.Node.prototype.init.call(this, config);
 
-        classList(this.tmpl.content).add(this.data.kind.capitalize() + '-Content');
         this.nodeType = nsNav.kindNodeType[this.data.kind];
-      }/*,
-      event_match: function(){},
-      event_unmatch: function(){}*/
+        classList(this.tmpl.content).add(this.data.kind.capitalize() + '-Content');
+      }
     })
   });
 
@@ -386,6 +384,7 @@
 
   var SearchMatchInput = Class(nsForm.MatchInput, {
     matchFilterClass: Class(nsForm.MatchFilter, {
+      textNodeGetter: getter('tmpl.title'),
       event_change: function(value, oldValue){
         nsForm.MatchProperty.prototype.event_change.call(this, value, oldValue);
 

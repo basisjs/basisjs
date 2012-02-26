@@ -292,8 +292,8 @@ basis.require('basis.dom.event');
             {
               if (token.type == TYPE_TEXT)
               {
+                pos -= m[2].length - 1;
                 token.value = source.substring(bufferPos, pos);
-                pos = startPos + m[1].length + 1;
                 state = TEXT;
               }
               else if (token.type == TYPE_COMMENT)
@@ -336,7 +336,18 @@ basis.require('basis.dom.event');
       }
 
       if (state != TEXT)    // must end on text parsing
-        throw SYNTAX_ERROR;
+      {
+        //throw SYNTAX_ERROR;
+        if (parseTag)
+          lastTag = tagStack.pop();
+
+        lastTag.childs.pop();
+
+        lastTag.childs.push({
+          type: TYPE_TEXT,
+          value: source.substring(textStateEndPos, pos)
+        });
+      }
 
       if (!result.length)   // there must be at least one token in result
         result.push({ type: TYPE_TEXT, value: '' });
@@ -691,7 +702,7 @@ basis.require('basis.dom.event');
           ? bindings.bindingId
           : null;
 
-        ;;;if (!cacheId) console.warn('basis.html.Template.getBinding: bindings has no id property, cache not used');
+        ;;;if (!cacheId) console.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
 
         var result = bindingCache[cacheId];
         if (!result)
@@ -715,7 +726,7 @@ basis.require('basis.dom.event');
                 var eventList = String(binding.events).qw();
                 for (var i = 0, eventName; eventName = eventList[i]; i++)
                 {
-                  ;;;if (testNode && ('event_' + eventName) in testNode == false && typeof console != 'undefined') console.warn('basis.html.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
+                  ;;;if (testNode && ('event_' + eventName) in testNode == false && typeof console != 'undefined') console.warn('basis.template.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
                   if (events[eventName])
                   {
                     events[eventName].push(key);
@@ -898,7 +909,7 @@ basis.require('basis.dom.event');
 
       /** @cut */try {
       var fnBody;
-      var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attrClass', fnBody = 'return function(obj,actionCallback,updateCallback){' + 
+      var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attrClass', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
         'var _=build(),id=gMap.seed++,' + pathes.path.concat(bindings.vars) + ';\n' +
         'if(obj)gMap[a.basisObjectId=id]=obj;\n' +
         'return tMap[id]={' + [pathes.ref, 'set:' + bindings.body, 'rebuild:function(){if(updateCallback)updateCallback.call(obj)},destroy:function(){delete tMap[id];if(obj)delete gMap[id]}'] + '}' +
@@ -1043,9 +1054,11 @@ basis.require('basis.dom.event');
   * @func
   */
   function buildTemplate(){
-    var source = String(typeof this.source == 'function'
-      ? this.source()
-      : this.source);
+    var source = String(
+      typeof this.source == 'function'
+        ? this.source()
+        : this.source
+    );
 
     var decl = makeDeclaration(source);
     var funcs = makeFunctions(decl);
@@ -1055,6 +1068,28 @@ basis.require('basis.dom.event');
     this.instances_ = funcs.map;
   }
 
+  function sourceFromFile(){
+  }
+
+  //
+  // source by id
+  //
+
+  function sourceById(){
+    var host = document.getElementById(sourceId);
+    if (host && host.tagName == 'SCRIPT')
+    {
+      switch(host.type){
+        case 'basis/template':
+          break
+        default:
+          return ;
+      }
+    }
+  }
+
+  function resolveSourceById(source){
+  }
 
  /**
   * Creates DOM structure template from marked HTML. Use {basis.Html.Template#createInstance}
@@ -1134,6 +1169,30 @@ basis.require('basis.dom.event');
     setSource: function(source){
       if (this.source != source)
       {
+        if (typeof source == 'string')
+        {
+          var m = source.match(/^([a-z]+):/);
+          if (m)
+          {
+            var prefix = m[1];
+            var source = source.substr(m[0].length);
+            switch (prefix)
+            {
+              case 'file':
+                source = sourceFromFile(source);
+                break;
+              case 'id':
+                // source from script element
+                source = resolveSourceById(source);
+              case 'raw':
+                source = source;
+                break;
+              default:
+                ;;;console.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.')
+            }
+          }
+        }
+
         this.source = source;
         var instances = this.instances_;
 
