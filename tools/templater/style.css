@@ -1,0 +1,300 @@
+
+  html,
+  body
+  {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Tahoma, Verdana, Arial, sans-serif;
+    font-size: small;
+  }
+
+  #Layout,
+  #Layout .Basis-VerticalPanelStack
+  {
+    height: 100%;
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+
+  #Layout
+  {
+    padding: 5px;
+  }
+  #Layout .Basis-VerticalPanelStack
+  {
+    border-width: 3px;
+    border-style: solid;
+      -webkit-border-radius: 4px;
+      -moz-border-radius: 4px;
+    border-radius: 4px;
+  }
+  #Layout .Basis-VerticalPanel
+  {
+    position: relative;
+  }
+
+
+  #Editor
+  {
+    position: relative;
+    overflow: visible;
+    float: left;
+    margin-right: 5px;
+    width: 50%;
+    border-color: #DDD;
+    min-width: 300px;
+    max-width: 75%;
+  }
+  #Editor .Basis-VerticalPanel
+  {
+    overflow: hidden;
+  }
+
+  #Editor .Basis-Resizer
+  {
+    position: absolute;
+    top: 0;
+    right: -8px;
+    bottom: 0;
+    width: 5px;
+  }
+
+  #Editor .Basis-FormContent
+  {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  #Editor .Field-Source,
+  #Editor .Field-Source .Basis-Field-Container
+  {
+    height: 100%;
+  }
+  #Editor .Field-Source .Basis-Field-Title
+  {
+    display: none;
+  }
+  #Editor .Field-Source textarea
+  {
+    margin: 0;
+    padding: 4px;
+    border: none;
+    width: 100%;
+    height: 100%;
+    resize: none;
+    outline: none;
+    background: #F8F8F8;
+
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+    box-sizing: border-box;
+
+    border-radius: 3px;
+      -webk1it-box-shadow: 0 0 3px #777 inset;
+      -moz1-box-shadow: 0 0 3px #777 inset;
+    box-sh2adow: 0 0 3px #777 inset;
+  }
+  #Editor .Field-Source textarea:focus
+  {
+    background: white;
+  }
+
+
+
+  #Viewer
+  {
+    overflow: hidden;
+    border-color: #ACF;
+    font-family: Consolas;
+  }
+
+  #Viewer .Basis-Tree,
+  #Viewer .Basis-TreeNode-Content
+  {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  #Viewer .Basis-Tree
+  {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    outline: none;
+    margin-left: -.5em;
+  }
+
+  #Viewer .Basis-TreeNode
+  {
+    position: relative;
+    margin: 0 0 0 1em;
+    padding: 0;
+  }
+
+  #Viewer .Basis-TreeNode.Text .Basis-TreeNode-Caption
+  {
+    white-space: pre-wrap;
+    background: #E8E8E8;
+    padding: 2px;
+    border-radius: 2px;
+  }
+
+  #Viewer .Basis-TreeNode-Title
+  {
+    padding: .2em .5em;
+    font-size: 85%;
+    line-height: 1.6;
+    cursor: pointer;
+  }
+
+  #Viewer .Basis-TreeNode.selected > .Basis-TreeNode-Title
+  {
+    background-color: #DEF;
+  }
+
+  #Viewer .Basis-TreeNode-Title:hover
+  {
+    background-color: #EEE;
+      -webkit-box-shadow: 0 -1px 3px #AAA;
+      -moz-box-shadow: 0 -1px 3px #AAA;
+    box-shadow: 0 -1px 3px #AAA;
+  }
+
+  #Viewer .Basis-TreeNode-Title,
+  #Viewer .Basis-TreeNode-Content
+  {
+    margin-left: -401px;
+    padding-left: 400px;
+  }
+
+  #Viewer .Basis-TreeNode-Title:hover + .Basis-TreeNode-Content
+  {
+      -webkit-box-shadow: 0 2px 3px -1px #AAA;
+      -moz-box-shadow: 0 2px 3px -1px #AAA;
+    box-shadow: 0 2px 3px -1px #AAA;
+  }
+
+
+  #Viewer .Basis-TreeNode.Comment > .Basis-TreeNode-Title
+  {
+    color: #777;
+  }
+
+  #Viewer .Basis-TreeNode-Prefix,
+  #Viewer .Basis-TreeNode.Tag > .Basis-TreeNode-Title > .Basis-TreeNode-Caption
+  {
+    font-weight: bold;
+  }
+
+
+  #Viewer .ReferenceList,
+  #Viewer .AttributeList,
+  #Viewer .Reference,
+  #Viewer .Attribute
+  {
+    display: inline-block;
+  }
+
+  #Viewer .ReferenceList
+  {
+    margin-left: 3px;
+    pad2ding-left: 19px;
+    bac2kground: url(img/chain.png) left .2em no-repeat;
+    color: #050;
+    text-shadow: 0 1px rgba(255,255,255,.75);
+  }
+  #Viewer .Reference
+  {
+    border-left: 1px solid #050;
+    padding: 0 .5em;
+    background-color: #CDEB8B;
+  }
+  #Viewer .Reference:first-child
+  {
+    border-left: none;
+      -webkit-border-radius: 3px 0 0 3px;
+      -moz-border-radius: 3px 0 0 3px;
+    border-radius: 3px 0 0 3px;
+  }
+  #Viewer .Reference:last-child
+  {
+      -webkit-border-radius: 0 3px 3px 0;
+      -moz-border-radius: 0 3px 3px 0;
+    border-radius: 0 3px 3px 0;
+  }
+  #Viewer .Reference:first-child:last-child
+  {
+      -webkit-border-radius: 3px;
+      -moz-border-radius: 3px;
+    border-radius: 3px;
+  }
+
+  #Viewer .AttributeList
+  {
+    margin-left: .5em;
+    color: #333;
+  }
+  #Viewer .Attribute
+  {
+    margin-left: 0.25em;
+    padding: 0 .5em;
+  }
+  #Viewer .Attribute:first-child
+  {
+    margin-left: 0;
+  }
+  #Viewer .Attribute.event
+  {
+      -webkit-border-radius: 3px;
+      -moz-border-radius: 3px;
+    border-radius: 3px;
+    background-color: #FE8;
+    color: #530;
+    text-shadow: 0 1px #FFF;
+  }
+  #Viewer .Attribute.event:hover
+  {
+    background-color: #FFE000;
+    color: #000;
+  }
+
+
+  #Viewer .Field-Edit
+  {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+  #Viewer .Field-Edit .Basis-Field-Title
+  {
+    display: none;
+  }
+  #Viewer .Field-Edit .Basis-Field-Container
+  {
+    height: 100%;
+    padding-right: 1px;
+  }
+  #Viewer .Field-Edit textarea
+  {
+    display: block;
+    margin: 0;
+    padding: 2px;
+    height: 100%;
+    width: 100%;
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    resize: none;
+  }

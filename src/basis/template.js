@@ -114,7 +114,16 @@ basis.require('basis.dom.event');
           if (parseTag)
             lastTag = tagStack.pop();
 
-          lastTag.childs.pop();
+          if (token)
+            lastTag.childs.pop();
+
+          if (token = lastTag.childs.pop())
+          {
+            if (token.type == TYPE_TEXT && !token.refs)
+              textStateEndPos -= token.value.length;
+            else
+              lastTag.childs.push(token);
+          }
 
           parseTag = false;
           state = TEXT;
@@ -152,6 +161,7 @@ basis.require('basis.dom.event');
             {
               if (m[3] == '/')
               {
+                token = null;
                 state = CLOSE_TAG;
               }
               else //if (m[3] == '!--')
@@ -341,7 +351,16 @@ basis.require('basis.dom.event');
         if (parseTag)
           lastTag = tagStack.pop();
 
-        lastTag.childs.pop();
+        if (token)
+          lastTag.childs.pop();
+
+        if (token = lastTag.childs.pop())
+        {
+          if (token.type == TYPE_TEXT && !token.refs)
+            textStateEndPos -= token.value.length;
+          else
+            lastTag.childs.push(token);
+        }
 
         lastTag.childs.push({
           type: TYPE_TEXT,

@@ -293,7 +293,7 @@ basis.require('basis.ui');
     * @private
     */
     template:
-      '<ul class="Basis-Tree {selected} {disabled}"/>',
+      '<ul class="Basis-Tree {disabled}"/>',
 
    /**
     * @inheritDoc
