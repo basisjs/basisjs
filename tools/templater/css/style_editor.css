@@ -1,0 +1,54 @@
+
+  #Editor
+  {
+    position: relative;
+    overflow: visible;
+  }
+  #Editor.focus
+  {
+    border-color: #ACF;
+  }
+  #Editor .Basis-VerticalPanel
+  {
+    overflow: hidden;
+  }
+
+  #Editor .Basis-FormContent
+  {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  #Editor .Field-Source,
+  #Editor .Field-Source .Basis-Field-Container
+  {
+    height: 100%;
+  }
+  #Editor .Field-Source .Basis-Field-Title
+  {
+    display: none;
+  }
+  #Editor .Field-Source textarea
+  {
+    margin: 0;
+    padding: 4px;
+    border: none;
+    width: 100%;
+    height: 100%;
+    resize: none;
+    outline: none;
+    background: #F8F8F8;
+
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+    box-sizing: border-box;
+
+    border-radius: 3px;
+  }
+  #Editor .Field-Source textarea:focus
+  {
+    background: white;
+  }

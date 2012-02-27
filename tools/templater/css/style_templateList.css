@@ -1,0 +1,38 @@
+
+  #TemplateList
+  {
+    float: left;
+    margin-right: 5px;
+    width: 15%;
+      -webkit-transition: width .5s, opacity 1.5s;
+    transition: width .5s, opacity 1.5s;
+  }
+  #TemplateList.not-active
+  {
+    width: 0;
+    min-width: 0;
+    opacity: 0;
+  }
+
+  #TemplateList IFRAME
+  {
+    display: block;
+    border: none;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  #TemplateList .Basis-Resizer
+  {
+    position: absolute;
+    top: 0;
+    right: -8px;
+    bottom: 0;
+    width: 5px;
+  }
+  #TemplateList IFRAME:focus
+  {
+    background-color: red;
+  }

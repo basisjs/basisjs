@@ -221,8 +221,8 @@ basis.require('basis.layout');
     }
   });
 
-  TagNode = TemplateNode.subclass({
-    template: 'file:tagNode.tmpl',
+  var TagNode = TemplateNode.subclass({
+    template: 'file:templates/tagNode.tmpl',
       /*'<li class="Basis-TreeNode Tag {selected} {disabled}" event-click="select" event-dblclick="edit">' +
         '<div class="Basis-TreeNode-Title">' +
           '&lt;' +
@@ -247,17 +247,17 @@ basis.require('basis.layout');
           return object.data[ELEMENT_ATTRS];
         },
         instanceOf: UIContainer.subclass({
-          template:
-            '<span class="AttributeList" />',
+          template: 'file:templates/attributeList.tmpl',
+            //'<span class="AttributeList" />',
 
-          childClass: {
-            template:
-              '<span> ' +
+          childClass: UIContainer.subclass({
+            template: 'file:templates/attribute.tmpl',
+              /*'<span> ' +
                 '<span class="Attribute {selected} {disabled} {hasValue} {isEvent}">' +
                   '<span class="AttributeTitle">{name}</span>' +
                   '<span class="AttributeValue">="{value}"</span>' +
                 '</span>' +
-              '</span>',
+              '</span>',*/
 
             binding: {
               name: function(object){
@@ -272,8 +272,17 @@ basis.require('basis.layout');
               isEvent: function(object){
                 return /^event-(.+)+/.test(object[ATTR_NAME]) ? 'isEvent' : '';
               }
+            },
+
+            childClass: {
+              template: '<b>part</b>'
+            },
+
+            init: function(config){
+              UIContainer.prototype.init.call(this, config);
+              //this.setChildNodes([{}, {}])
             }
-          }
+          })
         }),
         config: function(owner){
           return {
@@ -284,7 +293,7 @@ basis.require('basis.layout');
     }
   });
 
-  TextNode = TemplateNode.subclass({
+  var TextNode = TemplateNode.subclass({
     template: 'id:textNode',
       /*'<li class="Basis-TreeNode Text {selected} {disabled} {hasRefs}" event-click="select" event-dblclick="edit">' +
         '<div class="Basis-TreeNode-Title">' +
@@ -409,6 +418,9 @@ basis.require('basis.layout');
     }
   });
 
+  new basis.ui.resizer.Resizer({
+    element: viewerPanel.element
+  });
 
 
   var sourceChangedHandler = function(){
@@ -492,6 +504,10 @@ basis.require('basis.layout');
 
   var sourceField = form.getFieldByName('Source');
 
+  //
+  // Editor
+  //
+
   var editorPanel = new VerticalPanelStack({
     id: 'Editor',
     childNodes: {
@@ -500,17 +516,52 @@ basis.require('basis.layout');
     }
   });
 
+  //
+  // Template file view
+  //
+
+  var templatesPanel = new VerticalPanelStack({
+    id: 'TemplateList',
+    cssClassName: 'not-active',
+    childNodes: {
+      flex: 1,
+      childNodes: [
+        {
+          id: 'FSObserber',
+          template: '<iframe src="../fsobserver/fileviewer.html?path=templates" event-load="show"/>'
+        }
+      ]
+    }
+  });
+
+  var fsObserver = templatesPanel.firstChild.firstChild.element;
+  var fsObserverEnabled = new basis.data.property.Property(false, {
+    change: function(value){
+      classList(templatesPanel.element).bool('not-active', !value);
+    }
+  });
+
+  window.addEventListener('message', function(event){
+    if (event.data == 'fileObserverLoaded')
+      fsObserverEnabled.set(true);
+
+    console.log(event.data);
+  }, true);
+
   new basis.ui.resizer.Resizer({
-    element: editorPanel.element
+    element: templatesPanel.element
   });
 
   return new UIContainer({
     id: 'Layout',
     container: document.body,
     childNodes: [
-      editorPanel,
-      viewerPanel
+      templatesPanel,
+      viewerPanel,
+      editorPanel
     ]
   });
+
+  form.firstChild.focus();
 
 })();
