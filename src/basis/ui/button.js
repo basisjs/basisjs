@@ -136,7 +136,7 @@ basis.require('basis.ui');
     },
     setCaption: function(newCaption){
       this.caption = newCaption;
-      this.tmpl.updateBind('caption', this.binding.caption.getter(this));
+      this.tmpl.set('caption', this.binding.caption.getter(this));
     }
   });
 

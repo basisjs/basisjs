@@ -115,7 +115,8 @@ basis.require('basis.ui');
       init: function(config){
         PartitionNode.prototype.init.call(this, config);
         this.cell = new HeaderPartitionNode({
-          delegate: this
+          delegate: this,
+          titleGetter: this.titleGetter
         });
       },
       event_childNodesModified: function(object, delta){
