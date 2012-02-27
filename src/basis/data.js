@@ -77,13 +77,14 @@ basis.require('basis.event');
       STATE_EXISTS[value] = name;
 
       if (order)
-      {
-        order = this.indexOf(order);
-        if (order == -1)
-          this.PRIORITY.push(value)
-        else
-          this.PRIORITY.splice(order, 0, value);
-      }
+        order = this.PRIORITY.indexOf(order);
+      else
+        order = -1;
+
+      if (order == -1)
+        this.PRIORITY.push(value)
+      else
+        this.PRIORITY.splice(order, 0, value);
     },
 
     getList: function(){

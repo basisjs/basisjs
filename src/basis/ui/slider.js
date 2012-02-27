@@ -106,7 +106,7 @@ basis.require('basis.dragdrop');
     className: namespace + '.MarkLayer',
 
     template: 
-      '<div class="Basis-Slider-MarkLayer {selected} {disabled}"/>',
+      '<div class="Basis-Slider-MarkLayer"/>',
 
     childClass: Mark,
 
