@@ -27,6 +27,15 @@
   {
     height: 100%;
   }
+  #Editor .Field-Source .Basis-Field-Container
+  {
+    background: white;
+    box-shadow: 0 0 8px rgba(128, 128, 128, .25) inset;
+  }
+  #Editor.focus .Field-Source .Basis-Field-Container
+  {
+    background-color2: white;
+  }
   #Editor .Field-Source .Basis-Field-Title
   {
     display: none;
@@ -40,28 +49,25 @@
     height: 100%;
     resize: none;
     outline: none;
-    background: #F8F8F8;
+    background: transparent;
 
       -webkit-box-sizing: border-box;
       -moz-box-sizing: border-box;
     box-sizing: border-box;
 
     border-radius: 0 0 2px 2px;
-      -webkit-transition: border-color 1s;
-    transition: border-color 1s;
+      -webkit-transition: border-color .5s;
+    transition: border-color .5s;
   }
   #Editor .Field-Source textarea.modified
   {
     border-color: rgba(200, 0, 0, .5);
-  }
-  #Editor .Field-Source textarea:focus
-  {
-    background: white;
   }
 
   #EditorToolbar
   {
     padding: 5px;
     border-bottom: 1px solid #CCC;
+    background: #F4F4F4;
     text-align: right;
   }

@@ -294,7 +294,7 @@ basis.require('basis.layout');
   });
 
   var TextNode = TemplateNode.subclass({
-    template: 'id:textNode',
+    template: 'file:templates/textNode.tmpl',
       /*'<li class="devtools-templateNode Text {selected} {disabled} {hasRefs}" event-click="select" event-dblclick="edit">' +
         '<div class="devtools-templateNode-Title">' +
           '<span class="devtools-templateNode-Caption">{value}</span>' +
@@ -309,7 +309,7 @@ basis.require('basis.layout');
   });
 
   var CommentNode = TemplateNode.subclass({
-    template: 'id:commentNode',
+    template: 'file:templates/commentNode.tmpl',
       /*'<li class="devtools-templateNode Comment {selected} {disabled}" event-click="select" event-dblclick="edit">' +
         '<div class="devtools-templateNode-Title">' +
           '&lt;!--' +
@@ -646,6 +646,18 @@ basis.require('basis.layout');
 
   var fileTree = new basis.ui.tree.Tree({
     container: document.body,
+    template:
+      '<ul tabindex="0" class="devtools-templateFileList" event-keydown="keydown" event-focus="focus" event-blur="blur" />',
+
+    action: {
+      focus: function(){
+        classList(this.element.parentNode.parentNode).add('focus');
+      },
+      blur: function(){
+        classList(this.element.parentNode.parentNode).remove('focus');
+      }
+    },
+
     childFactory: childFactory,
     sorting: 'data.filename',
     grouping: {
@@ -655,12 +667,11 @@ basis.require('basis.layout');
         template: '<div/>'
       }
     },
+
     selection: {
       handler: {
         datasetChanged: function(dataset, delta){
-          var selected = this.pick();
-          form.setDelegate(selected);
-          //fileView.setDelegate(selected)
+          form.setDelegate(this.pick());
         }
       }
     }

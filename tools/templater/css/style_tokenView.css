@@ -1,7 +1,7 @@
 
   #Viewer
   {
-    overflow: hidden;
+    overflow: visible;
     font-family: Consolas;
     float: right;
     margin-left: 5px;

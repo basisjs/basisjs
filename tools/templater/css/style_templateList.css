@@ -1,11 +1,17 @@
 
   #TemplateList
   {
+    overflow: visible;
     float: left;
     margin-right: 5px;
     width: 15%;
       -webkit-transition: width .5s, opacity 1.5s;
     transition: width .5s, opacity 1.5s;
+  }
+  #TemplateList.focus
+  {
+    border-color: #ACF;
+    background: white;
   }
   #TemplateList.not-active
   {
@@ -27,4 +33,17 @@
     right: -8px;
     bottom: 0;
     width: 5px;
+  }
+
+  #TemplateList .devtools-templateFileList
+  {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    outline: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
