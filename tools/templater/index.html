@@ -8,27 +8,30 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
   <link rel="stylesheet" type="text/css" href="css/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../../style/tree/compat/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" href="../../style/button/new/style.css" media="screen" />
   <link rel="stylesheet" type="text/css" href="../../style/resizer/default/style.css" media="screen" />
 </head>
 
 <body>
   <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" src="../fsobserver/client.js"></script>
   <script type="text/javascript" src="../../locale/ru/form.js"></script>
 
   <script type="text/basis-template" id="commentNode">
-    <li class="Basis-TreeNode Comment {selected} {disabled}" event-click="select" event-dblclick="edit">
-      <div class="Basis-TreeNode-Title">
+    <li class="devtools-templateNode Comment {selected} {disabled}" event-click="select" event-dblclick="edit">
+      <div class="devtools-templateNode-Title">
         &lt;!--
-        <span class="Basis-TreeNode-Caption">{title}</span>
+        <span class="devtools-templateNode-Caption">{title}</span>
         --&gt;
         <!--{refList}-->
       </div>
     </li>
   </script>
   <script type="text/basis-template" id="textNode">
-    <li class="Basis-TreeNode Text {selected} {disabled} {hasRefs}" event-click="select" event-dblclick="edit">
-      <div class="Basis-TreeNode-Title">
-        <span class="Basis-TreeNode-Caption">{value}</span>
+    <li class="devtools-templateNode Text {selected} {disabled} {hasRefs}" event-click="select" event-dblclick="edit">
+      <div class="devtools-templateNode-Title">
+        <span class="devtools-templateNode-Caption">{value}</span>
       </div>
     </li>
   </script>

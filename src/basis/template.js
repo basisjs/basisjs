@@ -78,6 +78,7 @@ basis.require('basis.dom.event');
   // dictonaries
   var tmplEventListeners = {};
   var tmplNodeMap = { seed: 1 };
+  var tmplFilesMap = {};
 
 
  /**
@@ -891,6 +892,16 @@ basis.require('basis.dom.event');
    /**
     * @func
     */
+    var bind_attr = function(domRef, attrName, newValue){
+      if (newValue)
+        domRef.setAttribute(attrName, newValue);
+      else
+        domRef.removeAttribute(attrName);
+    }
+
+   /**
+    * @func
+    */
     function buildBindings(bindings){
       var bindMap = {};
       var bindCode;
@@ -955,7 +966,7 @@ basis.require('basis.dom.event');
                 expression.push('""');
 
               bindCode.push(
-                domRef + '.setAttribute("' + attrName + '",' + expression.join('+') + ');'
+                'bind_attr(' + [domRef, '"' + attrName + '"', expression.join('+')] + ');'
               );
             }
             break;
@@ -999,11 +1010,11 @@ basis.require('basis.dom.event');
 
       /** @cut */try {
       var fnBody;
-      var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attrClass', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
+      var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attr', 'bind_attrClass', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
         'var _=build(),id=gMap.seed++,' + pathes.path.concat(bindings.vars) + ';\n' +
         'if(obj)gMap[a.basisObjectId=id]=obj;\n' +
         'return tMap[id]={' + [pathes.ref, 'set:' + bindings.body, 'rebuild:function(){if(updateCallback)updateCallback.call(obj)},destroy:function(){delete tMap[id];if(obj)delete gMap[id]}'] + '}' +
-      '}')(tmplNodeMap, templateMap, build, bind_node, bind_nodeValue, bind_attrClass);
+      '}')(tmplNodeMap, templateMap, build, bind_node, bind_nodeValue, bind_attr, bind_attrClass);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
 
       return {
@@ -1147,6 +1158,7 @@ basis.require('basis.dom.event');
   * @func
   */
   function buildTemplate(){
+    var instances = this.instances_;
     var source = String(
       typeof this.source == 'function'
         ? this.source()
@@ -1159,6 +1171,12 @@ basis.require('basis.dom.event');
     this.createInstance = funcs.createInstance;
     this.getBinding = funcs.getBinding;
     this.instances_ = funcs.map;
+
+    if (instances)
+    {
+      for (var id in instances)
+        instances[id].rebuild();
+    }
   }
 
 
@@ -1168,11 +1186,17 @@ basis.require('basis.dom.event');
 
 
   function sourceFromFile(url){
+    if (tmplFilesMap[url] && tmplFilesMap[url].content !== null)
+      return tmplFilesMap[url].content;
+
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, false);
     xhr.send('');
     if (xhr.status == 200)
+    {
+      tmplFilesMap[url].content = xhr.responseText;
       return xhr.responseText;
+    }
     else
       return '<!--template `' + url + '` load fault-->';
   }
@@ -1180,6 +1204,35 @@ basis.require('basis.dom.event');
   function resolveSourceByUrl(sourceUrl){
     return function(){
       return sourceFromFile(sourceUrl);
+    }
+  }
+
+  var template2File = {};
+  function updateFileMap(url, template){
+    if (!tmplFilesMap[url])
+    {
+      tmplFilesMap[url] = {
+        templates: [],
+        update: function(newContent){
+          if (newContent !== this.content)
+          {
+            this.content = newContent;
+            for (var i = 0; i < this.templates.length; i++)
+              buildTemplate.call(this.templates[i]);
+          }
+        },
+        content: null
+      }
+    }
+
+    template2File[template.eventObjectId] = tmplFilesMap[url].templates;
+    tmplFilesMap[url].templates.push(template);
+  }
+
+  function removeFromFileMap(template){
+    if (template2File[template.eventObjectId])
+    {
+      template2File[template.eventObjectId].remove(template);
     }
   }
 
@@ -1289,6 +1342,9 @@ basis.require('basis.dom.event');
     setSource: function(source){
       if (this.source != source)
       {
+        if (this.source)
+          removeFromFileMap(this);
+
         if (typeof source == 'string')
         {
           var m = source.match(/^([a-z]+):/);
@@ -1299,7 +1355,8 @@ basis.require('basis.dom.event');
             switch (prefix)
             {
               case 'file':
-                source = sourceFromFile(source);
+                updateFileMap(source, this);
+                source = resolveSourceByUrl(source);
                 break;
               case 'id':
                 // source from script element
@@ -1314,14 +1371,9 @@ basis.require('basis.dom.event');
         }
 
         this.source = source;
-        var instances = this.instances_;
 
-        if (instances)
-        {
+        if (this.instances_)
           buildTemplate.call(this);
-          for (var id in instances)
-            instances[id].rebuild();
-        }
       }
     }
   });
@@ -1339,7 +1391,9 @@ basis.require('basis.dom.event');
     makeDeclaration: makeDeclaration,
     buildPathes: buildPathes,
     makeFunctions: makeFunctions,
-    buildHtml: buildHtml
+    buildHtml: buildHtml,
+
+    filesMap: tmplFilesMap
   });
 
 })(basis, this);

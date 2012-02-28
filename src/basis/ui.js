@@ -454,6 +454,13 @@ basis.require('basis.html');
         }
       },
 
+      updateBind: function(bindName){
+        var binding = this.binding[bindName];
+        var getter = binding && binding.getter;
+        if (getter && this.tmpl)
+          this.tmpl.set(bindName, getter(this));
+      },
+
      /**
       * Handler on template actions.
       * @param {string} actionName

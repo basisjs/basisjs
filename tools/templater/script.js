@@ -223,15 +223,15 @@ basis.require('basis.layout');
 
   var TagNode = TemplateNode.subclass({
     template: 'file:templates/tagNode.tmpl',
-      /*'<li class="Basis-TreeNode Tag {selected} {disabled}" event-click="select" event-dblclick="edit">' +
-        '<div class="Basis-TreeNode-Title">' +
+      /*'<li class="devtools-templateNode Tag {selected} {disabled}" event-click="select" event-dblclick="edit">' +
+        '<div class="devtools-templateNode-Title">' +
           '&lt;' +
-          '<span class="Basis-TreeNode-Caption">{title}</span>' +
+          '<span class="devtools-templateNode-Caption">{title}</span>' +
           '<!--{refList}-->' +
           '<!--{attributeList}-->' +
           '&gt;' +
         '</div>' +
-        '<ul{childNodesElement} class="Basis-TreeNode-Content" />' + 
+        '<ul{childNodesElement} class="devtools-templateNode-Content" />' + 
       '</li>',*/
 
     binding: {
@@ -295,9 +295,9 @@ basis.require('basis.layout');
 
   var TextNode = TemplateNode.subclass({
     template: 'id:textNode',
-      /*'<li class="Basis-TreeNode Text {selected} {disabled} {hasRefs}" event-click="select" event-dblclick="edit">' +
-        '<div class="Basis-TreeNode-Title">' +
-          '<span class="Basis-TreeNode-Caption">{value}</span>' +
+      /*'<li class="devtools-templateNode Text {selected} {disabled} {hasRefs}" event-click="select" event-dblclick="edit">' +
+        '<div class="devtools-templateNode-Title">' +
+          '<span class="devtools-templateNode-Caption">{value}</span>' +
         '</div>' +
       '</li>',*/
 
@@ -310,10 +310,10 @@ basis.require('basis.layout');
 
   var CommentNode = TemplateNode.subclass({
     template: 'id:commentNode',
-      /*'<li class="Basis-TreeNode Comment {selected} {disabled}" event-click="select" event-dblclick="edit">' +
-        '<div class="Basis-TreeNode-Title">' +
+      /*'<li class="devtools-templateNode Comment {selected} {disabled}" event-click="select" event-dblclick="edit">' +
+        '<div class="devtools-templateNode-Title">' +
           '&lt;!--' +
-          '<span class="Basis-TreeNode-Caption">{title}</span>' +
+          '<span class="devtools-templateNode-Caption">{title}</span>' +
           '--&gt;' +
           '<!--{refList}-->' +
         '</div>' +
@@ -343,7 +343,7 @@ basis.require('basis.layout');
 
   var tree = new basis.ui.tree.Tree({
     template:
-      '<ul tabindex="0" class="Basis-Tree" event-keydown="keydown" event-focus="focus" event-blur="blur" />',
+      '<ul tabindex="0" class="devtools-templateTree" event-keydown="keydown" event-focus="focus" event-blur="blur" />',
 
     action: {
       focus: function(){
@@ -425,78 +425,87 @@ basis.require('basis.layout');
 
   var sourceChangedHandler = function(){
     var nodes = [];
+    var newContent = this.getValue();
 
-    try
+    if (this.target)
     {
-      nodes = basis.template.makeDeclaration(this.getValue());
-    }
-    catch(e){}
+      var file = basis.template.filesMap[this.data.filename.replace('../templater/', '')];
 
+      this.target.update({ content: newContent }, true);
+
+      if (file)
+        file.update(newContent);
+    }
+
+    nodes = basis.template.makeDeclaration(newContent);
     tree.setChildNodes(nodes);
   }
 
   var form = new basis.ui.form.FormContent({
+    active: true,
     childNodes: {
+      autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
       type: 'textarea',
       name: 'Source',
       value: 
-        '<li class="Basis-TreeNode {collapsed}">\n\
-          <div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected} {disabled}">\n\
-            <div class="Basis-TreeNode-Expander" event-click="toggle"/>\n\
-            <span{titleElement} class="Basis-TreeNode-Caption" event-click="select">\n\
+        '<li class="devtools-templateNode {collapsed}">\n\
+          <div{content} class="devtools-templateNode-Title devtools-templateNode-CanHaveChildren {selected} {disabled}">\n\
+            <div class="devtools-templateNode-Expander" event-click="toggle"/>\n\
+            <span{titleElement} class="devtools-templateNode-Caption" event-click="select">\n\
               <!--{preTitle} sdf-->{title} ({childCount})<!--just a comment-->\n\
             </span>\n\
           </div>\n\
-          <ul{childNodesElement} class="Basis-TreeNode-Content"/>\n\
+          <ul{childNodesElement} class="devtools-templateNode-Content"/>\n\
         </li>',
-/*
-      '<div class="Basis-Table Basis-ScrollTable" event-load="">' +
-              '<namespace:div class="Basis-ScrollTable-Header-Container">' +
-                'LOCALE.HEADER' +
-                '<!--simple comment-->' +
-                '<table{headerOffset} class="Basis-ScrollTable-Header" cellspacing="0">' +
-                  '<!--{header}-->' +
-                  '<!--{headerExpandRow}-->' +
-                '</table>' +
-                '<div{headerExpandCell} class="Basis-ScrollTable-ExpandHeaderCell">' +
-                  '<div class="Basis-ScrollTable-ExpandHeaderCell-B1">' +
-                    '<div class="Basis-ScrollTable-ExpandHeaderCell-B2"/>' +
-                  '</div>' +
-                '</div>'+
-              '</namespace:div>' +
-              '<div{scrollContainer} class="Basis-ScrollTable-ScrollContainer" event-scroll="scroll">' +
-                '<namespace:div{boundElement} class="Basis-ScrollTable-TableWrapper">' +
-                  'LOCALE.TABLE_WRAPPER' +
-                  '<table{tableElement|groupsElement} class="Basis-ScrollTable-ContentTable" cellspacing="0">' +
-                    '<!--{shadowHeader}-->' +
-                    '<!--{measureRow}-->' +
-                    '<tbody{content|childNodesElement} class="Basis-Table-Body"/>' +
-                    '<!--{shadowFooter}-->' +
-                  '</table>' +
-                '</namespace:div>' +
-              '</div>' +
-              '<div class="Basis-ScrollTable-Footer-Container">' +
-                'Some text' +
-                '<table{footerOffset} class="Basis-ScrollTable-Footer" cellspacing="0">' +
-                  '<!--{footer}-->' +
-                  '<!--{footerExpandRow}-->' +
-                '</table>' +
-                '<div{footerExpandCell} class="Basis-ScrollTable-ExpandFooterCell">' +
-                  '<div class="Basis-ScrollTable-ExpandFooterCell-B1">' +
-                    '<div class="Basis-ScrollTable-ExpandFooterCell-B2"/>' +
-                  '</div>' +
-                '</div>'+
-              '</div>' +
-            '</div>',*/
+
       cssClassName: 'Field-Source',
+
+      listen: {
+        target: {
+          rollbackUpdate: function(){
+            this.updateBind('modified');
+            classList(this.tmpl.field).bool('modified', this.target && this.target.modified);
+          }
+        }
+      },
+
       handler: {
         input: sourceChangedHandler,
         change: sourceChangedHandler,
+        keydown: function(event){
+          if (!this.target)
+            return;
+
+          var key = basis.dom.event.key(event);
+          if (key == basis.dom.event.KEY.F2 || (key == 83 && event.ctrlKey))
+          {
+            this.target.save();
+            basis.dom.event.kill(event);
+          }
+        },
         focus: function(){
-          classList(document.getElementById('Editor')).add('focus');
+          classList(editorPanel.element).add('focus');
         },
         blur: function(){
-          classList(document.getElementById('Editor')).remove('focus');
+          classList(editorPanel.element).remove('focus');
+        },
+        update: function(object, delta){
+          if ('content' in delta)
+          {
+            this.tmpl.field.value = this.data.content;
+            tree.setChildNodes(basis.template.makeDeclaration(this.data.content));
+          }
+        },
+        targetChanged: function(){
+          classList(this.tmpl.field).bool('modified', this.target && this.target.modified);
+
+          if (this.target)
+            this.enable();
+          else
+          {
+            this.update({ content: '' });
+            this.disable();
+          }
         }
       }
     }
@@ -510,15 +519,152 @@ basis.require('basis.layout');
 
   var editorPanel = new VerticalPanelStack({
     id: 'Editor',
-    childNodes: {
-      flex: 1,
-      childNodes: form
-    }
+    childNodes: [
+      {
+        id: 'EditorToolbar',
+        childNodes: [
+          new basis.ui.button.ButtonPanel({
+            delegate: form,
+            disabled: true,
+            childNodes: [
+              {
+                delegate: form,
+                caption: 'Save',
+                click: function(){
+                  this.target.save();
+                }
+              },
+              {
+                delegate: form,
+                caption: 'Cancel changes',
+                click: function(){
+                  this.target.rollback();
+                }
+              }
+            ],
+            syncDisableState: function(){
+              if (this.target && this.target.modified)
+                this.enable();
+              else
+                this.disable();
+            },
+            handler: {
+              targetChanged: function(){
+                this.syncDisableState();
+              }
+            },
+            listen: {
+              target: {
+                rollbackUpdate: function(){
+                  this.syncDisableState();
+                }
+              }
+            }
+          })
+        ]
+      },
+      {
+        flex: 1,
+        childNodes: form
+      }
+    ]
   });
 
   //
   // Template file view
   //
+
+  var childFactory = function(cfg){
+    var childClass = cfg.delegate.data.type == 'dir' ? FolderNode : FileNode;
+    return new childClass(cfg);
+  };
+
+  var updatedNodes = new basis.data.Dataset({
+    handler: {
+      datasetChanged: function(dataset, delta){
+        var array;
+
+        if (array = delta.inserted)
+          for (var i = 0; i < array.length; i++)
+            classList(array[i].tmpl.content).add('highlight');
+
+        if (array = delta.deleted)
+          for (var i = 0; i < array.length; i++)
+            classList(array[i].tmpl.content).remove('highlight');
+
+        if (this.itemCount && !this.timer)
+          this.timer = setTimeout(function(){
+            this.timer = 0;
+            this.clear();
+          }.bind(this), 50);
+      }
+    }
+  });
+
+  var FileNode = basis.ui.tree.Node.subclass({
+    binding: {
+      title: 'data:filename.split("/").slice(-1)'
+    },
+
+    event_update: function(object, delta){
+      basis.ui.tree.Node.prototype.event_update.call(this, object, delta);
+      updatedNodes.add([this]);
+    },
+
+    templateUpdate: function(){
+      classList(this.element).bool('modified', this.target.modified);
+    },
+
+    listen: {
+      target: {
+        rollbackUpdate: function(){
+          classList(this.element).bool('modified', this.target.modified);
+        }
+      }
+    }
+  });
+  var FolderNode = basis.ui.tree.Folder.subclass({
+    binding: {
+      title: 'data:filename.split("/").slice(-1)'
+    },
+
+    childFactory: childFactory,
+    sorting: 'data.filename',
+    grouping: {
+      groupGetter: 'data.type',
+      sorting: 'data.id == "file"',
+      childClass: {
+        template: '<div/>'
+      }
+    },
+
+    init: function(config){
+      basis.ui.tree.Folder.prototype.init.call(this, config);
+      this.setDataSource(basis.devtools.filesByFolder.getSubset(this.data.filename, true));
+    }
+  });
+
+  var fileTree = new basis.ui.tree.Tree({
+    container: document.body,
+    childFactory: childFactory,
+    sorting: 'data.filename',
+    grouping: {
+      groupGetter: 'data.type',
+      sorting: 'data.id == "file"',
+      childClass: {
+        template: '<div/>'
+      }
+    },
+    selection: {
+      handler: {
+        datasetChanged: function(dataset, delta){
+          var selected = this.pick();
+          form.setDelegate(selected);
+          //fileView.setDelegate(selected)
+        }
+      }
+    }
+  });
 
   var templatesPanel = new VerticalPanelStack({
     id: 'TemplateList',
@@ -526,42 +672,42 @@ basis.require('basis.layout');
     childNodes: {
       flex: 1,
       childNodes: [
-        {
-          id: 'FSObserber',
-          template: '<iframe src="../fsobserver/fileviewer.html?path=templates" event-load="show"/>'
-        }
+        fileTree
       ]
     }
   });
-
-  var fsObserver = templatesPanel.firstChild.firstChild.element;
-  var fsObserverEnabled = new basis.data.property.Property(false, {
-    change: function(value){
-      classList(templatesPanel.element).bool('not-active', !value);
-    }
-  });
-
-  window.addEventListener('message', function(event){
-    if (event.data == 'fileObserverLoaded')
-      fsObserverEnabled.set(true);
-
-    console.log(event.data);
-  }, true);
 
   new basis.ui.resizer.Resizer({
     element: templatesPanel.element
   });
 
-  return new UIContainer({
+
+  basis.devtools.isReady.addLink(templatesPanel, function(value){
+    if (value)
+    {
+      app.insertBefore(templatesPanel, app.firstChild)
+      fileTree.setDataSource(basis.devtools.filesByFolder.getSubset('../templater', true));
+    }
+
+    classList(this.element).bool('not-active', !value);
+  })
+
+
+  //
+  // App
+  //
+
+  var app = new UIContainer({
     id: 'Layout',
     container: document.body,
     childNodes: [
-      templatesPanel,
       viewerPanel,
       editorPanel
     ]
   });
 
-  form.firstChild.focus();
+  form.firstChild.tmpl.field.focus();
+
+  return app;
 
 })();

@@ -24,15 +24,15 @@
     width: 5px;
   }
 
-  #Viewer .Basis-Tree,
-  #Viewer .Basis-TreeNode-Content
+  #Viewer .devtools-templateTree,
+  #Viewer .devtools-templateNode-Content
   {
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  #Viewer .Basis-Tree
+  #Viewer .devtools-templateTree
   {
     position: absolute;
     top: 0;
@@ -42,28 +42,28 @@
     outline: none;
   }
 
-  #Viewer .Basis-TreeNode
+  #Viewer .devtools-templateNode
   {
     position: relative;
     margin: 0;
     padding: 0;
   }
 
-  #Viewer .Basis-TreeNode.Text .Basis-TreeNode-Caption
+  #Viewer .devtools-templateNode.Text .devtools-templateNode-Caption
   {
     white-space: pre-wrap;
     background: #E8E8E8;
     padding: 2px;
     border-radius: 2px;
   }
-  #Viewer .Basis-TreeNode.Text.hasRefs .Basis-TreeNode-Caption
+  #Viewer .devtools-templateNode.Text.hasRefs .devtools-templateNode-Caption
   {
     background: #CDEB8B;
     color: #050;
     text-shadow: 0 1px rgba(255,255,255,.75);
   }
 
-  #Viewer .Basis-TreeNode-Title
+  #Viewer .devtools-templateNode-Title
   {
     padding: .1em .5em;
     font-size: 90%;
@@ -71,12 +71,12 @@
     cursor: pointer;
   }
 
-  #Viewer .Basis-TreeNode.selected > .Basis-TreeNode-Title
+  #Viewer .devtools-templateNode.selected > .devtools-templateNode-Title
   {
     background-color: #DEF;
   }
 
-  #Viewer .Basis-TreeNode-Title:hover
+  #Viewer .devtools-templateNode-Title:hover
   {
     background-color: #EEE;
       -webkit-box-shadow: 0 -1px 3px #AAA;
@@ -84,14 +84,14 @@
     box-shadow: 0 -1px 3px #AAA;
   }
 
-  #Viewer .Basis-TreeNode-Content .Basis-TreeNode-Title,
-  #Viewer .Basis-TreeNode-Content .Basis-TreeNode-Content
+  #Viewer .devtools-templateNode-Content .devtools-templateNode-Title,
+  #Viewer .devtools-templateNode-Content .devtools-templateNode-Content
   {
     margin-left: -375px;
     padding-left: 400px;
   }
 
-  #Viewer .Basis-TreeNode-Title:hover + .Basis-TreeNode-Content
+  #Viewer .devtools-templateNode-Title:hover + .devtools-templateNode-Content
   {
       -webkit-box-shadow: 0 2px 3px -1px #AAA;
       -moz-box-shadow: 0 2px 3px -1px #AAA;
@@ -99,13 +99,13 @@
   }
 
 
-  #Viewer .Basis-TreeNode.Comment > .Basis-TreeNode-Title
+  #Viewer .devtools-templateNode.Comment > .devtools-templateNode-Title
   {
     color: #444;
   }
 
-  #Viewer .Basis-TreeNode-Prefix,
-  #Viewer .Basis-TreeNode.Tag > .Basis-TreeNode-Title > .Basis-TreeNode-Caption
+  #Viewer .devtools-templateNode-Prefix,
+  #Viewer .devtools-templateNode.Tag > .devtools-templateNode-Title > .devtools-templateNode-Caption
   {
     font-weight: bold;
   }

@@ -14,15 +14,11 @@
     opacity: 0;
   }
 
-  #TemplateList IFRAME
+  #TemplateList .Basis-TreeNode.modified .Basis-TreeNode-Caption
   {
-    display: block;
-    border: none;
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    padding: 0;
+    background-image: url(../img/modified.png);
   }
+
 
   #TemplateList .Basis-Resizer
   {
@@ -31,8 +27,4 @@
     right: -8px;
     bottom: 0;
     width: 5px;
-  }
-  #TemplateList IFRAME:focus
-  {
-    background-color: red;
   }

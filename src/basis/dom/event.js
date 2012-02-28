@@ -56,7 +56,18 @@ basis.require('basis.dom');
     DOWN: 40,
     INSERT: 45,
     DELETE: 46,
-    F5: 116
+    F1: 112,
+    F2: 113,
+    F3: 114,
+    F4: 115,
+    F5: 116,
+    F6: 117,
+    F7: 118,
+    F8: 119,
+    F9: 120,
+    F10: 121,
+    F11: 122,
+    F12: 123
   };
 
   var MOUSE_LEFT = {
@@ -696,6 +707,10 @@ basis.require('basis.dom');
     onUnload: onUnload,
 
     getEventInfo: getEventInfo
+  });
+
+  basis.namespace('basis.dom').extend({
+    ready: onLoad
   });
 
 }(basis, this);

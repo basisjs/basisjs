@@ -29,6 +29,10 @@
           -webkit-transition: background-color 2s .6s;
         transition: background-color 1s .5s;
       }
+      .modified
+      {
+        border-color: red !important;
+      }
     </style>
 
     <script>
@@ -49,6 +53,16 @@
       });
 
       FSFile.entityType.entityClass.extend({
+        event_subscribersChanged: function(){
+          if (this.subscriberCount)
+          {
+            socket.emit('watchFileContent', this.data.filename);
+          }
+          else
+          {
+            socket.emit('unwatchFileContent', this.data.filename);
+          }
+        },
         save: function(){
           if (this.modified)
           {
@@ -147,14 +161,93 @@
             handler: {
               datasetChanged: function(dataset, delta){
                 var selected = this.pick();
-                if (selected && postMessageSupported)
+                if (selected)
                 {
-                  top.postMessage(selected.data, '*');
+                  if (postMessageSupported)
+                    top.postMessage(selected.data, '*');
                 }
+                fileView.setDelegate(selected)
               }
             }
           }
         });
+
+        fileView = new basis.ui.Node({
+          container: document.body,
+          active: true,
+
+          template: 
+            '<div style="border: 1px solid green" class="{modified}">' +
+              '<div>{filename}</div>' +
+              '<textarea{textarea} disabled="{disabled}" event-keyup="update" event-input="update" event-changed="update">' +
+                //'{fileContent}' +
+              '</textarea>' +
+            '</div>',
+
+          binding: {
+            filename: 'data:',
+            modified: {
+              events: 'targetChanged',
+              getter: function(node){
+                return node.target && node.target.modified ? 'modified' : '';
+              }
+            }
+          },
+
+          action: {
+            update: function(){
+              if (this.target)
+              {
+                this.target.update({ content: this.tmpl.textarea.value }, true);
+              }
+            }
+          },
+
+          listen: {
+            target: {
+              rollbackUpdate: function(){
+                this.updateBind('modified');
+              }
+            }
+          },
+
+          handler: {
+            update: function(object, delta){
+              if ('content' in delta)
+                this.tmpl.textarea.value = this.data.content;
+            },
+            targetChanged: function(){
+              if (this.target)
+                this.enable();
+              else
+              {
+                this.update({ content: '' });
+                this.disable();
+              }
+            }
+          }
+        });
+        new basis.ui.button.ButtonPanel({
+          container: document.body,
+          childNodes: [
+            {
+              delegate: fileView,
+              caption: 'rollback',
+              click: function(){
+                if (this.target)
+                  this.target.rollback();
+              }
+            },
+            {
+              delegate: fileView,
+              caption: 'save',
+              click: function(){
+                if (this.target)
+                  this.target.save();
+              }
+            }
+          ]
+        })
       });
     </script>
     <script>
