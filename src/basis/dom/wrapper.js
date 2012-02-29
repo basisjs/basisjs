@@ -772,8 +772,8 @@ basis.require('basis.html');
       if (!owner || owner instanceof AbstractNode == false)
         owner = null;
 
-      //if (owner && this.parentNode)
-      //  throw EXCEPTION_PARENTNODE_OWNER_CONFLICT;
+      if (owner && this.parentNode)
+        throw EXCEPTION_PARENTNODE_OWNER_CONFLICT;
 
       var oldOwner = this.owner;
       if (oldOwner !== owner)
@@ -1185,8 +1185,8 @@ basis.require('basis.html');
       if (!isChildClassInstance)
         newChild = createChildByFactory(this, newChild instanceof DataObject ? { delegate: newChild } : newChild);
 
-      //if (newChild.owner)
-      //  throw EXCEPTION_PARENTNODE_OWNER_CONFLICT;
+      if (newChild.owner)
+        throw EXCEPTION_PARENTNODE_OWNER_CONFLICT;
 
       // search for insert point
       var isInside = newChild.parentNode === this;

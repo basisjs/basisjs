@@ -1194,8 +1194,7 @@ basis.require('basis.dom.event');
     xhr.send('');
     if (xhr.status == 200)
     {
-      tmplFilesMap[url].content = xhr.responseText;
-      return xhr.responseText;
+      return tmplFilesMap[url].content = xhr.responseText;
     }
     else
       return '<!--template `' + url + '` load fault-->';

@@ -169,7 +169,7 @@ basis.require('basis.ui');
         className: namespace + '.ButtonPartitionNode',
 
         template:
-          '<div class="Basis-ButtonGroup {disabled}"/>'
+          '<div class="Basis-ButtonGroup"/>'
       }
     },
 
