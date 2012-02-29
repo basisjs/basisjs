@@ -88,6 +88,61 @@
     }, editor);
   });
 
+  function updatePickupElement(value, oldValue){
+    if (value)
+      basis.cssom.setStyle(value.element, {
+        'box-shadow': '0 0 15px rgba(0,128,0,.75)',
+        'outline': '2px solid rgba(0,128,0,.75)',
+        'background-color': 'rgba(0,128,0,.5)'
+      });
+    if (oldValue)
+      basis.cssom.setStyle(oldValue.element, {
+        'box-shadow': '',
+        'outline': '',
+        background: ''
+      });
+  }
+
+  var pickupActive = new basis.data.property.Property(false, {
+    change: function(value){
+      updatePickupElement(
+        value ? pickupTarget.value : null,
+        !value ? pickupTarget.value : null
+      );
+    }
+  });
+  var pickupTarget = new basis.data.property.Property(null, {
+    change: function(value, oldValue){
+      if (pickupActive.value)
+        updatePickupElement(value, oldValue);
+    }
+  }, function(value){
+    return value && value.template instanceof basis.template.Template ? value : null;
+  });
+
+  basis.dom.event.addGlobalHandler('mousemove', function(event){
+    pickupActive.set(event.altKey && event.ctrlKey);
+    var cursor = basis.dom.event.sender(event);
+    do {
+      if (refId = cursor.basisObjectId)
+        return pickupTarget.set(basis.template.resolveObjectById(refId));
+    } while (cursor = cursor.parentNode);
+  });
+  basis.dom.event.addGlobalHandler('click', function(event){
+    if (pickupTarget.value && pickupActive.value)
+    {
+      basis.dom.event.kill(event);
+
+      var source = pickupTarget.value.template.source;
+      editor.setSource(String(typeof source == 'function' ? source() : source));
+    }
+  });
+  basis.dom.event.addGlobalHandler('keydown', function(event){
+    pickupActive.set(event.altKey && event.ctrlKey);
+  });
+  basis.dom.event.addGlobalHandler('keyup', function(event){
+    pickupActive.set(event.altKey && event.ctrlKey);
+  });
 
   //
   // App

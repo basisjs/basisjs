@@ -192,6 +192,10 @@ basis.require('basis.ui.form');
 
   widget.form = form;
   widget.templateSource = templateSource;
+  widget.setSource = function(source){
+    form.setDelegate();
+    form.firstChild.update({ content: source });
+  }
 
   return widget;
 
