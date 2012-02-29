@@ -101,23 +101,27 @@ basis.require('basis.ui.tree');
   * @class
   */
   var AttributeValuePart = UINode.subclass({
-    template: '<b>part</b>'
+    template: 'file:templates/tokenView/attributeValuePart.tmpl',
+
+    binding: {
+      text: 'data:'
+    }
   });
 
 
  /**
   * @class
   */
-  var AttributeValueClass = UINode.subclass(AttributeValuePart, {
-    
+  var AttributeClassBinding = AttributeValuePart.subclass({
+    template: 'file:templates/tokenView/attributeClassBinding.tmpl'
   });
 
 
  /**
   * @class
   */
-  var AttributeValueBinding = UINode.subclass(AttributeValuePart, {
-    
+  var AttributeValueBinding = AttributeValuePart.subclass({
+    template: 'file:templates/tokenView/attributeValueBinding.tmpl'
   });
 
 
@@ -145,8 +149,60 @@ basis.require('basis.ui.tree');
     childClass: AttributeValuePart,
 
     init: function(config){
+      var attrParts = [];
+      var attrValue = this[ATTR_VALUE];
+      var attrName = this[ATTR_NAME];
+      var bindings = this[TOKEN_BINDINGS];
+      var addValue = !bindings;
+
+      if (bindings)
+      {
+        if (attrName == 'class')
+        {
+          if (attrValue)
+            addValue = true;
+
+          var list = bindings[0];
+          for (var b = 0; b < list.length; b++)
+            for (var p = 0; p < bindings[b + 1].length; p++)
+              attrParts.push(new AttributeClassBinding({
+                data: {
+                  text: bindings[b + 1][p] + '{' + list[b] + '}'
+                }
+              }));
+        }
+        else
+        {
+          var dict = bindings[0];
+          var list = bindings[1];
+          for (var b = 0; b < list.length; b++)
+          {
+            if (typeof list[b] == 'string')
+              attrParts.push(new AttributeValuePart({
+                data: {
+                  text: list[b]
+                }
+              }));
+            else
+              attrParts.push(new AttributeValueBinding({
+                data: {
+                  text: '{' + dict[list[b]] + '}'
+                }
+              }));
+          }
+        }
+      }
+
+      if (addValue && attrValue)
+        attrParts.unshift(new AttributeValuePart({
+          data: {
+            text: attrValue
+          }
+        }));
+
+      this.childNodes = attrParts;
+
       UIContainer.prototype.init.call(this, config);
-      //this.setChildNodes([{}, {}])
     }
   });
 

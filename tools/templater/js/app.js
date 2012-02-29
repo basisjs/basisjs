@@ -19,25 +19,35 @@
   var widgetRoot = 'js/';
   var widgetSuffix = '.widget.js';
 
-  function widget(widgetName){
-    var url = widgetRoot + widgetName + widgetSuffix;
+  var compileWidget = global.execScript || function(scriptText){
+    return global["eval"].call(global, scriptText);
+  };
 
+  function widget(widgetName, lazy){
     if (widgetName in widgets == false)
     {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', url, false);
-      xhr.send('');
-      if (xhr.status == 200)
+      if (lazy === false)
       {
-        // reserve name
-        widgets[widgetName] = undefined;
+        var url = widgetRoot + widgetName + widgetSuffix;
 
-        (global.execScript || function(scriptText){
-          widgets[widgetName] = global["eval"].call(global, scriptText + '//@ sourceURL=' + url);
-        })(xhr.responseText);
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, false);
+        xhr.send('');
+
+        if (xhr.status == 200)
+        {
+          // reserve widget name
+          widgets[widgetName] = undefined;
+          widgets[widgetName] = compileWidget(xhr.responseText + '//@ sourceURL=' + url);
+        }
+        else
+          throw 'Widget `' + widgetName + '`not found (url: ' + url + ')';
       }
       else
-        throw 'Widget `' + widgetName + '`not found (url: ' + url + ')';
+        widgets[widgetName] = Function.lazyInit(function(){
+          delete widgets[widgetName];
+          return widget(widgetName, false);
+        });
     }
 
     return widgets[widgetName];
@@ -48,23 +58,36 @@
   // import names
   //
 
+  var editor = widget('editor', false);
+  var tokenView = widget('tokenView', false);
   var filelist = widget('filelist');
-  var editor = widget('editor');
-  var tokenView = widget('tokenView');
+  var fsobserver = basis.devtools;
 
   //
   // main part
   //
 
-  // tree.selection -> editor
-  filelist.tree.selection.addHandler({
-    datasetChanged: function(selection, delta){
-      this.setDelegate(selection.pick());
-    }
-  }, editor);
-
   // editor -> tokenView
   editor.templateSource.addLink(tokenView, tokenView.setSource);
+
+  // fsobserver -> app
+  fsobserver.isOnline.addLink(null, function(value){
+    if (value)
+      initFilelist();
+  });
+
+  var initFilelist = Function.runOnce(function(){
+    // add filelist into app
+    app.insertBefore(filelist(), tokenView);
+
+    // tree.selection -> editor
+    filelist().tree.selection.addHandler({
+      datasetChanged: function(selection, delta){
+        this.setDelegate(selection.pick());
+      }
+    }, editor);
+  });
+
 
   //
   // App
@@ -74,7 +97,6 @@
     id: 'Layout',
     container: document.body,
     childNodes: [
-      filelist,
       tokenView,
       editor
     ]

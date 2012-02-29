@@ -1,7 +1,12 @@
 
-  <span>&#32;
+  <span>
+    &#32;
     <span class="Attribute {selected} {hasValue} {isEvent}">
       <span class="AttributeTitle">{name}</span>
-      <span class="AttributeValue">="{value}<!--{childNodesHere}-->"</span>
+      <span class="AttributeValue">
+        ="
+        <span{childNodesElement} class="AttributeValueList"/>
+        "
+      </span>
     </span>
   </span>

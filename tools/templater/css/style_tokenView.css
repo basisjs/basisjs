@@ -109,10 +109,17 @@
   {
     font-weight: bold;
   }
+  #Viewer .closeTag
+  {
+    display: none;
+  }
+  #Viewer .closeTag.hasChilds
+  {
+    display: block;
+  }
 
 
-  #Viewer .ReferenceList,
-  #Viewer .AttributeList
+  #Viewer .ReferenceList
   {
     display: inline-block;
   }
@@ -146,7 +153,6 @@
   #Viewer .AttributeList
   {
     color: #333;
-    margin-left: .5em;
   }
   #Viewer .Attribute
   {
@@ -156,6 +162,22 @@
   #Viewer .AttributeValue
   {
     display: none;
+  }
+  #Viewer .templater-AttributeValuePart
+  {
+    margin-right: 1ex;
+  }
+  #Viewer .templater-AttributeValuePart:last-child
+  {
+    margin-right: 0;
+  }
+  #Viewer .templater-AttributeValueBinding,
+  #Viewer .templater-AttributeClassBinding
+  {
+    background: #CDEB8B;
+    padding: 2px .2em;
+    border-radius: 2px;
+    text-shadow: 0 1px rgba(255,255,255,.75);
   }
   #Viewer .Attribute.hasValue .AttributeValue
   {

@@ -112,6 +112,8 @@
   var fileTree = new nsTree.Tree({
     template: 'file:templates/filelist/tree.tmpl',
 
+    dataSource: fsobserver.filesByFolder.getSubset('../templater', true),
+
     action: {
       focus: function(){
         classList(widget.element).add('focus');
@@ -156,22 +158,17 @@
   // link with fsobserver
   //
 
-  fsobserver.isReady.addLink(widget, function(value){
-    if (value)
-    {
-      //app.insertBefore(templatesPanel, app.firstChild)
-      fileTree.setDataSource(fsobserver.filesByFolder.getSubset('../templater', true));
-    }
-
-    classList(this.element).bool('not-active', !value);
-  });
-
   fsobserver.isOnline.addLink(fileTree, function(value){
     if (value)
       this.enable();
     else
       this.disable();
   });
+
+  fsobserver.isReady.addLink(widget, function(value){
+    classList(this.element).bool('not-active', !value);
+  });
+
 
   //
   // export names
