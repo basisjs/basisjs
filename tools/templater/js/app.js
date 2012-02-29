@@ -21,23 +21,26 @@
 
   function widget(widgetName){
     var url = widgetRoot + widgetName + widgetSuffix;
-    var result = widgets[widgetName];
-    if (result)
-      return result;
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, false);
-    xhr.send('');
-    if (xhr.status == 200)
+    if (widgetName in widgets == false)
     {
-      (global.execScript || function(scriptText){
-        result = global["eval"].call(global, scriptText + '//@ sourceURL=' + url);
-      })(xhr.responseText);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, false);
+      xhr.send('');
+      if (xhr.status == 200)
+      {
+        // reserve name
+        widgets[widgetName] = undefined;
 
-      return widgets[widgetName] = result;
+        (global.execScript || function(scriptText){
+          widgets[widgetName] = global["eval"].call(global, scriptText + '//@ sourceURL=' + url);
+        })(xhr.responseText);
+      }
+      else
+        throw 'Widget `' + widgetName + '`not found (url: ' + url + ')';
     }
-    else
-      throw 'Widget `' + widgetName + '`not found (url: ' + url + ')';
+
+    return widgets[widgetName];
   }
 
 

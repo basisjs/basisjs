@@ -10,7 +10,6 @@ basis.require('basis.ui.tree');
 
   'use strict';
 
-
   //
   // import names
   //
@@ -78,12 +77,10 @@ basis.require('basis.ui.tree');
           return object.data[TOKEN_REFS];
         },
         instanceOf: UIContainer.subclass({
-          template:
-            '<span class="ReferenceList" />',
+          template: 'file:templates/tokenView/referenceList.tmpl',
 
           childClass: {
-            template:
-              '<span class="Reference {selected} {disabled}">{title}</span>',
+            template: 'file:templates/tokenView/reference.tmpl',
 
             binding: {
               title: 'title'
@@ -128,7 +125,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var Attribute = UIContainer.subclass({
-    template: 'file:templates/attribute.tmpl',
+    template: 'file:templates/tokenView/attribute.tmpl',
 
     binding: {
       name: function(object){
@@ -158,7 +155,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var AttributeList = UIContainer.subclass({
-    template: 'file:templates/attributeList.tmpl',
+    template: 'file:templates/tokenView/attributeList.tmpl',
 
     childClass: Attribute/*,
 
@@ -173,7 +170,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var TagNode = TemplateNode.subclass({
-    template: 'file:templates/tagNode.tmpl',
+    template: 'file:templates/tokenView/tagNode.tmpl',
 
     binding: {
       attributeList: 'satellite:',
@@ -204,7 +201,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var TextNode = TemplateNode.subclass({
-    template: 'file:templates/textNode.tmpl',
+    template: 'file:templates/tokenView/textNode.tmpl',
 
     binding: {
       value: function(object){
@@ -218,7 +215,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var CommentNode = TemplateNode.subclass({
-    template: 'file:templates/commentNode.tmpl',
+    template: 'file:templates/tokenView/commentNode.tmpl',
 
     binding: {
       title: function(object){
@@ -243,8 +240,7 @@ basis.require('basis.ui.tree');
   }
 
   var tree = new nsTree.Tree({
-    template:
-      '<ul tabindex="0" class="devtools-templateTree" event-keydown="keydown" event-focus="focus" event-blur="blur" />',
+    template: 'file:templates/tokenView/tree.tmpl',
 
     action: {
       focus: function(){

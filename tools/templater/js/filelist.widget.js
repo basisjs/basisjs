@@ -5,6 +5,7 @@
   basis.require('basis.ui.tree');
 
 (function(basis){
+
   'use strict';
 
   //
@@ -109,15 +110,14 @@
   //
 
   var fileTree = new nsTree.Tree({
-    template:
-      '<ul tabindex="0" class="devtools-templateFileList" event-keydown="keydown" event-focus="focus" event-blur="blur" />',
+    template: 'file:templates/filelist/tree.tmpl',
 
     action: {
       focus: function(){
-        classList(this.element.parentNode.parentNode).add('focus');
+        classList(widget.element).add('focus');
       },
       blur: function(){
-        classList(this.element.parentNode.parentNode).remove('focus');
+        classList(widget.element).remove('focus');
       }
     },
 
@@ -164,6 +164,13 @@
     }
 
     classList(this.element).bool('not-active', !value);
+  });
+
+  fsobserver.isOnline.addLink(fileTree, function(value){
+    if (value)
+      this.enable();
+    else
+      this.disable();
   });
 
   //

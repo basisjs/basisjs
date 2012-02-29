@@ -175,6 +175,7 @@
   basis.namespace(namespace).extend({
     isReady: isReady,
     isOnline: isOnline,
+    connectionState: connectionState,
 
     File: File,
     filesByFolder: filesByFolder

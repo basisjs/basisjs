@@ -8,6 +8,7 @@ basis.require('basis.ui');
 basis.require('basis.ui.form');
 
 (function(basis){
+
   'use strict';
 
   //

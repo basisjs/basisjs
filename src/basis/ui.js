@@ -374,15 +374,18 @@ basis.require('basis.html');
             binding.sync.call(this);
           }
 
+          for (var child = this.lastChild; child; child = child.previousSibling)
+            this.insertBefore(child, child.nextSibling);
+
           if (oldElement && this.element && oldElement !== this.element)
           {
             var parentNode = oldElement && oldElement.parentNode;
             if (parentNode)
               parentNode.replaceChild(this.element, oldElement);
-          }
 
-          for (var child = this.lastChild; child; child = child.previousSibling)
-            this.insertBefore(child, child.nextSibling);
+            // ??? fire event
+            this.event_templateChanged(this);
+          }
 
           this.templateBinding_ = binding;
         }
@@ -447,10 +450,9 @@ basis.require('basis.html');
               parentNode.removeChild(oldElement);
           }
 
-
           // ??? fire event
-          if (oldTemplate && template)
-            this.event_templateChanged(this);
+          //if (oldTemplate && template)
+          //  this.event_templateChanged(this);
         }
       },
 
