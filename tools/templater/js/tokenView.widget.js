@@ -226,7 +226,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var TagNode = TemplateNode.subclass({
-    template: 'file:templates/tokenView/tagNode.tmpl',
+    template: 'file:templates/tokenView/tag.tmpl',
 
     binding: {
       attributeList: 'satellite:',
@@ -257,7 +257,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var TextNode = TemplateNode.subclass({
-    template: 'file:templates/tokenView/textNode.tmpl',
+    template: 'file:templates/tokenView/text.tmpl',
 
     binding: {
       value: function(object){
@@ -271,7 +271,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var CommentNode = TemplateNode.subclass({
-    template: 'file:templates/tokenView/commentNode.tmpl',
+    template: 'file:templates/tokenView/comment.tmpl',
 
     binding: {
       title: function(object){

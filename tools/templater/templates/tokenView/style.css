@@ -67,7 +67,7 @@
 
   #Viewer .devtools-templateNode-Title
   {
-    padding: .1em .5em;
+    padding: 1px;
     font-size: 90%;
     line-height: 1.6;
     cursor: pointer;

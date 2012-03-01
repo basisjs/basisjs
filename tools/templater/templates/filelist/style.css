@@ -5,8 +5,8 @@
     float: left;
     margin-right: 5px;
     width: 15%;
-      -webkit-transition: width .5s, opacity 1.5s;
-    transition: width .5s, opacity 1.5s;
+    /*  -webkit-transition: width .5s, opacity 1.5s;
+    transition: width .5s, opacity 1.5s;*/
   }
   #TemplateList.focus
   {

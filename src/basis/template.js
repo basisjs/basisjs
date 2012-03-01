@@ -88,6 +88,7 @@ basis.require('basis.dom.event');
     var result = [];
     var tagStack = [];
     var lastTag = { childs: result };
+    var sourceText;
     var token;
     var bufferPos;
     var startPos;
@@ -101,7 +102,7 @@ basis.require('basis.dom.event');
     var pos = 0;
     var m;
 
-    source = source.trim();
+    //source = source.trim();
 
     try {
       while (pos < source.length || state != TEXT)
@@ -123,7 +124,7 @@ basis.require('basis.dom.event');
           if (token = lastTag.childs.pop())
           {
             if (token.type == TYPE_TEXT && !token.refs)
-              textStateEndPos -= token.value.length;
+              textStateEndPos -= 'len' in token ? token.len : token.value.length;
             else
               lastTag.childs.push(token);
           }
@@ -144,15 +145,16 @@ basis.require('basis.dom.event');
 
             if (textStateEndPos != textEndPos)
             {
-              token = (
-                textStateEndPos == startPos
-                  ? m[1]
-                  : source.substring(textStateEndPos, textEndPos)
-              ).replace(/\s*(\r\n?|\n\r?)\s*/g, '');
+              sourceText = textStateEndPos == startPos
+                ? m[1]
+                : source.substring(textStateEndPos, textEndPos)
+
+              token = sourceText.replace(/\s*(\r\n?|\n\r?)\s*/g, '');
 
               if (token)
                 lastTag.childs.push({
                   type: TYPE_TEXT,
+                  len: sourceText.length,
                   value: token
                 });
             }
