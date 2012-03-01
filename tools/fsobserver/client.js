@@ -86,7 +86,7 @@
         console.log('file saved', data);
       });
       socket.on('filelist', function (data) {
-        console.log('filelist', data);
+        console.log('filelist', data.length + ' files');
         File.all.sync(data);
       });
       socket.on('error', function (data) {
@@ -109,42 +109,7 @@
     }
   });
 
-  var contentWatchers = new basis.data.Dataset({
-    handler: {
-      datasetChanged: function(dataset, delta){
-        var array;
-
-        if (isOnline.value)
-        {
-          if (array = delta.inserted)
-            for (var i = 0; i < array.length; i++)
-              socket.emit('watchFileContent', array[i].data.filename);
-
-          if (array = delta.deleted)
-            for (var i = 0; i < array.length; i++)
-              socket.emit('unwatchFileContent', array[i].data.filename);
-
-        }
-      }
-    }
-  });
-
-  isOnline.addLink(contentWatchers, function(value){
-    if (value)
-    {
-      var watchers = this.getItems();
-      for (var i = 0; i < watchers.length; i++)
-        socket.emit('watchFileContent', watchers[i].data.filename);
-    }
-  });
-
   File.entityType.entityClass.extend({
-    event_subscribersChanged: function(){
-      if (this.subscriberCount)
-        contentWatchers.add([this]);
-      else
-        contentWatchers.remove([this]);
-    },
     save: function(){
       if (this.modified)
         if (isOnline.value)
@@ -167,6 +132,80 @@
     }
   });
 
+  var files = new nsDataset.Subset({
+    source: File.all,
+    rule: function(object){
+      return object.data.type == 'file';
+    }
+  });
+
+  var filesByType = new nsDataset.Split({
+    source: files,
+    rule: function(object){
+      return object.data.filename.split('.').pop();
+    }
+  });
+
+
+  var templateUpdateHandler = {
+    update: function(file, delta){
+      if ('filename' in delta || 'content' in delta)
+      {
+        var tempalteFile = basis.template.filesMap[this.data.filename.replace('../templater/', '')];
+        if (tempalteFile)
+          tempalteFile.update(this.data.content);
+      }
+    }
+  };
+
+  filesByType.getSubset('tmpl', true).addHandler({
+    datasetChanged: function(dataset, delta){
+      var array;
+
+      if (array = delta.inserted)
+        for (var i = 0; i < array.length; i++)
+          array[i].addHandler(templateUpdateHandler);
+
+      if (array = delta.deleted)
+        for (var i = 0; i < array.length; i++)
+          array[i].removeHandler(templateUpdateHandler);
+    }
+  });
+
+  var styleUpdateHandler = {
+    update: function(file, delta){
+      if ('filename' in delta || 'content' in delta)
+      {
+        var styleSheets = document.styleSheets;
+        var filename = this.data.filename.replace('../templater/', '');
+        var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
+        for (var i = 0; i < styleSheets.length; i++)
+        {
+          var styleUrl = (styleSheets[i].href || '').replace(relBaseRx, '').replace(/\?.+$/, '');
+          console.log(styleUrl, filename);
+          if (styleUrl == filename)
+          {
+            styleSheets[i].ownerNode.href = filename + '?' + Math.random();
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  filesByType.getSubset('css', true).addHandler({
+    datasetChanged: function(dataset, delta){
+      var array;
+
+      if (array = delta.inserted)
+        for (var i = 0; i < array.length; i++)
+          array[i].addHandler(styleUpdateHandler);
+
+      if (array = delta.deleted)
+        for (var i = 0; i < array.length; i++)
+          array[i].removeHandler(styleUpdateHandler);
+    }
+  });
 
   //
   // export names
@@ -178,7 +217,8 @@
     connectionState: connectionState,
 
     File: File,
-    filesByFolder: filesByFolder
+    filesByFolder: filesByFolder,
+    filesByType: filesByType
   });
 
 })();

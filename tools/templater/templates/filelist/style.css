@@ -20,9 +20,14 @@
     opacity: 0;
   }
 
-  #TemplateList .Basis-TreeNode.modified .Basis-TreeNode-Caption
+  #TemplateList .devtools-fileNode-modified
   {
-    background-image: url(../img/modified.png);
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 16px;
+    height: 20px;
+    background: url(../../img/modified.png) no-repeat center;
   }
 
 
@@ -46,4 +51,9 @@
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  #TemplateList .fileType-tmpl .Basis-TreeNode-Caption
+  {
+    background-image: url(../../img/file-tmpl.png);
   }

@@ -159,4 +159,39 @@
 
   editor.form.firstChild.tmpl.field.focus();
 
+  /*'addRule deleteRule insertRule removeRule'.qw().forEach(function(methodName){
+    var realMethod = CSSStyleSheet.prototype[methodName];
+    CSSStyleSheet.prototype[methodName] = function(){
+      console.log(methodName, arguments);
+      realMethod.apply(this, arguments);
+    }
+  })*/
+
+  //setTimeout(function(){
+  (function(){
+    var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
+
+    function linearStyleSheets(styleSheet){
+      var rules = styleSheet.rules;
+      for (var i = rules.length, rule; i --> 0;)
+      {
+        var rule = rules[i];
+        if (rule.type == 3)
+        {
+          var url = rule.styleSheet.href.replace(relBaseRx, '');
+          var linkElement = basis.dom.createElement('link[rel="stylesheet"][type="text/css"][href="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : ''));
+          document.head.insertBefore(
+            linkElement,
+            styleSheet.ownerNode
+          );
+          styleSheet.removeRule(i);
+          linearStyleSheets(linkElement.sheet);
+        }
+      }
+    }
+
+    Array.from(document.styleSheets).forEach(linearStyleSheets);
+  })()
+  //}, 1000);
+
 })(basis, this);

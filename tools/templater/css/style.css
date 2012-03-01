@@ -1,7 +1,7 @@
 
-  @import 'style_editor.css';
-  @import 'style_tokenView.css';
-  @import 'style_templateList.css';
+  @import '../templates/editor/style.css';
+  @import '../templates/tokenView/style.css';
+  @import '../templates/filelist/style.css';
 
   html,
   body

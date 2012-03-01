@@ -58,8 +58,17 @@
   * @class
   */
   var FileNode = nsTree.Node.subclass({
+    template: 'file:templates/filelist/fileNode.tmpl',
+
     binding: {
-      title: 'data:filename.split("/").slice(-1)'
+      title: 'data:filename.split("/").slice(-1)',
+      fileType: 'data:filename.split(".").pop()',
+      modified: {
+        events: 'targetChanged',
+        getter: function(node){
+          return node.target && node.target.modified ? 'modified' : '';
+        }
+      }
     },
 
     event_update: function(object, delta){
@@ -67,18 +76,15 @@
       updatedNodes.add([this]);
     },
 
-    templateUpdate: function(){
-      classList(this.element).bool('modified', this.target.modified);
-    },
-
     listen: {
       target: {
         rollbackUpdate: function(){
-          classList(this.element).bool('modified', this.target.modified);
+          this.tmpl.set('modified', this.binding.modified.getter(this));
         }
       }
     }
   });
+
 
  /**
   * @class

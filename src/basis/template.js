@@ -1393,8 +1393,8 @@ basis.require('basis.dom.event');
     buildHtml: buildHtml,
 
     filesMap: tmplFilesMap,
-    resolveObjectById: function(){
-      return tmplNodeMap[refId]
+    resolveObjectById: function(refId){
+      return tmplNodeMap[refId];
     }
   });
 

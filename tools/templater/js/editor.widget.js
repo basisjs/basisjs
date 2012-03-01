@@ -42,14 +42,7 @@ basis.require('basis.ui.form');
     var newContent = this.getValue();
 
     if (this.target)
-    {
-      var file = nsTemplate.filesMap[this.data.filename.replace('../templater/', '')];
-
       this.target.update({ content: newContent }, true);
-
-      if (file)
-        file.update(newContent);
-    }
 
     templateSource.set(newContent);
   }

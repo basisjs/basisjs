@@ -39,8 +39,8 @@ var debug = true;
 var createCallback = function(filename, fileType, lastUpdate){
   io.sockets.emit('newFile', { filename: filename, type: fileType, lastUpdate: lastUpdate });
 }
-var updateCallback = function(filename, lastUpdate){
-  io.sockets.emit('updateFile', { filename: filename, lastUpdate: lastUpdate });
+var updateCallback = function(fileInfo){
+  io.sockets.emit('updateFile', fileInfo);
 }
 var deleteCallback = function(filename){
   io.sockets.emit('deleteFile', { filename: filename });
@@ -55,18 +55,20 @@ var fsWatcher = (function(){
       if (!err)
       {
         var fileInfo = fileMap[filename];
-        var listeners = fileInfo.listeners;
+        var newContent = String(data).replace(/\r\n?|\n\r?/g, '\n');
 
-        fileInfo.content = data.replace(/\r\n?|\n\r?/g, '\n');
+        var newFileInfo = {
+          filename: filename,
+          lastUpdate: fileInfo.mtime
+        };
 
-        for (var i = 0; i < listeners.length; i++)
+        if (newContent !== fileInfo.content)
         {
-          listeners[i].emit('updateFile', {
-            filename: filename,
-            lastUpdate: fileInfo.mtime,
-            content: fileInfo.content
-          });
+          fileInfo.content = newContent;
+          newFileInfo.content = newContent;
         }
+
+        updateCallback(newFileInfo);
       }
       else
         console.log('   \033[31merror of file read (' + filename + '): ' + err + ' \033[39m');
@@ -100,19 +102,20 @@ var fsWatcher = (function(){
 
           if (fileType == 'dir')
             lookup(filename);
+          else
+            readFile(filename);
         }
         else
         {
-          if (stats.mtime - fileMap[filename].mtime)
+          if (fileMap[filename].type == 'file' && stats.mtime - fileMap[filename].mtime)
           {
             fileInfo.mtime = stats.mtime;
 
             // event!! file modified
-            updateCallback(filename, stats.mtime);
+            //updateCallback(filename, stats.mtime);
             if (debug) console.log(filename + ' - changed'); // file changed
 
-            if (fileInfo.listeners.length)
-              readFile(filename);
+            readFile(filename);
           }
         }
 
@@ -215,7 +218,6 @@ var fsWatcher = (function(){
     unwatch: function(path){
       if (dirMap[path])
       {
-        console.log(Object.keys(dirMap));
         stopWatch(path)
         console.info('Folder `' + path + '` is NOT observing now');
       }
@@ -228,7 +230,8 @@ var fsWatcher = (function(){
         result.push({
           filename: filename,
           type: fileMap[filename].type,
-          lastUpdate: fileMap[filename].mtime
+          lastUpdate: fileMap[filename].mtime,
+          content: fileMap[filename].content
         });
 
       return result;
@@ -242,14 +245,11 @@ var fsWatcher = (function(){
       {
         if (arrayAdd(fileInfo.listeners, listener))
         {
-          if (fileInfo.listeners.length == 1)
-            readFile(filename);
-          else
-            listener.emit('updateFile', {
-              filename: filename,
-              lastUpdate: fileInfo.mtime,
-              content: fileInfo.content
-            });
+          listener.emit('updateFile', {
+            filename: filename,
+            lastUpdate: fileInfo.mtime,
+            content: fileInfo.content
+          });
 
           return true;
         }
@@ -257,16 +257,10 @@ var fsWatcher = (function(){
     },
     removeContentObserver: function(filename, listener){
       var fileInfo = fileMap[filename];
-      if (fileInfo)
-      {
-        if (arrayRemove(fileInfo.listeners, listener))
-        {
-          if (!fileInfo.listeners.length)
-            fileInfo.content = null;
 
+      if (fileInfo)
+        if (arrayRemove(fileInfo.listeners, listener))
           return true;
-        }
-      }
     }
   }
 
@@ -308,7 +302,7 @@ io.sockets.on('connection', function(socket){
     if (fsWatcher.removeContentObserver(filename, socket))
     {
       arrayRemove(socket.files, filename);
-      socket.emit('updateFile', { filename: filename, content: null });
+      //socket.emit('updateFile', { filename: filename, content: null });
     }
   });
   socket.files = [];
