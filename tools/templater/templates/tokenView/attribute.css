@@ -1,4 +1,8 @@
 
+  /* comment */
+
+  @import 'foo.css';
+
   #Viewer .AttributeList
   {
     color: #333;

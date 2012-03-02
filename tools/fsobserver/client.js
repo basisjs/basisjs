@@ -176,9 +176,25 @@
     update: function(file, delta){
       if ('filename' in delta || 'content' in delta)
       {
-        var styleSheets = document.styleSheets;
-        var filename = this.data.filename.replace('../templater/', '');
-        var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
+        var url = this.data.filename.replace('../templater/', '');
+        var styleEl = cssFileMap[url];
+
+        if (styleEl)
+        {
+          var newStyleEl = styleEl.cloneNode(false);
+          var styleContent = this.data.content.replace(/(@import\s*\(?\s*\')([^']+)/g, '$1' + newStyleEl.getAttribute('base') + '$2');
+
+          newStyleEl.appendChild(document.createTextNode(styleContent));
+          document.head.appendChild(newStyleEl);
+
+          console.log(newStyleEl.sheet);
+
+          cssFileMap[url] = newStyleEl;
+          basis.dom.replace(styleEl, newStyleEl);
+
+          linearStyleSheet(newStyleEl.sheet, newStyleEl);
+        }
+        /*var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
         for (var i = 0; i < styleSheets.length; i++)
         {
           var styleUrl = (styleSheets[i].href || '').replace(relBaseRx, '').replace(/\?.+$/, '');
@@ -188,7 +204,7 @@
             styleSheets[i].ownerNode.href = filename + '?' + Math.random();
             return;
           }
-        }
+        }*/
       }
     }
   };
@@ -205,6 +221,42 @@
         for (var i = 0; i < array.length; i++)
           array[i].removeHandler(styleUpdateHandler);
     }
+  });
+
+  var cssFileMap = {};
+  var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
+  function linearStyleSheet(styleSheet, insertPoint){
+    var rules = styleSheet.rules;
+    var result = [];
+
+    for (var i = rules.length, rule; i --> 0;)
+    {
+      var rule = rules[i];
+      if (rule.type == 3)
+      {
+        var url = rule.styleSheet.href.replace(relBaseRx, '');
+        if (!cssFileMap[url])
+        {
+          var importStyleEl = basis.dom.createElement(
+            'style[type="text/css"][base="' + url.replace(/(\/)[^\/]+$/, '$1') + '"][originalSrc="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : '')
+          );
+          cssFileMap[url] = importStyleEl;
+          insertPoint.parentNode.insertBefore(importStyleEl, insertPoint);
+          importStyleEl.appendChild(document.createTextNode(linearStyleSheet(rule.styleSheet, importStyleEl)));
+        }
+        styleSheet.removeRule(i);
+      }
+      else
+      {
+        result.push(rules[i].cssText);
+      }
+    }
+
+    return result.join('\n');        
+  }
+
+  Array.from(document.styleSheets).forEach(function(styleSheet){
+    linearStyleSheet(styleSheet, styleSheet.ownerNode);
   });
 
   //

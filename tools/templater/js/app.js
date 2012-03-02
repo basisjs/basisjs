@@ -86,17 +86,54 @@
         this.setDelegate(selection.pick());
       }
     }, editor);
+
+  var cssFileMap = {};
+  (function(){
+    var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
+
+    function linearStyleSheets(styleSheet, insertPoint){
+      var rules = styleSheet.rules;
+      var result = [];
+
+      for (var i = rules.length, rule; i --> 0;)
+      {
+        var rule = rules[i];
+        if (rule.type == 3)
+        {
+          var url = rule.styleSheet.href.replace(relBaseRx, '');
+          var importStyleEl = basis.dom.createElement(
+            'style[type="text/css"][originalSrc="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : '')
+          );
+          cssFileMap[url] = importStyleEl;
+          insertPoint.parentNode.insertBefore(importStyleEl, insertPoint);
+          importStyleEl.appendChild(document.createTextNode(linearStyleSheets(rule.styleSheet, importStyleEl)));
+          styleSheet.removeRule(i);
+        }
+        else
+        {
+          result.push(rules[i].cssText);
+        }
+      }
+
+      return result.join('\n');        
+    }
+
+    Array.from(document.styleSheets).forEach(function(styleSheet){
+      linearStyleSheets(styleSheet, styleSheet.ownerNode);
+    });
+  })();
+
   });
 
   function updatePickupElement(value, oldValue){
     if (value)
-      basis.cssom.setStyle(value.element, {
+      basis.cssom.setStyle(value, {
         'box-shadow': '0 0 15px rgba(0,128,0,.75)',
         'outline': '2px solid rgba(0,128,0,.75)',
         'background-color': 'rgba(0,128,0,.5)'
       });
     if (oldValue)
-      basis.cssom.setStyle(oldValue.element, {
+      basis.cssom.setStyle(oldValue, {
         'box-shadow': '',
         'outline': '',
         background: ''
@@ -117,7 +154,7 @@
         updatePickupElement(value, oldValue);
     }
   }, function(value){
-    return value && value.template instanceof basis.template.Template ? value : null;
+    return value && value.element && value.template instanceof basis.template.Template ? value : null;
   });
 
   basis.dom.event.addGlobalHandler('mousemove', function(event){
@@ -167,31 +204,5 @@
     }
   })*/
 
-  //setTimeout(function(){
-  (function(){
-    var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
-
-    function linearStyleSheets(styleSheet){
-      var rules = styleSheet.rules;
-      for (var i = rules.length, rule; i --> 0;)
-      {
-        var rule = rules[i];
-        if (rule.type == 3)
-        {
-          var url = rule.styleSheet.href.replace(relBaseRx, '');
-          var linkElement = basis.dom.createElement('link[rel="stylesheet"][type="text/css"][href="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : ''));
-          document.head.insertBefore(
-            linkElement,
-            styleSheet.ownerNode
-          );
-          styleSheet.removeRule(i);
-          linearStyleSheets(linkElement.sheet);
-        }
-      }
-    }
-
-    Array.from(document.styleSheets).forEach(linearStyleSheets);
-  })()
-  //}, 1000);
 
 })(basis, this);
