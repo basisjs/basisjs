@@ -1,8 +1,8 @@
 
-  @import 'bar.css';
+  @import url('bar.css');
 
   BODY
   {
-    font-size: 113%;
-    color: blue;
+    font-size: 114%;
+    color: green;
   }

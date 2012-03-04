@@ -416,8 +416,19 @@ basis.require('basis.dom.event');
     function namedCharReplace(m, token){
       if (!tokenMap[token])
       {
-        tokenElement.innerHTML = m;
-        tokenMap[token] = tokenElement.firstChild.nodeValue;
+        if (token.charAt(0) == '#')
+        {
+          tokenMap[token] = String.fromCharCode(
+            token.charAt(1) == 'x' || token.charAt(1) == 'X'
+              ? parseInt(token.substr(2), 16)
+              : token.substr(1)
+          );
+        }
+        else
+        {
+          tokenElement.innerHTML = m;
+          tokenMap[token] = tokenElement.firstChild ? tokenElement.firstChild.nodeValue : '';
+        }
       }
       return tokenMap[token];
     }

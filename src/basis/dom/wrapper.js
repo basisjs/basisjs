@@ -697,6 +697,36 @@ basis.require('basis.html');
       }
     },
 
+    setSatellite: function(key, satellite){
+      var oldSatellite = this.satellite[key];
+
+      if (satellite instanceof DataObject == false)
+        satellite = null;
+
+      if (oldSatellite != satellite && !this.satelliteConfig[key])
+      {
+        var satelliteListen = this.listen.satellite;
+
+        if (oldSatellite)
+        {
+          oldSatellite.setOwner(null);
+          if (satelliteListen)
+            oldSatellite.removeHandler(satelliteListen, this);
+        }
+
+        this.satellite[key] = satellite;
+
+        if (satellite)
+        {
+          satellite.setOwner(this);
+          if (satelliteListen)
+            satellite.addHandler(satelliteListen, this);
+        }
+
+        this.event_satelliteChanged(this, key, oldSatellite);
+      }
+    },
+
    /**
     * Adds the node newChild to the end of the list of children of this node. If the newChild is already in the tree, it is first removed.
     * @param {basis.dom.wrapper.AbstractNode} newChild The node to add.

@@ -5,7 +5,7 @@
     float: left;
     margin-right: 5px;
     width: 15%;
-    /*  -webkit-transition: width .5s, opacity 1.5s;
+    /*  -webkit-transition: width .5s, opacity 1.5s; 
     transition: width .5s, opacity 1.5s;*/
   }
   #TemplateList.focus
@@ -42,11 +42,11 @@
 
   #TemplateList .devtools-templateFileList
   {
-    position: absolute;
+    /*position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    left: 0;
+    left: 0;*/
     outline: none;
     margin: 0;
     padding: 0;

@@ -2,7 +2,6 @@
   #Editor
   {
     position: relative;
-    overflow: visible;
   }
   #Editor.focus
   {
@@ -13,7 +12,7 @@
     overflow: hidden;
   }
 
-  #Editor .Basis-FormContent
+  #TemplateEditor
   {
     position: absolute;
     top: 0;
@@ -21,26 +20,17 @@
     bottom: 0;
     left: 0;
   }
-
-  #Editor .Field-Source,
-  #Editor .Field-Source .Basis-Field-Container
-  {
-    height: 100%;
-  }
-  #Editor .Field-Source .Basis-Field-Container
-  {
-    background: white;
-    box-shadow: 0 0 8px rgba(128, 128, 128, .25) inset;
-  }
-  #Editor.focus .Field-Source .Basis-Field-Container
-  {
-    background-color2: white;
-  }
-  #Editor .Field-Source .Basis-Field-Title
+  #TemplateEditor .Basis-Field-Title
   {
     display: none;
   }
-  #Editor .Field-Source textarea
+  #TemplateEditor .Basis-Field-Container
+  {
+    height: 100%;
+    background: white;
+    box-shadow: 0 0 8px rgba(128, 128, 128, .25) inset;
+  }
+  #TemplateEditor TEXTAREA
   {
     margin: 0;
     padding: 2px;
@@ -59,7 +49,7 @@
       -webkit-transition: border-color .5s;
     transition: border-color .5s;
   }
-  #Editor .Field-Source textarea.modified
+  #TemplateEditor TEXTAREA.modified
   {
     border-color: rgba(200, 0, 0, .5);
   }

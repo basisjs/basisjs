@@ -19,9 +19,13 @@
   var widgetRoot = 'js/';
   var widgetSuffix = '.widget.js';
 
-  var compileWidget = global.execScript || function(scriptText){
-    return global["eval"].call(global, scriptText);
-  };
+  var compileWidget = 'eval' in global
+    ? function(scriptText){
+        return global["eval"].call(global, scriptText);
+      }
+    : function(scriptText){
+        return scriptText.toObject();
+      }
 
   function widget(widgetName, lazy){
     if (widgetName in widgets == false)
@@ -68,7 +72,7 @@
   //
 
   // editor -> tokenView
-  editor.templateSource.addLink(tokenView, tokenView.setSource);
+  editor.tmplSource.addLink(tokenView, tokenView.setSource);
 
   // fsobserver -> app
   fsobserver.isOnline.addLink(null, function(value){
@@ -78,61 +82,24 @@
 
   var initFilelist = Function.runOnce(function(){
     // add filelist into app
-    app.insertBefore(filelist(), tokenView);
+    app.setSatellite('filelist', filelist());
 
     // tree.selection -> editor
     filelist().tree.selection.addHandler({
       datasetChanged: function(selection, delta){
-        this.setDelegate(selection.pick());
+        this.setSourceFile(selection.pick());
       }
     }, editor);
-
-  var cssFileMap = {};
-  (function(){
-    var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
-
-    function linearStyleSheets(styleSheet, insertPoint){
-      var rules = styleSheet.rules;
-      var result = [];
-
-      for (var i = rules.length, rule; i --> 0;)
-      {
-        var rule = rules[i];
-        if (rule.type == 3)
-        {
-          var url = rule.styleSheet.href.replace(relBaseRx, '');
-          var importStyleEl = basis.dom.createElement(
-            'style[type="text/css"][originalSrc="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : '')
-          );
-          cssFileMap[url] = importStyleEl;
-          insertPoint.parentNode.insertBefore(importStyleEl, insertPoint);
-          importStyleEl.appendChild(document.createTextNode(linearStyleSheets(rule.styleSheet, importStyleEl)));
-          styleSheet.removeRule(i);
-        }
-        else
-        {
-          result.push(rules[i].cssText);
-        }
-      }
-
-      return result.join('\n');        
-    }
-
-    Array.from(document.styleSheets).forEach(function(styleSheet){
-      linearStyleSheets(styleSheet, styleSheet.ownerNode);
-    });
-  })();
-
   });
 
   function updatePickupElement(value, oldValue){
-    if (value)
+    if (value && value.element.nodeType == 1)
       basis.cssom.setStyle(value, {
         'box-shadow': '0 0 15px rgba(0,128,0,.75)',
         'outline': '2px solid rgba(0,128,0,.75)',
         'background-color': 'rgba(0,128,0,.5)'
       });
-    if (oldValue)
+    if (oldValue && oldValue.element.nodeType == 1)
       basis.cssom.setStyle(oldValue, {
         'box-shadow': '',
         'outline': '',
@@ -186,15 +153,30 @@
   //
 
   var app = new basis.ui.Container({
-    id: 'Layout',
     container: document.body,
+    template:
+      '<div id="Layout">' +
+        '<!--{filelist}-->' +
+        '<!--{tokenView}-->' +
+        '<!--{editor}-->' +
+      '</div>',
+
+    binding: {
+      filelist: 'satellite:',
+      tokenView: 'satellite:',
+      editor: 'satellite:'
+    },
+    satellite: {
+      tokenView: tokenView,
+      editor: editor
+    }/*
     childNodes: [
       tokenView,
       editor
-    ]
+    ]*/
   });
 
-  editor.form.firstChild.tmpl.field.focus();
+  editor.tmplEditor.tmpl.field.focus();
 
   /*'addRule deleteRule insertRule removeRule'.qw().forEach(function(methodName){
     var realMethod = CSSStyleSheet.prototype[methodName];

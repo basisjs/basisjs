@@ -20,8 +20,12 @@
   //
 
   var socket;
-  var isReady = new nsProperty.Property(false);
-  var isOnline = new nsProperty.Property(false);
+
+  var isReady_ = false;
+  var isOnline_ = false;
+
+  var isReady = new nsProperty.Property(isReady_);
+  var isOnline = new nsProperty.Property(isOnline_);
   var connectionState = new nsProperty.Property('offline', {
     change: function(state){
       console.log('connection state:', state);
@@ -50,15 +54,15 @@
     if (typeof io != 'undefined')
     {
       socket = io.connect(':8222');
-      isReady.set(true);
+      isReady.set(isReady_ = true);
 
       socket.on('connect', function(){
         connectionState.set('online');
-        isOnline.set(true);
+        isOnline.set(isOnline_ = true);
       });
       socket.on('disconnect', function(){
         connectionState.set('offline');
-        isOnline.set(false);
+        isOnline.set(isOnline_ = false);
       });
       socket.on('connecting', function(){
         connectionState.set('connecting');
@@ -112,7 +116,7 @@
   File.entityType.entityClass.extend({
     save: function(){
       if (this.modified)
-        if (isOnline.value)
+        if (isOnline_)
         {
           socket.emit('saveFile', this.data.filename, this.data.content);
         }
@@ -172,38 +176,78 @@
     }
   });
 
+
+  var linkQueue = [];
+  var linkQueueTimer;
+  function processLinkQueue(){
+    linkQueueTimer = clearTimeout(linkQueueTimer);
+
+    for (var i = linkQueue.length; i --> 0;)
+    {
+      var linkEl = linkQueue[i];
+      if (linkEl)
+      {
+        linkQueue.splice(i, 1);
+        linkEl.parentNode.removeChild(linkEl);
+      }
+    }
+
+    if (linkQueue.length)
+      linkQueueTimer = setTimeout(processLinkQueue, 1000/60);
+  }
+  function addUrlToQueue(url){
+    var linkEl = evalFrameDoc.createElement('link');
+    linkEl.rel = "stylesheet";
+    linkEl.type = "text/css";
+    linkEl.href = url + (url.indexOf('?') == -1 ? '?' : '&') + Math.random();
+    evalFrameDoc.head.appendChild(linkEl);
+    linkQueue.push(url);
+    if (!linkQueueTimer)
+      linkQueueTimer = setTimeout(processLinkQueue, 1000/60);
+  }
+
   var styleUpdateHandler = {
     update: function(file, delta){
       if ('filename' in delta || 'content' in delta)
       {
         var url = this.data.filename.replace('../templater/', '');
-        var styleEl = cssFileMap[url];
+        var fileInfo = styleSheetFileMap[url];
 
-        if (styleEl)
+        if (fileInfo)
         {
-          var newStyleEl = styleEl.cloneNode(false);
-          var styleContent = this.data.content.replace(/(@import\s*\(?\s*\')([^']+)/g, '$1' + newStyleEl.getAttribute('base') + '$2');
-
-          newStyleEl.appendChild(document.createTextNode(styleContent));
-          document.head.appendChild(newStyleEl);
-
-          console.log(newStyleEl.sheet);
-
-          cssFileMap[url] = newStyleEl;
-          basis.dom.replace(styleEl, newStyleEl);
-
-          linearStyleSheet(newStyleEl.sheet, newStyleEl);
-        }
-        /*var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
-        for (var i = 0; i < styleSheets.length; i++)
-        {
-          var styleUrl = (styleSheets[i].href || '').replace(relBaseRx, '').replace(/\?.+$/, '');
-          console.log(styleUrl, filename);
-          if (styleUrl == filename)
+          var rules = fileInfo.rules;
+          for (var i = 0; i < rules.length; i++)
           {
-            styleSheets[i].ownerNode.href = filename + '?' + Math.random();
-            return;
+            var rule = rules[i];
+            var styleSheet = rule.styleSheet;
+            var res = resolver.resolveCss(url, this.data.content);
+
+            var count = styleSheet.rules.length;
+            while (count --> 0)
+              styleSheet.removeRule(0);
+
+            for (var j = 0; j < res.rules.length; j++)
+            {
+              console.log(res.rules[j].cssText);
+              styleSheet.insertRule(res.rules[j].cssText, j);
+            }
           }
+
+          //document.body.className = document.body.className;
+        }
+
+        /*var styleInfo = cssFileMap[url];
+
+        if (styleInfo)
+        {
+          var res = resolver.resolveCss(url, this.data.content);
+          var styleEl = styleInfo.styleEl;
+          var newStyleEl = styleEl.cloneNode(false);
+
+          newStyleEl.appendChild(document.createTextNode(res.content.join('\n')));
+
+          cssFileMap[url].styleEl = newStyleEl;
+          basis.dom.replace(styleEl, newStyleEl);
         }*/
       }
     }
@@ -223,40 +267,139 @@
     }
   });
 
+
+
+
   var cssFileMap = {};
+  var styleSheetFileMap = {};
+  window.styleSheetFileMap = styleSheetFileMap;
+  var pathResolvers = {};
   var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
+
+  window.absToRel = function(path){
+    var abs = path.split(/\//);
+    var loc = location.href.replace(/\/[^\/]*$/, '').split(/\//);
+    var i = 0;
+
+    while (abs[i] == loc[i] && typeof loc[i] == 'string')
+      i++;
+
+    return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
+  }
+
   function linearStyleSheet(styleSheet, insertPoint){
     var rules = styleSheet.rules;
-    var result = [];
+    var imports = [];
+    var content = [];
 
     for (var i = rules.length, rule; i --> 0;)
     {
       var rule = rules[i];
       if (rule.type == 3)
       {
-        var url = rule.styleSheet.href.replace(relBaseRx, '');
+        //var url = rule.styleSheet.href.replace(relBaseRx, '');
+        var url = absToRel(rule.styleSheet.href);
+
+        if (!styleSheetFileMap[url])
+          styleSheetFileMap[url] = {
+            rules: []
+          };
+
+        styleSheetFileMap[url].rules.push(rule);
+
+        linearStyleSheet(rule.styleSheet);
+        /*
+
         if (!cssFileMap[url])
         {
-          var importStyleEl = basis.dom.createElement(
-            'style[type="text/css"][base="' + url.replace(/(\/)[^\/]+$/, '$1') + '"][originalSrc="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : '')
+          var res;
+          var newStyleEl = basis.dom.createElement(
+            'style[type="text/css"][sourceFile="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : '')
           );
-          cssFileMap[url] = importStyleEl;
-          insertPoint.parentNode.insertBefore(importStyleEl, insertPoint);
-          importStyleEl.appendChild(document.createTextNode(linearStyleSheet(rule.styleSheet, importStyleEl)));
+
+          cssFileMap[url] = {
+            styleEl: newStyleEl,
+            imports: []
+          };
+
+          // insert into body
+          insertPoint.parentNode.insertBefore(newStyleEl, insertPoint);
+          res = linearStyleSheet(rule.styleSheet, newStyleEl);
+          newStyleEl.appendChild(document.createTextNode(res.content));
         }
-        styleSheet.removeRule(i);
+
+        imports.push(url);
+        styleSheet.removeRule(i);*/
       }
       else
       {
-        result.push(rules[i].cssText);
+        content.push(rules[i].cssText);
       }
     }
 
-    return result.join('\n');        
+    return {
+      imports: imports,
+      content: content.join('\n')
+    };
   }
 
-  Array.from(document.styleSheets).forEach(function(styleSheet){
-    linearStyleSheet(styleSheet, styleSheet.ownerNode);
+
+  var evalFrameDoc;
+  //var resolver;
+  basis.dom.ready(function(){
+    document.body.appendChild(basis.dom.createElement({
+      description: 'iframe[src="resolver.html"][style="position:absolute;top:-100px;left:-100px;visibility:hidden;width:10px;height:10px;"]',
+      load: function(){
+        var doc = this.contentDocument;
+
+        var baseEl = doc.createElement('base');
+        doc.head.appendChild(baseEl);
+
+        var styleEl = doc.createElement('style');
+        doc.head.appendChild(styleEl);
+
+        var linkEl = doc.createElement('a');
+        doc.body.appendChild(linkEl);
+
+        window.resolver = {
+          resolvePath: function(base, path){
+            baseEl.href = base;
+            linkEl.href = path;
+
+            return linkEl.href;
+          },
+          resolveCss: function(path, cssText){
+            baseEl.href = path;
+            styleEl.innerHTML = cssText;
+
+            var rules = styleEl.sheet.rules;
+            var imports = [];
+            var content = [];
+            for (var i = 0; rule = rules[i]; i++)
+            {
+              if (rule.type == 3)  // @import rules
+              {
+                linkEl.href = rule.href;
+                imports.push(linkEl.href);
+                rule.absUrl = linkEl.href;
+              }
+              else
+                content.push(rule.cssText);
+            }
+
+            return {
+              rules: rules,
+              imports: imports,
+              content: content
+            }
+          }
+        };
+
+        Array.from(document.styleSheets).forEach(function(styleSheet){
+          linearStyleSheet(styleSheet, styleSheet.ownerNode);
+        });
+      }
+    }));
   });
 
   //
