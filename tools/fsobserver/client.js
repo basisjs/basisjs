@@ -215,6 +215,18 @@
 
         if (fileInfo)
         {
+          var res = resolver.resolveCss(url, this.data.content);
+
+          for (var i = 0, elem; elem = fileInfo.elems[i]; i++)
+          {
+            //elem.styleEl.innerHTML = res.content.join('\n');
+            var replaceStyleEl = elem.styleEl.cloneNode(false);
+            replaceStyleEl.appendChild(document.createTextNode(res.content.join('\n')))
+            basis.dom.replace(elem.styleEl, replaceStyleEl);
+            elem.styleEl = replaceStyleEl;
+          }
+
+          /*
           var rules = fileInfo.rules;
           for (var i = 0; i < rules.length; i++)
           {
@@ -231,7 +243,7 @@
               console.log(res.rules[j].cssText);
               styleSheet.insertRule(res.rules[j].cssText, j);
             }
-          }
+          }*/
 
           //document.body.className = document.body.className;
         }
@@ -288,56 +300,95 @@
   }
 
   function linearStyleSheet(styleSheet, insertPoint){
-    var rules = styleSheet.rules;
+    var rules = styleSheet.cssRules || styleSheet.rules;
     var imports = [];
     var content = [];
+
+    var sheetUrl = absToRel(styleSheet.href)
 
     for (var i = rules.length, rule; i --> 0;)
     {
       var rule = rules[i];
+      console.log(sheetUrl, rule.cssText);
       if (rule.type == 3)
       {
         //var url = rule.styleSheet.href.replace(relBaseRx, '');
+        if (rule.styleSheet)
+        {
         var url = absToRel(rule.styleSheet.href);
 
-        if (!styleSheetFileMap[url])
+        /*if (!styleSheetFileMap[url])
           styleSheetFileMap[url] = {
-            rules: []
-          };
-
-        styleSheetFileMap[url].rules.push(rule);
-
-        linearStyleSheet(rule.styleSheet);
-        /*
-
-        if (!cssFileMap[url])
-        {
-          var res;
-          var newStyleEl = basis.dom.createElement(
-            'style[type="text/css"][sourceFile="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : '')
-          );
-
-          cssFileMap[url] = {
-            styleEl: newStyleEl,
             imports: []
           };
 
-          // insert into body
-          insertPoint.parentNode.insertBefore(newStyleEl, insertPoint);
-          res = linearStyleSheet(rule.styleSheet, newStyleEl);
-          newStyleEl.appendChild(document.createTextNode(res.content));
-        }
+        if (!cssFileMap[url])
+        {
+        }*/
 
-        imports.push(url);
-        styleSheet.removeRule(i);*/
+        /*var res;
+        var importStyleEl = basis.dom.createElement(
+          'style[type="text/css"][sourceFile="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : '')
+        );*/
+
+        // insert into body
+        res = linearStyleSheet(rule.styleSheet, insertPoint);
+        imports.push(res.sheetInfo);
+        }
+        /*importStyleEl.appendChild(document.createTextNode(res.content));
+        insertPoint.parentNode.insertBefore(importStyleEl, insertPoint);
+
+        styleSheetFileMap[sheetUrl].elems.push({
+          url: sheetUrl,
+          styleEl: importStyleEl,
+          imports: res.imports
+        });
+
+        imports.push({
+          url: url,
+          styleEl: importStyleEl,
+          imports: res.imports
+        });*/
+
+        styleSheet.deleteRule(i);
       }
       else
       {
-        content.push(rules[i].cssText);
+        content.unshift(rules[i].cssText);
       }
     }
 
+    //
+    // insert new <style> element
+    //
+    var styleEl = basis.dom.createElement(
+      'style[type="text/css"][sourceFile="' + sheetUrl + '"]' + (styleSheet.media && styleSheet.media.mediaText ? '[media="' + styleSheet.media.mediaText + '"]' : ''),
+      content.join('\n')
+    );
+    var sheetInfo = {
+      url: sheetUrl,
+      styleEl: styleEl,
+      imports: imports
+    };
+
+    if (!styleSheetFileMap[sheetUrl])
+      styleSheetFileMap[sheetUrl] = {
+        elems: []
+      };
+
+    styleSheetFileMap[sheetUrl].elems.push(sheetInfo);
+
+    if (styleSheet.ownerNode)
+      basis.dom.replace(styleSheet.ownerNode, styleEl);
+    else
+      insertPoint.parentNode.insertBefore(styleEl, insertPoint);
+
+    //
+    // return result
+    //
+
     return {
+      sheetInfo: sheetInfo,
       imports: imports,
       content: content.join('\n')
     };
@@ -372,7 +423,7 @@
             baseEl.href = path;
             styleEl.innerHTML = cssText;
 
-            var rules = styleEl.sheet.rules;
+            var rules = styleEl.sheet.cssRules || styleEl.sheet.rules;
             var imports = [];
             var content = [];
             for (var i = 0; rule = rules[i]; i++)
@@ -396,7 +447,8 @@
         };
 
         Array.from(document.styleSheets).forEach(function(styleSheet){
-          linearStyleSheet(styleSheet, styleSheet.ownerNode);
+          if (styleSheet.ownerNode.tagName == 'LINK')
+            linearStyleSheet(styleSheet, styleSheet.ownerNode);
         });
       }
     }));
