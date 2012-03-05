@@ -766,8 +766,8 @@ basis.require('basis.event');
   //
 
   var KEYOBJECTMAP_MEMBER_HANDLER = {
-    destroy: function(){
-      delete this.map_[itemId];
+    destroy: function(object){
+      delete this.map_[object.itemId_];
     }
   };
 
@@ -814,6 +814,7 @@ basis.require('basis.event');
       if (!item && object)
       {
         item = this.map_[itemId] = this.create(key, object);
+        item.itemId_ = itemId;
         item.addHandler(KEYOBJECTMAP_MEMBER_HANDLER, this);
       }
 
