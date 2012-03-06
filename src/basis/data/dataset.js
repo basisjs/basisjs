@@ -1208,6 +1208,21 @@ basis.require('basis.data');
       return this.keyMap.resolve(sourceObject);
     },
 
+    /**
+    * @inheritDoc
+    */
+    setRule: function(rule){
+      if (typeof rule != 'function')
+        rule = $true;
+
+      if (this.rule !== rule)
+      {
+        this.rule = rule;
+        this.keyMap.keyGetter = rule;
+        return this.applyRule();
+      }
+    },
+
    /**
     * @inheritDoc
     */
