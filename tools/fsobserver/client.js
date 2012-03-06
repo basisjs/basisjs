@@ -58,7 +58,6 @@
 
       socket.on('connect', function(){
         connectionState.set('online');
-        isOnline.set(isOnline_ = true);
       });
       socket.on('disconnect', function(){
         connectionState.set('offline');
@@ -92,6 +91,7 @@
       socket.on('filelist', function (data) {
         console.log('filelist', data.length + ' files');
         File.all.sync(data);
+        isOnline.set(isOnline_ = true);
       });
       socket.on('error', function (data) {
         console.log('error:', data.operation, data.message);
@@ -177,33 +177,36 @@
   });
 
 
-  var linkQueue = [];
-  var linkQueueTimer;
-  function processLinkQueue(){
-    linkQueueTimer = clearTimeout(linkQueueTimer);
+  var linkEl = document.createElement('A');
+  document.body.appendChild(linkEl);
 
-    for (var i = linkQueue.length; i --> 0;)
-    {
-      var linkEl = linkQueue[i];
-      if (linkEl)
-      {
-        linkQueue.splice(i, 1);
-        linkEl.parentNode.removeChild(linkEl);
-      }
-    }
+  var baseEl = basis.dom.createElement('base');
 
-    if (linkQueue.length)
-      linkQueueTimer = setTimeout(processLinkQueue, 1000/60);
+  function setBase(path){
+    linkEl.href = path;                         // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
+    baseEl.setAttribute('href', linkEl.href);
+
+    basis.dom.insert(document.head, baseEl, 0); // even if there is more than one <base> elements, only first has effect
   }
-  function addUrlToQueue(url){
-    var linkEl = evalFrameDoc.createElement('link');
-    linkEl.rel = "stylesheet";
-    linkEl.type = "text/css";
-    linkEl.href = url + (url.indexOf('?') == -1 ? '?' : '&') + Math.random();
-    evalFrameDoc.head.appendChild(linkEl);
-    linkQueue.push(url);
-    if (!linkQueueTimer)
-      linkQueueTimer = setTimeout(processLinkQueue, 1000/60);
+  function restoreBase(){
+    baseEl.setAttribute('href', location);      // Opera left document base as <base> element specified,
+                                                // even if this element is removed from document
+    basis.dom.remove(baseEl);    
+  }
+
+  function deleteImports(imports){
+    if (!imports || !imports.length)
+      return;
+
+    for (var i = 0; i < imports.length; i++)
+    {
+      deleteImports(imports[i].imports);
+      styleSheetFileMap[imports[i].url].remove(imports[i]);
+      basis.dom.remove(imports[i].styleEl);
+    }
+  }
+
+  function applyStyle(path, content){
   }
 
   var styleUpdateHandler = {
@@ -215,52 +218,13 @@
 
         if (fileInfo)
         {
-          var res = resolver.resolveCss(url, this.data.content);
-
-          for (var i = 0, elem; elem = fileInfo.elems[i]; i++)
+          styleSheetFileMap[url] = [];
+          for (var i = 0, elem; elem = fileInfo[i]; i++)
           {
-            //elem.styleEl.innerHTML = res.content.join('\n');
-            var replaceStyleEl = elem.styleEl.cloneNode(false);
-            replaceStyleEl.appendChild(document.createTextNode(res.content.join('\n')))
-            basis.dom.replace(elem.styleEl, replaceStyleEl);
-            elem.styleEl = replaceStyleEl;
+            deleteImports(elem.imports);
+            linearStyleSheet(elem.styleEl, elem.cssFileStack);
           }
-
-          /*
-          var rules = fileInfo.rules;
-          for (var i = 0; i < rules.length; i++)
-          {
-            var rule = rules[i];
-            var styleSheet = rule.styleSheet;
-            var res = resolver.resolveCss(url, this.data.content);
-
-            var count = styleSheet.rules.length;
-            while (count --> 0)
-              styleSheet.removeRule(0);
-
-            for (var j = 0; j < res.rules.length; j++)
-            {
-              console.log(res.rules[j].cssText);
-              styleSheet.insertRule(res.rules[j].cssText, j);
-            }
-          }*/
-
-          //document.body.className = document.body.className;
         }
-
-        /*var styleInfo = cssFileMap[url];
-
-        if (styleInfo)
-        {
-          var res = resolver.resolveCss(url, this.data.content);
-          var styleEl = styleInfo.styleEl;
-          var newStyleEl = styleEl.cloneNode(false);
-
-          newStyleEl.appendChild(document.createTextNode(res.content.join('\n')));
-
-          cssFileMap[url].styleEl = newStyleEl;
-          basis.dom.replace(styleEl, newStyleEl);
-        }*/
       }
     }
   };
@@ -279,16 +243,23 @@
     }
   });
 
-
-
-
-  var cssFileMap = {};
   var styleSheetFileMap = {};
-  window.styleSheetFileMap = styleSheetFileMap;
-  var pathResolvers = {};
-  var relBaseRx = new RegExp('^' + location.href.replace(/\/[^\/]+$/, '/').forRegExp());
+  window.styleSheetFileMap = styleSheetFileMap; // TODO: remove
 
-  window.absToRel = function(path){
+  function abs2rel(path, base){
+    if (base)
+    {
+      setBase(base);
+      linkEl.href = path;
+      path = linkEl.href;
+      restoreBase();
+    }
+    else
+    {
+      linkEl.href = path;
+      path = linkEl.href;
+    }
+
     var abs = path.split(/\//);
     var loc = location.href.replace(/\/[^\/]*$/, '').split(/\//);
     var i = 0;
@@ -299,159 +270,190 @@
     return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
   }
 
-  function linearStyleSheet(styleSheet, insertPoint){
-    var rules = styleSheet.cssRules || styleSheet.rules;
+  var revisitQueue = [];
+  function processRevisitQueue(){
+    for (var i = revisitQueue.length; i --> 0;)
+    {
+      var params = revisitQueue[i];
+      var rule = params.rule;
+      if (rule.styleSheet)
+      {
+        console.log('revisit rule styleSheet success', rule.href);
+        revisitQueue.splice(i, 1);
+        var importSheet = linearStyleSheet(rule.styleSheet, params.insertPoint, params.cssFileStack);
+        if (importSheet)
+          params.imports.push(importSheet);
+      }
+      else
+      {
+        if (params.attempts++ > 10)
+        {
+          console.log('delete revisit rule, because too many attempts', rule.href);
+          revisitQueue.splice(i, 1);
+        }
+      }  
+    }
+
+    if (revisitQueue.length)
+      setTimeout(processRevisitQueue, 5);
+  }
+  function addToRevisitQueue(rule, imports, insertPoint, cssFileStack){
+    console.log('add rule to revisit queue', rule.href);
+
+    if (!revisitQueue.search(rule, 'rule'))
+    {
+      revisitQueue.push({
+        attempts: 0,
+        rule: rule,
+        imports: imports,
+        insertPoint: insertPoint,
+        cssFileStack: cssFileStack
+      });
+
+      if (revisitQueue.length == 1)
+        setTimeout(processRevisitQueue, 5);
+    }
+  }
+
+  var nonObservableFilesCache = {};
+  var styleSeed = 0;
+  var insertHelper = document.createComment('');
+
+  function linearStyleSheet(styleEl, cssFileStack, url){
+    var styleSheet;
+    //console.log(styleEl.relPath, ' / ', styleEl.relPath || abs2rel(styleSheet.href), ' / ', styleSheet.href);
+    var sheetUrl = url || styleEl.relPath || abs2rel(styleEl.sheet.href);
     var imports = [];
     var content = [];
 
-    var sheetUrl = absToRel(styleSheet.href)
+    if (!cssFileStack)
+      cssFileStack = [];
+    else
+    {
+      if (cssFileStack.has(sheetUrl))  // prevent for recursion
+      {
+        console.warn('prevent recursion for', sheetUrl, cssFileStack);
+        return;
+      }
+    }
 
+    //cssFileStack.push(sheetUrl);
+
+    //
+    // fetch style content
+    //
+    var cssText;
+    var cssFile = File.get('../templater/' + sheetUrl);
+    if (cssFile)
+    {
+      cssText = cssFile.data.content;
+    }
+    else
+    {
+      cssText = nonObservableFilesCache[sheetUrl];
+      if (typeof cssText != 'string')
+      {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', sheetUrl, false);
+        xhr.send(null);
+        
+        if (xhr.status >= 200 && xhr.status < 400)
+        {
+          cssText = xhr.responseText;
+          nonObservableFilesCache[sheetUrl] = cssText;
+        }
+        else
+        {
+          console.warn('fail to load css content', sheetUrl);
+          return;
+        }
+      }
+    }
+
+    //
+    // parse content
+    //
+    setBase(sheetUrl);
+
+    var tmpStyleEl = basis.dom.createElement(
+      'style[type="text/css"][seed="' + (styleSeed++) + '"][sourceFile="' + sheetUrl + '?"]',// + (styleSheet.media && styleSheet.media.mediaText ? '[media="' + styleSheet.media.mediaText + '"]' : ''),
+      cssText
+    );
+
+    document.head.insertBefore(tmpStyleEl, styleEl)
+    if (!url)
+      basis.dom.remove(styleEl);
+
+    styleEl = tmpStyleEl;
+    styleEl.relPath = sheetUrl;
+
+    restoreBase();
+
+    //
+    // fetch style sheet again, because it changes on our actions
+    //
+    styleSheet = styleEl.sheet;
+
+    //
+    // process rules
+    //
+    var rules = styleSheet.cssRules || styleSheet.rules;
     for (var i = rules.length, rule; i --> 0;)
     {
       var rule = rules[i];
-      console.log(sheetUrl, rule.cssText);
       if (rule.type == 3)
       {
-        //var url = rule.styleSheet.href.replace(relBaseRx, '');
-        if (rule.styleSheet)
-        {
-        var url = absToRel(rule.styleSheet.href);
-
-        /*if (!styleSheetFileMap[url])
-          styleSheetFileMap[url] = {
-            imports: []
-          };
-
-        if (!cssFileMap[url])
-        {
-        }*/
-
-        /*var res;
-        var importStyleEl = basis.dom.createElement(
-          'style[type="text/css"][sourceFile="' + url + '"]' + (rule.media.mediaText ? '[media="' + rule.media.mediaText + '"]' : '')
-        );*/
-
-        // insert into body
-        res = linearStyleSheet(rule.styleSheet, insertPoint);
-        imports.push(res.sheetInfo);
-        }
-        /*importStyleEl.appendChild(document.createTextNode(res.content));
-        insertPoint.parentNode.insertBefore(importStyleEl, insertPoint);
-
-        styleSheetFileMap[sheetUrl].elems.push({
-          url: sheetUrl,
-          styleEl: importStyleEl,
-          imports: res.imports
-        });
-
-        imports.push({
-          url: url,
-          styleEl: importStyleEl,
-          imports: res.imports
-        });*/
+        var importSheet = linearStyleSheet(styleEl, cssFileStack.concat(sheetUrl), abs2rel(rule.href, sheetUrl));
+        if (importSheet)
+          imports.push(importSheet);
 
         styleSheet.deleteRule(i);
       }
       else
       {
-        content.unshift(rules[i].cssText);
+        content.push(rule.cssText);
       }
     }
 
+    if (basis.ua.is('ff') || basis.ua.is('opera'))
+    {
+      setBase(sheetUrl);
+      styleEl.innerHTML = content.join('\n');
+      restoreBase();
+    }
+
     //
-    // insert new <style> element
+    // build sheet info
     //
-    var styleEl = basis.dom.createElement(
-      'style[type="text/css"][sourceFile="' + sheetUrl + '"]' + (styleSheet.media && styleSheet.media.mediaText ? '[media="' + styleSheet.media.mediaText + '"]' : ''),
-      content.join('\n')
-    );
+
     var sheetInfo = {
       url: sheetUrl,
       styleEl: styleEl,
-      imports: imports
+      imports: imports,
+      cssFileStack: cssFileStack
     };
 
     if (!styleSheetFileMap[sheetUrl])
-      styleSheetFileMap[sheetUrl] = {
-        elems: []
-      };
-
-    styleSheetFileMap[sheetUrl].elems.push(sheetInfo);
-
-    if (styleSheet.ownerNode)
-      basis.dom.replace(styleSheet.ownerNode, styleEl);
+      styleSheetFileMap[sheetUrl] = [sheetInfo];
     else
-      insertPoint.parentNode.insertBefore(styleEl, insertPoint);
+      styleSheetFileMap[sheetUrl].push(sheetInfo);
+
 
     //
     // return result
     //
 
-    return {
-      sheetInfo: sheetInfo,
-      imports: imports,
-      content: content.join('\n')
-    };
+    return sheetInfo;
   }
 
 
-  var evalFrameDoc;
-  //var resolver;
-  basis.dom.ready(function(){
-    document.body.appendChild(basis.dom.createElement({
-      description: 'iframe[src="resolver.html"][style="position:absolute;top:-100px;left:-100px;visibility:hidden;width:10px;height:10px;"]',
-      load: function(){
-        var doc = this.contentDocument;
-
-        var baseEl = doc.createElement('base');
-        doc.head.appendChild(baseEl);
-
-        var styleEl = doc.createElement('style');
-        doc.head.appendChild(styleEl);
-
-        var linkEl = doc.createElement('a');
-        doc.body.appendChild(linkEl);
-
-        window.resolver = {
-          resolvePath: function(base, path){
-            baseEl.href = base;
-            linkEl.href = path;
-
-            return linkEl.href;
-          },
-          resolveCss: function(path, cssText){
-            baseEl.href = path;
-            styleEl.innerHTML = cssText;
-
-            var rules = styleEl.sheet.cssRules || styleEl.sheet.rules;
-            var imports = [];
-            var content = [];
-            for (var i = 0; rule = rules[i]; i++)
-            {
-              if (rule.type == 3)  // @import rules
-              {
-                linkEl.href = rule.href;
-                imports.push(linkEl.href);
-                rule.absUrl = linkEl.href;
-              }
-              else
-                content.push(rule.cssText);
-            }
-
-            return {
-              rules: rules,
-              imports: imports,
-              content: content
-            }
-          }
-        };
-
-        Array.from(document.styleSheets).forEach(function(styleSheet){
-          if (styleSheet.ownerNode.tagName == 'LINK')
-            linearStyleSheet(styleSheet, styleSheet.ownerNode);
-        });
-      }
-    }));
+  isOnline.addLink(null, function(value){
+    if (value)
+      Array.from(document.styleSheets).forEach(function(styleSheet){
+        if (styleSheet.ownerNode)
+          if (styleSheet.ownerNode.tagName == 'LINK' || styleSheet.ownerNode.relPath)
+            linearStyleSheet(styleSheet.ownerNode);
+      });
   });
 
   //
