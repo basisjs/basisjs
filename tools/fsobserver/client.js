@@ -33,6 +33,11 @@
   });
 
 
+  var console = window.console;
+  if (typeof console == 'undefined')
+    console = { log: Function() };
+
+
   //
   // init part
   //
@@ -222,7 +227,7 @@
           for (var i = 0, elem; elem = fileInfo[i]; i++)
           {
             deleteImports(elem.imports);
-            linearStyleSheet(elem.styleEl, elem.cssFileStack);
+            linearStyleSheet(elem.styleEl, null, elem.cssFileStack, url);
           }
         }
       }
@@ -319,10 +324,8 @@
   var styleSeed = 0;
   var insertHelper = document.createComment('');
 
-  function linearStyleSheet(styleEl, cssFileStack, url){
-    var styleSheet;
-    //console.log(styleEl.relPath, ' / ', styleEl.relPath || abs2rel(styleSheet.href), ' / ', styleSheet.href);
-    var sheetUrl = url || styleEl.relPath || abs2rel(styleEl.sheet.href);
+  function linearStyleSheet(styleEl, insertPoint, cssFileStack, url){
+    var sheetUrl = url || abs2rel(styleEl.sheet.href);
     var imports = [];
     var content = [];
 
@@ -380,30 +383,35 @@
       cssText
     );
 
-    document.head.insertBefore(tmpStyleEl, styleEl)
-    if (!url)
-      basis.dom.remove(styleEl);
+    document.head.insertBefore(tmpStyleEl, insertPoint || styleEl);
+    if (!styleEl || styleEl.tagName == 'LINK')
+    {
+      var newStyleEl = tmpStyleEl.cloneNode(false);
+      document.head.insertBefore(newStyleEl, insertPoint || styleEl);
 
-    styleEl = tmpStyleEl;
-    styleEl.relPath = sheetUrl;
+      if (styleEl)
+        basis.dom.remove(styleEl);
+
+      styleEl = newStyleEl;
+    }
+
+    //if (styleEl)
+    //  basis.dom.remove(styleEl);
+    //styleEl = tmpStyleEl;
 
     restoreBase();
 
     //
-    // fetch style sheet again, because it changes on our actions
-    //
-    styleSheet = styleEl.sheet;
-
-    //
     // process rules
     //
+    var styleSheet = tmpStyleEl.sheet;
     var rules = styleSheet.cssRules || styleSheet.rules;
     for (var i = rules.length, rule; i --> 0;)
     {
       var rule = rules[i];
       if (rule.type == 3)
       {
-        var importSheet = linearStyleSheet(styleEl, cssFileStack.concat(sheetUrl), abs2rel(rule.href, sheetUrl));
+        var importSheet = linearStyleSheet(null, tmpStyleEl, cssFileStack.concat(sheetUrl), abs2rel(rule.href, sheetUrl));
         if (importSheet)
           imports.push(importSheet);
 
@@ -415,12 +423,11 @@
       }
     }
 
-    if (basis.ua.is('ff') || basis.ua.is('opera'))
-    {
-      setBase(sheetUrl);
-      styleEl.innerHTML = content.join('\n');
-      restoreBase();
-    }
+    setBase(sheetUrl);
+    styleEl.innerHTML = content.join('\n');
+    restoreBase();
+
+    basis.dom.remove(tmpStyleEl);
 
     //
     // build sheet info
@@ -451,7 +458,7 @@
     if (value)
       Array.from(document.styleSheets).forEach(function(styleSheet){
         if (styleSheet.ownerNode)
-          if (styleSheet.ownerNode.tagName == 'LINK' || styleSheet.ownerNode.relPath)
+          if (styleSheet.ownerNode.tagName == 'LINK' || styleSheet.ownerNode.getAttribute('sourceFile'))
             linearStyleSheet(styleSheet.ownerNode);
       });
   });

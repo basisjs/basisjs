@@ -36,6 +36,7 @@
 
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, false);
+        xhr.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
         xhr.send('');
 
         if (xhr.status == 200)

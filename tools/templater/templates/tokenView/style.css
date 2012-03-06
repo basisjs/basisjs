@@ -1,7 +1,13 @@
 
   @import 'attribute.css';
-  @import 'attribute2.css';
-  @import 'green.css';
+
+  body * {
+    /*font-style: italic;*/
+  }
+  #EditorToolbar
+  {
+    background-color: gray !important;
+  }
 
   #Viewer
   {
@@ -186,4 +192,3 @@
     box-sizing: border-box;
     resize: none;
   }
-

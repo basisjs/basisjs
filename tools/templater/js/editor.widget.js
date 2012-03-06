@@ -33,6 +33,8 @@ basis.require('basis.ui.form');
 
   var fsobserver = basis.devtools;
 
+  var KEY_S = 'S'.charCodeAt(0);
+
 
   //
   // Main part
@@ -41,8 +43,8 @@ basis.require('basis.ui.form');
   var tmplSource = new nsProperty.Property('');
   var cssSource = new nsProperty.Property('');
 
-  var sourceChangedHandler = function(){
-    var newContent = this.getValue();
+  var tmplSourceChangedHandler = function(){
+    var newContent = this.getValue().replace(/\r/g, '');
 
     if (this.target)
       this.target.update({ content: newContent }, true);
@@ -84,14 +86,15 @@ basis.require('basis.ui.form');
     },
 
     handler: {
-      input: sourceChangedHandler,
-      change: sourceChangedHandler,
+      input: tmplSourceChangedHandler,
+      change: tmplSourceChangedHandler,
+      keyup: tmplSourceChangedHandler,
       keydown: function(event){
         if (!this.target)
           return;
 
         var key = nsEvent.key(event);
-        if (key == nsEvent.KEY.F2 || (key == 83 && event.ctrlKey))
+        if (key == nsEvent.KEY.F2 || (event.ctrlKey && key == KEY_S))
         {
           this.target.save();
           nsEvent.kill(event);
@@ -106,7 +109,9 @@ basis.require('basis.ui.form');
       update: function(object, delta){
         if ('content' in delta)
         {
-          this.tmpl.field.value = this.data.content;
+          if (this.tmpl.field.value != this.data.content)
+            this.tmpl.field.value = this.data.content;
+
           tmplSource.set(this.data.content);
           //tree.setChildNodes(nsTemplate.makeDeclaration(this.data.content));
         }
@@ -129,7 +134,7 @@ basis.require('basis.ui.form');
   // CSS editor
   //
 
-  var sourceChangedHandler = function(){
+  var cssSourceChangedHandler = function(){
     var newContent = this.getValue();
 
     if (this.target)
@@ -156,14 +161,15 @@ basis.require('basis.ui.form');
     },
 
     handler: {
-      input: sourceChangedHandler,
-      change: sourceChangedHandler,
+      input: cssSourceChangedHandler,
+      change: cssSourceChangedHandler,
+      keyup: cssSourceChangedHandler,
       keydown: function(event){
         if (!this.target)
           return;
 
         var key = nsEvent.key(event);
-        if (key == nsEvent.KEY.F2 || (key == 83 && event.ctrlKey))
+        if (key == nsEvent.KEY.F2 || (event.ctrlKey && key == KEY_S))
         {
           this.target.save();
           nsEvent.kill(event);
@@ -178,7 +184,9 @@ basis.require('basis.ui.form');
       update: function(object, delta){
         if ('content' in delta)
         {
-          this.tmpl.field.value = this.data.content;
+          if (this.tmpl.field.value != this.data.content)
+            this.tmpl.field.value = this.data.content;
+
           cssSource.set(this.data.content);
         }
       },

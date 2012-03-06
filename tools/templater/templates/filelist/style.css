@@ -5,6 +5,7 @@
     float: left;
     margin-right: 5px;
     width: 15%;
+    min-width: 200px;
     /*  -webkit-transition: width .5s, opacity 1.5s; 
     transition: width .5s, opacity 1.5s;*/
   }
@@ -30,7 +31,6 @@
     background: url(../../img/modified.png) no-repeat center;
   }
 
-
   #TemplateList .Basis-Resizer
   {
     position: absolute;
@@ -42,11 +42,6 @@
 
   #TemplateList .devtools-templateFileList
   {
-    /*position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;*/
     outline: none;
     margin: 0;
     padding: 0;
