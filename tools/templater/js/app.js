@@ -76,22 +76,25 @@
   editor.tmplSource.addLink(tokenView, tokenView.setSource);
 
   // fsobserver -> app
-  fsobserver.isOnline.addLink(null, function(value){
-    if (value)
-      initFilelist();
-  });
+  if (fsobserver)
+  {
+    fsobserver.isOnline.addLink(null, function(value){
+      if (value)
+        initFilelist();
+    });
 
-  var initFilelist = Function.runOnce(function(){
-    // add filelist into app
-    app.setSatellite('filelist', filelist());
+    var initFilelist = Function.runOnce(function(){
+      // add filelist into app
+      app.setSatellite('filelist', filelist());
 
-    // tree.selection -> editor
-    filelist().tree.selection.addHandler({
-      datasetChanged: function(selection, delta){
-        this.setSourceFile(selection.pick());
-      }
-    }, editor);
-  });
+      // tree.selection -> editor
+      filelist().tree.selection.addHandler({
+        datasetChanged: function(selection, delta){
+          this.setSourceFile(selection.pick());
+        }
+      }, editor);
+    });
+  }
 
   function updatePickupElement(value, oldValue){
     if (value && value.element.nodeType == 1)

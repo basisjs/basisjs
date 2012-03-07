@@ -1,21 +1,59 @@
-var app = require('http').createServer();
+var app = require('http').createServer(handler);
 var io = require('socket.io').listen(app);
 var fs = require('fs');
+var url = require('url');
+var path = require('path');
 
-app.listen(8222);
+var fs_debug = false;
+var port = process.argv[2];
+if (isNaN(port))
+  port = 8123;
 
-/*function handler(req, res){
-  fs.readFile(__dirname + '/fileviewer.html',
-  function (err, data) {
-    if (err) {
+app.listen(port);
+console.log('Server is online, listen for port ' + port);
+
+function quote(value){
+  return "'" +
+    String(value)
+      .replace(/[\r\n]/g, '')
+      .replace(/'/g, '\\\'')
+      .replace(/\\/g, '/') + 
+   "'";
+}
+
+function handler(req, res){
+  var location = url.parse(req.url, true)
+  switch (location.pathname)
+  {
+    case '/':
+      fs.readFile(__dirname + '/client.js', function(err, data){
+        if (err){
+          res.writeHead(500);
+          return res.end('Error loading client.js');
+        }
+
+        res.writeHead(200);
+        res.end(data);
+      });
+      break;
+
+    case '/resolve':
+      fs.readFile(__dirname + '/client.html', function(err, data){
+        if (err){
+          res.writeHead(500);
+          return res.end('Error loading client.html');
+        }
+
+        res.writeHead(200);
+        res.end(data);
+      });
+      break;
+
+    default:
       res.writeHead(500);
-      return res.end('Error loading index.html');
-    }
-
-    res.writeHead(200);
-    res.end(data);
-  });
-}*/
+      res.end('Wrong url: ' + req.path);
+  }
+}
 
 function arrayAdd(array, item){
   var pos = array.indexOf(item);
@@ -35,15 +73,64 @@ function arrayRemove(array, item){
   }
 }
 
-var debug = true;
 var createCallback = function(filename, fileType, lastUpdate){
-  io.sockets.emit('newFile', { filename: filename, type: fileType, lastUpdate: lastUpdate });
+  for (var k in io.sockets.sockets)
+  {
+    var socket = io.sockets.sockets[k];
+    if (socket && socket.pathes)
+    {
+      for (var i = 0, p; i < socket.pathes.length; i++)
+      {
+        p = socket.pathes[i];
+        if (filename.substr(0, p.length) == p)
+        {
+          socket.emit('newFile', { filename: filename.substr(p.length), type: fileType, lastUpdate: lastUpdate });
+          break;
+        }
+      }
+    }
+  }
 }
 var updateCallback = function(fileInfo){
-  io.sockets.emit('updateFile', fileInfo);
+  //io.sockets.emit('updateFile', fileInfo);
+  var filename = fileInfo.filename;
+  for (var k in io.sockets.sockets)
+  {
+    var socket = io.sockets.sockets[k];
+    if (socket && socket.pathes)
+    {
+      for (var i = 0, p; i < socket.pathes.length; i++)
+      {
+        p = socket.pathes[i];
+        if (filename.substr(0, p.length) == p)
+        {
+          fileInfo.filename = filename.substr(p.length);
+          socket.emit('updateFile', fileInfo);
+          break;
+        }
+      }
+    }
+  }
 }
+
 var deleteCallback = function(filename){
-  io.sockets.emit('deleteFile', { filename: filename });
+  //io.sockets.emit('deleteFile', { filename: filename });
+  for (var k in io.sockets.sockets)
+  {
+    var socket = io.sockets.sockets[k];
+    if (socket && socket.pathes)
+    {
+      for (var i = 0, p; i < socket.pathes.length; i++)
+      {
+        p = socket.pathes[i];
+        if (filename.substr(0, p.length) == p)
+        {
+          socket.emit('deleteFile', filename.substr(p.length));
+          break;
+        }
+      }
+    }
+  }
 }
 
 var fsWatcher = (function(){
@@ -51,28 +138,31 @@ var fsWatcher = (function(){
   var dirMap = {};
 
   function readFile(filename){
-    fs.readFile(filename, 'utf8', function(err, data){
-      if (!err)
-      {
-        var fileInfo = fileMap[filename];
-        var newContent = String(data).replace(/\r\n?|\n\r?/g, '\n');
-
-        var newFileInfo = {
-          filename: filename,
-          lastUpdate: fileInfo.mtime
-        };
-
-        if (newContent !== fileInfo.content)
+    if (path.extname(filename) == '.css' || path.extname(filename) == '.tmpl')
+    {
+      fs.readFile(filename, 'utf8', function(err, data){
+        if (!err)
         {
-          fileInfo.content = newContent;
-          newFileInfo.content = newContent;
-        }
+          var fileInfo = fileMap[filename];
+          var newContent = String(data).replace(/\r\n?|\n\r?/g, '\n');
 
-        updateCallback(newFileInfo);
-      }
-      else
-        console.log('   \033[31merror of file read (' + filename + '): ' + err + ' \033[39m');
-    });
+          var newFileInfo = {
+            filename: filename,
+            lastUpdate: fileInfo.mtime
+          };
+
+          if (newContent !== fileInfo.content)
+          {
+            fileInfo.content = newContent;
+            newFileInfo.content = newContent;
+          }
+
+          updateCallback(newFileInfo);
+        }
+        else
+          console.log('   \033[31merror of file read (' + filename + '): ' + err + ' \033[39m');
+      });
+    }
   }
 
   function updateStat(dir, filename){
@@ -98,7 +188,7 @@ var fsWatcher = (function(){
 
           // event!! new file
           createCallback(filename, fileType, stats.mtime);
-          if (debug) console.log(filename + ' - found');
+          if (fs_debug) console.log(filename + ' - found');
 
           if (fileType == 'dir')
             lookup(filename);
@@ -113,7 +203,7 @@ var fsWatcher = (function(){
 
             // event!! file modified
             //updateCallback(filename, stats.mtime);
-            if (debug) console.log(filename + ' - changed'); // file changed
+            if (fs_debug) console.log(filename + ' - changed'); // file changed
 
             readFile(filename);
           }
@@ -148,7 +238,7 @@ var fsWatcher = (function(){
 
               // event!!
               deleteCallback(filename);
-              if (debug) console.log(filename + ' - missed'); // file lost
+              if (fs_debug) console.log(filename + ' - missed'); // file lost
             }
           }
         }
@@ -207,7 +297,13 @@ var fsWatcher = (function(){
         return;
       }
 
-      if (stat.isDirectory())
+      if (!stat.isDirectory())
+      {
+        console.warn('Error path `' + path + '` is not a folder');
+        return;
+      }
+
+      if (!dirMap[path])
       {
         lookup(path);
         console.info('Folder `' + path + '` is observing now');
@@ -218,11 +314,11 @@ var fsWatcher = (function(){
     unwatch: function(path){
       if (dirMap[path])
       {
-        stopWatch(path)
+        stopWatch(path);
         console.info('Folder `' + path + '` is NOT observing now');
       }
       else
-        console.warn('Folder `' + path + '` is not observing yet');
+        console.warn('Folder `' + path + '` isn\'t observing yet');
     },
     getFiles: function(){
       var result = [];
@@ -238,38 +334,14 @@ var fsWatcher = (function(){
     },
     isObserveFile: function(filename){
       return !!fileMap[filename];
-    },
-    addContentObserver: function(filename, listener){
-      var fileInfo = fileMap[filename];
-      if (fileInfo)
-      {
-        if (arrayAdd(fileInfo.listeners, listener))
-        {
-          listener.emit('updateFile', {
-            filename: filename,
-            lastUpdate: fileInfo.mtime,
-            content: fileInfo.content
-          });
-
-          return true;
-        }
-      }
-    },
-    removeContentObserver: function(filename, listener){
-      var fileInfo = fileMap[filename];
-
-      if (fileInfo)
-        if (arrayRemove(fileInfo.listeners, listener))
-          return true;
     }
   }
 
 })();
 
-fsWatcher.watch('../templater/templates');
+//fsWatcher.watch('../templater/templates');
 
 io.sockets.on('connection', function(socket){
-  socket.emit('filelist', fsWatcher.getFiles());
   socket.on('saveFile', function(filename, content){
     console.log('save file', arguments);
     if (fsWatcher.isObserveFile(filename))
@@ -294,7 +366,17 @@ io.sockets.on('connection', function(socket){
         message: 'bad filename'
       });
   });
-  socket.on('watchFileContent', function(filename){
+
+  socket.on('observe', function(rel, fspath){
+    var relListenPath = path.relative(__dirname, fspath).replace(/\\/, '/');
+    socket.pathes.push(relListenPath + '/');
+    fsWatcher.watch(relListenPath);
+    socket.emit('observeReady', rel, fsWatcher.getFiles());
+  });
+
+  socket.pathes = [];
+
+  /*socket.on('watchFileContent', function(filename){
     if (fsWatcher.addContentObserver(filename, socket))
       arrayAdd(socket.files, filename);
   });
@@ -305,11 +387,20 @@ io.sockets.on('connection', function(socket){
       //socket.emit('updateFile', { filename: filename, content: null });
     }
   });
-  socket.files = [];
+  socket.files = [];*/
+
+  //
+  // all initial work done, send to client init data
+  //
+  /*var initSessionData = {
+    filelist: fsWatcher.getFiles()
+  };
+
+  socket.emit('initSession', initSessionData);*/
 });
 
 io.sockets.on('disconnect', function(socket){
-  socket.files.forEach(fsWatcher.removeContentObserver);
-  delete socket.files;
+  //socket.files.forEach(fsWatcher.removeContentObserver);
+  delete socket.pathes;
 });
 

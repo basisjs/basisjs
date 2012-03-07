@@ -16,7 +16,10 @@
 <body>
   <script type="text/javascript" src="../../basis-all.js"></script>
   <script type="text/javascript" src="../../locale/ru/form.js"></script>
-  <script type="text/javascript" src="../fsobserver/client.js"></script>
+  <script type="text/javascript">
+    (function(a){"string"==typeof a&&(a={listen:a});if("undefined"!=typeof localStorage){var b={};if("string"==typeof a.listen)a.listen={".":a.listen};for(var c in a.listen)b[c]=""+a.listen[c];localStorage["basis.devtools.observer_"+location.pathname.replace(/\/[^\/\.]+?(\.[^\/\.]+)$/,"/").replace(/[^a-z0-9]/g,"_")]=JSON.stringify(b)}document.write('<script src="//'+location.host+":"+(a.port||8123)+'"><\/script>')})
+    ('C:\\usr\\local\\Apache\\htdocs\\apps\\basis2.0\\tools\\templater\\');
+  </script>
 
   <!--<script type="text/javascript" src="script.js"></script>-->
   <script type="text/javascript" src="js/app.js"></script>

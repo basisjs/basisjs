@@ -118,7 +118,7 @@
   var fileTree = new nsTree.Tree({
     template: 'file:templates/filelist/tree.tmpl',
 
-    dataSource: fsobserver.filesByFolder.getSubset('../templater', true),
+    dataSource: fsobserver.filesByFolder.getSubset('', true),
 
     action: {
       focus: function(){

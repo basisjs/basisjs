@@ -1,4 +1,4 @@
-(function(){
+(function(global){
 
  /**
   * @namespace
@@ -19,7 +19,7 @@
   // local vars
   //
 
-  var socket;
+  var sendToServer = function(){ console.warn('Server backend is not allowed'); };
 
   var isReady_ = false;
   var isOnline_ = false;
@@ -32,10 +32,12 @@
     }
   });
 
-
-  var console = window.console;
+  var console = global.console;
   if (typeof console == 'undefined')
-    console = { log: Function() };
+    console = { log: Function(), warn: Function() };
+
+  var settingsPath = 'basis.devtools.observer_' + location.pathname.replace(/\/[^\/\.]+?(\.[^\/\.]+)$/, '/').replace(/[^a-z0-9]/g, '_');
+  var listenDirs = typeof localStorage != 'undefined' ? JSON.parse(localStorage[settingsPath]) : {};
 
 
   //
@@ -46,66 +48,156 @@
     // socket.io
     document.getElementsByTagName('head')[0].appendChild(
       basis.dom.createElement({
-        description: 'script[src="//' + location.host + ':8222/socket.io/socket.io.js"]',
-        load: initServerBackend,
+        description: 'script[src="//' + location.host + ':8123/socket.io/socket.io.js"]',
+        load: linkWithSocketIO,
         error: function(){
+          console.warn('Error on loading ' + this.src);
           //alert('too bad... but also good')
         }
       })
     );
   });
 
-  function initServerBackend(){
+  function linkWithSocketIO(){
     if (typeof io != 'undefined')
     {
-      socket = io.connect(':8222');
+      console.log('Connecting to server via socket');
+
+      var socket = io.connect(':8123');
       isReady.set(isReady_ = true);
 
-      socket.on('connect', function(){
-        connectionState.set('online');
-      });
-      socket.on('disconnect', function(){
-        connectionState.set('offline');
-        isOnline.set(isOnline_ = false);
-      });
-      socket.on('connecting', function(){
-        connectionState.set('connecting');
-      });
+      function sendToServerOffline(){
+        console.warn('No connection with server :( Trying to send:', arguments);
+      };
+      function sendToServerOnline(){
+        console.log('Send to server: ', arguments);
+        socket.emit.apply(socket, arguments);
+      };
 
+      window.__socket = socket;
 
-      socket.on('newFile', function (data) {
-        console.log('new file', data);
+      //
+      // add callbacks on events
+      //
+      Object.iterate({
+        //
+        // connection events
+        //
+        connect: function(){
+          connectionState.set('connected');
 
-        File(data);
-      });
-      socket.on('updateFile', function (data) {
-        console.log('file updated', data);
+          var pathes = ListenPath.all.getItems();
+          for (var i = 0; path = pathes[i]; i++)
+            socket.emit('observe', path.data.rel, path.data.fspath);
 
-        File(data);
-      });
-      socket.on('deleteFile', function (data) {
-        console.log('file deleted', data);
+          sendToServer = sendToServerOnline;
+          connectionState.set('online');
+          isOnline.set(isOnline_ = true);
+        },
+        disconnect: function(){
+          connectionState.set('offline');
+          sendToServer = sendToServerOffline;
+          isOnline.set(isOnline_ = false);
+        },
+        connecting: function(){
+          connectionState.set('connecting');
+        },
+        observeReady: function(rel, filelist){
+          var path = ListenPath.get(rel)
 
-        var file = File.get(data);
-        if (file)
-          file.destroy();
-      });
-      socket.on('fileSaved', function (data) {
-        console.log('file saved', data);
-      });
-      socket.on('filelist', function (data) {
-        console.log('filelist', data.length + ' files');
-        File.all.sync(data);
-        isOnline.set(isOnline_ = true);
-      });
-      socket.on('error', function (data) {
-        console.log('error:', data.operation, data.message);
-      });
+          if (path)
+          {
+            path.files.set(filelist.map(File));
+          }
+        },
+
+        //
+        // file events
+        //
+        newFile: function(data){
+          console.log('new file', data);
+
+          File(data);
+        },
+        updateFile: function(data){
+          console.log('file updated', data);
+
+          File(data);
+        },
+        deleteFile: function(data){
+          console.log('file deleted', data);
+
+          var file = File.get(data);
+          if (file)
+            file.destroy();
+        },
+        fileSaved: function(data){
+          console.log('file saved', data);
+        },
+
+        //
+        // common events
+        //
+        error: function(data){
+          console.log('error:', data.operation, data.message);
+        }
+      }, socket.on, socket);
     }
   }
 
+
   //
   // Main logic
+  //
+
+  var ListenPath = new nsEntity.EntityType({
+    name: namespace + '.ListenPath',
+    fields: {
+      rel: basis.entity.StringId,
+      fspath: String
+    }
+  });
+
+  var fileDatasets = {};
+  var allFiles = new basis.data.dataset.Merge();
+  window.allFiles = allFiles;
+
+  ListenPath.all.addHandler({
+    datasetChanged: function(dataset, delta){
+      var array;
+
+      if (array = delta.inserted)
+        for (var i = 0, path; path = array[i]; i++)
+        {
+          path.files = new basis.data.Dataset({
+            data: {
+              path: path.rel,
+              fspath: path.fspath
+            }
+          });
+          allFiles.addSource(path.files);
+        }
+
+      if (array = delta.deleted)
+        for (var i = 0; i < array.length; i++)
+        {
+          array[i].files.destroy();
+          delete array[i].files;
+        }
+    }
+  });
+
+  for (var path in listenDirs)
+  {
+    ListenPath({
+      rel: path,
+      fspath: listenDirs[path]
+    });
+  }
+
+
+  //
+  // File
   //
 
   var File = new nsEntity.EntityType({
@@ -121,19 +213,12 @@
   File.entityType.entityClass.extend({
     save: function(){
       if (this.modified)
-        if (isOnline_)
-        {
-          socket.emit('saveFile', this.data.filename, this.data.content);
-        }
-        else
-        {
-          alert('No connection with server :(');
-        }  
+        sendToServer('saveFile', this.data.filename, this.data.content);
     }
   });
 
   var filesByFolder = new nsDataset.Split({
-    source: File.all,
+    source: allFiles,
     rule: function(object){
       var path = object.data.filename.split("/");
       path.pop();
@@ -142,7 +227,7 @@
   });
 
   var files = new nsDataset.Subset({
-    source: File.all,
+    source: allFiles,
     rule: function(object){
       return object.data.type == 'file';
     }
@@ -160,7 +245,7 @@
     update: function(file, delta){
       if ('filename' in delta || 'content' in delta)
       {
-        var tempalteFile = basis.template.filesMap[this.data.filename.replace('../templater/', '')];
+        var tempalteFile = basis.template.filesMap[this.data.filename];
         if (tempalteFile)
           tempalteFile.update(this.data.content);
       }
@@ -218,7 +303,7 @@
     update: function(file, delta){
       if ('filename' in delta || 'content' in delta)
       {
-        var url = this.data.filename.replace('../templater/', '');
+        var url = this.data.filename;
         var fileInfo = styleSheetFileMap[url];
 
         if (fileInfo)
@@ -346,7 +431,7 @@
     // fetch style content
     //
     var cssText;
-    var cssFile = File.get('../templater/' + sheetUrl);
+    var cssFile = File.get(sheetUrl);
     if (cssFile)
     {
       cssText = cssFile.data.content;
@@ -379,7 +464,7 @@
     setBase(sheetUrl);
 
     var tmpStyleEl = basis.dom.createElement(
-      'style[type="text/css"][seed="' + (styleSeed++) + '"][sourceFile="' + sheetUrl + '?"]',// + (styleSheet.media && styleSheet.media.mediaText ? '[media="' + styleSheet.media.mediaText + '"]' : ''),
+      'style[type="text/css"][seed="' + (styleSeed++) + '"][sourceFile="' + sheetUrl + '"]',// + (styleSheet.media && styleSheet.media.mediaText ? '[media="' + styleSheet.media.mediaText + '"]' : ''),
       cssText
     );
 
@@ -458,7 +543,7 @@
     if (value)
       Array.from(document.styleSheets).forEach(function(styleSheet){
         if (styleSheet.ownerNode)
-          if (styleSheet.ownerNode.tagName == 'LINK' || styleSheet.ownerNode.getAttribute('sourceFile'))
+          if (styleSheet.ownerNode.tagName == 'LINK')
             linearStyleSheet(styleSheet.ownerNode);
       });
   });
@@ -477,4 +562,4 @@
     filesByType: filesByType
   });
 
-})();
+})(this);
