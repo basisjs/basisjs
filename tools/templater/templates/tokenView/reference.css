@@ -1,0 +1,18 @@
+
+  #Viewer .Reference
+  {
+    border-left: 1px solid #050;
+    padding: 2px .35em;
+    background-color: #CDEB8B;
+  }
+  #Viewer .Reference:first-child
+  {
+    border-left: none;
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+  }
+  #Viewer .Reference:last-child
+  {
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+  }

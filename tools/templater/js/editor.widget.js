@@ -35,6 +35,32 @@ basis.require('basis.ui.form');
 
   var KEY_S = 'S'.charCodeAt(0);
 
+  function onEnter(editor){
+    var textarea = editor.tmpl.field;
+    var curValue = textarea.value;
+    var insertPoint = basis.dom.getSelectionStart(textarea);
+    var chrPos = curValue.lastIndexOf('\n', insertPoint - 1) + 1;
+    var spaces = '';
+    var chr;
+
+    while (chrPos < insertPoint)
+    {
+      chr = curValue.charAt(chrPos++);
+      if (chr == ' ' || chr == '\t')
+        spaces += chr;
+      else
+        break;
+    }
+
+    if (spaces)
+    {
+      textarea.value = textarea.value.substr(0, insertPoint) + '\n' + spaces + textarea.value.substr(insertPoint);
+      insertPoint += spaces.length + 1;
+      basis.dom.setSelectionRange(textarea, insertPoint, insertPoint);
+      nsEvent.kill(event);
+    }
+  }
+
 
   //
   // Main part
@@ -43,21 +69,143 @@ basis.require('basis.ui.form');
   var tmplSource = new nsProperty.Property('');
   var cssSource = new nsProperty.Property('');
 
-  var tmplSourceChangedHandler = function(){
+  //
+  // Editor class
+  //
+
+  var editorContentChangedHandler = function(){
     var newContent = this.getValue().replace(/\r/g, '');
 
     if (this.target)
       this.target.update({ content: newContent }, true);
 
-    tmplSource.set(newContent);
+    this.sourceProperty.set(newContent);
   }
 
-  var tmplEditor = new nsForm.Field.Textarea({
-    id: 'TemplateEditor',
-    cssClassName: 'Field-Source',
+ /**
+  *
+  */
+  var Editor = nsForm.Field.Textarea.subclass({
+    cssClassName: 'SourceEditor',
 
     autoDelegate: DELEGATE.PARENT,
-    name: 'Source',
+
+    template:
+      'file:templates/editor/editor.tmpl',
+
+    binding: {
+      filename: 'data:',
+      modified: {
+        events: 'targetChanged update',
+        getter: function(node){
+          return node.target && node.target.modified ? 'modified' : '';
+        }
+      },
+      createFilePanel: 'satellite:'
+    },
+
+    /*listen: {
+      target: {
+        rollbackUpdate: function(){
+          this.updateBind('modified');
+        }
+      }
+    },*/
+
+    handler: {
+      input: editorContentChangedHandler,
+      change: editorContentChangedHandler,
+      keyup: editorContentChangedHandler,
+      keydown: function(event){
+        var key = nsEvent.key(event);
+
+        if (key == nsEvent.KEY.F2 || (event.ctrlKey && key == KEY_S))
+        {
+          if (this.target)
+            this.target.save();
+
+          nsEvent.kill(event);
+
+          return;
+        }
+
+        if (key == nsEvent.KEY.ENTER)
+          onEnter(this);
+      },
+      focus: function(){
+        classList(widget.element).add('focus');
+      },
+      blur: function(){
+        classList(widget.element).remove('focus');
+      },
+      update: function(object, delta){
+        if ('content' in delta)
+        {
+          if (this.tmpl.field.value != this.data.content)
+            this.tmpl.field.value = this.data.content;
+
+          this.sourceProperty.set(this.data.content);
+        }
+      },
+      targetChanged: function(){
+        classList(this.tmpl.field).bool('modified', this.target && this.target.modified);
+
+        if (this.target)
+          this.enable();
+        else
+        {
+          this.update({ content: '' });
+          this.disable();
+        }
+      }
+    },
+    satelliteConfig: {
+      createFilePanel: {
+        existsIf: function(editor){
+          return editor.data.filename && !editor.target;
+        },
+        hook: {
+          rootChanged: true,
+          targetChanged: true
+        },
+        instanceOf: UINode.subclass({
+          autoDelegate: DELEGATE.OWNER,
+
+          template:
+            'file:templates/editor/createFilePanel.tmpl',
+
+          binding: {
+            filename: 'data:',
+            ext: function(node){
+              return (node.owner && node.owner.fileExt) || '?';
+            },
+            button: 'satellite:'
+          },
+
+          satelliteConfig: {
+            button: basis.ui.button.Button.subclass({
+              autoDelegate: DELEGATE.OWNER,
+              caption: 'Create a file',
+              click: function(){
+                fsobserver.createFile(this.data.filename);
+              }
+            })
+          }
+        })
+      }
+    }
+  });
+
+  //
+  // Custom editors
+  //
+
+  // .tmpl
+  var tmplEditor = new Editor({
+    id: 'TmplEditor',
+    sourceProperty: tmplSource,
+    fileExt: 'tmpl',
+
     value: 
       '<li class="devtools-templateNode {collapsed}">\n\
         <div{content} class="devtools-templateNode-Title devtools-templateNode-CanHaveChildren {selected} {disabled}">\n\
@@ -67,141 +215,14 @@ basis.require('basis.ui.form');
           </span>\n\
         </div>\n\
         <ul{childNodesElement} class="devtools-templateNode-Content"/>\n\
-      </li>',
-
-    template:
-      '<div{sampleContainer} class="Basis-Field {selected} {disabled}">' +
-        '<div{content} class="Basis-Field-Container">' +
-          '<textarea{field} />' +
-        '</div>' +
-      '</div>',
-
-    listen: {
-      target: {
-        rollbackUpdate: function(){
-          this.updateBind('modified');
-          classList(this.tmpl.field).bool('modified', this.target && this.target.modified);
-        }
-      }
-    },
-
-    handler: {
-      input: tmplSourceChangedHandler,
-      change: tmplSourceChangedHandler,
-      keyup: tmplSourceChangedHandler,
-      keydown: function(event){
-        if (!this.target)
-          return;
-
-        var key = nsEvent.key(event);
-        if (key == nsEvent.KEY.F2 || (event.ctrlKey && key == KEY_S))
-        {
-          this.target.save();
-          nsEvent.kill(event);
-        }
-      },
-      focus: function(){
-        classList(widget.element).add('focus');
-      },
-      blur: function(){
-        classList(widget.element).remove('focus');
-      },
-      update: function(object, delta){
-        if ('content' in delta)
-        {
-          if (this.tmpl.field.value != this.data.content)
-            this.tmpl.field.value = this.data.content;
-
-          tmplSource.set(this.data.content);
-          //tree.setChildNodes(nsTemplate.makeDeclaration(this.data.content));
-        }
-      },
-      targetChanged: function(){
-        classList(this.tmpl.field).bool('modified', this.target && this.target.modified);
-
-        if (this.target)
-          this.enable();
-        else
-        {
-          this.update({ content: '' });
-          this.disable();
-        }
-      }
-    }
+      </li>'
   });
 
-  //
-  // CSS editor
-  //
-
-  var cssSourceChangedHandler = function(){
-    var newContent = this.getValue();
-
-    if (this.target)
-      this.target.update({ content: newContent }, true);
-
-    cssSource.set(newContent);
-  }
-
-  var cssEditor = new nsForm.Field.Textarea({
-    id: 'TemplateEditor',
-    cssClassName: 'Field-Source',
-
-    autoDelegate: DELEGATE.PARENT,
-    name: 'Source',
-    value: '',
-
-    listen: {
-      target: {
-        rollbackUpdate: function(){
-          this.updateBind('modified');
-          classList(this.tmpl.field).bool('modified', this.target && this.target.modified);
-        }
-      }
-    },
-
-    handler: {
-      input: cssSourceChangedHandler,
-      change: cssSourceChangedHandler,
-      keyup: cssSourceChangedHandler,
-      keydown: function(event){
-        if (!this.target)
-          return;
-
-        var key = nsEvent.key(event);
-        if (key == nsEvent.KEY.F2 || (event.ctrlKey && key == KEY_S))
-        {
-          this.target.save();
-          nsEvent.kill(event);
-        }
-      },
-      focus: function(){
-        classList(widget.element).add('focus');
-      },
-      blur: function(){
-        classList(widget.element).remove('focus');
-      },
-      update: function(object, delta){
-        if ('content' in delta)
-        {
-          if (this.tmpl.field.value != this.data.content)
-            this.tmpl.field.value = this.data.content;
-
-          cssSource.set(this.data.content);
-        }
-      },
-      targetChanged: function(){
-        classList(this.tmpl.field).bool('modified', this.target && this.target.modified);
-
-        if (this.target)
-          this.enable();
-        else
-        {
-          this.update({ content: '' });
-          this.disable();
-        }
-      }
-    }
+  // .css
+  var cssEditor = new Editor({
+    id: 'CssEditor',
+    sourceProperty: cssSource,
+    fileExt: 'css'
   });
 
 
@@ -266,9 +287,66 @@ basis.require('basis.ui.form');
         flex: 1,
         autoDelegate: DELEGATE.PARENT,
         childNodes: cssEditor
+      },
+      {
+        flex: 1,
+        autoDelegate: DELEGATE.PARENT,
+        childNodes: [
+          {
+            content: basis.dom.createElement({
+              description: '#test[style="font-family:Consolas;white-space:pre"]',
+
+              mouseup: function(){
+                var r = window.getSelection().getRangeAt(0);
+                console.log(r.startContainer, r.startOffset)
+                var insertPoint = r.startContainer.nextSibling;
+                var parentNode = r.startContainer.parentNode;
+                if (r.startContainer.nodeType == 3)
+                {
+                  if (r.startOffset == 0)
+                    parentNode.insertBefore(cursor, r.startContainer);
+                  else
+                    if (r.startOffset < r.startContainer.nodeValue.length)
+                    {
+                      r.startContainer.splitText(r.startOffset);
+                      parentNode.insertBefore(cursor, insertPoint ? insertPoint.previousSibling : parentNode.lastChild);
+                    }
+                    else
+                    {
+                      parentNode.insertBefore(cursor, r.startContainer.nextSibling);
+                    }
+                }
+                else
+                {
+                  r.startContainer.insertBefore(cursor, r.startContainer.childNodes[r.startOffset])
+                }
+                cursorText.select();
+              }
+            }, 'sdfsdfsdfs dfsd fsd fsd fsdf sdf')
+          }
+        ]
       }
     ]
   });
+
+  function jumpOut(){
+    if (cursorText.value)
+    {
+      cursor.parentNode.insertBefore(document.createTextNode(cursorText.value), cursor);
+      cursorText.value = '';
+    }
+  }
+
+  var cursorText
+  var cursor = basis.dom.createElement('SPAN.cursor',
+    cursorText = basis.dom.createElement({
+      description: 'TEXTAREA',
+      change: jumpOut,
+      keydown: jumpOut,
+      keypressed: jumpOut,
+      keyup: jumpOut
+    })
+  );
 
   //
   // export names

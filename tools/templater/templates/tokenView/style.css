@@ -1,12 +1,11 @@
 
   @import 'attribute.css';
+  @import 'reference.css';
+  @import 'referenceList.css';
 
-  body * {
-    /*font-style: italic;*/
-  }
   #EditorToolbar
   {
-    background-color: gold !important;
+    /*background-color: green !important;*/
   }
 
   #Viewer
@@ -127,40 +126,6 @@
   {
     display: block;
   }
-
-
-  #Viewer .ReferenceList
-  {
-    display: inline-block;
-  }
-
-  #Viewer .ReferenceList
-  {
-    margin-left: 3px;
-    pad2ding-left: 19px;
-    bac2kground: url(img/chain.png) left .2em no-repeat;
-    color: #050;
-    text-shadow: 0 1px rgba(255,255,255,.75);
-  }
-  #Viewer .Reference
-  {
-    border-left: 1px solid #050;
-    padding: 2px .35em;
-    background-color: #CDEB8B;
-  }
-  #Viewer .Reference:first-child
-  {
-    border-left: none;
-    border-top-left-radius: 2px;
-    border-bottom-left-radius: 2px;
-  }
-  #Viewer .Reference:last-child
-  {
-    border-top-right-radius: 2px;
-    border-bottom-right-radius: 2px;
-  }
-
-
 
   #Viewer .Field-Edit
   {

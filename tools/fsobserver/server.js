@@ -5,6 +5,7 @@ var url = require('url');
 var path = require('path');
 
 var fs_debug = false;
+var is_dev = true;
 var port = process.argv[2];
 if (isNaN(port))
   port = 8123;
@@ -17,36 +18,57 @@ function quote(value){
     String(value)
       .replace(/[\r\n]/g, '')
       .replace(/'/g, '\\\'')
-      .replace(/\\/g, '/') + 
-   "'";
+      .replace(/\\/g, '/')
+   + "'";
+}
+
+var staticFileCache = {};
+function returnFile(res, filename, processData){
+  var absPath = __dirname + '/' + filename;
+  var data = staticFileCache[absPath];
+
+  if (!is_dev && data)
+  {
+    res.writeHead(200);
+    res.end(data);
+  }
+  else
+  {
+    fs.readFile(absPath, function(err, data){
+      if (err)
+      {
+        res.writeHead(500);
+        res.end('Error loading ' + filename);
+      }
+      else
+      {
+        if (processData)
+          data = processData(data);
+
+        staticFileCache[absPath] = data;
+        res.writeHead(200, {
+          'Content-Type': filename.match(/\.js$/) ? 'text/javascript' : 'text/html'
+        });
+        res.end(data);
+      }
+    });
+  }
 }
 
 function handler(req, res){
-  var location = url.parse(req.url, true)
+  var location = url.parse(req.url, true, true);
+  var host = req.headers.host;
+
   switch (location.pathname)
   {
     case '/':
-      fs.readFile(__dirname + '/client.js', function(err, data){
-        if (err){
-          res.writeHead(500);
-          return res.end('Error loading client.js');
-        }
-
-        res.writeHead(200);
-        res.end(data);
-      });
+      returnFile(res, 'client.js', function(data){
+        return String(data).replace(/\{location\}/g, host);
+      })
       break;
 
     case '/resolve':
-      fs.readFile(__dirname + '/client.html', function(err, data){
-        if (err){
-          res.writeHead(500);
-          return res.end('Error loading client.html');
-        }
-
-        res.writeHead(200);
-        res.end(data);
-      });
+      returnFile(res, 'client.html')
       break;
 
     default:
@@ -82,9 +104,10 @@ var createCallback = function(filename, fileType, lastUpdate){
       for (var i = 0, p; i < socket.pathes.length; i++)
       {
         p = socket.pathes[i];
-        if (filename.substr(0, p.length) == p)
+        if (filename.substr(0, p.length) == p && filename != p)
         {
-          socket.emit('newFile', { filename: filename.substr(p.length), type: fileType, lastUpdate: lastUpdate });
+          if (filename.length != p.length)
+            socket.emit('newFile', { filename: filename.substr(p.length), type: fileType, lastUpdate: lastUpdate });
           break;
         }
       }
@@ -105,7 +128,8 @@ var updateCallback = function(fileInfo){
         if (filename.substr(0, p.length) == p)
         {
           fileInfo.filename = filename.substr(p.length);
-          socket.emit('updateFile', fileInfo);
+          if (filename.length != p.length)
+            socket.emit('updateFile', fileInfo);
           break;
         }
       }
@@ -123,9 +147,10 @@ var deleteCallback = function(filename){
       for (var i = 0, p; i < socket.pathes.length; i++)
       {
         p = socket.pathes[i];
-        if (filename.substr(0, p.length) == p)
+        if (filename.substr(0, p.length) == p && filename != p)
         {
-          socket.emit('deleteFile', filename.substr(p.length));
+          if (filename.length != p.length)
+            socket.emit('deleteFile', filename.substr(p.length));
           break;
         }
       }
@@ -320,15 +345,16 @@ var fsWatcher = (function(){
       else
         console.warn('Folder `' + path + '` isn\'t observing yet');
     },
-    getFiles: function(){
+    getFiles: function(p){
       var result = [];
       for (var filename in fileMap)
-        result.push({
-          filename: filename,
-          type: fileMap[filename].type,
-          lastUpdate: fileMap[filename].mtime,
-          content: fileMap[filename].content
-        });
+        if (filename.substr(0, p.length) == p && filename.length != p.length)
+          result.push({
+            filename: filename.substr(p.length),
+            type: fileMap[filename].type,
+            lastUpdate: fileMap[filename].mtime,
+            content: fileMap[filename].content
+          });
 
       return result;
     },
@@ -344,6 +370,9 @@ var fsWatcher = (function(){
 io.sockets.on('connection', function(socket){
   socket.on('saveFile', function(filename, content){
     console.log('save file', arguments);
+
+    filename = socket.pathes[0] + filename;
+
     if (fsWatcher.isObserveFile(filename))
     {
       fs.writeFile(filename, content, function (err) {
@@ -367,11 +396,39 @@ io.sockets.on('connection', function(socket){
       });
   });
 
+  socket.on('createFile', function(filename, content){
+    console.log('create file', arguments);
+
+    filename = socket.pathes[0] + filename;
+
+    if (!path.existsSync(filename) && path.existsSync(path.dirname(filename)))
+    {
+      fs.writeFile(filename, '', function (err) {
+        if (err)
+        {
+          socket.emit('error', {
+            operation: 'create file',
+            message: err
+          });
+        }
+        else
+        {
+          socket.emit('fileSaved', filename);
+        }
+      });
+    }
+    else
+      socket.emit('error', {
+        operation: 'create file',
+        message: 'bad filename'
+      });
+  });
+
   socket.on('observe', function(rel, fspath){
     var relListenPath = path.relative(__dirname, fspath).replace(/\\/, '/');
     socket.pathes.push(relListenPath + '/');
     fsWatcher.watch(relListenPath);
-    socket.emit('observeReady', rel, fsWatcher.getFiles());
+    socket.emit('observeReady', rel, fsWatcher.getFiles(relListenPath + '/'));
   });
 
   socket.pathes = [];

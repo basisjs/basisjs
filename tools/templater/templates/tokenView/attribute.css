@@ -1,5 +1,5 @@
 
-  /* comment */
+  @import 'attributeValuePart.css';
 
   #Viewer .AttributeList
   {
@@ -13,14 +13,6 @@
   #Viewer .AttributeValue
   {
     display: none;
-  }
-  #Viewer .templater-AttributeValuePart
-  {
-    margin-right: 1ex;
-  }
-  #Viewer .templater-AttributeValuePart:last-child
-  {
-    margin-right: 0;
   }
   #Viewer .templater-AttributeValueBinding,
   #Viewer .templater-AttributeClassBinding

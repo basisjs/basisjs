@@ -5,7 +5,7 @@
     float: left;
     margin-right: 5px;
     width: 15%;
-    min-width: 200px;
+    min-width: 200px;    
     /*  -webkit-transition: width .5s, opacity 1.5s; 
     transition: width .5s, opacity 1.5s;*/
   }

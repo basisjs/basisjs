@@ -39,6 +39,7 @@
   var settingsPath = 'basis.devtools.observer_' + location.pathname.replace(/\/[^\/\.]+?(\.[^\/\.]+)$/, '/').replace(/[^a-z0-9]/g, '_');
   var listenDirs = typeof localStorage != 'undefined' ? JSON.parse(localStorage[settingsPath]) : {};
 
+  var documentHead = document.getElementsByTagName('head')[0];
 
   //
   // init part
@@ -46,104 +47,113 @@
 
   basis.dom.ready(function(){
     // socket.io
-    document.getElementsByTagName('head')[0].appendChild(
+    documentHead.appendChild(
       basis.dom.createElement({
-        description: 'script[src="//' + location.host + ':8123/socket.io/socket.io.js"]',
-        load: linkWithSocketIO,
+        description: 'script[src="//{location}/socket.io/socket.io.js"]',
         error: function(){
           console.warn('Error on loading ' + this.src);
           //alert('too bad... but also good')
+        },
+        load: function(){
+          if (typeof io != 'undefined')
+          {
+            console.log('Connecting to server via socket.io');
+
+            var observeCount = 0;
+            var socket = io.connect('//{location}');
+            isReady.set(isReady_ = true);
+
+            function sendToServerOffline(){
+              console.warn('No connection with server :( Trying to send:', arguments);
+            };
+            function sendToServerOnline(){
+              console.log('Send to server: ', arguments[0], arguments[1]);
+              socket.emit.apply(socket, arguments);
+            };
+
+            //
+            // add callbacks on events
+            //
+            Object.iterate({
+              //
+              // connection events
+              //
+              connect: function(){
+                connectionState.set('connected');
+
+                var pathes = ListenPath.all.getItems();
+                observeCount = pathes.length;
+                for (var i = 0; path = pathes[i]; i++)
+                  socket.emit('observe', path.data.rel, path.data.fspath);
+
+                sendToServer = sendToServerOnline;
+
+                if (!observeCount)
+                {
+                  connectionState.set('online');
+                  isOnline.set(isOnline_ = true);
+                }
+              },
+              disconnect: function(){
+                connectionState.set('offline');
+                sendToServer = sendToServerOffline;
+                isOnline.set(isOnline_ = false);
+              },
+              connecting: function(){
+                connectionState.set('connecting');
+              },
+              observeReady: function(rel, filelist){
+                var path = ListenPath.get(rel)
+
+                console.log('listen for ' + rel + ' (ready ' + filelist.length + ' files)');
+
+                if (path)
+                  path.files.set(filelist.map(File));
+
+                observeCount--;
+                if (!observeCount)
+                {
+                  connectionState.set('online');
+                  isOnline.set(isOnline_ = true);
+                }
+              },
+
+              //
+              // file events
+              //
+              newFile: function(data){
+                console.log('new file', data);
+
+                File(data);
+              },
+              updateFile: function(data){
+                console.log('file updated', data);
+
+                File(data);
+              },
+              deleteFile: function(data){
+                console.log('file deleted', data);
+
+                var file = File.get(data);
+                if (file)
+                  file.destroy();
+              },
+              fileSaved: function(data){
+                console.log('file saved', data);
+              },
+
+              //
+              // common events
+              //
+              error: function(data){
+                console.log('error:', data.operation, data.message);
+              }
+            }, socket.on, socket);
+          }
         }
       })
     );
   });
-
-  function linkWithSocketIO(){
-    if (typeof io != 'undefined')
-    {
-      console.log('Connecting to server via socket');
-
-      var socket = io.connect(':8123');
-      isReady.set(isReady_ = true);
-
-      function sendToServerOffline(){
-        console.warn('No connection with server :( Trying to send:', arguments);
-      };
-      function sendToServerOnline(){
-        console.log('Send to server: ', arguments);
-        socket.emit.apply(socket, arguments);
-      };
-
-      window.__socket = socket;
-
-      //
-      // add callbacks on events
-      //
-      Object.iterate({
-        //
-        // connection events
-        //
-        connect: function(){
-          connectionState.set('connected');
-
-          var pathes = ListenPath.all.getItems();
-          for (var i = 0; path = pathes[i]; i++)
-            socket.emit('observe', path.data.rel, path.data.fspath);
-
-          sendToServer = sendToServerOnline;
-          connectionState.set('online');
-          isOnline.set(isOnline_ = true);
-        },
-        disconnect: function(){
-          connectionState.set('offline');
-          sendToServer = sendToServerOffline;
-          isOnline.set(isOnline_ = false);
-        },
-        connecting: function(){
-          connectionState.set('connecting');
-        },
-        observeReady: function(rel, filelist){
-          var path = ListenPath.get(rel)
-
-          if (path)
-          {
-            path.files.set(filelist.map(File));
-          }
-        },
-
-        //
-        // file events
-        //
-        newFile: function(data){
-          console.log('new file', data);
-
-          File(data);
-        },
-        updateFile: function(data){
-          console.log('file updated', data);
-
-          File(data);
-        },
-        deleteFile: function(data){
-          console.log('file deleted', data);
-
-          var file = File.get(data);
-          if (file)
-            file.destroy();
-        },
-        fileSaved: function(data){
-          console.log('file saved', data);
-        },
-
-        //
-        // common events
-        //
-        error: function(data){
-          console.log('error:', data.operation, data.message);
-        }
-      }, socket.on, socket);
-    }
-  }
 
 
   //
@@ -187,6 +197,7 @@
     }
   });
 
+  window.ListenPath = ListenPath;
   for (var path in listenDirs)
   {
     ListenPath({
@@ -218,7 +229,7 @@
   });
 
   var filesByFolder = new nsDataset.Split({
-    source: allFiles,
+    source: File.all,
     rule: function(object){
       var path = object.data.filename.split("/");
       path.pop();
@@ -227,7 +238,7 @@
   });
 
   var files = new nsDataset.Subset({
-    source: allFiles,
+    source: File.all,
     rule: function(object){
       return object.data.type == 'file';
     }
@@ -245,9 +256,9 @@
     update: function(file, delta){
       if ('filename' in delta || 'content' in delta)
       {
-        var tempalteFile = basis.template.filesMap[this.data.filename];
-        if (tempalteFile)
-          tempalteFile.update(this.data.content);
+        var templateFile = basis.template.filesMap[this.data.filename];
+        if (templateFile)
+          templateFile.update(this.data.content);
       }
     }
   };
@@ -276,7 +287,7 @@
     linkEl.href = path;                         // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
     baseEl.setAttribute('href', linkEl.href);
 
-    basis.dom.insert(document.head, baseEl, 0); // even if there is more than one <base> elements, only first has effect
+    basis.dom.insert(documentHead, baseEl, 0); // even if there is more than one <base> elements, only first has effect
   }
   function restoreBase(){
     baseEl.setAttribute('href', location);      // Opera left document base as <base> element specified,
@@ -294,9 +305,6 @@
       styleSheetFileMap[imports[i].url].remove(imports[i]);
       basis.dom.remove(imports[i].styleEl);
     }
-  }
-
-  function applyStyle(path, content){
   }
 
   var styleUpdateHandler = {
@@ -352,10 +360,16 @@
 
     var abs = path.split(/\//);
     var loc = location.href.replace(/\/[^\/]*$/, '').split(/\//);
+    //var res = [];
     var i = 0;
 
     while (abs[i] == loc[i] && typeof loc[i] == 'string')
       i++;
+
+    //while (i < loc.length)
+    //  res.push('..');
+
+    //return res.concat(abs.slice(i)).join('/');
 
     return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
   }
@@ -468,11 +482,11 @@
       cssText
     );
 
-    document.head.insertBefore(tmpStyleEl, insertPoint || styleEl);
+    documentHead.insertBefore(tmpStyleEl, insertPoint || styleEl);
     if (!styleEl || styleEl.tagName == 'LINK')
     {
       var newStyleEl = tmpStyleEl.cloneNode(false);
-      document.head.insertBefore(newStyleEl, insertPoint || styleEl);
+      documentHead.insertBefore(newStyleEl, insertPoint || styleEl);
 
       if (styleEl)
         basis.dom.remove(styleEl);
@@ -559,7 +573,11 @@
 
     File: File,
     filesByFolder: filesByFolder,
-    filesByType: filesByType
+    filesByType: filesByType,
+
+    createFile: function(filename){
+      sendToServer('createFile', filename);
+    }
   });
 
 })(this);

@@ -106,7 +106,9 @@
 
     init: function(config){
       nsTree.Folder.prototype.init.call(this, config);
-      this.setDataSource(fsobserver.filesByFolder.getSubset(this.data.filename, true));
+      //console.log(this.data.filename);
+      if (this.data.filename)
+        this.setDataSource(fsobserver.filesByFolder.getSubset(this.data.filename, true));
     }
   });
 
