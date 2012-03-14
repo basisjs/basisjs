@@ -691,7 +691,7 @@ basis.require('basis.animation');
         scroller.setPositionX(positionX, true);
       }
 
-      if (this.scrollY && (scroller.viewportY < this.minPositionY || this.scroller.viewportY > this.maxPositionY))
+      if (this.scrollY && (scroller.viewportY < this.minPositionY || scroller.viewportY > this.maxPositionY))
       {
         var positionY = Math.min(this.maxPositionY, Math.max(this.minPositionY, scroller.viewportY));
         scroller.setPositionY(positionY, true);

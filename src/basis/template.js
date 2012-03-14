@@ -79,7 +79,9 @@ basis.require('basis.dom.event');
   var tmplEventListeners = {};
   var tmplNodeMap = { seed: 1 };
   var tmplFilesMap = {};
-
+  var namespaceURI = {
+    svg: 'http://www.w3.org/2000/svg'
+  };
 
  /**
   * Parse html into tokens.
@@ -1105,8 +1107,11 @@ basis.require('basis.dom.event');
       {
         case TYPE_ELEMENT: 
           var tagName = token[ELEMENT_NAME];
+          var parts = tagName.split(/:/);
 
-          element = document.createElement(tagName);
+          element = parts.length > 1
+            ? document.createElementNS(namespaceURI[parts[0]], tagName)
+            : document.createElement(tagName);
 
           // process for attributes
           if (attrs = token[ELEMENT_ATTRS])

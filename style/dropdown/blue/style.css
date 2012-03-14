@@ -51,6 +51,13 @@
       -o-text-overflow: ellipsis;
   }
 
+  .Basis-DropdownList-Caption .Basis-Combobox-Item
+  {
+    overflow: hidden;
+    text-overflow: ellipsis;
+      -o-text-overflow: ellipsis;
+  }
+
   .Basis-DropdownList-Trigger
   {
     position: absolute;
