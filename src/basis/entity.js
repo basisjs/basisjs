@@ -720,7 +720,7 @@ basis.require('basis.data.dataset');
         this.calcs = [];
 
       var calcConfig = {
-        args: wrapper.args,
+        args: wrapper.args || [],
         wrapper: !valueWrapper ? wrapper : function(delta, data, oldValue){
           return valueWrapper(wrapper(delta, data, oldValue));
         }
