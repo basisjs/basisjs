@@ -1386,6 +1386,8 @@ basis.require('basis.html');
       // ======= after this point newChild will be inserted or moved into new position =======
       //
 
+      this.domVersion_ = (this.domVersion_ || 0) + 1;
+
       // unlink from old parent
       if (isInside)
       {

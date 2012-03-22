@@ -320,13 +320,16 @@ basis.require('basis.ui');
       '</div>',
 
     insertBefore: function(newChild, refChild){
-      if (newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild))
+      var marker = this.domVersion_;
+      newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild);
+
+      if (newChild && marker != this.domVersion_)
       {
         if (this.tmpl.pagesElement)
           this.tmpl.pagesElement.insertBefore(newChild.tmpl.pageElement, this.nextSibling ? this.nextSibling.tmpl.pageElement : null)
-
-        return newChild;
       }
+
+      return newChild;
     },
     removeChild: function(oldChild){
     	if (oldChild = TabControl.prototype.removeChild.call(this, oldChild))

@@ -504,8 +504,13 @@ basis.require('basis.html');
     return {
       // methods
       insertBefore: function(newChild, refChild){
+        var marker = this.domVersion_;
+
         // inherit
         newChild = super_.insertBefore.call(this, newChild, refChild);
+
+        if (marker == this.domVersion_)
+          return newChild;
 
         var target = newChild.groupNode || this;
         var container = target.childNodesElement || target.element || this.childNodesElement || this.element;
