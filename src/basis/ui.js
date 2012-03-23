@@ -519,7 +519,7 @@ basis.require('basis.html');
         var element = newChild.element;
         var refNode = insertPoint || container.insertPoint || null;
 
-        if (element.parentNode !== container || marker != this.domVersion_) // prevent dom update
+        if (element.parentNode !== container || (element.nextSibling !== refNode/* && marker != this.domVersion_*/)) // prevent dom update
           container.insertBefore(element, refNode); // NOTE: null at the end for IE
           
         return newChild;
