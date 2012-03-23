@@ -503,7 +503,7 @@ basis.require('basis.ui');
     className: namespace + '.Body',
 
     template:
-      '<tbody class="Basis-Table-Body {selected} {disabled}">' +
+      '<tbody class="Basis-Table-Body">' +
         '<tr class="Basis-Table-GroupHeader" event-click="toggle">' +
           '<td{content} colspan="100">' +
             '<span class="expander"/>' +

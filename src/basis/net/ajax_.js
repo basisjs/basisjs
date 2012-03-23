@@ -149,7 +149,9 @@ basis.require('basis.data');
     }
     else
       if (Browser.test('ie')) // disable IE caching
-        headers['If-Modified-Since'] = new Date(0).toGMTString();
+        headers['If-Modified-Since'] = 'Thu, 01 Jan 1970 00:00:00 GMT'; // new Date(0).toGMTString() is not correct here;
+                                                                        // IE returns date string with no leading zero and IIS may parse
+                                                                        // date wrong and response with code 400
 
     Object.iterate(Object.extend(headers, requestData.headers), function(key, value){
       if (value != null)

@@ -509,9 +509,6 @@ basis.require('basis.html');
         // inherit
         newChild = super_.insertBefore.call(this, newChild, refChild);
 
-        if (marker == this.domVersion_)
-          return newChild;
-
         var target = newChild.groupNode || this;
         var container = target.childNodesElement || target.element || this.childNodesElement || this.element;
 
@@ -522,7 +519,7 @@ basis.require('basis.html');
         var element = newChild.element;
         var refNode = insertPoint || container.insertPoint || null;
 
-        if (element.parentNode !== container || element.nextSibling !== refNode) // prevent dom update
+        if (element.parentNode !== container || marker != this.domVersion_) // prevent dom update
           container.insertBefore(element, refNode); // NOTE: null at the end for IE
           
         return newChild;

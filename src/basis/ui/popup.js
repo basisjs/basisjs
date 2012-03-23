@@ -536,7 +536,7 @@ basis.require('basis.ui');
 
     template:
       '<div class="Basis-Menu-ItemGroup">' +
-        '<div{childNodesElement|content} class="Basis-Menu-ItemGroup-Content {selected} {disabled}"></div>' +
+        '<div{childNodesElement|content} class="Basis-Menu-ItemGroup-Content"></div>' +
       '</div>'
   });
 
