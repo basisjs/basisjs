@@ -792,6 +792,7 @@ basis.require('basis.data');
       }
       else
       {
+        this.stoppedProxies.add(proxy);
         ;;; console.warn('Request skipped. Service session is not opened');
         return false;
       }
@@ -812,7 +813,10 @@ basis.require('basis.data');
       this.event_sessionClose();
     },
 
-    freeze: function(){
+    freeze: function(){ 
+      if (!this.sessionKey)
+        return;
+
       this.oldSessionKey = this.sessionKey;
       this.sessionKey = null;
       this.sessionData = null;
