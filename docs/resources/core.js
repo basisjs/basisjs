@@ -688,7 +688,7 @@
         },
         success: function(req){
           var curResource = this.curResource;
-          curResource.text = req.responseText;
+          curResource.text = req.data.responseText;
           sourceParser[curResource.kind](curResource);
         },
         complete: function(req){
@@ -721,7 +721,7 @@
 
       if (this.curResource)
       {
-        this.transport().request(this.curResource.url);
+        this.transport().request({ url: this.curResource.url });
       }
     }
   };
