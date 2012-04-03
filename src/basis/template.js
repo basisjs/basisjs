@@ -746,6 +746,34 @@ basis.require('basis.dom.event');
       }
     }
 
+    var localeUpdaters = {};
+    function getLocaleUpdater(key){
+      return localeUpdaters[key] || (localeUpdaters[key] = function(){ this.tmpl.set(key, this.tmpl.l10n[key].value) });
+    }
+
+    function wrapLocaleGetter(key, getter){
+      return function(node){
+        var newToken = getter(node);
+        var oldToken = node.tmpl.l10n[key];
+
+        if (newToken instanceof basis.l10n.Token == false)
+          newToken = undefined;
+
+        if (newToken != oldToken)
+        {
+          if (oldToken)
+            oldToken.detach(localeUpdaters[key], node);
+
+          if (newToken)
+            newToken.attach(localeUpdaters[key] || getLocaleUpdater(key), node);
+
+          node.tmpl.l10n[key] = newToken;
+        }
+
+        return newToken && newToken.value;
+      }
+    }
+
    /**
     * @func
     */
@@ -772,6 +800,9 @@ basis.require('basis.dom.event');
 
             if (getter)
             {
+              if (binding.l10n)
+                getter = wrapLocaleGetter(key, getter);
+
               getters[key] = getter;
               names.push(key);
 
@@ -1025,11 +1056,11 @@ basis.require('basis.dom.event');
 
       /** @cut */try {
       var fnBody;
-      var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attr', 'bind_attrClass', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
+      var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attr', 'bind_attrClass', 'localeUpdaters', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
         'var _=build(),id=gMap.seed++,' + pathes.path.concat(bindings.vars) + ';\n' +
         'if(obj)gMap[a.basisObjectId=id]=obj;\n' +
-        'return tMap[id]={' + [pathes.ref, 'set:' + bindings.body, 'rebuild:function(){if(updateCallback)updateCallback.call(obj)},destroy:function(){delete tMap[id];if(obj)delete gMap[id]}'] + '}' +
-      '}')(tmplNodeMap, templateMap, build, bind_node, bind_nodeValue, bind_attr, bind_attrClass);
+        'return tMap[id]={' + [pathes.ref, 'set:' + bindings.body, 'l10n:{},rebuild:function(){if(updateCallback)updateCallback.call(obj)},destroy:function(){for(var key in this.l10n)if(this.l10n[key])this.l10n[key].detach(localeUpdaters[key], obj);delete tMap[id];if(obj)delete gMap[id]}'] + '}' +
+      '}')(tmplNodeMap, templateMap, build, bind_node, bind_nodeValue, bind_attr, bind_attrClass, localeUpdaters);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
 
       return {

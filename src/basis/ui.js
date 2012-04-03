@@ -86,10 +86,13 @@ basis.require('basis.html');
               events: value[1]
             };
           else
+          {
             def = {
               getter: getter(value.getter),
+              l10n: !!value.l10n,
               events: value.events
             };
+          }
       }
 
       binding[key] = def;
@@ -145,6 +148,15 @@ basis.require('basis.html');
         return node.satellite[satelliteName]
           ? node.satellite[satelliteName].element
           : null;
+      }
+    };
+  });
+
+  BINDING_PRESET.add('l10n', function(token){
+    return {
+      l10n: true,
+      getter: function(){
+        return basis.l10n.getToken(token);
       }
     };
   });
