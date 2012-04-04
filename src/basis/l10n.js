@@ -6,13 +6,16 @@
 
   var namespace = 'basis.l10n';
   
-  var currentCulture;
+  var currentCulture = 'base';
 
   var dictionaries = {};
 
   var Token = Class(null, {
+    listeners: null,
+    value: null,
     init: function(){
       this.listeners = [];
+      this.value = '';
     },
     set: function(value){
       if (value != this.value)
@@ -22,9 +25,9 @@
           listener.handler.call(listener.context);
       }
     },
-    /*get: function(){
+    get: function(){
       return this.value;
-    },*/
+    },
     attach: function(handler, context){
       for (var i = 0, listener; listener = this.listeners[i]; i++)
       {
@@ -50,6 +53,13 @@
       }
 
       return false;
+    },
+    destroy: function(){
+      for (var i = 0, listener; listener = this.listeners[i]; i++)
+        this.detach(listener.handler, listener.context);
+
+      delete this.listeners;
+      delete this.value;
     }
   });
 
@@ -59,18 +69,16 @@
       this.tokens = {};
       this.resources = {};
     },
-    getToken: function(tokenName){
-      if (!(tokenName in this.tokens))
-      {
-        this.tokens[tokenName] = new Token();
-        this.tokens[tokenName].set(this.getCultureValue(currentCulture, tokenName) || this.getCultureValue('base', tokenName));
-      }
-
-      return this.tokens[tokenName];
-    },
-    setTokens: function(culture, tokens){
+    update: function(culture, tokens){
       for (var tokenName in tokens)
         this.setCultureValue(culture, tokenName, tokens[tokenName]);
+    },
+    setCulture: function(culture){
+      for (var tokenName in this.tokens)
+        this.setTokenValue(tokenName, culture);
+    },
+    setTokenValue: function(tokenName, culture){
+      this.tokens[tokenName].set(this.getCultureValue(culture, tokenName) || this.getCultureValue('base', tokenName));      
     },
     setCultureValue: function(culture, tokenName, tokenValue){
       var resource = this.resources[culture];
@@ -79,21 +87,30 @@
 
       resource[tokenName] = tokenValue;
 
-      if (culture == currentCulture)
-        this.getToken(tokenName).set(tokenValue);
+      if (this.tokens[tokenName] && (culture == 'base' || culture == currentCulture))
+        this.setTokenValue(tokenName, currentCulture);
     },
     getCultureValue: function(culture, tokenName){
       return this.resources[culture] && this.resources[culture][tokenName];
     },
-    setCulture: function(culture){
-      for (var i in this.tokens)
-        this.tokens[i].set(this.getCultureValue(culture, i) || this.getCultureValue('base', i));
+    getToken: function(tokenName){
+      if (!(tokenName in this.tokens))
+      {
+        this.tokens[tokenName] = new Token();
+        this.setTokenValue(tokenName, currentCulture);
+      }
+
+      return this.tokens[tokenName];
+    },
+    destroy: function(){
+      delete this.namespace;
+      delete this.tokens;
+      delete this.resources;
     }
   });
 
   function updateDictionary(culture, namespace, tokens){
-    var dictionary = getDictionary(namespace, true);
-    dictionary.setTokens(culture, tokens);
+    getDictionary(namespace, true).update(culture, tokens);
   }
 
   function getDictionary(namespace, autoCreate){
@@ -110,15 +127,24 @@
     return getDictionary(namespace.substr(0, dotIndex), true).getToken(namespace.substr(dotIndex + 1));
   }
 
+  function createDictionary(namespace, tokens){
+    updateDictionary('base', namespace, tokens);
+  }
+
   function setCulture(culture){
-    for (var i in dictionaries)
-      dictionaries[i].setCulture(culture);
+    if (currentCulture != culture)
+    {
+      currentCulture = culture || 'base';
+      for (var i in dictionaries)
+        dictionaries[i].setCulture(culture);
+    }
   }
 
   basis.namespace(namespace).extend({
     Token: Token,
-    setCulture: setCulture,
     getToken: getToken,
+    setCulture: setCulture,
+    createDictionary: createDictionary,
     updateDictionary: updateDictionary
   });
 
