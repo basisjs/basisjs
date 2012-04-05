@@ -81,7 +81,7 @@
   }
 
   function getState(){
-    return document[visibilityPrefix ? visibilityPrefix + 'VisibilityState' : 'visibilityState'];
+    return document[visibilityPrefix ? visibilityPrefix + 'VisibilityState' : 'visibilityState'] || 'visible';
   }
 
   basis.namespace(namespace).extend({
