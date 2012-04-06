@@ -2,13 +2,15 @@
 !function(basis, global){
   'use strict';
 
+  var namespace = 'basis.l10n';
+
   var Class = basis.Class;
 
-  var namespace = 'basis.l10n';
-  
-  var currentCulture = 'base';
 
+  var dictionaryLocations = {};
+  var resourcesLoaded = {};
   var dictionaries = {};
+  var currentCulture = 'base';
 
   var Token = Class(null, {
     listeners: null,
@@ -109,8 +111,45 @@
     }
   });
 
-  function updateDictionary(culture, namespace, tokens){
-    getDictionary(namespace, true).update(culture, tokens);
+  function createDictionary(namespace, location, tokens){
+    getDictionary(namespace, true).update('base', tokens);    
+    dictionaryLocations[namespace] = location;
+  }
+
+  function setCultureForDictionary(dictionary, culture){
+    var location = dictionaryLocations[dictionary.namespace] + '/' + culture;
+    if (!resourcesLoaded[location])
+    {
+      resourcesLoaded[location] = true;
+      loadResource(location + '.js');
+    }
+
+    dictionary.setCulture(culture);
+  }
+
+  function loadResource(fileName){
+    var requestUrl = fileName
+    var req = new XMLHttpRequest();
+    req.open('GET', fileName, false);
+    req.send(null);
+    if (req.status == 200)
+    {
+      (global.execScript || function(scriptText){
+        global["eval"].call(global, scriptText);
+      })(req.responseText);
+    }
+  }
+
+  function updateDictionary(namespace, culture, tokens){
+    var dictionary = getDictionary(namespace);
+    if (dictionary)
+    {
+      dictionary.update(culture, tokens);
+    }
+    else 
+    {
+      ;;;console.warn('Dictionary ' + namespace + ' not found');
+    }
   }
 
   function getDictionary(namespace, autoCreate){
@@ -127,16 +166,12 @@
     return getDictionary(namespace.substr(0, dotIndex), true).getToken(namespace.substr(dotIndex + 1));
   }
 
-  function createDictionary(namespace, tokens){
-    updateDictionary('base', namespace, tokens);
-  }
-
   function setCulture(culture){
     if (currentCulture != culture)
     {
       currentCulture = culture || 'base';
       for (var i in dictionaries)
-        dictionaries[i].setCulture(culture);
+        setCultureForDictionary(dictionaries[i], culture);
     }
   }
 

@@ -764,21 +764,23 @@ basis.require('basis.dom.event');
         var newToken = getter(node);
         var oldToken = node.tmpl.l10n[key];
 
-        if (newToken instanceof basis.l10n.Token == false)
-          newToken = undefined;
-
         if (newToken != oldToken)
         {
           if (oldToken)
+          {
             oldToken.detach(localeUpdaters[key], node);
+            delete node.tmpl.l10n[key];
+          }
 
-          if (newToken)
+          if (newToken && newToken instanceof basis.l10n.Token)
+          {
             newToken.attach(localeUpdaters[key] || getLocaleUpdater(key), node);
-
-          node.tmpl.l10n[key] = newToken;
+            node.tmpl.l10n[key] = newToken;
+            newToken = newToken.value;
+          }
         }
 
-        return newToken && newToken.value;
+        return newToken;
       }
     }
 

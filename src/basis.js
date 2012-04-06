@@ -1277,7 +1277,7 @@
               requested[filename] = 1;
               var requestUrl = requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js';
               var req = new XMLHttpRequest();
-              req.open('POST', requestUrl, false);
+              req.open('GET', requestUrl, false);
               req.send(null);
               if (req.status == 200)
               {
