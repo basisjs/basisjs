@@ -37,6 +37,11 @@ basis.require('basis.dom.event');
   // Main part
   //
 
+  // Test for browser (IE) normalize text nodes during cloning
+  var CLONE_NORMALIZE_TEXT_BUG = (function(){
+    return dom.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
+  })();
+
   // token types
   /** @const */ var TYPE_ELEMENT = 1;
   /** @const */ var TYPE_ATTRIBUTE = 2;
@@ -598,7 +603,7 @@ basis.require('basis.dom.event');
 
       var result = optimize(source);
 
-      ;;;if ('JSON' in window) result.toString = function(){ return JSON.stringify(this) };
+      ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this) };
 
       return result;
     }
@@ -652,7 +657,10 @@ basis.require('basis.dom.event');
             localPath = path + '.lastChild';
           else
           {
-            //if (tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT) cp++;
+            // fix bug with normalize text node in IE8-
+            if (CLONE_NORMALIZE_TEXT_BUG && token[TOKEN_TYPE] == tokens[i - 1][TOKEN_TYPE] && token[TOKEN_TYPE] == TYPE_TEXT)
+              cp++;
+
             localPath = path + '.childNodes[' + cp + ']';
           }
         }
@@ -1191,8 +1199,9 @@ basis.require('basis.dom.event');
           break;
 
         case TYPE_TEXT:
-          //if (i && tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT)
-          //  result.appendChild(document.createComment(''));
+          // fix bug with normalize text node in IE8-
+          if (CLONE_NORMALIZE_TEXT_BUG && i && tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT)
+            result.appendChild(document.createComment(''));
 
           result.appendChild(document.createTextNode(token[TEXT_VALUE]));
           break;
@@ -1214,7 +1223,7 @@ basis.require('basis.dom.event');
         : this.source
     );
 
-    var decl = makeDeclaration(source);
+    var decl = this.isDecl ? source.toObject() : makeDeclaration(source);
     var funcs = makeFunctions(decl);
 
     this.createInstance = funcs.createInstance;
@@ -1393,13 +1402,17 @@ basis.require('basis.dom.event');
         if (this.source)
           removeFromFileMap(this);
 
+        this.isDecl = false;
+
         if (typeof source == 'string')
         {
           var m = source.match(/^([a-z]+):/);
           if (m)
           {
             var prefix = m[1];
-            var source = source.substr(m[0].length);
+
+            source = source.substr(m[0].length);
+
             switch (prefix)
             {
               case 'file':
@@ -1409,8 +1422,10 @@ basis.require('basis.dom.event');
               case 'id':
                 // source from script element
                 source = resolveSourceById(source);
+              case 'tokens':
+                this.isDecl = true;
               case 'raw':
-                source = source;
+                //source = source;
                 break;
               default:
                 ;;;console.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.')
@@ -1447,4 +1462,4 @@ basis.require('basis.dom.event');
     }
   });
 
-})(basis, this);
+})(basis, typeof exports != 'undefined' ? global : this);
