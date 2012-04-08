@@ -1,5 +1,5 @@
 /*!
- * Basis javascript library 
+ * Basis javascript library
  * http://code.google.com/p/basis-js/
  *
  * @copyright
@@ -50,7 +50,7 @@
   * Returns first not null value.
   * @param {...*} args
   * @return {object}
-  */ 
+  */
   function coalesce(/* arg1 .. argN */){
     var args = arguments;
     for (var i = 0; i < args.length; i++)
@@ -67,7 +67,7 @@
   function extend(object, source){
     for (var key in source)
       object[key] = source[key];
-    
+
     return object;
   }
 
@@ -81,7 +81,7 @@
     for (var key in source)
       if (key in object == false)
         object[key] = source[key];
-    
+
     return object;
   }
 
@@ -92,10 +92,10 @@
   */
   function keys(object){
     var result = new Array();
-    
+
     for (var key in object)
       result.push(key);
-    
+
     return result;
   }
 
@@ -106,10 +106,10 @@
   */
   function values(object){
     var result = new Array();
-    
+
     for (var key in object)
       result.push(object[key]);
-    
+
     return result;
   }
 
@@ -161,13 +161,13 @@
   */
   function iterate(object, callback, thisObject){
     var result = new Array();
-    
+
     for (var key in object)
       result.push(callback.call(thisObject, key, object[key]));
-    
+
     return result;
   }
-  
+
   extend(Object, {
     extend: extend,
     complete: complete,
@@ -401,7 +401,7 @@
         break;
 
         case 'object':
-          result = function(object){ return modificator[func(object)] }; 
+          result = function(object){ return modificator[func(object)] };
         break;
       }
 
@@ -553,7 +553,7 @@
     * arguments (folding) for function.
     * Implemented in Fifth Edition of ECMA-262.
     * TODO: check compliance
-    * @param {Object} thisObject 
+    * @param {Object} thisObject
     * @param {...*} args
     * @return {function()}
     */
@@ -589,14 +589,14 @@
 
   extend(Array, {
     // array copier
-    from: function(object, offset){ 
+    from: function(object, offset){
       if (object != null)
       {
         var len = object.length;
-        
+
         if (typeof len == 'undefined')
           return [object];
-        
+
         if (!offset)
           offset = 0;
 
@@ -615,10 +615,10 @@
     create: function(length, fillValue, thisObject){
       var result = new Array();
       var isFunc = typeof fillValue == 'function';
-      
+
       for (var i = 0; i < length; i++)
         result[i] = isFunc ? fillValue.call(thisObject, i, result) : fillValue;
-      
+
       return result;
     }
   });
@@ -641,7 +641,7 @@
     lastIndexOf: function(searchElement, offset){
       var len = this.length;
       offset = parseInt(offset);
-      if (isNaN(offset) || offset >= len) 
+      if (isNaN(offset) || offset >= len)
         offset = len - 1;
       else
         offset = (offset + len) % len;
@@ -766,7 +766,7 @@
     search: function(value, getter, offset){
       Array.lastSearchIndex = -1;
       getter = Function.getter(getter || $self);
-      
+
       for (var index = parseInt(offset) || 0, len = this.length; index < len; index++)
         if (/*index in this && */getter(this[index]) === value)
           return this[Array.lastSearchIndex = index];
@@ -784,7 +784,7 @@
 
       var len = this.length;
       var index = isNaN(offset) || offset == null ? len : parseInt(offset);
-      
+
       for (var i = index > len ? len : index; i --> 0;)
         if (/*i in this && */getter(this[i]) === value)
           return this[Array.lastSearchIndex = i];
@@ -797,12 +797,12 @@
     * @param {any} value Value search for
     * @param {function(object)|string=} getter
     * @param {boolean=} desc Must be true for reverse sorted arrays.
-    * @param {boolean=} strong If true - returns result only if value found. 
+    * @param {boolean=} strong If true - returns result only if value found.
     * @param {number=} left Min left index. If omit it equals to zero.
     * @param {number=} right Max right index. If omit it equals to array length.
     * @return {number}
     */
-    binarySearchPos: function(value, getter, desc, strong, left, right){ 
+    binarySearchPos: function(value, getter, desc, strong, left, right){
       if (!this.length)  // empty array check
         return strong ? -1 : 0;
 
@@ -813,13 +813,13 @@
       var l = isNaN(left) ? 0 : left;
       var r = isNaN(right) ? this.length - 1 : right;
 
-      do 
+      do
       {
         pos = (l + r) >> 1;
         compareValue = getter(this[pos]);
         if (desc ? value > compareValue : value < compareValue)
           r = pos - 1;
-        else 
+        else
           if (desc ? value < compareValue : value > compareValue)
             l = pos + 1;
           else
@@ -857,7 +857,7 @@
 
       return this
         .map(function(item, index){
-               return { 
+               return {
                  i: index,       // index
                  v: getter(item) // value
                };
@@ -968,7 +968,7 @@
     toArray: (new String('a')[0]
       ? function(){
           return Array.from(this);
-        } 
+        }
       // IE Array and String are not generics
       : function(){
           var result = new Array();
@@ -998,7 +998,7 @@
         extend(data, first);
 
       return this.replace(FORMAT_REGEXP,
-        function(m, key, numFormat, num, noNull){ 
+        function(m, key, numFormat, num, noNull){
           var value = key in data ? data[key] : (noNull ? '' : m);
           if (numFormat && !isNaN(value))
           {
@@ -1038,7 +1038,7 @@
   if ('|||'.split(/\|/).length + '|||'.split(/(\|)/).length != 11)
   {
     String.prototype.split = function(pattern, count){
-      if (pattern == '' || (pattern && pattern.source == '')) 
+      if (pattern == '' || (pattern && pattern.source == ''))
         return this.toArray();
 
       var result = new Array();
@@ -1049,7 +1049,7 @@
       {
         if (!pattern.global)
           pattern = new RegExp(pattern.source, /\/([mi]*)$/.exec(pattern)[1] + 'g')
-        
+
         while (match = pattern.exec(this))
         {
           match[0] = this.substring(pos, match.index);
@@ -1071,14 +1071,14 @@
   }
 
   // IE fix
-  if ('12'.substr(-1) != '2') 
+  if ('12'.substr(-1) != '2')
   {
     var _native_String_substr = String.prototype.substr;
     String.prototype.substr = function(start, end){
       return _native_String_substr.call(this, start < 0 ? Math.max(0, this.length + start) : start, end);
     };
   }
-  
+
  /**
   * Number extensions
   * @namespace Number.prototype
@@ -1095,7 +1095,7 @@
     between: function(min, max){
       return !isNaN(this) && this >= min && this <= max;
     },
-    quote: function(start, end){ 
+    quote: function(start, end){
       return (this + '').quote(start, end);
     },
     toHex: function(){
@@ -1110,8 +1110,8 @@
     lead: function(len, leadChar){
       // convert to string and lead first digits by leadChar
       return (this + '').replace(/\d+/, function(number){
-        // substract number length from desired length converting len to Number and indicates how much leadChars we need to add 
-        // here is no isNaN(len) check, because comparation of NaN and a Number is always false 
+        // substract number length from desired length converting len to Number and indicates how much leadChars we need to add
+        // here is no isNaN(len) check, because comparation of NaN and a Number is always false
         return (len -= number.length - 1) > 1 ? Array(len).join(leadChar || 0) + number : number;
       });
     },
@@ -1132,7 +1132,7 @@
     }
   });
 
-  // ============================================ 
+  // ============================================
   // Date (other extensions & fixes moved to date.js)
   //
 
@@ -1159,7 +1159,6 @@
   * @namespace Date.prototype
   */
 
-  // IE 5.0-7.0 fix
   if ((new Date).getYear() < 1900)
   {
     extend(Date.prototype, {
@@ -1177,14 +1176,14 @@
   // Main part
   //
 
- /** 
+ /**
   * Root namespace for Basis framework.
-  * @namespace Basis
+  * @namespace basis
   */
 
   var namespace = 'basis';
 
-  // ============================================ 
+  // ============================================
   // Namespace subsystem
   //
 
@@ -1202,7 +1201,6 @@
       extend(this, newNames);
       return this;
     };
-    //namespace.toString = function(){ return name };
 
     return namespace;
   }
@@ -1240,76 +1238,68 @@
   }
 
   var requireNamespace = (function(){
-    var scripts = document ? document.getElementsByTagName('SCRIPT') : null;
-    var basisRequirePath = (scripts ? scripts[scripts.length - 1].src : module.filename).replace(/[^\/]+$/, '');
-    var requested = {};
 
-    function resolve(namespace, path){
-      var cursor = namespaces[namespace];
-      var parts = path ? path.split(/\./) : [];
-
-      while (cursor && parts.length)
-        cursor = cursor[parts.shift()];
-
-      return cursor;
+    function dirname(path){
+      return path.replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/, '');
     }
 
+    var scripts = Array.from(global.document ? document.getElementsByTagName('SCRIPT') : null);
+    var basisRequirePath = dirname(scripts ? scripts.item(-1).src : module.filename);
+    var requested = {};
     var requireFunc;
+
     if (typeof require == 'function')
-      requireFunc = function(filename){
+    {
+      requireFunc = function(namespace){
         return require(requirePath + filename.replace(/\./g, '/'));
       }
+    }
     else
     {
-      requireFunc = function(filename, path_){
-        var namespace = filename.match(/^([a-z][a-zA-Z0-9\_]*(\.[a-z][a-zA-Z0-9\_]*)*)?/)[0];
-        var path = filename.substr(namespace.length ? namespace.length + 1 : 0);
-        var result = resolve(namespace, path);
+      requireFunc = function(namespace){
+        var filename = namespace.replace(/\./g, '/') + '.js';
+        var requirePath =
+          /^basis\./.test(namespace)
+            ? basisRequirePath
+            : dirname(location ? location.href : '');
 
-        var requirePath = /^basis\./.test(namespace) ? basisRequirePath : (location ? location.href : '').replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/, '');
-
-        if (!namespaces[namespace] || !result)
+        if (!namespaces[namespace])
         {
-          if (/^https?:/.test(requirePath))
-          {
-            if (!requested[filename])
-            {
-              requested[filename] = 1;
-              var requestUrl = requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js';
-              var req = new XMLHttpRequest();
-              req.open('GET', requestUrl, false);
-              req.send(null);
-              if (req.status == 200)
-              {
-                try {
-                  (global.execScript || function(scriptText){
-                    global["eval"].call(global, scriptText + '//@ sourceURL=' + requestUrl);
-                  })(req.responseText);
-                  //new Function(req.responseText).call(global);
-                } catch(e) {
-                  ;;;console.log('run ' + requirePath + (path_ || '') + filename.replace(/\./g, '/') + '.js' + ' ( ' + filename + ' )');
-                  throw e;
-                }
-                requireFunc.sequence.push(filename.replace(/\./g, '/') + '.js');
-              }
-              else
-              {
-                if (req.status == 404 && path)
-                  requireNamespace(namespace);
-                else
-                  throw 'unable to load module ' + filename + ' by basis.require()';
-              }
-            }
-            else
-            {
-              throw 'Attempt to load namespace, probably cycle require';
-            }
-          }
-          else
-            throw 'Path `' + filename + '` can\'t be resolved';
-        }
+          if (!/^https?:/.test(requirePath))
+            throw 'Path `' + namespace + '` can\'t be resolved';
 
-        return result || resolve(namespace, path);
+          if (!requested[namespace])
+            requested[namespace] = true;
+          else
+            throw 'Recursive require for ' + namespace;
+
+          var requestUrl = requirePath + filename;
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', requestUrl, false);
+          xhr.send(null);
+
+          if (xhr.status < 200 || xhr.status >= 400)
+            throw 'Unable to load module ' + requestUrl + ' (' + namespace + ') by basis.require()';
+
+          try {
+            (global.execScript || function(scriptText){
+              global["eval"].call(global,
+                '(function(basis, global, resource){' +
+                  scriptText +
+                '}).call(this, basis, this, function(resourcePath){' +
+                  'return function(){' +
+                    'return "' + dirname(requestUrl) + '" + resourcePath;' +
+                  '}' +
+                '})//@ sourceURL=' + requestUrl
+              );
+            })(xhr.responseText);
+          } catch(e) {
+            ;;;console.log('Run error ' + requestUrl + ' ( ' + namespace + ' )');
+            throw e;
+          }
+
+          requireFunc.sequence.push(filename);
+        }
       };
       requireFunc.sequence = [];
     }
@@ -1318,11 +1308,11 @@
   })();
 
 
-  // ============================================ 
+  // ============================================
   // OOP section: Class implementation
   //
 
-  var Class = (function(){ 
+  var Class = (function(){
 
    /**
     * This namespace introduce class creation scheme. It recomended for new
@@ -1333,7 +1323,7 @@
     * languages. All Basis classes and components (with some exceptions) are
     * building using this sheme.
     * @example
-    *   var classA = basis.Class(basis.Class, { // you can use null instead of basis.Class
+    *   var classA = basis.Class(null, { // you can use basis.Class instead of null
     *     name: 'default value',
     *     init: function(title){ // special method - constructor
     *       this.title = title;
@@ -1420,10 +1410,10 @@
       // Base class name
       className: namespace,
 
-      extendConstructor_: false, 
+      extendConstructor_: false,
 
       // prototype defaults
-      prototype: { 
+      prototype: {
         constructor: null,
         init: NULL_FUNCTION,
         postInit: NULL_FUNCTION,
@@ -1433,7 +1423,7 @@
         destroy: function(){
           for (var prop in this)
             this[prop] = null;
-        
+
           this.destroy = $undef;
         }
       },
@@ -1499,7 +1489,7 @@
         var className = newClassProps.className;
         var NULL_CONFIG = {};
 
-        var newClass = 
+        var newClass =
             /** @cut for more verbose in dev */ new Function('seed', 'NULL_CONFIG', 'return {"' + className + '": ' + (
 
               newClassProps.extendConstructor_
@@ -1514,7 +1504,7 @@
                     for (var key in extend)
                     {
                       prop = this[key];
-                      this[key] = prop && prop.__extend__ 
+                      this[key] = prop && prop.__extend__
                         ? prop.__extend__(extend[key])
                         : extend[key];
                     }
@@ -1554,7 +1544,7 @@
 
         //if (!window.classCount) window.classCount = 0; window.classCount++;
         //if (!window.classList) window.classList = []; window.classList.push(newClass);
-        
+
         return newClass;
       },
 
@@ -1565,7 +1555,7 @@
       */
       extend: function(source){
         var proto = this.prototype;
-        
+
         if (source.prototype)
           source = source.prototype;
 
@@ -1591,7 +1581,7 @@
         // for browsers that doesn't enum toString
         if (TOSTRING_BUG && source[key = 'toString'] !== Object.prototype[key])
           proto[key] = source[key];
-        
+
         return this;
       }
     });

@@ -6,21 +6,25 @@
     var scripts = document.getElementsByTagName('script');
     var curLocation = scripts[scripts.length - 1].src.replace(/[^\/]+\.js$/, '');
 
-    document.write('<script src="' + curLocation + 'src/basis.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/timer.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/event.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ua.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/dom.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/dom/event.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/template.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/html.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/dom/wrapper.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/cssom.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data/dataset.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data/property.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data/index.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/entity.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui.js"></script>');
+    document.write(
+      '<script src="' + curLocation + 'src/basis.js"></script>',
+      '<script>\n' +
+         'basis.require("basis.timer");\n' +
+         'basis.require("basis.event");\n' +
+         'basis.require("basis.ua");\n' +
+         'basis.require("basis.dom");\n' +
+         'basis.require("basis.dom.event");\n' +
+         'basis.require("basis.data");\n' +
+         'basis.require("basis.template");\n' +
+         'basis.require("basis.html");\n' +
+         'basis.require("basis.dom.wrapper");\n' +
+         'basis.require("basis.cssom");\n' +
+         'basis.require("basis.data.dataset");\n' +
+         'basis.require("basis.data.property");\n' +
+         'basis.require("basis.data.index");\n' +
+         'basis.require("basis.entity");\n' +
+         'basis.require("basis.ui");\n' +
+      '</script>'
+    );
   }
 }();

@@ -168,15 +168,14 @@ packages.forEach(function(pack){
   {
     var fileContent = ['// Package basis-' + packageName + '.js\n\n!function(){\n\  if (typeof document != \'undefined\')\n\  {\n\    var scripts = document.getElementsByTagName(\'script\');\n\    var curLocation = scripts[scripts.length - 1].src.replace(/[^\\/]+\\.js\$/, \'\');\n'];
 
-    for (var i = 0, filename; filename = build.files[i]; i++)
-    {
-      if (packageFilename == filename)
-        continue;
+    fileContent.push("\n    document.write(\n      '<script src=\"' + curLocation + '" + build.files[0] + "\"></script>',\n      '<script>\\n' +");
 
-      fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + filename + "\"></script>');");
-    }
+    var reqFiles = build.files.slice(1, -1);
+    var base = path.dirname(build.files[0]);
+    for (var i = 0, filename; filename = reqFiles[i]; i++)
+      fileContent.push('\n         \'basis.require("' + path.relative(base, filename).replace(/\.js$/, '').replace(/[\/\\]/g, '.') + '");\\n\' +');
 
-    fileContent.push("\n  }\n}();");
+    fileContent.push("\n      '</script>'\n    );\n  }\n}();");
 
     fs.writeFileSync(packageDebugResFilename, fileContent.join(''), 'utf-8')
     fs.writeFileSync(packageResFilename, fileContent.join(''), 'utf-8')

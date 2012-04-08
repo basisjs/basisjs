@@ -6,49 +6,53 @@
     var scripts = document.getElementsByTagName('script');
     var curLocation = scripts[scripts.length - 1].src.replace(/[^\/]+\.js$/, '');
 
-    document.write('<script src="' + curLocation + 'src/basis.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/timer.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/event.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ua.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/dom.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/dom/event.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/template.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/html.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/dom/wrapper.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/cssom.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/date.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/layout.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/dragdrop.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data/property.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/animation.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/xml.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/crypt.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data/dataset.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data/generator.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/data/index.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/entity.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/session.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/net/ajax.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/net/soap.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/button.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/label.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/tree.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/popup.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/table.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/scrolltable.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/window.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/tabs.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/calendar.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/form.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/scroller.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/slider.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/resizer.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/paginator.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/pageslider.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/canvas.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/ui/graph.js"></script>');
-    document.write('<script src="' + curLocation + 'src/basis/format/highlight.js"></script>');
+    document.write(
+      '<script src="' + curLocation + 'src/basis.js"></script>',
+      '<script>\n' +
+         'basis.require("basis.timer");\n' +
+         'basis.require("basis.event");\n' +
+         'basis.require("basis.ua");\n' +
+         'basis.require("basis.dom");\n' +
+         'basis.require("basis.dom.event");\n' +
+         'basis.require("basis.data");\n' +
+         'basis.require("basis.template");\n' +
+         'basis.require("basis.html");\n' +
+         'basis.require("basis.dom.wrapper");\n' +
+         'basis.require("basis.cssom");\n' +
+         'basis.require("basis.date");\n' +
+         'basis.require("basis.ui");\n' +
+         'basis.require("basis.layout");\n' +
+         'basis.require("basis.dragdrop");\n' +
+         'basis.require("basis.data.property");\n' +
+         'basis.require("basis.animation");\n' +
+         'basis.require("basis.xml");\n' +
+         'basis.require("basis.crypt");\n' +
+         'basis.require("basis.data.dataset");\n' +
+         'basis.require("basis.data.generator");\n' +
+         'basis.require("basis.data.index");\n' +
+         'basis.require("basis.entity");\n' +
+         'basis.require("basis.session");\n' +
+         'basis.require("basis.net.ajax");\n' +
+         'basis.require("basis.net.soap");\n' +
+         'basis.require("basis.ui.button");\n' +
+         'basis.require("basis.ui.label");\n' +
+         'basis.require("basis.ui.tree");\n' +
+         'basis.require("basis.ui.popup");\n' +
+         'basis.require("basis.ui.table");\n' +
+         'basis.require("basis.ui.scrolltable");\n' +
+         'basis.require("basis.ui.window");\n' +
+         'basis.require("basis.ui.tabs");\n' +
+         'basis.require("basis.ui.calendar");\n' +
+         'basis.require("basis.ui.form");\n' +
+         'basis.require("basis.ui.scroller");\n' +
+         'basis.require("basis.ui.slider");\n' +
+         'basis.require("basis.ui.resizer");\n' +
+         'basis.require("basis.ui.paginator");\n' +
+         'basis.require("basis.ui.pageslider");\n' +
+         'basis.require("basis.ui.canvas");\n' +
+         'basis.require("basis.ui.graph");\n' +
+         'basis.require("basis.format.highlight");\n' +
+      '</script>'
+    );
   }
 }();
