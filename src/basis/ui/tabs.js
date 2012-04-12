@@ -127,18 +127,22 @@ basis.require('basis.ui');
         '<span class="Basis-Tab-Start"/>' +
         '<span class="Basis-Tab-Content">' +
           '<span class="Basis-Tab-Caption">' +
-            '{titleText}' +
+            '{title}' +
           '</span>' +
         '</span>' + 
         '<span class="Basis-Tab-End"/>' +
       '</div>' +
       '<div{content}/>',
 
-    templateUpdate: function(tmpl, eventName, delta){
+    binding: {
+      title: 'data:title'
+    },
+
+    /*templateUpdate: function(tmpl, eventName, delta){
       // set new title
       var title = this.titleGetter(this);
       tmpl.titleText.nodeValue = title == null || String(title) == '' ? '[no title]' : title;
-    },
+    },*/
     
     action: {
       select: function(){
@@ -260,7 +264,7 @@ basis.require('basis.ui');
           '<span class="Basis-Tab-Start"/>' +
           '<span class="Basis-Tab-Content">' +
             '<span class="Basis-Tab-Caption">' +
-              '{titleText}' +
+              '{title}' +
             '</span>' +
           '</span>' + 
           '<span class="Basis-Tab-End"/>' +

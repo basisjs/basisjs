@@ -756,12 +756,16 @@ basis.require('basis.dom.event');
 
     var localeUpdaters = {};
     function getLocaleUpdater(key){
-      return localeUpdaters[key] || (localeUpdaters[key] = function(){ this.tmpl.set(key, this.tmpl.l10n[key].value) });
+      return localeUpdaters[key] || (localeUpdaters[key] = function(){ 
+        var tokenValue = this.tmpl.l10n[key].value;
+        var proxy = this.binding[key].l10nProxy; 
+        this.tmpl.set(key, proxy ? proxy(this, tokenValue) : tokenValue) 
+      });
     }
 
-    function wrapLocaleGetter(key, getter){
+    function wrapLocaleGetter(key, tokenGetter){
       return function(node){
-        var newToken = getter(node);
+        var newToken = tokenGetter(node);
         var oldToken = node.tmpl.l10n[key];
 
         if (newToken != oldToken)
@@ -775,12 +779,13 @@ basis.require('basis.dom.event');
           if (newToken && newToken instanceof basis.l10n.Token)
           {
             newToken.attach(localeUpdaters[key] || getLocaleUpdater(key), node);
-            node.tmpl.l10n[key] = newToken;
-            newToken = newToken.value;
+            node.tmpl.l10n[key] = newToken;              
           }
         }
 
-        return newToken;
+        var tokenValue = newToken instanceof basis.l10n.Token ? newToken.value : newToken;
+        var proxy = node.binding[key].l10nProxy;
+        return proxy ? proxy(node, tokenValue) : tokenValue;
       }
     }
 

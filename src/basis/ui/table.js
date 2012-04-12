@@ -74,15 +74,19 @@ basis.require('basis.ui');
       '<th class="Basis-Table-Header-Cell {selected} {disabled}">' +
         '<div class="Basis-Table-Sort-Direction"/>' +
         '<div class="Basis-Table-Header-Cell-Content">' + 
-          '<span{content} class="Basis-Table-Header-Cell-Title">{titleText}</span>' +
+          '<span{content} class="Basis-Table-Header-Cell-Title">{title}</span>' +
         '</div>' +
       '</th>',
 
-    titleGetter: getter('data.title'),
+    binding: {
+      title: 'data:title'
+    }
+
+    /*titleGetter: getter('data.title'),
 
     templateUpdate: function(tmpl, eventName, delta){
       tmpl.titleText.nodeValue = this.titleGetter(this);
-    }
+    }*/
   });
 
  /**
@@ -116,7 +120,8 @@ basis.require('basis.ui');
         PartitionNode.prototype.init.call(this, config);
         this.cell = new HeaderPartitionNode({
           delegate: this,
-          titleGetter: this.titleGetter
+          titleGetter: this.titleGetter,
+          binding: this.binding || {}
         });
       },
       event_childNodesModified: function(object, delta){
@@ -309,7 +314,7 @@ basis.require('basis.ui');
             config.groupId = colConfig.groupId;
 
           // content
-          config.content = (headerConfig == null || typeof headerConfig != 'object'
+          config.content = (headerConfig == null || typeof headerConfig != 'object' || headerConfig instanceof basis.l10n.Token
             ? headerConfig 
             : headerConfig.content) || String.Entity.nbsp;
 

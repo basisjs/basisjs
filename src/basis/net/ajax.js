@@ -765,7 +765,11 @@ basis.require('basis.data');
           this.constructor.superClass_.prototype.event_failure.apply(this, arguments);
 
           if (this.needSignature && this.service.isSessionExpiredError(req))
-            this.service.freeze();        
+          {
+            this.service.freeze();
+            this.service.stoppedProxies.push(this);
+            this.stop();
+          }
         },
 
         request: function(requestData){
@@ -792,7 +796,6 @@ basis.require('basis.data');
       }
       else
       {
-        this.stoppedProxies.add(proxy);
         ;;; console.warn('Request skipped. Service session is not opened');
         return false;
       }

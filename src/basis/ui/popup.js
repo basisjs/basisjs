@@ -470,14 +470,18 @@ basis.require('basis.ui');
 
     template:
       '<div class="Basis-Menu-Item" event-click="click">' +
-        '<a{content} class="{selected} {disabled}" href="#"><span>{captionText}</span></a>' +
+        '<a{content} class="{selected} {disabled}" href="#"><span>{caption}</span></a>' +
       '</div>'/* +
       '<div{childNodesElement}/>'*/,
 
-    templateUpdate: function(tmpl){
+    binding: {
+      caption: 'caption'
+    },
+
+    /*templateUpdate: function(tmpl){
       if (tmpl.captionText)
         tmpl.captionText.nodeValue = this.captionGetter(this);
-    },
+    },*/
 
     action: {
       click: function(event){
@@ -494,7 +498,7 @@ basis.require('basis.ui');
 
     groupId: 0,
     caption: '[untitled]',
-    captionGetter: getter('caption'),
+    //captionGetter: getter('caption'),
 
     handler: null,
     defaultHandler: function(node){

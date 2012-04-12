@@ -242,7 +242,8 @@ basis.require('basis.animation');
       Event.addHandler(document, 'mouseup', this.onMouseUp, this);
       Event.addHandler(document, 'touchend', this.onMouseUp, this);
 
-      Event.cancelDefault(event);
+      //Event.cancelBubble(event);
+      //Event.cancelDefault(event);
     },
 
     onMouseMove: function(event){

@@ -133,7 +133,7 @@ basis.require('basis.ui.button');
         '</div>' +
         '<div class="Basis-Window-Layout">' +
           '<div{ddtrigger} class="Basis-Window-Title">' +
-            '<div{title} class="Basis-Window-TitleCaption"/>' +
+            '<div class="Basis-Window-TitleCaption">{title}</div>' +
           '</div>' +
           '<div{content} class="Basis-Window-Content">' +
             '<!-- {childNodesHere} -->' +
@@ -180,6 +180,10 @@ basis.require('basis.ui.button');
     moveable: true,
 
     title: '[no title]',
+
+    binding: {
+      title: 'title'
+    },
 
     init: function(config){
       //this.inherit(config);
@@ -302,7 +306,8 @@ basis.require('basis.ui.button');
       Cleaner.add(this);
     },
     setTitle: function(title){
-      DOM.insert(DOM.clear(this.tmpl.title), title);
+      //DOM.insert(DOM.clear(this.tmpl.title), title);
+      this.tmpl.set('title', title);
     },
     realign: function(){
       if (this.autocenter)

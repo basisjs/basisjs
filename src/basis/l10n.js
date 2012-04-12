@@ -10,26 +10,35 @@
   var dictionaryLocations = {};
   var resourcesLoaded = {};
   var dictionaries = {};
+
   var currentCulture = 'base';
+  var cultureList;
 
   var Token = Class(null, {
+    className: namespace + '.Token',
+
     listeners: null,
     value: null,
-    init: function(){
+    
+    init: function(dictionary, tokenName){
       this.listeners = [];
       this.value = '';
+      this.dictionary = dictionary;
+      this.name = tokenName;
     },
+    
     set: function(value){
       if (value != this.value)
       {
         this.value = value;
         for (var i = 0, listener; listener = this.listeners[i]; i++)
-          listener.handler.call(listener.context);
+          listener.handler.call(listener.context, value);
       }
     },
     get: function(){
       return this.value;
     },
+    
     attach: function(handler, context){
       for (var i = 0, listener; listener = this.listeners[i]; i++)
       {
@@ -56,6 +65,7 @@
 
       return false;
     },
+    
     destroy: function(){
       for (var i = 0, listener; listener = this.listeners[i]; i++)
         this.detach(listener.handler, listener.context);
@@ -66,6 +76,8 @@
   });
 
   var Dictionary = Class(null, {
+    className: namespace + '.Dictionary',
+
     init: function(namespace){
       this.namespace = namespace;
       this.tokens = {};
@@ -98,7 +110,7 @@
     getToken: function(tokenName){
       if (!(tokenName in this.tokens))
       {
-        this.tokens[tokenName] = new Token();
+        this.tokens[tokenName] = new Token(this, tokenName);
         this.setTokenValue(tokenName, currentCulture);
       }
 
@@ -117,14 +129,25 @@
   }
 
   function setCultureForDictionary(dictionary, culture){
-    var location = dictionaryLocations[dictionary.namespace] + '/' + culture;
-    if (!resourcesLoaded[location])
-    {
-      resourcesLoaded[location] = true;
-      loadResource(location + '.js');
-    }
+    if (culture != 'base')
+      loadCultureForDictionary(dictionary, culture)
 
     dictionary.setCulture(culture);
+  }
+
+  function loadCultureForDictionary(dictionary, culture){
+    if (!cultureList || cultureList.indexOf(culture) != -1)
+    {
+      var location = dictionaryLocations[dictionary.namespace] + '/' + culture;
+      if (!resourcesLoaded[location])
+      {
+        resourcesLoaded[location] = true;
+        loadResource(location + '.js');
+      }
+    }
+    else {
+      ;;;console.warn('Culture "' + culture + '" is not specified in the list');
+    }
   }
 
   function loadResource(fileName){
@@ -171,16 +194,29 @@
     {
       currentCulture = culture || 'base';
       for (var i in dictionaries)
-        setCultureForDictionary(dictionaries[i], culture);
+        setCultureForDictionary(dictionaries[i], currentCulture);
     }
+  }
+
+  function setCultureList(list){
+    if (typeof list == 'string')
+      list = list.qw();
+
+    cultureList = list;
+  }
+  function getCultureList(){
+    return cultureList;
   }
 
   basis.namespace(namespace).extend({
     Token: Token,
     getToken: getToken,
     setCulture: setCulture,
+    setCultureList: setCultureList,
+    getCultureList: getCultureList,
     createDictionary: createDictionary,
-    updateDictionary: updateDictionary
+    updateDictionary: updateDictionary,
+    loadCultureForDictionary: loadCultureForDictionary
   });
 
 }(basis, this);

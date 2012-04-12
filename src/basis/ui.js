@@ -12,6 +12,7 @@
 basis.require('basis.dom.wrapper');
 basis.require('basis.cssom');
 basis.require('basis.html');
+basis.require('basis.l10n');
 
 (function(basis, global){
 
@@ -90,6 +91,7 @@ basis.require('basis.html');
             def = {
               getter: getter(value.getter),
               l10n: !!value.l10n,
+              l10nProxy: value.l10nProxy,
               events: value.events
             };
           }
@@ -352,7 +354,25 @@ basis.require('basis.html');
 
           // insert content
           if (this.content)
-            DOM.insert(tmpl.content || tmpl.element, this.content);
+          {
+            if (this.content instanceof basis.l10n.Token)
+            {
+              var token = this.content;
+              var textNode = DOM.createText(token.value);
+              var handler = function(value){ this.nodeValue = value };
+
+              token.attach(handler, textNode);
+              this.addHandler({
+                destroy: function(){
+                  token.detach(handler, textNode);
+                }
+              });
+
+              DOM.insert(tmpl.content || tmpl.element, textNode)
+            }
+            else
+              DOM.insert(tmpl.content || tmpl.element, this.content);
+          }
 
           // update template
           if (this.id)
