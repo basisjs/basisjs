@@ -2,6 +2,7 @@
   basis.require('basis.timer');
   basis.require('basis.event');
   basis.require('basis.ua');
+  basis.require('basis.ua.visibility');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');

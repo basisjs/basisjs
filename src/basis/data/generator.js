@@ -9,15 +9,15 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-!function(basis){
-
   'use strict';
+
 
  /**
   * @namespace basis.data.generator
   */ 
   
-  var namespace = 'basis.data.generator';
+  var namespace = this.path;
+
 
   //
   // Main part
@@ -76,10 +76,8 @@
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     number: genNumber,
     string: genString,
     sentence: genSentence
   });
-
-}(basis);

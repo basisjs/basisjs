@@ -9,18 +9,17 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom');
-basis.require('basis.template');
-
-(function(basis, global){
-
   'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.template');
+
 
  /**
   * @namespace basis.html
   */
 
-  var namespace = 'basis.html';
+  var namespace = this.path;
 
 
   //
@@ -63,11 +62,9 @@ basis.require('basis.template');
   // export names
   //
 
-  return basis.namespace(namespace).extend({
+  this.extend({
     Template: Template,
     escape: escape,
     unescape: unescape,
     string2Html: string2Html
   });
-
-})(basis, this);

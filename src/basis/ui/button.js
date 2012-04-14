@@ -9,22 +9,21 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
-basis.require('basis.html');
-basis.require('basis.ui');
-
-(function(basis){
-
   'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.html');
+  basis.require('basis.ui');
+
 
  /**
   * @see ./demo/defile/button.html
   * @namespace basis.ui.button
   */
 
-  var namespace = 'basis.ui.button';
+  var namespace = this.path;
 
 
   //
@@ -140,10 +139,6 @@ basis.require('basis.ui');
     }
   });
 
- /**
-  * @class
-  */
-  //var ButtonGrouping = Class(TmplGroupingNode, );
 
  /**
   * @class
@@ -190,9 +185,7 @@ basis.require('basis.ui');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Button: Button,
     ButtonPanel: ButtonPanel
   });
-
-})(basis);

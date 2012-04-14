@@ -14,23 +14,22 @@
  * Inspired on Paginator 3000 (http://karaboz.ru/?p=12)
  */
 
-basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
-basis.require('basis.cssom');
-basis.require('basis.dragdrop');
-basis.require('basis.ui');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.cssom');
+  basis.require('basis.dragdrop');
+  basis.require('basis.ui');
+
 
  /**
   * @see ./demo/defile/paginator.html
   * @namespace basis.ui.paginator
   */ 
-  var namespace = 'basis.ui.paginator';
+  var namespace = this.path;
 
 
   //
@@ -295,10 +294,11 @@ basis.require('basis.ui');
     }
   });
 
-  // export names
 
-  basis.namespace(namespace).extend({
+  //
+  // export names
+  //
+
+  this.extend({
     Paginator: Paginator
   });
-
-}(basis);

@@ -13,11 +13,16 @@
  * Roman Dvornov <rdvornov@gmail.com>
  *
  */
-basis.require('basis.ui.canvas');
-
-!function(basis){
 
   'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.data');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.ui');
+  basis.require('basis.ui.canvas');
+
 
  /**
   * @see ./demo/graph/range.html
@@ -25,7 +30,7 @@ basis.require('basis.ui.canvas');
   * @namespace basis.ui.graph
   */
 
-  var namespace = 'basis.ui.graph';
+  var namespace = this.path;
 
 
   //
@@ -1680,14 +1685,13 @@ basis.require('basis.ui.canvas');
     }
   });
 
+
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     LinearGraph: LinearGraph,
     BarGraph: BarGraph,
     StackedBarGraph: StackedBarGraph
   });
-
-}(basis);                                  

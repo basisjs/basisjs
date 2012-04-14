@@ -1,5 +1,5 @@
 /*!
-* Basis javascript library 
+ * Basis javascript library 
  * http://code.google.com/p/basis-js/
  *
  * @copyright
@@ -9,19 +9,18 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.cssom');
-basis.require('basis.data.property');
-
-!function(global, basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.cssom');
+  basis.require('basis.data.property');
+
 
  /**
   * @namespace basis.animation
   */
 
-  var namespace = 'basis.animation';
+  var namespace = this.path;
 
 
   //
@@ -231,10 +230,9 @@ basis.require('basis.data.property');
   global.requestAnimationFrame = requestAnimationFrame;
   global.cancelAnimationFrame = cancelAnimationFrame;
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Thread: Thread,
     Modificator: Modificator,
     FX: FX
   });
 
-}(this, basis);

@@ -13,21 +13,20 @@
  *
  */
 
-basis.require('basis.dom');
-basis.require('basis.cssom');
-basis.require('basis.ui');
-basis.require('basis.ui.tabs');
-basis.require('basis.ui.scroller');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.cssom');
+  basis.require('basis.ui');
+  basis.require('basis.ui.tabs');
+  basis.require('basis.ui.scroller');
+
 
  /**
   * @namespace basis.ui.pageslider
   */ 
 
-  var namespace = 'basis.ui.pageslider';
+  var namespace = this.path;
 
 
   //
@@ -136,8 +135,6 @@ basis.require('basis.ui.scroller');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     PageSlider: PageSlider
   });
-
-}(basis);

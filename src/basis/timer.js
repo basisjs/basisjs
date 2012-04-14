@@ -9,15 +9,14 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-!function(global, basis){
-
   'use strict';
+
 
  /**
   * @namespace basis.timer
   */
 
-  var namespace = 'basis.timer';
+  var namespace = this.path;
 
 
   //
@@ -344,8 +343,6 @@
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     TimeEventManager: TimeEventManager
   });
-
-}(this, basis);

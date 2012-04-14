@@ -15,21 +15,20 @@
  *
  */
 
-basis.require('basis.dom');
-basis.require('basis.cssom');
-basis.require('basis.dragdrop');
-basis.require('basis.ui');
-
-!function(basis, global){
-
   'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.cssom');
+  basis.require('basis.dragdrop');
+  basis.require('basis.ui');
+
 
  /**
   * @see ./demo/defile/resizer.html
   * @namespace basis.ui.resizer
   */
 
-  var namespace = 'basis.ui.resizer';
+  var namespace = this.path;
 
 
   //
@@ -305,8 +304,6 @@ basis.require('basis.ui');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Resizer: Resizer
   });
-
-}(basis, this);

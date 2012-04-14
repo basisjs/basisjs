@@ -10,24 +10,23 @@
  *
  */
 
-basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.html');
-basis.require('basis.layout');
-basis.require('basis.dragdrop');
-
-(function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.cssom');
+  basis.require('basis.html');
+  basis.require('basis.layout');
+  basis.require('basis.dragdrop');
+
 
  /**
   * @see ./demo/defile/slider.html
   * @namespace basis.ui.slider
   */ 
   
-  var namespace = 'basis.ui.slider';
+  var namespace = this.path;
 
 
   //
@@ -477,10 +476,8 @@ basis.require('basis.dragdrop');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Slider: Slider,
     MarkLayer: MarkLayer,
     Mark: Mark
   });
-
-})(basis);

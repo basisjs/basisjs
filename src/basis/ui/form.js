@@ -9,27 +9,27 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.html');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
-basis.require('basis.data');
-basis.require('basis.data.property');
-basis.require('basis.cssom');
-basis.require('basis.ui');
-basis.require('basis.ui.popup');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.html');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.data');
+  basis.require('basis.data.property');
+  basis.require('basis.cssom');
+  basis.require('basis.ui');
+  basis.require('basis.ui.popup');
+
 
  /**
   * @see ./demo/defile/form.html
   * @namespace basis.ui.form
   */
 
-  var namespace = 'basis.ui.form';
+  var namespace = this.path;
+
 
   //
   // import names
@@ -1508,7 +1508,7 @@ basis.require('basis.ui.popup');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     createFieldTemplate: function(template){
       return createFieldTemplate(baseFieldTemplate, template)
     },
@@ -1526,5 +1526,3 @@ basis.require('basis.ui.popup');
     MatchFilter: MatchFilter,
     MatchInput: MatchInput
   });
-
-}(basis);

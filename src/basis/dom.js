@@ -9,11 +9,10 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.ua');
-
-!function(basis, global){
-
   'use strict';
+
+  basis.require('basis.ua');
+
 
  /**
   * This namespace provides functions for manupulations with DOM - transerval,
@@ -47,7 +46,7 @@ basis.require('basis.ua');
   * @namespace basis.dom
   */
 
-  var namespace = 'basis.dom';
+  var namespace = this.path;
 
   // import names
   var coalesce = Object.coalesce;
@@ -939,9 +938,12 @@ basis.require('basis.ua');
       return ieGetInputPosition(false);
   }
 
-  // Export names
 
-  return basis.namespace(namespace).extend({
+  //
+  // export names
+  //
+
+  this.extend({
     // CONST
 
     // nodeType
@@ -1037,5 +1039,3 @@ basis.require('basis.ua');
     getSelectionStart: getSelectionStart,
     getSelectionEnd: getSelectionEnd
   });
-
-}(basis, this);

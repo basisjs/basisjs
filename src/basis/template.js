@@ -9,18 +9,17 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-
-(function(basis, global){
-
   'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+
 
  /**
   * @namespace basis.template
   */
 
-  var namespace = 'basis.template';
+  var namespace = this.path;
 
 
   //
@@ -38,7 +37,7 @@ basis.require('basis.dom.event');
   //
 
   // Test for browser (IE) normalize text nodes during cloning
-  var CLONE_NORMALIZE_TEXT_BUG = (function(){
+  var CLONE_NORMALIZE_TEXT_BUG = typeof window != 'undefined' && (function(){
     return dom.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
   })();
 
@@ -1453,7 +1452,7 @@ basis.require('basis.dom.event');
   // export names
   //
 
-  return basis.namespace(namespace).extend({
+  this.extend({
     Template: Template,
 
     // for debug purposes
@@ -1468,5 +1467,3 @@ basis.require('basis.dom.event');
       return tmplNodeMap[refId];
     }
   });
-
-})(basis, typeof exports != 'undefined' ? global : this);

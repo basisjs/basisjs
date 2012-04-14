@@ -9,15 +9,14 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-!function(basis, global){
-
   'use strict';
+
 
  /**
   * @namespace basis.ua
   */
 
-  var namespace = 'basis.ua';
+  var namespace = this.path;
 
 
   //
@@ -26,7 +25,7 @@
 
   var answers = {};
   var versions = {};
-  var userAgent = global.navigator && global.navigator.userAgent;
+  var userAgent = (global.navigator && global.navigator.userAgent) || '';
   var browserName = 'unknown';
   var browserPrettyName = 'unknown';
   var browserNames = {
@@ -169,10 +168,9 @@
   // export names
   //
 
-  namespace = basis.namespace(namespace);
-  namespace.toString = function(){ return browserPrettyName };
+  this.toString = function(){ return browserPrettyName };
 
-  return namespace.extend({
+  this.extend({
     testImage: testImage,
 
     //name: browserName,
@@ -185,5 +183,3 @@
     cookies: cookies,
     Cookies: cookies /* deprecated */
   });
-
-}(basis, this);

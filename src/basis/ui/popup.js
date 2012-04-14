@@ -9,22 +9,21 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.layout');
-basis.require('basis.ui');
-
-!function(){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.cssom');
+  basis.require('basis.layout');
+  basis.require('basis.ui');
+
 
  /**
   * @see ./demo/defile/popup.html
   * @namespace basis.ui.popup
   */
-  var namespace = 'basis.ui.popup';
+  var namespace = this.path;
 
 
   //
@@ -742,7 +741,7 @@ basis.require('basis.ui');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     // const
     ORIENTATION: ORIENTATION,
 
@@ -758,5 +757,3 @@ basis.require('basis.ui');
     MenuItem: MenuItem,
     MenuItemSet: MenuItemSet
   });
-
-}(basis);

@@ -9,19 +9,18 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.data');
-basis.require('basis.data.dataset');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.data');
+  basis.require('basis.data.dataset');
+
 
  /**
   * @namespace basis.entity
   */
 
-  var namespace = 'basis.entity';
+  var namespace = this.path;
 
   // import names
 
@@ -1298,7 +1297,7 @@ basis.require('basis.data.dataset');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     isEntity: isEntity,
 
     NumericId: NumericId,
@@ -1318,5 +1317,3 @@ basis.require('basis.data.dataset');
     Collection: EntityCollection,
     Grouping: EntityGrouping
   });
-
-}(basis);

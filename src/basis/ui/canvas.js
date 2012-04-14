@@ -9,28 +9,26 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
-basis.require('basis.html');
-basis.require('basis.ui');
-
 /*window.FlashCanvasOptions = {
   swfPath: "../../src/basis/ext/"
 };
 basis_require('basis.ext.flashcanvas');*/
 
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.html');
+  basis.require('basis.ui');
+
 
  /**
   * @namespace basis.ui.canvas
   */
 
-  var namespace = 'basis.ui.canvas';
+  var namespace = this.path;
 
 
   //
@@ -188,10 +186,8 @@ basis_require('basis.ext.flashcanvas');*/
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     CanvasLayer: CanvasLayer,
     Canvas: Canvas,
     Shape: Shape
   });
-
-}(basis);

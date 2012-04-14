@@ -9,14 +9,13 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom.wrapper');
-basis.require('basis.cssom');
-basis.require('basis.html');
-basis.require('basis.l10n');
-
-(function(basis, global){
-
   'use strict';
+
+  basis.require('basis.l10n');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.cssom');
+  basis.require('basis.html');
+
 
  /**
   * Classes:
@@ -27,7 +26,7 @@ basis.require('basis.l10n');
   * @namespace basis.ui
   */
 
-  var namespace = 'basis.ui';
+  var namespace = this.path;
 
 
   //
@@ -783,7 +782,9 @@ basis.require('basis.l10n');
   // export names
   //
 
-  basis.namespace(namespace, simpleTemplate).extend({
+  this.setWrapper(simpleTemplate);
+
+  this.extend({
     simpleTemplate: simpleTemplate,
     BINDING_PRESET: BINDING_PRESET,
 
@@ -794,4 +795,3 @@ basis.require('basis.l10n');
     Control: Control
   });
 
-})(basis, this);

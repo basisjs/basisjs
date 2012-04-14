@@ -9,15 +9,14 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.timer');
-basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.cssom');
-basis.require('basis.data');
-
-!function(){
-
   'use strict';
+
+  basis.require('basis.timer');
+  basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.cssom');
+  basis.require('basis.data');
+
 
  /**
   * Namespace overview:
@@ -29,7 +28,7 @@ basis.require('basis.data');
   * @namespace basis.data.property
   */
 
-  var namespace = 'basis.data.property';
+  var namespace = this.path;
 
   // import names
 
@@ -694,15 +693,14 @@ basis.require('basis.data');
     }
   });
 
+
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     DataObjectSet: DataObjectSet,
     AbstractProperty: AbstractProperty,
     Property: Property,
     PropertySet: DataObjectSet
   });
-
-}();

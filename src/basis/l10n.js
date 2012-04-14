@@ -1,11 +1,38 @@
+/*!
+ * Basis javascript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2012 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ *
+ * @author
+ * Vladimir Ratsev <wuzykk@gmail.com>
+ *
+ */
 
-!function(basis, global){
   'use strict';
 
-  var namespace = 'basis.l10n';
+
+ /**
+  * @namespace basis.ua.visibility
+  */
+  
+  var namespace = this.path;
+
+
+  //
+  // import names
+  //
 
   var Class = basis.Class;
 
+
+  //
+  // main part
+  //
 
   var dictionaryLocations = {};
   var resourcesLoaded = {};
@@ -13,6 +40,7 @@
 
   var currentCulture = 'base';
   var cultureList;
+
 
   var Token = Class(null, {
     className: namespace + '.Token',
@@ -142,24 +170,11 @@
       if (!resourcesLoaded[location])
       {
         resourcesLoaded[location] = true;
-        loadResource(location + '.js');
+        Function(basis.resource(location + '.js'))();
       }
     }
     else {
       ;;;console.warn('Culture "' + culture + '" is not specified in the list');
-    }
-  }
-
-  function loadResource(fileName){
-    var requestUrl = fileName
-    var req = new XMLHttpRequest();
-    req.open('GET', fileName, false);
-    req.send(null);
-    if (req.status == 200)
-    {
-      (global.execScript || function(scriptText){
-        global["eval"].call(global, scriptText);
-      })(req.responseText);
     }
   }
 
@@ -208,7 +223,12 @@
     return cultureList;
   }
 
-  basis.namespace(namespace).extend({
+
+  //
+  // export names
+  //
+
+  this.extend({
     Token: Token,
     getToken: getToken,
     setCulture: setCulture,
@@ -218,5 +238,3 @@
     updateDictionary: updateDictionary,
     loadCultureForDictionary: loadCultureForDictionary
   });
-
-}(basis, this);

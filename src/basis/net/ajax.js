@@ -9,21 +9,20 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.timer');
-basis.require('basis.event');
-basis.require('basis.ua');
-basis.require('basis.dom.event');
-basis.require('basis.data');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.timer');
+  basis.require('basis.event');
+  basis.require('basis.ua');
+  basis.require('basis.dom.event');
+  basis.require('basis.data');
+
 
  /**
   * @namespace basis.net.ajax
   */
 
-  var namespace = 'basis.net.ajax';
+  var namespace = this.path;
 
   // import names
   var Class = basis.Class;
@@ -857,11 +856,12 @@ basis.require('basis.data');
     }
   });
 
+
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Transport: AjaxProxy,
     TransportDispatcher: ProxyDispatcher,
     createEvent: createProxyEvent,
@@ -872,5 +872,3 @@ basis.require('basis.data');
     ProxyDispatcher: ProxyDispatcher,
     Service: Service
   });
-
-}(basis);

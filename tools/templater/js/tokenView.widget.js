@@ -1,14 +1,13 @@
 
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.data');
-basis.require('basis.layout');
-basis.require('basis.ui');
-basis.require('basis.ui.tree');
-
-(function(basis){
-
   'use strict';
+
+  basis.require('basis.dom.event');
+  basis.require('basis.cssom');
+  basis.require('basis.data');
+  basis.require('basis.layout');
+  basis.require('basis.ui');
+  basis.require('basis.ui.tree');
+
 
   //
   // import names
@@ -77,10 +76,10 @@ basis.require('basis.ui.tree');
           return object.data[TOKEN_REFS];
         },
         instanceOf: UIContainer.subclass({
-          template: 'file:templates/tokenView/referenceList.tmpl',
+          template: resource('../templates/tokenView/referenceList.tmpl'),
 
           childClass: {
-            template: 'file:templates/tokenView/reference.tmpl',
+            template: resource('../templates/tokenView/reference.tmpl'),
 
             binding: {
               title: 'title'
@@ -101,7 +100,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var AttributeValuePart = UINode.subclass({
-    template: 'file:templates/tokenView/attributeValuePart.tmpl',
+    template: resource('../templates/tokenView/attributeValuePart.tmpl'),
 
     binding: {
       text: 'data:'
@@ -113,7 +112,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var AttributeClassBinding = AttributeValuePart.subclass({
-    template: 'file:templates/tokenView/attributeClassBinding.tmpl'
+    template: resource('../templates/tokenView/attributeClassBinding.tmpl')
   });
 
 
@@ -121,7 +120,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var AttributeValueBinding = AttributeValuePart.subclass({
-    template: 'file:templates/tokenView/attributeValueBinding.tmpl'
+    template: resource('../templates/tokenView/attributeValueBinding.tmpl')
   });
 
 
@@ -129,7 +128,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var Attribute = UIContainer.subclass({
-    template: 'file:templates/tokenView/attribute.tmpl',
+    template: resource('../templates/tokenView/attribute.tmpl'),
 
     binding: {
       name: function(object){
@@ -211,7 +210,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var AttributeList = UIContainer.subclass({
-    template: 'file:templates/tokenView/attributeList.tmpl',
+    template: resource('../templates/tokenView/attributeList.tmpl'),
 
     childClass: Attribute/*,
 
@@ -226,7 +225,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var TagNode = TemplateNode.subclass({
-    template: 'file:templates/tokenView/tag.tmpl',
+    template: resource('../templates/tokenView/tag.tmpl'),
 
     binding: {
       attributeList: 'satellite:',
@@ -257,7 +256,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var TextNode = TemplateNode.subclass({
-    template: 'file:templates/tokenView/text.tmpl',
+    template: resource('../templates/tokenView/text.tmpl'),
 
     binding: {
       value: function(object){
@@ -271,7 +270,7 @@ basis.require('basis.ui.tree');
   * @class
   */
   var CommentNode = TemplateNode.subclass({
-    template: 'file:templates/tokenView/comment.tmpl',
+    template: resource('../templates/tokenView/comment.tmpl'),
 
     binding: {
       title: function(object){
@@ -296,7 +295,7 @@ basis.require('basis.ui.tree');
   }
 
   var tree = new nsTree.Tree({
-    template: 'file:templates/tokenView/tree.tmpl',
+    template: resource('../templates/tokenView/tree.tmpl'),
 
     action: {
       focus: function(){
@@ -387,11 +386,9 @@ basis.require('basis.ui.tree');
   //
   // export names
   //
-  widget.tree = tree;
-  widget.setSource = function(source){
+
+  exports = module.exports = widget;
+  exports.tree = tree;
+  exports.setSource = function(source){
     tree.setChildNodes(nsTemplate.makeDeclaration(source));
   }
-
-  return widget;
-
-})(basis);

@@ -9,16 +9,11 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-!function(){
-
   'use strict';
 
  /**
   * @namespace basis.event
   */
-
-  var namespace = 'basis.event';
-
 
   //
   // import names
@@ -143,7 +138,7 @@
   * @class
   */
   var EventObject = Class(null, {
-    className: namespace + '.EventObject',
+    className: this.name + '.EventObject',
 
    /**
     * List of event handler sets.
@@ -281,7 +276,7 @@
   // export names
   //
 
-  basis.namespace('basis.event').extend({
+  this.extend({
     LISTEN: LISTEN,
 
     create: createEvent,
@@ -290,4 +285,3 @@
     EventObject: EventObject
   }); 
 
-}(basis);

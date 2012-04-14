@@ -1,15 +1,14 @@
 
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.data');
-basis.require('basis.data.property');
-basis.require('basis.layout');
-basis.require('basis.ui');
-basis.require('basis.ui.form');
-
-(function(basis){
-
   'use strict';
+
+  basis.require('basis.dom.event');
+  basis.require('basis.cssom');
+  basis.require('basis.data');
+  basis.require('basis.data.property');
+  basis.require('basis.layout');
+  basis.require('basis.ui');
+  basis.require('basis.ui.form');
+
 
   //
   // import names
@@ -90,8 +89,7 @@ basis.require('basis.ui.form');
 
     autoDelegate: DELEGATE.PARENT,
 
-    template:
-      'file:templates/editor/editor.tmpl',
+    template: resource('../templates/editor/editor.tmpl'),
 
     binding: {
       filename: 'data:',
@@ -171,8 +169,7 @@ basis.require('basis.ui.form');
         instanceOf: UINode.subclass({
           autoDelegate: DELEGATE.OWNER,
 
-          template:
-            'file:templates/editor/createFilePanel.tmpl',
+          template: resource('../templates/editor/createFilePanel.tmpl'),
 
           binding: {
             filename: 'data:',
@@ -352,13 +349,14 @@ basis.require('basis.ui.form');
   // export names
   //
 
-  widget.tmplSource = tmplSource;
-  widget.tmplEditor = tmplEditor;
-  widget.setSource = function(source){
+  exports = module.exports = widget;
+  exports.tmplSource = tmplSource;
+  exports.tmplEditor = tmplEditor;
+  exports.setSource = function(source){
     tmplEditor.setDelegate();
     tmplEditor.update({ content: source });
   }
-  widget.setSourceFile = function(file){
+  exports.setSourceFile = function(file){
     var filename;
 
     if (file instanceof basis.data.DataObject)
@@ -379,7 +377,3 @@ basis.require('basis.ui.form');
       cssEditor.setDelegate();
     }
   }
-
-  return widget;
-
-})(basis);

@@ -9,13 +9,12 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom');
-basis.require('basis.xml');
-basis.require('basis.net.ajax');
-
-!function(){
-
  'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.xml');
+  basis.require('basis.net.ajax');
+
 
  /**
   * Interface for communication with SOAP services.
@@ -26,7 +25,7 @@ basis.require('basis.net.ajax');
   * @namespace basis.net.soap
   */
 
-  var namespace = 'basis.net.soap';
+  var namespace = this.path;
 
   // import names
 
@@ -406,11 +405,12 @@ basis.require('basis.net.ajax');
     }
   });
 
+
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     /*Service: Service,
     ServiceCall: ServiceCall,
     ServiceCallTransport: ServiceCallTransport,*/
@@ -422,5 +422,3 @@ basis.require('basis.net.ajax');
     EnvelopeHeader: EnvelopeHeader,
     EnvelopeBody: EnvelopeBody
   });
-
-}(basis);

@@ -1,15 +1,42 @@
-(function(){
+/*!
+ * Basis javascript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2012 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ *
+ * @author
+ * Vladimir Ratsev <wuzykk@gmail.com>
+ *
+ */
 
-  var namespace = 'basis.ua.visibility';
+  'use strict';
+
+
+ /**
+  * @namespace basis.ua.visibility
+  */
+  
+  var namespace = this.path;
+
+
+  //
+  // Main part
+  //
 
   var visibilityPrefix;
   var supported = false;
   var inited = false;
   var handlers = [];
 
+
   //
   // Check visibility support and get prefix
   //
+
   var prefixes = [ 'webkit', 'moz', 'o', 'ms' ]; 
   if (document.visibilityState != undefined)
     visibilityPrefix = '';
@@ -22,9 +49,11 @@
 
   supported = visibilityPrefix !== undefined;
 
+
   //
   // addHandler/removeHandler 
   //
+
   function addHandler(handler, thisObject){
     if (!supported)
       return;
@@ -84,10 +113,13 @@
     return document[visibilityPrefix ? visibilityPrefix + 'VisibilityState' : 'visibilityState'] || 'visible';
   }
 
-  basis.namespace(namespace).extend({
+
+  //
+  // export names
+  //
+
+  this.extend({
     addHandler: addHandler,
     removeHandler: removeHandler,
     getState: getState
   });
-
-})();

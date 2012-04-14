@@ -9,21 +9,20 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.timer');
-basis.require('basis.data');
-basis.require('basis.data.dataset');
-basis.require('basis.data.property');
-
-(function(basis){
-
   'use strict';
+
+  basis.require('basis.timer');
+  basis.require('basis.data');
+  basis.require('basis.data.dataset');
+  basis.require('basis.data.property');
+
 
  /**
   * @see ./demo/defile/data_index.html
   * @namespace basis.data.index
   */
 
-  var namespace = 'basis.data.index';
+  var namespace = this.path;
 
 
   //
@@ -802,7 +801,7 @@ basis.require('basis.data.property');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     IndexConstructor: IndexConstructor,
     createIndexConstructor: createIndexConstructor,
 
@@ -822,5 +821,3 @@ basis.require('basis.data.property');
 
     IndexMap: IndexMap
   });
-
-})(basis);

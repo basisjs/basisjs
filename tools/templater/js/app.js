@@ -2,6 +2,11 @@
 //basis.require('devtools.templater.List');
 //basis.require('devtools.templater.tokenView');
 //basis.require('devtools.templater.editor');
+basis.require('basis.cssom');
+basis.require('basis.data.property');
+basis.require('basis.template');
+basis.require('basis.dom.event');
+basis.require('basis.ui');
 
 (function(basis, global){
 
@@ -16,43 +21,31 @@
   //
 
   var widgets = {};
+  var widgetObjects = {};
   var widgetRoot = 'js/';
   var widgetSuffix = '.widget.js';
-
-  var compileWidget = 'eval' in global
-    ? function(scriptText){
-        return global["eval"].call(global, scriptText);
-      }
-    : function(scriptText){
-        return scriptText.toObject();
-      }
 
   function widget(widgetName, lazy){
     if (widgetName in widgets == false)
     {
-      if (lazy === false)
-      {
-        var url = widgetRoot + widgetName + widgetSuffix;
+      var url = widgetRoot + widgetName + widgetSuffix;
+      var widget = { exports: {} };
+      widgetObjects[widgetName] = widget;
+      var widgetFetcher = basis.wrapScript(widget, url);
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url, false);
-        xhr.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
-        xhr.send('');
+      widgets[widgetName] = widgetFetcher;
 
-        if (xhr.status == 200)
-        {
-          // reserve widget name
-          widgets[widgetName] = undefined;
-          widgets[widgetName] = compileWidget(xhr.responseText + '//@ sourceURL=' + url);
-        }
-        else
-          throw 'Widget `' + widgetName + '`not found (url: ' + url + ')';
+      var xx = function(){
+        widgetFetcher();
+        return (widgets[widgetName] = function(){
+          return widget.exports;
+        })()
       }
+
+      if (lazy === false)
+        xx();
       else
-        widgets[widgetName] = Function.lazyInit(function(){
-          delete widgets[widgetName];
-          return widget(widgetName, false);
-        });
+        widgets[widgetName] = Function.lazyInit(xx);
     }
 
     return widgets[widgetName];
@@ -73,7 +66,7 @@
   //
 
   // editor -> tokenView
-  editor.tmplSource.addLink(tokenView, tokenView.setSource);
+  editor().tmplSource.addLink(tokenView(), tokenView().setSource);
 
   // fsobserver -> app
   if (fsobserver)
@@ -92,7 +85,7 @@
         datasetChanged: function(selection, delta){
           this.setSourceFile(selection.pick());
         }
-      }, editor);
+      }, editor());
     });
   }
 
@@ -142,7 +135,7 @@
       basis.dom.event.kill(event);
 
       var source = pickupTarget.value.template.source;
-      editor.setSource(String(typeof source == 'function' ? source() : source));
+      editor().setSource(String(typeof source == 'function' ? source() : source));
     }
   });
   basis.dom.event.addGlobalHandler('keydown', function(event){
@@ -171,8 +164,8 @@
       editor: 'satellite:'
     },
     satellite: {
-      tokenView: tokenView,
-      editor: editor
+      tokenView: tokenView(),
+      editor: editor()
     }/*
     childNodes: [
       tokenView,
@@ -180,7 +173,7 @@
     ]*/
   });
 
-  editor.tmplEditor.tmpl.field.focus();
+  editor().tmplEditor.tmpl.field.focus();
 
   /*'addRule deleteRule insertRule removeRule'.qw().forEach(function(methodName){
     var realMethod = CSSStyleSheet.prototype[methodName];

@@ -9,21 +9,20 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.ua');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.layout');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.ua');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.cssom');
+  basis.require('basis.layout');
+
 
  /**
   * @namespace basis.dragdrop
   */
-  var namespace = 'basis.dragdrop';
+  var namespace = this.path;
 
 
   //
@@ -308,13 +307,12 @@ basis.require('basis.layout');
     }
   });
 
+
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     DragDropElement: DragDropElement,
     MoveableElement: MoveableElement
   });
-
-}(basis);

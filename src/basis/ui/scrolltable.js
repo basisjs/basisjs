@@ -14,22 +14,21 @@
  *
  */
 
-basis.require('basis.timer');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.layout');
-basis.require('basis.ui.table');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.timer');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.cssom');
+  basis.require('basis.layout');
+  basis.require('basis.ui.table');
+
 
  /**
   * @namespace basis.ui.scrolltable
   */
 
-  var namespace = 'basis.ui.scrolltable';
+  var namespace = this.path;
 
 
   //
@@ -283,12 +282,11 @@ basis.require('basis.ui.table');
     }
   });
 
+
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     ScrollTable: ScrollTable
   });
- 
-}(basis);

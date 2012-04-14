@@ -9,17 +9,16 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom');
-
-!function(basis, global){
- 
   'use strict';
+
+  basis.require('basis.dom');
+
 
  /**
   * @namespace basis.dom.event
   */
 
-  var namespace = 'basis.dom.event';
+  var namespace = this.path;
 
   // for better pack
 
@@ -566,28 +565,31 @@ basis.require('basis.dom');
       }
     }
 
-    if (W3CSUPPORT)
+    if (typeof window != 'undefined')
     {
-      // use the real event for browsers that support it (all modern browsers support it)
-      addHandler(document, "DOMContentLoaded", fireHandlers);
-    }
-    else
-    {
-      // ensure firing before onload,
-			// maybe late but safe also for iframes
-      addHandler(document, "readystatechange", fireHandlers);
+      if (W3CSUPPORT)
+      {
+        // use the real event for browsers that support it (all modern browsers support it)
+        addHandler(document, "DOMContentLoaded", fireHandlers);
+      }
+      else
+      {
+        // ensure firing before onload,
+  			// maybe late but safe also for iframes
+        addHandler(document, "readystatechange", fireHandlers);
 
-      // If IE and not a frame
-			// continually check to see if the document is ready
-			try {
-				if (window.frameElement == null && document.documentElement.doScroll)
-          doScrollCheck();
-			} catch(e) {
-			}
-    }
+        // If IE and not a frame
+  			// continually check to see if the document is ready
+  			try {
+  				if (window.frameElement == null && document.documentElement.doScroll)
+            doScrollCheck();
+  			} catch(e) {
+  			}
+      }
 
-    // A fallback to window.onload, that will always work
-    addHandler(global, "load", fireHandlers);
+      // A fallback to window.onload, that will always work
+      addHandler(global, "load", fireHandlers);
+    }
 
     // return attach function
     return function(callback, thisObject){
@@ -667,7 +669,8 @@ basis.require('basis.dom');
   // export names
   //
 
-  basis.namespace(namespace, wrap).extend({
+  this.setWrapper(wrap);
+  this.extend({
     W3CSUPPORT: W3CSUPPORT,
 
     KEY: KEY,
@@ -712,5 +715,3 @@ basis.require('basis.dom');
   basis.namespace('basis.dom').extend({
     ready: onLoad
   });
-
-}(basis, this);

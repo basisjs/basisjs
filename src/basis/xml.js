@@ -9,18 +9,17 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.ua');
-basis.require('basis.dom');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.ua');
+  basis.require('basis.dom');
+
 
  /**
   * @namespace basis.xml
   */
 
-  var namespace = 'basis.xml';
+  var namespace = this.path;
 
   // import names
 
@@ -429,11 +428,12 @@ basis.require('basis.dom');
     return DOM.outerHTML(node);
   }
 
+
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     NAMESPACE: {
       XMLShema: XSD_NAMESPACE,
       XMLShemaInstance: XSI_NAMESPACE,
@@ -455,5 +455,3 @@ basis.require('basis.dom');
     XML2String: XML2String,
     Object2XML: Object2XML
   });
-
-}(basis);

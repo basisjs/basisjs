@@ -9,15 +9,14 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.ui');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.cssom');
+  basis.require('basis.ui');
+
 
  /**
   * This namespace contains {basis.ui.tree.Tree} control class and it's
@@ -42,7 +41,7 @@ basis.require('basis.ui');
   * @namespace basis.ui.tree
   */
 
-  var namespace = 'basis.ui.tree';
+  var namespace = this.path;
 
 
   //
@@ -311,12 +310,10 @@ basis.require('basis.ui');
   // export names
   //
 
-  basis.namespace('basis.ui.tree').extend({
+  this.extend({
     Tree: Tree,
     Node: Node,
     Folder: Folder,
     GroupingNode: GroupingNode,
     PartitionNode: PartitionNode
   });
-
-}(basis);

@@ -1,12 +1,11 @@
 
+  'use strict';
+
   basis.require('basis.cssom');
   basis.require('basis.data');
   basis.require('basis.layout');
   basis.require('basis.ui.tree');
 
-(function(basis){
-
-  'use strict';
 
   //
   // import names
@@ -58,7 +57,7 @@
   * @class
   */
   var FileNode = nsTree.Node.subclass({
-    template: 'file:templates/filelist/fileNode.tmpl',
+    template: resource('../templates/filelist/fileNode.tmpl'),
 
     binding: {
       title: 'data:filename.split("/").slice(-1)',
@@ -118,7 +117,7 @@
   //
 
   var fileTree = new nsTree.Tree({
-    template: 'file:templates/filelist/tree.tmpl',
+    template: resource('../templates/filelist/tree.tmpl'),
 
     dataSource: fsobserver.filesByFolder.getSubset('', true),
 
@@ -182,8 +181,5 @@
   // export names
   //
 
-  widget.tree = fileTree;
-
-  return widget;
-
-})(basis);
+  exports = module.exports = widget;
+  exports.tree = fileTree;

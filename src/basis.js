@@ -1188,22 +1188,8 @@
   //
 
   var namespaces = {};
-
-  function createNamespace(namespace, name){
-    var names = {};
-
-    namespace.names = function(keys){
-      return Object.slice(names, typeof keys == 'string' ? keys.qw() : keys);
-    };
-
-    namespace.extend = function(newNames){
-      complete(names, newNames);
-      extend(this, newNames);
-      return this;
-    };
-
-    return namespace;
-  }
+  var namespaceWrappers = {};
+  var nullNamespaceWrapper = Function();
 
   function getNamespace(namespace, wrapFunction){
     var path = namespace.split('.');
@@ -1219,7 +1205,39 @@
 
       if (!cursor[name])
       {
-        cursor[name] = createNamespace((!path.length ? wrapFunction : null) || function(){}, stepPath);
+        // create new namespace
+        cursor[name] = (function(namespace, wrapFn){
+          var names = {};
+          var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
+
+          var newNamespace = function(){
+            if (wrapFunction)
+              return wrapFunction.apply(this, arguments);
+          }
+
+          newNamespace.path = namespace;
+
+          newNamespace.names = function(keys){
+            return Object.slice(names, typeof keys == 'string' ? keys.qw() : keys);
+          };
+
+          newNamespace.extend = function(newNames){
+            complete(names, newNames);
+            extend(this, newNames);
+            return this;
+          };
+
+          newNamespace.setWrapper = function(wrapFn){
+            if (typeof wrapFn == 'function')
+            {
+              if (wrapFunction && typeof console != 'undefined') console.warn('Wrapper for ' + namespace + ' is already set. Probably mistake here.');
+              wrapFunction = wrapFn;
+            }
+          }
+
+          return newNamespace;
+        })(stepPath, !path.length ? wrapFunction : null);
+
         if (nsRoot)
           nsRoot.namespaces_[stepPath] = cursor[name];
       }
@@ -1237,36 +1255,62 @@
     return namespaces[namespace] = cursor;
   }
 
+  function dirname(path){
+    return path.replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/i, '');
+  }
+
   var requireNamespace = (function(){
 
-    function dirname(path){
-      return path.replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/, '');
-    }
-
     var scripts = Array.from(global.document ? document.getElementsByTagName('SCRIPT') : null);
-    var basisRequirePath = dirname(scripts ? scripts.item(-1).src : module.filename);
+    var basisRequirePath = dirname(scripts && scripts.length ? scripts.item(-1).src : module.filename);
+    var nsRootPath = { basis: basisRequirePath };
     var requested = {};
     var requireFunc;
 
     if (typeof require == 'function')
     {
+      var requirePath = module.filename.replace(/[^\/\\]+$/, '');
       requireFunc = function(namespace){
-        return require(requirePath + filename.replace(/\./g, '/'));
+        return (function(){
+          var temp = module.constructor.prototype.load;
+          //console.log('>>>' + namespace);
+
+          module.constructor.prototype.load = function(fn){
+            //console.log(namespace, arguments);
+            this.exports = getNamespace(namespace);
+            //console.log(this.constructor === module.constructor, this.constructor._contextLoad);
+            temp.apply(this, arguments);
+          }
+
+          var exports = require(requirePath + namespace.replace(/\./g, '/'));
+
+          module.constructor.prototype.load = temp;
+
+          return exports;
+        })();
       }
     }
     else
     {
-      requireFunc = function(namespace){
+      requireFunc = function(namespace, path){
+        if (/[^a-z0-9\_\.]/i.test(namespace))
+          throw 'Namespace `' + namespace + '` contains wrong chars.';
+
         var filename = namespace.replace(/\./g, '/') + '.js';
-        var requirePath =
-          /^basis\./.test(namespace)
+        var namespaceRoot = namespace.split('.')[0];
+
+        if (namespaceRoot == namespace)
+          nsRootPath[namespaceRoot] = path || dirname(location ? location.href : '');
+
+        var requirePath = nsRootPath[namespaceRoot];
+          /*/^basis\./.test(namespace)
             ? basisRequirePath
-            : dirname(location ? location.href : '');
+            : dirname(location ? location.href : '');*/
 
         if (!namespaces[namespace])
         {
           if (!/^https?:/.test(requirePath))
-            throw 'Path `' + namespace + '` can\'t be resolved';
+            throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
 
           if (!requested[namespace])
             requested[namespace] = true;
@@ -1274,6 +1318,10 @@
             throw 'Recursive require for ' + namespace;
 
           var requestUrl = requirePath + filename;
+
+          wrapScript(basis.namespace(namespace), requestUrl)();
+
+          /*
           var xhr = new XMLHttpRequest();
           xhr.open('GET', requestUrl, false);
           xhr.send(null);
@@ -1281,22 +1329,38 @@
           if (xhr.status < 200 || xhr.status >= 400)
             throw 'Unable to load module ' + requestUrl + ' (' + namespace + ') by basis.require()';
 
+
+          runCode(basis.namespace(namespace), xhr.responseText, requestUrl);
+
           try {
-            (global.execScript || function(scriptText){
+            Function('basis, global, resource', xhr.responseText + '//@ sourceURL=' + requestUrl).call(
+              basis.namespace(namespace),
+              basis,
+              global,
+              function(resourcePath){
+                var resource = function(){
+                  return basis.resource(dirname(requestUrl) + resourcePath);
+                };
+                resource.toString = function(){ return resource(); };
+                return resource;
+              }
+            );*/
+
+            /*(global.execScript || function(scriptText){
               global["eval"].call(global,
                 '(function(basis, global, resource){' +
                   scriptText +
-                '}).call(this, basis, this, function(resourcePath){' +
-                  'return function(){' +
-                    'return "' + dirname(requestUrl) + '" + resourcePath;' +
-                  '}' +
+                '\n}).call(basis.namespace("' + namespace + '"), basis, this, function(resourcePath){' +
+                  'var resource = function(){' +
+                    'return basis.resource("' + dirname(requestUrl) + '" + resourcePath);' +
+                  '}; resource.toString = function(){ return resource(); }; return resource;' +
                 '})//@ sourceURL=' + requestUrl
               );
-            })(xhr.responseText);
-          } catch(e) {
+            })(xhr.responseText);*/
+          /*} catch(e) {
             ;;;console.log('Run error ' + requestUrl + ' ( ' + namespace + ' )');
             throw e;
-          }
+          }*/
 
           requireFunc.sequence.push(filename);
         }
@@ -1307,6 +1371,68 @@
     return requireFunc;
   })();
 
+  var externalResourceCache = {};
+  var externalResource = function(url){
+    var requestUrl = url;
+
+    if (!externalResourceCache[requestUrl])
+    {
+      var resourceContent = '';
+
+      var req = new XMLHttpRequest();
+      req.open('GET', requestUrl, false);
+      req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
+      req.send('');
+
+      if (req.status >= 200 && req.status < 400)
+        resourceContent = req.responseText;
+      else
+      {
+        if (typeof console != 'undefined')
+          console.warn('basis.resource: Unable to load ' + requestUrl);
+      }
+
+
+      externalResourceCache[requestUrl] = resourceContent;
+    }
+
+    return externalResourceCache[requestUrl];
+  };
+
+  var wrapScript = function(context, sourceURL){
+    var baseURL = dirname(sourceURL);
+
+    return function(){
+      var scriptText = externalResource(sourceURL);
+
+      if (typeof context.exports != 'object')
+        context.exports = {};
+
+      try {
+        Function('exports, module, basis, global, resource', scriptText + '//@ sourceURL=' + sourceURL).call(
+          context,
+          context.exports,
+          context,
+          basis,
+          global,
+          function(resourcePath){
+            var resource = function(){
+              return externalResource(baseURL + resourcePath);
+            };
+
+            resource.toString = function(){ return resource(); };
+
+            return resource;
+          }
+        );
+      } catch(e) {
+        ;;;console.log('Execute error ' + sourceURL);
+        throw e;
+      }
+
+      return context;
+    }
+  };
 
   // ============================================
   // OOP section: Class implementation
@@ -1741,6 +1867,8 @@
   getNamespace(namespace).extend({
     namespace: getNamespace,
     require: requireNamespace,
+    resource: externalResource,
+    wrapScript: wrapScript,
 
     platformFeature: {},
 

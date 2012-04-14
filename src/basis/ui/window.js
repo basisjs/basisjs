@@ -9,24 +9,23 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
-basis.require('basis.cssom');
-basis.require('basis.ui');
-basis.require('basis.ui.button');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.cssom');
+  basis.require('basis.ui');
+  basis.require('basis.ui.button');
+
 
  /**
   * @see ./demo/defile/window.html
   * @namespace basis.ui.window
   */
 
-  var namespace = 'basis.ui.window';
+  var namespace = this.path;
 
 
   //
@@ -461,10 +460,8 @@ basis.require('basis.ui.button');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Window: Window,
     Blocker: Blocker,
     getWindowTopZIndex: function(){ return windowManager.childNodes.length * 2 + 2001 }
   });
-
-}(basis);

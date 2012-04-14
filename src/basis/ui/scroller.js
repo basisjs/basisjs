@@ -12,20 +12,19 @@
  * Vladimir Ratsev <wuzykk@gmail.com>
  */
 
-basis.require('basis.event');
-basis.require('basis.ui');
-basis.require('basis.animation');
-
-!function() {
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.ui');
+  basis.require('basis.animation');
+
 
  /**
   * @see ./demo/defile/scroller.html
   * @namespace basis.ui.scroller
   */
 
-  var namespace = 'basis.ui.scroller';
+  var namespace = this.path;
 
 
   //
@@ -873,11 +872,9 @@ basis.require('basis.animation');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Scroller: Scroller,
     Scrollbar: Scrollbar,
     ScrollPanel: ScrollPanel,
     ScrollGallery: ScrollGallery
   });
-
-}(basis);

@@ -9,12 +9,11 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.data');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.data');
+
 
  /**
   * Namespace overview:
@@ -29,7 +28,7 @@ basis.require('basis.data');
   * @namespace basis.data.dataset
   */
 
-  var namespace = 'basis.data.dataset';
+  var namespace = this.path;
 
 
   //
@@ -1818,7 +1817,7 @@ basis.require('basis.data');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     // operable datasets
     Merge: Merge,
     Subtract: Subtract,
@@ -1833,4 +1832,3 @@ basis.require('basis.data');
     Cloud: Cloud
   });
 
-}(basis, this);

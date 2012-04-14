@@ -247,11 +247,20 @@
   </style>
 
   <script>var firstTime = new Date;</script>
-  <script src="../../basis-all.js"></script>
+  <script src="../../src/basis.js"></script>
   <script src="../seedrandom.js"></script>
   <script>Math.seedrandom("basis");</script>
   <script src="blog_posts-5000.js"></script>
   <script>
+    basis.require('basis.date');
+    basis.require('basis.dom');
+    basis.require('basis.dom.event');
+    basis.require('basis.cssom');
+    basis.require('basis.data');
+    basis.require('basis.data.dataset');
+    basis.require('basis.data.index');
+    basis.require('basis.ui');
+    basis.require('basis.ui.paginator');
 
     basis.dom.event.onLoad(runApp = function(){
       var statOutElement = basis.dom.createElement('ul');

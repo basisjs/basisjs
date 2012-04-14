@@ -9,11 +9,10 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-
-!function(){
-
   'use strict';
+
+  basis.require('basis.event');
+
 
  /**
   * This namespace contains base classes and functions for components of Basis framework.
@@ -28,7 +27,7 @@ basis.require('basis.event');
   * @namespace basis.data
   */
 
-  var namespace = 'basis.data';
+  var namespace = this.path;
 
 
   //
@@ -1381,19 +1380,21 @@ basis.require('basis.event');
   // namespace wrapper
   //
 
-  function wrapper(data){
+  function dataWrapper(data){
     if (Array.isArray(data))
-      return data.map(wrapper);
+      return data.map(dataWrapper);
     else
       return { data: data };
   }
+
+  this.setWrapper(dataWrapper);
 
 
   //
   // export names
   //
 
-  basis.namespace(namespace, wrapper).extend({
+  this.extend({
     // const
     STATE: STATE,
     SUBSCRIPTION: SUBSCRIPTION,
@@ -1407,5 +1408,3 @@ basis.require('basis.event');
     AbstractDataset: AbstractDataset,
     Dataset: Dataset
   });
-
-}(basis, this);

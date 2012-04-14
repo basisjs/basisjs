@@ -9,14 +9,12 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-!function(basis){
-
   'use strict';
 
  /**
   * @namespace basis.date
   */
-  var namespace = 'basis.date';
+  var namespace = this.path;
 
   // import names
 
@@ -273,12 +271,13 @@
     return timer;
   };
 
-  // export names
 
-  basis.namespace(namespace).extend({
+  //
+  // export names
+  //
+
+  this.extend({
     isLeapYear: isLeapYear,
     getMonthDayCount: getMonthDayCount,
     format: dateFormat
   });
-
-}(basis);

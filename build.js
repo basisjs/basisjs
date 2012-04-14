@@ -2,11 +2,15 @@ var fs = require('fs');
 var path = require('path');
 var exec = require('child_process').exec;
 
+global.document = require('jsdom-nocontextifiy').jsdom();
+global.basis = require('./src/basis').basis;
+basis.require('basis.template');
+
 var LOG_FILENAME = 'build.log';
 
 var fileCache = {};
 var packages = [];
-var childProcessCount = 0;
+var asyncCallCount = 0;
 var processStart = new Date;
 
 var flags = process.argv.slice(2);
@@ -88,8 +92,24 @@ function buildDep(namespace, context){
 
     if (buildMode)
     {
-      result.srcContent.push("//\n// " + filename + "\n//", cfg.srcContent);
-      result.buildContent.push("//\n// " + filename + "\n//", cfg.buildContent);
+      var contentTemplate = ["//\n// " + filename + "\n//"];
+      var contentPos = 1;
+
+      if (namespace != 'basis')
+      {
+        contentPos = 2;
+        contentTemplate.push(
+          '(function(basis, global, resource){',
+          '/*content*/',
+          '}).call(basis.namespace("' + namespace + '"), basis, this, function(filepath){ return function(){ return "' + path.dirname(cfg.path) + '" + filepath } });'
+        );
+      }
+
+      contentTemplate[contentPos] = cfg.srcContent;
+      result.srcContent.push.apply(result.srcContent, contentTemplate);
+
+      contentTemplate[contentPos] = cfg.buildContent;
+      result.buildContent.push.apply(result.buildContent, contentTemplate);
     }
 
     result.files.push(filename);
@@ -107,6 +127,13 @@ function writeLog(data, hideFromConsole){
     console.log(data);
 }
 
+function checkForEnd(count){
+  asyncCallCount -= count || 0;
+
+  if (!asyncCallCount)
+    writeLog('\n=====================\nBuild done in ' + ((new Date - processStart)/1000).toFixed(3) + 's\n');
+}
+
 if (path.existsSync(LOG_FILENAME))
   fs.unlinkSync(LOG_FILENAME);
 
@@ -121,6 +148,7 @@ writeLog('==============');
 //
 // build packages
 //
+//packages = [packages[0]];
 packages.forEach(function(pack){
   var packageFilename = pack.path;
 
@@ -141,41 +169,87 @@ packages.forEach(function(pack){
 
   if (buildMode)
   {
-    var tmpFilename = packageResFilename + '.tmp';
     var packStartTime = new Date;
 
     fs.writeFileSync(packageDebugResFilename, build.srcContent.join('\n\n'), 'utf-8');
-    fs.writeFileSync(tmpFilename, build.buildContent.join('\n\n'), 'utf-8');
 
-    writeLog('init packing for ' + packageResFilename + ' and continue...');
-    childProcessCount++;
-    exec('java -jar c:\\tools\\gcc.jar --js ' + tmpFilename, { maxBuffer: 1024 *1024 }, function(error, stdout, stderr){
-      writeLog('\n' + packageResFilename + ' packing - done in ' + ((new Date - packStartTime)/1000).toFixed(3) + 's');
+    if (!packFiles)
+    {
+      fs.writeFileSync(packageResFilename, build.buildContent.join('\n\n'), 'utf-8');
+    }
+    else
+    {
+      var tmpFilename = packageResFilename + '.tmp';
+      fs.writeFileSync(tmpFilename, build.buildContent.join('\n\n'), 'utf-8');
 
-      fs.writeFileSync(packageResFilename, stdout, 'utf-8');
-      fs.unlinkSync(tmpFilename);
+      writeLog('init packing for ' + packageResFilename + ' and continue...');
 
-      if (!--childProcessCount)
-        writeLog('\n=====================\nBuild done in ' + ((new Date - processStart)/1000).toFixed(3) + 's');
+      asyncCallCount++;
+      exec('java -jar c:\\tools\\gcc.jar --js ' + tmpFilename, { maxBuffer: 1024 *1024 }, function(error, stdout, stderr){
+        writeLog('\n' + packageResFilename + ' packing - done in ' + ((new Date - packStartTime)/1000).toFixed(3) + 's');
 
-      writeLog(stderr, true);
-      if (error !== null){
-        console.log('exec error: ' + error);
-      }
-    });
+        var fileContent = stdout.replace(/template:(?:'((?:\\'|[^'])+?)'|"((?:\\"|[^"])+?)")/g, function(m, a, b){
+          var templateStr = a || b;
+
+          if (!/^[a-z]+:/.test(templateStr))
+          {
+            var tokens = basis.template.makeDeclaration(templateStr) + '';
+
+            var sqMatch = tokens.match(/\'/g);
+            var dqMatch = tokens.match(/\"/g);
+            var sqCount = sqMatch ? sqMatch.length : 0;
+            var dqCount = dqMatch ? dqMatch.length : 0;
+
+            if (sqCount < dqCount)
+              templateStr = "template:'tokens:" + tokens.replace(/'/g, "\\'") + "'";
+            else
+              templateStr = 'template:"tokens:' + tokens.replace(/"/g, '\\"') + '"';
+          }
+
+          return templateStr;
+        });
+
+        asyncCallCount++;
+        fs.unlink(tmpFilename, function(err){
+          console.log('Temp package file ' + tmpFilename + (err ? ' don\'t deleted (' + err + ')' : ' deleted'));
+          checkForEnd(1);
+        });
+
+        asyncCallCount++;
+        fs.writeFile(packageResFilename, fileContent, 'utf-8', function(err){
+          console.log('Package file ' + packageResFilename + (err ? ' don\'t saved (' + err + ')' : ' saved'));
+          checkForEnd(1);
+        });
+
+        writeLog(stderr, true);
+
+        checkForEnd(1);
+
+        if (error !== null){
+          console.log('exec error: ' + error);
+        }
+      });
+    }
   }
   else
   {
     var fileContent = ['// Package basis-' + packageName + '.js\n\n!function(){\n\  if (typeof document != \'undefined\')\n\  {\n\    var scripts = document.getElementsByTagName(\'script\');\n\    var curLocation = scripts[scripts.length - 1].src.replace(/[^\\/]+\\.js\$/, \'\');\n'];
 
-    fileContent.push("\n    document.write(\n      '<script src=\"' + curLocation + '" + build.files[0] + "\"></script>',\n      '<script>\\n' +");
+    fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + build.files[0] + "\"></script>');\n");
+    fileContent.push("\n    document.write('<script>');\n");
 
     var reqFiles = build.files.slice(1, -1);
     var base = path.dirname(build.files[0]);
     for (var i = 0, filename; filename = reqFiles[i]; i++)
-      fileContent.push('\n         \'basis.require("' + path.relative(base, filename).replace(/\.js$/, '').replace(/[\/\\]/g, '.') + '");\\n\' +');
+    {
+      var namespace = path.relative(base, filename).replace(/\.js$/, '').replace(/[\/\\]/g, '.');
+      fileContent.push(
+        "    document.write('  basis.require(\"" + namespace + "\");');\n"
+      );
+    }
 
-    fileContent.push("\n      '</script>'\n    );\n  }\n}();");
+    fileContent.push("    document.write('</script>');");
+    fileContent.push("\n  }\n}();");
 
     fs.writeFileSync(packageDebugResFilename, fileContent.join(''), 'utf-8')
     fs.writeFileSync(packageResFilename, fileContent.join(''), 'utf-8')
@@ -183,5 +257,4 @@ packages.forEach(function(pack){
 
 });
 
-if (!childProcessCount)
-  writeLog('\n=====================\nBuild done in ' + ((new Date - processStart)/1000).toFixed(3) + 's');
+checkForEnd();

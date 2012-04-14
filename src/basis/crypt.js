@@ -9,17 +9,14 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-!function(basis){
-
   'use strict';
 
  /**
   * @namespace basis.crypt
   */
 
-  var namespace = 'basis.crypt';
+  var namespace = this.path;
 
-  basis.namespace(namespace, setCryptTarget);
 
   //
   // Main part
@@ -534,24 +531,21 @@
     };
   })();
 
-  /*
-   *  Extend Array & String prototypes
-   */
+
+  //
+  // wrap function
+  //
 
   var cryptTarget = '';
-  function setCryptTarget(target){
-    cryptTarget = target || '';
-    return context_;
-  }
 
   var cryptMethods = {
-    sha1:    function(useUTF8){ return SHA1(this, useUTF8); },
+    sha1: function(useUTF8){ return SHA1(this, useUTF8); },
     sha1hex: function(useUTF8){ return HEX(SHA1(this, useUTF8)); },
-    md5:     function(useUTF8){ return MD5(this, useUTF8); },
-    md5hex:  function(useUTF8){ return HEX(MD5(this, useUTF8)); },
-    base64:  function(useUTF8){ return Base64.encode(this, useUTF8); },
+    md5: function(useUTF8){ return MD5(this, useUTF8); },
+    md5hex: function(useUTF8){ return HEX(MD5(this, useUTF8)); },
+    base64: function(useUTF8){ return Base64.encode(this, useUTF8); },
     base64decode: function(useUTF8){ return Base64.encode(this, useUTF8); },
-    hex:     function(){ return HEX(this) }
+    hex: function(){ return HEX(this) }
   };
 
   var context_ = {};
@@ -562,17 +556,17 @@
     }
   });
 
-  //String.extend(cryptMethods);
-  //Array.extend(cryptMethods);
+  this.setWrapper(function(target){
+    cryptTarget = target || '';
+    return context_;
+  });
 
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     HEX: HEX,
     SHA1: SHA1,
     MD5: MD5
   });
-
-}(basis);

@@ -6,25 +6,25 @@
     var scripts = document.getElementsByTagName('script');
     var curLocation = scripts[scripts.length - 1].src.replace(/[^\/]+\.js$/, '');
 
-    document.write(
-      '<script src="' + curLocation + 'src/basis.js"></script>',
-      '<script>\n' +
-         'basis.require("basis.timer");\n' +
-         'basis.require("basis.event");\n' +
-         'basis.require("basis.ua");\n' +
-         'basis.require("basis.dom");\n' +
-         'basis.require("basis.dom.event");\n' +
-         'basis.require("basis.data");\n' +
-         'basis.require("basis.template");\n' +
-         'basis.require("basis.html");\n' +
-         'basis.require("basis.dom.wrapper");\n' +
-         'basis.require("basis.cssom");\n' +
-         'basis.require("basis.data.dataset");\n' +
-         'basis.require("basis.data.property");\n' +
-         'basis.require("basis.data.index");\n' +
-         'basis.require("basis.entity");\n' +
-         'basis.require("basis.ui");\n' +
-      '</script>'
-    );
+    document.write('<script src="' + curLocation + 'src/basis.js"></script>');
+
+    document.write('<script>');
+    document.write('  basis.require("basis.timer");');
+    document.write('  basis.require("basis.event");');
+    document.write('  basis.require("basis.ua");');
+    document.write('  basis.require("basis.dom");');
+    document.write('  basis.require("basis.dom.event");');
+    document.write('  basis.require("basis.data");');
+    document.write('  basis.require("basis.template");');
+    document.write('  basis.require("basis.html");');
+    document.write('  basis.require("basis.dom.wrapper");');
+    document.write('  basis.require("basis.cssom");');
+    document.write('  basis.require("basis.data.dataset");');
+    document.write('  basis.require("basis.data.property");');
+    document.write('  basis.require("basis.data.index");');
+    document.write('  basis.require("basis.entity");');
+    document.write('  basis.require("basis.l10n");');
+    document.write('  basis.require("basis.ui");');
+    document.write('</script>');
   }
 }();

@@ -9,22 +9,21 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.dom');
-basis.require('basis.dom.wrapper');
-basis.require('basis.cssom');
-basis.require('basis.ui');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.cssom');
+  basis.require('basis.ui');
+
 
  /**
   * @see ./demo/defile/tabs.html
   * @namespace basis.ui.tabs
   */
 
-  var namespace = 'basis.ui.tabs';
+  var namespace = this.path;
 
 
   //
@@ -359,7 +358,7 @@ basis.require('basis.ui');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     AbstractTabsControl: AbstractTabsControl,
 
     TabControl: TabControl,
@@ -372,5 +371,3 @@ basis.require('basis.ui');
     TabSheetControl: TabSheetControl,
     TabSheet: TabSheet
   });
-
-}(basis);

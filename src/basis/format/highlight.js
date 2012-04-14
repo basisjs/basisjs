@@ -9,17 +9,16 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.ui');
-
-!function(basis){ 
-
   'use strict';
+
+  basis.require('basis.ui');
+
   
  /**
   * @namespace basis.format.highlight
   */
 
-  var namespace = 'basis.format.highlight';
+  var namespace = this.path;
 
 
   //
@@ -443,12 +442,10 @@ basis.require('basis.ui');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     // functions
     highlight: highlight,
 
     // classes
     SourceCodeNode: SourceCodeNode
   });
-
-}(basis);

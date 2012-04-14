@@ -9,21 +9,20 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.ua');
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.cssom');
-basis.require('basis.ui');
-
-!function(basis, global){
-
   'use strict';
+
+  basis.require('basis.ua');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.cssom');
+  basis.require('basis.ui');
+
 
  /**
   * @namespace basis.layout
   */
 
-  var namespace = 'basis.layout';
+  var namespace = this.path;
 
   // import names
 
@@ -687,11 +686,12 @@ basis.require('basis.ui');
     }
   });
 
+
   //
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Box: Box,
     Intersection: Intersection,
     Viewport: Viewport,
@@ -702,5 +702,3 @@ basis.require('basis.ui');
     Helper: Helper,
     addBlockResizeHandler: addBlockResizeHandler
   });
-
-}(basis, this);

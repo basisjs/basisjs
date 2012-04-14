@@ -9,25 +9,24 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-basis.require('basis.dom.wrapper');
-basis.require('basis.html');
-basis.require('basis.cssom');
-
 //
 // TODO: migrate to new basis (remove behaviour, events and so on)
 //
 
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.html');
+  basis.require('basis.cssom');
+
 
  /**
   * @namespace basis.ui.toc
   */  
 
-  var namespace = 'basis.ui.toc';
+  var namespace = this.path;
 
 
   //
@@ -337,11 +336,9 @@ basis.require('basis.cssom');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     Control: TocControl,
     ControlItem: TocControlItem,
     ControlItemHeader: TocControlItemHeader,
     ControlHeaderList: TocControlHeaderList
   });
-
-}(basis);

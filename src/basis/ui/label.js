@@ -9,23 +9,22 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-basis.require('basis.event');
-basis.require('basis.html');
-basis.require('basis.dom');
-basis.require('basis.data');
-basis.require('basis.dom.wrapper');
-basis.require('basis.ui');
-
-!function(basis){
-
   'use strict';
+
+  basis.require('basis.event');
+  basis.require('basis.html');
+  basis.require('basis.dom');
+  basis.require('basis.data');
+  basis.require('basis.dom.wrapper');
+  basis.require('basis.ui');
+
 
  /**
   * @see ./demo/defile/label.html
   * @namespace basis.ui.label
   */
 
-  var namespace = 'basis.ui.label';
+  var namespace = this.path;
 
 
   //
@@ -333,7 +332,7 @@ basis.require('basis.ui');
   // export names
   //
 
-  basis.namespace(namespace).extend({
+  this.extend({
     // Owner
     NodeLabel: NodeLabel,
 
@@ -358,5 +357,3 @@ basis.require('basis.ui');
     ChildNodesCount: ChildNodesCount,
     Empty: Empty
   });
-
-}(basis);

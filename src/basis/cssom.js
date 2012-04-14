@@ -13,18 +13,17 @@
  * Roman Dvornov
  */
 
-basis.require('basis.dom');
-basis.require('basis.dom.event');
-
-(function(basis, global){
-
   'use strict';
+
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
+
 
  /**
   * @namespace basis.cssom
   */
   
-  var namespace = 'basis.cssom';
+  var namespace = this.path;
 
 
   //
@@ -728,23 +727,12 @@ basis.require('basis.dom.event');
     classList(document.body).bool('opacity-not-support', !basis.platformFeature['css-opacity']);
   });
 
+
+  //
   // export names
+  //
 
-  dom.extend({
-    // style interface
-    setStyleProperty: setStyleProperty,
-    setStyle: setStyle,
-
-    // node styling
-    display: display,
-    show: show,
-    hide: hide,
-    visibility: visibility,
-    visible: visible,
-    invisible: invisible
-  });
-
-  return basis.namespace(namespace).extend({
+  this.extend({
     // style interface
     setStyleProperty: setStyleProperty,
     setStyle: setStyle,
@@ -762,4 +750,16 @@ basis.require('basis.dom.event');
     RuleSet: RuleSet
   }).extend(unitFunc);
 
-})(basis, this);
+  basis.namespace('basis.dom').extend({
+    // style interface
+    setStyleProperty: setStyleProperty,
+    setStyle: setStyle,
+
+    // node styling
+    display: display,
+    show: show,
+    hide: hide,
+    visibility: visibility,
+    visible: visible,
+    invisible: invisible
+  });
