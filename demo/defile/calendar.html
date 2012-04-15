@@ -8,6 +8,7 @@
   <title>Basis Calendar</title>
 
   <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/calendar/default/style.css" media="screen" />
+  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/new/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     BODY, HTML
@@ -46,6 +47,21 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.l10n');
+    basis.require('basis.ui.button');
+    basis.require('basis.ui.calendar');
+
+    new basis.ui.button.ButtonPanel({
+      container: basis.dom.get('demo-container'),
+      childNodes: [null, 'ru-RU', 'uk-UA'].map(function(culture){
+        return {
+          caption: culture || 'Default (English)',
+          click: function(){
+            basis.l10n.setCulture(culture);
+          }
+        }
+      })
+    });
 
     var calendar = new basis.ui.calendar.Calendar({
       container: basis.dom.get('demo-container'),

@@ -1,5 +1,5 @@
 /*!
- * Basis javascript library 
+ * Basis javascript library
  * http://code.google.com/p/basis-js/
  *
  * @copyright
@@ -19,7 +19,7 @@
  /**
   * @namespace basis.ua.visibility
   */
-  
+
   var namespace = this.path;
 
 
@@ -47,14 +47,14 @@
 
     listeners: null,
     value: null,
-    
+
     init: function(dictionary, tokenName){
       this.listeners = [];
       this.value = '';
       this.dictionary = dictionary;
       this.name = tokenName;
     },
-    
+
     set: function(value){
       if (value != this.value)
       {
@@ -66,7 +66,7 @@
     get: function(){
       return this.value;
     },
-    
+
     attach: function(handler, context){
       for (var i = 0, listener; listener = this.listeners[i]; i++)
       {
@@ -93,7 +93,7 @@
 
       return false;
     },
-    
+
     destroy: function(){
       for (var i = 0, listener; listener = this.listeners[i]; i++)
         this.detach(listener.handler, listener.context);
@@ -120,7 +120,7 @@
         this.setTokenValue(tokenName, culture);
     },
     setTokenValue: function(tokenName, culture){
-      this.tokens[tokenName].set(this.getCultureValue(culture, tokenName) || this.getCultureValue('base', tokenName));      
+      this.tokens[tokenName].set(this.getCultureValue(culture, tokenName) || this.getCultureValue('base', tokenName));
     },
     setCultureValue: function(culture, tokenName, tokenValue){
       var resource = this.resources[culture];
@@ -152,7 +152,7 @@
   });
 
   function createDictionary(namespace, location, tokens){
-    getDictionary(namespace, true).update('base', tokens);    
+    getDictionary(namespace, true).update('base', tokens);
     dictionaryLocations[namespace] = location;
   }
 
@@ -184,14 +184,14 @@
     {
       dictionary.update(culture, tokens);
     }
-    else 
+    else
     {
       ;;;console.warn('Dictionary ' + namespace + ' not found');
     }
   }
 
   function getDictionary(namespace, autoCreate){
-    var dict = dictionaries[namespace];    
+    var dict = dictionaries[namespace];
 
     if (!dict && autoCreate)
       dict = dictionaries[namespace] = new Dictionary(namespace);
@@ -199,9 +199,12 @@
     return dict;
   }
 
-  function getToken(namespace){
-    var dotIndex = namespace.lastIndexOf('.');
-    return getDictionary(namespace.substr(0, dotIndex), true).getToken(namespace.substr(dotIndex + 1));
+  function getToken(path){
+    if (arguments.length > 1)
+      path = Array.from(arguments).join('.');
+
+    var dotIndex = path.lastIndexOf('.');
+    return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
   }
 
   function setCulture(culture){

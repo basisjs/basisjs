@@ -1,5 +1,5 @@
 /**
- * Basis javascript library 
+ * Basis javascript library
  * http://code.google.com/p/basis-js/
  *
  * @copyright
@@ -53,11 +53,11 @@
   // main part
   //
 
-  var YEAR  = 'year';
+  var YEAR = 'year';
   var MONTH = 'month';
-  var DAY   = 'day';
-  var HOUR  = 'hour';
-  var FORWARD  = true;
+  var DAY = 'day';
+  var HOUR = 'hour';
+  var FORWARD = true;
   var BACKWARD = false;
 
   var TAB_TEMPLATE =
@@ -69,14 +69,14 @@
   // localization
   //
 
-  var LOCALE = function(section){
-    var locale = basis.locale['ui.calendar'];
-    return locale ? locale[section] : section;
-  };
-
   var monthNumToRef = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
   var dayNumToRef = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"];
 
+  basis.l10n.createDictionary(namespace, '../../l10n/calendar', {
+    quarter: 'Quarter',
+    today: 'Today',
+    selected: 'Selected'
+  });
 
   basis.l10n.createDictionary(namespace + '.month', '../../l10n/calendar', {
     'jan': 'January',
@@ -108,6 +108,36 @@
     'dec': 'Dec'
   });
 
+  basis.l10n.createDictionary(namespace + '.day', '../../l10n/calendar', {
+    'mon': 'Monday',
+    'tue': 'Tuesday',
+    'wed': 'Wednesday',
+    'thr': 'Thursday',
+    'fri': 'Friday',
+    'sat': 'Saturday',
+    'sun': 'Sunday'
+  });
+
+  basis.l10n.createDictionary(namespace + '.day2', '../../l10n/calendar', {
+    'mon': 'Mo',
+    'tue': 'Tu',
+    'wed': 'We',
+    'thr': 'Th',
+    'fri': 'Fr',
+    'sat': 'Sa',
+    'sun': 'Su'
+  });
+
+  basis.l10n.createDictionary(namespace + '.day3', '../../l10n/calendar', {
+    'mon': 'Mon',
+    'tue': 'Tue',
+    'wed': 'Wed',
+    'thr': 'Thr',
+    'fri': 'Fri',
+    'sat': 'Sat',
+    'sun': 'Sun'
+  });
+
   //
   // Tools
   //
@@ -131,18 +161,16 @@
     var lv, rv;
 
     // binary search
-    do 
+    do
     {
       compareValue = arr[pos = (l + r) >> 1];
       if (value < (lv = compareValue.periodStart))
         r = pos - 1;
-      else 
+      else
         if (value > (rv = compareValue.periodEnd))
           l = pos + 1;
         else
-          return value >= lv && value <= rv ? pos : -1; // founded element
-                                                        // -1 returns when it seems as founded element,
-                                                        // but not equal (array item or value looked for have wrong data type for compare)
+          return value >= lv && value <= rv ? pos : -1;
     }
     while (l <= r);
 
@@ -174,11 +202,13 @@
     century: function(period){ return period.periodStart.getFullYear() + ' - ' + period.periodEnd.getFullYear() },
     decade:  function(period){ return period.periodStart.getFullYear() + ' - ' + period.periodEnd.getFullYear() },
     year:    function(period){ return period.periodStart.getFullYear() },
-    quarter: function(period){ return LOCALE('QUARTER').toLowerCase().format(1 + period.periodStart.getMonth().base(3)/3) },
+    quarter: function(period){
+      return LOCALE('QUARTER').toLowerCase().format(1 + period.periodStart.getMonth().base(3)/3);
+    },
     month:   function(period){
       return basis.l10n.getToken([namespace, 'monthShort', monthNumToRef[period.periodStart.getMonth()]].join('.'));
       //return LOCALE('MONTH').SHORT[period.periodStart.getMonth()].toLowerCase();
-    }, 
+    },
     day:     function(period){ return period.periodStart.getDate() }
   };
 
@@ -212,7 +242,10 @@
       result.periodEnd = new Date(new Date(y + mod[4], m + mod[5], d + mod[6]) - 1);
     }
     else
-      result.periodStart = new Date(result.periodEnd = new Date(date));
+    {
+      result.periodStart = new Date(date);
+      result.periodEnd = new Date(date)
+    }
 
     return result;
   }
@@ -226,6 +259,16 @@
     className: namespace + '.Calendar.Node',
 
     childClass: null,
+
+    periodStart: null,
+    periodEnd: null,
+
+    event_periodChanged: createEvent('periodChanged'),
+    event_select: function(){
+      UINode.prototype.event_select.call(this);
+
+      DOM.focus(this.element);
+    },
 
     template:
       '<a class="Basis-Calendar-Node {nodePeriodName} {selected} {disabled} {before} {after}" event-click="click">' +
@@ -246,7 +289,6 @@
         l10n: true,
         events: 'periodChanged',
         getter: function(node){
-          console.log(node.nodePeriodName);
           return PERIOD_TITLE[node.nodePeriodName](node);
         }
       },
@@ -268,46 +310,22 @@
       }
     },
 
-    periodStart: null,
-    periodEnd: null,
-    event_periodChanged: basis.event.create('periodChanged', 'sender', 'oldPeriodStart', 'oldPeriodEnd'),
-
     setPeriod: function(period, selectedDate){
       if (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd)
       {
-        var oldPeriodStart = this.periodStart;
-        var oldPeriodEnd = this.periodEnd;
         this.periodStart = period.periodStart;
         this.periodEnd = period.periodEnd;
 
         if (selectedDate)
+        {
           if (selectedDate >= this.periodStart && selectedDate <= this.periodEnd)
             this.select();
           else
             this.unselect();
+        }
 
-        this.event_periodChanged(this, oldPeriodStart, oldPeriodEnd);
+        this.event_periodChanged();
       }
-    },
-
-    // templateUpdate: function(object, eventName, delta){
-    //   if (!eventName || 'periodStart' in delta || 'periodEnd' in delta)
-    //   {
-    //     //this.tmpl.title.nodeValue = this.titleGetter(this.data);
-
-    //     if (this.parentNode)
-    //     {
-    //       var clsList = classList(this.element);
-    //       clsList.bool('before', this.data.periodStart < this.parentNode.data.periodStart);
-    //       clsList.bool('after', this.data.periodEnd > this.parentNode.data.periodEnd);
-    //     }
-    //   }
-    // },
-
-    event_select: function(){
-      UINode.prototype.event_select.call(this);
-
-      DOM.focus(this.element);
     }
   });
 
@@ -330,8 +348,8 @@
   var CalendarSection = Class(UIContainer, {
     className: namespace + '.CalendarSection',
 
-    event_periodChanged: basis.event.create('periodChanged'),
-    event_selectedDateChanged: basis.event.create('selectedDateChanged'),
+    event_periodChanged: createEvent('periodChanged'),
+    event_selectedDateChanged: createEvent('selectedDateChanged'),
 
     template:
       '<div class="Basis-Calendar-Section Basis-Calendar-Section-{sectionName} {selected} {disabled}">' +
@@ -343,7 +361,7 @@
     binding: {
       sectionName: 'sectionName',
       title: {
-        l10n: true,        
+        l10n: true,
         events: 'periodChanged',
         getter: function(node){
           return node.getTitle(node.periodStart) || '-';
@@ -503,29 +521,50 @@
     sectionName: 'Month',
     periodName: MONTH,
 
-    template: Function.lazyInit(function(){
-      return '' +
-      '<div class="Basis-Calendar-Section Basis-Calendar-Section-{sectionName} {selected} {disabled}">' +
-        '<div class="Basis-Calendar-SectionTitle">{title}</div>' +
-        '<div{content|childNodesElement} class="Basis-Calendar-SectionContent">' +
-          '<div class="Basis-Calendar-MonthWeekDays">' +
-            LOCALE('DAY').SHORT2.map(String.format, '<span class="Basis-Calendar-MonthWeekDays-Day">{0}</span>').join('') +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      TAB_TEMPLATE
-    }),
-
     nodeCount: 6 * 7,       // 6 weeks
     nodePeriodName: DAY,
     nodePeriodUnit: DAY,
 
     getTabTitle: getter('getDate()'),
-    getTitle: function(periodStart){
-      return LOCALE('MONTH').FULL[periodStart.getMonth()] + ' ' + periodStart.getFullYear();
-    },
     getInitOffset: function(date){
       return 1 + (new Date(date).set(DAY, 1).getDay() + 5) % 7;
+    },
+
+    template:
+      '<div class="Basis-Calendar-Section Basis-Calendar-Section-{sectionName} {selected} {disabled}">' +
+        '<div class="Basis-Calendar-SectionTitle">{title}</div>' +
+        '<div{content|childNodesElement} class="Basis-Calendar-SectionContent">' +
+          '<div class="Basis-Calendar-MonthWeekDays">' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayMon}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayTue}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayWed}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayThr}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayFri}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{daySat}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{daySun}</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      TAB_TEMPLATE,
+
+    binding: {
+      title: {
+        l10n: true,
+        events: 'periodChanged',
+        l10nProxy: function(node, tokenValue){
+          return tokenValue + ' ' + node.periodStart.getFullYear()
+        },
+        getter: function(node){
+          return basis.l10n.getToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]);
+        }
+      },
+      dayMon: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'mon'); } },
+      dayTue: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'tue'); } },
+      dayWed: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'wed'); } },
+      dayThr: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'thr'); } },
+      dayFri: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'fri'); } },
+      daySat: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'sat'); } },
+      daySun: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'sun'); } },
     }
   });
 
@@ -539,7 +578,7 @@
     nodePeriodUnit: MONTH,
 
     getTabTitle: getter('getMonth()', function(key){
-      return basis.l10n.getToken([namespace, 'month', monthNumToRef[key]].join('.'));// LOCALE('MONTH').FULL[key];
+      return basis.l10n.getToken(namespace, 'month', monthNumToRef[key]);// LOCALE('MONTH').FULL[key];
     }),
     getTitle: getter('getFullYear()')
   });
@@ -608,9 +647,22 @@
     nodePeriodName: MONTH,
     nodePeriodUnit: MONTH,
 
+    binding: {
+      title: {
+        l10n: true,
+        events: 'periodChanged',
+        l10nProxy: function(node, tokenValue){
+          return [Math.floor(1 + node.periodStart.getMonth().base(3)/3), tokenValue, node.periodStart.getFullYear()].join(' ')
+        },
+        getter: function(node){
+          return basis.l10n.getToken(namespace, 'quarter');
+        }
+      }
+    }
+/*
     getTitle: function(periodStart){
       return [Math.floor(1 + periodStart.getMonth().base(3)/3), LOCALE('QUARTER').toLowerCase(), periodStart.getFullYear()].join(' ');
-    }
+    }*/
   });
 
   //
@@ -620,41 +672,62 @@
   var Calendar = Class(UIControl, {
     className: namespace + '.Calendar',
 
+    event_change: createEvent('change'),
+
     childClass: CalendarSection,
     childFactory: Function(),
 
-    template: Function.lazyInit(function(){
-      return '' +
+    template:
       '<div class="Basis-Calendar {selected} {disabled}">' +
         '<div class="Basis-Calendar-Header">' +
           '<div{sectionTabs} class="Basis-Calendar-SectionTabs" />' +
         '</div>' +
         '<div class="Basis-Calendar-Body">' +
-          '<span event-click="move_prev" class="Basis-Calendar-ButtonPrevPeriod">' +
+          '<span event-click="movePrev" class="Basis-Calendar-ButtonPrevPeriod">' +
             '<span>\u2039</span><span class="over"></span>' +
           '</span>' +
-          '<span event-click="move_next" class="Basis-Calendar-ButtonNextPeriod">' +
+          '<span event-click="moveNext" class="Basis-Calendar-ButtonNextPeriod">' +
             '<span>\u203A</span><span class="over"></span>' +
           '</span>' +
           '<div{content|childNodesElement} class="Basis-Calendar-Content"/>' +
         '</div>' +
         '<div class="Basis-Calendar-Footer">' +
           '<div class="Basis-Calendar-Footer-Date">' +
-            '<span class="Basis-Calendar-Footer-Label">' + LOCALE('TODAY') + ':</span>' +
-            '<span event-click="select_today" class="Basis-Calendar-Footer-Value">{todayText}</span>' +
+            '<span class="Basis-Calendar-Footer-Label">{todayLabel}:</span>' +
+            '<span event-click="selectToday" class="Basis-Calendar-Footer-Value">{today}</span>' +
           '</div>' +
         '</div>' +
-      '</div>'
-    }),
+      '</div>',
 
-    event_change: createEvent('change'),
+    binding: {
+      todayLabel: {
+        l10n: true,
+        getter: function(){
+          return basis.l10n.getToken(namespace + '.today')
+        }
+      },
+      today: function(){
+        return new Date().toFormat("%D.%M.%Y");
+      }
+    },
+
+    action: {
+      moveNext: function(){
+        this.selection.pick().nextPeriod();
+      },
+      movePrev: function(){
+        this.selection.pick().prevPeriod();
+      },
+      selectToday: function(){
+        this.selectedDate.set(new Date());
+      }
+    },
 
     event_childNodesModified: function(node, delta){
       if (delta.inserted)
         for (var i = 0, section; section = delta.inserted[i++];)
         {
           section.setViewDate(this.date.value);
-          //section.setSelectedDate(this.selectedDate.value);
           this.selectedDate.addLink(section, section.setSelectedDate);
         }
 
@@ -682,34 +755,6 @@
         this.selectedDate.set(new Date(this.selectedDate.value).add(activeSection.nodePeriodUnit, this.selectedDate.value.diff(activeSection.nodePeriodUnit, newDate)));
         this.nextSection(BACKWARD);
       }
-      else
-      {
-        if (classList(Event.sender(event)).contains('disabled'))
-          return;
-
-        switch (actionName)
-        {
-          case 'select_today':
-            this.selectedDate.set(new Date());
-          break;
-
-          case 'select_current':
-            this.selectDate(this.date.value);
-          break;
-
-          case 'move_prev':
-            this.selection.pick().prevPeriod();
-          break;
-
-          case 'move_next':
-            this.selection.pick().nextPeriod();
-          break;
-
-          case 'move_up':
-            this.nextSection(FORWARD);
-          break;
-        }
-      }
     },
 
     date: null,
@@ -727,33 +772,13 @@
     */
     init: function(config){
       // dates
-      this.todayDate = new Property(new Date());
-      this.selectedDate = new Property(new Date(this.date || new Date()));
-      this.date = new Property(new Date(this.date || new Date()));
+      var now = new Date();
 
-      this.selection = {
-        selectedDate: this.selectedDate,
-        event_datasetChanged: function(dataset, delta){
-          this.constructor.prototype.event_datasetChanged.call(this, dataset, delta);
-
-          var activeSection = this.pick();
-          if (activeSection)
-            activeSection.setSelectedDate(this.selectedDate.value);
-        }
-      };
+      this.selectedDate = new Property(new Date(this.date || now));
+      this.date = new Property(new Date(this.date || now));
 
       // inherit
       UIControl.prototype.init.call(this, config);
-
-      // add links
-      /*this.selectedDate.addHandler({
-        change: function(value){
-          for (var section = this.firstChild; section; section = section.nextSibling)
-            section.setSelectedDate(value);
-        }
-      }, this);*/
-
-      this.todayDate.addLink(this.tmpl.todayText, null, getter("toFormat('%D.%M.%Y')"));
 
       // min/max dates
 
@@ -1048,7 +1073,6 @@
       UIControl.prototype.destroy.call(this);
 
       this.date.destroy();
-      this.todayDate.destroy();
     }
 
   });
