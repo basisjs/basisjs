@@ -16,6 +16,7 @@
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
+  basis.require('basis.l10n');
   basis.require('basis.ui');
   basis.require('basis.ui.button');
 
@@ -47,6 +48,14 @@
   var UIControl = basis.ui.Control;
   var ButtonPanel = basis.ui.button.ButtonPanel;
 
+
+  //
+  // localization
+  //
+
+  basis.l10n.createDictionary(namespace, '', {
+    emptyTitle: '[no title]'
+  });
 
   //
   // main part
@@ -140,6 +149,10 @@
         '</div>' +
       '</div>',
 
+    binding: {
+      title: 'title'
+    },
+
     action: {
       close: function(){
         this.close();
@@ -178,11 +191,7 @@
     closed: true,
     moveable: true,
 
-    title: '[no title]',
-
-    binding: {
-      title: 'title'
-    },
+    title: basis.l10n.getToken(namespace, 'emptyTitle'),
 
     init: function(config){
       //this.inherit(config);

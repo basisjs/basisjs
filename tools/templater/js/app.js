@@ -30,22 +30,20 @@ basis.require('basis.ui');
     {
       var url = widgetRoot + widgetName + widgetSuffix;
       var widget = { exports: {} };
-      widgetObjects[widgetName] = widget;
-      var widgetFetcher = basis.wrapScript(widget, url);
+      //widgetObjects[widgetName] = widget;
+      //var widgetFetcher = basis.wrapScript(widget, url);
 
-      widgets[widgetName] = widgetFetcher;
-
-      var xx = function(){
-        widgetFetcher();
+      var resolveWidget = function(){
+        basis.wrapScript(widget, url)();
         return (widgets[widgetName] = function(){
           return widget.exports;
-        })()
-      }
+        })();
+      };
 
       if (lazy === false)
-        xx();
+        resolveWidget();
       else
-        widgets[widgetName] = Function.lazyInit(xx);
+        widgets[widgetName] = Function.lazyInit(resolveWidget);
     }
 
     return widgets[widgetName];
