@@ -45,6 +45,18 @@
   var Token = Class(null, {
     className: namespace + '.Token',
 
+    bindingBridge: {
+      attach: function(token, handler, context){
+        return token.attach(handler, context);
+      },
+      detach: function(token, handler, context){
+        return token.detach(handler, context);
+      },
+      get: function(token){
+        return token.value;
+      }
+    },
+
     listeners: null,
     value: null,
 

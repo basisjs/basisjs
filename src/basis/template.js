@@ -814,8 +814,8 @@
 
             if (getter)
             {
-              if (binding.l10n)
-                getter = wrapLocaleGetter(key, getter);
+              //if (binding.l10n)
+              //  getter = wrapLocaleGetter(key, getter);
 
               getters[key] = getter;
               names.push(key);
@@ -969,6 +969,7 @@
       var domRef;
       var varList = [];
       var result = [];
+      ;;;var debugList = [];
 
       for (var i = 0, binding; binding = bindings[i]; i++)
       {
@@ -987,12 +988,16 @@
         {
           case TYPE_ELEMENT:
           case TYPE_COMMENT:
+            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val: ' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+
             varList.push(bindVar + '=' + domRef);
             bindCode.push(
               bindVar + '=bind_node(' + [domRef, bindVar] + ',value);'
             );
             break;
           case TYPE_TEXT:
+            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val: ' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+
             varList.push(bindVar + '=' + domRef);
             bindCode.push(
               bindVar + '=bind_nodeValue(' + [domRef, bindVar] + ',value);'
@@ -1000,6 +1005,8 @@
             break;
           case TYPE_ATTRIBUTE:
             var attrName = binding[3];
+
+            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',attr:"' + attrName + '",val: ' + bindVar + ',attachment:attaches["' + bindName + '"]}');
 
             if (attrName == 'class')
             {
@@ -1034,17 +1041,52 @@
       }
 
       result.push(
-        'function(bindName,value){\n' +
+        'var attaches = {};' +
+        (function updateAttach(){
+          set(String(this), attaches[this]);
+        }).toString() +
+        (function resolve(bindingName, value){
+          var bridge = value && value.bindingBridge;
+          var oldAttach = attaches[bindingName];
+
+          if (bridge || oldAttach)
+          {
+            if (bridge)
+            {
+              if (value !== oldAttach)
+              {
+                if (oldAttach)
+                  oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
+
+                bridge.attach(value, updateAttach, bindingName);
+                attaches[bindingName] = value;
+              }
+
+              value = bridge.get(value);
+            }
+            else
+            {
+              if (oldAttach)
+              {
+                oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
+                delete attaches[bindingName];
+              }
+            }
+          }
+          return value;
+        }).toString(),
+        'function set(bindName,value){\n' +
+          'value=resolve(bindName,value);' +
           'switch(bindName){'
       );
       for (var bindName in bindMap)
       {
         result.push(
-          'case"' + bindName + '":' +
+          'case"' + bindName + '":\n' +
           'if(__' + bindName + '!==value)' +
           '{' +
-            '__' + bindName + '=value;' +
-            bindMap[bindName].join('') +
+            '__' + bindName + '=value;\n' +
+            bindMap[bindName].join('\n') +
           '}' +
           'break;'
         );
@@ -1052,6 +1094,7 @@
       result.push('}}');
 
       return {
+        /** @cut */debugList: debugList,
         vars: varList,
         getBinding: getBindingFactory(bindMap),
         body: result.join('')
@@ -1073,7 +1116,17 @@
       var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attr', 'bind_attrClass', 'localeUpdaters', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
         'var _=build(),id=gMap.seed++,' + pathes.path.concat(bindings.vars) + ';\n' +
         'if(obj)gMap[a.basisObjectId=id]=obj;\n' +
-        'return tMap[id]={' + [pathes.ref, 'set:' + bindings.body, 'l10n:{},rebuild:function(){if(updateCallback)updateCallback.call(obj)},destroy:function(){for(var key in this.l10n)if(this.l10n[key])this.l10n[key].detach(localeUpdaters[key], obj);delete tMap[id];if(obj)delete gMap[id]}'] + '}' +
+        bindings.body +
+        /**@cut*/'set.debug=function(){return[' + bindings.debugList.join(',') + ']};' +
+        'return tMap[id]={' + [pathes.ref, 'set:set', 'l10n:{},rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
+        'destroy:function(){' +
+          'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
+          'attaches=null;' +
+          'for(var key in this.l10n)if(this.l10n[key])this.l10n[key].detach(localeUpdaters[key], obj);' +
+          'delete tMap[id];' + 
+          /**@cut*/'delete set.debug;' + 
+          'if(obj)delete gMap[id]}'] +
+        '}' +
       '}')(tmplNodeMap, templateMap, build, bind_node, bind_nodeValue, bind_attr, bind_attrClass, localeUpdaters);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
 

@@ -226,6 +226,20 @@
     links_: null,
 
    /**
+    */
+    bindingBridge: {
+      attach: function(property, handler, context){
+        return property.addLink(context, handler);
+      },
+      detach: function(property, handler, context){
+        return property.removeLink(context, handler);
+      },
+      get: function(property){
+        return property.value;
+      }
+    },
+
+   /**
     * @event
     */
     event_change: function(value, oldValue){
@@ -294,14 +308,16 @@
     * @return {Object} Returns object.
     */
     addLink: function(object, field, format){
-      // object must be an Object
-      // IE HtmlNode isn't instanceof Object, therefore additionaly used typeof
-      if (typeof object != 'object' && object instanceof Object == false)
-        throw new Error(EXCEPTION_BAD_OBJECT_LINK);
-
       // process field name
       if (field == null)
+      {
+        // object must be an Object
+        // IE HtmlNode isn't instanceof Object, therefore additionaly used typeof
+        if (typeof object != 'object' && object instanceof Object == false)
+          throw new Error(EXCEPTION_BAD_OBJECT_LINK);
+
         field = getFieldHandler(object);
+      }
 
       // process format argument
       if (typeof format != 'function')

@@ -206,7 +206,7 @@
       return LOCALE('QUARTER').toLowerCase().format(1 + period.periodStart.getMonth().base(3)/3);
     },
     month:   function(period){
-      return basis.l10n.getToken([namespace, 'monthShort', monthNumToRef[period.periodStart.getMonth()]].join('.'));
+      return basis.l10n.getToken(namespace, 'monthShort', monthNumToRef[period.periodStart.getMonth()]);
       //return LOCALE('MONTH').SHORT[period.periodStart.getMonth()].toLowerCase();
     },
     day:     function(period){ return period.periodStart.getDate() }
@@ -556,15 +556,41 @@
         },
         getter: function(node){
           return basis.l10n.getToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]);
+          /*
+          var expr = basis.l10n.createExpression(
+            function(a, b){
+              return a + ' x ' + b + ' ' + node.periodStart.getFullYear();
+            }
+          );
+
+          return basis.l10n.expression(
+            function(a, b){
+              return a + ' x ' + b + ' ' + node.periodStart.getFullYear();
+            },
+            basis.l10n.getToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]),
+            basis.l10n.getToken('basis.ui.calendar.day2.mon')
+          );
+
+
+          function expression(evaluate){
+            var result = Array.from(arguments, 1);
+            result.bindingBridge = {
+              attach: function(){ createExpression() },
+              detach: function(){ destroyExpression() },
+              get: function(args){ evaluate.apply(null, args) }
+            }
+            return result;
+          }
+          */
         }
       },
-      dayMon: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'mon'); } },
-      dayTue: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'tue'); } },
-      dayWed: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'wed'); } },
-      dayThr: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'thr'); } },
-      dayFri: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'fri'); } },
-      daySat: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'sat'); } },
-      daySun: { l10n: true, getter: function(){ return basis.l10n.getToken(namespace, 'day2', 'sun'); } },
+      dayMon: 'l10n:basis.ui.calendar.day2.mon',
+      dayTue: 'l10n:basis.ui.calendar.day2.tue',
+      dayWed: 'l10n:basis.ui.calendar.day2.wed',
+      dayThr: 'l10n:basis.ui.calendar.day2.thr',
+      dayFri: 'l10n:basis.ui.calendar.day2.fri',
+      daySat: 'l10n:basis.ui.calendar.day2.sat',
+      daySun: 'l10n:basis.ui.calendar.day2.sun'
     }
   });
 
@@ -700,12 +726,7 @@
       '</div>',
 
     binding: {
-      todayLabel: {
-        l10n: true,
-        getter: function(){
-          return basis.l10n.getToken(namespace + '.today')
-        }
-      },
+      todayLabel: 'l10n:' + namespace + '.today',
       today: function(){
         return new Date().toFormat("%D.%M.%Y");
       }
@@ -742,7 +763,7 @@
         this.childNodes.map(getter('tmpl.tabElement'))
       );
 
-      if (!this.selection.itemCount && this.firstChild)
+      if (this.selection && !this.selection.itemCount && this.firstChild)
         this.firstChild.select();
     },
     templateAction: function(actionName, event, node){
