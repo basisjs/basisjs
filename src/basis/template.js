@@ -66,10 +66,10 @@
   var SYNTAX_ERROR = 'Invalid or unsupported syntax';
 
   // html parsing states
-  var TEXT = /((?:.|[\r\n])*?)(\{|<(\/|!--(\s*\{)?)?|$)/g;
+  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-z\_][a-z0-9\-\_]*(?:\.[a-z\_][a-z0-9\-\_]*)*)\})?|<(\/|!--(\s*\{)?)?|$)/g;
   var TAG_NAME = /([a-z\_][a-z0-9\-\_]*)(\:|\{|\s*(\/?>)?)/ig;
   var ATTRIBUTE_NAME_OR_END = /([a-z\_][a-z0-9\-\_]*)(\:|\{|=|\s*)|(\/?>)/ig;
-  var COMMENT = /(.|[\r\n])*?-->/ig;
+  var COMMENT = /(.|[\r\n])*?-->/g;
   var CLOSE_TAG = /([a-z\_][a-z0-9\-\_]*(?:\:[a-z\_][a-z0-9\-\_]*)?)>/ig;
   var REFERENCE = /([a-z\_][a-z0-9\_]*)(\||\}\s*)/ig;
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
@@ -103,6 +103,7 @@
     var textEndPos;
     var refMap = {};
     var refName;
+    var l10nMatch;
 
     var state = TEXT;
     var pos = 0;
@@ -167,7 +168,15 @@
 
             textStateEndPos = textEndPos;
 
-            if (m[2] == '{')
+            if (m[3])
+            {
+              lastTag.childs.push({
+                type: TYPE_TEXT,
+                refs: ['l10n:' + m[3]],
+                value: '{l10n:' + m[3] + '}'
+              });
+            }
+            else if (m[2] == '{')
             {
               bufferPos = pos - 1;
               lastTag.childs.push(token = {
@@ -175,9 +184,9 @@
               });
               state = REFERENCE;
             }
-            else if (m[3])
+            else if (m[4])
             {
-              if (m[3] == '/')
+              if (m[4] == '/')
               {
                 token = null;
                 state = CLOSE_TAG;
@@ -188,9 +197,9 @@
                   type: TYPE_COMMENT
                 });
 
-                if (m[4])
+                if (m[5])
                 {
-                  bufferPos = pos - m[4].length;
+                  bufferPos = pos - m[5].length;
                   state = REFERENCE;
                 }
                 else
@@ -410,7 +419,7 @@
 
     var CLASS_ATTR_PARTS = /(\S+)/g;
     var CLASS_ATTR_BINDING = /^([a-z\_][a-z0-9\-\_]*)?\{([a-z\_][a-z0-9\-\_]*)\}$/i;
-    var ATTR_BINDING = /\{([a-z\_][a-z0-9\_]*)\}/i;
+    var ATTR_BINDING = /\{([a-z\_][a-z0-9\_]*|l10n:[a-z\_][a-z0-9\_]*(?:\.[a-z\_][a-z0-9\_]*)*)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
     var tokenMap = {};
     var tokenElement = document.createElement('div');
@@ -448,6 +457,12 @@
 
       if (!array || !array.length)
         return 0;
+
+      /*for (var i = 0, j = 0; i < array.length; i++)
+        if (array[i].indexOf(':') == -1)
+          array[j++] = array[i];
+
+      array.length = j;*/
 
       return array;
     }
@@ -620,7 +635,8 @@
 
     function putRefs(refs, pathIdx){
       for (var i = 0, refName; refName = refs[i]; i++)
-        refList.push(refName + ':' + pathIdx);
+        if (refName.indexOf(':') == -1)
+          refList.push(refName + ':' + pathIdx);
     }
 
     function putPath(path){
@@ -753,41 +769,6 @@
       }
     }
 
-    var localeUpdaters = {};
-    function getLocaleUpdater(key){
-      return localeUpdaters[key] || (localeUpdaters[key] = function(){ 
-        var tokenValue = this.tmpl.l10n[key].value;
-        var proxy = this.binding[key].l10nProxy; 
-        this.tmpl.set(key, proxy ? proxy(this, tokenValue) : tokenValue) 
-      });
-    }
-
-    function wrapLocaleGetter(key, tokenGetter){
-      return function(node){
-        var newToken = tokenGetter(node);
-        var oldToken = node.tmpl.l10n[key];
-
-        if (newToken != oldToken)
-        {
-          if (oldToken)
-          {
-            oldToken.detach(localeUpdaters[key], node);
-            delete node.tmpl.l10n[key];
-          }
-
-          if (newToken && newToken instanceof basis.l10n.Token)
-          {
-            newToken.attach(localeUpdaters[key] || getLocaleUpdater(key), node);
-            node.tmpl.l10n[key] = newToken;              
-          }
-        }
-
-        var tokenValue = newToken instanceof basis.l10n.Token ? newToken.value : newToken;
-        var proxy = node.binding[key].l10nProxy;
-        return proxy ? proxy(node, tokenValue) : tokenValue;
-      }
-    }
-
    /**
     * @func
     */
@@ -814,9 +795,6 @@
 
             if (getter)
             {
-              //if (binding.l10n)
-              //  getter = wrapLocaleGetter(key, getter);
-
               getters[key] = getter;
               names.push(key);
 
@@ -959,6 +937,32 @@
         domRef.removeAttribute(attrName);
     }
 
+    function buildAttrExpression(binding, l10n){
+      var expression = [];
+      var symbols = binding[5];
+      var dictonary = binding[4];
+      var exprVar;
+      var colonPos;
+
+      for (var j = 0; j < symbols.length; j++)
+        if (typeof symbols[j] == 'string')
+          expression.push('"' + symbols[j].replace(quoteEscape, '\\"') + '"');
+        else
+        {
+          exprVar = dictonary[symbols[j]];
+          colonPos = exprVar.indexOf(':');
+          if (colonPos == -1)
+            expression.push(l10n ? '"{' + exprVar + '}"' : '__' + exprVar);
+          else
+            expression.push('__l10n["' + exprVar.substr(colonPos + 1) + '"]');
+        }
+
+      if (expression.length == 1)
+        expression.push('""');
+
+      return expression.join('+')
+    }
+
    /**
     * @func
     */
@@ -969,6 +973,9 @@
       var domRef;
       var varList = [];
       var result = [];
+      var varName;
+      var l10nMap;
+      var l10nName;
       ;;;var debugList = [];
 
       for (var i = 0, binding; binding = bindings[i]; i++)
@@ -977,28 +984,61 @@
         bindName = binding[2];
         bindCode = bindMap[bindName];
         bindVar = '_' + i;
+        varName = '__' + bindName;
+        l10nName = null;
+
+        var namePart = bindName.split(':');
+        if (namePart[0] == 'l10n' && namePart[1])
+        {
+          l10nName = namePart[1];
+
+          if (!l10nMap)
+            l10nMap = {};
+
+          if (!bindMap[l10nName])
+          {
+            bindMap[l10nName] = [];
+            l10nMap[l10nName] = [];
+          }
+
+          bindCode = bindMap[l10nName]
+          bindCode.l10n = true;
+
+          if (binding[0] == TYPE_TEXT)
+          {
+            bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"];');
+            l10nMap[l10nName].push(domRef + '.nodeValue=__l10n["' + l10nName + '"];')
+          }
+          else
+          {
+            l10nMap[l10nName].push('bind_attr(' + [domRef, '"' + attrName + '"', buildAttrExpression(binding, true)] + ');')
+            bindCode.push('bind_attr(' + [domRef, '"' + attrName + '"', buildAttrExpression(binding)] + ');');
+          }
+
+          continue;
+        }
 
         if (!bindMap[bindName])
         {
           bindCode = bindMap[bindName] = [];
-          varList.push('__' + bindName);
+          if (!l10nName) varList.push(varName);
         }
 
         switch(binding[0])
         {
           case TYPE_ELEMENT:
           case TYPE_COMMENT:
-            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val: ' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
 
-            varList.push(bindVar + '=' + domRef);
+            if (!l10nName) varList.push(bindVar + '=' + domRef);
             bindCode.push(
               bindVar + '=bind_node(' + [domRef, bindVar] + ',value);'
             );
             break;
           case TYPE_TEXT:
-            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val: ' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
 
-            varList.push(bindVar + '=' + domRef);
+            if (!l10nName) varList.push(bindVar + '=' + domRef);
             bindCode.push(
               bindVar + '=bind_nodeValue(' + [domRef, bindVar] + ',value);'
             );   
@@ -1022,90 +1062,144 @@
             }
             else
             {
-              var expression = [];
+              /*var expression = [];
               var symbols = binding[5];
               var dictonary = binding[4];
+              var exprVar;
+              var l10nExpressions = {};
+              var bindExpressionCode;
 
               for (var j = 0; j < symbols.length; j++)
-                expression.push(typeof symbols[j] == 'string' ? '"' + symbols[j].replace(quoteEscape, '\\"') + '"' : '__' + dictonary[symbols[j]]);
+                if (typeof symbols[j] == 'string')
+                  expression.push('"' + symbols[j].replace(quoteEscape, '\\"') + '"');
+                else
+                {
+                  exprVar = dictonary[symbols[j]];
+                  if (exprVar.indexOf(':') == -1)
+                    expression.push('__' + exprVar);
+                  else
+                  {
+                    l10nExpressions[exprVar] = true;
+                    expression.push('__l10n["' + exprVar + '"]');
+                  }
+                }
 
               if (expression.length == 1)
-                expression.push('""');
+                expression.push('""');*/
 
               bindCode.push(
-                'bind_attr(' + [domRef, '"' + attrName + '"', expression.join('+')] + ');'
+                bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', buildAttrExpression(binding)] + ');'
               );
+
+              /*for (var key in l10nExpressions)
+              {
+                .push(bindExpressionCode);
+              }*/
             }
             break;
         }
       }
 
       result.push(
-        'var attaches = {};' +
-        (function updateAttach(){
-          set(String(this), attaches[this]);
-        }).toString() +
-        (function resolve(bindingName, value){
-          var bridge = value && value.bindingBridge;
-          var oldAttach = attaches[bindingName];
-
-          if (bridge || oldAttach)
-          {
-            if (bridge)
-            {
-              if (value !== oldAttach)
-              {
-                if (oldAttach)
-                  oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
-
-                bridge.attach(value, updateAttach, bindingName);
-                attaches[bindingName] = value;
-              }
-
-              value = bridge.get(value);
-            }
-            else
-            {
-              if (oldAttach)
-              {
-                oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
-                delete attaches[bindingName];
-              }
-            }
-          }
-          return value;
-        }).toString(),
         'function set(bindName,value){\n' +
-          'value=resolve(bindName,value);' +
+          'value=resolve(attaches,updateAttach,bindName,value);' +
           'switch(bindName){'
       );
+
       for (var bindName in bindMap)
-      {
         result.push(
           'case"' + bindName + '":\n' +
-          'if(__' + bindName + '!==value)' +
-          '{' +
-            '__' + bindName + '=value;\n' +
-            bindMap[bindName].join('\n') +
-          '}' +
+          (bindMap[bindName].l10n
+            ? bindMap[bindName].join('\n')
+            : 'if(__' + bindName + '!==value)' +
+              '{' +
+                '__' + bindName + '=value;\n' +
+                bindMap[bindName].join('\n') +
+              '}') +
           'break;'
         );
-      }
+
+      /*if (l10n.bindings)
+        result.push(
+          'case"$l10n":\n' +
+            l10n.bindings.join('\n');
+          'break;'
+        );*/
+
       result.push('}}');
 
       return {
         /** @cut */debugList: debugList,
         vars: varList,
+        l10n: l10nMap,
         getBinding: getBindingFactory(bindMap),
         body: result.join('')
       };
     }
+
+    function resolveValue(attaches, updateAttach, bindingName, value){
+      var bridge = value && value.bindingBridge;
+      var oldAttach = attaches[bindingName];
+
+      if (bridge || oldAttach)
+      {
+        if (bridge)
+        {
+          if (value !== oldAttach)
+          {
+            if (oldAttach)
+              oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
+            bridge.attach(value, updateAttach, bindingName);
+            attaches[bindingName] = value;
+          }
+
+          value = bridge.get(value);
+        }
+        else
+        {
+          if (oldAttach)
+          {
+            oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
+            delete attaches[bindingName];
+          }
+        }
+      }
+      return value;
+    };
 
     return function(tokens){
       var pathes = buildPathes(tokens, '_');
       var bindings = buildBindings(pathes.binding);
       var proto = buildHtml(tokens);
       var templateMap = {};
+      var l10nMap;
+
+      if (bindings.l10n)
+      {
+        l10nMap = {};
+
+        var code = [];
+        for (var key in bindings.l10n)
+          code.push(
+            'case"' + key +'":\n' +
+            '__l10n["' + key + '"]=value;' +
+            bindings.l10n[key].join(';') +
+            'break;'
+          );
+
+        var l10nProtoUpdate = new Function('_', '__l10n', 'bind_attr', 'var ' + pathes.path + ';return function(token, value){' +
+          'switch(token){' +
+            code.join('') +
+          '}' +
+        '}');
+        console.log(l10nProtoUpdate);
+        l10nProtoUpdate = l10nProtoUpdate(proto, l10nMap, bind_attr);
+
+        //console.log('>>>> ' + l10nProtoUpdate);
+
+        for (var key in bindings.l10n)
+          l10nProtoUpdate(key, basis.l10n.getToken(key).value);
+      }
 
       var build = function(){
         return proto.cloneNode(true);
@@ -1113,26 +1207,30 @@
 
       /** @cut */try {
       var fnBody;
-      var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attr', 'bind_attrClass', 'localeUpdaters', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
-        'var _=build(),id=gMap.seed++,' + pathes.path.concat(bindings.vars) + ';\n' +
+      var createInstance = new Function('gMap', 'tMap', 'build', 'bind_node', 'bind_nodeValue', 'bind_attr', 'bind_attrClass', 'resolve', '__l10n', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
+        'var _=build(),id=gMap.seed++,attaches={},' + pathes.path.concat(bindings.vars) + ';\n' +
         'if(obj)gMap[a.basisObjectId=id]=obj;\n' +
+        'function updateAttach(){set(String(this),attaches[this])};\n' +
         bindings.body +
-        /**@cut*/'set.debug=function(){return[' + bindings.debugList.join(',') + ']};' +
-        'return tMap[id]={' + [pathes.ref, 'set:set', 'l10n:{},rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
+        /**@cut*/';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' +
+        ';return tMap[id]={' + [pathes.ref, 'set:set,rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
         'destroy:function(){' +
           'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
           'attaches=null;' +
-          'for(var key in this.l10n)if(this.l10n[key])this.l10n[key].detach(localeUpdaters[key], obj);' +
           'delete tMap[id];' + 
           /**@cut*/'delete set.debug;' + 
           'if(obj)delete gMap[id]}'] +
         '}' +
-      '}')(tmplNodeMap, templateMap, build, bind_node, bind_nodeValue, bind_attr, bind_attrClass, localeUpdaters);
+      '}');
+      //console.log(createInstance);
+      createInstance = createInstance(tmplNodeMap, templateMap, build, bind_node, bind_nodeValue, bind_attr, bind_attrClass, resolveValue, l10nMap);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
 
       return {
         createInstance: createInstance,
         getBinding: bindings.getBinding,
+        l10nProtoUpdate: l10nProtoUpdate,
+        l10n: bindings.l10n,
         map: templateMap
       };
     }
@@ -1284,15 +1382,45 @@
 
     var decl = this.isDecl ? source.toObject() : makeDeclaration(source);
     var funcs = makeFunctions(decl);
+    var l10n = this.l10n_;
+
+    if (l10n)
+    {
+      this.l10n_ = null;
+      for (var i = 0, link; link = l10n[i]; i++)
+        link.token.detach(link.handler, link);
+    }
 
     this.createInstance = funcs.createInstance;
     this.getBinding = funcs.getBinding;
     this.instances_ = funcs.map;
+    var l10nProtoUpdate = funcs.l10nProtoUpdate;
 
     if (instances)
     {
       for (var id in instances)
         instances[id].rebuild();
+    }
+
+    if (funcs.l10n)
+    {
+      l10n = [];
+      this.l10n_ = l10n;
+      instances = funcs.map;
+      for (var key in funcs.l10n)
+      {
+        var link = {
+          path: key,
+          token: basis.l10n.getToken(key),
+          handler: function(value){
+            l10nProtoUpdate(this.path, value);
+            for (var id in instances)
+              instances[id].set(this.path, value);
+          }
+        };
+        link.token.attach(link.handler, link);
+        l10n.push(link);
+      }
     }
   }
 

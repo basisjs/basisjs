@@ -206,9 +206,11 @@
     value: 
       '<li class="devtools-templateNode {collapsed}">\n\
         <div{content} class="devtools-templateNode-Title devtools-templateNode-CanHaveChildren {selected} {disabled}">\n\
-          <div class="devtools-templateNode-Expander" event-click="toggle"/>\n\
+          <div class="devtools-templateNode-Expander" event-click="toggle" attr="{l10n:path.to.dict.token}"/>\n\
           <span{titleElement} class="devtools-templateNode-Caption" event-click="select">\n\
+            {l10n:path.to.dict.token}\n\
             <!--{preTitle} sdf-->{title} ({childCount})<!--just a comment-->\n\
+            <span{l10n:path.to.dict.token}/>\n\
           </span>\n\
         </div>\n\
         <ul{childNodesElement} class="devtools-templateNode-Content"/>\n\

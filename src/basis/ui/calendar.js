@@ -535,13 +535,13 @@
         '<div class="Basis-Calendar-SectionTitle">{title}</div>' +
         '<div{content|childNodesElement} class="Basis-Calendar-SectionContent">' +
           '<div class="Basis-Calendar-MonthWeekDays">' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayMon}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayTue}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayWed}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayThr}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{dayFri}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{daySat}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{daySun}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.mon}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.tue}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.wed}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.thr}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.fri}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.sat}</span>' +
+            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.sun}</span>' +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -583,14 +583,7 @@
           }
           */
         }
-      },
-      dayMon: 'l10n:basis.ui.calendar.day2.mon',
-      dayTue: 'l10n:basis.ui.calendar.day2.tue',
-      dayWed: 'l10n:basis.ui.calendar.day2.wed',
-      dayThr: 'l10n:basis.ui.calendar.day2.thr',
-      dayFri: 'l10n:basis.ui.calendar.day2.fri',
-      daySat: 'l10n:basis.ui.calendar.day2.sat',
-      daySun: 'l10n:basis.ui.calendar.day2.sun'
+      }
     }
   });
 
@@ -719,14 +712,14 @@
         '</div>' +
         '<div class="Basis-Calendar-Footer">' +
           '<div class="Basis-Calendar-Footer-Date">' +
-            '<span class="Basis-Calendar-Footer-Label">{todayLabel}:</span>' +
+            //'<input value="{today} {l10n:basis.ui.calendar.today}"/>' +
+            '<span class="Basis-Calendar-Footer-Label">{l10n:basis.ui.calendar.today}:</span>' +
             '<span event-click="selectToday" class="Basis-Calendar-Footer-Value">{today}</span>' +
           '</div>' +
         '</div>' +
       '</div>',
 
     binding: {
-      todayLabel: 'l10n:' + namespace + '.today',
       today: function(){
         return new Date().toFormat("%D.%M.%Y");
       }
