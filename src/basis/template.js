@@ -1102,8 +1102,8 @@
 
       result.push('}}');
 
-      //if (toolsUsed.bind_attr)
-      //  console.log(result.join(''));
+      for (var key in toolsUsed)
+        varList.push(key + '=tools.' + key);
 
       return {
         /** @cut */debugList: debugList,
