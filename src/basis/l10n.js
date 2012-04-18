@@ -17,7 +17,7 @@
 
 
  /**
-  * @namespace basis.ua.visibility
+  * @namespace basis.l10n
   */
 
   var namespace = this.path;
@@ -163,9 +163,54 @@
     }
   });
 
+  function getToken(path){
+    if (arguments.length > 1)
+      path = Array.from(arguments).join('.');
+
+    var dotIndex = path.lastIndexOf('.');
+    return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
+  }
+
+  function getDictionary(namespace, autoCreate){
+    var dict = dictionaries[namespace];    
+
+    if (!dict && autoCreate)
+      dict = dictionaries[namespace] = new Dictionary(namespace);
+
+    return dict;
+  }
+
+  function getDictionaries(){
+    return dictionaries;
+  }
+
   function createDictionary(namespace, location, tokens){
-    getDictionary(namespace, true).update('base', tokens);
+    getDictionary(namespace, true).update('base', tokens);    
     dictionaryLocations[namespace] = location;
+  }
+
+  function updateDictionary(namespace, culture, tokens){
+    var dictionary = getDictionary(namespace);
+    if (dictionary)
+    {
+      dictionary.update(culture, tokens);
+    }
+    else 
+    {
+      ;;;console.warn('Dictionary ' + namespace + ' not found');
+    }
+  }
+
+  function setCulture(culture){
+    if (currentCulture != culture)
+    {
+      currentCulture = culture || 'base';
+      for (var i in dictionaries)
+        setCultureForDictionary(dictionaries[i], currentCulture);
+    }
+  }
+  function getCulture(){
+    return currentCulture;
   }
 
   function setCultureForDictionary(dictionary, culture){
@@ -182,49 +227,11 @@
       if (!resourcesLoaded[location])
       {
         resourcesLoaded[location] = true;
-        Function(basis.resource(location + '.js'))();
+        loadResource(location + '.js');
       }
     }
     else {
       ;;;console.warn('Culture "' + culture + '" is not specified in the list');
-    }
-  }
-
-  function updateDictionary(namespace, culture, tokens){
-    var dictionary = getDictionary(namespace);
-    if (dictionary)
-    {
-      dictionary.update(culture, tokens);
-    }
-    else
-    {
-      ;;;console.warn('Dictionary ' + namespace + ' not found');
-    }
-  }
-
-  function getDictionary(namespace, autoCreate){
-    var dict = dictionaries[namespace];
-
-    if (!dict && autoCreate)
-      dict = dictionaries[namespace] = new Dictionary(namespace);
-
-    return dict;
-  }
-
-  function getToken(path){
-    if (arguments.length > 1)
-      path = Array.from(arguments).join('.');
-
-    var dotIndex = path.lastIndexOf('.');
-    return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
-  }
-
-  function setCulture(culture){
-    if (currentCulture != culture)
-    {
-      currentCulture = culture || 'base';
-      for (var i in dictionaries)
-        setCultureForDictionary(dictionaries[i], currentCulture);
     }
   }
 
@@ -239,17 +246,32 @@
   }
 
 
-  //
-  // export names
-  //
+  function loadResource(fileName){
+    var requestUrl = fileName
+    var req = new XMLHttpRequest();
+    req.open('GET', fileName, false);
+    req.send(null);
+    if (req.status == 200)
+    {
+      (global.execScript || function(scriptText){
+        global["eval"].call(global, scriptText);
+      })(req.responseText);
+    }
+  }
 
-  this.extend({
+
+
+  basis.namespace(namespace).extend({
     Token: Token,
     getToken: getToken,
-    setCulture: setCulture,
-    setCultureList: setCultureList,
-    getCultureList: getCultureList,
+    getDictionary: getDictionary,
+    getDictionaries: getDictionaries,
     createDictionary: createDictionary,
     updateDictionary: updateDictionary,
-    loadCultureForDictionary: loadCultureForDictionary
+    setCulture: setCulture,
+    getCulture: getCulture,
+    loadCultureForDictionary: loadCultureForDictionary,
+    setCultureList: setCultureList,
+    getCultureList: getCultureList
   });
+
