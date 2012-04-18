@@ -15,8 +15,6 @@
   basis.require('basis.date');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.cssom');
   basis.require('basis.html');
   basis.require('basis.data.property');
   basis.require('basis.ui');
@@ -40,7 +38,6 @@
   var Event = basis.dom.event;
 
   var getter = Function.getter;
-  var classList = basis.cssom.classList;
   var createEvent = basis.event.create;
 
   var Property = basis.data.property.Property;
@@ -286,7 +283,6 @@
     binding: {
       nodePeriodName: 'nodePeriodName',
       title: {
-        l10n: true,
         events: 'periodChanged',
         getter: function(node){
           return PERIOD_TITLE[node.nodePeriodName](node);
@@ -361,14 +357,12 @@
     binding: {
       sectionName: 'sectionName',
       title: {
-        l10n: true,
         events: 'periodChanged',
         getter: function(node){
           return node.getTitle(node.periodStart) || '-';
         }
       },
       tabTitle: {
-        l10n: true,
         events: 'selectedDateChanged',
         getter: function(node){
           return node.getTabTitle(node.selectedDate) || '-';
@@ -476,7 +470,6 @@
 
       this.setSelectedDate(selectedDate);
 
-      //classList(this.element).add('Basis-Calendar-Section-' + this.sectionName);
       Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
     },
 
@@ -712,7 +705,6 @@
         '</div>' +
         '<div class="Basis-Calendar-Footer">' +
           '<div class="Basis-Calendar-Footer-Date">' +
-            //'<input value="{today} {l10n:basis.ui.calendar.today}"/>' +
             '<span class="Basis-Calendar-Footer-Label">{l10n:basis.ui.calendar.today}:</span>' +
             '<span event-click="selectToday" class="Basis-Calendar-Footer-Value">{today}</span>' +
           '</div>' +

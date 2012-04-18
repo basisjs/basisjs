@@ -1321,47 +1321,6 @@
 
           wrapScript(basis.namespace(namespace), requestUrl)();
 
-          /*
-          var xhr = new XMLHttpRequest();
-          xhr.open('GET', requestUrl, false);
-          xhr.send(null);
-
-          if (xhr.status < 200 || xhr.status >= 400)
-            throw 'Unable to load module ' + requestUrl + ' (' + namespace + ') by basis.require()';
-
-
-          runCode(basis.namespace(namespace), xhr.responseText, requestUrl);
-
-          try {
-            Function('basis, global, resource', xhr.responseText + '//@ sourceURL=' + requestUrl).call(
-              basis.namespace(namespace),
-              basis,
-              global,
-              function(resourcePath){
-                var resource = function(){
-                  return basis.resource(dirname(requestUrl) + resourcePath);
-                };
-                resource.toString = function(){ return resource(); };
-                return resource;
-              }
-            );*/
-
-            /*(global.execScript || function(scriptText){
-              global["eval"].call(global,
-                '(function(basis, global, resource){' +
-                  scriptText +
-                '\n}).call(basis.namespace("' + namespace + '"), basis, this, function(resourcePath){' +
-                  'var resource = function(){' +
-                    'return basis.resource("' + dirname(requestUrl) + '" + resourcePath);' +
-                  '}; resource.toString = function(){ return resource(); }; return resource;' +
-                '})//@ sourceURL=' + requestUrl
-              );
-            })(xhr.responseText);*/
-          /*} catch(e) {
-            ;;;console.log('Run error ' + requestUrl + ' ( ' + namespace + ' )');
-            throw e;
-          }*/
-
           requireFunc.sequence.push(filename);
         }
       };
@@ -1375,7 +1334,7 @@
   var externalResource = function(url){
     var requestUrl = url;
 
-    if (!externalResourceCache[requestUrl])
+    if (requestUrl in externalResourceCache == false)
     {
       var resourceContent = '';
 
@@ -1392,11 +1351,88 @@
           console.warn('basis.resource: Unable to load ' + requestUrl);
       }
 
-
       externalResourceCache[requestUrl] = resourceContent;
     }
 
     return externalResourceCache[requestUrl];
+  };
+
+  var resolveUrl = (function(){
+    var resolver = document.createElement('A');
+    return function(url){
+      resolver.href = url;
+      return resolver.href;
+    }
+  })();
+
+  var frfCache = {};
+  var fetchResourceFunction = function(resourceUrl){
+
+    resourceUrl = resolveUrl(resourceUrl);
+
+    if (!frfCache[resourceUrl])
+    {
+      //console.log('new resource resolver:' + resourceUrl);
+      var attaches = [];
+      var resource = function(){
+        return externalResource(resourceUrl);
+      };
+
+      resource.url = resourceUrl;
+      resource.toString = resource; //function(){ return resource(); };
+      resource.update = function(content){
+        content = String(content);
+        if (content != externalResourceCache[resourceUrl])
+        {
+          externalResourceCache[resourceUrl] = content;
+          for (var i = 0, listener; listener = attaches[i]; i++)
+            listener.handler.call(listener.context, content);
+        }
+      }
+      resource.reload = function(){
+        var content = externalResourceCache[resourceUrl];
+        delete externalResourceCache[resourceUrl];
+        var newContent = externalResource(resourceUrl);
+        if (newContent != content)
+        {
+          delete externalResourceCache[resourceUrl];
+          this.update(newContent);
+        }
+      };
+      resource.bindingBridge = {
+        attach: function(fn, handler, context){
+          for (var i = 0, listener; listener = attaches[i]; i++)
+          {
+            if (listener.handler == handler && listener.context == context)
+              return false;
+          }
+
+          attaches.push({
+            handler: handler,
+            context: context
+          });
+
+          return true;
+        },
+        detach: function(handler, context){
+          for (var i = 0, listener; listener = attaches[i]; i++)
+            if (listener.handler == handler && listener.context == context)
+            {
+              attaches.splice(i, 1);
+              return true;
+            }
+
+          return false;
+        },
+        get: function(fn){
+          return externalResource(resourceUrl);
+        }
+      };
+
+      frfCache[resourceUrl] = resource;
+    }
+
+    return frfCache[resourceUrl];
   };
 
   var wrapScript = function(context, sourceURL){
@@ -1415,14 +1451,8 @@
           context,
           basis,
           global,
-          function(resourcePath){
-            var resource = function(){
-              return externalResource(baseURL + resourcePath);
-            };
-
-            resource.toString = function(){ return resource(); };
-
-            return resource;
+          function(relativePath){
+            return fetchResourceFunction(baseURL + relativePath);
           }
         );
       } catch(e) {
@@ -1867,7 +1897,7 @@
   getNamespace(namespace).extend({
     namespace: getNamespace,
     require: requireNamespace,
-    resource: externalResource,
+    resource: fetchResourceFunction,
     wrapScript: wrapScript,
 
     platformFeature: {},

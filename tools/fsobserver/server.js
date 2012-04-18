@@ -163,7 +163,7 @@ var fsWatcher = (function(){
   var dirMap = {};
 
   function readFile(filename){
-    if (path.extname(filename) == '.css' || path.extname(filename) == '.tmpl')
+    if (path.extname(filename) == '.css' || path.extname(filename) == '.tmpl' || path.extname(filename) == '.txt')
     {
       fs.readFile(filename, 'utf8', function(err, data){
         if (!err)

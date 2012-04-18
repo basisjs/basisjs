@@ -109,7 +109,7 @@
     var pos = 0;
     var m;
 
-    //source = source.trim();
+    source = source.trim();
 
     try {
       while (pos < source.length || state != TEXT)
@@ -1016,6 +1016,7 @@
           else
           {
             l10nMap[l10nName].push('bind_attr(' + [domRef, '"' + attrName + '"', '{}', buildAttrExpression(binding, true)] + ');')
+            varList.push(bindVar);
             bindCode.push(
               bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
             );
@@ -1357,6 +1358,14 @@
  /**
   * @func
   */
+  function templateSourceUpdate(){
+    if (this.instances_)
+      buildTemplate.call(this);
+  }
+
+ /**
+  * @func
+  */
   function buildTemplate(){
     var instances = this.instances_;
     var source = String(
@@ -1406,62 +1415,6 @@
         link.token.attach(link.handler, link);
         l10n.push(link);
       }
-    }
-  }
-
-
-  //
-  // source from external file
-  //
-
-
-  function sourceFromFile(url){
-    if (tmplFilesMap[url] && tmplFilesMap[url].content !== null)
-      return tmplFilesMap[url].content;
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, false);
-    xhr.send('');
-    if (xhr.status == 200)
-    {
-      return tmplFilesMap[url].content = xhr.responseText;
-    }
-    else
-      return '<!--template `' + url + '` load fault-->';
-  }
-
-  function resolveSourceByUrl(sourceUrl){
-    return function(){
-      return sourceFromFile(sourceUrl);
-    }
-  }
-
-  var template2File = {};
-  function updateFileMap(url, template){
-    if (!tmplFilesMap[url])
-    {
-      tmplFilesMap[url] = {
-        templates: [],
-        update: function(newContent){
-          if (newContent !== this.content)
-          {
-            this.content = newContent;
-            for (var i = 0; i < this.templates.length; i++)
-              buildTemplate.call(this.templates[i]);
-          }
-        },
-        content: null
-      }
-    }
-
-    template2File[template.eventObjectId] = tmplFilesMap[url].templates;
-    tmplFilesMap[url].templates.push(template);
-  }
-
-  function removeFromFileMap(template){
-    if (template2File[template.eventObjectId])
-    {
-      template2File[template.eventObjectId].remove(template);
     }
   }
 
@@ -1569,11 +1522,9 @@
     },
 
     setSource: function(source){
-      if (this.source != source)
+      var oldSource = this.source;
+      if (oldSource != source)
       {
-        if (this.source)
-          removeFromFileMap(this);
-
         this.isDecl = false;
 
         if (typeof source == 'string')
@@ -1588,8 +1539,7 @@
             switch (prefix)
             {
               case 'file':
-                updateFileMap(source, this);
-                source = resolveSourceByUrl(source);
+                source = basis.resource(source);
                 break;
               case 'id':
                 // source from script element
@@ -1605,10 +1555,34 @@
           }
         }
 
+        if (oldSource && oldSource.bindingBridge)
+        {
+          var tmplList = oldSource.url && tmplFilesMap[oldSource.url];
+          if (tmplList)
+          {
+            tmplList.remove(this);
+            if (!tmplList.length)
+              delete tmplFilesMap[oldSource.url];
+          }
+
+          this.source.bindingBridge.detach(oldSource, templateSourceUpdate, this);
+        }
+
+        if (source && source.bindingBridge)
+        {
+          if (source.url)
+          {
+            if (!tmplFilesMap[source.url])
+              tmplFilesMap[source.url] = [];
+            tmplFilesMap[source.url].add(this);
+          }
+
+          source.bindingBridge.attach(source, templateSourceUpdate, this);
+        }
+
         this.source = source;
 
-        if (this.instances_)
-          buildTemplate.call(this);
+        templateSourceUpdate.call(this);
       }
     }
   });

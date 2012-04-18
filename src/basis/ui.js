@@ -154,12 +154,11 @@
   });
 
   BINDING_PRESET.add('l10n', function(token){
-    return {
-      l10n: true,
-      getter: function(){
-        return basis.l10n.getToken(token);
-      }
-    };
+    return Function.$const(basis.l10n.getToken(token));
+  });
+
+  BINDING_PRESET.add('resource', function(url){
+    return Function.$const(basis.resource(url));
   });
 
 

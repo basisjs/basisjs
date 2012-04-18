@@ -256,14 +256,17 @@
     update: function(file, delta){
       if ('filename' in delta || 'content' in delta)
       {
-        var templateFile = basis.template.filesMap[this.data.filename];
+        /*var templateFile = basis.template.filesMap[this.data.filename];
         if (templateFile)
-          templateFile.update(this.data.content);
+          templateFile.update(this.data.content);*/
+
+        basis.resource(this.data.filename).update(this.data.content);
       }
     }
   };
 
-  filesByType.getSubset('tmpl', true).addHandler({
+  //filesByType.getSubset('tmpl', true)
+  files.addHandler({
     datasetChanged: function(dataset, delta){
       var array;
 
