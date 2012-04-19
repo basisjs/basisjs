@@ -568,6 +568,14 @@
         : function(){
             return method.apply(thisObject, arguments);
           };
+    },
+
+   /**
+    * Retuns function body code
+    * @return {string}
+    */
+    body: function(){
+      return this.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
     }
   });
 
@@ -1358,10 +1366,20 @@
   };
 
   var resolveUrl = (function(){
-    var resolver = document.createElement('A');
-    return function(url){
-      resolver.href = url;
-      return resolver.href;
+    if (typeof require == 'function')
+    {
+      var path = require('path');
+      return function(url){
+        return path.resolve(__dirname, url);
+      }
+    }
+    else
+    {
+      var resolver = document.createElement('A');
+      return function(url){
+        resolver.href = url;
+        return resolver.href;
+      }
     }
   })();
 
@@ -1445,12 +1463,14 @@
         context.exports = {};
 
       try {
-        Function('exports, module, basis, global, resource', scriptText + '//@ sourceURL=' + sourceURL).call(
+        Function('exports, module, basis, global, __filename, __dirname, resource', scriptText + '//@ sourceURL=' + sourceURL).call(
           context,
           context.exports,
           context,
           basis,
           global,
+          sourceURL,
+          baseURL,
           function(relativePath){
             return fetchResourceFunction(baseURL + relativePath);
           }

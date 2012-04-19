@@ -99,9 +99,9 @@ function buildDep(namespace, context){
       {
         contentPos = 2;
         contentTemplate.push(
-          '(function(basis, global, resource){',
+          'new Function(__wrapArgs, function(){',
           '/*content*/',
-          '}).call(basis.namespace("' + namespace + '"), basis, this, function(filepath){ return function(){ return "' + path.dirname(cfg.path) + '" + filepath } });'
+          '}.body() + "//@ sourceURL=" + __curLocation + "' + filename + '").call(basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '").exports, this, __curLocation + "' + filename + '", __curLocation + "' + path.dirname(cfg.path) + '/", basis, function(url){ return basis.resource(__curLocation + "' + path.dirname(cfg.path) + '/" + url) });'
         );
       }
 
@@ -170,17 +170,28 @@ packages.forEach(function(pack){
   if (buildMode)
   {
     var packStartTime = new Date;
+    var packageWrapper = [
+      "(function(){\n" +
+      "var __wrapArgs = 'module, exports, global, __filename, __dirname, basis, resource';\n" +
+      "var __scripts = document.getElementsByTagName('script');\n" +
+      "var __curLocation = __scripts[__scripts.length - 1].src.replace(/[^\/]+\.js$/, '');\n\n",
 
-    fs.writeFileSync(packageDebugResFilename, build.srcContent.join('\n\n'), 'utf-8');
+      "})();"
+    ];
+
+    var srcContent = packageWrapper[0] + build.srcContent.join('\n\n') + packageWrapper[1];
+    var buildContent = packageWrapper[0] + build.buildContent.join('\n\n') + packageWrapper[1];
+
+    fs.writeFileSync(packageDebugResFilename, srcContent, 'utf-8');
 
     if (!packFiles)
     {
-      fs.writeFileSync(packageResFilename, build.buildContent.join('\n\n'), 'utf-8');
+      fs.writeFileSync(packageResFilename, buildContent, 'utf-8');
     }
     else
     {
       var tmpFilename = packageResFilename + '.tmp';
-      fs.writeFileSync(tmpFilename, build.buildContent.join('\n\n'), 'utf-8');
+      fs.writeFileSync(tmpFilename, buildContent, 'utf-8');
 
       writeLog('init packing for ' + packageResFilename + ' and continue...');
 
@@ -188,7 +199,7 @@ packages.forEach(function(pack){
       exec('java -jar c:\\tools\\gcc.jar --js ' + tmpFilename, { maxBuffer: 1024 *1024 }, function(error, stdout, stderr){
         writeLog('\n' + packageResFilename + ' packing - done in ' + ((new Date - packStartTime)/1000).toFixed(3) + 's');
 
-        var fileContent = stdout.replace(/template:(?:'((?:\\'|[^'])+?)'|"((?:\\"|[^"])+?)")/g, function(m, a, b){
+        var fileContent = stdout/*.replace(/template:(?:'((?:\\'|[^'])+?)'|"((?:\\"|[^"])+?)")(?=[^\+])/g, function(m, a, b){
           var templateStr = a || b;
 
           if (!/^[a-z]+:/.test(templateStr))
@@ -207,7 +218,7 @@ packages.forEach(function(pack){
           }
 
           return templateStr;
-        });
+        })*/;
 
         asyncCallCount++;
         fs.unlink(tmpFilename, function(err){
@@ -236,7 +247,8 @@ packages.forEach(function(pack){
     var fileContent = ['// Package basis-' + packageName + '.js\n\n!function(){\n\  if (typeof document != \'undefined\')\n\  {\n\    var scripts = document.getElementsByTagName(\'script\');\n\    var curLocation = scripts[scripts.length - 1].src.replace(/[^\\/]+\\.js\$/, \'\');\n'];
 
     fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + build.files[0] + "\"></script>');\n");
-    fileContent.push("\n    document.write('<script>');\n");
+    fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + packageFilename + "\"></script>');\n");
+    /*fileContent.push("\n    document.write('<script>');\n");
 
     var reqFiles = build.files.slice(1, -1);
     var base = path.dirname(build.files[0]);
@@ -248,7 +260,7 @@ packages.forEach(function(pack){
       );
     }
 
-    fileContent.push("    document.write('</script>');");
+    fileContent.push("    document.write('</script>');");*/
     fileContent.push("\n  }\n}();");
 
     fs.writeFileSync(packageDebugResFilename, fileContent.join(''), 'utf-8')

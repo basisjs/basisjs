@@ -39,6 +39,8 @@
 
   var getter = Function.getter;
   var createEvent = basis.event.create;
+  var createDictionary = basis.l10n.createDictionary;
+  var l10nToken = basis.l10n.getToken;
 
   var Property = basis.data.property.Property;
   var UINode = basis.ui.Node;
@@ -66,16 +68,17 @@
   // localization
   //
 
+  var l10nLocation = __dirname + '../../../l10n/calendar';
   var monthNumToRef = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
   var dayNumToRef = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"];
 
-  basis.l10n.createDictionary(namespace, '../../l10n/calendar', {
+  createDictionary(namespace, l10nLocation, {
     quarter: 'Quarter',
     today: 'Today',
     selected: 'Selected'
   });
 
-  basis.l10n.createDictionary(namespace + '.month', '../../l10n/calendar', {
+  createDictionary(namespace + '.month', l10nLocation, {
     'jan': 'January',
     'feb': 'February',
     'mar': 'March',
@@ -90,7 +93,7 @@
     'dec': 'December'
   });
 
-  basis.l10n.createDictionary(namespace + '.monthShort', '../../l10n/calendar', {
+  createDictionary(namespace + '.monthShort', l10nLocation, {
     'jan': 'Jan',
     'feb': 'Feb',
     'mar': 'Mar',
@@ -105,7 +108,7 @@
     'dec': 'Dec'
   });
 
-  basis.l10n.createDictionary(namespace + '.day', '../../l10n/calendar', {
+  createDictionary(namespace + '.day', l10nLocation, {
     'mon': 'Monday',
     'tue': 'Tuesday',
     'wed': 'Wednesday',
@@ -115,7 +118,7 @@
     'sun': 'Sunday'
   });
 
-  basis.l10n.createDictionary(namespace + '.day2', '../../l10n/calendar', {
+  createDictionary(namespace + '.day2', l10nLocation, {
     'mon': 'Mo',
     'tue': 'Tu',
     'wed': 'We',
@@ -125,7 +128,7 @@
     'sun': 'Su'
   });
 
-  basis.l10n.createDictionary(namespace + '.day3', '../../l10n/calendar', {
+  createDictionary(namespace + '.day3', l10nLocation, {
     'mon': 'Mon',
     'tue': 'Tue',
     'wed': 'Wed',
@@ -203,7 +206,7 @@
       return LOCALE('QUARTER').toLowerCase().format(1 + period.periodStart.getMonth().base(3)/3);
     },
     month:   function(period){
-      return basis.l10n.getToken(namespace, 'monthShort', monthNumToRef[period.periodStart.getMonth()]);
+      return l10nToken(namespace, 'monthShort', monthNumToRef[period.periodStart.getMonth()]);
       //return LOCALE('MONTH').SHORT[period.periodStart.getMonth()].toLowerCase();
     },
     day:     function(period){ return period.periodStart.getDate() }
@@ -525,7 +528,7 @@
 
     template:
       '<div class="Basis-Calendar-Section Basis-Calendar-Section-{sectionName} {selected} {disabled}">' +
-        '<div class="Basis-Calendar-SectionTitle">{title}</div>' +
+        '<div class="Basis-Calendar-SectionTitle">{title} {year}</div>' +
         '<div{content|childNodesElement} class="Basis-Calendar-SectionContent">' +
           '<div class="Basis-Calendar-MonthWeekDays">' +
             '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.mon}</span>' +
@@ -541,14 +544,16 @@
       TAB_TEMPLATE,
 
     binding: {
-      title: {
-        l10n: true,
+      year: {
         events: 'periodChanged',
-        l10nProxy: function(node, tokenValue){
-          return tokenValue + ' ' + node.periodStart.getFullYear()
-        },
         getter: function(node){
-          return basis.l10n.getToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]);
+          return node.periodStart.getFullYear();
+        }
+      },
+      title: {
+        events: 'periodChanged',
+        getter: function(node){
+          return l10nToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]);
           /*
           var expr = basis.l10n.createExpression(
             function(a, b){
@@ -560,8 +565,8 @@
             function(a, b){
               return a + ' x ' + b + ' ' + node.periodStart.getFullYear();
             },
-            basis.l10n.getToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]),
-            basis.l10n.getToken('basis.ui.calendar.day2.mon')
+            l10nToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]),
+            l10nToken('basis.ui.calendar.day2.mon')
           );
 
 
@@ -590,7 +595,7 @@
     nodePeriodUnit: MONTH,
 
     getTabTitle: getter('getMonth()', function(key){
-      return basis.l10n.getToken(namespace, 'month', monthNumToRef[key]);// LOCALE('MONTH').FULL[key];
+      return l10nToken(namespace, 'month', monthNumToRef[key]);// LOCALE('MONTH').FULL[key];
     }),
     getTitle: getter('getFullYear()')
   });
@@ -667,7 +672,7 @@
           return [Math.floor(1 + node.periodStart.getMonth().base(3)/3), tokenValue, node.periodStart.getFullYear()].join(' ')
         },
         getter: function(node){
-          return basis.l10n.getToken(namespace, 'quarter');
+          return l10nToken(namespace, 'quarter');
         }
       }
     }
