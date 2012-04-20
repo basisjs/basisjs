@@ -456,7 +456,7 @@
     selection: true,
 
     init: function(config){
-      var selectedDate = this.selectedDate;
+      var selectedDate = this.selectedDate || new Date;
       this.selectedDate = null;
 
       this.setViewDate(selectedDate);

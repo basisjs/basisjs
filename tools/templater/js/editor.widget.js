@@ -203,7 +203,7 @@
     sourceProperty: tmplSource,
     fileExt: 'tmpl',
 
-    value: 
+    value:
       '<li class="devtools-templateNode {collapsed}">\n\
         <div{content} class="devtools-templateNode-Title devtools-templateNode-CanHaveChildren {selected} {disabled}">\n\
           <div class="devtools-templateNode-Expander" event-click="toggle" attr="{l10n:path.to.dict.token}"/>\n\

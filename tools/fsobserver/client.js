@@ -556,14 +556,14 @@
   }
 
 
-  isOnline.addLink(null, function(value){
+  /*isOnline.addLink(null, function(value){
     if (value)
       Array.from(document.styleSheets).forEach(function(styleSheet){
         if (styleSheet.ownerNode)
           if (styleSheet.ownerNode.tagName == 'LINK')
             linearStyleSheet(styleSheet.ownerNode);
       });
-  });
+  });*/
 
   //
   // export names

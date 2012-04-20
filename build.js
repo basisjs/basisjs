@@ -92,24 +92,34 @@ function buildDep(namespace, context){
 
     if (buildMode)
     {
-      var contentTemplate = ["//\n// " + filename + "\n//"];
-      var contentPos = 1;
-
-      if (namespace != 'basis')
+      if (namespace == 'basis')
       {
-        contentPos = 2;
-        contentTemplate.push(
-          'new Function(__wrapArgs, function(){',
-          '/*content*/',
-          '}.body() + "//@ sourceURL=" + __curLocation + "' + filename + '").call(basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '").exports, this, __curLocation + "' + filename + '", __curLocation + "' + path.dirname(cfg.path) + '/", basis, function(url){ return basis.resource(__curLocation + "' + path.dirname(cfg.path) + '/" + url) });'
-        );
+        result.srcContent.push.apply(result.srcContent, [
+          "//\n// " + filename + "\n//",
+          cfg.srcContent
+        ]);
+
+        result.buildContent.push.apply(result.buildContent, [
+          "//\n// " + filename + "\n//",
+          cfg.buildContent
+        ]);
       }
+      else
+      {
+        result.srcContent.push.apply(result.srcContent, [
+          "//\n// " + filename + "\n//",
+          'new Function(__wrapArgs, function(){',
+          cfg.srcContent,
+          '}.body() + "//@ sourceURL=" + __curLocation + "' + filename + '").call(basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '").exports, this, __curLocation + "' + filename + '", __curLocation + "' + path.dirname(cfg.path) + '/", basis, function(url){ return basis.resource(__curLocation + "' + path.dirname(cfg.path) + '/" + url) });'
+        ]);
 
-      contentTemplate[contentPos] = cfg.srcContent;
-      result.srcContent.push.apply(result.srcContent, contentTemplate);
-
-      contentTemplate[contentPos] = cfg.buildContent;
-      result.buildContent.push.apply(result.buildContent, contentTemplate);
+        result.buildContent.push.apply(result.buildContent, [
+          "//\n// " + filename + "\n//",
+          '(function(module, exports, global, __filename, __dirname, basis, resource){',
+          cfg.buildContent,
+          '}).call(basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '").exports, this, __curLocation + "' + filename + '", __curLocation + "' + path.dirname(cfg.path) + '/", basis, function(url){ return basis.resource(__curLocation + "' + path.dirname(cfg.path) + '/" + url) });'
+        ]);
+      }
     }
 
     result.files.push(filename);
@@ -176,7 +186,7 @@ packages.forEach(function(pack){
       "var __scripts = document.getElementsByTagName('script');\n" +
       "var __curLocation = __scripts[__scripts.length - 1].src.replace(/[^\/]+\.js$/, '');\n\n",
 
-      "})();"
+      "\n})();"
     ];
 
     var srcContent = packageWrapper[0] + build.srcContent.join('\n\n') + packageWrapper[1];

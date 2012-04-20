@@ -335,7 +335,7 @@
               satelliteConfig: {
                 taskList: {
                   dataSource: function(owner){
-                    return taskByDate.getSubset(owner.data.periodStart.toISODateString(), true);
+                    return taskByDate.getSubset(owner.periodStart.toISODateString(), true);
                   },
                   instanceOf: TaskList
                 }

@@ -19,6 +19,7 @@
   basis.require('basis.l10n');
   basis.require('basis.ui');
   basis.require('basis.ui.button');
+  basis.require('basis.dragdrop');
 
 
  /**
@@ -141,7 +142,7 @@
         '</div>' +
         '<div class="Basis-Window-Layout">' +
           '<div{ddtrigger} class="Basis-Window-Title">' +
-            '<div class="Basis-Window-TitleCaption">{title}</div>' +
+            '<div class="Basis-Window-TitleCaption {titleButtonClass}">{title}<!--{titleButtons}--></div>' +
           '</div>' +
           '<div{content} class="Basis-Window-Content">' +
             '<!-- {childNodesHere} -->' +
@@ -150,7 +151,35 @@
       '</div>',
 
     binding: {
-      title: 'title'
+      title: 'title',
+      titleButtons: 'satellite:',
+      titleButtonClass: function(node){
+        return !node.titleButton || node.titleButton.close !== false
+          ? 'Basis-Window-Title-ButtonPlace-Close'
+          : '';
+      }
+    },
+
+    satelliteConfig: {
+      titleButtons: {
+        existsIf: function(owner){
+          return !owner.titleButton || owner.titleButton.close !== false;
+        },
+        instanceOf: UINode.subclass({
+          template: 
+            '<span class="Basis-Window-Title-ButtonPlace">' +
+              '<span class="Basis-Window-Title-CloseButton" event-click="close">' +
+                '<span>Close</span>' +
+              '</span>' +
+            '</span>',
+
+          action: {
+            close: function(){
+              this.owner.close();
+            }
+          }
+        })
+      }
     },
 
     action: {
@@ -279,7 +308,7 @@
         });
       }
 
-      if (!this.titleButton || this.titleButton.close !== false)
+      /*if (!this.titleButton || this.titleButton.close !== false)
       {
         classList(titleContainer).add('Basis-Window-Title-ButtonPlace-Close');          
         DOM.insert(
@@ -291,7 +320,7 @@
           ),
           DOM.INSERT_BEGIN
         );
-      }
+      }*/
 
       if (this.autocenter !== false)
         this.autocenter = this.autocenter_ = true;

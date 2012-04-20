@@ -1331,6 +1331,9 @@
 
           requireFunc.sequence.push(filename);
         }
+
+        if (namespaces[namespace])
+          return namespaces[namespace].exports;
       };
       requireFunc.sequence = [];
     }
@@ -1458,27 +1461,36 @@
 
     return function(){
       var scriptText = externalResource(sourceURL);
+      var scriptFn;
 
       if (typeof context.exports != 'object')
         context.exports = {};
 
+      // compile context function
       try {
-        Function('exports, module, basis, global, __filename, __dirname, resource', scriptText + '//@ sourceURL=' + sourceURL).call(
-          context,
-          context.exports,
-          context,
-          basis,
-          global,
-          sourceURL,
-          baseURL,
-          function(relativePath){
-            return fetchResourceFunction(baseURL + relativePath);
-          }
+        scriptFn = Function('exports, module, basis, global, __filename, __dirname, resource',
+          '"use strict";\n\n' +
+          scriptText +
+          '//@ sourceURL=' + sourceURL
         );
       } catch(e) {
-        ;;;console.log('Execute error ' + sourceURL);
+        ;;;console.log('Compilation error ' + sourceURL);
         throw e;
       }
+
+      // run
+      scriptFn.call(
+        context,
+        context.exports,
+        context,
+        basis,
+        global,
+        sourceURL,
+        baseURL,
+        function(relativePath){
+          return fetchResourceFunction(baseURL + relativePath);
+        }
+      );
 
       return context;
     }
