@@ -39,7 +39,7 @@
   var dictionaries = {};
 
   var currentCulture = 'base';
-  var cultureList;
+  var cultureList = [];
 
 
   var Token = Class(null, {
@@ -123,9 +123,13 @@
       this.tokens = {};
       this.resources = {};
     },
-    update: function(culture, tokens){
-      for (var tokenName in tokens)
-        this.setCultureValue(culture, tokenName, tokens[tokenName]);
+    update: function(culture, newTokens){
+      for (var tokenName in this.tokens)
+        if (!newTokens[tokenName])
+          this.setCultureValue(culture, tokenName, '');
+
+      for (var tokenName in newTokens)
+        this.setCultureValue(culture, tokenName, newTokens[tokenName]);
     },
     setCulture: function(culture){
       for (var tokenName in this.tokens)
@@ -185,20 +189,21 @@
   }
 
   function createDictionary(namespace, location, tokens){
-    getDictionary(namespace, true).update('base', tokens);    
-    dictionaryLocations[namespace] = location;
+    var dictionary = getDictionary(namespace, true)
+    dictionary.location = location;
+
+    dictionary.update('base', tokens);
+
+    if (currentCulture != 'base')
+      loadCultureForDictionary(dictionary, currentCulture)
+
+    fireUpdateDictionaryEvent(namespace, 'base');
   }
 
   function updateDictionary(namespace, culture, tokens){
-    var dictionary = getDictionary(namespace);
-    if (dictionary)
-    {
-      dictionary.update(culture, tokens);
-    }
-    else 
-    {
-      ;;;console.warn('Dictionary ' + namespace + ' not found');
-    }
+    getDictionary(namespace, true).update(culture, tokens);
+
+    fireUpdateDictionaryEvent(namespace, culture);
   }
 
   function setCulture(culture){
@@ -223,17 +228,40 @@
   function loadCultureForDictionary(dictionary, culture){
     if (!cultureList || cultureList.indexOf(culture) != -1)
     {
-      var location = dictionaryLocations[dictionary.namespace] + '/' + culture;
+      var location = dictionary.location + '/' + culture;
       if (!resourcesLoaded[location])
       {
         resourcesLoaded[location] = true;
-        loadResource(location + '.js');
+        
+        var res = basis.resource(location + '.js');
+        res.bindingBridge.attach(res, function(content){
+          updateDictionaryResource(content, culture);
+        });
+        updateDictionaryResource(res(), culture);
+
+        //loadResource(location + '.js', culture);
       }
     }
     else {
       ;;;console.warn('Culture "' + culture + '" is not specified in the list');
     }
   }
+
+  function updateDictionaryResource(content, culture){
+    var dictionaryData = {};
+    try
+    {
+      dictionaryData = content.toObject();
+    }
+    catch(e)
+    {
+      console.warn('Can\'t read dictionary data (' + location + '); error: ' + e.toString());
+    }
+
+    for (var dictionaryName in dictionaryData)
+      updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);    
+  }
+
 
   function setCultureList(list){
     if (typeof list == 'string')
@@ -246,7 +274,7 @@
   }
 
 
-  function loadResource(fileName){
+  /*function loadResource(fileName, culture){
     var requestUrl = fileName
     var req = new XMLHttpRequest();
     req.open('GET', fileName, false);
@@ -257,8 +285,39 @@
         global["eval"].call(global, scriptText);
       })(req.responseText);
     }
-  }
+  }*/
 
+  var dictionaryUpdateListeners = [];
+  function addHandler(handler, context) {
+    for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
+    {
+      if (listener.handler == handler && listener.context == context)
+        return false;
+    }
+
+    dictionaryUpdateListeners.push({
+      handler: handler,
+      context: context
+    });
+
+    return true;
+  }
+  function removeHandler(handler, context){
+    for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
+    {
+      if (listener.handler == handler && listener.context == context)
+      {
+        dictionaryUpdateListeners.splice(i, 1);
+        return true;
+      }
+    }
+
+    return false;
+  }
+  function fireUpdateDictionaryEvent(dictionaryName, culture){
+    for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
+      listener.handler.call(listener.context, dictionaryName, culture);
+  }
 
 
   basis.namespace(namespace).extend({
@@ -272,6 +331,7 @@
     getCulture: getCulture,
     loadCultureForDictionary: loadCultureForDictionary,
     setCultureList: setCultureList,
-    getCultureList: getCultureList
+    getCultureList: getCultureList,
+    addUpdateDictionaryHandler: addHandler,
+    removeUpdateDictionaryHandler: removeHandler
   });
-

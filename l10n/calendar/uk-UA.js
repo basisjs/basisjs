@@ -1,12 +1,11 @@
+{
+  'basis.ui.calendar': {
+    'quarter': 'Квартал',
+    'today': 'Сьогодні',
+    'selected': 'Вибрані'
+  },
 
-
-  basis.l10n.updateDictionary('basis.ui.calendar', 'uk-UA', {
-    quarter: 'Квартал',
-    today: 'Сьогодні',
-    selected: 'Вибрані'
-  });
-
-  basis.l10n.updateDictionary('basis.ui.calendar.month', 'uk-UA', {
+  'basis.ui.calendar.month': {
     'jan': 'Січня',
     'feb': 'Лютого',
     'mar': 'Березня',
@@ -19,9 +18,9 @@
     'oct': 'Жовтня',
     'nov': 'Листопада',
     'dec': 'Грудня'
-  });
+  },
 
-  basis.l10n.updateDictionary('basis.ui.calendar.monthShort', 'uk-UA', {
+  'basis.ui.calendar.monthShort': {
     'jan': 'Січ',
     'feb': 'Лют',
     'mar': 'Бер',
@@ -34,9 +33,9 @@
     'oct': 'Жов',
     'nov': 'Лис',
     'dec': 'Гру'
-  });
+  },
 
-  basis.l10n.updateDictionary('basis.ui.calendar.day', 'uk-UA', {
+  'basis.ui.calendar.day': {
     'mon': 'Понеділок',
     'tue': 'Вівторок',
     'wed': 'Середа',
@@ -44,9 +43,9 @@
     'fri': 'П\'ятниця',
     'sat': 'Субота',
     'sun': 'Неділя'
-  });
+  },
 
-  basis.l10n.updateDictionary('basis.ui.calendar.day2', 'uk-UA', {
+  'basis.ui.calendar.day2': {
     'mon': 'Пн',
     'tue': 'Вт',
     'wed': 'Ср',
@@ -54,9 +53,9 @@
     'fri': 'Пт',
     'sat': 'Сб',
     'sun': 'Нд'
-  });
+  },
 
-  basis.l10n.updateDictionary('basis.ui.calendar.day3', 'uk-UA', {
+  'basis.ui.calendar.day3': {
     'mon': 'Пн',
     'tue': 'Вт',
     'wed': 'Ср',
@@ -64,4 +63,5 @@
     'fri': 'Пт',
     'sat': 'Сб',
     'sun': 'Нд'
-  });
+  }
+}
