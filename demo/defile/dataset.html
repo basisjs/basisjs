@@ -141,13 +141,18 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.dom.event');
+    basis.require('basis.data');
+    basis.require('basis.dom.wrapper');
+    basis.require('basis.ui.popup');
     
     // import names
-    var DOM = basis.require('basis.dom');
-    var Event = basis.require('basis.dom.event');
-    var nsData = basis.require('basis.data');
-    var nsWrapper = basis.require('basis.dom.wrapper');
-    var Menu = basis.require('basis.ui.popup').Menu;
+    var DOM = basis.dom;
+    var Event = basis.dom.event;
+    var nsData = basis.data;
+    var nsWrapper = basis.dom.wrapper;
+    var Menu = basis.ui.popup.Menu;
     var UIContainer = basis.ui.Container;
     var nsDataset = basis.data.dataset;
 
@@ -248,11 +253,15 @@
     ));
 
     var newItemPopup = new Menu({
-      dataSource: new nsDataset.Subtract({ minuend: NUMBERS }),
+      dataSource: new nsDataset.Subtract({
+        minuend: NUMBERS
+      }),
+      sorting: 'data.value',
       childClass: {
-        captionGetter: Function.getter('data.value')
+        binding: {
+          caption: 'data.value'
+        }
       },
-      sorting: Function.getter('data.value'),
       defaultHandler: function(node){
         if (node)
           this.dataSource.subtrahend.add([node.root]);

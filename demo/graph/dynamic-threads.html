@@ -47,7 +47,6 @@
   </style>
 
   <script type="text/javascript" src="../../basis-all.js"></script>
-  <script type="text/javascript" src="../../locale/ru/calendar.js"></script>
 
   <script type="text/javascript" src="../seedrandom.js"></script>
   <script type="text/javascript" src="../demo.js"></script>
@@ -142,29 +141,6 @@
 
     var graphCompanies = new nsEntity.EntitySet({ wrapper: Company });
 
-    /*new LinearGraph({
-      container: DOM.get('demo-container'),
-      width: 800,
-      height: 450,
-
-      propGetter: function(object){
-        var date = new Date(object.data.Date);
-        return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
-      },
-      
-      dataSource: graphCompanies,
-      childClass: {
-        dataSourceGetter: function(object){
-          return CompanyReport.getGrouping('Company').getSubset(object.target);
-        },
-        legendGetter: function(object){
-          return object.data.Title;
-        },
-        valueGetter: Function.getter('data.Amount'),
-        sorting: Function.getter('data.Date')
-      }
-    });*/
-
     var graph = new LinearGraph({
       container: DOM.get('demo-container'),
       width: 800,
@@ -179,7 +155,7 @@
       },
       keyTitleGetter: function(object){
         var date = new Date(object.data.Date);
-        return basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+        return String(basis.l10n.getToken('basis.ui.calendar', 'monthShort', basis.date.monthNumToAbbr[date.getMonth()])).toLowerCase() + ' ' + date.getFullYear();
       },
 
       series: {

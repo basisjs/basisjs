@@ -11,6 +11,7 @@
 
   'use strict';
 
+  basis.require('basis.l10n');
   basis.require('basis.event');
   basis.require('basis.html');
   basis.require('basis.dom');
@@ -57,6 +58,29 @@
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
   var Popup = basis.ui.popup.Popup;
+
+
+  //
+  // Localization
+  //
+
+  var l10nToken = basis.l10n.getToken;
+
+  basis.l10n.createDictionary(namespace, __dirname + '../../../l10n/form', {
+    "symbolsLeft": "Symbols left"
+  });
+
+  basis.l10n.createDictionary(namespace + '.validator', __dirname + '../../../l10n/form', {
+    "regExpWrongFormat": "The value has wrong format.",
+    "required": "The field is required and must have a value.",
+    "numberWrongFormat": "The value has wrong format of number.",
+    "currencyWrongFormat": "The value has wrong format of currency.",
+    "currencyMustBeGreaterZero": "The value must be greater than zero.",
+    "emailWrongFormat": "The value has a wrong format of e-mail.",
+    "urlWrongFormat": "The value has a wrong format of URL.",
+    "minLengthError": "The value must be longer than {0} symbols.",
+    "maxLengthError": "The value must be shorter than {0} symbols."
+  });
 
 
   //
@@ -140,13 +164,14 @@
       events.blur.call(this, event);
     },
 
+    binding: {
+      titleText: 'title || ""'
+    },
+
     init: function(config){
       UINode.prototype.init.call(this, config);
 
       this.name = this.name || '';
-
-      if (this.tmpl.titleText)
-        this.tmpl.titleText.nodeValue = this.title || '';
 
       // attach button
       /*if (this.button)
@@ -446,7 +471,7 @@
 
     init: function(config){
       //this.value = this.value || '';
-      this.counter = DOM.createElement('.counter', Field.LOCALE.Textarea.SYMBOLS_LEFT + ': ', DOM.createText(0));
+      this.counter = DOM.createElement('.counter', l10nToken(namespace, 'symbolsLeft') + ': ', DOM.createText(0));
 
       //inherit
       Field.prototype.init.call(this, config);
@@ -593,6 +618,10 @@
     childClass: ComplexFieldItem,
 
     template: Field.prototype.template,
+
+    binding: {
+      titleText: 'title || ""'
+    },
 
     /*childFactory: function(itemConfig){
       var config = {
@@ -1109,7 +1138,6 @@
       }
     },
     destroy: function(){
-
       if (this.property)
       {
         this.property.removeLink(this);
@@ -1134,59 +1162,58 @@
 
     init: function(field, message){
       this.field = field;
-      this.message = message;
+      this.message = String(message);
     }
   });
 
   var Validator = {
-    NO_LOCALE: 'There is no locale for this error',
     RegExp: function(regexp){
       if (regexp.constructor != RegExp)
         regexp = new RegExp(regexp);
       return function(field){
         var value = field.getValue();
         if (value != '' && !value.match(regexp))
-          return new ValidatorError(field, Validator.LOCALE.RegExp.WRONG_FORMAT || Validator.NO_LOCALE);
+          return new ValidatorError(field, l10nToken(namespace, 'validator', 'regExpWrongFormat'));
       }
     },
     Required: function(field){
       var value = field.getValue();
       if (Function.$isNull(value) || value == '')
-        return new ValidatorError(field, Validator.LOCALE.Required.MUST_BE_FILLED || Validator.NO_LOCALE);
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'required'));
     },
     Number: function(field){
       var value = field.getValue();
       if (isNaN(value))
-        return new ValidatorError(field, Validator.LOCALE.Number.WRONG_FORMAT || Validator.NO_LOCALE);
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'numberWrongFormat'));
     },
     Currency: function(field){
       var value = field.getValue();
       if (isNaN(value))
-        return new ValidatorError(field, Validator.LOCALE.Currency.WRONG_FORMAT || Validator.NO_LOCALE);
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyWrongFormat'));
       if (value <= 0)
-        return new ValidatorError(field, Validator.LOCALE.Currency.MUST_BE_GREATER_ZERO || Validator.NO_LOCALE);
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyMustBeGreaterZero'));
     },
     Email: function(field){
       var value = field.getValue().trim();
       if (value != '' && !value.match(/^[a-z0-9\.\-\_]+\@(([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i))
-        return new ValidatorError(field, Validator.LOCALE.Email.WRONG_FORMAT || Validator.NO_LOCALE);
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'emailWrongFormat'));
     },
     Url: function(field){
       var value = field.getValue().trim();
       if (value != '' && !value.match(/^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z][a-zA-Z\d\-]+\.)+[a-zA-Z]{2,6})(:\d+)?(\/[^\?]*(\?\S(\=\S*))*(\#\S*)?)?$/i))
-        return new ValidatorError(field, Validator.LOCALE.Url.WRONG_FORMAT || Validator.NO_LOCALE);
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'urlWrongFormat'));
     },
     MinLength: function(field){
       var value = field.getValue();
       var length = Function.$isNotNull(value.length) ? value.length : String(value).length;
       if (length < field.minLength)
-        return new ValidatorError(field, (Validator.LOCALE.MinLength.MUST_BE_LONGER_THAN || Validator.NO_LOCALE).format(field.minLength));
+        return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'minLengthError')).format(field.minLength));
     },
     MaxLength: function(field){
       var value = field.getValue();
       var length = Function.$isNotNull(value.length) ? value.length : String(value).length;
       if (length > field.maxLength)
-        return new ValidatorError(field, (Validator.LOCALE.MaxLength.MUST_BE_SHORTER_THAN || Validator.NO_LOCALE).format(field.maxLength));
+        return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'maxLengthError')).format(field.maxLength));
     }
   };
 

@@ -48,7 +48,7 @@
     {
       background: #E8E8E9;
     }
-    .selected
+    .user.selected
     {
       background: #D9E8FB;
     }
@@ -66,6 +66,11 @@
       padding-left: 1ex;
     }
 
+    .noGroup
+    {
+      color: #888;
+      font-style: italic;
+    }
     .group
     {
       overflow: hidden;
@@ -157,7 +162,7 @@
       { groupId: 6, title: 'Yellow' }
     ]);
 
-    User.all.sync(Array.create(100, function(idx){ return { userId: idx, group: 1 + idx % 6, title: 'user' + idx } }) || [
+    User.all.sync([
       { userId: 1,  groupId: 1, title: "Norman Yuen" },
       { userId: 2,  groupId: 2, title: "Casto" },
       { userId: 4,  groupId: 6, title: "Jose Crutcher" },
@@ -175,11 +180,19 @@
     ].map(User.reader));
 
 
+    var selectedGroup = new basis.data.Dataset();
+    var nonSelectedGroup = new basis.data.dataset.Subtract({
+      minuend: UserGroup.all,
+      subtrahend: selectedGroup
+    });
+
     var groupPopup = new basis.ui.popup.Menu({
-      dataSource: UserGroup.all,
+      dataSource: nonSelectedGroup,
       sorting: Function.getter('data.title'),
       childClass: {
-        captionGetter: Function.getter('data.title')
+        binding: {
+          caption: 'data:title'
+        }
       },
       defaultHandler: function(node){
         if (node)
@@ -190,10 +203,12 @@
       },
       handler: {
         delegateChanged: function(node, oldDelegate){
+          selectedGroup.set([this.data.group]);
+
           if (oldDelegate)
-            basis.cssom.classList(oldDelegate).remove('menuOpened');
+            basis.cssom.classList(oldDelegate.element).remove('menuOpened');
           if (this.delegate)
-            basis.cssom.classList(this.delegate).add('menuOpened');
+            basis.cssom.classList(this.delegate.element).add('menuOpened');
         },
         hide: function(){
           this.setDelegate();
@@ -201,24 +216,25 @@
       }
     });
 
-    var d = new Date();
     var userList = new basis.ui.Container({
-      container: DOM.get('demo-container'),
-
       id: 'UserList',
+      container: DOM.get('demo-container'),
 
       dataSource: User.all,
       sorting: Function.getter('data.title'),
       selection: true,
       childClass: {
         template:
-          '<div class="user" event-click="select">' +
-            '<div class="groupPanel"><!--{group}--><button event-click="chooseGroup">...</button></div>' +
+          '<div class="user {selected}" event-click="select">' +
+            '<div class="groupPanel">' +
+              '<span{group} class="noGroup">no group selected</span>' +
+              '<button event-click="chooseGroup">..</button>' +
+            '</div>' +
             '<span class="user__title">[{id}] {title}</span>' + 
           '</div>',
 
         binding: {
-          group: 'satellite:'
+          group: 'satellite:',
           id: 'data:userId',
           title: 'data:'
         },
@@ -241,15 +257,14 @@
               template:
                 '{title}',
 
-              templateUpdate: function(tmpl){
-                tmpl.title.nodeValue = this.data.title || '[no title]';
+              binding: {
+                title: 'data:'
               }
             })
           }
         }
       }
     });
-    DOM.insert(DOM.get('demo-container'), DOM.createText(new Date - d));
 
     var groupList = new basis.ui.Container({
       container: DOM.get('demo-container'),
@@ -258,13 +273,6 @@
       
       dataSource: UserGroup.all,
       sorting: Function.getter('data.groupId'),
-      listen: {
-        childNode: {
-          update: function(){
-            console.log('focus!');
-          }
-        }
-      },
       childClass: {
         template:
           '<div class="group">' +

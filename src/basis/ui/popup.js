@@ -468,8 +468,8 @@
     childClass: Class.SELF,
 
     template:
-      '<div class="Basis-Menu-Item" event-click="click">' +
-        '<a{content} class="{selected} {disabled}" href="#"><span>{caption}</span></a>' +
+      '<div class="Basis-Menu-Item {selected} {disabled}" event-click="click">' +
+        '<a{content} href="#"><span>{caption}</span></a>' +
       '</div>'/* +
       '<div{childNodesElement}/>'*/,
 

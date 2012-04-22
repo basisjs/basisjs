@@ -568,7 +568,7 @@
       for (var i = 0, token, item; token = tokens[i]; i++)
       {
         var refs = refList(token);
-        var bindings = refs && refs.length == 1 ? 1 : 0;
+        var bindings = refs && (refs.length == 1 || (refs.length == 2 && token.type == TYPE_TEXT && refs[1] == 'element')) ? 1 : 0;
 
         switch (token.type)
         {

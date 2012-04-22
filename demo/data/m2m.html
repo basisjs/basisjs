@@ -67,14 +67,13 @@
     }
     #MasterTree .emptyLabel
     {
-      display: none;
       color: #AAA;
       font-style: italic;
       padding: .15em 0 .2em;
     }
-    #MasterTree .empty .emptyLabel
+    #MasterTree .hasChilds .emptyLabel
     {
-      display: block;
+      display: none;
     }
     #MasterTree .Basis-TreeNode .Basis-TreeNode-Caption:hover
     {
@@ -293,10 +292,10 @@
       // Определяем класс для дочерних узлов
       childClass: nsTree.Folder.subclass({
         template: 
-          '<li{selected} class="Basis-TreeNode empty" event-click="select">' +
+          '<li{selected} class="Basis-TreeNode {hasChilds} {selected}" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
               '<div class="Basis-TreeNode-Expander" event-click="toggle"/>' +
-              '<span{title} class="Basis-TreeNode-Caption">{title}<span class="count">(Word count: {countText}, Frequency: {freqText})</span></span>' +
+              '<span{title} class="Basis-TreeNode-Caption">{title}<span class="count">(Word count: {childCount}, Frequency: {freqSum})</span></span>' +
             '</div>' + 
             '<div{childNodesElement} class="Basis-TreeNode-Content">' + 
               '<span class="emptyLabel">No words</span>' +
@@ -305,7 +304,8 @@
 
         freqSum: 0,
         binding: {
-          title: 'data:Title'
+          title: 'data:Title',
+          freqSum: 'freqSum'
         },
         sorting: function(node){
           return Word.get(node.data.WordId).data.Title;
@@ -324,13 +324,11 @@
               for (var i = 0; i < array.length; i++)
                 deltaSum -= Word.get(array[i].data.WordId).data.Freq;
 
-            this.freqSum += deltaSum;
-
-            // update template
-            this.tmpl.countText.nodeValue = this.childNodes.length;
-            this.tmpl.freqText.nodeValue = this.freqSum;
-
-            classList(this.element).bool('empty', !this.childNodes.length);
+            if (deltaSum)
+            {
+              this.freqSum += deltaSum;
+              this.updateBind('freqSum');
+            }
           }
         },
         init: function(config){
@@ -440,13 +438,19 @@
       }),
       childClass: nsUI.Node.subclass({
         template: 
-          '<li event-click="toggle">' +
-            '<input{state} type="checkbox"/>' +
+          '<li class="{checked}" event-click="toggle">' +
+            '<input type="checkbox" checked="{checked}"/>' +
             '<!--{word}-->' +
           '</li>',
 
         binding: {
-          word: 'satellite:'
+          word: 'satellite:',
+          checked: {
+            events: 'targetChanged',
+            getter: function(node){
+              return node.target ? 'checked' : '';
+            }
+          }
         },
 
         action: {
@@ -456,10 +460,6 @@
             else
               Link(this.data);
           }
-        },
-        event_targetChanged: function(object, oldTarget){
-          this.tmpl.state.checked = !!this.target;
-          classList(this.element).bool('checked', !!this.target);
         },
         satelliteConfig: {
           word: {
@@ -532,13 +532,13 @@
         new basis.ui.form.MatchInput({
           matchFilter: {
             node: relatedTree,
-            textNodeGetter: Function.getter('satellite.word.tmpl.this_data_Title')
+            textNodeGetter: Function.getter('satellite.word.tmpl.title')
           }
         }).element,
         relatedTree.element
       ),
       DOM.createElement('.ListContainer',
-        DOM.createElement('DIV.debug', 'Debug for (list of all links)'),
+        DOM.createElement('DIV.debug', 'Debug for (list of links)'),
 
         // NOTE: для отладки - список всех связей
         new nsTree.Tree({

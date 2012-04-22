@@ -149,13 +149,13 @@
       },
       calcs: {
         percentOfValueMax: function(data, indexes){
-          return data.value/indexes.valueMax;
+          return data.value / indexes.valueMax;
         },
         percentOfTotalMax: function(data, indexes){
-          return (data.total - indexes.totalMin)/(indexes.totalMax - indexes.totalMin);
+          return (data.total - indexes.totalMin) / (indexes.totalMax - indexes.totalMin);
         },
         percentOfTotalSum: function(data, indexes){
-          return data.total/indexes.totalSum;
+          return data.total / indexes.totalSum;
         }
       }
     });
@@ -251,7 +251,7 @@
           cssClassName: 'right',
           body: '{percentOfTotalSum}',
           footer: function(){
-            return indexMap.getIndex(basis.data.index.avg('data.percentOfTotalSum * 100')).addLink(basis.dom.createText(), null, '{0:.2}%');
+            return indexMap.getIndex(basis.data.index.avg('data.percentOfTotalMax * 100')).addLink(basis.dom.createText(), null, '{0:.2}%');
           }
         }
       ],

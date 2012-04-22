@@ -54,8 +54,9 @@
   // localization
   //
 
-  basis.l10n.createDictionary(namespace, '', {
-    emptyTitle: '[no title]'
+  basis.l10n.createDictionary(namespace, __dirname + '../../../l10n/window', {
+    "emptyTitle": "[no title]",
+    "closeButton": "Close"
   });
 
   //
@@ -169,7 +170,7 @@
           template: 
             '<span class="Basis-Window-Title-ButtonPlace">' +
               '<span class="Basis-Window-Title-CloseButton" event-click="close">' +
-                '<span>Close</span>' +
+                '<span>{l10n:basis.ui.window.closeButton}</span>' +
               '</span>' +
             '</span>',
 

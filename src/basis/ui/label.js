@@ -118,7 +118,12 @@
 
       condChangedTrigger.call(this);
       //this.event_condChanged.call(this)
-    }
+    }/*,
+
+    init: function(){
+      UINode.prototype.init.call(this);
+      condChangedTrigger.call(this);
+    }*/
   });
 
   //
@@ -323,6 +328,7 @@
     content: 'Empty',
 
     visibilityGetter: function(owner){ 
+    console.log(this.eventObjectId);
       return owner.state == STATE.READY && !owner.firstChild;
     }
   });

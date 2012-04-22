@@ -28,8 +28,7 @@
   </style>
   <![endif]-->
   
-  <script type="text/javascript" src="../../basis-all.js"></script>
-  <script type="text/javascript" src="../../locale/en/calendar.js"></script>
+  <script type="text/javascript" src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -53,7 +52,7 @@
 
     new basis.ui.button.ButtonPanel({
       container: basis.dom.get('demo-container'),
-      childNodes: [null, 'ru-RU', 'uk-UA'].map(function(culture){
+      childNodes: [null].concat(basis.l10n.getCultureList()).map(function(culture){
         return {
           caption: culture || 'Default (English)',
           click: function(){
@@ -66,6 +65,11 @@
     var calendar = new basis.ui.calendar.Calendar({
       container: basis.dom.get('demo-container'),
       sections: ['Month', 'Year', 'YearDecade']
+    });
+
+    var calendar2 = new basis.ui.calendar.Calendar({
+      container: basis.dom.get('demo-container'),
+      sections: ['Year', 'YearDecade']
     });
 
   </script>

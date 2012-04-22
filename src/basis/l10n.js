@@ -39,7 +39,7 @@
   var dictionaries = {};
 
   var currentCulture = 'base';
-  var cultureList = [];
+  var cultureList = ['en-US', 'ru-RU', 'uk-UA'];
 
 
   var Token = Class(null, {
@@ -59,6 +59,10 @@
 
     listeners: null,
     value: null,
+
+    toString: function(){
+      return this.value
+    },
 
     init: function(dictionary, tokenName){
       this.listeners = [];

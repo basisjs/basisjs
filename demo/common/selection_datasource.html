@@ -116,23 +116,20 @@
         })
       }),
       childClass: nsTree.Folder.subclass({
+        childFactory: basis.ui.Container.prototype.childFactory,
         collapsed: true,
-        event_expand: function(){
-          nsTree.Folder.prototype.event_expand.call(this);
-          this.setDataSource(this.delegate);
+        binding: {
+          title: {
+            events: 'update childNodesModified',
+            getter: function(node){
+              return node.data.title + ' (' + node.childNodes.length + ')';
+            }
+          }
         },
         init: function(config){
           nsTree.Folder.prototype.init.call(this, config);
 
-          this.tmpl.itemCountText = DOM.insert(this.tmpl.title, '');
-          this.listen.delegate.datasetChanged.call(this, this.delegate);
-        },
-        listen: {
-          delegate: {
-            datasetChanged: function(dataset, delta){
-              this.tmpl.itemCountText.nodeValue = ' ({0})'.format(dataset.itemCount);
-            }
-          }
+          this.setDataSource(this.delegate);
         }
       })
     });

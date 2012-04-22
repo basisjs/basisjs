@@ -119,7 +119,7 @@
     var table = new nsTable.Table({
       structure: [
         { header: 'Title', body: { content: Function.getter('data.title') }, sorting: Function.getter('data.title') },
-        { header: 'Content', body: { content: Function.getter('data.content') } }
+        { header: 'Content', body: { templateRef: 'text', content: Function.getter('data.content') } }
       ],
       childNodes: data
     })
@@ -131,6 +131,7 @@
         new nsForm.MatchInput({
           cssClassName: 'MatchHolder',
           matchFilter: {
+            textNodeGetter: 'tmpl.title',
             node: tree
           }
         }).element,
@@ -142,7 +143,7 @@
           cssClassName: 'MatchHolder',
           matchFilter: {
             node: table,
-            textNodeGetter: 'element.lastChild.firstChild',
+            textNodeGetter: 'tmpl.text.firstChild',
             wrapElement: 'A.custom-match'
           }
         }).element,

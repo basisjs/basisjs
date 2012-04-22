@@ -1937,7 +1937,5 @@
     Cleaner: Cleaner
   });
 
-  global.basis.locale = {};
-
 }(this);
 //alert(document.getElementsByTagName('script').length + '/' + document.scripts.length);

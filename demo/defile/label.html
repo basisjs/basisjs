@@ -65,7 +65,7 @@
     .DemoBlock-Content
     {
       height: 20px;
-      position: relative;
+      /*position: relative;*/
     }
 
     .Basis-Label
@@ -152,12 +152,12 @@
       template:
         '<div class="DemoBlock">' +
            '<h2>{title}</h2>' +
-           '<div{childNodesElement} class="DemoBlock-Content"><!--{label}--></div>' +
+           '<div{childNodesElement|content} class="DemoBlock-Content"></div>' +
         '</div>',
 
       binding: {
-        title: 'title',
-        label: 'satellite:'
+        title: 'title'/*,
+        label: 'satellite:'*/
       },
 
       childClass: {
@@ -165,7 +165,7 @@
           '<span class="DemoBlock-Node">{value}</span>',
 
         binding: {
-          value: 'data:value'
+          value: 'data:'
         }
       }
     });

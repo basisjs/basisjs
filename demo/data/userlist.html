@@ -132,7 +132,7 @@
     };
     var adapterHandler = {
       success: function(request){
-        var data = request.responseText.toObject();
+        var data = request.data.responseText.toObject();
         this.sync(data && data.map(this.wrapper.reader));
       }
     };

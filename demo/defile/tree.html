@@ -103,7 +103,9 @@
       grouping: {
         groupGetter: Function.getter('data.id % 2'),
         childClass: {
-          titleGetter: Function.getter('data.id', { 0: 'even', 1: 'odd' })
+          binding: {
+            title: Function.getter('data.id', { 0: 'even', 1: 'odd' })
+          }
         }
       },
       childFactory: function(config){

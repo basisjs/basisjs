@@ -426,9 +426,9 @@
       var object = event.args[0];
       var objectId = object.eventObjectId;
 
-      for (var indexId in this.indexes)
+      for (var indexId in this.indexes__)
       {
-        index = this.indexes[indexId];
+        index = this.indexes__[indexId];
 
         if (index.updateEvents[eventType])
         {
@@ -464,12 +464,12 @@
           array[i].removeHandler(ITEM_INDEX_HANDLER, this);
 
       // apply changes for indexes
-      for (var indexId in this.indexes)
-        applyIndexDelta(this.indexes[indexId], delta.inserted, delta.deleted);
+      for (var indexId in this.indexes__)
+        applyIndexDelta(this.indexes__[indexId], delta.inserted, delta.deleted);
     },
     
     destroy: function(){
-      var indexes = Object.values(this.indexes);
+      var indexes = Object.values(this.indexes__);
       for (var indexId in indexes)
         this.deleteIndex(indexes[indexId]);
     }
@@ -484,7 +484,7 @@
    /**
     * @type {Object}
     */
-    indexes: null,
+    indexes__: null,
 
    /**
     * @param
@@ -496,9 +496,9 @@
         return;
       }
 
-      if (!this.indexes)
+      if (!this.indexes__)
       {
-        this.indexes = {};
+        this.indexes__ = {};
 
         this.addHandler(DATASET_WITH_INDEX_HANDLER);
         DATASET_WITH_INDEX_HANDLER.datasetChanged.call(this, this, {
@@ -507,7 +507,7 @@
       }
 
       var indexId = indexConstructor.indexId;
-      var index = this.indexes[indexId];
+      var index = this.indexes__[indexId];
 
       if (!index)
       {
@@ -518,7 +518,7 @@
         index = new indexConstructor.indexClass();
         index.addHandler(DATASET_INDEX_HANDLER, this);
 
-        this.indexes[indexId] = index;
+        this.indexes__[indexId] = index;
         applyIndexDelta(index, this.getItems());
       }
 
@@ -529,19 +529,19 @@
     * @param {basis.data.index.IndexConstructor|basis.data.index.Index}
     */
     deleteIndex: function(index){
-      if (this.indexes && this.indexes[index.indexId])
+      if (this.indexes__ && this.indexes__[index.indexId])
       {
-        delete this.indexes[index.indexId];
+        delete this.indexes__[index.indexId];
         index.removeHandler(DATASET_INDEX_HANDLER, this);
         index.destroy();
 
         // if any index in dataset nothing to do
-        for (var key in this.indexes)
+        for (var key in this.indexes__)
           return;
 
         // if no indexes - delete indexes storage and remove handlers
         this.removeHandler(DATASET_WITH_INDEX_HANDLER);
-        this.indexes = null;
+        this.indexes__ = null;
       }
     }
   });

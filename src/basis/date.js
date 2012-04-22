@@ -22,6 +22,8 @@
 
   // CONST
   var MONTH_DAY_COUNT = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  var monthNumToAbbr = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  var dayNumToAbbr = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"];
 
   var DIFF_BASE = {
     day: 24 * 3600 * 1000,
@@ -277,6 +279,8 @@
   //
 
   this.extend({
+    monthNumToAbbr: monthNumToAbbr,
+    dayNumToAbbr: dayNumToAbbr,
     isLeapYear: isLeapYear,
     getMonthDayCount: getMonthDayCount,
     format: dateFormat

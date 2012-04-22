@@ -91,7 +91,6 @@
 
 
   <script type="text/javascript" src="../../basis-all.js"></script>
-  <script type="text/javascript" src="../../locale/en/form.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
@@ -131,28 +130,34 @@
     //
     // Define new node class for Article
     //
-    var ArticleNode = basis.Class(basis.ui.Node, 
-      basis.ui(
-        '<div{element} class="Article" event-click="select">' +
-          '<div class="Article-Title">{this_data_title}</div>' +
-          '<div class="Article-Content">{this_data_content}</div>' +
-        '</div>'
-      ),
-      {
-        action: {
-          select: function(event){
-            this.select(basis.dom.event(event).ctrlKey);
-          }
-        },
-        listen: {
-          target: {
-            rollbackUpdate: function(object, modifiedDelta){
-              basis.cssom.classList(this.element).bool('modified', object.modified)
-            }
+    var ArticleNode = basis.Class(basis.ui.Node, {
+      template:
+        '<div class="Article {selected} {modified}" event-click="select">' +
+          '<div class="Article-Title">{title}</div>' +
+          '<div class="Article-Content">{content}</div>' +
+        '</div>',
+
+      binding: {
+        title: 'data:',
+        content: 'data:',
+        modified: function(node){
+          return node.target && node.target.modified ? 'modified' : '';
+        }
+      },
+      action: {
+        select: function(event){
+          this.select(basis.dom.event(event).ctrlKey);
+        }
+      },
+
+      listen: {
+        target: {
+          rollbackUpdate: function(object, modifiedDelta){
+            this.updateBind('modified');
           }
         }
       }
-    );
+    });
 
     //
     // Article list

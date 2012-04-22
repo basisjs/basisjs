@@ -69,73 +69,73 @@
   //
 
   var l10nLocation = __dirname + '../../../l10n/calendar';
-  var monthNumToRef = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-  var dayNumToRef = ["mon", "tue", "wed", "thr", "fri", "sat", "sun"];
+  var monthNumToRef = basis.date.monthNumToAbbr;
+  var dayNumToRef = basis.date.dayNumToAbbr;
 
   createDictionary(namespace, l10nLocation, {
-    quarter: 'Quarter',
-    today: 'Today',
-    selected: 'Selected'
+    "quarter": "Quarter",
+    "today": "Today",
+    "selected": "Selected"
   });
 
   createDictionary(namespace + '.month', l10nLocation, {
-    'jan': 'January',
-    'feb': 'February',
-    'mar': 'March',
-    'apr': 'April',
-    'may': 'May',
-    'jun': 'June',
-    'jul': 'July',
-    'aug': 'August',
-    'sep': 'September',
-    'oct': 'October',
-    'nov': 'November',
-    'dec': 'December'
+    "jan": "January",
+    "feb": "February",
+    "mar": "March",
+    "apr": "April",
+    "may": "May",
+    "jun": "June",
+    "jul": "July",
+    "aug": "August",
+    "sep": "September",
+    "oct": "October",
+    "nov": "November",
+    "dec": "December"
   });
 
   createDictionary(namespace + '.monthShort', l10nLocation, {
-    'jan': 'Jan',
-    'feb': 'Feb',
-    'mar': 'Mar',
-    'apr': 'Apr',
-    'may': 'May',
-    'jun': 'Jun',
-    'jul': 'Jul',
-    'aug': 'Aug',
-    'sep': 'Sep',
-    'oct': 'Oct',
-    'nov': 'Nov',
-    'dec': 'Dec'
+    "jan": "Jan",
+    "feb": "Feb",
+    "mar": "Mar",
+    "apr": "Apr",
+    "may": "May",
+    "jun": "Jun",
+    "jul": "Jul",
+    "aug": "Aug",
+    "sep": "Sep",
+    "oct": "Oct",
+    "nov": "Nov",
+    "dec": "Dec"
   });
 
   createDictionary(namespace + '.day', l10nLocation, {
-    'mon': 'Monday',
-    'tue': 'Tuesday',
-    'wed': 'Wednesday',
-    'thr': 'Thursday',
-    'fri': 'Friday',
-    'sat': 'Saturday',
-    'sun': 'Sunday'
+    "mon": "Monday",
+    "tue": "Tuesday",
+    "wed": "Wednesday",
+    "thr": "Thursday",
+    "fri": "Friday",
+    "sat": "Saturday",
+    "sun": "Sunday"
   });
 
   createDictionary(namespace + '.day2', l10nLocation, {
-    'mon': 'Mo',
-    'tue': 'Tu',
-    'wed': 'We',
-    'thr': 'Th',
-    'fri': 'Fr',
-    'sat': 'Sa',
-    'sun': 'Su'
+    "mon": "Mo",
+    "tue": "Tu",
+    "wed": "We",
+    "thr": "Th",
+    "fri": "Fr",
+    "sat": "Sa",
+    "sun": "Su"
   });
 
   createDictionary(namespace + '.day3', l10nLocation, {
-    'mon': 'Mon',
-    'tue': 'Tue',
-    'wed': 'Wed',
-    'thr': 'Thr',
-    'fri': 'Fri',
-    'sat': 'Sat',
-    'sun': 'Sun'
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thr": "Thr",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
   });
 
   //

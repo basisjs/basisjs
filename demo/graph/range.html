@@ -99,7 +99,6 @@
   </style>
 
   <script type="text/javascript" src="../../basis-all.js"></script>
-  <script type="text/javascript" src="../../locale/ru/calendar.js"></script>
   <script type="text/javascript" src="data.json"></script>
 
   <script type="text/javascript" src="../seedrandom.js"></script>
@@ -178,7 +177,7 @@
       keyGetter: Function.getter('data.Date'),
       keyTitleGetter: function(object){
         var date = object.data.Date;
-        return date.getDate() + ' ' + basis.locale['ui.calendar'].MONTH.SHORT[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
+        return date.getDate() + ' ' + String(basis.l10n.getToken('basis.ui.calendar', 'monthShort', basis.date.monthNumToAbbr[date.getMonth()])).toLowerCase() + ' ' + date.getFullYear();
       },
       sorting: Function.getter('data.Date'),
       series: [

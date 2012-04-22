@@ -96,6 +96,10 @@
           }
       }
 
+      def.update = function(node){
+        return node.tmpl.set(key, this.getter(node));
+      };
+
       binding[key] = def;
     }
   };
