@@ -1393,11 +1393,20 @@
 
     if (!frfCache[resourceUrl])
     {
+      var extMatch = resourceUrl.match(/\.[a-z0-9]+$/);
+      var extWrapper;
+      if (extMatch)
+        extWrapper = fetchResourceFunction.extensions[extMatch[0]];
+
       //console.log('new resource resolver:' + resourceUrl);
       var attaches = [];
-      var resource = function(){
-        return externalResource(resourceUrl);
-      };
+      var resource = extWrapper
+        ? Function.lazyInit(function(){
+            return extWrapper(externalResource(resourceUrl), resourceUrl);
+          })
+        : function(){
+            return externalResource(resourceUrl);
+          };
 
       resource.url = resourceUrl;
       resource.toString = resource; //function(){ return resource(); };
@@ -1455,6 +1464,57 @@
 
     return frfCache[resourceUrl];
   };
+
+  fetchResourceFunction.extensions = {
+    '.js': function(resource, url){
+      return runScriptInContext({ exports: {} }, url, resource).exports;
+    },
+    '.json': function(resource, url){
+      var result;
+      try {
+        result = JSON.parse(String(resource));
+      } catch(e) {
+        if (typeof console != 'undefined') console.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
+      }
+      return result || false;
+    }
+  };
+
+  var runScriptInContext = function(context, sourceURL, scriptText){
+    var baseURL = dirname(sourceURL);
+    var scriptFn;
+
+    if (typeof context.exports != 'object')
+      context.exports = {};
+
+    // compile context function
+    try {
+      scriptFn = Function('exports, module, basis, global, __filename, __dirname, resource',
+        '"use strict";\n\n' +
+        scriptText +
+        '//@ sourceURL=' + sourceURL
+      );
+    } catch(e) {
+      ;;;console.log('Compilation error ' + sourceURL);
+      throw e;
+    }
+
+    // run
+    scriptFn.call(
+      context,
+      context.exports,
+      context,
+      basis,
+      global,
+      sourceURL,
+      baseURL,
+      function(relativePath){
+        return fetchResourceFunction(baseURL + relativePath);
+      }
+    );
+
+    return context;
+  }
 
   var wrapScript = function(context, sourceURL){
     var baseURL = dirname(sourceURL);

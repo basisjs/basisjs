@@ -237,7 +237,7 @@
       {
         resourcesLoaded[location] = true;
         
-        var res = basis.resource(location + '.js');
+        var res = basis.resource(location + '.json');
         res.bindingBridge.attach(res, function(content){
           updateDictionaryResource(content, culture);
         });
@@ -252,7 +252,7 @@
   }
 
   function updateDictionaryResource(content, culture){
-    var dictionaryData = {};
+    var dictionaryData = content; /*{};
     try
     {
       dictionaryData = content.toObject();
@@ -260,7 +260,7 @@
     catch(e)
     {
       console.warn('Can\'t read dictionary data (' + location + '); error: ' + e.toString());
-    }
+    }*/
 
     for (var dictionaryName in dictionaryData)
       updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);    
