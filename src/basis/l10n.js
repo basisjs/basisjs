@@ -198,16 +198,13 @@
 
     dictionary.update('base', tokens);
 
-    if (currentCulture != 'base')
-      loadCultureForDictionary(dictionary, currentCulture)
+    loadCultureForDictionary(dictionary, currentCulture)
 
-    fireUpdateDictionaryEvent(namespace, 'base');
+    fireCreateDictionaryEvent(namespace);
   }
 
   function updateDictionary(namespace, culture, tokens){
     getDictionary(namespace, true).update(culture, tokens);
-
-    fireUpdateDictionaryEvent(namespace, culture);
   }
 
   function setCulture(culture){
@@ -223,13 +220,14 @@
   }
 
   function setCultureForDictionary(dictionary, culture){
-    if (culture != 'base')
-      loadCultureForDictionary(dictionary, culture)
-
+    loadCultureForDictionary(dictionary, culture)
     dictionary.setCulture(culture);
   }
 
   function loadCultureForDictionary(dictionary, culture){
+    if (culture == 'base')
+      return;
+
     if (!cultureList || cultureList.indexOf(culture) != -1)
     {
       var location = dictionary.location + '/' + culture;
@@ -318,9 +316,9 @@
 
     return false;
   }
-  function fireUpdateDictionaryEvent(dictionaryName, culture){
+  function fireCreateDictionaryEvent(dictionaryName){
     for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
-      listener.handler.call(listener.context, dictionaryName, culture);
+      listener.handler.call(listener.context, dictionaryName);
   }
 
 
@@ -336,6 +334,6 @@
     loadCultureForDictionary: loadCultureForDictionary,
     setCultureList: setCultureList,
     getCultureList: getCultureList,
-    addUpdateDictionaryHandler: addHandler,
-    removeUpdateDictionaryHandler: removeHandler
+    addCreateDictionaryHandler: addHandler,
+    removeCreateDictionaryHandler: removeHandler
   });
