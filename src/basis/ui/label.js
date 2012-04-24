@@ -328,7 +328,6 @@
     content: 'Empty',
 
     visibilityGetter: function(owner){ 
-    console.log(this.eventObjectId);
       return owner.state == STATE.READY && !owner.firstChild;
     }
   });

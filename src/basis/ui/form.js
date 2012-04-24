@@ -1235,20 +1235,6 @@
     onSubmit: Function.$false,
 
     event_reset: createEvent('reset'),
-    event_disable: function(){
-      for (var field = this.firstChild; field; field = field.nextSibling)
-        if (!field.disabled)
-          field.event_disable();
-
-       UIControl.prototype.event_disable.call(this);
-    },
-    event_enable: function(){
-      for (var field = this.firstChild; field; field = field.nextSibling)
-        if (!field.disabled)
-          field.event_enable();
-
-      UIControl.prototype.event_enable.call(this);
-    },
     
     template:
       '<div class="Basis-FormContent {selected} {disabled}" />',

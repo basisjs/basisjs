@@ -173,6 +173,21 @@
     }
   }
 
+  function updateNodeDisableContext(node, disabled){
+    if (node.disabled)
+      return;
+
+    if (node.contextDisabled != disabled)
+    {
+      node.contextDisabled = disabled;
+
+      if (disabled)
+        node.event_disable();
+      else
+        node.event_enable();
+    }
+  }
+
 
   //
   // registrate new subscription types
@@ -1486,12 +1501,13 @@
       // update refChild
       refChild.previousSibling = newChild;
 
-      // update selection
-      updateNodeContextSelection(newChild, newChild.contextSelection, this.selection || this.contextSelection, true);
-
       // if node doesn't move inside the same parent (parentNode changed)
       if (!isInside)
       {
+        // update selection & disabled
+        updateNodeContextSelection(newChild, newChild.contextSelection, this.selection || this.contextSelection, true);
+        updateNodeDisableContext(newChild, this.disabled || this.contextDisabled);
+
         // re-match
         if (newChild.match)
           newChild.match(this.matchFunction);
@@ -1881,13 +1897,23 @@
     * Occurs after disabled property has been set to false.
     * @event
     */
-    event_enable: createEvent('enable', 'node'),
+    event_enable: createEvent('enable', 'node') && function(sender){
+      for (var child = this.firstChild; child; child = child.nextSibling)
+        updateNodeDisableContext(child, false);
+
+      events.enable.call(this, sender);
+    },
 
    /**
     * Occurs after disabled property has been set to true.
     * @event
     */
-    event_disable: createEvent('disable', 'node'),
+    event_disable: createEvent('disable', 'node') && function(sender){
+      for (var child = this.firstChild; child; child = child.nextSibling)
+        updateNodeDisableContext(child, true);
+
+      events.disable.call(this, sender);
+    },
 
    /**
     * Occurs after selected property has been set to true.
@@ -1966,6 +1992,26 @@
     * @readonly
     */
     disabled: false,
+
+   /**
+    * @type {boolean}
+    * @readonly
+    */
+    contextDisabled: false,
+
+   /**
+    * Extend owner listener
+    */
+    listen: {
+      owner: {
+        enable: function(){
+          updateNodeDisableContext(this, false);
+        },
+        disable: function(){
+          updateNodeDisableContext(this, true);
+        }
+      }
+    },
 
    /**
     * @param {Object} config
@@ -2089,7 +2135,9 @@
       if (this.disabled)
       {
         this.disabled = false;
-        this.event_enable(this);
+
+        if (this.disabled == this.contextDisabled)
+          this.event_enable(this);
       }
     },
 
@@ -2100,17 +2148,17 @@
       if (!this.disabled)
       {
         this.disabled = true;
-        this.event_disable(this);
+
+        if (this.disabled != this.contextDisabled)
+          this.event_disable(this);
       }
     },
 
    /**
-    * @return {boolean} Return true if node or one of it's ancestor nodes are disabled.
+    * @return {boolean} Return true if node itself or one of ancestor/owner are disabled.
     */
     isDisabled: function(){
-      return this.disabled 
-             || !!DOM.findAncestor(this, getter('disabled'));
-             // TODO: add check for groupNode, when groupNode will support for disabled
+      return this.disabled || this.contextDisabled;
     },
 
    /**

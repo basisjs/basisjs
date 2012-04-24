@@ -116,8 +116,11 @@
 
     childClass: null,
 
+    unselectDisabled: true,
     event_disable: function(node){
-      this.unselect();
+      if (this.unselectDisabled)
+        this.unselect();
+
       UIContainer.prototype.event_disable.call(this, node);
     },
 
@@ -134,7 +137,7 @@
       '<div{content}/>',
 
     binding: {
-      title: 'data:title'
+      title: 'data:'
     },
 
     /*templateUpdate: function(tmpl, eventName, delta){
@@ -202,18 +205,9 @@
   */
   var Page = Class(UIContainer, {
     className: namespace + '.Page',
-
-    event_select: function(node){
-      classList(this.element).remove('Basis-Page-Hidden');
-      UIContainer.prototype.event_select.call(this, node);
-    },
-    event_unselect: function(node){
-      classList(this.element).add('Basis-Page-Hidden');
-      UIContainer.prototype.event_unselect.call(this, node);
-    },
     
     template: 
-      '<div class="Basis-Page Basis-Page-Hidden {selected} {disabled}">' + 
+      '<div class="Basis-Page Basis-Page-{unselected} {selected} {disabled}">' + 
         '<div{content|childNodesElement} class="Basis-Page-Content"/>' +
       '</div>'
   });
@@ -248,15 +242,6 @@
 
     childClass: UINode,
 
-    event_select: function(node){
-      Tab.prototype.event_select.call(this, node);
-      classList(this.tmpl.pageElement).remove('Basis-Page-Hidden');
-    },
-    event_unselect: function(node){
-      Tab.prototype.event_unselect.call(this, node);
-      classList(this.tmpl.pageElement).add('Basis-Page-Hidden');
-    },
-    
     template: 
       '<div class="Basis-TabSheet {selected} {disabled}" event-click="select">' +
         '<div{tabElement} class="Basis-Tab">' +
@@ -268,10 +253,22 @@
           '</span>' + 
           '<span class="Basis-Tab-End"/>' +
         '</div>' +
-        '<div{pageElement} class="Basis-Page Basis-Page-Hidden">' +
+        '<div{pageElement} class="Basis-Page Basis-Page-{unselected}">' +
           '<div{content|pageContent|childNodesElement} class="Basis-Page-Content"/>' +
         '</div>' +
       '</div>',
+
+    templateSync: function(noRecreate){
+      var pageElement = this.tmpl.pageElement;
+      Tab.prototype.templateSync.call(this, noRecreate);
+      if (pageElement && this.tmpl.pageElement !== pageElement)
+      {
+        if (!this.tmpl.pageElement)
+          DOM.remove(pageElement);
+        else
+          DOM.replace(pageElement, this.tmpl.pageElement)
+      }
+    },
 
     destroy: function(){
       DOM.remove(this.tmpl.pageElement);
@@ -311,6 +308,16 @@
     className: namespace + '.TabSheetControl',
 
     childClass: TabSheet,
+
+    /*listen: {
+      childNode: {
+        templateChanged: function(tab){
+          console.log('!')
+          if (this.tmpl.pagesElement)
+            this.tmpl.pagesElement.insertBefore(tab.tmpl.pageElement, tab.nextSibling ? tab.nextSibling.tmpl.pageElement : null)
+        }
+      }
+    },*/
     
     template: 
       '<div class="Basis-TabSheetControl {selected} {disabled}">' +
@@ -323,13 +330,10 @@
       '</div>',
 
     insertBefore: function(newChild, refChild){
-      var marker = this.domVersion_;
-      newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild);
-
-      if (newChild && marker != this.domVersion_)
+      if (newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild))
       {
         if (this.tmpl.pagesElement)
-          this.tmpl.pagesElement.insertBefore(newChild.tmpl.pageElement, this.nextSibling ? this.nextSibling.tmpl.pageElement : null)
+          this.tmpl.pagesElement.insertBefore(newChild.tmpl.pageElement, newChild.nextSibling ? newChild.nextSibling.tmpl.pageElement : null)
       }
 
       return newChild;

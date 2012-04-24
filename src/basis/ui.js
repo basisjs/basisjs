@@ -172,12 +172,26 @@
   var TEMPLATE_BINDING = Class.customExtendProperty({
     selected: {
       events: 'select unselect',
-      getter: 'selected && "selected"'
+      getter: function(node){
+        return node.selected ? 'selected' : '';
+      }
+    },
+    unselected: {
+      events: 'select unselect',
+      getter: function(node){
+        return node.selected ? '' : 'unselected';
+      }
     },
     disabled: {
       events: 'disable enable',
       getter: function(node){
-        return node.disabled ? 'disabled' : '';
+        return node.disabled || node.contextDisabled ? 'disabled' : '';
+      }
+    },
+    enabled: {
+      events: 'disable enable',
+      getter: function(node){
+        return node.disabled || node.contextDisabled ? '' : 'enabled';
       }
     },
     state: {

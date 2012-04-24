@@ -122,6 +122,14 @@
         if (!m || m.index !== pos)
         {
           //throw SYNTAX_ERROR;
+
+          // treats broken comment reference as comment content
+          if (state == REFERENCE && token && token.type == TYPE_COMMENT)
+          {
+            state = COMMENT;
+            continue;
+          }
+
           if (parseTag)
             lastTag = tagStack.pop();
 
@@ -1168,7 +1176,8 @@
         for (var key in bindings.l10n)
           code.push(
             'case"' + key +'":\n' +
-            '__l10n["' + key + '"]=value;' +
+            'if(value==null)value="{"+token+"}";' +
+            '__l10n[token]=value;' +
             bindings.l10n[key].join(';') +
             'break;'
           );

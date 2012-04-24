@@ -541,7 +541,7 @@
   * @param {function(event)} handler 
   * @param {object=} thisObject Context for handler
   */
-  var onLoad = (function(){
+  var onLoad = basis.ready; /*(function(){
     // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig and Me :)
 
     var fired = false;
@@ -605,7 +605,7 @@
         ;;;if (typeof console != 'undefined') console.warn('Event.onLoad(): Can\'t attach handler to onload event, because it\'s already fired!');
       }
     }
-  })();
+  })();*/
 
  /**
   * Attach unload handlers for page

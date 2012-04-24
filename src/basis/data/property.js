@@ -502,6 +502,8 @@
   */    
   var DataObjectSet = Class(Property, {
     className: namespace + '.DataObjectSet',
+
+    statePriority: DataObjectSetStatePriority,
     
    /**
     * @type {Function}
@@ -678,7 +680,7 @@
             for (var i = 0; i < len; i++)
             {
               var object = this.objects[i];
-              var weight = DataObjectSetStatePriority.indexOf(String(object.state));
+              var weight = this.statePriority.indexOf(String(object.state));
               if (weight > maxWeight)
               {
                 curObject = object;

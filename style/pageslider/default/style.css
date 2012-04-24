@@ -27,7 +27,7 @@
     height: 100%;
   }
 
-  .Basis-PageSlider .Basis-Page-Hidden
+  .Basis-PageSlider .Basis-Page-unselected
   {
     display: block;
   }

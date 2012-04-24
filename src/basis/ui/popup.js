@@ -728,7 +728,7 @@
     }
   });
 
-  Event.onLoad(function(){
+  basis.ready(function(){
     DOM.insert(document.body, popupManager.element, DOM.INSERT_BEGIN);
     popupManager.realignAll();
   });

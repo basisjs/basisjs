@@ -19,7 +19,6 @@
   basis.require('basis.l10n');
   basis.require('basis.ui');
   basis.require('basis.ui.button');
-  basis.require('basis.dragdrop');
 
 
  /**
@@ -42,7 +41,6 @@
   var Cleaner = basis.Cleaner;
 
   var createEvent = basis.event.create;
-  var dragdrop = basis.dragdrop; // optional
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -247,9 +245,11 @@
       // make window moveable
       if (this.moveable)
       {
-        if (dragdrop)
+        basis.require('basis.dragdrop');
+
+        if (basis.dragdrop)
         {
-          this.dde = new dragdrop.MoveableElement({
+          this.dde = new basis.dragdrop.MoveableElement({
             element: this.element,
             trigger: this.tmpl.ddtrigger || titleContainer,
             fixRight: false,
@@ -272,7 +272,7 @@
         }
         else
         {
-          ;;;if(typeof console != 'undefined') console.warn('`moveable` property of Window is not allowed. Drag&Drop module required.')
+          ;;;if(typeof console != 'undefined') console.warn('`moveable` property of Window is not allowed. basis.dragdrop module required.')
         }
       }
 
@@ -488,7 +488,7 @@
     }      
   });
 
-  Event.onLoad(function(){
+  basis.ready(function(){
     DOM.insert(document.body, windowManager.element, DOM.INSERT_BEGIN);
     for (var node = windowManager.firstChild; node; node = node.nextSibling)
       node.realign();

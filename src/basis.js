@@ -1925,6 +1925,87 @@
   })();
 
 
+  //
+  // on document load event dispatcher
+  //
+
+ /**
+  * Attach load handlers for page
+  * @function
+  * @param {function(event)} handler 
+  * @param {object=} thisObject Context for handler
+  */
+  var onLoad = (function(){
+    // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig and Me :)
+
+    var fired = false;
+    var loadHandler = [];
+
+    function fireHandlers(e){
+      if (typeof document != 'undefined' && document.readyState != 'complete')
+      {
+        if (!fired++)
+          for (var i = 0; i < loadHandler.length; i++)
+            loadHandler[i].callback.call(loadHandler[i].thisObject);
+      }
+    }
+
+    // The DOM ready check for Internet Explorer
+    function doScrollCheck() {
+      try {
+        // If IE is used, use the trick by Diego Perini
+        // http://javascript.nwbox.com/IEContentLoaded/
+        document.documentElement.doScroll("left");
+        fireHandlers();
+      } catch(e) {
+        setTimeout(doScrollCheck, 1);
+      }
+    }
+
+    if (typeof document != 'undefined' && document.readyState != 'complete')
+    {
+      if (document.addEventListener)
+      {
+        // use the real event for browsers that support it (all modern browsers support it)
+        document.addEventListener("DOMContentLoaded", fireHandlers, false);
+
+        // A fallback to window.onload, that will always work
+        window.addEventListener("load", fireHandlers, false);
+      }
+      else
+      {
+        // ensure firing before onload,
+  			// maybe late but safe also for iframes
+        document.attachEvent('onreadystatechange', fireHandlers);
+
+        // A fallback to window.onload, that will always work
+        window.attachEvent('onload', fireHandlers);
+
+        // If IE and not a frame
+  			// continually check to see if the document is ready
+  			try {
+  				if (window.frameElement == null && document.documentElement.doScroll)
+            doScrollCheck();
+  			} catch(e) {
+  			}
+      }
+    }
+
+    // return attach function
+    return function(callback, thisObject){
+      if (!fired)
+      {
+        loadHandler.push({
+          callback: callback,
+          thisObject: thisObject
+        });
+      }
+      else
+        callback.call(thisObject);
+    }
+  })();
+
+
  /**
   * @namespace basis
   */
@@ -1991,6 +2072,8 @@
     require: requireNamespace,
     resource: fetchResourceFunction,
     wrapScript: wrapScript,
+
+    ready: onLoad,
 
     platformFeature: {},
 

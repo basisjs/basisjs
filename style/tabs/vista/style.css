@@ -157,7 +157,7 @@
     border: 1px solid #E0E0E0;
     height: 100%;
   }
-  .Basis-Page-Hidden
+  .Basis-Page-unselected
   {
     display: none;
   }
