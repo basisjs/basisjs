@@ -136,6 +136,9 @@
     setCaption: function(newCaption){
       this.caption = newCaption;
       this.tmpl.set('caption', this.binding.caption.getter(this));
+    },
+    focus: function(){
+      basis.dom.focus(this.tmpl.buttonElement || this.element);
     }
   });
 
