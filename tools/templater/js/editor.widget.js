@@ -203,6 +203,8 @@
     sourceProperty: tmplSource,
     fileExt: 'tmpl',
 
+    active: true,
+
     value:
       '<li class="devtools-templateNode {collapsed}">\n\
         <div{content} class="devtools-templateNode-Title devtools-templateNode-CanHaveChildren {selected} {disabled}">\n\
@@ -221,7 +223,8 @@
   var cssEditor = new Editor({
     id: 'CssEditor',
     sourceProperty: cssSource,
-    fileExt: 'css'
+    fileExt: 'css',
+    active: true
   });
 
 

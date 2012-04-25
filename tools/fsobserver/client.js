@@ -14,6 +14,8 @@
   var nsProperty = basis.data.property;
   var nsEntity = basis.entity;
 
+  var STATE = basis.data.STATE;
+
 
   //
   // local vars
@@ -129,7 +131,9 @@
               updateFile: function(data){
                 console.log('file updated', data);
 
-                File(data);
+                var file = File(data.filename);
+                file.setState(STATE.READY);
+                file.commit(data);
               },
               deleteFile: function(data){
                 console.log('file deleted', data);
@@ -138,8 +142,13 @@
                 if (file)
                   file.destroy();
               },
-              fileSaved: function(data){
-                console.log('file saved', data);
+              fileSaved: function(filename){
+                File(filename).setState(STATE.READY);
+                console.log('file saved', filename);
+              },
+              fileSaveError: function(data){
+                File(data.filename).setState(STATE.ERROR, data.message);
+                console.log('file save error: ', data.message);
               },
 
               //
@@ -221,10 +230,35 @@
     }
   });
 
-  File.entityType.entityClass.extend({
+  var FileClass = File.entityType.entityClass;
+
+  FileClass.extend({
+    read: function(){
+      this.setState(STATE.PROCESSING);
+      sendToServer('readFile', this.data.filename);      
+    },
     save: function(){
       if (this.modified)
+      {
+        this.setState(STATE.PROCESSING);
         sendToServer('saveFile', this.data.filename, this.data.content);
+      }
+    }
+  });
+
+  var fileHandler = function(){
+    if (this.subscriberCount > 0 && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
+      this.read();
+  }
+  Object.extend(FileClass.prototype, {
+    state: STATE.UNDEFINED,
+    event_subscribersChanged: function(){
+      FileClass.superClass_.prototype.event_subscribersChanged.call(this);
+      fileHandler.call(this);
+    },
+    event_stateChanged: function(object, oldState){
+      FileClass.superClass_.prototype.event_stateChanged.call(this, object, oldState);
+      fileHandler.call(this);
     }
   });
 
