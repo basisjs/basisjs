@@ -1395,15 +1395,31 @@
     {
       var extMatch = resourceUrl.match(/\.[a-z0-9]+$/);
       var extWrapper;
+      var extWrapperFn;
       if (extMatch)
+      {
         extWrapper = fetchResourceFunction.extensions[extMatch[0]];
+        extWrapperFn = function(content){
+          return extWrapper(content, resourceUrl)
+        }
+      }
 
       //console.log('new resource resolver:' + resourceUrl);
       var attaches = [];
+      var resourceObject;
+      var wrapped = false;
       var resource = extWrapper
-        ? Function.lazyInit(function(){
+        ? function(){
+            if (!wrapped)
+            {
+              resource.source = externalResource(resourceUrl);
+              resourceObject = extWrapperFn(resource.source);
+            }
+            return resourceObject;
+          }
+        /*? Function.lazyInit(function(){
             return extWrapper(externalResource(resourceUrl), resourceUrl);
-          })
+          })*/
         : function(){
             return externalResource(resourceUrl);
           };
@@ -1415,6 +1431,18 @@
         if (content != externalResourceCache[resourceUrl])
         {
           externalResourceCache[resourceUrl] = content;
+          if (extWrapper)
+          {
+            if (extWrapper.updatable)
+            {
+              resource.source = content;
+              resourceObject = extWrapperFn(content);
+              content = resourceObject;
+            }
+            else
+              return;
+          }
+
           for (var i = 0, listener; listener = attaches[i]; i++)
             listener.handler.call(listener.context, content);
         }
@@ -1479,6 +1507,8 @@
       return result || false;
     }
   };
+
+  fetchResourceFunction.extensions['.json'].updatable = true;
 
   var runScriptInContext = function(context, sourceURL, scriptText){
     var baseURL = dirname(sourceURL);
