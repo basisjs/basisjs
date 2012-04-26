@@ -45,7 +45,7 @@
   // main part
   //
 
-  var getComputedStyle;
+  var patchedComputedStyle;
 
   function getPixelValue(element, value) {
     if (IS_PIXEL.test(value))
@@ -94,7 +94,7 @@
     basis.dom.event.onLoad(function(){
       var element = DOM.insert(document.body, DOM.createElement('[style="position:absolute;top:auto"]'));
 
-      if (getComputedStyle(element, 'top') != 'auto')
+      if (global.getComputedStyle(element, 'top') != 'auto')
         GETCOMPUTEDSTYLE_BUGGY = {
           top: true,
           bottom: true,
@@ -108,7 +108,7 @@
     });
 
     // getComputedStyle function using W3C spec
-    getComputedStyle = function(element, styleProp){
+    patchedComputedStyle = function(element, styleProp){
       if (GETCOMPUTEDSTYLE_BUGGY[styleProp])
       {
         // clone ancestor vector
@@ -135,7 +135,7 @@
     var IS_PIXEL = /\dpx$/i;
 
     // getComputedStyle function for non-W3C spec browsers (Internet Explorer 6-8)
-    getComputedStyle = function(element, styleProp){
+    patchedComputedStyle = function(element, styleProp){
       var style = element.currentStyle;
 
       if (style)
@@ -201,8 +201,8 @@
       cfg.factor = this.factor;
 
       // determine dir
-      var cssFloat = getComputedStyle(this.element, 'float');
-      var cssPosition = getComputedStyle(this.element, 'position');
+      var cssFloat = patchedComputedStyle(this.element, 'float');
+      var cssPosition = patchedComputedStyle(this.element, 'position');
 
       var relToOffsetParent = cssPosition == 'absolute' || cssPosition == 'fixed';
       var parentNode = relToOffsetParent ? this.element.offsetParent : this.element.parentNode;
@@ -211,27 +211,27 @@
       if (cfg.delta == 'deltaY')
       {
         cfg.offsetStart = this.element.clientHeight
-          - parseFloat(getComputedStyle(this.element, 'padding-top'))
-          - parseFloat(getComputedStyle(this.element, 'padding-bottom'));
+          - parseFloat(patchedComputedStyle(this.element, 'padding-top'))
+          - parseFloat(patchedComputedStyle(this.element, 'padding-bottom'));
 
         parentNodeSize = parentNode.clientHeight;
         if (!relToOffsetParent)
-          parentNodeSize -= parseFloat(getComputedStyle(parentNode, 'padding-top')) + parseFloat(getComputedStyle(parentNode, 'padding-bottom'));
+          parentNodeSize -= parseFloat(patchedComputedStyle(parentNode, 'padding-top')) + parseFloat(patchedComputedStyle(parentNode, 'padding-bottom'));
 
         if (isNaN(cfg.factor))
-          cfg.factor = relToOffsetParent && getComputedStyle(this.element, 'bottom') != 'auto'
+          cfg.factor = relToOffsetParent && patchedComputedStyle(this.element, 'bottom') != 'auto'
             ? -1
             : 1;
       }
       else
       {
         cfg.offsetStart = this.element.clientWidth
-          - parseFloat(getComputedStyle(this.element, 'padding-left'))
-          - parseFloat(getComputedStyle(this.element, 'padding-right'));
+          - parseFloat(patchedComputedStyle(this.element, 'padding-left'))
+          - parseFloat(patchedComputedStyle(this.element, 'padding-right'));
 
         parentNodeSize = parentNode.clientWidth;
         if (!relToOffsetParent)
-          parentNodeSize -= parseFloat(getComputedStyle(parentNode, 'padding-left')) + parseFloat(getComputedStyle(parentNode, 'padding-right'));
+          parentNodeSize -= parseFloat(patchedComputedStyle(parentNode, 'padding-left')) + parseFloat(patchedComputedStyle(parentNode, 'padding-right'));
 
         if (isNaN(cfg.factor))
         {
@@ -241,7 +241,7 @@
             if (cssFloat == 'left')
               cfg.factor = 1;
             else
-              cfg.factor = relToOffsetParent && getComputedStyle(this.element, 'right') != 'auto'
+              cfg.factor = relToOffsetParent && patchedComputedStyle(this.element, 'right') != 'auto'
                 ? -1
                 : 1;
         }
