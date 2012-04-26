@@ -351,7 +351,7 @@
     *   property.addLinkShortcut(element, 'className', 'state-{0}');
     *   // add 'loading' class name to element, when property is true
     *   property.addLinkShortcut( element, 'className', { true: 'loading' });
-    *   // switch style.display property (using DOM.show/DOM.hide)
+    *   // switch style.display property (using cssom.show/cssom.hide)
     *   property.addLinkShortcut(element, 'show', { ShowValue: true });
     *   property.addLinkShortcut(element, 'show', function(value){ return value == 'ShowValue' });  // the same
     *   property.addLinkShortcut(element, 'hide', { 'HideValue': true } });  // variation
@@ -471,8 +471,8 @@
 
   Property.shortcut = {
     className: function(newValue, oldValue){ classList(this).replace(oldValue, newValue) },
-    show:      function(newValue){ DOM.display(this, !!newValue) },
-    hide:      function(newValue){ DOM.display(this, !newValue) },
+    show:      function(newValue){ cssom.display(this, !!newValue) },
+    hide:      function(newValue){ cssom.display(this, !newValue) },
     disable:   function(newValue){ this.disabled = !!newValue },
     enable:    function(newValue){ this.disabled = !newValue }
   };

@@ -10,17 +10,17 @@
 
     var eventStat = {};
 
-    if (basis.EventObject.event)
+    if (basis.event.EventObject.event)
     {
       function wrapEvent(eventName){
-        var func = basis.EventObject.event[eventName];
-        basis.EventObject.event[eventName] = function(){
+        var func = basis.event.EventObject.event[eventName];
+        basis.event.EventObject.event[eventName] = function(){
           eventStat[eventName] = (eventStat[eventName] || 0) + 1;
           func.apply(this, arguments);
         }
       }
      
-      Object.keys(basis.EventObject.event).forEach(wrapEvent);
+      Object.keys(basis.event.EventObject.event).forEach(wrapEvent);
     }
 
     var addCount = 0;

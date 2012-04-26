@@ -199,6 +199,7 @@ packages.forEach(function(pack){
 
     var buildContent = [
       packageWrapper[0],
+      '"use strict";\n',
       fileCache['src/basis.js'].buildContent,
       '[\n',
         build.buildModules.join(',\n'),

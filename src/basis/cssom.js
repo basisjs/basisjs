@@ -305,13 +305,13 @@
   }
 
  /**
-  * @deprecated use basis.dom.display instead.
+  * @deprecated use basis.cssom.display instead.
   */
   function show(element){
     return display(element, 1);
   }
  /**
-  * @deprecated use basis.dom.display instead.
+  * @deprecated use basis.cssom.display instead.
   */
   function hide(element){ 
     return display(element);
@@ -328,13 +328,13 @@
   }
 
  /**
-  * @deprecated use basis.dom.visibility instead.
+  * @deprecated use basis.cssom.visibility instead.
   */
   function visible(element){
     return visibility(element, 1);
   }
  /**
-  * @deprecated use basis.dom.visibility instead.
+  * @deprecated use basis.cssom.visibility instead.
   */
   function invisible(element){
     return visibility(element);
@@ -747,9 +747,17 @@
     // classes
     StyleSheet: StyleSheet,
     Rule: Rule,
-    RuleSet: RuleSet
-  }).extend(unitFunc);
+    RuleSet: RuleSet,
 
+    // node styling
+    display: display,
+    show: show,
+    hide: hide,
+    visibility: visibility,
+    visible: visible,
+    invisible: invisible
+  }).extend(unitFunc);
+/*
   basis.namespace('basis.dom').extend({
     // style interface
     setStyleProperty: setStyleProperty,
@@ -763,3 +771,4 @@
     visible: visible,
     invisible: invisible
   });
+*/

@@ -21,6 +21,7 @@
     var DOM = basis.dom;
     var Event = basis.dom.event;
     var Data = basis.data;
+    var cssom = basis.cssom;
     var classList = basis.cssom.classList;
 
     var highlight = Function.runOnce(function(){
@@ -71,14 +72,14 @@
       {
         DOM.axis(tabs, DOM.AXIS_CHILD).forEach(function(tab, idx){
           classList(tab).bool('selected', tab == sender);
-          DOM.display(pages[idx].element, tab == sender);
+          cssom.display(pages[idx].element, tab == sender);
         });
         if (!sender.nextSibling)
           highlight();
       }
     });
     
-    pages.forEach(function(page, idx){ DOM.display(page.element, !idx) });
+    pages.forEach(function(page, idx){ cssom.display(page.element, !idx) });
 
     DOM.insert(
       document.body,

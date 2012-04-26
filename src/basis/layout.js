@@ -402,7 +402,7 @@
 
       if (element)
       {
-        DOM.setStyle(element, {
+        cssom.setStyle(element, {
           top: this.top + 'px',
           left: this.left + 'px',
           width: this.width + 'px',

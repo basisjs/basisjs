@@ -938,6 +938,15 @@
       return ieGetInputPosition(false);
   }
 
+  function appendHead(node){
+    if (document)
+      insert(document.head || tag('head')[0], node);
+    else
+    {
+      ;;;if (typeof console != 'undefined') console.warn('Can\'t append to head, document not found');
+    }
+  }
+
 
   //
   // export names
@@ -1037,5 +1046,7 @@
     focus: focus,
     setSelectionRange: setSelectionRange,
     getSelectionStart: getSelectionStart,
-    getSelectionEnd: getSelectionEnd
+    getSelectionEnd: getSelectionEnd,
+
+    appendHead: appendHead
   });

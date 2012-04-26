@@ -33,6 +33,7 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
+  var cssom = basis.cssom;
 
   var createEvent = basis.event.create;
   var events = basis.event.events;
@@ -98,7 +99,7 @@
           DOM.remove(this.element);
       }
       else
-        DOM.display(this.element, this.visible);
+        cssom.display(this.element, this.visible);
     },
 
     event_condChanged: createEvent('condChanged', 'node') && function(node){

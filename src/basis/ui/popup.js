@@ -356,7 +356,7 @@
 
         // make element invisible & insert element into DOM
         classList(this.element).remove('pre-transition');
-        DOM.visibility(this.element, false);
+        cssom.visibility(this.element, false);
 
         popupManager.appendChild(this);
 
@@ -370,7 +370,7 @@
         // realign position and make it visible
         this.realign();
         if (this.thread) this.thread.start(1);
-        DOM.visibility(this.element, true);
+        cssom.visibility(this.element, true);
         classList(this.element).add('pre-transition');
 
         // dispatch `show` event, there we can set focus for elements etc.

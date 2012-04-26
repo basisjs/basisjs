@@ -77,7 +77,7 @@
     init: function(config){
       UINode.prototype.init.call(this, config);
 
-      DOM.setStyle(this.element, {
+      cssom.setStyle(this.element, {
         display: 'none',
         position: 'absolute',
         top: 0,
@@ -94,7 +94,7 @@
       {
         DOM.insert(this.captureElement, this.element);
         this.element.style.zIndex = zIndex || 1000;
-        DOM.show(this.element);
+        cssom.show(this.element);
       }
     },
     release: function(){
@@ -104,7 +104,7 @@
           DOM.remove(this.element);
 
         this.captureElement = null;
-        DOM.hide(this.element);
+        cssom.hide(this.element);
       }
     },
     destroy: function(){
@@ -226,7 +226,7 @@
       UIContainer.prototype.init.call(this, config);
 
       // make main element invisible by default
-      DOM.hide(this.element);
+      cssom.hide(this.element);
 
       // modal window
       /*if (config.modal)
@@ -263,7 +263,7 @@
             },
             over: function(){
               this.cssRule.setStyle(Object.slice(this.element.style, 'left top'.qw()));
-              DOM.setStyle(this.element, {
+              cssom.setStyle(this.element, {
                 top: '',
                 left: ''
               });
@@ -369,8 +369,8 @@
     open: function(params, x, y){
       if (this.closed)
       {
-        DOM.visibility(this.element, false);
-        DOM.show(this.element);
+        cssom.visibility(this.element, false);
+        cssom.show(this.element);
 
         windowManager.appendChild(this);
         this.closed = false;
@@ -382,7 +382,7 @@
 
         //this.dispatch('beforeShow', params);
         this.event_beforeShow(params);
-        DOM.visibility(this.element, true);
+        cssom.visibility(this.element, true);
 
         if (this.buttonPanel && this.buttonPanel.firstChild)
           this.buttonPanel.firstChild.select();

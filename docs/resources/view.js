@@ -15,6 +15,7 @@
   var nsData = basis.data;
 
   var getter = Function.getter;
+  var cssom = basis.cssom;
   var classList = basis.cssom.classList;
   var createEvent = basis.event.create;
 
@@ -343,7 +344,7 @@
         }
       }
 
-      DOM.display(this.element, !!newData.text)
+      cssom.display(this.element, !!newData.text)
     },
 
     destroy: function(){
@@ -1403,7 +1404,7 @@
         className: namespace + '.ViewPrototypePartitionNode',
         handler: {
           childNodesModified: function(){
-            DOM.display(this.tmpl.empty, !this.first);
+            cssom.display(this.tmpl.empty, !this.first);
           }
         },
         template:

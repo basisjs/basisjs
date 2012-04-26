@@ -36,6 +36,7 @@
   var document = global.document;
   var Class = basis.Class;
   var DOM = basis.dom;
+  var cssom = basis.cssom;
 
   var Cleaner = basis.Cleaner;
   var Template = basis.template.Template;
@@ -292,7 +293,7 @@
       event_match: function(node){
         super_.event_match.call(this, node);
 
-        DOM.display(this.element, true);
+        cssom.display(this.element, true);
       },
 
      /**
@@ -301,7 +302,7 @@
       event_unmatch: function(node){
         super_.event_unmatch.call(this, node);
 
-        DOM.display(this.element, false);
+        cssom.display(this.element, false);
       },
 
      /**

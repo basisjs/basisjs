@@ -38,6 +38,7 @@
 
   var DOM = basis.dom;
   var Event = basis.dom.event;
+  var cssom = basis.cssom;
 
   var classList = basis.cssom.classList;
 
@@ -532,7 +533,7 @@
           style[this.startProperty] = startPosition + 'px';
           style[this.endProperty] = endPosition + 'px';
           
-          DOM.setStyle(this.tmpl.trackElement, style);
+          cssom.setStyle(this.tmpl.trackElement, style);
         }
       }
     },

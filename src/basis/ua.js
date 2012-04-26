@@ -74,9 +74,12 @@
 
   basis.platformFeature.datauri = false;
 
-  var testImage = typeof Image != 'undefined' ? new Image() : {}; // NOTE test for Image neccesary for node.js
-  testImage.onload = function(){ basis.platformFeature.datauri = true };
-  testImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+  if (typeof Image != 'undefined') // NOTE test for Image is neccesary for node.js
+    (function(){
+      var testImage = new Image();
+      testImage.onload = function(){ basis.platformFeature.datauri = true };
+      testImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+    })();
 
   //
   // Version tests
@@ -171,8 +174,6 @@
   this.toString = function(){ return browserPrettyName };
 
   this.extend({
-    testImage: testImage,
-
     //name: browserName,
     prettyName: browserPrettyName,
     

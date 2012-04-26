@@ -1215,34 +1215,49 @@
       {
         // create new namespace
         cursor[name] = (function(namespace, wrapFn){
-          var names = {};
           var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
 
+          var ignore;
           var newNamespace = function(){
             if (wrapFunction)
               return wrapFunction.apply(this, arguments);
-          }
+          };
 
-          return extend(newNamespace, {
-            path: namespace,
-            exports: {},
-            names: function(keys){
-              return Object.slice(names, typeof keys == 'string' ? keys.qw() : keys);
-            },
-            extend: function(newNames){
-              complete(names, newNames);
-              extend(this, newNames);
-              return this;
-            },
-            setWrapper: function(wrapFn){
-              if (typeof wrapFn == 'function')
-              {
-                if (wrapFunction && typeof console != 'undefined') console.warn('Wrapper for ' + namespace + ' is already set. Probably mistake here.');
-                wrapFunction = wrapFn;
+          return extend(
+            newNamespace,
+            ignore = {
+              path: namespace,
+              exports: newNamespace,
+              toString: function(){ return '[basis.namespace ' + namespace + ']' },
+              names: function(keys){
+                var result = {};
+
+                if (!keys)
+                  keys = Object.keys(this);
+                else
+                {
+                  if (typeof keys == 'string')
+                    keys = keys.qw();
+                }
+
+                for (var i = 0, key; key = keys[i]; i++)
+                  if (this.hasOwnProperty(key) && this[key] !== ignore[key])
+                    result[key] = this[key];
+                    
+                return result;
+              },
+              extend: function(newNames){
+                return extend(newNamespace, newNames);
+              },
+              setWrapper: function(wrapFn){
+                if (typeof wrapFn == 'function')
+                {
+                  if (wrapFunction && typeof console != 'undefined') console.warn('Wrapper for ' + namespace + ' is already set. Probably mistake here.');
+                  wrapFunction = wrapFn;
+                }
               }
             }
-          });
-
+          );
         })(stepPath, !path.length ? wrapFunction : null);
 
         if (nsRoot)
@@ -1326,7 +1341,7 @@
 
           var requestUrl = requirePath + filename;
 
-          wrapScript(basis.namespace(namespace), requestUrl)();
+          runScriptInContext(basis.namespace(namespace), requestUrl, externalResource(requestUrl));
 
           requireFunc.sequence.push(filename);
         }
@@ -1418,9 +1433,6 @@
             }
             return resourceObject;
           }
-        /*? Function.lazyInit(function(){
-            return extWrapper(externalResource(resourceUrl), resourceUrl);
-          })*/
         : function(){
             return externalResource(resourceUrl);
           };
@@ -1494,6 +1506,10 @@
     return frfCache[resourceUrl];
   };
 
+  fetchResourceFunction.exists = (function(resourceUrl){
+    return !!frfCache.hasOwnProperty(resolveUrl(resourceUrl));
+  });
+
   fetchResourceFunction.extensions = {
     '.js': function(resource, url){
       return runScriptInContext({ exports: {} }, url, resource).exports;
@@ -1515,7 +1531,7 @@
     var baseURL = dirname(sourceURL);
     var scriptFn;
 
-    if (typeof context.exports != 'object')
+    if (!context.exports)
       context.exports = {};
 
     // compile context function
@@ -1547,45 +1563,6 @@
     return context;
   }
 
-  var wrapScript = function(context, sourceURL){
-    var baseURL = dirname(sourceURL);
-
-    return function(){
-      var scriptText = externalResource(sourceURL);
-      var scriptFn;
-
-      if (typeof context.exports != 'object')
-        context.exports = {};
-
-      // compile context function
-      try {
-        scriptFn = Function('exports, module, basis, global, __filename, __dirname, resource',
-          '"use strict";\n\n' +
-          scriptText +
-          '//@ sourceURL=' + sourceURL
-        );
-      } catch(e) {
-        ;;;console.log('Compilation error ' + sourceURL);
-        throw e;
-      }
-
-      // run
-      scriptFn.call(
-        context,
-        context.exports,
-        context,
-        basis,
-        global,
-        sourceURL,
-        baseURL,
-        function(relativePath){
-          return fetchResourceFunction(baseURL + relativePath);
-        }
-      );
-
-      return context;
-    }
-  };
 
   // ============================================
   // OOP section: Class implementation
@@ -2102,7 +2079,6 @@
     namespace: getNamespace,
     require: requireNamespace,
     resource: fetchResourceFunction,
-    wrapScript: wrapScript,
 
     ready: onLoad,
 

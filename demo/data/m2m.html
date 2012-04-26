@@ -217,6 +217,7 @@
     var nsTree = basis.ui.tree;
     var nsButton = basis.ui.button;
 
+    var cssom = basis.cssom;
     var classList = basis.cssom.classList;
     
     // Определяем типы данных
@@ -415,7 +416,7 @@
       id: 'RelatedTree',
 
       event_targetChanged: function(object, delta){
-        DOM.visibility(this.element.parentNode, !!this.target);
+        cssom.visibility(this.element.parentNode, !!this.target);
 
         if (this.target)
         {

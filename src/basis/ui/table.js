@@ -37,6 +37,7 @@
   var Class = basis.Class;
   var Event = basis.dom.event;
   var DOM = basis.dom;
+  var cssom = basis.cssom;
 
   var getter = Function.getter;
   var nullGetter = Function.nullGetter;
@@ -393,7 +394,7 @@
 
       this.applyConfig_(this.structure);
 
-      DOM.display(this.element, this.useFooter);
+      cssom.display(this.element, this.useFooter);
     },
 
     applyConfig_: function(structure){

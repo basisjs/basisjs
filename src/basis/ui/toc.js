@@ -174,8 +174,8 @@
         cssClassName: 'TocControlFooter'
       });
 
-      DOM.hide(this.header.element);
-      DOM.hide(this.footer.element);
+      cssom.hide(this.header.element);
+      cssom.hide(this.footer.element);
 
       this.header.owner = this;
       this.footer.owner = this;
@@ -276,8 +276,8 @@
       if (this.isFit != isFit)
       {
         this.isFit = isFit;
-        DOM.display(this.header.element, !isFit);
-        DOM.display(this.footer.element, !isFit);
+        cssom.display(this.header.element, !isFit);
+        cssom.display(this.footer.element, !isFit);
       }
 
       if (isFit)
