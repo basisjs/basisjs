@@ -31,7 +31,7 @@
  */
 
 // Define global scope: `window` on browser, or `global` on node.js
-!function(global){
+;(function(global){
 
   'use strict';
 
@@ -540,6 +540,14 @@
         if (!fired++)
           return run.apply(thisObject || this, arguments);
       }
+    },
+
+   /**
+    * Retuns function body code
+    * @return {string}
+    */
+    body: function(fn){
+      return fn.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
     }
   });
 
@@ -568,14 +576,6 @@
         : function(){
             return method.apply(thisObject, arguments);
           };
-    },
-
-   /**
-    * Retuns function body code
-    * @return {string}
-    */
-    body: function(){
-      return this.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
     }
   });
 
@@ -1223,27 +1223,26 @@
               return wrapFunction.apply(this, arguments);
           }
 
-          newNamespace.path = namespace;
-
-          newNamespace.names = function(keys){
-            return Object.slice(names, typeof keys == 'string' ? keys.qw() : keys);
-          };
-
-          newNamespace.extend = function(newNames){
-            complete(names, newNames);
-            extend(this, newNames);
-            return this;
-          };
-
-          newNamespace.setWrapper = function(wrapFn){
-            if (typeof wrapFn == 'function')
-            {
-              if (wrapFunction && typeof console != 'undefined') console.warn('Wrapper for ' + namespace + ' is already set. Probably mistake here.');
-              wrapFunction = wrapFn;
+          return extend(newNamespace, {
+            path: namespace,
+            exports: {},
+            names: function(keys){
+              return Object.slice(names, typeof keys == 'string' ? keys.qw() : keys);
+            },
+            extend: function(newNames){
+              complete(names, newNames);
+              extend(this, newNames);
+              return this;
+            },
+            setWrapper: function(wrapFn){
+              if (typeof wrapFn == 'function')
+              {
+                if (wrapFunction && typeof console != 'undefined') console.warn('Wrapper for ' + namespace + ' is already set. Probably mistake here.');
+                wrapFunction = wrapFn;
+              }
             }
-          }
+          });
 
-          return newNamespace;
         })(stepPath, !path.length ? wrapFunction : null);
 
         if (nsRoot)
@@ -1341,11 +1340,12 @@
     return requireFunc;
   })();
 
+  /*{resourceResolver}*/
   var externalResourceCache = {};
   var externalResource = function(url){
     var requestUrl = url;
 
-    if (requestUrl in externalResourceCache == false)
+    if (!externalResourceCache.hasOwnProperty(requestUrl))
     {
       var resourceContent = '';
 
@@ -1367,6 +1367,7 @@
 
     return externalResourceCache[requestUrl];
   };
+  /*{resourceResolverEnd}*/
 
   var resolveUrl = (function(){
     if (typeof require == 'function')
@@ -2110,5 +2111,4 @@
     Cleaner: Cleaner
   });
 
-}(this);
-//alert(document.getElementsByTagName('script').length + '/' + document.scripts.length);
+})(this);

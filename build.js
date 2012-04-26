@@ -21,7 +21,7 @@ function readFile(filepath){
   //console.log("read " + filepath);
 
   var fileContent = fs.readFileSync(filepath, 'utf-8');
-  var depends = ['basis']; 
+  var depends = []; 
 
   var buildContent = fileContent
     .replace(/;;;.*$/gm, '')
@@ -74,8 +74,8 @@ function buildDep(namespace, context){
   var cfg = fileCache[filename];
   var result = {
     files: [],
-    srcContent: [],
-    buildContent: []
+    srcModules: [],
+    buildModules: []
   };
 
   if (!context[filename])
@@ -86,40 +86,33 @@ function buildDep(namespace, context){
     {
       var build = buildDep(dep, context);
       result.files.push.apply(result.files, build.files);
-      result.srcContent.push.apply(result.srcContent, build.srcContent);
-      result.buildContent.push.apply(result.buildContent, build.buildContent);
+      result.srcModules.push.apply(result.srcModules, build.srcModules);
+      result.buildModules.push.apply(result.buildModules, build.buildModules);
     }
 
     if (buildMode)
     {
-      if (namespace == 'basis')
-      {
-        result.srcContent.push.apply(result.srcContent, [
-          "//\n// " + filename + "\n//",
-          cfg.srcContent
-        ]);
+      result.srcModules.push(
+        "//\n// " + filename + "\n//\n" +
+        '{\n' +
+        '  ns: "' + namespace + '",\n' + 
+        '  path: "' + path.dirname(cfg.path) + '/",\n' + 
+        '  fn: "' + path.basename(cfg.path) + '",\n' +
+        '  body: function(){\n"use strict";\n' +
+             cfg.srcContent + '\n' +
+        '  }\n' + 
+        '}'
+      );
 
-        result.buildContent.push.apply(result.buildContent, [
-          "//\n// " + filename + "\n//",
-          cfg.buildContent
-        ]);
-      }
-      else
-      {
-        result.srcContent.push.apply(result.srcContent, [
-          "//\n// " + filename + "\n//",
-          'new Function(__wrapArgs, function(){',
-          cfg.srcContent,
-          '}.body() + "//@ sourceURL=" + __curLocation + "' + filename + '").call(basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '").exports, this, __curLocation + "' + filename + '", __curLocation + "' + path.dirname(cfg.path) + '/", basis, function(url){ return basis.resource(__curLocation + "' + path.dirname(cfg.path) + '/" + url) });'
-        ]);
-
-        result.buildContent.push.apply(result.buildContent, [
-          "//\n// " + filename + "\n//",
-          '(function(module, exports, global, __filename, __dirname, basis, resource){',
-          cfg.buildContent,
-          '}).call(basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '"), basis.namespace("' + namespace + '").exports, this, __curLocation + "' + filename + '", __curLocation + "' + path.dirname(cfg.path) + '/", basis, function(url){ return basis.resource(__curLocation + "' + path.dirname(cfg.path) + '/" + url) });'
-        ]);
-      }
+      result.buildModules.push(
+        "// " + filename + "\n" +
+        '{' +
+          '"' + namespace.replace(/^basis\./, '') + '": function(basis, global, __dirname, exports, resource, module, __filename){' +
+            //'console.log(arguments)'+
+            cfg.buildContent +
+          '}' + 
+        '}'
+      );
     }
 
     result.files.push(filename);
@@ -182,15 +175,47 @@ packages.forEach(function(pack){
     var packStartTime = new Date;
     var packageWrapper = [
       "(function(){\n" +
-      "var __wrapArgs = 'module, exports, global, __filename, __dirname, basis, resource';\n" +
-      "var __scripts = document.getElementsByTagName('script');\n" +
+      "var __scripts = typeof document != 'undefined' ? document.getElementsByTagName('script') : [];\n" +
       "var __curLocation = __scripts[__scripts.length - 1].src.replace(/[^\/]+\.js$/, '');\n\n",
 
       "\n})();"
     ];
 
-    var srcContent = packageWrapper[0] + build.srcContent.join('\n\n') + packageWrapper[1];
-    var buildContent = packageWrapper[0] + build.buildContent.join('\n\n') + packageWrapper[1];
+    var srcContent = [
+      packageWrapper[0],
+      fileCache['src/basis.js'].srcContent,
+      '[\n',
+        build.srcModules.join(',\n'),
+      '].forEach(' + function(module){
+         var path = __curLocation + module.path;    
+         var fn = path + module.fn;
+         var ns = basis.namespace(module.ns);
+         new Function('module, exports, global, __filename, __dirname, basis, resource',
+           Function.body(module.body) + "//@ sourceURL=" + fn
+         ).call(ns, ns, ns.exports, this, fn, path, basis, function(url){ return basis.resource(path + url) });
+       } + ', this)',
+      packageWrapper[1]
+    ].join('');
+
+    var buildContent = [
+      packageWrapper[0],
+      fileCache['src/basis.js'].buildContent,
+      '[\n',
+        build.buildModules.join(',\n'),
+      '].forEach(' + function(module){
+         for (var ns in module)
+         {
+           var fn = module[ns];
+           ns = 'basis.' + ns;
+           var nsParts = ns.split(".");
+           var filename = nsParts.pop() + '.js';
+           var path = __curLocation + 'src/' + nsParts.join('/') + '/';
+           var ns = basis.namespace(ns);
+           fn.call(ns, basis, this, path, ns.exports, function(url){ return basis.resource(path + url) }, ns, path + filename);
+         }
+       } + ', this)',
+      packageWrapper[1]
+    ].join('');
 
     fs.writeFileSync(packageDebugResFilename, srcContent, 'utf-8');
 
@@ -256,7 +281,7 @@ packages.forEach(function(pack){
   {
     var fileContent = ['// Package basis-' + packageName + '.js\n\n!function(){\n\  if (typeof document != \'undefined\')\n\  {\n\    var scripts = document.getElementsByTagName(\'script\');\n\    var curLocation = scripts[scripts.length - 1].src.replace(/[^\\/]+\\.js\$/, \'\');\n'];
 
-    fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + build.files[0] + "\"></script>');\n");
+    fileContent.push("\n    document.write('<script src=\"' + curLocation + 'src/basis.js\"></script>');\n");
     fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + packageFilename + "\"></script>');\n");
     /*fileContent.push("\n    document.write('<script>');\n");
 

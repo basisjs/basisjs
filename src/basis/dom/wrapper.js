@@ -1519,6 +1519,9 @@
         // dispatch event
         if (!this.dataSource)
           this.event_childNodesModified(this, { inserted: [newChild] });
+
+        if (newChild.listen.parentNode)
+          this.addHandler(newChild.listen.parentNode, newChild);
       }
 
       // return newChild
@@ -1542,7 +1545,7 @@
       var pos = this.childNodes.indexOf(oldChild);
 
       if (pos == -1)
-        throw EXCEPTION_NODE_NOT_FOUND;        
+        throw EXCEPTION_NODE_NOT_FOUND;
 
       this.childNodes.splice(pos, 1);
         
@@ -1563,6 +1566,10 @@
         
       oldChild.nextSibling = null;
       oldChild.previousSibling = null;
+
+      // remove listener from parentNode
+      if (oldChild.listen.parentNode)
+        this.addHandler(oldChild.listen.parentNode, oldChild);
 
       // update selection
       updateNodeContextSelection(oldChild, oldChild.contextSelection, null, true);
