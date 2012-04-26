@@ -711,7 +711,3 @@
 
     getEventInfo: getEventInfo
   });
-
-  basis.namespace('basis.dom').extend({
-    ready: onLoad
-  });
