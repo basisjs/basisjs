@@ -323,7 +323,7 @@
       var superClsPrototype = cls && cls.superClass_ && cls.superClass_.prototype;
     }
 
-    var keys = context == 'namespace' ? scope.names() : scope;
+    var keys = context == 'namespace' ? scope.exports : scope;
     for (var key in keys)
     {
       // ignore for private names
@@ -590,24 +590,24 @@
 
       function createJsDocEntity(source, path){
         var text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft();
-        //if (path == 'basis.dom') debugger;
-        //console.log(path);
         var e = JsDocEntity({
           path: path,
           text: text,
           file: resource.url,
           line: line + 1 + lineFix
         });
-        //jsDocs[e.data.path] = e.data.text;
       }
 
-      var parts = resource.text.replace(/\r\n|\n\r|\r/g, '\n').replace(/\/\*+\//g, '').split(/(?:\/\*\*((?:.|\n)+?)\*\/)/);
       var ns = '';
       var isClass;
       var clsPrefix = '';
       var skipDeclaration = false;
       var line = 0;
       var lineFix;
+      var parts = resource.text
+        .replace(/\r\n|\n\r|\r/g, '\n')
+        .replace(/\/\*+(\s*@cut.+\*)?\//g, '')
+        .split(/(?:\/\*\*((?:.|\n)+?)\*\/)/);
 
       parts.reduce(function(jsdoc, code, idx){
         lineFix = 0;
@@ -725,6 +725,28 @@
       }
     }
   };
+
+  var resolveQueue = Object.values(basis.namespaces_).map(function(ns){
+    return ns.source_ ? {
+      url: ns.filename_,
+      kind: 'jsdoc',
+      text: ns.source_
+    } : null
+  }).filter(Function.$isNotNull);
+
+  var resolveResStart = new Date;
+  function resolveRes(){
+    var item = resolveQueue.shift();
+    if (item)
+    {
+      sourceParser[item.kind](item);
+      setTimeout(resolveRes, 0);
+    }
+    else
+      console.log(new Date - resolveResStart);
+  };
+  setTimeout(resolveRes, 0);
+
 
   basis.namespace(namespace).extend({
     JsDocEntity: JsDocEntity,

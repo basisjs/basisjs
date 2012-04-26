@@ -171,7 +171,7 @@
   // export names
   //
 
-  this.toString = function(){ return browserPrettyName };
+  //this.toString = function(){ return browserPrettyName };
 
   this.extend({
     //name: browserName,
@@ -181,6 +181,5 @@
     is: function(name){ return testBrowser(name) },  // single test
 
     // Cookie interface
-    cookies: cookies,
-    Cookies: cookies /* deprecated */
+    cookies: cookies
   });

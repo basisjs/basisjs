@@ -34,8 +34,6 @@
   var EXCEPTION_SESSION_NOT_OPEN = 'No opened session';
   var EXCEPTION_SESSION_IS_FROZEN = 'Session is frozen';
 
-  var DEBUG_MODE = basis.ua.Cookies.get('DEBUG_MODE');
-
   var activeSession;
   var timestamp;
   var freezeState = false;
@@ -90,7 +88,7 @@
       if (data)
         extend(session.data, data);
 
-      ;;; if (DEBUG_MODE && typeof console != 'undefined') console.info('Session opened: ' + activeSession.key);
+      ;;; if (typeof console != 'undefined') console.info('Session opened: ' + activeSession.key);
 
       // fire event
       this.event_sessionOpen(this);
@@ -101,7 +99,7 @@
         if (freezeState)
           this.unfreeze();
 
-        ;;; if (DEBUG_MODE && typeof console != 'undefined') console.info('Session closed: ' + activeSession.key);
+        ;;; if (typeof console != 'undefined') console.info('Session closed: ' + activeSession.key);
 
         this.event_sessionClose(this);
 
@@ -169,7 +167,7 @@
       this.key = key;
       this.data = {};
 
-      ;;; if (DEBUG_MODE && typeof console != 'undefined') console.info('Session created: ' + key);
+      ;;; if (typeof console != 'undefined') console.info('Session created: ' + key);
     },
     storeData: function(key, data){
       if (freezeState)

@@ -732,6 +732,7 @@
   // export names
   //
 
+  this.extend(unitFunc);
   this.extend({
     // style interface
     setStyleProperty: setStyleProperty,
@@ -756,7 +757,7 @@
     visibility: visibility,
     visible: visible,
     invisible: invisible
-  }).extend(unitFunc);
+  });
 /*
   basis.namespace('basis.dom').extend({
     // style interface

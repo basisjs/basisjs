@@ -1217,7 +1217,6 @@
         cursor[name] = (function(namespace, wrapFn){
           var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
 
-          var ignore;
           var newNamespace = function(){
             if (wrapFunction)
               return wrapFunction.apply(this, arguments);
@@ -1225,29 +1224,13 @@
 
           return extend(
             newNamespace,
-            ignore = {
+            {
               path: namespace,
-              exports: newNamespace,
+              exports: {},
               toString: function(){ return '[basis.namespace ' + namespace + ']' },
-              names: function(keys){
-                var result = {};
-
-                if (!keys)
-                  keys = Object.keys(this);
-                else
-                {
-                  if (typeof keys == 'string')
-                    keys = keys.qw();
-                }
-
-                for (var i = 0, key; key = keys[i]; i++)
-                  if (this.hasOwnProperty(key) && this[key] !== ignore[key])
-                    result[key] = this[key];
-                    
-                return result;
-              },
               extend: function(newNames){
-                return extend(newNamespace, newNames);
+                complete(this, newNames);
+                extend(this.exports, newNames);
               },
               setWrapper: function(wrapFn){
                 if (typeof wrapFn == 'function')
@@ -1341,7 +1324,11 @@
 
           var requestUrl = requirePath + filename;
 
-          runScriptInContext(basis.namespace(namespace), requestUrl, externalResource(requestUrl));
+          var ns = basis.namespace(namespace);
+          var scriptText = externalResource(requestUrl);
+          runScriptInContext(ns, requestUrl, scriptText);
+          ;;;ns.filename_ = requestUrl;
+          ;;;ns.source_ = scriptText;
 
           requireFunc.sequence.push(filename);
         }
@@ -1438,7 +1425,7 @@
           };
 
       resource.url = resourceUrl;
-      resource.toString = resource; //function(){ return resource(); };
+      resource.toString = resource;// function(){ return '[resource ' + resourceUrl + ']' }; //resource();
       resource.update = function(content){
         content = String(content);
         if (content != externalResourceCache[resourceUrl])
@@ -1506,6 +1493,9 @@
     return frfCache[resourceUrl];
   };
 
+  fetchResourceFunction.getSource = (function(resourceUrl){
+    return externalResource(resolveUrl(resourceUrl));
+  });
   fetchResourceFunction.exists = (function(resourceUrl){
     return !!frfCache.hasOwnProperty(resolveUrl(resourceUrl));
   });

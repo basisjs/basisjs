@@ -9,7 +9,7 @@
 
   <link rel="stylesheet" type="text/css" title="Default Style" href="../style/highlight/style.css" media="screen" />
 
-  <script type="text/javascript" src="../basis-all.js"></script>
+  <script type="text/javascript" src="../src/basis.js"></script>
 
   <style type="text/css">
     BODY
@@ -26,36 +26,39 @@
 
 <body>
   <script type="text/javascript">
+    basis.require('basis.format.highlight');
+    basis.require('basis.net.ajax');
+
     var line = parseInt((location.hash || '').replace(/^#/, ''));
     var filename = ((location.search || '').match(/[\?\&]file=([^&]+)/) || [])[1];
     if (filename)
     {
       var transport = new basis.net.ajax.Transport({
         url: '../' + filename,
-        event_complete: function(req){
-          this.constructor.prototype.event_success.apply(this, arguments);
+        handler: {
+          complete: function(req){
+            //t = new Date;
+            var node = new basis.format.highlight.SourceCodeNode({
+              container: document.body,
+              lang: 'js',
+              normalize: false,
+              data: {
+                code: req.data.responseText//.replace(/^\s*\n/, function(m){ return '.' + m })
+              }
+            });
 
-          //t = new Date;
-          var node = new basis.format.highlight.SourceCodeNode({
-            container: document.body,
-            lang: 'js',
-            normalize: false,
-            data: {
-              code: req.responseText//.replace(/^\s*\n/, function(m){ return '.' + m })
-            }
-          });
-
-          //alert(new Date - t)
-          if (!isNaN(line))
-          {
-            var lineElement = node.element.childNodes[line - 1];
-            if (lineElement)
+            //alert(new Date - t)
+            if (!isNaN(line))
             {
-              lineElement.className += ' selected';
-              setTimeout(function(){
-                document.documentElement.scrollTop =
-                document.body.scrollTop = lineElement.offsetTop - 200;
-              }, 15);
+              var lineElement = node.element.childNodes[line - 1];
+              if (lineElement)
+              {
+                lineElement.className += ' selected';
+                setTimeout(function(){
+                  document.documentElement.scrollTop =
+                  document.body.scrollTop = lineElement.offsetTop - 200;
+                }, 15);
+              }
             }
           }
         }

@@ -28,8 +28,7 @@
   var Class = basis.Class;
   var Event = basis.dom.event;
 
-  var Browser = basis.ua;
-  var Cookies = Browser.cookies;
+  var ua = basis.ua;
   var Cleaner = basis.Cleaner;
 
   var TimeEventManager = basis.timer.TimeEventManager;
@@ -143,11 +142,11 @@
       if (requestData.contentType != 'multipart/form-data')
         headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
 
-      if (Browser.test('gecko'))
+      if (ua.test('gecko'))
         headers['Connection'] = 'close';
     }
     else
-      if (Browser.test('ie')) // disable IE caching
+      if (ua.test('ie')) // disable IE caching
         headers['If-Modified-Since'] = 'Thu, 01 Jan 1970 00:00:00 GMT'; // new Date(0).toGMTString() is not correct here;
                                                                         // IE returns date string with no leading zero and IIS may parse
                                                                         // date wrong and response with code 400
@@ -335,7 +334,7 @@
 
       // create new XMLHTTPRequest instance for gecko browsers in asynchronous mode
       // object crash otherwise
-      if (Browser.test('gecko1.8.1-') && requestData.asynchronous)
+      if (ua.test('gecko1.8.1-') && requestData.asynchronous)
         this.xhr = createXmlHttpRequest();
 
       this.proxy.event_start(this);
@@ -365,7 +364,7 @@
       var postBody = requestData.postBody;
 
       // BUGFIX: IE fixes for post body
-      if (IS_POST_REGEXP.test(requestData.method) && Browser.test('ie9-'))
+      if (IS_POST_REGEXP.test(requestData.method) && ua.test('ie9-'))
       {
         if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
           // sending xmldocument content as string, otherwise IE override content-type header

@@ -98,7 +98,7 @@ function buildDep(namespace, context){
         '  ns: "' + namespace + '",\n' + 
         '  path: "' + path.dirname(cfg.path) + '/",\n' + 
         '  fn: "' + path.basename(cfg.path) + '",\n' +
-        '  body: function(){\n"use strict";\n' +
+        '  body: function(){' +
              cfg.srcContent + '\n' +
         '  }\n' + 
         '}'
@@ -190,8 +190,10 @@ packages.forEach(function(pack){
          var path = __curLocation + module.path;    
          var fn = path + module.fn;
          var ns = basis.namespace(module.ns);
+         ns.source_ = Function.body(module.body);
+         ns.filename_ = module.path + module.fn;
          new Function('module, exports, global, __filename, __dirname, basis, resource',
-           Function.body(module.body) + "//@ sourceURL=" + fn
+           '\n"use strict";\n' + ns.source_ + '//@ sourceURL=' + fn
          ).call(ns, ns, ns.exports, this, fn, path, basis, function(url){ return basis.resource(path + url) });
        } + ', this)',
       packageWrapper[1]

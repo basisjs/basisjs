@@ -1675,7 +1675,7 @@
         var namespace = this.data.obj;
         if (namespace)
         {
-          var clsList = namespace.names();
+          var clsList = namespace.exports;
           var dsClsList = {};
 
           for (var cls in clsList)

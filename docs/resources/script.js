@@ -634,6 +634,7 @@
   // jsDocs parse
   //
 
+  /*
   var scripts = Array.from(document.getElementsByTagName('SCRIPT'))
                   .map(getter('getAttribute("src")'))
                   .filter(getter('match(/\\/src\\/basis[a-z0-9\\_\\-\/]*\\.js$/i)'));
@@ -642,6 +643,6 @@
 
   scripts.forEach(function(src){
     nsCore.loadResource(src, 'jsdoc');
-  });
+  });*/
 
 })();
