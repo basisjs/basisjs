@@ -57,7 +57,7 @@ basis.require('basis.ui');
   var editor = widget('editor', false);
   var tokenView = widget('tokenView', false);
   var filelist = widget('filelist');
-  var fsobserver = basis.devtools;
+
 
   //
   // main part
@@ -66,26 +66,30 @@ basis.require('basis.ui');
   // editor -> tokenView
   editor().tmplSource.addLink(tokenView(), tokenView().setSource);
 
+  var fsobserver;
   // fsobserver -> app
-  if (fsobserver)
-  {
-    fsobserver.isOnline.addLink(null, function(value){
-      if (value)
-        initFilelist();
-    });
+  basis.ready(function(){
+    fsobserver = basis.devtools;
+    if (fsobserver)
+    {
+      fsobserver.isOnline.addLink(null, function(value){
+        if (value)
+          initFilelist();
+      });
 
-    var initFilelist = Function.runOnce(function(){
-      // add filelist into app
-      app.setSatellite('filelist', filelist());
+      var initFilelist = Function.runOnce(function(){
+        // add filelist into app
+        app.setSatellite('filelist', filelist());
 
-      // tree.selection -> editor
-      filelist().tree.selection.addHandler({
-        datasetChanged: function(selection, delta){
-          this.setSourceFile(selection.pick());
-        }
-      }, editor());
-    });
-  }
+        // tree.selection -> editor
+        filelist().tree.selection.addHandler({
+          datasetChanged: function(selection, delta){
+            this.setSourceFile(selection.pick());
+          }
+        }, editor());
+      });
+    }
+  });
 
   function updatePickupElement(value, oldValue){
     if (value && value.element.nodeType == 1)

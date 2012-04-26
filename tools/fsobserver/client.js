@@ -38,8 +38,9 @@
   if (typeof console == 'undefined')
     console = { log: Function(), warn: Function() };
 
-  var settingsPath = 'basis.devtools.observer_' + location.pathname.replace(/\/[^\/\.]+?(\.[^\/\.]+)$/, '/').replace(/[^a-z0-9]/g, '_');
-  var listenDirs = typeof localStorage != 'undefined' ? JSON.parse(localStorage[settingsPath]) : {};
+  /*var settingsPath = 'basis.devtools.observer_' + location.pathname.replace(/\/[^\/\.]+?(\.[^\/\.]+)$/, '/').replace(/[^a-z0-9]/g, '_');
+  var listenDirs = typeof localStorage != 'undefined' ? JSON.parse(localStorage[settingsPath]) : {};*/
+  //var listenDirs = {};
 
   var documentHead = document.getElementsByTagName('head')[0];
 
@@ -51,7 +52,7 @@
     // socket.io
     documentHead.appendChild(
       basis.dom.createElement({
-        description: 'script[src="//{location}/socket.io/socket.io.js"]',
+        description: 'script[src="/socket.io/socket.io.js"]',
         error: function(){
           console.warn('Error on loading ' + this.src);
           //alert('too bad... but also good')
@@ -62,7 +63,7 @@
             console.log('Connecting to server via socket.io');
 
             var observeCount = 0;
-            var socket = io.connect('//{location}');
+            var socket = io.connect('/');
             isReady.set(isReady_ = true);
 
             function sendToServerOffline(){
@@ -81,31 +82,25 @@
               // connection events
               //
               connect: function(){
-                connectionState.set('connected');
-
-                var pathes = ListenPath.all.getItems();
-                observeCount = pathes.length;
-                for (var i = 0; path = pathes[i]; i++)
-                  socket.emit('observe', path.data.rel, path.data.fspath);
+                socket.emit('observe');
 
                 sendToServer = sendToServerOnline;
 
-                if (!observeCount)
-                {
-                  connectionState.set('online');
-                  isOnline.set(isOnline_ = true);
-                }
+                connectionState.set('connected');
+                isOnline.set(isOnline_ = true);
               },
               disconnect: function(){
-                connectionState.set('offline');
                 sendToServer = sendToServerOffline;
+
+                connectionState.set('offline');
                 isOnline.set(isOnline_ = false);
               },
               connecting: function(){
                 connectionState.set('connecting');
               },
-              observeReady: function(rel, filelist){
-                var path = ListenPath.get(rel)
+              observeReady: function(filelist){
+                filelist.map(File);
+                /*var path = ListenPath.get(rel)
 
                 console.log('listen for ' + rel + ' (ready ' + filelist.length + ' files)');
 
@@ -117,7 +112,7 @@
                 {
                   connectionState.set('online');
                   isOnline.set(isOnline_ = true);
-                }
+                }*/
               },
 
               //
@@ -169,7 +164,7 @@
   // Main logic
   //
 
-  var ListenPath = new nsEntity.EntityType({
+  /*var ListenPath = new nsEntity.EntityType({
     name: namespace + '.ListenPath',
     fields: {
       rel: basis.entity.StringId,
@@ -213,7 +208,7 @@
       rel: path,
       fspath: listenDirs[path]
     });
-  }
+  }*/
 
 
   //

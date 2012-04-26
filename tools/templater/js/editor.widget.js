@@ -30,8 +30,6 @@
   var nsButton = basis.ui.button;
   var nsForm = basis.ui.form;
 
-  var fsobserver = basis.devtools;
-
   var KEY_S = 'S'.charCodeAt(0);
 
   function onEnter(editor){
@@ -373,8 +371,8 @@
     {
       var tmplFilename = filename.replace(/\.[a-z0-9]+$/, '.tmpl');
       var cssFilename = filename.replace(/\.[a-z0-9]+$/, '.css');
-      tmplEditor.setDelegate(fsobserver.File.getSlot({ filename: tmplFilename, content: '' }));
-      cssEditor.setDelegate(fsobserver.File.getSlot({ filename: cssFilename, content: '' }));
+      tmplEditor.setDelegate(basis.devtools.File.getSlot({ filename: tmplFilename, content: '' }));
+      cssEditor.setDelegate(basis.devtools.File.getSlot({ filename: cssFilename, content: '' }));
     }
     else
     {
