@@ -1,5 +1,11 @@
 (function(global){
 
+  basis.require('basis.date');
+  basis.require('basis.dom');
+  basis.require('basis.data');
+  basis.require('basis.data.property');
+  basis.require('basis.entity');
+
  /**
   * @namespace
   */
@@ -48,9 +54,9 @@
   // init part
   //
 
-  basis.dom.ready(function(){
+  basis.ready(function(){
     // socket.io
-    documentHead.appendChild(
+    basis.dom.appendHead(
       basis.dom.createElement({
         description: 'script[src="/socket.io/socket.io.js"]',
         error: function(){

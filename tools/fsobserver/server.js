@@ -16,7 +16,7 @@
 
   app.listen(port, function(){
     var port = app.address().port;
-    console.log('Server is online, listen for port http://localhost:' + port);
+    console.log('Server is online, listen for http://localhost:' + port + '\nWatching changes for path: ' + BASE_PATH);
   });
 
   var MIME_TYPE = {
@@ -32,37 +32,44 @@
     var location = url.parse(req.url, true, true);
     var host = req.headers.host;
 
-    var filename = BASE_PATH + location.pathname;
+    var pathname = location.pathname == '/' ? '/index.html' : location.pathname;
+    var filename = BASE_PATH + pathname;
     var ext = path.extname(filename);
 
-    fs.readFile(filename, function(err, data){
-      if (err)
-      {
-        res.writeHead(500);
-        res.end('Error loading ' + filename + ', error: ' + err);
-      }
-      else
-      {
-        res.writeHead(200, {
-          'Content-Type': MIME_TYPE[ext.slice(1)] || 'text/plain'
-        });
-
-        if (ext == '.html' || ext == '.htm')
+    if (!path.existsSync(filename))
+    {
+      res.writeHead(404);
+      res.end('File ' + filename + ' not found');
+    }
+    else
+      fs.readFile(filename, function(err, data){
+        if (err)
         {
-          fs.readFile(__dirname + '/client.js', function(err, clientFileData){
-            if (!err)
-            {
-              data = String(data).replace(/<\/body>/, '<script>' + clientFileData + '</script></body>');
-              res.end(data);
-            }
-          });
+          res.writeHead(500);
+          res.end('Can\'t read file ' + filename + ', error: ' + err);
         }
         else
         {
-          res.end(data);
+          res.writeHead(200, {
+            'Content-Type': MIME_TYPE[ext.slice(1)] || 'text/plain'
+          });
+
+          if (ext == '.html' || ext == '.htm')
+          {
+            fs.readFile(__dirname + '/client.js', function(err, clientFileData){
+              if (!err)
+              {
+                data = String(data).replace(/<\/body>/, '<script>' + clientFileData + '</script></body>');
+                res.end(data);
+              }
+            });
+          }
+          else
+          {
+            res.end(data);
+          }
         }
-      }
-    });
+      });
   }
 
   //
