@@ -115,6 +115,7 @@
   * @class
   */
   var ColorPicker = Node.subclass({
+    className: namespace + '.ColorPicker',
     usedColors: null,
     presetColors: [
       '#F80',
@@ -171,6 +172,7 @@
   * @class
   */
   var GraphNode = Node.subclass({
+    className: namespace + '.GraphNode',
     event_requestRedraw: createEvent('requestRedraw')
   });
 
@@ -356,6 +358,7 @@
   * @class
   */
   var GraphSeriesList = Node.subclass({
+    className: namespace + '.GraphSeriesList',
     childClass: GraphSeries,
 
     childFactory: function(config){
@@ -435,6 +438,7 @@
   * @class
   */
   var SeriesGraphNode = GraphNode.subclass({
+    className: namespace + '.SeriesGraphNode',
     values: {},
 
     valueChangeEvents: oneFunctionProperty(
@@ -454,6 +458,7 @@
   * @class
   */
   var SeriesGraph = Graph.subclass({
+    className: namespace + '.SeriesGraph',
     childClass: SeriesGraphNode,    
 
     keyGetter: Function.$self,
@@ -530,6 +535,8 @@
   * @class
   */
   var AxisGraph = SeriesGraph.subclass({
+    className: namespace + '.AxisGraph',
+
     showLegend: true,
     showYLabels: true,
     showXLabels: true,
@@ -1467,6 +1474,7 @@
    * @class
    */
   var BarGraphViewer = GraphViewer.subclass({
+    className: namespace + '.BarGraphViewer',
     draw: function(x, y){
       var context = this.context;
 
@@ -1635,6 +1643,7 @@
    * @class
    */
   var StackedBarGraph = BarGraph.subclass({
+    className: namespace + '.StackedBarGraph',
     getMaxValue: function(){
       var max;
       var sum;
@@ -1691,7 +1700,18 @@
   //
 
   this.extend({
+    ColorPicker: ColorPicker,
+    GraphNode: GraphNode,
+    Graph: Graph,
+    GraphSeries: GraphSeries,
+    GraphSeriesList: GraphSeriesList,
+    SeriesGraphNode: SeriesGraphNode,
+    SeriesGraph: SeriesGraph,
+    AxisGraph: AxisGraph,
+    GraphSelection: GraphSelection,
+    GraphViewer: GraphViewer,
     LinearGraph: LinearGraph,
+    BarGraphViewer: BarGraphViewer,
     BarGraph: BarGraph,
     StackedBarGraph: StackedBarGraph
   });

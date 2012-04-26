@@ -456,127 +456,6 @@
 
 
   //
-  // Menu
-  //
-
- /**
-  * @class
-  */
-  var MenuItem = Class(UIContainer, {
-    className: namespace + '.MenuItem',
-
-    childClass: Class.SELF,
-
-    template:
-      '<div class="Basis-Menu-Item {selected} {disabled}" event-click="click">' +
-        '<a{content} href="#"><span>{caption}</span></a>' +
-      '</div>'/* +
-      '<div{childNodesElement}/>'*/,
-
-    binding: {
-      caption: 'caption'
-    },
-
-    /*templateUpdate: function(tmpl){
-      if (tmpl.captionText)
-        tmpl.captionText.nodeValue = this.captionGetter(this);
-    },*/
-
-    action: {
-      click: function(event){
-        this.click();
-        Event.kill(event); // prevent default for <a>
-      }
-    },
-
-    event_childNodesModified: function(node, delta){
-      classList(this.element).bool('hasSubItems', this.firstChild);
-
-      UIContainer.prototype.event_childNodesModified.call(this, node, delta);
-    },
-
-    groupId: 0,
-    caption: '[untitled]',
-    //captionGetter: getter('caption'),
-
-    handler: null,
-    defaultHandler: function(node){
-      if (this.parentNode)
-        this.parentNode.defaultHandler(node);
-    },
-
-    setCaption: function(newCaption){
-      this.caption = newCaption;
-      this.templateUpdate(this.tmpl);
-    },
-    click: function(){
-      if (!this.isDisabled() && !(this instanceof MenuItemSet))
-      {
-        if (this.handler)
-          this.handler(this);
-        else
-          this.defaultHandler(this);
-      }
-    }
-  });
-
- /**
-  * @class
-  */
-  var MenuItemSet = Class(MenuItem, {
-    className: namespace + '.MenuItemSet',
-    //event_childNodesModified: UINode.prototype.event_childNodesModified,
-
-    template: 
-      '<div class="Basis-Menu-ItemSet {selected} {disabled}"/>'
-  });
-
- /**
-  * @class
-  */
-  var MenuPartitionNode = Class(UIPartitionNode, {
-    className: namespace + '.MenuPartitionNode',
-
-    template:
-      '<div class="Basis-Menu-ItemGroup">' +
-        '<div{childNodesElement|content} class="Basis-Menu-ItemGroup-Content"></div>' +
-      '</div>'
-  });
-
- /**
-  * @class
-  */
-  var MenuGroupingNode = Class(UIGroupingNode, {
-    className: namespace + '.MenuGroupingNode',
-    childClass: MenuPartitionNode
-  });
-
- /**
-  * @class
-  */
-  var Menu = Class(Popup, {
-    className: namespace + '.Menu',
-    childClass: MenuItem,
-
-    defaultDir: [LEFT, BOTTOM, LEFT, TOP].join(' '),
-    subMenu: null,
-
-    groupingClass: MenuGroupingNode,
-    grouping: getter('groupId'),
-
-    defaultHandler: function(){
-      this.hide();
-    },
-
-    template:
-      '<div class="Basis-Menu {selected} {disabled}">' +
-        '<div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>' +
-        '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
-      '</div>'
-  });
-
-
-  //
   //  Popup manager
   //
 
@@ -744,16 +623,18 @@
   this.extend({
     // const
     ORIENTATION: ORIENTATION,
+    DIR: {
+      LEFT: LEFT,
+      RIGHT: RIGHT,
+      TOP: TOP,
+      BOTTOM: BOTTOM,
+      CENTER: CENTER
+    },
 
     // methods
     setHandheldMode: setHandheldMode,
 
     // classes
     Popup: Popup,
-    Balloon: Balloon,
-    Menu: Menu,
-    MenuGroupingNode: MenuGroupingNode,
-    MenuPartitionNode: MenuPartitionNode,
-    MenuItem: MenuItem,
-    MenuItemSet: MenuItemSet
+    Balloon: Balloon
   });
