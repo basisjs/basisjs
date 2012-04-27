@@ -29,10 +29,10 @@
   //load proxy pathes
   var rewriteRules = {};
   try {
-    var data = fs.readFileSync('fsobserver/rewrite.json');
+    var data = fs.readFileSync(path.resolve(BASE_PATH, 'rewrite.json'));
     rewriteRules = JSON.parse(String(data));
   } catch(e) {  
-    console.log(e);
+    console.warn(e);
   }
 
   //proxy
@@ -64,7 +64,7 @@
     }
 
     var pathname = location.pathname == '/' ? '/index.html' : location.pathname;
-    var filename = BASE_PATH + pathname;
+    var filename = path.normalize(BASE_PATH + pathname);
     var ext = path.extname(filename);
 
     if (!path.existsSync(filename))
@@ -254,7 +254,7 @@
             if (fileType == 'dir')
             {
               console.log(filename);
-              if (!/(\.svn|xplat_cab3|blankApp)\/(basis|deploy)/.test(filename))// && filename.substr(0, 28) != '../..\\..\\apps\\xplat_cab3/basis')
+              if (!/\.svn|basis|deploy/.test(filename))// && filename.substr(0, 28) != '../..\\..\\apps\\xplat_cab3/basis')
                 lookup(filename);
             }
             /*else
