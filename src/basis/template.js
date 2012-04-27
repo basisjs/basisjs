@@ -1429,7 +1429,12 @@
       if (STYLE_APPEND_BUGGY)
         this.element.styleSheet.cssText = cssText;
       else
-        this.element.appendChild(document.createTextNode(cssText));
+      {
+        if (this.element.firstChild)
+          this.element.firstChild.nodeValue = cssText;
+        else
+          this.element.appendChild(document.createTextNode(cssText));
+      }
       restoreBase();
     }
 
@@ -1477,6 +1482,8 @@
             }
           }
         }
+        else
+          res.count++;
       },
       stopUse: function(path){
         var res = resourceUsage[path];
@@ -1634,6 +1641,8 @@
       else
         return new Template(value);
     },
+
+    baseURI: '',
 
    /**
     * @param {string|function()} template Template source code that will be parsed
