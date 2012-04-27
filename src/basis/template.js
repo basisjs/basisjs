@@ -64,7 +64,7 @@
   var SYNTAX_ERROR = 'Invalid or unsupported syntax';
 
   // html parsing states
-  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z\_][a-zA-Z0-9\-\_]*(?:\.[a-zA-Z\_][a-zA-Z0-9\-\_]*)*)\})?|<(\/|!--(\s*\{)?)?|$)/g;
+  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z\_][a-zA-Z0-9\-\_]*(?:\.[a-zA-Z\_][a-zA-Z0-9\-\_]*)*)\}|resource:([a-zA-Z0-9\_\-\.\\\/\s]+)\})?|<(\/|!--(\s*\{)?)?|$)/g;
   var TAG_NAME = /([a-z\_][a-z0-9\-\_]*)(\:|\{|\s*(\/?>)?)/ig;
   var ATTRIBUTE_NAME_OR_END = /([a-z\_][a-z0-9\-\_]*)(\:|\{|=|\s*)|(\/?>)/ig;
   var COMMENT = /(.|[\r\n])*?-->/g;
@@ -91,6 +91,7 @@
   var tokenize = function(source, debug){
     var result = [];
     var tagStack = [];
+    var resources = [];
     var lastTag = { childs: result };
     var sourceText;
     var token;
@@ -107,6 +108,7 @@
     var pos = 0;
     var m;
 
+    result.resources = resources;
     source = source.trim();
 
     try {
@@ -182,6 +184,10 @@
                 value: '{l10n:' + m[3] + '}'
               });
             }
+            else if (m[4])
+            {
+              resources.push(m[4]);
+            }
             else if (m[2] == '{')
             {
               bufferPos = pos - 1;
@@ -190,9 +196,9 @@
               });
               state = REFERENCE;
             }
-            else if (m[4])
+            else if (m[5])
             {
-              if (m[4] == '/')
+              if (m[5] == '/')
               {
                 token = null;
                 state = CLOSE_TAG;
@@ -203,9 +209,9 @@
                   type: TYPE_COMMENT
                 });
 
-                if (m[5])
+                if (m[6])
                 {
-                  bufferPos = pos - m[5].length;
+                  bufferPos = pos - m[6].length;
                   state = REFERENCE;
                 }
                 else
@@ -621,7 +627,10 @@
       if (!source.templateDeclaration)
         source = tokenize('' + source, debug);
 
-      var result = optimize(source);
+      var result = {
+        resources: source.resources,
+        tokens: optimize(source)
+      };
 
       ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this) };
 
@@ -1362,6 +1371,124 @@
   };
 
 
+  //
+  //
+  //
+
+  var resourceManager = (function(){
+    // Test for appendChild bugs (old IE browsers has a problem with some tags like <script> and <style>)
+    function appendTest(tagName){
+      try {
+        return !dom.createElement(tagName, '');
+      } catch(e) {
+        return true;
+      }
+    }
+
+    var SCRIPT_APPEND_BUGGY = appendTest('script');
+    var STYLE_APPEND_BUGGY = appendTest('style');
+
+    var linkEl = document.createElement('A');
+    document.body.appendChild(linkEl);
+
+    var baseEl = basis.dom.createElement('base');
+    var documentHead = document.head;
+
+    function setBase(path){
+      linkEl.href = path;                         // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
+      baseEl.setAttribute('href', linkEl.href);
+
+      basis.dom.insert(documentHead, baseEl, 0); // even if there is more than one <base> elements, only first has effect
+    }
+    function restoreBase(){
+      baseEl.setAttribute('href', location);      // Opera left document base as <base> element specified,
+                                                  // even if this element is removed from document
+      basis.dom.remove(baseEl);    
+    }
+    function relPath(path){
+      linkEl.href = path;
+      path = linkEl.href;
+
+      var abs = path.split(/\//);
+      var loc = location.href.replace(/\/[^\/]*$/, '').split(/\//);
+      var i = 0;
+
+      while (abs[i] == loc[i] && typeof loc[i] == 'string')
+        i++;
+
+      return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
+    }
+
+    function updateCss(cssText){
+      setBase(this.baseURI);
+      if (STYLE_APPEND_BUGGY)
+        this.element.styleSheet.cssText = cssText;
+      else
+        this.element.appendChild(document.createTextNode(cssText));
+      restoreBase();
+    }
+
+    var resourceUsage = {};
+    var resourceTypeHandler = {
+      '.css': {
+        attach: function(url){
+          var element = dom.createElement('style[src="' + relPath(url) + '"]');
+          var ctx = {
+            resource: basis.resource(url),
+            element: element,
+            baseURI: url
+          };
+
+          dom.appendHead(element);
+
+          updateCss.call(ctx, String(ctx.resource));
+          ctx.resource.bindingBridge.attach(ctx.resource, updateCss, ctx);
+
+          return ctx;
+        },
+        detach: function(ctx){
+          basis.dom.remove(ctx.element);
+          ctx.resource.bindingBridge.detach(ctx.resource, updateCss, ctx);
+        }
+      }
+    };
+
+    return {
+      startUse: function(path){
+        var res = resourceUsage[path];
+        if (!res)
+        {
+          var ext = path.match(/(\.[a-z0-9\-\_]+)+$/);
+          if (ext)
+          {
+            var handler = resourceTypeHandler[ext[0]];
+            if (handler)
+            {
+              resourceUsage[path] = {
+                count: 1,
+                handler: handler,
+                object: handler.attach(path)
+              }
+            }
+          }
+        }
+      },
+      stopUse: function(path){
+        var res = resourceUsage[path];
+        if (res)
+        {
+          if (--res.count == 0)
+          {
+            res.handler.detach(res.object);
+            delete resourceUsage[path];
+          }
+        }
+      }
+    }
+  })();
+
+
+
  /**
   * @func
   */
@@ -1382,7 +1509,7 @@
     );
 
     var decl = this.isDecl ? source.toObject() : makeDeclaration(source);
-    var funcs = makeFunctions(decl);
+    var funcs = makeFunctions(decl.tokens);
     var l10n = this.l10n_;
 
     if (l10n)
@@ -1395,7 +1522,19 @@
     this.createInstance = funcs.createInstance;
     this.getBinding = funcs.getBinding;
     this.instances_ = funcs.map;
+
     var l10nProtoUpdate = funcs.l10nProtoUpdate;
+    var hasResources = decl.resources && decl.resources.length > 0;
+
+    if (hasResources)
+      for (var i = 0, res; res = decl.resources[i]; i++)
+        resourceManager.startUse(this.baseURI + res);
+
+    if (this.resources)
+      for (var i = 0, res; res = this.resources[i]; i++)
+        resourceManager.stopUse(this.baseURI + res);
+
+    this.resources = hasResources && decl.resources;
 
     if (instances)
     {
@@ -1572,6 +1711,7 @@
               delete tmplFilesMap[oldSource.url];
           }
 
+          this.baseURI = '';
           this.source.bindingBridge.detach(oldSource, templateSourceUpdate, this);
         }
 
@@ -1579,6 +1719,7 @@
         {
           if (source.url)
           {
+            this.baseURI = source.url.replace(/[^\\\/]+$/, '');
             if (!tmplFilesMap[source.url])
               tmplFilesMap[source.url] = [];
             tmplFilesMap[source.url].add(this);

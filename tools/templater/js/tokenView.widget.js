@@ -294,6 +294,16 @@
     });
   }
 
+  var resourceList = new basis.ui.Container({
+    template: resource('../templates/tokenView/resourceList.tmpl'),
+    childClass: {
+      template: resource('../templates/tokenView/resource.tmpl'),
+      binding: {
+        filename: 'data:'
+      }
+    }
+  });
+
   var tree = new nsTree.Tree({
     template: resource('../templates/tokenView/tree.tmpl'),
 
@@ -368,10 +378,15 @@
   */
   var widget = new nsLayout.VerticalPanelStack({
     id: 'Viewer',
-    childNodes: {
-      flex: 1,
-      childNodes: tree
-    }
+    childNodes: [
+      {
+        childNodes: resourceList
+      },
+      {
+        flex: 1,
+        childNodes: tree
+      }
+    ]
   });
 
 
@@ -390,5 +405,8 @@
   exports = module.exports = widget;
   exports.tree = tree;
   exports.setSource = function(source){
-    tree.setChildNodes(nsTemplate.makeDeclaration(source));
+    var decl = nsTemplate.makeDeclaration(source)
+    console.log(decl + '');
+    tree.setChildNodes(decl.tokens);
+    resourceList.setChildNodes(decl.resources.map(function(res){ return { data: { filename: res }}}));
   }

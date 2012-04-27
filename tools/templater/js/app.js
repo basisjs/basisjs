@@ -17,46 +17,12 @@ basis.require('basis.ui');
 
 
   //
-  // widget subsystem prototype
-  //
-
-  var widgets = {};
-  var widgetObjects = {};
-  var widgetRoot = 'js/';
-  var widgetSuffix = '.widget.js';
-
-  function widget(widgetName, lazy){
-    if (widgetName in widgets == false)
-    {
-      var url = widgetRoot + widgetName + widgetSuffix;
-      var widget = { exports: {} };
-      //widgetObjects[widgetName] = widget;
-      //var widgetFetcher = basis.wrapScript(widget, url);
-
-      var resolveWidget = function(){
-        basis.wrapScript(widget, url)();
-        return (widgets[widgetName] = function(){
-          return widget.exports;
-        })();
-      };
-
-      if (lazy === false)
-        resolveWidget();
-      else
-        widgets[widgetName] = Function.lazyInit(resolveWidget);
-    }
-
-    return widgets[widgetName];
-  }
-
-
-  //
   // import names
   //
 
-  var editor = widget('editor', false);
-  var tokenView = widget('tokenView', false);
-  var filelist = widget('filelist');
+  var editor = basis.resource('js/editor.widget.js');
+  var tokenView = basis.resource('js/tokenView.widget.js');
+  var filelist = basis.resource('js/filelist.widget.js');
 
 
   //

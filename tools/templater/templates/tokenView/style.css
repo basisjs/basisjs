@@ -1,8 +1,4 @@
 
-  @import 'attribute.css';
-  @import 'reference.css';
-  @import 'referenceList.css';
-
   #EditorToolbar
   {
     /*background-color: green !important;*/
@@ -157,3 +153,4 @@
     box-sizing: border-box;
     resize: none;
   }
+
