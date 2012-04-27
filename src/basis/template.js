@@ -46,7 +46,7 @@
   /** @const */ var TYPE_COMMENT = 8;
 
   // references on fields in declaration
-  /** @const */ var TOKEN_TYPE = 0
+  /** @const */ var TOKEN_TYPE = 0;
   /** @const */ var TOKEN_BINDINGS = 1;
   /** @const */ var TOKEN_REFS = 2;
 
@@ -1376,6 +1376,9 @@
   //
 
   var resourceManager = (function(){
+    if (!document)  // hot fix for node.js
+      return {};
+
     // Test for appendChild bugs (old IE browsers has a problem with some tags like <script> and <style>)
     function appendTest(tagName){
       try {
@@ -1388,7 +1391,7 @@
     var SCRIPT_APPEND_BUGGY = appendTest('script');
     var STYLE_APPEND_BUGGY = appendTest('style');
 
-    var linkEl = document.createElement('A');
+    var linkEl = dom.createElement('A');
     document.body.appendChild(linkEl);
 
     var baseEl = basis.dom.createElement('base');

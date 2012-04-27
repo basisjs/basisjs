@@ -1289,6 +1289,8 @@
 
           var exports = require(requirePath + namespace.replace(/\./g, '/'));
 
+          complete(getNamespace(namespace), exports);
+
           module.constructor.prototype.load = temp;
 
           return exports;
