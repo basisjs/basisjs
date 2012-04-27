@@ -1,0 +1,22 @@
+{
+  "^w3schools_com/(.+)$":       "http://www.w3schools.com/$1",
+  "^moservice/([^/?]+)$":       "http://message-online.ru/gate/$1",
+  "^w1service/([^/?]+)$":       "http://services.w1.ru/10/$1",
+  "^w1service11/([^/?]+)$":     "http://services.w1.ru/11/$1",
+  "^netstream/([^/?]+)$":       "http://services.w1.ru/ExternalService/Netstream/$1",
+  "^loadup$":                   "http://loadup.ru/api/json/",
+  "^xplat/([^/?]+)$":           "http://dealer.x-plat.ru/xplat/$1",
+  "^xplatservice/([^/?]+)$":    "http://localhost:1427/XplatServices/10/$1",
+  "^xplatservice/([^/?]+)$":    "http://services.x-plat.ru/WebCabinet/10/$1",
+  "^xplatservice/([^/?]+)$":    "http://services.x-plat.ru/WebCabinet1.1/10/$1",
+  "^xplatservice/([^/?]+)$":    "http://services.x-plat.ru/dealer/WebCabinet/10/$1",
+  "^xplatservice1.1/(.*)$":     "http://services.x-plat.ru/dealer/WebCabinet1.1/$1",
+  "^xplatservice1.1/(.*)$":     "http://192.168.0.153/XPlatDealer/$1",
+  "^vault/(.*)$":               "http://192.168.0.6:8081/$1",
+  "^tools/([^/?]+)$":           "http://services.x-plat.ru/WebCabinet1.1/Tools/$1",
+  "^ajax_proxy/([^/?]+)$":      "http://www.w1.ru/ajax_proxy/$1",
+  "^w1/(.+)$":                  "http://www.w1.ru/w1/$1",
+  "^merchant/(.+)$":            "http://merchant.w1.ru/$1",
+  "^w1wc3_help$":               "http://www.w1.ru/cgi-bin/get_help.cgi?src=3.0test"
+
+}

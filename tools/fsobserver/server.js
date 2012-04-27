@@ -1,7 +1,7 @@
 
-  var app = require('http').createServer(serverHandler);
-  //var httpProxy = require('http-proxy');
-  var io = require('socket.io').listen(app);
+  var http = require('http');
+  var httpProxy = require('http-proxy');
+  var socket_io = require('socket.io');
   var fs = require('fs');
   var url = require('url');
   var path = require('path');
@@ -9,24 +9,6 @@
 
   var fs_debug = false;
   var is_dev = true;
-  var BASE_PATH = process.argv[2];
-  var port = process.argv[3];
-
-  if (isNaN(port))
-    port = 0;
-
-  /*var proxyServer = httpProxy.createServer(9000, 'localhost', {
-    router: {
-      '/foo': 'http://ya.ru'
-    }
-  });
-  proxyServer.listen(9000);*/
-   
-  app.listen(port, function(){
-    var port = app.address().port;
-    console.log('Server is online, listen for http://localhost:' + port + '\nWatching changes for path: ' + BASE_PATH);
-  });
-
 
   var MIME_TYPE = {
     'css':  'text/css',
@@ -37,9 +19,49 @@
     'gif':  'image/gif'
   }
 
-  function serverHandler(req, res){
+
+  var BASE_PATH = process.argv[2];
+  var port = process.argv[3];
+
+  if (isNaN(port))
+    port = 0;
+
+  //load proxy pathes
+  var rewriteRules = {};
+  try {
+    var data = fs.readFileSync('fsobserver/rewrite.json');
+    rewriteRules = JSON.parse(String(data));
+  } catch(e) {  
+    console.log(e);
+  }
+
+  //proxy
+  var proxy = new httpProxy.HttpProxy({
+    target: {
+      host: 'localhost',
+      port: 80
+    }
+  })
+
+  //create server
+  var app = http.createServer(function(req, res){
+  
     var location = url.parse(req.url, true, true);
     var host = req.headers.host;
+
+    //proxy request if nececcary
+    var re;
+    var pathname = location.pathname.slice(1);
+    for (var rule in rewriteRules)
+    {
+      re = new RegExp(rule);
+      if (re.test(pathname))
+      {
+        console.log(re);
+        proxy.proxyRequest(req, res);
+        return;
+      }
+    }
 
     var pathname = location.pathname == '/' ? '/index.html' : location.pathname;
     var filename = BASE_PATH + pathname;
@@ -51,6 +73,7 @@
       res.end('File ' + filename + ' not found');
     }
     else
+    {
       fs.readFile(filename, function(err, data){
         if (err)
         {
@@ -79,7 +102,14 @@
           }
         }
       });
-  }
+    }
+  });
+
+  app.listen(port, function(){
+    var port = app.address().port;
+    console.log('Server is online, listen for http://localhost:' + port + '\nWatching changes for path: ' + BASE_PATH);
+  });
+  var io = socket_io.listen(app);
 
   //
   // Messaging
