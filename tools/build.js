@@ -190,7 +190,7 @@ packages.forEach(function(pack){
       "var __scripts = typeof document != 'undefined' ? document.getElementsByTagName('script') : [];\n" +
       "var __curLocation = __scripts[__scripts.length - 1].src.replace(/[^\/]+\.js$/, '');\n\n",
 
-      "\n})();"
+      "\n}).call(this);"
     ];
 
     var srcContent = [

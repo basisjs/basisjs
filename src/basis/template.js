@@ -1392,7 +1392,9 @@
     var STYLE_APPEND_BUGGY = appendTest('style');
 
     var linkEl = dom.createElement('A');
-    document.body.appendChild(linkEl);
+    basis.ready(function(){
+      document.body.appendChild(linkEl);
+    });
 
     var baseEl = basis.dom.createElement('base');
     var documentHead = document.head;
