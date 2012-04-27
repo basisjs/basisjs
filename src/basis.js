@@ -1326,7 +1326,8 @@
 
           var ns = basis.namespace(namespace);
           var scriptText = externalResource(requestUrl);
-          runScriptInContext(ns, requestUrl, scriptText);
+          runScriptInContext(ns, requestUrl, scriptText, '/** @namespace ' + namespace + '*/\n');
+          complete(ns, ns.exports);
           ;;;ns.filename_ = requestUrl;
           ;;;ns.source_ = scriptText;
 
@@ -1518,7 +1519,7 @@
 
   fetchResourceFunction.extensions['.json'].updatable = true;
 
-  var runScriptInContext = function(context, sourceURL, scriptText){
+  var runScriptInContext = function(context, sourceURL, scriptText, prefix){
     var baseURL = dirname(sourceURL);
     var scriptFn;
 
@@ -1528,12 +1529,13 @@
     // compile context function
     try {
       scriptFn = Function('exports, module, basis, global, __filename, __dirname, resource',
+        (prefix || '') +
         '"use strict";\n\n' +
         scriptText +
         '//@ sourceURL=' + sourceURL
       );
     } catch(e) {
-      ;;;console.log('Compilation error ' + sourceURL);
+      ;;;console.log('Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e));
       throw e;
     }
 

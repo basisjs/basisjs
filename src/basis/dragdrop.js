@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.event');
   basis.require('basis.ua');
   basis.require('basis.dom');
@@ -312,7 +310,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     DragDropElement: DragDropElement,
     MoveableElement: MoveableElement
-  });
+  };

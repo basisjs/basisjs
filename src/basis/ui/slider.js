@@ -10,8 +10,6 @@
  *
  */
 
-  'use strict';
-
   basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
@@ -482,8 +480,8 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     Slider: Slider,
     MarkLayer: MarkLayer,
     Mark: Mark
-  });
+  };

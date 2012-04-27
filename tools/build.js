@@ -186,6 +186,7 @@ packages.forEach(function(pack){
     var packStartTime = new Date;
     var packageWrapper = [
       "(function(){\n" +
+      "'use strict';" +
       "var __scripts = typeof document != 'undefined' ? document.getElementsByTagName('script') : [];\n" +
       "var __curLocation = __scripts[__scripts.length - 1].src.replace(/[^\/]+\.js$/, '');\n\n",
 
@@ -204,15 +205,15 @@ packages.forEach(function(pack){
          ns.source_ = Function.body(module.body);
          ns.filename_ = module.path + module.fn;
          new Function('module, exports, global, __filename, __dirname, basis, resource',
-           '\n"use strict";\n' + ns.source_ + '//@ sourceURL=' + fn
+           '/** @namespace ' + ns.path + ' */\n' + ns.source_ + '//@ sourceURL=' + fn
          ).call(ns, ns, ns.exports, this, fn, path, basis, function(url){ return basis.resource(path + url) });
+         Object.complete(ns, ns.exports);
        } + ', this)',
       packageWrapper[1]
     ].join('');
 
     var buildContent = [
       packageWrapper[0],
-      '"use strict";\n',
       fileCache[SRC_PATH + 'basis.js'].buildContent,
       '[\n',
         build.buildModules.join(',\n'),
@@ -226,6 +227,7 @@ packages.forEach(function(pack){
            var path = __curLocation + 'src/' + nsParts.join('/') + '/';
            var ns = basis.namespace(ns);
            fn.call(ns, basis, this, path, ns.exports, function(url){ return basis.resource(path + url) }, ns, path + filename);
+           Object.complete(ns, ns.exports);
          }
        } + ', this)',
       packageWrapper[1]

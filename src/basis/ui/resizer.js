@@ -15,8 +15,6 @@
  *
  */
 
-  'use strict';
-
   basis.require('basis.dom');
   basis.require('basis.cssom');
   basis.require('basis.dragdrop');
@@ -304,6 +302,6 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     Resizer: Resizer
-  });
+  };

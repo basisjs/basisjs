@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
@@ -113,7 +111,6 @@
         PartitionNode.prototype.init.call(this, config);
         this.cell = new HeaderPartitionNode({
           delegate: this,
-          titleGetter: this.titleGetter,
           binding: this.binding || {}
         });
       },
@@ -631,11 +628,11 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     Table: Table,
     Body: Body,
     Header: Header,
     HeaderCell: HeaderCell,
     Row: Row,
     Footer: Footer
-  });
+  };

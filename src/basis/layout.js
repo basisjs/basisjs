@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.ua');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
@@ -24,7 +22,10 @@
 
   var namespace = this.path;
 
+
+  //
   // import names
+  //
 
   var document = global.document;
   var defaultView = document.defaultView;
@@ -41,6 +42,7 @@
   var nsWrappers = DOM.wrapper;
 
   var UIContainer = basis.ui.Container;
+
 
   //
   // Main part
@@ -691,7 +693,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     Box: Box,
     Intersection: Intersection,
     Viewport: Viewport,
@@ -701,4 +703,4 @@
 
     Helper: Helper,
     addBlockResizeHandler: addBlockResizeHandler
-  });
+  };

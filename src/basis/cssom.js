@@ -13,8 +13,6 @@
  * Roman Dvornov
  */
 
-  'use strict';
-
   basis.require('basis.dom');
   basis.require('basis.dom.event');
 
@@ -538,12 +536,6 @@
     }
   });
 
-  var unitFunc = {};
-  ['em', 'ex', 'px', '%'].forEach(function(unit){
-    unitFunc[unit == '%' ? 'percent' : unit] = function(value){
-      return value == 0 || isNaN(value) ? '0' : value + unit;
-    }
-  });
 
   //
   // classList
@@ -732,8 +724,7 @@
   // export names
   //
 
-  this.extend(unitFunc);
-  this.extend({
+  module.exports = {
     // style interface
     setStyleProperty: setStyleProperty,
     setStyle: setStyle,
@@ -757,19 +748,10 @@
     visibility: visibility,
     visible: visible,
     invisible: invisible
-  });
-/*
-  basis.namespace('basis.dom').extend({
-    // style interface
-    setStyleProperty: setStyleProperty,
-    setStyle: setStyle,
+  };
 
-    // node styling
-    display: display,
-    show: show,
-    hide: hide,
-    visibility: visibility,
-    visible: visible,
-    invisible: invisible
+  ['em', 'ex', 'px', '%'].forEach(function(unit){
+    module.exports[unit == '%' ? 'percent' : unit] = function(value){
+      return value == 0 || isNaN(value) ? '0' : value + unit;
+    }
   });
-*/

@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.event');
   basis.require('basis.data');
   basis.require('basis.data.dataset');
@@ -1297,7 +1295,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     isEntity: isEntity,
 
     NumericId: NumericId,
@@ -1316,4 +1314,4 @@
     ReadOnlyEntitySet: ReadOnlyEntitySet,
     Collection: EntityCollection,
     Grouping: EntityGrouping
-  });
+  };

@@ -14,8 +14,6 @@
  *
  */
 
-  'use strict';
-
   basis.require('basis.timer');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
@@ -287,6 +285,6 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     ScrollTable: ScrollTable
-  });
+  };

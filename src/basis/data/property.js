@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.timer');
   basis.require('basis.event');
   basis.require('basis.dom');
@@ -716,9 +714,9 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     DataObjectSet: DataObjectSet,
     AbstractProperty: AbstractProperty,
     Property: Property,
     PropertySet: DataObjectSet
-  });
+  };

@@ -148,10 +148,10 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     Menu: Menu,
     MenuGroupingNode: MenuGroupingNode,
     MenuPartitionNode: MenuPartitionNode,
     MenuItem: MenuItem,
     MenuItemSet: MenuItemSet
-  });
+  };

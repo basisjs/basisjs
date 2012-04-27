@@ -14,8 +14,6 @@
  * Inspired on Paginator 3000 (http://karaboz.ru/?p=12)
  */
 
-  'use strict';
-
   basis.require('basis.event');
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
@@ -300,6 +298,6 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     Paginator: Paginator
-  });
+  };

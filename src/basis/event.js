@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
  /**
   * @namespace basis.event
   */
@@ -276,12 +274,11 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     LISTEN: LISTEN,
 
     create: createEvent,
     events: events,
 
     EventObject: EventObject
-  }); 
-
+  }; 

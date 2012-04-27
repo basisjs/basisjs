@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
@@ -482,8 +480,8 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     Window: Window,
     Blocker: Blocker,
     getWindowTopZIndex: function(){ return windowManager.childNodes.length * 2 + 2001 }
-  });
+  };

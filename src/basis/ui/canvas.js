@@ -14,8 +14,6 @@
 };
 basis_require('basis.ext.flashcanvas');*/
 
-  'use strict';
-
   basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
@@ -186,8 +184,8 @@ basis_require('basis.ext.flashcanvas');*/
   // export names
   //
 
-  this.extend({
+  module.exports = {
     CanvasLayer: CanvasLayer,
     Canvas: Canvas,
     Shape: Shape
-  });
+  };

@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.dom');
 
 
@@ -670,7 +668,7 @@
   //
 
   this.setWrapper(wrap);
-  this.extend({
+  module.exports = {
     W3CSUPPORT: W3CSUPPORT,
 
     KEY: KEY,
@@ -710,4 +708,4 @@
     onUnload: onUnload,
 
     getEventInfo: getEventInfo
-  });
+  };

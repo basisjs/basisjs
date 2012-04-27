@@ -13,9 +13,6 @@
  *
  */
 
-  'use strict';
-
-
  /**
   * @namespace basis.ua.visibility
   */
@@ -118,8 +115,8 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     addHandler: addHandler,
     removeHandler: removeHandler,
     getState: getState
-  });
+  };

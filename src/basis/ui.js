@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.l10n');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
@@ -808,7 +806,7 @@
 
   this.setWrapper(simpleTemplate);
 
-  this.extend({
+  module.exports = {
     simpleTemplate: simpleTemplate,
     BINDING_PRESET: BINDING_PRESET,
 
@@ -817,5 +815,4 @@
     PartitionNode: PartitionNode,
     GroupingNode: GroupingNode,
     Control: Control
-  });
-
+  };

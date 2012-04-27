@@ -13,8 +13,6 @@
  *
  */
 
-  'use strict';
-
   basis.require('basis.dom');
   basis.require('basis.ui');
   basis.require('basis.ui.tabs');
@@ -131,6 +129,6 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     PageSlider: PageSlider
-  });
+  };

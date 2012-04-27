@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
  /**
   * @namespace basis.crypt
   */
@@ -132,14 +130,14 @@
       return fromUTF8(UTF8.fromBytes(input));
     }
 
-    return basis.namespace(namespace).extend({
+    return basis.namespace(namespace).exports = {
       toBytes: toBytes,
       fromBytes: fromBytes,
       toUTF8: toUTF8,
       fromUTF8: fromUTF8,
       toUTF8Bytes: toUTF8Bytes,
       fromUTF8Bytes: fromUTF8Bytes
-    });
+    };
 
   })();
 
@@ -192,14 +190,14 @@
       return UTF16.toUTF8(UTF16.fromBytes(input));
     }
 
-    return basis.namespace(namespace).extend({
+    return basis.namespace(namespace).exports = {
       toBytes: toBytes,
       fromBytes: fromBytes,
       toUTF16: toUTF16,
       fromUTF16: fromUTF16,
       toUTF16Bytes: toUTF16Bytes,
       fromUTF16Bytes: fromUTF16Bytes
-    });
+    };
   })();
 
   // =====================================================
@@ -292,10 +290,10 @@
     // export names
     //
 
-    return basis.namespace(namespace).extend({
+    return basis.namespace(namespace).exports = {
       encode: encode,
       decode: decode
-    });
+    };
 
   })();
 
@@ -565,8 +563,8 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     HEX: HEX,
     SHA1: SHA1,
     MD5: MD5
-  });
+  };

@@ -9,9 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
-
  /**
   * @namespace basis.data.generator
   */ 
@@ -76,8 +73,8 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     number: genNumber,
     string: genString,
     sentence: genSentence
-  });
+  };

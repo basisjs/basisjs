@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.timer');
   basis.require('basis.data');
   basis.require('basis.data.dataset');
@@ -801,7 +799,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     IndexConstructor: IndexConstructor,
     createIndexConstructor: createIndexConstructor,
 
@@ -820,4 +818,4 @@
     min: min,
 
     IndexMap: IndexMap
-  });
+  };

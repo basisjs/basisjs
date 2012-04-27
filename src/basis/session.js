@@ -9,9 +9,8 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.event');
+
 
  /**
   * @namespace basis.session
@@ -19,13 +18,17 @@
 
   var namespace = this.path;
 
+
+  //
   // import names
+  //
 
   var Class = basis.Class;
   var extend = Object.extend;
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
+
 
   /*
    *  Common
@@ -201,6 +204,6 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     SessionManager: SessionManager
-  });
+  };

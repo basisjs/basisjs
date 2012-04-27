@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.data');
@@ -2710,7 +2708,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     // const
     DELEGATE: DELEGATE,
 
@@ -2724,4 +2722,4 @@
     ChildNodesDataset: ChildNodesDataset,
     Selection: Selection,
     nullSelection: new AbstractDataset
-  });
+  };

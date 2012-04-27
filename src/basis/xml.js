@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.ua');
   basis.require('basis.dom');
 
@@ -21,7 +19,10 @@
 
   var namespace = this.path;
 
+
+  //
   // import names
+  //
 
   var DOM = basis.dom;
   var Class = basis.Class;
@@ -31,6 +32,11 @@
 
   var ELEMENT_NODE = DOM.ELEMENT_NODE;
   var ATTRIBUTE_NODE = DOM.ATTRIBUTE_NODE;
+
+
+  //
+  // main part
+  //
 
   /*
    *  QName
@@ -433,7 +439,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     NAMESPACE: {
       XMLShema: XSD_NAMESPACE,
       XMLShemaInstance: XSI_NAMESPACE,
@@ -454,4 +460,4 @@
     XML2Object: XML2Object,
     XML2String: XML2String,
     Object2XML: Object2XML
-  });
+  };

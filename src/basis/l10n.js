@@ -13,9 +13,6 @@
  *
  */
 
-  'use strict';
-
-
  /**
   * @namespace basis.l10n
   */
@@ -322,7 +319,7 @@
   }
 
 
-  basis.namespace(namespace).extend({
+  module.exports = {
     Token: Token,
     getToken: getToken,
     getDictionary: getDictionary,
@@ -336,4 +333,4 @@
     getCultureList: getCultureList,
     addCreateDictionaryHandler: addHandler,
     removeCreateDictionaryHandler: removeHandler
-  });
+  };

@@ -12,8 +12,6 @@
  * Vladimir Ratsev <wuzykk@gmail.com>
  */
 
-  'use strict';
-
   basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
@@ -875,9 +873,9 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     Scroller: Scroller,
     Scrollbar: Scrollbar,
     ScrollPanel: ScrollPanel,
     ScrollGallery: ScrollGallery
-  });
+  };

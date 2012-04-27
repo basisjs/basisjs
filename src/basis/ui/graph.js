@@ -14,8 +14,6 @@
  *
  */
 
-  'use strict';
-
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.data');
@@ -36,8 +34,8 @@
   //
   // import names
   //
-  var oneFunctionProperty = basis.Class.oneFunctionProperty;
 
+  var oneFunctionProperty = basis.Class.oneFunctionProperty;
 
   var Event = basis.dom.event;
   var DOM = basis.dom;
@@ -1699,7 +1697,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     ColorPicker: ColorPicker,
     GraphNode: GraphNode,
     Graph: Graph,
@@ -1714,4 +1712,4 @@
     BarGraphViewer: BarGraphViewer,
     BarGraph: BarGraph,
     StackedBarGraph: StackedBarGraph
-  });
+  };

@@ -344,7 +344,7 @@
         }
       }
 
-      cssom.display(this.element, !!newData.text)
+      //cssom.display(this.element, !!newData.text)
     },
 
     destroy: function(){

@@ -588,8 +588,12 @@
   var sourceParser = {
     'jsdoc': function(resource){
 
+      function getTextFromCode(source){
+        return source.replace(/(^|\*)\s+\@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft()
+      }
+
       function createJsDocEntity(source, path){
-        var text = source.replace(/(^|\*)\s+\@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft();
+        var text = getTextFromCode(source);
         var e = JsDocEntity({
           path: path,
           text: text,
@@ -604,6 +608,7 @@
       var skipDeclaration = false;
       var line = 0;
       var lineFix;
+      var scopeNS;
       var parts = resource.text
         .replace(/\r\n|\n\r|\r/g, '\n')
         .replace(/\/\*+(\s*@cut.+\*)?\//g, '')
@@ -620,11 +625,26 @@
           else
           {
             jsdoc.push(code);
-            var m = code.match(/@namespace\s+(\S+)/);
+            var m = code.match(/@namespace\s+(\S+)?/);
             if (m)
             {
-              ns = m[1];
-              createJsDocEntity(code, ns);
+              if (m[1])
+                scopeNS = m[1];
+
+              ns = scopeNS;
+              code = code.replace(/@namespace([^\n]*|$)/, '');
+
+              var nsJSDoc = JsDocEntity.get(ns);
+              if (nsJSDoc)
+              {
+                nsJSDoc.update({
+                  text: nsJSDoc.data.text + getTextFromCode(code),
+                  line: line + 1 + lineFix
+                });
+              }
+              else
+                createJsDocEntity(code, ns);
+
               skipDeclaration = true;
             }
             isClass = !!code.match(/@class/);
@@ -730,7 +750,7 @@
     return ns.source_ ? {
       url: ns.filename_,
       kind: 'jsdoc',
-      text: ns.source_
+      text: '/** @namespace ' + ns.path + '*/' + ns.source_
     } : null
   }).filter(Function.$isNotNull);
 

@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
   basis.require('basis.l10n');
   basis.require('basis.event');
   basis.require('basis.html');
@@ -1521,7 +1519,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     createFieldTemplate: function(template){
       return createFieldTemplate(baseFieldTemplate, template)
     },
@@ -1538,4 +1536,4 @@
     MatchProperty: MatchProperty,
     MatchFilter: MatchFilter,
     MatchInput: MatchInput
-  });
+  };

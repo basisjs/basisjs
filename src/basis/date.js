@@ -9,16 +9,22 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  'use strict';
-
  /**
   * @namespace basis.date
   */
   var namespace = this.path;
 
+
+  //
   // import names
+  //
 
   var getter = Function.getter;
+
+
+  //
+  // main part
+  //
 
   // CONST
   var MONTH_DAY_COUNT = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -278,10 +284,10 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     monthNumToAbbr: monthNumToAbbr,
     dayNumToAbbr: dayNumToAbbr,
     isLeapYear: isLeapYear,
     getMonthDayCount: getMonthDayCount,
     format: dateFormat
-  });
+  };

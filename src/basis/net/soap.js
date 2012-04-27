@@ -9,8 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
- 'use strict';
-
   basis.require('basis.dom');
   basis.require('basis.xml');
   basis.require('basis.net.ajax');
@@ -410,7 +408,7 @@
   // export names
   //
 
-  this.extend({
+  module.exports = {
     /*Service: Service,
     ServiceCall: ServiceCall,
     ServiceCallTransport: ServiceCallTransport,*/
@@ -421,4 +419,4 @@
     Envelope: Envelope,
     EnvelopeHeader: EnvelopeHeader,
     EnvelopeBody: EnvelopeBody
-  });
+  };
