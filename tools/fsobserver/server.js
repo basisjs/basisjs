@@ -206,7 +206,7 @@
   });
 
   function normPath(filename){
-    return path.relative(BASE_PATH, path.resolve(BASE_PATH, filename)).replace(/\\/g, '/')
+    return '/' + path.relative(BASE_PATH, path.resolve(BASE_PATH, filename)).replace(/\\/g, '/')
   }
 
   //
