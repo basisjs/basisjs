@@ -406,7 +406,6 @@
   exports.tree = tree;
   exports.setSource = function(source){
     var decl = nsTemplate.makeDeclaration(source)
-    console.log(decl + '');
     tree.setChildNodes(decl.tokens);
     resourceList.setChildNodes(decl.resources.map(function(res){ return { data: { filename: res }}}));
   }

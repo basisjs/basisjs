@@ -63,9 +63,7 @@
       }
     }
 
-    var pathname = location.pathname == '/' ? '/index.html' : location.pathname;
-    var filename = path.normalize(BASE_PATH + pathname);
-    var ext = path.extname(filename);
+    var filename = path.normalize(BASE_PATH + location.pathname);
 
     if (!path.existsSync(filename))
     {
@@ -74,6 +72,22 @@
     }
     else
     {
+      if (fs.statSync(filename).isDirectory())
+      {
+        if (path.existsSync(filename + '/index.html'))
+          filename += '/index.html';
+        else
+          if (path.existsSync(filename + '/index.htm'))
+            filename += '/index.htm';
+          else
+          {
+            res.writeHead(404);
+            res.end('Path ' + filename + ' is not file');
+          }
+      }
+
+      var ext = path.extname(filename);
+
       fs.readFile(filename, function(err, data){
         if (err)
         {
@@ -119,9 +133,10 @@
     socket.on('saveFile', function(filename, content){
       console.log('save file', arguments);
 
-      var fname = BASE_PATH + '/' + filename;
+      var fname = path.normalize(BASE_PATH + '/' + filename);
+      var fnKey = normPath(fname);
 
-      if (fsWatcher.isObserveFile(fname))
+      if (fsWatcher.isObserveFile(fnKey))
       {
         fs.writeFile(fname, content, function (err) {
           if (err)
@@ -133,14 +148,14 @@
           }
           else
           {
-            socket.emit('fileSaved', filename);
+            socket.emit('fileSaved', fnKey);
           }
         });
       }
       else
         socket.emit('fileSaveError', {
           filename: filename,
-          message: 'bad filename'
+          message: 'file not observable'
         });
     });
 
@@ -190,6 +205,10 @@
     delete socket.pathes;
   });
 
+  function normPath(filename){
+    return path.relative(BASE_PATH, path.resolve(BASE_PATH, filename)).replace(/\\/g, '/')
+  }
+
   //
   // File System Watcher
   //
@@ -202,9 +221,12 @@
       if (path.extname(filename) == '.css' || path.extname(filename) == '.tmpl' || path.extname(filename) == '.txt' || path.extname(filename) == '.json')
       {
         fs.readFile(filename, 'utf8', function(err, data){
+          console.log('READ FILE:', filename);
           if (!err)
           {
-            var fileInfo = fileMap[filename];
+            console.log('key', path.relative(BASE_PATH, filename).replace(/\\/g, '/'));
+
+            var fileInfo = fileMap[normPath(filename)];
             var newContent = String(data).replace(/\r\n?|\n\r?/g, '\n');
 
             var newFileInfo = {
@@ -226,21 +248,23 @@
       }
     }
 
-    function updateStat(dir, filename){
+    function updateStat(filename){
       fs.stat(filename, function(err, stats){
+        var fnKey = normPath(filename);
+
         if (err)
         {
           console.log('updateStat error:', err);
         }
         else
         {
-          var fileInfo = fileMap[filename];
+          var fileInfo = fileMap[fnKey];
 
-          if (!fileMap[filename])
+          if (!fileMap[fnKey])
           {
             var fileType = stats.isDirectory() ? 'dir' : 'file';
 
-            fileMap[filename] = {
+            fileMap[fnKey] = {
               mtime: stats.mtime,
               type: fileType,
               listeners: [],
@@ -248,33 +272,28 @@
             };
 
             // event!! new file
-            createCallback(filename, fileType, stats.mtime);
-            if (fs_debug) console.log(filename + ' - found');
+            if (filename != BASE_PATH)
+            {
+              createCallback(filename, fileType, stats.mtime);
+              console.log(filename + ' - found');
+            }
 
             if (fileType == 'dir')
             {
               console.log(filename);
-              if (!/\.svn|basis|deploy/.test(filename))// && filename.substr(0, 28) != '../..\\..\\apps\\xplat_cab3/basis')
+              if (!/(^|\/|\\)(\.svn|basis|deploy)(\/|\\|$)/.test(filename))
                 lookup(filename);
             }
-            /*else
-              readFile(filename);*/
           }
           else
           {
-            if (fileMap[filename].type == 'file' && stats.mtime - fileMap[filename].mtime)
+            if (fileMap[fnKey].type == 'file' && stats.mtime - fileMap[fnKey].mtime)
             {
               fileInfo.mtime = stats.mtime;
-
-              // event!! file modified
-              //updateCallback(filename, stats.mtime);
-              if (fs_debug) console.log(filename + ' - changed'); // file changed
 
               readFile(filename);
             }
           }
-
-          //console.log(filename + ' updated stat');
         }
       });
     }
@@ -288,7 +307,7 @@
           var filename;
           var dirInfo = dirMap[path];
 
-          updateStat('', path);
+          updateStat(path);
 
           if (dirInfo)
           {
@@ -310,10 +329,10 @@
           else
           {
             dirInfo = dirMap[path] = {
-                path: path,
-                watcher: fs.watch(path, function(event, filename){
-                  lookup(path);
-                })
+              path: path,
+              watcher: fs.watch(path, function(event, filename){
+                lookup(path);
+              })
             };
           }
 
@@ -325,7 +344,7 @@
             {
               var filename = path + '/' + file;
               //console.log(path + '/' + file);
-              updateStat(dirInfo, filename);
+              updateStat(filename);
             }
           }
 
@@ -387,14 +406,14 @@
       },
       getFiles: function(path){
         var result = [];
+
         for (var filename in fileMap)
-          if (filename.substr(0, path.length) == path && filename.length != path.length)
-            result.push({
-              filename: filename.substr(path.length),
-              type: fileMap[filename].type,
-              lastUpdate: fileMap[filename].mtime,
-              content: fileMap[filename].content
-            });
+          result.push({
+            filename: filename,
+            type: fileMap[filename].type,
+            lastUpdate: fileMap[filename].mtime,
+            content: fileMap[filename].content
+          });
 
         return result;
       },
@@ -408,18 +427,24 @@
 
 
   var createCallback = function(filename, fileType, lastUpdate){
-    var filename = filename.substr(BASE_PATH.length + 1);
+    var fileInfo = {
+      filename: normPath(filename),
+      type: fileType,
+      lastUpdate: lastUpdate
+    };
+
     for (var k in io.sockets.sockets)
     {
       var socket = io.sockets.sockets[k];
       if (socket)
       {
-        socket.emit('newFile', { filename: filename, type: fileType, lastUpdate: lastUpdate });
+        socket.emit('newFile', fileInfo);
       }
     }
   }
   var updateCallback = function(fileInfo){
-    fileInfo.filename = fileInfo.filename.substr(BASE_PATH.length + 1);
+    fileInfo.filename = normPath(fileInfo.filename);
+
     for (var k in io.sockets.sockets)
     {
       var socket = io.sockets.sockets[k];
@@ -431,6 +456,8 @@
   }
 
   var deleteCallback = function(filename){
+    filename = normPath(filename);
+
     for (var k in io.sockets.sockets)
     {
       var socket = io.sockets.sockets[k];
