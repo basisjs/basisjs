@@ -1415,6 +1415,7 @@
         ? function(){
             if (!wrapped)
             {
+              wrapped = true;
               resource.source = externalResource(resourceUrl);
               resourceObject = extWrapperFn(resource.source);
             }

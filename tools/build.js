@@ -2,11 +2,13 @@ var fs = require('fs');
 var path = require('path');
 var exec = require('child_process').exec;
 
-global.document = require('jsdom-nocontextifiy').jsdom();
-global.basis = require('./src/basis').basis;
-basis.require('basis.template');
-
+var SRC_PATH = '../src/';
 var LOG_FILENAME = 'build.log';
+var OUTPUT_PATH = path.normalize(path.resolve('.', '../') + '/');
+
+global.document = require('jsdom-nocontextifiy').jsdom();
+global.basis = require(SRC_PATH + 'basis').basis;
+basis.require('basis.template');
 
 var fileCache = {};
 var packages = [];
@@ -16,9 +18,16 @@ var processStart = new Date;
 var flags = process.argv.slice(2);
 var buildMode = flags.indexOf('-build') != -1;
 var packFiles = flags.indexOf('-nopack') == -1;
+var srcPathRx = new RegExp('^' + SRC_PATH.forRegExp());
+var packageRx = new RegExp(SRC_PATH.forRegExp() + 'package');
+
+function resolveRelPath(filepath){
+  return path.relative(OUTPUT_PATH, filepath).replace(/\\/g, '/')
+}
+
 
 function readFile(filepath){
-  //console.log("read " + filepath);
+  console.log("read " + filepath);
 
   var fileContent = fs.readFileSync(filepath, 'utf-8');
   var depends = []; 
@@ -39,7 +48,7 @@ function readFile(filepath){
     depends: depends
   };
 
-  if (/^src\/package/.test(filepath))
+  if (packageRx.test(filepath))
     packages.push(fileCache[filepath]);
 }
 
@@ -50,12 +59,12 @@ function readfiles(path){
 
   for (var i = 0, filename; filename = filelist[i]; i++)
   {
-    var filepath = path + '/' + filename;
+    var filepath = path + filename;
     var stat = fs.statSync(filepath);
     if (stat.isDirectory())
     {
       if (!/\.svn$/.test(filepath))
-        readfiles(filepath);
+        readfiles(filepath + '/');
     }
     else
     {
@@ -69,9 +78,10 @@ function buildDep(namespace, context){
   if (!context)
     context = {};
 
-  var filename = 'src/' + namespace.replace(/\./g, '/') + '.js';
+  var filename = SRC_PATH + namespace.replace(/\./g, '/') + '.js';
 
   var cfg = fileCache[filename];
+  if (!cfg) console.log(filename);
   var result = {
     files: [],
     srcModules: [],
@@ -93,10 +103,10 @@ function buildDep(namespace, context){
     if (buildMode)
     {
       result.srcModules.push(
-        "//\n// " + filename + "\n//\n" +
+        "//\n// " + resolveRelPath(filename) + "\n//\n" +
         '{\n' +
         '  ns: "' + namespace + '",\n' + 
-        '  path: "' + path.dirname(cfg.path) + '/",\n' + 
+        '  path: "' + resolveRelPath(path.dirname(cfg.path)) + '/",\n' + 
         '  fn: "' + path.basename(cfg.path) + '",\n' +
         '  body: function(){' +
              cfg.srcContent + '\n' +
@@ -143,7 +153,7 @@ if (path.existsSync(LOG_FILENAME))
 //
 // read src files
 //
-readfiles('src');
+readfiles(SRC_PATH);
 
 writeLog(Object.keys(fileCache).length + ' files read / ' + packages.length + ' packages');
 writeLog('==============');
@@ -156,15 +166,16 @@ packages.forEach(function(pack){
   var packageFilename = pack.path;
 
   var namespace = packageFilename
-    .replace(/^src\/|\.js$/g, '')
+    .replace(srcPathRx, '')
+    .replace(/\.js$/g, '')
     .replace(/\//g, '.');
 
   var packageName = namespace
     .replace(/^package\./g, '')
     .replace(/\./g, '-');
 
-  var packageResFilename = 'basis-' + packageName + '.js';
-  var packageDebugResFilename = 'basis-' + packageName + '-debug.js';
+  var packageResFilename = OUTPUT_PATH + 'basis-' + packageName + '.js';
+  var packageDebugResFilename = OUTPUT_PATH + 'basis-' + packageName + '-debug.js';
   var build = buildDep(namespace);
 
   writeLog("\nBuild package `" + packageName + "`:\n  ");
@@ -183,7 +194,7 @@ packages.forEach(function(pack){
 
     var srcContent = [
       packageWrapper[0],
-      fileCache['src/basis.js'].srcContent,
+      fileCache[SRC_PATH + 'basis.js'].srcContent,
       '[\n',
         build.srcModules.join(',\n'),
       '].forEach(' + function(module){
@@ -202,7 +213,7 @@ packages.forEach(function(pack){
     var buildContent = [
       packageWrapper[0],
       '"use strict";\n',
-      fileCache['src/basis.js'].buildContent,
+      fileCache[SRC_PATH + 'basis.js'].buildContent,
       '[\n',
         build.buildModules.join(',\n'),
       '].forEach(' + function(module){
@@ -285,7 +296,7 @@ packages.forEach(function(pack){
     var fileContent = ['// Package basis-' + packageName + '.js\n\n!function(){\n\  if (typeof document != \'undefined\')\n\  {\n\    var scripts = document.getElementsByTagName(\'script\');\n\    var curLocation = scripts[scripts.length - 1].src.replace(/[^\\/]+\\.js\$/, \'\');\n'];
 
     fileContent.push("\n    document.write('<script src=\"' + curLocation + 'src/basis.js\"></script>');\n");
-    fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + packageFilename + "\"></script>');\n");
+    fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + resolveRelPath(packageFilename) + "\"></script>');\n");
     /*fileContent.push("\n    document.write('<script>');\n");
 
     var reqFiles = build.files.slice(1, -1);
