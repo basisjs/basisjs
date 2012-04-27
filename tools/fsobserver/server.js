@@ -1,5 +1,6 @@
 
   var app = require('http').createServer(serverHandler);
+  //var httpProxy = require('http-proxy');
   var io = require('socket.io').listen(app);
   var fs = require('fs');
   var url = require('url');
@@ -14,10 +15,18 @@
   if (isNaN(port))
     port = 0;
 
+  /*var proxyServer = httpProxy.createServer(9000, 'localhost', {
+    router: {
+      '/foo': 'http://ya.ru'
+    }
+  });
+  proxyServer.listen(9000);*/
+   
   app.listen(port, function(){
     var port = app.address().port;
     console.log('Server is online, listen for http://localhost:' + port + '\nWatching changes for path: ' + BASE_PATH);
   });
+
 
   var MIME_TYPE = {
     'css':  'text/css',
@@ -80,7 +89,7 @@
     socket.on('saveFile', function(filename, content){
       console.log('save file', arguments);
 
-      var fname = BASE_PATH + filename;
+      var fname = BASE_PATH + '/' + filename;
 
       if (fsWatcher.isObserveFile(fname))
       {
@@ -108,7 +117,7 @@
     socket.on('createFile', function(filename, content){
       console.log('create file', arguments);
 
-      var fname = BASE_PATH + filename;
+      var fname = BASE_PATH + '/' + filename;
        
       if (!path.existsSync(fname) && path.existsSync(path.dirname(fn)))
       {

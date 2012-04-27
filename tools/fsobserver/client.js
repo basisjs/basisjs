@@ -56,7 +56,7 @@
 
   basis.ready(function(){
     // socket.io
-    basis.dom.appendHead(
+    document.getElementsByTagName('head')[0].appendChild(
       basis.dom.createElement({
         description: 'script[src="/socket.io/socket.io.js"]',
         error: function(){
