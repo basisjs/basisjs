@@ -50,6 +50,7 @@
   var coalesce = Object.coalesce;
   var document = global.document;
   var Class = basis.Class;
+  var getter = Function.getter;
 
   // element for DOM support tests
   var testElement = document.createElement('div');
