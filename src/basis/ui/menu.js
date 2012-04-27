@@ -77,7 +77,7 @@
 
     setCaption: function(newCaption){
       this.caption = newCaption;
-      this.templateUpdate(this.tmpl);
+      this.updateBind('caption');
     },
     click: function(){
       if (!this.isDisabled() && !(this instanceof MenuItemSet))

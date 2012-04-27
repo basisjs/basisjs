@@ -863,7 +863,7 @@
       ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
 
       tmpl.field.value = this.getValue();
-      tmpl.field.text = this.getTitle();
+      tmpl.titleText.nodeValue = this.getTitle();
     }
   });
 

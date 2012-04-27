@@ -137,24 +137,12 @@
       title: 'data:'
     },
 
-    /*templateUpdate: function(tmpl, eventName, delta){
-      // set new title
-      var title = this.titleGetter(this);
-      tmpl.titleText.nodeValue = title == null || String(title) == '' ? '[no title]' : title;
-    },*/
-    
     action: {
       select: function(){
         if (!this.isDisabled())
           this.select();
       }
     },
-
-   /**
-    * Using to fetch title value.
-    * @property {function(node)}
-    */
-    titleGetter: getter('data.title'),
     
    /**
     * Using for tab default grouping.

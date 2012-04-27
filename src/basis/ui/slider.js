@@ -188,10 +188,7 @@
       this.templateUpdate(this.tmpl, 'change');
     },
 
-    event_rangeChanged: createEvent('rangeChanged') && function(sender){
-      events.rangeChanged.call(this, sender);
-      this.templateUpdate(this.tmpl, 'rangeChanged');
-    },
+    event_rangeChanged: createEvent('rangeChanged'),
 
     captionFormat: function(value){
       return Math.round(Number(value));

@@ -68,13 +68,7 @@
   var PaginatorNode = UINode.subclass({
     className: namespace + '.PaginatorNode',
 
-    pageGetter: Function.getter('pageNumber + 1'),
-
-    event_pageNumberChanged: createEvent('pageNumberChanged', 'node', 'oldPageNumber') && function(node, oldPageNumber){
-      events.pageNumberChanged.call(this, node, oldPageNumber);
-
-      this.templateUpdate(this.tmpl, 'pageNumberChanged');
-    },
+    event_pageNumberChanged: createEvent('pageNumberChanged', 'node', 'oldPageNumber'),
 
     template:
       '<td class="Basis-PaginatorNode">' +
@@ -83,8 +77,13 @@
         '</span>' +
       '</td>',
 
-    templateUpdate: function(tmpl, eventName, delta){
-      tmpl.pageNumber.nodeValue = this.pageGetter(this);
+    binding: {
+      pageNumber: {
+        events: 'pageNumberChanged',
+        getter: function(node){
+          return node.pageNumber + 1;
+        }
+      }
     },
 
     action: {

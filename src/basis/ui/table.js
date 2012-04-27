@@ -360,17 +360,17 @@
     colSpan: 1,
 
     template:
-      '<td{content} class="Basis-Table-Footer-Cell {selected} {disabled}">' +
+      '<td{content} class="Basis-Table-Footer-Cell {selected} {disabled}" colspan="{colSpan}">' +
         '\xA0' +
       '</td>',
 
-    templateUpdate: function(tmpl){
-      this.element.colSpan = this.colSpan;
+    binding: {
+      colSpan: 'colSpan'
     },
 
     setColSpan: function(colSpan){
       this.colSpan = colSpan || 1;
-      this.templateUpdate(this.tmpl);
+      this.updateBind('colSpan');
     }
   });
 
