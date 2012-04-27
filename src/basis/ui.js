@@ -205,10 +205,16 @@
         return node.childNodes ? node.childNodes.length : 0;
       }
     },
-    hasChilds: {
+    hasChildren: {
       events: 'childNodesModified',
       getter: function(node){
-        return node.childNodes && node.childNodes.length ? 'hasChilds' : '';
+        return !!node.firstChild ? 'hasChildren' : '';
+      }
+    },
+    empty: {
+      events: 'childNodesModified',
+      getter: function(node){
+        return !node.firstChild ? 'empty' : '';
       }
     }
   }, extendBinding);

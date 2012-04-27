@@ -38,17 +38,13 @@
   var getter = Function.getter;
   var classList = basis.cssom.classList;
   var Cleaner = basis.Cleaner;
-
-  var nsWrapper = basis.dom.wrapper;
-  var nsLayout = basis.layout;
-
   var createEvent = basis.event.create;
+
+  var nsLayout = basis.layout;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
   var UIControl = basis.ui.Control;
-  var UIPartitionNode = basis.ui.PartitionNode;
-  var UIGroupingNode = basis.ui.GroupingNode;
 
 
   //
@@ -101,21 +97,26 @@
     className: namespace + '.Popup',
 
     template: 
-      '<div class="Basis-Popup {selected} {disabled}">' +
+      '<div class="Basis-Popup popup-{orientation} {selected} {disabled}">' +
         '<div{closeButton} class="Basis-Popup-CloseButton"><span>Close</span></div>' +
         '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
       '</div>',
+
+    binding: {
+      orientation: {
+        events: 'layoutChanged',
+        getter: function(node){
+          return (node.orientation + '-' + node.dir.qw().slice(2, 4).join('-')).toLowerCase();
+        }
+      }
+    },
 
     event_beforeShow: createEvent('beforeShow'),
     event_show: createEvent('show'),
     event_hide: createEvent('hide'),
     event_realign: createEvent('realign'),
     event_cleanup: createEvent('cleanup'),
-    event_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir') && function(oldOrientation, oldDir){
-      var oldClass = (oldOrientation + '-' + oldDir.qw().slice(2, 4).join('-')).toLowerCase();
-      var newClass = (this.orientation + '-' + this.dir.qw().slice(2, 4).join('-')).toLowerCase();
-      classList(this.element).replace(oldClass, newClass, this.cssLayoutPrefix)
-    },
+    event_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir'),
 
     visible: false,
     autorotate: false,
@@ -127,8 +128,6 @@
     hideOnAnyClick: true,
     hideOnKey: false,
     ignoreClickFor: null,
-
-    cssLayoutPrefix: 'popup-',
 
     init: function(config){
       UIContainer.prototype.init.call(this, config);
@@ -431,10 +430,8 @@
   var Balloon = Class(Popup, {
     className: namespace + '.Balloon',
 
-    cssLayoutPrefix: 'mode-',
-
     template: 
-      '<div class="Basis-Balloon {selected} {disabled}" event-click="click">' +
+      '<div class="Basis-Balloon mode-{orientation} {selected} {disabled}" event-click="click">' +
         '<div class="Basis-Balloon-Canvas">' +
           '<div class="corner-left-top"/>' +
           '<div class="corner-right-top"/>' +
@@ -463,7 +460,7 @@
   // that makes popup visible can also hide it (as click outside of popup).
 
   var popupManager = new UIControl({
-    id: 'Basis-PopupStack',
+    template: '<div id="Basis-PopupStack" class="{hasChildren}">',
 
     handheldMode: false,
 
@@ -475,7 +472,6 @@
 
       if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
       {
-        classList(this.element).add('IsNotEmpty');
         document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
                                                            // general sibling combinator (~) doesn't work otherwise
                                                            // (it's useful for handheld scenarios, when popups show on fullsreen)
@@ -489,7 +485,6 @@
         this.lastChild.select();
       else
       {
-        classList(this.element).remove('IsNotEmpty');
         document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
                                                            // general sibling combinator (~) doesn't work otherwise
                                                            // (it's useful for handheld scenarios, when popups show on fullsreen)

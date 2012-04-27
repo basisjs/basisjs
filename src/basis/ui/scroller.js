@@ -15,6 +15,8 @@
   'use strict';
 
   basis.require('basis.event');
+  basis.require('basis.dom');
+  basis.require('basis.dom.event');
   basis.require('basis.ui');
   basis.require('basis.animation');
 
@@ -31,8 +33,6 @@
   // import names
   //
 
-  var Class = basis.Class;
-
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
 
@@ -43,9 +43,17 @@
   var classList = basis.cssom.classList;
 
   var uiNode = basis.ui.Node;
+  var uiContainer = basis.ui.Container;
+
+
   //
   // Main part
   //
+
+  //consts
+  var AVARAGE_TICK_TIME_INTERVAl = 15;
+  var VELOCITY_DECREASE_FACTOR = 0.94;
+  var MOVE_THRESHOLD = 5;
 
   //css transform/transform3d feature detection
   var TRANSFORM_SUPPORT = false;
@@ -53,19 +61,18 @@
   var TRANSFORM_PROPERTY_NAME;
   
   (function (){
+
+    var testElement = DOM.createElement('');
     
-    function testProps(element, properties) {
-      var p;
-      while (p = properties.shift()) {
-        if (typeof element.style[p] != 'undefined') 
-          return p;
-      }
+    function testProps(properties){
+      for (var i = 0, propertyName; propertyName = properties[i]; i++)
+        if (typeof testElement.style[propertyName] != 'undefined') 
+          return propertyName;
+
       return false;
     }
 
-    var tester = DOM.createElement('');
-
-    TRANSFORM_PROPERTY_NAME = testProps(tester, [
+    TRANSFORM_PROPERTY_NAME = testProps([
       'transform',
       'WebkitTransform',
       'msTransform',
@@ -79,7 +86,7 @@
     //transform3d
     if (TRANSFORM_SUPPORT)
     {
-      var prop = testProps(tester, [
+      var prop = testProps([
         'perspectiveProperty', 
         'WebkitPerspective', 
         'MozPerspective', 
@@ -87,16 +94,11 @@
         'msPerspective'
       ]);
 
-      if (prop || 'webkitPerspective' in document.documentElement.style)
+      if (prop || 'webkitPerspective' in testElement.style)
         TRANSFORM_3D_SUPPORT = true;
     }
   })();
 
-
-  //consts
-  var AVARAGE_TICK_TIME_INTERVAl = 15;
-  var VELOCITY_DECREASE_FACTOR = 0.94;
-  var MOVE_THRESHOLD = 5;
 
  /**
   * @class
@@ -587,7 +589,7 @@
  /**
   * @class
   */
-  var ScrollPanel = Class(basis.ui.Container, {
+  var ScrollPanel = uiContainer.subclass({
     className: namespace + '.ScrollPanel',
 
     useScrollbars: true,

@@ -61,7 +61,6 @@
   // Table header
   //
 
-  var HEADERCELL_CSS_SORTABLE = 'Basis-Table-Header-SortableCell';
   var HEADERCELL_CSS_SORTDESC = 'sort-order-desc';
 
  /**
@@ -81,12 +80,6 @@
     binding: {
       title: 'data:title'
     }
-
-    /*titleGetter: getter('data.title'),
-
-    templateUpdate: function(tmpl, eventName, delta){
-      tmpl.titleText.nodeValue = this.titleGetter(this);
-    }*/
   });
 
  /**
@@ -201,12 +194,18 @@
     groupId: 0,
 
     template:
-      '<th class="Basis-Table-Header-Cell {selected} {disabled}" event-click="setColumnSorting">' +
+      '<th class="Basis-Table-Header-Cell Basis-Table-Header-Cell-{sortable} {selected} {disabled}" event-click="setColumnSorting">' +
         '<div class="Basis-Table-Sort-Direction"/>' +
         '<div class="Basis-Table-Header-Cell-Content">' + 
           '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
         '</div>' +
       '</th>',
+
+    binding: {
+      sortable: function(node){
+        return node.colSorting ? 'sortable' : '';
+      }
+    },
 
     action: {
       setColumnSorting: function(event){
@@ -233,7 +232,6 @@
       {
         //this.colSorting = getter(this.colSorting);
         this.defaultOrder = this.defaultOrder == 'desc';
-        classList(this.element).add(HEADERCELL_CSS_SORTABLE);
       }
     },
 

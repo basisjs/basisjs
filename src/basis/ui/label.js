@@ -31,19 +31,18 @@
   // import names
   //
 
+  var LISTEN = basis.event.LISTEN;
+  var STATE = basis.data.STATE;
+  var DELEGATE = basis.dom.wrapper.DELEGATE;
+
+
+  var getter = Function.getter;
+  var createEvent = basis.event.create;
+  var events = basis.event.events;
+
   var Class = basis.Class;
   var DOM = basis.dom;
   var cssom = basis.cssom;
-
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
-  var LISTEN = basis.event.LISTEN;
-
-  var getter = Function.getter;
-  var classList = basis.cssom.classList;
-
-  var STATE = basis.data.STATE;
-  var DELEGATE = basis.dom.wrapper.DELEGATE;
 
   var UINode = basis.ui.Node;
 

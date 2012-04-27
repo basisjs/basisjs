@@ -73,7 +73,7 @@
     font-style: normal;
     font-weight: normal; 
   }
-  .Basis-Paginator-WithNoScroll .Basis-Paginator-ScrollbarContainer
+  .Basis-Paginator-noScroll .Basis-Paginator-ScrollbarContainer
   {
     display: none;
   }

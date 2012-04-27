@@ -39,7 +39,6 @@
   var events = basis.event.events;
   var createEvent = basis.event.create;
   var cssom = basis.cssom;
-  var classList = basis.cssom.classList;
 
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var UINode = basis.ui.Node;
@@ -72,7 +71,7 @@
     caption: '\xA0',
 
     template:
-      '<div class="Basis-Slider-Mark {selected} {disabled}">' +
+      '<div class="Basis-Slider-Mark {last} {range} {selected} {disabled}">' +
         '<span class="Basis-Slider-Mark-CaptionWrapper">' +
           '<span class="Basis-Slider-Mark-Caption">' +
             '{text}' +
@@ -80,21 +79,21 @@
         '</span>' +
       '</div>',
 
+    binding: {
+      last: function(node){
+        return node.isLast ? 'last' : '';
+      },
+      range: function(node){
+        return node.isRange ? 'range' : '';
+      },
+      text: 'caption'
+    },
+
     templateUpdate: function(tmpl){
-      var element = tmpl.element;
-
-      tmpl.text.nodeValue = this.caption;
-
       cssom.setStyle(this.element, {
         left: percent(this.pos),
         width: percent(this.width)
       });
-
-      if (this.isLast)
-        classList(this.element).add('last');
-
-      if (this.isRange)
-        classList(this.element).add('range');
     }
   });
 
@@ -212,7 +211,7 @@
     * @inheritDoc
     */
     template:
-    	'<div class="Basis-Slider Basis-Slider-MinMaxOutside {selected} {disabled}" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">' +
+    	'<div class="Basis-Slider {isEmptyRange} Basis-Slider-MinMaxOutside {selected} {disabled}" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">' +
         '<div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>' +
         '<div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>' +
         '<div class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
@@ -227,7 +226,25 @@
     	'</div>',
 
     binding: {
-      marks: 'satellite:'
+      marks: 'satellite:',
+      minValue: {
+        events: 'rangeChanged',
+        getter: function(node){
+          return node.captionFormat(node.min);
+        }
+      },
+      maxValue: {
+        events: 'rangeChanged',
+        getter: function(node){
+          return node.captionFormat(node.max);
+        }
+      },
+      isEmptyRange: {
+        events: 'rangeChanged',
+        getter: function(node){
+          return node.min == node.max ? 'isEmptyRange' : '';
+        }
+      }
     },
 
    /**
@@ -295,14 +312,6 @@
     * @inheritDoc
     */
     templateUpdate: function(tmpl, eventName){
-      if (!eventName || eventName == 'rangeChanged')
-      {
-        tmpl.minValue.nodeValue = this.captionFormat(this.min);
-        tmpl.maxValue.nodeValue = this.captionFormat(this.max);
-
-        classList(this.element).bool('NoMax', this.max == this.min);
-      }
-
       if (!eventName || eventName == 'change')
       {
         cssom.setStyle(tmpl.valueBar, {

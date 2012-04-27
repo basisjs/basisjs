@@ -91,7 +91,7 @@
     // applied to element when it in document. Based on this, we clone element's ancestor vector and get computed
     // style on cloned element. Ancestor cloning is necessary, because it influence on rule set that apply to element.
     var GETCOMPUTEDSTYLE_BUGGY = {};
-    basis.dom.event.onLoad(function(){
+    basis.ready(function(){
       var element = DOM.insert(document.body, DOM.createElement('[style="position:absolute;top:auto"]'));
 
       if (global.getComputedStyle(element, 'top') != 'auto')

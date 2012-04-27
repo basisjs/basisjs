@@ -16,7 +16,6 @@
   'use strict';
 
   basis.require('basis.dom');
-  basis.require('basis.cssom');
   basis.require('basis.ui');
   basis.require('basis.ui.tabs');
   basis.require('basis.ui.scroller');
@@ -33,19 +32,15 @@
   // import names
   //
 
-  var DOM = basis.dom;
-  var Class = basis.Class;
-
   var PageControl = basis.ui.tabs.PageControl;
   var Scroller = basis.ui.scroller.Scroller;
-  var classList = basis.cssom.classList;
 
 
   //
   // main part
   //
   
-  var PageSlider = Class(PageControl, {
+  var PageSlider = PageControl.subclass({
     className: namespace + '.PageSlider',
 
     template: 
@@ -54,8 +49,9 @@
       '</div>',
 
     childClass: {
+      className: namespace + '.Page',
       event_select: function(){
-        this.constructor.superClass_.prototype.event_select.apply(this, arguments);
+        PageControl.prototype.childClass.prototype.event_select.apply(this, arguments);
         this.parentNode.scrollToPage(this);
       }
     },
@@ -69,10 +65,6 @@
 
     init: function(config){
       PageControl.prototype.init.call(this, config);
-
-      /*var cssClassName = 'gerericRule_' + this.eventObjectId;
-      this.pageSliderCssRule = basis.cssom.cssRule('.' + cssClassName + ' > .Basis-Page');
-      classList(this.element).add(cssClassName);*/
 
       this.scroller = new Scroller({
         targetElement: this.tmpl.childNodesElement,
@@ -95,19 +87,25 @@
 
       var pageWidth = currentPage.element.offsetWidth;
       var pagePosition = currentPage.element.offsetLeft
-      var pageScrollTo = currentPage;
+      var pageScrollTo;
 
       if (this.scroller.currentVelocityX)
       {
-        pageScrollTo = (this.scroller.currentVelocityX > 0 ? currentPage.nextSibling : currentPage.previousSibling) || currentPage;
+        pageScrollTo = this.scroller.currentVelocityX > 0
+          ? currentPage.nextSibling
+          : currentPage.previousSibling;
       }
-      else if ((this.scroller.viewportX > (pagePosition + pageWidth / 2)) 
-        || (this.scroller.viewportX < (pagePosition - pageWidth / 2))
-      )
-      {
-        var dir = this.scroller.viewportX - pagePosition;
-        pageScrollTo = (dir > 0 ? currentPage.nextSibling : currentPage.previousSibling) || currentPage;
-      }
+      else
+        if ((this.scroller.viewportX > (pagePosition + pageWidth / 2)) 
+            || (this.scroller.viewportX < (pagePosition - pageWidth / 2)))
+        {
+          pageScrollTo = this.scroller.viewportX - pagePosition > 0
+            ? currentPage.nextSibling
+            : currentPage.previousSibling;
+        }
+
+      if (!pageScrollTo)
+        pageScrollTo = currentPage;
 
       this.scrollToPage(pageScrollTo);
     },
@@ -123,10 +121,8 @@
     destroy: function(){
       PageControl.prototype.init.call(this, config);
 
-      /*DOM.Style.getStyleSheet().removeCssRule(this.pageSliderCssRule.rule);
-      this.pageSliderCssRule = null;*/
-
       this.scroller.destroy();
+      this.scroller = null;
     }
   });
 

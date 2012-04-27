@@ -37,7 +37,6 @@
   var DOM = basis.dom;
   var Event = basis.dom.event;
   var cssom = basis.cssom;
-  var classList = basis.cssom.classList;
   var Cleaner = basis.Cleaner;
 
   var createEvent = basis.event.create;
@@ -309,20 +308,6 @@
         });
       }
 
-      /*if (!this.titleButton || this.titleButton.close !== false)
-      {
-        classList(titleContainer).add('Basis-Window-Title-ButtonPlace-Close');          
-        DOM.insert(
-          titleContainer,
-          DOM.createElement('SPAN.Basis-Window-Title-ButtonPlace', 
-            DOM.createElement('SPAN.Basis-Window-Title-CloseButton[event-click="close"]',
-              DOM.createElement('SPAN', 'Close')
-            )
-          ),
-          DOM.INSERT_BEGIN
-        );
-      }*/
-
       if (this.autocenter !== false)
         this.autocenter = this.autocenter_ = true;
 
@@ -438,14 +423,12 @@
 
   var wmBlocker = new Blocker();
   var windowManager = new UIControl({
-    id: 'Basis-WindowStack',
+    template: '<div id="Basis-WindowStack" class="{hasChildren}"/>',
     childClass: Window
   });
 
   windowManager.addHandler({
     childNodesModified: function(){
-      classList(this.element).bool('IsNotEmpty', this.firstChild);
-
       var modalIndex = -1;
 
       if (this.lastChild)

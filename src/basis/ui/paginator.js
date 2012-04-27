@@ -17,10 +17,8 @@
   'use strict';
 
   basis.require('basis.event');
-  basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
-  basis.require('basis.cssom');
   basis.require('basis.dragdrop');
   basis.require('basis.ui');
 
@@ -36,13 +34,10 @@
   // import names
   //
 
-  var Class = basis.Class;
-  var DOM = basis.dom;
   var Event = basis.dom.event;
 
   var createEvent = basis.event.create;
   var events = basis.event.events;
-  var classList = basis.cssom.classList;
 
   var Box = basis.layout.Box;
   var DragDropElement = basis.dragdrop.DragDropElement;
@@ -144,7 +139,7 @@
     childClass: PaginatorNode,
 
     template:
-    	'<div class="Basis-Paginator {selected} {disabled}" event-mousewheel="scroll">' +
+    	'<div class="Basis-Paginator Basis-Paginator-{noScroll} {selected} {disabled}" event-mousewheel="scroll">' +
         '<table><tbody><tr{childNodesElement}/></tbody></table>' +
         '<div{scrollbarContainer} class="Basis-Paginator-ScrollbarContainer">' +
           '<div{scrollbar} class="Basis-Paginator-Scrollbar" event-click="jumpTo">' +
@@ -157,6 +152,15 @@
           '</div>' +
         '</div>' +
     	'</div>',
+
+    binding: {
+      noScroll: {
+        events: 'pageCountChanged',
+        getter: function(node){
+          return node.pageSpan >= node.pageCount ? 'noScroll' : '';
+        }
+      }
+    },
 
     action: {
       jumpTo: function(actionName, event, node){
@@ -247,8 +251,6 @@
 
       this.tmpl.scrollTrumbWrapper.style.width = percent(1 - spanWidth);
       this.tmpl.scrollTrumb.style.width = percent(scrollTrumbWidth);
-
-      classList(this.element).bool('Basis-Paginator-WithNoScroll', pageSpan >= pageCount);
 
       this.setSpanStartPage(this.spanStartPage_);
       this.setActivePage(arguments.length == 3 ? activePage : this.activePage);

@@ -34,9 +34,6 @@
   var DOM = basis.dom;
 
   var getter = Function.getter;
-  var classList = basis.cssom.classList;
-  var createEvent = basis.event.create;
-  var events = basis.event.events;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -309,16 +306,6 @@
 
     childClass: TabSheet,
 
-    /*listen: {
-      childNode: {
-        templateChanged: function(tab){
-          console.log('!')
-          if (this.tmpl.pagesElement)
-            this.tmpl.pagesElement.insertBefore(tab.tmpl.pageElement, tab.nextSibling ? tab.nextSibling.tmpl.pageElement : null)
-        }
-      }
-    },*/
-    
     template: 
       '<div class="Basis-TabSheetControl {selected} {disabled}">' +
         '<div{tabsElement} class="Basis-TabControl">' +

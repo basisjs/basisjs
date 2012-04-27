@@ -52,7 +52,6 @@
   var DOM = basis.dom;
   var Event = basis.dom.event;
 
-  var classList = basis.cssom.classList;
   var getter = Function.getter;
   var createEvent = basis.event.create;
 

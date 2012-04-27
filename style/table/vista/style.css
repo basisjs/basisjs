@@ -82,20 +82,20 @@
   /*
    * :hover
    */
-  .Basis-Table-Header-SortableCell:hover
+  .Basis-Table-Header-Cell-sortable:hover
   {
     cursor: pointer;
     background-color: #B7E7FB;
     background-image: url(hover_bg.gif);
   }
-  .Basis-Table-Header-SortableCell:hover .Basis-Table-Header-Cell-Content
+  .Basis-Table-Header-Cell-sortable:hover .Basis-Table-Header-Cell-Content
   {
     background-image: url(hover_hline.gif);
     border-color: #93C9E3;
     border-left: none;
     padding-left: 1px;
   }
-  .Basis-Table-Header-SortableCell:hover .Basis-Table-Header-Cell-Title
+  .Basis-Table-Header-Cell-sortable:hover .Basis-Table-Header-Cell-Title
   {
     background-image: url(hover_hline.gif);
   }

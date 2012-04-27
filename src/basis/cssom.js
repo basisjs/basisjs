@@ -723,7 +723,7 @@
   // platform specific actions
   //
 
-  event.onLoad(function(){
+  basis.ready(function(){
     classList(document.body).bool('opacity-not-support', !basis.platformFeature['css-opacity']);
   });
 

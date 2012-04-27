@@ -138,7 +138,7 @@
     },
 
     template:
-      '<div class="Basis-Menu {selected} {disabled}">' +
+      '<div class="Basis-Menu popup-{orientation} {selected} {disabled}">' +
         '<div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>' +
         '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
       '</div>'

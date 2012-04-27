@@ -95,9 +95,9 @@
     visibility: visible;
   }
 
-  .Basis-Slider.NoMax .Basis-Slider-MaxLabel .caption
+  .Basis-Slider.isEmptyRange .Basis-Slider-MaxLabel .caption
   {
-    visibility: visible;
+    visibility: hidden;
   }
 
   .Basis-Slider-MinLabel,
