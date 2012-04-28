@@ -2034,7 +2034,7 @@
             ;;;if (logDestroy) console.log('destroy', String(object.className).quote('['), object);
             object.destroy();
           } catch(e) {
-            ;;;if (typeof console != 'undefined') console.warn(e);
+            ;;;if (typeof console != 'undefined') console.warn(String(object), e);
           }
         }
         else
@@ -2047,7 +2047,16 @@
       objects.clear();
     };
 
-    //Event.onUnload(destroy);  // !!!FIXME
+    if ('attachEvent' in global)
+      global.attachEvent('onunload', destroy);
+    else
+      if ('addEventListener' in global)
+        global.addEventListener('unload', destroy, false);
+      else
+        return {
+          add: Function(),
+          remove: Function()
+        };
 
     var result = {
       add: function(object){

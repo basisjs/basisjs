@@ -1375,129 +1375,24 @@
   //
   //
 
-  var resourceManager = (function(){
-    if (!document)  // hot fix for node.js
-      return {};
+  var usableResources = {
+    '.css': true
+  };
 
-    // Test for appendChild bugs (old IE browsers has a problem with some tags like <script> and <style>)
-    function appendTest(tagName){
-      try {
-        return !dom.createElement(tagName, '');
-      } catch(e) {
-        return true;
-      }
-    }
+  function isUsableResource(path){
+    var ext = path.match(/(\.[a-z0-9\-\_]+)+$/);
+    return ext && usableResources[ext[0]];
+  }
 
-    var SCRIPT_APPEND_BUGGY = appendTest('script');
-    var STYLE_APPEND_BUGGY = appendTest('style');
+  function startUseResource(url){
+    if (isUsableResource(url))
+      basis.resource(url)().startUse();
+  }
 
-    var linkEl = dom.createElement('A');
-    basis.ready(function(){
-      document.body.appendChild(linkEl);
-    });
-
-    var baseEl = basis.dom.createElement('base');
-    var documentHead = document.head;
-
-    function setBase(path){
-      linkEl.href = path;                         // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
-      baseEl.setAttribute('href', linkEl.href);
-
-      basis.dom.insert(documentHead, baseEl, 0); // even if there is more than one <base> elements, only first has effect
-    }
-    function restoreBase(){
-      baseEl.setAttribute('href', location);      // Opera left document base as <base> element specified,
-                                                  // even if this element is removed from document
-      basis.dom.remove(baseEl);    
-    }
-    function relPath(path){
-      linkEl.href = path;
-      path = linkEl.href;
-
-      var abs = path.split(/\//);
-      var loc = location.href.replace(/\/[^\/]*$/, '').split(/\//);
-      var i = 0;
-
-      while (abs[i] == loc[i] && typeof loc[i] == 'string')
-        i++;
-
-      return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
-    }
-
-    function updateCss(cssText){
-      setBase(this.baseURI);
-      if (STYLE_APPEND_BUGGY)
-        this.element.styleSheet.cssText = cssText;
-      else
-      {
-        if (this.element.firstChild)
-          this.element.firstChild.nodeValue = cssText;
-        else
-          this.element.appendChild(document.createTextNode(cssText));
-      }
-      restoreBase();
-    }
-
-    var resourceUsage = {};
-    var resourceTypeHandler = {
-      '.css': {
-        attach: function(url){
-          var element = dom.createElement('style[src="' + relPath(url) + '"]');
-          var ctx = {
-            resource: basis.resource(url),
-            element: element,
-            baseURI: url
-          };
-
-          dom.appendHead(element);
-
-          updateCss.call(ctx, String(ctx.resource));
-          ctx.resource.bindingBridge.attach(ctx.resource, updateCss, ctx);
-
-          return ctx;
-        },
-        detach: function(ctx){
-          basis.dom.remove(ctx.element);
-          ctx.resource.bindingBridge.detach(ctx.resource, updateCss, ctx);
-        }
-      }
-    };
-
-    return {
-      startUse: function(path){
-        var res = resourceUsage[path];
-        if (!res)
-        {
-          var ext = path.match(/(\.[a-z0-9\-\_]+)+$/);
-          if (ext)
-          {
-            var handler = resourceTypeHandler[ext[0]];
-            if (handler)
-            {
-              resourceUsage[path] = {
-                count: 1,
-                handler: handler,
-                object: handler.attach(path)
-              }
-            }
-          }
-        }
-        else
-          res.count++;
-      },
-      stopUse: function(path){
-        var res = resourceUsage[path];
-        if (res)
-        {
-          if (--res.count == 0)
-          {
-            res.handler.detach(res.object);
-            delete resourceUsage[path];
-          }
-        }
-      }
-    }
-  })();
+  function stopUseResource(url){
+    if (isUsableResource(url))
+      basis.resource(url)().stopUse();
+  }
 
 
 
@@ -1540,11 +1435,11 @@
 
     if (hasResources)
       for (var i = 0, res; res = decl.resources[i]; i++)
-        resourceManager.startUse(this.baseURI + res);
+        startUseResource(this.baseURI + res);
 
     if (this.resources)
       for (var i = 0, res; res = this.resources[i]; i++)
-        resourceManager.stopUse(this.baseURI + res);
+        stopUseResource(this.baseURI + res);
 
     this.resources = hasResources && decl.resources;
 

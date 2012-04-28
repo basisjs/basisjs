@@ -32,6 +32,7 @@
   var dom = basis.dom;
   var event = basis.dom.event;
   var Class = basis.Class;
+  var Cleaner = basis.Cleaner;
 
 
   //
@@ -718,6 +719,194 @@
   basis.ready(function(){
     classList(document.body).bool('opacity-not-support', !basis.platformFeature['css-opacity']);
   });
+
+
+  //
+  // CSS resource
+  //
+
+  var dynamicResources = {};
+
+  // Test for appendChild bugs (old IE browsers has a problem with append textNode into <style>)
+  var STYLE_APPEND_BUGGY = !(function(tagName){
+    try {
+      return dom.createElement('style', '');
+    } catch(e) {}
+  })();
+
+
+ /**
+  * Helper for path resolving
+  */
+  var pathResolver = (function(){
+    var linkEl = dom.createElement('a');
+    var baseEl = dom.createElement('base');
+    var documentHead = document.head;
+
+    return {
+      setBase: function(path){
+        // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
+        // convert path to absolute value
+        linkEl.href = path;
+        baseEl.setAttribute('href', linkEl.href);
+
+        // if more than one <base> elements in document, only first has effect
+        // put our <base> resolver at the begining of <head>
+        dom.insert(documentHead, baseEl, 0);
+      },
+      restoreBase: function(){
+        // Opera left document base as <base> element specified,
+        // even if this element is removed from document
+        // so we set current location for base
+        baseEl.setAttribute('href', location);
+
+        dom.remove(baseEl);    
+      },
+      dirname: function(path){
+        linkEl.href = path;
+        return linkEl.href.replace(/\/[^\/]*$/, '');
+      },
+      relative: function(path){
+        linkEl.href = path;
+        path = linkEl.href;
+
+        var abs = path.split(/\//);
+        var loc = this.dirname(location.href).split(/\//);
+        var i = 0;
+
+        while (abs[i] == loc[i] && typeof loc[i] == 'string')
+          i++;
+
+        return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
+      }
+    }
+  })();
+
+
+ /**
+  * @class
+  */
+  var CssResource = Class(null, {
+    inUse: 0,
+    cssText: '',
+
+    element: null,
+    textNode: null,
+
+    init: function(url){
+      this.url = pathResolver.relative(url);
+      this.baseURI = pathResolver.dirname(url);
+
+      dynamicResources[url] = this;
+    },
+
+    updateCssText: function(cssText){
+      if (this.cssText != cssText)
+      {
+        this.cssText = cssText;
+        if (this.inUse)
+          this.syncCssText();
+      }
+    },
+
+    syncCssText: function(){
+      pathResolver.setBase(this.baseURI);
+
+      if (this.textNode)
+        // W3C browsers
+        this.textNode.nodeValue = this.cssText;
+      else
+        // old IE
+        this.element.styleSheet.cssText = this.cssText;
+
+      pathResolver.restoreBase();
+    },
+
+    startUse: function(){
+      if (!this.inUse)
+      {
+        this.inUse = 1;
+
+        if (!this.resource)
+        {
+          var resource = basis.resource(this.url);
+          //resource.bindingBridge.attach(resource, this.updateCssText, this);
+
+          this.resource = resource;
+          this.cssText = this.resource.source;
+        }
+
+        if (!this.element)
+        {
+          this.element = dom.createElement('style[src="' + this.url + '"]');
+          if (!STYLE_APPEND_BUGGY)
+            this.textNode = this.element.appendChild(dom.createText());
+        }
+
+        dom.appendHead(this.element);
+        this.syncCssText();
+      }
+      else
+        this.inUse += 1;
+    },
+
+    stopUse: function(){
+      if (!this.inUse)
+        return;
+
+      // decrease usage count
+      this.inUse -= 1;
+
+      // remove element if nobody use it
+      if (!this.inUse)
+        dom.remove(this.element);
+    },
+
+    destroy: function(){
+      if (this.element)
+      {
+        dom.remove(this.element);
+
+        this.element = null;
+        this.textNode = null;
+      }
+
+      if (this.resource)
+      {
+        //this.resource.bindingBridge.attach(this.resource, this.updateCssText, this);
+
+        this.resource = null;
+        this.cssText = null;
+      }
+    }
+  });
+
+  basis.resource.extensions['.css'] = function(content, url){
+    var resource = dynamicResources[url];
+
+    if (!resource)
+      resource = new CssResource(url);
+    else
+      resource.updateCssText(content);
+
+    return resource;
+  };
+  basis.resource.extensions['.css'].updatable = true;
+
+
+  //
+  // cleanup on page unload
+  //
+
+  Cleaner.add({
+    destroy: function(){
+      for (var url in dynamicResources)
+        dynamicResources[url].destroy();
+
+      dynamicResources = null;
+    }
+  });
+
 
 
   //
