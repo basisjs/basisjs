@@ -28,6 +28,7 @@
   var Class = basis.Class;
   var dom = basis.dom;
   var domEvent = basis.dom.event;
+  var Cleaner = basis.Cleaner;
 
 
   //
@@ -80,6 +81,7 @@
   // dictonaries
   var tmplEventListeners = {};
   var tmplNodeMap = { seed: 1 };
+  var templateList = [];
   var tmplFilesMap = {};
   var namespaceURI = {
     svg: 'http://www.w3.org/2000/svg'
@@ -1239,13 +1241,11 @@
       };
 
       var objectRefs = pathes.objectRefList;;
-
       for (var i = 0, ref; ref = objectRefs[i]; i++)
         objectRefs[i] += '.basisObjectId';
 
       objectRefs = objectRefs.join('=');
 
-      console.log(pathes.objectRefList);
       /** @cut */try {
       var fnBody;
       var createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
@@ -1260,7 +1260,7 @@
           'attaches=null;' +
           /**@cut*/'delete set.debug;' + 
           'delete tMap[id];' + 
-          'if(obj)delete gMap[id];' +
+          'delete gMap[id];' +
           '}'] +
         '}' +
       '}');
@@ -1589,6 +1589,8 @@
     */
     init: function(templateSource){
       this.setSource(templateSource);
+
+      templateList.push(this);
     },
 
    /**
@@ -1681,6 +1683,30 @@
 
         templateSourceUpdate.call(this);
       }
+    }
+  });
+
+
+  //
+  // cleanup on page unload
+  //
+
+  Cleaner.add({
+    destroy: function(){
+      for (var i = 0, template; template = templateList[i]; i++)
+      {
+        for (var key in template.instances_)
+          template.instances_[key].destroy();
+
+        template.createInstance = null;
+        template.getBinding = null;
+        template.instances_ = null;
+        template.resources = null;
+        template.l10n_ = null;
+        template.source = null;
+      }
+
+      templateList = null;
     }
   });
 
