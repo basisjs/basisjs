@@ -647,6 +647,7 @@
     var pathList;
     var refList;
     var bindingList;
+    var objectRefList;
 
     function putRefs(refs, pathIdx){
       for (var i = 0, refName; refName = refs[i]; i++)
@@ -709,6 +710,9 @@
         {
           myRef = -1;
 
+          if (!i && path == '_')
+            objectRefList.push(localPath);
+
           if (!explicitRef)
           {
             localPath = putPath(localPath);
@@ -753,13 +757,15 @@
       pathList = [];
       refList = [];
       bindingList = [];
+      objectRefList = [];
 
       processTokens(tokens, path);
 
       return {
         path: pathList,
         ref: refList,
-        binding: bindingList
+        binding: bindingList,
+        objectRefList: objectRefList
       };
     }
   })();
@@ -1232,11 +1238,19 @@
         return proto.cloneNode(true);
       };
 
+      var objectRefs = pathes.objectRefList;;
+
+      for (var i = 0, ref; ref = objectRefs[i]; i++)
+        objectRefs[i] += '.basisObjectId';
+
+      objectRefs = objectRefs.join('=');
+
+      console.log(pathes.objectRefList);
       /** @cut */try {
       var fnBody;
       var createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
-        'var _=build(),id=gMap.seed++,attaches={},resolve=tools.resolve,' + pathes.path.concat(bindings.vars) + ';\n' +
-        'if(obj&&a&&a.nodeType!=3)gMap[a.basisObjectId=id]=obj;\n' +
+        'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + pathes.path.concat(bindings.vars) + ';\n' +
+        (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
         'function updateAttach(){set(String(this),attaches[this])};\n' +
         bindings.body +
         /**@cut*/';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' +
@@ -1244,9 +1258,10 @@
         'destroy:function(){' +
           'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
           'attaches=null;' +
-          'delete tMap[id];' + 
           /**@cut*/'delete set.debug;' + 
-          'if(obj)delete gMap[id]}'] +
+          'delete tMap[id];' + 
+          'if(obj)delete gMap[id];' +
+          '}'] +
         '}' +
       '}');
       //console.log(createInstance);

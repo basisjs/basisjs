@@ -1328,7 +1328,7 @@
 
           var ns = basis.namespace(namespace);
           var scriptText = externalResource(requestUrl);
-          runScriptInContext(ns, requestUrl, scriptText, '/** @namespace ' + namespace + '*/\n');
+          runScriptInContext(ns, requestUrl, scriptText, '/** @namespace ' + namespace + ' */\n');
           complete(ns, ns.exports);
           ;;;ns.filename_ = requestUrl;
           ;;;ns.source_ = scriptText;
