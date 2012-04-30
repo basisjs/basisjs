@@ -34,7 +34,6 @@
   var cssom = basis.cssom;
 
   var getter = Function.getter;
-  var classList = basis.cssom.classList;
   var Cleaner = basis.Cleaner;
   var createEvent = basis.event.create;
 
@@ -95,17 +94,29 @@
     className: namespace + '.Popup',
 
     template: 
-      '<div class="Basis-Popup popup-{orientation} {selected} {disabled}">' +
-        '<div{closeButton} class="Basis-Popup-CloseButton"><span>Close</span></div>' +
+      '<div class="Basis-Popup popup-{orientation} {anim:visible} {selected} {disabled}">' +
+        '<div class="Basis-Popup-CloseButton" event-click="hide"><span>Close</span></div>' +
         '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
       '</div>',
 
     binding: {
+      visible: {
+        events: 'show hide',
+        getter: function(node){
+          return node.visible ? 'visible' : 'hidden';
+        }
+      },
       orientation: {
         events: 'layoutChanged',
         getter: function(node){
           return (node.orientation + '-' + node.dir.qw().slice(2, 4).join('-')).toLowerCase();
         }
+      }
+    },
+
+    action: {
+      hide: function(){
+        this.hide();
       }
     },
 
@@ -143,9 +154,6 @@
         
       if (this.thread)
         this.thread.addHandler(THREAD_HANDLER, this);
-
-      //Event.addHandler(this.element, 'click', this.click, this);
-      //this.addEventListener('click', 'click', true);
 
       Cleaner.add(this);
     },
@@ -324,12 +332,6 @@
         }
 
         this.cssRule.setStyle(style);
-        /*this.cssRule.setStyle({
-          right:  'auto',
-          left:   parseInt(point.x - (dirH != LEFT) * (this.element.offsetWidth >> (dirH == CENTER))) + 'px',
-          bottom: 'auto',
-          top:    parseInt(point.y - (dirV != TOP) * (this.element.offsetHeight >> (dirV == CENTER))) + 'px'
-        });*/
 
         this.event_realign();
       }
@@ -352,14 +354,12 @@
         }
 
         // make element invisible & insert element into DOM
-        classList(this.element).remove('pre-transition');
         cssom.visibility(this.element, false);
 
         popupManager.appendChild(this);
 
         // dispatch `beforeShow` event, there we can fill popup with content
         this.event_beforeShow();
-        //this.dispatch.apply(this, ['beforeShow'].concat(args));
 
         // set visible flag to TRUE
         this.visible = true;
@@ -368,10 +368,8 @@
         this.realign();
         if (this.thread) this.thread.start(1);
         cssom.visibility(this.element, true);
-        classList(this.element).add('pre-transition');
 
         // dispatch `show` event, there we can set focus for elements etc.
-        //this.dispatch.apply(this, ['show'].concat(args));
         this.event_show();
       }
       else
@@ -429,7 +427,7 @@
     className: namespace + '.Balloon',
 
     template: 
-      '<div class="Basis-Balloon mode-{orientation} {selected} {disabled}" event-click="click">' +
+      '<div class="Basis-Balloon mode-{orientation} {visible} {anim:visible} {selected} {disabled}" event-click="click">' +
         '<div class="Basis-Balloon-Canvas">' +
           '<div class="corner-left-top"/>' +
           '<div class="corner-right-top"/>' +
@@ -443,7 +441,7 @@
           '<div class="tail"/>' +
         '</div>' +
         '<div class="Basis-Balloon-Layout">' +
-          '<div{closeButton} class="Basis-Balloon-CloseButton"><span>Close</span></div>' +
+          '<div class="Basis-Balloon-CloseButton" event-click="hide"><span>Close</span></div>' +
           '<div{content|childNodesElement} class="Basis-Balloon-Content"/>' +
         '</div>' +
       '</div>'
@@ -547,12 +545,6 @@
 
       for (var i = 0, popup; popup = popups[i]; i++)
       {
-        if (sender === popup.tmpl.closeButton || DOM.parentOf(popup.tmpl.closeButton, sender))
-        {
-          this.removeChild(popup);
-          return;
-        }
-
         if (!ancestorAxis)
           ancestorAxis = DOM.axis(sender, DOM.AXIS_ANCESTOR_OR_SELF);
 
