@@ -38,8 +38,6 @@
   var Event = basis.dom.event;
   var cssom = basis.cssom;
 
-  var classList = basis.cssom.classList;
-
   var uiNode = basis.ui.Node;
   var uiContainer = basis.ui.Container;
 
@@ -599,7 +597,7 @@
     event_updatePosition: createEvent('updatePosition'),
 
     template: 
-      '<div class="Basis-ScrollPanel" event-mousewheel="onwheel">' +
+      '<div class="Basis-ScrollPanel {scrollProcess} {bothScrollbars}" event-mousewheel="onwheel">' +
         '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content {selected} {disabled}"/>' +
         '<!--{horizontalScrollbar}-->' +
         '<!--{verticalScrollbar}-->' +
@@ -607,7 +605,13 @@
 
     binding: {
       horizontalScrollbar: 'satellite:',
-      verticalScrollbar: 'satellite:'
+      verticalScrollbar: 'satellite:',
+      bothScrollbars: function(node){
+        return node.scrollX && node.scrollY ? bothScrollbars : '';
+      },
+      scrollProcess: function(node){
+        return node.scroller && node.scroller.isUpdating ? 'scrollProcess' : '';
+      }
     },
 
     action: {
@@ -663,14 +667,12 @@
           if (!this.maxPositionX && !this.maxPositionY)
             this.realign();
 
-          classList(this.element).add('scrollProcess');
+          this.updateBind('scrollProcess');
         },
         finish: function(){
-          classList(this.element).remove('scrollProcess');
+          this.updateBind('scrollProcess');
         }
       }, this);
-
-      classList(this.element).bool('bothScrollbars', this.scrollX && this.scrollY);
 
       // add resize handler
       basis.layout.addBlockResizeHandler(this.tmpl.scrollElement, this.realign.bind(this));

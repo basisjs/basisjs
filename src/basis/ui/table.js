@@ -40,7 +40,6 @@
   var getter = Function.getter;
   var nullGetter = Function.nullGetter;
   var extend = Object.extend;
-  var classList = basis.cssom.classList;
 
   var nsData = basis.data;
 
@@ -59,8 +58,6 @@
   // Table header
   //
 
-  var HEADERCELL_CSS_SORTDESC = 'sort-order-desc';
-
  /**
   * @class
   */
@@ -76,7 +73,7 @@
       '</th>',
 
     binding: {
-      title: 'data:title'
+      title: 'data:'
     }
   });
 
@@ -221,9 +218,9 @@
     * @inheritDoc
     */
     init: function(config){
-      UINode.prototype.init.call(this, config);
-
       this.selectable = !!this.colSorting;
+
+      UINode.prototype.init.call(this, config);
 
       if (this.colSorting)
       {
@@ -256,8 +253,14 @@
 
     template:
       '<thead{groupsElement} class="Basis-Table-Header {selected} {disabled}">' +
-        '<tr{childNodesElement|content}/>' +
+        '<tr{childNodesElement|content} class="sort-order-{order}"/>' +
       '</thead>',
+
+    binding: {
+      order: function(node){
+        return node.owner.sortingDesc ? 'desc' : 'asc';
+      }
+    },
 
     listen: {
       owner: {
@@ -267,10 +270,11 @@
           {
             cell.select();
             cell.order = owner.sortingDesc;
-            classList(this.tmpl.content).bool(HEADERCELL_CSS_SORTDESC, cell.order);
           }
           else
             this.selection.clear();
+
+          this.updateBind('order');
         }
       }
     },
@@ -502,8 +506,10 @@
   var Body = Class(UIPartitionNode, {
     className: namespace + '.Body',
 
+    collapsed: false,
+
     template:
-      '<tbody class="Basis-Table-Body">' +
+      '<tbody class="Basis-Table-Body {collapsed}">' +
         '<tr class="Basis-Table-GroupHeader" event-click="toggle">' +
           '<td{content} colspan="100">' +
             '<span class="expander"/>' +
@@ -513,9 +519,16 @@
         '<!--{childNodesHere}-->' +
       '</tbody>',
 
+    binding: {
+      collapsed: function(node){
+        return node.collapsed ? 'collapsed' : '';
+      }
+    },
+
     action: {
       toggle: function(){
-        classList(this.element).toggle('collapsed');
+        this.collapsed = !this.collapsed;
+        this.updateBind('collapsed');
       }
     }
   });
