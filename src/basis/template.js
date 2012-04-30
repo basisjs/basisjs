@@ -430,7 +430,7 @@
   var makeDeclaration = (function(){
 
     var CLASS_ATTR_PARTS = /(\S+)/g;
-    var CLASS_ATTR_BINDING = /^([a-z\_][a-z0-9\-\_]*)?\{([a-z\_][a-z0-9\-\_]*)\}$/i;
+    var CLASS_ATTR_BINDING = /^([a-z\_][a-z0-9\-\_]*)?\{((anim:)?[a-z\_][a-z0-9\-\_]*)\}$/i;
     var ATTR_BINDING = /\{([a-z\_][a-z0-9\_]*|l10n:[a-z\_][a-z0-9\_]*(?:\.[a-z\_][a-z0-9\_]*)*)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
     var tokenMap = {};
@@ -908,7 +908,7 @@
     */
     var bind_attrClass = CLASSLIST_SUPPORTED
       // classList supported
-      ? function(domRef, oldClass, newValue, prefix){
+      ? function(domRef, oldClass, newValue, prefix, anim){
           var newClass = newValue ? prefix + newValue : "";
 
           if (newClass != oldClass)
@@ -917,13 +917,21 @@
               domRef.classList.remove(oldClass);
 
             if (newClass)
+            {
               domRef.classList.add(newClass);
+
+              if (anim)
+              {
+                domRef.classList.add(newClass + '-anim');
+                setTimeout(function(){ domRef.classList.remove(newClass + '-anim') }, 0);
+              }
+            }
           }
 
           return newClass;
         }
       // old browsers are not support for classList
-      : function(domRef, oldClass, newValue, prefix){
+      : function(domRef, oldClass, newValue, prefix, anim){
           var newClass = newValue ? prefix + newValue : "";
 
           if (newClass != oldClass)
@@ -934,7 +942,19 @@
               classList.remove(oldClass);
 
             if (newClass)
+            {
               classList.push(newClass);
+
+              if (anim)
+              {
+                classList.add(newClass + '-anim');
+                setTimeout(function(){
+                  var classList = domRef.className.split(WHITESPACE);
+                  classList.remove(newClass + '-anim');
+                  domRef.className = classList.join(' ');
+                }, 0);
+              }
+            }
 
             domRef.className = classList.join(' ');
           }
@@ -1002,11 +1022,16 @@
       {
         domRef = binding[1];
         bindName = binding[2];
+
+        var namePart = bindName.split(':');
+        var anim = namePart[0] == 'anim';
+        if (anim)
+          bindName = namePart[1];
+
         bindCode = bindMap[bindName];
         bindVar = '_' + i;
         varName = '__' + bindName;
 
-        var namePart = bindName.split(':');
         if (namePart[0] == 'l10n' && namePart[1])
         {
           var l10nName = namePart[1];
@@ -1081,7 +1106,7 @@
                 varList.push(bindVar + '=""');
                 toolsUsed.bind_attrClass = true;
                 bindCode.push(
-                  bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + prefixes[j] + '"'] + ');'
+                  bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + prefixes[j] + '"'] + (anim ? ',1' : '') + ');'
                 );
               }
             }
