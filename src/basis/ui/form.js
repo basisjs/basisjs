@@ -62,11 +62,11 @@
 
   var l10nToken = basis.l10n.getToken;
 
-  basis.l10n.createDictionary(namespace, __dirname + '../../../l10n/form', {
+  basis.l10n.createDictionary(namespace, __dirname + 'l10n/form', {
     "symbolsLeft": "Symbols left"
   });
 
-  basis.l10n.createDictionary(namespace + '.validator', __dirname + '../../../l10n/form', {
+  basis.l10n.createDictionary(namespace + '.validator', __dirname + 'l10n/form', {
     "regExpWrongFormat": "The value has wrong format.",
     "required": "The field is required and must have a value.",
     "numberWrongFormat": "The value has wrong format of number.",

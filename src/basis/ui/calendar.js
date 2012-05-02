@@ -65,7 +65,7 @@
   // localization
   //
 
-  var l10nLocation = __dirname + '../../../l10n/calendar';
+  var l10nLocation = __dirname + 'l10n/calendar';
   var monthNumToRef = basis.date.monthNumToAbbr;
   var dayNumToRef = basis.date.dayNumToAbbr;
 

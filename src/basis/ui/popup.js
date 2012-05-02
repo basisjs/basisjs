@@ -447,8 +447,8 @@
   //  Popup manager
   //
 
-  // NOTE: popupManager adds global event handlers dynamicaly because click event
-  // that makes popup visible can also hide it (as click outside of popup).
+  // NOTE: popupManager adds global event handlers dynamically because click event
+  // which makes popup visible can also hide it (as click outside of popup).
 
   var popupManager = new UIContainer({
     template: '<div id="Basis-PopupStack" class="{hasChildren}">',

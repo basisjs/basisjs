@@ -10,9 +10,6 @@
  */
 
   basis.require('basis.dom');
-  basis.require('basis.dom.event');
-  basis.require('basis.dom.wrapper');
-  basis.require('basis.html');
   basis.require('basis.ui');
 
 
@@ -29,9 +26,7 @@
   //
 
   var getter = Function.getter;
-
-  var Class = basis.Class;
-  var DOM = basis.dom;
+  var dom = basis.dom;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -44,7 +39,7 @@
  /**
   * @class
   */
-  var Button = Class(UINode, {
+  var Button = UINode.subclass({
     className: namespace + '.Button',
 
    /**
@@ -52,30 +47,8 @@
     */
     event_select: function(){
       UINode.prototype.event_select.call(this);
-      DOM.focus(this.element);
+      this.focus();
     },
-
-   /**
-    * @inheritDoc
-    */
-    event_disable: function(){
-      UINode.prototype.event_disable.call(this);
-      this.tmpl.buttonElement.disabled = true;
-    },
-
-   /**
-    * @inheritDoc
-    */
-    event_enable: function(){
-      UINode.prototype.event_enable.call(this);
-      this.tmpl.buttonElement.disabled = false;
-    },
-
-   /**
-    * Button caption text.
-    * @type {string}
-    */
-    caption: '[no caption]',
 
    /**
     * Group indificator, using for grouping.
@@ -90,10 +63,16 @@
     name: null,
 
    /**
+    * Button caption text.
+    * @type {string}
+    */
+    caption: '[no caption]',
+
+   /**
     * @inheritDoc
     */
     template:
-      '<button{buttonElement} class="Basis-Button {selected} {disabled}" event-click="click">' +
+      '<button{buttonElement} class="Basis-Button {selected} {disabled}" disabled="{disabled}" event-click="click">' +
         '<span class="Basis-Button-Back"/>' +
         '<span class="Basis-Button-Caption">' +
           '{caption}' +
@@ -123,20 +102,19 @@
     click: function(){},
 
    /**
-    * @inheritDoc
+    * Set new caption and update binding.
+    * @param {string} newCaption
     */
-    init: function(config){
-      ;;;if (typeof this.handler == 'function' && typeof console != 'undefined') console.warn(namespace + '.Button: this.handler must be an object. Use this.click instead.')
-
-      // inherit
-      UINode.prototype.init.call(this, config);
-    },
     setCaption: function(newCaption){
       this.caption = newCaption;
-      this.tmpl.set('caption', this.binding.caption.getter(this));
+      this.updateBind('caption');
     },
+
+   /**
+    * Set focus for button.
+    */
     focus: function(){
-      basis.dom.focus(this.tmpl.buttonElement || this.element);
+      dom.focus(this.tmpl.buttonElement || this.element);
     }
   });
 
@@ -144,7 +122,7 @@
  /**
   * @class
   */
-  var ButtonPanel = Class(UIContainer, {
+  var ButtonPanel = UIContainer.subclass({
     className: namespace + '.ButtonPanel',
 
     template:

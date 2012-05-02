@@ -47,7 +47,7 @@
   // localization
   //
 
-  basis.l10n.createDictionary(namespace, __dirname + '../../../l10n/window', {
+  basis.l10n.createDictionary(namespace, __dirname + 'l10n/window', {
     "emptyTitle": "[no title]",
     "closeButton": "Close"
   });
