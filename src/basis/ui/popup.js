@@ -34,7 +34,6 @@
   var cssom = basis.cssom;
 
   var getter = Function.getter;
-  var Cleaner = basis.Cleaner;
   var createEvent = basis.event.create;
 
   var nsLayout = basis.layout;
@@ -154,8 +153,6 @@
         
       if (this.thread)
         this.thread.addHandler(THREAD_HANDLER, this);
-
-      Cleaner.add(this);
     },
     setLayout: function(dir, orientation, noRealign){
       var oldDir = this.dir;
@@ -415,8 +412,6 @@
 
       this.cssRule.destroy();
       this.cssRule = null;
-
-      Cleaner.remove(this);
     }
   });
 

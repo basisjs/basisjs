@@ -35,7 +35,6 @@
   var DOM = basis.dom;
   var Event = basis.dom.event;
   var cssom = basis.cssom;
-  var Cleaner = basis.Cleaner;
 
   var createEvent = basis.event.create;
 
@@ -82,8 +81,6 @@
         width: '100%',
         height: '100%'
       });
-
-      Cleaner.add(this);
     },
     capture: function(element, zIndex){
       this.captureElement = DOM.get(element || document.body);
@@ -108,8 +105,6 @@
       this.release();
       
       UINode.prototype.destroy.call(this);
-      
-      Cleaner.remove(this);
     }
   });
 
@@ -319,12 +314,6 @@
           }
         }, this);
       }
-
-      //Event.addHandler(this.element, 'keypress', buttonKeyPressHandler, this);
-      //addHandler(this.element, 'click', Event.kill);
-      //Event.addHandler(this.element, 'mousedown', this.activate, this);
-
-      Cleaner.add(this);
     },
     setTitle: function(title){
       //DOM.insert(DOM.clear(this.tmpl.title), title);
@@ -363,7 +352,6 @@
         if (this.thread)
           this.thread.start(true);
 
-        //this.dispatch('beforeShow', params);
         this.event_beforeShow(params);
         cssom.visibility(this.element, true);
 
@@ -372,8 +360,6 @@
 
         this.event_open(params);
         this.event_active(params);
-        /*this.dispatch('open', params);
-        this.dispatch('active', params);*/
       }
       else
       {
@@ -396,7 +382,6 @@
 
         this.closed = true;
         this.event_close(modalResult)
-        //this.dispatch('close', modalResult);
       }
     },
     destroy: function(){
@@ -410,8 +395,6 @@
 
       this.cssRule.destroy();
       this.cssRule = null;
-
-      Cleaner.remove(this);
     }
   });
 

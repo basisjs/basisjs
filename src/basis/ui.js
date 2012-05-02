@@ -36,7 +36,6 @@
   var DOM = basis.dom;
   var cssom = basis.cssom;
 
-  var Cleaner = basis.Cleaner;
   var Template = basis.template.Template;
   var classList = basis.cssom.classList;
   var getter = Function.getter;
@@ -758,9 +757,6 @@
     init: function(config){
       // inherit
       Container.prototype.init.call(this, config);
-                   
-      // add to basis.Cleaner
-      Cleaner.add(this);
     },
 
    /**
@@ -769,9 +765,6 @@
     destroy: function(){
       // inherit destroy, must be calling after inner objects destroyed
       Container.prototype.destroy.call(this);
-
-      // remove from Cleaner
-      Cleaner.remove(this);
     }
   });
 

@@ -574,8 +574,6 @@
 
       this.valueChanged_ = this.stateChanged_ = !!this.calculateOnInit;
       this.update();
-
-      Cleaner.add(this);
     },
 
    /**

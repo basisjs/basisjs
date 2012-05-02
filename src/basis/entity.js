@@ -23,7 +23,6 @@
   // import names
 
   var Class = basis.Class;
-  var Cleaner = basis.Cleaner;
 
   var extend = Object.extend;
   var complete = Object.complete;
@@ -103,7 +102,6 @@
 
         return value;
       }
-      Cleaner.add(this);
     },
     get: function(value, checkType){
       var item = this.index[value];

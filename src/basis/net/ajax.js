@@ -541,6 +541,8 @@
 
       if (this.poolLimit)
         this.addHandler(PROXY_POOL_LIMIT_HANDLER, this);
+
+      Cleaner.add(this);  // ???
     },
 
     getRequestByHash: function(requestHashId){
@@ -668,8 +670,6 @@
 
       this.requestHeaders = {};
       this.params = {};
-
-      Cleaner.add(this);  // ???
     },
 
     // params methods

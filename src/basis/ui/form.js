@@ -38,7 +38,6 @@
   var Event = basis.dom.event;
   var DOM = basis.dom;
   var Template = basis.template.Template;
-  var Cleaner = basis.Cleaner;
 
   var complete = Object.complete;
   var coalesce = Object.coalesce;
@@ -649,8 +648,6 @@
 
       //inherit
       Field.prototype.init.call(this, config);
-
-      Cleaner.add(this);
     },
     getValue: function(){
       var value = this.selection.getItems().map(getter('getValue()'));
@@ -679,8 +676,6 @@
     },
     destroy: function(){
       Field.prototype.destroy.call(this);
-
-      Cleaner.remove(this);
     }
   });
   
