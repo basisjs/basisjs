@@ -119,20 +119,24 @@
     id: 'PrototypeMapPopup',
     dir: 'center bottom center top',
     selection: {},
-    childClass: Class(uiNode,
-      basis.ui('<div{element} class="item" event-click="scrollTo">{this_data_key}</div>'),
-      {
-        action: {
-          scrollTo: function(event){
-            var element = this.delegate.element;
-            targetContent.scrollTo(element);
-            this.parentNode.hide();
-            classList(element).add('highlight');
-            setTimeout(function(){ classList(element).remove('highlight'); });
-          }
+    childClass: Class(uiNode, {
+      template:
+        '<div class="item" event-click="scrollTo">{key}</div>',
+
+      binding: {
+        key: 'data:'
+      },
+
+      action: {
+        scrollTo: function(event){
+          var element = this.delegate.element;
+          targetContent.scrollTo(element);
+          this.parentNode.hide();
+          classList(element).add('highlight');
+          setTimeout(function(){ classList(element).remove('highlight'); });
         }
       }
-    ),
+    }),
     sorting: Function.getter('data.title'),
     grouping: Object.slice(nsView.viewPrototype.grouping, 'groupGetter sorting childClass'.qw()),
     event_beforeShow: function(){

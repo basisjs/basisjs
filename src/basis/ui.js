@@ -740,38 +740,11 @@
   });
 
 
- /**
-  * @func
-  */
-  var simpleTemplate = function(template, config){
-    var refs = template.match(/\{(this_[^\}]+)\}/g) || [];
-    var lines = [];
-    for (var i = 0; i < refs.length; i++)
-    {
-      var name = refs[i].match(/\{(this_[^\|\}]+)\}/)[1];
-      lines.push('this.tmpl.' + name + '.nodeValue = ' + name.replace(/_/g, '.'));
-    }
-    
-    return Function('tmpl_', 'config_', 'return ' + (function(super_){
-      return Object.extend({
-        template: tmpl_,
-        templateUpdate: function(tmpl, eventName, delta){
-          super_.templateUpdate.call(this, tmpl, eventName, delta);
-          _code_();
-        }
-      }, config_);
-    }).toString().replace('_code_()', lines.join(';\n')))(new Template(template), config);
-  };
-
-
   //
   // export names
   //
 
-  this.setWrapper(simpleTemplate);
-
   module.exports = {
-    simpleTemplate: simpleTemplate,
     BINDING_PRESET: BINDING_PRESET,
 
     Node: Node,
