@@ -422,7 +422,7 @@
     className: namespace + '.Balloon',
 
     template: 
-      '<div class="Basis-Balloon mode-{orientation} {visible} {anim:visible} {selected} {disabled}" event-click="click">' +
+      '<div class="Basis-Balloon mode-{orientation} {anim:visible} {selected} {disabled}" event-click="click">' +
         '<div class="Basis-Balloon-Canvas">' +
           '<div class="corner-left-top"/>' +
           '<div class="corner-right-top"/>' +

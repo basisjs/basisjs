@@ -247,7 +247,7 @@
   </style>
 
   <script>var firstTime = new Date;</script>
-  <script src="../../src/basis.js"></script>
+  <script basis-config="{}" src="../../src/basis.js"></script>
   <script src="../seedrandom.js"></script>
   <script>Math.seedrandom("basis");</script>
   <script src="blog_posts-5000.js"></script>
@@ -262,7 +262,7 @@
     basis.require('basis.ui');
     basis.require('basis.ui.paginator');
 
-    basis.dom.event.onLoad(runApp = function(){
+    basis.ready(runApp = function(){
       var statOutElement = basis.dom.createElement('ul');
 
       function outStat(){

@@ -16,7 +16,7 @@
   document.write('<style type="text/css">@import "../demo.css";</style>');
   //document.write('<script type="text/javascript" src="../../plugins/highlight.js"></sc'+'ript>');
   
-  basis.dom.event.onLoad(function(){
+  basis.ready(function(){
 
     var DOM = basis.dom;
     var Event = basis.dom.event;

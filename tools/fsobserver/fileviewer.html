@@ -80,7 +80,7 @@
         }
       });
 
-      basis.dom.event.onLoad(function(){
+      basis.ready(function(){
         var childFactory = function(cfg){
           var childClass = cfg.delegate.data.type == 'dir' ? FolderNode : FileNode;
           return new childClass(cfg);

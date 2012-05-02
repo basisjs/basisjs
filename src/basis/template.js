@@ -409,16 +409,7 @@
       result.templateDeclaration = true;
 
     } catch(e) {
-      /*if (e === SYNTAX_ERROR)
-        console.warn('Syntax error:\n' + source.substr(0, pos) + '\n** here **\n' + source.substr(pos));
-      else
-      /*var br = source.indexOf('\n', i);
-      var offset = source.lastIndexOf('\n', i);
-      if (br == -1)
-        br = source.length;
-      if (offset == -1)
-        offset = 0;
-
+      /*
       console.warn(e + ':\n' + source.substr(0, br) + '\n' + Array(i - offset + 1).join(' ') + '\u25b2-- problem here \n' + source.substr(br));
       /*/console.warn(e, source); /* */
     }
@@ -471,12 +462,6 @@
 
       if (!array || !array.length)
         return 0;
-
-      /*for (var i = 0, j = 0; i < array.length; i++)
-        if (array[i].indexOf(':') == -1)
-          array[j++] = array[i];
-
-      array.length = j;*/
 
       return array;
     }
@@ -781,6 +766,14 @@
     var WHITESPACE = /\s+/;
     var W3C_DOM_NODE_SUPPORTED = typeof Node == 'function' && document instanceof Node;
     var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
+    var TRANSITION_SUPPORTED = !!(document && (function(){
+      var properties = ['webkitTransition', 'MozTransition', 'msTransition', 'OTransition', 'transition'];
+      var style = document.documentElement.style;
+      for (var i = 0; i < properties.length; i++)
+        if (properties[i] in style)
+          return true;
+    })());
+
 
    /**
     * @func
@@ -1034,7 +1027,10 @@
         var namePart = bindName.split(':');
         var anim = namePart[0] == 'anim';
         if (anim)
+        {
           bindName = namePart[1];
+          anim = TRANSITION_SUPPORTED;
+        }
 
         bindCode = bindMap[bindName];
         bindVar = '_' + i;

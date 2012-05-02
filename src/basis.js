@@ -1266,8 +1266,11 @@
 
   var requireNamespace = (function(){
 
-    var scripts = Array.from(global.document ? document.getElementsByTagName('SCRIPT') : null);
-    var basisRequirePath = dirname(scripts && scripts.length ? scripts.item(-1).src : module.filename);
+    var lastScriptEl = Array.from(global.document ? global.document.getElementsByTagName('SCRIPT') : null)
+      .filter(function(scriptEl){ return scriptEl.hasAttribute('basis-config'); })
+      .pop();
+
+    var basisRequirePath = dirname(lastScriptEl ? lastScriptEl.src : (typeof module != 'undefined' ? module.filename : ''));
     var nsRootPath = { basis: basisRequirePath };
     var requested = {};
     var requireFunc;

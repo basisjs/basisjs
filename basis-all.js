@@ -6,7 +6,7 @@
     var scripts = document.getElementsByTagName('script');
     var curLocation = scripts[scripts.length - 1].src.replace(/[^\/]+\.js$/, '');
 
-    document.write('<script src="' + curLocation + 'src/basis.js"></script>');
+    document.write('<script basis-config="{}" src="' + curLocation + 'src/basis.js"></script>');
 
     document.write('<script src="' + curLocation + 'src/package/all.js"></script>');
 

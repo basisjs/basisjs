@@ -1,5 +1,5 @@
 
-  basis.dom.event.onLoad(function(){
+  basis.ready(function(){
 
     var createElement = basis.dom.createElement;
     var DOM = basis.dom;

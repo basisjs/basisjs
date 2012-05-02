@@ -157,7 +157,7 @@
       childNodes: data
     });
 
-    basis.dom.event.onLoad(function(){
+    basis.ready(function(){
       container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));
       table = new ScrollTable({
         selection: {multiple:true},

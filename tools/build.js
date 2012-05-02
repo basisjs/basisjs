@@ -297,7 +297,7 @@ packages.forEach(function(pack){
   {
     var fileContent = ['// Package basis-' + packageName + '.js\n\n!function(){\n\  if (typeof document != \'undefined\')\n\  {\n\    var scripts = document.getElementsByTagName(\'script\');\n\    var curLocation = scripts[scripts.length - 1].src.replace(/[^\\/]+\\.js\$/, \'\');\n'];
 
-    fileContent.push("\n    document.write('<script src=\"' + curLocation + 'src/basis.js\"></script>');\n");
+    fileContent.push("\n    document.write('<script basis-config=\"{}\" src=\"' + curLocation + 'src/basis.js\"></script>');\n");
     fileContent.push("\n    document.write('<script src=\"' + curLocation + '" + resolveRelPath(packageFilename) + "\"></script>');\n");
     /*fileContent.push("\n    document.write('<script>');\n");
 
