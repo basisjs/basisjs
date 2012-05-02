@@ -1948,7 +1948,7 @@
     var loadHandler = [];
 
     function fireHandlers(e){
-      if (typeof document != 'undefined' && document.readyState != 'complete')
+      if (typeof document != 'undefined' && document.readyState == 'complete')
       {
         if (!fired++)
           for (var i = 0; i < loadHandler.length; i++)
