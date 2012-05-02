@@ -1449,13 +1449,12 @@
   */
   function buildTemplate(){
     var instances = this.instances_;
-    var source = String(
+    var source = 
       typeof this.source == 'function'
         ? this.source()
-        : this.source
-    );
+        : String(this.source);
 
-    var decl = this.isDecl ? source.toObject() : makeDeclaration(source);
+    var decl = typeof source != 'string' ? source : (this.isDecl ? source.toObject() : makeDeclaration(source));
     var funcs = makeFunctions(decl.tokens);
     var l10n = this.l10n_;
 

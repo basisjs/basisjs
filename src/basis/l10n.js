@@ -247,16 +247,7 @@
   }
 
   function updateDictionaryResource(content, culture){
-    var dictionaryData = content; /*{};
-    try
-    {
-      dictionaryData = content.toObject();
-    }
-    catch(e)
-    {
-      console.warn('Can\'t read dictionary data (' + location + '); error: ' + e.toString());
-    }*/
-
+    var dictionaryData = content;
     for (var dictionaryName in dictionaryData)
       updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);    
   }

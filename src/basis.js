@@ -1235,7 +1235,7 @@
               setWrapper: function(wrapFn){
                 if (typeof wrapFn == 'function')
                 {
-                  if (wrapFunction && typeof console != 'undefined') console.warn('Wrapper for ' + namespace + ' is already set. Probably mistake here.');
+                  ;;;if (wrapFunction && typeof console != 'undefined') console.warn('Wrapper for ' + namespace + ' is already set. Probably mistake here.');
                   wrapFunction = wrapFn;
                 }
               }
