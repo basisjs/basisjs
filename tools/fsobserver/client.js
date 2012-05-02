@@ -105,7 +105,8 @@
                 connectionState.set('connecting');
               },
               observeReady: function(filelist){
-                filelist.map(File);
+                File.all.sync(filelist);
+                //filelist.map(File);
                 /*var path = ListenPath.get(rel)
 
                 console.log('listen for ' + rel + ' (ready ' + filelist.length + ' files)');
@@ -235,31 +236,15 @@
 
   FileClass.extend({
     read: function(){
-      this.setState(STATE.PROCESSING);
+      //this.setState(STATE.PROCESSING);
       sendToServer('readFile', this.data.filename);      
     },
     save: function(){
       if (this.modified)
       {
-        this.setState(STATE.PROCESSING);
+        //this.setState(STATE.PROCESSING);
         sendToServer('saveFile', this.data.filename, this.data.content);
       }
-    }
-  });
-
-  var fileHandler = function(){
-    if (this.subscriberCount > 0 && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
-      this.read();
-  }
-  Object.extend(FileClass.prototype, {
-    state: STATE.UNDEFINED,
-    event_subscribersChanged: function(){
-      FileClass.superClass_.prototype.event_subscribersChanged.call(this);
-      fileHandler.call(this);
-    },
-    event_stateChanged: function(object, oldState){
-      FileClass.superClass_.prototype.event_stateChanged.call(this, object, oldState);
-      fileHandler.call(this);
     }
   });
 

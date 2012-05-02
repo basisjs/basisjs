@@ -408,12 +408,17 @@
         var result = [];
 
         for (var filename in fileMap)
-          result.push({
-            filename: filename,
-            type: fileMap[filename].type,
-            lastUpdate: fileMap[filename].mtime,
-            content: fileMap[filename].content
-          });
+        {
+          if (filename != '/')
+          {
+            result.push({
+              filename: filename,
+              type: fileMap[filename].type,
+              lastUpdate: fileMap[filename].mtime,
+              content: fileMap[filename].content
+            });
+          }
+        }
 
         return result;
       },
