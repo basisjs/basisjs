@@ -31,7 +31,6 @@
   var ui = basis.ui;
   var uiNode = basis.ui.Node;
   var uiContainer = basis.ui.Container;
-  var uiControl = basis.ui.Control;
 
   //
   // functions
@@ -871,7 +870,7 @@
  /**
   * @class
   */
-  var TemplatePanel = uiControl.subclass({
+  var TemplatePanel = uiContainer.subclass({
     template:
       '<div class="templatePanel">' +
         '<div{childNodesElement} class="templateHtml"/>' +

@@ -18,8 +18,7 @@
  /**
   * Classes:
   *   {basis.ui.Node}, {basis.ui.Container}, 
-  *   {basis.ui.PartitionNode}, {basis.ui.GroupingNode},
-  *   {basis.ui.Control}
+  *   {basis.ui.PartitionNode}, {basis.ui.GroupingNode}
   *
   * @namespace basis.ui
   */
@@ -740,34 +739,6 @@
     groupingClass: GroupingNode
   });
 
- /**
-  * @class
-  */
-  var Control = Class(Container, {
-    className: namespace + '.Control',
-
-   /**
-    * Create selection by default with empty config.
-    */
-    selection: true,
-
-   /**
-    * @inheritDoc
-    */
-    init: function(config){
-      // inherit
-      Container.prototype.init.call(this, config);
-    },
-
-   /**
-    * @inheritDoc
-    */
-    destroy: function(){
-      // inherit destroy, must be calling after inner objects destroyed
-      Container.prototype.destroy.call(this);
-    }
-  });
-
 
  /**
   * @func
@@ -806,6 +777,5 @@
     Node: Node,
     Container: Container,
     PartitionNode: PartitionNode,
-    GroupingNode: GroupingNode,
-    Control: Control
+    GroupingNode: GroupingNode
   };
