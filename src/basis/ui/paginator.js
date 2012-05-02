@@ -39,7 +39,7 @@
 
   var Box = basis.layout.Box;
   var DragDropElement = basis.dragdrop.DragDropElement;
-  var UIControl = basis.ui.Control;
+  var UIContainer = basis.ui.Container;
   var UINode = basis.ui.Node;
 
 
@@ -130,9 +130,10 @@
   * Paginator
   * @class
   */
-  var Paginator = UIControl.subclass({
+  var Paginator = UIContainer.subclass({
     className: namespace + '.Paginator',
 
+    selection: true,
     childClass: PaginatorNode,
 
     template:
@@ -186,7 +187,7 @@
     spanStartPage_: -1,
 
     init: function(config){
-      UIControl.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       var pageSpan = this.pageSpan || this.defaultPageSpan;
       var pageCount = this.pageCount || this.defaultPageCount;
@@ -289,7 +290,7 @@
       this.scrollbarDD.destroy();
       this.scrollbarDD = null;
 
-      UIControl.prototype.destroy.call(this);
+      UIContainer.prototype.destroy.call(this);
     }
   });
 

@@ -49,7 +49,6 @@
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
-  var UIControl = basis.ui.Control;
   var UIPartitionNode = basis.ui.PartitionNode;
   var UIGroupingNode = basis.ui.GroupingNode;
 
@@ -536,9 +535,10 @@
  /**
   * @class
   */
-  var Table = Class(UIControl, {
+  var Table = Class(UIContainer, {
     className: namespace + '.Table',
-    
+
+    selection: true, 
     childClass: Row,
 
     groupingClass: {
@@ -565,7 +565,7 @@
 
       this.applyConfig_(this.structure);
 
-      UIControl.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       this.headerConfig = this.header;
       this.footerConfig = this.footer;
@@ -626,7 +626,7 @@
     },
 
     destroy: function(){
-      UIControl.prototype.destroy.call(this);
+      UIContainer.prototype.destroy.call(this);
 
       this.header.destroy();
       this.header = null;

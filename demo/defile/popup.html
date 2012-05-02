@@ -47,6 +47,24 @@
       max-width: 300px;
     }
 
+    .visible
+    {
+        -webkit-transition: opacity .5s, margin-left .5s;
+        -moz-transition: opacity .5s, margin-left .5s;
+        -ms-transition: opacity .5s, margin-left .5s;
+        -o-transition: opacity .5s, margin-left .5s;
+      transition: opacity .5s, margin-left .5s;
+    }
+    .visible-anim
+    {
+      margin-left: -50px;
+      opacity: 0;
+        -webkit-transition: none;
+        -moz-transition: none;
+        -ms-transition: none;
+        -o-transition: none;
+      transition: none;
+    }
   </style>
   <!--[if lt IE 7]>
   <style type="text/css">

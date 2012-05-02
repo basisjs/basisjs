@@ -43,7 +43,6 @@
   var Property = basis.data.property.Property;
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
-  var UIControl = basis.ui.Control;
 
 
   //
@@ -684,11 +683,12 @@
   // Calendar
   //
 
-  var Calendar = Class(UIControl, {
+  var Calendar = Class(UIContainer, {
     className: namespace + '.Calendar',
 
     event_change: createEvent('change'),
 
+    selection: true,
     childClass: CalendarSection,
     childFactory: Function(),
 
@@ -744,7 +744,7 @@
         for (var i = 0, section; section = delta.deleted[i++];)
           this.selectedDate.removeLink(section, section.setSelectedDate);
 
-      UIControl.prototype.event_childNodesModified.call(this, node, delta);
+      UIContainer.prototype.event_childNodesModified.call(this, node, delta);
 
       DOM.insert(
         DOM.clear(this.tmpl.sectionTabs),
@@ -755,7 +755,7 @@
         this.firstChild.select();
     },
     templateAction: function(actionName, event, node){
-      UIControl.prototype.templateAction.call(this, actionName, event);
+      UIContainer.prototype.templateAction.call(this, actionName, event);
 
       if (node instanceof CalendarNode)
       {
@@ -787,7 +787,7 @@
       this.date = new Property(new Date(this.date || now));
 
       // inherit
-      UIControl.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       // min/max dates
 
@@ -1079,7 +1079,7 @@
     // destruction
 
     destroy: function(){
-      UIControl.prototype.destroy.call(this);
+      UIContainer.prototype.destroy.call(this);
 
       this.date.destroy();
     }

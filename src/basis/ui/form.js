@@ -51,7 +51,6 @@
   var Property = basis.data.property.Property;
 
   var Selection = basis.dom.wrapper.Selection;
-  var UIControl = basis.ui.Control;
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
   var Popup = basis.ui.popup.Popup;
@@ -1217,9 +1216,10 @@
  /**
   * @class
   */
-  var FormContent = UIControl.subclass({
+  var FormContent = UIContainer.subclass({
     className: namespace + '.FormContent',
     
+    selection: true,
     childClass: Field,
     childFactory: function(config){
       return Field.create(config.type || 'text', config);
@@ -1311,7 +1311,7 @@
     init: function(config){
       this.selection = false;
 
-      UIControl.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this, config);
 
       if (this.target)
         this.formElement.target = this.target;

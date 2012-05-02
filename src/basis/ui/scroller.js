@@ -607,7 +607,7 @@
       horizontalScrollbar: 'satellite:',
       verticalScrollbar: 'satellite:',
       bothScrollbars: function(node){
-        return node.scrollX && node.scrollY ? bothScrollbars : '';
+        return node.scrollX && node.scrollY ? 'bothScrollbars' : '';
       },
       scrollProcess: function(node){
         return node.scroller && node.scroller.isUpdating ? 'scrollProcess' : '';

@@ -21,6 +21,7 @@
   * @see ./demo/defile/popup.html
   * @namespace basis.ui.popup
   */
+
   var namespace = this.path;
 
 
@@ -40,7 +41,6 @@
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
-  var UIControl = basis.ui.Control;
 
 
   //
@@ -450,11 +450,12 @@
   // NOTE: popupManager adds global event handlers dynamicaly because click event
   // that makes popup visible can also hide it (as click outside of popup).
 
-  var popupManager = new UIControl({
+  var popupManager = new UIContainer({
     template: '<div id="Basis-PopupStack" class="{hasChildren}">',
 
     handheldMode: false,
 
+    selection: true,
     childClass: Popup,
     event_childNodesModified: function(object, delta){
       if (delta.deleted)
@@ -485,7 +486,7 @@
         Event.removeHandler(window, 'resize', this.realignAll, this);
       }
 
-      UIControl.prototype.event_childNodesModified.call(this, object, delta);
+      UIContainer.prototype.event_childNodesModified.call(this, object, delta);
     },
 
     insertBefore: function(newChild, refChild){
@@ -493,7 +494,7 @@
       var documentST_ = document.documentElement.scrollTop;
       var bodyST_ = document.body.scrollTop;
 
-      if (UIControl.prototype.insertBefore.call(this,newChild, refChild))
+      if (UIContainer.prototype.insertBefore.call(this,newChild, refChild))
       {
         // store saved scrollTop to popup and scroll viewport to top
         newChild.documentST_ = documentST_;
@@ -514,7 +515,7 @@
         if (popup.hideOnAnyClick && popup.nextSibling)
           this.removeChild(popup.nextSibling);
 
-        UIControl.prototype.removeChild.call(this, popup);
+        UIContainer.prototype.removeChild.call(this, popup);
 
         // restore documentElement (IE, mozilla and others) and body (webkit) scrollTop
         if (this.handheldMode)

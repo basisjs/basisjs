@@ -40,7 +40,6 @@
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
-  var UIControl = basis.ui.Control;
   var ButtonPanel = basis.ui.button.ButtonPanel;
 
 
@@ -403,8 +402,9 @@
   //
 
   var wmBlocker = new Blocker();
-  var windowManager = new UIControl({
+  var windowManager = new UIContainer({
     template: '<div id="Basis-WindowStack" class="{hasChildren}"/>',
+    selection: true,
     childClass: Window
   });
 

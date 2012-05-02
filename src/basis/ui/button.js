@@ -34,7 +34,7 @@
   var DOM = basis.dom;
 
   var UINode = basis.ui.Node;
-  var UIControl = basis.ui.Control;
+  var UIContainer = basis.ui.Container;
 
 
   //
@@ -144,7 +144,7 @@
  /**
   * @class
   */
-  var ButtonPanel = Class(UIControl, {
+  var ButtonPanel = Class(UIContainer, {
     className: namespace + '.ButtonPanel',
 
     template:

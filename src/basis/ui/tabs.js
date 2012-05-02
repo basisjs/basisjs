@@ -35,7 +35,6 @@
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
-  var UIControl = basis.ui.Control;
 
 
   //
@@ -55,16 +54,17 @@
  /**
   * @class
   */
-  var AbstractTabsControl = Class(UIControl, {
+  var AbstractTabsControl = Class(UIContainer, {
     className: namespace + '.AbstractTabsControl',
 
+    selection: true,
     childClass: UINode,
 
     autoSelectChild: true,
 
     event_childNodesModified: function(node, delta){
       findAndSelectActiveNode(this);
-      UIControl.prototype.event_childNodesModified.call(this, node, delta);
+      UIContainer.prototype.event_childNodesModified.call(this, node, delta);
     },
 
     listen: {

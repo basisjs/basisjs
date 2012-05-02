@@ -54,7 +54,6 @@
   var createEvent = basis.event.create;
 
   var UIContainer = basis.ui.Container;
-  var UIControl = basis.ui.Control;
   var UIPartitionNode = basis.ui.PartitionNode;
   var UIGroupingNode = basis.ui.GroupingNode;
 
@@ -280,8 +279,13 @@
  /**
   * @class
   */
-  var Tree = Class(UIControl, ExpandCollapseMixin, {
+  var Tree = Class(UIContainer, ExpandCollapseMixin, {
     className: namespace + '.Tree',
+
+   /**
+    * @inheritDoc
+    */
+    selection: true,
 
    /**
     * Template for node element. 
