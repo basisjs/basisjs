@@ -727,7 +727,7 @@
                   if (attrName == 'class')
                     putBinding(binding.concat([bindName, attrName, bindings[k + 1]]));
                   else
-                    putBinding(binding.concat([bindName, attrName, bindings[0], bindings[1]]));
+                    putBinding(binding.concat([bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]));
               }
             }
 
@@ -773,6 +773,14 @@
         if (properties[i] in style)
           return true;
     })());
+
+    var SPECIAL_ATTR_MAP = {
+      disabled: true,
+      checked: ['input'],
+      value: ['input', 'textarea'],
+      minlength: ['input'],
+      maxlength: ['input']
+    };
 
 
    /**
@@ -1017,6 +1025,7 @@
       var varName;
       var l10nMap;
       var toolsUsed = {};
+      var specialAttr;
       ;;;var debugList = [];
 
       for (var i = 0, binding; binding = bindings[i]; i++)
@@ -1097,13 +1106,13 @@
             );   
             break;
           case TYPE_ATTRIBUTE:
-            var attrName = binding[3];
+            var attrName = binding[ATTR_NAME];
 
             ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',attr:"' + attrName + '",val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
 
             if (attrName == 'class')
             {
-              var prefixes = binding[4];
+              var prefixes = binding[ATTR_VALUE];
 
               for (var j = 0; j < prefixes.length; j++)
               {
@@ -1121,6 +1130,15 @@
               bindCode.push(
                 bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
               );
+
+              specialAttr = SPECIAL_ATTR_MAP[attrName];
+              if (specialAttr)
+              {
+                if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
+                {
+                  bindCode.push(domRef + '.' + attrName + '=' + bindVar + ';')
+                }
+              }
             }
             break;
         }
