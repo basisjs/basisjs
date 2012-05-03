@@ -269,6 +269,12 @@
       cssClassName: null,
 
      /**
+      * Identify node can have focus. Useful when search for next/previous node to focus.
+      * @type {boolean}
+      */
+      focusable: true,
+
+     /**
       * Fires when template had changed.
       * @event
       */
@@ -537,6 +543,30 @@
       },
 
      /**
+      * Set focus on element in template, if possible.
+      */
+      focus: function(select){
+        if (this.focusable)
+        {
+          var focusElement = this.tmpl.focus || this.element;
+          if (focusElement)
+            DOM.focus(focusElement, select);
+        }
+      },
+
+     /**
+      * Remove focus from element.
+      */
+      blur: function(){
+        if (this.focusable)
+        {
+          var focusElement = this.tmpl.focus || this.element;
+          if (focusElement)
+            focusElement.blur();
+        }
+      },
+
+     /**
       * @inheritDoc
       */
       destroy: function(){
@@ -635,23 +665,9 @@
   var PartitionNode = Class(DWPartitionNode, TemplateMixin, {
     className: namespace + '.PartitionNode',
 
-    //titleGetter: getter('data.title'),
-
     binding: {
       title: 'data:'
     }
-
-    /*template: new Template(
-      '<div{element} class="Basis-PartitionNode">' + 
-        '<div class="Basis-PartitionNode-Title">{titleText}</div>' + 
-        '<div{content|childNodesElement} class="Basis-PartitionNode-Content"/>' + 
-      '</div>'
-    ),*//*
-
-    templateUpdate: function(tmpl, eventName, delta){
-      if (tmpl.titleText)
-        tmpl.titleText.nodeValue = String(this.titleGetter(this));
-    }*/
   });
 
 

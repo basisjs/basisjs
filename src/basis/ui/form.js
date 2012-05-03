@@ -43,7 +43,6 @@
   var FormContent = UIContainer.subclass({
     className: namespace + '.FormContent',
     
-    selection: true,
     childClass: field.Field,
     childFactory: function(config){
       return field(config);
@@ -52,10 +51,10 @@
     listen: {
       childNode: {
         commit: function(field){
-          var next = DOM.axis(field, DOM.AXIS_FOLLOWING_SIBLING).search(true, 'selectable');
+          var next = DOM.axis(field, DOM.AXIS_FOLLOWING_SIBLING).search(true, 'focusable');
 
           if (next)
-            next.select();
+            next.focus(true);
           else
             this.submit();
         }
@@ -67,7 +66,7 @@
     event_reset: createEvent('reset', 'sender'),
     
     template:
-      '<div class="Basis-FormContent {selected} {disabled}" />',
+      '<div class="Basis-FormContent {disabled}" />',
 
     getFieldByName: function(name){
       return this.childNodes.search(name, 'name');
@@ -106,7 +105,7 @@
       }
       if (errors.length)
       {
-        errors[0].field.select();
+        errors[0].field.focus();
         return errors;
       }
       else
@@ -135,7 +134,12 @@
     method: 'POST',
     
     template:
-      '<form{formElement} class="Basis-Form {selected} {disabled}" method="{method}" action="{action}" target="{target}" enctype="{enctype}" event-submit="submit">' +
+      '<form{formElement} class="Basis-Form {disabled}"' +
+        ' method="{method}"' +
+        ' action="{action}"' +
+        ' target="{target}"' +
+        ' enctype="{enctype}"' +
+        ' event-submit="submit">' +
         '<div{content|childNodesElement} class="Basis-FormContent" />' +
       '</form>',
 
@@ -153,13 +157,8 @@
     },
 
     init: function(config){
-      this.selection = false;
-
-      UIContainer.prototype.init.call(this, config);
-
+      FormContent.prototype.init.call(this, config);
       this.formElement.onsubmit = this.submit;
-
-      this.setMethod(this.method);
     },
     submit: function(){
       var result = (this.validate() === true) && !this.onSubmit();
