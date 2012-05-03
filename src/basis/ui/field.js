@@ -192,7 +192,6 @@
     //
 
     childClass: null,
-    name: '',
 
     nextFieldOnEnter: true,
     serializable: true,
@@ -747,10 +746,9 @@
     className: namespace + '.ComplexFieldItem',
 
     childClass: null,
-    name: '',
 
     binding: {
-      name: 'name',
+      name: 'name || ""',
       title: 'getTitle()',
       value: 'getValue()',
       checked: {

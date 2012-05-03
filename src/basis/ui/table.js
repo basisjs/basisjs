@@ -184,7 +184,6 @@
 
     colSorting: null,
     defaultOrder: false,
-    groupId: 0,
 
     template:
       '<th class="Basis-Table-Header-Cell Basis-Table-Header-Cell-{sortable} {selected} {disabled}" event-click="setColumnSorting">' +

@@ -9,7 +9,6 @@
  * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
  */
 
-  basis.require('basis.dom');
   basis.require('basis.ui');
 
 
@@ -24,9 +23,6 @@
   //
   // import names
   //
-
-  var getter = Function.getter;
-  var dom = basis.dom;
 
   var UINode = basis.ui.Node;
   var UIContainer = basis.ui.Container;
@@ -43,26 +39,6 @@
     className: namespace + '.Button',
 
    /**
-    * @inheritDoc
-    */
-    event_select: function(){
-      UINode.prototype.event_select.call(this);
-      this.focus();
-    },
-
-   /**
-    * Group indificator, using for grouping.
-    * @type {any}
-    */
-    groupId: 0,
-
-   /**
-    * Name of button. Using by parent to fetch child button by name.
-    * @type {string}
-    */
-    name: null,
-
-   /**
     * Button caption text.
     * @type {string}
     */
@@ -72,7 +48,7 @@
     * @inheritDoc
     */
     template:
-      '<button{buttonElement} class="Basis-Button {selected} {disabled}" disabled="{disabled}" event-click="click">' +
+      '<button{focus} class="Basis-Button {selected} {disabled}" disabled="{disabled}" event-click="click">' +
         '<span class="Basis-Button-Back"/>' +
         '<span class="Basis-Button-Caption">' +
           '{caption}' +
@@ -99,7 +75,7 @@
    /**
     * Actions on click.
     */
-    click: function(){},
+    click: Function(),
 
    /**
     * Set new caption and update binding.
@@ -108,13 +84,6 @@
     setCaption: function(newCaption){
       this.caption = newCaption;
       this.updateBind('caption');
-    },
-
-   /**
-    * Set focus for button.
-    */
-    focus: function(){
-      dom.focus(this.tmpl.buttonElement || this.element);
     }
   });
 
@@ -135,9 +104,7 @@
     groupingClass: {
       className: namespace + '.ButtonGroupingNode',
 
-      groupGetter: function(button){
-        return button.groupId || -button.eventObjectId;
-      },
+      groupGetter: 'groupId',
 
       childClass: {
         className: namespace + '.ButtonPartitionNode',
@@ -155,7 +122,7 @@
     * @return {basis.ui.button.Button}
     */
     getButtonByName: function(name){
-      return this.childNodes.search(name, getter('name'));
+      return this.getChildByName(name);
     }
   });
 

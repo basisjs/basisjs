@@ -479,6 +479,12 @@
     nodeType: 'DOMWrapperNode',
 
    /**
+    * Name of node. Using by parent to fetch child by name.
+    * @type {string}
+    */
+    name: null,
+
+   /**
     * A list that contains all children of this node. If there are no children,
     * this is a list containing no nodes.
     * @type {Array.<basis.dom.wrapper.AbstractNode>}
@@ -581,6 +587,12 @@
     * @readonly
     */
     groupNode: null,
+
+   /**
+    * Group indificator, may using for grouping.
+    * @type {any}
+    */
+    groupId: NaN,
 
    /**
     * Hash of satellite object configs.
@@ -1190,12 +1202,23 @@
       dataSource: DOMMIXIN_DATASOURCE_HANDLER
     },
 
+   /**
+    *
+    */
     getChild: function(value, getter){
       return this.childNodes.search(value, getter);
     },
+
+   /**
+    *
+    */
     getChildByName: function(name){
       return this.getChild('name', name);
     },
+
+   /**
+    *
+    */
     getChilds: function(value, getter){
       return this.childNodes.filter(function(child){
         return getter(child) == value;

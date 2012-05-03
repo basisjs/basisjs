@@ -65,8 +65,6 @@
       }
     },
 
-
-    groupId: 0,
     caption: '[untitled]',
 
     handler: null,

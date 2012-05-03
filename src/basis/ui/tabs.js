@@ -140,13 +140,7 @@
         if (!this.isDisabled())
           this.select();
       }
-    },
-    
-   /**
-    * Using for tab default grouping.
-    * @property {number}
-    */
-    groupId: 0
+    }
   });
 
 
