@@ -14,6 +14,7 @@
  */
 
   basis.require('basis.dom');
+  basis.require('basis.cssom');
   basis.require('basis.ui');
   basis.require('basis.ui.tabs');
   basis.require('basis.ui.scroller');
@@ -30,6 +31,7 @@
   // import names
   //
 
+  var cssom = basis.cssom;
   var PageControl = basis.ui.tabs.PageControl;
   var Scroller = basis.ui.scroller.Scroller;
 
@@ -58,7 +60,7 @@
       PageControl.prototype.event_childNodesModified.call(this, node, delta);
 
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        basis.cssom.setStyle(child.element, { left: (100 * i) + '%' });
+        cssom.setStyle(child.element, { left: (100 * i) + '%' });
     },
 
     init: function(config){

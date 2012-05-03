@@ -22,7 +22,7 @@
 
  /**
   * @see ./demo/defile/form.html
-  * @namespace basis.ui.form
+  * @namespace basis.ui.field
   */
 
   var namespace = this.path;
@@ -40,7 +40,6 @@
   var complete = Object.complete;
   var coalesce = Object.coalesce;
   var getter = Function.getter;
-  var classList = basis.cssom.classList;
 
   var createEvent = basis.event.create;
   var events = basis.event.events;

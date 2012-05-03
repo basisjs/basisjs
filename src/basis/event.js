@@ -12,6 +12,7 @@
  /**
   * @namespace basis.event
   */
+  var namespace = this.path;
 
   //
   // import names
@@ -136,7 +137,7 @@
   * @class
   */
   var EventObject = Class(null, {
-    className: this.name + '.EventObject',
+    className: namespace + '.EventObject',
 
    /**
     * List of event handler sets.
