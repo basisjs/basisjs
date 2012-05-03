@@ -83,1072 +83,39 @@
   // main part
   //
 
+  /** @const */ var VALIDITY_INDETERMINATE = 'indeterminate';
+  /** @const */ var VALIDITY_VALID = 'valid';
+  /** @const */ var VALIDITY_INVALID = 'invalid';
+
   var baseFieldTemplate = new Template(
-    '<div{sampleContainer} class="Basis-Field {selected} {disabled}">' +
+    '<div{sampleContainer} class="Basis-Field {selected} {disabled} {validity}" title="{error}">' +
       '<div class="Basis-Field-Title">' +
         '<label>' +
           '<span{title}>{titleText}</span>' +
         '</label>' +
       '</div>' +
       '<div{content} class="Basis-Field-Container">' +
-        '<!-- {fieldPlace} -->' +
+        '<!--{fieldPlace}-->' +
       '</div>' +
+      '<!--{example}-->' +
     '</div>'
   );
 
   function createFieldTemplate(template, injection){
-    return new Template(template.source.replace('<!-- {fieldPlace} -->', injection));
+    return new Template(template.source.replace('<!--{fieldPlace}-->', injection));
   }
 
-  //
-  //  Fields
-  //
-
- /**
-  * Base class for all form field classes
-  * @class
-  */
-  var Field = UINode.subclass({
-    className: namespace + '.Field',
-
-    childClass: null,
-    template: baseFieldTemplate,
-
-    nextFieldOnEnter: true,
-    serializable: true,
-
-    event_select: function(){
-      DOM.focus(this.tmpl.field, true);
-
-      UINode.prototype.event_select.call(this);
-    },
-    event_enable: function(){
-      this.tmpl.field.removeAttribute('disabled');
-
-      UINode.prototype.event_enable.call(this);
-    },
-    event_disable: function(){
-      this.tmpl.field.setAttribute('disabled', 'disabled');
-
-      UINode.prototype.event_disable.call(this);
-    },
-    event_input: createEvent('input', 'event'),
-    event_change: createEvent('change','event'),
-    event_keydown: createEvent('keydown', 'event'),
-    event_keypress: createEvent('keypress', 'event'),
-    event_keyup: createEvent('keyup', 'event') && function(event){
-      if (this.nextFieldOnEnter)
-        if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(Event.key(event)))
-        {
-          Event.cancelDefault(event);
-          this.nextFieldFocus();
-        }
-        else
-          this.setValid();
-
-      events.keyup.call(this, event);
-    },
-    event_focus: createEvent('focus', 'event') && function(event){
-      if (this.valid)
-        this.setValid();
-
-      events.focus.call(this, event);
-    },
-    event_blur: createEvent('blur', 'event') && function(event){
-      this.validate(true);
-
-      events.blur.call(this, event);
-    },
-
-    binding: {
-      titleText: 'title || ""'
-    },
-
-    init: function(config){
-      UINode.prototype.init.call(this, config);
-
-      this.name = this.name || '';
-
-      // attach button
-      /*if (this.button)
-      {
-        classList(this.element).add('have-button');
-        this.button = DOM.createElement('BUTTON', config.caption || '...');
-        if (config.button.handler) 
-          Event.addHandler(this.button, 'click', config.button.handler, this.button);
-        DOM.insert(this.tmpl.field.parentNode, this.button, DOM.INSERT_AFTER, this.tmpl.field);
-      }*/
-
-      // set events
-      if (this.tmpl.field)
-      {
-        Event.addHandler(this.tmpl.field, 'keydown',  this.keydown,  this);
-        Event.addHandler(this.tmpl.field, 'keyup',    this.keyup,    this);
-        Event.addHandler(this.tmpl.field, 'keypress', this.keypress, this);
-        Event.addHandler(this.tmpl.field, 'blur',     this.blur,     this);
-        Event.addHandler(this.tmpl.field, 'focus',    this.focus,    this);
-        Event.addHandler(this.tmpl.field, 'change',   this.change,   this);
-        Event.addHandler(this.tmpl.field, 'input',    this.input,    this);
-
-        if (this.name)
-          this.tmpl.field.name = this.name;
-
-        if (this.size)
-          this.tmpl.field.size = this.size;
-      }
-
-      if (!this.validators)
-        this.validators = [];
-
-      // set sample
-      this.setSample(this.sample);
-      
-      // set min/max length
-      if (this.minLength)
-        this.setMinLength(this.minLength);
-      if (this.maxLength)
-        this.setMaxLength(this.maxLength);
-
-      // set value & default value
-      if (this.readOnly)
-        this.setReadOnly(this.readOnly);
-      
-      //if (this.disabled)
-      //  this.disable();
-      
-      if (this.defaultValue !== this.value)
-      {
-        this.defaultValue = this.value;
-        this.setDefaultValue();
-      }
-    },
-    setReadOnly: function(readOnly){
-      if (readOnly)
-        this.tmpl.field.setAttribute('readonly', 'readonly', 0);
-      else
-        this.tmpl.field.removeAttribute('readonly', 0);
-    },
-    setDefaultValue: function(){
-      this.setValue(this.defaultValue);
-      this.setValid();
-    },
-    setSample: function(sample){
-      if (this.tmpl.sampleContainer && sample)
-      {
-        if (!this.sampleElement)
-          DOM.insert(this.tmpl.sampleContainer, this.sampleElement = DOM.createElement('SPAN.Basis-Field-Sample', sample));
-        else
-          DOM.insert(DOM.clear(this.sampleElement), sample);
-      }
-      else
-      {
-        if (this.sampleElement)
-        {
-          DOM.remove(this.sampleElement);
-          this.sampleElement = null;
-        }
-      }
-    },
-    getValue: function(){
-      return this.tmpl.field.value;
-    },
-    setValue: function(newValue){
-      newValue = newValue || '';
-      if (this.tmpl.field.value != newValue)
-      {
-        this.tmpl.field.value = newValue;
-        this.event_change();
-      }
-    },
-    /*disable: function(){
-      if (!this.disabled)
-      {
-        this.disabled = true;
-        this.event_disable();
-      }
-    },*/
-    setMaxLength: function(len){
-      this.maxLength = len;
-    },
-    setMinLength: function(len){
-      this.minLength = len;
-    },
-    attachValidator: function(validator, validate){
-      if (this.validators.add(validator) && validate)
-        this.validate();
-    },
-    detachValidator: function(validator, validate){
-      if (this.validators.remove(validator) && validate)
-        this.validate();
-    },
-    change: function(event){
-      this.event_change(event);
-    },
-    input: function(event){
-      this.event_input(event);
-    },
-    keydown: function(event){
-      this.event_keydown(event);
-    },
-    keyup: function(event){
-      this.event_keyup(event);
-    },
-    keypress: function(event){
-      this.event_keypress(event);
-    },
-    blur: function(event){
-      this.event_blur(event);
-    },
-    focus: function(event){
-      this.event_focus(event);
-    },
-    select: function(){
-      this.unselect();
-      UINode.prototype.select.apply(this, arguments);
-    },
-    setValid: function(valid, message){
-      var clsList = classList(this.element);
-
-      if (typeof valid == 'boolean')
-      {
-        clsList.bool('invalid', !valid)
-        clsList.bool('valid', valid);
-        if (message)
-          this.element.title = message;
-        else
-          this.element.removeAttribute('title');
-      }
-      else
-      {
-        clsList.remove('invalid');
-        clsList.remove('valid');
-        this.element.removeAttribute('title');
-      }
-      this.valid = valid;
-    },
-    validate: function(onlyValid){
-      var error;
-
-      this.setValid();
-      for (var i = 0; i < this.validators.length; i++)
-        if (error = this.validators[i](this))
-        {
-          if (!onlyValid) 
-            this.setValid(false, error.message);
-          return error;
-        }
-      if (this.getValue() != '') // && this.validators.length)
-        this.setValid(true);
-      return;
-    },
-    nextFieldFocus: function(event){
-      var next = DOM.axis(this, DOM.AXIS_FOLLOWING_SIBLING).search(true, 'selectable');
-
-      if (next)
-        next.select();
-      else
-        if (this.parentNode && this.parentNode.submit)
-          this.parentNode.submit();
-    },
-    destroy: function(){
-      Event.clearHandlers(this.element);// TODO: remove????
-      if (this.tmpl.field)
-        Event.clearHandlers(this.tmpl.field);
-
-      if (this.button)
-      {
-        Event.clearHandlers(this.button);
-        delete this.button;
-      }
-      this.validators.clear();
-
-      UINode.prototype.destroy.call(this);
-
-      delete this.sampleElement;
-      delete this.sampleContainer;
-      delete this.defaultValue;
-      //delete this.field;
-    }
-  });
-  Field.create = function(fieldType, config){
-    var alias = {
-      'radiogroup': 'RadioGroup',
-      'checkgroup': 'CheckGroup'
-    }
-
-    fieldType = alias[fieldType.toLowerCase()] || fieldType.capitalize();
-
-    if (Field[fieldType])
-      return new Field[fieldType](config);
-    else
-      throw new Error('Wrong field type `{0}`'.format(fieldType));
-  };
-
 
   //
-  // Simple fields
+  // Validators
   //
+
+  /** @const */ var REGEXP_EMAIL = /^[a-z0-9\.\-\_]+\@(([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i;
+  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z][a-zA-Z\d\-]+\.)+[a-zA-Z]{2,6})(:\d+)?(\/[^\?]*(\?\S(\=\S*))*(\#\S*)?)?$/i;
 
  /**
   * @class
   */
-  Field.Hidden = Field.subclass({
-    className: namespace + '.Field.Hidden',
-
-    selectable: false,
-
-    template:
-      '<input{field} type="hidden" />'
-  });
-
-
- /**
-  * @class
-  */
-  Field.Text = Field.subclass({
-    className: namespace + '.Field.Text',
-
-    template: createFieldTemplate(baseFieldTemplate,
-      '<input{field} type="text" />'
-    ),
-
-    init: function(config){
-      Field.prototype.init.call(this, config);
-
-      if (this.minLength)
-        this.attachValidator(Validator.MinLength);
-
-      if (this.autocomplete)
-        this.tmpl.field.setAttribute('autocomplete', this.autocomplete);
-    },
-    setMaxLength: function(len){
-      this.tmpl.field.setAttribute('maxlength', len, 0);
-
-      Field.prototype.setMaxLength.call(this, len);
-    }
-  });
-
-
-  /**
-  * @class
-  */
-  Field.Password = Field.Text.subclass({
-    className: namespace + '.Field.Password',
-
-    template: createFieldTemplate(baseFieldTemplate,
-      '<input{field} type="password" />'
-    )
-  });
-
-
- /**
-  * @class
-  */
-  Field.File = Field.subclass({
-    className: namespace + '.Field.File',
-
-    template: createFieldTemplate(baseFieldTemplate,
-      '<input{field} type="file" />'
-    )
-  });
-
-
- /**
-  * @class
-  */
-  Field.Textarea = Field.subclass({
-    className: namespace + '.Field.Textarea',
-
-    nextFieldOnEnter: false,
-
-    template: createFieldTemplate(baseFieldTemplate,
-      '<textarea{field} />'
-    ),
-
-    init: function(config){
-      //this.value = this.value || '';
-      this.counter = DOM.createElement('.counter', l10nToken(namespace, 'symbolsLeft') + ': ', DOM.createText(0));
-
-      //inherit
-      Field.prototype.init.call(this, config);
-
-      if (this.minLength)
-        this.attachValidator(Validator.MinLength);
-
-      if (this.maxLength)
-        this.attachValidator(Validator.MaxLength);
-
-      Event.addHandler(this.tmpl.field, 'keyup', this.updateCounter, this);
-      Event.addHandler(this.tmpl.field, 'input', this.updateCounter, this);
-
-      if (window.opera)
-      {
-        Event.addHandler(this.tmpl.field, 'focus', function(event){
-          this.contentEditable = true;
-          this.contentEditable = false;
-        });
-      }
-    },
-    updateCounter: function(){
-      var left = this.maxLength - this.getValue().length;
-      this.counter.lastChild.nodeValue = left >= 0 ? left : 0;
-    },
-    setValue: function(value){
-      Field.prototype.setValue.call(this, value);
-      this.updateCounter();
-    },
-    setMaxLength: function(len){
-      Field.prototype.setMaxLength.call(this, len);
-
-      if (len)
-      {
-        this.updateCounter();
-        DOM.insert(this.tmpl.sampleContainer, this.counter);
-      }
-      else
-        DOM.remove(this.counter);
-    },
-    destroy: function(){
-      delete this.counter;
-
-      Field.prototype.destroy.call(this);
-    }
-  });
-
-
-  /**
-  * @class
-  */
-  Field.Checkbox = Field.subclass({
-    className: namespace + '.Field.Checkbox',
-
-    value: false,
-
-    template:
-      '<div class="Basis-Field Basis-Field-Checkbox">' +
-        '<div{content} class="Basis-Field-Container {selected} {disabled}">' +
-          '<label>' +
-            '<input{field} type="checkbox" />' +
-            '<span>{titleText}</span>' +
-          '</label>' +
-        '</div>' +
-      '</div>',
-
-    /*init: function(config){
-      this.value = this.value || false;
-
-      //inherit
-      Field.prototype.init.call(this, config);
-    },*/
-    invert: function(){
-      this.setValue(!this.getValue());
-    },
-    setValue: function(value){
-      var state = this.tmpl.field.checked;
-      this.tmpl.field.checked = !!value;
-
-      if (state != this.tmpl.field.checked)
-        this.event_change();
-    },
-    getValue: function(){
-      return this.tmpl.field.checked;
-    }
-  });
-
-
-  /**
-  * @class
-  */
-  Field.Label = Field.subclass({
-    className: namespace + '.Field.Label',
-    cssClassName: 'Basis-Field-Label',
-
-    template: createFieldTemplate(baseFieldTemplate,
-      '<label{field}>{fieldValueText}</label>'
-    ),
-    valueGetter: Function.$self,
-    event_change: function(){
-      Field.prototype.event_change.apply(this, arguments);
-      this.tmpl.fieldValueText.nodeValue = this.valueGetter(this.getValue());
-    }
-    /*setValue: function(newValue){
-      Field.prototype.setValue.call(this, newValue);
-      this.tmpl.fieldValueText.nodeValue = this.tmpl.field.value;
-    }*/
-  });
-
-
-  //
-  // Complex fields
-  //
-
-  var ComplexFieldItem = UINode.subclass({
-    className: namespace + '.ComplexField.Item',
-
-    childClass: null,
-
-    titleGetter: function(item){
-      return item.title || item.getValue();
-    },
-    valueGetter: getter('value'),
-
-    getTitle: function(){
-      return this.titleGetter(this);
-    },
-    getValue: function(){
-      return this.valueGetter(this);
-    }
-  });
-
-  var COMPLEXFIELD_SELECTION_HANDLER = {
-    datasetChanged: function(){
-      this.event_change();
-    }
-  }
-
- /**
-  * @class
-  */
-  var ComplexField = Class(Field, UIContainer, {
-    className: namespace + '.Field.ComplexField',
-    childClass: ComplexFieldItem,
-
-    template: Field.prototype.template,
-
-    binding: {
-      titleText: 'title || ""'
-    },
-
-    /*childFactory: function(itemConfig){
-      var config = {
-        //valueGetter: this.itemValueGetter,
-        //titleGetter: this.itemTitleGetter
-      };
-
-      if (itemConfig.data || itemConfig.delegate)
-        complete(config, itemConfig);
-      else
-        config.data = itemConfig;
-
-      return new this.childClass(config);
-    },*/
-
-    multipleSelect: false,
-
-    //itemValueGetter: getter('value'),
-    //itemTitleGetter: function(data){ return data.title || data.value; },
-
-    init: function(config){
-
-      this.selection = new Selection({
-        multiple: !!this.multipleSelect
-      });
-      this.selection.addHandler(COMPLEXFIELD_SELECTION_HANDLER, this);
-
-      //inherit
-      Field.prototype.init.call(this, config);
-    },
-    getValue: function(){
-      var value = this.selection.getItems().map(getter('getValue()'));
-      return !this.selection.multiple ? value[0] : value;
-    },
-    setValue: function(value/* value[] */){
-      var source = this.multipleSelect ? Array.from(value) : [value];
-
-      /*var source = this.selection.multiple 
-        ? (value instanceof AbstractProperty
-            ? Array.from(value.value).map(function(item){ return this.itemValueGetter(item.value) }, this)
-            : Array.from(value)
-          )
-        : [value];*/
-
-      var selected = {};
-      source.forEach(function(key){ selected[key] = true });
-
-      // prevent selection dispatch change event
-      var selectedItems = [];
-      for (var item = this.firstChild; item; item = item.nextSibling)
-        if (selected[item.getValue()])
-          selectedItems.push(item);
-
-      this.selection.set(selectedItems);
-    },
-    destroy: function(){
-      Field.prototype.destroy.call(this);
-    }
-  });
-  
-  ComplexField.Item = ComplexFieldItem;
-
-  //
-  // Radio group
-  //
-
- /**
-  * @class
-  */
-  var RadioGroupItem = ComplexFieldItem.subclass({
-    className: namespace + '.Field.RadioGroup.Item',
-
-    event_select: function(){
-      this.tmpl.field.checked = true;
-      ComplexFieldItem.prototype.event_select.call(this);
-
-      //classList(this.element).add('selected');
-    },
-    event_unselect: function(){
-      this.tmpl.field.checked = false;
-      ComplexFieldItem.prototype.event_unselect.call(this);
-      //classList(this.element).remove('selected');
-    },
-    event_enable: function(){
-      this.tmpl.field.removeAttribute('disabled');
-
-      UINode.prototype.event_enable.call(this);
-    },
-    event_disable: function(){
-      this.tmpl.field.setAttribute('disabled', 'disabled');
-
-      UINode.prototype.event_disable.call(this);
-    },
-
-    template:
-      '<label class="Basis-RadioGroup-Item {selected} {disabled}" event-click="select">' + 
-        '<input{field} type="radio" class="radio"/>' +
-        '<span{content}>{titleText}</span>' +
-      '</label>',
-
-    templateUpdate: function(tmpl, eventName, delta){
-      ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
-
-      tmpl.field.value = this.getValue();
-      tmpl.titleText.nodeValue = this.getTitle();
-    },
-
-    action: {
-      select: function(event){
-        if (!this.isDisabled())
-          this.select();
-      }
-    }
-  });
-
-
- /**
-  * @class
-  */
-  Field.RadioGroup = ComplexField.subclass({
-    className: namespace + '.Field.RadioGroup',
-
-    childClass: RadioGroupItem,
-
-    template: createFieldTemplate(baseFieldTemplate,
-      '<div{field|childNodesElement} class="Basis-RadioGroup"></div>'
-    ),
-
-    childFactory: function(config){
-      var child = ComplexField.prototype.childFactory.call(this, config);
-
-      if (this.name)
-        child.tmpl.field.name = this.name;
-
-      return child;
-    }
-  });
-
-  Field.RadioGroup.Item = RadioGroupItem;
-
-
-  //
-  // Check Group
-  //
-
- /**
-  * @class
-  */
-  var CheckGroupItem = ComplexFieldItem.subclass({
-    className: namespace + '.Field.CheckGroup.Item',
-
-    event_select: function(){
-      this.tmpl.field.checked = true;
-      ComplexFieldItem.prototype.event_select.call(this);
-    },
-    event_unselect: function(){
-      this.tmpl.field.checked = false;
-      ComplexFieldItem.prototype.event_unselect.call(this);
-    },
-    event_enable: function(){
-      this.tmpl.field.removeAttribute('disabled');
-
-      UINode.prototype.event_enable.call(this);
-    },
-    event_disable: function(){
-      this.tmpl.field.setAttribute('disabled', 'disabled');
-
-      UINode.prototype.event_disable.call(this);
-    },
-
-    template:
-      '<label event-click="click" class="{selected} {disabled}">' + 
-        '<input{field} type="checkbox"/>' +
-        '<span{content}>{titleText}</span>' +
-      '</label>',
-
-    templateUpdate: function(tmpl, eventName, delta){
-      ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
-
-      this.tmpl.field.value = this.getValue();
-      this.tmpl.titleText.nodeValue = this.getTitle();
-    },
-
-    action: {
-      click: function(event){
-        if (!this.isDisabled())
-        {
-          this.select(this.parentNode.multipleSelect);
-
-          if (Event.sender(event).tagName != 'INPUT')
-            Event.kill(event);
-        }
-      }
-    }
-  });
-
-
- /**
-  * @class
-  */
-  Field.CheckGroup = ComplexField.subclass({
-    className: namespace + '.Field.CheckGroup',
-
-    childClass: CheckGroupItem,
-
-    multipleSelect: true,
-
-    template: createFieldTemplate(baseFieldTemplate,
-      '<div{field|childNodesElement} class="Basis-CheckGroup"></div>'
-    )
-  });
-
-  Field.CheckGroup.Item = CheckGroupItem;
-
-  //
-  // Select
-  //
-
-  var SelectItem = ComplexFieldItem.subclass({
-    className: namespace + '.Field.Select.Item',
-
-    event_select: function(){
-      if (this.parentNode)
-        this.parentNode.setValue(this.getValue());
-    },
-    event_unselect: function(){
-      if (this.parentNode)
-        this.parentNode.setValue();
-    },
-
-    template:
-      '<option{field}>{titleText}</option>',
-
-    templateUpdate: function(tmpl, eventName, delta){
-      ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
-
-      tmpl.field.value = this.getValue();
-      tmpl.titleText.nodeValue = this.getTitle();
-    }
-  });
-
-
- /**
-  * @class
-  */
-  Field.Select = ComplexField.subclass({
-    className: namespace + '.Field.Select',
-
-    childClass: SelectItem,
-    
-    template: createFieldTemplate(baseFieldTemplate,
-      '<select{field|childNodesElement} />'
-    ),
-
-    event_keyup: function(object, event){
-      this.change();
-
-      ComplexField.prototype.event_keyup.call(this, object, event);
-    },
-
-    setValue: function(value){
-      var item = this.childNodes.search(value, 'getValue()');
-
-      if (item)
-        this.selection.set([item]);
-      else
-        this.selection.clear();
-    }
-  });
-
-  Field.Select.Item = SelectItem;
-
-  //
-  //  Combobox
-  //
-
-  var ComboboxPopupHandler = {
-    show: function(){
-      classList(this.tmpl.field).add('Basis-DropdownList-Opened'); 
-    },
-    hide: function(){
-      classList(this.tmpl.field).remove('Basis-DropdownList-Opened'); 
-    }
-  };
-
-  //
-  // Combobox
-  //
-
-  var ComboboxItem = ComplexFieldItem.subclass({
-    className: namespace + '.Field.Combobox.Item',
-
-    //titleGetter: Function.getter('data.title'),
-    //valueGetter: Function.getter('data.value'),
-
-    template:
-      '<div class="Basis-Combobox-Item {selected} {disabled}" event-click="click">{titleText}</div>',
-
-    templateUpdate: function(tmpl, eventName, delta){
-      ComplexFieldItem.prototype.templateUpdate.call(this, tmpl, eventName, delta);
-      tmpl.titleText.nodeValue = this.getTitle();
-    },
-
-    action: {
-      click: function(event){
-        if (!this.isDisabled())
-        {
-          this.select();
-
-          if (this.parentNode)
-            this.parentNode.hide();
-
-          Event.kill(event);
-        }
-      }
-    }
-  });
-
-  var ComboboxCaptionHandlers = {
-    /*blur: function(){
-      this.hide();
-    },*/
-    keyup: function(event){
-      var key = Event.key(event);
-      var cur = this.selection.pick();
-
-      switch (key){
-        case Event.KEY.DOWN:
-          if (event.altKey)
-            return this.popup.visible ? this.hide() : (!this.isDisabled() ? this.show() : null);
-
-          //cur = cur ? cur.nextSibling : this.firstChild;
-          cur = DOM.axis(cur ? cur : this.firstChild, DOM.AXIS_FOLLOWING_SIBLING).search(false, 'disabled');
-        break;
-
-        case Event.KEY.UP: 
-          if (event.altKey)
-            return this.popup.visible ? this.hide() : (!this.isDisabled() ? this.show() : null);
-
-          cur = cur ? DOM.axis(cur, DOM.AXIS_PRESCENDING_SIBLING).search(false, 'disabled') : this.firstChild;
-        break;
-      }
-
-      if (cur)
-      {
-        cur.select();
-        DOM.focus(this.tmpl.field);
-      }
-    },
-    keydown: function(event){
-      var key = Event.key(event);
-      if (key == Event.KEY.DOWN || key == Event.KEY.UP)
-      {
-        Event.kill(event);
-      }
-      else if (key == Event.KEY.ENTER)
-      {
-        if (this.popup.visible)
-          this.hide();
-
-        Event.kill(event);
-      }
-    }
-  };
-  
-  Field.Combobox = ComplexField.subclass({
-    className: namespace + '.Field.Combobox',
-
-    childClass: ComboboxItem,
-
-    event_enable: function(){
-      if (this.delegate && this.delegate.select)
-        this.delegate.select();
-
-      ComplexField.prototype.event_enable.call(this);
-    },
-    /*event_update: function(object, delta){
-      ComplexField.prototype.event_update.call(this, object, delta);
-      // update title
-      var title = this.getTitle() || this.getValue() || '';
-
-      this.tmpl.field.title = 
-      this.tmpl.captionText.nodeValue = this.captionFormater(title, this.getValue());
-    },*/
-    event_change: function(){
-      ComplexField.prototype.event_change.call(this);
-
-      var value = this.getValue();
-
-      if (this.property)
-        this.property.set(value);
-
-      if (this.hidden)
-        this.hidden.value = value;
-
-      if (this.satellite)
-        this.satellite.captionItem.setDelegate(this.selection.pick());
-    },
-    //}),
-
-    caption: null,
-    popup: null,
-    property: null,
-
-    template: createFieldTemplate(baseFieldTemplate,
-      '<span{field} class="Basis-DropdownList" event-click="click" tabindex="0">' +
-        '<span class="Basis-DropdownList-Caption"><!--{captionItem}--></span>' +
-        '<span class="Basis-DropdownList-Trigger"/>' +
-      '</span>' +
-      '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent" />'
-    ),
-
-    binding: {
-      captionItem: 'satellite:'
-    },
-
-    action: {
-      click: function(event){
-        if (this.isDisabled() || this.popup.visible)
-          this.hide();
-        else
-          this.show({});
-
-        Event.kill(event);
-      }
-    },
-
-    init: function(config){
-      if (!basis.ui.popup)
-        throw new Error('basis.ui.popup required for DropDownList');
-
-      if (this.property)
-        this.value = this.property.value;
-
-      this.satelliteConfig = UIContainer.prototype.satelliteConfig.__extend__({
-        captionItem: {
-          instanceOf: this.childClass,
-          delegate: getter('selection.pick()'),
-          config: {
-            getTitle: function(){
-              return this.delegate && this.delegate.getTitle();
-            },
-            getValue: function(){
-              return this.delegate && this.delegate.getValue();
-            },
-            handler: {
-              delegateChanged: function(){
-                this.event_update(this, {});
-              }
-            }
-          }
-        }
-      });
-
-      // inherit
-      ComplexField.prototype.init.call(this, config);
-
-      this.satellite.captionItem.setDelegate(this.selection.pick());
-
-      Event.addHandlers(this.tmpl.field, ComboboxCaptionHandlers, this);
-
-      if (this.name)
-        DOM.insert(this.tmpl.field, this.hidden = DOM.createElement('INPUT[type=hidden][name={0}]'.format(String(this.name).quote())));
-
-      // create items popup
-      this.popup = new Popup(complete({
-        cssClassName: 'Basis-DropdownList-Popup',
-        autorotate: 1,
-        ignoreClickFor: [this.tmpl.field],
-        thread: this.thread,
-        content: this.childNodesElement,
-        handler: ComboboxPopupHandler,
-        handlerContext: this
-      }, this.popup));
-
-      if (this.property)
-        this.property.addLink(this, this.setValue);
-    },
-    /*select: function(){
-      ComplexField.prototype.select.call(this);
-      DOM.focus(this.tmpl.field);
-    },*/
-    show: function(){
-      this.popup.show(this.tmpl.field); 
-      this.select();
-    },
-    hide: function(){
-      this.popup.hide();
-    },
-    getTitle: function(){
-      var selected = this.selection.pick();
-      return selected && selected.getTitle();
-    },
-    getValue: function(){
-      var selected = this.selection.pick();
-      return selected && selected.getValue();
-    },
-    setValue: function(value){
-      /*if (value instanceof AbstractProperty)
-        value = this.itemValueGetter(value.value);*/
-      if (this.getValue() != value)
-      {
-        // update value & selection
-        var item = this.childNodes.search(value, 'getValue()');
-        if (item && !item.isDisabled())
-          this.selection.set([item]);
-        else
-          this.selection.clear();
-
-      }
-    },
-    destroy: function(){
-      if (this.property)
-      {
-        this.property.removeLink(this);
-        this.property = null;
-      }
-
-      this.popup.destroy();
-      this.popup = null;
-
-      ComplexField.prototype.destroy.call(this);
-    }
-  });
-
-  Field.Combobox.Item = ComboboxItem;
-
-  //
-  //  Value validators
-  //
-
   var ValidatorError = Class(null, {
     className: namespace + '.ValidatorError',
 
@@ -1162,6 +129,7 @@
     RegExp: function(regexp){
       if (regexp.constructor != RegExp)
         regexp = new RegExp(regexp);
+
       return function(field){
         var value = field.getValue();
         if (value != '' && !value.match(regexp))
@@ -1187,12 +155,12 @@
     },
     Email: function(field){
       var value = field.getValue().trim();
-      if (value != '' && !value.match(/^[a-z0-9\.\-\_]+\@(([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i))
+      if (value != '' && !value.match(REGEXP_EMAIL))
         return new ValidatorError(field, l10nToken(namespace, 'validator', 'emailWrongFormat'));
     },
     Url: function(field){
       var value = field.getValue().trim();
-      if (value != '' && !value.match(/^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z][a-zA-Z\d\-]+\.)+[a-zA-Z]{2,6})(:\d+)?(\/[^\?]*(\?\S(\=\S*))*(\#\S*)?)?$/i))
+      if (value != '' && !value.match(REGEXP_URL))
         return new ValidatorError(field, l10nToken(namespace, 'validator', 'urlWrongFormat'));
     },
     MinLength: function(field){
@@ -1208,6 +176,1043 @@
         return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'maxLengthError')).format(field.maxLength));
     }
   };
+
+
+  //
+  //  Fields
+  //
+
+ /**
+  * Base class for all form field classes
+  * @class
+  */
+  var Field = UIContainer.subclass({
+    className: namespace + '.Field',
+
+    //
+    // properties
+    //
+
+    childClass: null,
+    name: '',
+
+    nextFieldOnEnter: true,
+    serializable: true,
+
+    validity: VALIDITY_INDETERMINATE,
+    error: '',
+    example: null,
+
+    //
+    // events
+    //
+
+    event_select: function(){
+      DOM.focus(this.tmpl.field, true);
+      UINode.prototype.event_select.call(this, this);
+    },
+    event_commit: createEvent('commit', 'sender'),
+
+    event_input: createEvent('input', 'sender', 'event'),
+    event_change: createEvent('change', 'sender', 'event'),
+    event_keydown: createEvent('keydown', 'sender', 'event'),
+    event_keypress: createEvent('keypress', 'sender', 'event'),
+    event_keyup: createEvent('keyup', 'sender', 'event') && function(sender, event){
+      if (this.nextFieldOnEnter)
+      {
+        var keyCode = Event.key(event);
+        if (keyCode == Event.KEY.ENTER || keyCode == Event.KEY.CTRL_ENTER)
+        {
+          Event.cancelDefault(event);
+          this.commit();
+        }
+        else
+          this.setValidity();
+      }
+
+      events.keyup.call(this, sender, event);
+    },
+    event_focus: createEvent('focus', 'sender', 'event') && function(sender, event){
+      if (this.validity)
+        this.setValidity();
+
+      events.focus.call(this, sender, event);
+    },
+    event_blur: createEvent('blur', 'sender', 'event') && function(sender, event){
+      this.validate(true);
+
+      events.blur.call(this, sender, event);
+    },
+
+    event_validityChanged: createEvent('validityChanged', 'sender', 'oldValidity'),
+    event_errorChanged: createEvent('errorChanged', 'sender'),
+    event_exampleChanged: createEvent('exampleChanged', 'sender'),
+
+    //
+    // template
+    //
+
+    template: baseFieldTemplate,
+    binding: {
+      name: 'name || ""',
+      titleText: 'title || ""',
+      value: {
+        events: 'change',
+        getter: 'getValue()'
+      },
+      defaultValue: {
+        getter: 'defaultValue'
+      },
+      validity: {
+        events: 'validityChanged',
+        getter: 'validity'
+      },
+      error: {
+        events: 'errorChanged',
+        getter: 'error'
+      },
+      example: 'satellite:'
+    },
+
+    action: 'focus blur change keydown keypress keyup input'.qw().reduce(
+      function(res, item){
+        res[item] = new Function('event', 'this.event_' + item + '(this, event)');
+        return res;
+      },
+      {}
+    ),
+
+    satelliteConfig: {
+      example: {
+        hook: {
+          exampleChanged: true
+        },
+        existsIf: function(owner){
+          return owner.example;
+        },
+        instanceOf: UINode.subclass({
+          template: '<span class="Basis-Field-Sample">{example}</span>',
+          binding: {
+            example: 'owner.example'
+          },
+          listen: {
+            owner: {
+              exampleChanged: function(){
+                this.updateBind('example');
+              }
+            }
+          }
+        })
+      }
+    },
+
+    //
+    // methods
+    //
+
+    init: function(config){
+      this.name = this.name || '';
+      this.validators = Array.from(this.validators);
+
+      if (typeof this.defaultValue == 'undefined')
+        this.defaultValue = this.value;
+
+      UIContainer.prototype.init.call(this, config);
+    },
+
+    setExample: function(example){
+      if (example != this.example)
+      {
+        this.example = example;
+        this.event_exampleChanged(this);
+      }
+    },
+
+    getValue: function(){
+      return this.value;
+    },
+    setValue: function(newValue){
+      if (this.value != newValue)
+      {
+        var oldValue = this.value;
+        this.value = newValue;
+        this.event_change(this, oldValue);
+      }
+    },
+    reset: function(){
+      this.setValue(this.defaultValue);
+      this.setValidity();
+    },
+
+    attachValidator: function(validator, validate){
+      if (this.validators.add(validator) && validate)
+        this.validate();
+    },
+    detachValidator: function(validator, validate){
+      if (this.validators.remove(validator) && validate)
+        this.validate();
+    },
+    setValidity: function(validity, message){
+      if (!validity)
+        validity = VALIDITY_INDETERMINATE;
+
+      if (this.validity !== validity)
+      {
+        this.validity = validity;
+        this.event_validityChanged(this);
+      }
+
+      if (!message || validity != VALIDITY_INVALID)
+        message = '';
+
+      if (this.error != message)
+      {
+        this.error = message;
+        this.event_errorChanged(this);
+      }
+    },
+    validate: function(onlyValid){
+      var error;
+
+      this.setValidity();
+      for (var i = 0; i < this.validators.length; i++)
+        if (error = this.validators[i](this))
+        {
+          if (!onlyValid) 
+            this.setValidity(VALIDITY_INVALID, error.message);
+
+          return error;
+        }
+
+      if (this.getValue() != '')
+        this.setValidity(VALIDITY_VALID);
+    },
+
+    select: function(){
+      this.unselect();
+      UINode.prototype.select.apply(this, arguments);
+    },
+    commit: function(){
+      this.event_commit(this);
+    },
+
+    destroy: function(){
+      this.validators = null;
+      this.error = null;
+      this.example = null;
+
+      UINode.prototype.destroy.call(this);
+    }
+  });
+
+  Field.create = function(fieldType, config){
+    var alias = {
+      'radiogroup': 'RadioGroup',
+      'checkgroup': 'CheckGroup'
+    };
+
+    fieldType = alias[fieldType.toLowerCase()] || fieldType.capitalize();
+
+    if (Field[fieldType])
+      return new Field[fieldType](config);
+    else
+      throw new Error('Unknown field type `{0}`'.format(fieldType));
+  };
+
+
+  //
+  // Simple fields
+  //
+
+ /**
+  * @class
+  */
+  Field.Hidden = Field.subclass({
+    className: namespace + '.Field.Hidden',
+
+    selectable: false,
+
+    template:
+      '<input{field} type="hidden" value="{value}"/>'
+  });
+
+
+  var TextField = Field.subclass({
+    className: namespace + '.TextField',
+
+    event_minLengthChanged: createEvent('minLengthChanged', 'sender'),
+    event_maxLengthChanged: createEvent('maxLengthChanged', 'sender'),
+
+    readOnly: false,
+    minLength: 0,
+    maxLength: 0,
+
+    binding: {
+      minlength: {
+        events: 'minLengthChanged',
+        getter: function(field){
+          return field.minLength > 0 ? field.minLength : "";
+        }
+      },
+      maxlength: {
+        events: 'maxLengthChanged',
+        getter: function(field){
+          return field.maxLength > 0 ? field.maxLength : "";
+        }
+      },
+      readonly: function(node){
+        return node.readOnly ? 'readonly' : ""
+      },
+      autocomplete: 'autocomplete || ""'
+    },
+
+    init: function(config){
+      if (typeof this.value == 'undefined')
+        this.value = '';
+
+      Field.prototype.init.call(this, config);
+
+      this.setMinLength(this.minLength);
+      this.setMaxLength(this.maxLength);
+    },
+    setReadOnly: function(readOnly){
+      this.readOnly = !!readonly;
+      this.updateBind('readonly');
+    },
+    setMinLength: function(len){
+      len = Math.min(parseInt(len) || 0, 0);
+
+      if (this.minLength != len)
+      {
+        if (!this.minLength ^ !len)
+        {
+          if (len)
+            this.attachValidator(Validator.MinLength);
+          else
+            this.detachValidator(Validator.MinLength);
+        }
+
+        this.minLength = len;
+        this.event_minLengthChanged(this);
+      }
+    },
+    setMaxLength: function(len){
+      len = Math.min(parseInt(len) || 0, 0);
+
+      if (this.maxLength != len)
+      {
+        if (!this.maxLength ^ !len)
+        {
+          if (len)
+            this.attachValidator(Validator.MaxLength);
+          else
+            this.detachValidator(Validator.MaxLength);
+        }
+
+        this.maxLength = len;
+        this.event_maxLengthChanged(this);
+      }
+    },
+
+    getValue: function(){
+      return this.tmpl.field.value;
+    },
+    setValue: function(newValue){
+      newValue = newValue || '';
+      if (this.tmpl.field.value != newValue)
+      {
+        this.tmpl.field.value = newValue;
+        this.event_change(this);
+      }
+    }
+  });
+
+ /**
+  * @class
+  */
+  Field.Text = TextField.subclass({
+    className: namespace + '.Field.Text',
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<input{field} type="text" class="native-type-text"' +
+        ' name="{name}"' +
+        ' value="{defaultValue}"' +
+        ' readonly="{readonly}"' +
+        ' disabled="{disabled}"' +
+        ' maxlength="{maxlength}"' +
+        ' autocomplete="{autocomplete}"' +
+        ' event-keydown="keydown"' +
+        ' event-keyup="keyup"' +
+        ' event-keypress="keypress"' +
+        ' event-focus="focus"' +
+        ' event-blur="blur"' +
+        ' event-change="change"' +
+        ' event-input="input"' +
+      '/>'
+    ),
+
+    binding: {
+      autocomplete: 'autocomplete || ""'
+    }
+  });
+
+
+  /**
+  * @class
+  */
+  Field.Password = TextField.subclass({
+    className: namespace + '.Field.Password',
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<input{field} type="password" class="native-type-password"' +
+        ' name="{name}"' +
+        ' readonly="{readonly}"' +
+        ' disabled="{disabled}"' +
+        ' maxlength="{maxlength}"' +
+        ' event-keydown="keydown"' +
+        ' event-keyup="keyup"' +
+        ' event-keypress="keypress"' +
+        ' event-focus="focus"' +
+        ' event-blur="blur"' +
+        ' event-change="change"' +
+        ' event-input="input"' +
+      '/>'
+    )
+  });
+
+
+ /**
+  * @class
+  */
+  Field.File = Field.subclass({
+    className: namespace + '.Field.File',
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<input{field} type="file" class="native-type-file"' +
+        ' name="{name}"' +
+        ' disabled="{disabled}"' +
+      '/>'
+    )
+  });
+
+
+ /**
+  * @class
+  */
+  Field.Textarea = TextField.subclass({
+    className: namespace + '.Field.Textarea',
+
+    nextFieldOnEnter: false,
+    symbolsLeft: 0,
+
+    event_symbolsLeftChanged: createEvent('symbolsLeftChanged', 'sender'),
+    event_focus: !window.opera
+      ? TextField.prototype.event_focus
+        // fix opera's bug: when invisible textarea becomes visible and user
+        // changes it content, value property returns empty string instead value in field
+      : function(sender, event){
+          this.contentEditable = true;
+          this.contentEditable = false;
+          TextField.prototype.event_focus.call(this, sender, event);
+        },
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<textarea{field}' +
+        ' name="{name}"' +
+        ' readonly="{readonly}"' +
+        ' disabled="{disabled}"' +
+        ' event-keydown="keydown"' +
+        ' event-keyup="keyup updateSymbolsLeft"' +
+        ' event-keypress="keypress"' +
+        ' event-focus="focus"' +
+        ' event-blur="blur"' +
+        ' event-change="change updateSymbolsLeft"' +
+        ' event-input="input updateSymbolsLeft"' +
+      '/>' +
+      '<!--{counter}-->'
+    ),
+
+    binding: {
+      availChars: {
+        events: 'symbolsLeftChanged',
+        getter: 'symbolsLeft'
+      },
+      counter: 'satellite:'
+    },
+
+    action: {
+      updateSymbolsLeft: function(){
+        this.updateSymbolsLeft();
+      }
+    },
+
+    satelliteConfig: {
+      counter: {
+        hook: {
+          maxLengthChanged: true
+        },
+        existsIf: function(owner){
+          return owner.maxLength > 0;
+        },
+        instanceOf: UINode.subclass({
+          template:
+            '<div class="counter">' +
+              '{l10n:basis.ui.form.symbolsLeft}: {availChars}' +
+            '</div>',
+
+          binding: {
+            availChars: function(node){
+              return node.owner.symbolsLeft;
+            }
+          },
+
+          listen: {
+            owner: {
+              symbolsLeftChanged: function(){
+                this.updateBind('availChars');
+              }
+            }
+          }
+        })
+      }
+    },
+
+    updateSymbolsLeft: function(){
+      var symbolsLeft = this.maxLength ? this.maxLength - this.getValue().length : -1;
+
+      if (symbolsLeft <= 0)
+        symbolsLeft = 0;
+
+      if (this.symbolsLeft != symbolsLeft)
+      {
+        this.symbolsLeft = symbolsLeft;
+        this.event_symbolsLeftChanged(this);
+      }
+    }
+  });
+
+
+  /**
+  * @class
+  */
+  Field.Checkbox = Field.subclass({
+    className: namespace + '.Field.Checkbox',
+
+    value: false,
+
+    template:
+      '<div class="Basis-Field Basis-Field-Checkbox {selected} {disabled} {validity}">' +
+        '<div{content} class="Basis-Field-Container">' +
+          '<label>' +
+            '<input{field} type="checkbox" class="native-type-checkbox"' +
+              ' checked="{checked}"' +
+              ' event-focus="focus"' +
+              ' event-blur="blur"' +
+              ' event-change="change"' +
+            '/>' +
+            '<span>{titleText}</span>' +
+          '</label>' +
+        '</div>' +
+      '</div>',
+
+    binding: {
+      checked: {
+        events: 'change',
+        getter: function(field){
+          return field.value ? 'checked' : '';
+        }
+      }
+    },
+
+    toggle: function(){
+      this.setValue(!this.getValue());
+    },
+    setValue: function(value){
+      value = !!value;
+      if (this.value != value)
+      {
+        this.value = value;
+        this.event_change(this);
+      }
+    },
+    getValue: function(){
+      return !!this.tmpl.field.checked;
+    }
+  });
+
+
+  /**
+  * @class
+  */
+  Field.Label = Field.subclass({
+    className: namespace + '.Field.Label',
+    cssClassName: 'Basis-Field-Label',
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<label{field}>{value}</label>'
+    )
+  });
+
+
+  //
+  // Complex fields
+  //
+
+  var ComplexFieldItem = UINode.subclass({
+    className: namespace + '.ComplexField.Item',
+
+    childClass: null,
+    name: '',
+
+    binding: {
+      name: 'name',
+      title: 'getTitle()',
+      value: 'getValue()',
+      checked: {
+        events: 'select unselect',
+        getter: function(item){
+          return item.selected ? 'checked' : '';
+        }
+      }
+    },
+
+    action: {
+      select: function(event){
+        if (!this.isDisabled())
+        {
+          this.select(true);
+
+          if (Event.sender(event).tagName != 'INPUT')
+            Event.kill(event);
+        }
+      }
+    },
+
+    titleGetter: function(item){
+      return item.title || item.getValue();
+    },
+    valueGetter: getter('value'),
+
+    getTitle: function(){
+      return this.titleGetter(this);
+    },
+    getValue: function(){
+      return this.valueGetter(this);
+    },
+
+    setName: function(name){
+      if (this.name != name)
+      {
+        this.name = name;
+        this.updateBind('name');
+      }
+    }
+  });
+
+  var COMPLEXFIELD_SELECTION_HANDLER = {
+    datasetChanged: function(){
+      this.event_change(this);
+    }
+  }
+
+ /**
+  * @class
+  */
+  var ComplexField = Class(Field, {
+    className: namespace + '.Field.ComplexField',
+
+    childClass: ComplexFieldItem,
+    multipleSelect: false,
+
+    init: function(config){
+      this.selection = new Selection({
+        multiple: !!this.multipleSelect,
+        handler: COMPLEXFIELD_SELECTION_HANDLER,
+        handlerContext: this
+      });
+
+      //inherit
+      Field.prototype.init.call(this, config);
+    },
+    getValue: function(){
+      var value = this.selection.getItems().map(getter('getValue()'));
+      return this.multipleSelect ? value : value[0];
+    },
+    setValue: function(value/* value[] */){
+      var newValues = this.multipleSelect ? Array.from(value) : [value];
+      var selectedItems = [];
+
+      for (var item = this.firstChild; item; item = item.nextSibling)
+        if (newValues.indexOf(item.getValue()) != -1)
+          selectedItems.push(item);
+
+      this.selection.set(selectedItems);
+    }
+  });
+
+
+  //
+  // Radio group
+  //
+
+ /**
+  * @class
+  */
+  Field.RadioGroup = ComplexField.subclass({
+    className: namespace + '.Field.RadioGroup',
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<div{field|childNodesElement} class="Basis-RadioGroup"></div>'
+    ),
+
+    childClass: {
+      className: namespace + '.Field.RadioGroup.Item',
+
+      template:
+        '<label class="Basis-RadioGroup-Item {selected} {disabled}" event-click="select">' + 
+          '<input{field} type="radio" class="native-type-radio"' +
+            ' name="{name}"' +
+            ' value="{value}"' +
+            ' disabled="{disabled}"' +
+            ' checked="{checked}"' +
+            ' event-focus="focus"' +
+            ' event-blur="blur"' +
+          '/>' +
+          '<span{content}>{title}</span>' +
+        '</label>'
+    }
+  });
+
+
+  //
+  // Check Group
+  //
+
+ /**
+  * @class
+  */
+  Field.CheckGroup = ComplexField.subclass({
+    className: namespace + '.Field.CheckGroup',
+
+    multipleSelect: true,
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<div{field|childNodesElement} class="Basis-CheckGroup"></div>'
+    ),
+
+    childClass: {
+      className: namespace + '.Field.CheckGroup.Item',
+
+      template:
+        '<label class="Basis-CheckGroup-Item {selected} {disabled}" event-click="select">' + 
+          '<input{field} type="checkbox" class="native-type-checkbox"' +
+            ' name="{name}"' +
+            ' value="{value}"' +
+            ' disabled="{disabled}"' +
+            ' checked="{checked}"' +
+            ' event-focus="focus"' +
+            ' event-blur="blur"' +
+          '/>' +
+          '<span{content}>{title}</span>' +
+        '</label>'
+    }
+  });
+
+
+  //
+  // Select
+  //
+
+ /**
+  * @class
+  */
+  Field.Select = ComplexField.subclass({
+    className: namespace + '.Field.Select',
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<select{field|childNodesElement} class="Basis-Select {disabled} {validity}"' +
+        ' name="{name}"' +
+        ' disabled="{disabled}"' +
+        ' event-change="change"' +
+        ' event-keyup="keyup"' +
+        ' event-keypress="keypress"' +
+        ' event-keydown="keydown"' +
+        ' event-focus="focus"' +
+        ' event-blur="blur"' +
+      '/>'
+    ),
+
+    childClass: {
+      className: namespace + '.Field.Select.Item',
+
+      template:
+        '<option{field} class="Basis-Select-Item" selected="{selected}" value="{value}">{title}</option>'
+    },
+
+    getValue: function(){
+      var item = this.childNodes[this.tmpl.field.selectedIndex];
+      return item && item.getValue();
+    },
+    setValue: function(value){
+      var item = this.childNodes.search(value, 'getValue()');
+      this.tmpl.field.selectedIndex = item ? this.childNodes.indexOf(item) : -1;
+    }
+  });
+
+
+  //
+  //  Combobox
+  //
+
+  var ComboboxPopupHandler = {
+    show: function(){
+      this.updateBind('opened'); 
+    },
+    hide: function(){
+      this.updateBind('opened'); 
+    }
+  };
+
+ /**
+  * @class
+  */
+  var ComboboxItem = ComplexFieldItem.subclass({
+    className: namespace + '.Field.Combobox.Item',
+
+    template:
+      '<div class="Basis-Combobox-Item {selected} {disabled}" event-click="select">{title}</div>',
+
+    action: {
+      select: function(event){
+        if (!this.isDisabled())
+        {
+          this.select();
+
+          if (this.parentNode)
+            this.parentNode.hide();
+
+          Event.kill(event);
+        }
+      }
+    }
+  });
+
+ /**
+  * @class
+  */
+  Field.Combobox = ComplexField.subclass({
+    className: namespace + '.Field.Combobox',
+
+    childClass: ComboboxItem,
+    
+    event_change: function(sender, event){
+      ComplexField.prototype.event_change.call(this, sender, event);
+
+      var value = this.getValue();
+
+      if (this.property)
+        this.property.set(value);
+    },
+
+    caption: null,
+    popup: null,
+    property: null,
+
+    template: createFieldTemplate(baseFieldTemplate,
+      '<span{field} class="Basis-DropdownList Basis-DropdownList-{opened}"' +
+        ' event-click="togglePopup"' +
+        ' event-keyup="keyup"' +
+        ' event-keydown="keydown"' +
+        ' event-keypressed="keypressed"' +
+        ' event-focus="focus"' +
+        ' event-blur="blur"' +
+        ' tabindex="0"' +
+        '>' +
+        '<span class="Basis-DropdownList-Caption"><!--{captionItem}--></span>' +
+        '<span class="Basis-DropdownList-Trigger"/>' +
+        '<!--{hiddenField}-->' +
+      '</span>' +
+      '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent" />'
+    ),
+
+    binding: {
+      captionItem: 'satellite:',
+      hiddenField: 'satellite:',
+      opened: function(node){
+        return node.popup.visible ? 'opened' : '';
+      }
+    },
+
+    satelliteConfig: {
+      hiddenField: {
+        existsIf: function(owner){
+          return owner.name;
+        },
+        instanceOf: Field.Hidden.subclass({
+          getValue: function(){
+            return this.owner.getValue();
+          },
+          listen: {
+            owner: {
+              change: function(){
+                this.updateBind('value');
+              }
+            }
+          }
+        }),
+        config: function(owner){
+          return {
+            name: owner.name,
+            value: owner.getValue()
+          }
+        }
+      }
+    },
+
+    action: {
+      togglePopup: function(event){
+        if (this.isDisabled() || this.popup.visible)
+          this.hide();
+        else
+          this.show();
+      },
+      keyup: function(event){
+        var cur = this.selection.pick();
+        var next;
+
+        switch (Event.key(event))
+        {
+          case Event.KEY.DOWN:
+            if (event.altKey)
+              return this.popup.visible ? this.hide() : (!this.isDisabled() ? this.show() : null);
+
+            next = DOM.axis(cur ? cur : this.firstChild, DOM.AXIS_FOLLOWING_SIBLING).search(false, 'disabled');
+          break;
+
+          case Event.KEY.UP: 
+            if (event.altKey)
+              return this.popup.visible ? this.hide() : (!this.isDisabled() ? this.show() : null);
+
+            next = cur ? DOM.axis(cur, DOM.AXIS_PRESCENDING_SIBLING).search(false, 'disabled') : this.firstChild;
+          break;
+        }
+
+        if (next)
+        {
+          next.select();
+          DOM.focus(this.tmpl.field);
+        }
+
+        this.event_keyup(this, event);
+      },
+      keydown: function(event){
+        switch (Event.key(event))
+        {
+          case Event.KEY.DOWN:
+          case Event.KEY.UP:
+            Event.kill(event);
+
+            break;
+          case Event.KEY.ENTER:
+            if (this.popup.visible)
+              this.hide();
+
+            Event.kill(event);
+
+            break;
+        }
+
+        this.event_keydown(this, event);
+      }
+    },
+
+    init: function(config){
+      if (!basis.ui.popup)
+        throw new Error('basis.ui.popup required for DropDownList');
+
+      if (this.property)
+        this.value = this.property.value;
+
+      // inherit
+      ComplexField.prototype.init.call(this, config);
+
+      var captionItem = new this.childClass({
+        delegate: this.selection.pick(),
+        owner: this,
+        getTitle: function(){
+          return this.owner.getTitle();
+        },
+        getValue: function(){
+          return this.owner.getValue();
+        },
+        handler: {
+          delegateChanged: function(){
+            this.updateBind('title');
+          }
+        }
+      });
+      this.setSatellite('captionItem', captionItem);
+      this.selection.addHandler({
+        datasetChanged: function(){
+          captionItem.setDelegate(this.pick());
+        }
+      });
+
+      // create items popup
+      this.popup = new Popup(complete({
+        cssClassName: 'Basis-DropdownList-Popup',
+        autorotate: 1,
+        ignoreClickFor: [this.tmpl.field],
+        content: this.childNodesElement,
+        handler: ComboboxPopupHandler,
+        handlerContext: this
+      }, this.popup));
+
+      if (this.property)
+        this.property.addLink(this, this.setValue);
+    },
+    show: function(){
+      this.popup.show(this.tmpl.field); 
+      this.select();
+    },
+    hide: function(){
+      this.popup.hide();
+    },
+    getTitle: function(){
+      var selected = this.selection.pick();
+      return selected && selected.getTitle();
+    },
+    getValue: function(){
+      var selected = this.selection.pick();
+      return selected && selected.getValue();
+    },
+    setValue: function(value){
+      if (this.getValue() != value)
+      {
+        // update value & selection
+        var item = this.childNodes.search(value, 'getValue()');
+        if (item && !item.isDisabled())
+          this.selection.set([item]);
+        else
+          this.selection.clear();
+      }
+    },
+    destroy: function(){
+      if (this.property)
+      {
+        this.property.removeLink(this);
+        this.property = null;
+      }
+
+      this.popup.destroy();
+      this.popup = null;
+
+      ComplexField.prototype.destroy.call(this);
+    }
+  });
+
+
+
 
   //
   // FORM
@@ -1225,9 +1230,22 @@
       return Field.create(config.type || 'text', config);
     },
 
+    listen: {
+      childNode: {
+        commit: function(field){
+          var next = DOM.axis(field, DOM.AXIS_FOLLOWING_SIBLING).search(true, 'selectable');
+
+          if (next)
+            next.select();
+          else
+            this.submit();
+        }
+      }
+    },
+
     onSubmit: Function.$false,
 
-    event_reset: createEvent('reset'),
+    event_reset: createEvent('reset', 'sender'),
     
     template:
       '<div class="Basis-FormContent {selected} {disabled}" />',
@@ -1238,41 +1256,27 @@
     getFieldById: function(id){
       return this.childNodes.search(id, 'id');
     },
-    serialize: function(){
-      var result = {};
-      for (var field = this.firstChild; field; field = field.nextSibling)
-      {
-        if (field.serializable && field.name)
-          result[field.name] = field.getValue();
-      }
-      return result;
-    },
-    setData: function(data, withoutValidate){
-      ;;; if (typeof console != 'undefined') console.warn('FormContent.setData() method deprecated. Use FormContent.loadData() instead');
-      this.loadData(data, withoutValidate);
-    },
-    loadData: function(data, withoutValidate){
+    loadData: function(data, noValidate){
       var names = Object.keys(data);
+
       for (var field = this.firstChild; field; field = field.nextSibling)
       {
         if (names.indexOf(field.name) != -1)
           field.setValue(data[field.name]);
         else
-          field.setDefaultValue();
+          field.reset();
 
-        field.setValid();  // set undefined valid
+        field.setValidity();  // set undefined validity
       }
-      if (!withoutValidate)
+
+      if (!noValidate)
         this.validate();
-    },
-    setDefaultState: function(){
-      ;;; if (typeof console != 'undefined') console.warn('FormContent.setDefaultState() is deprecated. Use FormContent.reset() instead');
-      this.reset();
     },
     reset: function(){
       for (var field = this.firstChild; field; field = field.nextSibling)
-        field.setDefaultValue();
-      this.event_reset();
+        field.reset();
+
+      this.event_reset(this);
     },
     validate: function(){
       var error, errors = new Array();
@@ -1288,6 +1292,14 @@
       }
       else
         return true;
+    },
+    serialize: function(){
+      return this.childNodes.reduce(function(result, field){
+        if (field.serializable && field.name)
+          result[field.name] = field.getValue();
+
+        return result;
+      }, {});
     },
     submit: function(){
       if (this.validate() === true && this.onSubmit)
@@ -1344,7 +1356,10 @@
     }
   });
 
+
+  //
   // additional
+  //
 
  /**
   * @class
@@ -1490,16 +1505,16 @@
 
     matchFilterClass: MatchFilter,
 
-    event_keyup: function(event){
+    event_keyup: function(sender, event){
       this.matchFilter.set(this.tmpl.field.value);
 
-      Field.Text.prototype.event_keyup.call(this, event);
+      Field.Text.prototype.event_keyup.call(this, sender, event);
     },
 
-    event_change: function(event){
+    event_change: function(sender, event){
       this.matchFilter.set(this.tmpl.field.value);
 
-      Field.Text.prototype.event_change.call(this, event);
+      Field.Text.prototype.event_change.call(this, sender, event);
     },
 
     init: function(config){

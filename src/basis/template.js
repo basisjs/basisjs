@@ -779,7 +779,8 @@
       checked: ['input'],
       value: ['input', 'textarea'],
       minlength: ['input'],
-      maxlength: ['input']
+      maxlength: ['input'],
+      selected: ['option']
     };
 
 
