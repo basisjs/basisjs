@@ -99,7 +99,7 @@
     var nsTable = basis.ui.table;
     var nsForm = basis.ui.form;
 
-    var MatchInput = nsForm.MatchInput;
+    var MatchInput = basis.ui.field.MatchInput;
 
     // data
     var data = [
@@ -128,7 +128,7 @@
     DOM.insert(DOM.get('demo-container'), DOM.wrap([
       [
         'Type in:',
-        new nsForm.MatchInput({
+        new MatchInput({
           cssClassName: 'MatchHolder',
           matchFilter: {
             textNodeGetter: 'tmpl.title',
@@ -139,7 +139,7 @@
       ],
       [
         'Type in:',
-        new nsForm.MatchInput({
+        new MatchInput({
           cssClassName: 'MatchHolder',
           matchFilter: {
             node: table,

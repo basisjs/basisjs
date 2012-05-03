@@ -154,7 +154,7 @@
     }
   });
 
-  var prototypeMapPopupMatchInput = new nsForm.MatchInput({
+  var prototypeMapPopupMatchInput = new basis.ui.field.MatchInput({
     event_keyup: function(event){
       this.constructor.prototype.event_keyup.call(this);
 
@@ -386,11 +386,11 @@
     ]
   });
 
-  var SearchMatchInput = Class(nsForm.MatchInput, {
-    matchFilterClass: Class(nsForm.MatchFilter, {
+  var SearchMatchInput = Class(basis.ui.field.MatchInput, {
+    matchFilterClass: Class(basis.ui.field.MatchFilter, {
       textNodeGetter: getter('tmpl.title'),
       event_change: function(value, oldValue){
-        nsForm.MatchProperty.prototype.event_change.call(this, value, oldValue);
+        basis.ui.field.MatchProperty.prototype.event_change.call(this, value, oldValue);
 
         var fc = value.charAt(0);
         var v = value.substr(1).replace(/./g, function(m){ return '[' + m.toUpperCase() + m.toLowerCase() + ']' });

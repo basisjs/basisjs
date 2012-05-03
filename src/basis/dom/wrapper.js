@@ -1190,6 +1190,18 @@
       dataSource: DOMMIXIN_DATASOURCE_HANDLER
     },
 
+    getChild: function(value, getter){
+      return this.childNodes.search(value, getter);
+    },
+    getChildByName: function(name){
+      return this.getChild('name', name);
+    },
+    getChilds: function(value, getter){
+      return this.childNodes.filter(function(child){
+        return getter(child) == value;
+      });
+    },
+
    /**
     * @inheritDoc
     */

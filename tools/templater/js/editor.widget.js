@@ -82,7 +82,7 @@
  /**
   *
   */
-  var Editor = nsForm.Field.Textarea.subclass({
+  var Editor = basis.ui.field.Textarea.subclass({
     cssClassName: 'SourceEditor',
 
     autoDelegate: DELEGATE.PARENT,

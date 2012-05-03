@@ -88,23 +88,86 @@
     var Event = basis.dom.event;
     var nsData = basis.data;
     var nsForm = basis.ui.form;
+    var nsField = basis.ui.field;
     var nsButton = basis.ui.button;
 
     function createBlock(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
     }
+    function createFieldView(field){
+      var valChange;
+      var valInput;
+      var valKeydown;
+      var valKeyup;
+      var valKeypress;
+      var valBlur;
+
+      var el = DOM.createElement('.fieldViewer',
+        DOM.createElement('', 'change: ',
+          valChange = DOM.createText(field.getValue())
+        ),
+        DOM.createElement('', 'input: ',
+          valInput = DOM.createText(field.getValue())
+        ),
+        DOM.createElement('', 'keydown: ',
+          valKeydown = DOM.createText(field.getValue())
+        ),
+        DOM.createElement('', 'keyup: ',
+          valKeyup = DOM.createText(field.getValue())
+        ),
+        DOM.createElement('', 'keypress: ',
+          valKeypress = DOM.createText(field.getValue())
+        ),
+        DOM.createElement('', 'blur: ',
+          valBlur = DOM.createText(field.getValue())
+        )
+      );
+
+      field.addHandler({
+        change: function(){
+          valChange.nodeValue = field.getValue();
+        },
+        input: function(){
+          valInput.nodeValue = field.getValue();
+        },
+        keydown: function(){
+          valKeydown.nodeValue = field.getValue();
+        },
+        keyup: function(){
+          valKeyup.nodeValue = field.getValue();
+        },
+        keypress: function(){
+          valKeypress.nodeValue = field.getValue();
+        },
+        blur: function(){
+          valBlur.nodeValue = field.getValue();
+        }
+      });
+
+      return el;
+    };
+
+    var _postInit = basis.ui.field.Field.prototype.postInit;
+    basis.ui.field.Field.prototype.postInit = function(){
+      _postInit.apply(this, arguments);
+      DOM.insert(DOM.get('demo-container'), createFieldView(this));
+    }
 
 
-    new nsForm.Field.Text({
-      container: createBlock('Text Field')
+    new nsField.Text({
+      container: createBlock('Text Field'),
+      value: 'text field'
     });
 
-    new nsForm.Field.Textarea({
+
+
+    new nsField.Textarea({
       container: createBlock('Textarea Field'),
       maxLength: 20
     });
 
-    new nsForm.Field.Select({
+    new nsField.Select({
+      value: 2,
       childNodes: [
         {
           title: 'Option 1',
@@ -124,7 +187,7 @@
 
     var property = new nsData.property.Property(1);
 
-    new nsForm.Field.Combobox({
+    new nsField.Combobox({
       childNodes: [
         {
           title: 'Combobox Item 1',
@@ -142,11 +205,15 @@
       ],
       property: property,
       title: 'Combobox Title',
-      sample: 'Sample',
+      name: 'test',
+      example: 'Sample',
       container: createBlock('Combobox Field')
     });
 
-    new nsForm.Field.RadioGroup({
+    new nsField.RadioGroup({
+      container: createBlock('RadioGroup Field'),
+      name: 'combo1',
+      value: 2,
       childNodes: [
         {
           title: 'Radio Item 1',
@@ -160,11 +227,11 @@
           title: 'Radio Item 3',
           value: 3
         }
-      ],
-      container: createBlock('RadioGroup Field')
+      ]
     });
 
-    var checkGroup = new nsForm.Field.CheckGroup({
+    var checkGroup = new nsField.CheckGroup({
+      container: createBlock('CheckGroup Field'),
       childNodes: [
         {
           title: 'Check Item 1',
@@ -179,8 +246,7 @@
           value: 3,
           selected: true
         }
-      ],
-      container: createBlock('CheckGroup Field')
+      ]
     });
 
     // form
