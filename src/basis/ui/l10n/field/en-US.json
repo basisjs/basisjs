@@ -1,8 +1,8 @@
 {
-  "basis.ui.form": {
+  "basis.ui.field": {
     "symbolsLeft": "Symbols left"
   },
-  "basis.ui.form.validator": {
+  "basis.ui.field.validator": {
     "regExpWrongFormat": "The value has wrong format.",
     "required": "The field is required and must have a value.",
     "numberWrongFormat": "The value has wrong format of number.",

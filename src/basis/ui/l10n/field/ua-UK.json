@@ -1,8 +1,8 @@
 {
-  "basis.ui.form": {
+  "basis.ui.field": {
    "symbolsLeft": "Залишилося символів"
   },
-  "basis.ui.form.validator": {
+  "basis.ui.field.validator": {
     "regExpWrongFormat": "Значення має невірний формат.",
     "required": "Поле не повинно бути пустим.",
     "numberWrongFormat": "Поле має невірний формат числа.",

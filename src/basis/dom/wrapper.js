@@ -2064,7 +2064,11 @@
     init: function(config){
       // add selection object, if selection is not null
       if (this.selection && this.selection instanceof AbstractDataset == false)
+      {
         this.selection = new Selection(this.selection);
+        if (this.listen.selection)
+          this.selection.addHandler(this.listen.selection, this);
+      }
 
       // inherit
       AbstractNode.prototype.init.call(this, config);
@@ -2091,8 +2095,14 @@
         // change context selection for child nodes
         updateNodeContextSelection(this, this.selection || this.contextSelection, selection || this.contextSelection, false, true);
 
+        if (this.selection && this.listen.selection)
+          this.selection.removeHandler(this.listen.selection, this);
+
         // update selection
         this.selection = selection;
+
+        if (selection && this.listen.selection)
+          selection.addHandler(this.listen.selection, this);
 
         return true;
       }
@@ -2232,10 +2242,7 @@
     */
     destroy: function(){
       if (this.hasOwnSelection())
-      {
-        this.selection.destroy(); // how about shared selection?
-        this.selection = null;
-      }
+        this.setSelection();
 
       this.unselect();
 

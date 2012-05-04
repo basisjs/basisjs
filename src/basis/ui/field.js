@@ -59,11 +59,11 @@
 
   var l10nToken = basis.l10n.getToken;
 
-  basis.l10n.createDictionary(namespace, __dirname + 'l10n/form', {
+  basis.l10n.createDictionary(namespace, __dirname + 'l10n/field', {
     "symbolsLeft": "Symbols left"
   });
 
-  basis.l10n.createDictionary(namespace + '.validator', __dirname + 'l10n/form', {
+  basis.l10n.createDictionary(namespace + '.validator', __dirname + 'l10n/field', {
     "regExpWrongFormat": "The value has wrong format.",
     "required": "The field is required and must have a value.",
     "numberWrongFormat": "The value has wrong format of number.",
@@ -162,8 +162,8 @@
       events.fieldKeyup.call(this, sender, event);
     },
     event_fieldFocus: createEvent('fieldFocus', 'sender', 'event') && function(sender, event){
-      if (this.validity)
-        this.setValidity();
+      /*if (this.validity)
+        this.setValidity();*/
 
       events.fieldFocus.call(this, sender, event);
     },
@@ -1083,7 +1083,6 @@
         cssClassName: 'Basis-DropdownList-Popup',
         autorotate: 1,
         ignoreClickFor: [this.tmpl.field],
-        hideOnAnyClick: false,
         content: this.childNodesElement,
         handler: ComboboxPopupHandler,
         handlerContext: this
