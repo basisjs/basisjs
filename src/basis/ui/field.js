@@ -260,7 +260,9 @@
       }
     },
 
-    readFieldValue_: function(){ return this.value },
+    readFieldValue_: function(){
+      return this.getValue();
+    },
     writeFieldValue_: Function(),
     getValue: function(){
       return this.value;
@@ -1081,6 +1083,7 @@
         cssClassName: 'Basis-DropdownList-Popup',
         autorotate: 1,
         ignoreClickFor: [this.tmpl.field],
+        hideOnAnyClick: false,
         content: this.childNodesElement,
         handler: ComboboxPopupHandler,
         handlerContext: this
@@ -1217,9 +1220,6 @@
       this.map[this.wrapElement || 'SPAN.match'] = function(v, i){ return (i % 3) == 2 };
 
       Property.prototype.init.call(this, '', this.handlers, String.trim);
-
-      /*if (this.handlers)
-        this.addHandler(this.handlers);*/
     }
   });
 
@@ -1279,15 +1279,13 @@
     matchFilterClass: MatchFilter,
 
     event_fieldKeyup: function(sender, event){
-      this.matchFilter.set(this.tmpl.field.value);
-
       Text.prototype.event_fieldKeyup.call(this, sender, event);
+      this.matchFilter.set(this.getValue());
     },
 
     event_change: function(sender, event){
-      this.matchFilter.set(this.tmpl.field.value);
-
       Text.prototype.event_change.call(this, sender, event);
+      this.matchFilter.set(this.getValue());
     },
 
     init: function(config){
