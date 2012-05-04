@@ -1,76 +1,100 @@
 
   var http = require('http');
-  var httpProxy = require('http-proxy');
   var socket_io = require('socket.io');
   var fs = require('fs');
   var url = require('url');
   var path = require('path');
+  var mime = require('mime');
 
 
   var fs_debug = false;
   var is_dev = true;
 
-  var MIME_TYPE = {
-    'css':  'text/css',
-    'js':   'text/javascript',
-    'html': 'text/html',
-    'jpg':  'image/jpg',
-    'png':  'image/png',
-    'gif':  'image/gif'
-  }
-
   var BASE_PATH = process.argv[2];
   var port = process.argv[3];
+  var configFilename = path.resolve(BASE_PATH, 'server.config');
+
+  //load proxy pathes
+  var config = {};
+  var rewriteRules = [];
+  if (path.existsSync(configFilename))
+  {
+    console.log('Config found:', configFilename);
+    try {
+      var data = fs.readFileSync(configFilename);
+      config = JSON.parse(String(data));
+
+      if ('port' in config)
+      {
+        port = Number(config.port);
+        console.log('  Set server port:', port);
+      }
+
+      if (Array.isArray(config.ignore))
+      {
+        config.ignore = config.ignore.reduce(function(result, p){
+          result[path.resolve(BASE_PATH, p)] = true;
+          return result;
+        }, {});
+        console.log('\n  Ignore pathes:\n    ' + Object.keys(config.ignore).join('\n    '));
+      }
+      else
+        delete config.ignore;
+
+      if (config.rewrite)
+      {
+        try {
+          httpProxy = require('http-proxy');
+          console.log('\n  Rewrite rules:');
+          for (var key in config.rewrite)
+          {
+            console.log('    /' + key + '/ -> ' + config.rewrite[key]);
+            rewriteRules.push({
+              re: new RegExp(key),
+              replace: config.rewrite[key]
+            });
+          }
+        } catch(e) {
+          console.warn('  Proxy is not supported (requires http-proxy). Rewrite rules ignored.');
+        }
+      }
+      console.log('\nConfig parse done.\n');
+
+    } catch(e) {  
+      console.warn(e + '\n');
+    }
+  }
 
   if (isNaN(port))
     port = 0;
 
-  //load proxy pathes
-  var config = {};
-  var rewriteRules = {};
-  try {
-    var data = fs.readFileSync(path.resolve(BASE_PATH, 'server.config'));
-    config = JSON.parse(String(data));
-    if (config.rewrite)
-      rewriteRules = config.rewrite;
-
-    if (Array.isArray(config.ignore))
-    {
-      config.ignore = config.ignore.reduce(function(result, p){
-        result[path.resolve(BASE_PATH, p)] = true;
-        return result;
-      }, {});
-      console.log('Ignore pathes:\n  ' + Object.keys(config.ignore).join('\n  '));
-    }
-    else
-      delete config.ignore;
-  } catch(e) {  
-    console.warn(e);
-  }
-
   //proxy
-  var proxy = new httpProxy.HttpProxy({
-    target: {
-      host: 'localhost',
-      port: 80
-    }
-  })
 
+  console.log('Start server');
   //create server
+  var proxy;
   var app = http.createServer(function(req, res){
   
     var location = url.parse(req.url, true, true);
     var host = req.headers.host;
 
     //proxy request if nececcary
-    var re;
     var pathname = location.pathname.slice(1);
-    for (var rule in rewriteRules)
+    for (var i = 0, rule; rule = rewriteRules[i]; i++)
     {
-      re = new RegExp(rule);
-      if (re.test(pathname))
+      if (rule.re.test(pathname))
       {
-        console.log(re);
+        if (!proxy)
+        {
+          proxy = new httpProxy.HttpProxy({
+            target: {
+              host: 'localhost',
+              port: 80
+            }
+          });
+        }
+
+        //console.log(re);
         proxy.proxyRequest(req, res);
         return;
       }
@@ -110,7 +134,7 @@
         else
         {
           res.writeHead(200, {
-            'Content-Type': MIME_TYPE[ext.slice(1)] || 'text/plain'
+            'Content-Type': mime.lookup(filename, 'text/plain') //MIME_TYPE[ext.slice(1)] || 'text/plain'
           });
 
           if (ext == '.html' || ext == '.htm')
