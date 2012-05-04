@@ -171,7 +171,9 @@
   */
   var GraphNode = Node.subclass({
     className: namespace + '.GraphNode',
-    event_requestRedraw: createEvent('requestRedraw')
+    event_requestRedraw: createEvent('requestRedraw'),
+    event_disable: createEvent('disable'),
+    event_enable: createEvent('enable')
   });
 
  /**
@@ -308,6 +310,8 @@
     //events
     event_valuesChanged: createEvent('valuesChanged', 'object', 'delta'),
     event_sourceChanged: createEvent('sourceChanged', 'object', 'oldSource'),
+    event_disable: createEvent('disable'),
+    event_enable: createEvent('enable'),
 
     init: function(config){
       this.valuesMap = {};

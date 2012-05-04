@@ -795,7 +795,7 @@
 
     init: function(url){
       this.url = pathResolver.relative(url);
-      this.baseURI = pathResolver.dirname(url);
+      this.baseURI = pathResolver.dirname(url) + '/';
 
       dynamicResources[url] = this;
     },

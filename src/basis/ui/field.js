@@ -103,76 +103,6 @@
   }
 
 
-  //
-  // Validators
-  //
-
-  /** @const */ var REGEXP_EMAIL = /^[a-z0-9\.\-\_]+\@(([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i;
-  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z][a-zA-Z\d\-]+\.)+[a-zA-Z]{2,6})(:\d+)?(\/[^\?]*(\?\S(\=\S*))*(\#\S*)?)?$/i;
-
- /**
-  * @class
-  */
-  var ValidatorError = Class(null, {
-    className: namespace + '.ValidatorError',
-
-    init: function(field, message){
-      this.field = field;
-      this.message = String(message);
-    }
-  });
-
-  var Validator = {
-    RegExp: function(regexp){
-      if (regexp.constructor != RegExp)
-        regexp = new RegExp(regexp);
-
-      return function(field){
-        var value = field.getValue();
-        if (value != '' && !value.match(regexp))
-          return new ValidatorError(field, l10nToken(namespace, 'validator', 'regExpWrongFormat'));
-      }
-    },
-    Required: function(field){
-      var value = field.getValue();
-      if (Function.$isNull(value) || value == '')
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'required'));
-    },
-    Number: function(field){
-      var value = field.getValue();
-      if (isNaN(value))
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'numberWrongFormat'));
-    },
-    Currency: function(field){
-      var value = field.getValue();
-      if (isNaN(value))
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyWrongFormat'));
-      if (value <= 0)
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyMustBeGreaterZero'));
-    },
-    Email: function(field){
-      var value = field.getValue().trim();
-      if (value != '' && !value.match(REGEXP_EMAIL))
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'emailWrongFormat'));
-    },
-    Url: function(field){
-      var value = field.getValue().trim();
-      if (value != '' && !value.match(REGEXP_URL))
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'urlWrongFormat'));
-    },
-    MinLength: function(field){
-      var value = field.getValue();
-      var length = Function.$isNotNull(value.length) ? value.length : String(value).length;
-      if (length < field.minLength)
-        return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'minLengthError')).format(field.minLength));
-    },
-    MaxLength: function(field){
-      var value = field.getValue();
-      var length = Function.$isNotNull(value.length) ? value.length : String(value).length;
-      if (length > field.maxLength)
-        return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'maxLengthError')).format(field.maxLength));
-    }
-  };
 
 
   //
@@ -204,12 +134,19 @@
     //
 
     event_commit: createEvent('commit', 'sender'),
+    event_change: createEvent('change', 'sender', 'oldValue') && function(sender, oldValue){
+      this.writeFieldValue_(this.value);
+      events.change.call(sender, oldValue);
+    },
+    event_validityChanged: createEvent('validityChanged', 'sender', 'oldValidity'),
+    event_errorChanged: createEvent('errorChanged', 'sender'),
+    event_exampleChanged: createEvent('exampleChanged', 'sender'),
 
-    event_input: createEvent('input', 'sender', 'event'),
-    event_change: createEvent('change', 'sender', 'event'),
-    event_keydown: createEvent('keydown', 'sender', 'event'),
-    event_keypress: createEvent('keypress', 'sender', 'event'),
-    event_keyup: createEvent('keyup', 'sender', 'event') && function(sender, event){
+    event_fieldInput: createEvent('fieldInput', 'sender', 'event'),
+    event_fieldChange: createEvent('fieldChange', 'sender', 'event'),
+    event_fieldKeydown: createEvent('fieldKeydown', 'sender', 'event'),
+    event_fieldKeypress: createEvent('fieldKeypress', 'sender', 'event'),
+    event_fieldKeyup: createEvent('fieldKeyup', 'sender', 'event') && function(sender, event){
       if (this.nextFieldOnEnter)
       {
         var keyCode = Event.key(event);
@@ -222,23 +159,19 @@
           this.setValidity();
       }
 
-      events.keyup.call(this, sender, event);
+      events.fieldKeyup.call(this, sender, event);
     },
-    event_focus: createEvent('focus', 'sender', 'event') && function(sender, event){
+    event_fieldFocus: createEvent('fieldFocus', 'sender', 'event') && function(sender, event){
       if (this.validity)
         this.setValidity();
 
-      events.focus.call(this, sender, event);
+      events.fieldFocus.call(this, sender, event);
     },
-    event_blur: createEvent('blur', 'sender', 'event') && function(sender, event){
+    event_fieldBlur: createEvent('fieldBlur', 'sender', 'event') && function(sender, event){
       this.validate(true);
 
-      events.blur.call(this, sender, event);
+      events.fieldBlur.call(this, sender, event);
     },
-
-    event_validityChanged: createEvent('validityChanged', 'sender', 'oldValidity'),
-    event_errorChanged: createEvent('errorChanged', 'sender'),
-    event_exampleChanged: createEvent('exampleChanged', 'sender'),
 
     //
     // template
@@ -268,7 +201,11 @@
 
     action: 'focus blur change keydown keypress keyup input'.qw().reduce(
       function(res, item){
-        res[item] = new Function('event', 'this.event_' + item + '(this, event)');
+        var eventName = 'event_field' + item.capitalize();
+        res[item] = function(event){
+          this.setValue(this.readFieldValue_());
+          this[eventName].call(this, this, event)
+        };
         return res;
       },
       {}
@@ -310,6 +247,9 @@
         this.defaultValue = this.value;
 
       UIContainer.prototype.init.call(this, config);
+
+      if (this.value)
+        this.setValue(this.value);
     },
 
     setExample: function(example){
@@ -320,6 +260,8 @@
       }
     },
 
+    readFieldValue_: function(){ return this.value },
+    writeFieldValue_: Function(),
     getValue: function(){
       return this.value;
     },
@@ -401,18 +343,6 @@
  /**
   * @class
   */
-  var Hidden = Field.subclass({
-    className: namespace + '.Hidden',
-
-    focusable: false,
-
-    template:
-      '<input{field} type="hidden" value="{value}"/>'
-  });
-
- /**
-  * @class
-  */
   var File = Field.subclass({
     className: namespace + '.File',
 
@@ -433,6 +363,7 @@
     event_minLengthChanged: createEvent('minLengthChanged', 'sender'),
     event_maxLengthChanged: createEvent('maxLengthChanged', 'sender'),
 
+    defaultValue: '',
     readOnly: false,
     minLength: 0,
     maxLength: 0,
@@ -504,17 +435,25 @@
       }
     },
 
-    getValue: function(){
-      return this.tmpl.field.value;
-    },
-    setValue: function(newValue){
-      newValue = newValue || '';
-      if (this.tmpl.field.value != newValue)
-      {
-        this.tmpl.field.value = newValue;
-        this.event_change(this);
-      }
-    }
+    readFieldValue_: function(){
+      return this.tmpl && this.tmpl.field && this.tmpl.field.value;
+    }/*,
+    writeFieldValue_: function(value){
+      if (this.tmpl && this.tmpl.field && this.tmpl.field.value != value)
+        this.tmpl.field.value = value;
+    }*/
+  });
+
+ /**
+  * @class
+  */
+  var Hidden = TextField.subclass({
+    className: namespace + '.Hidden',
+
+    focusable: false,
+
+    template:
+      '<input{field} type="hidden" value="{value}" event-change="change"/>'
   });
 
  /**
@@ -526,7 +465,7 @@
     template: createFieldTemplate(baseFieldTemplate,
       '<input{field|focus} type="text" class="native-type-text"' +
         ' name="{name}"' +
-        ' value="{defaultValue}"' +
+        ' value="{value}"' +
         ' readonly="{readonly}"' +
         ' disabled="{disabled}"' +
         ' maxlength="{maxlength}"' +
@@ -556,6 +495,7 @@
     template: createFieldTemplate(baseFieldTemplate,
       '<input{field|focus} type="password" class="native-type-password"' +
         ' name="{name}"' +
+        ' value="{value}"' +
         ' readonly="{readonly}"' +
         ' disabled="{disabled}"' +
         ' maxlength="{maxlength}"' +
@@ -581,19 +521,20 @@
     symbolsLeft: 0,
 
     event_symbolsLeftChanged: createEvent('symbolsLeftChanged', 'sender'),
-    event_focus: !window.opera
-      ? TextField.prototype.event_focus
+    event_fieldFocus: !window.opera
+      ? TextField.prototype.event_fieldFocus
         // fix opera's bug: when invisible textarea becomes visible and user
         // changes it content, value property returns empty string instead value in field
       : function(sender, event){
           this.contentEditable = true;
           this.contentEditable = false;
-          TextField.prototype.event_focus.call(this, sender, event);
+          TextField.prototype.event_fieldFocus.call(this, sender, event);
         },
 
     template: createFieldTemplate(baseFieldTemplate,
       '<textarea{field|focus}' +
         ' name="{name}"' +
+        ' value="{value}"' +
         ' readonly="{readonly}"' +
         ' disabled="{disabled}"' +
         ' event-keydown="keydown"' +
@@ -706,15 +647,10 @@
       this.setValue(!this.getValue());
     },
     setValue: function(value){
-      value = !!value;
-      if (this.value != value)
-      {
-        this.value = value;
-        this.event_change(this);
-      }
+      return Field.prototype.setValue(!!value);
     },
-    getValue: function(){
-      return !!this.tmpl.field.checked;
+    readFieldValue_: function(){
+      return this.tmpl && this.tmpl.field && !!this.tmpl.field.checked;
     }
   });
 
@@ -1085,7 +1021,7 @@
           DOM.focus(this.tmpl.field);
         }
 
-        this.event_keyup(this, event);
+        this.event_fieldKeyup(this, event);
       },
       keydown: function(event){
         switch (Event.key(event))
@@ -1104,7 +1040,7 @@
             break;
         }
 
-        this.event_keydown(this, event);
+        this.event_fieldKeydown(this, event);
       }
     },
 
@@ -1342,10 +1278,10 @@
 
     matchFilterClass: MatchFilter,
 
-    event_keyup: function(sender, event){
+    event_fieldKeyup: function(sender, event){
       this.matchFilter.set(this.tmpl.field.value);
 
-      Text.prototype.event_keyup.call(this, sender, event);
+      Text.prototype.event_fieldKeyup.call(this, sender, event);
     },
 
     event_change: function(sender, event){
@@ -1360,6 +1296,78 @@
       this.matchFilter = new this.matchFilterClass(this.matchFilter);
     }
   });
+
+
+  //
+  // Validators
+  //
+
+  /** @const */ var REGEXP_EMAIL = /^[a-z0-9\.\-\_]+\@(([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,6}|(\d{1,3}\.){3}\d{1,3})$/i;
+  /** @const */ var REGEXP_URL = /^(https?\:\/\/)?((\d{1,3}\.){3}\d{1,3}|([a-zA-Z][a-zA-Z\d\-]+\.)+[a-zA-Z]{2,6})(:\d+)?(\/[^\?]*(\?\S(\=\S*))*(\#\S*)?)?$/i;
+
+ /**
+  * @class
+  */
+  var ValidatorError = Class(null, {
+    className: namespace + '.ValidatorError',
+
+    init: function(field, message){
+      this.field = field;
+      this.message = String(message);
+    }
+  });
+
+  var Validator = {
+    RegExp: function(regexp){
+      if (regexp.constructor != RegExp)
+        regexp = new RegExp(regexp);
+
+      return function(field){
+        var value = field.getValue();
+        if (value != '' && !value.match(regexp))
+          return new ValidatorError(field, l10nToken(namespace, 'validator', 'regExpWrongFormat'));
+      }
+    },
+    Required: function(field){
+      var value = field.getValue();
+      if (Function.$isNull(value) || value == '')
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'required'));
+    },
+    Number: function(field){
+      var value = field.getValue();
+      if (isNaN(value))
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'numberWrongFormat'));
+    },
+    Currency: function(field){
+      var value = field.getValue();
+      if (isNaN(value))
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyWrongFormat'));
+      if (value <= 0)
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyMustBeGreaterZero'));
+    },
+    Email: function(field){
+      var value = field.getValue().trim();
+      if (value != '' && !value.match(REGEXP_EMAIL))
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'emailWrongFormat'));
+    },
+    Url: function(field){
+      var value = field.getValue().trim();
+      if (value != '' && !value.match(REGEXP_URL))
+        return new ValidatorError(field, l10nToken(namespace, 'validator', 'urlWrongFormat'));
+    },
+    MinLength: function(field){
+      var value = field.getValue();
+      var length = Function.$isNotNull(value.length) ? value.length : String(value).length;
+      if (length < field.minLength)
+        return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'minLengthError')).format(field.minLength));
+    },
+    MaxLength: function(field){
+      var value = field.getValue();
+      var length = Function.$isNotNull(value.length) ? value.length : String(value).length;
+      if (length > field.maxLength)
+        return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'maxLengthError')).format(field.maxLength));
+    }
+  };
 
 
   //
