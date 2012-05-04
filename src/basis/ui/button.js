@@ -104,7 +104,9 @@
     groupingClass: {
       className: namespace + '.ButtonGroupingNode',
 
-      groupGetter: 'groupId',
+      groupGetter: function(button){
+        return button.groupId || button.eventObjectId;
+      },
 
       childClass: {
         className: namespace + '.ButtonPartitionNode',

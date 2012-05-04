@@ -64,10 +64,7 @@
 
     captureElement: null,
 
-    template:
-      '<div class="Basis-Blocker">' + 
-        '<div{content} class="Basis-Blocker-Mate"/>' +
-      '</div>',
+    template: resource('templates/window/Blocker.tmpl'),
 
     init: function(config){
       UINode.prototype.init.call(this, config);
@@ -117,28 +114,7 @@
   var Window = Class(UIContainer, {
     className: namespace + '.Window',
 
-    template:
-      '<div class="Basis-Window {selected} {disabled}" event-mousedown="mousedown" event-keypress="keypress">' +
-        '<div class="Basis-Window-Canvas">' +
-          '<div class="corner-left-top"/>' +
-          '<div class="corner-right-top"/>' +
-          '<div class="side-top"/>' +
-          '<div class="side-left"/>' +
-          '<div class="side-right"/>' +
-          '<div class="content"/>' +
-          '<div class="corner-left-bottom"/>' +
-          '<div class="corner-right-bottom"/>' +
-          '<div class="side-bottom"/>' +
-        '</div>' +
-        '<div class="Basis-Window-Layout">' +
-          '<div{ddtrigger} class="Basis-Window-Title">' +
-            '<div class="Basis-Window-TitleCaption {titleButtonClass}">{title}<!--{titleButtons}--></div>' +
-          '</div>' +
-          '<div{content} class="Basis-Window-Content">' +
-            '<!-- {childNodesHere} -->' +
-          '</div>' +
-        '</div>' +
-      '</div>',
+    template: resource('templates/window/Window.tmpl'),
 
     binding: {
       title: 'title',
@@ -156,12 +132,9 @@
           return !owner.titleButton || owner.titleButton.close !== false;
         },
         instanceOf: UINode.subclass({
-          template: 
-            '<span class="Basis-Window-Title-ButtonPlace">' +
-              '<span class="Basis-Window-Title-CloseButton" event-click="close">' +
-                '<span>{l10n:basis.ui.window.closeButton}</span>' +
-              '</span>' +
-            '</span>',
+          className: namespace + '.TitleButton',
+
+          template: resource('templates/window/TitleButton.tmpl'),
 
           action: {
             close: function(){
@@ -213,22 +186,13 @@
     title: basis.l10n.getToken(namespace, 'emptyTitle'),
 
     init: function(config){
-      //this.inherit(config);
       UIContainer.prototype.init.call(this, config);
 
       // make main element invisible by default
       cssom.hide(this.element);
 
-      // modal window
-      /*if (config.modal)
-        this.modal = true;*/
-
       // process title
       var titleContainer = this.tmpl.title.parentNode;
-      this.setTitle(this.title);
-
-      /*if ('closeOnEscape' in config)
-        this.closeOnEscape = !!config.closeOnEscape;*/
 
       // add generic rule
       this.cssRule = cssom.uniqueRule(this.element);
@@ -276,10 +240,6 @@
 
       // common buttons
       var buttons_ = Object.slice(this, ['buttonOk', 'buttonCancel']);
-      /*if (this.buttonOk)
-        buttons_.buttonOk = this.buttonOk;
-      if (this.buttonCancel)
-        buttons_.buttonCancel = this.buttonCancel;*/
        
       for (var buttonId in buttons_)
       {
@@ -315,8 +275,8 @@
       }
     },
     setTitle: function(title){
-      //DOM.insert(DOM.clear(this.tmpl.title), title);
-      this.tmpl.set('title', title);
+      this.title = title;
+      this.updateBind('title');
     },
     realign: function(){
       if (this.autocenter)
@@ -324,8 +284,6 @@
         //this.autocenter = false;
         this.element.style.margin = '';
         this.cssRule.setStyle(this.element.offsetWidth ? {
-          //left: Math.max(0, parseInt(0.5 * (document.body.clientWidth  - this.element.offsetWidth))) + 'px',
-          //top:  Math.max(0, parseInt(0.5 * (document.body.clientHeight - this.element.offsetHeight))) + 'px'
           left: '50%',
           top: '50%',
           marginLeft: -this.element.offsetWidth/2 + 'px',
@@ -334,7 +292,6 @@
       }
     },
     activate: function(){
-      //windowManager.activate(this);
       this.select();
     },
     open: function(params, x, y){

@@ -1,0 +1,212 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2012 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+  .Basis-Window
+  {
+    position: absolute;
+    min-height: 40px; /* 32 (top) + 7 (bottom) + 2 (white border) + 2 (dark border) */
+    min-width: 60px;
+  }
+
+  .Basis-Window-Canvas
+  {
+    pointer-events: none;
+    position: absolute;
+
+    bottom: 1px;
+    top: 1px;
+    right: 1px;
+    left: 1px;
+
+    padding-bottom: 39px; /* 32 (top) + 7 (bottom) */
+  }
+
+  .Basis-Window-Canvas .corner-left-top,
+  .Basis-Window-Canvas .corner-right-top,
+  .Basis-Window-Canvas .corner-left-bottom,
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    background-repeat: no-repeat;
+    background-image: url(res/corners.png);
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAA7CAYAAAAXdfjrAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAMxSURBVHja7Jq9jtQwEMdnst4cJ1FQIPHxABRQ0NCcRMVj3AtcfU9y9b3AvcXRgAQSVEhcQ0EHJS1HsjFxsKPZyUw+HCdaibM0ym7WsX/5z9jxjoMwrSDMKzZFRzhQD2fA2CFY09MhB8ORwEMAdswN4AAUKsZh+8As+8xNhEYFilvGjpqCoCgUrGJHFdIIikkw1DigBMehKFDl69NzHXcaJYY4zMYbBwx1pVIxsGA7b0igQt3AYIcUc2YuLq9+QYJyfnb6mLRfEpXCOSuNxMwrmNd2XNv92h7UUPb63Sc7t7g2XFt1mw7uoWvb93Hs+zTEEx1XouA+ePP6VXMrH77+iFLq5MXTpo0vN9/AQ2ijVHQlh9vQwfHx5ifkeQ7b7dEkqKK4ba49ef4knNoq8bfnTiNMGTzo25Ln9yar5a4pioKe2vrgDwMh9EVHJ2qKUcB/PyI2FlPYdcZbKcyLbcVMeSSJiiUqG9I2nXr2SjYw62fKXc9RjM6J2qMOTM+Dmj0LccaaB7kY2dCzt291sSdxc9PRMdbxEvcIjln2iEufhME/ahGQjffBnMVrLxiMXSiKFI1ikESxUSthMylOEFLE2KiSRbpj8f8wZoo7FnLlfLB4V+Jyrkw486dVbLADm+Dv8CKK4Z0rhVGJeHjBv/Y8drCunAA2Q6+Ia+NjbML0sG6M4cHE2Jqhv9aoxP9xVK5d7hRLBWZXVMzGKGYXEIMng6MUWwNstGKhYrUQGE/aiXCZcCej5Y7UtIJunp/334Jpuxdtlu/ZIxP9QGDXhnS6tAnRshhFA5qTh7fvPzfJXRVuRHFtELCKHMWQ0RLCzlyu1GWY84vLq+8pguv87PRlffhT229/dOYStKW3VkmaC8sY3JbYkYcM3w3ImUFgYRDcVnqAwsPcku8Fg2rMKMM4NMoTbOG3Ero5VAlMg+soxIPfCMEfcu471mHoxMB+chcVMMtiqWS2E+LMasFvGVwpnC+hP7lre+B2BKoUoNQ1vzRVlOTcDtLtvmnzmehKFGZk2niq/coKupuqMORKeseogC25wys2epB74hocQPq3CAbfLjjY9y6mLktXe1PlrwADAF52pQT/J54OAAAAAElFTkSuQmCC);
+  }
+
+  .Basis-Window-Canvas .side-top,
+  .Basis-Window-Canvas .content,
+  .Basis-Window-Canvas .side-bottom
+  {
+    background-repeat: repeat-x;
+    background-image: url(res/repeat-x.png);
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAxCAYAAADTAynyAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAACRSURBVHja7NRLDkAwFIXheygGjWXY/yrswBZsgXgkxcTIhF80RJNOv/SetkdmJgPLrTuhQEoBR4GMAgUFcgpUFOgp0EU/AQZGCgwUmCgwE0D0N4oWiuqmDSgD70tDgKS4ACrUWwAnCtjrQ1wzEM3A/hHwCNs7CNdrJdl7Ke4Ir+6DhzM4uO5zJ9AnQ/wAsAgwAICBDl4SYx5qAAAAAElFTkSuQmCC);
+  }
+
+  .Basis-Window-Canvas .side-left,
+  .Basis-Window-Canvas .side-right
+  {
+    background-repeat: repeat-y;
+    background-image: url(res/repeat-y.png);
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAUCAYAAACAl21KAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAABDSURBVHja7MwxDoAgFATRj4iGmvtfUyIgYUhs6Sh3kteOMzOHAx4nAm5ciEh4kH8FLyoaPvQ52JJGGmmkkUarhgADAOFzCSmzwqMFAAAAAElFTkSuQmCC);
+  }
+
+  .Basis-Window-Canvas .corner-left-top
+  {
+    float: left;
+
+    width: 19px;
+    height: 40px;
+
+    margin-top: -8px;
+    margin-right: -10px;
+    margin-left: -9px;
+
+    background-position: 0 0;
+  }
+  .Basis-Window-Canvas .corner-right-top
+  {
+    float: right;
+
+    width: 19px;
+    height: 40px;
+
+    margin-top: -8px;
+    margin-right: -11px;
+    margin-left: -8px;
+
+    background-position: -19px 0;
+  }
+  .Basis-Window-Canvas .side-top
+  {
+    height: 7px;
+    border-bottom: 1px solid #8F99A6;
+
+    margin-top: -8px;
+    margin-right: 8px;
+    margin-left: 10px;
+
+    background-position: 0 0;
+  }
+  .Basis-Window-Canvas .side-left
+  {
+    position: relative; /* ? */
+    float: left;
+
+    width: 8px;
+    height: 100%;
+    border-right: 1px solid #8F99A6;
+
+    margin-left: -9px;
+    margin-top: 32px;
+
+    background-position: 0 0;
+  }
+  .Basis-Window-Canvas .side-right
+  {
+    position: relative; /* ? */
+    float: right;
+
+    width: 10px;
+    height: 100%;
+    border-left: 1px solid #8F99A6;
+
+    margin-right: -11px;
+    margin-top: 32px;
+
+    background-position: -8px 0;
+  }
+  .Basis-Window-Canvas .content
+  {
+    height: 100%;
+    padding: 31px 0px 6px;
+    border: 1px solid white;
+
+    background-color: #D9E8FB;
+    background-position: 0 -18px;
+  }
+  .Basis-Window-Canvas .side-bottom
+  {
+    height: 11px;
+    border-top: 1px solid #8F99A6;
+
+    margin-right: 8px;
+    margin-left: 10px;
+
+    background-position: 0 -7px;
+  }
+  .Basis-Window-Canvas .corner-left-bottom
+  {
+    float: left;
+
+    width: 19px;
+    height: 19px;
+
+    margin-top: -7px;
+    margin-left: -9px;
+
+    background-position: 0 -40px;
+  }
+  .Basis-Window-Canvas .corner-right-bottom
+  {
+    float: right;
+
+    width: 19px;
+    height: 19px;
+
+    margin-top: -7px;
+    margin-right: -11px;
+
+    background-position: -19px -40px;
+  }
+
+  .Basis-Window-Layout
+  {
+    position: relative;
+
+    padding: 1.2em 4px 4px;
+  }
+  .Basis-Window-Title
+  {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    top: 2px;
+
+    line-height: 1.2em;
+  }
+  .Basis-Window-TitleCaption
+  {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+      -o-text-overflow: ellipsis;
+    font-size: 85%;
+    padding: 3px 0 2px 2px;
+  }
+  .Basis-Dragable .Basis-Window-TitleCaption
+  {
+    cursor: move;
+  }
+
+  .Basis-Window-Content
+  {
+    position: relative;
+    margin-top: 7px;
+    background: white;
+    border: 1px solid #C5D3E5;
+    padding: 4px;
+    border-radius: 2px;
+      -webkit-border-radius: 2px;
+      -moz-border-radius: 2px;
+  }
+
+  .Basis-Window-ButtonPlace .Basis-ButtonPanel-Content
+  {
+    text-align: right;
+  }

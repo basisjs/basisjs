@@ -1,0 +1,36 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2012 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+  .Basis-Blocker
+  {
+    z-index: 1000;
+  }
+
+  .Basis-Blocker-Mate
+  {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: white;
+
+      -moz-opacity: .5;
+      -khtml-opacity: .5;
+      -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=50)";
+      filter: progid:DXImageTransform.Microsoft.Alpha(opacity=50);
+    opacity: .5;
+  }
+
+  .opacity-not-support .Basis-Blocker-Mate
+  {
+    background: url(res/mate_white.png);
+  }

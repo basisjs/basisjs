@@ -1,0 +1,24 @@
+
+  {resource:Window.css}
+
+  <div class="Basis-Window {selected} {disabled}" event-mousedown="mousedown" event-keypress="keypress">
+    <div class="Basis-Window-Canvas">
+      <div class="corner-left-top"/>
+      <div class="corner-right-top"/>
+      <div class="side-top"/>
+      <div class="side-left"/>
+      <div class="side-right"/>
+      <div class="content"/>
+      <div class="corner-left-bottom"/>
+      <div class="corner-right-bottom"/>
+      <div class="side-bottom"/>
+    </div>
+    <div class="Basis-Window-Layout">
+      <div{ddtrigger} class="Basis-Window-Title">
+        <div class="Basis-Window-TitleCaption {titleButtonClass}">{title}<!--{titleButtons}--></div>
+      </div>
+      <div{content} class="Basis-Window-Content">
+        <!-- {childNodesHere} -->
+      </div>
+    </div>
+  </div>
