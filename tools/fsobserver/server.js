@@ -19,7 +19,6 @@
     'gif':  'image/gif'
   }
 
-
   var BASE_PATH = process.argv[2];
   var port = process.argv[3];
 
@@ -27,10 +26,24 @@
     port = 0;
 
   //load proxy pathes
+  var config = {};
   var rewriteRules = {};
   try {
-    var data = fs.readFileSync(path.resolve(BASE_PATH, 'rewrite.json'));
-    rewriteRules = JSON.parse(String(data));
+    var data = fs.readFileSync(path.resolve(BASE_PATH, 'server.config'));
+    config = JSON.parse(String(data));
+    if (config.rewrite)
+      rewriteRules = config.rewrite;
+
+    if (Array.isArray(config.ignore))
+    {
+      config.ignore = config.ignore.reduce(function(result, p){
+        result[path.resolve(BASE_PATH, p)] = true;
+        return result;
+      }, {});
+      console.log('Ignore pathes:\n  ' + Object.keys(config.ignore).join('\n  '));
+    }
+    else
+      delete config.ignore;
   } catch(e) {  
     console.warn(e);
   }
@@ -164,7 +177,7 @@
 
       var fname = BASE_PATH + '/' + filename;
        
-      if (!path.existsSync(fname) && path.existsSync(path.dirname(fn)))
+      if (!path.existsSync(fname) && path.existsSync(path.dirname(fname)))
       {
         fs.writeFile(fname, '', function (err) {
           if (err)
@@ -237,8 +250,9 @@
             if (newContent !== fileInfo.content)
             {
               fileInfo.content = newContent;
-              newFileInfo.content = newContent;
             }
+
+            newFileInfo.content = newContent;
 
             updateCallback(newFileInfo);
           }
@@ -280,8 +294,8 @@
 
             if (fileType == 'dir')
             {
-              console.log(filename);
-              if (!/(^|\/|\\)(\.svn|basis|deploy)(\/|\\|$)/.test(filename))
+              console.log(filename, path.normalize(filename));
+              if (!config.ignore || !config.ignore[path.normalize(filename)])
                 lookup(filename);
             }
           }
@@ -415,7 +429,7 @@
               filename: filename,
               type: fileMap[filename].type,
               lastUpdate: fileMap[filename].mtime,
-              content: fileMap[filename].content
+              content: null//fileMap[filename].content
             });
           }
         }

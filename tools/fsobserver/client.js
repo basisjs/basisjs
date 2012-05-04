@@ -600,7 +600,8 @@
 
     createFile: function(filename){
       sendToServer('createFile', filename);
-    }
+    },
+    abs2rel: abs2rel
   });
 
 })(this);
