@@ -68,12 +68,7 @@
 
     event_pageNumberChanged: createEvent('pageNumberChanged', 'node', 'oldPageNumber'),
 
-    template:
-      '<td class="Basis-PaginatorNode">' +
-        '<span>' +
-          '<a{link} class="{selected} {disabled}" event-click="click" href="#">{pageNumber}</a>' +
-        '</span>' +
-      '</td>',
+    template: resource('templates/paginator/PaginatorNode.tmpl'),
 
     binding: {
       pageNumber: {
@@ -136,20 +131,7 @@
     selection: true,
     childClass: PaginatorNode,
 
-    template:
-    	'<div class="Basis-Paginator Basis-Paginator-{noScroll} {selected} {disabled}" event-mousewheel="scroll">' +
-        '<table><tbody><tr{childNodesElement}/></tbody></table>' +
-        '<div{scrollbarContainer} class="Basis-Paginator-ScrollbarContainer">' +
-          '<div{scrollbar} class="Basis-Paginator-Scrollbar" event-click="jumpTo">' +
-            '<div{activePageMarkWrapper}>' +
-              '<div{activePageMark} class="Basis-Paginator-ActivePageMark"><div/></div>' +
-            '</div>' +
-            '<div{scrollTrumbWrapper}>' + 
-              '<div{scrollTrumb} class="Basis-Paginator-ScrollbarSlider"><div{scrollTrumbElement}><span/></div></div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-    	'</div>',
+    template: resource('templates/paginator/Paginator.tmpl'),
 
     binding: {
       noScroll: {

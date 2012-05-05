@@ -96,6 +96,7 @@
     }
     function createFieldView(field){
       var valChange;
+      var fvalChange;
       var valInput;
       var valKeydown;
       var valKeyup;
@@ -105,6 +106,9 @@
       var el = DOM.createElement('.fieldViewer',
         DOM.createElement('', 'change: ',
           valChange = DOM.createText(field.getValue())
+        ),
+        DOM.createElement('', 'fieldChange: ',
+          fvalChange = DOM.createText(field.getValue())
         ),
         DOM.createElement('', 'input: ',
           valInput = DOM.createText(field.getValue())
@@ -127,19 +131,22 @@
         change: function(){
           valChange.nodeValue = field.getValue();
         },
-        input: function(){
+        fieldChange: function(){
+          fvalChange.nodeValue = field.getValue();
+        },
+        fieldInput: function(){
           valInput.nodeValue = field.getValue();
         },
-        keydown: function(){
+        fieldKeydown: function(){
           valKeydown.nodeValue = field.getValue();
         },
-        keyup: function(){
+        fieldKeyup: function(){
           valKeyup.nodeValue = field.getValue();
         },
-        keypress: function(){
+        fieldKeypress: function(){
           valKeypress.nodeValue = field.getValue();
         },
-        blur: function(){
+        fieldBlur: function(){
           valBlur.nodeValue = field.getValue();
         }
       });

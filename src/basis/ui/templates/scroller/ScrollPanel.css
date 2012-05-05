@@ -1,0 +1,11 @@
+
+  .Basis-ScrollPanel
+  {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .Basis-ScrollPanel-Content
+  {
+    position: absolute;
+  }

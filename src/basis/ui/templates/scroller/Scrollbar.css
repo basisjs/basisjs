@@ -1,0 +1,76 @@
+
+  .Basis-Scrollbar
+  {
+    position: absolute;
+  }
+
+  .Basis-Scrollbar.horizontal
+  {
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    height: 4px;
+  }
+
+  .Basis-Scrollbar.vertical
+  {
+    top: 2px;
+    bottom: 2px;
+    right: 2px;
+    width: 4px;
+  }
+
+  .bothScrollbars .Basis-Scrollbar.horizontal
+  {
+    right: 10px;
+  }
+  .bothScrollbars .Basis-Scrollbar.vertical
+  {
+    bottom: 10px;
+  }
+
+
+  .Basis-Scrollbar-Track
+  {
+    position: absolute;
+
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+    border-radius: 2px;
+
+    background: #444;
+    background: rgba(20, 20, 20, 0.6);
+
+    opacity: 0;
+    visibility: hidden;
+
+      -moz-transition: opacity 0.5s, visibility 0.5s;
+      -webkit-transition: opacity 0.5s, visibility 0.5s;
+      -o-transition: opacity 0.5s, visibility 0.5s;
+    transition: opacity 0.5s, visibility 0.5s;
+
+    box-shadow: 0 0 1px 1px rgba(255, 255, 255, .33);
+  }
+
+  .Basis-Scrollbar.vertical .Basis-Scrollbar-Track
+  {
+    left: 0;
+    width: 100%;
+  }
+
+  .Basis-Scrollbar.horizontal .Basis-Scrollbar-Track
+  {
+    top: 0;
+    height: 100%;
+  }
+
+  .Basis-ScrollPanel.scrollProcess .Basis-Scrollbar-Track
+  {
+    opacity: 1;
+    visibility: visible;
+
+      -moz-transition: none;
+      -webkit-transition: none;
+    transition: none;
+  }
+

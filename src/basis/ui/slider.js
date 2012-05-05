@@ -68,14 +68,7 @@
     pos: 0,
     caption: '\xA0',
 
-    template:
-      '<div class="Basis-Slider-Mark {last} {range} {selected} {disabled}">' +
-        '<span class="Basis-Slider-Mark-CaptionWrapper">' +
-          '<span class="Basis-Slider-Mark-Caption">' +
-            '{text}' +
-          '</span>' +
-        '</span>' +
-      '</div>',
+    template: resource('templates/slider/Mark.tmpl'),
 
     binding: {
       last: function(node){
@@ -101,8 +94,7 @@
   var MarkLayer = UIContainer.subclass({
     className: namespace + '.MarkLayer',
 
-    template: 
-      '<div class="Basis-Slider-MarkLayer"/>',
+    template: resource('templates/slider/MarkLayer.tmpl'),
 
     childClass: Mark,
 
@@ -205,20 +197,7 @@
    /**
     * @inheritDoc
     */
-    template:
-    	'<div class="Basis-Slider {isEmptyRange} Basis-Slider-MinMaxOutside {selected} {disabled}" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">' +
-        '<div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>' +
-        '<div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>' +
-        '<div class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">' +
-      	  '<!--{marks}-->' +
-          '<div{scrollbar} class="Basis-Slider-Scrollbar">' +
-            '<div{valueBar} class="Basis-Slider-ValueBar">' +
-              '<div{scrollTrumb} class="Basis-Slider-Thumb"/>' +
-            '</div>' +
-            '<div{leftBar} class="Basis-Slider-LeftBar"/>' +
-          '</div>' +
-        '</div>' +
-    	'</div>',
+    template: resource('templates/slider/Slider.tmpl'),
 
     binding: {
       marks: 'satellite:',
@@ -298,7 +277,7 @@
     satelliteConfig: {
       marks: UIContainer.subclass({
         className: namespace + '.MarkLayers',
-        template: '<div class="Basis-Slider-MarkLayers {selected} {disabled}"/>',
+        template: resource('templates/slider/MarkLayers.tmpl'),
         childClass: MarkLayer
       })
     },

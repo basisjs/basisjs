@@ -504,10 +504,7 @@
 
     cssClassName: 'Basis-ScrollPanel-Scrollbar',
 
-    template: 
-      '<div class="Basis-Scrollbar {selected} {disabled}">' +
-        '<div{trackElement} class="Basis-Scrollbar-Track"></div>' +
-      '</div>',
+    template: resource('templates/scroller/Scrollbar.tmpl'),
 
     listen: {
       owner: {
@@ -597,12 +594,7 @@
     event_realign: createEvent('realign'),
     event_updatePosition: createEvent('updatePosition'),
 
-    template: 
-      '<div class="Basis-ScrollPanel {scrollProcess} {bothScrollbars}" event-mousewheel="onwheel">' +
-        '<div{scrollElement|childNodesElement|content} class="Basis-ScrollPanel-Content {selected} {disabled}"/>' +
-        '<!--{horizontalScrollbar}-->' +
-        '<!--{verticalScrollbar}-->' +
-      '</div>',
+    template: resource('templates/scroller/ScrollPanel.tmpl'),
 
     binding: {
       horizontalScrollbar: 'satellite:',
@@ -739,6 +731,7 @@
   */
   var ScrollGallery = ScrollPanel.subclass({
     className: namespace + '.ScrollGallery',
+
     scrollX: false,
     scrollY: false,
     childTransform: Function.$null,
@@ -770,8 +763,9 @@
     },
 
     childClass: uiNode.subclass({
-      template: 
-        '<div class="{selected} {disabled}" event-click="select"/>',
+      className: namespace + '.ScrollGalleryItem',
+
+      template: resource('templates/scroller/ScrollGalleryItem.tmpl'),
 
       action: {
         select: function(){

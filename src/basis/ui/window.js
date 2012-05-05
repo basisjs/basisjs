@@ -182,20 +182,18 @@
     modal: false,
     closed: true,
     moveable: true,
+    zIndex: 0,
 
     title: basis.l10n.getToken(namespace, 'emptyTitle'),
 
     init: function(config){
+      // add generic rule
+      this.cssRule = cssom.uniqueRule();
+
       UIContainer.prototype.init.call(this, config);
 
       // make main element invisible by default
       cssom.hide(this.element);
-
-      // process title
-      var titleContainer = this.tmpl.title.parentNode;
-
-      // add generic rule
-      this.cssRule = cssom.uniqueRule(this.element);
 
       // make window moveable
       if (this.moveable)
@@ -206,7 +204,7 @@
         {
           this.dde = new basis.dragdrop.MoveableElement({
             element: this.element,
-            trigger: this.tmpl.ddtrigger || titleContainer,
+            trigger: this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element,
             fixRight: false,
             fixBottom: false
           });
@@ -255,7 +253,6 @@
       {
         this.buttonPanel = new ButtonPanel({
           cssClassName: 'Basis-Window-ButtonPlace',
-          container: this.tmpl.content,
           childNodes: buttons
         });
       }
@@ -278,7 +275,27 @@
       this.title = title;
       this.updateBind('title');
     },
+    templateSync: function(noRecreate){
+      UIContainer.prototype.templateSync.call(this, noRecreate);
+      if (this.element)
+      {
+        if (this.dde)
+          this.dde.setElement(this.element, this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element);
+
+        if (this.buttonPanel)
+          DOM.insert(this.tmpl.content || this.element, this.buttonPanel.element);
+
+        this.element.className += ' ' + this.cssRule.token;
+
+        this.realign();
+      }
+    },
+    setZIndex: function(zIndex){
+      this.zIndex = zIndex;
+      this.element.style.zIndex = zIndex;
+    },
     realign: function(){
+      this.setZIndex(this.zIndex);
       if (this.autocenter)
       {
         //this.autocenter = false;
@@ -286,8 +303,8 @@
         this.cssRule.setStyle(this.element.offsetWidth ? {
           left: '50%',
           top: '50%',
-          marginLeft: -this.element.offsetWidth/2 + 'px',
-          marginTop: -this.element.offsetHeight/2 + 'px'
+          marginLeft: -this.element.offsetWidth / 2 + 'px',
+          marginTop: -this.element.offsetHeight / 2 + 'px'
         } : { left: 0, top: 0 });
       }
     },
@@ -373,7 +390,8 @@
       {
         for (var i = 0, node; node = this.childNodes[i]; i++)
         {
-          node.element.style.zIndex = 2001 + i * 2;
+          node.setZIndex(2001 + i * 2);
+          //node.element.style.zIndex = 2001 + i * 2;
           if (node.modal)
             modalIndex = i;
         }

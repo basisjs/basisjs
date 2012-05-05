@@ -1,0 +1,146 @@
+
+  .Basis-Slider
+  {
+    line-height: 1;
+    display: block;
+    padding: 4px 10px 4px;
+      -webkit-border-radius: 4px;
+      -moz-border-radius: 4px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .Basis-Slider:hover,
+  .Basis-Slider:focus
+  {
+    background: #F4F4F4;
+  }
+  /*.Basis-Slider:focus
+  {
+    outline: none;
+      -webkit-box-shadow: 0 0 2px 1px rgba(255,155,0,.6);
+      -moz-box-shadow: 0 0 2px 1px rgba(255,155,0,.6);
+    box-shadow: 0 0 2px 1px rgba(255,155,0,.6);
+  }*/
+
+  .Basis-Slider.isEmptyRange .Basis-Slider-MaxLabel .caption
+  {
+    visibility: hidden;
+  }
+
+  .Basis-Slider-MinLabel,
+  .Basis-Slider-MaxLabel
+  {
+    height: 18px;
+    font-size: 10px;
+    position: relative;
+    margin-top: 1px;
+    top: 1.2em;
+    z-index: 2;
+  }
+  .Basis-Slider-MinLabel
+  {
+    float: left;
+    border-right: 1px solid #888;
+  }
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MinLabel
+  {
+    margin-right: -8px;
+    padding-right: 3px;
+  }
+  .Basis-Slider-MaxLabel
+  {
+    float: right;
+    border-left: 1px solid #888;
+  }
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MaxLabel
+  {
+    padding-left: 3px;
+    margin-left: -8px;
+    min-width: 8px;
+  }
+  .Basis-Slider-MinLabel .caption,
+  .Basis-Slider-MaxLabel .caption
+  {
+    text-align: center;
+    white-space: nowrap;
+    top: -1.2em;
+    position: absolute;
+  }
+
+  .Basis-Slider-MinLabel .caption
+  {
+    left: 0;
+  }
+  .Basis-Slider-MaxLabel .caption
+  {
+    right: 0;
+  }
+
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MinLabel .caption,
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MaxLabel .caption
+  {
+    left: auto;
+    right: auto;
+    position: relative;
+    display: block;
+  }
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MaxLabel .caption
+  {
+    margin-left: -50%;
+  }
+  .Basis-Slider-MinMaxOutside .Basis-Slider-MinLabel .caption
+  {
+    margin-right: -50%;
+  }
+
+
+  .Basis-Slider-ScrollbarContainer
+  {
+    cursor: pointer;
+    cursor: hand;
+  }
+  .Basis-Slider-MinMaxOutside .Basis-Slider-ScrollbarContainer
+  {
+    overflow: hidden;
+    padding: 0 8px;
+  }
+  .Basis-Slider-Scrollbar
+  {
+    position: relative;
+    z-index: 10;
+    height: 3px;
+    margin: 6px 0px 7px;
+    background: #CCC;
+    border-left: 1px solid #888;
+    border-right: 1px solid #888;
+  }
+  .Basis-Slider-MinMaxOutside .Basis-Slider-Scrollbar
+  {
+    border: none;
+  }
+  .Basis-Slider-ValueBar
+  {
+    float: left;
+    position: relative;
+    height: 100%;
+  }
+  .Basis-Slider-LeftBar
+  {
+    height: 100%;
+  }
+  .Basis-Slider-Thumb
+  {
+    position: absolute;
+    z-index: 21;
+
+    top: -7px;
+    right: 0;
+    margin-right: -8px;
+
+    font-size: 1px;
+    width: 16px;
+    height: 16px;
+
+    background: url(res/slider.png) no-repeat left top;
+    cursor: pointer;
+  }

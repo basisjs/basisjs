@@ -1,0 +1,48 @@
+
+  .Basis-Slider-Mark
+  {
+    height: 7px;
+    border-right: 1px solid #888;
+    box-sizing: border-box;
+    position: absolute;
+    font-size: 10px;
+  }
+  .Basis-Slider-Mark.last
+  {
+    border-right: none;
+  }
+  .Basis-Slider-Mark-CaptionWrapper
+  {
+    position: absolute;
+    right: -1px;
+  }
+  .Basis-Slider-Mark.last .Basis-Slider-Mark-CaptionWrapper
+  {
+    visibility: hidden;
+  }
+  .Basis-Slider-Mark-Caption
+  {
+    position: relative;
+    left: 50%;
+    top: -1.2em;
+    text-align: center;
+    margin-left: -1px;
+  }
+
+  .Basis-Slider-Mark.range
+  {
+    border: none;
+    background: #E0E0E0;
+    text-align: center;
+    height: auto;
+    padding: 2px 0 3px;
+  }
+  .Basis-Slider-Mark.range .Basis-Slider-Mark-Caption,
+  .Basis-Slider-Mark.range .Basis-Slider-Mark-CaptionWrapper
+  {
+    position: static;
+  }
+  .Basis-Slider-Mark.last.range .Basis-Slider-Mark-CaptionWrapper
+  {
+    visibility: visible;
+  }

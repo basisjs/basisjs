@@ -11,6 +11,8 @@
 
   basis.require('basis.ui');
 
+  resource('templates/SourceCodeNode.css')().startUse();
+
   
  /**
   * @namespace basis.format.highlight

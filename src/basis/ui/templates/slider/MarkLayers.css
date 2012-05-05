@@ -1,0 +1,9 @@
+
+  .Basis-Slider-MarkLayers
+  {
+    position: relative;
+    z-index: 1;
+    height: 14px;
+    margin-bottom: -5px;
+    padding-top: 1em;
+  }

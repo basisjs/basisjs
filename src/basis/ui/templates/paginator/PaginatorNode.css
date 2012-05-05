@@ -1,0 +1,35 @@
+
+  .Basis-PaginatorNode
+  {
+    padding: 0;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .Basis-PaginatorNode SPAN
+  {
+    display: block;
+    padding: 3px 0;
+    color: #fff;
+  }
+  .Basis-PaginatorNode A
+  {
+    padding: 2px .5ex;
+    min-width: 3ex;
+    color: #0066CC;
+      -webkit-border-radius: 3px;
+      -moz-border-radius: 3px;
+    border-radius: 3px;
+  }
+  .Basis-PaginatorNode A:hover
+  {
+    background: #F0F0F0;
+  }
+  .Basis-PaginatorNode A.selected
+  {
+    background: #D9E8FB;
+    color: black;
+    text-decoration: none;
+    cursor: default;
+    font-style: normal;
+    font-weight: normal; 
+  }
