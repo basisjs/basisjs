@@ -415,8 +415,7 @@
   var SourceCodeNode = Class(UINode, {
     className: namespace + '.SourceCodeNode',
 
-    template:
-      '<pre{code} class="Basis-SyntaxHighlight"/>',
+    template: resource('templates/SourceCodeNode.tmpl'),
 
     codeGetter: Function.getter('data.code'),
     normalize: true,

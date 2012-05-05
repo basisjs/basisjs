@@ -1,0 +1,30 @@
+
+  .Basis-Menu-ItemGroup
+  {
+    margin-left: 26px;
+
+    border-bottom: 1px solid #E0E0E0;
+    border-left: 1px solid #E0E0E0;
+  }
+  .Basis-Menu-ItemGroup-Content
+  {
+    padding-top: 0px;
+    padding-bottom: 5px;
+    margin-bottom: -2px;
+    border-bottom: 1px solid #FFF;
+    border-left: 1px solid #FFF;
+  }
+  .Basis-Menu-ItemGroup:last-child
+  {
+    border-bottom: none;
+  }
+  .Basis-Menu-ItemGroup ~ .Basis-Menu-ItemGroup .Basis-Menu-ItemGroup-Content
+  {
+    padding-top: 3px;
+  }
+  .Basis-Menu-ItemGroup:last-child .Basis-Menu-ItemGroup-Content
+  {
+    padding-bottom: 0;
+    border-bottom: none;
+    margin-bottom: 0;
+  }

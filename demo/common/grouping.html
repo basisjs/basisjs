@@ -7,7 +7,6 @@
 
   <title>Basis Demos: Grouping switch</title>
 
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
   <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/table/vista/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
@@ -78,7 +77,7 @@
     var DOM = basis.dom;
     var nsTree = basis.ui.tree;
     var nsTable = basis.ui.table;
-    var nsForm = basis.ui.form;
+    var nsField = basis.ui.field;
 
     // data
     var data = [
@@ -113,10 +112,10 @@
       table.element
     ], { '.Demo-Section': Function.$true }));
 
-    var groupigList = new nsForm.RadioGroup({
+    var groupigList = new nsField.RadioGroup({
       container: DOM.get('demo-changeGroupingList'),
       event_change: function(){
-        nsForm.RadioGroup.prototype.event_change.call(this);
+        nsField.RadioGroup.prototype.event_change.call(this);
 
         var grouping = this.getValue();
         tree.setGrouping(grouping);

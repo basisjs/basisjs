@@ -1,0 +1,18 @@
+
+  .Basis-TreeNode_Expander
+  {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    width: 9px;
+    height: 1.5em;
+    background: url(res/minus.gif) no-repeat center center;
+    background-image: url(data:image/gif;base64,R0lGODlhCQAJAMQXAM/PzvHy8vr6+uDf3/n6+vn5+uDg387Oz9fW18/OzvLx8tfW1s7Ozvr6+c7Pzunp6fn6+fLy8tbW1jAwMN/f3////01NTf///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAJAAkAAAUv4GWNpCVWaFqNDVQIUEOMShDdSjQ+U98/owHFQClSRhLJArFIjhgOwCEBNZVIlxAAOw==);
+    cursor: pointer;
+  }
+
+  .Basis-TreeNode_Expander__collapsed
+  {
+    background-image: url(res/plus.gif);
+    background-image: url(data:image/gif;base64,R0lGODlhCQAJAMQVAPn6+s7Oz8/OzuDg3+Df3/Hy8s/Pzvn5+vLx8tfW1s7Ozvr6+c7Pzunp6fn6+fLy8t/f39bW1jAwMP///01NTf///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABUALAAAAAAJAAkAAAUwYEWNJCVOaDqNi3NIzgKMSPFID/KMjeT7jREBMpBAjqNIJCFJKEcKhiEgiJpKpEoIADs=);
+  }

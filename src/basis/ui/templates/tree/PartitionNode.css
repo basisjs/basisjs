@@ -1,0 +1,14 @@
+
+  .Basis-TreePartitionNode,
+  .Basis-TreePartitionNode-Content
+  {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .Basis-TreePartitionNode-Title
+  {
+    font-size: 85%;
+    background: #F0F0F0;
+    padding: 2px 4px;
+  }

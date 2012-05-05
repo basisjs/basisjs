@@ -92,11 +92,7 @@
   var Popup = Class(UIContainer, {
     className: namespace + '.Popup',
 
-    template: 
-      '<div class="Basis-Popup popup-{orientation} {anim:visible} {selected} {disabled}">' +
-        '<div class="Basis-Popup-CloseButton" event-click="hide"><span>Close</span></div>' +
-        '<div{content|childNodesElement} class="Basis-Popup-Content"/>' +
-      '</div>',
+    template: resource('templates/popup/Popup.tmpl'),
 
     binding: {
       visible: {
@@ -421,25 +417,7 @@
   var Balloon = Class(Popup, {
     className: namespace + '.Balloon',
 
-    template: 
-      '<div class="Basis-Balloon mode-{orientation} {anim:visible} {selected} {disabled}" event-click="click">' +
-        '<div class="Basis-Balloon-Canvas">' +
-          '<div class="corner-left-top"/>' +
-          '<div class="corner-right-top"/>' +
-          '<div class="side-top"/>' +
-          '<div class="side-left"/>' +
-          '<div class="side-right"/>' +
-          '<div class="content"/>' +
-          '<div class="corner-left-bottom"/>' +
-          '<div class="corner-right-bottom"/>' +
-          '<div class="side-bottom"/>' +
-          '<div class="tail"/>' +
-        '</div>' +
-        '<div class="Basis-Balloon-Layout">' +
-          '<div class="Basis-Balloon-CloseButton" event-click="hide"><span>Close</span></div>' +
-          '<div{content|childNodesElement} class="Basis-Balloon-Content"/>' +
-        '</div>' +
-      '</div>'
+    template: resource('templates/popup/Balloon.tmpl')
   });
 
 

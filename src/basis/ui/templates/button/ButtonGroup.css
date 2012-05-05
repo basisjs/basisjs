@@ -1,0 +1,59 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2011
+ *
+ * @author
+ *   Vladimir Ratsev
+ *   Roman Dvornov
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+  .Basis-ButtonGroup
+  {
+    display: inline;
+    margin-right: 5px;
+  }
+
+  .Basis-ButtonGroup:last-child
+  {
+    margin-right: 0;
+  }
+
+  .Basis-ButtonGroup .Basis-Button .Basis-Button-Back
+  {
+    /* overlay for 1px on right */
+    margin-right: -1px;
+
+    /* remove border radius, only first and last buttons has border-radius */
+      -webkit-border-radius: 0;
+      -moz-border-radius: 0;
+    border-radius: 0;
+  }
+
+  .Basis-ButtonGroup .Basis-Button:first-child .Basis-Button-Back
+  {
+      -webkit-border-top-left-radius: 2px;
+      -moz-border-radius-topleft: 2px;
+    border-top-left-radius: 2px;
+
+      -webkit-border-bottom-left-radius: 2px;
+      -moz-border-radius-bottomleft: 2px;
+    border-bottom-left-radius: 2px;
+  }
+  .Basis-ButtonGroup .Basis-Button:last-child .Basis-Button-Back
+  {
+    margin-right: 0;
+
+      -webkit-border-top-right-radius: 2px;
+      -moz-border-radius-topright: 2px;
+    border-top-right-radius: 2px;
+
+      -webkit-border-bottom-right-radius: 2px;
+      -moz-border-radius-bottomright: 2px;
+    border-bottom-right-radius: 2px;
+  }

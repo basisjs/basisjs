@@ -43,6 +43,7 @@
     {
       overflow: hidden;
       border-bottom: 1px solid #E0E0E0;
+      cursor: pointer;
     }
     .user:hover
     {
@@ -51,6 +52,7 @@
     .user.selected
     {
       background: #D9E8FB;
+      cursor: default;
     }
     .user__title
     {
@@ -230,12 +232,11 @@
               '<span{group} class="noGroup">no group selected</span>' +
               '<button event-click="chooseGroup">..</button>' +
             '</div>' +
-            '<span class="user__title">[{id}] {title}</span>' + 
+            '<span class="user__title">{title}</span>' + 
           '</div>',
 
         binding: {
           group: 'satellite:',
-          id: 'data:userId',
           title: 'data:'
         },
 

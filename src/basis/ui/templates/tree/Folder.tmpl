@@ -1,10 +1,14 @@
 
-  <li class="Basis-TreeNode {collapsed}">
-    <div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected} {disabled}">
-      <div class="Basis-TreeNode-Expander" event-click="toggle"/>
-      <span{titleElement} class="Basis-TreeNode-Caption" event-click="select">
+  {resource:Node.css}
+  {resource:Node_Expander.css}
+  {resource:Folder.css}
+
+  <li class="Basis-TreeNode">
+    <div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected}">
+      <div class="Basis-TreeNode_Expander Basis-TreeNode_Expander__{collapsed}" event-click="toggle" />
+      <span class="Basis-TreeNode-Caption Basis-TreeNode-FolderCaption Basis-TreeNode-Caption__{disabled} Basis-TreeNode-Caption__{selected}" event-click="select">
         {title}
       </span>
     </div> 
-    <ul{childNodesElement} class="Basis-TreeNode-Content"/> 
+    <ul{childNodesElement} class="Basis-TreeNode-Content Basis-TreeNode-Content__{collapsed}"/> 
   </li>

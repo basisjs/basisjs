@@ -49,10 +49,7 @@
 
     childClass: Class.SELF,
 
-    template:
-      '<div class="Basis-Menu-Item {selected} {disabled}" event-click="click">' +
-        '<a{content} href="#"><span>{caption}</span></a>' +
-      '</div>',
+    template: resource('templates/menu/MenuItem.tmpl'),
 
     binding: {
       caption: 'caption'
@@ -94,20 +91,16 @@
   var MenuItemSet = Class(MenuItem, {
     className: namespace + '.MenuItemSet',
 
-    template: 
-      '<div class="Basis-Menu-ItemSet {selected} {disabled}"/>'
+    template: resource('templates/menu/MenuItemSet.tmpl')
   });
 
  /**
   * @class
   */
   var MenuPartitionNode = Class(UIPartitionNode, {
-    className: namespace + '.MenuPartitionNode',
+    className: namespace + '.PartitionNode',
 
-    template:
-      '<div class="Basis-Menu-ItemGroup">' +
-        '<div{childNodesElement|content} class="Basis-Menu-ItemGroup-Content"></div>' +
-      '</div>'
+    template: resource('templates/menu/PartitionNode.tmpl')
   });
 
  /**
@@ -135,11 +128,7 @@
       this.hide();
     },
 
-    template:
-      '<div class="Basis-Menu popup-{orientation} {anim:visible} {selected} {disabled}">' +
-        '<div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>' +
-        '<div{content|childNodesElement} class="Basis-Menu-Content"/>' +
-      '</div>'
+    template: resource('templates/menu/Menu.tmpl')
   });
 
   //

@@ -47,13 +47,7 @@
    /**
     * @inheritDoc
     */
-    template:
-      '<button{focus} class="Basis-Button {selected} {disabled}" disabled="{disabled}" event-click="click">' +
-        '<span class="Basis-Button-Back"/>' +
-        '<span class="Basis-Button-Caption">' +
-          '{caption}' +
-        '</span>' +
-      '</button>',
+    template: resource('templates/button/Button.tmpl'),
 
    /**
     * @inheritDoc
@@ -94,10 +88,7 @@
   var ButtonPanel = UIContainer.subclass({
     className: namespace + '.ButtonPanel',
 
-    template:
-      '<div class="Basis-ButtonPanel {disabled}">' +
-        '<div{childNodesElement|content} class="Basis-ButtonPanel-Content"/>' +
-      '</div>',
+    template: resource('templates/button/ButtonPanel.tmpl'),
 
     childClass: Button,
 
@@ -111,8 +102,7 @@
       childClass: {
         className: namespace + '.ButtonPartitionNode',
 
-        template:
-          '<div class="Basis-ButtonGroup"/>'
+        template: resource('templates/button/ButtonGroup.tmpl')
       }
     },
 

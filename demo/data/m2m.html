@@ -71,7 +71,7 @@
       font-style: italic;
       padding: .15em 0 .2em;
     }
-    #MasterTree .hasChilds .emptyLabel
+    #MasterTree .hasChildren .emptyLabel
     {
       display: none;
     }
@@ -293,12 +293,15 @@
       // Определяем класс для дочерних узлов
       childClass: nsTree.Folder.subclass({
         template: 
-          '<li{selected} class="Basis-TreeNode {hasChilds} {selected}" event-click="select">' +
+          '{resource:../../src/basis/ui/templates/tree/Node.css}' +
+          '{resource:../../src/basis/ui/templates/tree/Folder.css}' +
+          '{resource:../../src/basis/ui/templates/tree/Node_Expander.css}' +
+          '<li{selected} class="Basis-TreeNode {hasChildren} {selected}" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
-              '<div class="Basis-TreeNode-Expander" event-click="toggle"/>' +
+              '<div class="Basis-TreeNode_Expander Basis-TreeNode_Expander__{collapsed}" event-click="toggle"/>' +
               '<span{title} class="Basis-TreeNode-Caption">{title}<span class="count">(Word count: {childCount}, Frequency: {freqSum})</span></span>' +
             '</div>' + 
-            '<div{childNodesElement} class="Basis-TreeNode-Content">' + 
+            '<div{childNodesElement} class="Basis-TreeNode-Content Basis-TreeNode-Content__{collapsed}">' + 
               '<span class="emptyLabel">No words</span>' +
             '</div>' +
           '</li>',

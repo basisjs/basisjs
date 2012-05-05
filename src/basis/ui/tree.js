@@ -106,13 +106,8 @@
   */
   var PartitionNode = Class(UIPartitionNode, {
     className: namespace + '.PartitionNode',
-    template: 
-      '<li class="Basis-TreePartitionNode">' + 
-        '<div class="Basis-TreePartitionNode-Title">' +
-          '<span>{title}</span>' +
-        '</div>' +
-        '<ul{childNodesElement} class="Basis-TreePartitionNode-Content"/>' +
-      '</li>'
+
+    template: resource('templates/tree/PartitionNode.tmpl')
   });
 
  /**
@@ -120,6 +115,7 @@
   */
   var GroupingNode = Class(UIGroupingNode, {
     className: namespace + '.GroupingNode',
+
     childClass: PartitionNode
   });
 
@@ -148,14 +144,7 @@
     * @type {basis.template.Template}
     * @private
     */
-    template: 
-      '<li class="Basis-TreeNode">' +
-        '<div{content} class="Basis-TreeNode-Title {selected} {disabled}">' +
-          '<span{titleElement} class="Basis-TreeNode-Caption" event-click="select">' +
-            '{title}' +
-          '</span>' +
-        '</div>' +
-      '</li>',
+    template: resource('templates/tree/Node.tmpl'),
 
     binding: {
       title: 'data:title || "[no title]"',
@@ -204,16 +193,7 @@
     * @type {basis.template.Template}
     * @private
     */
-    template: 
-      '<li class="Basis-TreeNode {collapsed}">' +
-        '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected} {disabled}">' +
-          '<div class="Basis-TreeNode-Expander" event-click="toggle"/>' +
-          '<span{titleElement} class="Basis-TreeNode-Caption" event-click="select">' +
-            '{title}' +
-          '</span>' +
-        '</div>' + 
-        '<ul{childNodesElement} class="Basis-TreeNode-Content"/>' + 
-      '</li>',
+    template: resource('templates/tree/Folder.tmpl'),
 
    /**
     * @type {boolean}
@@ -291,8 +271,7 @@
     * @type {basis.template.Template}
     * @private
     */
-    template:
-      '<ul class="Basis-Tree {disabled}"/>',
+    template: resource('templates/tree/Tree.tmpl'),
 
    /**
     * @inheritDoc
