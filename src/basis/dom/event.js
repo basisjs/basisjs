@@ -271,6 +271,7 @@
   * @private
   */
   var globalHandlers = {};
+  var captureHandlers = {};
 
  /**
   * There is another global events sheme for browser doesn't support for event capture phase (generaly old IE).
@@ -286,6 +287,14 @@
   */
   function observeGlobalEvents(event){
     var handlers = Array.from(globalHandlers[event.type]);
+    var captureHandler = captureHandlers[event.type];
+
+    if (captureHandler)
+    {
+      captureHandler.handler.call(captureHandler.thisObject, event);
+      kill(event);
+      return;
+    }
 
     if (handlers)
     {
@@ -294,6 +303,31 @@
         var handlerObject = handlers[i];
         handlerObject.handler.call(handlerObject.thisObject, event);
       }
+    }
+  };
+
+ /**
+  * @param {string} eventType
+  * @param {function(event)} handler 
+  * @param {object=} thisObject Context for handler
+  */
+  function captureEvent(eventType, handler, thisObject){
+    if (captureHandlers[eventType])
+      releaseEvent(eventType);
+
+    addGlobalHandler(eventType, handler, thisObject);
+    captureHandlers[eventType] = globalHandlers[eventType][globalHandlers[eventType].length - 1];
+  };
+
+ /**
+  * @param {string} eventType
+  */
+  function releaseEvent(eventType){
+    var handlerObject = captureHandlers[eventType];
+    if (handlerObject)
+    {
+      removeGlobalHandler(eventType, handlerObject.handler, handlerObject.thisObject);
+      delete captureHandlers[eventType];
     }
   };
 
@@ -696,6 +730,9 @@
 
     addGlobalHandler: addGlobalHandler,
     removeGlobalHandler: removeGlobalHandler,
+
+    captureEvent: captureEvent,
+    releaseEvent: releaseEvent,
 
     addHandler: addHandler,
     addHandlers: addHandlers,
