@@ -431,8 +431,19 @@
             binding.sync.call(this);
           }
 
-          for (var child = this.lastChild; child; child = child.previousSibling)
-            this.insertBefore(child, child.nextSibling);
+          if (this instanceof PartitionNode)
+          {
+            var nodes = this.nodes;
+            if (nodes)
+              for (var i = nodes.length; i --> 0;)
+              {
+                var child = nodes[i];
+                child.parentNode.insertBefore(child, child.nextSibling);
+              }
+          }
+          else
+            for (var child = this.lastChild; child; child = child.previousSibling)
+              this.insertBefore(child, child.nextSibling);
 
           if (oldElement && this.element && oldElement !== this.element)
           {
