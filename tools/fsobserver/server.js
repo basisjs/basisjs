@@ -10,12 +10,19 @@
   var fs_debug = false;
   var is_dev = true;
 
-  var BASE_PATH = process.argv[2];
+  var BASE_PATH = path.normalize(process.argv[2]);
   var port = process.argv[3];
   var configFilename = path.resolve(BASE_PATH, 'server.config');
 
+  if (!path.existsSync(BASE_PATH))
+  {
+    console.warn('Base path `' + BASE_PATH + '` not found');
+    process.exit();
+  }
+
   //load proxy pathes
-  var config = {};
+  var config = { };
+  var ignorePathes = ['.svn'];
   var rewriteRules = [];
   if (path.existsSync(configFilename))
   {
@@ -32,14 +39,9 @@
 
       if (Array.isArray(config.ignore))
       {
-        config.ignore = config.ignore.reduce(function(result, p){
-          result[path.resolve(BASE_PATH, p)] = true;
-          return result;
-        }, {});
-        console.log('\n  Ignore pathes:\n    ' + Object.keys(config.ignore).join('\n    '));
+        ignorePathes = config.ignore;
+        console.log('  Ignore pathes: ' + ignorePathes);
       }
-      else
-        delete config.ignore;
 
       if (config.rewrite)
       {
@@ -65,8 +67,18 @@
     }
   }
 
+  //
+  // port
+  //
   if (isNaN(port))
     port = 0;
+
+  //
+  // ignore pathes
+  //
+  ignorePathes = ignorePathes.map(function(p){
+    return path.resolve(BASE_PATH, p);
+  });
 
   //proxy
 
@@ -111,6 +123,15 @@
     {
       if (fs.statSync(filename).isDirectory())
       {
+        if (!/\/$/.test(location.pathname))
+        {
+          res.writeHead(301, {
+            Location: location.pathname + '/'
+          });
+          res.end();
+          return;
+        }
+
         if (path.existsSync(filename + '/index.html'))
           filename += '/index.html';
         else
@@ -158,9 +179,14 @@
 
   app.listen(port, function(){
     var port = app.address().port;
-    console.log('Server is online, listen for http://localhost:' + port + '\nWatching changes for path: ' + BASE_PATH);
+    console.log([
+      'Server is online, listen for http://localhost:' + port,
+      'Watching changes for path: ' + BASE_PATH,
+      'Ignore pathes:\n  ' + ignorePathes.join('\n  ')
+    ].join('\n'));
   });
   var io = socket_io.listen(app);
+  io.disable('log');
 
   //
   // Messaging
@@ -318,8 +344,8 @@
 
             if (fileType == 'dir')
             {
-              console.log(filename, path.normalize(filename));
-              if (!config.ignore || !config.ignore[path.normalize(filename)])
+              //console.log(filename, path.normalize(filename));
+              if (ignorePathes.indexOf(path.normalize(filename)) == -1)
                 lookup(filename);
             }
           }
@@ -476,39 +502,18 @@
       lastUpdate: lastUpdate
     };
 
-    for (var k in io.sockets.sockets)
-    {
-      var socket = io.sockets.sockets[k];
-      if (socket)
-      {
-        socket.emit('newFile', fileInfo);
-      }
-    }
+    io.sockets.emit('newFile', fileInfo);
   }
   var updateCallback = function(fileInfo){
     fileInfo.filename = normPath(fileInfo.filename);
 
-    for (var k in io.sockets.sockets)
-    {
-      var socket = io.sockets.sockets[k];
-      if (socket)
-      {
-        socket.emit('updateFile', fileInfo);
-      }
-    }
+    io.sockets.emit('updateFile', fileInfo);
   }
 
   var deleteCallback = function(filename){
     filename = normPath(filename);
 
-    for (var k in io.sockets.sockets)
-    {
-      var socket = io.sockets.sockets[k];
-      if (socket)
-      {
-        socket.emit('deleteFile', filename.substr(BASE_PATH.length + 1));
-      }
-    }
+    io.sockets.emit('deleteFile', filename.substr(BASE_PATH.length + 1));
   }
 
 
