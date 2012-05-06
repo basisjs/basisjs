@@ -6,30 +6,31 @@
   var path = require('path');
   var mime = require('mime');
 
-
   var fs_debug = false;
-  var is_dev = true;
 
   var BASE_PATH = path.normalize(process.argv[2]);
   var port = process.argv[3];
-  var configFilename = path.resolve(BASE_PATH, 'server.config');
 
+  // settings
+  var readExtensions = ['.css', '.tmpl', '.txt', '.json'];
+  var ignorePathes = ['.svn'];
+  var rewriteRules = [];
+
+  // check base path
   if (!path.existsSync(BASE_PATH))
   {
     console.warn('Base path `' + BASE_PATH + '` not found');
     process.exit();
   }
 
-  //load proxy pathes
-  var config = { };
-  var ignorePathes = ['.svn'];
-  var rewriteRules = [];
+  // process config
+  var configFilename = path.resolve(BASE_PATH, 'server.config');
   if (path.existsSync(configFilename))
   {
     console.log('Config found:', configFilename);
     try {
       var data = fs.readFileSync(configFilename);
-      config = JSON.parse(String(data));
+      var config = JSON.parse(String(data));
 
       if ('port' in config)
       {
@@ -80,18 +81,15 @@
     return path.resolve(BASE_PATH, p);
   });
 
-  //proxy
-
-  console.log('Start server');
   //create server
+  console.log('Start server');
+
   var proxy;
   var app = http.createServer(function(req, res){
-  
     var location = url.parse(req.url, true, true);
-    var host = req.headers.host;
+    var pathname = location.pathname.slice(1);
 
     //proxy request if nececcary
-    var pathname = location.pathname.slice(1);
     for (var i = 0, rule; rule = rewriteRules[i]; i++)
     {
       if (rule.re.test(pathname))
@@ -112,6 +110,7 @@
       }
     }
 
+    //
     var filename = path.normalize(BASE_PATH + location.pathname);
 
     if (!path.existsSync(filename))
@@ -144,9 +143,7 @@
           }
       }
 
-      var ext = path.extname(filename);
-
-      fs.readFile(filename, function(err, data){
+      fs.readFile(filename, 'utf-8', function(err, data){
         if (err)
         {
           res.writeHead(500);
@@ -158,14 +155,12 @@
             'Content-Type': mime.lookup(filename, 'text/plain') //MIME_TYPE[ext.slice(1)] || 'text/plain'
           });
 
+          var ext = path.extname(filename);
           if (ext == '.html' || ext == '.htm')
           {
             fs.readFile(__dirname + '/client.js', function(err, clientFileData){
               if (!err)
-              {
-                data = String(data).replace(/<\/body>/, '<script>' + clientFileData + '</script></body>');
-                res.end(data);
-              }
+                res.end(data.replace(/<\/body>/, '<script>' + clientFileData + '</script></body>'));
             });
           }
           else
@@ -185,87 +180,52 @@
       'Ignore pathes:\n  ' + ignorePathes.join('\n  ')
     ].join('\n'));
   });
-  var io = socket_io.listen(app);
-  io.disable('log');
 
   //
   // Messaging
   //
 
+  var io = socket_io.listen(app);
+  io.disable('log');
+
   io.sockets.on('connection', function(socket){
-    socket.on('saveFile', function(filename, content){
-      console.log('save file', arguments);
+    socket.on('saveFile', function(filename, content, callback){
+      console.log('Save file', arguments);
 
       var fname = path.normalize(BASE_PATH + '/' + filename);
-      var fnKey = normPath(fname);
 
-      if (fsWatcher.isObserveFile(fnKey))
-      {
-        fs.writeFile(fname, content, function (err) {
-          if (err)
-          {
-            socket.emit('fileSaveError', {
-              filename: filename,
-              message: err
-            });
-          }
-          else
-          {
-            socket.emit('fileSaved', fnKey);
-          }
-        });
-      }
+      if (!fsWatcher.isObserveFile(fname))
+        callback('file not observable');
       else
-        socket.emit('fileSaveError', {
-          filename: filename,
-          message: 'file not observable'
+        fs.writeFile(fname, content, function(err){
+          callback(err);
         });
     });
 
-    socket.on('createFile', function(filename, content){
+    socket.on('createFile', function(filename, content, callback){
       console.log('create file', arguments);
+
+      if (typeof callback != 'function')
+        callback = Function();
 
       var fname = BASE_PATH + '/' + filename;
        
-      if (!path.existsSync(fname) && path.existsSync(path.dirname(fname)))
-      {
-        fs.writeFile(fname, '', function (err) {
-          if (err)
-          {
-            socket.emit('error', {
-              operation: 'create file',
-              message: err
-            });
-          }
-          else
-          {
-            socket.emit('fileSaved', filename);
-          }
-        });
-      }
+      if (path.existsSync(fname) || !path.existsSync(path.dirname(fname)))
+        callback('bad filename');
       else
-        socket.emit('error', {
-          operation: 'create file',
-          message: 'bad filename'
+        fs.writeFile(fname, '', function(err){
+          callback(err);
         });
     });
 
     socket.on('readFile', function(filename, content){
       console.log('read file', arguments);
-
       fsWatcher.readFile(BASE_PATH + '/' + filename);
     });
 
-
     socket.on('observe', function(rel, fspath){
-      fsWatcher.watch(BASE_PATH);
       socket.emit('observeReady', fsWatcher.getFiles(BASE_PATH + '/'));
     });
-  });
-
-  io.sockets.on('disconnect', function(socket){
-    //socket.files.forEach(fsWatcher.removeContentObserver);
-    delete socket.pathes;
   });
 
   function normPath(filename){
@@ -281,26 +241,21 @@
     var dirMap = {};
 
     function readFile(filename){
-      if (path.extname(filename) == '.css' || path.extname(filename) == '.tmpl' || path.extname(filename) == '.txt' || path.extname(filename) == '.json')
+      if (readExtensions.indexOf(path.extname(filename)) != -1)
       {
         fs.readFile(filename, 'utf8', function(err, data){
-          console.log('READ FILE:', filename);
           if (!err)
           {
-            console.log('key', path.relative(BASE_PATH, filename).replace(/\\/g, '/'));
-
             var fileInfo = fileMap[normPath(filename)];
             var newContent = String(data).replace(/\r\n?|\n\r?/g, '\n');
 
             var newFileInfo = {
-              filename: filename,
+              filename: normPath(filename),
               lastUpdate: fileInfo.mtime
             };
 
             if (newContent !== fileInfo.content)
-            {
               fileInfo.content = newContent;
-            }
 
             newFileInfo.content = newContent;
 
@@ -331,15 +286,19 @@
             fileMap[fnKey] = {
               mtime: stats.mtime,
               type: fileType,
-              listeners: [],
               content: null
             };
 
             // event!! new file
             if (filename != BASE_PATH)
             {
-              createCallback(filename, fileType, stats.mtime);
               console.log(filename + ' - found');
+
+              createCallback({
+                filename: normPath(filename),
+                type: fileType,
+                lastUpdate: stats.mtime
+              });
             }
 
             if (fileType == 'dir')
@@ -354,7 +313,6 @@
             if (fileMap[fnKey].type == 'file' && stats.mtime - fileMap[fnKey].mtime)
             {
               fileInfo.mtime = stats.mtime;
-
               readFile(filename);
             }
           }
@@ -381,7 +339,6 @@
               if (files.indexOf(file) == -1)
               {
                 var filename = path + '/' + file;
-                delete dirFiles[filename];
                 delete fileMap[filename];
 
                 // event!!
@@ -392,82 +349,26 @@
           }
           else
           {
-            dirInfo = dirMap[path] = {
-              path: path,
-              watcher: fs.watch(path, function(event, filename){
-                lookup(path);
-              })
-            };
+            dirInfo = dirMap[path] = {};
+
+            // start watching
+            fs.watch(path, function(event, filename){
+              lookup(path);
+            });
           }
 
           dirInfo.files = files;
 
-          if (files.length)
-          {
-            for (var file, i = 0; file = files[i++];)
-            {
-              var filename = path + '/' + file;
-              //console.log(path + '/' + file);
-              updateStat(filename);
-            }
-          }
-
+          for (var file, i = 0; file = files[i++];)
+            updateStat(path + '/' + file);
         }
       });
     }
 
-    function stopWatch(path){
-      console.log('stopWatch ', path);
-      var difInfo = dirMap[path];
-      var dirFiles = difInfo.files;
-
-      for (var i = 0, filename; filename = dirFiles[i]; i++)
-      {
-        var fullPath = path + '/' + filename;
-
-        if (dirMap[fullPath])
-          stopWatch(fullPath);
-
-        delete fileMap[fullPath];
-      }
-
-      difInfo.watcher.close();
-
-      delete dirMap[path];
-    }
+    lookup(BASE_PATH);
 
     return {
-      watch: function(path){
-        try {
-          var stat = fs.statSync(path);
-        } catch(e) {
-          console.warn('Error on read path `' + path + '`:' + e);
-          return;
-        }
-
-        if (!stat.isDirectory())
-        {
-          console.warn('Error path `' + path + '` is not a folder');
-          return;
-        }
-
-        if (!dirMap[path])
-        {
-          lookup(path);
-          console.info('Folder `' + path + '` is observing now');
-        }
-        else
-          console.warn('Folder `' + path + '` is already observing');
-      },
-      unwatch: function(path){
-        if (dirMap[path])
-        {
-          stopWatch(path);
-          console.info('Folder `' + path + '` is NOT observing now');
-        }
-        else
-          console.warn('Folder `' + path + '` isn\'t observing yet');
-      },
+      readFile: readFile,
       getFiles: function(path){
         var result = [];
 
@@ -478,8 +379,8 @@
             result.push({
               filename: filename,
               type: fileMap[filename].type,
-              lastUpdate: fileMap[filename].mtime,
-              content: null//fileMap[filename].content
+              lastUpdate: fileMap[filename].mtime/*,
+              content: null//fileMap[filename].content*/
             });
           }
         }
@@ -487,33 +388,22 @@
         return result;
       },
       isObserveFile: function(filename){
-        return !!fileMap[filename];
-      },
-      readFile: readFile
+        return !!fileMap[normPath(filename)];
+      }
     }
 
   })();
 
 
-  var createCallback = function(filename, fileType, lastUpdate){
-    var fileInfo = {
-      filename: normPath(filename),
-      type: fileType,
-      lastUpdate: lastUpdate
-    };
-
+  var createCallback = function(fileInfo){
     io.sockets.emit('newFile', fileInfo);
   }
   var updateCallback = function(fileInfo){
-    fileInfo.filename = normPath(fileInfo.filename);
-
     io.sockets.emit('updateFile', fileInfo);
   }
 
   var deleteCallback = function(filename){
-    filename = normPath(filename);
-
-    io.sockets.emit('deleteFile', filename.substr(BASE_PATH.length + 1));
+    io.sockets.emit('deleteFile', normPath(filename));
   }
 
 

@@ -144,14 +144,6 @@
                 if (file)
                   file.destroy();
               },
-              fileSaved: function(filename){
-                File(filename).setState(STATE.READY);
-                console.log('file saved', filename);
-              },
-              fileSaveError: function(data){
-                File(data.filename).setState(STATE.ERROR, data.message);
-                console.log('file save error: ', data.message);
-              },
 
               //
               // common events
@@ -243,7 +235,19 @@
       if (this.modified)
       {
         //this.setState(STATE.PROCESSING);
-        sendToServer('saveFile', this.data.filename, this.data.content);
+        var self = this;
+        sendToServer('saveFile', this.data.filename, this.data.content, function(err){
+          if (err)
+          {
+            self.setState(STATE.ERROR, err);
+            console.log('file save error: ', err);
+          }
+          else
+          {
+            self.setState(STATE.READY);
+            console.log('file saved', self.data.filename);
+          }
+        });
       }
     }
   });
