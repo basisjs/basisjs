@@ -743,6 +743,10 @@
     var linkEl = dom.createElement('a');
     var baseEl = dom.createElement('base');
     var documentHead = document.head;
+    var pageLocation;
+
+    linkEl.href = location.pathname;
+    pageLocation = linkEl.href;
 
     return {
       setBase: function(path){
@@ -763,16 +767,17 @@
 
         dom.remove(baseEl);    
       },
-      dirname: function(path){
+      normalize: function(path){
         linkEl.href = path;
-        return linkEl.href.replace(/\/[^\/]*$/, '');
+        linkEl.href = linkEl.pathname;
+        return linkEl.href;
+      },
+      dirname: function(path){
+        return this.normalize(path).replace(/\/[^\/]*$/, '');
       },
       relative: function(path){
-        linkEl.href = path;
-        path = linkEl.href;
-
-        var abs = path.split(/\//);
-        var loc = this.dirname(location.href).split(/\//);
+        var abs = this.normalize(path).split(/\//);
+        var loc = this.dirname(location).split(/\//);
         var i = 0;
 
         while (abs[i] == loc[i] && typeof loc[i] == 'string')
