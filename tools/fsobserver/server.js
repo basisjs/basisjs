@@ -143,7 +143,7 @@
           }
       }
 
-      fs.readFile(filename, 'utf-8', function(err, data){
+      fs.readFile(filename, function(err, data){
         if (err)
         {
           res.writeHead(500);
@@ -158,7 +158,7 @@
           var ext = path.extname(filename);
           if (ext == '.html' || ext == '.htm')
           {
-            fs.readFile(__dirname + '/client.js', function(err, clientFileData){
+            fs.readFile(__dirname + '/client.js', 'utf-8', function(err, clientFileData){
               if (!err)
                 res.end(data.replace(/<\/body>/, '<script>' + clientFileData + '</script></body>'));
             });

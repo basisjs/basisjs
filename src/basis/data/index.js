@@ -531,7 +531,7 @@
       {
         delete this.indexes__[index.indexId];
         index.removeHandler(DATASET_INDEX_HANDLER, this);
-        index.destroy();
+        //index.destroy();
 
         // if any index in dataset nothing to do
         for (var key in this.indexes__)
