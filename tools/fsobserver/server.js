@@ -160,7 +160,7 @@
           {
             fs.readFile(__dirname + '/client.js', 'utf-8', function(err, clientFileData){
               if (!err)
-                res.end(data.replace(/<\/body>/, '<script>' + clientFileData + '</script></body>'));
+                res.end(String(data).replace(/<\/body>/, '<script>' + clientFileData + '</script></body>'));
             });
           }
           else
