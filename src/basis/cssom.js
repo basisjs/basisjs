@@ -726,6 +726,7 @@
   //
 
   var dynamicResources = {};
+  var cleanupDom = true; // is require remove style node on CssResource destroy or not
 
   // Test for appendChild bugs (old IE browsers has a problem with append textNode into <style>)
   var STYLE_APPEND_BUGGY = !(function(tagName){
@@ -865,7 +866,8 @@
     destroy: function(){
       if (this.element)
       {
-        dom.remove(this.element);
+        if (cleanupDom)
+          dom.remove(this.element);
 
         this.element = null;
         this.textNode = null;
@@ -900,6 +902,8 @@
 
   Cleaner.add({
     destroy: function(){
+      cleanupDom = false; // don't need remove unused style on global destroy
+
       for (var url in dynamicResources)
         dynamicResources[url].destroy();
 
