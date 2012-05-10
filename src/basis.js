@@ -1260,6 +1260,24 @@
     return namespaces[namespace] = cursor;
   }
 
+  var resolveUrl = (function(){
+    if (typeof require == 'function')
+    {
+      var path = require('path');
+      return function(url){
+        return path.resolve(__dirname, url);
+      }
+    }
+    else
+    {
+      var resolver = document.createElement('A');
+      return function(url){
+        resolver.href = url;
+        return resolver.href;
+      }
+    }
+  })();
+
   function dirname(path){
     return path.replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/i, '');
   }
@@ -1310,7 +1328,7 @@
         var namespaceRoot = namespace.split('.')[0];
 
         if (namespaceRoot == namespace)
-          nsRootPath[namespaceRoot] = path || dirname(location ? location.href : '');
+          nsRootPath[namespaceRoot] = path || dirname(location ? resolveUrl(location.pathname) : '');
 
         var requirePath = nsRootPath[namespaceRoot];
           /*/^basis\./.test(namespace)
@@ -1376,24 +1394,6 @@
     return externalResourceCache[requestUrl];
   };
   /*{resourceResolverEnd}*/
-
-  var resolveUrl = (function(){
-    if (typeof require == 'function')
-    {
-      var path = require('path');
-      return function(url){
-        return path.resolve(__dirname, url);
-      }
-    }
-    else
-    {
-      var resolver = document.createElement('A');
-      return function(url){
-        resolver.href = url;
-        return resolver.href;
-      }
-    }
-  })();
 
   var frfCache = {};
   var fetchResourceFunction = function(resourceUrl){
