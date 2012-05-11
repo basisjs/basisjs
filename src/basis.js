@@ -1337,7 +1337,7 @@
 
         if (!namespaces[namespace])
         {
-          if (!/^https?:/.test(requirePath))
+          if (!/^(https?|chrome-extension):/.test(requirePath))
             throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
 
           if (!requested[namespace])
@@ -1540,8 +1540,14 @@
         '//@ sourceURL=' + sourceURL
       );
     } catch(e) {
-      ;;;console.log('Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e));
-      throw e;
+      //;;;console.log('Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e));
+      var src = document.createElement('script');
+      src.src = sourceURL;
+      src.async = false;
+      document.head.appendChild(src);
+      document.head.removeChild(src);
+      throw 'Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e);
+      //return;
     }
 
     // run

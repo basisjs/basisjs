@@ -229,7 +229,7 @@
   FileClass.extend({
     read: function(){
       //this.setState(STATE.PROCESSING);
-      sendToServer('readFile', this.data.filename);      
+      sendToServer('readFile', this.data.filename);
     },
     save: function(){
       if (this.modified)
@@ -371,22 +371,26 @@
   var styleSheetFileMap = {};
   window.styleSheetFileMap = styleSheetFileMap; // TODO: remove
 
+  function normalizeUrl(path){
+    linkEl.href = path;
+    linkEl.href = linkEl.pathname;
+    return linkEl.href;
+  }
+
   function abs2rel(path, base){
     if (base)
     {
       setBase(base);
-      linkEl.href = path;
-      path = linkEl.href;
+      path = normalizeUrl(path);
       restoreBase();
     }
     else
     {
-      linkEl.href = path;
-      path = linkEl.href;
+      path = normalizeUrl(path);
     }
 
     var abs = path.split(/\//);
-    var loc = location.href.replace(/\/[^\/]*$/, '').split(/\//);
+    var loc = normalizeUrl(location).replace(/\/[^\/]*$/, '').split(/\//);
     //var res = [];
     var i = 0;
 

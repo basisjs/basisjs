@@ -80,7 +80,7 @@
       return this.value;
     },
 
-    attach: function(handler, context){
+    attach: function(handler, context, apply){
       for (var i = 0, listener; listener = this.listeners[i]; i++)
       {
         if (listener.handler == handler && listener.context == context)
@@ -91,6 +91,9 @@
         handler: handler,
         context: context
       });
+
+      if (apply)
+        handler.call(context, this.value);
 
       return true;
     },

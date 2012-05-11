@@ -899,6 +899,32 @@
     cache_: null,
 
    /**
+    * @readonly
+    */
+    syncEvents: Class.oneFunctionProperty(
+      function(){
+        if (this.isSyncRequired())
+          this.syncAction();
+      },
+      {
+        stateChanged: true,
+        subscribersChanged: true
+      }
+    ),
+
+   /**
+    * @readonly
+    */
+    isSyncRequired: function(){
+      return this.subscriberCount > 0 && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED);
+    },
+
+   /**
+    * @readonly
+    */
+    syncAction: false,
+
+   /**
     * Fires when items changed.
     * @param {basis.data.AbstractDataset} dataset
     * @param {Object} delta Delta of changes. Must have property `inserted`
@@ -948,6 +974,9 @@
     init: function(config){
       // inherit
       DataObject.prototype.init.call(this, config);
+
+      if (this.syncAction)
+        this.setSyncAction(this.syncAction);
 
       this.memberMap_ = {};
       this.item_ = {};
@@ -1029,6 +1058,27 @@
     * Removes all items from dataset.
     */
     clear: function(){
+    },
+
+   /**
+    * @param {function} syncAction
+    */
+    setSyncAction: function(syncAction){
+      if (typeof syncAction != 'function')
+        syncAction = false;
+
+      this.syncAction = syncAction;
+
+      if (syncAction)
+      {
+        this.addHandler(this.syncEvents);
+        if (this.isSyncRequired())
+          this.syncAction();
+      }
+      else
+      {
+        this.removeHandler(this.syncEvents);
+      }
     },
 
    /**

@@ -403,7 +403,7 @@
       this.updateBind('readonly');
     },
     setMinLength: function(len){
-      len = Math.min(parseInt(len) || 0, 0);
+      len = Math.max(parseInt(len) || 0, 0);
 
       if (this.minLength != len)
       {
@@ -420,7 +420,7 @@
       }
     },
     setMaxLength: function(len){
-      //len = Math.min(parseInt(len) || 0, 0);
+      len = Math.max(parseInt(len) || 0, 0);
 
       if (this.maxLength != len)
       {
@@ -439,11 +439,11 @@
 
     readFieldValue_: function(){
       return this.tmpl && this.tmpl.field && this.tmpl.field.value;
-    },
+    }/*,
     writeFieldValue_: function(value){
       if (this.tmpl && this.tmpl.field && this.tmpl.field.value != value)
         this.tmpl.field.value = value;
-    }
+    }*/
   });
 
  /**
@@ -1093,7 +1093,7 @@
     },
     show: function(){
       this.popup.show(this.tmpl.field); 
-      this.select();
+      this.focus();
     },
     hide: function(){
       this.popup.hide();
