@@ -136,7 +136,7 @@
     event_commit: createEvent('commit', 'sender'),
     event_change: createEvent('change', 'sender', 'oldValue') && function(sender, oldValue){
       this.writeFieldValue_(this.value);
-      events.change.call(sender, oldValue);
+      events.change.call(this, sender, oldValue);
     },
     event_validityChanged: createEvent('validityChanged', 'sender', 'oldValidity'),
     event_errorChanged: createEvent('errorChanged', 'sender'),
@@ -939,7 +939,7 @@
     property: null,
 
     template: createFieldTemplate(baseFieldTemplate,
-      '<span{field|focus} class="Basis-DropdownList Basis-DropdownList-{opened}"' +
+      '<span{field|focus} class="Basis-DropdownList Basis-DropdownList-{opened} {disabled}"' +
         ' event-click="togglePopup"' +
         ' event-keyup="keyup"' +
         ' event-keydown="keydown"' +
