@@ -420,7 +420,7 @@
       }
     },
     setMaxLength: function(len){
-      len = Math.min(parseInt(len) || 0, 0);
+      //len = Math.min(parseInt(len) || 0, 0);
 
       if (this.maxLength != len)
       {
@@ -439,11 +439,11 @@
 
     readFieldValue_: function(){
       return this.tmpl && this.tmpl.field && this.tmpl.field.value;
-    }/*,
+    },
     writeFieldValue_: function(value){
       if (this.tmpl && this.tmpl.field && this.tmpl.field.value != value)
         this.tmpl.field.value = value;
-    }*/
+    }
   });
 
  /**
@@ -575,7 +575,7 @@
         instanceOf: UINode.subclass({
           template:
             '<div class="counter">' +
-              '{l10n:basis.ui.form.symbolsLeft}: {availChars}' +
+              '{l10n:basis.ui.field.symbolsLeft}: {availChars}' +
             '</div>',
 
           binding: {
