@@ -43,8 +43,6 @@
   var DataObject = basis.data.DataObject;
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var Node = basis.dom.wrapper.Node;
-  var uiNode = basis.ui.Node;
-  var uiContainer = basis.ui.Container;
   var Canvas = basis.ui.canvas.Canvas;
   var CanvasLayer = basis.ui.canvas.CanvasLayer;
   var ChildNodesDataset = basis.dom.wrapper.ChildNodesDataset;

@@ -708,9 +708,9 @@
       }
     },
 
-    titleGetter: function(item){
+    titleGetter: Function.getter(function(item){
       return item.title || item.getValue();
-    },
+    }),
     valueGetter: getter('value'),
 
     getTitle: function(){

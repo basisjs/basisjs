@@ -34,6 +34,7 @@ basis_require('basis.ext.flashcanvas');*/
   //
 
   var Node = basis.dom.wrapper.Node;
+  var nodePrototype = Node.prototype;
   var UINode = basis.ui.Node;
 
   var createEvent = basis.event.create;
@@ -43,6 +44,29 @@ basis_require('basis.ext.flashcanvas');*/
   // Main part
   //
 
+ /**
+  * @class
+  */
+  var Shape = Node.subclass({
+    className: namespace + '.Shape',
+    draw: function(context){
+      context.save();
+      context.fillStyle = 'red';
+      context.fillRect(this.data.value * 10,10,30,30);
+      context.restore();
+    },
+    listen: {
+      childNode: {
+        update: function(){
+          this.updateCount++;
+        }
+      }
+    }
+  });
+
+ /**
+  * @class
+  */
   var CanvasLayer = UINode.subclass({
     className: namespace + '.CanvasLayer',
 
@@ -66,60 +90,25 @@ basis_require('basis.ext.flashcanvas');*/
       if (canvasElement && canvasElement.getContext)
         this.context = canvasElement.getContext('2d');
     },
+
+    childClass: Shape,
+    insertBefore: nodePrototype.insertBefore,
+    removeChild: nodePrototype.removeChild,
+    clear: nodePrototype.clear,
+
+    draw: Function.undef,
     reset: function(){
       if (this.context)
         this.context.clearRect(0, 0, this.element.offsetWidth, this.element.offsetHeight)
-    },
-
-    draw: Function.undef
+    }
   });
 
-  var Shape = Node.subclass({
-    className: namespace + '.Shape',
-    draw: function(context){
-      context.save();
-      context.fillStyle = 'red';
-      context.fillRect(this.data.value * 10,10,30,30);
-      context.restore();
-    },
-    listen: {
-      childNode: {
-        update: function(){
-          this.updateCount++;
-        }
-      }
-    }/*
-    update: function(){
-      var result = Node.prototype.update.apply(this, arguments);
-
-      if (result)
-      {
-        var parent = this.parentNode;
-        while (parent)
-        {
-          if (parent instanceof Canvas)
-          {
-            parent.updateCount++;
-            break;
-          }
-          parent = parent.parentNode;
-        }
-      }
-
-      return result;
-    }*/
-  });
 
  /**
   * @class
   */
   var Canvas = CanvasLayer.subclass({
     className: namespace + '.Canvas',
-
-    childFactory: function(config){
-      return new this.childClass(config);
-    },
-    childClass: Shape,
 
     drawCount: 0,
     lastDrawUpdateCount: -1,

@@ -670,6 +670,7 @@
     }
   };
 
+
  /**
   * @class
   */
@@ -745,20 +746,10 @@
  /**
   * @class
   */
-  var Node = Class(DWNode, TemplateMixin, {
+  var Node = Class(DWNode, TemplateMixin, ContainerTemplateMixin, {
     className: namespace + '.Node',
 
-    childClass: null
-  });
-
-
- /**
-  * @class
-  */
-  var Container = Class(Node, ContainerTemplateMixin, {
-    className: namespace + '.Container',
-
-    childClass: Node,//Class.SELF,
+    childClass: Class.SELF,
     childFactory: function(config){
       return new this.childClass(config);
     },
@@ -775,7 +766,7 @@
     BINDING_PRESET: BINDING_PRESET,
 
     Node: Node,
-    Container: Container,
+    Container: Node,  // deprecated
     PartitionNode: PartitionNode,
     GroupingNode: GroupingNode
   };
