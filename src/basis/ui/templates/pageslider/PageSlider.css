@@ -1,0 +1,33 @@
+
+  .Basis-PageSlider
+  {
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+  }
+
+  .Basis-PageSlider-Content
+  {
+    height: 100%;
+    position: relative;
+  }
+
+  .Basis-PageSlider .Basis-Page
+  {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+  }
+
+  .Basis-PageSlider .Basis-Page-Content
+  {
+    height: 100%;
+  }
+
+  .Basis-PageSlider .Basis-Page__unselected
+  {
+    display: block;
+  }

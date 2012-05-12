@@ -1,0 +1,16 @@
+
+  {resource:Tab.css}
+  {resource:Page.css}
+
+  <div class="Basis-TabSheet {selected} {disabled}" event-click="select">
+    <div{tabElement} class="Basis-Tab Basis-Tab__{selected} Basis-Tab__{disabled}">
+      <span class="Basis-Tab-Content">
+        <span class="Basis-Tab-Caption">
+          {title}
+        </span>
+      </span> 
+    </div>
+    <div{pageElement} class="Basis-Page Basis-Page__{unselected}">
+      <div{content|pageContent|childNodesElement} class="Basis-Page-Content"/>
+    </div>
+  </div>

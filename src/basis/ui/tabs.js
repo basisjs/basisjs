@@ -118,17 +118,7 @@
       UIContainer.prototype.event_disable.call(this, node);
     },
 
-    template: 
-      '<div class="Basis-Tab {selected} {disabled}" event-click="select">' +
-        '<span class="Basis-Tab-Start"/>' +
-        '<span class="Basis-Tab-Content">' +
-          '<span class="Basis-Tab-Caption">' +
-            '{title}' +
-          '</span>' +
-        '</span>' + 
-        '<span class="Basis-Tab-End"/>' +
-      '</div>' +
-      '<div{content}/>',
+    template: resource('templates/tabs/Tab.tmpl'),
 
     binding: {
       title: 'data:'
@@ -155,20 +145,14 @@
 
     childClass: Tab,
     groupingClass: {
-      className: namespace + '.TabsGroupingNode',
+      className: namespace + '.TabGroupingNode',
       childClass: {
-        className: namespace + '.TabsPartitionNode',
-        template: 
-          '<div class="Basis-TabControl-TabGroup {selected} {disabled}"/>'
+        className: namespace + '.TabGroup',
+        template: resource('templates/tabs/TabGroup.tmpl')
       }
     },
 
-    template: 
-      '<div class="Basis-TabControl {selected} {disabled}">' +
-        '<div class="Basis-TabControl-Start"/>' +
-        '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +
-        '<div class="Basis-TabControl-End"/>' +
-      '</div>'
+    template: resource('templates/tabs/TabControl.tmpl')
   });
 
 
@@ -182,10 +166,7 @@
   var Page = Class(UIContainer, {
     className: namespace + '.Page',
     
-    template: 
-      '<div class="Basis-Page Basis-Page-{unselected} {selected} {disabled}">' + 
-        '<div{content|childNodesElement} class="Basis-Page-Content"/>' +
-      '</div>'
+    template: resource('templates/tabs/Page.tmpl')
   });
 
 
@@ -201,8 +182,7 @@
 
     childClass: Page,
     
-    template: 
-      '<div class="Basis-PageControl {selected} {disabled}"/>'
+    template: resource('templates/tabs/PageControl.tmpl')
   });
 
 
@@ -218,21 +198,7 @@
 
     childClass: UINode,
 
-    template: 
-      '<div class="Basis-TabSheet {selected} {disabled}" event-click="select">' +
-        '<div{tabElement} class="Basis-Tab">' +
-          '<span class="Basis-Tab-Start"/>' +
-          '<span class="Basis-Tab-Content">' +
-            '<span class="Basis-Tab-Caption">' +
-              '{title}' +
-            '</span>' +
-          '</span>' + 
-          '<span class="Basis-Tab-End"/>' +
-        '</div>' +
-        '<div{pageElement} class="Basis-Page Basis-Page-{unselected}">' +
-          '<div{content|pageContent|childNodesElement} class="Basis-Page-Content"/>' +
-        '</div>' +
-      '</div>',
+    template: resource('templates/tabs/TabSheet.tmpl'),
 
     templateSync: function(noRecreate){
       var pageElement = this.tmpl.pageElement;
@@ -266,10 +232,7 @@
 
     childClass: TabSheet,
     
-    template: 
-      '<div class="Basis-AccordionControl {selected} {disabled}">' +
-        '<div{content|childNodesElement} class="Basis-AccordionControl-Content"/>' +
-      '</div>'
+    template: resource('templates/tabs/AccordionControl.tmpl')
   });
 
 
@@ -285,15 +248,7 @@
 
     childClass: TabSheet,
 
-    template: 
-      '<div class="Basis-TabSheetControl {selected} {disabled}">' +
-        '<div{tabsElement} class="Basis-TabControl">' +
-          '<div class="Basis-TabControl-Start"/>' +
-          '<div{content|childNodesElement} class="Basis-TabControl-Content"/>' +
-          '<div class="Basis-TabControl-End"/>' +
-        '</div>' +
-        '<div{pagesElement} class="Basis-PageControl"/>' +
-      '</div>',
+    template: resource('templates/tabs/TabSheetControl.tmpl'),
 
     insertBefore: function(newChild, refChild){
       if (newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild))

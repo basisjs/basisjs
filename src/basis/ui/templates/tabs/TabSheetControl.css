@@ -1,0 +1,11 @@
+
+  .Basis-TabSheetControl .Basis-TabSheet
+  {
+    float: left;
+  }
+
+  .Basis-TabSheetControl .Basis-PageControl
+  {
+    clear: both;
+    border-top: none;
+  }

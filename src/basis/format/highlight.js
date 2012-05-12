@@ -11,7 +11,9 @@
 
   basis.require('basis.ui');
 
-  resource('templates/SourceCodeNode.css')().startUse();
+  var styleRequire = Function.runOnce(function(){
+    resource('templates/SourceCodeNode.css')().startUse();
+  });
 
   
  /**
@@ -381,6 +383,8 @@
     }
 
     //  MAIN PART
+
+    styleRequire();
 
     if (!options)
       options = {};

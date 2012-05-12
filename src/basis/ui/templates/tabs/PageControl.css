@@ -1,0 +1,12 @@
+
+  .Basis-PageControl
+  {
+    border: 1px solid #808080;
+    padding: 4px 4px 4px;
+  }
+
+  .Basis-PageControl .Basis-Page
+  {
+    border: 1px solid #E0E0E0;
+    height: 100%;
+  }

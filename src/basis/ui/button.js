@@ -25,7 +25,6 @@
   //
 
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
 
 
   //
@@ -85,7 +84,7 @@
  /**
   * @class
   */
-  var ButtonPanel = UIContainer.subclass({
+  var ButtonPanel = UINode.subclass({
     className: namespace + '.ButtonPanel',
 
     template: resource('templates/button/ButtonPanel.tmpl'),

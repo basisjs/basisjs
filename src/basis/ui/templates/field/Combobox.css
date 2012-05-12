@@ -1,0 +1,150 @@
+/*!
+ * Basis javasript library 
+ * http://code.google.com/p/basis-js/
+ *
+ * @copyright
+ * Copyright (c) 2006-2010 Roman Dvornov.
+ *
+ * @license
+ * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ */
+
+  /*
+   *  DropDownList
+   */
+
+  .Basis-DropdownList
+  {
+    position: relative;
+    /*display: inline;
+    display: inline-block;*/
+    display: block;
+
+    min-width: 100px;
+    width: 144px;
+
+    background: #F2F9FC url(res/dropdown_bg.gif) repeat-x left bottom;
+
+    text-decoration: none;
+    outline: none;
+  }
+
+  .Basis-DropdownList:focus .Basis-DropdownList-Caption
+  {
+    outline: 1px dotted black;
+  }
+
+  .Basis-DropdownList-Caption
+  {
+    position: relative;
+    overflow: hidden;
+    display: block;
+
+    min-height: 1.2em;
+    padding: 0.4em 17px 0.4em 0.5em;
+
+
+    white-space: nowrap;
+    font-size: 85%;
+    color: black;
+    text-overflow: ellipsis;
+      -o-text-overflow: ellipsis;
+  }
+
+  .Basis-DropdownList-Caption .Basis-Combobox-Item
+  {
+    overflow: hidden;
+    text-overflow: ellipsis;
+      -o-text-overflow: ellipsis;
+  }
+
+  .Basis-DropdownList-Trigger
+  {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    background: url(res/dropdown_arrow.gif) no-repeat right center;
+    border: 1px solid #87C4E0;
+
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+    border-radius: 2px;
+
+    cursor: pointer;
+  }
+
+  .Basis-DropdownList.disabled
+  {
+    background-color: #EDEDED;
+    background-image: url(res/dropdown_gray_bg.gif);
+    /*border-color: #CCC;*/
+  }
+  .Basis-DropdownList.disabled A
+  {
+    color: #AAA;
+  }
+  .Basis-DropdownList.disabled .Basis-DropdownList-Trigger
+  {
+    background: none;
+    border-color: #CCC;
+  }
+
+  /* popup */
+
+  .Basis-DropdownList-Popup
+  {
+    padding: 0 !important;
+    opacity: .95;
+    -moz-opacity: .95;
+    -khtml-opacity: .95;
+    position: absolute;
+    border: 1px solid #87C4E0 !important;
+    border-bottom: none !important;
+    background: white;
+    /*margin: 1px 0 0;*/
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content
+  {
+    padding: 0;
+    margin-bottom: -1px;
+    border-bottom: 1px solid #87C4E0;
+    _width: 142px;
+    font-size: 85%;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content .Basis-Combobox-Item
+  {
+    padding: .3em 6px .35em;
+    zoom: 1;
+    display: block;
+    color: black;
+    text-decoration: none;
+    white-space: nowrap;
+    min-width: 130px;  /* important min-width here (not on parent nodes) - otherwise IE7 bug. but this bring bug to opera 9.2 */
+    min-height: 1em;
+    cursor: pointer;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content .Basis-Combobox-Item:hover
+  {
+    background-color: #E8E8E8;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content .Basis-Combobox-Item.selected
+  {
+    background-color: #E1F1F9;
+  }
+  .Basis-DropdownList-Popup .Basis-Popup-Content .Basis-Combobox-Item.disabled
+  {
+    color: #AAA;
+    background: none !important;
+    cursor: default;
+  }
+
+  .Basis-DropdownList-Popup .Basis-PartitionNode-Title
+  {
+    background: #F0F0F0;
+    padding: .3em 6px .35em;
+    font-weight: bold;
+  }
+

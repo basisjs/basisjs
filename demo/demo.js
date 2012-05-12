@@ -106,10 +106,12 @@
   });
 
   var _gaq = _gaq || [];
- _gaq.push(
- ['siteTracker._setAccount', 'UA-18071-1'],
- ['siteTracker._trackPageview']);
+  _gaq.push(
+    ['siteTracker._setAccount', 'UA-18071-1'],
+    ['siteTracker._trackPageview']
+  );
  
- _gaq.push(
- ['projectTracker._setAccount', 'UA-16275563-1'],
- ['projectTracker._trackPageview']);
+  _gaq.push(
+    ['projectTracker._setAccount', 'UA-16275563-1'],
+    ['projectTracker._trackPageview']
+  );

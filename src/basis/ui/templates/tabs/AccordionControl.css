@@ -1,0 +1,31 @@
+
+  .Basis-AccordionControl
+  {
+    border: 1px solid #808080;
+  }
+  .Basis-AccordionControl .Basis-TabSheet
+  {
+    margin: -1px;
+  }
+  .Basis-AccordionControl .Basis-Tab
+  {
+    float: none;
+  }
+  .Basis-AccordionControl .Basis-Tab__selected
+  {
+    border-bottom-color: #BBB;
+  }
+  .Basis-AccordionControl .Basis-Page
+  {
+    margin: 0 1px;
+  }
+  .Basis-AccordionControl .Basis-TabControl-TabGroup
+  {
+    float: none;
+    margin: 0 0 6px;
+    border-bottom: 1px solid #898C95;
+  }
+  .Basis-AccordionControl .Basis-TabControl-TabGroup:last-child
+  {
+    margin: 0 0 -1px;
+  }

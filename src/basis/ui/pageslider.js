@@ -43,16 +43,22 @@
   var PageSlider = PageControl.subclass({
     className: namespace + '.PageSlider',
 
-    template: 
-      '<div class="Basis-PageControl Basis-PageSlider {selected} {disabled}">' +
-        '<div{childNodesElement} class="Basis-PageSlider-Content"/>' +
-      '</div>',
+    template: resource('templates/pageslider/PageSlider.tmpl'),
 
-    childClass: {
+    /*childClass: {
       className: namespace + '.Page',
+
       event_select: function(){
         PageControl.prototype.childClass.prototype.event_select.apply(this, arguments);
         this.parentNode.scrollToPage(this);
+      }
+    },*/
+
+    listen: {
+      selection: {
+        datasetChanged: function(selection){
+          this.scrollToPage(selection.pick())
+        }
       }
     },
 
@@ -60,7 +66,9 @@
       PageControl.prototype.event_childNodesModified.call(this, node, delta);
 
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        cssom.setStyle(child.element, { left: (100 * i) + '%' });
+        cssom.setStyle(child.element, {
+          left: (100 * i) + '%'
+        });
     },
 
     init: function(config){
@@ -70,14 +78,13 @@
         targetElement: this.tmpl.childNodesElement,
         scrollY: false,
         minScrollDelta: 10,
+        handlerContext: this,
         handler: {
           startInertia: this.setPage
-        },
-        handlerContext: this
+        }
       });
 
-      if (this.selection.itemCount)
-        this.scrollToPage(this.selection.pick())
+      this.scrollToPage(this.selection.pick())
     },
 
     setPage: function(scroller){
@@ -111,7 +118,7 @@
     },
 
     scrollToPage: function(page){
-      if (this.scroller)
+      if (page && this.scroller)
       {
         page.select();
         this.scroller.setPositionX(page.element.offsetLeft, true);

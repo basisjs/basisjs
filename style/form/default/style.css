@@ -18,78 +18,44 @@
     position: relative;
     overflow: hidden;
   }
-  .Basis-FormContent .Basis-Field
-  {
-    /*clear: both;*/
-  }
-  .Basis-FormContent .Basis-Field-Container
+  .Basis-Field-Container
   {
     _position: relative;
     _zoom: 1;
     padding-left: 20px;
     _width: 100%;
   }
-  .Basis-Field-Container LABEL
+  .Basis-Field LABEL
   {
     display: block;
   }
-  .Basis-Field-Container INPUT,
-  .Basis-Field-Container TEXTAREA
-  {
-    _border: expression("if (nodeName == 'TEXTAREA' || type.match(/text|password/)){runtimeStyle.border = '1px solid #808080';runtimeStyle.backgroundColor = 'white';runtimeStyle.padding = '2px';}");
-  }
-  .Basis-Field-Container INPUT[type="text"],
-  .Basis-Field-Container INPUT[type="password"],
-  .Basis-Field-Container TEXTAREA
+  .Basis-Field TEXTAREA,
+  .Basis-Field .native-type-text,
+  .Basis-Field .native-type-password
   {
     border: 1px solid #808080;
     background-color: white;
     padding: 2px;
   }
-  /*.Basis-Field-Container INPUT.radio,
-  .Basis-Field-Container INPUT.checkbox
-  {
-    width: 20px;
-    border: none;
-    background: none;
-  }*/
-  .Basis-FormContent .invalid .Basis-Field-Container
-  {
-    background: url(warning.gif) left 0.2em no-repeat;
-  }
-  .Basis-FormContent .valid .Basis-Field-Container
-  {
-    background: url(ok.gif) left 0.2em no-repeat;
-  }
-  .Basis-FormContent .invalid .Basis-Field-Container INPUT,
-  .Basis-FormContent .invalid .Basis-Field-Container TEXTAREA
-  {
-    border-color: #DD0000;
-  }
   .Basis-Field-Container SELECT
   {
     width: 100%;
   }
-
-  .Basis-FormContent .monospace INPUT
+  .Basis-Field__invalid .Basis-Field-Container
   {
-    font-family: Courier;
+    background: url(warning.gif) left 0.2em no-repeat;
   }
-  /*.Basis-FormContent .have-button .Basis-Field-Container
+  .Basis-Field__valid .Basis-Field-Container
   {
-    padding-right: 25px;
+    background: url(ok.gif) left 0.2em no-repeat;
+  }
+  .Basis-Field__invalid TEXTAREA
+  .Basis-Field__invalid .native-type-text,
+  .Basis-Field__invalid .native-type-password
+  {
+    border-color: #DD0000;
   }
 
-  .Basis-FormContent .have-button .Basis-Field-Container BUTTON
-  {
-    padding: 1px 0;
-    position: absolute;
-    width: 22px;
-    top: 0; 
-    right: -26px;
-    text-align: center;
-    border: 1px solid #808080;
-  }*/
   .Basis-Field-Sample
   {
     clear: both;
@@ -127,49 +93,3 @@
   }
 
 
-
-
-  /* ===========================
-       listbox */
-
-  /*.basis-listbox
-  {
-    border: 1px solid #888;
-  }
-  .basis-listbox-title
-  {
-    line-height: 1em;
-    margin-top: -.6em;
-    margin-left: 5px;
-    padding: 0 4px 4px 2px;
-    background: white;
-    float: left;
-  }
-  .basis-listbox-content
-  {
-    padding: 3px;
-    clear: both;
-    overflow-y: auto;
-  }
-  .basis-listbox-item
-  {
-    cursor: pointer;
-    padding: 1px;
-    margin: 1px;
-  }
-  .basis-listbox-item:hover
-  {
-    background-color: #F8F8F8;
-  }
-  .basis-listbox-item .basis-listbox-item-content
-  {
-    padding: 3px;
-  }
-  .basis-listbox-content .selected
-  {
-    padding: 0;
-    cursor: default;
-
-    background: #D5EFFC url(selected_bg.gif) repeat-x !important;
-    border: 1px solid #99DEFD;
-  }*/

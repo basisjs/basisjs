@@ -85,7 +85,7 @@
   /** @const */ var VALIDITY_INVALID = 'invalid';
 
   var baseFieldTemplate = new Template(
-    '<div{sampleContainer} class="Basis-Field {disabled} {validity}" title="{error}">' +
+    '<div{sampleContainer} class="Basis-Field {disabled} Basis-Field__{validity}" title="{error}">' +
       '<div class="Basis-Field-Title">' +
         '<label>' +
           '<span{title}>{titleText}</span>' +
@@ -939,6 +939,7 @@
     property: null,
 
     template: createFieldTemplate(baseFieldTemplate,
+      '{resource:' + __dirname + 'templates/field/Combobox.css}' +
       '<span{field|focus} class="Basis-DropdownList Basis-DropdownList-{opened} {disabled}"' +
         ' event-click="togglePopup"' +
         ' event-keyup="keyup"' +

@@ -1,0 +1,26 @@
+
+  .Basis-Resizer
+  {
+    position: absolute;
+    /*width: 5px;
+    top: 0;
+    bottom: 0;
+    right: -3px;*/
+
+    z-index: 1000;
+
+    background: #666;
+    opacity: .025;
+      -moz-transition: .15s .025s opacity;
+      -webkit-transition: .15s .025s opacity;
+      -ms-transition: .15s .025s opacity;
+      -o-transition: .15s .025s opacity;
+    transition: .15s .025s opacity;
+  }
+
+  .Basis-Resizer:hover,
+  .Basis-Resizer.selected
+  {
+    /*cursor: w-resize;*/
+    opacity: .25;
+  }

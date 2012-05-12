@@ -13,21 +13,21 @@
  * Default style set for Basis library
  */
 
-  @import 'tree/compat/style.css';
+/*  @import 'tree/compat/style.css';*/
   @import 'table/vista/style.css';
   @import 'form/default/style.css';
-  @import 'window/new/style.css';
+/*  @import 'window/new/style.css';
   @import 'popup/default/style.css';
   @import 'menu/default/style.css';
   @import 'balloon/new/style.css';
   @import 'dropdown/blue/style.css';
-  @import 'tabs/vista/style.css';
+  @import 'tabs/vista/style.css';*/
   @import 'calendar/default/style.css';
-  @import 'button/new/style.css';
+/*  @import 'button/new/style.css';
   @import 'paginator/default/style.css';
   @import 'slider/default/style.css';
   @import 'scrollPanel/default/style.css';
-  @import 'pageslider/default/style.css';
+  @import 'pageslider/default/style.css';*/
 
   /* MAIN */
 

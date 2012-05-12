@@ -20,6 +20,10 @@
   basis.require('basis.dragdrop');
   basis.require('basis.ui');
 
+  var styleRequired = Function.runOnce(function(){
+    resource('templates/resizer/style.css')().startUse();
+  });
+
 
  /**
   * @see ./demo/defile/resizer.html
@@ -267,6 +271,8 @@
     * @constructor
     */
     init: function(config){
+      styleRequired();
+
       this.resizer = DOM.createElement('.Basis-Resizer');
       this.cursor = PROPERTY_CURSOR[this.property][1];
       this.resizer.style.cursor = this.cursor;

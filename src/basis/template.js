@@ -65,7 +65,7 @@
   var SYNTAX_ERROR = 'Invalid or unsupported syntax';
 
   // html parsing states
-  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z\_][a-zA-Z0-9\-\_]*(?:\.[a-zA-Z\_][a-zA-Z0-9\-\_]*)*)\}|resource:([a-zA-Z0-9\_\-\.\\\/\s]+)\})?|<(\/|!--(\s*\{)?)?|$)/g;
+  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z\_][a-zA-Z0-9\-\_]*(?:\.[a-zA-Z\_][a-zA-Z0-9\-\_]*)*)\}|resource:([a-zA-Z0-9\_\-\.\:\\\/\s]+)\})?|<(\/|!--(\s*\{)?)?|$)/g;
   var TAG_NAME = /([a-z\_][a-z0-9\-\_]*)(\:|\{|\s*(\/?>)?)/ig;
   var ATTRIBUTE_NAME_OR_END = /([a-z\_][a-z0-9\-\_]*)(\:|\{|=|\s*)|(\/?>)/ig;
   var COMMENT = /(.|[\r\n])*?-->/g;

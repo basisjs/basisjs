@@ -1,0 +1,33 @@
+
+  .Basis-Tab
+  {
+    font-size: 85%;
+    margin: 0;
+    border: 1px solid #898C95;
+    cursor: pointer;
+    color: black;
+    background-color: #F3F3F3;
+    background-image: url(res/not_active_border.gif);
+    background-repeat: repeat-x;
+  }
+  .Basis-Tab-Content
+  {
+    display: block;
+    padding: .1em 6px .2em 6px;
+    margin: 0 1px;
+    border-top: 1px solid #FAFAFA;
+    background-color: #CFCFCF;
+    background-image: url(res/not_active_bg.gif);
+    background-repeat: repeat-x;
+  }
+  .Basis-Tab-Caption
+  {
+    white-space: nowrap;
+    display: block;
+  }
+
+  .Basis-Tab__disabled
+  {
+    color: #A0A0A0;
+    cursor: default;
+  }
