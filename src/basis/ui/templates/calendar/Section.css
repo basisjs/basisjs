@@ -1,0 +1,31 @@
+
+  .Basis-Calendar-Section
+  {
+    top: 0;
+    left: 0;
+    width: 100%;
+    position: absolute;
+    background-color: white;
+    display: none;
+  }
+  .Basis-Calendar-Section.selected
+  {
+    display: block;
+  }
+  .Basis-Calendar-SectionTitle
+  {
+    padding: .5em 0;
+    text-align: center;
+    display: block;
+    color: black;
+    text-decoration: none;
+    background: #D9E8FB;
+  }
+  .Basis-Calendar-SectionContent
+  {
+    height: 10.5em;
+    border: 2px solid white;
+    position: relative;
+    overflow: hidden;
+    background: white;
+  }

@@ -1,0 +1,13 @@
+
+  .Basis-Table
+  {
+    border-spacing: 0;
+    border-left: 1px solid #E8E8E8;
+    border-bottom: 1px solid #E8E8E8;
+    empty-cells: show;
+  }
+  .Basis-Table TD,
+  .Basis-Table TH
+  {
+    border-collapse: collapse;
+  }

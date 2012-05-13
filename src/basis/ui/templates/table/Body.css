@@ -1,0 +1,29 @@
+
+  .Basis-Table-GroupHeader TD
+  {
+    font-weight: bold;
+    border-top: 1px solid #EDEDED !important;
+    border-bottom: 1px solid #EDEDED !important;
+    border-right: 1px solid #EDEDED;
+    font-size: 85% !important;
+    padding: 4px !important;
+    background: none !important;
+    cursor: pointer;
+  }
+  .Basis-Table-GroupHeader .expander
+  {
+    display: block;
+    float: left;
+    margin-left: -2px;
+    height: 1.2em;
+    width: 20px;
+    background: url(res/minus.gif) no-repeat center center;
+  }
+  .Basis-Table-Body__collapsed .Basis-Table-GroupHeader .expander
+  {
+    background-image: url(res/plus.gif);
+  }
+  .Basis-Table-Body__collapsed .Basis-Table-Row
+  {
+    display: none;
+  }

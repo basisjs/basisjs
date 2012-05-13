@@ -56,10 +56,6 @@
   var FORWARD = true;
   var BACKWARD = false;
 
-  var TAB_TEMPLATE =
-    '<div{tabElement} class="Basis-Calendar-SectionTab {selected}" event-click="select">' +
-      '{tabTitle}' +
-    '</div>';
 
   //
   // localization
@@ -267,10 +263,7 @@
       DOM.focus(this.element);
     },
 
-    template:
-      '<a class="Basis-Calendar-Node {nodePeriodName} {selected} {disabled} {before} {after}" event-click="click">' +
-        '{title}' +
-      '</a>',
+    template: resource('templates/calendar/Node.tmpl'),
 
     action: {
       click: function(event){
@@ -347,12 +340,7 @@
     event_periodChanged: createEvent('periodChanged'),
     event_selectedDateChanged: createEvent('selectedDateChanged'),
 
-    template:
-      '<div class="Basis-Calendar-Section Basis-Calendar-Section-{sectionName} {selected} {disabled}">' +
-        '<div class="Basis-Calendar-SectionTitle">{title}</div>' +
-        '<div{childNodesElement} class="Basis-Calendar-SectionContent"/>' +
-      '</div>' +
-      TAB_TEMPLATE,
+    template: resource('templates/calendar/Section.tmpl'),
 
     binding: {
       sectionName: 'sectionName',
@@ -523,22 +511,7 @@
       return 1 + (new Date(date).set(DAY, 1).getDay() + 5) % 7;
     },
 
-    template:
-      '<div class="Basis-Calendar-Section Basis-Calendar-Section-{sectionName} {selected} {disabled}">' +
-        '<div class="Basis-Calendar-SectionTitle">{title} {year}</div>' +
-        '<div{content|childNodesElement} class="Basis-Calendar-SectionContent">' +
-          '<div class="Basis-Calendar-MonthWeekDays">' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.mon}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.tue}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.wed}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.thr}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.fri}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.sat}</span>' +
-            '<span class="Basis-Calendar-MonthWeekDays-Day">{l10n:basis.ui.calendar.day2.sun}</span>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-      TAB_TEMPLATE,
+    template: resource('templates/calendar/SectionMonth.tmpl'),
 
     binding: {
       year: {
@@ -692,27 +665,7 @@
     childClass: CalendarSection,
     childFactory: Function(),
 
-    template:
-      '<div class="Basis-Calendar {selected} {disabled}">' +
-        '<div class="Basis-Calendar-Header">' +
-          '<div{sectionTabs} class="Basis-Calendar-SectionTabs" />' +
-        '</div>' +
-        '<div class="Basis-Calendar-Body">' +
-          '<span event-click="movePrev" class="Basis-Calendar-ButtonPrevPeriod">' +
-            '<span>\u2039</span><span class="over"></span>' +
-          '</span>' +
-          '<span event-click="moveNext" class="Basis-Calendar-ButtonNextPeriod">' +
-            '<span>\u203A</span><span class="over"></span>' +
-          '</span>' +
-          '<div{content|childNodesElement} class="Basis-Calendar-Content"/>' +
-        '</div>' +
-        '<div class="Basis-Calendar-Footer">' +
-          '<div class="Basis-Calendar-Footer-Date">' +
-            '<span class="Basis-Calendar-Footer-Label">{l10n:basis.ui.calendar.today}:</span>' +
-            '<span event-click="selectToday" class="Basis-Calendar-Footer-Value">{today}</span>' +
-          '</div>' +
-        '</div>' +
-      '</div>',
+    template: resource('templates/calendar/Calendar.tmpl'),
 
     binding: {
       today: function(){

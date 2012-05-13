@@ -1,0 +1,22 @@
+
+  .Basis-Calendar-MonthWeekDays
+  {
+    float: left;
+    width: 100%;
+    padding: .25em 0;
+    border-bottom: 1px solid #F0F0F0;
+    margin-bottom: 1px;
+    margin-top: -2px;
+  }
+  .Basis-Calendar-MonthWeekDays-Day
+  {
+    width: 4ex;
+    text-align: center;
+    display: block;
+    float: left;
+  }
+  .Basis-Calendar-Section-Month .Basis-Calendar-Node
+  {
+    width: 4ex;
+    padding: .25em 0;
+  }

@@ -1,0 +1,38 @@
+
+  {resource:../table/Table.css}
+  {resource:ScrollTable.css}
+
+  <div class="Basis-Table Basis-ScrollTable {selected} {disabled}" event-load="">
+    <div class="Basis-ScrollTable-Header-Container">
+      <table{headerOffset} class="Basis-ScrollTable-Header" cellspacing="0">
+        <!--{header}-->
+        <!--{headerExpandRow}-->
+      </table>
+      <div{headerExpandCell} class="Basis-ScrollTable-ExpandHeaderCell">
+        <div class="Basis-ScrollTable-ExpandHeaderCell-B1">
+          <div class="Basis-ScrollTable-ExpandHeaderCell-B2"/>
+        </div>
+      </div>
+    </div>
+    <div{scrollContainer} class="Basis-ScrollTable-ScrollContainer" event-scroll="scroll">
+      <div{boundElement} class="Basis-ScrollTable-TableWrapper">
+        <table{tableElement|groupsElement} class="Basis-ScrollTable-ContentTable" cellspacing="0">
+          <!--{shadowHeader}-->
+          <!--{measureRow}-->
+          <tbody{content|childNodesElement} class="Basis-Table-Body"/>
+          <!--{shadowFooter}-->
+        </table>
+      </div>
+    </div>
+    <div class="Basis-ScrollTable-Footer-Container">
+      <table{footerOffset} class="Basis-ScrollTable-Footer" cellspacing="0">
+        <!--{footer}-->
+        <!--{footerExpandRow}-->
+      </table>
+      <div{footerExpandCell} class="Basis-ScrollTable-ExpandFooterCell">
+        <div class="Basis-ScrollTable-ExpandFooterCell-B1">
+          <div class="Basis-ScrollTable-ExpandFooterCell-B2"/>
+        </div>
+      </div>
+    </div>
+  </div>

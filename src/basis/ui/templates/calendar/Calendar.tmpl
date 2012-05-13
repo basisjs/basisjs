@@ -1,0 +1,23 @@
+
+  {resource:Calendar.css}
+
+  <div class="Basis-Calendar {selected} {disabled}">
+    <div class="Basis-Calendar-Header">
+      <div{sectionTabs} class="Basis-Calendar-SectionTabs" />
+    </div>
+    <div class="Basis-Calendar-Body">
+      <span event-click="movePrev" class="Basis-Calendar-ButtonPrevPeriod">
+        <span>&#x2039;</span><span class="over"></span>
+      </span>
+      <span event-click="moveNext" class="Basis-Calendar-ButtonNextPeriod">
+        <span>&#x203A;</span><span class="over"></span>
+      </span>
+      <div{content|childNodesElement} class="Basis-Calendar-Content"/>
+    </div>
+    <div class="Basis-Calendar-Footer">
+      <div class="Basis-Calendar-Footer-Date">
+        <span class="Basis-Calendar-Footer-Label">{l10n:basis.ui.calendar.today}:</span>
+        <span event-click="selectToday" class="Basis-Calendar-Footer-Value">{today}</span>
+      </div>
+    </div>
+  </div>

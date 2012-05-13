@@ -1,0 +1,32 @@
+
+  .Basis-Table-Row TD
+  {
+    padding: 3px .25em 3px .5em;
+    border-right: 1px solid #EDEDED;
+  }
+
+  .Basis-Table-Row:hover TD,
+  .Basis-Table-Row.selected TD
+  {
+    border-top: 1px solid;
+    border-bottom: 1px solid;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAARCAYAAADUryzEAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAA+SURBVHjaYvz///8OBgoACxCfp9SAX5Qa8JNSA34MuAHfKTXg24Ab8HXoGzDwgfh9QPMCI7A8YKLEAIAAAwCH5xVDsWrjRgAAAABJRU5ErkJggg==);
+    background-repeat: repeat-x;
+  }
+
+  .Basis-Table-Row:hover TD
+  {              
+    background-color: #E8F5FD !important;
+    border-top-color: #D8F0FA;
+    border-bottom-color: #D8F0FA;
+  }
+  .Basis-Table-Row.selected TD
+  {
+    background-color: #D5EFFC !important;
+    border-right-color: #D5EFFC;
+    /*border-right-color: #D1EBF8;*/
+    border-top-color: #99DEFD;
+    border-bottom-color: #99DEFD;
+  }

@@ -63,13 +63,7 @@
   var HeaderPartitionNode = Class(UINode, {
     className: namespace + '.HeaderPartitionNode',
 
-    template: 
-      '<th class="Basis-Table-Header-Cell {selected} {disabled}">' +
-        '<div class="Basis-Table-Sort-Direction"/>' +
-        '<div class="Basis-Table-Header-Cell-Content">' + 
-          '<span{content} class="Basis-Table-Header-Cell-Title">{title}</span>' +
-        '</div>' +
-      '</th>',
+    template: resource('templates/table/HeaderPartitionNode.tmpl'),
 
     binding: {
       title: 'data:'
@@ -185,13 +179,7 @@
     colSorting: null,
     defaultOrder: false,
 
-    template:
-      '<th class="Basis-Table-Header-Cell Basis-Table-Header-Cell-{sortable} {selected} {disabled}" event-click="setColumnSorting">' +
-        '<div class="Basis-Table-Sort-Direction"/>' +
-        '<div class="Basis-Table-Header-Cell-Content">' + 
-          '<span{content} class="Basis-Table-Header-Cell-Title"/>' +
-        '</div>' +
-      '</th>',
+    template: resource('templates/table/HeaderCell.tmpl'),
 
     binding: {
       sortable: function(node){
@@ -249,10 +237,7 @@
 
     groupingClass: HeaderGroupingNode,
 
-    template:
-      '<thead{groupsElement} class="Basis-Table-Header {selected} {disabled}">' +
-        '<tr{childNodesElement|content} class="sort-order-{order}"/>' +
-      '</thead>',
+    template: resource('templates/table/Header.tmpl'),
 
     binding: {
       order: function(node){
@@ -358,10 +343,7 @@
 
     colSpan: 1,
 
-    template:
-      '<td{content} class="Basis-Table-Footer-Cell {selected} {disabled}" colspan="{colSpan}">' +
-        '\xA0' +
-      '</td>',
+    template: resource('templates/table/FooterCell.tmpl'),
 
     binding: {
       colSpan: 'colSpan'
@@ -381,10 +363,7 @@
 
     childClass: FooterCell,
 
-    template:
-      '<tfoot class="Basis-Table-Footer {selected} {disabled}">' +
-        '<tr{content|childNodesElement}/>' +
-      '</tfoot>',
+    template: resource('templates/table/Footer.tmpl'),
 
     init: function(config){
       UIContainer.prototype.init.call(this, config);
@@ -458,10 +437,7 @@
     childClass: null,
     repaintCount: 0,
 
-    template:
-      '<tr class="Basis-Table-Row {selected} {disabled}" event-click="select">' +
-        '<!--{cells}-->' +
-      '</tr>',
+    template: resource('templates/table/Row.tmpl'),
 
     action: { 
       select: function(event){
@@ -506,16 +482,7 @@
 
     collapsed: false,
 
-    template:
-      '<tbody class="Basis-Table-Body {collapsed}">' +
-        '<tr class="Basis-Table-GroupHeader" event-click="toggle">' +
-          '<td{content} colspan="100">' +
-            '<span class="expander"/>' +
-            '<span class="Basis-Table-GroupHeader-Title">{title}</span>' +
-          '</td>'+ 
-        '</tr>' +
-        '<!--{childNodesHere}-->' +
-      '</tbody>',
+    template: resource('templates/table/Body.tmpl'),
 
     binding: {
       collapsed: function(node){
@@ -545,12 +512,7 @@
       childClass: Body
     },
 
-    template:
-      '<table{groupsElement} class="Basis-Table {selected} {disabled}" cellspacing="0">' +
-        '<!--{header}-->' +
-        '<tbody{content|childNodesElement} class="Basis-Table-Body"/>' +
-        '<!--{footer}-->' +
-      '</table>',
+    template: resource('templates/table/Table.tmpl'),
 
     headerClass: Header,
     footerClass: Footer,
@@ -614,7 +576,7 @@
         this.columnCount = i;
 
         this.childClass = this.childClass.subclass({
-          template: this.childClass.prototype.template.source.replace('<!--{cells}-->', template),
+          template: String(this.childClass.prototype.template.source).replace('<!--{cells}-->', template),
           updaters: updaters
         });
       }

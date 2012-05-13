@@ -1,0 +1,8 @@
+
+  .Basis-Table-Footer-Cell
+  {
+    padding: .22em .25em .22em .5em;
+    border-top: 1px solid #E8E8E8;
+    border-right: 1px solid #E8E8E8;
+    background: url(res/footer_bg.gif) repeat-x;
+  }
