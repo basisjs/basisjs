@@ -1213,7 +1213,7 @@
     *
     */
     getChildByName: function(name){
-      return this.getChild('name', name);
+      return this.getChild(name, 'name');
     },
 
    /**

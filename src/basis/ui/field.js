@@ -473,6 +473,7 @@
         ' disabled="{disabled}"' +
         ' maxlength="{maxlength}"' +
         ' autocomplete="{autocomplete}"' +
+        ' placeholder="{placeholder}"' +
         ' event-keydown="keydown"' +
         ' event-keyup="keyup"' +
         ' event-keypress="keypress"' +
@@ -484,7 +485,8 @@
     ),
 
     binding: {
-      autocomplete: 'autocomplete || ""'
+      autocomplete: 'autocomplete || ""',
+      placeholder: 'placeholder || ""'
     }
   });
 
