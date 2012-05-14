@@ -83,7 +83,7 @@
     right: 0;
     top: -2px;
     min-width: 100%;
-    background: #F1F2F4 url(../table/res/table/vista/bg.gif) repeat-x 0 2px;
+    background: #F1F2F4 url(../table/res/bg.gif) repeat-x 0 2px;
     border-left: 1px solid #D5D5D5;
     border-bottom: 1px solid #D5D5D5;
   }
@@ -111,7 +111,7 @@
     right: 0;
     bottom: -1px;
     min-width: 100%;
-    background: white url(../table/res/table/vista/footer_bg.gif) repeat-x;
+    background: white url(../table/res/footer_bg.gif) repeat-x;
     border-left: 1px solid #E8E8E8;
     border-top: 1px solid #E8E8E8;
   }
