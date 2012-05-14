@@ -85,6 +85,7 @@
   /** @const */ var VALIDITY_INVALID = 'invalid';
 
   var baseFieldTemplate = new Template(
+    '{resource:' + __dirname + 'templates/field/field.css}' +
     '<div{sampleContainer} class="Basis-Field {disabled} Basis-Field__{validity}" title="{error}">' +
       '<div class="Basis-Field-Title">' +
         '<label>' +
@@ -99,7 +100,7 @@
   );
 
   function createFieldTemplate(template, injection){
-    return new Template(template.source.replace('<!--{fieldPlace}-->', injection));
+    return new Template(String(template.source).replace('<!--{fieldPlace}-->', injection));
   }
 
 

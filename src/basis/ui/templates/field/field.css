@@ -1,0 +1,74 @@
+
+  .Basis-Field-Container
+  {
+    _position: relative;
+    _zoom: 1;
+    padding-left: 20px;
+    _width: 100%;
+  }
+  .Basis-Field LABEL
+  {
+    display: block;
+  }
+  .Basis-Field TEXTAREA,
+  .Basis-Field .native-type-text,
+  .Basis-Field .native-type-password
+  {
+    border: 1px solid #808080;
+    background-color: white;
+    padding: 2px;
+  }
+  .Basis-Field-Container SELECT
+  {
+    width: 100%;
+  }
+  .Basis-Field__invalid .Basis-Field-Container
+  {
+    background: url(res/warning.gif) left 0.2em no-repeat;
+  }
+  .Basis-Field__valid .Basis-Field-Container
+  {
+    background: url(res/ok.gif) left 0.2em no-repeat;
+  }
+  .Basis-Field__invalid TEXTAREA
+  .Basis-Field__invalid .native-type-text,
+  .Basis-Field__invalid .native-type-password
+  {
+    border-color: #DD0000;
+  }
+
+  .Basis-Field-Sample
+  {
+    clear: both;
+    display: block;
+    font-size: 85%;
+    color: #666;
+    padding: .2em 0 .4em;
+  }
+
+  .Basis-Field-LengthCounter
+  {
+    text-align: right;
+    font-size: 80%;
+    color: #333;
+  }
+
+  /* Checkbox, Radio */
+
+  .Basis-CheckGroup LABEL INPUT,
+  .Basis-RadioGroup LABEL INPUT,
+  .Basis-Field-Checkbox LABEL INPUT
+  {
+    margin: 0 0.5ex 0 0;
+  }
+
+  .Basis-CheckGroup LABEL INPUT,
+  .Basis-CheckGroup LABEL SPAN,
+  .Basis-RadioGroup LABEL INPUT,
+  .Basis-RadioGroup LABEL SPAN,
+  .Basis-Field-Checkbox LABEL INPUT,
+  .Basis-Field-Checkbox LABEL SPAN
+  {
+    display: inline-block;
+    vertical-align: middle;
+  }

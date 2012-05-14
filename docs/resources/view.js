@@ -478,7 +478,7 @@
     className: namespace + '.TemplateTreeNode.EmptyElement',
     template:
       '<div class="Doc-TemplateView-Node Doc-TemplateView-Element {hasRefs}">' + 
-        '<span><{nodeName}<!--{refList}--><!--{attributes}-->/></span>' + 
+        '<span>&lt;{nodeName}<!--{refList}--><!--{attributes}-->/&gt;</span>' + 
       '</div>',
 
     binding: {
@@ -508,9 +508,9 @@
     className: namespace + '.TemplateTreeNode.Element',
     template:
       '<div class="Doc-TemplateView-Node Doc-TemplateView-Element {hasRefs}">' + 
-        '<span><{nodeName}<!--{refList}--><!--{attributes}-->></span>' + 
+        '<span>&lt;{nodeName}<!--{refList}--><!--{attributes}-->&gt;</span>' + 
         '<div{childNodesElement} class="Doc-TemplateView-NodeContent"></div>' + 
-        '<span></{nodeName}></span>' +
+        '<span>&lt;/{nodeName}&gt;</span>' +
       '</div>'
   });
 
@@ -532,7 +532,7 @@
     className: namespace + '.TemplateTreeNode.Comment',
     template:
       '<div class="Doc-TemplateView-Node Doc-TemplateView-Comment {hasRefs}">' + 
-        '&lt;!--<span>{nodeValue}</span>-->' + 
+        '&lt;!--<span>{nodeValue}</span>--&gt;' + 
       '</div>'
   });
 
@@ -567,7 +567,7 @@
         '<!--{childNodesHere}-->' +
       '</div>',
 
-    sorting: 'name',
+    sorting: 'data.name',
 
     childClass: {
       expanded: false,
@@ -582,7 +582,7 @@
         '</div>',
 
       binding: {
-        name: 'data:name',
+        name: 'data:',
         events: 'data:events || ""',
         used: function(node){
           return node.data.used ? 'used' : '';
@@ -659,7 +659,7 @@
         '<!--{childNodesHere}-->' +
       '</div>',
 
-    sorting: 'name',
+    sorting: 'data.name',
 
     childClass: {
       expanded: false,
@@ -872,7 +872,8 @@
   */
   var TemplatePanel = uiContainer.subclass({
     template:
-      '<div class="templatePanel">' +
+      '<div class="templatePanel {isExternalFile}">' +
+        '<a class="templateFile" href="source_viewer.html?file={externalFileUrl}" target="_blank">{externalFileCaption}</a>' +
         '<div{childNodesElement} class="templateHtml"/>' +
         '<div>' +
           '<!--{bindings}-->' +
@@ -882,7 +883,21 @@
 
     binding: {
       bindings: 'satellite:',
-      actions: 'satellite:'
+      actions: 'satellite:',
+      isExternalFile: function(node){
+        var template = node.data.obj && node.data.obj.prototype.template;
+        if (template && template.source && template.source.url)
+          return 'isExternalFile';
+        return '';
+      },
+      externalFileCaption: function(node){
+        var template = node.data.obj && node.data.obj.prototype.template;
+        return ((template && template.source && template.source.url) || '').split('src/basis/').pop();
+      },
+      externalFileUrl: function(node){
+        var template = node.data.obj && node.data.obj.prototype.template;
+        return ((template && template.source && template.source.url) || '').replace(/^(.*)(src\/basis\/)/i, '$2');
+      }
     },
 
     event_templateViewChanged: createEvent('templateViewChanged'),
@@ -911,6 +926,9 @@
       }
 
       this.setChildNodes(rootCfg.childNodes || [], true);
+      this.updateBind('isExternalFile');
+      this.updateBind('externalFileCaption');
+      this.updateBind('externalFileUrl');
 
       if (template)
         template.docsCache_ = Array.from(this.childNodes);

@@ -65,8 +65,7 @@
 
     event_reset: createEvent('reset', 'sender'),
     
-    template:
-      '<div class="Basis-FormContent {disabled}" />',
+    template: resource('templates/form/FormContent.tmpl'),
 
     getFieldByName: function(name){
       return this.childNodes.search(name, 'name');
@@ -133,15 +132,7 @@
 
     method: 'POST',
     
-    template:
-      '<form{formElement} class="Basis-Form {disabled}"' +
-        ' method="{method}"' +
-        ' action="{action}"' +
-        ' target="{target}"' +
-        ' enctype="{enctype}"' +
-        ' event-submit="submit">' +
-        '<div{content|childNodesElement} class="Basis-FormContent" />' +
-      '</form>',
+    template: resource('templates/form/Form.tmpl'),
 
     binding: {
       target: 'target || ""',

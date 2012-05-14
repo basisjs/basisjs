@@ -224,6 +224,18 @@
     clear: both;
     margin-top: 1.5em;
   }
+  .templateFile
+  {
+    display: none;
+  }
+  .isExternalFile .templateFile
+  {
+    font-size: 85%;
+    text-align: right;
+    display: block;
+    color: #666;    
+    padding: 0 1ex .2em;
+  }
   .show-references .templatePanel
   {
     margin-top: 0;
