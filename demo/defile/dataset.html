@@ -407,9 +407,9 @@
         },
 
         childClass: DatasetViewer.prototype.childClass,
-        init: function(config){
+        init: function(){
           this.dataSource = this.delegate;
-          UIContainer.prototype.init.call(this, config);
+          UIContainer.prototype.init.call(this);
         }
       })
     });
@@ -449,9 +449,9 @@
         },
 
         childClass: DatasetViewer.prototype.childClass,
-        init: function(config){
+        init: function(){
           this.dataSource = this.delegate;
-          UIContainer.prototype.init.call(this, config);
+          UIContainer.prototype.init.call(this);
         }
       })
     });

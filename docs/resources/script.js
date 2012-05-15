@@ -114,7 +114,7 @@
     }
   });
 
-  var prototypeDataset = new nsWrappers.ChildNodesDataset(nsView.viewPrototype);
+  var prototypeDataset = new nsWrappers.ChildNodesDataset({ sourceNode: nsView.viewPrototype });
   var prototypeMapPopup = new nsPopup.Balloon({
     id: 'PrototypeMapPopup',
     dir: 'center bottom center top',
@@ -181,7 +181,7 @@
 
   var targetHeader = new uiContainer({
     delegate: targetContent,
-    dataSource: new nsWrappers.ChildNodesDataset(targetContent),
+    dataSource: new nsWrappers.ChildNodesDataset({ sourceNode: targetContent }),
 
     childClass: Class(nsButton.Button, {
       binding: {
@@ -364,8 +364,8 @@
         }
       },
 
-      init: function(config){
-        nsTree.Node.prototype.init.call(this, config);
+      init: function(){
+        nsTree.Node.prototype.init.call(this);
 
         this.nodeType = nsNav.kindNodeType[this.data.kind];
         classList(this.tmpl.content).add(this.data.kind.capitalize() + '-Content');

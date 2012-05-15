@@ -71,8 +71,8 @@
         });
     },
 
-    init: function(config){
-      PageControl.prototype.init.call(this, config);
+    init: function(){
+      PageControl.prototype.init.call(this);
 
       this.scroller = new Scroller({
         targetElement: this.tmpl.childNodesElement,
@@ -126,7 +126,7 @@
     },
 
     destroy: function(){
-      PageControl.prototype.init.call(this, config);
+      PageControl.prototype.destroy.call(this);
 
       this.scroller.destroy();
       this.scroller = null;

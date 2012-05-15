@@ -559,8 +559,8 @@
 
     flex: 0,
 
-    init: function(config){
-      UIContainer.prototype.init.call(this, config);
+    init: function(){
+      UIContainer.prototype.init.call(this);
 
       if (this.flex)
       {
@@ -594,7 +594,7 @@
         (SUPPORT_DISPLAYBOX ? '' : '<div{ruller} style="position: absolute; visibility: hidden; top: -1000px; width: 10px;"/>') +
       '</div>',
 
-    init: function(config){
+    init: function(){
       //if (SUPPORT_DISPLAYBOX === false)
       //{
         //this.ruleClassName = 'Basis-FlexStackPanel-' + ++stackPanelId;
@@ -604,7 +604,7 @@
         this.cssRule.setProperty('overflow', 'auto');
       //}
 
-      UIContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this);
 
       if (SUPPORT_DISPLAYBOX === false)
       {

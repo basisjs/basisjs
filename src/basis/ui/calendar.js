@@ -440,7 +440,7 @@
 
     selection: true,
 
-    init: function(config){
+    init: function(){
       var selectedDate = this.selectedDate || new Date;
       this.selectedDate = null;
 
@@ -454,7 +454,7 @@
         }
       }, this);
 
-      UIContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this);
 
       this.setSelectedDate(selectedDate);
 
@@ -732,7 +732,7 @@
    /**
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // dates
       var now = new Date();
 
@@ -740,7 +740,7 @@
       this.date = new Property(new Date(this.date || now));
 
       // inherit
-      UIContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this);
 
       // min/max dates
 

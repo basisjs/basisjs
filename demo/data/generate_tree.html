@@ -151,8 +151,8 @@
       },
       sorting: Function.getter('data.name'),
       grouping: grouping,
-      init: function(config){
-        nsTree.Node.prototype.init.call(this, config);
+      init: function(){
+        nsTree.Node.prototype.init.call(this);
         this.setDataSource(goupingByParentId.getSubset(this.data.path + '' + this.data.name + '/'))
       }
     });

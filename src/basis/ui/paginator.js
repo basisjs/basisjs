@@ -168,8 +168,8 @@
 
     spanStartPage_: -1,
 
-    init: function(config){
-      UIContainer.prototype.init.call(this, config);
+    init: function(){
+      UIContainer.prototype.init.call(this);
 
       var pageSpan = this.pageSpan || this.defaultPageSpan;
       var pageCount = this.pageCount || this.defaultPageCount;

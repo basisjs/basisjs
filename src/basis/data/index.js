@@ -634,7 +634,7 @@
     ),
 
 
-    init: function(config){
+    init: function(){
       this.recalc = this.recalc.bind(this);
 
       this.indexUpdated = false;
@@ -655,7 +655,7 @@
           }
         }, this.keyMap));
 
-      MapReduce.prototype.init.call(this, config);
+      MapReduce.prototype.init.call(this);
 
       Object.iterate(indexes, this.addIndex, this);
     },

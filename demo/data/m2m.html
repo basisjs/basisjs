@@ -335,8 +335,8 @@
             }
           }
         },
-        init: function(config){
-          nsTree.Folder.prototype.init.call(this, config);
+        init: function(){
+          nsTree.Folder.prototype.init.call(this);
           this.setDataSource(Link.getGrouping('FieldId').getSubset(this.data.FieldId, true));
         },
 

@@ -246,8 +246,8 @@
                 this.tmpl.after.style.width = 100 * (1-end/itemCount) + '%';
               },
 
-              init: function(config){
-                basis.ui.Node.prototype.init.call(this, config);
+              init: function(){
+                basis.ui.Node.prototype.init.call(this);
 
                 this.sync();
 

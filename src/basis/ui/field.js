@@ -240,14 +240,14 @@
     // methods
     //
 
-    init: function(config){
+    init: function(){
       this.name = this.name || '';
       this.validators = Array.from(this.validators);
 
       if (typeof this.defaultValue == 'undefined')
         this.defaultValue = this.value;
 
-      UIContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this);
 
       if (this.value)
         this.setValue(this.value);
@@ -390,11 +390,11 @@
       autocomplete: 'autocomplete || ""'
     },
 
-    init: function(config){
+    init: function(){
       if (typeof this.value == 'undefined')
         this.value = '';
 
-      Field.prototype.init.call(this, config);
+      Field.prototype.init.call(this);
 
       this.setMinLength(this.minLength);
       this.setMaxLength(this.maxLength);
@@ -747,7 +747,7 @@
     childClass: ComplexFieldItem,
     multipleSelect: false,
 
-    init: function(config){
+    init: function(){
       this.selection = new Selection({
         multiple: !!this.multipleSelect,
         handler: COMPLEXFIELD_SELECTION_HANDLER,
@@ -755,7 +755,7 @@
       });
 
       //inherit
-      Field.prototype.init.call(this, config);
+      Field.prototype.init.call(this);
     },
     getValue: function(){
       var value = this.selection.getItems().map(getter('getValue()'));
@@ -1050,7 +1050,7 @@
       }
     },
 
-    init: function(config){
+    init: function(){
       if (!basis.ui.popup)
         throw new Error('basis.ui.popup required for DropDownList');
 
@@ -1058,7 +1058,7 @@
         this.value = this.property.value;
 
       // inherit
-      ComplexField.prototype.init.call(this, config);
+      ComplexField.prototype.init.call(this);
 
       var captionItem = new this.childClass({
         delegate: this.selection.pick(),
@@ -1209,7 +1209,7 @@
 
     extendConstructor_: true,
 
-    init: function(config){
+    init: function(){
       var startPoints = this.startPoints || '';
 
       this.textNodeGetter = getter(this.textNodeGetter || 'tmpl.titleText');
@@ -1246,8 +1246,8 @@
       this.applyMatch();
     },
 
-    init: function(config){
-      MatchProperty.prototype.init.call(this, config);
+    init: function(){
+      MatchProperty.prototype.init.call(this);
 
       this.node.addHandler(NodeMatchHandler, this);
     },
@@ -1291,8 +1291,8 @@
       this.matchFilter.set(this.getValue());
     },
 
-    init: function(config){
-      Text.prototype.init.call(this, config);
+    init: function(){
+      Text.prototype.init.call(this);
 
       this.matchFilter = new this.matchFilterClass(this.matchFilter);
     }

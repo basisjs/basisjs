@@ -238,9 +238,9 @@
     * @config {Array.<basis.data.AbstractDataset>} sources Set of source datasets for aggregate.
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this, config);
+      AbstractDataset.prototype.init.call(this);
 
       // init part
       var sources = this.sources;
@@ -559,9 +559,9 @@
    /**
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this, config);
+      AbstractDataset.prototype.init.call(this);
 
       // init part
       var minuend = this.minuend;
@@ -731,7 +731,7 @@
    /**
     * @constructor
     */
-    init: function(config){
+    init: function(){
       this.sourceMap_ = {};
 
       var source = this.source;
@@ -739,7 +739,7 @@
         this.source = null;     // NOTE: reset source before inherit -> prevent double subscription activation
                                 // when this.active == true and source is assigned
 
-      AbstractDataset.prototype.init.call(this, config);
+      AbstractDataset.prototype.init.call(this);
 
       if (source)
         this.setSource(source);
@@ -1237,7 +1237,7 @@
    /**
     * @constructor
     */ 
-    init: function(config){
+    init: function(){
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
         this.keyMap = new KeyObjectMap(extend({
           keyGetter: this.rule,
@@ -1245,7 +1245,7 @@
         }, this.keyMap));
 
       // inherit
-      MapReduce.prototype.init.call(this, config);
+      MapReduce.prototype.init.call(this);
     },
 
    /**
@@ -1494,11 +1494,11 @@
     * @config {number} limit Initial value of range length.
     * @constructor
     */
-    init: function(config){
+    init: function(){
       this.index_ = [];
 
       // inherit
-      SourceDatasetMixin.init.call(this, config);
+      SourceDatasetMixin.init.call(this);
     },
 
    /**
@@ -1776,7 +1776,7 @@
    /**
     * @constructor
     */ 
-    init: function(config){
+    init: function(){
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
         this.keyMap = new KeyObjectMap(extend({
           keyGetter: this.map,
@@ -1784,7 +1784,7 @@
         }, this.keyMap));
 
       // inherit
-      SourceDatasetMixin.init.call(this, config);
+      SourceDatasetMixin.init.call(this);
     },
 
    /**

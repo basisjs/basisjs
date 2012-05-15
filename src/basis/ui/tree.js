@@ -211,9 +211,9 @@
     * @config {boolean} collapsed
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // inherit
-      Node.prototype.init.call(this, config);
+      Node.prototype.init.call(this);
 
       if (this.collapsed && this.collapsable)
         this.event_collapse();

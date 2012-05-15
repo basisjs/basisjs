@@ -89,8 +89,8 @@
     var BaseDocTreeNode = Class(nsTree.Node, {
       views: [],
 
-      init: function(config){
-        nsTree.Node.prototype.init.call(this, config);
+      init: function(){
+        nsTree.Node.prototype.init.call(this);
 
         this.tmpl.title.href = '#' + this.data.fullPath;
         classList(this.tmpl.content).add(this.nodeType + '-Content');
@@ -107,8 +107,8 @@
         nsView.viewSourceCode
       ],
 
-      init: function(config){
-        BaseDocTreeNode.prototype.init.call(this, config);
+      init: function(){
+        BaseDocTreeNode.prototype.init.call(this);
 
         DOM.insert(this.tmpl.title.parentNode, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
         this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj).args;
@@ -193,8 +193,8 @@
       },
       grouping: nodeTypeGrouping,
 
-      init: function(config){
-        BaseDocTreeNode.prototype.init.call(this, config);
+      init: function(){
+        BaseDocTreeNode.prototype.init.call(this);
 
         if (this.collapsed)
           this.event_collapse();
@@ -262,8 +262,8 @@
         nsView.viewPrototype
       ],
 
-      init: function(config){
-        BaseDocTreeFolder.prototype.init.call(this, config);
+      init: function(){
+        BaseDocTreeFolder.prototype.init.call(this);
 
         DOM.insert(this.tmpl.title.parentNode, DOM.createElement('SPAN.args', '(', this.tmpl.argsText = DOM.createText(), ')'))
         this.tmpl.argsText.nodeValue = nsCore.getFunctionDescription(this.data.obj).args;

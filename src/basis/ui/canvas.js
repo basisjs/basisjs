@@ -75,8 +75,8 @@ basis_require('basis.ext.flashcanvas');*/
         '<div>Canvas doesn\'t support.</div>' +
       '</canvas>',
 
-    init: function(config){
-      UINode.prototype.init.call(this, config);
+    init: function(){
+      UINode.prototype.init.call(this);
      
       this.tmpl.canvas.width = this.width || 600;
       this.tmpl.canvas.height = this.height || 400;
@@ -122,8 +122,8 @@ basis_require('basis.ext.flashcanvas');*/
       }
     },
 
-    init: function(config){
-      CanvasLayer.prototype.init.call(this, config);
+    init: function(){
+      CanvasLayer.prototype.init.call(this);
      
       this.updateCount = 0;
 

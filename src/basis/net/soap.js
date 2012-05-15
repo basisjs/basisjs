@@ -84,8 +84,8 @@
       return AjaxRequest.prototype.isSuccessful.call(this) && (xml !== undefined && xml.documentElement !== undefined);
     },
 
-    init: function(config){
-      AjaxRequest.prototype.init.call(this, config);
+    init: function(){
+      AjaxRequest.prototype.init.call(this);
       this.requestEnvelope = new Envelope();
     },
 
@@ -216,11 +216,11 @@
       this.soapHeaderSections[name] = data;
     },
 
-    init: function(config){
+    init: function(){
       if (!this.soapHeaderSections)
         this.soapHeaderSections = {};
 
-      AjaxProxy.prototype.init.call(this, config);
+      AjaxProxy.prototype.init.call(this);
     },
 
     prepareRequestData: function(requestData){

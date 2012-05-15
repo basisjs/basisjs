@@ -124,12 +124,12 @@
    /**
     * @inheritDoc
     */
-    init: function(config){
+    init: function(){
       this.requestRelayout = this.requestRelayout.bind(this);
       this.relayout = this.relayout.bind(this);
 
       // inherit
-      Table.prototype.init.call(this, config);
+      Table.prototype.init.call(this);
 
       // add request to relayout on any header events
       this.header.addHandler({

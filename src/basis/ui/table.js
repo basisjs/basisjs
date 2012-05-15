@@ -97,8 +97,8 @@
     */
     childClass: {
       className: namespace + '.HeaderPartitionNode',
-      init: function(config){
-        PartitionNode.prototype.init.call(this, config);
+      init: function(){
+        PartitionNode.prototype.init.call(this);
         this.cell = new HeaderPartitionNode({
           delegate: this,
           binding: this.binding || {}
@@ -136,8 +136,8 @@
    /**
     * @inheritDoc
     */
-    init: function(config){
-      GroupingNode.prototype.init.call(this, config);
+    init: function(){
+      GroupingNode.prototype.init.call(this);
       this.element = this.childNodesElement = this.headerRow = DOM.createElement('tr.Basis-Table-Header-GroupContent');
     },
 
@@ -203,10 +203,10 @@
    /**
     * @inheritDoc
     */
-    init: function(config){
+    init: function(){
       this.selectable = !!this.colSorting;
 
-      UINode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this);
 
       if (this.colSorting)
       {
@@ -262,7 +262,7 @@
       }
     },
 
-    init: function(config){
+    init: function(){
       this.selection = {
         owner: this,
         handlerContext: this,
@@ -275,7 +275,7 @@
         }
       };
 
-      UIContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this);
 
       this.applyConfig_(this.structure)
     },
@@ -365,8 +365,8 @@
 
     template: resource('templates/table/Footer.tmpl'),
 
-    init: function(config){
-      UIContainer.prototype.init.call(this, config);
+    init: function(){
+      UIContainer.prototype.init.call(this);
 
       this.applyConfig_(this.structure);
 
@@ -519,14 +519,14 @@
 
     columnCount: 0,
 
-    init: function(config){
+    init: function(){
 
       ;;;if (this.rowSatellite && typeof console != 'undefined') console.warn('rowSatellite is deprecated. Move all extensions into childClass');
       ;;;if (this.rowBehaviour && typeof console != 'undefined') console.warn('rowBehaviour is deprecated. Move all extensions into childClass');
 
       this.applyConfig_(this.structure);
 
-      UIContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this);
 
       this.headerConfig = this.header;
       this.footerConfig = this.footer;

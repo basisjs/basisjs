@@ -553,14 +553,11 @@
     * @config {Array.<basis.data.DataObject>} objects
     * @constructor
     */
-    init: function(config){
+    init: function(){
       var handlers = this.handler;
-      delete this.handler;
+      this.handler = null;
 
       Property.prototype.init.call(this, this.value || 0, handlers, this.proxy);
-
-      /*if (typeof config.calculateValue == 'function')
-        this.calculateValue = config.calculateValue;*/
 
       var objects = this.objects;
       this.objects = [];

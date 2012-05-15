@@ -159,9 +159,9 @@
     //
     // Constructor
     //
-    init: function(config){
+    init: function(){
       //this.inherit(config);
-      EventObject.prototype.init.call(this, config);
+      EventObject.prototype.init.call(this);
 
       var element = this.element;
       var trigger = this.trigger;

@@ -133,8 +133,8 @@
     hideOnKey: false,
     ignoreClickFor: null,
 
-    init: function(config){
-      UIContainer.prototype.init.call(this, config);
+    init: function(){
+      UIContainer.prototype.init.call(this);
 
       // add generic rule
       this.cssRule = cssom.uniqueRule(this.element);

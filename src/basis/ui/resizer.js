@@ -270,14 +270,14 @@
    /**
     * @constructor
     */
-    init: function(config){
+    init: function(){
       styleRequired();
 
       this.resizer = DOM.createElement('.Basis-Resizer');
       this.cursor = PROPERTY_CURSOR[this.property][1];
       this.resizer.style.cursor = this.cursor;
       
-      super_.init.call(this, config);
+      super_.init.call(this);
     },
     setElement: function(element, trigger){
       var oldElement = this.element;

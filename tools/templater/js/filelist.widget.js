@@ -103,8 +103,8 @@
       }
     },
 
-    init: function(config){
-      nsTree.Folder.prototype.init.call(this, config);
+    init: function(){
+      nsTree.Folder.prototype.init.call(this);
       //console.log(this.data.filename);
       if (this.data.filename)
         this.setDataSource(fsobserver.filesByFolder.getSubset(this.data.filename, true));

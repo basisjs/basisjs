@@ -147,8 +147,8 @@
       },
       all: {
         handler: colHandler,
-        init: function(config){
-          this.constructor.prototype.init.call(this, config);
+        init: function(){
+          this.constructor.prototype.init.call(this);
           this.adapter = new basis.net.ajax.Transport({
             url: '../res/data/groups.json',
             influence: [this],
@@ -171,8 +171,8 @@
       },
       all: {
         handler: colHandler,
-        init: function(config){
-          this.constructor.prototype.init.call(this, config);
+        init: function(){
+          this.constructor.prototype.init.call(this);
           this.adapter = new basis.net.ajax.Transport({
             url: '../res/data/users.json',
             influence: [this],

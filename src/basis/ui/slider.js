@@ -103,8 +103,8 @@
     count: 0,
     marks: null,
 
-    init: function(config){
-      UIContainer.prototype.init.call(this, config);
+    init: function(){
+      UIContainer.prototype.init.call(this);
       this.apply();
     },
 
@@ -297,7 +297,7 @@
    /**
     * @inheritDoc
     */
-    init: function(config){
+    init: function(){
       // save init values
       var step = this.step;
       var value = this.value;
@@ -307,7 +307,7 @@
       this.value = NaN;
 
       // inherit
-      UINode.prototype.init.call(this, config);
+      UINode.prototype.init.call(this);
 
       // set properties
       this.setRange(this.min, this.max, step || 1);

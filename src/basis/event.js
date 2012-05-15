@@ -174,7 +174,7 @@
     * @param {Object=} config
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // fast add first handler
       if (this.handler)
       {

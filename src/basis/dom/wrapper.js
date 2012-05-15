@@ -627,7 +627,7 @@
     * @return {Object} Returns a config. 
     * @constructor
     */
-    init: function(config){
+    init: function(){
 
       var dataSource = this.dataSource;
       var childNodes = this.childNodes;
@@ -640,7 +640,7 @@
                                 // when this.active == true and dataSource is assigned
 
       // inherit
-      DataObject.prototype.init.call(this, config);
+      DataObject.prototype.init.call(this);
 
       if (grouping)
       {
@@ -936,9 +936,9 @@
    /**
     * @constructor
     */
-    init: function(config){
+    init: function(){
       this.nodes = [];
-      AbstractNode.prototype.init.call(this, config);
+      AbstractNode.prototype.init.call(this);
     },
 
    /**
@@ -2061,7 +2061,7 @@
     * @config {boolean} selected Initial value for selected property. If true 'select' event fired.
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // add selection object, if selection is not null
       if (this.selection && this.selection instanceof AbstractDataset == false)
       {
@@ -2071,7 +2071,7 @@
       }
 
       // inherit
-      AbstractNode.prototype.init.call(this, config);
+      AbstractNode.prototype.init.call(this);
 
       // synchronize node state according to config
       if (this.disabled)
@@ -2328,13 +2328,13 @@
 
     // methods
 
-    init: function(config){
+    init: function(){
       this.map_ = {};
       this.nullGroup = new PartitionNode();
 
       ;;;if ('titleGetter' in this) console.warn(namespace + '.GroupingNode: titleGetter is not support anymore for GroupingNode; extend partition nodes with titleGetter instead');
 
-      AbstractNode.prototype.init.call(this, config);
+      AbstractNode.prototype.init.call(this);
     },
 
    /**
@@ -2583,18 +2583,17 @@
     },
 
    /**
-    * use extend constructor
-    */
-    extendConstructor_: false,
-
-   /**
     * @constructor
     */
-    init: function(node, config){
-      AbstractDataset.prototype.init.call(this, config);
+    init: function(){
+      AbstractDataset.prototype.init.call(this);
 
-      if (node)
-        this.setSourceNode(node);
+      if (this.sourceNode)
+      {
+        var sourceNode = this.sourceNode;
+        this.sourceNode = null;
+        this.setSourceNode(sourceNode);
+      }
     },
 
    /**

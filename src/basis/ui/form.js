@@ -147,8 +147,8 @@
       }
     },
 
-    init: function(config){
-      FormContent.prototype.init.call(this, config);
+    init: function(){
+      FormContent.prototype.init.call(this);
       this.formElement.onsubmit = this.submit;
     },
     submit: function(){

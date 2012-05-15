@@ -247,8 +247,8 @@
         this.influence[i].setState(this.state, this.state.data);
     },
 
-    init: function(config){
-      DataObject.prototype.init.call(this, config);
+    init: function(){
+      DataObject.prototype.init.call(this);
       this.xhr = createXmlHttpRequest();
       this.influence = [];
     },
@@ -527,12 +527,12 @@
     event_failure: createProxyEvent('failure'),
     event_complete: createProxyEvent('complete'),
 
-    init: function(config){
+    init: function(){
       this.requests = {};
       this.requestQueue = [];
       this.inprogressRequests = [];
 
-      EventObject.prototype.init.call(this, config);
+      EventObject.prototype.init.call(this);
 
       // handlers
       /*if (this.callback)
@@ -665,8 +665,8 @@
     contentType: DEFAULT_CONTENT_TYPE,
     encoding: null,
 
-    init: function(config){
-      Proxy.prototype.init.call(this, config);
+    init: function(){
+      Proxy.prototype.init.call(this);
 
       this.requestHeaders = {};
       this.params = {};
@@ -747,8 +747,8 @@
     signature: Function.$undef,
     isSessionExpiredError: Function.$false,
 
-    init: function(config){
-      EventObject.prototype.init.call(this, config);
+    init: function(){
+      EventObject.prototype.init.call(this);
 
       this.inprogressProxies = [];
 

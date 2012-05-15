@@ -181,7 +181,7 @@
   }
 
   var ENTITYSET_INIT_METHOD = function(superClass, name){
-    return function(config){
+    return function(){
       if (!this.name)
         this.name = getUntitledName(name);
       /*if (config)
@@ -193,7 +193,7 @@
         this.name = getUntitledName(name);*/
 
       // inherit
-      superClass.prototype.init.call(this, config);
+      superClass.prototype.init.call(this);
     }
   }
 

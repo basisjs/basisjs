@@ -113,7 +113,7 @@
     event_startInertia: createEvent('startInertia', 'scrollerObject'),
     event_updatePosition: createEvent('updatePosition', 'scrollerObject', 'scrollPosition'),
 
-    init: function(config){
+    init: function(){
       this.lastMouseX = 0;
       this.lastMouseY = 0;
 
@@ -148,7 +148,7 @@
       this.panningActive = false;
 
       //init
-      EventObject.prototype.init.call(this, config);
+      EventObject.prototype.init.call(this);
 
       if (this.targetElement)
       {
@@ -635,8 +635,8 @@
       }
     },
 
-    init: function(config){
-      basis.ui.Node.prototype.init.call(this, config);
+    init: function(){
+      uiContainer.prototype.init.call(this);
 
       //init variables
       this.minPositionX = 0;
@@ -721,8 +721,9 @@
 
     destroy: function(){
       this.scroller.destroy();
+      this.scroller = null;
 
-      basis.ui.Node.prototype.destroy.call(this);
+      uiContainer.prototype.destroy.call(this);
     }
   });
 
@@ -780,8 +781,8 @@
       }
     }),
 
-    init: function(config){
-      ScrollPanel.prototype.init.call(this, config);
+    init: function(){
+      ScrollPanel.prototype.init.call(this);
 
       this.scroller.addHandler({
         startInertia: this.adjustPosition

@@ -424,9 +424,9 @@
     * @param {Object=} config The configuration of object.
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // inherit
-      EventObject.prototype.init.call(this, config);
+      EventObject.prototype.init.call(this);
 
       // data/delegate
       var delegate = this.delegate;
@@ -780,7 +780,7 @@
     map_: null,
 
     extendConstructor_: true,
-    init: function(config){
+    init: function(){
       this.map_ = {};
       Cleaner.add(this);
     },
@@ -971,9 +971,9 @@
    /**
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // inherit
-      DataObject.prototype.init.call(this, config);
+      DataObject.prototype.init.call(this);
 
       if (this.syncAction)
         this.setSyncAction(this.syncAction);
@@ -1123,9 +1123,9 @@
     * @config {Array.<basis.data.DataObject>} items Initial set of items.
     * @constructor
     */
-    init: function(config){
+    init: function(){
       // inherit
-      AbstractDataset.prototype.init.call(this, config);
+      AbstractDataset.prototype.init.call(this);
 
       var items = this.items;
       if (items)

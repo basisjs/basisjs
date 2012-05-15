@@ -316,7 +316,7 @@
      /**
       * @inheritDoc
       */
-      init: function(config){
+      init: function(){
         // create dom fragment by template
         var template = this.template;
         if (template)
@@ -326,7 +326,7 @@
         }
 
         // inherit init
-        super_.init.call(this, config);
+        super_.init.call(this);
       },
 
      /**
@@ -717,10 +717,10 @@
       }
     },
 
-    init: function(config){
+    init: function(){
       this.nullElement = DOM.createFragment();
       this.element = this.childNodesElement = this.nullElement;
-      DWGroupingNode.prototype.init.call(this, config);
+      DWGroupingNode.prototype.init.call(this);
     },
 
     syncDomRefs: function(){

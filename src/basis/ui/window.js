@@ -66,8 +66,8 @@
 
     template: resource('templates/window/Blocker.tmpl'),
 
-    init: function(config){
-      UINode.prototype.init.call(this, config);
+    init: function(){
+      UINode.prototype.init.call(this);
 
       cssom.setStyle(this.element, {
         display: 'none',
@@ -186,11 +186,11 @@
 
     title: basis.l10n.getToken(namespace, 'emptyTitle'),
 
-    init: function(config){
+    init: function(){
       // add generic rule
       this.cssRule = cssom.uniqueRule();
 
-      UIContainer.prototype.init.call(this, config);
+      UIContainer.prototype.init.call(this);
 
       // make main element invisible by default
       cssom.hide(this.element);

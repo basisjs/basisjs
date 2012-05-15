@@ -1741,16 +1741,15 @@
         }
 
 
-        /** @cut */if (newProto.init != NULL_FUNCTION && /^function[^(]*\(config\)/.test(newProto.init) ^ newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
+        /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
         /** @cut *///if (genericClassName == newClassProps.className) { console.warn('Class has no className'); }
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
         var className = newClassProps.className;
-        var NULL_CONFIG = {};
 
         var newClass =
-            /** @cut for more verbose in dev */ new Function('seed', 'NULL_CONFIG', 'return {"' + className + '": ' + (
+            /** @cut for more verbose in dev */ new Function('seed', 'return {"' + className + '": ' + (
 
               newClassProps.extendConstructor_
 
@@ -1769,8 +1768,10 @@
                         : extend[key];
                     }
 
+                    ;;;if (config) console.warn('config param is obsolete for extensible classes (ignored)');
+
                     // call constructor
-                    this.init(config || NULL_CONFIG);
+                    this.init();
 
                     // post init
                     this.postInit();
@@ -1788,7 +1789,7 @@
                     this.postInit();
                   }
 
-            /** @cut for more verbose in dev */ ) + '\n}["' + className + '"]')(seed, NULL_CONFIG);
+            /** @cut for more verbose in dev */ ) + '\n}["' + className + '"]')(seed);
 
         // add constructor property to prototype
         newProto.constructor = newClass;

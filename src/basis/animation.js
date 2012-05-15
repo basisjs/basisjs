@@ -93,7 +93,7 @@
     },
 
     extendConstructor_: true,
-    init: function(config){
+    init: function(){
       this.run = this.run.bind(this);
 
       Property.prototype.init.call(this, 0);

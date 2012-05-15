@@ -45,7 +45,6 @@
   var Node = basis.dom.wrapper.Node;
   var Canvas = basis.ui.canvas.Canvas;
   var CanvasLayer = basis.ui.canvas.CanvasLayer;
-  var ChildNodesDataset = basis.dom.wrapper.ChildNodesDataset;
   var Selection = basis.dom.wrapper.Selection;
 
   var createEvent = basis.event.create;
@@ -133,10 +132,10 @@
       }
     },
 
-    init: function(config){
+    init: function(){
       this.presetColors = Array.from(this.presetColors);
       this.usedColors = {};
-      Node.prototype.init.call(this, config);
+      Node.prototype.init.call(this);
     },
 
     setColor: function(object){
@@ -311,10 +310,10 @@
     event_disable: createEvent('disable'),
     event_enable: createEvent('enable'),
 
-    init: function(config){
+    init: function(){
       this.valuesMap = {};
 
-      Node.prototype.init.call(this, config);
+      Node.prototype.init.call(this);
 
       this.source = this.sourceGetter(this);
 
@@ -373,9 +372,9 @@
       }
     },
 
-    init: function(config){
+    init: function(){
       this.colorPicker = new ColorPicker(Object.extend({ owner: this }, this.colorPicker));
-      Node.prototype.init.call(this, config);
+      Node.prototype.init.call(this);
     },
 
     destroy: function(){
@@ -448,9 +447,9 @@
       }
     ),
 
-    init: function(config){
+    init: function(){
       this.values = {};
-      GraphNode.prototype.init.call(this, config);
+      GraphNode.prototype.init.call(this);
     }
   });
 
@@ -495,8 +494,8 @@
     },
 
     //init
-    init: function(config){
-      Graph.prototype.init.call(this, config);
+    init: function(){
+      Graph.prototype.init.call(this);
 
       if (Array.isArray(this.series))
       {
@@ -551,10 +550,10 @@
     max: 'auto',
 
     //init
-    init: function(config){
+    init: function(){
       this.clientRect = {};
 
-      SeriesGraph.prototype.init.call(this, config);
+      SeriesGraph.prototype.init.call(this);
     },
 
     drawFrame: function(){
@@ -1414,11 +1413,11 @@
       }
     },
 
-    init: function(config){
+    init: function(){
       if (this.selection && !(this.selection instanceof Selection))
         this.selection = Object.complete({ multiple: true }, this.selection)
 
-      AxisGraph.prototype.init.call(this, config);
+      AxisGraph.prototype.init.call(this);
     },
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
