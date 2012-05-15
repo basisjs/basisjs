@@ -3,13 +3,14 @@
   {
     _position: relative;
     _zoom: 1;
-    padding-left: 20px;
     _width: 100%;
   }
+
   .Basis-Field LABEL
   {
     display: block;
   }
+
   .Basis-Field TEXTAREA,
   .Basis-Field .native-type-text,
   .Basis-Field .native-type-password
@@ -17,18 +18,6 @@
     border: 1px solid #808080;
     background-color: white;
     padding: 2px;
-  }
-  .Basis-Field-Container SELECT
-  {
-    width: 100%;
-  }
-  .Basis-Field__invalid .Basis-Field-Container
-  {
-    background: url(res/warning.gif) left 0.2em no-repeat;
-  }
-  .Basis-Field__valid .Basis-Field-Container
-  {
-    background: url(res/ok.gif) left 0.2em no-repeat;
   }
   .Basis-Field__invalid TEXTAREA
   .Basis-Field__invalid .native-type-text,
@@ -55,18 +44,16 @@
 
   /* Checkbox, Radio */
 
-  .Basis-CheckGroup LABEL INPUT,
-  .Basis-RadioGroup LABEL INPUT,
-  .Basis-Field-Checkbox LABEL INPUT
+  .native-type-checkbox,
+  .native-type-radio
   {
     margin: 0 0.5ex 0 0;
+    display: inline-block;
+    vertical-align: middle;
   }
 
-  .Basis-CheckGroup LABEL INPUT,
   .Basis-CheckGroup LABEL SPAN,
-  .Basis-RadioGroup LABEL INPUT,
   .Basis-RadioGroup LABEL SPAN,
-  .Basis-Field-Checkbox LABEL INPUT,
   .Basis-Field-Checkbox LABEL SPAN
   {
     display: inline-block;
