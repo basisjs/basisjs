@@ -44,13 +44,11 @@
   /* head, foot*/
   .Basis-ScrollTable-Header-Container
   {
-    dire2ction: rtl;
     position: relative;
     margin-top: -1px;
   }
   .Basis-ScrollTable-Header-Container TABLE
   {
-    direc2tion: rtl;
   }
   .Basis-ScrollTable-Footer-Container
   {
@@ -71,7 +69,6 @@
     direction: rtl;
     overflow: visible;
     position: absolute;
-    ov3erflow: hidden;
     height: 100%;
     right: 0;
     top: 0;
