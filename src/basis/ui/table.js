@@ -437,7 +437,10 @@
     childClass: null,
     repaintCount: 0,
 
-    template: resource('templates/table/Row.tmpl'),
+    template: //resource('templates/table/Row.tmpl'),
+      '<tr class="Basis-Table-Row {selected} {disabled}" event-click="select">' +
+        '<!--{cells}-->' +
+      '</tr>',
 
     action: { 
       select: function(event){

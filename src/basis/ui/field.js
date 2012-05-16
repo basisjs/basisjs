@@ -84,8 +84,10 @@
   /** @const */ var VALIDITY_VALID = 'valid';
   /** @const */ var VALIDITY_INVALID = 'invalid';
 
+  // TODO: remove
+  resource('templates/field/field.css')().startUse();
+
   var baseFieldTemplate = new Template(
-    '{resource:' + __dirname + 'templates/field/field.css}' +
     '<div{sampleContainer} class="Basis-Field {disabled} Basis-Field__{validity}" title="{error}">' +
       '<div class="Basis-Field-Title">' +
         '<label>' +
@@ -920,6 +922,11 @@
     }
   });
 
+  // TODO: remove
+  var initComboboxStyle = Function.runOnce(function(){
+    resource('templates/field/Combobox.css')().startUse();
+  });
+
  /**
   * @class
   */
@@ -942,7 +949,6 @@
     property: null,
 
     template: createFieldTemplate(baseFieldTemplate,
-      '{resource:' + __dirname + 'templates/field/Combobox.css}' +
       '<span{field|focus} class="Basis-DropdownList Basis-DropdownList-{opened} {disabled}"' +
         ' event-click="togglePopup"' +
         ' event-keyup="keyup"' +
@@ -1051,6 +1057,8 @@
     },
 
     init: function(){
+      initComboboxStyle(); // TODO: remove
+
       if (!basis.ui.popup)
         throw new Error('basis.ui.popup required for DropDownList');
 
