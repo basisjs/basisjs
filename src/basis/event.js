@@ -54,13 +54,13 @@
 
           function dispatchEvent(){
             var handlers = this.handlers_;
-            var listenHandler;
-            var config;
+            var handler;
+            var args;
             var fn;
 
             if (eventFunction.listen)
               if (fn = this.listen[eventFunction.listenName])
-                eventFunction.listen.call(this, fn, arguments);
+                eventFunction.listen.call(this, fn, args = [this].concat(slice.call(arguments)));
 
             if (handlers && handlers.length)
             {
@@ -69,17 +69,20 @@
 
               for (var i = handlers.length; i --> 0;)
               {
-                config = handlers[i];
+                handler = handlers[i];
 
                 // handler call
-                if (fn = config.handler[eventName])
+                if (fn = handler.handler[eventName])
                   if (typeof fn == 'function')
-                    fn.apply(config.thisObject, arguments);
+                  {
+                    args = args || [this].concat(slice.call(arguments));
+                    fn.apply(handler.thisObject, args);
+                  }
 
                 // any event handler
-                if (fn = config.handler['*'])
+                if (fn = handler.handler['*'])
                   if (typeof fn == 'function')
-                    fn.call(config.thisObject, {
+                    fn.call(handler.thisObject, {
                       sender: this,
                       type: eventName,
                       args: arguments
@@ -160,7 +163,7 @@
     * @param {Basis.EventObject} object Reference for object wich is destroing.
     * @event
     */
-    event_destroy: createEvent('destroy', 'object'),
+    event_destroy: createEvent('destroy'),
 
    /**
     * Related object listeners.
@@ -262,7 +265,7 @@
       if (this.handlers_)
       {
         // fire object destroy event handlers
-        events.destroy.call(this, this);
+        events.destroy.call(this);
 
         // remove all event handler sets
         this.handlers_ = null;

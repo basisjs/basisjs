@@ -70,8 +70,8 @@
       }
     },
 
-    event_update: function(object, delta){
-      nsTree.Node.prototype.event_update.call(this, object, delta);
+    event_update: function(delta){
+      nsTree.Node.prototype.event_update.call(this, delta);
       updatedNodes.add([this]);
     },
 

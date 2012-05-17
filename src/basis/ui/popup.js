@@ -81,7 +81,7 @@
       if (!this.visible)
       {
         DOM.remove(this.element);
-        this.event_cleanup(this);
+        this.event_cleanup();
       }
     }
   };
@@ -379,7 +379,7 @@
           else
           {
             DOM.remove(this.element);
-            this.event_cleanup(this);
+            this.event_cleanup();
           }
         }
 
@@ -435,7 +435,7 @@
 
     selection: true,
     childClass: Popup,
-    event_childNodesModified: function(object, delta){
+    event_childNodesModified: function(delta){
       if (delta.deleted)
         for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
           item.hide();
@@ -464,7 +464,7 @@
         Event.removeHandler(window, 'resize', this.realignAll, this);
       }
 
-      UIContainer.prototype.event_childNodesModified.call(this, object, delta);
+      UIContainer.prototype.event_childNodesModified.call(this, delta);
     },
 
     insertBefore: function(newChild, refChild){

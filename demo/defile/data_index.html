@@ -276,9 +276,9 @@
             },
             instanceOf: nsData.Object.subclass({
               active: true,
-              event_update: function(object, delta){
+              event_update: function(delta){
                 //console.log(count++, delta);
-                nsData.Object.prototype.event_update.call(this, object, delta);
+                nsData.Object.prototype.event_update.call(this, delta);
 
                 var tmpl = this.owner.tmpl;
                 tmpl.percentOfTotalSum.nodeValue = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);

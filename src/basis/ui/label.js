@@ -60,7 +60,7 @@
   //
 
   var condChangedTrigger = function(){
-    this.event_condChanged(this);
+    this.event_condChanged();
   };
 
  /**
@@ -80,8 +80,8 @@
       return owner.tmpl.content || owner.element;
     },
 
-    event_visibilityChanged: createEvent('visibilityChanged', 'node') && function(node){
-      events.visibilityChanged.call(this, node);
+    event_visibilityChanged: createEvent('visibilityChanged') && function(){
+      events.visibilityChanged.call(this);
 
       if (this.insertPoint)
       {
@@ -99,23 +99,23 @@
         cssom.display(this.element, this.visible);
     },
 
-    event_condChanged: createEvent('condChanged', 'node') && function(node){
-      events.condChanged.call(this, node);
+    event_condChanged: createEvent('condChanged') && function(){
+      events.condChanged.call(this);
 
       var visible = this.owner ? !!this.visibilityGetter(this.owner) : false;
 
       if (this.visible !== visible)
       {
         this.visible = visible;
-        this.event_visibilityChanged(this);
+        this.event_visibilityChanged();
       }
     },
 
-    event_ownerChanged: function(node, oldOwner){
-      UINode.prototype.event_ownerChanged.call(this, node, oldOwner);
+    event_ownerChanged: function(oldOwner){
+      UINode.prototype.event_ownerChanged.call(this, oldOwner);
 
       condChangedTrigger.call(this);
-      //this.event_condChanged.call(this)
+      //this.event_condChanged.call()
     }/*,
 
     init: function(){
@@ -184,7 +184,7 @@
     if (oldOwnerDataSource != newOwnerDataSource)
     {
       this.ownerDataSource = newOwnerDataSource;
-      this.event_ownerDataSourceChanged(this, oldOwnerDataSource);
+      this.event_ownerDataSourceChanged(oldOwnerDataSource);
     }
   }
 
@@ -208,14 +208,14 @@
 
     ownerDataSource: null,
 
-    event_ownerChanged: function(node, oldOwner){
-      UINode.prototype.event_ownerChanged.call(this, node, oldOwner);
+    event_ownerChanged: function(oldOwner){
+      UINode.prototype.event_ownerChanged.call(this, oldOwner);
 
       syncOwnerDataSource.call(this);
     },
 
-    event_ownerDataSourceChanged: createEvent('ownerDataSourceChanged', 'node', 'oldOwnerDataSource') && function(node, oldOwnerDataSource){
-      events.ownerDataSourceChanged.call(this, node, oldOwnerDataSource);
+    event_ownerDataSourceChanged: createEvent('ownerDataSourceChanged', 'oldOwnerDataSource') && function(oldOwnerDataSource){
+      events.ownerDataSourceChanged.call(this, oldOwnerDataSource);
 
       condChangedTrigger.call(this);
     }

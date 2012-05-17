@@ -28,16 +28,16 @@
         init_.apply(this, arguments);
       };
 
-      Basis.Entity.BaseEntity.prototype.event_update = function(obj, delta){
+      Basis.Entity.BaseEntity.prototype.event_update = function(delta){
         this.history_.push(delta);
         this.historyAll_.push(['update'].concat(Array.from(arguments)));
-        Basis.EventObject.event.update.apply(this, arguments);
+        Basis.EventObject.event.update.call(this, delta);
       }
       
 
-      Basis.Entity.BaseEntity.prototype.event_rollbackUpdate = function(obj, delta){
+      Basis.Entity.BaseEntity.prototype.event_rollbackUpdate = function(delta){
         this.historyAll_.push(['rollbackUpdate'].concat(Array.from(arguments)));
-        Basis.EventObject.event.rollbackUpdate.apply(this, arguments);
+        Basis.EventObject.event.rollbackUpdate.call(this, delta);
       }
 
     })();

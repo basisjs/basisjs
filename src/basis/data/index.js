@@ -584,8 +584,8 @@
         member.removeHandler(this.listen.member, this);
     },
 
-    event_sourceChanged: function(dataset, oldSource){
-      MapReduce.prototype.event_sourceChanged.call(this, dataset, oldSource);
+    event_sourceChanged: function(oldSource){
+      MapReduce.prototype.event_sourceChanged.call(this, oldSource);
       
       var index;
 

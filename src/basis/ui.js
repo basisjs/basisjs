@@ -289,17 +289,17 @@
      /**
       * @inheritDoc
       */
-      event_update: function(object, delta){
+      event_update: function(delta){
         this.templateUpdate(this.tmpl, 'update', delta);
 
-        super_.event_update.call(this, object, delta);
+        super_.event_update.call(this, delta);
       },
 
      /**
       * @inheritDoc
       */
-      event_match: function(node){
-        super_.event_match.call(this, node);
+      event_match: function(){
+        super_.event_match.call(this);
 
         cssom.display(this.element, true);
       },
@@ -307,8 +307,8 @@
      /**
       * @inheritDoc
       */
-      event_unmatch: function(node){
-        super_.event_unmatch.call(this, node);
+      event_unmatch: function(){
+        super_.event_unmatch.call(this);
 
         cssom.display(this.element, false);
       },
@@ -452,7 +452,7 @@
               parentNode.replaceChild(this.element, oldElement);
 
             // ??? fire event
-            this.event_templateChanged(this);
+            this.event_templateChanged();
           }
 
           this.templateBinding_ = binding;
@@ -520,7 +520,7 @@
 
           // ??? fire event
           //if (oldTemplate && template)
-          //  this.event_templateChanged(this);
+          //  this.event_templateChanged();
         }
       },
 
@@ -702,9 +702,9 @@
    /**
     * @inheritDoc
     */
-    event_ownerChanged: function(node, oldOwner){
+    event_ownerChanged: function(oldOwner){
       this.syncDomRefs();
-      DWGroupingNode.prototype.event_ownerChanged.call(this, node, oldOwner);
+      DWGroupingNode.prototype.event_ownerChanged.call(this, oldOwner);
     },
 
     listen: {

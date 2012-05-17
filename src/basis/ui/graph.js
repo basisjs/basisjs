@@ -197,16 +197,16 @@
 
     style: {},
 
-    event_sortingChanged: function(node, oldSorting, oldSortingDesc){
-      Canvas.prototype.event_sortingChanged.call(this, node, oldSorting, oldSortingDesc);
+    event_sortingChanged: function(oldSorting, oldSortingDesc){
+      Canvas.prototype.event_sortingChanged.call(this, oldSorting, oldSortingDesc);
       this.redrawRequest();
     },
-    event_groupingChanged: function(node, oldGrouping){
-      Canvas.prototype.event_groupingChanged.call(this, node, oldGrouping);
+    event_groupingChanged: function(oldGrouping){
+      Canvas.prototype.event_groupingChanged.call(this, oldGrouping);
       this.redrawRequest();
     },
-    event_childNodesModified: function(node, delta){
-      Canvas.prototype.event_childNodesModified.call(this, node, delta);
+    event_childNodesModified: function(delta){
+      Canvas.prototype.event_childNodesModified.call(this, delta);
       this.redrawRequest();
     },
 
@@ -261,7 +261,7 @@
           child.removeHandler(SERIES_ITEM_HANDLER, this);
         }
 
-      this.event_valuesChanged(this, valuesDelta);
+      this.event_valuesChanged(valuesDelta);
     } 
   }
 
@@ -274,7 +274,7 @@
       this.valuesMap[key] = value;
       valuesDelta[key] = value;
 
-      this.event_valuesChanged(this, valuesDelta);
+      this.event_valuesChanged(valuesDelta);
     }
   }
 
@@ -305,8 +305,8 @@
     },
 
     //events
-    event_valuesChanged: createEvent('valuesChanged', 'object', 'delta'),
-    event_sourceChanged: createEvent('sourceChanged', 'object', 'oldSource'),
+    event_valuesChanged: createEvent('valuesChanged', 'delta'),
+    event_sourceChanged: createEvent('sourceChanged', 'oldSource'),
     event_disable: createEvent('disable'),
     event_enable: createEvent('enable'),
 
@@ -342,7 +342,7 @@
           SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { inserted: this.source.getItems() });
         }
 
-        this.event_sourceChanged(this, oldSource);
+        this.event_sourceChanged(oldSource);
       }
     },
 
@@ -465,8 +465,8 @@
       return this.keyGetter(object); 
     },
     
-    event_childNodesModified: function(object, delta){
-      Graph.prototype.event_childNodesModified.call(this, object, delta);
+    event_childNodesModified: function(delta){
+      Graph.prototype.event_childNodesModified.call(this, delta);
 
       if (!this.series || !this.series.childNodes)
         return;
@@ -1102,8 +1102,8 @@
       }
     },
 
-    event_ownerChanged: function(object, oldOwner){
-      CanvasLayer.prototype.event_ownerChanged.call(this, object, oldOwner);
+    event_ownerChanged: function(oldOwner){
+      CanvasLayer.prototype.event_ownerChanged.call(this, oldOwner);
       
       if (oldOwner && oldOwner.selection)
       {
@@ -1207,8 +1207,8 @@
       }
     },
 
-    event_ownerChanged: function(object, oldOwner){
-      CanvasLayer.prototype.event_ownerChanged.call(this, object, oldOwner);
+    event_ownerChanged: function(oldOwner){
+      CanvasLayer.prototype.event_ownerChanged.call(this, oldOwner);
 
       if (this.owner)
         this.recalc();

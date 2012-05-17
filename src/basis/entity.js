@@ -976,7 +976,7 @@
         calc(this, delta);
 
         // reg entity in all entity type instances list
-        all.event_datasetChanged(all, {
+        all.event_datasetChanged({
           inserted: [this]
         });
       },
@@ -1157,12 +1157,12 @@
           if (update)
           {
             // fire event
-            this.event_update(this, delta);
+            this.event_update(delta);
             result.delta = delta;
           }
 
           if (rollbackDelta)
-            this.event_rollbackUpdate(this, rollbackDelta);
+            this.event_rollbackUpdate(rollbackDelta);
         }
 
         // return delta or false (if no changes)
@@ -1205,10 +1205,10 @@
           // dispatch events
 
           if (update)
-            this.event_update(this, delta);
+            this.event_update(delta);
 
           if (rollbackUpdate)
-            this.event_rollbackUpdate(this, rollbackDelta);
+            this.event_rollbackUpdate(rollbackDelta);
         }
 
         return update ? delta : false;
@@ -1232,7 +1232,7 @@
         this.update(data);
 
         if (rollbackData)
-          this.event_rollbackUpdate(this, rollbackData);
+          this.event_rollbackUpdate(rollbackData);
       },
       rollback: function(){
         if (this.state == STATE.PROCESSING)
@@ -1247,7 +1247,7 @@
           this.modified = null;
           this.update(rollbackData);
 
-          this.event_rollbackUpdate(this, rollbackData);
+          this.event_rollbackUpdate(rollbackData);
         }
         this.setState(STATE.READY);
       },
@@ -1270,7 +1270,7 @@
         DataObject.prototype.destroy.call(this);
 
         // delete from all entity type list (is it right order?)
-        all.event_datasetChanged(all, {
+        all.event_datasetChanged({
           deleted: [this]
         });
 

@@ -108,10 +108,10 @@
     scrollX: true,
     scrollY: true,
 
-    event_start: createEvent('start', 'scrollerObject'),
-    event_finish: createEvent('finish', 'scrollerObject'),
-    event_startInertia: createEvent('startInertia', 'scrollerObject'),
-    event_updatePosition: createEvent('updatePosition', 'scrollerObject', 'scrollPosition'),
+    event_start: createEvent('start'),
+    event_finish: createEvent('finish'),
+    event_startInertia: createEvent('startInertia'),
+    event_updatePosition: createEvent('updatePosition', 'scrollPosition'),
 
     init: function(){
       this.lastMouseX = 0;
@@ -208,7 +208,7 @@
       this.lastUpdateTime = Date.now();
       this.updateFrameHandle = this.nextFrame();
 
-      this.event_start(this);
+      this.event_start();
     },
 
     stopUpdate: function(){
@@ -222,7 +222,7 @@
 
       this.updateElementPosition();
 
-      this.event_finish(this);
+      this.event_finish();
     },
 
     onMouseDown: function(event){
@@ -331,7 +331,7 @@
       Event.removeHandler(document, 'mouseup',   this.onMouseUp, this);
       Event.removeHandler(document, 'touchend',  this.onMouseUp, this);
 
-      this.event_startInertia(this);
+      this.event_startInertia();
     },
 
     onUpdate: function(time){
@@ -420,7 +420,7 @@
       }
 
       this.updateElementPosition();
-      this.event_updatePosition(this, time, this.viewportX, this.viewportY);
+      this.event_updatePosition(time, this.viewportX, this.viewportY);
 
       this.nextFrame();
     },
@@ -675,7 +675,7 @@
       if (!this.scroller.panningActive)
         this.fixPosition();
 
-      this.event_updatePosition(this);
+      this.event_updatePosition();
     },
 
     fixPosition: function(){
@@ -753,8 +753,8 @@
       }
     },
 
-    event_childNodesModified: function(object, delta){
-      ScrollPanel.prototype.event_childNodesModified.call(this, object, delta);
+    event_childNodesModified: function(delta){
+      ScrollPanel.prototype.event_childNodesModified.call(this, delta);
 
       if (this.scroller && this.childNodes.length == delta.inserted.length)
       {
@@ -776,7 +776,7 @@
       },
 
       event_select: function(){
-        uiNode.prototype.event_select.apply(this, arguments);
+        uiNode.prototype.event_select.call(this);
         this.parentNode.scrollToChild(this);
       }
     }),

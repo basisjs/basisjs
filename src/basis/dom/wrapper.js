@@ -324,7 +324,7 @@
         satellite = new config.instanceOf(satelliteConfig);
 
         owner.satellite[key] = satellite;
-        owner.event_satelliteChanged(this, key, null);
+        owner.event_satelliteChanged(key, null);
 
         if (owner.listen.satellite)
           satellite.addHandler(owner.listen.satellite, owner);
@@ -336,7 +336,7 @@
       {
         delete owner.satellite[key];
 
-        owner.event_satelliteChanged(owner, key, satellite);
+        owner.event_satelliteChanged(key, satellite);
 
         satellite.destroy();
       }
@@ -373,8 +373,8 @@
    /**
     * @inheritDoc
     */
-    event_update: function(object, delta){
-      DataObject.prototype.event_update.call(this, object, delta);
+    event_update: function(delta){
+      DataObject.prototype.event_update.call(this, delta);
 
       var parentNode = this.parentNode;
       if (parentNode)
@@ -397,8 +397,8 @@
     * @param {object} delta Delta of changes.
     * @event
     */
-    event_childNodesModified: createEvent('childNodesModified', 'node', 'delta') && function(node, delta){
-      events.childNodesModified.call(this, node, delta);
+    event_childNodesModified: createEvent('childNodesModified', 'delta') && function(delta){
+      events.childNodesModified.call(this, delta);
 
       var listen = this.listen.childNode;
       var array;
@@ -418,33 +418,33 @@
     * @param {basis.dom.wrapper.AbstractNode} node
     * @param {basis.data.AbstractDataset} oldDataSource
     */
-    event_dataSourceChanged: createEvent('dataSourceChanged', 'node', 'oldDataSource'),
+    event_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
     * @param {basis.dom.wrapper.GroupingNode} oldGroupingNode
     */
-    event_groupingChanged: createEvent('groupingChanged', 'node', 'oldGroupingNode'),
+    event_groupingChanged: createEvent('groupingChanged', 'oldGroupingNode'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
     * @param {function()} oldSorting
     * @param {boolean} oldSortingDesc
     */
-    event_sortingChanged: createEvent('sortingChanged', 'node', 'oldSorting', 'oldSortingDesc'),
+    event_sortingChanged: createEvent('sortingChanged', 'oldSorting', 'oldSortingDesc'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node
     * @param {basis.dom.wrapper.AbstractNode} oldOwner
     */
-    event_ownerChanged: createEvent('ownerChanged', 'node', 'oldOwner'),
+    event_ownerChanged: createEvent('ownerChanged', 'oldOwner'),
 
    /**
     * @param {basis.dom.wrapper.AbstractNode} node Initiator of event
     * @param {string} key
     * @param {basis.dom.wrapper.AbstractNode} oldSattelite Old satellite for key
     */
-    event_satelliteChanged: createEvent('satelliteChanged', 'node', 'key', 'oldSattelite'),
+    event_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSattelite'),
 
     //
     // properties
@@ -686,7 +686,7 @@
           var satellite = this.satellite[key];
 
           satellite.setOwner(this);
-          this.event_satelliteChanged(this, key, null);
+          this.event_satelliteChanged(key, null);
 
           if (satelliteListen)
             satellite.addHandler(satelliteListen, this);
@@ -747,7 +747,7 @@
             satellite.addHandler(satelliteListen, this);
         }
 
-        this.event_satelliteChanged(this, key, oldSatellite);
+        this.event_satelliteChanged(key, oldSatellite);
       }
     },
 
@@ -834,7 +834,7 @@
       {
         this.owner = owner;
 
-        this.event_ownerChanged(this, oldOwner);
+        this.event_ownerChanged(oldOwner);
 
         if (this.autoDelegate == DELEGATE.OWNER)
           this.setDelegate(owner);
@@ -962,7 +962,7 @@
 
       newNode.groupNode = this;
 
-      this.event_childNodesModified(this, { inserted: [newNode] });
+      this.event_childNodesModified({ inserted: [newNode] });
     },
 
    /**
@@ -977,7 +977,7 @@
         this.last = nodes[nodes.length - 1] || null;
         oldNode.groupNode = null;
 
-        this.event_childNodesModified(this, { deleted: [oldNode] });
+        this.event_childNodesModified({ deleted: [oldNode] });
       }
 
       if (!this.first && this.autoDestroyIfEmpty)
@@ -1004,7 +1004,7 @@
       this.first = null;
       this.last = null;
 
-      this.event_childNodesModified(this, { deleted: nodes });
+      this.event_childNodesModified({ deleted: nodes });
 
       // destroy partition if necessary
       if (this.autoDestroyIfEmpty)
@@ -1099,7 +1099,7 @@
         // use fast child insert method if possible (it also fire childNodesModified event)
         this.setChildNodes(newDelta.inserted);
       else
-        this.event_childNodesModified(this, newDelta);
+        this.event_childNodesModified(newDelta);
 
       // destroy removed items
       if (this.destroyDataSourceMember && deleted.length)
@@ -1140,7 +1140,7 @@
       group.first = nodes[0] || null;
       group.last = nodes[nodes.length - 1] || null;
       order.push.apply(order, nodes);
-      group.event_childNodesModified(group, { inserted: nodes });
+      group.event_childNodesModified({ inserted: nodes });
     }
 
     return order;
@@ -1551,7 +1551,7 @@
 
         // dispatch event
         if (!this.dataSource)
-          this.event_childNodesModified(this, { inserted: [newChild] });
+          this.event_childNodesModified({ inserted: [newChild] });
 
         if (newChild.listen.parentNode)
           this.addHandler(newChild.listen.parentNode, newChild);
@@ -1613,7 +1613,7 @@
 
       // dispatch event
       if (!this.dataSource)
-        this.event_childNodesModified(this, { deleted: [oldChild] });
+        this.event_childNodesModified({ deleted: [oldChild] });
 
       if (oldChild.autoDelegate == DELEGATE.PARENT)
         oldChild.setDelegate();
@@ -1665,7 +1665,7 @@
 
       // dispatch event
       // NOTE: important dispatch event before nodes remove/destroy, because listeners may analyze removing nodes
-      this.event_childNodesModified(this, { deleted: childNodes });
+      this.event_childNodesModified({ deleted: childNodes });
 
       for (var i = childNodes.length; i --> 0;)
       {
@@ -1719,7 +1719,7 @@
 
           // restore event dispatch & dispatch changes event
           this.event_childNodesModified = tmp;
-          this.event_childNodesModified(this, { inserted: this.childNodes });
+          this.event_childNodesModified({ inserted: this.childNodes });
         }
       }
     },
@@ -1767,7 +1767,7 @@
 
         // TODO: restore sorting & grouping, fast node reorder
 
-        this.event_dataSourceChanged(this, oldDataSource);
+        this.event_dataSourceChanged(oldDataSource);
       }
     },
 
@@ -1849,7 +1849,7 @@
           }
         }
 
-        this.event_groupingChanged(this, oldGroupingNode);
+        this.event_groupingChanged(oldGroupingNode);
       }
     },
 
@@ -1904,7 +1904,7 @@
           fastChildNodesOrder(this, order);
         }
 
-        this.event_sortingChanged(this, oldSorting, oldSortingDesc);
+        this.event_sortingChanged(oldSorting, oldSortingDesc);
       }
     },
 
@@ -1921,7 +1921,7 @@
         for (var node = this.lastChild; node; node = node.previousSibling)
           node.match(matchFunction);
 
-        this.event_matchFunctionChanged(this, oldMatchFunction);
+        this.event_matchFunctionChanged(oldMatchFunction);
       }
     }
   };
@@ -1937,53 +1937,53 @@
     * Occurs after disabled property has been set to false.
     * @event
     */
-    event_enable: createEvent('enable', 'node') && function(sender){
+    event_enable: createEvent('enable') && function(){
       for (var child = this.firstChild; child; child = child.nextSibling)
         updateNodeDisableContext(child, false);
 
-      events.enable.call(this, sender);
+      events.enable.call(this);
     },
 
    /**
     * Occurs after disabled property has been set to true.
     * @event
     */
-    event_disable: createEvent('disable', 'node') && function(sender){
+    event_disable: createEvent('disable') && function(){
       for (var child = this.firstChild; child; child = child.nextSibling)
         updateNodeDisableContext(child, true);
 
-      events.disable.call(this, sender);
+      events.disable.call(this);
     },
 
    /**
     * Occurs after selected property has been set to true.
     * @event
     */
-    event_select: createEvent('select', 'node'),
+    event_select: createEvent('select'),
 
    /**
     * Occurs after selected property has been set to false.
     * @event
     */
-    event_unselect: createEvent('unselect', 'node'),
+    event_unselect: createEvent('unselect'),
 
    /**
     * Occurs after matched property has been set to true.
     * @event
     */
-    event_match: createEvent('match', 'node'),
+    event_match: createEvent('match'),
 
    /**
     * Occurs after matched property has been set to false.
     * @event
     */
-    event_unmatch: createEvent('unmatch', 'node'),
+    event_unmatch: createEvent('unmatch'),
 
    /**
     * Occurs after matchFunction property has been changed.
     * @event
     */
-    event_matchFunctionChanged: createEvent('matchFunctionChanged', 'node', 'oldMatchFunction'),
+    event_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
 
    /**
     * Indicate could be able node to be selected or not.
@@ -2075,7 +2075,7 @@
 
       // synchronize node state according to config
       if (this.disabled)
-        this.event_disable(this);
+        this.event_disable();
 
       if (this.selected)
       {
@@ -2148,7 +2148,7 @@
         if (!selected && this.selectable/* && !this.isDisabled()*/)
         {
           this.selected = true;
-          this.event_select(this);
+          this.event_select();
         }
 
       return this.selected != selected;
@@ -2170,7 +2170,7 @@
         else
         {
           this.selected = false;
-          this.event_unselect(this);
+          this.event_unselect();
         }
       }
 
@@ -2187,7 +2187,7 @@
         this.disabled = false;
 
         if (this.disabled == this.contextDisabled)
-          this.event_enable(this);
+          this.event_enable();
       }
     },
 
@@ -2200,7 +2200,7 @@
         this.disabled = true;
 
         if (this.disabled != this.contextDisabled)
-          this.event_disable(this);
+          this.event_disable();
       }
     },
 
@@ -2231,9 +2231,9 @@
         this.matched = matched;
 
         if (matched)
-          this.event_match(this)
+          this.event_match();
         else
-          this.event_unmatch(this)
+          this.event_unmatch();
       }
     },
 
@@ -2264,8 +2264,8 @@
    /**
     * @inheritDoc
     */
-    event_childNodesModified: function(node, delta){
-      events.childNodesModified.call(this, node, delta);
+    event_childNodesModified: function(delta){
+      events.childNodesModified.call(this, delta);
 
       this.nullGroup.nextSibling = this.firstChild;
 
@@ -2291,7 +2291,7 @@
    /**
     * @inheritDoc
     */
-    event_ownerChanged: function(node, oldOwner){
+    event_ownerChanged: function(oldOwner){
       // detach from old owner, if it still connected
       if (oldOwner && oldOwner.grouping === this)
         oldOwner.setGrouping(null, true);
@@ -2300,7 +2300,7 @@
       if (this.owner && this.owner.grouping !== this)
         this.owner.setGrouping(this);
 
-      events.ownerChanged.call(this, node, oldOwner);
+      events.ownerChanged.call(this, oldOwner);
 
       if (!this.owner && this.autoDestroyWithNoOwner)
         this.destroy();
@@ -2549,7 +2549,7 @@
       }
 
       if (insertCount || deleteCount)
-        this.event_datasetChanged(this, newDelta);
+        this.event_datasetChanged(newDelta);
     },
     destroy: function(){
       if (this.autoDestroy)
@@ -2575,8 +2575,8 @@
       sourceNode: CHILDNODESDATASET_HANDLER
     },
 
-    event_sourceNodeChanged: createEvent('sourceNodeChanged') && function(object, oldSourceNode){
-      events.sourceNodeChanged.call(this, object, oldSourceNode);
+    event_sourceNodeChanged: createEvent('sourceNodeChanged') && function(oldSourceNode){
+      events.sourceNodeChanged.call(this, oldSourceNode);
 
       if (!this.sourceNode && this.autoDestroy)
         this.destroy();
@@ -2636,7 +2636,7 @@
           }
         }
 
-        this.event_sourceNodeChanged(this, oldSourceNode);
+        this.event_sourceNodeChanged(oldSourceNode);
       }
     },
 
@@ -2676,8 +2676,8 @@
    /**
     * @inheritDoc
     */
-    event_datasetChanged: function(dataset, delta){
-      Dataset.prototype.event_datasetChanged.call(this, dataset, delta);
+    event_datasetChanged: function(delta){
+      Dataset.prototype.event_datasetChanged.call(this, delta);
 
       if (delta.inserted)
       {
@@ -2686,7 +2686,7 @@
           if (!node.selected)
           {
             node.selected = true;
-            node.event_select(node);
+            node.event_select();
           }
         }
       }
@@ -2698,7 +2698,7 @@
           if (node.selected)
           {
             node.selected = false;
-            node.event_unselect(node);
+            node.event_unselect();
           }
         }
       }

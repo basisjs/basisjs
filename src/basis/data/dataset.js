@@ -213,7 +213,7 @@
     * and `deleted` property is array of removed sources.
     * @event
     */
-    event_sourcesChanged: createEvent('sourcesChanged', 'dataset', 'delta'),
+    event_sourcesChanged: createEvent('sourcesChanged', 'delta'),
 
    /**
     * @type {Array.<basis.data.AbstractDataset>}
@@ -300,7 +300,7 @@
 
       // fire event if delta found
       if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(this, delta);
+        this.event_datasetChanged(delta);
 
       return delta;
     },
@@ -343,7 +343,7 @@
           this.applyRule();
 
           // fire sources changes event
-          this.event_sourcesChanged(this, {
+          this.event_sourcesChanged({
             inserted: [source]
           });
 
@@ -377,7 +377,7 @@
         this.applyRule();
 
         // fire sources changes event
-        this.event_sourcesChanged(this, {
+        this.event_sourcesChanged({
           deleted: [source]
         });
 
@@ -493,7 +493,7 @@
       );
       
       if (newDelta)
-        this.event_datasetChanged(this, newDelta);
+        this.event_datasetChanged(newDelta);
     },
     destroy: function(){
       this.setOperands(null, this.subtrahend);
@@ -511,7 +511,7 @@
       );
 
       if (newDelta)
-        this.event_datasetChanged(this, newDelta);
+        this.event_datasetChanged(newDelta);
     },
     destroy: function(){
       this.setOperands(this.minuend, null);
@@ -546,7 +546,7 @@
     * @param {object} oldState Object state before changes.
     * @event
     */
-    event_operandsChanged: createEvent('operandsChanged', 'dataset', 'oldMinuend', 'oldSubtrahend'),
+    event_operandsChanged: createEvent('operandsChanged', 'oldMinuend', 'oldSubtrahend'),
 
    /**
     * @inheritDoc
@@ -631,13 +631,13 @@
         return false;
 
       // emit event
-      this.event_operandsChanged(this, oldMinuend, oldSubtrahend);
+      this.event_operandsChanged(oldMinuend, oldSubtrahend);
 
       // apply changes
       if (!minuend || !subtrahend)
       {
         if (this.itemCount)
-          this.event_datasetChanged(this, delta = {
+          this.event_datasetChanged(delta = {
             deleted: this.getItems()
           });
       }
@@ -655,7 +655,7 @@
             inserted.push(minuend.item_[key]);
 
         if (delta = getDelta(inserted, deleted))
-          this.event_datasetChanged(this, delta);
+          this.event_datasetChanged(delta);
       }
 
       return delta;
@@ -715,7 +715,7 @@
     * @param {basis.data.AbstractDataset} oldSource Previous value for source property.
     * @event
     */
-    event_sourceChanged: createEvent('sourceChanged', 'dataset', 'oldSource'),
+    event_sourceChanged: createEvent('sourceChanged', 'oldSource'),
 
    /**
     * @inheritDoc
@@ -784,7 +784,7 @@
           }
         }
 
-        this.event_sourceChanged(this, oldSource);
+        this.event_sourceChanged(oldSource);
       }
     },
 
@@ -879,7 +879,7 @@
 
       // fire event, if any delta
       if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(this, delta);
+        this.event_datasetChanged(delta);
     }
   };
 
@@ -962,7 +962,7 @@
       Dataset.setAccumulateState(false);
 
       if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(this, delta);
+        this.event_datasetChanged(delta);
     }
   };
 
@@ -1152,7 +1152,7 @@
 
       // if any changes, fire event
       if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(this, delta);
+        this.event_datasetChanged(delta);
 
       return delta;
     }
@@ -1224,14 +1224,14 @@
     * @inheritDoc
     */
     addMemberRef: function(subset, sourceObject){
-      subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+      subset.event_datasetChanged({ inserted: [sourceObject] });
     },
 
    /**
     * @inheritDoc
     */
     removeMemberRef: function(subset, sourceObject){
-      subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+      subset.event_datasetChanged({ deleted: [sourceObject] });
     },
 
    /**
@@ -1486,7 +1486,7 @@
    /**
     * @event
     */
-    event_rangeChanged: createEvent('rangeChanged', 'dataset', 'oldOffset', 'oldLimit'),
+    event_rangeChanged: createEvent('rangeChanged', 'oldOffset', 'oldLimit'),
 
    /**
     * @config {function} index Function for index value calculation; values are ordering according to this values.
@@ -1519,7 +1519,7 @@
 
         delta = this.applyRule();
 
-        this.event_rangeChanged(this, oldOffset, oldLimit);
+        this.event_rangeChanged(oldOffset, oldLimit);
       }
     },
 
@@ -1570,7 +1570,7 @@
       }
 
       if (delta = getDelta(inserted, values(curSet)))
-        this.event_datasetChanged(this, delta);
+        this.event_datasetChanged(delta);
 
       return delta;
     },
@@ -1617,7 +1617,7 @@
 
           if (!oldList[subsetId])
           {
-            subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+            subset.event_datasetChanged({ inserted: [sourceObject] });
 
             if (!memberMap[subsetId])
             {
@@ -1635,7 +1635,7 @@
       if (!newList[subsetId])
       {
         var subset = oldList[subsetId];
-        subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+        subset.event_datasetChanged({ deleted: [sourceObject] });
 
         if (!--memberMap[subsetId])
         {
@@ -1645,7 +1645,7 @@
       }
 
     if (delta = getDelta(inserted, deleted))
-      this.event_datasetChanged(this, delta);
+      this.event_datasetChanged(delta);
   };
 
   var CLOUD_SOURCE_HANDLER = {
@@ -1683,7 +1683,7 @@
                 subsetId = subset.eventObjectId;
                 sourceObjectInfo.list[subsetId] = subset;
 
-                subset.event_datasetChanged(subset, { inserted: [sourceObject] });
+                subset.event_datasetChanged({ inserted: [sourceObject] });
 
                 if (!memberMap[subsetId])
                 {
@@ -1710,7 +1710,7 @@
           for (var subsetId in list)
           {
             var subset = list[subsetId];
-            subset.event_datasetChanged(subset, { deleted: [sourceObject] });
+            subset.event_datasetChanged({ deleted: [sourceObject] });
 
             if (!--memberMap[subsetId])
             {
@@ -1726,7 +1726,7 @@
       Dataset.setAccumulateState(false);
 
       if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(this, delta);
+        this.event_datasetChanged(delta);
     }
   };
 

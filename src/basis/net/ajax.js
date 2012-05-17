@@ -240,8 +240,8 @@
     debug: false,
     proxy: null,
 
-    event_stateChanged: function(object, oldState){
-      DataObject.prototype.event_stateChanged.call(this, object, oldState);
+    event_stateChanged: function(oldState){
+      DataObject.prototype.event_stateChanged.call(this, oldState);
 
       for (var i = 0; i < this.influence.length; i++)
         this.influence[i].setState(this.state, this.state.data);
@@ -758,7 +758,7 @@
         needSignature: this.isSecure,
 
         event_failure: function(req){
-          this.constructor.superClass_.prototype.event_failure.apply(this, arguments);
+          this.constructor.superClass_.prototype.event_failure.call(this, req);
 
           if (this.needSignature && this.service.isSessionExpiredError(req))
           {

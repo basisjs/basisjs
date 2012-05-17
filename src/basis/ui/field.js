@@ -136,20 +136,20 @@
     // events
     //
 
-    event_commit: createEvent('commit', 'sender'),
-    event_change: createEvent('change', 'sender', 'oldValue') && function(sender, oldValue){
+    event_commit: createEvent('commit'),
+    event_change: createEvent('change', 'oldValue') && function(oldValue){
       this.writeFieldValue_(this.value);
-      events.change.call(this, sender, oldValue);
+      events.change.call(this, oldValue);
     },
-    event_validityChanged: createEvent('validityChanged', 'sender', 'oldValidity'),
-    event_errorChanged: createEvent('errorChanged', 'sender'),
-    event_exampleChanged: createEvent('exampleChanged', 'sender'),
+    event_validityChanged: createEvent('validityChanged', 'oldValidity'),
+    event_errorChanged: createEvent('errorChanged'),
+    event_exampleChanged: createEvent('exampleChanged'),
 
-    event_fieldInput: createEvent('fieldInput', 'sender', 'event'),
-    event_fieldChange: createEvent('fieldChange', 'sender', 'event'),
-    event_fieldKeydown: createEvent('fieldKeydown', 'sender', 'event'),
-    event_fieldKeypress: createEvent('fieldKeypress', 'sender', 'event'),
-    event_fieldKeyup: createEvent('fieldKeyup', 'sender', 'event') && function(sender, event){
+    event_fieldInput: createEvent('fieldInput', 'event'),
+    event_fieldChange: createEvent('fieldChange', 'event'),
+    event_fieldKeydown: createEvent('fieldKeydown', 'event'),
+    event_fieldKeypress: createEvent('fieldKeypress', 'event'),
+    event_fieldKeyup: createEvent('fieldKeyup', 'event') && function(event){
       if (this.nextFieldOnEnter)
       {
         var keyCode = Event.key(event);
@@ -162,18 +162,18 @@
           this.setValidity();
       }
 
-      events.fieldKeyup.call(this, sender, event);
+      events.fieldKeyup.call(this, event);
     },
-    event_fieldFocus: createEvent('fieldFocus', 'sender', 'event') && function(sender, event){
+    event_fieldFocus: createEvent('fieldFocus', 'event') && function(event){
       /*if (this.validity)
         this.setValidity();*/
 
-      events.fieldFocus.call(this, sender, event);
+      events.fieldFocus.call(this, event);
     },
-    event_fieldBlur: createEvent('fieldBlur', 'sender', 'event') && function(sender, event){
+    event_fieldBlur: createEvent('fieldBlur', 'event') && function(event){
       this.validate(true);
 
-      events.fieldBlur.call(this, sender, event);
+      events.fieldBlur.call(this, event);
     },
 
     //
@@ -207,7 +207,7 @@
         var eventName = 'event_field' + item.capitalize();
         res[item] = function(event){
           this.setValue(this.readFieldValue_());
-          this[eventName].call(this, this, event)
+          this[eventName].call(this, event)
         };
         return res;
       },
@@ -259,7 +259,7 @@
       if (example != this.example)
       {
         this.example = example;
-        this.event_exampleChanged(this);
+        this.event_exampleChanged();
       }
     },
 
@@ -275,7 +275,7 @@
       {
         var oldValue = this.value;
         this.value = newValue;
-        this.event_change(this, oldValue);
+        this.event_change(oldValue);
       }
     },
     reset: function(){
@@ -298,7 +298,7 @@
       if (this.validity !== validity)
       {
         this.validity = validity;
-        this.event_validityChanged(this);
+        this.event_validityChanged();
       }
 
       if (!message || validity != VALIDITY_INVALID)
@@ -307,7 +307,7 @@
       if (this.error != message)
       {
         this.error = message;
-        this.event_errorChanged(this);
+        this.event_errorChanged();
       }
     },
     validate: function(onlyValid){
@@ -328,7 +328,7 @@
     },
 
     commit: function(){
-      this.event_commit(this);
+      this.event_commit();
     },
 
     destroy: function(){
@@ -365,8 +365,8 @@
   var TextField = Field.subclass({
     className: namespace + '.TextField',
 
-    event_minLengthChanged: createEvent('minLengthChanged', 'sender'),
-    event_maxLengthChanged: createEvent('maxLengthChanged', 'sender'),
+    event_minLengthChanged: createEvent('minLengthChanged'),
+    event_maxLengthChanged: createEvent('maxLengthChanged'),
 
     defaultValue: '',
     readOnly: false,
@@ -419,7 +419,7 @@
         }
 
         this.minLength = len;
-        this.event_minLengthChanged(this);
+        this.event_minLengthChanged();
       }
     },
     setMaxLength: function(len){
@@ -436,7 +436,7 @@
         }
 
         this.maxLength = len;
-        this.event_maxLengthChanged(this);
+        this.event_maxLengthChanged();
       }
     },
 
@@ -527,15 +527,15 @@
     nextFieldOnEnter: false,
     symbolsLeft: 0,
 
-    event_symbolsLeftChanged: createEvent('symbolsLeftChanged', 'sender'),
+    event_symbolsLeftChanged: createEvent('symbolsLeftChanged'),
     event_fieldFocus: !window.opera
       ? TextField.prototype.event_fieldFocus
         // fix opera's bug: when invisible textarea becomes visible and user
         // changes it content, value property returns empty string instead value in field
-      : function(sender, event){
+      : function(event){
           this.contentEditable = true;
           this.contentEditable = false;
-          TextField.prototype.event_fieldFocus.call(this, sender, event);
+          TextField.prototype.event_fieldFocus.call(this, event);
         },
 
     template: createFieldTemplate(baseFieldTemplate,
@@ -609,7 +609,7 @@
       if (this.symbolsLeft != symbolsLeft)
       {
         this.symbolsLeft = symbolsLeft;
-        this.event_symbolsLeftChanged(this);
+        this.event_symbolsLeftChanged();
       }
     }
   });
@@ -736,7 +736,7 @@
 
   var COMPLEXFIELD_SELECTION_HANDLER = {
     datasetChanged: function(){
-      this.event_change(this);
+      this.event_change();
     }
   }
 
@@ -935,8 +935,8 @@
 
     childClass: ComboboxItem,
     
-    event_change: function(sender, event){
-      ComplexField.prototype.event_change.call(this, sender, event);
+    event_change: function(event){
+      ComplexField.prototype.event_change.call(this, event);
 
       var value = this.getValue();
 
@@ -1033,7 +1033,7 @@
           DOM.focus(this.tmpl.field);
         }
 
-        this.event_fieldKeyup(this, event);
+        this.event_fieldKeyup(event);
       },
       keydown: function(event){
         switch (Event.key(event))
@@ -1052,7 +1052,7 @@
             break;
         }
 
-        this.event_fieldKeydown(this, event);
+        this.event_fieldKeydown(event);
       }
     },
 
@@ -1289,13 +1289,13 @@
 
     matchFilterClass: MatchFilter,
 
-    event_fieldKeyup: function(sender, event){
-      Text.prototype.event_fieldKeyup.call(this, sender, event);
+    event_fieldKeyup: function(event){
+      Text.prototype.event_fieldKeyup.call(this, event);
       this.matchFilter.set(this.getValue());
     },
 
-    event_change: function(sender, event){
-      Text.prototype.event_change.call(this, sender, event);
+    event_change: function(event){
+      Text.prototype.event_change.call(this, event);
       this.matchFilter.set(this.getValue());
     },
 

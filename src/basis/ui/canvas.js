@@ -113,7 +113,7 @@ basis_require('basis.ext.flashcanvas');*/
     drawCount: 0,
     lastDrawUpdateCount: -1,
 
-    event_draw: createEvent('draw', 'object'),
+    event_draw: createEvent('draw'),
     listen: {
       childNode: {
         update: function(){
@@ -153,7 +153,7 @@ basis_require('basis.ext.flashcanvas');*/
 
       this.drawFrame();
 
-      this.event_draw(this);
+      this.event_draw();
 
       return true;
     },

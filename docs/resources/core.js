@@ -208,8 +208,8 @@
         }
       }
     },
-    event_update: function(object, delta){
-      nsData.DataObject.prototype.event_update.call(this, object, delta);
+    event_update: function(delta){
+      nsData.DataObject.prototype.event_update.call(this, delta);
       if (this.subscriberCount && 'text' in delta)
       {
         var self = this;
@@ -220,6 +220,7 @@
       this.setActive(!!this.subscriberCount);
     },
     event_subscribersChanged: function(){
+      nsData.DataObject.prototype.event_subscribersChanged.call(this);
       if (this.subscriberCount && this.data.text)
       {
         var self = this;
@@ -245,7 +246,7 @@
         if (doc)
           this.set('tags', doc.data.tags);
 
-        this.event_inheritDocChanged(this, oldInherit);
+        this.event_inheritDocChanged(oldInherit);
       }
     },
     destroy: function(){

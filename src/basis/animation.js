@@ -146,7 +146,7 @@
     destroy: function(){
       this.stop();
 
-      Property.prototype.destroy.call();
+      Property.prototype.destroy.call(this);
     }
   });
 

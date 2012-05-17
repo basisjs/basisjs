@@ -66,7 +66,7 @@
   var PaginatorNode = UINode.subclass({
     className: namespace + '.PaginatorNode',
 
-    event_pageNumberChanged: createEvent('pageNumberChanged', 'node', 'oldPageNumber'),
+    event_pageNumberChanged: createEvent('pageNumberChanged', 'oldPageNumber'),
 
     template: resource('templates/paginator/PaginatorNode.tmpl'),
 
@@ -98,7 +98,7 @@
         var oldPageNumber = this.pageNumber;
         this.pageNumber = pageNumber;
 
-        this.event_pageNumberChanged(this, oldPageNumber);
+        this.event_pageNumberChanged(oldPageNumber);
       }
     }
   });

@@ -418,7 +418,9 @@
     var relatedTree = new nsTree.Tree({
       id: 'RelatedTree',
 
-      event_targetChanged: function(object, delta){
+      event_targetChanged: function(delta){
+        nsTree.Tree.prototype.event_targetChanged.call(this, delta);
+
         cssom.visibility(this.element.parentNode, !!this.target);
 
         if (this.target)

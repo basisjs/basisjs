@@ -173,8 +173,8 @@
   var Slider = UINode.subclass({
     className: namespace + '.Slider',
 
-    event_change: createEvent('change', 'oldValue') && function(sender, oldValue){
-      events.change.call(this, sender, oldValue);
+    event_change: createEvent('change', 'oldValue') && function(oldValue){
+      events.change.call(this, oldValue);
       this.templateUpdate(this.tmpl, 'change');
     },
 
@@ -431,7 +431,7 @@
         this.value = this.normalize(this.min + stepValue * this.step);
         this.stepValue = stepValue;
 
-        this.event_change(this, oldValue);
+        this.event_change(oldValue);
       }
     },
 

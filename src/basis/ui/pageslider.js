@@ -49,7 +49,7 @@
       className: namespace + '.Page',
 
       event_select: function(){
-        PageControl.prototype.childClass.prototype.event_select.apply(this, arguments);
+        PageControl.prototype.childClass.prototype.event_select.call(this);
         this.parentNode.scrollToPage(this);
       }
     },*/
@@ -62,8 +62,8 @@
       }
     },
 
-    event_childNodesModified: function(node, delta){
-      PageControl.prototype.event_childNodesModified.call(this, node, delta);
+    event_childNodesModified: function(delta){
+      PageControl.prototype.event_childNodesModified.call(this, delta);
 
       for (var i = 0, child; child = this.childNodes[i]; i++)
         cssom.setStyle(child.element, {

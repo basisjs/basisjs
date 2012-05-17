@@ -61,9 +61,9 @@
 
     autoSelectChild: true,
 
-    event_childNodesModified: function(node, delta){
+    event_childNodesModified: function(delta){
       findAndSelectActiveNode(this);
-      UIContainer.prototype.event_childNodesModified.call(this, node, delta);
+      UIContainer.prototype.event_childNodesModified.call(this, delta);
     },
 
     listen: {
@@ -111,11 +111,11 @@
     childClass: null,
 
     unselectDisabled: true,
-    event_disable: function(node){
+    event_disable: function(){
       if (this.unselectDisabled)
         this.unselect();
 
-      UIContainer.prototype.event_disable.call(this, node);
+      UIContainer.prototype.event_disable.call(this);
     },
 
     template: resource('templates/tabs/Tab.tmpl'),

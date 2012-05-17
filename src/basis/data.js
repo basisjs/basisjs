@@ -137,7 +137,7 @@
                 var oldSubscriberCount = object.subscriberCount;
                 object.subscribers_[subscriberId] = thisObject;
                 object.subscriberCount += 1;
-                object.event_subscribersChanged(object, oldSubscriberCount);
+                object.event_subscribersChanged(oldSubscriberCount);
               }
               else
               {
@@ -154,7 +154,7 @@
                 var oldSubscriberCount = object.subscriberCount;
                 delete object.subscribers_[subscriberId];
                 object.subscriberCount -= 1;
-                object.event_subscribersChanged(object, oldSubscriberCount);
+                object.event_subscribersChanged(oldSubscriberCount);
               }
               else
               {
@@ -341,7 +341,7 @@
     * (value of property before changes).
     * @event
     */
-    event_update: createEvent('update', 'object', 'delta'),
+    event_update: createEvent('update', 'delta'),
 
    /**
     * Fires when state or state.data was changed.
@@ -349,7 +349,7 @@
     * @param {object} oldState Object state before changes.
     * @event
     */
-    event_stateChanged: createEvent('stateChanged', 'object', 'oldState'),
+    event_stateChanged: createEvent('stateChanged', 'oldState'),
 
    /**
     * Fires when delegate was changed.
@@ -357,7 +357,7 @@
     * @param {basis.data.DataObject} oldDelegate Object delegate before changes.
     * @event
     */
-    event_delegateChanged: createEvent('delegateChanged', 'object', 'oldDelegate'),
+    event_delegateChanged: createEvent('delegateChanged', 'oldDelegate'),
 
    /**
     * Fires when root of delegate chain was changed.
@@ -365,7 +365,7 @@
     * @param {basis.data.DataObject} oldRoot Object root before changes.
     * @event
     */
-    event_rootChanged: createEvent('rootChanged', 'object', 'oldRoot'),
+    event_rootChanged: createEvent('rootChanged', 'oldRoot'),
 
    /**
     * Fires when target property was changed.
@@ -373,20 +373,20 @@
     * @param {basis.data.DataObject} oldTarget Object before changes.
     * @event
     */
-    event_targetChanged: createEvent('targetChanged', 'object', 'oldTarget'),
+    event_targetChanged: createEvent('targetChanged', 'oldTarget'),
 
    /**
     * Fires when count of subscribers (subscriberCount property) was changed.
     * @param {basis.data.DataObject} object Object which subscribers count was changed.
     * @event
     */
-    event_subscribersChanged: createEvent('subscribersChanged', 'object'),
+    event_subscribersChanged: createEvent('subscribersChanged'),
 
    /**
     * Fires when state of subscription was changed.
     * @event
     */
-    event_activeChanged: createEvent('activeChanged', 'object'),
+    event_activeChanged: createEvent('activeChanged'),
 
    /**
     * Default listeners.
@@ -396,20 +396,20 @@
       delegate: {
         update: function(object, delta){
           this.data = object.data;
-          this.event_update(this, delta);
+          this.event_update(delta);
         },
         stateChanged: function(object, oldState){
           this.state = object.state;
-          this.event_stateChanged(this, oldState);
+          this.event_stateChanged(oldState);
         },
         targetChanged: function(object, oldTarget){
           this.target = object.target;
-          this.event_targetChanged(this, oldTarget);
+          this.event_targetChanged(oldTarget);
         },
         rootChanged: function(object, oldRoot){
           this.data = object.data;
           this.root = object.root;
-          this.event_rootChanged(this, oldRoot);
+          this.event_rootChanged(oldRoot);
         },
         destroy: function(){
           if (this.cascadeDestroy)
@@ -573,13 +573,13 @@
           // fire update event if any key in delta (data changed)
           for (var key in delta)
           {
-            this.event_update(this, delta);
+            this.event_update(delta);
             break;
           }
 
           // fire stateChanged event if state was changed
           if (oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
-            this.event_stateChanged(this, oldState);
+            this.event_stateChanged(oldState);
         }
         else
         {
@@ -596,14 +596,14 @@
 
         // fire event if target changed
         if (this.root !== oldRoot)
-          this.event_rootChanged(this, oldRoot);
+          this.event_rootChanged(oldRoot);
 
         // fire event if target changed
         if (this.target !== oldTarget)
-          this.event_targetChanged(this, oldTarget);
+          this.event_targetChanged(oldTarget);
 
         // fire event if delegate changed
-        this.event_delegateChanged(this, oldDelegate);
+        this.event_delegateChanged(oldDelegate);
 
         // delegate was changed
         return true;
@@ -639,7 +639,7 @@
         this.state = Object(stateCode);
         this.state.data = data;
 
-        this.event_stateChanged(this, oldState);
+        this.event_stateChanged(oldState);
 
         return true; // state was changed
       }
@@ -684,7 +684,7 @@
 
         if (updateCount)
         {
-          this.event_update(this, delta);
+          this.event_update(delta);
           return delta;
         }
       }
@@ -703,7 +703,7 @@
       if (this.active != isActive)
       {
         this.active = isActive;
-        this.event_activeChanged(this);
+        this.event_activeChanged();
 
         applySubscription(this, this.subscribeTo, SUBSCRIPTION.ALL * isActive);
 
@@ -932,7 +932,7 @@
     * and `deleted` property is array of removed items.
     * @event
     */
-    event_datasetChanged: createEvent('datasetChanged', 'dataset', 'delta') && function(dataset, delta){
+    event_datasetChanged: createEvent('datasetChanged', 'delta') && function(delta){
       var items;
       var insertCount = 0;
       var deleteCount = 0;
@@ -965,7 +965,7 @@
       this.cache_ = null;
 
       // call event 
-      events.datasetChanged.call(this, dataset, delta);
+      events.datasetChanged.call(this, delta);
     },
 
    /**
@@ -1162,7 +1162,7 @@
       // trace changes
       if (inserted.length)
       {
-        this.event_datasetChanged(this, delta = {
+        this.event_datasetChanged(delta = {
           inserted: inserted
         });
       }
@@ -1197,7 +1197,7 @@
       // trace changes
       if (deleted.length)
       {
-        this.event_datasetChanged(this, delta = {
+        this.event_datasetChanged(delta = {
           deleted: deleted
         });
       }
@@ -1266,7 +1266,7 @@
       
       // fire event if any changes
       if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(this, delta);
+        this.event_datasetChanged(delta);
 
       return delta;
     },
@@ -1324,7 +1324,7 @@
           for (var i = deleted.length; i --> 0;)
             deleted[i].removeHandler(listenHandler, this);
 
-        this.event_datasetChanged(this, delta = {
+        this.event_datasetChanged(delta = {
           deleted: deleted
         });
          
@@ -1359,7 +1359,8 @@
         flushCache(eventCacheCopy[datasetId]);
     }
 
-    function storeDatasetDelta(dataset, delta){
+    function storeDatasetDelta(delta){
+      var dataset = this;
       var datasetId = dataset.eventObjectId;
       var inserted = delta.inserted;
       var deleted = delta.deleted;

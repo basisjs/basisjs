@@ -398,7 +398,7 @@
           }*/
         }
 
-        this.event_periodChanged(this, oldPeriodStart, oldPeriodEnd);
+        this.event_periodChanged(oldPeriodStart, oldPeriodEnd);
       }
     },
 
@@ -685,7 +685,7 @@
       }
     },
 
-    event_childNodesModified: function(node, delta){
+    event_childNodesModified: function(delta){
       if (delta.inserted)
         for (var i = 0, section; section = delta.inserted[i++];)
         {
@@ -697,7 +697,7 @@
         for (var i = 0, section; section = delta.deleted[i++];)
           this.selectedDate.removeLink(section, section.setSelectedDate);
 
-      UIContainer.prototype.event_childNodesModified.call(this, node, delta);
+      UIContainer.prototype.event_childNodesModified.call(this, delta);
 
       DOM.insert(
         DOM.clear(this.tmpl.sectionTabs),

@@ -190,12 +190,12 @@
         '<div{link} class="links"/>' +
       '</div>',
 
-    event_update: function(object, delta){
-      uiNode.prototype.event_update.call(this, object, delta);
+    event_update: function(delta){
+      uiNode.prototype.event_update.call(this, delta);
       this.parse();
     },
-    event_targetChanged: function(object, oldTarget){
-      uiNode.prototype.event_targetChanged.call(this, object, oldTarget);
+    event_targetChanged: function(oldTarget){
+      uiNode.prototype.event_targetChanged.call(this, oldTarget);
       this.parse();
     },
 
@@ -599,7 +599,7 @@
       action: {
         toggle: function(){
           this.expanded = !this.expanded;
-          this.event_toggle(this);
+          this.event_toggle();
         }
       },
 
@@ -690,7 +690,7 @@
       action: {
         toggle: function(){
           this.expanded = !this.expanded;
-          this.event_toggle(this);
+          this.event_toggle();
         }
       },
 
@@ -935,7 +935,7 @@
 
       var oldTemplate = this.templateView;
       this.templateView = template;
-      this.event_templateViewChanged(this, oldTemplate);
+      this.event_templateViewChanged(oldTemplate);
     },
 
     satelliteConfig: {
@@ -1224,8 +1224,8 @@
           return nsCore.JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
         },
         instanceOf: JsDocPanel.subclass({
-          event_update: function(object, delta){
-            JsDocPanel.prototype.event_update.call(this, object, delta);
+          event_update: function(delta){
+            JsDocPanel.prototype.event_update.call(this, delta);
 
             var owner = this.owner;
             var tags = this.data.tags;
@@ -1369,8 +1369,8 @@
       }
     },
 
-    event_update: function(object, delta){
-      ViewList.prototype.event_update.call(this, object, delta);
+    event_update: function(delta){
+      ViewList.prototype.event_update.call(this, delta);
 
       if (this.data.obj)
       {
@@ -1567,8 +1567,8 @@
       if (!eventName || 'clsId' in delta)
         this.setDataSource(clsSplitBySuper.getSubset(this.data.clsId));
     },
-    event_childNodesModified: function(node, delta){
-      uiContainer.prototype.event_childNodesModified.call(this, node, delta);
+    event_childNodesModified: function(delta){
+      uiContainer.prototype.event_childNodesModified.call(this, delta);
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
     },
 
@@ -1676,8 +1676,8 @@
       if (!eventName || 'clsId' in delta)
         this.setDataSource(namespaceClsSplitBySuper.getSubset(this.data.clsId));
     },
-    event_childNodesModified: function(node, delta){
-      uiContainer.prototype.event_childNodesModified.call(this, node, delta);
+    event_childNodesModified: function(delta){
+      uiContainer.prototype.event_childNodesModified.call(this, delta);
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
     },
     sorting: getter('data.className.split(".").pop()'),

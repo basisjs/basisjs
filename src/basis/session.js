@@ -28,6 +28,7 @@
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
+  var events = basis.events;
 
 
   /*
@@ -94,7 +95,7 @@
       ;;; if (typeof console != 'undefined') console.info('Session opened: ' + activeSession.key);
 
       // fire event
-      this.event_sessionOpen(this);
+      this.event_sessionOpen();
     },
     close: function(){
       if (activeSession)
@@ -104,7 +105,7 @@
 
         ;;; if (typeof console != 'undefined') console.info('Session closed: ' + activeSession.key);
 
-        this.event_sessionClose(this);
+        this.event_sessionClose();
 
         activeSession = null;
         timestamp = null;
@@ -113,7 +114,7 @@
     freeze: function(){
       if (activeSession && !freezeState)
       {
-        this.event_sessionFreeze(this);
+        this.event_sessionFreeze();
 
         freezeState = true;
         timestamp = null;
@@ -125,7 +126,7 @@
         freezeState = false;
         timestamp = genTimestamp();
 
-        this.event_sessionUnfreeze(this);
+        this.event_sessionUnfreeze();
       }
     },
     storeData: function(key, data){
@@ -158,6 +159,8 @@
     className: namespace + '.Session',
 
     event_destroy: function(){
+      events.event_destroy.call(this);
+
       if (activeSession == this)
         SessionManager.close();
       delete sessions[this.key];

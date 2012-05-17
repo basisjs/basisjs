@@ -63,7 +63,7 @@
 
     onSubmit: Function.$false,
 
-    event_reset: createEvent('reset', 'sender'),
+    event_reset: createEvent('reset'),
     
     template: resource('templates/form/FormContent.tmpl'),
 
@@ -93,7 +93,7 @@
       for (var field = this.firstChild; field; field = field.nextSibling)
         field.reset();
 
-      this.event_reset(this);
+      this.event_reset();
     },
     validate: function(){
       var error, errors = new Array();
