@@ -421,7 +421,7 @@
       var newValue;
       var index;
       var eventType = event.type;
-      var object = event.args[0];
+      var object = event.sender;
       var objectId = object.eventObjectId;
 
       for (var indexId in this.indexes__)
