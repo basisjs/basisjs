@@ -1341,7 +1341,7 @@
 
     if (typeof require == 'function')
     {
-      var requirePath = pathUtils.dirname(module.filename);
+      var requirePath = pathUtils.dirname(module.filename) + '/';
       requireFunc = function(namespace){
         return (function(){
           var temp = module.constructor.prototype.load;
@@ -2132,7 +2132,8 @@
   //
 
   // extend Basis
-  getNamespace(namespace).extend({
+  var basis = getNamespace(namespace);
+  basis.extend({
     namespace: getNamespace,
     require: requireNamespace,
     resource: fetchResourceFunction,
