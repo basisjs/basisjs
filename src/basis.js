@@ -1192,6 +1192,73 @@
   var namespace = 'basis';
 
   // ============================================
+  // path
+  //
+
+  var NODE_ENV = typeof module != 'undefined' && typeof require == 'function' && typeof exports != 'undefined' && exports === this;
+
+  var pathUtils = (function(){
+    var utils;
+
+    if (NODE_ENV)
+    {
+      utils = Object.slice(require('path'), [
+        'normalize',
+        'dirname',
+        'extname',
+        'basename',
+        'resolve',
+        'relative'
+      ]);
+    }
+    else
+    {
+      var linkEl = document.createElement('A');
+
+      utils = {
+        normalize: function(path){
+          linkEl.href = path || '';
+          linkEl.href = linkEl.pathname;
+          return linkEl.href;
+        },
+        dirname: function(path){
+          return this.normalize(path).replace(/\/[^\/]*$/, '');
+        },
+        extname: function(path){
+          var ext = String(path).match(/\.[a-z0-9\_\-]+$/);
+          return ext ? ext[0] : '';
+        },
+        basename: function(path, ext){
+          var filename = String(path).match(/[^\\\/]*$/);
+          filename = filename ? filename[0] : '';
+
+          if (ext == this.extname(filename))
+            filename = filename.substring(0, filename.length - ext.length);
+
+          return filename;
+        },
+        resolve: function(path){  // TODO: more compliant with node.js
+          return this.normalize(path);
+        },
+        relative: function(path){
+          var abs = this.normalize(path).split(/\//);
+          var loc = this.baseURI.split(/\//);
+          var i = 0;
+
+          while (abs[i] == loc[i] && typeof loc[i] == 'string')
+            i++;
+
+          return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
+        }
+      };
+    }
+
+    utils.baseURI = utils.dirname(utils.resolve());
+
+    return utils;
+  })();
+
+  // ============================================
   // Namespace subsystem
   //
 
@@ -1260,27 +1327,6 @@
     return namespaces[namespace] = cursor;
   }
 
-  var resolveUrl = (function(){
-    if (typeof require == 'function')
-    {
-      var path = require('path');
-      return function(url){
-        return path.resolve(__dirname, url);
-      }
-    }
-    else
-    {
-      var resolver = document.createElement('A');
-      return function(url){
-        resolver.href = url;
-        return resolver.href;
-      }
-    }
-  })();
-
-  function dirname(path){
-    return path.replace(/[a-z0-9\-\_\.]+\.[a-z0-9]+$/i, '');
-  }
 
   var requireNamespace = (function(){
 
@@ -1288,14 +1334,14 @@
       .filter(function(scriptEl){ return scriptEl.hasAttribute('basis-config'); })
       .pop();
 
-    var basisRequirePath = dirname(lastScriptEl ? lastScriptEl.src : (typeof module != 'undefined' ? module.filename : ''));
+    var basisRequirePath = pathUtils.dirname(lastScriptEl ? lastScriptEl.src : (typeof module != 'undefined' ? module.filename : '')) + '/';
     var nsRootPath = { basis: basisRequirePath };
     var requested = {};
     var requireFunc;
 
     if (typeof require == 'function')
     {
-      var requirePath = module.filename.replace(/[^\/\\]+$/, '');
+      var requirePath = pathUtile.dirname(module.filename);
       requireFunc = function(namespace){
         return (function(){
           var temp = module.constructor.prototype.load;
@@ -1328,12 +1374,9 @@
         var namespaceRoot = namespace.split('.')[0];
 
         if (namespaceRoot == namespace)
-          nsRootPath[namespaceRoot] = path || dirname(location ? resolveUrl(location.pathname) : '');
+          nsRootPath[namespaceRoot] = path || (pathUtils.dirname(location ? pathUtils.baseURI : '') + '/');
 
         var requirePath = nsRootPath[namespaceRoot];
-          /*/^basis\./.test(namespace)
-            ? basisRequirePath
-            : dirname(location ? location.href : '');*/
 
         if (!namespaces[namespace])
         {
@@ -1398,16 +1441,16 @@
   var frfCache = {};
   var fetchResourceFunction = function(resourceUrl){
 
-    resourceUrl = resolveUrl(resourceUrl);
+    resourceUrl = pathUtils.resolve(resourceUrl);
 
     if (!frfCache[resourceUrl])
     {
-      var extMatch = resourceUrl.match(/\.[a-z0-9]+$/);
+      var ext = pathUtils.extname(resourceUrl);
       var extWrapper;
       var extWrapperFn;
-      if (extMatch)
+      if (ext)
       {
-        extWrapper = fetchResourceFunction.extensions[extMatch[0]];
+        extWrapper = fetchResourceFunction.extensions[ext];
         extWrapperFn = function(content){
           return extWrapper(content, resourceUrl)
         }
@@ -1501,10 +1544,10 @@
   };
 
   fetchResourceFunction.getSource = (function(resourceUrl){
-    return externalResource(resolveUrl(resourceUrl));
+    return externalResource(pathUtils.resolve(resourceUrl));
   });
   fetchResourceFunction.exists = (function(resourceUrl){
-    return !!frfCache.hasOwnProperty(resolveUrl(resourceUrl));
+    return !!frfCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
   });
 
   fetchResourceFunction.extensions = {
@@ -1525,7 +1568,7 @@
   fetchResourceFunction.extensions['.json'].updatable = true;
 
   var runScriptInContext = function(context, sourceURL, scriptText, prefix){
-    var baseURL = dirname(sourceURL);
+    var baseURL = pathUtils.dirname(sourceURL) + '/';
     var scriptFn;
 
     if (!context.exports)
@@ -2100,5 +2143,8 @@
 
     Cleaner: Cleaner
   });
+
+  // TODO: rename path->stmElse and add path to exports
+  basis.path = pathUtils;
 
 })(this);

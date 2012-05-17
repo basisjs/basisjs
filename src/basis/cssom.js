@@ -29,6 +29,7 @@
   //
 
   var document = global.document;
+  var path = basis.path;
   var dom = basis.dom;
   var event = basis.dom.event;
   var Class = basis.Class;
@@ -740,20 +741,14 @@
   * Helper for path resolving
   */
   var pathResolver = (function(){
-    var linkEl = dom.createElement('a');
     var baseEl = dom.createElement('base');
     var documentHead = document.head;
-    var pageLocation;
-
-    linkEl.href = location.pathname;
-    pageLocation = linkEl.href;
 
     return {
-      setBase: function(path){
+      setBase: function(baseURI){
         // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
         // convert path to absolute value
-        linkEl.href = path;
-        baseEl.setAttribute('href', linkEl.href);
+        baseEl.setAttribute('href', path.resolve(baseURI));
 
         // if more than one <base> elements in document, only first has effect
         // put our <base> resolver at the begining of <head>
@@ -763,27 +758,9 @@
         // Opera left document base as <base> element specified,
         // even if this element is removed from document
         // so we set current location for base
-        baseEl.setAttribute('href', location);
+        baseEl.setAttribute('href', path.baseURI);
 
         dom.remove(baseEl);    
-      },
-      normalize: function(path){
-        linkEl.href = path;
-        linkEl.href = linkEl.pathname;
-        return linkEl.href;
-      },
-      dirname: function(path){
-        return this.normalize(path).replace(/\/[^\/]*$/, '');
-      },
-      relative: function(path){
-        var abs = this.normalize(path).split(/\//);
-        var loc = this.dirname(location).split(/\//);
-        var i = 0;
-
-        while (abs[i] == loc[i] && typeof loc[i] == 'string')
-          i++;
-
-        return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
       }
     }
   })();
@@ -800,8 +777,8 @@
     textNode: null,
 
     init: function(url){
-      this.url = pathResolver.relative(url);
-      this.baseURI = pathResolver.dirname(url) + '/';
+      this.url = path.relative(url);
+      this.baseURI = path.dirname(url) + '/';
 
       dynamicResources[url] = this;
     },
