@@ -1349,7 +1349,7 @@
 
     function flushCache(cache){
       var dataset = cache.dataset;
-      realEvent.call(dataset, dataset, cache);
+      realEvent.call(dataset, cache);
     }
 
     function flushAllDataset(){
@@ -1373,7 +1373,7 @@
           delete eventCache[datasetId];
           flushCache(cache);
         }
-        return realEvent.call(dataset, dataset, delta);
+        return realEvent.call(dataset, delta);
       }
 
       var mode = inserted ? 'inserted' : 'deleted';
