@@ -1341,7 +1341,7 @@
 
     if (typeof require == 'function')
     {
-      var requirePath = pathUtile.dirname(module.filename);
+      var requirePath = pathUtils.dirname(module.filename);
       requireFunc = function(namespace){
         return (function(){
           var temp = module.constructor.prototype.load;
