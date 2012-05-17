@@ -1374,7 +1374,7 @@
         var namespaceRoot = namespace.split('.')[0];
 
         if (namespaceRoot == namespace)
-          nsRootPath[namespaceRoot] = path || (pathUtils.dirname(location ? pathUtils.baseURI : '') + '/');
+          nsRootPath[namespaceRoot] = path || (pathUtils.baseURI + '/');
 
         var requirePath = nsRootPath[namespaceRoot];
 
@@ -2147,4 +2147,4 @@
   // TODO: rename path->stmElse and add path to exports
   basis.path = pathUtils;
 
-})(this);
+}).call(this, this);
