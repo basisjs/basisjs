@@ -77,12 +77,12 @@
       },
       poolLimit: 1,
       handler: {
-        success: function(req){
+        success: function(sender, req){
           var m = req.data.responseText.match(/<title>([^<]*)<\/title>/i);
           if (m && req.influence[0])
             req.influence[0].update({ title: m[1] });
         },
-        failure: function(req){
+        failure: function(sender, req){
           req.influence[0].update({ title: 'Fault to load ' + req.requestData.url })
         }
       }
@@ -117,7 +117,7 @@
     var indexTransport = new basis.net.ajax.Transport({
       url: '../index.html',
       handler: {
-        success: function(req){
+        success: function(sender, req){
           var list = req.data.responseText.match(/url:\s*(\"[^\"]+\"|\'[^\']+\')/g);
           var result = [];
 

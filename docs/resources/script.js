@@ -465,7 +465,7 @@
         return new RegExp('(^|[^a-z])(' + value.forRegExp() + ')', 'i');
       },
       handler: {
-        change: function(value, oldValue){
+        change: function(sender, value, oldValue){
           classList(searchInput.element).bool('empty', !value);
 
           if (value)

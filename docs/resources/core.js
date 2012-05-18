@@ -202,9 +202,9 @@
     inheritDoc: null,
     listen: {
       inheritDoc: {
-        update: function(inheritDoc, delta){
+        update: function(sender, delta){
           if ('tags' in delta)
-            this.set('tags', inheritDoc.data.tags);
+            this.set('tags', sender.data.tags);
         }
       }
     },
