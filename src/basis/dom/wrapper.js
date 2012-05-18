@@ -11,7 +11,6 @@
 
   basis.require('basis.event');
   basis.require('basis.data');
-  basis.require('basis.html');
 
 
  /**

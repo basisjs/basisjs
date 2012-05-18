@@ -92,8 +92,8 @@
   */
   var tokenize = function(source, debug){
     var result = [];
-    var tagStack = [];
     var resources = [];
+    var tagStack = [];
     var lastTag = { childs: result };
     var sourceText;
     var token;
@@ -395,18 +395,18 @@
       if (!result.length)   // there must be at least one token in result
         result.push({ type: TYPE_TEXT, value: '' });
 
-      if ('element' in refMap == false)
+      /*if ('element' in refMap == false)
       {
         if (!result[0].refs)
           result[0].refs = ['element'];
         else
           result[0].refs.push('element');
-      }
+      }*/
 
       if (tagStack.length > 1)
         throw 'No close tag for ' + tagStack.pop().name;
 
-      result.templateDeclaration = true;
+      result.templateTokens = true;
 
     } catch(e) {
       /*
@@ -416,6 +416,16 @@
 
     return result;
   };
+
+
+  //
+  // Convert tokens to declaration
+  //
+
+  function dirname(url){
+    return String(url).replace(/[^\\\/]+$/, '');
+  }
+
 
  /**
   * make compiled version of template
@@ -428,6 +438,8 @@
     var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
     var tokenMap = {};
     var tokenElement = document.createElement('div');
+    var includeStack = [];
+    var cleanupItems = [];
 
     function name(token){
       return (token.prefix ? token.prefix + ':' : '') + token.name;
@@ -561,25 +573,132 @@
       return result.length ? result : 0;
     }
 
-    function optimize(tokens){
+    function findAttr(token, name){
+      return token.attrs && token.attrs.search('src', 'name');
+    }
+
+    function tokenAttrs(token){
+      var result = {};
+
+      if (token.attrs)
+        for (var i = 0, attr; attr = token.attrs[i]; i++)
+          result[name(attr)] = attr.value;
+
+      return result;
+    }
+
+    function process(tokens, template, opt){
       var result = [];
 
       for (var i = 0, token, item; token = tokens[i]; i++)
       {
         var refs = refList(token);
-        var bindings = refs && (refs.length == 1 || (refs.length == 2 && token.type == TYPE_TEXT && refs[1] == 'element')) ? 1 : 0;
+        var bindings = refs && refs.length == 1 ? refs[0] : 0;
+
+        if (token.type == TYPE_TEXT && refs.length == 2 && refs.has('element'))
+        {
+          var tmp = Array.from(refs);
+          tmp.remove('element');
+          bindings = tmp[0];
+        }
 
         switch (token.type)
         {
           case TYPE_ELEMENT:
-            item = [
-              1,                       // TOKEN_TYPE = 0
-              bindings,                // TOKEN_BINDINGS = 1
-              refs,                    // TOKEN_REFS = 2
-              name(token),             // ELEMENT_NAME = 3
-              attrs(token),            // ELEMENT_ATTRS = 4
-              optimize(token.childs)   // ELEMENT_CHILDS = 5
-            ];
+            var elName = name(token);
+
+            switch (elName)
+            {
+              case 'b:resource':
+                var elAttrs = tokenAttrs(token);
+                if (elAttrs.src)
+                  template.resources.push(basis.path.resolve(template.baseURI + elAttrs.src));
+
+                continue;
+
+              case 'b:include':
+                var elAttrs = tokenAttrs(token);
+                if (elAttrs.src)
+                {
+                  var url = basis.path.resolve(template.baseURI + elAttrs.src);
+
+                  if (includeStack.indexOf(url) == -1) // prevent recursion
+                  {
+                    includeStack.push(url);
+                    var decl = makeDeclaration(basis.resource(url), basis.path.dirname(url) + '/');
+                    includeStack.pop();
+
+                    decl.resources.forEach(template.resources.add, template.resources);
+
+                    console.log(elAttrs.src + ' -> ' + url);
+                    console.log(decl);
+
+                    for (var j = 0, child; child = token.childs[j]; j++)
+                    {
+                      if (child.type == TYPE_ELEMENT)
+                        switch (name(child))
+                        {
+                          case 'b:replace':
+                            var childAttrs = tokenAttrs(child);
+                            var node = childAttrs.ref && decl.refs[childAttrs.ref];
+
+                            if (node)
+                            {
+                              var pos = node.owner.indexOf(node);
+                              if (pos != -1)
+                                node.owner.splice.apply(node.owner, [pos, 1].concat(process(child.childs, template)));
+                            }
+
+                            /*var nodes = childAttrs.ref && decl.refs[childAttrs.ref];
+
+                            if (nodes)
+                            {
+                              for (var k = 0, node; node = nodes[k]; k++)
+                              {
+                                var owner = node.owner;
+                                if (owner)
+                                  owner.splice.apply(owner, [owner.indexOf(node), 1].concat(process(child.childs, template)));
+                                else
+                                  debugger;
+                              }
+                            }*/
+
+                            continue;
+                        }
+
+                      decl.tokens.push.apply(decl.tokens, process([child], template));
+                    }
+
+                    if (decl.refs.element)
+                    {
+                      var tokenRefs = decl.refs.element[TOKEN_REFS];
+                      tokenRefs.remove('element');
+                      if (!tokenRefs.length)
+                        decl.refs.element[TOKEN_REFS] = 0;
+                    }
+
+                    //resources.push.apply(resources, tokens.resources);
+                    result.push.apply(result, decl.tokens);
+                    //tokens.splice.apply(tokens, [i--, 1].concat(decl.tokens));
+                  }
+                  else
+                  {
+                    console.warn('Recursion: ', includeStack.join(' -> '));
+                  }
+                }
+
+                continue;
+
+              default:
+                item = [
+                  1,                       // TOKEN_TYPE = 0
+                  bindings,                // TOKEN_BINDINGS = 1
+                  refs,                    // TOKEN_REFS = 2
+                  elName,                  // ELEMENT_NAME = 3
+                  attrs(token),            // ELEMENT_ATTRS = 4
+                  process(token.childs, template, true)    // ELEMENT_CHILDS = 5
+                ];
+            }
 
             break;
 
@@ -604,20 +723,82 @@
             break;
         }
 
+        item.owner = result;
+        cleanupItems.push(item);
         result.push(item);
       }
 
-      return result.length ? result : 0;
+      return !opt || result.length ? result : 0;
     }
 
-    return function(source, debug){
-      if (!source.templateDeclaration)
+    function buildRefMap(tokens, map){
+      for (var i = 0, token; token = tokens[i]; i++)
+      {
+        var refs = token[TOKEN_REFS];
+
+        if (refs)
+          for (var j = 0, ref; ref = refs[j]; j++)
+          {
+            var curRefToken = map[ref];
+            if (curRefToken)
+            {
+              if (curRefToken[TOKEN_REFS].length > 1)
+                curRefToken[TOKEN_REFS].remove(ref);
+              else
+                curRefToken[TOKEN_REFS] = 0;
+            }
+
+            map[ref] = token;
+            /*if (!map[ref])
+              map[ref] = [token];
+            else
+              map[ref].push(token);*/
+          }
+
+        if (token[TOKEN_TYPE] == TYPE_ELEMENT)
+          buildRefMap(token[ELEMENT_CHILDS], map);
+      }
+
+      return map;
+    }
+
+    return function(source, baseURI, debug){
+      if (!source.templateTokens)
         source = tokenize('' + source, debug);
 
+      var resources = source.resources;
       var result = {
-        resources: source.resources,
-        tokens: optimize(source)
+        baseURI: baseURI || '',
+        resources: source.resources.map(function(url){
+          return baseURI + url;
+        }),
+        refs: {}
       };
+
+      result.tokens = process(source, result);
+      result.refs = buildRefMap(result.tokens, {});
+
+      var elRefs;
+      if (!result.refs.element)
+      {
+        var firstToken = result.tokens[0];
+        if (!firstToken[TOKEN_REFS])
+          firstToken[TOKEN_REFS] = ['element'];
+        else
+          firstToken[TOKEN_REFS].push('element');
+
+        result.refs.element = firstToken;
+      }
+
+      if (!includeStack.length)
+      {
+        // drop ref map
+        delete result.refs;
+
+        // clean up cycle refs
+        for (var i = 0; i < cleanupItems.length; i++)
+          delete cleanupItems[i].owner;
+      }
 
       ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this) };
 
@@ -688,10 +869,19 @@
           explicitRef = true;
           localPath = putPath(localPath);
           putRefs(refs, localPath);
-
-          if (token[TOKEN_BINDINGS])
-            putBinding([token[TOKEN_TYPE], localPath, refs[0]]);
         }
+
+        if (token[TOKEN_BINDINGS])
+        {
+          if (!explicitRef)
+          {
+            explicitRef = true;
+            localPath = putPath(localPath);
+          }
+
+          putBinding([token[TOKEN_TYPE], localPath, token[TOKEN_BINDINGS]]);
+        }
+
 
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
         {
@@ -1469,7 +1659,7 @@
         ? this.source()
         : String(this.source);
 
-    var decl = typeof source != 'string' ? source : (this.isDecl ? source.toObject() : makeDeclaration(source));
+    var decl = typeof source != 'string' ? source : (this.isDecl ? source.toObject() : makeDeclaration(source, this.baseURI));
     var funcs = makeFunctions(decl.tokens);
     var l10n = this.l10n_;
 
@@ -1489,11 +1679,11 @@
 
     if (hasResources)
       for (var i = 0, res; res = decl.resources[i]; i++)
-        startUseResource(this.baseURI + res);
+        startUseResource(res);
 
     if (this.resources)
       for (var i = 0, res; res = this.resources[i]; i++)
-        stopUseResource(this.baseURI + res);
+        stopUseResource(res);
 
     this.resources = hasResources && decl.resources;
 
@@ -1684,7 +1874,7 @@
         {
           if (source.url)
           {
-            this.baseURI = source.url.replace(/[^\\\/]+$/, '');
+            this.baseURI = dirname(source.url);
             if (!tmplFilesMap[source.url])
               tmplFilesMap[source.url] = [];
             tmplFilesMap[source.url].add(this);

@@ -467,7 +467,7 @@
   var Text = TextField.subclass({
     className: namespace + '.Text',
 
-    template: createFieldTemplate(baseFieldTemplate,
+    template: resource('templates/field/Text.tmpl')/*createFieldTemplate(baseFieldTemplate,
       '<input{field|focus} type="text" class="native-type-text"' +
         ' name="{name}"' +
         ' value="{value}"' +
@@ -484,7 +484,7 @@
         ' event-change="change"' +
         ' event-input="input"' +
       '/>'
-    ),
+    )*/,
 
     binding: {
       autocomplete: 'autocomplete || ""',
