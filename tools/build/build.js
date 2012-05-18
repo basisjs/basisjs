@@ -616,7 +616,7 @@ var resourceDigestMap = {};
     .replace(/resourceUrl\s*=\s*resolveUrl\(resourceUrl\)/, '')
     .replace(/\/\*\{resourceResolver\}\*\/(?:.|[\r\n])+\/\*\{resourceResolverEnd\}\*\//,
       'var externalResource = ' + function(ref){
-        return externalResourceCache[parseInt(ref)] || "";
+        return externalResourceCache[parseInt(pathUtils.relative(ref))] || "";
       }.toString() +';\n'
     );
 
