@@ -10,7 +10,6 @@
  */
 
   basis.require('basis.event');
-  basis.require('basis.dom');
   basis.require('basis.data');
   basis.require('basis.html');
 
@@ -37,7 +36,6 @@
   //
 
   var Class = basis.Class;
-  var DOM = basis.dom;
   var nsData = basis.data;
 
   var createEvent = basis.event.create;
