@@ -1,0 +1,21 @@
+
+  <b:resource src="Combobox.css"/>
+
+  <b:include src="Field.tmpl">
+    <b:replace ref="fieldPlace">
+      <span{field|focus} class="Basis-DropdownList Basis-DropdownList-{opened} {disabled}"
+         event-click="togglePopup"
+         event-keyup="keyup"
+         event-keydown="keydown"
+         event-keypressed="keypressed"
+         event-focus="focus"
+         event-blur="blur"
+         tabindex="0"
+        >
+        <span class="Basis-DropdownList-Caption"><!--{captionItem}--></span>
+        <span class="Basis-DropdownList-Trigger"/>
+        <!--{hiddenField}-->
+      </span>
+      <div{content|childNodesElement} class="Basis-DropdownList-PopupContent" />
+    </b:replace>
+  </b:include>

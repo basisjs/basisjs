@@ -84,9 +84,6 @@
   /** @const */ var VALIDITY_VALID = 'valid';
   /** @const */ var VALIDITY_INVALID = 'invalid';
 
-  // TODO: remove
-  resource('templates/field/field.css')().startUse();
-
   var baseFieldTemplate = new Template(
     '<div{sampleContainer} class="Basis-Field {disabled} Basis-Field__{validity}" title="{error}">' +
       '<div class="Basis-Field-Title">' +
@@ -100,11 +97,6 @@
       '<!--{example}-->' +
     '</div>'
   );
-
-  function createFieldTemplate(template, injection){
-    return new Template(String(template.source).replace('<!--{fieldPlace}-->', injection));
-  }
-
 
 
 
@@ -180,7 +172,7 @@
     // template
     //
 
-    template: baseFieldTemplate,
+    template: resource('templates/field/Field.tmpl'),
     binding: {
       name: 'name || ""',
       titleText: 'title || ""',
@@ -223,7 +215,7 @@
           return owner.example;
         },
         instanceOf: UINode.subclass({
-          template: '<span class="Basis-Field-Sample">{example}</span>',
+          template: resource('templates/field/Example.tmpl'),
           binding: {
             example: 'owner.example'
           },
@@ -351,12 +343,7 @@
   var File = Field.subclass({
     className: namespace + '.File',
 
-    template: createFieldTemplate(baseFieldTemplate,
-      '<input{field|focus} type="file" class="native-type-file"' +
-        ' name="{name}"' +
-        ' disabled="{disabled}"' +
-      '/>'
-    )
+    template: resource('templates/field/File.tmpl')
   });
 
  /**
@@ -457,8 +444,7 @@
 
     focusable: false,
 
-    template:
-      '<input{field} type="hidden" value="{value}" event-change="change"/>'
+    template: resource('templates/field/Hidden.tmpl')
   });
 
  /**
@@ -467,24 +453,7 @@
   var Text = TextField.subclass({
     className: namespace + '.Text',
 
-    template: resource('templates/field/Text.tmpl')/*createFieldTemplate(baseFieldTemplate,
-      '<input{field|focus} type="text" class="native-type-text"' +
-        ' name="{name}"' +
-        ' value="{value}"' +
-        ' readonly="{readonly}"' +
-        ' disabled="{disabled}"' +
-        ' maxlength="{maxlength}"' +
-        ' autocomplete="{autocomplete}"' +
-        ' placeholder="{placeholder}"' +
-        ' event-keydown="keydown"' +
-        ' event-keyup="keyup"' +
-        ' event-keypress="keypress"' +
-        ' event-focus="focus"' +
-        ' event-blur="blur"' +
-        ' event-change="change"' +
-        ' event-input="input"' +
-      '/>'
-    )*/,
+    template: resource('templates/field/Text.tmpl'),
 
     binding: {
       autocomplete: 'autocomplete || ""',
@@ -499,22 +468,7 @@
   var Password = TextField.subclass({
     className: namespace + '.Password',
 
-    template: createFieldTemplate(baseFieldTemplate,
-      '<input{field|focus} type="password" class="native-type-password"' +
-        ' name="{name}"' +
-        ' value="{value}"' +
-        ' readonly="{readonly}"' +
-        ' disabled="{disabled}"' +
-        ' maxlength="{maxlength}"' +
-        ' event-keydown="keydown"' +
-        ' event-keyup="keyup"' +
-        ' event-keypress="keypress"' +
-        ' event-focus="focus"' +
-        ' event-blur="blur"' +
-        ' event-change="change"' +
-        ' event-input="input"' +
-      '/>'
-    )
+    template: resource('templates/field/Password.tmpl')
   });
 
 
@@ -538,22 +492,7 @@
           TextField.prototype.event_fieldFocus.call(this, event);
         },
 
-    template: createFieldTemplate(baseFieldTemplate,
-      '<textarea{field|focus}' +
-        ' name="{name}"' +
-        ' value="{value}"' +
-        ' readonly="{readonly}"' +
-        ' disabled="{disabled}"' +
-        ' event-keydown="keydown"' +
-        ' event-keyup="keyup updateSymbolsLeft"' +
-        ' event-keypress="keypress"' +
-        ' event-focus="focus"' +
-        ' event-blur="blur"' +
-        ' event-change="change updateSymbolsLeft"' +
-        ' event-input="input updateSymbolsLeft"' +
-      '/>' +
-      '<!--{counter}-->'
-    ),
+    template: resource('templates/field/Textarea.tmpl'),
 
     binding: {
       availChars: {
@@ -578,10 +517,7 @@
           return owner.maxLength > 0;
         },
         instanceOf: UINode.subclass({
-          template:
-            '<div class="counter">' +
-              '{l10n:basis.ui.field.symbolsLeft}: {availChars}' +
-            '</div>',
+          template: resource('templates/field/Counter.tmpl'),
 
           binding: {
             availChars: function(node){
@@ -623,23 +559,7 @@
 
     value: false,
 
-    template:
-      '<div class="Basis-Field Basis-Field-Checkbox {disabled} {validity}">' +
-        '<div{content} class="Basis-Field-Container">' +
-          '<label>' +
-            '<input{field|focus} type="checkbox" class="native-type-checkbox"' +
-              ' checked="{checked}"' +
-              ' event-focus="focus"' +
-              ' event-blur="blur"' +
-              ' event-change="change"' +
-              ' event-keydown="keydown"' +
-              ' event-keyup="keyup"' +
-              ' event-keypress="keypress"' +
-            '/>' +
-            '<span>{titleText}</span>' +
-          '</label>' +
-        '</div>' +
-      '</div>',
+    template: resource('templates/field/Checkbox.tmpl'),
 
     binding: {
       checked: {
@@ -671,9 +591,7 @@
 
     focusable: false,
 
-    template: createFieldTemplate(baseFieldTemplate,
-      '<label{field}>{value}</label>'
-    )
+    template: resource('templates/field/Label.tmpl')
   });
 
 
@@ -786,25 +704,12 @@
   var RadioGroup = ComplexField.subclass({
     className: namespace + '.RadioGroup',
 
-    template: createFieldTemplate(baseFieldTemplate,
-      '<div{field|childNodesElement} class="Basis-RadioGroup"></div>'
-    ),
+    template: resource('templates/field/RadioGroup.tmpl'),
 
     childClass: {
       className: namespace + '.RadioGroupItem',
 
-      template:
-        '<label class="Basis-RadioGroup-Item {selected} {disabled}" event-click="select">' + 
-          '<input{field|focus} type="radio" class="native-type-radio"' +
-            ' name="{name}"' +
-            ' value="{value}"' +
-            ' disabled="{disabled}"' +
-            ' checked="{checked}"' +
-            ' event-focus="focus"' +
-            ' event-blur="blur"' +
-          '/>' +
-          '<span{content}>{title}</span>' +
-        '</label>'
+      template: resource('templates/field/RadioGroupItem.tmpl')
     }
   });
 
@@ -821,25 +726,12 @@
 
     multipleSelect: true,
 
-    template: createFieldTemplate(baseFieldTemplate,
-      '<div{field|childNodesElement} class="Basis-CheckGroup"></div>'
-    ),
+    template: resource('templates/field/CheckGroup.tmpl'),
 
     childClass: {
       className: namespace + '.CheckGroupItem',
 
-      template:
-        '<label class="Basis-CheckGroup-Item {selected} {disabled}" event-click="select">' + 
-          '<input{field|focus} type="checkbox" class="native-type-checkbox"' +
-            ' name="{name}"' +
-            ' value="{value}"' +
-            ' disabled="{disabled}"' +
-            ' checked="{checked}"' +
-            ' event-focus="focus"' +
-            ' event-blur="blur"' +
-          '/>' +
-          '<span{content}>{title}</span>' +
-        '</label>'
+      template: resource('templates/field/CheckGroupItem.tmpl')
     }
   });
 
@@ -854,24 +746,12 @@
   var Select = ComplexField.subclass({
     className: namespace + '.Select',
 
-    template: createFieldTemplate(baseFieldTemplate,
-      '<select{field|focus|childNodesElement} class="Basis-Select {disabled} {validity}"' +
-        ' name="{name}"' +
-        ' disabled="{disabled}"' +
-        ' event-change="change"' +
-        ' event-keyup="keyup"' +
-        ' event-keypress="keypress"' +
-        ' event-keydown="keydown"' +
-        ' event-focus="focus"' +
-        ' event-blur="blur"' +
-      '/>'
-    ),
+    template: resource('templates/field/Select.tmpl'),
 
     childClass: {
       className: namespace + '.SelectItem',
 
-      template:
-        '<option{field} class="Basis-Select-Item" selected="{selected}" value="{value}">{title}</option>'
+      template: resource('templates/field/SelectItem.tmpl')
     },
 
     getValue: function(){
@@ -904,8 +784,7 @@
   var ComboboxItem = ComplexFieldItem.subclass({
     className: namespace + '.ComboboxItem',
 
-    template:
-      '<div class="Basis-Combobox-Item {selected} {disabled}" event-click="select">{title}</div>',
+    template: resource('templates/field/ComboboxItem.tmpl'),
 
     action: {
       select: function(event){
@@ -920,11 +799,6 @@
         }
       }
     }
-  });
-
-  // TODO: remove
-  var initComboboxStyle = Function.runOnce(function(){
-    resource('templates/field/Combobox.css')().startUse();
   });
 
  /**
@@ -948,22 +822,7 @@
     popup: null,
     property: null,
 
-    template: createFieldTemplate(baseFieldTemplate,
-      '<span{field|focus} class="Basis-DropdownList Basis-DropdownList-{opened} {disabled}"' +
-        ' event-click="togglePopup"' +
-        ' event-keyup="keyup"' +
-        ' event-keydown="keydown"' +
-        ' event-keypressed="keypressed"' +
-        ' event-focus="focus"' +
-        ' event-blur="blur"' +
-        ' tabindex="0"' +
-        '>' +
-        '<span class="Basis-DropdownList-Caption"><!--{captionItem}--></span>' +
-        '<span class="Basis-DropdownList-Trigger"/>' +
-        '<!--{hiddenField}-->' +
-      '</span>' +
-      '<div{content|childNodesElement} class="Basis-DropdownList-PopupContent" />'
-    ),
+    template: resource('templates/field/Combobox.tmpl'),
 
     binding: {
       captionItem: 'satellite:',
@@ -1057,7 +916,6 @@
     },
 
     init: function(){
-      initComboboxStyle(); // TODO: remove
 
       if (!basis.ui.popup)
         throw new Error('basis.ui.popup required for DropDownList');
@@ -1401,7 +1259,7 @@
 
   module.exports = {
     createFieldTemplate: function(template){
-      return createFieldTemplate(baseFieldTemplate, template)
+      return new Template(String(baseFieldTemplate.source).replace('<!--{fieldPlace}-->', template));
     },
     Validator: Validator,  // deprecated
     validator: Validator,

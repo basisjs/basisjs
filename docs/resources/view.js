@@ -919,7 +919,7 @@
           rootCfg.childNodes = [];
 
           var source = String(typeof template.source == 'function' ? template.source() : template.source);
-          var decl = basis.template.makeDeclaration(source);
+          var decl = basis.template.makeDeclaration(source, template.baseURI);
 
           rootCfg.childNodes = buildTemplate(decl.tokens);
         }

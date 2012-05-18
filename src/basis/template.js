@@ -630,8 +630,8 @@
 
                     decl.resources.forEach(template.resources.add, template.resources);
 
-                    console.log(elAttrs.src + ' -> ' + url);
-                    console.log(decl);
+                    //console.log(elAttrs.src + ' -> ' + url);
+                    //console.log(decl);
 
                     for (var j = 0, child; child = token.childs[j]; j++)
                     {
