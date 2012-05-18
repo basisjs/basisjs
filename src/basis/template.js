@@ -573,10 +573,6 @@
       return result.length ? result : 0;
     }
 
-    function findAttr(token, name){
-      return token.attrs && token.attrs.search('src', 'name');
-    }
-
     function tokenAttrs(token){
       var result = {};
 
@@ -587,20 +583,18 @@
       return result;
     }
 
-    function process(tokens, template, opt){
+    function addUnique(array, items){
+      for (var i = 0; i < items.length; i++)
+        array.add(items[i]);
+    }
+
+    function process(tokens, template){
       var result = [];
 
       for (var i = 0, token, item; token = tokens[i]; i++)
       {
         var refs = refList(token);
         var bindings = refs && refs.length == 1 ? refs[0] : 0;
-
-        if (token.type == TYPE_TEXT && refs.length == 2 && refs.has('element'))
-        {
-          var tmp = Array.from(refs);
-          tmp.remove('element');
-          bindings = tmp[0];
-        }
 
         switch (token.type)
         {
@@ -625,10 +619,13 @@
                   if (includeStack.indexOf(url) == -1) // prevent recursion
                   {
                     includeStack.push(url);
-                    var decl = makeDeclaration(basis.resource(url), basis.path.dirname(url) + '/');
+                    var resource = basis.resource(url);
+                    var decl = makeDeclaration(resource, basis.path.dirname(url) + '/');
                     includeStack.pop();
 
-                    decl.resources.forEach(template.resources.add, template.resources);
+                    template.deps.add(resource);
+                    addUnique(template.resources, decl.resources);
+                    addUnique(template.deps, decl.deps);
 
                     //console.log(elAttrs.src + ' -> ' + url);
                     //console.log(decl);
@@ -646,7 +643,7 @@
                             {
                               var pos = node.owner.indexOf(node);
                               if (pos != -1)
-                                node.owner.splice.apply(node.owner, [pos, 1].concat(process(child.childs, template)));
+                                node.owner.splice.apply(node.owner, [pos, 1].concat(process(child.childs, template) || []));
                             }
 
                             /*var nodes = childAttrs.ref && decl.refs[childAttrs.ref];
@@ -666,7 +663,7 @@
                             continue;
                         }
 
-                      decl.tokens.push.apply(decl.tokens, process([child], template));
+                      decl.tokens.push.apply(decl.tokens, process([child], template) || []);
                     }
 
                     if (decl.refs.element)
@@ -696,13 +693,16 @@
                   refs,                    // TOKEN_REFS = 2
                   elName,                  // ELEMENT_NAME = 3
                   attrs(token),            // ELEMENT_ATTRS = 4
-                  process(token.childs, template, true)    // ELEMENT_CHILDS = 5
+                  process(token.childs, template)    // ELEMENT_CHILDS = 5
                 ];
             }
 
             break;
 
           case TYPE_TEXT:
+            if (refs && refs.length == 2 && refs.search('element'))
+              bindings = refs[+!Array.lastSearchIndex];
+
             item = [
               3,                       // TOKEN_TYPE = 0
               bindings,                // TOKEN_BINDINGS = 1
@@ -728,7 +728,7 @@
         result.push(item);
       }
 
-      return !opt || result.length ? result : 0;
+      return result.length ? result : 0;
     }
 
     function buildRefMap(tokens, map){
@@ -772,6 +772,7 @@
         resources: source.resources.map(function(url){
           return baseURI + url;
         }),
+        deps: [],
         refs: {}
       };
 
@@ -1662,6 +1663,22 @@
     var decl = typeof source != 'string' ? source : (this.isDecl ? source.toObject() : makeDeclaration(source, this.baseURI));
     var funcs = makeFunctions(decl.tokens);
     var l10n = this.l10n_;
+    var deps = this.deps_;
+
+    if (deps)
+    {
+      this.deps_ = null;
+      for (var i = 0, dep; dep = deps[i]; i++)
+        dep.bindingBridge.detach(dep, buildTemplate, this);
+    }
+
+    if (decl.deps && decl.deps.length)
+    {
+      deps = decl.deps;
+      this.deps_ = deps;
+      for (var i = 0, dep; dep = deps[i]; i++)
+        dep.bindingBridge.attach(dep, buildTemplate, this);
+    }
 
     if (l10n)
     {

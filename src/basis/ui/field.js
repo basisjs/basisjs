@@ -961,6 +961,15 @@
       if (this.property)
         this.property.addLink(this, this.setValue);
     },
+    templateSync: function(noRecreate){
+      if (this.childNodesElement)
+        DOM.remove(this.childNodesElement);
+
+      UIContainer.prototype.templateSync.call(this, noRecreate);
+
+      if (this.childNodesElement && this.popup)
+        DOM.insert(this.popup.tmpl.content, this.childNodesElement);
+    },
     show: function(){
       this.popup.show(this.tmpl.field); 
       this.focus();
