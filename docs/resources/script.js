@@ -341,7 +341,7 @@
       template:
         '<li class="Basis-TreeNode">' +
           '<div{content} class="Basis-TreeNode-Title {selected} {disabled}">' +
-            '<span class="Basis-TreeNode-Caption" event-click="select">' +
+            '<span class="Basis-TreeNode-Caption Basis-TreeNode-Caption__{disabled} Basis-TreeNode-Caption__{selected}" event-click="select">' +
               '<span class="namespace">{namespace}</span>' +
               '<span class="label">{title}<!--{args}--></span>' +
             '</span>' +
@@ -456,7 +456,7 @@
     cssClassName: 'empty Basis-MatchInput',
     action: {
       clear: function(){
-        this.setValue();
+        this.setValue('');
       }
     },
     matchFilter: {

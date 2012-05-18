@@ -1739,7 +1739,7 @@
     makeFunctions: makeFunctions,
     buildHtml: buildHtml,
 
-    filesMap: tmplFilesMap,
+    //filesMap: tmplFilesMap,
     resolveObjectById: function(refId){
       return tmplNodeMap[refId];
     }

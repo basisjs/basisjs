@@ -707,12 +707,12 @@
           if (++curResource.attemptCount < RESOURCE_ATTEMPT_LOAD)
             this.queue.push(curResource);
         },
-        success: function(req){
+        success: function(sender, req){
           var curResource = this.curResource;
           curResource.text = req.data.responseText;
           sourceParser[curResource.kind](curResource);
         },
-        complete: function(req){
+        complete: function(sender, req){
           this.curResource = null;
           TimeEventManager.add(this, 'load', Date.now() + 5);
         }
