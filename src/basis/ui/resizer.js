@@ -96,7 +96,7 @@
     basis.ready(function(){
       var element = DOM.insert(document.body, DOM.createElement('[style="position:absolute;top:auto"]'));
 
-      if (global.getComputedStyle(element, 'top') != 'auto')
+      if (patchedComputedStyle(element, 'top') != 'auto')
         GETCOMPUTEDSTYLE_BUGGY = {
           top: true,
           bottom: true,
