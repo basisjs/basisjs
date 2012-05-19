@@ -545,6 +545,11 @@
       return result.length ? result : 0;
     }
 
+    function removeTokenRef(token, refName){
+      if (token[TOKEN_REFS].remove(refName) && !token[TOKEN_REFS].length)
+        token[TOKEN_REFS] = 0;      
+    }
+
     function tokenAttrs(token){
       var result = {};
 
@@ -639,16 +644,10 @@
                     }
 
                     if (decl.refs.element)
-                    {
-                      var tokenRefs = decl.refs.element[TOKEN_REFS];
-                      tokenRefs.remove('element');
-                      if (!tokenRefs.length)
-                        decl.refs.element[TOKEN_REFS] = 0;
-                    }
+                      removeTokenRef(decl.refs.element, 'element');
 
                     //resources.push.apply(resources, tokens.resources);
                     result.push.apply(result, decl.tokens);
-                    //tokens.splice.apply(tokens, [i--, 1].concat(decl.tokens));
                   }
                   else
                   {
@@ -709,18 +708,12 @@
         var refs = token[TOKEN_REFS];
 
         if (refs)
-          for (var j = 0, ref; ref = refs[j]; j++)
+          for (var j = 0, refName; refName = refs[j]; j++)
           {
-            var curRefToken = map[ref];
-            if (curRefToken)
-            {
-              if (curRefToken[TOKEN_REFS].length > 1)
-                curRefToken[TOKEN_REFS].remove(ref);
-              else
-                curRefToken[TOKEN_REFS] = 0;
-            }
+            if (map[refName])
+              removeTokenRef(map[refName], refName);
 
-            map[ref] = token;
+            map[refName] = token;
             /*if (!map[ref])
               map[ref] = [token];
             else
@@ -755,6 +748,7 @@
       if (!result.refs.element)
       {
         var firstToken = result.tokens[0];
+
         if (!firstToken[TOKEN_REFS])
           firstToken[TOKEN_REFS] = ['element'];
         else
@@ -1232,10 +1226,11 @@
           }
           else
           {
-            l10nMap[l10nName].push('bind_attr(' + [domRef, '"' + attrName + '"', '{}', buildAttrExpression(binding, true)] + ');')
+            attrName = '"' + binding[ATTR_NAME] + '"';
+            l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, true)] + ');')
             varList.push(bindVar);
             bindCode.push(
-              bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
+              bindVar + '=bind_attr(' + [domRef, attrName, bindVar, buildAttrExpression(binding)] + ');'
             );
           }
 
@@ -1394,7 +1389,7 @@
         for (var key in bindings.l10n)
           code.push(
             'case"' + key +'":\n' +
-            'if(value==null)value="{"+token+"}";' +
+            'if(value==null)value="{' + key + '}";' +
             '__l10n[token]=value;' +
             bindings.l10n[key].join(';') +
             'break;'
@@ -1405,7 +1400,7 @@
             code.join('') +
           '}' +
         '}');
-        //console.log(l10nProtoUpdate);
+        console.log(l10nProtoUpdate);
         l10nProtoUpdate = l10nProtoUpdate(proto, l10nMap, bind_attr);
 
         //console.log('>>>> ' + l10nProtoUpdate);
@@ -1442,7 +1437,7 @@
           '}'] +
         '}' +
       '}');
-      //console.log(createInstance);
+      console.log(createInstance);
       createInstance = createInstance(tmplNodeMap, templateMap, build, tools, l10nMap);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
 
