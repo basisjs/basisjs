@@ -668,9 +668,11 @@
             item = [
               3,                       // TOKEN_TYPE = 0
               bindings,                // TOKEN_BINDINGS = 1
-              refs,                    // TOKEN_REFS = 2
-              untoken(token.value)     // TEXT_VALUE = 3
+              refs                     // TOKEN_REFS = 2
             ];
+
+            if (!refs)                 // TEXT_VALUE = 3
+              item.push(untoken(token.value));
 
             break;
 
@@ -1567,7 +1569,7 @@
           if (CLONE_NORMALIZE_TEXT_BUG && i && tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT)
             result.appendChild(document.createComment(''));
 
-          result.appendChild(document.createTextNode(token[TEXT_VALUE]));
+          result.appendChild(document.createTextNode(token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : token[TEXT_VALUE]));
           break;
       }
     }
@@ -1619,7 +1621,13 @@
         ? this.source()
         : String(this.source);
 
-    var decl = typeof source != 'string' ? source : (this.isDecl ? source.toObject() : makeDeclaration(source, this.baseURI));
+    var decl = typeof source != 'string'
+      ? (
+          Array.isArray(source)
+            ? { tokens: source }
+            : source
+        )
+      : (this.isDecl ? source.toObject() : makeDeclaration(source, this.baseURI));
     var funcs = makeFunctions(decl.tokens);
     var l10n = this.l10n_;
     var deps = this.deps_;
