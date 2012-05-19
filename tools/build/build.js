@@ -41,9 +41,11 @@ var treeConsole = (function(){
         console.log.apply(console, args);
     },
     incDeep: function(){
+      //console.log('deep++');
       logDeep++;
     },
     decDeep: function(){
+      //console.log('deep--');
       logDeep--;
     },
     push: function(){
@@ -239,7 +241,7 @@ var resourceDigestMap = {};
 
     if (!jsResourceMap[filepath])
     {
-      treeConsole.incDeep();
+      //treeConsole.incDeep();
 
       var addResource = true;
       var resource = {
@@ -271,7 +273,7 @@ var resourceDigestMap = {};
             break;
           case 'tmpl':
             var fileContent = fs.readFileSync(filepath, 'utf-8');
-            var decl = basis.template.makeDeclaration(fileContent);
+            var decl = basis.template.makeDeclaration(fileContent, path.dirname(filepath) + '/');
 
             if (decl.resources.length)
             {
@@ -295,6 +297,8 @@ var resourceDigestMap = {};
             }
 
             delete decl.resources;
+            delete decl.deps;
+            delete decl.baseURI;
             resource.obj = decl;
             resource.content = decl.toString();
 
@@ -308,7 +312,7 @@ var resourceDigestMap = {};
           resource.id = jsResourceList.push(resource) - 1;
       }
 
-      treeConsole.decDeep();
+      //treeConsole.decDeep();
     }
 
     return jsResourceMap[filepath];
@@ -333,7 +337,6 @@ var resourceDigestMap = {};
         var fileContent = fs.readFileSync(absFilepath, 'utf-8');
         var depends = []; 
         var resources = [];
-        var resourceFound = false;
 
         if (cutDev)
         {
@@ -354,12 +357,12 @@ var resourceDigestMap = {};
               path = evalExpr(path)
               dictName = evalExpr(dictName);
             } catch(e){
-              treeConsole.log('Can\'t evalute path `' + path + '` in ' + filepath);
+              treeConsole.log('Can\'t evaluate path `' + path + '` in ' + filepath);
               return m;
             }
 
             if (dictName in l10nDictionary)
-              treeConsole.log('Dictonary '  + dictName + ' already declared ');
+              treeConsole.log('Dictionary '  + dictName + ' is already declared ');
 
             l10nDictionary[dictName] = path;
             l10nPathes.add(path);
@@ -387,7 +390,7 @@ var resourceDigestMap = {};
               resources.add(resource);
 
               treeConsole.log(
-                '[+]', path.relative(INDEX_PATH, resource.path).replace(/\\/g, '/')
+                '[+] ' + path.relative(INDEX_PATH, resource.path).replace(/\\/g, '/')
               );
               treeConsole.log(
                 ' ~  ' + fn + '(' + resourceExpr + ') -> ' + replaceFor + '\n'
@@ -403,9 +406,6 @@ var resourceDigestMap = {};
 
             return replaceFor;
           });
-
-        if (resourceFound)
-          treeConsole.log('');
 
         fileCache[filepath] = {
           path: filepath,
@@ -504,6 +504,7 @@ var resourceDigestMap = {};
    return !buildMode
     // pack mode
     ? [
+        '// filelist: \n//   ' + package.files.join('\n//   ') + '\n',
         packageWrapper[0],
         'var __curLocation = "' + package.path + '";\n',
         package == packages.basis
@@ -527,6 +528,7 @@ var resourceDigestMap = {};
       ].join('')
     // source mode
     : [
+        '// filelist: \n//   ' + package.files.join('\n//   ') + '\n',
         packageWrapper[0],
         'var __curLocation = "' + package.path + '";\n',
         package == packages.basis

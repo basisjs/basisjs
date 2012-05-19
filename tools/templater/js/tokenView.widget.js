@@ -66,7 +66,7 @@
     binding: {
       refList: 'satellite:',
       hasRefs: function(node){
-        return node.data[TOKEN_REFS] ? 'hasRefs' : '';
+        return node.data[TOKEN_BINDINGS] || node.data[TOKEN_REFS] ? 'hasRefs' : '';
       }
     },
 
@@ -137,9 +137,6 @@
       value: function(object){
         return object[ATTR_VALUE];
       },
-      hasValue: function(object){
-        return object[ATTR_VALUE] ? 'hasValue' : '';
-      },
       isEvent: function(object){
         return /^event-(.+)+/.test(object[ATTR_NAME]) ? 'isEvent' : '';
       }
@@ -161,14 +158,12 @@
           if (attrValue)
             addValue = true;
 
-          var list = bindings[0];
-          for (var b = 0; b < list.length; b++)
-            for (var p = 0; p < bindings[b + 1].length; p++)
-              attrParts.push(new AttributeClassBinding({
-                data: {
-                  text: bindings[b + 1][p] + '{' + list[b] + '}'
-                }
-              }));
+          for (var b = 0; b < bindings.length; b++)
+            attrParts.push(new AttributeClassBinding({
+              data: {
+                text: bindings[b][0] + '{' + bindings[b][1] + '}'
+              }
+            }));
         }
         else
         {

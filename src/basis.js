@@ -1208,7 +1208,8 @@
         'extname',
         'basename',
         'resolve',
-        'relative'
+        'relative',
+        'existsSync'
       ]);
     }
     else
@@ -1418,17 +1419,27 @@
     {
       var resourceContent = '';
 
-      var req = new XMLHttpRequest();
-      req.open('GET', requestUrl, false);
-      req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
-      req.send('');
+      if (!NODE_ENV)
+      {
+        var req = new XMLHttpRequest();
+        req.open('GET', requestUrl, false);
+        req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
+        req.send('');
 
-      if (req.status >= 200 && req.status < 400)
-        resourceContent = req.responseText;
+        if (req.status >= 200 && req.status < 400)
+          resourceContent = req.responseText;
+        else
+        {
+          if (typeof console != 'undefined')
+            console.warn('basis.resource: Unable to load ' + requestUrl);
+        }
+      }
       else
       {
-        if (typeof console != 'undefined')
-          console.warn('basis.resource: Unable to load ' + requestUrl);
+        if (pathUtils.existsSync(requestUrl))
+          resourceContent = require('fs').readFileSync(requestUrl, 'utf-8');
+        else
+          console.log('basis.resource: Unable to load ' + requestUrl);
       }
 
       externalResourceCache[requestUrl] = resourceContent;

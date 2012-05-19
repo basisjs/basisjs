@@ -100,6 +100,12 @@
       createFilePanel: 'satellite:'
     },
 
+    event_targetChanged: function(oldTarget){
+      basis.ui.field.Textarea.prototype.event_targetChanged.call(this, oldTarget);
+      if (this.target)
+        this.target.read();
+    },
+
     /*listen: {
       target: {
         rollbackUpdate: function(){
@@ -109,10 +115,11 @@
     },*/
 
     handler: {
-      input: editorContentChangedHandler,
       change: editorContentChangedHandler,
-      keyup: editorContentChangedHandler,
-      keydown: function(event){
+      fieldInput: editorContentChangedHandler,
+      fieldChange: editorContentChangedHandler,
+      fieldKeyup: editorContentChangedHandler,
+      fieldKeydown: function(event){
         var key = nsEvent.key(event);
 
         if (key == nsEvent.KEY.F2 || (event.ctrlKey && key == KEY_S))
@@ -128,10 +135,10 @@
         if (key == nsEvent.KEY.ENTER)
           onEnter(this);
       },
-      focus: function(){
+      fieldFocus: function(){
         classList(widget.element).add('focus');
       },
-      blur: function(){
+      fieldBlur: function(){
         classList(widget.element).remove('focus');
       },
       update: function(object, delta){
@@ -204,8 +211,15 @@
     active: true,
 
     value:
-      '{resource:1.css}\n' +
-      '<li class="devtools-templateNode {collapsed}">\n\
+      '{resource:1.css}\n\
+       <b:resource src="style.css"/>\n\
+       <b:include src="include.tmpl"/>\n\
+       <b:include src="include2.tmpl">\n\
+         <b:replace ref="title">\n\
+           {title} {childCount}\n\
+         </b:replace>\n\
+       </b:include>\n\
+       <li class="devtools-templateNode {collapsed}">\n\
         <div{content} class="devtools-templateNode-Title devtools-templateNode-CanHaveChildren {selected} {disabled}">\n\
           <div class="devtools-templateNode-Expander" event-click="toggle" attr="{l10n:path.to.dict.token}"/>\n\
           <span{titleElement} class="devtools-templateNode-Caption" event-click="select">\n\
@@ -217,6 +231,8 @@
         <ul{childNodesElement} class="devtools-templateNode-Content"/>\n\
       </li>'
   });
+
+  editorContentChangedHandler.call(tmplEditor);
 
   // .css
   var cssEditor = new Editor({
@@ -288,44 +304,6 @@
         flex: 1,
         autoDelegate: DELEGATE.PARENT,
         childNodes: cssEditor
-      },
-      {
-        flex: 1,
-        autoDelegate: DELEGATE.PARENT,
-        childNodes: [
-          {
-            content: basis.dom.createElement({
-              description: '#test[style="font-family:Consolas;white-space:pre"]',
-
-              mouseup: function(){
-                var r = window.getSelection().getRangeAt(0);
-                console.log(r.startContainer, r.startOffset)
-                var insertPoint = r.startContainer.nextSibling;
-                var parentNode = r.startContainer.parentNode;
-                if (r.startContainer.nodeType == 3)
-                {
-                  if (r.startOffset == 0)
-                    parentNode.insertBefore(cursor, r.startContainer);
-                  else
-                    if (r.startOffset < r.startContainer.nodeValue.length)
-                    {
-                      r.startContainer.splitText(r.startOffset);
-                      parentNode.insertBefore(cursor, insertPoint ? insertPoint.previousSibling : parentNode.lastChild);
-                    }
-                    else
-                    {
-                      parentNode.insertBefore(cursor, r.startContainer.nextSibling);
-                    }
-                }
-                else
-                {
-                  r.startContainer.insertBefore(cursor, r.startContainer.childNodes[r.startOffset])
-                }
-                cursorText.select();
-              }
-            }, 'sdfsdfsdfs dfsd fsd fsd fsdf sdf')
-          }
-        ]
       }
     ]
   });

@@ -375,6 +375,13 @@
             this.tmpl = tmpl;
             this.element = tmpl.element;
             this.childNodesElement = tmpl.childNodesElement || tmpl.element;
+            ;;;this.noChildNodesElement = false;
+
+            if (!this.childNodesElement || this.childNodesElement.nodeType != 1)
+            {
+              this.childNodesElement = document.createDocumentFragment();
+              ;;;this.noChildNodesElement = true;
+            }
           }
 
           // insert content
@@ -501,6 +508,14 @@
             this.element = tmpl.element;
             this.childNodesElement = tmpl.childNodesElement || tmpl.element;
 
+            ;;;this.noChildNodesElement = false;
+
+            if (!this.childNodesElement || this.childNodesElement.nodeType != 1)
+            {
+              this.childNodesElement = document.createDocumentFragment();
+              ;;;this.noChildNodesElement = true;
+            }
+
             if (oldTemplate)
               this.templateSync(true);
           }
@@ -596,7 +611,7 @@
     return {
       // methods
       insertBefore: function(newChild, refChild){
-        var marker = this.domVersion_;
+        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; console.warn('Bug: Template has no childNodesElement container, but insertBefore ca'); }
 
         // inherit
         newChild = super_.insertBefore.call(this, newChild, refChild);
@@ -611,7 +626,7 @@
         var element = newChild.element;
         var refNode = insertPoint || container.insertPoint || null;
 
-        if (element.parentNode !== container || (element.nextSibling !== refNode/* && marker != this.domVersion_*/)) // prevent dom update
+        if (element.parentNode !== container || element.nextSibling !== refNode) // prevent dom update
           container.insertBefore(element, refNode); // NOTE: null at the end for IE
           
         return newChild;
@@ -650,6 +665,8 @@
         super_.clear.call(this, alive);
       },
       setChildNodes: function(childNodes, keepAlive){
+        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; console.warn('Template has childNodesElement container, probably it is bug'); }
+
         // reallocate childNodesElement to new DocumentFragment
         var domFragment = DOM.createFragment();
         var target = this.grouping || this;

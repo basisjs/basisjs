@@ -21,7 +21,7 @@
     border-radius: 2px;
     text-shadow: 0 1px rgba(255,255,255,.75);
   }
-  #Viewer .Attribute.hasValue .AttributeValue
+  #Viewer .Attribute.hasChildren .AttributeValue
   {
     display: inline;
   }

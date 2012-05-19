@@ -470,23 +470,13 @@
             {
               var newValue = [];
               var map = {};
-              var prefixes;
 
-              bindings = [[]];
+              bindings = [];
 
               for (var j = 0, part; part = parts[j]; j++)
               {
                 if (m = part.match(CLASS_ATTR_BINDING))
-                {
-                  prefixes = map[m[2]];
-                  if (!map[m[2]])
-                  {
-                    prefixes = map[m[2]] = [];
-                    bindings[0].push(m[2]);
-                    bindings.push(prefixes);
-                  }
-                  prefixes.push(m[1] || '');
-                }
+                  bindings.push([m[1] || '', m[2]]);
                 else
                   newValue.push(part);
               }
@@ -494,7 +484,7 @@
               // set new value
               attr.value = newValue.join(' ');
 
-              if (bindings.length == 1)
+              if (!bindings.length)
                 bindings = 0;
             }
           }
@@ -736,7 +726,7 @@
       var result = {
         baseURI: baseURI || '',
         resources: source.resources.map(function(url){
-          return baseURI + url;
+          return (baseURI || '') + url;
         }),
         deps: [],
         refs: {}
@@ -877,15 +867,18 @@
 
               if (bindings = attr[TOKEN_BINDINGS])
               {
-                var binding = [2, localPath];
-
                 explicitRef = true;
 
-                for (var k = 0, bindName; bindName = bindings[0][k]; k++)
-                  if (attrName == 'class')
-                    putBinding(binding.concat([bindName, attrName, bindings[k + 1]]));
-                  else
-                    putBinding(binding.concat([bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]));
+                if (attrName == 'class')
+                {
+                  for (var k = 0, binding; binding = bindings[k]; k++)
+                    putBinding([2, localPath, binding[1], attrName, binding[0]]);
+                }
+                else
+                {
+                  for (var k = 0, bindName; bindName = bindings[0][k]; k++)
+                    putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]);
+                }
               }
             }
 
@@ -1273,16 +1266,11 @@
 
             if (attrName == 'class')
             {
-              var prefixes = binding[ATTR_VALUE];
-
-              for (var j = 0; j < prefixes.length; j++)
-              {
-                varList.push(bindVar + '=""');
-                toolsUsed.bind_attrClass = true;
-                bindCode.push(
-                  bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + prefixes[j] + '"'] + (anim ? ',1' : '') + ');'
-                );
-              }
+              varList.push(bindVar + '=""');
+              toolsUsed.bind_attrClass = true;
+              bindCode.push(
+                bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + binding[4] + '"'] + (anim ? ',1' : '') + ');'
+              );
             }
             else
             {
