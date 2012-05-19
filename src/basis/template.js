@@ -1215,7 +1215,8 @@
 
           if (binding[0] == TYPE_TEXT)
           {
-            ;;;debugList.push('{binding:"' + l10nName + '",dom:' + domRef + ',val:__l10n["' + l10nName + '"],attachment:basis.l10n.getToken("' + l10nName + '")}');
+            ;;;debugList.push('{binding:"' + l10nName + '",dom:' + domRef + ',val:__l10n["' + l10nName + '"],attachment:l10nToken("' + l10nName + '")}');
+            ;;;toolsUsed.l10nToken = true;
             bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"];');
             l10nMap[l10nName].push(domRef + '.nodeValue=value;')
           }
@@ -1361,7 +1362,8 @@
       bind_node: bind_node,
       bind_attr: bind_attr,
       bind_attrClass: bind_attrClass,
-      resolve: resolveValue
+      resolve: resolveValue,
+      l10nToken: basis.l10n.getToken
     };
 
     return function(tokens){
