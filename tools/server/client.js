@@ -106,20 +106,6 @@
               },
               observeReady: function(filelist){
                 File.all.sync(filelist);
-                //filelist.map(File);
-                /*var path = ListenPath.get(rel)
-
-                console.log('listen for ' + rel + ' (ready ' + filelist.length + ' files)');
-
-                if (path)
-                  path.files.set(filelist.map(File));
-
-                observeCount--;
-                if (!observeCount)
-                {
-                  connectionState.set('online');
-                  isOnline.set(isOnline_ = true);
-                }*/
               },
 
               //
@@ -160,54 +146,8 @@
 
 
   //
-  // Main logic
+  // Main
   //
-
-  /*var ListenPath = new nsEntity.EntityType({
-    name: namespace + '.ListenPath',
-    fields: {
-      rel: basis.entity.StringId,
-      fspath: String
-    }
-  });
-
-  var fileDatasets = {};
-  var allFiles = new basis.data.dataset.Merge();
-  window.allFiles = allFiles;
-
-  ListenPath.all.addHandler({
-    datasetChanged: function(dataset, delta){
-      var array;
-
-      if (array = delta.inserted)
-        for (var i = 0, path; path = array[i]; i++)
-        {
-          path.files = new basis.data.Dataset({
-            data: {
-              path: path.rel,
-              fspath: path.fspath
-            }
-          });
-          allFiles.addSource(path.files);
-        }
-
-      if (array = delta.deleted)
-        for (var i = 0; i < array.length; i++)
-        {
-          array[i].files.destroy();
-          delete array[i].files;
-        }
-    }
-  });
-
-  window.ListenPath = ListenPath;
-  for (var path in listenDirs)
-  {
-    ListenPath({
-      rel: path,
-      fspath: listenDirs[path]
-    });
-  }*/
 
 
   //
@@ -279,13 +219,7 @@
   var templateUpdateHandler = {
     update: function(file, delta){
       if ('filename' in delta || 'content' in delta)
-      {
-        /*var templateFile = basis.template.filesMap[this.data.filename];
-        if (templateFile)
-          templateFile.update(this.data.content);*/
-
         basis.resource(this.data.filename).update(this.data.content);
-      }
     }
   };
 
@@ -314,7 +248,7 @@
     linkEl.href = path;                         // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
     baseEl.setAttribute('href', linkEl.href);
 
-    basis.dom.insert(documentHead, baseEl, 0); // even if there is more than one <base> elements, only first has effect
+    basis.dom.insert(documentHead, baseEl, 0);  // even if there is more than one <base> elements, only first has effect
   }
   function restoreBase(){
     baseEl.setAttribute('href', location);      // Opera left document base as <base> element specified,
@@ -391,64 +325,14 @@
 
     var abs = path.split(/\//);
     var loc = normalizeUrl(location).replace(/\/[^\/]*$/, '').split(/\//);
-    //var res = [];
     var i = 0;
 
     while (abs[i] == loc[i] && typeof loc[i] == 'string')
       i++;
 
-    //while (i < loc.length)
-    //  res.push('..');
-
-    //return res.concat(abs.slice(i)).join('/');
-
     return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
   }
 
-  var revisitQueue = [];
-  function processRevisitQueue(){
-    for (var i = revisitQueue.length; i --> 0;)
-    {
-      var params = revisitQueue[i];
-      var rule = params.rule;
-      if (rule.styleSheet)
-      {
-        console.log('revisit rule styleSheet success', rule.href);
-        revisitQueue.splice(i, 1);
-        var importSheet = linearStyleSheet(rule.styleSheet, params.insertPoint, params.cssFileStack);
-        if (importSheet)
-          params.imports.push(importSheet);
-      }
-      else
-      {
-        if (params.attempts++ > 10)
-        {
-          console.log('delete revisit rule, because too many attempts', rule.href);
-          revisitQueue.splice(i, 1);
-        }
-      }  
-    }
-
-    if (revisitQueue.length)
-      setTimeout(processRevisitQueue, 5);
-  }
-  function addToRevisitQueue(rule, imports, insertPoint, cssFileStack){
-    console.log('add rule to revisit queue', rule.href);
-
-    if (!revisitQueue.search(rule, 'rule'))
-    {
-      revisitQueue.push({
-        attempts: 0,
-        rule: rule,
-        imports: imports,
-        insertPoint: insertPoint,
-        cssFileStack: cssFileStack
-      });
-
-      if (revisitQueue.length == 1)
-        setTimeout(processRevisitQueue, 5);
-    }
-  }
 
   var nonObservableFilesCache = {};
   var styleSeed = 0;
