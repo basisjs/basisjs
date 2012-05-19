@@ -1,17 +1,17 @@
-/**
- * Basis javascript library 
- * http://code.google.com/p/basis-js/
- *
- * @copyright
- * Copyright (c) 2006-2012 Roman Dvornov.
- *
- * @license
- * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
- *
- * @author
- * Vladimir Ratsev
- * Roman Dvornov
- */
+/*
+  Basis javascript library 
+  http://code.google.com/p/basis-js/
+ 
+  @copyright
+  Copyright (c) 2006-2012 Roman Dvornov.
+ 
+  @license
+  GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
+ 
+  @author
+  Vladimir Ratsev
+  Roman Dvornov
+*/
 
   basis.require('basis.dom');
   basis.require('basis.dom.event');
