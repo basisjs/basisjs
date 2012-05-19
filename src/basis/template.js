@@ -11,6 +11,7 @@
 
   basis.require('basis.dom');
   basis.require('basis.dom.event');
+  basis.require('basis.l10n');
 
 
  /**
@@ -1221,6 +1222,7 @@
 
           if (binding[0] == TYPE_TEXT)
           {
+            ;;;debugList.push('{binding:"' + l10nName + '",dom:' + domRef + ',val:__l10n["' + l10nName + '"],attachment:basis.l10n.getToken("' + l10nName + '")}');
             bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"];');
             l10nMap[l10nName].push(domRef + '.nodeValue=value;')
           }
@@ -1400,7 +1402,7 @@
             code.join('') +
           '}' +
         '}');
-        console.log(l10nProtoUpdate);
+        //console.log(l10nProtoUpdate);
         l10nProtoUpdate = l10nProtoUpdate(proto, l10nMap, bind_attr);
 
         //console.log('>>>> ' + l10nProtoUpdate);
@@ -1437,7 +1439,7 @@
           '}'] +
         '}' +
       '}');
-      console.log(createInstance);
+      //console.log(createInstance);
       createInstance = createInstance(tmplNodeMap, templateMap, build, tools, l10nMap);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
 
