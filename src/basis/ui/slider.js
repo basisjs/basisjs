@@ -14,7 +14,6 @@
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.cssom');
-  basis.require('basis.html');
   basis.require('basis.layout');
   basis.require('basis.dragdrop');
 
@@ -162,7 +161,7 @@
   };
 
   var DRAGDROP_HANDLER = {
-    move: function(config, event){
+    move: function(sender, config, event){
       eventToValue.call(this, event);
     }
   };

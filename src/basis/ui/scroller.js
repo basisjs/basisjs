@@ -236,13 +236,13 @@
 
       this.lastMotionUpdateTime = Date.now();
 
-      Event.addHandler(document, 'mousemove', this.onMouseMove, this);
-      Event.addHandler(document, 'touchmove', this.onMouseMove, this);
-      Event.addHandler(document, 'mouseup', this.onMouseUp, this);
-      Event.addHandler(document, 'touchend', this.onMouseUp, this);
+      Event.addGlobalHandler('mousemove', this.onMouseMove, this);
+      Event.addGlobalHandler('touchmove', this.onMouseMove, this);
+      Event.addGlobalHandler('mouseup', this.onMouseUp, this);
+      Event.addGlobalHandler('touchend', this.onMouseUp, this);
 
       //Event.cancelBubble(event);
-      //Event.cancelDefault(event);
+      Event.cancelDefault(event);
     },
 
     onMouseMove: function(event){
@@ -326,10 +326,10 @@
       if (this.scrollY)
         this.currentVelocityY *= 1 - Math.min(1, Math.max(0, deltaTime / 100));
 
-      Event.removeHandler(document, 'mousemove', this.onMouseMove, this);
-      Event.removeHandler(document, 'touchmove', this.onMouseMove, this);
-      Event.removeHandler(document, 'mouseup',   this.onMouseUp, this);
-      Event.removeHandler(document, 'touchend',  this.onMouseUp, this);
+      Event.removeGlobalHandler('mousemove', this.onMouseMove, this);
+      Event.removeGlobalHandler('touchmove', this.onMouseMove, this);
+      Event.removeGlobalHandler('mouseup', this.onMouseUp, this);
+      Event.removeGlobalHandler('touchend', this.onMouseUp, this);
 
       this.event_startInertia();
     },
