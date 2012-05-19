@@ -102,7 +102,6 @@
     var parseTag = false;
     var textStateEndPos = 0;
     var textEndPos;
-    var refMap = {};
     var refName;
     var l10nMatch;
 
@@ -313,25 +312,6 @@
           case REFERENCE:
             refName = m[1];
 
-            // if ref is already in use, remove it from another holder
-            if (refMap[refName])
-            {
-              var holder = refMap[refName];
-
-              ;;;if (debug) debug.push('Html parse: Dublicate reference `' + refName + '` in template');
-
-              //token.refs.remove(refName);
-              holder.refs.splice(holder.refs.indexOf(refName), 1);
-
-              // if no more refs in list - delete it
-              if (!holder.refs.length)
-                delete holder.refs;
-            }
-
-            // add to map
-            if (token.type != TYPE_TEXT)
-              refMap[refName] = token;
-
             // add reference to token list name
             if (token.refs)
               token.refs.push(m[1]);
@@ -394,14 +374,6 @@
 
       if (!result.length)   // there must be at least one token in result
         result.push({ type: TYPE_TEXT, value: '' });
-
-      /*if ('element' in refMap == false)
-      {
-        if (!result[0].refs)
-          result[0].refs = ['element'];
-        else
-          result[0].refs.push('element');
-      }*/
 
       if (tagStack.length > 1)
         throw 'No close tag for ' + tagStack.pop().name;
