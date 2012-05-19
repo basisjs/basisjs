@@ -162,10 +162,7 @@ var indexFileContent = fs.readFileSync(INDEX_FILE, 'utf-8')
       jsFiles.push(scriptPath);
 
       return /\s+basis-config/.test(m)
-        ? offset + [
-            '<script type="text/javascript" src="basis.js?' + buildLabel + '"><\/script>',
-            '<script type="text/javascript" src="app.js?' + buildLabel + '"><\/script>'
-          ].join('\n' + offset)
+        ? offset + '<!--build inject point-->'
         : m;
     }
   )
@@ -260,12 +257,20 @@ var resourceDigestMap = {};
           case 'js':
             resource.contentObject = getJsFile(filepath);
             resource.content = resource.contentObject.content;
-            /*try {
-              resource.obj = new Function(resource.content);
+
+            try {
+              compiled = new Function('exports, module, basis, global, __filename, __dirname, resource', resource.content);
+
+              if (buildMode)
+                resource.obj = compiled;
+
             } catch(e) {
-              console.log('[ERROR] Compilation error: ' + filepath);
-              resource.obj = Function();
-            }*/
+              console.warn('[ERROR] Compilation error: ' + filepath);
+
+              if (buildMode)
+                resource.obj = Function();
+            }
+
             break;
           case 'css':
             genericCssContent.push(filepath);
@@ -500,57 +505,66 @@ var resourceDigestMap = {};
     "\n}).call(this);"
   ];
 
+  var basisWrapper = [
+    "(function(externalResourceCache){\n" +
+    "'use strict';\n\n",
+
+    "\n}).call(this, window.__resources__);delete window.__resources__;"
+  ];
+
   function wrapPackage(package){
-   return !buildMode
-    // pack mode
-    ? [
-        '// filelist: \n//   ' + package.files.join('\n//   ') + '\n',
-        packageWrapper[0],
-        'var __curLocation = "' + package.path + '";\n',
-        package == packages.basis
-          ? 'var externalResourceCache = ' + resourceMapCode + ';\n' + 
-            fileCache[nsBase.basis + 'basis.js'].content
-          : '',
-        '[\n',
-          package.content.join(',\n'),
-        '].forEach(' + function(module){
-           var path = __curLocation + module.path;    
-           var fn = path + module.fn;
-           var ns = basis.namespace(module.ns);
-           ns.source_ = Function.body(module.body);
-           ns.filename_ = module.path + module.fn;
-           new Function('module, exports, global, __filename, __dirname, basis, resource',
-             '/** @namespace ' + ns.path + ' */\n' + ns.source_ + '//@ sourceURL=' + fn
-           ).call(ns, ns, ns.exports, this, fn, path, basis, function(url){ return basis.resource(path + url) });
-           Object.complete(ns, ns.exports);
-         } + ', this)',
-        packageWrapper[1]
-      ].join('')
-    // source mode
-    : [
-        '// filelist: \n//   ' + package.files.join('\n//   ') + '\n',
-        packageWrapper[0],
-        'var __curLocation = "' + package.path + '";\n',
-        package == packages.basis
-          ? 'var externalResourceCache = ' + resourceMapCode + ';\n' + 
-            fileCache[nsBase.basis + 'basis.js'].content
-          : '',
-        '[\n',
-          package.content.join(',\n'),
-        '].forEach(' + function(module){
-           for (var ns in module)
-           {
-             var fn = module[ns];
-             var nsParts = ns.split(".");
-             var filename = nsParts.pop() + '.js';
-             var path = __curLocation + nsParts.join('/') + '/';
-             var ns = basis.namespace(ns);
-             fn.call(ns, basis, this, path, ns.exports, function(url){ return basis.resource(path + url) }, ns, path + filename);
+    var isBasis = package == packages.basis;
+    var sourceWrapper = isBasis ? basisWrapper : packageWrapper;
+    return !buildMode
+      // pack mode
+      ? [
+          '// filelist: \n//   ' + package.files.join('\n//   ') + '\n',
+          packageWrapper[0],
+          'var __curLocation = "' + package.path + '";\n',
+          isBasis
+            ? 'var externalResourceCache = this.__resources__; delete this.__resources__;\n' +
+              fileCache[nsBase.basis + 'basis.js'].content
+            : '',
+          '[\n',
+            package.content.join(',\n'),
+          '].forEach(' + function(module){
+             var path = __curLocation + module.path;    
+             var fn = path + module.fn;
+             var ns = basis.namespace(module.ns);
+             ns.source_ = Function.body(module.body);
+             ns.filename_ = module.path + module.fn;
+             new Function('module, exports, global, __filename, __dirname, basis, resource',
+               '/** @namespace ' + ns.path + ' */\n' + ns.source_ + '//@ sourceURL=' + fn
+             ).call(ns, ns, ns.exports, this, fn, path, basis, function(url){ return basis.resource(path + url) });
              Object.complete(ns, ns.exports);
-           }
-         } + ', this)',
-        packageWrapper[1]
-      ].join('');
+           } + ', this)',
+          packageWrapper[1]
+        ].join('')
+      // source mode
+      : [
+          '// filelist: \n//   ' + package.files.join('\n//   ') + '\n',
+          packageWrapper[0],
+          'var __curLocation = "' + package.path + '";\n',
+          isBasis
+            ? 'var externalResourceCache = this.__resources__; delete this.__resources__;\n' +
+              fileCache[nsBase.basis + 'basis.js'].content
+            : '',
+          '[\n',
+            package.content.join(',\n'),
+          '].forEach(' + function(module){
+             for (var ns in module)
+             {
+               var fn = module[ns];
+               var nsParts = ns.split(".");
+               var filename = nsParts.pop() + '.js';
+               var path = __curLocation + nsParts.join('/') + '/';
+               var ns = basis.namespace(ns);
+               fn.call(ns, basis, this, path, ns.exports, function(url){ return basis.resource(path + url) }, ns, path + filename);
+               Object.complete(ns, ns.exports);
+             }
+           } + ', this)',
+          packageWrapper[1]
+        ].join('');
   }
 
   ///////////////////////////////////////////
@@ -597,30 +611,45 @@ var resourceDigestMap = {};
   //console.log(reqGraph.join('\n'));
 
 
-  ///////////////////////////////////////////
 
+
+  ////////////////////////////////
+  // wrap modules
+  for (var packageName in packages)
+    packages[packageName].content = wrapPackage(packages[packageName]);
+
+  packages.basis.content = packages.basis.content
+    .replace(/resourceUrl\s*=\s*pathUtils.resolve\(resourceUrl\)/, '')
+    .replace(/\/\*\{resourceResolver\}\*\/(?:.|[\r\n])+\/\*\{resourceResolverEnd\}\*\//,
+      'var externalResource = ' + function(ref){
+        return externalResourceCache[ref] || "";
+      }.toString() +';\n'
+    );
+
+
+  ///////////////////////////////////////////
   // build resource map
-  var resourceMapCode = '[' + jsResourceList.map(function(resource){
+
+  var resourceMapCode = '"use strict";\nwindow.__resources__ = {' + jsResourceList.map(function(resource){
+    var content;
     if (resource.obj)
-      return typeof resource.obj == 'function'
+      content = typeof resource.obj == 'function'
         ? resource.obj.toString().replace(/function\s+anonymous/, 'function')
         : JSON.stringify(resource.obj);
     else
-      return JSON.stringify(String(resource.contentObject ? resource.contentObject.content : resource.content).replace(/\r\n?|\n\r?/g, '\n'));
-  }).join(',\n') + ']';
+      content = JSON.stringify(String(resource.contentObject ? resource.contentObject.content : resource.content).replace(/\r\n?|\n\r?/g, '\n'));
 
-  var allSource = [];
-  for (var packageName in packages)
-    allSource.push(packages[packageName].content = wrapPackage(packages[packageName]));
+    return '"' + resource.id + '.' + resource.type + '": ' + content;
+  }).join(',\n') + '}';
 
-  allSource = allSource.join('');
-  packages.basis.content = packages.basis.content
-    .replace(/resourceUrl\s*=\s*resolveUrl\(resourceUrl\)/, '')
-    .replace(/\/\*\{resourceResolver\}\*\/(?:.|[\r\n])+\/\*\{resourceResolverEnd\}\*\//,
-      'var externalResource = ' + function(ref){
-        return externalResourceCache[parseInt(pathUtils.relative(ref))] || "";
-      }.toString() +';\n'
-    );
+  // write to file
+  /*var resFilename = BUILD_DIR + '/res.js';
+  console.log('  Write ' + resFilename + '...');
+  fs.writeFile(resFilename, resourceMapCode, 'utf-8');*/
+
+  packages.res = {
+    content: resourceMapCode
+  }
 
 
   ////////////////////////////////
@@ -629,17 +658,18 @@ var resourceDigestMap = {};
   if (!packBuild)
   {
     for (var packageName in packages)
-      fs.writeFile(BUILD_DIR + '/' + packageName + '.js', packages[packageName].content, 'utf-8');
+    {
+      var filename = BUILD_DIR + '/' + packageName + '.js';
+      console.log('  Write ' + filename + '...');
+      fs.writeFile(filename, packages[packageName].content, 'utf-8');
+    }
   }
   else
   {
-    [
-      { name: 'basis', content: packages.basis.content },
-      { name: 'app', content: packages.app.content }
-    ].forEach(function(cfg){
+    function writeAndPack(name, cfg){
       var packStartTime = new Date;
-      var tmpFilename = BUILD_DIR + '/' + cfg.name + '.tmp';
-      var resFilename = BUILD_DIR + '/' + cfg.name + '.js';
+      var tmpFilename = BUILD_DIR + '/' + name + '.tmp';
+      var resFilename = BUILD_DIR + '/' + name + '.js';
 
       fs.writeFile(tmpFilename, cfg.content, 'utf-8');
 
@@ -660,14 +690,23 @@ var resourceDigestMap = {};
           })
         }
       });
+    }
 
-    })
+    for (var packageName in packages)
+      writeAndPack(packageName, packages[packageName]);
   }
 
   ////////////////////////////////
 
   printHeader('l10n:');
 
+  // collect all source content for analyze
+  var allSource = [];
+  for (var packageName in packages)
+    allSource.push(packages[packageName].content);
+  allSource = allSource.join('');
+
+  // process culture list
   var cultureList = allSource.match(/basis\.l10n\.setCultureList\([^\)]+\)/g);
   if (cultureList)
   {
@@ -715,17 +754,16 @@ var resourceDigestMap = {};
     }
   }
 
-  //console.log(l10nDictionary);
+  ///////////////////////////////////
+  // inject scripts into index.html
 
-  /*for (var key in resourceMap)
-  {
-    var resource = resourceMap[key];
-    console.log(resource.type, resource.path, resource.id, (resource.content || '').length);
-  }*/
-
-
-/*
-*/
+  indexFileContent = indexFileContent.replace(/([\t ]*)<!--build inject point-->/, function(m, offset){
+    return offset + [
+      '<script type="text/javascript" src="res.js?' + buildLabel + '"><\/script>',
+      '<script type="text/javascript" src="basis.js?' + buildLabel + '"><\/script>',
+      '<script type="text/javascript" src="app.js?' + buildLabel + '"><\/script>'
+    ].join('\n' + offset)
+  });
 
 })();
 
@@ -967,14 +1005,14 @@ printHeader("CSS:");
 
     if (flags.cssPack)
     {
-      console.log('  Pack /resources.css ...');
+      console.log('  Pack /res.css ...');
       resourceCss.content = csso.justDoIt(resourceCss.content);
       console.log('    * ' + resourceCss.sourceSize + ' -> ' + resourceCss.content.length);
     }
 
-    fs.writeFile(BUILD_DIR + '/resources.css', resourceCss.content, 'utf-8');
+    fs.writeFile(BUILD_DIR + '/res.css', resourceCss.content, 'utf-8');
 
-    indexFileContent = indexFileContent.replace(/<\/head>/i, '  <link rel="stylesheet" type="text/css" href="resources.css?' + buildLabel + '"/>\n$&')
+    indexFileContent = indexFileContent.replace(/<\/head>/i, '  <link rel="stylesheet" type="text/css" href="res.css?' + buildLabel + '"/>\n$&')
   }
 
 })();

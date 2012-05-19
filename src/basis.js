@@ -1439,7 +1439,7 @@
         if (pathUtils.existsSync(requestUrl))
           resourceContent = require('fs').readFileSync(requestUrl, 'utf-8');
         else
-          console.log('basis.resource: Unable to load ' + requestUrl);
+          console.warn('basis.resource: Unable to load ' + requestUrl);
       }
 
       externalResourceCache[requestUrl] = resourceContent;
@@ -1578,21 +1578,23 @@
 
   fetchResourceFunction.extensions['.json'].updatable = true;
 
-  var runScriptInContext = function(context, sourceURL, scriptText, prefix){
+  var runScriptInContext = function(context, sourceURL, sourceCode, prefix){
     var baseURL = pathUtils.dirname(sourceURL) + '/';
-    var scriptFn;
+    var compiledSourceCode;
 
     if (!context.exports)
       context.exports = {};
 
     // compile context function
     try {
-      scriptFn = Function('exports, module, basis, global, __filename, __dirname, resource',
-        (prefix || '') +
-        '"use strict";\n\n' +
-        scriptText +
-        '//@ sourceURL=' + sourceURL
-      );
+      compiledSourceCode = typeof sourceCode == 'function'
+        ? sourceCode
+        : Function('exports, module, basis, global, __filename, __dirname, resource',
+            (prefix || '') +
+            '"use strict";\n\n' +
+            sourceCode +
+            '//@ sourceURL=' + sourceURL
+          );
     } catch(e) {
       //;;;console.log('Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e));
       var src = document.createElement('script');
@@ -1605,7 +1607,7 @@
     }
 
     // run
-    scriptFn.call(
+    compiledSourceCode.call(
       context,
       context.exports,
       context,
