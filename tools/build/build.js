@@ -10,7 +10,7 @@ var INDEX_FILE = path.resolve(BASE_PATH, 'index.html');
 var INDEX_PATH = path.dirname(INDEX_FILE) + '/';
 var BUILD_DIR = path.resolve(BASE_PATH, 'build');
 var BUILD_RESOURCE_DIR = BUILD_DIR + '/res';
-var JSCOMPILER = 'java -jar c:\\tools\\gcc.jar';
+var JSCOMPILER = 'java -jar c:\\tools\\gcc.jar --charset UTF-8';
 
 
 if (!path.existsSync(INDEX_FILE))
@@ -301,10 +301,10 @@ var resourceDigestMap = {};
               treeConsole.decDeep();
             }
 
-            delete decl.resources;
+            /*delete decl.resources;
             delete decl.deps;
-            delete decl.baseURI;
-            resource.obj = decl;
+            delete decl.baseURI;*/
+            resource.obj = decl.tokens;
             resource.content = decl.toString();
 
             //resource.contentObject = basis.template.makeDeclaration(resource.content);
@@ -314,7 +314,10 @@ var resourceDigestMap = {};
         }
 
         if (addResource)
+        {
           resource.id = jsResourceList.push(resource) - 1;
+          resource.ref = resource.id + '.' + resource.type;
+        }
       }
 
       //treeConsole.decDeep();
@@ -611,8 +614,6 @@ var resourceDigestMap = {};
   //console.log(reqGraph.join('\n'));
 
 
-
-
   ////////////////////////////////
   // wrap modules
   for (var packageName in packages)
@@ -627,6 +628,73 @@ var resourceDigestMap = {};
     );
 
 
+  ////////////////////////////////
+  // build dictionaries
+
+  printHeader('l10n:');
+
+  // collect all source content for analyze
+  var allSource = [];
+  for (var packageName in packages)
+    allSource.push(packages[packageName].content);
+  allSource = allSource.join('');
+
+  // process culture list
+  var cultureList = allSource.match(/basis\.l10n\.setCultureList\([^\)]+\)/g);
+  if (cultureList)
+  {
+    cultureList = cultureList.pop();
+    cultureList = eval(cultureList.substring(26, cultureList.length - 1));
+    if (typeof cultureList == 'string')
+      cultureList = cultureList.trim().split(/\s+/)
+    if (Array.isArray(cultureList))
+    {
+      console.log('  Culture list is [' + cultureList.join(', ') + ']');
+
+      mkdir(BUILD_DIR + '/l10n');
+
+      for (var i = 0; i < cultureList.length; i++)
+      {
+        console.log('  * ' + cultureList[i]);
+        var dictFileContent = l10nPathes
+          .map(function(filepath){
+            filepath = filepath + '/' + this + '.json';
+            if (path.existsSync(filepath))
+              try {
+                return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
+              } catch(e){}
+            else
+              console.log('    [ERROR] Dictionary file ' + filepath + ' not found');
+
+            return {};
+          }, cultureList[i])
+          .reduce(function(res, dict){
+            for (var key in dict)
+            {
+              if (res[key])
+                console.log(key + ' is already exists');
+
+              res[key] = dict[key];
+            }
+
+            return res;
+          }, {});
+
+        jsResourceList.push({
+          ref: 'l10n/' + cultureList[i] + '.json',
+          obj: dictFileContent
+        });
+
+        /*
+        var dictFilename = BUILD_DIR + '/l10n/' + cultureList[i] + '.json';
+        fs.writeFile(dictFilename, JSON.stringify(dictFileContent), 'utf-8');
+        console.log('    dictionary saved to ' + dictFilename + '\n');
+        */
+      }
+    }
+  }
+
+
   ///////////////////////////////////////////
   // build resource map
 
@@ -639,7 +707,7 @@ var resourceDigestMap = {};
     else
       content = JSON.stringify(String(resource.contentObject ? resource.contentObject.content : resource.content).replace(/\r\n?|\n\r?/g, '\n'));
 
-    return '"' + resource.id + '.' + resource.type + '": ' + content;
+    return '"' + resource.ref + '": ' + content;
   }).join(',\n') + '}';
 
   // write to file
@@ -696,63 +764,6 @@ var resourceDigestMap = {};
       writeAndPack(packageName, packages[packageName]);
   }
 
-  ////////////////////////////////
-
-  printHeader('l10n:');
-
-  // collect all source content for analyze
-  var allSource = [];
-  for (var packageName in packages)
-    allSource.push(packages[packageName].content);
-  allSource = allSource.join('');
-
-  // process culture list
-  var cultureList = allSource.match(/basis\.l10n\.setCultureList\([^\)]+\)/g);
-  if (cultureList)
-  {
-    cultureList = cultureList.pop();
-    cultureList = eval(cultureList.substring(26, cultureList.length - 1));
-    if (typeof cultureList == 'string')
-      cultureList = cultureList.trim().split(/\s+/)
-    if (Array.isArray(cultureList))
-    {
-      console.log('  Culture list is [' + cultureList.join(', ') + ']');
-
-      mkdir(BUILD_DIR + '/l10n');
-
-      for (var i = 0; i < cultureList.length; i++)
-      {
-        console.log('  * ' + cultureList[i]);
-        var dictFileContent = l10nPathes
-          .map(function(filepath){
-            filepath = filepath + '/' + this + '.json';
-            if (path.existsSync(filepath))
-              try {
-                return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
-              } catch(e){}
-            else
-              console.log('    [ERROR] Dictionary file ' + filepath + ' not found');
-
-            return {};
-          }, cultureList[i])
-          .reduce(function(res, dict){
-            for (var key in dict)
-            {
-              if (res[key])
-                console.log(key + ' is already exists');
-
-              res[key] = dict[key];
-            }
-
-            return res;
-          }, {});
-
-        var dictFilename = BUILD_DIR + '/l10n/' + cultureList[i] + '.json';
-        fs.writeFile(dictFilename, JSON.stringify(dictFileContent), 'utf-8');
-        console.log('    dictionary saved to ' + dictFilename + '\n');
-      }
-    }
-  }
 
   ///////////////////////////////////
   // inject scripts into index.html

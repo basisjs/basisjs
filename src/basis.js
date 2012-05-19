@@ -1566,6 +1566,9 @@
       return runScriptInContext({ exports: {} }, url, resource).exports;
     },
     '.json': function(resource, url){
+      if (typeof resource == 'object')
+        return resource;
+
       var result;
       try {
         result = JSON.parse(String(resource));
