@@ -1219,8 +1219,8 @@
       utils = {
         normalize: function(path){
           linkEl.href = path || '';
-          linkEl.href = linkEl.pathname;
-          return linkEl.href;
+          //linkEl.href = linkEl.pathname;
+          return linkEl.href.substring(0, linkEl.href.length - linkEl.hash.length);
         },
         dirname: function(path){
           return this.normalize(path).replace(/\/[^\/]*$/, '');
@@ -1332,7 +1332,7 @@
   var requireNamespace = (function(){
 
     var lastScriptEl = Array.from(global.document ? global.document.getElementsByTagName('SCRIPT') : null)
-      .filter(function(scriptEl){ return scriptEl.hasAttribute('basis-config'); })
+      .filter(function(scriptEl){ return scriptEl.getAttributeNode('basis-config'); })
       .pop();
 
     var basisRequirePath = pathUtils.dirname(lastScriptEl ? lastScriptEl.src : (typeof module != 'undefined' ? module.filename : '')) + '/';

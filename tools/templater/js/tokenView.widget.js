@@ -124,6 +124,28 @@
   });
 
 
+  function buildExpr(dict, list){
+    var res = [];
+
+    for (var b = 0; b < list.length; b++)
+    {
+      if (typeof list[b] == 'string')
+        res.push(new AttributeValuePart({
+          data: {
+            text: list[b]
+          }
+        }));
+      else
+        res.push(new AttributeValueBinding({
+          data: {
+            text: '{' + dict[list[b]] + '}'
+          }
+        }));
+    }
+
+    return res;
+  }
+
  /**
   * @class
   */
@@ -153,37 +175,44 @@
 
       if (bindings)
       {
-        if (attrName == 'class')
+        switch (attrName)
         {
-          if (attrValue)
-            addValue = true;
+          case 'class':
+            if (attrValue)
+              addValue = true;
 
-          for (var b = 0; b < bindings.length; b++)
-            attrParts.push(new AttributeClassBinding({
-              data: {
-                text: bindings[b][0] + '{' + bindings[b][1] + '}'
-              }
-            }));
-        }
-        else
-        {
-          var dict = bindings[0];
-          var list = bindings[1];
-          for (var b = 0; b < list.length; b++)
-          {
-            if (typeof list[b] == 'string')
+            for (var b = 0; b < bindings.length; b++)
+              attrParts.push(new AttributeClassBinding({
+                data: {
+                  text: bindings[b][0] + '{' + bindings[b][1] + '}'
+                }
+              }));
+          break;
+
+          case 'style':
+            if (attrValue)
+              addValue = true;
+
+            for (var b = 0; b < bindings.length; b++)
+            {
               attrParts.push(new AttributeValuePart({
                 data: {
-                  text: list[b]
+                  text: bindings[b][2] + ': '
                 }
               }));
-            else
-              attrParts.push(new AttributeValueBinding({
+
+              attrParts.push.apply(attrParts, buildExpr(bindings[b][0], bindings[b][1]));
+
+              attrParts.push(new AttributeValuePart({
                 data: {
-                  text: '{' + dict[list[b]] + '}'
+                  text: ';'
                 }
               }));
-          }
+            }
+          break;
+
+          default:
+            attrParts.push.apply(attrParts, buildExpr(bindings[0], bindings[1]));
         }
       }
 
@@ -226,6 +255,9 @@
       attributeList: 'satellite:',
       title: function(object){
         return object.data[ELEMENT_NAME];
+      },
+      color: function(object){
+        return object.data[ELEMENT_NAME] == 'div' ? 'red' : 'green';
       }
     },
 
@@ -255,7 +287,7 @@
 
     binding: {
       value: function(object){
-        return object.data[TEXT_VALUE].replace(/\r\n?|\n\r?/g, '\u21b5');
+        return object.data[TOKEN_BINDINGS] ? '{' + object.data[TOKEN_BINDINGS] + '}' : (object.data[TEXT_VALUE] || '').replace(/\r\n?|\n\r?/g, '\u21b5');
       }
     }
   });

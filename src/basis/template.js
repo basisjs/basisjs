@@ -407,6 +407,8 @@
 
     var CLASS_ATTR_PARTS = /(\S+)/g;
     var CLASS_ATTR_BINDING = /^([a-z\_][a-z0-9\-\_]*)?\{((anim:)?[a-z\_][a-z0-9\-\_]*)\}$/i;
+    var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|\".*?\"|\'.*?\'|[^;]+?)+(?:;|$)/gi;
+    var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|\".*?\"|\'.*?\'|[^;]+?)+);?$/i;
     var ATTR_BINDING = /\{([a-z\_][a-z0-9\_]*|l10n:[a-z\_][a-z0-9\_]*(?:\.[a-z\_][a-z0-9\_]*)*)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
     var tokenMap = {};
@@ -452,6 +454,34 @@
     }
 
     function attrs(token){
+      function buildExpression(parts){
+        var bindName;
+        var names = [];
+        var expression = [];
+        var map = {};
+        
+        for (var j = 0; j < parts.length; j++)
+          if (j % 2)
+          {
+            bindName = parts[j];
+            
+            if (!map[bindName])
+            {
+              map[bindName] = names.length;
+              names.push(bindName);
+            }
+
+            expression.push(map[bindName]);
+          }
+          else
+          {
+            if (parts[j])
+              expression.push(untoken(parts[j]));
+          }
+
+        return [names, expression];
+      }
+
       var attrs = token.attrs;
       var result = [];
       var bindings;
@@ -464,65 +494,67 @@
 
         if (attr.value)
         {
-          if (attr.name == 'class')
+          switch (attr.name)
           {
-            if (parts = attr.value.match(CLASS_ATTR_PARTS))
-            {
-              var newValue = [];
-              var map = {};
+            case 'class':
+              if (parts = attr.value.match(CLASS_ATTR_PARTS))
+              {
+                var newValue = [];
+                var map = {};
 
-              bindings = [];
+                bindings = [];
+
+                for (var j = 0, part; part = parts[j]; j++)
+                {
+                  if (m = part.match(CLASS_ATTR_BINDING))
+                    bindings.push([m[1] || '', m[2]]);
+                  else
+                    newValue.push(part);
+                }
+                
+                // set new value
+                attr.value = newValue.join(' ');
+              }
+            break;
+
+            case 'style':
+              var parts = attr.value.match(STYLE_ATTR_PARTS);
+              var props = [];
+              var bindings = [];
 
               for (var j = 0, part; part = parts[j]; j++)
               {
-                if (m = part.match(CLASS_ATTR_BINDING))
-                  bindings.push([m[1] || '', m[2]]);
+                var m = part.match(STYLE_PROPERTY);
+                var propertyName = m[1];
+                var value = m[2].trim();
+
+                var valueParts = value.split(ATTR_BINDING);
+                if (valueParts.length > 1)
+                {
+                  var expr = buildExpression(valueParts);
+                  expr.push(propertyName);
+                  bindings.push(expr);
+                }
                 else
-                  newValue.push(part);
+                  props.push(propertyName + ': ' + untoken(value));
               }
-              
-              // set new value
-              attr.value = newValue.join(' ');
 
-              if (!bindings.length)
-                bindings = 0;
-            }
-          }
-          else
-          {
-            parts = attr.value.split(ATTR_BINDING);
-            if (parts.length > 1)
-            {
-              var bindName;
-              var names = [];
-              var expression = [];
-              var map = {};
-              
-              for (var j = 0; j < parts.length; j++)
-                if (j % 2)
-                {
-                  bindName = parts[j];
-                  
-                  if (!map[bindName])
-                  {
-                    map[bindName] = names.length;
-                    names.push(bindName);
-                  }
+              console.log(attr.value, bindings, props);
+              props.push('');
+              attr.value = props.join(';');
+            break;
 
-                  expression.push(map[bindName]);
-                }
-                else
-                {
-                  if (parts[j])
-                    expression.push(untoken(parts[j]));
-                }
-
-              bindings = [names, expression];
-            }
-            else
-              attr.value = untoken(attr.value);
+            default:
+              parts = attr.value.split(ATTR_BINDING);
+              if (parts.length > 1)
+                bindings = buildExpression(parts);
+              else
+                attr.value = untoken(attr.value);
           }
         }
+
+        if (bindings && !bindings.length)
+          bindings = 0;
 
         result.push([
           2,                      // TOKEN_TYPE = 0
@@ -614,20 +646,6 @@
                                 node.owner.splice.apply(node.owner, [pos, 1].concat(process(child.childs, template) || []));
                             }
 
-                            /*var nodes = childAttrs.ref && decl.refs[childAttrs.ref];
-
-                            if (nodes)
-                            {
-                              for (var k = 0, node; node = nodes[k]; k++)
-                              {
-                                var owner = node.owner;
-                                if (owner)
-                                  owner.splice.apply(owner, [owner.indexOf(node), 1].concat(process(child.childs, template)));
-                                else
-                                  debugger;
-                              }
-                            }*/
-
                             continue;
                         }
 
@@ -707,10 +725,6 @@
               removeTokenRef(map[refName], refName);
 
             map[refName] = token;
-            /*if (!map[ref])
-              map[ref] = [token];
-            else
-              map[ref].push(token);*/
           }
 
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
@@ -871,15 +885,22 @@
               {
                 explicitRef = true;
 
-                if (attrName == 'class')
+                switch (attrName)
                 {
-                  for (var k = 0, binding; binding = bindings[k]; k++)
-                    putBinding([2, localPath, binding[1], attrName, binding[0]]);
-                }
-                else
-                {
-                  for (var k = 0, bindName; bindName = bindings[0][k]; k++)
-                    putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]);
+                  case 'class':
+                    for (var k = 0, binding; binding = bindings[k]; k++)
+                      putBinding([2, localPath, binding[1], attrName, binding[0]]);
+                  break;
+
+                  case 'style':
+                    for (var k = 0, property; property = bindings[k]; k++)
+                      for (var m = 0, bindName; bindName = property[0][m]; m++)
+                        putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2]]);
+                  break;
+
+                  default:
+                    for (var k = 0, bindName; bindName = bindings[0][k]; k++)
+                      putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]);
                 }
               }
             }
@@ -1128,6 +1149,21 @@
    /**
     * @func
     */
+    var bind_attrStyle = function(domRef, propertyName, oldValue, newValue){
+      if (oldValue !== newValue)
+      {
+        try {
+          domRef.style[propertyName] = newValue;
+        } catch(e){
+        }
+      }
+
+      return newValue;
+    }
+
+   /**
+    * @func
+    */
     var bind_attr = function(domRef, attrName, oldValue, newValue){
       if (oldValue !== newValue)
       {
@@ -1143,7 +1179,7 @@
     function buildAttrExpression(binding, l10n){
       var expression = [];
       var symbols = binding[5];
-      var dictonary = binding[4];
+      var dictionary = binding[4];
       var exprVar;
       var colonPos;
 
@@ -1152,7 +1188,7 @@
           expression.push('"' + symbols[j].replace(quoteEscape, '\\"') + '"');
         else
         {
-          exprVar = dictonary[symbols[j]];
+          exprVar = dictionary[symbols[j]];
           colonPos = exprVar.indexOf(':');
           if (colonPos == -1)
             expression.push(l10n ? '"{' + exprVar + '}"' : '__' + exprVar);
@@ -1267,30 +1303,41 @@
 
             ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',attr:"' + attrName + '",val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
 
-            if (attrName == 'class')
+            switch (attrName)
             {
-              varList.push(bindVar + '=""');
-              toolsUsed.bind_attrClass = true;
-              bindCode.push(
-                bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + binding[4] + '"'] + (anim ? ',1' : '') + ');'
-              );
-            }
-            else
-            {
-              toolsUsed.bind_attr = true;
-              varList.push(bindVar + '=' + buildAttrExpression(binding, true));
-              bindCode.push(
-                bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
-              );
+              case 'class':
+                varList.push(bindVar + '=""');
+                toolsUsed.bind_attrClass = true;
+                bindCode.push(
+                  bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + binding[4] + '"'] + (anim ? ',1' : '') + ');'
+                );
 
-              specialAttr = SPECIAL_ATTR_MAP[attrName];
-              if (specialAttr)
-              {
-                if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
+                break;
+
+              case 'style':
+                varList.push(bindVar + '=""');
+                toolsUsed.bind_attrStyle = true;
+                bindCode.push(
+                  bindVar + '=bind_attrStyle(' + [domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding)] + ');'
+                );
+
+                break;
+
+              default:
+                toolsUsed.bind_attr = true;
+                varList.push(bindVar + '=' + buildAttrExpression(binding, true));
+                bindCode.push(
+                  bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
+                );
+
+                specialAttr = SPECIAL_ATTR_MAP[attrName];
+                if (specialAttr)
                 {
-                  bindCode.push(domRef + '.' + attrName + '=' + bindVar + ';')
+                  if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
+                  {
+                    bindCode.push(domRef + '.' + attrName + '=' + bindVar + ';')
+                  }
                 }
-              }
             }
             break;
         }
@@ -1364,6 +1411,7 @@
       bind_node: bind_node,
       bind_attr: bind_attr,
       bind_attrClass: bind_attrClass,
+      bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
       l10nToken: basis.l10n.getToken
     };

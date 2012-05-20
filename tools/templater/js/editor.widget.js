@@ -219,8 +219,8 @@
            {title} {childCount}\n\
          </b:replace>\n\
        </b:include>\n\
-       <li class="devtools-templateNode {collapsed}">\n\
-        <div{content} class="devtools-templateNode-Title devtools-templateNode-CanHaveChildren {selected} {disabled}">\n\
+       <li class="devtools-templateNode {collapsed}" style="color: {color}; content: \'asd;:()\'; background: url(:;); margin: {top}px 0 {bottom}">\n\
+        <div{content} class="devtools-templateNode-Title devtools-templateNode-CanHaveChildren {selected} {disabled}" style="color:red">\n\
           <div class="devtools-templateNode-Expander" event-click="toggle" attr="{l10n:path.to.dict.token}"/>\n\
           <span{titleElement} class="devtools-templateNode-Caption" event-click="select">\n\
             {l10n:path.to.dict.token}\n\

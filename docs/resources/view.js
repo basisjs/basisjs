@@ -769,14 +769,12 @@
                   addValue = true;
 
                 var bindings = attr[TOKEN_BINDINGS];
-                var list = bindings[0];
-                for (var b = 0; b < list.length; b++)
-                  for (var p = 0; p < bindings[b + 1].length; p++)
-                    attrParts.push(new TemplateTreeNode.AttributeClassBinding({
-                      data: {
-                        text: bindings[b + 1][p] + '{' + list[b] + '}'
-                      }
-                    }));
+                for (var p = 0, binding; binding = bindings[p]; p++)
+                  attrParts.push(new TemplateTreeNode.AttributeClassBinding({
+                    data: {
+                      text: binding[0] + '{' + binding[1] + '}'
+                    }
+                  }));
               }
               else
               {
@@ -841,7 +839,7 @@
           nodeConfig = {
             data: {
               nodeType: TYPE_TEXT,
-              nodeValue: token[TEXT_VALUE] || '?',
+              nodeValue: token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : token[TEXT_VALUE],
               refs: refList(token)
             }
           };
