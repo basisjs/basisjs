@@ -92,21 +92,6 @@
     // applied to element when it in document. Based on this, we clone element's ancestor vector and get computed
     // style on cloned element. Ancestor cloning is necessary, because it influence on rule set that apply to element.
     var GETCOMPUTEDSTYLE_BUGGY = {};
-    basis.ready(function(){
-      var element = DOM.insert(document.body, DOM.createElement('[style="position:absolute;top:auto"]'));
-
-      if (patchedComputedStyle(element, 'top') != 'auto')
-        GETCOMPUTEDSTYLE_BUGGY = {
-          top: true,
-          bottom: true,
-          left: true,
-          right: true,
-          height: true,
-          width: true
-        };
-
-      DOM.remove(element);
-    });
 
     // getComputedStyle function using W3C spec
     patchedComputedStyle = function(element, styleProp){
@@ -129,6 +114,23 @@
       if (style)
         return style.getPropertyValue(styleProp);
     }
+
+    // test for computed style bug
+    basis.ready(function(){
+      var element = DOM.insert(document.body, DOM.createElement('[style="position:absolute;top:auto"]'));
+
+      if (patchedComputedStyle(element, 'top') != 'auto')
+        GETCOMPUTEDSTYLE_BUGGY = {
+          top: true,
+          bottom: true,
+          left: true,
+          right: true,
+          height: true,
+          width: true
+        };
+
+      DOM.remove(element);
+    });
   }
   else
   {
