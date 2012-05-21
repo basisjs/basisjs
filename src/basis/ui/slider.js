@@ -12,7 +12,6 @@
   basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
-  basis.require('basis.cssom');
   basis.require('basis.layout');
   basis.require('basis.dragdrop');
 
@@ -34,7 +33,6 @@
 
   var events = basis.event.events;
   var createEvent = basis.event.create;
-  var cssom = basis.cssom;
 
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var UINode = basis.ui.Node;
@@ -52,8 +50,8 @@
   var KEY_MINUS = 189;     // -
   var KEY_KP_MINUS = 109;  // KEYPAD -
 
-  function percent(value){
-    return (100 * value || 0).toFixed(4) + '%';
+  function percentValue(value){
+    return (100 * value || 0).toFixed(4);
   }
 
 
@@ -69,6 +67,12 @@
     template: resource('templates/slider/Mark.tmpl'),
 
     binding: {
+      pos: function(node){
+        return percentValue(node.pos);
+      },
+      width: function(node){
+        return percentValue(node.width);
+      },
       last: function(node){
         return node.isLast ? 'last' : '';
       },
@@ -76,13 +80,6 @@
         return node.isRange ? 'range' : '';
       },
       text: 'caption'
-    },
-
-    templateUpdate: function(tmpl){
-      cssom.setStyle(this.element, {
-        left: percent(this.pos),
-        width: percent(this.width)
-      });
     }
   });
 
@@ -171,11 +168,7 @@
   var Slider = UINode.subclass({
     className: namespace + '.Slider',
 
-    event_change: createEvent('change', 'oldValue') && function(oldValue){
-      events.change.call(this, oldValue);
-      this.templateUpdate(this.tmpl, 'change');
-    },
-
+    event_change: createEvent('change', 'oldValue'),
     event_rangeChanged: createEvent('rangeChanged'),
 
     captionFormat: function(value){
@@ -199,6 +192,12 @@
 
     binding: {
       marks: 'satellite:',
+      trumbPos: {
+        events: 'change rangeChanged',
+        getter: function(node){
+          return percentValue(node.value2pos(node.value));
+        }
+      },
       minValue: {
         events: 'rangeChanged',
         getter: function(node){
@@ -278,18 +277,6 @@
         template: resource('templates/slider/MarkLayers.tmpl'),
         childClass: MarkLayer
       })
-    },
-
-   /**
-    * @inheritDoc
-    */
-    templateUpdate: function(tmpl, eventName){
-      if (!eventName || eventName == 'change')
-      {
-        cssom.setStyle(tmpl.valueBar, {
-          width: percent(this.value2pos(this.value))
-        });
-      }
     },
 
    /**
