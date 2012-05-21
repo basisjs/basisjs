@@ -1039,10 +1039,75 @@
     var bind_node = W3C_DOM_NODE_SUPPORTED
       // W3C DOM way
       ? function(domRef, oldNode, newValue){
-          var newNode = newValue instanceof Node ? newValue : domRef;
+          var newNode = domRef;
+
+          if (newValue instanceof Node)
+          {
+            if (newValue.nodeType == 11)  // fragment
+            {
+              if (newValue.firstChild === newValue.lastChild)
+                newNode = newValue.firstChild;
+              else
+                newNode = Array.from(newValue);
+            }
+            else
+              newNode = newValue;
+          }
+          /*else
+          {
+            if (newValue && Array.isArray(newValue))
+              if (newValue.length == 1)
+                newNode = newValue[0];
+              else
+                newNode = Array.from(newValue);
+          }*/
 
           if (newNode !== oldNode)
-            oldNode.parentNode.replaceChild(newNode, oldNode);
+          {
+            if (Array.isArray(newNode))
+            {
+              if (oldNode.fragmentStart)
+              {
+                newNode.fragmentStart = oldNode.fragmentStart;
+                newNode.fragmentEnd = oldNode.fragmentEnd;
+
+                var cursor = newNode.fragmentStart.nextSibling;
+                while (cursor && cursor != newNode.fragmentEnd)
+                {
+                  var tmp = cursor;
+                  cursor = cursor.nextSibling;
+                  tmp.parentNode.removeChild(tmp);
+                }
+              }
+              else
+              {
+                newNode.fragmentStart = document.createComment('start');
+                newNode.fragmentEnd = document.createComment('end');
+                oldNode.parentNode.insertBefore(newNode.fragmentStart, oldNode);
+                oldNode.parentNode.replaceChild(newNode.fragmentEnd, oldNode);
+              }
+
+              for (var i = 0, node; node = newNode[i]; i++)
+                newNode.fragmentEnd.parentNode.insertBefore(node, newNode.fragmentEnd);
+            }
+            else
+            {
+              if (oldNode && oldNode.fragmentStart)
+              {
+                var cursor = oldNode.fragmentStart.nextSibling;
+                while (cursor && cursor != oldNode.fragmentEnd)
+                {
+                  var tmp = cursor;
+                  cursor = cursor.nextSibling;
+                  tmp.parentNode.removeChild(tmp);
+                }
+                oldNode.fragmentStart.parentNode.removeChild(oldNode.fragmentStart);
+                oldNode = oldNode.fragmentEnd;
+              }
+
+              oldNode.parentNode.replaceChild(newNode, oldNode);
+            }
+          }
 
           return newNode;
         }
@@ -1068,10 +1133,10 @@
     var bind_nodeValue = W3C_DOM_NODE_SUPPORTED
       // W3C DOM way
       ? function(domRef, oldNode, newValue){
-          var newNode = newValue instanceof Node ? newValue : domRef;
+          var newNode = bind_node(domRef, oldNode, newValue);//newValue instanceof Node ? newValue : domRef;
 
-          if (newNode !== oldNode)
-            oldNode.parentNode.replaceChild(newNode, oldNode);
+          //if (newNode !== oldNode)
+          //  oldNode.parentNode.replaceChild(newNode, oldNode);
 
           if (newNode === domRef)
             newNode.nodeValue = newValue;

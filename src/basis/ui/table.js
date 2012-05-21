@@ -444,35 +444,8 @@
 
     action: { 
       select: function(event){
-        this.select(Event(event).ctrlKey);
-      }
-    },
-
-    templateUpdate: function(tmpl, eventName, delta){
-      // update template
-      this.repaintCount += 1;  // WARN: don't use this.repaintCount++
-                               // on first call repaintCount is prototype member
-
-      for (var i = 0, updater; updater = this.updaters[i]; i++)
-      {
-        var cell = this.element.childNodes[updater.cellIndex];
-        var content = updater.getter.call(this, this, cell);
-
-        if (this.repaintCount > 1)
-          cell.innerHTML = '';
-       
-        if (!content || !Array.isArray(content))
-          content = [content];
-
-        for (var j = 0; j < content.length; j++)
-        {
-          var ins = content[j];
-          cell.appendChild(
-            ins && ins.nodeType
-              ? ins
-              : DOM.createText(ins != null && (typeof ins != 'string' || ins != '') ? ins : ' ')
-          );
-        }
+        if (!this.isDisabled())
+          this.select(Event(event).ctrlKey);
       }
     }
   });
@@ -546,6 +519,7 @@
       {
         var updaters = new Array();
         var template = '';
+        var binding = {};
 
         if (this.firstChild)
           this.clear();
@@ -562,17 +536,18 @@
 
           var className = [col.cssClassName || '', cell.cssClassName || ''].join(' ').trim();
           var content = cell.content;
+
           template += 
-            '<td' + (cell.templateRef ? cell.templateRef.quote('{') : '') + (className ? ' class="' + className + '"' : '') + '>' + 
-              (typeof content == 'string' ? cell.content : '') +
+            '<td' + (cell.templateRef ? '{' + cell.templateRef + '}' : '') + (className ? ' class="' + className + '"' : '') + '>' + 
+              (typeof content == 'string' ? cell.content : '{__cell' + i + '}') +
             '</td>';
 
           if (typeof content == 'function')
           {
-            updaters.push({
-              cellIndex: i,
+            binding['__cell' + i] = {
+              events: 'update',
               getter: content
-            });
+            };
           }
         }
 
@@ -580,7 +555,7 @@
 
         this.childClass = this.childClass.subclass({
           template: String(this.childClass.prototype.template.source).replace('<!--{cells}-->', template),
-          updaters: updaters
+          binding: binding
         });
       }
     },

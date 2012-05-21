@@ -293,9 +293,9 @@
       // Определяем класс для дочерних узлов
       childClass: nsTree.Folder.subclass({
         template: 
-          '{resource:../../src/basis/ui/templates/tree/Node.css}' +
-          '{resource:../../src/basis/ui/templates/tree/Folder.css}' +
-          '{resource:../../src/basis/ui/templates/tree/Node_Expander.css}' +
+          '<b:resource src="../../src/basis/ui/templates/tree/Node.css"/>' +
+          '<b:resource src="../../src/basis/ui/templates/tree/Folder.css"/>' +
+          '<b:resource src="../../src/basis/ui/templates/tree/Node_Expander.css"/>' +
           '<li{selected} class="Basis-TreeNode {hasChildren} {selected}" event-click="select">' +
             '<div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren">' +
               '<div class="Basis-TreeNode_Expander Basis-TreeNode_Expander__{collapsed}" event-click="toggle"/>' +
