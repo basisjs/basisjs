@@ -373,8 +373,8 @@
           value: source.substring(textStateEndPos, pos)
         });
 
-      if (!result.length)   // there must be at least one token in result
-        result.push({ type: TYPE_TEXT, value: '' });
+      //if (!result.length)   // there must be at least one token in result
+      //  result.push({ type: TYPE_TEXT, value: '' });
 
       if (tagStack.length > 1)
         throw 'No close tag for ' + tagStack.pop().name;
@@ -754,6 +754,10 @@
       };
 
       result.tokens = process(source, result);
+
+      if (!result.tokens) // there must be at least one token in result
+        result.tokens = [3, 0, 0, ''];
+
       result.refs = buildRefMap(result.tokens, {});
 
       var elRefs;
