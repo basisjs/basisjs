@@ -756,7 +756,7 @@
       result.tokens = process(source, result);
 
       if (!result.tokens) // there must be at least one token in result
-        result.tokens = [3, 0, 0, ''];
+        result.tokens = [[3, 0, 0, '']];
 
       result.refs = buildRefMap(result.tokens, {});
 
