@@ -1336,6 +1336,8 @@
           {
             attrName = '"' + binding[ATTR_NAME] + '"';
             l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, true)] + ');')
+
+            toolsUsed.bind_attr = true;
             varList.push(bindVar);
             bindCode.push(
               bindVar + '=bind_attr(' + [domRef, attrName, bindVar, buildAttrExpression(binding)] + ');'
