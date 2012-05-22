@@ -614,16 +614,21 @@
                 var elAttrs = tokenAttrs(token);
                 if (elAttrs.src)
                 {
-                  var url = basis.path.resolve(template.baseURI + elAttrs.src);
+                  var isTemplateRef = /^#\d+$/.test(elAttrs.src);
+                  var url = isTemplateRef ? elAttrs.src.substr(1) : basis.path.resolve(template.baseURI + elAttrs.src);
 
                   if (includeStack.indexOf(url) == -1) // prevent recursion
                   {
                     includeStack.push(url);
-                    var resource = basis.resource(url);
-                    var decl = makeDeclaration(resource, basis.path.dirname(url) + '/');
+                    var resource = isTemplateRef ? templateList[url] : basis.resource(url);
+                    var decl = isTemplateRef
+                      ? makeDeclaration(resource.source, resource.baseURI)
+                      : makeDeclaration(resource, basis.path.dirname(url) + '/');
                     includeStack.pop();
 
                     template.deps.add(resource);
+                    if (isTemplateRef && resource.source.bindingBridge)
+                      template.deps.add(resource.source);
                     addUnique(template.resources, decl.resources);
                     addUnique(template.deps, decl.deps);
 
@@ -1722,6 +1727,9 @@
   function templateSourceUpdate(){
     if (this.instances_)
       buildTemplate.call(this);
+
+    for (var i = 0, attach; attach = this.attaches_[i]; i++)
+      attach.handler.call(attach.context);
   }
 
  /**
@@ -1889,9 +1897,40 @@
     * @constructor
     */
     init: function(templateSource){
+      this.attaches_ = [];
       this.setSource(templateSource);
 
-      templateList.push(this);
+      this.templateId = templateList.push(this) - 1;
+    },
+
+    bindingBridge: {
+      attach: function(template, handler, context){
+        for (var i = 0, listener; listener = template.attaches_[i]; i++)
+        {
+          if (listener.handler == handler && listener.context == context)
+            return false;
+        }
+
+        template.attaches_.push({
+          handler: handler,
+          context: context
+        });
+
+        return true;
+      },
+      detach: function(template, handler, context){
+        for (var i = 0, listener; listener = template.attaches_[i]; i++)
+          if (listener.handler == handler && listener.context == context)
+          {
+            template.attaches_.splice(i, 1);
+            return true;
+          }
+
+        return false;
+      },
+      get: function(template){
+        return '?';
+      }
     },
 
    /**

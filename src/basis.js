@@ -1533,7 +1533,7 @@
 
           return true;
         },
-        detach: function(handler, context){
+        detach: function(fn, handler, context){
           for (var i = 0, listener; listener = attaches[i]; i++)
             if (listener.handler == handler && listener.context == context)
             {

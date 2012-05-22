@@ -437,10 +437,7 @@
     childClass: null,
     repaintCount: 0,
 
-    template: //resource('templates/table/Row.tmpl'),
-      '<tr class="Basis-Table-Row {selected} {disabled}" event-click="select">' +
-        '<!--{cells}-->' +
-      '</tr>',
+    template: resource('templates/table/Row.tmpl'),
 
     action: { 
       select: function(event){
@@ -554,7 +551,13 @@
         this.columnCount = i;
 
         this.childClass = this.childClass.subclass({
-          template: String(this.childClass.prototype.template.source).replace('<!--{cells}-->', template),
+          template:
+            '<b:include src="#' + this.childClass.prototype.template.templateId + '">' +
+              '<b:replace ref="cells">' +
+                template +
+              '</b:replace>' +
+            '</b:include>',
+
           binding: binding
         });
       }
