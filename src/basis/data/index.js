@@ -605,7 +605,7 @@
 
     listen: {
       index: {
-        change: function(value){
+        change: function(sender, value){
           var indexMap = this.indexMap;
 
           indexMap.indexValues[this.key] = value;
@@ -692,7 +692,7 @@
             index.addHandler(listenHandler, this.indexesBind_[key]);
 
             if (listenHandler.change)
-              listenHandler.change.call(this.indexesBind_[key], index.value);
+              listenHandler.change.call(this.indexesBind_[key], index, index.value);
           }
         }
         else
