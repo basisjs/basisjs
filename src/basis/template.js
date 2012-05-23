@@ -593,8 +593,13 @@
     }
 
     function removeTokenRef(token, refName){
-      if (token[TOKEN_REFS].remove(refName) && !token[TOKEN_REFS].length)
-        token[TOKEN_REFS] = 0;      
+      if (token[TOKEN_REFS].remove(refName))
+      {
+        if (!token[TOKEN_REFS].length)
+          token[TOKEN_REFS] = 0;      
+        if (token[TOKEN_BINDINGS] === refName)
+          token[TOKEN_BINDINGS] = 0;
+      }
     }
 
     function tokenAttrs(token){
@@ -628,17 +633,19 @@
             // special elements (basis namespace)
             if (token.prefix == 'b')
             {
+              var elAttrs = tokenAttrs(token);
+
               switch (token.name)
               {
                 case 'resource':
-                  var elAttrs = tokenAttrs(token);
+
                   if (elAttrs.src)
                     template.resources.push(basis.path.resolve(template.baseURI + elAttrs.src));
 
                 break;
 
                 case 'include':
-                  var elAttrs = tokenAttrs(token);
+
                   if (elAttrs.src)
                   {
                     var isTemplateRef = /^#\d+$/.test(elAttrs.src);
@@ -649,15 +656,18 @@
                       includeStack.push(url);
                       var resource = isTemplateRef ? templateList[url] : basis.resource(url);
                       var decl = isTemplateRef
-                        ? makeDeclaration(resource.source, resource.baseURI)
+                        ? getDeclFromTemplate(resource) // makeDeclaration(resource.source, resource.baseURI)
                         : makeDeclaration(resource, basis.path.dirname(url) + '/');
                       includeStack.pop();
 
                       template.deps.add(resource);
                       if (isTemplateRef && resource.source.bindingBridge)
                         template.deps.add(resource.source);
-                      addUnique(template.resources, decl.resources);
-                      addUnique(template.deps, decl.deps);
+
+                      if (decl.resources)
+                        addUnique(template.resources, decl.resources);
+                      if (decl.deps)
+                        addUnique(template.deps, decl.deps);
 
                       //console.log(elAttrs.src + ' -> ' + url);
                       //console.log(decl);
@@ -686,8 +696,12 @@
                           decl.tokens.push.apply(decl.tokens, process([child], template) || []);
                       }
 
-                      if (decl.refs.element)
-                        removeTokenRef(decl.refs.element, 'element');
+                      var refMap = decl.refs;
+                      if (!refMap)
+                        refMap = buildRefMap(result.tokens, {});
+
+                      if (refMap.element)
+                        removeTokenRef(refMap.element, 'element');
 
                       //resources.push.apply(resources, tokens.resources);
                       result.push.apply(result, decl.tokens);
@@ -783,8 +797,7 @@
         resources: source.resources.map(function(url){
           return (baseURI || '') + url;
         }),
-        deps: [],
-        refs: {}
+        deps: []
       };
 
       result.tokens = process(source, result);
@@ -792,20 +805,8 @@
       if (!result.tokens) // there must be at least one token in result
         result.tokens = [[3, 0, 0, '']];
 
+      addTokenRef(result.tokens[0], 'element');
       result.refs = buildRefMap(result.tokens, {});
-
-      var elRefs;
-      if (!result.refs.element)
-      {
-        var firstToken = result.tokens[0];
-
-        if (!firstToken[TOKEN_REFS])
-          firstToken[TOKEN_REFS] = ['element'];
-        else
-          firstToken[TOKEN_REFS].push('element');
-
-        result.refs.element = firstToken;
-      }
 
       if (!includeStack.length)
       {
@@ -1772,23 +1773,27 @@
       attach.handler.call(attach.context);
   }
 
+  function getDeclFromTemplate(template){
+    var source = typeof template.source == 'function'
+      ? template.source()
+      : String(template.source);
+
+    if (typeof source == 'string')
+      return template.isDecl
+        ? source.toObject()
+        : makeDeclaration(source, template.baseURI);
+    else
+      return Array.isArray(source)
+        ? { tokens: source }
+        : source;
+  }
+
  /**
   * @func
   */
   function buildTemplate(){
+    var decl = getDeclFromTemplate(this);
     var instances = this.instances_;
-    var source = 
-      typeof this.source == 'function'
-        ? this.source()
-        : String(this.source);
-
-    var decl = typeof source != 'string'
-      ? (
-          Array.isArray(source)
-            ? { tokens: source }
-            : source
-        )
-      : (this.isDecl ? source.toObject() : makeDeclaration(source, this.baseURI));
     var funcs = makeFunctions(decl.tokens);
     var l10n = this.l10n_;
     var deps = this.deps_;
