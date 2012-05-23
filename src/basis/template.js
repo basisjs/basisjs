@@ -539,7 +539,7 @@
                   props.push(propertyName + ': ' + untoken(value));
               }
 
-              console.log(attr.value, bindings, props);
+              //console.log(attr.value, bindings, props);
               props.push('');
               attr.value = props.join(';');
             break;
