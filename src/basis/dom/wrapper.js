@@ -257,9 +257,7 @@
 
           if (hookRequired)
           {
-            var hook = config.hook
-              ? SATELLITE_OWNER_HOOK.__extend__(config.hook)
-              : SATELLITE_OWNER_HOOK;
+            var hook = SATELLITE_OWNER_HOOK.__extend__(config.hook || { update: true });
 
             for (var hookEvent in hook)
               if (hook[hookEvent] === SATELLITE_UPDATE)
@@ -341,12 +339,7 @@
   };
 
   // default satellite hooks
-  var SATELLITE_OWNER_HOOK = oneFunctionProperty(
-    SATELLITE_UPDATE,
-    {
-      update: true
-    }
-  );
+  var SATELLITE_OWNER_HOOK = oneFunctionProperty(SATELLITE_UPDATE, {});
 
 
   //
