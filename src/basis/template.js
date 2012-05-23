@@ -453,7 +453,7 @@
       return array;
     }
 
-    function attrs(token){
+    function attrs(token, declToken){
       function buildExpression(parts){
         var bindName;
         var names = [];
@@ -492,6 +492,22 @@
       {
         bindings = 0;
 
+        // process special attributes (basis namespace)
+        if (attr.prefix == 'b')
+        {
+          switch (attr.name)
+          {
+            case 'ref':
+              var refs = (attr.value || '').trim().split(/\s+/);
+              for (var j = 0; j < refs.length; j++)
+                addTokenRef(declToken, refs[j]);
+            break;
+          }
+
+          continue;
+        }
+
+        // other attributes
         if (attr.value)
         {
           switch (attr.name)
@@ -568,6 +584,14 @@
       return result.length ? result : 0;
     }
 
+    function addTokenRef(token, refName){
+      if (!token[TOKEN_REFS])
+        token[TOKEN_REFS] = [];
+
+      token[TOKEN_REFS].add(refName);
+      token[TOKEN_BINDINGS] = token[TOKEN_REFS].length == 1 ? refName : 0;
+    }
+
     function removeTokenRef(token, refName){
       if (token[TOKEN_REFS].remove(refName) && !token[TOKEN_REFS].length)
         token[TOKEN_REFS] = 0;      
@@ -601,86 +625,96 @@
           case TYPE_ELEMENT:
             var elName = name(token);
 
-            switch (elName)
+            // special elements (basis namespace)
+            if (token.prefix == 'b')
             {
-              case 'b:resource':
-                var elAttrs = tokenAttrs(token);
-                if (elAttrs.src)
-                  template.resources.push(basis.path.resolve(template.baseURI + elAttrs.src));
+              switch (token.name)
+              {
+                case 'resource':
+                  var elAttrs = tokenAttrs(token);
+                  if (elAttrs.src)
+                    template.resources.push(basis.path.resolve(template.baseURI + elAttrs.src));
 
-                continue;
+                break;
 
-              case 'b:include':
-                var elAttrs = tokenAttrs(token);
-                if (elAttrs.src)
-                {
-                  var isTemplateRef = /^#\d+$/.test(elAttrs.src);
-                  var url = isTemplateRef ? elAttrs.src.substr(1) : basis.path.resolve(template.baseURI + elAttrs.src);
-
-                  if (includeStack.indexOf(url) == -1) // prevent recursion
+                case 'include':
+                  var elAttrs = tokenAttrs(token);
+                  if (elAttrs.src)
                   {
-                    includeStack.push(url);
-                    var resource = isTemplateRef ? templateList[url] : basis.resource(url);
-                    var decl = isTemplateRef
-                      ? makeDeclaration(resource.source, resource.baseURI)
-                      : makeDeclaration(resource, basis.path.dirname(url) + '/');
-                    includeStack.pop();
+                    var isTemplateRef = /^#\d+$/.test(elAttrs.src);
+                    var url = isTemplateRef ? elAttrs.src.substr(1) : basis.path.resolve(template.baseURI + elAttrs.src);
 
-                    template.deps.add(resource);
-                    if (isTemplateRef && resource.source.bindingBridge)
-                      template.deps.add(resource.source);
-                    addUnique(template.resources, decl.resources);
-                    addUnique(template.deps, decl.deps);
-
-                    //console.log(elAttrs.src + ' -> ' + url);
-                    //console.log(decl);
-
-                    for (var j = 0, child; child = token.childs[j]; j++)
+                    if (includeStack.indexOf(url) == -1) // prevent recursion
                     {
-                      if (child.type == TYPE_ELEMENT)
-                        switch (name(child))
+                      includeStack.push(url);
+                      var resource = isTemplateRef ? templateList[url] : basis.resource(url);
+                      var decl = isTemplateRef
+                        ? makeDeclaration(resource.source, resource.baseURI)
+                        : makeDeclaration(resource, basis.path.dirname(url) + '/');
+                      includeStack.pop();
+
+                      template.deps.add(resource);
+                      if (isTemplateRef && resource.source.bindingBridge)
+                        template.deps.add(resource.source);
+                      addUnique(template.resources, decl.resources);
+                      addUnique(template.deps, decl.deps);
+
+                      //console.log(elAttrs.src + ' -> ' + url);
+                      //console.log(decl);
+
+                      for (var j = 0, child; child = token.childs[j]; j++)
+                      {
+                        // process special elements (basis namespace)
+                        if (child.type == TYPE_ELEMENT && child.prefix == 'b')
                         {
-                          case 'b:replace':
-                            var childAttrs = tokenAttrs(child);
-                            var node = childAttrs.ref && decl.refs[childAttrs.ref];
+                          switch (child.name)
+                          {
+                            case 'replace':
+                              var childAttrs = tokenAttrs(child);
+                              var node = childAttrs.ref && decl.refs[childAttrs.ref];
 
-                            if (node)
-                            {
-                              var pos = node.owner.indexOf(node);
-                              if (pos != -1)
-                                node.owner.splice.apply(node.owner, [pos, 1].concat(process(child.childs, template) || []));
-                            }
-
-                            continue;
+                              if (node)
+                              {
+                                var pos = node.owner.indexOf(node);
+                                if (pos != -1)
+                                  node.owner.splice.apply(node.owner, [pos, 1].concat(process(child.childs, template) || []));
+                              }
+                            break;
+                          }
                         }
+                        else
+                          decl.tokens.push.apply(decl.tokens, process([child], template) || []);
+                      }
 
-                      decl.tokens.push.apply(decl.tokens, process([child], template) || []);
+                      if (decl.refs.element)
+                        removeTokenRef(decl.refs.element, 'element');
+
+                      //resources.push.apply(resources, tokens.resources);
+                      result.push.apply(result, decl.tokens);
                     }
-
-                    if (decl.refs.element)
-                      removeTokenRef(decl.refs.element, 'element');
-
-                    //resources.push.apply(resources, tokens.resources);
-                    result.push.apply(result, decl.tokens);
+                    else
+                    {
+                      console.warn('Recursion: ', includeStack.join(' -> '));
+                    }
                   }
-                  else
-                  {
-                    console.warn('Recursion: ', includeStack.join(' -> '));
-                  }
-                }
 
-                continue;
+                break;
+              }
 
-              default:
-                item = [
-                  1,                       // TOKEN_TYPE = 0
-                  bindings,                // TOKEN_BINDINGS = 1
-                  refs,                    // TOKEN_REFS = 2
-                  elName,                  // ELEMENT_NAME = 3
-                  attrs(token),            // ELEMENT_ATTRS = 4
-                  process(token.childs, template)    // ELEMENT_CHILDS = 5
-                ];
+              // don't add to declaration
+              continue;
             }
+
+            item = [
+              1,                       // TOKEN_TYPE = 0
+              bindings,                // TOKEN_BINDINGS = 1
+              refs,                    // TOKEN_REFS = 2
+              name(token),             // ELEMENT_NAME = 3
+              0,                       // ELEMENT_ATTRS = 4
+              process(token.childs, template)    // ELEMENT_CHILDS = 5
+            ];
+
+            item[ELEMENT_ATTRS] = attrs(token, item);
 
             break;
 
