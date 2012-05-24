@@ -597,8 +597,8 @@
       {
         if (!token[TOKEN_REFS].length)
           token[TOKEN_REFS] = 0;      
-        if (token[TOKEN_BINDINGS] === refName)
-          token[TOKEN_BINDINGS] = 0;
+        /*if (token[TOKEN_BINDINGS] === refName)
+          token[TOKEN_BINDINGS] = 0;*/
       }
     }
 
@@ -672,6 +672,8 @@
                       //console.log(elAttrs.src + ' -> ' + url);
                       //console.log(decl);
 
+                      var tokenRefMap = normalizeRefs(decl.tokens);
+
                       for (var j = 0, child; child = token.childs[j]; j++)
                       {
                         // process special elements (basis namespace)
@@ -681,13 +683,13 @@
                           {
                             case 'replace':
                               var childAttrs = tokenAttrs(child);
-                              var node = childAttrs.ref && decl.refs[childAttrs.ref];
+                              var tokenRef = childAttrs.ref && tokenRefMap[childAttrs.ref];
 
-                              if (node)
+                              if (tokenRef)
                               {
-                                var pos = node.owner.indexOf(node);
+                                var pos = tokenRef.owner.indexOf(tokenRef.token);
                                 if (pos != -1)
-                                  node.owner.splice.apply(node.owner, [pos, 1].concat(process(child.childs, template) || []));
+                                  tokenRef.owner.splice.apply(tokenRef.owner, [pos, 1].concat(process(child.childs, template) || []));
                               }
                             break;
                           }
@@ -696,12 +698,8 @@
                           decl.tokens.push.apply(decl.tokens, process([child], template) || []);
                       }
 
-                      var refMap = decl.refs;
-                      if (!refMap)
-                        refMap = buildRefMap(result.tokens, {});
-
-                      if (refMap.element)
-                        removeTokenRef(refMap.element, 'element');
+                      if (tokenRefMap.element)
+                        removeTokenRef(tokenRefMap.element.token, 'element');
 
                       //resources.push.apply(resources, tokens.resources);
                       result.push.apply(result, decl.tokens);
@@ -758,15 +756,16 @@
             break;
         }
 
-        item.owner = result;
-        cleanupItems.push(item);
         result.push(item);
       }
 
       return result.length ? result : 0;
     }
 
-    function buildRefMap(tokens, map){
+    function normalizeRefs(tokens, map){
+      if (!map)
+        map = {};
+
       for (var i = 0, token; token = tokens[i]; i++)
       {
         var refs = token[TOKEN_REFS];
@@ -775,13 +774,16 @@
           for (var j = 0, refName; refName = refs[j]; j++)
           {
             if (map[refName])
-              removeTokenRef(map[refName], refName);
+              removeTokenRef(map[refName].token, refName);
 
-            map[refName] = token;
+            map[refName] = {
+              owner: tokens,
+              token: token
+            };
           }
 
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
-          buildRefMap(token[ELEMENT_CHILDS], map);
+          normalizeRefs(token[ELEMENT_CHILDS], map);
       }
 
       return map;
@@ -806,17 +808,7 @@
         result.tokens = [[3, 0, 0, '']];
 
       addTokenRef(result.tokens[0], 'element');
-      result.refs = buildRefMap(result.tokens, {});
-
-      if (!includeStack.length)
-      {
-        // drop ref map
-        delete result.refs;
-
-        // clean up cycle refs
-        for (var i = 0; i < cleanupItems.length; i++)
-          delete cleanupItems[i].owner;
-      }
+      normalizeRefs(result.tokens);
 
       ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this) };
 
@@ -1435,8 +1427,8 @@
                 break;
 
               default:
-                toolsUsed.bind_attr = true;
                 varList.push(bindVar + '=' + buildAttrExpression(binding, true));
+                toolsUsed.bind_attr = true;
                 bindCode.push(
                   bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
                 );

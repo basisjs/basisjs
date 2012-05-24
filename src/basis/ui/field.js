@@ -376,7 +376,8 @@
       readonly: function(node){
         return node.readOnly ? 'readonly' : ""
       },
-      autocomplete: 'autocomplete || ""'
+      autocomplete: 'autocomplete || ""',
+      placeholder: 'placeholder || ""'
     },
 
     init: function(){
@@ -387,6 +388,9 @@
 
       this.setMinLength(this.minLength);
       this.setMaxLength(this.maxLength);
+    },
+    setValue: function(newValue){
+      return Field.prototype.setValue.call(this, newValue == null ? '' : newValue);
     },
     setReadOnly: function(readOnly){
       this.readOnly = !!readonly;
@@ -453,12 +457,7 @@
   var Text = TextField.subclass({
     className: namespace + '.Text',
 
-    template: resource('templates/field/Text.tmpl'),
-
-    binding: {
-      autocomplete: 'autocomplete || ""',
-      placeholder: 'placeholder || ""'
-    }
+    template: resource('templates/field/Text.tmpl')
   });
 
 
@@ -816,6 +815,12 @@
 
       if (this.property)
         this.property.set(value);
+    },
+
+    event_childNodesModified: function(delta){
+      ComplexField.prototype.event_childNodesModified.call(this, delta);
+      if (this.property)
+        this.setValue(this.property.value);
     },
 
     caption: null,
