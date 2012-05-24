@@ -656,7 +656,7 @@
                       includeStack.push(url);
                       var resource = isTemplateRef ? templateList[url] : basis.resource(url);
                       var decl = isTemplateRef
-                        ? getDeclFromTemplate(resource) // makeDeclaration(resource.source, resource.baseURI)
+                        ? getDeclFromTemplate(resource, true) // makeDeclaration(resource.source, resource.baseURI)
                         : makeDeclaration(resource, basis.path.dirname(url) + '/');
                       includeStack.pop();
 
@@ -1765,7 +1765,22 @@
       attach.handler.call(attach.context);
   }
 
-  function getDeclFromTemplate(template){
+  function cloneDecl(array){
+    var result = [];
+
+    for (var i = 0; i < array.length; i++)
+    {
+      result.push(
+        Array.isArray(array[i])
+          ? cloneDecl(array[i])
+          : array[i]
+      );
+    }
+
+    return result;
+  }
+
+  function getDeclFromTemplate(template, clone){
     var source = typeof template.source == 'function'
       ? template.source()
       : String(template.source);
@@ -1776,7 +1791,7 @@
         : makeDeclaration(source, template.baseURI);
     else
       return Array.isArray(source)
-        ? { tokens: source }
+        ? { tokens: clone ? cloneDecl(source) : source }
         : source;
   }
 
