@@ -41,6 +41,8 @@
 
   var document = global.document;
 
+  var externalResourceCache = this.__resources__ || {};
+
  /**
   * Object extensions
   * @namespace Object
@@ -1411,7 +1413,6 @@
   })();
 
   /*{resourceResolver}*/
-  var externalResourceCache = {};
   var externalResource = function(url){
     var requestUrl = url;
 
@@ -1452,7 +1453,8 @@
   var frfCache = {};
   var fetchResourceFunction = function(resourceUrl){
 
-    resourceUrl = pathUtils.resolve(resourceUrl);
+    if (typeof resourceUrl != 'number')
+      resourceUrl = pathUtils.resolve(resourceUrl);
 
     if (!frfCache[resourceUrl])
     {

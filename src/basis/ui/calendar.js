@@ -61,17 +61,16 @@
   // localization
   //
 
-  var l10nLocation = __dirname + 'l10n/calendar';
   var monthNumToRef = basis.date.monthNumToAbbr;
   var dayNumToRef = basis.date.dayNumToAbbr;
 
-  createDictionary(namespace, l10nLocation, {
+  createDictionary(namespace, __dirname + 'l10n/calendar', {
     "quarter": "Quarter",
     "today": "Today",
     "selected": "Selected"
   });
 
-  createDictionary(namespace + '.month', l10nLocation, {
+  createDictionary(namespace + '.month', __dirname + 'l10n/calendar', {
     "jan": "January",
     "feb": "February",
     "mar": "March",
@@ -86,7 +85,7 @@
     "dec": "December"
   });
 
-  createDictionary(namespace + '.monthShort', l10nLocation, {
+  createDictionary(namespace + '.monthShort', __dirname + 'l10n/calendar', {
     "jan": "Jan",
     "feb": "Feb",
     "mar": "Mar",
@@ -101,7 +100,7 @@
     "dec": "Dec"
   });
 
-  createDictionary(namespace + '.day', l10nLocation, {
+  createDictionary(namespace + '.day', __dirname + 'l10n/calendar', {
     "mon": "Monday",
     "tue": "Tuesday",
     "wed": "Wednesday",
@@ -111,7 +110,7 @@
     "sun": "Sunday"
   });
 
-  createDictionary(namespace + '.day2', l10nLocation, {
+  createDictionary(namespace + '.day2', __dirname + 'l10n/calendar', {
     "mon": "Mo",
     "tue": "Tu",
     "wed": "We",
@@ -121,7 +120,7 @@
     "sun": "Su"
   });
 
-  createDictionary(namespace + '.day3', l10nLocation, {
+  createDictionary(namespace + '.day3', __dirname + 'l10n/calendar', {
     "mon": "Mon",
     "tue": "Tue",
     "wed": "Wed",

@@ -522,8 +522,8 @@
       var key = Event.key(event);
       var chr = String.fromCharCode(key);
 
-      if (key == 27)
-        return searchInput.setValue();
+      if (key == Event.KEY.ESC)
+        return searchInput.reset();
 
       if (!/[a-z\_0-9\x08\x09\x0A\x0D\x23-\x28]/i.test(chr))
         Event.kill(event);

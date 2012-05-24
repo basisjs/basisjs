@@ -65,6 +65,8 @@ var treeConsole = (function(){
     flushAll: function(){
       while (logBuffer.length)
         this.flush(this.pop());
+
+      logDeep = 0;
     }
   }
 })();
@@ -111,15 +113,18 @@ var flags = (function(){
   var args = process.argv.slice(2);
   var publishMode = hasFlag('-publish');
   return {
-    production:  hasFlag('-production'),
-    pack:        publishMode || hasFlag('-pack'),
-    archive:     publishMode || hasFlag('-archive'),
-    clear:       publishMode || hasFlag('-clear'),
-    deploy:      publishMode || hasFlag('-deploy'),
-    jsBuildMode: publishMode || hasFlag('-pack') || hasFlag('-js-build-mode'),  // evaluate module code (close to basis.require works)
-    jsCutDev:    publishMode || hasFlag('-pack') || hasFlag('-js-cut-dev'),     // cut from source ;;; and /** @cut .. */
-    jsPack:      publishMode || hasFlag('-pack') || hasFlag('-js-pack'), // pack source code
-    cssPack:     publishMode || hasFlag('-pack') || hasFlag('-css-pack') // pack source code
+    production:    hasFlag('-production'),
+    pack:          publishMode || hasFlag('-pack'),
+    archive:       publishMode || hasFlag('-archive'),
+    clear:         publishMode || hasFlag('-clear'),
+    deploy:        publishMode || hasFlag('-deploy'),
+    singleFile:    !hasFlag('-no-single-file'),
+    jsSingleFile:  !hasFlag('-no-single-file') && !hasFlag('-js-no-single-file'), // merge all javascript in one file
+    cssSingleFile: !hasFlag('-no-single-file') && !hasFlag('-css-no-single-file'), // pack source code
+    jsBuildMode:   publishMode || hasFlag('-pack') || hasFlag('-js-build-mode'),  // evaluate module code (close to basis.require works)
+    jsCutDev:      publishMode || hasFlag('-pack') || hasFlag('-js-cut-dev'),     // cut from source ;;; and /** @cut .. */
+    jsPack:        publishMode || hasFlag('-pack') || hasFlag('-js-pack'), // pack javascript source
+    cssPack:       publishMode || hasFlag('-pack') || hasFlag('-css-pack') // pack css code
   };
 })();
 
@@ -166,7 +171,7 @@ var indexFileContent = fs.readFileSync(INDEX_FILE, 'utf-8')
         : m;
     }
   )
-  .replace(/<link(?:\s+id="[^"]+?")?\s+rel="stylesheet"\s+type="text\/css"\s+title="Default Style"\s+href="([^"]+?)"/gmi, 
+  .replace(/<link(?:.*?\s)href="([^"]+?)"(?:.*?)\/>/gmi, 
     function(m, stylePath){
       var filename = path.resolve(INDEX_FILE, stylePath);
       var basename = path.basename(filename);
@@ -179,7 +184,9 @@ var indexFileContent = fs.readFileSync(INDEX_FILE, 'utf-8')
       
       cssFiles.push(stylePath);
 
-      return m.replace(new RegExp(stylePath + '"$'), basename + '?' + buildLabel + '"');
+      return flags.cssSingleFile
+        ? (cssFiles.length == 1 ? '<link rel="stylesheet" type="text/css" href="app.css"/>' : '')
+        : m.replace(new RegExp(stylePath + '"$'), basename + '?' + buildLabel + '"');
     }
   );
 
@@ -259,12 +266,13 @@ var resourceDigestMap = {};
             resource.content = resource.contentObject.content;
 
             try {
-              compiled = new Function('exports, module, basis, global, __filename, __dirname, resource', resource.content);
+              var compiled = new Function('exports, module, basis, global, __filename, __dirname, resource', resource.content);
 
               if (buildMode)
                 resource.obj = compiled;
 
             } catch(e) {
+              treeConsole.log('[ERROR] Compilation error: ' + filepath);
               console.warn('[ERROR] Compilation error: ' + filepath);
 
               if (buildMode)
@@ -355,17 +363,24 @@ var resourceDigestMap = {};
         }
 
         fileContent = fileContent
-          .replace(/basis\.require\((['"])([^'"]+)\1\);?/g, function(m, q, path){
+          .replace(/((\S?)\s*)basis\.require\((['"])([^'"]+)\3\)(;?)/g, function(m, pre, preSym, q, path, sym){
             depends.push(path);
-            return m; //buildMode ? '' : m;
+            return !buildMode
+              ? m // don't replace anything in non-build mode
+              : ( // in build mode try to optimize code
+                  preSym == '' || /[;\{\}]/.test(preSym)
+                    ? pre
+                    : pre + path + '.exports' + sym
+                );
           })
           .replace(/(createDictionary\(\s*([^,]+?)\s*,\s*)([^,]+)/g, function(m, pre, dictName, path){
             //console.log('>>>>>>', m, namespace, filepath);
             try {
               path = evalExpr(path)
-              dictName = evalExpr(dictName);
+              dictName = Function('namespace', 'return ' + dictName)(namespace);
+              console.log('  Dictionary declaration found: ' + dictName + ' -> ' + path);
             } catch(e){
-              treeConsole.log('Can\'t evaluate path `' + path + '` in ' + filepath);
+              treeConsole.log('Can\'t evaluate path `' + path + '` in ' + absFilepath);
               return m;
             }
 
@@ -395,6 +410,7 @@ var resourceDigestMap = {};
             if (!error)
             {
               replaceFor = 'basis.resource("' + resource.id + '.' + resource.type + '")';
+              //replaceFor = 'basis.resource("' + resource.ref + '")';
               resources.add(resource);
 
               treeConsole.log(
@@ -474,21 +490,21 @@ var resourceDigestMap = {};
         if (buildMode)
           package.content.push(
             "// " + filename + "\n" +
-            '{' +
-              '"' + namespace + '": function(basis, global, __dirname, exports, resource, module, __filename){' +
+            '[' +
+              '"' + namespace + '", function(basis, global, __dirname, exports, resource, module, __filename){' +
                 //'console.log(arguments)'+
                 jsFile.content +
               '}' + 
-            '}'
+            ']'
           );
         else
           package.content.push(
-            "//\n// " + relpath(filename) + "\n//\n" +
+            "//\n// " + filename + "\n//\n" +
             '{\n' +
             '  ns: "' + namespace + '",\n' + 
-            '  path: "' + relpath(path.dirname(jsFile.path)) + '/",\n' + 
+            '  path: "' + path.dirname(jsFile.path) + '/",\n' + 
             '  fn: "' + path.basename(jsFile.path) + '",\n' +
-            '  body: function(){' +
+            '  body: function(){\n' +
                  jsFile.content + '\n' +
             '  }\n' + 
             '}'
@@ -508,30 +524,20 @@ var resourceDigestMap = {};
     "\n}).call(this);"
   ];
 
-  var basisWrapper = [
-    "(function(externalResourceCache){\n" +
-    "'use strict';\n\n",
-
-    "\n}).call(this, window.__resources__);delete window.__resources__;"
-  ];
-
-  function wrapPackage(package){
-    var isBasis = package == packages.basis;
-    var sourceWrapper = isBasis ? basisWrapper : packageWrapper;
+  function wrapPackage(package, root){
+    var isRoot = root || package == packages.basis;
     return !buildMode
-      // pack mode
+      // source mode
       ? [
           '// filelist: \n//   ' + package.files.join('\n//   ') + '\n',
           packageWrapper[0],
-          'var __curLocation = "' + package.path + '";\n',
-          isBasis
-            ? 'var externalResourceCache = this.__resources__; delete this.__resources__;\n' +
-              fileCache[nsBase.basis + 'basis.js'].content
+          isRoot
+            ? fileCache[nsBase.basis + 'basis.js'].content
             : '',
           '[\n',
             package.content.join(',\n'),
           '].forEach(' + function(module){
-             var path = __curLocation + module.path;    
+             var path = module.path;    
              var fn = path + module.fn;
              var ns = basis.namespace(module.ns);
              ns.source_ = Function.body(module.body);
@@ -543,28 +549,20 @@ var resourceDigestMap = {};
            } + ', this)',
           packageWrapper[1]
         ].join('')
-      // source mode
+      // pack mode
       : [
           '// filelist: \n//   ' + package.files.join('\n//   ') + '\n',
           packageWrapper[0],
-          'var __curLocation = "' + package.path + '";\n',
-          isBasis
-            ? 'var externalResourceCache = this.__resources__; delete this.__resources__;\n' +
-              fileCache[nsBase.basis + 'basis.js'].content
+          isRoot
+            ? fileCache[nsBase.basis + 'basis.js'].content
             : '',
           '[\n',
             package.content.join(',\n'),
           '].forEach(' + function(module){
-             for (var ns in module)
-             {
-               var fn = module[ns];
-               var nsParts = ns.split(".");
-               var filename = nsParts.pop() + '.js';
-               var path = __curLocation + nsParts.join('/') + '/';
-               var ns = basis.namespace(ns);
-               fn.call(ns, basis, this, path, ns.exports, function(url){ return basis.resource(path + url) }, ns, path + filename);
-               Object.complete(ns, ns.exports);
-             }
+             var fn = module[1];
+             var ns = basis.namespace(module[0]);
+             fn.call(ns, basis, this, "", ns.exports, basis.resource, ns, 'app.js');
+             Object.complete(ns, ns.exports);
            } + ', this)',
           packageWrapper[1]
         ].join('');
@@ -616,17 +614,38 @@ var resourceDigestMap = {};
 
   ////////////////////////////////
   // wrap modules
-  for (var packageName in packages)
-    packages[packageName].content = wrapPackage(packages[packageName]);
 
-  packages.basis.content = packages.basis.content
-    .replace(/resourceUrl\s*=\s*pathUtils.resolve\(resourceUrl\)/, '')
-    .replace(/\/\*\{resourceResolver\}\*\/(?:.|[\r\n])+\/\*\{resourceResolverEnd\}\*\//,
-      'var externalResource = ' + function(ref){
-        return externalResourceCache[ref] || "";
-      }.toString() +';\n'
-    );
+  fileCache[nsBase.basis + 'basis.js'].content = fileCache[nsBase.basis + 'basis.js'].content
+    .replace(/resourceUrl\s*=\s*pathUtils.resolve\(resourceUrl\)/, '');
 
+  if (flags.jsSingleFile)
+  {
+    (function(){
+      var content = packages.basis.content;
+      var files = packages.basis.files;
+
+      for (var packageName in packages)
+        if (packageName != 'basis')
+        {
+          content.push.apply(content, packages[packageName].content);
+          files.push.apply(files, packages[packageName].files);
+        }
+
+      packages = {
+        app: {
+          files: files,
+          content: content
+        }
+      };
+
+      packages.app.content = wrapPackage(packages.app, true);
+    })();
+  }
+  else
+  {
+    for (var packageName in packages)
+      packages[packageName].content = wrapPackage(packages[packageName]);
+  }
 
   ////////////////////////////////
   // build dictionaries
@@ -649,30 +668,38 @@ var resourceDigestMap = {};
       cultureList = cultureList.trim().split(/\s+/)
     if (Array.isArray(cultureList))
     {
-      console.log('  Culture list is [' + cultureList.join(', ') + ']');
+      console.log('Culture list is [' + cultureList.join(', ') + ']');
 
-      mkdir(BUILD_DIR + '/l10n');
-
-      for (var i = 0; i < cultureList.length; i++)
+      treeConsole.incDeep();
+      for (var i = 0, cultureId; cultureId = cultureList[i]; i++)
       {
-        console.log('  * ' + cultureList[i]);
+        treeConsole.incDeep();
+        treeConsole.log('* ' + cultureId);
+
         var dictFileContent = l10nPathes
           .map(function(filepath){
-            filepath = filepath + '/' + this + '.json';
+            filepath = path.normalize(filepath + '/' + cultureId + '.json');
+            var res = {};
             if (path.existsSync(filepath))
+            {
+              var fileContent = fs.readFileSync(filepath, 'utf-8');
               try {
-                return JSON.parse(fs.readFileSync(filepath, 'utf-8'));
-              } catch(e){}
+                res = JSON.parse(fileContent);
+                treeConsole.log('[+] ' + filepath);
+              } catch(e){
+                treeConsole.log('[ERROR] ' + filepath + ' JSON parse error:' + e);
+              }
+            }
             else
-              console.log('    [ERROR] Dictionary file ' + filepath + ' not found');
+              treeConsole.log('[ERROR] Dictionary file ' + filepath + ' not found');
 
-            return {};
-          }, cultureList[i])
+            return res;
+          })
           .reduce(function(res, dict){
             for (var key in dict)
             {
               if (res[key])
-                console.log(key + ' is already exists');
+                treeConsole.log(key + ' is already exists');
 
               res[key] = dict[key];
             }
@@ -681,9 +708,13 @@ var resourceDigestMap = {};
           }, {});
 
         jsResourceList.push({
-          ref: 'l10n/' + cultureList[i] + '.json',
+          ref: 'l10n/' + cultureId + '.json',
           obj: dictFileContent
         });
+
+        treeConsole.decDeep();
+
+        console.log('');
 
         /*
         var dictFilename = BUILD_DIR + '/l10n/' + cultureList[i] + '.json';
@@ -691,6 +722,8 @@ var resourceDigestMap = {};
         console.log('    dictionary saved to ' + dictFilename + '\n');
         */
       }
+
+      treeConsole.decDeep();
     }
   }
 
@@ -698,7 +731,7 @@ var resourceDigestMap = {};
   ///////////////////////////////////////////
   // build resource map
 
-  var resourceMapCode = '"use strict";\nwindow.__resources__ = {' + jsResourceList.map(function(resource){
+  var resourceMapCode = '{' + jsResourceList.map(function(resource){
     var content;
     if (resource.obj)
       content = typeof resource.obj == 'function'
@@ -715,65 +748,82 @@ var resourceDigestMap = {};
   console.log('  Write ' + resFilename + '...');
   fs.writeFile(resFilename, resourceMapCode, 'utf-8');*/
 
-  packages.res = {
-    content: resourceMapCode
-  }
 
 
   ////////////////////////////////
   // save js files
 
-  if (!packBuild)
+  var outputFiles = [];
+
+  if (flags.jsSingleFile)
   {
-    for (var packageName in packages)
-    {
-      var filename = BUILD_DIR + '/' + packageName + '.js';
-      console.log('  Write ' + filename + '...');
-      fs.writeFile(filename, packages[packageName].content, 'utf-8');
-    }
+    outputFiles.push({
+      filename: path.normalize(BUILD_DIR + '/app.js'),
+      content: packages.app.content.replace(/this\.__resources__ \|\| \{\}/, resourceMapCode)
+    });
   }
   else
   {
-    function writeAndPack(name, cfg){
-      var packStartTime = new Date;
-      var tmpFilename = BUILD_DIR + '/' + name + '.tmp';
-      var resFilename = BUILD_DIR + '/' + name + '.js';
-
-      fs.writeFile(tmpFilename, cfg.content, 'utf-8');
-
-      console.log('Task for ' + resFilename + '.js packing added...');
-
-      childProcessTask.push({
-        name: 'Pack ' + resFilename,
-        task: function(){
-          exec(JSCOMPILER + ' --js ' + tmpFilename + ' --js_output_file ' + resFilename, { maxBuffer: 1024 *1024 }, function(error, stdout, stderr){
-            console.log('\n' + resFilename + ' packing - done in ' + ((new Date - packStartTime)/1000).toFixed(3) + 's');
-            console.log(stderr);
-
-            fs.unlink(tmpFilename);
-
-            if (error !== null){
-              console.log('exec error: ' + error);
-            }
-          })
-        }
-      });
-    }
+    packages.res = {
+      content: '"use strict";\nwindow.__resources__ = ' + resourceMapCode
+    };
 
     for (var packageName in packages)
-      writeAndPack(packageName, packages[packageName]);
+      outputFiles.push({
+        filename: path.normalize(BUILD_DIR + '/' + packageName + '.js'),
+        content: packages[packageName].content
+      });
   }
+
+  outputFiles.forEach(
+    !packBuild
+      ? function(file){
+          console.log('  Write ' + file.filename + '...');
+          fs.writeFile(file.filename, file.content, 'utf-8');
+        }
+      : function(file){
+          var packStartTime = new Date;
+          var resFilename = file.filename;
+          var tmpFilename = file.filename + '.tmp';
+
+          fs.writeFile(tmpFilename, file.content, 'utf-8');
+
+          console.log('Task for ' + resFilename + '.js packing added...');
+
+          childProcessTask.push({
+            name: 'Pack ' + resFilename,
+            task: function(){
+              exec(JSCOMPILER + ' --js ' + tmpFilename + ' --js_output_file ' + resFilename, { maxBuffer: 1024 *1024 }, function(error, stdout, stderr){
+                console.log('\n' + resFilename + ' packed in ' + ((new Date - packStartTime)/1000).toFixed(3) + 's');
+
+                if (stderr && stderr.length)
+                  console.log(stderr);
+
+                fs.unlink(tmpFilename);
+
+                if (error !== null){
+                  console.log('exec error: ' + error);
+                }
+              });
+            }
+          });
+        }
+  );
 
 
   ///////////////////////////////////
   // inject scripts into index.html
 
   indexFileContent = indexFileContent.replace(/([\t ]*)<!--build inject point-->/, function(m, offset){
-    return offset + [
-      '<script type="text/javascript" src="res.js?' + buildLabel + '"><\/script>',
-      '<script type="text/javascript" src="basis.js?' + buildLabel + '"><\/script>',
-      '<script type="text/javascript" src="app.js?' + buildLabel + '"><\/script>'
-    ].join('\n' + offset)
+    return offset + 
+      (flags.jsSingleFile
+        ? '<script type="text/javascript" src="app.js?' + buildLabel + '"><\/script>'
+        : [
+           '<script type="text/javascript" src="res.js?' + buildLabel + '"><\/script>',
+           '<script type="text/javascript" src="basis.js?' + buildLabel + '"><\/script>',
+           '<script type="text/javascript" src="app.js?' + buildLabel + '"><\/script>'
+          ].join('\n' + offset)
+      )
   });
 
 })();
@@ -877,12 +927,14 @@ printHeader("CSS:");
   function processFileContent(fileContent, filename, context){
     var comments = [];
     var imports = [];
+    var files = [];
     var sourceSize = 0;
     var baseURI = path.dirname(filename);
 
     // remove comments
     fileContent = fileContent.replace(/\/\*(.|[\r\n])*?\*\//g, function(m){ comments.push(m); return '\x00' });
 
+    // cut imports
     fileContent = fileContent.replace(cssImportRuleRx, function(m, sq1, dq1, url, sq2, dq2, media){
       var sq = sq1 || sq2;
       var dq = dq1 || dq2;
@@ -927,6 +979,8 @@ printHeader("CSS:");
       else
       {
         var cssBuild = linearCssFile(importRule.url, context);
+        files.push(importRule.url);
+        files.push(cssBuild.files);
 
         result += cssBuild.content;
         sourceSize += cssBuild.sourceSize;
@@ -942,7 +996,8 @@ printHeader("CSS:");
     
     return {
       sourceSize: sourceSize,
-      content: fileContent
+      content: fileContent,
+      files: files
     };
   }
 
@@ -986,7 +1041,7 @@ printHeader("CSS:");
   }
 
 
-  cssFiles.forEach(function(filename, idx){
+  cssFiles = cssFiles.map(function(filename, idx){
     var absFilename = path.resolve(path.dirname(INDEX_FILE), filename);
     var basename = path.basename(filename);
     var targetFilename = BUILD_DIR + '/' + basename;
@@ -994,7 +1049,7 @@ printHeader("CSS:");
     console.log('  Build ' + basename + '...');
     var cssBuild = linearCssFile(absFilename);
 
-    if (0&&flags.cssPack)
+    if (flags.cssPack)
     {
       console.log('  Pack ' + basename + '...');
       cssBuild.content = csso.justDoIt(cssBuild.content);
@@ -1003,8 +1058,11 @@ printHeader("CSS:");
 
     total_final_css_size += cssBuild.content;
 
-    console.log('  Save ' + filename + ' to ' + targetFilename + '...\n');
-    fs.writeFile(targetFilename, cssBuild.content, 'utf-8');
+    return {
+      filename: filename,
+      targetFilename: targetFilename,
+      content: cssBuild.content
+    };
   });
 
   if (genericCssContent.length)
@@ -1021,9 +1079,26 @@ printHeader("CSS:");
       console.log('    * ' + resourceCss.sourceSize + ' -> ' + resourceCss.content.length);
     }
 
-    fs.writeFile(BUILD_DIR + '/res.css', resourceCss.content, 'utf-8');
+    cssFiles.push({
+      filename: '{resources}',
+      targetFilename: BUILD_DIR + '/res.css',
+      content: resourceCss.content
+    });
+  }
 
+  if (flags.cssSingleFile)
+  {
+    console.log('  Save all CSS to ' + BUILD_DIR + '/app.css...\n');
+    fs.writeFile(BUILD_DIR + '/app.css', cssFiles.map(function(cssFile){ return cssFile.content }).join(''), 'utf-8');    
+  }
+  else
+  {
     indexFileContent = indexFileContent.replace(/<\/head>/i, '  <link rel="stylesheet" type="text/css" href="res.css?' + buildLabel + '"/>\n$&')
+
+    cssFiles.forEach(function(cssFile){
+      console.log('  Save ' + cssFile.filename + ' to ' + cssFile.targetFilename + '...\n');
+      fs.writeFile(cssFile.targetFilename, cssFile.content, 'utf-8');
+    });
   }
 
 })();
