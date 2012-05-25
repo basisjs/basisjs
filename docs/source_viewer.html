@@ -36,7 +36,7 @@
       var transport = new basis.net.ajax.Transport({
         url: '../' + filename,
         handler: {
-          complete: function(req){
+          complete: function(sender, req){
             //t = new Date;
             var node = new basis.format.highlight.SourceCodeNode({
               container: document.body,
