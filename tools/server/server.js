@@ -409,14 +409,14 @@
       });
     }
 
-    function lookup(path){
-      fs.readdir(path, function(err, files){
+    function lookup(dirname){
+      fs.readdir(dirname, function(err, files){
         if (err)
-          console.log('lookup error:', path, err);
+          console.log('lookup error:', dirname, err);
         else
         {
           var filename;
-          var dirInfo = dirMap[path];
+          var dirInfo = dirMap[dirname];
 
           updateStat(path);
 
@@ -427,7 +427,7 @@
             {
               if (files.indexOf(file) == -1)
               {
-                var filename = path.normalize(path + '/' + file);
+                var filename = path.normalize(dirname + '/' + file);
                 var fnKey = normPath(filename);
                 var fileInfo = fileMap[fnKey];
                 delete fileMap[fnKey];
@@ -442,18 +442,18 @@
           }
           else
           {
-            dirInfo = dirMap[path] = {};
+            dirInfo = dirMap[dirname] = {};
 
             // start watching
-            fs.watch(path, function(event, filename){
-              lookup(path);
+            fs.watch(dirname, function(event, filename){
+              lookup(dirname);
             });
           }
 
           dirInfo.files = files;
 
           for (var file, i = 0; file = files[i++];)
-            updateStat(path + '/' + file);
+            updateStat(dirname + '/' + file);
         }
       });
     }
