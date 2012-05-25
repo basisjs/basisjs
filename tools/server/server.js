@@ -12,7 +12,9 @@
   var port = process.argv[3];
 
   // settings
-  var readExtensions = ['.css', '.tmpl', '.txt', '.json'];
+  var readExtensions = ['.css', '.tmpl', '.txt', '.json', '.js'];
+  var notifyExtensions = ['.css', '.tmpl', '.txt', '.json'];
+  var hotStartExtensions = ['.css', '.tmpl', '.json', '.js'];
   var ignorePathes = ['.svn'];
   var rewriteRules = [];
 
@@ -84,6 +86,46 @@
   //create server
   console.log('Start server');
 
+  var hotStartCache = (function(){
+    var cache = {};
+    var content = '';
+    var timer_;
+
+    function rebuild(){
+      timer_ = 0;
+      content = JSON.stringify(cache, null, 2);
+      console.log('[CACHE] rebuild');
+      //fs.writeFile('server/cache.tmp', content, 'utf-8');
+    }
+
+    return {
+      add: function(fnKey, content){
+        if (cache[fnKey] !== content)
+        {
+          console.log('[CACHE] ' + (fnKey in cache ? 'update ' : 'add ') + fnKey);
+          cache[fnKey] = content;
+
+          if (!timer_)
+            timer_ = setTimeout(rebuild, 100);
+        }
+      },
+      remove: function(fnKey){
+        if (fnKey in cache)
+        {
+          console.log('[CACHE] remove ' + fnKey);
+          delete cache[fnKey];
+
+          if (!timer_)
+            timer_ = setTimeout(rebuild, 100);
+        }
+      },
+      get: function(){
+        return content;
+      }
+    }
+  })();
+
+
   var proxy;
   var app = http.createServer(function(req, res){
     var location = url.parse(req.url, true, true);
@@ -112,6 +154,17 @@
 
     //
     var filename = path.normalize(BASE_PATH + location.pathname);
+    var fnKey = normPath(filename);
+    console.log('[CLIENT] request', fnKey);
+
+    if (fnKey == '/FDF31FF4-1532-421C-A865-99D0E77ADE04.js')
+    {
+      res.writeHead(200, {
+        'Content-Type': 'text/javascript'
+      });
+      res.end('window.__resources__ = ' + hotStartCache.get());
+      return;
+    }
 
     if (!path.existsSync(filename))
     {
@@ -143,7 +196,7 @@
           }
       }
 
-      fs.readFile(filename, function(err, data){
+      function processFile(err, data){
         if (err)
         {
           res.writeHead(500);
@@ -158,9 +211,12 @@
           var ext = path.extname(filename);
           if (ext == '.html' || ext == '.htm')
           {
+            var fileContent = String(data)
+              .replace(/<head>/i, '<head><script src="/FDF31FF4-1532-421C-A865-99D0E77ADE04.js"></script>');
+
             fs.readFile(__dirname + '/client.js', 'utf-8', function(err, clientFileData){
               if (!err)
-                res.end(String(data).replace(/<\/body>/, '<script>' + clientFileData + '</script></body>'));
+                res.end(fileContent.replace(/<\/body>/i, '<script>' + clientFileData + '</script></body>'));
             });
           }
           else
@@ -168,7 +224,12 @@
             res.end(data);
           }
         }
-      });
+      }
+
+      if (fileMap[fnKey] && fileMap[fnKey].content != null)
+        processFile(null, fileMap[fnKey].content)
+      else
+        fs.readFile(filename, processFile);
     }
   });
 
@@ -178,7 +239,7 @@
       'Server is online, listen for http://localhost:' + port,
       'Watching changes for path: ' + BASE_PATH,
       'Ignore pathes:\n  ' + ignorePathes.join('\n  ')
-    ].join('\n'));
+    ].join('\n') + '\n------------');
   });
 
   //
@@ -228,6 +289,19 @@
     });
   });
 
+  var createCallback = function(fileInfo){
+    console.log('[SOCKET] broadcast newFile');
+    io.sockets.emit('newFile', fileInfo);
+  }
+  var updateCallback = function(fileInfo){
+    console.log('[SOCKET] broadcast updateFile');
+    io.sockets.emit('updateFile', fileInfo);
+  }
+  var deleteCallback = function(filename){
+    console.log('[SOCKET] broadcast deleteFile');
+    io.sockets.emit('deleteFile', normPath(filename));
+  }
+
   function normPath(filename){
     return '/' + path.relative(BASE_PATH, path.resolve(BASE_PATH, filename)).replace(/\\/g, '/')
   }
@@ -236,17 +310,18 @@
   // File System Watcher
   //
 
+  var fileMap = {};
   var fsWatcher = (function(){
-    var fileMap = {};
     var dirMap = {};
-
     function readFile(filename){
       if (readExtensions.indexOf(path.extname(filename)) != -1)
       {
         fs.readFile(filename, 'utf8', function(err, data){
           if (!err)
           {
-            var fileInfo = fileMap[normPath(filename)];
+            console.log('[FS] file read ' + filename);
+            var fnKey = normPath(filename);
+            var fileInfo = fileMap[fnKey];
             var newContent = String(data).replace(/\r\n?|\n\r?/g, '\n');
 
             var newFileInfo = {
@@ -259,15 +334,21 @@
 
             newFileInfo.content = newContent;
 
-            updateCallback(newFileInfo);
+            if (fileInfo.notify)
+              updateCallback(newFileInfo);
+
+            if (fileInfo.hotStart)
+              hotStartCache.add(fnKey, newContent);
           }
           else
-            console.log('   \033[31merror of file read (' + filename + '): ' + err + ' \033[39m');
+            console.log('[FS] Error: Can\'t read file ' + filename + ': ' + err);
         });
       }
     }
 
     function updateStat(filename){
+      filename = path.normalize(filename);
+
       fs.stat(filename, function(err, stats){
         var fnKey = normPath(filename);
 
@@ -282,17 +363,20 @@
           if (!fileMap[fnKey])
           {
             var fileType = stats.isDirectory() ? 'dir' : 'file';
+            var ext = path.extname(filename);
 
             fileMap[fnKey] = {
               mtime: stats.mtime,
               type: fileType,
+              hotStart: hotStartExtensions.indexOf(ext) != -1,
+              notify: notifyExtensions.indexOf(ext) != -1,
               content: null
             };
 
             // event!! new file
             if (filename != BASE_PATH)
             {
-              console.log(filename + ' - found');
+              console.log('[FS] new -> ' + filename);
 
               createCallback({
                 filename: normPath(filename),
@@ -307,11 +391,16 @@
               if (ignorePathes.indexOf(path.normalize(filename)) == -1)
                 lookup(filename);
             }
+            else
+            {
+              readFile(filename);
+            }
           }
           else
           {
             if (fileMap[fnKey].type == 'file' && stats.mtime - fileMap[fnKey].mtime)
             {
+              console.log('[FS] update -> ' + filename);
               fileInfo.mtime = stats.mtime;
               readFile(filename);
             }
@@ -338,12 +427,16 @@
             {
               if (files.indexOf(file) == -1)
               {
-                var filename = path + '/' + file;
-                delete fileMap[filename];
+                var filename = path.normalize(path + '/' + file);
+                var fnKey = normPath(filename);
+                var fileInfo = fileMap[fnKey];
+                delete fileMap[fnKey];
+
+                hotStartCache.remove(fnKey);
 
                 // event!!
                 deleteCallback(filename);
-                if (fs_debug) console.log(filename + ' - missed'); // file lost
+                console.log('[FS] delete -> ' + filename); // file lost
               }
             }
           }
@@ -394,33 +487,3 @@
 
   })();
 
-
-  var createCallback = function(fileInfo){
-    io.sockets.emit('newFile', fileInfo);
-  }
-  var updateCallback = function(fileInfo){
-    io.sockets.emit('updateFile', fileInfo);
-  }
-
-  var deleteCallback = function(filename){
-    io.sockets.emit('deleteFile', normPath(filename));
-  }
-
-
-  function arrayAdd(array, item){
-    var pos = array.indexOf(item);
-    if (pos == -1)
-    {
-      array.push(item);
-      return true;
-    }
-  }
-
-  function arrayRemove(array, item){
-    var pos = array.indexOf(item);
-    if (pos != -1)
-    {
-      array.splice(pos, 1);
-      return true;
-    }
-  }

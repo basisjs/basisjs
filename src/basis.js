@@ -1413,6 +1413,14 @@
   })();
 
   /*{resourceResolver}*/
+
+  (function(){
+    var tmp = externalResourceCache;
+    externalResourceCache = {};
+    for (var key in tmp)
+      externalResourceCache[pathUtils.resolve(key)] = tmp[key];
+  })();
+
   var externalResource = function(url){
     var requestUrl = url;
 
