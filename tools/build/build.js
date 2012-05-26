@@ -615,8 +615,8 @@ var resourceDigestMap = {};
   ////////////////////////////////
   // wrap modules
 
-  fileCache[nsBase.basis + 'basis.js'].content = fileCache[nsBase.basis + 'basis.js'].content
-    .replace(/resourceUrl\s*=\s*pathUtils.resolve\(resourceUrl\)/, '');
+  //fileCache[nsBase.basis + 'basis.js'].content = fileCache[nsBase.basis + 'basis.js'].content
+  //  .replace(/resourceUrl\s*=\s*pathUtils.resolve\(resourceUrl\)/, '');
 
   if (flags.jsSingleFile)
   {
