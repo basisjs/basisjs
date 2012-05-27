@@ -1496,7 +1496,8 @@
           };
 
       resource.url = resourceUrl;
-      resource.toString = resource;// function(){ return '[resource ' + resourceUrl + ']' }; //resource();
+      resource.fetch = resource;
+      resource.toString = function(){ return '[basis.resource ' + resourceUrl + ']' }; //resource();
       resource.update = function(content){
         content = String(content);
         if (content != externalResourceCache[resourceUrl])

@@ -1166,27 +1166,31 @@
    /**
     * @func
     */
-    var bind_nodeValue = W3C_DOM_NODE_SUPPORTED
-      // W3C DOM way
-      ? function(domRef, oldNode, newValue){
-          var newNode = bind_node(domRef, oldNode, newValue);//newValue instanceof Node ? newValue : domRef;
+    var bind_element = function(domRef, oldNode, newValue){
+      var newNode = bind_node(domRef, oldNode, newValue);
 
-          //if (newNode !== oldNode)
-          //  oldNode.parentNode.replaceChild(newNode, oldNode);
+      if (newNode === domRef)
+        domRef.innerHTML = newValue;
 
-          if (newNode === domRef)
-            newNode.nodeValue = newValue;
+      return newNode;
+    };
 
-          return newNode;
-        }
-      : function(domRef, oldNode, newValue){
-          var newNode = bind_node(domRef, oldNode, newValue);
+   /**
+    * @func
+    */
+    var bind_comment = bind_node;
 
-          if (newNode === domRef)
-            newNode.nodeValue = newValue;
+   /**
+    * @func
+    */
+    var bind_textNode = function(domRef, oldNode, newValue){
+      var newNode = bind_node(domRef, oldNode, newValue);
 
-          return newNode;
-        };
+      if (newNode === domRef)
+        domRef.nodeValue = newValue;
+
+      return newNode;
+    };
 
    /**
     * @func
@@ -1303,6 +1307,12 @@
       return expression.join('+')
     }
 
+    var bindFunctions = {
+      1: 'bind_element',
+      3: 'bind_textNode',
+      8: 'bind_comment'
+    };
+
    /**
     * @func
     */
@@ -1310,7 +1320,6 @@
       var bindMap = {};
       var bindCode;
       var bindVar;
-      var domRef;
       var varList = [];
       var result = [];
       var varName;
@@ -1321,8 +1330,9 @@
 
       for (var i = 0, binding; binding = bindings[i]; i++)
       {
-        domRef = binding[1];
-        bindName = binding[2];
+        var bindType = binding[0];
+        var domRef = binding[1];
+        var bindName = binding[2];
 
         var namePart = bindName.split(':');
         var anim = namePart[0] == 'anim';
@@ -1380,69 +1390,59 @@
           varList.push(varName);
         }
 
-        switch(binding[0])
+        if (bindType != TYPE_ATTRIBUTE)
         {
-          case TYPE_ELEMENT:
-          case TYPE_COMMENT:
-            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+          ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
 
-            varList.push(bindVar + '=' + domRef);
-            toolsUsed.bind_node = true;
-            bindCode.push(
-              bindVar + '=bind_node(' + [domRef, bindVar] + ',value);'
-            );
-            break;
-          case TYPE_TEXT:
-            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+          var bindFunction = bindFunctions[bindType];
+          varList.push(bindVar + '=' + domRef);
+          toolsUsed[bindFunction] = true;
+          bindCode.push(
+            bindVar + '=' + bindFunction + '(' + [domRef, bindVar] + ',value);'
+          );
+        }
+        else
+        {
+          var attrName = binding[ATTR_NAME];
 
-            varList.push(bindVar + '=' + domRef);
-            toolsUsed.bind_nodeValue = true;
-            bindCode.push(
-              bindVar + '=bind_nodeValue(' + [domRef, bindVar] + ',value);'
-            );   
-            break;
-          case TYPE_ATTRIBUTE:
-            var attrName = binding[ATTR_NAME];
+          ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',attr:"' + attrName + '",val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
 
-            ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',attr:"' + attrName + '",val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+          switch (attrName)
+          {
+            case 'class':
+              varList.push(bindVar + '=""');
+              toolsUsed.bind_attrClass = true;
+              bindCode.push(
+                bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + binding[4] + '"'] + (anim ? ',1' : '') + ');'
+              );
 
-            switch (attrName)
-            {
-              case 'class':
-                varList.push(bindVar + '=""');
-                toolsUsed.bind_attrClass = true;
-                bindCode.push(
-                  bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + binding[4] + '"'] + (anim ? ',1' : '') + ');'
-                );
+              break;
 
-                break;
+            case 'style':
+              varList.push(bindVar + '=""');
+              toolsUsed.bind_attrStyle = true;
+              bindCode.push(
+                bindVar + '=bind_attrStyle(' + [domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding)] + ');'
+              );
 
-              case 'style':
-                varList.push(bindVar + '=""');
-                toolsUsed.bind_attrStyle = true;
-                bindCode.push(
-                  bindVar + '=bind_attrStyle(' + [domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding)] + ');'
-                );
+              break;
 
-                break;
+            default:
+              varList.push(bindVar + '=' + buildAttrExpression(binding, true));
+              toolsUsed.bind_attr = true;
+              bindCode.push(
+                bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
+              );
 
-              default:
-                varList.push(bindVar + '=' + buildAttrExpression(binding, true));
-                toolsUsed.bind_attr = true;
-                bindCode.push(
-                  bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
-                );
-
-                specialAttr = SPECIAL_ATTR_MAP[attrName];
-                if (specialAttr)
+              specialAttr = SPECIAL_ATTR_MAP[attrName];
+              if (specialAttr)
+              {
+                if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
                 {
-                  if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
-                  {
-                    bindCode.push(domRef + '.' + attrName + '=' + bindVar + ';')
-                  }
+                  bindCode.push(domRef + '.' + attrName + '=' + bindVar + ';')
                 }
-            }
-            break;
+              }
+          }
         }
       }
 
@@ -1510,8 +1510,10 @@
     };
 
     var tools = {
-      bind_nodeValue: bind_nodeValue,
+      bind_textNode: bind_textNode,
       bind_node: bind_node,
+      bind_element: bind_element,
+      bind_comment: bind_comment,
       bind_attr: bind_attr,
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,

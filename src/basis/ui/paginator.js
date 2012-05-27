@@ -108,15 +108,15 @@
   //
 
   var DRAGDROP_HANDLER = {
-    start: function(config){
+    start: function(sender, config){
       this.initOffset = this.tmpl.scrollTrumb.offsetLeft;
     },
-    move: function(config){
+    move: function(sender, config){
       var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
       this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
       this.tmpl.scrollTrumb.style.left = percent(pos);
     },
-    over: function(config){
+    over: function(sender, config){
       this.setSpanStartPage(this.spanStartPage_);
     }
   };
