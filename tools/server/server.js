@@ -418,7 +418,7 @@
           var filename;
           var dirInfo = dirMap[dirname];
 
-          updateStat(path);
+          updateStat(dirname);
 
           if (dirInfo)
           {
