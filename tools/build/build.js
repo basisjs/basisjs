@@ -100,6 +100,16 @@ function relpath(filename){
   return path.relative(INDEX_PATH, filename).replace(/\\/g, '/');
 }
 
+function getDigest(content){
+  var hash = crypto.createHash('md5');
+  hash.update(content);
+  return hash.digest('base64')
+    // remove trailing == which always appear on md5 digest, save 2 bytes
+    .replace(/=+$/, '')
+    // make digest web safe
+    .replace(/\//g, '_')
+    .replace(/\+/g, '-');
+}
 
 //
 //
@@ -151,8 +161,6 @@ mkdir(BUILD_RESOURCE_DIR);
 var buildLabel = new Date().toISOString().replace(/\D/g, '').substr(0, 14);
 printHeader("BUILD: " + buildLabel);
 
-var cssSingleInjection = '<link rel="stylesheet" type="text/css" href="app.css?' + buildLabel + '"/>';
-
 
 //
 // Fetch index file content and it's resources
@@ -162,18 +170,33 @@ var baseFilenames = {};
 var cssFiles = [];
 var jsFiles = [];
 var genericCssContent = [];
+var inlineJsContentId = 1;
+var inlineJsContent = {};
 var indexFileContent = fs.readFileSync(INDEX_FILE, 'utf-8')
   .replace(/<!--[^\[](.|[\r\n])+?-->/g, '')
-  .replace(/([\t ]*)<script(?:\s+.+?)?\s+src="([^"]+)"(.*?)><\/script>/gmi,
-    function(m, offset, scriptPath){
-      jsFiles.push(scriptPath);
+  .replace(/([\t ]*)(?:<script(?:\s+.+?)?(?:\s+src="([^"]+)")(?:.*?)><\/script>|<script.*?>((?:.|[\r\n])*?)<\/script>)/gi,
+    function(m, offset, scriptPath, code){
+      if (scriptPath)
+      {
+        jsFiles.push(scriptPath);
 
-      return /\s+basis-config/.test(m)
-        ? offset + '<!--build inject point-->'
-        : m;
+        return /\s+basis-config/.test(m)
+          ? offset + '<!--build inject point-->'
+          : m;
+      }
+      else
+      {
+        inlineJsContent[inlineJsContentId] = {
+          id: inlineJsContentId,
+          content: code
+        }
+        jsFiles.push(inlineJsContent[inlineJsContentId]);
+        inlineJsContentId++;
+        return offset + '{inlinecode}';
+      }
     }
   )
-  .replace(/(<link(?:.*?\s)href=")([^"]+?)("(?:.*?)\/>)/gmi, 
+  .replace(/(<link(?:.*?\s)href=")([^"]+?)("(?:.*?)\/?>(?:[\t ]*\n)?)/gmi, 
     function(m, pre, stylePath, post){
       var filename = path.resolve(INDEX_FILE, stylePath);
       var basename = path.basename(filename);
@@ -192,10 +215,7 @@ var indexFileContent = fs.readFileSync(INDEX_FILE, 'utf-8')
     }
   );
 
-jsFiles.push('app.js');
-
-//console.log(cssFiles);
-//console.log(jsFiles);
+/// !!! jsFiles.push('app.js');
 
 var resourceMap = {};
 var resourceDigestMap = {};
@@ -209,7 +229,7 @@ var resourceDigestMap = {};
   var cutDev = flags.jsCutDev;
   var packBuild = flags.jsPack;
 
-  var rootDepends = ['basis', 'app'];
+  var rootDepends = [];
   var fileCache = {};
 
   var jsResourceMap = {};
@@ -311,13 +331,8 @@ var resourceDigestMap = {};
               treeConsole.decDeep();
             }
 
-            /*delete decl.resources;
-            delete decl.deps;
-            delete decl.baseURI;*/
             resource.obj = decl.tokens;
             resource.content = decl.toString();
-
-            //resource.contentObject = basis.template.makeDeclaration(resource.content);
             break;
           default:
             resource.content = fs.readFileSync(filepath, 'utf-8');
@@ -339,6 +354,13 @@ var resourceDigestMap = {};
   function getJsFile(filepath, namespace){
     //console.log("read " + filepath);
 
+    var inlineJsId = filepath.match(/^#js-(\d+)/);
+    if (inlineJsId)
+    {
+      inlineJsId = inlineJsId[1];
+      filepath = '.';
+    }
+
     var absFilepath = path.resolve(BASE_PATH, filepath);
     var fileDir = path.dirname(absFilepath) + '/';
 
@@ -346,13 +368,13 @@ var resourceDigestMap = {};
       return path.resolve(basePath || fileDir, Function('__dirname, namespace', 'return ' + expr)(fileDir, namespace));
     }
 
-    if (!fileCache[absFilepath])
+    if (inlineJsId || !fileCache[absFilepath])
     {
-      if (path.existsSync(absFilepath))
+      if (inlineJsId || path.existsSync(absFilepath))
       {
         treeConsole.incDeep();
 
-        var fileContent = fs.readFileSync(absFilepath, 'utf-8');
+        var fileContent = inlineJsId ? inlineJsContent[inlineJsId].content : fs.readFileSync(absFilepath, 'utf-8');
         var depends = []; 
         var resources = [];
 
@@ -469,12 +491,22 @@ var resourceDigestMap = {};
       context = {};
 
     var nsParts = namespace.split('.');
-    var filename = nsBase[nsParts[0]] + nsParts.join('/') + '.js';
+    var pathRoot = nsParts[0];
 
-    var jsFile = namespace != '__build__'
-      ? getJsFile(filename, namespace)
-      : { depends: rootDepends };
-    var package = packages[nsParts[0]];
+    if (pathRoot in nsBase == false)
+    {
+      rootDepends.push(pathRoot);
+      nsBase[pathRoot] = '';
+      packages[pathRoot] = {
+        path: '',
+        files: [],
+        content: []
+      }
+    }
+
+    var filename = nsBase[pathRoot] + nsParts.join('/') + '.js';
+    var jsFile = getJsFile(filename, namespace);
+    var package = packages[pathRoot];
 
     if (jsFile && !context[filename])
     {
@@ -487,7 +519,7 @@ var resourceDigestMap = {};
         buildDep(dep, context);
       }
 
-      if (namespace != 'basis' && namespace != '__build__')
+      if (namespace != 'basis')
       {
         if (buildMode)
           package.content.push(
@@ -572,14 +604,15 @@ var resourceDigestMap = {};
 
   ///////////////////////////////////////////
 
-  var nsBase = {
-    __build__: ''
-  };
+  var nsBase = {};
   var packages = {};
 
   // build base namespace map
   for (var i = 0; i < jsFiles.length; i++)
   {
+    if (typeof jsFiles[i] != 'string')
+      continue;
+
     var m = jsFiles[i].match(/([^\/\\]+)\.js$/i); //.test(jsFiles[i]))
     if (m)
     {
@@ -595,6 +628,8 @@ var resourceDigestMap = {};
   }
 
 //  console.log(nsBase);
+//  console.log(packages);
+//  process.exit();
 //  console.log(INDEX_PATH);
 
 
@@ -608,7 +643,26 @@ var resourceDigestMap = {};
   global.basis = require('../../src/basis.js').basis;
   basis.require('basis.template');
 
-  buildDep('__build__');
+  //buildDep('__build__');
+
+  for (var i = 0; i < jsFiles.length; i++)
+  {
+    var jsFile;
+    if (typeof jsFiles[i] == 'string')
+      jsFile = getJsFile(jsFiles[i]);
+    else
+    {
+      jsFile = getJsFile('#js-' + jsFiles[i].id);
+      indexFileContent = indexFileContent.replace('{inlinecode}', function(){ return jsFile.content.trim() ? '<script>' + jsFile.content + '</script>' : '' });
+    }
+
+    jsFile.depends.forEach(rootDepends.add, rootDepends);
+  }
+
+  rootDepends.forEach(buildDep);
+
+  //console.log('>>>>>!>!>!>!>', rootDepends.join(', '));
+  //process.exit();
 
   //console.log(build);
   //console.log(reqGraph.join('\n'));
@@ -777,11 +831,15 @@ var resourceDigestMap = {};
       });
   }
 
+  var jsDigests = {};
+
   outputFiles.forEach(
     !packBuild
       ? function(file){
           console.log('  Write ' + file.filename + '...');
           fs.writeFile(file.filename, file.content, 'utf-8');
+
+          jsDigests[path.basename(file.filename)] = getDigest(file.content);
         }
       : function(file){
           var packStartTime = new Date;
@@ -806,6 +864,15 @@ var resourceDigestMap = {};
                 if (error !== null){
                   console.log('exec error: ' + error);
                 }
+                else
+                {
+                  var filename = path.basename(resFilename);
+                  indexFileContent = indexFileContent.replace(' src="' + filename + '?"', function(){
+                    return ' src="' + filename + '?' + getDigest(fs.readFileSync(resFilename, 'utf-8')) + '"'
+                  });
+                }
+
+                taskCompleted();
               });
             }
           });
@@ -819,11 +886,11 @@ var resourceDigestMap = {};
   indexFileContent = indexFileContent.replace(/([\t ]*)<!--build inject point-->/, function(m, offset){
     return offset + 
       (flags.jsSingleFile
-        ? '<script type="text/javascript" src="app.js?' + buildLabel + '"><\/script>'
+        ? '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
         : [
-           '<script type="text/javascript" src="res.js?' + buildLabel + '"><\/script>',
-           '<script type="text/javascript" src="basis.js?' + buildLabel + '"><\/script>',
-           '<script type="text/javascript" src="app.js?' + buildLabel + '"><\/script>'
+           '<script type="text/javascript" src="res.js?' + (!packBuild ? jsDigests['res.js'] : '') + '"><\/script>',
+           '<script type="text/javascript" src="basis.js?' + (!packBuild ? jsDigests['basis.js'] : '') + '"><\/script>',
+           '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
           ].join('\n' + offset)
       )
   });
@@ -882,15 +949,7 @@ printHeader("CSS:");
       else
       {
         var resourceContent = fs.readFileSync(filename);
-
-        var hash = crypto.createHash('md5');
-        hash.update(resourceContent);
-        var digest = hash.digest('base64')
-          // remove trailing == which always appear on md5 digest, save 2 bytes
-          .replace(/=+$/, '')
-          // make digest web safe
-          .replace(/\//g, '_')
-          .replace(/\+/g, '-');
+        var digest = getDigest(resourceContent);
 
         if (!resourceDigestMap[digest])
         {
@@ -1090,10 +1149,11 @@ printHeader("CSS:");
 
   if (flags.cssSingleFile)
   {
-    indexFileContent = indexFileContent.replace(/<\/head>/i, cssSingleInjection + '\n$&');
+    var allCssContent = cssFiles.map(function(cssFile){ return cssFile.content }).join('');
+    indexFileContent = indexFileContent.replace(/<\/head>/i, '<link rel="stylesheet" type="text/css" href="app.css?' + getDigest(allCssContent) + '"/>\n$&');
 
     console.log('  Save all CSS to ' + BUILD_DIR + '/app.css...\n');
-    fs.writeFile(BUILD_DIR + '/app.css', cssFiles.map(function(cssFile){ return cssFile.content }).join(''), 'utf-8');    
+    fs.writeFile(BUILD_DIR + '/app.css', allCssContent, 'utf-8');    
   }
   else
   {
@@ -1150,9 +1210,20 @@ printHeader("CSS:");
 })();
 
 //console.log(indexFileContent);
-fs.writeFile(BUILD_DIR + '/' + path.basename(path.resolve(BASE_PATH, INDEX_FILE)), indexFileContent);
 
-if (childProcessTask.length)
+function writeIndex(){
+  indexFileContent = indexFileContent.replace(/([\t ]*)<title>(.|[\r\n])*?<\/title>/, '$&\n$1<meta name="build" content="' + buildLabel + '"/>');
+  fs.writeFile(BUILD_DIR + '/' + path.basename(path.resolve(BASE_PATH, INDEX_FILE)), indexFileContent);
+}
+
+function taskCompleted(){
+  childProcessTaskCount--;
+  if (!childProcessTaskCount)
+    writeIndex();
+}
+
+var childProcessTaskCount = childProcessTask.length;
+if (childProcessTaskCount)
 {
   printHeader('Child process tasks:');  
   childProcessTask.forEach(function(task){
@@ -1160,3 +1231,5 @@ if (childProcessTask.length)
     task.task();
   });
 }
+else
+  writeIndex();
