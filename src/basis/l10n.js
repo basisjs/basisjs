@@ -192,9 +192,11 @@
   }
 
   function createDictionary(namespace, location, tokens){
-    ;;;if (getDictionary(namespace) && typeof console != 'undefined') console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created');
+    var dictionary = getDictionary(namespace);
 
-    var dictionary = getDictionary(namespace, true)
+    ;;;if (dictionary && typeof console != 'undefined') console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created');
+
+    dictionary = getDictionary(namespace, true);
     dictionary.location = location;
 
     dictionary.update('base', tokens);
@@ -232,7 +234,7 @@
     if (!cultureList || cultureList.indexOf(culture) != -1)
     {
       var location = dictionary.location + '/' + culture;
-      if (!resourcesLoaded[location])
+      if (location && !resourcesLoaded[location])
       {
         resourcesLoaded[location] = true;
         

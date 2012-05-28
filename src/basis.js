@@ -1222,7 +1222,7 @@
         normalize: function(path){
           linkEl.href = path || '';
           //linkEl.href = linkEl.pathname;
-          return linkEl.href.substring(0, linkEl.href.length - linkEl.hash.length);
+          return linkEl.href.substring(0, linkEl.href.length - linkEl.hash.length - linkEl.search.length);
         },
         dirname: function(path){
           return this.normalize(path).replace(/\/[^\/]*$/, '');
