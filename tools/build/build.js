@@ -151,6 +151,8 @@ mkdir(BUILD_RESOURCE_DIR);
 var buildLabel = new Date().toISOString().replace(/\D/g, '').substr(0, 14);
 printHeader("BUILD: " + buildLabel);
 
+var cssSingleInjection = '<link rel="stylesheet" type="text/css" href="app.css?' + buildLabel + '"/>';
+
 
 //
 // Fetch index file content and it's resources
@@ -171,8 +173,8 @@ var indexFileContent = fs.readFileSync(INDEX_FILE, 'utf-8')
         : m;
     }
   )
-  .replace(/<link(?:.*?\s)href="([^"]+?)"(?:.*?)\/>/gmi, 
-    function(m, stylePath){
+  .replace(/(<link(?:.*?\s)href=")([^"]+?)("(?:.*?)\/>)/gmi, 
+    function(m, pre, stylePath, post){
       var filename = path.resolve(INDEX_FILE, stylePath);
       var basename = path.basename(filename);
 
@@ -185,8 +187,8 @@ var indexFileContent = fs.readFileSync(INDEX_FILE, 'utf-8')
       cssFiles.push(stylePath);
 
       return flags.cssSingleFile
-        ? (cssFiles.length == 1 ? '<link rel="stylesheet" type="text/css" href="app.css"/>' : '')
-        : m.replace(new RegExp(stylePath + '"$'), basename + '?' + buildLabel + '"');
+        ? ''
+        : pre + (basename + '?' + buildLabel) + post;
     }
   );
 
@@ -1088,12 +1090,14 @@ printHeader("CSS:");
 
   if (flags.cssSingleFile)
   {
+    indexFileContent = indexFileContent.replace(/<\/head>/i, cssSingleInjection + '\n$&');
+
     console.log('  Save all CSS to ' + BUILD_DIR + '/app.css...\n');
     fs.writeFile(BUILD_DIR + '/app.css', cssFiles.map(function(cssFile){ return cssFile.content }).join(''), 'utf-8');    
   }
   else
   {
-    indexFileContent = indexFileContent.replace(/<\/head>/i, '  <link rel="stylesheet" type="text/css" href="res.css?' + buildLabel + '"/>\n$&')
+    indexFileContent = indexFileContent.replace(/<\/head>/i, '  <link rel="stylesheet" type="text/css" href="res.css?' + buildLabel + '"/>\n$&');
 
     cssFiles.forEach(function(cssFile){
       console.log('  Save ' + cssFile.filename + ' to ' + cssFile.targetFilename + '...\n');
