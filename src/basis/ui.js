@@ -665,7 +665,7 @@
         super_.clear.call(this, alive);
       },
       setChildNodes: function(childNodes, keepAlive){
-        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; console.warn('Template has childNodesElement container, probably it is bug'); }
+        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; console.warn('Template has no childNodesElement container, probably it is bug'); }
 
         // reallocate childNodesElement to new DocumentFragment
         var domFragment = DOM.createFragment();

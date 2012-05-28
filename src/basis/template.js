@@ -654,15 +654,27 @@
                     if (includeStack.indexOf(url) == -1) // prevent recursion
                     {
                       includeStack.push(url);
-                      var resource = isTemplateRef ? templateList[url] : basis.resource(url);
-                      var decl = isTemplateRef
-                        ? getDeclFromTemplate(resource, true) // makeDeclaration(resource.source, resource.baseURI)
-                        : makeDeclaration(resource, basis.path.dirname(url) + '/');
-                      includeStack.pop();
 
-                      template.deps.add(resource);
-                      if (isTemplateRef && resource.source.bindingBridge)
-                        template.deps.add(resource.source);
+                      var decl;
+
+                      if (isTemplateRef)
+                      {
+                        var tmpl = templateList[url];
+                        template.deps.add(tmpl);
+                        if (tmpl.source.bindingBridge)
+                          template.deps.add(tmpl.source);
+
+                        decl = getDeclFromTemplate(tmpl, true);
+                      }
+                      else
+                      {
+                        var resource = basis.resource(url);
+                        template.deps.add(resource);
+
+                        decl = makeDeclaration(resource(), basis.path.dirname(url) + '/');
+                      }
+
+                      includeStack.pop();
 
                       if (decl.resources)
                         addUnique(template.resources, decl.resources);
