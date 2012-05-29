@@ -576,7 +576,9 @@
         {
           var focusElement = this.tmpl.focus || this.element;
           if (focusElement)
-            DOM.focus(focusElement, select);
+            setImmediate(function(){
+              DOM.focus(focusElement, select);
+            });
         }
       },
 
