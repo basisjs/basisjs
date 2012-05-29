@@ -234,8 +234,8 @@
   // reg new type of listen
   //
 
-  LISTEN.add('delegate', 'delegateChanged');
-  LISTEN.add('target', 'targetChanged');
+  //LISTEN.add('delegate', 'delegateChanged');
+  //LISTEN.add('target', 'targetChanged');
 
 
   //
@@ -549,6 +549,15 @@
         var oldRoot = this.root;
         var delta = {};
 
+        var delegateListenHandler = this.listen.delegate;
+        var targetListenHandler = (oldTarget || newDelegate) && (!newDelegate || newDelegate.target !== oldTarget) && this.listen.target;
+
+        if (oldDelegate && delegateListenHandler)
+          oldDelegate.removeHandler(delegateListenHandler, this);
+
+        if (oldTarget && targetListenHandler)
+          oldTarget.removeHandler(targetListenHandler, this);
+
         if (newDelegate)
         {
           // assing new delegate
@@ -566,6 +575,12 @@
           for (var key in oldData)
             if (oldData[key] !== newDelegate.data[key])
               delta[key] = oldData[key];
+
+          if (delegateListenHandler)
+            newDelegate.addHandler(delegateListenHandler, this);
+
+          if (newDelegate.target && targetListenHandler)
+            newDelegate.target.addHandler(targetListenHandler, this);
 
           // update & stateChanged can be fired only if new delegate was assigned;
           // otherwise (delegate drop) do nothing -> performance benefits
