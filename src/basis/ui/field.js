@@ -573,7 +573,7 @@
       this.setValue(!this.getValue());
     },
     setValue: function(value){
-      return Field.prototype.setValue(!!value);
+      return Field.prototype.setValue.call(this, !!value);
     },
     readFieldValue_: function(){
       return this.tmpl && this.tmpl.field && !!this.tmpl.field.checked;
