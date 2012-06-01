@@ -185,7 +185,7 @@
 
     DOM.insert(DOM.get('demo-container'),
       DOM.createElement('#Demo-ControlPanel',
-        new basis.ui.form.RadioGroup({
+        new basis.ui.field.RadioGroup({
           title: 'Object state:',
           childNodes: STATE.getList().map(function(state){
             return {
@@ -205,7 +205,7 @@
           }
         }).element,
 
-        new basis.ui.form.RadioGroup({
+        new basis.ui.field.RadioGroup({
           title: 'Dataset state:',
           childNodes: STATE.getList().map(function(state){
             return {
