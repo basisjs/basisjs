@@ -492,16 +492,16 @@
 
 
   var PROXY_REQUEST_HANDLER = {
-    start: function(request){
+    start: function(sender, request){
       this.inprogressRequests.add(request);
     },
-    complete: function(request){
+    complete: function(sender, request){
       this.inprogressRequests.remove(request);
     }
   }
 
   var PROXY_POOL_LIMIT_HANDLER = {
-    complete: function(request){
+    complete: function(sender, request){
       var nextRequest = this.requestQueue.shift();
       if (nextRequest)
       {
