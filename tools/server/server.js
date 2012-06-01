@@ -88,7 +88,7 @@
 
   var hotStartCache = (function(){
     var cache = {};
-    var content = '';
+    var content = '{}';
     var timer_;
 
     function rebuild(){
@@ -99,6 +99,9 @@
     }
 
     return {
+      isRequire: function(fnKey){
+        return fnKey in cache;
+      },
       add: function(fnKey, content){
         if (cache[fnKey] !== content)
         {
@@ -166,6 +169,12 @@
       return;
     }
 
+    if (fnKey == '/favicon.ico')
+    {
+      if (!path.existsSync(filename))
+        filename = __dirname + '/favicon.ico';
+    }
+
     if (!path.existsSync(filename))
     {
       res.writeHead(404);
@@ -209,6 +218,10 @@
           });
 
           var ext = path.extname(filename);
+
+          if (hotStartExtensions.indexOf(ext) != -1)
+            hotStartCache.add(fnKey, String(data));
+
           if (ext == '.html' || ext == '.htm')
           {
             var fileContent = String(data)
@@ -337,7 +350,7 @@
             if (fileInfo.notify)
               updateCallback(newFileInfo);
 
-            if (fileInfo.hotStart)
+            if (fileInfo.hotStart && hotStartCache.isRequire(fnKey))
               hotStartCache.add(fnKey, newContent);
           }
           else
