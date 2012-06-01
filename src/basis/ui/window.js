@@ -285,7 +285,7 @@
         if (this.buttonPanel)
           DOM.insert(this.tmpl.content || this.element, this.buttonPanel.element);
 
-        this.element.className += ' ' + this.cssRule.token;
+        cssom.classList(this.element).add(this.cssRule.token);
 
         this.realign();
       }

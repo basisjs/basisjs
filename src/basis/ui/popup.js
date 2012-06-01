@@ -150,6 +150,14 @@
       if (this.thread)
         this.thread.addHandler(THREAD_HANDLER, this);
     },
+    templateSync: function(noRecreate){
+      UIContainer.prototype.templateSync.call(this, noRecreate);
+      if (this.element)
+      {
+        cssom.classList(this.element).add(this.cssRule.token);
+        this.realign();
+      }
+    },
     setLayout: function(dir, orientation, noRealign){
       var oldDir = this.dir;
       var oldOrientation = this.orientation;
@@ -245,7 +253,12 @@
         }
       }
     },
+    setZIndex: function(zIndex){
+      this.zIndex = zIndex;
+      this.element.style.zIndex = zIndex;
+    },
     realign: function(){
+      this.setZIndex(this.zIndex);
       if (this.visible && this.relElement)
       {
         var dir = this.dir.qw();
@@ -484,7 +497,7 @@
         }
 
         // set zIndex
-        newChild.element.style.zIndex = basis.ui.window ? basis.ui.window.getWindowTopZIndex() : 2001;
+        newChild.setZIndex(basis.ui.window ? basis.ui.window.getWindowTopZIndex() : 2001);
       }
     },
     removeChild: function(popup){
