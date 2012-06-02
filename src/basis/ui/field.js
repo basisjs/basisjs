@@ -386,8 +386,13 @@
 
       Field.prototype.init.call(this);
 
-      this.setMinLength(this.minLength);
-      this.setMaxLength(this.maxLength);
+      var minLength = this.minLength;
+      delete this.minLength;
+      this.setMinLength(minLength);
+
+      var maxLength = this.maxLength;
+      delete this.maxLength;
+      this.setMaxLength(maxLength);
     },
     setValue: function(newValue){
       return Field.prototype.setValue.call(this, newValue == null ? '' : newValue);
