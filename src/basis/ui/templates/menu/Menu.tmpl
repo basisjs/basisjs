@@ -1,5 +1,9 @@
 
   <b:resource src="Menu.css"/>
+  <b:define name="selected" type="bool"/>
+  <b:define name="disabled" type="bool"/>
+  <b:define name="visible" type="enum" values="visible hidden" default="hidden"/>
+  <b:define name="orientation" type="enum" values="v-left-top v-right-top v-center-top v-left-center v-right-center v-center-center v-left-bottom v-right-bottom v-center-bottom h-left-top h-right-top h-center-top h-left-center h-right-center h-center-center h-left-bottom h-right-bottom h-center-bottom"/>
 
   <div class="Basis-Menu popup-{orientation} {anim:visible} {selected} {disabled}">
     <div{closeButton} class="Basis-Menu-CloseButton"><span>Close</span></div>

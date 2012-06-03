@@ -1,5 +1,7 @@
 
   <b:resource src="Field.css"/>
+  <b:define name="disabled" type="bool"/>
+  <b:define name="validity" type="enum" values="indeterminate valid invalid" default="indeterminate"/>
 
   <div{sampleContainer} class="Basis-Field {disabled} Basis-Field__{validity}" title="{error}">
     <div class="Basis-Field-Title">

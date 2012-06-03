@@ -1,5 +1,7 @@
 
   <b:resource src="Window.css"/>
+  <b:define name="selected" type="bool"/>
+  <b:define name="disabled" type="bool"/>
 
   <div class="Basis-Window {selected} {disabled}" event-mousedown="mousedown" event-keypress="keypress">
     <div class="Basis-Window-Canvas">
@@ -15,7 +17,10 @@
     </div>
     <div class="Basis-Window-Layout">
       <div{ddtrigger} class="Basis-Window-Title">
-        <div class="Basis-Window-TitleCaption {titleButtonClass}">{title}<!--{titleButtons}--></div>
+        <div class="Basis-Window-TitleCaption {titleButtonClass}">
+          {title}
+          <!--{titleButtons}-->
+        </div>
       </div>
       <div{content} class="Basis-Window-Content">
         <!-- {childNodesHere} -->

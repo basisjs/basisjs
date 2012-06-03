@@ -1,5 +1,10 @@
 
   <b:resource src="Node.css"/>
+  <b:define name="selected" type="bool"/>
+  <b:define name="disabled" type="bool"/>
+  <b:define name="before" type="bool"/>
+  <b:define name="after" type="bool"/>
+  <b:define name="nodePeriodName" type="enum" values="day month year decade quarter"/>
 
   <a class="Basis-Calendar-Node {nodePeriodName} {selected} {disabled} {before} {after}" event-click="click">
     {title}

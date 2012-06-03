@@ -1,6 +1,9 @@
 
   <b:resource src="Tab.css"/>
   <b:resource src="Page.css"/>
+  <b:define name="selected" type="bool"/>
+  <b:define name="unselected" type="bool" default="true"/>
+  <b:define name="disabled" type="bool"/>
 
   <div class="Basis-TabSheet {selected} {disabled}" event-click="select">
     <div{tabElement} class="Basis-Tab Basis-Tab__{selected} Basis-Tab__{disabled}">
