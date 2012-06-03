@@ -672,6 +672,7 @@
                         var values = elAttrs.values ? elAttrs.values.qw() : [];
                         template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
                       break;
+                      /**@cut*/default: if (template.warns) template.warns.push(namespace + ': Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
                     }
                   }
                 break;
@@ -835,14 +836,14 @@
       return map;
     }
 
-    function applyDefines(tokens, defines, classMap){
+    function applyDefines(tokens, defines, classMap, warns){
       var unpredictable = 0;
 
       for (var i = 0, token; token = tokens[i]; i++)
       {
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
         {
-          unpredictable += applyDefines(token[ELEMENT_CHILDS], defines, classMap);
+          unpredictable += applyDefines(token[ELEMENT_CHILDS], defines, classMap, warns);
 
           var attrs = token[ELEMENT_ATTRS];
           if (attrs)
@@ -862,16 +863,21 @@
 
                   for (var k = 0, bind; bind = bindings[k]; k++)
                   {
-                    var bindDef = defines[bind[1]];
+                    if (bind.length > 2)  // bind already processed
+                      continue;
+
+                    var bindName = bind[1].split(':').pop();
+                    var bindDef = defines[bindName];
 
                     if (bindDef)
                     {
                       bind.push.apply(bind, bindDef);
+                      bindDef.used = true;
 
                       if (bindDef[0])
                       {
                         if (bindDef.length == 1) // bool
-                          newAttrValue.add(bind[0] + bind[1]);
+                          newAttrValue.add(bind[0] + bindName);
                         else                  // enum
                           newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
                       }
@@ -880,7 +886,7 @@
                       {
                         if (bindDef.length == 1) // bool
                         {
-                          bind.push(bind[0] + bind[1]);
+                          bind.push(bind[0] + bindName);
                           bind[0] = 0;
                         }
                         else                  // enum
@@ -894,6 +900,7 @@
                     }
                     else
                     {
+                      ;;;if (warns) warns.push(namespace + ': Class binding `' + bind[1] + '` is not defined');
                       unpredictable++;
                     }
                   }
@@ -912,11 +919,14 @@
     }
 
     return function(source, baseURI, options){
-      if (!source.templateTokens)
-        source = tokenize('' + source, options && options.debug);
+      var debug = !!(options && options.debug);
 
-      var resources = source.resources;
+      if (!source.templateTokens)
+        source = tokenize('' + source, debug);
+
+      // result object
       var result = {
+        debug: debug,
         baseURI: baseURI || '',
         resources: source.resources.map(function(url){
           return (baseURI || '') + url;
@@ -927,22 +937,35 @@
         options: {}
       };
 
+      if (debug)
+        result.warns = [];
+
+      // main task
       result.tokens = process(source, result);
 
-      if (!result.tokens) // there must be at least one token in result
+      // there must be at least one token in result
+      if (!result.tokens)
         result.tokens = [[3, 0, 0, '']];
 
+      // normalize refs
       addTokenRef(result.tokens[0], 'element');
       normalizeRefs(result.tokens);
 
-      if (!includeStack.length)
-      {
-        var classMap = options && options.classMap ? [] : null;
-        result.unpredictable = !!applyDefines(result.tokens, result.defines, classMap);
-        if (classMap && classMap.length)
-          result.classMap = classMap;
-      }
+      // deal with defines
+      var classMap = options && options.classMap ? [] : null;
+      result.unpredictable = !!applyDefines(result.tokens, result.defines, classMap, result.warns);
+
+      if (classMap && classMap.length)
+        result.classMap = classMap;
+
+      ;;;if (debug) for (var key in result.defines) if (!result.defines[key].used) result.warns.push(namespace + ': Dead define for ' + key + ' (not used in template)');
+
+      // delete unnecessary keys
       delete result.defines;
+      delete result.debug;
+
+      if (debug && !result.warns.length)
+        delete result.warns;
 
       ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this) };
 
