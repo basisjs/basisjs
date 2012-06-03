@@ -903,6 +903,7 @@
           return (baseURI || '') + url;
         }),
         deps: [],
+        defines: {},
         unpredictable: true,
         options: {}
       };
