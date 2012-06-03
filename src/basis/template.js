@@ -589,7 +589,9 @@
         token[TOKEN_REFS] = [];
 
       token[TOKEN_REFS].add(refName);
-      token[TOKEN_BINDINGS] = token[TOKEN_REFS].length == 1 ? refName : 0;
+
+      if (refName != 'element')
+        token[TOKEN_BINDINGS] = token[TOKEN_REFS].length == 1 ? refName : 0;
     }
 
     function removeTokenRef(token, refName){
@@ -642,6 +644,37 @@
                   if (elAttrs.src)
                     template.resources.push(basis.path.resolve(template.baseURI + elAttrs.src));
 
+                break;
+
+                case 'set':
+                  if ('name' in elAttrs && 'value' in elAttrs)
+                  {
+                    var value = elAttrs.value;
+
+                    if (value === 'true')
+                      value = true;
+                    if (value === 'false')
+                      value = false;
+
+                    template.options[elAttrs.name] = value;
+                  }
+                break;
+
+                case 'define':
+                  if ('name' in elAttrs && !template.defines[elAttrs.name])
+                  {
+                    switch (elAttrs.type)
+                    {
+                      case 'bool':
+                        template.defines[elAttrs.name] = [elAttrs.default == 'true' ? 1 : 0];
+                        break;
+                      case 'enum':
+                        var values = elAttrs.values ? elAttrs.values.qw() : [];
+                        values.unshift(values.indexOf(elAttrs.default) + 1);
+                        template.defines[elAttrs.name] = values;
+                      break;
+                    }
+                  }
                 break;
 
                 case 'include':
@@ -795,10 +828,68 @@
           }
 
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
+        {
           normalizeRefs(token[ELEMENT_CHILDS], map);
+        }
       }
 
       return map;
+    }
+
+    function applyDefines(tokens, defines){
+      var unpredictable = 0;
+
+      for (var i = 0, token; token = tokens[i]; i++)
+      {
+        if (token[TOKEN_TYPE] == TYPE_ELEMENT)
+        {
+          unpredictable += applyDefines(token[ELEMENT_CHILDS], defines);
+
+          var attrs = token[ELEMENT_ATTRS];
+          if (attrs)
+          {
+            for (var j = 0, attr; attr = attrs[j]; j++)
+            {
+              if (attr[ATTR_NAME] == 'class')
+              {
+                var bindings = attr[TOKEN_BINDINGS];
+
+                if (bindings)
+                {
+                  var newAttrValue = attr[ATTR_VALUE].qw();
+
+                  for (var k = 0, bind; bind = bindings[k]; k++)
+                  {
+                    var bindDef = defines[bind[1]];
+                    if (bindDef)
+                    {
+                      bind.push.apply(bind, bindDef);
+
+                      if (bindDef[0])
+                      {
+                        if (bindDef.length == 1) // bool
+                          newAttrValue.add(bind[0] + bind[1]);
+                        else                  // enum
+                          newAttrValue.add(bind[0] + bindDef[bindDef[0]]);
+                      }
+                    }
+                    else
+                    {
+                      unpredictable++;
+                    }
+                  }
+
+                  attr[ATTR_VALUE] = newAttrValue.join(' ');
+                }
+
+                break; // stop iterate other attributes
+              }
+            }
+          }
+        }
+      }
+
+      return unpredictable;
     }
 
     return function(source, baseURI, debug){
@@ -811,7 +902,9 @@
         resources: source.resources.map(function(url){
           return (baseURI || '') + url;
         }),
-        deps: []
+        deps: [],
+        unpredictable: true,
+        options: {}
       };
 
       result.tokens = process(source, result);
@@ -821,6 +914,9 @@
 
       addTokenRef(result.tokens[0], 'element');
       normalizeRefs(result.tokens);
+
+      if (!includeStack.length)
+        result.unpredictable = !!applyDefines(result.tokens, result.defines);
 
       ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this) };
 
@@ -838,6 +934,7 @@
     var refList;
     var bindingList;
     var objectRefList;
+    var rootPath;
 
     function putRefs(refs, pathIdx){
       for (var i = 0, refName; refName = refs[i]; i++)
@@ -909,7 +1006,7 @@
         {
           myRef = -1;
 
-          if (!i && path == '_')
+          if (!i && path == rootPath)
             objectRefList.push(localPath);
 
           if (!explicitRef)
@@ -937,7 +1034,7 @@
                 {
                   case 'class':
                     for (var k = 0, binding; binding = bindings[k]; k++)
-                      putBinding([2, localPath, binding[1], attrName, binding[0]]);
+                      putBinding([2, localPath, binding[1], attrName, binding[0]].concat(binding.slice(2)));
                   break;
 
                   case 'style':
@@ -967,8 +1064,9 @@
       refList = [];
       bindingList = [];
       objectRefList = [];
+      rootPath = path || '_';
 
-      processTokens(tokens, path);
+      processTokens(tokens, rootPath);
 
       return {
         path: pathList,
@@ -1422,10 +1520,32 @@
           switch (attrName)
           {
             case 'class':
-              varList.push(bindVar + '=""');
+              var defaultExpr = '';
+              var valueExpr = 'value';
+
+              if (binding.length == 6) // bool
+              {
+                valueExpr = 'value?"' + bindName + '":""';
+                if (binding[5])
+                  defaultExpr = binding[4] + bindName;
+              }
+              else
+                if (binding.length > 6) // enum
+                {
+                  valueExpr = binding.slice(6).map(function(val){ return 'value=="' + val + '"'; }).join('||');
+                  
+                  if (!valueExpr)  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
+                    continue;
+
+                  valueExpr += '?value:""';
+                  if (binding[5])
+                    defaultExpr = binding[4] + binding[5 + binding[5]];
+                }
+
+              varList.push(bindVar + '="' + defaultExpr + '"');
               toolsUsed.bind_attrClass = true;
               bindCode.push(
-                bindVar + '=bind_attrClass(' + [domRef, bindVar, 'value', '"' + binding[4] + '"'] + (anim ? ',1' : '') + ');'
+                bindVar + '=bind_attrClass(' + [domRef, bindVar, valueExpr, '"' + binding[4] + '"'] + (anim ? ',1' : '') + ');'
               );
 
               break;
