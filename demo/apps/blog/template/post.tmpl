@@ -1,0 +1,14 @@
+
+  <b:resource src="post.css"/>
+
+  <div class="blog-post">
+    <h2 class="blog-post__title">{title}</h2>
+    <span class="blog-post__pubDate">[#{id}] {pubDate}</span>
+    <div{content} class="blog-post__content"/>
+    <div class="blog-post__footer">
+      <span class="blog-post__category">
+        Category: <span class="blog-post__category-link" event-click="filterByCategory">{category}</span>
+      </span>
+      <!--{tagList}-->
+    </div>
+  </div>

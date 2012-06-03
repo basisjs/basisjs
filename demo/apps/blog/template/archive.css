@@ -1,0 +1,17 @@
+
+  .archive-list__header
+  {
+    font-size: 140%;
+    background: #2A80EE;
+    color: white;
+    margin: 0 -0px;
+    padding: .2em 10px .3em;
+    font-weight: normal;
+    font-family: 'Segoe UI', Arial;
+  }
+
+  .archive-list__content
+  {
+    padding: 1em 0 1em 16px;
+    margin: 0;
+  }

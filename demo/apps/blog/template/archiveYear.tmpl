@@ -1,0 +1,10 @@
+
+  <b:resource src="archiveYear.css"/>
+  <b:define name="collapsed" type="bool"/>
+
+  <li class="archive-year">
+    <div class="archive-year__title archive-year__title_{collapsed}" event-click="toggle">
+      {title}
+    </div>
+    <ul{childNodesElement} class="archive-year__content archive-year__content_{collapsed}"/>
+  </li>

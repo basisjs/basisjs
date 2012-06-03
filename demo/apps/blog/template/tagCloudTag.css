@@ -1,0 +1,11 @@
+
+  .cloud-tag
+  {
+    margin-right: 8px;
+    cursor: pointer;
+    -webkit-transition: font-size .5s;
+  }
+  .cloud-tag:hover
+  {
+    color: red;
+  }

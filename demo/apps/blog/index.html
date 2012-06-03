@@ -1,0 +1,54 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis Demos: Basis.js blog</title>
+
+  <style type="text/css">
+    HTML,
+    BODY
+    {
+      background: #F0F0F0;
+      font-family: Tahoma, Arial, sans-serif;
+      font-size: small;
+    }
+    BODY
+    {
+      padding: 20px 0;
+    }
+
+    A
+    {
+      color: #06D;
+    }
+
+    .Basis-Paginator
+    {
+      float: right;
+    }
+    .Basis-Paginator .Basis-PaginatorNode
+    {
+      width: 4ex;
+    }
+  </style>
+
+  <!--<script src="../../seedrandom.js"></script>-->
+  <script>
+    var firstTime = new Date;
+    //Math.seedrandom("basis");
+  </script>
+  <script basis-config="{}" src="../../../src/basis.js"></script>
+  <script>
+    basis.require('blog');
+    basis.require('basis.entity');
+  </script>
+</head>
+
+<body>
+  <div id="footer"></div>
+</body>
+
+</html>

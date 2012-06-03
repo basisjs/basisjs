@@ -1,0 +1,36 @@
+
+  #page
+  {
+    min-width: 600px;
+    max-width: 1000px;
+    margin: 0px auto 0;
+    background: white;
+  }
+  #page-wrapper
+  {
+    border: 1px solid #E0E0E0;
+    margin: 0 -1px;
+    overflow: hidden;
+  }
+  #sidebar
+  {
+    float: right;
+    height: 100%;
+    width: 25%;
+    min-width: 180px;
+    padding: 10px;
+    margin-left: 10px
+  }
+  #content
+  {
+    overflow: hidden;
+    padding: 10px;
+  }
+  #footer
+  {
+    height: 2em;
+  }
+  #blog-thread
+  {
+    clear: both;
+  }

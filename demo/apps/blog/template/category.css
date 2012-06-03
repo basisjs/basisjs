@@ -1,0 +1,14 @@
+
+  .category-list-item
+  {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .category-list-item:hover
+  {
+    color: red;
+  }

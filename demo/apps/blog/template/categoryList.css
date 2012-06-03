@@ -1,0 +1,16 @@
+
+  .category-list__header
+  {
+    font-size: 140%;
+    background: #2A80EE;
+    color: white;
+    margin: 0 -0px;
+    padding: .2em 10px .3em;
+    font-weight: normal;
+    font-family: 'Segoe UI', Arial;
+  }
+  .category-list__content
+  {
+    margin: 0;
+    padding: 1em 1ex 1em 2ex;
+  }

@@ -1,0 +1,31 @@
+
+  .archive-year
+  {
+    list-style: none;
+  }
+  .archive-year__title
+  {
+    margin-left: -16px;
+    padding: .2em 0 .2em 16px;
+    cursor: pointer;
+    background: url(img/arrow_down.png) no-repeat 6px center;
+  }
+  .archive-year__title:hover
+  {
+    background-color: #F0F0F0;
+  }
+  .archive-year__content
+  {
+    padding: 0 0 1em 2ex;
+    margin: 0;
+  }
+
+  .archive-year__title_collapsed
+  {
+    background-image: url(img/arrow_right.png);
+    background-position: 8px center;
+  }
+  .archive-year__content_collapsed
+  {
+    display: none;
+  }

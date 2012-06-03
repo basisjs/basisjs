@@ -1,0 +1,17 @@
+
+  .archive-list-item__link
+  {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .archive-list-item
+  {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .archive-list-item__link:hover
+  {
+    color: red;
+  }

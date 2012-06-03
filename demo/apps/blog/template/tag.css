@@ -1,0 +1,20 @@
+
+  .blog-post-tag
+  {
+    padding-right: .6em;
+  }
+  .blog-post-tag:not(:last-child):after
+  {
+    content: ',';
+  }
+
+  .blog-post-tag__title
+  {
+    text-decoration: underline;
+    color: #2A80EE;
+    cursor: pointer;
+  }
+  .blog-post-tag__title:hover
+  {
+    color: red;
+  }

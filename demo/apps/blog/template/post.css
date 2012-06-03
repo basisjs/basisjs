@@ -1,0 +1,56 @@
+
+  .blog-post
+  {
+    margin: 1.5em 0 2em;
+  }
+  .blog-post__title
+  {
+    margin: 0;
+    font-size: 160%;
+    color: #2A80EE;
+    font-weight: normal; 
+    font-family: 'Segoe UI', Arial;
+    text-decoration: underline;
+    cursor: pointer;
+    display: inline;
+  }
+  .blog-post__title:hover
+  {
+    color: red;
+  }
+  .blog-post__pubDate
+  {
+    font-size: 80%;
+    color: #666;
+    display: block;
+    margin: .5em 0;
+  }
+  .blog-post__content
+  {
+    margin: .75em 0;
+    color: #333;
+    text-transform: capitalize;
+  }
+  .blog-post__footer
+  {
+    font-size: 90%;
+    border-top: 1px solid #F8F8F8;
+    padding-top: .2em;
+  }
+  .blog-post__category
+  {
+    min-width: 24ex;
+    padding-right: 2ex;
+    white-space: nowrap;
+    float: left;
+  }
+  .blog-post__category-link
+  {
+    color: #2A80EE;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .blog-post__category-link:hover
+  {
+    color: red;
+  }
