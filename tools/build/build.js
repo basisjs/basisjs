@@ -337,7 +337,7 @@ var jsBuild = (function buildJs(){
             }
 
             resource.obj = decl.tokens;
-            resource.content = decl.toString();
+            //resource.content = decl.toString();
 
             if (decl.classMap)
               resource.classMap = decl.classMap;
@@ -668,7 +668,9 @@ var jsBuild = (function buildJs(){
     jsFile.depends.forEach(rootDepends.add, rootDepends);
   }
 
-  rootDepends.forEach(buildDep);
+  rootDepends.forEach(function(item){
+    buildDep(item, this);
+  }, {});
 
   //console.log('>>>>>!>!>!>!>', rootDepends.join(', '));
   //process.exit();
@@ -1049,14 +1051,6 @@ var cssClassNameMap = (function buildCSS(){
     return dict;
   }
 
-  function genNextClassName(curName){
-    if (!curName)
-      return 'a';
-
-    return (parseInt(curName, 36) + 1).toString(36);
-  }
-
-
 
   //
   // build css files
@@ -1080,11 +1074,6 @@ var cssClassNameMap = (function buildCSS(){
       basename: basename,
       content: cssBuild.content,
       sourceSize: cssBuild.sourceSize
-      /*content: processCssContent({
-        basename: basename,
-        content: cssBuild.content,
-        sourceSize: cssBuild.sourceSize
-      })*/
     };
   });
 
@@ -1101,11 +1090,6 @@ var cssClassNameMap = (function buildCSS(){
       basename: '/res.css',
       content: resourceCss.content,
       sourceSize: resourceCss.sourceSize
-      /*content: processCssContent({
-        basename: '/res.css',
-        content: resourceCss.content,
-        sourceSize: resourceCss.sourceSize
-      })*/
     });
   }
 
@@ -1133,6 +1117,13 @@ var cssClassNameMap = (function buildCSS(){
   if (flags.cssOptNames)
   {
     (function(){
+      function genNextClassName(curName){
+        if (!curName)
+          return 'a';
+
+        return (parseInt(curName, 36) + 1).toString(36).replace(/^\d/, 'a');
+      }
+
       var dict = {};
 
       cssFiles.forEach(function(cssFile){
@@ -1225,6 +1216,36 @@ printHeader("Javascript:");
   if (flags.cssOptNames)
   {
     jsResourceList.forEach(function(res){
+      function removeAttr(attrToRemove){
+        function walkTree(tokens){
+          for (var i = 0, token; token = tokens[i]; i++)
+            if (token[0] == 1)
+            {
+              var attrs = token[4];
+              if (attrs)
+                for (var j = 0, attr; attr = attrs[j]; j++)
+                  if (attr === attrToRemove)
+                  {
+                    attrs.splice(j, 1);
+                    return true;
+                  }
+
+              if (walkTree(token[5]))
+                return true;
+            }
+        }
+        walkTree(res.obj);
+      }
+
+      function resolveClassName(ar, pos){
+        ar[pos] = cssClassNameMap[ar[pos]];
+
+        if (!ar[pos])
+          ar.splice(pos--, 1);
+
+        return pos;
+      }
+
       if (res.type == 'tmpl' && res.classMap)
       {
         //console.log(JSON.stringify(res.classMap));
@@ -1237,26 +1258,60 @@ printHeader("Javascript:");
             {
               var lastIdx = bind.length - 1;
               var last = bind[lastIdx];
-              if (typeof last == 'string')
-                last = cssClassNameMap[last] || last;
+              if (typeof last == 'string')  // bool
+              {
+                last = cssClassNameMap[last];
+                if (!last)
+                {
+                  bindings.splice(ii, 1);
+                  ii--;
+                  continue;
+                }
+              }
               else
               {
+                var refList = bind[lastIdx - 1];
                 for (var j = 0; j < last.length; j++)
-                  last[j] = cssClassNameMap[last[j]] || last[j];
+                {
+                  last[j] = cssClassNameMap[last[j]];
+                  if (!last[j])
+                  {
+                    last.splice(j, 1);
+                    refList.splice(j, 1);
+                    j--;
+                  }
+                }
+
+                if (refList.length)
+                {
+                  bindings.splice(ii, 1);
+                  ii--;
+                  continue;
+                }
               }
 
               bind[lastIdx] = last;
             }
+
+            if (!bindings.length)
+              attr[1] = bindings = 0;
           }
 
           if (attr[4])
           {
             attr[4] = attr[4].split(/\s+/).map(function(className){
-              return cssClassNameMap[className] || className;
-            }).join(' ');
+              return cssClassNameMap[className] || '';
+            }).join(' ').replace(/\s+/, ' ');
+          }
+
+          if (!attr[4] && !bindings)
+          {
+            //console.log('!!!attr remove');
+            removeAttr(attr);
           }
         }
-        console.log(JSON.stringify(res.classMap));
+        //console.log('classMap:', JSON.stringify(res.classMap));
+        //console.log(JSON.stringify(res.obj));
       }
       //cssClassNameMap
     });
