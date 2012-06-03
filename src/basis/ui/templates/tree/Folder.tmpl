@@ -3,6 +3,10 @@
   <b:resource src="Node_Expander.css"/>
   <b:resource src="Folder.css"/>
 
+  <b:define name="selected" type="bool"/>
+  <b:define name="collapsed" type="bool"/>
+  <b:define name="disabled" type="bool"/>
+
   <li class="Basis-TreeNode">
     <div{content} class="Basis-TreeNode-Title Basis-TreeNode-CanHaveChildren {selected}">
       <div class="Basis-TreeNode_Expander Basis-TreeNode_Expander__{collapsed}" event-click="toggle" />

@@ -853,6 +853,9 @@
               {
                 var bindings = attr[TOKEN_BINDINGS];
 
+                if (classMap)
+                  classMap.push(attr);
+
                 if (bindings)
                 {
                   var newAttrValue = attr[ATTR_VALUE].qw();
@@ -860,6 +863,7 @@
                   for (var k = 0, bind; bind = bindings[k]; k++)
                   {
                     var bindDef = defines[bind[1]];
+
                     if (bindDef)
                     {
                       bind.push.apply(bind, bindDef);
@@ -867,26 +871,24 @@
                       if (bindDef[0])
                       {
                         if (bindDef.length == 1) // bool
-                        {
                           newAttrValue.add(bind[0] + bind[1]);
-                          if (classMap)
-                          {
-                            classMap.push(bind);
-                            bind.push(bind[0] + bind[1]);
-                            bind[0] = 0;
-                          }
+                        else                  // enum
+                          newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
+                      }
+
+                      if (classMap)
+                      {
+                        if (bindDef.length == 1) // bool
+                        {
+                          bind.push(bind[0] + bind[1]);
+                          bind[0] = 0;
                         }
                         else                  // enum
                         {
-                          newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
-                          if (classMap)
-                          {
-                            classMap.push(bind);
-                            bind.push(bindDef[1].map(function(name){
-                              return bind[0] + name;
-                            }));
-                            bind[0] = 0;
-                          }
+                          bind.push(bindDef[1].map(function(name){
+                            return bind[0] + name;
+                          }));
+                          bind[0] = 0;
                         }
                       }
                     }
@@ -937,7 +939,7 @@
       {
         var classMap = options && options.classMap ? [] : null;
         result.unpredictable = !!applyDefines(result.tokens, result.defines, classMap);
-        if (classMap)
+        if (classMap && classMap.length)
           result.classMap = classMap;
       }
       delete result.defines;

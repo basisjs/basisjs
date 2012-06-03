@@ -134,6 +134,7 @@ var flags = (function(){
     jsBuildMode:   publishMode || hasFlag('-pack') || hasFlag('-js-build-mode'),  // evaluate module code (close to basis.require works)
     jsCutDev:      publishMode || hasFlag('-pack') || hasFlag('-js-cut-dev'),     // cut from source ;;; and /** @cut .. */
     jsPack:        publishMode || hasFlag('-pack') || hasFlag('-js-pack'), // pack javascript source
+    cssOptNames:   hasFlag('-css-optimize-names'),                         // make css classes short
     cssPack:       publishMode || hasFlag('-pack') || hasFlag('-css-pack') // pack css code
   };
 })();
@@ -224,10 +225,11 @@ var resourceDigestMap = {};
 // build js
 
 
-(function buildJs(){
+var jsBuild = (function buildJs(){
   var buildMode = flags.jsBuildMode;
   var cutDev = flags.jsCutDev;
   var packBuild = flags.jsPack;
+  var cssOptNames = flags.cssOptNames;
 
   var rootDepends = [];
   var fileCache = {};
@@ -308,7 +310,10 @@ var resourceDigestMap = {};
             break;
           case 'tmpl':
             var fileContent = fs.readFileSync(filepath, 'utf-8');
-            var decl = basis.template.makeDeclaration(fileContent, path.dirname(filepath) + '/');
+            var decl = basis.template.makeDeclaration(fileContent, path.dirname(filepath) + '/', { classMap: cssOptNames });
+
+            if (cssOptNames && decl.unpredictable)
+              treeConsole.log('  [WARN] Unpredictable class names in template, class names optimization is not safe\n');
 
             if (decl.resources.length)
             {
@@ -333,6 +338,10 @@ var resourceDigestMap = {};
 
             resource.obj = decl.tokens;
             resource.content = decl.toString();
+
+            if (decl.classMap)
+              resource.classMap = decl.classMap;
+
             break;
           default:
             resource.content = fs.readFileSync(filepath, 'utf-8');
@@ -404,7 +413,7 @@ var resourceDigestMap = {};
               dictName = Function('namespace', 'return ' + dictName)(namespace);
               console.log('  Dictionary declaration found: ' + dictName + ' -> ' + path);
             } catch(e){
-              treeConsole.log('Can\'t evaluate path `' + path + '` in ' + absFilepath);
+              treeConsole.log('[!] Can\'t evaluate path `' + path + '` in createDictionary() call\n     filename: ' + absFilepath);
               return m;
             }
 
@@ -445,7 +454,7 @@ var resourceDigestMap = {};
               );
             }
             else
-              treeConsole.log('[!] Error: ', error, 'for ' + fn + '(' + resourceExpr + ') in ' + filepath);
+              treeConsole.log('[!] Error: ', error, 'for ' + fn + '(' + resourceExpr + ')\n     filename: ' + filepath);
 
             if (messages.length)
             {
@@ -747,7 +756,7 @@ var resourceDigestMap = {};
               }
             }
             else
-              treeConsole.log('[ERROR] Dictionary file ' + filepath + ' not found');
+              treeConsole.log('[ERROR] Dictionary not found: ' + filepath);
 
             return res;
           })
@@ -783,117 +792,10 @@ var resourceDigestMap = {};
     }
   }
 
-
-  ///////////////////////////////////////////
-  // build resource map
-
-  var resourceMapCode = '{' + jsResourceList.map(function(resource){
-    var content;
-    if (resource.obj)
-      content = typeof resource.obj == 'function'
-        ? resource.obj.toString().replace(/function\s+anonymous/, 'function')
-        : JSON.stringify(resource.obj);
-    else
-      content = JSON.stringify(String(resource.contentObject ? resource.contentObject.content : resource.content).replace(/\r\n?|\n\r?/g, '\n'));
-
-    return '"' + resource.ref + '": ' + content;
-  }).join(',\n') + '}';
-
-  // write to file
-  /*var resFilename = BUILD_DIR + '/res.js';
-  console.log('  Write ' + resFilename + '...');
-  fs.writeFile(resFilename, resourceMapCode, 'utf-8');*/
-
-
-
-  ////////////////////////////////
-  // save js files
-
-  var outputFiles = [];
-
-  if (flags.jsSingleFile)
-  {
-    outputFiles.push({
-      filename: path.normalize(BUILD_DIR + '/app.js'),
-      content: packages.app.content.replace(/this\.__resources__ \|\| \{\}/, resourceMapCode)
-    });
-  }
-  else
-  {
-    packages.res = {
-      content: '"use strict";\nwindow.__resources__ = ' + resourceMapCode
-    };
-
-    for (var packageName in packages)
-      outputFiles.push({
-        filename: path.normalize(BUILD_DIR + '/' + packageName + '.js'),
-        content: packages[packageName].content
-      });
-  }
-
-  var jsDigests = {};
-
-  outputFiles.forEach(
-    !packBuild
-      ? function(file){
-          console.log('  Write ' + file.filename + '...');
-          fs.writeFile(file.filename, file.content, 'utf-8');
-
-          jsDigests[path.basename(file.filename)] = getDigest(file.content);
-        }
-      : function(file){
-          var packStartTime = new Date;
-          var resFilename = file.filename;
-          var tmpFilename = file.filename + '.tmp';
-
-          fs.writeFile(tmpFilename, file.content, 'utf-8');
-
-          console.log('Task for ' + resFilename + '.js packing added...');
-
-          childProcessTask.push({
-            name: 'Pack ' + resFilename,
-            task: function(){
-              exec(JSCOMPILER + ' --js ' + tmpFilename + ' --js_output_file ' + resFilename, { maxBuffer: 1024 *1024 }, function(error, stdout, stderr){
-                console.log('\n' + resFilename + ' packed in ' + ((new Date - packStartTime)/1000).toFixed(3) + 's');
-
-                if (stderr && stderr.length)
-                  console.log(stderr);
-
-                fs.unlink(tmpFilename);
-
-                if (error !== null){
-                  console.log('exec error: ' + error);
-                }
-                else
-                {
-                  var filename = path.basename(resFilename);
-                  indexFileContent = indexFileContent.replace(' src="' + filename + '?"', function(){
-                    return ' src="' + filename + '?' + getDigest(fs.readFileSync(resFilename, 'utf-8')) + '"'
-                  });
-                }
-
-                taskCompleted();
-              });
-            }
-          });
-        }
-  );
-
-
-  ///////////////////////////////////
-  // inject scripts into index.html
-
-  indexFileContent = indexFileContent.replace(/([\t ]*)<!--build inject point-->/, function(m, offset){
-    return offset + 
-      (flags.jsSingleFile
-        ? '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
-        : [
-           '<script type="text/javascript" src="res.js?' + (!packBuild ? jsDigests['res.js'] : '') + '"><\/script>',
-           '<script type="text/javascript" src="basis.js?' + (!packBuild ? jsDigests['basis.js'] : '') + '"><\/script>',
-           '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
-          ].join('\n' + offset)
-      )
-  });
+  return {
+    resources: jsResourceList,
+    packages: packages
+  };
 
 })();
 
@@ -904,7 +806,7 @@ var resourceDigestMap = {};
 
 printHeader("CSS:");
 
-(function buildCSS(){
+var cssClassNameMap = (function buildCSS(){
 
   var total_init_css_size = 0;
   var total_final_css_size = 0;
@@ -922,6 +824,9 @@ printHeader("CSS:");
   var cssImportRuleRx = new RegExp('@import(?:\\s*(?:' + cssQuotedValueRxToken + ')|\\s+' + cssUrlRxPart + ')(\\s+' + cssMediaListRxToken + ')?\s*;', 'g');
   var cssUrlRx = new RegExp('\\b' + cssUrlRxPart, 'g');
 
+  var classNameMap = {};
+
+
   function resolveResource(url, baseUri, cssFile){
     // url(data:..) and so on -> nothing to do
     if (/^[a-z]+\:/.test(url))
@@ -936,7 +841,7 @@ printHeader("CSS:");
     {
       if (!path.existsSync(filename))
       {
-        console.log('    !                          [NOT FOUND] ' + relpath(filename));
+        treeConsole.log('    !                          [NOT FOUND] ' + relpath(filename));
         resourceMap[filename] = {
           state: 'error',
           url: url,
@@ -977,7 +882,7 @@ printHeader("CSS:");
     }
 
     if (resourceDesc.state == 'ok')
-      console.log('    + ' + resourceDesc.replacement + (newResource ? ' [NEW]' : ' [DUP]') + ' -> ' + relpath(filename) + ' (' + resourceDesc.content.length + ' bytes)');
+      treeConsole.log('    + ' + resourceDesc.replacement + (newResource ? ' [NEW]' : ' [DUP]') + ' -> ' + relpath(filename) + ' (' + resourceDesc.content.length + ' bytes)');
 
     resourceDesc.references.push(cssFile);
     resourceDesc.refCount++;
@@ -1069,12 +974,12 @@ printHeader("CSS:");
 
     if (!path.existsSync(filename))
     {
-      console.log('  # [NOT FOUND] ' + relpath(filename));
+      treeConsole.log('  # [NOT FOUND] ' + relpath(filename));
       fileContent = '\n/* WARN: File ' + filename + ' not found */\n';
     }
     else
     {
-      console.log('  # [OK] ' + relpath(filename));
+      treeConsole.log('  # [OK] ' + relpath(filename));
 
       if (!context)
         context = {};
@@ -1101,58 +1006,190 @@ printHeader("CSS:");
     };
   }
 
+  function collectClassNames(tree, dict){
 
+    function walkTree(tokens){
+      for (var i = 0, token; token = tokens[i]; i++)
+      {
+        switch (token[1])
+        { 
+          case 'stylesheet':
+          case 'ruleset':
+          case 'selector':
+            walkTree(token.slice(2));
+            break;
+          case 'simpleselector':
+            var selectorTokens = token.slice(2);
+            for (var j = 0, part; part = selectorTokens[j]; j++)
+            {
+              if (part[1] == 'clazz')
+              {
+                var ident = part[2];
+                var identName = ident[2];
+                
+                if (!dict[identName])
+                {
+                  dict[identName] = ident;
+                  ident[3] = 1;
+                }
+                else
+                {
+                  part[2] = dict[identName];
+                  dict[identName][3]++;
+                }
+              }
+            }
+            break;
+        }
+      }
+    }
+
+    dict = dict || {};
+    walkTree([tree]);
+    return dict;
+  }
+
+  function genNextClassName(curName){
+    if (!curName)
+      return 'a';
+
+    return (parseInt(curName, 36) + 1).toString(36);
+  }
+
+
+
+  //
+  // build css files
+  //
+
+  treeConsole.incDeep();
+
+  treeConsole.log('Build');
+  treeConsole.incDeep();
   cssFiles = cssFiles.map(function(filename, idx){
     var absFilename = path.resolve(path.dirname(INDEX_FILE), filename);
     var basename = path.basename(filename);
     var targetFilename = BUILD_DIR + '/' + basename;
 
-    console.log('  Build ' + basename + '...');
+    treeConsole.log(basename);
     var cssBuild = linearCssFile(absFilename);
-
-    if (flags.cssPack)
-    {
-      console.log('  Pack ' + basename + '...');
-      cssBuild.content = csso.justDoIt(cssBuild.content);
-      console.log('    * ' + cssBuild.sourceSize + ' -> ' + cssBuild.content.length);
-    }
-
-    total_final_css_size += cssBuild.content;
 
     return {
       filename: filename,
       targetFilename: targetFilename,
-      content: cssBuild.content
+      basename: basename,
+      content: cssBuild.content,
+      sourceSize: cssBuild.sourceSize
+      /*content: processCssContent({
+        basename: basename,
+        content: cssBuild.content,
+        sourceSize: cssBuild.sourceSize
+      })*/
     };
   });
 
   if (genericCssContent.length)
   {
-    console.log('  Build resources css');
+    treeConsole.log('resources css');
     var resourceCss = processFileContent(genericCssContent.map(function(cssFilename){
       return '@import url(' + relpath(path.resolve(BASE_PATH, cssFilename)) + ');';
     }).join('\n'), INDEX_FILE, {});
 
-    if (flags.cssPack)
-    {
-      console.log('  Pack /res.css ...');
-      resourceCss.content = csso.justDoIt(resourceCss.content);
-      console.log('    * ' + resourceCss.sourceSize + ' -> ' + resourceCss.content.length);
-    }
-
     cssFiles.push({
       filename: '{resources}',
       targetFilename: BUILD_DIR + '/res.css',
-      content: resourceCss.content
+      basename: '/res.css',
+      content: resourceCss.content,
+      sourceSize: resourceCss.sourceSize
+      /*content: processCssContent({
+        basename: '/res.css',
+        content: resourceCss.content,
+        sourceSize: resourceCss.sourceSize
+      })*/
     });
   }
+
+  treeConsole.log();
+  treeConsole.decDeep();
+
+  //
+  // Parse
+  //
+
+  treeConsole.log('Parse');
+  treeConsole.incDeep();
+
+  cssFiles.forEach(function(cssFile){
+    treeConsole.log(cssFile.basename);
+    cssFile.content = csso.parse(cssFile.content, 'stylesheet');
+  });
+
+  treeConsole.log();
+  treeConsole.decDeep();
+
+  //
+  // build className map and optimize
+  //
+  if (flags.cssOptNames)
+  {
+    (function(){
+      var dict = {};
+
+      cssFiles.forEach(function(cssFile){
+        collectClassNames(cssFile.content, dict);
+      });
+
+      var classNames = Object
+        .keys(dict) // all class names
+        .sort(function(a, b){ return dict[b][3] - dict[a][3] }); // sorted desc by usage count
+
+      for (var i = 0, name, replaceName; name = classNames[i]; i++)
+      {
+        do {
+          replaceName = genNextClassName(replaceName);
+        } while (dict[replaceName]);
+        //console.log(name, replaceName);
+
+        dict[name][2] = replaceName;
+        classNameMap[name] = replaceName;
+      }
+    })();
+  }
+
+  //
+  // Pack
+  //
+  if (flags.cssPack)
+  {
+    treeConsole.log('Pack');
+    treeConsole.incDeep();
+
+    cssFiles.forEach(function(cssFile){
+      treeConsole.log(cssFile.basename);
+      //content = csso.justDoIt(content);
+      cssFile.content = csso.translate(csso.cleanInfo(csso.compress(cssFile.content)));
+      treeConsole.log('  * ' + cssFile.sourceSize + ' -> ' + cssFile.content.length);
+    });
+
+    treeConsole.log();
+    treeConsole.decDeep();
+  }
+  else
+  {
+    cssFiles.forEach(function(cssFile){
+      cssFile.content = csso.translate(csso.cleanInfo(cssFile.content));
+    });    
+  }
+
+  treeConsole.decDeep();
 
   if (flags.cssSingleFile)
   {
     var allCssContent = cssFiles.map(function(cssFile){ return cssFile.content }).join('');
+    total_final_css_size = allCssContent.length;
     indexFileContent = indexFileContent.replace(/<\/head>/i, '<link rel="stylesheet" type="text/css" href="app.css?' + getDigest(allCssContent) + '"/>\n$&');
 
-    console.log('  Save all CSS to ' + BUILD_DIR + '/app.css...\n');
+    treeConsole.log('Save all CSS to ' + path.normalize(BUILD_DIR + '/app.css') + '...\n');
     fs.writeFile(BUILD_DIR + '/app.css', allCssContent, 'utf-8');    
   }
   else
@@ -1160,12 +1197,183 @@ printHeader("CSS:");
     indexFileContent = indexFileContent.replace(/<\/head>/i, '  <link rel="stylesheet" type="text/css" href="res.css?' + buildLabel + '"/>\n$&');
 
     cssFiles.forEach(function(cssFile){
-      console.log('  Save ' + cssFile.filename + ' to ' + cssFile.targetFilename + '...\n');
+      treeConsole.log('Save ' + cssFile.filename + ' to ' + cssFile.targetFilename + '...\n');
       fs.writeFile(cssFile.targetFilename, cssFile.content, 'utf-8');
+      total_final_css_size = cssFile.content.length;
     });
   }
 
+  return classNameMap;
+
 })();
+
+
+//
+// Write js
+//
+
+printHeader("Javascript:");
+
+(function(jsBuild){
+  var buildMode = flags.jsBuildMode;
+  var packBuild = flags.jsPack;
+
+  var jsResourceList = jsBuild.resources;
+  var packages = jsBuild.packages;
+
+
+  if (flags.cssOptNames)
+  {
+    jsResourceList.forEach(function(res){
+      if (res.type == 'tmpl' && res.classMap)
+      {
+        //console.log(JSON.stringify(res.classMap));
+        for (var i = 0, attr; attr = res.classMap[i]; i++)
+        {
+          var bindings = attr[1];
+          if (bindings)
+          {
+            for (var ii = 0, bind; bind = bindings[ii]; ii++)
+            {
+              var lastIdx = bind.length - 1;
+              var last = bind[lastIdx];
+              if (typeof last == 'string')
+                last = cssClassNameMap[last] || last;
+              else
+              {
+                for (var j = 0; j < last.length; j++)
+                  last[j] = cssClassNameMap[last[j]] || last[j];
+              }
+
+              bind[lastIdx] = last;
+            }
+          }
+
+          if (attr[4])
+          {
+            attr[4] = attr[4].split(/\s+/).map(function(className){
+              return cssClassNameMap[className] || className;
+            }).join(' ');
+          }
+        }
+        console.log(JSON.stringify(res.classMap));
+      }
+      //cssClassNameMap
+    });
+  }
+
+
+  ///////////////////////////////////////////
+  // build resource map
+
+  // TODO: fix problem with css resources and remove
+  jsResourceList.push({
+    ref: 'null.css',
+    content: ''
+  });
+
+  var resourceMapCode = '{' + jsResourceList.map(function(resource){
+    var content;
+    if (resource.obj)
+      content = typeof resource.obj == 'function'
+        ? resource.obj.toString().replace(/function\s+anonymous/, 'function')
+        : JSON.stringify(resource.obj);
+    else
+      content = JSON.stringify(String(resource.contentObject ? resource.contentObject.content : resource.content).replace(/\r\n?|\n\r?/g, '\n'));
+
+    return '"' + resource.ref + '": ' + content;
+  }).join(',\n') + '}';
+
+
+  ////////////////////////////////
+  // save js files
+
+  var outputFiles = [];
+
+  if (flags.jsSingleFile)
+  {
+    outputFiles.push({
+      filename: path.normalize(BUILD_DIR + '/app.js'),
+      content: packages.app.content.replace(/this\.__resources__ \|\| \{\}/, resourceMapCode)
+    });
+  }
+  else
+  {
+    packages.res = {
+      content: '"use strict";\nwindow.__resources__ = ' + resourceMapCode
+    };
+
+    for (var packageName in packages)
+      outputFiles.push({
+        filename: path.normalize(BUILD_DIR + '/' + packageName + '.js'),
+        content: packages[packageName].content
+      });
+  }
+
+  var jsDigests = {};
+
+  outputFiles.forEach(
+    !packBuild
+      ? function(file){
+          console.log('  Write ' + file.filename + '...');
+          fs.writeFile(file.filename, file.content, 'utf-8');
+
+          jsDigests[path.basename(file.filename)] = getDigest(file.content);
+        }
+      : function(file){
+          var packStartTime = new Date;
+          var resFilename = file.filename;
+          var tmpFilename = file.filename + '.tmp';
+
+          fs.writeFile(tmpFilename, file.content, 'utf-8');
+
+          console.log('Task for ' + resFilename + '.js packing added...');
+
+          childProcessTask.push({
+            name: 'Pack ' + resFilename,
+            task: function(){
+              exec(JSCOMPILER + ' --js ' + tmpFilename + ' --js_output_file ' + resFilename, { maxBuffer: 1024 *1024 }, function(error, stdout, stderr){
+                console.log('\n' + resFilename + ' packed in ' + ((new Date - packStartTime)/1000).toFixed(3) + 's');
+
+                if (stderr && stderr.length)
+                  console.log(stderr);
+
+                fs.unlink(tmpFilename);
+
+                if (error !== null){
+                  console.log('exec error: ' + error);
+                }
+                else
+                {
+                  var filename = path.basename(resFilename);
+                  indexFileContent = indexFileContent.replace(' src="' + filename + '?"', function(){
+                    return ' src="' + filename + '?' + getDigest(fs.readFileSync(resFilename, 'utf-8')) + '"'
+                  });
+                }
+
+                taskCompleted();
+              });
+            }
+          });
+        }
+  );
+
+
+  ///////////////////////////////////
+  // inject scripts into index.html
+
+  indexFileContent = indexFileContent.replace(/([\t ]*)<!--build inject point-->/, function(m, offset){
+    return offset + 
+      (flags.jsSingleFile
+        ? '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
+        : [
+           '<script type="text/javascript" src="res.js?' + (!packBuild ? jsDigests['res.js'] : '') + '"><\/script>',
+           '<script type="text/javascript" src="basis.js?' + (!packBuild ? jsDigests['basis.js'] : '') + '"><\/script>',
+           '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
+          ].join('\n' + offset)
+      )
+  });
+})(jsBuild);
 
 //
 // Copy resources to build folder
