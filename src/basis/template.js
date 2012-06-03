@@ -666,12 +666,11 @@
                     switch (elAttrs.type)
                     {
                       case 'bool':
-                        template.defines[elAttrs.name] = [elAttrs.default == 'true' ? 1 : 0];
+                        template.defines[elAttrs.name] = [elAttrs['default'] == 'true' ? 1 : 0];
                         break;
                       case 'enum':
                         var values = elAttrs.values ? elAttrs.values.qw() : [];
-                        values.unshift(values.indexOf(elAttrs.default) + 1);
-                        template.defines[elAttrs.name] = values;
+                        template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
                       break;
                     }
                   }
@@ -836,14 +835,14 @@
       return map;
     }
 
-    function applyDefines(tokens, defines){
+    function applyDefines(tokens, defines, classMap){
       var unpredictable = 0;
 
       for (var i = 0, token; token = tokens[i]; i++)
       {
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
         {
-          unpredictable += applyDefines(token[ELEMENT_CHILDS], defines);
+          unpredictable += applyDefines(token[ELEMENT_CHILDS], defines, classMap);
 
           var attrs = token[ELEMENT_ATTRS];
           if (attrs)
@@ -868,9 +867,27 @@
                       if (bindDef[0])
                       {
                         if (bindDef.length == 1) // bool
+                        {
                           newAttrValue.add(bind[0] + bind[1]);
+                          if (classMap)
+                          {
+                            classMap.push(bind);
+                            bind.push(bind[0] + bind[1]);
+                            bind[0] = 0;
+                          }
+                        }
                         else                  // enum
-                          newAttrValue.add(bind[0] + bindDef[bindDef[0]]);
+                        {
+                          newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
+                          if (classMap)
+                          {
+                            classMap.push(bind);
+                            bind.push(bindDef[1].map(function(name){
+                              return bind[0] + name;
+                            }));
+                            bind[0] = 0;
+                          }
+                        }
                       }
                     }
                     else
@@ -892,9 +909,9 @@
       return unpredictable;
     }
 
-    return function(source, baseURI, debug){
+    return function(source, baseURI, options){
       if (!source.templateTokens)
-        source = tokenize('' + source, debug);
+        source = tokenize('' + source, options && options.debug);
 
       var resources = source.resources;
       var result = {
@@ -917,7 +934,13 @@
       normalizeRefs(result.tokens);
 
       if (!includeStack.length)
-        result.unpredictable = !!applyDefines(result.tokens, result.defines);
+      {
+        var classMap = options && options.classMap ? [] : null;
+        result.unpredictable = !!applyDefines(result.tokens, result.defines, classMap);
+        if (classMap)
+          result.classMap = classMap;
+      }
+      delete result.defines;
 
       ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this) };
 
@@ -1523,30 +1546,62 @@
             case 'class':
               var defaultExpr = '';
               var valueExpr = 'value';
+              var prefix = binding[4];
 
-              if (binding.length == 6) // bool
+              if (binding.length >= 6)
               {
-                valueExpr = 'value?"' + bindName + '":""';
-                if (binding[5])
-                  defaultExpr = binding[4] + bindName;
-              }
-              else
-                if (binding.length > 6) // enum
+                if (binding.length == 6 || typeof binding[6] == 'string') // bool
                 {
-                  valueExpr = binding.slice(6).map(function(val){ return 'value=="' + val + '"'; }).join('||');
-                  
-                  if (!valueExpr)  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
-                    continue;
-
-                  valueExpr += '?value:""';
-                  if (binding[5])
-                    defaultExpr = binding[4] + binding[5 + binding[5]];
+                  if (binding.length == 6)
+                  {
+                    valueExpr = 'value?"' + bindName + '":""';
+                    if (binding[5])
+                      defaultExpr = prefix + bindName;
+                  }
+                  else
+                  {
+                    prefix = '';
+                    valueExpr = 'value?"' + binding[6] + '":""';
+                    if (binding[5])
+                      defaultExpr = binding[6];
+                  }
                 }
+                else // enum
+                {
+                  if (binding.length == 7)
+                  {
+                    valueExpr = binding[6].map(function(val){ return 'value=="' + val + '"'; }).join('||');
+                    
+                    if (!valueExpr)  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
+                      continue;
+
+                    valueExpr += '?value:""';
+                    if (binding[5])
+                      defaultExpr = prefix + binding[6][binding[5] - 1];
+                  }
+                  else
+                  {
+                    prefix = "";
+                    valueExpr = [];
+                    var values = binding[6];
+                    for (var jj = 0; jj < values.length; jj++)
+                      valueExpr.push('value=="' + values[jj] + '"?"' + binding[7][jj] + '"');
+                    
+                    if (!valueExpr.length)  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
+                      continue;
+
+                    valueExpr.push('""');
+                    valueExpr = valueExpr.join(':');
+                    if (binding[5])
+                      defaultExpr = binding[7][binding[5] - 1];
+                  }
+                }
+              }
 
               varList.push(bindVar + '="' + defaultExpr + '"');
               toolsUsed.bind_attrClass = true;
               bindCode.push(
-                bindVar + '=bind_attrClass(' + [domRef, bindVar, valueExpr, '"' + binding[4] + '"'] + (anim ? ',1' : '') + ');'
+                bindVar + '=bind_attrClass(' + [domRef, bindVar, valueExpr, '"' + prefix + '"'] + (anim ? ',1' : '') + ');'
               );
 
               break;
