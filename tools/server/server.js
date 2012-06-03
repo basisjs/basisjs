@@ -15,7 +15,7 @@
   var readExtensions = ['.css', '.tmpl', '.txt', '.json', '.js'];
   var notifyExtensions = ['.css', '.tmpl', '.txt', '.json'];
   var hotStartExtensions = ['.css', '.tmpl', '.json', '.js'];
-  var ignorePathes = ['.svn'];
+  var ignorePathes = ['.svn', '.git'];
   var rewriteRules = [];
 
   // check base path
@@ -219,7 +219,7 @@
 
           var ext = path.extname(filename);
 
-          if (hotStartExtensions.indexOf(ext) != -1)
+          if (hotStartExtensions.indexOf(ext) != -1 && ignorePathes.indexOf(path.normalize(filename)) != 0)
             hotStartCache.add(fnKey, String(data));
 
           if (ext == '.html' || ext == '.htm')
@@ -401,7 +401,7 @@
             if (fileType == 'dir')
             {
               //console.log(filename, path.normalize(filename));
-              if (ignorePathes.indexOf(path.normalize(filename)) == -1)
+              if (ignorePathes.indexOf(path.normalize(filename)) != 0)
                 lookup(filename);
             }
             else
@@ -423,51 +423,54 @@
     }
 
     function lookup(dirname){
-      fs.readdir(dirname, function(err, files){
-        if (err)
-          console.log('lookup error:', dirname, err);
-        else
-        {
-          var filename;
-          var dirInfo = dirMap[dirname];
-
-          updateStat(dirname);
-
-          if (dirInfo)
-          {
-            var dirFiles = dirInfo.files;
-            for (var i = 0, file; file = dirFiles[i++];)
+      path.exists(dirname, function(exists){
+        if (exists)
+          fs.readdir(dirname, function(err, files){
+            if (err)
+              console.log('lookup error:', dirname, err);
+            else
             {
-              if (files.indexOf(file) == -1)
+              var filename;
+              var dirInfo = dirMap[dirname];
+
+              updateStat(dirname);
+
+              if (dirInfo)
               {
-                var filename = path.normalize(dirname + '/' + file);
-                var fnKey = normPath(filename);
-                var fileInfo = fileMap[fnKey];
-                delete fileMap[fnKey];
+                var dirFiles = dirInfo.files;
+                for (var i = 0, file; file = dirFiles[i++];)
+                {
+                  if (files.indexOf(file) == -1)
+                  {
+                    var filename = path.normalize(dirname + '/' + file);
+                    var fnKey = normPath(filename);
+                    var fileInfo = fileMap[fnKey];
+                    delete fileMap[fnKey];
 
-                hotStartCache.remove(fnKey);
+                    hotStartCache.remove(fnKey);
 
-                // event!!
-                deleteCallback(filename);
-                console.log('[FS] delete -> ' + filename); // file lost
+                    // event!!
+                    deleteCallback(filename);
+                    console.log('[FS] delete -> ' + filename); // file lost
+                  }
+                }
               }
+              else
+              {
+                dirInfo = dirMap[dirname] = {};
+
+                // start watching
+                fs.watch(dirname, function(event, filename){
+                  lookup(dirname);
+                });
+              }
+
+              dirInfo.files = files;
+
+              for (var file, i = 0; file = files[i++];)
+                updateStat(dirname + '/' + file);
             }
-          }
-          else
-          {
-            dirInfo = dirMap[dirname] = {};
-
-            // start watching
-            fs.watch(dirname, function(event, filename){
-              lookup(dirname);
-            });
-          }
-
-          dirInfo.files = files;
-
-          for (var file, i = 0; file = files[i++];)
-            updateStat(dirname + '/' + file);
-        }
+          });
       });
     }
 
