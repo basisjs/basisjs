@@ -233,8 +233,11 @@
 
     if (!cultureList || cultureList.indexOf(culture) != -1)
     {
+      if (!dictionary.location)
+        return;
+
       var location = dictionary.location + '/' + culture;
-      if (location && !resourcesLoaded[location])
+      if (!resourcesLoaded[location])
       {
         resourcesLoaded[location] = true;
         
