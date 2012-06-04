@@ -1,6 +1,5 @@
 (function(global){
 
-  basis.require('basis.date');
   basis.require('basis.dom');
   basis.require('basis.data');
   basis.require('basis.data.property');
@@ -22,7 +21,6 @@
 
   var STATE = basis.data.STATE;
 
-
   //
   // local vars
   //
@@ -36,7 +34,7 @@
   var isOnline = new nsProperty.Property(isOnline_);
   var connectionState = new nsProperty.Property('offline', {
     change: function(state){
-      console.log('connection state:', state);
+      console.log('Socket.io state:', state.value);
     }
   });
 
@@ -44,11 +42,18 @@
   if (typeof console == 'undefined')
     console = { log: Function(), warn: Function() };
 
-  /*var settingsPath = 'basis.devtools.observer_' + location.pathname.replace(/\/[^\/\.]+?(\.[^\/\.]+)$/, '/').replace(/[^a-z0-9]/g, '_');
-  var listenDirs = typeof localStorage != 'undefined' ? JSON.parse(localStorage[settingsPath]) : {};*/
-  //var listenDirs = {};
+  //
+  // Date parse
+  //
 
-  var documentHead = document.getElementsByTagName('head')[0];
+  var reIsoStringSplit = /\D/;
+  function fastDateParse(y, m, d, h, i, s, ms){
+    return new Date(y, m - 1, d, h || 0, i || 0, s || 0, ms || 0);
+  }
+  Date.fromISOString = function(isoString){
+    return isoString ? fastDateParse.apply(null, String(isoString).split(reIsoStringSplit)) : null;
+  }
+
 
   //
   // init part
@@ -56,12 +61,11 @@
 
   basis.ready(function(){
     // socket.io
-    document.getElementsByTagName('head')[0].appendChild(
+    basis.dom.appendHead(
       basis.dom.createElement({
         description: 'script[src="/socket.io/socket.io.js"]',
         error: function(){
           console.warn('Error on loading ' + this.src);
-          //alert('too bad... but also good')
         },
         load: function(){
           if (typeof io != 'undefined')
@@ -112,19 +116,19 @@
               // file events
               //
               newFile: function(data){
-                console.log('new file', data);
+                console.log('New file', data);
 
                 File(data);
               },
               updateFile: function(data){
-                console.log('file updated', data);
+                console.log('File updated', data);
 
                 var file = File(data.filename);
                 file.setState(STATE.READY);
                 file.commit(data);
               },
               deleteFile: function(data){
-                console.log('file deleted', data);
+                console.log('File deleted', data);
 
                 var file = File.get(data);
                 if (file)
@@ -160,13 +164,16 @@
       filename: basis.entity.StringId,
       type: String,
       lastUpdate: Date.fromISOString,
-      content: String
+      content: function(value){
+        if (value == null)
+          return null;
+        else
+          return String(value);
+      }
     }
   });
 
-  var FileClass = File.entityType.entityClass;
-
-  FileClass.extend({
+  File.entityType.entityClass.extend({
     read: function(){
       //this.setState(STATE.PROCESSING);
       sendToServer('readFile', this.data.filename);
@@ -180,12 +187,12 @@
           if (err)
           {
             self.setState(STATE.ERROR, err);
-            console.log('file save error: ', err);
+            console.log('File `' + self.data.filename + '` saving error: ', err);
           }
           else
           {
             self.setState(STATE.READY);
-            console.log('file saved', self.data.filename);
+            console.log('File `' + self.data.filename + '` successfuly saved');
           }
         });
       }
@@ -201,10 +208,30 @@
     }
   });
 
+  var FILE_UPDATE_HANDLER = {
+    update: function(file, delta){
+      if ('filename' in delta || 'content' in delta)
+        basis.resource(this.data.filename).update(this.data.content);
+    }
+  };
+
   var files = new nsDataset.Subset({
     source: File.all,
     rule: function(object){
       return object.data.type == 'file';
+    },
+    handler: {
+      datasetChanged: function(dataset, delta){
+        var array;
+
+        if (array = delta.inserted)
+          for (var i = 0; i < array.length; i++)
+            array[i].addHandler(FILE_UPDATE_HANDLER);
+
+        if (array = delta.deleted)
+          for (var i = 0; i < array.length; i++)
+            array[i].removeHandler(FILE_UPDATE_HANDLER);
+      }
     }
   });
 
@@ -215,267 +242,6 @@
     }
   });
 
-
-  var templateUpdateHandler = {
-    update: function(file, delta){
-      if ('filename' in delta || 'content' in delta)
-        basis.resource(this.data.filename).update(this.data.content);
-    }
-  };
-
-  //filesByType.getSubset('tmpl', true)
-  files.addHandler({
-    datasetChanged: function(dataset, delta){
-      var array;
-
-      if (array = delta.inserted)
-        for (var i = 0; i < array.length; i++)
-          array[i].addHandler(templateUpdateHandler);
-
-      if (array = delta.deleted)
-        for (var i = 0; i < array.length; i++)
-          array[i].removeHandler(templateUpdateHandler);
-    }
-  });
-
-
-  var linkEl = document.createElement('A');
-  document.body.appendChild(linkEl);
-
-  var baseEl = basis.dom.createElement('base');
-
-  function setBase(path){
-    linkEl.href = path;                         // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
-    baseEl.setAttribute('href', linkEl.href);
-
-    basis.dom.insert(documentHead, baseEl, 0);  // even if there is more than one <base> elements, only first has effect
-  }
-  function restoreBase(){
-    baseEl.setAttribute('href', location);      // Opera left document base as <base> element specified,
-                                                // even if this element is removed from document
-    basis.dom.remove(baseEl);    
-  }
-
-  function deleteImports(imports){
-    if (!imports || !imports.length)
-      return;
-
-    for (var i = 0; i < imports.length; i++)
-    {
-      deleteImports(imports[i].imports);
-      styleSheetFileMap[imports[i].url].remove(imports[i]);
-      basis.dom.remove(imports[i].styleEl);
-    }
-  }
-
-  var styleUpdateHandler = {
-    update: function(file, delta){
-      if ('filename' in delta || 'content' in delta)
-      {
-        var url = this.data.filename;
-        var fileInfo = styleSheetFileMap[url];
-
-        if (fileInfo)
-        {
-          styleSheetFileMap[url] = [];
-          for (var i = 0, elem; elem = fileInfo[i]; i++)
-          {
-            deleteImports(elem.imports);
-            linearStyleSheet(elem.styleEl, null, elem.cssFileStack, url);
-          }
-        }
-      }
-    }
-  };
-
-  filesByType.getSubset('css', true).addHandler({
-    datasetChanged: function(dataset, delta){
-      var array;
-
-      if (array = delta.inserted)
-        for (var i = 0; i < array.length; i++)
-          array[i].addHandler(styleUpdateHandler);
-
-      if (array = delta.deleted)
-        for (var i = 0; i < array.length; i++)
-          array[i].removeHandler(styleUpdateHandler);
-    }
-  });
-
-  var styleSheetFileMap = {};
-  window.styleSheetFileMap = styleSheetFileMap; // TODO: remove
-
-  function normalizeUrl(path){
-    linkEl.href = path;
-    linkEl.href = linkEl.pathname;
-    return linkEl.href;
-  }
-
-  function abs2rel(path, base){
-    if (base)
-    {
-      setBase(base);
-      path = normalizeUrl(path);
-      restoreBase();
-    }
-    else
-    {
-      path = normalizeUrl(path);
-    }
-
-    var abs = path.split(/\//);
-    var loc = normalizeUrl(location).replace(/\/[^\/]*$/, '').split(/\//);
-    var i = 0;
-
-    while (abs[i] == loc[i] && typeof loc[i] == 'string')
-      i++;
-
-    return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
-  }
-
-
-  var nonObservableFilesCache = {};
-  var styleSeed = 0;
-  var insertHelper = document.createComment('');
-
-  function linearStyleSheet(styleEl, insertPoint, cssFileStack, url){
-    var sheetUrl = url || abs2rel(styleEl.sheet.href);
-    var imports = [];
-    var content = [];
-
-    if (!cssFileStack)
-      cssFileStack = [];
-    else
-    {
-      if (cssFileStack.has(sheetUrl))  // prevent for recursion
-      {
-        console.warn('prevent recursion for', sheetUrl, cssFileStack);
-        return;
-      }
-    }
-
-    //cssFileStack.push(sheetUrl);
-
-    //
-    // fetch style content
-    //
-    var cssText;
-    var cssFile = File.get(sheetUrl);
-    if (cssFile)
-    {
-      cssText = cssFile.data.content;
-    }
-    else
-    {
-      cssText = nonObservableFilesCache[sheetUrl];
-      if (typeof cssText != 'string')
-      {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', sheetUrl, false);
-        xhr.send(null);
-        
-        if (xhr.status >= 200 && xhr.status < 400)
-        {
-          cssText = xhr.responseText;
-          nonObservableFilesCache[sheetUrl] = cssText;
-        }
-        else
-        {
-          console.warn('fail to load css content', sheetUrl);
-          return;
-        }
-      }
-    }
-
-    //
-    // parse content
-    //
-    setBase(sheetUrl);
-
-    var tmpStyleEl = basis.dom.createElement(
-      'style[type="text/css"][seed="' + (styleSeed++) + '"][sourceFile="' + sheetUrl + '"]',// + (styleSheet.media && styleSheet.media.mediaText ? '[media="' + styleSheet.media.mediaText + '"]' : ''),
-      cssText
-    );
-
-    documentHead.insertBefore(tmpStyleEl, insertPoint || styleEl);
-    if (!styleEl || styleEl.tagName == 'LINK')
-    {
-      var newStyleEl = tmpStyleEl.cloneNode(false);
-      documentHead.insertBefore(newStyleEl, insertPoint || styleEl);
-
-      if (styleEl)
-        basis.dom.remove(styleEl);
-
-      styleEl = newStyleEl;
-    }
-
-    //if (styleEl)
-    //  basis.dom.remove(styleEl);
-    //styleEl = tmpStyleEl;
-
-    restoreBase();
-
-    //
-    // process rules
-    //
-    var styleSheet = tmpStyleEl.sheet;
-    var rules = styleSheet.cssRules || styleSheet.rules;
-    for (var i = rules.length, rule; i --> 0;)
-    {
-      var rule = rules[i];
-      if (rule.type == 3)
-      {
-        var importSheet = linearStyleSheet(null, tmpStyleEl, cssFileStack.concat(sheetUrl), abs2rel(rule.href, sheetUrl));
-        if (importSheet)
-          imports.push(importSheet);
-
-        styleSheet.deleteRule(i);
-      }
-      else
-      {
-        content.push(rule.cssText);
-      }
-    }
-
-    setBase(sheetUrl);
-    styleEl.innerHTML = content.join('\n');
-    restoreBase();
-
-    basis.dom.remove(tmpStyleEl);
-
-    //
-    // build sheet info
-    //
-
-    var sheetInfo = {
-      url: sheetUrl,
-      styleEl: styleEl,
-      imports: imports,
-      cssFileStack: cssFileStack
-    };
-
-    if (!styleSheetFileMap[sheetUrl])
-      styleSheetFileMap[sheetUrl] = [sheetInfo];
-    else
-      styleSheetFileMap[sheetUrl].push(sheetInfo);
-
-
-    //
-    // return result
-    //
-
-    return sheetInfo;
-  }
-
-
-  /*isOnline.addLink(null, function(value){
-    if (value)
-      Array.from(document.styleSheets).forEach(function(styleSheet){
-        if (styleSheet.ownerNode)
-          if (styleSheet.ownerNode.tagName == 'LINK')
-            linearStyleSheet(styleSheet.ownerNode);
-      });
-  });*/
 
   //
   // export names
@@ -493,7 +259,9 @@
     createFile: function(filename){
       sendToServer('createFile', filename);
     },
-    abs2rel: abs2rel
+    abs2rel: function(path, base){
+      return basis.path.relative(path, base);
+    }
   });
 
 })(this);
