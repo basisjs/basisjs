@@ -19,7 +19,7 @@
     background-color: white;
     padding: 2px;
   }
-  .Basis-Field__invalid TEXTAREA
+  .Basis-Field__invalid TEXTAREA,
   .Basis-Field__invalid .native-type-text,
   .Basis-Field__invalid .native-type-password
   {
