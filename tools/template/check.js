@@ -20,8 +20,19 @@ var flags = (function(){
 })();
 
 
+var isOk = true;
+var templateCount = 0;
+process.on('exit', function(){
+  if (isOk)
+    console.log('[OK] No problems found\n');
+
+  console.log('Templates found:', templateCount);
+});
+
+
 (function getTemplates(dir){
   function readAndCheck(filename){
+    templateCount++;
     fs.readFile(filename, 'utf-8', function(err, content){
       if (err)
         return console.warn('readFile error:', err, filename);
@@ -33,10 +44,16 @@ var flags = (function(){
         var code = 'OK';
 
         if (decl.unpredictable)
+        {
+          isOk = false;
           code = 'UNPREDICTABLE';
+        }
 
         if (decl.warns)
+        {
+          isOk = false;
           code = 'WARN';
+        }
 
         console.log('[' + code + ']', path.normalize(filename));
 

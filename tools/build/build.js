@@ -1256,6 +1256,12 @@ printHeader("Javascript:");
           {
             for (var ii = 0, bind; bind = bindings[ii]; ii++)
             {
+              if (bind.length < (4 + (typeof bind[3] != 'string')))
+              {
+                console.log('[WARN] Unpredictable binding ' + JSON.stringify(bind));
+                continue;
+              }
+
               var lastIdx = bind.length - 1;
               var last = bind[lastIdx];
               if (typeof last == 'string')  // bool

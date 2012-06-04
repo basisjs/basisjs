@@ -219,7 +219,7 @@
 
           var ext = path.extname(filename);
 
-          if (hotStartExtensions.indexOf(ext) != -1 && ignorePathes.indexOf(path.normalize(filename)) != 0)
+          if (hotStartExtensions.indexOf(ext) != -1 && ignorePathes.indexOf(path.normalize(filename)) == -1)
             hotStartCache.add(fnKey, String(data));
 
           if (ext == '.html' || ext == '.htm')
@@ -401,7 +401,7 @@
             if (fileType == 'dir')
             {
               //console.log(filename, path.normalize(filename));
-              if (ignorePathes.indexOf(path.normalize(filename)) != 0)
+              if (ignorePathes.indexOf(path.normalize(filename)) == -1)
                 lookup(filename);
             }
             else
