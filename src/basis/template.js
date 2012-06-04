@@ -1417,7 +1417,7 @@
       if (oldValue !== newValue)
       {
         try {
-          domRef.style[propertyName] = newValue;
+          domRef.style[propertyName.camelize()] = newValue;
         } catch(e){
         }
       }
