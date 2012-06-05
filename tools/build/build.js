@@ -264,6 +264,93 @@ var jsBuild = (function buildJs(){
     return result;
   }
 
+  function createDictionaryKeyMap(keyMap){
+    var stack = [];
+    var res = [];
+    var keys = Object.keys(keyMap).sort();
+    var map = [];
+    var pathMap = {};
+    var keyIndex = 0;
+    for (var i = 0, key; key = keys[i]; i++)
+    {
+      var parts = key.split('.');
+      var reset = false;
+      var offset = 0;
+
+      if (stack.length && stack[0] != parts[0])
+      {
+        res.push('#');
+        stack = [];
+      }
+
+      if (!stack.length)
+        reset = true;
+      else
+      {
+        for (; offset < parts.length; offset++)
+          if (parts[offset] != stack[offset])
+          {
+            if (stack[offset])
+            {
+              reset = true;
+              res.push(new Array(stack.length - offset + 1).join('<'));
+              stack.splice(offset);
+            }
+            break;
+          }
+      }
+
+      while (parts[offset])
+      {
+        if (!reset)
+          res.push('>');
+
+        reset = false;
+        res.push(parts[offset]);
+        stack.push(parts[offset]);
+        offset++;
+
+        var path = stack.join('.');
+        keyMap[path] = map.length;
+        map.push(path);
+      }
+    }
+    return {
+      keyMap: keyMap,
+      map: map,
+      content: res.join('')
+    };
+  }
+
+  function packDictionary(dict, map){
+    var linear = {};
+    var result = [];
+
+    for (var dictName in dict)
+      for (var key in dict[dictName])
+        linear[dictName + '.' + key] = dict[dictName][key];
+     
+    for (var i = 0, gap = -1; i < map.length; i++)
+    {
+      if (linear[map[i]])
+      {
+        if (gap != -1)
+          result.push(gap);
+
+        result.push(linear[map[i]]);
+
+        gap = -1;
+      }
+      else
+        gap++;
+    }
+
+    if (typeof result[result.length - 1] == 'number')
+      result.pop();
+
+    return result;
+  }
+
   function resolveResource(filepath){
 
     if (!jsResourceMap[filepath])
@@ -742,89 +829,6 @@ var jsBuild = (function buildJs(){
 
   printHeader('l10n:');
 
-  function packDictionaryKeyMap(keyMap){
-    var stack = [];
-    var res = [];
-    var keys = Object.keys(keyMap).sort();
-    var map = [];
-    var keyIndex = 0;
-    for (var i = 0, key; key = keys[i]; i++)
-    {
-      var parts = key.split('.');
-      var reset = false;
-      var offset = 0;
-
-      if (stack.length && stack[0] != parts[0])
-      {
-        res.push('#');
-        stack = [];
-      }
-
-      if (!stack.length)
-        reset = true;
-      else
-      {
-        for (; offset < parts.length; offset++)
-          if (parts[offset] != stack[offset])
-          {
-            if (stack[offset])
-            {
-              reset = true;
-              res.push(new Array(stack.length - offset + 1).join('<'));
-              stack.splice(offset);
-            }
-            break;
-          }
-      }
-
-      while (parts[offset])
-      {
-        if (!reset)
-          res.push('>');
-
-        reset = false;
-        res.push(parts[offset]);
-        stack.push(parts[offset]);
-        offset++;
-
-        map.push(stack.join('.'));
-      }
-    }
-    return {
-      map: map,
-      content: res.join('')
-    };
-  }
-
-  function packDictionary(dict, map){
-    var linear = {};
-    var result = [];
-
-    for (var dictName in dict)
-      for (var key in dict[dictName])
-        linear[dictName + '.' + key] = dict[dictName][key];
-     
-    for (var i = 0, gap = -1; i < map.length; i++)
-    {
-      if (linear[map[i]])
-      {
-        if (gap != -1)
-          result.push(gap);
-
-        result.push(linear[map[i]]);
-
-        gap = -1;
-      }
-      else
-        gap++;
-    }
-
-    if (typeof result[result.length - 1] == 'number')
-      result.pop();
-
-    return result;
-  }
-
   // collect all source content for analyze
   var allSource = [];
   for (var packageName in packages)
@@ -911,12 +915,19 @@ var jsBuild = (function buildJs(){
       {
         console.log('  Pack dictionaries');
 
-        var packedKeyMap = packDictionaryKeyMap(dictKeyMap);
+        var packedKeyMap = createDictionaryKeyMap(dictKeyMap);
         var l10nIndexSize = packedKeyMap.content.length;
         var l10nOriginalSize = 0;
         var l10nPackedSize = 0;
 
+        var l10nGetPackToken = function(tokenName){
+          return tokenName in packedKeyMap.keyMap
+            ? packedKeyMap.keyMap[tokenName].toString(36)
+            : null;
+        };
+
         console.log('    Index: ' + packedKeyMap.map.length + ' keys ' + l10nIndexSize + ' bytes\n');
+
         jsResourceList.push({
           ref: '_l10nIndex_',
           type: 'sys',
@@ -961,7 +972,8 @@ var jsBuild = (function buildJs(){
 
   return {
     resources: jsResourceList,
-    packages: packages
+    packages: packages,
+    l10nGetPackToken: l10nGetPackToken || Function()
   };
 
 })();
@@ -1403,6 +1415,7 @@ printHeader("Javascript:");
 
   var jsResourceList = jsBuild.resources;
   var packages = jsBuild.packages;
+  var l10nGetPackToken = jsBuild.l10nGetPackToken;
 
 
   if (flags.cssOptNames)
@@ -1558,11 +1571,20 @@ printHeader("Javascript:");
     resourceStat[resource.type].count++;
     resourceStat[resource.type].size += content.length;
 
-    /*if (resource.type == 'tmpl')
+    if (resource.type == 'tmpl')
     {
-      var packed = xpack.pack(resource.obj);
-      _tmplPacked += packed.length;
-    }*/
+      if (flags.l10nPack)
+      {
+        content = content.replace(/"l10n:([^"]+)"/g, function(m, key){
+          var code = l10nGetPackToken(key);
+          if (!code)
+            console.log('    [!] Template l10n token `' + key + '` not found');
+          return code ? '"l10n:#' + code + '"' : m;
+        });
+      }
+     // var packed = xpack.pack(resource.obj);
+     // _tmplPacked += packed.length;
+    }
 
     return '"' + resource.ref + '": ' + content;
   }).join(',\n') + '}';
