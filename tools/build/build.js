@@ -129,13 +129,16 @@ var flags = (function(){
     clear:         publishMode || hasFlag('-clear'),
     deploy:        publishMode || hasFlag('-deploy'),
     singleFile:    !hasFlag('-no-single-file'),
-    jsSingleFile:  !hasFlag('-no-single-file') && !hasFlag('-js-no-single-file'), // merge all javascript in one file
+    jsSingleFile:  !hasFlag('-no-single-file') && !hasFlag('-js-no-single-file'),  // merge all javascript in one file
     cssSingleFile: !hasFlag('-no-single-file') && !hasFlag('-css-no-single-file'), // pack source code
-    jsBuildMode:   publishMode || hasFlag('-pack') || hasFlag('-js-build-mode'),  // evaluate module code (close to basis.require works)
-    jsCutDev:      publishMode || hasFlag('-pack') || hasFlag('-js-cut-dev'),     // cut from source ;;; and /** @cut .. */
-    jsPack:        publishMode || hasFlag('-pack') || hasFlag('-js-pack'), // pack javascript source
-    cssOptNames:   hasFlag('-css-optimize-names'),                         // make css classes short
-    cssPack:       publishMode || hasFlag('-pack') || hasFlag('-css-pack') // pack css code
+    jsBuildMode:   publishMode || hasFlag('-pack') || hasFlag('-js-build-mode'),   // evaluate module code (close to basis.require works)
+    jsCutDev:      publishMode || hasFlag('-pack') || hasFlag('-js-cut-dev'),      // cut from source ;;; and /** @cut .. */
+    jsPack:        publishMode || hasFlag('-pack') || hasFlag('-js-pack'),         // pack javascript source
+    cssOptNames:   hasFlag('-css-optimize-names'),                                 // make css classes short
+    cssPack:       publishMode || hasFlag('-pack') || hasFlag('-css-pack'),        // pack css code
+    // experimental
+    l10nPack:      hasFlag('-l10n-pack'),
+    cssIgnoreDup:  hasFlag('-css-ignore-duplicates')
   };
 })();
 
@@ -530,6 +533,30 @@ var jsBuild = (function buildJs(){
 
       if (namespace != 'basis')
       {
+        if (namespace == 'basis.l10n' && flags.l10nPack)
+        {
+          jsFile.content += '\n;(' + function(){
+            var parts = basis.resource("_l10nIndex_").fetch().split(/([\<\>\#])/);
+            var stack = [];
+            for (var i = 0; i < parts.length; i++)
+            {
+              switch(parts[i])
+              {
+                case '#': stack.length = 0; break;
+                case '<': stack.pop(); break;
+                case '>': break;
+                default:
+                  if (parts[i])
+                  {
+                    stack.push(parts[i]);
+                    getToken(stack.join('.'));
+                  }
+              }
+            }
+            getToken(stack.join('.'));
+          } + ')();';
+        }
+
         if (buildMode)
           package.content.push(
             "// " + filename + "\n" +
@@ -719,6 +746,89 @@ var jsBuild = (function buildJs(){
 
   printHeader('l10n:');
 
+  function packDictionaryKeyMap(keyMap){
+    var stack = [];
+    var res = [];
+    var keys = Object.keys(keyMap).sort();
+    var map = [];
+    var keyIndex = 0;
+    for (var i = 0, key; key = keys[i]; i++)
+    {
+      var parts = key.split('.');
+      var reset = false;
+      var offset = 0;
+
+      if (stack.length && stack[0] != parts[0])
+      {
+        res.push('#');
+        stack = [];
+      }
+
+      if (!stack.length)
+        reset = true;
+      else
+      {
+        for (; offset < parts.length; offset++)
+          if (parts[offset] != stack[offset])
+          {
+            if (stack[offset])
+            {
+              reset = true;
+              res.push(new Array(stack.length - offset + 1).join('<'));
+              stack.splice(offset);
+            }
+            break;
+          }
+      }
+
+      while (parts[offset])
+      {
+        if (!reset)
+          res.push('>');
+
+        reset = false;
+        res.push(parts[offset]);
+        stack.push(parts[offset]);
+        offset++;
+
+        map.push(stack.join('.'));
+      }
+    }
+    return {
+      map: map,
+      content: res.join('')
+    };
+  }
+
+  function packDictionary(dict, map){
+    var linear = {};
+    var result = [];
+
+    for (var dictName in dict)
+      for (var key in dict[dictName])
+        linear[dictName + '.' + key] = dict[dictName][key];
+     
+    for (var i = 0, gap = -1; i < map.length; i++)
+    {
+      if (linear[map[i]])
+      {
+        if (gap != -1)
+          result.push(gap);
+
+        result.push(linear[map[i]]);
+
+        gap = -1;
+      }
+      else
+        gap++;
+    }
+
+    if (typeof result[result.length - 1] == 'number')
+      result.pop();
+
+    return result;
+  }
+
   // collect all source content for analyze
   var allSource = [];
   for (var packageName in packages)
@@ -738,6 +848,8 @@ var jsBuild = (function buildJs(){
       console.log('Culture list is [' + cultureList.join(', ') + ']');
 
       treeConsole.incDeep();
+      var dictKeyMap = {};
+      var dictList = [];
       for (var i = 0, cultureId; cultureId = cultureList[i]; i++)
       {
         treeConsole.incDeep();
@@ -769,14 +881,17 @@ var jsBuild = (function buildJs(){
                 treeConsole.log(key + ' is already exists');
 
               res[key] = dict[key];
+
+              for (var dk in dict[key])
+                dictKeyMap[key + '.' + dk] = 1;
             }
 
             return res;
           }, {});
 
-        jsResourceList.push({
-          ref: 'l10n/' + cultureId + '.json',
-          obj: dictFileContent
+        dictList.push({
+          cultureId: cultureId,
+          content: dictFileContent
         });
 
         treeConsole.decDeep();
@@ -791,6 +906,60 @@ var jsBuild = (function buildJs(){
       }
 
       treeConsole.decDeep();
+
+      //
+      // Pack dictionaries
+      //
+
+      if (flags.l10nPack)
+      {
+        console.log('  Pack dictionaries');
+
+        var packedKeyMap = packDictionaryKeyMap(dictKeyMap);
+        var l10nIndexSize = packedKeyMap.content.length;
+        var l10nOriginalSize = 0;
+        var l10nPackedSize = 0;
+
+        console.log('    Index: ' + packedKeyMap.map.length + ' keys ' + l10nIndexSize + ' bytes\n');
+        jsResourceList.push({
+          ref: '_l10nIndex_',
+          type: 'sys',
+          content: packedKeyMap.content
+        });
+
+        dictList.forEach(function(dict){
+          var packedContent = packDictionary(dict.content, packedKeyMap.map);
+
+          var originalSize = JSON.stringify(dict.content).length;
+          var packedSize = JSON.stringify(packedContent).length;
+
+          l10nOriginalSize += originalSize;
+          l10nPackedSize += packedSize;
+
+          console.log('    * ' + dict.cultureId + ': ');
+          console.log('       Original size:', originalSize);
+          console.log('       Packed size:', packedSize);
+          console.log();
+
+          jsResourceList.push({
+            ref: 'l10n/' + dict.cultureId + '.json',
+            type: 'json',
+            obj: packedContent
+          });
+        });
+
+        console.log('    Pack saving: ' + (l10nOriginalSize - (l10nPackedSize + l10nIndexSize)) + ' bytes');
+      }
+      else
+      {
+        dictList.forEach(function(dict){
+          jsResourceList.push({
+            ref: 'l10n/' + dict.cultureId + '.json',
+            type: 'json',
+            obj: dict.content
+          });
+        });
+      }
     }
   }
 
@@ -825,6 +994,9 @@ var cssClassNameMap = (function buildCSS(){
 
   var cssImportRuleRx = new RegExp('@import(?:\\s*(?:' + cssQuotedValueRxToken + ')|\\s+' + cssUrlRxPart + ')(\\s+' + cssMediaListRxToken + ')?\s*;', 'g');
   var cssUrlRx = new RegExp('\\b' + cssUrlRxPart, 'g');
+
+  var fileCache = {};
+  var processFileCount = 0;
 
   var classNameMap = {};
 
@@ -981,6 +1153,13 @@ var cssClassNameMap = (function buildCSS(){
     }
     else
     {
+      if (flags.cssIgnoreDup && fileCache[filename])
+        return {
+          sourceSize: 0,
+          content: ''
+        };
+
+      processFileCount++;
       treeConsole.log('  # [OK] ' + relpath(filename));
 
       if (!context)
@@ -988,8 +1167,17 @@ var cssClassNameMap = (function buildCSS(){
 
       context[filename] = true;
 
-      // read file content
-      fileContent = fs.readFileSync(filename, 'utf-8');
+      // read file content or get from cache
+      if (!fileCache[filename])
+      {
+        fileContent = fs.readFileSync(filename, 'utf-8');
+        fileCache[filename] = {
+          source: fileContent
+        };
+      }
+      else
+        fileContent = fileCache[filename].source;
+
       sourceSize = fileContent.length;
 
       // consume original file size
@@ -998,6 +1186,9 @@ var cssClassNameMap = (function buildCSS(){
       var processed = processFileContent(fileContent, filename, context);
       fileContent = processed.content;
       sourceSize += processed.sourceSize;
+
+      fileCache[filename].fileContent = fileContent;
+      fileCache[filename].sourceSize = sourceSize;
 
       delete context[filename];
     }
@@ -1079,7 +1270,7 @@ var cssClassNameMap = (function buildCSS(){
 
   if (genericCssContent.length)
   {
-    treeConsole.log('resources css');
+    treeConsole.log('[resources css]');
     var resourceCss = processFileContent(genericCssContent.map(function(cssFilename){
       return '@import url(' + relpath(path.resolve(BASE_PATH, cssFilename)) + ');';
     }).join('\n'), INDEX_FILE, {});
@@ -1096,83 +1287,86 @@ var cssClassNameMap = (function buildCSS(){
   treeConsole.log();
   treeConsole.decDeep();
 
-  //
-  // Parse
-  //
-
-  treeConsole.log('Parse');
-  treeConsole.incDeep();
-
-  cssFiles.forEach(function(cssFile){
-    treeConsole.log(cssFile.basename);
-    cssFile.content = csso.parse(cssFile.content, 'stylesheet');
-  });
-
-  treeConsole.log();
-  treeConsole.decDeep();
-
-  //
-  // build className map and optimize
-  //
-  if (flags.cssOptNames)
+  if (flags.cssOptNames || flags.cssPack)
   {
-    (function(){
-      function genNextClassName(curName){
-        if (!curName)
-          return 'a';
+    //
+    // Parse
+    //
 
-        return (parseInt(curName, 36) + 1).toString(36).replace(/^\d/, 'a');
-      }
-
-      var dict = {};
-
-      cssFiles.forEach(function(cssFile){
-        collectClassNames(cssFile.content, dict);
-      });
-
-      var classNames = Object
-        .keys(dict) // all class names
-        .sort(function(a, b){ return dict[b][3] - dict[a][3] }); // sorted desc by usage count
-
-      for (var i = 0, name, replaceName; name = classNames[i]; i++)
-      {
-        do {
-          replaceName = genNextClassName(replaceName);
-        } while (dict[replaceName]);
-        //console.log(name, replaceName);
-
-        dict[name][2] = replaceName;
-        classNameMap[name] = replaceName;
-      }
-    })();
-  }
-
-  //
-  // Pack
-  //
-  if (flags.cssPack)
-  {
-    treeConsole.log('Pack');
+    treeConsole.log('Parse');
     treeConsole.incDeep();
 
     cssFiles.forEach(function(cssFile){
       treeConsole.log(cssFile.basename);
-      //content = csso.justDoIt(content);
-      cssFile.content = csso.translate(csso.cleanInfo(csso.compress(cssFile.content)));
-      treeConsole.log('  * ' + cssFile.sourceSize + ' -> ' + cssFile.content.length);
+      cssFile.content = csso.parse(cssFile.content, 'stylesheet');
     });
 
     treeConsole.log();
     treeConsole.decDeep();
-  }
-  else
-  {
-    cssFiles.forEach(function(cssFile){
-      cssFile.content = csso.translate(csso.cleanInfo(cssFile.content));
-    });    
-  }
 
-  treeConsole.decDeep();
+    //
+    // build className map and optimize
+    //
+    if (flags.cssOptNames)
+    {
+      (function(){
+        function genNextClassName(curName){
+          if (!curName)
+            return 'a';
+
+          return (parseInt(curName, 36) + 1).toString(36).replace(/^\d/, 'a');
+        }
+
+        var dict = {};
+
+        cssFiles.forEach(function(cssFile){
+          collectClassNames(cssFile.content, dict);
+        });
+
+        var classNames = Object
+          .keys(dict) // all class names
+          .sort(function(a, b){ return dict[b][3] - dict[a][3] }); // sorted desc by usage count
+
+        for (var i = 0, name, replaceName; name = classNames[i]; i++)
+        {
+          do {
+            replaceName = genNextClassName(replaceName);
+          } while (dict[replaceName]);
+          //console.log(name, replaceName);
+
+          dict[name][2] = replaceName;
+          classNameMap[name] = replaceName;
+        }
+      })();
+    }
+
+    //
+    // Pack
+    //
+    if (flags.cssPack)
+    {
+      treeConsole.log('Pack');
+      treeConsole.incDeep();
+
+      cssFiles.forEach(function(cssFile){
+        treeConsole.log(cssFile.basename);
+        //content = csso.justDoIt(content);
+        cssFile.content = csso.translate(csso.cleanInfo(csso.compress(cssFile.content)));
+        treeConsole.log('  * ' + cssFile.sourceSize + ' -> ' + cssFile.content.length);
+      });
+
+      treeConsole.log();
+      treeConsole.decDeep();
+    }
+    else
+    {
+      cssFiles.forEach(function(cssFile){
+        cssFile.content = csso.translate(csso.cleanInfo(cssFile.content));
+      });    
+    }
+
+    treeConsole.decDeep();
+  }
 
   if (flags.cssSingleFile)
   {
@@ -1193,6 +1387,8 @@ var cssClassNameMap = (function buildCSS(){
       total_final_css_size = cssFile.content.length;
     });
   }
+
+  console.log(' ' + processFileCount + ' files (' + Object.keys(fileCache).length + ' unique) in ' + total_final_css_size + ' bytes (original ' + total_init_css_size + ' bytes)');
 
   return classNameMap;
 
@@ -1215,6 +1411,7 @@ printHeader("Javascript:");
 
   if (flags.cssOptNames)
   {
+    console.log('Optimize class names');
     jsResourceList.forEach(function(res){
       function removeAttr(attrToRemove){
         function walkTree(tokens){
@@ -1333,7 +1530,12 @@ printHeader("Javascript:");
     content: ''
   });
 
-  var resourceMapCode = '{' + jsResourceList.map(function(resource){
+  //var xpack = require('./pack.js');
+  //var _tmplPacked = 0;
+
+  console.log('  Build resource map');
+  var resourceStat = {};
+  var resourceMapCode = '{' + jsResourceList.sort(function(a, b){ return a.type > b.type ? 1 : (a.type < b.type ? -1 : 0) }).map(function(resource){
     var content;
     if (resource.obj)
       content = typeof resource.obj == 'function'
@@ -1342,8 +1544,37 @@ printHeader("Javascript:");
     else
       content = JSON.stringify(String(resource.contentObject ? resource.contentObject.content : resource.content).replace(/\r\n?|\n\r?/g, '\n'));
 
+    if (!resourceStat[resource.type])
+      resourceStat[resource.type] = { count: 0, size: 0 };
+
+    resourceStat[resource.type].count++;
+    resourceStat[resource.type].size += content.length;
+
+    /*if (resource.type == 'tmpl')
+    {
+      var packed = xpack.pack(resource.obj);
+      _tmplPacked += packed.length;
+    }*/
+
     return '"' + resource.ref + '": ' + content;
   }).join(',\n') + '}';
+
+  /*console.log('!!!!!!!!!!!!  Template size  ' + resourceStat.tmpl.size + ', packed ' + _tmplPacked);
+  console.log('!!!!!!!!!!!! String count:'  + Object.keys(xpack.dict).length);
+  var xxxx = 0;
+  var yyyy = 0;
+  Object.iterate(xpack.dict, function(k, v){
+    xxxx += v * (k.length + 1);
+    yyyy += v * 2 + k.length + 3;
+  });
+//  console.log(Object.keys(xpack.dict).sort(function(a,b){ return xpack.dict[a] - xpack.dict[b] }).map(function(k){ return k + ' ' + xpack.dict[k]}).join('\n'));
+  console.log('!!!!!!!!!!!! cur length '  + xxxx);
+  console.log('!!!!!!!!!!!! length '  + yyyy);
+  console.log('!!!!!!!!!!!! Saving:'  + (xxxx - yyyy));
+  console.log('!!!!!!!!!!!! Packed:'  + (_tmplPacked - xxxx + yyyy));*/
+
+  for (var key in resourceStat)
+    console.log('    ' + key + ': ' + resourceStat[key].count + ' resources in ' + resourceStat[key].size + ' bytes');
 
 
   ////////////////////////////////
@@ -1351,6 +1582,7 @@ printHeader("Javascript:");
 
   var outputFiles = [];
 
+  console.log('  Prepare output files');
   if (flags.jsSingleFile)
   {
     outputFiles.push({
@@ -1373,10 +1605,11 @@ printHeader("Javascript:");
 
   var jsDigests = {};
 
+  console.log('  Write output files');
   outputFiles.forEach(
     !packBuild
       ? function(file){
-          console.log('  Write ' + file.filename + '...');
+          console.log('    Write ' + file.filename + '...');
           fs.writeFile(file.filename, file.content, 'utf-8');
 
           jsDigests[path.basename(file.filename)] = getDigest(file.content);
@@ -1388,7 +1621,7 @@ printHeader("Javascript:");
 
           fs.writeFile(tmpFilename, file.content, 'utf-8');
 
-          console.log('Task for ' + resFilename + '.js packing added...');
+          console.log('    Task for ' + resFilename + '.js packing added...');
 
           childProcessTask.push({
             name: 'Pack ' + resFilename,
