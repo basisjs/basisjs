@@ -175,8 +175,15 @@
     if (arguments.length > 1)
       path = Array.from(arguments).join('.');
 
-    var dotIndex = path.lastIndexOf('.');
-    return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
+    if (path.charAt(0) == '#')
+    {
+      return tokenIndex[parseInt(path.substr(1), 36)];
+    }
+    else
+    {
+      var dotIndex = path.lastIndexOf('.');
+      return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
+    }
   }
 
   function getDictionary(namespace, autoCreate){
@@ -270,10 +277,7 @@
         else
         {
           if (token = tokenIndex[idx])
-          {
             token.dictionary.setCultureValue(culture, token.name, item);
-            console.log(token, token.dictionary, token.name, item);
-          }
         }
       }
     }
