@@ -36,7 +36,7 @@
 
   var currentCulture = 'base';
   var cultureList = ['en-US', 'ru-RU', 'uk-UA'];
-
+  var tokenIndex = [];
 
   var Token = Class(null, {
     className: namespace + '.Token',
@@ -65,6 +65,7 @@
       this.value = '';
       this.dictionary = dictionary;
       this.name = tokenName;
+      tokenIndex.push(this);
     },
 
     set: function(value){
@@ -255,10 +256,32 @@
     }
   }
 
-  function updateDictionaryResource(content, culture){
-    var dictionaryData = content;
-    for (var dictionaryName in dictionaryData)
-      updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);    
+  function updateDictionaryResource(dictionaryData, culture){
+    if (Array.isArray(dictionaryData))
+    { // packed dictionary
+      var idx = 0;
+      var token;
+      var item;
+      for (var i = 0; i < dictionaryData.length; i++, idx++)
+      {
+        item = dictionaryData[i];
+        if (typeof item == 'number')
+          idx += item;
+        else
+        {
+          if (token = tokenIndex[idx])
+          {
+            token.dictionary.setCultureValue(culture, token.name, item);
+            console.log(token, token.dictionary, token.name, item);
+          }
+        }
+      }
+    }
+    else
+    {
+      for (var dictionaryName in dictionaryData)
+        updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);
+    }
   }
 
 
