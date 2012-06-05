@@ -790,6 +790,10 @@
 
     template: resource('templates/field/ComboboxItem.tmpl'),
 
+    binding: {
+      title: 'getTitle() || String.Entity.nbsp'
+    },
+
     action: {
       select: function(event){
         if (!this.isDisabled())
