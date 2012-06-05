@@ -210,6 +210,7 @@
         }
         else
         {
+
           this.processErrorResponse();
 
           proxy.event_failure(this, this.data.error);
@@ -720,10 +721,10 @@
    */
 
   var SERVICE_HANDLER = {
-    start: function(request){
+    start: function(service, request){
       this.inprogressProxies.add(request.proxy);
     },
-    complete: function(request){
+    complete: function(service, request){
       this.inprogressProxies.remove(request.proxy);
     }
   }
@@ -829,7 +830,7 @@
     },
 
     unfreeze: function(){
-      if (this.oldSessionKey == this.sessionKey && this.stoppedProxies)
+      if (/*this.oldSessionKey == this.sessionKey && */this.stoppedProxies)
       {
         for (var i = 0, proxy; proxy = this.stoppedProxies[i]; i++)
           proxy.resume();
