@@ -112,7 +112,7 @@ function getDigest(content){
 }
 
 //
-//
+// Set up flags
 //
 
 var flags = (function(){
@@ -129,25 +129,21 @@ var flags = (function(){
     clear:         publishMode || hasFlag('-clear'),
     deploy:        publishMode || hasFlag('-deploy'),
     singleFile:    !hasFlag('-no-single-file'),
+
     jsSingleFile:  !hasFlag('-no-single-file') && !hasFlag('-js-no-single-file'),  // merge all javascript in one file
-    cssSingleFile: !hasFlag('-no-single-file') && !hasFlag('-css-no-single-file'), // pack source code
     jsBuildMode:   publishMode || hasFlag('-pack') || hasFlag('-js-build-mode'),   // evaluate module code (close to basis.require works)
     jsCutDev:      publishMode || hasFlag('-pack') || hasFlag('-js-cut-dev'),      // cut from source ;;; and /** @cut .. */
     jsPack:        publishMode || hasFlag('-pack') || hasFlag('-js-pack'),         // pack javascript source
+
+    cssSingleFile: !hasFlag('-no-single-file') && !hasFlag('-css-no-single-file'), // merge all css in one file
     cssOptNames:   hasFlag('-css-optimize-names'),                                 // make css classes short
     cssPack:       publishMode || hasFlag('-pack') || hasFlag('-css-pack'),        // pack css code
+
     // experimental
     l10nPack:      hasFlag('-l10n-pack'),
     cssIgnoreDup:  hasFlag('-css-ignore-duplicates')
   };
 })();
-
-
-if (flags.production)
-{
-  SECRET_KEY = '???';
-}
-
 
 
 //
@@ -1533,9 +1529,21 @@ printHeader("Javascript:");
   //var xpack = require('./pack.js');
   //var _tmplPacked = 0;
 
+  var resourceTypeWeight = {
+    'json': 1,
+    'tmpl': 2,
+    'js': 100
+  };
+
+  function resourceSort(a, b){
+    var wa = resourceTypeWeight[a.type] || 0;
+    var wb = resourceTypeWeight[b.type] || 0;
+    return wa > wb ? 1 : (wa < wb ? -1 : 0);
+  }
+
   console.log('  Build resource map');
   var resourceStat = {};
-  var resourceMapCode = '{' + jsResourceList.sort(function(a, b){ return a.type > b.type ? 1 : (a.type < b.type ? -1 : 0) }).map(function(resource){
+  var resourceMapCode = '{' + jsResourceList.sort(resourceSort).map(function(resource){
     var content;
     if (resource.obj)
       content = typeof resource.obj == 'function'
