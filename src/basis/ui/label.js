@@ -49,11 +49,11 @@
   // main part
   //
 
-  var stateTemplate = '<div class="Basis-Label Basis-Label-State {selected} {disabled}"/>';
-  var processingTemplate = '<div class="Basis-Label Basis-Label-Processing {selected} {disabled}"/>';
-  var errorTemplate = '<div class="Basis-Label Basis-Label-Error {selected} {disabled}"/>';
-  var countTemplate = '<div class="Basis-Label Basis-Label-Count {selected} {disabled}">{count}</div>';
-  var emptyTemplate = '<div class="Basis-Label Basis-Label-Empty {selected} {disabled}"/>';
+  var stateTemplate = resource('templates/label/state.tmpl');
+  var processingTemplate = resource('templates/label/processing.tmpl');
+  var errorTemplate = resource('templates/label/error.tmpl');
+  var countTemplate = resource('templates/label/count.tmpl');
+  var emptyTemplate = resource('templates/label/empty.tmpl');
 
   //
   // NodeLabel
@@ -70,7 +70,7 @@
   var NodeLabel = Class(UINode, {
     className: namespace + '.NodeLabel',
 
-    template: '<div class="Basis-Label {selected} {disabled}"/>',
+    template: resource('templates/label/label.tmpl'),
     content: null,
 
     visibilityGetter: Function.$true,
