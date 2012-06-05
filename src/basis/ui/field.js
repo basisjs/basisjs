@@ -84,21 +84,6 @@
   /** @const */ var VALIDITY_VALID = 'valid';
   /** @const */ var VALIDITY_INVALID = 'invalid';
 
-  var baseFieldTemplate = new Template(
-    '<div{sampleContainer} class="Basis-Field {disabled} Basis-Field__{validity}" title="{error}">' +
-      '<div class="Basis-Field-Title">' +
-        '<label>' +
-          '<span{title}>{titleText}</span>' +
-        '</label>' +
-      '</div>' +
-      '<div{content} class="Basis-Field-Container">' +
-        '<!--{fieldPlace}-->' +
-      '</div>' +
-      '<!--{example}-->' +
-    '</div>'
-  );
-
-
 
   //
   //  Fields
@@ -1281,9 +1266,6 @@
   });
 
   module.exports = {
-    createFieldTemplate: function(template){
-      return new Template(String(baseFieldTemplate.source).replace('<!--{fieldPlace}-->', template));
-    },
     Validator: Validator,  // deprecated
     validator: Validator,
 
