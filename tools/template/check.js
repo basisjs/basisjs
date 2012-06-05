@@ -20,11 +20,13 @@ var flags = (function(){
 })();
 
 
-var isOk = true;
+var problemTemplateCount = 0;
 var templateCount = 0;
 process.on('exit', function(){
-  if (isOk)
-    console.log('[OK] No problems found\n');
+  if (!problemTemplateCount)
+    console.log('[OK] No problem templates found\n');
+  else
+    console.log('Problem templates:', problemTemplateCount);
 
   console.log('Templates found:', templateCount);
 });
@@ -43,17 +45,17 @@ process.on('exit', function(){
       {
         var code = 'OK';
 
-        if (decl.unpredictable)
-        {
-          isOk = false;
-          code = 'UNPREDICTABLE';
-        }
-
         if (decl.warns)
         {
-          isOk = false;
+          problemTemplateCount++;
           code = 'WARN';
         }
+        else
+          if (decl.unpredictable)
+          {
+            problemTemplateCount++;
+            code = 'UNPREDICTABLE';
+          }
 
         console.log('[' + code + ']', path.normalize(filename));
 
