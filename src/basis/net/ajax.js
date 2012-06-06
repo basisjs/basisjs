@@ -821,7 +821,7 @@
       this.sessionKey = null;
       this.sessionData = null;
 
-      this.stoppedProxies = Array.from(this.inprogressProxies);
+      this.stoppedProxies = Array.from(this.inprogressProxies.filter(function(proxy){ return proxy.needSignature }));
 
       for (var i = 0, proxy; proxy = this.inprogressProxies[i]; i++)
         proxy.stop();
