@@ -383,7 +383,7 @@
       return Field.prototype.setValue.call(this, newValue == null ? '' : newValue);
     },
     setReadOnly: function(readOnly){
-      this.readOnly = !!readonly;
+      this.readOnly = !!readOnly;
       this.updateBind('readonly');
     },
     setMinLength: function(len){
