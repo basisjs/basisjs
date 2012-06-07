@@ -1003,10 +1003,13 @@ var cssClassNameMap = (function buildCSS(){
   var cssImportRuleRx = new RegExp('@import(?:\\s*(?:' + cssQuotedValueRxToken + ')|\\s+' + cssUrlRxPart + ')(\\s+' + cssMediaListRxToken + ')?\s*;', 'g');
   var cssUrlRx = new RegExp('\\b' + cssUrlRxPart, 'g');
 
+  var dataUriRx = /^data:text\/css;/;
+
   var fileCache = {};
   var processFileCount = 0;
 
   var classNameMap = {};
+  var cssSourceClassNames = {};
 
 
   function resolveResource(url, baseUri, cssFile){
@@ -1072,153 +1075,78 @@ var cssClassNameMap = (function buildCSS(){
     return resourceMap[filename].replacement;
   }
 
-  function processFileContent(fileContent, filename, context){
-    var comments = [];
-    var imports = [];
-    var files = [];
-    var sourceSize = 0;
-    var baseURI = path.dirname(filename);
+  function processCssTree(tree, baseURI, context){
 
-    // remove comments
-    fileContent = fileContent.replace(/\/\*(.|[\r\n])*?\*\//g, function(m){ comments.push(m); return '\x00' });
-
-    // cut imports
-    fileContent = fileContent.replace(cssImportRuleRx, function(m, sq1, dq1, url, sq2, dq2, media){
-      var sq = sq1 || sq2;
-      var dq = dq1 || dq2;
-
-      if (sq)
-        url = sq.replace(/\\'/g, "'");
-
-      if (dq)
-        url = dq.replace(/\\"/g, '"');
-
-      imports.push({
-        src: m,
-        url: path.resolve(baseURI, url),
-        media: media
-      });
-
-      return '\x01';
-    });
-
-    // resolve urls
-    fileContent = fileContent.replace(cssUrlRx, function(m, sq, dq, raw){
-      var url = raw;
-
-      if (sq)
-        url = sq.replace(/\\'/g, "'");
-
-      if (dq)
-        url = dq.replace(/\\"/g, '"');
-
-      var n = RegExp.leftContext.match(/\n/g);
-
-      return 'url(' + resolveResource(url, baseURI, filename + ':' + (n ? n.length : 0)) + ')';
-    });
-
-    // restore/resolve imports
-    fileContent = fileContent.replace(/\x01/g, function(){
-      var importRule = imports.shift();
-      var result = '\n/* ' + importRule.src + ' */\n';
-
-      if (context[importRule.url])
-        result += '/* WARN: Recursive @import rule ignored */\n';
-      else
-      {
-        var cssBuild = linearCssFile(importRule.url, context);
-        files.push(importRule.url);
-        files.push(cssBuild.files);
-
-        result += cssBuild.content;
-        sourceSize += cssBuild.sourceSize;
-      }
-
-      return result;
-    });
-
-    // restore comments
-    fileContent = fileContent.replace(/\x00/g, function(){
-      return comments.shift();
-    });
-    
-    return {
-      sourceSize: sourceSize,
-      content: fileContent,
-      files: files
-    };
-  }
-
-  function linearCssFile(filename, context){
-
-    var fileContent;
-    var sourceSize = 0;
-
-    if (!path.existsSync(filename))
-    {
-      treeConsole.log('  # [NOT FOUND] ' + relpath(filename));
-      fileContent = '\n/* WARN: File ' + filename + ' not found */\n';
-    }
-    else
-    {
-      if (flags.cssIgnoreDup && fileCache[filename])
-        return {
-          sourceSize: 0,
-          content: ''
-        };
-
-      processFileCount++;
-      treeConsole.log('  # [OK] ' + relpath(filename));
-
-      if (!context)
-        context = {};
-
-      context[filename] = true;
-
-      // read file content or get from cache
-      if (!fileCache[filename])
-      {
-        fileContent = fs.readFileSync(filename, 'utf-8');
-        fileCache[filename] = {
-          source: fileContent
-        };
-      }
-      else
-        fileContent = fileCache[filename].source;
-
-      sourceSize = fileContent.length;
-
-      // consume original file size
-      total_init_css_size += fileContent.length;  
-
-      var processed = processFileContent(fileContent, filename, context);
-      fileContent = processed.content;
-      sourceSize += processed.sourceSize;
-
-      fileCache[filename].fileContent = fileContent;
-      fileCache[filename].sourceSize = sourceSize;
-
-      delete context[filename];
+    function readString(val){
+      return val.substr(1, val.length - 2);
     }
 
-    return {
-      sourceSize: sourceSize,
-      content: fileContent
-    };
-  }
+    function whitespaceAndComment(token){
+      return token[1] != 's' && token[1] != 'comment';
+    }
 
-  function collectClassNames(tree, dict){
+    function readUri(token){
+      var val = token.slice(2).filter(whitespaceAndComment)[0];
 
-    function walkTree(tokens){
-      for (var i = 0, token; token = tokens[i]; i++)
+      if (val[1] == 'string')
+        return readString(val[2]);
+      else
+        return val[2];
+    }
+
+    function walkTree(topToken, offset){
+      for (var i = offset || 0, token; token = topToken[i]; i++)
       {
         switch (token[1])
         { 
-          case 'stylesheet':
-          case 'ruleset':
-          case 'selector':
-            walkTree(token.slice(2));
+          case 'atrules':
+
+            // @import
+            if (token[2][1] == 'atkeyword' && token[2][2][1] == 'ident' && token[2][2][2] == 'import')
+            {
+              var parts = token.slice(3);
+              var pos = 3;
+
+              if (parts[0][1] == 's')
+              {
+                pos++;
+                parts.shift();
+              }
+
+              var url = parts[0][1] == 'uri'
+                ? readUri(parts[0])
+                : readString(parts[0][2]);
+
+              var media = parts.slice(1);
+              var injection = buildCssTree(url, baseURI, context).slice(2);
+
+              // @media wrap
+              if (media.filter(whitespaceAndComment).length)
+              {
+                injection.unshift([{}, 's', '\n']);
+                injection.push([{}, 's', '\n']);
+                injection = [
+                  [{}, 'atruler',
+                    [{}, 'atkeyword',
+                      [{}, 'ident', 'media' ]
+                    ],
+                    [{}, 'atrulerq'].concat(media),
+                    [{}, 'atrulers'].concat(injection)
+                  ]
+                ];
+              }
+
+              // inject
+              injection.unshift(i, 1,
+                [{}, 'comment', csso.translate(csso.cleanInfo(token)).replace(/\*\//g, '* /')],
+                [{}, 's', '\n\n']
+              );
+              topToken.splice.apply(topToken, injection);
+              i += injection.length - 2;
+            }
+
             break;
+
           case 'simpleselector':
             var selectorTokens = token.slice(2);
             for (var j = 0, part; part = selectorTokens[j]; j++)
@@ -1228,26 +1156,111 @@ var cssClassNameMap = (function buildCSS(){
                 var ident = part[2];
                 var identName = ident[2];
                 
-                if (!dict[identName])
+                if (!cssSourceClassNames[identName])
                 {
-                  dict[identName] = ident;
+                  cssSourceClassNames[identName] = ident;
                   ident[3] = 1;
                 }
                 else
                 {
-                  part[2] = dict[identName];
-                  dict[identName][3]++;
+                  part[2] = cssSourceClassNames[identName];
+                  cssSourceClassNames[identName][3]++;
                 }
               }
             }
+            break;
+
+          case 'uri':
+
+            var url = readUri(token);
+            token.splice(2);
+            
+            var replaceUrl = resolveResource(url, baseURI, 'filename' + ':' + (token[0].s));
+            token.push([{}, 'string', replaceUrl.indexOf(')') == -1 ? replaceUrl : '"' + replaceUrl + '"']);
+
+            break;
+
+          default:
+
+            walkTree(token, 2);
+
             break;
         }
       }
     }
 
-    dict = dict || {};
     walkTree([tree]);
-    return dict;
+    return tree;
+  }
+
+  function buildCssTree(filename, baseURI, context){
+    //console.log('buildCssTree:', filename);
+    var content;
+    var isInlineStyle = dataUriRx.test(filename);
+    var offset = '';
+
+    if (!context)
+      context = [];
+    else
+      offset = (new Array(context.length + 1)).join('  ');
+
+    if (isInlineStyle)
+      content = filename.replace(dataUriRx, '');
+    else
+    {
+      filename = path.resolve(baseURI, filename);
+      baseURI = path.dirname(filename);
+
+      if (!path.existsSync(filename))
+      {
+        treeConsole.log('  # [NOT FOUND] ' + relpath(filename));
+        return [
+          {}, 'stylesheet',
+          [{}, 's', offset],
+          [{}, 'comment', ' [WARN] File ' + filename + ' not found '],
+          [{}, 's', '\n\n']
+        ];
+      }
+
+      if (context.indexOf(filename) != -1)
+      {
+        treeConsole.log('  # [WARN] Recursion ' + context.map(relpath).join(' -> ') + ' -> ' + relpath(filename));
+        return [
+          {}, 'stylesheet',
+          [{}, 's', offset],
+          [{}, 'comment', ' [WARN] Recursion: ' + context.map(relpath).join(' -> ') + ' -> ' + relpath(filename) + ' '],
+          [{}, 's', '\n\n']
+        ];
+      }
+
+      treeConsole.log('  # [OK] ' + relpath(filename));
+
+      content = fs.readFileSync(filename, 'utf-8');
+      context.push(filename);
+    }
+
+    if (context.length)
+      content = content.replace(/^|\n/g, "$&" + offset);
+
+    // parse css into tree
+    var cssTree = csso.parse(content, 'stylesheet');
+
+    // add header
+    cssTree.splice(2, 0,
+      [{}, 's', offset],
+      [{}, 'comment', '\n ' + offset + '* ' + filename + ' content injection\n ' + offset],
+      [{}, 's', '\n']
+    );
+    cssTree.push(
+      [{}, 's', '\n\n']
+    );
+
+    processCssTree(cssTree, baseURI, context);
+
+    if (!isInlineStyle)
+      context.pop();
+
+    return cssTree;
   }
 
 
@@ -1265,116 +1278,105 @@ var cssClassNameMap = (function buildCSS(){
     var targetFilename = BUILD_DIR + '/' + basename;
 
     treeConsole.log(basename);
-    var cssBuild = linearCssFile(absFilename);
+    var cssBuild = {
+      content: buildCssTree(absFilename)
+    };
 
     return {
       filename: filename,
       targetFilename: targetFilename,
       basename: basename,
       content: cssBuild.content,
-      sourceSize: cssBuild.sourceSize
+      sourceSize: cssBuild.sourceSize || 0
     };
   });
 
   if (genericCssContent.length)
   {
     treeConsole.log('[resources css]');
-    var resourceCss = processFileContent(genericCssContent.map(function(cssFilename){
+    /*var resourceCss = processFileContent(genericCssContent.map(function(cssFilename){
       return '@import url(' + relpath(path.resolve(BASE_PATH, cssFilename)) + ');';
-    }).join('\n'), INDEX_FILE, {});
+    }).join('\n'), INDEX_FILE, {});*/
+
+    var resourceCss = {
+      content: buildCssTree('data:text/css;' + genericCssContent.map(function(cssFilename){
+        return '@import url(' + relpath(path.resolve(BASE_PATH, cssFilename)) + ');';
+      }).join('\n'), INDEX_PATH)
+    };
 
     cssFiles.push({
       filename: '{resources}',
       targetFilename: BUILD_DIR + '/res.css',
       basename: '/res.css',
       content: resourceCss.content,
-      sourceSize: resourceCss.sourceSize
+      sourceSize: resourceCss.sourceSize || 0
     });
   }
 
   treeConsole.log();
   treeConsole.decDeep();
 
-  if (flags.cssOptNames || flags.cssPack)
+  //
+  // build className map and optimize
+  //
+  if (flags.cssOptNames)
   {
-    //
-    // Parse
-    //
+    (function(){
+      function genNextClassName(curName){
+        if (!curName)
+          return 'a';
 
-    treeConsole.log('Parse');
+        return (parseInt(curName, 36) + 1).toString(36).replace(/^\d/, 'a');
+      }
+
+      var classNames = Object
+        .keys(cssSourceClassNames) // all class names
+        .sort(function(a, b){ return cssSourceClassNames[b][3] - cssSourceClassNames[a][3] }); // sorted desc by usage count
+
+      for (var i = 0, name, replaceName; name = classNames[i]; i++)
+      {
+        do {
+          replaceName = genNextClassName(replaceName);
+        } while (cssSourceClassNames[replaceName]);
+        //console.log(name, replaceName);
+
+        cssSourceClassNames[name][2] = replaceName;
+        classNameMap[name] = replaceName;
+      }
+    })();
+  }
+
+  //
+  // Pack
+  //
+  if (flags.cssPack)
+  {
+    treeConsole.log('Pack');
     treeConsole.incDeep();
 
     cssFiles.forEach(function(cssFile){
       treeConsole.log(cssFile.basename);
-      cssFile.content = csso.parse(cssFile.content, 'stylesheet');
+      //content = csso.justDoIt(content);
+      cssFile.content = csso.translate(csso.cleanInfo(csso.compress(cssFile.content)));
+      treeConsole.log('  * ' + cssFile.sourceSize + ' -> ' + cssFile.content.length);
     });
 
     treeConsole.log();
     treeConsole.decDeep();
-
-    //
-    // build className map and optimize
-    //
-    if (flags.cssOptNames)
-    {
-      (function(){
-        function genNextClassName(curName){
-          if (!curName)
-            return 'a';
-
-          return (parseInt(curName, 36) + 1).toString(36).replace(/^\d/, 'a');
-        }
-
-        var dict = {};
-
-        cssFiles.forEach(function(cssFile){
-          collectClassNames(cssFile.content, dict);
-        });
-
-        var classNames = Object
-          .keys(dict) // all class names
-          .sort(function(a, b){ return dict[b][3] - dict[a][3] }); // sorted desc by usage count
-
-        for (var i = 0, name, replaceName; name = classNames[i]; i++)
-        {
-          do {
-            replaceName = genNextClassName(replaceName);
-          } while (dict[replaceName]);
-          //console.log(name, replaceName);
-
-          dict[name][2] = replaceName;
-          classNameMap[name] = replaceName;
-        }
-      })();
-    }
-
-    //
-    // Pack
-    //
-    if (flags.cssPack)
-    {
-      treeConsole.log('Pack');
-      treeConsole.incDeep();
-
-      cssFiles.forEach(function(cssFile){
-        treeConsole.log(cssFile.basename);
-        //content = csso.justDoIt(content);
-        cssFile.content = csso.translate(csso.cleanInfo(csso.compress(cssFile.content)));
-        treeConsole.log('  * ' + cssFile.sourceSize + ' -> ' + cssFile.content.length);
-      });
-
-      treeConsole.log();
-      treeConsole.decDeep();
-    }
-    else
-    {
-      cssFiles.forEach(function(cssFile){
-        cssFile.content = csso.translate(csso.cleanInfo(cssFile.content));
-      });    
-    }
-
-    treeConsole.decDeep();
   }
+  else
+  {
+    cssFiles.forEach(function(cssFile){
+      cssFile.content = csso.translate(csso.cleanInfo(cssFile.content));
+    });    
+  }
+
+  treeConsole.decDeep();
+
+
+  //
+  // insert link into index.html
+  //
 
   if (flags.cssSingleFile)
   {
