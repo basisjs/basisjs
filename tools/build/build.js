@@ -999,6 +999,7 @@ var cssClassNameMap = (function buildCSS(){
   var fileCache = {};
   var processFileCount = 0;
 
+  var resourceUriMap = [];
   var classNameMap = {};
   var cssSourceClassNames = {};
 
@@ -1066,24 +1067,38 @@ var cssClassNameMap = (function buildCSS(){
     return resourceMap[filename].replacement;
   }
 
+  function whitespaceAndComment(token){
+    return token[1] != 's' && token[1] != 'comment';
+  }
+
+  function unpackStringToken(val){
+    return val.substr(1, val.length - 2);
+  }
+
+  function unpackUriToken(token){
+    var val = token.slice(2).filter(whitespaceAndComment)[0];
+
+    if (val[1] == 'string')
+      return unpackStringToken(val[2]);
+    else
+      return val[2];
+  }
+
+  function packStringToken(string){
+    return [{}, 'string', '"' + string.replace(/\"/, '\\"') + '"'];
+  }
+
+  function packCommentToken(comment){
+    return [{}, 'comment', comment.replace(/\*\//g, '* /')];
+  }
+
+  function packUriToken(uri, token){
+    token = token || [{}, 'uri'];
+    token[2] = uri.indexOf(')') != -1 ? packStringToken(uri) : [{}, 'raw', uri];
+    return token;
+  }
+
   function processCssTree(tree, baseURI, context){
-
-    function readString(val){
-      return val.substr(1, val.length - 2);
-    }
-
-    function whitespaceAndComment(token){
-      return token[1] != 's' && token[1] != 'comment';
-    }
-
-    function readUri(token){
-      var val = token.slice(2).filter(whitespaceAndComment)[0];
-
-      if (val[1] == 'string')
-        return readString(val[2]);
-      else
-        return val[2];
-    }
 
     function walkTree(topToken, offset){
       for (var i = offset || 0, token; token = topToken[i]; i++)
@@ -1105,8 +1120,8 @@ var cssClassNameMap = (function buildCSS(){
               }
 
               var url = parts[0][1] == 'uri'
-                ? readUri(parts[0])
-                : readString(parts[0][2]);
+                ? unpackUriToken(parts[0])
+                : unpackStringToken(parts[0][2]);
 
               var media = parts.slice(1);
               var injection = buildCssTree(url, baseURI, context).slice(2);
@@ -1129,7 +1144,7 @@ var cssClassNameMap = (function buildCSS(){
 
               // inject
               injection.unshift(i, 1,
-                [{}, 'comment', csso.translate(csso.cleanInfo(token)).replace(/\*\//g, '* /')],
+                packCommentToken(csso.translate(csso.cleanInfo(token))),
                 [{}, 's', '\n\n']
               );
               topToken.splice.apply(topToken, injection);
@@ -1163,11 +1178,10 @@ var cssClassNameMap = (function buildCSS(){
 
           case 'uri':
 
-            var url = readUri(token);
-            token.splice(2);
-            
-            var replaceUrl = resolveResource(url, baseURI, 'filename' + ':' + (token[0].s));
-            token.push([{}, 'string', replaceUrl.indexOf(')') == -1 ? replaceUrl : '"' + replaceUrl + '"']);
+            resourceUriMap.push({
+              baseURI: baseURI,
+              token: token
+            });
 
             break;
 
@@ -1213,7 +1227,7 @@ var cssClassNameMap = (function buildCSS(){
         return [
           {}, 'stylesheet',
           [{}, 's', offset],
-          [{}, 'comment', ' [WARN] File ' + filename + ' not found '],
+          packCommentToken(' [WARN] File ' + filename + ' not found '),
           [{}, 's', '\n\n']
         ];
       }
@@ -1224,7 +1238,7 @@ var cssClassNameMap = (function buildCSS(){
         return [
           {}, 'stylesheet',
           [{}, 's', offset],
-          [{}, 'comment', ' [WARN] Recursion: ' + context.map(relpath).join(' -> ') + ' -> ' + relpath(filename) + ' '],
+          packCommentToken(' [WARN] Recursion: ' + context.map(relpath).join(' -> ') + ' -> ' + relpath(filename) + ' '),
           [{}, 's', '\n\n']
         ];
       }
@@ -1244,7 +1258,7 @@ var cssClassNameMap = (function buildCSS(){
     // add header
     cssTree.splice(2, 0,
       [{}, 's', offset],
-      [{}, 'comment', '\n ' + offset + '* ' + filename + ' content injection\n ' + offset],
+      packCommentToken('\n ' + offset + '* ' + filename + ' content injection\n ' + offset),
       [{}, 's', '\n']
     );
     cssTree.push(
@@ -1311,6 +1325,19 @@ var cssClassNameMap = (function buildCSS(){
 
   treeConsole.log();
   treeConsole.decDeep();
+
+
+  //
+  // process URI
+  //
+
+  for (var i = 0, uriEntry; uriEntry = resourceUriMap[i]; i++)
+  {
+    var url = unpackUriToken(uriEntry.token);
+    var replaceUrl = resolveResource(url, uriEntry.baseURI, 'filename' + ':' + (uriEntry.token[0].s));
+    packUriToken(replaceUrl, uriEntry.token);
+  }
+
 
   //
   // build className map and optimize
