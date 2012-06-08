@@ -16,5 +16,5 @@ goto loop
 
 if "%command%"=="server" node server\server.js %curpath% %params%
 if "%command%"=="rebuild" node build.js %params%
-if "%command%"=="build" node build\build.js --path %curpath% %params%
+if "%command%"=="build" node build\build.js --base %curpath% %params%
 if "%command%"=="tmplcheck" node template\check.js %curpath% %params%

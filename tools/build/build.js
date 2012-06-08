@@ -105,9 +105,8 @@ function getDigest(content){
 
 var options = (function(){
   commander
-    .version('a')
-
-    .option('--path <path>', 'Path for build')
+    .option('-f, --file <filename>', 'File to build (index.html by default)', 'index.html')
+    .option('-b, --base <path>', 'Base path for path resolving')
 
     // general
     .option('-p, --pack', 'Pack sources. It equals to: --js-build-mode --js-cut-dev --js-pack --css-pack')
@@ -157,8 +156,9 @@ var options = (function(){
 })();
 
 
-var BASE_PATH = path.normalize(options.path);
-var INDEX_FILE = path.resolve(BASE_PATH, 'index.html');
+var BASE_PATH = path.normalize(options.base);
+var FILENAME = options.file;
+var INDEX_FILE = path.resolve(BASE_PATH, FILENAME);
 var INDEX_PATH = path.dirname(INDEX_FILE) + '/';
 var BUILD_DIR = path.resolve(BASE_PATH, 'build');
 var BUILD_RESOURCE_DIR = BUILD_DIR + '/res';
@@ -1429,7 +1429,7 @@ var cssClassNameMap = (function buildCSS(){
 
 
   //
-  // insert link into index.html
+  // insert link into build file
   //
 
   if (options.cssSingleFile)
@@ -1740,7 +1740,7 @@ printHeader("Javascript:");
 
 
   ///////////////////////////////////
-  // inject scripts into index.html
+  // inject scripts into build file
 
   indexFileContent = indexFileContent.replace(/([\t ]*)<!--build inject point-->/, function(m, offset){
     return offset + 
@@ -1801,7 +1801,7 @@ printHeader("Javascript:");
 
 function writeIndex(){
   indexFileContent = indexFileContent.replace(/([\t ]*)<title>(.|[\r\n])*?<\/title>/, '$&\n$1<meta name="build" content="' + buildLabel + '"/>');
-  fs.writeFile(BUILD_DIR + '/' + path.basename(path.resolve(BASE_PATH, INDEX_FILE)), indexFileContent);
+  fs.writeFile(BUILD_DIR + '/' + path.basename(INDEX_FILE), indexFileContent);
 }
 
 function taskCompleted(){
