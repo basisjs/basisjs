@@ -1,4 +1,3 @@
-var commander = require('commander');
 var fs = require('fs');
 var path = require('path');
 var crypto = require('crypto');
@@ -104,6 +103,8 @@ function getDigest(content){
 
 
 var options = (function(){
+  var commander = require('commander');
+
   commander
     .option('-f, --file <filename>', 'File to build (index.html by default)', 'index.html')
     .option('-b, --base <path>', 'Base path for path resolving')
@@ -126,11 +127,11 @@ var options = (function(){
     //experimental
     .option('-l, --l10n-pack', 'Build l10n index, pack dictionaries and replace token names for shorter one if possible.')
 
+    // parse argv
     .parse(process.argv);
 
-  commander.singleFile = !commander.noSingleFile;
-  commander.jsSingleFile = !commander.noSingleFile && !commander.jsNoSingleFile;
-  commander.cssSingleFile = !commander.noSingleFile && !commander.cssNoSingleFile;
+  commander.jsSingleFile = commander.singleFile && commander.jsSingleFile;
+  commander.cssSingleFile = commander.singleFile && commander.cssSingleFile;
 
   var optionOverride = [
     {
@@ -158,6 +159,7 @@ var options = (function(){
 
 var BASE_PATH = path.normalize(options.base);
 var FILENAME = options.file;
+var BASENAME = path.basename(options.file, path.extname(options.file));
 var INDEX_FILE = path.resolve(BASE_PATH, FILENAME);
 var INDEX_PATH = path.dirname(INDEX_FILE) + '/';
 var BUILD_DIR = path.resolve(BASE_PATH, 'build');
@@ -739,7 +741,7 @@ var jsBuild = (function buildJs(){
           '].forEach(' + function(module){
              var fn = module[1];
              var ns = basis.namespace(module[0]);
-             fn.call(ns, basis, this, "", ns.exports, basis.resource, ns, 'app.js');
+             fn.call(ns, basis, this, "", ns.exports, basis.resource, ns, '');
              Object.complete(ns, ns.exports);
            } + ', this)',
           packageWrapper[1]
@@ -1436,10 +1438,10 @@ var cssClassNameMap = (function buildCSS(){
   {
     var allCssContent = cssFiles.map(function(cssFile){ return cssFile.content }).join('');
     total_final_css_size = allCssContent.length;
-    indexFileContent = indexFileContent.replace(/<\/head>/i, '<link rel="stylesheet" type="text/css" href="app.css?' + getDigest(allCssContent) + '"/>\n$&');
+    indexFileContent = indexFileContent.replace(/<\/head>/i, '<link rel="stylesheet" type="text/css" href="' + BASENAME + '.css?' + getDigest(allCssContent) + '"/>\n$&');
 
-    treeConsole.log('Save all CSS to ' + path.normalize(BUILD_DIR + '/app.css') + '...\n');
-    fs.writeFile(BUILD_DIR + '/app.css', allCssContent, 'utf-8');    
+    treeConsole.log('Save all CSS to ' + path.normalize(BUILD_DIR + '/' + BASENAME + '.css') + '...\n');
+    fs.writeFile(BUILD_DIR + '/' + BASENAME + '.css', allCssContent, 'utf-8');    
   }
   else
   {
@@ -1672,7 +1674,7 @@ printHeader("Javascript:");
   if (options.jsSingleFile)
   {
     outputFiles.push({
-      filename: path.normalize(BUILD_DIR + '/app.js'),
+      filename: path.normalize(BUILD_DIR + '/' + BASENAME + '.js'),
       content: packages.app.content.replace(/this\.__resources__ \|\| \{\}/, resourceMapCode)
     });
   }
@@ -1745,12 +1747,11 @@ printHeader("Javascript:");
   indexFileContent = indexFileContent.replace(/([\t ]*)<!--build inject point-->/, function(m, offset){
     return offset + 
       (options.jsSingleFile
-        ? '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
-        : [
-           '<script type="text/javascript" src="res.js?' + (!packBuild ? jsDigests['res.js'] : '') + '"><\/script>',
-           '<script type="text/javascript" src="basis.js?' + (!packBuild ? jsDigests['basis.js'] : '') + '"><\/script>',
-           '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
-          ].join('\n' + offset)
+        ? '<script type="text/javascript" src="' + BASENAME + '.js?' + (!packBuild ? jsDigests[BASENAME + '.js'] : '') + '"><\/script>'
+        : outputFiles.map(function(file){
+            var filename = path.basename(file.filename);
+            return '<script type="text/javascript" src="' + filename + '?' + (!packBuild ? jsDigests[filename] : '') + '"><\/script>';
+          }).join('\n' + offset)
       )
   });
 })(jsBuild);
