@@ -1,24 +1,11 @@
+var commander = require('commander');
 var fs = require('fs');
 var path = require('path');
 var crypto = require('crypto');
 var csso = require('csso');
 var exec = require('child_process').exec;
 
-var BASE_PATH = path.normalize(process.argv[2]);
-var INDEX_FILE = path.resolve(BASE_PATH, 'index.html');
-//var INDEX_PATH = path.dirname(INDEX_FILE);
-var INDEX_PATH = path.dirname(INDEX_FILE) + '/';
-var BUILD_DIR = path.resolve(BASE_PATH, 'build');
-var BUILD_RESOURCE_DIR = BUILD_DIR + '/res';
 var JSCOMPILER = 'java -jar c:\\tools\\gcc.jar --charset UTF-8';
-
-
-if (!path.existsSync(INDEX_FILE))
-{
-  console.warn('Index file not found:', INDEX_FILE);
-  process.exit();
-}
-
 var childProcessTask = [];
 
 
@@ -112,39 +99,77 @@ function getDigest(content){
 }
 
 //
-// Set up flags
+// Set up options
 //
 
-var flags = (function(){
-  function hasFlag(flag){
-    return args.indexOf(flag) != -1;
+
+var options = (function(){
+  commander
+    .version('a')
+
+    .option('--path <path>', 'Path for build')
+
+    // general
+    .option('-p, --pack', 'Pack sources. It equals to: --js-build-mode --js-cut-dev --js-pack --css-pack')
+    .option('--no-single-file', 'Avoid merge sources into one file. It equals to: --js-no-single-file --css-no-single-file')
+
+    // javascript
+    .option('--js-no-single-file', 'Avoid merge javascript source into one file.')
+    .option('-b, --js-build-mode', 'Evaluate modules code (close to basis.require works).')
+    .option('-d, --js-cut-dev', 'Remove marked debug message from javascript source (cut from source ;;; and /** @cut .. */)')
+    .option('-J, --js-pack', 'Pack javascript source.')
+
+    // css
+    .option('--css-no-single-file', 'Avoid merge CSS source into one file.')
+    .option('-n, --css-optimize-names', 'Replace css class names for shorter one.')
+    .option('-C, --css-pack', 'Pack CSS source.')
+
+    //experimental
+    .option('-l, --l10n-pack', 'Build l10n index, pack dictionaries and replace token names for shorter one if possible.')
+
+    .parse(process.argv);
+
+  commander.singleFile = !commander.noSingleFile;
+  commander.jsSingleFile = !commander.noSingleFile && !commander.jsNoSingleFile;
+  commander.cssSingleFile = !commander.noSingleFile && !commander.cssNoSingleFile;
+
+  var optionOverride = [
+    {
+      option: 'publish',
+      override: ['pack'] //, 'archive', 'clear', 'destroy']
+    },
+    {
+      option: 'pack',
+      override: ['jsBuildMode', 'jsCutDev', 'jsPack', 'cssPack']
+    }
+  ];
+
+  for (var i = 0; i < optionOverride.length; i++)
+  {
+    if (commander[optionOverride[i].option])
+      optionOverride[i].override.forEach(function(name){
+        commander[name] = true;
+        console.log(name, commander[name]);
+      });
   }
 
-  var args = process.argv.slice(2);
-  var publishMode = hasFlag('-publish');
-  return {
-    production:    hasFlag('-production'),
-    pack:          publishMode || hasFlag('-pack'),
-    archive:       publishMode || hasFlag('-archive'),
-    clear:         publishMode || hasFlag('-clear'),
-    deploy:        publishMode || hasFlag('-deploy'),
-    singleFile:    !hasFlag('-no-single-file'),
-
-    jsSingleFile:  !hasFlag('-no-single-file') && !hasFlag('-js-no-single-file'),  // merge all javascript in one file
-    jsBuildMode:   publishMode || hasFlag('-pack') || hasFlag('-js-build-mode'),   // evaluate module code (close to basis.require works)
-    jsCutDev:      publishMode || hasFlag('-pack') || hasFlag('-js-cut-dev'),      // cut from source ;;; and /** @cut .. */
-    jsPack:        publishMode || hasFlag('-pack') || hasFlag('-js-pack'),         // pack javascript source
-
-    cssSingleFile: !hasFlag('-no-single-file') && !hasFlag('-css-no-single-file'), // merge all css in one file
-    cssOptNames:   hasFlag('-css-optimize-names'),                                 // make css classes short
-    cssPack:       publishMode || hasFlag('-pack') || hasFlag('-css-pack'),        // pack css code
-
-    // experimental
-    l10nPack:      hasFlag('-l10n-pack'),
-    cssIgnoreDup:  hasFlag('-css-ignore-duplicates')
-  };
+  return commander;
 })();
 
+
+var BASE_PATH = path.normalize(options.path);
+var INDEX_FILE = path.resolve(BASE_PATH, 'index.html');
+var INDEX_PATH = path.dirname(INDEX_FILE) + '/';
+var BUILD_DIR = path.resolve(BASE_PATH, 'build');
+var BUILD_RESOURCE_DIR = BUILD_DIR + '/res';
+
+if (!path.existsSync(INDEX_FILE))
+{
+  console.warn('Index file not found:', INDEX_FILE);
+  process.exit();
+}
+
+//process.exit();
 
 //
 // Create output folder
@@ -209,7 +234,7 @@ var indexFileContent = fs.readFileSync(INDEX_FILE, 'utf-8')
       
       cssFiles.push(stylePath);
 
-      return flags.cssSingleFile
+      return options.cssSingleFile
         ? ''
         : pre + (basename + '?' + buildLabel) + post;
     }
@@ -225,10 +250,10 @@ var resourceDigestMap = {};
 
 
 var jsBuild = (function buildJs(){
-  var buildMode = flags.jsBuildMode;
-  var cutDev = flags.jsCutDev;
-  var packBuild = flags.jsPack;
-  var cssOptNames = flags.cssOptNames;
+  var buildMode = options.jsBuildMode;
+  var cutDev = options.jsCutDev;
+  var packBuild = options.jsPack;
+  var cssOptimazeNames = options.cssOptimazeNames;
 
   var rootDepends = [];
   var fileCache = {};
@@ -396,9 +421,9 @@ var jsBuild = (function buildJs(){
             break;
           case 'tmpl':
             var fileContent = fs.readFileSync(filepath, 'utf-8');
-            var decl = basis.template.makeDeclaration(fileContent, path.dirname(filepath) + '/', { classMap: cssOptNames });
+            var decl = basis.template.makeDeclaration(fileContent, path.dirname(filepath) + '/', { classMap: cssOptimazeNames });
 
-            if (cssOptNames && decl.unpredictable)
+            if (cssOptimazeNames && decl.unpredictable)
               treeConsole.log('  [WARN] Unpredictable class names in template, class names optimization is not safe\n');
 
             if (decl.resources.length)
@@ -616,7 +641,7 @@ var jsBuild = (function buildJs(){
 
       if (namespace != 'basis')
       {
-        if (namespace == 'basis.l10n' && flags.l10nPack)
+        if (namespace == 'basis.l10n' && options.l10nPack)
         {
           jsFile.content += '\n;(' + function(){
             var parts = basis.resource("_l10nIndex_").fetch().split(/([\<\>\#])/);
@@ -795,7 +820,7 @@ var jsBuild = (function buildJs(){
   //fileCache[nsBase.basis + 'basis.js'].content = fileCache[nsBase.basis + 'basis.js'].content
   //  .replace(/resourceUrl\s*=\s*pathUtils.resolve\(resourceUrl\)/, '');
 
-  if (flags.jsSingleFile)
+  if (options.jsSingleFile)
   {
     (function(){
       var content = packages.basis.content;
@@ -911,7 +936,7 @@ var jsBuild = (function buildJs(){
       // Pack dictionaries
       //
 
-      if (flags.l10nPack)
+      if (options.l10nPack)
       {
         console.log('  Pack dictionaries');
 
@@ -1347,7 +1372,7 @@ var cssClassNameMap = (function buildCSS(){
   //
   // build className map and optimize
   //
-  if (flags.cssOptNames)
+  if (options.cssOptimazeNames)
   {
     treeConsole.log('Process class names');
     (function(){
@@ -1378,7 +1403,7 @@ var cssClassNameMap = (function buildCSS(){
   //
   // Pack
   //
-  if (flags.cssPack)
+  if (options.cssPack)
   {
     treeConsole.log('Pack');
     treeConsole.incDeep();
@@ -1407,7 +1432,7 @@ var cssClassNameMap = (function buildCSS(){
   // insert link into index.html
   //
 
-  if (flags.cssSingleFile)
+  if (options.cssSingleFile)
   {
     var allCssContent = cssFiles.map(function(cssFile){ return cssFile.content }).join('');
     total_final_css_size = allCssContent.length;
@@ -1441,15 +1466,15 @@ var cssClassNameMap = (function buildCSS(){
 printHeader("Javascript:");
 
 (function(jsBuild){
-  var buildMode = flags.jsBuildMode;
-  var packBuild = flags.jsPack;
+  var buildMode = options.jsBuildMode;
+  var packBuild = options.jsPack;
 
   var jsResourceList = jsBuild.resources;
   var packages = jsBuild.packages;
   var l10nGetPackToken = jsBuild.l10nGetPackToken;
 
 
-  if (flags.cssOptNames)
+  if (options.cssOptimazeNames)
   {
     console.log('Optimize class names');
     jsResourceList.forEach(function(res){
@@ -1604,7 +1629,7 @@ printHeader("Javascript:");
 
     if (resource.type == 'tmpl')
     {
-      if (flags.l10nPack)
+      if (options.l10nPack)
       {
         content = content.replace(/"l10n:([^"]+)"/g, function(m, key){
           var code = l10nGetPackToken(key);
@@ -1644,7 +1669,7 @@ printHeader("Javascript:");
   var outputFiles = [];
 
   console.log('  Prepare output files');
-  if (flags.jsSingleFile)
+  if (options.jsSingleFile)
   {
     outputFiles.push({
       filename: path.normalize(BUILD_DIR + '/app.js'),
@@ -1719,7 +1744,7 @@ printHeader("Javascript:");
 
   indexFileContent = indexFileContent.replace(/([\t ]*)<!--build inject point-->/, function(m, offset){
     return offset + 
-      (flags.jsSingleFile
+      (options.jsSingleFile
         ? '<script type="text/javascript" src="app.js?' + (!packBuild ? jsDigests['app.js'] : '') + '"><\/script>'
         : [
            '<script type="text/javascript" src="res.js?' + (!packBuild ? jsDigests['res.js'] : '') + '"><\/script>',
