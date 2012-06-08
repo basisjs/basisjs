@@ -1035,7 +1035,7 @@ var cssClassNameMap = (function buildCSS(){
 
         if (!resourceDigestMap[digest])
         {
-          var ext = path.extname(filename).replace(/^\./, '');
+          var ext = path.extname(filename);
 
           newResource = true;
           resourceDigestMap[digest] = {
@@ -1044,8 +1044,8 @@ var cssClassNameMap = (function buildCSS(){
             pathCount: 1,
             refCount: 0,
             references: [],
-            filename: CSS_RESOURCE_PATH + digest + '.' + ext,
-            replacement: CSS_REL_RESOURCE_PATH + digest + '.' + ext,
+            filename: CSS_RESOURCE_PATH + digest + ext,
+            replacement: CSS_REL_RESOURCE_PATH + digest + ext,
             content: resourceContent
           }
         }
@@ -1178,6 +1178,7 @@ var cssClassNameMap = (function buildCSS(){
 
           case 'uri':
 
+            treeConsole.log('+ ' + csso.translate(csso.cleanInfo(token)));
             resourceUriMap.push({
               baseURI: baseURI,
               token: token
@@ -1223,7 +1224,7 @@ var cssClassNameMap = (function buildCSS(){
 
       if (!path.existsSync(filename))
       {
-        treeConsole.log('  # [NOT FOUND] ' + relpath(filename));
+        treeConsole.log('# [NOT FOUND] ' + relpath(filename));
         return [
           {}, 'stylesheet',
           [{}, 's', offset],
@@ -1234,7 +1235,7 @@ var cssClassNameMap = (function buildCSS(){
 
       if (context.indexOf(filename) != -1)
       {
-        treeConsole.log('  # [WARN] Recursion ' + context.map(relpath).join(' -> ') + ' -> ' + relpath(filename));
+        treeConsole.log('# [WARN] Recursion ' + context.map(relpath).join(' -> ') + ' -> ' + relpath(filename));
         return [
           {}, 'stylesheet',
           [{}, 's', offset],
@@ -1243,7 +1244,7 @@ var cssClassNameMap = (function buildCSS(){
         ];
       }
 
-      treeConsole.log('  # [OK] ' + relpath(filename));
+      treeConsole.log('# [OK] ' + relpath(filename));
 
       content = fs.readFileSync(filename, 'utf-8');
       context.push(filename);
@@ -1265,7 +1266,9 @@ var cssClassNameMap = (function buildCSS(){
       [{}, 's', '\n\n']
     );
 
+    treeConsole.incDeep();
     processCssTree(cssTree, baseURI, context);
+    treeConsole.decDeep();
 
     if (!isInlineStyle)
       context.pop();
@@ -1331,12 +1334,14 @@ var cssClassNameMap = (function buildCSS(){
   // process URI
   //
 
+  treeConsole.log('Process urls');
   for (var i = 0, uriEntry; uriEntry = resourceUriMap[i]; i++)
   {
     var url = unpackUriToken(uriEntry.token);
     var replaceUrl = resolveResource(url, uriEntry.baseURI, 'filename' + ':' + (uriEntry.token[0].s));
     packUriToken(replaceUrl, uriEntry.token);
   }
+  console.log();
 
 
   //
@@ -1344,6 +1349,7 @@ var cssClassNameMap = (function buildCSS(){
   //
   if (flags.cssOptNames)
   {
+    treeConsole.log('Process class names');
     (function(){
       function genNextClassName(curName){
         if (!curName)
