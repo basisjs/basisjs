@@ -123,6 +123,7 @@ var options = (function(){
     .option('--css-no-single-file', 'Avoid merge CSS source into one file.')
     .option('-n, --css-optimize-names', 'Replace css class names for shorter one.')
     .option('-C, --css-pack', 'Pack CSS source.')
+    .option('-i, --css-inline-image-size <n>', 'Max size for resource to be inlined (in bytes).', Number, 0)
 
     //experimental
     .option('-l, --l10n-pack', 'Build l10n index, pack dictionaries and replace token names for shorter one if possible.')
@@ -1059,20 +1060,32 @@ var cssClassNameMap = (function buildCSS(){
       {
         var resourceContent = fs.readFileSync(filename);
         var digest = getDigest(resourceContent);
+        var ext = path.extname(filename);
+        var replacement;
+        var filename;
 
         if (!resourceDigestMap[digest])
         {
-          var ext = path.extname(filename);
-
           newResource = true;
+
+          if (['.gif', '.png'].indexOf(ext) != -1 && resourceContent.length < options.cssInlineImageSize)
+          {
+            replacement = 'data:image/' + ext.substr(1) + ';base64,' + new Buffer(resourceContent, 'binary').toString('base64');
+          }
+          else
+          {
+            filename = CSS_RESOURCE_PATH + digest + ext;
+            replacement = CSS_REL_RESOURCE_PATH + digest + ext
+          }
+
           resourceDigestMap[digest] = {
             state: 'ok',
             url: url,
             pathCount: 1,
             refCount: 0,
             references: [],
-            filename: CSS_RESOURCE_PATH + digest + ext,
-            replacement: CSS_REL_RESOURCE_PATH + digest + ext,
+            filename: filename,
+            replacement: replacement,
             content: resourceContent
           }
         }
@@ -1775,12 +1788,15 @@ printHeader("Javascript:");
     var resource = resourceMap[fn];
     if (resource.state == 'ok')
     {
-      count++;
-      pathCount += resource.pathCount;
-      refCount += resource.refCount;
-      size += resource.content.length;
+      if (resource.filename)
+      {
+        count++;
+        pathCount += resource.pathCount;
+        refCount += resource.refCount;
+        size += resource.content.length;
 
-      fs.writeFile(resource.filename, resource.content);
+        fs.writeFile(resource.filename, resource.content);
+      }
     }
     else
       refErrors.push(resource);
