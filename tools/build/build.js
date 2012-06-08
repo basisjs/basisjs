@@ -993,17 +993,8 @@ var cssClassNameMap = (function buildCSS(){
   var CSS_REL_RESOURCE_PATH = path.relative(BUILD_DIR, BUILD_RESOURCE_DIR) + '/';
   var CSS_RESOURCE_PATH = BUILD_RESOURCE_DIR + '/';
 
-  var cssMediaRxToken = "[a-z][a-z\-0-9]+(?:\\([^\\)]+?\\))?";
-  var cssMediaExprRxToken = cssMediaRxToken + '(?:\\b\\s*and\\s*' + cssMediaRxToken + ')*';
-  var cssMediaListRxToken = cssMediaExprRxToken + '(?:\\s*,\\s*' + cssMediaExprRxToken + ')*';
-
-  var cssQuotedValueRxToken = "'((?:\\\'|[^'])*?)'|\"((?:\\\"|[^\"])*?)\"";
-  var cssUrlRxPart = 'url\\(\\s*(?:' + cssQuotedValueRxToken + '|([^\\)]*?))\\s*\\)';
-
-  var cssImportRuleRx = new RegExp('@import(?:\\s*(?:' + cssQuotedValueRxToken + ')|\\s+' + cssUrlRxPart + ')(\\s+' + cssMediaListRxToken + ')?\s*;', 'g');
-  var cssUrlRx = new RegExp('\\b' + cssUrlRxPart, 'g');
-
-  var dataUriRx = /^data:text\/css;/;
+  var dataUriRx = /^\s*data:\s*text\/css\s*;/i;
+  var base64PrefixRx = /^\s*base64\s*,\s*/i;
 
   var fileCache = {};
   var processFileCount = 0;
@@ -1205,7 +1196,12 @@ var cssClassNameMap = (function buildCSS(){
       offset = (new Array(context.length + 1)).join('  ');
 
     if (isInlineStyle)
+    {
       content = filename.replace(dataUriRx, '');
+      // decode from base64
+      if (base64PrefixRx.test(content))
+        content = new Buffer(content.replace(base64PrefixRx, ''), 'base64').toString('utf-8');
+    }
     else
     {
       filename = path.resolve(baseURI, filename);
