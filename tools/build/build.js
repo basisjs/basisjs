@@ -64,15 +64,6 @@ var treeConsole = (function(){
 Array.prototype.add = function(value){
   return this.indexOf(value) == -1 && !!this.push(value);
 }
-Array.prototype.remove = function(value){
-  var pos = this.indexOf(value);
-
-  if (pos != -1)
-    this.splice(pos, 1);
-
-  return pos != -1;
-}
-
 String.prototype.repeat = function(count){
   var result = [];
   for (var i = 0; i < count; i++)
@@ -428,8 +419,7 @@ var jsBuild = (function buildJs(){
 
             break;
           case 'css':
-            genericCssContent.remove(filepath);
-            genericCssContent.add(filepath);
+            genericCssContent.push(filepath);
             addResource = false;
             break;
           case 'tmpl':
@@ -448,8 +438,7 @@ var jsBuild = (function buildJs(){
                 ext = path.extname(res);
                 if (ext == '.css')
                 {
-                  genericCssContent.remove(res);
-                  genericCssContent.add(res);
+                  genericCssContent.push(res);
                   treeConsole.log('[+] ' + relpath(res));
                 }
                 else
