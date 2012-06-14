@@ -256,7 +256,7 @@ var jsBuild = (function buildJs(){
   var buildMode = options.jsBuildMode;
   var cutDev = options.jsCutDev;
   var packBuild = options.jsPack;
-  var cssOptimazeNames = options.cssOptimazeNames;
+  var cssOptimizeNames = options.cssOptimizeNames;
 
   var rootDepends = [];
   var fileCache = {};
@@ -424,9 +424,9 @@ var jsBuild = (function buildJs(){
             break;
           case 'tmpl':
             var fileContent = fs.readFileSync(filepath, 'utf-8');
-            var decl = basis.template.makeDeclaration(fileContent, path.dirname(filepath) + '/', { classMap: cssOptimazeNames });
+            var decl = basis.template.makeDeclaration(fileContent, path.dirname(filepath) + '/', { classMap: cssOptimizeNames });
 
-            if (cssOptimazeNames && decl.unpredictable)
+            if (cssOptimizeNames && decl.unpredictable)
               treeConsole.log('  [WARN] Unpredictable class names in template, class names optimization is not safe\n');
 
             if (decl.resources.length)
@@ -1387,7 +1387,7 @@ var cssClassNameMap = (function buildCSS(){
   //
   // build className map and optimize
   //
-  if (options.cssOptimazeNames)
+  if (options.cssOptimizeNames)
   {
     treeConsole.log('Process class names');
     (function(){
@@ -1489,7 +1489,7 @@ printHeader("Javascript:");
   var l10nGetPackToken = jsBuild.l10nGetPackToken;
 
 
-  if (options.cssOptimazeNames)
+  if (options.cssOptimizeNames)
   {
     console.log('Optimize class names');
     jsResourceList.forEach(function(res){
