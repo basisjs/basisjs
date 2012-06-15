@@ -758,7 +758,7 @@
         // Opera left document base as <base> element specified,
         // even if this element is removed from document
         // so we set current location for base
-        baseEl.setAttribute('href', path.baseURI);
+        baseEl.setAttribute('href', location);
 
         dom.remove(baseEl);    
       }
@@ -777,7 +777,7 @@
     textNode: null,
 
     init: function(url){
-      this.url = path.relative(url);
+      this.url = path.resolve(url);
       this.baseURI = path.dirname(url) + '/';
 
       dynamicResources[url] = this;
@@ -821,9 +821,9 @@
 
         if (!this.element)
         {
-          this.element = dom.createElement('style[src="' + this.url + '"]');
+          this.element = dom.createElement('style[src="' + path.relative(this.url) + '"]');
           if (!STYLE_APPEND_BUGGY)
-            this.textNode = this.element.appendChild(dom.createText());
+            this.textNode = this.element.appendChild(dom.createText(''));
         }
 
         dom.appendHead(this.element);
