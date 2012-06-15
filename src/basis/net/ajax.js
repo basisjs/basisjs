@@ -428,6 +428,13 @@
     },
 
     timeoutAbort: function(){
+      this.update({ 
+        error: {
+          code: 'TIMEOUT_ERROR',
+          message: 'Timeout error'
+        }
+      });
+
       this.proxy.event_timeout(this);
       this.abort();
     },
