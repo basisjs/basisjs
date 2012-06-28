@@ -38,6 +38,7 @@
   var DOM = basis.dom;
   var Event = basis.dom.event;
   var cssom = basis.cssom;
+  var anim = basis.animation;
 
   var uiNode = basis.ui.Node;
   var uiContainer = basis.ui.Container;
@@ -218,7 +219,7 @@
       this.resetVariables();
 
       this.isUpdating = false;
-      cancelAnimationFrame(this.updateFrameHandle);
+      anim.cancelAnimationFrame(this.updateFrameHandle);
 
       this.updateElementPosition();
 
@@ -427,7 +428,7 @@
 
     nextFrame: function(){
       if (this.isUpdating)
-        this.updateFrameHandle = requestAnimationFrame(this.onUpdateHandler, this.targetElement);
+        this.updateFrameHandle = anim.requestAnimationFrame(this.onUpdateHandler, this.targetElement);
     },
 
     setPosition: function(positionX, positionY, instantly){

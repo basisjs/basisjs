@@ -47,15 +47,19 @@
   var prefixes = ['webkit', 'moz', 'o', 'ms'];
 
   function createMethod(name, fallback){
-    if (global[name])
-      return global[name];
+    var fn = global[name];
 
-    name = name.charAt(0).toUpperCase() + name.substr(1);
-    for (var i = 0, prefix; prefix = prefixes[i++];)
-      if (global[prefix + name])
-        return global[prefix + name];
+    if (!fn)
+    {
+      name = name.charAt(0).toUpperCase() + name.substr(1);
+      for (var i = 0; !fn && i < prefixes.length; i++)
+        fn = global[prefixes[i] + name];
+    }
 
-    return fallback;
+    if (!fn)
+      fn = fallback;
+
+    return fn && fn.bind(global);
   }
 
   var requestAnimationFrame = createMethod('requestAnimationFrame',
@@ -64,7 +68,7 @@
     }
   );
 
-  var cancelAnimationFrame = createMethod('cancelRequestAnimFrame') || createMethod('cancelAnimationFrame', clearTimeout);
+  var cancelAnimationFrame = createMethod('cancelRequestAnimationFrame') || createMethod('cancelAnimationFrame', clearTimeout);
 
 
  /**
@@ -225,11 +229,15 @@
   // export names
   //
 
-  global.requestAnimationFrame = requestAnimationFrame;
-  global.cancelAnimationFrame = cancelAnimationFrame;
-
   module.exports = {
+    // cross-browser methods
+    requestAnimationFrame: requestAnimationFrame,
+    cancelAnimationFrame: cancelAnimationFrame,
+
+    // classes
     Thread: Thread,
     Modificator: Modificator,
+
+    // pre-defined fx
     FX: FX
   };
