@@ -121,6 +121,7 @@
     event_validityChanged: createEvent('validityChanged', 'oldValidity'),
     event_errorChanged: createEvent('errorChanged'),
     event_exampleChanged: createEvent('exampleChanged'),
+    event_descriptionChanged: createEvent('descriptionChanged'),
 
     event_fieldInput: createEvent('fieldInput', 'event'),
     event_fieldChange: createEvent('fieldChange', 'event'),
@@ -135,7 +136,7 @@
           Event.cancelDefault(event);
           this.commit();
         }
-        else
+        else if (keyCode != Event.KEY.TAB)
           this.setValidity();
       }
 
@@ -176,7 +177,8 @@
         events: 'errorChanged',
         getter: 'error'
       },
-      example: 'satellite:'
+      example: 'satellite:',
+      description: 'satellite:'
     },
 
     action: 'focus blur change keydown keypress keyup input'.qw().reduce(
@@ -212,6 +214,27 @@
             }
           }
         })
+      },
+      description: {
+        hook: {
+          descriptionChanged: true
+        },
+        existsIf: function(owner){
+          return owner.description;
+        },
+        instanceOf: UINode.subclass({
+          template: resource('templates/field/Description.tmpl'),
+          binding: {
+            description: 'owner.description'
+          },
+          listen: {
+            owner: {
+              descriptionChanged: function(){
+                this.updateBind('description');
+              }
+            }
+          }
+        })
       }
     },
 
@@ -237,6 +260,13 @@
       {
         this.example = example;
         this.event_exampleChanged();
+      }
+    },
+    setDescription: function(description){
+      if (description != this.description)
+      {
+        this.description = description;
+        this.event_descriptionChanged();
       }
     },
 

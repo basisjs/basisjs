@@ -81,7 +81,7 @@
 
     isSuccessful: function(){
       var xml = this.xhr.responseXML;
-      return AjaxRequest.prototype.isSuccessful.call(this) && (xml !== undefined && xml.documentElement !== undefined);
+      return AjaxRequest.prototype.isSuccessful.call(this) && (xml !== undefined && xml !== null && xml.documentElement !== undefined);
     },
 
     init: function(){
