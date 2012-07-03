@@ -1403,8 +1403,8 @@
           requireFunc.sequence.push(filename);
         }
 
-        if (namespaces[namespace])
-          return namespaces[namespace].exports;
+        //if (namespaces[namespace])
+        //  return namespaces[namespace].exports;
       };
       requireFunc.sequence = [];
     }
