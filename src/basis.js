@@ -1204,15 +1204,17 @@
 
     if (NODE_ENV)
     {
-      utils = Object.slice(require('path'), [
+      var _node_path = require('path');
+      var _node_fs = require('fs');
+      utils = Object.slice(_node_path, [
         'normalize',
         'dirname',
         'extname',
         'basename',
         'resolve',
-        'relative',
-        'existsSync'
+        'relative'
       ]);
+      utils.existsSync = _node_fs.existsSync || _node_path.existsSync;
     }
     else
     {
