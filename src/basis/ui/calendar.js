@@ -37,7 +37,6 @@
 
   var getter = Function.getter;
   var createEvent = basis.event.create;
-  var createDictionary = basis.l10n.createDictionary;
   var l10nToken = basis.l10n.getToken;
 
   var Property = basis.data.property.Property;
@@ -64,13 +63,13 @@
   var monthNumToRef = basis.date.monthNumToAbbr;
   var dayNumToRef = basis.date.dayNumToAbbr;
 
-  createDictionary(namespace, __dirname + 'l10n/calendar', {
+  basis.l10n.createDictionary(namespace, __dirname + 'l10n/calendar', {
     "quarter": "Quarter",
     "today": "Today",
     "selected": "Selected"
   });
 
-  createDictionary(namespace + '.month', __dirname + 'l10n/calendar', {
+  basis.l10n.createDictionary(namespace + '.month', __dirname + 'l10n/calendar', {
     "jan": "January",
     "feb": "February",
     "mar": "March",
@@ -85,7 +84,7 @@
     "dec": "December"
   });
 
-  createDictionary(namespace + '.monthShort', __dirname + 'l10n/calendar', {
+  basis.l10n.createDictionary(namespace + '.monthShort', __dirname + 'l10n/calendar', {
     "jan": "Jan",
     "feb": "Feb",
     "mar": "Mar",
@@ -100,7 +99,7 @@
     "dec": "Dec"
   });
 
-  createDictionary(namespace + '.day', __dirname + 'l10n/calendar', {
+  basis.l10n.createDictionary(namespace + '.day', __dirname + 'l10n/calendar', {
     "mon": "Monday",
     "tue": "Tuesday",
     "wed": "Wednesday",
@@ -110,7 +109,7 @@
     "sun": "Sunday"
   });
 
-  createDictionary(namespace + '.day2', __dirname + 'l10n/calendar', {
+  basis.l10n.createDictionary(namespace + '.day2', __dirname + 'l10n/calendar', {
     "mon": "Mo",
     "tue": "Tu",
     "wed": "We",
@@ -120,7 +119,7 @@
     "sun": "Su"
   });
 
-  createDictionary(namespace + '.day3', __dirname + 'l10n/calendar', {
+  basis.l10n.createDictionary(namespace + '.day3', __dirname + 'l10n/calendar', {
     "mon": "Mon",
     "tue": "Tue",
     "wed": "Wed",
