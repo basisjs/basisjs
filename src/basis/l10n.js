@@ -200,14 +200,34 @@
   }
 
   function createDictionary(namespace, location, tokens){
+    ;;;if (this !== module && typeof console != 'undefined') console.warn('basis.l10n.createDictionary: Called with wrong context. Don\'t shortcut this function call, use basis.l10n.createDictionary to make build possible');
+
     var dictionary = getDictionary(namespace);
 
-    ;;;if (dictionary && typeof console != 'undefined') console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created');
+    ;;;if (dictionary && typeof console != 'undefined') { debugger; console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created') };
 
     dictionary = getDictionary(namespace, true);
     dictionary.location = location;
 
-    dictionary.update('base', tokens);
+    if (Array.isArray(tokens))
+    { // packed dictionary
+      var idx = 0;
+      var token;
+      var item;
+      for (var i = 0; i < tokens.length; i++, idx++)
+      {
+        item = tokens[i];
+        if (typeof item == 'number')
+          idx += item;
+        else
+        {
+          if (token = tokenIndex[idx])
+            token.dictionary.setCultureValue('base', token.name, item);
+        }
+      }
+    }
+    else
+      dictionary.update('base', tokens);
 
     loadCultureForDictionary(dictionary, currentCulture)
 
