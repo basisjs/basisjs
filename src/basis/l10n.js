@@ -237,7 +237,7 @@
 
     var dictionary = getDictionary(namespace);
 
-    ;;;if (dictionary && typeof console != 'undefined') { debugger; console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created') };
+    ;;;if (dictionary && typeof console != 'undefined') { console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created') };
 
     dictionary = getDictionary(namespace, true);
     dictionary.location = location;
