@@ -881,9 +881,16 @@ var jsBuild = (function buildJs(){
     cultureList = cultureList.pop();
     cultureList = eval(cultureList.substring(26, cultureList.length - 1));
     if (typeof cultureList == 'string')
-      cultureList = cultureList.trim().split(/\s+/)
+      cultureList = cultureList.trim().split(/\s+/);
+
     if (Array.isArray(cultureList))
     {
+      for (var i = 0, cultureDef; cultureDef = cultureList[i]; i++)
+      {
+        var clist = cultureDef.split(/\//);
+        cultureList[i] = clist[0];
+      }
+
       console.log('Culture list is [' + cultureList.join(', ') + ']');
 
       treeConsole.incDeep();
