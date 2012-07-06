@@ -169,12 +169,12 @@
   }
 
   function updateNodeDisableContext(node, disabled){
-    if (node.disabled)
-      return;
-
     if (node.contextDisabled != disabled)
     {
       node.contextDisabled = disabled;
+
+      if (node.disabled)
+        return;
 
       if (disabled)
         node.event_disable();
