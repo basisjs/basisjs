@@ -266,7 +266,7 @@
     action: {
       click: function(event){
         var calendar = this.parentNode && this.parentNode.parentNode;
-        if (calendar)
+        if (calendar && !this.isDisabled())
           calendar.templateAction('click', event, this);
       }
     },
@@ -297,11 +297,20 @@
       }
     },
 
-    setPeriod: function(period, selectedDate){
-      if (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd)
+    setPeriod: function(period, selectedDate, rebuild){
+      if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
         this.periodStart = period.periodStart;
         this.periodEnd = period.periodEnd;
+
+        var calendar = this.parentNode && this.parentNode.parentNode;
+        if (calendar)
+        {
+          if (calendar.isPeriodEnabled(this.periodStart, this.periodEnd))
+            this.enable();
+          else
+            this.disable();
+        }
 
         if (selectedDate)
         {
@@ -328,6 +337,7 @@
       // move to next period
       nodePeriod = getPeriod(this.nodePeriodName, new Date(nodePeriod.periodStart).add(this.nodePeriodUnit, this.nodePeriodUnitCount));
     }
+
 
     return result;
   }
@@ -365,8 +375,8 @@
 
     periodStart: null,
     periodEnd: null,
-    setPeriod: function(period){
-      if (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd)
+    setPeriod: function(period, rebuild){
+      if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
       {
         var oldPeriodStart = this.periodStart;
         var oldPeriodEnd = this.periodEnd;
@@ -382,7 +392,7 @@
         if (this.firstChild)
         {
           for (var i = 0; i < this.childNodes.length; i++)
-            this.childNodes[i].setPeriod(periods[i], this.selectedDate);
+            this.childNodes[i].setPeriod(periods[i], this.selectedDate, rebuild);
 
           /*var node = this.getNodeByDate(this.selectedDate);
           if (node)
@@ -487,6 +497,10 @@
 
     setViewDate: function(date){
       this.setPeriod(getPeriod(this.periodName, date));
+    },
+
+    rebuild: function(){
+      this.setPeriod(getPeriod(this.periodName, this.selectedDate), true);
     },
 
     // bild methods
@@ -749,6 +763,23 @@
             selectedDate: this.selectedDate.value
           })
         }, this));
+    },
+
+    setMinDate: function(date){
+      if (this.minDate != date)
+      {
+        this.minDate = date;
+        for (var i = 0, section; section = this.childNodes[i]; i++)
+          section.rebuild();
+      }
+    },
+    setMaxDate: function(date){
+      if (this.maxDate != date)
+      {
+        this.maxDate = date;
+        for (var i = 0, section; section = this.childNodes[i]; i++)
+          section.rebuild();
+      }
     },
 
     // section navigate

@@ -36,6 +36,8 @@
 
   var currentCulture = 'base';
   var cultureList = ['en-US', 'ru-RU', 'uk-UA'];
+  var cultureGetTokenValue = {};
+  var cultureReplacement = {};
   var tokenIndex = [];
 
   var Token = Class(null, {
@@ -140,7 +142,10 @@
         this.setTokenValue(tokenName, culture);
     },
     setTokenValue: function(tokenName, culture){
-      this.tokens[tokenName].set(this.getCultureValue(culture, tokenName) || this.getCultureValue('base', tokenName));
+      this.tokens[tokenName].set(cultureGetTokenValue[culture] ? cultureGetTokenValue[culture].call(this, tokenName) : this.getTokenValue(culture, tokenName));
+    },
+    getTokenValue: function(culture, tokenName){
+      return this.getCultureValue(culture, tokenName) || this.getCultureValue('base', tokenName);
     },
     setCultureValue: function(culture, tokenName, tokenValue){
       var resource = this.resources[culture];
@@ -170,6 +175,34 @@
       delete this.resources;
     }
   });
+
+  function setCultureList(list){
+    if (typeof list == 'string')
+      list = list.qw();
+
+    var cultures = [];
+    var cultureRow;
+
+    for (var i = 0, culture; culture = list[i]; i++)
+    {
+      cultureRow = culture.split('/');
+      cultures.push(cultureRow[0]);
+      cultureGetTokenValue[cultureRow[0]] = createGetTokenValueFunction(cultureRow);
+      cultureReplacement[cultureRow[0]] = cultureRow.slice(1);
+    }
+
+    cultureList = cultures;
+  }
+  function createGetTokenValueFunction(cultureRow)
+  {
+    return new Function('tokenName', 
+      'return ' + cultureRow.map(function(culture){ return 'this.getCultureValue("' + culture +'", tokenName)' }).join(' || ') 
+      + ' || this.getCultureValue("base", tokenName);');
+  }
+
+  function getCultureList(){
+    return cultureList;
+  }
 
   function getToken(path){
     if (arguments.length > 1)
@@ -256,6 +289,13 @@
   }
 
   function loadCultureForDictionary(dictionary, culture){
+    ;;;if (cultureReplacement[culture]) for (var i = 0, cult; cult = cultureReplacement[culture][i]; i++) loadCultureForDictionary_(dictionary, cult);
+
+    loadCultureForDictionary_(dictionary, culture);
+  }
+
+
+  function loadCultureForDictionary_(dictionary, culture){
     if (culture == 'base')
       return;
 
@@ -306,17 +346,6 @@
       for (var dictionaryName in dictionaryData)
         updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);
     }
-  }
-
-
-  function setCultureList(list){
-    if (typeof list == 'string')
-      list = list.qw();
-
-    cultureList = list;
-  }
-  function getCultureList(){
-    return cultureList;
   }
 
 
