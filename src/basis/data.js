@@ -404,6 +404,17 @@
         },
         targetChanged: function(object, oldTarget){
           this.target = object.target;
+
+          var targetListenHandler = this.listen.target;
+          if (targetListenHandler)
+          {
+            if (oldTarget)
+              oldTarget.removeHandler(targetListenHandler, this);
+
+            if (this.target)
+              this.target.addHandler(targetListenHandler, this);
+          }
+
           this.event_targetChanged(oldTarget);
         },
         rootChanged: function(object, oldRoot){
