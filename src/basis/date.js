@@ -57,22 +57,6 @@
     SETTER[key] = new Function('d,v', 'd.set' + value + '(v)');
   });
 
-  /*
-  function(){
-    day = date.getDate();
-    if (day > 28)
-      date.setDate(1);
-
-    this.setMonth/this.setFullYear
-    
-    if (day)
-    {
-      var monthDayCount = this.getMonthDayCount();
-      if (day > monthDayCount)
-        this.setDate(monthDayCount);
-    }
-  }*/
-
   var FORMAT = {
     y: getter('getFullYear().toString().substr(2)'),               // %y - year in YY
     Y: getter('getFullYear()'),                                    // %Y - year in YYYY
@@ -94,6 +78,7 @@
 
   var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d{1,3}))?)?$/;
   var reFormat = /%([ymdhiszp])/ig;
+  var reIsoStringSplit = /\D/;
 
   // functions
 
@@ -247,37 +232,19 @@
     }
   });
 
-  // capability
-  Object.extend(Date.prototype, {
-    toODBCDate: Date.prototype.toISODateString,
-    toODBCTime: Date.prototype.toISOTimeString,
-    toODBC: Date.prototype.toISOString,
-    fromODBC: Date.prototype.fromISOString
-  });
-
   // extend Date
 
-  /*Date.fromISOString = function(isoString){
-    return isoString ? (new Date()).fromISOString(isoString) : null;
-  };*/
-
-  var reIsoStringSplit = /\D/;
   function fastDateParse(y, m, d, h, i, s, ms){
     return new Date(y, m - 1, d, h || 0, i || 0, s || 0, ms || 0);
   }
-  Date.fromISOString = function(isoString){
+  function fromISOString(isoString){
     return isoString ? fastDateParse.apply(null, String(isoString).split(reIsoStringSplit)) : null;
   }
 
-  Date.timer = function(date){
-    var timer = date || new Date;
-    timer.measure = function(seconds){
-      return seconds
-        ? ((new Date - timer)/1000).toFixed(3)
-        : new Date - timer;
-    }
-    return timer;
-  };
+  Date.fromISOString = function(){
+    ;;; if (typeof console != 'undefined') console.warn('Date.fromISOString is deprecated, use basis.date.fromISOString instead');
+    return (Date.fromISOString = fromISOString).apply(this, arguments);
+  }
 
 
   //
@@ -287,7 +254,10 @@
   module.exports = {
     monthNumToAbbr: monthNumToAbbr,
     dayNumToAbbr: dayNumToAbbr,
+
     isLeapYear: isLeapYear,
     getMonthDayCount: getMonthDayCount,
-    format: dateFormat
+
+    format: dateFormat,
+    fromISOString: fromISOString
   };
