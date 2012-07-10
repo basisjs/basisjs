@@ -24,7 +24,6 @@
 
   // import names
   var Class = basis.Class;
-  var Event = basis.dom.event;
 
   var ua = basis.ua;
   var Cleaner = basis.Cleaner;
@@ -34,9 +33,8 @@
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
 
-  var nsData = basis.data;
-  var DataObject = nsData.DataObject;
-  var STATE = nsData.STATE;
+  var DataObject = basis.data.DataObject;
+  var STATE = basis.data.STATE;
 
 
   //
@@ -52,6 +50,7 @@
   /** @const */ var STATE_DONE = 4;
 
   var IS_POST_REGEXP = /POST/i;
+  var ESCAPE_CHARS = /[\%\=\&\<\>\s\+]/g;
 
   // base 
   var DEFAULT_METHOD = 'GET';
@@ -60,35 +59,12 @@
   // TODO: better debug info out
   var logOutput = typeof console != 'undefined' ? function(){ console.log(arguments) } : Function.$self;
 
-  // Encode
-  var CodePages = {};
-  var Encode = {
-    escape: function(string, codepage){
-      var table = (CodePages[codepage] || codepage || CodePages.win1251).escape;
-      return escape(String(string)).replace(/%u0([0-9a-f]{3})/gi, 
-                                            function(match, code) { return table[code.toUpperCase()] || match });
-    },
-    unescape: function(string, codepage){
-      var table = (CodePages[codepage] || codepage || CodePages.win1251).unescape;
-      return unescape(String(string).replace(/%([0-9a-f]{2})/gi, 
-                                             function(match, code){ return table[code.toUpperCase()] || match }));
-    }
-  };
-
-  // Windows 1251
-  (function(){
-    var w1251 = CodePages.win1251 = { escape: {}, unescape: {} };
-    w1251.escape['401']  = '%A8'; // `E' - e kratkoe
-    w1251.unescape['A8'] = 0x401; // `E'
-    w1251.escape['451']  = '%B8'; // `e'
-    w1251.unescape['B8'] = 0x451; // `e'
-
-    for (var i = 0xC0; i <= 0xFF; i++) // A-YAa-ya
-    {
-      w1251.unescape[i.toHex()] = String.fromCharCode(i + 0x350); 
-      w1251.escape[(i + 0x350).toHex()] = '%' + i.toHex();
-    }
-  })();
+  function escapeValue(value){
+    return String(value).replace(ESCAPE_CHARS, function(m){
+      var code = m.charCodeAt(0).toHex();
+      return '%' + (code.length < 2 ? '0' : '') + code;
+    });
+  }
 
 
  /**
@@ -187,8 +163,8 @@
 
     if (readyState == STATE_DONE)
     {
-      //TimeEventManager.remove(this, 'timeoutAbort');
       this.clearTimeout();
+
       // clean event handler
       xhr.onreadystatechange = Function.$undef;
 
@@ -296,21 +272,38 @@
     prepare: Function.$true,
 
     prepareRequestData: function(requestData){
-      var params = Object.iterate(requestData.params , function(key, value){
-        return (value == null) || (value && typeof value.toString == 'function' && value.toString() == null)
-          ? null
-          : key + '=' + String(value.toString()).replace(/[\%\=\&\<\>\s\+]/g, function(m){ var code = m.charCodeAt(0).toHex(); return '%' + (code.length < 2 ? '0' : '') + code })//Encode.escape(basis.crypt.UTF8.fromUTF16(value.toString()))
-      }).filter(Function.$isNotNull).join('&');
+      var params = [];
+      var url = requestData.url;
+
+      for (var key in requestData.params)
+      {
+        var value = requestData.params[key];
+
+        if (value == null || value.toString() == null)
+          continue;
+
+        params.push(escapeValue(key) + '=' + escapeValue(value.toString()));
+      }
+
+      params = params.join('&');
 
       // prepare location & postBody
-      if (IS_POST_REGEXP.test(requestData.method) && !requestData.postBody)
+      if (!requestData.postBody && IS_POST_REGEXP.test(requestData.method))
       {
         requestData.postBody = params || '';
         params = '';
       }
 
+      // process url
+      /*url = url.replace(/:([a-z\_\-][a-z0-9\_\-]+)/gi, function(m, key){
+        if (key in requestData.routerParams)
+          return requestData.routerParams[key]; // escapeValue?
+      });*/
+
       if (params)
-        requestData.url += (requestData.url.indexOf('?') == -1 ? '?' : '&') + params;
+        url += (url.indexOf('?') == -1 ? '?' : '&') + params;
+
+      requestData.requestUrl = url;
 
       return requestData;
     },
@@ -350,14 +343,13 @@
         readyStateChangeHandler.call(this, STATE_UNSENT);
 
       // open XMLHttpRequest
-      xhr.open(requestData.method, requestData.url, requestData.asynchronous);
+      xhr.open(requestData.method, requestData.requestUrl, requestData.asynchronous);
 
       // set headers
       setRequestHeaders(xhr, requestData);
 
       // save transfer start point time & set timeout
       this.setTimeout(this.timeout);
-      //TimeEventManager.add(this, 'timeoutAbort', Date.now() + this.timeout);
 
       // prepare post body
       var postBody = requestData.postBody;
@@ -399,13 +391,7 @@
       if (!this.isIdle())
       {
         this.clearTimeout();
-        //TimeEventManager.remove(this, 'timeoutAbort');
-        //this.xhr.onreadystatechange = Function.$undef;
         this.xhr.abort();
-
-        /*this.proxy.event_abort(this);
-        this.proxy.event_complete(this);
-        this.setState(STATE.READY);*/
 
         if (this.xhr.readyState != STATE_DONE)
           readyStateChangeHandler.call(this, STATE_DONE);
@@ -525,7 +511,6 @@
 
     requests: null,
     poolLimit: null,
-
     poolHashGetter: Function.$true,
 
     event_start: createProxyEvent('start'),
@@ -543,8 +528,6 @@
       EventObject.prototype.init.call(this);
 
       // handlers
-      /*if (this.callback)
-        this.addHandler(this.callback, this);*/
       this.addHandler(PROXY_REQUEST_HANDLER, this);
 
       if (this.poolLimit)
@@ -676,8 +659,8 @@
     init: function(){
       Proxy.prototype.init.call(this);
 
-      this.requestHeaders = {};
-      this.params = {};
+      this.requestHeaders = Object.extend({}, this.requestHeaders);
+      this.params = Object.extend({}, this.params);
     },
 
     // params methods
@@ -704,6 +687,7 @@
         throw new Error('URL is not defined');
 
       Object.extend(requestData, {
+        requestUrl: url,
         url: url,
         method: this.method.toUpperCase(),
         contentType: this.contentType,
@@ -712,6 +696,7 @@
         headers: [this.requestHeaders, requestData.headers].merge(),
         postBody: requestData.postBody || this.postBody,
         params: [this.params, requestData.params].merge(),
+        //routerParams: requestData.routerParams || {},
         influence: requestData.influence
       });
 
@@ -719,6 +704,7 @@
     },
 
     get: function(){
+      ;;; if (typeof console != 'undefined') console.warn('basis.net.ajax.AjaxProxy#get method is deprecated, use basis.net.ajax.AjaxProxy#request method instead');
       this.request.apply(this, arguments);
     }
   });
@@ -800,7 +786,7 @@
       }
       else
       {
-        ;;; console.warn('Request skipped. Service session is not opened');
+        ;;; if (typeof console != 'undefined') console.warn('Request skipped. Service session is not opened');
         return false;
       }
     },
@@ -824,11 +810,10 @@
       if (!this.sessionKey)
         return;
 
-      this.oldSessionKey = this.sessionKey;
       this.sessionKey = null;
       this.sessionData = null;
 
-      this.stoppedProxies = Array.from(this.inprogressProxies.filter(function(proxy){ return proxy.needSignature }));
+      this.stoppedProxies = this.inprogressProxies.filter(function(proxy){ return proxy.needSignature });
 
       for (var i = 0, proxy; proxy = this.inprogressProxies[i]; i++)
         proxy.stop();
@@ -837,7 +822,7 @@
     },
 
     unfreeze: function(){
-      if (/*this.oldSessionKey == this.sessionKey && */this.stoppedProxies)
+      if (this.stoppedProxies)
       {
         for (var i = 0, proxy; proxy = this.stoppedProxies[i]; i++)
           proxy.resume();
@@ -855,7 +840,6 @@
       delete this.stoppedProxies;
       delete this.sessionData;
       delete this.sessionKey;
-      delete this.oldSessionKey;
 
       EventObject.prototype.destroy.call(this);
     }
@@ -867,13 +851,15 @@
   //
 
   module.exports = {
-    Transport: AjaxProxy,
-    TransportDispatcher: ProxyDispatcher,
     createEvent: createProxyEvent,
 
     Proxy: Proxy,
     AjaxProxy: AjaxProxy,
     AjaxRequest: AjaxRequest,
     ProxyDispatcher: ProxyDispatcher,
-    Service: Service
+    Service: Service,
+
+    // backward capability, deprecated
+    Transport: AjaxProxy,
+    TransportDispatcher: ProxyDispatcher
   };
