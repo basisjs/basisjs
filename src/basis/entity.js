@@ -588,6 +588,9 @@
           return this.__id__;
         }
       });
+
+      if (config.state)
+        entityClass__.extend({ state: config.state });
     },
     reader: function(data){
       var result = {};
