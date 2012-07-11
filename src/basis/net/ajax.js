@@ -689,9 +689,9 @@
       Object.extend(requestData, {
         requestUrl: url,
         url: url,
-        method: this.method.toUpperCase(),
-        contentType: this.contentType,
-        encoding: this.encoding,
+        method: (requestData.method || this.method).toUpperCase(),
+        contentType: requestData.contentType || this.contentType,
+        encoding: requestData.encoding || this.encoding,
         asynchronous: this.asynchronous,
         headers: [this.requestHeaders, requestData.headers].merge(),
         postBody: requestData.postBody || this.postBody,
