@@ -49,12 +49,10 @@
   /** @const */ var STATE_LOADING = 3;
   /** @const */ var STATE_DONE = 4;
 
+  var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.qw();
   var IS_POST_REGEXP = /POST/i;
+  var ID_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
   var ESCAPE_CHARS = /[\%\=\&\<\>\s\+]/g;
-
-  // base 
-  var DEFAULT_METHOD = 'GET';
-  var DEFAULT_CONTENT_TYPE = 'application/x-www-form-urlencoded';
 
   // TODO: better debug info out
   var logOutput = typeof console != 'undefined' ? function(){ console.log(arguments) } : Function.$self;
@@ -111,7 +109,7 @@
       'JS-Framework': 'Basis'
     };
 
-    if (IS_POST_REGEXP.test(requestData.method)) 
+    if (ID_METHOD_WITH_BODY.test(requestData.method)) 
     {
       if (requestData.contentType != 'multipart/form-data')
         headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
@@ -288,7 +286,7 @@
       params = params.join('&');
 
       // prepare location & postBody
-      if (!requestData.postBody && IS_POST_REGEXP.test(requestData.method))
+      if (!requestData.postBody && ID_METHOD_WITH_BODY.test(requestData.method))
       {
         requestData.postBody = params || '';
         params = '';
@@ -355,7 +353,7 @@
       var postBody = requestData.postBody;
 
       // BUGFIX: IE fixes for post body
-      if (IS_POST_REGEXP.test(requestData.method) && ua.test('ie9-'))
+      if (ID_METHOD_WITH_BODY.test(requestData.method) && ua.test('ie9-'))
       {
         if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
           // sending xmldocument content as string, otherwise IE override content-type header
@@ -652,8 +650,8 @@
 
     // transport properties
     asynchronous: true,
-    method: DEFAULT_METHOD,
-    contentType: DEFAULT_CONTENT_TYPE,
+    method: 'GET',
+    contentType: 'application/x-www-form-urlencoded',
     encoding: null,
 
     init: function(){
@@ -689,7 +687,7 @@
       Object.extend(requestData, {
         requestUrl: url,
         url: url,
-        method: (requestData.method || this.method).toUpperCase(),
+        method: requestData.method || this.method,
         contentType: requestData.contentType || this.contentType,
         encoding: requestData.encoding || this.encoding,
         asynchronous: this.asynchronous,
