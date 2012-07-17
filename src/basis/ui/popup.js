@@ -92,6 +92,8 @@
   var Popup = Class(UIContainer, {
     className: namespace + '.Popup',
 
+    closeText: 'Close',
+
     template: resource('templates/popup/Popup.tmpl'),
 
     binding: {
@@ -106,6 +108,9 @@
         getter: function(node){
           return (node.orientation + '-' + node.dir.qw().slice(2, 4).join('-')).toLowerCase();
         }
+      },
+      closeText: function(node){
+        return node.closeText;
       }
     },
 
