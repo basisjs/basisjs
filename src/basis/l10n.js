@@ -289,7 +289,7 @@
   }
 
   function loadCultureForDictionary(dictionary, culture){
-    ;;;if (cultureReplacement[culture]) for (var i = 0, cult; cult = cultureReplacement[culture][i]; i++) loadCultureForDictionary_(dictionary, cult);
+    if (cultureReplacement[culture]) for (var i = 0, cult; cult = cultureReplacement[culture][i]; i++) loadCultureForDictionary_(dictionary, cult);
 
     loadCultureForDictionary_(dictionary, culture);
   }

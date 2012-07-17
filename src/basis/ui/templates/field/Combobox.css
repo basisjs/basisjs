@@ -101,7 +101,7 @@
     -moz-opacity: .95;
     -khtml-opacity: .95;
     position: absolute;
-    border: 1px solid #87C4E0 !important;
+    border: 1px solid #87C4E0;
     border-bottom: none !important;
     background: white;
     /*margin: 1px 0 0;*/
