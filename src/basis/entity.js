@@ -389,7 +389,7 @@
                 {
                   entity = entityType.singleton;
                   if (!entity)
-                    return entityType.singleton = new entityClass(data);
+                    return new entityClass(data);
                 }
               }
           }
@@ -982,6 +982,9 @@
         all.event_datasetChanged({
           inserted: [this]
         });
+
+        if (entityType.isSingleton)
+          entityType.singleton = this;
       },
       toString: function(){
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
@@ -1276,6 +1279,9 @@
         all.event_datasetChanged({
           deleted: [this]
         });
+
+        if (entityType.isSingleton)
+          entityType.singleton = null;
 
         // clear links
         this.data = NULL_INFO; 

@@ -1298,8 +1298,8 @@
   module.exports = {
     Validator: Validator,  // deprecated
     validator: Validator,
-
     ValidatorError: ValidatorError,
+
     Field: Field,
     Hidden: Hidden,
     File: File,
