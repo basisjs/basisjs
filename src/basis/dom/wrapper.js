@@ -69,7 +69,8 @@
   /** @const */ var EXCEPTION_PARENTNODE_OWNER_CONFLICT = namespace + ': Node can\'t has owner and parentNode';
 
   var DELEGATE = {
-    NONE: 'none',
+    ANY: true,
+    NONE: false,
     PARENT: 'parent',
     OWNER: 'owner'
   };
@@ -826,7 +827,7 @@
 
         this.event_ownerChanged(oldOwner);
 
-        if (this.autoDelegate == DELEGATE.OWNER)
+        if (this.autoDelegate == DELEGATE.OWNER || this.autoDelegate === DELEGATE.ANY)
           this.setDelegate(owner);
       }
     },
@@ -1534,7 +1535,7 @@
           newChild.match(this.matchFunction);
 
         // delegate parentNode automatically, if necessary
-        if (newChild.autoDelegate == DELEGATE.PARENT)
+        if (newChild.autoDelegate == DELEGATE.PARENT || newChild.autoDelegate === DELEGATE.ANY)
           newChild.setDelegate(this);
 
         // dispatch event
@@ -1603,7 +1604,7 @@
       if (!this.dataSource)
         this.event_childNodesModified({ deleted: [oldChild] });
 
-      if (oldChild.autoDelegate == DELEGATE.PARENT)
+      if (oldChild.autoDelegate == DELEGATE.PARENT || oldChild.autoDelegate === DELEGATE.ANY)
         oldChild.setDelegate();
 
       // return removed child
@@ -1667,7 +1668,7 @@
           child.nextSibling = null;
           child.previousSibling = null;
 
-          if (child.autoDelegate == DELEGATE.PARENT)
+          if (child.autoDelegate == DELEGATE.PARENT || child.autoDelegate === DELEGATE.ANY)
             child.setDelegate();
         }
         else
