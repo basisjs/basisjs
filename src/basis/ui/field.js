@@ -642,7 +642,7 @@
       select: function(event){
         if (!this.isDisabled())
         {
-          this.select(true);
+          this.select(this.parentNode.multipleSelect);
 
           if (Event.sender(event).tagName != 'INPUT')
             Event.kill(event);
