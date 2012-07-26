@@ -51,7 +51,7 @@
 
   var METHODS = 'HEAD GET POST PUT PATCH DELETE TRACE LINK UNLINK CONNECT'.qw();
   var IS_POST_REGEXP = /POST/i;
-  var ID_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
+  var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
   var ESCAPE_CHARS = /[\%\=\&\<\>\s\+]/g;
 
   // TODO: better debug info out
@@ -109,7 +109,7 @@
       'JS-Framework': 'Basis'
     };
 
-    if (ID_METHOD_WITH_BODY.test(requestData.method)) 
+    if (IS_METHOD_WITH_BODY.test(requestData.method)) 
     {
       if (requestData.contentType != 'multipart/form-data')
         headers['Content-Type'] = requestData.contentType + (requestData.encoding ? '\x3Bcharset=' + requestData.encoding : '');
@@ -286,7 +286,7 @@
       params = params.join('&');
 
       // prepare location & postBody
-      if (!requestData.postBody && ID_METHOD_WITH_BODY.test(requestData.method))
+      if (!requestData.postBody && IS_METHOD_WITH_BODY.test(requestData.method))
       {
         requestData.postBody = params || '';
         params = '';
@@ -353,7 +353,7 @@
       var postBody = requestData.postBody;
 
       // BUGFIX: IE fixes for post body
-      if (ID_METHOD_WITH_BODY.test(requestData.method) && ua.test('ie9-'))
+      if (IS_METHOD_WITH_BODY.test(requestData.method) && ua.test('ie9-'))
       {
         if (typeof postBody == 'object' && typeof postBody.documentElement != 'undefined' && typeof postBody.xml == 'string')
           // sending xmldocument content as string, otherwise IE override content-type header
