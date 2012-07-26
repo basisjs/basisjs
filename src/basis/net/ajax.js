@@ -293,10 +293,11 @@
       }
 
       // process url
-      /*url = url.replace(/:([a-z\_\-][a-z0-9\_\-]+)/gi, function(m, key){
-        if (key in requestData.routerParams)
-          return requestData.routerParams[key]; // escapeValue?
-      });*/
+      if (requestData.routerParams)
+        url = url.replace(/:([a-z\_\-][a-z0-9\_\-]+)/gi, function(m, key){
+          if (key in requestData.routerParams)
+            return requestData.routerParams[key]; // escapeValue?
+        });
 
       if (params)
         url += (url.indexOf('?') == -1 ? '?' : '&') + params;
@@ -694,7 +695,7 @@
         headers: [this.requestHeaders, requestData.headers].merge(),
         postBody: requestData.postBody || this.postBody,
         params: [this.params, requestData.params].merge(),
-        //routerParams: requestData.routerParams || {},
+        routerParams: requestData.routerParams,
         influence: requestData.influence
       });
 
