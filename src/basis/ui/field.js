@@ -1279,18 +1279,25 @@
   // export names
   //
 
+  var fieldType2Class = {
+    'hidden': Hidden,
+    'file': File,
+    'text': Text,
+    'password': Password,
+    'textarea': Textarea,
+    'checkbox': Checkbox,
+    'label': Label,
+    'select': Select,
+    'combobox': Combobox,
+    'radiogroup': RadioGroup,
+    'checkgroup': CheckGroup
+  };
+
   module.setWrapper(function(config){
-    var fieldType = (config && config.type) || 'Text';
-    var alias = {
-      'radiogroup': 'RadioGroup',
-      'checkgroup': 'CheckGroup'
-    };
+    var fieldType = (config && config.type) || 'text';
 
-    fieldType = alias[fieldType.toLowerCase()] || fieldType.capitalize();
-    var fieldClass = module.exports[fieldType];
-
-    if (fieldClass && fieldClass.isSubclassOf(Field))
-      return new fieldClass(config);
+    if (fieldType2Class.hasOwnProperty(fieldType))
+      return new fieldType2Class[fieldType](config);
     else
       throw 'Unknown field type `{0}`'.format(fieldType);
   });
@@ -1299,6 +1306,12 @@
     Validator: Validator,  // deprecated
     validator: Validator,
     ValidatorError: ValidatorError,
+
+    addFieldType: function(type, fieldClass){
+      ;;;if (!fieldClass.isSubclassOf(Field)) throw 'basis.ui.field.addFieldType: Class is not a subclass of Field';
+
+      fieldType2Class[type] = fieldClass;
+    },
 
     Field: Field,
     Hidden: Hidden,
