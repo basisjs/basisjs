@@ -10,7 +10,6 @@
 */
 
   basis.require('basis.event');
-  basis.require('basis.template');
   basis.require('basis.dom');
   basis.require('basis.ui');
   basis.require('basis.ui.field');

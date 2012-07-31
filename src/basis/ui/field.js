@@ -11,7 +11,6 @@
 
   basis.require('basis.l10n');
   basis.require('basis.event');
-  basis.require('basis.template');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
@@ -35,7 +34,6 @@
   var Class = basis.Class;
   var Event = basis.dom.event;
   var DOM = basis.dom;
-  var Template = basis.template.Template;
 
   var complete = Object.complete;
   var coalesce = Object.coalesce;
