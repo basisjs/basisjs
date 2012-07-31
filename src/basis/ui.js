@@ -12,7 +12,7 @@
   basis.require('basis.l10n');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
-  basis.require('basis.template');
+  basis.require('basis.template.html');
 
 
  /**
@@ -35,7 +35,7 @@
   var DOM = basis.dom;
   var cssom = basis.cssom;
 
-  var Template = basis.template.Template;
+  var Template = basis.template.html.Template;
   var classList = basis.cssom.classList;
   var getter = Function.getter;
   var createEvent = basis.event.create;

@@ -2163,6 +2163,8 @@
   // extend Basis
   var basis = getNamespace(namespace);
   basis.extend({
+    NODE_ENV: NODE_ENV,
+
     namespace: getNamespace,
     require: requireNamespace,
     resource: fetchResourceFunction,
