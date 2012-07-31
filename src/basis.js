@@ -1303,6 +1303,7 @@
               extend: function(newNames){
                 complete(this, newNames);
                 extend(this.exports, newNames);
+                return this;
               },
               setWrapper: function(wrapFn){
                 if (typeof wrapFn == 'function')
@@ -1727,7 +1728,7 @@
       for (var key in { toString: 1 })
         return;
       return true;
-    })()
+    })();
 
 
     //
@@ -2165,6 +2166,7 @@
     resource: fetchResourceFunction,
 
     ready: onLoad,
+    Class: Class,
 
     platformFeature: {},
 
