@@ -18,7 +18,6 @@ basis_require('basis.ext.flashcanvas');*/
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
-  basis.require('basis.html');
   basis.require('basis.ui');
 
 

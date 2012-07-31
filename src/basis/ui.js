@@ -12,7 +12,7 @@
   basis.require('basis.l10n');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
-  basis.require('basis.html');
+  basis.require('basis.template');
 
 
  /**

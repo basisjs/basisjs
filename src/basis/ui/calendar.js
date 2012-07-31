@@ -13,7 +13,6 @@
   basis.require('basis.date');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
-  basis.require('basis.html');
   basis.require('basis.data.property');
   basis.require('basis.ui');
   basis.require('basis.l10n');

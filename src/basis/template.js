@@ -2134,7 +2134,7 @@
   * method.
   * @example
   *   // create a template
-  *   var template = new basis.html.Template(
+  *   var template = new basis.template.Template(
   *     '<li{element} class="listitem">' +
   *       '<a href{hrefAttr}="#">{titleText}</a>' + 
   *       '<span class="description">{descriptionText}</span>' +
