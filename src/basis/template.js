@@ -364,7 +364,7 @@
     } catch(e) {
       /*
       console.warn(e + ':\n' + source.substr(0, br) + '\n' + Array(i - offset + 1).join(' ') + '\u25b2-- problem here \n' + source.substr(br));
-      /*/console.warn(e, source); /* */
+      /*/;;;if (typeof console != 'undefined') console.warn(e, source); /* */
     }
 
     return result;
@@ -734,7 +734,7 @@
                     }
                     else
                     {
-                      console.warn('Recursion: ', includeStack.join(' -> '));
+                      ;;;if (typeof console != 'undefined') console.warn('Recursion: ', includeStack.join(' -> '));
                     }
                   }
 

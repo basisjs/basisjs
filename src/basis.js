@@ -1441,16 +1441,16 @@
           resourceContent = req.responseText;
         else
         {
-          if (typeof console != 'undefined')
-            console.warn('basis.resource: Unable to load ' + requestUrl);
+          ;;;if (typeof console != 'undefined') console.warn('basis.resource: Unable to load ' + requestUrl);
         }
       }
       else
       {
         if (pathUtils.existsSync(requestUrl))
           resourceContent = require('fs').readFileSync(requestUrl, 'utf-8');
-        else
-          console.warn('basis.resource: Unable to load ' + requestUrl);
+        else {
+          ;;;if (typeof console != 'undefined') console.warn('basis.resource: Unable to load ' + requestUrl);
+        }
       }
 
       externalResourceCache[requestUrl] = resourceContent;
@@ -1586,7 +1586,7 @@
       try {
         result = JSON.parse(String(resource));
       } catch(e) {
-        if (typeof console != 'undefined') console.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
+        ;;;if (typeof console != 'undefined') console.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
       }
       return result || false;
     }
@@ -1612,12 +1612,7 @@
             '//@ sourceURL=' + sourceURL
           );
     } catch(e) {
-      //;;;console.log('Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e));
-      var src = document.createElement('script');
-      src.src = sourceURL;
-      src.async = false;
-      document.head.appendChild(src);
-      document.head.removeChild(src);
+      ;;;var src = document.createElement('script');src.src = sourceURL;src.async = false;document.head.appendChild(src);document.head.removeChild(src);
       throw 'Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e);
       //return;
     }

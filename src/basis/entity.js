@@ -133,8 +133,7 @@
     var args = Array.from(arguments);
     var func = args.pop();
 
-    if (typeof func != 'function')
-      console.warn('Last argument for calculate field constructor must be a function');
+    ;;;if (typeof func != 'function' && typeof console != 'undefined') console.warn('Last argument for calculate field constructor must be a function');
 
     var cond = [];
     var calcArgs = [];
