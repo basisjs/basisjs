@@ -39,7 +39,6 @@
   var createEvent = basis.event.create;
 
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
   var ButtonPanel = basis.ui.button.ButtonPanel;
 
 
@@ -111,7 +110,7 @@
  /**
   * @class
   */
-  var Window = Class(UIContainer, {
+  var Window = Class(UINode, {
     className: namespace + '.Window',
 
     template: resource('templates/window/Window.tmpl'),
@@ -190,7 +189,7 @@
       // add generic rule
       this.cssRule = cssom.uniqueRule();
 
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       // make main element invisible by default
       cssom.hide(this.element);
@@ -276,7 +275,7 @@
       this.updateBind('title');
     },
     templateSync: function(noRecreate){
-      UIContainer.prototype.templateSync.call(this, noRecreate);
+      UINode.prototype.templateSync.call(this, noRecreate);
       if (this.element)
       {
         if (this.dde)
@@ -364,7 +363,7 @@
         delete this.dde;
       }
 
-      UIContainer.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
 
       this.cssRule.destroy();
       this.cssRule = null;
@@ -376,7 +375,7 @@
   //
 
   var wmBlocker = new Blocker();
-  var windowManager = new UIContainer({
+  var windowManager = new UINode({
     template: '<div id="Basis-WindowStack" class="{hasChildren}"/>',
     selection: true,
     childClass: Window

@@ -40,7 +40,6 @@
 
   var Property = basis.data.property.Property;
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
 
 
   //
@@ -341,7 +340,7 @@
     return result;
   }
 
-  var CalendarSection = Class(UIContainer, {
+  var CalendarSection = Class(UINode, {
     className: namespace + '.CalendarSection',
 
     event_periodChanged: createEvent('periodChanged'),
@@ -461,7 +460,7 @@
         }
       }, this);
 
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       this.setSelectedDate(selectedDate);
 
@@ -667,7 +666,7 @@
   // Calendar
   //
 
-  var Calendar = Class(UIContainer, {
+  var Calendar = Class(UINode, {
     className: namespace + '.Calendar',
 
     event_change: createEvent('change'),
@@ -708,7 +707,7 @@
         for (var i = 0, section; section = delta.deleted[i++];)
           this.selectedDate.removeLink(section, section.setSelectedDate);
 
-      UIContainer.prototype.event_childNodesModified.call(this, delta);
+      UINode.prototype.event_childNodesModified.call(this, delta);
 
       DOM.insert(
         DOM.clear(this.tmpl.sectionTabs),
@@ -719,7 +718,7 @@
         this.firstChild.select();
     },
     templateAction: function(actionName, event, node){
-      UIContainer.prototype.templateAction.call(this, actionName, event);
+      UINode.prototype.templateAction.call(this, actionName, event);
 
       if (node instanceof CalendarNode)
       {
@@ -751,7 +750,7 @@
       this.date = new Property(new Date(this.date || now));
 
       // inherit
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       // min/max dates
 
@@ -1060,7 +1059,7 @@
     // destruction
 
     destroy: function(){
-      UIContainer.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
 
       this.date.destroy();
     }

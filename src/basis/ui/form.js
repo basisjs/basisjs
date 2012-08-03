@@ -32,14 +32,14 @@
   var createEvent = basis.event.create;
   var events = basis.event.events;
 
-  var UIContainer = basis.ui.Container;
+  var UINode = basis.ui.Node;
   var field = basis.ui.field;
 
 
  /**
   * @class
   */
-  var FormContent = UIContainer.subclass({
+  var FormContent = UINode.subclass({
     className: namespace + '.FormContent',
     
     childClass: field.Field,

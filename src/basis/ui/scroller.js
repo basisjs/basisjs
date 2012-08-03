@@ -40,8 +40,7 @@
   var cssom = basis.cssom;
   var anim = basis.animation;
 
-  var uiNode = basis.ui.Node;
-  var uiContainer = basis.ui.Container;
+  var UINode = basis.ui.Node;
 
 
   //
@@ -500,7 +499,7 @@
  /**
   * @class
   */
-  var Scrollbar = uiNode.subclass({
+  var Scrollbar = UINode.subclass({
     className: namespace + '.Scrollbar',
 
     cssClassName: 'Basis-ScrollPanel-Scrollbar',
@@ -584,7 +583,7 @@
  /**
   * @class
   */
-  var ScrollPanel = uiContainer.subclass({
+  var ScrollPanel = UINode.subclass({
     className: namespace + '.ScrollPanel',
 
     useScrollbars: true,
@@ -637,7 +636,7 @@
     },
 
     init: function(){
-      uiContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       //init variables
       this.minPositionX = 0;
@@ -724,7 +723,7 @@
       this.scroller.destroy();
       this.scroller = null;
 
-      uiContainer.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
     }
   });
 
@@ -764,7 +763,7 @@
       }
     },
 
-    childClass: uiNode.subclass({
+    childClass: UINode.subclass({
       className: namespace + '.ScrollGalleryItem',
 
       template: resource('templates/scroller/ScrollGalleryItem.tmpl'),
@@ -777,7 +776,7 @@
       },
 
       event_select: function(){
-        uiNode.prototype.event_select.call(this);
+        UINode.prototype.event_select.call(this);
         this.parentNode.scrollToChild(this);
       }
     }),

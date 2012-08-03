@@ -32,7 +32,6 @@
   var Popup = basis.ui.popup.Popup;
 
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
   var UIPartitionNode = basis.ui.PartitionNode;
   var UIGroupingNode = basis.ui.GroupingNode;
 
@@ -44,7 +43,7 @@
  /**
   * @class
   */
-  var MenuItem = Class(UIContainer, {
+  var MenuItem = Class(UINode, {
     className: namespace + '.MenuItem',
 
     childClass: Class.SELF,

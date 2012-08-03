@@ -40,7 +40,6 @@
   var nsLayout = basis.layout;
 
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
 
 
   //
@@ -89,7 +88,7 @@
  /**
   * @class
   */
-  var Popup = Class(UIContainer, {
+  var Popup = Class(UINode, {
     className: namespace + '.Popup',
 
     closeText: 'Close',
@@ -139,7 +138,7 @@
     ignoreClickFor: null,
 
     init: function(){
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       // add generic rule
       this.cssRule = cssom.uniqueRule(this.element);
@@ -156,7 +155,7 @@
         this.thread.addHandler(THREAD_HANDLER, this);
     },
     templateSync: function(noRecreate){
-      UIContainer.prototype.templateSync.call(this, noRecreate);
+      UINode.prototype.templateSync.call(this, noRecreate);
       if (this.element)
       {
         cssom.classList(this.element).add(this.cssRule.token);
@@ -422,7 +421,7 @@
 
       this.hide();
 
-      UIContainer.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
 
       this.cssRule.destroy();
       this.cssRule = null;
@@ -446,7 +445,7 @@
   // NOTE: popupManager adds global event handlers dynamically because click event
   // which makes popup visible can also hide it (as click outside of popup).
 
-  var popupManager = new UIContainer({
+  var popupManager = new UINode({
     template: '<div id="Basis-PopupStack" class="{hasChildren}">',
 
     handheldMode: false,
@@ -482,7 +481,7 @@
         Event.removeHandler(window, 'resize', this.realignAll, this);
       }
 
-      UIContainer.prototype.event_childNodesModified.call(this, delta);
+      UINode.prototype.event_childNodesModified.call(this, delta);
     },
 
     insertBefore: function(newChild, refChild){
@@ -490,7 +489,7 @@
       var documentST_ = document.documentElement.scrollTop;
       var bodyST_ = document.body.scrollTop;
 
-      if (UIContainer.prototype.insertBefore.call(this,newChild, refChild))
+      if (UINode.prototype.insertBefore.call(this,newChild, refChild))
       {
         // store saved scrollTop to popup and scroll viewport to top
         newChild.documentST_ = documentST_;
@@ -511,7 +510,7 @@
         if (popup.hideOnAnyClick && popup.nextSibling)
           this.removeChild(popup.nextSibling);
 
-        UIContainer.prototype.removeChild.call(this, popup);
+        UINode.prototype.removeChild.call(this, popup);
 
         // restore documentElement (IE, mozilla and others) and body (webkit) scrollTop
         if (this.handheldMode)

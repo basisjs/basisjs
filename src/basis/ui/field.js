@@ -47,7 +47,6 @@
 
   var Selection = basis.dom.wrapper.Selection;
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
   var Popup = basis.ui.popup.Popup;
 
 
@@ -91,7 +90,7 @@
   * Base class for all form field classes
   * @class
   */
-  var Field = UIContainer.subclass({
+  var Field = UINode.subclass({
     className: namespace + '.Field',
 
     //
@@ -247,7 +246,7 @@
       if (typeof this.defaultValue == 'undefined')
         this.defaultValue = this.value;
 
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       if (this.value)
         this.setValue(this.value);
@@ -341,7 +340,7 @@
       this.error = null;
       this.example = null;
 
-      UIContainer.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
     }
   });
 
@@ -998,7 +997,7 @@
       if (this.childNodesElement)
         DOM.remove(this.childNodesElement);
 
-      UIContainer.prototype.templateSync.call(this, noRecreate);
+      UINode.prototype.templateSync.call(this, noRecreate);
 
       if (this.childNodesElement && this.popup)
         DOM.insert(this.popup.tmpl.content, this.childNodesElement);

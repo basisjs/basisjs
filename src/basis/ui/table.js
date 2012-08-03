@@ -48,7 +48,6 @@
   var PartitionNode = nsWrapper.PartitionNode;
 
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
   var UIPartitionNode = basis.ui.PartitionNode;
   var UIGroupingNode = basis.ui.GroupingNode;
 
@@ -230,7 +229,7 @@
  /**
   * @class
   */
-  var Header = Class(UIContainer, {
+  var Header = Class(UINode, {
     className: namespace + '.Header',
 
     childClass: HeaderCell,
@@ -275,7 +274,7 @@
         }
       };
 
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       this.applyConfig_(this.structure)
     },
@@ -358,7 +357,7 @@
  /**
   * @class
   */
-  var Footer = Class(UIContainer, {
+  var Footer = Class(UINode, {
     className: namespace + '.Footer',
 
     childClass: FooterCell,
@@ -366,7 +365,7 @@
     template: resource('templates/table/Footer.tmpl'),
 
     init: function(){
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       this.applyConfig_(this.structure);
 
@@ -474,7 +473,7 @@
  /**
   * @class
   */
-  var Table = Class(UIContainer, {
+  var Table = Class(UINode, {
     className: namespace + '.Table',
 
     selection: true, 
@@ -499,7 +498,7 @@
 
       this.applyConfig_(this.structure);
 
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       this.headerConfig = this.header;
       this.footerConfig = this.footer;
@@ -568,7 +567,7 @@
     },
 
     destroy: function(){
-      UIContainer.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
 
       this.header.destroy();
       this.header = null;

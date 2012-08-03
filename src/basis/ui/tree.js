@@ -52,7 +52,7 @@
   var getter = Function.getter;
   var createEvent = basis.event.create;
 
-  var UIContainer = basis.ui.Container;
+  var UINode = basis.ui.Node;
   var UIPartitionNode = basis.ui.PartitionNode;
   var UIGroupingNode = basis.ui.GroupingNode;
 
@@ -123,7 +123,7 @@
   * Base child class for {basis.ui.tree.Tree}
   * @class
   */
-  var Node = Class(UIContainer, ExpandCollapseMixin, {
+  var Node = Class(UINode, ExpandCollapseMixin, {
     className: namespace + '.Node',
 
    /**
@@ -258,7 +258,7 @@
  /**
   * @class
   */
-  var Tree = Class(UIContainer, ExpandCollapseMixin, {
+  var Tree = Class(UINode, ExpandCollapseMixin, {
     className: namespace + '.Tree',
 
    /**

@@ -41,7 +41,7 @@
 
   var nsWrappers = DOM.wrapper;
 
-  var UIContainer = basis.ui.Container;
+  var UINode = basis.ui.Node;
 
 
   //
@@ -551,7 +551,7 @@
  /**
   * @class
   */
-  var VerticalPanel = Class(UIContainer, {
+  var VerticalPanel = Class(UINode, {
     className: namespace + '.VerticalPanel',
 
     template: 
@@ -560,7 +560,7 @@
     flex: 0,
 
     init: function(){
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       if (this.flex)
       {
@@ -585,7 +585,7 @@
  /**
   * @class
   */
-  var VerticalPanelStack = Class(UIContainer, {
+  var VerticalPanelStack = Class(UINode, {
     className: namespace + '.VerticalPanelStack',
 
     childClass: VerticalPanel,
@@ -604,7 +604,7 @@
         this.cssRule.setProperty('overflow', 'auto');
       //}
 
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
 
       if (SUPPORT_DISPLAYBOX === false)
       {
@@ -617,7 +617,7 @@
       }
     },
     insertBefore: function(newChild, refChild){
-      if (newChild = UIContainer.prototype.insertBefore.call(this, newChild, refChild))
+      if (newChild = UINode.prototype.insertBefore.call(this, newChild, refChild))
       {
         if (newChild.flex && this.cssRule)
           classList(newChild.element).add(this.ruleClassName);
@@ -628,7 +628,7 @@
       }
     },
     removeChild: function(oldChild){
-      if (UIContainer.prototype.removeChild.call(this, oldChild))
+      if (UINode.prototype.removeChild.call(this, oldChild))
       {
         if (oldChild.flex && this.cssRule)
           classList(oldChild.element).remove(this.ruleClassName);
@@ -681,7 +681,7 @@
         this.cssRule.setProperty('height', Math.max(0, flexHeight/flexNodeCount) + 'px');
     },
     destroy: function(){
-      UIContainer.prototype.destroy.call(this);
+      UINode.prototype.destroy.call(this);
 
       this.cssRule.destroy();
       this.cssRule = null;

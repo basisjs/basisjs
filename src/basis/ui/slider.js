@@ -36,7 +36,6 @@
 
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
   var DragDropElement = basis.dragdrop.DragDropElement;
   var Box = basis.layout.Box;
 
@@ -86,7 +85,7 @@
  /**
   * @class
   */
-  var MarkLayer = UIContainer.subclass({
+  var MarkLayer = UINode.subclass({
     className: namespace + '.MarkLayer',
 
     template: resource('templates/slider/MarkLayer.tmpl'),
@@ -99,7 +98,7 @@
     marks: null,
 
     init: function(){
-      UIContainer.prototype.init.call(this);
+      UINode.prototype.init.call(this);
       this.apply();
     },
 
@@ -272,7 +271,7 @@
     * @inheritDoc
     */
     satelliteConfig: {
-      marks: UIContainer.subclass({
+      marks: UINode.subclass({
         className: namespace + '.MarkLayers',
         template: resource('templates/slider/MarkLayers.tmpl'),
         childClass: MarkLayer

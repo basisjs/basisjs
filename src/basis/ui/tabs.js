@@ -33,7 +33,6 @@
   var getter = Function.getter;
 
   var UINode = basis.ui.Node;
-  var UIContainer = basis.ui.Container;
 
 
   //
@@ -53,7 +52,7 @@
  /**
   * @class
   */
-  var AbstractTabsControl = Class(UIContainer, {
+  var AbstractTabsControl = Class(UINode, {
     className: namespace + '.AbstractTabsControl',
 
     selection: true,
@@ -63,7 +62,7 @@
 
     event_childNodesModified: function(delta){
       findAndSelectActiveNode(this);
-      UIContainer.prototype.event_childNodesModified.call(this, delta);
+      UINode.prototype.event_childNodesModified.call(this, delta);
     },
 
     listen: {
@@ -105,7 +104,7 @@
  /**
   * @class
   */
-  var Tab = Class(UIContainer, {
+  var Tab = Class(UINode, {
     className: namespace + '.Tab',
 
     childClass: null,
@@ -115,7 +114,7 @@
       if (this.unselectDisabled)
         this.unselect();
 
-      UIContainer.prototype.event_disable.call(this);
+      UINode.prototype.event_disable.call(this);
     },
 
     template: resource('templates/tabs/Tab.tmpl'),
@@ -163,7 +162,7 @@
  /**
   * @class
   */
-  var Page = Class(UIContainer, {
+  var Page = Class(UINode, {
     className: namespace + '.Page',
     
     template: resource('templates/tabs/Page.tmpl')

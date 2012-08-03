@@ -17,8 +17,7 @@
 
  /**
   * Classes:
-  *   {basis.ui.Node}, {basis.ui.Container}, 
-  *   {basis.ui.PartitionNode}, {basis.ui.GroupingNode}
+  *   {basis.ui.Node}, {basis.ui.PartitionNode}, {basis.ui.GroupingNode}
   *
   * @namespace basis.ui
   */
@@ -785,7 +784,10 @@
     BINDING_PRESET: BINDING_PRESET,
 
     Node: Node,
-    Container: Node,  // deprecated
     PartitionNode: PartitionNode,
     GroupingNode: GroupingNode
   };
+
+  // deprecated, left here for backward capability
+  // TODO: remove in future
+  module.exports.Container = Node;
