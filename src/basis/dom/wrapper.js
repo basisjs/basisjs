@@ -712,13 +712,18 @@
       }
     },
 
-    setSatellite: function(key, satellite){
-      var oldSatellite = this.satellite[key];
+   /**
+    * Set replace satellite with defined name for new one.
+    * @param {string} name Satellite name.
+    * @param {basis.dom.wrapper.AbstractNode} satellite New satellite node.
+    */
+    setSatellite: function(name, satellite){
+      var oldSatellite = this.satellite[name];
 
       if (satellite instanceof DataObject == false)
         satellite = null;
 
-      if (oldSatellite != satellite && !this.satelliteConfig[key])
+      if (oldSatellite != satellite && !this.satelliteConfig[name])
       {
         var satelliteListen = this.listen.satellite;
 
@@ -729,7 +734,10 @@
             oldSatellite.removeHandler(satelliteListen, this);
         }
 
-        this.satellite[key] = satellite;
+        if (satellite)
+          this.satellite[name] = satellite;
+        else
+          delete this.satellite[name]
 
         if (satellite)
         {
@@ -738,7 +746,7 @@
             satellite.addHandler(satelliteListen, this);
         }
 
-        this.event_satelliteChanged(key, oldSatellite);
+        this.event_satelliteChanged(name, oldSatellite);
       }
     },
 
@@ -874,9 +882,9 @@
       // destroy satellites
       if (this.satellite)
       {
-        for (var key in this.satellite)
+        for (var name in this.satellite)
         {
-          var satellite = this.satellite[key];
+          var satellite = this.satellite[name];
           satellite.owner = null;  // should we drop owner?
           satellite.destroy();
         }
@@ -2052,9 +2060,10 @@
     */
     init: function(){
       // add selection object, if selection is not null
-      if (this.selection && this.selection instanceof AbstractDataset == false)
+      if (this.selection)
       {
-        this.selection = new Selection(this.selection);
+        if (this.selection instanceof AbstractDataset == false)
+          this.selection = new Selection(this.selection);
         if (this.listen.selection)
           this.selection.addHandler(this.listen.selection, this);
       }
