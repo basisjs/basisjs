@@ -1270,6 +1270,7 @@
               case 'id':
                 // source from script element
                 source = resolveSourceById(source);
+                break;
               case 'tokens':
                 this.isDecl = true;
               case 'raw':
