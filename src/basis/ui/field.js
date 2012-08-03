@@ -771,12 +771,18 @@
       template: resource('templates/field/SelectItem.tmpl')
     },
 
+    init: function(){
+      ComplexField.prototype.init.call(this);
+      this.selection.set([this.childNodes[this.tmpl.field.selectedIndex]]);
+    },
+
     getValue: function(){
       var item = this.childNodes[this.tmpl.field.selectedIndex];
       return item && item.getValue();
     },
     setValue: function(value){
       var item = this.childNodes.search(value, 'getValue()');
+      this.selection.set([item]);
       this.tmpl.field.selectedIndex = item ? this.childNodes.indexOf(item) : -1;
     }
   });
