@@ -41,7 +41,7 @@
 
   var document = global.document;
 
-  var externalResourceCache = this.__resources__ || {};
+  var externalResourceCache = global.__resources__ || {};
 
  /**
   * Object extensions
@@ -1197,7 +1197,7 @@
   // path
   //
 
-  var NODE_ENV = typeof module != 'undefined' && typeof require == 'function' && typeof exports != 'undefined' && exports === this;
+  var NODE_ENV = typeof process != 'undefined' && process.versions && process.versions.node;
 
   var pathUtils = (function(){
     var utils;
@@ -1333,15 +1333,53 @@
     return namespaces[namespace] = cursor;
   }
 
+  var config = (function(){
+    function getConfigAttr(node){
+      return node.getAttributeNode('data-basis-config') || node.getAttributeNode('basis-config');
+    }
+
+    var config = {};
+    var basisUrl = '';
+
+    if (NODE_ENV)
+    {
+      // node.js env
+      basisUrl = __dirname;
+    }
+    else
+    {
+      // browser env
+      var basisScriptEl = Array.from(document.getElementsByTagName('script')).filter(getConfigAttr).pop();
+      if (basisScriptEl)
+      {
+        var configValue = getConfigAttr(basisScriptEl).nodeValue.trim();
+        if (configValue)
+        {
+          try {
+            config = ('{' + configValue + '}').toObject(true) || {};
+          } catch (e) {
+            ;;;if (typeof console != 'undefined') console.warn('basis.js config parse fault: ' + e);
+          }
+        }
+
+        basisUrl = pathUtils.dirname(basisScriptEl.src);
+      }
+    }
+
+    if (!config.path)
+      config.path = {};
+
+    config.path.basis = basisUrl;
+      
+    for (var key in config.path)
+      config.path[key] = pathUtils.resolve(config.path[key] + '/');
+
+    return config;
+  })();
 
   var requireNamespace = (function(){
 
-    var lastScriptEl = Array.from(global.document ? global.document.getElementsByTagName('SCRIPT') : null)
-      .filter(function(scriptEl){ return scriptEl.getAttributeNode('basis-config'); })
-      .pop();
-
-    var basisRequirePath = pathUtils.dirname(lastScriptEl ? lastScriptEl.src : (typeof module != 'undefined' ? module.filename : '')) + '/';
-    var nsRootPath = { basis: basisRequirePath };
+    var nsRootPath = config.path;
     var requested = {};
     var requireFunc;
 
@@ -1351,12 +1389,9 @@
       requireFunc = function(namespace){
         return (function(){
           var temp = module.constructor.prototype.load;
-          //console.log('>>>' + namespace);
 
           module.constructor.prototype.load = function(fn){
-            //console.log(namespace, arguments);
             this.exports = getNamespace(namespace);
-            //console.log(this.constructor === module.constructor, this.constructor._contextLoad);
             temp.apply(this, arguments);
           }
 
@@ -1380,10 +1415,9 @@
         var namespaceRoot = namespace.split('.')[0];
 
         if (namespaceRoot == namespace)
-          nsRootPath[namespaceRoot] = path || (pathUtils.baseURI + '/');
+          nsRootPath[namespaceRoot] = path || nsRootPath[namespace] || (pathUtils.baseURI + '/');
 
         var requirePath = nsRootPath[namespaceRoot];
-
         if (!namespaces[namespace])
         {
           if (!/^(https?|chrome-extension):/.test(requirePath))
@@ -2160,6 +2194,7 @@
   var basis = getNamespace(namespace);
   basis.extend({
     NODE_ENV: NODE_ENV,
+    config: config,
 
     namespace: getNamespace,
     require: requireNamespace,
@@ -2176,4 +2211,11 @@
   // TODO: rename path->stmElse and add path to exports
   basis.path = pathUtils;
 
-}).call(this, this);
+  //
+  // auto load section
+  //
+
+  if (config.autoload)
+    requireNamespace(config.autoload);
+
+})(this);
