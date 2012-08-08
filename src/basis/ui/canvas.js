@@ -1,13 +1,3 @@
-/*
-  Basis javascript library 
-  http://code.google.com/p/basis-js/
- 
-  @copyright
-  Copyright (c) 2006-2012 Roman Dvornov.
- 
-  @license
-  GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
-*/
 
 /*window.FlashCanvasOptions = {
   swfPath: "../../src/basis/ext/"
@@ -82,9 +72,8 @@ basis_require('basis.ext.flashcanvas');*/
 
       var canvasElement = this.tmpl.canvas;
 
-      if (typeof FlashCanvas != "undefined") {
+      if (typeof FlashCanvas != "undefined")
         FlashCanvas.initElement(canvasElement);
-      }
       
       if (canvasElement && canvasElement.getContext)
         this.context = canvasElement.getContext('2d');

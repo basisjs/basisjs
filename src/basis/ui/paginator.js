@@ -1,18 +1,3 @@
-/*
-  Basis javascript library 
-  http://code.google.com/p/basis-js/
- 
-  @copyright
-  Copyright (c) 2006-2010 Roman Dvornov.
- 
-  @license
-  GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
- 
-  @author
-  Roman Dvornov <rdvornov@gmail.com>
- 
-  Inspired on Paginator 3000 (http://karaboz.ru/?p=12)
-*/
 
   basis.require('basis.event');
   basis.require('basis.dom.event');

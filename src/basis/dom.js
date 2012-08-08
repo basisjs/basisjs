@@ -1,19 +1,9 @@
-/*
-  Basis javascript library 
-  http://code.google.com/p/basis-js/
- 
-  @copyright
-  Copyright (c) 2006-2012 Roman Dvornov.
- 
-  @license
-  GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
-*/
 
   basis.require('basis.ua');
 
 
  /**
-  * This namespace provides functions for manupulations with DOM - transerval,
+  * This namespace provides functions for DOM manupulations - transerval,
   * node creation, moving and test nodes. Most of functions are compatible with
   * native and simulated (object that generaly has properties like firsChild,
   * lastChild, parentNode etc) DOM structures.
