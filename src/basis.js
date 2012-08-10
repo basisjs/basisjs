@@ -2199,6 +2199,9 @@
     namespace: getNamespace,
     require: requireNamespace,
     resource: fetchResourceFunction,
+    asset: function(url){
+      return url;
+    },
 
     ready: onLoad,
     Class: Class,
