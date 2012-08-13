@@ -337,19 +337,6 @@
   }
 
 
-  /*function loadResource(fileName, culture){
-    var requestUrl = fileName
-    var req = new XMLHttpRequest();
-    req.open('GET', fileName, false);
-    req.send(null);
-    if (req.status == 200)
-    {
-      (global.execScript || function(scriptText){
-        global["eval"].call(global, scriptText);
-      })(req.responseText);
-    }
-  }*/
-
   var dictionaryUpdateListeners = [];
   function addHandler(handler, context) {
     for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
