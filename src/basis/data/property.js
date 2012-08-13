@@ -23,7 +23,7 @@
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var Cleaner = basis.Cleaner;
+  var cleaner = basis.cleaner;
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
@@ -233,7 +233,7 @@
     event_change: function(value, oldValue){
       AbstractProperty.prototype.event_change.call(this, value, oldValue);
 
-      if (!this.links_.length || Cleaner.globalDestroy)
+      if (!this.links_.length || cleaner.globalDestroy)
         return;
 
       for (var i = 0, link; link = this.links_[i++];)
@@ -248,7 +248,7 @@
       AbstractProperty.prototype.init.call(this, initValue, handlers, proxy);
       this.links_ = new Array();
 
-      Cleaner.add(this);
+      cleaner.add(this);
     },
 
    /**
@@ -453,7 +453,7 @@
       AbstractProperty.prototype.destroy.call(this);
 
       this.links_ = null;
-      Cleaner.remove(this);
+      cleaner.remove(this);
     }
   });
 
@@ -644,7 +644,7 @@
       delete this.timer_;
       TimeEventManager.remove(this, 'update');
 
-      if (!Cleaner.globalDestroy)
+      if (!cleaner.globalDestroy)
       {
         if (this.valueChanged_)
           this.set(this.calculateValue());

@@ -21,7 +21,7 @@
   var Class = basis.Class;
   var Event = basis.dom.event;
   var DOM = basis.dom;
-  var Cleaner = basis.Cleaner;
+  var cleaner = basis.cleaner;
 
   var getter = Function.getter;
   var classList = basis.cssom.classList;
@@ -163,7 +163,7 @@
       this.setElement(element, trigger);
       this.setBase(this.baseElement);
 
-      Cleaner.add(this);
+      cleaner.add(this);
     },
 
 
@@ -217,7 +217,7 @@
     },
 
     destroy: function(){
-      Cleaner.remove(this);
+      cleaner.remove(this);
 
       this.stop();
 

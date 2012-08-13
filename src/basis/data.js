@@ -23,7 +23,7 @@
   //
 
   var Class = basis.Class;
-  var Cleaner = basis.Cleaner;
+  var cleaner = basis.cleaner;
 
   var values = Object.values;
   var $self = Function.$self;
@@ -798,7 +798,7 @@
     extendConstructor_: true,
     init: function(){
       this.map_ = {};
-      Cleaner.add(this);
+      cleaner.add(this);
     },
 
     resolve: function(object){
@@ -837,7 +837,7 @@
       return item;
     },
     destroy: function(){
-      Cleaner.remove(this);
+      cleaner.remove(this);
 
       var items = values(this.map_);
       for (var i = 0, item; item = items[i++];)

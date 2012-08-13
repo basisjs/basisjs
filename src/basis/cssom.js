@@ -19,7 +19,7 @@
   var dom = basis.dom;
   var event = basis.dom.event;
   var Class = basis.Class;
-  var Cleaner = basis.Cleaner;
+  var cleaner = basis.cleaner;
   var arrayFrom = basis.array.from;
 
 
@@ -869,7 +869,7 @@
   // cleanup on page unload
   //
 
-  Cleaner.add({
+  cleaner.add({
     destroy: function(){
       cleanupDom = false; // don't need remove unused style on global destroy
 

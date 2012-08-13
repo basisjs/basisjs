@@ -25,9 +25,9 @@
  *   o Number
  *   o Date (you can find other extensions for Date in date.js)
  * - Namespace sheme (module subsystem)
+ * - resouces
  * - Basis.Class namespace (provides inheritance)
- * - Cleaner
- * - TimeEventManager
+ * - cleaner
  */
 
 // Define global scope: `window` on browser, or `global` on node.js
@@ -2086,11 +2086,10 @@
   * @namespace basis
   */
 
-  // =====================================================================
-  // Cleaner
-  // Description: Singleton that is destroy registred objects when page unload
-
-  var Cleaner = function(){
+ /**
+  * Singleton object to destroy registred objects on page unload
+  */
+  var cleaner = function(){
     var objects = new Array();
 
     function destroy(log){
@@ -2168,7 +2167,7 @@
     ready: onLoad,
     Class: Class,
 
-    Cleaner: Cleaner,
+    cleaner: cleaner,
 
     getter: getter,
 

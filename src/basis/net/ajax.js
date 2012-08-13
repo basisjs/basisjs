@@ -16,7 +16,7 @@
   var Class = basis.Class;
 
   var ua = basis.ua;
-  var Cleaner = basis.Cleaner;
+  var cleaner = basis.cleaner;
 
   var TimeEventManager = basis.timer.TimeEventManager;
 
@@ -523,7 +523,7 @@
       if (this.poolLimit)
         this.addHandler(PROXY_POOL_LIMIT_HANDLER, this);
 
-      Cleaner.add(this);  // ???
+      cleaner.add(this);  // ???
     },
 
     getRequestByHash: function(requestHashId){
@@ -623,7 +623,7 @@
       EventObject.prototype.destroy.call(this);
 
       delete this.requests;
-      Cleaner.remove(this);
+      cleaner.remove(this);
     }
   });
 

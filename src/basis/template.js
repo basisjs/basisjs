@@ -11,7 +11,7 @@
   //
 
   var Class = basis.Class;
-  var Cleaner = basis.Cleaner;
+  var cleaner = basis.cleaner;
 
   //
   // Main part
@@ -1310,7 +1310,7 @@
   // cleanup on page unload
   //
 
-  Cleaner.add({
+  cleaner.add({
     destroy: function(){
       for (var i = 0, template; template = templateList[i]; i++)
       {

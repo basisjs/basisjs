@@ -11,7 +11,7 @@
   //
 
   var document = global.document;
-  var Cleaner = basis.Cleaner;
+  var cleaner = basis.cleaner;
   var getter = Function.getter;
   var arrayFrom = basis.array.from;
 
@@ -311,7 +311,7 @@
       setNextTime();
     }
 
-    Cleaner.add({
+    cleaner.add({
       destroy: function(){
         lockSetTimeout = true;
         clearTimeout(timer);
