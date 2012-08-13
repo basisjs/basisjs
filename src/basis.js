@@ -2089,21 +2089,22 @@
  /**
   * Singleton object to destroy registred objects on page unload
   */
-  var cleaner = function(){
-    var objects = new Array();
+  var cleaner = (function(){
+    var objects = [];
 
     function destroy(log){
       ;;;var logDestroy = log && typeof log == 'boolean' && typeof console != 'undefined';
       result.globalDestroy = true;
       result.add = $undef;
       result.remove = $undef;
+
       var object;
       while (object = objects.pop())
       {
         if (typeof object.destroy == 'function')
         {
           try {
-            ;;;if (logDestroy) console.log('destroy', String(object.className).quote('['), object);
+            ;;;if (logDestroy && typeof console != 'undefined') console.log('destroy', String(object.className).quote('['), object);
             object.destroy();
           } catch(e) {
             ;;;if (typeof console != 'undefined') console.warn(String(object), e);
@@ -2114,7 +2115,6 @@
           for (var prop in object)
             delete object[prop]
         }
-        //objects[i] = undefined;
       };
       objects.clear();
     };
@@ -2126,8 +2126,8 @@
         global.addEventListener('unload', destroy, false);
       else
         return {
-          add: Function(),
-          remove: Function()
+          add: $undef,
+          remove: $undef
         };
 
     var result = {
@@ -2139,11 +2139,13 @@
         objects.remove(object);
       }
     };
+
     // for debug purposes
     ;;;result.destroy_ = destroy;
     ;;;result.objects_ = objects;
+
     return result;
-  }();
+  })();
 
 
   //
