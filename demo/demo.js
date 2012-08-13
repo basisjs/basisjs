@@ -92,7 +92,7 @@
         tabs,
         DOM.wrap(pages, { '.DemoWrapper-Page': Function.$true }, 'element')
       ),
-      DOM.createElement('#DemoCopy', DOM.createElement('P', 'basis.js ' + String.Entity.copy + ' 2006-2012, ', DOM.createElement('A[href="http://code.google.com/p/basis-js"][target="_blank"]', 'Project page')))
+      DOM.createElement('#DemoCopy', DOM.createElement('P', 'basis.js \xA9 2006-2012, ', DOM.createElement('A[href="http://code.google.com/p/basis-js"][target="_blank"]', 'Project page')))
     ]);
 
     classList(document.body).add('show');

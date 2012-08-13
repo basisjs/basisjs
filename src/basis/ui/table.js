@@ -287,7 +287,7 @@
           // content
           config.content = (headerConfig == null || typeof headerConfig != 'object' || headerConfig instanceof basis.l10n.Token
             ? headerConfig 
-            : headerConfig.content) || String.Entity.nbsp;
+            : headerConfig.content) || '\xA0';
 
           if (typeof config.content == 'function')
             config.content = config.content.call(this);

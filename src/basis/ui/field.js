@@ -799,7 +799,7 @@
     template: resource('templates/field/ComboboxItem.tmpl'),
 
     binding: {
-      title: 'getTitle() || String.Entity.nbsp'
+      title: 'getTitle() || "\xA0"'
     },
 
     action: {

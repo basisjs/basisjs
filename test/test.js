@@ -174,7 +174,7 @@
         if (DOMFOR) DOM = DOMFOR;
         return DOM.createElement('.' + this.testType, 
                  DOM.createElement('SPAN', this.testType),
-                 String.Entity.nbsp,
+                 '\xA0',
                  DOM.createElement('EM', this.name),
                  ': ',
                  DOM.createElement('SPAN.' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? 'success' : 'fault'))),
@@ -256,7 +256,7 @@
               return s.replace(/\\u([0-9a-f]{4})/ig, function(m, code){ return String.fromCharCode(parseInt(code, 16)) });
             else
               return s;
-          });//.replace(/ /g, String.Entity.nbsp);
+          });//.replace(/ /g, '\xA0');
 
         this.testText = lines.join('\n');
         this.lines = lines;
@@ -490,7 +490,7 @@
         return DOM.createElement('.' + this.testType,
                  DOM.createElement('P.' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.result ? 'success' : 'fault'))), 
                    DOM.createElement('SPAN', this.testType),
-                   String.Entity.nbsp,
+                   '\xA0',
                    DOM.createElement('EM', this.name),
                    (!this.success ? ' ({1} passed of {0})'.format(this.testCount, this.successCount) : '') + ':'
                  ),
