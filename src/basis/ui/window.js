@@ -26,6 +26,7 @@
   var Event = basis.dom.event;
   var cssom = basis.cssom;
 
+  var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
 
   var UINode = basis.ui.Node;
@@ -219,7 +220,7 @@
       }
 
       // buttons
-      var buttons = Array.from(this.buttons).map(function(button){
+      var buttons = arrayFrom(this.buttons).map(function(button){
         return Object.complete({
           click: (button.click || this.close).bind(this)
         }, button);

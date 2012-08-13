@@ -21,6 +21,7 @@
     var Event = basis.dom.event;
     var cssClass = basis.cssom.classList;
     var extend = Object.extend;
+    var arrayFrom = basis.array.from;
     var Class = basis.Class;
 
     var nsWrappers = basis.dom.wrapper;
@@ -393,8 +394,8 @@
       fault: function(error, answer, result){
         this.errorLines[this.testCount] = {
           error: error,
-          answer: answer && typeof answer == 'object' ? (Array.isArray(answer) ? Array.from(answer) : sliceOwnOnly(answer)) : answer,
-          result: result && typeof result == 'object' ? (Array.isArray(result) ? Array.from(result) : sliceOwnOnly(result)) : result
+          answer: answer && typeof answer == 'object' ? (Array.isArray(answer) ? arrayFrom(answer) : sliceOwnOnly(answer)) : answer,
+          result: result && typeof result == 'object' ? (Array.isArray(result) ? arrayFrom(result) : sliceOwnOnly(result)) : result
         };
         this.testCount++;
       }

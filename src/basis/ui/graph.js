@@ -34,6 +34,7 @@
 
   var createEvent = basis.event.create;
   var getter = Function.getter;
+  var arrayFrom = basis.array.from;
 
   //
   // Main part
@@ -118,7 +119,7 @@
     },
 
     init: function(){
-      this.presetColors = Array.from(this.presetColors);
+      this.presetColors = arrayFrom(this.presetColors);
       this.usedColors = {};
       Node.prototype.init.call(this);
     },
@@ -957,7 +958,7 @@
     var curItem = graph.childNodes[curItemPosition];
     var applyItems = graph.childNodes.slice(Math.min(startItemPosition, curItemPosition), Math.max(startItemPosition, curItemPosition) + 1);
 
-    var selectedItems = Array.from(graph.selection.getItems());
+    var selectedItems = arrayFrom(graph.selection.getItems());
     if (addSelectionMode)
     {
       selectedItems = selectedItems.concat(applyItems);

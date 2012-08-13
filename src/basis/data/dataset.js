@@ -31,6 +31,7 @@
   var $self = Function.$self;
   var $true = Function.$true;
   var $false = Function.$false;
+  var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
 
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
@@ -386,7 +387,7 @@
     * @param {Array.<basis.data.AbstractDataset>} sources
     */
     setSources: function(sources){
-      var exists = Array.from(this.sources); // clone list
+      var exists = arrayFrom(this.sources); // clone list
 
       for (var i = 0, source; source = sources[i]; i++)
       {
@@ -409,7 +410,7 @@
     * TODO: optimize, reduce event_sourcesChanged and event_datasetChanged count
     */
     clear: function(){
-      Array.from(this.sources).forEach(this.removeSource, this);
+      arrayFrom(this.sources).forEach(this.removeSource, this);
     },
 
    /**

@@ -24,6 +24,7 @@
   var DOM = basis.dom;
   var Event = basis.dom.event;
 
+  var arrayFrom = basis.array.from;
   var getter = Function.getter;
   var createEvent = basis.event.create;
   var l10nToken = basis.l10n.getToken;
@@ -541,7 +542,7 @@
 
 
           function expression(evaluate){
-            var result = Array.from(arguments, 1);
+            var result = arrayFrom(arguments, 1);
             result.bindingBridge = {
               attach: function(){ createExpression() },
               detach: function(){ destroyExpression() },

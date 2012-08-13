@@ -16,7 +16,7 @@
 
   var document = global.document;
   var dom = basis.dom;
-
+  var arrayFrom = basis.array.from;
 
   var Template = basis.template.Template;
 
@@ -42,7 +42,7 @@
   */
   function string2Html(text){
     unescapeElement.innerHTML = text;
-    return dom.createFragment.apply(null, Array.from(unescapeElement.childNodes));
+    return dom.createFragment.apply(null, arrayFrom(unescapeElement.childNodes));
   }
 
 

@@ -9,6 +9,7 @@
   var document = global.document;
   var dom = basis.dom;
   var domEvent = basis.dom.event;
+  var arrayFrom = basis.array.from;
 
   var Template = basis.template.Template;
 
@@ -318,7 +319,7 @@
               if (newValue.firstChild === newValue.lastChild)
                 newNode = newValue.firstChild;
               else
-                newNode = Array.from(newValue);
+                newNode = arrayFrom(newValue);
             }
             else
               newNode = newValue;
@@ -329,7 +330,7 @@
               if (newValue.length == 1)
                 newNode = newValue[0];
               else
-                newNode = Array.from(newValue);
+                newNode = arrayFrom(newValue);
           }*/
 
           if (newNode !== oldNode)

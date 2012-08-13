@@ -12,6 +12,7 @@
   var Class = basis.Class;
   var extend = Object.extend;
   var slice = Array.prototype.slice;
+  var arrayFrom = basis.array.from;
 
 
   //
@@ -41,7 +42,7 @@
     if (!eventFunction)
     {
       eventFunction = events[eventName] = 
-        /** @cut for more verbose in dev */ Function('eventName', 'slice', 'eventFunction', 'return eventFunction = function _event_' + eventName + '(' + Array.from(arguments, 1).join(', ') + '){' + 
+        /** @cut for more verbose in dev */ Function('eventName', 'slice', 'eventFunction', 'return eventFunction = function _event_' + eventName + '(' + arrayFrom(arguments, 1).join(', ') + '){' + 
 
           function dispatchEvent(){
             var handlers = this.handlers_;

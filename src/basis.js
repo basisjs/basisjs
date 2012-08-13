@@ -170,16 +170,6 @@
     return result;
   }
 
-  extend(Object, {
-    extend: extend,
-    complete: complete,
-    keys: keys,
-    values: values,
-    slice: slice,
-    splice: splice,
-    iterate: iterate,
-    coalesce: coalesce
-  });
 
  /**
   * Function extensions
@@ -373,7 +363,7 @@
           if (modType != 'object')
           {
             // only string, function and objects are support as modificator
-            ;;;console.warn('Function.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
+            ;;;console.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
             return func;
           }
 
@@ -454,7 +444,7 @@
       return checker(res) ? defValue : res;
     };
     return result;
-  };
+  }
 
  /**
   * @param {string} key
@@ -466,92 +456,69 @@
       result[key] = value;
       return result;
     }
-  };
+  }
 
-  extend(Function, {
-    // test functions
-    $undefined: $undefined,
-    $defined:   $defined,
-    $isNull:    $isNull,
-    $isNotNull: $isNotNull,
-    $isSame:    $isSame,
-    $isNotSame: $isNotSame,
-
-    // gag functions
-    $self:      $self,
-    $const:     $const,
-    $false:     $false,
-    $true:      $true,
-    $null:      $null,
-    $undef:     $undef,
-
-    // getters and modificators
-    getter:     getter,
-    nullGetter: nullGetter,
-    def:        def,
-    wrapper:    wrapper,
-
-   /**
-    * @param {function()} init Function that should be called at first time.
-    * @param {Object=} thisObject
-    * @return {function()} Returns lazy function.
-    */
-    lazyInit: function(init, thisObject){
-      var inited = 0, self, data;
-      return self = function(){
-        if (!inited++)
-        {
-          self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
-          self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
-          data = init.apply(thisObject || this, arguments);
-          ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInit function returns nothing:\n' + init);
-        }
-        return data;
-      };
-    },
-
-   /**
-    * @param {function()} init Function that should be called at first time.
-    * @param {function()} run Function that will be called all times.
-    * @param {Object=} thisObject
-    * @return {function()} Returns lazy function.
-    */
-    lazyInitAndRun: function(init, run, thisObject){
-      var inited = 0, self, data;
-      return self = function(){
-        if (!inited++)
-        {
-          self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
-          self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
-          data = init.call(thisObject || this);
-          ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInitAndRun function returns nothing:\n' + init);
-        }
-        run.apply(data, arguments);
-        return data;
-      };
-    },
-
-   /**
-    * @param {function()} run Function that will be called only once.
-    * @param {Object=} thisObject
-    * @return {function()} Returns lazy function.
-    */
-    runOnce: function(run, thisObject){
-      var fired = 0;
-      return function(){
-        if (!fired++)
-          return run.apply(thisObject || this, arguments);
+ /**
+  * @param {function()} init Function that should be called at first time.
+  * @param {Object=} thisObject
+  * @return {function()} Returns lazy function.
+  */
+  function lazyInit(init, thisObject){
+    var inited = 0, self, data;
+    return self = function(){
+      if (!inited++)
+      {
+        self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
+        self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
+        data = init.apply(thisObject || this, arguments);
+        ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInit function returns nothing:\n' + init);
       }
-    },
+      return data;
+    };
+  }
 
-   /**
-    * Retuns function body code
-    * @return {string}
-    */
-    body: function(fn){
-      return fn.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
+ /**
+  * @param {function()} init Function that should be called at first time.
+  * @param {function()} run Function that will be called all times.
+  * @param {Object=} thisObject
+  * @return {function()} Returns lazy function.
+  */
+  function lazyInitAndRun(init, run, thisObject){
+    var inited = 0, self, data;
+    return self = function(){
+      if (!inited++)
+      {
+        self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
+        self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
+        data = init.call(thisObject || this);
+        ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInitAndRun function returns nothing:\n' + init);
+      }
+      run.apply(data, arguments);
+      return data;
+    };
+  }
+
+ /**
+  * @param {function()} run Function that will be called only once.
+  * @param {Object=} thisObject
+  * @return {function()} Returns lazy function.
+  */
+  function runOnce(run, thisObject){
+    var fired = 0;
+    return function(){
+      if (!fired++)
+        return run.apply(thisObject || this, arguments);
     }
-  });
+  }
+
+ /**
+  * Retuns function body code
+  * @return {string}
+  */
+  function functionBody(fn){
+    return fn.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
+  }
+
 
  /**
   * @namespace Function.prototype
@@ -569,7 +536,7 @@
     */
     bind: function(thisObject/*, arg1 .. argN*/){
       var method = this;
-      var params = Array.from(arguments, 1);
+      var params = arrayFrom(arguments, 1);
 
       return params.length
         ? function(){
@@ -580,6 +547,7 @@
           };
     }
   });
+
 
  /**
   * Array extensions
@@ -597,41 +565,38 @@
     }
   });
 
-  extend(Array, {
-    // array copier
-    from: function(object, offset){
-      if (object != null)
+  function arrayFrom(object, offset){
+    if (object != null)
+    {
+      var len = object.length;
+
+      if (typeof len == 'undefined')
+        return [object];
+
+      if (!offset)
+        offset = 0;
+
+      if (len - offset > 0)
       {
-        var len = object.length;
-
-        if (typeof len == 'undefined')
-          return [object];
-
-        if (!offset)
-          offset = 0;
-
-        if (len - offset > 0)
-        {
-          for (var result = [], k = 0, i = offset; i < len;)
-            result[k++] = object[i++];
-          return result;
-        }
+        for (var result = [], k = 0, i = offset; i < len;)
+          result[k++] = object[i++];
+        return result;
       }
-
-      return [];
-    },
-
-    // filled array creator
-    create: function(length, fillValue, thisObject){
-      var result = new Array();
-      var isFunc = typeof fillValue == 'function';
-
-      for (var i = 0; i < length; i++)
-        result[i] = isFunc ? fillValue.call(thisObject, i, result) : fillValue;
-
-      return result;
     }
-  });
+
+    return [];
+  }
+
+  function createArray(length, fillValue, thisObject){
+    var result = new Array();
+    var isFunc = typeof fillValue == 'function';
+
+    for (var i = 0; i < length; i++)
+      result[i] = isFunc ? fillValue.call(thisObject, i, result) : fillValue;
+
+    return result;
+  }
+
 
  /**
   * @namespace Array.prototype
@@ -725,7 +690,7 @@
       return this.concat.apply([], this);
     },
     repeat: function(count){
-      return Array.create(parseInt(count) || 0, this).flatten();
+      return createArray(parseInt(count) || 0, this).flatten();
     },
 
     // getters
@@ -733,12 +698,6 @@
       index = parseInt(index || 0);
       return this[index >= 0 ? index : this.length + index];
     },
-    /*first: function(index){
-      return this[0];
-    },
-    last: function(){
-      return this[this.length - 1];
-    },*/
 
     // search
    /**
@@ -766,7 +725,7 @@
     *     // result -> [{ a: 1, b: 2 }, { a: 1, b: 4}]
     *
     *   // but if you need all items of array with filtered by condition use Array#filter method instead
-    *   var result = list.filter(Function.getter('a == 1'));
+    *   var result = list.filter(basis.getter('a == 1'));
     *
     * @param {any} value
     * @param {function(object)|string} getter
@@ -775,7 +734,7 @@
     */
     search: function(value, getter, offset){
       Array.lastSearchIndex = -1;
-      getter = Function.getter(getter || $self);
+      getter = basis.getter(getter || $self);
 
       for (var index = parseInt(offset) || 0, len = this.length; index < len; index++)
         if (/*index in this && */getter(this[index]) === value)
@@ -790,7 +749,7 @@
     */
     lastSearch: function(value, getter, offset){
       Array.lastSearchIndex = -1;
-      getter = Function.getter(getter || $self);
+      getter = basis.getter(getter || $self);
 
       var len = this.length;
       var index = isNaN(offset) || offset == null ? len : parseInt(offset);
@@ -816,7 +775,7 @@
       if (!this.length)  // empty array check
         return strong ? -1 : 0;
 
-      getter = Function.getter(getter || $self);
+      getter = basis.getter(getter || $self);
       desc = !!desc;
 
       var pos, compareValue;
@@ -862,7 +821,7 @@
       return this.reduce(extend, object || {});
     },
     sortAsObject: function(getter, comparator, desc){
-      getter = Function.getter(getter);
+      getter = basis.getter(getter);
       desc = desc ? -1 : 1;
 
       return this
@@ -892,12 +851,12 @@
   });
 
   // IE 5.5+ & Opera
-  // when second argument omit, method set this parameter equal zero (must be equal array length)
+  // when second argument is omited, method set this parameter equal zero (must be equal array length)
   if (![1,2].splice(1).length)
   {
     var _native_Array_splice = Array.prototype.splice;
     Array.prototype.splice = function(){
-      var params = Array.from(arguments);
+      var params = arrayFrom(arguments);
       if (params.length < 2)
         params[1] = this.length;
       return _native_Array_splice.apply(this, params);
@@ -929,6 +888,14 @@
     hellip: '\u2026'
   };
 
+  function isEmptyString(value){
+    return value == null || String(value) == '';
+  }
+
+  function isNotEmptyString(value){
+    return value != null && String(value) != '';
+  }
+
   complete(String, {
     toLowerCase: function(value){
       return String(value).toLowerCase();
@@ -944,14 +911,9 @@
     },
     trimRight: function(value){
       return String(value).trimRight();
-    },
-    isEmpty: function(value){
-      return value == null || String(value) == '';
-    },
-    isNotEmpty: function(value){
-      return value != null && String(value) != '';
     }
   });
+
 
  /**
   * @namespace String.prototype
@@ -977,7 +939,7 @@
     },
     toArray: (new String('a')[0]
       ? function(){
-          return Array.from(this);
+          return arrayFrom(this);
         }
       // IE Array and String are not generics
       : function(){
@@ -1038,7 +1000,6 @@
     }
   });
 
-  String.format = String.prototype.format;
 
   // Fix some methods
   // ----------------
@@ -1349,7 +1310,7 @@
     else
     {
       // browser env
-      var basisScriptEl = Array.from(document.getElementsByTagName('script')).filter(getConfigAttr).pop();
+      var basisScriptEl = arrayFrom(document.getElementsByTagName('script')).filter(getConfigAttr).pop();
       if (basisScriptEl)
       {
         var configValue = getConfigAttr(basisScriptEl).nodeValue.trim();
@@ -1817,7 +1778,7 @@
           // class methods
           isSubclassOf: isSubclassOf,
           subclass: function(){
-            return BaseClass.create.apply(null, [newClass].concat(Array.from(arguments)));
+            return BaseClass.create.apply(null, [newClass].concat(arrayFrom(arguments)));
           },
           extend: BaseClass.extend,
           // auto extend creates a subclass
@@ -2195,6 +2156,7 @@
   basis.extend({
     NODE_ENV: NODE_ENV,
     config: config,
+    platformFeature: {},
 
     namespace: getNamespace,
     require: requireNamespace,
@@ -2206,9 +2168,58 @@
     ready: onLoad,
     Class: Class,
 
-    platformFeature: {},
+    Cleaner: Cleaner,
 
-    Cleaner: Cleaner
+    getter: getter,
+
+    object: {
+      extend: extend,
+      complete: complete,
+      keys: keys,
+      values: values,
+      slice: slice,
+      splice: splice,
+      iterate: iterate,
+      coalesce: coalesce
+    },
+    fn: {
+      // test functions
+      $undefined: $undefined,
+      $defined:   $defined,
+      $isNull:    $isNull,
+      $isNotNull: $isNotNull,
+      $isSame:    $isSame,
+      $isNotSame: $isNotSame,
+
+      // gag functions
+      $self:      $self,
+      $const:     $const,
+      $false:     $false,
+      $true:      $true,
+      $null:      $null,
+      $undef:     $undef,
+
+      // getters and modificators
+      getter:     getter,
+      nullGetter: nullGetter,
+      def:        def,
+      wrapper:    wrapper,
+
+      // lazy
+      lazyInit:   lazyInit,
+      lazyInitAndRun: lazyInitAndRun,
+      runOnce:    runOnce,
+      body:       functionBody
+    },
+    array: extend(arrayFrom, {
+      from: arrayFrom,
+      create: createArray
+    }),
+    string: {
+      isEmpty: isEmptyString,
+      isNotEmpty: isNotEmptyString,
+      format: String.prototype.format
+    }
   });
 
   // TODO: rename path->stmElse and add path to exports
@@ -2220,5 +2231,15 @@
 
   if (config.autoload)
     requireNamespace(config.autoload);
+
+  //
+  // basis extenstions
+  //
+
+  extend(Object, basis.object);
+  extend(Function, basis.fn);
+  extend(Array, basis.array);
+  extend(String, basis.string);
+
 
 })(this);

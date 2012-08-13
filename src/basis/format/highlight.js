@@ -19,6 +19,7 @@
 
   var Class = basis.Class;
   var UINode = basis.ui.Node;
+  var arrayFrom = basis.array.from;
 
 
   //
@@ -36,7 +37,7 @@
   // default parser
   //
 
-  PARSER.add('text', Array.from);
+  PARSER.add('text', arrayFrom);
 
   //
   // javascript parser

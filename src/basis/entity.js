@@ -19,6 +19,7 @@
   var arrayFrom = Array.from;
   var $self = Function.$self;
   var getter = Function.getter;
+  var arrayFrom = basis.array.from;
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
@@ -120,7 +121,7 @@
 
 
   function CalculateField(){
-    var args = Array.from(arguments);
+    var args = arrayFrom(arguments);
     var func = args.pop();
 
     ;;;if (typeof func != 'function' && typeof console != 'undefined') console.warn('Last argument for calculate field constructor must be a function');
@@ -147,7 +148,7 @@
   }
 
   function ConcatString(){
-    return CalculateField.apply(null, Array.from(arguments).concat(function(){
+    return CalculateField.apply(null, arrayFrom(arguments).concat(function(){
       var value = [];
       for (var i = arguments.length; i --> 0;)
       {
@@ -303,7 +304,7 @@
           if (!(entitySet instanceof EntitySet))
             entitySet = entitySetType.createEntitySet();
 
-          entitySet.set(data instanceof Dataset ? data.getItems() : Array.from(data));
+          entitySet.set(data instanceof Dataset ? data.getItems() : arrayFrom(data));
 
           return entitySet;
         }

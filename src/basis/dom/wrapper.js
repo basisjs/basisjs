@@ -38,6 +38,7 @@
 
   var STATE = nsData.STATE;
 
+  var arrayFrom = basis.array.from;
   var getter = Function.getter;
   var nullGetter = Function.nullGetter;
   var $undef = Function.$undef;
@@ -1031,7 +1032,7 @@
         if (this.childNodes.length == delta.deleted.length)
         {
           // copy childNodes to deleted
-          deleted = Array.from(this.childNodes);
+          deleted = arrayFrom(this.childNodes);
 
           // optimization: if all old nodes deleted -> clear childNodes
           var tmp = this.dataSource;
@@ -1691,7 +1692,7 @@
 
       if (newChildNodes)
       {
-        if ('length' in newChildNodes == false) // NOTE: we don't use Array.from here to avoid make a copy of array
+        if ('length' in newChildNodes == false) // NOTE: we don't use basis.array.from here to avoid make a copy of array
           newChildNodes = [newChildNodes];
 
         if (newChildNodes.length)
@@ -2269,7 +2270,7 @@
         if (this.dataSource && this.nullGroup.first)
         {
           var parentNode = this.owner;
-          var nodes = Array.from(this.nullGroup.nodes); // Array.from, because nullGroup.nodes may be transformed
+          var nodes = arrayFrom(this.nullGroup.nodes); // basis.array.from, because nullGroup.nodes may be transformed
           for (var i = nodes.length; i --> 0;)
             parentNode.insertBefore(nodes[i], nodes[i].nextSibling);
         }

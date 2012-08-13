@@ -14,6 +14,7 @@
   var nsHighlight = basis.format.highlight;
   var nsData = basis.data;
 
+  var arrayFrom = basis.array.from;
   var getter = Function.getter;
   var cssom = basis.cssom;
   var classList = basis.cssom.classList;
@@ -929,7 +930,7 @@
       this.updateBind('externalFileUrl');
 
       if (template)
-        template.docsCache_ = Array.from(this.childNodes);
+        template.docsCache_ = arrayFrom(this.childNodes);
 
       var oldTemplate = this.templateView;
       this.templateView = template;

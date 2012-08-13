@@ -11,6 +11,7 @@
   //
 
   var Class = basis.Class;
+  var arrayFrom = basis.array.from;
 
 
   //
@@ -193,7 +194,7 @@
 
   function getToken(path){
     if (arguments.length > 1)
-      path = Array.from(arguments).join('.');
+      path = arrayFrom(arguments).join('.');
 
     if (path.charAt(0) == '#')
     {

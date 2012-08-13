@@ -13,6 +13,7 @@
   var document = global.document;
   var Cleaner = basis.Cleaner;
   var getter = Function.getter;
+  var arrayFrom = basis.array.from;
 
 
   //
@@ -56,7 +57,7 @@
         global.setImmediate = function(){
           taskById[++taskId] = {
             fn: arguments[0],
-            args: Array.from(arguments, 1)
+            args: arrayFrom(arguments, 1)
           };
 
           addToQueue(taskId);

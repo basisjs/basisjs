@@ -7,6 +7,7 @@
     var nsEntity = basis.entity;
 
     var getter = Function.getter;
+    var arrayFrom = basis.array.from;
 
     var eventStat = {};
 
@@ -66,7 +67,7 @@
     };
 
     Function.$nullOrArray = function(value){
-      return value == null || value.length == 0 ? null : Array.from(value);
+      return value == null || value.length == 0 ? null : arrayFrom(value);
     }
 
     var User = new nsEntity.EntityType({

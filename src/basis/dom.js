@@ -40,6 +40,7 @@
   var coalesce = Object.coalesce;
   var document = global.document;
   var Class = basis.Class;
+  var arrayFrom = basis.array.from;
   var getter = Function.getter;
 
   // element for DOM support tests
@@ -401,9 +402,9 @@
     node = get(node) || document;
 
     if (tagName == '*' && node.all)
-      return Array.from(node.all);
+      return arrayFrom(node.all);
     else
-      return Array.from(node.getElementsByTagName(tagName || '*'));
+      return arrayFrom(node.getElementsByTagName(tagName || '*'));
   }
 
   //
@@ -644,7 +645,7 @@
 
     // append child nodes
     if (arguments.length > 1)
-      handleInsert(element, createFragment.apply(0, Array.from(arguments, 1).flatten()));
+      handleInsert(element, createFragment.apply(0, arrayFrom(arguments, 1).flatten()));
 
     // attach event handlers
     if (isConfig)

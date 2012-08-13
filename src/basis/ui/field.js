@@ -28,6 +28,7 @@
   var complete = Object.complete;
   var coalesce = Object.coalesce;
   var getter = Function.getter;
+  var arrayFrom = basis.array.from;
 
   var createEvent = basis.event.create;
   var events = basis.event.events;
@@ -231,7 +232,7 @@
 
     init: function(){
       this.name = this.name || '';
-      this.validators = Array.from(this.validators);
+      this.validators = arrayFrom(this.validators);
 
       if (typeof this.defaultValue == 'undefined')
         this.defaultValue = this.value;
@@ -688,7 +689,7 @@
       return this.multipleSelect ? value : value[0];
     },
     setValue: function(value/* value[] */){
-      var newValues = this.multipleSelect ? Array.from(value) : [value];
+      var newValues = this.multipleSelect ? arrayFrom(value) : [value];
       var selectedItems = [];
 
       for (var item = this.firstChild; item; item = item.nextSibling)

@@ -22,6 +22,7 @@
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
+  var arrayFrom = basis.array.from;
 
   var DataObject = basis.data.DataObject;
   var STATE = basis.data.STATE;
@@ -219,7 +220,7 @@
     },
 
     setInfluence: function(influence){
-      this.influence = Array.from(influence);
+      this.influence = arrayFrom(influence);
     },
     clearInfluence: function(){
       this.influence = [];
@@ -434,7 +435,7 @@
 
   var ProxyDispatcher = new EventObject({
     abort: function(){
-      var result = Array.from(inprogressProxies);
+      var result = arrayFrom(inprogressProxies);
       for (var i = 0; i < result.length; i++)
         result[i].abort();
 

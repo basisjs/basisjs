@@ -13,6 +13,7 @@
   var document = global.document;
   var dom = basis.dom;
   var $null = Function.$null;
+  var arrayFrom = basis.array.from;
 
   var W3CSUPPORT = !!document.addEventListener;
 
@@ -276,7 +277,7 @@
   * @param {Event} event
   */
   function observeGlobalEvents(event){
-    var handlers = Array.from(globalHandlers[event.type]);
+    var handlers = arrayFrom(globalHandlers[event.type]);
     var captureHandler = captureHandlers[event.type];
 
     if (captureHandler)

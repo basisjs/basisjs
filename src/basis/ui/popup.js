@@ -25,6 +25,7 @@
   var cssom = basis.cssom;
 
   var getter = Function.getter;
+  var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
 
   var nsLayout = basis.layout;
@@ -134,7 +135,7 @@
       this.cssRule = cssom.uniqueRule(this.element);
 
       // 
-      this.ignoreClickFor = Array.from(this.ignoreClickFor);
+      this.ignoreClickFor = arrayFrom(this.ignoreClickFor);
 
       if (this.dir)
         this.defaultDir = this.dir.toUpperCase();

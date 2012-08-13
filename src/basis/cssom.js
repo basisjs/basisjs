@@ -20,6 +20,7 @@
   var event = basis.dom.event;
   var Class = basis.Class;
   var Cleaner = basis.Cleaner;
+  var arrayFrom = basis.array.from;
 
 
   //
@@ -364,7 +365,7 @@
       var styleSheet = this.styleSheet;
       var index = this.rules.length;
       var newIndex = styleSheet.insertRule(selector + '{}', index);
-      var cssRules = Array.from(styleSheet.cssRules, index);
+      var cssRules = arrayFrom(styleSheet.cssRules, index);
 
       var ruleWrapper = cssRules[1]
         ? new RuleSet(cssRules, this)
