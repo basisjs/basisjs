@@ -61,14 +61,14 @@
   * Creates transport constructor
   */
   var XHRSupport = 'native';
-  var createXmlHttpRequest = function(){
+  var createXmlHttpRequest = (function(){
 
-    if (window.XMLHttpRequest)
+    if ('XMLHttpRequest' in global)
       return function(){
         return new XMLHttpRequest();
       };
 
-    var ActiveXObject = window.ActiveXObject;
+    var ActiveXObject = global.ActiveXObject;
     if (ActiveXObject)
     {
       var progID = [
@@ -87,9 +87,9 @@
         } catch(e) {}
     }
 
-    throw new Error(XHRSupport = 'Browser doesn\'t support for XMLHttpRequest!');
+    throw new Error(XHRSupport = 'XMLHttpRequest is not supported!');
 
-  }();
+  })();
 
  /**
   * Sets transport request headers
