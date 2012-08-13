@@ -116,7 +116,7 @@
         }
         else
         {
-          ;;;throw new Error('Bad browser version description in Browser.test() function: ' + forTest);
+          ;;;if (typeof console != 'undefined') console.warn('Bad browser version description in Browser.test() function: ' + forTest);
         }
       }
     }
