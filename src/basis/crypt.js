@@ -11,14 +11,15 @@
   //
 
   var arrayFrom = basis.array.from;
+  var createArray = basis.array.create;
 
   function rotateLeft(number, offset){
     return (number << offset) | (number >>> (32 - offset));
   }
 
-  var chars = Array.create(255, function(i){
+  var chars = createArray(255, function(i){
     return String.fromCharCode(i);
-  })
+  });
 
   // =======================================
   //  [ UTF16 Encode/Decode ]
@@ -370,7 +371,7 @@
         dwords[len >> 2] = 0x80000000;
 
       // padding 0
-      dwords.push.apply(dwords, Array.create(((dwords.length & 0x0F) > 14 ? 30 : 14) - (dwords.length & 0x0F), 0));
+      dwords.push.apply(dwords, createArray(((dwords.length & 0x0F) > 14 ? 30 : 14) - (dwords.length & 0x0F), 0));
 
       // add length
       dwords.push(len >>> 29);

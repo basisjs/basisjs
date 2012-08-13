@@ -737,7 +737,7 @@
       getter = basis.getter(getter || $self);
 
       for (var index = parseInt(offset) || 0, len = this.length; index < len; index++)
-        if (/*index in this && */getter(this[index]) === value)
+        if (getter(this[index]) === value)
           return this[Array.lastSearchIndex = index];
     },
 
@@ -755,7 +755,7 @@
       var index = isNaN(offset) || offset == null ? len : parseInt(offset);
 
       for (var i = index > len ? len : index; i --> 0;)
-        if (/*i in this && */getter(this[i]) === value)
+        if (getter(this[i]) === value)
           return this[Array.lastSearchIndex = i];
     },
 

@@ -19,6 +19,7 @@
 
   var Event = basis.dom.event;
 
+  var createArray = basis.array.create;
   var createEvent = basis.event.create;
   var events = basis.event.events;
 
@@ -185,7 +186,7 @@
       if (pageSpan != this.pageSpan)
       {
         this.pageSpan = pageSpan;
-        this.setChildNodes(Array.create(pageSpan, function(idx){
+        this.setChildNodes(createArray(pageSpan, function(idx){
           return {
             pageNumber: idx
           }

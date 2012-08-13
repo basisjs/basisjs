@@ -20,11 +20,13 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var sender = basis.dom.event.sender;
-
   var cssom = basis.cssom;
-  var Table = basis.ui.table.Table;
   var layout = basis.layout;
+
+  var sender = basis.dom.event.sender;
+  var createArray = basis.array.create;
+
+  var Table = basis.ui.table.Table;
 
 
   //
@@ -122,7 +124,7 @@
       }, this);
 
       // column width sync cells
-      this.columnWidthSync_ = Array.create(this.columnCount, function(){
+      this.columnWidthSync_ = createArray(this.columnCount, function(){
         return {
           measure: measureCell.cloneNode(true),
           header: expanderCell.cloneNode(true),
