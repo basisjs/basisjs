@@ -2227,13 +2227,6 @@
   basis.path = pathUtils;
 
   //
-  // auto load section
-  //
-
-  if (config.autoload)
-    requireNamespace(config.autoload);
-
-  //
   // basis extenstions
   //
 
@@ -2242,5 +2235,11 @@
   extend(Array, basis.array);
   extend(String, basis.string);
 
+  //
+  // auto load section
+  //
+
+  if (config.autoload)
+    requireNamespace(config.autoload);
 
 })(this);
