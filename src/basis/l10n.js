@@ -225,7 +225,7 @@
 
     var dictionary = getDictionary(namespace);
 
-    ;;;if (dictionary && typeof console != 'undefined') { console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created') };
+    ;;;if (dictionary && dictionary.location && typeof console != 'undefined') { console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created') };
 
     dictionary = getDictionary(namespace, true);
     dictionary.location = location;
@@ -250,7 +250,7 @@
     else
       dictionary.update('base', tokens);
 
-    loadCultureForDictionary(dictionary, currentCulture)
+    loadCultureForDictionary(dictionary, currentCulture);
 
     fireCreateDictionaryEvent(namespace);
   }
@@ -277,7 +277,9 @@
   }
 
   function loadCultureForDictionary(dictionary, culture){
-    if (cultureReplacement[culture]) for (var i = 0, cult; cult = cultureReplacement[culture][i]; i++) loadCultureForDictionary_(dictionary, cult);
+    if (cultureReplacement[culture]) 
+      for (var i = 0, cult; cult = cultureReplacement[culture][i]; i++) 
+        loadCultureForDictionary_(dictionary, cult);
 
     loadCultureForDictionary_(dictionary, culture);
   }
@@ -293,25 +295,25 @@
         return;
 
       var location = dictionary.location + '/' + culture;
+
+      var resource = basis.resource(location + '.json');
       if (!resourcesLoaded[location])
       {
-        resourcesLoaded[location] = true;
-        
-        var res = basis.resource(location + '.json');
-        res.bindingBridge.attach(res, function(content){
+        resource.bindingBridge.attach(resource, function(content){
           updateDictionaryResource(content, culture);
         });
-        updateDictionaryResource(res(), culture);
-
+        resourcesLoaded[location] = true;
         //loadResource(location + '.js', culture);
       }
+
+      updateDictionaryResource(resource(), culture, dictionary.namespace);
     }
     else {
       ;;;console.warn('Culture "' + culture + '" is not specified in the list');
     }
   }
 
-  function updateDictionaryResource(dictionaryData, culture){
+  function updateDictionaryResource(dictionaryData, culture, dictionary){
     if (Array.isArray(dictionaryData))
     { // packed dictionary
       var idx = 0;
@@ -331,8 +333,13 @@
     }
     else
     {
-      for (var dictionaryName in dictionaryData)
-        updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);
+      if (dictionary)
+        updateDictionary(dictionary, culture, dictionaryData[dictionary]);
+      else
+      {
+        for (var dictionaryName in dictionaryData)
+          updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);
+      }
     }
   }
 
