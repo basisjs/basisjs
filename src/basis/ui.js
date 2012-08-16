@@ -602,7 +602,7 @@
     return {
       // methods
       insertBefore: function(newChild, refChild){
-        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; console.warn('Bug: Template has no childNodesElement container, but insertBefore ca'); }
+        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; console.warn('Bug: Template has no childNodesElement container, but insertBefore call'); }
 
         // inherit
         newChild = super_.insertBefore.call(this, newChild, refChild);
