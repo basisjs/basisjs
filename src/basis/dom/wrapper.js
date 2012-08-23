@@ -1659,6 +1659,9 @@
       {
         var child = childNodes[i];
 
+        if (child.listen.parentNode)
+          child.parentNode.removeHandler(child.listen.parentNode, child);
+
         child.parentNode = null;
         child.groupNode = null;
 
