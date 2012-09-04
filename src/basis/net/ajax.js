@@ -97,7 +97,8 @@
   */
   function setRequestHeaders(request, requestData){
     var headers = {
-      'JS-Framework': 'Basis'
+      'X-Requested-With': 'XMLHttpRequest',
+      'X-Powered-By': 'basis.js'
     };
 
     if (IS_METHOD_WITH_BODY.test(requestData.method)) 
