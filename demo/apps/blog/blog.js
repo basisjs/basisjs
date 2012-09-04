@@ -30,11 +30,15 @@ basis.ready(function(){
 
   var times = [new Date];
 
+  var postsData = basis.resource('blog_posts.js').fetch();
+
+  times.push([new Date, 'generate posts']);
+
   //console.profile();
 
   var DataObject = basis.data.DataObject;
   var allPostDataset = new basis.data.Dataset({
-    items: basis.resource('blog_posts-5000.json').fetch().map(function(data){
+    items: postsData.map(function(data){
       data.tags = data.tags.split(/\s*,\s*/);
 
       if (data.tags[0] == '')
