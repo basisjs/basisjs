@@ -25,7 +25,7 @@
     if (res.length < count)
       res = res.concat(randomWord.slice(0, count - res.length))
 
-    return res.join(delim || ' ');
+    return res;
   };
 
   var posts = [];
@@ -37,10 +37,10 @@
     posts.push({
       id: COUNT - i,
       pubDate: date.toISOString(),
-      title: genSentence(1, 10),
-      content: genSentence(15, 150),
+      title: genSentence(1, 10).join(' '),
+      content: genSentence(15, 150).join(' '),
       category: catList[(i * 33847) % catList.length],
-      tags: genSentence(1, 6, ',')
+      tags: genSentence(1, 6)
     });
   }
 
