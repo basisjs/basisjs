@@ -9,6 +9,7 @@ basis.require('basis.ui.paginator');
 
 basis.ready(function(){
   var statOutElement = basis.dom.createElement('ul');
+  var PROFILE = false;
 
   function outStat(){
     var sdate = times.shift();
@@ -28,18 +29,17 @@ basis.ready(function(){
     ]);
   }
 
+  if (PROFILE) console.profile();
+
   var times = [new Date];
 
-  //console.profile();
+  var postsData = basis.resource('blog_posts.js').fetch();
+
+  times.push([new Date, 'generate posts']);
 
   var DataObject = basis.data.DataObject;
   var allPostDataset = new basis.data.Dataset({
-    items: basis.resource('blog_posts-5000.json').fetch().map(function(data){
-      data.tags = data.tags.split(/\s*,\s*/);
-
-      if (data.tags[0] == '')
-        data.tags.shift();
-
+    items: postsData.map(function(data){
       return new DataObject({
         data: data
       });
@@ -95,7 +95,7 @@ basis.ready(function(){
         pubDate: {
           events: 'update',
           getter: function(node){
-            return Date.fromISOString(node.data.pubDate).toFormat('%D/%M/%Y %H:%I:%S');
+            return basis.date.fromISOString(node.data.pubDate).toFormat('%D/%M/%Y %H:%I:%S');
           }
         },
         tagList: 'satellite:'
@@ -324,6 +324,8 @@ basis.ready(function(){
   });
 
   times.push([new Date, 'app']);
+
+  if (PROFILE) console.profileEnd();
 
   outStat();
 });

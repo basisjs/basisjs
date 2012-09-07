@@ -1167,7 +1167,7 @@
     {
       var _node_path = require('path');
       var _node_fs = require('fs');
-      utils = Object.slice(_node_path, [
+      utils = slice(_node_path, [
         'normalize',
         'dirname',
         'extname',

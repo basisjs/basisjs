@@ -1071,10 +1071,8 @@
     this.resources = hasResources && decl.resources;
 
     if (instances)
-    {
       for (var id in instances)
         instances[id].rebuild();
-    }
 
     if (funcs.l10n)
     {
@@ -1184,10 +1182,8 @@
     bindingBridge: {
       attach: function(template, handler, context){
         for (var i = 0, listener; listener = template.attaches_[i]; i++)
-        {
           if (listener.handler == handler && listener.context == context)
             return false;
-        }
 
         template.attaches_.push({
           handler: handler,
@@ -1317,6 +1313,7 @@
         for (var key in template.instances_)
           template.instances_[key].destroy();
 
+        template.attaches_ = null;
         template.createInstance = null;
         template.getBinding = null;
         template.instances_ = null;

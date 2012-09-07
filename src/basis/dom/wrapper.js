@@ -1590,7 +1590,7 @@
 
       // remove listener from parentNode
       if (oldChild.listen.parentNode)
-        this.addHandler(oldChild.listen.parentNode, oldChild);
+        this.removeHandler(oldChild.listen.parentNode, oldChild);
 
       // update selection
       updateNodeContextSelection(oldChild, oldChild.contextSelection, null, true);
@@ -1658,6 +1658,9 @@
       for (var i = childNodes.length; i --> 0;)
       {
         var child = childNodes[i];
+
+        if (child.listen.parentNode)
+          child.parentNode.removeHandler(child.listen.parentNode, child);
 
         child.parentNode = null;
         child.groupNode = null;
