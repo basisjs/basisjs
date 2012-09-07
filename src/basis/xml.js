@@ -22,6 +22,7 @@
 
   var ELEMENT_NODE = DOM.ELEMENT_NODE;
   var ATTRIBUTE_NODE = DOM.ATTRIBUTE_NODE;
+  var TEXT_NODE = DOM.TEXT_NODE;
 
 
   //
@@ -218,6 +219,18 @@
       // single child node and not an element -> return child nodeValue
       if (firstChild.nodeType != ELEMENT_NODE && firstChild === node.lastChild)
         return firstChild.nodeValue;
+      else if (firstChild !== node.lastChild && firstChild.nodeType == TEXT_NODE)
+      {
+        var result = '';
+        var cursor = firstChild;
+        do
+        {
+          result += cursor.nodeValue;
+        }
+        while (cursor = cursor.nextSibling);
+
+        return result;
+      }
     }
 
     var result = {};

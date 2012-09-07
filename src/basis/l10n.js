@@ -109,6 +109,7 @@
     }
   });
 
+
   var Dictionary = Class(null, {
     className: namespace + '.Dictionary',
 
@@ -164,6 +165,11 @@
     }
   });
 
+
+  function getCultureList(){
+    return cultureList;
+  }
+
   function setCultureList(list){
     if (typeof list == 'string')
       list = list.qw();
@@ -181,6 +187,7 @@
 
     cultureList = cultures;
   }
+
   function createGetTokenValueFunction(cultureRow)
   {
     return new Function('tokenName', 
@@ -188,33 +195,6 @@
       + ' || this.getCultureValue("base", tokenName);');
   }
 
-  function getCultureList(){
-    return cultureList;
-  }
-
-  function getToken(path){
-    if (arguments.length > 1)
-      path = arrayFrom(arguments).join('.');
-
-    if (path.charAt(0) == '#')
-    {
-      return tokenIndex[parseInt(path.substr(1), 36)];
-    }
-    else
-    {
-      var dotIndex = path.lastIndexOf('.');
-      return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
-    }
-  }
-
-  function getDictionary(namespace, autoCreate){
-    var dict = dictionaries[namespace];    
-
-    if (!dict && autoCreate)
-      dict = dictionaries[namespace] = new Dictionary(namespace);
-
-    return dict;
-  }
 
   function getDictionaries(){
     return dictionaries;
@@ -225,7 +205,7 @@
 
     var dictionary = getDictionary(namespace);
 
-    ;;;if (dictionary && dictionary.location && typeof console != 'undefined') { console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created') };
+    ;;;if (dictionary && typeof console != 'undefined') { console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created') };
 
     dictionary = getDictionary(namespace, true);
     dictionary.location = location;
@@ -259,6 +239,35 @@
     getDictionary(namespace, true).update(culture, tokens);
   }
 
+  function getDictionary(namespace, autoCreate){
+    var dict = dictionaries[namespace];    
+
+    if (!dict && autoCreate)
+      dict = dictionaries[namespace] = new Dictionary(namespace);
+
+    return dict;
+  }
+
+  function getToken(path){
+    if (arguments.length > 1)
+      path = arrayFrom(arguments).join('.');
+
+    if (path.charAt(0) == '#')
+    {
+      return tokenIndex[parseInt(path.substr(1), 36)];
+    }
+    else
+    {
+      var dotIndex = path.lastIndexOf('.');
+      return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
+    }
+  }
+
+
+  function getCulture(){
+    return currentCulture;
+  }
+
   function setCulture(culture){
     if (currentCulture != culture)
     {
@@ -266,9 +275,6 @@
       for (var i in dictionaries)
         setCultureForDictionary(dictionaries[i], currentCulture);
     }
-  }
-  function getCulture(){
-    return currentCulture;
   }
 
   function setCultureForDictionary(dictionary, culture){
@@ -283,7 +289,6 @@
 
     loadCultureForDictionary_(dictionary, culture);
   }
-
 
   function loadCultureForDictionary_(dictionary, culture){
     if (culture == 'base')
@@ -334,7 +339,10 @@
     else
     {
       if (dictionary)
-        updateDictionary(dictionary, culture, dictionaryData[dictionary]);
+      {
+        if (dictionaryData[dictionary])
+          updateDictionary(dictionary, culture, dictionaryData[dictionary]);
+      }
       else
       {
         for (var dictionaryName in dictionaryData)
@@ -343,7 +351,9 @@
     }
   }
 
-
+  //
+  // create dictionary event handling
+  //
   var dictionaryUpdateListeners = [];
   function addHandler(handler, context) {
     for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
@@ -376,6 +386,10 @@
       listener.handler.call(listener.context, dictionaryName);
   }
 
+
+  //
+  // exports
+  //
 
   module.exports = {
     Token: Token,
