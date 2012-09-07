@@ -1,9 +1,0 @@
-
-  #Viewer .templater-AttributeValuePart
-  {
-    margin-right: 1ex;
-  }
-  #Viewer .templater-AttributeValuePart:last-child
-  {
-    margin-right: 0;
-  }
