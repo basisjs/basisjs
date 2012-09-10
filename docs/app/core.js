@@ -1,10 +1,3 @@
-(function(){
-
- /**
-  * @namespace
-  */
-
-  var namespace = 'BasisDoc.Core';
 
   // import names
 
@@ -18,6 +11,8 @@
   var TimeEventManager = basis.timer.TimeEventManager;
 
   // main part
+
+  var BASE_URL_RX = new RegExp(location.href.replace(/docs\/index\.html(#.*)?$/i, '').forRegExp(), 'i');
 
   var urlResolver_ = document.createElement('A');
 
@@ -263,14 +258,14 @@
   // Analize object structure
   //
 
-  mapDO = {};
+  var mapDO = {};
   var members = {};
   var searchValues = [];
 
   var walkThroughCount = 0;
   var clsSeed = 1;
   
-  clsList = [{
+  var clsList = [{
     docsUid_: 0,
     docsLevel_: 0,
     docsProto_: {}
@@ -769,7 +764,11 @@
   setTimeout(resolveRes, 0);
 
 
-  basis.namespace(namespace).extend({
+  module.exports = {
+    BASE_URL_RX: BASE_URL_RX,
+    mapDO: mapDO,
+    clsList: clsList,
+
     JsDocEntity: JsDocEntity,
     JsDocLinkEntity: JsDocLinkEntity,
     JsDocConfigOption: JsDocConfigOption,
@@ -783,6 +782,5 @@
     loadResource: resourceLoader.addResource.bind(resourceLoader),
 
     searchIndex: new basis.data.Dataset({ items: searchValues, listen: { item: null } })
-  });
+  }
 
-})();

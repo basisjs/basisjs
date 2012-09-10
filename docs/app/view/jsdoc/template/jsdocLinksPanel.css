@@ -1,0 +1,19 @@
+
+  .jsDocs .linksPanel UL
+  {
+    list-style: none;
+    padding: 0;
+    margin: .75em 0;
+  }
+  .jsDocs .linksPanel LI
+  {
+    list-style: none;
+    padding: 0;
+    margin: .4em 0 .4em 8px;
+  }
+  .jsDocs .linksPanel A
+  {
+    color: #06C;
+    padding-left: 20px;
+    background: url(img/demo.png) no-repeat left center;
+  }

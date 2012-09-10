@@ -1,0 +1,52 @@
+
+  #Content .viewInheritance UL
+  {
+    margin: 0;
+    list-style: none;
+  }
+  #Content .viewInheritance LI
+  {
+    margin: .2em 0;
+  }
+  #Content .viewInheritance LI UL
+  {
+    padding: 0;
+    padding-left: 14px;
+  }
+  #Content .viewInheritance .absent
+  {
+    opacity: .5;
+      -moz-opacity: .5;
+      filter: alpha(opacity:50);
+  }
+  #Content .viewInheritance .content A
+  {
+    padding-left: 20px;
+    background: url(img/bullet_square_red.png) 2px .1em no-repeat;
+    color: #0066CC;
+  }
+  #Content .viewInheritance .namespace
+  {
+    display: none;
+    font-size: 75%;
+    color: #AAA;
+    padding-left: 20px;
+  }
+  #Content .viewInheritance .show-namespace .namespace
+  {
+    display: block;
+  }
+  #Content .viewInheritance .tag
+  {
+    font-size: 80%;
+    margin-left: 1ex;
+    padding: 1px 1ex 2px;
+    background: #FFE13F;
+    border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+  }
+  #Content .viewInheritance .tag-none
+  {
+    display: none;
+  }

@@ -1,0 +1,10 @@
+  
+  <b:resource src="prototypeView.css"/>
+
+  <div class="view viewPrototype">
+    <h3 class="Content-Header" event-click="scrollTo">
+      <span>{title}</span>
+    </h3>
+    <!--{viewOptions}-->
+    <div{content|childNodesElement} class="content grouping-{groupingType}"/>
+  </div>

@@ -1,10 +1,8 @@
-(function(){
 
- /**
-  * @namespace
-  */
+  basis.require('app.core');
+  basis.require('app.view');
+  basis.require('app.nav');
 
-  var namespace = 'BasisDoc';
 
   // import names
 
@@ -28,9 +26,12 @@
   var uiContainer = basis.ui.Container;
   var uiNode = basis.ui.Node;
   
-  var nsCore = BasisDoc.Core;
-  var nsView = BasisDoc.View;
-  var nsNav = BasisDoc.Nav;
+  var nsCore = app.core;
+  var nsView = app.view;
+  var nsNav = app.nav;
+
+  var viewPrototype = basis.resource('app/view/prototype/prototype.js')();
+  var viewJsDoc = basis.resource('app/view/jsdoc/jsdoc.js')();
 
   //
   // main part
@@ -91,7 +92,7 @@
 
       if (this.delegate)
       {
-        this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
+        this.setChildNodes([viewJsDoc].concat(this.delegate.views || []).filter(function(view){
           return view.isAcceptableObject(this.data);
         }, this), true);
 
@@ -103,7 +104,7 @@
       delegateChanged: function(object, oldDelegate){
         if (this.delegate)
         {
-          this.setChildNodes([nsView.viewJsDoc].concat(this.delegate.views || []).filter(function(view){
+          this.setChildNodes([viewJsDoc].concat(this.delegate.views || []).filter(function(view){
             return view.isAcceptableObject(this.data);
           }, this), true);
           this.scrollTo(this.firstChild.element, true);
@@ -114,7 +115,7 @@
     }
   });
 
-  var prototypeDataset = new nsWrappers.ChildNodesDataset({ sourceNode: nsView.viewPrototype });
+  var prototypeDataset = new nsWrappers.ChildNodesDataset({ sourceNode: viewPrototype });
   var prototypeMapPopup = new nsPopup.Balloon({
     id: 'PrototypeMapPopup',
     dir: 'center bottom center top',
@@ -138,7 +139,7 @@
       }
     }),
     sorting: Function.getter('data.title'),
-    grouping: Object.slice(nsView.viewPrototype.grouping, 'groupGetter sorting childClass'.qw()),
+    grouping: Object.slice(viewPrototype.grouping, 'groupGetter sorting childClass'.qw()),
     event_beforeShow: function(){
       this.constructor.prototype.event_beforeShow.call(this);
       this.setDataSource(prototypeDataset);
@@ -190,7 +191,7 @@
         }
       },
       click: function(){
-        if (this.delegate === nsView.viewPrototype)
+        if (this.delegate === viewPrototype)
           prototypeMapPopup.show(this.element);
         else
           this.delegate.parentNode.scrollTo(this.delegate.element);
@@ -266,7 +267,7 @@
       {
         data: { title: 'basis', fullPath: 'basis' },
         childNodes: Object.iterate(basis.namespaces_, function(key){
-          return mapDO[key];
+          return app.core.mapDO[key];
         })
       }
     ],
@@ -564,7 +565,7 @@
   //
 
   var panel = new nsLayout.VerticalPanelStack({
-    container: 'Layout',
+    container: basis.dom.get('Layout'),
     id: 'Sidebar',
     childNodes: [
       {
@@ -580,7 +581,7 @@
   });
 
   var contentLayout = new nsLayout.VerticalPanelStack({
-    container: 'Layout',
+    container: basis.dom.get('Layout'),
     id: 'Content',
     childNodes: [
       {
@@ -634,5 +635,3 @@
 
   DOM.focus(searchInput.tmpl.field, true);
 
-
-})();

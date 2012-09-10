@@ -1,0 +1,39 @@
+
+  .viewInheritance .Basis-PartitionNode
+  {
+    display: table-row;
+    background: #F8F8F8;
+  }
+  .viewInheritance .Basis-PartitionNode:nth-child(2n)
+  {
+    background: #F0F0F0;
+  }
+  .viewInheritance .Basis-PartitionNode-Title
+  {
+    display: table-cell;
+    border-top: 1px solid #E0E0E0;
+    padding: .5em 0.5ex .5em 2ex;
+    text-align: right;
+    margin: 1ex 0;
+  }
+  .viewInheritance .Basis-PartitionNode-Title A
+  {
+    background: none !important;
+    padding-left: 0 !important;
+    color: #009900 !important;
+  }
+  .viewInheritance .Basis-PartitionNode-Content
+  {
+    display: table-cell;
+    border-top: 1px solid #E0E0E0;
+    padding: 0 2ex 0 0.5ex;
+  }
+  .viewInheritance .Basis-PartitionNode-Content .item
+  {
+    margin: .5em 0 !important;
+  }
+
+  .viewInheritance .Basis-PartitionNode-Content .title
+  {
+    margin: .25em 0;
+  }
