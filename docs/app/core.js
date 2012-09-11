@@ -12,8 +12,6 @@
 
   // main part
 
-  var BASE_URL_RX = new RegExp(location.href.replace(/docs\/index\.html(#.*)?$/i, '').forRegExp(), 'i');
-
   var urlResolver_ = document.createElement('A');
 
   function resolveUrl(value){
@@ -765,7 +763,6 @@
 
 
   module.exports = {
-    BASE_URL_RX: BASE_URL_RX,
     mapDO: mapDO,
     clsList: clsList,
 

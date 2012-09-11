@@ -242,44 +242,10 @@
     line-height: 1.2em;
   }
 
-  #Content .viewOptions
-  {
-    position: relative;
-    z-index: 1;
-    font-size: 85%;
-    float: right;
-    line-height: 1em;
-    margin-top: 1em;
-    margin-right: 1ex;
-  }
-  #Content .viewOptions .title,
-  #Content .viewOptions .options
-  {
-  }
-  #Content .viewOptions .option
-  {
-    color: #0066CC;
-    margin-left: .5ex;
-    padding: .2em .75ex .3em;
-    border-radius: 3px;
-      -moz-border-radius: 3px;
-      -webkit-border-radius: 3px;
-    cursor: pointer;
-    text-decoration: underline;
-  }
-  #Content .viewOptions .selected
-  {
-    background: #D9E8FB;
-    color: #333;
-    text-decoration: none;
-    cursor: default;
-  }
-
   #Content .viewTitle
   {
     margin: 5px 0 0 5px;
   }
-
 
 
   #Content .content
@@ -288,69 +254,6 @@
     padding: 1em 1ex 2em 2ex;
   }
 
-
-  #Content .ClassMap .Basis-ScrollPanel
-  {
-    height: 400px;
-  }
-  #Content .ClassMap .Basis-Scrollbar.horizontal
-  {
-    left: 10px;
-    right: 10px;
-  }
-  #Content .ClassMap .Basis-Scrollbar.vertical
-  {
-    top: 10px;
-    bottom: 10px;
-  }
-  #Content .ClassMap .content
-  {
-    padding: 0;
-    width: 100%;
-    overflow: hidden;
-  }
-
-  #Content .ClassMap .firstLevel
-  {
-    padding: 0;
-  }
-
-
-  .viewConfig UL.content
-  {
-    list-style: none;
-    padding: 0 0 0 5px;
-    margin: 0;
-  }
-  .viewConfig .content A
-  {
-    color: #06C;
-  }
-  .viewConfig .content LI
-  {
-    padding: .2em 0 .2em 0;
-  }
-  .viewConfig .content .title
-  {
-    padding-left: 18px;
-    background: url(img/config.png) no-repeat left center;
-  }
-  .viewConfig P
-  {
-    margin: 0 0 0 20px;
-    font-size: 85%;
-    color: #888;
-  }
-  .viewConfig .Basis-PartitionNode-Title
-  {
-    padding-left: 20px;
-    background: url(img/bullet_square_red.png) no-repeat left center;
-  }
-  .viewConfig .Basis-PartitionNode-Content
-  {
-    padding-left: 20px;
-    padding-bottom: .5em;
-  }
 
 
   /*********************************/
