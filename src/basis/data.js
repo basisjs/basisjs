@@ -55,13 +55,15 @@
     PRIORITY: [],
 
    /**
-    * Registrate new state
+    * Register new state
+    * @param {string} state
+    * @param {string=} order
     */
     add: function(state, order){
-      var name = state.toUpperCase();
+      var name = state;
       var value = state.toLowerCase();
 
-      this[name] = value;
+      STATE[name] = value;
       STATE_EXISTS[value] = name;
 
       if (order)
@@ -70,7 +72,7 @@
         order = -1;
 
       if (order == -1)
-        this.PRIORITY.push(value)
+        this.PRIORITY.push(value);
       else
         this.PRIORITY.splice(order, 0, value);
     },
@@ -80,7 +82,7 @@
     }
   };
 
-  // Registrate base states
+  // Register base states
 
   STATE.add('READY');
   STATE.add('DEPRECATED');
@@ -90,7 +92,7 @@
 
 
   //
-  // Subscription sheme
+  // Subscription schema
   //
 
   var subscriptionHandlers = {};
@@ -104,7 +106,7 @@
     ALL: 0,
 
    /**
-    * Registrate new type of subscription
+    * Register new type of subscription
     * @param {string} name
     * @param {Object} handler
     * @param {function()} action
@@ -131,7 +133,7 @@
               }
               else
               {
-                ;;;console.warn('Attempt to add dublicate subscription');
+                ;;;console.warn('Attempt to add duplicate subscription');
               }
             }
           },
@@ -192,7 +194,7 @@
     }
   }
 
-  // Registrate base subscription types
+  // Register base subscription types
 
   SUBSCRIPTION.add(
     'DELEGATE',
@@ -422,7 +424,6 @@
     },
 
    /**
-    * @param {Object=} config The configuration of object.
     * @constructor
     */
     init: function(){
@@ -515,8 +516,8 @@
     *   a.setState(basis.data.STATE.PROCESSING);
     *   alert(a.state); // shows 'processing'
     *   alert(a.state === b.state); // shows true
-    * @param {basis.data.DataObject} delegate
-    * @return {basis.data.DataObject} Returns current delegate object.
+    * @param {basis.data.DataObject=} newDelegate
+    * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
 
@@ -561,7 +562,7 @@
 
         if (newDelegate)
         {
-          // assing new delegate
+          // assign new delegate
           this.delegate = newDelegate;
           this.root = newDelegate.root;
           this.data = newDelegate.data;
@@ -631,9 +632,8 @@
    /**
     * Set new state for object. Fire stateChanged event only if state (or state text) was changed.
     * @param {basis.data.STATE|string} state New state for object
-    * @param {Object=} data
-    * @param {boolean=} forceEvent Fire stateChanged event even state didn't changed.
-    * @return {basis.data.STATE|string} Current object state.
+    * @param {*=} data
+    * @return {boolean} Current object state.
     */
     setState: function(state, data){
       var root = this.target || this.getRootDelegate();
@@ -780,7 +780,7 @@
   //
 
   var KEYOBJECTMAP_MEMBER_HANDLER = {
-    destroy: function(object){
+    destroy: function(){
       delete this.map[this.itemId];
     }
   };
@@ -851,6 +851,7 @@
 
  /**
   * Returns delta object
+  * @return {object|undefined}
   */
   function getDelta(inserted, deleted){
     var delta = {};
@@ -938,7 +939,7 @@
    /**
     * @readonly
     */
-    syncAction: false,
+    syncAction: null,
 
    /**
     * Fires when items changed.
@@ -1077,11 +1078,11 @@
     },
 
    /**
-    * @param {function} syncAction
+    * @param {function|null} syncAction
     */
     setSyncAction: function(syncAction){
       if (typeof syncAction != 'function')
-        syncAction = false;
+        syncAction = null;
 
       this.syncAction = syncAction;
 
@@ -1222,7 +1223,6 @@
     },
 
     set: function(data){
-
       // a little optimizations
       if (!this.itemCount)
         return this.add(data);
@@ -1298,7 +1298,6 @@
       var objectId;
       var exists = {};
       var inserted = [];
-      var deleted = [];
       var res;
 
       for (var i = 0; i < data.length; i++)
@@ -1389,7 +1388,8 @@
           delete eventCache[datasetId];
           flushCache(cache);
         }
-        return realEvent.call(dataset, delta);
+        realEvent.call(dataset, delta);
+        return;
       }
 
       var mode = inserted ? 'inserted' : 'deleted';
@@ -1399,7 +1399,10 @@
         if (!array)
           flushCache(cache);
         else
-          return array.push.apply(array, inserted || deleted);
+        {
+          array.push.apply(array, inserted || deleted);
+          return
+        }
       }
 
       eventCache[datasetId] = delta;

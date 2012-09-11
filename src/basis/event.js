@@ -27,7 +27,7 @@
   * @func
   */
   var warnOnDestroy = function(){
-    throw 'Object had been destroed before. Destroy method shouldn\'t be call more than once.'
+    throw 'Object had been destroyed before. Destroy method must not be called more than once.'
   };
 
 
@@ -42,7 +42,7 @@
     if (!eventFunction)
     {
       eventFunction = events[eventName] = 
-        /** @cut for more verbose in dev */ Function('eventName', 'slice', 'eventFunction', 'return eventFunction = function _event_' + eventName + '(' + arrayFrom(arguments, 1).join(', ') + '){' + 
+        /** @cut for more verbose in dev */ new Function('eventName', 'slice', 'eventFunction', 'return eventFunction = function _event_' + eventName + '(' + arrayFrom(arguments, 1).join(', ') + '){' +
 
           function dispatchEvent(){
             var handlers = this.handlers_;
@@ -93,7 +93,7 @@
     }
 
     return eventFunction;
-  };
+  }
 
 
   //
@@ -152,7 +152,7 @@
    /**
     * Fires when object is destroing.
     * NOTE: don't override
-    * @param {Basis.EventObject} object Reference for object wich is destroing.
+    * @param {basis.EventObject} object Reference for object wich is destroing.
     * @event
     */
     event_destroy: createEvent('destroy'),
@@ -166,17 +166,15 @@
     extendConstructor_: true,
 
    /**
-    * @param {Object=} config
     * @constructor
     */
     init: function(){
-      // fast add first handler
+      // add first handler
       if (this.handler)
       {
-        (this.handlers_ || (this.handlers_ = [])).push({
-          handler: this.handler,
-          thisObject: this.handlerContext || this
-        });
+        this.addHandler(this.handler, this.handlerContext);
+        this.handler = null;
+        this.handlerContext = null;
       }
     },
 
@@ -204,7 +202,7 @@
         item = handlers[i];
         if (item.handler === handler && item.thisObject === thisObject)
         {
-          ;;;if (typeof console != 'undefined') console.warn('EventObject#addHandler: Add dublicate handler to EventObject instance: ', this);
+          ;;;if (typeof console != 'undefined') console.warn('EventObject#addHandler: Add duplicate handler to EventObject instance: ', this);
           return false;
         }
       }
@@ -227,7 +225,7 @@
       var handlers = this.handlers_;
 
       if (!handlers)
-        return;
+        return false;
 
       if (!thisObject)
         thisObject = this;
