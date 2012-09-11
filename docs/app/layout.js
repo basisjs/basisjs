@@ -1,8 +1,5 @@
 
   basis.require('app.core');
-  basis.require('app.ext.view');
-  basis.require('app.nav');
-
 
   // import names
   var DOM = basis.dom;
@@ -14,8 +11,8 @@
   //
   var prototypeMapPopup = basis.resource('app/layout/prototypeMapPopup.js');
 
-  var targetContent = basis.resource('app/layout/targetContent.js')();
   var targetHeader = basis.resource('app/layout/targetHeader.js')();
+  var targetContent = basis.resource('app/layout/targetContent.js')();
 
   targetHeader.setDelegate(targetContent);
   targetHeader.setDataSource(new basis.dom.wrapper.ChildNodesDataset({ sourceNode: targetContent }));

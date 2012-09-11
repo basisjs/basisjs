@@ -1,0 +1,68 @@
+
+  .PrototypeMapPopupPanel-Content
+  {
+    -moz-column-count: 5;
+    -moz-column-width: 24ex;
+    -moz-column-gap: 1ex;
+    -webkit-column-count: 5;
+    -webkit-column-width: 24ex;
+    -webkit-column-gap: 1ex;
+    column-count: 4;
+    column-width: 24ex;
+    column-gap: 1ex;
+    width: 124ex;
+    line-height: 1.1em;
+  }
+  .PrototypeMapPopupPanel-Content .item
+  {
+    cursor: pointer;
+      -webkit-border-radius: 3px;
+      -moz-border-radius: 3px;
+    border-radius: 3px;
+    padding: .25em .5ex;
+    backg3round: gray;
+  }
+  .PrototypeMapPopupPanel-Content .match
+  {
+    background-color: #FFE13F;
+    padding: 0 0 0 2px;
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+    border-radius: 2px;
+  }
+  .PrototypeMapPopupPanel-Content .selected,
+  .PrototypeMapPopupPanel-Content .item:hover
+  {
+    background: gold;
+  }
+  .PrototypeMapPopupPanel-Input INPUT
+  {
+    width: 46ex;
+  }
+  .PrototypeMapPopupPanel-Input .Basis-Field-Container
+  {
+    padding: 0;
+  }
+
+  .PrototypeMapPopupPanel .Basis-PartitionNode
+  {
+    margin-bottom: 1.5em;
+  }
+  .PrototypeMapPopupPanel .Basis-PartitionNode-Title
+  {
+    padding: .25em .5ex;
+    backgrou3nd: red;
+    font-weight: bold;
+  }
+
+  .PrototypeMapPopupPanel .emptyLabel
+  {
+    font-size: 85%;
+    color: #999;
+
+    display: none;
+  }
+  .PrototypeMapPopupPanel .groupEmpty .emptyLabel
+  {
+    display: block;
+  }

@@ -5,12 +5,21 @@
   var targetContent = basis.resource('app/layout/targetContent.js');
   
   var prototypeDataset = new basis.dom.wrapper.ChildNodesDataset({ sourceNode: viewPrototype() });
-  var prototypeMapPopup = new basis.ui.popup.Balloon({
-    id: 'PrototypeMapPopup',
-    dir: 'center bottom center top',
-    selection: {},
+
+
+  var prototypeMapPopupPanel = new basis.ui.Node({
+    template: resource('template/prototypeMapPopupPanel.tmpl'),
+
+    binding: {
+      matchInput: 'satellite:'
+    },
+    
+    /*satellite: {
+      matchInput: prototypeMapPopupMatchInput
+    },*/
+
     childClass: basis.ui.Node.subclass({
-      template: resource('template/prototypeMapItem.tmpl'),
+      template: resource('template/prototypeMapPopupPanelItem.tmpl'),
 
       binding: {
         key: 'data:'
@@ -20,27 +29,16 @@
         scrollTo: function(event){
           var element = this.delegate.element;
           targetContent().scrollTo(element);
-          this.parentNode.hide();
+          
           classList(element).add('highlight');
           setTimeout(function(){ classList(element).remove('highlight'); });
+
+          prototypeMapPopup.hide();
         }
       }
     }),
     sorting: Function.getter('data.title'),
     grouping: Object.slice(viewPrototype().grouping, 'groupGetter sorting childClass'.qw()),
-    event_beforeShow: function(){
-      this.constructor.prototype.event_beforeShow.call(this);
-      this.setDataSource(prototypeDataset);
-    },
-    event_show: function(){
-      this.constructor.prototype.event_show.call(this);
-      prototypeMapPopupMatchInput.select();
-    },
-    event_hide: function(){
-      this.constructor.prototype.event_hide.call(this);
-      this.setDataSource();
-      prototypeMapPopupMatchInput.setValue();
-    }
   });
 
   var prototypeMapPopupMatchInput = new basis.ui.field.MatchInput({
@@ -62,11 +60,35 @@
       }
     },
     matchFilter: {
-      node: prototypeMapPopup,
+      node: prototypeMapPopupPanel,
       textNodeGetter: Function.getter('tmpl.this_data_title')
     }
   });
-  basis.dom.insert(prototypeMapPopup.tmpl.content.parentNode, prototypeMapPopupMatchInput.element, basis.dom.INSERT_BEGIN);
+
+  prototypeMapPopupPanel.setSatellite('matchInput', prototypeMapPopupMatchInput);
+
+  var prototypeMapPopup = new basis.ui.popup.Balloon({
+    id: 'PrototypeMapPopup',
+    dir: 'center bottom center top',
+    selection: {},
+
+    childNodes: prototypeMapPopupPanel,
+
+    handler: {
+      beforeShow: function(){
+        prototypeMapPopupPanel.setDataSource(prototypeDataset);
+      },
+      show: function(){
+        prototypeMapPopupMatchInput.select();
+      },
+      hide: function(){
+        prototypeMapPopupPanel.setDataSource();
+        prototypeMapPopupMatchInput.setValue();
+      }
+    }
+  });
+
+  //basis.dom.insert(prototypeMapPopup.tmpl.content.parentNode, prototypeMapPopupMatchInput.element, basis.dom.INSERT_BEGIN);
 
   //
   // exports

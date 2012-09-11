@@ -5,6 +5,8 @@
   var getter = Function.getter;
   var classList = basis.cssom.classList;
 
+  var mapDO = app.core.mapDO;
+
   var InheritanceItem = basis.ui.Node.subclass({
     className: module.path + '.InheritanceItem',
     template: resource('template/inheritanceItem.tmpl'),

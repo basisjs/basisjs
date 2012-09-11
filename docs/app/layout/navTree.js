@@ -1,16 +1,18 @@
 
-  var nav = basis.resource('nav.js')();
+  var nav = resource('nav.js')();
 
   var curHash;
 
   var navTree = new basis.ui.tree.Tree({
-    handler: {
-      datasetChanged: function(){
-        var selected = this.pick();
-        if (selected)
-        {
-          navTree.open(selected.data.fullPath, true);
-          location.hash = '#' + selected.data.fullPath;
+    selection: {
+      handler: {
+        datasetChanged: function(){
+          var selected = this.pick();
+          if (selected)
+          {
+            navTree.open(selected.data.fullPath, true);
+            location.hash = '#' + selected.data.fullPath;
+          }
         }
       }
     },
