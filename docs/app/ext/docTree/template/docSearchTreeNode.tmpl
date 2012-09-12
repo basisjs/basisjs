@@ -1,0 +1,16 @@
+
+  <b:resource src="../../../../../src/basis/ui/templates/tree/Node.css"/>
+  <b:resource src="docTreeNode.css"/>
+  <b:resource src="docSearchTreeNode.css"/>
+
+  <b:define name="selected" type="bool"/>
+  <b:define name="disabled" type="bool"/>
+
+  <li class="Basis-TreeNode App-DocTreeNode App-DocSearchTreeNode">
+    <div{content} class="Basis-TreeNode-Title {selected} Type-{kind}">
+      <span class="Basis-TreeNode-Caption Basis-TreeNode-Caption__{disabled} Basis-TreeNode-Caption__{selected}" event-click="select">
+        <span class="namespace">{namespace}</span>
+        <span class="label">{title}<!--{args}--></span>
+      </span>
+    </div>
+  </li>

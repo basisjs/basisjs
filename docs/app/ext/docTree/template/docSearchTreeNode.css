@@ -1,0 +1,30 @@
+  
+  .App-DocSearchTreeNode .Basis-TreeNode-Caption
+  {
+    background-position: 3px .3em;
+    padding-left: 24px;
+  }
+  .App-DocSearchTreeNode .match
+  {
+    background-color: #FFE13F;
+    padding: 0 0 0 2px;
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+    border-radius: 2px;
+  }
+  .App-DocSearchTreeNode .Basis-TreeNode .label
+  {
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+      -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+  }
+  .App-DocSearchTreeNode .Basis-TreeNode .namespace
+  {
+    padding-left: 1.5ex;
+    padding-right: .25ex;
+    color: #090;
+    display: block;
+    float: right;
+  }

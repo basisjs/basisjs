@@ -51,88 +51,68 @@
 
 
   var searchInput = new SearchMatchInput({
-    cssClassName: 'empty Basis-MatchInput',
+    template: resource('template/searchInput.tmpl'),
     action: {
       clear: function(){
         this.setValue('');
       }
     },
     matchFilter: {
-      //node: searchTree,
       regexpGetter: function(value){
         return new RegExp('(^|[^a-z])(' + value.forRegExp() + ')', 'i');
       },
       handler: {
         change: function(sender, value, oldValue){
-          basis.cssom.classList(searchInput.element).bool('empty', !value);
-
-          /*if (value)
-          {
-            if (!oldValue)
-            {
-              searchCloud.setSource(nsCore.searchIndex);
-              sidebarPages.item('search').select();
-            }
-
-            searchTree.setDataSource(searchCloud.getSubset(value.charAt(0).toUpperCase()));
-          }
-          else
-          {
-            sidebarPages.item('tree').select();
-            var selected = navTree.selection.pick();
-            if (selected)
-              selected.element.scrollIntoView(true);
-          }*/
+          searchInput.tmpl.set('empty', !value ? 'empty' : '');
         }
+      }
+    },
+    handler: {
+      fieldKeyup: function(sender, event){
+        var key = Event.key(event);
+        var ctrl = this.matchFilter.node;
+        var selected = ctrl.selection.pick();
+        
+        if ([Event.KEY.UP, Event.KEY.DOWN].has(key))
+        {
+          var cn = ctrl.childNodes;
+          var pos = -1, node;
+          
+          if (selected && selected.matched)
+            pos = cn.indexOf(selected);
+          
+          if (key == Event.KEY.UP)
+            node = cn.lastSearch(true, 'matched', pos == -1 ? cn.length : pos);
+          else
+            node = cn.search(true, 'matched', pos + 1);
+
+          if (node)
+            node.select();
+        }
+        /*else
+          if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(key))
+            if (selected)
+              navTree.open(selected.data.fullPath);*/
+      },
+      fieldKeydown: function(sender, event){
+        var key = Event.key(event);
+        var chr = String.fromCharCode(key);
+
+        if (key == Event.KEY.ESC)
+          return searchInput.reset();
+
+        if (!/[a-z\_0-9\x08\x09\x0A\x0D\x23-\x28]/i.test(chr))
+          Event.kill(event);
+      },
+      fieldFocus: function(){
+        this.focused = true;
+      },
+      fieldBlur: function(){
+        this.focused = false;
       }
     }
   });
-  DOM.insert(searchInput.element, DOM.createElement('#CancelSearchButton[event-click="clear"]', 'x'));
 
-  Event.addHandlers(searchInput.tmpl.field, {
-    keyup: function(event){
-      var key = Event.key(event);
-      var ctrl = this.matchFilter.node;
-      var selected = ctrl.selection.pick();
-      
-      if ([Event.KEY.UP, Event.KEY.DOWN].has(key))
-      {
-        var cn = ctrl.childNodes;
-        var pos = -1, node;
-        
-        if (selected && selected.matched)
-          pos = cn.indexOf(selected);
-        
-        if (key == Event.KEY.UP)
-          node = cn.lastSearch(true, 'matched', pos == -1 ? cn.length : pos);
-        else
-          node = cn.search(true, 'matched', pos + 1);
-
-        if (node)
-          node.select();
-      }
-      /*else
-        if ([Event.KEY.ENTER, Event.KEY.CTRL_ENTER].has(key))
-          if (selected)
-            navTree.open(selected.data.fullPath);*/
-    },
-    keydown: function(event){
-      var key = Event.key(event);
-      var chr = String.fromCharCode(key);
-
-      if (key == Event.KEY.ESC)
-        return searchInput.reset();
-
-      if (!/[a-z\_0-9\x08\x09\x0A\x0D\x23-\x28]/i.test(chr))
-        Event.kill(event);
-    },
-    focus: function(){
-      this.focused = true;
-    },
-    blur: function(){
-      this.focused = false;
-    }
-  }, searchInput);
 
   //
   // exports

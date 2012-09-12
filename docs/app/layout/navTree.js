@@ -1,9 +1,35 @@
 
-  var nav = resource('nav.js')();
+  basis.require('app.ext.docTree');
 
   var curHash;
 
-  var navTree = new basis.ui.tree.Tree({
+  var navTree = new app.ext.docTree.DocTree({
+    childNodes: [
+      {
+        data: { kind: 'Section', title: 'Buildin class extensions', fullPath: 'window' },
+        selectable: false,
+        collapsed: true,
+        childNodes: Object.iterate(app.core.buildin, function(key, value){
+          return new app.ext.docTree.DocTreeClassNode({
+            data: {
+              kind: 'Class',
+              title: key,
+              path: '',
+              fullPath: key,
+              obj: value
+            }
+          });
+        })
+      },
+      {
+        data: { kind: 'Section', title: 'basis', fullPath: 'basis' },
+        selectable: false,
+        childNodes: Object.iterate(basis.namespaces_, function(key){
+          return app.core.mapDO[key];
+        })
+      }
+    ],
+
     selection: {
       handler: {
         datasetChanged: function(){
@@ -16,30 +42,6 @@
         }
       }
     },
-    childClass: nav.docSection,
-    childNodes: [
-      {
-        data: { title: 'Buildin class extensions', fullPath: 'window' },
-        collapsed: true,
-        childNodes: Object.iterate(app.core.buildin, function(key, value){
-          return new nav.docClass({
-            data: {
-              kind: 'Class',
-              title: key,
-              path: '',
-              fullPath: key,
-              obj: value
-            }
-          });
-        })
-      },
-      {
-        data: { title: 'basis', fullPath: 'basis' },
-        childNodes: Object.iterate(basis.namespaces_, function(key){
-          return app.core.mapDO[key];
-        })
-      }
-    ],
 
     open: function(path, noScroll){
       path = path.replace(/^#/, '');

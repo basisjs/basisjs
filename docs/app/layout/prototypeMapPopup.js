@@ -88,8 +88,6 @@
     }
   });
 
-  //basis.dom.insert(prototypeMapPopup.tmpl.content.parentNode, prototypeMapPopupMatchInput.element, basis.dom.INSERT_BEGIN);
-
   //
   // exports
   //

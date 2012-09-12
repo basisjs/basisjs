@@ -1,11 +1,27 @@
 
-  basis.require('app.ext.view');
+  var viewInheritance = basis.resource('app/views/inheritance/inheritance.js')();
+  var viewSourceCode = basis.resource('app/views/sourceCode/sourceCode.js')();
+  var viewTemplate = basis.resource('app/views/templateView/templateView.js')();
+  var viewPrototype = basis.resource('app/views/prototype/prototype.js')();
+  var viewNamespaceMap = basis.resource('app/views/namespaceMap/namespaceMap.js')();
+  var viewDescription = basis.resource('app/views/description/description.js')();
 
-  var viewDescription = basis.resource('app/views/description/description.js');
-  
+  var VIEW_MAP = {
+    'namespace':      [viewDescription, viewNamespaceMap],
+    'method':         [viewDescription, viewInheritance, viewSourceCode],
+    'function':       [viewDescription, viewSourceCode],
+    'property':       [viewDescription, viewInheritance],
+    'classMember':    [viewDescription],
+    'constant':       [viewDescription],
+    'constantObject': [viewDescription],
+    'htmlElement':    [viewDescription],
+    'class':          [viewDescription, viewInheritance, viewTemplate, viewPrototype],
+    'object':         [viewDescription],
+    'event':          [viewDescription, viewInheritance, viewSourceCode]
+  }
+
   module.exports = new basis.ui.Node({
     id: 'ObjectView',
-    childClass: app.ext.view.View,
 
     template: resource('template/targetContent.tmpl'),
 
@@ -16,7 +32,7 @@
 
       if (this.delegate)
       {
-        this.setChildNodes([viewDescription()].concat(this.delegate.views || []).filter(function(view){
+        this.setChildNodes((VIEW_MAP[this.data.kind.toLowerCase()] || []).filter(function(view){
           return view.isAcceptableObject(this.data);
         }, this), true);
 

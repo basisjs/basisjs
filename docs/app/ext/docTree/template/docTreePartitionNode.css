@@ -1,0 +1,23 @@
+
+  .App-DocTreePartitionNode
+  {
+    margin: .2em 0 .4em;
+  }
+  .App-DocTreePartitionNode .Basis-TreePartitionNode-Title
+  {
+    background: none;
+    height: .6em;
+    margin-bottom: .6em;
+    margin-right: 2px;
+    border-bottom: 1px solid #E0E0E0;
+    padding: 1px 0;
+    line-height: 1.2em;
+  }
+  .App-DocTreePartitionNode .Basis-TreePartitionNode-Title SPAN
+  {
+    color: #888;
+    display: block;
+    float: left;
+    background: white;
+    padding-right: 4px;
+  }
