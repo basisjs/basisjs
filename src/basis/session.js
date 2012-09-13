@@ -15,6 +15,7 @@
 
   var Class = basis.Class;
   var extend = Object.extend;
+  var keys = Object.keys;
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
@@ -132,7 +133,7 @@
         throw new Error(EXCEPTION_SESSION_NOT_OPEN);
     },
     destroy: function(){
-      var keys = Object.keys(sessions);
+      var keys = keys(sessions);
       var key;
       while (key = keys.pop())
         sessions[key].destroy();
@@ -180,7 +181,7 @@
     destroy: function(){
       EventObject.prototype.destroy.call(this);
 
-      var keys = Object.keys(this.data);
+      var keys = keys(this.data);
       var key;
       while (key = keys.pop())
       {

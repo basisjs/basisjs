@@ -14,6 +14,7 @@
 
   var Class = basis.Class;
 
+  var keys = Object.keys;
   var extend = Object.extend;
   var complete = Object.complete;
   var arrayFrom = Array.from;
@@ -665,7 +666,7 @@
         if (this.idField || this.compositeKey)
         {
           this.idField = null;
-          this.compositeKey = ConcatString.apply(null, Object.keys(this.idFields));
+          this.compositeKey = ConcatString.apply(null, keys(this.idFields));
         }
         else
         {
@@ -1057,7 +1058,7 @@
 
                   delete rollbackData[key];
 
-                  if (!Object.keys(rollbackData).length)
+                  if (!keys(rollbackData).length)
                     this.modified = null;
                 }
               }
@@ -1128,7 +1129,7 @@
 
             delete rollbackData[key];
 
-            if (!Object.keys(rollbackData).length)
+            if (!keys(rollbackData).length)
               this.modified = null;
           }
         }
