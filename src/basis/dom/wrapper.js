@@ -177,7 +177,7 @@
 
 
   //
-  // registrate new subscription types
+  // register new subscription types
   //
 
   SUBSCRIPTION.add(
@@ -426,7 +426,7 @@
     * @param {string} key
     * @param {basis.dom.wrapper.AbstractNode} oldSattelite Old satellite for key
     */
-    event_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSattelite'),
+    event_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
 
     //
     // properties
@@ -572,7 +572,7 @@
 
    /**
     * Group indificator, may using for grouping.
-    * @type {any}
+    * @type {*}
     */
     groupId: NaN,
 
@@ -605,8 +605,6 @@
     *   - dataSource
     *   - satelliteConfig
     *   - owner
-    * @param {Object} config
-    * @return {Object} Returns a config. 
     * @constructor
     */
     init: function(){
@@ -728,7 +726,7 @@
         if (satellite)
           this.satellite[name] = satellite;
         else
-          delete this.satellite[name]
+          delete this.satellite[name];
 
         if (satellite)
         {
@@ -777,21 +775,22 @@
 
    /**
     * Removes all child nodes from the list of children, fast way to remove all childs.
-    * @param {boolean} alive
+    * @param {boolean=} alive
     */
     clear: function(alive){
     },
 
    /**
-    * Returns whether this node has any children. 
+    * Returns whether this node has any children.
+    * @param {Array.<basis.dom.wrapper.AbstractNode>} nodes
     * @return {boolean} Returns true if this node has any children, false otherwise.
     */
-    setChildNodes: function(){
+    setChildNodes: function(nodes){
     },
 
    /**
-    * @param {Object|function()|string} grouping
-    * @param {boolean} alive Keep grouping node alive after unlink
+    * @param {Object|function()|string=} grouping
+    * @param {boolean=} alive Keep grouping node alive after unlink
     */
     setGrouping: function(grouping, alive){
     },
@@ -804,13 +803,13 @@
     },
 
    /**
-    * @param {basis.data.AbstractDataset} dataSource
+    * @param {basis.data.AbstractDataset=} dataSource
     */
     setDataSource: function(dataSource){
     },
 
    /**
-    * @param {basis.dom.wrapper.AbstractNode} owner
+    * @param {basis.dom.wrapper.AbstractNode=} owner
     */
     setOwner: function(owner){
       if (!owner || owner instanceof AbstractNode == false)
@@ -837,12 +836,12 @@
     destroy: function(){
       // This order of actions is better for perfomance: 
       // inherit destroy -> clear childNodes -> remove from parent
-      // DON'T CHANGE ORDER WITH NO ANALIZE AND TESTS
+      // DON'T CHANGE ORDER WITH NO ANALYZE AND TESTS
 
       // inherit (fire destroy event & remove handlers)
       DataObject.prototype.destroy.call(this);
 
-      // delete childs
+      // delete children
       if (this.dataSource)
       {
         // drop dataSource
@@ -942,7 +941,7 @@
 
       if (pos == -1)
       {
-        nodes.push(newNode)
+        nodes.push(newNode);
         this.last = newNode;
       }
       else
@@ -1209,7 +1208,7 @@
    /**
     *
     */
-    getChilds: function(value, getter){
+    getChildren: function(value, getter){
       return this.childNodes.filter(function(child){
         return getter(child) == value;
       });
@@ -1643,10 +1642,10 @@
       if (alive)
         updateNodeContextSelection(this, this.selection || this.contextSelection, null, false, true);
 
-      // store childs
+      // store children
       var childNodes = this.childNodes;
 
-      // remove all childs
+      // remove all children
       this.firstChild = null;
       this.lastChild = null;
       this.childNodes = [];
@@ -1734,7 +1733,7 @@
           this.dataSource = null;
         }
 
-        // remove old childs
+        // remove old children
         if (this.firstChild)
           this.clear();
 
@@ -1901,7 +1900,7 @@
 
    /**
     * Set match function for child nodes.
-    * @param {function(node):boolean} func
+    * @param {function(node):boolean} matchFunction
     */
     setMatchFunction: function(matchFunction){
       if (this.matchFunction != matchFunction)
@@ -2045,11 +2044,6 @@
     },
 
    /**
-    * @param {Object} config
-    * @config {basis.dom.wrapper.Selection} selection Set Selection control for child nodes.
-    * @config {boolean} selectable Initial value for selectable property.
-    * @config {boolean} disabled Initial value for disabled property. If true 'disable' event fired.
-    * @config {boolean} selected Initial value for selected property. If true 'select' event fired.
     * @constructor
     */
     init: function(){
@@ -2078,7 +2072,7 @@
 
    /**
     * Changes selection property of node.
-    * @param {basis.dom.wrapper.Selection} selection New selection value for node.
+    * @param {basis.dom.wrapper.Selection=} selection New selection value for node.
     * @return {boolean} Returns true if selection was changed.
     */
     setSelection: function(selection){
@@ -2148,7 +2142,6 @@
 
    /**
     * Makes node unselected.
-    * @param {boolean} multiple
     * @return {boolean} Returns true if selected state has been changed.
     */
     unselect: function(){
@@ -2590,7 +2583,7 @@
 
    /**
     * Set source node for dataset.
-    * @param {basis.dom.wrapper.AbstractNode} node
+    * @param {basis.dom.wrapper.AbstractNode=} node
     */
     setSourceNode: function(node){
       if (node instanceof AbstractNode == false)
