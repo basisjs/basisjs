@@ -870,7 +870,7 @@
  /**
   * Set focus for node.
   * @param {Node} node
-  * @param {boolean} select Call select() method of node.
+  * @param {boolean=} select Call select() method of node.
   */
   function focus(node, select){
     // try catch block here because browsers throw unexpected exeption in some cases
@@ -881,7 +881,7 @@
                                  // temporary removed because IE returns 'object' for DOM object methods, instead of 'function'
         node.select();
     } catch(e) {}
-  };
+  }
 
   // Input text selection
   // Original code of Mihai Bazon, 2006

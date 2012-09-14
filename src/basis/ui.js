@@ -1,4 +1,5 @@
 
+  basis.require('basis.timer');
   basis.require('basis.l10n');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
@@ -46,7 +47,8 @@
 
  /**
   * Function that extends list of binding by extension.
-  * @func
+  * @param {object} binding
+  * @param {object} extension
   */
   function extendBinding(binding, extension){
     binding.bindingId = bindingSeed++;
@@ -56,45 +58,47 @@
       var value = extension[key];
 
       if (!value)
-        def = null
+        def = null;
       else
       {
         value = BINDING_PRESET.process(key, value);
 
         if (typeof value != 'object')
+        {
           def = {
             getter: getter(value)
           };
+        }
         else
           if (Array.isArray(value))
+          {
             def = {
               getter: getter(value[0]),
               events: value[1]
             };
+          }
           else
           {
             def = {
               getter: getter(value.getter),
-              l10n: !!value.l10n,
-              l10nProxy: value.l10nProxy,
               events: value.events
             };
           }
       }
 
-      def.update = function(node){
+      /*def.update = function(node){
         return node.tmpl.set(key, this.getter(node));
-      };
+      };*/
 
       binding[key] = def;
     }
-  };
+  }
 
   // binding preset
 
   var BINDING_PRESET = (function(){
     var presets = {};
-    var prefixRegExp = /^([a-z\_][a-z0-9\_]*)\:(.*)/i;
+    var prefixRegExp = /^([a-z_][a-z0-9_]*):(.*)/i;
 
     return {
       add: function(prefix, func){
@@ -224,7 +228,7 @@
     return {
      /**
       * Template for object.
-      * @type {basis.Html.Template}
+      * @type {basis.html.Template}
       */
       template: EMPTY_TEMPLATE,   // NOTE: explicit template constructor here;
                                   // it could be ommited in subclasses
@@ -247,7 +251,7 @@
       binding: TEMPLATE_BINDING,
 
      /**
-      * @type
+      * @type {string}
       */
       id: null,
 
@@ -471,7 +475,7 @@
           // drop old template
           if (oldTemplate)
           {
-            oldTemplate.clearInstance(this.tmpl, this);
+            oldTemplate.clearInstance(this.tmpl);
 
             var oldBinding = oldTemplate.getBinding(this.binding, this);
             if (oldBinding && oldBinding.handler)
@@ -549,9 +553,9 @@
 
      /**
       * Template update function. It calls on init and on update event by default.
-      * @param {Object} tmpl
+      * @param {object} tmpl
       * @param {string} eventName
-      * @param {Object} delta
+      * @param {object} delta
       */
       templateUpdate: function(tmpl, eventName, delta){
         /** nothing to do, override it in sub classes */
@@ -559,6 +563,7 @@
 
      /**
       * Set focus on element in template, if possible.
+      * @param {boolean=} select
       */
       focus: function(select){
         if (this.focusable)

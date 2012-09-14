@@ -36,7 +36,7 @@
     {
       var createScript = function(){
         return document.createElement("script");
-      }
+      };
 
       var MESSAGE_NAME = "setImmediate.basis";
 
@@ -103,7 +103,7 @@
       //
       if (global.MessageChannel)
       {
-        var addToQueue = function(taskId){
+        addToQueue = function(taskId){
           var channel = new global.MessageChannel();
           channel.port1.onmessage = function(){
             runTask(taskId);
@@ -130,7 +130,7 @@
 
         if (postMessageSupported)
         {
-          // postMessage sheme
+          // postMessage scheme
           var handleMessage = function(event){
             if (event && event.source == global)
             {
@@ -139,7 +139,7 @@
               if (taskId)
                 runTask(taskId)
             }
-          }
+          };
 
           if (global.addEventListener)
             global.addEventListener("message", handleMessage, true);
@@ -148,8 +148,8 @@
 
           // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
           // invoking our onGlobalMessage listener above.
-          var addToQueue = function(taskId){
-            postMessage(MESSAGE_NAME + taskId, "*");
+          addToQueue = function(taskId){
+            global.postMessage(MESSAGE_NAME + taskId, "*");
           };
         }
         else
@@ -158,7 +158,7 @@
           {
             // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
             // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
-            var addToQueue = function(taskId){
+            addToQueue = function(taskId){
               var scriptEl = createScript();
               scriptEl.onreadystatechange = function(){
                 runTask(taskId);
@@ -252,7 +252,10 @@
       if (eventObject)
       {
         if (isNaN(eventTime))
-          return remove(object, event);
+        {
+          remove(object, event);
+          return;
+        }
 
         if (eventObject.eventTime == eventTime)
           return;

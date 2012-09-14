@@ -637,11 +637,7 @@
 
     binding: {
       title: {
-        l10n: true,
         events: 'periodChanged',
-        l10nProxy: function(node, tokenValue){
-          return [Math.floor(1 + node.periodStart.getMonth().base(3)/3), tokenValue, node.periodStart.getFullYear()].join(' ')
-        },
         getter: function(node){
           return l10nToken(namespace, 'quarter');
         }
