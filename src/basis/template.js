@@ -45,22 +45,22 @@
   var SYNTAX_ERROR = 'Invalid or unsupported syntax';
 
   // html parsing states
-  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z\_][a-zA-Z0-9\-\_]*(?:\.[a-zA-Z\_][a-zA-Z0-9\-\_]*)*)\}|resource:([a-zA-Z0-9\_\-\.\:\\\/\s]+)\})?|<(\/|!--(\s*\{)?)?|$)/g;
-  var TAG_NAME = /([a-z\_][a-z0-9\-\_]*)(\:|\{|\s*(\/?>)?)/ig;
-  var ATTRIBUTE_NAME_OR_END = /([a-z\_][a-z0-9\-\_]*)(\:|\{|=|\s*)|(\/?>)/ig;
+  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z_][a-zA-Z0-9_\-]*(?:\.[a-zA-Z_][a-zA-Z0-9_\-]*)*)\}|resource:([a-zA-Z0-9_\-\.:\\\/\s]+)\})?|<(\/|!--(\s*\{)?)?|$)/g;
+  var TAG_NAME = /([a-z_][a-z0-9\-_]*)(:|\{|\s*(\/?>)?)/ig;
+  var ATTRIBUTE_NAME_OR_END = /([a-z_][a-z0-9_\-]*)(:|\{|=|\s*)|(\/?>)/ig;
   var COMMENT = /(.|[\r\n])*?-->/g;
-  var CLOSE_TAG = /([a-z\_][a-z0-9\-\_]*(?:\:[a-z\_][a-z0-9\-\_]*)?)>/ig;
-  var REFERENCE = /([a-z\_][a-z0-9\_]*)(\||\}\s*)/ig;
+  var CLOSE_TAG = /([a-z_][a-z0-9_\-]*(?::[a-z_][a-z0-9_\-]*)?)>/ig;
+  var REFERENCE = /([a-z_][a-z0-9_]*)(\||\}\s*)/ig;
   var ATTRIBUTE_VALUE = /"((?:(\\")|[^"])*?)"\s*/g;
 
-  var quoteEscape = /"/g;
   var quoteUnescape = /\\"/g;
 
 
  /**
   * Parse html into tokens.
+  * @param {string} source Source of template
   */
-  var tokenize = function(source, debug){
+  var tokenize = function(source){
     var result = [];
     var resources = [];
     var tagStack = [];
@@ -73,7 +73,6 @@
     var textStateEndPos = 0;
     var textEndPos;
     var refName;
-    var l10nMatch;
 
     var state = TEXT;
     var pos = 0;
@@ -133,7 +132,7 @@
             {
               sourceText = textStateEndPos == startPos
                 ? m[1]
-                : source.substring(textStateEndPos, textEndPos)
+                : source.substring(textStateEndPos, textEndPos);
 
               token = sourceText.replace(/\s*(\r\n?|\n\r?)\s*/g, '');
 
@@ -229,7 +228,7 @@
             if (m[2] == ':')
             {
               if (token.prefix)  // if '/' or prefix was before
-                throw SYNTAX_ERROR;
+                throw SYNTAX_ERROR;      // TODO: drop to text but not throw
 
               token.prefix = m[1];
               break;
@@ -375,15 +374,14 @@
   var makeDeclaration = (function(){
 
     var CLASS_ATTR_PARTS = /(\S+)/g;
-    var CLASS_ATTR_BINDING = /^([a-z\_][a-z0-9\-\_]*)?\{((anim:)?[a-z\_][a-z0-9\-\_]*)\}$/i;
-    var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|\".*?\"|\'.*?\'|[^;]+?)+(?:;|$)/gi;
-    var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|\".*?\"|\'.*?\'|[^;]+?)+);?$/i;
-    var ATTR_BINDING = /\{([a-z\_][a-z0-9\_]*|l10n:[a-z\_][a-z0-9\_]*(?:\.[a-z\_][a-z0-9\_]*)*)\}/i;
+    var CLASS_ATTR_BINDING = /^([a-z_][a-z0-9_\-]*)?\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
+    var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
+    var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
+    var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
     var tokenMap = basis.NODE_ENV ? require('./template/htmlentity.json') : {};
     var tokenElement = !basis.NODE_ENV ? document.createElement('div') : null;
     var includeStack = [];
-    var cleanupItems = [];
 
     function name(token){
       return (token.prefix ? token.prefix + ':' : '') + token.name;
@@ -488,7 +486,6 @@
               if (parts = attr.value.match(CLASS_ATTR_PARTS))
               {
                 var newValue = [];
-                var map = {};
 
                 bindings = [];
 
@@ -506,9 +503,10 @@
             break;
 
             case 'style':
-              var parts = attr.value.match(STYLE_ATTR_PARTS);
               var props = [];
-              var bindings = [];
+
+              parts = attr.value.match(STYLE_ATTR_PARTS);
+              bindings = [];
 
               for (var j = 0, part; part = parts[j]; j++)
               {
@@ -602,8 +600,6 @@
         switch (token.type)
         {
           case TYPE_ELEMENT:
-            var elName = name(token);
-
             // special elements (basis namespace)
             if (token.prefix == 'b')
             {
@@ -874,8 +870,8 @@
                         else                  // enum
                         {
                           bind.push(bindDef[1].map(function(name){
-                            return bind[0] + name;
-                          }));
+                            return this + name;
+                          }, bind[0]));
                           bind[0] = 0;
                         }
                       }
@@ -904,7 +900,7 @@
       var debug = !!(options && options.debug);
 
       if (!source.templateTokens)
-        source = tokenize('' + source, debug);
+        source = tokenize('' + source);
 
       // result object
       var result = {
@@ -964,7 +960,7 @@
   };
 
   function isUsableResource(path){
-    var ext = path.match(/(\.[a-z0-9\-\_]+)+$/);
+    var ext = path.match(/(\.[a-z0-9_\-]+)+$/);
     return ext && usableResources[ext[0]];
   }
 
@@ -1006,6 +1002,10 @@
     return result;
   }
 
+ /**
+  * @param {Template} template
+  * @param {boolean=} clone
+  */
   function getDeclFromTemplate(template, clone){
     var source = typeof template.source == 'function'
       ? template.source()
@@ -1116,6 +1116,8 @@
     }
 
     ;;;if (typeof console != 'undefined') console.warn('Template script element with id `' + sourceId + '` not found');
+
+    return '';
   }
 
   function resolveSourceById(sourceId){
@@ -1162,19 +1164,28 @@
         return new Template(value);
     },
 
+   /**
+    * Template source
+    * @type {string|function|Array}
+    */
+    source: '',
+
+   /**
+    * Base url for nested resources.
+    * @type {string}
+    */
     baseURI: '',
 
    /**
-    * @param {string|function()} template Template source code that will be parsed
-    * into DOM structure prototype. Parsing will be initiated on first
-    * {basis.Html.Template#createInstance} call. If function passed it be called at
-    * first {basis.Html.Template#createInstance} and it's result will be used as
-    * template source code.
+    * @param {string|function()|Array} source Template source code that will be parsed
+    * into DOM structure prototype. Parsing will be done on first {basis.Html.Template#createInstance}
+    * or {basis.Html.Template#getBinding} call. If function passed it be called and it's result will be
+    * used as template source code. If array passed that it treats as token list.
     * @constructor
     */
-    init: function(templateSource){
+    init: function(source){
       this.attaches_ = [];
-      this.setSource(templateSource);
+      this.setSource(source);
 
       this.templateId = templateList.push(this) - 1;
     },
@@ -1209,21 +1220,21 @@
 
    /**
     * Create DOM structure and return object with references for it's nodes.
-    * @param {Object=} object Storage for DOM references.
     * @param {Object=} node Object which templateAction method will be called on events.
+    * @param {function=} actionCallback
+    * @param {function=} updateCallback
     * @return {Object}
     */
-    createInstance: function(node, ac, uc){
+    createInstance: function(node, actionCallback, updateCallback){
       buildTemplate.call(this);
-      return this.createInstance(node, ac, uc);
+      return this.createInstance(node, actionCallback, updateCallback);
     },
 
    /**
     * Remove reference from DOM structure
     * @param {Object=} object Storage of DOM references.
-    * @param {Object=} node Object which templateAction method.
     */
-    clearInstance: function(object, node){
+    clearInstance: function(object){
       object.destroy();
     },
 
@@ -1258,6 +1269,7 @@
                 break;
               case 'tokens':
                 this.isDecl = true;
+                break;
               case 'raw':
                 //source = source;
                 break;
