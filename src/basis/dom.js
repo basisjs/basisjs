@@ -37,7 +37,6 @@
   var namespace = this.path;
 
   // import names
-  var coalesce = Object.coalesce;
   var document = global.document;
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
@@ -70,12 +69,12 @@
   /** @const */ var AXIS_CHILD = 64;
   /** @const */ var AXIS_FOLLOWING = 128;
   /** @const */ var AXIS_FOLLOWING_SIBLING = 256;
-  /** @const */ var AXIS_PRESCENDING = 512;
-  /** @const */ var AXIS_PRESCENDING_SIBLING = 1024;
+  /** @const */ var AXIS_PRECEDING = 512;
+  /** @const */ var AXIS_PRECEDING_SIBLING = 1024;
 
   // nodes compare support
   /** @const */ var POSITION_DISCONNECTED = 1;
-  /** @const */ var POSITION_PRECENDING = 2;
+  /** @const */ var POSITION_PRECEDING = 2;
   /** @const */ var POSITION_FOLLOWING = 4;
   /** @const */ var POSITION_CONTAINS = 8;
   /** @const */ var POSITION_CONTAINED_BY = 16;
@@ -106,14 +105,14 @@
   // init functions depends on browser support
   if (typeof testElement.compareDocumentPosition == 'function')
   {
-    // W3C DOM sheme
+    // W3C DOM scheme
     comparePosition = function(nodeA, nodeB){
       return nodeA.compareDocumentPosition(nodeB);
     };
   }
   else
   {
-    // IE6-8 DOM sheme
+    // IE6-8 DOM scheme
     comparePosition = function(nodeA, nodeB){
       if (nodeA == nodeB)
         return 0;
@@ -122,9 +121,9 @@
         return POSITION_DISCONNECTED | POSITION_IMPLEMENTATION_SPECIFIC;
       
       if (nodeA.sourceIndex > nodeB.sourceIndex)
-        return POSITION_PRECENDING | (POSITION_CONTAINS * nodeB.contains(childA));
+        return POSITION_PRECEDING | (POSITION_CONTAINS * nodeB.contains(nodeA));
       else
-        return POSITION_FOLLOWING  | (POSITION_CONTAINED_BY * nodeA.contains(childB));
+        return POSITION_FOLLOWING  | (POSITION_CONTAINED_BY * nodeA.contains(nodeB));
     };
   }
 
@@ -156,13 +155,14 @@
  /**
   * Insert newNode into node. If newNode is instance of Node, it insert without change; otherwise it converts to TextNode.
   * @param {Node} node Target node
-  * @param {Node|any} newNode Inserting node or object.
-  * @param {Node} refChild Child of node.
+  * @param {Node|*} newNode Inserting node or object.
+  * @param {Node=} refChild Child of node.
   * @return {Node}
   */ 
   function handleInsert(node, newNode, refChild){
-    if (newNode != null)
-      return node.insertBefore(isNode(newNode) ? newNode : createText(newNode), refChild || null);
+    return newNode != null
+      ? node.insertBefore(isNode(newNode) ? newNode : createText(newNode), refChild || null)
+      : null;
   }
 
   /**
@@ -268,7 +268,7 @@
       var node;
 
       if (!result)
-        result = new Array();
+        result = [];
       
       this.reset();
       
@@ -353,14 +353,14 @@
   // MISC
   //
  /**
-  * Returns outerHTML for node, even for browser doesn't support this property (only IE support)
+  * Returns outerHTML for node, even for browser doesn't support this property (only IE/Webkit support)
   * @param {Node} node
-  * @param {boolean} noClone
+  * @param {boolean=} noClone
   * @return {string}
   */
   function outerHTML(node, noClone){
     return node.outerHTML || createElement('', noClone ? node : node.cloneNode(true)).innerHTML;
-  };
+  }
 
  /**
   * Returns all inner text of node (nodeValue for Attribute)
@@ -374,7 +374,7 @@
       if (node[property] != null)
         return node[property];
     return axis(node, AXIS_DESCENDANT, function(node){ return node.nodeType == TEXT_NODE }).map(getter('nodeValue')).join('');
-  };
+  }
 
   //
   // Node getters
@@ -382,29 +382,29 @@
 
  /**
   * Returns node by id. This is $() like function
-  * @param {string|Node} id
-  * @return {Node}
+  * @param {string|Node} ref
+  * @return {Element}
   */
-  function get(id){ 
-    if (isNode(id) || (id && id.nodeType))
-      return id;
+  function get(ref){
+    if (isNode(ref) || (ref && ref.nodeType))
+      return ref;
     else
-      return typeof id == 'string' ? document.getElementById(id) : null;
-  };
+      return typeof ref == 'string' ? document.getElementById(ref) : null;
+  }
 
  /**
   * Returns all descendant elements tagName name for node.
+  * @param {string|Node} node Context element.
   * @param {string} tagName Tag name.
-  * @param {Element} node Context element.
-  * @return {[Element]}
+  * @return {Array.<Element>}
   */
   function tag(node, tagName){
-    node = get(node) || document;
+    var element = get(node) || document;
 
-    if (tagName == '*' && node.all)
-      return arrayFrom(node.all);
+    if (tagName == '*' && element.all)
+      return arrayFrom(element.all);
     else
-      return arrayFrom(node.getElementsByTagName(tagName || '*'));
+      return arrayFrom(element.getElementsByTagName(tagName || '*'));
   }
 
   //
@@ -415,12 +415,12 @@
   * Returns nodes axis in XPath like way.
   * @param {Node} root Relative point for axis.
   * @param {number} axis Axis constant.
-  * @param {function(node):boolean} filter Filter function. If it's returns true node will be in result list.
-  * @return {[Node]}
+  * @param {function(node:Node):boolean} filter Filter function. If it's returns true node will be in result list.
+  * @return {Array.<Node>}
   */
   function axis(root, axis, filter){
     var walker, cursor;
-    var result = new Array;
+    var result = [];
 
     filter = typeof filter == 'string' ? getter(filter) : filter || Function.$true;
 
@@ -476,14 +476,14 @@
           result.push(root[PARENT_NODE]);
       break;
 
-      case AXIS_PRESCENDING:
+      case AXIS_PRECEDING:
         walker = new TreeWalker(root, filter, TreeWalker.BACKWARD);
         walker.cursor_ = root[PREVIOUS_SIBLING] || root[PARENT_NODE];
         while (cursor = walker.next())
           result.push(cursor);
       break;
 
-      case AXIS_PRESCENDING_SIBLING:
+      case AXIS_PRECEDING_SIBLING:
         cursor = root;
         while (cursor = cursor[PREVIOUS_SIBLING])
           if (filter(cursor))
@@ -497,7 +497,7 @@
  /**
   * Returns ancestor that matchFunction returns true for.
   * @param {Node} node Start node for traversal.
-  * @param {function(node):boolean} matchFunction Checking function.
+  * @param {function(node:Node):boolean} matchFunction Checking function.
   * @param {Node=} bound Don't traversal after bound node.
   * @return {Node} First ancestor node that pass matchFunction.
   */
@@ -505,10 +505,12 @@
     while (node && node !== bound)
     {
       if (matchFunction(node))
-        return node;
+        break;
 
       node = node.parentNode;
     }
+
+    return node || null;
   }
 
   //
@@ -526,13 +528,13 @@
 
  /**
   * Returns new DocumentFragmentNode with arguments as childs.
-  * @param {string} text 
-  * @return {!DocumentFragment} The new DocumentFragment
+  * @param {...Node|string} nodes
+  * @return {DocumentFragment} The new DocumentFragment
   */
-  function createFragment(){
+  function createFragment(nodes){
     var result = document.createDocumentFragment();
     var len = arguments.length;
-    var array = createFragment.array = new Array;
+    var array = createFragment.array = [];
     for (var i = 0; i < len; i++)
       array.push(handleInsert(result, arguments[i]));
     return result;
@@ -564,15 +566,15 @@
   * @type {RegExp}
   * @private
   */
-  var DESCRIPTION_PART_REGEXP = /#([a-z0-9\_\-\:]+)|\.([a-z0-9\_\-\:]+)|\[([a-z0-9\_\-:]+)(="((?:\\.|[^"])*)"|='((?:\\.|[^'])*)'|=((?:\\.|[^\]])*))?\s*\]|\s*(\S)/gi;
+  var DESCRIPTION_PART_REGEXP = /#([a-z0-9_:\-]+)|\.([a-z0-9_:\-]+)|\[([a-z0-9_:\-]+)(="((?:\\.|[^"])*)"|='((?:\\.|[^'])*)'|=((?:\\.|[^\]])*))?\s*\]|\s*(\S)/gi;
 
  /**
   * Creates a new Element with arguments as childs.
-  * @param {string|object} def CSS-selector like definition or object for extended Element creation.
-  * @param {...Node|object} childs Child nodes 
+  * @param {string|object} config CSS-selector like definition or object for extended Element creation.
+  * @param {...Node|object} children Child nodes
   * @return {!Element} The new Element.
   */
-  function createElement(config, childs){
+  function createElement(config, children){
     var isConfig = config != undefined && typeof config != 'string';
     var description = (isConfig ? config.description : config) || '';
 
@@ -580,7 +582,7 @@
     var element;
     
     // fetch tag name
-    var m = description.match(/^([a-z0-9\_\-]+)(.*)$/i);
+    var m = description.match(/^([a-z0-9_\-]+)(.*)$/i);
     if (m)
     {
       elementName = m[1];
@@ -592,7 +594,7 @@
     if (description != '')
     {
       // extract properties
-      var classNames = new Array();
+      var classNames = [];
       var attributes = {};
       var entryName;
 
@@ -677,13 +679,13 @@
  /**
   * Insert source into specified insertPoint position of node.
   * @param {Node|object} node Destination node.
-  * @param {Node|[Node]|object|[object]} source One or more nodes to be inserted.
-  * @param {string|number} insertPoint
+  * @param {Node|Array.<Node>|object|Array.<object>} source One or more nodes to be inserted.
+  * @param {string|number=} insertPoint
   *   If number that's mean position in nodes childNodes.
   *   Or it might be one of INSERT_BEGIN, INSERT_BEFORE,
   *   INSERT_AFTER, INSERT_END
-  * @param {Node|object} refChild Child node of node, using for INSERT_BEFORE & INSERT_AFTER
-  * @return {Node|[Node]} Inserted nodes (may different of source members). 
+  * @param {Node|object=} refChild Child node of node, using for INSERT_BEFORE & INSERT_AFTER
+  * @return {Node|Array.<Node>} Inserted nodes (may different of source members).
   */
   function insert(node, source, insertPoint, refChild){
     node = get(node); // TODO: remove
@@ -692,7 +694,7 @@
       throw new Error('basis.dom.insert: destination node can\'t be null');
 
     switch (insertPoint) {
-      case undefined: // insertPoint omited
+      case undefined: // insertPoint omitted
       case INSERT_END:
         refChild = null;
       break;
@@ -717,7 +719,7 @@
     {
       if (isDOMLikeObject)
       {
-        result = new Array();
+        result = [];
         for (var i = 0, len = source.length; i < len; i++)
           result[i] = node.insertBefore(source[i], refChild);
       }
@@ -729,7 +731,7 @@
     }
 
     return result;
-  };
+  }
 
  /**
   * Remove node from it's parent and returns this node.
@@ -762,7 +764,7 @@
 
     replace(nodeA, testElement);
     replace(nodeB, nodeA);
-    replace(testElement, nodeB)
+    replace(testElement, nodeB);
 
     return true;
   }
@@ -802,9 +804,9 @@
   *
   *   basis.dom.wrap([1,2,3], { A: Function.$true, B: function(val, idx){ return val == 3 } });
   *   // result: [<a>1</a>, <a>2</a>, <b><a>3</a></b>]
-  * @param {[any]} array
+  * @param {Array} array
   * @param {object} map
-  * @return {[any]}
+  * @return {Array}
   */
   function wrap(array, map, getter){
     var result = [];
@@ -826,7 +828,7 @@
   * Set new value for attribute. If value is null than attribute will be deleted.
   * @param {Node} node
   * @param {string} name
-  * @param {any} value
+  * @param {*} value
   */
   function setAttribute(node, name, value){
     if (value == null)
@@ -869,7 +871,7 @@
 
  /**
   * Set focus for node.
-  * @param {Node} node
+  * @param {Element} node
   * @param {boolean=} select Call select() method of node.
   */
   function focus(node, select){
@@ -912,6 +914,8 @@
         range.collapse(isStart);
       return range.getBookmark().charCodeAt(2) - 2;
     }
+
+    return 0;
   }
 
   function getSelectionStart(input){
@@ -930,7 +934,7 @@
 
   function appendHead(node){
     if (document)
-      insert(document.head || tag('head')[0], node);
+      insert(document.head || tag(document, 'head')[0], node);
     else
     {
       ;;;if (typeof console != 'undefined') console.warn('Can\'t append to head, document not found');
@@ -969,8 +973,8 @@
     AXIS_CHILD: AXIS_CHILD,
     AXIS_FOLLOWING: AXIS_FOLLOWING,
     AXIS_FOLLOWING_SIBLING: AXIS_FOLLOWING_SIBLING,
-    AXIS_PRESCENDING: AXIS_PRESCENDING,
-    AXIS_PRESCENDING_SIBLING: AXIS_PRESCENDING_SIBLING,
+    AXIS_PRECEDING: AXIS_PRECEDING,
+    AXIS_PRECEDING_SIBLING: AXIS_PRECEDING_SIBLING,
 
     // insert position
     INSERT_BEGIN: INSERT_BEGIN,
