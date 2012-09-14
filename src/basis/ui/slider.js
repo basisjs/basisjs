@@ -380,7 +380,7 @@
     * @param {number} count
     */
     stepUp: function(count){
-      this.setStepValue(this.stepValue + parseInt(count || 1));
+      this.setStepValue(this.stepValue + parseInt(count || 1, 10));
     },
 
    /**
@@ -388,7 +388,7 @@
     * @param {number} count
     */
     stepDown: function(count){
-      this.setStepValue(this.stepValue - parseInt(count || 1));
+      this.setStepValue(this.stepValue - parseInt(count || 1, 10));
     },
 
    /**

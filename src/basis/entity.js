@@ -48,7 +48,7 @@
     return isNaN(value) ? null : Number(value);
   }
   var IntId = function(value){
-    return isNaN(value) ? null : parseInt(value);
+    return isNaN(value) ? null : parseInt(value, 10);
   }
   var StringId = function(value){
     return value == null ? null : String(value);

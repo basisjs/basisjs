@@ -70,7 +70,7 @@
     //  common methods
     //
     item: function(indexOrName){
-      var index = isNaN(indexOrName) ? this.indexOf(indexOrName) : parseInt(indexOrName);
+      var index = isNaN(indexOrName) ? this.indexOf(indexOrName) : parseInt(indexOrName, 10);
       return this.childNodes[index];
     },
     indexOf: function(objectOrName){

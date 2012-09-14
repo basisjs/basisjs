@@ -35,7 +35,7 @@
 
   function getPixelValue(element, value) {
     if (IS_PIXEL.test(value))
-      return parseInt(value) + 'px';
+      return parseInt(value, 10) + 'px';
 
     // The awesome hack by Dean Edwards
     // @see http://erik.eae.net/archives/2007/07/27/18.54.15/#comment-102291

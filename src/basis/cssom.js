@@ -177,7 +177,7 @@
   };
 
   createStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter', true, {
-    fitler: function(value){ return 'alpha(opacity:' + parseInt(value * 100) + ')' }
+    fitler: function(value){ return 'alpha(opacity:' + parseInt(value * 100, 10) + ')' }
   });
   createStyleMapping('border-radius', 'borderRadius MozBorderRadius WebkitBorderRadius', true);
   createStyleMapping('float', 'cssFloat styleFloat');

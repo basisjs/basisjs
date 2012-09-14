@@ -604,7 +604,7 @@
   complete(Array.prototype, {
     // JavaScript 1.6
     indexOf: function(searchElement, offset){
-      offset = parseInt(offset) || 0;
+      offset = parseInt(offset, 10) || 0;
       if (offset < 0)
         return -1;
       for (; offset < this.length; offset++)
@@ -614,7 +614,7 @@
     },
     lastIndexOf: function(searchElement, offset){
       var len = this.length;
-      offset = parseInt(offset);
+      offset = parseInt(offset, 10);
       if (isNaN(offset) || offset >= len)
         offset = len - 1;
       else
@@ -689,12 +689,12 @@
       return this.concat.apply([], this);
     },
     repeat: function(count){
-      return createArray(parseInt(count) || 0, this).flatten();
+      return createArray(parseInt(count, 10) || 0, this).flatten();
     },
 
     // getters
     item: function(index){
-      index = parseInt(index || 0);
+      index = parseInt(index || 0, 10);
       return this[index >= 0 ? index : this.length + index];
     },
 
@@ -735,7 +735,7 @@
       Array.lastSearchIndex = -1;
       getter_ = getter(getter_ || $self);
 
-      for (var index = parseInt(offset) || 0, len = this.length; index < len; index++)
+      for (var index = parseInt(offset, 10) || 0, len = this.length; index < len; index++)
         if (getter_(this[index]) === value)
           return this[Array.lastSearchIndex = index];
     },
@@ -751,7 +751,7 @@
       getter_ = getter(getter_ || $self);
 
       var len = this.length;
-      var index = isNaN(offset) || offset == null ? len : parseInt(offset);
+      var index = isNaN(offset) || offset == null ? len : parseInt(offset, 10);
 
       for (var i = index > len ? len : index; i --> 0;)
         if (getter_(this[i]) === value)
@@ -958,7 +958,7 @@
         }
     ),
     repeat: function(count){
-      return (new Array(parseInt(count) + 1 || 0)).join(this);
+      return (new Array(parseInt(count, 10) + 1 || 0)).join(this);
     },
     qw: function(){
       var trimmed = this.trim();
@@ -1074,7 +1074,7 @@
       return (this + '').quote(start, end);
     },
     toHex: function(){
-      return parseInt(this).toString(16).toUpperCase();
+      return parseInt(this, 10).toString(16).toUpperCase();
     },
     sign: function(){
       return this < 0 ? -1 : +(this > 0);

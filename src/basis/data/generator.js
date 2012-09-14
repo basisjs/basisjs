@@ -50,7 +50,7 @@
   */
   function genSentence(wordCount){
     var result = [];
-    var count = parseInt(wordCount);
+    var count = parseInt(wordCount, 10);
 
     while (count--)
       result.push(words[Math.round(Math.random() * words.length)]);

@@ -405,7 +405,7 @@
       this.updateBind('readonly');
     },
     setMinLength: function(len){
-      len = Math.max(parseInt(len) || 0, 0);
+      len = Math.max(parseInt(len, 10) || 0, 0);
 
       if (this.minLength != len)
       {
@@ -422,7 +422,7 @@
       }
     },
     setMaxLength: function(len){
-      len = Math.max(parseInt(len) || 0, 0);
+      len = Math.max(parseInt(len, 10) || 0, 0);
 
       if (this.maxLength != len)
       {
