@@ -149,7 +149,7 @@
  /**
   * Stops event bubbling and prevent default actions for event.
   * @param {Event|string} event
-  * @param {Node} node
+  * @param {Node=} node
   */
   function kill(event, node){
     node = getNode(node);
@@ -199,7 +199,7 @@
       return event.which == button.VALUE;
     else
       // IE6-8
-      return event.button & button.BIT;
+      return !!(event.button & button.BIT);
   }
 
  /**
@@ -269,7 +269,7 @@
   * @private
   * @const
   */
-  var noCaptureSheme = !document.addEventListener;
+  var noCaptureScheme = !document.addEventListener;
 
  /**
   * Observe handlers for event
@@ -295,7 +295,7 @@
         handlerObject.handler.call(handlerObject.thisObject, event);
       }
     }
-  };
+  }
 
  /**
   * @param {string} eventType
@@ -308,7 +308,7 @@
 
     addGlobalHandler(eventType, handler, thisObject);
     captureHandlers[eventType] = globalHandlers[eventType][globalHandlers[eventType].length - 1];
-  };
+  }
 
  /**
   * @param {string} eventType
@@ -320,7 +320,7 @@
       removeGlobalHandler(eventType, handlerObject.handler, handlerObject.thisObject);
       delete captureHandlers[eventType];
     }
-  };
+  }
 
  /**
   * Adds global handler for some event type.
@@ -342,13 +342,13 @@
     }
     else
     {
-      if (noCaptureSheme)
+      if (noCaptureScheme)
         // nothing to do, but it will provide observeGlobalEvents calls if other one doesn't
         addHandler(document, eventType, $null);
       else
         document.addEventListener(eventType, observeGlobalEvents, true);
 
-      handlers = globalHandlers[eventType] = new Array();
+      handlers = globalHandlers[eventType] = [];
     }
 
     // add new handler
@@ -356,7 +356,7 @@
       handler: handler,
       thisObject: thisObject
     });
-  };
+  }
 
  /**
   * Removes global handler for eventType storage.
@@ -377,7 +377,7 @@
           if (!handlers.length)
           {
             delete globalHandlers[eventType];
-            if (noCaptureSheme)
+            if (noCaptureScheme)
               removeHandler(document, eventType, $null);
             else
               document.removeEventListener(eventType, observeGlobalEvents, true);
@@ -387,7 +387,7 @@
         }
       }
     }
-  };
+  }
 
   //
   //  common event handlers
@@ -395,7 +395,7 @@
 
  /**
   * Adds handler for node for eventType events.
-  * @param {Node|string} node
+  * @param {Node|Window|string} node
   * @param {string} eventType
   * @param {function(event)} handler 
   * @param {object=} thisObject Context for handler
@@ -426,7 +426,7 @@
       eventTypeHandlers.fireEvent = function(event){ // closure
         // simulate capture phase for old browsers
         event = wrap(event);
-        if (noCaptureSheme && event && globalHandlers[eventType])
+        if (noCaptureScheme && event && globalHandlers[eventType])
         {
           if (typeof event.returnValue == 'undefined')
           {
@@ -452,7 +452,7 @@
     }
     else
     {
-      // check for dublicates, exit if found
+      // check for duplicates, exit if found
       for (var i = 0, item; item = eventTypeHandlers[i]; i++)
         if (item.handler === handler && item.thisObject === thisObject)
           return;
@@ -460,11 +460,11 @@
       // add only unique handlers
       eventTypeHandlers.push(handlerObject);
     }
-  };
+  }
 
  /**
   * Adds multiple handlers for node.
-  * @param {Node|string} node
+  * @param {Node|Window|string} node
   * @param {object} handlers
   * @param {object=} thisObject Context for handlers
   */
@@ -473,12 +473,12 @@
 
     for (var eventType in handlers)
       addHandler(node, eventType, handlers[eventType], thisObject);
-  };
+  }
 
  /**
   * Removes handler from node's handler holder.
-  * @param {Node|string} node
-  * @param {sting} eventType
+  * @param {Node|Window|string} node
+  * @param {string} eventType
   * @param {object} handler
   * @param {object=} thisObject Context for handlers
   */
@@ -507,7 +507,7 @@
         }
       }
     }
-  };
+  }
 
  /**
   * Removes all node's handlers for eventType. If eventType omited, all handlers for all eventTypes will be deleted.
@@ -541,7 +541,7 @@
         }
       }
     }
-  };
+  }
 
  /**
   * Fires eventType 
@@ -552,7 +552,7 @@
     var handlers = node[EVENT_HOLDER];
     if (handlers && handlers[eventType])
         handlers[eventType].fireEvent(event);
-  };
+  }
 
   //
   // on document load event dispatcher

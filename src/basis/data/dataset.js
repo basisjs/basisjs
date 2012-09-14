@@ -106,8 +106,10 @@
 
   
  /**
-  * @func
   * Returns delta object
+  * @param {Array.<basis.data.DataObject>} inserted
+  * @param {Array.<basis.data.DataObject>} deleted
+  * @return {object|boolean}
   */
   function getDelta(inserted, deleted){
     var delta = {};
@@ -131,7 +133,6 @@
     datasetChanged: function(source, delta){
       var memberMap = this.memberMap_;
       var updated = {};
-      var deleted = [];
 
       var object;
       var objectId;
@@ -150,7 +151,7 @@
           }
           else
           {
-            // registrate in source map
+            // register in source map
             memberMap[objectId] = {
               count: 1,
               object: object
@@ -171,7 +172,7 @@
           // mark as updated
           updated[objectId] = memberMap[objectId];
 
-          // descrease source counter
+          // decrease source counter
           memberMap[objectId].count--;
         }
       }
@@ -212,7 +213,7 @@
     sources: null,
 
    /**
-    * @type {function(count, sourceCount):boolean}
+    * @type {function(count:number, sourceCount:number):boolean}
     */
     rule: function(count, sourceCount){
       return count > 0;
@@ -242,7 +243,7 @@
 
    /**
     * Set new merge rule for dataset. Some types are available in basis.data.Dataset.Merge
-    * @param {function(count, sourceCount):boolean} rule New rule.
+    * @param {function(count:number, sourceCount:number):boolean} rule New rule.
     */
     setRule: function(rule){
       if (typeof rule != 'function')
@@ -567,9 +568,9 @@
 
    /**
     * Set new minuend & subtrahend.
-    * @param {basis.data.AbstractDataset} minuend
-    * @param {basis.data.AbstractDataset} subtrahend
-    * @return {Object} Delta if changes happend
+    * @param {basis.data.AbstractDataset=} minuend
+    * @param {basis.data.AbstractDataset=} subtrahend
+    * @return {object|boolean} Delta if changes happend
     */
     setOperands: function(minuend, subtrahend){
       var delta;
@@ -738,7 +739,7 @@
 
    /**
     * Set new source dataset.
-    * @param {basis.data.AbstractDataset} dataset
+    * @param {basis.data.AbstractDataset} source
     */
     setSource: function(source){
       if (source instanceof AbstractDataset == false)
@@ -1048,7 +1049,7 @@
 
    /**
     * Set new filter function.
-    * @param {function(basis.data.DataObject):boolean} filter
+    * @param {function(basis.data.DataObject):boolean} rule
     * @return {Object} Delta of member changes.
     */
     setRule: function(rule){
@@ -1134,7 +1135,7 @@
       }
 
       // get deleted delta
-      for (var curMemberId in this.item_)
+      for (curMemberId in this.item_)
         if (memberMap[curMemberId] == 0)
         {
           delete memberMap[curMemberId];
@@ -1342,7 +1343,6 @@
       var dropIndex = false;
       var buildIndex = false;
       var sourceObjectInfo;
-      var sourceObjectId;
       var inserted = delta.inserted;
       var deleted = delta.deleted;
 
@@ -1441,7 +1441,7 @@
 
    /**
     * Calculated source object values
-    * @type {Array.<basis.data.DataSource>}
+    * @type {Array.<basis.data.Dataset>}
     * @private
     */
     index_: null,
@@ -1496,7 +1496,7 @@
     * Set new range for dataset.
     * @param {number} offset Start of range.
     * @param {number} limit Length of range.
-    * @return {Object} Delta of member changes.
+    * @return {object|boolean} Delta of member changes.
     */
     setRange: function(offset, limit){
       var oldOffset = this.offset;
@@ -1512,12 +1512,14 @@
 
         this.event_rangeChanged(oldOffset, oldLimit);
       }
+
+      return delta;
     },
 
    /**
     * Set new value for offset.
     * @param {number} offset
-    * @return {Object} Delta of member changes.
+    * @return {object} Delta of member changes.
     */
     setOffset: function(offset){
       return this.setRange(offset, this.limit);
@@ -1526,7 +1528,7 @@
    /**
     * Set new value for limit.
     * @param {number} limit
-    * @return {Object} Delta of member changes.
+    * @return {object} Delta of member changes.
     */
     setLimit: function(limit){
       return this.setRange(this.offset, limit);
@@ -1644,7 +1646,6 @@
       var sourceMap = this.sourceMap_;
       var memberMap = this.memberMap_;
       var updateHandler = this.ruleEvents;
-      var objectInfo;
       var array;
       var subset;
       var subsetId;
@@ -1700,7 +1701,7 @@
 
           for (var subsetId in list)
           {
-            var subset = list[subsetId];
+            subset = list[subsetId];
             subset.event_datasetChanged({ deleted: [sourceObject] });
 
             if (!--memberMap[subsetId])

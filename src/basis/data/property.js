@@ -26,6 +26,7 @@
   var cleaner = basis.cleaner;
 
   var getter = Function.getter;
+  var cssom = basis.cssom;
   var classList = basis.cssom.classList;
 
   var TimeEventManager = basis.timer.TimeEventManager;
@@ -66,7 +67,7 @@
 
    /**
     * Value before property locked (passed as oldValue when property unlock).
-    * @type {Object}
+    * @type {object}
     * @private
     */
     lockValue_: null,
@@ -77,8 +78,8 @@
     updateCount: 0,
 
    /**
-    * @param {Object} initValue Initial value for object.
-    * @param {Object=} handlers
+    * @param {object} initValue Initial value for object.
+    * @param {object=} handlers
     * @param {function()=} proxy
     * @constructor
     */
@@ -95,13 +96,13 @@
     * Sets new value for property, only when data not equivalent current
     * property's value. In causes when value was changed or forceEvent
     * parameter was true event 'change' dispatching.
-    * @param {Object} data New value for property.
+    * @param {object} data New value for property.
     * @param {boolean=} forceEvent Dispatch 'change' event even value not changed.
     * @return {boolean} Whether value was changed.
     */
     set: function(data, forceEvent){
       var oldValue = this.value;
-      var newValue = this.proxy ? this.proxy(data) : newValue;
+      var newValue = this.proxy ? this.proxy(data) : data;
       var updated = false;
 
       if (newValue !== oldValue)
@@ -154,7 +155,7 @@
 
    /**
     * Returns object value.
-    * @return {Object}
+    * @return {object}
     */
     /*toString: function(){
       return this.value != null && this.value.constructor == Object ? String(this.value) : this.value;
@@ -237,7 +238,7 @@
         return;
 
       for (var i = 0, link; link = this.links_[i++];)
-        this.power_(link, oldValue);
+        this.apply_(link, oldValue);
     },
 
    /**
@@ -246,7 +247,7 @@
     */
     init: function(initValue, handlers, proxy){
       AbstractProperty.prototype.init.call(this, initValue, handlers, proxy);
-      this.links_ = new Array();
+      this.links_ = [];
 
       cleaner.add(this);
     },
@@ -290,10 +291,10 @@
     *   // Another one
     *   property.addLink(console, console.log, 'new value of property is {0}');
     *
-    * @param {Object} object Target object.
-    * @param {String|Function=} field Field or method of target object.
-    * @param {String|Function|Object=} format Value modificator.
-    * @return {Object} Returns object.
+    * @param {object} object Target object.
+    * @param {string|function=} field Field or method of target object.
+    * @param {string|function|object=} format Value modificator.
+    * @return {object} Returns object.
     */
     addLink: function(object, field, format){
       // process field name
@@ -320,14 +321,14 @@
       };
 
       // add link
-      ;;;if (typeof console != 'undefined' && this.links_.search(true, function(link){ return link.object == object && link.field == field })) console.warn('Property.addLink: Dublicate link for property');
+      ;;;if (typeof console != 'undefined' && this.links_.search(true, function(link){ return link.object == object && link.field == field })) console.warn('Property.addLink: Duplicate link for property');
       this.links_.push(link);  // !!! TODO: check for object-field duplicates
       
       if (link.isEventObject)
         object.addHandler(PropertyObjectDestroyAction, this); // add unlink handler on object destroy
 
       // make effect on object
-      this.power_(link);
+      this.apply_(link);
 
       return object;
     },
@@ -344,9 +345,9 @@
     *   property.addLinkShortcut(element, 'show', function(value){ return value == 'ShowValue' });  // the same
     *   property.addLinkShortcut(element, 'hide', { 'HideValue': true } });  // variation
     * @param {object} element Target object.
-    * @param {String} shortcutName Name of shortcut.
-    * @param {String|Function|Object=} format Value modificator.
-    * @return {Object} Returns object.
+    * @param {string} shortcutName Name of shortcut.
+    * @param {string|function|object=} format Value modificator.
+    * @return {object} Returns object.
     */
     addLinkShortcut: function(element, shortcutName, format){
       return this.addLink(element, Property.shortcut[shortcutName], format);
@@ -382,8 +383,8 @@
     *   property.addLink(node, 'title');
     *   ...
     *   node.destroy();       // links will be removed automatically
-    * @param {Object} object
-    * @param {String|Function=} field
+    * @param {object} object
+    * @param {string|function=} field
     */
     removeLink: function(object, field){
       if (this.links_ == null) // property destroyed
@@ -424,11 +425,11 @@
     },
 
    /**
-    * @param {Object} link
-    * @param {Object} oldValue Object value before changes.
+    * @param {object} link
+    * @param {*} oldValue Object value before changes.
     * @private
     */
-    power_: function(link, oldValue){
+    apply_: function(link, oldValue){
       var field = link.field;
 
       // field specified
@@ -494,7 +495,7 @@
     statePriority: DataObjectSetStatePriority,
     
    /**
-    * @type {Function}
+    * @type {function}
     */
     calculateValue: function(){
       return this.value + 1;
@@ -534,13 +535,6 @@
     extendConstructor_: true,
 
    /**
-    * @param {Object} config
-    * @config {Object} value
-    * @config {Object} handlers
-    * @config {boolean} calculateOnInit
-    * @config {function()} proxy
-    * @config {function()} calculateValue
-    * @config {Array.<basis.data.DataObject>} objects
     * @constructor
     */
     init: function(){
@@ -565,7 +559,7 @@
 
    /**
     * Adds one or more DataObject instances to objects collection.
-    * @param {...basis.data.DataObject} args
+    * @param {...basis.data.DataObject}
     */
     add: function(/* dataObject1 .. dataObjectN */){
       for (var i = 0, len = arguments.length; i < len; i++)
@@ -606,8 +600,8 @@
     },
 
    /**
-    * @param {boolean} valueChanged 
-    * @param {boolean} stateChanged
+    * @param {boolean=} valueChanged
+    * @param {boolean=} stateChanged
     */
     fire: function(valueChanged, stateChanged){
       if (!this.locked)
@@ -651,10 +645,9 @@
 
         if (this.stateChanged_)
         {
-          var stateMap = {};
           var len = this.objects.length;
           if (!len)
-            this.setState(STATE.UNDEFINED)
+            this.setState(STATE.UNDEFINED);
           else
           {
             var maxWeight = -2;
@@ -674,7 +667,6 @@
             if (curObject)
               this.setState(curObject.state, curObject.state.data);
           }
-          //this.setState();
         }
       }
 

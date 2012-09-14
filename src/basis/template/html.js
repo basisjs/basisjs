@@ -38,11 +38,10 @@
   })();
 
   var quoteEscape = /"/g;
-  var quoteUnescape = /\\"/g;
 
   var eventAttr = /^event-(.+)+/;
 
-  // dictonaries
+  // dictionaries
   var tmplEventListeners = {};
   var tmplNodeMap = { seed: 1 };
   var namespaceURI = {
@@ -82,7 +81,6 @@
   
     function processTokens(tokens, path){
       var localPath;
-      var hasBindings;
       var attrs;
       var childs;
       var refs;
@@ -217,6 +215,7 @@
       for (var i = 0; i < properties.length; i++)
         if (properties[i] in style)
           return true;
+      return false;
     })());
 
     var SPECIAL_ATTR_MAP = {
@@ -499,7 +498,7 @@
       }
 
       return newValue;
-    }
+    };
 
    /**
     * @func
@@ -514,8 +513,12 @@
       }
 
       return newValue;
-    }
+    };
 
+   /**
+    * @param {object} binding
+    * @param {boolean=} l10n
+    */
     function buildAttrExpression(binding, l10n){
       var expression = [];
       var symbols = binding[5];
@@ -594,7 +597,7 @@
             l10nMap[l10nName] = [];
           }
 
-          bindCode = bindMap[l10nName]
+          bindCode = bindMap[l10nName];
           bindCode.l10n = true;
 
           if (binding[0] == TYPE_TEXT)
@@ -607,7 +610,7 @@
           else
           {
             attrName = '"' + binding[ATTR_NAME] + '"';
-            l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, true)] + ');')
+            l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, true)] + ');');
 
             toolsUsed.bind_attr = true;
             varList.push(bindVar);
@@ -796,7 +799,7 @@
         }
       }
       return value;
-    };
+    }
 
     var tools = {
       bind_textNode: bind_textNode,
@@ -849,7 +852,7 @@
         return proto.cloneNode(true);
       };
 
-      var objectRefs = pathes.objectRefList;;
+      var objectRefs = pathes.objectRefList;
       for (var i = 0, ref; ref = objectRefs[i]; i++)
         objectRefs[i] += '.basisObjectId';
 

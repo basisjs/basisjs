@@ -80,7 +80,7 @@
     indexCache_: null,
 
    /**
-    * @type {function(object):any}
+    * @type {function(object)}
     */
     valueGetter: Function.$null,
 
@@ -232,13 +232,13 @@
 
    /**
     * function to fetch item from vector
-    * @type {function(vector)}
+    * @type {function(object)}
     */
     itemGetter: Function.$null,
 
    /**
     * Values vector
-    * @type {Array.<any>}
+    * @type {Array}
     */
     vector_: null,
 
@@ -279,7 +279,7 @@
     * @inheritDoc
     */
     destroy: function(){
-      Index.prototype.destroy.call(this)
+      Index.prototype.destroy.call(this);
       this.vector_ = null;
     }
   });
@@ -319,6 +319,9 @@
     }
   };
 
+ /**
+  * @constructor
+  */
   function IndexConstructor(BaseClass, getter, events){
     if (!Class.isClass(BaseClass) || !BaseClass.isSubclassOf(Index))
       throw 'Wrong class for index constructor';
@@ -355,13 +358,13 @@
     };
 
     this.indexId = indexId;
-  };
+  }
 
   var createIndexConstructor = function(IndexClass){
     return function(getter, events){
       return new IndexConstructor(IndexClass, getter, events);
     }
-  }
+  };
 
   //
   // Build basic index constructors
@@ -475,14 +478,11 @@
     indexes__: null,
 
    /**
-    * @param
+    * @param {basis.data.index.IndexConstructor}
     */ 
     getIndex: function(indexConstructor){
       if (indexConstructor instanceof IndexConstructor == false)
-      {
-        ;;;if (typeof console != 'undefined') console.warn('indexConstructor must be an instance of IndexConstructor');
-        return;
-      }
+        throw 'indexConstructor must be an instance of IndexConstructor';
 
       if (!this.indexes__)
       {
@@ -687,7 +687,7 @@
         }
         else
         {
-          return; // warn
+          // warn
         }
       }
       /** @cut */else if (typeof console != 'undefined') console.warn('Index `{0}` already exists'.format(key));
