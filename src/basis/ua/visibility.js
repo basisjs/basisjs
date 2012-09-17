@@ -39,11 +39,11 @@
 
   function addHandler(handler, thisObject){
     if (!supported)
-      return;
+      return false;
 
     addGlobalHandler();
 
-    for (var i = handlers.length, item; i --> 0;)
+    for (var i = handlers.length, item; i-- > 0;)
     {
       item = handlers[i];
       if (item.handler === handler && item.thisObject === thisObject)
@@ -59,9 +59,9 @@
 
   function removeHandler(handler, thisObject){
     if (!supported)
-      return;
+      return false;
 
-    for (var i = handlers.length, item; i --> 0;)
+    for (var i = handlers.length, item; i-- > 0;)
     {
       item = handlers[i];
       if (item.handler === handler && item.thisObject === thisObject)

@@ -68,15 +68,15 @@
         //
         // Remove support for clearImmediate
         //
-        global.clearImmediate = function(taskId){
-          delete taskById[taskId];
+        global.clearImmediate = function(id){
+          delete taskById[id];
         };
 
         //
         // return result function for task run
         //
-        return function(taskId){
-          var task = taskById[taskId];
+        return function(id){
+          var task = taskById[id];
 
           if (task)
           {
@@ -91,10 +91,10 @@
               }
 
             } finally {
-              delete taskById[taskId];
+              delete taskById[id];
             }
           }
-        }
+        };
       })();
 
 
@@ -137,7 +137,7 @@
               var taskId = String(event.data).split(MESSAGE_NAME)[1];
 
               if (taskId)
-                runTask(taskId)
+                runTask(taskId);
             }
           };
 
@@ -168,7 +168,7 @@
                 scriptEl = null;
               };
               document.documentElement.appendChild(scriptEl);
-            }
+            };
           }
         }
       }

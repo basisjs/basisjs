@@ -53,7 +53,7 @@
   * @param {...*} args
   * @return {*}
   */
-  function coalesce(args/* arg1 .. argN */){
+  function coalesce(/* arg1 .. argN */){
     for (var i = 0; i < arguments.length; i++)
       if (arguments[i] != null)
         return arguments[i];
@@ -238,7 +238,7 @@
   * @return {function()}
   */
   function $const(value){
-    return function(){ return value };
+    return function(){ return value; };
   }
 
  /**
@@ -308,7 +308,7 @@
           // this function never used for getter before, wrap and cache it
 
           // wrap function to prevent function properties rewrite
-          func = function(object){ return path(object) };
+          func = function(object){ return path(object); };
           func.base = path;
           func.__extend__ = getter;
 
@@ -362,7 +362,7 @@
           if (modType != 'object')
           {
             // only string, function and objects are support as modificator
-            ;;;console.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
+            ;;;if (typeof console != 'undefined') console.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
 
             return func;
           }
@@ -378,7 +378,7 @@
       switch (modType)
       {
         case 'string':
-          result = function(object){ return modificator.format(func(object)) };
+          result = function(object){ return modificator.format(func(object)); };
         break;
 
         case 'function':
@@ -389,12 +389,11 @@
             modificator.basisModId_ = modId;
           }
 
-          result = function(object){ return modificator(func(object)) };
+          result = function(object){ return modificator(func(object)); };
         break;
 
-        case 'object':
-          result = function(object){ return modificator[func(object)] };
-        break;
+        default: //case 'object':
+          result = function(object){ return modificator[func(object)]; };
       }
 
       result.base = func.base || func;
@@ -454,7 +453,7 @@
       var result = {};
       result[key] = value;
       return result;
-    }
+    };
   }
 
  /**
@@ -507,7 +506,7 @@
     return function(){
       if (!fired++)
         return run.apply(thisObject || this, arguments);
-    }
+    };
   }
 
  /**
@@ -533,7 +532,7 @@
     * @param {...*} args
     * @return {function()}
     */
-    bind: function(thisObject, args){
+    bind: function(thisObject){
       var method = this;
       var params = arrayFrom(arguments, 1);
 
@@ -666,6 +665,7 @@
 
       var result;
       var inited = 0;
+
       if (argsLen > 1)
       {
         result = initialValue;
@@ -753,7 +753,7 @@
       var len = this.length;
       var index = isNaN(offset) || offset == null ? len : parseInt(offset, 10);
 
-      for (var i = index > len ? len : index; i --> 0;)
+      for (var i = index > len ? len : index; i-- > 0;)
         if (getter_(this[i]) === value)
           return this[Array.lastSearchIndex = i];
     },
@@ -830,7 +830,7 @@
                  v: getter(item) // value
                };
              })                                                                           // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
-        .sort(comparator || function(a, b){ return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1)) })
+        .sort(comparator || function(a, b){ return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1)); })
         .map(function(item){
                return this[item.i];
              }, this);
@@ -853,12 +853,12 @@
   // when second argument is omited, method set this parameter equal zero (must be equal array length)
   if (![1,2].splice(1).length)
   {
-    var _native_Array_splice = Array.prototype.splice;
+    var nativeArraySplice = Array.prototype.splice;
     Array.prototype.splice = function(){
       var params = arrayFrom(arguments);
       if (params.length < 2)
         params[1] = this.length;
-      return _native_Array_splice.apply(this, params);
+      return nativeArraySplice.apply(this, params);
     };
   }
 
@@ -997,10 +997,10 @@
       return this.charAt(0).toUpperCase() + this.substr(1).toLowerCase();
     },
     camelize: function(){
-      return this.replace(/-(.)/g, function(m, chr){ return chr.toUpperCase() });
+      return this.replace(/-(.)/g, function(m, chr){ return chr.toUpperCase(); });
     },
     dasherize: function(){
-      return this.replace(/[A-Z]/g, function(m){ return '-' + m.toLowerCase() });
+      return this.replace(/[A-Z]/g, function(m){ return '-' + m.toLowerCase(); });
     }
   });
 
@@ -1048,9 +1048,9 @@
   // IE fix
   if ('12'.substr(-1) != '2')
   {
-    var _native_String_substr = String.prototype.substr;
+    var nativeStringSubstr = String.prototype.substr;
     String.prototype.substr = function(start, end){
-      return _native_String_substr.call(this, start < 0 ? Math.max(0, this.length + start) : start, end);
+      return nativeStringSubstr.call(this, start < 0 ? Math.max(0, this.length + start) : start, end);
     };
   }
 
@@ -1259,7 +1259,7 @@
           return extend(namespace, {
             path: path,
             exports: {},
-            toString: function(){ return '[basis.namespace ' + path + ']' },
+            toString: function(){ return '[basis.namespace ' + path + ']'; },
             extend: function(names){
               complete(this, names);
               extend(this.exports, names);
@@ -1339,9 +1339,7 @@
   })();
 
   var requireNamespace = (function(){
-    var requireFunc;
-
-    if (typeof require == 'function')
+    if (NODE_ENV)
     {
       var requirePath = pathUtils.dirname(module.filename) + '/';
       var moduleProto = module.constructor.prototype;
@@ -1349,7 +1347,7 @@
         return (function(){
           var temp = moduleProto.load;
 
-          moduleProto.load = function(fn){
+          moduleProto.load = function(){
             this.exports = getNamespace(path);
             temp.apply(this, arguments);
           };
@@ -1362,7 +1360,7 @@
 
           return exports;
         })();
-      }
+      };
     }
     else
     {
@@ -1459,8 +1457,8 @@
       {
         extWrapper = fetchResourceFunction.extensions[ext];
         extWrapperFn = function(content){
-          return extWrapper(content, resourceUrl)
-        }
+          return extWrapper(content, resourceUrl);
+        };
       }
 
       //console.log('new resource resolver:' + resourceUrl);
@@ -1483,7 +1481,7 @@
 
       resource.url = resourceUrl;
       resource.fetch = resource;
-      resource.toString = function(){ return '[basis.resource ' + resourceUrl + ']' }; //resource();
+      resource.toString = function(){ return '[basis.resource ' + resourceUrl + ']'; }; //resource();
       resource.update = function(content){
         content = String(content);
         if (content != externalResourceCache[resourceUrl])
@@ -2065,7 +2063,7 @@
       }
       else
         callback.call(thisObject);
-    }
+    };
   })();
 
 

@@ -127,7 +127,7 @@
 
       iframe.onload = function(){
         (iframe.contentWindow.onresize = handler)();
-      }
+      };
     }
   }
 
@@ -179,7 +179,7 @@
       if (!woCalc) this.recalc(this.offsetElement);
     },
     copy: function(box){
-      ['top', 'left', 'bottom', 'right', 'height', 'width', 'defined'].forEach(function(prop){ this[prop] = box[prop] }, this);
+      ['top', 'left', 'bottom', 'right', 'height', 'width', 'defined'].forEach(function(prop){ this[prop] = box[prop]; }, this);
     },
     reset: function(){
       extend(this, BOX_UNDEFINED);
@@ -642,9 +642,9 @@
 
       if (!SUPPORT_COMPUTESTYLE)
       {
-        var _height = ruller.offsetHeight;
+        var offsetHeight = ruller.offsetHeight;
         ruller.style.height = lastElement.currentStyle.marginBottom;
-        bottom += ruller.offsetHeight - _height;
+        bottom += ruller.offsetHeight - offsetHeight;
       }
       else
       {

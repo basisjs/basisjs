@@ -136,20 +136,20 @@
 
   if (typeof Node != 'undefined')
   {
-    isNode = function(node){ return node instanceof Node };
+    isNode = function(node){ return node instanceof Node; };
 
     // add support for node.contains (generally for Firefox)
     if (!Node.prototype.contains)
     {
       Node.prototype.contains = function(node){
-        return !!(this.compareDocumentPosition(node) & POSITION_CONTAINED_BY)
-      }
+        return !!(this.compareDocumentPosition(node) & POSITION_CONTAINED_BY);
+      };
     }
   }
   else
   {
     // IE6-IE8 version
-    isNode = function(node){ return node && node.ownerDocument === document };
+    isNode = function(node){ return node && node.ownerDocument === document; };
   }
 
  /**
@@ -373,7 +373,7 @@
     for (var i = 0, property; property = TEXT_PROPERTIES[i++];)
       if (node[property] != null)
         return node[property];
-    return axis(node, AXIS_DESCENDANT, function(node){ return node.nodeType == TEXT_NODE }).map(getter('nodeValue')).join('');
+    return axis(node, AXIS_DESCENDANT, function(node){ return node.nodeType == TEXT_NODE; }).map(getter('nodeValue')).join('');
   }
 
   //
@@ -531,7 +531,7 @@
   * @param {...Node|string} nodes
   * @return {DocumentFragment} The new DocumentFragment
   */
-  function createFragment(nodes){
+  function createFragment(){
     var result = document.createDocumentFragment();
     var len = arguments.length;
     var array = createFragment.array = [];
@@ -574,7 +574,7 @@
   * @param {...Node|object} children Child nodes
   * @return {!Element} The new Element.
   */
-  function createElement(config, children){
+  function createElement(config){
     var isConfig = config != undefined && typeof config != 'string';
     var description = (isConfig ? config.description : config) || '';
 
@@ -834,7 +834,7 @@
     if (value == null)
       node.removeAttribute(name);
     else
-      node.setAttribute(name, value)
+      node.setAttribute(name, value);
   }
 
   //

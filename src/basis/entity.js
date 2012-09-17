@@ -43,16 +43,16 @@
 
   var NumericId = function(value){
     return isNaN(value) ? null : Number(value);
-  }
+  };
   var NumberId = function(value){
     return isNaN(value) ? null : Number(value);
-  }
+  };
   var IntId = function(value){
     return isNaN(value) ? null : parseInt(value, 10);
-  }
+  };
   var StringId = function(value){
     return value == null ? null : String(value);
-  }
+  };
 
   // ---
 
@@ -93,7 +93,7 @@
           throw 'Duplicate value for index ' + oldValue + ' => ' + newValue;
 
         return value;
-      }
+      };
     },
     get: function(value, checkType){
       var item = this.index[value];
@@ -151,14 +151,14 @@
   function ConcatString(){
     return CalculateField.apply(null, arrayFrom(arguments).concat(function(){
       var value = [];
-      for (var i = arguments.length; i --> 0;)
+      for (var i = arguments.length; i-- > 0;)
       {
         if (arguments[i] == null)
           return null;
         value.push(arguments[i]);
       }
       return value.join('-');
-    }))
+    }));
   }
 
   //
@@ -169,7 +169,7 @@
     return function(data){
       return superClass.prototype[method].call(this, data && data.map(this.wrapper));
     };
-  }
+  };
 
   var ENTITYSET_INIT_METHOD = function(superClass, name){
     return function(){
@@ -185,8 +185,8 @@
 
       // inherit
       superClass.prototype.init.call(this);
-    }
-  }
+    };
+  };
 
   var ENTITYSET_SYNC_METHOD = function(superClass){
     return function(data, set){
@@ -198,7 +198,7 @@
 
       return res;
     };
-  }
+  };
 
  /**
   * @class
@@ -504,7 +504,6 @@
       this.name = config.name || getUntitledName(this.name);
 
       var entityClass__;
-      var idField;
 
       this.index__ = config.index;
       this.idFields = {};
@@ -570,7 +569,6 @@
 
       ;;;if (config.reflections) console.warn('Reflections are deprecated');
 
-      idField = this.idField;
       entityClass__ = this.entityClass = Entity(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters).extend({
         entityType: this,
         type: wrapper,
@@ -646,12 +644,11 @@
 
       if ('type' in config && typeof config.type != 'function')
       {
-        ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wraper: ', wrapper);
+        ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wraper: ', config.type);
         config.type = $self;
       }
 
       var wrapper = config.type || $self;
-      var calcWrapper;
 
       if ([NumericId, NumberId, IntId, StringId].has(wrapper))
         config.id = true;
@@ -678,7 +675,7 @@
       }
 
       if (config.calc)
-        this.addCalcField(key, config.calc, calcWrapper);
+        this.addCalcField(key, config.calc);
       else
         this.fields[key] = wrapper;
 
@@ -748,7 +745,7 @@
         this.fields[key] = function(value, oldValue){
           ;;;if (typeof console != 'undefined') console.log('Calculate fields are readonly');
           return oldValue;
-        }
+        };
       }
       else
       {
@@ -993,7 +990,7 @@
           if (!entityType.extensible)
           {
             ;;;entityWarn(this, 'Set value for "' + key + '" property is ignored.');
-            return;
+            return false;
           }
 
           // emulate field wrapper
@@ -1002,7 +999,6 @@
 
         // main part
         var delta;
-        var updateDelta;
         var result;
         var rollbackData = this.modified;
         var newValue = valueWrapper(value, this.data[key]);

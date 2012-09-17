@@ -289,7 +289,7 @@
 
     if (handlers)
     {
-      for (var i = handlers.length; i --> 0;)
+      for (var i = handlers.length; i-- > 0;)
       {
         var handlerObject = handlers[i];
         handlerObject.handler.call(handlerObject.thisObject, event);
@@ -333,7 +333,7 @@
     if (handlers)
     {
       // search for similar handler, returns if found (prevent for handler dublicates)
-      for (var i = handlers.length; i --> 0;)
+      for (var i = handlers.length; i-- > 0;)
       {
         var handlerObject = handlers[i];
         if (handlerObject.handler === handler && handlerObject.thisObject === thisObject)
@@ -679,11 +679,11 @@
           // if exception event doesn't support
         }
       }
-      
+
       return tagNameEventMap[id] = {
         supported: supported,
         bubble: bubble
-      }
+      };
     }
   }
 
