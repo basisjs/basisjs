@@ -34,18 +34,17 @@
   // Main part
   //
 
-  //consts
-  var AVARAGE_TICK_TIME_INTERVAl = 15;
+  // constants
+  var AVERAGE_TICK_TIME_INTERVAL = 15;
   var VELOCITY_DECREASE_FACTOR = 0.94;
   var MOVE_THRESHOLD = 5;
 
-  //css transform/transform3d feature detection
+  // css transform/transform3d feature detection
   var TRANSFORM_SUPPORT = false;
   var TRANSFORM_3D_SUPPORT = false;
   var TRANSFORM_PROPERTY_NAME;
   
   (function (){
-
     var testElement = DOM.createElement('');
     
     function testProps(properties){
@@ -106,9 +105,6 @@
 
       this.currentVelocityX = 0;
       this.currentVelocityY = 0;
-
-      this.currentDirectionX = 0;
-      this.currentDirectionY = 0;
 
       this.viewportX = 0;
       this.viewportY = 0;
@@ -175,9 +171,6 @@
       this.currentVelocityX = 0;
       this.currentVelocityY = 0;
       
-      this.currentDirectionX = 0;
-      this.currentDirectionY = 0;
-
       if (this.minScrollDelta != 0)
       {
         this.minScrollDeltaXReached = false;
@@ -248,7 +241,7 @@
       if (this.minScrollDeltaXReached || !this.minScrollDeltaYReached)
       {
 
-        var curMouseX = Event.mouseX(event)
+        var curMouseX = Event.mouseX(event);
         var deltaX = this.lastMouseX - curMouseX;
         this.lastMouseX = curMouseX;
         this.viewportTargetX += deltaX;
@@ -259,7 +252,7 @@
 
       if (this.minScrollDeltaYReached || !this.minScrollDeltaXReached)
       {
-        var curMouseY = Event.mouseY(event)
+        var curMouseY = Event.mouseY(event);
         var deltaY = this.lastMouseY - curMouseY;
         this.lastMouseY = curMouseY;
         this.viewportTargetY += deltaY;
@@ -279,16 +272,10 @@
             this.minScrollDeltaYReached = true;          
 
           if (this.minScrollDeltaYReached)
-          {
             this.viewportTargetX = this.viewportX;
-            this.currentDirectionX = 0;
-          }
 
           if (this.minScrollDeltaXReached)
-          {
             this.viewportTargetY = this.viewportY;
-            this.currentDirectionY = 0;
-          }
         }
       }
 
@@ -340,26 +327,18 @@
 
         if (this.scrollX)
         {
-          delta = (this.viewportTargetX - this.viewportX/*this.lastViewportTargetX*/);
-          //this.lastViewportTargetX = this.viewportTargetX;
+          delta = this.viewportTargetX - this.viewportX;
 
           if (delta)
-          {
             this.currentVelocityX = delta / deltaTime;
-            this.currentDirectionX = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
-          }
         }
 
         if (this.scrollY)
         {
-          delta = (this.viewportTargetY - this.viewportY/*this.lastViewportTargetY*/);
-          //this.lastViewportTargetY = this.viewportTargetY;
+          delta = this.viewportTargetY - this.viewportY;
 
           if (delta)
-          {
             this.currentVelocityY = delta / deltaTime;
-            this.currentDirectionY = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
-          }
         }
       }
       else if (this.processInertia)
@@ -458,7 +437,6 @@
       var expectedInertiaDelta = 0;
 
       var currentVelocity = axis == 'x' ? this.currentVelocityX : this.currentVelocityY;
-      var currentDirection = currentVelocity > 0 ? 1 : -1; //axis == 'x' ? this.currentDirectionX : this.currentDirectionY;
       var viewportTargetPosition = axis == 'x' ? this.viewportTargetX : this.viewportTargetY;
 
       if (currentVelocity)
@@ -467,20 +445,20 @@
         var velocity = currentVelocity;
         for (var i = 0; i < expectedInertiaIterationCount; i++)
         {
-          expectedInertiaDelta += velocity * AVARAGE_TICK_TIME_INTERVAl;
+          expectedInertiaDelta += velocity * AVERAGE_TICK_TIME_INTERVAL;
           velocity *= VELOCITY_DECREASE_FACTOR;
         }
       }
-      var expectedPosition = viewportTargetPosition + expectedInertiaDelta;
 
-      return expectedPosition;
-    },
+      // return expected position
+      return viewportTargetPosition + expectedInertiaDelta;
+    }/*,
     calcExpectedPositionX: function(){
       return this.calcExpectedPosition('x');
     },
     calcExpectedPositionY: function(){
       return this.calcExpectedPosition('y');
-    }
+    }*/
   });
 
  /**
@@ -567,6 +545,11 @@
     }
   });
 
+
+  //
+  // Scroller
+  //
+
  /**
   * @class
   */
@@ -640,7 +623,6 @@
       });
 
       this.scroller = new Scroller(scrollerConfig);
-
       this.scroller.addHandler({
         updatePosition: this.updatePosition,
         start: function(){

@@ -39,7 +39,6 @@
 
   var UINode = basis.ui.Node;
   var UIPartitionNode = basis.ui.PartitionNode;
-  var UIGroupingNode = basis.ui.GroupingNode;
 
 
   //
@@ -177,7 +176,7 @@
     },
 
     action: {
-      setColumnSorting: function(event){
+      setColumnSorting: function(){
         if (this.selected)
         {
           var owner = this.parentNode && this.parentNode.owner;
@@ -236,7 +235,7 @@
 
     listen: {
       owner: {
-        sortingChanged: function(owner, oldSorting, oldSortingDesc){
+        sortingChanged: function(owner){
           var cell = this.childNodes.search(owner.sorting, 'colSorting');
           if (cell)
           {
@@ -256,7 +255,7 @@
         owner: this,
         handlerContext: this,
         handler: {
-          datasetChanged: function(dataset, delta){
+          datasetChanged: function(dataset){
             var cell = dataset.pick();
             if (cell && this.owner)
               this.owner.setSorting(cell.colSorting, cell.order);
@@ -272,7 +271,7 @@
       if (structure)
       {
         var cells = [];
-        var autosorting = [];
+        var autoSorting = [];
         var ownerSorting = this.owner && this.owner.sorting;
         
         for (var i = 0; i < structure.length; i++)
@@ -304,15 +303,15 @@
             config.defaultOrder = colConfig.defaultOrder;
           
             if (colConfig.autosorting || sorting === ownerSorting)
-              autosorting.push(config);
+              autoSorting.push(config);
           }
 
           // store cell
           cells.push(config);
-        };
+        }
 
-        if (autosorting.length)
-          autosorting[0].selected = true;
+        if (autoSorting.length)
+          autoSorting[0].selected = true;
 
         this.setChildNodes(cells);
       }
@@ -483,15 +482,15 @@
 
     init: function(){
 
-      ;;;if (this.rowSatellite && typeof console != 'undefined') console.warn('rowSatellite is deprecated. Move all extensions into childClass');
-      ;;;if (this.rowBehaviour && typeof console != 'undefined') console.warn('rowBehaviour is deprecated. Move all extensions into childClass');
+      ;;;if ('rowSatellite' in this && typeof console != 'undefined') console.warn('rowSatellite is deprecated. Move all extensions into childClass');
+      ;;;if ('rowBehaviour' in this && typeof console != 'undefined') console.warn('rowBehaviour is deprecated. Move all extensions into childClass');
 
       this.applyConfig_(this.structure);
 
       UINode.prototype.init.call(this);
 
-      this.headerConfig = this.header;
-      this.footerConfig = this.footer;
+      //this.headerConfig = this.header;
+      //this.footerConfig = this.footer;
 
       this.header = new this.headerClass(extend({ owner: this, structure: this.structure }, this.header));
       this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
@@ -503,7 +502,6 @@
     applyConfig_: function(structure){
       if (structure)
       {
-        var updaters = new Array();
         var template = '';
         var binding = {};
 

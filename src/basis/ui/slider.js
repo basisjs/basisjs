@@ -181,7 +181,7 @@
 
     binding: {
       marks: 'satellite:',
-      trumbPos: {
+      thrumPos: {
         events: 'change rangeChanged',
         getter: function(node){
           return percentValue(node.value2pos(node.value));
@@ -287,9 +287,9 @@
       this.setRange(this.min, this.max, step || 1);
       this.setValue(isNaN(value) ? this.min : value);
 
-      // add drag posibility for slider
+      // add drag possibility for slider
       this.scrollbarDD = new DragDropElement({
-        element: this.tmpl.scrollTrumb,
+        element: this.tmpl.scrollThrum,
         handler: DRAGDROP_HANDLER,
         handlerContext: this
       });
@@ -393,7 +393,7 @@
 
    /**
     * Set value in step count
-    * @param {number} stepCount
+    * @param {number} stepValue
     */
     setStepValue: function(stepValue){
       stepValue = Math.round(stepValue).fit(0, this.stepCount);

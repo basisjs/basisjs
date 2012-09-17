@@ -100,7 +100,7 @@
     headerClass: {
       listen: {
         childNode: {
-          '*': function(event){
+          '*': function(){
             if (this.owner)
               this.owner.requestRelayout();
           }

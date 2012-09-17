@@ -56,7 +56,7 @@
 
     // return value in pixels
     return value + 'px';
-  };
+  }
 
   if ('getComputedStyle' in global)
   {
@@ -98,7 +98,7 @@
       var style = global.getComputedStyle(element, null);
       if (style)
         return style.getPropertyValue(styleProp);
-    }
+    };
 
     // test for computed style bug
     basis.ready(function(){
@@ -265,7 +265,7 @@
       
       super_.init.call(this);
     },
-    setElement: function(element, trigger){
+    setElement: function(element){
       var oldElement = this.element;
       
       super_.setElement.call(this, element, this.resizer);
