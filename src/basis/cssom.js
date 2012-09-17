@@ -15,6 +15,7 @@
   //
 
   var document = global.document;
+  var location = global.location;
   var path = basis.path;
   var dom = basis.dom;
   var event = basis.dom.event;
@@ -129,8 +130,6 @@
     return StyleSheet_makeCompatible(element.sheet || element.styleSheet);
   }
 
-  var basisId = 1;
-
  /**
   * Returns generic stylesheet by it's id.
   * @param {string=} id
@@ -143,7 +142,7 @@
 
     if (!cssStyleSheets[id])
       if (createIfNotExists)
-        cssStyleSheets[id] = new StyleSheet(addStyleSheet())
+        cssStyleSheets[id] = new StyleSheet(addStyleSheet());
 
     return cssStyleSheets[id];
   }
@@ -174,35 +173,38 @@
         return;
       }
     }
-  };
+  }
 
   createStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter', true, {
-    fitler: function(value){ return 'alpha(opacity:' + parseInt(value * 100, 10) + ')' }
+    filter: function(value){ return 'alpha(opacity:' + parseInt(value * 100, 10) + ')' }
   });
   createStyleMapping('border-radius', 'borderRadius MozBorderRadius WebkitBorderRadius', true);
   createStyleMapping('float', 'cssFloat styleFloat');
 
  /**
   * Apply new style property values for node.
-  * @param {Node} node Node which style to be changed.
-  * @param {object} style Object contains new values for node style properties.
-  * @return {Node} 
+  * @param {string} key Node which style to be changed.
+  * @param {*} value Object contains new values for node style properties.
+  * @return {object}
   */
   function getStylePropertyMapping(key, value){
     var mapping = styleMapping[key];
+
     if (key = mapping ? mapping.key : key.replace(/^-ms-/, 'ms-').camelize())
       return {
         key: key,
         value: mapping && mapping.getter ? mapping.getter(value) : value
       };
+
+    return null;
   }
 
  /**
   * Apply new style property value for node.
-  * @param {Node} node Node which style to be changed.
+  * @param {Element} node Node which style to be changed.
   * @param {string} property Name of property.
   * @param {string} value Value of property.
-  * @return Returns style property value after assignment.
+  * @return {*} Returns style property value after assignment.
   */
   function setStyleProperty(node, property, value){
     var mapping = getStylePropertyMapping(property, value);
@@ -247,7 +249,7 @@
       if (SET_STYLE_EXCEPTION_BUG)
       {
         // IE6-8 throw exception when assign wrong value to style, but standart
-        // says just ignore this assigments
+        // says just ignore this assignments
         // try/catch is speedless, therefore wrap this statement only for ie
         // it makes code safe and more compatible
         try {
@@ -265,9 +267,9 @@
 
  /**
   * Apply new style properties for node.
-  * @param {Node} node Node which style to be changed.
+  * @param {Element} node Node which style to be changed.
   * @param {object} style Object contains new values for node style properties.
-  * @return {Node} 
+  * @return {Element}
   */
   function setStyle(node, style){
     for (var key in style)
@@ -283,9 +285,9 @@
 
  /**
   * Changes for node display value.
-  * @param {Node} node
-  * @param {boolean|string} display
-  * @return {Node}
+  * @param {Element} node
+  * @param {boolean|string=} display
+  * @return {*}
   */
   function display(node, display){
     return setStyleProperty(node, 'display', typeof display == 'string' ? display : (display ? '' : 'none'));
@@ -295,7 +297,7 @@
   * @deprecated use basis.cssom.display instead.
   */
   function show(element){
-    return display(element, 1);
+    return display(element, true);
   }
  /**
   * @deprecated use basis.cssom.display instead.
@@ -306,9 +308,9 @@
 
  /**
   * Changes node visibility.
-  * @param {Node} node
-  * @param {boolean} visible
-  * @return {Node}
+  * @param {Element} node
+  * @param {boolean=} visible
+  * @return {*}
   */
   function visibility(node, visible){
     return setStyleProperty(node, 'visibility', visible ? '' : 'hidden');
@@ -318,7 +320,7 @@
   * @deprecated use basis.cssom.visibility instead.
   */
   function visible(element){
-    return visibility(element, 1);
+    return visibility(element, true);
   }
  /**
   * @deprecated use basis.cssom.visibility instead.
@@ -364,9 +366,10 @@
     createRule: function(selector){
       var styleSheet = this.styleSheet;
       var index = this.rules.length;
-      var newIndex = styleSheet.insertRule(selector + '{}', index);
-      var cssRules = arrayFrom(styleSheet.cssRules, index);
 
+      styleSheet.insertRule(selector + '{}', index);
+
+      var cssRules = arrayFrom(styleSheet.cssRules, index);
       var ruleWrapper = cssRules[1]
         ? new RuleSet(cssRules, this)
         : new Rule(cssRules[0], this);
@@ -427,7 +430,7 @@
 
    /**
     * @param {CSSRule} rule
-    * @contructor
+    * @constructor
     */
     init: function(rule, owner){
       this.owner = owner;
@@ -437,14 +440,14 @@
 
    /**
     * @param {string} property
-    * @param {any} value
+    * @param {string} value
     */
     setProperty: function(property, value){
       setStyleProperty(this.rule, property, value);
     },
 
    /**
-    * @param {Object} style
+    * @param {object} style
     */
     setStyle: function(style){
       Object.iterate(style, this.setProperty, this);
@@ -486,7 +489,7 @@
     */
     init: function(rules, owner){
       this.owner = owner;
-      this.rules = rules.map(function(){
+      this.rules = rules.map(function(rule){
         return new Rule(rule, this);
       }, this);
     },
@@ -638,8 +641,9 @@
     },
     items: function(){
       var classList = this.classList.toString();
-      if (classList)
-        return classList.toString().match(prefixRegExp(this.prefix, true));
+      return classList
+        ? classList.toString().match(prefixRegExp(this.prefix, true))
+        : null;
     },
     set: function(value){
       var items = this.items();
@@ -668,7 +672,7 @@
   });
 
   //
-  // Make crossbrowser classList
+  // Make cross-browser classList
   //
   if (CLASSLIST_SUPPORTED)
   {
@@ -685,20 +689,20 @@
     });
     classList = function(element){
       return (typeof element == 'string' ? dom.get(element) : element).classList;
-    }
+    };
   }
   else
   {
     classList = function(element){ 
       return new ClassList(typeof element == 'string' ? dom.get(element) : element);
-    }
+    };
   }
 
   var classListProxy = function(element, ns){
     return ns
       ? new ClassListNS(ns, classList(element))
       : classList(element);
-  }
+  };
 
   //
   // platform specific actions
@@ -717,10 +721,12 @@
   var cleanupDom = true; // is require remove style node on CssResource destroy or not
 
   // Test for appendChild bugs (old IE browsers has a problem with append textNode into <style>)
-  var STYLE_APPEND_BUGGY = !(function(tagName){
+  var STYLE_APPEND_BUGGY = (function(){
     try {
-      return dom.createElement('style', '');
-    } catch(e) {}
+      return !dom.createElement('style', '');
+    } catch(e) {
+      return true;
+    }
   })();
 
 
@@ -745,7 +751,7 @@
         // Opera left document base as <base> element specified,
         // even if this element is removed from document
         // so we set current location for base
-        baseEl.setAttribute('href', location);
+        baseEl.setAttribute('href', location.href);
 
         dom.remove(baseEl);    
       }
@@ -880,7 +886,11 @@
     }
   });
 
-
+  function createUnitFormatter(unit){
+    return function(value){
+      return value == 0 || isNaN(value) ? '0' : value + unit;
+    }
+  }
 
   //
   // export names
@@ -905,15 +915,18 @@
 
     // node styling
     display: display,
+    visibility: visibility,
+
+    // units
+    em: createUnitFormatter('em'),
+    ex: createUnitFormatter('ex'),
+    px: createUnitFormatter('px'),
+    percent: createUnitFormatter('%'),
+
+    // deprecated
     show: show,
     hide: hide,
-    visibility: visibility,
     visible: visible,
     invisible: invisible
   };
 
-  ['em', 'ex', 'px', '%'].forEach(function(unit){
-    module.exports[unit == '%' ? 'percent' : unit] = function(value){
-      return value == 0 || isNaN(value) ? '0' : value + unit;
-    }
-  });

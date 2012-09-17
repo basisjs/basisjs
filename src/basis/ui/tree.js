@@ -76,9 +76,9 @@
       DOM.axis(this, DOM.AXIS_DESCENDANT_OR_SELF, collapse);
     },
 
-    expand: Function(),
-    collapse: Function(),
-    toggle: Function()
+    expand: function(){},
+    collapse: function(){},
+    toggle: function(){}
   };
 
  /**
@@ -154,7 +154,7 @@
         if (!this.isDisabled())
           this.select(Event(event).ctrlKey);
       },
-      toggle: function(event){
+      toggle: function(){
         this.toggle();
       }
     }
@@ -179,16 +179,14 @@
     groupingClass: GroupingNode,
 
    /**
-    * Template for node element. 
-    * @type {basis.template.Template}
-    * @private
+    * @inheritDoc
     */
     template: resource('templates/tree/Folder.tmpl'),
 
    /**
     * @type {boolean}
     */
-    collapsable: true,
+    collapsible: true,
 
    /**
     * @type {boolean}
@@ -196,16 +194,15 @@
     collapsed: false,
 
    /**
-    * @param {Object} config
-    * @config {boolean} collapsable
-    * @config {boolean} collapsed
     * @constructor
     */
     init: function(){
       // inherit
       Node.prototype.init.call(this);
 
-      if (this.collapsed && this.collapsable)
+      ;;;if ('collapsable' in this && typeof console != 'undefined') console.warn('WARN: collapsable property is not supported, use collapsible')
+
+      if (this.collapsed && this.collapsible)
         this.event_collapse();
     },
 
@@ -221,6 +218,7 @@
 
         return true;
       }
+      return false;
     },
 
    /**
@@ -228,20 +226,24 @@
     * @return {boolean} Returns true if node was collpased.
     */
     collapse: function(){
-      if (!this.collapsed && this.collapsable)
+      if (!this.collapsed && this.collapsible)
       {
         this.collapsed = true;
         this.event_collapse();
 
         return true;
       }
+      return false;
     },
 
    /**
     * Inverts node collapsed state. If node was collapsed expand it, otherwise collapse it.
     */
     toggle: function(){
-      this.collapsed ? this.expand() : this.collapse();
+      if (this.collapsed)
+        this.expand();
+      else
+        this.collapse();
     }
   });
 

@@ -57,10 +57,10 @@
 
     listen: {
       childNode: {
-        enable: function(childNode){
+        enable: function(){
           findAndSelectActiveNode(this);
         },
-        disable: function(childNode){
+        disable: function(){
           findAndSelectActiveNode(this);
         }
       }
@@ -253,14 +253,13 @@
       {
         if (this.tmpl.pagesElement)
           oldChild.element.appendChild(oldChild.tmpl.pageElement);
-
-        return oldChild;
       }
+      return oldChild;
     },
     clear: function(keepAlive){
       // put pageElement back to TabSheet root element
-      this.childNodes.forEach(function(tabsheet){
-        tabsheet.element.appendChild(tabsheet.tmpl.pageElement);
+      this.childNodes.forEach(function(tabSheet){
+        tabSheet.element.appendChild(tabSheet.tmpl.pageElement);
       });
 
       TabControl.prototype.clear.call(this, keepAlive);

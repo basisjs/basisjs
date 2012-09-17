@@ -98,6 +98,20 @@
   //  Window
   //
 
+  var DD_HANDLER = {
+    move: function(){
+      this.autocenter = false;
+      this.element.style.margin = 0;
+    },
+    over: function(){
+      this.cssRule.setStyle(Object.slice(this.element.style, 'left top'.qw()));
+      cssom.setStyle(this.element, {
+        top: '',
+        left: ''
+      });
+    }
+  };
+
  /**
   * @class
   */
@@ -199,19 +213,7 @@
             fixBottom: false
           });
 
-          this.dde.addHandler({
-            move: function(){
-              this.autocenter = false;
-              this.element.style.margin = 0;
-            },
-            over: function(){
-              this.cssRule.setStyle(Object.slice(this.element.style, 'left top'.qw()));
-              cssom.setStyle(this.element, {
-                top: '',
-                left: ''
-              });
-            }
-          }, this);
+          this.dde.addHandler(DD_HANDLER, this);
         }
         else
         {
@@ -301,7 +303,7 @@
     activate: function(){
       this.select();
     },
-    open: function(params, x, y){
+    open: function(params){
       if (this.closed)
       {
         cssom.visibility(this.element, false);
