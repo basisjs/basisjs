@@ -205,7 +205,7 @@
         var testIndex = 0;
 
         var t, s = test.toString();
-        var lines = [];
+        var lines;
         var str = [];
         var parenthesis = [];  
 

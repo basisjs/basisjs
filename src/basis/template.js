@@ -72,7 +72,6 @@
     var parseTag = false;
     var textStateEndPos = 0;
     var textEndPos;
-    var refName;
 
     var state = TEXT;
     var pos = 0;
@@ -279,8 +278,6 @@
             break;
 
           case REFERENCE:
-            refName = m[1];
-
             // add reference to token list name
             if (token.refs)
               token.refs.push(m[1]);

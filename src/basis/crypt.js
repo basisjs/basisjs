@@ -317,7 +317,7 @@
     if (typeof input == 'number')
       return number2hex(input);
 
-    var output = new Array();
+    var output;
     if (Array.isArray(input))
       output = input.map(HEX);
     else

@@ -218,7 +218,7 @@
 
     if (imp || isPropertyImportant(style, property))
     {
-      value = value.replace(IMPORTANT_REGEXP, '');
+      mapping.value = mapping.value.replace(IMPORTANT_REGEXP, '');
 
       if (style.setProperty)
       {

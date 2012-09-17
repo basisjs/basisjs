@@ -2,7 +2,6 @@ function loadTest(TestCase){
 
   var DOM = basis.dom;
   var Event = basis.dom.event;
-  var CSS = basis.cssom;
   var Tester = basis.test.Tester;
 
   if (top.regTestCase)

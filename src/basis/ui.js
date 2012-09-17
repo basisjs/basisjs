@@ -57,9 +57,7 @@
       var def = null;
       var value = extension[key];
 
-      if (!value)
-        def = null;
-      else
+      if (value)
       {
         value = BINDING_PRESET.process(key, value);
 

@@ -59,9 +59,9 @@
       utf8_bytes[2] = [127, 194, 128, 223, 191, 224, 160, 128];
 
       var utf8_str = new Array();
-      utf8_str[0] = utf8_bytes[0].map(function(char){ return String.fromCharCode(char) }).join('');
-      utf8_str[1] = utf8_bytes[1].map(function(char){ return String.fromCharCode(char) }).join('');
-      utf8_str[2] = utf8_bytes[2].map(function(char){ return String.fromCharCode(char) }).join('');
+      utf8_str[0] = utf8_bytes[0].map(function(ch){ return String.fromCharCode(ch); }).join('');
+      utf8_str[1] = utf8_bytes[1].map(function(ch){ return String.fromCharCode(ch); }).join('');
+      utf8_str[2] = utf8_bytes[2].map(function(ch){ return String.fromCharCode(ch); }).join('');
       utf8_str[3] = utf8_str[0] + ' world';
       utf8_str[4] = utf8_str[0] + '\t\r\n world\n\r\t';
       utf8_str[5] = utf8_str[0] + utf8_str[1];
@@ -381,7 +381,7 @@
                 this.is('1a279ee072886994b2cbd88559e3cdfa', MD5('Привет мирHello world').map(hex).join(''));
                 this.is('42c488cb0b5fa1819d0f1e7d57ac1821', MD5('Привет мирHello world', true).map(hex).join(''));
               }
-            },
+            }
           ]
         },
         {

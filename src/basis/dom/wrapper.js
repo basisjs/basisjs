@@ -2424,10 +2424,10 @@
 
           // re-insert partition nodes
           if (firstNode instanceof PartitionNode)
-            for (var i = nodesCount, insertBefore = afterNext; i --> 0;)
+            for (var i = nodesCount, insertBefore = afterNext; i-- > 0;)
             {
               parent.insertBefore(nodes[i], insertBefore);
-              refChild = nodes[i];
+              insertBefore = nodes[i];
             }
         }
       }

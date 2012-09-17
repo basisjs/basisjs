@@ -894,7 +894,6 @@
       if (!result)
       {
         var count = 1;
-        var canDivide = true;
         var step;
         var newVal;
         var curVal = maxGridValue;
@@ -955,7 +954,6 @@
 
   function rebuildGraphSelection(graph, curItemPosition, startItemPosition)
   {
-    var curItem = graph.childNodes[curItemPosition];
     var applyItems = graph.childNodes.slice(Math.min(startItemPosition, curItemPosition), Math.max(startItemPosition, curItemPosition) + 1);
 
     var selectedItems = arrayFrom(graph.selection.getItems());

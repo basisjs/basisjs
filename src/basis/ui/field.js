@@ -1056,7 +1056,7 @@
 
         var matchCount = 0;
 
-        for (var i = textNodes.length; i --> 0;)
+        for (var i = textNodes.length; i-- > 0;)
         {
           var textNode = textNodes[i];
 
