@@ -942,9 +942,7 @@
       if (debug && !result.warns.length)
         delete result.warns;
 
-      ;;;if ('JSON' in global) result.toString = function(){
-        return JSON.stringify(this);
-      };
+      ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this); };
 
       return result;
     };
