@@ -942,10 +942,12 @@
       if (debug && !result.warns.length)
         delete result.warns;
 
-      ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this) };
+      ;;;if ('JSON' in global) result.toString = function(){
+        return JSON.stringify(this);
+      };
 
       return result;
-    }
+    };
   })();
 
   //
@@ -1120,7 +1122,7 @@
   function resolveSourceById(sourceId){
     return function(){
       return sourceById(sourceId);
-    }
+    };
   }
 
  /**
@@ -1210,9 +1212,7 @@
 
         return false;
       },
-      get: function(template){
-        return '?';
-      }
+      get: function(){}
     },
 
    /**
@@ -1271,7 +1271,7 @@
                 //source = source;
                 break;
               default:
-                ;;;console.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.')
+                ;;; if (typeof console != 'undefined') console.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.');
             }
           }
         }

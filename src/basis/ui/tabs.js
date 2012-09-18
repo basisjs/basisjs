@@ -197,7 +197,7 @@
         if (!this.tmpl.pageElement)
           DOM.remove(pageElement);
         else
-          DOM.replace(pageElement, this.tmpl.pageElement)
+          DOM.replace(pageElement, this.tmpl.pageElement);
       }
     },
 
@@ -243,7 +243,7 @@
       if (newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild))
       {
         if (this.tmpl.pagesElement)
-          this.tmpl.pagesElement.insertBefore(newChild.tmpl.pageElement, newChild.nextSibling ? newChild.nextSibling.tmpl.pageElement : null)
+          this.tmpl.pagesElement.insertBefore(newChild.tmpl.pageElement, newChild.nextSibling ? newChild.nextSibling.tmpl.pageElement : null);
       }
 
       return newChild;

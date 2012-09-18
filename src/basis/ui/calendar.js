@@ -179,17 +179,26 @@
   //
 
   var PERIOD_TITLE = {
-    century: function(period){ return period.periodStart.getFullYear() + ' - ' + period.periodEnd.getFullYear() },
-    decade:  function(period){ return period.periodStart.getFullYear() + ' - ' + period.periodEnd.getFullYear() },
-    year:    function(period){ return period.periodStart.getFullYear() },
-    quarter: function(period){
-      return LOCALE('QUARTER').toLowerCase().format(1 + period.periodStart.getMonth().base(3)/3);
+    century: function(period){
+      return period.periodStart.getFullYear() + ' - ' + period.periodEnd.getFullYear();
     },
-    month:   function(period){
+    decade: function(period){
+      return period.periodStart.getFullYear() + ' - ' + period.periodEnd.getFullYear();
+    },
+    year: function(period){
+      return period.periodStart.getFullYear();
+    },
+    quarter: function(period){
+      return l10nToken(namespace, 'quarter');
+      //return LOCALE('QUARTER').toLowerCase().format(1 + period.periodStart.getMonth().base(3)/3);
+    },
+    month: function(period){
       return l10nToken(namespace, 'monthShort', monthNumToRef[period.periodStart.getMonth()]);
       //return LOCALE('MONTH').SHORT[period.periodStart.getMonth()].toLowerCase();
     },
-    day:     function(period){ return period.periodStart.getDate() }
+    day: function(period){
+      return period.periodStart.getDate();
+    }
   };
 
   //
@@ -224,7 +233,7 @@
     else
     {
       result.periodStart = new Date(date);
-      result.periodEnd = new Date(date)
+      result.periodEnd = new Date(date);
     }
 
     return result;
@@ -314,7 +323,7 @@
     }
   });
 
-  function getPeriods(section){
+  function getPeriods(){
     // update nodes
     var nodePeriod = getPeriod(this.nodePeriodName, new Date(this.periodStart).add(this.nodePeriodUnit, -this.nodePeriodUnitCount * (this.getInitOffset(this.periodStart) || 0)));
     var result = [];
@@ -326,7 +335,6 @@
       // move to next period
       nodePeriod = getPeriod(this.nodePeriodName, new Date(nodePeriod.periodStart).add(this.nodePeriodUnit, this.nodePeriodUnitCount));
     }
-
 
     return result;
   }
@@ -448,7 +456,7 @@
           nodePeriodName: this.nodePeriodName,
           periodStart: period.periodStart,
           periodEnd: period.periodEnd
-        }
+        };
       }, this);
 
       UINode.prototype.init.call(this);
@@ -474,12 +482,12 @@
       return null;
     },
 
-    prevPeriod: function(forward){
+    prevPeriod: function(){
       if (this.isPrevPeriodEnabled)
         this.setPeriod(getPeriod(this.periodName, new Date(+this.periodStart - 1)));
     },
 
-    nextPeriod: function(forward){
+    nextPeriod: function(){
       if (this.isNextPeriodEnabled)
         this.setPeriod(getPeriod(this.periodName, new Date(+this.periodEnd + 1)));
     },
@@ -638,7 +646,7 @@
     binding: {
       title: {
         events: 'periodChanged',
-        getter: function(node){
+        getter: function(){
           return l10nToken(namespace, 'quarter');
         }
       }
@@ -743,10 +751,10 @@
 
       // insert sections
       if (this.sections)
-        DOM.insert(this, this.sections.map(function(sectionClass, index){
+        DOM.insert(this, this.sections.map(function(sectionClass){
           return new CalendarSection[sectionClass]({
             selectedDate: this.selectedDate.value
-          })
+          });
         }, this));
     },
 
@@ -886,17 +894,18 @@
         }
         else
         {
-          var offset    = forward ? 1 : -1;
-
-          var curYear   = date.getFullYear();
+          var offset = forward ? 1 : -1;
+          var curYear = date.getFullYear();
           var firstDate = (new Date(date)).add('millisecond', offset);
           var firstYear = firstDate.getFullYear();
-          var years     = Object.keys(this.map.enable).filter(function(year){ return offset * year >= offset * firstYear });
+          var years = Object.keys(this.map.enable).filter(function(year){ return offset * year >= offset * firstYear; });
           var yearCount = years.length;
 
           if (yearCount)
           {
-            years = years.sort(function(a, b){ return offset * (a > b) || -offset * (a < b) });
+            years = years.sort(function(a, b){
+              return offset * (a > b) || -offset * (a < b);
+            });
 
             for (var i = 0; i < yearCount; i++)
             {

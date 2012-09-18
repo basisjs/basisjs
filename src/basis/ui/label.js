@@ -160,7 +160,7 @@
     visibilityGetter: function(owner){
       return owner.state == STATE.ERROR;
     }
-  })
+  });
 
   //
   // Node dataSource labels

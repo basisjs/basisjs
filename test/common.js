@@ -1,6 +1,11 @@
 function loadTest(TestCase){
 
+  basis.require('basis.dom');
+  basis.require('basis.cssom');
+  basis.require('basis.dom.event');
+
   var DOM = basis.dom;
+  var cssom = basis.cssom;
   var Event = basis.dom.event;
   var Tester = basis.test.Tester;
 
@@ -21,7 +26,7 @@ function loadTest(TestCase){
         ),
         buttonRun = DOM.createElement({ description: 'BUTTON', click: new Event.Handler(Tester.run, Tester) }, 'Run'),
         buttonStop = DOM.createElement({ description: 'BUTTON', click: new Event.Handler(Tester.stop, Tester) }, 'Stop'),
-        DOM.createElement({ description: 'A[href=#autorun]', click: function(event){ Tester.run() } }, 'Autorun')
+        DOM.createElement({ description: 'A[href=#autorun]', click: function(event){ Tester.run(); } }, 'Autorun')
       )
     ]);
 
@@ -30,7 +35,7 @@ function loadTest(TestCase){
 
     testcase.addHandler({
       progress: function(diff, p){
-        DOM.setStyle(progressbar.firstChild, { width: (100 * p) + '%' });
+        cssom.setStyle(progressbar.firstChild, { width: (100 * p) + '%' });
       },
       over: function(){
         DOM.remove(progressbar);
@@ -44,8 +49,8 @@ function loadTest(TestCase){
       }
     });
 
-    Tester.state.addLink(buttonRun, function(value){ this.disabled = value == 'run' });
-    Tester.state.addLink(buttonStop, function(value){ this.disabled = value != 'run' });
+    Tester.state.addLink(buttonRun, function(value){ this.disabled = value == 'run'; });
+    Tester.state.addLink(buttonStop, function(value){ this.disabled = value != 'run'; });
 
     if (location.hash == '#autorun')
       Tester.run();

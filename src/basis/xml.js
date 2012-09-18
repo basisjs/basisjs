@@ -79,7 +79,7 @@
         if (result.charset && result.charset != document.charset)
           result.charset = document.charset;
         return result;
-      }
+      };
     }
 
     if (window.ActiveXObject)
@@ -115,7 +115,7 @@
     if (namespace)
       return isNativeSupport
                ? document.createElementNS(namespace, nodename)
-               : document.createNode(1, nodename, namespace)
+               : document.createNode(1, nodename, namespace);
     else
       return document.createElement(nodename);
   };
@@ -130,7 +130,7 @@
     if (namespace)
       attr = isNativeSupport
                ? document.createAttributeNS(namespace, nodename)
-               : document.createNode(2, nodename, namespace)
+               : document.createNode(2, nodename, namespace);
     else
       attr = document.createAttribute(nodename);
 

@@ -185,7 +185,6 @@
                          name: 'Data'
                        }
                       ];
-      var testers   = [];
       var currentTest;
 
 //      Basis.addHandler('TestList', 'resize', function(){ alert('!a') });
@@ -207,7 +206,7 @@
         }))
       );
 
-      regTestCase = function(test){
+      window.regTestCase = function(test){
         var testcase = {
           tester: test.tester,
           name:   test.name,
@@ -215,7 +214,7 @@
           progress: DOM.createElement('.progress', DOM.createElement('.bar'))
         };
 
-        test.tester.state.addLink(testcase.progress, function(value){ DOM.css(this, { display: value == 'run' ? '' : 'none' }) }, testcase.progress);
+        test.tester.state.addLink(testcase.progress, function(value){ DOM.css(this, { display: value == 'run' ? '' : 'none' }); }, testcase.progress);
 
         test.addHandler({
           progress: function(diff, progress){
@@ -237,10 +236,10 @@
             ]);
             nextTest();
           }
-        }, testcase)
+        }, testcase);
 
         currentTest.testers.push(testcase);
-      }
+      };
 
       currentTestCase = 0;
       nextTest = function(){
@@ -275,7 +274,7 @@
           currentTest.testers = [];
           DOM.insert('test_place', DOM.createElement('IFRAME[src=' + (currentTest.filename + '?' + Math.random()).quote('"') + ']'));
         }
-      }
+      };
       nextTest();
 //      alert(Basis.keys(document).sort());
     });

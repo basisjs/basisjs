@@ -123,14 +123,14 @@
       return fromUTF8(UTF8.fromBytes(input));
     }
 
-    return basis.namespace(namespace).exports = {
+    return basis.namespace(namespace).extend({
       toBytes: toBytes,
       fromBytes: fromBytes,
       toUTF8: toUTF8,
       fromUTF8: fromUTF8,
       toUTF8Bytes: toUTF8Bytes,
       fromUTF8Bytes: fromUTF8Bytes
-    };
+    });
 
   })();
 
@@ -183,14 +183,14 @@
       return UTF16.toUTF8(UTF16.fromBytes(input));
     }
 
-    return basis.namespace(namespace).exports = {
+    return basis.namespace(namespace).extend({
       toBytes: toBytes,
       fromBytes: fromBytes,
       toUTF16: toUTF16,
       fromUTF16: fromUTF16,
       toUTF16Bytes: toUTF16Bytes,
       fromUTF16Bytes: fromUTF16Bytes
-    };
+    });
   })();
 
   // =====================================================
@@ -206,7 +206,7 @@
     var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=".toArray();
     var charIndex = {};
     
-    chars.forEach(function(item, index){ charIndex[item] = index });
+    chars.forEach(function(item, index){ charIndex[item] = index; });
 
     function encode(input, useUTF8){
       // convert to bytes array if necessary
@@ -283,10 +283,10 @@
     // export names
     //
 
-    return basis.namespace(namespace).exports = {
+    return basis.namespace(namespace).extend({
       encode: encode,
       decode: decode
-    };
+    });
 
   })();
 
@@ -333,10 +333,18 @@
 
     var K = [0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6];
     var F = [
-      function(x, y, z){ return z ^ (x & (y ^ z)) },
-      function(x, y, z){ return x ^ y ^ z },
-      function(x, y, z){ return (x & y) | (z & (x | y)) },
-      function(x, y, z){ return y ^ x ^ z }
+      function(x, y, z){
+        return z ^ (x & (y ^ z));
+      },
+      function(x, y, z){
+         return x ^ y ^ z;
+      },
+      function(x, y, z){
+         return (x & y) | (z & (x | y));
+      },
+      function(x, y, z){
+         return y ^ x ^ z;
+      }
     ];
 
     function vector(val){
@@ -410,7 +418,7 @@
 
       // return sha1 hash bytes array
       return H.map(vector).flatten();
-    }
+    };
   })();
 
   // ==========================================
@@ -423,10 +431,18 @@
     var K = new Array();
     var I = new Array();
     var F = [
-      function(x, y, z){ return z ^ (x & (y ^ z)) },
-      function(x, y, z){ return y ^ (z & (y ^ x)) },
-      function(x, y, z){ return (x ^ y ^ z) },
-      function(x, y, z){ return (y ^ (x | ~z)) }
+      function(x, y, z){
+        return z ^ (x & (y ^ z));
+      },
+      function(x, y, z){
+        return y ^ (z & (y ^ x));
+      },
+      function(x, y, z){
+        return x ^ y ^ z;
+      },
+      function(x, y, z){
+        return y ^ (x | ~z);
+      }
     ];
 
     function initConst(){
@@ -536,7 +552,7 @@
     md5hex: function(useUTF8){ return HEX(MD5(this, useUTF8)); },
     base64: function(useUTF8){ return Base64.encode(this, useUTF8); },
     base64decode: function(useUTF8){ return Base64.encode(this, useUTF8); },
-    hex: function(){ return HEX(this) }
+    hex: function(){ return HEX(this); }
   };
 
   var context_ = {};
@@ -544,7 +560,7 @@
     context_[name] = function(useUTF8){
       var result = value.call(cryptTarget, useUTF8);
       return cryptTarget = Object.extend(typeof result != 'object' ? Object(result) : result, context_);
-    }
+    };
   });
 
   this.setWrapper(function(target){

@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="windows-1251"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
@@ -19,10 +18,9 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis.js"></script>
-  <script type="text/javascript"  src="../dom_wrapper.js"></script>
-  <script type="text/javascript"  src="test.js"></script>
-  <script type="text/javascript"  src="common.js"></script>
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
 </head>
 
 <body>
@@ -30,13 +28,10 @@
   <script type="text/javascript">
     loadTest((function(){
 
-      var Event = Basis.Event;
-      var CSS = Basis.CSS;
-      var Tester = Basis.Test.Tester;
-      var DOM = Basis.DOM;
-      var Browser = Basis.Browser;
+      basis.require('basis.ua');
+      var browser = basis.ua;
 
-      var CookieName;
+      var cookieName;
 
       return [
         {
@@ -45,43 +40,43 @@
             {
               name: 'set',
               test: function(){
-                CookieName = 'test-cookie-' + Math.random().toFixed(8).substr(2);
+                cookieName = 'test-cookie-' + Math.random().toFixed(8).substr(2);
 
-                Browser.Cookies.set(CookieName, 1);
-                this.is(true, (new RegExp('(^|\;)\\s*' + CookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
+                browser.Cookies.set(cookieName, 1);
+                this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
 
-                Browser.Cookies.set(CookieName, 'basis-test');
-                this.is(true, (new RegExp('(^|\;)\\s*' + CookieName + '\\s*=\\s*basis-test\\s*(;|$)')).test(document.cookie), true);
+                browser.Cookies.set(cookieName, 'basis-test');
+                this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*basis-test\\s*(;|$)')).test(document.cookie), true);
 
-                Browser.Cookies.set(CookieName);
-                this.is(true, (new RegExp('(^|\;)\\s*' + CookieName + '\\s*=?\\s*(;|$)')).test(document.cookie), true);
+                browser.Cookies.set(cookieName);
+                this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=?\\s*(;|$)')).test(document.cookie), true);
               }
             },
             {
               name: 'get',
               test: function(){
-                Browser.Cookies.set(CookieName, 1);
-                this.is('1', Browser.Cookies.get(CookieName));
+                browser.Cookies.set(cookieName, 1);
+                this.is('1', browser.Cookies.get(cookieName));
 
-                Browser.Cookies.set(CookieName, 'basis-test');
-                this.is('basis-test', Browser.Cookies.get(CookieName));
+                browser.Cookies.set(cookieName, 'basis-test');
+                this.is('basis-test', browser.Cookies.get(cookieName));
 
-                Browser.Cookies.set(CookieName);
-                this.is('', Browser.Cookies.get(CookieName));
+                browser.Cookies.set(cookieName);
+                this.is('', browser.Cookies.get(cookieName));
 
-                Browser.Cookies.set(CookieName, 'Привет мир');
-                this.is('Привет мир', Browser.Cookies.get(CookieName));
+                browser.Cookies.set(cookieName, 'Привет мир');
+                this.is('Привет мир', browser.Cookies.get(cookieName));
               }
             },
             {
               name: 'remove',
               test: function(){
-                Browser.Cookies.set(CookieName, 1);
-                this.is(true, (new RegExp('(^|\;)\\s*' + CookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
+                browser.Cookies.set(cookieName, 1);
+                this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
 
-                Browser.Cookies.remove(CookieName);
-                this.is(false, (new RegExp('(^|\;)\\s*' + CookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
-                this.is(false, (new RegExp(CookieName)).test(document.cookie), true);
+                browser.Cookies.remove(cookieName);
+                this.is(false, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
+                this.is(false, (new RegExp(cookieName)).test(document.cookie), true);
               }
             },
             {
@@ -90,19 +85,18 @@
                 var path = location.pathname.replace(/\/[^\/]+$/, '/');
 
                 // set with path
-                Browser.Cookies.set(CookieName, 1, 0, path);
-                //alert(CookieName + '\n' + document.cookie);
-                this.is(true, (new RegExp('(^|\;)\\s*' + CookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
+                browser.Cookies.set(cookieName, 1, 0, path);
+                this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
 
                 // no effect for remove without path
-                Browser.Cookies.remove(CookieName);
-                this.is(true, (new RegExp('(^|\;)\\s*' + CookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie));
-                this.is(true, (new RegExp(CookieName)).test(document.cookie));
+                browser.Cookies.remove(cookieName);
+                this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie));
+                this.is(true, (new RegExp(cookieName)).test(document.cookie));
 
                 // remove
-                Browser.Cookies.remove(CookieName, path);
-                this.is(false, (new RegExp('(^|\;)\\s*' + CookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie));
-                this.is(false, (new RegExp(CookieName)).test(document.cookie));
+                browser.Cookies.remove(cookieName, path);
+                this.is(false, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie));
+                this.is(false, (new RegExp(cookieName)).test(document.cookie));
               }
             }
           ]
@@ -110,7 +104,7 @@
         {
           name: 'clear test cookies',
           test: function(){
-            document.cookie = CookieName + '=;expires=' + new Date(0);
+            document.cookie = cookieName + '=;expires=' + new Date(0);
           }
         }
       ];

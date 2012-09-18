@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -50,7 +50,7 @@
     // Example
     //
 
-    var countries = ['Russia', 'United States', 'China', 'UK', 'Germany']
+    var countries = ['Russia', 'United States', 'China', 'UK', 'Germany'];
 
     var data = [];
     var lastValue;
@@ -64,7 +64,7 @@
     {
       var row = {
         Country: country
-      }
+      };
       
       lastValue = (max - min) * Math.random() + min; // 10 000 - 50 000
       for (var year = 2010; year <= 2012; year++)
@@ -98,7 +98,7 @@
           }
         ]
       }
-    }
+    };
 
     new BarGraph(barGraphConfig);
 

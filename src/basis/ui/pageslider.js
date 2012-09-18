@@ -43,7 +43,7 @@
     listen: {
       selection: {
         datasetChanged: function(selection){
-          this.scrollToPage(selection.pick())
+          this.scrollToPage(selection.pick());
         }
       }
     },
@@ -70,7 +70,7 @@
         }
       });
 
-      this.scrollToPage(this.selection.pick())
+      this.scrollToPage(this.selection.pick());
     },
 
     setPage: function(scroller){
@@ -79,7 +79,7 @@
         return;
 
       var pageWidth = currentPage.element.offsetWidth;
-      var pagePosition = currentPage.element.offsetLeft
+      var pagePosition = currentPage.element.offsetLeft;
       var pageScrollTo;
 
       if (this.scroller.currentVelocityX)

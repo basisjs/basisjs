@@ -363,7 +363,7 @@
   var createIndexConstructor = function(IndexClass){
     return function(getter, events){
       return new IndexConstructor(IndexClass, getter, events);
-    }
+    };
   };
 
   //
@@ -446,12 +446,12 @@
 
       // add handler to new source object
       if (array = delta.inserted)
-        for (var i = array.length; i --> 0;)
+        for (var i = array.length; i-- > 0;)
           array[i].addHandler(ITEM_INDEX_HANDLER, this);
 
       // remove handler from old source object
       if (array = delta.deleted)
-        for (var i = array.length; i --> 0;)
+        for (var i = array.length; i-- > 0;)
           array[i].removeHandler(ITEM_INDEX_HANDLER, this);
 
       // apply changes for indexes

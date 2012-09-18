@@ -123,7 +123,7 @@
           ? preset(value)
           : value;
       }
-    }
+    };
   })();
 
   //
@@ -382,7 +382,9 @@
             {
               var token = this.content;
               var textNode = DOM.createText(token.value);
-              var handler = function(value){ this.nodeValue = value };
+              var handler = function(value){
+                this.nodeValue = value;
+              };
 
               token.attach(handler, textNode);
               this.addHandler({
@@ -391,7 +393,7 @@
                 }
               });
 
-              DOM.insert(tmpl.content || tmpl.element, textNode)
+              DOM.insert(tmpl.content || tmpl.element, textNode);
             }
             else
               DOM.insert(tmpl.content || tmpl.element, this.content);
@@ -433,7 +435,7 @@
           {
             var nodes = this.nodes;
             if (nodes)
-              for (var i = nodes.length; i --> 0;)
+              for (var i = nodes.length; i-- > 0;)
               {
                 var child = nodes[i];
                 child.parentNode.insertBefore(child, child.nextSibling);
@@ -594,7 +596,7 @@
 
         this.setTemplate();
       }
-    }
+    };
   };
 
  /**
@@ -678,7 +680,7 @@
         container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
         target.childNodesElement = container;
       }
-    }
+    };
   };
 
 

@@ -82,7 +82,9 @@
   }
 
   function dateFormat(date, format){
-    return format.replace(reFormat, function(m, part){ return FORMAT[part](date) });
+    return format.replace(reFormat, function(m, part){
+      return FORMAT[part](date);
+    });
   }
 
   // Date prototype extension
@@ -142,7 +144,7 @@
       else
       {
         var diff = Math.floor((date - this)/DIFF_BASE[part]);
-        return diff + Number(GETTER[part](new Date(date - diff * DIFF_BASE[part])) - GETTER[part](this) != 0)
+        return diff + Number(GETTER[part](new Date(date - diff * DIFF_BASE[part])) - GETTER[part](this) != 0);
       }
     },
     set: function(part, value){
@@ -235,7 +237,7 @@
   Date.fromISOString = function(){
     ;;; if (typeof console != 'undefined') console.warn('Date.fromISOString is deprecated, use basis.date.fromISOString instead');
     return (Date.fromISOString = fromISOString).apply(this, arguments);
-  }
+  };
 
 
   //

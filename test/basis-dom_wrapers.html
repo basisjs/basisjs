@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="windows-1251"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
@@ -19,37 +18,24 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis-all.js"></script>
-  <script type="text/javascript"  src="test.js"></script>
-  <script type="text/javascript"  src="common.js"></script>
+  <script type="text/javascript" data-basis-config="" src="../src/basis.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
 </head>
 
 <body>
 
   <script type="text/javascript">
     loadTest((function(){
+      
+      basis.require('basis.dom');
+      basis.require('basis.dom.wrapper');
 
       var Class = basis.Class;
       var DOM = basis.dom;
-      var Data = basis.data;
-      var CSS = basis.cssom;
-      var Event = basis.dom.event;
-      var Tester = basis.test.Tester;
 
       var nsWrappers = basis.dom.wrapper;
-      var Property = basis.data.property.Property;
-      var PropertySet = basis.data.property.DataObjectSet;
-
-      var Node = nsWrappers.Node;
-
-      var CookieName;
-      var TestProperty;
-
-      var updateCount = 0;
-
-      //basis.event.EventObject.prototype.event_debug = function(e){
-      //  console.log(e.sender.eventObjectId, e.type, e.args);
-      //}
+      var Node = basis.dom.wrapper.Node;
 
       var groupDatasetByGroupMap = {};
       var groupDatasetByGroup10 = new basis.data.Dataset({
@@ -59,12 +45,12 @@
               id: idx + 1,
               title: idx + 1
             }
-          })
+          });
         })
       });
       var groupDatasetByGroup = new basis.data.Dataset({
         items: Array.create(4, function(idx){
-          return groupDatasetByGroupMap[idx + 1]
+          return groupDatasetByGroupMap[idx + 1];
         })
       });
 
@@ -91,7 +77,7 @@
         return testSet.map(function(item){
           return {
             data: Object.slice(item.data)
-          }
+          };
         });
       }
 
@@ -100,7 +86,7 @@
           items: testSet.map(function(item){
             return new basis.data.DataObject({
               data: Object.slice(item.data)
-            })
+            });
           })
         });
       }
@@ -336,7 +322,7 @@
       function $values(ar){
         return ar.map(function(node){
           return node.data.value + '(' + node.data.group + ')';
-        })
+        });
       }
 
       return [
@@ -411,14 +397,14 @@
                   test: function(){
                     var testSet = getTestSet();
                     var node = new Node();
-                    DOM.insert(node, testSet.map(nodeFactory))
+                    DOM.insert(node, testSet.map(nodeFactory));
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
 
                     var testSet = getTestSet();
                     var node = new Node({ childFactory: nodeFactory });
-                    DOM.insert(node, testSet)
+                    DOM.insert(node, testSet);
                     this.is(false, checkNode(node));
                     this.is(testSet.length, node.childNodes.length);
                     this.is($values(testSet), $values(node.childNodes));
@@ -474,11 +460,10 @@
                     this.is(dataset, node.dataSource);
 
                     var itemCount = dataset.itemCount;
-                    var childNodes = Array.from(node.childNodes);
 
                     var exceptionHere = false;
                     try {
-                      node.appendChild(new Node)
+                      node.appendChild(new Node);
                     } catch(e){
                       exceptionHere = true;
                     }
@@ -489,7 +474,7 @@
 
                     var exceptionHere = false;
                     try {
-                      node.insertBefore(new Node)
+                      node.insertBefore(new Node);
                     } catch(e){
                       exceptionHere = true;
                     }
@@ -500,7 +485,7 @@
 
                     var exceptionHere = false;
                     try {
-                      node.removeChild(node.firstChild)
+                      node.removeChild(node.firstChild);
                     } catch(e){
                       exceptionHere = true;
                     }
@@ -511,7 +496,7 @@
 
                     var exceptionHere = false;
                     try {
-                      node.replaceChild(new Node, node.firstChild)
+                      node.replaceChild(new Node, node.firstChild);
                     } catch(e){
                       exceptionHere = true;
                     }
@@ -633,7 +618,6 @@
                 {
                   name: 'set/reset/set dataSource',
                   test: function(){
-                    var testSet = getTestSet();
                     var dataset = getDataset();
                     var node = new Node({
                       childFactory: nodeFactory
@@ -925,7 +909,7 @@
                         if (this.subscriberCount)
                           this.update({ title: this.data.title_ });
                       }
-                    })
+                    });
 
                     var groupNodes = {};
                     for (var i = 1; i <= 4; i++)

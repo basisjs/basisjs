@@ -1,13 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-
-  <link rel="stylesheet" type="text/css" href="../../style/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" href="../../style/slider/default/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" href="../demo.css" media="screen" />
 
   <title>Basis Demos: Data indexes</title>
 
@@ -70,10 +66,6 @@
   </style>
   <![endif]-->
 
-  <!--[if IE 7]>
-  <![endif]-->
-
-
   <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../seedrandom.js"></script>
@@ -117,7 +109,6 @@
     var Slider = basis.ui.slider.Slider;
 
     var UINode = basis.ui.Node;
-    var UIContainer = basis.ui.Container;
 
     Math.seedrandom("basis");
 
@@ -134,7 +125,7 @@
             total: parseInt(150 * Math.random())
           }
         });
-      }
+      };
     })();
 
     var dataset = new basis.data.Dataset({
@@ -298,7 +289,7 @@
       }
     });
 
-    var recordPanel = new UIContainer({
+    var recordPanel = new UINode({
       container: DOM.get('demo-container'),
       id: 'RecordPanel',
       handler: {

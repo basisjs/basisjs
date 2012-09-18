@@ -174,7 +174,7 @@
         var eventName = 'event_field' + item.capitalize();
         res[item] = function(event){
           this.setValue(this.readFieldValue_());
-          this[eventName].call(this, event)
+          this[eventName](event);
         };
         return res;
       },
@@ -373,11 +373,11 @@
       maxlength: {
         events: 'maxLengthChanged',
         getter: function(field){
-          return field.maxLength > 0 ? field.maxLength : "";
+          return field.maxLength > 0 ? field.maxLength : '';
         }
       },
       readonly: function(node){
-        return node.readOnly ? 'readonly' : ""
+        return node.readOnly ? 'readonly' : '';
       },
       autocomplete: 'autocomplete || ""',
       placeholder: 'placeholder || ""'
@@ -663,7 +663,7 @@
     datasetChanged: function(){
       this.event_change();
     }
-  }
+  };
 
  /**
   * @class
@@ -876,13 +876,13 @@
           return {
             name: owner.name,
             value: owner.getValue()
-          }
+          };
         }
       }
     },
 
     action: {
-      togglePopup: function(event){
+      togglePopup: function(){
         if (this.isDisabled() || this.popup.visible)
           this.hide();
         else
@@ -1114,11 +1114,13 @@
 
       if (typeof this.regexpGetter != 'function')
         this.regexpGetter = function(value){ 
-          return new RegExp('(' + startPoints + ')(' + value.forRegExp() + ')', 'i') 
+          return new RegExp('(' + startPoints + ')(' + value.forRegExp() + ')', 'i'); 
         };
 
       this.map = {};
-      this.map[this.wrapElement || 'SPAN.match'] = function(v, i){ return (i % 3) == 2 };
+      this.map[this.wrapElement || 'SPAN.match'] = function(v, i){
+        return (i % 3) == 2;
+      };
 
       Property.prototype.init.call(this, '', this.handlers, String.trim);
     }
@@ -1130,7 +1132,7 @@
         this.matchFunction(child, this.value == '');
       }, this);
     }
-  }
+  };
 
  /**
   * @class
@@ -1225,7 +1227,7 @@
         var value = field.getValue();
         if (value != '' && !value.match(regexp))
           return new ValidatorError(field, l10nToken(namespace, 'validator', 'regExpWrongFormat'));
-      }
+      };
     },
     Required: function(field){
       var value = field.getValue();

@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -116,10 +116,6 @@
   </style>
   <![endif]-->
 
-  <!--[if IE 7]>
-  <![endif]-->
-
-
   <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -151,7 +147,7 @@
     var nsData = basis.data;
     var nsWrapper = basis.dom.wrapper;
     var Menu = basis.ui.menu.Menu;
-    var UIContainer = basis.ui.Container;
+    var UINode = basis.ui.Container;
     var nsDataset = basis.data.dataset;
 
     var getter = Function.getter;
@@ -204,7 +200,7 @@
     //
     // Custom classes & instances
     //
-    var DatasetViewer = UIContainer.subclass({
+    var DatasetViewer = UINode.subclass({
       container: document.getElementById('demo-container'),
 
       template:
@@ -230,7 +226,7 @@
       }
     });
 
-    var EditableDatasetViewer = UIContainer.subclass({
+    var EditableDatasetViewer = UINode.subclass({
       container: document.getElementById('demo-container'),
 
       template:
@@ -394,7 +390,7 @@
         rule: Function.getter('data.value % 2 ? "odd" : "even"'),
         source: A
       }),
-      childClass: UIContainer.subclass({
+      childClass: UINode.subclass({
         template:
           '<span class="dsitem">' +
             '{title}' +
@@ -407,7 +403,7 @@
         childClass: DatasetViewer.prototype.childClass,
         init: function(){
           this.dataSource = this.delegate;
-          UIContainer.prototype.init.call(this);
+          UINode.prototype.init.call(this);
         }
       })
     });
@@ -436,7 +432,7 @@
         },
         source: A
       }),
-      childClass: UIContainer.subclass({
+      childClass: UINode.subclass({
         template:
           '<span class="dsitem">' +
             '{title}' +
@@ -449,7 +445,7 @@
         childClass: DatasetViewer.prototype.childClass,
         init: function(){
           this.dataSource = this.delegate;
-          UIContainer.prototype.init.call(this);
+          UINode.prototype.init.call(this);
         }
       })
     });

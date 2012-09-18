@@ -1,6 +1,6 @@
 ﻿<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
@@ -21,7 +21,7 @@
   <script type="text/javascript"  src="../basis-all.js"></script>
   <script type="text/javascript">
     (function(){
-      var eventTypeFilter = function(event){ return event.type == this };
+      var eventTypeFilter = function(event){ return event.type == this; };
       var proto = basis.data.DataObject.prototype;
       var eventsMap = {};
       var seed = 1;
@@ -43,19 +43,19 @@
           events = events.filter(eventTypeFilter, type);
 
         return events;
-      }
+      };
 
       window.eventCount = function(object, type){
         var events = getEvents(object, type);
 
         return events ? events.length : 0;
-      }
+      };
 
       window.getLastEvent = function(object, type){
         var events = getEvents(object, type);
 
         return events && events[events.length - 1];
-      }
+      };
     })();
   </script>
   <script type="text/javascript"  src="test.js"></script>
@@ -68,9 +68,6 @@
 
       var nsData = basis.data;
       var DataObject = nsData.DataObject;
-
-      var data = [
-      ];
 
       function checkObject(object){
 
@@ -349,7 +346,7 @@
                   name: '(delegate) during creation',
                   test: function(){
                     var objectA = new DataObject;
-                    var objectB = new DataObject({
+                    new DataObject({
                       delegate: objectA,
                       active: true,
                       subscribeTo: nsData.SUBSCRIPTION.DELEGATE

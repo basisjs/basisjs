@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="windows-1251"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
-  <title>Basis Test Suite - Crypt module</title>
+  <title>Basis Test Suite - crypt module</title>
 
   <style type="text/css">
     @import "style/default/style.css";
@@ -19,11 +18,7 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis.js"></script>
-  <script type="text/javascript"  src="../data.js"></script>
-  <script type="text/javascript"  src="../property.js"></script>
-  <script type="text/javascript"  src="../dom_wrapper.js"></script>
-  <script type="text/javascript"  src="../crypt.js"></script>
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
   <script type="text/javascript"  src="test.js"></script>
   <script type="text/javascript"  src="common.js"></script>
 </head>
@@ -31,148 +26,48 @@
 <body>
   <script type="text/javascript">
     loadTest((function(){
+      basis.require('basis.crypt');
 
-      var UTF16 = Basis.Crypt.UTF16;
-      var UTF8 = Basis.Crypt.UTF8;
-      var SHA1 = Basis.Crypt.SHA1;
-      var MD5 = Basis.Crypt.MD5;
-      var Base64 = Basis.Crypt.Base64;
+      var UTF16 = basis.crypt.UTF16;
+      var UTF8 = basis.crypt.UTF8;
+      var SHA1 = basis.crypt.SHA1;
+      var MD5 = basis.crypt.MD5;
+      var base64 = basis.crypt.Base64;
 
-      var utf16_bytes = new Array();
-      utf16_bytes[0] = [63, 4, 64, 4, 56, 4, 50, 4, 53, 4, 66, 4];
-      utf16_bytes[1] = [135, 8, 135, 9, 135, 24];
-      utf16_bytes[2] = [127, 0, 128, 0, 255, 7, 0, 8];
+      var utf16Bytes = [];
+      utf16Bytes[0] = [63, 4, 64, 4, 56, 4, 50, 4, 53, 4, 66, 4];
+      utf16Bytes[1] = [135, 8, 135, 9, 135, 24];
+      utf16Bytes[2] = [127, 0, 128, 0, 255, 7, 0, 8];
 
-      var utf16_str = new Array();
-      utf16_str[0] = 'привет';
-      utf16_str[1] = '\u0887\u0987\u1887';
-      utf16_str[2] = '\u007F\u0080\u07FF\u0800';
-      utf16_str[3] = utf16_str[0] + ' world';
-      utf16_str[4] = utf16_str[0] + '\t\r\n world\n\r\t';
-      utf16_str[5] = utf16_str[0] + utf16_str[1];
-      utf16_str[6] = utf16_str[3] + utf16_str[1];
-      utf16_str[7] = utf16_str[4] + utf16_str[1];
+      var utf16Str = [];
+      utf16Str[0] = 'привет';
+      utf16Str[1] = '\u0887\u0987\u1887';
+      utf16Str[2] = '\u007F\u0080\u07FF\u0800';
+      utf16Str[3] = utf16Str[0] + ' world';
+      utf16Str[4] = utf16Str[0] + '\t\r\n world\n\r\t';
+      utf16Str[5] = utf16Str[0] + utf16Str[1];
+      utf16Str[6] = utf16Str[3] + utf16Str[1];
+      utf16Str[7] = utf16Str[4] + utf16Str[1];
 
-      var utf8_bytes = new Array();
-      utf8_bytes[0] = [208, 191, 209, 128, 208, 184, 208, 178, 208, 181, 209, 130];
-      utf8_bytes[1] = [224, 162, 135, 224, 166, 135, 225, 162, 135];
-      utf8_bytes[2] = [127, 194, 128, 223, 191, 224, 160, 128];
+      var utf8Bytes = [];
+      utf8Bytes[0] = [208, 191, 209, 128, 208, 184, 208, 178, 208, 181, 209, 130];
+      utf8Bytes[1] = [224, 162, 135, 224, 166, 135, 225, 162, 135];
+      utf8Bytes[2] = [127, 194, 128, 223, 191, 224, 160, 128];
 
-      var utf8_str = new Array();
-      utf8_str[0] = utf8_bytes[0].map(function(ch){ return String.fromCharCode(ch); }).join('');
-      utf8_str[1] = utf8_bytes[1].map(function(ch){ return String.fromCharCode(ch); }).join('');
-      utf8_str[2] = utf8_bytes[2].map(function(ch){ return String.fromCharCode(ch); }).join('');
-      utf8_str[3] = utf8_str[0] + ' world';
-      utf8_str[4] = utf8_str[0] + '\t\r\n world\n\r\t';
-      utf8_str[5] = utf8_str[0] + utf8_str[1];
-      utf8_str[6] = utf8_str[3] + utf8_str[1];
-      utf8_str[7] = utf8_str[4] + utf8_str[1];
-
-      var base64 = [
-        '',
-        'aABlAGwAbABvACAAdwBvAHIAbAA=',
-        'aABlAGwAbABvACAAdwBvAHIAbABkAA==',
-        'aABlAGwAbABvACAAdwBvAHIAbABkACEA',
-        'PwRABDgEMgQ1BEIEIAA8BDgEQAQ=',
-        '0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk',
-        'HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA'
-      ];
+      var utf8Str = [];
+      utf8Str[0] = utf8Bytes[0].map(function(ch){ return String.fromCharCode(ch); }).join('');
+      utf8Str[1] = utf8Bytes[1].map(function(ch){ return String.fromCharCode(ch); }).join('');
+      utf8Str[2] = utf8Bytes[2].map(function(ch){ return String.fromCharCode(ch); }).join('');
+      utf8Str[3] = utf8Str[0] + ' world';
+      utf8Str[4] = utf8Str[0] + '\t\r\n world\n\r\t';
+      utf8Str[5] = utf8Str[0] + utf8Str[1];
+      utf8Str[6] = utf8Str[3] + utf8Str[1];
+      utf8Str[7] = utf8Str[4] + utf8Str[1];
 
       function hex(value){
         var res = value.toString(16);
         return res.length == 1 ? '0' + res : res;
       };
-
-      //UTF8OLD = Basis.CryptOld.UTF8;
-      //Base64OLD = Basis.CryptOld.Base64;
-
-      var result = [];
-      function store(str){
-        result.push(str);
-      }
-
-      if (false)
-        setTimeout(function(){
-          var COUNT = 400;
-          var res;
-
-          for (var x = 0; x < 4; x++)
-          {
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < utf16_str.length; i++)
-                res = UTF16.toUTF8(utf16_str[i]);
-            store('toUTF8: ' + ((new Date() - t)/1000).toFixed(3));
-
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < utf16_str.length; i++)
-                res = UTF8OLD.encode(utf16_str[i]);
-            store('old encode: ' + ((new Date() - t)/1000).toFixed(3));
-
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < utf16_str.length; i++)
-                res = UTF16.fromUTF8(utf8_str[i]);
-            store('fromUTF8: ' + ((new Date() - t)/1000).toFixed(3));
-
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < utf16_str.length; i++)
-                res = UTF8OLD.decode(utf8_str[i]);
-            store('old decode: ' + ((new Date() - t)/1000).toFixed(3));
-            store('---'.repeat(10));
-          };
-          alert(result.join('\n'));
-        }, 1000); 
-
-      if (false)
-        setTimeout(function(){
-          var COUNT = 400;
-          var res;
-
-          for (var x = 0; x < 4; x++)
-          {
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < utf16_str.length; i++)
-                res = Base64.encode(utf16_str[i]);
-            store('new encode: ' + ((new Date() - t)/1000).toFixed(3));
-
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < utf16_str.length; i++)
-                res = Base64.encode2(utf16_str[i]);
-            store('new encode2: ' + ((new Date() - t)/1000).toFixed(3));
-
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < utf16_str.length; i++)
-                res = Base64.encode3(utf16_str[i]);
-            store('new encode3: ' + ((new Date() - t)/1000).toFixed(3));
-
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < utf16_str.length; i++)
-                res = Base64OLD.encode(utf16_str[i]);
-            store('old encode: ' + ((new Date() - t)/1000).toFixed(3));
-
-/*            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < base64.length; i++)
-                res = Base64.decode(base64[i]);
-            store('new decode: ' + ((new Date() - t)/1000).toFixed(3));
-
-            var t = new Date();
-            for (var count = 0; count < COUNT; count++)
-              for (var i = 0; i < base64.length; i++)
-                res = Base64OLD.decode(base64[i]);
-            store('old decode: ' + ((new Date() - t)/1000).toFixed(3));*/
-            store('---'.repeat(10));
-          };
-          alert(result.join('\n'));
-        }, 1000); 
-
 
       return [
         {
@@ -184,43 +79,43 @@
                 {
                   name: 'toBytes',
                   test: function(){
-                    for (var i = 0; i < utf8_bytes.length; i++)
-                      this.is(utf8_bytes[i], UTF8.toBytes(utf8_str[i]));
+                    for (var i = 0; i < utf8Bytes.length; i++)
+                      this.is(utf8Bytes[i], UTF8.toBytes(utf8Str[i]));
                   }
                 },
                 {
                   name: 'fromBytes',
                   test: function(){
-                    for (var i = 0; i < utf8_bytes.length; i++)
-                      this.is(utf8_str[i], UTF8.fromBytes(utf8_bytes[i]));
+                    for (var i = 0; i < utf8Bytes.length; i++)
+                      this.is(utf8Str[i], UTF8.fromBytes(utf8Bytes[i]));
                   }
                 },
                 {
                   name: 'fromUTF16',
                   test: function(){
-                    for (var i = 0; i < utf16_str.length; i++)
-                      this.is(utf8_str[i], UTF8.fromUTF16(utf16_str[i]));
+                    for (var i = 0; i < utf16Str.length; i++)
+                      this.is(utf8Str[i], UTF8.fromUTF16(utf16Str[i]));
                   }
                 },
                 {
                   name: 'fromUTF16Bytes',
                   test: function(){
-                    for (var i = 0; i < utf16_bytes.length; i++)
-                      this.is(utf8_str[i], UTF8.fromUTF16Bytes(utf16_bytes[i]));
+                    for (var i = 0; i < utf16Bytes.length; i++)
+                      this.is(utf8Str[i], UTF8.fromUTF16Bytes(utf16Bytes[i]));
                   }
                 },
                 {
                   name: 'toUTF16',
                   test: function(){
-                    for (var i = 0; i < utf8_str.length; i++)
-                      this.is(utf16_str[i], UTF8.toUTF16(utf8_str[i]));
+                    for (var i = 0; i < utf8Str.length; i++)
+                      this.is(utf16Str[i], UTF8.toUTF16(utf8Str[i]));
                   }
                 },
                 {
                   name: 'toUTF16Bytes',
                   test: function(){
-                    for (var i = 0; i < utf16_bytes.length; i++)
-                      this.is(utf16_bytes[i], UTF8.toUTF16Bytes(utf8_str[i]));
+                    for (var i = 0; i < utf16Bytes.length; i++)
+                      this.is(utf16Bytes[i], UTF8.toUTF16Bytes(utf8Str[i]));
                   }
                 },
                 {
@@ -242,15 +137,15 @@
                 {
                   name: 'toUTF16 <=> fromUTF16 #2',
                   test: function(){
-                    for (var i = 0; i < utf8_str.length; i++)
-                      this.is(utf16_str[i], UTF8.toUTF16(UTF8.fromUTF16(utf16_str[i])));
+                    for (var i = 0; i < utf8Str.length; i++)
+                      this.is(utf16Str[i], UTF8.toUTF16(UTF8.fromUTF16(utf16Str[i])));
                   }
                 },
                 {
                   name: 'toUTF16 <=> fromUTF16 #3',
                   test: function(){
-                    for (var i = 0; i < utf16_str.length; i++)
-                      this.is(utf8_str[i], UTF8.fromUTF16(UTF8.toUTF16(utf8_str[i])));
+                    for (var i = 0; i < utf16Str.length; i++)
+                      this.is(utf8Str[i], UTF8.fromUTF16(UTF8.toUTF16(utf8Str[i])));
                   }
                 }
               ]
@@ -261,43 +156,43 @@
                 {
                   name: 'toBytes',
                   test: function(){
-                    for (var i = 0; i < utf16_bytes.length; i++)
-                      this.is(utf16_bytes[i], UTF16.toBytes(utf16_str[i]));
+                    for (var i = 0; i < utf16Bytes.length; i++)
+                      this.is(utf16Bytes[i], UTF16.toBytes(utf16Str[i]));
                   }
                 },
                 {
                   name: 'fromBytes',
                   test: function(){
-                    for (var i = 0; i < utf16_bytes.length; i++)
-                      this.is(utf16_str[i], UTF16.fromBytes(utf16_bytes[i]));
+                    for (var i = 0; i < utf16Bytes.length; i++)
+                      this.is(utf16Str[i], UTF16.fromBytes(utf16Bytes[i]));
                   }
                 },
                 {
                   name: 'fromUTF8',
                   test: function(){
-                    for (var i = 0; i < utf8_str.length; i++)
-                      this.is(utf16_str[i], UTF16.fromUTF8(utf8_str[i]));
+                    for (var i = 0; i < utf8Str.length; i++)
+                      this.is(utf16Str[i], UTF16.fromUTF8(utf8Str[i]));
                   }
                 },
                 {
                   name: 'fromUTF8Bytes',
                   test: function(){
-                    for (var i = 0; i < utf8_bytes.length; i++)
-                      this.is(utf16_str[i], UTF16.fromUTF8Bytes(utf8_bytes[i]));
+                    for (var i = 0; i < utf8Bytes.length; i++)
+                      this.is(utf16Str[i], UTF16.fromUTF8Bytes(utf8Bytes[i]));
                   }
                 },
                 {
                   name: 'toUTF8',
                   test: function(){
-                    for (var i = 0; i < utf16_str.length; i++)
-                      this.is(utf8_str[i], UTF16.toUTF8(utf16_str[i]));
+                    for (var i = 0; i < utf16Str.length; i++)
+                      this.is(utf8Str[i], UTF16.toUTF8(utf16Str[i]));
                   }
                 },
                 {
                   name: 'toUTF8Bytes',
                   test: function(){
-                    for (var i = 0; i < utf8_bytes.length; i++)
-                      this.is(utf8_bytes[i], UTF16.toUTF8Bytes(utf16_str[i]));
+                    for (var i = 0; i < utf8Bytes.length; i++)
+                      this.is(utf8Bytes[i], UTF16.toUTF8Bytes(utf16Str[i]));
                   }
                 },
                 {
@@ -306,28 +201,28 @@
                     var S = 'hello world';
                     this.is(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
 
-                    var S = [208, 191, 209, 128, 208, 184, 208, 178, 208, 181, 209, 130, 32, 208, 188, 208, 184, 209, 128].map(function(c){ return String.fromCharCode(c) }).join('');
+                    var S = [208, 191, 209, 128, 208, 184, 208, 178, 208, 181, 209, 130, 32, 208, 188, 208, 184, 209, 128].map(function(c){ return String.fromCharCode(c); }).join('');
                     this.is(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
 
-                    var S = 'hello ' + [208, 188, 208, 184, 209, 128].map(function(c){ return String.fromCharCode(c) }).join('');
+                    var S = 'hello ' + [208, 188, 208, 184, 209, 128].map(function(c){ return String.fromCharCode(c); }).join('');
                     this.is(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
 
-                    var S = '\t\r\nhello \r'  + [208, 188, 208, 184, 209, 128].map(function(c){ return String.fromCharCode(c) }).join('') + '\n';
+                    var S = '\t\r\nhello \r'  + [208, 188, 208, 184, 209, 128].map(function(c){ return String.fromCharCode(c); }).join('') + '\n';
                     this.is(S, UTF16.toUTF8(UTF16.fromUTF8(S)));
                   }
                 },
                 {
                   name: 'toUTF8 <=> fromUTF8 #2',
                   test: function(){
-                    for (var i = 0; i < utf8_str.length; i++)
-                      this.is(utf8_str[i], UTF16.toUTF8(UTF16.fromUTF8(utf8_str[i])));
+                    for (var i = 0; i < utf8Str.length; i++)
+                      this.is(utf8Str[i], UTF16.toUTF8(UTF16.fromUTF8(utf8Str[i])));
                   }
                 },
                 {
                   name: 'toUTF8 <=> fromUTF8 #3',
                   test: function(){
-                    for (var i = 0; i < utf16_str.length; i++)
-                      this.is(utf16_str[i], UTF16.fromUTF8(UTF16.toUTF8(utf16_str[i])));
+                    for (var i = 0; i < utf16Str.length; i++)
+                      this.is(utf16Str[i], UTF16.fromUTF8(UTF16.toUTF8(utf16Str[i])));
                   }
                 }
               ]
@@ -343,25 +238,25 @@
                 {
                   name: 'encode',
                   test: function(){
-                    this.is('', Base64.encode(''));
-                    this.is('aABlAGwAbABvACAAdwBvAHIAbAA=', Base64.encode('hello worl'));
-                    this.is('aABlAGwAbABvACAAdwBvAHIAbABkAA==', Base64.encode('hello world'));
-                    this.is('aABlAGwAbABvACAAdwBvAHIAbABkACEA', Base64.encode('hello world!'));
-                    this.is('PwRABDgEMgQ1BEIEIAA8BDgEQAQ=', Base64.encode('привет мир'));
-                    this.is('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', Base64.encode('Привет мирHello world', true));
-                    this.is('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA', Base64.encode('Привет мирHello world'));
+                    this.is('', base64.encode(''));
+                    this.is('aABlAGwAbABvACAAdwBvAHIAbAA=', base64.encode('hello worl'));
+                    this.is('aABlAGwAbABvACAAdwBvAHIAbABkAA==', base64.encode('hello world'));
+                    this.is('aABlAGwAbABvACAAdwBvAHIAbABkACEA', base64.encode('hello world!'));
+                    this.is('PwRABDgEMgQ1BEIEIAA8BDgEQAQ=', base64.encode('привет мир'));
+                    this.is('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', base64.encode('Привет мирHello world', true));
+                    this.is('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA', base64.encode('Привет мирHello world'));
                   }
                 },
                 {
                   name: 'decode',
                   test: function(){
-                    this.is('', Base64.decode(''));
-                    this.is('hello worl', Base64.decode('aABlAGwAbABvACAAdwBvAHIAbAA='));
-                    this.is('hello world', Base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkAA=='));
-                    this.is('hello world!', Base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkACEA'));
-                    this.is('привет мир', Base64.decode('PwRABDgEMgQ1BEIEIAA8BDgEQAQ='));
-                    this.is('Привет мирHello world', Base64.decode('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', true));
-                    this.is('Привет мирHello world', Base64.decode('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA'));
+                    this.is('', base64.decode(''));
+                    this.is('hello worl', base64.decode('aABlAGwAbABvACAAdwBvAHIAbAA='));
+                    this.is('hello world', base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkAA=='));
+                    this.is('hello world!', base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkACEA'));
+                    this.is('привет мир', base64.decode('PwRABDgEMgQ1BEIEIAA8BDgEQAQ='));
+                    this.is('Привет мирHello world', base64.decode('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', true));
+                    this.is('Привет мирHello world', base64.decode('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA'));
                   }
                 }
               ]
@@ -425,8 +320,6 @@
             {
               name: '.hex()',
               test: function(){
-                var S = 'hello';
-
               }
             }
           ]

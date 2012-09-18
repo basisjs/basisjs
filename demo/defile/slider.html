@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -71,10 +71,6 @@
   </style>
   <![endif]-->
 
-  <!--[if IE 7]>
-  <![endif]-->
-
-
   <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -101,7 +97,7 @@
       new Slider({ min: 0, max: 100, step: 10, value: 23 }),
       new Slider({ min: 0, max: 100, value: 47 }),
       new Slider({ min: 0, max: 100, step: 50 }),
-      new Slider({ min: 20, max: 80, step: .15, captionFormat: function(value){ return value.toFixed(1) } }),
+      new Slider({ min: 20, max: 80, step: .15, captionFormat: function(value){ return value.toFixed(1); } }),
       new Slider({ min: -15, max: 15, value: 0, marks: 15 }),
       new Slider({ min: -15, max: -30, value: 0 }),
       new Slider({ min: 0, max: 0, value: 0 }),
@@ -153,7 +149,7 @@
         return DOM.createElement('',
           slider.element,
           DOM.createElement(".slider_pages", label = DOM.createText(slider.value))
-        )
+        );
       })
     );
 

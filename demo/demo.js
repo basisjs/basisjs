@@ -14,23 +14,19 @@
   };
 
   document.write('<style type="text/css">@import "../demo.css";</style>');
-  //document.write('<script type="text/javascript" src="../../plugins/highlight.js"></sc'+'ript>');
   
   basis.ready(function(){
 
     var DOM = basis.dom;
     var Event = basis.dom.event;
-    var Data = basis.data;
     var cssom = basis.cssom;
     var classList = basis.cssom.classList;
 
     var highlight = Function.runOnce(function(){
       DOM.get('javascript').innerHTML = basis.format.highlight.highlight(DOM.get('javascript').innerHTML, 'js');
       DOM.get('css').innerHTML = basis.format.highlight.highlight(DOM.get('css').innerHTML, 'css');
-      //SyntaxHighlighter.highlight({}, DOM.get('css'));
     });
 
-    var cssSource, jsSource;
     var pages = [
       {
         title: DemoLocale.TABS.DEMO,
@@ -43,22 +39,10 @@
       {
         title: DemoLocale.TABS.SOURCE,
         element: DOM.createElement('#Demo-SourcePage',
-          /*DOM.createElement('H2', 'Included resources'),
-          DOM.createElement('UL',
-            DOM.wrap(
-              DOM
-                .tag('SCRIPT')
-                .map(Function.getter('getAttribute("src")'))
-                .filter(String.isNotEmpty)
-                .filter(function(value){ return !/third_party/.test(value) && !/demo\.js/.test(value) })
-                .map(function(value){ return DOM.createElement('A[href={0}]'.format(value.quote()), value.replace(/^([\.]+\/)+/, '')) }),
-              { 'LI': Function.$true }
-            )
-          ),*/
           DOM.createElement('H2', 'CSS'),
-          cssSource = DOM.createElement('PRE#css.Basis-SyntaxHighlight', DOM.get('demo-css').innerHTML),
+          DOM.createElement('PRE#css.Basis-SyntaxHighlight', DOM.get('demo-css').innerHTML),
           DOM.createElement('H2', 'Javascript'),
-          jsSource = DOM.createElement('PRE#javascript.Basis-SyntaxHighlight', DOM.get('demo-javascript').innerHTML)
+          DOM.createElement('PRE#javascript.Basis-SyntaxHighlight', DOM.get('demo-javascript').innerHTML)
         )
       }
     ];
@@ -79,7 +63,7 @@
       }
     });
     
-    pages.forEach(function(page, idx){ cssom.display(page.element, !idx) });
+    pages.forEach(function(page, idx){ cssom.display(page.element, !idx); });
 
     DOM.insert(
       document.body,

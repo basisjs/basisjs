@@ -1,14 +1,10 @@
-<?xml version="1.0" encoding="windows-1251"?>
+<!doctype html>
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
   <title>Speed Test: Basis Table</title>
-
-  <link rel="stylesheet" type="text/css" title="Vista Style" href="../style/table/vista/style.css" media="screen" />
 
   <style type="text/css">
     HTML,
@@ -46,7 +42,6 @@
     }
   </style>
   <!--[if lt IE 7]>
-  <link rel="stylesheet" type="text/css" title="Vista Style" href="../style/table/vista/style_ie.css" media="screen" />
   <style type="text/css">
     BODY,
     TABLE *
@@ -55,11 +50,6 @@
     }
   </style>
   <![endif]-->
-
-  <!--[if IE 7]>
-  <link rel="stylesheet" type="text/css" title="Vista Style" href="../style/table/vista/style_ie7.css" media="screen" />
-  <![endif]-->
-
 
   <script type="text/javascript" src="../basis-all.js"></script>
 </head>
@@ -79,7 +69,6 @@
   <script type="text/javascript">
     
     (function(){
-      var Data = basis.data;
       var DOM = basis.dom;
       var Event = basis.dom.event;
 
@@ -93,12 +82,12 @@
           DOM.get('time').innerHTML = '<span style=color:red>&quot;<b>' + value + '</b>&quot; is not a number</span>';
         else 
           genRows(Number(value)); 
-      }
+      };
 
       DOM.insert('control_panel', [1, 10, 100, 250, 500, 1000].map(function(item){ 
         var btn = DOM.createElement('button', item); 
-        Event.addHandler(btn, 'click', function(){ setRowCount(item) });
-        Event.onUnload(function(){ Event.clearHandlers(btn) });
+        Event.addHandler(btn, 'click', function(){ setRowCount(item); });
+        Event.onUnload(function(){ Event.clearHandlers(btn); });
         return btn;
       }), 'begin');
 

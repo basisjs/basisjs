@@ -18,7 +18,7 @@
         basis.event.EventObject.event[eventName] = function(){
           eventStat[eventName] = (eventStat[eventName] || 0) + 1;
           func.apply(this, arguments);
-        }
+        };
       }
      
       Object.keys(basis.event.EventObject.event).forEach(wrapEvent);
@@ -68,7 +68,7 @@
 
     Function.$nullOrArray = function(value){
       return value == null || value.length == 0 ? null : arrayFrom(value);
-    }
+    };
 
     var User = new nsEntity.EntityType({
       name: 'User',
@@ -278,7 +278,7 @@
             padding: '0 2ex'
           }
         },
-        [Transfer.all, Currency.all, User.all].map(function(ds, idx){ return ['Transfer', 'Currency', 'User'][idx] + ' ' + getCount(ds) }).join(', ')
+        [Transfer.all, Currency.all, User.all].map(function(ds, idx){ return ['Transfer', 'Currency', 'User'][idx] + ' ' + getCount(ds); }).join(', ')
       );
     }
 
@@ -317,8 +317,8 @@
         run1(function(){
           var c1 = Transfer.createCollection('col1', getter('getId()%2'), Transfer.all);
           var c2 = User.createCollection('col2', getter('getId()%2'), User.all);
-          c1.addHandler({ datasetChanged: function(dataset, delta){ c1count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0) } });
-          c2.addHandler({ datasetChanged: function(dataset, delta){ c2count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0) } });
+          c1.addHandler({ datasetChanged: function(dataset, delta){ c1count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0); } });
+          c2.addHandler({ datasetChanged: function(dataset, delta){ c2count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0); } });
           DOM.insert(document.body, [
             DOM.createElement('hr'),
             DOM.createElement(null, '2 collection added')
@@ -344,5 +344,5 @@
 
     if (location.hash == '#autorun')
     {
-      basis.Event.onLoad(function(){ runBtn.click() });
+      basis.Event.onLoad(function(){ runBtn.click(); });
     }

@@ -1336,7 +1336,7 @@
       if (deleted.length)
       {
         if (listenHandler)
-          for (var i = deleted.length; i --> 0;)
+          for (var i = deleted.length; i-- > 0;)
             deleted[i].removeHandler(listenHandler, this);
 
         this.event_datasetChanged(delta = {
@@ -1401,7 +1401,7 @@
         else
         {
           array.push.apply(array, inserted || deleted);
-          return
+          return;
         }
       }
 
@@ -1424,24 +1424,20 @@
       flushAllDataset();
     }
 
-    return function(state){
-      if (state)
-      {
-        if (setStateCount == 0)
-        {
+    return function(state) {
+      if (state) {
+        if (setStateCount == 0) {
           proto.event_datasetChanged = storeDatasetDelta;
           if (!urgentTimer)
             urgentTimer = setTimeout(urgentFlush, 0);
         }
         setStateCount++;
-      }
-      else
-      {
+      } else {
         setStateCount -= setStateCount > 0;
         if (setStateCount == 0)
           setAccumulateStateOff();
       }
-    }
+    };
   })();
 
 

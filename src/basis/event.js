@@ -27,7 +27,7 @@
   * @func
   */
   var warnOnDestroy = function(){
-    throw 'Object had been destroyed before. Destroy method must not be called more than once.'
+    throw 'Object had been destroyed before. Destroy method must not be called more than once.';
   };
 
 
@@ -59,7 +59,7 @@
               // prevent handlers list from changes
               handlers = slice.call(handlers);
 
-              for (var i = handlers.length; i --> 0;)
+              for (var i = handlers.length; i-- > 0;)
               {
                 handler = handlers[i];
 
@@ -197,7 +197,7 @@
       
       // search for duplicate
       // check from end to start is more efficient for objects which often add/remove handlers
-      for (var i = handlers.length, item; i --> 0;)
+      for (var i = handlers.length, item; i-- > 0;)
       {
         item = handlers[i];
         if (item.handler === handler && item.thisObject === thisObject)
@@ -234,7 +234,7 @@
 
       // search for handler and remove
       // check from end to start is more efficient for objects which often add/remove handlers
-      for (var i = handlers.length, item; i --> 0;)
+      for (var i = handlers.length, item; i-- > 0;)
       {
         item = handlers[i];
         if (item.handler === handler && item.thisObject === thisObject)

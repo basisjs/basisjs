@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -36,10 +36,6 @@
     }
   </style>
   <![endif]-->
-
-  <!--[if IE 7]>
-  <![endif]-->
-
 
   <script type="text/javascript" src="../../basis-all.js"></script>
 
@@ -134,7 +130,7 @@
     DOM.insert(demoContainer, DOM.createElement('', DOM.createElement('LABEL', 'Selection contains: '), contentText));
     treeSelection.addHandler({
       datasetChanged: function(){
-        contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(DOM.axis(node, DOM.AXIS_ANCESTOR).pop().element.id, node.data.title) }).join(', ') || 'nothing';
+        contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(DOM.axis(node, DOM.AXIS_ANCESTOR).pop().element.id, node.data.title); }).join(', ') || 'nothing';
       }
     });
 

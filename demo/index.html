@@ -111,22 +111,13 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
 </head>
 
 <body>
   <script type="text/javascript">
     (function(){
-      basis.require('basis.data');
-      basis.require('basis.html');
-      basis.require('basis.ui.tree');
-
-      var Class = basis.Class;
-      var Data = basis.data;
-      var nsWrappers = basis.dom.wrapper;
-      var nsTree = basis.ui.tree;
-      var Template = basis.html.Template;
-      var UIContainer = basis.ui.Container;
+      basis.require('basis.ui');
 
       var data = [
         {
@@ -169,13 +160,6 @@
             { title: 'Entity', url: '../test/speed-Entity.html', image: 'res/img/speed.png' }
           ]
         },
-        /*{
-          title: 'Simple controls',
-          demos: [
-            { title: 'Tree', url: 'simple/tree.html' },
-            { title: 'Tabs', url: 'simple/tabs.html' }
-          ]
-        },*/
         {
           title: 'Common models',
           demos: [
@@ -217,7 +201,7 @@
         }
       ];
 
-      var treeDemos = new UIContainer({
+      window.demos = new basis.ui.Node({
         id: 'DemoList',
         container: document.body,
         template: 
@@ -245,13 +229,7 @@
             setDefaultImage: function(){
               this.tmpl.set('imageUrl', 'res/img/noimg.png');
             }
-          }/*,
-
-          templateUpdate: function(tmpl, eventName, delta){
-            tmpl.titleText.nodeValue = this.data.title;
-            tmpl.title.href = this.data.url;
-            tmpl.imageUrl.nodeValue = this.data.image || this.data.url.replace('.html', '.png');
-          }*/
+          }
         },
         grouping: {
           childClass: {
@@ -264,7 +242,7 @@
           groupGetter: Function.getter('data.groupId')
         },
         childNodes: data.map(function(section){
-          return section.demos.map(function(demo, idx, array){
+          return section.demos.map(function(demo){
             return {
               data: Object.extend(demo, {
                 groupId: this.title

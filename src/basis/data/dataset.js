@@ -56,11 +56,11 @@
         var array;
 
         if (array = delta.inserted)
-          for (var i = array.length; i --> 0;)
+          for (var i = array.length; i-- > 0;)
             this.add(object, array[i]);
 
         if (array = delta.deleted)
-          for (var i = array.length; i --> 0;)
+          for (var i = array.length; i-- > 0;)
             this.remove(object, array[i]);
       }
     },
@@ -598,7 +598,7 @@
             oldMinuend.removeHandler(listenHandler, this);
 
           if (minuend)
-            minuend.addHandler(listenHandler, this)
+            minuend.addHandler(listenHandler, this);
         }
       }
 
@@ -1318,13 +1318,13 @@
   var SLICE_SOURCEOBJECT_UPDATE = function(sourceObject){
     var sourceObjectInfo = this.sourceMap_[sourceObject.eventObjectId];
     var newValue = this.rule(sourceObject);
-    var index_ = this.index_;
+    var index = this.index_;
 
     if (newValue !== sourceObjectInfo.value)
     {
-      index_.splice(binarySearchPos(index_, sourceObjectInfo), 1);
+      index.splice(binarySearchPos(index, sourceObjectInfo), 1);
       sourceObjectInfo.value = newValue;
-      index_.splice(binarySearchPos(index_, sourceObjectInfo), 0, sourceObjectInfo);
+      index.splice(binarySearchPos(index, sourceObjectInfo), 0, sourceObjectInfo);
       this.applyRule();
     }
   };

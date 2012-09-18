@@ -1,13 +1,12 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Transport Test</title>
-  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/new/style.css" media="screen" />
 
-  <script type="text/javascript" basis-config="{}" src="../../src/basis.js"></script>
+  <script type="text/javascript" data-basis-config="" src="../../src/basis.js"></script>
   <script type="text/javascript"  src="../../src/basis/data.js"></script>
   <script type="text/javascript"  src="../../src/basis/property.js"></script>
   <script type="text/javascript"  src="../../src/basis/crypt.js"></script>
@@ -35,7 +34,6 @@
     (function(){
 
       var DOM = basis.dom;
-      var Event = basis.Event;
 
       var nsAjax = basis.net.ajax;
       var nsSoap = basis.net.soap;
@@ -45,7 +43,7 @@
       var Transport = nsAjax.AjaxProxy;
       var SOAPTransport = nsSoap.SOAPProxy;
 
-      var logOutput = DOM.get('logOutput')
+      var logOutput = DOM.get('logOutput');
 
       function clearLog(){
         logOutput.value = '';

@@ -72,8 +72,8 @@ basis_require('basis.ext.flashcanvas');*/
 
       var canvasElement = this.tmpl.canvas;
 
-      if (typeof FlashCanvas != "undefined")
-        FlashCanvas.initElement(canvasElement);
+      if (typeof global.FlashCanvas != "undefined")
+        global.FlashCanvas.initElement(canvasElement);
       
       if (canvasElement && canvasElement.getContext)
         this.context = canvasElement.getContext('2d');
@@ -87,7 +87,7 @@ basis_require('basis.ext.flashcanvas');*/
     draw: Function.undef,
     reset: function(){
       if (this.context)
-        this.context.clearRect(0, 0, this.element.offsetWidth, this.element.offsetHeight)
+        this.context.clearRect(0, 0, this.element.offsetWidth, this.element.offsetHeight);
     }
   });
 

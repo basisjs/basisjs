@@ -985,7 +985,7 @@
       var nodes = this.nodes;
 
       // unlink all nodes from partition
-      for (var i = nodes.length; i --> 0;)
+      for (var i = nodes.length; i-- > 0;)
         nodes[i].groupNode = null;
 
       // clear nodes & pointers
@@ -1654,7 +1654,7 @@
       // NOTE: important dispatch event before nodes remove/destroy, because listeners may analyze removing nodes
       this.event_childNodesModified({ deleted: childNodes });
 
-      for (var i = childNodes.length; i --> 0;)
+      for (var i = childNodes.length; i-- > 0;)
       {
         var child = childNodes[i];
 
@@ -1799,7 +1799,7 @@
                 order = this.childNodes;
 
               // reset reference to group node
-              for (var i = order.length; i --> 0;)
+              for (var i = order.length; i-- > 0;)
                 order[i].groupNode = null;
 
               // apply new order
@@ -2267,7 +2267,7 @@
         {
           var parentNode = this.owner;
           var nodes = arrayFrom(this.nullGroup.nodes); // basis.array.from, because nullGroup.nodes may be transformed
-          for (var i = nodes.length; i --> 0;)
+          for (var i = nodes.length; i-- > 0;)
             parentNode.insertBefore(nodes[i], nodes[i].nextSibling);
         }
       }
@@ -2458,7 +2458,9 @@
       var getGroupNode = this.getGroupNode;
       var nullGroup = this.nullGroup;
 
-      this.getGroupNode = function(){ return nullGroup };
+      this.getGroupNode = function(){
+        return nullGroup;
+      };
 
       for (var group = this.firstChild; group; group = group.nextSibling)
         nodes.push.apply(nodes, group.nodes);

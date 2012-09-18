@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="windows-1251"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
@@ -19,9 +18,9 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis-all.js"></script>
-  <script type="text/javascript"  src="test.js"></script>
-  <script type="text/javascript"  src="common.js"></script>
+  <script type="text/javascript" data-basis-config="" src="../src/basis.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
 </head>
 
 <body>
@@ -29,16 +28,9 @@
 
   <script type="text/javascript">
     loadTest((function(){
+      basis.require('basis.dom');
+      
       var DOM = basis.dom;
-
-      var CSS = basis.cssom;
-      var Event = basis.dom.event;
-      var Tester = basis.test.Tester;
-
-      var CookieName;
-      var TestProperty;
-
-      var updateCount = 0;
 
       var pg = DOM.get('playground');
       function resolveNodes(nodes){
@@ -53,22 +45,13 @@
         return result.join(' ');
       }
 
-      function rs(nodes){
-        var result = Array.from(nodes);
-        
-        for (var i = 0; i < result.length; i++)
-          result[i] = result[i].nodeName + (result[i].nodeType == 1 ? (result[i].id ? '#' + result[i].id : '') : '('+result[i].nodeValue+')');
-        
-        return result.join(' ');
-      }
-
       var a1 = 'n1 n2 1 n3 2 n4 n5 3 n6 4 n7 5 n8 n9 6 7 8 n10 9';
       var a2 = '1 2 3 4 5 6 7 8 9';
       var a3 = 'n1 n2 n3 n4 n5 n6 n7 n8 n9 n10';
       var a4 = 'n1 n10 9 n3 8 n4 n7 7 n8 n9 6 5 n6 4 n5 3 2 n2 1';
 
-      var IS_TEXT_NODE = function(node){ return node.nodeType == 3 };
-      var IS_ELEMENT_NODE = function(node){ return node.nodeType == 1 };
+      var IS_TEXT_NODE = function(node){ return node.nodeType == 3; };
+      var IS_ELEMENT_NODE = function(node){ return node.nodeType == 1; };
 
       return [
         {
@@ -260,11 +243,11 @@
                 }
 
                 this.is(r1, DOM.axis(root, DOM.AXIS_ANCESTOR));
-                this.is([document.body], DOM.axis(root, DOM.AXIS_ANCESTOR, function(node){ return node.tagName == 'BODY' }));
+                this.is([document.body], DOM.axis(root, DOM.AXIS_ANCESTOR, function(node){ return node.tagName == 'BODY'; }));
                                   
                 r1.unshift(root);
                 this.is(r1, DOM.axis(root, DOM.AXIS_ANCESTOR_OR_SELF));
-                this.is([document.body], DOM.axis(root, DOM.AXIS_ANCESTOR_OR_SELF, function(node){ return node.tagName == 'BODY' }));
+                this.is([document.body], DOM.axis(root, DOM.AXIS_ANCESTOR_OR_SELF, function(node){ return node.tagName == 'BODY'; }));
               }
             },
             {
@@ -280,7 +263,7 @@
                 }
 
                 this.is(r1, DOM.axis(root, DOM.AXIS_CHILD));
-                this.is('n2 n3 n10'.qw().map(DOM.get), DOM.axis(root, DOM.AXIS_CHILD, function(node){ return node.tagName == 'LI' }));
+                this.is('n2 n3 n10'.qw().map(DOM.get), DOM.axis(root, DOM.AXIS_CHILD, function(node){ return node.tagName == 'LI'; }));
 
                 var root = DOM.get('n3');
                 var node = root.firstChild;

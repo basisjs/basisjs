@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="windows-1251"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
@@ -19,16 +18,14 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis-all.js"></script>
-  <script type="text/javascript"  src="test.js"></script>
-  <script type="text/javascript"  src="common.js"></script>
+  <script type="text/javascript" data-basis-config="" src="../src/basis.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
 </head>
 
 <body>
   <script type="text/javascript">
     loadTest((function(){
-
-      var Data = basis.data;
 
       var data = [
         { a: 11, b: 21, c: 31 },
@@ -68,10 +65,10 @@
                 {
                   name: 'create from function',
                   test: function(){
-                    var g = Function.getter(function(object){ return object.a });
+                    var g = Function.getter(function(object){ return object.a; });
                     this.is(11, g(data[0]));
 
-                    var g = Function.getter(function(object){ return object.a }, 'value: {0:.2}');
+                    var g = Function.getter(function(object){ return object.a; }, 'value: {0:.2}');
                     this.is("value: 11.00", g(data[0]));
                   }
                 },
@@ -131,23 +128,23 @@
                     this.is(true, !Function.$self.getter);
                     this.is(true, !Function.$self.__extend__);
 
-                    this.is(true, Function.getter(function(){ return 1 }) !== Function.getter(function(){ return 1 }));
-                    this.is(true, Function.getter(function(){ return 1 }) !== Function.getter(function(){ return 1; }));
-                    this.is(true, Function.getter(function(){ return 1 }) !== Function.getter(function(){ return 2 }));
+                    this.is(true, Function.getter(function(){ return 1; }) !== Function.getter(function(){ return 1; }));
+                    this.is(true, Function.getter(function(){ return 1; }) !== Function.getter(function(){ return 1; }));
+                    this.is(true, Function.getter(function(){ return 1; }) !== Function.getter(function(){ return 2; }));
 
-                    this.is(true, Function.getter(function(){ return 1 }, Number) !== Function.getter(function(){ return 1 }, Number));
-                    this.is(true, Function.getter(function(){ return 1 }, Number) !== Function.getter(function(){ return 1; }, Number));
-                    this.is(true, Function.getter(function(){ return 1 }, Number) !== Function.getter(function(){ return 2 }, Number));
+                    this.is(true, Function.getter(function(){ return 1; }, Number) !== Function.getter(function(){ return 1; }, Number));
+                    this.is(true, Function.getter(function(){ return 1; }, Number) !== Function.getter(function(){ return 1; }, Number));
+                    this.is(true, Function.getter(function(){ return 1; }, Number) !== Function.getter(function(){ return 2; }, Number));
 
-                    this.is(true, Function.getter(function(){ return 1 }, '') !== Function.getter(function(){ return 1 }, ''));
-                    this.is(true, Function.getter(function(){ return 1 }, '') !== Function.getter(function(){ return 1; }, ''));
-                    this.is(true, Function.getter(function(){ return 1 }, '') !== Function.getter(function(){ return 2 }, ''));
+                    this.is(true, Function.getter(function(){ return 1; }, '') !== Function.getter(function(){ return 1; }, ''));
+                    this.is(true, Function.getter(function(){ return 1; }, '') !== Function.getter(function(){ return 1; }, ''));
+                    this.is(true, Function.getter(function(){ return 1; }, '') !== Function.getter(function(){ return 2; }, ''));
 
-                    this.is(true, Function.getter(function(){ return 1 }, 'f') !== Function.getter(function(){ return 1 }, 'f'));
-                    this.is(true, Function.getter(function(){ return 1 }, 'f') !== Function.getter(function(){ return 1; }, 'f'));
-                    this.is(true, Function.getter(function(){ return 1 }, 'f') !== Function.getter(function(){ return 2 }, 'f'));
+                    this.is(true, Function.getter(function(){ return 1; }, 'f') !== Function.getter(function(){ return 1; }, 'f'));
+                    this.is(true, Function.getter(function(){ return 1; }, 'f') !== Function.getter(function(){ return 1; }, 'f'));
+                    this.is(true, Function.getter(function(){ return 1; }, 'f') !== Function.getter(function(){ return 2; }, 'f'));
 
-                    this.is(true, Function.getter(function(){ return 1 }, 'f') !== Function.getter(function(){ return 1 }, 'fs'));
+                    this.is(true, Function.getter(function(){ return 1; }, 'f') !== Function.getter(function(){ return 1; }, 'fs'));
 
                     this.is(true, Function.getter('a', Number) !== Function.getter('a'));
                     this.is(true, Function.getter('a', Number) === Function.getter('a', Number));

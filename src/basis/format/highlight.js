@@ -136,7 +136,7 @@
       addMatch(null, text.length);
 
       return result;
-    }
+    };
   })());
 
   PARSER.add('css', (function(){
@@ -327,7 +327,7 @@
       addMatch(null, text.length);
 
       return result;
-    }
+    };
   })());
 
 
@@ -336,10 +336,10 @@
   */
   function highlight(text, lang, options){
 
-    function normalize(text, offset){
+    function normalize(text){
       text = text
-               .trimRight()
-               .replace(/\r\n|\n\r|\r/g, '\n')
+        .trimRight()
+        .replace(/\r\n|\n\r|\r/g, '\n');
 
       if (!options.keepFormat)
         text = text.replace(/^(?:\s*[\n]+)+?([ \t]*)/, '$1');
@@ -368,7 +368,9 @@
           text = text.replace(new RegExp('(^|\\n) {' + minOffset + '}', 'g'), '$1');
       }
 
-      text = text.replace(new RegExp('(^|\\n)( +)', 'g'), function(m, a, b){ return a + '\xA0'.repeat(b.length)});
+      text = text.replace(new RegExp('(^|\\n)( +)', 'g'), function(m, a, b){
+        return a + '\xA0'.repeat(b.length);
+      });
 
       return text; 
     }
@@ -400,7 +402,7 @@
             (lines[i] + '\r\n') + 
           '</span>' +
         '</div>'
-      )
+      );
     }
 
     return res.join('');
@@ -419,7 +421,7 @@
     lineNumber: true,
     lang: 'text',
 
-    templateUpdate: function(tmpl, event, delta){
+    templateUpdate: function(){
       var code = this.codeGetter(this);
       if (code != this.code_)
       {

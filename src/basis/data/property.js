@@ -179,8 +179,8 @@
   //
 
   var PropertyObjectDestroyAction = { 
-    destroy: function(object){ 
-      this.removeLink(object) 
+    destroy: function(object){
+      this.removeLink(object); 
     } 
   };
 
@@ -321,7 +321,7 @@
       };
 
       // add link
-      ;;;if (typeof console != 'undefined' && this.links_.search(true, function(link){ return link.object == object && link.field == field })) console.warn('Property.addLink: Duplicate link for property');
+      ;;;if (typeof console != 'undefined' && this.links_.search(true, function(link){ return link.object == object && link.field == field; })) console.warn('Property.addLink: Duplicate link for property');
       this.links_.push(link);  // !!! TODO: check for object-field duplicates
       
       if (link.isEventObject)
@@ -459,11 +459,21 @@
   });
 
   Property.shortcut = {
-    className: function(newValue, oldValue){ classList(this).replace(oldValue, newValue) },
-    show:      function(newValue){ cssom.display(this, !!newValue) },
-    hide:      function(newValue){ cssom.display(this, !newValue) },
-    disable:   function(newValue){ this.disabled = !!newValue },
-    enable:    function(newValue){ this.disabled = !newValue }
+    className: function(newValue, oldValue){
+      classList(this).replace(oldValue, newValue);
+    },
+    show: function(newValue){
+      cssom.display(this, !!newValue);
+    },
+    hide: function(newValue){
+      cssom.display(this, !newValue);
+    },
+    disable: function(newValue){
+      this.disabled = !!newValue;
+    },
+    enable: function(newValue){
+      this.disabled = !newValue;
+    }
   };
 
   //
@@ -482,7 +492,7 @@
       this.fire(true);
     },
     destroy: function(object){
-      this.remove(object)
+      this.remove(object);
     }
   };
 

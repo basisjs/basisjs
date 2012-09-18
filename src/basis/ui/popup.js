@@ -245,7 +245,7 @@
         return {
           x: pointX,
           y: pointY
-        }
+        };
       }
     },
     setZIndex: function(zIndex){
@@ -342,7 +342,7 @@
       this.relElement = DOM.get(relElement) || this.relElement;
 
       // set up direction and orientation
-      this.setLayout(dir || this.defaultDir, orientation)
+      this.setLayout(dir || this.defaultDir, orientation);
 
       // if not visible yet, make popup visible
       if (!this.visible)

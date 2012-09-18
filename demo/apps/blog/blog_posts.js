@@ -23,7 +23,7 @@
 
     var res = randomWord.slice(rwIdx %= RND_COUNT, rwIdx += count);
     if (res.length < count)
-      res = res.concat(randomWord.slice(0, count - res.length))
+      res = res.concat(randomWord.slice(0, count - res.length));
 
     return res;
   };

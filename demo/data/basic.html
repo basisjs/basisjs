@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -6,10 +6,6 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
   <title>Basis Demos: Property &amp; DataObjectSet</title>
-
-  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/tree/compat/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/form/default/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Default Style" href="../../style/button/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     .Basis-Tree
@@ -37,10 +33,6 @@
     }
   </style>
   <![endif]-->
-
-  <!--[if IE 7]>
-  <![endif]-->
-
 
   <script type="text/javascript" src="../../basis-all.js"></script>
 
@@ -76,7 +68,7 @@
           return value + object.value;
         }, 0);
       }
-    })
+    });
 
     var container = DOM.get('demo-container');
     new nsButton.ButtonPanel({
@@ -84,7 +76,7 @@
       childNodes: [
         {
           caption: 'Add 1 to property1',
-          click: function(){ property1.set(property1.value + 1) }
+          click: function(){ property1.set(property1.value + 1); }
         },
         {
           caption: 'Add 1 to property1 and than sub 1 ',
@@ -92,11 +84,11 @@
         },
         {
           caption: 'Add 1 to property2',
-          click: function(){ property2.set(property2.value + 1) }
+          click: function(){ property2.set(property2.value + 1); }
         },
         {
           caption: 'Add 1 to property1 & property2',
-          click: function(){ property1.set(property1.value + 1) & property2.set(property2.value + 1) }
+          click: function(){ property1.set(property1.value + 1) & property2.set(property2.value + 1); }
         }
       ]
     });

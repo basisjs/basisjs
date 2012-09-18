@@ -37,10 +37,9 @@ basis.ready(function(){
 
   times.push([new Date, 'generate posts']);
 
-  var DataObject = basis.data.DataObject;
   var allPostDataset = new basis.data.Dataset({
     items: postsData.map(function(data){
-      return new DataObject({
+      return new basis.data.DataObject({
         data: data
       });
     })

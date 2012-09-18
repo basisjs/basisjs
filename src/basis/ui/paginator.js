@@ -189,7 +189,7 @@
         this.setChildNodes(createArray(pageSpan, function(idx){
           return {
             pageNumber: idx
-          }
+          };
         }));
       }
 
@@ -244,7 +244,7 @@
       {
         this.spanStartPage_ = pageNumber;
 
-        for (var i = this.childNodes.length; i --> 0;)
+        for (var i = this.childNodes.length; i-- > 0;)
           this.childNodes[i].setPageNumber(pageNumber + i);
 
         updateSelection(this);

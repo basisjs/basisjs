@@ -241,7 +241,7 @@
         for (var i = 0, child; child = delta.deleted[i]; i++)
         {
           key = this.keyGetter(child);
-          valuesDelta[key] = null
+          valuesDelta[key] = null;
           this.valuesMap[key] = null;
 
           child.removeHandler(SERIES_ITEM_HANDLER, this);
@@ -249,7 +249,7 @@
 
       this.event_valuesChanged(valuesDelta);
     } 
-  }
+  };
 
   var SERIES_ITEM_HANDLER = {
     update: function(object, delta){ 
@@ -262,7 +262,7 @@
 
       this.event_valuesChanged(valuesDelta);
     }
-  }
+  };
 
  /**
   * @class
@@ -282,7 +282,7 @@
 
     legendGetter: getter('legend'),
     getLegend: function(){
-      return this.legendGetter(this)
+      return this.legendGetter(this);
     },
 
     colorGetter: getter('color'),
@@ -410,14 +410,14 @@
       if (needRedraw)
         this.redrawRequest();
     }
-  }
+  };
 
   var GRAPH_NODE_UPDATE_HANDLER = function(object){
     for (var i = 0, seria; seria = this.series.childNides[i]; i++)
       object.values[seria.eventObjectId] = seria.getValue(object, this.keyGetter(object));
 
     this.redrawRequest();
-  }
+  };
 
  /**
   * @class
@@ -491,7 +491,7 @@
         
         this.series = {
           childNodes: series
-        }
+        };
       }
 
       this.series = new GraphSeriesList(Object.extend({ owner: this }, this.series));
@@ -546,9 +546,9 @@
       var context = this.context;
 
       var TOP = 0;
+      var BOTTOM = 0;      
       var LEFT = 0;
       var RIGHT = 10;
-      var BOTTOM = 0;
       var WIDTH = context.canvas.width;
       var HEIGHT = context.canvas.height;
 
@@ -639,8 +639,8 @@
       var maxXLabelWidth = this.invertAxis ? maxValueTextWidth : maxKeyTextWidth;
       var maxYLabelWidth = this.invertAxis ? maxKeyTextWidth : maxValueTextWidth;
 
-      LEFT = Math.max(maxYLabelWidth, Math.round(firstXLabelWidth / 2));
-      RIGHT = Math.round(lastXLabelWidth / 2);
+      LEFT += Math.max(maxYLabelWidth, Math.round(firstXLabelWidth / 2));
+      RIGHT += Math.round(lastXLabelWidth / 2);
 
       // Legend
       if (this.showLegend)
@@ -693,7 +693,7 @@
       var skipLabelCount;
 
       // xscale
-      var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : keysCount - (this.keyValuesOnEdges ? 1 : 0)) 
+      var xStep = (WIDTH - LEFT - RIGHT) / (this.invertAxis ? partCount : keysCount - (this.keyValuesOnEdges ? 1 : 0)); 
       if (this.showXLabels)
       {
         var angle;
@@ -852,7 +852,7 @@
       {
         for (var j in child.values)
           if (child.values[j] < min || min == null)
-            min = child.values[j]
+            min = child.values[j];
       }
       return min;
     },
@@ -862,7 +862,7 @@
       {
         for (var j in child.values)
           if (child.values[j] > max || max == null)
-            max = child.values[j]
+            max = child.values[j];
       }
       return max;
     },
@@ -1029,7 +1029,7 @@
       ctrlPressed = false;
       //shiftPressed = false;
     }
-  }
+  };
 
   var GRAPH_SELECTION_GLOBAL_HANDLER = {
     mousemove: function(event){
@@ -1055,13 +1055,13 @@
       for (var i in GRAPH_SELECTION_GLOBAL_HANDLER)
         Event.removeGlobalHandler(i, GRAPH_SELECTION_GLOBAL_HANDLER[i], this);
     }
-  }
+  };
 
   var GRAPH_SELECTION_HANDLER = {
     datasetChanged: function(object, delta){
       this.draw();
     }
-  }
+  };
 
  /**
   * @class
@@ -1295,14 +1295,14 @@
           text: valueText,
           valueY: valueY,
           labelY: labelY
-        }
+        };
       }
 
       // adjust label positions 
       var labels = labels.sortAsObject(getter('valueY'));
       var crossGroup = labels.map(function(label){
         return { labels: [label], y: label.labelY, height: labelHeight };
-      })
+      });
       var hasCrossing = true;
       while (crossGroup.length > 1 && hasCrossing)
       {
@@ -1399,7 +1399,7 @@
 
     init: function(){
       if (this.selection && !(this.selection instanceof Selection))
-        this.selection = Object.complete({ multiple: true }, this.selection)
+        this.selection = Object.complete({ multiple: true }, this.selection);
 
       AxisGraph.prototype.init.call(this);
     },
@@ -1422,7 +1422,7 @@
       for (var i = 0; i < values.length; i++)
       {
         x = i * step;
-        y = height * (1 - (values[i] - min) / (max - min))
+        y = height * (1 - (values[i] - min) / (max - min));
         
         if (i == 0)
           context.moveTo(x, y);
@@ -1637,7 +1637,7 @@
           sum += child.values[j];
 
         if (sum > max || max == null)
-          max = sum
+          max = sum;
       }
       return max;
 

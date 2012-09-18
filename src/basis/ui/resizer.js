@@ -136,7 +136,7 @@
 
         return value;
       }
-    }
+    };
   }
 
   var resizerDisableRule = cssom.createRule('IFRAME');

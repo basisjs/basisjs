@@ -129,7 +129,7 @@
           measure: measureCell.cloneNode(true),
           header: expanderCell.cloneNode(true),
           footer: expanderCell.cloneNode(true)
-        }
+        };
       });
 
       // insert measure row

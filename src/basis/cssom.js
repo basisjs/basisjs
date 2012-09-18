@@ -176,7 +176,9 @@
   }
 
   createStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter', true, {
-    filter: function(value){ return 'alpha(opacity:' + parseInt(value * 100, 10) + ')' }
+    filter: function(value){
+      return 'alpha(opacity:' + parseInt(value * 100, 10) + ')';
+    }
   });
   createStyleMapping('border-radius', 'borderRadius MozBorderRadius WebkitBorderRadius', true);
   createStyleMapping('float', 'cssFloat styleFloat');
@@ -472,6 +474,18 @@
     }
   });
 
+
+  //
+  // RuleSet
+  //
+  
+  function createRuleSetMethod(methodName){
+    return function(){
+      for (var i = 0, rule; rule = this.rules[i]; i++)
+        rule[methodName].apply(rule, arguments);
+    };
+  }
+
  /**
   * @class
   */
@@ -509,6 +523,10 @@
         this.owner.deleteRule(rule);
       }
     },
+    
+    setProperty: createRuleSetMethod('setProperty'),
+    setStyle: createRuleSetMethod('setStyle'),
+    clear: createRuleSetMethod('clear'),
 
    /**
     */
@@ -518,13 +536,6 @@
 
       this.owner = null;
       this.rules = null;
-    }
-  });
-
-  ['setProperty', 'setStyle', 'clear'].forEach(function(method){
-    RuleSet.prototype[method] = function(){
-      for (var rule, i = 0; rule = this.rules[i]; i++)
-        rule[method].apply(rule, arguments);
     }
   });
 
@@ -682,7 +693,7 @@
       replace: proto.replace,
       bool: proto.bool,
       clear: function(){
-        for (var i = this.length; i --> 0;)
+        for (var i = this.length; i-- > 0;)
           this.remove(this[i]);
       },
       setPrefixToken: proto.setPrefixToken
@@ -755,7 +766,7 @@
 
         dom.remove(baseEl);    
       }
-    }
+    };
   })();
 
 
@@ -889,7 +900,7 @@
   function createUnitFormatter(unit){
     return function(value){
       return value == 0 || isNaN(value) ? '0' : value + unit;
-    }
+    };
   }
 
   //

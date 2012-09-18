@@ -1,26 +1,25 @@
 
-  .Basis-Menu
-  {
-    position: absolute;
-    border: 1px solid #979797;
-    font-family: 'Segoe UI';
-    font-size: 90%;
-      -moz-box-shadow: 4px 4px 2px -2px rgba(0,0,0,.5);
-      -webkit-box-shadow: 4px 4px 2px -2px rgba(0,0,0,.5);
-    box-shadow: 4px 4px 2px -2px rgba(0,0,0,.5);
-    overflow: auto;
-    overflow-x: hidden;
-  }
+.Basis-Menu
+{
+  position: absolute;
+  border: 1px solid #979797;
+  font-family: 'Segoe UI';
+  font-size: 90%;
+  -moz-box-shadow: 4px 4px 2px -2px rgba(0, 0, 0, .5);
+  -webkit-box-shadow: 4px 4px 2px -2px rgba(0, 0, 0, .5);
+  box-shadow: 4px 4px 2px -2px rgba(0, 0, 0, .5);
+  overflow: auto;
+  overflow-x: hidden;
+}
 
-  .Basis-Menu-CloseButton
-  {
-    display: none;
-  }
+.Basis-Menu-CloseButton
+{
+  display: none;
+}
 
-  .Basis-Menu-Content
-  {
-    border: 2px solid #F5F5F5;
-    background-color: #F1F1F1;
-    min-width: 150px;
-  }
-
+.Basis-Menu-Content
+{
+  border: 2px solid #F5F5F5;
+  background-color: #F1F1F1;
+  min-width: 150px;
+}

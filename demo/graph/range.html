@@ -142,7 +142,7 @@
 
     var max = Math.max.apply(null, amounts.map(Number));
 
-    for (var i = dates.length; i --> 0;)
+    for (var i = dates.length; i-- > 0;)
       data.push(new basis.data.DataObject({
         data: {
           Date: new Date(dates[i] * 1000),
@@ -302,7 +302,7 @@
                   handlerContext: this
                 });
               }
-            }
+            };
           }
         }
       }

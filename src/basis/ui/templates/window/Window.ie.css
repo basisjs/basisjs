@@ -70,7 +70,7 @@
 
     width: 100%;
 
-    background-image: url(content.gif);
+    background-image: url(res/content.gif);
     background-position: 0 0;
   }
   .Basis-Window-Canvas .side-bottom

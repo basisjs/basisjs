@@ -686,7 +686,7 @@
 
     .XControlHeader
     {
-      poi3nter-events: none;
+      pointer-events: none;
       position: absolute;
       left: 0; 
       right: 17px;
@@ -706,7 +706,7 @@
     }*/
     .XControlFooter
     {
-      poi3nter-events: none;
+      pointer-events: none;
       position: absolute;
       left: 0; 
       right: 17px;
@@ -737,7 +737,6 @@
     border-top: 1px solid white;
     border-bottom: 1px solid white;
     background: url(img/tab_bg_top.png?1) repeat-x 0 -2px;
-    font-wei3ght: normal !important;
     font-family: Consolas;
     padding-left: 14px !important;
     /*background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #FBB700), color-stop(1, #D96200));*/
@@ -862,7 +861,6 @@
       -moz-border-radius: 3px;
     border-radius: 3px;
     padding: .25em .5ex;
-    backg3round: gray;
   }
   #PrototypeMapPopup .Basis-Balloon-Content .match
   {
@@ -893,7 +891,6 @@
   #PrototypeMapPopup .Basis-PartitionNode-Title
   {
     padding: .25em .5ex;
-    backgrou3nd: red;
     font-weight: bold;
   }
 

@@ -217,7 +217,7 @@
         }
         else
         {
-          ;;;if(typeof console != 'undefined') console.warn('`moveable` property of Window is not allowed. basis.dragdrop module required.')
+          ;;;if(typeof console != 'undefined') console.warn('`moveable` property of Window is not allowed. basis.dragdrop module required.');
         }
       }
 
@@ -346,7 +346,7 @@
         this.autocenter = this.autocenter_;
 
         this.closed = true;
-        this.event_close(modalResult)
+        this.event_close(modalResult);
       }
     },
     destroy: function(){
@@ -433,5 +433,7 @@
   module.exports = {
     Window: Window,
     Blocker: Blocker,
-    getWindowTopZIndex: function(){ return windowManager.childNodes.length * 2 + 2001 }
+    getWindowTopZIndex: function(){
+      return windowManager.childNodes.length * 2 + 2001;
+    }
   };

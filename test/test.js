@@ -10,21 +10,22 @@
  */
 
   (function(){
+    basis.require('basis.dom');
+    basis.require('basis.cssom');
+    basis.require('basis.ua');
+    basis.require('basis.event');
+    basis.require('basis.data.property');
 
     var namespace = 'basis.test';
 
     // import names
 
     var DOM = basis.dom;
-    var CSS = basis.cssom;
-    var Browser = basis.ua;
-    var Event = basis.dom.event;
     var cssClass = basis.cssom.classList;
     var extend = Object.extend;
     var arrayFrom = basis.array.from;
     var Class = basis.Class;
 
-    var nsWrappers = basis.dom.wrapper;
     var EventObject = basis.event.EventObject;
     var Property = basis.data.property.Property;
 
@@ -34,7 +35,6 @@
     // const
 
     var TEST_NUMBER = 0;
-    var TESTCASE_NUMBER = 0;
     var TestFaultError = new Error('Test fault');
 
     function sliceOwnOnly(obj){
@@ -42,7 +42,6 @@
       for (var key in obj)
         if (obj.hasOwnProperty(key))
           res[key] = obj[key];
-      console.log(res);
       return res;
     }
 
@@ -76,9 +75,9 @@
             var res = [];
             for (var key in value)
               if (value.hasOwnProperty(key))
-                res.push(key + ': ' + value2string(value[key], true))
+                res.push(key + ': ' + value2string(value[key], true));
               
-            return '{ ' + res.join(', ') + ' }'
+            return '{ ' + res.join(', ') + ' }';
           }
           else
             return '{object}';
@@ -116,7 +115,7 @@
       extendConstructor_: false,
       init: function(name, critical){
         EventObject.prototype.init.call(this);
-        this.name = (name || 'test#' + TEST_NUMBER++)
+        this.name = (name || 'test#' + TEST_NUMBER++);
         this.critical = critical || false;
         this.timer = 0;
         this.tester = Tester;
@@ -228,11 +227,11 @@
         s = s.replace(/"(\\.|[^"])*?"|'(\\.|[^'])*?'|\/\/.+|\/\*(.|\s)*?\*\/|([^\)a-zA-Z0-9]\s*)\/([^\*\/](\\.|[^\/])*)\//g, 
                       function(m, p1, p2, p3, p4, p5){
                         str.push((p4 ? '/' + (p5 || '') + '/' : m));
-                        return (p4 || '') + '\u0001' 
+                        return (p4 || '') + '\u0001'; 
                       });
 
         // remove & store parenthesis 
-        while (s != (t = s.replace(/\([^\(\)]*\)/, function(m){ parenthesis.push(m); return '\u0002' })))
+        while (s != (t = s.replace(/\([^\(\)]*\)/, function(m){ parenthesis.push(m); return '\u0002'; })))
           s = t;
         //console.log(s);
 
@@ -246,7 +245,7 @@
 
         // restore parenthesis
         for (var i = lines.length - 1; i >= 0; i--)
-          while (lines[i] != (t = lines[i].replace(re0002, function(){ return parenthesis.pop() })))
+          while (lines[i] != (t = lines[i].replace(re0002, function(){ return parenthesis.pop(); })))
             lines[i] = t;
 
         // restore strings
@@ -254,7 +253,7 @@
           lines[i] = lines[i].replace(re0001, function(){ 
             var s = str.shift();
             if (/^['"]/.test(s))
-              return s.replace(/\\u([0-9a-f]{4})/ig, function(m, code){ return String.fromCharCode(parseInt(code, 16)) });
+              return s.replace(/\\u([0-9a-f]{4})/ig, function(m, code){ return String.fromCharCode(parseInt(code, 16)); });
             else
               return s;
           });//.replace(/ /g, '\xA0');
@@ -296,9 +295,6 @@
         if (!this.result)
         {
           var pre;
-          var matchIndex = 0;
-          var self = this;
-          var closeSpan = false;
           element.appendChild(pre = DOM.createElement('DIV.code'));
 //          console.log(this);
 
@@ -306,7 +302,7 @@
           var uncomplete = false;
           for (var i = 0; i < this.lines.length; i++)
           {
-            var node = DOM.createElement('.line', DOM.createElement({ description: '.lineText', click: function(event){ cssClass(this.parentNode).toggle('show-error-details') }}, this.lines[i]));
+            var node = DOM.createElement('.line', DOM.createElement({ description: '.lineText', click: function(event){ cssClass(this.parentNode).toggle('show-error-details'); }}, this.lines[i]));
             var testIndex = this.testLines[i];
 
             if (uncomplete)
@@ -446,7 +442,7 @@
           else
             item = new TestCase(test.name, test.critical, test.testcase);
 
-          item.addHandler({ progress: function(diff, progress){ this.event_progress(diff, (this.completeTestCount + diff)/(this.totalTestCount || 0)) } }, this);
+          item.addHandler({ progress: function(diff, progress){ this.event_progress(diff, (this.completeTestCount + diff)/(this.totalTestCount || 0)); } }, this);
 
           this.items[i] = item;
           totalTestCount += item.totalTestCount;
@@ -457,7 +453,7 @@
       reset: function(){
         if (TesterState == 'stop')
         {
-          this.items.forEach(function(item){ item.reset() });
+          this.items.forEach(function(item){ item.reset(); });
           AbstractTest.prototype.reset.call(this);
           return true;
         }
@@ -495,7 +491,7 @@
                    DOM.createElement('EM', this.name),
                    (!this.success ? ' ({1} passed of {0})'.format(this.testCount, this.successCount) : '') + ':'
                  ),
-                 DOM.createElement('UL', this.items.map(function(item){ return DOM.createElement('LI.' + item.testType, item.toDOM(DOM)) }))
+                 DOM.createElement('UL', this.items.map(function(item){ return DOM.createElement('LI.' + item.testType, item.toDOM(DOM)); }))
                );
       }
     });

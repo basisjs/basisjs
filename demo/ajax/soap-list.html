@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -6,10 +6,6 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
   <title>Basis Demos: SOAP, List loading</title>
-
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style.css" media="screen" />
-  <link rel="alternate stylesheet" type="text/css" title="Vista Style" href="../../style/tree/vista/style.css" media="screen" />
-  <link rel="alternate stylesheet" type="text/css" title="Default Style" href="../../style/tree/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -45,10 +41,6 @@
       font-size: x-small;
     }
   </style>
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/tree/compat/style_ie.css" media="screen" />
-  <![endif]-->
-
-  <!--[if IE 7]>
   <![endif]-->
 
 
@@ -107,17 +99,17 @@
       },
       callback: {
         start: function(){ 
-          ProviderGroup.all.setState(basis.data.STATE.PROCESSING)
+          ProviderGroup.all.setState(basis.data.STATE.PROCESSING);
         },
         failure: function(){
-          ProviderGroup.all.setState(basis.data.STATE.ERROR)
+          ProviderGroup.all.setState(basis.data.STATE.ERROR);
         },
-        success: function(envelopeData){
+        success: function(){
           // synchonize with current dataset
           ProviderGroup.all.sync((getResponseData.call(this)).ProviderGroup);
 
           // change dataset state to READY
-          ProviderGroup.all.setState(basis.data.STATE.READY)
+          ProviderGroup.all.setState(basis.data.STATE.READY);
         }
       }
     }, true);

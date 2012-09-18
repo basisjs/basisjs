@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="windows-1251"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
-  <title>Basis Test Suite - DOM Wrapers</title>
+  <title>Basis Test Suite - basis.data.property</title>
 
   <style type="text/css">
     @import "style/default/style.css";
@@ -19,9 +18,9 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis-all.js"></script>
-  <script type="text/javascript"  src="test.js"></script>
-  <script type="text/javascript"  src="common.js"></script>
+  <script type="text/javascript" data-basis-config="" src="../src/basis.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
 </head>
 
 <body>
@@ -29,27 +28,15 @@
   <script type="text/javascript">
     loadTest((function(){
 
-      var Class = basis.Class;
       var DOM = basis.dom;
-      var Data = basis.data;
-      var CSS = basis.cssom;
-      var Event = basis.dom.event;
-      var Tester = basis.test.Tester;
 
-      var nsWrappers = basis.dom.wrapper;
       var Property = basis.data.property.Property;
       var PropertySet = basis.data.property.DataObjectSet;
 
       var TestProperty;
 
       var updateCount = 0;
-
-
-      function $values(ar){
-        return ar.map(function(node){
-          return node.data.value + '(' + node.data.group + ')';
-        })
-      }
+      var s;
 
       return [
         {
@@ -116,7 +103,7 @@
 
                 var t = {};
                 var value = Math.random();
-                TestProperty.addLink(t, function(value){ this.saved = value * 2 });
+                TestProperty.addLink(t, function(value){ this.saved = value * 2; });
                 TestProperty.set(value);
                 this.is(value, TestProperty.value);
                 this.is(value * 2, t.saved);
@@ -215,7 +202,7 @@
             {
               name: 'destroyed property unlink',
               test: function(){
-                s = new PropertySet();
+                var s = new PropertySet();
                 s.a = new Property(1);
                 s.b = new Property(2);
 
@@ -242,7 +229,7 @@
               name: 'destroyed PropertySet unlink',
               test: function(){
                 var result = 0;
-                s = new PropertySet();
+                var s = new PropertySet();
                 s.a = new Property(1),
                 s.b = new Property(2);
 

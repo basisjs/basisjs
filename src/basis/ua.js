@@ -64,7 +64,9 @@
   if (typeof Image != 'undefined') // NOTE test for Image is neccesary for node.js
     (function(){
       var testImage = new Image();
-      testImage.onload = function(){ basis.platformFeature.datauri = true };
+      testImage.onload = function() {
+        basis.platformFeature.datauri = true;
+      };
       testImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
     })();
 
@@ -151,7 +153,9 @@
 
   // enable background image cache for IE6
   if (testBrowser('IE7-')) 
-    try { document.execCommand("BackgroundImageCache", false, true) } catch(e) {};
+    try {
+      document.execCommand("BackgroundImageCache", false, true);
+    } catch(e) {};
 
 
   //
@@ -165,7 +169,9 @@
     prettyName: browserPrettyName,
     
     test: testBrowser,  // multiple test
-    is: function(name){ return testBrowser(name) },  // single test
+    is: function(name){ // single test
+      return testBrowser(name);
+    },
 
     // Cookie interface
     cookies: cookies

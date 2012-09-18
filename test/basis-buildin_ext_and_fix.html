@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="windows-1251"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
@@ -19,25 +18,20 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis.js"></script>
-  <script type="text/javascript"  src="../data.js"></script>
-  <script type="text/javascript"  src="../property.js"></script>
-  <script type="text/javascript"  src="../dom_wrapper.js"></script>
-  <script type="text/javascript"  src="test.js"></script>
-  <script type="text/javascript"  src="common.js"></script>
+  <script type="text/javascript" data-basis-config="" src="../src/basis.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
 </head>
 
 <body>
   <script type="text/javascript">
     loadTest((function(){
-      var Data = Basis.Data;
 
       var A = [1,2,3,4,5];
       var B = [5,4,3,2,1];
       var C = [1,2,3];
       var D = [4,5];
       var E = [1,2,3,2,3,2,1];
-      var T;
 
       return [
         {
@@ -108,11 +102,11 @@
                   name: 'pop()',
                   test: function(){
                     var T = Array.from(D);
-                    this.is(5, T.pop())
+                    this.is(5, T.pop());
                     this.is([4], T);
 
                     var T = Array.from(D);
-                    this.is(5, T.pop(3))
+                    this.is(5, T.pop(3));
                     this.is([4], T);
                   }
                 },
@@ -120,15 +114,15 @@
                   name: 'unshift()',
                   test: function(){
                     var T = Array.from(D);
-                    this.is(2, T.unshift())
+                    this.is(2, T.unshift());
                     this.is([4, 5], T);
 
                     var T = Array.from(D);
-                    this.is(3, T.unshift(3))
+                    this.is(3, T.unshift(3));
                     this.is([3, 4, 5], T);
 
                     var T = Array.from(D);
-                    this.is(5, T.unshift(1, 2, 3))
+                    this.is(5, T.unshift(1, 2, 3));
                     this.is([1, 2, 3, 4, 5], T);
                   }
                 },
@@ -136,11 +130,11 @@
                   name: 'shift()',
                   test: function(){
                     var T = Array.from(D);
-                    this.is(4, T.shift())
+                    this.is(4, T.shift());
                     this.is([5], T);
 
                     var T = Array.from(D);
-                    this.is(4, T.shift(3))
+                    this.is(4, T.shift(3));
                     this.is([5], T);
                   }
                 },
@@ -234,13 +228,13 @@
                     var tmp = '';
                     var T = Array.from(C);
                     // must return array or undefined???
-                    this.is(undefined, T.forEach(function(item){ tmp += item * 2 }));
+                    this.is(undefined, T.forEach(function(item){ tmp += item * 2; }));
                     this.is(C, T, true);
 
                     this.is('246', tmp);
 
                     var T = Array.from(C);
-                    T.forEach(function(item, index, array){ array[index] *= 2 });
+                    T.forEach(function(item, index, array){ array[index] *= 2; });
                     this.is([2,4,6], T);
                   }
                 },
@@ -248,16 +242,16 @@
                   name: 'every()',
                   test: function(){
                     var T = [1,2,3,4,5];;
-                    this.is(true,  T.every(function(item){ return item > 0 }));
+                    this.is(true,  T.every(function(item){ return item > 0; }));
                     this.is(A, T, true);
 
-                    this.is(false, T.every(function(item){ return item > 1 }));
+                    this.is(false, T.every(function(item){ return item > 1; }));
 
                     T[100] = 1;
-                    this.is(true, T.every(function(item){ return typeof item != 'undefined' }));
+                    this.is(true, T.every(function(item){ return typeof item != 'undefined'; }));
 
                     var counter = 0;
-                    this.is(true, T.every(function(item){ counter++; return true }));
+                    this.is(true, T.every(function(item){ counter++; return true; }));
                     this.is(A.length + 1, counter);
                   }
                 },
@@ -265,16 +259,16 @@
                   name: 'some()',
                   test: function(){
                     var T = [1,2,3,4,5];;
-                    this.is(true,  T.some(function(item){ return item > 4 }));
+                    this.is(true,  T.some(function(item){ return item > 4; }));
                     this.is(A, T, true);
 
-                    this.is(false, T.some(function(item){ return item > 10 }));
+                    this.is(false, T.some(function(item){ return item > 10; }));
 
                     T[100] = 1;
-                    this.is(false, T.some(function(item){ return typeof item == 'undefined' }));
+                    this.is(false, T.some(function(item){ return typeof item == 'undefined'; }));
 
                     var counter = 0;
-                    this.is(false, T.some(function(item){ counter++; return false }));
+                    this.is(false, T.some(function(item){ counter++; return false; }));
                     this.is(A.length + 1, counter);
                   }
                 },
@@ -282,7 +276,7 @@
                   name: 'filter()',
                   test: function(){
                     var T = [1,2,3,4,5];;
-                    this.is([1,3,5], T.filter(function(item){ return item % 2 }));
+                    this.is([1,3,5], T.filter(function(item){ return item % 2; }));
                     this.is(A, T, true);
 
                     T[100] = 1;
@@ -292,7 +286,7 @@
                     this.is([], T.filter(Function.$false));
 
                     var counter = 0;
-                    this.is([], T.filter(function(item){ counter++ }));
+                    this.is([], T.filter(function(item){ counter++; }));
                     this.is(A.length + 1, counter);
                   }
                 },
@@ -300,14 +294,14 @@
                   name: 'map()',
                   test: function(){
                     var T = Array.from(C);
-                    this.is([2,4,6], T.map(function(item){ return item * 2 }));
+                    this.is([2,4,6], T.map(function(item){ return item * 2; }));
                     this.is(T, C, true);
 
                     T[5] = 1;
-                    this.is([2,4,6,undefined,undefined,2], T.map(function(item){ return item * 2 }));
+                    this.is([2,4,6,undefined,undefined,2], T.map(function(item){ return item * 2; }));
 
                     var counter = 0;
-                    this.is([undefined, undefined, undefined, undefined, undefined, undefined], T.map(function(item){ counter++ }));
+                    this.is([undefined, undefined, undefined, undefined, undefined, undefined], T.map(function(item){ counter++; }));
                     this.is(4, counter);
                   }
                 },
@@ -371,7 +365,7 @@
                   test: function(){
                     var T = [1,2,3,4,5];
 
-                    this.is([1,3,5], T.collapse(function(item){ return !(item % 2) }));
+                    this.is([1,3,5], T.collapse(function(item){ return !(item % 2); }));
                     this.is([1,3,5], T);
 
                     var T = [1,2,3,4,5];
@@ -709,11 +703,11 @@
                     this.is(-1, T.binarySearchIntervalPos(3.5, l, 'r', true));
                     this.is(1, T.binarySearchIntervalPos(2, 'l', r));
 
-                    this.is(1, T.binarySearchIntervalPos(0.7, function(o){ return o.l/2 }, "r/2"));
-                    this.is(1, T.binarySearchIntervalPos(1.2, "l/2", function(o){ return o.r/2 }));
-                    this.is(2, T.binarySearchIntervalPos(2.5, function(o){ return o.l/2 }, function(o){ return o.r/2 }));
-                    this.is(3, T.binarySearchIntervalPos(3,   function(o){ return o.l/2 }, function(o){ return o.r/2 }));
-                    this.is(0, T.binarySearchIntervalPos(-5, function(o){ return -o.l }, function(o){ return -o.r }));
+                    this.is(1, T.binarySearchIntervalPos(0.7, function(o){ return o.l/2; }, "r/2"));
+                    this.is(1, T.binarySearchIntervalPos(1.2, "l/2", function(o){ return o.r/2; }));
+                    this.is(2, T.binarySearchIntervalPos(2.5, function(o){ return o.l/2; }, function(o){ return o.r/2; }));
+                    this.is(3, T.binarySearchIntervalPos(3,   function(o){ return o.l/2; }, function(o){ return o.r/2; }));
+                    this.is(0, T.binarySearchIntervalPos(-5, function(o){ return -o.l; }, function(o){ return -o.r; }));
                   }
                 },
                 {
@@ -948,7 +942,7 @@
               test: function(){
                 this.is({ a: 123, b: 234 }, '{ a: 123, b: 234 }'.toObject());
                 this.is([1,2,3,4,5], '[1,2,3,4,5]'.toObject());
-                this.is(function(val){return val}.toString(), 'function(val){return val}'.toObject().toString());
+                this.is(function(val){return val;}.toString(), 'function(val){return val}'.toObject().toString());
               }
             },
             {

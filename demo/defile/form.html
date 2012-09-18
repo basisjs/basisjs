@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -6,11 +6,6 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
   <title>Basis Demos: Forms</title>
-
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/form/default/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/popup/default/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/dropdown/blue/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -49,10 +44,6 @@
     }
   </style>
   <![endif]-->
-
-  <!--[if IE 7]>
-  <![endif]-->
-
 
   <script type="text/javascript" src="../../basis-all.js"></script>
 
@@ -158,7 +149,7 @@
     basis.ui.field.Field.prototype.postInit = function(){
       _postInit.apply(this, arguments);
       DOM.insert(DOM.get('demo-container'), createFieldView(this));
-    }
+    };
 
 
     new nsField.Text({

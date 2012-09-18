@@ -49,7 +49,7 @@
     * @inheritDoc
     */
     action: {
-      click: function(event){
+      click: function(){
         if (!this.isDisabled())
           this.click();
       }

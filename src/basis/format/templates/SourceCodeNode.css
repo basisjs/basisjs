@@ -5,7 +5,6 @@
     padding: 1px;
     margin: 0 1ex;
     overflow: hidden;
-    pos3ition: relative;
 
     font-family: Consolas, monospace;
     font-size: 100%;
@@ -18,7 +17,7 @@
     position: relative; /* для webkit, иначе при начале выделения с нумерации будет
                              выделяться текст с самого начала блока */
     zoom: 1;            /* для IE6/7 */
-    wh3ite-space: pre;   /* важно чтобы сохранялись переносы в IE7 */
+    /*white-space: pre;*/   /* важно чтобы сохранялись переносы в IE7 */
 
     background: #F0F0F0;
   }

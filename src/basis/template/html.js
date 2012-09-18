@@ -197,7 +197,7 @@
         binding: bindingList,
         objectRefList: objectRefList
       };
-    }
+    };
   })();
 
 
@@ -235,7 +235,7 @@
       return function templateBindingUpdate(){
         for (var i = 0, bindingName; bindingName = names[i]; i++)
           this.tmpl.set(bindingName, getters[bindingName](this));
-      }
+      };
     }
 
    /**
@@ -300,7 +300,7 @@
         }
 
         return result;
-      }
+      };
     }
 
    /**
@@ -446,7 +446,9 @@
               if (anim)
               {
                 domRef.classList.add(newClass + '-anim');
-                setTimeout(function(){ domRef.classList.remove(newClass + '-anim') }, 0);
+                setTimeout(function(){
+                  domRef.classList.remove(newClass + '-anim');
+                }, 0);
               }
             }
           }
@@ -542,7 +544,7 @@
       if (expression.length == 1)
         expression.push('""');
 
-      return expression.join('+')
+      return expression.join('+');
     }
 
     var bindFunctions = {
@@ -605,7 +607,7 @@
             ;;;debugList.push('{binding:"' + l10nName + '",dom:' + domRef + ',val:__l10n["' + l10nName + '"],attachment:l10nToken("' + l10nName + '")}');
             ;;;toolsUsed.l10nToken = true;
             bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"];');
-            l10nMap[l10nName].push(domRef + '.nodeValue=value;')
+            l10nMap[l10nName].push(domRef + '.nodeValue=value;');
           }
           else
           {
@@ -731,7 +733,7 @@
               {
                 if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
                 {
-                  bindCode.push(domRef + '.' + attrName + '=' + bindVar + ';')
+                  bindCode.push(domRef + '.' + attrName + '=' + bindVar + ';');
                 }
               }
           }
@@ -853,7 +855,7 @@
       };
 
       var objectRefs = pathes.objectRefList;
-      for (var i = 0, ref; ref = objectRefs[i]; i++)
+      for (var i = 0; objectRefs[i]; i++)
         objectRefs[i] += '.basisObjectId';
 
       objectRefs = objectRefs.join('=');
@@ -887,7 +889,7 @@
         l10n: bindings.l10n,
         map: templateMap
       };
-    }
+    };
   })();
 
 
@@ -938,7 +940,7 @@
           }
         }
       } while (cursor = cursor.parentNode);
-    }
+    };
   }
 
 
@@ -991,7 +993,7 @@
                     element.attachEvent('on' + eventName, function(eventName){
                       return function(){
                         domEvent.fireEvent(document, eventName);
-                      }
+                      };
                     }(eventName));
                 }
               }

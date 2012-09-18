@@ -46,7 +46,9 @@
   var ESCAPE_CHARS = /[\%\=\&\<\>\s\+]/g;
 
   // TODO: better debug info out
-  var logOutput = typeof console != 'undefined' ? function(){ console.log(arguments) } : Function.$self;
+  var logOutput = typeof console != 'undefined'
+    ? function(){ console.log(arguments); }
+    : Function.$self;
 
   function escapeValue(value){
     return String(value).replace(ESCAPE_CHARS, function(m){
@@ -78,7 +80,7 @@
         "Microsoft.XMLHTTP"
       ];
 
-      for (var i = 0, fn; XHRSupport = progID[i]; i++)
+      for (var i = 0; XHRSupport = progID[i]; i++)
         try {
           if (new ActiveXObject(XHRSupport))
             return function(){
@@ -129,7 +131,6 @@
   */
   function readyStateChangeHandler(readyState){
     var newState;
-    var error;
 
     var xhr = this.xhr;
     if (!xhr)
@@ -468,7 +469,7 @@
         event.apply(this.service, arguments);
 
       event.apply(this, arguments);
-    }
+    };
   }
 
   /**
@@ -483,7 +484,7 @@
     complete: function(sender, request){
       this.inprogressRequests.remove(request);
     }
-  }
+  };
 
   var PROXY_POOL_LIMIT_HANDLER = {
     complete: function(sender, request){
@@ -495,7 +496,7 @@
         }, 0);
       }
     }
-  }
+  };
 
   var Proxy = Class(EventObject, {
     className: namespace + '.Proxy',
@@ -711,7 +712,7 @@
     complete: function(service, request){
       this.inprogressProxies.remove(request.proxy);
     }
-  }
+  };
 
 
   var Service = Class(EventObject, {
@@ -804,7 +805,9 @@
       this.sessionKey = null;
       this.sessionData = null;
 
-      this.stoppedProxies = this.inprogressProxies.filter(function(proxy){ return proxy.needSignature });
+      this.stoppedProxies = this.inprogressProxies.filter(function(proxy){
+        return proxy.needSignature;
+      });
 
       for (var i = 0, proxy; proxy = this.inprogressProxies[i]; i++)
         proxy.stop();

@@ -265,7 +265,7 @@
 
       UINode.prototype.init.call(this);
 
-      this.applyConfig_(this.structure)
+      this.applyConfig_(this.structure);
     },
     applyConfig_: function(structure){
       if (structure)

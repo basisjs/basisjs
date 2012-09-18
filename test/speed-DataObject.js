@@ -87,7 +87,7 @@
       });
 
       speedTest('destroy ' + x.length + ' objects', 1, function(){
-        for (var i = x.length; i --> 0;)
+        for (var i = x.length; i-- > 0;)
           x[i].destroy();
         x.length = 0;
       });
@@ -150,7 +150,7 @@
             item.name + ' x ' + item.count + ': ',
             createElement('B.total', parseInt(item.total/item.count)),
             ' ms'
-          ))
+          ));
         });
 
         output.appendChild(createElement('hr'));

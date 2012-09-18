@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -6,10 +6,6 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
   <title>Basis Demos: Tables</title>
-
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/table/vista/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/scrolltable/vista/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/resizer/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -60,10 +56,6 @@
     }
   </style>
   <![endif]-->
-
-  <!--[if IE 7]>
-  <![endif]-->
-
 
   <script type="text/javascript" src="../../basis-all.js"></script>
 
@@ -142,7 +134,7 @@
           percentChange: row[3],
           lastUpdate: new Date(row[4])
         }
-      }
+      };
     });
 
     new Table({
@@ -159,7 +151,7 @@
 
     basis.ready(function(){
       container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));
-      table = new ScrollTable({
+      var table = new ScrollTable({
         selection: {multiple:true},
         //container: container,
         cssClassName: 'FitToContainer',
@@ -188,7 +180,7 @@
 
 
       var container2 = createBlock('basis.ui.scrolltable.ScrollTable');
-      table2 = new ScrollTable({
+      new ScrollTable({
         container: container2,
         header: { grouping: Function.getter('groupId') },
         structure: [
@@ -201,7 +193,7 @@
         childNodes: data
       }); 
 
-    })
+    });
 
     basis.dom.insert('demo-container', basis.dom.createElement('button', 'remove')).onclick = function(){
       basis.dom.remove(table.element);

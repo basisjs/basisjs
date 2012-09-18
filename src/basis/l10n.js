@@ -47,7 +47,7 @@
     value: null,
 
     toString: function(){
-      return this.value
+      return this.value;
     },
 
     init: function(dictionary, tokenName){
@@ -191,8 +191,12 @@
   function createGetTokenValueFunction(cultureRow)
   {
     return new Function('tokenName', 
-      'return ' + cultureRow.map(function(culture){ return 'this.getCultureValue("' + culture +'", tokenName)' }).join(' || ') 
-      + ' || this.getCultureValue("base", tokenName);');
+      'return ' + 
+        cultureRow.map(function(culture){
+          return 'this.getCultureValue("' + culture + '", tokenName)';
+        }).join(' || ') +
+        ' || this.getCultureValue("base", tokenName);'
+    );
   }
 
 
@@ -205,7 +209,7 @@
 
     var dictionary = getDictionary(namespace);
 
-    ;;;if (dictionary && typeof console != 'undefined') { console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created') };
+    ;;;if (dictionary && typeof console != 'undefined') console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created');
 
     dictionary = getDictionary(namespace, true);
     dictionary.location = location;
@@ -278,7 +282,7 @@
   }
 
   function setCultureForDictionary(dictionary, culture){
-    loadCultureForDictionary(dictionary, culture)
+    loadCultureForDictionary(dictionary, culture);
     dictionary.setCulture(culture);
   }
 

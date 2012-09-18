@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 
 <html>
 
@@ -6,10 +6,6 @@
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
   <title>Basis Demos: Paginator</title>
-
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/button/new/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/paginator/default/style.css" media="screen" />
-  <link rel="stylesheet" type="text/css" title="Compat Style" href="../../style/resizer/default/style.css" media="screen" />
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -72,10 +68,6 @@
   </style>
   <![endif]-->
 
-  <!--[if IE 7]>
-  <![endif]-->
-
-
   <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
@@ -120,7 +112,7 @@
         return DOM.createElement('',
           paginator.element,
           DOM.createElement(".paginator_pages", paginator.pageCount + ' pages')
-        )
+        );
       })
     );
 
@@ -155,7 +147,7 @@
               click: function(){
                 setWidth(this.caption);
               }
-            }
+            };
           })
         }).element
       ),
@@ -169,7 +161,7 @@
               click: function(){
                 setPageCount(this.caption);
               }
-            }
+            };
           })
         }).element
       ),
