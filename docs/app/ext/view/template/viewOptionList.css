@@ -1,0 +1,11 @@
+
+  .viewOptions
+  {
+    position: relative;
+    z-index: 1;
+    font-size: 85%;
+    float: right;
+    line-height: 1em;
+    margin-top: 1em;
+    margin-right: 1ex;
+  }

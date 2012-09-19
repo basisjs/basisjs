@@ -1,0 +1,62 @@
+  .bindingList
+  {
+    float: left;
+    margin-right: 1em;
+    min-width: 25em;
+    width: 50%;
+  }
+  .actionsList
+  {
+    overflow: hidden;
+  }
+  .bindingList .binding,
+  .actionsList .action
+  {
+    margin: 1px 0;
+    border-radius: 3px;
+    background: #F0F0F0;
+    color: #888;
+    padding: 2px 4px;
+  }
+  .bindingList .binding.used
+  {
+    background: #CDEB8B;
+    color: black;
+  }
+  .actionsList .action.used
+  {
+    background: #E1CEEB;
+    color: black;
+  }
+  .bindingList_header,
+  .actionsList_header
+  {
+    font-size: 85%;
+  }
+
+  .binding-header,
+  .action-header
+  {
+    padding-left: 16px;
+    background: url(img/plus.gif) no-repeat 2px center;
+    background-image: url(data:image/gif;base64,R0lGODlhCQAJAMQVAPn6+s7Oz8/OzuDg3+Df3/Hy8s/Pzvn5+vLx8tfW1s7Ozvr6+c7Pzunp6fn6+fLy8t/f39bW1jAwMP///01NTf///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABUALAAAAAAJAAkAAAUwYEWNJCVOaDqNi3NIzgKMSPFID/KMjeT7jREBMpBAjqNIJCFJKEcKhiEgiJpKpEoIADs=);
+    cursor: pointer;
+  }
+  .binding__expanded .binding-header,
+  .action__expanded .action-header
+  {
+    background-image: url(img/minus.gif);
+    background-image: url(data:image/gif;base64,R0lGODlhCQAJAMQXAM/PzvHy8vr6+uDf3/n6+vn5+uDg387Oz9fW18/OzvLx8tfW1s7Ozvr6+c7Pzunp6fn6+fLy8tbW1jAwMN/f3////01NTf///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAJAAkAAAUv4GWNpCVWaFqNDVQIUEOMShDdSjQ+U98/owHFQClSRhLJArFIjhgOwCEBNZVIlxAAOw==);
+  }
+  .bindingList .Basis-SyntaxHighlight,
+  .actionsList .Basis-SyntaxHighlight
+  {
+    background: white;
+    margin: 2px -3px -1px;
+    color: black;
+  }
+  .bindingList .Basis-SyntaxHighlight .lineContent,
+  .actionsList .Basis-SyntaxHighlight .lineContent
+  {
+    border: none;
+  }

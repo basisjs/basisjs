@@ -1,0 +1,10 @@
+
+  <b:resource src="inheritanceView.css"/>
+  
+  <div class="view viewInheritance">
+    <h3 class="Content-Header" event-click="scrollTo">
+      <span>{title}</span>
+    </h3>
+    <!--{viewOptions}-->
+    <ul{childNodesElement|content} class="content {show_namespace}"/>
+  </div>

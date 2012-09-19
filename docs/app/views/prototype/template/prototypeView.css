@@ -1,0 +1,102 @@
+
+  .viewPrototype .jsDocs A.location
+  {
+    margin-top: -1.5em;
+    font-size: 100%;
+  }
+
+  .viewPrototype .item
+  {
+    border: 1px solid #F0F0F0;
+    border-top-color: white;
+    padding: .5em 1ex;
+      -webkit-transition: background-color 1.5s .5s;
+      -moz-transition: background-color 1.5s .5s;
+      -o-transition: background-color 1.5s .5s;
+    transition: background-color 1.5s .5s;
+  }
+  .viewPrototype .item.highlight
+  {
+    background-color: gold;
+      -webkit-transition: none;
+      -moz-transition: none;
+      -o-transition: none;
+    transition: none;
+  }
+  .viewPrototype .item .jsDocs
+  {
+    padding: .25em 0 0 20px;
+    font-size: 85%;
+  }
+  .viewPrototype .collapsed .jsDocs,
+  .viewPrototype .item .trigger
+  {
+    display: none;
+  }
+  .viewPrototype .hasJsDoc.collapsed .trigger
+  {
+    display: inline-block;
+    border: 1px solid #DDDDDD;
+    border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+    color: #888888;
+    font-size: 80%;
+    margin: 0.2em 0 0 20px;
+    padding: 0 1ex;
+    text-decoration: none;
+  }
+  .viewPrototype .item .trigger:hover
+  {
+    border-color: #AAA;
+    color: #444;
+  }
+  .viewPrototype .item A
+  {
+    color: #0066CC;
+  }
+  .viewPrototype .item .title
+  {
+    padding-left: 20px;
+    background-repeat: no-repeat;
+    background-position: left top;
+    min-height: 16px;
+  }
+  .viewPrototype .item .title .tags
+  {
+    color: #009900;
+  }
+  .viewPrototype .item .title .tags .splitter
+  {
+    margin: 0 .5ex;
+    color: black;
+  }
+  .viewPrototype .property .title
+  {
+    background-image: url(img/node_property2.png);
+  }
+  .viewPrototype .method .title
+  {
+    background-image: url(img/node_method.png);
+  }
+  .viewPrototype .event .title
+  {
+    background-image: url(img/node_event.png);
+  }
+  .viewPrototype .method .method_mark
+  {
+    margin-right: 1ex;
+    font-style: italic;
+    color: #080;
+  }
+  .viewPrototype .method .args,
+  .viewPrototype .event .args
+  {
+    margin-left: .33ex;
+    color: #888;
+  }
+  .viewPrototype .event .title .types,
+  .viewPrototype .method .title .types
+  {
+    padding-right: 3ex;
+  }

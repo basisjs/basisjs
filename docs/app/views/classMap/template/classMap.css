@@ -1,0 +1,25 @@
+
+  .ClassMap .Basis-ScrollPanel
+  {
+    height: 400px;
+  }
+  .ClassMap .Basis-Scrollbar.horizontal
+  {
+    left: 10px;
+    right: 10px;
+  }
+  .ClassMap .Basis-Scrollbar.vertical
+  {
+    top: 10px;
+    bottom: 10px;
+  }
+  .ClassMap .content
+  {
+    padding: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+  .ClassMap .firstLevel
+  {
+    padding: 0;
+  }

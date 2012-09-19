@@ -1,0 +1,38 @@
+
+  .App-DocTreeNode .Basis-TreeNode-Expander
+  {
+    height: 1.7em;
+  }
+
+  .App-DocTreeNode .Basis-TreeNode-Caption
+  {
+    padding-left: 34px;
+    padding-bottom: .5em;
+    background-position: 14px 0.3em;
+    margin: 0 2px 0 0;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+    line-height: 1.2em;
+  }
+
+  .App-DocTreeNode .Type-Namespace   .Basis-TreeNode-Caption { background-image: url(img/node_module.png) }
+  .App-DocTreeNode .Type-Section     .Basis-TreeNode-Caption { background-image: url(img/node_partition.png) }
+  .App-DocTreeNode .Type-Class       .Basis-TreeNode-Caption { background-image: url(img/bullet_square_red.png) }
+  .App-DocTreeNode .Type-Constant    .Basis-TreeNode-Caption { background-image: url(img/node_const.png) }
+  .App-DocTreeNode .Type-ConstantObject .Basis-TreeNode-Caption { background-image: url(img/node_const.png) }
+  .App-DocTreeNode .Type-Function    .Basis-TreeNode-Caption { background-image: url(img/node_class_function.png) }
+  .App-DocTreeNode .Type-Event       .Basis-TreeNode-Caption { background-image: url(img/node_event.png?!) }
+  .App-DocTreeNode .Type-Method      .Basis-TreeNode-Caption { background-image: url(img/node_method.png) }
+  .App-DocTreeNode .Type-Property    .Basis-TreeNode-Caption { background-image: url(img/node_property2.png) }
+  .App-DocTreeNode .Type-Object      .Basis-TreeNode-Caption { background-image: url(img/node_property.png) }
+  .App-DocTreeNode .Type-HtmlElement .Basis-TreeNode-Caption { background-image: url(img/element_copy.png) }
+
+  .App-DocTreeNode .Type-Class    .args,
+  .App-DocTreeNode .Type-Function .args,
+  .App-DocTreeNode .Type-Event    .args,
+  .App-DocTreeNode .Type-Method   .args
+  {
+    color: #AAA;
+    margin-left: 2px;
+  }

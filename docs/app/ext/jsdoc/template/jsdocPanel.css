@@ -1,0 +1,103 @@
+
+  .jsDocs P
+  {
+    margin: .25em 0;
+  }
+  .jsDocs .description A,
+  .jsDocs .param A
+  {
+    color: #06C;
+  }
+  .jsDocs .description A.doclink-namespace
+  {
+    padding-left: 18px;
+    background: url(img/node_module.png) left center no-repeat;
+    color: #009900;
+  }
+  .jsDocs A.location
+  {
+    display: block;
+    float: right;
+    color: #666;
+    font-size: 90%;
+  }
+  .jsDocs .description UL
+  {
+    list-style: disc;
+    margin: 0 0 .75em 20px;
+  }
+  .jsDocs .description LI
+  {
+    margin: .25em 0 .5em;
+    padding: 0;
+  }
+  #Content .jsDocs .description .definition
+  {
+    display: block;
+    margin-bottom: .25em;
+  }
+  .jsDocs UL
+  {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .jsDocs LI
+  {
+    margin: .5em 0 .75em;
+    padding: 0 0 0 20px;
+  }
+  .jsDocs LI.param
+  {
+    background: url(img/jsdocs_param.png) no-repeat 2px -1px;
+  }
+  .jsDocs LI.optional
+  {
+    background-image: url(img/jsdocs_param_optional.png);
+  }
+  .jsDocs LI.param .name
+  {
+    font-weight: bold;
+    margin-right: 1ex;
+  }
+  .jsDocs LI P
+  {
+    padding-left: 3ex;
+  }
+  .jsDocs .tags
+  {
+    padding: .25em 0;
+  }
+  .jsDocs .tags .tag
+  {
+    font-size: 90%;
+    padding: 0px 4px 1px;
+    background: #FFCC99;
+    border-radius: 2px;
+      -moz-border-radius: 2px;
+      -webkit-border-radius: 2px;
+  }
+  .jsDocs .label
+  {
+    margin: .75em 0 .4em;
+    text-decoration: underline;
+  }
+  .jsDocs .types,
+  .viewPrototype .types,
+  .viewConfig .types
+  {
+    color: #009900;
+  }
+  .jsDocs .types A,
+  .viewPrototype .types A,
+  .viewConfig .types A
+  {
+    color: inherit !important;
+  }
+  .jsDocs .types .splitter,
+  .viewPrototype .types .splitter,
+  .viewConfig .types .splitter
+  {
+    margin: 0 .6ex;
+    color: black;
+  }

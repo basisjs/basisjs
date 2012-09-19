@@ -1,0 +1,183 @@
+
+  .viewTemplate .Basis-Tree
+  {
+    clear: both;
+    padding-left: 5px;
+  }
+  .viewTemplate .Basis-Tree UL
+  {
+    margin: .2em 0;
+  }
+
+  .viewTemplate .refList,
+  .viewTemplate .ref
+  {
+    display: none;
+  }
+
+  .Doc-TemplateView-Node
+  {
+    margin: 0;
+    line-height: 1.4em;
+  }
+  .Doc-TemplateView-NodeContent
+  {
+    padding-left: 20px;
+  }
+  .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs
+  {
+    border: 2px solid #CEE1EB;
+    margin: 1.4em 2px .2em -4px;
+    padding-left: 2px;
+    padding-bottom: 1px;
+    position: relative;
+      -moz-border-radius: 0 4px 4px 4px;
+    border-radius: 0 4px 4px 4px;
+  }
+  .viewTemplate .show-realReferences .Doc-TemplateView-Element.hasRefs > SPAN .refList
+  {
+    white-space: nowrap;
+    display: inline;
+    background: #CEE1EB;
+    font-size: 90%;
+    padding: 1px 2px 2px;
+    margin-left: 1px;
+    position: relative;
+      -moz-border-radius: 3px;
+    border-radius: 3px;
+  }
+  .viewTemplate .refList B
+  {
+    display: none;
+  }
+  .viewTemplate .show-realReferences .refList B
+  {
+    display: inline;
+    font-weight: normal;
+  }
+  .viewTemplate .show-references .Doc-TemplateView-Element.hasRefs > SPAN .refList
+  {
+    white-space: nowrap;
+    line-height: 1em;
+    display: block;
+    position: absolute;
+    top: -1em;
+    margin-top: -7px;
+    margin-left: -4px;
+    padding: 3px 1ex 2px;
+    font-size: 90%;
+      -moz-border-radius: 4px 4px 0 0;
+    border-radius: 4px 4px 0 0;
+    background: #CEE1EB;
+  }
+  .viewTemplate .Doc-TemplateView-Element .Doc-TemplateView-Attribute
+  {
+    /*margin-left: 1ex;*/
+    position: relative;
+    white-space: nowrap;
+  }
+  .viewTemplate .show-references .Doc-TemplateView-Element .Doc-TemplateView-Attribute.hasRefs
+  {
+    border: 2px solid #CDEB8B;
+    display: inline-block;
+    margin-top: 1.4em;
+      -moz-border-radius: 0 4px 4px 4px;
+    border-radius: 0 4px 4px 4px;
+    line-height: 1.3;
+    padding: 1px 2px 2px;
+  }
+  .viewTemplate .show-references .Doc-TemplateView-Element .Doc-TemplateView-Attribute.hasRefs .refList
+  {
+    line-height: 1em;
+    display: block;
+    position: absolute;
+    top: -1em;
+    margin-top: -6px;
+    margin-left: -4px;
+    padding: 3px 1ex 2px;
+    font-size: 85%;
+      -moz-border-radius: 4px 4px 0 0;
+    border-radius: 4px 4px 0 0;
+    background: #CDEB8B;
+  }
+  .viewTemplate .show-realReferences .Doc-TemplateView-Element .Doc-TemplateView-Attribute SPAN .refList,
+  .viewTemplate .show-references .Doc-TemplateView-Element .Doc-TemplateView-Attribute SPAN .refList
+  {
+    display: none;
+  }
+  .viewTemplate .show-realReferences .Doc-TemplateView-Element .Doc-TemplateView-Attribute.hasRefs SPAN .refList
+  {
+    display: inline;
+  }
+  .viewTemplate .Doc-TemplateView-Attribute .refList
+  {
+    background: #CDEB8B !important;
+  }
+  .viewTemplate .ref
+  {
+    display: inline;
+    padding: 0px 1ex;
+  }
+
+  .viewTemplate .Doc-TemplateView-Text
+  {
+    display: inline;
+    padding: 1px 2px 2px 2px;
+    font-size: 90%;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+    border-radius: 3px;
+    margin-right: 2px;
+  }
+  .viewTemplate .Doc-TemplateView-Text.hasRefs
+  {
+    background: #CDEB8B;
+    color: #006600;
+    m1argin: 0 2px 0 1px;
+  }
+
+  .viewTemplate .Doc-TemplateView-Comment
+  {
+    display: inline;
+    padding: 1px 2px 2px 2px;
+    font-size: 90%;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+    border-radius: 3px;
+    margin-right: 2px;
+  }
+  .viewTemplate .Doc-TemplateView-Comment.hasRefs
+  {
+    background: #F4E4B4;
+    color: #996600;
+  }
+  .viewTemplate .Doc-TemplateView-Comment.hasRefs .ref
+  {
+    display: none;
+  }
+
+  .Doc-TemplateView-Attribute-Binding,
+  .Doc-TemplateView-Attribute-ClassBinding
+  {
+    background: #CDEB8B;
+    color: #006600;
+    padding: 1px 2px 2px;
+    font-size: 90%;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+    border-radius: 3px;
+  }
+  .Doc-TemplateView-Attribute-ClassBinding
+  {
+    margin: 0 0 0 1ex;
+  }
+  .Doc-TemplateView-Attribute__isEvent
+  {
+    background: #E1CEEB;
+    font-size: 90%;
+    padding: 1px 2px 2px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+    border-radius: 3px;
+  }
+
