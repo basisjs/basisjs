@@ -480,7 +480,7 @@
   //  Property Set
   //
                        // priority: lowest  ------------------------------------------------------------> highest
-  var DataObjectSetStatePriority = STATE.PRIORITY; //[STATE.READY, STATE.DEPRECATED, STATE.UNDEFINED, STATE.ERROR, STATE.PROCESSING];
+  var DataObjectSetStatePriority = STATE.priority; //[STATE.READY, STATE.DEPRECATED, STATE.UNDEFINED, STATE.ERROR, STATE.PROCESSING];
   var DataObjectSetHandlers = {
     stateChanged: function(){
       this.fire(false, true);

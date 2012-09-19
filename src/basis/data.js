@@ -52,7 +52,7 @@
   * @enum {string}
   */
   var STATE = {
-    PRIORITY: [],
+    priority: [],
 
    /**
     * Register new state
@@ -67,14 +67,14 @@
       STATE_EXISTS[value] = name;
 
       if (order)
-        order = this.PRIORITY.indexOf(order);
+        order = this.priority.indexOf(order);
       else
         order = -1;
 
       if (order == -1)
-        this.PRIORITY.push(value);
+        this.priority.push(value);
       else
-        this.PRIORITY.splice(order, 0, value);
+        this.priority.splice(order, 0, value);
     },
 
     getList: function(){
