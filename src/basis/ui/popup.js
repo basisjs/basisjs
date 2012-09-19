@@ -183,7 +183,7 @@
       var dir = this.dir.qw();
       offset = ((offset % 4) + 4) % 4;
 
-      var result = new Array();
+      var result = [];
 
       if (!offset)
         return dir;

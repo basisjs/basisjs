@@ -222,7 +222,7 @@
         case 'method': childClass = specialMethod[config.data.key] ? PrototypeSpecialMethod : PrototypeMethod; break;
         default:
           childClass = PrototypeItem;
-      };
+      }
 
       return new childClass(config);
     },

@@ -109,7 +109,7 @@
     position: relative;
     z-index: 10;
     height: 3px;
-    margin: 6px 0px 7px;
+    margin: 6px 0 7px;
     background: #CCC;
     border-left: 1px solid #888;
     border-right: 1px solid #888;

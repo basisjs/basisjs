@@ -85,7 +85,7 @@
       this.event_reset();
     },
     validate: function(){
-      var error, errors = new Array();
+      var error, errors = [];
       for (var field = this.firstChild; field; field = field.nextSibling)
       {
         if (error = field.validate())

@@ -28,7 +28,7 @@
     max = max || 1;
     if (min > max) return genNumber(precision, max, min);
     return Number((min + Math.random() * (max - min)).toFixed(precision || 0));
-  };
+  }
 
  /**
   * @func
@@ -43,7 +43,7 @@
     for (var i = 0; i < len; i++)
       result += String.fromCharCode(Math.floor(Math.random() * 26) + base[Math.round(Math.random())]);
     return result;
-  };
+  }
 
  /**
   * @func
@@ -56,7 +56,7 @@
       result.push(words[Math.round(Math.random() * words.length)]);
 
     return result.join(' ');
-  };
+  }
 
 
   //

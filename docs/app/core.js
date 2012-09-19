@@ -4,7 +4,6 @@
   var getter = Function.getter;
 
   var nsData = basis.data;
-  var nsWrappers = basis.dom.wrapper;
   var nsEntity = basis.entity;
   var nsAjax = basis.net.ajax;
 
@@ -60,8 +59,7 @@
   var awaitingUpdateQueue = {};
 
   function fetchInheritedJsDocs(path, entity){
-    var fullPath = path;
-    var objData = mapDO[fullPath].data;
+    var objData = mapDO[path].data;
     if (/class|property|method/.test(objData.kind))
     {
       var postPath = objData.kind == 'class' ? '' : '.prototype.' + objData.title;
@@ -90,7 +88,7 @@
   }
 
   function parseJsDocText(text){
-    var parts = text.split(/\s*\@([a-z]+)[\t ]*/i);
+    var parts = text.split(/\s*@([a-z]+)[\t ]*/i);
     var tags = {};
     parts.unshift('description');
     for (var i = 0, key; key = parts[i]; i += 2)
@@ -251,7 +249,7 @@
   //jsDocs = {};
 
   //
-  // Analize object structure
+  // Analyze object structure
   //
 
   var mapDO = {};
@@ -274,7 +272,7 @@
     if (!cls.docsProto_)
     {
       var superDescr = getClassDocsProtoDescr(cls.superClass_);
-      var Proto = Function();
+      var Proto = function(){};
       Proto.prototype = superDescr.docsProto_;
       cls.docsUid_ = clsSeed++;
       cls.docsProto_ = new Proto;
@@ -392,8 +390,8 @@
           if (obj && (obj == document || (obj.ownerDocument && obj.ownerDocument == document)))
             kind = 'htmlElement';
           else
-            kind = /[^A-Z0-9\_]/.test(key) ? 'object' : 'constant';
-      };
+            kind = /[^A-Z0-9_]/.test(key) ? 'object' : 'constant';
+      }
 
       if (isPrototype)
       {
@@ -537,7 +535,7 @@
       console.log('Function parse error: ' + func.toString());
 
     var name = String(m[1] || 'anonymous').trim();
-    var args = String(m[2] || '').replace(/\s*\,\s*/g, ', ');
+    var args = String(m[2] || '').replace(/\s*,\s*/g, ', ');
 
     return func.basisDocFD_ = {
       name: name,
@@ -553,7 +551,7 @@
   }
 
   function getInheritance(cls, key){
-    var result = new Array();
+    var result = [];
     var cursor = cls;
 
     while (cursor)
@@ -584,7 +582,7 @@
     'jsdoc': function(resource){
 
       function getTextFromCode(source){
-        return source.replace(/(^|\*)\s+\@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft();
+        return source.replace(/(^|\*)\s+@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft();
       }
 
       function createJsDocEntity(source, path){
@@ -651,7 +649,7 @@
         {
           if (!skipDeclaration && idx)
           {
-            var m = code.match(/^([\s\n]*)(var\s+|function\s+)?([a-z0-9\_\$\.]+)/i);
+            var m = code.match(/^([\s\n]*)(var\s+|function\s+)?([a-z0-9_\$\.]+)/i);
             if (m)
             {
               var name = m[3];
@@ -761,7 +759,7 @@
     }
     else
       console.log(new Date - resolveResStart);
-  };
+  }
   setTimeout(resolveRes, 0);
 
 

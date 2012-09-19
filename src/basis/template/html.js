@@ -816,8 +816,8 @@
     };
 
     return function(tokens){
-      var pathes = buildPathes(tokens, '_');
-      var bindings = buildBindings(pathes.binding);
+      var paths = buildPathes(tokens, '_');
+      var bindings = buildBindings(paths.binding);
       var proto = buildHtml(tokens);
       var templateMap = {};
       var l10nMap;
@@ -836,7 +836,7 @@
             'break;'
           );
 
-        var l10nProtoUpdate = new Function('_', '__l10n', 'bind_attr', 'var ' + pathes.path + ';return function(token, value){' +
+        var l10nProtoUpdate = new Function('_', '__l10n', 'bind_attr', 'var ' + paths.path + ';return function(token, value){' +
           'switch(token){' +
             code.join('') +
           '}' +
@@ -854,7 +854,7 @@
         return proto.cloneNode(true);
       };
 
-      var objectRefs = pathes.objectRefList;
+      var objectRefs = paths.objectRefList;
       for (var i = 0; objectRefs[i]; i++)
         objectRefs[i] += '.basisObjectId';
 
@@ -863,12 +863,12 @@
       /** @cut */try {
       var fnBody;
       var createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
-        'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + pathes.path.concat(bindings.vars) + ';\n' +
+        'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
         (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
         'function updateAttach(){set(String(this),attaches[this])};\n' +
         bindings.body +
         /**@cut*/';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' +
-        ';return tMap[id]={' + [pathes.ref, 'set:set,rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
+        ';return tMap[id]={' + [paths.ref, 'set:set,rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
         'destroy:function(){' +
           'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
           'attaches=null;' +
@@ -950,7 +950,7 @@
   var buildHtml = function(tokens){
     var result = document.createDocumentFragment();
     var attrs;
-    var childs;
+    var children;
     var element;
 
     for (var i = 0, token; token = tokens[i]; i++)
@@ -1000,8 +1000,8 @@
             }
 
           // precess for childs
-          if (childs = token[ELEMENT_CHILDS]) // childs
-            element.appendChild(buildHtml(childs));
+          if (children = token[ELEMENT_CHILDS]) // childs
+            element.appendChild(buildHtml(children));
 
           // add to result
           result.appendChild(element);

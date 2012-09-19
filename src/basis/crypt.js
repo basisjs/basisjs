@@ -33,7 +33,7 @@
 
     // utf16 string -> utf16 bytes array
     function toBytes(input){  
-      var output = new Array();
+      var output = [];
       var len = input.length;
 
       for (var i = 0; i < len; i++)
@@ -248,7 +248,7 @@
     function decode(input, useUTF8){
       input = input.replace(/[^a-z0-9\+\/]/ig, '');
 
-      var output = new Array();
+      var output = [];
       var chr1, chr2, chr3;
       var enc1, enc2, enc3, enc4;
       var i = 0;
@@ -298,7 +298,7 @@
   //  [ HEX Encode/Decode ]
 
   function number2hex(number){
-    var result = new Array();
+    var result = [];
 
     do
     {
@@ -311,7 +311,7 @@
       result.push('0');
 
     return result.reverse().join('');
-  };
+  }
 
   function HEX(input){
     if (typeof input == 'number')
@@ -324,7 +324,7 @@
       output = String(input).toArray().map(function(c){ return number2hex(c.charCodeAt(0)); });
 
     return output.join('');
-  };
+  }
 
   // ==========================================
   //  SHA1
@@ -348,11 +348,11 @@
     ];
 
     function vector(val){
-      var result = new Array();
+      var result = [];
       for (var i = 3; i >= 0; i--)
         result.push((val >> i * 8) & 0xFF);
       return result;
-    };
+    }
 
     //
     // SHA1 main function
@@ -368,7 +368,7 @@
 
       // convert message to dword array
       var len = message.length;
-      var dwords = new Array();
+      var dwords = [];
 
       for (var i = 0; i < len; i++)
         dwords[i >> 2] |= message[i] << ((3 - (i & 3)) << 3);
@@ -428,8 +428,8 @@
 
     var C_2_POW_32 = Math.pow(2, 32);
     var S;
-    var K = new Array();
-    var I = new Array();
+    var K = [];
+    var I = [];
     var F = [
       function(x, y, z){
         return z ^ (x & (y ^ z));
@@ -459,30 +459,29 @@
           case 3: I[i] = (i * 7) & 0x0F; break;
         }
       }
-    };
+    }
 
     function add(word){  // safe add
-      var args = arguments;
-      var count = args.length;
+      var count = arguments.length;
       var lw = word & 0xFFFF;
       var hw = word >> 16;
       for (var i = 1; i < count; i++)
       {
-        var b = args[i];
+        var b = arguments[i];
         lw += (b & 0xFFFF);
         hw += (b >> 16) + (lw >> 16);
         lw &= 0xFFFF;
       }  
       return (hw << 16) | (lw & 0xFFFF);
 
-    };
+    }
 
     function vector(val){
-      var result = new Array();
+      var result = [];
       for (var i = 0; i < 4; i++)
         result.push((val >> i * 8) & 0xFF);
       return result;
-    };
+    }
 
     //
     // MD5 main function
@@ -501,7 +500,7 @@
           message = UTF16.toBytes(message);
 
       // convert message to dword array
-      var dwords = new Array();
+      var dwords = [];
       var len = message.length;
 
       for (var i = 0; i < len; i++)
@@ -510,7 +509,7 @@
       dwords[len >> 2] |= 0x80 << ((len & 3) << 3);
 
       // padding 0
-      dwords.push.apply(dwords, Array(((dwords.length & 0x0F) > 14 ? 30 : 14) - (dwords.length & 0x0F)));
+      dwords.push.apply(dwords, new Array(((dwords.length & 0x0F) > 14 ? 30 : 14) - (dwords.length & 0x0F)));
       // add length
       dwords.push((len << 3) & 0x0FFFFFFFF);
       dwords.push(len >>> 29);
@@ -551,7 +550,6 @@
     md5: function(useUTF8){ return MD5(this, useUTF8); },
     md5hex: function(useUTF8){ return HEX(MD5(this, useUTF8)); },
     base64: function(useUTF8){ return Base64.encode(this, useUTF8); },
-    base64decode: function(useUTF8){ return Base64.encode(this, useUTF8); },
     hex: function(){ return HEX(this); }
   };
 

@@ -7,8 +7,8 @@
  /**
   * Interface for communication with SOAP services.
   *
-  * @link ./demo/ajax/soap-simple.html
-  * @link ./demo/ajax/soap-list.html
+  * @see ./demo/ajax/soap-simple.html
+  * @see ./demo/ajax/soap-list.html
   *
   * @namespace basis.net.soap
   */
@@ -155,13 +155,13 @@
       if (requestData.soapHeaderSections)
       {
         var header = this.requestEnvelope.getHeader(true); 
-        for (var i in requestData.soapHeaderSections)
+        for (var key in requestData.soapHeaderSections)
         {
-          var section = requestData.soapHeaderSections[i];
+          var section = requestData.soapHeaderSections[key];
           var ns = section.namespace || this.proxy.namespace;
           var data = section.data || section;
 
-          header.setSection(new QName(i, ns), data);
+          header.setSection(new QName(key, ns), data);
         }
       }
 
@@ -268,7 +268,7 @@
 
       if (!header)
       {
-        var headerElement = this.getElementByName('Header');
+        var headerElement = this.getElementByName(SOAP_HEADER);
 
         if (headerElement || forceCreate)
         {
@@ -291,7 +291,7 @@
 
       if (!body)
       {
-        var bodyElement = this.getElementByName('Body');
+        var bodyElement = this.getElementByName(SOAP_BODY);
 
         if (bodyElement || forceCreate)
         {
@@ -334,7 +334,7 @@
     className: namespace + '.EnvelopeHeader',
 
     init: function(element, document){
-      this.element = element || createElementNS(document, 'Header', SOAP_NAMESPACE);
+      this.element = element || createElementNS(document, SOAP_HEADER, SOAP_NAMESPACE);
     },
     getValue: function(){
       return XML2Object(this.element);
@@ -371,7 +371,7 @@
     className: namespace + '.EnvelopeBody',
 
     init: function(element, document){
-      this.element = element || createElementNS(document, 'Body', SOAP_NAMESPACE);
+      this.element = element || createElementNS(document, SOAP_BODY, SOAP_NAMESPACE);
     },
     getValue: function(mapping){
       return XML2Object(this.element, mapping);
@@ -399,10 +399,6 @@
   //
 
   module.exports = {
-    /*Service: Service,
-    ServiceCall: ServiceCall,
-    ServiceCallTransport: ServiceCallTransport,*/
-
     SOAPProxy: SOAPProxy,
     SOAPRequest: SOAPRequest,
 

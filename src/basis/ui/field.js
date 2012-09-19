@@ -261,7 +261,7 @@
     readFieldValue_: function(){
       return this.getValue();
     },
-    writeFieldValue_: Function(),
+    writeFieldValue_: function(){},
     getValue: function(){
       return this.value;
     },

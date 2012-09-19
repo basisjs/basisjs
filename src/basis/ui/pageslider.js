@@ -73,7 +73,7 @@
       this.scrollToPage(this.selection.pick());
     },
 
-    setPage: function(scroller){
+    setPage: function(){
       var currentPage = this.selection.pick();
       if (!currentPage)
         return;

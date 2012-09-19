@@ -31,7 +31,6 @@
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
 
-  var nsWrappers = basis.dom.wrapper;
   var nsLayout = basis.layout;
   var ua = basis.ua;
   

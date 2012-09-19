@@ -43,7 +43,7 @@
       result.getter = getter;
 
     return result;
-  };
+  }
 
  /**
   * @class

@@ -548,7 +548,7 @@
       var TOP = 0;
       var BOTTOM = 0;      
       var LEFT = 0;
-      var RIGHT = 10;
+      var RIGHT = 0;
       var WIDTH = context.canvas.width;
       var HEIGHT = context.canvas.height;
 
@@ -847,21 +847,21 @@
       this.updateCount++;
     },
     getMinValue: function(){
-      var min;
+      var min = Infinity;
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         for (var j in child.values)
-          if (child.values[j] < min || min == null)
+          if (child.values[j] < min)
             min = child.values[j];
       }
       return min;
     },
     getMaxValue: function(){
-      var max;
+      var max = -Infinity;
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         for (var j in child.values)
-          if (child.values[j] > max || max == null)
+          if (child.values[j] > max)
             max = child.values[j];
       }
       return max;
@@ -931,9 +931,6 @@
   // GraphSelection
   // 
   var ctrlPressed = false;
-  var shiftPressed = false;
-  var selectionStart = false;
-  var lastItemPosition = -1;
   var startItemPosition = -1;
   var addSelectionMode = true;
 
@@ -982,8 +979,8 @@
 
       if (x > 0 && x < this.clientRect.width && y > 0 && y < this.clientRect.height)
       {
-        for (var i in GRAPH_SELECTION_GLOBAL_HANDLER)
-          Event.addGlobalHandler(i, GRAPH_SELECTION_GLOBAL_HANDLER[i], this);
+        for (var eventName in GRAPH_SELECTION_GLOBAL_HANDLER)
+          Event.addGlobalHandler(eventName, GRAPH_SELECTION_GLOBAL_HANDLER[eventName], this);
 
         addSelectionMode = Event.mouseButton(event, Event.MOUSE_LEFT);
 
@@ -1299,11 +1296,12 @@
       }
 
       // adjust label positions 
-      var labels = labels.sortAsObject(getter('valueY'));
+      labels = labels.sortAsObject(getter('valueY'));
+
+      var hasCrossing = true;
       var crossGroup = labels.map(function(label){
         return { labels: [label], y: label.labelY, height: labelHeight };
       });
-      var hasCrossing = true;
       while (crossGroup.length > 1 && hasCrossing)
       {
         var i = 1;
@@ -1323,6 +1321,7 @@
             i++;
         }
       }
+
       for (var i = 0; i < crossGroup.length; i++)
       {
         for (var j = 0; j < crossGroup[i].labels.length; j++)
@@ -1628,7 +1627,7 @@
   var StackedBarGraph = BarGraph.subclass({
     className: namespace + '.StackedBarGraph',
     getMaxValue: function(){
-      var max;
+      var max = -Infinity;
       var sum;
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
@@ -1651,7 +1650,7 @@
 
       return Math.max.apply(null, values);*/
     },
-    getBarRect: function(value, seriaPos, barPos, min, max, step, width, height, zeroLinePosition){
+    getBarRect: function(value, seriaPos, barPos, min, max, step, width, height){
       var bar = {};
       var previousBar = seriaPos > 0 && this.bars[seriaPos - 1][barPos];
       var barSize = 0.7 * step;

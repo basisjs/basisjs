@@ -29,7 +29,6 @@
   var $self = Function.$self;
 
   var EventObject = basis.event.EventObject;
-  var LISTEN = basis.event.LISTEN;
   var createEvent = basis.event.create;
   var events = basis.event.events;
 

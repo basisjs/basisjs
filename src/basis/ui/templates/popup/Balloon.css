@@ -11,10 +11,10 @@
     pointer-events: none;
     position: absolute;
 
-    bottom: 0px;
-    top: 0px;
-    right: 0px;
-    left: 0px;
+    bottom: 0;
+    top: 0;
+    right: 0;
+    left: 0;
 
     padding-bottom: 10px; /* 5 (top) + 5 (bottom) */
   }
@@ -124,7 +124,7 @@
   .Basis-Balloon-Canvas .content
   {
     height: 100%;
-    padding: 5px 0px 5px;
+    padding: 5px 0 5px;
 
     background-color: #F7E36F;
   }

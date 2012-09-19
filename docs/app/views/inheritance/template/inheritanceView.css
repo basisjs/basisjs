@@ -10,14 +10,11 @@
   }
   #Content .viewInheritance LI UL
   {
-    padding: 0;
-    padding-left: 14px;
+    padding: 0 0 0 14px;
   }
   #Content .viewInheritance .absent
   {
     opacity: .5;
-      -moz-opacity: .5;
-      filter: alpha(opacity:50);
   }
   #Content .viewInheritance .content A
   {
@@ -42,9 +39,9 @@
     margin-left: 1ex;
     padding: 1px 1ex 2px;
     background: #FFE13F;
-    border-radius: 3px;
       -moz-border-radius: 3px;
       -webkit-border-radius: 3px;
+    border-radius: 3px;
   }
   #Content .viewInheritance .tag-none
   {

@@ -155,7 +155,7 @@
   if (testBrowser('IE7-')) 
     try {
       document.execCommand("BackgroundImageCache", false, true);
-    } catch(e) {};
+    } catch(e) {}
 
 
   //

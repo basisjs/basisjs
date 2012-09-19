@@ -92,7 +92,7 @@
   // Layout
   //
 
-  var panel = new VerticalPanelStack({
+  new VerticalPanelStack({
     container: basis.dom.get('Layout'),
     id: 'Sidebar',
     childNodes: [
@@ -153,7 +153,7 @@
         thread.start();
       }
     };
-  };
+  }
 
   //
   // Global events

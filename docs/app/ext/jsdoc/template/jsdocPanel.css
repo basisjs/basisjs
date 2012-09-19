@@ -71,11 +71,11 @@
   .jsDocs .tags .tag
   {
     font-size: 90%;
-    padding: 0px 4px 1px;
+    padding: 0 4px 1px;
     background: #FFCC99;
-    border-radius: 2px;
       -moz-border-radius: 2px;
       -webkit-border-radius: 2px;
+    border-radius: 2px;
   }
   .jsDocs .label
   {

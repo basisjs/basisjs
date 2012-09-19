@@ -26,7 +26,7 @@
       res = res.concat(randomWord.slice(0, count - res.length));
 
     return res;
-  };
+  }
 
   var posts = [];
   var catList = ['javascript', 'basis', 'style', 'usability', 'css', 'html', 'framework', 'browser'];

@@ -121,7 +121,7 @@
       if (value != null)
         this.setRequestHeader(key, value);
     }, request);
-  };
+  }
 
 
  /**
@@ -193,7 +193,7 @@
 
     // set new state
     this.setState(newState, this.data.error);
-  };
+  }
 
   /**
    * @class Request
@@ -487,7 +487,7 @@
   };
 
   var PROXY_POOL_LIMIT_HANDLER = {
-    complete: function(sender, request){
+    complete: function(){
       var nextRequest = this.requestQueue.shift();
       if (nextRequest)
       {

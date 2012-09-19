@@ -131,7 +131,7 @@
     var calcArgs = [];
     for (var i = 0, name; i < args.length; i++)
     {
-      var name = args[i].quote('"');
+      name = args[i].quote('"');
       cond.push(name + ' in delta');
       calcArgs.push('data[' + name + ']');
     }
@@ -194,9 +194,7 @@
       data = (data || []).map(this.wrapper);
       Dataset.setAccumulateState(false);
 
-      var res = superClass.prototype.sync.call(this, data, set);
-
-      return res;
+      return superClass.prototype.sync.call(this, data, set);
     };
   };
 
@@ -644,7 +642,7 @@
 
       if ('type' in config && typeof config.type != 'function')
       {
-        ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wraper: ', config.type);
+        ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
         config.type = $self;
       }
 
@@ -809,11 +807,7 @@
 
   function entityWarn(entity, message){
     ;;;if (typeof console != 'undefined') console.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.eventObjectId + ': ' + message, entity); 
-  };
-
-  function fieldCleaner(key){
-    this.set(key, null);
-  };
+  }
 
  /**
   * @class
@@ -835,17 +829,11 @@
       for (var key in delta)
         entity.data[key] = delta[key];
 
-      if (rollbackDelta)
+      if (rollbackDelta && !entity.modified)
         for (var key in rollbackDelta)
         {
-          if (!entity.modified)
-          {
-            entity.modified = rollbackDelta;
-          }
-          else
-          {
-            // ???
-          }
+          entity.modified = rollbackDelta;
+          break;
         }
     }
 
@@ -998,7 +986,6 @@
         }
 
         // main part
-        var delta;
         var result;
         var rollbackData = this.modified;
         var newValue = valueWrapper(value, this.data[key]);
@@ -1006,7 +993,7 @@
                                         // that why we fetch it again after valueWrapper call
 
         var valueChanged = newValue !== curValue
-                           // date comparation fix;
+                           // date comparison fix;
                            && (!newValue || !curValue || newValue.constructor !== Date || curValue.constructor !== Date || +newValue !== +curValue);
 
         // if value changed:

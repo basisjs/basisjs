@@ -182,12 +182,11 @@
     line-height: 1em !important;
     height: 1em !important;
     overflow: hidden;
-    padding: 1px 1ex 2px !important;
+    padding: 1px 1ex 2px 14px !important;
     border-top: 1px solid white;
     border-bottom: 1px solid white;
     background: url(img/tab_bg_top.png?1) repeat-x 0 -2px;
-    font-family: Consolas;
-    padding-left: 14px !important;
+    font-family: Consolas, Courier New, monospace;
   }
 
   .Basis-SyntaxHighlight

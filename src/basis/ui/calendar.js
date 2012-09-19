@@ -50,7 +50,6 @@
   //
 
   var monthNumToRef = basis.date.monthNumToAbbr;
-  var dayNumToRef = basis.date.dayNumToAbbr;
 
   basis.l10n.createDictionary(namespace, __dirname + 'l10n/calendar', {
     "quarter": "Quarter",
@@ -466,8 +465,8 @@
       Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
     },
 
-    getTitle: Function(),
-    getTabTitle: Function(),
+    getTitle: function(){},
+    getTabTitle: function(){},
 
     // nodes methods
 
@@ -501,7 +500,7 @@
     },
 
     // bild methods
-    getInitOffset: Function()
+    getInitOffset: function(){}
   });
 
 
@@ -668,7 +667,7 @@
 
     selection: true,
     childClass: CalendarSection,
-    childFactory: Function(),
+    childFactory: function(){},
 
     template: resource('templates/calendar/Calendar.tmpl'),
 

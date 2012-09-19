@@ -13,13 +13,13 @@
     background-color: #F1F2F4;
     white-space: nowrap;
     -moz-user-select: none;
+    user-select: none;
     cursor: default;
   }
   .Basis-Table-Header-Cell-Content
   {
     height: 100%;
-    margin: 0;
-    margin-top: -8px;
+    margin: -8px 0 0 0;
     padding-left: 1px;
     border-top: 1px solid #D5D5D5;
     border-bottom: 1px solid #D5D5D5;

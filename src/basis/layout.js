@@ -29,8 +29,6 @@
   var cssom = basis.cssom;
   var classList = basis.cssom.classList;
 
-  var nsWrappers = DOM.wrapper;
-
   var UINode = basis.ui.Node;
 
 
@@ -521,8 +519,6 @@
   // Vertical stack panel
   //
 
-  var stackPanelId = 0;
-
   var VerticalPanelRule = cssom.createRule('.Basis-VerticalPanel');
   VerticalPanelRule.setStyle({
     position: 'relative'
@@ -634,17 +630,17 @@
 
       var element = this.element;
       var lastElement = this.lastChild.element;
-      var ruller = this.tmpl.ruller;
+      var ruler = this.tmpl.ruller;
 
       var lastBox = new Box(lastElement, false, element);
       var bottom = (lastBox.bottom - getComputedProperty(element, 'paddingTop') - getComputedProperty(element, 'borderTopWidth')) || 0;
-      var height = getHeight(element, ruller);
+      var height = getHeight(element, ruler);
 
       if (!SUPPORT_COMPUTESTYLE)
       {
-        var offsetHeight = ruller.offsetHeight;
-        ruller.style.height = lastElement.currentStyle.marginBottom;
-        bottom += ruller.offsetHeight - offsetHeight;
+        var offsetHeight = ruler.offsetHeight;
+        ruler.style.height = lastElement.currentStyle.marginBottom;
+        bottom += ruler.offsetHeight - offsetHeight;
       }
       else
       {
@@ -663,7 +659,7 @@
         if (node.flex)
         {
           flexNodeCount++;
-          flexHeight += getHeight(node.element, ruller);
+          flexHeight += getHeight(node.element, ruler);
         }
       }
 

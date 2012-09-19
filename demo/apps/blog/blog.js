@@ -13,17 +13,16 @@ basis.ready(function(){
 
   function outStat(){
     var sdate = times.shift();
-
-    var timelist = statOutElement;
     var lasttime = sdate;
+
     for (var i = 0; i < times.length; i++)
     {
       var t = times[i];
-      timelist.appendChild(basis.dom.createElement('LI', (t[0] - sdate) + 'ms, self: ' + (t[0] - (lasttime)) + ' [' + t[1] + ']'));
+      statOutElement.appendChild(basis.dom.createElement('LI', (t[0] - sdate) + 'ms, self: ' + (t[0] - (lasttime)) + ' [' + t[1] + ']'));
       lasttime = t[0];
     }
 
-    basis.dom.insert(timelist, [
+    basis.dom.insert(statOutElement, [
       basis.dom.createElement('B', lasttime - sdate),
       basis.dom.createElement('SPAN', ' (' + (lasttime - firstTime) + ')')
     ]);

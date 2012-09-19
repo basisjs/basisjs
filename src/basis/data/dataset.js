@@ -75,7 +75,7 @@
   SUBSCRIPTION.add(
     'MINUEND',
     {
-      operandsChanged: function(object, oldMinuend, oldSubtrahend){
+      operandsChanged: function(object, oldMinuend){
         if (this.minuend !== oldMinuend)
         {
           this.remove(object, oldMinuend);

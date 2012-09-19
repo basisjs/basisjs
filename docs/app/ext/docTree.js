@@ -5,20 +5,6 @@
   // Maps
   //
 
-  var kindNodeType = {
-    'namespace': 'Namespace',
-    'method': 'Method',
-    'function': 'Function',
-    'property': 'Property',
-    'classMember': 'ClassMember',
-    'constant': 'Constant',
-    'constantObject': 'ConstantObject',
-    'htmlElement': 'HtmlElement',
-    'class': 'Class',
-    'object': 'Object',
-    'event': 'Event'
-  };
-
   var groupTitle = {
     Namespace: 'Namespaces',
     Method: 'Methods',

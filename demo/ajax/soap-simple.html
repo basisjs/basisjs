@@ -72,7 +72,7 @@
   <div id="demo-container">
     <form id="convertFormNative">
       <h2>Using Basis.Ajax.Transport</h2>
-      <label>Enter a value (celsius degree):</label>
+      <label for="convertFormNative_Value">Enter a value (celsius degree):</label>
       <input id="convertFormNative_Value" type="text" value="100.0"/>
       <button type="submit">Convert</button>
       <p>Press Convert button or enter</p>
@@ -81,7 +81,7 @@
 
     <form id="convertFormDynamicCall">
       <h2>Using Basis.SOAP (dynamic method call)</h2>
-      <label>Enter a value (celsius degree):</label>
+      <label for="convertFormDynamicCall_Value">Enter a value (celsius degree):</label>
       <input id="convertFormDynamicCall_Value" type="text" value="100.0"/>
       <button type="submit">Convert</button>
       <p>Press Convert button or enter</p>
@@ -90,7 +90,7 @@
 
     <form id="convertFormStaticCall">
       <h2>Using Basis.SOAP (static method call)</h2>
-      <label>Enter a value (celsius degree):</label>
+      <label for="convertFormStaticCall_Value">Enter a value (celsius degree):</label>
       <input id="convertFormStaticCall_Value" type="text" value="100.0"/>
       <button type="submit">Convert</button>
       <p>Press Convert button or enter</p>
@@ -145,7 +145,7 @@
     $('convertFormNative').onsubmit = function(e){
       transport.reqValue = Number($('convertFormNative_Value').value);
       transport.postBody = 
-        '<?xml version="1.0" encoding="utf-8"?>\n<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><CelsiusToFahrenheit xmlns="http://tempuri.org/"><Celsius>' +
+        '<?xml version="1.0" encoding="utf-8"?>\n<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><CelsiusToFahrenheit xmlns="http://tempuri.org/"><Celsius>' +
         transport.reqValue +
         '</Celsius></CelsiusToFahrenheit></soap:Body></soap:Envelope>';
       transport.request();

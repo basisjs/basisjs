@@ -118,7 +118,7 @@
                : document.createNode(1, nodename, namespace);
     else
       return document.createElement(nodename);
-  };
+  }
 
 
   /*
@@ -400,13 +400,13 @@
       }
       return result;
     }
-  };
+  }
 
   function getElementsByTagNameNS(element, name, namespace){
     if (element.getElementsByTagNameNS)
       return element.getElementsByTagNameNS(namespace, name);
 
-    var result = new Array();
+    var result = [];
     element.ownerDocument.setProperty('SelectionNamespaces', 'xmlns:x="' + namespace + '"');
     var nodes = element.selectNodes('//x:' + name);
 

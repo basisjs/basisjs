@@ -58,7 +58,8 @@
    /**
     * Actions on click.
     */
-    click: Function(),
+    click: function(){
+    },
 
    /**
     * Set new caption and update binding.

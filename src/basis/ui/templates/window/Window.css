@@ -124,7 +124,7 @@
   .Basis-Window-Canvas .content
   {
     height: 100%;
-    padding: 31px 0px 6px;
+    padding: 31px 0 6px;
     border: 1px solid white;
 
     background-color: #D9E8FB;

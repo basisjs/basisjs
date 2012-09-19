@@ -38,7 +38,7 @@
       }
     }),
     sorting: Function.getter('data.title'),
-    grouping: Object.slice(viewPrototype().grouping, 'groupGetter sorting childClass'.qw()),
+    grouping: Object.slice(viewPrototype().grouping, 'groupGetter sorting childClass'.qw())
   });
 
   var prototypeMapPopupMatchInput = new basis.ui.field.MatchInput({

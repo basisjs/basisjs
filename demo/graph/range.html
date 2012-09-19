@@ -99,7 +99,6 @@
   </style>
 
   <script type="text/javascript" src="../../basis-all.js"></script>
-  <script type="text/javascript" src="data.json"></script>
 
   <script type="text/javascript" src="../seedrandom.js"></script>
   <script type="text/javascript" src="../demo.js"></script>
@@ -135,6 +134,7 @@
     // Example
     //
 
+    var rawData = basis.resource('data.json').fetch();
     var data = [];
 
     var dates = rawData.dates.split(';');

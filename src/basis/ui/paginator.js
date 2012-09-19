@@ -94,12 +94,12 @@
 
   var DRAGDROP_HANDLER = {
     start: function(){
-      this.initOffset = this.tmpl.scrollTrumb.offsetLeft;
+      this.initOffset = this.tmpl.scrollThumb.offsetLeft;
     },
     move: function(sender, config){
-      var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollTrumbWrapper.offsetWidth).fit(0, 1);
+      var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollThumbWrapper.offsetWidth).fit(0, 1);
       this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
-      this.tmpl.scrollTrumb.style.left = percent(pos);
+      this.tmpl.scrollThumb.style.left = percent(pos);
     },
     over: function(){
       this.setSpanStartPage(this.spanStartPage_);
@@ -168,7 +168,7 @@
       this.setActivePage(activePage, true);
 
       this.scrollbarDD = new DragDropElement({
-        element: this.tmpl.scrollTrumb,
+        element: this.tmpl.scrollThumb,
         handler: DRAGDROP_HANDLER,
         handlerContext: this
       });
@@ -212,10 +212,10 @@
       // scrollThumbWidth = spanWidth * 1 / (1 - spanWidth)
 
       var spanWidth = pageSpan / pageCount;
-      var scrollTrumbWidth = spanWidth / (1 - spanWidth);
+      var scrollThumbWidth = spanWidth / (1 - spanWidth);
 
-      this.tmpl.scrollTrumbWrapper.style.width = percent(1 - spanWidth);
-      this.tmpl.scrollTrumb.style.width = percent(scrollTrumbWidth);
+      this.tmpl.scrollThumbWrapper.style.width = percent(1 - spanWidth);
+      this.tmpl.scrollThumb.style.width = percent(scrollThumbWidth);
 
       this.setSpanStartPage(this.spanStartPage_);
       this.setActivePage(arguments.length == 3 ? activePage : this.activePage);
@@ -250,7 +250,7 @@
         updateSelection(this);
       }
 
-      this.tmpl.scrollTrumb.style.left = percent((pageNumber / Math.max(this.pageCount - this.pageSpan, 1)).fit(0, 1));
+      this.tmpl.scrollThumb.style.left = percent((pageNumber / Math.max(this.pageCount - this.pageSpan, 1)).fit(0, 1));
     },
 
     destroy: function(){
