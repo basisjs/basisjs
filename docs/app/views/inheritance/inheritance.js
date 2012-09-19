@@ -112,7 +112,7 @@
               {
                 title: 'Namespace',
                 selected: true,
-                handler: function(){
+                onselect: function(){
                   owner.setGrouping({
                     groupGetter: getter('delegate.group'),
                     childClass: {
@@ -123,7 +123,7 @@
               },
               {
                 title: 'None',
-                handler: function(){
+                onselect: function(){
                   owner.setGrouping();
                 }
               }

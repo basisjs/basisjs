@@ -38,20 +38,20 @@
             childNodes: [
               {
                 title: 'Schematic',
-                handler: function(){
+                onselect: function(){
                   contentClassList.set('references');
                 }
               },
               {
                 title: 'Highlight',
                 selected: true,
-                handler: function(){
+                onselect: function(){
                   contentClassList.set('realReferences');
                 }
               },
               {
                 title: 'Hide',
-                handler: function(){
+                onselect: function(){
                   contentClassList.clear();
                 }
               }

@@ -254,7 +254,7 @@
             childNodes: [
               {
                 title: 'Type',
-                handler: function(){
+                onselect: function(){
                   owner.setSorting('data.key');
                   owner.setGrouping(PROTOTYPE_GROUPING_TYPE);
                 }
@@ -262,7 +262,7 @@
               {
                 title: 'Implementation',
                 selected: true,
-                handler: function(){
+                onselect: function(){
                   owner.setSorting(function(node){
                     return (PROTOTYPE_ITEM_WEIGHT[node.data.kind] || 0) + '_' + node.data.key;
                   });

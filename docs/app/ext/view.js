@@ -47,6 +47,10 @@
       select: function(event){
         this.select();
       }
+    },
+    init: function(){
+      basis.ui.Node.prototype.init.call(this);
+      if ('handler' in this) alert('!');
     }
   });
 
@@ -66,8 +70,8 @@
         datasetChanged: function(){
           var node = this.pick();
 
-          if (node && node.handler)
-            node.handler();
+          if (node && typeof node.onselect == 'function')
+            node.onselect();
         }
       }
     }
