@@ -142,8 +142,8 @@
       sliders.map(function(slider){
         var label;
         slider.addHandler({
-          change: function(slider){
-            label.nodeValue = Math.floor(this.value * 1000)/1000;
+          change: function(){
+            label.nodeValue = Math.floor(this.value * 1000) / 1000;
           }
         });
         return DOM.createElement('',

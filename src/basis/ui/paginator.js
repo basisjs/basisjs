@@ -93,7 +93,7 @@
   //
 
   var DRAGDROP_HANDLER = {
-    start: function(sender, config){
+    start: function(){
       this.initOffset = this.tmpl.scrollTrumb.offsetLeft;
     },
     move: function(sender, config){
@@ -101,7 +101,7 @@
       this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
       this.tmpl.scrollTrumb.style.left = percent(pos);
     },
-    over: function(sender, config){
+    over: function(){
       this.setSpanStartPage(this.spanStartPage_);
     }
   };
@@ -128,7 +128,7 @@
     },
 
     action: {
-      jumpTo: function(actionName, event, node){
+      jumpTo: function(actionName, event){
         var scrollbar = this.tmpl.scrollbar;
         var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
         this.setSpanStartPage(Math.floor(pos * this.pageCount) - Math.floor(this.pageSpan / 2));

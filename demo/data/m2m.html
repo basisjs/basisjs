@@ -350,7 +350,7 @@
           },
 
           action: {
-            delete: function(event){
+            delete: function(){
               this.target.destroy();
             }
           },
@@ -457,7 +457,7 @@
         },
 
         action: {
-          toggle: function(event){
+          toggle: function(){
             if (this.target)
               this.target.destroy();
             else

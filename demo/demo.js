@@ -5,56 +5,48 @@
   basis.require('basis.cssom');
   basis.require('basis.format.highlight');
 
-  window.DemoLocale = {
-    TABS: {
-      DEMO: 'Demo',
-      DESCRIPTION: 'Description',
-      SOURCE: 'Source code'
-    }
-  };
-
   document.write('<style type="text/css">@import "../demo.css";</style>');
   
   basis.ready(function(){
 
-    var DOM = basis.dom;
-    var Event = basis.dom.event;
+    var dom = basis.dom;
+    var event = basis.dom.event;
     var cssom = basis.cssom;
     var classList = basis.cssom.classList;
 
     var highlight = Function.runOnce(function(){
-      DOM.get('javascript').innerHTML = basis.format.highlight.highlight(DOM.get('javascript').innerHTML, 'js');
-      DOM.get('css').innerHTML = basis.format.highlight.highlight(DOM.get('css').innerHTML, 'css');
+      dom.get('javascript').innerHTML = basis.format.highlight.highlight(dom.get('javascript').innerHTML, 'js');
+      dom.get('css').innerHTML = basis.format.highlight.highlight(dom.get('css').innerHTML, 'css');
     });
 
     var pages = [
       {
-        title: DemoLocale.TABS.DEMO,
-        element: DOM.createElement('#Demo-MainPage', DOM.get('demo-summary'), DOM.get('demo-container'))
+        title: 'Demo',
+        element: dom.createElement('#Demo-MainPage', dom.get('demo-summary'), dom.get('demo-container'))
       },
       {
-        title: DemoLocale.TABS.DESCRIPTION,
-        element: DOM.createElement('#Demo-DescriptionPage', DOM.get('demo-description'))
+        title: 'Description',
+        element: dom.createElement('#Demo-DescriptionPage', dom.get('demo-description'))
       },
       {
-        title: DemoLocale.TABS.SOURCE,
-        element: DOM.createElement('#Demo-SourcePage',
-          DOM.createElement('H2', 'CSS'),
-          DOM.createElement('PRE#css.Basis-SyntaxHighlight', DOM.get('demo-css').innerHTML),
-          DOM.createElement('H2', 'Javascript'),
-          DOM.createElement('PRE#javascript.Basis-SyntaxHighlight', DOM.get('demo-javascript').innerHTML)
+        title: 'Source',
+        element: dom.createElement('#Demo-SourcePage',
+          dom.createElement('H2', 'CSS'),
+          dom.createElement('PRE#css.Basis-SyntaxHighlight', dom.get('demo-css').innerHTML),
+          dom.createElement('H2', 'Javascript'),
+          dom.createElement('PRE#javascript.Basis-SyntaxHighlight', dom.get('demo-javascript').innerHTML)
         )
       }
     ];
-    var tabs = DOM.createElement('#DemoTabs', DOM.wrap(pages, { '.DemoWrapper-Tab': Function.$true }, 'title'));
+    var tabs = dom.createElement('#DemoTabs', dom.wrap(pages, { '.DemoWrapper-Tab': Function.$true }, 'title'));
     classList(tabs.firstChild).add('selected');
 
-    Event.addHandler(tabs, 'click', function(event){
-      var sender = Event.sender(event);
+    event.addHandler(tabs, 'click', function(e){
+      var sender = event.sender(e);
       var classListSender = classList(sender);
       if (classListSender.contains('DemoWrapper-Tab'))
       {
-        DOM.axis(tabs, DOM.AXIS_CHILD).forEach(function(tab, idx){
+        dom.axis(tabs, dom.AXIS_CHILD).forEach(function(tab, idx){
           classList(tab).bool('selected', tab == sender);
           cssom.display(pages[idx].element, tab == sender);
         });
@@ -65,31 +57,31 @@
     
     pages.forEach(function(page, idx){ cssom.display(page.element, !idx); });
 
-    DOM.insert(
+    dom.insert(
       document.body,
-      DOM.createElement('A#backLink[href="../index.html"]', 'Back to demos'),
-      DOM.INSERT_BEGIN
+      dom.createElement('A#backLink[href="../index.html"]', 'Back to demos'),
+      dom.INSERT_BEGIN
     );
 
-    DOM.insert(document.body, [
-      DOM.createElement('#DemoWrapper',
+    dom.insert(document.body, [
+      dom.createElement('#DemoWrapper',
         tabs,
-        DOM.wrap(pages, { '.DemoWrapper-Page': Function.$true }, 'element')
+        dom.wrap(pages, { '.DemoWrapper-Page': Function.$true }, 'element')
       ),
-      DOM.createElement('#DemoCopy', DOM.createElement('P', 'basis.js \xA9 2006-2012, ', DOM.createElement('A[href="http://code.google.com/p/basis-js"][target="_blank"]', 'Project page')))
+      dom.createElement('#DemoCopy', dom.createElement('P', 'basis.js \xA9 2006-2012, ', dom.createElement('A[href="http://code.google.com/p/basis-js"][target="_blank"]', 'Project page')))
     ]);
 
     classList(document.body).add('show');
 
-    if (/google/.test(location.host))
+    /*if (/google/.test(location.host))
       (function() {
         var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
         ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ga);
-      })();
+      })();*/
   });
 
-  var _gaq = _gaq || [];
+  /*var _gaq = _gaq || [];
   _gaq.push(
     ['siteTracker._setAccount', 'UA-18071-1'],
     ['siteTracker._trackPageview']
@@ -98,4 +90,4 @@
   _gaq.push(
     ['projectTracker._setAccount', 'UA-16275563-1'],
     ['projectTracker._trackPageview']
-  );
+  );*/

@@ -144,7 +144,7 @@
 
       listen: {
         target: {
-          rollbackUpdate: function(object, modifiedDelta){
+          rollbackUpdate: function(){
             this.updateBind('modified');
           }
         }
@@ -161,7 +161,7 @@
       sorting: Function.getter('data.title', String.toLowerCase),  // sorting for child nodes
       selection: {              // we need for selection, define config for it
         handler: {
-          datasetChanged: function(dataset, delta){ // dataset -> articleList.selection
+          datasetChanged: function(){
             // this -> articleList.selection
             articleEditor.setDelegate(this.pick());
           }
@@ -202,7 +202,7 @@
         }
       ],
       handler: {                 // add handler for form
-        targetChanged: function(object, oldTarget){
+        targetChanged: function(){
           // this -> myForm
           if (this.target)
           {
@@ -246,7 +246,7 @@
       },
       listen: {
         target: {
-          rollbackUpdate: function(object, delta){
+          rollbackUpdate: function(object){
             if (object.modified)
               this.enable();
             else

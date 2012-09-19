@@ -115,7 +115,7 @@ basis.ready(function(){
           instanceOf: basis.ui.Container.subclass({
             template: resource('template/tagList.tmpl'),
 
-            templateUpdate: function(object, eventName, delta){
+            templateUpdate: function(){
               this.setChildNodes(this.data.tags.map(function(tag){
                 return {
                   data: { title: tag }

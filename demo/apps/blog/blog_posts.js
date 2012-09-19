@@ -18,7 +18,7 @@
     return words[parseInt(words.length * Math.random())];
   });
 
-  function genSentence(min, max, delim){
+  function genSentence(min, max){
     var count = min + parseInt((max - min) * randoms[randomsIdx++ % RND_COUNT]);
 
     var res = randomWord.slice(rwIdx %= RND_COUNT, rwIdx += count);

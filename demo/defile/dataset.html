@@ -156,7 +156,7 @@
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('H2', header));
     };
 
-    function createImage(type, url){
+    function createImage(type){
       return DOM.createElement('.img',
         DOM.createElement('IMG[src="dataset_' + type + '.png"][width=120][height=80]')
       );
