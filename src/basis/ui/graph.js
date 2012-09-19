@@ -252,7 +252,7 @@
   };
 
   var SERIES_ITEM_HANDLER = {
-    update: function(object, delta){ 
+    update: function(object){ 
       var key = this.keyGetter(object);
       var value = this.valueGetter(object);
 
@@ -1058,7 +1058,7 @@
   };
 
   var GRAPH_SELECTION_HANDLER = {
-    datasetChanged: function(object, delta){
+    datasetChanged: function(){
       this.draw();
     }
   };

@@ -20,7 +20,6 @@
       -moz-border-radius: 3px;
     border-radius: 3px;
     padding: .25em .5ex;
-    backg3round: gray;
   }
   .PrototypeMapPopupPanel-Content .match
   {
@@ -51,7 +50,6 @@
   .PrototypeMapPopupPanel .Basis-PartitionNode-Title
   {
     padding: .25em .5ex;
-    backgrou3nd: red;
     font-weight: bold;
   }
 

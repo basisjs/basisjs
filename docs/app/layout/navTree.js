@@ -51,11 +51,11 @@
 
       curHash = location.hash = '#' + path;
 
-      var rootNS = path.split(".")[0];
-      if (app.core.buildin[rootNS])
-        rootNS = 'window';
+      var root = path.split(".")[0];
+      if (app.core.buildin[root])
+        root = 'window';
 
-      var node = this.childNodes.search(rootNS, 'data.fullPath');
+      var node = this.childNodes.search(root, 'data.fullPath');
 
       //if (typeof console != 'undefined') console.log(node);
 
@@ -67,8 +67,8 @@
                node.childNodes
                  .sortAsObject('data.fullPath')
                  .reverse()
-                 .search(0, function(node){
-                   return path.indexOf(node.data.fullPath + '.');
+                 .search(0, function(item){
+                   return path.indexOf(item.data.fullPath + '.');
                  });
       }
 

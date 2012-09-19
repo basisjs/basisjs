@@ -63,7 +63,7 @@
               events: value.events,
               used: matchBinding && matchBinding.names.indexOf(key) != -1
             }
-          } : null
+          } : null;
         }).filter(Boolean);
       }
 
@@ -227,7 +227,7 @@
 
     event_templateViewChanged: basis.event.create('templateViewChanged'),
 
-    templateUpdate: function(tmpl, object, oldDelegate){
+    templateUpdate: function(){
       var rootCfg = {};
 
       var template = this.data.obj.prototype.template;
@@ -282,4 +282,4 @@
   //
   // exports
   //
-  module.exports = TemplatePanel
+  module.exports = TemplatePanel;

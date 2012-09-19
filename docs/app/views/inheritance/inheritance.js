@@ -25,7 +25,7 @@
     }
   });
 
-  var viewInheritance = new app.ext.view.ViewList({
+  var viewInheritance = new app.ext.view.View({
     title: 'Inheritance',
     viewHeader: 'Inheritance',
 
@@ -61,7 +61,7 @@
           var isClass = this.data.kind == 'class';
           var cursor = isClass ? this.data.obj : (mapDO[this.data.path.replace(/.prototype$/, '')] || { data: { obj: null } }).data.obj;
           var groupId = 0;
-          var group;
+          var group = null;
           var lastNamespace;
           var list = [];
           while (cursor)
@@ -78,7 +78,7 @@
                   title: namespace,
                   namespace: namespace
                 }
-              })
+              });
               groupId++;
             }
 
@@ -128,7 +128,7 @@
                 }
               }
             ]
-          }
+          };
         }
       }
     }

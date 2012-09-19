@@ -26,7 +26,7 @@
       },
 
       action: {
-        scrollTo: function(event){
+        scrollTo: function(){
           var element = this.delegate.element;
           targetContent().scrollTo(element);
           

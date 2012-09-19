@@ -139,7 +139,7 @@
 
     modificator.timeFunction = function(value){
       return Math.sin(Math.acos(1 - value));
-    }
+    };
 
     return function(relElement, jump){
       var curScrollTop = element.scrollTop;
@@ -152,7 +152,7 @@
         modificator.setRange(curScrollTop, relElement.offsetTop);
         thread.start();
       }
-    }
+    };
   };
 
   //
@@ -165,7 +165,7 @@
     var sender = Event.sender(e);
 
     if (sender.tagName != 'A')
-      sender = DOM.findAncestor(sender, function(node){ return node.tagName == 'A' });
+      sender = DOM.findAncestor(sender, function(node){ return node.tagName == 'A'; });
 
     if (sender && sender.pathname == location.pathname && sender.hash != '')
       navTree.open(sender.hash, DOM.parentOf(navTree.element, sender));

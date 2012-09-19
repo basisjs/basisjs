@@ -44,7 +44,7 @@
       this.parse();
     },
 
-    parse: function(object, delta){
+    parse: function(){
       var newData = this.data;
 
       DOM.clear(this.tmpl.content);
@@ -121,7 +121,7 @@
                 );
               })
             )
-          ])
+          ]);
         }
 
         if (newData.tags.example)
@@ -171,7 +171,7 @@
         }
       }
     }
-  })
+  });
 
   //
   // functions
@@ -262,4 +262,4 @@
   module.exports = {
     JsDocPanel: JsDocPanel,
     PrototypeJsDocPanel: PrototypeJsDocPanel
-  }
+  };

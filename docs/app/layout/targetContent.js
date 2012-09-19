@@ -18,7 +18,7 @@
     'class':          [viewDescription, viewInheritance, viewTemplate, viewPrototype],
     'object':         [viewDescription],
     'event':          [viewDescription, viewInheritance, viewSourceCode]
-  }
+  };
 
   module.exports = new basis.ui.Node({
     id: 'ObjectView',

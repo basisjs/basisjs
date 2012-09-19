@@ -9,16 +9,15 @@
         basis.ui.field.MatchProperty.prototype.event_change.call(this, value, oldValue);
 
         var fc = value.charAt(0);
-        var v = value.substr(1).replace(/./g, function(m){ return '[' + m.toUpperCase() + m.toLowerCase() + ']' });
+        var v = value.substr(1).replace(/./g, function(m){ return '[' + m.toUpperCase() + m.toLowerCase() + ']'; });
         var rx = new RegExp('(^|[^a-zA-Z])([' + fc.toLowerCase() + fc.toUpperCase() +']' + v + ')|([a-z])(' + fc.toUpperCase() + v + ')');
         //console.log(rx.source);
         var textNodeGetter = this.textNodeGetter;
         var wrapMap = this.map;
 
-        wrapMap['SPAN.match'] = function(s, i){ return s && (i % 5 == 2 || i % 5 == 4) };
+        wrapMap['SPAN.match'] = function(s, i){ return s && (i % 5 == 2 || i % 5 == 4); };
 
-        var x;
-        this.node.setMatchFunction(x = value ? function(child, reset){
+        this.node.setMatchFunction(value ? function(child, reset){
           if (!reset)
           {
             var textNode = child._m || textNodeGetter(child);
@@ -62,7 +61,7 @@
         return new RegExp('(^|[^a-z])(' + value.forRegExp() + ')', 'i');
       },
       handler: {
-        change: function(sender, value, oldValue){
+        change: function(sender, value){
           searchInput.tmpl.set('empty', !value ? 'empty' : '');
         }
       }
@@ -96,13 +95,16 @@
       },
       fieldKeydown: function(sender, event){
         var key = Event.key(event);
-        var chr = String.fromCharCode(key);
-
+        
         if (key == Event.KEY.ESC)
-          return searchInput.reset();
-
-        if (!/[a-z\_0-9\x08\x09\x0A\x0D\x23-\x28]/i.test(chr))
-          Event.kill(event);
+        {
+          searchInput.reset();
+        }
+        else
+        {
+          if (!/[a-z\_0-9\x08\x09\x0A\x0D\x23-\x28]/i.test(String.fromCharCode(key)))
+            Event.kill(event);
+        }
       },
       fieldFocus: function(){
         this.focused = true;

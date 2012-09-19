@@ -180,4 +180,4 @@
     DocTree: DocTree,
     DocSearchTree: DocSearchTree,
     DocTreeClassNode: DocTreeClassNode
-  }
+  };

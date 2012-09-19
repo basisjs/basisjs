@@ -477,14 +477,14 @@
 
     insertBefore: function(newChild, refChild){
       // save documentElement (IE, mozilla and others) and body (webkit) scrollTop
-      var documentST_ = document.documentElement.scrollTop;
-      var bodyST_ = document.body.scrollTop;
+      var documentScrollTop = document.documentElement.scrollTop;
+      var bodyScrollTop = document.body.scrollTop;
 
       if (UINode.prototype.insertBefore.call(this,newChild, refChild))
       {
         // store saved scrollTop to popup and scroll viewport to top
-        newChild.documentST_ = documentST_;
-        newChild.bodyST_ = bodyST_;
+        newChild.documentST_ = documentScrollTop;
+        newChild.bodyST_ = bodyScrollTop;
         if (this.handheldMode)
         {
           document.documentElement.scrollTop = 0;

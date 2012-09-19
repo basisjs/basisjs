@@ -27,13 +27,6 @@
     }
   });
 
-  var ViewList = View.subclass({
-    className: namespace + '.ViewList',
-    childFactory: function(config){
-      return new this.childClass(config);
-    }
-  });
-
   var ViewOption = basis.ui.Node.subclass({
     className: namespace + '.ViewOption',
 
@@ -44,13 +37,12 @@
     },
 
     action: {
-      select: function(event){
+      select: function(){
         this.select();
       }
     },
     init: function(){
       basis.ui.Node.prototype.init.call(this);
-      if ('handler' in this) alert('!');
     }
   });
 
@@ -83,6 +75,5 @@
   //
   module.exports = {
     View: View,
-    ViewList: ViewList,
     ViewOptions: ViewOptions
-  }
+  };

@@ -11,7 +11,7 @@
         clsId: cls.docsUid_,
         superClsId: cls.docsSuperUid_
       }
-    })
+    });
   });
 
   var namespaceClassDS = new basis.data.Dataset();

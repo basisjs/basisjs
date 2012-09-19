@@ -149,7 +149,6 @@
 
     .XControlHeader
     {
-      poi3nter-events: none;
       position: absolute;
       left: 0; 
       right: 17px;
@@ -159,7 +158,6 @@
     }
     .XControlFooter
     {
-      poi3nter-events: none;
       position: absolute;
       left: 0; 
       right: 17px;
@@ -188,7 +186,6 @@
     border-top: 1px solid white;
     border-bottom: 1px solid white;
     background: url(img/tab_bg_top.png?1) repeat-x 0 -2px;
-    font-wei3ght: normal !important;
     font-family: Consolas;
     padding-left: 14px !important;
   }

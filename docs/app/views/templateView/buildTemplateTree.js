@@ -91,7 +91,7 @@
         config: function(owner){
           return {
             childNodes: owner.data.attrs
-          }
+          };
         }
       }
     }
@@ -128,7 +128,7 @@
   /** @const */ var TYPE_COMMENT = 8;
 
   // references on fields in declaration
-  /** @const */ var TOKEN_TYPE = 0
+  /** @const */ var TOKEN_TYPE = 0;
   /** @const */ var TOKEN_BINDINGS = 1;
   /** @const */ var TOKEN_REFS = 2;
 
@@ -155,7 +155,7 @@
     }
 
     var nodeConfig;
-    var nodeClass;
+    var NodeClass;
     for (var i = 0, token; token = tokens[i]; i++)
     {
       switch(token[TOKEN_TYPE]){
@@ -224,7 +224,7 @@
             }));
           }
 
-          nodeClass = TemplateTreeNode.EmptyElement;
+          NodeClass = TemplateTreeNode.EmptyElement;
           nodeConfig = {
             data: {
               nodeName: token[ELEMENT_NAME],
@@ -236,14 +236,14 @@
 
           if (childs.length)
           {
-            nodeClass = TemplateTreeNode.Element;
+            NodeClass = TemplateTreeNode.Element;
             nodeConfig.childNodes = childs; 
           }
 
           break;
 
         case TYPE_TEXT:
-          nodeClass = TemplateTreeNode.Text;
+          NodeClass = TemplateTreeNode.Text;
           nodeConfig = {
             data: {
               nodeType: TYPE_TEXT,
@@ -255,7 +255,7 @@
           break;
 
         case TYPE_COMMENT:
-          nodeClass = TemplateTreeNode.Comment;
+          NodeClass = TemplateTreeNode.Comment;
           nodeConfig = {
             data: {
               nodeType: TYPE_COMMENT,
@@ -267,10 +267,10 @@
           break;
       }
 
-      result.push(new nodeClass(nodeConfig));
+      result.push(new NodeClass(nodeConfig));
     }
 
     return result;
   }
 
-  module.exports = buildTemplate
+  module.exports = buildTemplate;

@@ -11,7 +11,7 @@
         clsId: cls.docsUid_,
         superClsId: cls.docsSuperUid_
       }
-    })
+    });
   });
 
   var clsSplitBySuper = new basis.data.dataset.Split({

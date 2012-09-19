@@ -10,7 +10,7 @@
   var classList = basis.cssom.classList;
 
   var mapDO = app.core.mapDO;
-  var ViewList = app.ext.view.ViewList;
+  var View = app.ext.view.View;
   var PrototypeJsDocPanel = app.ext.jsdoc.PrototypeJsDocPanel;
 
   var PROTOTYPE_ITEM_WEIGHT = {
@@ -167,7 +167,7 @@
  /**
   * @class
   */
-  var viewPrototype = new ViewList({
+  var viewPrototype = new View({
     title: 'Prototype',
     viewHeader: 'Prototype',
     template: resource('template/prototypeView.tmpl'),
@@ -182,7 +182,7 @@
     },
 
     event_update: function(delta){
-      ViewList.prototype.event_update.call(this, delta);
+      View.prototype.event_update.call(this, delta);
 
       if (this.data.obj)
       {
@@ -204,7 +204,7 @@
               return {
                 data: val,
                 host: this
-              }
+              };
             }, this)
             .filter(Boolean)
         );
@@ -270,7 +270,7 @@
                 }
               }
             ]
-          }
+          };
         }
       }
     }

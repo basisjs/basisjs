@@ -68,7 +68,6 @@
       var inheritance = getInheritance(objData.kind == 'class' ? objData.obj : mapDO[objData.path.replace(/.prototype$/, '')].data.obj, objData.kind == 'class' ? null : objData.title);
       for (var i = inheritance.length, inherit; inherit = inheritance[--i];)
       {
-        //console.log(inherit.cls.className + postFix);
         var inheritedEntity = JsDocEntity.get(inherit.cls.className + postPath);
         if (inheritedEntity && inheritedEntity.data.text)
         {
@@ -76,7 +75,6 @@
           return true;
         }
       }
-      //console.log(inheritance);
     }
   }
   
@@ -158,7 +156,7 @@
         if (desc)
         {
           //console.log(path + ' -> ' + desc.cls.className);
-          this.setInheritDoc(JsDocEntity(desc.cls.className + '.prototype.' + p[1]))
+          this.setInheritDoc(JsDocEntity(desc.cls.className + '.prototype.' + p[1]));
         }
       }
       return;
@@ -302,9 +300,12 @@
     var ns = ctx.namespace || '';
 
     if (deep > 8)
-      return window.console && console.log(path);
+    {
+      ;;;if (typeof console != 'undefined') console.log('Deep more than 8 for path:', path);
+      return;
+    }
 
-    members[path] = new Array();
+    members[path] = [];
 
     // new
     var isPrototype = context == 'prototype';
@@ -312,7 +313,7 @@
     {
       var clsPath = path.replace(/\.prototype$/, '');
       var cls = mapDO[clsPath] && mapDO[clsPath].data.obj;
-      var clsProtoDescr = getClassDocsProtoDescr(cls);
+      getClassDocsProtoDescr(cls);
       var clsProto = cls.docsProto_;
       var superClsPrototype = cls && cls.superClass_ && cls.superClass_.prototype;
     }
@@ -583,12 +584,12 @@
     'jsdoc': function(resource){
 
       function getTextFromCode(source){
-        return source.replace(/(^|\*)\s+\@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft()
+        return source.replace(/(^|\*)\s+\@/, '@').replace(/(^|\n+)\s*\*/g, '\n').trimLeft();
       }
 
       function createJsDocEntity(source, path){
         var text = getTextFromCode(source);
-        var e = JsDocEntity({
+        JsDocEntity({
           path: path,
           text: text,
           file: resource.url,
@@ -628,11 +629,11 @@
               ns = scopeNS;
               code = code.replace(/@namespace([^\n]*|$)/, '');
 
-              var nsJSDoc = JsDocEntity.get(ns);
-              if (nsJSDoc)
+              var nsjsdoc = JsDocEntity.get(ns);
+              if (nsjsdoc)
               {
-                nsJSDoc.update({
-                  text: nsJSDoc.data.text + getTextFromCode(code),
+                nsjsdoc.update({
+                  text: nsjsdoc.data.text + getTextFromCode(code),
                   line: line + 1 + lineFix
                 });
               }
@@ -705,7 +706,7 @@
           curResource.text = req.data.responseText;
           sourceParser[curResource.kind](curResource);
         },
-        complete: function(sender, req){
+        complete: function(){
           this.curResource = null;
           TimeEventManager.add(this, 'load', Date.now() + 5);
         }
@@ -741,11 +742,13 @@
   };
 
   var resolveQueue = Object.values(basis.namespaces_).map(function(ns){
-    return ns.source_ ? {
-      url: ns.filename_,
-      kind: 'jsdoc',
-      text: '/** @namespace ' + ns.path + '*/' + ns.source_
-    } : null
+    return ns.source_
+      ? {
+          url: ns.filename_,
+          kind: 'jsdoc',
+          text: '/** @namespace ' + ns.path + '*/' + ns.source_
+        }
+      : null;
   }).filter(Function.$isNotNull);
 
   var resolveResStart = new Date;
@@ -779,5 +782,5 @@
     loadResource: resourceLoader.addResource.bind(resourceLoader),
 
     searchIndex: new basis.data.Dataset({ items: searchValues, listen: { item: null } })
-  }
+  };
 
