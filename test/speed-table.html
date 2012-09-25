@@ -3,7 +3,7 @@
 <html>
 
 <head>
-  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Speed Test: Basis Table</title>
 
   <style type="text/css">
@@ -72,9 +72,9 @@
       var DOM = basis.dom;
       var Event = basis.dom.event;
 
-      /*var Sum = Basis.DOM.Wrapper.Register.Sum;
-      var Max = Basis.DOM.Wrapper.Register.Max;
-      var Count = Basis.DOM.Wrapper.Register.Count;*/
+      /*var sum = basis.data.index.sum;
+      var max = basis.data.index.max;
+      var count = basis.data.index.count;*/
 
       setRowCount = function(value){
         DOM.get('rowCount').value = value;
@@ -120,11 +120,11 @@
       TestTable = new basis.ui.table.Table({
         id: 'table',
         container: document.body,
-        registers: [
+        /*registers: [
           //testAOddCount = new Count('count % 2'),
-          //testASum  = new Sum(Function.getter('amount', Number)),
-          //testASum2 = new Sum(Function.getter('count', Number))
-        ],
+          testASum  = sum(Function.getter('amount', Number)),
+          testASum2 = sum(Function.getter('count', Number))
+        ],*/
         selection: {
           multiple: multipleSelection.checked
         },
@@ -138,7 +138,7 @@
         },
         //sorting: Function.getter('data.id', Number),
         structure: [
-          { 
+          /*{ 
             header: {
               content: '#'
             },
@@ -155,7 +155,7 @@
             body: {
               content: '{groupPosText}'
             }
-          },
+          },*/
           { 
             header: {
               content: 'PU'
@@ -220,11 +220,11 @@
 
             body: {
               cssClassName: 'italic',
-              content: Function.getter('data.amount', '{0:.2}р.')
+              content: Function.getter('data.amount', '${0:.2}')
             },
 
             footer: {
-              content: '-' // testASum.addLink(DOM.createText(), null, '{0:.2} р.')
+              content: '-' //testASum.addLink(DOM.createText(), null, '{0:.2} СЂ.')
             }
           },
           { 
@@ -242,16 +242,7 @@
             footer: {
               content: '-' //testASum2.addLink(DOM.createText(), null)
             }
-          }/*,
-          {
-            header: {
-              content: 'asd'
-            },
-            body: {
-              content: '-'
-            }
-          }/*,
-          { caption: 'update count',  className: 'right', fill: 'updateCount' }*/
+          }
         ]
       });
 
@@ -337,14 +328,6 @@
       });
       DOM.insert(document.body, field.element, DOM.INSERT_BEFORE, TestTable.element);
 
-/*
-TestTable.header.setGrouping({
-  groupGetter: function(node){
-    return !!node.sorting;
-  },
-  titleGetter: Basis.Function.getter('data.title', { 'true': 'sortable', 'false': 'is\'t sortable' })
-})
-*/
     })();
   </script>
 </body>

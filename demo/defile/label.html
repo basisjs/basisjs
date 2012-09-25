@@ -142,7 +142,7 @@
    /**
     * @class
     */
-    var DemoBlock = basis.ui.Container.subclass({
+    var DemoBlock = basis.ui.Node.subclass({
       template:
         '<div class="DemoBlock">' +
            '<h2>{title}</h2>' +
@@ -235,7 +235,7 @@
     // Demo blocks
     //
 
-    new basis.ui.Container({
+    new basis.ui.Node({
       container: DOM.get('demo-container'),
 
       childClass: DemoBlock,

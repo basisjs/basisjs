@@ -17,18 +17,7 @@
 
     #demo-container
     {
-      font-family: Consolas;
-    }
-
-    .img
-    {
-      text-align: center;
-    }
-    OBJECT
-    {
-      height: 100px;
-      width: 135px;
-      margin: -15px 0 0;
+      font-family: Arial, sans;
     }
 
     H2
@@ -39,77 +28,25 @@
       font-size: 100%;
     }
 
-    .DemoBlock
+    #TagCloud
     {
-      border: 1px solid #D0D0D0;
-      padding: 15px;
-      margin: 0 10px .5em 0;
-      overflow: hidden;
-      position: relative;
-      float: left;
-      width: 160px;
-      display: inline-block;
-    }
-    .DemoBlock H3
-    {
-      clear: both;
-      font-size: 85%;
-      font-weight: normal;
-      background: #EEE;
-      margin: 10px -15px -15px -15px;
-      padding: 2px 2px 2px 1.5em;
-      /*text-align: center;*/
-    }
-
-    .item
-    {
-      margin: 2px 0 2px 4px;
-      padding: .2em .75ex;
+      width: 80%;
+      max-width: 500px;
+      min-width: 250px;
       text-align: center;
-      display: inline-block;
-      min-width: 3ex;
-      background: #E0E0E0;
-      color: black;
-      border-radius: 3px;
-      position: relative;
-    }
-    .dsitem
-    {
-      margin: 2px;
-      padding: .2em 4px .2em .75ex;
-      text-align: center;
-      display: inline-block;
-      background: #999999;
-      color: white;
-      border-radius: 3px;
-    }
-    .remove
-    {
-      background: #CC0000;
-      color: white;
-      position: absolute;
-      font-size: 60%;
-      padding: 0 4px 2px;
-      line-height: 1;
-      border-radius: 3px;
-      top: -.5em;
-      right: -.75ex;
-      cursor: pointer;
-      opacity: .6;
-    }
-    .remove:hover
-    {
-      opacity: 1;
-    }
-    BUTTON
-    {
-      margin-left: 1ex;
+      margin: 0 auto;
     }
 
     .tag
     {
       -webkit-transition: font-size .5s;
       margin: 0 1ex;
+    }
+    .tag SUB
+    {
+      font-size: 10px;
+      padding-left: 2px;
+      color: #8D8;
     }
   </style>
   <!--[if lt IE 7]>
@@ -124,6 +61,7 @@
   <script type="text/javascript" src="../../basis-all.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
+  <script type="text/javascript" src="../seedrandom.js"></script>
 </head>
 
 <body>
@@ -140,40 +78,59 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
+
+    //
+    // Data generation
+    //
+
+    Math.seedrandom("tag cloud");
+    var words = (
+      'Lorem ipsum dolor sit amet consectetur adipisicing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ' +
+      'Ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat ' +
+      'Duis aute irure dolor in reprehenderit voluptate velit esse cillum dolore eu fugiat nulla pariatur ' +
+      'Excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum'
+    ).toLowerCase().split(/\s+/);
+
+    function genTags(min, max){
+      var count = min + parseInt((max - min) * Math.random());
+      var res = [];
+
+      while (count-- > 0)
+        res.push(words[parseInt(words.length * Math.random(), 10)]);
+
+      return res;
+    }
     
-    var BlogPost = new basis.entity.EntityType({
-      fields: {
-        id: basis.entity.IntId,
-        tags: String
-      }
+    var data = new basis.data.Dataset({
+      items: basis.array.create(256, function(idx){
+        return new basis.data.DataObject({
+          data: {
+            id: idx,
+            tags: genTags(1, 6)
+          }
+        })
+      })
     });
 
-    BlogPost({ id: 1, tags: 'picture, basis, javascript' });
-    BlogPost({ id: 2, tags: 'picture, javascript' });
-    BlogPost({ id: 3, tags: 'basis, javascript' });
-    BlogPost({ id: 4, tags: 'tag' });
-    BlogPost({ id: 5, tags: 'picture' });
-    BlogPost({ id: 6, tags: 'basis, world' });
-    BlogPost({ id: 7, tags: 'javascript, basis' });
-    BlogPost({ id: 8, tags: 'hello' });
-    BlogPost({ id: 9, tags: 'world, basis' });
+    //
+    // Build tag cloud
+    //
 
     var cloud = new basis.data.dataset.Cloud({
-      source: BlogPost.all,
-      rule: function(item){
-        return (item.data.tags || '').split(/\s*,\s*/);
-      }
+      source: data,
+      rule: Function.getter('data.tags')
     });
 
     var indexMap = new basis.data.index.IndexMap({
       source: cloud,
       indexes: {
-        itemCountMin: new basis.data.index.Min('itemCount'),
-        itemCountMax: new basis.data.index.Max('itemCount')
+        itemCountMin: basis.data.index.min('itemCount'),
+        itemCountMax: basis.data.index.max('itemCount')
       },
       calcs: {
         percentOfMax: function(data, indexes, obj){
-          return (obj.itemCount - indexes.itemCountMin)/(indexes.itemCountMax - indexes.itemCountMin);
+          console.log(obj.itemCount , indexes.itemCountMin, indexes.itemCountMax, indexes.itemCountMin);
+          return (obj.itemCount - indexes.itemCountMin) / (indexes.itemCountMax - indexes.itemCountMin);
         }
       },
       listen: {
@@ -183,13 +140,22 @@
       }
     });
 
-    var tagCloud = new basis.ui.Container({
+    //
+    // Visualization
+    //
+
+    var tagCloud = new basis.ui.Node({
       container: basis.dom.get('demo-container'),
+      id: 'TagCloud',
       dataSource: cloud,
-      sorting: Function.getter('data.title'),
+      sorting: 'data.title',
       childClass: {
         template: 
-          '<span class="tag">{title}<sub>{count}</sub></span>',
+          '<span class="tag">' +
+            '{title}' +
+            '<sub>{count}</sub>' +
+            '<wbr/>' +
+          '</span>',
 
         binding: {
           title: 'data:',
@@ -199,7 +165,7 @@
         listen: {
           delegate: {
             datasetChanged: function(dataset){
-              this.tmpl.set('count', dataset.itemCount);
+              this.updateBind('count');
             }
           }
         },
@@ -215,7 +181,7 @@
               event_update: function(delta){
                 basis.data.DataObject.prototype.event_update.call(this, delta);
 
-                this.owner.element.style.fontSize = '{0:.2}%'.format(80 + 120 * this.data.percentOfMax);
+                this.owner.element.style.fontSize = '{0:.2}%'.format(50 + 200 * this.data.percentOfMax);
               }
             })
           }

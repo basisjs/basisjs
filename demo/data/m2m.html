@@ -339,7 +339,7 @@
           this.setDataSource(Link.getGrouping('FieldId').getSubset(this.data.FieldId, true));
         },
 
-        childFactory: basis.ui.Container.prototype.childFactory,
+        childFactory: basis.ui.Node.prototype.childFactory,
         childClass: nsUI.Node.subclass({
           template: 
             '<div class="Field-WordLink">' +

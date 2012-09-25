@@ -20,7 +20,6 @@
         delegate: Function.$self,
         instanceOf: uiNode.subclass({
           template: resource('template/tree/refList.tmpl'),
-
           binding: {
             refs: 'data:'
           }
@@ -256,11 +255,12 @@
 
         case TYPE_COMMENT:
           NodeClass = TemplateTreeNode.Comment;
+          var refs = refList(token);
           nodeConfig = {
             data: {
               nodeType: TYPE_COMMENT,
-              nodeValue: token[COMMENT_VALUE],
-              refs: refList(token)
+              nodeValue: token[COMMENT_VALUE] || (refs ? '{' + refs + '}' : ''),
+              refs: refs
             }
           };
 

@@ -16,6 +16,8 @@
       padding: 0;
       font-size: small;
       font-family: Tahoma, Verdana, Arial, sans-serif;
+      color: black;
+      background: #FAF8F0;
     }
 
     #DemoList
@@ -33,21 +35,15 @@
 
     .Demo-Group
     {
-      padding: 5px;
+      padding-bottom: 1.5em !important;
     }
 
     #DemoList .Demo-Group-Title
     {
-      border-bottom: 1px solid #E0E0E0;
       clear: both;
-      height: .5em;
-      margin-bottom: .5em;
-      line-height: 1em;
-    }
-    #DemoList .Demo-Group-Title SPAN
-    {
-      padding: 0 1ex;
-      background: white;
+      font-size: 210%;
+      font-family: Arial;
+      padding-left: 22px;
     }
 
     #DemoList .Demo-Group-Content
@@ -71,23 +67,34 @@
       display: block;
       text-decoration: none;
       color: #333;
-      border-radius: 3px;
-      background: white;
+      text-shadow: 0px 1px 1px rgba(0,0,0,0);
+      -webkit-transition: text-shadow .33s;
+      -moz-transition: text-shadow .33s;
+      -o-transition: text-shadow .33s;
+      transition: text-shadow .33s;
     }
     #DemoList .Demo-TreeNode A:hover
     {
       background: #F0F0F0;
+      text-shadow: 0px 1px 1px rgba(0,0,0,.12);
     }
     #DemoList .Demo-TreeNode IMG
     {
       margin: 5px 5px 0 5px;
-      border: 1px solid #D0D0D0;
+      border: 1px solid #E0E0E0;
       background: white;
-      box-shadow: 1px 1px 3px rgba(0,0,0,.15);
+      box-shadow: 1px 1px 3px rgba(0,0,0,0);
+      -webkit-transition: opacity .33s, border-color .33s, box-shadow .33s;
+      -moz-transition: opacity .33s, border-color .33s, box-shadow .33s;
+      -o-transition: opacity .33s, border-color .33s, box-shadow .33s;
+      transition: opacity .33s, border-color .33s, box-shadow .33s;
+      opacity: .85;
     }
     #DemoList .Demo-TreeNode A:hover IMG
     {
-      border-color: #BBB;
+      opacity: 1;
+      border-color: #C0C0C0;
+      box-shadow: 1px 1px 3px rgba(0,0,0,.15);
     }
     #DemoList .Demo-TreeNode .title
     {
@@ -123,11 +130,10 @@
         {
           title: 'Apps',
           demos: [
-            { title: 'Basis Docs', url: '../docs/index.html', image: 'apps/docs.png' },
-            { title: 'Templater (template editor)', url: '../tools/templater/index.html' },
-            { title: 'Blog', url: 'apps/blog/index.html' },
-            { title: 'Todo list', url: 'apps/todo.html' },
-            { title: '(external) Wallet One Cabinet', url: 'https://en.w1.ru/client', image: 'apps/w1.png' }
+            { title: 'Basis Docs', url: '../docs/', image: 'apps/docs.png' },
+            { title: 'Blog', url: 'apps/blog/', image: 'apps/blog/blog.png' },
+            //{ title: 'Todo list', url: 'apps/todo.html' },
+            { title: '(external) Wallet One Cabinet', url: 'https://www.walletone.com/client/', image: 'apps/w1.png' }
           ]
         },
         {
@@ -148,16 +154,15 @@
             { title: 'basis.ui.scroller', url: 'defile/scroller.html' },
             { title: 'basis.ui.resizer', url: 'defile/resizer.html' },
             { title: 'basis.ui.paginator', url: 'defile/paginator.html' }
-            //{ title: 'basis.ui.Animation', url: 'defile/animation.html' },
           ]
         },
         {
           title: 'Speed Demos',
           demos: [
             { title: 'Tree', url: '../test/speed-tree.html', image: 'res/img/speed.png' },
-            { title: 'Table', url: '../test/speed-table.html', image: 'res/img/speed.png' },
+            { title: 'Table', url: '../test/speed-table.html', image: 'res/img/speed.png' }/*,
             { title: 'DataObject', url: '../test/speed-DataObject.html', image: 'res/img/speed.png' },
-            { title: 'Entity', url: '../test/speed-Entity.html', image: 'res/img/speed.png' }
+            { title: 'Entity', url: '../test/speed-Entity.html', image: 'res/img/speed.png' }*/
           ]
         },
         {
@@ -176,6 +181,7 @@
           title: 'Data',
           demos: [
             { title: 'Property & DataObjectSet', url: 'data/basic.html' },
+            { title: 'Tag cloud', url: 'data/tag_cloud.html' },
             { title: 'Entity simple', url: 'data/entity.html' },
             { title: 'Live entity edit', url: 'data/live_edit.html' },
             { title: 'Entity user list', url: 'data/userlist.html' },
@@ -183,14 +189,14 @@
             { title: 'Build tree using dataset', url: 'data/generate_tree.html' }
           ]
         },
-        {
+        /*{
           title: 'Ajax',
           demos: [
             { title: 'SOAP simple', url: 'ajax/soap-simple.html' },
             { title: 'SOAP list', url: 'ajax/soap-list.html' },
             { title: 'Parallel', url: 'ajax/parallel.html' }
           ]
-        },
+        },*/
         {
           title: 'Graph',
           demos: [
@@ -227,7 +233,8 @@
 
           action: {
             setDefaultImage: function(){
-              this.tmpl.set('imageUrl', 'res/img/noimg.png');
+              this.data.image = 'res/img/noimg.png';
+              this.updateBind('imageUrl');
             }
           }
         },
@@ -239,16 +246,15 @@
                 '<ul{childNodesElement} class="Demo-Group-Content"/>' +
               '</li>'
           },
-          groupGetter: Function.getter('data.groupId')
+          groupGetter: 'section'
         },
         childNodes: data.map(function(section){
           return section.demos.map(function(demo){
             return {
-              data: Object.extend(demo, {
-                groupId: this.title
-              })
+              section: section.title,
+              data: demo
             };
-          }, section);
+          });
         }).flatten()
       });
 

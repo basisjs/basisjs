@@ -190,7 +190,7 @@
     });
 
 
-    new basis.ui.Container({
+    new basis.ui.Node({
       cssClassName: 'selectionContainer',
       container: DOM.get('demo-container'),
       dataSource: graph.selection,
@@ -201,8 +201,9 @@
         binding: {
           title: {
             events: 'update',
-            getter: function(){
-              return (new Date(this.data.Date)).toFormat('%D.%M.%Y');
+            getter: function(node){
+              var p = node.data.Date.split('-');
+              return (new Date(p[0], p[1])).toFormat('%D.%M.%Y');
             }
           }
         }

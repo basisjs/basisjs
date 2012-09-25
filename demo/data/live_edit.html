@@ -154,7 +154,7 @@
     //
     // Article list
     //
-    var articleList = new basis.ui.Container({
+    var articleList = new basis.ui.Node({
       id: 'ArticleList',
       dataSource: Article.all,  // set data source
       childClass: ArticleNode,  // set class for child nodes
@@ -256,7 +256,7 @@
       }
     });
 
-    var articleEditor = new basis.ui.Container({
+    var articleEditor = new basis.ui.Node({
       id: 'EditForm',
       childNodes: [              // set child nodes
         myForm,

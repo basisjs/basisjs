@@ -77,7 +77,7 @@ basis.ready(function(){
     }
   }, paginator);
 
-  var postList = new basis.ui.Container({
+  var postList = new basis.ui.Node({
     dataSource: blogThreadPage,
     sorting: 'data.pubDate',
     sortingDesc: true,
@@ -111,7 +111,7 @@ basis.ready(function(){
             return owner.data.tags && owner.data.tags.length;
           },
           delegate: Function.$self,
-          instanceOf: basis.ui.Container.subclass({
+          instanceOf: basis.ui.Node.subclass({
             template: resource('template/tagList.tmpl'),
 
             templateUpdate: function(){
@@ -150,7 +150,7 @@ basis.ready(function(){
     rule: 'data.category'
   });
 
-  var categoryList = new basis.ui.Container({
+  var categoryList = new basis.ui.Node({
     dataSource: postByCategory,
     template: resource('template/categoryList.tmpl'),
 
@@ -174,7 +174,7 @@ basis.ready(function(){
 
 
   var MONTH = 'January February March April May June July August September October November December'.qw();
-  var archiveList = new basis.ui.Container({
+  var archiveList = new basis.ui.Node({
     dataSource: new basis.data.dataset.Split({
       source: allPostDataset,
       rule: 'data.pubDate.substr(0, 7)'
@@ -260,7 +260,7 @@ basis.ready(function(){
     }
   });
 
-  var tagCloud = new basis.ui.Container({
+  var tagCloud = new basis.ui.Node({
     dataSource: cloudCalcs,
     sorting: 'data.title',
     template: resource('template/tagCloud.tmpl'),
