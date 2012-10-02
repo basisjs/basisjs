@@ -119,37 +119,33 @@
   var Form = FormContent.subclass({
     className: namespace + '.Form',
 
-    method: 'POST',
+    formMethod: 'POST',
     
     template: resource('templates/form/Form.tmpl'),
 
     binding: {
-      target: 'target || ""',
-      action: 'action || ""',
-      enctype: 'enctype || ""',
-      method: 'method || ""'
+      target:  'formTarget  || ""',
+      action:  'formAction  || ""',
+      enctype: 'formEnctype || ""',
+      method:  'formMethod  || ""'
     },
 
     action: {
       submit: function(){
         this.submit();
+      },
+      validate: function(event){
+        if (this.validate() !== true)
+          basis.dom.event.cancelDefault(event);
       }
     },
 
-    init: function(){
-      FormContent.prototype.init.call(this);
-      this.formElement.onsubmit = this.submit;
-    },
     submit: function(){
-      var result = (this.validate() === true) && !this.onSubmit();
+      if (this.onSubmit)
+        this.onSubmit(this.serialize());
 
-      if (result)
-        if (this.tagName == 'FORM')
-          return false;
-        else
-          this.formElement.submit();
-
-      return true;
+      if (this.tmpl.form)
+        this.tmpl.form.submit();
     }
   });
 
