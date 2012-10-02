@@ -438,6 +438,7 @@
   // export names
   //
 
+  module.setWrapper(highlight);
   module.exports = {
     // functions
     highlight: highlight,
