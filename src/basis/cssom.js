@@ -746,7 +746,7 @@
   */
   var pathResolver = (function(){
     var baseEl = dom.createElement('base');
-    var documentHead = document.head;
+    var documentHead = dom.head();
 
     return {
       setBase: function(baseURI){
