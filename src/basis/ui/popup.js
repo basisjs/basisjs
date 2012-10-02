@@ -249,8 +249,11 @@
       }
     },
     setZIndex: function(zIndex){
-      this.zIndex = zIndex;
-      this.element.style.zIndex = zIndex;
+      this.zIndex = isNaN(zIndex) ? 'auto' : zIndex;
+      //this.element.style.zIndex = zIndex;
+      cssom.setStyle(this.element, {
+        'z-index': zIndex
+      });
     },
     realign: function(){
       this.setZIndex(this.zIndex);
