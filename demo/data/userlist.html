@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Entity user list</title>
+  <title>Basis.js demos: Entity user list</title>
 
   <style id="demo-css" type="text/css">
     HTML,
@@ -20,6 +20,7 @@
 
     #UserList
     {
+      background: white;
       margin: 10px;
       height: 450px;
       width: 300px;
@@ -76,24 +77,23 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basis Demos: Entity user list</h1>
-
-  <p id="demo-summary">
-    ...
-  </p>
-  <div id="demo-description">
-    <p>...</p>
-  </div>
-
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
+    basis.require('basis.data');
+    basis.require('basis.dom');
+    basis.require('basis.ui');
+    basis.require('basis.entity');
+    basis.require('basis.ui.tree');
+    basis.require('basis.ui.label');
+    basis.require('basis.net.ajax');
+
     //
     // import names
     //
@@ -125,7 +125,7 @@
       }
     };
     var adapterHandler = {
-      success: function(request){
+      success: function(sender, request){
         var data = request.data.responseText.toObject();
         this.sync(data && data.map(this.wrapper.reader));
       }

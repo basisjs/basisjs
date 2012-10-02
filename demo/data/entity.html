@@ -5,11 +5,12 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Entity basic</title>
+  <title>Basis.js demos: Entity basic</title>
 
   <style type="text/css" id="demo-css">
     .Basis-Tree
     {
+      background: white;
       border: 1px solid #AAA;
       width: 240px;
       height: 300px;
@@ -20,7 +21,7 @@
       margin-right: 10px;
     }
 
-    .form-content
+    .Basis-FormContent
     {
       overflow: hidden;
     }
@@ -34,24 +35,19 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basis Demos: Entity basic</h1>
-
-  <p id="demo-summary">
-    В данной демонстации показана реализация простого интерфейса редактирования данных в связке список-форма с использованием basis.entity.
-  </p>
-  <div id="demo-description">
-    <p>В дереве (basis.ui.tree.Tree) представлен список статей. При выборе одного из пунктов его данные (данные статьи) загружаются в форму (basis.ui.form.FormContent), при это не происходит никакого копирования или присвоения данных. Загрузка данных осуществляется через связывание листа дерева (basis.ui.tree.TreeNode) с формой, путем назначения посленей делегатом (form.setDelegate) выбранного листа. Это...</p>
-  </div>
-
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
+    basis.require('basis.entity');
+    basis.require('basis.ui.tree');
+    basis.require('basis.ui.form');
+    basis.require('basis.ui.button');
     
     // Определяем новый тип данных.
     var Article = new basis.entity.EntityType({

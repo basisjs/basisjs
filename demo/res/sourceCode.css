@@ -1,0 +1,21 @@
+
+  #sourceCode
+  {
+    padding-bottom: 2em;
+  }
+
+  #sourceCodeTrigger
+  {
+    cursor: pointer;
+    text-decoration: underline;
+    margin-bottom: 1em;
+  }
+
+  #sourceCodeContent
+  {
+    display: none;
+  }
+  #sourceCodeContent.sourceCode_sourceVisible
+  {
+    display: block;
+  }

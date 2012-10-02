@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Dataset</title>
+  <title>Basis.js demos: Dataset</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -24,12 +24,6 @@
     {
       text-align: center;
     }
-    OBJECT
-    {
-      height: 100px;
-      width: 135px;
-      margin: -15px 0 0;
-    }
 
     H2
     {
@@ -41,6 +35,7 @@
 
     .DemoBlock
     {
+      background: white;
       border: 1px solid #D0D0D0;
       padding: 15px;
       margin: 0 10px .5em 0;
@@ -116,21 +111,12 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basis Demos: Dataset</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container">
   </div>
 
@@ -138,14 +124,14 @@
     basis.require('basis.dom');
     basis.require('basis.dom.event');
     basis.require('basis.data');
-    basis.require('basis.dom.wrapper');
+    basis.require('basis.data.dataset');
     basis.require('basis.ui.popup');
+    basis.require('basis.ui.menu');
     
     // import names
     var DOM = basis.dom;
     var Event = basis.dom.event;
     var nsData = basis.data;
-    var nsWrapper = basis.dom.wrapper;
     var Menu = basis.ui.menu.Menu;
     var UINode = basis.ui.Node;
     var nsDataset = basis.data.dataset;

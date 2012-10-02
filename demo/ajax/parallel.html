@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Parallel loading</title>
+  <title>Basis.js demos: Parallel loading</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -31,7 +31,7 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 
@@ -47,19 +47,12 @@
 </head>
 
 <body>
-  <h1>Basic demos: SOAP, List loading</h1>
-  
-  <p id="demo-summary">
-    Simple example of Basis.SOAP
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
-
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.data');
+    basis.require('basis.net.ajax');
+    basis.require('basis.ui.button');
 
     var STATE = basis.data.STATE;
 

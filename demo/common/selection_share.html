@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Share selection between controls</title>
+  <title>Basis.js demos: Share selection between controls</title>
 
 
   <style type="text/css" id="demo-css">
@@ -18,6 +18,7 @@
 
     #demo-container .Basis-Tree
     {
+      background: white;
       border: 1px solid #AAA;
       width: 300px;
       height: 400px;
@@ -37,24 +38,21 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Share selection between controls</h1>
-  
-  <p id="demo-summary">
+  <!--
     This demonstration shows how you can share selection between controls (even particular nodes). Use CTRL for multiple node selection.
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
+  -->
 
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.ui.tree');
    
     // make shortcut
     var DOM = basis.dom;

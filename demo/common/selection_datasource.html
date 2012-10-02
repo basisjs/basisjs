@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Selection as data source</title>
+  <title>Basis.js demos: Selection as data source</title>
 
   <style id="demo-css" type="text/css">
     #sourceTree,
@@ -18,39 +18,32 @@
     #selectedItemsTree H2,
     #selectedItemsByGroupTree H2
     {
-      font-size: 100%;
+      font-size: 150%;
+      font-weight: normal;
     }
     #demo-container .Basis-Tree
     {
+      background: white;
       border: 1px solid #888;
       width: 300px;
       height: 400px;
-      margin-right: 1ex;
+      margin-right: 2ex;
       overflow: auto;
     }
   </style>
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Selection as data source</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container">
     <div id="demo-panel">
       <button id="button-SelectAll">Select all</button>
       <button id="button-SelectChildNodes">Select first level child nodes</button>
       <button id="button-ClearSelection">Clear selection</button>
-      <p>Use CTRL key for multiple select.</p>
+      <p>Use CTRL key for multiple selection.</p>
     </div>
     <div id="sourceTree">
       <h2>Source tree</h2>
@@ -64,6 +57,11 @@
   </div>
 
   <script id="demo-javascript" type="text/javascript">
+    basis.require('basis.dom');
+    basis.require('basis.dom.event');
+    basis.require('basis.data.dataset');
+    basis.require('basis.ui.tree');
+
     var DOM = basis.dom;
     var Event = basis.dom.event;
     var nsTree = basis.ui.tree;

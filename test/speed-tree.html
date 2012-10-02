@@ -73,7 +73,7 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript"  src="../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
 </head>
 
 <body>
@@ -123,6 +123,10 @@
       console = { log: Function.$null, warn: Function.$null, dir: Function.$null };
 
     (function(){
+      basis.require('basis.dom');
+      basis.require('basis.dom.event');
+      basis.require('basis.data.generator');
+      basis.require('basis.ui.tree');
 
       var DOM = basis.dom;
       var Event = basis.dom.event;
@@ -147,8 +151,6 @@
         Event.onUnload(function(){ Event.clearHandlers(btn); });
         return btn;
       }), DOM.INSERT_BEFORE, DOM.get('nodeCount'));
-
-      if (!window.console) window.console = false;
 
       // create tree (reference allowed in global scope)
       TestTree = new Tree({

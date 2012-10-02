@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Using of satellites</title>
+  <title>Basis.js demos: Using of satellites</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -29,6 +29,7 @@
     {
       float: left;
       margin-right: 1ex;
+      background: white;
       border: 1px solid #AAA;
       height: 400px;
       width: 300px;
@@ -107,25 +108,21 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Using of satellites</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    
+    basis.require('basis.data');
+    basis.require('basis.dom');
+    basis.require('basis.entity');
+    basis.require('basis.ui.menu');
+    basis.require('basis.ui.field');
+        
     // make shortcut
     var Data = basis.data;
     var DOM = basis.dom;

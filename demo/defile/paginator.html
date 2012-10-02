@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Paginator</title>
+  <title>Basis.js demos: Paginator</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -18,6 +18,7 @@
     #Demo-Section
     {
       width: 600px;
+      background: white;
       border: 1px solid #E0E0E0;
       padding: 5px;
       margin-top: 20px;
@@ -25,7 +26,7 @@
     }
     .Basis-Resizer
     {
-      opacity: .5;
+      opacity: .5 !important;
       right: -5px;
       width: 5px;
       top: -1px;
@@ -68,24 +69,21 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Paginator</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.cssom');
+    basis.require('basis.ui.button');
+    basis.require('basis.ui.resizer');
+    basis.require('basis.ui.paginator');
+
     var DOM = basis.dom;
     var classList = basis.cssom.classList;
     var ButtonPanel = basis.ui.button.ButtonPanel;

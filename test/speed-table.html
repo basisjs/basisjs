@@ -51,7 +51,7 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
 </head>
 
 <body>
@@ -69,6 +69,13 @@
   <script type="text/javascript">
     
     (function(){
+      basis.require('basis.dom');
+      basis.require('basis.dom.event');
+      basis.require('basis.data.index');
+      basis.require('basis.data.generator');
+      basis.require('basis.ui.field');
+      basis.require('basis.ui.table');
+
       var DOM = basis.dom;
       var Event = basis.dom.event;
 

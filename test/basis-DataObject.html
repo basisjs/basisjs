@@ -18,9 +18,11 @@
     }
   </style>
   
-  <script type="text/javascript"  src="../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
   <script type="text/javascript">
     (function(){
+      basis.require('basis.data');
+
       var eventTypeFilter = function(event){ return event.type == this; };
       var proto = basis.data.DataObject.prototype;
       var eventsMap = {};
@@ -58,8 +60,8 @@
       };
     })();
   </script>
-  <script type="text/javascript"  src="test.js"></script>
-  <script type="text/javascript"  src="common.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
 </head>
 
 <body>

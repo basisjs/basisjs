@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Resizer</title>
+  <title>Basis.js demos: Resizer</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -15,9 +15,12 @@
       font-family: Tahoma, Verdana, Arial, sans-serif;
     }
 
-    #Demo-Section
+    #demo-container
     {
-      width: 600px;
+      width: 100%;
+      box-sizing: border-box;
+      height: 500px;
+      background: white;
       border: 1px solid #E0E0E0;
       padding: 5px;
       margin-top: 20px;
@@ -27,7 +30,7 @@
     {
       position: relative;
       width: 20%;
-      min-width: 10%;
+      min-width: 200px;
       max-width: 50%;
       border-right: 1px solid black;
       height: 100%;
@@ -58,9 +61,9 @@
     {
       position: absolute;
       top: 0;
-      height: 20%;
-      min-height: 10%;
-      max-height: 50%;
+      height: 35%;
+      min-height: 25%;
+      max-height: 70%;
       left: 0;
       right: 0;
       padding-left: 2ex;
@@ -96,24 +99,19 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Resizer</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.cssom');
+    basis.require('basis.ui.resizer');
+
     var DOM = basis.dom;
     var classList = basis.cssom.classList;
     var Resizer = basis.ui.resizer.Resizer;

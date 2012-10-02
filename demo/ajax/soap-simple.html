@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: SOAP, Temperature convertor</title>
+  <title>Basis.js demos: SOAP, Temperature convertor</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -54,21 +54,12 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: SOAP, Temperature convertor</h1>
-  
-  <p id="demo-summary">
-    Simple example of Basis.SOAP
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container">
     <form id="convertFormNative">
       <h2>Using Basis.Ajax.Transport</h2>
@@ -99,6 +90,11 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.cssom');
+    basis.require('basis.net.ajax');
+    basis.require('basis.net.soap');
+
     // IMPORTANT: Host server must has url proxy for pathes starts with /w3schools_com
     // to http://www.w3schools.com
     // So, /w3schools_com/webservices/tempconvert.asmx should be proxed to 

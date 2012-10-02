@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Tables</title>
+  <title>Basis.js demos: Tables</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -17,13 +17,11 @@
 
     .DemoBlock
     {
+      background: white;
       border: 1px solid #D0D0D0;
-        -moz-border-radius: 3px;
-        -webkit-border-radius: 3px;
       border-radius: 3px;
       padding: 15px;
-      margin: 0 0 .5em 10px;
-      overflow: hidden;
+      margin: 0 10px .5em 0;
       position: relative;
       width: 45%;
       float: left;
@@ -57,21 +55,12 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Tables</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
@@ -79,6 +68,8 @@
     basis.require('basis.dom');
     basis.require('basis.date');
     basis.require('basis.ui.table');
+    basis.require('basis.ui.scrolltable');
+    basis.require('basis.ui.resizer');
     
     // import names
 
@@ -152,10 +143,13 @@
     basis.ready(function(){
       container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));
       var table = new ScrollTable({
-        selection: {multiple:true},
-        //container: container,
+        selection: {
+          multiple: true
+        },
         cssClassName: 'FitToContainer',
-        header: { grouping: Function.getter('groupId') },
+        header: {
+          grouping: Function.getter('groupId || "\xA0"')
+        },
         structure: [
           { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
           { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: { content: 'footer' } },
@@ -165,9 +159,6 @@
         ],
         childNodes: data
       }); 
-      /*setTimeout(function(){
-        table.setChildNodes(data);
-      }, 10);*/
       basis.dom.insert(container, table.element);
 
       var r = new basis.ui.resizer.Resizer({ element: container.parentNode });
@@ -182,7 +173,9 @@
       var container2 = createBlock('basis.ui.scrolltable.ScrollTable');
       new ScrollTable({
         container: container2,
-        header: { grouping: Function.getter('groupId') },
+        header: {
+          grouping: Function.getter('groupId || "\xA0"')
+        },
         structure: [
           { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
           { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },
@@ -195,12 +188,12 @@
 
     });
 
-    basis.dom.insert('demo-container', basis.dom.createElement('button', 'remove')).onclick = function(){
+    /*basis.dom.insert('demo-container', basis.dom.createElement('button', 'remove')).onclick = function(){
       basis.dom.remove(table.element);
     };
     basis.dom.insert('demo-container', basis.dom.createElement('button', 'insert')).onclick = function(){
       basis.dom.insert(container, table.element);
-    };
+    };*/
 
 
 

@@ -5,11 +5,12 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Live entity edit</title>
+  <title>Basis.js demos: Live entity edit</title>
 
   <style type="text/css" id="demo-css">
     #ArticleList
     {
+      background: white;
       border: 1px solid #AAA;
       width: 320px;
       height: 450px;
@@ -67,6 +68,11 @@
       resize: none;
     }
 
+    #EditForm .disabled .Basis-Field-Container
+    {
+      opacity: .4;
+    }
+
     .Basis-ButtonPanel
     {
       text-align: right;
@@ -82,22 +88,19 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basis Demos: Live entity edit</h1>
-
-  <p id="demo-summary">
-  </p>
-  <div id="demo-description">
-  </div>
-
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
+    basis.require('basis.entity');
+    basis.require('basis.ui');
+    basis.require('basis.ui.form');
+    basis.require('basis.ui.button');
 
     //
     // Data

@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: SOAP, List loading</title>
+  <title>Basis.js demos: SOAP, list loading</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -44,24 +44,22 @@
   <![endif]-->
 
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: SOAP, List loading</h1>
-  
-  <p id="demo-summary">
-    Simple example of Basis.SOAP
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.entity');
+    basis.require('basis.data');
+    basis.require('basis.net.soap');
+    basis.require('basis.ui.tree');
+    basis.require('basis.ui.label');
+
     // IMPORTANT: Host server must has url proxy for pathes starts with /w1service
     // to http://service.w1.ru/10/
     // So, /w1service/PublicService.asmx should be proxed to 
@@ -86,7 +84,7 @@
     }
 
     // create service and it's method
-    var service = new basis.net.soap.Service('/w1service/PublicService.asmx', 'Wallet.Public.WebService');
+    var service = new basis.net.soap.SOAPProxy({ url: '/w1service/PublicService.asmx', namespace: 'Wallet.Public.WebService' });
     var getProviderGroup = service.createMethodCall('GetProviderGroups', {
       mapping: {
         // force converting ProviderGroup element to array in response

@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Todo list</title>
+  <title>Basis.js demos: Todo list</title>
 
   <style type="text/css" id="demo-css">
 
@@ -167,26 +167,28 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basis Demos: Todo list</h1>
-
-  <p id="demo-summary">
-    ...
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
 
     basis.ready(function(){
+      basis.require('basis.dom');
+      basis.require('basis.data');
+      basis.require('basis.entity');
+      basis.require('basis.layout');
+      basis.require('basis.cssom');
+      basis.require('basis.ui');
+      basis.require('basis.ui.calendar');
+      basis.require('basis.ui.tabs');
+      basis.require('basis.ui.form');
+      basis.require('basis.ui.window');
+
       var DOM = basis.dom;
       var nsData = basis.data;
       var nsUI = basis.ui;

@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Graph</title>
+  <title>Basis.js demos: Graph with dynamic threads</title>
 
   <style type="text/css" id="demo-css">
     BODY, HTML
@@ -46,7 +46,7 @@
 
   </style>
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../seedrandom.js"></script>
   <script type="text/javascript" src="../demo.js"></script>
@@ -58,23 +58,18 @@
 </head>
 
 <body>
-  <h1>Basis Demos: Graph</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.date');
+    basis.require('basis.dom');
+    basis.require('basis.entity');
+    basis.require('basis.ui.graph');
+    basis.require('basis.ui.field');
 
     var DOM = basis.dom;
     var nsEntity = basis.entity;
     var LinearGraph = basis.ui.graph.LinearGraph;
-
     var nsField = basis.ui.field;
 
     //
@@ -154,8 +149,8 @@
         return object.data.Date;
       },
       keyTitleGetter: function(object){
-        var date = new Date(object.data.Date);
-        return String(basis.l10n.getToken('basis.ui.calendar', 'monthShort', basis.date.monthNumToAbbr[date.getMonth()])).toLowerCase() + ' ' + date.getFullYear();
+        var date = object.data.Date.split('-');
+        return basis.date.monthNumToAbbr[date[1] - 1].toLowerCase() + ' ' + date[0];
       },
 
       series: {
@@ -202,8 +197,8 @@
           title: {
             events: 'update',
             getter: function(node){
-              var p = node.data.Date.split('-');
-              return (new Date(p[0], p[1])).toFormat('%D.%M.%Y');
+              var date = node.data.Date.split('-');
+              return basis.date.monthNumToAbbr[date[1] - 1].toLowerCase() + ' ' + date[0];
             }
           }
         }

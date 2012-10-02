@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Independent selection model</title>
+  <title>Basis.js demos: Independent selection model</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -17,6 +17,7 @@
 
     #DemoTree
     {
+      background: white;
       border: 1px solid #AAA;
       width: 300px;
       height: 500px;
@@ -53,28 +54,21 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Independant selection model</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.dom.wrapper');
+    basis.require('basis.ui.tree');
     
     // make shortcut
     var DOM = basis.dom;
-
     var nsTree = basis.ui.tree;
     var Selection = basis.dom.wrapper.Selection;
 

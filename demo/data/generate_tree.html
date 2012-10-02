@@ -5,15 +5,22 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Generate tree using dataset</title>
+  <title>Basis.js demos: Generate tree using dataset</title>
 
   <style type="text/css" id="demo-css">
+    H2
+    {
+      font-size: 150%;
+      font-weight: normal;
+    }
+
     .TreeContainer
     {
       float: left;
     }
     #demo-container .Basis-Tree
     {
+      background: white;
       border: 1px solid #AAA;
       width: 240px;
       height: 300px;
@@ -37,21 +44,12 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basis Demos: Generate tree using dataset</h1>
-
-  <p id="demo-summary">
-    ...
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container">
     <div id="fileTreeContainer" class="TreeContainer">
       <h2>File tree</h2>
@@ -63,6 +61,11 @@
   </div>
 
   <script id="demo-javascript" type="text/javascript">
+    basis.require('basis.dom');
+    basis.require('basis.data');
+    basis.require('basis.entity');
+    basis.require('basis.ui');
+    basis.require('basis.ui.tree');
 
     var DOM = basis.dom;
     var nsData = basis.data;

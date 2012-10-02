@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Tabs</title>
+  <title>Basis.js demos: Tabs</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -17,10 +17,11 @@
 
     .DemoBlock
     {
+      background: white;
       border: 1px solid #D0D0D0;
       border-radius: 3px;
       padding: 15px;
-      margin: 0 0 .5em 10px;
+      margin: 0 10px .5em 0;
       overflow: hidden;
       position: relative;
     }
@@ -32,6 +33,14 @@
       margin: -15px -15px 10px -15px;
       padding: 2px;
       text-align: center;
+    }
+
+    .DemoBlock.aside
+    {
+      float: right;
+      width: 250px;
+      margin-left: 10px;
+      margin-right: 0;
     }
     
     .Basis-AccordionControl .Basis-Page
@@ -49,21 +58,12 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Tabs</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
@@ -75,15 +75,18 @@
     // import names
     var DOM = basis.dom;
     var cssom = basis.cssom;
-    var Tabs = basis.ui.tabs;
+    var tabs = basis.ui.tabs;
     var getter = Function.getter;
 
     //
     // Main part
     //
 
-    function createBlock(header){
-      return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
+    function createBlock(header, aside){
+      return DOM.insert(
+        DOM.get('demo-container'),
+        DOM.createElement('.DemoBlock' + (aside ? '.aside' : ''), DOM.createElement('H2', header))
+      );
     }
 
     // Data source
@@ -99,45 +102,45 @@
 
 
     // AccordionControl
-    new Tabs.AccordionControl({
-      container: cssom.setStyle(createBlock('AccordionControl'), { 'float': 'right', width: '250px' }),
+    new tabs.AccordionControl({
+      container: createBlock('AccordionControl', true),
       childNodes: data
     });
 
     // AccordionControl with sorting & grouping
-    new Tabs.AccordionControl({
-      container: cssom.setStyle(createBlock('AccordionControl with sorting & grouping'), { 'float': 'right', width: '250px' }),
+    new tabs.AccordionControl({
+      container: createBlock('AccordionControl with sorting & grouping', true),
+      childNodes: data,
       grouping: {
-        groupGetter: getter('groupId'),
-        sorting: getter('data.title')
+        groupGetter: 'groupId',
+        sorting: 'data.title'
       },
-      sorting: getter('data.title'),
-      childNodes: data
+      sorting: 'data.title'
     });
 
     // TabControl
-    new Tabs.TabControl({
+    new tabs.TabControl({
       container: createBlock('TabControl'),
       childNodes: data
     });
 
     // TabControl with sorting & grouping
-    new Tabs.TabControl({
+    new tabs.TabControl({
       container: createBlock('TabControl with sorting & grouping'),
+      childNodes: data,
       grouping: {
-        groupGetter: getter('groupId'),
-        sorting: getter('data.title')
+        groupGetter: 'groupId',
+        sorting: 'data.title'
       },
-      sorting: getter('data.title'),
-      childNodes: data
+      sorting: 'data.title'
     });
 
     // PageControl
     var container = createBlock('PageControl');
     var buttonPanel = DOM.createElement();
-    DOM.insert(container, DOM.createElement('', 'Show page: ', buttonPanel));
+    DOM.insert(container, ['Show page: ', buttonPanel]);
 
-    new Tabs.PageControl({
+    new tabs.PageControl({
       container: container,
       handler: {
         childNodesModified: function(){
@@ -170,20 +173,20 @@
     });
 
     // TabSheetControl
-    new Tabs.TabSheetControl({
+    new tabs.TabSheetControl({
       container: createBlock('TabSheetControl'),
       childNodes: data
     });
 
     // TabSheetControl with sorting & grouping
-    new Tabs.TabSheetControl({
+    new tabs.TabSheetControl({
       container: createBlock('TabSheetControl with sorting & grouping'),
+      childNodes: data,
       grouping: {
-        groupGetter: getter('groupId'),
-        sorting: getter('data.title')
+        groupGetter: 'groupId',
+        sorting: 'data.title'
       },
-      sorting: getter('data.title'),
-      childNodes: data
+      sorting: 'data.title'
     });
 
   </script>

@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Forms</title>
+  <title>Basis.js demos: Forms</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -17,13 +17,11 @@
 
     .DemoBlock
     {
+      background: white;
       border: 1px solid #D0D0D0;
       border-radius: 3px;
-        -moz-border-radius: 3px;
-        -webkit-border-radius: 3px;
       padding: 15px;
-      margin: 0 0 .5em 10px;
-      overflow: hidden;
+      margin: 0 0 .5em;
       position: relative;
     }
     .DemoBlock H2
@@ -33,7 +31,6 @@
       background: #EEE;
       margin: -15px -15px 10px -15px;
       padding: 2px 2px 2px 1.5em;
-      /*text-align: center;*/
     }
   </style>
   <!--[if lt IE 7]>
@@ -45,21 +42,12 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Forms</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
@@ -94,7 +82,7 @@
       var valKeypress;
       var valBlur;
 
-      var el = DOM.createElement('.fieldViewer',
+      var el = DOM.createElement('.fieldViewer'/*,
         DOM.createElement('', 'change: ',
           valChange = DOM.createText(field.getValue())
         ),
@@ -115,10 +103,10 @@
         ),
         DOM.createElement('', 'blur: ',
           valBlur = DOM.createText(field.getValue())
-        )
+        )*/
       );
 
-      field.addHandler({
+      /*field.addHandler({
         change: function(){
           valChange.nodeValue = field.getValue();
         },
@@ -140,7 +128,7 @@
         fieldBlur: function(){
           valBlur.nodeValue = field.getValue();
         }
-      });
+      });*/
 
       return el;
     }
@@ -156,8 +144,6 @@
       container: createBlock('Text Field'),
       value: 'text field'
     });
-
-
 
     new nsField.Textarea({
       container: createBlock('Textarea Field'),

@@ -5,6 +5,7 @@
     border-left: 1px solid #E8E8E8;
     border-bottom: 1px solid #E8E8E8;
     empty-cells: show;
+    background: white;
   }
   .Basis-Table TD,
   .Basis-Table TH

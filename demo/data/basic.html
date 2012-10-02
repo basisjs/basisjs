@@ -5,11 +5,12 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Property &amp; DataObjectSet</title>
+  <title>Basis.js demos: Property &amp; DataObjectSet</title>
 
   <style type="text/css" id="demo-css">
     .Basis-Tree
     {
+      background: white;
       border: 1px solid #AAA;
       width: 240px;
       height: 300px;
@@ -34,24 +35,20 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basis Demos: Property &amp; DataObjectSet</h1>
-
-  <p id="demo-summary">
-    ...
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
+    basis.require('basis.dom');
+    basis.require('basis.data');
+    basis.require('basis.dom.wrapper');
+    basis.require('basis.ui.button');
+    basis.require('basis.data.property');
 
     var DOM = basis.dom;
     var nsData = basis.data;
@@ -76,19 +73,29 @@
       childNodes: [
         {
           caption: 'Add 1 to property1',
-          click: function(){ property1.set(property1.value + 1); }
+          click: function(){
+            property1.set(property1.value + 1);
+          }
         },
         {
           caption: 'Add 1 to property1 and than sub 1 ',
-          click: function(){ property1.set(property1.value + 1); property1.set(property1.value - 1); }
+          click: function(){
+            property1.set(property1.value + 1);
+            property1.set(property1.value - 1);
+          }
         },
         {
           caption: 'Add 1 to property2',
-          click: function(){ property2.set(property2.value + 1); }
+          click: function(){
+            property2.set(property2.value + 1);
+          }
         },
         {
           caption: 'Add 1 to property1 & property2',
-          click: function(){ property1.set(property1.value + 1); property2.set(property2.value + 1); }
+          click: function(){
+            property1.set(property1.value + 1);
+            property2.set(property2.value + 1);
+          }
         }
       ]
     });

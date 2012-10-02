@@ -1,5 +1,8 @@
 
   basis.ready(function(){
+    basis.require('basis.dom');
+    basis.require('basis.dom.event');
+    basis.require('basis.data');
 
     var createElement = basis.dom.createElement;
     var DOM = basis.dom;

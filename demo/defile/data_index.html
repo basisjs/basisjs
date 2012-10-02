@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Data indexes</title>
+  <title>Basis.js demos: Data indexes</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -66,22 +66,13 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../seedrandom.js"></script>
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basis Demos: Data indexes</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container">
   </div>
 
@@ -90,7 +81,6 @@
     basis.require('basis.dom');
     basis.require('basis.cssom');
     basis.require('basis.data');
-    basis.require('basis.dom.wrapper');
     basis.require('basis.data.index');
     basis.require('basis.ui.button');
     basis.require('basis.ui.table');
@@ -99,7 +89,6 @@
     // import names
     var DOM = basis.dom;
     var nsData = basis.data;
-    var nsWrapper = basis.dom.wrapper;
     var nsDataIndex = basis.data.index;
     var cssom = basis.cssom;
 
@@ -107,7 +96,6 @@
     var ButtonPanel = basis.ui.button.ButtonPanel;
     var Table = basis.ui.table.Table;
     var Slider = basis.ui.slider.Slider;
-
     var UINode = basis.ui.Node;
 
     Math.seedrandom("basis");
@@ -324,7 +312,9 @@
                 this.setValue(this.data.total);
             },
             change: function(){
-              this.update({ total: this.value });
+              this.update({
+                total: this.value
+              });
             }
           }
         })

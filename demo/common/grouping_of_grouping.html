@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Grouping of grouping ...</title>
+  <title>Basis.js demos: Nested grouping</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -13,6 +13,12 @@
     {
       font-size: small;
       font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    H2
+    {
+      font: 150% Arial, sans-serif;
+      font-weight: normal;
     }
 
     .Demo-Section
@@ -115,26 +121,17 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Grouping of grouping ...</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container">
-    <h2>1. Number grouping demo</h2>
+    <h2>Number grouping, 5 level grouping</h2>
     <div id="NumberDemo-Container"></div>
 
-    <h2>2. Metro demo</h2>
+    <h2>Metro of world</h2>
     <div id="MetroDemo-Container"></div>
   </div>
 
@@ -142,7 +139,7 @@
 
     basis.require('basis.data');
     basis.require('basis.dom');
-    basis.require('basis.dom.wrapper');
+    basis.require('basis.ui');
     
     // make shortcut
     var Data = basis.data;
@@ -164,21 +161,6 @@
       });
     }
 
-    var groupingClass = basis.Class(nsUI.GroupingNode, {
-      groupGetter: function(node){
-        return node.data.id >> 1;
-      },
-      groupingClass: basis.Class.SELF,
-      childClass: {
-        template:
-          '<div class="group">' +
-            '<!-- {childNodesHere} -->' +
-            '<div class="group-title">{title}</div>' +
-          '</div>'
-      }
-    });
-    //groupingClass.prototype.groupingClass = groupingClass;
-
     var list = new nsUI.Node({
       container: DOM.get('NumberDemo-Container'),
       childNodes: data,
@@ -191,7 +173,19 @@
           value: 'data.id'
         }
       },
-      groupingClass: groupingClass,
+      groupingClass: nsUI.GroupingNode.subclass({
+        groupGetter: function(node){
+          return node.data.id >> 1;
+        },
+        groupingClass: basis.Class.SELF,
+        childClass: {
+          template:
+            '<div class="group">' +
+              '<!-- {childNodesHere} -->' +
+              '<div class="group-title">{title}</div>' +
+            '</div>'
+        }
+      }),
       grouping: {
         grouping: {
           grouping: {
@@ -442,7 +436,7 @@
 
       grouping: {
         // group metro by country
-        groupGetter: Function.getter('data.country'),
+        groupGetter: 'data.country',
         sorting: 'data.title',
         childClass: {
           template:

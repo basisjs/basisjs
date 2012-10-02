@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Using match filter</title>
+  <title>Basis.js demos: Using match filter</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -31,6 +31,7 @@
     .MatchHolder INPUT
     {
       width: 300px;
+      box-sizing: border-box;
     }
 
     .match
@@ -50,6 +51,7 @@
 
     .Basis-Tree
     {
+      background: white;
       border: 1px solid #AAA;
       height: 400px;
       overflow: auto;
@@ -66,24 +68,20 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Using match filter</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.data');
+    basis.require('basis.dom');
+    basis.require('basis.ui.tree');
+    basis.require('basis.ui.table');
+    basis.require('basis.ui.form');
     
     // make shortcut
     var Data = basis.data;

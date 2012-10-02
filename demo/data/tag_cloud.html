@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Dataset</title>
+  <title>Basis.js demos: Dataset</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -46,7 +46,7 @@
     {
       font-size: 10px;
       padding-left: 2px;
-      color: #8D8;
+      color: #D94;
     }
   </style>
   <!--[if lt IE 7]>
@@ -58,26 +58,19 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
   <script type="text/javascript" src="../seedrandom.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Dataset</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
-  <div id="demo-container">
-  </div>
+  <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.data');
+    basis.require('basis.data.index');
+    basis.require('basis.ui');
 
     //
     // Data generation

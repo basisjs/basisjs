@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Grouping switch</title>
+  <title>Basis.js demos: Grouping switch</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -17,7 +17,7 @@
 
     .Demo-Section
     {
-      width: 300px;
+      width: 400px;
       float: left;
       border-right: 1px solid #EEE;
       margin-right: 10px;
@@ -26,6 +26,7 @@
 
     .Basis-Tree
     {
+      background: white;
       border: 1px solid #AAA;
       height: 400px;
       overflow: auto;
@@ -47,28 +48,24 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Grouping switch</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"><div id="demo-changeGroupingList">Choose grouping: </div></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.data');
+    basis.require('basis.ui.tree');
+    basis.require('basis.ui.table');
+    basis.require('basis.ui.field');
     
     // make shortcut
-    var Data = basis.data;
     var DOM = basis.dom;
+    var Data = basis.data;
     var nsTree = basis.ui.tree;
     var nsTable = basis.ui.table;
     var nsField = basis.ui.field;

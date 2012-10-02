@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Buttons</title>
+  <title>Basis.js demos: Buttons</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -17,12 +17,11 @@
 
     .DemoBlock
     {
+      background: white;
       border: 1px solid #D0D0D0;
-        -moz-border-radius: 3px;
-        -webkit-border-radius: 3px;
       border-radius: 3px;
       padding: 15px;
-      margin: 0 0 .5em 10px;
+      margin: 0 0 .5em 0;
       overflow: hidden;
       position: relative;
     }
@@ -62,7 +61,7 @@
 
     .big
     {
-      font-size: 300%;
+      font-size: 300% !important;
     }
 
   </style>
@@ -75,32 +74,21 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Buttons</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.ui.button');
     
     // import names
     var DOM = basis.dom;
-    var Event = basis.dom.event;
-    var Data = basis.data;
-
     var getter = Function.getter;
-
     var Button = basis.ui.button.Button;
     var ButtonPanel = basis.ui.button.ButtonPanel;
 

@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis Demos: Scroller</title>
+  <title>Basis.js demos: Scroller</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -26,14 +26,11 @@
       width: 25%;
     }
 
-
     .DemoBlock
     {
       margin-right: 1ex;
-
+      background: white;
       border: 1px solid #D0D0D0;
-        -moz-border-radius: 3px;
-        -webkit-border-radius: 3px;
       border-radius: 3px;
       overflow: hidden;
       position: relative;
@@ -182,29 +179,23 @@
   </style>
   <![endif]-->
 
-  <script type="text/javascript" src="../../basis-all.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
 
   <script type="text/javascript" src="../demo.js"></script>
 </head>
 
 <body>
-  <h1>Basic demos: Scroller</h1>
-  
-  <p id="demo-summary">
-    ..
-  </p>
-  <div id="demo-description">
-    ..
-  </div>
-
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.dom');
+    basis.require('basis.layout');
+    basis.require('basis.ui');
+    basis.require('basis.ui.scroller');
+    basis.require('basis.ui.pageslider');
     
     // import names
     var DOM = basis.dom;
-    var Event = basis.dom.event;
-    var Data = basis.data;
 
     var Scroller = basis.ui.scroller.Scroller;
     var ScrollPanel = basis.ui.scroller.ScrollPanel;
@@ -212,8 +203,6 @@
     var PageSlider = basis.ui.pageslider.PageSlider;
     var uiNode = basis.ui.Node;
 
-    var nsEntity = basis.entity;
-    
     var getter = Function.getter;
 
     function createBlock(header, cssClassName){

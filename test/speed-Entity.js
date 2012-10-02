@@ -1,9 +1,14 @@
+
+    basis.require('basis.dom');
+    basis.require('basis.dom.event');
+    basis.require('basis.data');
+    basis.require('basis.entity');
+    
     var MAX_COUNT = 3000;
     var MAX_COUNT_QUATER = MAX_COUNT >> 2;
     
     var DOM = basis.dom;
     var Data = basis.data;
-    var nsWrapers = DOM.wrapper;
     var nsEntity = basis.entity;
 
     var getter = Function.getter;
