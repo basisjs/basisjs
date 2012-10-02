@@ -932,9 +932,25 @@
       return ieGetInputPosition(false);
   }
 
+  // head/body
+
+  function head(doc){
+    if (!doc)
+      doc = document || { head: null };
+
+    return doc.head || tag(doc, 'head')[0];
+  }
+
+  function body(doc){
+    if (!doc)
+      doc = document || { body: null };
+
+    return doc.body || tag(doc, 'body')[0];
+  }
+
   function appendHead(node){
     if (document)
-      insert(document.head || tag(document, 'head')[0], node);
+      insert(head(), node);
     else
     {
       ;;;if (typeof console != 'undefined') console.warn('Can\'t append to head, document not found');
@@ -1042,5 +1058,7 @@
     getSelectionStart: getSelectionStart,
     getSelectionEnd: getSelectionEnd,
 
+    head: head,
+    body: body,
     appendHead: appendHead
   };
