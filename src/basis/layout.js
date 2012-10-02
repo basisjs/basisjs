@@ -40,6 +40,7 @@
 
   var IS_IE = Browser.test('IE');
   var IS_IE7_UP = Browser.test('IE7+');
+  var IS_IE8_DOWN = Browser.test('IE8-');
 
   var SUPPORT_DISPLAYBOX = false;
 
@@ -222,9 +223,12 @@
           {
             if (IS_IE7_UP)
             {
-              // IE7
-              this.top  += documentElement.scrollTop  - documentElement.clientTop;
-              this.left += documentElement.scrollLeft - documentElement.clientLeft;
+              if (IS_IE8_DOWN)
+              {
+                // IE7-8
+                this.top  += documentElement.scrollTop  - documentElement.clientTop;
+                this.left += documentElement.scrollLeft - documentElement.clientLeft;
+              }
             }
             else
               // IE6 and lower
@@ -236,21 +240,20 @@
           }
 
           // coords relative of offsetElement
-          if (offsetElement)
+          if (offsetElement) // TODO: check for body.style === 'static', not bug if body is not static
           {
-            /*if (element.offsetParent == offsetElement)
+            if (offsetElement !== document.body)
             {
-              this.top = element.offsetTop - offsetElement.scrollTop;
-              this.left = element.offsetLeft - offsetElement.scrollLeft;
-            }
-            else
-            {*/
-            //if (offsetElement && offsetElement.nodeType == 11) debugger;
               var relBox = new Box(offsetElement);
               this.top  -= relBox.top;
               this.left -= relBox.left;
               relBox.destroy();
-            //}
+            }
+            else
+            {
+              this.top += offsetElement.scrollTop + documentElement.scrollTop;
+              this.left += offsetElement.scrollLeft + documentElement.scrollLeft;
+            }
           }
         }
         else
