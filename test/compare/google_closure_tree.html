@@ -47,7 +47,7 @@
     function childFactory(data){
       if (data[1] && data[1].length)
       {
-          // has children -> create folder
+        // has children -> create folder
         return new LazyFolder({
           collapsed: this instanceof basis.ui.tree.Tree == false && data[0] != 'D',
           data: { title: data[0] },
@@ -56,7 +56,7 @@
       }
       else
       {
-          // has no children -> create node
+        // has no children -> create node
         return new basis.ui.tree.Node({
           data: { title: data[0] }
         });
@@ -76,22 +76,18 @@
       lazyInitChildren: function(){
         if (!this.collapsed && this.lazyChildren)
         {
-          this.setChildNodes(this.lazyChildren);
+          basis.dom.insert(this, this.lazyChildren, 0);
           this.lazyChildren = null;
         }
       }
     });
 
-    function makeTree(){
-      return new basis.ui.tree.Tree({
-        container: document.body,
-        childNodes: [testData],
-        childFactory: childFactory
-      });
-    }
-
     var timer = new Date();
-    var tree = makeTree();
+    var tree = new basis.ui.tree.Tree({
+      container: document.body,
+      childNodes: [testData],
+      childFactory: childFactory
+    });
 
     basis.dom.insert('time', ['make tree time: ', new Date - timer, 'ms']);
 
