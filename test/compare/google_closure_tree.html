@@ -1,0 +1,131 @@
+﻿<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Basis.js tree vs Google closure library tree</title>
+  <style>
+    HTML
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+
+      background: #FAF8EC;
+      color: black;
+    }
+  </style>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+</head>
+
+<body>
+  Inspired on <a href="http://closure-library.googlecode.com/svn/trunk/closure/goog/demos/tree/demo.html">goog.ui.tree.TreeControl demo</a>
+  <div>
+    <button onclick="cut()">Cut</button>
+    <button onclick="paste()">Paste</button>
+  </div>
+  <div id="time"></div>
+  <script type="text/javascript" src="google_closure_tree_data.js"></script>
+  <script type="text/javascript">
+    basis.require('basis.dom');
+    basis.require('basis.ui.tree');
+
+    /*// increase test data size
+    testData[1] = testData[1].concat(testData[1].slice(0));
+    testData[1] = testData[1].concat(testData[1].slice(0));
+    testData[1] = testData[1].concat(testData[1].slice(0));
+    console.log(testData[1].reduce(function(res, val){ return val[1].length + 1 + res }, 0));
+    */
+
+    //
+    // create tree
+    //
+
+    function childFactory(data){
+      if (data[1] && data[1].length)
+      {
+          // has children -> create folder
+        return new LazyFolder({
+          collapsed: this instanceof basis.ui.tree.Tree == false && data[0] != 'D',
+          data: { title: data[0] },
+          lazyChildren: data[1]
+        });
+      }
+      else
+      {
+          // has no children -> create node
+        return new basis.ui.tree.Node({
+          data: { title: data[0] }
+        });
+      }
+    }
+
+    var LazyFolder = basis.ui.tree.Folder.subclass({
+      childFactory: childFactory,
+      init: function(){
+        basis.ui.tree.Folder.prototype.init.call(this);
+        this.lazyInitChildren();
+      },
+      event_expand: function(){
+        basis.ui.tree.Folder.prototype.event_expand.call(this);
+        this.lazyInitChildren();
+      },
+      lazyInitChildren: function(){
+        if (!this.collapsed && this.lazyChildren)
+        {
+          this.setChildNodes(this.lazyChildren);
+          this.lazyChildren = null;
+        }
+      }
+    });
+
+    function makeTree(){
+      return new basis.ui.tree.Tree({
+        container: document.body,
+        childNodes: [testData],
+        childFactory: childFactory
+      });
+    }
+
+    var timer = new Date();
+    var tree = makeTree();
+
+    basis.dom.insert('time', ['make tree time: ', new Date - timer, 'ms']);
+
+    //
+    // cut/paste
+    //
+
+    var clipboardNode;
+
+    function cut(){
+      var selected = tree.selection.pick();
+      if (selected)
+      {
+        if (clipboardNode)
+          clipboardNode.destroy();
+
+        clipboardNode = basis.dom.remove(selected);  // eq: if (selected.parentNode) selected.parentNode.removeChild(selected);
+      }
+    }
+
+    function paste(){
+      if (clipboardNode)
+      {
+        var selected = tree.selection.pick();
+        var insertTo = selected || tree;
+
+        if (insertTo.childClass)
+        {
+          insertTo.appendChild(clipboardNode);
+          clipboardNode = null;
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>
