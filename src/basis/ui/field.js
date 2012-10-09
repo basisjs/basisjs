@@ -33,7 +33,6 @@
   var createEvent = basis.event.create;
   var events = basis.event.events;
 
-  var AbstractProperty = basis.data.property.AbstractProperty;
   var Property = basis.data.property.Property;
 
   var Selection = basis.dom.wrapper.Selection;
@@ -96,6 +95,7 @@
     validity: VALIDITY_INDETERMINATE,
     error: '',
     example: null,
+    focused: false,
 
     //
     // events
@@ -131,6 +131,7 @@
       events.fieldKeyup.call(this, event);
     },
     event_fieldFocus: createEvent('fieldFocus', 'event') && function(event){
+      this.focused = true;
       /*if (this.validity)
         this.setValidity();*/
 
@@ -138,6 +139,7 @@
     },
     event_fieldBlur: createEvent('fieldBlur', 'event') && function(event){
       this.validate(true);
+      this.focused = false;
 
       events.fieldBlur.call(this, event);
     },
@@ -150,6 +152,12 @@
     binding: {
       name: 'name || ""',
       titleText: 'title || ""',
+      focused: {
+        events: 'fieldFocus fieldBlur',
+        getter: function(node){
+          return node.focused ? 'focused' : '';
+        }
+      },
       value: {
         events: 'change',
         getter: 'getValue()'
