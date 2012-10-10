@@ -418,7 +418,7 @@
           node.select();
         else
         {
-          if (this.selectedDate && this.minDate <= this.selectedDate && this.selectedDate <= this.maxDate)
+          if (this.selectedDate /*&& this.minDate <= this.selectedDate && this.selectedDate <= this.maxDate*/)
             this.setViewDate(this.selectedDate);
           else
             this.selection.clear();

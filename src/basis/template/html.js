@@ -878,7 +878,7 @@
           '}'] +
         '}' +
       '}');
-      //console.log(createInstance);
+
       createInstance = createInstance(tmplNodeMap, templateMap, build, tools, l10nMap);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
 
@@ -1016,7 +1016,7 @@
           if (CLONE_NORMALIZE_TEXT_BUG && i && tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT)
             result.appendChild(document.createComment(''));
 
-          result.appendChild(document.createTextNode(token[TEXT_VALUE] || (token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : '')));
+          result.appendChild(document.createTextNode(token[TEXT_VALUE] || (token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : '') || (token[TOKEN_BINDINGS] ? '!' : '')));
           break;
       }
     }
