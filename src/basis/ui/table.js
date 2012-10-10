@@ -524,7 +524,7 @@
 
           template += 
             '<td' + (cell.templateRef ? '{' + cell.templateRef + '}' : '') + (className ? ' class="' + className + '"' : '') + '>' + 
-              (contentType == 'string' ? content : (contentType == 'function' ? '<!--{__cell' + i + '}-->' : '')) +
+              (contentType == 'string' ? content : (contentType == 'function' ? '{__cell' + i + '}' : '')) +
             '</td>';
 
           if (contentType == 'function')
