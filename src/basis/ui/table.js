@@ -520,13 +520,14 @@
 
           var className = [col.cssClassName || '', cell.cssClassName || ''].join(' ').trim();
           var content = cell.content;
+          var contentType = typeof content;
 
           template += 
             '<td' + (cell.templateRef ? '{' + cell.templateRef + '}' : '') + (className ? ' class="' + className + '"' : '') + '>' + 
-              (typeof content == 'string' ? cell.content : '{__cell' + i + '}') +
+              (contentType == 'string' ? content : (contentType == 'function' ? '<!--{__cell' + i + '}-->' : '')) +
             '</td>';
 
-          if (typeof content == 'function')
+          if (contentType == 'function')
           {
             binding['__cell' + i] = {
               events: 'update',
