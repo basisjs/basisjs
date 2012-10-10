@@ -46,14 +46,18 @@
 
     action: {
       click: function(event){
-        this.click();
-        Event.kill(event); // prevent default for <a>
+        if (!this.isDisabled() && !(this instanceof MenuItemSet))
+        {
+          if (this.click)
+            this.click();
+          else
+            this.defaultHandler(this);
+        }
       }
     },
 
     caption: '[untitled]',
 
-    handler: null,
     defaultHandler: function(node){
       if (this.parentNode)
         this.parentNode.defaultHandler(node);
@@ -63,15 +67,7 @@
       this.caption = newCaption;
       this.updateBind('caption');
     },
-    click: function(){
-      if (!this.isDisabled() && !(this instanceof MenuItemSet))
-      {
-        if (this.handler)
-          this.handler(this);
-        else
-          this.defaultHandler(this);
-      }
-    }
+    click: null
   });
 
  /**
@@ -113,7 +109,7 @@
     groupingClass: MenuGroupingNode,
     grouping: getter('groupId'),
 
-    defaultHandler: function(){
+    defaultHandler: function(node){
       this.hide();
     },
 
