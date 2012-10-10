@@ -403,7 +403,7 @@
     var bind_element = function(domRef, oldNode, newValue){
       var newNode = bind_node(domRef, oldNode, newValue);
 
-      if (newNode === domRef)
+      if (newNode === domRef && typeof newValue == 'string')  // TODO: save inner nodes on first innerHTML and restore when newValue is not a string
         domRef.innerHTML = newValue;
 
       return newNode;
