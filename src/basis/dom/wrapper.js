@@ -59,6 +59,8 @@
   /** @const */ var EXCEPTION_DATASOURCE_CONFLICT = namespace + ': Operation is not allowed because node is under dataSource control';
   /** @const */ var EXCEPTION_PARENTNODE_OWNER_CONFLICT = namespace + ': Node can\'t has owner and parentNode';
 
+  var childNodesDatasetMap = {};
+
   var DELEGATE = {
     ANY: true,
     NONE: false,
@@ -828,6 +830,16 @@
         if (this.autoDelegate == DELEGATE.OWNER || this.autoDelegate === DELEGATE.ANY)
           this.setDelegate(owner);
       }
+    },
+
+   /**
+    * Returns 
+    * @return {basis.dom.wrapper.ChildNodesDataset}
+    */
+    getChildNodesDataset: function(){
+      return childNodesDatasetMap[this.eventObjectId] || new ChildNodesDataset({
+        sourceNode: this
+      });
     },
 
    /**
@@ -2539,10 +2551,7 @@
         this.event_datasetChanged(newDelta);
     },
     destroy: function(){
-      if (this.autoDestroy)
-        this.destroy();
-      else
-        this.setSourceNode();
+      this.destroy();
     }
   };
 
@@ -2552,22 +2561,10 @@
   var ChildNodesDataset = Class(AbstractDataset, {
     className: namespace + '.ChildNodesDataset',
 
-    autoDestroy: true,
-    sourceNode: null,
-
    /**
-    * @inheritDoc
+    * @type {basis.dom.wrapper.AbstractNode}
     */
-    listen: {
-      sourceNode: CHILDNODESDATASET_HANDLER
-    },
-
-    event_sourceNodeChanged: createEvent('sourceNodeChanged') && function(oldSourceNode){
-      events.sourceNodeChanged.call(this, oldSourceNode);
-
-      if (!this.sourceNode && this.autoDestroy)
-        this.destroy();
-    },
+    sourceNode: null,
 
    /**
     * @constructor
@@ -2575,64 +2572,27 @@
     init: function(){
       AbstractDataset.prototype.init.call(this);
 
-      if (this.sourceNode)
-      {
-        var sourceNode = this.sourceNode;
-        this.sourceNode = null;
-        this.setSourceNode(sourceNode);
-      }
-    },
+      var sourceNode = this.sourceNode;
 
-   /**
-    * Set source node for dataset.
-    * @param {basis.dom.wrapper.AbstractNode=} node
-    */
-    setSourceNode: function(node){
-      if (node instanceof AbstractNode == false)
-        node = null;
+      // add to map
+      childNodesDatasetMap[sourceNode.eventObjectId] = this;
 
-      if (node !== this.sourceNode)
-      {
-        var oldSourceNode = this.sourceNode;
-        var listenHandler = this.listen.sourceNode;
+      // add existing nodes
+      if (sourceNode.firstChild)
+        CHILDNODESDATASET_HANDLER.childNodesModified.call(this, sourceNode, {
+          inserted: sourceNode.childNodes
+        });
 
-        this.sourceNode = node;
-
-        if (listenHandler)
-        {
-          var childNodesModifiedHandler = listenHandler.childNodesModified;
-
-          if (oldSourceNode)
-          {
-            oldSourceNode.removeHandler(listenHandler, this);
-
-            if (childNodesModifiedHandler)
-              childNodesModifiedHandler.call(this, oldSourceNode, {
-                deleted: oldSourceNode.childNodes
-              });
-          }
-
-          if (node)
-          {
-            node.addHandler(listenHandler, this);
-
-            if (childNodesModifiedHandler)
-              childNodesModifiedHandler.call(this, node, {
-                inserted: node.childNodes
-              });
-          }
-        }
-
-        this.event_sourceNodeChanged(oldSourceNode);
-      }
+      // add handler for changes listening
+      sourceNode.addHandler(CHILDNODESDATASET_HANDLER, this);
     },
 
    /**
     * @destructor
     */
     destroy: function(){
-      // drop source node if exists
-      this.setSourceNode();
+      this.sourceNode.removeHandler(CHILDNODESDATASET_HANDLER, this);
+      delete childNodesDatasetMap[this.sourceNode.eventObjectId];
 
       // inherit
       AbstractDataset.prototype.destroy.call(this);
@@ -2747,7 +2707,9 @@
     PartitionNode: PartitionNode,
 
     // datasets
-    ChildNodesDataset: ChildNodesDataset,
     Selection: Selection,
-    nullSelection: new AbstractDataset
+    nullSelection: new AbstractDataset,
+
+    // deprecated, use node.getChildNodesDataset()
+    ChildNodesDataset: ChildNodesDataset
   };
