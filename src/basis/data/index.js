@@ -25,7 +25,7 @@
   var AbstractDataset = nsData.AbstractDataset;
 
   var Property = basis.data.property.Property;
-  var MapReduce = basis.data.dataset.MapReduce;
+  var MapFilter = basis.data.dataset.MapFilter;
 
 
   //
@@ -538,7 +538,7 @@
  /**
   * @class
   */
-  var IndexMap = Class(MapReduce, {
+  var IndexMap = Class(MapFilter, {
     className: namespace + '.IndexMap',
 
     calcs: null,
@@ -575,7 +575,7 @@
     },
 
     event_sourceChanged: function(oldSource){
-      MapReduce.prototype.event_sourceChanged.call(this, oldSource);
+      MapFilter.prototype.event_sourceChanged.call(this, oldSource);
       
       var index;
 
@@ -613,7 +613,7 @@
 
     ruleEvents: Class.oneFunctionProperty(
       function(sourceObject, delta){
-        MapReduce.prototype.ruleEvents.update.call(this, sourceObject, delta);
+        MapFilter.prototype.ruleEvents.update.call(this, sourceObject, delta);
 
         this.sourceMap_[sourceObject.eventObjectId].updated = true;
         this.recalcRequest();
@@ -645,7 +645,7 @@
           }
         }, this.keyMap));
 
-      MapReduce.prototype.init.call(this);
+      MapFilter.prototype.init.call(this);
 
       Object.iterate(indexes, this.addIndex, this);
     },
@@ -780,7 +780,7 @@
       for (var indexName in this.indexes)
         this.removeIndex(indexName);
 
-      MapReduce.prototype.destroy.call(this);
+      MapFilter.prototype.destroy.call(this);
     }
   });
 

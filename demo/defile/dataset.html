@@ -352,11 +352,11 @@
       })
     });
 
-    createHeader('MapReduce datasets');
+    createHeader('MapFilter datasets');
 
     new DatasetViewer({
-      title: 'MapReduce for dataset A: NUMBERS -> WORDS',
-      dataSource: new nsDataset.MapReduce({
+      title: 'MapFilter for dataset A: NUMBERS -> WORDS',
+      dataSource: new nsDataset.MapFilter({
         map: Function.getter('data.value - 1', data2),
         source: A
       })
