@@ -4,7 +4,7 @@
   basis.require('basis.ua');
   basis.require('basis.dom.event');
   basis.require('basis.data');
-
+  basis.require('basis.net.proxy');
 
  /**
   * @namespace basis.net.ajax
@@ -22,11 +22,12 @@
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
-  var arrayFrom = basis.array.from;
 
-  var DataObject = basis.data.DataObject;
   var STATE = basis.data.STATE;
 
+  var Proxy = basis.net.proxy.Proxy;
+  var Request = basis.net.proxy.Request;
+  var createProxyEvent = basis.net.proxy.createEvent;
 
   //
   // Main part
@@ -199,7 +200,7 @@
    * @class Request
    */
 
-  var AjaxRequest = Class(DataObject, {
+  var AjaxRequest = Request.subclass({
     className: namespace + '.AjaxRequest',
 
     timeout:  30000, // 30 sec
@@ -208,24 +209,9 @@
     debug: false,
     proxy: null,
 
-    event_stateChanged: function(oldState){
-      DataObject.prototype.event_stateChanged.call(this, oldState);
-
-      for (var i = 0; i < this.influence.length; i++)
-        this.influence[i].setState(this.state, this.state.data);
-    },
-
     init: function(){
-      DataObject.prototype.init.call(this);
+      Request.prototype.init.call(this);
       this.xhr = createXmlHttpRequest();
-      this.influence = [];
-    },
-
-    setInfluence: function(influence){
-      this.influence = arrayFrom(influence);
-    },
-    clearInfluence: function(){
-      this.influence = [];
     },
 
     isIdle: function(){
@@ -420,222 +406,18 @@
     destroy: function(){
       this.abort();
 
-      this.clearInfluence();
-
       delete this.xhr;
       delete this.requestData;
 
-      DataObject.prototype.destroy.call(this);
+      Request.prototype.destroy.call(this);
     }
   });
-
-
-
-  //
-  // ProxyDispatcher
-  //
-
-  var ProxyDispatcher = new EventObject({
-    abort: function(){
-      var result = arrayFrom(inprogressProxies);
-      for (var i = 0; i < result.length; i++)
-        result[i].abort();
-
-      return result;
-    }
-  });
-
-  var inprogressProxies = [];
-  ProxyDispatcher.addHandler({
-    start: function(request){
-      inprogressProxies.add(request.proxy);
-    },
-    complete: function(request){
-      inprogressProxies.remove(request.proxy);
-    }
-  });
-
- /**
-  * @function createEvent
-  */
-
-  function createProxyEvent(eventName) {
-    var event = createEvent(eventName);
-
-    return function(){
-      event.apply(ProxyDispatcher, arguments);
-
-      if (this.service)
-        event.apply(this.service, arguments);
-
-      event.apply(this, arguments);
-    };
-  }
-
-  /**
-   * @class Proxy
-   */
-
-
-  var PROXY_REQUEST_HANDLER = {
-    start: function(sender, request){
-      this.inprogressRequests.add(request);
-    },
-    complete: function(sender, request){
-      this.inprogressRequests.remove(request);
-    }
-  };
-
-  var PROXY_POOL_LIMIT_HANDLER = {
-    complete: function(){
-      var nextRequest = this.requestQueue.shift();
-      if (nextRequest)
-      {
-        setTimeout(function(){
-          nextRequest.doRequest();
-        }, 0);
-      }
-    }
-  };
-
-  var Proxy = Class(EventObject, {
-    className: namespace + '.Proxy',
-
-    requests: null,
-    poolLimit: null,
-    poolHashGetter: Function.$true,
-
-    event_start: createProxyEvent('start'),
-    event_timeout: createProxyEvent('timeout'),
-    event_abort: createProxyEvent('abort'),
-    event_success: createProxyEvent('success'),
-    event_failure: createProxyEvent('failure'),
-    event_complete: createProxyEvent('complete'),
-
-    init: function(){
-      this.requests = {};
-      this.requestQueue = [];
-      this.inprogressRequests = [];
-
-      EventObject.prototype.init.call(this);
-
-      // handlers
-      this.addHandler(PROXY_REQUEST_HANDLER, this);
-
-      if (this.poolLimit)
-        this.addHandler(PROXY_POOL_LIMIT_HANDLER, this);
-
-      cleaner.add(this);  // ???
-    },
-
-    getRequestByHash: function(requestHashId){
-      if (!this.requests[requestHashId])
-      {
-        var request;
-        //find idle transport
-        for (var i in this.requests)
-          if (this.requests[i].isIdle() && !this.requestQueue.has(this.requests[i]))
-          {
-            request = this.requests[i];
-            delete this.requests[i];
-          }
-
-        this.requests[requestHashId] = request || new this.requestClass({ proxy: this });
-      }
-
-      return this.requests[requestHashId];
-    },
-
-    prepare: Function.$true,
-    prepareRequestData: Function.$self,
-
-    request: function(config){
-      if (!this.prepare())
-        return;
-
-      var requestData = Object.slice(config);
-
-      var requestData = this.prepareRequestData(requestData);
-      var requestHashId = this.poolHashGetter(requestData);
-
-      if (this.requests[requestHashId])
-        this.requests[requestHashId].abort();
-
-      var request = this.getRequestByHash(requestHashId);
-
-      request.initData = Object.slice(config);
-      request.requestData = requestData;
-      request.setInfluence(requestData.influence);
-
-      if (this.poolLimit && this.inprogressRequests.length >= this.poolLimit)
-      {
-        this.requestQueue.push(request);
-        request.setState(STATE.PROCESSING);
-      }
-      else
-        request.doRequest();
-
-      return request;
-    },
-
-    abort: function(){
-      for (var i = 0, request; request = this.inprogressRequests[i]; i++)
-        request.abort();
-
-      for (var i = 0, request; request = this.requestQueue[i]; i++)
-        request.setState(STATE.ERROR);
-
-      this.inprogressRequests = [];
-      this.requestQueue = [];
-    },
-
-    stop: function(){
-      if (!this.stopped)
-      {
-        this.stoppedRequests = this.inprogressRequests.concat(this.requestQueue);
-        this.abort();
-        this.stopped = true;
-      }
-    },
-
-    resume: function(){
-      if (this.stoppedRequests)
-      {
-        for (var i = 0, request; request = this.stoppedRequests[i]; i++)
-          request.proxy.get(request.initData);
-
-        this.stoppedRequests = [];
-      }
-      this.stopped = false;
-    },
-
-    /*repeat: function(){ 
-      if (this.requestData)
-        this.request(this.requestData);
-    },*/
-
-    destroy: function(){
-      for (var i in this.requests)
-        this.requests[i].destroy();
-
-      delete this.requestData;
-      delete this.requestQueue;
-
-        
-      EventObject.prototype.destroy.call(this);
-
-      delete this.requests;
-      cleaner.remove(this);
-    }
-  });
-
-  Proxy.createEvent = createProxyEvent;
 
 
  /**
   * @class AjaxProxy
   */
-  var AjaxProxy = Class(Proxy, {
+  var AjaxProxy = Proxy.subclass({
     className: namespace + '.AjaxProxy',
 
     requestClass: AjaxRequest,
@@ -701,159 +483,18 @@
     }
   });
 
-  /**
-   * @class Service
-   */
-
-  var SERVICE_HANDLER = {
-    start: function(service, request){
-      this.inprogressProxies.add(request.proxy);
-    },
-    complete: function(service, request){
-      this.inprogressProxies.remove(request.proxy);
-    }
-  };
-
-
-  var Service = Class(EventObject, {
-    className: namespace + '.Service',
-
-    proxyClass: AjaxProxy,
-    requestClass: AjaxRequest,
-
-    event_sessionOpen: createEvent('sessionOpen'),
-    event_sessionClose: createEvent('sessionClose'),
-    event_sessionFreeze: createEvent('sessionFreeze'),
-    event_sessionUnfreeze: createEvent('sessionUnfreeze'),
-
-    //event_service_failure: createEvent('service_failure'),
-    isSecure: false,
-
-    prepare: Function.$true,
-    signature: Function.$undef,
-    isSessionExpiredError: Function.$false,
-
-    init: function(){
-      EventObject.prototype.init.call(this);
-
-      this.inprogressProxies = [];
-
-      this.proxyClass = Class(this.proxyClass, {
-        service: this,
-
-        needSignature: this.isSecure,
-
-        event_failure: function(req){
-          this.constructor.superClass_.prototype.event_failure.call(this, req);
-
-          if (this.needSignature && this.service.isSessionExpiredError(req))
-          {
-            this.service.freeze();
-            this.service.stoppedProxies.push(this);
-            this.stop();
-          }
-        },
-
-        request: function(requestData){
-          if (!this.service.prepare(this, requestData))
-            return;
-
-          if (this.needSignature && !this.service.sign(this))
-            return;
-
-          return this.constructor.superClass_.prototype.request.call(this, requestData);
-        },
-
-        requestClass: this.requestClass
-      });
-
-      this.addHandler(SERVICE_HANDLER, this);
-    },
-
-    sign: function(proxy){
-      if (this.sessionKey)
-      {
-        this.signature(proxy, this.sessionData);
-        return true;
-      }
-      else
-      {
-        ;;; if (typeof console != 'undefined') console.warn('Request skipped. Service session is not opened');
-        return false;
-      }
-    },
-
-    openSession: function(sessionKey, sessionData){
-      this.sessionKey = sessionKey;
-      this.sessionData = sessionData;
-
-      this.unfreeze();
-
-      this.event_sessionOpen();
-    },
-
-    closeSession: function(){
-      this.freeze();
-
-      this.event_sessionClose();
-    },
-
-    freeze: function(){ 
-      if (!this.sessionKey)
-        return;
-
-      this.sessionKey = null;
-      this.sessionData = null;
-
-      this.stoppedProxies = this.inprogressProxies.filter(function(proxy){
-        return proxy.needSignature;
-      });
-
-      for (var i = 0, proxy; proxy = this.inprogressProxies[i]; i++)
-        proxy.stop();
-
-      this.event_sessionFreeze();
-    },
-
-    unfreeze: function(){
-      if (this.stoppedProxies)
-      {
-        for (var i = 0, proxy; proxy = this.stoppedProxies[i]; i++)
-          proxy.resume();
-      }
-
-      this.event_sessionUnfreeze();
-    },
-    
-    createProxy: function(config){
-      return new this.proxyClass(config);
-    },
-
-    destroy: function(){
-      delete this.inprogressProxies;
-      delete this.stoppedProxies;
-      delete this.sessionData;
-      delete this.sessionKey;
-
-      EventObject.prototype.destroy.call(this);
-    }
-  });
-
-
   //
   // export names
   //
 
   module.exports = {
-    createEvent: createProxyEvent,
-
-    Proxy: Proxy,
     AjaxProxy: AjaxProxy,
     AjaxRequest: AjaxRequest,
-    ProxyDispatcher: ProxyDispatcher,
-    Service: Service,
+
+    createEvent: createProxyEvent,
+    ProxyDispatcher: basis.net.proxy.ProxyDispatcher,
 
     // backward capability, deprecated
     Transport: AjaxProxy,
-    TransportDispatcher: ProxyDispatcher
+    TransportDispatcher: basis.net.proxy.ProxyDispatcher
   };
