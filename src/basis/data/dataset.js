@@ -7,7 +7,7 @@
   * Namespace overview:
   * - Classes:
   *   {basis.data.dataset.Merge}, {basis.data.dataset.Subtract},
-  *   {basis.data.dataset.MapReduce}, {basis.data.dataset.Subset},
+  *   {basis.data.dataset.MapFilter}, {basis.data.dataset.Subset},
   *   {basis.data.dataset.Split}, {basis.data.dataset.Slice}
   *   {basis.data.dataset.Cloud}
   *
@@ -800,13 +800,13 @@
 
 
   //
-  // MapReduce
+  // MapFilter
   //
 
-  var MAPREDUCE_SOURCEOBJECT_UPDATE = function(sourceObject){
+  var MAPFILTER_SOURCEOBJECT_UPDATE = function(sourceObject){
     var newMember = this.map ? this.map(sourceObject) : object; // fetch new member ref
     
-    if (newMember instanceof DataObject == false || this.reduce(newMember))
+    if (newMember instanceof DataObject == false || this.filter(newMember))
       newMember = null;
 
     var sourceMap = this.sourceMap_[sourceObject.eventObjectId];
@@ -875,7 +875,7 @@
     }
   };
 
-  var MAPREDUCE_SOURCE_HANDLER = {
+  var MAPFILTER_SOURCE_HANDLER = {
     datasetChanged: function(source, delta){
       var sourceMap = this.sourceMap_;
       var memberMap = this.memberMap_;
@@ -894,7 +894,7 @@
         {
           member = this.map ? this.map(sourceObject) : sourceObject;
 
-          if (member instanceof DataObject == false || this.reduce(member))
+          if (member instanceof DataObject == false || this.filter(member))
             member = null;
 
           if (updateHandler)
@@ -961,8 +961,8 @@
  /**
   * @class
   */
-  var MapReduce = Class(AbstractDataset, SourceDatasetMixin, {
-    className: namespace + '.MapReduce',
+  var MapFilter = Class(AbstractDataset, SourceDatasetMixin, {
+    className: namespace + '.MapFilter',
 
    /**
     * Map function for source object, to get member object.
@@ -977,7 +977,7 @@
     * @type {function(basis.data.DataObject):boolean}
     * @readonly
     */
-    reduce: $false,
+    filter: $false,
 
    /**
     * Helper function.
@@ -988,7 +988,7 @@
     * Events list when dataset should recompute rule for source item.
     */
     ruleEvents: oneFunctionProperty(
-      MAPREDUCE_SOURCEOBJECT_UPDATE,
+      MAPFILTER_SOURCEOBJECT_UPDATE,
       {
         update: true
       }
@@ -1012,7 +1012,7 @@
     * @inheritDoc
     */
     listen: {
-      source: MAPREDUCE_SOURCE_HANDLER
+      source: MAPFILTER_SOURCE_HANDLER
     },
 
     // no special init
@@ -1034,15 +1034,15 @@
 
    /**
     * Set new filter function and apply new function to source objects.
-    * @param {function(basis.data.DataObject):boolean} reduce
+    * @param {function(basis.data.DataObject):boolean} filter
     */
-    setReduce: function(reduce){
-      if (typeof reduce != 'function')
-        reduce = $false;
+    setFilter: function(filter){
+      if (typeof filter != 'function')
+        filter = $false;
 
-      if (this.reduce !== reduce)
+      if (this.filter !== filter)
       {
-        this.reduce = reduce;
+        this.filter = filter;
         return this.applyRule();
       }
     },
@@ -1088,7 +1088,7 @@
         curMember = sourceObjectInfo.member;
         newMember = this.map ? this.map(sourceObject) : sourceObject;
 
-        if (newMember instanceof DataObject == false || this.reduce(newMember))
+        if (newMember instanceof DataObject == false || this.filter(newMember))
           newMember = null;
 
         if (curMember != newMember)
@@ -1158,13 +1158,13 @@
  /**
   * @class
   */
-  var Subset = Class(MapReduce, {
+  var Subset = Class(MapFilter, {
     className: namespace + '.Subset',
 
    /**
     * @inheritDoc
     */
-    reduce: function(object){
+    filter: function(object){
       return !this.rule(object);
     }
   });
@@ -1177,7 +1177,7 @@
  /**
   * @class
   */
-  var Split = Class(MapReduce, {
+  var Split = Class(MapFilter, {
     className: namespace + '.Split',
 
    /**
@@ -1237,7 +1237,7 @@
         }, this.keyMap));
 
       // inherit
-      MapReduce.prototype.init.call(this);
+      MapFilter.prototype.init.call(this);
     },
 
    /**
@@ -1255,7 +1255,7 @@
     */
     destroy: function(){
       // inherit
-      MapReduce.prototype.destroy.call(this);
+      MapFilter.prototype.destroy.call(this);
 
       // destroy keyMap
       this.keyMap.destroy();
@@ -1813,7 +1813,7 @@
     Subtract: Subtract,
 
     // transform datasets
-    MapReduce: MapReduce,
+    MapFilter: MapFilter,
     Subset: Subset,
     Split: Split,
 
@@ -1821,3 +1821,6 @@
     Slice: Slice,
     Cloud: Cloud
   };
+
+  // TODO: remove
+  module.exports.MapReduce = MapFilter;

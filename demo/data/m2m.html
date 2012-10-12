@@ -441,7 +441,7 @@
       sorting: function(node){
         return node.satellite.word.data.Title;
       },
-      dataSource: new basis.data.dataset.MapReduce({
+      dataSource: new basis.data.dataset.MapFilter({
         source: Word.all
       }),
       childClass: nsUI.Node.subclass({
