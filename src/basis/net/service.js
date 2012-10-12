@@ -1,7 +1,6 @@
 
   basis.require('basis.event');
-  basis.require('basis.net.proxy');
-  basis.require('basis.net.ajax');
+  basis.require('basis.net');
 
  /**
   * @namespace basis.net.service
@@ -11,8 +10,8 @@
 
   var EventObject = basis.event.EventObject;
 
-  var AjaxProxy = basis.net.ajax.AjaxProxy;
-  var AjaxRequest = basis.net.ajax.AjaxRequest;
+  var AjaxTransport = basis.net.AjaxTransport;
+  var AjaxRequest = basis.net.AjaxRequest;
 
   var createEvent = basis.event.create;
 
@@ -22,10 +21,10 @@
 
   var SERVICE_HANDLER = {
     start: function(service, request){
-      this.inprogressProxies.add(request.proxy);
+      this.inprogressTransports.add(request.transport);
     },
     complete: function(service, request){
-      this.inprogressProxies.remove(request.proxy);
+      this.inprogressTransports.remove(request.transport);
     }
   };
 
@@ -33,7 +32,9 @@
   var Service = EventObject.subclass({
     className: namespace + '.Service',
 
-    proxyClass: AjaxProxy,
+    inprogressTransports: null,
+
+    transportClass: AjaxTransport,
     requestClass: AjaxRequest,
 
     event_sessionOpen: createEvent('sessionOpen'),
@@ -41,7 +42,6 @@
     event_sessionFreeze: createEvent('sessionFreeze'),
     event_sessionUnfreeze: createEvent('sessionUnfreeze'),
 
-    //event_service_failure: createEvent('service_failure'),
     isSecure: false,
 
     prepare: Function.$true,
@@ -51,20 +51,22 @@
     init: function(){
       EventObject.prototype.init.call(this);
 
-      this.inprogressProxies = [];
+      this.inprogressTransports = [];
 
-      this.proxyClass = this.proxyClass.subclass({
+      var TransportClass = this.transportClass;
+
+      this.transportClass = this.transportClass.subclass({
         service: this,
 
         needSignature: this.isSecure,
 
         event_failure: function(req){
-          this.constructor.superClass_.prototype.event_failure.call(this, req);
+          TransportClass.prototype.event_failure.call(this, req);
 
           if (this.needSignature && this.service.isSessionExpiredError(req))
           {
             this.service.freeze();
-            this.service.stoppedProxies.push(this);
+            this.service.stoppedTransports.push(this);
             this.stop();
           }
         },
@@ -76,7 +78,7 @@
           if (this.needSignature && !this.service.sign(this))
             return;
 
-          return this.constructor.superClass_.prototype.request.call(this, requestData);
+          return TransportClass.prototype.request.call(this, requestData);
         },
 
         requestClass: this.requestClass
@@ -120,12 +122,12 @@
       this.sessionKey = null;
       this.sessionData = null;
 
-      this.stoppedProxies = this.inprogressProxies.filter(function(proxy){
-        return proxy.needSignature;
+      this.stoppedTransports = this.inprogressTransports.filter(function(transport){
+        return transport.needSignature;
       });
 
-      for (var i = 0, proxy; proxy = this.inprogressProxies[i]; i++)
-        proxy.stop();
+      for (var i = 0, transport; transport = this.inprogressTransports[i]; i++)
+        transport.stop();
 
       this.event_sessionFreeze();
     },
@@ -133,20 +135,20 @@
     unfreeze: function(){
       if (this.stoppedProxies)
       {
-        for (var i = 0, proxy; proxy = this.stoppedProxies[i]; i++)
-          proxy.resume();
+        for (var i = 0, transport; transport = this.stoppedTransports[i]; i++)
+          transport.resume();
       }
 
       this.event_sessionUnfreeze();
     },
     
-    createProxy: function(config){
-      return new this.proxyClass(config);
+    createTransport: function(config){
+      return new this.transportClass(config);
     },
 
     destroy: function(){
-      delete this.inprogressProxies;
-      delete this.stoppedProxies;
+      delete this.inprogressTransports;
+      delete this.stoppedTransports;
       delete this.sessionData;
       delete this.sessionKey;
 

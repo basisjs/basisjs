@@ -1,6 +1,5 @@
 
-  basis.require('basis.net.proxy');
-  basis.require('basis.net.ajax');
+  basis.require('basis.net');
 
 
   // features support detection
@@ -37,7 +36,7 @@
 
   if (fileAPISupport() && formDataSupport()) // XMLHttpRequest2
   { 
-    FileUploader = basis.net.ajax.AjaxProxy.subclass({
+    FileUploader = basis.net.Transport.subclass({
       method: 'POST',
       contentType: 'multipart/form-data',
 
@@ -64,11 +63,11 @@
 
       event_start: function(request){
         basis.dom.event.addHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
-        basis.net.ajax.AjaxProxy.prototype.event_start.call(this, request);
+        basis.net.Transport.prototype.event_start.call(this, request);
       },
       event_complete: function(request){
         basis.dom.event.removeHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
-        basis.net.ajax.AjaxProxy.prototype.event_complete.call(this, request);
+        basis.net.Transport.prototype.event_complete.call(this, request);
       }
     });
 
@@ -79,12 +78,12 @@
   }
   else //IFrame
   {
-    var IFrameRequest = basis.net.proxy.Request.subclass({
+    var IFrameRequest = basis.net.AbstractRequest.subclass({
       state: basis.data.STATE.UNDEFINED,
       inprogress: false,
 
       init: function(){
-        basis.net.proxy.Request.prototype.init.call(this);
+        basis.net.AbstractRequest.prototype.init.call(this);
 
         this.frame = createIFrame();
 
@@ -96,11 +95,11 @@
           this.processResponse();
 
           if (this.isSuccessful())
-            this.proxy.event_success(this);
+            this.transport.event_success(this);
           else
-            this.proxy.event_failure(this);
+            this.transport.event_failure(this);
 
-          this.proxy.event_complete(this);
+          this.transport.event_complete(this);
 
           this.inprogress = false;
           var that = this;
@@ -131,7 +130,7 @@
         if (!form)
           return;
 
-        this.proxy.event_start(this);
+        this.transport.event_start(this);
         this.insertFrame();
         this.inprogress = true;
         this.setState(basis.data.STATE.PROCESSING);
@@ -146,16 +145,18 @@
         {
           this.removeFrame();
           this.inprogress = false;
-          this.proxy.event_abort(this);
+          this.transport.event_abort(this);
         }
       },
       destroy: function(){
         this.removeFrame();
         delete this.frame;
+
+        basis.net.AbstractRequest.prototype.destroy.call();
       }
     });
 
-    FileUploader = basis.net.proxy.Proxy.subclass({
+    FileUploader = basis.net.AbstractTransport.subclass({
       requestClass: IFrameRequest,
 
       formSubmit: function(form){

@@ -1,7 +1,7 @@
 
   basis.require('basis.dom');
   basis.require('basis.xml');
-  basis.require('basis.net.ajax');
+  basis.require('basis.net');
 
 
  /**
@@ -20,7 +20,6 @@
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var nsAjax = basis.net.ajax;
   var XML = basis.xml;
 
 
@@ -32,8 +31,8 @@
   var createElementNS = XML.createElementNS;
   var NAMESPACE = XML.NAMESPACE;
 
-  var AjaxProxy = nsAjax.AjaxProxy;
-  var AjaxRequest = nsAjax.AjaxRequest;
+  var AjaxTransport = basis.net.AjaxTransport;
+  var AjaxRequest = basis.net.AjaxRequest;
 
   //
   // Main part
@@ -158,7 +157,7 @@
         for (var key in requestData.soapHeaderSections)
         {
           var section = requestData.soapHeaderSections[key];
-          var ns = section.namespace || this.proxy.namespace;
+          var ns = section.namespace || this.transport.namespace;
           var data = section.data || section;
 
           header.setSection(new QName(key, ns), data);
@@ -185,8 +184,8 @@
  /**
   * @class
   */
-  var SOAPProxy = Class(AjaxProxy, {
-    className: namespace + '.SOAPProxy',
+  var SOAPTransport = Class(AjaxTransport, {
+    className: namespace + '.SOAPTransport',
 
     requestClass: SOAPRequest,
 
@@ -210,11 +209,11 @@
       if (!this.soapHeaderSections)
         this.soapHeaderSections = {};
 
-      AjaxProxy.prototype.init.call(this);
+      AjaxTransport.prototype.init.call(this);
     },
 
     prepareRequestData: function(requestData){
-      requestData = AjaxProxy.prototype.prepareRequestData.call(this, requestData);
+      requestData = AjaxTransport.prototype.prepareRequestData.call(this, requestData);
 
       Object.extend(requestData, {
         namespace: this.namespace,
@@ -399,8 +398,8 @@
   //
 
   module.exports = {
-    SOAPProxy: SOAPProxy,
-    SOAPRequest: SOAPRequest,
+    Transport: SOAPTransport,
+    Request: SOAPRequest,
 
     Envelope: Envelope,
     EnvelopeHeader: EnvelopeHeader,

@@ -1,29 +1,255 @@
 
-  basis.require('basis.timer');
   basis.require('basis.event');
-  basis.require('basis.ua');
-  basis.require('basis.dom.event');
   basis.require('basis.data');
-  basis.require('basis.net.proxy');
+  basis.require('basis.timer');
 
  /**
-  * @namespace basis.net.ajax
+  * @namespace basis.net
   */
 
   var namespace = this.path;
 
-  // import names
   var ua = basis.ua;
   var TimeEventManager = basis.timer.TimeEventManager;
 
   var STATE = basis.data.STATE;
 
-  var Proxy = basis.net.proxy.Proxy;
-  var Request = basis.net.proxy.Request;
-  var createProxyEvent = basis.net.proxy.createEvent;
+  var arrayFrom = basis.array.from;
+  var DataObject = basis.data.DataObject;
+  var EventObject = basis.event.EventObject;
+
+  var createEvent = basis.event.create;
+
+ /**
+  * @function createEvent
+  */
+
+  function createTransportEvent(eventName) {
+    var event = createEvent(eventName);
+
+    return function(){
+      event.apply(TransportDispatcher, arguments);
+
+      if (this.service)
+        event.apply(this.service, arguments);
+
+      event.apply(this, arguments);
+    };
+  }
+
+  var inprogressTransports = [];
+  //
+  // TransportDispatcher
+  //
+  var TransportDispatcher = new EventObject({
+    abort: function(){
+      var result = arrayFrom(inprogressTransports);
+      for (var i = 0; i < result.length; i++)
+        result[i].abort();
+
+      return result;
+    },
+    handler: {
+      start: function(request){
+        inprogressTransports.add(request.transport);
+      },
+      complete: function(request){
+        inprogressTransports.remove(request.transport);
+      }
+    }
+  });
+
+ /**
+  * @class AbstractRequest
+  */
+
+  var AbstractRequest = DataObject.subclass({
+    className: namespace + '.AbstractRequest',
+
+    influence: null,
+
+    event_stateChanged: function(oldState){
+      DataObject.prototype.event_stateChanged.call(this, oldState);
+
+      if (this.influence)
+      {
+        for (var i = 0; i < this.influence.length; i++)
+          this.influence[i].setState(this.state, this.state.data);
+      }
+    },
+
+    init: function(){
+      DataObject.prototype.init.call(this);
+      this.influence = [];
+    },
+    
+    setInfluence: function(influence){
+      this.influence = arrayFrom(influence);
+    },
+    clearInfluence: function(){
+      this.influence = null;
+    },
+
+    doRequest: Function.$undef,
+
+    destroy: function(){
+      DataObject.prototype.destroy.call(this);
+
+      this.clearInfluence();
+    }
+  });
+
+ /**
+  * @class AbstractTransport
+  */
+
+  var AbstractTransport = EventObject.subclass({
+    className: namespace + '.AbstractTransport',
+
+    requestClass: AbstractRequest,
+
+    requests: null,
+    poolLimit: null,
+    poolHashGetter: Function.$true,
+
+    event_start: createTransportEvent('start'),
+    event_timeout: createTransportEvent('timeout'),
+    event_abort: createTransportEvent('abort'),
+    event_success: createTransportEvent('success'),
+    event_failure: createTransportEvent('failure'),
+    event_complete: createTransportEvent('complete'),
+
+    init: function(){
+      this.requests = {};
+      this.requestQueue = [];
+      this.inprogressRequests = [];
+
+      EventObject.prototype.init.call(this);
+
+      // handlers
+      this.addHandler(TRANSPORT_REQUEST_HANDLER, this);
+
+      if (this.poolLimit)
+        this.addHandler(TRANSPORT_POOL_LIMIT_HANDLER, this);
+    },
+
+    getRequestByHash: function(requestHashId){
+      if (!this.requests[requestHashId])
+      {
+        var request;
+        //find idle transport
+        for (var i in this.requests)
+          if (this.requests[i].isIdle() && !this.requestQueue.has(this.requests[i]))
+          {
+            request = this.requests[i];
+            delete this.requests[i];
+          }
+
+        this.requests[requestHashId] = request || new this.requestClass({ transport: this });
+      }
+
+      return this.requests[requestHashId];
+    },
+
+    prepare: Function.$true,
+    prepareRequestData: Function.$self,
+
+    request: function(config){
+      if (!this.prepare())
+        return;
+
+      var requestData = Object.slice(config);
+
+      var requestData = this.prepareRequestData(requestData);
+      var requestHashId = this.poolHashGetter(requestData);
+
+      if (this.requests[requestHashId])
+        this.requests[requestHashId].abort();
+
+      var request = this.getRequestByHash(requestHashId);
+
+      request.initData = Object.slice(config);
+      request.requestData = requestData;
+      request.setInfluence(requestData.influence || this.influence);
+
+      if (this.poolLimit && this.inprogressRequests.length >= this.poolLimit)
+      {
+        this.requestQueue.push(request);
+        request.setState(STATE.PROCESSING);
+      }
+      else
+        request.doRequest();
+
+      return request;
+    },
+
+    abort: function(){
+      for (var i = 0, request; request = this.inprogressRequests[i]; i++)
+        request.abort();
+
+      for (var i = 0, request; request = this.requestQueue[i]; i++)
+        request.setState(STATE.ERROR);
+
+      this.inprogressRequests = [];
+      this.requestQueue = [];
+    },
+
+    stop: function(){
+      if (!this.stopped)
+      {
+        this.stoppedRequests = this.inprogressRequests.concat(this.requestQueue);
+        this.abort();
+        this.stopped = true;
+      }
+    },
+
+    resume: function(){
+      if (this.stoppedRequests)
+      {
+        for (var i = 0, request; request = this.stoppedRequests[i]; i++)
+          request.transport.request(request.initData);
+
+        this.stoppedRequests = [];
+      }
+      this.stopped = false;
+    },
+
+    destroy: function(){
+      for (var i in this.requests)
+        this.requests[i].destroy();
+
+      delete this.requestData;
+      delete this.requestQueue;
+
+      EventObject.prototype.destroy.call(this);
+
+      delete this.requests;
+    }
+  });
+
+  var TRANSPORT_REQUEST_HANDLER = {
+    start: function(sender, request){
+      this.inprogressRequests.add(request);
+    },
+    complete: function(sender, request){
+      this.inprogressRequests.remove(request);
+    }
+  };
+
+  var TRANSPORT_POOL_LIMIT_HANDLER = {
+    complete: function(){
+      var nextRequest = this.requestQueue.shift();
+      if (nextRequest)
+      {
+        setTimeout(function(){
+          nextRequest.doRequest();
+        }, 0);
+      }
+    }
+  };
 
   //
-  // Main part
+  // AJAX
   //
 
   // const
@@ -130,7 +356,7 @@
     if (!xhr)
       return;
 
-    var proxy = this.proxy;
+    var transport = this.transport;
 
     if (typeof readyState != 'number')
       readyState = xhr.readyState;
@@ -144,7 +370,7 @@
     ;;;if (this.debug) logOutput('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
 
     // dispatch self event
-    proxy.event_readyStateChanged(this, readyState);
+    transport.event_readyStateChanged(this, readyState);
 
     if (readyState == STATE_DONE)
     {
@@ -155,8 +381,8 @@
 
       if (typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders()))
       {
-        proxy.event_failure(this);
-        proxy.event_abort(this);
+        transport.event_failure(this);
+        transport.event_abort(this);
         newState = STATE.ERROR;
       }
       else
@@ -166,7 +392,7 @@
         // dispatch events
         if (this.isSuccessful())
         {
-          proxy.event_success(this);
+          transport.event_success(this);
           newState = STATE.READY;
         }
         else
@@ -174,13 +400,13 @@
 
           this.processErrorResponse();
 
-          proxy.event_failure(this, this.data.error);
+          transport.event_failure(this, this.data.error);
           newState = STATE.ERROR;
         }
       }
 
       // dispatch complete event
-      proxy.event_complete(this);
+      transport.event_complete(this);
     }
     else
       newState = STATE.PROCESSING;
@@ -190,20 +416,20 @@
   }
 
   /**
-   * @class Request
+   * @class AjaxRequest
    */
 
-  var AjaxRequest = Request.subclass({
+  var AjaxRequest = AbstractRequest.subclass({
     className: namespace + '.AjaxRequest',
 
     timeout:  30000, // 30 sec
     requestStartTime: 0,
 
     debug: false,
-    proxy: null,
+    transport: null,
 
     init: function(){
-      Request.prototype.init.call(this);
+      AbstractRequest.prototype.init.call(this);
       this.xhr = createXmlHttpRequest();
     },
 
@@ -280,10 +506,6 @@
     },
 
     doRequest: function(){
-      /*if (!this.prepare())
-        return;*/
-
-      //this.requestData = requestData;
       this.send(this.prepareRequestData(this.requestData));
     },
     
@@ -300,7 +522,7 @@
       if (ua.test('gecko1.8.1-') && requestData.asynchronous)
         this.xhr = createXmlHttpRequest();
 
-      this.proxy.event_start(this);
+      this.transport.event_start(this);
 
       var xhr = this.xhr;
 
@@ -392,7 +614,7 @@
         }
       });
 
-      this.proxy.event_timeout(this);
+      this.transport.event_timeout(this);
       this.abort();
     },
 
@@ -402,20 +624,20 @@
       delete this.xhr;
       delete this.requestData;
 
-      Request.prototype.destroy.call(this);
+      AbstractRequest.prototype.destroy.call(this);
     }
   });
 
 
  /**
-  * @class AjaxProxy
+  * @class AjaxTransport
   */
-  var AjaxProxy = Proxy.subclass({
-    className: namespace + '.AjaxProxy',
+  var AjaxTransport = AbstractTransport.subclass({
+    className: namespace + '.AjaxTransport',
 
     requestClass: AjaxRequest,
 
-    event_readyStateChanged: createProxyEvent('readyStateChanged'),
+    event_readyStateChanged: createTransportEvent('readyStateChanged'),
 
     // transport properties
     asynchronous: true,
@@ -424,7 +646,7 @@
     encoding: null,
 
     init: function(){
-      Proxy.prototype.init.call(this);
+      AbstractTransport.prototype.init.call(this);
 
       this.requestHeaders = Object.extend({}, this.requestHeaders);
       this.params = Object.extend({}, this.params);
@@ -471,23 +693,25 @@
     },
 
     get: function(){
-      ;;; if (typeof console != 'undefined') console.warn('basis.net.ajax.AjaxProxy#get method is deprecated, use basis.net.ajax.AjaxProxy#request method instead');
+      ;;; if (typeof console != 'undefined') console.warn('basis.net.Transport#get method is deprecated, use basis.net.Transport#request method instead');
       this.request.apply(this, arguments);
     }
   });
 
-  //
-  // export names
-  //
 
+  //
+  // exports
+  //
   module.exports = {
-    AjaxProxy: AjaxProxy,
+    createEvent: createTransportEvent,
+
+    AbstractRequest: AbstractRequest,
+    AbstractTransport: AbstractTransport,
+
+    AjaxTransport: AjaxTransport,
     AjaxRequest: AjaxRequest,
+    Transport: AjaxTransport,
 
-    createEvent: createProxyEvent,
-    ProxyDispatcher: basis.net.proxy.ProxyDispatcher,
+    TransportDispatcher: TransportDispatcher
+  }
 
-    // backward capability, deprecated
-    Transport: AjaxProxy,
-    TransportDispatcher: basis.net.proxy.ProxyDispatcher
-  };
