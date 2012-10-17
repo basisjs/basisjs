@@ -26,6 +26,7 @@
   <div>
     <button onclick="cut()">Cut</button>
     <button onclick="paste()">Paste</button>
+    <button onclick="makeTree()">rebuild tree</button>
   </div>
   <div id="time"></div>
   <script type="text/javascript" src="google_closure_tree_data.js"></script>
@@ -44,6 +45,26 @@
     // create tree
     //
 
+    var LazyFolder = basis.ui.tree.Folder.subclass({
+      childFactory: childFactory,
+      template:
+        '<b:include src="../../src/basis/ui/templates/tree/Folder.tmpl">' +
+          '<b:replace ref="childNodesElement">' +
+            '<!--{childNodesWhenExpanded}-->' +
+          '</b:replace>' +
+          '<ul{childNodesElement} class="Basis-TreeNode-Content"/>' +
+        '</b:include>',
+
+      binding: {
+        childNodesWhenExpanded: {
+          events: 'collapse expand',
+          getter: function(node){
+            return node.collapsed ? null : node.tmpl.childNodesElement;
+          }
+        }
+      }
+    });
+
     function childFactory(data){
       if (data[1] && data[1].length)
       {
@@ -51,7 +72,7 @@
         return new LazyFolder({
           collapsed: this instanceof basis.ui.tree.Tree == false && data[0] != 'D',
           data: { title: data[0] },
-          lazyChildren: data[1]
+          childNodes: data[1]
         });
       }
       else
@@ -63,33 +84,23 @@
       }
     }
 
-    var LazyFolder = basis.ui.tree.Folder.subclass({
-      childFactory: childFactory,
-      init: function(){
-        basis.ui.tree.Folder.prototype.init.call(this);
-        this.lazyInitChildren();
-      },
-      event_expand: function(){
-        basis.ui.tree.Folder.prototype.event_expand.call(this);
-        this.lazyInitChildren();
-      },
-      lazyInitChildren: function(){
-        if (!this.collapsed && this.lazyChildren)
-        {
-          basis.dom.insert(this, this.lazyChildren, 0);
-          this.lazyChildren = null;
-        }
-      }
-    });
+    function makeTree(){
+      if (tree)
+        tree.destroy();
 
-    var timer = new Date();
-    var tree = new basis.ui.tree.Tree({
-      container: document.body,
-      childNodes: [testData],
-      childFactory: childFactory
-    });
+      var timer = new Date();
 
-    basis.dom.insert('time', ['make tree time: ', new Date - timer, 'ms']);
+      tree = new basis.ui.tree.Tree({
+        container: document.body,
+        childNodes: [testData],
+        childFactory: childFactory
+      });
+
+      basis.dom.insert(basis.dom.clear('time'), ['make tree time: ', new Date - timer, 'ms']);
+    }
+
+    var tree;
+    makeTree();
 
     //
     // cut/paste
