@@ -251,12 +251,13 @@
         ;;;if (!cacheId) console.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
 
         var result = bindingCache[cacheId];
+
         if (!result)
         {
           var names = [];
-          var events = {};
-          var handler = {};
           var getters = {};
+          var events = {};
+          var handler;
           for (var key in templateBindings)
           {
             var binding = bindings[key];
@@ -279,7 +280,7 @@
                   }
                   else
                   {
-                    if (!handler) handler = {};
+                    handler = handler || {};
                     events[eventName] = [key];
                     handler[eventName] = templateBindingUpdateFactory(events[eventName], getters);
                   }
@@ -878,7 +879,7 @@
           '}'] +
         '}' +
       '}');
-
+      //console.log(createInstance);
       createInstance = createInstance(tmplNodeMap, templateMap, build, tools, l10nMap);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
 
@@ -896,6 +897,25 @@
   //
   // Constructs dom structure
   //
+
+ /**
+  * @func
+  */
+  function findHostNode(cursor){
+    var refId;
+    var node;
+
+    do {
+      if (refId = cursor.basisObjectId)
+      {
+        // if node found, return it
+        if (node = tmplNodeMap[refId])
+          return node;
+      }
+    } while (cursor = cursor.parentNode);
+
+    return cursor;
+  }
 
  /**
   * @func
@@ -924,25 +944,21 @@
         return;
 
       // search for nearest node refer to basis.Class instance
-      do {
-        if (refId = cursor.basisObjectId)
-        {
-          // if found call templateAction method
-          var node = tmplNodeMap[refId];
-          if (node && node.templateAction)
-          {
-            var actions = attr.nodeValue.qw();
-
-            for (var i = 0, actionName; actionName = actions[i++];)
-              node.templateAction(actionName, domEvent(event));
-
-            break;
-          }
-        }
-      } while (cursor = cursor.parentNode);
+      var node = findHostNode(cursor);
+      if (node && typeof node.templateAction == 'function')
+      {
+        var actions = attr.nodeValue.qw();
+        for (var i = 0, actionName; actionName = actions[i++];)
+          node.templateAction(actionName, domEvent(event));
+      }
     };
   }
 
+  function createEventTrigger(eventName){
+    return function(){
+      domEvent.fireEvent(document, eventName);
+    };
+  }
 
  /**
   * Creates dom structure by declaration.
@@ -967,6 +983,7 @@
 
           // process for attributes
           if (attrs = token[ELEMENT_ATTRS])
+          {
             for (var j = 0, attr; attr = attrs[j]; j++)
             {
               var attrName = attr[ATTR_NAME];
@@ -990,17 +1007,14 @@
                 {
                   var eventInfo = domEvent.getEventInfo(eventName, tagName);
                   if (eventInfo.supported && !eventInfo.bubble)
-                    element.attachEvent('on' + eventName, function(eventName){
-                      return function(){
-                        domEvent.fireEvent(document, eventName);
-                      };
-                    }(eventName));
+                    element.attachEvent('on' + eventName, createEventTrigger(eventName));
                 }
               }
             }
+          }
 
-          // precess for childs
-          if (children = token[ELEMENT_CHILDS]) // childs
+          // precess for children
+          if (children = token[ELEMENT_CHILDS]) // children
             element.appendChild(buildHtml(children));
 
           // add to result
@@ -1025,8 +1039,8 @@
   };
 
   function resolveObjectById(refId){
-      return tmplNodeMap[refId];
-    }
+    return tmplNodeMap[refId];
+  }
 
   var HtmlTemplate = Template.subclass({
     className: namespace + '.Template',
@@ -1041,12 +1055,18 @@
     builder: makeFunctions
   });
 
+
+  //
+  // exports name
+  //
+
   module.exports = {
     Template: HtmlTemplate
   };
 
   //
   // for backward capability
+  // TODO: remove
   //
   basis.template.extend({
     buildPathes: buildPathes,
