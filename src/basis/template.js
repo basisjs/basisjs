@@ -1182,7 +1182,7 @@
     */
     init: function(source){
       this.attaches_ = [];
-      this.setSource(source);
+      this.setSource(source || '');
 
       this.templateId = templateList.push(this) - 1;
     },
@@ -1310,6 +1310,306 @@
 
 
   //
+  // Theme
+  //
+
+  var themes = {};
+  var themeSources = {};
+  var themeSourcesList = {};
+  var themeFallback = {};
+  var themeTemplateMap = {};
+
+  var Theme = Class(null, {
+    className: namespace + '.Theme',
+    get: getTemplateByPath
+  });
+
+  var baseTheme = getTheme();
+  var currentTheme = baseTheme;
+  var currentThemeName = 'base';
+
+  function getTemplateByPath(path){
+    var template = themeTemplateMap[path];
+
+    if (!template)
+    {
+      template = new basis.template.html.Template();  // FIXME: this is hack
+      themeTemplateMap[path] = template;
+    }
+
+    return template;
+  }
+
+  function normalize(list){
+    var used = {};
+    var result = [];
+
+    for (var i = 0; i < list.length; i++)
+      if (!used[list[i]])
+      {
+        used[list[i]] = true;
+        result.push(list[i]);
+      }
+
+    return result;
+  }
+
+  function expendFallback(themeName, list){
+    var result = [];
+    result.source = normalize(list).join('/');
+
+    // map for used themes
+    var used = {
+      base: true
+    };
+
+    for (var i = 0; i < list.length; i++)
+    {
+      var name = list[i] || 'base';
+
+      // skip if theme already processed
+      if (name == themeName || used[name])
+        continue;
+
+      // get or create theme
+      var theme = getTheme(name);
+
+      // mark theme as used (theme could be only once in list)
+      // and add to lists
+      used[name] = true;
+      result.push(name);
+
+      // add theme fallback list
+      list.splice.apply(list, [i + 1, 0].concat(themeFallback[name]));
+    }
+
+    // special cases:
+    // - theme itself must be the first in source list and not in fallback list
+    // - base theme must be the last for both lists
+    result.unshift(themeName);
+    if (themeName != 'base')
+      result.push('base');
+
+    result.value = result.join('/');
+
+    return result;
+  }
+
+  function getThemeSource(name, path){
+    var sourceList = themeSourcesList[name];
+
+    for (var i = 0, map; map = sourceList[i]; i++)
+      if (map.hasOwnProperty(path))
+        return map[path];
+
+    return '';
+  }
+
+  function syncCurrentTheme(changed){
+    if (themeFallback[currentThemeName].some(function(themeName){ return changed[themeName]; }))
+    {
+      console.log('re-apply templates');
+
+      var sourcesList = themeSourcesList[currentThemeName];
+      for (var path in themeTemplateMap)
+        getTemplateByPath(path).setSource(getThemeSource(currentThemeName, path));
+    }
+  }
+
+
+  function getTheme(name){
+    if (!name)
+      name = 'base';
+
+    if (themes[name])
+      return themes[name];
+
+    if (!/^([a-z0-9\_\-]+)$/.test(name))
+      throw 'Bad name for theme - ' + name;
+
+    var sources = {};
+    var sourceList = [sources];
+    var theme = new Theme();
+
+    themes[name] = theme;
+    themeSources[name] = sources;
+    themeSourcesList[name] = sourceList;
+    themeFallback[name] = [];
+
+    // closure methods
+
+    var addSource = function(path, rawSource){
+      var source = rawSource;
+
+      /*if (!source || !source.bindingBridge)
+      {
+        var attachList = [];
+        source = {
+          attach: function(){
+          },
+          get: 
+        };
+        source.
+      }*/
+
+      sources[path] = source;
+
+      var template = getTemplateByPath(path);
+
+      // FIXME: update only changed path
+      var delta = {};
+      delta[name] = true;
+      syncCurrentTheme(delta);
+      //if (currentTheme === theme)
+      //  template.setSource(source);
+
+      return template;
+    };
+
+
+    var applySource = function(path){
+      getTemplateByPath(path).setSource(getThemeSource(name, path));
+    };
+
+    var applyThemeSources = function(){
+      for (var path in themeTemplateMap)
+        applySource(path);
+    }
+    
+    basis.object.extend(theme, {
+      name: name,
+      fallback: function(value){
+        if (theme !== baseTheme && arguments.length > 0)
+        {
+          var newFallback = typeof value == 'string' ? value.split('/') : [];
+
+          // process new fallback
+          var changed = {};
+          newFallback = expendFallback(name, newFallback);
+          if (themeFallback[name].source != newFallback.source)
+          {
+            themeFallback[name].source = newFallback.source;
+            console.log('fallback changed');
+            for (var themeName in themes)
+            {
+              var curFallback = themeFallback[themeName];
+              var newFallback = expendFallback(themeName, (curFallback.source || '').split('/'));
+              if (newFallback.value != curFallback.value)
+              {
+                changed[themeName] = true;
+                themeFallback[themeName] = newFallback;
+
+                var sourceList = themeSourcesList[themeName];
+                sourceList.length = newFallback.length;
+                for (var i = 0; i < sourceList.length; i++)
+                  sourceList[i] = themeSources[newFallback[i]];
+              }
+            }
+          }
+
+          // re-compure fallback for dependant themes
+          syncCurrentTheme(changed);
+        }
+
+        var result = themeFallback[name].slice(1); // skip theme itself
+        result.source = themeFallback[name].source;
+        return result;
+      },
+      define: function(what, wherewith){
+        if (typeof what == 'function')
+          what = what();
+
+        if (typeof what == 'string')
+        {
+          if (typeof wherewith == 'object')
+          {
+            // define(namespace, dictionary): object
+            // what -> path
+            // wherewith -> dictionary
+
+            var namespace = what;
+            var dictionary = wherewith;
+            var result = {};
+
+            for (var key in dictionary)
+              if (dictionary.hasOwnProperty(key))
+                result[key] = addSource(namespace + '.' + key, dictionary[key]);
+
+            return result;
+          }
+          else
+          {
+            if (arguments.length == 1)
+            {
+              // define(path): Template  === getTempalteByPath(path)
+
+              return getTemplateByPath(what);
+            }
+            else
+            {
+              // define(path, source): Template
+              // what -> path
+              // wherewith -> source
+
+              return addSource(what, wherewith);
+            }
+          }
+        }
+        else
+        {
+          if (typeof what == 'object')
+          {
+            // define(dictionary): Theme
+            var dictionary = what;
+
+            for (var path in dictionary)
+              if (dictionary.hasOwnProperty(path))
+                addSource(path, dictionary[path]);
+
+            return this;
+          }
+          else
+          {
+            ;;;if (typeof console != 'undefined') console.warn('');
+          }
+        }
+      },
+      apply: function(){
+        if (currentTheme !== theme)
+        {
+          currentTheme = theme;
+          currentThemeName = name;
+          applyThemeSources();
+
+          ;;;if (typeof console != 'undefined') console.info('Template theme switched to `' + name + '`');
+        }
+      },
+      getSource: function(withFallback){
+        return withFallback ? getThemeSource(name, path) : sources[path];
+      },
+      drop: function(path){
+        if (sources.hasOwnProperty(path))
+        {
+          delete sources[path];
+
+          // FIXME: update only changed path
+          var delta = {};
+          delta[name] = true;
+          syncCurrentTheme(delta);
+          //if (currentTheme === theme)
+          //  applySource(path);
+        }
+      }
+    });
+
+    themeFallback[name] = expendFallback(name, []);
+    sourceList.push(themeSources['base']);
+
+    return theme;
+  }
+
+
+  //
   // cleanup on page unload
   //
 
@@ -1364,5 +1664,27 @@
 
     // for debug purposes
     tokenize: tokenize,
-    makeDeclaration: makeDeclaration
+    makeDeclaration: makeDeclaration,
+
+    // theme
+    Theme: Theme,
+    theme: getTheme,
+    getThemeList: function(){
+      return Object.keys(themes);
+    },
+    currentTheme: function(){
+      return currentTheme;
+    },
+    setTheme: function(name){
+      var theme = getTheme(name);
+      theme.apply();
+      return theme;
+    },
+
+    define: baseTheme.define,
+
+    get: getTemplateByPath,
+    getPathList: function(){
+      return Object.keys(themeTemplateMap);
+    }
   };
