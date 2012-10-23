@@ -1313,31 +1313,63 @@
   // Theme
   //
 
-  var themes = {};
-  var themeSources = {};
-  var themeSourcesList = {};
-  var themeFallback = {};
-  var themeTemplateMap = {};
-
+ /**
+  * @class
+  */
   var Theme = Class(null, {
     className: namespace + '.Theme',
-    get: getTemplateByPath
+    get: getSourceByPath
   });
 
-  var baseTheme = getTheme();
-  var currentTheme = baseTheme;
-  var currentThemeName = 'base';
+ /**
+  * @class
+  */
+  var SourceWrapper = Class(basis.Token, {
+    className: namespace + '.SourceWrapper',
+    content: null,
+    toString: function(){
+      return this.get();
+    },
+    init: function(content){
+      basis.Token.prototype.init.call(this);
+      this.set(content);
+    },
+    set: function(content){
+      if (this.content != content)
+      {
+        if (this.content && this.content.bindingBridge)
+          this.content.bindingBridge.detach(this.content, this.apply, this);
 
-  function getTemplateByPath(path){
-    var template = themeTemplateMap[path];
+        this.content = content;
 
-    if (!template)
+        if (this.content && this.content.bindingBridge)
+          this.content.bindingBridge.attach(this.content, this.apply, this);
+
+        this.apply();
+      }
+    },
+    get: function(){
+      return this.content && this.content.bindingBridge
+        ? this.content.bindingBridge.get(this.content)
+        : this.content;
+    },
+    destroy: function(){
+      basis.Token.prototype.destroy.call(this);
+      this.apply = basis.fn.$null;
+      this.set();
+    }
+  });
+
+  function getSourceByPath(path){
+    var source = sourceByPath[path];
+
+    if (!source)
     {
-      template = new basis.template.html.Template();  // FIXME: this is hack
-      themeTemplateMap[path] = template;
+      source = new SourceWrapper('');
+      sourceByPath[path] = source;
     }
 
-    return template;
+    return source;
   }
 
   function normalize(list){
@@ -1380,7 +1412,7 @@
       result.push(name);
 
       // add theme fallback list
-      list.splice.apply(list, [i + 1, 0].concat(themeFallback[name]));
+      list.splice.apply(list, [i + 1, 0].concat(themes[name].fallback));
     }
 
     // special cases:
@@ -1396,7 +1428,7 @@
   }
 
   function getThemeSource(name, path){
-    var sourceList = themeSourcesList[name];
+    var sourceList = themes[name].sourcesList;
 
     for (var i = 0, map; map = sourceList[i]; i++)
       if (map.hasOwnProperty(path))
@@ -1405,114 +1437,98 @@
     return '';
   }
 
-  function syncCurrentTheme(changed){
-    if (themeFallback[currentThemeName].some(function(themeName){ return changed[themeName]; }))
-    {
-      console.log('re-apply templates');
-
-      var sourcesList = themeSourcesList[currentThemeName];
-      for (var path in themeTemplateMap)
-        getTemplateByPath(path).setSource(getThemeSource(currentThemeName, path));
-    }
+  function themeHasEffect(themeName){
+    return themes[currentThemeName].fallback.has(themeName);
   }
 
+  function syncCurrentThemePath(path){
+    getSourceByPath(path).set(getThemeSource(currentThemeName, path));
+  }
+
+  function syncCurrentTheme(changed){
+    ;;;if (typeof console != 'undefined') console.log('re-apply templates');
+
+    for (var path in sourceByPath)
+      syncCurrentThemePath(path);
+  }
 
   function getTheme(name){
     if (!name)
       name = 'base';
 
     if (themes[name])
-      return themes[name];
+      return themes[name].theme;
 
     if (!/^([a-z0-9\_\-]+)$/.test(name))
       throw 'Bad name for theme - ' + name;
 
     var sources = {};
     var sourceList = [sources];
-    var theme = new Theme();
+    var themeInterface = new Theme();
 
-    themes[name] = theme;
-    themeSources[name] = sources;
-    themeSourcesList[name] = sourceList;
-    themeFallback[name] = [];
+    themes[name] = {
+      theme: themeInterface,
+      sources: sources,
+      sourcesList: sourceList,
+      fallback: []
+    };
 
     // closure methods
 
-    var addSource = function(path, rawSource){
-      var source = rawSource;
-
-      /*if (!source || !source.bindingBridge)
-      {
-        var attachList = [];
-        source = {
-          attach: function(){
-          },
-          get: 
-        };
-        source.
-      }*/
-
+    var addSource = function(path, source){
       sources[path] = source;
 
-      var template = getTemplateByPath(path);
+      if (themeHasEffect(name))
+        syncCurrentThemePath(path);
 
-      // FIXME: update only changed path
-      var delta = {};
-      delta[name] = true;
-      syncCurrentTheme(delta);
-      //if (currentTheme === theme)
-      //  template.setSource(source);
-
-      return template;
+      return getSourceByPath(path);
     };
 
-
-    var applySource = function(path){
-      getTemplateByPath(path).setSource(getThemeSource(name, path));
-    };
-
-    var applyThemeSources = function(){
-      for (var path in themeTemplateMap)
-        applySource(path);
-    }
-    
-    basis.object.extend(theme, {
+    basis.object.extend(themeInterface, {
       name: name,
       fallback: function(value){
-        if (theme !== baseTheme && arguments.length > 0)
+        if (themeInterface !== baseTheme && arguments.length > 0)
         {
           var newFallback = typeof value == 'string' ? value.split('/') : [];
 
           // process new fallback
           var changed = {};
           newFallback = expendFallback(name, newFallback);
-          if (themeFallback[name].source != newFallback.source)
+          if (themes[name].fallback.source != newFallback.source)
           {
-            themeFallback[name].source = newFallback.source;
-            console.log('fallback changed');
+            themes[name].fallback.source = newFallback.source;
+            ;;;if (typeof console != 'undefined') console.log('fallback changed');
             for (var themeName in themes)
             {
-              var curFallback = themeFallback[themeName];
+              var curFallback = themes[themeName].fallback;
               var newFallback = expendFallback(themeName, (curFallback.source || '').split('/'));
               if (newFallback.value != curFallback.value)
               {
                 changed[themeName] = true;
-                themeFallback[themeName] = newFallback;
+                themes[themeName].fallback = newFallback;
 
-                var sourceList = themeSourcesList[themeName];
+                var sourceList = themes[themeName].sourcesList;
                 sourceList.length = newFallback.length;
                 for (var i = 0; i < sourceList.length; i++)
-                  sourceList[i] = themeSources[newFallback[i]];
+                  sourceList[i] = themes[newFallback[i]].sources;
               }
             }
           }
 
           // re-compure fallback for dependant themes
-          syncCurrentTheme(changed);
+          var currentFallback = themes[currentThemeName].fallback;
+          for (var themeName in changed)
+          {
+            if (themeHasEffect(themeName))
+            {
+              syncCurrentTheme();
+              break;
+            }
+          }
         }
 
-        var result = themeFallback[name].slice(1); // skip theme itself
-        result.source = themeFallback[name].source;
+        var result = themes[name].fallback.slice(1); // skip theme itself
+        result.source = themes[name].fallback.source;
         return result;
       },
       define: function(what, wherewith){
@@ -1543,7 +1559,7 @@
             {
               // define(path): Template  === getTempalteByPath(path)
 
-              return getTemplateByPath(what);
+              return getSourceByPath(what);
             }
             else
             {
@@ -1575,14 +1591,14 @@
         }
       },
       apply: function(){
-        if (currentTheme !== theme)
+        if (name != currentThemeName)
         {
-          currentTheme = theme;
           currentThemeName = name;
-          applyThemeSources();
+          syncCurrentTheme();
 
           ;;;if (typeof console != 'undefined') console.info('Template theme switched to `' + name + '`');
         }
+        return themeInterface;
       },
       getSource: function(withFallback){
         return withFallback ? getThemeSource(name, path) : sources[path];
@@ -1591,22 +1607,22 @@
         if (sources.hasOwnProperty(path))
         {
           delete sources[path];
-
-          // FIXME: update only changed path
-          var delta = {};
-          delta[name] = true;
-          syncCurrentTheme(delta);
-          //if (currentTheme === theme)
-          //  applySource(path);
+          if (themeHasEffect(name))
+            syncCurrentThemePath(path);
         }
       }
     });
 
-    themeFallback[name] = expendFallback(name, []);
-    sourceList.push(themeSources['base']);
+    themes[name].fallback = expendFallback(name, []);
+    sourceList.push(themes['base'].sources);
 
-    return theme;
+    return themeInterface;
   }
+
+  var themes = {};
+  var sourceByPath = {};
+  var baseTheme = getTheme();
+  var currentThemeName = 'base';
 
 
   //
@@ -1615,6 +1631,14 @@
 
   cleaner.add({
     destroy: function(){
+      // clear themes
+      for (var path in sourceByPath)
+        sourceByPath[path].destroy();
+
+      themes = null;
+      sourceByPath = null;
+
+      // clear templates
       for (var i = 0, template; template = templateList[i]; i++)
       {
         for (var key in template.instances_)
@@ -1673,18 +1697,16 @@
       return Object.keys(themes);
     },
     currentTheme: function(){
-      return currentTheme;
+      return themes[currentThemeName].theme;
     },
     setTheme: function(name){
-      var theme = getTheme(name);
-      theme.apply();
-      return theme;
+      return getTheme(name).apply();
     },
 
     define: baseTheme.define,
 
-    get: getTemplateByPath,
+    get: getSourceByPath,
     getPathList: function(){
-      return Object.keys(themeTemplateMap);
+      return Object.keys(sourceByPath);
     }
   };

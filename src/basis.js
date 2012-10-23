@@ -2117,6 +2117,8 @@
   * @class
   */
   var Token = Class(null, {
+    className: 'basis.Token',
+
     attachList: null,
 
     bindingBridge: {
@@ -2179,7 +2181,6 @@
     // destructor
     destroy: function(){
       this.attachList = null;
-      this.set();
     }  
   });
 
