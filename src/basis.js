@@ -1479,69 +1479,49 @@
             return externalResource(resourceUrl);
           };
 
-      resource.url = resourceUrl;
-      resource.fetch = resource;
-      resource.toString = function(){ return '[basis.resource ' + resourceUrl + ']'; }; //resource();
-      resource.update = function(content){
-        content = String(content);
-        if (content != externalResourceCache[resourceUrl])
-        {
-          externalResourceCache[resourceUrl] = content;
-          if (extWrapper)
+      extend(resource, new Token());
+      extend(resource, {
+        url: resourceUrl,
+        fetch: resource,
+        toString: function(){
+          return '[basis.resource ' + resourceUrl + ']';
+        },
+        update: function(content){
+          content = String(content);
+          if (content != externalResourceCache[resourceUrl])
           {
-            if (extWrapper.updatable)
+            externalResourceCache[resourceUrl] = content;
+            if (extWrapper)
             {
-              resource.source = content;
-              resourceObject = extWrapperFn(content);
-              content = resourceObject;
+              if (extWrapper.updatable)
+              {
+                resource.source = content;
+                resourceObject = extWrapperFn(content);
+                content = resourceObject;
+              }
+              else
+                return;
             }
-            else
-              return;
-          }
 
-          for (var i = 0, listener; listener = attaches[i]; i++)
-            listener.handler.call(listener.context, content);
-        }
-      };
-      resource.reload = function(){
-        var content = externalResourceCache[resourceUrl];
-        delete externalResourceCache[resourceUrl];
-        var newContent = externalResource(resourceUrl);
-        if (newContent != content)
-        {
+            this.apply();
+            //for (var i = 0, listener; listener = attaches[i]; i++)
+            //  listener.handler.call(listener.context, content);
+          }
+        },
+        reload: function(){
+          var content = externalResourceCache[resourceUrl];
           delete externalResourceCache[resourceUrl];
-          this.update(newContent);
-        }
-      };
-      resource.bindingBridge = {
-        attach: function(fn, handler, context){
-          for (var i = 0, listener; listener = attaches[i]; i++)
+          var newContent = externalResource(resourceUrl);
+          if (newContent != content)
           {
-            if (listener.handler == handler && listener.context == context)
-              return false;
+            delete externalResourceCache[resourceUrl];
+            this.update(newContent);
           }
-
-          attaches.push({
-            handler: handler,
-            context: context
-          });
-
-          return true;
         },
-        detach: function(fn, handler, context){
-          for (var i = 0, listener; listener = attaches[i]; i++)
-            if (listener.handler == handler && listener.context == context)
-            {
-              attaches.splice(i, 1);
-              return true;
-            }
-
-          return false;
-        },
-        get: function(){
-          return externalResource(resourceUrl);
+        get: function(source){
+          return source ? externalResource(resourceUrl) : resource();
         }
-      };
+      });
 
       frfCache[resourceUrl] = resource;
     }
