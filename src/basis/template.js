@@ -647,7 +647,7 @@
                   if (elAttrs.src)
                   {
                     var isTemplateRef = /^#\d+$/.test(elAttrs.src);
-                    var url = isTemplateRef ? elAttrs.src.substr(1) : basis.path.resolve(template.baseURI + elAttrs.src);
+                    var url = isTemplateRef ? elAttrs.src.substr(1) : elAttrs.src;
 
                     if (includeStack.indexOf(url) == -1) // prevent recursion
                     {
@@ -666,10 +666,19 @@
                       }
                       else
                       {
-                        var resource = basis.resource(url);
-                        template.deps.add(resource);
-
-                        decl = makeDeclaration(resource(), basis.path.dirname(url) + '/');
+                        if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
+                        {
+                          var resource = getSourceByPath(url);
+                          template.deps.add(resource);
+                          decl = makeDeclaration(resource.get(), resource.url ? basis.path.dirname(resource.url) + '/' : '');
+                        }
+                        else
+                        {
+                          url = basis.path.resolve(template.baseURI + url);
+                          var resource = basis.resource(url);
+                          template.deps.add(resource);
+                          decl = makeDeclaration(resource(), resource.baseURI + '/');
+                        }
                       }
 
                       includeStack.pop();
@@ -1268,6 +1277,9 @@
               case 'raw':
                 //source = source;
                 break;
+              case 'path':
+                source = getSourceByPath(source);
+                break;
               default:
                 ;;; if (typeof console != 'undefined') console.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.');
             }
@@ -1341,6 +1353,8 @@
           this.content.bindingBridge.detach(this.content, this.apply, this);
 
         this.content = content;
+        this.url = (content && content.url) || '';
+        this.baseURI = (content && content.baseURI) || '';
 
         if (this.content && this.content.bindingBridge)
           this.content.bindingBridge.attach(this.content, this.apply, this);
@@ -1360,7 +1374,8 @@
     }
   });
 
-  function getSourceByPath(path){
+  function getSourceByPath(){
+    var path = basis.array(arguments).join('.');
     var source = sourceByPath[path];
 
     if (!source)
@@ -1661,6 +1676,8 @@
   //
   // export names
   //
+
+  module.setWrapper(baseTheme.define);
 
   module.exports = {
     // const

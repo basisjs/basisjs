@@ -3,6 +3,7 @@
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.ui');
+  basis.require('basis.template');
 
 
  /**
@@ -45,6 +46,18 @@
   var UINode = basis.ui.Node;
   var UIPartitionNode = basis.ui.PartitionNode;
   var UIGroupingNode = basis.ui.GroupingNode;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Tree: resource('templates/tree/Tree.tmpl'),
+    PartitionNode: resource('templates/tree/PartitionNode.tmpl'),
+    Node: resource('templates/tree/Node.tmpl'),
+    Folder: resource('templates/tree/Folder.tmpl')
+  });
 
 
   //
@@ -97,7 +110,7 @@
   var PartitionNode = Class(UIPartitionNode, {
     className: namespace + '.PartitionNode',
 
-    template: resource('templates/tree/PartitionNode.tmpl')
+    template: templates.PartitionNode
   });
 
  /**
@@ -134,7 +147,7 @@
     * @type {basis.template.Template}
     * @private
     */
-    template: resource('templates/tree/Node.tmpl'),
+    template: templates.Node,
 
     binding: {
       title: 'data:title || "[no title]"',
@@ -181,7 +194,7 @@
    /**
     * @inheritDoc
     */
-    template: resource('templates/tree/Folder.tmpl'),
+    template: templates.Folder,
 
    /**
     * @type {boolean}
@@ -247,6 +260,7 @@
     }
   });
 
+
  /**
   * @class
   */
@@ -263,7 +277,7 @@
     * @type {basis.template.Template}
     * @private
     */
-    template: resource('templates/tree/Tree.tmpl'),
+    template: templates.Tree,
 
    /**
     * @inheritDoc
