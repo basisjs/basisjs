@@ -19,7 +19,6 @@
   // Main part
   //
 
-  var eventObjectId = 1; // EventObject seed ID
   var events = {};
 
 

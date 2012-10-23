@@ -377,14 +377,14 @@
         for (var i = 0, seria; seria = delta.inserted[i]; i++)
         {
           for (var j = 0, child; child = this.childNodes[j]; j++)
-            child.values[seria.eventObjectId] = seria.getValue(child, this.keyGetter(child));
+            child.values[seria.basisObjectId] = seria.getValue(child, this.keyGetter(child));
         }
 
       if (delta.deleted)
         for (var i = 0, seria; seria = delta.deleted[i]; i++)
         {
           for (var j = 0, child; child = this.childNodes[j]; j++)
-            delete child.values[seria.eventObjectId];
+            delete child.values[seria.basisObjectId];
         }
 
       this.redrawRequest();
@@ -399,9 +399,9 @@
         if (delta[key])
         {
           if (delta[key])
-            child.values[seria.eventObjectId] = delta[key];
+            child.values[seria.basisObjectId] = delta[key];
           else
-            delete child.values[seria.eventObjectId];
+            delete child.values[seria.basisObjectId];
 
           needRedraw = true;
         }
@@ -414,7 +414,7 @@
 
   var GRAPH_NODE_UPDATE_HANDLER = function(object){
     for (var i = 0, seria; seria = this.series.childNides[i]; i++)
-      object.values[seria.eventObjectId] = seria.getValue(object, this.keyGetter(object));
+      object.values[seria.basisObjectId] = seria.getValue(object, this.keyGetter(object));
 
     this.redrawRequest();
   };
@@ -462,7 +462,7 @@
         {
           for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
             if (seria.getValue)
-              child.values[seria.eventObjectId] = seria.getValue(child, this.keyGetter(child));
+              child.values[seria.basisObjectId] = seria.getValue(child, this.keyGetter(child));
 
           child.addHandler(child.valueChangeEvents, this);
         }
@@ -471,7 +471,7 @@
         for (var i = 0, child; child = delta.deleted[i]; i++)
         {
           for (var j = 0, seria; seria = this.series.childNodes[j]; j++)
-            child.values[seria.eventObjectId] = null;
+            child.values[seria.basisObjectId] = null;
 
           child.removeHandler(child.valueChangeEvents, this);
         }
@@ -502,7 +502,7 @@
     getValuesForSeria: function(seria){
       var values = [];
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        values.push(child.values[seria.eventObjectId]);
+        values.push(child.values[seria.basisObjectId]);
       
       return values;
     },
@@ -1122,7 +1122,7 @@
       var selectedItemsMap = {};
 
       for (var i = 0; i < selectedItems.length; i++)
-        selectedItemsMap[selectedItems[i].eventObjectId] = true;
+        selectedItemsMap[selectedItems[i].basisObjectId] = true;
 
       var left, right;
       var lastPos = -1;
@@ -1132,7 +1132,7 @@
       for (var i = 0; i < this.owner.childNodes.length + 1; i++)
       {
         var child = this.owner.childNodes[i];
-        if (child && selectedItemsMap[child.eventObjectId])
+        if (child && selectedItemsMap[child.basisObjectId])
         {
           if (lastPos == -1)
             lastPos = i;
@@ -1273,7 +1273,7 @@
       //var key = this.owner.keyGetter(this.owner.childNodes[keyPosition]);
       for (var i = 0, seria; seria = series[i]; i++)
       {
-        var value = this.owner.childNodes[keyPosition].values[seria.eventObjectId];
+        var value = this.owner.childNodes[keyPosition].values[seria.basisObjectId];
 
         if (isNaN(value))
           continue;

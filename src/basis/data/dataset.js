@@ -141,7 +141,7 @@
       {
         for (var i = 0; object = delta.inserted[i]; i++)
         {
-          objectId = object.eventObjectId;
+          objectId = object.basisObjectId;
         
           // check: is this object already known
           if (memberMap[objectId])
@@ -167,7 +167,7 @@
       {
         for (var i = 0; object = delta.deleted[i]; i++)
         {
-          objectId = object.eventObjectId;
+          objectId = object.basisObjectId;
 
           // mark as updated
           updated[objectId] = memberMap[objectId];
@@ -809,7 +809,7 @@
     if (newMember instanceof DataObject == false || this.filter(newMember))
       newMember = null;
 
-    var sourceMap = this.sourceMap_[sourceObject.eventObjectId];
+    var sourceMap = this.sourceMap_[sourceObject.basisObjectId];
     var curMember = sourceMap.member;
 
     // if member ref is changed
@@ -826,7 +826,7 @@
       // if here is ref for member already
       if (curMember)
       {
-        var curMemberId = curMember.eventObjectId;
+        var curMemberId = curMember.basisObjectId;
 
         // call callback on member ref add
         if (this.removeMemberRef)
@@ -848,7 +848,7 @@
       // if new member exists, update map
       if (newMember)
       {
-        var newMemberId = newMember.eventObjectId;
+        var newMemberId = newMember.basisObjectId;
 
         // call callback on member ref add
         if (this.addMemberRef)
@@ -900,14 +900,14 @@
           if (updateHandler)
             sourceObject.addHandler(updateHandler, this);
 
-          sourceMap[sourceObject.eventObjectId] = {
+          sourceMap[sourceObject.basisObjectId] = {
             sourceObject: sourceObject,
             member: member
           };
 
           if (member)
           {
-            var memberId = member.eventObjectId;
+            var memberId = member.basisObjectId;
             if (memberMap[memberId])
             {
               memberMap[memberId]++;
@@ -928,7 +928,7 @@
       {
         for (var i = 0; sourceObject = delta.deleted[i]; i++)
         {
-          sourceObjectId = sourceObject.eventObjectId;
+          sourceObjectId = sourceObject.basisObjectId;
           member = sourceMap[sourceObjectId].member;
 
           if (updateHandler)
@@ -938,7 +938,7 @@
 
           if (member)
           {
-            var memberId = member.eventObjectId;
+            var memberId = member.basisObjectId;
             if (--memberMap[memberId] == 0)
             {
               delete memberMap[memberId];
@@ -1098,7 +1098,7 @@
           // if here is ref for member already
           if (curMember)
           {
-            curMemberId = curMember.eventObjectId;
+            curMemberId = curMember.basisObjectId;
 
             // call callback on member ref add
             if (this.removeMemberRef)
@@ -1111,7 +1111,7 @@
           // if new member exists, update map
           if (newMember)
           {
-            newMemberId = newMember.eventObjectId;
+            newMemberId = newMember.basisObjectId;
 
             // call callback on member ref add
             if (this.addMemberRef)
@@ -1273,7 +1273,7 @@
       return 0;
 
     var pos;
-    var id = map.object.eventObjectId;
+    var id = map.object.basisObjectId;
     var value = map.value || 0;
     var cmpValue;
     var cmpId;
@@ -1290,7 +1290,7 @@
 
       if (cmpValue === value)
       {
-        cmpId = item.object.eventObjectId;
+        cmpId = item.object.basisObjectId;
         if (id < cmpId)
           r = pos - 1;
         else 
@@ -1316,7 +1316,7 @@
   }
 
   var SLICE_SOURCEOBJECT_UPDATE = function(sourceObject){
-    var sourceObjectInfo = this.sourceMap_[sourceObject.eventObjectId];
+    var sourceObjectInfo = this.sourceMap_[sourceObject.basisObjectId];
     var newValue = this.rule(sourceObject);
     var index = this.index_;
 
@@ -1332,7 +1332,7 @@
   function sliceIndexSort(a, b){
     return +(a.value > b.value)
         || -(a.value < b.value)
-        ||  (a.object.eventObjectId - b.object.eventObjectId);
+        ||  (a.object.basisObjectId - b.object.basisObjectId);
   }
 
   var SLICE_SOURCE_HANDLER = {
@@ -1364,11 +1364,11 @@
         {
           if (!dropIndex)
           {
-            sourceObjectInfo = sourceMap[sourceObject.eventObjectId];
+            sourceObjectInfo = sourceMap[sourceObject.basisObjectId];
             index.splice(binarySearchPos(index, sourceObjectInfo), 1);
           }
 
-          delete sourceMap[sourceObject.eventObjectId];
+          delete sourceMap[sourceObject.basisObjectId];
 
           if (updateHandler)
             sourceObject.removeHandler(updateHandler, this);
@@ -1393,7 +1393,7 @@
             object: sourceObject,
             value: this.rule(sourceObject)
           };
-          sourceMap[sourceObject.eventObjectId] = sourceObjectInfo;
+          sourceMap[sourceObject.basisObjectId] = sourceObjectInfo;
 
           if (!buildIndex)
             index.splice(binarySearchPos(index, sourceObjectInfo), 0, sourceObjectInfo);
@@ -1555,7 +1555,7 @@
 
       for (var i = 0, item; item = newSet[i]; i++)
       {
-        var objectId = item.object.eventObjectId;
+        var objectId = item.object.basisObjectId;
         if (curSet[objectId])
           delete curSet[objectId];
         else
@@ -1588,7 +1588,7 @@
   var CLOUD_SOURCEOBJECT_UPDATE = function(sourceObject){
     var sourceMap = this.sourceMap_;
     var memberMap = this.memberMap_;
-    var sourceObjectId = sourceObject.eventObjectId;
+    var sourceObjectId = sourceObject.basisObjectId;
 
     var oldList = sourceMap[sourceObjectId].list;
     var newList = sourceMap[sourceObjectId].list = {};
@@ -1605,7 +1605,7 @@
 
         if (subset)
         {
-          subsetId = subset.eventObjectId;
+          subsetId = subset.basisObjectId;
           newList[subsetId] = subset;
 
           if (!oldList[subsetId])
@@ -1663,7 +1663,7 @@
             list: {}
           };
 
-          sourceMap[sourceObject.eventObjectId] = sourceObjectInfo;
+          sourceMap[sourceObject.basisObjectId] = sourceObjectInfo;
 
           if (Array.isArray(list))
             for (var j = 0; j < list.length; j++)
@@ -1672,7 +1672,7 @@
 
               if (subset && !subset.has(sourceObject))
               {
-                subsetId = subset.eventObjectId;
+                subsetId = subset.basisObjectId;
                 sourceObjectInfo.list[subsetId] = subset;
 
                 subset.event_datasetChanged({ inserted: [sourceObject] });
@@ -1694,7 +1694,7 @@
       if (array = delta.deleted)
         for (var i = 0, sourceObject; sourceObject = array[i]; i++)
         {
-          var sourceObjectId = sourceObject.eventObjectId;
+          var sourceObjectId = sourceObject.basisObjectId;
           var list = sourceMap[sourceObjectId].list;
 
           delete sourceMap[sourceObjectId];

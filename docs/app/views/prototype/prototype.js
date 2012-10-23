@@ -160,7 +160,7 @@
       titleGetter: getter('data.fullPath')
     },
     sorting: function(group){
-      return group.delegate && group.delegate.eventObjectId;
+      return group.delegate && group.delegate.basisObjectId;
     }
   };
 

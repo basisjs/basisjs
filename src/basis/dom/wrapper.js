@@ -837,7 +837,7 @@
     * @return {basis.dom.wrapper.ChildNodesDataset}
     */
     getChildNodesDataset: function(){
-      return childNodesDatasetMap[this.eventObjectId] || new ChildNodesDataset({
+      return childNodesDatasetMap[this.basisObjectId] || new ChildNodesDataset({
         sourceNode: this
       });
     },
@@ -1056,7 +1056,7 @@
         {
           for (var i = 0, item; item = delta.deleted[i]; i++)
           {
-            var delegateId = item.eventObjectId;
+            var delegateId = item.basisObjectId;
             var oldChild = this.dataSourceMap_[delegateId];
 
             delete this.dataSourceMap_[delegateId];
@@ -1086,7 +1086,7 @@
           newChild.canHaveDelegate = false; // prevent delegate override
 
           // insert
-          this.dataSourceMap_[item.eventObjectId] = newChild;
+          this.dataSourceMap_[item.basisObjectId] = newChild;
           newDelta.inserted.push(newChild);
 
           // optimization: insert child only if node has at least one child, otherwise setChildNodes method
@@ -1255,7 +1255,7 @@
       // check for dataSource
       if (this.dataSource)
       {
-        if (!isChildClassInstance || this.dataSourceMap_[newChild.delegate.eventObjectId] !== newChild)
+        if (!isChildClassInstance || this.dataSourceMap_[newChild.delegate.basisObjectId] !== newChild)
           throw EXCEPTION_DATASOURCE_CONFLICT;
       }
 
@@ -2271,7 +2271,7 @@
       {
         for (var i = 0, child; child = array[i++];)
         {
-          child.groupId_ = child.delegate ? child.delegate.eventObjectId : child.data.id;
+          child.groupId_ = child.delegate ? child.delegate.basisObjectId : child.data.id;
           this.map_[child.groupId_] = child;
         }
 
@@ -2341,7 +2341,7 @@
     getGroupNode: function(node, autocreate){
       var groupRef = this.groupGetter(node);
       var isDelegate = groupRef instanceof DataObject;
-      var group = this.map_[isDelegate ? groupRef.eventObjectId : groupRef];
+      var group = this.map_[isDelegate ? groupRef.basisObjectId : groupRef];
 
       if (this.dataSource)
         autocreate = false;
@@ -2531,7 +2531,7 @@
 
         while (node = inserted[insertCount])
         {
-          memberMap[node.eventObjectId] = node;
+          memberMap[node.basisObjectId] = node;
           insertCount++;
         }
       }
@@ -2542,7 +2542,7 @@
 
         while (node = deleted[deleteCount])
         {
-          delete memberMap[node.eventObjectId];
+          delete memberMap[node.basisObjectId];
           deleteCount++;
         }
       }
@@ -2575,7 +2575,7 @@
       var sourceNode = this.sourceNode;
 
       // add to map
-      childNodesDatasetMap[sourceNode.eventObjectId] = this;
+      childNodesDatasetMap[sourceNode.basisObjectId] = this;
 
       // add existing nodes
       if (sourceNode.firstChild)
@@ -2592,7 +2592,7 @@
     */
     destroy: function(){
       this.sourceNode.removeHandler(CHILDNODESDATASET_HANDLER, this);
-      delete childNodesDatasetMap[this.sourceNode.eventObjectId];
+      delete childNodesDatasetMap[this.sourceNode.basisObjectId];
 
       // inherit
       AbstractDataset.prototype.destroy.call(this);

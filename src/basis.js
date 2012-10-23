@@ -1784,7 +1784,7 @@
                 // constructor with instance extension
                 ? function(extend, config){
                     // mark object
-                    this.eventObjectId = seed.id++;
+                    this.basisObjectId = seed.id++;
 
                     // extend and override instance properties
                     var prop;
@@ -1808,7 +1808,7 @@
                 // simple constructor
                 : function(){
                     // mark object
-                    this.eventObjectId = seed.id++;
+                    this.basisObjectId = seed.id++;
 
                     // call constructor
                     this.init.apply(this, arguments);

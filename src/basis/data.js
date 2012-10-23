@@ -118,7 +118,7 @@
           add: function(thisObject, object){
             if (object)
             {
-              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.eventObjectId;
+              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.basisObjectId;
 
               if (!object.subscribers_)
                 object.subscribers_ = {};
@@ -139,7 +139,7 @@
           remove: function(thisObject, object){
             if (object)
             {
-              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.eventObjectId;
+              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.basisObjectId;
               if (object.subscribers_[subscriberId])
               {
                 var oldSubscriberCount = object.subscriberCount;
@@ -821,7 +821,7 @@
       return new this.itemClass(itemConfig);
     },
     get: function(key, object){
-      var itemId = key instanceof DataObject ? key.eventObjectId : key;
+      var itemId = key instanceof DataObject ? key.basisObjectId : key;
       var item = this.map_[itemId];
 
       if (!item && object)
@@ -959,7 +959,7 @@
       {
         while (object = items[insertCount])
         {
-          this.item_[object.eventObjectId] = object;
+          this.item_[object.basisObjectId] = object;
           insertCount++;
         }
       }
@@ -969,7 +969,7 @@
       {
         while (object = items[deleteCount])
         {
-          delete this.item_[object.eventObjectId];
+          delete this.item_[object.basisObjectId];
           deleteCount++;
         }
       }
@@ -1004,7 +1004,7 @@
     * @return {boolean} Returns true if object in dataset.
     */
     has: function(object){
-      return !!(object && this.item_[object.eventObjectId]);
+      return !!(object && this.item_[object.basisObjectId]);
     },
 
    /**
@@ -1162,7 +1162,7 @@
         var object = data[i];
         if (object instanceof DataObject)
         {
-          var objectId = object.eventObjectId;
+          var objectId = object.basisObjectId;
           if (!memberMap[objectId])
           {
             memberMap[objectId] = object;
@@ -1197,7 +1197,7 @@
         var object = data[i];
         if (object instanceof DataObject)
         {
-          var objectId = object.eventObjectId;
+          var objectId = object.basisObjectId;
           if (memberMap[objectId])
           {
             if (listenHandler)
@@ -1247,7 +1247,7 @@
 
         if (object instanceof DataObject)
         {
-          objectId = object.eventObjectId;
+          objectId = object.basisObjectId;
           exists[objectId] = object;
 
           // insert data
@@ -1305,7 +1305,7 @@
 
         if (object instanceof DataObject)
         {
-          objectId = object.eventObjectId;
+          objectId = object.basisObjectId;
 
           exists[objectId] = object;
           if (!memberMap[objectId])
@@ -1375,7 +1375,7 @@
 
     function storeDatasetDelta(delta){
       var dataset = this;
-      var datasetId = dataset.eventObjectId;
+      var datasetId = dataset.basisObjectId;
       var inserted = delta.inserted;
       var deleted = delta.deleted;
       var cache = eventCache[datasetId];

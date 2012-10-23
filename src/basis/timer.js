@@ -241,7 +241,7 @@
     }
 
     function add(object, event, eventTime){
-      var objectId = object.eventObjectId;
+      var objectId = object.basisObjectId;
       var eventMap = map[event];
 
       if (!eventMap)
@@ -286,7 +286,7 @@
     }
 
     function remove(object, event){
-      var objectId = object.eventObjectId;
+      var objectId = object.basisObjectId;
       var eventObject = map[event] && map[event][objectId];
 
       if (eventObject)
@@ -305,7 +305,7 @@
 
       lockSetTimeout = true; // lock for set timeout if callback calling will add new events
       eventStack.splice(0, pos).forEach(function(eventObject){
-        delete map[eventObject.eventName][eventObject.object.eventObjectId];
+        delete map[eventObject.eventName][eventObject.object.basisObjectId];
         eventObject.callback.call(eventObject.object);
       });
       lockSetTimeout = false; // unlock

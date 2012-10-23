@@ -86,7 +86,7 @@
       className: namespace + '.ButtonGroupingNode',
 
       groupGetter: function(button){
-        return button.groupId || button.eventObjectId;
+        return button.groupId || button.basisObjectId;
       },
 
       childClass: {

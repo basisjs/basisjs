@@ -806,7 +806,7 @@
   //
 
   function entityWarn(entity, message){
-    ;;;if (typeof console != 'undefined') console.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.eventObjectId + ': ' + message, entity); 
+    ;;;if (typeof console != 'undefined') console.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.basisObjectId + ': ' + message, entity); 
   }
 
  /**

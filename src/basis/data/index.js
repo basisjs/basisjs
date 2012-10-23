@@ -392,14 +392,14 @@
       for (var i = 0, object; object = inserted[i++];)
       {
         var newValue = index.valueGetter(object);
-        indexCache[object.eventObjectId] = newValue;
+        indexCache[object.basisObjectId] = newValue;
         index.add_(newValue);
       }
 
     if (deleted)
       for (var i = 0, object; object = deleted[i++];)
       {
-        objectId = object.eventObjectId;
+        objectId = object.basisObjectId;
         index.remove_(indexCache[objectId]);
         delete indexCache[objectId];
       }
@@ -415,7 +415,7 @@
       var index;
       var eventType = event.type;
       var object = event.sender;
-      var objectId = object.eventObjectId;
+      var objectId = object.basisObjectId;
 
       for (var indexId in this.indexes__)
       {
@@ -556,19 +556,19 @@
     },
 
     addMemberRef: function(member, sourceObject){
-      this.memberSourceMap[member.eventObjectId] = sourceObject.eventObjectId;
+      this.memberSourceMap[member.basisObjectId] = sourceObject.basisObjectId;
 
       if (this.listen.member)
         member.addHandler(this.listen.member, this);
 
-      this.sourceMap_[sourceObject.eventObjectId].updated = true;
+      this.sourceMap_[sourceObject.basisObjectId].updated = true;
 
       if (member.subscriberCount > 0)
         this.calcMember(member);
     },
 
     removeMemberRef: function(member, sourceObject){
-      delete this.memberSourceMap[member.eventObjectId];
+      delete this.memberSourceMap[member.basisObjectId];
 
       if (this.listen.member)
         member.removeHandler(this.listen.member, this);
@@ -615,7 +615,7 @@
       function(sourceObject, delta){
         MapFilter.prototype.ruleEvents.update.call(this, sourceObject, delta);
 
-        this.sourceMap_[sourceObject.eventObjectId].updated = true;
+        this.sourceMap_[sourceObject.basisObjectId].updated = true;
         this.recalcRequest();
       },
       {
@@ -737,7 +737,7 @@
     },
 
     calcMember: function(member){
-      var sourceObject = this.sourceMap_[this.memberSourceMap[member.eventObjectId]];
+      var sourceObject = this.sourceMap_[this.memberSourceMap[member.basisObjectId]];
 
       if (member.subscriberCount && (sourceObject.updated || this.indexUpdated))
       {
