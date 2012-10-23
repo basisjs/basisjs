@@ -817,7 +817,6 @@
         if (!this.resource)
         {
           var resource = basis.resource(this.url);
-          //resource.bindingBridge.attach(resource, this.updateCssText, this);
 
           this.resource = resource;
           this.cssText = this.resource.source;
@@ -861,8 +860,6 @@
 
       if (this.resource)
       {
-        //this.resource.bindingBridge.attach(this.resource, this.updateCssText, this);
-
         this.resource = null;
         this.cssText = null;
       }

@@ -28,84 +28,38 @@
   var cultureReplacement = {};
   var tokenIndex = [];
 
-  var Token = Class(null, {
+  var Token = Class(basis.Token, {
     className: namespace + '.Token',
 
-    bindingBridge: {
-      attach: function(token, handler, context){
-        return token.attach(handler, context);
-      },
-      detach: function(token, handler, context){
-        return token.detach(handler, context);
-      },
-      get: function(token){
-        return token.value;
-      }
-    },
-
-    listeners: null,
-    value: null,
+    value: '',
 
     toString: function(){
       return this.value;
     },
 
     init: function(dictionary, tokenName){
-      this.listeners = [];
-      this.value = '';
+      basis.Token.prototype.init.call(this);
+
       this.dictionary = dictionary;
       this.name = tokenName;
+
       tokenIndex.push(this);
     },
 
+    get: function(){
+      return this.value;
+    },
     set: function(value){
       if (value != this.value)
       {
         this.value = value;
-        for (var i = 0, listener; listener = this.listeners[i]; i++)
-          listener.handler.call(listener.context, value);
+        this.apply();
       }
-    },
-    get: function(){
-      return this.value;
-    },
-
-    attach: function(handler, context, apply){
-      for (var i = 0, listener; listener = this.listeners[i]; i++)
-      {
-        if (listener.handler == handler && listener.context == context)
-          return false;
-      }
-
-      this.listeners.push({
-        handler: handler,
-        context: context
-      });
-
-      if (apply)
-        handler.call(context, this.value);
-
-      return true;
-    },
-    detach: function(handler, context){
-      for (var i = 0, listener; listener = this.listeners[i]; i++)
-      {
-        if (listener.handler == handler && listener.context == context)
-        {
-          this.listeners.splice(i, 1);
-          return true;
-        }
-      }
-
-      return false;
     },
 
     destroy: function(){
-      for (var i = 0, listener; listener = this.listeners[i]; i++)
-        this.detach(listener.handler, listener.context);
-
-      delete this.listeners;
-      delete this.value;
+      this.value = null;
+      basis.Token.prototype.destroy.call(this);
     }
   });
 
@@ -188,8 +142,7 @@
     cultureList = cultures;
   }
 
-  function createGetTokenValueFunction(cultureRow)
-  {
+  function createGetTokenValueFunction(cultureRow){
     return new Function('tokenName', 
       'return ' + 
         cultureRow.map(function(culture){
@@ -359,7 +312,7 @@
   // create dictionary event handling
   //
   var dictionaryUpdateListeners = [];
-  function addHandler(handler, context) {
+  function addHandler(handler, context){
     for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
     {
       if (listener.handler == handler && listener.context == context)

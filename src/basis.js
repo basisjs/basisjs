@@ -2133,6 +2133,77 @@
   })();
 
 
+ /**
+  * @class
+  */
+  var Token = Class(null, {
+    attachList: null,
+
+    bindingBridge: {
+      attach: function(host, fn, context){
+        return host.attach(fn, context);
+      },
+      detach: function(host, fn, context){
+        return host.detach(fn, context);
+      },
+      get: function(host){
+        return host.get();
+      }
+    },
+
+    // constructor
+    init: function(){
+      this.attachList = [];
+    },
+
+    set: function(value){
+    },
+    get: function(){
+    },
+
+    attach: function(fn, context){
+      var attachList = this.attachList;
+
+      for (var i = attachList.length; i-- > 0;)
+        if (attachList[i].fn === fn && attachList[i].context === context)
+          return false;
+
+      attachList.push({
+        fn: fn,
+        context: context
+      });
+
+      return true;
+    },
+    detach: function(fn, context){
+      var attachList = this.attachList;
+
+      for (var i = attachList.length; i-- > 0;)
+        if (attachList[i].fn === fn && attachList[i].context === context)
+        {
+          attachList.splice(i, 1);
+          return true;
+        }
+
+      return false;
+    },
+
+    apply: function(){
+      var attachList = this.attachList;
+      var value = this.get();
+
+      for (var i = attachList.length; i-- > 0;)
+        attachList[i].fn.call(attachList[i].context, value);
+    },
+
+    // destructor
+    destroy: function(){
+      this.attachList = null;
+      this.set();
+    }  
+  });
+
+
   //
   // export names
   //
@@ -2153,6 +2224,8 @@
 
     ready: onLoad,
     Class: Class,
+
+    Token: Token,
 
     cleaner: cleaner,
 
