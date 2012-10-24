@@ -45,7 +45,7 @@
   var SYNTAX_ERROR = 'Invalid or unsupported syntax';
 
   // html parsing states
-  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z_][a-zA-Z0-9_\-]*(?:\.[a-zA-Z_][a-zA-Z0-9_\-]*)*)\}|resource:([a-zA-Z0-9_\-\.:\\\/\s]+)\})?|<(\/|!--(\s*\{)?)?|$)/g;
+  var TEXT = /((?:.|[\r\n])*?)(\{(?:l10n:([a-zA-Z_][a-zA-Z0-9_\-]*(?:\.[a-zA-Z_][a-zA-Z0-9_\-]*)*)\})?|<(\/|!--(\s*\{)?)?|$)/g;
   var TAG_NAME = /([a-z_][a-z0-9\-_]*)(:|\{|\s*(\/?>)?)/ig;
   var ATTRIBUTE_NAME_OR_END = /([a-z_][a-z0-9_\-]*)(:|\{|=|\s*)|(\/?>)/ig;
   var COMMENT = /(.|[\r\n])*?-->/g;
@@ -62,7 +62,6 @@
   */
   var tokenize = function(source){
     var result = [];
-    var resources = [];
     var tagStack = [];
     var lastTag = { childs: result };
     var sourceText;
@@ -77,7 +76,6 @@
     var pos = 0;
     var m;
 
-    result.resources = resources;
     source = source.trim();
 
     try {
@@ -153,10 +151,6 @@
                 value: '{l10n:' + m[3] + '}'
               });
             }
-            else if (m[4])
-            {
-              resources.push(m[4]);
-            }
             else if (m[2] == '{')
             {
               bufferPos = pos - 1;
@@ -165,9 +159,9 @@
               });
               state = REFERENCE;
             }
-            else if (m[5])
+            else if (m[4])
             {
-              if (m[5] == '/')
+              if (m[4] == '/')
               {
                 token = null;
                 state = CLOSE_TAG;
@@ -178,9 +172,9 @@
                   type: TYPE_COMMENT
                 });
 
-                if (m[6])
+                if (m[5])
                 {
-                  bufferPos = pos - m[6].length;
+                  bufferPos = pos - m[5].length;
                   state = REFERENCE;
                 }
                 else
@@ -1014,9 +1008,7 @@
       var result = {
         debug: debug,
         baseURI: baseURI || '',
-        resources: source.resources.map(function(url){
-          return (baseURI || '') + url;
-        }),
+        resources: [],
         deps: [],
         defines: {},
         unpredictable: true,
