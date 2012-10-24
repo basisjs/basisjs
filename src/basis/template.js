@@ -370,6 +370,7 @@
   */
   var makeDeclaration = (function(){
 
+    var IDENT = /^[a-z_][a-z0-9_\-]*$/i;
     var CLASS_ATTR_PARTS = /(\S+)/g;
     var CLASS_ATTR_BINDING = /^([a-z_][a-z0-9_\-]*)?\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
     var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
@@ -587,6 +588,62 @@
     }
 
     function process(tokens, template){
+      function modifyAttr(token, name, fn, noCreate){
+        var attrs = tokenAttrs(token);
+
+        if (name)
+          attrs.name = name;
+
+        if (!attrs.name)
+        {
+          ;;;if (template.warns) template.warns.push('Instruction <b:' + token.name + '> has no attribute name');
+          return;
+        }  
+
+        if (!IDENT.test(attrs.name))
+        {
+          ;;;if (template.warns) template.warns.push('Bad attribute name `' + attrs.name + '`');
+          return;
+        }
+
+        var includedToken = tokenRefMap[attrs.ref || 'element'];
+        if (includedToken)
+        {
+          if (includedToken.token[TOKEN_TYPE] == TYPE_ELEMENT)
+          {
+            var itAttrs = includedToken.token[ELEMENT_ATTRS];
+            var itAttrToken = itAttrs && itAttrs.search(attrs.name, function(token){
+              return token[ATTR_NAME];
+            });
+
+            if (!itAttrToken && !noCreate)
+            {
+              itAttrToken = [
+                TYPE_ATTRIBUTE,
+                0,
+                0,
+                attrs.name,
+                ''
+              ];
+
+              if (!itAttrs)
+              {
+                itAttrs = [];
+                includedToken.token[ELEMENT_ATTRS] = itAttrs;
+              }
+
+              itAttrs.push(itAttrToken);
+            }
+
+            fn(attrs, itAttrs, itAttrToken);
+          }
+          else
+          {
+            ;;;if (template.warns) template.warns.push('Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')');
+          }
+        }
+      }
+
       var result = [];
 
       for (var i = 0, token, item; token = tokens[i]; i++)
@@ -692,8 +749,14 @@
                       //console.log(decl);
 
                       var tokenRefMap = normalizeRefs(decl.tokens);
+                      var instructions = (token.childs || []).slice();
 
-                      for (var j = 0, child; child = token.childs[j]; j++)
+                      if (elAttrs.class)
+                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'append-class', attrs: [{ type: 2, name: 'value', value: elAttrs.class }] });
+                      if (elAttrs.id)
+                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'set-attr', attrs: [{ type: 2, name: 'name', value: 'id' }, { type: 2, name: 'value', value: elAttrs.id }] });
+
+                      for (var j = 0, child; child = instructions[j]; j++)
                       {
                         // process special elements (basis namespace)
                         if (child.type == TYPE_ELEMENT && child.prefix == 'b')
@@ -711,6 +774,45 @@
                                   tokenRef.owner.splice.apply(tokenRef.owner, [pos, 1].concat(process(child.childs, template) || []));
                               }
                             break;
+                            case 'set-attr':
+                              modifyAttr(child, false, function(params, attrs, attrToken){
+                                attrToken[ATTR_VALUE] = params.value || '';
+                              });
+                            break;
+                            case 'append-attr':
+                              modifyAttr(child, false, function(params, attrs, attrToken){
+                                attrToken[ATTR_VALUE] += params.value || '';
+                              });
+                            break;
+                            case 'remove-attr':
+                              modifyAttr(child, false, function(params, attrs, attrToken){
+                                if (attrToken)
+                                  attrs.remove(attrToken);
+                              }, true);
+                            break;
+                            case 'class':
+                            case 'append-class':
+                              modifyAttr(child, 'class', function(params, attrs, attrToken){
+                                //attr.value = (attr.value ? ' ' : '') + (params.value || '');
+                                attrToken[ATTR_VALUE] = (attrToken[ATTR_VALUE] + ' ' + (params.value || '')).trim();
+                                if (!attrToken[ATTR_VALUE])
+                                  attrs.remove(attrToken);
+                              });
+                            break;
+                            case 'set-class':
+                              modifyAttr(child, 'class', function(params, attrs, attr){
+                                attr.value = params.value || '';
+                              }, true);
+                            break;
+                            case 'remove-class':
+                              modifyAttr(child, 'class', function(params, attrs, attr){
+                                if (attr)
+                                  attrs.remove(attr);
+                              }, true);
+                            break;
+
+                            default: 
+                              ;;;if (template.warns) template.warns.push('Unknown instruction tag <b:' + child.name + '>');
                           }
                         }
                         else

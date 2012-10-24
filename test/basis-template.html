@@ -1,0 +1,220 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <title>Basis Test Suite - Template</title>
+
+  <style type="text/css">
+    @import "style/default/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    loadTest((function(){
+      basis.require('basis.dom');
+      basis.require('basis.template.html');
+
+      var createTemplate = function(source){
+        return new basis.template.html.Template(source);
+      }
+
+      var text = function(template, binding){
+        if (typeof template == 'string')
+          template = createTemplate(template);
+
+        var tmpl = template.createInstance();
+        var fragment = tmpl.element.parentNode;
+        var cursor = fragment.firstChild;
+        var res = '';
+        while (cursor)
+        {
+          res += basis.dom.outerHTML(cursor);
+          cursor = cursor.nextSibling;
+        }
+
+        return res;
+      }
+
+      return [
+        {
+          name: 'Template include',
+          testcase: [
+            {
+              name: 'Attribute modification',
+              testcase: [
+                {
+                  name: 'include with attribute modificators',
+                  testcase: [
+                    {
+                      name: 'class when class not exists',
+                      test: function(){
+                        var a = createTemplate('<span title="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
+
+                        this.is(text('<span title="a" class="b"/>'), text(b))
+                      }
+                    },
+                    {
+                      name: 'class when class exists',
+                      test: function(){
+                        var a = createTemplate('<span class="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
+
+                        this.is(text('<span class="a b"/>'), text(b))
+                      }
+                    },
+                    {
+                      name: 'id when id not exists',
+                      test: function(){
+                        var a = createTemplate('<span title="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
+
+                        this.is(text('<span title="a" id="b"/>'), text(b))
+                      }
+                    },
+                    {
+                      name: 'id when id exists',
+                      test: function(){
+                        var a = createTemplate('<span id="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
+
+                        this.is(text('<span id="b"/>'), text(b))
+                      }
+                    }
+                  ]
+                },
+                {
+                  name: '<b:set-attr>',
+                  test: function(){
+                    var a = createTemplate('<span title="a"/>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-attr name="class" value="b"/></b:include>');
+
+                    this.is(text('<span title="a" class="b"/>'), text(b))
+
+                    var a = createTemplate('<span title="a"/>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-attr name="title" value="b"/></b:include>');
+
+                    this.is(text('<span title="b"/>'), text(b))
+                  }
+                },
+                {
+                  name: '<b:remove-attr>',
+                  test: function(){
+                    var a = createTemplate('<span title="a"/>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="class" value="b"/></b:include>');
+
+                    this.is(text('<span title="a"/>'), text(b))
+
+                    var a = createTemplate('<span title="a"/>');
+                    var b = createTemplate('<b:include src="#' + a.templateId + '"><b:remove-attr name="title"/></b:include>');
+
+                    this.is(text('<span/>'), text(b))
+                  }
+                },
+                {
+                  name: '<b:class>',
+                  testcase: [
+                    {
+                      name: 'class not exists',
+                      test: function(){
+                        var a = createTemplate('<span title="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class value="b"/></b:include>');
+
+                        this.is(text('<span title="a" class="b"/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'class exists',
+                      test: function(){
+                        var a = createTemplate('<span class="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class value="b"/></b:include>');
+
+                        this.is(text('<span class="a b"/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'class not exists by reference',
+                      test: function(){
+                        var a = createTemplate('<span><b{reference}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class ref="reference" value="b"/></b:include>');
+
+                        this.is(text('<span><b class="b"/></span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'class exists by reference',
+                      test: function(){
+                        var a = createTemplate('<span><b{reference} class="a"/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class ref="reference" value="b"/></b:include>');
+
+                        this.is(text('<span><b class="a b"/></span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'ignore name attribute',
+                      test: function(){
+                        var a = createTemplate('<span title="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class name="title" value="b"/></b:include>');
+
+                        this.is(text('<span title="a" class="b"/>'), text(b))
+                      }
+                    },
+                    {
+                      name: 'ignore if no value attribute',
+                      test: function(){
+                        var a = createTemplate('<span title="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class/></b:include>');
+
+                        this.is(text('<span title="a"/>'), text(b))
+                      }
+                    },
+                    {
+                      name: 'ignore set on non-element node',
+                      test: function(){
+                        var a = createTemplate('{a}');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class value="b"/></b:include>');
+
+                        this.is(text('{a}'), text(b))
+                      }
+                    },
+                    {
+                      name: 'ignore set on non-element node by reference',
+                      test: function(){
+                        var a = createTemplate('<span>{reference}</span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:class ref="reference" value="b"/></b:include>');
+
+                        this.is(text('<span>{reference}</span>'), text(b))
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }/**/
+      ];
+
+    })());
+
+//    if (top.nextTest)
+//      top.nextTest();
+
+  </script>
+</body>
+
+</html>
