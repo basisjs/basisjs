@@ -10,10 +10,7 @@ function loadTest(TestCase){
   var Tester = basis.test.Tester;
 
   if (top.regTestCase)
-  {
     top.regTestCase(Tester.parse(document.title, TestCase));
-    top.nextTest();
-  }
   else
   {
     var buttonRun, buttonStop, progressbar, panel;

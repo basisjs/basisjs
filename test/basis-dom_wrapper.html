@@ -1409,7 +1409,7 @@
 
                         groupDataSource.destroy();
                         this.is(null, node.grouping.dataSource);
-                        this.is(true, node.grouping.childNodes.length);
+                        this.is(0, node.grouping.childNodes.length);
                         this.is(false, checkNode(node));
 
                         var dataset2 = new basis.data.Dataset({ items: groupDatasetByGroup.getItems() });

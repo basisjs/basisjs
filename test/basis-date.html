@@ -18,7 +18,7 @@
     }
   </style>
   
-  <script type="text/javascript" src="../src/basis.js"></script>
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
   <script type="text/javascript" src="test.js"></script>
   <script type="text/javascript" src="common.js"></script>
 </head>
@@ -187,13 +187,13 @@
               }
             },
             {
-              name: 'toODBCDate()',
+              name: 'toISODateString()',
               test: function(){
                 var D = new Date(2007, 5, 20);
-                this.is('2007-06-20', D.toODBCDate());
+                this.is('2007-06-20', D.toISODateString());
 
                 var D = new Date(2007, 0, 1);
-                this.is('2007-01-01', D.toODBCDate());
+                this.is('2007-01-01', D.toISODateString());
               }
             },
             {
@@ -203,26 +203,26 @@
               }
             },
             {
-              name: 'toODBC()',
+              name: 'toISOString()',
               test: function(){
-                this.is('2007-01-01T00:00:00.000', (new Date(2007, 0, 1)).toODBC());
-                this.is('2007-01-01T01:02:03.000', (new Date(2007, 0, 1, 1, 2, 3)).toODBC());
-                this.is('2007-01-01T01:02:03.123', (new Date(2007, 0, 1, 1, 2, 3, 123)).toODBC());
-                this.is('2008-01-01T01:02:03.123', (new Date(2007, 12, 1, 1, 2, 3, 123)).toODBC());
+                this.is('2007-01-01T00:00:00.000', (new Date(2007, 0, 1)).toISOString());
+                this.is('2007-01-01T01:02:03.000', (new Date(2007, 0, 1, 1, 2, 3)).toISOString());
+                this.is('2007-01-01T01:02:03.123', (new Date(2007, 0, 1, 1, 2, 3, 123)).toISOString());
+                this.is('2008-01-01T01:02:03.123', (new Date(2007, 12, 1, 1, 2, 3, 123)).toISOString());
               }
             },
             {
               name: 'fromODBC()',
               test: function(){
-                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01'));
-                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01T00:00:00'));
-                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01T00:00:00.000'));
-                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01 00:00:00'));
-                this.is(new Date(2007, 0, 1), (new Date()).fromODBC('2007-01-01 00:00:00.000'));
-                this.is(new Date(2007, 0, 1, 1, 2, 3), (new Date()).fromODBC('2007-01-01 01:02:03'));
-                this.is(new Date(2007, 0, 1, 1, 2, 3), (new Date()).fromODBC('2007-1-1 1:2:3'));
-                this.is(new Date(07, 0, 1, 1, 2, 3), (new Date()).fromODBC('07-1-1 1:2:3'));
-                this.is(new Date(2007, 0, 1, 23, 59, 59), (new Date()).fromODBC('2007-01-01 23:59:59'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01T00:00:00'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01T00:00:00.000'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01 00:00:00'));
+                this.is(new Date(2007, 0, 1), (new Date()).fromISOString('2007-01-01 00:00:00.000'));
+                this.is(new Date(2007, 0, 1, 1, 2, 3), (new Date()).fromISOString('2007-01-01 01:02:03'));
+                this.is(new Date(2007, 0, 1, 1, 2, 3), (new Date()).fromISOString('2007-1-1 1:2:3'));
+                this.is(new Date(07, 0, 1, 1, 2, 3), (new Date()).fromISOString('07-1-1 1:2:3'));
+                this.is(new Date(2007, 0, 1, 23, 59, 59), (new Date()).fromISOString('2007-01-01 23:59:59'));
               }
             },
             {

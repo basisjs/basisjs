@@ -58,13 +58,20 @@
               name: 'Attribute modification',
               testcase: [
                 {
-                  name: 'include with attribute modificators',
+                  name: '<b:include> with attribute modificators',
                   testcase: [
                     {
                       name: 'class when class not exists',
                       test: function(){
                         var a = createTemplate('<span title="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
+
+                        /*nestedTemplate({
+                          include: '<span title="a"/>',
+                          attrs: {
+                            class: 'b'
+                          }
+                        });*/
 
                         this.is(text('<span title="a" class="b"/>'), text(b))
                       }

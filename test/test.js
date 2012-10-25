@@ -29,7 +29,7 @@
     var EventObject = basis.event.EventObject;
     var Property = basis.data.property.Property;
 
-    var event = basis.event.events;
+    var events = basis.event.events;
     var createEvent = basis.event.create;
 
     // const
@@ -353,33 +353,6 @@
             result.push(node);
           }
           DOM.insert(pre, result);
-
-/*          pre.innerHTML = this.testText
-                            .replace(/(^|[\r\n])>(\s*)([^\r\n]+)/g, function(m, p, p2, i){ 
-                              var breakLine = self.error && !self.broken && matchIndex == self.testCount;
-                              var errorLine = self.errorLines[matchIndex];
-                              var lastLine  = breakLine || (self.broken && matchIndex == self.testCount - 1);
-
-                              var error = '';
-                              if (self.error)
-                                error += "<b>Error:</b><span>" + (self.broken ? 'Critical wrong answer' : self.error.message.escapeHTML()) + '</span>';
-                              if (errorLine)
-                                error += '<b>Answer:</b><span class="answer">' + String(value2string(errorLine.result)).escapeHTML() + '</span>' +
-                                         '<b>Expected:</b><span class="expect">' + String(value2string(errorLine.answer)).escapeHTML() + '</span>';
-                              if (error)
-                                error = "<span class='ErrorDetails'" + (Browser.test('ie7-') ? " title='" + 
-                                        error.replace(/<\/(b|span)>/g, function(m){ return '\n' + (m == '</b>' ? '  ': '') }).replace(/<(b|span)>/g, '').replace(/[\r\n]\s*$/, '') + 
-                                        "'" : '') + "><div>" + error + "</div></span>";
-
-                              var res = p + p2 + (breakLine || lastLine || errorLine ? "<span class='" + (breakLine || lastLine ? 'BreakLine' : 'ErrorLine') + "'>" + (error || '') + i + "</span>" : i);
-                              if (lastLine)
-                              {
-                                res += '<span class="UncompleteLines">';
-                                closeSpan = true;
-                              }
-                              matchIndex++;
-                              return res;
-                            }) + (closeSpan ? '</span>' : '');*/
         }
         return element;
       },
@@ -425,30 +398,40 @@
 
       testType: 'TestCase',
 
-      event_progress: function(diff, p){
-        event.progress.call(this, diff, p);
+      event_progress: function(diff, progress){
+        events.progress.call(this, diff, progress);
         this.completeTestCount += diff;
       },
 
       init: function(name, critical, tests){
         AbstractTest.prototype.init.call(this, name, critical);
 
-        this.items = new Array();
-        var totalTestCount = 0, item;
-        for (var i = 0, test; test = tests[i]; i++)
+        this.items = [];
+        this.totalTestCount = 0;
+        for (var i = 0, item, config; config = tests[i]; i++)
         {
-          if (test.test)
-            item = new Test(test.name, test.critical, test.test);
+          if (config.test)
+            item = new Test(config.name, config.critical, config.test);
           else
-            item = new TestCase(test.name, test.critical, test.testcase);
+            item = new TestCase(config.name, config.critical, config.testcase);
 
-          item.addHandler({ progress: function(diff, progress){ this.event_progress(diff, (this.completeTestCount + diff)/(this.totalTestCount || 0)); } }, this);
+          item.addHandler({
+            progress: function(sender, diff, progress){
+              this.event_progress(diff, (this.completeTestCount + diff)/(this.totalTestCount || 0));
+            },
+            over: function(sender){
+              if (sender instanceof TestCase)
+                this.totalSuccessTestCount += sender.totalSuccessTestCount;
+              else
+                this.totalSuccessTestCount += sender.isSuccess();
+            }
+          }, this);
 
           this.items[i] = item;
-          totalTestCount += item.totalTestCount;
+          this.totalTestCount += item.totalTestCount;
         }
+        this.totalSuccessTestCount = 0;
         this.testCount = this.items.length;
-        this.totalTestCount = totalTestCount;
       },
       reset: function(){
         if (TesterState == 'stop')
@@ -503,7 +486,8 @@
 
     // private variables
     var TesterState = 'stop';
-    var TesterPos, RunTest;
+    var TesterPos;
+    var RunTest;
 
     var TesterOverHandler = {
       over: function(){ 

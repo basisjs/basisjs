@@ -179,7 +179,7 @@
 
                         b.setDelegate(a);
                         this.is(1, eventCount(b, 'update'));
-                        this.is({ a: undefined, c: 3 }, getLastEvent(b, 'update').args[1]);
+                        this.is({ a: undefined, c: 3 }, getLastEvent(b, 'update').args[0]);
                       }
                     },
                     {
@@ -197,12 +197,12 @@
                         objectA.setDelegate(objectC);
                         this.is({ x: 1, y: 2, z: 3 }, objectA.data);
                         this.is(1, eventCount(objectA, 'update'));
-                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[1]);
+                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[0]);
 
                         objectA.setDelegate(objectB);
                         this.is({ a: 1, b: 2, c: 3 }, objectA.data);
                         this.is(2, eventCount(objectA, 'update'));
-                        this.is({ a: undefined, b: undefined, c: undefined, x: 1, y: 2, z: 3 }, getLastEvent(objectA, 'update').args[1]);
+                        this.is({ a: undefined, b: undefined, c: undefined, x: 1, y: 2, z: 3 }, getLastEvent(objectA, 'update').args[0]);
 
                         objectA.setDelegate();
                         this.is({ a: 1, b: 2, c: 3 }, objectA.data);
@@ -230,7 +230,7 @@
                         this.is(true, objectB.delegate === objectC);
                         this.is({ x: 1, y: 2, z: 3 }, objectA.data);
                         this.is(1, eventCount(objectA, 'update'));
-                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[1]);
+                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectA, 'update').args[0]);
                         this.is(1, eventCount(objectA, 'delegateChanged'));
                         this.is(false, checkObject(objectA));
                         this.is(false, checkObject(objectB));
@@ -267,7 +267,7 @@
                         this.is(true, objectB.delegate === objectC);
                         this.is({ x: 1, y: 2, z: 3 }, objectB.data);
                         this.is(1, eventCount(objectB, 'update'));
-                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectB, 'update').args[1]);
+                        this.is({ a: 1, b: 2, c: 3, x: undefined, y: undefined, z: undefined }, getLastEvent(objectB, 'update').args[0]);
                         this.is(1, eventCount(objectB, 'delegateChanged'));
 
                         objectB.setDelegate('not a delegate');

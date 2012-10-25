@@ -33,14 +33,14 @@
 
       basis.entity.BaseEntity.prototype.event_update = function(delta){
         this.history_.push(delta);
-        this.historyAll_.push(['update'].concat(Array.from(arguments)));
-        basis.event.EventObject.event.update.call(this, delta);
+        this.historyAll_.push(['update'].concat([this].concat(Array.from(arguments))));
+        basis.event.events.update.call(this, delta);
       };
       
 
       basis.entity.BaseEntity.prototype.event_rollbackUpdate = function(delta){
-        this.historyAll_.push(['rollbackUpdate'].concat(Array.from(arguments)));
-        basis.event.EventObject.event.rollbackUpdate.call(this, delta);
+        this.historyAll_.push(['rollbackUpdate'].concat([this].concat(Array.from(arguments))));
+        basis.event.events.rollbackUpdate.call(this, delta);
       };
 
     })();

@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="windows-1251"?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!doctype html>
 
-<html lang="ru" xml:lang="ru">
+<html>
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
@@ -51,8 +50,6 @@
       margin: 0;
       padding: 0;
       clear: both;
-      border-top: 1px solid white;
-      border-bottom: 1px solid #E0E0E0;
       line-height: 1em;
       background: #F8F8F8;
     }
@@ -66,7 +63,7 @@
     #TestList LI .checker
     {
       float: left;
-      padding: .1em .2em 0;
+      padding: .1em .2em .1em;
       _padding: .1em 0 0 .2em;
       background-color: white;
     }
@@ -143,147 +140,323 @@
       height: 5px;
       font-size: 0;
     }
+
+    .testCase
+    {
+      border-bottom: 1px solid #DDD;
+      overflow: hidden;
+    }
    
+    .testCase-ready
+    {
+      color: green;
+    }
+    .testCase-processing
+    {
+      color: olive;
+    }
+    .testCase-error
+    {
+      color: red;
+    }
+
+    .progressBar
+    {
+      border: 1px solid #888;
+      padding: 1px;
+      margin-top: 3px;
+      margin-left: 3px;
+    }
+    .progressBar .fill
+    {
+      height: 5px;
+      background: blue;
+    }
+
+    IFRAME
+    {
+      position: absolute;
+      visibility: hidden;
+    }
   </style>
 </head>
 
 <body>
-  <script type="text/javascript" src="../basis.js"></script>
+  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
   <script type="text/javascript">
-    Basis.Event.onLoad(function(){
-      var DOM = Basis.DOM;
-      var Event = Basis.Event;
-      var CSS = Basis.CSS;
+    basis.require('basis.data');
+    basis.require('basis.data.dataset');
+    basis.require('basis.dom');
+    basis.require('basis.dom.event');
+    basis.require('basis.cssom');
+    basis.require('basis.ui');
+    basis.require('basis.ui.button');
+
+    basis.ready(function(){
+      var DOM = basis.dom;
+      var Event = basis.dom.event;
+      var CSS = basis.cssom;
 
       var testCases = [
-                       { 
-                         filename: 'basis-buildin_ext_and_fix.html',
-                         name: 'Buildin Classes/Objects extensions & fix'
-                       }, 
-                       { 
-                         filename: 'basis-date.html',
-                         name: 'Date'
-                       }, 
-                       { 
-                         filename: 'basis-dom.html',
-                         name: 'DOM'
-                       },
-                       { 
-                         filename: 'basis-dom_wrapers.html',
-                         name: 'DOM.Wrapers'
-                       }, 
-                       { 
-                         filename: 'basis-crypt.html',
-                         name: 'Crypt'
-                       }, 
-                       { 
-                         filename: 'basis-browser.html',
-                         name: 'Browser'
-                       }, 
-                       { 
-                         filename: 'basis-data.html',
-                         name: 'Data'
-                       }
-                      ];
+        { 
+          filename: 'basis-buildin_ext_and_fix.html',
+          name: 'Buildin Classes/Objects extensions & fix'
+        }, 
+        { 
+          filename: 'basis-getter.html',
+          name: 'basis.getter'
+        }, 
+        { 
+          filename: 'basis-date.html',
+          name: 'basis.date'
+        }, 
+        { 
+          filename: 'basis-dom.html',
+          name: 'basis.dom'
+        },
+        { 
+          filename: 'basis-stylesheet.html',
+          name: 'basis.cssom.stylesheet'
+        },
+        { 
+          filename: 'basis-dom_wrapper.html',
+          name: 'basis.dom.wrapper'
+        }, 
+        { 
+          filename: 'basis-crypt.html',
+          name: 'basis.crypt'
+        }, 
+        { 
+          filename: 'basis-browser.html',
+          name: 'basis.ua'
+        }, 
+        { 
+          filename: 'basis-data-DataObject.html',
+          name: 'basis.data.DataObject'
+        }, 
+        { 
+          filename: 'basis-property.html',
+          name: 'basis.data.property'
+        }, 
+        { 
+          filename: 'basis-entity.html',
+          name: 'basis.entity'
+        }, 
+        { 
+          filename: 'basis-template.html',
+          name: 'basis.template'
+        }
+      ].map(function(data){
+        return new basis.data.DataObject({
+          state: basis.data.STATE.UNDEFINED,
+          isTarget: true,
+          data: data
+        });
+      });
+
+      var processingQueue = new basis.data.Dataset({
+        listen: {
+          item: {
+            stateChanged: function(sender, oldState){
+              if (oldState == basis.data.STATE.PROCESSING && sender.state != basis.data.STATE.PROCESSING)
+                this.remove([sender]);
+            }
+          }
+        }
+      });
+      var processingQueueTop = new basis.data.dataset.Slice({
+        source: processingQueue,
+        limit: 1,
+        rule: 'basisObjectId',
+        handler: {
+          datasetChanged: function(sender, delta){
+            if (delta.inserted)
+              delta.inserted.forEach(function(item){
+                item.update({ test: null });
+                item.setState(basis.data.STATE.PROCESSING);
+              });
+          }
+        }
+      });
+
       var currentTest;
 
-//      Basis.addHandler('TestList', 'resize', function(){ alert('!a') });
-//      DOM.insert('Content', Basis.Debug.inspect(DOM.get('TestList').style));
-      DOM.insert('TestList', 
-        DOM.createElement('UL', testCases.map(function(item, index){
-          return DOM.createElement('LI',
-                   item.indicator = DOM.createElement('DIV.indicator'/*,
-                     DOM.createElement('SPAN.result', '(999/999)'),
-                     DOM.createElement('A[href=#]', 'details') /**/
-                   ),
-                   DOM.createElement('LABEL',
-                     DOM.createElement('.checker',
-                       item.checkbox = DOM.createElement('INPUT[type="checkbox"]')
-                     ),
-                     DOM.createElement('.title[title=' + item.name.quote('"') + ']', item.name)
-                   )
-                 );
-        }))
-      );
+      var buttonPanel = new basis.ui.button.ButtonPanel({
+        container: 'Content',
+        childNodes: [
+          {
+            delegate: processingQueue,
+            listen: {
+              delegate: {
+                datasetChanged: function(sender){
+                  if (sender.itemCount)
+                    this.disable();
+                  else
+                    this.enable();
+                }
+              }
+            },
+            caption: 'Start',
+            click: runTesting
+          },
+          {
+            caption: 'Stop',
+            click: stopTesting,
+            delegate: processingQueue,
+            listen: {
+              delegate: {
+                datasetChanged: function(sender){
+                  if (!sender.itemCount)
+                    this.disable();
+                  else
+                    this.enable();
+                }
+              }
+            }
+          }
+        ]        
+      });
+
+      var testList = new basis.ui.Node({
+        container: 'TestList',
+        childNodes: testCases,
+
+        template: '<ul/>',
+
+        childClass: {
+          template:
+            '<li class="testCase testCase-{state}">' +
+              '<div class="indicator">' +
+                '<!--{progressBar}-->' +
+                '{error}' +
+              '</div>' +
+              '<label>' +
+                '<div class="checker">' +
+                  '<input{checkbox} type="checkbox" checked/>' +
+                '</div>' +
+                '<div class="title" title="{name}">' +
+                  '{name}' +
+                  '<!--{testFrame}-->' +
+                '</div>' +
+              '</label>' +
+            '</li>',
+          binding: {
+            name: 'data:',
+            testFrame: 'satellite:',
+            progressBar: 'satellite:',
+            error: {
+              events: 'stateChanged',
+              getter: function(node){
+                return node.state == basis.data.STATE.ERROR && node.state.data ? String(node.state.data) : '';
+              }
+            }
+          },
+          satelliteConfig: {
+            progressBar: {
+              hook: { stateChanged: true },
+              existsIf: function(owner){
+                return owner.state == basis.data.STATE.PROCESSING;
+              },
+              instanceOf: basis.ui.Node.subclass({
+                autoDelegate: true,
+                template:
+                  '<div class="progressBar">' +
+                    '<div class="fill" style="width: {progress}%"/>' +
+                  '</div>',
+                binding: {
+                  progress: {
+                    events: 'stateChanged',
+                    getter: function(node){
+                      return (Number(node.state.data) || 0) * 100;
+                    }
+                  }
+                }
+              })
+            },
+            testFrame: {
+              hook: { stateChanged: true },
+              existsIf: function(owner){
+                return owner.state == basis.data.STATE.PROCESSING;
+              },
+              instanceOf: basis.ui.Node.subclass({
+                autoDelegate: true,
+                template:
+                  '<iframe src="{src}" event-load="loaded"/>',
+                action: {
+                  loaded: function(){
+                    if (!this.data.test)
+                      this.setState(basis.data.STATE.ERROR, 'test load fault');
+                  }
+                },
+                binding: {
+                  src: function(node){
+                    return node.data.filename + '?' + Math.random();
+                  }
+                }
+              })
+            }
+          }
+        }
+      });
 
       window.regTestCase = function(test){
-        var testcase = {
-          tester: test.tester,
-          name:   test.name,
-          test:   test,
-          progress: DOM.createElement('.progress', DOM.createElement('.bar'))
-        };
-
-        test.tester.state.addLink(testcase.progress, function(value){ DOM.css(this, { display: value == 'run' ? '' : 'none' }); }, testcase.progress);
-
-        test.addHandler({
-          progress: function(diff, progress){
-            DOM.css(this.progress.firstChild, { width: CSS.percent(progress * 100) });
-          },
-          reset: function(){
-          },
-          over: function(){
-            DOM.insert(DOM.clear(this.indicator), [
-              DOM.createElement('SPAN.result', '({1}/{0})'.format(this.test.testCount, this.test.successCount)),
-              DOM.createElement({
-                description: 'A[href=#]',
-                click: new Event.Handler(function(e){ 
-                  DOM.get('TestResult').innerHTML = this.test.toHTML();
-                  //DOM.insert(DOM.clear('TestResult'), DOM.createElement('.res', this.test.toDOM(DOM)));
-                  Event.kill(e);
-                }, this)
-              }, 'details')
-            ]);
-            nextTest();
-          }
-        }, testcase);
-
-        currentTest.testers.push(testcase);
-      };
-
-      currentTestCase = 0;
-      nextTest = function(){
-        if (currentTest)
+        var currentTestCase = processingQueueTop.pick();
+        if (currentTestCase)
         {
-          var node = DOM.get('TestList').firstChild.childNodes[currentTestCase - 1];
-          node.style.color = 'green';
-          if (currentTest.testers && currentTest.testers.length)
-            currentTest.testers.forEach(function(item){
-              item.indicator = currentTest.indicator;
-              DOM.insert(item.indicator, item.progress);
-              item.tester.run(item.testcase);
-              //DOM.insert('test_result', DOM.createElement('.res', item.result.toDOM(DOM)));
-            });
+          currentTestCase.update({
+            test: test
+          });
+
+          test.addHandler({
+            progress: function(sender, diff, progress){
+              this.setState(basis.data.STATE.PROCESSING, progress);
+            },
+            over: function(sender){
+              if (test.testCount == test.successCount)
+                this.setState(basis.data.STATE.READY);
+              else
+                this.setState(basis.data.STATE.ERROR, (sender.totalTestCount - sender.totalSuccessTestCount) + ' of ' + sender.totalTestCount + ' fault');
+            }
+          }, currentTestCase);
+
+          test.tester.run({
+            name: test.name,
+            test: test,
+            progress: DOM.createElement('.progress', DOM.createElement('.bar'))
+          });
+        }
+      }
+      
+      function runTesting(){
+        if (processingQueueTop.itemCount)
+        {
+          stop();
+          setTimeout(runTests, 10);
         }
 
-        currentTest = testCases[currentTestCase++];
-        if (!currentTest)
-          return;
+        processingQueue.set(testList.childNodes
+          .filter(function(node){
+            node.setState(basis.data.STATE.UNDEFINED);
+            return node.tmpl.checkbox.checked;
+          }).map(function(node){
+            return node.target;
+          })
+        );
+      }
 
-        if (!currentTest.checkbox.checked)
-        {
-          currentTest = null;
-          return nextTest();
-        }
+      function stopTesting(){
+        processingQueue.remove(processingQueue.getItems().filter(function(item){
+          return item.state != basis.data.STATE.PROCESSING;
+        }));
+      }
 
-        if (currentTest.testers)
-        {
-        }
-        else
-        {
-          currentTest.testers = [];
-          DOM.insert('test_place', DOM.createElement('IFRAME[src=' + (currentTest.filename + '?' + Math.random()).quote('"') + ']'));
-        }
-      };
-      nextTest();
-//      alert(Basis.keys(document).sort());
+      runTesting();
     });
+
   </script>
   <div id="Interface">
     <div id="TestList"></div>
     <div id="Content">
-      <button onclick="currentTestCase=0;nextTest();">Start</button>
-      <button onclick="currentTestCase=0;nextTest();">Stop</button>
       <div id="test_place"></div>
       <div id="test_result"></div>
       <div id="TestResult"></div>

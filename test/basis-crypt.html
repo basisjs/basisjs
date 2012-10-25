@@ -3,7 +3,7 @@
 <html>
 
 <head>
-  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Basis Test Suite - crypt module</title>
 
   <style type="text/css">
@@ -19,8 +19,8 @@
   </style>
   
   <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
-  <script type="text/javascript"  src="test.js"></script>
-  <script type="text/javascript"  src="common.js"></script>
+  <script type="text/javascript" src="test.js"></script>
+  <script type="text/javascript" src="common.js"></script>
 </head>
 
 <body>
@@ -40,7 +40,7 @@
       utf16Bytes[2] = [127, 0, 128, 0, 255, 7, 0, 8];
 
       var utf16Str = [];
-      utf16Str[0] = 'привет';
+      utf16Str[0] = 'РїСЂРёРІРµС‚';
       utf16Str[1] = '\u0887\u0987\u1887';
       utf16Str[2] = '\u007F\u0080\u07FF\u0800';
       utf16Str[3] = utf16Str[0] + ' world';
@@ -124,13 +124,13 @@
                     var S = 'hello world';
                     this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
-                    var S = 'привет мир';
+                    var S = 'РїСЂРёРІРµС‚ РјРёСЂ';
                     this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
-                    var S = 'hello мир';
+                    var S = 'hello РјРёСЂ';
                     this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
 
-                    var S = '\t\r\nhello \rмир\n';
+                    var S = '\t\r\nhello \rРјРёСЂ\n';
                     this.is(S, UTF8.toUTF16(UTF8.fromUTF16(S)));
                   }
                 },
@@ -242,9 +242,9 @@
                     this.is('aABlAGwAbABvACAAdwBvAHIAbAA=', base64.encode('hello worl'));
                     this.is('aABlAGwAbABvACAAdwBvAHIAbABkAA==', base64.encode('hello world'));
                     this.is('aABlAGwAbABvACAAdwBvAHIAbABkACEA', base64.encode('hello world!'));
-                    this.is('PwRABDgEMgQ1BEIEIAA8BDgEQAQ=', base64.encode('привет мир'));
-                    this.is('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', base64.encode('Привет мирHello world', true));
-                    this.is('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA', base64.encode('Привет мирHello world'));
+                    this.is('PwRABDgEMgQ1BEIEIAA8BDgEQAQ=', base64.encode('РїСЂРёРІРµС‚ РјРёСЂ'));
+                    this.is('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', base64.encode('РџСЂРёРІРµС‚ РјРёСЂHello world', true));
+                    this.is('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA', base64.encode('РџСЂРёРІРµС‚ РјРёСЂHello world'));
                   }
                 },
                 {
@@ -254,9 +254,9 @@
                     this.is('hello worl', base64.decode('aABlAGwAbABvACAAdwBvAHIAbAA='));
                     this.is('hello world', base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkAA=='));
                     this.is('hello world!', base64.decode('aABlAGwAbABvACAAdwBvAHIAbABkACEA'));
-                    this.is('привет мир', base64.decode('PwRABDgEMgQ1BEIEIAA8BDgEQAQ='));
-                    this.is('Привет мирHello world', base64.decode('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', true));
-                    this.is('Привет мирHello world', base64.decode('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA'));
+                    this.is('РїСЂРёРІРµС‚ РјРёСЂ', base64.decode('PwRABDgEMgQ1BEIEIAA8BDgEQAQ='));
+                    this.is('РџСЂРёРІРµС‚ РјРёСЂHello world', base64.decode('0J/RgNC40LLQtdGCINC80LjRgEhlbGxvIHdvcmxk', true));
+                    this.is('РџСЂРёРІРµС‚ РјРёСЂHello world', base64.decode('HwRABDgEMgQ1BEIEIAA8BDgEQARIAGUAbABsAG8AIAB3AG8AcgBsAGQA'));
                   }
                 }
               ]
@@ -265,16 +265,16 @@
               name: 'SHA1',
               test: function(){
                 this.is('2fd4e1c67a2d28fced849ee1bb76e7391b93eb12', SHA1('The quick brown fox jumps over the lazy dog', true).map(hex).join(''));
-                this.is('50edb0e47dbb65c8498d1bdd51723d4e9104f2a0', SHA1('Привет мирHello world').map(hex).join(''));
-                this.is('654ff793e9a7c63429041383da52a32b517c60c5', SHA1('Привет мирHello world', true).map(hex).join(''));
+                this.is('50edb0e47dbb65c8498d1bdd51723d4e9104f2a0', SHA1('РџСЂРёРІРµС‚ РјРёСЂHello world').map(hex).join(''));
+                this.is('654ff793e9a7c63429041383da52a32b517c60c5', SHA1('РџСЂРёРІРµС‚ РјРёСЂHello world', true).map(hex).join(''));
               }
             },
             {
               name: 'MD5',
               test: function(){
                 this.is('9e107d9d372bb6826bd81d3542a419d6', MD5('The quick brown fox jumps over the lazy dog', true).map(hex).join(''));
-                this.is('1a279ee072886994b2cbd88559e3cdfa', MD5('Привет мирHello world').map(hex).join(''));
-                this.is('42c488cb0b5fa1819d0f1e7d57ac1821', MD5('Привет мирHello world', true).map(hex).join(''));
+                this.is('1a279ee072886994b2cbd88559e3cdfa', MD5('РџСЂРёРІРµС‚ РјРёСЂHello world').map(hex).join(''));
+                this.is('42c488cb0b5fa1819d0f1e7d57ac1821', MD5('РџСЂРёРІРµС‚ РјРёСЂHello world', true).map(hex).join(''));
               }
             }
           ]
