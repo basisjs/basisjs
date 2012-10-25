@@ -1771,7 +1771,7 @@
   // export names
   //
 
-  module.setWrapper(baseTheme.define);
+  this.setWrapper(baseTheme.define);
 
   module.exports = {
     // const

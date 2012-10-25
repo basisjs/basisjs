@@ -680,11 +680,9 @@
   * Insert source into specified insertPoint position of node.
   * @param {Node|object} node Destination node.
   * @param {Node|Array.<Node>|object|Array.<object>} source One or more nodes to be inserted.
-  * @param {string|number=} insertPoint
-  *   If number that's mean position in nodes childNodes.
-  *   Or it might be one of INSERT_BEGIN, INSERT_BEFORE,
-  *   INSERT_AFTER, INSERT_END
-  * @param {Node|object=} refChild Child node of node, using for INSERT_BEFORE & INSERT_AFTER
+  * @param {string|number=} insertPoint Number as value means position in nodes childNodes.
+  * Also it might be one of special value: INSERT_BEGIN, INSERT_BEFORE, INSERT_AFTER, INSERT_END.
+  * @param {Node|object=} refChild Pointer to Child node of node, using for INSERT_BEFORE & INSERT_AFTER
   * @return {Node|Array.<Node>} Inserted nodes (may different of source members).
   */
   function insert(node, source, insertPoint, refChild){
