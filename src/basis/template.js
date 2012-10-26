@@ -728,7 +728,7 @@
                           url = basis.path.resolve(template.baseURI + url);
                           var resource = basis.resource(url);
                           template.deps.add(resource);
-                          decl = makeDeclaration(resource(), resource.baseURI + '/');
+                          decl = makeDeclaration(resource(), resource.url ? basis.path.dirname(resource.url) + '/' : '');
                         }
                       }
 
