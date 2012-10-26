@@ -343,7 +343,7 @@
     } catch(e) {
       /*
       console.warn(e + ':\n' + source.substr(0, br) + '\n' + Array(i - offset + 1).join(' ') + '\u25b2-- problem here \n' + source.substr(br));
-      /*/;;;if (typeof console != 'undefined') console.warn(e, source); /* */
+      /*/;;;basis.dev.warn(e, source); /* */
     }
 
     return result;
@@ -517,7 +517,6 @@
                   props.push(propertyName + ': ' + untoken(value));
               }
 
-              //console.log(attr.value, bindings, props);
               props.push('');
               attr.value = props.join(';');
             break;
@@ -821,7 +820,7 @@
                     }
                     else
                     {
-                      ;;;if (typeof console != 'undefined') console.warn('Recursion: ', includeStack.join(' -> '));
+                      ;;;basis.dev.warn('Recursion: ', includeStack.join(' -> '));
                     }
                   }
 
@@ -1215,7 +1214,7 @@
       }
     }
 
-    ;;;if (typeof console != 'undefined') console.warn('Template script element with id `' + sourceId + '` not found');
+    ;;;basis.dev.warn('Template script element with id `' + sourceId + '` not found');
 
     return '';
   }
@@ -1375,7 +1374,7 @@
                 source = getSourceByPath(source);
                 break;
               default:
-                ;;; if (typeof console != 'undefined') console.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.');
+                ;;;basis.dev.warn(namespace + '.Template.setSource: Unknown prefix ' + prefix + ' for template source was ingnored.');
             }
           }
         }
@@ -1555,7 +1554,7 @@
   }
 
   function syncCurrentTheme(changed){
-    ;;;if (typeof console != 'undefined') console.log('re-apply templates');
+    ;;;basis.dev.log('re-apply templates');
 
     for (var path in sourceByPath)
       syncCurrentThemePath(path);
@@ -1606,7 +1605,7 @@
           if (themes[name].fallback.source != newFallback.source)
           {
             themes[name].fallback.source = newFallback.source;
-            ;;;if (typeof console != 'undefined') console.log('fallback changed');
+            ;;;basis.dev.log('fallback changed');
             for (var themeName in themes)
             {
               var curFallback = themes[themeName].fallback;
@@ -1695,7 +1694,7 @@
           }
           else
           {
-            ;;;if (typeof console != 'undefined') console.warn('');
+            ;;;basis.dev.warn('Wrong first argument for basis.template.Theme#define');
           }
         }
       },
@@ -1705,7 +1704,7 @@
           currentThemeName = name;
           syncCurrentTheme();
 
-          ;;;if (typeof console != 'undefined') console.info('Template theme switched to `' + name + '`');
+          ;;;basis.dev.info('Template theme switched to `' + name + '`');
         }
         return themeInterface;
       },

@@ -79,7 +79,7 @@
 
         if (value !== oldValue && index[value])
         {
-          ;;;if (typeof console != undefined) console.warn('Duplicate value for index ' + oldValue + ' => ' + newValue);
+          ;;;basis.dev.warn('Duplicate value for index ' + oldValue + ' => ' + newValue);
           return oldValue;  // no changes
         }
 
@@ -125,7 +125,7 @@
     var args = arrayFrom(arguments);
     var func = args.pop();
 
-    ;;;if (typeof func != 'function' && typeof console != 'undefined') console.warn('Last argument for calculate field constructor must be a function');
+    ;;;if (typeof func != 'function') basis.dev.warn('Last argument for calculate field constructor must be a function');
 
     var cond = [];
     var calcArgs = [];
@@ -506,7 +506,7 @@
       this.index__ = config.index;
       this.idFields = {};
 
-      ;;;if (typeof console != 'undefined' && entityTypes.search(this.name, getter('name'))) console.warn('Dublicate entity type name: ', this.name);
+      ;;;if (entityTypes.search(this.name, getter('name'))) basis.dev.warn('Dublicate entity type name: ', this.name);
       entityTypes.push(this);
 
       this.isSingleton = config.isSingleton;
@@ -565,7 +565,7 @@
         }
       }
 
-      ;;;if (config.reflections) console.warn('Reflections are deprecated');
+      ;;;if (config.reflections) basis.dev.warn('Reflections are deprecated');
 
       entityClass__ = this.entityClass = Entity(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters).extend({
         entityType: this,
@@ -620,14 +620,14 @@
       {
         if (alias in this.aliases == false)
           this.aliases[alias] = key;
-        /** @cut */else console.warn('Alias `{0}` already exists'.format(alias));
+        /** @cut */else basis.dev.warn('Alias `{0}` already exists'.format(alias));
       }
-      /** @cut */else console.warn('Can\'t add alias `{0}` for non-exists field `{1}`'.format(alias, key));
+      /** @cut */else basis.dev.warn('Can\'t add alias `{0}` for non-exists field `{1}`'.format(alias, key));
     },
     addField: function(key, config){
       if (this.all.itemCount)
       {
-        ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
+        ;;;basis.dev.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
         return;
       }
 
@@ -642,7 +642,7 @@
 
       if ('type' in config && typeof config.type != 'function')
       {
-        ;;;if (typeof console != 'undefined') console.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
+        ;;;basis.dev.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
         config.type = $self;
       }
 
@@ -696,7 +696,7 @@
     addCalcField: function(key, wrapper, valueWrapper){
       if (key && this.fields[key])
       {
-        ;;;if (typeof console != 'undefined') console.warn('Field `{0}` had defined already'.format(key));
+        ;;;basis.dev.warn('Field `{0}` had defined already'.format(key));
         return;
       }
 
@@ -733,7 +733,7 @@
 
         if (after > before)
         {
-          ;;;if (typeof console != 'undefined') console.warn('Can\'t add calculate field `{0}`, because recursion'.format(key));
+          ;;;basis.dev.warn('Can\'t add calculate field `{0}`, because recursion'.format(key));
           return;
         }
 
@@ -741,7 +741,7 @@
           this.compositeKey = wrapper;
 
         this.fields[key] = function(value, oldValue){
-          ;;;if (typeof console != 'undefined') console.log('Calculate fields are readonly');
+          ;;;basis.dev.log('Calculate fields are readonly');
           return oldValue;
         };
       }
@@ -806,7 +806,7 @@
   //
 
   function entityWarn(entity, message){
-    ;;;if (typeof console != 'undefined') console.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.basisObjectId + ': ' + message, entity); 
+    ;;;basis.dev.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.basisObjectId + ': ' + message, entity); 
   }
 
  /**
@@ -874,7 +874,7 @@
           entityType.index__.calcWrapper(entity.__id__);
 
       } catch(e) {
-        ;;;if (typeof console != 'undefined') console.warn('Exception on field calc');
+        ;;;basis.dev.warn('Exception on field calc');
         entity.__id__ = id;
         rollbackChanges(entity, delta, rollbackDelta);
         update = false;

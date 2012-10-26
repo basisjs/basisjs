@@ -132,7 +132,7 @@
               }
               else
               {
-                ;;;console.warn('Attempt to add duplicate subscription');
+                ;;;basis.dev.warn('Attempt to add duplicate subscription');
               }
             }
           },
@@ -149,7 +149,7 @@
               }
               else
               {
-                ;;;console.warn('Trying remove non-exists subscription');
+                ;;;basis.dev.warn('Trying remove non-exists subscription');
               }
             }
           }
@@ -528,7 +528,7 @@
         if (newDelegate.delegate && this.isConnected(newDelegate))
         {
           // DEBUG: show warning in debug mode that we drop delegate because it is already connected with object
-          ;;;if (typeof console != 'undefined') console.warn('(debug) New delegate has already connected to object. Delegate assign has been ignored.', this, newDelegate);
+          ;;;basis.dev.warn('(debug) New delegate has already connected to object. Delegate assign has been ignored.', this, newDelegate);
 
           // newDelegate can't be assigned
           return false;
@@ -1178,7 +1178,7 @@
         }
         else
         {
-          ;;;if (typeof console != 'undefined') console.warn('Wrong data type: value must be an instance of basis.data.DataObject');
+          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.DataObject');
         }
       }
 
@@ -1220,7 +1220,7 @@
         }
         else
         {
-          ;;;if (typeof console != 'undefined') console.warn('Wrong data type: value must be an instance of basis.data.DataObject');
+          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.DataObject');
         }
       }
 
@@ -1277,7 +1277,7 @@
         }
         else
         {
-          ;;;if (typeof console != 'undefined') console.warn('Wrong data type: value must be an instance of basis.data.DataObject');
+          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.DataObject');
         }
       }
 
@@ -1331,7 +1331,7 @@
         }
         else
         {
-          ;;;if (typeof console != 'undefined') console.warn('Wrong data type: value must be an instanceof basis.data.DataObject');
+          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.DataObject');
         }
       }
 
@@ -1434,7 +1434,7 @@
       urgentTimer = null;
       if (setStateCount)
       {
-        ;;;if (typeof console != 'undefined') console.warn('(debug) Urgent flush dataset changes');
+        ;;;basis.dev.warn('(debug) Urgent flush dataset changes');
         setStateCount = 0;
         setAccumulateStateOff();
       }
