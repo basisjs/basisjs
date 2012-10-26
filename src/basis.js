@@ -43,6 +43,7 @@
 
   var externalResourceCache = global.__resources__ || {};
 
+
  /**
   * Object extensions
   * @namespace Object
@@ -362,7 +363,7 @@
           if (modType != 'object')
           {
             // only string, function and objects are support as modificator
-            ;;;if (typeof console != 'undefined') console.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
+            ;;;consoleMethods.warn('basis.getter: wrong modificator type, modificator not used, path: ', path, ', modificator:', modificator);
 
             return func;
           }
@@ -469,7 +470,7 @@
         self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
         self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
         data = init.apply(thisObject || this, arguments);
-        ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInit function returns nothing:\n' + init);
+        ;;;if (typeof data == 'undefined') consoleMethods.warn('lazyInit function returns nothing:\n' + init);
       }
       return data;
     };
@@ -489,7 +490,7 @@
         self.inited = true;  // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
         self.data =          // DON'T USE THIS PROPERTY, IT'S FOR DEBUG PURPOSES ONLY
         data = init.call(thisObject || this);
-        ;;;if (typeof data == 'undefined' && typeof console != 'undefined') console.warn('lazyInitAndRun function returns nothing:\n' + init);
+        ;;;if (typeof data == 'undefined') consoleMethods.warn('lazyInitAndRun function returns nothing:\n' + init);
       }
       run.apply(data, arguments);
       return data;
@@ -516,6 +517,26 @@
   function functionBody(fn){
     return fn.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
   }
+
+  //
+  // safe console method wrappers
+  //
+  var consoleMethods = (function(){
+    var methods = {
+      log: $undef,
+      info: $undef,
+      warn: $undef
+    };
+
+    if (typeof console != 'undefined')
+      iterate(methods, function(methodName){
+        methods[methodName] = function(){
+          console[methodName].apply(console, arguments);
+        };
+      })
+
+    return methods;
+  })();
 
 
  /**
@@ -1268,7 +1289,7 @@
             setWrapper: function(wrapFn){
               if (typeof wrapFn == 'function')
               {
-                ;;;if (wrapFunction && typeof console != 'undefined') console.warn('Wrapper for ' + path + ' is already set. Probably mistake here.');
+                ;;;if (wrapFunction) consoleMethods.warn('Wrapper for ' + path + ' is already set. Probably mistake here.');
                 wrapFunction = wrapFn;
               }
             }
@@ -1319,7 +1340,7 @@
           try {
             config = ('{' + configValue + '}').toObject(true) || {};
           } catch (e) {
-            ;;;if (typeof console != 'undefined') console.warn('basis.js config parse fault: ' + e);
+            ;;;consoleMethods.warn('basis.js config parse fault: ' + e);
           }
         }
 
@@ -1424,7 +1445,7 @@
           resourceContent = req.responseText;
         else
         {
-          ;;;if (typeof console != 'undefined') console.warn('basis.resource: Unable to load ' + url);
+          ;;;consoleMethods.warn('basis.resource: Unable to load ' + url);
         }
       }
       else
@@ -1432,7 +1453,7 @@
         if (pathUtils.existsSync(url))
           resourceContent = require('fs').readFileSync(url, 'utf-8');
         else {
-          ;;;if (typeof console != 'undefined') console.warn('basis.resource: Unable to load ' + url);
+          ;;;consoleMethods.warn('basis.resource: Unable to load ' + url);
         }
       }
 
@@ -1461,7 +1482,7 @@
         };
       }
 
-      //console.log('new resource resolver:' + resourceUrl);
+      //consoleMethods.log('new resource resolver:' + resourceUrl);
       var attaches = [];
       var resourceObject;
       var wrapped = false;
@@ -1548,7 +1569,7 @@
       try {
         result = JSON.parse(String(resource));
       } catch(e) {
-        ;;;if (typeof console != 'undefined') console.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
+        ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
       }
       return result || false;
     }
@@ -1769,7 +1790,7 @@
         }
 
 
-        /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) console.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
+        /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
         /** @cut *///if (genericClassName == newClassProps.className) { console.warn('Class has no className'); }
 
         // new class constructor
@@ -1796,7 +1817,7 @@
                         : extend[key];
                     }
 
-                    ;;;if (config) console.warn('config param is obsolete for extensible classes (ignored)');
+                    ;;;if (config) consoleMethods.warn('config param is obsolete for extensible classes (ignored)');
 
                     // call constructor
                     this.init();
@@ -1862,7 +1883,7 @@
             else
             {
               proto[key] = value;
-              //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ console.warn('!' + key); }
+              //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
             }
           }
         }
@@ -2069,10 +2090,10 @@
         if (typeof object.destroy == 'function')
         {
           try {
-            ;;;if (logDestroy && typeof console != 'undefined') console.log('destroy', String(object.className).quote('['), object);
+            ;;;if (logDestroy) consoleMethods.log('destroy', String(object.className).quote('['), object);
             object.destroy();
           } catch(e) {
-            ;;;if (typeof console != 'undefined') console.warn(String(object), e);
+            ;;;consoleMethods.warn(String(object), e);
           }
         }
         else
@@ -2203,14 +2224,14 @@
       return url;
     },
 
+    getter: getter,
     ready: onLoad,
-    Class: Class,
 
+    Class: Class,
     Token: Token,
 
     cleaner: cleaner,
-
-    getter: getter,
+    console: consoleMethods,
 
     object: {
       extend: extend,
@@ -2261,6 +2282,9 @@
       format: String.prototype.format
     }
   });
+
+  // add dev namespace, host for special functionality in development environment
+  getNamespace('basis.dev').extend(consoleMethods);
 
   // TODO: rename path->stmElse and add path to exports
   basis.path = pathUtils;
