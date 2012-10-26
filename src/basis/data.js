@@ -1157,6 +1157,9 @@
       var inserted = [];
       var listenHandler = this.listen.item;
 
+      if (data && !Array.isArray(data))
+        data = [data];
+
       for (var i = 0; i < data.length; i++)
       {
         var object = data[i];
@@ -1172,6 +1175,10 @@
 
             inserted.push(object);
           }
+        }
+        else
+        {
+          ;;;if (typeof console != 'undefined') console.warn('Wrong data type: value must be an instance of basis.data.DataObject');
         }
       }
 
@@ -1192,6 +1199,9 @@
       var deleted = [];
       var listenHandler = this.listen.item;
 
+      if (data && !Array.isArray(data))
+        data = [data];
+
       for (var i = 0; i < data.length; i++)
       {
         var object = data[i];
@@ -1207,6 +1217,10 @@
 
             deleted.push(object);
           }
+        }
+        else
+        {
+          ;;;if (typeof console != 'undefined') console.warn('Wrong data type: value must be an instance of basis.data.DataObject');
         }
       }
 
@@ -1261,6 +1275,10 @@
             inserted.push(object);
           }
         }
+        else
+        {
+          ;;;if (typeof console != 'undefined') console.warn('Wrong data type: value must be an instance of basis.data.DataObject');
+        }
       }
 
       // delete data
@@ -1310,6 +1328,10 @@
           exists[objectId] = object;
           if (!memberMap[objectId])
             inserted.push(object);
+        }
+        else
+        {
+          ;;;if (typeof console != 'undefined') console.warn('Wrong data type: value must be an instanceof basis.data.DataObject');
         }
       }
 
