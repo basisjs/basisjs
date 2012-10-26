@@ -7,6 +7,7 @@
   basis.require('basis.l10n');
   basis.require('basis.ui');
   basis.require('basis.ui.button');
+  basis.require('basis.dragdrop');
 
 
  /**
@@ -190,6 +191,10 @@
 
     title: basis.l10n.getToken(namespace, 'emptyTitle'),
 
+    buttonPanelClass: ButtonPanel.subclass({
+      template: resource('templates/window/ButtonPanel.tmpl')
+    }),
+
     init: function(){
       // add generic rule
       this.cssRule = cssom.uniqueRule();
@@ -202,23 +207,14 @@
       // make window moveable
       if (this.moveable)
       {
-        basis.require('basis.dragdrop');
-
-        if (basis.dragdrop)
-        {
-          this.dde = new basis.dragdrop.MoveableElement({
-            element: this.element,
-            trigger: this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element,
-            fixRight: false,
-            fixBottom: false
-          });
-
-          this.dde.addHandler(DD_HANDLER, this);
-        }
-        else
-        {
-          ;;;if(typeof console != 'undefined') console.warn('`moveable` property of Window is not allowed. basis.dragdrop module required.');
-        }
+        this.dde = new basis.dragdrop.MoveableElement({
+          element: this.element,
+          trigger: this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element,
+          fixRight: false,
+          fixBottom: false,
+          handler: DD_HANDLER,
+          handlerContext: this
+        });
       }
 
       // buttons
@@ -243,8 +239,7 @@
 
       if (buttons.length)
       {
-        this.buttonPanel = new ButtonPanel({
-          cssClassName: 'Basis-Window-ButtonPlace',
+        this.buttonPanel = new this.buttonPanelClass({
           childNodes: buttons
         });
       }

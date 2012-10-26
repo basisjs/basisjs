@@ -219,6 +219,9 @@
   var EMPTY_TEMPLATE = new Template('<div/>');
 
 
+  ;;;var oneTimeIdWarn = 0;
+  ;;;var oneTimeCssClassNameWarn = 0;
+
  /**
   * @mixin
   */
@@ -250,12 +253,14 @@
 
      /**
       * @type {string}
+      * @deprecated
       */
       id: null,
 
      /**
       * Classes for template elements.
       * @type {object}
+      * @deprecated
       */
       cssClassName: null,
 
@@ -401,11 +406,17 @@
 
           // update template
           if (this.id)
+          {
+            ;;;if (!oneTimeIdWarn++) basis.dev.warn('WARN: basis.ui.Node#id property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.id);
+
             tmpl.element.id = this.id;
+          }
 
           var cssClassNames = this.cssClassName;
           if (cssClassNames)
           {
+            ;;;if (!oneTimeCssClassNameWarn++) basis.dev.warn('WARN: basis.ui.Node#cssClassName property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.cssClassName);
+
             if (typeof cssClassNames == 'string')
               cssClassNames = { element: cssClassNames };
 

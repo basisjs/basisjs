@@ -467,9 +467,11 @@
   var Scrollbar = UINode.subclass({
     className: namespace + '.Scrollbar',
 
-    cssClassName: 'Basis-ScrollPanel-Scrollbar',
-
     template: resource('templates/scroller/Scrollbar.tmpl'),
+
+    binding: {
+      orientation: 'orientation || ""'
+    },
 
     listen: {
       owner: {
@@ -512,7 +514,7 @@
    */
   var HorizontalScrollbar = Scrollbar.subclass({
     className: namespace + '.HorizontalScrollbar',
-    cssClassName: 'horizontal',
+    orientation: 'horizontal',
     startProperty: 'left',
     endProperty: 'right',
     getScrollbarSize: function(){
@@ -531,7 +533,7 @@
    */
   var VerticalScrollbar = Scrollbar.subclass({
     className: namespace + '.VerticalScrollbar',
-    cssClassName: 'vertical',
+    orientation: 'vertical',
     startProperty: 'top',
     endProperty: 'bottom',
     getScrollbarSize: function(){

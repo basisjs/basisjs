@@ -602,7 +602,6 @@
   */
   var Label = Field.subclass({
     className: namespace + '.Label',
-    cssClassName: 'Basis-Field-Label',
 
     focusable: false,
 
@@ -851,6 +850,11 @@
 
     caption: null,
     popup: null,
+    popupClass: Popup.subclass({
+      className: namespace + '.ComboboxDropdownList',
+      template: resource('templates/field/ComboboxDropdownList.tmpl'),
+      autorotate: 1
+    }),
     property: null,
 
     template: resource('templates/field/Combobox.tmpl'),
@@ -948,9 +952,6 @@
 
     init: function(){
 
-      if (!basis.ui.popup)
-        throw new Error('basis.ui.popup required for DropDownList');
-
       if (this.property)
         this.value = this.property.value;
 
@@ -980,9 +981,7 @@
       });
 
       // create items popup
-      this.popup = new Popup(complete({
-        cssClassName: 'Basis-DropdownList-Popup',
-        autorotate: 1,
+      this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
         ignoreClickFor: [this.tmpl.field],
         content: this.childNodesElement,
         handler: ComboboxPopupHandler,
@@ -1185,7 +1184,8 @@
   */
   var MatchInput = Text.subclass({
     className: namespace + '.MatchInput',
-    cssClassName: 'Basis-MatchInput',
+
+    template: resource('templates/field/MatchInput.tmpl'),
 
     matchFilterClass: MatchFilter,
 

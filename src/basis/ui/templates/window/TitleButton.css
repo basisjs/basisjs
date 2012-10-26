@@ -1,21 +1,11 @@
-/*!
- * Basis javasript library 
- * http://code.google.com/p/basis-js/
- *
- * @copyright
- * Copyright (c) 2006-2012 Roman Dvornov.
- *
- * @license
- * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
- */
 
   .Basis-Window-Title-ButtonPlace
   {
-    display: block;
     float: right;
 
-    padding-top: 2px;
+    /*padding-top: 2px;*/
 
+    margin-top: -1px;
     margin-left: 2px;
     margin-right: -4px;
 
