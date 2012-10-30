@@ -744,8 +744,8 @@
                       var tokenRefMap = normalizeRefs(decl.tokens);
                       var instructions = (token.childs || []).slice();
 
-                      if (elAttrs.class)
-                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'append-class', attrs: [{ type: 2, name: 'value', value: elAttrs.class }] });
+                      if (elAttrs['class'])
+                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'append-class', attrs: [{ type: 2, name: 'value', value: elAttrs['class'] }] });
                       if (elAttrs.id)
                         instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'set-attr', attrs: [{ type: 2, name: 'name', value: 'id' }, { type: 2, name: 'value', value: elAttrs.id }] });
 
@@ -1106,18 +1106,37 @@
   * @param {boolean=} clone
   */
   function getDeclFromTemplate(template, clone){
-    var source = typeof template.source == 'function'
-      ? template.source()
-      : String(template.source);
-
-    if (typeof source == 'string')
-      return template.isDecl
-        ? source.toObject()
-        : makeDeclaration(source, template.baseURI);
+    var source = template.source;
+    var decl;
+    
+    if (typeof source == 'function')
+    {
+      decl = source();
+    }
     else
-      return Array.isArray(source)
-        ? { tokens: clone ? cloneDecl(source) : source }
-        : source;
+    {
+      if (source instanceof basis.Token)
+        decl = source.get();
+      else
+        decl = String(source);
+    }
+
+    if (Array.isArray(decl))
+    {
+      decl = {
+        tokens: clone ? cloneDecl(decl) : decl
+      };
+    }
+
+    if (typeof decl == 'string')
+    {
+      if (template.isDecl)
+        decl = decl.toObject();
+      else
+        decl = makeDeclaration(decl, template.baseURI);
+    }
+
+    return decl;
   }
 
  /**
