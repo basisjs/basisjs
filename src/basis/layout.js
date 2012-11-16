@@ -50,6 +50,10 @@
   {
     try
     {
+      // Opera tries to use -webkit-box but doesn't set "-webkit-box-orient" dynamically for cssRule
+      if (prefixes[i] == '-webkit-' && Basis.Browser.is('opera'))
+        continue;
+
       var value = prefixes[i] + 'box';
       testElement.style.display = value;
       if (testElement.style.display == value)
