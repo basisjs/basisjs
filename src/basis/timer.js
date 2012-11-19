@@ -66,7 +66,7 @@
         };
 
         //
-        // Remove support for clearImmediate
+        // Add support for clearImmediate
         //
         global.clearImmediate = function(id){
           delete taskById[id];

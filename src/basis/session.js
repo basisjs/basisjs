@@ -19,7 +19,7 @@
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
-  var events = basis.events;
+  var events = basis.event.events;
 
 
   /*
@@ -47,7 +47,7 @@
    *  SessionManager
    */
 
-  var SessionManager = extend(new EventObject(), {
+  var SessionManager = new EventObject({
     event_sessionOpen: createEvent('sessionOpen'),
     event_sessionClose: createEvent('sessionClose'),
     event_sessionFreeze: createEvent('sessionFreeze'),
