@@ -530,10 +530,8 @@
 
     if (typeof console != 'undefined')
       iterate(methods, function(methodName){
-        methods[methodName] = function(){
-          console[methodName].apply(console, arguments);
-        };
-      })
+        methods[methodName] = console[methodName].bind(console);
+      });
 
     return methods;
   })();
