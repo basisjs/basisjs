@@ -712,7 +712,7 @@
                         if (tmpl.source.bindingBridge)
                           template.deps.add(tmpl.source);
 
-                        decl = getDeclFromTemplate(tmpl, true);
+                        decl = getDeclFromSource(tmpl.source, tmpl.baseURI, true);
                       }
                       else
                       {
@@ -720,14 +720,14 @@
                         {
                           var resource = getSourceByPath(url);
                           template.deps.add(resource);
-                          decl = makeDeclaration(resource.get(), resource.url ? basis.path.dirname(resource.url) + '/' : '');
+                          decl = getDeclFromSource(resource.get(), resource.url ? basis.path.dirname(resource.url) + '/' : '', true);
                         }
                         else
                         {
                           url = basis.path.resolve(template.baseURI + url);
                           var resource = basis.resource(url);
                           template.deps.add(resource);
-                          decl = makeDeclaration(resource(), resource.url ? basis.path.dirname(resource.url) + '/' : '');
+                          decl = getDeclFromSource(resource(), resource.url ? basis.path.dirname(resource.url) + '/' : '', true);
                         }
                       }
 
@@ -1105,45 +1105,41 @@
   * @param {Template} template
   * @param {boolean=} clone
   */
-  function getDeclFromTemplate(template, clone){
-    var source = template.source;
-    var decl;
+  function getDeclFromSource(source, baseURI, clone){
+    var result = source;
     
-    if (typeof source == 'function')
+    if (typeof result == 'function')
+      result = result();
+
+    if (result instanceof basis.Token)
+      result = result.get();
+
+    if (Array.isArray(result))
     {
-      decl = source();
+      if (clone)
+        result = cloneDecl(result);
+
+      result = {
+        tokens: result
+      };
     }
     else
     {
-      if (source instanceof basis.Token)
-        decl = source.get();
-      else
-        decl = String(source);
+      if (typeof result != 'object' || !Array.isArray(result.tokens))
+        result = String(result);
     }
 
-    if (Array.isArray(decl))
-    {
-      decl = {
-        tokens: clone ? cloneDecl(decl) : decl
-      };
-    }
+    if (typeof result == 'string')
+      result = makeDeclaration(result, baseURI);
 
-    if (typeof decl == 'string')
-    {
-      if (template.isDecl)
-        decl = decl.toObject();
-      else
-        decl = makeDeclaration(decl, template.baseURI);
-    }
-
-    return decl;
+    return result;
   }
 
  /**
   * @func
   */
   function buildTemplate(){
-    var decl = getDeclFromTemplate(this);
+    var decl = getDeclFromSource(this.source, this.baseURI);
     var instances = this.instances_;
     var funcs = this.builder(decl.tokens);  // makeFunctions
     var l10n = this.l10n_;
@@ -1363,8 +1359,6 @@
       var oldSource = this.source;
       if (oldSource != source)
       {
-        this.isDecl = false;
-
         if (typeof source == 'string')
         {
           var m = source.match(/^([a-z]+):/);
@@ -1384,7 +1378,8 @@
                 source = resolveSourceById(source);
                 break;
               case 'tokens':
-                this.isDecl = true;
+                source = source.toObject();
+                source.isDecl = true;
                 break;
               case 'raw':
                 //source = source;
@@ -1451,9 +1446,7 @@
   var SourceWrapper = Class(basis.Token, {
     className: namespace + '.SourceWrapper',
     content: null,
-    toString: function(){
-      return this.get();
-    },
+
     init: function(content){
       basis.Token.prototype.init.call(this);
       this.set(content);

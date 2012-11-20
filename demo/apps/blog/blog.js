@@ -32,7 +32,7 @@ basis.ready(function(){
 
   var times = [new Date];
 
-  var postsData = basis.resource('blog_posts.js').fetch();
+  var postsData = resource('blog_posts.js').fetch();
 
   times.push([new Date, 'generate posts']);
 

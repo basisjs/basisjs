@@ -48,7 +48,7 @@
     var LazyFolder = basis.ui.tree.Folder.subclass({
       childFactory: childFactory,
       template:
-        '<b:include src="../../src/basis/ui/templates/tree/Folder.tmpl">' +
+        '<b:include src="basis.ui.tree.Folder">' +
           '<b:replace ref="childNodesElement">' +
             '<!--{childNodesWhenExpanded}-->' +
           '</b:replace>' +
