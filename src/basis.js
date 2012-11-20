@@ -530,7 +530,7 @@
 
     if (typeof console != 'undefined')
       iterate(methods, function(methodName){
-        methods[methodName] = console[methodName].bind(console);
+        methods[methodName] = Function.prototype.bind.call(console[methodName], console);
       });
 
     return methods;
