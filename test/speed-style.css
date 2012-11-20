@@ -2,9 +2,8 @@
 
   BODY
   {
-    font-size: x-small;
+    font-size: small;
     font-family: Tahoma;
-    color: #999999;
   }
 
   B
@@ -23,4 +22,57 @@
     border: none;
     border-top: 1px solid #999;
     margin: 2px;
+  }
+
+  TABLE
+  {
+    border: 1px solid #888;
+    border-collapse: collapse;
+  }
+
+  THEAD TH
+  {
+    font-weight: normal;
+    color: black;
+    padding: 2px 8px;
+    border: 1px solid white;
+    background: #C0D0F0;
+  }
+
+  TD
+  {
+    border: 1px solid white;
+    padding: 4px 6px;
+    color: #666;
+  }
+  TD.time
+  {
+    text-align: right;
+    min-width: 8ex;
+  }
+  TD.score
+  {
+    text-align: right;
+    font-size: 150%;
+    font-weight: bold;
+    color: black;
+  }
+  TD.score.total
+  {
+    color: #AA0000;
+  }
+  TD.total
+  {
+    color: black;
+    font-weight: bold;
+    background: rgba(0,0,0,.1);
+  }
+
+  TR
+  {
+    background: #F0F0F0;
+  }
+  TR:nth-child(2n + 1)
+  {
+    background: #E0E0E0;
   }
