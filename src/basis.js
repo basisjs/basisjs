@@ -1,9 +1,6 @@
 /*
   Basis javascript library
-  http://code.google.com/p/basis-js/
- 
-  @copyright
-  Copyright (c) 2006-2012 Roman Dvornov.
+  http://github.com/lahmatiy/basisjs
  
   @license
   Dual licensed under the MIT or GPL Version 2 licenses.
@@ -12,25 +9,25 @@
 /**
  * @annotation
  * Basis library core module. It provides various most using functions
- * and namespaces.
+ * and base functionality.
  *
  * This file should be loaded first.
  *
  * Content overview:
  * - Buildin class extensions and fixes
- *   o Object (new class members only)
+ *   o Object (static class members only)
  *   o Function
  *   o Array
  *   o String
  *   o Number
- *   o Date (you can find other extensions for Date in date.js)
- * - Namespace sheme (module subsystem)
+ *   o Date (more extensions for Date in src/basis/date.js)
+ * - namespace sheme (module subsystem)
  * - resouces
- * - Basis.Class namespace (provides inheritance)
+ * - basis.Class namespace (provides inheritance)
  * - cleaner
  */
 
-// Define global scope: `window` on browser, or `global` on node.js
+// Define global scope: `window` in browser, or `global` on node.js
 ;(function(global){
 
   'use strict';
@@ -40,7 +37,6 @@
   //
 
   var document = global.document;
-
   var externalResourceCache = global.__resources__ || {};
 
 
@@ -61,30 +57,30 @@
   }
 
  /**
-  * Copy all properties from source object(s) to object.
-  * @param {object} object Any object should be extended.
+  * Copy all properties from source (object) to destination object.
+  * @param {object} dest Object should be extended.
   * @param {object} source
-  * @return {object} Extended object.
+  * @return {object} Destination object.
   */
-  function extend(object, source){
+  function extend(dest, source){
     for (var key in source)
-      object[key] = source[key];
+      dest[key] = source[key];
 
-    return object;
+    return dest;
   }
 
  /**
-  * Copy only missed properties from source object(s) to object.
-  * @param {object} object Any object should be completed.
+  * Copy only missed properties from source (object) to object.
+  * @param {object} dest Object should be completed.
   * @param {object} source
-  * @return {object} Completed object.
+  * @return {object} Destination object.
   */
-  function complete(object, source){
+  function complete(dest, source){
     for (var key in source)
-      if (key in object == false)
-        object[key] = source[key];
+      if (key in dest == false)
+        dest[key] = source[key];
 
-    return object;
+    return dest;
   }
 
  /**
@@ -104,7 +100,7 @@
  /**
   * Returns all property values of object.
   * @param {object} object Any object can has properties.
-  * @return {Array.<Object>}
+  * @return {Array.<object>}
   */
   function values(object){
     var result = [];
@@ -139,6 +135,8 @@
   * @param {object} source Any object can has properties.
   * @param {Array.<string>} keys Desired key set.
   * @return {object} New object with desired keys from source object.
+  * TODO: fix case when keys is not passed; it returns copy of source,
+  *       but doesn't delete anything (source should become empty object)
   */
   function splice(source, keys){
     var result = {};
@@ -157,9 +155,11 @@
   }
 
  /**
-  * Returns callback call results for all pair key-value of object.
+  * Returns list of callback call result for every object's key-value pair.
   * @param {object} object Any object can has properties.
-  * @return {Array.<Object>}
+  * @param {function(key, value)} callback
+  * @param {*=} thisObject
+  * @return {Array.<*>}
   */
   function iterate(object, callback, thisObject){
     var result = [];
@@ -225,9 +225,9 @@
   }
 
  /**
-  * Just returns first param.
+  * nothing to do, just returns first argument.
   * @param {*} value
-  * @return {boolean} Returns value argument.
+  * @return {*} Returns first argument.
   */
   function $self(value){
     return value;
@@ -246,35 +246,34 @@
   * Always returns false.
   * @return {boolean}
   */
-  var $false = function(){
+  function $false(){
     return false;
-  };
+  }
 
  /**
   * Always returns true.
   * @return {boolean}
   */
-  var $true = function(){
+  function $true(){
     return true;
-  };
+  }
 
  /**
   * Always returns null.
   */
-  var $null = function(){
+  function $null(){
     return null;
-  };
+  }
 
  /**
   * Always returns undefined.
   */
-  var $undef = function(){
-  };
+  function $undef(){
+  }
 
  /**
-  * @function
-  * @param  {function(object)|string} path
-  * @param  {function(value)|string|object=} modificator
+  * @param {function(object)|string} path
+  * @param {function(value)|string|object=} modificator
   * @return {function(object)} Returns function that resolve some path in object and can use modificator for value transformation.
   */
   var getter = (function(){
@@ -518,6 +517,36 @@
     return fn.toString().replace(/^\s*\(?\s*function[^(]*\([^\)]*\)[^{]*\{|\}\s*\)?\s*$/g, '');
   }
 
+
+ /**
+  * @namespace Function.prototype
+  */
+
+  complete(Function.prototype, {
+   /**
+    * Changes function default context. It also makes possible to set static
+    * arguments (folding) for function.
+    * Implemented in ES5.
+    * @param {Object} thisObject
+    * @param {...*} args
+    * @return {function()}
+    * TODO: check compliance
+    */
+    bind: function(thisObject){
+      var fn = this;
+      var params = arrayFrom(arguments, 1);
+
+      return params.length
+        ? function(){
+            return fn.apply(thisObject, params.concat.apply(params, arguments));
+          }
+        : function(){
+            return fn.apply(thisObject, arguments);
+          };
+    }
+  });
+
+
   //
   // safe console method wrappers
   //
@@ -538,43 +567,15 @@
 
 
  /**
-  * @namespace Function.prototype
-  */
-
-  complete(Function.prototype, {
-   /**
-    * Changes function default context. It also makes possible to set static
-    * arguments (folding) for function.
-    * Implemented in Fifth Edition of ECMA-262.
-    * TODO: check compliance
-    * @param {Object} thisObject
-    * @param {...*} args
-    * @return {function()}
-    */
-    bind: function(thisObject){
-      var method = this;
-      var params = arrayFrom(arguments, 1);
-
-      return params.length
-        ? function(){
-            return method.apply(thisObject, params.concat.apply(params, arguments));
-          }
-        : function(){
-            return method.apply(thisObject, arguments);
-          };
-    }
-  });
-
-
- /**
   * Array extensions
   * @namespace Array
   */
 
   complete(Array, {
    /**
-    * Retruns true if value is Array instance.
-    * @param {Object} value
+    * Returns true if value is Array instance.
+    * Implemented in ES5.
+    * @param {*} value Value to be tested.
     * @return {boolean}
     */
     isArray: function(value){
