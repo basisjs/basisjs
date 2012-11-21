@@ -6,6 +6,7 @@
     
     var MAX_COUNT = 3000;
     var MAX_COUNT_QUATER = MAX_COUNT >> 2;
+    var PROFILE = false;
     
     var DOM = basis.dom;
     var Data = basis.data;
@@ -342,7 +343,9 @@
         description: 'BUTTON',
         click: function(){
           DOM.remove(this);
+          if (PROFILE) console.profile();
           run_test();
+          if (PROFILE) console.profileEnd();
         }
       }, 'run test')
     );
