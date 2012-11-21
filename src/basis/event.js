@@ -135,7 +135,7 @@
 
    /**
     * List of event handler sets.
-    * @type {Array.<Object>}
+    * @type {Array.<object>}
     * @private
     */
     handlers_: null,
@@ -179,9 +179,8 @@
 
    /**
     * Registrates new event handler set for object.
-    * @param {Object} handler Event handler set.
-    * @param {Object=} thisObject Context object.
-    * @return {boolean} Whether event handler set was added.
+    * @param {object} handler Event handler set.
+    * @param {object=} thisObject Context object.
     */
     addHandler: function(handler, thisObject){
       var handlers = this.handlers_;
@@ -202,12 +201,12 @@
         if (item.handler === handler && item.thisObject === thisObject)
         {
           ;;;basis.dev.warn('Emitter#addHandler: Add duplicate handler to Emitter instance: ', this);
-          return false;
+          break;
         }
       }
 
       // add handler
-      return !!handlers.push({ 
+      handlers.push({ 
         handler: handler,
         thisObject: thisObject
       });
@@ -216,9 +215,8 @@
    /**
     * Removes event handler set from object. For this operation parameters
     * must be the same (equivalent) as used for addHandler method.
-    * @param {Object} handler Event handler set.
-    * @param {Object=} thisObject Context object.
-    * @return {boolean} Whether event handler set was removed.
+    * @param {object} handler Event handler set.
+    * @param {object=} thisObject Context object.
     */
     removeHandler: function(handler, thisObject){
       var handlers = this.handlers_;
@@ -237,12 +235,14 @@
       {
         item = handlers[i];
         if (item.handler === handler && item.thisObject === thisObject)
-          return !!handlers.splice(i, 1);
+        {
+          handlers.splice(i, 1);
+          return;
+        }
       }
 
       // handler not found
       ;;;basis.dev.warn('Emitter#removeHandler: method didn\'t remove any handler');
-      return false;
     },
 
    /**
