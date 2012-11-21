@@ -3,11 +3,11 @@
 <html>
 
 <head>
-  <meta http-equiv="Content-type" content="text/html; charset=windows-1251" />
-  <title>Basis Test Suite - Browser</title>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Basis Test Suite - basis.ua</title>
 
   <style type="text/css">
-    @import "style/default/style.css";
+    @import "../style/style.css";
 
     /* */
     BODY
@@ -18,9 +18,9 @@
     }
   </style>
   
-  <script type="text/javascript" data-basis-config src="../src/basis.js"></script>
-  <script type="text/javascript" src="test.js"></script>
-  <script type="text/javascript" src="common.js"></script>
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../test.js"></script>
+  <script type="text/javascript" src="../common.js"></script>
 </head>
 
 <body>
@@ -64,8 +64,8 @@
                 browser.Cookies.set(cookieName);
                 this.is('', browser.Cookies.get(cookieName));
 
-                browser.Cookies.set(cookieName, 'Привет мир');
-                this.is('Привет мир', browser.Cookies.get(cookieName));
+                browser.Cookies.set(cookieName, 'РџСЂРёРІРµС‚ РјРёСЂ');
+                this.is('РџСЂРёРІРµС‚ РјРёСЂ', browser.Cookies.get(cookieName));
               }
             },
             {

@@ -23,7 +23,7 @@
   * Most part of component logic implemented in {basis.dom.wrapper} namespace,
   * and this one just contains templates and collapse/expand implementation.
   *
-  * @see ./test/speed-tree.html
+  * @see ./test/speed/tree.html
   * @see ./demo/data/entity.html
   *
   * @namespace basis.ui.tree

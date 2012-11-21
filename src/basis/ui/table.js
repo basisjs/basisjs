@@ -8,7 +8,7 @@
  /**
   * Table namespace
   *
-  * @see ./test/speed-table.html
+  * @see ./test/speed/table.html
   * @see ./demo/common/match.html
   * @see ./demo/common/grouping.html
   *
