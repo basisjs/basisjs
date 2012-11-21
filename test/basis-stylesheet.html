@@ -44,6 +44,8 @@
       basis.require('basis.cssom');
 
       var DOM = basis.dom;
+      var createElement = basis.dom.createElement;
+
       var cssom = basis.cssom;
       var cssRule = basis.cssom.createRule;
 
@@ -73,14 +75,12 @@
               name: 'create',
               test: function(){
                 var rule = cssRule('#playground, #playground2');
+
                 rule.setStyle({width: '200px !important'});
-                //this.is('#playground, #playground2', rule.selector);
                 this.is(200, pg.clientWidth);
                 this.is(200, pg2.clientWidth);
+
                 rule.clear();
-                /*var rule1 = cssRule('#playground');
-                var rule2 = cssRule('#playground');
-                this.is(true, rule1.rule === rule2.rule);*/
               }
             },
             {
@@ -108,18 +108,34 @@
               }
             },
             {
-              name: 'clear',
+              name: 'clear #1',
               test: function(){
-                var rule = cssRule('#playground');
-                rule.setStyle({width: '200px', height: '200px'});
-                rule.clear();
-                this.is(100, pg.clientWidth);
-                this.is(100, pg.clientHeight);
+                var el = document.body.appendChild(createElement('.test_clear1[style="padding:0 !important;border:none !important"]'));
 
-                rule = cssRule('#playground2');
-                rule.setStyle({height: '100px !important'});
+                var rule = cssRule('.test_clear1');
+
+                rule.setStyle({ width: '200px', height: '200px' });
+                this.is(200, el.offsetWidth);
+                this.is(200, el.offsetHeight);
+
                 rule.clear();
-                this.is(0, pg2.clientHeight);
+                this.is(true, el.offsetWidth != 200);
+                this.is(true, el.offsetHeight != 200);
+
+              }
+            },
+            {
+              name: 'clear #2',
+              test: function(){
+                var el = document.body.appendChild(createElement('.test_clear2[style="padding:0 !important;border:none !important"]'));
+
+                rule = cssRule('.test_clear2');
+
+                rule.setStyle({height: '100px !important'});
+                this.is(100, el.offsetHeight);
+
+                rule.clear();
+                this.is(0, el.offsetHeight);
 
               }
             }

@@ -330,14 +330,6 @@
               name: 'Extractors',
               testcase: [
                 {
-                  name: 'clone()',
-                  test: function(){
-                    var T = [1,2,3];
-                    this.is(T, T.clone());
-                    this.is(true, T !== T.clone());
-                  }
-                },
-                {
                   name: 'flatten()',
                   test: function(){
                     this.is([0,1,2,3,3.5,4,5,6], [0, C, 3.5, D, 6].flatten());
@@ -350,80 +342,6 @@
                     this.is([1,T,2], [1,[T],2].flatten());
                   }
                 },
-                {
-                  name: 'unique()',
-                  test: function(){
-                    var T = Array.from(E);
-                    this.is(C, T.unique());
-                    this.is(T, E);
-
-                    this.is([1,2,3,'1','2'], [1,2,3,'1',1,2,'1',3,'2'].unique());
-                  }
-                },
-                {
-                  name: 'collapse()',
-                  test: function(){
-                    var T = [1,2,3,4,5];
-
-                    this.is([1,3,5], T.collapse(function(item){ return !(item % 2); }));
-                    this.is([1,3,5], T);
-
-                    var T = [1,2,3,4,5];
-                    this.is([], T.collapse(Function.$true));
-
-                    var T = [1,2,3,4,5];
-                    this.is(T, T.collapse(Function.$false));
-
-                    var T = [1,2,3,4,5];
-                    T[10] = 1;
-                    this.is([1,2,3,4,5,1], T.collapse(Function.$isNull));
-
-                    var T = [1,2,3,4,5];
-                    T[10] = 1;
-                    this.is([undefined,undefined,undefined,undefined,undefined], T.collapse(Function.$isNotNull));
-
-                    var T = [1,2,3,4,5,0];
-                    T[10] = 1;
-                    this.is([0,undefined,undefined,undefined,undefined], T.collapse(Function.$self));
-                  }
-                },
-                {
-                  name: 'exclude()',
-                  test: function(){
-                    var T = [1,2,3,4,5];
-
-                    //this.is(undefined, T.exclude()); // exception thrown
-
-                    this.is(T, T.exclude([]));
-                    this.is(false, T === T.exclude([]));
-
-                    this.is([2,3], T.exclude([5,4,1]));
-                    this.is([2,3,4,5], T.exclude([1,1,1]));
-                    this.is(T, T.exclude([6,7,8]));
-                  }
-                },
-                /*{
-                  name: 'call()',
-                  test: function(){
-                    var T = [1,2,3,4,5];
-                    this.is(T, T.call(Function.$self));
-
-                    var oddCount = 0;
-                    this.is(T, T.call(function(){ oddCount += this % 2 }));
-                    this.is(3, oddCount);
-
-                    var oddCount = 0;
-                    this.is(T, T.call(function(a, b){ oddCount += (this + a + b) % 2 }, 1, 2));
-                    this.is(2, oddCount);
-
-                    var count = 0;
-                    var c = function(value){ this.value = value };
-                    c.prototype.count = function(){ count += this.value };
-                    var T = [new c(1), new c(2), new c(3)];
-                    this.is(T, T.call(c.prototype.count));
-                    this.is(6, count);
-                  }
-                },*/
                 {
                   name: 'repeat()',
                   test: function(){
@@ -454,106 +372,6 @@
                     this.is(undefined, T.item(-7));
                   }
                 },
-                /*{
-                  name: 'firstIndex()',
-                  test: function(){
-                    var T = [0,1,2,3,4,5];
-                    this.is(0, T.firstIndex());
-                    this.is(0, T.firstIndex(0));
-                    this.is(0, T.firstIndex(0.5));
-                    this.is(3, T.firstIndex(3));
-                    this.is(3, T.firstIndex(3.1));
-                    this.is(3, T.firstIndex(3.999));
-
-                    var T = [];
-                    T[3] = 3;
-                    T[7] = 5;
-                    this.is(3, T.firstIndex());
-                    this.is(3, T.firstIndex(0));
-                    this.is(3, T.firstIndex(0.5));
-                    this.is(7, T.firstIndex(1));
-                    this.is(7, T.firstIndex(1.1));
-                    this.is(7, T.firstIndex(1.99));
-
-                    this.is(-1, T.firstIndex(2));
-                    this.is(-1, T.firstIndex(-1));
-                  }
-                },*/
-                {
-                  name: 'first()',
-                  test: function(){
-                    /*var T = [0,1,2,3,4,5];
-                    this.is(0, T.first());
-                    this.is(0, T.first(0));
-                    this.is(0, T.first(0.5));
-                    this.is(3, T.first(3));
-                    this.is(3, T.first(3.1));
-                    this.is(3, T.first(3.999));
-
-                    var T = [];
-                    T[3] = 3;
-                    T[7] = 5;
-                    this.is(3, T.first());
-                    this.is(3, T.first(0));
-                    this.is(3, T.first(0.5));
-                    this.is(5, T.first(1));
-                    this.is(5, T.first(1.1));
-                    this.is(5, T.first(1.99));
-
-                    this.is(undefined, T.first(2));
-                    this.is(undefined, T.first(-1));*/
-                  }
-                },
-                /*{
-                  name: 'lastIndex()',
-                  test: function(){
-                    var T = [0,1,2,3,4,5];
-                    this.is(5, T.lastIndex());
-                    this.is(5, T.lastIndex(0));
-                    this.is(5, T.lastIndex(0.5));
-                    this.is(2, T.lastIndex(3));
-                    this.is(2, T.lastIndex(3.1));
-                    this.is(2, T.lastIndex(3.999));
-
-                    var T = [];
-                    T[3] = 3;
-                    T[7] = 5;
-                    this.is(7, T.lastIndex());
-                    this.is(7, T.lastIndex(0));
-                    this.is(7, T.lastIndex(0.5));
-                    this.is(3, T.lastIndex(1));
-                    this.is(3, T.lastIndex(1.1));
-                    this.is(3, T.lastIndex(1.99));
-
-                    this.is(-1, T.lastIndex(2));
-                    this.is(-1, T.lastIndex(-1));
-                  }
-                },*/
-                {
-                  name: 'last()',
-                  test: function(){
-                    /*var T = [0,1,2,3,4,5];
-                    this.is(5, T.last());
-                    this.is(5, T.last(0));
-                    this.is(5, T.last(0.5));
-                    this.is(2, T.last(3));
-                    this.is(2, T.last(3.1));
-                    this.is(2, T.last(3.999));
-
-                    var T = [];
-                    T[3] = 3;
-                    T[7] = 5;
-                    this.is(5, T.last());
-                    this.is(5, T.last(0));
-                    this.is(5, T.last(0.5));
-                    this.is(3, T.last(1));
-                    this.is(3, T.last(1.1));
-                    this.is(3, T.last(1.99));
-
-                    this.is(undefined, T.last(2));
-                    this.is(undefined, T.last(-1));*/
-                  }
-                },
                 {
                   name: 'search()',
                   test: function(){
@@ -564,8 +382,8 @@
                     this.is(undefined, T.search(1.5, Function.getter('value')));
                     this.is(undefined, T.search('2', Function.getter('value')));
                     this.is(T[2], T.search(2, Function.getter('value')));
-                    this.is(T.last(), T.search(2, Function.getter('value'), 3));
-                    this.is(T.last(), T.search(2, 'value', 3));
+                    this.is(T[T.length - 1], T.search(2, Function.getter('value'), 3));
+                    this.is(T[T.length - 1], T.search(2, 'value', 3));
 
                     var T = [];
                     T[3] = { value: 3 };
@@ -589,11 +407,12 @@
                     this.is(T[1], T.lastSearch(1.0, Function.getter('value')));
                     this.is(undefined, T.lastSearch(1.5, Function.getter('value')));
                     this.is(undefined, T.lastSearch('2', Function.getter('value')));
-                    this.is(T.last(), T.lastSearch(2, Function.getter('value')));
+                    this.is(T[T.length - 1], T.lastSearch(2, Function.getter('value')));
                     this.is(T[2], T.lastSearch(2, Function.getter('value'), 3));
                     this.is(T[2], T.lastSearch(2, 'value', 3));
                     this.is(T[2], T.lastSearch(2, 'value', 4));
-                    this.is(T.last(), T.lastSearch(2, 'value', 5));
+                    this.is(T[2], T.lastSearch(2, 'value', 5));
+                    this.is(T[T.length - 1], T.lastSearch(2, 'value', 6));
 
                     var T = [];
                     T[3] = { value: 3 };
@@ -640,12 +459,12 @@
                     this.is(0, T.binarySearchPos(5, null, true));
                     this.is(-1, T.binarySearchPos(5, null, true, true));
 
-                    var T = [{ a: 0 }, { a: 1}, { a: 2 }, { a: 3 }, { a: 4 }];
+                    var T = [{ a: 0 }, { a: 1 }, { a: 2 }, { a: 3 }, { a: 4 }];
                     this.is(0, T.binarySearchPos(-1,  'a'));
                     this.is(0, T.binarySearchPos(0,   'a'));
-                    this.is(-1, T.binarySearchPos(0,  'b'));
-                    this.is(-1, T.binarySearchPos({},  'a'));
-                    this.is(-1, T.binarySearchPos(null,  'a'));
+                    //?this.is(-1, T.binarySearchPos(0,  'b'));
+                    //?this.is(-1, T.binarySearchPos({},  'a'));
+                    //?this.is(-1, T.binarySearchPos(null,  'a'));
                     this.is(1, T.binarySearchPos(1,   'a'));
                     this.is(2, T.binarySearchPos(1.5, 'a'));
                     this.is(-1, T.binarySearchPos(1.5, 'a', false, true));
@@ -676,96 +495,7 @@
                     this.is(4,  T.binarySearch(4,   Function.getter('a')));
                     this.is(-1, T.binarySearch(5,   Function.getter('a')));
                   }
-                },
-                {
-                  name: 'binarySearchIntervalPos()',
-                  test: function(){
-                    var T = [{ l: 0, r: 1 }, { l: 2, r: 3}, { l: 4, r: 5}];
-                    var l = Function.getter('l');
-                    var r = Function.getter('r');
-                    this.is(0, T.binarySearchIntervalPos(-1, l, r));
-                    this.is(-1, T.binarySearchIntervalPos(-1, l, r, true));
-                    this.is(0, T.binarySearchIntervalPos(0, l, r));
-                    this.is(0, T.binarySearchIntervalPos(1, l, r));
-                    this.is(1, T.binarySearchIntervalPos(1.5, l, r));
-                    this.is(1, T.binarySearchIntervalPos(1.01, l, r));
-                    this.is(1, T.binarySearchIntervalPos(1.99, l, r));
-                    this.is(-1, T.binarySearchIntervalPos(1.5, l, r, true));
-                    this.is(2, T.binarySearchIntervalPos(3.5, l, r));
-                    this.is(-1, T.binarySearchIntervalPos(3.5, l, r, true));
-                    this.is(3, T.binarySearchIntervalPos(5.5, l, r));
-                    this.is(-1, T.binarySearchIntervalPos(3.5, l, r, true));
-                    this.is(1, T.binarySearchIntervalPos(2, l, r));
-                    this.is(2, T.binarySearchIntervalPos(4, l, r));
-                    this.is(2, T.binarySearchIntervalPos(5, l, r));
-
-                    this.is(3, T.binarySearchIntervalPos(5.5, 'l', 'r'));
-                    this.is(-1, T.binarySearchIntervalPos(3.5, l, 'r', true));
-                    this.is(1, T.binarySearchIntervalPos(2, 'l', r));
-
-                    this.is(1, T.binarySearchIntervalPos(0.7, function(o){ return o.l/2; }, "r/2"));
-                    this.is(1, T.binarySearchIntervalPos(1.2, "l/2", function(o){ return o.r/2; }));
-                    this.is(2, T.binarySearchIntervalPos(2.5, function(o){ return o.l/2; }, function(o){ return o.r/2; }));
-                    this.is(3, T.binarySearchIntervalPos(3,   function(o){ return o.l/2; }, function(o){ return o.r/2; }));
-                    this.is(0, T.binarySearchIntervalPos(-5, function(o){ return -o.l; }, function(o){ return -o.r; }));
-                  }
-                },
-                {
-                  name: 'binarySearchInterval()',
-                  test: function(){
-                    var T = [{ l: 0, r: 1 }, { l: 2, r: 3}, { l: 4, r: 5}];
-                    var l = Function.getter('l');
-                    var r = Function.getter('r');
-                    this.is(-1, T.binarySearchInterval(-1, l, r));
-                    this.is(0,  T.binarySearchInterval(0, l, r));
-                    this.is(0,  T.binarySearchInterval(1, l, r));
-                    this.is(-1, T.binarySearchInterval(1.5, l, r));
-                    this.is(1,  T.binarySearchInterval(2, l, r));
-                    this.is(2,  T.binarySearchInterval(4, l, r));
-                    this.is(-1, T.binarySearchInterval(6, l, r));
-
-                    this.is(0,  T.binarySearchInterval(1, 'l', 'r'));
-                    this.is(-1, T.binarySearchInterval(1.5, l, 'r'));
-                    this.is(1,  T.binarySearchInterval(2, 'l', r));
-
-                  }
                 }
-              ]
-            },
-            {
-              name: 'Comparators',
-              testcase: [
-                {
-                  name: 'equal()',
-                  test: function(){
-                    var TA = Array.from(A);
-                    var TB = Array.from(B);
-                    var TC = Array.from(C);
-
-                    this.is(A, TB.reverse());
-                    this.is(true, TA.equal(TB));
-                    this.is(false, TA.equal(TC.reverse()));
-                    this.is(false, [1,2,'3'].equal(C));
-                  }
-                }/* removed from Basis,
-                {
-                  name: 'same()',
-                  test: function(){
-                    var T = [1,2,3,4,5];;
-                    this.is(true,  T.same(B));
-                    this.is(false, T.same(E));
-                    this.is(A, T);
-                  }
-                },
-                {
-                  name: 'similar()',
-                  test: function(){
-                    this.is(true,  A.similar(B));
-                    this.is(true,  C.similar(E));
-                    this.is(false, A.similar(C));
-                    this.is(false, [1,2,'3'].similar(C));
-                  }
-                }*/
               ]
             },
             {
@@ -797,69 +527,15 @@
                     this.is(true,  T.has(3));
                     this.is(false, T.has(23));
                   }
-                },
-                {
-                  name: 'absent()',
-                  test: function(){
-                    var T = [1,2,3,4,5];
-                    this.is(true,  T.absent('3'));
-                    this.is(false, T.absent(3));
-                    this.is(true,  T.absent(23));
-                  }
                 }
               ]
             },
             {
               name: 'Misc',
               testcase: [
-                /*{
-                  name: 'roll()',
-                  test: function(){
-                    var T = [1,2,3,4,5];
-                    this.is([1,2,3,4,5], T.roll());
-
-                    var T = [1,2,3,4,5];
-                    this.is([1,2,3,4,5], T.roll(0));
-
-                    var T = [1,2,3,4,5];
-                    this.is([1,2,3,4,5], T.roll(T.length));
-
-                    var T = [1,2,3,4,5];
-                    this.is([1,2,3,4,5], T.roll(-T.length));
-
-                    var T = [1,2,3,4,5];
-                    var T2 = T.roll(T.length);
-                    this.is(true, T === T2);
-
-                    var T = [1,2,3,4,5];
-                    this.is([3,4,5,1,2], T.roll(2));
-
-                    var T = [1,2,3,4,5];
-                    this.is([3,4,5,1,2], T.roll(2.1));
-
-                    var T = [1,2,3,4,5];
-                    this.is([3,4,5,1,2], T.roll(2.9));
-
-                    var T = [1,2,3,4,5];
-                    this.is([3,4,5,1,2], T.roll(T.length + 2));
-
-                    var T = [1,2,3,4,5];
-                    this.is([4,5,1,2,3], T.roll(-2));
-
-                    var T = [1,2,3,4,5];
-                    this.is([4,5,1,2,3], T.roll(-2.1));
-
-                    var T = [1,2,3,4,5];
-                    this.is([4,5,1,2,3], T.roll(-2.9));
-
-                    var T = [1,2,3,4,5];
-                    this.is([4,5,1,2,3], T.roll(-T.length - 2));
-                  }
-                },*/
                 {
                   name: 'sortAsObject()',
                   test: function(){
-                    ;
                   }
                 },
                 {
@@ -942,7 +618,7 @@
               test: function(){
                 this.is({ a: 123, b: 234 }, '{ a: 123, b: 234 }'.toObject());
                 this.is([1,2,3,4,5], '[1,2,3,4,5]'.toObject());
-                this.is(function(val){return val;}.toString(), 'function(val){return val}'.toObject().toString());
+                this.is(function(val){return val;}.toString(), 'function(val){return val;}'.toObject().toString());
               }
             },
             {
@@ -1011,13 +687,13 @@
               }
             },
             {
-              name: 'ltrim()',
+              name: 'trimLeft()',
               test: function(){
                 this.is('x \n ', ' \n x \n '.trimLeft());
               }
             },
             {
-              name: 'rtrim()',
+              name: 'trimRight()',
               test: function(){
                 this.is(' \n x', ' \n x \n '.trimRight());
               }
@@ -1026,36 +702,6 @@
               name: 'trim()',
               test: function(){
                 this.is('x', ' \n x \n '.trim());
-              }
-            },
-            {
-              name: 'ellipsis()',
-              test: function(){
-                var tail = '\u2026';
-
-                this.is('', ''.ellipsis());
-                this.is('', ''.ellipsis(0));
-                this.is('', ''.ellipsis(1));
-                this.is('', ''.ellipsis(2));
-                this.is('', ''.ellipsis(-2));
-
-                var S = 'hello';
-                this.is(tail, S.ellipsis());
-                this.is(tail, S.ellipsis(0));
-                this.is('h' + tail, S.ellipsis(1));
-                this.is('he' + tail, S.ellipsis(2));
-                this.is('hell' + tail, S.ellipsis(4));
-                this.is('hello', S.ellipsis(5));
-                this.is('hello', S.ellipsis(7));
-                this.is('hello', S.ellipsis(-2));
-
-                var S = 'multiple\nline\n\t string';
-                this.is(tail, S.ellipsis());
-                this.is(tail, S.ellipsis(0));
-                this.is('m' + tail, S.ellipsis(1));
-                this.is('mult' + tail, S.ellipsis(4));
-                this.is('multiple\nline' + tail, S.ellipsis(13));
-                this.is(S.substring(0, S.length - 1) + tail, S.ellipsis(S.length - 1));
               }
             },
             {
@@ -1115,35 +761,6 @@
                 //this.is("-\u043F\u0440\u0438-\u0432\u0435\u0442", "\u041F\u0440\u0438\u0412\u0435\u0442".dasherize());
                 //this.is("-\u043F\u0440\u0438", "\u041F\u0440\u0438".dasherize());
               }
-            },
-            {
-              name: 'dump()',
-              test: function(){
-              
-              }
-            },
-            {
-              name: 'Buildin',
-              testcase: [
-                {
-                  name: 'split()',
-                  test: function(){
-                  
-                  }
-                },
-                {
-                  name: 'replace()',
-                  test: function(){
-                  
-                  }
-                },
-                {
-                  name: 'substr()',
-                  test: function(){
-                  
-                  }
-                }
-              ]
             }
           ]
         },
@@ -1336,9 +953,9 @@
                 this.is('123.23', N.lead(1));
                 this.is('123.23', N.lead(2));
                 this.is('123.23', N.lead(3));
-                this.is('123.23', N.lead(6));
-                this.is('00123.23', N.lead(8));
-                this.is('##123.23', N.lead(8, '#'));
+                this.is('000123.23', N.lead(6));
+                this.is('00000123.23', N.lead(8));
+                this.is('#####123.23', N.lead(8, '#'));
 
                 var N = -123.23;
                 this.is('-123.23', N.lead());
@@ -1346,9 +963,9 @@
                 this.is('-123.23', N.lead(1));
                 this.is('-123.23', N.lead(2));
                 this.is('-123.23', N.lead(3));
-                this.is('-123.23', N.lead(6));
-                this.is('-00123.23', N.lead(8));
-                this.is('-##123.23', N.lead(8, '#'));
+                this.is('-000123.23', N.lead(6));
+                this.is('-00000123.23', N.lead(8));
+                this.is('-#####123.23', N.lead(8, '#'));
               }
             }
           ]
