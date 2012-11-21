@@ -277,6 +277,7 @@
           this.test.call(Tester);
         } catch(e) {
           console.log(e);
+          this.testCount++;
 
           if (typeof e == 'string')
             e = { message: e };
@@ -496,8 +497,7 @@
     };
 
     // main object
-    var Tester = new EventObject();
-    extend(Tester, {
+    var Tester = new EventObject({
       dataStack: [{}],
       resultStack: [],
 

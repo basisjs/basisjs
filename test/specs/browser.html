@@ -42,39 +42,39 @@
               test: function(){
                 cookieName = 'test-cookie-' + Math.random().toFixed(8).substr(2);
 
-                browser.Cookies.set(cookieName, 1);
+                browser.cookies.set(cookieName, 1);
                 this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
 
-                browser.Cookies.set(cookieName, 'basis-test');
+                browser.cookies.set(cookieName, 'basis-test');
                 this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*basis-test\\s*(;|$)')).test(document.cookie), true);
 
-                browser.Cookies.set(cookieName);
+                browser.cookies.set(cookieName);
                 this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=?\\s*(;|$)')).test(document.cookie), true);
               }
             },
             {
               name: 'get',
               test: function(){
-                browser.Cookies.set(cookieName, 1);
-                this.is('1', browser.Cookies.get(cookieName));
+                browser.cookies.set(cookieName, 1);
+                this.is('1', browser.cookies.get(cookieName));
 
-                browser.Cookies.set(cookieName, 'basis-test');
-                this.is('basis-test', browser.Cookies.get(cookieName));
+                browser.cookies.set(cookieName, 'basis-test');
+                this.is('basis-test', browser.cookies.get(cookieName));
 
-                browser.Cookies.set(cookieName);
-                this.is('', browser.Cookies.get(cookieName));
+                browser.cookies.set(cookieName);
+                this.is('', browser.cookies.get(cookieName));
 
-                browser.Cookies.set(cookieName, 'Привет мир');
-                this.is('Привет мир', browser.Cookies.get(cookieName));
+                browser.cookies.set(cookieName, 'Привет мир');
+                this.is('Привет мир', browser.cookies.get(cookieName));
               }
             },
             {
               name: 'remove',
               test: function(){
-                browser.Cookies.set(cookieName, 1);
+                browser.cookies.set(cookieName, 1);
                 this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
 
-                browser.Cookies.remove(cookieName);
+                browser.cookies.remove(cookieName);
                 this.is(false, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
                 this.is(false, (new RegExp(cookieName)).test(document.cookie), true);
               }
@@ -85,16 +85,16 @@
                 var path = location.pathname.replace(/\/[^\/]+$/, '/');
 
                 // set with path
-                browser.Cookies.set(cookieName, 1, 0, path);
+                browser.cookies.set(cookieName, 1, 0, path);
                 this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie), true);
 
                 // no effect for remove without path
-                browser.Cookies.remove(cookieName);
+                browser.cookies.remove(cookieName);
                 this.is(true, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie));
                 this.is(true, (new RegExp(cookieName)).test(document.cookie));
 
                 // remove
-                browser.Cookies.remove(cookieName, path);
+                browser.cookies.remove(cookieName, path);
                 this.is(false, (new RegExp('(^|\;)\\s*' + cookieName + '\\s*=\\s*1\\s*(;|$)')).test(document.cookie));
                 this.is(false, (new RegExp(cookieName)).test(document.cookie));
               }
