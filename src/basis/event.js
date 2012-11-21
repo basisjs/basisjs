@@ -130,8 +130,8 @@
   * can registrate handlers for events, and call it when event happend. 
   * @class
   */
-  var EventObject = Class(null, {
-    className: namespace + '.EventObject',
+  var Emitter = Class(null, {
+    className: namespace + '.Emitter',
 
    /**
     * List of event handler sets.
@@ -151,7 +151,7 @@
    /**
     * Fires when object is destroing.
     * NOTE: don't override
-    * @param {basis.EventObject} object Reference for object wich is destroing.
+    * @param {basis.Emitter} object Reference for object wich is destroing.
     * @event
     */
     event_destroy: createEvent('destroy'),
@@ -192,7 +192,7 @@
       if (!thisObject)
         thisObject = this;
 
-      ;;;if (!handler && typeof console != 'undefined') console.warn('EventObject#addHandler: `handler` argument is not an object (', handler, ')');
+      ;;;if (!handler) basis.dev.warn('Emitter#addHandler: `handler` argument is not an object (', handler, ')');
       
       // search for duplicate
       // check from end to start is more efficient for objects which often add/remove handlers
@@ -201,7 +201,7 @@
         item = handlers[i];
         if (item.handler === handler && item.thisObject === thisObject)
         {
-          ;;;if (typeof console != 'undefined') console.warn('EventObject#addHandler: Add duplicate handler to EventObject instance: ', this);
+          ;;;basis.dev.warn('Emitter#addHandler: Add duplicate handler to Emitter instance: ', this);
           return false;
         }
       }
@@ -229,7 +229,7 @@
       if (!thisObject)
         thisObject = this;
 
-      ;;;if (!handler && typeof console != 'undefined') console.warn('EventObject#addHandler: `handler` argument is not an object (', handler, ')');
+      ;;;if (!handler) basis.dev.warn('Emitter#removeHandler: `handler` argument is not an object (', handler, ')');
 
       // search for handler and remove
       // check from end to start is more efficient for objects which often add/remove handlers
@@ -241,6 +241,7 @@
       }
 
       // handler not found
+      ;;;basis.dev.warn('Emitter#removeHandler: method didn\'t remove any handler');
       return false;
     },
 
@@ -273,5 +274,8 @@
     create: createEvent,
     events: events,
 
-    EventObject: EventObject
+    Emitter: Emitter,
+
+    // deprecated
+    EventObject: Emitter
   }; 
