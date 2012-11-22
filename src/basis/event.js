@@ -36,7 +36,7 @@
     if (!eventFunction)
     {
       eventFunction = events[eventName] = 
-        /** @cut for more verbose in dev */ new Function('eventName', 'slice', 'return eventFunction = function _event_' + eventName + '(' + slice.call(arguments, 1).join(', ') + '){' +
+        /** @cut for more verbose in dev */ new Function('eventName', 'slice', 'var eventFunction;\nreturn eventFunction = function _event_' + eventName + '(' + slice.call(arguments, 1).join(', ') + '){' +
 
           function dispatchEvent(){
             var args;
