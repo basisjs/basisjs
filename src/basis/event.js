@@ -10,21 +10,16 @@
   //
 
   var Class = basis.Class;
-  var extend = Object.extend;
+  var extend = basis.object.extend;
   var slice = Array.prototype.slice;
-  var arrayFrom = basis.array.from;
 
 
   //
   // Main part
   //
 
+  var NULL_HANDLER = {};
   var events = {};
-
-
- /**
-  * @func
-  */
   var warnOnDestroy = function(){
     throw 'Object had been destroyed before. Destroy method must not be called more than once.';
   };
@@ -41,11 +36,9 @@
     if (!eventFunction)
     {
       eventFunction = events[eventName] = 
-        /** @cut for more verbose in dev */ new Function('eventName', 'slice', 'eventFunction', 'return eventFunction = function _event_' + eventName + '(' + arrayFrom(arguments, 1).join(', ') + '){' +
+        /** @cut for more verbose in dev */ new Function('eventName', 'slice', 'return eventFunction = function _event_' + eventName + '(' + slice.call(arguments, 1).join(', ') + '){' +
 
           function dispatchEvent(){
-            var handlers = this.handlers_;
-            var handler;
             var args;
             var fn;
 
@@ -53,39 +46,29 @@
               if (fn = this.listen[eventFunction.listenName])
                 eventFunction.listen.call(this, fn, args = [this].concat(slice.call(arguments)));
 
-            if (handlers && handlers.length)
+            var cursor = this;
+            while (cursor = cursor.handlers_)
             {
-              // prevent handlers list from changes
-              handlers = slice.call(handlers);
+              // handler call
+              if (fn = cursor.handler[eventName])
+                if (typeof fn == 'function')
+                  fn.apply(cursor.context, args = args || [this].concat(slice.call(arguments)));
 
-              for (var i = handlers.length; i-- > 0;)
-              {
-                handler = handlers[i];
-
-                // handler call
-                if (fn = handler.handler[eventName])
-                  if (typeof fn == 'function')
-                  {
-                    args = args || [this].concat(slice.call(arguments));
-                    fn.apply(handler.thisObject, args);
-                  }
-
-                // any event handler
-                if (fn = handler.handler['*'])
-                  if (typeof fn == 'function')
-                    fn.call(handler.thisObject, {
-                      sender: this,
-                      type: eventName,
-                      args: arguments
-                    });
-              }
+              // any event handler
+              if (fn = cursor.handler['*'])
+                if (typeof fn == 'function')
+                  fn.call(cursor.context, {
+                    sender: this,
+                    type: eventName,
+                    args: arguments
+                  });
             }
 
             // WARN: this feature is not available in producation
             ;;;if (this.event_debug) this.event_debug({ sender: this, type: eventName, args: arguments });
           }
 
-        /** @cut for more verbose in dev */ .toString().replace(/\beventName\b/g, '\'' + eventName + '\'').replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + '}')(eventName, slice);
+        /** @cut for more verbose in dev */ .toString().replace(/\beventName\b/g, "'" + eventName + "'").replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + '}')(eventName, slice);
 
       if (LISTEN_MAP[eventName])
         extend(eventFunction, LISTEN_MAP[eventName]);
@@ -107,14 +90,12 @@
 
       LISTEN_MAP[eventName] = {
         listenName: listenName,
-        listen: handler || function(listen, args){
-          var object;
+        listen: handler || function(listenHandler, args){
+          if (args[1])  // second argument is oldObject
+            args[1].removeHandler(listenHandler, this);
 
-          if (object = args[1])  // second argument is oldObject
-            object.removeHandler(listen, this);
-
-          if (object = this[propertyName])
-            object.addHandler(listen, this);
+          if (this[propertyName])
+            this[propertyName].addHandler(listenHandler, this);
         }
       };
 
@@ -180,65 +161,49 @@
    /**
     * Registrates new event handler set for object.
     * @param {object} handler Event handler set.
-    * @param {object=} thisObject Context object.
+    * @param {object=} context Context object.
     */
-    addHandler: function(handler, thisObject){
-      var handlers = this.handlers_;
-
-      if (!handlers)
-        handlers = this.handlers_ = [];
-
-      if (!thisObject)
-        thisObject = this;
-
+    addHandler: function(handler, context){
       ;;;if (!handler) basis.dev.warn('Emitter#addHandler: `handler` argument is not an object (', handler, ')');
+
+      context = context || this;
       
-      // search for duplicate
-      // check from end to start is more efficient for objects which often add/remove handlers
-      for (var i = handlers.length, item; i-- > 0;)
-      {
-        item = handlers[i];
-        if (item.handler === handler && item.thisObject === thisObject)
-        {
-          ;;;basis.dev.warn('Emitter#addHandler: Add duplicate handler to Emitter instance: ', this);
-          break;
-        }
-      }
+      // warn about duplicates
+      ;;;var cursor = this; while (cursor = cursor.handlers_) if (cursor.handler === handler && cursor.context === context) { basis.dev.warn('Emitter#addHandler: Add duplicate handler', handler, ' to Emitter instance: ', this); break; }
 
       // add handler
-      handlers.push({ 
+      this.handlers_ = { 
         handler: handler,
-        thisObject: thisObject
-      });
+        context: context,
+        handlers_: this.handlers_
+      };
     },
 
    /**
     * Removes event handler set from object. For this operation parameters
     * must be the same (equivalent) as used for addHandler method.
     * @param {object} handler Event handler set.
-    * @param {object=} thisObject Context object.
+    * @param {object=} context Context object.
     */
-    removeHandler: function(handler, thisObject){
-      var handlers = this.handlers_;
+    removeHandler: function(handler, context){
+      if (!this.handlers_)
+        return;
 
-      if (!handlers)
-        return false;
+      if (!context)
+        context = this;
 
-      if (!thisObject)
-        thisObject = this;
-
-      ;;;if (!handler) basis.dev.warn('Emitter#removeHandler: `handler` argument is not an object (', handler, ')');
-
-      // search for handler and remove
-      // check from end to start is more efficient for objects which often add/remove handlers
-      for (var i = handlers.length, item; i-- > 0;)
+      // search for handler and remove it
+      var cursor = this;
+      var prev = cursor;
+      while (cursor = cursor.handlers_)
       {
-        item = handlers[i];
-        if (item.handler === handler && item.thisObject === thisObject)
+        if (cursor.handler === handler && cursor.context === context)
         {
-          handlers.splice(i, 1);
+          cursor.handler = NULL_HANDLER; // make it non-callable
+          prev.handlers_ = cursor.handlers_;
           return;
         }
+        prev = cursor;
       }
 
       // handler not found

@@ -319,6 +319,7 @@
     window.c2count = 0;
 
     function run_test(){
+      if (PROFILE) console.profile();
       run1(function(){
         run1(function(){
           var c1 = Transfer.createCollection('col1', getter('getId()%2'), Transfer.all);
@@ -331,6 +332,7 @@
           ]);
           run2(function(){
             run2(function(){
+              if (PROFILE) console.profileEnd();
               total();
             });
           });
@@ -343,9 +345,7 @@
         description: 'BUTTON',
         click: function(){
           DOM.remove(this);
-          if (PROFILE) console.profile();
           run_test();
-          if (PROFILE) console.profileEnd();
         }
       }, 'run test')
     );
