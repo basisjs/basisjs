@@ -87,10 +87,10 @@
       this.addHandler(SERVICE_HANDLER, this);
     },
 
-    sign: function(proxy){
+    sign: function(transport){
       if (this.sessionKey)
       {
-        this.signature(proxy, this.sessionData);
+        this.signature(transport, this.sessionData);
         return true;
       }
       else
@@ -133,7 +133,7 @@
     },
 
     unfreeze: function(){
-      if (this.stoppedProxies)
+      if (this.stoppedTransports)
       {
         for (var i = 0, transport; transport = this.stoppedTransports[i]; i++)
           transport.resume();

@@ -40,13 +40,15 @@
       method: 'POST',
       contentType: 'multipart/form-data',
 
-      formSubmit: function(form){
+      formSubmit: function(form, requestData){
         var formData = new FormData(form);
 
-        this.request({
+        var requestConfig = Object.extend({}, requestData);
+
+        this.request(Object.extend(requestConfig, {
           url: form.action,
           postBody: formData
-        });
+        }));
       },
       
       uploadFiles: function(url, files){
@@ -115,8 +117,10 @@
       },
       processResponse: function(){
         var doc = getIFrameDocument(this.frame);
+        var docRoot = doc.body ? doc.body : doc.documentElement;
         this.update({
-          responseXML: doc && doc.body && doc.body.innerHTML
+          responseText: docRoot ? docRoot.innerHTML : null,
+          responseXML: doc.XMLDocument ? doc.XMLDocument : doc
         });
       },
       insertFrame: function(){
@@ -159,8 +163,9 @@
     FileUploader = basis.net.AbstractTransport.subclass({
       requestClass: IFrameRequest,
 
-      formSubmit: function(form){
-        this.request({ form: form });
+      formSubmit: function(form, requestData){
+        var requestConfig = Object.extend({}, requestData);
+        this.request(Object.extend(requestConfig, { form: form }));
       }
     });
   }
