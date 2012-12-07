@@ -221,15 +221,22 @@
         return firstChild.nodeValue;
       else if (firstChild !== node.lastChild && firstChild.nodeType == TEXT_NODE)
       {
+        var isSeparatedTextNode = true;
         var result = '';
         var cursor = firstChild;
         do
         {
+          if (cursor.nodeType !== TEXT_NODE)
+          {
+            isSeparatedTextNode = false;
+            break;
+          }
           result += cursor.nodeValue;
         }
         while (cursor = cursor.nextSibling);
 
-        return result;
+        if (isSeparatedTextNode)
+          return result;
       }
     }
 
