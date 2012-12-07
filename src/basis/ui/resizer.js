@@ -180,10 +180,11 @@
 
       resizerDisableRule.setProperty('pointerEvents', 'none'); // disable iframes to catch mouse events
       this.cursorOverloadRule_ = cssom.createRule('*');
-      this.cursorOverloadRule_.setProperty('cursor', this.cursor + ' !important');
     },
     event_start: function(cfg){
       super_.event_start.call(this, cfg);
+
+      this.cursorOverloadRule_.setProperty('cursor', this.cursor + ' !important');
 
       cfg.delta = PROPERTY_DELTA[this.property];
       cfg.factor = this.factor;
