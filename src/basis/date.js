@@ -115,8 +115,9 @@
       if (day > 28)
       {
         var monthDayCount = this.getMonthDayCount();
-        if (day > monthDayCount)
-          this.setDate(monthDayCount);
+        /*if (day > monthDayCount)
+          this.setDate(monthDayCount);*/
+        this.setDate(Math.min(day, monthDayCount));
       }
 
       return this;
@@ -166,8 +167,8 @@
       if (day > 28)
       {
         var monthDayCount = this.getMonthDayCount();
-        if (day > monthDayCount)
-          this.setDate(monthDayCount);
+        //if (day > monthDayCount)
+        this.setDate(Math.min(day, monthDayCount));
       }
 
       return this;
