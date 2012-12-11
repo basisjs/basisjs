@@ -734,7 +734,7 @@
               {
                 if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
                 {
-                  bindCode.push(domRef + '.' + attrName + '=' + bindVar + ';');
+                  bindCode.push('if(' + domRef + '.' + attrName + '!=' + bindVar + ')' + domRef + '.' + attrName + '=' + bindVar + ';');
                 }
               }
           }
