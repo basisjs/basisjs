@@ -103,6 +103,9 @@
       this.lastMouseX = 0;
       this.lastMouseY = 0;
 
+      this.currentDirectionX = 0;
+      this.currentDirectionY = 0;
+
       this.currentVelocityX = 0;
       this.currentVelocityY = 0;
 
@@ -170,7 +173,10 @@
 
       this.currentVelocityX = 0;
       this.currentVelocityY = 0;
-      
+
+      this.currentDirectionX = 0;
+      this.currentDirectionY = 0;
+
       if (this.minScrollDelta != 0)
       {
         this.minScrollDeltaXReached = false;
@@ -272,10 +278,16 @@
             this.minScrollDeltaYReached = true;          
 
           if (this.minScrollDeltaYReached)
+          {
             this.viewportTargetX = this.viewportX;
+            this.currentDirectionX = 0;
+          }
 
           if (this.minScrollDeltaXReached)
+          {
             this.viewportTargetY = this.viewportY;
+            this.currentDirectionY = 0;
+          }
         }
       }
 
@@ -330,7 +342,10 @@
           delta = this.viewportTargetX - this.viewportX;
 
           if (delta)
+          {
             this.currentVelocityX = delta / deltaTime;
+            this.currentDirectionX = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
+          }
         }
 
         if (this.scrollY)
@@ -338,7 +353,10 @@
           delta = this.viewportTargetY - this.viewportY;
 
           if (delta)
+          {
             this.currentVelocityY = delta / deltaTime;
+            this.currentDirectionY = delta == 0 ? 0 : (delta < 0 ? -1 : 1);
+          }
         }
       }
       else if (this.processInertia)
@@ -431,6 +449,10 @@
         this.viewportTargetY = positionY;
         this.updateElementPosition();
       }
+    },
+
+    getCurrentDirection: function(axis){
+      return axis == 'x' ? this.currentDirectionX : this.currentDirectionY;
     },
 
     calcExpectedPosition: function(axis){
