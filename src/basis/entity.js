@@ -715,9 +715,10 @@
       var before = this.calcs.length;
       var after = 0;
 
-      for (var i = 0; i < this.calcs.length; i++)
-        if (wrapper.args.has(this.calcs[i].key))
-          after = i + 1;
+      if (wrapper.args)
+        for (var i = 0; i < this.calcs.length; i++)
+          if (wrapper.args.has(this.calcs[i].key))
+            after = i + 1;
 
       if (key)
       {
