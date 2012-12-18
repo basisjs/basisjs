@@ -440,7 +440,7 @@
   // which makes popup visible can also hide it (as click outside of popup).
 
   var popupManager = new UINode({
-    template: '<div id="Basis-PopupStack" class="{hasChildren}">',
+    template: resource('templates/popup/popupManager.tmpl'),
 
     handheldMode: false,
 

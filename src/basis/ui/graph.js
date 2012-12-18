@@ -167,14 +167,7 @@
 
     childClass: GraphNode,
 
-    template:
-      '<div class="Basis-Graph {selected} {disabled}" style="position: relative; display: inline; display: inline-block; zoom: 1; outline: none">' +
-        '<!-- {graphSelection} -->' +
-        '<canvas{canvas} style="vertical-align: top; position:relative">' +
-          '<div>Canvas doesn\'t support.</div>' +
-        '</canvas>' +
-        '<!-- {graphViewer} -->' +
-      '</div>',
+    template: resource('templates/graph/Graph.tmpl'),
 
     binding: {
       graphSelection: 'satellite:',
@@ -1072,7 +1065,7 @@
       alpha: '.7'
     },
 
-    template: '<canvas{canvas} class="{selected} {disabled}" style="position:absolute;left:0;top:0"/>',
+    template: resource('templates/graph/GraphSelection.tmpl'),
 
     listen: {
       owner: {
@@ -1160,7 +1153,7 @@
   var GraphViewer = CanvasLayer.subclass({
     className: namespace + '.GraphViewer',
 
-    template: '<canvas{canvas} class="{selected} {disabled}" event-mousemove="move" event-mouseout="out" style="position:absolute;left:0;top:0"/>',
+    template: resource('templates/graph/GraphViewer.tmpl'),
 
     action: {
       move: function(event){

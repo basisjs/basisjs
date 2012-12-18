@@ -1,0 +1,15 @@
+
+  .Basis-Graph
+  {
+    position: relative;
+    display: inline;
+    display: inline-block;
+    zoom: 1;
+    outline: none;
+  }
+
+  .Basis-Graph-Canvas
+  {
+    vertical-align: top;
+    position: relative;
+  }

@@ -364,7 +364,7 @@
 
   var wmBlocker = new Blocker();
   var windowManager = new UINode({
-    template: '<div id="Basis-WindowStack" class="{hasChildren}"/>',
+    template: resource('templates/window/windowManager.tmpl'),
     selection: true,
     childClass: Window
   });
