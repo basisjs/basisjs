@@ -1,5 +1,4 @@
 
-  basis.require('basis.dom.event');
   basis.require('basis.ui');
   basis.require('basis.ui.popup');
 
@@ -15,7 +14,6 @@
   //
 
   var Class = basis.Class;
-  var Event = basis.dom.event;
   var getter = Function.getter;
 
   var DIR = basis.ui.popup.DIR;

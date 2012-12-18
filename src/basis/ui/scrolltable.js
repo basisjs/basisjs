@@ -52,6 +52,7 @@
   }
 
   // Cells proto
+  // TODO: remove reference to basis.dom.event, because future build improvement may hide basis from global scope
   var measureCell = DOM.createElement('td' + resetStyle(),
     DOM.createElement(resetStyle('position:relative!important'),
       DOM.createElement('iframe[event-load="measureInit"]' + resetStyle('width:100%!important;position:absolute!important;visibility:hidden!important;behavior:expression(basis.dom.event.fireEvent(window,\\"load\\",{type:\\"load\\",target:this}),(runtimeStyle.behavior=\\"none\\"))'))

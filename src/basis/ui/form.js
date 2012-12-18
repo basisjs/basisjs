@@ -1,6 +1,7 @@
 
   basis.require('basis.event');
   basis.require('basis.dom');
+  basis.require('basis.dom.event');
   basis.require('basis.ui');
   basis.require('basis.ui.field');
 
@@ -18,6 +19,7 @@
   //
 
   var DOM = basis.dom;
+  var domEvent = basis.dom.event;
 
   var createEvent = basis.event.create;
   var events = basis.event.events;
@@ -136,7 +138,7 @@
       },
       validate: function(event){
         if (this.validate() !== true)
-          basis.dom.event.cancelDefault(event);
+          domEvent.cancelDefault(event);
       }
     },
 

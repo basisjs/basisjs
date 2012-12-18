@@ -1,6 +1,6 @@
 
+  basis.require('basis.data');
   basis.require('basis.dom');
-  basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
   basis.require('basis.ui');
 
@@ -23,13 +23,12 @@
   //
 
   var Class = basis.Class;
-  var Event = basis.dom.event;
   var DOM = basis.dom;
   var cssom = basis.cssom;
 
   var getter = Function.getter;
   var nullGetter = Function.nullGetter;
-  var extend = Object.extend;
+  var extend = basis.object.extend;
 
   var nsData = basis.data;
 
@@ -430,7 +429,7 @@
     action: { 
       select: function(event){
         if (!this.isDisabled())
-          this.select(Event(event).ctrlKey);
+          this.select(event.ctrlKey);
       }
     }
   });

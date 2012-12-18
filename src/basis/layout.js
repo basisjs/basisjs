@@ -1,7 +1,6 @@
 
   basis.require('basis.ua');
   basis.require('basis.dom');
-  basis.require('basis.dom.event');
   basis.require('basis.cssom');
   basis.require('basis.ui');
 
@@ -22,7 +21,6 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var Event = basis.dom.event;
 
   var Browser = basis.ua;
   var extend = Object.extend;

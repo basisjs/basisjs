@@ -462,6 +462,7 @@
 
       this.setSelectedDate(selectedDate);
 
+      // TODO: remove when possible; it a hack, because tabElement will be placed aside of this.tmpl.element
       Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
     },
 
