@@ -143,13 +143,12 @@
   }
 
   function createGetTokenValueFunction(cultureRow){
-    return new Function('tokenName', 
-      'return ' + 
-        cultureRow.map(function(culture){
-          return 'this.getCultureValue("' + culture + '", tokenName)';
-        }).join(' || ') +
-        ' || this.getCultureValue("base", tokenName);'
-    );
+    return function(tokenName){
+      for (var i = 0, culture, value; culture = cultureRow[i++];)
+        if (value = this.getCultureValue(culture, tokenName))
+          return value;
+      return this.getCultureValue('base', tokenName);
+    }
   }
 
 

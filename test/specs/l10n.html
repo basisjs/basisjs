@@ -1,0 +1,85 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <title>Basis Test Suite - l10n</title>
+
+  <style type="text/css">
+    @import "../style/style.css";
+
+    /* */
+    BODY
+    {
+      font-family: Georgia;
+      font-size: small;
+      _font-size: x-small;
+    }
+  </style>
+  
+  <script type="text/javascript" data-basis-config="" src="../../src/basis.js"></script>
+  <script type="text/javascript" src="../test.js"></script>
+  <script type="text/javascript" src="../common.js"></script>
+</head>
+
+<body>
+  <script type="text/javascript">
+    loadTest((function(){
+      basis.require('basis.l10n');
+      
+      return [
+        {
+          name: 'base',
+          testcase: [
+            {
+              name: 'fallback',
+              test: function(){
+                basis.l10n.createDictionary('test', '', { value: 'base' });
+                basis.l10n.setCulture();
+                this.is('base', basis.l10n.getToken('test.value').value);
+
+                basis.l10n.setCultureList('a/b/c b/c c');
+
+                basis.l10n.setCulture('c');
+                this.is('base', basis.l10n.getToken('test.value').value);
+                basis.l10n.setCulture('b');
+                this.is('base', basis.l10n.getToken('test.value').value);
+                basis.l10n.setCulture('a');
+                this.is('base', basis.l10n.getToken('test.value').value);
+
+                basis.l10n.updateDictionary('test', 'c', { value: 'c' });
+                basis.l10n.setCulture('c');
+                this.is('c', basis.l10n.getToken('test.value').value);
+
+                basis.l10n.setCulture('b');
+                this.is('c', basis.l10n.getToken('test.value').value);
+                basis.l10n.setCulture('a');
+                this.is('c', basis.l10n.getToken('test.value').value);
+                basis.l10n.updateDictionary('test', 'b', { value: 'b' });
+                this.is('b', basis.l10n.getToken('test.value').value);
+                basis.l10n.setCulture('b');
+                this.is('b', basis.l10n.getToken('test.value').value);
+                basis.l10n.setCulture('c');
+                this.is('c', basis.l10n.getToken('test.value').value);
+
+                basis.l10n.updateDictionary('test', 'a', { value: 'a' });
+                basis.l10n.setCulture('a');
+                this.is('a', basis.l10n.getToken('test.value').value);
+                basis.l10n.setCulture('b');
+                this.is('b', basis.l10n.getToken('test.value').value);
+                basis.l10n.setCulture('c');
+                this.is('c', basis.l10n.getToken('test.value').value);
+              }
+            }
+          ]
+        }
+      ];
+
+    })());
+
+
+  </script>
+</body>
+
+</html>
