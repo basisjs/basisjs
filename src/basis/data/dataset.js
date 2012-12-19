@@ -1826,6 +1826,3 @@
     Slice: Slice,
     Cloud: Cloud
   };
-
-  // TODO: remove
-  module.exports.MapReduce = MapFilter;
