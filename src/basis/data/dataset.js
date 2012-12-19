@@ -682,7 +682,9 @@
   // Source dataset mixin
   //
 
-  var SourceDatasetMixin = {
+  var SourceDataset = Class(AbstractDataset, {
+    className: namespace + '.SourceDataset',
+
    /**
     * @inheritDoc
     */
@@ -796,7 +798,7 @@
 
       this.sourceMap_ = null;
     }
-  };
+  });
 
 
   //
@@ -961,7 +963,7 @@
  /**
   * @class
   */
-  var MapFilter = Class(AbstractDataset, SourceDatasetMixin, {
+  var MapFilter = Class(SourceDataset, {
     className: namespace + '.MapFilter',
 
    /**
@@ -1419,7 +1421,7 @@
   * @see ./demo/graph/range.html
   * @class
   */
-  var Slice = Class(AbstractDataset, SourceDatasetMixin, {
+  var Slice = Class(SourceDataset, {
     className: namespace + '.Slice',
 
    /**
@@ -1489,7 +1491,7 @@
       this.index_ = [];
 
       // inherit
-      SourceDatasetMixin.init.call(this);
+      SourceDataset.prototype.init.call(this);
     },
 
    /**
@@ -1573,7 +1575,7 @@
     */
     destroy: function(){
       // inherit
-      SourceDatasetMixin.destroy.call(this);
+      SourceDataset.prototype.destroy.call(this);
 
       // destroy index
       this.index_ = null;
@@ -1725,7 +1727,7 @@
  /**
   * @class
   */
-  var Cloud = Class(AbstractDataset, SourceDatasetMixin, {
+  var Cloud = Class(SourceDataset, {
     className: namespace + '.Cloud',
 
    /**
@@ -1776,7 +1778,7 @@
         }, this.keyMap));
 
       // inherit
-      SourceDatasetMixin.init.call(this);
+      SourceDataset.prototype.init.call(this);
     },
 
    /**
@@ -1794,7 +1796,7 @@
     */
     destroy: function(){
       // inherit
-      SourceDatasetMixin.destroy.call(this);
+      SourceDataset.prototype.destroy.call(this);
 
       // destroy keyMap
       this.keyMap.destroy();
@@ -1811,6 +1813,9 @@
     // operable datasets
     Merge: Merge,
     Subtract: Subtract,
+
+    // base source dataset
+    SourceDataset: SourceDataset,
 
     // transform datasets
     MapFilter: MapFilter,
