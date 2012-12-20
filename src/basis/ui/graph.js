@@ -349,13 +349,13 @@
       return new this.childClass(config);
     },
 
-    listen: {
+    /*listen: {
       childNode: {
         valuesChanged: function(seria, delta){
           this.event_valuesChanged(seria, delta);
         }
       }
-    },
+    },*/
 
     init: function(){
       this.colorPicker = new ColorPicker(extend({ owner: this }, this.colorPicker));
