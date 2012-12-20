@@ -26,11 +26,12 @@
   var Class = basis.Class;
   var oneFunctionProperty = Class.oneFunctionProperty;
 
-  var extend = Object.extend;
-  var values = Object.values;
-  var $self = Function.$self;
-  var $true = Function.$true;
-  var $false = Function.$false;
+  var extend = basis.object.extend;
+  var values = basis.object.values;
+  var getter = basis.getter;
+  var $self = basis.fn.$self;
+  var $true = basis.fn.$true;
+  var $false = basis.fn.$false;
   var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
 
@@ -984,7 +985,7 @@
    /**
     * Helper function.
     */
-    rule: Function.getter($true),
+    rule: getter($true),
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -1429,7 +1430,7 @@
     * @type {function(basis.data.DataObject)}
     * @readonly
     */
-    rule: Function.getter($true),
+    rule: getter($true),
 
    /**
     * Events list when dataset should recompute rule for source item.
@@ -1738,7 +1739,7 @@
    /**
     * @type {function(basis.data.DataObject)}
     */
-    rule: Function.getter($false),
+    rule: getter($false),
 
    /**
     * Events list when dataset should recompute rule for source item.
