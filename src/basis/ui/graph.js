@@ -33,8 +33,14 @@
   var Selection = basis.dom.wrapper.Selection;
 
   var createEvent = basis.event.create;
-  var getter = Function.getter;
+  var getter = basis.getter;
   var arrayFrom = basis.array.from;
+  var $undef = basis.fn.$undef;
+  var $const = basis.fn.$const;
+  var $self = basis.fn.$self;
+  var extend = basis.object.extend;
+  var complete = basis.object.complete;
+  var objSlice = basis.object.slice;
 
   //
   // Main part
@@ -198,7 +204,7 @@
     },
 
     setStyle: function(newStyle){
-      Object.extend(this.style, Object.slice(newStyle, ['strokeStyle', 'lineWidth']));
+      extend(this.style, objSlice(newStyle, ['strokeStyle', 'lineWidth']));
       this.redrawRequest();
     },
 
@@ -206,7 +212,7 @@
       this.updateCount++;
     },
 
-    drawFrame: Function.$undef
+    drawFrame: $undef
   });
 
   //
@@ -266,9 +272,9 @@
     valuesMap: null,
 
     sourceGetter: getter('source'),
-    keyGetter: Function.$undef,
+    keyGetter: getter(),
     
-    valueGetter: Function.$const(0),
+    valueGetter: getter($const(0)),
     getValue: function(object, key){
       return this.source ? this.valuesMap[key] : this.valueGetter(object);
     },
@@ -352,7 +358,7 @@
     },
 
     init: function(){
-      this.colorPicker = new ColorPicker(Object.extend({ owner: this }, this.colorPicker));
+      this.colorPicker = new ColorPicker(extend({ owner: this }, this.colorPicker));
       Node.prototype.init.call(this);
     },
 
@@ -439,7 +445,7 @@
     className: namespace + '.SeriesGraph',
     childClass: SeriesGraphNode,    
 
-    keyGetter: Function.$self,
+    keyGetter: $self,
     keyTitleGetter: function(object){
       return this.keyGetter(object); 
     },
@@ -487,7 +493,7 @@
         };
       }
 
-      this.series = new GraphSeriesList(Object.extend({ owner: this }, this.series));
+      this.series = new GraphSeriesList(extend({ owner: this }, this.series));
       this.series.addHandler(GRAPH_SERIES_HANDLER, this);
       GRAPH_SERIES_HANDLER.childNodesModified.call(this, this.series, { inserted: this.series.childNodes });
     },
@@ -495,7 +501,7 @@
     getValuesForSeria: function(seria){
       var values = [];
       for (var i = 0, child; child = this.childNodes[i]; i++)
-        values.push(child.values[seria.basisObjectId]);
+        values.push(child.values[seria.basisObjectId] || 0);
       
       return values;
     },
@@ -821,7 +827,7 @@
       }  
 
       //save graph data
-      Object.extend(this.clientRect, {
+      extend(this.clientRect, {
         left: LEFT,
         top: TOP,
         width: WIDTH - LEFT - RIGHT,
@@ -916,7 +922,7 @@
     },
 
     // abstract methods
-    drawSeria: Function.$undef
+    drawSeria: $undef
   });
 
 
@@ -1120,7 +1126,7 @@
       var left, right;
       var lastPos = -1;
 
-      Object.extend(this.context, this.style);
+      extend(this.context, this.style);
 
       for (var i = 0; i < this.owner.childNodes.length + 1; i++)
       {
@@ -1280,16 +1286,16 @@
         var valueY = Math.round((1 - value / MAX) * HEIGHT);
         var labelY = Math.max(labelHeight / 2, Math.min(valueY, HEIGHT - labelHeight / 2));
 
-        labels[i] = {
+        labels.push({
           color: seria.getColor(),
           text: valueText,
           valueY: valueY,
           labelY: labelY
-        };
+        });
       }
 
       // adjust label positions 
-      labels = labels.sortAsObject(getter('valueY'));
+      labels = labels.sortAsObject('valueY');
 
       var hasCrossing = true;
       var crossGroup = labels.map(function(label){
@@ -1315,14 +1321,9 @@
         }
       }
 
-      for (var i = 0; i < crossGroup.length; i++)
-      {
-        for (var j = 0; j < crossGroup[i].labels.length; j++)
-        {
-          var label = crossGroup[i].labels[j];
-          label.labelY = crossGroup[i].y - crossGroup[i].height / 2 + j * labelHeight + labelHeight / 2;
-        }
-      }
+      for (var i = 0, group; group = crossGroup[i]; i++)
+        for (var j = 0, label; label = group.labels[j]; j++)
+          label.labelY = group.y - (group.height / 2) + j * labelHeight + (labelHeight / 2);
 
       // draw labels
       var align = keyPosition >= (keyCount / 2) ? -1 : 1;
@@ -1334,21 +1335,20 @@
         context.fillStyle = 'white';
         context.lineWidth = 3;
         context.beginPath();
-        context.arc(xPosition + .5, label.valueY + .5, pointWidth, 0, 2*Math.PI);
+        context.arc(xPosition + .5, label.valueY + .5, pointWidth, 0, 2 * Math.PI);
         context.stroke();         
         context.fill();
         context.closePath();
         
-        
         var tongueSize = 10;
         context.beginPath();
         context.moveTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
-        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY - 5 + .5);
-        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
-        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + (labelWidth + 2*labelPadding)*align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
-        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + (labelWidth + 2*labelPadding)*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
-        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
-        context.lineTo(xPosition + (pointWidth + 1 + tongueSize)*align + .5, label.labelY + 5 + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + .5, label.labelY - 5 + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + (labelWidth + 2 * labelPadding) * align + .5, label.labelY - Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + (labelWidth + 2 * labelPadding) * align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + .5, label.labelY + Math.round(labelHeight / 2) + .5);
+        context.lineTo(xPosition + (pointWidth + 1 + tongueSize) * align + .5, label.labelY + 5 + .5);
         context.lineTo(xPosition + (pointWidth + 1) * align + .5, label.valueY + .5);
         context.fillStyle = label.color;
         context.strokeStyle = '#444';
@@ -1359,7 +1359,7 @@
 
         context.fillStyle = 'black';
         context.textAlign = 'right';
-        context.fillText(label.text, xPosition + (pointWidth + tongueSize + labelPadding)*align + (align == 1 ? labelWidth : 0) + .5, label.labelY + 4);
+        context.fillText(label.text, xPosition + (pointWidth + tongueSize + labelPadding) * align + (align == 1 ? labelWidth : 0) + .5, label.labelY + 4);
       }
 
       context.restore();
@@ -1372,7 +1372,7 @@
   var LinearGraph = AxisGraph.subclass({
     className: namespace + '.LinearGraph',
 
-    fillArea: true,
+    fillArea: false,
     style: {
       strokeStyle: '#090',
       lineWidth: 2.5,
@@ -1391,7 +1391,7 @@
 
     init: function(){
       if (this.selection && !(this.selection instanceof Selection))
-        this.selection = Object.complete({ multiple: true }, this.selection);
+        this.selection = complete({ multiple: true }, this.selection);
 
       AxisGraph.prototype.init.call(this);
     },
@@ -1422,10 +1422,10 @@
           context.lineTo(x, y);
       }
 
-      Object.extend(context, this.style);
+      extend(context, this.style);
       context.stroke();
 
-      if (this.fillArea && this.childNodes.length == 1)
+      if (this.fillArea && this.series.childNodes.length == 1)
       {
         context.lineWidth = 0;
         var zeroPosition = min < 0 ? Math.max(0, max) / (max - min) * height : height;
@@ -1557,7 +1557,7 @@
       context.translate(left, top);
       context.fillStyle = color;
 
-      Object.extend(context, this.style);
+      extend(context, this.style);
       context.strokeStyle = '#333';
       context.lineWidth = 1;
 
