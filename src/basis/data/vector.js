@@ -185,7 +185,7 @@
     // create member if necessary
     if (!newMember)
     {
-      newItem = new VectorItem({
+      newItem = new Item({
         key: newKey
       });
       newMember = {
@@ -194,6 +194,9 @@
       };
       dataset.memberMap_[newKey] = newMember;
       inserted = newItem;
+
+      if (dataset.slots_[newKey])
+        dataset.slots_[newKey].setDelegate(newItem);
     }
     else
       newItem = newMember.item;
@@ -254,7 +257,7 @@
           // create member if necessary
           if (!member)
           {
-            item = new VectorItem({
+            item = new Item({
               key: key
             });
             member = {
@@ -262,7 +265,11 @@
               item: item
             };
             this.memberMap_[key] = member;
-            inserted.push(item);            
+            inserted.push(item);
+
+            console.log(this.slots_, key, this.slots_[key]);
+            if (this.slots_[key])
+              this.slots_[key].setDelegate(item);
           }
           else
             item = member.item;
@@ -342,10 +349,14 @@
     }
   };
 
-  var VectorItem = basis.data.Object.subclass({
-    className: namespace + '.VectorItem',
+  var Item = basis.data.Object.subclass({
+    className: namespace + '.Item',
     isTarget: true,
     key: undefined
+  });
+
+  var Slot = basis.data.Object.subclass({
+    className: namespace + '.Slot'
   });
 
   var Vector = Class(SourceDataset, {
@@ -354,6 +365,7 @@
     * @type {Object}
     */ 
   	calcs: null,
+  	slots_: null,
 
   	rule: defaultRule,
 
@@ -376,6 +388,8 @@
   	    this.calcs[key] = calc;
   	  }
 
+  	  this.slots_ = {};
+
   	  // inherit
       SourceDataset.prototype.init.call(this);
   	},
@@ -384,6 +398,18 @@
   	  var member = this.memberMap_[key];
   	  if (member)
   	    return member.item;
+  	},
+  	getSlot: function(key){
+  	  var slot = this.slots_[key];
+  	  if (!slot)
+  	  {
+  	    slot = new Slot({
+  	      key: key,
+  	      delegate: this.get(key)
+  	    });
+  	    this.slots_[key] = slot;
+  	  }
+  	  return slot;
   	},
 
   	setRule: function(rule){
