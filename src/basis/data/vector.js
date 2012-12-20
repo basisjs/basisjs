@@ -164,7 +164,7 @@
       var updateData = {};
 
       for (var calcName in calcs)                  // cur value            what remove                 count of values
-        updateData[calcName] = calcs[calcName].remove(oldItem.data[calcName], sourceObjectInfo[calcName], oldMember);
+        updateData[calcName] = calcs[calcName].remove(oldItem.data[calcName], sourceObjectInfo.values[calcName], oldMember);
 
       oldItem.update(updateData); // TODO: store items and update aside
     }
@@ -173,11 +173,8 @@
     // recalc
     //
     if (recalc)
-    {
-      var calcs = dataset.calcs;
       for (var calcName in calcs)
-        sourceObjectInfo.values[calcName] = calcs[calcName].valueGetter(object);
-    }
+        sourceObjectInfo.values[calcName] = calcs[calcName].valueGetter(sourceObjectInfo.object);
 
 
     //
@@ -326,7 +323,7 @@
             var updateData = {};
 
             for (var calcName in calcs)          // cur value            what remove                 count of values
-              updateData[calcName] = calcs[calcName].remove(item.data[calcName], sourceObjectInfo[calcName], member);
+              updateData[calcName] = calcs[calcName].remove(item.data[calcName], sourceObjectInfo.values[calcName], member);
 
             item.update(updateData); // TODO: store items and update aside
           }
@@ -346,10 +343,13 @@
   };
 
   var VectorItem = basis.data.Object.subclass({
+    className: namespace + '.VectorItem',
+    isTarget: true,
     key: undefined
   });
 
   var Vector = Class(SourceDataset, {
+    className: namespace + '.Vector',
    /**
     * @type {Object}
     */ 

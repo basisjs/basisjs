@@ -396,6 +396,56 @@
                     this.is(false, checkVector(vector));
                     this.is(10, vector.itemCount);
                   }
+                },
+                {
+                  name: 'move some items from one key to another',
+                  test: function(){
+                    var dataset = createDS();
+                    var items = dataset.getItems();
+                    var vector = new basis.data.vector.Vector({
+                      source: dataset,
+                      rule: 'data.value & 1',
+                      calcs: {
+                        sum: basis.data.vector.sum('data.value')
+                      }
+                    });
+
+                    this.is(false, checkVector(vector));
+                    this.is(2, vector.itemCount);
+
+                    for (var i = 0; i < items.length / 2; i++)
+                      items[i].update({ value: 0 })
+
+                    this.is(false, checkVector(vector));
+                    this.is(2, vector.itemCount);
+                    this.is(false, isNaN(vector.getItems()[0].data.sum));
+                    this.is(false, isNaN(vector.getItems()[1].data.sum));
+                  }
+                },
+                {
+                  name: 'delete some items from source',
+                  test: function(){
+                    var dataset = createDS();
+                    var items = dataset.getItems().slice();
+                    var vector = new basis.data.vector.Vector({
+                      source: dataset,
+                      rule: 'data.value & 1',
+                      calcs: {
+                        sum: basis.data.vector.sum('data.value')
+                      }
+                    });
+
+                    this.is(false, checkVector(vector));
+                    this.is(2, vector.itemCount);
+
+                    for (var i = 0; i < items.length / 2; i++)
+                      items[i].destroy()
+
+                    this.is(false, checkVector(vector));
+                    this.is(2, vector.itemCount);
+                    this.is(false, isNaN(vector.getItems()[0].data.sum));
+                    this.is(false, isNaN(vector.getItems()[1].data.sum));
+                  }
                 }
               ]
             }
