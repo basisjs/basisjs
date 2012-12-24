@@ -266,8 +266,8 @@
  /**
   * @class
   */
-  var GraphSeries = AbstractNode.subclass({
-    className: namespace + '.GraphSeries',
+  var GraphSeria = AbstractNode.subclass({
+    className: namespace + '.GraphSeria',
 
     valuesMap: null,
 
@@ -343,7 +343,7 @@
   */
   var GraphSeriesList = Node.subclass({
     className: namespace + '.GraphSeriesList',
-    childClass: GraphSeries,
+    childClass: GraphSeria,
 
     childFactory: function(config){
       return new this.childClass(config);
@@ -1678,7 +1678,7 @@
     ColorPicker: ColorPicker,
     GraphNode: GraphNode,
     Graph: Graph,
-    GraphSeries: GraphSeries,
+    GraphSeria: GraphSeria,
     GraphSeriesList: GraphSeriesList,
     SeriesGraphNode: SeriesGraphNode,
     SeriesGraph: SeriesGraph,
