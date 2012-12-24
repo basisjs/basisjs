@@ -774,6 +774,16 @@
     }
   });
 
+
+  //
+  // Slot
+  //
+
+  var Slot = Class(DataObject, {
+    className: namespace + '.Slot'
+  });
+
+
   //
   // KeyObjectMap
   //
@@ -1488,6 +1498,7 @@
     // classes
     Object: DataObject,
     DataObject: DataObject,
+    Slot: Slot,
 
     KeyObjectMap: KeyObjectMap,
 

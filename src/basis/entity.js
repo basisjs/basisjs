@@ -25,14 +25,13 @@
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
 
-  var nsData = basis.data;
-
-  var AbstractDataset = nsData.AbstractDataset;
-  var Dataset = nsData.Dataset;
-  var Collection = nsData.dataset.Subset;
-  var Grouping = nsData.dataset.Split;
-  var DataObject = nsData.DataObject;
-  var STATE = nsData.STATE;
+  var DataObject = basis.data.DataObject;
+  var Slot = basis.data.Slot;
+  var AbstractDataset = basis.data.AbstractDataset;
+  var Dataset = basis.data.Dataset;
+  var Collection = basis.data.dataset.Subset;
+  var Grouping = basis.data.dataset.Split;
+  var STATE = basis.data.STATE;
 
   var NULL_INFO = {};
 
@@ -480,13 +479,6 @@
  /**
   * @class
   */
-  var Slot = Class(DataObject, {
-    className: namespace + '.Slot'
-  });
-
- /**
-  * @class
-  */
   var EntityTypeConstructor = Class(null, {
     className: namespace + '.EntityType',
     name: 'UntitledEntityType',
@@ -792,7 +784,7 @@
             data = tmp;
           }
 
-          slot = this.slot_[id] = new DataObject({
+          slot = this.slot_[id] = new Slot({
             delegate: this.get(id),
             data: data
           });

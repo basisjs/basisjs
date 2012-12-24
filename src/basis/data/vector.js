@@ -16,6 +16,7 @@
 
   var Class = basis.Class;
   var DataObject = basis.data.Object;
+  var Slot = basis.data.Slot;
   var SourceDataset = basis.data.dataset.SourceDataset;
 
   var $undef = basis.fn.$undef;
@@ -357,10 +358,6 @@
     className: namespace + '.Item',
     isTarget: true,
     key: undefined
-  });
-
-  var Slot = Class(DataObject, {
-    className: namespace + '.Slot'
   });
 
   var Vector = Class(SourceDataset, {
