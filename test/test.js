@@ -187,7 +187,7 @@
     });
 
     var re0001 = new RegExp('\u0001', 'g');
-    var re0002 = new RegExp('\u0002(?!.*\u0002)');
+    var re0002 = new RegExp('\u0002(\\d+)\u0002', 'g');
     var reThisIs = new RegExp('this\\.is\u0002', 'g');
     var Test = Class(AbstractTest, {
       className: namespace + '.Test',
@@ -231,7 +231,7 @@
                       });
 
         // remove & store parenthesis 
-        while (s != (t = s.replace(/\([^\(\)]*\)/, function(m){ parenthesis.push(m); return '\u0002'; })))
+        while (s != (t = s.replace(/\([^\(\)]*\)/, function(m){ var idx = parenthesis.push(m) - 1; return '\u0002' + String(idx) + '\u0002'; })))
           s = t;
         //console.log(s);
 
@@ -245,7 +245,7 @@
 
         // restore parenthesis
         for (var i = lines.length - 1; i >= 0; i--)
-          while (lines[i] != (t = lines[i].replace(re0002, function(){ return parenthesis.pop(); })))
+          while (lines[i] != (t = lines[i].replace(re0002, function(m, idx){ console.log(arguments);return parenthesis[idx]; })))
             lines[i] = t;
 
         // restore strings
