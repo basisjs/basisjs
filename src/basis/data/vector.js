@@ -222,7 +222,7 @@
     return {
       inserted: inserted,
       deleted: deleted
-    }
+    };
   }
 
   var VECTOR_ITEM_HANDLER = {
@@ -231,7 +231,11 @@
       var key = this.rule(object);
 
       if (sourceObjectInfo.key !== key)
-        changeSourceObjectKey(this, key, sourceObjectInfo, true);
+      {
+        var delta = changeSourceObjectKey(this, key, sourceObjectInfo, true);
+        if (delta = getDelta([delta.inserted], [delta.deleted]))
+          this.event_datasetChanged(delta);
+      }
       else
         recalcSourceObject(this, sourceObjectInfo, this.memberMap_[key]);
     }

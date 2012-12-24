@@ -385,13 +385,13 @@
                     this.is(10, vector.itemCount);
 
                     items.forEach(function(object){
-                      object.update({ value: 0 })
+                      object.update({ value: 0 });
                     });
                     this.is(false, checkVector(vector));
                     this.is(1, vector.itemCount);
 
                     items.forEach(function(object, idx){
-                      object.update({ value: idx })
+                      object.update({ value: idx });
                     });
                     this.is(false, checkVector(vector));
                     this.is(10, vector.itemCount);
