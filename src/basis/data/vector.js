@@ -15,6 +15,7 @@
   //
 
   var Class = basis.Class;
+  var DataObject = basis.data.Object;
   var SourceDataset = basis.data.dataset.SourceDataset;
 
   var $undef = basis.fn.$undef;
@@ -267,7 +268,6 @@
             this.memberMap_[key] = member;
             inserted.push(item);
 
-            console.log(this.slots_, key, this.slots_[key]);
             if (this.slots_[key])
               this.slots_[key].setDelegate(item);
           }
@@ -349,13 +349,13 @@
     }
   };
 
-  var Item = basis.data.Object.subclass({
+  var Item = Class(DataObject, {
     className: namespace + '.Item',
     isTarget: true,
     key: undefined
   });
 
-  var Slot = basis.data.Object.subclass({
+  var Slot = Class(DataObject, {
     className: namespace + '.Slot'
   });
 
