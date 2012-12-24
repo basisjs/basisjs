@@ -237,14 +237,16 @@
         }
 
       if (delta.deleted)
+      {
         for (var i = 0, child; child = delta.deleted[i]; i++)
         {
           key = this.keyGetter(child);
           valuesDelta[key] = null;
-          this.valuesMap[key] = null;
+          this.valuesMap[key] = 0;
 
           child.removeHandler(SERIA_ITEM_HANDLER, this);
         }
+      }
 
       this.event_valuesChanged(valuesDelta);
     } 
@@ -397,7 +399,7 @@
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         key = this.keyGetter(child);
-        if (delta[key])
+        if (key in delta)
         {
           if (delta[key])
             child.values[seria.basisObjectId] = delta[key];
