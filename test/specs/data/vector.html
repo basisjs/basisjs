@@ -423,7 +423,7 @@
                   }
                 },
                 {
-                  name: 'delete some items from source',
+                  name: 'delete items from source',
                   test: function(){
                     var dataset = createDS();
                     var items = dataset.getItems().slice();
@@ -438,6 +438,7 @@
                     this.is(false, checkVector(vector));
                     this.is(2, vector.itemCount);
 
+                    // delete half
                     for (var i = 0; i < items.length / 2; i++)
                       items[i].destroy()
 
@@ -445,6 +446,12 @@
                     this.is(2, vector.itemCount);
                     this.is(false, isNaN(vector.getItems()[0].data.sum));
                     this.is(false, isNaN(vector.getItems()[1].data.sum));
+
+                    // delete all
+                    dataset.clear()
+
+                    this.is(false, checkVector(vector));
+                    this.is(0, vector.itemCount);
                   }
                 }
               ]
