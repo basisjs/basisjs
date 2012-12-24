@@ -218,7 +218,7 @@
   //
   // Series Graph
   //
-  var SERIES_SOURCE_HANDLER = {
+  var SERIA_SOURCE_HANDLER = {
     datasetChanged: function(object, delta){
       var key;
       var value;
@@ -233,7 +233,7 @@
           valuesDelta[key] = value;
           this.valuesMap[key] = value;
 
-          child.addHandler(SERIES_ITEM_HANDLER, this);
+          child.addHandler(SERIA_ITEM_HANDLER, this);
         }
 
       if (delta.deleted)
@@ -243,14 +243,14 @@
           valuesDelta[key] = null;
           this.valuesMap[key] = null;
 
-          child.removeHandler(SERIES_ITEM_HANDLER, this);
+          child.removeHandler(SERIA_ITEM_HANDLER, this);
         }
 
       this.event_valuesChanged(valuesDelta);
     } 
   };
 
-  var SERIES_ITEM_HANDLER = {
+  var SERIA_ITEM_HANDLER = {
     update: function(object){ 
       var key = this.keyGetter(object);
       var value = this.valueGetter(object);
@@ -316,15 +316,15 @@
         var oldSource = this.source;
         if (oldSource)
         {
-          oldSource.removeHandler(SERIES_SOURCE_HANDLER, this);
-          SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { deleted: oldSource.getItems() });
+          oldSource.removeHandler(SERIA_SOURCE_HANDLER, this);
+          SERIA_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { deleted: oldSource.getItems() });
         }
 
         this.source = source;
         if (this.source)
         {
-          this.source.addHandler(SERIES_SOURCE_HANDLER, this);
-          SERIES_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { inserted: this.source.getItems() });
+          this.source.addHandler(SERIA_SOURCE_HANDLER, this);
+          SERIA_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { inserted: this.source.getItems() });
         }
 
         this.event_sourceChanged(oldSource);
@@ -345,17 +345,19 @@
     className: namespace + '.GraphSeriesList',
     childClass: GraphSeria,
 
+    event_valuesChanged: createEvent('valuesChanged', 'delta'),
+
     childFactory: function(config){
       return new this.childClass(config);
     },
 
-    /*listen: {
-      childNode: {
+    listen: {
+      childNode: { // seria
         valuesChanged: function(seria, delta){
           this.event_valuesChanged(seria, delta);
         }
       }
-    },*/
+    },
 
     init: function(){
       this.colorPicker = new ColorPicker(extend({ owner: this }, this.colorPicker));
@@ -388,7 +390,7 @@
 
       this.redrawRequest();
     },
-    valuesChanged: function(seria, delta){
+    valuesChanged: function(object, seria, delta){
       var needRedraw = false;
 
       var key;
@@ -1261,12 +1263,12 @@
       context.closePath();
 
       context.fillStyle = 'black';
-      context.fillText(keyText, xPosition +.5, TOP + HEIGHT + 5);
+      context.fillText(keyText, xPosition + .5, TOP + HEIGHT + 5);
 
       var labels = [];
 
       var labelPadding = 7;
-      var labelHeight = 10 + 2*labelPadding;
+      var labelHeight = 10 + 2 * labelPadding;
       var labelWidth = 0;
 
       //var key = this.owner.keyGetter(this.owner.childNodes[keyPosition]);
