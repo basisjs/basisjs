@@ -237,7 +237,7 @@
       if (sourceObjectInfo.key !== key)
       {
         var delta = changeSourceObjectKey(this, key, sourceObjectInfo, true);
-        if (delta = getDelta([delta.inserted], [delta.deleted]))
+        if (delta = getDelta(delta.inserted && [delta.inserted], delta.deleted && [delta.deleted]))
           this.event_datasetChanged(delta);
       }
       else
@@ -344,16 +344,9 @@
           }
         }
 
+      // fire event
       if (delta = getDelta(inserted, deleted))
-      {
-        // fire event
         this.event_datasetChanged(delta);
-
-        // destroy deleted
-        deleted.forEach(function(item){
-          item.destroy();
-        });
-      }
     }
   };
 
@@ -372,6 +365,16 @@
     slots_: null,
 
     rule: defaultRule,
+
+    event_datasetChanged: function(delta){
+      SourceDataset.prototype.event_datasetChanged.call(this, delta);
+
+      // destroy deleted
+      if (delta.deleted)
+        delta.deleted.forEach(function(item){ 
+          item.destroy();
+        });
+    },
 
     listen: {
       source: VECTOR_SOURCE_HANDLER
