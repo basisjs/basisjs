@@ -76,6 +76,20 @@
     }
   });
 
+  var Avg = VectorFn.subclass({
+    className: namespace + '.Avg',
+    add: function(curValue, value, member){
+      return (curValue * (member.count - 1) + (value || 0)) / member.count;
+    },
+    remove: function(curValue, value, member){
+      return (curValue * (member.count + 1) - (value || 0)) / (member.count || 1);
+    },
+    update: function(curValue, oldValue, newValue, member){
+      return ((curValue * member.count) - (oldValue || 0) + (newValue || 0)) / member.count;
+    }
+  });
+
+
   var fnPreset_ = {};
   function FnConstructor(BaseClass, getter, events){
     if (!Class.isClass(BaseClass) || !BaseClass.isSubclassOf(VectorFn))
@@ -117,6 +131,7 @@
 
   var sum = fnConstructor(Sum);
   var count = fnConstructor(Count);
+  var avg = fnConstructor(Avg);
 
 
   //////////
@@ -465,9 +480,12 @@
             {
               newValues[key] = {
                 item: member.item,
+                count: 0,
                 value: 0
               }
             }
+
+            member.count = (newValues[key] += 1);
 
             sourceObjectInfo.values[name] = newCalc.valueGetter(sourceObjectInfo.object);
             newValues[key].value = newCalc.add(newValues[key].value || 0, sourceObjectInfo.values[name], member);
@@ -528,5 +546,6 @@
     Vector: Vector,
 
     count: count,
-    sum: sum
+    sum: sum,
+    avg: avg
   };
