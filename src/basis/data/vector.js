@@ -485,7 +485,7 @@
               }
             }
 
-            member.count = (newValues[key] += 1);
+            member.count = (newValues[key].count += 1);
 
             sourceObjectInfo.values[name] = newCalc.valueGetter(sourceObjectInfo.object);
             newValues[key].value = newCalc.add(newValues[key].value || 0, sourceObjectInfo.values[name], member);
