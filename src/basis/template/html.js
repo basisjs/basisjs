@@ -224,9 +224,15 @@
       value: ['input', 'textarea'],
       minlength: ['input'],
       maxlength: ['input'],
+      readonly: ['input'],
       selected: ['option']
     };
-
+    var SPECIAL_ATTR_SINGLE = {
+      disabled: true,
+      checked: true,
+      selected: true,
+      readonly: true
+    };
 
    /**
     * @func
@@ -725,16 +731,23 @@
             default:
               varList.push(bindVar + '=' + buildAttrExpression(binding, true));
               toolsUsed.bind_attr = true;
-              bindCode.push(
-                bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar, buildAttrExpression(binding)] + ');'
-              );
 
               specialAttr = SPECIAL_ATTR_MAP[attrName];
+
+              bindCode.push(
+                bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar,
+                  specialAttr && SPECIAL_ATTR_SINGLE[attrName]
+                    ? buildAttrExpression(binding) + '?"' + attrName + '":""'
+                    : buildAttrExpression(binding)
+                  ] +
+                ');'
+              );
+
               if (specialAttr)
               {
                 if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
                 {
-                  bindCode.push('if(' + domRef + '.' + attrName + '!=' + bindVar + ')' + domRef + '.' + attrName + '=' + bindVar + ';');
+                  bindCode.push('if(' + domRef + '.' + attrName + '!=' + bindVar + ')' + domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' : '') + '(' + bindVar + ');');
                 }
               }
           }
