@@ -63,11 +63,11 @@ basis_require('basis.ext.flashcanvas');*/
         '<div>Canvas doesn\'t support.</div>' +
       '</canvas>',
 
-    init: function(){
-      UINode.prototype.init.call(this);
-     
+    templateSync: function(noRecreate){
       this.tmpl.canvas.width = this.width || 600;
       this.tmpl.canvas.height = this.height || 400;
+
+      UINode.prototype.templateSync.call(this, noRecreate);
 
       var canvasElement = this.tmpl.canvas;
 
@@ -76,6 +76,9 @@ basis_require('basis.ext.flashcanvas');*/
       
       if (canvasElement && canvasElement.getContext)
         this.context = canvasElement.getContext('2d');
+
+      if (this.redrawRequest)
+        this.redrawRequest();
     },
 
     childClass: Shape,
@@ -98,11 +101,15 @@ basis_require('basis.ext.flashcanvas');*/
     className: namespace + '.Canvas',
 
     drawCount: 0,
+    updateCount: 0,
     lastDrawUpdateCount: -1,
 
     event_draw: createEvent('draw'),
     listen: {
       childNode: {
+        redrawRequest: function(){
+          this.updateCount++;
+        },
         update: function(){
           this.updateCount++;
         }
@@ -128,11 +135,21 @@ basis_require('basis.ext.flashcanvas');*/
       );
     },
     draw: function(){
+      var canvas = this.tmpl.canvas;
+
+      if (!canvas || !this.context)
+        return false;
+
+      if (canvas.offsetWidth && canvas.width != canvas.offsetWidth)
+        canvas.width = canvas.offsetWidth;
+      if (canvas.offsetHeight && canvas.height != canvas.offsetHeight)
+        canvas.height = canvas.offsetHeight;
+
       if (!this.isNeedToDraw())
         return false;
 
-      this.lastDrawWidth = this.tmpl.canvas.width;
-      this.lastDrawHeight = this.tmpl.canvas.height;
+      this.lastDrawWidth = canvas.width;
+      this.lastDrawHeight = canvas.height;
       this.lastDrawUpdateCount = this.updateCount;
       this.drawCount = this.drawCount + 1;
 
