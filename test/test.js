@@ -160,7 +160,6 @@
       success: Function.$null,
       fault: Function.$null,
       progress: function(diff){
-//          console.log(diff);
         if (diff)
           this.event_progress(diff, this.completeTestCount/(this.totalTestCount || 1));
       },
@@ -233,7 +232,6 @@
         // remove & store parenthesis 
         while (s != (t = s.replace(/\([^\(\)]*\)/, function(m){ var idx = parenthesis.push(m) - 1; return '\u0002' + String(idx) + '\u0002'; })))
           s = t;
-        //console.log(s);
 
         // break into lines
         lines = s.split(/\r?\n|\n?\r/);
@@ -245,7 +243,7 @@
 
         // restore parenthesis
         for (var i = lines.length - 1; i >= 0; i--)
-          while (lines[i] != (t = lines[i].replace(re0002, function(m, idx){ console.log(arguments);return parenthesis[idx]; })))
+          while (lines[i] != (t = lines[i].replace(re0002, function(m, idx){ return parenthesis[idx]; })))
             lines[i] = t;
 
         // restore strings
@@ -297,7 +295,6 @@
         {
           var pre;
           element.appendChild(pre = DOM.createElement('DIV.code'));
-//          console.log(this);
 
           var result = new Array();
           var uncomplete = false;
