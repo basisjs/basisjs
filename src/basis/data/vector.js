@@ -331,6 +331,17 @@
             // delete
             delete memberMap[sourceObjectInfo.key];
             deleted.push(item);
+
+            if (this.slots_[item.key])
+            {
+              // update item
+              var updateData = {};
+
+              for (var calcName in calcs)          // cur value            what remove                 count of values
+                updateData[calcName] = calcs[calcName].remove(item.data[calcName], sourceObjectInfo.values[calcName], member);
+
+              item.update(updateData); // TODO: store items and update aside
+            }
           }
           else
           {
