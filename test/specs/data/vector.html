@@ -453,6 +453,33 @@
                     this.is(false, checkVector(vector));
                     this.is(0, vector.itemCount);
                   }
+                },
+                {
+                  name: 'setCalc',
+                  test: function(){
+                    var dataset = createDS();
+                    var vector = new basis.data.vector.Vector({
+                      source: dataset,
+                      calcs: {
+                        value: basis.data.vector.sum('data.value')
+                      }
+                    });
+
+                    var sum = dataset.getItems().reduce(function(res, item){ return res + item.data.value }, 0);
+                    this.is(sum, vector.pick().data.value)
+
+                    vector.setCalc('value', basis.data.vector.count());
+                    this.is(dataset.itemCount, vector.pick().data.value)
+
+                    vector.setCalc('value');
+                    this.is(undefined, vector.pick().data.value)
+
+                    vector.setCalc('value', basis.data.vector.count());
+                    this.is(dataset.itemCount, vector.pick().data.value)
+
+                    vector.setCalc('value', basis.data.vector.sum('data.value'));
+                    this.is(sum, vector.pick().data.value);
+                  }
                 }
               ]
             }

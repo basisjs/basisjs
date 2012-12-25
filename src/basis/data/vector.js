@@ -51,6 +51,7 @@
   var VectorFn = basis.Class(null, { extendConstructor_: true });
 
   var Count = VectorFn.subclass({
+    className: namespace + '.Count',
     add: function(curValue, value){
       return curValue + !!value;
     },
@@ -63,6 +64,7 @@
   });
 
   var Sum = VectorFn.subclass({
+    className: namespace + '.Sum',
     add: function(curValue, value){
       return curValue + value;
     },
@@ -121,16 +123,17 @@
   //
   //
 
-  function recalcSourceObject(dataset, sourceObjectInfo, member){
+  function recalcSourceObject(dataset, sourceObjectInfo){
     var calcs = dataset.calcs;
     var updateData = {};
+    var member = dataset.memberMap_[sourceObjectInfo.key];
     var item = member.item;
 
     for (var calcName in calcs)
     {
       var calc = calcs[calcName];
       var value = calc.valueGetter(sourceObjectInfo.object);
-      updateData[calcName] = calc.update(item.data[calcName], sourceObjectInfo.values[calcName], value, member);
+      updateData[calcName] = calc.update(item.data[calcName] || 0, sourceObjectInfo.values[calcName], value, member);
       sourceObjectInfo.values[calcName] = value;
     }
 
@@ -238,7 +241,7 @@
           this.event_datasetChanged(delta);
       }
       else
-        recalcSourceObject(this, sourceObjectInfo, this.memberMap_[key]);
+        recalcSourceObject(this, sourceObjectInfo);
     }
   };
 
@@ -365,10 +368,10 @@
    /**
     * @type {Object}
     */ 
-  	calcs: null,
-  	slots_: null,
+    calcs: null,
+    slots_: null,
 
-  	rule: defaultRule,
+    rule: defaultRule,
 
     listen: {
       source: VECTOR_SOURCE_HANDLER
@@ -376,44 +379,44 @@
 
    /**
     * @inheritDoc
-    */	
-  	init: function(){
-  	  // process calcs
-  	  var calcs = this.calcs;
+    */
+    init: function(){
+      // process calcs
+      var calcs = this.calcs;
       this.calcs = {};
-  	  for (var key in calcs)
-  	  {
-  	    var calc = calcs[key];
-  	    if (calc instanceof VectorFn == false)
-  	      calc = sum(calc);
-  	    this.calcs[key] = calc;
-  	  }
+      for (var key in calcs)
+      {
+        var calc = calcs[key];
+        if (calc instanceof VectorFn == false)
+          calc = sum(calc);
+        this.calcs[key] = calc;
+      }
 
-  	  this.slots_ = {};
+      this.slots_ = {};
 
-  	  // inherit
+      // inherit
       SourceDataset.prototype.init.call(this);
-  	},
+    },
 
-  	get: function(key){
-  	  var member = this.memberMap_[key];
-  	  if (member)
-  	    return member.item;
-  	},
-  	getSlot: function(key){
-  	  var slot = this.slots_[key];
-  	  if (!slot)
-  	  {
-  	    slot = new Slot({
-  	      key: key,
-  	      delegate: this.get(key)
-  	    });
-  	    this.slots_[key] = slot;
-  	  }
-  	  return slot;
-  	},
+    get: function(key){
+      var member = this.memberMap_[key];
+      if (member)
+        return member.item;
+    },
+    getSlot: function(key){
+      var slot = this.slots_[key];
+      if (!slot)
+      {
+        slot = new Slot({
+          key: key,
+          delegate: this.get(key)
+        });
+        this.slots_[key] = slot;
+      }
+      return slot;
+    },
 
-  	setRule: function(rule){
+    setRule: function(rule){
       if (typeof rule != 'function')
         rule = defaultRule;
 
@@ -422,33 +425,89 @@
         this.rule = rule;
         this.applyRule();
       }
-  	},
+    },
 
-  	applyRule: function(scope){
-  	  var inserted = [];
-  	  var deleted = [];
-  	  var delta;
+    setCalc: function(name, newCalc){
+      if (newCalc && newCalc instanceof VectorFn == false)
+        newCalc = sum(newCalc);
 
-  	  if (!scope)
-  	    scope = this.sourceMap_;
+	    var oldCalc = this.calcs[name];
+      if (oldCalc != newCalc)
+      {
+        var sourceMap = this.sourceMap_;
 
-  	  for (var objectId in scope)
-  	  {
-  	    var sourceObjectInfo = scope[objectId];
+  	    if (newCalc)
+  	    {
+          this.calcs[name] = newCalc;
+
+          var newValues = {};
+          for (var objectId in sourceMap)
+          {
+            var sourceObjectInfo = sourceMap[objectId];
+            var key = sourceObjectInfo.key;
+            var member = this.memberMap_[key];
+
+            if (!newValues[key])
+            {
+              newValues[key] = {
+                item: member.item,
+                value: 0
+              }
+            }
+
+            sourceObjectInfo.values[name] = newCalc.valueGetter(sourceObjectInfo.object);
+            newValues[key].value = newCalc.add(newValues[key].value || 0, sourceObjectInfo.values[name], member);
+          }
+
+          var updateData = {};
+          for (var key in newValues)
+          {
+            updateData[name] = newValues[key].value;
+            newValues[key].item.update(updateData);
+          }
+        }
+        else
+        {
+          delete this.calcs[name];
+
+          for (var objectId in sourceMap)
+            delete sourceMap[objectId].values[name];
+
+          var resetData = {};
+          resetData[name] = undefined;
+          for (var i = 0, item, items = this.getItems(); item = items[i]; i++)
+            item.update(resetData);
+        }
+      }
+    },
+
+    applyRule: function(scope){
+      var inserted = [];
+      var deleted = [];
+      var delta;
+
+     if (!scope)
+       scope = this.sourceMap_;
+
+      for (var objectId in scope)
+      {
+        var sourceObjectInfo = scope[objectId];
         var newKey = this.rule(sourceObjectInfo.object);
         if (newKey !== sourceObjectInfo.key)
         {
-          delta = changeSourceObjectKey(this, newKey, sourceObjectInfo);
+          delta = changeSourceObjectKey(this, newKey, sourceObjectInfo, true);
           if (delta.inserted)
             inserted.push(delta.inserted);
           if (delta.deleted)
             deleted.push(delta.deleted);
         }
+        else
+          recalcSourceObject(this, sourceObjectInfo);
       }
 
       if (delta = getDelta(inserted, deleted))
         this.event_datasetChanged(delta);
-  	}
+    }
   });
 
   module.exports = {
