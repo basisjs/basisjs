@@ -941,10 +941,12 @@
     var graphRect = graph.element.getBoundingClientRect();
     return globalX - graphRect.left - graph.clientRect.left;
   }
+
   function getGraphYByMouseY(graph, globalY){
     var graphRect = graph.element.getBoundingClientRect();
     return globalY - graphRect.top - graph.clientRect.top;
   }
+
   function getGraphItemPositionByMouseX(graph, mouseX){
     var width = graph.clientRect.width;
     var itemCount = graph.childNodes.length;
@@ -952,8 +954,7 @@
     return Math.max(0, Math.min(itemCount - 1, Math.round(x / (width / (itemCount - 1)))));
   }
 
-  function rebuildGraphSelection(graph, curItemPosition, startItemPosition)
-  {
+  function rebuildGraphSelection(graph, curItemPosition, startItemPosition){
     var applyItems = graph.childNodes.slice(Math.min(startItemPosition, curItemPosition), Math.max(startItemPosition, curItemPosition) + 1);
 
     var selectedItems = arrayFrom(graph.selection.getItems());
@@ -966,7 +967,8 @@
       var pos;
       for (var i = 0, item; item = applyItems[i]; i++)
       {
-        if ((pos = selectedItems.indexOf(item)) != -1)
+        pos = selectedItems.indexOf(item);
+        if (pos != -1)
           selectedItems.splice(pos, 1); 
       }      
     }
@@ -1050,6 +1052,10 @@
       var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
       var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
       
+      graph.selection.lastSelectedRange = {
+        start: Math.min(curItemPosition, startItemPosition),
+        end: Math.max(curItemPosition, startItemPosition)
+      };
       graph.selection.set(selectedItems);
 
       for (var i in GRAPH_SELECTION_GLOBAL_HANDLER)
