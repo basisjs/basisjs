@@ -58,10 +58,7 @@ basis_require('basis.ext.flashcanvas');*/
   var CanvasLayer = UINode.subclass({
     className: namespace + '.CanvasLayer',
 
-    template:
-      '<canvas{canvas} class="{selected} {disabled}">' +
-        '<div>Canvas doesn\'t support.</div>' +
-      '</canvas>',
+    template: resource('templates/canvas/CanvasLayer.tmpl'),
 
     templateSync: function(noRecreate){
       this.tmpl.canvas.width = this.width || 600;
