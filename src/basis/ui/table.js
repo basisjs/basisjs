@@ -493,9 +493,13 @@
 
       this.header = new this.headerClass(extend({ owner: this, structure: this.structure }, this.header));
       this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
+    },
+
+    templateSync: function(noRecreate){
+      UINode.prototype.templateSync.call(this, noRecreate);
 
       DOM.replace(this.tmpl.header, this.header.element);
-      DOM.replace(this.tmpl.footer, this.footer.element);
+      DOM.replace(this.tmpl.footer, this.footer.element);      
     },
 
     applyConfig_: function(structure){
