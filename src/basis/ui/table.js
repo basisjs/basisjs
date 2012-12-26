@@ -333,7 +333,8 @@
     template: resource('templates/table/FooterCell.tmpl'),
 
     binding: {
-      colSpan: 'colSpan'
+      colSpan: 'colSpan',
+      value: basis.fn.$const('\xA0')
     },
 
     setColSpan: function(colSpan){
@@ -386,13 +387,22 @@
               content = content.call(this);
               
             this.useFooter = true;
-            
-            cell = this.appendChild({
-              //colSpan: footerConfig.colSpan || 1,
+
+            // fill config
+
+            var config = {
               cssClassName: (colConfig.cssClassName || '') + ' ' + (footerConfig.cssClassName || ''),
-              content: content,
-              template: footerConfig.template || FooterCell.prototype.template
-            });
+              content: content
+            };
+
+            if (footerConfig.template)
+              config.template = footerConfig.template;
+            if (footerConfig.binding)
+              config.binding = footerConfig.binding;
+
+            // create instace of cell
+           
+            cell = this.appendChild(config);
           }
           else
           {
