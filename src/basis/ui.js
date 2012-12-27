@@ -527,11 +527,14 @@
             this.childNodesElement = null;
           }
 
-          if (oldElement && !this.element)
+          if (oldElement)
           {
-            var parentNode = oldElement && oldElement.parentNode;
-            if (parentNode && parentNode.nodeType == DOM.ELEMENT_NODE)
-              parentNode.removeChild(oldElement);
+            if (!this.element || this.element != oldElement)
+            {
+              var parentNode = oldElement && oldElement.parentNode;
+              if (parentNode && parentNode.nodeType == DOM.ELEMENT_NODE)
+                parentNode.removeChild(oldElement);
+            }
           }
 
           // ??? fire event
