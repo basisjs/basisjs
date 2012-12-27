@@ -86,7 +86,7 @@ basis_require('basis.ext.flashcanvas');*/
     draw: Function.undef,
     reset: function(){
       if (this.context)
-        this.context.clearRect(0, 0, this.element.offsetWidth, this.element.offsetHeight);
+        this.context.clearRect(0, 0, this.tmpl.canvas.width, this.tmpl.canvas.height);
     }
   });
 
