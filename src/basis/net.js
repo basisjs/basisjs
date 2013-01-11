@@ -25,7 +25,7 @@
 
   var TimeEventManager = basis.timer.TimeEventManager;
   var DataObject = basis.data.DataObject;
-  var EventObject = basis.event.EventObject;
+  var Emitter = basis.event.Emitter;
 
 
  /**
@@ -36,7 +36,7 @@
     var event = createEvent(eventName);
 
     return function(){
-      event.apply(TransportDispatcher, arguments);
+      event.apply(transportDispatcher, arguments);
 
       if (this.service)
         event.apply(this.service, arguments);
@@ -45,13 +45,15 @@
     };
   }
 
+
+  //
+  // transport dispatcher
+  //
   var inprogressTransports = [];
-  //
-  // TransportDispatcher
-  //
-  var TransportDispatcher = new EventObject({
+  var transportDispatcher = new Emitter({
     abort: function(){
       var result = arrayFrom(inprogressTransports);
+
       for (var i = 0; i < result.length; i++)
         result[i].abort();
 
@@ -78,14 +80,14 @@
     initData: null,
     requestData: null,
 
+    transport: null,
+
     event_stateChanged: function(oldState){
       DataObject.prototype.event_stateChanged.call(this, oldState);
 
       if (this.influence)
-      {
         for (var i = 0; i < this.influence.length; i++)
           this.influence[i].setState(this.state, this.state.data);
-      }
     },
 
     init: function(){
@@ -115,7 +117,7 @@
   * @class AbstractTransport
   */
 
-  var AbstractTransport = EventObject.subclass({
+  var AbstractTransport = Emitter.subclass({
     className: namespace + '.AbstractTransport',
 
     requestClass: AbstractRequest,
@@ -136,7 +138,7 @@
       this.requestQueue = [];
       this.inprogressRequests = [];
 
-      EventObject.prototype.init.call(this);
+      Emitter.prototype.init.call(this);
 
       // handlers
       this.addHandler(TRANSPORT_REQUEST_HANDLER, this);
@@ -240,7 +242,7 @@
       this.requestQueue = null;
       this.stoppedRequests = null;
 
-      EventObject.prototype.destroy.call(this);
+      Emitter.prototype.destroy.call(this);
     }
   });
 
@@ -720,13 +722,12 @@
   //
   module.exports = {
     createEvent: createTransportEvent,
+    transportDispatcher: transportDispatcher,
 
     AbstractRequest: AbstractRequest,
     AbstractTransport: AbstractTransport,
 
     AjaxTransport: AjaxTransport,
     AjaxRequest: AjaxRequest,
-    Transport: AjaxTransport,
-
-    TransportDispatcher: TransportDispatcher
+    Transport: AjaxTransport
   };
