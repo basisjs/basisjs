@@ -18,7 +18,7 @@
   var createEvent = basis.event.create;
   var createRpc = basis.net.rpc.createRpc;
 
-  var EventObject = basis.event.EventObject;
+  var Emitter = basis.event.Emitter;
   var AjaxTransport = basis.net.AjaxTransport;
   var AjaxRequest = basis.net.AjaxRequest;
 
@@ -37,7 +37,7 @@
   };
 
 
-  var Service = EventObject.subclass({
+  var Service = Emitter.subclass({
     className: namespace + '.Service',
 
     inprogressTransports: null,
@@ -57,21 +57,20 @@
     isSessionExpiredError: Function.$false,
 
     init: function(){
-      EventObject.prototype.init.call(this);
+      Emitter.prototype.init.call(this);
 
       this.inprogressTransports = [];
 
       var TransportClass = this.transportClass;
-
-      this.transportClass = this.transportClass.subclass({
+      this.transportClass = TransportClass.subclass({
         service: this,
 
         needSignature: this.isSecure,
 
-        event_failure: function(req){
-          TransportClass.prototype.event_failure.call(this, req);
+        event_failure: function(request){
+          TransportClass.prototype.event_failure.call(this, request);
 
-          if (this.needSignature && this.service.isSessionExpiredError(req))
+          if (this.needSignature && this.service.isSessionExpiredError(request))
           {
             this.service.freeze();
             this.service.stoppedTransports.push(this);
@@ -92,7 +91,7 @@
         requestClass: this.requestClass
       });
 
-      this.addHandler(SERVICE_HANDLER, this);
+      this.addHandler(SERVICE_HANDLER);
     },
 
     sign: function(transport){
@@ -103,8 +102,7 @@
       }
       else
       {
-        ;;; if (typeof console != 'undefined') console.warn('Request skipped. Service session is not opened');
-        return false;
+        ;;;basis.dev.warn('Request ignored. Service have no session key');
       }
     },
 
@@ -142,10 +140,8 @@
 
     unfreeze: function(){
       if (this.stoppedTransports)
-      {
         for (var i = 0, transport; transport = this.stoppedTransports[i]; i++)
           transport.resume();
-      }
 
       this.event_sessionUnfreeze();
     },
@@ -161,12 +157,12 @@
     },
 
     destroy: function(){
-      delete this.inprogressTransports;
-      delete this.stoppedTransports;
-      delete this.sessionData;
-      delete this.sessionKey;
+      this.inprogressTransports = null;
+      this.stoppedTransports = null;
+      this.sessionKey = null;
+      this.sessionData = null;
 
-      EventObject.prototype.destroy.call(this);
+      Emitter.prototype.destroy.call(this);
     }
   });
 
