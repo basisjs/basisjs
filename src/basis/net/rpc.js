@@ -79,8 +79,6 @@
   * @function
   */
   function createRpc(config){
-    ;;;if (!config.service) basis.dev.warn('action config have no service');
-
     // make a copy of config with defaults
     config = basis.object.extend({
       prepare: $undef,
@@ -95,10 +93,17 @@
     ].merge();
 
     // lazy transport
-    var getCall = basis.fn.lazyInit(function(){
-      var call = config.service.createCall(config);
-      call.addHandler(CALLBACK_HANDLER, callback);
-      return call;
+    var getTransport = basis.fn.lazyInit(function(){
+      var transport = config.transport;
+
+      if (!transport && config.service)
+        transport = config.service.createTransport(config);
+
+      if (!transport && config.createTransport)
+        transport = config.createTransport(config);
+
+      transport.addHandler(CALLBACK_HANDLER, callback);
+      return transport;
     });
 
     return function rpc(){
@@ -107,7 +112,7 @@
       {
         fn.prepare.apply(this, arguments);
 
-        this.request = getCall().request(basis.object.complete({
+        this.request = getTransport().request(basis.object.complete({
           origin: this
         }, fn.request.call(this)));
       }
