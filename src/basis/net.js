@@ -126,6 +126,7 @@
     },
 
     doRequest: Function.$undef,
+    getResponseData: Function.$undef,
 
     destroy: function(){
       DataObject.prototype.destroy.call(this);
@@ -434,7 +435,7 @@
         // dispatch events
         if (this.isSuccessful())
         {
-          this.event_success();
+          this.event_success(this.getResponseData());
           newState = STATE.READY;
         }
         else
