@@ -1,6 +1,11 @@
 
   basis.require('basis.data');
 
+ /**
+  * @namespace basis.net.rpc
+  */
+
+
   //
   // import names
   //

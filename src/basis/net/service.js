@@ -1,6 +1,8 @@
 
   basis.require('basis.event');
   basis.require('basis.net');
+  basis.require('basis.net.rpc');
+
 
  /**
   * @namespace basis.net.service
@@ -8,12 +10,18 @@
 
   var namespace = this.path;
 
-  var EventObject = basis.event.EventObject;
 
+  //
+  // import names
+  //
+
+  var createEvent = basis.event.create;
+  var createRpc = basis.net.rpc.createRpc;
+
+  var EventObject = basis.event.EventObject;
   var AjaxTransport = basis.net.AjaxTransport;
   var AjaxRequest = basis.net.AjaxRequest;
 
-  var createEvent = basis.event.create;
 
  /**
   * @class Service
@@ -146,6 +154,12 @@
       return new this.transportClass(config);
     },
 
+    createAction: function(config){
+      return createRpc(basis.object.complete({
+        service: this
+      }, config));
+    },
+
     destroy: function(){
       delete this.inprogressTransports;
       delete this.stoppedTransports;
@@ -161,4 +175,4 @@
   //
   module.exports = {
     Service: Service
-  }
+  };
