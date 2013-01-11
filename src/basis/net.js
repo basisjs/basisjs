@@ -75,6 +75,8 @@
     className: namespace + '.AbstractRequest',
 
     influence: null,
+    initData: null,
+    requestData: null,
 
     event_stateChanged: function(oldState){
       DataObject.prototype.event_stateChanged.call(this, oldState);
@@ -103,6 +105,8 @@
     destroy: function(){
       DataObject.prototype.destroy.call(this);
 
+      this.initData = null;
+      this.requestData = null;
       this.clearInfluence();
     }
   });
@@ -456,8 +460,7 @@
         return (status == undefined)
             || (status == 0)
             || (status >= 200 && status < 300);
-      } catch(e) {
-      }
+      } catch(e) {}
       return false;
     },
 
@@ -635,9 +638,7 @@
 
     destroy: function(){
       this.abort();
-
-      delete this.xhr;
-      delete this.requestData;
+      this.xhr = null;
 
       AbstractRequest.prototype.destroy.call(this);
     }
