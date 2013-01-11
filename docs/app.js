@@ -20,10 +20,14 @@
   basis.require('basis.data.generator');
   basis.require('basis.data.property');
   basis.require('basis.data.index');
+  basis.require('basis.data.vector');
   basis.require('basis.entity');
   basis.require('basis.session');
-  basis.require('basis.net.ajax');
+  basis.require('basis.net');
+  basis.require('basis.net.rpc');
+  basis.require('basis.net.service');
   basis.require('basis.net.soap');
+  basis.require('basis.net.upload');
   basis.require('basis.ui');
   basis.require('basis.ui.button');
   basis.require('basis.ui.label');

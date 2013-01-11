@@ -5,7 +5,7 @@
 
   var nsData = basis.data;
   var nsEntity = basis.entity;
-  var nsAjax = basis.net.ajax;
+  var nsAjax = basis.net;
 
   var TimeEventManager = basis.timer.TimeEventManager;
 
