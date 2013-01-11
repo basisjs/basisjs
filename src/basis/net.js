@@ -35,7 +35,7 @@
   function createTransportEvent(eventName) {
     var event = createEvent(eventName);
 
-    return function(){
+    return function transportEvent(){
       event.apply(transportDispatcher, arguments);
 
       if (this.service)
@@ -44,6 +44,22 @@
       event.apply(this, arguments);
     };
   }
+
+  function createRequestEvent(eventName) {
+    var event = createEvent(eventName);
+
+    return function requestEvent(){
+      var args = [this].concat(arrayFrom(arguments));
+
+      event.apply(transportDispatcher, args);
+
+      if (this.transport)
+        this.transport['event_' + eventName].apply(this.transport, args);
+
+      event.apply(this, arguments);
+    };
+  }
+
 
 
   //
@@ -81,6 +97,13 @@
     requestData: null,
 
     transport: null,
+
+    event_start: createRequestEvent('start'),
+    event_timeout: createRequestEvent('timeout'),
+    event_abort: createRequestEvent('abort'),
+    event_success: createRequestEvent('success'),
+    event_failure: createRequestEvent('failure'),
+    event_complete: createRequestEvent('complete'),
 
     event_stateChanged: function(oldState){
       DataObject.prototype.event_stateChanged.call(this, oldState);
@@ -389,7 +412,7 @@
     ;;;if (this.debug) logOutput('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
 
     // dispatch self event
-    transport.event_readyStateChanged(this, readyState);
+    this.event_readyStateChanged(readyState);
 
     if (readyState == STATE_DONE)
     {
@@ -400,8 +423,8 @@
 
       if (typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders()))
       {
-        transport.event_failure(this);
-        transport.event_abort(this);
+        this.event_failure();
+        this.event_abort();
         newState = STATE.ERROR;
       }
       else
@@ -411,7 +434,7 @@
         // dispatch events
         if (this.isSuccessful())
         {
-          transport.event_success(this);
+          this.event_success();
           newState = STATE.READY;
         }
         else
@@ -419,13 +442,13 @@
 
           this.processErrorResponse();
 
-          transport.event_failure(this, this.data.error);
+          this.event_failure(this.data.error);
           newState = STATE.ERROR;
         }
       }
 
       // dispatch complete event
-      transport.event_complete(this);
+      this.event_complete(this);
     }
     else
       newState = STATE.PROCESSING;
@@ -445,7 +468,8 @@
     requestStartTime: 0,
 
     debug: false,
-    transport: null,
+
+    event_readyStateChanged: createRequestEvent('readyStateChanged'),
 
     init: function(){
       AbstractRequest.prototype.init.call(this);
@@ -543,7 +567,7 @@
       if (ua.test('gecko1.8.1-') && requestData.asynchronous)
         this.xhr = createXmlHttpRequest();
 
-      this.transport.event_start(this);
+      this.event_start();
 
       var xhr = this.xhr;
 
@@ -634,7 +658,7 @@
         }
       });
 
-      this.transport.event_timeout(this);
+      this.event_timeout(this);
       this.abort();
     },
 
