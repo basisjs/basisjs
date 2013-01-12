@@ -51,12 +51,12 @@
 
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.data');
-    basis.require('basis.net.ajax');
+    basis.require('basis.net');
     basis.require('basis.ui.button');
 
     var STATE = basis.data.STATE;
 
-    var titleResolver = new basis.net.ajax.Transport({
+    var titleResolver = new basis.net.Transport({
       poolHashGetter: function(requestData){
         return requestData.url;
       },
@@ -99,7 +99,7 @@
     });
 
     // create service and it's method
-    var indexTransport = new basis.net.ajax.Transport({
+    var indexTransport = new basis.net.Transport({
       url: '../index.html',
       handler: {
         success: function(sender, req){

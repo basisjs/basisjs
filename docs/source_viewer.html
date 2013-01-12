@@ -25,13 +25,13 @@
 <body>
   <script type="text/javascript">
     basis.require('basis.format.highlight');
-    basis.require('basis.net.ajax');
+    basis.require('basis.net');
 
     var line = parseInt((location.hash || '').replace(/^#/, ''));
     var filename = ((location.search || '').match(/[\?\&]file=([^&]+)/) || [])[1];
     if (filename)
     {
-      var transport = new basis.net.ajax.Transport({
+      var transport = new basis.net.Transport({
         url: '../' + filename,
         handler: {
           complete: function(sender, req){

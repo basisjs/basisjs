@@ -92,7 +92,7 @@
     basis.require('basis.entity');
     basis.require('basis.ui.tree');
     basis.require('basis.ui.label');
-    basis.require('basis.net.ajax');
+    basis.require('basis.net');
 
     //
     // import names
@@ -143,7 +143,7 @@
         handler: colHandler,
         init: function(){
           this.constructor.prototype.init.call(this);
-          this.adapter = new basis.net.ajax.Transport({
+          this.adapter = new basis.net.Transport({
             url: '../res/data/groups.json',
             influence: [this],
             handler: adapterHandler,
@@ -167,7 +167,7 @@
         handler: colHandler,
         init: function(){
           this.constructor.prototype.init.call(this);
-          this.adapter = new basis.net.ajax.Transport({
+          this.adapter = new basis.net.Transport({
             url: '../res/data/users.json',
             influence: [this],
             handler: adapterHandler,

@@ -92,7 +92,7 @@
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.dom');
     basis.require('basis.cssom');
-    basis.require('basis.net.ajax');
+    basis.require('basis.net');
     basis.require('basis.net.soap');
 
     // IMPORTANT: Host server must has url proxy for pathes starts with /w3schools_com
@@ -110,11 +110,11 @@
     var RESULT_FORMAT = 'Result: {0}' + String.Entity.deg + ' C = {1}' + String.Entity.deg + ' F';
 
     //
-    // basis.net.ajax.Transport
+    // basis.net.Transport
     //
 
     var nativeResult = $('convertFormNative_Result');
-    var transport = new basis.net.ajax.Transport({
+    var transport = new basis.net.Transport({
       method: 'POST',
       url: '/w3schools_com/webservices/tempconvert.asmx',
       callback: {
