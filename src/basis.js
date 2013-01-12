@@ -1437,6 +1437,9 @@
       {
         var req = new XMLHttpRequest();
         req.open('GET', url, false);
+        // set if-modified-since header since begining prevents cache using;
+        // otherwise browser could never ask server for new file content
+        // and use file content from cache
         req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
         req.send('');
 

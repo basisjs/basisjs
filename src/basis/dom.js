@@ -36,11 +36,12 @@
 
   var namespace = this.path;
 
+
   // import names
   var document = global.document;
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
-  var getter = Function.getter;
+  var getter = basis.getter;
 
   // element for DOM support tests
   var testElement = document.createElement('div');
@@ -105,14 +106,14 @@
   // init functions depends on browser support
   if (typeof testElement.compareDocumentPosition == 'function')
   {
-    // W3C DOM scheme
+    // W3C DOM
     comparePosition = function(nodeA, nodeB){
       return nodeA.compareDocumentPosition(nodeB);
     };
   }
   else
   {
-    // IE6-8 DOM scheme
+    // IE6-8
     comparePosition = function(nodeA, nodeB){
       if (nodeA == nodeB)
         return 0;
@@ -123,7 +124,7 @@
       if (nodeA.sourceIndex > nodeB.sourceIndex)
         return POSITION_PRECEDING | (POSITION_CONTAINS * nodeB.contains(nodeA));
       else
-        return POSITION_FOLLOWING  | (POSITION_CONTAINED_BY * nodeA.contains(nodeB));
+        return POSITION_FOLLOWING | (POSITION_CONTAINED_BY * nodeA.contains(nodeB));
     };
   }
 
@@ -136,20 +137,22 @@
 
   if (typeof Node != 'undefined')
   {
-    isNode = function(node){ return node instanceof Node; };
+    isNode = function(node){
+      return node instanceof Node;
+    };
 
     // add support for node.contains (generally for Firefox)
     if (!Node.prototype.contains)
-    {
       Node.prototype.contains = function(node){
         return !!(this.compareDocumentPosition(node) & POSITION_CONTAINED_BY);
       };
-    }
   }
   else
   {
     // IE6-IE8 version
-    isNode = function(node){ return node && node.ownerDocument === document; };
+    isNode = function(node){
+      return node && node.ownerDocument === document;
+    };
   }
 
  /**
@@ -165,10 +168,10 @@
       : null;
   }
 
-  /**
+ /**
   * Note: Tree nodes should have properties: parentNode, nextSibling, prevSibling, firstChild,
-  * lastChild, nodeType
-  * @class TreeWalker
+  * lastChild
+  * @class
   */
   var TreeWalker = Class(null, {
     className: namespace + '.TreeWalker',
@@ -535,8 +538,10 @@
     var result = document.createDocumentFragment();
     var len = arguments.length;
     var array = createFragment.array = [];
+
     for (var i = 0; i < len; i++)
       array.push(handleInsert(result, arguments[i]));
+    
     return result;
   }
 
