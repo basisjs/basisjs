@@ -1810,6 +1810,7 @@
 
     // for debug purposes
     tokenize: tokenize,
+    getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
 
     // theme

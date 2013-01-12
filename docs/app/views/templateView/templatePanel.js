@@ -243,8 +243,7 @@
         {
           rootCfg.childNodes = [];
 
-          var source = String(typeof template.source == 'function' ? template.source() : template.source);
-          var decl = basis.template.makeDeclaration(source, template.baseURI);
+          var decl = basis.template.getDeclFromSource(template.source, template.baseURI);
 
           rootCfg.childNodes = buildTemplateTree(decl.tokens);
         }
