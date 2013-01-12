@@ -1,7 +1,13 @@
 
+  basis.require('basis.timer');
+  basis.require('basis.event');
+  basis.require('basis.data');
+  basis.require('basis.entity');
+  basis.require('basis.net');
+
   // import names
 
-  var getter = Function.getter;
+  var getter = basis.getter;
 
   var nsData = basis.data;
   var nsEntity = basis.entity;
@@ -11,11 +17,8 @@
 
   // main part
 
-  var urlResolver_ = document.createElement('A');
-
   function resolveUrl(value){
-    urlResolver_.href = value.replace(/^\.\//, '../');
-    return urlResolver_.href;
+    return basis.path.resolve(value.replace(/^\.\//, '../'));
   }
 
 
@@ -713,8 +716,7 @@
       return transport;
     }),
     addResource: function(url, kind){
-      urlResolver_.href = url;
-      url = urlResolver_.href;
+      url = basis.path.resolve(url);
       if (!this.loaded[url])
       {
         this.queue.push({
