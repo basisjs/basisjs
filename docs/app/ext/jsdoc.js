@@ -5,8 +5,6 @@
   var DOM = basis.dom;
   var mapDO = app.core.mapDO;
 
-  var BASE_URL_RX = new RegExp(location.href.replace(/docs\/index\.html(#.*)?$/i, '').forRegExp(), 'i');
-
   var tagLabels = ['readonly', 'private'];
 
   //
@@ -51,7 +49,7 @@
 
       if (newData.file)
       {
-        var filename = newData.file.replace(BASE_URL_RX, '');
+        var filename = basis.path.relative(newData.file);
         DOM.insert(this.tmpl.content,
           DOM.createElement('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]'.format(filename, newData.line),
             filename.split('src/basis/').pop() + ':' + newData.line
