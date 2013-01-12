@@ -68,7 +68,7 @@
 
     binding: {
       namespace: function(node){
-        return node.data.kind != 'namespace' ? node.data.path : '';
+        return node.data.kind != 'namespace' ? node.data.path + '.' : '';
       }
     }
   });
