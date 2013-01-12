@@ -72,7 +72,7 @@
   }
   .viewTemplate .Doc-TemplateView-Element .Doc-TemplateView-Attribute
   {
-    /*margin-left: 1ex;*/
+    margin-left: 1ex;
     position: relative;
     white-space: nowrap;
   }
