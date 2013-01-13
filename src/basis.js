@@ -1191,6 +1191,7 @@
     {
       var _node_path = require('path');
       var _node_fs = require('fs');
+
       utils = slice(_node_path, [
         'normalize',
         'dirname',
@@ -1199,6 +1200,7 @@
         'resolve',
         'relative'
       ]);
+
       utils.existsSync = _node_fs.existsSync || _node_path.existsSync;
     }
     else
@@ -1277,15 +1279,18 @@
           }
 
           var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
+          var pathFn = function(name){
+            return path + (name ? '.' + name : '');
+          };
+          pathFn.toString = $const(path);
 
           return extend(namespace, {
-            path: path,
+            path: pathFn,
             exports: {},
-            toString: function(){ return '[basis.namespace ' + path + ']'; },
+            toString: $const('[basis.namespace ' + path + ']'),
             extend: function(names){
-              complete(this, names);
               extend(this.exports, names);
-              return this;
+              return complete(this, names);
             },
             setWrapper: function(wrapFn){
               if (typeof wrapFn == 'function')
