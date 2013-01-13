@@ -2,7 +2,6 @@
   basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
-  basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
   basis.require('basis.l10n');
   basis.require('basis.ui');
@@ -65,7 +64,6 @@
     template: templates.Blocker,
     
     captureElement: null,
-
     capture: function(element, zIndex){
       this.captureElement = DOM.get(element || document.body);
       if (this.captureElement)
@@ -83,6 +81,7 @@
         this.captureElement = null;
       }
     },
+
     destroy: function(){
       this.release();
       
@@ -115,7 +114,6 @@
     className: namespace + '.Window',
 
     template: templates.Window,
-
     binding: {
       title: 'title',
       titleButtons: 'satellite:',
@@ -123,6 +121,28 @@
         return !node.titleButton || node.titleButton.close !== false
           ? 'Basis-Window-Title-ButtonPlace-Close'
           : '';
+      }
+    },
+    action: {
+      close: function(){
+        this.close();
+      },
+      mousedown: function(){
+        this.activate();
+      },
+      keydown: function(event){
+        switch (Event.key(event))
+        {
+          case Event.KEY.ESCAPE:
+            if (this.closeOnEscape)
+              this.close();
+            break;
+
+          case Event.KEY.ENTER:
+            if (Event.sender(event).tagName != 'TEXTAREA')
+              Event.kill(event);
+            break;
+        }
       }
     },
 
@@ -135,36 +155,12 @@
           className: namespace + '.TitleButton',
 
           template: templates.TitleButton,
-
           action: {
             close: function(){
               this.owner.close();
             }
           }
         })
-      }
-    },
-
-    action: {
-      close: function(){
-        this.close();
-      },
-      mousedown: function(){
-        this.activate();
-      },
-      keypress: function(event){
-        var key = Event.key(event);
-
-        if (key == Event.KEY.ESCAPE)
-        {
-          if (this.closeOnEscape)
-            this.close(0);
-        }
-        else if (key == Event.KEY.ENTER)
-        {
-          if (Event.sender(event).tagName != 'TEXTAREA')
-            Event.kill(event);
-        }
       }
     },
 
@@ -187,7 +183,15 @@
     title: basis.l10n.getToken(namespace, 'emptyTitle'),
 
     buttonPanelClass: ButtonPanel.subclass({
-      template: templates.ButtonPanel
+      template: templates.ButtonPanel,
+      listen: {
+        owner: {
+          select: function(){
+            if (this.firstChild)
+              this.firstChild.focus();
+          }
+        }
+      }
     }),
 
     init: function(){
@@ -196,51 +200,42 @@
       // add generic rule
       this.cssRule = cssom.uniqueRule();
 
-      // make main element invisible by default
-      cssom.hide(this.element);
-
       // make window moveable
       if (this.moveable)
-      {
         this.dde = new basis.dragdrop.MoveableElement({
-          element: this.element,
-          trigger: this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element,
           fixRight: false,
           fixBottom: false,
           handler: DD_HANDLER,
           handlerContext: this
         });
-      }
+
+      // common buttons
+      var commonButtons = basis.object.iterate(basis.object.slice(this, ['buttonOk', 'buttonCancel']), function(key, button){
+        return {
+          name: key == 'buttonOk' ? 'ok' : 'cancel',
+          caption: button.caption || button.title || button
+        };
+      }, this);
 
       // buttons
-      var buttons = arrayFrom(this.buttons).map(function(button){
+      var buttons = arrayFrom(this.buttons).concat(commonButtons).map(function(button){
         return basis.object.complete({
           click: (button.click || this.close).bind(this)
         }, button);
       }, this);
 
-      // common buttons
-      var buttons_ = basis.object.slice(this, ['buttonOk', 'buttonCancel']);
-       
-      for (var buttonId in buttons_)
-      {
-        var button = buttons_[buttonId];
-        buttons.push({
-          name: buttonId == 'buttonOk' ? 'ok' : 'cancel',
-          caption: button.caption || button.title || button,
-          click: (button.click || this.close).bind(this)
-        });
-      }
-
+      // build button panel
       if (buttons.length)
-      {
         this.buttonPanel = new this.buttonPanelClass({
+          owner: this,
           childNodes: buttons
         });
-      }
 
       if (this.autocenter !== false)
-        this.autocenter = this.autocenter_ = true;
+      {
+        this.autocenter = true;
+        this.autocenter_ = true;
+      }
     },
     setTitle: function(title){
       this.title = title;
@@ -248,7 +243,7 @@
     },
     templateSync: function(noRecreate){
       UINode.prototype.templateSync.call(this, noRecreate);
-      
+
       if (this.element)
       {
         if (this.dde)
@@ -270,7 +265,6 @@
       this.setZIndex(this.zIndex);
       if (this.autocenter)
       {
-        //this.autocenter = false;
         this.element.style.margin = '';
         this.cssRule.setStyle(
           this.element.offsetWidth
@@ -294,7 +288,6 @@
       if (this.closed)
       {
         cssom.visibility(this.element, false);
-        cssom.show(this.element);
 
         windowManager.appendChild(this);
         this.closed = false;
@@ -304,35 +297,36 @@
         this.event_beforeShow(params);
         cssom.visibility(this.element, true);
 
-        if (this.buttonPanel && this.buttonPanel.firstChild)
-          this.buttonPanel.firstChild.select();
-
         this.event_open(params);
-        this.event_active(params);
+        //this.event_active(params);
       }
       else
       {
         this.realign();
       }
     },
-    close: function(modalResult){
+    close: function(){
       if (!this.closed)
       {
-        DOM.remove(this.element);
-
         windowManager.removeChild(this);
+        this.closed = true;
 
         this.autocenter = this.autocenter_;
 
-        this.closed = true;
-        this.event_close(modalResult);
+        this.event_close();
       }
     },
     destroy: function(){
       if (this.dde)
       {
         this.dde.destroy();
-        delete this.dde;
+        this.dde = null;
+      }
+
+      if (this.buttonPanel)
+      {
+        this.buttonPanel.destroy();
+        this.buttonPanel = null;
       }
 
       UINode.prototype.destroy.call(this);
@@ -346,11 +340,12 @@
   // Window manager
   //
 
-  var wmBlocker = new Blocker();
   var windowManager = new UINode({
     template: templates.windowManager,
     selection: true,
-    childClass: Window
+    blocker: basis.fn.lazyInit(function(){
+      return new Blocker();
+    })
   });
 
   windowManager.addHandler({
@@ -362,7 +357,7 @@
         for (var i = 0, node; node = this.childNodes[i]; i++)
         {
           node.setZIndex(2001 + i * 2);
-          //node.element.style.zIndex = 2001 + i * 2;
+
           if (node.modal)
             modalIndex = i;
         }
@@ -371,9 +366,9 @@
       }
 
       if (modalIndex != -1)
-        wmBlocker.capture(this.element, 2000 + modalIndex * 2);
+        this.blocker().capture(this.element, 2000 + modalIndex * 2);
       else
-        wmBlocker.release();
+        this.blocker().release();
     }
   });
 
@@ -381,6 +376,7 @@
     datasetChanged: function(){
       var selected = this.pick();
       var lastWin = windowManager.lastChild;
+      
       if (selected)
       {
         if (selected.parentNode == windowManager && selected != lastWin)

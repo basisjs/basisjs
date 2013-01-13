@@ -72,11 +72,12 @@
       autocenter: true,
       moveable: true,
       title: 'Simple Window',
+      closeOnEscape: true,
       content: DOM.createElement({ css: { padding: '1.5em 1ex' } }, 'Basis is great framework!'),
       buttons: [
         {
           caption: 'OK',
-          handler: function(){
+          click: function(){
             alert('OK');
           }
         }

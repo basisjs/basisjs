@@ -3,7 +3,7 @@
   <b:define name="selected" type="bool"/>
   <b:define name="disabled" type="bool"/>
 
-  <div class="Basis-Window {selected} {disabled}" event-mousedown="mousedown" event-keypress="keypress">
+  <div class="Basis-Window {selected} {disabled}" event-mousedown="mousedown" event-keydown="keydown">
     <div class="Basis-Window-Canvas">
       <div class="corner-left-top"/>
       <div class="corner-right-top"/>
@@ -23,7 +23,7 @@
         </div>
       </div>
       <div{content} class="Basis-Window-Content">
-        <!-- {childNodesHere} -->
+        <!--{childNodesHere}-->
       </div>
     </div>
   </div>
