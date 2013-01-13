@@ -5,12 +5,14 @@
 
 .Basis-Menu-Item .Basis-Menu-Item-Caption
 {
-  margin-left: -28px;
   display: block;
+  margin-left: -28px;
+
   white-space: nowrap;
   text-decoration: none;
   color: black;
-  -moz-outline: none;
+
+    -moz-outline: none;
   outline: none;
 }
 
@@ -29,22 +31,23 @@
 .Basis-Menu-Item.disabled .Basis-Menu-Item-Caption:hover
 {
   background-color: #E8E8E8;
-  background-color: rgba(220,220,220,.5);
+  background-color: rgba(220, 220, 220, .5);
 }
 
 .Basis-Menu-Item.disabled .Basis-Menu-Item-Caption:hover SPAN
 {
   border-color: #D3D3D3;
-  border-color: rgba(200,200,200,.6);
+  border-color: rgba(200, 200, 200,.6);
 }
 
 .Basis-Menu-Item .Basis-Menu-Item-Caption SPAN
 {
-  border: 1px solid transparent;
-  padding: .22em 20px .26em 32px;
   display: block;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 2px;
+  padding: .22em 20px .26em 32px;
+  
+  border: 1px solid transparent;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 2px;
   border-radius: 2px;
 }
 
@@ -59,7 +62,7 @@
 {
   border-color: #AECFF7;
   border-color: rgba(136, 186, 247, .6);
-  -moz-box-shadow: 0 0 1px 1px rgba(255, 255, 255, .4) inset;
-  -webkit-box-shadow: 0 0 1px 1px rgba(255, 255, 255, .4) inset;
+    -moz-box-shadow: 0 0 1px 1px rgba(255, 255, 255, .4) inset;
+    -webkit-box-shadow: 0 0 1px 1px rgba(255, 255, 255, .4) inset;
   box-shadow: 0 0 1px 1px rgba(255, 255, 255, .4) inset;
 }

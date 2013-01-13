@@ -54,7 +54,7 @@
     },
     action: {
       click: function(event){
-        if (!this.isDisabled() && !(this instanceof MenuItemSet))
+        if (!this.isDisabled())
         {
           if (this.click)
             this.click();
@@ -64,17 +64,17 @@
       }
     },
 
-    caption: '[untitled]',
-
     defaultHandler: function(node){
       if (this.parentNode)
         this.parentNode.defaultHandler(node);
     },
 
-    setCaption: function(newCaption){
-      this.caption = newCaption;
+    caption: '[untitled]',
+    setCaption: function(caption){
+      this.caption = caption;
       this.updateBind('caption');
     },
+
     click: null
   });
 
@@ -101,7 +101,7 @@
   */
   var MenuGroupingNode = Class(UIGroupingNode, {
     className: namespace + '.MenuGroupingNode',
-    
+
     childClass: MenuPartitionNode
   });
 
@@ -113,9 +113,7 @@
 
     template: templates.Menu,
 
-
     defaultDir: [DIR.LEFT, DIR.BOTTOM, DIR.LEFT, DIR.TOP].join(' '),
-    subMenu: null,
 
     childClass: MenuItem,
 
@@ -126,6 +124,7 @@
       this.hide();
     }
   });
+
 
   //
   // export names
