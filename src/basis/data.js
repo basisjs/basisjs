@@ -25,8 +25,8 @@
   var Class = basis.Class;
   var cleaner = basis.cleaner;
 
-  var values = Object.values;
-  var $self = Function.$self;
+  var values = basis.object.values;
+  var $self = basis.fn.$self;
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
@@ -77,7 +77,7 @@
     },
 
     getList: function(){
-      return Object.values(STATE_EXISTS);
+      return values(STATE_EXISTS);
     }
   };
 
@@ -238,7 +238,7 @@
   * @class
   */
   var DataObject = Class(EventObject, {
-    className: namespace + '.DataObject',
+    className: namespace('DataObject'),
 
    /**
     * State of object. Might be managed by delegate object (if used).
@@ -780,7 +780,7 @@
   //
 
   var Slot = Class(DataObject, {
-    className: namespace + '.Slot'
+    className: namespace('Slot')
   });
 
 
@@ -798,7 +798,7 @@
   * @class
   */
   var KeyObjectMap = Class(null, {
-    className: namespace + '.KeyObjectMap',
+    className: namespace('KeyObjectMap'),
 
     itemClass: DataObject,
     keyGetter: $self,
@@ -880,7 +880,7 @@
   * @class
   */
   var AbstractDataset = Class(DataObject, {
-    className: namespace + '.AbstractDataset',
+    className: namespace('AbstractDataset'),
 
    /**
     * Datasets can't have delegate by default.
@@ -1132,7 +1132,7 @@
   * @class
   */
   var Dataset = Class(AbstractDataset, {
-    className: namespace + '.Dataset',
+    className: namespace('Dataset'),
 
    /**
     * @inheritDoc
