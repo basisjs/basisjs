@@ -28,7 +28,7 @@
   var nsData = basis.data;
 
   var getter = basis.getter;
-  var nullGetter = basis.nullGetter;
+  var nullGetter = basis.fn.nullGetter;
   var extend = basis.object.extend;
 
   var GroupingNode = basis.dom.wrapper.GroupingNode;
