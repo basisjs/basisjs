@@ -241,17 +241,6 @@
 
       if (this.autocenter !== false)
         this.autocenter = this.autocenter_ = true;
-
-      // handlers
-      if (this.thread)
-      {
-        this.thread.addHandler({
-          finish: function(){
-            if (this.closed)
-              DOM.remove(this.element);
-          }
-        }, this);
-      }
     },
     setTitle: function(title){
       this.title = title;
@@ -259,6 +248,7 @@
     },
     templateSync: function(noRecreate){
       UINode.prototype.templateSync.call(this, noRecreate);
+      
       if (this.element)
       {
         if (this.dde)
@@ -311,9 +301,6 @@
 
         this.realign();
 
-        if (this.thread)
-          this.thread.start(true);
-
         this.event_beforeShow(params);
         cssom.visibility(this.element, true);
 
@@ -331,10 +318,7 @@
     close: function(modalResult){
       if (!this.closed)
       {
-        if (this.thread)
-          this.thread.start(1);
-        else
-          DOM.remove(this.element);
+        DOM.remove(this.element);
 
         windowManager.removeChild(this);
 
