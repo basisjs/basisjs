@@ -81,15 +81,6 @@
     CENTER: CENTER
   };
 
-  var THREAD_HANDLER = {
-    finish: function(){
-      if (!this.visible)
-      {
-        DOM.remove(this.element);
-        this.event_cleanup();
-      }
-    }
-  };
 
  /**
   * @class
@@ -129,7 +120,6 @@
     event_show: createEvent('show'),
     event_hide: createEvent('hide'),
     event_realign: createEvent('realign'),
-    event_cleanup: createEvent('cleanup'),
     event_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir'),
 
     visible: false,
@@ -155,12 +145,10 @@
         this.defaultDir = this.dir.toUpperCase();
 
       this.setLayout(this.defaultDir, this.orientation);
-        
-      if (this.thread)
-        this.thread.addHandler(THREAD_HANDLER, this);
     },
     templateSync: function(noRecreate){
       UINode.prototype.templateSync.call(this, noRecreate);
+
       if (this.element)
       {
         cssom.classList(this.element).add(this.cssRule.token);
@@ -264,23 +252,23 @@
     },
     setZIndex: function(zIndex){
       this.zIndex = isNaN(zIndex) ? 'auto' : zIndex;
-      //this.element.style.zIndex = zIndex;
       cssom.setStyle(this.element, {
         'z-index': zIndex
       });
     },
     realign: function(){
       this.setZIndex(this.zIndex);
+
       if (this.visible && this.relElement)
       {
         var dir = this.dir.qw();
-
         var point;
         var rotateOffset = 0;
         var curDir = dir;
         var dirH = dir[2];
         var dirV = dir[3];
         var maxRotate = typeof this.autorotate == 'number' || !this.autorotate.length ? 3 : this.autorotate.length;
+
         while (this.autorotate && rotateOffset <= maxRotate)
         {
           if (point = this.isFitToViewport(curDir.join(' ')))
@@ -310,6 +298,7 @@
         if (!point)
         {
           var box = new layout.Box(this.relElement, false, this.element.offsetParent);
+
           point = {
             x: dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()],
             y: dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()]
@@ -317,7 +306,6 @@
         }
 
         var offsetParentBox = new layout.Box(this.element.offsetParent);
-
         var style = {
           left: 'auto',
           right: 'auto',
@@ -325,7 +313,8 @@
           bottom: 'auto'
         };
 
-        switch (dirH){
+        switch (dirH)
+        {
           case LEFT:
             style.left = point.x + 'px';
             break;
@@ -337,7 +326,8 @@
             break;
         }
 
-        switch (dirV){
+        switch (dirV)
+        {
           case TOP:
             style.top = point.y + 'px';
             break;
@@ -367,7 +357,7 @@
         // error on relElement no assigned
         if (!this.relElement)
         {
-          ;;;if (typeof console != 'undefined') console.warn('Popup.show(): relElement missed');
+          ;;;basis.dev.warn('Popup#show(): relElement missed');
           return;
         }
 
@@ -379,12 +369,12 @@
         // dispatch `beforeShow` event, there we can fill popup with content
         this.event_beforeShow();
 
-        // set visible flag to TRUE
+        // set visible flag
         this.visible = true;
 
         // realign position and make it visible
         this.realign();
-        if (this.thread) this.thread.start(1);
+
         cssom.visibility(this.element, true);
 
         // dispatch `show` event, there we can set focus for elements etc.
@@ -395,21 +385,10 @@
     },
     hide: function(){
       if (this.visible)
-      {
-        // remove from DOM
-        if (DOM.parentOf(document.body, this.element))
-        {
-          if (this.thread)
-            this.thread.start(1);
-          else
-          {
-            DOM.remove(this.element);
-            this.event_cleanup();
-          }
-        }
-
-        // set visible flag to FALSE
+      { 
+        // set visible flag
         this.visible = false;
+
         if (this.parentNode)
           popupManager.removeChild(this);
 
@@ -421,12 +400,6 @@
       popupManager.clear();
     },
     destroy: function(){
-      if (this.thread)
-      {
-        this.thread.removeHandler(THREAD_HANDLER, this);
-        this.thread = null;
-      }
-
       this.hide();
 
       UINode.prototype.destroy.call(this);
@@ -457,9 +430,8 @@
     template: templates.popupManager,
 
     handheldMode: false,
-
     selection: true,
-    childClass: Popup,
+
     event_childNodesModified: function(delta){
       if (delta.deleted)
         for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
