@@ -35,13 +35,22 @@
 
 
   //
-  // localization
+  // definitions
   //
+
+  var templates = basis.template.define(namespace, {
+    Blocker: resource('templates/window/Blocker.tmpl'),
+    Window: resource('templates/window/Window.tmpl'),
+    TitleButton: resource('templates/window/TitleButton.tmpl'),
+    ButtonPanel: resource('templates/window/ButtonPanel.tmpl'),
+    windowManager: resource('templates/window/windowManager.tmpl')
+  });
 
   basis.l10n.createDictionary(namespace, __dirname + 'l10n/window', {
     "emptyTitle": "[no title]",
     "closeButton": "Close"
   });
+
 
   //
   // main part
@@ -55,7 +64,7 @@
 
     captureElement: null,
 
-    template: resource('templates/window/Blocker.tmpl'),
+    template: templates.Blocker,
 
     init: function(){
       UINode.prototype.init.call(this);
@@ -105,7 +114,7 @@
       this.element.style.margin = 0;
     },
     over: function(){
-      this.cssRule.setStyle(Object.slice(this.element.style, 'left top'.qw()));
+      this.cssRule.setStyle(basis.object.slice(this.element.style, ['left', 'top']));
       cssom.setStyle(this.element, {
         top: '',
         left: ''
@@ -119,7 +128,7 @@
   var Window = Class(UINode, {
     className: namespace + '.Window',
 
-    template: resource('templates/window/Window.tmpl'),
+    template: templates.Window,
 
     binding: {
       title: 'title',
@@ -139,7 +148,7 @@
         instanceOf: UINode.subclass({
           className: namespace + '.TitleButton',
 
-          template: resource('templates/window/TitleButton.tmpl'),
+          template: templates.TitleButton,
 
           action: {
             close: function(){
@@ -192,7 +201,7 @@
     title: basis.l10n.getToken(namespace, 'emptyTitle'),
 
     buttonPanelClass: ButtonPanel.subclass({
-      template: resource('templates/window/ButtonPanel.tmpl')
+      template: templates.ButtonPanel
     }),
 
     init: function(){
@@ -364,7 +373,7 @@
 
   var wmBlocker = new Blocker();
   var windowManager = new UINode({
-    template: resource('templates/window/windowManager.tmpl'),
+    template: templates.windowManager,
     selection: true,
     childClass: Window
   });
