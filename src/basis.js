@@ -871,7 +871,7 @@
 
   // IE 5.5+ & Opera
   // when second argument is omited, method set this parameter equal zero (must be equal array length)
-  if (![1,2].splice(1).length)
+  if (![1, 2].splice(1).length)
   {
     var nativeArraySplice = Array.prototype.splice;
     Array.prototype.splice = function(){
@@ -2248,31 +2248,31 @@
     fn: {
       // test functions
       $undefined: $undefined,
-      $defined:   $defined,
-      $isNull:    $isNull,
+      $defined: $defined,
+      $isNull: $isNull,
       $isNotNull: $isNotNull,
-      $isSame:    $isSame,
+      $isSame: $isSame,
       $isNotSame: $isNotSame,
 
       // gag functions
-      $self:      $self,
-      $const:     $const,
-      $false:     $false,
-      $true:      $true,
-      $null:      $null,
-      $undef:     $undef,
+      $self: $self,
+      $const: $const,
+      $false: $false,
+      $true: $true,
+      $null: $null,
+      $undef: $undef,
 
       // getters and modificators
-      getter:     getter,
+      getter: getter,
       nullGetter: nullGetter,
-      def:        def,
-      wrapper:    wrapper,
+      def: def,
+      wrapper: wrapper,
 
       // lazy
-      lazyInit:   lazyInit,
+      lazyInit: lazyInit,
       lazyInitAndRun: lazyInitAndRun,
-      runOnce:    runOnce,
-      body:       functionBody
+      runOnce: runOnce,
+      body: functionBody
     },
     array: extend(arrayFrom, {
       from: arrayFrom,

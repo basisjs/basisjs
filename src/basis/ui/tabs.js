@@ -86,13 +86,13 @@
     item: function(index){
       return this.childNodes[typeof index == 'number' ? index : this.indexOf(index)];
     },
-    indexOf: function(objectOrName){
+    indexOf: function(item){
       // search for object
-      if (objectOrName instanceof this.childClass)
-        return this.childNodes.indexOf(objectOrName);
+      if (item instanceof this.childClass)
+        return this.childNodes.indexOf(item);
 
       // search by name
-      if (this.childNodes.search(objectOrName, 'name'))
+      if (this.childNodes.search(item, 'name'))
         return Array.lastSearchIndex;
 
       return -1;
@@ -106,6 +106,17 @@
   var Tab = Class(UINode, {
     className: namespace + '.Tab',
 
+    template: templates.Tab,
+    binding: {
+      title: 'data:'
+    },
+    action: {
+      select: function(){
+        if (!this.isDisabled())
+          this.select();
+      }
+    },
+
     childClass: null,
 
     unselectDisabled: true,
@@ -114,19 +125,6 @@
         this.unselect();
 
       UINode.prototype.event_disable.call(this);
-    },
-
-    template: templates.Tab,
-
-    binding: {
-      title: 'data:'
-    },
-
-    action: {
-      select: function(){
-        if (!this.isDisabled())
-          this.select();
-      }
     }
   });
 
@@ -268,7 +266,7 @@
     PageControl: PageControl,
     Page: Page,
     
-    AccordionControl: AccordionControl,
     TabSheetControl: TabSheetControl,
+    AccordionControl: AccordionControl,
     TabSheet: TabSheet
   };
