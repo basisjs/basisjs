@@ -19,15 +19,26 @@
   // import names
   //
 
-  var EventObject = basis.event.EventObject;
-  var createEvent = basis.event.create;
-
   var DOM = basis.dom;
   var Event = basis.dom.event;
   var cssom = basis.cssom;
   var anim = basis.animation;
 
+  var createEvent = basis.event.create;
+
+  var EventObject = basis.event.EventObject;
   var UINode = basis.ui.Node;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Scrollbar: resource('templates/scroller/Scrollbar.tmpl'),
+    ScrollPanel: resource('templates/scroller/ScrollPanel.tmpl'),
+    ScrollGalleryItem: resource('templates/scroller/ScrollGalleryItem.tmpl')
+  });
 
 
   //
@@ -89,7 +100,6 @@
   var Scroller = EventObject.subclass({
     className: namespace + '.Scroller',
 
-    //className: namespace + '.Scroller',
     minScrollDelta: 0,
     scrollX: true,
     scrollY: true,
@@ -489,7 +499,7 @@
   var Scrollbar = UINode.subclass({
     className: namespace + '.Scrollbar',
 
-    template: resource('templates/scroller/Scrollbar.tmpl'),
+    template: templates.Scrollbar,
 
     binding: {
       orientation: 'orientation || ""'
@@ -588,7 +598,7 @@
     event_realign: createEvent('realign'),
     event_updatePosition: createEvent('updatePosition'),
 
-    template: resource('templates/scroller/ScrollPanel.tmpl'),
+    template: templates.ScrollPanel,
 
     binding: {
       horizontalScrollbar: 'satellite:',
@@ -759,7 +769,7 @@
     childClass: UINode.subclass({
       className: namespace + '.ScrollGalleryItem',
 
-      template: resource('templates/scroller/ScrollGalleryItem.tmpl'),
+      template: templates.ScrollGalleryItem,
 
       action: {
         select: function(){
