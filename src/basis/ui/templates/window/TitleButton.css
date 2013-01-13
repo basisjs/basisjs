@@ -2,8 +2,7 @@
   .Basis-Window-Title-ButtonPlace
   {
     float: right;
-
-    /*padding-top: 2px;*/
+    position: relative;
 
     margin-top: -1px;
     margin-left: 2px;
@@ -14,13 +13,15 @@
 
   .Basis-Window-Title-CloseButton
   {
+    display: block;
+    overflow: hidden;
     width: 30px;
     height: 19px;
+
     background-repeat: no-repeat;
     background-image: url(res/button_close.png);
     background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB0AAAATCAYAAABsmQZ/AAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAALLSURBVHjaxFbPS1RBHP/OvPf2R5ZEtzyFKIr0F3Tr2LEOBWGKZf7aCE+C/TiZ2SlE3FoSMyGQ8BJ1jbxEh6JDsAXpxa6SpO6uu/vem5m+3/Hta3Umitho4MN85zPf73zed+a7M8vgZ2MIHvWNbgohoz4W4M9evM7jiCEtFahAKSXQVn8jIJUKpBC7oRAl3/e3Bi+dHUJeIEISJ1G29PzV+462E8e7OlpblGpcegxXz39eW3nz7uOX0avnx5CqIgKXspRSljvbW1v80B5c2PUhlFzbLpdw5FDCytlaV2f76bcfPm2imYwyFSTKhMStwB0nHGzFsg9CcXj8IKvHl0cysLldBnC8fdxWyYfDabsw485R+jaEQ0MyQIR7ooEwAwLBYeFhFm7fHNXjiclp6BvOwELW5GzxkWhzVD+6hvZEpaxqUUumMgL66PGN8etwZ2oGbmFf42o+tnimZViqntOHgsUjQ6zZQJgQQkDv4AhM3J1BW2qMj12LbeJpnvxs8bQu5scN0b1s8UzJ6QAc14Oq70MPLjx5bxZ2CoUYNCae5snPFi8s2bs149vGBuyUqqaD60IqlcYznIWhwYtQLBbiub7ec5Cbvg/d/QNQ2N6GMDTLv7kpaXBRpkoxzoE7joFUugmezs9B/5ULuKjQyD1aim3iaZ78bPG0Ll4x5vbieZQdzMj1vP3ALeMYxLAaJO4TYX5hGXoGhmH+yTLg71uDcab9jHgErYvxSWN7fT8o0jaij9GECHWhLM7l9JjsSqUMvQN1HNpB4GO8Zz0eVE0Yoli9ThID6IaxXYOUDYnVPiKdThtcIpGw/lySnvOLQsIb4+v6er61re2k/O3d6/0hh8ui6Orq2ve6lyZ+ZehTErOLL1dQ/Bjuf6rR71qm+8wp7CqIEp1m7Wryogs5GWXPGvyWhtELE78yNRKi3vkHoqLuPVXsf/xz+CHAAAV4m0XACqzKAAAAAElFTkSuQmCC);
-    overflow: hidden;
-    display: block;
+    
     cursor: pointer;
   }
 

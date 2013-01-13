@@ -62,29 +62,16 @@
   var Blocker = Class(UINode, {
     className: namespace + '.Blocker',
 
+    template: templates.Blocker,
+    
     captureElement: null,
 
-    template: templates.Blocker,
-
-    init: function(){
-      UINode.prototype.init.call(this);
-
-      cssom.setStyle(this.element, {
-        display: 'none',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%'
-      });
-    },
     capture: function(element, zIndex){
       this.captureElement = DOM.get(element || document.body);
       if (this.captureElement)
       {
         DOM.insert(this.captureElement, this.element);
         this.element.style.zIndex = zIndex || 1000;
-        cssom.show(this.element);
       }
     },
     release: function(){
@@ -94,7 +81,6 @@
           DOM.remove(this.element);
 
         this.captureElement = null;
-        cssom.hide(this.element);
       }
     },
     destroy: function(){
@@ -205,10 +191,10 @@
     }),
 
     init: function(){
+      UINode.prototype.init.call(this);
+
       // add generic rule
       this.cssRule = cssom.uniqueRule();
-
-      UINode.prototype.init.call(this);
 
       // make main element invisible by default
       cssom.hide(this.element);
@@ -228,13 +214,13 @@
 
       // buttons
       var buttons = arrayFrom(this.buttons).map(function(button){
-        return Object.complete({
+        return basis.object.complete({
           click: (button.click || this.close).bind(this)
         }, button);
       }, this);
 
       // common buttons
-      var buttons_ = Object.slice(this, ['buttonOk', 'buttonCancel']);
+      var buttons_ = basis.object.slice(this, ['buttonOk', 'buttonCancel']);
        
       for (var buttonId in buttons_)
       {
@@ -296,12 +282,19 @@
       {
         //this.autocenter = false;
         this.element.style.margin = '';
-        this.cssRule.setStyle(this.element.offsetWidth ? {
-          left: '50%',
-          top: '50%',
-          marginLeft: -this.element.offsetWidth / 2 + 'px',
-          marginTop: -this.element.offsetHeight / 2 + 'px'
-        } : { left: 0, top: 0 });
+        this.cssRule.setStyle(
+          this.element.offsetWidth
+            ? {
+                left: '50%',
+                top: '50%',
+                marginLeft: -this.element.offsetWidth / 2 + 'px',
+                marginTop: -this.element.offsetHeight / 2 + 'px'
+              }
+            : {
+                left: 0,
+                top: 0
+              }
+        );
       }
     },
     activate: function(){
@@ -332,8 +325,6 @@
       }
       else
       {
-        //windowManager.activate(this);
-        //;;;if (typeof console != 'undefined') console.warn('make window activate on window.open()');
         this.realign();
       }
     },
