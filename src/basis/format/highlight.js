@@ -416,7 +416,13 @@
 
     template: resource('templates/SourceCodeNode.tmpl'),
 
-    codeGetter: Function.getter('data.code'),
+    binding: {
+      code: 'codeHtml'
+    },
+
+    codeGetter: basis.getter('data.code'),
+    codeHtml: '',
+
     normalize: true,
     lineNumber: true,
     lang: 'text',
@@ -426,10 +432,11 @@
       if (code != this.code_)
       {
         this.code_ = code;
-        this.tmpl.code.innerHTML = highlight(code, this.lang, {
+        this.codeHtml = highlight(code, this.lang, {
           keepFormat: !this.normalize,
           noLineNumber: !this.lineNumber
         });
+        this.updateBind('code');
       }
     }
   });

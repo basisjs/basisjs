@@ -26,7 +26,21 @@
     template: resource('template/namespaceNode.tmpl'),
 
     binding: {
-      className: 'data:className',
+      path: 'data:className',
+      namespace: {
+        events: 'update',
+        getter: function(node){
+          var p = node.data.className.split('.');
+          p.pop();
+          return p.join('.');
+        }
+      },
+      className: {
+        events: 'update',
+        getter: function(node){
+          return node.data.className.split('.').pop();
+        }
+      },
       part: {
         events: 'delegateChanged',
         getter: function(object){
@@ -36,10 +50,6 @@
     },
 
     templateUpdate: function(tmpl, eventName, delta){
-      var p = this.data.className.split('.');
-      tmpl.title.nodeValue = p.pop();
-      tmpl.namespace.nodeValue = p.join('.');
-
       if (!eventName || 'clsId' in delta)
         this.setDataSource(namespaceClsSplitBySuper.getSubset(this.data.clsId));
     },

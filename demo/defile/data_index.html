@@ -237,14 +237,12 @@
       ],
 
       childClass: {
-        templateUpdate: function(tmpl, eventName, delta){
-          if (delta)
-            for (var key in delta)
-              tmpl[key].nodeValue = this.data[key];
-          else
-            for (var key in this.data)
-              if (key in tmpl)
-                tmpl[key].nodeValue = this.data[key];
+        binding: {
+          id: 'data:',
+          title: 'data:',
+          value: 'data:',
+          total: 'data:',
+          percentOfTotalSum: 'data:'
         },
         satelliteConfig: {
           indexes: {

@@ -26,11 +26,17 @@
   var ClsNode = basis.ui.Node.subclass({
     template: resource('template/classMapNode.tmpl'),
 
-    templateUpdate: function(tmpl, eventName, delta){
-      tmpl.title.nodeValue = this.data.className.split(/\./).pop();
-      tmpl.header.title = this.data.className;
-      tmpl.link.nodeValue = '#' + this.data.className;
+    binding: {
+      path: 'data:',
+      className: {
+        events: 'update',
+        getter: function(node){
+          return node.data.className.split(/\./).pop();
+        }
+      }
+    },
 
+    templateUpdate: function(tmpl, eventName, delta){
       if (!eventName || 'clsId' in delta)
         this.setDataSource(clsSplitBySuper.getSubset(this.data.clsId));
     },

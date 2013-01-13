@@ -357,12 +357,12 @@
       childClass: {
         template: 
           '<div{content} class="ImageItem" event-click="select">' +
-            '<img{image} src=""/>' +
+            '<img{image} src="{src}"/>' +
             '<span class="aligner"/>' +
           '</div>',
 
-        templateUpdate: function(){
-          this.tmpl.image.src = this.src;
+        binding: {
+          src: 'src'
         }
       },
 
