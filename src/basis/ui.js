@@ -21,15 +21,16 @@
   //
 
   var document = global.document;
+
   var Class = basis.Class;
   var DOM = basis.dom;
   var cssom = basis.cssom;
 
-  var Template = basis.template.html.Template;
   var classList = basis.cssom.classList;
-  var getter = Function.getter;
+  var getter = basis.getter;
   var createEvent = basis.event.create;
 
+  var Template = basis.template.html.Template;
   var DWNode = basis.dom.wrapper.Node;
   var DWPartitionNode = basis.dom.wrapper.PartitionNode;
   var DWGroupingNode = basis.dom.wrapper.GroupingNode;
@@ -146,11 +147,11 @@
   });
 
   BINDING_PRESET.add('l10n', function(token){
-    return Function.$const(basis.l10n.getToken(token));
+    return basis.fn.$const(basis.l10n.getToken(token));
   });
 
   BINDING_PRESET.add('resource', function(url){
-    return Function.$const(basis.resource(url));
+    return basis.fn.$const(basis.resource(url));
   });
 
 
@@ -618,7 +619,7 @@
     return {
       // methods
       insertBefore: function(newChild, refChild){
-        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; console.warn('Bug: Template has no childNodesElement container, but insertBefore call'); }
+        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; basis.dev.warn('Bug: Template has no childNodesElement container, but insertBefore call'); }
 
         // inherit
         newChild = super_.insertBefore.call(this, newChild, refChild);
@@ -631,10 +632,10 @@
         var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
 
         var element = newChild.element;
-        var refNode = insertPoint || container.insertPoint || null;
+        var refNode = insertPoint || container.insertPoint || null; // NOTE: null at the end for IE
 
         if (element.parentNode !== container || element.nextSibling !== refNode) // prevent dom update
-          container.insertBefore(element, refNode); // NOTE: null at the end for IE
+          container.insertBefore(element, refNode);
           
         return newChild;
       },
