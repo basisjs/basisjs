@@ -783,18 +783,18 @@
     * When strong parameter equal false insert position returns.
     * Otherwise returns position of founded item, but -1 if nothing found.
     * @param {*} value Value search for
-    * @param {function(object)|string=} getter
+    * @param {function(object)|string=} getter_
     * @param {boolean=} desc Must be true for reverse sorted arrays.
     * @param {boolean=} strong If true - returns result only if value found.
     * @param {number=} left Min left index. If omit it equals to zero.
     * @param {number=} right Max right index. If omit it equals to array length.
     * @return {number}
     */
-    binarySearchPos: function(value, getter, desc, strong, left, right){
+    binarySearchPos: function(value, getter_, desc, strong, left, right){
       if (!this.length)  // empty array check
         return strong ? -1 : 0;
 
-      getter = basis.getter(getter || $self);
+      getter_ = getter(getter_ || $self);
       desc = !!desc;
 
       var pos, compareValue;
@@ -804,7 +804,7 @@
       do
       {
         pos = (l + r) >> 1;
-        compareValue = getter(this[pos]);
+        compareValue = getter_(this[pos]);
         if (desc ? value > compareValue : value < compareValue)
           r = pos - 1;
         else
@@ -839,15 +839,15 @@
     merge: function(object){
       return this.reduce(extend, object || {});
     },
-    sortAsObject: function(getter, comparator, desc){
-      getter = basis.getter(getter);
+    sortAsObject: function(getter_, comparator, desc){
+      getter_ = getter(getter_);
       desc = desc ? -1 : 1;
 
       return this
         .map(function(item, index){
                return {
                  i: index,       // index
-                 v: getter(item) // value
+                 v: getter_(item) // value
                };
              })                                                                           // stability sorting (neccessary only for browsers with no strong sorting, just for sure)
         .sort(comparator || function(a, b){ return desc * ((a.v > b.v) || -(a.v < b.v) || (a.i > b.i ? 1 : -1)); })
@@ -1074,6 +1074,7 @@
     };
   }
 
+
  /**
   * Number extensions
   * @namespace Number.prototype
@@ -1127,6 +1128,7 @@
     }
   });
 
+
   // ============================================
   // Date (other extensions & fixes moved to date.js)
   //
@@ -1172,7 +1174,7 @@
   //
 
  /**
-  * Root namespace for Basis framework.
+  * Root namespace for basis.js framework.
   * @namespace basis
   */
 
