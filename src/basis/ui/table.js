@@ -2,6 +2,7 @@
   basis.require('basis.data');
   basis.require('basis.dom');
   basis.require('basis.dom.wrapper');
+  basis.require('basis.l10n');
   basis.require('basis.ui');
 
 
@@ -24,7 +25,6 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var cssom = basis.cssom;
   var nsData = basis.data;
 
   var getter = basis.getter;
@@ -370,8 +370,6 @@
       UINode.prototype.init.call(this);
 
       this.applyConfig_(this.structure);
-
-      cssom.display(this.element, this.useFooter);
     },
 
     applyConfig_: function(structure){
@@ -517,7 +515,8 @@
       UINode.prototype.templateSync.call(this, noRecreate);
 
       DOM.replace(this.tmpl.header, this.header.element);
-      DOM.replace(this.tmpl.footer, this.footer.element);      
+      if (this.footer.useFooter)
+        DOM.replace(this.tmpl.footer, this.footer.element);      
     },
 
     applyConfig_: function(structure){
