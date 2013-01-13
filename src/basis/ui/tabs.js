@@ -17,23 +17,41 @@
   // import names
   //
 
+  var getter = basis.getter;
+
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var getter = Function.getter;
-
   var UINode = basis.ui.Node;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    TabControl: resource('templates/tabs/TabControl.tmpl'),
+    TabGroup: resource('templates/tabs/TabGroup.tmpl'),
+    Tab: resource('templates/tabs/Tab.tmpl'),
+
+    PageControl: resource('templates/tabs/PageControl.tmpl'),
+    Page: resource('templates/tabs/Page.tmpl'),
+
+    TabSheetControl: resource('templates/tabs/TabSheetControl.tmpl'),
+    TabSheet: resource('templates/tabs/TabSheet.tmpl'),
+    AccordionControl: resource('templates/tabs/AccordionControl.tmpl')
+  });
 
 
   //
   // main part
   //
 
-  function findAndSelectActiveNode(control){
-    if (control.autoSelectChild && control.selection && !control.selection.itemCount)
+  function findAndSelectActiveNode(){
+    if (this.autoSelectChild && this.selection && !this.selection.itemCount)
     {
       // select first non-disabled child
-      var node = control.childNodes.search(false, 'disabled');
+      var node = this.childNodes.search(false, 'disabled');
       if (node)
         node.select();
     }
@@ -46,32 +64,27 @@
     className: namespace + '.AbstractTabsControl',
 
     selection: true,
-    childClass: UINode,
-
     autoSelectChild: true,
 
+    childClass: UINode,
+
     event_childNodesModified: function(delta){
-      findAndSelectActiveNode(this);
+      findAndSelectActiveNode.call(this);
       UINode.prototype.event_childNodesModified.call(this, delta);
     },
 
     listen: {
       childNode: {
-        enable: function(){
-          findAndSelectActiveNode(this);
-        },
-        disable: function(){
-          findAndSelectActiveNode(this);
-        }
+        enable: findAndSelectActiveNode,
+        disable: findAndSelectActiveNode
       }
     },
 
     //
     //  common methods
     //
-    item: function(indexOrName){
-      var index = isNaN(indexOrName) ? this.indexOf(indexOrName) : parseInt(indexOrName, 10);
-      return this.childNodes[index];
+    item: function(index){
+      return this.childNodes[typeof index == 'number' ? index : this.indexOf(index)];
     },
     indexOf: function(objectOrName){
       // search for object
@@ -86,10 +99,6 @@
     }
   });
 
-
-  //
-  // Tab
-  //
 
  /**
   * @class
@@ -107,7 +116,7 @@
       UINode.prototype.event_disable.call(this);
     },
 
-    template: resource('templates/tabs/Tab.tmpl'),
+    template: templates.Tab,
 
     binding: {
       title: 'data:'
@@ -122,32 +131,27 @@
   });
 
 
-  //
-  // Tabs control
-  //
-
  /**
   * @class
   */
   var TabControl = Class(AbstractTabsControl, {
     className: namespace + '.TabControl',
 
+    template: templates.TabControl,
+
     childClass: Tab,
+
     groupingClass: {
       className: namespace + '.TabGroupingNode',
+
       childClass: {
         className: namespace + '.TabGroup',
-        template: resource('templates/tabs/TabGroup.tmpl')
-      }
-    },
 
-    template: resource('templates/tabs/TabControl.tmpl')
+        template: templates.TabGroup
+      }
+    }
   });
 
-
-  //
-  // Page Node
-  //
 
  /**
   * @class
@@ -155,29 +159,21 @@
   var Page = Class(UINode, {
     className: namespace + '.Page',
     
-    template: resource('templates/tabs/Page.tmpl')
+    template: templates.Page
   });
 
-
-  //
-  // Page Control
-  //
 
  /**
   * @class
   */
   var PageControl = Class(AbstractTabsControl, {
     className: namespace + '.PageControl',
-
-    childClass: Page,
     
-    template: resource('templates/tabs/PageControl.tmpl')
+    template: templates.PageControl,
+
+    childClass: Page
   });
 
-
-  //
-  // TabSheet Node
-  //
 
  /**
   * @class
@@ -185,9 +181,9 @@
   var TabSheet = Class(Tab, {
     className: namespace + '.TabSheet',
 
-    childClass: UINode,
+    template: templates.TabSheet,
 
-    template: resource('templates/tabs/TabSheet.tmpl'),
+    childClass: UINode,
 
     templateSync: function(noRecreate){
       var pageElement = this.tmpl.pageElement;
@@ -209,35 +205,15 @@
   });
 
 
-  //
-  // AccordionControl
-  //
-
- /**
-  * @class
-  */
-  var AccordionControl = Class(TabControl, {
-    className: namespace + '.AccordionControl',
-
-    childClass: TabSheet,
-    
-    template: resource('templates/tabs/AccordionControl.tmpl')
-  });
-
-
-  //
-  //  TabSheetControl
-  //
-
  /**
   * @class
   */
   var TabSheetControl = Class(TabControl, {
     className: namespace + '.TabSheetControl',
 
-    childClass: TabSheet,
+    template: templates.TabSheetControl,
 
-    template: resource('templates/tabs/TabSheetControl.tmpl'),
+    childClass: TabSheet,
 
     insertBefore: function(newChild, refChild){
       if (newChild = TabControl.prototype.insertBefore.call(this, newChild, refChild))
@@ -264,6 +240,18 @@
 
       TabControl.prototype.clear.call(this, keepAlive);
     }
+  });
+
+
+ /**
+  * @class
+  */
+  var AccordionControl = Class(TabControl, {
+    className: namespace + '.AccordionControl',
+    
+    template: templates.AccordionControl,
+
+    childClass: TabSheet
   });
 
 
