@@ -31,6 +31,18 @@
 
 
   //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Slider: resource('templates/slider/Slider.tmpl'),
+    MarkLayers: resource('templates/slider/MarkLayers.tmpl'),
+    MarkLayer: resource('templates/slider/MarkLayer.tmpl'),
+    Mark: resource('templates/slider/Mark.tmpl')
+  });
+
+
+  //
   // main part
   //
 
@@ -50,10 +62,10 @@
   var Mark = UINode.subclass({
     className: namespace + '.Mark',
 
+    template: templates.Mark,
+
     pos: 0,
     caption: '\xA0',
-
-    template: resource('templates/slider/Mark.tmpl'),
 
     binding: {
       pos: function(node){
@@ -78,11 +90,11 @@
   var MarkLayer = UINode.subclass({
     className: namespace + '.MarkLayer',
 
-    template: resource('templates/slider/MarkLayer.tmpl'),
+    template: templates.MarkLayer,
 
     childClass: Mark,
 
-    captionGetter: Function.$self,
+    captionGetter: basis.fn.$self,
 
     count: 0,
     marks: null,
@@ -113,7 +125,7 @@
         }
       }
 
-      marks = marks.filter(Function.$isNotNull).sortAsObject('pos');
+      marks = marks.filter(basis.fn.$isNotNull).sortAsObject('pos');
 
       var pos = 0;
       for (var i = 0, mark; mark = marks[i]; i++)
@@ -174,14 +186,11 @@
     stepCount: NaN,
     stepValue: NaN,
 
-   /**
-    * @inheritDoc
-    */
-    template: resource('templates/slider/Slider.tmpl'),
 
+    template: templates.Slider,
     binding: {
       marks: 'satellite:',
-      thrumPos: {
+      thumbPos: {
         events: 'change rangeChanged',
         getter: function(node){
           return percentValue(node.value2pos(node.value));
@@ -206,14 +215,10 @@
         }
       }
     },
-
-   /**
-    * @inheritDoc
-    */
     action: {
       jumpTo: eventToValue,
       focus: function(){
-        DOM.focus(this.element);
+        this.focus();
       },
       keyStep: function(event){
         switch(Event.key(event))
@@ -263,7 +268,7 @@
     satelliteConfig: {
       marks: UINode.subclass({
         className: namespace + '.MarkLayers',
-        template: resource('templates/slider/MarkLayers.tmpl'),
+        template: templates.MarkLayers,
         childClass: MarkLayer
       })
     },
@@ -288,11 +293,17 @@
       this.setValue(isNaN(value) ? this.min : value);
 
       // add drag possibility for slider
-      this.scrollbarDD = new DragDropElement({
-        element: this.tmpl.scrollThrum,
+      this.dde = new DragDropElement({
         handler: DRAGDROP_HANDLER,
         handlerContext: this
       });
+    },
+
+    templateSync: function(noRecreate){
+      UINode.prototype.templateSync.call(this, noRecreate);
+
+      if (this.tmpl.scrollThumb)
+        this.dde.setElement(this.tmpl.scrollThumb);
     },
 
    /**
@@ -355,6 +366,7 @@
     },
 
    /**
+    * @return {number}
     */
     value2pos: function(value){     
       return (value.fit(this.min, this.max) - this.min) / (this.max - this.min);
@@ -421,8 +433,8 @@
     * @inheritDoc
     */
     destroy: function(){
-      this.scrollbarDD.destroy();
-      this.scrollbarDD = null;
+      this.dde.destroy();
+      this.dde = null;
 
       UINode.prototype.destroy.call(this);
     }

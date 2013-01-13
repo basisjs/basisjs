@@ -4,14 +4,14 @@
   <b:define name="disabled" type="bool"/>
   <b:define name="isEmptyRange" type="bool"/>
 
-	<div class="Basis-Slider {isEmptyRange} Basis-Slider-MinMaxOutside {selected} {disabled}" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">
+	<div class="Basis-Slider Basis-Slider-MinMaxOutside {isEmptyRange} {selected} {disabled}" event-mousewheel="focus wheelStep" event-keyup="keyStep" event-mousedown="focus" tabindex="0">
     <div class="Basis-Slider-MinLabel"><span class="caption">{minValue}</span></div>
     <div class="Basis-Slider-MaxLabel"><span class="caption">{maxValue}</span></div>
     <div class="Basis-Slider-ScrollbarContainer" event-click="jumpTo">
   	  <!--{marks}-->
       <div{scrollbar} class="Basis-Slider-Scrollbar">
-        <div{valueBar} class="Basis-Slider-ValueBar" style="left: {thrumPos}%">
-          <div{scrollThrum} class="Basis-Slider-Thrum"/>
+        <div{valueBar} class="Basis-Slider-ValueBar" style="left: {thumbPos}%">
+          <div{scrollThumb} class="Basis-Slider-Thumb"/>
         </div>
         <div{leftBar} class="Basis-Slider-LeftBar"/>
       </div>
