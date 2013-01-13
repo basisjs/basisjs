@@ -4,6 +4,7 @@
   basis.require('basis.dom.event');
   basis.require('basis.cssom');
   basis.require('basis.layout');
+  basis.require('basis.l10n');
   basis.require('basis.ui');
 
 
@@ -23,14 +24,28 @@
   var DOM = basis.dom;
   var Event = basis.dom.event;
   var cssom = basis.cssom;
+  var layout = basis.layout;
 
-  var getter = Function.getter;
+  var getter = basis.getter;
   var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
 
-  var nsLayout = basis.layout;
-
   var UINode = basis.ui.Node;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Popup: resource('templates/popup/Popup.tmpl'),
+    Balloon: resource('templates/popup/Balloon.tmpl'),
+    popupManager: resource('templates/popup/popupManager.tmpl')
+  });
+
+  basis.l10n.createDictionary(namespace, __dirname + 'l10n/popup', {
+    "close": "Close"
+  });
 
 
   //
@@ -82,9 +97,9 @@
   var Popup = Class(UINode, {
     className: namespace + '.Popup',
 
-    closeText: 'Close',
+    closeText: basis.l10n.getToken(namespace, 'close'),
 
-    template: resource('templates/popup/Popup.tmpl'),
+    template: templates.Popup,
 
     binding: {
       visible: {
@@ -134,7 +149,6 @@
       // add generic rule
       this.cssRule = cssom.uniqueRule(this.element);
 
-      // 
       this.ignoreClickFor = arrayFrom(this.ignoreClickFor);
 
       if (this.dir)
@@ -218,8 +232,8 @@
     isFitToViewport: function(dir){
       if (this.visible && this.relElement)
       {
-        var box = new nsLayout.Box(this.relElement, false, this.element.offsetParent);
-        var viewport = new nsLayout.Viewport(this.element.offsetParent);
+        var box = new layout.Box(this.relElement, false, this.element.offsetParent);
+        var viewport = new layout.Viewport(this.element.offsetParent);
         var width  = this.element.offsetWidth;
         var height = this.element.offsetHeight;
 
@@ -295,14 +309,14 @@
 
         if (!point)
         {
-          var box = new nsLayout.Box(this.relElement, false, this.element.offsetParent);
+          var box = new layout.Box(this.relElement, false, this.element.offsetParent);
           point = {
             x: dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()],
             y: dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()]
           };
         }
 
-        var offsetParentBox = new nsLayout.Box(this.element.offsetParent);
+        var offsetParentBox = new layout.Box(this.element.offsetParent);
 
         var style = {
           left: 'auto',
@@ -428,7 +442,7 @@
   var Balloon = Class(Popup, {
     className: namespace + '.Balloon',
 
-    template: resource('templates/popup/Balloon.tmpl')
+    template: templates.Balloon
   });
 
 
@@ -440,7 +454,7 @@
   // which makes popup visible can also hide it (as click outside of popup).
 
   var popupManager = new UINode({
-    template: resource('templates/popup/popupManager.tmpl'),
+    template: templates.popupManager,
 
     handheldMode: false,
 
