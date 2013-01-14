@@ -490,6 +490,8 @@
     headerClass: Header,
     footerClass: Footer,
 
+    columnCount: 0,
+
     selection: true, 
     childClass: Row,
 
@@ -555,6 +557,8 @@
             };
           }
         }
+
+        this.columnCount = i;
 
         this.childClass = this.childClass.subclass({
           template:
