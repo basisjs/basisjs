@@ -12,6 +12,8 @@
 
   var Class = basis.Class;
   var cleaner = basis.cleaner;
+  var path = basis.path;
+
 
   //
   // Main part
@@ -657,7 +659,7 @@
                 case 'resource':
 
                   if (elAttrs.src)
-                    template.resources.push(basis.path.resolve(template.baseURI + elAttrs.src));
+                    template.resources.push(path.resolve(template.baseURI + elAttrs.src));
 
                 break;
 
@@ -716,19 +718,15 @@
                       }
                       else
                       {
+                        var resource;
+
                         if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
-                        {
-                          var resource = getSourceByPath(url);
-                          template.deps.add(resource);
-                          decl = getDeclFromSource(resource.get(), resource.url ? basis.path.dirname(resource.url) + '/' : '', true);
-                        }
+                          resource = getSourceByPath(url);
                         else
-                        {
-                          url = basis.path.resolve(template.baseURI + url);
-                          var resource = basis.resource(url);
-                          template.deps.add(resource);
-                          decl = getDeclFromSource(resource(), resource.url ? basis.path.dirname(resource.url) + '/' : '', true);
-                        }
+                          resource = basis.resource(path.resolve(template.baseURI + url));
+
+                        template.deps.add(resource);
+                        decl = getDeclFromSource(resource.get(), resource.url ? path.dirname(resource.url) + '/' : '', true);
                       }
 
                       includeStack.pop();
@@ -1058,19 +1056,14 @@
     '.css': true
   };
 
-  function isUsableResource(path){
-    var ext = path.match(/(\.[a-z0-9_\-]+)+$/);
-    return ext && usableResources[ext[0]];
+  function startUseResource(uri){
+    if (usableResources[path.extname(uri)])
+      basis.resource(uri)().startUse();
   }
 
-  function startUseResource(url){
-    if (isUsableResource(url))
-      basis.resource(url)().startUse();
-  }
-
-  function stopUseResource(url){
-    if (isUsableResource(url))
-      basis.resource(url)().stopUse();
+  function stopUseResource(uri){
+    if (usableResources[path.extname(uri)])
+      basis.resource(uri)().stopUse();
   }
 
 
