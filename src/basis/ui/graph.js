@@ -20,19 +20,9 @@
   // import names
   //
 
-  var oneFunctionProperty = basis.Class.oneFunctionProperty;
-
   var Event = basis.dom.event;
   var DOM = basis.dom;
 
-  var DataObject = basis.data.DataObject;
-  var AbstractNode = basis.dom.wrapper.AbstractNode;
-  var Node = basis.dom.wrapper.Node;
-  var Canvas = basis.ui.canvas.Canvas;
-  var CanvasLayer = basis.ui.canvas.CanvasLayer;
-  var Selection = basis.dom.wrapper.Selection;
-
-  var createEvent = basis.event.create;
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
   var $undef = basis.fn.$undef;
@@ -41,6 +31,27 @@
   var extend = basis.object.extend;
   var complete = basis.object.complete;
   var objSlice = basis.object.slice;
+  var oneFunctionProperty = basis.Class.oneFunctionProperty;
+  var createEvent = basis.event.create;
+
+  var DataObject = basis.data.DataObject;
+  var AbstractNode = basis.dom.wrapper.AbstractNode;
+  var Node = basis.dom.wrapper.Node;
+  var Selection = basis.dom.wrapper.Selection;
+  var Canvas = basis.ui.canvas.Canvas;
+  var CanvasLayer = basis.ui.canvas.CanvasLayer;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Graph: resource('templates/graph/Graph.tmpl'),
+    GraphSelection: resource('templates/graph/GraphSelection.tmpl'),
+    GraphViewer: resource('templates/graph/GraphViewer.tmpl')
+  });
+
 
   //
   // Main part
@@ -55,8 +66,8 @@
     }
     else
     {
-      /0\.(0+)?[^0]/.test(String(number));
-      return (-1) * (RegExp.$1 || '').length - 1;
+      var m = String(number).match(/0\.(0+)?[^0]/);
+      return -(m ? m[1].length : 0) - 1;
     }
   }
 
@@ -109,7 +120,7 @@
       '#BB7BF1',
       '#FF3030',
       '#090',
-      '#6699DD'
+      '#69D'
     ],
 
     listen: {
@@ -173,8 +184,7 @@
 
     childClass: GraphNode,
 
-    template: resource('templates/graph/Graph.tmpl'),
-
+    template: templates.Graph,
     binding: {
       graphSelection: 'satellite:',
       graphViewer: 'satellite:'
@@ -345,10 +355,10 @@
   */
   var GraphSeriesList = Node.subclass({
     className: namespace + '.GraphSeriesList',
-    childClass: GraphSeria,
 
     event_valuesChanged: createEvent('valuesChanged', 'delta'),
 
+    childClass: GraphSeria,
     childFactory: function(config){
       return new this.childClass(config);
     },
@@ -427,6 +437,7 @@
   */
   var SeriesGraphNode = GraphNode.subclass({
     className: namespace + '.SeriesGraphNode',
+
     values: {},
 
     valueChangeEvents: oneFunctionProperty(
@@ -447,6 +458,7 @@
   */
   var SeriesGraph = Graph.subclass({
     className: namespace + '.SeriesGraph',
+
     childClass: SeriesGraphNode,    
 
     keyGetter: $self,
@@ -1081,7 +1093,7 @@
       alpha: '.7'
     },
 
-    template: resource('templates/graph/GraphSelection.tmpl'),
+    template: templates.GraphSelection,
 
     listen: {
       owner: {
@@ -1169,7 +1181,7 @@
   var GraphViewer = CanvasLayer.subclass({
     className: namespace + '.GraphViewer',
 
-    template: resource('templates/graph/GraphViewer.tmpl'),
+    template: templates.GraphViewer,
 
     action: {
       move: function(event){
@@ -1460,6 +1472,7 @@
    */
   var BarGraphViewer = GraphViewer.subclass({
     className: namespace + '.BarGraphViewer',
+
     draw: function(x, y){
       var context = this.context;
 
@@ -1629,9 +1642,11 @@
    */
   var StackedBarGraph = BarGraph.subclass({
     className: namespace + '.StackedBarGraph',
+
     getMaxValue: function(){
       var max = -Infinity;
       var sum;
+
       for (var i = 0, child; child = this.childNodes[i]; i++)
       {
         sum = 0;
@@ -1641,17 +1656,8 @@
         if (sum > max || max == null)
           max = sum;
       }
+
       return max;
-
-      /*var keys = this.getKeys();
-      var series = this.seriesList.childNodes;
-      var values = series[0].getValues(keys);
-      for (var i = 1, seria; seria = series[i]; i++)
-      {
-        seria.getValues(keys).forEach(function(value, pos) { values[pos] += value });
-      }
-
-      return Math.max.apply(null, values);*/
     },
     getBarRect: function(value, seriaPos, barPos, min, max, step, width, height){
       var bar = {};
