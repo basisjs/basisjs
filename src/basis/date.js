@@ -67,9 +67,10 @@
     Z: getter('getMilliseconds()', '{0:03}')                       // %Z - milliseconds (000..999)
   };
 
-  var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d{1,3}))?)?$/;
+  var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d+))?)?$/;
   var reFormat = /%([ymdhiszp])/ig;
   var reIsoStringSplit = /\D/;
+  var reIsoTimezoneDesignator = /.{10,}([\-\+]\d{1,2}):?(\d{1,2})?/;
 
   // functions
 
@@ -213,27 +214,27 @@
     toISOString: function(){
       return this.toISODateString() + 'T' + this.toISOTimeString();
     },
-    fromISOString: function(datetime){
-      var m = String(datetime).match(reISOFormat);
-      if (!m)
-        throw new Error('Value of date isn\'t in ISO format: ' + datetime);
-
-      m[2] -= 1; // substract 1 for monthes
-      for (var i = 0, part; part = DATE_PART[i]; i++)
-        this.set(part, m[i + 1] || 0);
-
+    fromISOString: function(isoDateString){
+      this.fromDate(fromISOString(isoDateString));
       return this;
     }
   });
 
   // extend Date
+  var fromISOString = (function(){
+    function fastDateParse(y, m, d, h, i, s, ms){ // this -> tz
+      return new Date(y, m - 1, d, h || 0, +(i || 0) - this, s || 0, ms ? ms.substr(3) : 0);
+    }
 
-  function fastDateParse(y, m, d, h, i, s, ms){
-    return new Date(y, m - 1, d, h || 0, i || 0, s || 0, ms || 0);
-  }
-  function fromISOString(isoString){
-    return isoString ? fastDateParse.apply(null, String(isoString).split(reIsoStringSplit)) : null;
-  }
+    var tzoffset = (new Date).getTimezoneOffset();
+
+    return function(isoDateString){
+      var tz = isoDateString.match(reIsoTimezoneDesignator) || 0;
+      if (tz)
+        tz = tzoffset + (tz[2] ? tz[1] * 60 + tz[2] * 1 : tz[1] * 1);
+      return fastDateParse.apply(tz || 0, isoDateString.split(reIsoStringSplit));
+    }
+  })();
 
   Date.fromISOString = function(){
     ;;; if (typeof console != 'undefined') console.warn('Date.fromISOString is deprecated, use basis.date.fromISOString instead');
