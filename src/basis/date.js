@@ -70,7 +70,7 @@
   var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d+))?)?$/;
   var reFormat = /%([ymdhiszp])/ig;
   var reIsoStringSplit = /\D/;
-  var reIsoTimezoneDesignator = /.{10,}([\-\+]\d{1,2}):?(\d{1,2})?/;
+  var reIsoTimezoneDesignator = /(.{10,})([\-\+]\d{1,2}):?(\d{1,2})?$/;
 
   // functions
 
@@ -222,17 +222,23 @@
 
   // extend Date
   var fromISOString = (function(){
-    function fastDateParse(y, m, d, h, i, s, ms){ // this -> tz
-      return new Date(y, m - 1, d, h || 0, +(i || 0) - this, s || 0, ms ? ms.substr(3) : 0);
+    function fastDateParse(y, m, d, h, i, s, ms){
+      return new Date(y, m - 1, d, h || 0, (i || 0) - tz, s || 0, ms ? ms.substr(0, 3) : 0);
     }
 
     var tzoffset = (new Date).getTimezoneOffset();
+    var tz;
 
     return function(isoDateString){
-      var tz = isoDateString.match(reIsoTimezoneDesignator) || 0;
-      if (tz)
-        tz = tzoffset + (tz[2] ? tz[1] * 60 + tz[2] * 1 : tz[1] * 1);
-      return fastDateParse.apply(tz || 0, isoDateString.split(reIsoStringSplit));
+      return fastDateParse.apply(
+        tz = tzoffset,
+        String(isoDateString || '')
+          .replace(reIsoTimezoneDesignator, function(m, pre, h, i){
+            tz += i ? h * 60 + i * 1 : h * 1;
+            return pre;
+          })
+          .split(reIsoStringSplit)
+      );
     }
   })();
 
