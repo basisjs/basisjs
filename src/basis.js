@@ -1417,7 +1417,7 @@
 
           var requestUrl = requirePath + filename;
 
-          var ns = basis.namespace(namespace);
+          var ns = getNamespace(namespace);
           var scriptText = externalResource(requestUrl);
           runScriptInContext(ns, requestUrl, scriptText, '/** @namespace ' + namespace + ' */\n');
           complete(ns, ns.exports);
