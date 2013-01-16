@@ -38,10 +38,10 @@ basis_require('basis.ext.flashcanvas');*/
   var Shape = Node.subclass({
     className: namespace + '.Shape',
     draw: function(context){
-      context.save();
-      context.fillStyle = 'red';
-      context.fillRect(this.data.value * 10,10,30,30);
-      context.restore();
+      // context.save();
+      // context.fillStyle = 'red';
+      // context.fillRect(this.data.value * 10,10,30,30);
+      // context.restore();
     },
     listen: {
       childNode: {
@@ -61,18 +61,20 @@ basis_require('basis.ext.flashcanvas');*/
     template: resource('templates/canvas/CanvasLayer.tmpl'),
 
     templateSync: function(noRecreate){
-      this.tmpl.canvas.width = this.width || 600;
-      this.tmpl.canvas.height = this.height || 400;
+      var canvasElement = this.tmpl.canvas;
+
+      if (canvasElement)
+      {
+        canvasElement.width = this.width || 600;
+        canvasElement.height = this.height || 400;
+      }
 
       UINode.prototype.templateSync.call(this, noRecreate);
 
-      var canvasElement = this.tmpl.canvas;
-
-      if (typeof global.FlashCanvas != "undefined")
+      if (typeof global.FlashCanvas != 'undefined')
         global.FlashCanvas.initElement(canvasElement);
       
-      if (canvasElement && canvasElement.getContext)
-        this.context = canvasElement.getContext('2d');
+      this.context = canvasElement && canvasElement.getContext ? canvasElement.getContext('2d') : null;
 
       if (this.redrawRequest)
         this.redrawRequest();
@@ -117,10 +119,7 @@ basis_require('basis.ext.flashcanvas');*/
       CanvasLayer.prototype.init.call(this);
      
       this.updateCount = 0;
-
-      var canvasElement = this.tmpl.canvas;
-      if (canvasElement && canvasElement.getContext)
-        this.updateTimer_ = setInterval(this.draw.bind(this), 1000/60);
+      this.updateTimer_ = setInterval(this.draw.bind(this), 1000 / 60);
     },
     isNeedToDraw: function(){
       return this.context && (
@@ -134,7 +133,7 @@ basis_require('basis.ext.flashcanvas');*/
     draw: function(){
       var canvas = this.tmpl.canvas;
 
-      if (!canvas || !this.context)
+      if (!this.context)
         return false;
 
       if (canvas.offsetWidth && canvas.width != canvas.offsetWidth)

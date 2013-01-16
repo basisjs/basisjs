@@ -1123,8 +1123,11 @@
     },
 
     recalc: function(){
-      this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
-      this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+      if (this.tmpl.canvas && this.owner.tmpl.canvas)
+      {
+        this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
+        this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+      }
 
       this.clientRect = this.owner.clientRect;
     },
@@ -1217,8 +1220,11 @@
     },
 
     recalc: function(){
-      this.element.width = this.owner.tmpl.canvas.width;
-      this.element.height = this.owner.tmpl.canvas.height;
+      if (this.tmpl.canvas && this.owner.tmpl.canvas)
+      {
+        this.tmpl.canvas.width = this.owner.tmpl.canvas.width;
+        this.tmpl.canvas.height = this.owner.tmpl.canvas.height;
+      }
 
       this.clientRect = this.owner.clientRect;
       this.max = this.owner.maxValue;
