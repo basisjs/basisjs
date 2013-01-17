@@ -1210,16 +1210,15 @@
 
   function sourceById(sourceId){
     var host = document.getElementById(sourceId);
+    
     if (host && host.tagName == 'SCRIPT')
     {
-      var content = host.textContent || host.text;
+      if (host.type == 'text/basis-template')
+        content = host.textContent || host.text;
+      
+      ;;;basis.dev.warn('Template script element with wrong type', host.type);
 
-      switch (host.type)
-      {
-        case 'text/basis-template':
-        default:
-          return content;
-      }
+      return '';
     }
 
     ;;;basis.dev.warn('Template script element with id `' + sourceId + '` not found');
@@ -1440,8 +1439,9 @@
     className: namespace + '.SourceWrapper',
     content: null,
 
-    init: function(content){
+    init: function(content, path){
       basis.Token.prototype.init.call(this);
+      this.path = path;
       this.set(content);
     },
     set: function(content){
@@ -1478,7 +1478,7 @@
 
     if (!source)
     {
-      source = new SourceWrapper('');
+      source = new SourceWrapper('', path);
       sourceByPath[path] = source;
     }
 
