@@ -535,6 +535,54 @@
   });
 
 
+  var CalcIndexPreset = Class(null, {
+    extendConstructor_: true,
+    indexes: {},
+    calc: basis.fn.$null
+  });
+
+  var calcIndexPreset_seed = 1;
+  function getUniqueCalcIndexId(){
+    return 'calc-index-preset-' + (calcIndexPreset_seed++).lead(8);
+  }
+
+  function percentOfRange(getter, events){
+    var minIndex = 'min_' + getUniqueCalcIndexId();
+    var maxIndex = 'max_' + getUniqueCalcIndexId();
+    var indexes = {};
+
+    getter = basis.getter(getter);
+    indexes[minIndex] = min(getter, events);
+    indexes[maxIndex] = max(getter, events);
+
+    var calc = function(data, index, object){
+      return (getter(object) - index[minIndex]) / (index[maxIndex] - index[minIndex]);
+    };
+
+    return calc.preset = new CalcIndexPreset({
+      indexes: indexes,
+      calc: calc
+    });
+  }
+
+  function percentOfMax(getter, events){
+    var maxIndex = 'max_' + getUniqueCalcIndexId();
+    var indexes = {};
+
+    getter = basis.getter(getter);
+    indexes[maxIndex] = max(getter, events);
+
+    var calc = function(data, index, object){
+      return getter(object) / index[maxIndex];
+    };
+
+    return calc.preset = new CalcIndexPreset({
+      indexes: indexes,
+      calc: calc
+    });
+  }
+
+
  /**
   * @class
   */
@@ -634,9 +682,10 @@
       var indexes = this.indexes;
       this.indexes = {};
       this.indexes_ = {};
-
-      this.calcs = this.calcs || {};
       this.indexValues = {};
+
+      var calcs = this.calcs;
+      this.calcs = {};
 
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
         this.keyMap = new KeyObjectMap(Object.complete({
@@ -648,6 +697,7 @@
       MapFilter.prototype.init.call(this);
 
       Object.iterate(indexes, this.addIndex, this);
+      Object.iterate(calcs, this.addCalc, this);
     },
 
     addIndex: function(key, index){
@@ -706,11 +756,28 @@
       }
     },
 
-    addCalc: function(name, calc){
-      this.calcs[name] = calc;
+    addCalc: function(name, calcCfg){
+      if (calcCfg instanceof CalcIndexPreset)
+      {
+        this.calcs[name] = calcCfg.calc;
+        for (var indexName in calcCfg.indexes)
+          this.addIndex(indexName, calcCfg.indexes[indexName]);
+      }
+      else
+        this.calcs[name] = calcCfg;
+
       this.recalcRequest();
     },
     removeCalc: function(name){
+      var calcCfg = this.calcs[name];
+
+      if (calcCfg && calcCfg.preset instanceof CalcIndexPreset)
+      {
+        var indexes = calcCfg.preset.indexes;
+        for (var indexName in indexes)
+          this.removeIndex(indexName, indexes[indexName]);
+      }
+
       delete this.calcs[name];
     },
 
@@ -806,6 +873,10 @@
     avg: avg,
     max: max,
     min: min,
+
+    CalcIndexPreset: CalcIndexPreset,
+    percentOfRange: percentOfRange,
+    percentOfMax: percentOfMax,
 
     IndexMap: IndexMap
   };
