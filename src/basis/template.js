@@ -1210,7 +1210,7 @@
 
   function sourceById(sourceId){
     var host = document.getElementById(sourceId);
-    
+
     if (host && host.tagName == 'SCRIPT')
     {
       if (host.type == 'text/basis-template')
@@ -1241,23 +1241,27 @@
   * method.
   * @example
   *   // create a template
-  *   var template = new basis.template.Template(
-  *     '<li{element} class="listitem">' +
-  *       '<a href{hrefAttr}="#">{titleText}</a>' + 
-  *       '<span class="description">{descriptionText}</span>' +
+  *   var template = new basis.template.html.Template(
+  *     '<li class="listitem item-{num}" title="Item #{num}: {title}">' +
+  *       '<a href="{url}">{title}</a>' + 
+  *       '<span class="description">{description}</span>' +
   *     '</li>'
   *   );
-  *   
+  *
+  *   // create list container
+  *   var list = document.createElement('ul'); // or create using another template
+  *
   *   // create 10 DOM elements using template
   *   for (var i = 0; i < 10; i++)
   *   {
   *     var tmpl = template.createInstance();
-  *     basis.cssom.classList(tmpl.element).add('item' + i);
-  *     tmpl.hrefAttr.nodeValue = '/foo/bar.html';
-  *     tmpl.titleText.nodeValue = 'some title';
-  *     tmpl.descriptionText.nodeValue = 'description text';
+  *     tmpl.set('num', i);
+  *     tmpl.set('url', '/foo/bar.html');
+  *     tmpl.set('title, 'some title');
+  *     tmpl.set('description', 'description text');
+  *     list.appendChild(tmpl.element);
   *   }
-  *   
+  *
   * @class
   */
   var Template = Class(null, {
