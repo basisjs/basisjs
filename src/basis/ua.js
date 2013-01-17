@@ -10,9 +10,11 @@
   // main part
   //
 
-  var answers = {};
-  var versions = {};
+  var document = global.document;
   var userAgent = (global.navigator && global.navigator.userAgent) || '';
+  var opera = global.opera;
+  var versions = {};
+  var answers = {};
   var browserName = 'unknown';
   var browserPrettyName = 'unknown';
   var browserNames = {
@@ -32,19 +34,19 @@
   // init
   for (var name in browserNames)
   {
-    if (name == 'MSIE' && global.opera)
+    if (name == 'MSIE' && opera)
       continue;  // opera identifies as IE :(
 
-    if (name == 'Safari' && userAgent.match(/chrome/i))
+    if (name == 'Safari' && /chrome/i.test(userAgent))
       continue;  // Chrome identifies as Safari :(
 
-    if (name == 'AppleWebKit' && userAgent.match(/iphone/i))
+    if (name == 'AppleWebKit' && /iphone/i.test(userAgent))
       continue;
 
     if (userAgent.match(new RegExp(name + '.' + '(\\d+(\\.\\d+)*)', 'i')))
     {
       var names     = browserNames[name];
-      var version   = global.opera && typeof global.opera.version == 'function' ? global.opera.version() : RegExp.$1;
+      var version   = opera && typeof opera.version == 'function' ? opera.version() : RegExp.$1;
       var verNumber = versionToInt(version);
 
       browserName = names[0] + verNumber;
@@ -77,50 +79,41 @@
   function versionToInt(version){
     var base = 1000000;
     var part = String(version).split(".");
+
     for (var i = 0, result = 0; i < 4 && i < part.length; i++, base/=100)
       result += part[i] * base;
 
     return result;
   }
 
-  function testBrowser(/* browserName1 .. browserNameN */){
-    for (var i = 0; i < arguments.length; i++)
+  function testBrowser(browserName){
+    var forTest = browserName.toLowerCase();
+
+    // using cache
+    if (forTest in answers)
+      return answers[forTest];
+
+    // calculate answer
+    var m = forTest.match(/^([a-z]+)(([\d\.]+)([+-=]?))?$/i);
+    if (m)
+    { 
+      answers[forTest] = false;
+
+      var name = m[1].toLowerCase();
+      var version = versionToInt(m[3]); // what
+      var operation = m[4] || '=';      // how
+      var cmpVersion = versions[name];  // with
+
+      if (cmpVersion)
+        return answers[forTest] = 
+             !version
+          || (operation == '=' && cmpVersion == version)
+          || (operation == '+' && cmpVersion >= version)
+          || (operation == '-' && cmpVersion <  version);
+    }
+    else
     {
-      var forTest = arguments[i].toLowerCase();
-
-      // using cache
-      if (forTest in answers)
-      {
-        if (answers[forTest])
-          return true;
-      }
-      else 
-      {
-        // calculate answer
-        var m = forTest.match(/^([a-z]+)(([\d\.]+)([+-=]?))?$/i);
-        if (m)
-        { 
-          answers[forTest] = false;
-
-          var name = m[1].toLowerCase();
-          var version = versionToInt(m[3]); // what
-          var operation = m[4] || '=';      // how
-          var cmpVersion = versions[name];  // with
-
-          if (!cmpVersion)
-            continue;
-
-          return answers[forTest] = 
-               !version
-            || (operation == '=' && cmpVersion == version)
-            || (operation == '+' && cmpVersion >= version)
-            || (operation == '-' && cmpVersion <  version);
-        }
-        else
-        {
-          ;;;if (typeof console != 'undefined') console.warn('Bad browser version description in Browser.test() function: ' + forTest);
-        }
-      }
+      ;;;basis.dev.warn('Bad browser version description in Browser.test() function: ' + forTest);
     }
 
     return false;
@@ -143,7 +136,7 @@
     },
 
     remove: function(name, path){
-      document.cookie = name + "=;expires=" + new Date(0).toGMTString() + ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname));
+      document.cookie = name + "=;expires=" + (new Date(0)).toGMTString() + ";path=" + (path || ((location.pathname.indexOf('/') == 0 ? '' : '/') + location.pathname));
     }
   };
 
@@ -162,17 +155,14 @@
   // export names
   //
 
-  //this.toString = function(){ return browserPrettyName };
-
   module.exports = {
-    //name: browserName,
     prettyName: browserPrettyName,
     
-    test: testBrowser,  // multiple test
-    is: function(name){ // single test
-      return testBrowser(name);
+    test: function(){  // multiple test
+      return basis.array(arguments).some(testBrowser);
     },
+    is: testBrowser, // single test
 
-    // Cookie interface
+    // cookie interface
     cookies: cookies
   };
