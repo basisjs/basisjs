@@ -20,7 +20,6 @@
 
   var Emitter = basis.event.Emitter;
   var AjaxTransport = basis.net.AjaxTransport;
-  var AjaxRequest = basis.net.AjaxRequest;
 
 
  /**
@@ -43,7 +42,6 @@
     inprogressTransports: null,
 
     transportClass: AjaxTransport,
-    requestClass: AjaxRequest,
 
     event_sessionOpen: createEvent('sessionOpen'),
     event_sessionClose: createEvent('sessionClose'),
@@ -57,6 +55,8 @@
     isSessionExpiredError: Function.$false,
 
     init: function(){
+      ;;;if (this.requestClass) basis.dev.warn(namespace + '.Service#requestClass is not supported; set requestClass via transportClass')
+
       Emitter.prototype.init.call(this);
 
       this.inprogressTransports = [];
@@ -86,9 +86,7 @@
             return;
 
           return TransportClass.prototype.request.call(this, requestData);
-        },
-
-        requestClass: this.requestClass
+        }
       });
 
       this.addHandler(SERVICE_HANDLER);
