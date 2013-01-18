@@ -58,36 +58,51 @@
       var def = null;
       var value = extension[key];
 
-      if (value)
+      if (Node && value instanceof Node)
       {
-        value = BINDING_PRESET.process(key, value);
-
-        if (typeof value != 'object')
+        def = {
+          events: 'satelliteChanged',
+          getter: (function(key, satellite){
+            var init = basis.fn.runOnce(function(node){
+              node.setSatellite(key, satellite);
+              ;;;if (node.satellite[key] !== satellite) basis.dev.warn('basis.ui.binding: implicit satellite `' + key + '` attach to owner failed');
+            });
+            return function(node){
+              init(node);
+              return node.satellite[key] ? node.satellite[key].element : null;
+            };
+          })(key, value)
+        };
+      }
+      else
+      {
+        if (value)
         {
-          def = {
-            getter: getter(value)
-          };
-        }
-        else
-          if (Array.isArray(value))
+          value = BINDING_PRESET.process(key, value);
+
+          if (typeof value != 'object')
           {
             def = {
-              getter: getter(value[0]),
-              events: value[1]
+              getter: getter(value)
             };
           }
           else
-          {
-            def = {
-              getter: getter(value.getter),
-              events: value.events
-            };
-          }
+            if (Array.isArray(value))
+            {
+              def = {
+                getter: getter(value[0]),
+                events: value[1]
+              };
+            }
+            else
+            {
+              def = {
+                getter: getter(value.getter),
+                events: value.events
+              };
+            }
+        }
       }
-
-      /*def.update = function(node){
-        return node.tmpl.set(key, this.getter(node));
-      };*/
 
       binding[key] = def;
     }
