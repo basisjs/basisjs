@@ -25,6 +25,8 @@
  * - resouces
  * - basis.Class namespace (provides inheritance)
  * - cleaner
+ * - Token
+ * - basis.ready (on load handler)
  */
 
 // Define global scope: `window` in browser, or `global` on node.js
@@ -427,8 +429,9 @@
 
   })();
 
-  var nullGetter = function(){};
-  nullGetter.__extend__ = getter;
+  var nullGetter = extend(function(){}, {
+    __extend__: getter
+  });
 
  /**
   * @param {function(object)|string|object} getter

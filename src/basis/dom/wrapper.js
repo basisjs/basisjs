@@ -25,25 +25,22 @@
   //
 
   var Class = basis.Class;
-  var nsData = basis.data;
-
+  var complete = basis.object.complete;
+  var arrayFrom = basis.array.from;
+  var $undef = basis.fn.$undef;
+  var getter = basis.getter;
+  var nullGetter = basis.fn.nullGetter;
+  var oneFunctionProperty = Class.oneFunctionProperty;
   var createEvent = basis.event.create;
   var events = basis.event.events;
+
   var LISTEN = basis.event.LISTEN;
+  var SUBSCRIPTION = basis.data.SUBSCRIPTION;
+  var STATE = basis.data.STATE;
 
-  var SUBSCRIPTION = nsData.SUBSCRIPTION;
-  var DataObject = nsData.DataObject;
-  var AbstractDataset = nsData.AbstractDataset;
-  var Dataset = nsData.Dataset;
-
-  var STATE = nsData.STATE;
-
-  var arrayFrom = basis.array.from;
-  var getter = Function.getter;
-  var nullGetter = Function.nullGetter;
-  var $undef = Function.$undef;
-  var complete = Object.complete;
-  var oneFunctionProperty = Class.oneFunctionProperty;
+  var DataObject = basis.data.DataObject;
+  var AbstractDataset = basis.data.AbstractDataset;
+  var Dataset = basis.data.Dataset;
 
 
   //
@@ -657,25 +654,13 @@
           this.dataSource = null;
       }
 
-      // process satellite
-      if (!this.satellite)
-        this.satellite = {};
-      else
-      {
-        var satelliteListen = this.listen.satellite;
-        for (var key in this.satellite)
-        {
-          var satellite = this.satellite[key];
-
-          if (satellite instanceof AbstractNode)
-            satellite.setOwner(this);
-
-          if (satelliteListen)
-            satellite.addHandler(satelliteListen, this);
-
-          this.event_satelliteChanged(key, null);
-        }  
-      }
+      // process satellites
+      var satellites = this.satellite;
+      this.satellite = {};
+      
+      if (satellites)
+        for (var key in satellites)
+          this.setSatellite(key, satellites[key]);
 
       if (this.satelliteConfig !== NULL_SATELLITE_CONFIG)
       {
@@ -697,51 +682,12 @@
         }
       }
 
+      // process owner
       var owner = this.owner;
       if (owner)
       {
         this.owner = null;
         this.setOwner(owner);
-      }
-    },
-
-   /**
-    * Set replace satellite with defined name for new one.
-    * @param {string} name Satellite name.
-    * @param {basis.dom.wrapper.AbstractNode} satellite New satellite node.
-    */
-    setSatellite: function(name, satellite){
-      var oldSatellite = this.satellite[name];
-
-      if (satellite instanceof DataObject == false)
-        satellite = null;
-
-      if (oldSatellite != satellite && !this.satelliteConfig[name])
-      {
-        var satelliteListen = this.listen.satellite;
-
-        if (oldSatellite)
-        {
-          if (oldSatellite instanceof AbstractNode)
-            oldSatellite.setOwner(null);
-          if (satelliteListen)
-            oldSatellite.removeHandler(satelliteListen, this);
-        }
-
-        if (satellite)
-          this.satellite[name] = satellite;
-        else
-          delete this.satellite[name];
-
-        if (satellite)
-        {
-          if (satellite instanceof AbstractNode)
-            satellite.setOwner(this);
-          if (satelliteListen)
-            satellite.addHandler(satelliteListen, this);
-        }
-
-        this.event_satelliteChanged(name, oldSatellite);
       }
     },
 
@@ -835,6 +781,46 @@
           this.setDelegate(owner);
       }
     },
+
+   /**
+    * Set replace satellite with defined name for new one.
+    * @param {string} name Satellite name.
+    * @param {basis.dom.wrapper.AbstractNode} satellite New satellite node.
+    */
+    setSatellite: function(name, satellite){
+      var oldSatellite = this.satellite[name];
+      
+      if (satellite instanceof DataObject == false)
+        satellite = null;
+
+      if (oldSatellite != satellite && !this.satelliteConfig[name])
+      {
+        var satelliteListen = this.listen.satellite;
+
+        if (oldSatellite)
+        {
+          if (oldSatellite instanceof AbstractNode)
+            oldSatellite.setOwner(null);
+          if (satelliteListen)
+            oldSatellite.removeHandler(satelliteListen, this);
+        }
+
+        if (satellite)
+          this.satellite[name] = satellite;
+        else
+          delete this.satellite[name];
+
+        if (satellite)
+        {
+          if (satellite instanceof AbstractNode)
+            satellite.setOwner(this);
+          if (satelliteListen)
+            satellite.addHandler(satelliteListen, this);
+        }
+
+        this.event_satelliteChanged(name, oldSatellite);
+      }
+    },    
 
    /**
     * Returns 
