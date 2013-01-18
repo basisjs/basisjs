@@ -58,8 +58,8 @@
     success: function(transport, request, data){
       this.success.call(request.requestData.origin, data);
     },
-    failure: function(transport, request, error){
-      this.failure.call(request.requestData.origin, error);
+    failure: function(transport, request){
+      this.failure.call(request.requestData.origin, request.data.error);
     },
     complete: function(transport, request){
       this.complete.call(request.requestData.origin);
