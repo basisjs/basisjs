@@ -14,7 +14,18 @@
   // import names
   //
 
-  var UINode = basis.ui.Node;
+  var Node = basis.ui.Node;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Button: resource('templates/button/Button.tmpl'),
+    ButtonPanel: resource('templates/button/ButtonPanel.tmpl'),
+    ButtonGroup: resource('templates/button/ButtonGroup.tmpl')
+  });
 
 
   //
@@ -24,30 +35,14 @@
  /**
   * @class
   */
-  var Button = UINode.subclass({
+  var Button = Node.subclass({
     className: namespace + '.Button',
 
-   /**
-    * Button caption text.
-    * @type {string}
-    */
-    caption: '[no caption]',
-
-   /**
-    * @inheritDoc
-    */
-    template: resource('templates/button/Button.tmpl'),
-
-   /**
-    * @inheritDoc
-    */
+    // template, binding & action
+    template: templates.Button,
     binding: {
       caption: 'caption'
     },
-
-   /**
-    * @inheritDoc
-    */
     action: {
       click: function(){
         if (!this.isDisabled())
@@ -56,10 +51,10 @@
     },
 
    /**
-    * Actions on click.
+    * Button caption text.
+    * @type {string}
     */
-    click: function(){
-    },
+    caption: '[no caption]',
 
    /**
     * Set new caption and update binding.
@@ -68,6 +63,12 @@
     setCaption: function(newCaption){
       this.caption = newCaption;
       this.updateBind('caption');
+    },
+
+   /**
+    * Actions on click.
+    */
+    click: function(){
     }
   });
 
@@ -75,10 +76,10 @@
  /**
   * @class
   */
-  var ButtonPanel = UINode.subclass({
+  var ButtonPanel = Node.subclass({
     className: namespace + '.ButtonPanel',
 
-    template: resource('templates/button/ButtonPanel.tmpl'),
+    template: templates.ButtonPanel,
 
     childClass: Button,
 
@@ -90,9 +91,9 @@
       },
 
       childClass: {
-        className: namespace + '.ButtonPartitionNode',
+        className: namespace + '.ButtonGroup',
 
-        template: resource('templates/button/ButtonGroup.tmpl')
+        template: templates.ButtonGroup
       }
     },
 
@@ -100,10 +101,12 @@
 
    /**
     * Fetch button by name.
+    * @deprecated
     * @param {string} name Name value of button.
     * @return {basis.ui.button.Button}
     */
     getButtonByName: function(name){
+      ;;;basis.dev.warn('basis.ui.button.ButtonPanel#getButtonByName is deprecated, use getChildByName method istead');
       return this.getChildByName(name);
     }
   });
