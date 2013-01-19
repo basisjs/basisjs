@@ -20,12 +20,22 @@
 
   var DOM = basis.dom;
   var domEvent = basis.dom.event;
+  var field = basis.ui.field;
 
   var createEvent = basis.event.create;
   var events = basis.event.events;
 
   var UINode = basis.ui.Node;
-  var field = basis.ui.field;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Form: resource('templates/form/Form.tmpl'),
+    FormContent: resource('templates/form/FormContent.tmpl')
+  });
 
 
  /**
@@ -34,10 +44,10 @@
   var FormContent = UINode.subclass({
     className: namespace + '.FormContent',
     
+    template: templates.FormContent,
+
     childClass: field.Field,
-    childFactory: function(config){
-      return field(config);
-    },
+    childFactory: field,
 
     listen: {
       childNode: {
@@ -52,20 +62,27 @@
       }
     },
 
-    onSubmit: Function.$false,
-
     event_reset: createEvent('reset'),
-    
-    template: resource('templates/form/FormContent.tmpl'),
 
+    onSubmit: basis.fn.$false,
+
+   /**
+    * @deprecated
+    */
     getFieldByName: function(name){
-      return this.childNodes.search(name, 'name');
+      ;;;basis.dev.warn('basis.ui.form.FormContent#getFieldByName is deprecated, use getChildByName method istead');
+      return this.getChildByName(name);
     },
+   /**
+    * @deprecated
+    */
     getFieldById: function(id){
-      return this.childNodes.search(id, 'id');
+      ;;;basis.dev.warn('basis.ui.form.FormContent#getFieldById is deprecated, use getChild method istead');
+      return this.getChild(id, 'id');
     },
+
     loadData: function(data, noValidate){
-      var names = Object.keys(data);
+      var names = basis.object.keys(data);
 
       for (var field = this.firstChild; field; field = field.nextSibling)
       {
@@ -87,19 +104,20 @@
       this.event_reset();
     },
     validate: function(){
-      var error, errors = [];
+      var errors = [];
+      var error;
+
       for (var field = this.firstChild; field; field = field.nextSibling)
-      {
         if (error = field.validate())
           errors.push(error);
-      }
+
       if (errors.length)
       {
         errors[0].field.focus();
         return errors;
       }
-      else
-        return true;
+      
+      return true;
     },
     serialize: function(){
       return this.childNodes.reduce(function(result, field){
@@ -123,13 +141,13 @@
 
     formMethod: 'POST',
     
-    template: resource('templates/form/Form.tmpl'),
+    template: templates.Form,
 
     binding: {
-      target:  'formTarget  || ""',
-      action:  'formAction  || ""',
+      target:  'formTarget || ""',
+      action:  'formAction || ""',
       enctype: 'formEnctype || ""',
-      method:  'formMethod  || ""'
+      method:  'formMethod || ""'
     },
 
     action: {
