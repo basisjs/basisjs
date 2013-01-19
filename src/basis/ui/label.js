@@ -18,34 +18,37 @@
   // import names
   //
 
+  var Class = basis.Class;
+  var DOM = basis.dom;
+  var cssom = basis.cssom;
+
   var LISTEN = basis.event.LISTEN;
   var STATE = basis.data.STATE;
   var DELEGATE = basis.dom.wrapper.DELEGATE;
 
-
-  var getter = Function.getter;
+  var getter = basis.getter;
   var createEvent = basis.event.create;
   var events = basis.event.events;
-
-  var Class = basis.Class;
-  var DOM = basis.dom;
-  var cssom = basis.cssom;
 
   var UINode = basis.ui.Node;
 
 
   //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    base: resource('templates/label/label.tmpl'),
+    state: resource('templates/label/state.tmpl'),
+    processing: resource('templates/label/processing.tmpl'),
+    error: resource('templates/label/error.tmpl'),
+    count: resource('templates/label/count.tmpl'),
+    empty: resource('templates/label/empty.tmpl')
+  });
+
+
+  //
   // main part
-  //
-
-  var stateTemplate = resource('templates/label/state.tmpl');
-  var processingTemplate = resource('templates/label/processing.tmpl');
-  var errorTemplate = resource('templates/label/error.tmpl');
-  var countTemplate = resource('templates/label/count.tmpl');
-  var emptyTemplate = resource('templates/label/empty.tmpl');
-
-  //
-  // NodeLabel
   //
 
   var condChangedTrigger = function(){
@@ -53,16 +56,16 @@
   };
 
  /**
-  * Base class for all labels.
+  * Base class for labels.
   * @class
   */
   var NodeLabel = Class(UINode, {
     className: namespace + '.NodeLabel',
 
-    template: resource('templates/label/label.tmpl'),
+    template: templates.base,
     content: null,
 
-    visibilityGetter: Function.$true,
+    visibilityGetter: basis.fn.$true,
     visible: null,
 
     insertPoint: function(owner){
@@ -104,13 +107,7 @@
       UINode.prototype.event_ownerChanged.call(this, oldOwner);
 
       condChangedTrigger.call(this);
-      //this.event_condChanged.call()
-    }/*,
-
-    init: function(){
-      UINode.prototype.init.call(this);
-      condChangedTrigger.call(this);
-    }*/
+    }
   });
 
   //
@@ -124,7 +121,7 @@
   var State = Class(NodeLabel, {
     className: namespace + '.State',
 
-    template: stateTemplate,
+    template: templates.state,
 
     listen: {
       owner: {
@@ -140,7 +137,7 @@
   var Processing = Class(State, {
     className: namespace + '.Processing',
 
-    template: processingTemplate,
+    template: templates.processing,
     content: 'Processing...',
 
     visibilityGetter: function(owner){
@@ -154,13 +151,14 @@
   var Error = Class(State, {
     className: namespace + '.Error',
 
-    template: errorTemplate,
+    template: templates.error,
     content: 'Error',
 
     visibilityGetter: function(owner){
       return owner.state == STATE.ERROR;
     }
   });
+
 
   //
   // Node dataSource labels
@@ -185,7 +183,7 @@
   var DataSourceLabel = Class(NodeLabel, {
     className: namespace + '.DataSourceLabel',
 
-    template: stateTemplate,
+    template: templates.state,
 
     listen: {
       owner: {
@@ -216,7 +214,7 @@
   var DataSourceState = Class(DataSourceLabel, {
     className: namespace + '.DataSourceState',
 
-    template: stateTemplate,
+    template: templates.state,
 
     listen: {
       ownerDataSource: {
@@ -233,7 +231,7 @@
     className: namespace + '.DataSourceProcessing',
 
     content: 'Processing...',
-    template: processingTemplate,
+    template: templates.processing,
 
     visibilityGetter: function(owner){
       return owner.dataSource && owner.dataSource.state == STATE.PROCESSING;
@@ -248,7 +246,7 @@
     className: namespace + '.DataSourceProcessing',
 
     content: 'Error',
-    template: errorTemplate,
+    template: templates.error,
 
     visibilityGetter: function(owner){
       return owner.dataSource && owner.dataSource.state == STATE.ERROR;
@@ -261,7 +259,7 @@
   var DataSourceItemCount = Class(DataSourceLabel, {
     className: namespace + '.DataSourceItemCount',
 
-    template: countTemplate,
+    template: templates.count,
     listen: {
       ownerDataSource: {
         stateChanged: condChangedTrigger,
@@ -276,7 +274,7 @@
   var DataSourceEmpty = Class(DataSourceItemCount, {
     className: namespace + '.DataSourceEmpty',
 
-    template: emptyTemplate,
+    template: templates.empty,
     content: 'Empty',
 
     visibilityGetter: function(owner){ 
@@ -295,7 +293,7 @@
   var ChildNodesCount = Class(NodeLabel, {
     className: namespace + '.ChildCount',
 
-    template: countTemplate,
+    template: templates.count,
     listen: {
       owner: {
         stateChanged: condChangedTrigger,
@@ -311,7 +309,7 @@
   var Empty = Class(ChildNodesCount, {
     className: namespace + '.Empty',
 
-    template: emptyTemplate,
+    template: templates.empty,
     content: 'Empty',
 
     visibilityGetter: function(owner){ 
