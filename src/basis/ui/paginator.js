@@ -137,13 +137,20 @@
       jumpTo: function(actionName, event){
         var scrollbar = this.tmpl.scrollbar;
         var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
+
         this.setSpanStartPage(Math.floor(pos * this.pageCount) - Math.floor(this.pageSpan / 2));
       },
       scroll: function(event){
         var delta = Event.wheelDelta(event);
         
         if (delta)
+        {
+          // set new offset
           this.setSpanStartPage(this.spanStartPage_ + delta);
+
+          // prevent page scrolling
+          Event.cancelDefault(event);
+        }
       }
     },
 
@@ -251,6 +258,7 @@
     },
     setSpanStartPage: function(pageNumber){
       pageNumber = pageNumber.fit(0, this.pageCount - this.pageSpan);
+
       if (pageNumber != this.spanStartPage_)
       {
         this.spanStartPage_ = pageNumber;

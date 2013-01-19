@@ -259,6 +259,9 @@
           this.stepDown();
         else
           this.stepUp();
+
+        // prevent page scrolling
+        Event.cancelDefault(event);
       }
     },
 
