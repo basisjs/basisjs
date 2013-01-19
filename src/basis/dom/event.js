@@ -244,13 +244,15 @@
   function wheelDelta(event){
     event = wrap(event);
 
+    var delta = 0;
+
     if ('wheelDelta' in event) 
-      return event.wheelDelta / 120; // IE, webkit, opera
+      delta = event.wheelDelta; // IE, webkit, opera
     else
       if (event.type == 'DOMMouseScroll')
-        return -event.detail / 3;    // gecko
-      else
-        return 0;                  // not a mousewheel event
+        delta = -event.detail;    // gecko
+
+    return delta / Math.abs(delta);
   }
 
   //
