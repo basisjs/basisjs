@@ -25,22 +25,34 @@
 
   var sender = basis.dom.event.sender;
   var createArray = basis.array.create;
+  var createElement = basis.dom.createElement;
 
   var Table = basis.ui.table.Table;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    ScrollTable: resource('templates/scrolltable/ScrollTable.tmpl')
+  });
 
 
   //
   // main part
   //
 
+  var IE8 = basis.ua.is('IE8');
+
   function resetStyle(extraStyle){
     return '[style="padding:0!important;margin:0!important;border:0!important;width:auto!important;height:0!important;font-size:0!important;' + (extraStyle || '') + '"]';
   }
 
   function buildCellsSection(owner, property){
-    return DOM.createElement('tbody' + resetStyle(),
-      DOM.createElement('tr' + resetStyle(),
-        owner.columnWidthSync_.map(Function.getter(property))
+    return createElement('tbody' + resetStyle(),
+      createElement('tr' + resetStyle(),
+        owner.columnWidthSync_.map(basis.getter(property))
       )
     );
   }
@@ -53,14 +65,21 @@
 
   // Cells proto
   // TODO: remove reference to basis.dom.event, because future build improvement may hide basis from global scope
-  var measureCell = DOM.createElement('td' + resetStyle(),
-    DOM.createElement(resetStyle('position:relative!important'),
-      DOM.createElement('iframe[event-load="measureInit"]' + resetStyle('width:100%!important;position:absolute!important;visibility:hidden!important;behavior:expression(basis.dom.event.fireEvent(window,\\"load\\",{type:\\"load\\",target:this}),(runtimeStyle.behavior=\\"none\\"))'))
+  var measureCell = createElement('td' + resetStyle(),
+    createElement(resetStyle('position:relative!important'),
+      createElement('iframe[event-load="measureInit"]' +
+        resetStyle(
+          'width:100%!important;position:absolute!important;visibility:hidden!important;' +
+          // hack for IE via behavior - load event emulation
+          // FIXME: find to better way, but anyway don't access to basis via global scope (it may be removed ob build)
+          'behavior:expression(basis.dom.event.fireEvent(window,\\"load\\",{type:\\"load\\",target:this}),(runtimeStyle.behavior=\\"none\\"))'
+        )
+      )
     )
   );
 
-  var expanderCell = DOM.createElement('td' + resetStyle(),
-    DOM.createElement(resetStyle())
+  var expanderCell = createElement('td' + resetStyle(),
+    createElement(resetStyle())
   );
 
 
@@ -80,8 +99,7 @@
    /**
     * @inheritDoc
     */
-    template: resource('templates/scrolltable/ScrollTable.tmpl'),
-
+    template: templates.ScrollTable,
     action: {
       scroll: function(){
         var scrollLeft = -this.tmpl.scrollContainer.scrollLeft + 'px';
@@ -93,7 +111,6 @@
         }
       },
       measureInit: function(event){
-        //console.log('load');
         (sender(event).contentWindow.onresize = this.requestRelayout)();
       }
     },
@@ -142,11 +159,11 @@
       // insert footer expander row
       replaceTemplateNode(this, 'footerExpandRow', buildCellsSection(this, 'footer'));
 
-      //
+      // add block resize trigger
       layout.addBlockResizeHandler(this.tmpl.boundElement, this.requestRelayout);
 
-      // hack for ie, trigger relayout on create
-      if (basis.ua.is('IE8')) // TODO: remove this hack
+      // FIXME: hack for ie, trigger relayout on create
+      if (IE8)
         setTimeout(this.requestRelayout, 1);
     },
 
@@ -162,8 +179,6 @@
     * Make relayout of table. Should never be used in common cases. Call requestRelayout instead.
     */
     relayout: function(){
-      //console.log('relayout');
-
       var headerElement = this.header.element;
       var footerElement = this.footer.element;
 
@@ -211,7 +226,7 @@
       //
       this.tmpl.headerExpandCell.style.left = tableWidth + 'px';
       this.tmpl.footerExpandCell.style.left = tableWidth + 'px';
-      this.tmpl.tableElement.style.margin = '-{0}px 0 -{1}px'.format(headerHeight, footerHeight);
+      this.tmpl.tableElement.style.margin = '-' + headerHeight + 'px 0 -' + footerHeight + 'px';
       this.element.style.paddingBottom = (headerHeight + footerHeight) + 'px';
 
       // reset timer
@@ -223,7 +238,7 @@
     * @inheritDoc
     */
     destroy: function(){
-      this.timer_ = clearTimeout(this.timer_);
+      clearTimeout(this.timer_);
       this.timer_ = true; // prevent relayout call
 
       this.columnWidthSync_ = null;
