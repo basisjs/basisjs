@@ -25,7 +25,7 @@
   var Event = basis.dom.event;
 
   var arrayFrom = basis.array.from;
-  var getter = Function.getter;
+  var getter = basis.getter;
   var createEvent = basis.event.create;
   var l10nToken = basis.l10n.getToken;
 
@@ -44,12 +44,19 @@
   var FORWARD = true;
   var BACKWARD = false;
 
-
-  //
-  // localization
-  //
-
   var monthNumToRef = basis.date.monthNumToAbbr;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Calendar: resource('templates/calendar/Calendar.tmpl'),
+    Section: resource('templates/calendar/Section.tmpl'),
+    SectionMonth: resource('templates/calendar/SectionMonth.tmpl'),
+    Node: resource('templates/calendar/Node.tmpl')
+  });
 
   basis.l10n.createDictionary(namespace, __dirname + 'l10n/calendar', {
     "quarter": "Quarter",
@@ -243,6 +250,9 @@
   // SECTIONS
   //
 
+ /**
+  * @class
+  */
   var CalendarNode = Class(UINode, {
     className: namespace + '.Calendar.Node',
 
@@ -258,16 +268,7 @@
       DOM.focus(this.element);
     },
 
-    template: resource('templates/calendar/Node.tmpl'),
-
-    action: {
-      click: function(event){
-        var calendar = this.parentNode && this.parentNode.parentNode;
-        if (calendar && !this.isDisabled())
-          calendar.templateAction('click', event, this);
-      }
-    },
-
+    template: templates.Node,
     binding: {
       nodePeriodName: 'nodePeriodName',
       title: {
@@ -293,6 +294,13 @@
         }
       }
     },
+    action: {
+      click: function(event){
+        var calendar = this.parentNode && this.parentNode.parentNode;
+        if (calendar && !this.isDisabled())
+          calendar.templateAction('click', event, this);
+      }
+    },
 
     setPeriod: function(period, selectedDate, rebuild){
       if (rebuild || (this.periodStart - period.periodStart || this.periodEnd - period.periodEnd))
@@ -300,6 +308,7 @@
         this.periodStart = period.periodStart;
         this.periodEnd = period.periodEnd;
 
+        // FIXME: shouldn't access to parent
         var calendar = this.parentNode && this.parentNode.parentNode;
         if (calendar)
         {
@@ -338,13 +347,16 @@
     return result;
   }
 
+ /**
+  * @class
+  */
   var CalendarSection = Class(UINode, {
     className: namespace + '.CalendarSection',
 
     event_periodChanged: createEvent('periodChanged'),
     event_selectedDateChanged: createEvent('selectedDateChanged'),
 
-    template: resource('templates/calendar/Section.tmpl'),
+    template: templates.Section,
 
     binding: {
       sectionName: 'sectionName',
@@ -386,21 +398,8 @@
         this.maxDate = periods[periods.length - 1].periodEnd;
 
         if (this.firstChild)
-        {
-          for (var i = 0; i < this.childNodes.length; i++)
-            this.childNodes[i].setPeriod(periods[i], this.selectedDate, rebuild);
-
-          /*var node = this.getNodeByDate(this.selectedDate);
-          if (node)
-            node.select();
-          else
-          {
-            if (this.selectedDate && this.minDate <= this.selectedDate && this.selectedDate <= this.maxDate)
-              this.setViewDate(this.selectedDate);
-            else
-              this.selection.clear();
-          }*/
-        }
+          for (var i = 0, child; child = this.childNodes[i]; i++)
+            child.setPeriod(periods[i], this.selectedDate, rebuild);
 
         this.event_periodChanged(oldPeriodStart, oldPeriodEnd);
       }
@@ -462,7 +461,7 @@
 
       this.setSelectedDate(selectedDate);
 
-      // TODO: remove when possible; it a hack, because tabElement will be placed aside of this.tmpl.element
+      // FIXME: remove when possible; it is a hack, because tabElement will be placed aside of this.tmpl.element
       Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
     },
 
@@ -504,7 +503,9 @@
     getInitOffset: function(){}
   });
 
-
+ /**
+  * @class
+  */
   CalendarSection.Month = Class(CalendarSection, {
     className: namespace + '.CalendarSection.Month',
 
@@ -520,8 +521,7 @@
       return 1 + (new Date(date).set(DAY, 1).getDay() + 5) % 7;
     },
 
-    template: resource('templates/calendar/SectionMonth.tmpl'),
-
+    template: templates.SectionMonth,
     binding: {
       year: {
         events: 'periodChanged',
@@ -533,37 +533,14 @@
         events: 'periodChanged',
         getter: function(node){
           return l10nToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]);
-          /*
-          var expr = basis.l10n.createExpression(
-            function(a, b){
-              return a + ' x ' + b + ' ' + node.periodStart.getFullYear();
-            }
-          );
-
-          return basis.l10n.expression(
-            function(a, b){
-              return a + ' x ' + b + ' ' + node.periodStart.getFullYear();
-            },
-            l10nToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]),
-            l10nToken('basis.ui.calendar.day2.mon')
-          );
-
-
-          function expression(evaluate){
-            var result = arrayFrom(arguments, 1);
-            result.bindingBridge = {
-              attach: function(){ createExpression() },
-              detach: function(){ destroyExpression() },
-              get: function(args){ evaluate.apply(null, args) }
-            }
-            return result;
-          }
-          */
         }
       }
     }
   });
 
+ /**
+  * @class
+  */
   CalendarSection.Year = Class(CalendarSection, {
     className:  namespace + '.CalendarSection.Year',
 
@@ -579,6 +556,9 @@
     getTitle: getter('getFullYear()')
   });
 
+ /**
+  * @class
+  */
   CalendarSection.YearDecade = Class(CalendarSection, {
     className: namespace + '.CalendarSection.YearDecade',
 
@@ -597,6 +577,9 @@
     }
   });
 
+ /**
+  * @class
+  */
   CalendarSection.Century = Class(CalendarSection, {
     className: namespace + '.CalendarSection.Century',
 
@@ -621,6 +604,9 @@
     }
   });
 
+ /**
+  * @class
+  */
   CalendarSection.YearQuarters = Class(CalendarSection, {
     className: namespace + '.CalendarSection.YearQuarter',
 
@@ -633,6 +619,9 @@
     nodePeriodUnitCount: 3
   });
 
+ /**
+  * @class
+  */
   CalendarSection.Quarter = Class(CalendarSection, {
     className: namespace + '.CalendarSection.Quarter',
 
@@ -661,6 +650,9 @@
   // Calendar
   //
 
+ /**
+  * @class
+  */
   var Calendar = Class(UINode, {
     className: namespace + '.Calendar',
 
@@ -670,14 +662,12 @@
     childClass: CalendarSection,
     childFactory: function(){},
 
-    template: resource('templates/calendar/Calendar.tmpl'),
-
+    template: templates.Calendar,
     binding: {
       today: function(){
         return new Date().toFormat("%D.%M.%Y");
       }
     },
-
     action: {
       moveNext: function(){
         this.selection.pick().nextPeriod();
@@ -1059,7 +1049,6 @@
 
       this.date.destroy();
     }
-
   });
 
 
