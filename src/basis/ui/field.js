@@ -25,26 +25,52 @@
   var Event = basis.dom.event;
   var DOM = basis.dom;
 
-  var complete = Object.complete;
-  var coalesce = Object.coalesce;
-  var getter = Function.getter;
+  var complete = basis.object.complete;
+  var getter = basis.getter;
   var arrayFrom = basis.array.from;
-
   var createEvent = basis.event.create;
   var events = basis.event.events;
+  var l10nToken = basis.l10n.getToken;
 
   var Property = basis.data.property.Property;
-
   var Selection = basis.dom.wrapper.Selection;
   var UINode = basis.ui.Node;
   var Popup = basis.ui.popup.Popup;
 
 
   //
-  // Localization
+  // definitions
   //
 
-  var l10nToken = basis.l10n.getToken;
+  var templates = basis.template.define(namespace, {
+    Example: resource('templates/field/Example.tmpl'),
+    Description: resource('templates/field/Description.tmpl'),
+    Counter: resource('templates/field/Counter.tmpl'),
+
+    Field: resource('templates/field/Field.tmpl'),
+    File: resource('templates/field/File.tmpl'),
+    Hidden: resource('templates/field/Hidden.tmpl'),
+    Text: resource('templates/field/Text.tmpl'),
+    Password: resource('templates/field/Password.tmpl'),
+    Textarea: resource('templates/field/Textarea.tmpl'),
+    Checkbox: resource('templates/field/Checkbox.tmpl'),
+    Label: resource('templates/field/Label.tmpl'),
+
+    RadioGroup: resource('templates/field/RadioGroup.tmpl'),
+    RadioGroupItem: resource('templates/field/RadioGroupItem.tmpl'),
+
+    CheckGroup: resource('templates/field/CheckGroup.tmpl'),
+    CheckGroupItem: resource('templates/field/CheckGroupItem.tmpl'),
+
+    Select: resource('templates/field/Select.tmpl'),
+    SelectItem: resource('templates/field/SelectItem.tmpl'),
+
+    Combobox: resource('templates/field/Combobox.tmpl'),
+    ComboboxItem: resource('templates/field/ComboboxItem.tmpl'),
+    ComboboxDropdownList: resource('templates/field/ComboboxDropdownList.tmpl'),
+    
+    MatchInput: resource('templates/field/MatchInput.tmpl')
+  });
 
   basis.l10n.createDictionary(namespace, __dirname + 'l10n/field', {
     "symbolsLeft": "Symbols left"
@@ -148,7 +174,7 @@
     // template
     //
 
-    template: resource('templates/field/Field.tmpl'),
+    template: templates.Field,
     binding: {
       name: 'name || ""',
       titleText: 'title || ""',
@@ -198,7 +224,7 @@
           return owner.example;
         },
         instanceOf: UINode.subclass({
-          template: resource('templates/field/Example.tmpl'),
+          template: templates.Example,
           binding: {
             example: 'owner.example'
           },
@@ -219,7 +245,7 @@
           return owner.description;
         },
         instanceOf: UINode.subclass({
-          template: resource('templates/field/Description.tmpl'),
+          template: templates.Description,
           binding: {
             description: 'owner.description'
           },
@@ -354,7 +380,7 @@
   var File = Field.subclass({
     className: namespace + '.File',
 
-    template: resource('templates/field/File.tmpl')
+    template: templates.File
   });
 
  /**
@@ -464,7 +490,7 @@
 
     focusable: false,
 
-    template: resource('templates/field/Hidden.tmpl')
+    template: templates.Hidden
   });
 
  /**
@@ -473,7 +499,7 @@
   var Text = TextField.subclass({
     className: namespace + '.Text',
 
-    template: resource('templates/field/Text.tmpl')
+    template: templates.Text
   });
 
 
@@ -483,7 +509,7 @@
   var Password = TextField.subclass({
     className: namespace + '.Password',
 
-    template: resource('templates/field/Password.tmpl')
+    template: templates.Password
   });
 
 
@@ -507,7 +533,7 @@
           TextField.prototype.event_fieldFocus.call(this, event);
         },
 
-    template: resource('templates/field/Textarea.tmpl'),
+    template: templates.Textarea,
 
     binding: {
       availChars: {
@@ -532,7 +558,7 @@
           return owner.maxLength > 0;
         },
         instanceOf: UINode.subclass({
-          template: resource('templates/field/Counter.tmpl'),
+          template: templates.Counter,
 
           binding: {
             availChars: function(node){
@@ -574,7 +600,7 @@
 
     value: false,
 
-    template: resource('templates/field/Checkbox.tmpl'),
+    template: templates.Checkbox,
 
     binding: {
       checked: {
@@ -605,7 +631,7 @@
 
     focusable: false,
 
-    template: resource('templates/field/Label.tmpl')
+    template: templates.Label
   });
 
 
@@ -718,12 +744,12 @@
   var RadioGroup = ComplexField.subclass({
     className: namespace + '.RadioGroup',
 
-    template: resource('templates/field/RadioGroup.tmpl'),
+    template: templates.RadioGroup,
 
     childClass: {
       className: namespace + '.RadioGroupItem',
 
-      template: resource('templates/field/RadioGroupItem.tmpl')
+      template: templates.RadioGroupItem
     }
   });
 
@@ -740,12 +766,12 @@
 
     multipleSelect: true,
 
-    template: resource('templates/field/CheckGroup.tmpl'),
+    template: templates.CheckGroup,
 
     childClass: {
       className: namespace + '.CheckGroupItem',
 
-      template: resource('templates/field/CheckGroupItem.tmpl')
+      template: templates.CheckGroupItem
     }
   });
 
@@ -760,12 +786,12 @@
   var Select = ComplexField.subclass({
     className: namespace + '.Select',
 
-    template: resource('templates/field/Select.tmpl'),
+    template: templates.Select,
 
     childClass: {
       className: namespace + '.SelectItem',
 
-      template: resource('templates/field/SelectItem.tmpl')
+      template: templates.SelectItem,
     },
 
     init: function(){
@@ -804,7 +830,7 @@
   var ComboboxItem = ComplexFieldItem.subclass({
     className: namespace + '.ComboboxItem',
 
-    template: resource('templates/field/ComboboxItem.tmpl'),
+    template: templates.ComboboxItem,
 
     binding: {
       title: 'getTitle() || "\xA0"'
@@ -852,12 +878,12 @@
     popup: null,
     popupClass: Popup.subclass({
       className: namespace + '.ComboboxDropdownList',
-      template: resource('templates/field/ComboboxDropdownList.tmpl'),
+      template: templates.ComboboxDropdownList,
       autorotate: 1
     }),
     property: null,
 
-    template: resource('templates/field/Combobox.tmpl'),
+    template: templates.Combobox,
 
     binding: {
       captionItem: 'satellite:',
@@ -908,14 +934,28 @@
         {
           case Event.KEY.DOWN:
             if (event.altKey)
-              return this.popup.visible ? this.hide() : (!this.isDisabled() ? this.show() : null);
+            {
+              if (this.popup.visible)
+                this.hide();
+              else
+                if (!this.isDisabled())
+                  this.show();
+              return;
+            }
 
             next = DOM.axis(cur ? cur : this.firstChild, DOM.AXIS_FOLLOWING_SIBLING).search(false, 'disabled');
           break;
 
           case Event.KEY.UP: 
             if (event.altKey)
-              return this.popup.visible ? this.hide() : (!this.isDisabled() ? this.show() : null);
+            {
+              if (this.popup.visible)
+                this.hide();
+              else
+                if (!this.isDisabled())
+                  this.show();
+              return;
+            }
 
             next = cur ? DOM.axis(cur, DOM.AXIS_PRESCENDING_SIBLING).search(false, 'disabled') : this.firstChild;
           break;
@@ -924,7 +964,7 @@
         if (next)
         {
           next.select();
-          DOM.focus(this.tmpl.field);
+          this.focus();
         }
 
         this.event_fieldKeyup(event);
@@ -1185,7 +1225,7 @@
   var MatchInput = Text.subclass({
     className: namespace + '.MatchInput',
 
-    template: resource('templates/field/MatchInput.tmpl'),
+    template: templates.MatchInput,
 
     matchFilterClass: MatchFilter,
 
@@ -1201,7 +1241,6 @@
 
     init: function(){
       Text.prototype.init.call(this);
-
       this.matchFilter = new this.matchFilterClass(this.matchFilter);
     }
   });
