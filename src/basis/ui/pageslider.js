@@ -18,8 +18,18 @@
   //
 
   var cssom = basis.cssom;
+
   var PageControl = basis.ui.tabs.PageControl;
   var Scroller = basis.ui.scroller.Scroller;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    PageSlider: resource('templates/pageslider/PageSlider.tmpl')
+  });
 
 
   //
@@ -29,16 +39,7 @@
   var PageSlider = PageControl.subclass({
     className: namespace + '.PageSlider',
 
-    template: resource('templates/pageslider/PageSlider.tmpl'),
-
-    /*childClass: {
-      className: namespace + '.Page',
-
-      event_select: function(){
-        PageControl.prototype.childClass.prototype.event_select.call(this);
-        this.parentNode.scrollToPage(this);
-      }
-    },*/
+    template: templates.PageSlider,
 
     listen: {
       selection: {
@@ -75,6 +76,7 @@
 
     setPage: function(){
       var currentPage = this.selection.pick();
+
       if (!currentPage)
         return;
 
