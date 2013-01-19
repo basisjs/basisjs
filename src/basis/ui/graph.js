@@ -39,7 +39,7 @@
   var Node = basis.dom.wrapper.Node;
   var Selection = basis.dom.wrapper.Selection;
   var Canvas = basis.ui.canvas.Canvas;
-  var CanvasLayer = basis.ui.canvas.CanvasLayer;
+  var AbstractCanvas = basis.ui.canvas.AbstractCanvas;
 
 
   //
@@ -1084,7 +1084,7 @@
  /**
   * @class
   */
-  var GraphSelection = CanvasLayer.subclass({
+  var GraphSelection = AbstractCanvas.subclass({
     className: namespace + '.GraphSelection',
 
     style: {
@@ -1105,7 +1105,7 @@
     },
 
     event_ownerChanged: function(oldOwner){
-      CanvasLayer.prototype.event_ownerChanged.call(this, oldOwner);
+      AbstractCanvas.prototype.event_ownerChanged.call(this, oldOwner);
       
       if (oldOwner && oldOwner.selection)
       {
@@ -1181,7 +1181,7 @@
  /**
   * @class
   */
-  var GraphViewer = CanvasLayer.subclass({
+  var GraphViewer = AbstractCanvas.subclass({
     className: namespace + '.GraphViewer',
 
     template: templates.GraphViewer,
@@ -1213,7 +1213,7 @@
     },
 
     event_ownerChanged: function(oldOwner){
-      CanvasLayer.prototype.event_ownerChanged.call(this, oldOwner);
+      AbstractCanvas.prototype.event_ownerChanged.call(this, oldOwner);
 
       if (this.owner)
         this.recalc();

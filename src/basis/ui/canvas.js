@@ -1,9 +1,4 @@
 
-/*window.FlashCanvasOptions = {
-  swfPath: "../../src/basis/ext/"
-};
-basis_require('basis.ext.flashcanvas');*/
-
   basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.dom.wrapper');
@@ -21,21 +16,35 @@ basis_require('basis.ext.flashcanvas');*/
   // import names
   //
 
-  var Node = basis.dom.wrapper.Node;
-  var nodePrototype = Node.prototype;
-  var UINode = basis.ui.Node;
-
   var createEvent = basis.event.create;
+
+  var dwNode = basis.dom.wrapper.Node;
+  var Node = basis.ui.Node;
+
+
+  //
+  // definitions
+  //
+
+  var templates = basis.template.define(namespace, {
+    Canvas: resource('templates/canvas/Canvas.tmpl')
+  });
 
 
   //
   // Main part
   //
 
+  // global.FlashCanvasOptions = {
+  //   swfPath: __dirname + 'external/flashcanvas/'
+  // };
+  // resource('external/flashcanvas/flashcanvas.js').fecth();
+
+
  /**
   * @class
   */
-  var Shape = Node.subclass({
+  var Shape = dwNode.subclass({
     className: namespace + '.Shape',
     draw: function(context){
       // context.save();
@@ -55,10 +64,10 @@ basis_require('basis.ext.flashcanvas');*/
  /**
   * @class
   */
-  var CanvasLayer = UINode.subclass({
-    className: namespace + '.CanvasLayer',
+  var AbstractCanvas = Node.subclass({
+    className: namespace + '.AbstractCanvas',
 
-    template: resource('templates/canvas/CanvasLayer.tmpl'),
+    template: templates.Canvas,
 
     templateSync: function(noRecreate){
       var canvasElement = this.tmpl.canvas;
@@ -69,10 +78,10 @@ basis_require('basis.ext.flashcanvas');*/
         canvasElement.height = this.height || 400;
       }
 
-      UINode.prototype.templateSync.call(this, noRecreate);
+      Node.prototype.templateSync.call(this, noRecreate);
 
-      if (typeof global.FlashCanvas != 'undefined')
-        global.FlashCanvas.initElement(canvasElement);
+      //if (typeof global.FlashCanvas != 'undefined')
+      //  global.FlashCanvas.initElement(canvasElement);
       
       this.context = canvasElement && canvasElement.getContext ? canvasElement.getContext('2d') : null;
 
@@ -81,11 +90,13 @@ basis_require('basis.ext.flashcanvas');*/
     },
 
     childClass: Shape,
-    insertBefore: nodePrototype.insertBefore,
-    removeChild: nodePrototype.removeChild,
-    clear: nodePrototype.clear,
 
-    draw: Function.undef,
+    // FIXME: it is a hack, to find better way do the same
+    insertBefore: dwNode.prototype.insertBefore,
+    removeChild: dwNode.prototype.removeChild,
+    clear: dwNode.prototype.clear,
+
+    draw: basis.fn.$undef,
     reset: function(){
       if (this.context)
         this.context.clearRect(0, 0, this.tmpl.canvas.width, this.tmpl.canvas.height);
@@ -96,7 +107,7 @@ basis_require('basis.ext.flashcanvas');*/
  /**
   * @class
   */
-  var Canvas = CanvasLayer.subclass({
+  var Canvas = AbstractCanvas.subclass({
     className: namespace + '.Canvas',
 
     drawCount: 0,
@@ -116,7 +127,7 @@ basis_require('basis.ext.flashcanvas');*/
     },
 
     init: function(){
-      CanvasLayer.prototype.init.call(this);
+      AbstractCanvas.prototype.init.call(this);
      
       this.updateCount = 0;
       this.updateTimer_ = setInterval(this.draw.bind(this), 1000 / 60);
@@ -164,7 +175,7 @@ basis_require('basis.ext.flashcanvas');*/
     destroy: function(){
       clearInterval(this.updateTimer_);
 
-      CanvasLayer.prototype.destroy.call(this);
+      AbstractCanvas.prototype.destroy.call(this);
     }
   });
 
@@ -174,7 +185,7 @@ basis_require('basis.ext.flashcanvas');*/
   //
 
   module.exports = {
-    CanvasLayer: CanvasLayer,
+    AbstractCanvas: AbstractCanvas,
     Canvas: Canvas,
     Shape: Shape
   };
