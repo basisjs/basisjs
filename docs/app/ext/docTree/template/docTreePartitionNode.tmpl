@@ -1,10 +1,4 @@
 
-  <b:resource src="../../../../../src/basis/ui/templates/tree/PartitionNode.css"/>
   <b:resource src="docTreePartitionNode.css"/>
 
-  <li class="Basis-TreePartitionNode App-DocTreePartitionNode"> 
-    <div class="Basis-TreePartitionNode-Title">
-      <span>{title}</span>
-    </div>
-    <ul{childNodesElement} class="Basis-TreePartitionNode-Content"/>
-  </li>
+  <b:include src="basis.ui.tree.PartitionNode" class="App-DocTreePartitionNode"/>
