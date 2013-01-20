@@ -2219,9 +2219,8 @@
   // export names
   //
 
-  // extend Basis
-  var basis = getNamespace('basis');
-  basis.extend({
+  // create and extend basis namespace
+  var basis = getNamespace('basis').extend({
     NODE_ENV: NODE_ENV,
     config: config,
     platformFeature: {},
@@ -2298,6 +2297,7 @@
   // TODO: rename path->stmElse and add path to exports
   basis.path = pathUtils;
 
+
   //
   // basis extenstions
   //
@@ -2306,6 +2306,7 @@
   extend(Function, basis.fn);
   extend(Array, basis.array);
   extend(String, basis.string);
+
 
   //
   // auto load section
