@@ -1,13 +1,3 @@
-/*!
- * Basis javasript library 
- * http://code.google.com/p/basis-js/
- *
- * @copyright
- * Copyright (c) 2006-2010 Roman Dvornov.
- *
- * @license
- * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
- */
 
   /*
    *  DropDownList
@@ -47,15 +37,15 @@
     white-space: nowrap;
     font-size: 85%;
     color: black;
-    text-overflow: ellipsis;
       -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
   }
 
   .Basis-DropdownList-Caption .Basis-Combobox-Item
   {
     overflow: hidden;
-    text-overflow: ellipsis;
       -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
   }
 
   .Basis-DropdownList-Trigger
@@ -97,9 +87,9 @@
   .Basis-DropdownList-Popup
   {
     padding: 0 !important;
-    opacity: .95;
     -moz-opacity: .95;
     -khtml-opacity: .95;
+    opacity: .95;
     position: absolute;
     border: 1px solid #87C4E0;
     border-bottom: none !important;
