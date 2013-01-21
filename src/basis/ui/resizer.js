@@ -4,7 +4,7 @@
   basis.require('basis.dragdrop');
   basis.require('basis.ui');
 
-  var styleRequired = Function.runOnce(function(){
+  var styleRequired = basis.fn.runOnce(function(){
     resource('templates/resizer/style.css')().startUse();
   });
 
@@ -21,7 +21,10 @@
   // import names
   //
 
-  var DOM = basis.dom;
+  var document = global.document;
+  var parseFloat = global.parseFloat;
+
+  var dom = basis.dom;
   var cssom = basis.cssom;
   var classList = basis.cssom.classList;
   var DragDropElement = basis.dragdrop.DragDropElement;
@@ -31,32 +34,7 @@
   // main part
   //
 
-  var patchedComputedStyle;
-
-  function getPixelValue(element, value) {
-    if (IS_PIXEL.test(value))
-      return parseInt(value, 10) + 'px';
-
-    // The awesome hack by Dean Edwards
-    // @see http://erik.eae.net/archives/2007/07/27/18.54.15/#comment-102291
-
-    var style = element.style.left;
-    var runtimeStyle = element.runtimeStyle.left;
-
-    // set new values
-    element.runtimeStyle.left = element.currentStyle.left;
-    element.style.left = value || 0;
-
-    // fetch new value
-    value = element.style.pixelLeft;
-
-    // restore values
-    element.style.left = style;
-    element.runtimeStyle.left = runtimeStyle;
-
-    // return value in pixels
-    return value + 'px';
-  }
+  var computedStyle;
 
   if ('getComputedStyle' in global)
   {
@@ -79,7 +57,7 @@
     var GETCOMPUTEDSTYLE_BUGGY = {};
 
     // getComputedStyle function using W3C spec
-    patchedComputedStyle = function(element, styleProp){
+    computedStyle = function(element, styleProp){
       if (GETCOMPUTEDSTYLE_BUGGY[styleProp])
       {
         // clone ancestor vector
@@ -102,9 +80,9 @@
 
     // test for computed style bug
     basis.ready(function(){
-      var element = DOM.insert(document.body, DOM.createElement('[style="position:absolute;top:auto"]'));
+      var element = dom.insert(document.body, dom.createElement('[style="position:absolute;top:auto"]'));
 
-      if (patchedComputedStyle(element, 'top') != 'auto')
+      if (computedStyle(element, 'top') != 'auto')
         GETCOMPUTEDSTYLE_BUGGY = {
           top: true,
           bottom: true,
@@ -114,7 +92,7 @@
           width: true
         };
 
-      DOM.remove(element);
+      dom.remove(element);
     });
   }
   else
@@ -123,7 +101,7 @@
     var IS_PIXEL = /\dpx$/i;
 
     // getComputedStyle function for non-W3C spec browsers (Internet Explorer 6-8)
-    patchedComputedStyle = function(element, styleProp){
+    computedStyle = function(element, styleProp){
       var style = element.currentStyle;
 
       if (style)
@@ -137,24 +115,56 @@
         return value;
       }
     };
+
+    // css value to pixel convertor
+    var getPixelValue = function(element, value) {
+      if (IS_PIXEL.test(value))
+        return parseInt(value, 10) + 'px';
+
+      // The awesome hack by Dean Edwards
+      // @see http://erik.eae.net/archives/2007/07/27/18.54.15/#comment-102291
+
+      var style = element.style;
+      var runtimeStyle = element.runtimeStyle;
+
+      var left = style.left;
+      var runtimeLeft = runtimeStyle.left;
+
+      // set new values
+      runtimeStyle.left = element.currentStyle.left;
+      style.left = value || 0;
+
+      // fetch new value
+      value = style.pixelLeft;
+
+      // restore values
+      style.left = left;
+      runtimeStyle.left = runtimeLeft;
+
+      // return value in pixels
+      return value + 'px';
+    };
   }
 
   var resizerDisableRule = cssom.createRule('IFRAME');
+  var cursorOverrideRule;
 
   var PROPERTY_DELTA = {
-    width: 'deltaX',/*
-    left: 'deltaX',
-    right: 'deltaX',*/
-
-    height: 'deltaY'/*,
-    top: 'deltaY',
-    bottom: 'deltaY'*/
+    width: 'deltaX',
+    height: 'deltaY'
   };
 
   var PROPERTY_CURSOR = {
-    width: { '-1': 'w-resize', '1': 'e-resize' },
-    height: { '-1': 'n-resize', '1': 's-resize' }
+    width: {
+      '-1': 'w-resize',
+      '1': 'e-resize'
+    },
+    height: {
+      '-1': 'n-resize',
+      '1': 's-resize'
+    }
   };
+
 
  /**
   * @class
@@ -173,25 +183,26 @@
     event_prepare: function(){
       if (!PROPERTY_DELTA[this.property])
       {
-        if (typeof console != 'undefined') console.warn('Property to change `' + this.property + '` is unsupported');
+        ;;;basis.dev.warn('Property to change `' + this.property + '` is unsupported');
         this.stop();
         return;
       }
 
       resizerDisableRule.setProperty('pointerEvents', 'none'); // disable iframes to catch mouse events
-      this.cursorOverloadRule_ = cssom.createRule('*');
+      cursorOverrideRule = cssom.createRule('*');
+      cursorOverrideRule.creator = this;
     },
     event_start: function(cfg){
       super_.event_start.call(this, cfg);
 
-      this.cursorOverloadRule_.setProperty('cursor', this.cursor + ' !important');
+      cursorOverrideRule.setProperty('cursor', this.cursor + ' !important');
 
       cfg.delta = PROPERTY_DELTA[this.property];
       cfg.factor = this.factor;
 
       // determine dir
-      var cssFloat = patchedComputedStyle(this.element, 'float');
-      var cssPosition = patchedComputedStyle(this.element, 'position');
+      var cssFloat = computedStyle(this.element, 'float');
+      var cssPosition = computedStyle(this.element, 'position');
 
       var relToOffsetParent = cssPosition == 'absolute' || cssPosition == 'fixed';
       var parentNode = relToOffsetParent ? this.element.offsetParent : this.element.parentNode;
@@ -200,27 +211,25 @@
       if (cfg.delta == 'deltaY')
       {
         cfg.offsetStart = this.element.clientHeight
-          - parseFloat(patchedComputedStyle(this.element, 'padding-top'))
-          - parseFloat(patchedComputedStyle(this.element, 'padding-bottom'));
+          - parseFloat(computedStyle(this.element, 'padding-top'))
+          - parseFloat(computedStyle(this.element, 'padding-bottom'));
 
         parentNodeSize = parentNode.clientHeight;
         if (!relToOffsetParent)
-          parentNodeSize -= parseFloat(patchedComputedStyle(parentNode, 'padding-top')) + parseFloat(patchedComputedStyle(parentNode, 'padding-bottom'));
+          parentNodeSize -= parseFloat(computedStyle(parentNode, 'padding-top')) + parseFloat(computedStyle(parentNode, 'padding-bottom'));
 
         if (isNaN(cfg.factor))
-          cfg.factor = relToOffsetParent && patchedComputedStyle(this.element, 'bottom') != 'auto'
-            ? -1
-            : 1;
+          cfg.factor = -(relToOffsetParent && computedStyle(this.element, 'bottom') != 'auto') || 1;
       }
       else
       {
         cfg.offsetStart = this.element.clientWidth
-          - parseFloat(patchedComputedStyle(this.element, 'padding-left'))
-          - parseFloat(patchedComputedStyle(this.element, 'padding-right'));
+          - parseFloat(computedStyle(this.element, 'padding-left'))
+          - parseFloat(computedStyle(this.element, 'padding-right'));
 
         parentNodeSize = parentNode.clientWidth;
         if (!relToOffsetParent)
-          parentNodeSize -= parseFloat(patchedComputedStyle(parentNode, 'padding-left')) + parseFloat(patchedComputedStyle(parentNode, 'padding-right'));
+          parentNodeSize -= parseFloat(computedStyle(parentNode, 'padding-left')) + parseFloat(computedStyle(parentNode, 'padding-right'));
 
         if (isNaN(cfg.factor))
         {
@@ -230,9 +239,7 @@
             if (cssFloat == 'left')
               cfg.factor = 1;
             else
-              cfg.factor = relToOffsetParent && patchedComputedStyle(this.element, 'right') != 'auto'
-                ? -1
-                : 1;
+              cfg.factor = -(relToOffsetParent && computedStyle(this.element, 'right') != 'auto') || 1;
         }
       }
 
@@ -242,7 +249,15 @@
     event_move: function(cfg){
       super_.event_move.call(this, cfg);
 
+      var metricName = cfg.delta == 'deltaX' ? 'offsetWidth' : 'offsetHeight';
+      var metricValue = this.element[metricName];
+      var curValue = this.element.style[this.property];
+
       this.element.style[this.property] = cfg.offsetStartInPercent * (cfg.offsetStart + cfg.factor * cfg[cfg.delta]) + '%';
+
+      // restore value if new value takes no effect
+      if (this.element[metricName] == metricValue)
+        this.element.style[this.property] = curValue;
     },
     event_over: function(cfg){
       super_.event_over.call(this, cfg);
@@ -250,8 +265,8 @@
       classList(this.resizer).remove('selected');
       resizerDisableRule.setProperty('pointerEvents', 'auto');
 
-      this.cursorOverloadRule_.destroy();
-      this.cursorOverloadRule_ = null;
+      cursorOverrideRule.destroy();
+      cursorOverrideRule = null;
     },
 
    /**
@@ -260,32 +275,28 @@
     init: function(){
       styleRequired();
 
-      this.resizer = DOM.createElement('.Basis-Resizer');
+      this.resizer = dom.createElement('.Basis-Resizer');
       this.cursor = PROPERTY_CURSOR[this.property][1];
       this.resizer.style.cursor = this.cursor;
       
       super_.init.call(this);
     },
     setElement: function(element){
-      var oldElement = this.element;
-      
       super_.setElement.call(this, element, this.resizer);
 
-      if (oldElement !== this.element)
-      {
-        if (oldElement)
-          DOM.remove(this.resizer);
-        if (this.element)
-          DOM.insert(this.element, this.resizer);
-      }
+      if (!this.element)
+        dom.remove(this.resizer);
+      else
+        if (this.resizer.parentNode != this.element)
+          dom.insert(this.element, this.resizer);
     },
     destroy: function(){
       super_.destroy.call(this);
 
-      if (this.cursorOverloadRule_)
+      if (cursorOverrideRule && cursorOverrideRule.creator == this)
       {
-        this.cursorOverloadRule_.destroy();
-        this.cursorOverloadRule_ = null;
+        cursorOverrideRule.destroy();
+        cursorOverrideRule = null;
       }
     }
   }});
