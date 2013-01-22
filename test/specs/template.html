@@ -28,6 +28,7 @@
     loadTest((function(){
       basis.require('basis.dom');
       basis.require('basis.template.html');
+      basis.require('basis.ui');
 
       var createTemplate = function(source){
         return new basis.template.html.Template(source);
@@ -81,6 +82,21 @@
                       test: function(){
                         var a = createTemplate('<span class="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
+
+                        this.is(text('<span class="a b"/>'), text(b))
+                      }
+                    },
+                    {
+                      name: 'class from binding when class exists',
+                      test: function(){
+                        var a = createTemplate('<span class="a"/>');
+                        var b = new basis.ui.Node({
+                          template: createTemplate('<b:include src="#' + a.templateId + '" class="{b}"></b:include>'),
+
+                          binding: {
+                            b: basis.fn.$const('b')
+                          }
+                        }).template;
 
                         this.is(text('<span class="a b"/>'), text(b))
                       }
