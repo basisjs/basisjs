@@ -309,7 +309,7 @@
             {
               var lineError   = this.errorLines[testIndex];
               var isErrorLine = !!lineError;
-              var isBreakLine = this.error && !this.broken && testIndex == this.testCount;
+              var isBreakLine = this.error && !this.broken && testIndex == this.testCount -1;
               var isLastLine  = isBreakLine || (this.broken && testIndex == this.testCount - 1);
 
               if (isBreakLine || isLastLine)
