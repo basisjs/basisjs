@@ -835,6 +835,7 @@
       var proto = buildHtml(tokens);
       var templateMap = {};
       var l10nMap;
+      var sourceURL = '' /** @cut */ + '//@ sourceURL=' + (this.source.url || 'inline_template' + this.templateId);
 
       if (bindings.l10n)
       {
@@ -854,7 +855,7 @@
           'switch(token){' +
             code.join('') +
           '}' +
-        '}');
+        '}//' + sourceURL + '_l10n');
         //console.log(l10nProtoUpdate);
         l10nProtoUpdate = l10nProtoUpdate(proto, l10nMap, bind_attr);
 
@@ -891,7 +892,7 @@
           'delete gMap[id];' +
           '}'] +
         '}' +
-      '}');
+      '}' + sourceURL);
       //console.log(createInstance);
       createInstance = createInstance(tmplNodeMap, templateMap, build, tools, l10nMap);
       /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
