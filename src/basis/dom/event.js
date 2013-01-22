@@ -1,7 +1,4 @@
 
-  basis.require('basis.dom');
-
-
  /**
   * @namespace basis.dom.event
   */
@@ -11,8 +8,7 @@
   // for better pack
 
   var document = global.document;
-  var dom = basis.dom;
-  var $null = Function.$null;
+  var $null = basis.fn.$null;
   var arrayFrom = basis.array.from;
 
   var W3CSUPPORT = !!document.addEventListener;
@@ -102,11 +98,11 @@
 
  /**
   * Returns DOM node if possible.
-  * @param {Node|string} object
+  * @param {Node|string} ref
   * @return {Node}
   */
-  function getNode(object){ 
-    return typeof object == 'string' ? dom.get(object) : object;
+  function getNode(ref){ 
+    return typeof ref == 'string' ? document.getElementById(ref) : ref;
   }
 
  /**
@@ -271,7 +267,7 @@
   * @private
   * @const
   */
-  var noCaptureScheme = !document.addEventListener;
+  var noCaptureScheme = !W3CSUPPORT;
 
  /**
   * Observe handlers for event
@@ -335,12 +331,9 @@
     if (handlers)
     {
       // search for similar handler, returns if found (prevent for handler dublicates)
-      for (var i = handlers.length; i-- > 0;)
-      {
-        var handlerObject = handlers[i];
-        if (handlerObject.handler === handler && handlerObject.thisObject === thisObject)
+      for (var i = 0, item; item = handlers[i]; i++)
+        if (item.handler === handler && item.thisObject === thisObject)
           return;
-      }
     }
     else
     {
@@ -445,7 +438,7 @@
           item.handler.call(item.thisObject, event);
       };
 
-      if (node.addEventListener) 
+      if (W3CSUPPORT) 
         // W3C DOM event model
         node.addEventListener(eventType, eventTypeHandlers.fireEvent, false);
       else 
@@ -669,10 +662,12 @@
       if (!W3CSUPPORT)
       {
         var onevent = 'on' + eventName;
-        var target = dom.createElement(tagName);
-        var host = dom.createElement('div', target);
+        var host = document.createElement('div');
+        var target = host.appendChild(document.createElement(tagName));
 
-        host[onevent] = function(){ bubble = true; };
+        host[onevent] = function(){
+          bubble = true;
+        };
 
         try {
           target.fireEvent(onevent);
