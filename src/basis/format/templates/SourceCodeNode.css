@@ -9,15 +9,15 @@
     font-family: Consolas, monospace;
     font-size: 100%;
     line-height: 1.4em;
-    white-space: pre;   /* на случай если основной блок не <PRE> */
+    white-space: pre;   /* needs for line endings preserving */
   }
 
   .Basis-SyntaxHighlight .line
   {
-    position: relative; /* для webkit, иначе при начале выделения с нумерации будет
-                             выделяться текст с самого начала блока */
-    zoom: 1;            /* для IE6/7 */
-    /*white-space: pre;*/   /* важно чтобы сохранялись переносы в IE7 */
+    position: relative; /* for webkit, otherwise if user starts select from numbering
+                           selection begins from block begining */
+    zoom: 1;            /* IE6/7 */
+    /*white-space: pre;*/   /* preseving line endings in IE7 */
 
     background: #F0F0F0;
   }
@@ -49,11 +49,12 @@
     text-align: right;
     color: #666;
 
-      -moz-user-select: none;    /* задаем user-select для Firefox & webkit, чтобы блок не попадал в область выделения*/
+      -moz-user-select: none;    /* prevent block including to selection */
       -webkit-user-select: none;
+      -ms-user-select: none;
     user-select: none;
-    pointer-events: none;        /* фактически это свойство делает ненужным блок .over, 
-                                    но пока оно поддерживается только в Firefox & webkit */
+    pointer-events: none;        /* actually this rule makes unnecessary .over block,
+                                    but it lacks of browsers support */
   }
 
   .Basis-SyntaxHighlight .over
@@ -64,8 +65,8 @@
     width: 7ex;
     height: 1.4em;
     z-index: 1;
-    background: url(data:image/png;base64,);  /* для IE и Opera, иначе блок будет "простреливаться"
-                                                 (пропускать события мыши нижележащим блокам) */
+    background: url(data:image/png;base64,);  /* we need set transporent background, otherwise IE & Opera
+                                                 pass mouse event to underline blocks */
   }
 
   .Basis-SyntaxHighlight .lineContent
@@ -74,7 +75,7 @@
     padding-right: 1ex;
     border-left: 2px solid #33BB66;
     display: block;
-    white-space: pre-wrap;      /* сохраняем форматирование, но оставляем возможность переносить по словам */
+    white-space: pre-wrap;      /* preserve formating but allow word breaking */
   }
 
   .Basis-SyntaxHighlight .hasLineNumber .lineContent
