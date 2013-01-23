@@ -18,10 +18,10 @@
       tag: 'data:tag || "none"'
     },
     event_match: function(){
-      this.tmpl.set('absent', 'absent');
+      this.tmpl.set('absent', '');
     },
     event_unmatch: function(){
-      this.tmpl.set('absent', '');
+      this.tmpl.set('absent', 'absent');
     }
   });
 
