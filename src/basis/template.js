@@ -1131,6 +1131,82 @@
  /**
   * @func
   */
+  function createTemplateBindingUpdater(names, getters){
+    return function templateBindingUpdater(){
+      for (var i = 0, bindingName; bindingName = names[i]; i++)
+        this.tmpl.set(bindingName, getters[bindingName](this));
+    };
+  }
+
+ /**
+  * @func
+  */
+  function createBindingFunction(keys){
+    var bindingCache = {};
+    return function getBinding(bindings, testNode){
+      var cacheId = 'bindingId' in bindings
+        ? bindings.bindingId
+        : null;
+
+      ;;;if (!cacheId) console.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
+
+      var result = bindingCache[cacheId];
+
+      if (!result)
+      {
+        var names = [];
+        var getters = {};
+        var events = {};
+        var handler;
+        for (var i = 0, key; key = keys[i]; i++)
+        {
+          var binding = bindings[key];
+          var getter = binding && binding.getter;
+
+          if (getter)
+          {
+            getters[key] = getter;
+            names.push(key);
+
+            if (binding.events)
+            {
+              var eventList = String(binding.events).qw();
+              for (var j = 0, eventName; eventName = eventList[j]; j++)
+              {
+                ;;;if (testNode && ('event_' + eventName) in testNode == false && typeof console != 'undefined') console.warn('basis.template.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
+                if (events[eventName])
+                {
+                  events[eventName].push(key);
+                }
+                else
+                {
+                  handler = handler || {};
+                  events[eventName] = [key];
+                  handler[eventName] = createTemplateBindingUpdater(events[eventName], getters);
+                }
+              }
+            }
+          }
+        }
+
+        result = {
+          names: names,
+          events: events,
+          sync: createTemplateBindingUpdater(names, getters),
+          handler: handler
+        };
+
+        if (cacheId)
+          bindingCache[cacheId] = result;
+      }
+
+      return result;
+    };
+  }
+
+ /**
+  * @func
+  */
   function buildTemplate(){
     var decl = getDeclFromSource(this.source, this.baseURI);
     var instances = this.instances_;
@@ -1161,7 +1237,7 @@
     }
 
     this.createInstance = funcs.createInstance;
-    this.getBinding = funcs.getBinding;
+    this.getBinding = createBindingFunction(funcs.keys);
     this.instances_ = funcs.map;
 
     var l10nProtoSync = funcs.l10nProtoSync;

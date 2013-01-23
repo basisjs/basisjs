@@ -21,7 +21,9 @@
   var dom = basis.dom;
   var domEvent = basis.dom.event;
   var arrayFrom = basis.array.from;
-
+  var l10nToken = basis.l10n.getToken;
+  var getFunctions = basis.template.htmlfgen.getFunctions;
+  
   var Template = basis.template.Template;
 
   var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
@@ -43,8 +45,6 @@
   var TEXT_VALUE = basis.template.TEXT_VALUE;
   var COMMENT_VALUE = basis.template.COMMENT_VALUE;
 
-  var buildPathes = basis.template.htmlfgen.buildPathes;
-  var getFunctions = basis.template.htmlfgen.getFunctions;
 
 
   //
@@ -341,7 +341,7 @@
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
-      l10nToken: basis.l10n.getToken
+      l10nToken: l10nToken
     };
 
     return function(tokens){
@@ -349,28 +349,27 @@
 
       var fn = getFunctions(tokens, true, sourceURL);
       var templateMap = {};
+      var l10nMap = {};
       var l10nProtoSync;
-      var l10nMap;
 
       var proto = buildHtml(tokens);
       var build = function(){
         return proto.cloneNode(true);
       };
 
-      if (fn.l10n)
+      if (fn.createL10nSync)
       {
-        l10nMap = {};
-        l10nProtoSync = fn.l10n(proto, l10nMap, bind_attr);
+        l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr);
 
         for (var i = 0, key; key = fn.l10nKeys[i]; i++)
-          l10nProtoSync(key, basis.l10n.getToken(key).value);
+          l10nProtoSync(key, l10nToken(key).value);
       }
 
       return {
         createInstance: fn.createInstance(tmplNodeMap, templateMap, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG),
         l10nProtoSync: l10nProtoSync,
-        getBinding: fn.getBinding,
-
+        
+        keys: fn.keys,
         l10nKeys: fn.l10nKeys,
         map: templateMap
       };
@@ -553,9 +552,7 @@
   // TODO: remove
   //
   basis.template.extend({
-    buildPathes: buildPathes,
     buildHtml: buildHtml,
     buildFunctions: buildFunctions,
-    getFunctions: getFunctions,
     resolveObjectById: resolveObjectById
   });

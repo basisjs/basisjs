@@ -486,96 +486,20 @@
       return ref + '.basisObjectId';
     }
 
-   /**
-    * @func
-    */
-    function templateBindingUpdateFactory(names, getters){
-      return function templateBindingUpdate(){
-        for (var i = 0, bindingName; bindingName = names[i]; i++)
-          this.tmpl.set(bindingName, getters[bindingName](this));
-      };
-    }
-
-   /**
-    * @func
-    */
-    function getBindingFactory(keys){
-      var bindingCache = {};
-      return function getBinding(bindings, testNode){
-        var cacheId = 'bindingId' in bindings
-          ? bindings.bindingId
-          : null;
-
-        ;;;if (!cacheId) console.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
-
-        var result = bindingCache[cacheId];
-
-        if (!result)
-        {
-          var names = [];
-          var getters = {};
-          var events = {};
-          var handler;
-          for (var i = 0, key; key = keys[i]; i++)
-          {
-            var binding = bindings[key];
-            var getter = binding && binding.getter;
-
-            if (getter)
-            {
-              getters[key] = getter;
-              names.push(key);
-
-              if (binding.events)
-              {
-                var eventList = String(binding.events).qw();
-                for (var j = 0, eventName; eventName = eventList[j]; j++)
-                {
-                  ;;;if (testNode && ('event_' + eventName) in testNode == false && typeof console != 'undefined') console.warn('basis.template.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
-                  if (events[eventName])
-                  {
-                    events[eventName].push(key);
-                  }
-                  else
-                  {
-                    handler = handler || {};
-                    events[eventName] = [key];
-                    handler[eventName] = templateBindingUpdateFactory(events[eventName], getters);
-                  }
-                }
-              }
-            }
-          }
-
-          result = {
-            names: names,
-            events: events,
-            sync: templateBindingUpdateFactory(names, getters),
-            handler: handler
-          };
-
-          if (cacheId)
-            bindingCache[cacheId] = result;
-        }
-
-        return result;
-      };
-    }
-
     return function(tokens, debug, uri){
       var fn = tmplFunctions[uri && basis.path.relative(uri)];
       var paths = buildPathes(tokens, '_');
       var bindings = buildBindings(paths.binding);
       var result = {
-        l10nKeys: bindings.l10nKeys,
-        getBinding: getBindingFactory(bindings.keys)
+        keys: bindings.keys,
+        l10nKeys: bindings.l10nKeys
       };
 
       // try get functions by templateId
       if (fn)
       {
         result.createInstance = fn[0];
-        result.l10n = fn[1];
+        result.createL10nSync = fn[1];
       }
       else
       {
@@ -595,7 +519,7 @@
               'break;'
             );
 
-          result.l10n = new Function('_', '__l10n', 'bind_attr', 'var ' + paths.path + ';return function(token, value){' +
+          result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'var ' + paths.path + ';return function(token, value){' +
             'switch(token){' +
               code.join('') +
             '}}'
@@ -628,7 +552,6 @@
   })();
 
   module.exports = {
-  	buildPathes: buildPathes,
   	getFunctions: getFunctions
   };
   
