@@ -1164,7 +1164,7 @@
     this.getBinding = funcs.getBinding;
     this.instances_ = funcs.map;
 
-    var l10nProtoUpdate = funcs.l10nProtoUpdate;
+    var l10nProtoSync = funcs.l10nProtoSync;
     var hasResources = decl.resources && decl.resources.length > 0;
 
     if (hasResources)
@@ -1181,18 +1181,18 @@
       for (var id in instances)
         instances[id].rebuild();
 
-    if (funcs.l10n)
+    if (funcs.l10nKeys)
     {
       l10n = [];
       this.l10n_ = l10n;
       instances = funcs.map;
-      for (var key in funcs.l10n)
+      for (var i = 0, key; key = funcs.l10nKeys[i]; i++)
       {
         var link = {
           path: key,
           token: basis.l10n.getToken(key),
           handler: function(value){
-            l10nProtoUpdate(this.path, value);
+            l10nProtoSync(this.path, value);
             for (var id in instances)
               instances[id].set(this.path, value);
           }
