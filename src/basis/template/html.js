@@ -44,6 +44,7 @@
   var eventAttr = /^event-(.+)+/;
 
   // dictionaries
+  var tmplFunctions = {};
   var tmplEventListeners = {};
   var tmplNodeMap = { seed: 1 };
   var namespaceURI = {
@@ -501,59 +502,69 @@
       return ref + '.basisObjectId';
     }
 
-    return function(tokens, debug, sourceURL){
+    return function(tokens, debug, uri){
+      var fn = tmplFunctions[uri && basis.path.relative(uri)];
       var paths = buildPathes(tokens, '_');
       var bindings = buildBindings(paths.binding);
-      var objectRefs = paths.objectRefList.map(addBasisObjectId).join('=');
-      var createInstance;
-      var l10n;
+      var result = {
+        paths: paths,
+        bindings: bindings
+      };
 
-      if (bindings.l10n)
+      // try get functions by templateId
+      if (fn)
       {
-        var code = [];
-        for (var key in bindings.l10n)
-          code.push(
-            'case"' + key +'":\n' +
-            'if(value==null)value="{' + key + '}";' +
-            '__l10n[token]=value;' +
-            bindings.l10n[key].join(';') +
-            'break;'
-          );
+        result.createInstance = fn[0];
+        result.l10n = fn[1];
+      }
+      else
+      {
+        var objectRefs = paths.objectRefList.map(addBasisObjectId).join('=');
+        var createInstance;
+        var l10n;
+        var fnBody;
 
-        l10n = new Function('_', '__l10n', 'bind_attr', 'var ' + paths.path + ';return function(token, value){' +
-          'switch(token){' +
-            code.join('') +
-          '}' +
-        '}'/**@cut*/ + (sourceURL ? sourceURL + '_l10n' : ''));
+        if (bindings.l10n)
+        {
+          var code = [];
+          for (var key in bindings.l10n)
+            code.push(
+              'case"' + key +'":\n' +
+              'if(value==null)value="{' + key + '}";' +
+              '__l10n[token]=value;' +
+              bindings.l10n[key].join(';') +
+              'break;'
+            );
+
+          result.l10n = new Function('_', '__l10n', 'bind_attr', 'var ' + paths.path + ';return function(token, value){' +
+            'switch(token){' +
+              code.join('') +
+            '}}'
+            /**@cut*/ + (uri ? '//@ sourceURL=' + uri + '_l10n' : '')
+          );
+        }
+
+        /**@cut*/try {
+        result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
+          'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
+          (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
+          'function updateAttach(){set(String(this),attaches[this])};\n' +
+          bindings.body +
+          /**@cut*/(debug ? ';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' : '') +
+          ';return tMap[id]={' + [paths.ref, 'set:set,rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
+          'destroy:function(){' +
+            'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
+            'attaches=null;' +
+            /**@cut*/(debug ? 'delete set.debug;' : '') + 
+            'delete tMap[id];' + 
+            'delete gMap[id];' +
+            '}'] +
+          '}' + /**@cut*/ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
+        '}');
+        /**@cut*/} catch(e) { console.warn("can't build createInstance\n", fnBody); }
       }
 
-      /**@cut*/try {
-      var fnBody;
-      var createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
-        'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
-        (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
-        'function updateAttach(){set(String(this),attaches[this])};\n' +
-        bindings.body +
-        /**@cut*/(debug ? ';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' : '') +
-        ';return tMap[id]={' + [paths.ref, 'set:set,rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
-        'destroy:function(){' +
-          'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
-          'attaches=null;' +
-          /**@cut*/(debug ? 'delete set.debug;' : '') + 
-          'delete tMap[id];' + 
-          'delete gMap[id];' +
-          '}'] +
-        '}' +
-      '}'/**@cut*/ + sourceURL);
-      /**@cut*/} catch(e) { console.warn("can't build createInstance\n", fnBody); }
-
-      return {
-        paths: paths,
-        bindings: bindings,
-
-        createInstance: createInstance,
-        l10n: l10n
-      };
+      return result;
     }
   })();
 
@@ -911,7 +922,7 @@
     };
 
     return function(tokens){
-      var sourceURL = '' /** @cut */ + '//@ sourceURL=' + (this.source.url || 'inline_template' + this.templateId);
+      var sourceURL = '' /** @cut */ + (this.source.url || 'inline_template' + this.templateId);
 
       var fn = getFunctions(tokens, true, sourceURL);
       var paths = fn.paths;
@@ -1123,5 +1134,6 @@
     buildPathes: buildPathes,
     buildHtml: buildHtml,
     buildFunctions: buildFunctions,
+    getFunctions: getFunctions,
     resolveObjectById: resolveObjectById
   });
