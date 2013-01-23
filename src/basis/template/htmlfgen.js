@@ -498,8 +498,9 @@
       // try get functions by templateId
       if (fn)
       {
-        result.createInstance = fn[0];
-        result.createL10nSync = fn[1];
+        return fn;
+        //result.createInstance = fn[0];
+        //result.createL10nSync = fn[1];
       }
       else
       {
