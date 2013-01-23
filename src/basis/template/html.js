@@ -96,7 +96,7 @@
       var explicitRef;
       var bindings;
 
-      for (var i = 0, cp = 0, token; token = tokens[i]; i++, cp++, explicitRef = false)
+      for (var i = 0, cp = 0, closeText = 0, token; token = tokens[i]; i++, cp++, explicitRef = false)
       {
         if (!i)
           localPath = path + '.firstChild';
@@ -107,10 +107,10 @@
           else
           {
             // fix bug with normalize text node in IE8-
-            if (CLONE_NORMALIZATION_TEXT_BUG && token[TOKEN_TYPE] == tokens[i - 1][TOKEN_TYPE] && token[TOKEN_TYPE] == TYPE_TEXT)
-              cp++;
+            if (token[TOKEN_TYPE] == tokens[i - 1][TOKEN_TYPE] && token[TOKEN_TYPE] == TYPE_TEXT)
+              closeText++;
 
-            localPath = path + '.childNodes[' + cp + ']';
+            localPath = path + '.childNodes[' + cp + (closeText ? ' + ' + closeText + ' * TEXT_BUG' : '') + ']';
           }
         }
 
@@ -529,7 +529,7 @@
 
       /**@cut*/try {
       var fnBody;
-      var createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
+      var createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
         'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
         (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
         'function updateAttach(){set(String(this),attaches[this])};\n' +
@@ -553,7 +553,7 @@
 
         createInstance: createInstance,
         l10n: l10n
-      }
+      };
     }
   })();
 
@@ -935,7 +935,7 @@
       }
 
       return {
-        createInstance: fn.createInstance(tmplNodeMap, templateMap, build, tools, l10nMap),
+        createInstance: fn.createInstance(tmplNodeMap, templateMap, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG),
         getBinding: getBindingFactory(bindings.bindMap),
         l10nProtoUpdate: l10nProtoUpdate,
         l10n: bindings.l10n,
