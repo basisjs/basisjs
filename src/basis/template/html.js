@@ -359,7 +359,7 @@
 
       if (fn.createL10nSync)
       {
-        l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr);
+        l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
 
         for (var i = 0, key; key = fn.l10nKeys[i]; i++)
           l10nProtoSync(key, l10nToken(key).value);

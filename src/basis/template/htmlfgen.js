@@ -519,7 +519,7 @@
               'break;'
             );
 
-          result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'var ' + paths.path + ';return function(token, value){' +
+          result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'TEXT_BUG', 'var ' + paths.path + ';return function(token, value){' +
             'switch(token){' +
               code.join('') +
             '}}'
