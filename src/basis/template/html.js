@@ -292,7 +292,7 @@
         if (anim)
         {
           bindName = namePart[1];
-          anim = TRANSITION_SUPPORTED;
+          //anim = TRANSITION_SUPPORTED;
         }
 
         bindCode = bindMap[bindName];
@@ -495,6 +495,69 @@
   })();
 
 
+  var getFunctions = (function(){
+
+    function addBasisObjectId(ref){
+      return ref + '.basisObjectId';
+    }
+
+    return function(tokens, debug, sourceURL){
+      var paths = buildPathes(tokens, '_');
+      var bindings = buildBindings(paths.binding);
+      var objectRefs = paths.objectRefList.map(addBasisObjectId).join('=');
+      var createInstance;
+      var l10n;
+
+      if (bindings.l10n)
+      {
+        var code = [];
+        for (var key in bindings.l10n)
+          code.push(
+            'case"' + key +'":\n' +
+            'if(value==null)value="{' + key + '}";' +
+            '__l10n[token]=value;' +
+            bindings.l10n[key].join(';') +
+            'break;'
+          );
+
+        l10n = new Function('_', '__l10n', 'bind_attr', 'var ' + paths.path + ';return function(token, value){' +
+          'switch(token){' +
+            code.join('') +
+          '}' +
+        '}'/**@cut*/ + (sourceURL ? sourceURL + '_l10n' : ''));
+      }
+
+      /**@cut*/try {
+      var fnBody;
+      var createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
+        'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
+        (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
+        'function updateAttach(){set(String(this),attaches[this])};\n' +
+        bindings.body +
+        /**@cut*/(debug ? ';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' : '') +
+        ';return tMap[id]={' + [paths.ref, 'set:set,rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
+        'destroy:function(){' +
+          'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
+          'attaches=null;' +
+          /**@cut*/(debug ? 'delete set.debug;' : '') + 
+          'delete tMap[id];' + 
+          'delete gMap[id];' +
+          '}'] +
+        '}' +
+      '}'/**@cut*/ + sourceURL);
+      /**@cut*/} catch(e) { console.warn("can't build createInstance\n", fnBody); }
+
+      return {
+        paths: paths,
+        bindings: bindings,
+
+        createInstance: createInstance,
+        l10n: l10n
+      }
+    }
+  })();
+
+
  /**
   * Build functions for creating instance of template.
   */
@@ -503,14 +566,14 @@
     var WHITESPACE = /\s+/;
     var W3C_DOM_NODE_SUPPORTED = typeof Node == 'function' && document instanceof Node;
     var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
-    var TRANSITION_SUPPORTED = !!(document && (function(){
+    /*var TRANSITION_SUPPORTED = !!(document && (function(){
       var properties = ['webkitTransition', 'MozTransition', 'msTransition', 'OTransition', 'transition'];
       var style = document.documentElement.style;
       for (var i = 0; i < properties.length; i++)
         if (properties[i] in style)
           return true;
       return false;
-    })());
+    })());*/
 
 
    /**
@@ -848,75 +911,31 @@
     };
 
     return function(tokens){
-      var paths = buildPathes(tokens, '_');
-      var bindings = buildBindings(paths.binding);
-      var proto = buildHtml(tokens);
-      var templateMap = {};
-      var l10nMap;
       var sourceURL = '' /** @cut */ + '//@ sourceURL=' + (this.source.url || 'inline_template' + this.templateId);
 
-      if (bindings.l10n)
+      var fn = getFunctions(tokens, true, sourceURL);
+      var paths = fn.paths;
+      var bindings = fn.bindings;
+      var templateMap = {};
+      var l10nProtoUpdate;
+      var l10nMap;
+
+      var proto = buildHtml(tokens);
+      var build = function(){
+        return proto.cloneNode(true);
+      };
+
+      if (fn.l10n)
       {
         l10nMap = {};
-
-        var code = [];
-        for (var key in bindings.l10n)
-          code.push(
-            'case"' + key +'":\n' +
-            'if(value==null)value="{' + key + '}";' +
-            '__l10n[token]=value;' +
-            bindings.l10n[key].join(';') +
-            'break;'
-          );
-
-        var l10nProtoUpdate = new Function('_', '__l10n', 'bind_attr', 'var ' + paths.path + ';return function(token, value){' +
-          'switch(token){' +
-            code.join('') +
-          '}' +
-        '}//' + sourceURL + '_l10n');
-        //console.log(l10nProtoUpdate);
-        l10nProtoUpdate = l10nProtoUpdate(proto, l10nMap, bind_attr);
-
-        //console.log('>>>> ' + l10nProtoUpdate);
+        l10nProtoUpdate = fn.l10n(proto, l10nMap, bind_attr);
 
         for (var key in bindings.l10n)
           l10nProtoUpdate(key, basis.l10n.getToken(key).value);
       }
 
-      var build = function(){
-        return proto.cloneNode(true);
-      };
-
-      var objectRefs = paths.objectRefList;
-      for (var i = 0; objectRefs[i]; i++)
-        objectRefs[i] += '.basisObjectId';
-
-      objectRefs = objectRefs.join('=');
-
-      /** @cut */try {
-      var fnBody;
-      var createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
-        'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
-        (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
-        'function updateAttach(){set(String(this),attaches[this])};\n' +
-        bindings.body +
-        /**@cut*/';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' +
-        ';return tMap[id]={' + [paths.ref, 'set:set,rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
-        'destroy:function(){' +
-          'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
-          'attaches=null;' +
-          /**@cut*/'delete set.debug;' + 
-          'delete tMap[id];' + 
-          'delete gMap[id];' +
-          '}'] +
-        '}' +
-      '}' + sourceURL);
-      //console.log(createInstance);
-      createInstance = createInstance(tmplNodeMap, templateMap, build, tools, l10nMap);
-      /** @cut */} catch(e) { console.warn("can't build createInstance\n", fnBody); }
-
       return {
-        createInstance: createInstance,
+        createInstance: fn.createInstance(tmplNodeMap, templateMap, build, tools, l10nMap),
         getBinding: getBindingFactory(bindings.bindMap),
         l10nProtoUpdate: l10nProtoUpdate,
         l10n: bindings.l10n,
