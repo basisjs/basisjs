@@ -561,7 +561,7 @@
  /**
   * Build functions for creating instance of template.
   */
-  var makeFunctions = (function(){
+  var buildFunctions = (function(){
 
     var WHITESPACE = /\s+/;
     var W3C_DOM_NODE_SUPPORTED = typeof Node == 'function' && document instanceof Node;
@@ -1103,7 +1103,7 @@
         return new HtmlTemplate(value);
     },
 
-    builder: makeFunctions
+    builder: buildFunctions
   });
 
 
@@ -1121,7 +1121,7 @@
   //
   basis.template.extend({
     buildPathes: buildPathes,
-    makeFunctions: makeFunctions,
     buildHtml: buildHtml,
+    buildFunctions: buildFunctions,
     resolveObjectById: resolveObjectById
   });
