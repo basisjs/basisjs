@@ -2,6 +2,7 @@
   basis.require('basis.ua');
   basis.require('basis.dom');
   basis.require('basis.cssom');
+  basis.require('basis.template');
   basis.require('basis.ui');
 
 
@@ -22,8 +23,8 @@
   var Class = basis.Class;
   var DOM = basis.dom;
 
-  var Browser = basis.ua;
-  var extend = Object.extend;
+  var browser = basis.ua;
+  var extend = basis.object.extend;
   var cssom = basis.cssom;
   var classList = basis.cssom.classList;
 
@@ -36,9 +37,9 @@
 
   // tests
 
-  var IS_IE = Browser.test('IE');
-  var IS_IE7_UP = Browser.test('IE7+');
-  var IS_IE8_DOWN = Browser.test('IE8-');
+  var IS_IE = browser.test('IE');
+  var IS_IE7_UP = browser.test('IE7+');
+  var IS_IE8_DOWN = browser.test('IE8-');
 
   var SUPPORT_DISPLAYBOX = false;
 
@@ -73,11 +74,8 @@
     if (SUPPORT_COMPUTESTYLE)
       try {
         return parseFloat(defaultView.getComputedStyle(element, null)[what]);
-      } catch(e){
-        return 0;
-      }
-    else
-      return 0;
+      } catch(e){}
+   return 0;
   }
 
   function getHeight(element, ruller){
@@ -104,20 +102,16 @@
   function addBlockResizeHandler(element, handler){
     // element.style.position = 'relative';
     if (SUPPORT_ONRESIZE)
-    {
-      classList(element).add('Basis-Layout-OnResizeElement');
       element.onresize = handler;
-    }
     else
     {
       var iframe = DOM.createElement({
-        description: 'IFRAME.Basis-Layout-OnResizeFrame',
+        description: 'iframe',
         css: {
           position: 'absolute',
           width: '100%',
           height: '100%',
           border: 'none',
-          //border: '1px solid red',
           left: 0,
           zIndex: -1,
           top: '-2000px'
@@ -134,29 +128,13 @@
 
   // other stuff
 
-  var Helper = function(){
-    return DOM.createElement({
-      css: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: 0,
-        height: 0,
-        padding: 0,
-        margin: 0,
-        border: 0
-      }
-    });
-  };
-  Helper.className = 'basis.Layout.Helper';
-
   var BOX_UNDEFINED = {
-    top: Number.NaN,
-    left: Number.NaN,
-    bottom: Number.NaN,
-    right: Number.NaN,
-    width: Number.NaN,
-    height: Number.NaN,
+    top: NaN,
+    left: NaN,
+    bottom: NaN,
+    right: NaN,
+    width: NaN,
+    height: NaN,
     defined: false
   };
 
@@ -172,15 +150,10 @@
 
     init: function(element, woCalc, offsetElement){
       this.reset();
-      this.setElement(element, woCalc, offsetElement);
-    },
-    setElement: function(element, woCalc, offsetElement){
       this.element = DOM.get(element);
       this.offsetElement = offsetElement;
-      if (!woCalc) this.recalc(this.offsetElement);
-    },
-    copy: function(box){
-      ['top', 'left', 'bottom', 'right', 'height', 'width', 'defined'].forEach(function(prop){ this[prop] = box[prop]; }, this);
+      if (!woCalc)
+        this.recalc(this.offsetElement);
     },
     reset: function(){
       extend(this, BOX_UNDEFINED);
@@ -268,7 +241,7 @@
             this.top  = box.screenY - oPageBox.screenY;
             this.left = box.screenX - oPageBox.screenX;
 
-            if (Browser.test('FF1.5-'))
+            if (browser.test('FF1.5-'))
             {
               offsetParent = element.offsetParent;
               // offsetParent offset fix
@@ -286,7 +259,7 @@
               }
             }
 
-            if (Browser.test('FF2+'))
+            if (browser.test('FF2+'))
             {
               if (this.top)
               {
@@ -351,7 +324,7 @@
 
       return this.defined;
     },
-    intersection: function(box){
+    intersect: function(box){
       if (!this.defined)
         return false;
 
@@ -364,50 +337,9 @@
              box.bottom > this.top &&
              box.top    < this.bottom;
     },
-    inside: function(box){
-      if (!this.defined)
-        return false;
-
-      if (box instanceof Box == false)
-        box = new Box(box);
-
-      return box.defined &&
-             box.left   >= this.left && 
-             box.right  <= this.right &&
-             box.bottom >= this.bottom &&
-             box.top    <= this.top;
-    },
-    point: function(point){
-      if (!this.defined)
-        return false;
-
-      var x = point.left || point.x || 0;
-      var y = point.top  || point.y || 0;
-
-      return x >= this.left  &&
-             x <  this.right &&
-             y >= this.top   &&
-             y <  this.bottom;
-    },
-    power: function(element){
-      if (!this.defined)
-        return false;
-
-      element = DOM.get(element) || this.element;
-
-      if (element)
-      {
-        cssom.setStyle(element, {
-          top: this.top + 'px',
-          left: this.left + 'px',
-          width: this.width + 'px',
-          height: this.height + 'px'
-        });
-        return true;
-      }
-    },
     destroy: function(){
-      delete this.element;
+      this.element = null;
+      this.offsetElement = null;
     }
   });
 
@@ -419,9 +351,6 @@
     className: namespace + '.Intersection',
 
     init: function(boxA, boxB, bWoCalc){
-      this.setBoxes(boxA, boxB, bWoCalc);
-    },
-    setBoxes: function(boxA, boxB, bWoCalc){
       this.boxA = boxA instanceof Box ? boxA : new Box(boxA, true);
       this.boxB = boxB instanceof Box ? boxB : new Box(boxB, true);
 
@@ -435,7 +364,7 @@
           !this.boxB.recalc())
         return false;
 
-      if (this.boxA.intersection(this.boxB))
+      if (this.boxA.intersect(this.boxB))
       {
         this.top     = Math.max(this.boxA.top, this.boxB.top);
         this.left    = Math.max(this.boxA.left, this.boxB.left);
@@ -451,6 +380,9 @@
       }
 
       return this.defined;
+    },
+    destroy: function(){
+      Box
     }
   });
 
@@ -524,6 +456,11 @@
   // Vertical stack panel
   //
 
+  var templates = basis.template.define(namespace, {
+    Panel: resource('ui/templates/layout/VerticalPanel.tmpl'),
+    Stack: resource('ui/templates/layout/VerticalPanelStack.tmpl')
+  });
+
   var VerticalPanelRule = cssom.createRule('.Basis-VerticalPanel');
   VerticalPanelRule.setStyle({
     position: 'relative'
@@ -545,8 +482,7 @@
   var VerticalPanel = Class(UINode, {
     className: namespace + '.VerticalPanel',
 
-    template: 
-      '<div class="Basis-VerticalPanel"/>',
+    template: templates.Panel,
 
     flex: 0,
 
@@ -555,20 +491,16 @@
 
       if (this.flex)
       {
-        //cssom.setStyleProperty(this.element, 'overflow', 'auto');
-
         if (SUPPORT_DISPLAYBOX !== false)
           cssom.setStyleProperty(this.element, SUPPORT_DISPLAYBOX + 'box-flex', this.flex);
       }
       else
       {
         if (SUPPORT_DISPLAYBOX === false)
-        {
           addBlockResizeHandler(this.element, (function(){
             if (this.parentNode)
               this.parentNode.realign();
           }).bind(this));
-        }
       }
     }
   });
@@ -579,38 +511,28 @@
   var VerticalPanelStack = Class(UINode, {
     className: namespace + '.VerticalPanelStack',
 
+    template: templates.Stack,
+
     childClass: VerticalPanel,
-    template:
-      '<div class="Basis-VerticalPanelStack">' + 
-        (SUPPORT_DISPLAYBOX ? '' : '<div{ruller} style="position: absolute; visibility: hidden; top: -1000px; width: 10px;"/>') +
-      '</div>',
 
     init: function(){
-      //if (SUPPORT_DISPLAYBOX === false)
-      //{
-        //this.ruleClassName = 'Basis-FlexStackPanel-' + ++stackPanelId;
-        //this.cssRule = cssom.cssRule('.' + this.ruleClassName);
-        this.cssRule = cssom.uniqueRule();
-        this.ruleClassName = this.cssRule.token;
-        this.cssRule.setProperty('overflow', 'auto');
-      //}
+      this.cssRule = cssom.uniqueRule();
+      this.cssRule.setProperty('overflow', 'auto');
+      this.ruleClassName = this.cssRule.token;
 
       UINode.prototype.init.call(this);
 
       if (SUPPORT_DISPLAYBOX === false)
       {
-        //this.box = new Box(this.childNodesElement, true);
         this.realign();
-
-        addBlockResizeHandler(this.childNodesElement, (function(){
-          this.realign();
-        }).bind(this));
+        addBlockResizeHandler(this.childNodesElement, this.realign.bind(this));
       }
     },
     insertBefore: function(newChild, refChild){
-      if (newChild = UINode.prototype.insertBefore.call(this, newChild, refChild))
+      newChild = UINode.prototype.insertBefore.call(this, newChild, refChild);
+      if (newChild)
       {
-        if (newChild.flex && this.cssRule)
+        if (newChild.flex)
           classList(newChild.element).add(this.ruleClassName);
 
         this.realign();
@@ -621,7 +543,7 @@
     removeChild: function(oldChild){
       if (UINode.prototype.removeChild.call(this, oldChild))
       {
-        if (oldChild.flex && this.cssRule)
+        if (oldChild.flex)
           classList(oldChild.element).remove(this.ruleClassName);
 
         this.realign();
@@ -692,6 +614,5 @@
     VerticalPanel: VerticalPanel,
     VerticalPanelStack: VerticalPanelStack,
 
-    Helper: Helper,
     addBlockResizeHandler: addBlockResizeHandler
   };
