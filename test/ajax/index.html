@@ -107,7 +107,7 @@
         caption: 'Simple request',
         click: function(){
           clearLog();
-          transport.get();
+          transport.request();
         },
         container: DOM.get('container')
       });
@@ -116,7 +116,7 @@
         caption: 'Simple request with timeout',
         click: function(){
           clearLog();
-          transport.get({
+          transport.request({
             url: '/cgi-bin/delay.pl'
           });
         },
@@ -127,7 +127,7 @@
         caption: 'Request with abort',
         click: function(){
           clearLog();
-          transport.get({
+          transport.request({
             influence: influence1
           });
           transport.abort();
@@ -139,10 +139,10 @@
         caption: 'Two same request one by one',
         click: function(){
           clearLog();
-          transport.get({
+          transport.request({
             influence: influence1
           });
-          transport.get({
+          transport.request({
             influence: influence1
           });
         },
@@ -164,12 +164,12 @@
             poolLimit: 1
           });
           
-          transport.get({
+          transport.request({
             influence: influence1,
             params: { 'param': Math.random(1) }
           });
 
-          transport.get({
+          transport.request({
             influence: influence2,
             params: { 'param': Math.random(1) }
           });
@@ -196,7 +196,7 @@
               }
             }
           });
-          transport.get({
+          transport.request({
             influence: influence1
           });
         },
@@ -264,7 +264,7 @@
         caption: 'SOAP Transport',
         click: function(){
           clearLog();
-          soapTransport.get();
+          soapTransport.request();
         },
         container: DOM.get('container')
       });
@@ -272,8 +272,8 @@
         caption: 'Two same SOAP request one by one',
         click: function(){
           clearLog();
-          soapTransport.get();
-          soapTransport.get();
+          soapTransport.request();
+          soapTransport.request();
         },
         container: DOM.get('container')
       });
@@ -281,12 +281,12 @@
         caption: 'Two different SOAP request one by one',
         click: function(){
           clearLog();
-          soapTransport.get({
+          soapTransport.request({
             soapBody: {  
               SessionKey: 'fe4c97c9-8e44-4314-9920-b33af86f1d33'              
             }
           });
-          soapTransport.get({
+          soapTransport.request({
             soapBody: {
               SessionKey: 'fe4c97c9-8e44-4314-9920-b33af86f1d34'              
             }
@@ -343,7 +343,7 @@
         caption: 'SOAP request via Custom Service',
         click: function(){
           clearLog();
-          customSOAPProxy.get();
+          customSOAPProxy.request();
         },
         container: DOM.get('container')
       });
