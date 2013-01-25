@@ -157,11 +157,11 @@
   }
 
   function createDictionary(namespace, location, tokens){
-    ;;;if (this !== module && typeof console != 'undefined') console.warn('basis.l10n.createDictionary: Called with wrong context. Don\'t shortcut this function call, use basis.l10n.createDictionary to make build possible');
+    ;;;if (this !== module) basis.dev.warn('basis.l10n.createDictionary: Called with wrong context. Don\'t shortcut this function call, use basis.l10n.createDictionary to make build possible');
 
     var dictionary = getDictionary(namespace);
 
-    ;;;if (dictionary && typeof console != 'undefined') console.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created');
+    ;;;if (dictionary) basis.dev.warn('basis.l10n.createDictionary: Dictionary ' + namespace + ' is already created');
 
     dictionary = getDictionary(namespace, true);
     dictionary.location = location;
@@ -269,8 +269,9 @@
 
       updateDictionaryResource(resource(), culture, dictionary.namespace);
     }
-    else {
-      ;;;console.warn('Culture "' + culture + '" is not specified in the list');
+    else
+    {
+      ;;;basis.dev.warn('Culture "' + culture + '" is not specified in the list');
     }
   }
 

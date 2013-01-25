@@ -956,7 +956,7 @@
       insert(head(), node);
     else
     {
-      ;;;if (typeof console != 'undefined') console.warn('Can\'t append to head, document not found');
+      ;;;basis.dev.warn('Can\'t append to head, document not found');
     }
   }
 

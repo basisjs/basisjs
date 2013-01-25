@@ -83,7 +83,7 @@
       if (data)
         extend(session.data, data);
 
-      ;;; if (typeof console != 'undefined') console.info('Session opened: ' + activeSession.key);
+      ;;;basis.dev.info('Session opened: ' + activeSession.key);
 
       // fire event
       this.event_sessionOpen();
@@ -94,7 +94,7 @@
         if (freezeState)
           this.unfreeze();
 
-        ;;; if (typeof console != 'undefined') console.info('Session closed: ' + activeSession.key);
+        ;;;basis.dev.info('Session closed: ' + activeSession.key);
 
         this.event_sessionClose();
 
@@ -164,7 +164,7 @@
       this.key = key;
       this.data = {};
 
-      ;;; if (typeof console != 'undefined') console.info('Session created: ' + key);
+      ;;;basis.dev.info('Session created: ' + key);
     },
     storeData: function(key, data){
       if (freezeState)

@@ -308,11 +308,6 @@
   var IS_METHOD_WITH_BODY = /^(POST|PUT|PATCH|LINK|UNLINK)$/i;
   var ESCAPE_CHARS = /[\%\=\&\<\>\s\+]/g;
 
-  // TODO: better debug info out
-  var logOutput = typeof console != 'undefined'
-    ? function(){ console.log(arguments); }
-    : basis.fn.$self;
-
   function escapeValue(value){
     return String(value).replace(ESCAPE_CHARS, function(m){
       var code = m.charCodeAt(0).toHex();
@@ -410,7 +405,7 @@
 
     this.prevReadyState_ = readyState;
 
-    ;;;if (this.debug) logOutput('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
+    ;;;if (this.debug) basis.dev.log('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
 
     // dispatch self event
     this.event_readyStateChanged(readyState);
@@ -612,7 +607,7 @@
       // send data
       xhr.send(postBody);
 
-      ;;;if (this.debug) logOutput('Request over, waiting for response');
+      ;;;if (this.debug) basis.dev.log('Request over, waiting for response');
 
       return true;
     },

@@ -334,18 +334,13 @@
           value: source.substring(textStateEndPos, pos)
         });
 
-      //if (!result.length)   // there must be at least one token in result
-      //  result.push({ type: TYPE_TEXT, value: '' });
-
       if (tagStack.length > 1)
         throw 'No close tag for ' + tagStack.pop().name;
 
       result.templateTokens = true;
 
     } catch(e) {
-      /*
-      console.warn(e + ':\n' + source.substr(0, br) + '\n' + Array(i - offset + 1).join(' ') + '\u25b2-- problem here \n' + source.substr(br));
-      /*/;;;basis.dev.warn(e, source); /* */
+      ;;;basis.dev.warn(e, source);
     }
 
     return result;
@@ -736,8 +731,8 @@
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
 
-                      //console.log(elAttrs.src + ' -> ' + url);
-                      //console.log(decl);
+                      //basis.dev.log(elAttrs.src + ' -> ' + url);
+                      //basis.dev.log(decl);
 
                       var tokenRefMap = normalizeRefs(decl.tokens);
                       var instructions = (token.childs || []).slice();
@@ -1148,7 +1143,7 @@
         ? bindings.bindingId
         : null;
 
-      ;;;if (!cacheId) console.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
+      ;;;if (!cacheId) basis.dev.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
 
       var result = bindingCache[cacheId];
 
@@ -1173,7 +1168,7 @@
               var eventList = String(binding.events).qw();
               for (var j = 0, eventName; eventName = eventList[j]; j++)
               {
-                ;;;if (testNode && ('event_' + eventName) in testNode == false && typeof console != 'undefined') console.warn('basis.template.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
+                ;;;if (testNode && ('event_' + eventName) in testNode == false) basis.dev.warn('basis.template.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
                 if (events[eventName])
                 {
                   events[eventName].push(key);

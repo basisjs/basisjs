@@ -38,7 +38,6 @@ function loadTest(TestCase){
         DOM.remove(progressbar);
         DOM.insert(DOM.clear(result), testcase.toDOM());
         DOM.insert(document.body, result);
-        //console.log('end');
       },
       reset: function(){
         DOM.remove(result);

@@ -845,7 +845,6 @@
       var childPosition = this.scrollX ? child.element.offsetLeft : child.element.offsetTop;
       var childSize = this.scrollX ? child.element.offsetWidth : child.element.offsetHeight;
 
-      //console.log(childPosition + childSize / 2 - startPosition);
       this.setPosition(childPosition + childSize / 2 - startPosition, instantly);
     },
 

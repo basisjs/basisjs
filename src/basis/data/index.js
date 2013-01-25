@@ -712,7 +712,7 @@
           }
           else
           {
-            /** @cut */ if (typeof console != 'undefined') console.warn('Index `{0}` already exists'.format(key));
+            ;;;basis.dev.warn('Index `{0}` already exists'.format(key));
             return;
           }
         }
@@ -740,7 +740,7 @@
           // warn
         }
       }
-      /** @cut */else if (typeof console != 'undefined') console.warn('Index `{0}` already exists'.format(key));
+      ;;;basis.dev.warn('Index `{0}` already exists'.format(key));
     },
 
     removeIndex: function(key){

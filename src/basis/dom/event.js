@@ -559,72 +559,8 @@
   * @param {function(event)} handler 
   * @param {object=} thisObject Context for handler
   */
-  var onLoad = basis.ready; /*(function(){
-    // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig and Me :)
-
-    var fired = false;
-    var loadHandler = [];
-
-    function fireHandlers(e){
-      if (!fired++)
-        for (var i = 0; i < loadHandler.length; i++)
-          loadHandler[i].callback.call(loadHandler[i].thisObject);
-    }
-
-    // The DOM ready check for Internet Explorer
-    function doScrollCheck() {
-      try {
-        // If IE is used, use the trick by Diego Perini
-        // http://javascript.nwbox.com/IEContentLoaded/
-        document.documentElement.doScroll("left");
-        fireHandlers();
-      } catch(e) {
-        setTimeout(doScrollCheck, 1);
-      }
-    }
-
-    if (typeof window != 'undefined')
-    {
-      if (W3CSUPPORT)
-      {
-        // use the real event for browsers that support it (all modern browsers support it)
-        addHandler(document, "DOMContentLoaded", fireHandlers);
-      }
-      else
-      {
-        // ensure firing before onload,
-  			// maybe late but safe also for iframes
-        addHandler(document, "readystatechange", fireHandlers);
-
-        // If IE and not a frame
-  			// continually check to see if the document is ready
-  			try {
-  				if (window.frameElement == null && document.documentElement.doScroll)
-            doScrollCheck();
-  			} catch(e) {
-  			}
-      }
-
-      // A fallback to window.onload, that will always work
-      addHandler(global, "load", fireHandlers);
-    }
-
-    // return attach function
-    return function(callback, thisObject){
-      if (!fired)
-      {
-        loadHandler.push({
-          callback: callback,
-          thisObject: thisObject
-        });
-      }
-      else
-      {
-        ;;;if (typeof console != 'undefined') console.warn('Event.onLoad(): Can\'t attach handler to onload event, because it\'s already fired!');
-      }
-    }
-  })();*/
-
+  var onLoad = basis.ready;
+  
  /**
   * Attach unload handlers for page
   * @param {function(event)} handler 

@@ -1148,7 +1148,7 @@
     if (!child)
       throw EXCEPTION_NULL_CHILD;
 
-    ;;;if (typeof console != 'undefined') console.warn(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
+    ;;;basis.dev.warn(EXCEPTION_BAD_CHILD_CLASS + ' (expected ' + (node.childClass && node.childClass.className) + ' but ' + (child && child.constructor && child.constructor.className) + ')');
     throw EXCEPTION_BAD_CHILD_CLASS;
   }
 
@@ -2316,7 +2316,7 @@
       this.map_ = {};
       this.nullGroup = new PartitionNode();
 
-      ;;;if ('titleGetter' in this) console.warn(namespace + '.GroupingNode: titleGetter is not support anymore for GroupingNode; extend partition nodes with titleGetter instead');
+      ;;;if ('titleGetter' in this) basis.dev.warn(namespace + '.GroupingNode: titleGetter is not support anymore for GroupingNode; extend partition nodes with titleGetter instead');
 
       AbstractNode.prototype.init.call(this);
     },

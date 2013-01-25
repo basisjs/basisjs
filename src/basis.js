@@ -320,7 +320,7 @@
             }
         }
       }
-      
+
       return new Function('object', 'return object != null ? object.' + path + ' : object');
     }
 
@@ -1842,7 +1842,7 @@
 
 
         /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
-        /** @cut *///if (genericClassName == newClassProps.className) { console.warn('Class has no className'); }
+        /** @cut *///if (genericClassName == newClassProps.className) { consoleMethods.warn('Class has no className'); }
 
         // new class constructor
         // NOTE: this code makes Chrome and Firefox show class name in console
@@ -2128,7 +2128,7 @@
     var objects = [];
 
     function destroy(log){
-      ;;;var logDestroy = log && typeof log == 'boolean' && typeof console != 'undefined';
+      ;;;var logDestroy = log && typeof log == 'boolean';
       result.globalDestroy = true;
       result.add = $undef;
       result.remove = $undef;

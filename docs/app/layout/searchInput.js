@@ -11,7 +11,6 @@
         var fc = value.charAt(0);
         var v = value.substr(1).replace(/./g, function(m){ return '[' + m.toUpperCase() + m.toLowerCase() + ']'; });
         var rx = new RegExp('(^|[^a-zA-Z])([' + fc.toLowerCase() + fc.toUpperCase() +']' + v + ')|([a-z])(' + fc.toUpperCase() + v + ')');
-        //console.log(rx.source);
         var textNodeGetter = this.textNodeGetter;
         var wrapMap = this.map;
 

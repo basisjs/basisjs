@@ -57,8 +57,6 @@
 
       var node = this.childNodes.search(root, 'data.fullPath');
 
-      //if (typeof console != 'undefined') console.log(node);
-
       if (node)
       {
         node.expand();

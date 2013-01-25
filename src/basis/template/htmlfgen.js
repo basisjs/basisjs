@@ -545,7 +545,7 @@
             '}'] +
           '}' + /**@cut*/ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
         '}');
-        /**@cut*/} catch(e) { console.warn("can't build createInstance\n", fnBody); }
+        /**@cut*/} catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }
       }
 
       return result;

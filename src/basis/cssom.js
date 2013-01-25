@@ -242,7 +242,7 @@
         try {
           style.cssText = style.cssText.replace(new RegExp(rxText, 'i'), newValue);
         } catch(e) {
-          ;;;if (typeof console != 'undefined') console.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
+          ;;;basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
         }
       }
     }
@@ -257,7 +257,7 @@
         try {
           node.style[mapping.key] = mapping.value;
         } catch(e) {
-          ;;;if (typeof console != 'undefined') console.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
+          ;;;basis.dev.warn('basis.cssom.setStyleProperty: Can\'t set wrong value `' + mapping.value + '` for ' + mapping.key + ' property');
         }
       }
       else
@@ -599,12 +599,12 @@
       return this.element.className.qw()[index];
     },
     add: function(token){ 
-      ;;;if (arguments.length > 1) console.warn('classList.add accept only one argument');
+      ;;;if (arguments.length > 1) basis.dev.warn('classList.add accepts only one argument');
       if (!this.element.className.match(tokenRegExp(token)))
         this.element.className += ' ' + token;
     },
     remove: function(token){
-      ;;;if (arguments.length > 1) console.warn('classList.remove accept only one argument');
+      ;;;if (arguments.length > 1) basis.dev.warn('classList.remove accepts only one argument');
       var className = this.element.className;
       var newClassName = className.replace(tokenRegExp(token), '');
       if (newClassName != className)

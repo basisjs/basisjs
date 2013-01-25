@@ -117,9 +117,13 @@
     return {
       add: function(prefix, func){
         if (!presets[prefix])
+        {
           presets[prefix] = func;
-
-        /** @cut */else console.warn('Preset `' + prefix + '` already exists, new definition ignored');
+        }
+        else
+        {
+          ;;;basis.dev.warn('Preset `' + prefix + '` already exists, new definition ignored');
+        }
       },
       process: function(key, value){
         var preset;
@@ -688,7 +692,7 @@
         super_.clear.call(this, alive);
       },
       setChildNodes: function(childNodes, keepAlive){
-        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; console.warn('Template has no childNodesElement container, probably it is bug'); }
+        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; basis.dev.warn('Template has no childNodesElement container, probably it is bug'); }
 
         // reallocate childNodesElement to new DocumentFragment
         var domFragment = DOM.createFragment();

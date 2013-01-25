@@ -345,7 +345,7 @@
       }
       else
       {
-        ;;;if(typeof console != 'undefined') console.warn(this.className + '.addSource: source isn\'t instance of AbstractDataset');
+        ;;;basis.dev.warn(this.className + '.addSource: source isn\'t instance of AbstractDataset');
       }
     },
 
@@ -378,7 +378,7 @@
       }
       else
       {
-        ;;;if(typeof console != 'undefined') console.warn(this.className + '.removeSource: source isn\'t in dataset source list');
+        ;;;basis.dev.warn(this.className + '.removeSource: source isn\'t in dataset source list');
       }
     },
 
@@ -400,7 +400,7 @@
         }
         else
         {
-          ;;;if(typeof console != 'undefined') console.warn(this.className + '.setSources: source isn\'t type of AbstractDataset', source);
+          ;;;basis.dev.warn(this.className + '.setSources: source isn\'t type of AbstractDataset', source);
         }
       }
 
@@ -1348,9 +1348,6 @@
       var sourceObjectInfo;
       var inserted = delta.inserted;
       var deleted = delta.deleted;
-
-      //var d = new Date;
-      //console.profile();
      
       // delete comes first to reduce index size -> insert will be faster
       if (deleted)
@@ -1410,9 +1407,6 @@
         if (buildIndex)
           index.sort(sliceIndexSort);
       }
-
-      //console.profileEnd();
-      //console.log('Slice: ', new Date - d, buildIndex);
 
       this.applyRule();
     }

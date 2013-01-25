@@ -139,8 +139,7 @@
         handler: {
           '*': function(){
             if (logEventCheckbox.checked)
-              if (typeof console != 'undefined')
-                console.log(arguments);
+              basis.dev.log(arguments);
           }
         },
         //sorting: basis.getter('data.id', Number),
