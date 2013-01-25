@@ -1854,7 +1854,7 @@
               newClassProps.extendConstructor_
 
                 // constructor with instance extension
-                ? function(extend, config){
+                ? function(extend){
                     // mark object
                     this.basisObjectId = seed.id++;
 
@@ -1867,8 +1867,6 @@
                         ? prop.__extend__(extend[key])
                         : extend[key];
                     }
-
-                    ;;;if (config) consoleMethods.warn('config param is obsolete for extensible classes (ignored)');
 
                     // call constructor
                     this.init();
