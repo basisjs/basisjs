@@ -7,13 +7,6 @@
 
 
   //
-  // import names
-  //
-
-  var getter = basis.getter;
-
-
-  //
   // main part
   //
 
@@ -35,7 +28,7 @@
   var GETTER = {};
   var SETTER = {};
 
-  Object.iterate({
+  basis.object.iterate({
     year: 'FullYear',
     month: 'Month',
     day: 'Date',
@@ -43,28 +36,32 @@
     minute: 'Minutes',
     second: 'Seconds',
     millisecond: 'Milliseconds'
-  }, function(key, value){
-    GETTER[key] = getter('get' + value + '()');
-    SETTER[key] = new Function('d,v', 'd.set' + value + '(v)');
+  }, function(key, name){
+    GETTER[key] = function(date){
+      return date['get' + value]()
+    };
+    SETTER[key] = function(date, value){
+      return date['set' + value](value);
+    };
   });
 
   var FORMAT = {
-    y: getter('getFullYear().toString().substr(2)'),               // %y - year in YY
-    Y: getter('getFullYear()'),                                    // %Y - year in YYYY
-    d: getter('getDate()'),                                        // %d - day (1..31)
-    D: getter('getDate()', '{0:02}'),                              // %D - day (01..31)
-    m: getter('getMonth() + 1'),                                   // %m - month (1..12)
-    M: getter('getMonth() + 1', '{0:02}'),                         // %M - month (01..12)
-    h: getter('getHours()'),                                       // %h - hours (0..23)
-    H: getter('getHours()', '{0:02}'),                             // %H - hours (00..23)
-    i: getter('getHours() % 12 || 12', '{0:02}'),                  // %i - hours (01..12)
-    p: getter('getHours() > 12', { 'true': 'pm', 'false': 'am' }), // %p - am or pm
-    P: getter('getHours() > 12', { 'true': 'PM', 'false': 'AM' }), // %p - AM or PM
-    I: getter('getMinutes()', '{0:02}'),                           // %I - minutes (00..59)
-    s: getter('getSeconds()'),                                     // %s - seconds (0..59)
-    S: getter('getSeconds()', '{0:02}'),                           // %S - seconds (00..59)
-    z: getter('getMilliseconds()'),                                // %z - milliseconds (0..999)
-    Z: getter('getMilliseconds()', '{0:03}')                       // %Z - milliseconds (000..999)
+    y: function(date){ return date.getFullYear().toString().substr(2); },   // %y - year in YY
+    Y: function(date){ return date.getFullYear(); },                        // %Y - year in YYYY
+    d: function(date){ return date.getDate(); },                            // %d - day (1..31)
+    D: function(date){ return date.getDate().lead(2); },                    // %D - day (01..31)
+    m: function(date){ return date.getMonth() + 1; },                       // %m - month (1..12)
+    M: function(date){ return (date.getMonth() + 1).lead(2); },             // %M - month (01..12)
+    h: function(date){ return date.getHours(); },                           // %h - hours (0..23)
+    H: function(date){ return date.getHours().lead(2); },                   // %H - hours (00..23)
+    i: function(date){ return (date.getHours() % 12 || 12).lead(2); },      // %i - hours (01..12)
+    p: function(date){ return date.getHours() > 12 ? 'pm' : 'am'; },        // %p - am or pm
+    P: function(date){ return date.getHours() > 12 ? 'PM' : 'AM'; },        // %p - AM or PM
+    I: function(date){ return date.getMinutes().lead(2); },                 // %I - minutes (00..59)
+    s: function(date){ return date.getSeconds(); },                         // %s - seconds (0..59)
+    S: function(date){ return date.getSeconds().lead(2); },                 // %S - seconds (00..59)
+    z: function(date){ return date.getMilliseconds(); },                    // %z - milliseconds (0..999)
+    Z: function(date){ return date.getMilliseconds().lead(3); }             // %Z - milliseconds (000..999)
   };
 
   var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d+))?)?$/;
@@ -90,7 +87,7 @@
 
   // Date prototype extension
 
-  Object.extend(Date.prototype, {
+  basis.object.extend(Date.prototype, {
     isLeapYear: function(){
       return isLeapYear(this.getFullYear());
     },
@@ -208,7 +205,7 @@
     };
   }
 
-  Object.complete(Date.prototype, {
+  basis.object.complete(Date.prototype, {
     // implemented in ECMAScript5
     // TODO: check for time zone
     toISOString: function(){
