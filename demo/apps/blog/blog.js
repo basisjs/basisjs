@@ -110,7 +110,7 @@ basis.ready(function(){
           existsIf: function(owner){
             return owner.data.tags && owner.data.tags.length;
           },
-          delegate: Function.$self,
+          delegate: basis.fn.$self,
           instanceOf: basis.ui.Node.subclass({
             template: resource('template/tagList.tmpl'),
 
@@ -302,7 +302,7 @@ basis.ready(function(){
       categoryList: 'satellite:',
       tagCloud: 'satellite:',
       archiveList: 'satellite:',
-      stat: Function.$const(statOutElement)
+      stat: basis.fn.$const(statOutElement)
     },
 
     action: {

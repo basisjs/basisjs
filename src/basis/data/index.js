@@ -82,7 +82,7 @@
    /**
     * @type {function(object)}
     */
-    valueGetter: Function.$null,
+    valueGetter: basis.fn.$null,
 
    /**
     * Event names map when index must check for updates.
@@ -163,7 +163,7 @@
    /**
     * @inheritDoc
     */
-    valueGetter: Function.$true,
+    valueGetter: basis.fn.$true,
 
    /**
     * @inheritDoc
@@ -234,7 +234,7 @@
     * function to fetch item from vector
     * @type {function(object)}
     */
-    itemGetter: Function.$null,
+    itemGetter: basis.fn.$null,
 
    /**
     * Values vector
@@ -326,7 +326,7 @@
     if (!Class.isClass(BaseClass) || !BaseClass.isSubclassOf(Index))
       throw 'Wrong class for index constructor';
 
-    getter = Function.getter(getter);
+    getter = basis.getter(getter);
     events = events || 'update';
 
     if (typeof events != 'string')

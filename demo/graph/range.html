@@ -153,7 +153,7 @@
     });
 
     var reportSlice = new basis.data.dataset.Slice({
-      rule: Function.getter('data.Date', Number),
+      rule: basis.getter('data.Date', Number),
       source: graphValues,
       orderDesc: true,
       offset: 450,
@@ -173,16 +173,16 @@
         lineWidth: 1.5
       },
       dataSource: reportSlice,
-      keyGetter: Function.getter('data.Date'),
+      keyGetter: basis.getter('data.Date'),
       keyTitleGetter: function(object){
         var date = object.data.Date;
         return date.getDate() + ' ' + basis.date.monthNumToAbbr[date.getMonth()].toLowerCase() + ' ' + date.getFullYear();
       },
-      sorting: Function.getter('data.Date'),
+      sorting: basis.getter('data.Date'),
       series: [
         {
           color: 'red',
-          valueGetter: Function.getter('data.Amount')
+          valueGetter: basis.getter('data.Amount')
         }
       ]
     });
@@ -198,11 +198,11 @@
       showBoundLines: false,
       showGrid: false,
       fillArea: true,
-      keyGetter: Function.getter('data.Date'),
+      keyGetter: basis.getter('data.Date'),
       dataSource: graphValues,
-      sorting: Function.getter('data.Date'),
+      sorting: basis.getter('data.Date'),
       series: [
-        Function.getter('data.Amount')
+        basis.getter('data.Amount')
       ],
       style: {
         lineWidth: .5

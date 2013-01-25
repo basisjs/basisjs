@@ -671,7 +671,7 @@
       }
     },
 
-    titleGetter: Function.getter(function(item){
+    titleGetter: basis.getter(function(item){
       return item.title || item.getValue();
     }),
     valueGetter: getter('value'),
@@ -1278,7 +1278,7 @@
     },
     Required: function(field){
       var value = field.getValue();
-      if (Function.$isNull(value) || value == '')
+      if (basis.fn.$isNull(value) || value == '')
         return new ValidatorError(field, l10nToken(namespace, 'validator', 'required'));
     },
     Number: function(field){
@@ -1305,13 +1305,13 @@
     },
     MinLength: function(field){
       var value = field.getValue();
-      var length = Function.$isNotNull(value.length) ? value.length : String(value).length;
+      var length = basis.fn.$isNotNull(value.length) ? value.length : String(value).length;
       if (length < field.minLength)
         return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'minLengthError')).format(field.minLength));
     },
     MaxLength: function(field){
       var value = field.getValue();
-      var length = Function.$isNotNull(value.length) ? value.length : String(value).length;
+      var length = basis.fn.$isNotNull(value.length) ? value.length : String(value).length;
       if (length > field.maxLength)
         return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'maxLengthError')).format(field.maxLength));
     }

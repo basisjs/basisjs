@@ -12,7 +12,7 @@
 
   var document = global.document;
   var cleaner = basis.cleaner;
-  var getter = Function.getter;
+  var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
 

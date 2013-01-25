@@ -81,7 +81,7 @@
     var MyTreeNode = basis.Class.create(basis.ui.tree.Node, {
       binding: {
         events: 'update',
-        getter: Function.getter('data', '[{id}] {title}')
+        getter: basis.getter('data', '[{id}] {title}')
       }
     });
 
@@ -97,7 +97,7 @@
       dataSource: Article.all,
 
       // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
-      sorting: Function.getter('data.title'),
+      sorting: basis.getter('data.title'),
 
       // Задаем обработчик на событие изменения выборки (Selection).
       selection: {}

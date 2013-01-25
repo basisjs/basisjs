@@ -141,14 +141,14 @@
       groupGetter: function(node){
         return node instanceof nsTree.Folder == false;
       },
-      sorting: Function.getter('data.id')
+      sorting: basis.getter('data.id')
     };
 
     var FolderNode = basis.Class(nsTree.Folder, {
       binding: {
         title: 'data:name'
       },
-      sorting: Function.getter('data.name'),
+      sorting: basis.getter('data.name'),
       grouping: grouping,
       init: function(){
         nsTree.Node.prototype.init.call(this);
@@ -160,7 +160,7 @@
       binding: {
         title: 'data:name'
       },
-      sorting: Function.getter('data.name'),
+      sorting: basis.getter('data.name'),
       grouping: grouping,
       collapsed: true,
       event_expand: function(){
@@ -177,7 +177,7 @@
 
     var FileTree = basis.Class(nsTree.Tree, {
       dataSource: goupingByParentId.getSubset('/'),
-      sorting: Function.getter('data.name'),
+      sorting: basis.getter('data.name'),
       grouping: grouping,
       childFactory: function(config){
         if (config.delegate.type == Folder)

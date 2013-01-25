@@ -82,7 +82,7 @@
       this.element = DOM.insert(selectionOutput, DOM.createElement('', DOM.createElement('LABEL', (this.name || 'Tree selection') + ': '), this.content = DOM.createText('{no items}')));
       this.addHandler({
         datasetChanged: function(){
-          this.content.nodeValue = this.getItems().map(Function.getter('data.title')).join(', ') || '{no items}';
+          this.content.nodeValue = this.getItems().map(basis.getter('data.title')).join(', ') || '{no items}';
         }
       });
     };

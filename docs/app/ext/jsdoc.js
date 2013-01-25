@@ -59,7 +59,7 @@
 
       if (newData.tags)
       {
-        var tags = DOM.wrap(Object.keys(Object.slice(newData.tags, tagLabels)), { 'SPAN.tag': Function.$true });
+        var tags = DOM.wrap(Object.keys(Object.slice(newData.tags, tagLabels)), { 'SPAN.tag': basis.fn.$true });
         if (tags.length)
           DOM.insert(this.tmpl.content, DOM.createElement('.tags', tags));
         
@@ -203,7 +203,7 @@
       }
 
       return DOM.createElement(listItem ? 'LI' : 'P', h, parts);
-    }).filter(Function.$isNotNull).flatten();
+    }).filter(basis.fn.$isNotNull).flatten();
 
     var result = [];
     var listContext;

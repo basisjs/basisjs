@@ -61,7 +61,7 @@
       },
       template: {
         existsIf: hasTemplate,
-        delegate: Function.$self,
+        delegate: basis.fn.$self,
         instanceOf: TemplatePanel
       }
     }

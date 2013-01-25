@@ -2,7 +2,7 @@
   basis.require('app.core');
   basis.require('app.ext.view');
 
-  var getter = Function.getter;
+  var getter = basis.getter;
   var classList = basis.cssom.classList;
 
   var mapDO = app.core.mapDO;

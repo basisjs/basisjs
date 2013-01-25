@@ -25,7 +25,7 @@
 
   var cleaner = basis.cleaner;
 
-  var getter = Function.getter;
+  var getter = basis.getter;
   var cssom = basis.cssom;
   var classList = basis.cssom.classList;
 
@@ -88,7 +88,7 @@
       if (handlers)
         this.addHandler(handlers);
 
-      this.proxy = typeof proxy == 'function' ? proxy : Function.$self;
+      this.proxy = typeof proxy == 'function' ? proxy : basis.fn.$self;
       this.initValue = this.value = this.proxy(initValue);
     },
 
@@ -310,7 +310,7 @@
 
       // process format argument
       if (typeof format != 'function')
-        format = getter(Function.$self, format);
+        format = getter(basis.fn.$self, format);
 
       // create link
       var link = { 

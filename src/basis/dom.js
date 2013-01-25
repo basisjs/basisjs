@@ -190,7 +190,7 @@
     * Default filter function.
     * @type {function()}
     */
-    filter: Function.$true,
+    filter: basis.fn.$true,
 
    /**
     * @param {Node|object} root
@@ -425,7 +425,7 @@
     var walker, cursor;
     var result = [];
 
-    filter = typeof filter == 'string' ? getter(filter) : filter || Function.$true;
+    filter = typeof filter == 'string' ? getter(filter) : filter || basis.fn.$true;
 
     if (axis & (AXIS_SELF | AXIS_ANCESTOR_OR_SELF | AXIS_DESCENDANT_OR_SELF))
       if (filter(root))
@@ -805,7 +805,7 @@
   *   basis.dom.wrap([1,2,3,4,5], { 'SPAN.match': function(val, idx){ return idx % 2 } });
   *   // result: [1, <span class="match">2</span>, 3, <span class="match">4</span>, 5]
   *
-  *   basis.dom.wrap([1,2,3], { A: Function.$true, B: function(val, idx){ return val == 3 } });
+  *   basis.dom.wrap([1,2,3], { A: basis.fn.$true, B: function(val, idx){ return val == 3 } });
   *   // result: [<a>1</a>, <a>2</a>, <b><a>3</a></b>]
   * @param {Array} array
   * @param {object} map
@@ -813,7 +813,7 @@
   */
   function wrap(array, map, getter){
     var result = [];
-    getter = Function.getter(getter || Function.$self);
+    getter = basis.getter(getter || basis.fn.$self);
     for (var k in map)
       for (var i = 0; i < array.length; i++)
       {

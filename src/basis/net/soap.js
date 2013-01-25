@@ -58,8 +58,8 @@
   var SOAPRequest = Class(AjaxRequest, {
     className: namespace + 'SOAPRequest',
 
-    requestDataGetter: Function.$self,
-    responseDataGetter: Function.$self,
+    requestDataGetter: basis.fn.$self,
+    responseDataGetter: basis.fn.$self,
 
     errorCodeGetter: function(node){
       return DOM.tag(node, 'code')[0];
@@ -78,7 +78,7 @@
       this.requestEnvelope = new Envelope();
     },
 
-    processResponse: Function.$undef,
+    processResponse: basis.fn.$undef,
 
     processErrorResponse: function(){
       this.parseResponseXML();
@@ -355,7 +355,7 @@
       var section = XML.getElementsByTagNameNS(this.element, qname, qname.namespace)[0];
       if (section)
         DOM.remove(section);
-      this.appendChild(Function.wrapper(qname)(data), qname.namespace);
+      this.appendChild(basis.fn.wrapper(qname)(data), qname.namespace);
     }
   });
 
@@ -380,7 +380,7 @@
       this.appendChild(method, data, encodingStyle);
     },
     appendChild: function(method, data, encodingStyle){
-      var child = Object2XML(this.element.ownerDocument, method, method.namespace, Function.$defined(data) ? data : {});
+      var child = Object2XML(this.element.ownerDocument, method, method.namespace, basis.fn.$defined(data) ? data : {});
 
       this.element.appendChild(child);
 

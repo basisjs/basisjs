@@ -50,9 +50,9 @@
 
     isSecure: false,
 
-    prepare: Function.$true,
-    signature: Function.$undef,
-    isSessionExpiredError: Function.$false,
+    prepare: basis.fn.$true,
+    signature: basis.fn.$undef,
+    isSessionExpiredError: basis.fn.$false,
 
     init: function(){
       ;;;if (this.requestClass) basis.dev.warn(namespace + '.Service#requestClass is not supported; set requestClass via transportClass')

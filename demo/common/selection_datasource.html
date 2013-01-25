@@ -105,7 +105,7 @@
       container: DOM.get('selectedItemsByGroupTree'),
       dataSource: new basis.data.dataset.Split({
         source: tree1.selection, 
-        rule: Function.getter('data.id % 2', {
+        rule: basis.getter('data.id % 2', {
           'NaN': 'Child items',
           '0': 'Even items',
           '1': 'Odd items'

@@ -83,13 +83,13 @@
     new nsTree.Tree({
       id: 'DemoTree',
       container: dom.get('demo-container'),
-      sorting: Function.getter('title'),
+      sorting: basis.getter('title'),
       sortingDesc: true,
       grouping: {
-        groupGetter: Function.getter('data.id % 2'),
+        groupGetter: basis.getter('data.id % 2'),
         childClass: {
           binding: {
-            title: Function.getter('data.id', { 0: 'even', 1: 'odd' })
+            title: basis.getter('data.id', { 0: 'even', 1: 'odd' })
           }
         }
       },

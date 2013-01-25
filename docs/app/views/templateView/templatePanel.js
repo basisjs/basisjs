@@ -105,7 +105,7 @@
       satelliteConfig: {
         source: {
           hook: { toggle: true },
-          existsIf: Function.getter('expanded'),
+          existsIf: basis.getter('expanded'),
           instanceOf: basis.format.highlight.SourceCodeNode.subclass({
             autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
             lang: 'js',
@@ -184,7 +184,7 @@
       satelliteConfig: {
         source: {
           hook: { toggle: true },
-          existsIf: Function.getter('expanded'),
+          existsIf: basis.getter('expanded'),
           instanceOf: basis.format.highlight.SourceCodeNode.subclass({
             autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
             lang: 'js',
@@ -265,14 +265,14 @@
     satelliteConfig: {
       bindings: {
         hook: { templateViewChanged: true },
-        existsIf: Function.getter('templateView'),
-        delegate: Function.$self,
+        existsIf: basis.getter('templateView'),
+        delegate: basis.fn.$self,
         instanceOf: BindingsPanel
       },
       actions: {
         hook: { templateViewChanged: true },
-        existsIf: Function.getter('templateView'),
-        delegate: Function.$self,
+        existsIf: basis.getter('templateView'),
+        delegate: basis.fn.$self,
         instanceOf: ActionsPanel
       }
     }

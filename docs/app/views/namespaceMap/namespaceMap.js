@@ -54,7 +54,7 @@
         this.setDataSource(namespaceClsSplitBySuper.getSubset(this.data.clsId));
     },
 
-    sorting: Function.getter('data.className.split(".").pop()')
+    sorting: basis.getter('data.className.split(".").pop()')
   });
 
   ViewNSNode.prototype.childClass = ViewNSNode;

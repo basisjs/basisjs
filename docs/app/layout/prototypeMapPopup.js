@@ -37,7 +37,7 @@
         }
       }
     }),
-    sorting: Function.getter('data.title'),
+    sorting: basis.getter('data.title'),
     grouping: Object.slice(viewPrototype().grouping, 'groupGetter sorting childClass'.qw())
   });
 
@@ -61,7 +61,7 @@
     },
     matchFilter: {
       node: prototypeMapPopupPanel,
-      textNodeGetter: Function.getter('tmpl.this_data_title')
+      textNodeGetter: basis.getter('tmpl.this_data_title')
     }
   });
 

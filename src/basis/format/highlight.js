@@ -1,7 +1,7 @@
 
   basis.require('basis.ui');
 
-  var styleRequire = Function.runOnce(function(){
+  var styleRequire = basis.fn.runOnce(function(){
     resource('templates/SourceCodeNode.css')().startUse();
   });
 

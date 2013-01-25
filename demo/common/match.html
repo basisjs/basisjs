@@ -109,8 +109,8 @@
     // Create a table
     var table = new nsTable.Table({
       structure: [
-        { header: 'Title', body: { content: Function.getter('data.title') }, sorting: Function.getter('data.title') },
-        { header: 'Content', body: { templateRef: 'text', content: Function.getter('data.content') } }
+        { header: 'Title', body: { content: basis.getter('data.title') }, sorting: basis.getter('data.title') },
+        { header: 'Content', body: { templateRef: 'text', content: basis.getter('data.content') } }
       ],
       childNodes: data
     });
@@ -140,7 +140,7 @@
         }).element,
         table.element
       ]
-    ], { '.Demo-Section': Function.$true }));
+    ], { '.Demo-Section': basis.fn.$true }));
 
   </script>
 </body>

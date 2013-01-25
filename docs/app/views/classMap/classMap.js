@@ -45,7 +45,7 @@
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
     }, 
 
-    sorting: Function.getter('data.className')
+    sorting: basis.getter('data.className')
   });
 
   ClsNode.prototype.childClass = ClsNode;
@@ -81,7 +81,7 @@
   });
 
   function searchClassNode(parent, className){
-    var result = parent.childNodes.search(className, Function.getter('data.className'));
+    var result = parent.childNodes.search(className, basis.getter('data.className'));
     if (!result)
     {
       for (var i = 0, node; node = parent.childNodes[i]; i++)

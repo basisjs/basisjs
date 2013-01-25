@@ -139,13 +139,13 @@
         }
       },
 
-      run: Function.$null,
+      run: basis.fn.$null,
 
       isSuccess: function(){
         return this.testCount == this.successCount;
       },
       over: function(error){
-        this.over     = Function.$null;
+        this.over     = basis.fn.$null;
         this.empty    = !error && this.testCount == 0;
         this.result   = !error && this.isSuccess();
         this.error    = error;
@@ -157,8 +157,8 @@
 
         this.event_over();
       },
-      success: Function.$null,
-      fault: Function.$null,
+      success: basis.fn.$null,
+      fault: basis.fn.$null,
       progress: function(diff){
         if (diff)
           this.event_progress(diff, this.completeTestCount/(this.totalTestCount || 1));
@@ -274,7 +274,6 @@
           Tester.result = this;
           this.test.call(Tester);
         } catch(e) {
-          console.log(e);
           this.testCount++;
 
           if (typeof e == 'string')

@@ -151,9 +151,9 @@
   var Modificator = Class(null, {
     className: namespace + '.Modificator',
     thread: null,
-    setter: Function.$null,
+    setter: basis.fn.$null,
     notRevert: false,
-    timeFunction: Function.$self,
+    timeFunction: basis.fn.$self,
 
     init: function(thread, setter, start, end, notInvert){
       if (thread instanceof Thread)

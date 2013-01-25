@@ -92,8 +92,8 @@
     var table = new nsTable.Table({
       childNodes: data,
       structure: [
-        { header: 'Title', body: Function.getter('data.title') },
-        { header: 'Content', body: Function.getter('data.content') }
+        { header: 'Title', body: basis.getter('data.title') },
+        { header: 'Content', body: basis.getter('data.content') }
       ]
     });
 
@@ -101,7 +101,7 @@
     DOM.insert(demoContainer, DOM.wrap([
       tree.element,
       table.element
-    ], { '.Demo-Section': Function.$true }));
+    ], { '.Demo-Section': basis.fn.$true }));
 
     var groupigList = new nsField.RadioGroup({
       container: DOM.get('demo-changeGroupingList'),
@@ -129,7 +129,7 @@
             sorting: 'data.title',
             childClass: {
               binding: {
-                title: Function.getter('data.title', 'Group for letter <{0}>')
+                title: basis.getter('data.title', 'Group for letter <{0}>')
               }
             }
           }

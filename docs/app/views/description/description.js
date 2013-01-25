@@ -16,7 +16,7 @@
 
     satelliteConfig: {
       content: {
-        existsIf: Function.getter('data.fullPath'),
+        existsIf: basis.getter('data.fullPath'),
         delegate: function(owner){
           return app.core.JsDocEntity.getSlot(owner.data.fullPath);
         },

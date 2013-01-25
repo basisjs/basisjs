@@ -5,5 +5,5 @@
   module.exports = new app.ext.docTree.DocSearchTree({
     id: 'SearchTree',
     selection: {},
-    sorting: Function.getter('data.title', String.toLowerCase)
+    sorting: basis.getter('data.title', String.toLowerCase)
   });

@@ -39,7 +39,7 @@
         this.scrollTo(this.firstChild.element, true);
       }
     },
-    scrollTo: Function.$true
+    scrollTo: basis.fn.$true
   });
 
 

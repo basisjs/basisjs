@@ -23,7 +23,7 @@
   var DOM = basis.dom;
   var cleaner = basis.cleaner;
 
-  var getter = Function.getter;
+  var getter = basis.getter;
   var classList = basis.cssom.classList;
   var addGlobalHandler = Event.addGlobalHandler;
   var removeGlobalHandler = Event.removeGlobalHandler;
@@ -138,8 +138,8 @@
     axisX: true,
     axisY: true,
 
-    axisXproxy: Function.$self,
-    axisYproxy: Function.$self,
+    axisXproxy: basis.fn.$self,
+    axisYproxy: basis.fn.$self,
 
     event_prepare: createEvent('prepare'), // occure before drag start
     event_start: createEvent('start'), // occure on first mouse move

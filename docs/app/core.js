@@ -45,7 +45,7 @@
       line: Number,
       text: String,
       context: String,
-      tags: Function.$self
+      tags: basis.fn.$self
     }
   });
 
@@ -693,7 +693,7 @@
     queue: [],
     loaded: {},
     curResource: null,
-    transport: Function.lazyInit(function(){
+    transport: basis.fn.lazyInit(function(){
       var transport = new nsAjax.Transport();
 
       transport.addHandler({
@@ -749,7 +749,7 @@
           text: '/** @namespace ' + ns.path + '*/' + ns.source_
         }
       : null;
-  }).filter(Function.$isNotNull);
+  }).filter(basis.fn.$isNotNull);
 
   var resolveResStart = new Date;
   function resolveRes(){

@@ -207,7 +207,7 @@
         fields: {
           TaskId: nsEntity.NumberId,
           IsDone: Boolean,
-          Date: Function.$self,
+          Date: basis.fn.$self,
           Text: String
         }
       });
@@ -274,7 +274,7 @@
       //
 
       var todoList = new TaskList({
-        sorting: Function.getter('data.Date', Number)
+        sorting: basis.getter('data.Date', Number)
       });
 
       var todoTabs = new basis.ui.tabs.TabControl({

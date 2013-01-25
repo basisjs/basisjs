@@ -61,7 +61,7 @@
 
     
     // import names
-    var getter = Function.getter;
+    var getter = basis.getter;
 
     var DOM = basis.dom;
     var Event = basis.dom.event;
@@ -260,8 +260,8 @@
           name: 'Gender',
           title: 'Gender',
           childClass: {
-            titleGetter: Function.getter('data.title'),
-            valueGetter: Function.getter('data.value')
+            titleGetter: basis.getter('data.title'),
+            valueGetter: basis.getter('data.value')
           },
           childNodes: [
             { data: { value: 'Male', title: 'Male' } },

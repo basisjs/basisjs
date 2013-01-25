@@ -14,7 +14,7 @@
   var View = basis.ui.Node.subclass({
     className: namespace + '.View',
     autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
-    isAcceptableObject: Function.$true,
+    isAcceptableObject: basis.fn.$true,
     binding: {
       title: 'title',
       viewOptions: 'satellite:'

@@ -71,7 +71,7 @@
         return item;
       });
 
-      var convertToNode = Function.getter(Function.$self, testSet);
+      var convertToNode = basis.getter(basis.fn.$self, testSet);
 
       function getTestSet(){
         return testSet.map(function(item){
@@ -170,7 +170,7 @@
             //  return 'child #' + i + ' has wrong document ref';
           }
 
-          if (node.sorting !== Function.nullGetter)
+          if (node.sorting !== basis.fn.nullGetter)
           {
             if (node.grouping)
             {
@@ -722,8 +722,8 @@
                     var node = new Node({
                       childFactory: nodeFactory,
                       grouping: {
-                        groupGetter: Function.getter('data.group'),
-                        sorting: Function.getter('data.id'),
+                        groupGetter: basis.getter('data.group'),
+                        sorting: basis.getter('data.id'),
                         sortingDesc: true
                       }
                     });
@@ -738,11 +738,11 @@
                     var testSet = getTestSet();
                     var node = new Node({
                       childFactory: nodeFactory,
-                      sorting: Function.getter('data.value'),
+                      sorting: basis.getter('data.value'),
                       sortingDesc: true,
                       grouping: {
-                        groupGetter: Function.getter('data.group'),
-                        sorting: Function.getter('data.id'),
+                        groupGetter: basis.getter('data.group'),
+                        sorting: basis.getter('data.id'),
                         sortingDesc: true
                       },
                       childNodes: testSet
@@ -759,11 +759,11 @@
                     var testSet = getTestSet();
                     var node = new Node({
                       childFactory: nodeFactory,
-                      sorting: Function.getter('data.value'),
+                      sorting: basis.getter('data.value'),
                       sortingDesc: true,
                       grouping: {
-                        groupGetter: Function.getter('data.group'),
-                        sorting: Function.getter('data.title', String),
+                        groupGetter: basis.getter('data.group'),
+                        sorting: basis.getter('data.title', String),
                         sortingDesc: true
                       },
                       childNodes: testSet
@@ -810,14 +810,14 @@
                     // ======================================
                     var node = new Node({
                       childFactory: nodeFactory,
-                      sorting: Function.getter('data.value'),
+                      sorting: basis.getter('data.value'),
                       sortingDesc: true,
                       grouping: {
-                        groupGetter: Function.getter('data.group', groupNodes),
-                        sorting: Function.getter('data.title'),
+                        groupGetter: basis.getter('data.group', groupNodes),
+                        sorting: basis.getter('data.title'),
                         sortingDesc: true
                       },
-                      childNodes: testSet//.filter(Function.getter('data.group >= 3'))
+                      childNodes: testSet//.filter(basis.getter('data.group >= 3'))
                     });
 
                     this.is(false, checkNode(node));
@@ -861,16 +861,16 @@
 
                     var node = new Node({
                       childFactory: nodeFactory,
-                      sorting: Function.getter('data.value'),
+                      sorting: basis.getter('data.value'),
                       sortingDesc: true,
-                      childNodes: testSet//.filter(Function.getter('data.group >= 3'))
+                      childNodes: testSet//.filter(basis.getter('data.group >= 3'))
                     });
 
                     this.is(false, checkNode(node));
 
                     node.setGrouping({
-                      groupGetter: Function.getter('data.group', groupNodes),
-                      sorting: Function.getter('data.title'),
+                      groupGetter: basis.getter('data.group', groupNodes),
+                      sorting: basis.getter('data.title'),
                       sortingDesc: true
                     });
 
@@ -923,21 +923,21 @@
 
                     var node = new Node({
                       childFactory: nodeFactory,
-                      sorting: Function.getter('data.value'),
+                      sorting: basis.getter('data.value'),
                       sortingDesc: true,
                       groupingClass: {
                         childClass: {
                           active: true
                         }
                       },
-                      childNodes: testSet//.filter(Function.getter('data.group >= 3'))
+                      childNodes: testSet//.filter(basis.getter('data.group >= 3'))
                     });
 
                     this.is(false, checkNode(node));
 
                     node.setGrouping({
-                      groupGetter: Function.getter('data.group', groupNodes),
-                      sorting: Function.getter('data.title'),
+                      groupGetter: basis.getter('data.group', groupNodes),
+                      sorting: basis.getter('data.title'),
                       sortingDesc: true
                     });
 
@@ -961,18 +961,18 @@
 
                     this.is(false, checkNode(node));
 
-                    node.setSorting(Function.getter('data.value'));
+                    node.setSorting(basis.getter('data.value'));
                     this.is(false, checkNode(node));
 
                     var order = Array.from(node.childNodes);
-                    node.setSorting(Function.getter('data.value * -1'), true);
+                    node.setSorting(basis.getter('data.value * -1'), true);
                     this.is(false, checkNode(node));
                     this.is(order, node.childNodes);
 
                     node.setSorting();
                     this.is(false, checkNode(node));
 
-                    node.setSorting(Function.getter('data.value'), true);
+                    node.setSorting(basis.getter('data.value'), true);
                     this.is(false, checkNode(node));
 
                     var order = Array.from(node.childNodes);
@@ -987,14 +987,14 @@
                   test: function(){
                     var node = new Node({
                       childFactory: nodeFactory,
-                      sorting: Function.getter('data.value'),
+                      sorting: basis.getter('data.value'),
                       childNodes: getTestSet()
                     });
                     this.is(false, checkNode(node));
 
                     var node = new Node({
                       childFactory: nodeFactory,
-                      sorting: Function.getter('data.value'),
+                      sorting: basis.getter('data.value'),
                       sortingDesc: true,
                       childNodes: getTestSet()
                     });
@@ -1002,7 +1002,7 @@
 
                     var node = new Node({
                       childFactory: nodeFactory,
-                      sorting: Function.getter('data.value'),
+                      sorting: basis.getter('data.value'),
                       sortingDesc: true
                     });
                     this.is(false, checkNode(node));
@@ -1026,12 +1026,12 @@
                         });
                         this.is(false, checkNode(node));
 
-                        node.setGrouping(Function.getter('data.group'));
+                        node.setGrouping(basis.getter('data.group'));
                         this.is(false, checkNode(node));
                         this.is(4, getGroups(node).length);
 
                         // change grouping
-                        node.setGrouping(Function.getter('data.value'));
+                        node.setGrouping(basis.getter('data.value'));
                         this.is(false, checkNode(node));
                         this.is(10, getGroups(node).length);
 
@@ -1043,8 +1043,8 @@
                         this.is(order, node.childNodes);
 
                         node.setGrouping({
-                          groupGetter: Function.getter('data.value'),
-                          sorting: Function.getter('data.title')
+                          groupGetter: basis.getter('data.value'),
+                          sorting: basis.getter('data.title')
                         });
                         this.is(false, checkNode(node));
 
@@ -1065,7 +1065,7 @@
                         var node = new Node({
                           childFactory: nodeFactory,
                           grouping: {
-                            groupGetter: Function.getter('data.value')
+                            groupGetter: basis.getter('data.value')
                           }
                         });
                         this.is(false, checkNode(node));
@@ -1086,7 +1086,7 @@
                         var node = new Node({
                           childFactory: nodeFactory,
                           grouping: {
-                            groupGetter: Function.getter('data.value')
+                            groupGetter: basis.getter('data.value')
                           }
                         });
 
@@ -1125,10 +1125,10 @@
                         var node = new Node({
                           childFactory: nodeFactory,
                           grouping: {
-                            groupGetter: Function.getter('data.value'),
+                            groupGetter: basis.getter('data.value'),
                             grouping: {
-                              groupGetter: Function.getter('data.id % 4'),
-                              grouping: Function.getter('data.id % 2')
+                              groupGetter: basis.getter('data.id % 4'),
+                              grouping: basis.getter('data.id % 2')
                             }
                           },
                           childNodes: getTestSet()
@@ -1160,10 +1160,10 @@
                         var node = new Node({
                           childFactory: nodeFactory,
                           grouping: {
-                            groupGetter: Function.getter('data.value'),
+                            groupGetter: basis.getter('data.value'),
                             grouping: {
-                              groupGetter: Function.getter('data.id % 4'),
-                              grouping: Function.getter('data.id % 2')
+                              groupGetter: basis.getter('data.id % 4'),
+                              grouping: basis.getter('data.id % 2')
                             }
                           }
                         });
@@ -1211,10 +1211,10 @@
                           childNodes: getTestSet()
                         });
                         node.setGrouping({
-                          groupGetter: Function.getter('data.value'),
+                          groupGetter: basis.getter('data.value'),
                           grouping: {
-                            groupGetter: Function.getter('data.id % 4'),
-                            grouping: Function.getter('data.id % 2')
+                            groupGetter: basis.getter('data.id % 4'),
+                            grouping: basis.getter('data.id % 2')
                           }
                         });
                         this.is(false, checkNode(node));
@@ -1223,10 +1223,10 @@
                         this.is(true, node.grouping !== null);
 
                         node.setGrouping({
-                          groupGetter: Function.getter('data.value'),
+                          groupGetter: basis.getter('data.value'),
                           grouping: {
-                            groupGetter: Function.getter('data.id % 4'),
-                            grouping: Function.getter('data.id % 2')
+                            groupGetter: basis.getter('data.id % 4'),
+                            grouping: basis.getter('data.id % 2')
                           }
                         });
                         this.is(false, checkNode(node));
@@ -1245,15 +1245,15 @@
                       childNodes: getTestSet()
                     });
 
-                    node.setGrouping(Function.getter('data.group'));
+                    node.setGrouping(basis.getter('data.group'));
                     this.is(false, checkNode(node));
 
-                    node.setSorting(Function.getter('data.value'));
+                    node.setSorting(basis.getter('data.value'));
                     this.is(false, checkNode(node));
 
                     node.setGrouping({
-                      groupGetter: Function.getter('data.group'),
-                      sorting: Function.getter('data.id'),
+                      groupGetter: basis.getter('data.group'),
+                      sorting: basis.getter('data.id'),
                       sortingDesc: true
                     });
                     this.is(false, checkNode(node));
@@ -1261,10 +1261,10 @@
                     node.setGrouping();
                     this.is(false, checkNode(node));
 
-                    node.setSorting(Function.getter('data.group'), true);
+                    node.setSorting(basis.getter('data.group'), true);
                     this.is(false, checkNode(node));
 
-                    node.setGrouping(Function.getter('data.group'));
+                    node.setGrouping(basis.getter('data.group'));
                     this.is(false, checkNode(node));
 
                     var order = Array.from(node.childNodes);
@@ -1281,7 +1281,7 @@
                     var node = new Node({
                       childFactory: nodeFactory,
                       grouping: {
-                        groupGetter: Function.getter('data.group')
+                        groupGetter: basis.getter('data.group')
                       },
                       childNodes: getTestSet()
                     });
@@ -1331,7 +1331,7 @@
                         });
 
                         node.setGrouping({
-                          groupGetter: Function.getter('data.groupObj'),
+                          groupGetter: basis.getter('data.groupObj'),
                           dataSource: groupDatasetByGroup
                         });
                         this.is(false, checkNode(node));
@@ -1340,7 +1340,7 @@
                         this.is(false, checkNode(node));
 
                         node.setGrouping({
-                          groupGetter: Function.getter('data.groupObj'),
+                          groupGetter: basis.getter('data.groupObj'),
                           dataSource: groupDatasetByGroup
                         });
                         this.is(false, checkNode(node));
@@ -1356,7 +1356,7 @@
                           childFactory: nodeFactory,
                           childNodes: getTestSet(),
                           grouping: {
-                            groupGetter: Function.getter('data.groupObj')
+                            groupGetter: basis.getter('data.groupObj')
                           }
                         });
                         this.is(false, checkNode(node));
@@ -1377,7 +1377,7 @@
                           childFactory: nodeFactory,
                           childNodes: getTestSet(),
                           grouping: {
-                            groupGetter: Function.getter('data.groupObj'),
+                            groupGetter: basis.getter('data.groupObj'),
                             dataSource: groupDataSource
                           }
                         });
@@ -1398,7 +1398,7 @@
                           childFactory: nodeFactory,
                           childNodes: getTestSet(),
                           grouping: {
-                            groupGetter: Function.getter('data.groupObj'),
+                            groupGetter: basis.getter('data.groupObj'),
                             dataSource: groupDataSource
                           }
                         });
@@ -1437,7 +1437,7 @@
                         });
 
                         node.setGrouping({
-                          groupGetter: Function.getter('data.groupObj'),
+                          groupGetter: basis.getter('data.groupObj'),
                           dataSource: groupDatasetByGroup10
                         });
                         this.is(false, checkNode(node));
@@ -1446,7 +1446,7 @@
                         this.is(false, checkNode(node));
 
                         node.setGrouping({
-                          groupGetter: Function.getter('data.groupObj'),
+                          groupGetter: basis.getter('data.groupObj'),
                           dataSource: groupDatasetByGroup10
                         });
                         this.is(false, checkNode(node));
@@ -1463,7 +1463,7 @@
                           childFactory: nodeFactory,
                           childNodes: getTestSet(),
                           grouping: {
-                            groupGetter: Function.getter('data.groupObj'),
+                            groupGetter: basis.getter('data.groupObj'),
                             dataSource: groupDatasetByGroup
                           }
                         });
@@ -1480,7 +1480,7 @@
                         var node = new Node({
                           childFactory: nodeFactory,
                           grouping: {
-                            groupGetter: Function.getter('data.groupObj'),
+                            groupGetter: basis.getter('data.groupObj'),
                             dataSource: groupDatasetByGroup
                           }
                         });

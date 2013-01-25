@@ -6,7 +6,7 @@
   var namespace = module.path;
 
   var DOM = basis.dom;
-  var getter = Function.getter;
+  var getter = basis.getter;
   var classList = basis.cssom.classList;
 
   var mapDO = app.core.mapDO;

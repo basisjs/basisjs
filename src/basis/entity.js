@@ -18,8 +18,8 @@
   var extend = Object.extend;
   var complete = Object.complete;
   var arrayFrom = Array.from;
-  var $self = Function.$self;
-  var getter = Function.getter;
+  var $self = basis.fn.$self;
+  var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
   var EventObject = basis.event.EventObject;
@@ -203,7 +203,7 @@
   var EntitySet = Class(Dataset, {
     className: namespace + '.EntitySet',
 
-    wrapper: Function.$self,
+    wrapper: $self,
 
     init: ENTITYSET_INIT_METHOD(Dataset, 'EntitySet'),
     sync: ENTITYSET_SYNC_METHOD(Dataset),
@@ -230,10 +230,10 @@
   var ReadOnlyEntitySet = Class(EntitySet, {
     className: namespace + '.ReadOnlyEntitySet',
 
-    set: Function.$false,
-    add: Function.$false,
-    remove: Function.$false,
-    clear: Function.$false
+    set: basis.fn.$false,
+    add: basis.fn.$false,
+    remove: basis.fn.$false,
+    clear: basis.fn.$false
   });
 
   //
@@ -538,7 +538,7 @@
             name: name,
             wrapper: wrapper,
             source: this.all,
-            rule: config.collections[name] || Function.$true
+            rule: config.collections[name] || basis.fn.$true
           });
         }
       }
@@ -552,7 +552,7 @@
             name: name,
             wrapper: wrapper,
             source: this.all,
-            rule: config.groupings[name] || Function.$true
+            rule: config.groupings[name] || basis.fn.$true
           });
         }
       }

@@ -16,8 +16,8 @@
 
     satelliteConfig: {
       refList: {
-        existsIf: Function.getter('data.refs'),
-        delegate: Function.$self,
+        existsIf: basis.getter('data.refs'),
+        delegate: basis.fn.$self,
         instanceOf: uiNode.subclass({
           template: resource('template/tree/refList.tmpl'),
           binding: {
@@ -82,7 +82,7 @@
 
     satelliteConfig: {
       attributes: {
-        existsIf: Function.getter('data.attrs'),
+        existsIf: basis.getter('data.attrs'),
         instanceOf: basis.ui.Node.subclass({
           template: '<span/>',
           childClass: TemplateTreeNode.Attribute

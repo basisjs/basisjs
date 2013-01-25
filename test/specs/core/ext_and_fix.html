@@ -58,8 +58,8 @@
 
                     this.is([], Array.create());
 
-                    this.is([0,1,2], Array.create(3, Function.$self));
-                    this.is([true,true,true], Array.create(3, Function.$true));
+                    this.is([0,1,2], Array.create(3, basis.fn.$self));
+                    this.is([true,true,true], Array.create(3, basis.fn.$true));
                   }
                 }/*,
                 {
@@ -280,10 +280,10 @@
                     this.is(A, T, true);
 
                     T[100] = 1;
-                    this.is([1,2,3,4,5,1], T.filter(Function.$true));
-                    this.is([1,2,3,4,5,1], T.filter(Function.$self));
+                    this.is([1,2,3,4,5,1], T.filter(basis.fn.$true));
+                    this.is([1,2,3,4,5,1], T.filter(basis.fn.$self));
 
-                    this.is([], T.filter(Function.$false));
+                    this.is([], T.filter(basis.fn.$false));
 
                     var counter = 0;
                     this.is([], T.filter(function(item){ counter++; }));
@@ -378,11 +378,11 @@
                     var T = [{ value: 0 },{ value: 1 },{ value: 2 },{ value: 3 },{ value: 4 },{ value: 2, b: 1 }];
                     this.is(undefined, T.search(2));
                     this.is(T[1], T.search(T[1]));
-                    this.is(T[1], T.search(1.0, Function.getter('value')));
-                    this.is(undefined, T.search(1.5, Function.getter('value')));
-                    this.is(undefined, T.search('2', Function.getter('value')));
-                    this.is(T[2], T.search(2, Function.getter('value')));
-                    this.is(T[T.length - 1], T.search(2, Function.getter('value'), 3));
+                    this.is(T[1], T.search(1.0, basis.getter('value')));
+                    this.is(undefined, T.search(1.5, basis.getter('value')));
+                    this.is(undefined, T.search('2', basis.getter('value')));
+                    this.is(T[2], T.search(2, basis.getter('value')));
+                    this.is(T[T.length - 1], T.search(2, basis.getter('value'), 3));
                     this.is(T[T.length - 1], T.search(2, 'value', 3));
 
                     var T = [];
@@ -390,12 +390,12 @@
                     T[7] = { value: 5 };
                     T[9] = { value: 3 };
                     this.is(undefined, T.search(2));
-                    this.is(undefined, T.search(2, Function.getter('value')));
-                    this.is(T[3], T.search(3.0, Function.getter('value')));
-                    this.is(undefined, T.search(1.5, Function.getter('value')));
-                    this.is(undefined, T.search('3', Function.getter('value')));
-                    this.is(T[3], T.search(3, Function.getter('value')));
-                    this.is(T[9], T.search(3, Function.getter('value'), 4));
+                    this.is(undefined, T.search(2, basis.getter('value')));
+                    this.is(T[3], T.search(3.0, basis.getter('value')));
+                    this.is(undefined, T.search(1.5, basis.getter('value')));
+                    this.is(undefined, T.search('3', basis.getter('value')));
+                    this.is(T[3], T.search(3, basis.getter('value')));
+                    this.is(T[9], T.search(3, basis.getter('value'), 4));
                   }
                 },
                 {
@@ -404,11 +404,11 @@
                     var T = [{ value: 0 },{ value: 1 },{ value: 2 },{ value: 3 },{ value: 4 },{ value: 2, b: 1 }];
                     this.is(undefined, T.lastSearch(2));
                     this.is(T[1], T.lastSearch(T[1]));
-                    this.is(T[1], T.lastSearch(1.0, Function.getter('value')));
-                    this.is(undefined, T.lastSearch(1.5, Function.getter('value')));
-                    this.is(undefined, T.lastSearch('2', Function.getter('value')));
-                    this.is(T[T.length - 1], T.lastSearch(2, Function.getter('value')));
-                    this.is(T[2], T.lastSearch(2, Function.getter('value'), 3));
+                    this.is(T[1], T.lastSearch(1.0, basis.getter('value')));
+                    this.is(undefined, T.lastSearch(1.5, basis.getter('value')));
+                    this.is(undefined, T.lastSearch('2', basis.getter('value')));
+                    this.is(T[T.length - 1], T.lastSearch(2, basis.getter('value')));
+                    this.is(T[2], T.lastSearch(2, basis.getter('value'), 3));
                     this.is(T[2], T.lastSearch(2, 'value', 3));
                     this.is(T[2], T.lastSearch(2, 'value', 4));
                     this.is(T[2], T.lastSearch(2, 'value', 5));
@@ -419,12 +419,12 @@
                     T[7] = { value: 5 };
                     T[9] = { value: 3 };
                     this.is(undefined, T.lastSearch(2));
-                    this.is(undefined, T.lastSearch(2, Function.getter('value')));
-                    this.is(T[9], T.lastSearch(3.0, Function.getter('value')));
-                    this.is(undefined, T.lastSearch(1.5, Function.getter('value')));
-                    this.is(undefined, T.lastSearch('3', Function.getter('value')));
-                    this.is(T[9], T.lastSearch(3, Function.getter('value')));
-                    this.is(T[3], T.lastSearch(3, Function.getter('value'), 4));
+                    this.is(undefined, T.lastSearch(2, basis.getter('value')));
+                    this.is(T[9], T.lastSearch(3.0, basis.getter('value')));
+                    this.is(undefined, T.lastSearch(1.5, basis.getter('value')));
+                    this.is(undefined, T.lastSearch('3', basis.getter('value')));
+                    this.is(T[9], T.lastSearch(3, basis.getter('value')));
+                    this.is(T[3], T.lastSearch(3, basis.getter('value'), 4));
                   }
                 }
               ]
@@ -470,7 +470,7 @@
                     this.is(-1, T.binarySearchPos(1.5, 'a', false, true));
                     this.is(2, T.binarySearchPos(2,   'a'));
                     this.is(4, T.binarySearchPos(4,   'a'));
-                    this.is(5, T.binarySearchPos(5,   Function.getter('a')));
+                    this.is(5, T.binarySearchPos(5,   basis.getter('a')));
                   }
                 },
                 {
@@ -486,14 +486,14 @@
                     this.is(-1, T.binarySearch(5));
 
                     var T = [{ a: 0 }, { a: 1}, { a: 2 }, { a: 3 }, { a: 4 }];
-                    this.is(-1, T.binarySearch(-1,  Function.getter('a')));
-                    this.is(0,  T.binarySearch(0,   Function.getter('a')));
-                    this.is(-1, T.binarySearch(0,   Function.getter('b')));
-                    this.is(1,  T.binarySearch(1,   Function.getter('a')));
-                    this.is(-1, T.binarySearch(1.5, Function.getter('a')));
-                    this.is(2,  T.binarySearch(2,   Function.getter('a')));
-                    this.is(4,  T.binarySearch(4,   Function.getter('a')));
-                    this.is(-1, T.binarySearch(5,   Function.getter('a')));
+                    this.is(-1, T.binarySearch(-1,  basis.getter('a')));
+                    this.is(0,  T.binarySearch(0,   basis.getter('a')));
+                    this.is(-1, T.binarySearch(0,   basis.getter('b')));
+                    this.is(1,  T.binarySearch(1,   basis.getter('a')));
+                    this.is(-1, T.binarySearch(1.5, basis.getter('a')));
+                    this.is(2,  T.binarySearch(2,   basis.getter('a')));
+                    this.is(4,  T.binarySearch(4,   basis.getter('a')));
+                    this.is(-1, T.binarySearch(5,   basis.getter('a')));
                   }
                 }
               ]

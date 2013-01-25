@@ -67,7 +67,7 @@
 
                 var w = new DOM.TreeWalker(pg, IS_TEXT_NODE);
                 this.is(a2, resolveNodes(w.nodes()));
-                this.is(a1, resolveNodes(w.nodes(Function.$true)));
+                this.is(a1, resolveNodes(w.nodes(basis.fn.$true)));
                 w.next();
                 w.next();
                 this.is(a2, resolveNodes(w.nodes()));

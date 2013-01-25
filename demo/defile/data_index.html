@@ -91,7 +91,7 @@
     var nsDataIndex = basis.data.index;
     var cssom = basis.cssom;
 
-    var getter = Function.getter;
+    var getter = basis.getter;
     var ButtonPanel = basis.ui.button.ButtonPanel;
     var Table = basis.ui.table.Table;
     var Slider = basis.ui.slider.Slider;
@@ -209,16 +209,16 @@
           body: '{title}'
         },
         {
-          sorting: Function.getter('data.value', Number),
+          sorting: basis.getter('data.value', Number),
           cssClassName: 'right',
           header: 'Value',
           body: '<div class="barWrapper"><div{percentOfValueMax} class="bar"/><span class="label">{value}</span></div>',
           footer: function(){
-            return dataset.getIndex(basis.data.index.count(Function.$true)).addLink(basis.dom.createText());
+            return dataset.getIndex(basis.data.index.count(basis.fn.$true)).addLink(basis.dom.createText());
           }
         },
         {
-          sorting: Function.getter('data.total', Number),
+          sorting: basis.getter('data.total', Number),
           cssClassName: 'right',
           header: 'Total',
           body: '<div class="barWrapper"><div{percentOfTotalMax} class="bar"/><span class="label">{total}</span></div>',

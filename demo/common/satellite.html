@@ -181,7 +181,7 @@
 
     var groupPopup = new basis.ui.menu.Menu({
       dataSource: nonSelectedGroup,
-      sorting: Function.getter('data.title'),
+      sorting: basis.getter('data.title'),
       childClass: {
         binding: {
           caption: 'data:title'
@@ -214,7 +214,7 @@
       container: DOM.get('demo-container'),
 
       dataSource: User.all,
-      sorting: Function.getter('data.title'),
+      sorting: basis.getter('data.title'),
       selection: true,
       childClass: {
         template:
@@ -243,8 +243,8 @@
 
         satelliteConfig: {
           group: {
-            existsIf: Function.getter('data.group'),
-            delegate: Function.getter('data.group'),
+            existsIf: basis.getter('data.group'),
+            delegate: basis.getter('data.group'),
             instanceOf: basis.ui.Node.subclass({
               template:
                 '{title}',
@@ -264,7 +264,7 @@
       id: 'GroupList',
       
       dataSource: UserGroup.all,
-      sorting: Function.getter('data.groupId'),
+      sorting: basis.getter('data.groupId'),
       childClass: {
         template:
           '<div class="group">' +

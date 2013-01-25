@@ -536,9 +536,9 @@
       this.scrollbarSize = this.getScrollbarSize();
       this.trackSize = this.scrollbarSize - this.scrollbarSize * this.getScrollbarPart();
     },
-    getScrollbarSize: Function.$null,
-    getScrollbarPart: Function.$null,
-    getScrollbarPosition: Function.$null
+    getScrollbarSize: basis.fn.$null,
+    getScrollbarPart: basis.fn.$null,
+    getScrollbarPosition: basis.fn.$null
   });
 
   /**
@@ -738,7 +738,7 @@
 
     scrollX: false,
     scrollY: false,
-    childTransform: Function.$null,
+    childTransform: basis.fn.$null,
   
     selection: true,
 
@@ -791,7 +791,7 @@
         startInertia: this.adjustPosition
       }, this);
 
-      if (this.childTransform != Function.$null)
+      if (this.childTransform != basis.fn.$null)
       {
         this.scroller.addHandler({
           updatePosition: this.applyPosition

@@ -75,21 +75,21 @@
       width: 500,
       height: 450,
 
-      keyGetter: Function.getter('data.Country'),
+      keyGetter: basis.getter('data.Country'),
       childNodes: basis.data(data),
       series: {
         childNodes: [
           {
             legend: '2010',
-            valueGetter: Function.getter('data[2010]')
+            valueGetter: basis.getter('data[2010]')
           },
           {
             legend: '2011',
-            valueGetter: Function.getter('data[2011]')
+            valueGetter: basis.getter('data[2011]')
           },
           {
             legend: '2012',
-            valueGetter: Function.getter('data[2012]')
+            valueGetter: basis.getter('data[2012]')
           }
         ]
       }

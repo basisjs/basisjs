@@ -248,7 +248,7 @@
       },
 
       groupings: {
-        FieldId: Function.getter('data.FieldId')
+        FieldId: basis.getter('data.FieldId')
       }
     });
 
@@ -271,8 +271,8 @@
 
     for (var i = 0; i < 25; i++)
     {
-      var fieldId = parseInt((i * 2347.56) % Field.all.itemCount);
-      var wordId = parseInt((i * 7263.23) % Word.all.itemCount);
+      var fieldId = parseInt((i * 2347.56) % Field.all.itemCount, 10);
+      var wordId = parseInt((i * 7263.23) % Word.all.itemCount, 10);
       Link({
         FieldId: fieldId,
         WordId: wordId
@@ -290,7 +290,7 @@
       dataSource: Field.all,
 
       // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
-      sorting: Function.getter('data.Title'),
+      sorting: basis.getter('data.Title'),
 
       // Определяем класс для дочерних узлов
       childClass: nsTree.Folder.subclass({
@@ -362,7 +362,7 @@
 
           satelliteConfig: {
             word: {
-              delegate: Function.getter('data.WordId', Word),
+              delegate: basis.getter('data.WordId', Word),
               instanceOf: nsUI.Node.subclass({
                 template:
                   '<span class="Field-WordLink-Title">{title}</span>',
@@ -406,7 +406,7 @@
           name: 'add',
           caption: 'Add field',
           click: function(){
-            var newId = parseInt(Math.random() * 1000000 + 10);
+            var newId = parseInt(Math.random() * 1000000 + 10, 10);
             Field({
               FieldId: newId,
               Title: 'Field #' + newId
@@ -471,7 +471,7 @@
         },
         satelliteConfig: {
           word: {
-            delegate: Function.getter('data.WordId', Word),
+            delegate: basis.getter('data.WordId', Word),
             instanceOf: nsUI.Node.subclass({
               template:
                 '<span>' +
@@ -540,7 +540,7 @@
         new basis.ui.field.MatchInput({
           matchFilter: {
             node: relatedTree,
-            textNodeGetter: Function.getter('satellite.word.tmpl.title')
+            textNodeGetter: basis.getter('satellite.word.tmpl.title')
           }
         }).element,
         relatedTree.element
@@ -551,7 +551,7 @@
         // NOTE: для отладки - список всех связей
         new nsTree.Tree({
           dataSource: Link.all,
-          sorting: Function.getter('data.FieldId'),
+          sorting: basis.getter('data.FieldId'),
 
           // Определяем класс для дочерних узлов (описан выше)
           childClass: {

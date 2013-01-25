@@ -17,7 +17,7 @@
       sourceCode: basis.format.highlight.SourceCodeNode.subclass({
         autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
         lang: 'js',
-        codeGetter: Function.getter('data.obj || ""', String)
+        codeGetter: basis.getter('data.obj || ""', String)
       })
     }
   });

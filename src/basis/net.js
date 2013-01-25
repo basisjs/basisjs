@@ -125,8 +125,8 @@
       this.influence = null;
     },
 
-    doRequest: Function.$undef,
-    getResponseData: Function.$undef,
+    doRequest: basis.fn.$undef,
+    getResponseData: basis.fn.$undef,
 
     destroy: function(){
       DataObject.prototype.destroy.call(this);
@@ -148,7 +148,7 @@
 
     requests: null,
     poolLimit: null,
-    poolHashGetter: Function.$true,
+    poolHashGetter: basis.fn.$true,
 
     event_start: createTransportEvent('start'),
     event_timeout: createTransportEvent('timeout'),
@@ -196,8 +196,8 @@
       return request;
     },
 
-    prepare: Function.$true,
-    prepareRequestData: Function.$self,
+    prepare: basis.fn.$true,
+    prepareRequestData: basis.fn.$self,
 
     request: function(config){
       if (!this.prepare())
@@ -311,7 +311,7 @@
   // TODO: better debug info out
   var logOutput = typeof console != 'undefined'
     ? function(){ console.log(arguments); }
-    : Function.$self;
+    : basis.fn.$self;
 
   function escapeValue(value){
     return String(value).replace(ESCAPE_CHARS, function(m){
@@ -420,7 +420,7 @@
       this.clearTimeout();
 
       // clean event handler
-      xhr.onreadystatechange = Function.$undef;
+      xhr.onreadystatechange = basis.fn.$undef;
 
       if (typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders()))
       {
@@ -508,7 +508,7 @@
       });
     },
 
-    prepare: Function.$true,
+    prepare: basis.fn.$true,
 
     prepareRequestData: function(requestData){
       var params = [];

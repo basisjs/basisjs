@@ -73,7 +73,7 @@
     
     // import names
 
-    var getter = Function.getter;
+    var getter = basis.getter;
     var DOM = basis.dom;
     var Table = basis.ui.table.Table;
     var ScrollTable = basis.ui.scrolltable.ScrollTable;
@@ -131,11 +131,11 @@
     new Table({
       container: createBlock('table'),
       structure: [
-        { header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title'), autosorting: true },
-        { header: 'Price', body: Function.getter('data.price', '${0:.2}'), autosorting: true, sorting: Function.getter('data.price') },
-        { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
-        { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
-        { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+        { header: 'Company', body: getter('data.title'), sorting: getter('data.title'), autosorting: true },
+        { header: 'Price', body: getter('data.price', '${0:.2}'), autosorting: true, sorting: getter('data.price') },
+        { header: 'Change', body: getter('data.change', '{0:.2}') },
+        { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
+        { header: 'Last Updated', body: getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
       ],
       childNodes: data
     });
@@ -148,14 +148,14 @@
         },
         cssClassName: 'FitToContainer',
         header: {
-          grouping: Function.getter('groupId || "\xA0"')
+          grouping: getter('groupId || "\xA0"')
         },
         structure: [
-          { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
-          { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: { content: 'footer' } },
-          { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
-          { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
-          { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+          { groupId: 2, header: 'Company', body: getter('data.title'), sorting: getter('data.title') },
+          { header: 'Price', body: getter('data.price', '${0:.2}'), sorting: getter('data.price'), footer: { content: 'footer' } },
+          { header: 'Change', body: getter('data.change', '{0:.2}') },
+          { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
+          { header: 'Last Updated', body: getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
         ],
         childNodes: data
       }); 
@@ -174,14 +174,14 @@
       new ScrollTable({
         container: container2,
         header: {
-          grouping: Function.getter('groupId || "\xA0"')
+          grouping: getter('groupId || "\xA0"')
         },
         structure: [
-          { groupId: 2, header: 'Company', body: Function.getter('data.title'), sorting: Function.getter('data.title') },
-          { header: 'Price', body: Function.getter('data.price', '${0:.2}'), sorting: Function.getter('data.price'), footer: 'xxx' },
-          { header: 'Change', body: Function.getter('data.change', '{0:.2}') },
-          { header: '% Change', body: Function.getter('data.percentChange', '{0:.2}%') },
-          { header: 'Last Updated', body: Function.getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
+          { groupId: 2, header: 'Company', body: getter('data.title'), sorting: getter('data.title') },
+          { header: 'Price', body: getter('data.price', '${0:.2}'), sorting: getter('data.price'), footer: 'xxx' },
+          { header: 'Change', body: getter('data.change', '{0:.2}') },
+          { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
+          { header: 'Last Updated', body: getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
         ],
         childNodes: data
       }); 

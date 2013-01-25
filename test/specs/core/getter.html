@@ -48,59 +48,59 @@
                 {
                   name: 'create from path',
                   test: function(){
-                    var g = Function.getter('a');
+                    var g = basis.getter('a');
                     this.is(11, g(data[0]));
 
-                    var g = Function.getter('d.a');
+                    var g = basis.getter('d.a');
                     this.is(1, g(data[data.length - 1]));
                   }
                 },
                 {
                   name: 'create from path with modificator',
                   test: function(){
-                    var g = Function.getter('a', 'value: {0:.2}');
+                    var g = basis.getter('a', 'value: {0:.2}');
                     this.is("value: 11.00", g(data[0]));
                   }
                 },
                 {
                   name: 'create from function',
                   test: function(){
-                    var g = Function.getter(function(object){ return object.a; });
+                    var g = basis.getter(function(object){ return object.a; });
                     this.is(11, g(data[0]));
 
-                    var g = Function.getter(function(object){ return object.a; }, 'value: {0:.2}');
+                    var g = basis.getter(function(object){ return object.a; }, 'value: {0:.2}');
                     this.is("value: 11.00", g(data[0]));
                   }
                 },
                 {
                   name: 'create from getter',
                   test: function(){
-                    var g = Function.getter('a');
-                    var g2 = Function.getter(g);
+                    var g = basis.getter('a');
+                    var g2 = basis.getter(g);
                     this.is(g, g2);
                     this.is(11, g(data[0]));
                     this.is(11, g2(data[0]));
 
-                    var g = Function.getter('a', '[{0}]');
-                    var g2 = Function.getter(g);
+                    var g = basis.getter('a', '[{0}]');
+                    var g2 = basis.getter(g);
                     this.is(true, g === g2);
                     this.is('[11]', g(data[0]));
                     this.is('[11]', g2(data[0]));
 
-                    var g = Function.getter('a', '[{0}]');
-                    var g2 = Function.getter(g, Function.$self);
+                    var g = basis.getter('a', '[{0}]');
+                    var g2 = basis.getter(g, basis.fn.$self);
                     this.is(false, g === g2);
                     this.is('[11]', g(data[0]));
                     this.is('[11]', g2(data[0]));
 
-                    var g = Function.getter('a');
-                    var g2 = Function.getter(g, '[{0}]');
+                    var g = basis.getter('a');
+                    var g2 = basis.getter(g, '[{0}]');
                     this.is(false, g === g2);
                     this.is(11, g(data[0]));
                     this.is('[11]', g2(data[0]));
 
-                    var g = Function.getter('a', '[{0}]');
-                    var g2 = Function.getter(g, '{{0}}');
+                    var g = basis.getter('a', '[{0}]');
+                    var g2 = basis.getter(g, '{{0}}');
                     this.is(false, g === g2);
                     this.is('[11]', g(data[0]));
                     this.is('{[11]}', g2(data[0]));
@@ -110,58 +110,58 @@
                 {
                   name: 'use on array',
                   test: function(){
-                    var g = Function.getter('a');
+                    var g = basis.getter('a');
                     this.is("11,12,13,,15,,,", data.map(g).join(','));
-                    this.is("11,12,13,15", data.map(g).filter(Function.$isNotNull).join(','));
+                    this.is("11,12,13,15", data.map(g).filter(basis.fn.$isNotNull).join(','));
                   }
                 },
                 {
                   name: 'comparation',
                   test: function(){
-                    this.is(true, Function.getter('a') === Function.getter('a'));
-                    this.is(true, Function.getter('a', '') !== Function.getter('a'));
-                    this.is(true, Function.getter('a', false) === Function.getter('a'));
-                    this.is(true, Function.getter('a', null) === Function.getter('a'));
-                    this.is(true, Function.getter('a', undefined) === Function.getter('a'));
+                    this.is(true, basis.getter('a') === basis.getter('a'));
+                    this.is(true, basis.getter('a', '') !== basis.getter('a'));
+                    this.is(true, basis.getter('a', false) === basis.getter('a'));
+                    this.is(true, basis.getter('a', null) === basis.getter('a'));
+                    this.is(true, basis.getter('a', undefined) === basis.getter('a'));
 
-                    this.is(true, Function.getter(Function.$self) === Function.getter(Function.$self));
-                    this.is(true, !Function.$self.getter);
-                    this.is(true, !Function.$self.__extend__);
+                    this.is(true, basis.getter(basis.fn.$self) === basis.getter(basis.fn.$self));
+                    this.is(true, !basis.fn.$self.getter);
+                    this.is(true, !basis.fn.$self.__extend__);
 
-                    this.is(true, Function.getter(function(){ return 1; }) !== Function.getter(function(){ return 1; }));
-                    this.is(true, Function.getter(function(){ return 1; }) !== Function.getter(function(){ return 1; }));
-                    this.is(true, Function.getter(function(){ return 1; }) !== Function.getter(function(){ return 2; }));
+                    this.is(true, basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 1; }));
+                    this.is(true, basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 1; }));
+                    this.is(true, basis.getter(function(){ return 1; }) !== basis.getter(function(){ return 2; }));
 
-                    this.is(true, Function.getter(function(){ return 1; }, Number) !== Function.getter(function(){ return 1; }, Number));
-                    this.is(true, Function.getter(function(){ return 1; }, Number) !== Function.getter(function(){ return 1; }, Number));
-                    this.is(true, Function.getter(function(){ return 1; }, Number) !== Function.getter(function(){ return 2; }, Number));
+                    this.is(true, basis.getter(function(){ return 1; }, Number) !== basis.getter(function(){ return 1; }, Number));
+                    this.is(true, basis.getter(function(){ return 1; }, Number) !== basis.getter(function(){ return 1; }, Number));
+                    this.is(true, basis.getter(function(){ return 1; }, Number) !== basis.getter(function(){ return 2; }, Number));
 
-                    this.is(true, Function.getter(function(){ return 1; }, '') !== Function.getter(function(){ return 1; }, ''));
-                    this.is(true, Function.getter(function(){ return 1; }, '') !== Function.getter(function(){ return 1; }, ''));
-                    this.is(true, Function.getter(function(){ return 1; }, '') !== Function.getter(function(){ return 2; }, ''));
+                    this.is(true, basis.getter(function(){ return 1; }, '') !== basis.getter(function(){ return 1; }, ''));
+                    this.is(true, basis.getter(function(){ return 1; }, '') !== basis.getter(function(){ return 1; }, ''));
+                    this.is(true, basis.getter(function(){ return 1; }, '') !== basis.getter(function(){ return 2; }, ''));
 
-                    this.is(true, Function.getter(function(){ return 1; }, 'f') !== Function.getter(function(){ return 1; }, 'f'));
-                    this.is(true, Function.getter(function(){ return 1; }, 'f') !== Function.getter(function(){ return 1; }, 'f'));
-                    this.is(true, Function.getter(function(){ return 1; }, 'f') !== Function.getter(function(){ return 2; }, 'f'));
+                    this.is(true, basis.getter(function(){ return 1; }, 'f') !== basis.getter(function(){ return 1; }, 'f'));
+                    this.is(true, basis.getter(function(){ return 1; }, 'f') !== basis.getter(function(){ return 1; }, 'f'));
+                    this.is(true, basis.getter(function(){ return 1; }, 'f') !== basis.getter(function(){ return 2; }, 'f'));
 
-                    this.is(true, Function.getter(function(){ return 1; }, 'f') !== Function.getter(function(){ return 1; }, 'fs'));
+                    this.is(true, basis.getter(function(){ return 1; }, 'f') !== basis.getter(function(){ return 1; }, 'fs'));
 
-                    this.is(true, Function.getter('a', Number) !== Function.getter('a'));
-                    this.is(true, Function.getter('a', Number) === Function.getter('a', Number));
-                    this.is(true, Function.getter(Function.$self, Number) === Function.getter(Function.$self, Number));
-                    this.is(true, Function.getter(Function.$self, '') === Function.getter(Function.$self, ''));
-                    this.is(true, Function.getter(Function.$self, 'asd') === Function.getter(Function.$self, 'asd'));
-                    this.is(true, Function.getter(Function.$self, String) !== Function.getter(Function.$self, Number));
+                    this.is(true, basis.getter('a', Number) !== basis.getter('a'));
+                    this.is(true, basis.getter('a', Number) === basis.getter('a', Number));
+                    this.is(true, basis.getter(basis.fn.$self, Number) === basis.getter(basis.fn.$self, Number));
+                    this.is(true, basis.getter(basis.fn.$self, '') === basis.getter(basis.fn.$self, ''));
+                    this.is(true, basis.getter(basis.fn.$self, 'asd') === basis.getter(basis.fn.$self, 'asd'));
+                    this.is(true, basis.getter(basis.fn.$self, String) !== basis.getter(basis.fn.$self, Number));
 
-                    this.is(true, Function.getter('a', '') === Function.getter('a', ''));
-                    this.is(true, Function.getter('a', '') !== Function.getter('a', 'f'));
+                    this.is(true, basis.getter('a', '') === basis.getter('a', ''));
+                    this.is(true, basis.getter('a', '') !== basis.getter('a', 'f'));
 
-                    this.is(true, Function.getter('a', Number) === Function.getter(Function.getter('a', Number)));
-                    this.is(true, Function.getter('a', Number) !== Function.getter(Function.getter('a', Number), Number));
+                    this.is(true, basis.getter('a', Number) === basis.getter(basis.getter('a', Number)));
+                    this.is(true, basis.getter('a', Number) !== basis.getter(basis.getter('a', Number), Number));
 
-                    this.is(true, Function.getter('a', Function.getter('b', Number)) === Function.getter('a', Function.getter('b', Number)));
-                    this.is(true, Function.getter('a', Function.getter('b', Number)) !== Function.getter('a', Function.getter('a', Number)));
-                    this.is(true, Function.getter('a', Function.getter('b', Number)) !== Function.getter('a', Function.getter('b')));
+                    this.is(true, basis.getter('a', basis.getter('b', Number)) === basis.getter('a', basis.getter('b', Number)));
+                    this.is(true, basis.getter('a', basis.getter('b', Number)) !== basis.getter('a', basis.getter('a', Number)));
+                    this.is(true, basis.getter('a', basis.getter('b', Number)) !== basis.getter('a', basis.getter('b')));
                   }
                 },
                 {
@@ -170,50 +170,50 @@
                     var object = {};
                     var array = {};
 
-                    this.is(true, Function.getter('a', {}) !== Function.getter('a', {}));
-                    this.is(true, Function.getter('a', object) !== Function.getter('a', object));
+                    this.is(true, basis.getter('a', {}) !== basis.getter('a', {}));
+                    this.is(true, basis.getter('a', object) !== basis.getter('a', object));
 
-                    this.is(true, Function.getter('a', []) !== Function.getter('a', []));
-                    this.is(true, Function.getter('a', array) !== Function.getter('a', array));
+                    this.is(true, basis.getter('a', []) !== basis.getter('a', []));
+                    this.is(true, basis.getter('a', array) !== basis.getter('a', array));
                   }
                 },
                 {
                   name: 'extensible',
                   test: function(){
-                    var __extend__ = Function.getter('').__extend__;
+                    var __extend__ = basis.getter('').__extend__;
                     var func = function(){};
-                    var getter = Function.getter('random');
+                    var getter = basis.getter('random');
 
                     this.is(true, typeof __extend__ == 'function');
 
-                    this.is(__extend__, Function.getter('a').__extend__);
-                    this.is(__extend__, Function.getter('a', '').__extend__);
-                    this.is(__extend__, Function.getter('a', function(){}).__extend__);
-                    this.is(__extend__, Function.getter('a', {}).__extend__);
-                    this.is(__extend__, Function.getter('a', []).__extend__);
+                    this.is(__extend__, basis.getter('a').__extend__);
+                    this.is(__extend__, basis.getter('a', '').__extend__);
+                    this.is(__extend__, basis.getter('a', function(){}).__extend__);
+                    this.is(__extend__, basis.getter('a', {}).__extend__);
+                    this.is(__extend__, basis.getter('a', []).__extend__);
 
-                    this.is(__extend__, Function.getter(Function.$true).__extend__);
-                    this.is(__extend__, Function.getter(Function.$true, '').__extend__);
-                    this.is(__extend__, Function.getter(Function.$true, function(){}).__extend__);
-                    this.is(__extend__, Function.getter(Function.$true, {}).__extend__);
-                    this.is(__extend__, Function.getter(Function.$true, []).__extend__);
+                    this.is(__extend__, basis.getter(basis.fn.$true).__extend__);
+                    this.is(__extend__, basis.getter(basis.fn.$true, '').__extend__);
+                    this.is(__extend__, basis.getter(basis.fn.$true, function(){}).__extend__);
+                    this.is(__extend__, basis.getter(basis.fn.$true, {}).__extend__);
+                    this.is(__extend__, basis.getter(basis.fn.$true, []).__extend__);
 
-                    this.is(__extend__, Function.getter(function(){}).__extend__);
-                    this.is(__extend__, Function.getter(function(){}, '').__extend__);
-                    this.is(__extend__, Function.getter(function(){}, function(){}).__extend__);
-                    this.is(__extend__, Function.getter(function(){}, {}).__extend__);
-                    this.is(__extend__, Function.getter(function(){}, []).__extend__);
+                    this.is(__extend__, basis.getter(function(){}).__extend__);
+                    this.is(__extend__, basis.getter(function(){}, '').__extend__);
+                    this.is(__extend__, basis.getter(function(){}, function(){}).__extend__);
+                    this.is(__extend__, basis.getter(function(){}, {}).__extend__);
+                    this.is(__extend__, basis.getter(function(){}, []).__extend__);
 
-                    this.is(__extend__, Function.getter(getter).__extend__);
-                    this.is(__extend__, Function.getter(getter, '').__extend__);
-                    this.is(__extend__, Function.getter(getter, getter).__extend__);
-                    this.is(__extend__, Function.getter(getter, {}).__extend__);
-                    this.is(__extend__, Function.getter(getter, []).__extend__);
+                    this.is(__extend__, basis.getter(getter).__extend__);
+                    this.is(__extend__, basis.getter(getter, '').__extend__);
+                    this.is(__extend__, basis.getter(getter, getter).__extend__);
+                    this.is(__extend__, basis.getter(getter, {}).__extend__);
+                    this.is(__extend__, basis.getter(getter, []).__extend__);
 
-                    this.is(true, Function.getter('a').__extend__() === Function.getter());
-                    this.is(true, Function.getter('a').__extend__() === Function.nullGetter);
-                    this.is(true, Function.getter('a').__extend__('a') === Function.getter('a'));
-                    this.is(true, Function.getter('a').__extend__(func) === Function.getter(func));
+                    this.is(true, basis.getter('a').__extend__() === basis.getter());
+                    this.is(true, basis.getter('a').__extend__() === basis.fn.nullGetter);
+                    this.is(true, basis.getter('a').__extend__('a') === basis.getter('a'));
+                    this.is(true, basis.getter('a').__extend__(func) === basis.getter(func));
                   }
                 }
               ]

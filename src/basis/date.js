@@ -10,7 +10,7 @@
   // import names
   //
 
-  var getter = Function.getter;
+  var getter = basis.getter;
 
 
   //

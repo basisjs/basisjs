@@ -136,7 +136,7 @@
     var UINode = basis.ui.Node;
     var nsDataset = basis.data.dataset;
 
-    var getter = Function.getter;
+    var getter = basis.getter;
 
     function createHeader(header){
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('H2', header));
@@ -357,7 +357,7 @@
     new DatasetViewer({
       title: 'MapFilter for dataset A: NUMBERS -> WORDS',
       dataSource: new nsDataset.MapFilter({
-        map: Function.getter('data.value - 1', data2),
+        map: basis.getter('data.value - 1', data2),
         source: A
       })
     });
@@ -365,7 +365,7 @@
     new DatasetViewer({
       title: 'Subset of dataset A: ONLY ODD',
       dataSource: new nsDataset.Subset({
-        rule: Function.getter('data.value % 2'),
+        rule: basis.getter('data.value % 2'),
         source: A
       })
     });
@@ -373,7 +373,7 @@
     new DatasetViewer({
       title: 'Split data A: ODD and EVEN',
       dataSource: new nsDataset.Split({
-        rule: Function.getter('data.value % 2 ? "odd" : "even"'),
+        rule: basis.getter('data.value % 2 ? "odd" : "even"'),
         source: A
       }),
       childClass: UINode.subclass({
@@ -396,9 +396,9 @@
 
     new DatasetViewer({
       title: 'First 3 item of A',
-      sorting: Function.getter('data.value'),
+      sorting: basis.getter('data.value'),
       dataSource: new nsDataset.Slice({
-        rule: Function.getter('data.value'),
+        rule: basis.getter('data.value'),
         source: A,
         limit: 3
       })
@@ -406,7 +406,7 @@
 
     new DatasetViewer({
       title: 'Cloud of A: deviders',
-      sorting: Function.getter('data.title'),
+      sorting: basis.getter('data.title'),
       dataSource: new nsDataset.Cloud({
         rule: function(item){
           var res = [];

@@ -95,7 +95,7 @@
         CompanyId: 'Company'
       },
       groupings: {
-        Company: Function.getter('data.Company')
+        Company: basis.getter('data.Company')
       }
     });
 
@@ -144,7 +144,7 @@
       selection: true,
 
       dataSource: CompanyReport.getGrouping('Company').getSubset(Company('microsoft')),
-      sorting: Function.getter('data.Date'),
+      sorting: basis.getter('data.Date'),
       keyGetter: function(object){
         return object.data.Date;
       },
@@ -162,8 +162,8 @@
           legendGetter: function(object){
             return object.data.Title;
           },
-          keyGetter: Function.getter('data.Date'),
-          valueGetter: Function.getter('data.Amount')
+          keyGetter: basis.getter('data.Date'),
+          valueGetter: basis.getter('data.Amount')
         }
       }
     });
@@ -174,8 +174,8 @@
       dataSource: Company.all,
       value: ['apple', 'microsoft'],
       childClass: {
-        valueGetter: Function.getter('data.Id'),
-        titleGetter: Function.getter('data.Title')
+        valueGetter: basis.getter('data.Id'),
+        titleGetter: basis.getter('data.Title')
       },
       handler: {
         change: function(){

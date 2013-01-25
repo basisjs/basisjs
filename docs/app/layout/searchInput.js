@@ -4,7 +4,7 @@
 
   var SearchMatchInput = basis.ui.field.MatchInput.subclass({
     matchFilterClass: basis.ui.field.MatchFilter.subclass({
-      textNodeGetter: Function.getter('tmpl.title'),
+      textNodeGetter: basis.getter('tmpl.title'),
       event_change: function(value, oldValue){
         basis.ui.field.MatchProperty.prototype.event_change.call(this, value, oldValue);
 
