@@ -280,10 +280,49 @@
   */
   var getter = (function(){
     var modificatorSeed = 1;
+    var simplePath = /^[a-z$_][a-z$_0-9]*(\.[a-z$_][a-z$_0-9]*)*$/i;
 
     var getterMap = [];
     var pathCache = {};
     var modCache = {};
+
+    function buildFunction(path){
+      if (simplePath.test(path))
+      {
+        var parts = path.split('.');
+        var foo = parts[0];
+        var bar = parts[1];
+        var baz = parts[2];
+        switch (parts.length)
+        {
+          case 1:
+            return function(object){
+              return object != null ? object[foo] : object;
+            };
+          case 2:
+            return function(object){
+              return object != null ? object[foo][bar] : object;
+            };
+          case 3:
+            return function(object){
+              return object != null ? object[foo][bar][baz] : object;
+            };
+          default:
+            return function(object){
+              if (object != null)
+              {
+                object = object[foo][bar][baz];
+                for (var i = 3, key; key = path[i]; i++)
+                  object = object[key];
+              }
+
+              return object;
+            }
+        }
+      }
+      
+      return new Function('object', 'return object != null ? object.' + path + ' : object');
+    }
 
     return function(path, modificator){
       var func;
@@ -333,7 +372,7 @@
         else
         {
           // create getter function
-          func = new Function('object', 'return object != null ? object.' + path + ' : object');
+          func = buildFunction(path);
           func.base = path;
           func.__extend__ = getter;
 
