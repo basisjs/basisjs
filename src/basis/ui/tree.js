@@ -147,7 +147,12 @@
     template: templates.Node,
 
     binding: {
-      title: 'data:title || "[no title]"',
+      title: {
+        events: 'update',
+        getter: function(node){
+          return node.data.title || '[no title]'
+        }
+      },
       collapsed: {
         events: 'expand collapse',
         getter: function(node){

@@ -139,15 +139,18 @@
   var Form = FormContent.subclass({
     className: namespace + '.Form',
 
+    formTarget: '',
+    formAction: '',
+    formEnctype: '',
     formMethod: 'POST',
-    
+
     template: templates.Form,
 
     binding: {
-      target:  'formTarget || ""',
-      action:  'formAction || ""',
-      enctype: 'formEnctype || ""',
-      method:  'formMethod || ""'
+      target: 'formTarget',
+      action: 'formAction',
+      enctype: 'formEnctype',
+      method: 'formMethod'
     },
 
     action: {

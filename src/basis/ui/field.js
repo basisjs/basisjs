@@ -118,6 +118,8 @@
     nextFieldOnEnter: true,
     serializable: true,
 
+    name: '',
+    title: '',
     validity: VALIDITY_INDETERMINATE,
     error: '',
     example: null,
@@ -176,17 +178,19 @@
 
     template: templates.Field,
     binding: {
-      name: 'name || ""',
-      titleText: 'title || ""',
       focused: {
         events: 'fieldFocus fieldBlur',
         getter: function(node){
           return node.focused ? 'focused' : '';
         }
       },
+      name: 'name',
+      titleText: 'title',
       value: {
         events: 'change',
-        getter: 'getValue()'
+        getter: function(node){
+          return node.getValue();
+        }
       },
       defaultValue: {
         getter: 'defaultValue'
@@ -265,7 +269,6 @@
     //
 
     init: function(){
-      this.name = this.name || '';
       this.validators = arrayFrom(this.validators);
 
       if (typeof this.defaultValue == 'undefined')
@@ -396,12 +399,14 @@
     readOnly: false,
     minLength: 0,
     maxLength: 0,
+    autocomplete: '',
+    placeholder: '',
 
     binding: {
       minlength: {
         events: 'minLengthChanged',
         getter: function(field){
-          return field.minLength > 0 ? field.minLength : "";
+          return field.minLength > 0 ? field.minLength : '';
         }
       },
       maxlength: {
@@ -413,8 +418,8 @@
       readonly: function(node){
         return node.readOnly ? 'readonly' : '';
       },
-      autocomplete: 'autocomplete || ""',
-      placeholder: 'placeholder || ""'
+      autocomplete: 'autocomplete',
+      placeholder: 'placeholder'
     },
 
     init: function(){
@@ -526,7 +531,7 @@
     event_fieldFocus: !window.opera
       ? TextField.prototype.event_fieldFocus
         // fix opera's bug: when invisible textarea becomes visible and user
-        // changes it content, value property returns empty string instead value in field
+        // changes it content, value property returns empty string instead of field value
       : function(event){
           this.contentEditable = true;
           this.contentEditable = false;
@@ -646,11 +651,17 @@
     className: namespace + '.ComplexFieldItem',
 
     childClass: null,
+    name: '',
 
     binding: {
-      name: 'name || ""',
-      title: 'getTitle()',
-      value: 'getValue()',
+      name: 'name',
+      title: function(node){
+        return node.getTitle();
+
+      },
+      value: function(node){
+        return node.getValue();
+      },
       checked: {
         events: 'select unselect',
         getter: function(item){
@@ -833,7 +844,9 @@
     template: templates.ComboboxItem,
 
     binding: {
-      title: 'getTitle() || "\xA0"'
+      title: function(){
+        return node.getTitle() || '\xA0';
+      }
     },
 
     action: {
