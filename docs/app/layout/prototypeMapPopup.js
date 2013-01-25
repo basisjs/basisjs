@@ -4,7 +4,7 @@
   var viewPrototype = basis.resource('app/views/prototype/prototype.js');
   var targetContent = basis.resource('app/layout/targetContent.js');
   
-  var prototypeDataset = new basis.dom.wrapper.ChildNodesDataset({ sourceNode: viewPrototype() });
+  var prototypeDataset = viewPrototype().getChildNodesDataset();
 
 
   var prototypeMapPopupPanel = new basis.ui.Node({
