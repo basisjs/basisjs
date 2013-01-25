@@ -733,11 +733,6 @@
       });
 
       return requestData;
-    },
-
-    get: function(){
-      ;;;basis.dev.warn('basis.net.Transport#get method is deprecated, use basis.net.Transport#request method instead');
-      this.request.apply(this, arguments);
     }
   });
 

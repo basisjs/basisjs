@@ -242,11 +242,6 @@
     }
   })();
 
-  Date.fromISOString = function(){
-    ;;; if (typeof console != 'undefined') console.warn('Date.fromISOString is deprecated, use basis.date.fromISOString instead');
-    return (Date.fromISOString = fromISOString).apply(this, arguments);
-  };
-
 
   //
   // export names

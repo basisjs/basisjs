@@ -1,4 +1,5 @@
 
+    basis.require('basis.date');
     basis.require('basis.dom');
     basis.require('basis.dom.event');
     basis.require('basis.data');
@@ -69,7 +70,7 @@
     };
 
     basis.fn.$date = function(value){
-      return value instanceof Date || value == null ? value : Date.fromISOString(value);
+      return value instanceof Date || value == null ? value : basis.date.fromISOString(value);
     };
 
     basis.fn.$nullOrArray = function(value){

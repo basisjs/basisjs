@@ -557,8 +557,6 @@
         }
       }
 
-      ;;;if (config.reflections) basis.dev.warn('Reflections are deprecated');
-
       entityClass__ = this.entityClass = Entity(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters).extend({
         entityType: this,
         type: wrapper,

@@ -607,12 +607,9 @@
     * @constructor
     */
     init: function(){
-
       var dataSource = this.dataSource;
       var childNodes = this.childNodes;
       var grouping = this.grouping;
-
-      ;;;if (('autoDelegateParent' in this) && typeof console != 'undefined') console.warn('autoDelegateParent property is deprecate. Use autoDelegate instead');
 
       if (dataSource)
         this.dataSource = null; // NOTE: reset dataSource before inherit -> prevent double subscription activation

@@ -501,10 +501,6 @@
     },
 
     init: function(){
-
-      ;;;if ('rowSatellite' in this && typeof console != 'undefined') console.warn('rowSatellite is deprecated. Move all extensions into childClass');
-      ;;;if ('rowBehaviour' in this && typeof console != 'undefined') console.warn('rowBehaviour is deprecated. Move all extensions into childClass');
-
       this.applyConfig_(this.structure);
 
       UINode.prototype.init.call(this);

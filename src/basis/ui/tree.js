@@ -215,8 +215,6 @@
       // inherit
       Node.prototype.init.call(this);
 
-      ;;;if ('collapsable' in this && typeof console != 'undefined') console.warn('WARN: collapsable property is not supported, use collapsible');
-
       if (this.collapsed && this.collapsible)
         this.event_collapse();
     },
