@@ -844,7 +844,7 @@
     template: templates.ComboboxItem,
 
     binding: {
-      title: function(){
+      title: function(node){
         return node.getTitle() || '\xA0';
       }
     },
