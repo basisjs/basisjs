@@ -499,10 +499,11 @@
   var Scrollbar = UINode.subclass({
     className: namespace + '.Scrollbar',
 
-    template: templates.Scrollbar,
+    orientation: '',
 
+    template: templates.Scrollbar,
     binding: {
-      orientation: 'orientation || ""'
+      orientation: 'orientation'
     },
 
     listen: {

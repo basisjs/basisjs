@@ -516,7 +516,9 @@
     nodePeriodName: DAY,
     nodePeriodUnit: DAY,
 
-    getTabTitle: getter('getDate()'),
+    getTabTitle: function(node){
+      return node.getDate();
+    },
     getInitOffset: function(date){
       return 1 + (new Date(date).set(DAY, 1).getDay() + 5) % 7;
     },
@@ -550,10 +552,12 @@
     nodePeriodName: MONTH,
     nodePeriodUnit: MONTH,
 
-    getTabTitle: getter('getMonth()', function(key){
-      return l10nToken(namespace, 'month', monthNumToRef[key]);// LOCALE('MONTH').FULL[key];
-    }),
-    getTitle: getter('getFullYear()')
+    getTabTitle: function(node){
+      return l10nToken(namespace, 'month', monthNumToRef[node.getMonth()]);
+    },
+    getTitle: function(node){
+      return node.getFullYear();
+    }
   });
 
  /**
@@ -571,7 +575,9 @@
     getInitOffset: function(){
       return 1;
     },
-    getTabTitle: getter('getFullYear()'),
+    getTabTitle: function(node){
+      return node.getFullYear();
+    },
     getTitle: function(periodStart){
       return periodStart.getFullYear() + ' - ' + this.periodEnd.getFullYear();
     }
