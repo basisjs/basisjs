@@ -740,7 +740,10 @@
           // warn
         }
       }
-      ;;;basis.dev.warn('Index `{0}` already exists'.format(key));
+      else
+      {
+        ;;;basis.dev.warn('Index `{0}` already exists'.format(key));
+      }
     },
 
     removeIndex: function(key){
