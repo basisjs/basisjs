@@ -2036,29 +2036,26 @@
   })();
 
 
-  //
-  // on document load event dispatcher
-  //
-
  /**
-  * Attach load handlers for page
+  * Attach document ready handlers
   * @function
-  * @param {function(event)} handler 
-  * @param {object=} thisObject Context for handler
+  * @param {function()} handler 
+  * @param {*} thisObject Context for handler
   */
-  var onLoad = (function(){
-    // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig and Me :)
+  var ready = (function(){
+    // Matthias Miller/Mark Wubben/Paul Sowden/Dean Edwards/John Resig/Roman Dvornov
 
-    var fired = false;
-    var loadHandler = [];
+    var fired = !document || document.readyState == 'complete';
+    var deferredHandler;
 
     function fireHandlers(){
-      if (typeof document != 'undefined' && document.readyState == 'complete')
-      {
+      if (document.readyState == 'complete')
         if (!fired++)
-          for (var i = 0; i < loadHandler.length; i++)
-            loadHandler[i].callback.call(loadHandler[i].thisObject);
-      }
+          while (deferredHandler)
+          {
+            deferredHandler.callback.call(deferredHandler.context);
+            deferredHandler = deferredHandler.next;
+          }
     }
 
     // The DOM ready check for Internet Explorer
@@ -2073,7 +2070,7 @@
       }
     }
 
-    if (typeof document != 'undefined' && document.readyState != 'complete')
+    if (!fired)
     {
       if (document.addEventListener)
       {
@@ -2081,38 +2078,39 @@
         document.addEventListener('DOMContentLoaded', fireHandlers, false);
 
         // A fallback to window.onload, that will always work
-        window.addEventListener('load', fireHandlers, false);
+        global.addEventListener('load', fireHandlers, false);
       }
       else
       {
         // ensure firing before onload,
-  			// maybe late but safe also for iframes
+        // maybe late but safe also for iframes
         document.attachEvent('onreadystatechange', fireHandlers);
 
         // A fallback to window.onload, that will always work
-        window.attachEvent('onload', fireHandlers);
+        global.attachEvent('onload', fireHandlers);
 
         // If IE and not a frame
-  			// continually check to see if the document is ready
-  			try {
-  				if (window.frameElement == null && document.documentElement.doScroll)
+        // continually check to see if the document is ready
+        try {
+          if (!global.frameElement && document.documentElement.doScroll)
             doScrollCheck();
-  			} catch(e) {
-  			}
+        } catch(e) {
+        }
       }
     }
 
     // return attach function
-    return function(callback, thisObject){
+    return function(callback, context){
       if (!fired)
       {
-        loadHandler.push({
+        deferredHandler = {
           callback: callback,
-          thisObject: thisObject
-        });
+          context: context,
+          next: deferredHandler
+        };
       }
       else
-        callback.call(thisObject);
+        callback.call(context);
     };
   })();
 
@@ -2273,7 +2271,7 @@
     },
 
     getter: getter,
-    ready: onLoad,
+    ready: ready,
 
     Class: Class,
     Token: Token,
