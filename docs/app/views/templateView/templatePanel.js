@@ -221,7 +221,9 @@
       },
       externalFileUrl: function(node){
         var template = node.data.obj && node.data.obj.prototype.template;
-        return ((template && template.source && template.source.url) || '').replace(/^(.*)(src\/basis\/)/i, '$2');
+        var url = (template && template.source && template.source.url) || '';
+        
+        return url && basis.path.relative(url);
       }
     },
 
