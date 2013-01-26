@@ -38,10 +38,10 @@
     millisecond: 'Milliseconds'
   }, function(key, name){
     GETTER[key] = function(date){
-      return date['get' + value]()
+      return date['get' + name]()
     };
     SETTER[key] = function(date, value){
-      return date['set' + value](value);
+      return date['set' + name](value);
     };
   });
 
