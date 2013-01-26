@@ -345,7 +345,7 @@
     };
 
     return function(tokens){
-      var sourceURL = '' /** @cut */ + (this.source.url || 'inline_template' + this.templateId);
+      var sourceURL = this.source.url || 'inline_template' + this.templateId;
 
       var fn = getFunctions(tokens, true, sourceURL);
       var templateMap = {};
