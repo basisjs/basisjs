@@ -97,6 +97,10 @@
   /** @const */ var VALIDITY_VALID = 'valid';
   /** @const */ var VALIDITY_INVALID = 'invalid';
 
+  function getFieldValue(field){
+    return field.getValue();
+  }
+
 
   //
   //  Fields
@@ -729,7 +733,7 @@
       Field.prototype.init.call(this);
     },
     getValue: function(){
-      var value = this.selection.getItems().map(getter('getValue()'));
+      var value = this.selection.getItems().map(getFieldValue);
       return this.multipleSelect ? value : value[0];
     },
     setValue: function(value/* value[] */){
@@ -815,7 +819,7 @@
       return item && item.getValue();
     },
     setValue: function(value){
-      var item = this.childNodes.search(value, 'getValue()');
+      var item = this.childNodes.search(value, getFieldValue);
       this.selection.set([item]);
       this.tmpl.field.selectedIndex = item ? this.childNodes.indexOf(item) : -1;
     }
@@ -1072,7 +1076,7 @@
       if (this.getValue() != value)
       {
         // update value & selection
-        var item = this.childNodes.search(value, 'getValue()');
+        var item = this.childNodes.search(value, getFieldValue);
         if (item && !item.isDisabled())
           this.selection.set([item]);
         else
