@@ -1534,7 +1534,6 @@
       }
 
       //consoleMethods.log('new resource resolver:' + resourceUrl);
-      var attaches = [];
       var resourceObject;
       var wrapped = false;
       var resource = extWrapper
@@ -1576,8 +1575,6 @@
             }
 
             this.apply();
-            //for (var i = 0, listener; listener = attaches[i]; i++)
-            //  listener.handler.call(listener.context, content);
           }
         },
         reload: function(){
@@ -2187,7 +2184,7 @@
   var Token = Class(null, {
     className: 'basis.Token',
 
-    attachList: null,
+    handlers: null,
 
     bindingBridge: {
       attach: function(host, fn, context){
@@ -2201,54 +2198,55 @@
       }
     },
 
-    // constructor
-    init: function(){
-      this.attachList = [];
-    },
-
     set: function(value){
     },
     get: function(){
     },
 
     attach: function(fn, context){
-      var attachList = this.attachList;
+      var cursor = this;
 
-      for (var i = attachList.length; i-- > 0;)
-        if (attachList[i].fn === fn && attachList[i].context === context)
+      while (cursor = cursor.handlers)
+        if (cursor.fn === fn && cursor.context === context)
           return false;
 
-      attachList.push({
+      this.handlers = {
         fn: fn,
-        context: context
-      });
+        context: context,
+        handlers: this.handlers
+      };
 
       return true;
     },
     detach: function(fn, context){
-      var attachList = this.attachList;
+      var cursor = this;
+      var prev = this;
 
-      for (var i = attachList.length; i-- > 0;)
-        if (attachList[i].fn === fn && attachList[i].context === context)
+      while (cursor = cursor.handlers)
+      {
+        if (cursor.fn === fn && cursor.context === context)
         {
-          attachList.splice(i, 1);
+          prev.handlers = cursor.handlers;
           return true;
         }
+
+        prev = cursor;
+      }
 
       return false;
     },
 
     apply: function(){
-      var attachList = this.attachList;
       var value = this.get();
+      var cursor = this;
 
-      for (var i = attachList.length; i-- > 0;)
-        attachList[i].fn.call(attachList[i].context, value);
+      while (cursor = cursor.handlers)
+        cursor.fn.call(cursor.context, value);
     },
 
     // destructor
     destroy: function(){
-      this.attachList = null;
+      this.handlers = null;
     }  
   });
 
