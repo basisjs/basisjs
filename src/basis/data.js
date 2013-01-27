@@ -519,9 +519,11 @@
     * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
+      if (!this.canHaveDelegate)
+        return false;
 
       // check is newDelegate can be linked to this object as delegate
-      if (this.canHaveDelegate && newDelegate && newDelegate instanceof DataObject)
+      if (newDelegate && newDelegate instanceof DataObject)
       {
         // check for connected prevents from linking to objects
         // that has this object in delegate chains
