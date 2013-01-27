@@ -255,7 +255,7 @@
    /**
     * @type {boolean}
     */
-    canHaveDelegate: true,
+    canSetDelegate: true,
 
    /**
     * Object that manage data updates if assigned.
@@ -519,7 +519,7 @@
     * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
-      if (!this.canHaveDelegate)
+      if (!this.canSetDelegate)
         return false;
 
       // check is newDelegate can be linked to this object as delegate
@@ -888,7 +888,7 @@
     * Datasets can't have delegate by default.
     * @inheritDoc
     */
-    //canHaveDelegate: false, // ????
+    //canSetDelegate: false, // ????
 
    /**
     * Default state for set is undefined. It useful to trigger dataset update

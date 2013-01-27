@@ -936,7 +936,7 @@
     return Class(BaseEntity, getters, {
       className: namespace + '.Entity',
 
-      canHaveDelegate: false,
+      canSetDelegate: false,
       //index: index__,
 
       modified: null,

@@ -1047,7 +1047,7 @@
             var oldChild = this.dataSourceMap_[delegateId];
 
             delete this.dataSourceMap_[delegateId];
-            oldChild.canHaveDelegate = true; // allow delegate drop
+            oldChild.canSetDelegate = true; // allow delegate drop
             this.removeChild(oldChild);
 
             deleted.push(oldChild);
@@ -1065,12 +1065,12 @@
             cascadeDestroy: false,     // NOTE: it's important set cascadeDestroy to false, otherwise
                                        // there will be two attempts to destroy node - 1st on delegate
                                        // destroy, 2nd on object removal from dataSource
-            //canHaveDelegate: false,  // NOTE: we can't set canHaveDelegate in config, because it
+            //canSetDelegate: false,   // NOTE: we can't set canSetDelegate in config, because it
                                        // prevents delegate assignment
             delegate: item
           });
 
-          newChild.canHaveDelegate = false; // prevent delegate override
+          newChild.canSetDelegate = false; // prevent delegate override
 
           // insert
           this.dataSourceMap_[item.basisObjectId] = newChild;
