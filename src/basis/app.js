@@ -51,6 +51,9 @@
       setElement: function(el){
         var newAppEl = resolveNode(el);
 
+        if (appEl == newAppEl)
+          return;
+
         if (appEl)
         {
           replaceNode(appEl, newAppEl);
@@ -114,8 +117,9 @@
     }
 
     basis.ready(function(){
-      appEl = appInit.call(app) || appEl;
-      app.setElement(appEl);
+      var tmpEl = appEl;
+      appEl = null;
+      app.setElement(appInit.call(app) || tmpEl);
     });
 
     return app;
