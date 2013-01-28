@@ -312,7 +312,7 @@
               if (object != null)
               {
                 object = object[foo][bar][baz];
-                for (var i = 3, key; key = path[i]; i++)
+                for (var i = 3, key; key = parts[i]; i++)
                   object = object[key];
               }
 
