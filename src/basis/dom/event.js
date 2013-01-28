@@ -79,7 +79,7 @@
   }
 
  /**
-  * Function wraper with thisObject as context.
+  * Function wrapper with thisObject as context.
   * @class
   */
   var Handler = function(handler, thisObject){
@@ -88,12 +88,44 @@
   };
 
  /**
+  * @class
+  */
+  var Event = basis.Class(null, {
+    className: namespace + '.Event',
+    init: function(event){
+      event = wrap(event);
+
+      basis.object.extend(this, { 
+        event_: event,
+        sender: sender(event),
+        key: key(event),
+        charCode: charCode(event),
+        mouseLeft: mouseButton(event, MOUSE_LEFT),
+        mouseMiddle: mouseButton(event, MOUSE_MIDDLE),
+        mouseRight: mouseButton(event, MOUSE_RIGHT),
+        mouseX: mouseX(event),
+        mouseY: mouseY(event),
+        wheelDelta: wheelDelta(event)
+      });
+    },
+    cancelBubble: function(){
+      cancelBubble(this.event_);
+    },
+    cancelDefault: function(){
+      cancelBubble(this.event_);
+    },
+    kill: function(){
+      kill(this.event_);
+    }
+  });
+
+ /**
   * Cross-browser event wrapper.
   * @param {Event} event
   * @return {Event}
   */
   function wrap(event){
-    return event || global.event;
+    return event instanceof Event ? event.event_ : event || global.event;
   }
 
  /**
@@ -111,8 +143,6 @@
   * @return {Node}
   */
   function sender(event){
-    event = wrap(event);
-
     return event.target || event.srcElement;
   }
 
@@ -121,8 +151,6 @@
   * @param {Event} event
   */
   function cancelBubble(event){
-    event = wrap(event);
-
     if (event.stopPropagation) 
       event.stopPropagation();
     else
@@ -134,8 +162,6 @@
   * @param {Event} event
   */
   function cancelDefault(event){
-    event = wrap(event);
-
     if (event.preventDefault) 
       event.preventDefault();
     else
@@ -165,8 +191,6 @@
   * @return {number}
   */
   function key(event){
-    event = wrap(event);
-
     return event.keyCode || event.which || 0;
   }
 
@@ -176,8 +200,6 @@
   * @return {number}
   */
   function charCode(event){
-    event = wrap(event);
-  
     return event.charCode || event.keyCode || 0;
   }
 
@@ -188,8 +210,6 @@
   * @return {boolean}
   */
   function mouseButton(event, button){
-    event = wrap(event);
-
     if (typeof event.which == 'number')
       // DOM scheme
       return event.which == button.VALUE;
@@ -204,8 +224,6 @@
   * @return {number}
   */
   function mouseX(event){
-    event = wrap(event);
-
     if (event.changedTouches)               // touch device
       return event.changedTouches[0].pageX;
     else
@@ -221,8 +239,6 @@
   * @return {number}
   */
   function mouseY(event){
-    event = wrap(event);
-
     if (event.changedTouches)             // touch device
       return event.changedTouches[0].pageY;
     else                                  // all others
@@ -238,8 +254,6 @@
   * @return {number} -1, 0, 1
   */
   function wheelDelta(event){
-    event = wrap(event);
-
     var delta = 0;
 
     if ('wheelDelta' in event) 
@@ -625,7 +639,7 @@
   // export names
   //
 
-  this.setWrapper(wrap);
+  module.setWrapper(wrap);
   module.exports = {
     W3CSUPPORT: W3CSUPPORT,
 
@@ -638,6 +652,7 @@
     browserEvents: browserEvents,
 
     Handler: Handler,
+    Event: Event,
 
     sender: sender,
 
