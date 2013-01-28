@@ -193,7 +193,7 @@
     var quoteEscape = /"/g;
 
     var SPECIAL_ATTR_MAP = {
-      disabled: true,
+      disabled: '*',  // any tag
       checked: ['input'],
       value: ['input', 'textarea'],
       minlength: ['input'],
@@ -217,9 +217,9 @@
 
    /**
     * @param {object} binding
-    * @param {boolean=} l10n
+    * @param {string=} special Possible values: l10n and bool
     */
-    function buildAttrExpression(binding, l10n){
+    function buildAttrExpression(binding, special){
       var expression = [];
       var symbols = binding[5];
       var dictionary = binding[4];
@@ -234,7 +234,14 @@
           exprVar = dictionary[symbols[j]];
           colonPos = exprVar.indexOf(':');
           if (colonPos == -1)
-            expression.push(l10n ? '"{' + exprVar + '}"' : '__' + exprVar);
+            expression.push(
+              special == 'l10n'
+                ? '"{' + exprVar + '}"'
+                : (special == 'bool'
+                     ? '(__' + exprVar + '||"")'
+                     : '__' + exprVar
+                  )
+            );
           else
             expression.push('__l10n["' + exprVar.substr(colonPos + 1) + '"]');
         }
@@ -309,7 +316,7 @@
           else
           {
             attrName = '"' + binding[ATTR_NAME] + '"';
-            l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, true)] + ');');
+            l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, 'l10n')] + ');');
 
             toolsUsed.bind_attr = true;
             varList.push(bindVar);
@@ -419,7 +426,7 @@
               break;
 
             default:
-              varList.push(bindVar + '=' + buildAttrExpression(binding, true));
+              varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n'));
               toolsUsed.bind_attr = true;
 
               specialAttr = SPECIAL_ATTR_MAP[attrName];
@@ -427,7 +434,7 @@
               bindCode.push(
                 bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar,
                   specialAttr && SPECIAL_ATTR_SINGLE[attrName]
-                    ? buildAttrExpression(binding) + '?"' + attrName + '":""'
+                    ? buildAttrExpression(binding, 'bool') + '?"' + attrName + '":""'
                     : buildAttrExpression(binding)
                   ] +
                 ');'
@@ -435,7 +442,7 @@
 
               if (specialAttr)
               {
-                if (specialAttr === true || specialAttr.has(binding[6].toLowerCase()))
+                if (specialAttr == '*' || specialAttr.has(binding[6].toLowerCase()))
                 {
                   bindCode.push('if(' + domRef + '.' + attrName + '!=' + bindVar + ')' + domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' : '') + '(' + bindVar + ');');
                 }
