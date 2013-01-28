@@ -601,7 +601,13 @@
 
     if (typeof console != 'undefined')
       iterate(methods, function(methodName){
-        methods[methodName] = Function.prototype.bind.call(console[methodName], console);
+        methods[methodName] = typeof console[methodName] == 'function'
+          ? Function.prototype.bind.call(console[methodName], console)
+            // ie8 and lower, it's also more safe when Function.prototype.bind defined
+            // by other libraries (like es5-shim)
+          : function(){
+              console[methodName].apply(console, arguments);
+            };
       });
 
     return methods;
