@@ -92,14 +92,20 @@
   */
   var Event = basis.Class(null, {
     className: namespace + '.Event',
+
+    KEY: KEY,
+
     init: function(event){
       event = wrap(event);
 
-      basis.object.extend(this, { 
+      basis.object.extend(basis.object.complete(this, event), { 
         event_: event,
+
         sender: sender(event),
+
         key: key(event),
         charCode: charCode(event),
+
         mouseLeft: mouseButton(event, MOUSE_LEFT),
         mouseMiddle: mouseButton(event, MOUSE_MIDDLE),
         mouseRight: mouseButton(event, MOUSE_RIGHT),
@@ -108,14 +114,18 @@
         wheelDelta: wheelDelta(event)
       });
     },
-    cancelBubble: function(){
+    stopBubble: function(){
       cancelBubble(this.event_);
     },
-    cancelDefault: function(){
+    stopPropagation: function(){
       cancelBubble(this.event_);
     },
-    kill: function(){
-      kill(this.event_);
+    preventDefault: function(){
+      cancelDefault(this.event_);
+    },
+    die: function(){
+      this.stopBubble();
+      this.preventDefault();
     }
   });
 
@@ -319,7 +329,10 @@
       releaseEvent(eventType);
 
     addGlobalHandler(eventType, handler, thisObject);
-    captureHandlers[eventType] = globalHandlers[eventType][globalHandlers[eventType].length - 1];
+    captureHandlers[eventType] = {
+      handler: handler,
+      thisObject: thisObject
+    };
   }
 
  /**
@@ -566,14 +579,6 @@
   //
   // on document load event dispatcher
   //
-
- /**
-  * Attach load handlers for page
-  * @function
-  * @param {function(event)} handler 
-  * @param {object=} thisObject Context for handler
-  */
-  var onLoad = basis.ready;
   
  /**
   * Attach unload handlers for page
@@ -634,6 +639,12 @@
     }
   }
 
+  function wrapEventFunction(fn){
+    return function(event){
+      return fn(wrap(event));
+    }
+  }
+
 
   //
   // export names
@@ -641,32 +652,36 @@
 
   module.setWrapper(wrap);
   module.exports = {
+    // support and testing
     W3CSUPPORT: W3CSUPPORT,
+    browserEvents: browserEvents,
+    getEventInfo: getEventInfo,
 
+    // const
     KEY: KEY,
-
     MOUSE_LEFT: MOUSE_LEFT,
     MOUSE_RIGHT: MOUSE_RIGHT,
     MOUSE_MIDDLE: MOUSE_MIDDLE,
 
-    browserEvents: browserEvents,
-
+    // classes
     Handler: Handler,
     Event: Event,
 
-    sender: sender,
+    // event functions
+    sender: wrapEventFunction(sender),
 
-    cancelBubble: cancelBubble,
-    cancelDefault: cancelDefault,
-    kill: kill,
+    cancelBubble: wrapEventFunction(cancelBubble),
+    cancelDefault: wrapEventFunction(cancelDefault),
+    kill: wrapEventFunction(kill),
 
-    key: key,
-    charCode: charCode,
-    mouseButton: mouseButton,
-    mouseX: mouseX,
-    mouseY: mouseY,
-    wheelDelta: wheelDelta,
+    key: wrapEventFunction(key),
+    charCode: wrapEventFunction(charCode),
+    mouseButton: wrapEventFunction(mouseButton),
+    mouseX: wrapEventFunction(mouseX),
+    mouseY: wrapEventFunction(mouseY),
+    wheelDelta: wrapEventFunction(wheelDelta),
 
+    // attach & detach event handler helpers
     addGlobalHandler: addGlobalHandler,
     removeGlobalHandler: removeGlobalHandler,
 
@@ -680,8 +695,6 @@
     
     fireEvent: fireEvent,
 
-    onLoad: onLoad,
-    onUnload: onUnload,
-
-    getEventInfo: getEventInfo
+    onLoad: basis.ready,  // deprecated, for backward capability
+    onUnload: onUnload
   };
