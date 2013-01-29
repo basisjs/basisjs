@@ -493,7 +493,7 @@
       return ref + '.basisObjectId';
     }
 
-    return function(tokens, debug, uri){
+    return function(tokens, debug, uri, source){
       var fn = tmplFunctions[uri && basis.path.relative(uri)];
       var paths = buildPathes(tokens, '_');
       var bindings = buildBindings(paths.binding);
@@ -527,7 +527,9 @@
               'break;'
             );
 
-          result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'TEXT_BUG', 'var ' + paths.path + ';return function(token, value){' +
+          result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'TEXT_BUG',
+            (source ? '/*\n' + source + '\n*/\n' : '') +
+            'var ' + paths.path + ';return function(token, value){' +
             'switch(token){' +
               code.join('') +
             '}}'
@@ -536,7 +538,9 @@
         }
 
         /**@cut*/try {
-        result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG', fnBody = 'return function createInstance_(obj,actionCallback,updateCallback){' + 
+        result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG',
+          fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
+          'return function createInstance_(obj,actionCallback,updateCallback){' + 
           'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
           (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
           'function updateAttach(){set(String(this),attaches[this])};\n' +

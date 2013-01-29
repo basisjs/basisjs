@@ -992,9 +992,7 @@
 
     return function(source, baseURI, options){
       var debug = !!(options && options.debug);
-
-      if (!source.templateTokens)
-        source = tokenize('' + source);
+      ;;;var source_;
 
       // result object
       var result = {
@@ -1007,11 +1005,19 @@
         options: {}
       };
 
+      if (!source.templateTokens)
+      {
+        ;;;source_ = source;
+        source = tokenize('' + source);
+      }
+
       if (debug)
         result.warns = [];
 
       // main task
       result.tokens = process(source, result);
+
+      ;;;if (source_) result.tokens.source_ = source_;
 
       // there must be at least one token in result
       if (!result.tokens)
@@ -1077,14 +1083,14 @@
   function cloneDecl(array){
     var result = [];
 
+    ;;;if (array.source_) result.source_ = array.source_;
+
     for (var i = 0; i < array.length; i++)
-    {
       result.push(
         Array.isArray(array[i])
           ? cloneDecl(array[i])
           : array[i]
       );
-    }
 
     return result;
   }

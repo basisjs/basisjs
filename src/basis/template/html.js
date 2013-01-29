@@ -347,7 +347,7 @@
     return function(tokens){
       var sourceURL = this.source.url || 'inline_template' + this.templateId;
 
-      var fn = getFunctions(tokens, true, sourceURL);
+      var fn = getFunctions(tokens, true, sourceURL, tokens.source_);
       var templateMap = {};
       var l10nMap = {};
       var l10nProtoSync;
