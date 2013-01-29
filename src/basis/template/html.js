@@ -405,14 +405,17 @@
   */
   function createEventHandler(attrName){
     return function(event){
+      event = new domEvent.Event(event);
+
+      // don't process right click - generaly FF problem
       if (event && event.type == 'click' && event.which == 3)
         return;
 
-      var cursor = domEvent.sender(event);
+      var cursor = event.sender;
       var attr;
       var refId;
 
-      // IE events may have no source
+      // IE events may have no source, nothing to do in this case
       if (!cursor)
         return;
 
@@ -432,7 +435,7 @@
       {
         var actions = attr.nodeValue.qw();
         for (var i = 0, actionName; actionName = actions[i++];)
-          node.templateAction(actionName, domEvent(event));
+          node.templateAction(actionName, event);
       }
     };
   }
