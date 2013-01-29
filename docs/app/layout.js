@@ -173,7 +173,7 @@
 
   Event.addGlobalHandler('keydown', function(e){
     var event = Event(e);
-    if (event.ctrlKey || event.shiftKey || event.altKey || prototypeMapPopup().visible)
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || prototypeMapPopup().visible)
       return;
 
     DOM.focus(searchInput.tmpl.field, !searchInput.focused);

@@ -232,7 +232,7 @@
 
         action: {
           select: function(event){
-            this.select(event.ctrlKey);
+            this.select(event.ctrlKey || event.metaKey);
           }
         }
       },

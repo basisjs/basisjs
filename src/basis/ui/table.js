@@ -450,7 +450,7 @@
     action: { 
       select: function(event){
         if (!this.isDisabled())
-          this.select(event.ctrlKey);
+          this.select(event.ctrlKey || event.metaKey);
       }
     }
   });
