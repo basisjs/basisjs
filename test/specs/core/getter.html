@@ -38,6 +38,18 @@
         { d: { a: 1, b: 2, c: 3 } }
       ];
 
+      var longPath = {
+        foo: {
+          bar: {
+            baz: {
+              basis: {
+                js: {}
+              }
+            }
+          }
+        }
+      };
+
       return [
         {
           name: 'Main frame',
@@ -48,11 +60,20 @@
                 {
                   name: 'create from path',
                   test: function(){
-                    var g = basis.getter('a');
-                    this.is(11, g(data[0]));
+                    var g = basis.getter('foo');
+                    this.is(longPath.foo, g(longPath));
 
-                    var g = basis.getter('d.a');
-                    this.is(1, g(data[data.length - 1]));
+                    var g = basis.getter('foo.bar');
+                    this.is(longPath.foo.bar, g(longPath));
+
+                    var g = basis.getter('foo.bar.baz');
+                    this.is(longPath.foo.bar.baz, g(longPath));
+
+                    var g = basis.getter('foo.bar.baz.basis');
+                    this.is(longPath.foo.bar.baz.basis, g(longPath));
+
+                    var g = basis.getter('foo.bar.baz.basis.js');
+                    this.is(longPath.foo.bar.baz.basis.js, g(longPath));                    
                   }
                 },
                 {
