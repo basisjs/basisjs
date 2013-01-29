@@ -1,6 +1,5 @@
 
   basis.require('basis.dom');
-  basis.require('basis.dom.event');
 
 
  /**
@@ -17,18 +16,18 @@
   var document = global.document;
   var location = global.location;
   var path = basis.path;
-  var dom = basis.dom;
-  var event = basis.dom.event;
+  var arrayFrom = basis.array.from;
   var Class = basis.Class;
   var cleaner = basis.cleaner;
-  var arrayFrom = basis.array.from;
+  var dom = basis.dom;
+  var DOMTokenList = global.DOMTokenList;
 
 
   //
   // main part
   //
 
-  var CLASSLIST_SUPPORTED = global.DOMTokenList && document && document.documentElement.classList instanceof global.DOMTokenList;
+  var CLASSLIST_SUPPORTED = DOMTokenList && document && document.documentElement.classList instanceof DOMTokenList;
   var IMPORTANT_REGEXP = /\s*!important/i;
   var IMPORTANT = String('important');
   var GENERIC_RULE_SEED = 1;
@@ -688,7 +687,7 @@
   if (CLASSLIST_SUPPORTED)
   {
     var proto = ClassList.prototype;
-    Object.extend(global.DOMTokenList.prototype, {
+    Object.extend(DOMTokenList.prototype, {
       set: proto.set,
       replace: proto.replace,
       bool: proto.bool,
