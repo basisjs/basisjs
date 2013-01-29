@@ -606,7 +606,7 @@
             // ie8 and lower, it's also more safe when Function.prototype.bind defined
             // by other libraries (like es5-shim)
           : function(){
-              console[methodName].apply(console, arguments);
+              Function.prototype.apply.call(console[methodName], console, arguments)
             };
       });
 
