@@ -407,6 +407,13 @@
                   }
                 }
               }
+              else
+              {
+                // quirks mode
+                // number || string set as it
+                // otherwise treat as boolean, if true set binding name and empty string in other cases
+                valueExpr = 'typeof value=="string"||typeof value=="number"?value:(value?"' + bindName + '":"")';
+              }
 
               varList.push(bindVar + '="' + defaultExpr + '"');
               toolsUsed.bind_attrClass = true;
