@@ -181,30 +181,32 @@
     selected: {
       events: 'select unselect',
       getter: function(node){
-        return node.selected ? 'selected' : '';
+        return node.selected;
       }
     },
     unselected: {
       events: 'select unselect',
       getter: function(node){
-        return node.selected ? '' : 'unselected';
+        return !node.selected;
       }
     },
     disabled: {
       events: 'disable enable',
       getter: function(node){
-        return node.disabled || node.contextDisabled ? 'disabled' : '';
+        return node.disabled || node.contextDisabled;
       }
     },
     enabled: {
       events: 'disable enable',
       getter: function(node){
-        return node.disabled || node.contextDisabled ? '' : 'enabled';
+        return !(node.disabled || node.contextDisabled);
       }
     },
     state: {
       events: 'stateChanged',
-      getter: 'state'
+      getter: function(node){
+        return String(node.state);
+      }
     },
     childCount: {
       events: 'childNodesModified',
@@ -215,13 +217,13 @@
     hasChildren: {
       events: 'childNodesModified',
       getter: function(node){
-        return !!node.firstChild ? 'hasChildren' : '';
+        return !!node.firstChild;
       }
     },
     empty: {
       events: 'childNodesModified',
       getter: function(node){
-        return !node.firstChild ? 'empty' : '';
+        return !node.firstChild;
       }
     }
   }, extendBinding);
