@@ -150,13 +150,12 @@
     event_fieldKeyup: createEvent('fieldKeyup', 'event') && function(event){
       if (this.nextFieldOnEnter)
       {
-        var keyCode = Event.key(event);
-        if (keyCode == Event.KEY.ENTER || keyCode == Event.KEY.CTRL_ENTER)
+        if (event.key == event.KEY.ENTER || event.key == event.KEY.CTRL_ENTER)
         {
-          Event.cancelDefault(event);
+          event.preventDefault();
           this.commit();
         }
-        else if (keyCode != Event.KEY.TAB)
+        else if (event.key != event.KEY.TAB)
           this.setValidity();
       }
 
@@ -680,8 +679,8 @@
         {
           this.select(this.parentNode.multipleSelect);
 
-          if (Event.sender(event).tagName != 'INPUT')
-            Event.kill(event);
+          if (event.sender.tagName != 'INPUT')
+            event.die();
         }
       }
     },
@@ -862,7 +861,7 @@
           if (this.parentNode)
             this.parentNode.hide();
 
-          Event.kill(event);
+          event.die();
         }
       }
     }
@@ -947,9 +946,9 @@
         var cur = this.selection.pick();
         var next;
 
-        switch (Event.key(event))
+        switch (event.key)
         {
-          case Event.KEY.DOWN:
+          case event.KEY.DOWN:
             if (event.altKey)
             {
               if (this.popup.visible)
@@ -963,7 +962,7 @@
             next = DOM.axis(cur ? cur : this.firstChild, DOM.AXIS_FOLLOWING_SIBLING).search(false, 'disabled');
           break;
 
-          case Event.KEY.UP: 
+          case event.KEY.UP: 
             if (event.altKey)
             {
               if (this.popup.visible)
@@ -987,19 +986,18 @@
         this.event_fieldKeyup(event);
       },
       keydown: function(event){
-        switch (Event.key(event))
+        switch (event.key)
         {
-          case Event.KEY.DOWN:
-          case Event.KEY.UP:
-            Event.kill(event);
+          case event.KEY.DOWN:
+          case event.KEY.UP:
+            event.die();
 
             break;
-          case Event.KEY.ENTER:
+          case event.KEY.ENTER:
             if (this.popup.visible)
               this.hide();
 
-            Event.kill(event);
-
+            event.die();
             break;
         }
 
