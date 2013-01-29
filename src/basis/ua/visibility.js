@@ -23,7 +23,7 @@
   var prefix = '';
   var visibilityProperty = 'visibilityState';
 
-  while (!document[visibilityProperty])
+  while (visibilityProperty && !document[visibilityProperty])
     if (visibilityProperty = prefix = prefixes.pop())
       visibilityProperty += 'VisibilityState';
 
