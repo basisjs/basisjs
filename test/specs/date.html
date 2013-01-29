@@ -194,10 +194,12 @@
             {
               name: 'toISODateString()',
               test: function(){
-                var D = new Date(2007, 5, 20);
+                // Date constructor creates date instances in local time, but toISOString returns in UTC timezone,
+                // so we need convert date to UTC before get ISO string                
+                var D = toUTC(new Date(2007, 5, 20));
                 this.is('2007-06-20', D.toISODateString());
 
-                var D = new Date(2007, 0, 1);
+                var D = toUTC(new Date(2007, 0, 1));
                 this.is('2007-01-01', D.toISODateString());
               }
             },
@@ -226,6 +228,21 @@
                 this.is(new Date(2007, 0, 1, 23, 59, 59), (new Date()).fromISOString('2007-01-01 23:59:59'));
               }
             },
+            {
+              name: 'fromISOString() <-> toISOString()',
+              test: function(){
+                this.is('2007-01-01', (new Date()).fromISOString('2007-01-01').toISODateString());
+                this.is('2007-01-01T01:02:03.123Z', (new Date()).fromISOString('2007-01-01T01:02:03.123Z').toISOString());
+
+                var d = new Date();
+                var isoStr = d.toISOString();
+                var d2 = new Date();
+                d2.setHours(d2.getHours() + 1);
+                this.is(false, d2 - d == 0); // should be false, it diff date time
+                this.is(isoStr, d2.fromISOString(isoStr).toISOString());
+                this.is(true, d2 - d == 0);
+              }
+            },            
             {
               name: 'fromDate()',
               test: function(){

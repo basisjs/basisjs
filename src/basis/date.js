@@ -45,27 +45,16 @@
     };
   });
 
-  var FORMAT = {
-    y: function(date){ return date.getFullYear().toString().substr(2); },   // %y - year in YY
-    Y: function(date){ return date.getFullYear(); },                        // %Y - year in YYYY
-    d: function(date){ return date.getDate(); },                            // %d - day (1..31)
-    D: function(date){ return date.getDate().lead(2); },                    // %D - day (01..31)
-    m: function(date){ return date.getMonth() + 1; },                       // %m - month (1..12)
-    M: function(date){ return (date.getMonth() + 1).lead(2); },             // %M - month (01..12)
-    h: function(date){ return date.getHours(); },                           // %h - hours (0..23)
-    H: function(date){ return date.getHours().lead(2); },                   // %H - hours (00..23)
-    i: function(date){ return (date.getHours() % 12 || 12).lead(2); },      // %i - hours (01..12)
-    p: function(date){ return date.getHours() > 12 ? 'pm' : 'am'; },        // %p - am or pm
-    P: function(date){ return date.getHours() > 12 ? 'PM' : 'AM'; },        // %p - AM or PM
-    I: function(date){ return date.getMinutes().lead(2); },                 // %I - minutes (00..59)
-    s: function(date){ return date.getSeconds(); },                         // %s - seconds (0..59)
-    S: function(date){ return date.getSeconds().lead(2); },                 // %S - seconds (00..59)
-    z: function(date){ return date.getMilliseconds(); },                    // %z - milliseconds (0..999)
-    Z: function(date){ return date.getMilliseconds().lead(3); }             // %Z - milliseconds (000..999)
-  };
+  function lead2(num){
+    return num < 10 ? '0' + num : num;
+  }
+
+  function lead3(num){
+    return num < 100 ? '0' + lead2(num) : num;
+  }  
 
   var reISOFormat = /^(\d{1,4})-(\d\d?)-(\d\d?)(?:[T ](\d\d?):(\d\d?):(\d\d?)(?:\.(\d+))?)?$/;
-  var reFormat = /%([ymdhiszp])/ig;
+  var reFormat = /%([yYdDmMhHipPIsSzZ])/g;
   var reIsoStringSplit = /\D/;
   var reIsoTimezoneDesignator = /(.{10,})([\-\+]\d{1,2}):?(\d{1,2})?$/;
 
@@ -79,10 +68,51 @@
     return month == 1 ? 28 + isLeapYear(year) : MONTH_DAY_COUNT[month];
   }
 
-  function dateFormat(date, format){
-    return format.replace(reFormat, function(m, part){
-      return FORMAT[part](date);
-    });
+  function dateFormat(date, format, useUTC){
+    var local = function(m, part){
+      switch (part)
+      {
+        case 'y': return String(date.getFullYear()).substr(2);      // %y - year in YY
+        case 'Y': return date.getFullYear();                        // %Y - year in YYYY
+        case 'd': return date.getDate();                            // %d - day (1..31)
+        case 'D': return lead2(date.getDate());                     // %D - day (01..31)
+        case 'm': return date.getMonth() + 1;                       // %m - month (1..12)
+        case 'M': return lead2(date.getMonth() + 1);                // %M - month (01..12)
+        case 'h': return date.getHours();                           // %h - hours (0..23)
+        case 'H': return lead2(date.getHours());                    // %H - hours (00..23)
+        case 'i': return lead2(date.getHours() % 12 || 12);         // %i - hours (01..12)
+        case 'p': return date.getHours() > 12 ? 'pm' : 'am';        // %p - am or pm
+        case 'P': return date.getHours() > 12 ? 'PM' : 'AM';        // %p - AM or PM
+        case 'I': return lead2(date.getMinutes());                  // %I - minutes (00..59)
+        case 's': return date.getSeconds();                         // %s - seconds (0..59)
+        case 'S': return lead2(date.getSeconds());                  // %S - seconds (00..59)
+        case 'z': return date.getMilliseconds();                    // %z - milliseconds (0..999)
+        case 'Z': return lead3(date.getMilliseconds());             // %Z - milliseconds (000..999)
+      }
+    };
+    var utc = function(m, part){
+      switch (part)
+      {
+        case 'y': return String(date.getUTCFullYear()).substr(2);      // %y - year in YY
+        case 'Y': return date.getUTCFullYear();                        // %Y - year in YYYY
+        case 'd': return date.getUTCDate();                            // %d - day (1..31)
+        case 'D': return lead2(date.getUTCDate());                     // %D - day (01..31)
+        case 'm': return date.getUTCMonth() + 1;                       // %m - month (1..12)
+        case 'M': return lead2(date.getUTCMonth() + 1);                // %M - month (01..12)
+        case 'h': return date.getUTCHours();                           // %h - hours (0..23)
+        case 'H': return lead2(date.getUTCHours());                    // %H - hours (00..23)
+        case 'i': return lead2(date.getUTCHours() % 12 || 12);         // %i - hours (01..12)
+        case 'p': return date.getUTCHours() > 12 ? 'pm' : 'am';        // %p - am or pm
+        case 'P': return date.getUTCHours() > 12 ? 'PM' : 'AM';        // %p - AM or PM
+        case 'I': return lead2(date.getUTCMinutes());                  // %I - minutes (00..59)
+        case 's': return date.getUTCSeconds();                         // %s - seconds (0..59)
+        case 'S': return lead2(date.getUTCSeconds());                  // %S - seconds (00..59)
+        case 'z': return date.getUTCMilliseconds();                    // %z - milliseconds (0..999)
+        case 'Z': return lead3(date.getUTCMilliseconds());             // %Z - milliseconds (000..999)
+      }
+    }
+
+    return format.replace(reFormat, useUTC ? utc : local);
   }
 
   // Date prototype extension
@@ -178,10 +208,10 @@
       throw new Error(PART_ERROR + part);
     },
     toISODateString: function(){
-      return dateFormat(this, '%Y-%M-%D');
+      return dateFormat(this, '%Y-%M-%D', true);
     },
     toISOTimeString: function(){
-      return dateFormat(this, '%H:%I:%S.%Z');
+      return dateFormat(this, '%H:%I:%S.%Z', true);
     },
     fromDate: function(date){
       if (date instanceof Date)
@@ -197,23 +227,14 @@
     }
   });
 
-  var _native_toISOString = Date.prototype.toISOString;
-  if (_native_toISOString && (new Date).toISOString().match(/Z/i))
-  {
-    Date.prototype.toISOString = function(){
-      return _native_toISOString.call(this).replace(/Z/i, '');
-    };
-  }
-
   basis.object.complete(Date.prototype, {
     // implemented in ECMAScript5
     // TODO: check for time zone
     toISOString: function(){
-      return this.toISODateString() + 'T' + this.toISOTimeString();
+      return this.toISODateString() + 'T' + this.toISOTimeString() + 'Z';
     },
     fromISOString: function(isoDateString){
-      this.fromDate(fromISOString(isoDateString));
-      return this;
+      return this.fromDate(fromISOString(isoDateString));
     }
   });
 
