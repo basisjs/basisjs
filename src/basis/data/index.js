@@ -360,9 +360,9 @@
     this.indexId = indexId;
   }
 
-  var createIndexConstructor = function(IndexClass){
+  var createIndexConstructor = function(IndexClass, defGetter){
     return function(getter, events){
-      return new IndexConstructor(IndexClass, getter, events);
+      return new IndexConstructor(IndexClass, getter || defGetter, events);
     };
   };
 
@@ -370,7 +370,7 @@
   // Build basic index constructors
   //
 
-  var count = createIndexConstructor(Count);
+  var count = createIndexConstructor(Count, basis.fn.$true);
   var sum = createIndexConstructor(Sum);
   var avg = createIndexConstructor(Avg);
   var min = createIndexConstructor(Min);
