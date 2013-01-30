@@ -604,6 +604,23 @@
     });
   }
 
+  function percentOfSum(getter, events){
+    var sumIndex = 'sum_' + getUniqueCalcIndexId();
+    var indexes = {};
+
+    getter = basis.getter(getter);
+    indexes[sumIndex] = sum(getter, events);
+
+    var calc = function(data, index, object){
+      return getter(object) / index[sumIndex];
+    };
+
+    return calc.preset = new CalcIndexPreset({
+      indexes: indexes,
+      calc: calc
+    });
+  }
+
 
  /**
   * @class
@@ -902,6 +919,7 @@
     CalcIndexPreset: CalcIndexPreset,
     percentOfRange: percentOfRange,
     percentOfMax: percentOfMax,
+    percentOfSum: percentOfSum,
 
     IndexMap: IndexMap
   };
