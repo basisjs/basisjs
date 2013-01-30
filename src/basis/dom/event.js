@@ -640,8 +640,8 @@
   }
 
   function wrapEventFunction(fn){
-    return function(event){
-      return fn(wrap(event));
+    return function(event, arg){
+      return fn(wrap(event), arg);
     }
   }
 
