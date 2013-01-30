@@ -320,9 +320,15 @@
   };
 
  /**
-  * @constructor
+  * @class
   */
-  function IndexConstructor(BaseClass, getter, events){
+  function IndexConstructor(){
+  }
+
+ /**
+  * @function
+  */
+  function getIndexConstructor(BaseClass, getter, events){
     if (!Class.isClass(BaseClass) || !BaseClass.isSubclassOf(Index))
       throw 'Wrong class for index constructor';
 
@@ -339,7 +345,7 @@
 
     if (indexConstructor)
       return indexConstructor.owner;
-
+    
     //
     // Create new constructor
     //
@@ -348,8 +354,9 @@
     for (var i = 0; i < events.length; i++)
       events_[events[i]] = true;
 
+    indexConstructor = new IndexConstructor();
     indexConstructors_[indexId] = {
-      owner: this,
+      owner: indexConstructor,
       indexClass: BaseClass.subclass({
         indexId: indexId,
         updateEvents: events_,
@@ -357,12 +364,27 @@
       })
     };
 
-    this.indexId = indexId;
+    indexConstructor.indexId = indexId;
+    return indexConstructor;
   }
 
   var createIndexConstructor = function(IndexClass, defGetter){
     return function(getter, events){
-      return new IndexConstructor(IndexClass, getter || defGetter, events);
+      var dataset;
+
+      if (getter instanceof AbstractDataset)
+      {
+        dataset = getter;
+        getter = events;
+        events = arguments[2];
+      }
+
+      var indexConstructor = getIndexConstructor(IndexClass, getter || defGetter, events);
+
+      if (dataset)
+        return dataset.getIndex(indexConstructor);
+      else
+        return indexConstructor;
     };
   };
 
