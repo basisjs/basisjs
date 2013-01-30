@@ -1,15 +1,13 @@
 
   basis.require('basis.timer');
   basis.require('basis.l10n');
+  basis.require('basis.data');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
   basis.require('basis.template.html');
 
 
  /**
-  * Classes:
-  *   {basis.ui.Node}, {basis.ui.PartitionNode}, {basis.ui.GroupingNode}
-  *
   * @namespace basis.ui
   */
 
@@ -58,6 +56,7 @@
       var def = null;
       var value = extension[key];
 
+      // NOTE: check for Node, because first call of extendBinding happens before Node declared
       if (Node && value instanceof Node)
       {
         def = {
@@ -78,7 +77,14 @@
       {
         if (value)
         {
-          value = BINDING_PRESET.process(key, value);
+          if (typeof value == 'string')
+            value = BINDING_PRESET.process(key, value);
+          else
+            // getter is function that returns value if value is basis.Token or basis.data.Object instance
+            // those sort of instance have mechanism (via bindingBridge) to update itself
+            // TODO: basis.data.DataObject should be replace for basis.data.AbstractData
+            if (value instanceof basis.Token || (value instanceof basis.data.DataObject && value.bindingBridge))
+              value = basis.fn.$const(value);
 
           if (typeof value != 'object')
           {
@@ -127,16 +133,12 @@
       },
       process: function(key, value){
         var preset;
+        var m = value.match(prefixRegExp);
 
-        if (typeof value == 'string')
+        if (m)
         {
-          var m = value.match(prefixRegExp);
-
-          if (m)
-          {
-            preset = presets[m[1]];
-            value = m[2] || key;
-          }
+          preset = presets[m[1]];
+          value = m[2] || key;
         }
 
         return preset
@@ -167,10 +169,6 @@
 
   BINDING_PRESET.add('l10n', function(token){
     return basis.fn.$const(basis.l10n.getToken(token));
-  });
-
-  BINDING_PRESET.add('resource', function(url){
-    return basis.fn.$const(basis.resource(url));
   });
 
 
