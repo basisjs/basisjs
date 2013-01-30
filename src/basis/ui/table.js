@@ -343,10 +343,14 @@
   var FooterCell = Class(UINode, {
     className: namespace + '.FooterCell',
 
+    value: '',
+
     template: templates.FooterCell,
     binding: {
       colSpan: 'colSpan',
-      value: basis.fn.$const('\xA0')
+      value: function(node){
+        return node.value || String(node.value) || '\xA0';
+      }
     },
 
     colSpan: 1,
@@ -410,6 +414,8 @@
               config.template = footerConfig.template;
             if (footerConfig.binding)
               config.binding = footerConfig.binding;
+            if ('value' in footerConfig)
+              config.value = footerConfig.value;
 
             // create instace of cell
            
