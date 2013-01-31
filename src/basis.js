@@ -1758,6 +1758,15 @@
       return cursor === superClass;
     }
 
+   /**
+    * @func
+    * dev mode only
+    */
+    function dev_verboseNameWrap(name, args, fn){
+      return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
+    }
+
+
     // test is toString property enumerable
     var TOSTRING_BUG = (function(){
       for (var key in { toString: 1 })
@@ -1804,6 +1813,10 @@
 
         // temp class constructor with no init call
         var SuperClass_ = function(){};
+
+        // verbose name in dev
+        ;;;SuperClass_ = dev_verboseNameWrap(SuperClass.className, {}, SuperClass_);
+
         SuperClass_.prototype = SuperClass.prototype;
 
         var newProto = new SuperClass_;
@@ -1851,46 +1864,43 @@
         // NOTE: this code makes Chrome and Firefox show class name in console
         var className = newClassProps.className;
 
-        var newClass =
-            /** @cut for more verbose in dev */ new Function('seed', 'return {"' + className + '": ' + (
+        var newClass = newClassProps.extendConstructor_
+          // constructor with instance extension
+          ? function(extend){
+              // mark object
+              this.basisObjectId = seed.id++;
 
-              newClassProps.extendConstructor_
+              // extend and override instance properties
+              var prop;
+              for (var key in extend)
+              {
+                prop = this[key];
+                this[key] = prop && prop.__extend__
+                  ? prop.__extend__(extend[key])
+                  : extend[key];
+              }
 
-                // constructor with instance extension
-                ? function(extend){
-                    // mark object
-                    this.basisObjectId = seed.id++;
+              // call constructor
+              this.init();
 
-                    // extend and override instance properties
-                    var prop;
-                    for (var key in extend)
-                    {
-                      prop = this[key];
-                      this[key] = prop && prop.__extend__
-                        ? prop.__extend__(extend[key])
-                        : extend[key];
-                    }
+              // post init
+              this.postInit();
+            }
 
-                    // call constructor
-                    this.init();
+          // simple constructor
+          : function(){
+              // mark object
+              this.basisObjectId = seed.id++;
 
-                    // post init
-                    this.postInit();
-                  }
+              // call constructor
+              this.init.apply(this, arguments);
 
-                // simple constructor
-                : function(){
-                    // mark object
-                    this.basisObjectId = seed.id++;
+              // post init
+              this.postInit();
+            };
 
-                    // call constructor
-                    this.init.apply(this, arguments);
-
-                    // post init
-                    this.postInit();
-                  }
-
-            /** @cut for more verbose in dev */ ) + '\n}["' + className + '"]')(seed);
+        // verbose name in dev
+        ;;;newClass = dev_verboseNameWrap(className, { seed: seed }, newClass);
 
         // add constructor property to prototype
         newProto.constructor = newClass;
@@ -1952,7 +1962,7 @@
    /**
     * @func
     */
-    var customExtendProperty = function(extension, func){
+    var customExtendProperty = function(extension, func, devName){
       return {
         __extend__: function(extension){
           if (!extension)
@@ -1962,6 +1972,7 @@
             return extension;
 
           var Base = function(){};
+          /** @cut verbose name in dev */Base = dev_verboseNameWrap(devName || 'customExtendProperty', {}, Base);
           Base.prototype = this;
           var result = new Base;
           func(result, extension);
@@ -1975,7 +1986,7 @@
     * @func
     */
     var extensibleProperty = function(extension){
-      return customExtendProperty(extension, extend);
+      return customExtendProperty(extension, extend, 'extensibleProperty');
     };
 
 
@@ -1991,7 +2002,7 @@
             ? value.__extend__(extension[key])
             : extensibleProperty(extension[key]);
         }
-      });
+      }, 'nestedExtendProperty');
     };
 
    /**
@@ -2009,6 +2020,9 @@
           result = {
             __extend__: create
           };
+
+          // verbose name in dev
+          ;;;var Cls = dev_verboseNameWrap('oneFunctionProperty', {}, function(){}); result = new Cls; result.__extend__ = create;
 
           for (var key in keys)
             if (keys[key])
