@@ -1251,6 +1251,12 @@
                     node.setSorting(basis.getter('data.value'));
                     this.is(false, checkNode(node));
 
+                    node.firstChild.update({ group: 2 });
+                    this.is(false, checkNode(node));
+
+                    node.firstChild.update({ group: 1 });
+                    this.is(false, checkNode(node));
+
                     node.setGrouping({
                       groupGetter: basis.getter('data.group'),
                       sorting: basis.getter('data.id'),
