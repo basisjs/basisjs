@@ -1251,12 +1251,6 @@
                     node.setSorting(basis.getter('data.value'));
                     this.is(false, checkNode(node));
 
-                    node.firstChild.update({ group: 2 });
-                    this.is(false, checkNode(node));
-
-                    node.firstChild.update({ group: 1 });
-                    this.is(false, checkNode(node));
-
                     node.setGrouping({
                       groupGetter: basis.getter('data.group'),
                       sorting: basis.getter('data.id'),
@@ -1279,6 +1273,66 @@
                     node.setGrouping();
                     this.is(false, checkNode(node));
                     this.is(order, node.childNodes);
+                  }
+                },
+                {
+                  name: 'mixing sorting & grouping, wrong order on child group changing (issue #1)',
+                  test: function(){
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet(),
+                      sorting: 'data.value',
+                      grouping: 'data.group'
+                    });
+
+                    var child = node.firstChild;
+                    var orginalGroupId = child.data.group;
+
+                    child.update({ group: orginalGroupId + 1 });
+                    this.is(false, checkNode(node));
+
+                    child.update({ group: orginalGroupId });
+                    this.is(false, checkNode(node));
+
+                    ///////
+
+                    var node = new Node({
+                      childFactory: function(cfg){
+                        return new Node(cfg);
+                      },
+                      sorting: 'data.value',
+                      grouping: {
+                        groupGetter: 'data.group',
+                        sorting: 'data.id'
+                      },
+                      childNodes: [
+                        { value: 2, group: 1 },
+                        { value: 3, group: 1 },
+                        { value: 3, group: 2 },
+                        { value: 4, group: 2 },
+                        { value: 1, group: 3 },
+                        { value: 4, group: 3 },
+                        { value: 5, group: 3 },
+                        { value: 1, group: 4 }
+                      ]
+                    });
+
+                    var child = node.firstChild;
+
+                    child.update({ group: 2 });
+                    this.is(2, node.childNodes.indexOf(child));
+
+                    child.update({ group: 3 });
+                    this.is(4, node.childNodes.indexOf(child));
+
+                    child.update({ group: 4 });
+                    this.is(7, node.childNodes.indexOf(child));
+
+                    child.update({ group: 5 });
+                    this.is(7, node.childNodes.indexOf(child));
+
+                    child.update({ group: 1 });
+                    this.is(0, node.childNodes.indexOf(child));
                   }
                 },
                 {
