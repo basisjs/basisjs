@@ -33,13 +33,13 @@
 
   var LISTEN_MAP = {};
   var LISTEN = {
-    add: function(listenName, eventName, propertyName, handler){
+    add: function(listenName, eventName, propertyName, callback){
       if (!propertyName)
         propertyName = listenName;
 
       LISTEN_MAP[eventName] = {
         listenName: listenName,
-        listen: handler || function(listenHandler, args){
+        listen: callback || function(listenHandler, args){
           if (args[0])  // second argument is oldObject
             args[0].removeHandler(listenHandler, this);
 
@@ -60,7 +60,7 @@
   * @param {string} eventName
   * @func
   */
-  function createEvent(eventName){
+  function createDispatcher(eventName){
     var eventFunction = events[eventName];
 
     if (!eventFunction)
@@ -74,17 +74,17 @@
           if (fn = this.listen[eventFunction.listenName])
             eventFunction.listen.call(this, fn, arguments);
 
-        while (cursor = cursor.handlers_)
+        while (cursor = cursor.handler)
         {
-          // handler call
-          if (fn = cursor.handler[eventName])
+          // callback call
+          if (fn = cursor.callbacks[eventName])
             if (typeof fn == 'function')
-              fn.apply(cursor.context, args = args || [this].concat(slice.call(arguments)));
+              fn.apply(cursor.context || this, args = args || [this].concat(slice.call(arguments)));
 
-          // any event handler
-          if (fn = cursor.handler['*'])
+          // any event callback call
+          if (fn = cursor.callbacks['*'])
             if (typeof fn == 'function')
-              fn.call(cursor.context, {
+              fn.call(cursor.context || this, {
                 sender: this,
                 type: eventName,
                 args: arguments
@@ -105,7 +105,8 @@
       {
         eventFunction = new Function('eventName', 'slice', 'DEVMODE',
           'var eventFunction;\n' +
-          'return eventFunction = function _event_' + eventName + '(' + slice.call(arguments, 1).join(', ') + '){' +
+          'return eventFunction = function(' + slice.call(arguments, 1).join(', ') + '){' +
+          '//' + namespace + '.dispatcher.' + eventName + '\n' +
           eventFunction.toString()
             .replace(/\beventName\b/g, "'" + eventName + "'")
             .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + 
@@ -130,49 +131,53 @@
   var Emitter = Class(null, {
     className: namespace + '.Emitter',
 
+    // use extend constructor
+    extendConstructor_: true,
+
    /**
-    * List of event handler sets.
+    * Head of event handler set list.
     * @type {object}
     * @private
     */
-    handlers_: null,
+    handler: null,
+
+    // TODO: remove
+    handlerContext: null,
 
    /**
     * Fires when object is destroing.
     * NOTE: don't override
     * @event
     */
-    event_destroy: createEvent('destroy'),
+    event_destroy: createDispatcher('destroy'),
 
    /**
     * Related object listeners.
     */
     listen: Class.nestedExtendProperty(),
 
-    // use extend constructor
-    extendConstructor_: true,
-
    /**
     * @constructor
     */
     init: function(){
-      // add first handler
-      if (this.handler)
+      // process handler
+      if (this.handler && !this.handler.callbacks)
       {
-        this.addHandler(this.handler, this.handlerContext);
-        this.handler = null;
-        this.handlerContext = null;
+        this.handler = {
+          callbacks: this.handler,
+          context: this.handlerContext || this
+        }
       }
     },
 
    /**
     * Adds new event handler to object.
-    * @param {object} handler Event handler set.
+    * @param {object} callbacks Callback set.
     * @param {object=} context Context object.
     */
-    addHandler: function(handler, context){
-      if (DEVMODE && !handler)
-        basis.dev.warn('Emitter#addHandler: handler is not an object (', handler, ')');
+    addHandler: function(callbacks, context){
+      if (DEVMODE && !callbacks)
+        basis.dev.warn('Emitter#addHandler: callbacks is not an object (', callbacks, ')');
 
       context = context || this;
       
@@ -180,42 +185,43 @@
       if (DEVMODE)
       {
         var cursor = this;
-        while (cursor = cursor.handlers_)
+        while (cursor = cursor.handler)
         {
-          if (cursor.handler === handler && cursor.context === context)
+          if (cursor.callbacks === callbacks && cursor.context === context)
           {
-            basis.dev.warn('Emitter#addHandler: add duplicate event handler', handler, 'to Emitter instance:', this);
+            basis.dev.warn('Emitter#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
             break;
           }
         }
       }
 
       // add handler
-      this.handlers_ = { 
-        handler: handler,
+      this.handler = { 
+        callbacks: callbacks,
         context: context,
-        handlers_: this.handlers_
+        handler: this.handler
       };
     },
 
    /**
     * Removes event handler set from object. For this operation parameters
     * must be the same (equivalent) as used for addHandler method.
-    * @param {object} handler Event handler set.
+    * @param {object} callbacks Callback set.
     * @param {object=} context Context object.
     */
-    removeHandler: function(handler, context){
+    removeHandler: function(callbacks, context){
+      var cursor = this;
+      var prev = cursor;
+
       context = context || this;
 
       // search for handler and remove it
-      var cursor = this;
-      var prev = cursor;
-      while (cursor = cursor.handlers_)
+      while (cursor = cursor.handler)
       {
-        if (cursor.handler === handler && cursor.context === context)
+        if (cursor.callbacks === callbacks && cursor.context === context)
         {
-          cursor.handler = NULL_HANDLER; // make it non-callable
-          prev.handlers_ = cursor.handlers_;
+          cursor.callbacks = NULL_HANDLER; // make it non-callable
+          prev.handler = cursor.handler;
           return;
         }
         prev = cursor;
@@ -238,7 +244,7 @@
       this.event_destroy();
 
       // drop event handlers if any
-      this.handlers_ = null;
+      this.handler = null;
     }
   });
 
@@ -256,7 +262,6 @@
   }
 
 
-
   //
   // export names
   //
@@ -264,7 +269,7 @@
   module.exports = {
     LISTEN: LISTEN,
 
-    create: createEvent,
+    create: createDispatcher,
     events: events,
 
     Emitter: Emitter,
