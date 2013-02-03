@@ -494,24 +494,29 @@
             case 'style':
               var props = [];
 
-              parts = attr.value.match(STYLE_ATTR_PARTS);
               bindings = [];
-
-              for (var j = 0, part; part = parts[j]; j++)
+              if (parts = attr.value.match(STYLE_ATTR_PARTS))
               {
-                var m = part.match(STYLE_PROPERTY);
-                var propertyName = m[1];
-                var value = m[2].trim();
-
-                var valueParts = value.split(ATTR_BINDING);
-                if (valueParts.length > 1)
+                for (var j = 0, part; part = parts[j]; j++)
                 {
-                  var expr = buildExpression(valueParts);
-                  expr.push(propertyName);
-                  bindings.push(expr);
+                  var m = part.match(STYLE_PROPERTY);
+                  var propertyName = m[1];
+                  var value = m[2].trim();
+
+                  var valueParts = value.split(ATTR_BINDING);
+                  if (valueParts.length > 1)
+                  {
+                    var expr = buildExpression(valueParts);
+                    expr.push(propertyName);
+                    bindings.push(expr);
+                  }
+                  else
+                    props.push(propertyName + ': ' + untoken(value));
                 }
-                else
-                  props.push(propertyName + ': ' + untoken(value));
+              }
+              else
+              {
+                ;;;if (/\S/.test(attr.value)) basis.dev.warn('Bad value for style attribute (value ignored):', attr.value);
               }
 
               props.push('');
