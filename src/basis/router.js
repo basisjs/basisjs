@@ -1,6 +1,7 @@
 
   basis.require('basis.ua');
-  basis.require('basis.event');
+  basis.require('basis.dom.event');
+
 
  /**
   * @namespace basis.router
@@ -8,12 +9,17 @@
 
   var namespace = this.path;
 
+
+  var location = global.location;
+  var document = global.document;
   var docMode = document.documentMode;
-  var oldIE = (/msie\s*[\w.]+/i.exec(navigator.userAgent) && (!docMode || docMode <= 7));
+  var buggyIE = basis.ua.is('IE') && (!docMode || docMode <= 7);
+  var eventSupport = 'onhashchange' in global && !buggyIE;
 
   var CHECK_INTERVAL = 50;
   var NAMED_PARAM = /:\w+/g;
   var SPLAT_PARAM = /\\\*\w+/g;
+
 
   function pathToRegExp(route){
     return new RegExp(
@@ -26,49 +32,46 @@
     'i');
   }
 
-  // router object
+
+  //
+  // main part
+  //
 
   var Router = basis.Class(null, {
-    _routes: null,
-    _cachedPath: null,
+    routes_: null,
+    cachedPath_: null,
     started: false,
 
     init: function(){
-      this._routes = {};
-      this._cachedPath = '';
+      this.routes_ = {};
+      this.cachedPath_ = '';
     },
     
     add: function(path, callback, context){
-      if (!this._routes[path])
-      {
-        var regExp = path;
-        if (Object.prototype.toString.call(path) != '[object RegExp]')
-          regExp = pathToRegExp(path);
+      var route = this.routes_[path]
 
-        this._routes[path] = {
+      if (!route)
+      {
+        route = {
           source: path,
-          regExp: regExp,
-          callbacks: [
-            {
-              callback: callback,
-              context: context
-            }
-          ]
-        }
+          callbacks: [],
+          regexp: Object.prototype.toString.call(path) != '[object RegExp]'
+            ? pathToRegExp(path)
+            : path
+        };
+        this.routes_[path] = route;
       }
-      else
-      {
-        this._routes[path].callbacks.push({
-          callback: callback,
-          context: context
-        });
-      }
+      
+      route.callbacks.push({
+        callback: callback,
+        context: context
+      });
 
-      if (this._cachedPath)
+      if (this.cachedPath_)
       {
-        var match = this._cachedPath.match(this._routes[path].regExp);
+        var match = this.cachedPath_.match(route.regexp);
         if (match)
-          callback.apply(context, Array.from(match, 1));
+          callback.apply(context, basis.array.from(match, 1));
       }
     },
     
@@ -85,43 +88,47 @@
     start: function(){
       if (!this.started)
       {
-        if ('onhashchange' in window && !oldIE)
-          basis.dom.event.addHandler(window, 'hashchange', this.checkUrl, this);
+        if (eventSupport)
+          basis.dom.event.addHandler(global, 'hashchange', this.checkUrl, this);
         else
           this.timer = setInterval(this.checkUrl.bind(this), 50);
 
-         this.started = true;
+        ;;;basis.dev.log('Router stated');
+        this.started = true;
       }
 
       this.checkUrl();
     },
     
     stop: function(){
-      basis.dom.event.removeHandler(window, 'hashchange', this.checkUrl, this);
-      clearInterval(this.timer);
+      if (eventSupport)
+        basis.dom.event.removeHandler(global, 'hashchange', this.checkUrl, this);
+      else
+        clearInterval(this.timer);
+
+      ;;;basis.dev.log('Router stated');
       this.started = false;
     },
 
     checkUrl: function(){
       var curPath = location.hash.substr(1) || '/';
-      var args;
 
-      if (curPath != this._cachedPath)
+      if (curPath != this.cachedPath_)
       {
-        this._cachedPath = curPath;
-        ;;;console.log('New hash: ', curPath);
+        ;;;basis.dev.log('Router hash changed:', curPath);
+        this.cachedPath_ = curPath;
 
-        for (var i in this._routes)
+        for (var path in this.routes_)
         {
-          var route = this._routes[i];
-          var match = curPath.match(route.regExp);
+          var route = this.routes_[path];
+          var match = curPath.match(route.regexp);
           if (match)
           {
-            var args = Array.from(match, 1);
-            for (var j = 0, callback; callback = route.callbacks[j]; j++)
-              callback.callback.apply(callback.context, args);
+            var args = basis.array.from(match, 1);
+            for (var i = 0, item; item = route.callbacks[i]; i++)
+              item.callback.apply(item.context, args);
 
-            ;;;console.log('Hash match: ', route.source, args);
+            ;;;basis.dev.log('Router hash match:', route.source, args);
           }
         }
       }
@@ -135,6 +142,7 @@
       this.stop();
     }
   });
+
 
   //
   // export names
