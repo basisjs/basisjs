@@ -96,7 +96,7 @@
   */
   /*function treeChildFactory(config){
     if (config.childNodes)
-      return new Folder(Object.complete({ childFactory: this.childFactory }, config));
+      return new Folder(basis.object.complete({ childFactory: this.childFactory }, config));
     else
       return new Node(config);
   }*/

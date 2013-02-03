@@ -80,7 +80,7 @@
   }
   
   function processAwaitingJsDocs(){
-    var keys = Object.keys(awaitingUpdateQueue);
+    var keys = basis.object.keys(awaitingUpdateQueue);
     for (var k = 0; k < keys.length; k++)
     {
       var fullPath = keys[k];
@@ -165,7 +165,7 @@
     if (tags.description.trim() == '')
       delete tags.description;
 
-    this.set('tags', Object.keys(tags).length ? tags : null);
+    this.set('tags', basis.object.keys(tags).length ? tags : null);
   }
 
 
@@ -506,7 +506,7 @@
     context: 'object'
   });  // buildin, '', 'object'
 
-  Object.iterate(buildin, function(name, value){
+  basis.object.iterate(buildin, function(name, value){
     value.className = name;
     walk({ scope: value, path: name, context: 'class' });
     walk({ scope: value.prototype, path: name + '.prototype', context: 'prototype' });
@@ -547,7 +547,7 @@
 
   function getMembers(path){
     //var objData = mapDO[path] && mapDO[path].data;
-    //return objData.kind == 'class' ? Object.iterate(objData.obj.docsProto_, function(key, value){ return mapDO[value.path] }) : 
+    //return objData.kind == 'class' ? basis.object.iterate(objData.obj.docsProto_, function(key, value){ return mapDO[value.path] }) : 
     return members[path];
   }
 
@@ -739,7 +739,7 @@
     }
   };
 
-  var resolveQueue = Object.values(basis.namespaces_).map(function(ns){
+  var resolveQueue = basis.object.values(basis.namespaces_).map(function(ns){
     return ns.source_
       ? {
           url: ns.filename_,

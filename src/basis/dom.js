@@ -210,7 +210,7 @@
     * @param {boolean} direction False for normal (forward) direction, true for backward direction.
     */
     setDirection: function(direction){
-      Object.extend(this,
+      basis.object.extend(this,
         direction
         ? {
             a: LAST_CHILD,        // nextChild  

@@ -22,7 +22,7 @@
 
     var DOM = basis.dom;
     var cssClass = basis.cssom.classList;
-    var extend = Object.extend;
+    var extend = basis.object.extend;
     var arrayFrom = basis.array.from;
     var Class = basis.Class;
 

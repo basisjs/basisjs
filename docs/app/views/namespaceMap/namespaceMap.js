@@ -115,7 +115,7 @@
             }
           }
 
-          namespaceClassDS.set(Object.values(dsClsList));
+          namespaceClassDS.set(basis.object.values(dsClsList));
         }
       }
     }

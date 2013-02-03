@@ -894,7 +894,7 @@
           var curYear = date.getFullYear();
           var firstDate = (new Date(date)).add('millisecond', offset);
           var firstYear = firstDate.getFullYear();
-          var years = Object.keys(this.map.enable).filter(function(year){ return offset * year >= offset * firstYear; });
+          var years = basis.object.keys(this.map.enable).filter(function(year){ return offset * year >= offset * firstYear; });
           var yearCount = years.length;
 
           if (yearCount)

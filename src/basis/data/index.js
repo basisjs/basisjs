@@ -482,7 +482,7 @@
     },
     
     destroy: function(){
-      var indexes = Object.values(this.indexes__);
+      var indexes = basis.object.values(this.indexes__);
       for (var indexId in indexes)
         this.deleteIndex(indexes[indexId]);
     }
@@ -727,7 +727,7 @@
       this.calcs = {};
 
       if (!this.keyMap || this.keyMap instanceof KeyObjectMap == false)
-        this.keyMap = new KeyObjectMap(Object.complete({
+        this.keyMap = new KeyObjectMap(basis.object.complete({
           create: function(key, config){
             return new this.itemClass(config);
           }
@@ -735,8 +735,8 @@
 
       MapFilter.prototype.init.call(this);
 
-      Object.iterate(indexes, this.addIndex, this);
-      Object.iterate(calcs, this.addCalc, this);
+      basis.object.iterate(indexes, this.addIndex, this);
+      basis.object.iterate(calcs, this.addCalc, this);
     },
 
     addIndex: function(key, index){

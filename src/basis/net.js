@@ -375,7 +375,7 @@
                                                                         // IE returns date string with no leading zero and IIS may parse
                                                                         // date wrong and response with code 400
 
-    Object.iterate(extend(headers, requestData.headers), function(key, value){
+    basis.object.iterate(extend(headers, requestData.headers), function(key, value){
       if (value != null)
         this.setRequestHeader(key, value);
     }, request);

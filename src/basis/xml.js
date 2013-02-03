@@ -18,7 +18,7 @@
   var Class = basis.Class;
   var Browser = basis.ua;
 
-  var extend = Object.extend;
+  var extend = basis.object.extend;
 
   var ELEMENT_NODE = DOM.ELEMENT_NODE;
   var ATTRIBUTE_NODE = DOM.ATTRIBUTE_NODE;

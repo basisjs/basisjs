@@ -181,7 +181,7 @@
       grouping: grouping,
       childFactory: function(config){
         if (config.delegate.type == Folder)
-          return new FolderNode(Object.extend({ childFactory: this.childFactory }, config));
+          return new FolderNode(basis.object.extend({ childFactory: this.childFactory }, config));
         else
           return new FileNode(config);
       }
@@ -199,7 +199,7 @@
       container: document.getElementById('lazyFileTreeContainer'),
       childFactory: function(config){
         if (config.delegate.type == Folder)
-          return new LazyFolderNode(Object.extend({ childFactory: this.childFactory }, config));
+          return new LazyFolderNode(basis.object.extend({ childFactory: this.childFactory }, config));
         else
           return new FileNode(config);
       }

@@ -9,7 +9,7 @@
         data: { kind: 'Section', title: 'Buildin class extensions', fullPath: 'window' },
         selectable: false,
         collapsed: true,
-        childNodes: Object.iterate(app.core.buildin, function(key, value){
+        childNodes: basis.object.iterate(app.core.buildin, function(key, value){
           return new app.ext.docTree.DocTreeClassNode({
             data: {
               kind: 'Class',
@@ -24,7 +24,7 @@
       {
         data: { kind: 'Section', title: 'basis', fullPath: 'basis' },
         selectable: false,
-        childNodes: Object.iterate(basis.namespaces_, function(key){
+        childNodes: basis.object.iterate(basis.namespaces_, function(key){
           return app.core.mapDO[key];
         })
       }

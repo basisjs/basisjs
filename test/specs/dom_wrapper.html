@@ -76,7 +76,7 @@
       function getTestSet(){
         return testSet.map(function(item){
           return {
-            data: Object.slice(item.data)
+            data: basis.object.slice(item.data)
           };
         });
       }
@@ -85,7 +85,7 @@
         return new basis.data.Dataset({
           items: testSet.map(function(item){
             return new basis.data.DataObject({
-              data: Object.slice(item.data)
+              data: basis.object.slice(item.data)
             });
           })
         });

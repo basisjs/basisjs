@@ -215,7 +215,7 @@
     prepareRequestData: function(requestData){
       requestData = AjaxTransport.prototype.prepareRequestData.call(this, requestData);
 
-      Object.extend(requestData, {
+      basis.object.extend(requestData, {
         namespace: this.namespace,
         methodName: this.methodName,
         soapBody: requestData.soapBody || this.soapBody,

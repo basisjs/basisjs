@@ -43,9 +43,9 @@
       formSubmit: function(form, requestData){
         var formData = new FormData(form);
 
-        var requestConfig = Object.extend({}, requestData);
+        var requestConfig = basis.object.extend({}, requestData);
 
-        this.request(Object.extend(requestConfig, {
+        this.request(basis.object.extend(requestConfig, {
           url: form.action,
           postBody: formData
         }));
@@ -164,8 +164,8 @@
       requestClass: IFrameRequest,
 
       formSubmit: function(form, requestData){
-        var requestConfig = Object.extend({}, requestData);
-        this.request(Object.extend(requestConfig, { form: form }));
+        var requestConfig = basis.object.extend({}, requestData);
+        this.request(basis.object.extend(requestConfig, { form: form }));
       }
     });
   }

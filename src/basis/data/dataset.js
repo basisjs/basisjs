@@ -1545,7 +1545,7 @@
         end = start + this.limit;
       }
 
-      var curSet = Object.slice(this.item_);
+      var curSet = basis.object.slice(this.item_);
       var newSet = this.index_.slice(Math.max(0, start), Math.max(0, end));
       var inserted = [];
       var delta;

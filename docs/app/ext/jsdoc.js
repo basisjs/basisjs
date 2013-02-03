@@ -59,7 +59,7 @@
 
       if (newData.tags)
       {
-        var tags = DOM.wrap(Object.keys(Object.slice(newData.tags, tagLabels)), { 'SPAN.tag': basis.fn.$true });
+        var tags = DOM.wrap(basis.object.keys(basis.object.slice(newData.tags, tagLabels)), { 'SPAN.tag': basis.fn.$true });
         if (tags.length)
           DOM.insert(this.tmpl.content, DOM.createElement('.tags', tags));
         
@@ -88,7 +88,7 @@
           DOM.insert(this.tmpl.content, [
             DOM.createElement('DIV.label', 'Parameters:'),
             DOM.createElement('UL',
-              Object.iterate(newData.tags.param, function(key, value){
+              basis.object.iterate(newData.tags.param, function(key, value){
                 var types = value.type.replace(/=$/, '');
                 var isOptional = types != value.type;
                 return DOM.createElement('LI.param' + (isOptional ? '.optional' : ''),
@@ -109,7 +109,7 @@
           DOM.insert(this.tmpl.content, [
             DOM.createElement('DIV.label', 'Returns:'),
             DOM.createElement('UL',
-              Object.iterate({ ret: newData.tags.returns }, function(key, value){
+              basis.object.iterate({ ret: newData.tags.returns }, function(key, value){
                 var types = value.type.replace(/=$/, '');
                 return DOM.createElement('LI.param',
                   //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),

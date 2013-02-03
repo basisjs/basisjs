@@ -55,7 +55,7 @@
       if (template)
       {
         var matchBinding = template.getBinding(this.data.obj.prototype.binding);
-        binding = Object.iterate(this.data.obj.prototype.binding, function(key, value){
+        binding = basis.object.iterate(this.data.obj.prototype.binding, function(key, value){
           return typeof value == 'object' ? {
             data: {
               name: key,

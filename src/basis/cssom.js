@@ -451,7 +451,7 @@
     * @param {object} style
     */
     setStyle: function(style){
-      Object.iterate(style, this.setProperty, this);
+      basis.object.iterate(style, this.setProperty, this);
     },
 
    /**
@@ -687,7 +687,7 @@
   if (CLASSLIST_SUPPORTED)
   {
     var proto = ClassList.prototype;
-    Object.extend(DOMTokenList.prototype, {
+    basis.object.extend(DOMTokenList.prototype, {
       set: proto.set,
       replace: proto.replace,
       bool: proto.bool,

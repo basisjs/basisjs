@@ -1891,7 +1891,7 @@
     Theme: Theme,
     theme: getTheme,
     getThemeList: function(){
-      return Object.keys(themes);
+      return basis.object.keys(themes);
     },
     currentTheme: function(){
       return themes[currentThemeName].theme;
@@ -1904,6 +1904,6 @@
 
     get: getSourceByPath,
     getPathList: function(){
-      return Object.keys(sourceByPath);
+      return basis.object.keys(sourceByPath);
     }
   };

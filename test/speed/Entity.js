@@ -28,7 +28,7 @@
         };
       }
      
-      Object.keys(basis.event.EventObject.event).forEach(wrapEvent);
+      basis.object.keys(basis.event.EventObject.event).forEach(wrapEvent);
     }
 
     var addCount = 0;
@@ -45,7 +45,7 @@
     }*/
 
     function saveEventStat(){
-      savedEventStat_ = Object.extend({}, eventStat);
+      savedEventStat_ = basis.object.extend({}, eventStat);
     }
     function getEventStat(){
       var res = {};
@@ -300,7 +300,7 @@
             padding: '0 2ex'
           }
         },
-        Object.iterate(res, String.format, '{0}: +{1}').sort().join(', ')
+        basis.object.iterate(res, String.format, '{0}: +{1}').sort().join(', ')
       );
     }
 

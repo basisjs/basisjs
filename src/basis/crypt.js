@@ -554,10 +554,10 @@
   };
 
   var context_ = {};
-  Object.iterate(cryptMethods, function(name, value){
+  basis.object.iterate(cryptMethods, function(name, value){
     context_[name] = function(useUTF8){
       var result = value.call(cryptTarget, useUTF8);
-      return cryptTarget = Object.extend(typeof result != 'object' ? Object(result) : result, context_);
+      return cryptTarget = basis.object.extend(typeof result != 'object' ? Object(result) : result, context_);
     };
   });
 

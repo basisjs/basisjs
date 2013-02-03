@@ -287,7 +287,7 @@
           createElement('TH', 'Avg')
         );
 
-        Object.values(funcs).forEach(function(item){
+        basis.object.values(funcs).forEach(function(item){
           total += item.total;
           item.dom.appendChild(
             createElement('TD.time.total', parseInt(item.total / TEST_REPEAT_COUNT))

@@ -542,7 +542,7 @@
       this.isSingleton = config.isSingleton;
       this.wrapper = wrapper;
 
-      this.all = new ReadOnlyEntitySet(Object.extend(config.all || {}, {
+      this.all = new ReadOnlyEntitySet(basis.object.extend(config.all || {}, {
         wrapper: wrapper
       }));
       this.slot_ = {};
@@ -555,7 +555,7 @@
       this.aliases = {};
       this.getters = {};
 
-      Object.iterate(config.fields, this.addField, this);
+      basis.object.iterate(config.fields, this.addField, this);
       if (config.constrains)
         config.constrains.forEach(function(item){
           this.addCalcField(null, item);
@@ -565,7 +565,7 @@
         this.get = getSingleton;
 
       if (config.aliases)
-        Object.iterate(config.aliases, this.addAlias, this);
+        basis.object.iterate(config.aliases, this.addAlias, this);
 
       this.collection_ = {};
       if (config.collections)

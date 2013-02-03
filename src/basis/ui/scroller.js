@@ -651,7 +651,7 @@
       this.maxPositionY = 0;
 
       // create scroller
-      var scrollerConfig = Object.extend(this.scroller || {}, {
+      var scrollerConfig = basis.object.extend(this.scroller || {}, {
         targetElement: this.tmpl.scrollElement,
         scrollX: this.scrollX,
         scrollY: this.scrollY

@@ -14,8 +14,8 @@
   //
 
   var Class = basis.Class;
-  var extend = Object.extend;
-  var keys = Object.keys;
+  var extend = basis.object.extend;
+  var keys = basis.object.keys;
 
   var EventObject = basis.event.EventObject;
   var createEvent = basis.event.create;
