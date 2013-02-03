@@ -297,8 +297,10 @@
 
       // add drag possibility for slider
       this.dde = new DragDropElement({
-        handler: DRAGDROP_HANDLER,
-        handlerContext: this
+        handler: {
+          context: this,
+          callbacks: DRAGDROP_HANDLER
+        }
       });
     },
 

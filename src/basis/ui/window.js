@@ -205,8 +205,10 @@
         this.dde = new basis.dragdrop.MoveableElement({
           fixRight: false,
           fixBottom: false,
-          handler: DD_HANDLER,
-          handlerContext: this
+          handler: {
+            context: this,
+            callbacks: DD_HANDLER
+          }
         });
 
       // common buttons

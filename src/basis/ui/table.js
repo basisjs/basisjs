@@ -267,12 +267,14 @@
     init: function(){
       this.selection = {
         owner: this,
-        handlerContext: this,
         handler: {
-          datasetChanged: function(dataset){
-            var cell = dataset.pick();
-            if (cell && this.owner)
-              this.owner.setSorting(cell.colSorting, cell.order);
+          context: this,
+          callbacks: {
+            datasetChanged: function(dataset){
+              var cell = dataset.pick();
+              if (cell && this.owner)
+                this.owner.setSorting(cell.colSorting, cell.order);
+            }
           }
         }
       };

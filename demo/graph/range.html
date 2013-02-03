@@ -257,50 +257,56 @@
                   element: this.tmpl.win,
                   axisY: false,
                   handler: {
-                    start: function(){
-                      this.offset__ = reportSlice.offset;
-                    },
-                    move: function(sender, config){
-                      var itemCount = reportSlice.index_.length;
-                      var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
-                      reportSlice.setOffset(offset.fit(0, itemCount - reportSlice.limit));
+                    context: this,
+                    callbacks: {
+                      start: function(){
+                        this.offset__ = reportSlice.offset;
+                      },
+                      move: function(sender, config){
+                        var itemCount = reportSlice.index_.length;
+                        var offset = this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                        reportSlice.setOffset(offset.fit(0, itemCount - reportSlice.limit));
+                      }
                     }
-                  },
-                  handlerContext: this
+                  }
                 });
 
                 this.dd2 = new basis.dragdrop.DragDropElement({
                   element: this.tmpl.before.firstChild,
                   axisY: false,
                   handler: {
-                    start: function(){
-                      this.limit__ = reportSlice.limit;
-                    },
-                    move: function(sender, config){
-                      var itemCount = reportSlice.index_.length;
-                      var limit = this.limit__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
-                      reportSlice.setLimit(Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
+                    context: this,
+                    callbacks: {
+                      start: function(){
+                        this.limit__ = reportSlice.limit;
+                      },
+                      move: function(sender, config){
+                        var itemCount = reportSlice.index_.length;
+                        var limit = this.limit__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth);
+                        reportSlice.setLimit(Math.max(2, Math.min(limit, itemCount - reportSlice.offset)));
+                      }
                     }
-                  },
-                  handlerContext: this
+                  }
                 });
 
                 this.dd3 = new basis.dragdrop.DragDropElement({
                   element: this.tmpl.after.firstChild,
                   axisY: false,
                   handler: {
-                    start: function(){
-                      this.offset__ = reportSlice.offset;
-                      this.limit__ = reportSlice.limit;
-                    },
-                    move: function(sender, config){
-                      var itemCount = reportSlice.index_.length;
-                      var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
-                      var limit = reportSlice.limit - (offset - reportSlice.offset);
-                      reportSlice.setRange(offset, limit);
+                    context: this,
+                    callbacks: {
+                      start: function(){
+                        this.offset__ = reportSlice.offset;
+                        this.limit__ = reportSlice.limit;
+                      },
+                      move: function(sender, config){
+                        var itemCount = reportSlice.index_.length;
+                        var offset = Math.min(reportSlice.offset + reportSlice.limit - 2, this.offset__ - parseInt(itemCount * config.deltaX / this.element.offsetWidth));
+                        var limit = reportSlice.limit - (offset - reportSlice.offset);
+                        reportSlice.setRange(offset, limit);
+                      }
                     }
-                  },
-                  handlerContext: this
+                  }
                 });
               }
             };

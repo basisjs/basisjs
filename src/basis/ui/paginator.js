@@ -186,8 +186,10 @@
 
       this.scrollbarDD = new DragDropElement({
         element: this.tmpl.scrollThumb,
-        handler: DRAGDROP_HANDLER,
-        handlerContext: this
+        handler: {
+          context: this,
+          callbacks: DRAGDROP_HANDLER
+        }
       });
     },
 

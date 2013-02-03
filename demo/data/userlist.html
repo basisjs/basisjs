@@ -146,8 +146,10 @@
           this.adapter = new basis.net.Transport({
             url: '../res/data/groups.json',
             influence: [this],
-            handler: adapterHandler,
-            handlerContext: this
+            handler: {
+              context: this,
+              callbacks: adapterHandler
+            }
           });
         }
       }
@@ -170,8 +172,10 @@
           this.adapter = new basis.net.Transport({
             url: '../res/data/users.json',
             influence: [this],
-            handler: adapterHandler,
-            handlerContext: this
+            handler: {
+              context: this,
+              callbacks: adapterHandler
+            }
           });
         }
       }
@@ -183,16 +187,20 @@
     /*UserGroup.all.adapter = new Basis.Ajax.Transport({
       url: '../res/data/groups.json',
       influence: UserGroup.all,
-      handler: adapterHandler,
-      handlerContext: UserGroup.all
+      handler: {
+        context: UserGroup.all,
+        callbacks: adapterHandler
+      }
     });*/
 
     //User.all.addHandler(colHandler);
     /*User.all.adapter = new Basis.Ajax.Transport({
       url: '../res/data/users.json',
       influence: User.all,
-      handler: adapterHandler,
-      handlerContext: User.all
+      handler: {
+        context: User.all,
+        callbacks: adapterHandler
+      }
     }); */
 
     // create controls
@@ -249,7 +257,7 @@
           template:
             '<div class="PartitionNode" event-click="selectAll">' +
               '<div class="PartitionNode-Title">{title}</div>' +
-              '<!-- {childNodeHere} -->' +
+              '<!--{childNodeHere}-->' +
             '</div>',
 
           binding: {

@@ -65,9 +65,11 @@
         targetElement: this.tmpl.childNodesElement,
         scrollY: false,
         minScrollDelta: 10,
-        handlerContext: this,
         handler: {
-          startInertia: this.setPage
+          context: this,
+          callbacks: {
+            startInertia: this.setPage
+          }
         }
       });
 

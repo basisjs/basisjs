@@ -724,8 +724,10 @@
     init: function(){
       this.selection = new Selection({
         multiple: !!this.multipleSelect,
-        handler: COMPLEXFIELD_SELECTION_HANDLER,
-        handlerContext: this
+        handler: {
+          context: this,
+          callbacks: COMPLEXFIELD_SELECTION_HANDLER
+        }
       });
 
       //inherit
@@ -1039,8 +1041,10 @@
       this.popup = new this.popupClass(complete({ // FIXME: move to subclass, and connect components in templateSync
         ignoreClickFor: [this.tmpl.field],
         content: this.childNodesElement,
-        handler: ComboboxPopupHandler,
-        handlerContext: this
+        handler: {
+          context: this,
+          callbacks: ComboboxPopupHandler
+        }
       }, this.popup));
 
       if (this.property)
