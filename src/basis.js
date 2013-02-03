@@ -293,22 +293,26 @@
         var foo = parts[0];
         var bar = parts[1];
         var baz = parts[2];
+        var result;
         switch (parts.length)
         {
           case 1:
-            return function(object){
+            result = function(object){
               return object != null ? object[foo] : object;
             };
+            break;
           case 2:
-            return function(object){
+            result = function(object){
               return object != null ? object[foo][bar] : object;
             };
+            break;
           case 3:
-            return function(object){
+            result = function(object){
               return object != null ? object[foo][bar][baz] : object;
             };
+            break;
           default:
-            return function(object){
+            result = function(object){
               if (object != null)
               {
                 object = object[foo][bar][baz];
@@ -319,6 +323,8 @@
               return object;
             }
         }
+
+        ;;;result.toString = function(){ return 'function(object){\n  return object ? object.' + path + ' : object;\n}'; }
       }
 
       return new Function('object', 'return object != null ? object.' + path + ' : object');
