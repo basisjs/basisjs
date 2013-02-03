@@ -20,7 +20,7 @@
       if (m = location.search.match(/ext=([^&]+)/))
       {
         var scripts = m[1].split(',');
-        document.write(scripts.map(String.format, '<script type="text/javascript" src="{0}"><\/script>'));
+        document.write(scripts.map(basis.string.format, '<script type="text/javascript" src="{0}"><\/script>'));
       }
     })();  
   </script>

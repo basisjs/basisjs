@@ -300,7 +300,7 @@
             padding: '0 2ex'
           }
         },
-        basis.object.iterate(res, String.format, '{0}: +{1}').sort().join(', ')
+        basis.object.iterate(res, basis.string.format, '{0}: +{1}').sort().join(', ')
       );
     }
 

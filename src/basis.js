@@ -940,7 +940,7 @@
   var FORMAT_REGEXP = /\{([a-z\d_]+)(?::([\.0])(\d+)|:(\?))?\}/gi;
   var QUOTE_REGEXP_CACHE = {};
 
-  String.Entity = {
+  var Entity = {
     laquo:  '\xAB',
     raquo:  '\xBB',
     nbsp:   '\xA0',
@@ -2341,6 +2341,7 @@
       create: createArray
     }),
     string: {
+      entity: Entity,
       isEmpty: isEmptyString,
       isNotEmpty: isNotEmptyString,
       format: String.prototype.format
