@@ -39,7 +39,7 @@
 
       var groupDatasetByGroupMap = {};
       var groupDatasetByGroup10 = new basis.data.Dataset({
-        items: Array.create(10, function(idx){
+        items: basis.array.create(10, function(idx){
           return groupDatasetByGroupMap[idx + 1] = new basis.data.DataObject({
             data: {
               id: idx + 1,
@@ -49,7 +49,7 @@
         })
       });
       var groupDatasetByGroup = new basis.data.Dataset({
-        items: Array.create(4, function(idx){
+        items: basis.array.create(4, function(idx){
           return groupDatasetByGroupMap[idx + 1];
         })
       });
@@ -96,7 +96,7 @@
       };
 
       function getGroups(node, withNull){
-        var res = Array.from(node.grouping.childNodes);
+        var res = basis.array.from(node.grouping.childNodes);
         if (withNull)
           res.unshift(node.grouping.nullGroup);
         return res;
@@ -206,7 +206,7 @@
               return 'Count of child in groups (' + k + ') is not equal to child count (' + childCount + ')';
             }
 
-            var childNodes = Array.from(node.childNodes);
+            var childNodes = basis.array.from(node.childNodes);
 
             // check for child groupNode reference
             for (var i = 0, child; child = node.childNodes[i++];)
@@ -964,7 +964,7 @@
                     node.setSorting(basis.getter('data.value'));
                     this.is(false, checkNode(node));
 
-                    var order = Array.from(node.childNodes);
+                    var order = basis.array.from(node.childNodes);
                     node.setSorting(basis.getter('data.value * -1'), true);
                     this.is(false, checkNode(node));
                     this.is(order, node.childNodes);
@@ -975,7 +975,7 @@
                     node.setSorting(basis.getter('data.value'), true);
                     this.is(false, checkNode(node));
 
-                    var order = Array.from(node.childNodes);
+                    var order = basis.array.from(node.childNodes);
                     for (var i = 0; i < order.length; i++)
                       order[i].update({ value: -order[i].data.value });
                     this.is(false, checkNode(node));
@@ -1036,7 +1036,7 @@
                         this.is(10, getGroups(node).length);
 
                         // drop grouping
-                        var order = Array.from(node.childNodes);
+                        var order = basis.array.from(node.childNodes);
                         node.setGrouping();
                         this.is(false, checkNode(node));
                         this.is(null, node.grouping);
@@ -1048,7 +1048,7 @@
                         });
                         this.is(false, checkNode(node));
 
-                        var order = Array.from(node.childNodes);
+                        var order = basis.array.from(node.childNodes);
                         // nothing changed
                         node.grouping.setSorting(node.grouping.sorting);
                         this.is(false, checkNode(node));
@@ -1267,7 +1267,7 @@
                     node.setGrouping(basis.getter('data.group'));
                     this.is(false, checkNode(node));
 
-                    var order = Array.from(node.childNodes);
+                    var order = basis.array.from(node.childNodes);
                     node.setSorting();
                     this.is(false, checkNode(node));
                     node.setGrouping();

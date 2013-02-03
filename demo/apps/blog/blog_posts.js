@@ -12,9 +12,9 @@
   ).split(/\s+/);
 
   var randomsIdx = 0;
-  var randoms = Array.create(RND_COUNT, Math.random);
+  var randoms = basis.array.create(RND_COUNT, Math.random);
   var rwIdx = 0;
-  var randomWord = Array.create(RND_COUNT, function(){
+  var randomWord = basis.array.create(RND_COUNT, function(){
     return words[parseInt(words.length * Math.random())];
   });
 

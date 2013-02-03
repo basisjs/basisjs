@@ -257,7 +257,7 @@
       this.updateBind('externalFileUrl');
 
       if (template)
-        template.docsCache_ = Array.from(this.childNodes);
+        template.docsCache_ = basis.array.from(this.childNodes);
 
       var oldTemplate = this.templateView;
       this.templateView = template;

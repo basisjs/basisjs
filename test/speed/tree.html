@@ -270,7 +270,7 @@
           this.selection.clear();
           items.forEach(function(node){ node.destroy(); });
           DOM.insert(DOM.clear('allNodesSelectTime'), 'op time: ' + ((new Date - d)/1000).toFixed(3));
-          //Array.from(this.selection.getItems()).forEach(function(node){ node.destroy(); });
+          //basis.array.from(this.selection.getItems()).forEach(function(node){ node.destroy(); });
         },
         RenameSelected: function(){
           this.selection.getItems().forEach(function(item){

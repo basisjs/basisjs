@@ -72,7 +72,7 @@
     var tree1 = new nsTree.Tree({
       container: DOM.get('sourceTree'),
       selection: { multiple: true },
-      childNodes: Array.create(10, function(i){
+      childNodes: basis.array.create(10, function(i){
         return new nsTree.Folder({
           data: {
             id: i,

@@ -41,41 +41,27 @@
               name: 'Class methods',
               testcase: [
                 {
-                  name: 'Array.from()',
+                  name: 'basis.array.from()',
                   test: function(){
-                    this.is(A, Array.from(A));
-                    this.is(false, A === Array.from(A));
+                    this.is(A, basis.array.from(A));
+                    this.is(false, A === basis.array.from(A));
                   }
                 },
                 {
-                  name: 'Array.create()',
+                  name: 'basis.array.create()',
                   test: function(){
-                    this.is([undefined, undefined, undefined], Array.create(3));
+                    this.is([undefined, undefined, undefined], basis.array.create(3));
 
-                    this.is([1,1,1], Array.create(3, 1));
+                    this.is([1,1,1], basis.array.create(3, 1));
 
-                    this.is(['1','1','1'], Array.create(3, '1'));
+                    this.is(['1','1','1'], basis.array.create(3, '1'));
 
-                    this.is([], Array.create());
+                    this.is([], basis.array.create());
 
-                    this.is([0,1,2], Array.create(3, basis.fn.$self));
-                    this.is([true,true,true], Array.create(3, basis.fn.$true));
+                    this.is([0,1,2], basis.array.create(3, basis.fn.$self));
+                    this.is([true,true,true], basis.array.create(3, basis.fn.$true));
                   }
-                }/*,
-                {
-                  name: 'Array.matrix()',
-                  test: function(){
-                    var M = Array.matrix(2,3);
-                    this.is(2, M.length);
-                    this.is(3, M[0].length);
-                    this.is(3, M[1].length);
-
-                    var M = Array.matrix(2,3,4);
-                    this.is(2, M.length);
-                    this.is(3, M[0].length);
-                    this.is(4, M[0][0].length);
-                  }
-                }*/
+                }
               ]
             },
             {
@@ -85,15 +71,15 @@
                   name: 'push()',
 
                   test: function(){
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(2, T.push());
                     this.is([4,5], T);
 
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(3, T.push(6));
                     this.is([4,5,6], T);
 
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(4, T.push(6,7));
                     this.is([4,5,6,7], T);
                   }
@@ -101,11 +87,11 @@
                 {
                   name: 'pop()',
                   test: function(){
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(5, T.pop());
                     this.is([4], T);
 
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(5, T.pop(3));
                     this.is([4], T);
                   }
@@ -113,15 +99,15 @@
                 {
                   name: 'unshift()',
                   test: function(){
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(2, T.unshift());
                     this.is([4, 5], T);
 
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(3, T.unshift(3));
                     this.is([3, 4, 5], T);
 
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(5, T.unshift(1, 2, 3));
                     this.is([1, 2, 3, 4, 5], T);
                   }
@@ -129,11 +115,11 @@
                 {
                   name: 'shift()',
                   test: function(){
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(4, T.shift());
                     this.is([5], T);
 
-                    var T = Array.from(D);
+                    var T = basis.array.from(D);
                     this.is(4, T.shift(3));
                     this.is([5], T);
                   }
@@ -178,7 +164,7 @@
                   name: 'slice()',
                   test: function(){
 
-                    var T = Array.from(C);
+                    var T = basis.array.from(C);
                     this.is(C, T.slice());
                     this.is(C, T);
 
@@ -226,14 +212,14 @@
                   name: 'forEach()',
                   test: function(){
                     var tmp = '';
-                    var T = Array.from(C);
+                    var T = basis.array.from(C);
                     // must return array or undefined???
                     this.is(undefined, T.forEach(function(item){ tmp += item * 2; }));
                     this.is(C, T, true);
 
                     this.is('246', tmp);
 
-                    var T = Array.from(C);
+                    var T = basis.array.from(C);
                     T.forEach(function(item, index, array){ array[index] *= 2; });
                     this.is([2,4,6], T);
                   }
@@ -293,7 +279,7 @@
                 {
                   name: 'map()',
                   test: function(){
-                    var T = Array.from(C);
+                    var T = basis.array.from(C);
                     this.is([2,4,6], T.map(function(item){ return item * 2; }));
                     this.is(T, C, true);
 
