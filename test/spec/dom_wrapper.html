@@ -107,7 +107,7 @@
         var desc = host.sortingDesc;
 
         for (var i = 0; i < nodes.length; i++)
-          if (nodes[i].sortingValue !== sortingValue(nodes[i]))
+          if (nodes[i].sortingValue !== (sortingValue(nodes[i]) || 0))
             return 'Bad sortingValue';
 
         if (!desc)
@@ -1306,33 +1306,38 @@
                         sorting: 'data.id'
                       },
                       childNodes: [
-                        { value: 2, group: 1 },
-                        { value: 3, group: 1 },
-                        { value: 3, group: 2 },
-                        { value: 4, group: 2 },
-                        { value: 1, group: 3 },
-                        { value: 4, group: 3 },
-                        { value: 5, group: 3 },
-                        { value: 1, group: 4 }
+                        { data: { value: 2, group: 1 } },
+                        { data: { value: 3, group: 1 } },
+                        { data: { value: 3, group: 2 } },
+                        { data: { value: 4, group: 2 } },
+                        { data: { value: 1, group: 3 } },
+                        { data: { value: 4, group: 3 } },
+                        { data: { value: 5, group: 3 } },
+                        { data: { value: 1, group: 4 } }
                       ]
                     });
 
                     var child = node.firstChild;
 
                     child.update({ group: 2 });
-                    this.is(2, node.childNodes.indexOf(child));
+                    this.is(1, node.childNodes.indexOf(child));
+                    this.is(false, checkNode(node));                    
 
                     child.update({ group: 3 });
                     this.is(4, node.childNodes.indexOf(child));
+                    this.is(false, checkNode(node));                    
 
                     child.update({ group: 4 });
                     this.is(7, node.childNodes.indexOf(child));
+                    this.is(false, checkNode(node));                    
 
                     child.update({ group: 5 });
                     this.is(7, node.childNodes.indexOf(child));
+                    this.is(false, checkNode(node));                    
 
                     child.update({ group: 1 });
                     this.is(0, node.childNodes.indexOf(child));
+                    this.is(false, checkNode(node));                    
                   }
                 },
                 {
