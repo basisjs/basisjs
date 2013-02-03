@@ -1297,9 +1297,7 @@
                     ///////
 
                     var node = new Node({
-                      childFactory: function(cfg){
-                        return new Node(cfg);
-                      },
+                      childFactory: nodeFactory,
                       sorting: 'data.value',
                       grouping: {
                         groupGetter: 'data.group',
@@ -1474,7 +1472,7 @@
 
                         groupDataSource.destroy();
                         this.is(null, node.grouping.dataSource);
-                        this.is(0, node.grouping.childNodes.length);
+                        this.is(4, node.grouping.childNodes.length);
                         this.is(false, checkNode(node));
 
                         var dataset2 = new basis.data.Dataset({ items: groupDatasetByGroup.getItems() });

@@ -2308,15 +2308,10 @@
 
     autoDestroyWithNoOwner: true,
     autoDestroyEmptyGroups: true,
-    //titleGetter: getter('data.title'),
     groupGetter: nullGetter,
 
     childClass: PartitionNode,
     childFactory: function(config){
-      //return new this.childClass(complete(config, {
-      //  titleGetter: this.titleGetter,
-      //  autoDestroyIfEmpty: this.dataSource ? false : this.autoDestroyEmptyGroups
-      //}));
       return new this.childClass(complete({
         autoDestroyIfEmpty: this.dataSource ? false : this.autoDestroyEmptyGroups
       }, config));
@@ -2360,6 +2355,20 @@
       }
 
       return group || this.nullGroup;
+    },
+
+    setDataSource: function(dataSource){
+      var curDataSource = this.dataSource;
+
+      DomMixin.setDataSource.call(this, dataSource);
+
+      var owner = this.owner;
+      if (owner && this.dataSource !== curDataSource)
+      {
+        var nodes = arrayFrom(owner.childNodes);
+        for (var i = nodes.length - 1; i >= 0; i--)
+          owner.insertBefore(nodes[i], nodes[i + 1]);
+      }
     },
 
    /**
