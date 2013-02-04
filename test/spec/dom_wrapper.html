@@ -1339,6 +1339,21 @@
                   }
                 },
                 {
+                  name: 'mixed sorting & grouping, wrong order after moving last child within the group',
+                  test: function(){
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet(),
+                      sorting: 'data.value',
+                      grouping: 'data.group'
+                    });
+                    this.is(false, checkNode(node));
+
+                    node.lastChild.update({ value: 0 });
+                    this.is(false, checkNode(node));
+                  }
+                },
+                {
                   name: 'partition manipulations',
                   test: function(){
                     var node = new Node({
