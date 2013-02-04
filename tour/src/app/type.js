@@ -1,4 +1,4 @@
 
   module.exports = {
-    // Type: resource('type/type.js').fetch()
+    Page: resource('type/page.js').fetch()
   };
