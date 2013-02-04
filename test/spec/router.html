@@ -25,9 +25,11 @@
 
 <body>
   <script type="text/javascript">
+
     loadTest((function(){
       basis.require('basis.router');
-      
+      var router = basis.router;      
+
       return [
         {
           name: 'base',
@@ -37,7 +39,6 @@
               test: function(){
                 var checker = 0;
 
-                var router = new basis.router.Router();
                 router.start();
                 router.add('test', function(){
                   checker++;
@@ -56,7 +57,6 @@
               test: function(){
                 var checker = 0;
 
-                var router = new basis.router.Router();
                 router.start();
                 router.add('test', function(){
                   checker++;
@@ -76,28 +76,27 @@
                 var checker = 0;
 
                 location.hash = '';
-                var router = new basis.router.Router();
-                router.add('test', function(){
+                router.add('callback', function(){
                   checker++;
                 });
-                router.add('test2', function(){
+                router.add('callback2', function(){
                   checker++;
                 });
                 this.is(0, checker);
                 
-                router.navigate('test');
+                router.navigate('callback');
                 this.is(0, checker);
                 
                 router.start();
                 this.is(1, checker);
                 
-                router.add('test', function(){
+                router.add('callback', function(){
                   checker++;
                 });
                 this.is(2, checker);
                 
                 checker = 0;
-                router.navigate('test2');
+                router.navigate('callback2');
                 this.is(1, checker);
 
                 router.stop();
@@ -109,7 +108,6 @@
               test: function(){
                 var checker;
                 
-                var router = new basis.router.Router();
                 router.start();
 
                 router.add('param/:id', function(id){
