@@ -90,12 +90,31 @@
                       }
                     },
                     {
-                      name: 'class binding for class addiction',
+                      name: 'class with binding',
                       test: function(){
                         var a = createTemplate('<span class="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b}"></b:include>');
 
                         this.is(text('<span class="a b"/>'), text(b, { b: 'b' }));
+
+                        var a = createTemplate('<span class="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b} {b2}"></b:include>');
+
+                        this.is(text('<span class="a b b2"/>'), text(b, { b: 'b', b2: 'b2' }));                        
+                      }
+                    },
+                    {
+                      name: 'class binding and value',
+                      test: function(){
+                        var a = createTemplate('<span class="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b} c"></b:include>');
+
+                        this.is(text('<span class="a c b"/>'), text(b, { b: 'b' }));
+
+                        var a = createTemplate('<span class="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '" class="a2 {b} {b2} c"></b:include>');
+
+                        this.is(text('<span class="a a2 c b b2"/>'), text(b, { b: 'b', b2: 'b2' }));
                       }
                     },
                     {
