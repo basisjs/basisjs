@@ -32,65 +32,65 @@
     'i');
   }
 
-  var routes_ = {};
-  var timer = null;
-  var started_ = false;
-  var cachedPath_ = null;
+  var routes = {};
+  var started = false;
+  var currentPath;
+  var timer;
 
 
  /**
   * Start router
   */
   function start(){
-    if (!started_)
+    if (!started)
     {
       if (eventSupport)
         basis.dom.event.addHandler(global, 'hashchange', checkUrl);
       else
-        timer_ = setInterval(checkUrl, 50);
+        timer = setInterval(checkUrl, 50);
 
-      ;;;basis.dev.log('Router stated');
-      started_ = true;
+      ;;;basis.dev.log(namespace + ' started');
+      started = true;
+
+      checkUrl();      
     }
-
-    checkUrl();
   }
 
  /**
-  * Start router
+  * Stop router
   */
   function stop(){
     if (eventSupport)
       basis.dom.event.removeHandler(global, 'hashchange', checkUrl);
     else
-      clearInterval(timer_);
+      clearInterval(timer);
 
-    ;;;basis.dev.log('Router stated');
-    started_ = false;
+    ;;;basis.dev.log(namespace + ' stopped');
+    started = false;
   }
 
  /**
   * Process current location
   */
   function checkUrl(){
-    var curPath = location.hash.substr(1) || '/';
+    var newPath = location.hash.substr(1) || '/';
 
-    if (curPath != cachedPath_)
+    if (newPath != currentPath)
     {
-      ;;;basis.dev.log('Router hash changed:', curPath);
-      cachedPath_ = curPath;
+      ;;;basis.dev.log(namespace + ' hash changed:', newPath);
+      currentPath = newPath;
 
-      for (var path in routes_)
+      for (var path in routes)
       {
-        var route = routes_[path];
-        var match = curPath.match(route.regexp);
+        var route = routes[path];
+        var match = newPath.match(route.regexp);
         if (match)
         {
           var args = basis.array.from(match, 1);
           for (var i = 0, item; item = route.callbacks[i]; i++)
             item.callback.apply(item.context, args);
 
-          ;;;basis.dev.log('Router hash match:', route.source, args);
+          ;;;basis.dev.log(namespace + ' hash match:', route.source, args);
         }
       }
     }
@@ -100,7 +100,7 @@
   * Add path to be handled
   */
   function add(path, callback, context){
-    var route = routes_[path];
+    var route = routes[path];
 
     if (!route)
     {
@@ -111,7 +111,7 @@
           ? pathToRegExp(path)
           : path
       };
-      routes_[path] = route;
+      routes[path] = route;
     }
     
     route.callbacks.push({
@@ -119,9 +119,9 @@
       context: context
     });
 
-    if (cachedPath_)
+    if (currentPath)
     {
-      var match = cachedPath_.match(route.regexp);
+      var match = currentPath.match(route.regexp);
       if (match)
         callback.apply(context, basis.array.from(match, 1));
     }
@@ -136,7 +136,7 @@
     else
       location.hash = path;
 
-    if (started_)
+    if (started)
       checkUrl();
   }
 
