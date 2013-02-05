@@ -11,7 +11,7 @@
       }
     },
 
-  	template: resource('template/list.tmpl'),
+    template: resource('template/list.tmpl'),
     binding: {
       noActive: 'noActive'
     },
@@ -24,8 +24,9 @@
       }
     },
 
-  	soting: 'data.id',
-  	childClass: {
+    sorting: 'data.id',
+    sortingDesc: true,
+    childClass: {
       editing: false,
       template: resource('template/item.tmpl'),
       binding: {
@@ -33,12 +34,12 @@
         completed: 'data:',
         editing: 'editing'
       },
-  		action: {
-  		  toggle: function(){
-  		    this.update({
-  		      completed: !this.data.completed
-  		    });
-  		  },
+      action: {
+        toggle: function(){
+          this.update({
+            completed: !this.data.completed
+          });
+        },
         startEditing: function(){
           this.editing = true;
           this.updateBind('editing');
@@ -55,11 +56,11 @@
           if (event.key == event.KEY.ENTER)
             this.action.stopEditing.call(this, event);
         },
-  		  destroy: function(){
-  		    this.target.destroy();
-  		  }
-  		}
-  	}
+        destroy: function(){
+          this.target.destroy();
+        }
+      }
+    }
   });
 
   basis.data.index.count(app.type.Todo.active).addLink(module.exports, function(value){
