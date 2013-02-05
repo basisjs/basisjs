@@ -1,6 +1,6 @@
 /*
   Basis javascript library
-  http://github.com/lahmatiy/basisjs
+  http://github.com/basisjs/basisjs
  
   @license
   Dual licensed under the MIT or GPL Version 2 licenses.
