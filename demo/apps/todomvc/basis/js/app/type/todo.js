@@ -5,11 +5,22 @@
   var Todo = new basis.entity.EntityType({
   	name: 'Todo',
   	fields: {
-  		id: basis.entity.IntId,
+  		id: {
+        type: basis.entity.IntId,
+        calc: function(delta, data, oldValue){
+          return data.id || ((lastId.value || 0) + 1);
+        }
+      },
   		title: String,
   		completed: Boolean
   	}
   });
+
+  var lastId = basis.data.index.max(Todo.all, 'data.id');
+
+  //
+  // datasets
+  //
 
   var splitByCompleted = new basis.data.dataset.Split({
     source: Todo.all,
