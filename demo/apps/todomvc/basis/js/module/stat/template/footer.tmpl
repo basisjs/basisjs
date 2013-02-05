@@ -1,0 +1,9 @@
+
+  <b:define name="completed" type="bool"/>
+
+ 	<footer id="footer">
+ 		<!-- This should be `0 items left` by default -->
+ 		<span id="todo-count"><strong>{active}</strong> {itemLabel} left</span>
+ 		<!--{filters}-->
+ 		<button id="clear-completed" class="has-{completed}" event-click="clearCompleted">Clear completed ({completed})</button>
+ 	</footer>

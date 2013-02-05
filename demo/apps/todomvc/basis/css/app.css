@@ -1,0 +1,11 @@
+#todoapp.empty #main,
+#todoapp.empty #footer,
+#clear-completed
+{
+  display: none;
+}
+
+#clear-completed.has-completed
+{
+  display: block;
+}

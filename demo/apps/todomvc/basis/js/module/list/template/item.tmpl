@@ -1,0 +1,9 @@
+
+ 	<li class="{completed} {editing}">
+ 		<div class="view">
+ 			<input class="toggle" type="checkbox" checked="{completed}" event-click="toggle" />
+ 			<label event-dblclick="startEditing">{title}</label>
+ 			<button class="destroy" event-click="destroy"></button>
+ 		</div>
+ 		<input{focus} class="edit" value="{title}" event-blur="stopEditing" event-keydown="key" />
+ 	</li>
