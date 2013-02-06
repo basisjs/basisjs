@@ -1,0 +1,26 @@
+<!doctype>
+
+<html>
+<head>
+  <title>basis.js tour code launcher</title>
+  <script src="../src/basis.js" basis-config></script>
+</head>
+<body>
+  <script>
+    window.onerror = function(message){
+      document.write(message);
+    }
+    document.write(+new Date);
+    if (top.launcherCallback)
+    {
+      try {
+        Function(top.launcherCallback())();
+      } catch(e) {
+        document.write('<div style="font-weight: bold; color: #AA0000;">Syntax error: ' + e.message + '</div>');
+      }
+    }
+    else
+      document.write('<div style="font-weight: bold; color: #AA0000;">Sorry, but I have no required environment</div>')
+  </script>
+</body>
+</html>

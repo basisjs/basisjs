@@ -17,10 +17,11 @@
         Hello world!
       </div>
       <div id="code">
-        code
+        <textarea id="code-editor" event-keyup="runCode">basis.require("basis.ui.window");
+(new basis.ui.window.Window()).open();</textarea>
       </div>
       <div id="preview">
-        preview
+        <iframe{launcher} src="launcher.html"/>
       </div>
     </div>
   </div>

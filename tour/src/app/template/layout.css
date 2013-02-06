@@ -58,15 +58,28 @@
     text-overflow: ellipsis;
     height: 2.5em;
   }
+
   #code
   {
-    background: #F0F0F0;
     position: absolute;
     top: 2.5em;
     left: 0;
     right: 0;
     bottom: 50%;
   }
+  #code-editor
+  {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    border: none;
+    resize: none;
+    background: #F0F0F0;
+  }
+
   #preview
   {
     background: white;
@@ -75,4 +88,13 @@
     left: 0;
     right: 0;
     bottom: 0;
+  }
+  #preview IFRAME
+  {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
   }
