@@ -1323,7 +1323,7 @@
 
         // optimization: test node position, possible it on right place
         if (currentNewChildGroup === group)
-          if (correctSortPos || (isInside && nextSibling === refChild))
+          if (correctSortPos || (sorting === nullGetter && nextSibling === refChild))
             return newChild;
 
         // calculate newChild position
