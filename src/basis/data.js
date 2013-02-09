@@ -94,8 +94,9 @@
   // Subscription schema
   //
 
-  var subscriptionHandlers = {};
+  var subscriptionConfig = {};
   var subscriptionSeed = 1;
+
 
  /**
   * @enum {number}
@@ -104,6 +105,45 @@
     NONE: 0,
     ALL: 0,
 
+    link: function(type, from, to){
+      var subscriberId = type + from.basisObjectId;
+      var subscribers = to.subscribers_;
+
+      if (!subscribers)
+        subscribers = to.subscribers_ = {};
+
+      if (!subscribers[subscriberId])
+      {
+        subscribers[subscriberId] = from;
+        var count = to.subscriberCount += 1;
+        if (count == 1)
+          to.event_subscribersChanged(+1);
+      }
+      else
+      {
+        ;;;basis.dev.warn('Attempt to add duplicate subscription');
+      }
+    },
+    unlink: function(type, from, to){
+      var subscriberId = type + from.basisObjectId;
+      var subscribers = to.subscribers_;
+
+      if (subscribers && subscribers[subscriberId])
+      {
+        delete subscribers[subscriberId];
+        var count = to.subscriberCount -= 1;
+        if (count == 0)
+        {
+          to.event_subscribersChanged(-1);
+          to.subscribers_ = null;
+        }
+      }
+      else
+      {
+        ;;;basis.dev.warn('Trying remove non-exists subscription');
+      }
+    },
+
    /**
     * Register new type of subscription
     * @param {string} name
@@ -111,134 +151,117 @@
     * @param {function()} action
     */
     add: function(name, handler, action){
-      subscriptionHandlers[subscriptionSeed] = {
+      subscriptionConfig[subscriptionSeed] = {
         handler: handler,
-        action: action,
-        context: {
-          add: function(thisObject, object){
-            if (object)
-            {
-              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.basisObjectId;
-
-              if (!object.subscribers_)
-                object.subscribers_ = {};
-
-              if (!object.subscribers_[subscriberId])
-              {
-                var oldSubscriberCount = object.subscriberCount;
-                object.subscribers_[subscriberId] = thisObject;
-                object.subscriberCount += 1;
-                object.event_subscribersChanged(oldSubscriberCount);
-              }
-              else
-              {
-                ;;;basis.dev.warn('Attempt to add duplicate subscription');
-              }
-            }
-          },
-          remove: function(thisObject, object){
-            if (object)
-            {
-              var subscriberId = SUBSCRIPTION[name] + '_' + thisObject.basisObjectId;
-              if (object.subscribers_[subscriberId])
-              {
-                var oldSubscriberCount = object.subscriberCount;
-                delete object.subscribers_[subscriberId];
-                object.subscriberCount -= 1;
-                object.event_subscribersChanged(oldSubscriberCount);
-              }
-              else
-              {
-                ;;;basis.dev.warn('Trying remove non-exists subscription');
-              }
-            }
-          }
-        }
+        action: action
       };
 
       SUBSCRIPTION[name] = subscriptionSeed;
       SUBSCRIPTION.ALL |= subscriptionSeed;
 
       subscriptionSeed <<= 1;
+    },
+   /**
+    * @param {string} propertyName Name of property for subscription. Property must must be instance of {basis.data.AbstractData} class.
+    * @param {string=} eventName Name of event which fire when property changed. If omitted it will be equal to property name with 'Changed' suffix.
+    */
+    addProperty: function(propertyName, eventName){
+      var handler = {};
+      handler[eventName || propertyName + 'Changed'] = function(object, oldValue){
+        if (oldValue)
+          SUBSCRIPTION.unlink(propertyName, object, oldValue);
+
+        if (object[propertyName])
+          SUBSCRIPTION.link(propertyName, object, object[propertyName]);
+      };
+
+      this.add(propertyName.toUpperCase(), handler, function(fn, object){
+        if (object[propertyName])
+          fn(propertyName, object, object[propertyName]);
+      });
     }
   };
 
- /**
-  * Apply subscription according with current state.
-  * For internal purposes only.
-  */
-  function applySubscription(object, mask, state){
-    var idx = 1;
-    var config;
 
-    while (mask)
-    {
-      if (mask & 1)
-      {
-        config = subscriptionHandlers[idx];
-        if (state & idx)
-        {
-          object.addHandler(config.handler, config.context);
-          config.action(config.context.add, object);
-        }
-        else
-        {
-          object.removeHandler(config.handler, config.context);
-          config.action(config.context.remove, object);
-        }
-      }
-        
-      mask >>= 1;
-      idx <<= 1;
+  var maskConfig = {};
+
+  function mixFunctions(fnA, fnB){
+    return function(){
+      fnA.apply(this, arguments);
+      fnB.apply(this, arguments);
     }
   }
 
+  function getMaskConfig(mask){
+    var config = maskConfig[mask];
+
+    if (!config)
+    {
+      var actions = [];
+      var handler = {};
+      var idx = 1;
+
+      config = maskConfig[mask] = {
+        actions: actions,
+        handler: handler
+      };
+
+      while (mask)
+      {
+        if (mask & 1)
+        {
+          var cfg = subscriptionConfig[idx];
+          for (var key in cfg.handler)
+          {
+            actions.push(cfg.action);
+            handler[key] = handler[key]
+              ? mixFunctions(handler[key], cfg.handler[key])  // suppose it never be used, but do it for double sure
+              : cfg.handler[key];
+          }
+        }
+        idx <<= 1;
+        mask >>= 1;
+      }
+    }
+
+    return config;
+  }
+
+  function addSub(object, mask){
+    var config = getMaskConfig(mask);    
+
+    for (var i = 0, action; action = config.actions[i]; i++)
+      action(SUBSCRIPTION.link, object);
+
+    object.addHandler(config.handler);
+  }
+
+  function remSub(object, mask){
+    var config = getMaskConfig(mask);    
+
+    for (var i = 0, action; action = config.actions[i++];)
+      action(SUBSCRIPTION.unlink, object);
+
+    object.removeHandler(config.handler);
+  }
+
+
   // Register base subscription types
 
-  SUBSCRIPTION.add(
-    'DELEGATE',
-    {
-      delegateChanged: function(object, oldDelegate){
-        this.remove(object, oldDelegate);
-        this.add(object, object.delegate);
-      }
-    },
-    function(action, object){
-      action(object, object.delegate);
-    }
-  );
-
-  SUBSCRIPTION.add(
-    'TARGET',
-    {
-      targetChanged: function(object, oldTarget){
-        this.remove(object, oldTarget);
-        this.add(object, object.target);
-      }
-    },
-    function(action, object){
-      action(object, object.target);
-    }
-  );
-
-  //
-  // reg new type of listen
-  //
-
-  //LISTEN.add('delegate', 'delegateChanged');
-  //LISTEN.add('target', 'targetChanged');
+  SUBSCRIPTION.addProperty('delegate', 'delegateChanged');
+  SUBSCRIPTION.addProperty('target', 'targetChanged');
 
 
   //
-  // DataObject
+  // Abstract data
   //
 
  /**
-  * Base class for data storing.
+  * Base class for any data type class.
   * @class
   */
-  var DataObject = Class(EventObject, {
-    className: namespace('DataObject'),
+  var AbstractData = Class(EventObject, {
+    className: namespace + '.AbstractData',
 
    /**
     * State of object. Might be managed by delegate object (if used).
@@ -247,51 +270,12 @@
     state: STATE.READY,
 
    /**
-    * Using for data storing. Might be managed by delegate object (if used).
-    * @type {Object}
+    * Fires when state or state.data was changed.
+    * @param {basis.data.DataObject} object Object which state was changed.
+    * @param {object} oldState Object state before changes.
+    * @event
     */
-    data: null,
-
-   /**
-    * @type {boolean}
-    */
-    canSetDelegate: true,
-
-   /**
-    * Object that manage data updates if assigned.
-    * @type {basis.data.DataObject}
-    */
-    delegate: null,
-
-   /**
-    * Root of delegate chain. By default and when no delegate, it points to object itself.
-    * @type {basis.data.DataObject}
-    * @readonly
-    */
-    root: null,
-
-   /**
-    * Flag determines object behaviour when assigned delegate is destroing:
-    * - true - destroy object on delegate object destroing (cascade destroy)
-    * - false - don't destroy object, detach delegate only
-    * @type {boolean}
-    */
-    cascadeDestroy: false,
-
-   /**
-    * Flag to determine is this object target object or not. This property
-    * is readonly and can't be changed after init.
-    * @type {boolean}
-    * @readobly
-    */
-    isTarget: false,
-
-   /**
-    * Reference to root delegate if some object in delegate chain marked as targetPoint.
-    * @type {basis.data.DataObject}
-    * @readonly
-    */
-    target: null,
+    event_stateChanged: createEvent('stateChanged', 'oldState'),
 
    /**
     * Indicates if object influences to related objects or not (is
@@ -301,11 +285,17 @@
     active: false,
 
    /**
+    * Fires when state of subscription was changed.
+    * @event
+    */
+    event_activeChanged: createEvent('activeChanged'),
+
+   /**
     * Subscriber type indicates what sort of influence has current object on
     * related objects (delegate, source, dataSource etc).
     * @type {basis.data.SUBSCRIPTION|number}
     */
-    subscribeTo: SUBSCRIPTION.DELEGATE + SUBSCRIPTION.TARGET,
+    subscribeTo: SUBSCRIPTION.NONE,
 
    /**
     * Count of subscribed objects. This property can use to determinate
@@ -324,6 +314,172 @@
     subscribers_: null,
 
    /**
+    * Fires when count of subscribers (subscriberCount property) was changed.
+    * @param {basis.data.DataObject} object Object which subscribers count was changed.
+    * @event
+    */
+    event_subscribersChanged: createEvent('subscribersChanged'),
+
+   /**
+    * @constructor
+    */
+    init: function(){
+      // inherit
+      EventObject.prototype.init.call(this);
+
+      // activate subscription if active
+      if (this.active)
+        this.addHandler(getMaskConfig(this.subscribeTo).handler);
+    },
+
+   /**
+    * Set new state for object. Fire stateChanged event only if state (or state text) was changed.
+    * @param {basis.data.STATE|string} state New state for object
+    * @param {*=} data
+    * @return {boolean} Current object state.
+    */
+    setState: function(state, data){
+      var stateCode = String(state);
+
+      if (!STATE_EXISTS[stateCode])
+        throw new Error('Wrong state value');
+
+      // set new state for object
+      if (this.state != stateCode || this.state.data != data)
+      {
+        var oldState = this.state;
+
+        this.state = Object(stateCode);
+        this.state.data = data;
+
+        this.event_stateChanged(oldState);
+
+        return true; // state was changed
+      }
+
+      return false; // state wasn't changed
+    },
+
+   /**
+    * Default action on deprecate, set object state to {basis.data.STATE.DEPRECATED},
+    * but only if object isn't in {basis.data.STATE.PROCESSING} state.
+    */
+    deprecate: function(){
+      if (this.state != STATE.PROCESSING)
+        this.setState(STATE.DEPRECATED);
+    },
+
+   /**
+    * Set new value for isActiveSubscriber property.
+    * @param {boolean} isActive New value for {basis.data.DataObject#active} property.
+    * @return {boolean} Returns true if {basis.data.DataObject#active} was changed.
+    */
+    setActive: function(isActive){
+      isActive = !!isActive;
+
+      if (this.active != isActive)
+      {
+        this.active = isActive;
+        this.event_activeChanged();
+
+        if (isActive)
+          addSub(this, this.subscribeTo);
+        else
+          remSub(this, this.subscribeTo);
+
+        return true;
+      }
+
+      return false;
+    },
+
+   /**
+    * Set new value for subscriptionType property.
+    * @param {number} subscriptionType New value for {basis.data.DataObject#subscribeTo} property.
+    * @return {boolean} Returns true if {basis.data.DataObject#subscribeTo} was changed.
+    */
+    setSubscription: function(subscriptionType){
+      var curSubscriptionType = this.subscribeTo;
+      var newSubscriptionType = subscriptionType & SUBSCRIPTION.ALL;
+      var delta = curSubscriptionType ^ newSubscriptionType;
+
+      if (delta)
+      {
+        this.subscribeTo = newSubscriptionType;
+
+        if (this.active)
+        {
+          var curConfig = getMaskConfig(curSubscriptionType);
+          var newConfig = getMaskConfig(newSubscriptionType);
+
+          this.removeHandler(curConfig.handler);
+          this.addHandler(newConfig.handler);
+
+          var idx = 1;
+          while (delta)
+          {
+            if (delta & 1)
+            {
+              var cfg = subscriptionConfig[idx];
+              if (curSubscriptionType & idx)
+                cfg.action(SUBSCRIPTION.unlink, this);
+              else
+                cfg.action(SUBSCRIPTION.link, this);
+            }
+            idx <<= 1;
+            delta >>= 1;
+          }
+        }
+
+        return true;
+      }
+
+      return false;
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      // remove subscriptions if necessary
+      if (this.active)
+      {
+        var config = getMaskConfig(this.subscribeTo);
+        for (var i = 0, action; action = config.actions[i]; i++)
+          action(SUBSCRIPTION.unlink, this);
+      }
+
+      // inherit
+      EventObject.prototype.destroy.call(this);
+
+      this.state = STATE.UNDEFINED;
+    }
+  });
+
+
+  //
+  // DataObject
+  //
+
+ /**
+  * Base class for data storing.
+  * @class
+  */
+  var DataObject = Class(AbstractData, {
+    className: namespace + '.DataObject',
+
+   /**
+    * @inheritDoc
+    */
+    subscribeTo: SUBSCRIPTION.DELEGATE + SUBSCRIPTION.TARGET,
+
+   /**
+    * Using for data storing. Might be managed by delegate object (if used).
+    * @type {Object}
+    */
+    data: null,
+
+   /**
     * Fires on data changes.
     * @param {basis.data.DataObject} object Object which data property
     * was changed. Usually it is root of delegate chain.
@@ -335,12 +491,15 @@
     event_update: createEvent('update', 'delta'),
 
    /**
-    * Fires when state or state.data was changed.
-    * @param {basis.data.DataObject} object Object which state was changed.
-    * @param {object} oldState Object state before changes.
-    * @event
+    * @type {boolean}
     */
-    event_stateChanged: createEvent('stateChanged', 'oldState'),
+    canSetDelegate: true,
+
+   /**
+    * Object that manage data updates if assigned.
+    * @type {basis.data.DataObject}
+    */
+    delegate: null,
 
    /**
     * Fires when delegate was changed.
@@ -351,12 +510,19 @@
     event_delegateChanged: createEvent('delegateChanged', 'oldDelegate'),
 
    /**
-    * Fires when root of delegate chain was changed.
-    * @param {basis.data.DataObject} object Object which root was changed.
-    * @param {basis.data.DataObject} oldRoot Object root before changes.
-    * @event
+    * Flag to determine is this object target object or not. This property
+    * is readonly and can't be changed after init.
+    * @type {boolean}
+    * @readobly
     */
-    event_rootChanged: createEvent('rootChanged', 'oldRoot'),
+    isTarget: false,
+
+   /**
+    * Reference to root delegate if some object in delegate chain marked as targetPoint.
+    * @type {basis.data.DataObject}
+    * @readonly
+    */
+    target: null,
 
    /**
     * Fires when target property was changed.
@@ -367,17 +533,27 @@
     event_targetChanged: createEvent('targetChanged', 'oldTarget'),
 
    /**
-    * Fires when count of subscribers (subscriberCount property) was changed.
-    * @param {basis.data.DataObject} object Object which subscribers count was changed.
-    * @event
+    * Root of delegate chain. By default and when no delegate, it points to object itself.
+    * @type {basis.data.DataObject}
+    * @readonly
     */
-    event_subscribersChanged: createEvent('subscribersChanged'),
+    root: null,
 
    /**
-    * Fires when state of subscription was changed.
+    * Fires when root of delegate chain was changed.
+    * @param {basis.data.DataObject} object Object which root was changed.
+    * @param {basis.data.DataObject} oldRoot Object root before changes.
     * @event
     */
-    event_activeChanged: createEvent('activeChanged'),
+    event_rootChanged: createEvent('rootChanged', 'oldRoot'),
+
+   /**
+    * Flag determines object behaviour when assigned delegate is destroing:
+    * - true - destroy object on delegate object destroing (cascade destroy)
+    * - false - don't destroy object, detach delegate only
+    * @type {boolean}
+    */
+    cascadeDestroy: false,
 
    /**
     * Default listeners.
@@ -427,7 +603,7 @@
     */
     init: function(){
       // inherit
-      EventObject.prototype.init.call(this);
+      AbstractData.prototype.init.call(this);
 
       // data/delegate
       var delegate = this.delegate;
@@ -453,17 +629,7 @@
         if (this.isTarget)
           this.target = this;
       }
-
-      // subscription sheme: activate subscription if active
-      if (this.active)
-        applySubscription(this, this.subscribeTo, SUBSCRIPTION.ALL);
     },
-
-    /*postInit: function(){
-      // subscription sheme: activate subscription if active
-      if (this.active)
-        applySubscription(this, this.subscribeTo, SUBSCRIPTION.ALL);
-    },*/
 
    /**
     * Returns true if current object is connected to another object through delegate bubbling.
@@ -642,35 +808,8 @@
       // set new state for root
       if (root !== this)
         return root.setState(state, data);
-
-      var stateCode = String(state);
-
-      if (!STATE_EXISTS[stateCode])
-        throw new Error('Wrong state value');
-
-      // set new state for object
-      if (this.state != stateCode || this.state.data != data)
-      {
-        var oldState = this.state;
-
-        this.state = Object(stateCode);
-        this.state.data = data;
-
-        this.event_stateChanged(oldState);
-
-        return true; // state was changed
-      }
-
-      return false; // state wasn't changed
-    },
-
-   /**
-    * Default action on deprecate, set object state to {basis.data.STATE.DEPRECATED},
-    * but only if object isn't in {basis.data.STATE.PROCESSING} state.
-    */
-    deprecate: function(){
-      if (this.state != STATE.PROCESSING)
-        this.setState(STATE.DEPRECATED);
+      else
+        return AbstractData.prototype.setState.call(this, state, data);
     },
 
    /**
@@ -710,67 +849,18 @@
     },
 
    /**
-    * Set new value for isActiveSubscriber property.
-    * @param {boolean} isActive New value for {basis.data.DataObject#active} property.
-    * @return {boolean} Returns true if {basis.data.DataObject#active} was changed.
-    */
-    setActive: function(isActive){
-      isActive = !!isActive;
-
-      if (this.active != isActive)
-      {
-        this.active = isActive;
-        this.event_activeChanged();
-
-        applySubscription(this, this.subscribeTo, SUBSCRIPTION.ALL * isActive);
-
-        return true;
-      }
-
-      return false;
-    },
-
-   /**
-    * Set new value for subscriptionType property.
-    * @param {number} subscriptionType New value for {basis.data.DataObject#subscribeTo} property.
-    * @return {boolean} Returns true if {basis.data.DataObject#subscribeTo} was changed.
-    */
-    setSubscription: function(subscriptionType){
-      var curSubscriptionType = this.subscribeTo;
-      var newSubscriptionType = subscriptionType & SUBSCRIPTION.ALL;
-      var delta = curSubscriptionType ^ newSubscriptionType;
-
-      if (delta)
-      {
-        this.subscribeTo = newSubscriptionType;
-
-        if (this.active)
-          applySubscription(this, delta, newSubscriptionType);
-
-        return true;
-      }
-
-      return false;
-    },
-
-   /**
     * @destructor
     */
     destroy: function(){
-      // remove subscriptions if necessary
-      if (this.active)
-        applySubscription(this, this.subscribeTo, 0);
-
       // drop delegate
       if (this.delegate)
         this.setDelegate();
 
       // inherit
-      EventObject.prototype.destroy.call(this);
+      AbstractData.prototype.destroy.call(this);
 
       // drop data & state
       this.data = NULL_OBJECT;
-      this.state = STATE.UNDEFINED;
       this.root = null;
       this.target = null;
     }
@@ -883,12 +973,6 @@
   */
   var AbstractDataset = Class(DataObject, {
     className: namespace('AbstractDataset'),
-
-   /**
-    * Datasets can't have delegate by default.
-    * @inheritDoc
-    */
-    //canSetDelegate: false, // ????
 
    /**
     * Default state for set is undefined. It useful to trigger dataset update
@@ -1458,14 +1542,18 @@
     }
 
     return function(state) {
-      if (state) {
-        if (setStateCount == 0) {
+      if (state)
+      {
+        if (setStateCount == 0)
+        {
           proto.event_datasetChanged = storeDatasetDelta;
           if (!urgentTimer)
             urgentTimer = setTimeout(urgentFlush, 0);
         }
         setStateCount++;
-      } else {
+      }
+      else
+      {
         setStateCount -= setStateCount > 0;
         if (setStateCount == 0)
           setAccumulateStateOff();
@@ -1498,6 +1586,7 @@
     SUBSCRIPTION: SUBSCRIPTION,
 
     // classes
+    AbstractData: AbstractData,
     Object: DataObject,
     DataObject: DataObject,
     Slot: Slot,

@@ -191,32 +191,7 @@
   // register new subscription types
   //
 
-  SUBSCRIPTION.add(
-    'OWNER',
-    {
-      ownerChanged: function(object, oldOwner){
-        this.remove(object, oldOwner);
-        this.add(object, object.owner);
-      }
-    },
-    function(action, object){
-      action(object, object.owner);
-    }
-  );
-
-  SUBSCRIPTION.add(
-    'DATASOURCE',
-    {
-      dataSourceChanged: function(object, oldDataSource){
-        this.remove(object, oldDataSource);
-        this.add(object, object.dataSource);
-      }
-    },
-    function(action, object){
-      action(object, object.dataSource);
-    }
-  );
-
+  SUBSCRIPTION.addProperty('owner', 'ownerChanged');  SUBSCRIPTION.addProperty('dataSource', 'dataSourceChanged');
 
   //
   // AbstractNode

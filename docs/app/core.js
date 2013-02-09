@@ -169,25 +169,12 @@
   }
 
 
-  basis.data.SUBSCRIPTION.add(
-    'INHERIT_DOCS',
-    {
-      inheritDocChanged: function(object, oldInheritDoc){
-        this.remove(object, oldInheritDoc);
-        this.add(object, object.inheritDoc);
-      }
-    },
-    function(action, object){
-      action(object, object.inheritDoc);
-    }
-  );
-
-  
+  basis.data.SUBSCRIPTION.addProperty('inheritDoc');
   basis.event.LISTEN.add('inheritDoc', 'inheritDocChanged');
 
   var destroyJsDocEntity = JsDocEntity.entityType.entityClass.prototype.destroy;
   JsDocEntity.entityType.entityClass.extend({
-    subscribeTo: basis.data.SUBSCRIPTION.INHERIT_DOCS,
+    subscribeTo: basis.data.SUBSCRIPTION.INHERITDOC,
     event_inheritDocChanged: basis.event.create('inheritDocChanged'),
     inheritDoc: null,
     listen: {

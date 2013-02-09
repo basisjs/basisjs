@@ -691,8 +691,8 @@
         }
       },
       member: {
-        subscribersChanged: function(object, oldCount){
-          if (object.subscriberCount > 0 && oldCount == 0)
+        subscribersChanged: function(object, delta){
+          if (object.subscriberCount > 0)
             this.calcMember(object);
         }
       }

@@ -50,60 +50,33 @@
     'SOURCE',
     {
       sourceChanged: function(object, oldSource){
-        this.remove(object, oldSource);
-        this.add(object, object.source);
+        if (oldSource)
+          SUBSCRIPTION.unlink('source', object, oldSource);
+        if (object.source)
+          SUBSCRIPTION.link('source', object, object.source);
       },
       sourcesChanged: function(object, delta){
         var array;
 
         if (array = delta.inserted)
           for (var i = array.length; i-- > 0;)
-            this.add(object, array[i]);
+            SUBSCRIPTION.link('source', object, array[i]);
 
         if (array = delta.deleted)
           for (var i = array.length; i-- > 0;)
-            this.remove(object, array[i]);
+            SUBSCRIPTION.unlink('source', object, array[i]);
       }
     },
     function(action, object){
-      var sources = object.sources || [object.source];
+      var sources = object.sources || (object.source ? [object.source] : []);
 
       for (var i = 0, source; source = sources[i++];)
-        action(object, source);
+        action('source', object, source);
     }
   );
 
-  SUBSCRIPTION.add(
-    'MINUEND',
-    {
-      operandsChanged: function(object, oldMinuend){
-        if (this.minuend !== oldMinuend)
-        {
-          this.remove(object, oldMinuend);
-          this.add(object, object.minuend);
-        }
-      }
-    },
-    function(action, object){
-      action(object, object.minuend);
-    }
-  );
-
-  SUBSCRIPTION.add(
-    'SUBTRAHEND',
-    {
-      operandsChanged: function(object, oldMinuend, oldSubtrahend){
-        if (this.subtrahend !== oldSubtrahend)
-        {
-          this.remove(object, oldSubtrahend);
-          this.add(object, object.subtrahend);
-        }
-      }
-    },
-    function(action, object){
-      action(object, object.subtrahend);
-    }
-  );
+  SUBSCRIPTION.addProperty('minuend');
+  SUBSCRIPTION.addProperty('subtrahend');
 
   
  /**
@@ -529,17 +502,23 @@
     minuend: null,
 
    /**
+    * Fires when minuend changed.
+    * @param {basis.data.AbstractDataset} oldMinuend Value of {basis.data.dataset.Subtract#minuend} before changes.
+    * @event
+    */
+    event_minuendChanged: createEvent('minuendChanged', 'oldMinuend'),
+
+   /**
     * @type {basis.data.AbstractDataset}
     */
     subtrahend: null,
 
    /**
-    * Fires when minuend or substrahend changed.
-    * @param {basis.data.DataObject} object Object which state was changed.
-    * @param {object} oldState Object state before changes.
+    * Fires when subtrahend changed.
+    * @param {basis.data.AbstractDataset} oldSubtrahend Value of {basis.data.dataset.Subtract#subtrahend} before changes.
     * @event
     */
-    event_operandsChanged: createEvent('operandsChanged', 'oldMinuend', 'oldSubtrahend'),
+    event_subtrahendChanged: createEvent('subtrahendChanged', 'oldSubtrahend'),
 
    /**
     * @inheritDoc
@@ -601,6 +580,8 @@
           if (minuend)
             minuend.addHandler(listenHandler, this);
         }
+
+        this.event_minuendChanged(oldMinuend);
       }
 
       // set new subtrahend if changed
@@ -618,13 +599,12 @@
           if (subtrahend)
             subtrahend.addHandler(listenHandler, this);
         }
+
+        this.event_subtrahendChanged(oldSubtrahend);
       }
 
       if (!operandsChanged)
         return false;
-
-      // emit event
-      this.event_operandsChanged(oldMinuend, oldSubtrahend);
 
       // apply changes
       if (!minuend || !subtrahend)
