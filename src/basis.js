@@ -1420,12 +1420,12 @@
     config.autoload = false;
     if (autoload)
     {
-      var m = autoload.match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)(?:\.js)?$/i);
+      var m = autoload.match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)((?:\.[a-z$_][a-z0-9$_]*)*)$/i);
       if (m)
       {
         if (m[2] != 'basis')
         {
-          config.autoload = m[2];
+          config.autoload = m[2] + (m[3] || '');
           if (m[1])
             config.path[m[2]] = m[1].replace(/\/$/, '');
         }
