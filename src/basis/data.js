@@ -3,7 +3,7 @@
 
 
  /**
-  * This namespace contains base classes and functions for components of Basis framework.
+  * This namespace contains base classes and functions for data maintain.
   *
   * Namespace overview:
   * - Const:
@@ -162,8 +162,10 @@
       subscriptionSeed <<= 1;
     },
    /**
-    * @param {string} propertyName Name of property for subscription. Property must must be instance of {basis.data.AbstractData} class.
-    * @param {string=} eventName Name of event which fire when property changed. If omitted it will be equal to property name with 'Changed' suffix.
+    * @param {string} propertyName Name of property for subscription. Property
+    *   must must be instance of {basis.data.AbstractData} class.
+    * @param {string=} eventName Name of event which fire when property changed.
+    *   If omitted it will be equal to property name with 'Changed' suffix.
     */
     addProperty: function(propertyName, eventName){
       var handler = {};
@@ -321,6 +323,25 @@
     event_subscribersChanged: createEvent('subscribersChanged'),
 
    /**
+    * @readonly
+    */
+    syncEvents: Class.oneFunctionProperty(
+      function(){
+        if (this.isSyncRequired())
+          this.syncAction();
+      },
+      {
+        stateChanged: true,
+        subscribersChanged: true
+      }
+    ),
+
+   /**
+    * @readonly
+    */
+    syncAction: null,
+
+   /**
     * @constructor
     */
     init: function(){
@@ -330,6 +351,9 @@
       // activate subscription if active
       if (this.active)
         this.addHandler(getMaskConfig(this.subscribeTo).handler);
+
+      if (this.syncAction)
+        this.setSyncAction(this.syncAction);
     },
 
    /**
@@ -438,6 +462,36 @@
     },
 
    /**
+    * Rule to determine is sync required.
+    */
+    isSyncRequired: function(){
+      return this.subscriberCount > 0 && 
+             (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED);
+    },
+    
+   /**
+    * Change sync actions function.
+    * @param {function|null} syncAction
+    */
+    setSyncAction: function(syncAction){
+      if (typeof syncAction != 'function')
+        syncAction = null;
+
+      this.syncAction = syncAction;
+
+      if (syncAction)
+      {
+        this.addHandler(this.syncEvents);
+        if (this.isSyncRequired())
+          this.syncAction();
+      }
+      else
+      {
+        this.removeHandler(this.syncEvents);
+      }
+    },     
+
+   /**
     * @destructor
     */
     destroy: function(){
@@ -491,15 +545,15 @@
     event_update: createEvent('update', 'delta'),
 
    /**
-    * @type {boolean}
-    */
-    canSetDelegate: true,
-
-   /**
     * Object that manage data updates if assigned.
     * @type {basis.data.DataObject}
     */
     delegate: null,
+
+   /**
+    * @type {boolean}
+    */
+    canSetDelegate: true,
 
    /**
     * Fires when delegate was changed.
@@ -695,8 +749,8 @@
         // that has this object in delegate chains
         if (newDelegate.delegate && this.isConnected(newDelegate))
         {
-          // DEBUG: show warning in debug mode that we drop delegate because it is already connected with object
-          ;;;basis.dev.warn('(debug) New delegate has already connected to object. Delegate assign has been ignored.', this, newDelegate);
+          // show warning in dev mode about new delegate ignore because it is already connected with object
+          ;;;basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
 
           // newDelegate can't be assigned
           return false;
@@ -719,7 +773,9 @@
         var delta = {};
 
         var delegateListenHandler = this.listen.delegate;
-        var targetListenHandler = (oldTarget || newDelegate) && (!newDelegate || newDelegate.target !== oldTarget) && this.listen.target;
+        var targetListenHandler = (oldTarget || newDelegate) && 
+                                  (!newDelegate || newDelegate.target !== oldTarget) && 
+                                  this.listen.target;
 
         if (oldDelegate && delegateListenHandler)
           oldDelegate.removeHandler(delegateListenHandler, this);
@@ -1011,32 +1067,6 @@
     cache_: null,
 
    /**
-    * @readonly
-    */
-    syncEvents: Class.oneFunctionProperty(
-      function(){
-        if (this.isSyncRequired())
-          this.syncAction();
-      },
-      {
-        stateChanged: true,
-        subscribersChanged: true
-      }
-    ),
-
-   /**
-    * @readonly
-    */
-    isSyncRequired: function(){
-      return this.subscriberCount > 0 && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED);
-    },
-
-   /**
-    * @readonly
-    */
-    syncAction: null,
-
-   /**
     * Fires when items changed.
     * @param {basis.data.AbstractDataset} dataset
     * @param {Object} delta Delta of changes. Must have property `inserted`
@@ -1086,9 +1116,6 @@
     init: function(){
       // inherit
       DataObject.prototype.init.call(this);
-
-      if (this.syncAction)
-        this.setSyncAction(this.syncAction);
 
       this.memberMap_ = {};
       this.item_ = {};
@@ -1170,27 +1197,6 @@
     * Removes all items from dataset.
     */
     clear: function(){
-    },
-
-   /**
-    * @param {function|null} syncAction
-    */
-    setSyncAction: function(syncAction){
-      if (typeof syncAction != 'function')
-        syncAction = null;
-
-      this.syncAction = syncAction;
-
-      if (syncAction)
-      {
-        this.addHandler(this.syncEvents);
-        if (this.isSyncRequired())
-          this.syncAction();
-      }
-      else
-      {
-        this.removeHandler(this.syncEvents);
-      }
     },
 
    /**
