@@ -22,7 +22,7 @@
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
-  var EventObject = basis.event.EventObject;
+  var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
   var DataObject = basis.data.DataObject;
@@ -843,7 +843,7 @@
   */
   var BaseEntity = Class(DataObject, {
     className: namespace + '.BaseEntity',
-    init: EventObject.prototype.init,
+    init: Emitter.prototype.init,
     event_rollbackUpdate: createEvent('rollbackUpdate')
   });
 
@@ -972,7 +972,7 @@
             value = defaults[key];
           }
 
-          if (value && value !== this && value instanceof EventObject)
+          if (value && value !== this && value instanceof Emitter)
           {
             if (value.addHandler(fieldDestroyHandlers[key], this))
               this.fieldHandlers_[key] = true;
@@ -1027,7 +1027,7 @@
 
         // if value changed:
         // - update index for id field
-        // - attach/detach handlers on object destroy (for EventObjects)
+        // - attach/detach handlers on object destroy (for Emitters)
         // - registrate changes to rollback data if neccessary
         // - fire 'change' event for not silent mode
         if (valueChanged) updateField:
@@ -1113,9 +1113,9 @@
             this.fieldHandlers_[key] = false;
           }
 
-          // add new handler if object is instance of EventObject
+          // add new handler if object is instance of basis.event.Emitter
           // newValue !== this prevents recursion for self update
-          if (newValue && newValue !== this && newValue instanceof EventObject)
+          if (newValue && newValue !== this && newValue instanceof Emitter)
           {
             if (newValue.addHandler(fieldDestroyHandlers[key], this))
               this.fieldHandlers_[key] = true;

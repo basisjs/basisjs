@@ -30,7 +30,7 @@
   var classList = basis.cssom.classList;
 
   var TimeEventManager = basis.timer.TimeEventManager;
-  var EventObject = basis.event.EventObject;
+  var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
   var nsData = basis.data;
@@ -255,7 +255,7 @@
    /**
     * Adds link to object property or method. Optional parameter format using to
     * convert value to another value or type.
-    * If object instance of {basis.event.EventObject}, property attached handler. This handler
+    * If object instance of {basis.event.Emitter}, property attached handler. This handler
     * removes property links to object, when object destroy.
     * @example
     *
@@ -317,14 +317,14 @@
         object: object,
         format: format,
         field: field,
-        isEventObject: object instanceof EventObject 
+        isEmitter: object instanceof Emitter 
       };
 
       // add link
       ;;;if (this.links_.some(function(link){ return link.object == object && link.field == field; })) basis.dev.warn('Property.addLink: Duplicate link for property');
       this.links_.push(link);  // !!! TODO: check for object-field duplicates
       
-      if (link.isEventObject)
+      if (link.isEmitter)
         object.addHandler(PropertyObjectDestroyAction, this); // add unlink handler on object destroy
 
       // make effect on object
@@ -378,7 +378,7 @@
     *   ...
     *   property.removeLink(object, linkHandler);
     *
-    *   // for cases when object is instance of {basis.event.EventObject} removing link on destroy is not required
+    *   // for cases when object is instance of {basis.event.Emitter} removing link on destroy is not required
     *   var node = new Node();
     *   property.addLink(node, 'title');
     *   ...
@@ -402,7 +402,7 @@
       {
         if (link.object === object && (deleteAll || field == link.field))
         {
-          if (link.isEventObject)
+          if (link.isEmitter)
             link.object.removeHandler(PropertyObjectDestroyAction, this); // remove unlink handler on object destroy
         }
         else
@@ -417,7 +417,7 @@
     clear: function(){
       // destroy links
       for (var i = 0, link; link = this.links_[i]; i++)
-        if (link.isEventObject)
+        if (link.isEmitter)
           link.object.removeHandler(PropertyObjectDestroyAction, this); // remove unlink on object destroy
 
       // clear links array

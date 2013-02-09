@@ -26,7 +26,7 @@
     var arrayFrom = basis.array.from;
     var Class = basis.Class;
 
-    var EventObject = basis.event.EventObject;
+    var Emitter = basis.event.Emitter;
     var Property = basis.data.property.Property;
 
     var events = basis.event.events;
@@ -91,7 +91,7 @@
      *  Test
      */
 
-    var AbstractTest = Class(EventObject, {
+    var AbstractTest = Class(Emitter, {
       className: namespace + '.AbstractTest',
 
       result:   false,
@@ -114,7 +114,7 @@
 
       extendConstructor_: false,
       init: function(name, critical){
-        EventObject.prototype.init.call(this);
+        Emitter.prototype.init.call(this);
         this.name = (name || 'test#' + TEST_NUMBER++);
         this.critical = critical || false;
         this.timer = 0;
@@ -493,7 +493,7 @@
     };
 
     // main object
-    var Tester = new EventObject({
+    var Tester = new Emitter({
       dataStack: [{}],
       resultStack: [],
 

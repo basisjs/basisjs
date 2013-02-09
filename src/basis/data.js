@@ -28,7 +28,7 @@
   var values = basis.object.values;
   var $self = basis.fn.$self;
 
-  var EventObject = basis.event.EventObject;
+  var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
   var events = basis.event.events;
 
@@ -260,7 +260,7 @@
   * Base class for any data type class.
   * @class
   */
-  var AbstractData = Class(EventObject, {
+  var AbstractData = Class(Emitter, {
     className: namespace + '.AbstractData',
 
    /**
@@ -325,7 +325,7 @@
     */
     init: function(){
       // inherit
-      EventObject.prototype.init.call(this);
+      Emitter.prototype.init.call(this);
 
       // activate subscription if active
       if (this.active)
@@ -450,7 +450,7 @@
       }
 
       // inherit
-      EventObject.prototype.destroy.call(this);
+      Emitter.prototype.destroy.call(this);
 
       this.state = STATE.UNDEFINED;
     }

@@ -18,28 +18,28 @@
 
     var eventStat = {};
 
-    if (basis.event.EventObject.event)
+    if (basis.event.Emitter.event)
     {
       function wrapEvent(eventName){
-        var func = basis.event.EventObject.event[eventName];
-        basis.event.EventObject.event[eventName] = function(){
+        var func = basis.event.Emitter.event[eventName];
+        basis.event.Emitter.event[eventName] = function(){
           eventStat[eventName] = (eventStat[eventName] || 0) + 1;
           func.apply(this, arguments);
         };
       }
      
-      basis.object.keys(basis.event.EventObject.event).forEach(wrapEvent);
+      basis.object.keys(basis.event.Emitter.event).forEach(wrapEvent);
     }
 
     var addCount = 0;
     var removeCount = 0;
-    /*var _add = basis.EventObject.prototype.addHandler.method;
-    basis.EventObject.prototype.addHandler.method = function(){
+    /*var _add = basis.Emitter.prototype.addHandler.method;
+    basis.Emitter.prototype.addHandler.method = function(){
       addCount++;
       return _add.apply(this, arguments);
     }/*
-    var _remove = basis.EventObject.prototype.removeHandler.method;
-    basis.EventObject.prototype.removeHandler.method = function(){
+    var _remove = basis.Emitter.prototype.removeHandler.method;
+    basis.Emitter.prototype.removeHandler.method = function(){
       removeCount++;
       _remove.apply(this, arguments);
     }*/

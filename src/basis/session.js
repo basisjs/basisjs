@@ -17,7 +17,7 @@
   var extend = basis.object.extend;
   var keys = basis.object.keys;
 
-  var EventObject = basis.event.EventObject;
+  var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
   var events = basis.event.events;
 
@@ -47,7 +47,7 @@
    *  SessionManager
    */
 
-  var SessionManager = new EventObject({
+  var SessionManager = new Emitter({
     event_sessionOpen: createEvent('sessionOpen'),
     event_sessionClose: createEvent('sessionClose'),
     event_sessionFreeze: createEvent('sessionFreeze'),
@@ -138,7 +138,7 @@
       while (key = keys.pop())
         sessions[key].destroy();
 
-      EventObject.prototype.destroy.call(this);
+      Emitter.prototype.destroy.call(this);
     }
   });
 
@@ -146,7 +146,7 @@
    *  Session
    */
 
-  var Session = Class(EventObject, {
+  var Session = Class(Emitter, {
     className: namespace + '.Session',
 
     event_destroy: function(){
@@ -159,7 +159,7 @@
 
     extendConstructor_: false,
     init: function(key){
-      EventObject.prototype.init.call(this);
+      Emitter.prototype.init.call(this);
 
       this.key = key;
       this.data = {};
@@ -179,7 +179,7 @@
       return this.data[key];
     },
     destroy: function(){
-      EventObject.prototype.destroy.call(this);
+      Emitter.prototype.destroy.call(this);
 
       var keys = keys(this.data);
       var key;

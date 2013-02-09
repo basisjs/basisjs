@@ -26,7 +26,7 @@
 
   var createEvent = basis.event.create;
 
-  var EventObject = basis.event.EventObject;
+  var Emitter = basis.event.Emitter;
   var UINode = basis.ui.Node;
 
 
@@ -97,7 +97,7 @@
  /**
   * @class
   */
-  var Scroller = EventObject.subclass({
+  var Scroller = Emitter.subclass({
     className: namespace + '.Scroller',
 
     minScrollDelta: 0,
@@ -144,7 +144,7 @@
       this.panningActive = false;
 
       //init
-      EventObject.prototype.init.call(this);
+      Emitter.prototype.init.call(this);
 
       if (this.targetElement)
       {

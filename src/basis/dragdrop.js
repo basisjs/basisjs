@@ -28,7 +28,7 @@
   var addGlobalHandler = Event.addGlobalHandler;
   var removeGlobalHandler = Event.removeGlobalHandler;
 
-  var EventObject = basis.event.EventObject;
+  var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
   var nsLayout = basis.layout;
@@ -121,7 +121,7 @@
  /**
   * @class
   */
-  var DragDropElement = Class(EventObject, {
+  var DragDropElement = Class(Emitter, {
     className: namespace + '.DragDropElement',
 
     containerGetter: getter('element'),
@@ -151,7 +151,7 @@
     //
     init: function(){
       //this.inherit(config);
-      EventObject.prototype.init.call(this);
+      Emitter.prototype.init.call(this);
 
       var element = this.element;
       var trigger = this.trigger;
@@ -220,7 +220,7 @@
 
       this.stop();
 
-      EventObject.prototype.destroy.call(this);
+      Emitter.prototype.destroy.call(this);
       
       this.setElement();
       this.setBase();
