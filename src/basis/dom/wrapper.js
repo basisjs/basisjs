@@ -587,40 +587,44 @@
    /**
     * Process on init:
     *   - grouping
-    *   - childNodes
     *   - dataSource
+    *   - childNodes
+    *   - satellite
     *   - satelliteConfig
     *   - owner
     * @constructor
     */
     init: function(){
-      var dataSource = this.dataSource;
-      var childNodes = this.childNodes;
-      var grouping = this.grouping;
-
-      if (dataSource)
-        this.dataSource = null; // NOTE: reset dataSource before inherit -> prevent double subscription activation
-                                // when this.active == true and dataSource is assigned
-
       // inherit
       DataObject.prototype.init.call(this);
 
+      // save current values
+      var childNodes = this.childNodes;
+      var dataSource = this.dataSource;
+
+      // reset values
+      if (childNodes)
+        this.childNodes = null;
+
+      if (dataSource)
+        this.dataSource = null;
+
+      // apply grouping on empty childNodes, because childNodes may contains
+      // configs but not Node instances
+      var grouping = this.grouping;      
       if (grouping)
       {
         this.grouping = null;
         this.setGrouping(grouping);
       }
 
-      // init properties
+      // apply child nodes properties
       if (this.childClass)
       {
-        // init child nodes storage
         this.childNodes = [];
 
-        // set dataSource
         if (dataSource)
         {
-          this.dataSource = null;
           this.setDataSource(dataSource);
         }
         else
@@ -628,14 +632,6 @@
           if (childNodes)
             this.setChildNodes(childNodes);
         }
-      }
-      else
-      {
-        if (childNodes)
-          this.childNodes = null;
-
-        if (dataSource)
-          this.dataSource = null;
       }
 
       // process satellites
