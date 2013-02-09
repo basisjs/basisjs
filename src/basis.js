@@ -1416,6 +1416,30 @@
 
     config.path.basis = basisUrl;
       
+    var autoload = config.autoload;
+    config.autoload = false;
+    if (autoload)
+    {
+      var m = autoload.match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)(?:\.js)?$/i);
+      if (m)
+      {
+        if (m[2] != 'basis')
+        {
+          config.autoload = m[2];
+          if (m[1])
+            config.path[m[2]] = m[1].replace(/\/$/, '');
+        }
+        else
+        {
+          ;;;consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
+        }
+      }
+      else
+      {
+        ;;;consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
+      }
+    }
+
     for (var key in config.path)
       config.path[key] = pathUtils.resolve(config.path[key] + '/');
 
