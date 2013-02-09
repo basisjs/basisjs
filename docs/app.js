@@ -7,7 +7,11 @@
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
+  basis.require('basis.router');
+  basis.require('basis.app');
   basis.require('basis.template');
+  basis.require('basis.template.html');
+  basis.require('basis.template.htmlfgen');
   basis.require('basis.html');
   basis.require('basis.date');
   basis.require('basis.dragdrop');
@@ -28,6 +32,7 @@
   basis.require('basis.net.service');
   basis.require('basis.net.soap');
   basis.require('basis.net.upload');
+  basis.require('basis.l10n');
   basis.require('basis.ui');
   basis.require('basis.ui.button');
   basis.require('basis.ui.label');
@@ -40,6 +45,7 @@
   basis.require('basis.ui.tabs');
   basis.require('basis.ui.calendar');
   basis.require('basis.ui.form');
+  basis.require('basis.ui.field');
   basis.require('basis.ui.scroller');
   basis.require('basis.ui.slider');
   basis.require('basis.ui.resizer');
