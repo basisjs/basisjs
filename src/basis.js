@@ -294,6 +294,7 @@
         var bar = parts[1];
         var baz = parts[2];
         var fn;
+
         switch (parts.length)
         {
           case 1:
@@ -321,10 +322,11 @@
               }
 
               return object;
-            }
+            };
         }
 
         ;;;fn.toString = function(){ return 'function(object){\n  return object ? object.' + path + ' : object;\n}'; }
+        
         return fn;
       }
 
