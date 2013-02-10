@@ -1844,6 +1844,7 @@
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
 
+        /** @cut */ var classId = classSeed++;
         /** @cut */ var className = '';
 
         /** @cut */ for (var i = 1, extension; extension = arguments[i]; i++)
@@ -1852,6 +1853,7 @@
 
         /** @cut */ if (!className)
         /** @cut */   className = SuperClass.className + '._Class' + classId;
+        /** @cut */// consoleMethods.warn('Class has no name');
 
         // temp class constructor with no init call
         var NewClassProto = function(){};
@@ -1862,8 +1864,6 @@
         NewClassProto.prototype = SuperClass.prototype;
 
         var newProto = new NewClassProto;
-        var classId = classSeed++;
-        var genericClassName = SuperClass.className + '._Class' + classId;
         var newClassProps = {
           /** @cut */ className: className,
           /** @cut */ basisClassId_: classId,
@@ -1901,7 +1901,6 @@
 
 
         /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
-        /** @cut *///if (genericClassName == newClassProps.className) { consoleMethods.warn('Class has no className'); }
 
         // new class constructor
         var newClass = newClassProps.extendConstructor_
