@@ -260,12 +260,11 @@
       */
       template: TEMPLATE,         // NOTE: explicit template constructor here;
                                   // it could be ommited in subclasses
-
      /**
-      * Contains references to template nodes.
-      * @type {Object}
+      * Fires when template had changed.
+      * @event
       */
-      tmpl: null,
+      event_templateChanged: createEvent('templateChanged'),
 
      /**
       * @type {Object}
@@ -277,6 +276,24 @@
       * @type {Object}
       */
       action: TEMPLATE_ACTION,
+
+     /**
+      * Map for references to template nodes.
+      * @type {Object}
+      */
+      tmpl: null,
+
+     /**
+      * Fast reference to template root node (tmpl.element)
+      * @type {Node}
+      */
+      element: null,
+
+     /**
+      * Fast reference to child nodes container dom (tmpl.childNodesElement/tmpl.childNodesHere or tmpl.element)
+      * @type {Node}
+      */
+      childNodesElement: null,
 
      /**
       * @type {string}
@@ -296,12 +313,6 @@
       * @type {boolean}
       */
       focusable: true,
-
-     /**
-      * Fires when template had changed.
-      * @event
-      */
-      event_templateChanged: createEvent('templateChanged'),
 
      /**
       * @inheritDoc
@@ -386,7 +397,7 @@
             if (tmpl.childNodesHere)
             {
               tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
-              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;
+              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere; // FIXME: we should avoid add expando to dom nodes
             }
 
             this.tmpl = tmpl;
@@ -394,7 +405,7 @@
             this.childNodesElement = tmpl.childNodesElement || tmpl.element;
             ;;;this.noChildNodesElement = false;
 
-            if (!this.childNodesElement || this.childNodesElement.nodeType != 1)
+            if (this.childNodesElement.nodeType != 1)
             {
               this.childNodesElement = document.createDocumentFragment();
               ;;;this.noChildNodesElement = true;
@@ -475,8 +486,10 @@
               }
           }
           else
+          {
             for (var child = this.lastChild; child; child = child.previousSibling)
               this.insertBefore(child, child.nextSibling);
+          }
 
           if (oldElement && this.element && oldElement !== this.element)
           {
@@ -527,7 +540,7 @@
             if (tmpl.childNodesHere)
             {
               tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
-              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;
+              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;  // FIXME: we should avoid add expando to dom nodes
             }
 
             this.tmpl = tmpl;
@@ -536,7 +549,7 @@
 
             ;;;this.noChildNodesElement = false;
 
-            if (!this.childNodesElement || this.childNodesElement.nodeType != 1)
+            if (this.childNodesElement.nodeType != 1)
             {
               this.childNodesElement = document.createDocumentFragment();
               ;;;this.noChildNodesElement = true;
@@ -643,23 +656,22 @@
     return {
       // methods
       insertBefore: function(newChild, refChild){
-        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; basis.dev.warn('Bug: Template has no childNodesElement container, but insertBefore call'); }
+        ;;;if (this.noChildNodesElement){ this.noChildNodesElement = false; basis.dev.warn('Bug: Template has no childNodesElement container, but insertBefore called'); }
 
         // inherit
         newChild = super_.insertBefore.call(this, newChild, refChild);
 
         var target = newChild.groupNode || this;
-        var container = target.childNodesElement || target.element || this.childNodesElement || this.element;
+        var container = target.childNodesElement || this.childNodesElement;
 
         var nextSibling = newChild.nextSibling;
-        //var insertPoint = nextSibling && (target == this || nextSibling.groupNode === target) ? nextSibling.element : null;
         var insertPoint = nextSibling && nextSibling.element.parentNode == container ? nextSibling.element : null;
 
-        var element = newChild.element;
+        var childElement = newChild.element;
         var refNode = insertPoint || container.insertPoint || null; // NOTE: null at the end for IE
 
-        if (element.parentNode !== container || element.nextSibling !== refNode) // prevent dom update
-          container.insertBefore(element, refNode);
+        if (childElement.parentNode !== container || childElement.nextSibling !== refNode) // prevent dom update
+          container.insertBefore(childElement, refNode);
           
         return newChild;
       },
@@ -702,10 +714,10 @@
         // reallocate childNodesElement to new DocumentFragment
         var domFragment = DOM.createFragment();
         var target = this.grouping || this;
-        var container = target.childNodesElement || target.element;
+        var container = target.childNodesElement;
         target.childNodesElement = domFragment;
 
-        // call inherited method
+        // call inherit method
         // NOTE: make sure that dispatching childNodesModified event handlers are not sensetive
         // for child node positions at real DOM (html document), because all new child nodes
         // will be inserted into temporary DocumentFragment that will be inserted into html document
@@ -779,7 +791,7 @@
 
       if (owner)
       {
-        element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement || owner.element;
+        element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement;
         element.appendChild(this.nullElement);
       }
 
