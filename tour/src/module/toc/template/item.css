@@ -1,9 +1,12 @@
 .app-toc-item
 {
-
+  padding: .2em .2em .2em 1em;
+  background: #F8F8F8;
+  margin: 1px;
+  cursor: pointer;
 }
 
-.app-toc-item_selected
+.app-toc-item:hover
 {
   background: gold;
 }

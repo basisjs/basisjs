@@ -9,6 +9,7 @@
     background: white;
     color: black;
   	font-size: small;
+    font-family: Tahoma, Verdana, sans-serif;
   }
 
   #layout
@@ -18,83 +19,4 @@
     left: 0;
     right: 0;
     bottom: 0;
-  }
-
-  #navAndContentSide
-  {
-    float: right;
-    position: relative;
-    width: 40%;
-    height: 100%;
-    background: gray;
-  }
-  #description
-  {
-    background: #E0E0E0;
-    position: absolute;
-    top: 2.5em;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 15px;
-    overflow: auto;
-  }
-  #nav
-  {
-    background: blue;
-    height: 2.5em;
-  }
-
-  #interactiveSide
-  {
-    position: relative;
-    height: 100%;
-    overflow: hidden;
-  }
-  #header
-  {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    height: 2.5em;
-  }
-
-  #code
-  {
-    position: absolute;
-    top: 2.5em;
-    left: 0;
-    right: 0;
-    bottom: 50%;
-  }
-  #code-editor
-  {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    margin: 0;
-    border: none;
-    resize: none;
-    background: #F0F0F0;
-  }
-
-  #preview
-  {
-    background: white;
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-  #preview IFRAME
-  {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
   }

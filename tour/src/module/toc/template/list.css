@@ -1,4 +1,15 @@
 .app-toc-list
 {
-
+  float: right;
+  width: 40%;
+}
+.app-toc-list H2
+{
+  margin: 0 0 .5em;
+}
+.app-toc-list UL
+{
+  list-style: none;
+  padding: 0;
+  margin: 0; 
 }
