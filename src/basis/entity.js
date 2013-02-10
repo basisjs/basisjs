@@ -952,11 +952,8 @@
 
         // set up some properties
         this.fieldHandlers_ = {};
-        //this.data = {};//new entityType.xdefaults;//{};
-        //this.root = this;
-        //this.target = this;
 
-        ;;;for (var key in data) if (!fields[key]) entityWarn(this, 'Set value for "' + key + '" property is ignored.');
+        ;;;for (var key in data) if (!fields[key]) entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
 
         // copy default values
         var value;
@@ -1007,7 +1004,7 @@
           // exit if no new fields allowed
           if (!entityType.extensible)
           {
-            ;;;entityWarn(this, 'Set value for "' + key + '" property is ignored.');
+            ;;; entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
             return false;
           }
 
