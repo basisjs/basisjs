@@ -1844,21 +1844,31 @@
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
 
+        /** @cut */ var className = '';
+
+        /** @cut */ for (var i = 1, extension; extension = arguments[i]; i++)
+        /** @cut */   if (typeof extension != 'function' && extension.className)
+        /** @cut */     className = extension.className;
+
+        /** @cut */ if (!className)
+        /** @cut */   className = SuperClass.className + '._Class' + classId;
+
         // temp class constructor with no init call
-        var SuperClass_ = function(){};
+        var NewClassProto = function(){};
 
         // verbose name in dev
-        ;;;SuperClass_ = dev_verboseNameWrap(SuperClass.className, {}, SuperClass_);
+        /** @cut */ NewClassProto = dev_verboseNameWrap(className, {}, NewClassProto);
 
-        SuperClass_.prototype = SuperClass.prototype;
+        NewClassProto.prototype = SuperClass.prototype;
 
-        var newProto = new SuperClass_;
+        var newProto = new NewClassProto;
         var classId = classSeed++;
         var genericClassName = SuperClass.className + '._Class' + classId;
         var newClassProps = {
-          className: genericClassName,
-          basisClassId_: classId,
-          superClass_: SuperClass,
+          /** @cut */ className: className,
+          /** @cut */ basisClassId_: classId,
+          /** @cut */ superClass_: SuperClass,
+
           extendConstructor_: !!SuperClass.extendConstructor_,
 
           // class methods
@@ -1894,9 +1904,6 @@
         /** @cut *///if (genericClassName == newClassProps.className) { consoleMethods.warn('Class has no className'); }
 
         // new class constructor
-        // NOTE: this code makes Chrome and Firefox show class name in console
-        var className = newClassProps.className;
-
         var newClass = newClassProps.extendConstructor_
           // constructor with instance extension
           ? function(extend){
@@ -1933,6 +1940,7 @@
             };
 
         // verbose name in dev
+        // NOTE: this code makes Chrome and Firefox show class name in console
         ;;;newClass = dev_verboseNameWrap(className, { seed: seed }, newClass);
 
         // add constructor property to prototype
@@ -1946,9 +1954,6 @@
 
         // extend constructor with properties
         extend(newClass, newClassProps);
-
-        //if (!window.classCount) window.classCount = 0; window.classCount++;
-        //if (!window.classList) window.classList = []; window.classList.push(newClass);
 
         return newClass;
       },
