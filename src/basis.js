@@ -327,11 +327,11 @@
 
         //;;;fn.toString = function(){ return 'function(object){\n  return object ? object.' + path + ' : object;\n}'; }
         // verbose function code in dev mode
-        /** @cut */ fn = Function('return ' + fn.toString()
+        /** @cut */ fn = Function('parts', 'return ' + fn.toString()
         /** @cut */   .replace(/(foo|bar|baz)/g, function(m, w){
         /** @cut */      return '"' + parts[w == 'foo' ? 0 : (w == 'bar' ? 1 : 2)] + '"';
         /** @cut */    })
-        /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))();
+        /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))(parts);
         
         return fn;
       }
