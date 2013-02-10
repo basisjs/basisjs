@@ -1,0 +1,51 @@
+<!doctype html>
+
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>basis.js tour: simple class</title>
+
+  <script src="../../src/basis.js" basis-config="autoload: '../src/app'"></script>
+  <script>
+    //location.replace('/tour/');
+  </script>
+</head>
+<body>
+  <h1>class inheritance</h1>
+  <div id="description">
+    class inheritance
+  </div>
+  <pre id="sourceCode">
+var classA = basis.Class(null, { // you can use basis.Class instead of null
+  name: 'default value',
+  init: function(title){ // special method - constructor
+    this.title = title;
+  },
+  say: function(){
+    return 'My name is {0}.'.format(this.title);
+  }
+});
+
+var classB = basis.Class(classA, {
+  age: 0,
+  init: function(title, age){
+    classA.prototype.init.call(this, title);
+    this.age = age;
+  },
+  say: function(){
+    return classA.prototype.say.call(this) + ' I\'m {0} year old.'.format(this.age);
+  }
+});
+
+var foo = new classA('John');
+var bar = new classB('Ivan', 25);
+show(foo.say()); // My name is John.
+show(bar.say()); // My name is Ivan. I'm 25 year old.
+show(bar instanceof basis.Class); // false (for some reasons it false now)
+show(bar instanceof classA); // true
+show(bar instanceof classB); // true
+</pre>
+  <div id="files">
+  </div>
+</body>
+</html>

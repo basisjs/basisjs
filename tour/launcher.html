@@ -10,7 +10,16 @@
     window.onerror = function(message){
       document.write(message);
     }
+
     document.write(+new Date);
+
+    window.show = function(value){
+      var el = document.createElement('div');
+      el.className = 'basis-tour-message';
+      el.appendChild(document.createTextNode(String(value)));
+      document.body.appendChild(el);
+    }
+
     if (top.launcherCallback)
     {
       try {

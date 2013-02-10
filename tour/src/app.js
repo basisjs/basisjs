@@ -4,9 +4,10 @@
 
 
   var prevCode = '';
+  var view;
   module.exports = basis.app({
     init: function(){
-      return new basis.ui.Node({
+      view = new basis.ui.Node({
         template: resource('app/template/layout.tmpl'),
         binding: {
           toc: resource('module/toc/index.js').fetch()
@@ -27,10 +28,23 @@
               this.tmpl.launcher.src = this.tmpl.launcher.src;
             }
           }
+        },
+
+        active: true,
+        handler: {
+          update: function(sender, delta){
+            //if ('content' in delta)
+              this.tmpl.editor.value = this.data.code || '';
+          }
         }
-      }).element;
+      });
+      return view.element;
     }
   });
+
+  module.exports.selectPage = function(page){
+    view.setDelegate(page);
+  }
 
   global.launcherCallback = function(){
     var sourceCodeNode = document.getElementById('code-editor');

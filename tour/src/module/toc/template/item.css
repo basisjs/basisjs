@@ -2,3 +2,8 @@
 {
 
 }
+
+.app-toc-item_selected
+{
+  background: gold;
+}
