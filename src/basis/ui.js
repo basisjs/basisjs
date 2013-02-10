@@ -304,12 +304,6 @@
       event_templateChanged: createEvent('templateChanged'),
 
      /**
-      * Fires when template parse it source.
-      * @event
-      */
-      event_templateUpdate: createEvent('templateUpdate'),
-
-     /**
       * @inheritDoc
       */
       event_update: function(delta){
