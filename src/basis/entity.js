@@ -843,7 +843,12 @@
   */
   var BaseEntity = Class(DataObject, {
     className: namespace + '.BaseEntity',
-    init: Emitter.prototype.init,
+
+    canSetDelegate: false,
+    isTarget: true,
+
+    modified: null,
+
     event_rollbackUpdate: createEvent('rollbackUpdate')
   });
 
@@ -936,24 +941,20 @@
     return Class(BaseEntity, getters, {
       className: namespace + '.Entity',
 
-      canSetDelegate: false,
-      //index: index__,
-
-      modified: null,
-      isTarget: true,
-
       extendConstructor_: false,
       init: function(data){
-        //var entityType = this.entityType;
+        // ignore delegate and data
+        this.delegate = null;
+        this.data = {};
 
         // inherit
         BaseEntity.prototype.init.call(this);
 
         // set up some properties
         this.fieldHandlers_ = {};
-        this.data = {};//new entityType.xdefaults;//{};
-        this.root = this;
-        this.target = this;
+        //this.data = {};//new entityType.xdefaults;//{};
+        //this.root = this;
+        //this.target = this;
 
         ;;;for (var key in data) if (!fields[key]) entityWarn(this, 'Set value for "' + key + '" property is ignored.');
 
