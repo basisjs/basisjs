@@ -180,6 +180,13 @@
         };
     }
 
+    // verbose function code in dev mode
+    /** @cut */ result = Function('calcFn', 'return ' + result.toString()
+    /** @cut */   .replace(/(foo|bar|baz)/g, function(m, w){
+    /** @cut */      return '"' + names[w == 'foo' ? 0 : (w == 'bar' ? 1 : 2)] + '"';
+    /** @cut */    })
+    /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))(calcFn);
+
     result.args = names;
     result.calc = result;
     return result;
@@ -835,7 +842,7 @@
   //
 
   function entityWarn(entity, message){
-    ;;;basis.dev.warn('(debug) Entity ' + entity.entityType.name + '#' + entity.basisObjectId + ': ' + message, entity); 
+    ;;;basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity); 
   }
 
  /**
@@ -908,7 +915,7 @@
           entityType.index__.calcWrapper(entity.__id__);
 
       } catch(e) {
-        ;;;basis.dev.warn('Exception on field calc');
+        ;;;entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message));
         entity.__id__ = id;
         rollbackChanges(entity, delta, rollbackDelta);
         update = false;
