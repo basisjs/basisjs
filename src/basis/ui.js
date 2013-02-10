@@ -230,13 +230,23 @@
  /**
   * Base action
   */
-  var EMPTY_TEMPLATE_ACTION = Class.extensibleProperty();
+  var TEMPLATE_ACTION = Class.extensibleProperty({
+    select: function(event){
+      if (this.isDisabled())
+        return;
+
+      if (this.contextSelection && this.contextSelection.multiple)
+        this.select(event.ctrlKey || event.metaKey);
+      else
+        this.select();
+    }
+  });
 
 
  /**
   * Base template for TemplateMixin
   */
-  var EMPTY_TEMPLATE = new Template('<div/>');
+  var TEMPLATE = new Template('<div/>');
 
 
  /**
@@ -248,7 +258,7 @@
       * Template for object.
       * @type {basis.html.Template}
       */
-      template: EMPTY_TEMPLATE,   // NOTE: explicit template constructor here;
+      template: TEMPLATE,         // NOTE: explicit template constructor here;
                                   // it could be ommited in subclasses
 
      /**
@@ -258,15 +268,15 @@
       tmpl: null,
 
      /**
-      * Handlers for template actions.
-      * @type {Object}
-      */
-      action: EMPTY_TEMPLATE_ACTION,
-
-     /**
       * @type {Object}
       */
       binding: TEMPLATE_BINDING,
+
+     /**
+      * Handlers for template actions.
+      * @type {Object}
+      */
+      action: TEMPLATE_ACTION,
 
      /**
       * @type {string}
@@ -402,6 +412,7 @@
           {
             if (this.content instanceof basis.l10n.Token)
             {
+              // FIXME: buggy code here, looks like we shouldn't want to do that
               var token = this.content;
               var textNode = DOM.createText(token.value);
               var handler = function(value){
