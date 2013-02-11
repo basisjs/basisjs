@@ -382,7 +382,9 @@
       return this.defined;
     },
     destroy: function(){
-      Box
+      Box.prototype.destroy.call(this);
+      this.boxA = null;
+      this.boxB = null;
     }
   });
 
