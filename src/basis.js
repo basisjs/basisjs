@@ -1846,11 +1846,11 @@
       * @return {function()} A new class.
       */
       create: function(SuperClass, extensions){
+        var classId = classSeed++;        
 
         if (typeof SuperClass != 'function')
           SuperClass = BaseClass;
 
-        /** @cut */ var classId = classSeed++;
         /** @cut */ var className = '';
 
         /** @cut */ for (var i = 1, extension; extension = arguments[i]; i++)
@@ -1872,9 +1872,9 @@
         var newProto = new NewClassProto;
         var newClassProps = {
           /** @cut */ className: className,
-          /** @cut */ basisClassId_: classId,
-          /** @cut */ superClass_: SuperClass,
 
+          basisClassId_: classId,
+          superClass_: SuperClass,
           extendConstructor_: !!SuperClass.extendConstructor_,
 
           // class methods
