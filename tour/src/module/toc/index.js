@@ -7,20 +7,16 @@ module.exports = new basis.ui.Node({
 
   template: resource('template/list.tmpl'),
   
-  selection: {
-    handler: {
-      datasetChanged: function(){
-        var page = this.pick();
-        if (page)
-          app.selectPage(page.root);
-      }
-    }
-  },
   childClass: {
     active: true,
     template: resource('template/item.tmpl'),
     binding: {
-      title: 'data:title'
+      title: 'data:'
+    },
+    action: {
+      openPage: function(){
+        basis.router.navigate(this.data.filename.replace(/\.html$/, ''));
+      }
     }
   }
 });

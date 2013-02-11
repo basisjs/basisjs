@@ -60,11 +60,26 @@
   font-size: 150%;
   text-indent: .25em;
 }
+#files-tabs
+{
+  position: absolute;
+  top: 2.5em;
+  left: 0;
+  right: 0;
+  height: 2em;
+}
+#files-tabs .Basis-TabControl
+{
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
 
 #code
 {
   position: absolute;
-  top: 2.5em;
+  top: 4.5em;
   left: 0;
   right: 0;
   bottom: 50%;

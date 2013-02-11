@@ -1,6 +1,27 @@
 basis.require('basis.ui');
+basis.require('basis.ui.tabs');
+basis.require('basis.router');
 
 var prevCode = '';
+
+var filesView = new basis.ui.tabs.TabControl({
+  autoDelegate: true,
+  handler: {
+    update: function(sender, delta){
+      if ('files' in delta)
+        this.setChildNodes(this.data.files);
+    }
+  },
+  childClass: {
+    binding: {
+      title: 'data:filename'
+    }
+  },
+  childNodes: [
+    { title: 'test' },
+    { title: 'test2' }
+  ]
+});
 
 module.exports = new basis.ui.Node({
   autoDelegate: true,
@@ -9,7 +30,7 @@ module.exports = new basis.ui.Node({
     update: function(sender, delta){
       if ('code' in delta)
       {
-        this.tmpl.editor.value = this.data.code || '';
+        console.log('1');
         this.tmpl.launcher.src = this.tmpl.launcher.src;
       }
     }
@@ -17,10 +38,13 @@ module.exports = new basis.ui.Node({
 
   template: resource('template/view.tmpl'),
   binding: {
+    code: 'data:',
+    description: 'data:',
+    files: filesView
   },
   action: {
     dropPage: function(){
-      app.selectPage();
+      basis.router.navigate('');
     },
     runCode: function(event){
       var value = event.sender.value;
@@ -33,7 +57,7 @@ module.exports = new basis.ui.Node({
 
       if (prevCode != value)
       {
-        //prevCode = value;
+        prevCode = value;
         this.tmpl.launcher.src = this.tmpl.launcher.src;
       }
     }

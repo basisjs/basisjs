@@ -1,0 +1,43 @@
+<!doctype html>
+
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <title>basis.js tour: simple class</title>
+
+  <script src="../../src/basis.js" basis-config="autoload: '../src/app'"></script>
+  <script>
+    //location.replace('/tour/');
+  </script>
+</head>
+<body>
+  <h1>UI: List with resources</h1>
+  <div id="description">
+    Simple list with templates in separate files.
+  </div>
+  <pre id="sourceCode">basis.require('basis.ui');'&lt;';
+var list = basis.ui.Node({
+  template: resource('list.tmpl'),
+  childClass: {
+    template: resource('item.tmpl'),
+    binding: {
+      title: 'title'
+    }
+  },
+  childNodes: [
+    { title: 'Item foo' },
+    { title: 'Item bar' },
+    { title: 'Item baz' }
+  ]
+});
+</pre>
+  <div id="files">
+    <pre filename="list.tmpl"><b:resource src="list.css"/>
+<ul class="list"/></pre>
+    <pre filename="item.tmpl"><b:resource src="item.css"/>
+<li class="item">
+  {title}
+</li></pre>
+  </div>
+</body>
+</html>

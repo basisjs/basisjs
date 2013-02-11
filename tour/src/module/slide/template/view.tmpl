@@ -7,19 +7,21 @@
     </div>
     <div id="description">
       <!--{toc}-->
-      description
-      <div style="width: 200%; height: 120%; background: rgba(0,0,0,0.1)"/>
+      {description}
     </div>
   </div>
   <div id="interactiveSide">
     <div id="header">
       Basis.js tour
     </div>
+    <div id="files-tabs">
+      <!--{files}-->
+    </div>
     <div id="code">
-      <textarea{editor} id="code-editor" event-keyup="runCode">console.log('launcher works fine')</textarea>
+      <textarea{editor} id="code-editor" value="{code}" event-keyup="runCode" />
     </div>
     <div id="preview">
-      <iframe{launcher} src="launcher.html"/>
+      <iframe{launcher} src="launcher.html" />
     </div>
   </div>
 </div>

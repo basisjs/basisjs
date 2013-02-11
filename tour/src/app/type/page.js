@@ -2,6 +2,8 @@
 basis.require('basis.entity');
 
 
+var calc = basis.entity.CalculateField;
+
 //
 // main part
 //
@@ -11,15 +13,27 @@ var Page = new basis.entity.EntityType({
   fields: {
     filename: basis.entity.StringId,
     html: String,
-    title: basis.entity.CalculateField('filename', 'html', function(filename, html){
+    title: calc('filename', 'html', function(filename, html){
       var m = html.match(/<h1>((?:[\r\n]|.)*)<\/h1>/);
       return m ? m[1] : filename;
     }),
-    code: basis.entity.CalculateField('html', function(html){
-      var m = html.match(/<pre id="sourceCode">((?:[\r\n]|.)*)<\/pre>/);
+    code: calc('html', function(html){
+      var m = html.match(/<pre id="sourceCode">((?:[\r\n]|.)*?)<\/pre>/);
       return m ? m[1] : '';
     }),
-    description: String
+    description: calc('html', function(html){
+      var m = html.match(/<div id="description">((?:[\r\n]|.)*?)<\/div>/);
+      return m ? m[1] : '';
+    }),
+    files: calc('html', function(){
+      return [
+        new basis.data.Object({
+          data: {
+            filename: 'file1'
+          }
+        })
+      ]
+    })
   }
 });
 
@@ -30,7 +44,7 @@ Page.entityType.entityClass.extend({
     this.set('html', content);
   }
 });
- 
+
 Page.all.setSyncAction(function(){
   this.sync(basis.resource('page/index.json').fetch());
 });
