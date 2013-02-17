@@ -1,0 +1,44 @@
+.Basis-DevPanel
+{
+  position: absolute;
+  right: 0;
+  top: 0;
+  padding: 10px 0;
+  width: 40px;
+
+  z-index: 10001;
+  background: #4B77CC;
+  background: rgba(75, 119, 204, 0.8);  
+  border: 1px solid #4B77CC;
+  opacity: 0.5;
+  border-radius: 3px;
+  box-shadow: 0 0 10px 0 rgba(0,0,0, .3), 0 0 1px 1px rgba(255, 255, 255, 0.5) inset;
+  
+  font-family: Arial;
+  color: white;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 115%;
+  text-shadow: 0 1px 0 #777;
+}
+
+.Basis-DevPanel:hover,
+.Basis-DevPanel.active,
+BODY.devpanel-inspectMode .Basis-DevPanel
+{
+  opacity: 1;
+  background: #4B77CC;
+  color: white;
+}
+
+.Basis-DevPanel.Basis-DragDrop-DragElement
+{
+  cursor: move;
+}
+
+BODY.devpanel-inspectMode .Basis-DevPanel
+{
+  pointer-events: none;
+}

@@ -2,6 +2,7 @@
   basis.require('basis.app');
   basis.require('basis.ui');
   basis.require('basis.router');
+  basis.require('basis.devpanel');
   basis.require('app.type');
 
 
@@ -49,6 +50,8 @@
         view.setDelegate(app.type.Page.getSlot(slide + '.html'));
       });
       basis.router.start();
+
+      basis.devpanel.init();
 
       return view.element;
     }
