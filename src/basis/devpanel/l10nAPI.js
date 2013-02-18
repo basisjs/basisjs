@@ -1,6 +1,8 @@
 
 basis.require('basis.data.property');
 
+var STATE = basis.data.STATE;
+
 var transport = resource('transport.js').fetch();
 var sendData = transport.sendData;
 
