@@ -138,8 +138,7 @@ module.exports = {
 
         file.setState(STATE.UNDEFINED);
         fileDataObjectSet.add(file);
-        file.update({ content: newContent });
-        file.save();
+        file.save(newContent);
       }
       else
         sendData('saveDictionary', { result: 'error', dictionaryName: dictionaryName, errorText: 'File ' + filename + ' not found' });

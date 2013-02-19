@@ -20,7 +20,8 @@ function sendFile(file){
 
 var FILE_HANDLER = {
   update: function(object, delta){
-    sendFile(object);
+    if ('content' in delta && this.data.content !== null)
+      sendFile(object);
   }
 };
 var FILE_LIST_HANDLER = {
@@ -51,13 +52,13 @@ var FILE_LIST_HANDLER = {
       {
         if (/\.(tmpl|css)$/.test(object.data.filename))
         {
-          data.deleted.push(object.getId());
+          data.deleted.push(object.data.filename);
           object.removeHandler(FILE_HANDLER);
         }
       }
     }
     
-    if ((data.inseted && data.inseted.length) || (data.deleted && data.deleted.length))
+    if ((data.inserted && data.inserted.length) || (data.deleted && data.deleted.length))
       sendData('filesChanged', data);
   }
 }
@@ -101,9 +102,6 @@ module.exports = {
   saveFile: function(filename, content){
     var file = basis.devtools.getFile(filename);
     if (file)
-    {
-      file.update({ content: content });
-      file.save();
-    }
+      file.save(content);
   }
 }
