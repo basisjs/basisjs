@@ -670,7 +670,7 @@
 
                 break;
 
-                case 'set':
+                /*case 'set':
                   if ('name' in elAttrs && 'value' in elAttrs)
                   {
                     var value = elAttrs.value;
@@ -682,7 +682,7 @@
 
                     template.options[elAttrs.name] = value;
                   }
-                break;
+                break;*/
 
                 case 'define':
                   if ('name' in elAttrs && !template.defines[elAttrs.name])
@@ -695,7 +695,7 @@
                       case 'enum':
                         var values = elAttrs.values ? elAttrs.values.qw() : [];
                         template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
-                      break;
+                        break;
                       /**@cut*/default: if (template.warns) template.warns.push(namespace + ': Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
                     }
                   }
@@ -890,6 +890,9 @@
             break;
 
           case TYPE_COMMENT:
+            if (template.optimizeSize && !bindings && !refs)
+              continue;
+
             item = [
               8,                       // TOKEN_TYPE = 0
               bindings,                // TOKEN_BINDINGS = 1
@@ -897,8 +900,9 @@
             ];
 
             // COMMENT_VALUE = 3
-            if (!refs || token.value != '{' + refs.join('|') + '}')
-              item.push(untoken(token.value));
+            if (!template.optimizeSize)
+              if (!refs || token.value != '{' + refs.join('|') + '}')
+                item.push(untoken(token.value));
 
             break;
         }
@@ -1008,7 +1012,8 @@
     }
 
     return function(source, baseURI, options){
-      var debug = !!(options && options.debug);
+      options = options || {};
+      var debug = options.debug;
       ;;;var source_;
 
       // result object
@@ -1019,7 +1024,7 @@
         deps: [],
         defines: {},
         unpredictable: true,
-        options: {}
+        optimizeSize: options.optimizeSize
       };
 
       if (!source.templateTokens)
@@ -1052,6 +1057,7 @@
       // delete unnecessary keys
       delete result.defines;
       delete result.debug;
+      delete result.optimizeSize;
 
       if (debug && !result.warns.length)
         delete result.warns;
