@@ -463,21 +463,6 @@
     Stack: resource('ui/templates/layout/VerticalPanelStack.tmpl')
   });
 
-  var VerticalPanelRule = cssom.createRule('.Basis-VerticalPanel');
-  VerticalPanelRule.setStyle({
-    position: 'relative'
-  });
-
-  var VerticalPanelStackRule = cssom.createRule('.Basis-VerticalPanelStack');
-  VerticalPanelStackRule.setStyle({
-    overflow: 'hidden'
-  });
-  if (SUPPORT_DISPLAYBOX !== false)
-  {
-    VerticalPanelStackRule.setProperty('display', SUPPORT_DISPLAYBOX + 'box');
-    VerticalPanelStackRule.setProperty(SUPPORT_DISPLAYBOX + 'box-orient', 'vertical');
-  }
-
  /**
   * @class
   */
