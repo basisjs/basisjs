@@ -78,10 +78,12 @@ basis.ready(function(){
   }, paginator);
 
   var postList = new basis.ui.Node({
+    template: resource('template/blog-thread.tmpl'),
+
     dataSource: blogThreadPage,
+    
     sorting: 'data.pubDate',
     sortingDesc: true,
-    id: 'blog-thread',
     childClass: {
       template: resource('template/post.tmpl'),
 
