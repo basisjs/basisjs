@@ -520,7 +520,7 @@
       };   
     }
 
-    function attrs(token, declToken){
+    function attrs(token, declToken, optimizeSize){
       var attrs = token.attrs;
       var result = [];
 
@@ -542,13 +542,18 @@
         }
 
         var parsed = processAttr(attr.name, attr.value);
-        result.push([
+        var item = [
           2,                      // TOKEN_TYPE = 0
           parsed.binding,         // TOKEN_BINDINGS = 1
           refList(attr),          // TOKEN_REFS = 2
-          name(attr),             // ATTR_NAME = 2
-          parsed.value            // ATTR_VALUE = 3
-        ]);
+          name(attr)              // ATTR_NAME = 3
+        ];
+        
+        // ATTR_VALUE = 4
+        if (!optimizeSize || !parsed.binding || attr.name == 'class' || attr.name == 'style')
+          item.push(parsed.value);
+
+        result.push(item);
       }
 
       return result.length ? result : 0;
@@ -869,7 +874,7 @@
               process(token.childs, template)    // ELEMENT_CHILDS = 5
             ];
 
-            item[ELEMENT_ATTRS] = attrs(token, item);
+            item[ELEMENT_ATTRS] = attrs(token, item, template.optimizeSize);
 
             break;
 

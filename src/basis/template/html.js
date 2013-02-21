@@ -473,9 +473,20 @@
             for (var j = 0, attr; attr = attrs[j]; j++)
             {
               var attrName = attr[ATTR_NAME];
+              var attrValue = attr[ATTR_VALUE];
+              var bindings = attr[TOKEN_BINDINGS];
               var m;
 
-              element.setAttribute(attrName, attr[ATTR_VALUE]);
+              if (bindings && attrName != 'class' && attrName != 'style')
+              {
+                var dict = bindings[0];
+                var expr = bindings[1];
+                attrValue = expr.map(function(t){
+                  return typeof t == 'number' ? dict[t] : t;
+                }).join('');
+              }
+
+              element.setAttribute(attrName, attrValue);
 
               if (m = attrName.match(eventAttr))
               {
