@@ -675,9 +675,9 @@
                   {
                     var value = elAttrs.value;
 
-                    if (value === 'true')
+                    if (value == 'true')
                       value = true;
-                    if (value === 'false')
+                    if (value == 'false')
                       value = false;
 
                     template.options[elAttrs.name] = value;
@@ -944,14 +944,14 @@
       return map;
     }
 
-    function applyDefines(tokens, defines, classMap, warns){
+    function applyDefines(tokens, defines, warns){
       var unpredictable = 0;
 
       for (var i = 0, token; token = tokens[i]; i++)
       {
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
         {
-          unpredictable += applyDefines(token[ELEMENT_CHILDS], defines, classMap, warns);
+          unpredictable += applyDefines(token[ELEMENT_CHILDS], defines, warns);
 
           var attrs = token[ELEMENT_ATTRS];
           if (attrs)
@@ -961,9 +961,6 @@
               if (attr[ATTR_NAME] == 'class')
               {
                 var bindings = attr[TOKEN_BINDINGS];
-
-                if (classMap)
-                  classMap.push(attr);
 
                 if (bindings)
                 {
@@ -988,22 +985,6 @@
                           newAttrValue.add(bind[0] + bindName);
                         else                  // enum
                           newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
-                      }
-
-                      if (classMap)
-                      {
-                        if (bindDef.length == 1) // bool
-                        {
-                          bind.push(bind[0] + bindName);
-                          bind[0] = 0;
-                        }
-                        else                  // enum
-                        {
-                          bind.push(bindDef[1].map(function(name){
-                            return this + name;
-                          }, bind[0]));
-                          bind[0] = 0;
-                        }
                       }
                     }
                     else
@@ -1064,11 +1045,7 @@
       normalizeRefs(result.tokens);
 
       // deal with defines
-      var classMap = options && options.classMap ? [] : null;
-      result.unpredictable = !!applyDefines(result.tokens, result.defines, classMap, result.warns);
-
-      if (classMap && classMap.length)
-        result.classMap = classMap;
+      result.unpredictable = !!applyDefines(result.tokens, result.defines, result.warns);
 
       ;;;if (debug) for (var key in result.defines) if (!result.defines[key].used) result.warns.push(namespace + ': Dead define for ' + key + ' (not used in template)');
 
