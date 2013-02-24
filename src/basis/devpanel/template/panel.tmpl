@@ -3,5 +3,10 @@
 <b:define name="active" type="bool"/>
 
 <div class="Basis-DevPanel {active}" event-click="showMenu" event-mousemove="storePosition">
-  <span>b</span>
+  <div{dragElement} class="Basis-DevPanel-DragTrigger">&nbsp;</div>
+  <div class="Basis-DevPanel-Button template" event-click="inspectTemplate">&nbsp;</div>
+  <div class="Basis-DevPanel-Button l10n" event-click="inspectl10n">&nbsp;</div>
+  <div{cultureButton} class="Basis-DevPanel-Button culture" event-click="showCultures">
+    <span style="background-position: -{spriteX}px -{spriteY}px;">&nbsp;</span>
+  </div>
 </div>  

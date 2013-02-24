@@ -7,61 +7,52 @@ basis.require('basis.l10n');
 var l10nInspector = resource('l10nInspector.js').fetch();
 var templateInspector = resource('templateInspector.js').fetch();
 
-//
-// menu
-//
-var menu = new basis.ui.menu.Menu({
-  dir: 'right bottom right top',
-  autorotate: [
-    'right top right bottom', 
-    'left bottom left top', 
-    'left top left bottom'
-  ],
-  childNodes: [
-    {
+var currentCulture = new basis.data.property.Property(basis.l10n.getCulture(), {
+  change: function(value){
+    basis.l10n.setCulture(this.value);
+  }
+});
+
+var countryFlagBinding = {
+  spriteX: {
+    events: 'update',
+    getter: function(object){
+      return object.country ? 16 * (object.country.charCodeAt(0) - 65) : 1000;
+    }
+  },
+  spriteY: {
+    events: 'update',
+    getter: function(object){
+      return object.country ? 11 * (object.country.charCodeAt(1) - 65) : 1000;
+    }
+  }  
+}
+
+var cultureMenu = new basis.ui.menu.Menu({
+  selection: {
+    handler: {
+      datasetChanged: function(){
+        currentCulture.set(this.pick().value);
+      }
+    }
+  },  
+  dir: 'right bottom right top',  
+  childNodes: (basis.l10n.getCultureList() || []).map(function(culture){
+    return {
       groupId: 'general',
-      caption: 'Pick template',
-      click: function(){
-        templateInspector.startInspect();
-        menu.hide();
-      }
-    },
-    {
-    caption: 'Translate',
-      groupId: 'general',
-      click: function(){
-        l10nInspector.startInspect();
-        menu.hide();
-      }
-    },
-    new basis.ui.menu.MenuItemSet({
-      selection: {},
-      childNodes: (basis.l10n.getCultureList() || []).map(function(culture){
-        return {
-          groupId: 'general',
-          caption: culture,
-          value: culture,
-          selected: basis.l10n.getCulture() == culture
-        }
-      }),
-      childClass: {
-        click: function(){
-          this.select();
-          basis.l10n.setCulture(this.value);
-          menu.hide();
-        }
-      }
-    })
-  ],
-  handler: {
-    show: function(){
-      panel.active = true;
-      panel.updateBind('active')
-    },
-    hide: function(){
-      panel.active = false;
-      panel.updateBind('active')
-    }    
+      caption: culture,
+      value: culture,
+      country: culture.split('-').pop(),
+      selected: basis.l10n.getCulture() == culture
+    }
+  }),
+  childClass: {
+    template: resource('template/cultureItem.tmpl'),
+    binding: countryFlagBinding,
+    click: function(){
+      this.select();
+      cultureMenu.hide();
+    }
   }
 });
 
@@ -72,12 +63,18 @@ var menu = new basis.ui.menu.Menu({
 var panel = new basis.ui.Node({
   container: document.body,
   template: resource('template/panel.tmpl'),
-  binding: {
-    active: 'active'
-  },
+  binding: basis.object.extend({
+    active: 'active',
+  }, countryFlagBinding),
   action: {
-    showMenu: function(){
-      menu.show(this.element);
+    inspectTemplate: function(){
+      templateInspector.startInspect();
+    },
+    inspectl10n: function(){
+      l10nInspector.startInspect();
+    },
+    showCultures: function(){
+      cultureMenu.show(this.tmpl.cultureButton);
     },
     storePosition: function(event){
       if (localStorage){
@@ -87,6 +84,15 @@ var panel = new basis.ui.Node({
   }
 });
 
+currentCulture.addLink(panel, function(value){
+  this.country = value.split('-').pop();
+  this.updateBind('spriteY');
+  this.updateBind('spriteX');
+});
+
+//
+// drag stuff
+//
 if (localStorage){
   var position = (localStorage['basis-devpanel'] || '0;0').split(';');
   panel.element.style.left = position[0] + 'px';
@@ -94,7 +100,8 @@ if (localStorage){
 }
 
 new basis.dragdrop.MoveableElement({
-  element: panel.element
+  element: panel.element,
+  trigger: panel.tmpl.dragElement
 });
 
 //

@@ -26,6 +26,11 @@ var overlay = DOM.createElement({
   }
 });
 
+function openDevtools(){
+  var evt = new document.createEvent('KeyboardEvent');
+  evt.initKeyboardEvent('keypress', true, true, window, 'j', 0, 'Shift Control');
+}
+
 DOM.event.addHandler(overlay, 'contextmenu', function(event){
   DOM.event.kill(event);  
   endInspect();
@@ -50,6 +55,9 @@ function loadToken(token){
       data.tokens[tkn.name][culture] = dictionary.getCultureValue(culture, tkn.name);
   }
   
+
+  openDevtools();
+
   transport.sendData('token', data);        
 }
 

@@ -1,0 +1,14 @@
+
+.Basis-Devpanel-CultureItem .Basis-Menu-Item-Caption
+{
+  position: relative;
+}
+.Basis-Devpanel-CultureItem .flag
+{
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 16px;
+  height: 11px;
+  background: url(img/flags.png) no-repeat 0 0;
+}
