@@ -17,9 +17,6 @@ basis.dom.event.addHandler(document, 'keypress', function(event){
   console.log(event.keyCode)
 });
 
-function openDevtools(){
-  
-}
 
 function pickHandler(event){
   DOM.event.kill(event);
@@ -27,8 +24,6 @@ function pickHandler(event){
   var node = pickupTarget.value;
   
   if (node){
-    openDevtools();
-
     var url = node.template.source.url;
     if (url){
       transport.sendData('pickTemplate', {
