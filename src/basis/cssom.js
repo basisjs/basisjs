@@ -791,21 +791,21 @@
       {
         this.cssText = cssText;
         if (this.inUse)
+        {
+          pathResolver.setBase(this.baseURI);
           this.syncCssText();
+          pathResolver.restoreBase();
+        }
       }
     },
 
     syncCssText: function(){
-      pathResolver.setBase(this.baseURI);
-
       if (this.textNode)
         // W3C browsers
         this.textNode.nodeValue = this.cssText;
       else
         // old IE
         this.element.styleSheet.cssText = this.cssText;
-
-      pathResolver.restoreBase();
     },
 
     startUse: function(){
@@ -828,8 +828,10 @@
             this.textNode = this.element.appendChild(dom.createText(''));
         }
 
-        dom.appendHead(this.element);
         this.syncCssText();
+        pathResolver.setBase(this.baseURI);
+        dom.appendHead(this.element);
+        pathResolver.restoreBase();
       }
       else
         this.inUse += 1;
