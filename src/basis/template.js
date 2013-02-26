@@ -1125,12 +1125,18 @@
   */
   function getDeclFromSource(source, baseURI, clone){
     var result = source;
-    
+
     if (typeof result == 'function')
+    {
+      baseURI = 'baseURI' in source ? source.baseURI : baseURI;
       result = result();
+    }
 
     if (result instanceof basis.Token)
+    {
+      baseURI = 'baseURI' in source ? source.baseURI : baseURI;
       result = result.get();
+    }
 
     if (Array.isArray(result))
     {
@@ -1557,7 +1563,7 @@
 
         this.content = content;
         this.url = (content && content.url) || '';
-        this.baseURI = (content && content.baseURI) || '';
+        this.baseURI = content && 'baseURI' in content ? content.baseURI : path.dirname(this.url) + '/';
 
         if (this.content && this.content.bindingBridge)
           this.content.bindingBridge.attach(this.content, this.apply, this);
