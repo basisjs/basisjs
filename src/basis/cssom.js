@@ -741,32 +741,29 @@
 
 
  /**
-  * Helper for path resolving
+  * Helper functions for path resolving
   */
-  var pathResolver = (function(){
-    var baseEl = dom.createElement('base');
-    var documentHead = dom.head();
+  var baseEl = dom.createElement('base');
+  var documentHead = dom.head();
 
-    return {
-      setBase: function(baseURI){
-        // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
-        // convert path to absolute value
-        baseEl.setAttribute('href', path.resolve(baseURI));
+  function setBase(baseURI){
+    // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
+    // convert path to absolute value
+    baseEl.setAttribute('href', path.resolve(baseURI));
 
-        // if more than one <base> elements in document, only first has effect
-        // put our <base> resolver at the begining of <head>
-        dom.insert(documentHead, baseEl, 0);
-      },
-      restoreBase: function(){
-        // Opera left document base as <base> element specified,
-        // even if this element is removed from document
-        // so we set current location for base
-        baseEl.setAttribute('href', location.href);
+    // if more than one <base> elements in document, only first has effect
+    // put our <base> resolver at the begining of <head>
+    dom.insert(documentHead, baseEl, 0);
+  }
 
-        dom.remove(baseEl);    
-      }
-    };
-  })();
+  function restoreBase(){
+    // Opera left document base as <base> element specified,
+    // even if this element is removed from document
+    // so we set current location for base
+    baseEl.setAttribute('href', location.href);
+
+    dom.remove(baseEl);    
+  }
 
 
  /**
@@ -774,8 +771,12 @@
   */
   var CssResource = Class(null, {
     inUse: 0,
+
+    url: '',
+    baseURI: '',
     cssText: '',
 
+    resource: null,
     element: null,
     textNode: null,
 
@@ -792,78 +793,74 @@
         this.cssText = cssText;
         if (this.inUse)
         {
-          pathResolver.setBase(this.baseURI);
+          setBase(this.baseURI);
           this.syncCssText();
-          pathResolver.restoreBase();
+          restoreBase();
         }
       }
     },
 
     syncCssText: function(){
       if (this.textNode)
+      {
         // W3C browsers
         this.textNode.nodeValue = this.cssText;
+      }
       else
+      {
         // old IE
         this.element.styleSheet.cssText = this.cssText;
+      }
     },
 
     startUse: function(){
       if (!this.inUse)
       {
-        this.inUse = 1;
-
         if (!this.resource)
         {
           var resource = basis.resource(this.url);
 
           this.resource = resource;
-          this.cssText = this.resource.source;
+          this.cssText = resource.source;
         }
 
         if (!this.element)
         {
           this.element = dom.createElement('style[src="' + path.relative(this.url) + '"]');
           if (!STYLE_APPEND_BUGGY)
-            this.textNode = this.element.appendChild(dom.createText(''));
+            this.textNode = dom.insert(this.element, '');
         }
 
         this.syncCssText();
-        pathResolver.setBase(this.baseURI);
+
+        setBase(this.baseURI);
         dom.appendHead(this.element);
-        pathResolver.restoreBase();
+        restoreBase();
       }
-      else
-        this.inUse += 1;
+
+      this.inUse += 1;
     },
 
     stopUse: function(){
-      if (!this.inUse)
-        return;
+      if (this.inUse)
+      {
+        // decrease usage count
+        this.inUse -= 1;
 
-      // decrease usage count
-      this.inUse -= 1;
-
-      // remove element if nobody use it
-      if (!this.inUse)
-        dom.remove(this.element);
+        // remove element if nobody use it
+        if (!this.inUse)
+          dom.remove(this.element);
+      }
     },
 
     destroy: function(){
-      if (this.element)
-      {
-        if (cleanupDom)
-          dom.remove(this.element);
+      if (this.element && cleanupDom)
+        dom.remove(this.element);
 
-        this.element = null;
-        this.textNode = null;
-      }
-
-      if (this.resource)
-      {
-        this.resource = null;
-        this.cssText = null;
-      }
+      this.element = null;
+      this.textNode = null;
+      this.resource = null;
+      this.cssText = null;
     }
   });
 
