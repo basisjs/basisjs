@@ -1820,6 +1820,9 @@
           currentThemeName = name;
           syncCurrentTheme();
 
+          for (var i = 0, handler; handler = themeChangeHandlers[i]; i++)
+            handler.fn.call(handler.context, name);
+
           ;;;basis.dev.info('Template theme switched to `' + name + '`');
         }
         return themeInterface;
@@ -1847,6 +1850,17 @@
   var sourceByPath = {};
   var baseTheme = getTheme();
   var currentThemeName = 'base';
+  var themeChangeHandlers = [];
+
+  function onThemeChange(fn, context, fire){
+    themeChangeHandlers.push({
+      fn: fn,
+      context: context
+    });
+
+    if (fire)
+      fn.call(context, currentThemeName);
+  }
 
 
   //
@@ -1929,6 +1943,7 @@
     setTheme: function(name){
       return getTheme(name).apply();
     },
+    onThemeChange: onThemeChange,
 
     define: baseTheme.define,
 
