@@ -742,7 +742,7 @@
 
                       includeStack.pop();
 
-                      if (decl.resources)
+                      if (decl.resources && 'no-style' in elAttrs == false)
                         addUnique(template.resources, decl.resources);
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
