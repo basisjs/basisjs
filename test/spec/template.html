@@ -98,10 +98,10 @@
               name: 'Attribute modification',
               testcase: [
                 {
-                  name: '<b:include> with attribute modificators',
+                  name: '<b:include> with attributes',
                   testcase: [
                     {
-                      name: 'class when class not exists',
+                      name: '<b:include class> when class attribute does not exist',
                       test: function(){
                         var a = createTemplate('<span title="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
@@ -117,7 +117,7 @@
                       }
                     },
                     {
-                      name: 'class when class exists',
+                      name: '<b:include class> class when class attribute exists',
                       test: function(){
                         var a = createTemplate('<span class="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" class="b"></b:include>');
@@ -126,7 +126,7 @@
                       }
                     },
                     {
-                      name: 'class with binding',
+                      name: '<b:include class> class with binding',
                       test: function(){
                         var a = createTemplate('<span class="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b}"></b:include>');
@@ -140,7 +140,7 @@
                       }
                     },
                     {
-                      name: 'class binding and value',
+                      name: '<b:include class> class binding and value',
                       test: function(){
                         var a = createTemplate('<span class="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" class="{b} c"></b:include>');
@@ -154,7 +154,7 @@
                       }
                     },
                     {
-                      name: 'id when id not exists',
+                      name: '<b:include id> when id attribute does not exist',
                       test: function(){
                         var a = createTemplate('<span title="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
@@ -163,7 +163,7 @@
                       }
                     },
                     {
-                      name: 'id when id exists',
+                      name: '<b:include id> when id exists',
                       test: function(){
                         var a = createTemplate('<span id="a"/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '" id="b"></b:include>');
@@ -173,6 +173,292 @@
                     }
                   ]
                 },
+                {
+                  name: '<b:replace>',
+                  testcase: [
+                    {
+                      name: 'nothing happen if no reference',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:replace ref="foo">x</b:replace></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'nothing happen if no ref attribute',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:replace>x</b:replace></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'replace token with single node',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:replace ref="foo">x</b:replace></b:include>');
+
+                        this.is(text('<span>x</span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'replace root element',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:replace ref="element">x</b:replace></b:include>');
+
+                        this.is(text('x'), text(b));
+                      }
+                    },                    
+                    {
+                      name: 'replace token with multiple nodes',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:replace ref="foo"><br/>x<br/></b:replace></b:include>');
+
+                        this.is(text('<span><br/>x<br/></span>'), text(b));
+                      }
+                    }
+                  ]
+                },
+                {
+                  name: '<b:before>',
+                  testcase: [
+                    {
+                      name: 'nothing happen if no reference',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before ref="foo">x</b:before></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'nothing happen if no ref attribute',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before>x</b:before></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'before token with single node',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before ref="foo">x</b:before></b:include>');
+
+                        this.is(text('<span>x<span/></span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'before root element',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before ref="element">x</b:before></b:include>');
+
+                        this.is(text('x<span/>'), text(b));
+                      }
+                    },                    
+                    {
+                      name: 'before token with multiple nodes',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:before ref="foo"><br/>x<br/></b:before></b:include>');
+
+                        this.is(text('<span><br/>x<br/><span/></span>'), text(b));
+                      }
+                    }
+                  ]
+                },
+                {
+                  name: '<b:after>',
+                  testcase: [
+                    {
+                      name: 'nothing happen if no reference',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:after ref="foo">x</b:after></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'nothing happen if no ref attribute',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:after>x</b:after></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'after token with single node',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:after ref="foo">x</b:after></b:include>');
+
+                        this.is(text('<span><span/>x</span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'after root element',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:after ref="element">x</b:after></b:include>');
+
+                        this.is(text('<span/>x'), text(b));
+                      }
+                    },                    
+                    {
+                      name: 'after token with multiple nodes',
+                      test: function(){
+                        var a = createTemplate('<span><span{foo}/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:after ref="foo"><br/>x<br/></b:after></b:include>');
+
+                        this.is(text('<span><span/><br/>x<br/></span>'), text(b));
+                      }
+                    }
+                  ]
+                },
+                {
+                  name: '<b:prepend>',
+                  testcase: [
+                    {
+                      name: 'nothing happen if no reference',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:prepend ref="foo">x</b:prepend></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'nothing happen if no ref attribute',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:prepend>x</b:prepend></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'nothing happen if ref node is not an element',
+                      test: function(){
+                        var a = createTemplate('<span>{foo}</span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:prepend ref="foo">x</b:prepend></b:include>');
+
+                        this.is(text('<span>{foo}</span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'prepend token with single node when no children',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:prepend ref="element">x</b:prepend></b:include>');
+
+                        this.is(text('<span>x</span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'prepend token with single node',
+                      test: function(){
+                        var a = createTemplate('<span><span/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:prepend ref="element">x</b:prepend></b:include>');
+
+                        this.is(text('<span>x<span/></span>'), text(b));
+                      }
+                    },                
+                    {
+                      name: 'prepend token with multiple nodes when no children',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:prepend ref="element"><br/>x<br/></b:prepend></b:include>');
+
+                        this.is(text('<span><br/>x<br/></span>'), text(b));
+                      }
+                    },                
+                    {
+                      name: 'prepend token with multiple nodes',
+                      test: function(){
+                        var a = createTemplate('<span><span/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:prepend ref="element"><br/>x<br/></b:prepend></b:include>');
+
+                        this.is(text('<span><br/>x<br/><span/></span>'), text(b));
+                      }
+                    }
+                  ]
+                },
+                {
+                  name: '<b:append>',
+                  testcase: [
+                    {
+                      name: 'nothing happen if no reference',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="foo">x</b:append></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'nothing happen if no ref attribute',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append>x</b:append></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'nothing happen if ref node is not an element',
+                      test: function(){
+                        var a = createTemplate('<span>{foo}</span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="foo">x</b:append></b:include>');
+
+                        this.is(text('<span>{foo}</span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'prepend token with single node when no children',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="element">x</b:append></b:include>');
+
+                        this.is(text('<span>x</span>'), text(b));
+                      }
+                    },
+                    {
+                      name: 'prepend token with single node',
+                      test: function(){
+                        var a = createTemplate('<span><span/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="element">x</b:append></b:include>');
+
+                        this.is(text('<span><span/>x</span>'), text(b));
+                      }
+                    },                
+                    {
+                      name: 'prepend token with multiple nodes when no children',
+                      test: function(){
+                        var a = createTemplate('<span/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="element"><br/>x<br/></b:append></b:include>');
+
+                        this.is(text('<span><br/>x<br/></span>'), text(b));
+                      }
+                    },                
+                    {
+                      name: 'prepend token with multiple nodes',
+                      test: function(){
+                        var a = createTemplate('<span><span/></span>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:append ref="element"><br/>x<br/></b:append></b:include>');
+
+                        this.is(text('<span><span/><br/>x<br/></span>'), text(b));
+                      }
+                    }
+                  ]
+                },                
                 {
                   name: '<b:set-attr>',
                   test: function(){

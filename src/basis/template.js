@@ -755,9 +755,9 @@
                       var instructions = (token.childs || []).slice();
 
                       if (elAttrs['class'])
-                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'append-class', attrs: [{ type: 2, name: 'value', value: elAttrs['class'] }] });
+                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'append-class', attrs: [{ type: TYPE_ATTRIBUTE, name: 'value', value: elAttrs['class'] }] });
                       if (elAttrs.id)
-                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'set-attr', attrs: [{ type: 2, name: 'name', value: 'id' }, { type: 2, name: 'value', value: elAttrs.id }] });
+                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'set-attr', attrs: [{ type: TYPE_ATTRIBUTE, name: 'name', value: 'id' }, { type: TYPE_ATTRIBUTE, name: 'value', value: elAttrs.id }] });
 
                       for (var j = 0, child; child = instructions[j]; j++)
                       {
@@ -767,16 +767,43 @@
                           switch (child.name)
                           {
                             case 'replace':
+                            case 'before':
+                            case 'after':
                               var childAttrs = tokenAttrs(child);
                               var tokenRef = childAttrs.ref && tokenRefMap[childAttrs.ref];
 
                               if (tokenRef)
                               {
                                 var pos = tokenRef.owner.indexOf(tokenRef.token);
+                                var rem;
                                 if (pos != -1)
-                                  tokenRef.owner.splice.apply(tokenRef.owner, [pos, 1].concat(process(child.childs, template) || []));
+                                {
+                                  pos += child.name == 'after';
+                                  rem = child.name == 'replace';
+                                  tokenRef.owner.splice.apply(tokenRef.owner, [pos, rem].concat(process(child.childs, template) || []));
+                                }
                               }
                             break;
+                            case 'prepend':                            
+                            case 'append':
+                              var childAttrs = tokenAttrs(child);
+                              var tokenRef = childAttrs.ref && tokenRefMap[childAttrs.ref];
+                              var token = tokenRef && tokenRef.token;
+
+                              if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
+                              {
+                                var childs = process(child.childs, template) || [];
+
+                                if (!token[ELEMENT_CHILDS])
+                                  (token[ELEMENT_CHILDS] = []).owner = token;
+
+                                if (child.name == 'prepend')
+                                  Array.prototype.unshift.apply(token[ELEMENT_CHILDS], childs);
+                                else
+                                  Array.prototype.push.apply(token[ELEMENT_CHILDS], childs);
+                              }
+                            break;                            
+
                             case 'set-attr':
                               modifyAttr(child, false, function(params, attrs, attrToken){
                                 attrToken[ATTR_VALUE] = params.value || '';
