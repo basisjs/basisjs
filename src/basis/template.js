@@ -669,10 +669,9 @@
               switch (token.name)
               {
                 case 'resource':
-
+                case 'style':
                   if (elAttrs.src)
                     template.resources.push(path.resolve(template.baseURI + elAttrs.src));
-
                 break;
 
                 /*case 'set':
