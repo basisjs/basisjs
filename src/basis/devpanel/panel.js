@@ -28,6 +28,30 @@ var countryFlagBinding = {
   }  
 }
 
+var themeMenu = new basis.ui.menu.Menu({
+  selection: {
+    handler: {
+      datasetChanged: function(){
+        basis.template.setTheme(this.pick().value);
+      }
+    }
+  },  
+  dir: 'right bottom right top',  
+  childNodes: basis.template.getThemeList().map(function(themeName){
+    return {
+      caption: themeName,
+      value: themeName,
+      selected: basis.template.currentTheme().name == themeName
+    }
+  }),
+  childClass: {
+    click: function(){
+      this.select();
+      themeMenu.hide();
+    }
+  }
+});
+
 var cultureMenu = new basis.ui.menu.Menu({
   selection: {
     handler: {
@@ -63,12 +87,17 @@ var cultureMenu = new basis.ui.menu.Menu({
 var panel = new basis.ui.Node({
   container: document.body,
   template: resource('template/panel.tmpl'),
+  themeName: basis.template.currentTheme().name,
   binding: basis.object.extend({
     active: 'active',
+    themeName: 'themeName'
   }, countryFlagBinding),
   action: {
     inspectTemplate: function(){
       templateInspector.startInspect();
+    },
+    showThemes: function(){
+      themeMenu.show(this.tmpl.themeButton);
     },
     inspectl10n: function(){
       l10nInspector.startInspect();
@@ -83,6 +112,12 @@ var panel = new basis.ui.Node({
     }
   }
 });
+
+basis.template.onThemeChange(function(themeName){
+  panel.themeName = themeName;
+  panel.updateBind('themeName');
+  themeMenu.getChild(themeName, 'value').select();
+}, null, true);
 
 currentCulture.addLink(panel, function(value){
   this.country = value.split('-').pop();
