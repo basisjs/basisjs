@@ -1,6 +1,6 @@
 .Basis-DevPanel
 {
-  position: absolute;
+  position: fixed;
   left: 0;
   top: 0;
   /*padding: 10px 0;*/
