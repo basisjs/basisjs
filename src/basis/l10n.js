@@ -225,11 +225,17 @@
   }
 
   function setCulture(culture){
+    if (!culture)
+      culture = 'base';
     if (currentCulture != culture)
     {
-      currentCulture = culture || 'base';
+      currentCulture = culture;
+
       for (var i in dictionaries)
         setCultureForDictionary(dictionaries[i], currentCulture);
+
+      for (var i = 0, handler; handler = cultureChangeHandlers[i]; i++)
+        handler.fn.call(handler.context, culture);
     }
   }
 
@@ -343,6 +349,18 @@
       listener.handler.call(listener.context, dictionaryName);
   }
 
+  
+  var cultureChangeHandlers = [];
+  function onCultureChange(fn, context, fire){
+    cultureChangeHandlers.push({
+      fn: fn,
+      context: context
+    });
+
+    if (fire)
+      fn.call(context, currentCulture);
+  }
+
 
   //
   // exports
@@ -361,5 +379,8 @@
     setCultureList: setCultureList,
     getCultureList: getCultureList,
     addCreateDictionaryHandler: addHandler,
-    removeCreateDictionaryHandler: removeHandler
+    removeCreateDictionaryHandler: removeHandler,
+
+    // new api
+    onCultureChange: onCultureChange
   };
