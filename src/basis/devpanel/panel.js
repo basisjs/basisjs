@@ -7,12 +7,6 @@ basis.require('basis.l10n');
 var l10nInspector = resource('l10nInspector.js').fetch();
 var templateInspector = resource('templateInspector.js').fetch();
 
-var currentCulture = new basis.data.property.Property(basis.l10n.getCulture(), {
-  change: function(value){
-    basis.l10n.setCulture(this.value);
-  }
-});
-
 var countryFlagBinding = {
   spriteX: {
     events: 'update',
@@ -56,12 +50,12 @@ var cultureMenu = new basis.ui.menu.Menu({
   selection: {
     handler: {
       datasetChanged: function(){
-        currentCulture.set(this.pick().value);
+        basis.l10n.setCulture(this.pick().value);
       }
     }
   },  
   dir: 'right bottom right top',  
-  childNodes: (basis.l10n.getCultureList() || []).map(function(culture){
+  childNodes: ['base'].concat(basis.l10n.getCultureList()).map(function(culture){
     return {
       groupId: 'general',
       caption: culture,
@@ -119,11 +113,15 @@ basis.template.onThemeChange(function(themeName){
   themeMenu.getChild(themeName, 'value').select();
 }, null, true);
 
-currentCulture.addLink(panel, function(value){
-  this.country = value.split('-').pop();
-  this.updateBind('spriteY');
-  this.updateBind('spriteX');
-});
+basis.l10n.onCultureChange(function(culture){
+  panel.country = culture.split('-').pop();
+  panel.updateBind('spriteY');
+  panel.updateBind('spriteX');
+  var item = cultureMenu.getChild(culture, 'value');
+  if (item)
+    item.select();
+}, null, true);
+
 
 //
 // drag stuff
