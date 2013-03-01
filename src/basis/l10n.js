@@ -382,5 +382,6 @@
     removeCreateDictionaryHandler: removeHandler,
 
     // new api
+    token: getToken,
     onCultureChange: onCultureChange
   };
