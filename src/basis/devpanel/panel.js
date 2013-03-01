@@ -23,6 +23,9 @@ var countryFlagBinding = {
 }
 
 var themeMenu = new basis.ui.menu.Menu({
+  dir: 'right bottom right top',  
+  autorotate: true,
+
   selection: {
     handler: {
       datasetChanged: function(){
@@ -30,23 +33,26 @@ var themeMenu = new basis.ui.menu.Menu({
       }
     }
   },  
-  dir: 'right bottom right top',  
+
+  childClass: {
+    click: function(){
+      this.select();
+      themeMenu.hide();
+    }
+  },
   childNodes: basis.template.getThemeList().map(function(themeName){
     return {
       caption: themeName,
       value: themeName,
       selected: basis.template.currentTheme().name == themeName
     }
-  }),
-  childClass: {
-    click: function(){
-      this.select();
-      themeMenu.hide();
-    }
-  }
+  })
 });
 
 var cultureMenu = new basis.ui.menu.Menu({
+  dir: 'right bottom right top',
+  autorotate: true,
+
   selection: {
     handler: {
       datasetChanged: function(){
@@ -54,7 +60,15 @@ var cultureMenu = new basis.ui.menu.Menu({
       }
     }
   },  
-  dir: 'right bottom right top',  
+
+  childClass: {
+    template: resource('template/cultureItem.tmpl'),
+    binding: countryFlagBinding,
+    click: function(){
+      this.select();
+      cultureMenu.hide();
+    }
+  },
   childNodes: ['base'].concat(basis.l10n.getCultureList()).map(function(culture){
     return {
       groupId: 'general',
@@ -63,15 +77,7 @@ var cultureMenu = new basis.ui.menu.Menu({
       country: culture.split('-').pop(),
       selected: basis.l10n.getCulture() == culture
     }
-  }),
-  childClass: {
-    template: resource('template/cultureItem.tmpl'),
-    binding: countryFlagBinding,
-    click: function(){
-      this.select();
-      cultureMenu.hide();
-    }
-  }
+  })
 });
 
 
