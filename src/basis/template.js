@@ -1785,9 +1785,6 @@
         if (typeof what == 'function')
           what = what();
 
-        if (typeof wherewith == 'function')
-          wherewith = wherewith();       
-
         if (typeof what == 'string')
         {
           if (typeof wherewith == 'object')
