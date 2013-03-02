@@ -1737,8 +1737,8 @@
               listenHandler.datasetChanged.call(this, dataSource, {
                 inserted: dataSource.getItems()
               });
-            
-            oldDataSource.addHandler(listenHandler, this);
+
+            dataSource.addHandler(listenHandler, this);
           }
         }
 
