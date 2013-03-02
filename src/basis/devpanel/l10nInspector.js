@@ -64,11 +64,11 @@ var observer = (function(){
   var names = ['MutationObserver', 'WebKitMutationObserver'];
   
   for (var i = 0, name; name = names[i]; i++)
-    if (name in global)
-      return new global[name](function(mutations){
-        unhighlight();
-        highlight();  
-      });
+  {
+    var ObserverClass = global[name];
+    if (typeof ObserverClass == 'function')
+      return new ObserverClass(updateHighlight);
+  }
 })();
 
 function startInspect(){ 
@@ -77,6 +77,7 @@ function startInspect(){
     basis.cssom.classList(document.body).add('devpanel-inspectMode');
     inspectMode = true;
     highlight();
+    basis.dom.event.addGlobalHandler('scroll', updateHighlight);
     if (observer)
       observer.observe(document.body, observerConfig);
   }
@@ -85,6 +86,7 @@ function endInspect(){
   if (inspectMode)
   {
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
+    basis.dom.event.removeGlobalHandler('scroll', updateHighlight);
     if (observer)
       observer.disconnect();
 
@@ -108,6 +110,11 @@ function unhighlight(){
   }
 
   DOM.remove(overlay);
+}
+
+function updateHighlight(){
+  unhighlight();
+  highlight();
 }
 
 function domTreeHighlight(root){
