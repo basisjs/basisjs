@@ -1713,6 +1713,9 @@
         {
           this.dataSourceMap_ = null;
           this.dataSource = null;
+
+          if (listenHandler)
+            oldDataSource.removeHandler(listenHandler, this);
         }
 
         // remove old children
@@ -1734,6 +1737,8 @@
               listenHandler.datasetChanged.call(this, dataSource, {
                 inserted: dataSource.getItems()
               });
+            
+            oldDataSource.addHandler(listenHandler, this);
           }
         }
 
