@@ -133,7 +133,7 @@ basis.l10n.onCultureChange(function(culture){
 // drag stuff
 //
 if (localStorage){
-  var position = (localStorage['basis-devpanel'] || '0;0').split(';');
+  var position = (localStorage['basis-devpanel'] || '10;10').split(';');
   panel.element.style.left = position[0] + 'px';
   panel.element.style.top  = position[1] + 'px';  
 }
