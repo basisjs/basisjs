@@ -87,7 +87,8 @@
         if (match)
         {
           var args = basis.array.from(match, 1);
-          for (var i = 0, item; item = route.callbacks[i]; i++)
+          var callbacks_ = basis.array.from(route.callbacks);
+          for (var i = 0, item; item = callbacks_[i]; i++)
             item.callback.apply(item.context, args);
 
           ;;;basis.dev.log(namespace + ' hash match:', route.source, args);
