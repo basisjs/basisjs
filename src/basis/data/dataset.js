@@ -318,7 +318,7 @@
       }
       else
       {
-        ;;;basis.dev.warn(this.className + '.addSource: source isn\'t instance of AbstractDataset');
+        ;;;basis.dev.warn(this.constructor.className + '.addSource: source isn\'t instance of AbstractDataset');
       }
     },
 
@@ -351,7 +351,7 @@
       }
       else
       {
-        ;;;basis.dev.warn(this.className + '.removeSource: source isn\'t in dataset source list');
+        ;;;basis.dev.warn(this.constructor.className + '.removeSource: source isn\'t in dataset source list');
       }
     },
 
@@ -373,7 +373,7 @@
         }
         else
         {
-          ;;;basis.dev.warn(this.className + '.setSources: source isn\'t type of AbstractDataset', source);
+          ;;;basis.dev.warn(this.constructor.className + '.setSources: source isn\'t type of AbstractDataset', source);
         }
       }
 
