@@ -146,15 +146,26 @@
       //init
       Emitter.prototype.init.call(this);
 
+      var element = this.targetElement;
+      this.targetElement = null;
+      this.setElement(element);
+
+      this.onUpdateHandler = this.onUpdate.bind(this);
+
+      this.updateElementPosition = TRANSFORM_SUPPORT ? this.updatePosition_styleTransform : this.updatePosition_styleTopLeft;
+    },
+    setElement: function(element){
+      if (this.targetElement)
+      {
+        Event.removeHandler(this.targetElement, 'mousedown', this.onMouseDown, this);
+        Event.removeHandler(this.targetElement, 'touchstart', this.onMouseDown, this);        
+      }
+      this.targetElement = element;
       if (this.targetElement)
       {
         Event.addHandler(this.targetElement, 'mousedown', this.onMouseDown, this);
         Event.addHandler(this.targetElement, 'touchstart', this.onMouseDown, this);
       }
-
-      this.onUpdateHandler = this.onUpdate.bind(this);
-
-      this.updateElementPosition = TRANSFORM_SUPPORT ? this.updatePosition_styleTransform : this.updatePosition_styleTopLeft;
     },
    
     updatePosition_styleTopLeft: function(){
@@ -484,13 +495,17 @@
 
       // return expected position
       return viewportTargetPosition + expectedInertiaDelta;
-    }/*,
+    },/*,
     calcExpectedPositionX: function(){
       return this.calcExpectedPosition('x');
     },
     calcExpectedPositionY: function(){
       return this.calcExpectedPosition('y');
     }*/
+    destroy: function(){
+      this.setElement();
+      Emitter.prototype.destroy.call(this);
+    }
   });
 
  /**
@@ -673,6 +688,12 @@
 
       // add resize handler
       basis.layout.addBlockResizeHandler(this.tmpl.scrollElement, this.realign.bind(this));
+    },
+
+    templateSync: function(noRecreate){
+      UINode.prototype.templateSync.call(this, noRecreate);
+
+      this.scroller.setElement(this.tmpl.scrollElement);
     },
 
     updatePosition: function(){
