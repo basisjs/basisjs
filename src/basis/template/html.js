@@ -477,16 +477,17 @@
               var bindings = attr[TOKEN_BINDINGS];
               var m;
 
-              if (bindings && attrName != 'class' && attrName != 'style')
-              {
-                var dict = bindings[0];
-                var expr = bindings[1];
-                attrValue = expr.map(function(t){
-                  return typeof t == 'number' ? dict[t] : t;
-                }).join('');
-              }
+              // if (bindings && attrName != 'class' && attrName != 'style')
+              // {
+              //   var dict = bindings[0];
+              //   var expr = bindings[1];
+              //   attrValue = expr.map(function(t){
+              //     return typeof t == 'number' ? dict[t] : t;
+              //   }).join('');
+              // }
 
-              element.setAttribute(attrName, attrValue);
+              if (!bindings || ((attrName == 'class' || attrName == 'style') && attrValue))
+                element.setAttribute(attrName, attrValue);
 
               if (m = attrName.match(eventAttr))
               {
