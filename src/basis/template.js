@@ -594,7 +594,7 @@
         array.add(items[i]);
     }
 
-    function process(tokens, template){
+    function process(tokens, template, options){
       function modifyAttr(token, name, fn, noCreate){
         var attrs = tokenAttrs(token);
 
@@ -603,13 +603,13 @@
 
         if (!attrs.name)
         {
-          ;;;if (template.warns) template.warns.push('Instruction <b:' + token.name + '> has no attribute name');
+          ;;;template.warns.push('Instruction <b:' + token.name + '> has no attribute name');
           return;
         }  
 
         if (!IDENT.test(attrs.name))
         {
-          ;;;if (template.warns) template.warns.push('Bad attribute name `' + attrs.name + '`');
+          ;;;template.warns.push('Bad attribute name `' + attrs.name + '`');
           return;
         }
 
@@ -646,7 +646,7 @@
           }
           else
           {
-            ;;;if (template.warns) template.warns.push('Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')');
+            ;;;template.warns.push('Attribute modificator is not reference to element token (reference name: ' + (attrs.ref || 'element') + ')');
           }
         }
       }
@@ -700,7 +700,8 @@
                         var values = elAttrs.values ? elAttrs.values.qw() : [];
                         template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
                         break;
-                      /**@cut*/default: if (template.warns) template.warns.push(namespace + ': Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
+                      ;;;default:
+                      ;;;  template.warns.push('Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
                     }
                   }
                 break;
@@ -725,7 +726,7 @@
                         if (tmpl.source.bindingBridge)
                           template.deps.add(tmpl.source);
 
-                        decl = getDeclFromSource(tmpl.source, tmpl.baseURI, true);
+                        decl = getDeclFromSource(tmpl.source, tmpl.baseURI, true, options);
                       }
                       else
                       {
@@ -737,7 +738,7 @@
                           resource = basis.resource(path.resolve(template.baseURI + url));
 
                         template.deps.add(resource);
-                        decl = getDeclFromSource(resource.get(), resource.url ? path.dirname(resource.url) + '/' : '', true);
+                        decl = getDeclFromSource(resource.get(), resource.url ? path.dirname(resource.url) + '/' : '', true, options);
                       }
 
                       includeStack.pop();
@@ -779,7 +780,7 @@
                                 {
                                   pos += child.name == 'after';
                                   rem = child.name == 'replace';
-                                  tokenRef.owner.splice.apply(tokenRef.owner, [pos, rem].concat(process(child.childs, template) || []));
+                                  tokenRef.owner.splice.apply(tokenRef.owner, [pos, rem].concat(process(child.childs, template, options) || []));
                                 }
                               }
                             break;
@@ -791,7 +792,7 @@
 
                               if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
                               {
-                                var childs = process(child.childs, template) || [];
+                                var childs = process(child.childs, template, options) || [];
 
                                 if (!token[ELEMENT_CHILDS])
                                   (token[ELEMENT_CHILDS] = []).owner = token;
@@ -824,7 +825,7 @@
                             case 'append-class':
                               modifyAttr(child, 'class', function(params, attrs, attrToken){
                                 //attr.value = (attr.value ? ' ' : '') + (params.value || '');
-                                var parsed = processAttr(params.name, params.value);
+                                var parsed = processAttr(params.name, params.value, options);
 
                                 if (!parsed.binding && !parsed.value)
                                 {
@@ -846,7 +847,7 @@
                             break;
                             case 'set-class':
                               modifyAttr(child, 'class', function(params, attrs, attr){
-                                var parsed = processAttr(params.name, params.value);
+                                var parsed = processAttr(params.name, params.value, options);
 
                                 if (!parsed.binding && !parsed.value)
                                 {
@@ -866,11 +867,11 @@
                             break;
 
                             default: 
-                              ;;;if (template.warns) template.warns.push('Unknown instruction tag <b:' + child.name + '>');
+                              ;;;template.warns.push('Unknown instruction tag <b:' + child.name + '>');
                           }
                         }
                         else
-                          decl.tokens.push.apply(decl.tokens, process([child], template) || []);
+                          decl.tokens.push.apply(decl.tokens, process([child], template, options) || []);
                       }
 
                       if (tokenRefMap.element)
@@ -898,10 +899,10 @@
               refs,                    // TOKEN_REFS = 2
               name(token),             // ELEMENT_NAME = 3
               0,                       // ELEMENT_ATTRS = 4
-              process(token.childs, template)    // ELEMENT_CHILDS = 5
+              process(token.childs, template, options)    // ELEMENT_CHILDS = 5
             ];
 
-            item[ELEMENT_ATTRS] = attrs(token, item, template.optimizeSize);
+            item[ELEMENT_ATTRS] = attrs(token, item, options.optimizeSize);
 
             break;
 
@@ -922,7 +923,7 @@
             break;
 
           case TYPE_COMMENT:
-            if (template.optimizeSize && !bindings && !refs)
+            if (options.optimizeSize && !bindings && !refs)
               continue;
 
             item = [
@@ -932,7 +933,7 @@
             ];
 
             // COMMENT_VALUE = 3
-            if (!template.optimizeSize)
+            if (!options.optimizeSize)
               if (!refs || token.value != '{' + refs.join('|') + '}')
                 item.push(untoken(token.value));
 
@@ -1025,7 +1026,7 @@
                     }
                     else
                     {
-                      ;;;if (warns) warns.push(namespace + ': Class binding `' + bind[1] + '` is not defined');
+                      ;;;warns.push('Class binding `' + bind[1] + '` is not defined');
                       unpredictable++;
                     }
                   }
@@ -1046,17 +1047,18 @@
     return function(source, baseURI, options){
       options = options || {};
       var debug = options.debug;
+      var warns = [];
       ;;;var source_;
 
       // result object
       var result = {
-        debug: debug,
         baseURI: baseURI || '',
+        tokens: null,
         resources: [],
         deps: [],
         defines: {},
         unpredictable: true,
-        optimizeSize: options.optimizeSize
+        warns: warns
       };
 
       if (!source.templateTokens)
@@ -1065,36 +1067,31 @@
         source = tokenize('' + source);
       }
 
-      if (debug)
-        result.warns = [];
-
       // main task
-      result.tokens = process(source, result);
-
-      ;;;if (source_) result.tokens.source_ = source_;
+      result.tokens = process(source, result, options);
 
       // there must be at least one token in result
       if (!result.tokens)
         result.tokens = [[3, 0, 0, '']];
+
+      // store source for debug
+      ;;;if (source_) result.tokens.source_ = source_;
 
       // normalize refs
       addTokenRef(result.tokens[0], 'element');
       normalizeRefs(result.tokens);
 
       // deal with defines
-      result.unpredictable = !!applyDefines(result.tokens, result.defines, result.warns);
+      result.unpredictable = !!applyDefines(result.tokens, result.defines, warns);
 
-      ;;;if (debug) for (var key in result.defines) if (!result.defines[key].used) result.warns.push(namespace + ': Dead define for ' + key + ' (not used in template)');
+      ;;;for (var key in result.defines) if (!result.defines[key].used) warns.push('Unused define for ' + key);
 
       // delete unnecessary keys
       delete result.defines;
-      delete result.debug;
-      delete result.optimizeSize;
 
-      if (debug && !result.warns.length)
-        delete result.warns;
-
-      ;;;if ('JSON' in global) result.toString = function(){ return JSON.stringify(this); };
+      if (!warns.length)
+        result.warns = false;
+      /** @cut */else console.warn('Template make declaration warns', result, result.warns);
 
       return result;
     };
@@ -1150,7 +1147,7 @@
   * @param {Template} template
   * @param {boolean=} clone
   */
-  function getDeclFromSource(source, baseURI, clone){
+  function getDeclFromSource(source, baseURI, clone, options){
     var result = source;
 
     if (typeof result == 'function')
@@ -1181,7 +1178,7 @@
     }
 
     if (typeof result == 'string')
-      result = makeDeclaration(result, baseURI);
+      result = makeDeclaration(result, baseURI, options);
 
     return result;
   }
