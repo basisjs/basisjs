@@ -1590,7 +1590,7 @@
 
         this.content = content;
         this.url = (content && content.url) || '';
-        this.baseURI = content && 'baseURI' in content ? content.baseURI : path.dirname(this.url) + '/';
+        this.baseURI = (typeof content == 'object' || typeof content == 'function') && 'baseURI' in content ? content.baseURI : path.dirname(this.url) + '/';
 
         if (this.content && this.content.bindingBridge)
           this.content.bindingBridge.attach(this.content, this.apply, this);
