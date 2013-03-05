@@ -846,7 +846,7 @@
                               });
                             break;
                             case 'set-class':
-                              modifyAttr(child, 'class', function(params, attrs, attr){
+                              modifyAttr(child, 'class', function(params, attrs, attrToken){
                                 var parsed = processAttr(params.name, params.value, options);
 
                                 if (!parsed.binding && !parsed.value)
@@ -857,7 +857,7 @@
 
                                 attrToken[TOKEN_BINDINGS] = parsed.binding;
                                 attrToken[ATTR_VALUE] = parsed.value;
-                              }, true);
+                              });
                             break;
                             case 'remove-class':
                               modifyAttr(child, 'class', function(params, attrs, attr){
