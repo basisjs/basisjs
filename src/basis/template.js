@@ -803,6 +803,7 @@
                               }
                             break;                            
 
+                            case 'attr':
                             case 'set-attr':
                               modifyAttr(child, false, function(params, attrs, attrToken){
                                 attrToken[ATTR_VALUE] = params.value || '';
