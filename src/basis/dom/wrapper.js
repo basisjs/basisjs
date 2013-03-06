@@ -412,7 +412,12 @@
     * @param {string} key
     * @param {basis.dom.wrapper.AbstractNode} oldSattelite Old satellite for key
     */
-    event_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
+    event_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite') && function(key, oldSatellite){
+      events.satelliteChanged.call(this, key, oldSatellite);
+
+      if (this.satellite[key])
+        updateNodeDisableContext(this.satellite[key], this.disabled || this.contextDisabled);
+    },
 
     //
     // properties
@@ -2113,7 +2118,7 @@
         }
       }
       else
-        if (!selected && this.selectable/* && !this.isDisabled()*/)
+        if (!selected && this.selectable)
         {
           this.selected = true;
           this.event_select();
