@@ -505,16 +505,18 @@
                         var a = createTemplate('<span/>');
                         var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-attr name="class" value="b"/></b:include>');
 
-                        this.is(text('<span title="a" class="b"/>'), text(b));
+                        this.is(text('<span class="b"/>'), text(b));
                       }
                     },
                     {
                       name: '<b:set-attr> class with binding',
                       test: function(){
-                        var a = createTemplate('<span/>');
-                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-attr name="class" value="a {b}"/></b:include>');
+                        var a = createTemplate('<span title="x"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-attr name="title" value="a {b}"/></b:include>');
 
-                        this.is(text('<span class="a"/>'), text(b));
+                        this.is(text('<span title="a {b}"/>'), text(b));
+                        this.is(text('<span title="a b"/>'), text(b, { b: 'b' }));
+                      }
                     }
                   ]
                 },
