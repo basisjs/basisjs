@@ -893,12 +893,16 @@
                                 var childs = process(child.childs, template, options) || [];
 
                                 if (!token[ELEMENT_CHILDS])
-                                  (token[ELEMENT_CHILDS] = []).owner = token;
+                                {
+                                  token[ELEMENT_ATTRS] = token[ELEMENT_ATTRS] || 0; // avoid undefined on attrs place
+                                  token[ELEMENT_CHILDS] = [];
+                                  token[ELEMENT_CHILDS].owner = token;
+                                }
 
                                 if (child.name == 'prepend')
-                                  Array.prototype.unshift.apply(token[ELEMENT_CHILDS], childs);
+                                  token[ELEMENT_CHILDS].unshift.apply(token[ELEMENT_CHILDS], childs);
                                 else
-                                  Array.prototype.push.apply(token[ELEMENT_CHILDS], childs);
+                                  token[ELEMENT_CHILDS].push.apply(token[ELEMENT_CHILDS], childs);
                               }
                             break;                            
 
@@ -997,8 +1001,12 @@
             break;
         }
 
+        while (item[item.length - 1] === 0)
+          item.pop();
+
         result.push(item);
       }
+
 
       return result.length ? result : 0;
     }
@@ -1031,7 +1039,7 @@
           }
         }
 
-        if (token[TOKEN_TYPE] == TYPE_ELEMENT)
+        if (token[TOKEN_TYPE] == TYPE_ELEMENT && token[ELEMENT_CHILDS])
           normalizeRefs(token[ELEMENT_CHILDS], map);
       }
 
@@ -1045,7 +1053,8 @@
       {
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
         {
-          unpredictable += applyDefines(token[ELEMENT_CHILDS], template, options);
+          if (token[ELEMENT_CHILDS])
+            unpredictable += applyDefines(token[ELEMENT_CHILDS], template, options);
 
           var attrs = token[ELEMENT_ATTRS];
           if (attrs)
