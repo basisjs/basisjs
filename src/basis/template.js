@@ -1083,13 +1083,14 @@
           {
             for (var j = 0, attr; attr = attrs[j]; j++)
             {
-              if (attr[ATTR_NAME] == 'class')
+              if (attr[TOKEN_TYPE] == 4 || (attr[TOKEN_TYPE] == TYPE_ATTRIBUTE && attr[ATTR_NAME] == 'class'))
               {
                 var bindings = attr[TOKEN_BINDINGS];
+                var valueIdx = ATTR_VALUE - (attr[TOKEN_TYPE] == 4);
 
                 if (bindings)
                 {
-                  var newAttrValue = (attr[ATTR_VALUE] || '').qw();
+                  var newAttrValue = (attr[valueIdx] || '').qw();
 
                   for (var k = 0, bind; bind = bindings[k]; k++)
                   {
@@ -1119,9 +1120,9 @@
                     }
                   }
 
-                  attr[ATTR_VALUE] = newAttrValue.join(' ');
-                  if (options.optimizeSize && !attr[ATTR_VALUE])
-                    attr.length = ATTR_VALUE;
+                  attr[valueIdx] = newAttrValue.join(' ');
+                  if (options.optimizeSize && !attr[valueIdx])
+                    attr.length = valueIdx;
                 }
 
                 break; // stop iterate other attributes
