@@ -16,7 +16,7 @@
   var TOKEN_REFS = basis.template.TOKEN_REFS;
 
   var ATTR_NAME = basis.template.ATTR_NAME;
-  var ATTR_VALUE = basis.template.ATTR_VALUE;
+  var ATTR_NAME_BY_TYPE = basis.template.ATTR_NAME_BY_TYPE;
 
   var ELEMENT_NAME = basis.template.ELEMENT_NAME;
   var ELEMENT_ATTRS = basis.template.ELEMENT_ATTRS;
@@ -126,7 +126,10 @@
           if (attrs = token[ELEMENT_ATTRS]) // attrs
             for (var j = 0, attr; attr = attrs[j]; j++)
             {
-              var attrName = attr[ATTR_NAME];
+              if (attr[TOKEN_TYPE] == 6)
+                continue;
+
+              var attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
 
               if (refs = attr[TOKEN_REFS])
               {

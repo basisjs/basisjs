@@ -37,6 +37,7 @@
 
   var ATTR_NAME = basis.template.ATTR_NAME;
   var ATTR_VALUE = basis.template.ATTR_VALUE;
+  var ATTR_NAME_BY_TYPE = basis.template.ATTR_NAME_BY_TYPE;
 
   var ELEMENT_NAME = basis.template.ELEMENT_NAME;
   var ELEMENT_ATTRS = basis.template.ELEMENT_ATTRS;
@@ -472,26 +473,11 @@
           {
             for (var j = 0, attr; attr = attrs[j]; j++)
             {
-              var attrName = attr[ATTR_NAME];
-              var attrValue = attr[ATTR_VALUE];
-              var bindings = attr[TOKEN_BINDINGS];
-              var m;
-
-              // if (bindings && attrName != 'class' && attrName != 'style')
-              // {
-              //   var dict = bindings[0];
-              //   var expr = bindings[1];
-              //   attrValue = expr.map(function(t){
-              //     return typeof t == 'number' ? dict[t] : t;
-              //   }).join('');
-              // }
-
-              if (!bindings || ((attrName == 'class' || attrName == 'style') && attrValue))
-                element.setAttribute(attrName, attrValue);
-
-              if (m = attrName.match(eventAttr))
+              if (attr[TOKEN_TYPE] == 6)
               {
-                var eventName = m[1];
+                var eventName = attr[1];
+                var attrName = 'event-' + eventName;
+
                 if (!tmplEventListeners[eventName])
                 {
                   tmplEventListeners[eventName] = createEventHandler(attrName);
@@ -507,7 +493,28 @@
                   if (eventInfo.supported && !eventInfo.bubble)
                     element.attachEvent('on' + eventName, createEventTrigger(eventName));
                 }
+
+                element.setAttribute(attrName, attr[2] || eventName);
+
+                continue;
               }
+
+              var attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
+              var attrValue = attr[ATTR_VALUE - (attr[TOKEN_TYPE] != 2)];
+              var bindings = attr[TOKEN_BINDINGS];
+              var m;
+
+              // if (bindings && attrName != 'class' && attrName != 'style')
+              // {
+              //   var dict = bindings[0];
+              //   var expr = bindings[1];
+              //   attrValue = expr.map(function(t){
+              //     return typeof t == 'number' ? dict[t] : t;
+              //   }).join('');
+              // }
+
+              if (attrName == 'class' || attrName == 'style' ? attrValue : !bindings)
+                element.setAttribute(attrName, attrValue || '');
             }
           }
 

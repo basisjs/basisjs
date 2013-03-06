@@ -35,6 +35,14 @@
 
   /** @const */ var ATTR_NAME = 3;
   /** @const */ var ATTR_VALUE = 4;
+  var ATTR_NAME_BY_TYPE = {
+    4: 'class',
+    5: 'style'
+  };
+  var ATTR_TYPE_BY_NAME = {
+    'class': 4,
+    'style': 5
+  };
 
   /** @const */ var ELEMENT_NAME = 3;
   /** @const */ var ELEMENT_ATTRS = 4;
@@ -516,13 +524,15 @@
 
       return {
         binding: bindings,
-        value: value
+        value: value,
+        type: ATTR_TYPE_BY_NAME[name] || 2
       };   
     }
 
     function attrs(token, declToken, optimizeSize){
       var attrs = token.attrs;
       var result = [];
+      var m;
 
       for (var i = 0, attr; attr = attrs[i]; i++)
       {
@@ -541,16 +551,25 @@
           continue;
         }
 
+        if (m = attr.name.match(/^event-(.+)$/))
+        {
+          result.push(m[1] == attr.value ? [6, m[1]] : [6, m[1], attr.value]);
+          continue;
+        }
+
         var parsed = processAttr(attr.name, attr.value);
         var item = [
-          2,                      // TOKEN_TYPE = 0
+          parsed.type,            // TOKEN_TYPE = 0
           parsed.binding,         // TOKEN_BINDINGS = 1
-          refList(attr),          // TOKEN_REFS = 2
-          name(attr)              // ATTR_NAME = 3
+          refList(attr)           // TOKEN_REFS = 2         
         ];
-        
+
+        // ATTR_NAME = 3
+        if (parsed.type == 2)
+          item.push(name(attr));
+
         // ATTR_VALUE = 4
-        if (parsed.value && (!optimizeSize || !parsed.binding || attr.name == 'class' || attr.name == 'style'))
+        if (parsed.value && (!optimizeSize || !parsed.binding || parsed.type != 2))
           item.push(parsed.value);
 
         result.push(item);
@@ -623,19 +642,22 @@
           if (includedToken.token[TOKEN_TYPE] == TYPE_ELEMENT)
           {
             var itAttrs = includedToken.token[ELEMENT_ATTRS];
+            var itType = ATTR_TYPE_BY_NAME[attrs.name];
+            var valueIdx = ATTR_VALUE - !!itType;
             var itAttrToken = itAttrs && itAttrs.search(attrs.name, function(token){
-              return token[ATTR_NAME];
+              return itType ? ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]] : token[ATTR_NAME];
             });
 
             if (!itAttrToken && action != 'remove')
             {
               itAttrToken = [
-                TYPE_ATTRIBUTE,
+                itType || TYPE_ATTRIBUTE,
                 0,
-                0,
-                attrs.name,
-                ''
+                0
               ];
+              if (!itType)
+                itAttrToken.push(attrs.name);
+              itAttrToken.push('');
 
               if (!itAttrs)
               {
@@ -654,12 +676,12 @@
                 itAttrToken[TOKEN_BINDINGS] = parsed.binding;
 
                 if (!options.optimizeSize || !itAttrToken[TOKEN_BINDINGS] || classOrStyle)
-                  itAttrToken[ATTR_VALUE] = parsed.value || '';
+                  itAttrToken[valueIdx] = parsed.value || '';
                 else
-                  itAttrToken.length = ATTR_VALUE;
+                  itAttrToken.length = valueIdx;
 
                 if (classOrStyle)
-                  if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[ATTR_VALUE])
+                  if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
                   {
                     itAttrs.remove(itAttrToken);
                     return;
@@ -696,10 +718,10 @@
                 }
 
                 if (parsed.value)
-                  itAttrToken[ATTR_VALUE] += (itAttrToken[ATTR_VALUE] && attrs.name == 'class' ? ' ' : '') + parsed.value;
+                  itAttrToken[valueIdx] += (itAttrToken[valueIdx] && attrs.name == 'class' ? ' ' : '') + parsed.value;
 
                 if (classOrStyle)
-                  if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[ATTR_VALUE])
+                  if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[valueIdx])
                   {
                     itAttrs.remove(itAttrToken);
                     return;
@@ -2007,6 +2029,7 @@
 
     ATTR_NAME: ATTR_NAME,
     ATTR_VALUE: ATTR_VALUE,
+    ATTR_NAME_BY_TYPE: ATTR_NAME_BY_TYPE,
 
     ELEMENT_NAME: ELEMENT_NAME,
     ELEMENT_ATTRS: ELEMENT_ATTRS,
