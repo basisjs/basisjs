@@ -742,6 +742,25 @@
                       }
                     },
                     {
+                      name: 'class exists, empty value removes class attr',
+                      test: function(){
+                        var a = createTemplate('<span class="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value=""/></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+
+                        var a = createTemplate('<span class="a"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class/></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+
+                        var a = createTemplate('<span class="{a}"/>');
+                        var b = createTemplate('<b:include src="#' + a.templateId + '"><b:set-class value=""/></b:include>');
+
+                        this.is(text('<span/>'), text(b));
+                      }
+                    },
+                    {
                       name: 'class not exists, set class with binding',
                       test: function(){
                         var a = createTemplate('<span title="a"/>');

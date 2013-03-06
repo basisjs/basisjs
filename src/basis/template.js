@@ -550,7 +550,7 @@
         ];
         
         // ATTR_VALUE = 4
-        if (!optimizeSize || !parsed.binding || attr.name == 'class' || attr.name == 'style')
+        if (parsed.value && (!optimizeSize || !parsed.binding || attr.name == 'class' || attr.name == 'style'))
           item.push(parsed.value);
 
         result.push(item);
@@ -594,8 +594,12 @@
         array.add(items[i]);
     }
 
+    //
+    // main function
+    //
     function process(tokens, template, options){
-      function modifyAttr(token, name, fn, noCreate){
+
+      function modifyAttr(token, name, action){
         var attrs = tokenAttrs(token);
 
         if (name)
@@ -623,7 +627,7 @@
               return token[ATTR_NAME];
             });
 
-            if (!itAttrToken && !noCreate)
+            if (!itAttrToken && action != 'remove')
             {
               itAttrToken = [
                 TYPE_ATTRIBUTE,
@@ -642,7 +646,73 @@
               itAttrs.push(itAttrToken);
             }
 
-            fn(attrs, itAttrs, itAttrToken);
+            var classOrStyle = attrs.name == 'class' || attrs.name == 'style';
+            switch (action){
+              case 'set':
+                var parsed = processAttr(attrs.name, attrs.value);
+
+                itAttrToken[TOKEN_BINDINGS] = parsed.binding;
+
+                if (!options.optimizeSize || !itAttrToken[TOKEN_BINDINGS] || classOrStyle)
+                  itAttrToken[ATTR_VALUE] = parsed.value || '';
+                else
+                  itAttrToken.length = ATTR_VALUE;
+
+                if (classOrStyle)
+                  if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[ATTR_VALUE])
+                  {
+                    itAttrs.remove(itAttrToken);
+                    return;
+                  }
+
+                break;
+
+              case 'append':
+                var parsed = processAttr(attrs.name, attrs.value);
+
+                if (parsed.binding)
+                {
+                  var attrBindings = itAttrToken[TOKEN_BINDINGS];
+                  if (attrBindings)
+                  {
+                    if (attrs.name == 'style')
+                    {
+                      var filter = {};
+
+                      for (var i = 0, newBinding; newBinding = parsed.binding[i]; i++)
+                        filter[newBinding[2]] = true;
+
+                      for (var i = 0, k = 0, oldBinding; oldBinding = attrBindings[i]; i++)
+                        if (!filter[oldBinding[2]])
+                          attrBindings[k++] = oldBinding;
+
+                      attrBindings.length = k;
+                    }
+
+                    attrBindings.push.apply(attrBindings, parsed.binding);
+                  }
+                  else
+                    itAttrToken[TOKEN_BINDINGS] = parsed.binding;
+                }
+
+                if (parsed.value)
+                  itAttrToken[ATTR_VALUE] += (itAttrToken[ATTR_VALUE] && attrs.name == 'class' ? ' ' : '') + parsed.value;
+
+                if (classOrStyle)
+                  if (!itAttrToken[TOKEN_BINDINGS] && !itAttrToken[ATTR_VALUE])
+                  {
+                    itAttrs.remove(itAttrToken);
+                    return;
+                  }
+
+                break;
+
+              case 'remove':
+                if (itAttrToken)
+                  itAttrs.remove(itAttrToken);
+
+                break;
+            }
           }
           else
           {
@@ -755,9 +825,37 @@
                       var instructions = (token.childs || []).slice();
 
                       if (elAttrs['class'])
-                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'append-class', attrs: [{ type: TYPE_ATTRIBUTE, name: 'value', value: elAttrs['class'] }] });
+                        instructions.push({
+                          type: TYPE_ELEMENT,
+                          prefix: 'b',
+                          name: 'append-class',
+                          attrs: [
+                            {
+                              type: TYPE_ATTRIBUTE,
+                              name: 'value',
+                              value: elAttrs['class']
+                            }
+                          ]
+                        });
+
                       if (elAttrs.id)
-                        instructions.push({ type: TYPE_ELEMENT, prefix: 'b', name: 'set-attr', attrs: [{ type: TYPE_ATTRIBUTE, name: 'name', value: 'id' }, { type: TYPE_ATTRIBUTE, name: 'value', value: elAttrs.id }] });
+                        instructions.push({
+                          type: TYPE_ELEMENT,
+                          prefix: 'b',
+                          name: 'set-attr',
+                          attrs: [
+                            {
+                              type: TYPE_ATTRIBUTE,
+                              name: 'name',
+                              value: 'id'
+                            },
+                            {
+                              type: TYPE_ATTRIBUTE,
+                              name: 'value',
+                              value: elAttrs.id
+                            }
+                          ]
+                        });
 
                       for (var j = 0, child; child = instructions[j]; j++)
                       {
@@ -806,64 +904,23 @@
 
                             case 'attr':
                             case 'set-attr':
-                              modifyAttr(child, false, function(params, attrs, attrToken){
-                                attrToken[ATTR_VALUE] = params.value || '';
-                              });
+                              modifyAttr(child, false, 'set');
                             break;
                             case 'append-attr':
-                              modifyAttr(child, false, function(params, attrs, attrToken){
-                                attrToken[ATTR_VALUE] += params.value || '';
-                              });
+                              modifyAttr(child, false, 'append');
                             break;
                             case 'remove-attr':
-                              modifyAttr(child, false, function(params, attrs, attrToken){
-                                if (attrToken)
-                                  attrs.remove(attrToken);
-                              }, true);
+                              modifyAttr(child, false, 'remove');
                             break;
                             case 'class':
                             case 'append-class':
-                              modifyAttr(child, 'class', function(params, attrs, attrToken){
-                                //attr.value = (attr.value ? ' ' : '') + (params.value || '');
-                                var parsed = processAttr(params.name, params.value, options);
-
-                                if (!parsed.binding && !parsed.value)
-                                {
-                                  attrs.remove(attrToken);
-                                  return;
-                                }
-
-                                if (parsed.binding)
-                                {
-                                  if (attrToken[TOKEN_BINDINGS])
-                                    attrToken[TOKEN_BINDINGS].push.apply(attrToken[TOKEN_BINDINGS], parsed.binding);
-                                  else
-                                    attrToken[TOKEN_BINDINGS] = parsed.binding;
-                                }
-
-                                if (parsed.value)
-                                  attrToken[ATTR_VALUE] += (attrToken[ATTR_VALUE] ? ' ' : '') + parsed.value;
-                              });
+                              modifyAttr(child, 'class', 'append');
                             break;
                             case 'set-class':
-                              modifyAttr(child, 'class', function(params, attrs, attrToken){
-                                var parsed = processAttr(params.name, params.value, options);
-
-                                if (!parsed.binding && !parsed.value)
-                                {
-                                  attrs.remove(attrToken);
-                                  return;
-                                }
-
-                                attrToken[TOKEN_BINDINGS] = parsed.binding;
-                                attrToken[ATTR_VALUE] = parsed.value;
-                              });
+                              modifyAttr(child, 'class', 'set');
                             break;
                             case 'remove-class':
-                              modifyAttr(child, 'class', function(params, attrs, attr){
-                                if (attr)
-                                  attrs.remove(attr);
-                              }, true);
+                              modifyAttr(child, 'class', 'remove');
                             break;
 
                             default: 
@@ -981,14 +1038,14 @@
       return map;
     }
 
-    function applyDefines(tokens, defines, warns){
+    function applyDefines(tokens, template, options){
       var unpredictable = 0;
 
       for (var i = 0, token; token = tokens[i]; i++)
       {
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
         {
-          unpredictable += applyDefines(token[ELEMENT_CHILDS], defines, warns);
+          unpredictable += applyDefines(token[ELEMENT_CHILDS], template, options);
 
           var attrs = token[ELEMENT_ATTRS];
           if (attrs)
@@ -1001,7 +1058,7 @@
 
                 if (bindings)
                 {
-                  var newAttrValue = attr[ATTR_VALUE].qw();
+                  var newAttrValue = (attr[ATTR_VALUE] || '').qw();
 
                   for (var k = 0, bind; bind = bindings[k]; k++)
                   {
@@ -1009,7 +1066,7 @@
                       continue;
 
                     var bindName = bind[1].split(':').pop();
-                    var bindDef = defines[bindName];
+                    var bindDef = template.defines[bindName];
 
                     if (bindDef)
                     {
@@ -1026,12 +1083,14 @@
                     }
                     else
                     {
-                      ;;;warns.push('Class binding `' + bind[1] + '` is not defined');
+                      ;;;template.warns.push('Class binding `' + bind[1] + '` is not defined');
                       unpredictable++;
                     }
                   }
 
                   attr[ATTR_VALUE] = newAttrValue.join(' ');
+                  if (options.optimizeSize && !attr[ATTR_VALUE])
+                    attr.length = ATTR_VALUE;
                 }
 
                 break; // stop iterate other attributes
@@ -1082,7 +1141,7 @@
       normalizeRefs(result.tokens);
 
       // deal with defines
-      result.unpredictable = !!applyDefines(result.tokens, result.defines, warns);
+      result.unpredictable = !!applyDefines(result.tokens, result, options);
 
       ;;;for (var key in result.defines) if (!result.defines[key].used) warns.push('Unused define for ' + key);
 
@@ -1091,7 +1150,7 @@
 
       if (!warns.length)
         result.warns = false;
-      /** @cut */else console.warn('Template make declaration warns', result, result.warns);
+      //else console.warn('Template make declaration warns', result, result.warns.join('\n'));
 
       return result;
     };
