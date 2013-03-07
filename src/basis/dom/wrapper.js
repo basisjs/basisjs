@@ -361,7 +361,6 @@
     * This is a general event for notification of childs changes to the parent node.
     * It may be dispatched after a single modification to the childNodes or after
     * multiple changes have occurred. 
-    * @param {basis.dom.wrapper.AbstractNode} node
     * @param {object} delta Delta of changes.
     * @event
     */
@@ -383,41 +382,31 @@
     },
 
    /**
-    * @param {basis.dom.wrapper.AbstractNode} node
     * @param {basis.data.AbstractDataset} oldDataSource
     */
     event_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
 
    /**
-    * @param {basis.dom.wrapper.AbstractNode} node
     * @param {basis.dom.wrapper.GroupingNode} oldGroupingNode
     */
     event_groupingChanged: createEvent('groupingChanged', 'oldGroupingNode'),
 
    /**
-    * @param {basis.dom.wrapper.AbstractNode} node
     * @param {function()} oldSorting
     * @param {boolean} oldSortingDesc
     */
     event_sortingChanged: createEvent('sortingChanged', 'oldSorting', 'oldSortingDesc'),
 
    /**
-    * @param {basis.dom.wrapper.AbstractNode} node
     * @param {basis.dom.wrapper.AbstractNode} oldOwner
     */
     event_ownerChanged: createEvent('ownerChanged', 'oldOwner'),
 
    /**
-    * @param {basis.dom.wrapper.AbstractNode} node Initiator of event
     * @param {string} key
-    * @param {basis.dom.wrapper.AbstractNode} oldSattelite Old satellite for key
+    * @param {basis.data.DataObject} oldSattelite Old satellite for key
     */
-    event_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite') && function(key, oldSatellite){
-      events.satelliteChanged.call(this, key, oldSatellite);
-
-      if (this.satellite[key])
-        updateNodeDisableContext(this.satellite[key], this.disabled || this.contextDisabled);
-    },
+    event_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
 
     //
     // properties
@@ -770,7 +759,7 @@
    /**
     * Set replace satellite with defined name for new one.
     * @param {string} name Satellite name.
-    * @param {basis.dom.wrapper.AbstractNode} satellite New satellite node.
+    * @param {basis.data.DataObject} satellite New satellite node.
     */
     setSatellite: function(name, satellite){
       var oldSatellite = this.satellite[name];
@@ -1931,6 +1920,17 @@
 
       events.disable.call(this);
     },
+
+   /**
+    * @param {string} key
+    * @param {basis.data.DataObject} oldSattelite Old satellite for key
+    */
+    event_satelliteChanged: function(key, oldSatellite){
+      AbstractNode.prototype.event_satelliteChanged.call(this, key, oldSatellite);
+
+      if (this.satellite[key] instanceof Node)
+        updateNodeDisableContext(this.satellite[key], this.disabled || this.contextDisabled);
+    },    
 
    /**
     * Occurs after selected property has been set to true.
