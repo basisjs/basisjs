@@ -589,12 +589,23 @@
     }
 
     function removeTokenRef(token, refName){
-      if (token[TOKEN_REFS].remove(refName))
+      var idx = token[TOKEN_REFS].indexOf(refName);
+      if (idx != -1)
       {
+        var indexBinding = token[TOKEN_BINDINGS] && typeof token[TOKEN_BINDINGS] == 'number';
+        token[TOKEN_REFS].splice(idx, 1);
+
+        if (indexBinding)
+          if (idx == token[TOKEN_BINDINGS] - 1)
+            token[TOKEN_BINDINGS] = refName;
+
         if (!token[TOKEN_REFS].length)
-          token[TOKEN_REFS] = 0;      
-        /*if (token[TOKEN_BINDINGS] === refName)
-          token[TOKEN_BINDINGS] = 0;*/
+          token[TOKEN_REFS] = 0;
+        else
+        {
+          if (indexBinding)
+            token[TOKEN_BINDINGS] -= idx < (token[TOKEN_BINDINGS] - 1);
+        }
       }
     }
 
@@ -1047,6 +1058,9 @@
 
             if (map[refName])
               removeTokenRef(map[refName].token, refName);
+
+            if (token[TOKEN_BINDINGS] == refName)
+              token[TOKEN_BINDINGS] = j + 1;
 
             map[refName] = {
               owner: tokens,

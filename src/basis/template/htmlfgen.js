@@ -98,6 +98,9 @@
 
         if (token[TOKEN_BINDINGS])
         {
+          if (token[TOKEN_BINDINGS] && typeof token[TOKEN_BINDINGS] == 'number')
+            token[TOKEN_BINDINGS] = token[TOKEN_REFS][token[TOKEN_BINDINGS] - 1];
+
           if (!explicitRef)
           {
             explicitRef = true;
