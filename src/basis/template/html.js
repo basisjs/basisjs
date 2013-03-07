@@ -449,6 +449,28 @@
   * Creates dom structure by declaration.
   */
   var buildHtml = function(tokens, parent){
+    function setEventAttribute(eventName, actions){
+      var attrName = 'event-' + eventName;
+
+      if (!tmplEventListeners[eventName])
+      {
+        tmplEventListeners[eventName] = createEventHandler(attrName);
+
+        for (var k = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[k++];)
+          domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
+      }
+
+      // hack for non-bubble events in IE<=8
+      if (!domEvent.W3CSUPPORT)
+      {
+        var eventInfo = domEvent.getEventInfo(eventName, tagName);
+        if (eventInfo.supported && !eventInfo.bubble)
+          result.attachEvent('on' + eventName, createEventTrigger(eventName));
+      }
+
+      result.setAttribute(attrName, actions);
+    }
+
     var result = parent || document.createDocumentFragment();
 
     for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
@@ -472,8 +494,20 @@
           break;
 
         case TYPE_ATTRIBUTE:
-          if (!token[TOKEN_BINDINGS])
-            result.setAttribute(token[ATTR_NAME], token[ATTR_VALUE] || '');
+          var attrName = token[ATTR_NAME];
+          var attrValue = token[ATTR_VALUE];
+          var eventName = attrName.replace(/^event-/, '');
+
+          if (eventName != attrName)
+          {
+            setEventAttribute(eventName, attrValue);
+          }
+          else
+          {
+            if (attrName != 'class' && attrName != 'style' ? !token[TOKEN_BINDINGS] : attrValue)
+              result.setAttribute(attrName, attrValue || '');
+          }
+
           break;
 
         case 4:
@@ -486,27 +520,7 @@
           break;
 
         case 6:
-          var eventName = token[1];
-          var attrName = 'event-' + eventName;
-
-          if (!tmplEventListeners[eventName])
-          {
-            tmplEventListeners[eventName] = createEventHandler(attrName);
-
-            for (var k = 0, names = domEvent.browserEvents(eventName), browserEventName; browserEventName = names[k++];)
-              domEvent.addGlobalHandler(browserEventName, tmplEventListeners[eventName]);
-          }
-
-          // hack for non-bubble events in IE<=8
-          if (!domEvent.W3CSUPPORT)
-          {
-            var eventInfo = domEvent.getEventInfo(eventName, tagName);
-            if (eventInfo.supported && !eventInfo.bubble)
-              result.attachEvent('on' + eventName, createEventTrigger(eventName));
-          }
-
-          result.setAttribute(attrName, token[2] || eventName);
-
+          setEventAttribute(token[1], token[2] || token[1]);
           break;
 
         case TYPE_COMMENT:
