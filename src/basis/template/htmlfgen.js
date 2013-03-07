@@ -66,8 +66,6 @@
   
     function processTokens(tokens, path){
       var localPath;
-      var attrs;
-      var childs;
       var refs;
       var myRef;
       var explicitRef;
@@ -123,46 +121,54 @@
             myRef = pathList.length;
           }
 
-          if (attrs = token[ELEMENT_ATTRS]) // attrs
-            for (var j = 0, attr; attr = attrs[j]; j++)
+          // TODO: temporate solution, rewrite function
+          var attrs = [];
+          var children = [];
+          for (var j = ELEMENT_ATTRS, t; t = token[j]; j++)
+            if (t[TOKEN_TYPE] == TYPE_ELEMENT || t[TOKEN_TYPE] == TYPE_TEXT || t[TOKEN_TYPE] == TYPE_COMMENT)
+              children.push(t);
+            else
+              attrs.push(t);
+
+          for (var j = 0, attr; attr = attrs[j]; j++)
+          {
+            if (attr[TOKEN_TYPE] == 6)
+              continue;
+
+            var attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
+
+            if (refs = attr[TOKEN_REFS])
             {
-              if (attr[TOKEN_TYPE] == 6)
-                continue;
-
-              var attrName = ATTR_NAME_BY_TYPE[attr[TOKEN_TYPE]] || attr[ATTR_NAME];
-
-              if (refs = attr[TOKEN_REFS])
-              {
-                explicitRef = true;
-                putRefs(refs, putPath(localPath + '.getAttributeNode("' + attrName + '")'));
-              }
-
-              if (bindings = attr[TOKEN_BINDINGS])
-              {
-                explicitRef = true;
-
-                switch (attrName)
-                {
-                  case 'class':
-                    for (var k = 0, binding; binding = bindings[k]; k++)
-                      putBinding([2, localPath, binding[1], attrName, binding[0]].concat(binding.slice(2)));
-                  break;
-
-                  case 'style':
-                    for (var k = 0, property; property = bindings[k]; k++)
-                      for (var m = 0, bindName; bindName = property[0][m]; m++)
-                        putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2]]);
-                  break;
-
-                  default:
-                    for (var k = 0, bindName; bindName = bindings[0][k]; k++)
-                      putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]);
-                }
-              }
+              explicitRef = true;
+              putRefs(refs, putPath(localPath + '.getAttributeNode("' + attrName + '")'));
             }
 
-          if (childs = token[ELEMENT_CHILDS]) // childs
-            processTokens(childs, localPath);
+            if (bindings = attr[TOKEN_BINDINGS])
+            {
+              explicitRef = true;
+
+              switch (attrName)
+              {
+                case 'class':
+                  for (var k = 0, binding; binding = bindings[k]; k++)
+                    putBinding([2, localPath, binding[1], attrName, binding[0]].concat(binding.slice(2)));
+                break;
+
+                case 'style':
+                  for (var k = 0, property; property = bindings[k]; k++)
+                    for (var m = 0, bindName; bindName = property[0][m]; m++)
+                      putBinding([2, localPath, bindName, attrName, property[0], property[1], property[2]]);
+                break;
+
+                default:
+                  for (var k = 0, bindName; bindName = bindings[0][k]; k++)
+                    putBinding([2, localPath, bindName, attrName, bindings[0], bindings[1], token[ELEMENT_NAME]]);
+              }
+            }
+          }
+
+          if (children.length)
+            processTokens(children, localPath);
 
           if (!explicitRef && myRef == pathList.length)
             pathList.pop();

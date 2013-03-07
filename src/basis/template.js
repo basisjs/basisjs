@@ -641,7 +641,7 @@
         {
           if (includedToken.token[TOKEN_TYPE] == TYPE_ELEMENT)
           {
-            var itAttrs = includedToken.token[ELEMENT_ATTRS];
+            var itAttrs = includedToken.token;
             var itType = ATTR_TYPE_BY_NAME[attrs.name];
             var valueIdx = ATTR_VALUE - !!itType;
             var itAttrToken = itAttrs && itAttrs.search(attrs.name, function(token){
@@ -662,7 +662,7 @@
               if (!itAttrs)
               {
                 itAttrs = [];
-                includedToken.token[ELEMENT_ATTRS] = itAttrs;
+                includedToken.token.push(itAttrs);
               }
 
               itAttrs.push(itAttrToken);
@@ -914,17 +914,10 @@
                               {
                                 var childs = process(child.childs, template, options) || [];
 
-                                if (!token[ELEMENT_CHILDS])
-                                {
-                                  token[ELEMENT_ATTRS] = token[ELEMENT_ATTRS] || 0; // avoid undefined on attrs place
-                                  token[ELEMENT_CHILDS] = [];
-                                  token[ELEMENT_CHILDS].owner = token;
-                                }
-
                                 if (child.name == 'prepend')
-                                  token[ELEMENT_CHILDS].unshift.apply(token[ELEMENT_CHILDS], childs);
+                                  token.splice.apply(token, [ELEMENT_ATTRS, 0].concat(childs));
                                 else
-                                  token[ELEMENT_CHILDS].push.apply(token[ELEMENT_CHILDS], childs);
+                                  token.push.apply(token, childs);
                               }
                             break;                            
 
@@ -980,12 +973,10 @@
               1,                       // TOKEN_TYPE = 0
               bindings,                // TOKEN_BINDINGS = 1
               refs,                    // TOKEN_REFS = 2
-              name(token),             // ELEMENT_NAME = 3
-              0,                       // ELEMENT_ATTRS = 4
-              process(token.childs, template, options)    // ELEMENT_CHILDS = 5
-            ];
-
-            item[ELEMENT_ATTRS] = attrs(token, item, options.optimizeSize);
+              name(token)             // ELEMENT_NAME = 3
+            ]
+            item.push.apply(item, attrs(token, item, options.optimizeSize) || []);
+            item.push.apply(item, process(token.childs, template, options) || []);
 
             break;
 
@@ -1033,12 +1024,15 @@
       return result.length ? result : 0;
     }
 
-    function normalizeRefs(tokens, map){
+    function normalizeRefs(tokens, map, stIdx){
       if (!map)
         map = {};
 
-      for (var i = 0, token; token = tokens[i]; i++)
+      for (var i = stIdx || 0, token; token = tokens[i]; i++)
       {
+        if (token[TOKEN_TYPE] == 6)
+          continue;
+
         var refs = token[TOKEN_REFS];
 
         if (refs)
@@ -1061,74 +1055,64 @@
           }
         }
 
-        if (token[TOKEN_TYPE] == TYPE_ELEMENT && token[ELEMENT_CHILDS])
-          normalizeRefs(token[ELEMENT_CHILDS], map);
+        if (token[TOKEN_TYPE] == TYPE_ELEMENT)
+          normalizeRefs(token, map, ELEMENT_ATTRS);
       }
 
       return map;
     }
 
-    function applyDefines(tokens, template, options){
+    function applyDefines(tokens, template, options, stIdx){
       var unpredictable = 0;
 
-      for (var i = 0, token; token = tokens[i]; i++)
+      for (var i = stIdx || 0, token; token = tokens[i]; i++)
       {
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
+          unpredictable += applyDefines(token, template, options, ELEMENT_ATTRS);
+
+        if (token[TOKEN_TYPE] == 4 || (token[TOKEN_TYPE] == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
         {
-          if (token[ELEMENT_CHILDS])
-            unpredictable += applyDefines(token[ELEMENT_CHILDS], template, options);
+          var bindings = token[TOKEN_BINDINGS];
+          var valueIdx = ATTR_VALUE - (token[TOKEN_TYPE] == 4);
 
-          var attrs = token[ELEMENT_ATTRS];
-          if (attrs)
+          if (bindings)
           {
-            for (var j = 0, attr; attr = attrs[j]; j++)
+            var newAttrValue = (token[valueIdx] || '').qw();
+
+            for (var k = 0, bind; bind = bindings[k]; k++)
             {
-              if (attr[TOKEN_TYPE] == 4 || (attr[TOKEN_TYPE] == TYPE_ATTRIBUTE && attr[ATTR_NAME] == 'class'))
+              if (bind.length > 2)  // bind already processed
+                continue;
+
+              var bindName = bind[1].split(':').pop();
+              var bindDef = template.defines[bindName];
+
+              if (bindDef)
               {
-                var bindings = attr[TOKEN_BINDINGS];
-                var valueIdx = ATTR_VALUE - (attr[TOKEN_TYPE] == 4);
+                bind.push.apply(bind, bindDef);
+                bindDef.used = true;
 
-                if (bindings)
+                if (bindDef[0])
                 {
-                  var newAttrValue = (attr[valueIdx] || '').qw();
-
-                  for (var k = 0, bind; bind = bindings[k]; k++)
-                  {
-                    if (bind.length > 2)  // bind already processed
-                      continue;
-
-                    var bindName = bind[1].split(':').pop();
-                    var bindDef = template.defines[bindName];
-
-                    if (bindDef)
-                    {
-                      bind.push.apply(bind, bindDef);
-                      bindDef.used = true;
-
-                      if (bindDef[0])
-                      {
-                        if (bindDef.length == 1) // bool
-                          newAttrValue.add(bind[0] + bindName);
-                        else                  // enum
-                          newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
-                      }
-                    }
-                    else
-                    {
-                      ;;;template.warns.push('Class binding `' + bind[1] + '` is not defined');
-                      unpredictable++;
-                    }
-                  }
-
-                  attr[valueIdx] = newAttrValue.join(' ');
-                  if (options.optimizeSize && !attr[valueIdx])
-                    attr.length = valueIdx;
+                  if (bindDef.length == 1) // bool
+                    newAttrValue.add(bind[0] + bindName);
+                  else                  // enum
+                    newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
                 }
-
-                break; // stop iterate other attributes
+              }
+              else
+              {
+                ;;;template.warns.push('Class binding `' + bind[1] + '` is not defined');
+                unpredictable++;
               }
             }
+
+            token[valueIdx] = newAttrValue.join(' ');
+            if (options.optimizeSize && !token[valueIdx])
+              token.length = valueIdx;
           }
+
+          break; // stop iterate other attributes
         }
       }
 
