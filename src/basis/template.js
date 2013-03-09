@@ -22,6 +22,8 @@
   var templateList = [];
   var tmplFilesMap = {};
 
+  var DECLARATION_VERSION = 2;
+
   // token types
   /** @const */ var TYPE_ELEMENT = 1;
   /** @const */ var TYPE_ATTRIBUTE = 2;
@@ -2016,6 +2018,7 @@
   this.setWrapper(baseTheme.define);
 
   module.exports = {
+    DECLARATION_VERSION: DECLARATION_VERSION,
     // const
     TYPE_ELEMENT: TYPE_ELEMENT,
     TYPE_ATTRIBUTE: TYPE_ATTRIBUTE,
