@@ -1,3 +1,5 @@
+  basis.require('basis.template');
+  basis.require('basis.ui');
 
   var namespace = module.path;
   var uiNode = basis.ui.Node;
@@ -121,25 +123,28 @@
   });
 
   // token types
-  /** @const */ var TYPE_ELEMENT = 1;
-  /** @const */ var TYPE_ATTRIBUTE = 2;
-  /** @const */ var TYPE_TEXT = 3;
-  /** @const */ var TYPE_COMMENT = 8;
+  /** @const */ var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
+  /** @const */ var TYPE_ATTRIBUTE = basis.template.TYPE_ATTRIBUTE;
+  /** @const */ var TYPE_TEXT = basis.template.TYPE_TEXT;
+  /** @const */ var TYPE_COMMENT = basis.template.TYPE_COMMENT;
+  /** @const */ var TYPE_ATTRIBUTE_CLASS = basis.template.TYPE_ATTRIBUTE_CLASS;
+  /** @const */ var TYPE_ATTRIBUTE_STYLE = basis.template.TYPE_ATTRIBUTE_STYLE;
+  /** @const */ var TYPE_ATTRIBUTE_EVENT = basis.template.TYPE_ATTRIBUTE_EVENT;
 
   // references on fields in declaration
-  /** @const */ var TOKEN_TYPE = 0;
-  /** @const */ var TOKEN_BINDINGS = 1;
-  /** @const */ var TOKEN_REFS = 2;
+  /** @const */ var TOKEN_TYPE = basis.template.TOKEN_TYPE;
+  /** @const */ var TOKEN_BINDINGS = basis.template.TOKEN_BINDINGS;
+  /** @const */ var TOKEN_REFS = basis.template.TOKEN_REFS;
 
-  /** @const */ var ATTR_NAME = 3;
-  /** @const */ var ATTR_VALUE = 4;
+  /** @const */ var ATTR_NAME = basis.template.ATTR_NAME;
+  /** @const */ var ATTR_VALUE = basis.template.ATTR_VALUE;
 
-  /** @const */ var ELEMENT_NAME = 3;
-  /** @const */ var ELEMENT_ATTRS = 4;
-  /** @const */ var ELEMENT_CHILDS = 5;
+  /** @const */ var ELEMENT_NAME = basis.template.ELEMENT_NAME;
+  /** @const */ var ELEMENT_ATTRS = basis.template.ELEMENT_ATTRS;
+  /** @const */ var ELEMENT_CHILDS = basis.template.ELEMENT_CHILDS;
 
-  /** @const */ var TEXT_VALUE = 3;
-  /** @const */ var COMMENT_VALUE = 3;
+  /** @const */ var TEXT_VALUE = basis.template.TEXT_VALUE;
+  /** @const */ var COMMENT_VALUE = basis.template.COMMENT_VALUE;
 
   function buildTemplate(tokens){
     var result = [];
@@ -159,15 +164,37 @@
     {
       switch(token[TOKEN_TYPE]){
         case TYPE_ELEMENT:
-          var childs = buildTemplate(token[ELEMENT_CHILDS]);
-          var attrs = token[ELEMENT_ATTRS];
+          var attrs = [];
           var attrNodes = [];
+          var children = [];
+          for (var j = ELEMENT_ATTRS, t; t = token[j]; j++)
+            if (t[TOKEN_TYPE] == TYPE_ELEMENT || t[TOKEN_TYPE] == TYPE_TEXT || t[TOKEN_TYPE] == TYPE_COMMENT)
+              children.push(t);
+            else
+              attrs.push(t);
+
+          var childs = buildTemplate(children);
 
           for (var j = 0, attr; attr = attrs[j]; j++)
           {
+            // normalization
+            switch (attr[TOKEN_TYPE])
+            {
+              case TYPE_ATTRIBUTE_CLASS:
+                attr = attr.slice();
+                attr.splice(ATTR_NAME, 0, 'class');
+                break;
+              case TYPE_ATTRIBUTE_STYLE:
+                attr = attr.slice();
+                attr.splice(ATTR_NAME, 0, 'style');
+                break;
+              case TYPE_ATTRIBUTE_EVENT:
+                attr = [2, 0, 0, 'event-' + attr[1], attr[2] || attr[1]];
+                break;
+            }
+
             var attrParts = [];
             var addValue = !attr[TOKEN_BINDINGS];
-
             if (attr[TOKEN_BINDINGS])
             {
               if (attr[ATTR_NAME] == 'class')
