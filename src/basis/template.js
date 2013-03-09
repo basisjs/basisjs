@@ -27,6 +27,9 @@
   // token types
   /** @const */ var TYPE_ELEMENT = 1;
   /** @const */ var TYPE_ATTRIBUTE = 2;
+  /** @const */ var TYPE_ATTRIBUTE_CLASS = 4;
+  /** @const */ var TYPE_ATTRIBUTE_STYLE = 5;
+  /** @const */ var TYPE_ATTRIBUTE_EVENT = 6;
   /** @const */ var TYPE_TEXT = 3;
   /** @const */ var TYPE_COMMENT = 8;
 
@@ -37,13 +40,14 @@
 
   /** @const */ var ATTR_NAME = 3;
   /** @const */ var ATTR_VALUE = 4;
+
   var ATTR_NAME_BY_TYPE = {
     4: 'class',
     5: 'style'
   };
   var ATTR_TYPE_BY_NAME = {
-    'class': 4,
-    'style': 5
+    'class': TYPE_ATTRIBUTE_CLASS,
+    'style': TYPE_ATTRIBUTE_STYLE
   };
 
   /** @const */ var ELEMENT_NAME = 3;
@@ -555,7 +559,7 @@
 
         if (m = attr.name.match(/^event-(.+)$/))
         {
-          result.push(m[1] == attr.value ? [6, m[1]] : [6, m[1], attr.value]);
+          result.push(m[1] == attr.value ? [TYPE_ATTRIBUTE_EVENT, m[1]] : [TYPE_ATTRIBUTE_EVENT, m[1], attr.value]);
           continue;
         }
 
@@ -1043,7 +1047,7 @@
 
       for (var i = stIdx || 0, token; token = tokens[i]; i++)
       {
-        if (token[TOKEN_TYPE] == 6)
+        if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_EVENT)
           continue;
 
         var refs = token[TOKEN_REFS];
@@ -1086,10 +1090,10 @@
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
           unpredictable += applyDefines(token, template, options, ELEMENT_ATTRS);
 
-        if (token[TOKEN_TYPE] == 4 || (token[TOKEN_TYPE] == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
+        if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_CLASS || (token[TOKEN_TYPE] == TYPE_ATTRIBUTE && token[ATTR_NAME] == 'class'))
         {
           var bindings = token[TOKEN_BINDINGS];
-          var valueIdx = ATTR_VALUE - (token[TOKEN_TYPE] == 4);
+          var valueIdx = ATTR_VALUE - (token[TOKEN_TYPE] == TYPE_ATTRIBUTE_CLASS);
 
           if (bindings)
           {
@@ -2022,6 +2026,9 @@
     // const
     TYPE_ELEMENT: TYPE_ELEMENT,
     TYPE_ATTRIBUTE: TYPE_ATTRIBUTE,
+    TYPE_ATTRIBUTE_CLASS: TYPE_ATTRIBUTE_CLASS,
+    TYPE_ATTRIBUTE_STYLE: TYPE_ATTRIBUTE_STYLE,
+    TYPE_ATTRIBUTE_EVENT: TYPE_ATTRIBUTE_EVENT,
     TYPE_TEXT: TYPE_TEXT,
     TYPE_COMMENT: TYPE_COMMENT,
 
