@@ -76,6 +76,7 @@ module.exports = {
     var resourceParts;
 
     var fileDataObjectSet = new basis.data.property.DataObjectSet({
+      state: STATE.READY,
       handler: {
         stateChanged: function(){
           if (this.state == STATE.READY)
@@ -92,7 +93,7 @@ module.exports = {
     });
 
     var dictionaries;
-    var resourceParts;      
+    var resourceParts;
     var dictParts;
     var filename;
     var file;
@@ -101,47 +102,42 @@ module.exports = {
     for (var i = 0, culture; culture = cultureList[i]; i++)
     {
       filename = '/' + basis.path.relative(location + '/' + culture + '.json');
-      file = basis.devtools.getFile(filename);
+      file = basis.devtools.getFile(filename, true);
 
-      if (file)
+      dictionaries = Object.extend({}, basis.resource(filename)());
+      dictionaries[dictionaryName] = dict.resources[culture];
+      dictParts = [];
+      for (var dName in dictionaries)
       {
-        dictionaries = Object.extend({}, basis.resource(filename)());
-        dictionaries[dictionaryName] = dict.resources[culture];
-        dictParts = [];
-        for (var dName in dictionaries)
+        resourceParts = [];
+
+        if (dName == dict.namespace)
         {
-          resourceParts = [];
-
-          if (dName == dict.namespace)
+          for (var tokenName in dict.resources['base'])
           {
-            for (var tokenName in dict.resources['base'])
-            {
-              if (dict.resources[culture][tokenName])
-                resourceParts.push('    "' + tokenName + '": "' + dict.resources[culture][tokenName] + '"');
+            if (dict.resources[culture][tokenName])
+              resourceParts.push('    "' + tokenName + '": "' + dict.resources[culture][tokenName] + '"');
 
-              if (!dictionaryData[tokenName])
-                dictionaryData[tokenName] = {};
+            if (!dictionaryData[tokenName])
+              dictionaryData[tokenName] = {};
 
-              dictionaryData[tokenName][culture] = dict.resources[culture][tokenName] || '';
-            }
+            dictionaryData[tokenName][culture] = dict.resources[culture][tokenName] || '';
           }
-          else
-          {
-            for (var tokenName in dictionaries[dName])
-              resourceParts.push('    "' + tokenName + '": "' + dictionaries[dName][tokenName] + '"');
-          }
-
-          dictParts.push('\r\n  "' + dName + '": {\r\n' + resourceParts.join(',\r\n') + '\r\n  }');
+        }
+        else
+        {
+          for (var tokenName in dictionaries[dName])
+            resourceParts.push('    "' + tokenName + '": "' + dictionaries[dName][tokenName] + '"');
         }
 
-        newContent = '{' + dictParts.join(', ') + '\r\n}';  
-
-        file.setState(STATE.UNDEFINED);
-        fileDataObjectSet.add(file);
-        file.save(newContent);
+        dictParts.push('\r\n  "' + dName + '": {\r\n' + resourceParts.join(',\r\n') + '\r\n  }');
       }
-      else
-        sendData('saveDictionary', { result: 'error', dictionaryName: dictionaryName, errorText: 'File ' + filename + ' not found' });
+
+      newContent = '{' + dictParts.join(', ') + '\r\n}';  
+
+
+      fileDataObjectSet.add(file);
+      file.save(newContent);
     }
   }
 }
