@@ -8,4 +8,4 @@ module.exports = {
   templateEndInspect: function(){
     inspector.endInspect();
   }
-}
+};

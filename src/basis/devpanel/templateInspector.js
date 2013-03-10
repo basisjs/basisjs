@@ -13,10 +13,6 @@ var inspectDepth = 0;
 
 var overlay = DOM.createElement('DIV[style="pointer-events: none; position: absolute; top: 0; bottom: 0; left: 0; right: 0; z-index: 10000; background: rgba(110,163,217,0.7)"]');
 
-basis.dom.event.addHandler(document, 'keypress', function(event){
-  console.log(event.keyCode)
-});
-
 
 function pickHandler(event){
   DOM.event.kill(event);

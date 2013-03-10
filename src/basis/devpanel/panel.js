@@ -20,7 +20,7 @@ var countryFlagBinding = {
       return object.country ? 11 * (object.country.charCodeAt(1) - 65) : 1000;
     }
   }  
-}
+};
 
 var themeMenu = new basis.ui.menu.Menu({
   dir: 'right bottom right top',  
