@@ -135,6 +135,7 @@ function startInspect(){
     DOM.event.addGlobalHandler('mousewheel', mouseWheelHandler);
     basis.cssom.classList(document.body).add('devpanel-inspectMode');    
     inspectMode = true;
+    transport.sendData('startInspect', 'template');
   }
 }
 function endInspect(){
@@ -144,6 +145,7 @@ function endInspect(){
     DOM.event.removeGlobalHandler('mousewheel', mouseWheelHandler);
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
     inspectMode = false;
+    transport.sendData('endInspect', 'template');
     pickupTarget.set();
   }
 }

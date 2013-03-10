@@ -80,6 +80,8 @@ function startInspect(){
     basis.dom.event.addGlobalHandler('scroll', updateHighlight);
     if (observer)
       observer.observe(document.body, observerConfig);
+
+    transport.sendData('startInspect', 'l10n');
   }
 }
 function endInspect(){
@@ -92,6 +94,7 @@ function endInspect(){
 
     unhighlight();
     inspectMode = false;
+    transport.sendData('endInspect', 'l10n');
   }
 }
 
