@@ -562,10 +562,21 @@
     init: function(element){ 
       ;;;if (!element) throw new Error(namespace + '.classList: Element ' + element + ' not found!');
       this.element = element;
-      //this.tokens = this.element.className.qw();
+    },
+
+    get_: function(){
+      var className = this.element.className;
+      return typeof className == 'string' ? className : className.baseVal;
+    },
+    set_: function(value){
+      var className = this.element.className;
+      if (typeof className == 'string')
+        return this.element.className = value;
+      else
+        return className.baseVal = value;
     },
     toString: function(){
-      return this.element.className;
+      return this.get_();
     },
 
     set: function(tokenList){
@@ -588,26 +599,27 @@
         this.remove(token);
     },
     clear: function(){
-      this.element.className = '';
+      this.set_('');
     },
 
     contains: function(token){
-      return !!this.element.className.match(tokenRegExp(token));
+      return !!this.get_().match(tokenRegExp(token));
     },
     item: function(index){
-      return this.element.className.qw()[index];
+      return this.get_().qw()[index];
     },
     add: function(token){ 
-      ;;;if (arguments.length > 1) basis.dev.warn('classList.add accepts only one argument');
-      if (!this.element.className.match(tokenRegExp(token)))
-        this.element.className += ' ' + token;
+      var className = this.get_();
+      
+      if (!className.match(tokenRegExp(token)))
+        this.set_(className + ' ' + token);
     },
     remove: function(token){
-      ;;;if (arguments.length > 1) basis.dev.warn('classList.remove accepts only one argument');
-      var className = this.element.className;
+      var className = this.get_();
       var newClassName = className.replace(tokenRegExp(token), '');
+
       if (newClassName != className)
-        this.element.className = newClassName;
+        this.set_(newClassName);
     },
     toggle: function(token){
       var exists = this.contains(token);
@@ -650,9 +662,9 @@
       this.classList.remove(this.prefix + value);
     },
     items: function(){
-      var classList = this.classList.toString();
-      return classList
-        ? classList.toString().match(prefixRegExp(this.prefix, true))
+      var className = this.classList.get_();
+      return className
+        ? className.match(prefixRegExp(this.prefix, true))
         : null;
     },
     set: function(value){

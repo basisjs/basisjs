@@ -243,7 +243,14 @@
 
           if (newClass != oldClass)
           {
-            var classList = domRef.className.split(WHITESPACE);
+            var className = domRef.className;
+            var classNameIsObject = typeof className != 'string';
+            var classList;
+
+            if (classNameIsObject)
+              className = className.baseVal;
+
+            classList = className.split(WHITESPACE);
 
             if (oldClass)
               classList.remove(oldClass);
@@ -256,14 +263,22 @@
               {
                 classList.add(newClass + '-anim');
                 setTimeout(function(){
-                  var classList = domRef.className.split(WHITESPACE);
+                  var classList = (classNameIsObject ? domRef.className.baseVal : domRef.className).split(WHITESPACE);
+                  
                   classList.remove(newClass + '-anim');
-                  domRef.className = classList.join(' ');
+
+                  if (classNameIsObject)
+                    domRef.className.baseVal = classList.join(' ');
+                  else
+                    domRef.className = classList.join(' ');                  
                 }, 0);
               }
             }
 
-            domRef.className = classList.join(' ');
+            if (classNameIsObject)
+              domRef.className.baseVal = classList.join(' ');
+            else
+              domRef.className = classList.join(' ');
           }
 
           return newClass;
