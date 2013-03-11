@@ -564,10 +564,6 @@
       this.element = element;
     },
 
-    get_: function(){
-      var className = this.element.className;
-      return typeof className == 'string' ? className : className.baseVal;
-    },
     set_: function(value){
       var className = this.element.className;
       if (typeof className == 'string')
@@ -576,7 +572,8 @@
         return className.baseVal = value;
     },
     toString: function(){
-      return this.get_();
+      var className = this.element.className;
+      return typeof className == 'string' ? className : className.baseVal;
     },
 
     set: function(tokenList){
@@ -603,19 +600,19 @@
     },
 
     contains: function(token){
-      return !!this.get_().match(tokenRegExp(token));
+      return !!this.toString().match(tokenRegExp(token));
     },
     item: function(index){
-      return this.get_().qw()[index];
+      return this.toString().qw()[index];
     },
     add: function(token){ 
-      var className = this.get_();
+      var className = this.toString();
       
       if (!className.match(tokenRegExp(token)))
         this.set_(className + ' ' + token);
     },
     remove: function(token){
-      var className = this.get_();
+      var className = this.toString();
       var newClassName = className.replace(tokenRegExp(token), '');
 
       if (newClassName != className)
@@ -662,7 +659,7 @@
       this.classList.remove(this.prefix + value);
     },
     items: function(){
-      var className = this.classList.get_();
+      var className = this.classList.toString();
       return className
         ? className.match(prefixRegExp(this.prefix, true))
         : null;
@@ -704,8 +701,8 @@
       replace: proto.replace,
       bool: proto.bool,
       clear: function(){
-        for (var i = this.length; i-- > 0;)
-          this.remove(this[i]);
+        for (var i = this.length; i > 0; i)
+          this.remove(this[--i]);
       },
       setPrefixToken: proto.setPrefixToken
     });
