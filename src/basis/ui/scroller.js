@@ -1,6 +1,5 @@
 
   basis.require('basis.event');
-  basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.cssom');
   basis.require('basis.ui');
@@ -19,7 +18,6 @@
   // import names
   //
 
-  var DOM = basis.dom;
   var Event = basis.dom.event;
   var cssom = basis.cssom;
   var anim = basis.animation;
@@ -56,11 +54,11 @@
   var TRANSFORM_PROPERTY_NAME;
   
   (function (){
-    var testElement = DOM.createElement('');
+    var style = document.body.style;
     
     function testProps(properties){
       for (var i = 0, propertyName; propertyName = properties[i]; i++)
-        if (typeof testElement.style[propertyName] != 'undefined') 
+        if (typeof style[propertyName] != 'undefined') 
           return propertyName;
 
       return false;
@@ -88,7 +86,7 @@
         'msPerspective'
       ]);
 
-      if (prop || 'webkitPerspective' in testElement.style)
+      if (prop || 'webkitPerspective' in style)
         TRANSFORM_3D_SUPPORT = true;
     }
   })();
