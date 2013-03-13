@@ -692,7 +692,57 @@
                     this.is(null, node.dataSource);
                     this.is(false, checkNode(node));
                   }
-                }
+                },
+                {
+                  name: 'destroy node with dataSource',
+                  test: function(){
+                    var dataset = getDataset();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+
+                    var target = dataset.pick();
+                    var targetNode = node.childNodes.search(target, 'root');
+
+                    node.destroy();
+
+                    var ok = true;
+                    var cursor = target;
+                    while(cursor = cursor.handler)
+                    {
+                      if (cursor.context == targetNode)
+                        ok = false;
+                    }
+
+                    this.is(true, ok);
+                  }
+                },
+                {
+                  name: 'clear dataSource',
+                  test: function(){
+                    var dataset = getDataset();
+                    var node = new Node({
+                      childFactory: nodeFactory,
+                      dataSource: dataset
+                    });
+
+                    var target = dataset.pick();
+                    var targetNode = node.childNodes.search(target, 'root');
+
+                    dataset.clear();
+
+                    var ok = true;
+                    var cursor = target;
+                    while(cursor = cursor.handler)
+                    {
+                      if (cursor.context == targetNode)
+                        ok = false;
+                    }
+
+                    this.is(true, ok);
+                  }
+                }                
               ]
             },
             {
