@@ -18,6 +18,7 @@
   // import names
   //
 
+  var document = global.document;
   var Event = basis.dom.event;
   var cssom = basis.cssom;
   var anim = basis.animation;
@@ -53,8 +54,8 @@
   var TRANSFORM_3D_SUPPORT = false;
   var TRANSFORM_PROPERTY_NAME;
   
-  (function (){
-    var style = document.body.style;
+  (function(){
+    var style = document.createElement('div');
     
     function testProps(properties){
       for (var i = 0, propertyName; propertyName = properties[i]; i++)
