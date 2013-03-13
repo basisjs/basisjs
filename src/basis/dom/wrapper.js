@@ -1008,6 +1008,8 @@
         {
           // copy childNodes to deleted
           deleted = arrayFrom(this.childNodes);
+          for (var i = 0, child; child = deleted[i]; i++)
+            child.canSetDelegate = true;
 
           // optimization: if all old nodes deleted -> clear childNodes
           var tmp = this.dataSource;
@@ -1068,10 +1070,8 @@
 
       // destroy removed items
       if (this.destroyDataSourceMember && deleted.length)
-      {
         for (var i = 0, item; item = deleted[i]; i++)
           item.destroy();
-      }
     },
     destroy: function(dataSource){
       if (this.dataSource === dataSource)
@@ -1711,7 +1711,14 @@
 
         // remove old children
         if (this.firstChild)
+        {
+          // return posibility to change delegate
+          if (oldDataSource)
+            for (var i = 0, child; child = this.childNodes[i]; i++)
+              child.canSetDelegate = true;
+
           this.clear();
+        }
 
         this.dataSource = dataSource;
 

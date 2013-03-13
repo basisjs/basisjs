@@ -707,15 +707,16 @@
 
                     node.destroy();
 
-                    var ok = true;
+                    var hasHandler = false;
                     var cursor = target;
                     while(cursor = cursor.handler)
                     {
                       if (cursor.context == targetNode)
-                        ok = false;
+                        hasHandler = true;
                     }
 
-                    this.is(true, ok);
+                    this.is(true, !targetNode.delegate);
+                    this.is(false, hasHandler);
                   }
                 },
                 {
@@ -732,15 +733,16 @@
 
                     dataset.clear();
 
-                    var ok = true;
+                    var hasHandler = false;
                     var cursor = target;
                     while(cursor = cursor.handler)
                     {
                       if (cursor.context == targetNode)
-                        ok = false;
+                        hasHandler = true;
                     }
 
-                    this.is(true, ok);
+                    this.is(true, !targetNode.delegate);
+                    this.is(false, hasHandler);
                   }
                 }                
               ]
