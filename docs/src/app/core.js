@@ -768,4 +768,3 @@
 
     searchIndex: new basis.data.Dataset({ items: searchValues, listen: { item: null } })
   };
-

@@ -1,8 +1,13 @@
 
+  basis.require('basis.cssom');
+  basis.require('basis.ui');
+  basis.require('basis.ui.field');
+  basis.require('basis.ui.popup');
+
   var classList = basis.cssom.classList;
 
-  var viewPrototype = basis.resource('app/views/prototype/prototype.js');
-  var targetContent = basis.resource('app/layout/targetContent.js');
+  var viewPrototype = resource('views/prototype/prototype.js');
+  var targetContent = resource('targetContent.js');
   
   var prototypeDataset = viewPrototype().getChildNodesDataset();
 
@@ -31,7 +36,7 @@
           targetContent().scrollTo(element);
           
           classList(element).add('highlight');
-          setTimeout(function(){ classList(element).remove('highlight'); });
+          setTimeout(function(){ classList(element).remove('highlight'); }, 0);
 
           prototypeMapPopup.hide();
         }

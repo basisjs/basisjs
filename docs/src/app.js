@@ -1,28 +1,34 @@
+resource('app/basis_modules.js').fetch();
 
-  basis.require('app.core');
+basis.require('basis.dom');
+basis.require('basis.dom.event');
+basis.require('basis.layout');
+basis.require('app.core');
 
+basis.ready(function(){
   // import names
-  var DOM = basis.dom;
   var Event = basis.dom.event;
   var VerticalPanelStack = basis.layout.VerticalPanelStack;
 
   //
   // main part
   //
-  var prototypeMapPopup = basis.resource('app/layout/prototypeMapPopup.js');
+  var prototypeMapPopup = resource('app/layout/prototypeMapPopup.js');
 
-  var targetHeader = basis.resource('app/layout/targetHeader.js')();
-  var targetContent = basis.resource('app/layout/targetContent.js')();
+  var targetHeader = resource('app/layout/targetHeader.js')();
+  var targetContent = resource('app/layout/targetContent.js')();
 
   targetHeader.setDelegate(targetContent);
   targetHeader.setDataSource(targetContent.getChildNodesDataset());
 
-  var navTree = basis.resource('app/layout/navTree.js')();
-  var searchTree = basis.resource('app/layout/searchTree.js')();
+  var navTree = resource('app/layout/navTree.js')();
+  var searchTree = resource('app/layout/searchTree.js')();
 
   navTree.selection.addHandler({
     datasetChanged: function(){
-      targetContent.setDelegate(this.pick());
+      var selected = this.pick();
+      targetContent.setDelegate(selected);
+      document.title = 'Basis API' + (selected ? ': ' + selected.data.title + (selected.data.path ? ' @ ' + selected.data.path : '') : '');
     }
   });
 
@@ -50,7 +56,7 @@
   //
   // search input
   //
-  var searchInput = basis.resource('app/layout/searchInput.js')();
+  var searchInput = resource('app/layout/searchInput.js')();
   searchInput.matchFilter.node = searchTree;
   searchInput.matchFilter.addHandler({
     change: function(sender, value, oldValue){
@@ -158,25 +164,26 @@
   //
   // Global events
   //
-  Event.addGlobalHandler('click', function(e){
-    if (!Event.mouseButton(e, Event.MOUSE_LEFT))
+  basis.dom.event.addGlobalHandler('click', function(e){
+    if (!basis.dom.event.mouseButton(e, basis.dom.event.MOUSE_LEFT))
       return;
     
-    var sender = Event.sender(e);
+    var sender = basis.dom.event.sender(e);
 
     if (sender.tagName != 'A')
-      sender = DOM.findAncestor(sender, function(node){ return node.tagName == 'A'; });
+      sender = basis.dom.findAncestor(sender, function(node){ return node.tagName == 'A'; });
 
     if (sender && sender.pathname == location.pathname && sender.hash != '')
-      navTree.open(sender.hash, DOM.parentOf(navTree.element, sender));
+      navTree.open(sender.hash, basis.dom.parentOf(navTree.element, sender));
   });
 
-  Event.addGlobalHandler('keydown', function(e){
-    var event = Event(e);
+  basis.dom.event.addGlobalHandler('keydown', function(e){
+    var event = basis.dom.event(e);
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || prototypeMapPopup().visible)
       return;
 
-    DOM.focus(searchInput.tmpl.field, !searchInput.focused);
+    basis.dom.focus(searchInput.tmpl.field, !searchInput.focused);
   });
 
-  DOM.focus(searchInput.tmpl.field, true);
+  basis.dom.focus(searchInput.tmpl.field, true);
+});
