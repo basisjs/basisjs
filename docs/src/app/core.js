@@ -4,6 +4,7 @@
   basis.require('basis.data');
   basis.require('basis.entity');
   basis.require('basis.net');
+  basis.require('app.stat');
 
   // import names
 
@@ -272,7 +273,9 @@
     return cls;
   }
 
+  var walkCount = 0;
   function walk(ctx){
+    walkCount++;
     var scope = ctx.scope;
 
     if (scope.basisDocsVisited_)
@@ -307,6 +310,7 @@
     var keys = context == 'namespace' ? scope.exports : scope;
     for (var key in keys)
     {
+      walkCount++;
       // ignore for private names
       if (/_$/.test(key))
         continue;
@@ -505,7 +509,11 @@
     scope: basis.namespaces_,
     context: 'object'
   });
-  basis.dev.log(Date.now() - walkStartTime, '/', walkThroughCount);
+  var walkTime = Date.now() - walkStartTime;
+  //basis.dev.log(walkTime, '/', walkThroughCount);
+  app.stat.walkTime.set(walkTime);
+  app.stat.walkCount.set(walkCount);
+  app.stat.tokenCount.set(basis.object.keys(mapDO).length);
 
   //
   // --------------------------------

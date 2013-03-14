@@ -2,7 +2,7 @@ basis.require('basis.ui');
 basis.require('basis.ui.button');
 
 var viewPrototype = resource('views/prototype/prototype.js')();
-var prototypeMapPopup = resource('../module/prototypeMapPopup/index.js');
+var prototypeMapPopup = resource('prototypeMapPopup.js');
 
 module.exports = new basis.ui.Node({
   handler: {

@@ -5,6 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
   <title>Basis.js API</title>
+  <script>var PAGE_LOAD_TIME = new Date();</script>
 
   <link rel="stylesheet" type="text/css" title="Default Style" href="src/app/css/main.css" media="screen" />
 
@@ -23,6 +24,9 @@
         document.write(scripts.map(basis.string.format, '<script type="text/javascript" src="{0}"><\/script>'));
       }
     })();  
+  </script>
+  <script>
+    app.stat.pageLoadTime.set(new Date - PAGE_LOAD_TIME);
   </script>
 </body>
 

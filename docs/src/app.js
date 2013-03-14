@@ -3,9 +3,12 @@ resource('app/basis_modules.js').fetch();
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.layout');
+basis.require('app.stat');
 basis.require('app.core');
 
 basis.ready(function(){
+  var initTime = new Date;
+
   // import names
   var Event = basis.dom.event;
   var VerticalPanelStack = basis.layout.VerticalPanelStack;
@@ -186,4 +189,6 @@ basis.ready(function(){
   });
 
   basis.dom.focus(searchInput.tmpl.field, true);
+
+  app.stat.initTime.set(new Date - initTime);
 });

@@ -1,0 +1,56 @@
+#welcome-page
+{
+  padding: 2em;
+}
+#welcome-page H1
+{
+  margin: 0 0 1em;
+  font-size: 180%;
+}
+#welcome-page H2
+{
+  font-size: 120%;
+  margin: 2em 0 -1.5em;
+  padding: 0;
+}
+#welcome-page P
+{
+  line-height: 1.5em;
+  font-size: 110%;
+}
+#welcome-page P B
+{
+  font-size: 135%;
+  color: #339955;
+}
+
+#welcome-page UL
+{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+#welcome-page A
+{
+  padding: .5em 0;
+  float: left;
+  width: 25%;
+  font-size: 110%;
+  line-height: 1.2em;
+}
+#welcome-page A
+{
+  color: #06C;
+}
+#welcome-page A.namespace
+{
+  padding-left: 18px;
+  background: url(img/node_module.png) left center no-repeat;
+  color: #009900;
+}
+#welcome-page A.class
+{
+  padding-left: 18px;
+  background: url(img/bullet_square_red.png) left center no-repeat;
+}
