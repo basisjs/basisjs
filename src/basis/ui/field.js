@@ -72,6 +72,16 @@
     MatchInput: resource('templates/field/MatchInput.tmpl')
   });
 
+  basis.template.define(namespace + '.native', {
+    text: resource('templates/field/native-type-text.tmpl'),
+    password: resource('templates/field/native-type-password.tmpl'),
+    textarea: resource('templates/field/native-type-textarea.tmpl'),
+    checkbox: resource('templates/field/native-type-checkbox.tmpl'),
+    radio: resource('templates/field/native-type-radio.tmpl'),
+    select: resource('templates/field/native-type-select.tmpl'),
+    file: resource('templates/field/native-type-file.tmpl')
+  });
+
   basis.l10n.createDictionary(namespace, __dirname + 'l10n/field', {
     "symbolsLeft": "Symbols left"
   });

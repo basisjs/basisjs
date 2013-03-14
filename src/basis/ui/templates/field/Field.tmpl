@@ -1,17 +1,16 @@
+<b:resource src="Field.css"/>
+<b:define name="disabled" type="bool"/>
+<b:define name="validity" type="enum" values="indeterminate valid invalid" default="indeterminate"/>
 
-  <b:resource src="Field.css"/>
-  <b:define name="disabled" type="bool"/>
-  <b:define name="validity" type="enum" values="indeterminate valid invalid" default="indeterminate"/>
-
-  <div{sampleContainer} class="Basis-Field {disabled} {focused} Basis-Field__{validity}" title="{error}">
-    <div class="Basis-Field-Title">
-      <label>
-        <span{title}>{titleText}</span>
-      </label>
-    </div>
-    <div{content} class="Basis-Field-Container">
-      <!--{fieldPlace}-->
-    </div>
-    <!--{description}-->
-    <!--{example}-->
+<div{sampleContainer} class="Basis-Field {disabled} {focused} Basis-Field__{validity}" title="{error}">
+  <div class="Basis-Field-Title">
+    <label>
+      <span{title}>{titleText}</span>
+    </label>
   </div>
+  <div{content} class="Basis-Field-Container">
+    <!--{fieldPlace}-->
+  </div>
+  <!--{description}-->
+  <!--{example}-->
+</div>

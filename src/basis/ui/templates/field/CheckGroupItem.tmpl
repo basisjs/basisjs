@@ -1,15 +1,7 @@
+<b:define name="selected" type="bool"/>
+<b:define name="disabled" type="bool"/>
 
-  <b:define name="selected" type="bool"/>
-  <b:define name="disabled" type="bool"/>
-
-  <label class="Basis-CheckGroup-Item {selected} {disabled}" event-click="select"> 
-    <input{field|focus} type="checkbox" class="native-type-checkbox"
-       name="{name}"
-       value="{value}"
-       disabled="{disabled}"
-       checked="{checked}"
-       event-focus="focus"
-       event-blur="blur"
-    />
-    <span{content}>{title}</span>
-  </label>
+<label class="Basis-CheckGroup-Item {selected} {disabled}" event-click="select"> 
+  <b:include src="basis.ui.field.native.checkbox"/>
+  <span{content}>{title}</span>
+</label>

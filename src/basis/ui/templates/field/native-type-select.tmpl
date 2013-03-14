@@ -1,14 +1,16 @@
+<b:define name="disabled" type="bool"/>
+<b:define name="validity" type="enum" values="indeterminate valid invalid" default="indeterminate"/>
 
-  <b:define name="disabled" type="bool"/>
-  <b:define name="validity" type="enum" values="indeterminate valid invalid" default="indeterminate"/>
+<select{field|focus|childNodesElement}
+  class="Basis-Select {disabled} {validity}"
 
-  <select{field|focus|childNodesElement} class="Basis-Select {disabled} {validity}"
-     name="{name}"
-     disabled="{disabled}"
-     event-change="change"
-     event-keyup="keyup"
-     event-keypress="keypress"
-     event-keydown="keydown"
-     event-focus="focus"
-     event-blur="blur"
-  />
+  name="{name}"
+  disabled="{disabled}"
+
+  event-change="change"
+  event-keyup="keyup"
+  event-keypress="keypress"
+  event-keydown="keydown"
+  event-focus="focus"
+  event-blur="blur"
+/>
