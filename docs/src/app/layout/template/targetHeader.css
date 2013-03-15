@@ -1,0 +1,8 @@
+.viewHeader
+{
+  display: none;
+}
+.viewHeader__hasTarget
+{
+  display: block;
+}
