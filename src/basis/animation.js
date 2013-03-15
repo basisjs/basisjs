@@ -173,7 +173,7 @@
           this.start += this.range;
           this.range *= -1;
         },
-        change: function(progress){
+        change: function(sender, progress){
           this.setter(this.start + this.range * this.timeFunction(progress));
         },
         finish: function(){
