@@ -116,12 +116,7 @@
     template: templates.Window,
     binding: {
       title: 'title',
-      titleButtons: 'satellite:',
-      titleButtonClass: function(node){
-        return !node.titleButton || node.titleButton.close !== false
-          ? 'Basis-Window-Title-ButtonPlace-Close'
-          : '';
-      }
+      titleButtons: 'satellite:'
     },
     action: {
       close: function(){
