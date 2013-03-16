@@ -420,7 +420,7 @@
               {
                 if (isSingleton)
                 {
-                  entity = entityType.singleton;
+                  entity = entityType.singleton_;
                   if (!entity)
                     return new entityClass(data);
                 }
@@ -438,13 +438,13 @@
           return entity;
         }
         else
-          return entityType.singleton;
+          return entityType.singleton_;
       };
 
       var entityType = new EntityTypeConstructor(config || {}, result);
       var index = entityType.index__;
       var entityClass = entityType.entityClass;
-      var isSingleton = entityType.isSingleton;
+      var isSingleton = entityType.singleton;
 
       extend(result, {
         toString: function(){
@@ -518,7 +518,7 @@
   // Entity type constructor
   //
 
-  var getSingleton = getter('singleton');
+  var getSingleton = getter('singleton_');
   var fieldDestroyHandlers = {};
 
  /**
@@ -546,7 +546,13 @@
       ;;;if (entityTypes.search(this.name, getter('name'))) basis.dev.warn('Dublicate entity type name: ', this.name);
       entityTypes.push(this);
 
-      this.isSingleton = config.isSingleton;
+      this.singleton = config.singleton;
+      if ('isSingleton' in config)
+      {
+        this.singleton = config.isSingleton;
+        ;;;basis.dev.warn('Property `isSingleton` in config is deprecated, and will be dropped soon. Use `singleton` property instead.')
+      }
+
       this.wrapper = wrapper;
 
       this.all = new ReadOnlyEntitySet(basis.object.extend(config.all || {}, {
@@ -568,7 +574,7 @@
           this.addCalcField(null, item);
         }, this);
 
-      if (this.isSingleton)
+      if (this.singleton)
         this.get = getSingleton;
 
       if (config.aliases)
@@ -993,8 +999,8 @@
           inserted: [this]
         });
 
-        if (entityType.isSingleton)
-          entityType.singleton = this;
+        if (entityType.singleton)
+          entityType.singleton_ = this;
       },
       toString: function(){
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
@@ -1288,8 +1294,8 @@
           deleted: [this]
         });
 
-        if (entityType.isSingleton)
-          entityType.singleton = null;
+        if (entityType.singleton)
+          entityType.singleton_ = null;
 
         // clear links
         this.data = NULL_INFO; 
