@@ -387,64 +387,70 @@
   var EntityTypeWrapper = function(config){
     if (this instanceof EntityTypeWrapper)
     {
-      var result = function(data, entity){
-        // newData - data for target EntityType instance
-        // entity - current instance of target EntityType
+      var isSingleton = config.singleton || config.isSingleton; // TODO: remove support for config.isSingleton
 
-        if (data != null)
-        {
-          // if newData instance of target EntityType return newData
-          if (data === entity || data.entityType === entityType)
-            return data;
+      var result;
+      if (isSingleton)
+        result = function(data){
+          var entity = entityType.singleton_;
 
-          var idValue;
-          var idField = entityType.idField;
-
-          if (isKeyType[typeof data])
+          if (entity)
           {
-            if (!idField)
-              return;
-
-            idValue = data;
-            data = {};
-            data[idField] = idValue;
+            if (data)
+              entity.update(data);
           }
           else
-          {
-            if (entityType.compositeKey)
-              idValue = entityType.compositeKey(data, data);
-            else
-              if (idField)
-                idValue = data[idField];
-              else
-              {
-                if (isSingleton)
-                {
-                  entity = entityType.singleton_;
-                  if (!entity)
-                    return new entityClass(data);
-                }
-              }
-          }
-
-          if (idValue != null && index)
-            entity = index.get(idValue, entityType.entityClass);
-
-          if (entity && entity.entityType === entityType)
-            entity.update(data);
-          else
-            entity = new entityClass(data);
+            entity = new entityClass(data || {});
 
           return entity;
-        }
-        else
-          return entityType.singleton_;
-      };
+        };
+      else
+        result = function(data, entity){
+          // newData - data for target EntityType instance
+          // entity - current instance of target EntityType
+
+          if (data != null)
+          {
+            // if newData instance of target EntityType return newData
+            if (data === entity || data.entityType === entityType)
+              return data;
+
+            var idValue;
+            var idField = entityType.idField;
+
+            if (isKeyType[typeof data])
+            {
+              if (!idField)
+                return;
+
+              idValue = data;
+              data = {};
+              data[idField] = idValue;
+            }
+            else
+            {
+              if (entityType.compositeKey)
+                idValue = entityType.compositeKey(data, data);
+              else
+                if (idField)
+                  idValue = data[idField];
+            }
+
+            if (idValue != null && index)
+              entity = index.get(idValue, entityType.entityClass);
+
+            if (entity && entity.entityType === entityType)
+              entity.update(data);
+            else
+              entity = new entityClass(data);
+
+            return entity;
+          }
+        };
 
       var entityType = new EntityTypeConstructor(config || {}, result);
       var index = entityType.index__;
       var entityClass = entityType.entityClass;
-      var isSingleton = entityType.singleton;
 
       extend(result, {
         toString: function(){
@@ -550,7 +556,7 @@
       if ('isSingleton' in config)
       {
         this.singleton = config.isSingleton;
-        ;;;basis.dev.warn('Property `isSingleton` in config is deprecated, and will be dropped soon. Use `singleton` property instead.')
+        ;;;basis.dev.warn('Property `isSingleton` in config is deprecated, and will be dropped soon. Use `singleton` property instead.');
       }
 
       this.wrapper = wrapper;
