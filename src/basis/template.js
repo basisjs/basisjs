@@ -1132,8 +1132,6 @@
             if (options.optimizeSize && !token[valueIdx])
               token.length = valueIdx;
           }
-
-          break; // stop iterate other attributes
         }
       }
 
