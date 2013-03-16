@@ -924,7 +924,8 @@
                             case 'prepend':                            
                             case 'append':
                               var childAttrs = tokenAttrs(child);
-                              var tokenRef = childAttrs.ref && tokenRefMap[childAttrs.ref];
+                              var ref = 'ref' in childAttrs ? childAttrs.ref : 'element';
+                              var tokenRef = ref && tokenRefMap[ref];
                               var token = tokenRef && tokenRef.token;
 
                               if (token && token[TOKEN_TYPE] == TYPE_ELEMENT)
