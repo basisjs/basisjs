@@ -701,7 +701,7 @@
       replace: proto.replace,
       bool: proto.bool,
       clear: function(){
-        for (var i = this.length; i > 0; i)
+        for (var i = this.length; i > 0;)
           this.remove(this[--i]);
       },
       setPrefixToken: proto.setPrefixToken
