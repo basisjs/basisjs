@@ -1117,13 +1117,13 @@
                 {
                   if (bindDef.length == 1) // bool
                     newAttrValue.add(bind[0] + bindName);
-                  else                  // enum
+                  else                     // enum
                     newAttrValue.add(bind[0] + bindDef[1][bindDef[0] - 1]);
                 }
               }
               else
               {
-                ;;;template.warns.push('Class binding `' + bind[1] + '` is not defined');
+                ;;;template.warns.push('Class binding `' + bindName + '` is not defined');
                 unpredictable++;
               }
             }
