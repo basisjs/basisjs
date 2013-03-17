@@ -1123,7 +1123,7 @@
               }
               else
               {
-                ;;;template.warns.push('Class binding `' + bindName + '` is not defined');
+                ;;;template.warns.push('Unpredictable value `' + bindName + '` in class binding: ' + bind[0] + '{' + bind[1] + '}');
                 unpredictable++;
               }
             }
