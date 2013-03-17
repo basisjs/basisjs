@@ -20,7 +20,7 @@ basis.ready(function(){
   };
   basis.object.extend(basis.appCP, resource('devpanel/fileAPI.js').fetch());
   basis.object.extend(basis.appCP, resource('devpanel/l10nAPI.js').fetch());
-  basis.object.extend(basis.appCP, resource('devpanel/templateAPI.js').fetch());  
+  basis.object.extend(basis.appCP, resource('devpanel/inspectorAPI.js').fetch());  
 
   console.log('basis devpanel inited');
 });

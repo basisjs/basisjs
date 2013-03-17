@@ -6,7 +6,7 @@ basis.require('basis.ui');
 basis.require('basis.ui.popup');
 
 var DOM = basis.dom;
-var transport = resource('transport.js').fetch();
+var transport = resource('../transport.js').fetch();
 
 var inspectMode;
 var inspectDepth = 0;
@@ -238,5 +238,8 @@ function getOffsetRect(elem){
 //
 module.exports = {
   startInspect: startInspect,
-  endInspect: endInspect
+  endInspect: endInspect,
+  isActive: function(){
+    return !!inspectMode;
+  }
 }

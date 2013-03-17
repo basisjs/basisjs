@@ -6,7 +6,7 @@ basis.require('basis.cssom');
 var DOM = basis.dom;
 
 var colorPicker = resource('colorPicker.js').fetch();
-var transport = resource('transport.js').fetch();
+var transport = resource('../transport.js').fetch();
 
 var inspectMode;
 var elements = [];
@@ -186,5 +186,8 @@ function getColorForDictionary(dictionaryName){
 //
 module.exports = {
   startInspect: startInspect,
-  endInspect: endInspect
+  endInspect: endInspect,
+  isActive: function(){
+    return !!inspectMode;
+  }
 }

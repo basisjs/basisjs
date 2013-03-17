@@ -3,7 +3,6 @@ basis.require('basis.data.property');
 
 var STATE = basis.data.STATE;
 
-var inspector = resource('l10nInspector.js').fetch();
 var transport = resource('transport.js').fetch();
 var sendData = transport.sendData;
 
@@ -16,12 +15,6 @@ basis.l10n.onCultureChange(function(culture){
 });
 
 module.exports = {
-  l10nStartInspect: function(){
-    inspector.startInspect();
-  },
-  l10nEndInspect: function(){
-    inspector.endInspect();
-  },  
   loadCultureList: function(){
     var data = {
       currentCulture: basis.l10n.getCulture(),

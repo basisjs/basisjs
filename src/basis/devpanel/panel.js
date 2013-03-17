@@ -4,8 +4,8 @@ basis.require('basis.ui.menu');
 basis.require('basis.dragdrop');
 basis.require('basis.l10n');
 
-var l10nInspector = resource('l10nInspector.js').fetch();
-var templateInspector = resource('templateInspector.js').fetch();
+var l10nInspector = resource('inspector/l10n.js').fetch();
+var templateInspector = resource('inspector/template.js').fetch();
 
 var countryFlagBinding = {
   spriteX: {
