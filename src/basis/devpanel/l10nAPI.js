@@ -11,6 +11,10 @@ basis.l10n.addCreateDictionaryHandler(function(dictionaryName){
   sendData('newDictionary', { dictionaryName: dictionaryName });
 }); 
 
+basis.l10n.onCultureChange(function(culture){
+  sendData('cultureChanged', culture);
+});
+
 module.exports = {
   l10nStartInspect: function(){
     inspector.startInspect();
