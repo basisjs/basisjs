@@ -74,63 +74,7 @@
       return DOM.insert(DOM.get('demo-container'), DOM.createElement('.DemoBlock', DOM.createElement('H2', header)));
     }
     function createFieldView(field){
-      var valChange;
-      var fvalChange;
-      var valInput;
-      var valKeydown;
-      var valKeyup;
-      var valKeypress;
-      var valBlur;
-
-      var el = DOM.createElement('.fieldViewer'/*,
-        DOM.createElement('', 'change: ',
-          valChange = DOM.createText(field.getValue())
-        ),
-        DOM.createElement('', 'fieldChange: ',
-          fvalChange = DOM.createText(field.getValue())
-        ),
-        DOM.createElement('', 'input: ',
-          valInput = DOM.createText(field.getValue())
-        ),
-        DOM.createElement('', 'keydown: ',
-          valKeydown = DOM.createText(field.getValue())
-        ),
-        DOM.createElement('', 'keyup: ',
-          valKeyup = DOM.createText(field.getValue())
-        ),
-        DOM.createElement('', 'keypress: ',
-          valKeypress = DOM.createText(field.getValue())
-        ),
-        DOM.createElement('', 'blur: ',
-          valBlur = DOM.createText(field.getValue())
-        )*/
-      );
-
-      /*field.addHandler({
-        change: function(){
-          valChange.nodeValue = field.getValue();
-        },
-        fieldChange: function(){
-          fvalChange.nodeValue = field.getValue();
-        },
-        fieldInput: function(){
-          valInput.nodeValue = field.getValue();
-        },
-        fieldKeydown: function(){
-          valKeydown.nodeValue = field.getValue();
-        },
-        fieldKeyup: function(){
-          valKeyup.nodeValue = field.getValue();
-        },
-        fieldKeypress: function(){
-          valKeypress.nodeValue = field.getValue();
-        },
-        fieldBlur: function(){
-          valBlur.nodeValue = field.getValue();
-        }
-      });*/
-
-      return el;
+      return DOM.createElement('.fieldViewer');
     }
 
     var _postInit = basis.ui.field.Field.prototype.postInit;
@@ -141,12 +85,22 @@
 
 
     new nsField.Text({
-      container: createBlock('Text Field'),
+      container: createBlock('basis.ui.field.Text'),
       value: 'text field'
     });
 
+    new nsField.Password({
+      container: createBlock('basis.ui.field.Password'),
+      value: 'password'
+    });
+
+    new nsField.File({
+      container: createBlock('basis.ui.field.File'),
+      value: 'file'
+    });
+
     new nsField.Textarea({
-      container: createBlock('Textarea Field'),
+      container: createBlock('basis.ui.field.Textarea'),
       maxLength: 20
     });
 
