@@ -820,7 +820,7 @@
           var resource = basis.resource(this.url);
 
           this.resource = resource;
-          this.cssText = resource.source;
+          this.cssText = resource.get(true);
         }
 
         if (!this.element)

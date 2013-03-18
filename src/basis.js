@@ -39,7 +39,7 @@
   //
 
   var document = global.document;
-  var externalResourceCache = global.__resources__ || {};
+  var prefetchedResources = global.__resources__;
 
 
  /**
@@ -325,7 +325,6 @@
             };
         }
 
-        //;;;fn.toString = function(){ return 'function(object){\n  return object ? object.' + path + ' : object;\n}'; }
         // verbose function code in dev mode
         /** @cut */ fn = Function('parts', 'return ' + fn.toString()
         /** @cut */   .replace(/(foo|bar|baz)/g, function(m, w){
@@ -434,7 +433,9 @@
       switch (modType)
       {
         case 'string':
-          result = function(object){ return modificator.format(func(object)); };
+          result = function(object){
+            return modificator.format(func(object));
+          };
         break;
 
         case 'function':
@@ -445,11 +446,15 @@
             modificator.basisModId_ = modId;
           }
 
-          result = function(object){ return modificator(func(object)); };
+          result = function(object){
+            return modificator(func(object));
+          };
         break;
 
         default: //case 'object':
-          result = function(object){ return modificator[func(object)]; };
+          result = function(object){
+            return modificator[func(object)];
+          };
       }
 
       result.base = func.base || func;
@@ -1176,7 +1181,9 @@
     },
     group: function(len, splitter){
       return (this + '').replace(/\d+/, function(number){
-        return number.replace(/\d/g, function(m, pos){ return !pos + (number.length - pos) % (len || 3) ? m : (splitter || ' ') + m; });
+        return number.replace(/\d/g, function(m, pos){
+          return !pos + (number.length - pos) % (len || 3) ? m : (splitter || ' ') + m;
+        });
       });
     },
     format: function(prec, gs, prefix, postfix, comma){
@@ -1246,7 +1253,6 @@
   //
 
   var NODE_ENV = typeof process != 'undefined' && process.versions && process.versions.node;
-
   var pathUtils = (function(){
     var utils;
 
@@ -1314,75 +1320,9 @@
   })();
 
 
-  // ============================================
-  // Namespace subsystem
   //
-
-  var namespaces = {};
-
-  function getNamespace(path, wrapFunction){
-    var cursor = global;
-    var nsRoot;
-
-    path = path.split('.');
-    for (var i = 0, name; name = path[i]; i++)
-    {
-      if (!cursor[name])
-      {
-        var nspath = path.slice(0, i + 1).join('.');
-
-        // create new namespace
-        cursor[name] = (function(path, wrapFn){
-         /**
-          * @returns {*|undefined}
-          */
-          function namespace(){
-            if (wrapFunction)
-              return wrapFunction.apply(this, arguments);
-          }
-
-          var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
-          var pathFn = function(name){
-            return path + (name ? '.' + name : '');
-          };
-          pathFn.toString = $const(path);
-
-          return extend(namespace, {
-            path: pathFn,
-            exports: {},
-            toString: $const('[basis.namespace ' + path + ']'),
-            extend: function(names){
-              extend(this.exports, names);
-              return complete(this, names);
-            },
-            setWrapper: function(wrapFn){
-              if (typeof wrapFn == 'function')
-              {
-                ;;;if (wrapFunction) consoleMethods.warn('Wrapper for ' + path + ' is already set. Probably mistake here.');
-                wrapFunction = wrapFn;
-              }
-            }
-          });
-        })(nspath, i < path.length ? wrapFunction : null);
-
-        if (nsRoot)
-          nsRoot.namespaces_[nspath] = cursor[name];
-      }
-
-      cursor = cursor[name];
-
-      if (!nsRoot)
-      {
-        nsRoot = cursor;
-        if (!nsRoot.namespaces_)
-          nsRoot.namespaces_ = {};
-      }
-    }
-
-    namespaces[path.join('.')] = cursor;
-
-    return cursor;
-  }
+  // apply config
+  //
 
   var config = (function(){
     function getConfigAttr(node){
@@ -1450,8 +1390,266 @@
       config.path[key] = pathUtils.resolve(config.path[key] + '/');
 
     return config;
+  })();  
+
+
+  //
+  // Resources
+  //
+
+  var resourceCache = {};
+  var requestResourceCache = {};
+
+  // apply prefetched resources to cache
+  (function(){
+    if (prefetchedResources)
+      for (var key in prefetchedResources)
+        requestResourceCache[pathUtils.resolve(key)] = prefetchedResources[key];
+
+    prefetchedResources = null; // reset prefetched to reduce memory leaks
   })();
 
+  var getResourceContent = function(url, ignoreCache){
+    if (ignoreCache || !requestResourceCache.hasOwnProperty(url))
+    {
+      var resourceContent = '';
+
+      if (!NODE_ENV)
+      {
+        var req = new XMLHttpRequest();
+        req.open('GET', url, false);
+        // set if-modified-since header since begining prevents cache using;
+        // otherwise browser could never ask server for new file content
+        // and use file content from cache
+        req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
+        req.send('');
+
+        if (req.status >= 200 && req.status < 400)
+          resourceContent = req.responseText;
+        else
+        {
+          ;;;consoleMethods.warn('basis.resource: Unable to load ' + url);
+        }
+      }
+      else
+      {
+        if (pathUtils.existsSync(url))
+          resourceContent = require('fs').readFileSync(url, 'utf-8');
+        else
+        {
+          ;;;consoleMethods.warn('basis.resource: Unable to load ' + url);
+        }
+      }
+
+      requestResourceCache[url] = resourceContent;
+    }
+
+    return requestResourceCache[url];
+  };
+
+  // basis.resource  
+  var getResource = function(resourceUrl){
+    resourceUrl = pathUtils.resolve(resourceUrl);
+
+    if (!resourceCache[resourceUrl])
+    {
+      var extWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
+      var resourceObject;
+      var wrapped = false;
+      var resource = function(){
+        if (extWrapper)
+        {
+          if (!wrapped)
+          {
+            resourceObject = extWrapper(getResourceContent(resourceUrl), resourceUrl);
+            wrapped = true;              
+          }
+          return resourceObject;
+        }
+
+        return getResourceContent(resourceUrl);
+      };
+
+      extend(resource, new Token());
+      extend(resource, {
+        url: resourceUrl,
+        fetch: resource,
+        toString: function(){
+          return '[basis.resource ' + resourceUrl + ']';
+        },
+        update: function(newContent, force){
+          newContent = String(newContent);
+          if (force || newContent != requestResourceCache[resourceUrl])
+          {
+            requestResourceCache[resourceUrl] = newContent;
+            if (extWrapper && wrapped)
+            {
+              if (!extWrapper.updatable)
+                return;
+
+              resourceObject = extWrapper(newContent, resourceUrl);
+            }
+
+            this.apply();
+          }
+        },
+        reload: function(){
+          var oldContent = requestResourceCache[resourceUrl];
+          var newContent = getResourceContent(resourceUrl, true);
+
+          if (newContent != oldContent)
+            this.update(newContent, true);
+        },
+        get: function(source){
+          return source ? getResourceContent(resourceUrl) : resource();
+        }
+      });
+
+      resourceCache[resourceUrl] = resource;
+    }
+
+    return resourceCache[resourceUrl];
+  };
+
+  extend(getResource, {
+    getSource: function(resourceUrl){
+      return getResourceContent(pathUtils.resolve(resourceUrl));
+    },
+    exists: function(resourceUrl){
+      return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
+    },
+    extensions: {
+      '.js': function(resource, url){
+        return runScriptInContext({ exports: {} }, url, resource).exports;
+      },
+      '.json': extend(function(resource, url){
+        if (typeof resource == 'object')
+          return resource;
+
+        var result;
+        try {
+          result = JSON.parse(String(resource));
+        } catch(e) {
+          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
+        }
+        return result || false;
+      }, {
+        updatable: true
+      })
+    }
+  });
+
+
+  var runScriptInContext = function(context, sourceURL, sourceCode, prefix){
+    var baseURL = pathUtils.dirname(sourceURL) + '/';
+    var compiledSourceCode = sourceCode;
+
+    if (!context.exports)
+      context.exports = {};
+
+    // compile context function
+    if (typeof compiledSourceCode != 'function')
+      try {
+        compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
+          (prefix || '') +
+          '"use strict";\n\n' +
+          sourceCode +
+          '//@ sourceURL=' + sourceURL
+        );
+      } catch(e) {
+        ;;;var src = document.createElement('script');src.src = sourceURL;src.async = false;document.head.appendChild(src);document.head.removeChild(src);
+        throw 'Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e);
+        //return;
+      }
+
+    // run
+    compiledSourceCode.call(
+      context,
+      context.exports,
+      context,
+      basis,
+      global,
+      sourceURL,
+      baseURL,
+      function(relativePath){
+        return getResource(baseURL + relativePath);
+      }
+    );
+
+    return context;
+  };
+
+
+  // ============================================
+  // Namespace subsystem
+  //
+
+  var namespaces = {};
+  var getNamespace = function(path, wrapFunction){
+    var cursor = global;
+    var nsRoot;
+
+    path = path.split('.');
+    for (var i = 0, name; name = path[i]; i++)
+    {
+      if (!cursor[name])
+      {
+        var nspath = path.slice(0, i + 1).join('.');
+
+        // create new namespace
+        cursor[name] = (function(path, wrapFn){
+         /**
+          * @returns {*|undefined}
+          */
+          function namespace(){
+            if (wrapFunction)
+              return wrapFunction.apply(this, arguments);
+          }
+
+          var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
+          var pathFn = function(name){
+            return path + (name ? '.' + name : '');
+          };
+          pathFn.toString = $const(path);
+
+          return extend(namespace, {
+            path: pathFn,
+            exports: {},
+            toString: $const('[basis.namespace ' + path + ']'),
+            extend: function(names){
+              extend(this.exports, names);
+              return complete(this, names);
+            },
+            setWrapper: function(wrapFn){
+              if (typeof wrapFn == 'function')
+              {
+                ;;;if (wrapFunction) consoleMethods.warn('Wrapper for ' + path + ' is already set. Probably mistake here.');
+                wrapFunction = wrapFn;
+              }
+            }
+          });
+        })(nspath, i < path.length ? wrapFunction : null);
+
+        if (nsRoot)
+          nsRoot.namespaces_[nspath] = cursor[name];
+      }
+
+      cursor = cursor[name];
+
+      if (!nsRoot)
+      {
+        nsRoot = cursor;
+        if (!nsRoot.namespaces_)
+          nsRoot.namespaces_ = {};
+      }
+    }
+
+    namespaces[path.join('.')] = cursor;
+
+    return cursor;
+  }
+
+  // basis.require
   var requireNamespace = (function(){
     if (NODE_ENV)
     {
@@ -1460,7 +1658,6 @@
       return function(path){
         return (function(){
           var temp = moduleProto.load;
-
           moduleProto.load = function(){
             this.exports = getNamespace(path);
             temp.apply(this, arguments);
@@ -1469,7 +1666,6 @@
           var exports = require(requirePath + path.replace(/\./g, '/'));
 
           complete(getNamespace(path), exports);
-
           moduleProto.load = temp;
 
           return exports;
@@ -1505,7 +1701,7 @@
           var requestUrl = requirePath + filename;
 
           var ns = getNamespace(namespace);
-          var scriptText = externalResource(requestUrl);
+          var scriptText = getResourceContent(requestUrl);
           runScriptInContext(ns, requestUrl, scriptText, '/** @namespace ' + namespace + ' */\n');
           complete(ns, ns.exports);
           ;;;ns.filename_ = requestUrl;
@@ -1514,201 +1710,6 @@
       };
     }
   })();
-
-  (function(){
-    var tmp = externalResourceCache;
-    externalResourceCache = {};
-    for (var key in tmp)
-      externalResourceCache[pathUtils.resolve(key)] = tmp[key];
-  })();
-
-  var externalResource = function(url){
-    if (!externalResourceCache.hasOwnProperty(url))
-    {
-      var resourceContent = '';
-
-      if (!NODE_ENV)
-      {
-        var req = new XMLHttpRequest();
-        req.open('GET', url, false);
-        // set if-modified-since header since begining prevents cache using;
-        // otherwise browser could never ask server for new file content
-        // and use file content from cache
-        req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
-        req.send('');
-
-        if (req.status >= 200 && req.status < 400)
-          resourceContent = req.responseText;
-        else
-        {
-          ;;;consoleMethods.warn('basis.resource: Unable to load ' + url);
-        }
-      }
-      else
-      {
-        if (pathUtils.existsSync(url))
-          resourceContent = require('fs').readFileSync(url, 'utf-8');
-        else {
-          ;;;consoleMethods.warn('basis.resource: Unable to load ' + url);
-        }
-      }
-
-      externalResourceCache[url] = resourceContent;
-    }
-
-    return externalResourceCache[url];
-  };
-
-  var frfCache = {};
-  var fetchResourceFunction = function(resourceUrl){
-
-    if (typeof resourceUrl != 'number')
-      resourceUrl = pathUtils.resolve(resourceUrl);
-
-    if (!frfCache[resourceUrl])
-    {
-      var ext = pathUtils.extname(resourceUrl);
-      var extWrapper;
-      var extWrapperFn;
-      if (ext)
-      {
-        extWrapper = fetchResourceFunction.extensions[ext];
-        extWrapperFn = function(content){
-          return extWrapper(content, resourceUrl);
-        };
-      }
-
-      //consoleMethods.log('new resource resolver:' + resourceUrl);
-      var resourceObject;
-      var wrapped = false;
-      var resource = extWrapper
-        ? function(){
-            if (!wrapped)
-            {
-              wrapped = true;
-              resource.source = externalResource(resourceUrl);
-              resourceObject = extWrapperFn(resource.source);
-            }
-            return resourceObject;
-          }
-        : function(){
-            return externalResource(resourceUrl);
-          };
-
-      extend(resource, new Token());
-      extend(resource, {
-        url: resourceUrl,
-        fetch: resource,
-        toString: function(){
-          return '[basis.resource ' + resourceUrl + ']';
-        },
-        update: function(content){
-          content = String(content);
-          if (content != externalResourceCache[resourceUrl])
-          {
-            externalResourceCache[resourceUrl] = content;
-            if (extWrapper)
-            {
-              if (extWrapper.updatable)
-              {
-                resource.source = content;
-                resourceObject = extWrapperFn(content);
-                content = resourceObject;
-              }
-              else
-                return;
-            }
-
-            this.apply();
-          }
-        },
-        reload: function(){
-          var content = externalResourceCache[resourceUrl];
-          delete externalResourceCache[resourceUrl];
-          var newContent = externalResource(resourceUrl);
-          if (newContent != content)
-          {
-            delete externalResourceCache[resourceUrl];
-            this.update(newContent);
-          }
-        },
-        get: function(source){
-          return source ? externalResource(resourceUrl) : resource();
-        }
-      });
-
-      frfCache[resourceUrl] = resource;
-    }
-
-    return frfCache[resourceUrl];
-  };
-
-  fetchResourceFunction.getSource = (function(resourceUrl){
-    return externalResource(pathUtils.resolve(resourceUrl));
-  });
-  fetchResourceFunction.exists = (function(resourceUrl){
-    return !!frfCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
-  });
-
-  fetchResourceFunction.extensions = {
-    '.js': function(resource, url){
-      return runScriptInContext({ exports: {} }, url, resource).exports;
-    },
-    '.json': function(resource, url){
-      if (typeof resource == 'object')
-        return resource;
-
-      var result;
-      try {
-        result = JSON.parse(String(resource));
-      } catch(e) {
-        ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
-      }
-      return result || false;
-    }
-  };
-
-  fetchResourceFunction.extensions['.json'].updatable = true;
-
-  var runScriptInContext = function(context, sourceURL, sourceCode, prefix){
-    var baseURL = pathUtils.dirname(sourceURL) + '/';
-    var compiledSourceCode;
-
-    if (!context.exports)
-      context.exports = {};
-
-    // compile context function
-    try {
-      compiledSourceCode = typeof sourceCode == 'function'
-        ? sourceCode
-        : new Function('exports, module, basis, global, __filename, __dirname, resource',
-            (prefix || '') +
-            '"use strict";\n\n' +
-            sourceCode +
-            '//@ sourceURL=' + sourceURL
-          );
-    } catch(e) {
-      ;;;var src = document.createElement('script');src.src = sourceURL;src.async = false;document.head.appendChild(src);document.head.removeChild(src);
-      throw 'Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e);
-      //return;
-    }
-
-    // run
-    compiledSourceCode.call(
-      context,
-      context.exports,
-      context,
-      basis,
-      global,
-      sourceURL,
-      baseURL,
-      function(relativePath){
-        return fetchResourceFunction(baseURL + relativePath);
-      }
-    );
-
-    return context;
-  };
 
 
   // ============================================
@@ -2326,7 +2327,7 @@
 
     namespace: getNamespace,
     require: requireNamespace,
-    resource: fetchResourceFunction,
+    resource: getResource,
     asset: function(url){
       return url;
     },
