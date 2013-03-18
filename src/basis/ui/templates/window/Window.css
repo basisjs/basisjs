@@ -179,7 +179,7 @@
     font-size: 85%;
     padding: 3px 0 2px 2px;
   }
-  .Basis-Dragable .Basis-Window-TitleCaption
+  .Basis-Window_moveable .Basis-Window-TitleCaption
   {
     cursor: move;
   }

@@ -34,11 +34,6 @@ BODY.devpanel-inspectMode .Basis-DevPanel
   color: white;
 }
 
-.Basis-DevPanel.Basis-DragDrop-DragElement
-{
-  cursor: move;
-}
-
 BODY.devpanel-inspectMode .Basis-DevPanel
 {
   pointer-events: none;

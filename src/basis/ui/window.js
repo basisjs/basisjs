@@ -113,10 +113,27 @@
   var Window = Class(UINode, {
     className: namespace + '.Window',
 
+    event_beforeShow: createEvent('beforeShow'),
+    event_open: createEvent('open'),
+    event_close: createEvent('close'),
+    event_active: createEvent('active'),
+
+    closeOnEscape: true,
+
+    autocenter: true,
+    autocenter_: false,
+    modal: false,
+    closed: true,
+    moveable: true,
+    zIndex: 0,
+
+    title: basis.l10n.getToken(namespace, 'emptyTitle'),
+
     template: templates.Window,
     binding: {
       title: 'title',
-      titleButtons: 'satellite:'
+      titleButtons: 'satellite:',
+      moveable: 'moveable'
     },
     action: {
       close: function(){
@@ -141,6 +158,18 @@
       }
     },
 
+    buttonPanelClass: ButtonPanel.subclass({
+      template: templates.ButtonPanel,
+      listen: {
+        owner: {
+          select: function(){
+            if (this.firstChild)
+              this.firstChild.focus();
+          }
+        }
+      }
+    }),
+
     satelliteConfig: {
       titleButtons: {
         existsIf: function(owner){
@@ -158,36 +187,6 @@
         })
       }
     },
-
-    // properties
-
-    event_beforeShow: createEvent('beforeShow'),
-    event_open: createEvent('open'),
-    event_close: createEvent('close'),
-    event_active: createEvent('active'),
-
-    closeOnEscape: true,
-
-    autocenter: true,
-    autocenter_: false,
-    modal: false,
-    closed: true,
-    moveable: true,
-    zIndex: 0,
-
-    title: basis.l10n.getToken(namespace, 'emptyTitle'),
-
-    buttonPanelClass: ButtonPanel.subclass({
-      template: templates.ButtonPanel,
-      listen: {
-        owner: {
-          select: function(){
-            if (this.firstChild)
-              this.firstChild.focus();
-          }
-        }
-      }
-    }),
 
     init: function(){
       UINode.prototype.init.call(this);

@@ -3,7 +3,6 @@
   basis.require('basis.ua');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
-  basis.require('basis.cssom');
   basis.require('basis.layout');
 
 
@@ -18,13 +17,13 @@
   // import names
   //
 
+  var document = global.document;
   var Class = basis.Class;
   var Event = basis.dom.event;
   var DOM = basis.dom;
   var cleaner = basis.cleaner;
 
   var getter = basis.getter;
-  var classList = basis.cssom.classList;
   var addGlobalHandler = Event.addGlobalHandler;
   var removeGlobalHandler = Event.removeGlobalHandler;
 
@@ -75,9 +74,6 @@
     move: function(event){  // `this` store DDE config
       var dde = DDEConfig.dde;
 
-      //if (!Event.mouseButton(e, Event.MOUSE_LEFT))
-      //  return DDEHandler.over();
-
       if (!DDEConfig.run)
       {
         DDEConfig.run = true;
@@ -113,10 +109,6 @@
     }
   };
 
-  var DDCssClass = {
-    dragable: 'Basis-Dragable',
-    element: 'Basis-DragDrop-DragElement'
-  };
 
  /**
   * @class
@@ -171,8 +163,8 @@
     //
 
     setElement: function(element, trigger){
-      element = element && DOM.get(element);
-      trigger = (trigger && DOM.get(trigger)) || element;
+      element = DOM.get(element);
+      trigger = DOM.get(trigger) || element;
 
       if (this.trigger != trigger)
       {
@@ -187,15 +179,7 @@
 
 
       if (this.element != element)
-      {
-        if (this.element)
-          classList(this.element).remove(DDCssClass.dragable);
-
         this.element = element;
-
-        if (this.element)
-          classList(this.element).add(DDCssClass.dragable);
-      }
     },
 
     setBase: function(baseElement){
@@ -241,9 +225,6 @@
         var box = new nsLayout.Box(element);
         var viewport = new nsLayout.Viewport(this.baseElement);
 
-        // set class
-        classList(element).add(DDCssClass.element);
-
         config.element = element;
         config.box = box;
         config.viewport = viewport;
@@ -283,16 +264,6 @@
       }
 
       DragDropElement.prototype.event_move.call(this, config);
-    },
-
-    event_over: function(config){
-      if (!config.element)
-        return;
-
-      // remove class
-      classList(config.element).remove(DDCssClass.element);
-
-      DragDropElement.prototype.event_over.call(this, config);
     }
   });
 
