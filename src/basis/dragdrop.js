@@ -18,12 +18,10 @@
   //
 
   var document = global.document;
-  var Class = basis.Class;
-  var Event = basis.dom.event;
-  var DOM = basis.dom;
   var cleaner = basis.cleaner;
 
-  var getter = basis.getter;
+  var DOM = basis.dom;
+  var Event = basis.dom.event;
   var addGlobalHandler = Event.addGlobalHandler;
   var removeGlobalHandler = Event.removeGlobalHandler;
 
@@ -39,84 +37,83 @@
   //
 
   var SELECTSTART_SUPPORTED = Event.getEventInfo('selectstart').supported;
+  var defaultBaseElement = ua.is('IE7-') ? document.body : document.documentElement;
 
-  var DDEConfig;
-  var DDEHandler = {
-    start: function(event){
-      if (DDEConfig)
-        DDEHandler.over();
+  var dragging;
+  var dragElement;
+  var dragData;
+  
+  function startDrag(event){
+    if (dragElement)
+      stopDrag();
 
-      DDEConfig = {
-        dde: this,
-        run: false,
-        event: {
-          // calculate point
-          initX: Event.mouseX(event),
-          initY: Event.mouseY(event),
-          deltaX: 0,
-          deltaY: 0
-        }
-      };
+    dragElement = this;
+    dragData = {
+      // calculate point
+      initX: Event.mouseX(event),
+      initY: Event.mouseY(event),
+      deltaX: 0,
+      deltaY: 0
+    };
 
-      // add global handlers
-      addGlobalHandler('mousemove', DDEHandler.move, DDEConfig);
-      addGlobalHandler('mouseup',   DDEHandler.over, DDEConfig);
-      addGlobalHandler('mousedown', DDEHandler.over, DDEConfig);
-      if (SELECTSTART_SUPPORTED)
-        addGlobalHandler('selectstart', Event.kill, DDEConfig);
+    // add global handlers
+    addGlobalHandler('mousedown', stopDrag);
+    addGlobalHandler('mousemove', onDrag);
+    addGlobalHandler('mouseup', stopDrag);
+    if (SELECTSTART_SUPPORTED)
+      addGlobalHandler('selectstart', Event.kill);
 
-      // kill event
-      Event.cancelDefault(event);
+    // kill event
+    Event.cancelDefault(event);
 
-      // ready to drag start, make other preparations if need
-      this.event_prepare(DDEConfig.event, event);
-    },
-    move: function(event){  // `this` store DDE config
-      var dde = DDEConfig.dde;
+    // ready to drag start, make other preparations if need
+    this.prepareDrag(dragData, event);
+  }
 
-      if (!DDEConfig.run)
-      {
-        DDEConfig.run = true;
-        dde.draging = true;
-        dde.event_start(DDEConfig.event);
-      }
-
-      if (dde.axisX)
-        DDEConfig.event.deltaX = dde.axisXproxy(Event.mouseX(event) - DDEConfig.event.initX);
-
-      if (dde.axisY)
-        DDEConfig.event.deltaY = dde.axisYproxy(Event.mouseY(event) - DDEConfig.event.initY);
-
-      dde.event_move(DDEConfig.event, event);
-    },
-    over: function(event){  // `this` store DDE config
-      var dde = DDEConfig.dde;
-
-      // remove global handlers
-      removeGlobalHandler('mousemove', DDEHandler.move, DDEConfig);
-      removeGlobalHandler('mouseup',   DDEHandler.over, DDEConfig);
-      removeGlobalHandler('mousedown', DDEHandler.over, DDEConfig);
-      if (SELECTSTART_SUPPORTED)
-        removeGlobalHandler('selectstart', Event.kill, DDEConfig);
-
-      dde.draging = false;
-
-      if (DDEConfig.run)
-        dde.event_over(DDEConfig.event, event);
-      
-      DDEConfig = null;
-      Event.kill(event);
+  function onDrag(event){
+    if (!dragging)
+    {
+      dragging = true;
+      dragElement.event_start(dragData, event);
     }
-  };
+
+    if (dragElement.axisX)
+      dragData.deltaX = dragElement.axisXproxy(Event.mouseX(event) - dragData.initX);
+
+    if (dragElement.axisY)
+      dragData.deltaY = dragElement.axisYproxy(Event.mouseY(event) - dragData.initY);
+
+    dragElement.event_drag(dragData, event);
+  }
+
+  function stopDrag(event){
+    // remove global handlers
+    removeGlobalHandler('mousedown', stopDrag);
+    removeGlobalHandler('mousemove', onDrag);
+    removeGlobalHandler('mouseup', stopDrag);
+    if (SELECTSTART_SUPPORTED)
+      removeGlobalHandler('selectstart', Event.kill);
+
+    if (dragging)
+    {
+      dragging = false;
+      dragElement.event_over(dragData, event);
+    }
+    
+    dragElement = null;
+    dragData = null;
+
+    Event.kill(event);
+  }
 
 
  /**
   * @class
   */
-  var DragDropElement = Class(Emitter, {
+  var DragDropElement = Emitter.subclass({
     className: namespace + '.DragDropElement',
 
-    containerGetter: getter('element'),
+    containerGetter: basis.getter('element'),
 
     element: null,
     trigger: null,            // element that trig a drag; if null element is trig drag itself
@@ -133,16 +130,15 @@
     axisXproxy: basis.fn.$self,
     axisYproxy: basis.fn.$self,
 
-    event_prepare: createEvent('prepare'), // occure before drag start
+    prepareDrag: function(){},
     event_start: createEvent('start'), // occure on first mouse move
-    event_move: createEvent('move'),
+    event_drag: createEvent('drag'),
     event_over: createEvent('over'),
 
     //
     // Constructor
     //
     init: function(){
-      //this.inherit(config);
       Emitter.prototype.init.call(this);
 
       var element = this.element;
@@ -163,40 +159,35 @@
     //
 
     setElement: function(element, trigger){
-      element = DOM.get(element);
-      trigger = DOM.get(trigger) || element;
+      this.element = DOM.get(element);
+      trigger = DOM.get(trigger) || this.element;
 
-      if (this.trigger != trigger)
+      if (this.trigger !== trigger)
       {
         if (this.trigger)
-          Event.removeHandler(this.trigger, 'mousedown', DDEHandler.start, this);
+          Event.removeHandler(this.trigger, 'mousedown', startDrag, this);
 
         this.trigger = trigger;
 
         if (this.trigger)
-          Event.addHandler(this.trigger, 'mousedown', DDEHandler.start, this);
+          Event.addHandler(this.trigger, 'mousedown', startDrag, this);
       }
-
-
-      if (this.element != element)
-        this.element = element;
     },
 
     setBase: function(baseElement){
-      this.baseElement = DOM.get(baseElement) || (ua.is('IE7-') ? document.body : document.documentElement);
+      this.baseElement = DOM.get(baseElement) || defaultBaseElement;
     },
 
-    isDraging: function(){
-      return !!(DDEConfig && DDEConfig.dde == this);
+    isDragging: function(){
+      return dragElement === this;
     },
-
     start: function(event){
-      if (!this.isDraging())
-        DDEHandler.start.call(this, event);
+      if (!this.isDragging())
+        startDrag.call(this, event);
     },
     stop: function(){
-      if (this.isDraging())
-        DDEHandler.over();
+      if (this.isDragging())
+        stopDrag();
     },
 
     destroy: function(){
@@ -214,56 +205,53 @@
  /**
   * @class
   */
-  var MoveableElement = Class(DragDropElement, {
+  var MoveableElement = DragDropElement.subclass({
     className: namespace + '.MoveableElement',
     
-    event_start: function(config){
-      var element = this.containerGetter(this, config.initX, config.initY);
+    event_start: function(dragData, event){
+      var element = this.containerGetter(this, dragData.initX, dragData.initY);
 
       if (element)
       {
-        var box = new nsLayout.Box(element);
-        var viewport = new nsLayout.Viewport(this.baseElement);
-
-        config.element = element;
-        config.box = box;
-        config.viewport = viewport;
+        dragData.element = element;
+        dragData.box = new nsLayout.Box(element);
+        dragData.viewport = new nsLayout.Viewport(this.baseElement);
       }
 
-      DragDropElement.prototype.event_start.call(this, config);
+      DragDropElement.prototype.event_start.call(this, dragData, event);
     },
 
-    event_move: function(config){
-      if (!config.element)
+    event_drag: function(dragData, event){
+      if (!dragData.element)
         return;
 
       if (this.axisX)
       {
-        var newLeft = config.box.left + config.deltaX;
+        var newLeft = dragData.box.left + dragData.deltaX;
         
         if (this.fixLeft && newLeft < 0)
           newLeft = 0;
         else
-          if (this.fixRight && newLeft + config.box.width > config.viewport.width)
-            newLeft = config.viewport.width - config.box.width;
+          if (this.fixRight && newLeft + dragData.box.width > dragData.viewport.width)
+            newLeft = dragData.viewport.width - dragData.box.width;
 
-        config.element.style.left = newLeft + 'px';
+        dragData.element.style.left = newLeft + 'px';
       }
 
       if (this.axisY)
       {
-        var newTop = config.box.top + config.deltaY;
+        var newTop = dragData.box.top + dragData.deltaY;
        
         if (this.fixTop && newTop < 0)
           newTop = 0;
         else
-          if (this.fixBottom && newTop + config.box.height > config.viewport.height)
-            newTop = config.viewport.height - config.box.height;
+          if (this.fixBottom && newTop + dragData.box.height > dragData.viewport.height)
+            newTop = dragData.viewport.height - dragData.box.height;
 
-        config.element.style.top = newTop + 'px';
+        dragData.element.style.top = newTop + 'px';
       }
 
-      DragDropElement.prototype.event_move.call(this, config);
+      DragDropElement.prototype.event_drag.call(this, dragData, event);
     }
   });
 

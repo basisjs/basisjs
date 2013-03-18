@@ -94,7 +94,7 @@
   //
 
   var DD_HANDLER = {
-    move: function(){
+    start: function(){
       this.autocenter = false;
       this.element.style.margin = 0;
     },

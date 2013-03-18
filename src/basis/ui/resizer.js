@@ -180,7 +180,9 @@
     factor: NaN,
     property: 'width',
 
-    event_prepare: function(){
+    prepareDrag: function(dragData, event){
+      super_.prepareDrag.call(this, dragData, event);
+
       if (!PROPERTY_DELTA[this.property])
       {
         ;;;basis.dev.warn('Property to change `' + this.property + '` is unsupported');
@@ -192,8 +194,8 @@
       cursorOverrideRule = cssom.createRule('*');
       cursorOverrideRule.creator = this;
     },
-    event_start: function(dragData){
-      super_.event_start.call(this, dragData);
+    event_start: function(dragData, event){
+      super_.event_start.call(this, dragData, event);
 
       cursorOverrideRule.setProperty('cursor', this.cursor + ' !important');
 
@@ -246,8 +248,8 @@
       dragData.offsetStartInPercent = 100 / parentNodeSize;
       classList(this.resizer).add('selected');
     },
-    event_move: function(dragData){
-      super_.event_move.call(this, dragData);
+    event_drag: function(dragData, event){
+      super_.event_drag.call(this, dragData, event);
 
       var metricName = dragData.delta == 'deltaX' ? 'offsetWidth' : 'offsetHeight';
       var metricValue = this.element[metricName];
@@ -259,8 +261,8 @@
       if (this.element[metricName] == metricValue)
         this.element.style[this.property] = curValue;
     },
-    event_over: function(dragData){
-      super_.event_over.call(this, dragData);
+    event_over: function(dragData, event){
+      super_.event_over.call(this, dragData, event);
 
       classList(this.resizer).remove('selected');
       resizerDisableRule.setProperty('pointerEvents', 'auto');

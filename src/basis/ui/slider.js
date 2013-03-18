@@ -158,7 +158,7 @@
   };
 
   var DRAGDROP_HANDLER = {
-    move: function(sender, config, event){
+    drag: function(sender, dragData, event){
       eventToValue.call(this, event);
     }
   };

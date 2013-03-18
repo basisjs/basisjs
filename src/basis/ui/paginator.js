@@ -107,8 +107,8 @@
     start: function(){
       this.initOffset = this.tmpl.scrollThumb.offsetLeft;
     },
-    move: function(sender, config){
-      var pos = ((this.initOffset + config.deltaX) / this.tmpl.scrollThumbWrapper.offsetWidth).fit(0, 1);
+    drag: function(sender, dragData){
+      var pos = ((this.initOffset + dragData.deltaX) / this.tmpl.scrollThumbWrapper.offsetWidth).fit(0, 1);
       this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
       this.tmpl.scrollThumb.style.left = percent(pos);
     },
