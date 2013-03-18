@@ -389,7 +389,7 @@
   * @return {Element}
   */
   function get(ref){
-    if (isNode(ref) || (ref && ref.nodeType))
+    if (ref && (isNode(ref) || ref.nodeType))
       return ref;
     else
       return typeof ref == 'string' ? document.getElementById(ref) : null;
