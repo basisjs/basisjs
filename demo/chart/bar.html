@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis.js demos: Bar Graph</title>
+  <title>Basis.js demos: Bar Chart</title>
 
   <style type="text/css" id="demo-css">
     BODY, HTML
@@ -32,13 +32,13 @@
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.dom');
     basis.require('basis.entity');
-    basis.require('basis.ui.graph');
+    basis.require('basis.ui.chart');
 
 
     var DOM = basis.dom;
     var nsEntity = basis.entity;
-    var BarGraph = basis.ui.graph.BarGraph;
-    var StackedBarGraph = basis.ui.graph.StackedBarGraph;
+    var BarChart = basis.ui.chart.BarChart;
+    var StackedBarChart = basis.ui.chart.StackedBarChart;
 
 
     //
@@ -51,7 +51,7 @@
     var lastValue;
     var value;
 
-    Math.seedrandom("bar graph");
+    Math.seedrandom("bar chart");
 
     var min = 10000;
     var max = 50000;
@@ -70,7 +70,7 @@
       data.push(row);
     }
 
-    var barGraphConfig = {
+    var barChartConfig = {
       container: DOM.get('demo-container'),
       width: 500,
       height: 450,
@@ -95,17 +95,17 @@
       }
     };
 
-    new BarGraph(barGraphConfig);
+    new BarChart(barChartConfig);
 
-    new BarGraph(basis.object.extend({
+    new BarChart(basis.object.extend({
       invertAxis: true
-    }, barGraphConfig));
+    }, barChartConfig));
 
-    new StackedBarGraph(barGraphConfig);
+    new StackedBarChart(barChartConfig);
 
-    new StackedBarGraph(basis.object.extend({
+    new StackedBarChart(basis.object.extend({
       invertAxis: true
-    }, barGraphConfig));
+    }, barChartConfig));
 
   </script>
 </body>

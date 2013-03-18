@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis.js demos: Graph with range selection</title>
+  <title>Basis.js demos: Chart with range selection</title>
 
   <style type="text/css" id="demo-css">
     BODY, HTML
@@ -24,7 +24,7 @@
       margin-left: 0;
     }
 
-    #RangeGraph
+    #RangeChart
     {
       background: white;
     }
@@ -116,7 +116,7 @@
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.dom');
     basis.require('basis.entity');
-    basis.require('basis.ui.graph');
+    basis.require('basis.ui.chart');
     basis.require('basis.ui.form');
     basis.require('basis.dragdrop');
     basis.require('basis.l10n');
@@ -124,7 +124,7 @@
 
     var DOM = basis.dom;
     var nsEntity = basis.entity;
-    var LinearGraph = basis.ui.graph.LinearGraph;
+    var LinearChart = basis.ui.chart.LinearChart;
 
     var nsForm = basis.ui.form;
 
@@ -148,19 +148,19 @@
         }
       }));
 
-    var graphValues = new basis.data.Dataset({
+    var chartValues = new basis.data.Dataset({
       items: data
     });
 
     var reportSlice = new basis.data.dataset.Slice({
       rule: basis.getter('data.Date', Number),
-      source: graphValues,
+      source: chartValues,
       orderDesc: true,
       offset: 450,
       limit: 300
     });
 
-    var graph = new LinearGraph({
+    var chart = new LinearChart({
       autoRotateScale: true,
       container: DOM.get('demo-container'),
       width: 800,
@@ -187,8 +187,8 @@
       ]
     });
 
-    new LinearGraph({
-      id: 'RangeGraph',
+    new LinearChart({
+      id: 'RangeChart',
       container: DOM.get('demo-container'),
       width: 800,
       height: 50,
@@ -199,7 +199,7 @@
       showGrid: false,
       fillArea: true,
       keyGetter: basis.getter('data.Date'),
-      dataSource: graphValues,
+      dataSource: chartValues,
       sorting: basis.getter('data.Date'),
       series: [
         basis.getter('data.Amount')
@@ -208,7 +208,7 @@
         lineWidth: .5
       },
       satelliteConfig: {
-        graphViewer: null,
+        chartViewer: null,
         period: {
           instanceOf: basis.ui.Node,
           config: function(owner){
@@ -315,7 +315,7 @@
       }
     });
 
-    var totalCount = new basis.data.property.Property(graphValues.itemCount);
+    var totalCount = new basis.data.property.Property(chartValues.itemCount);
     var rangeCount = new basis.data.property.Property(reportSlice.itemCount);
 
     reportSlice.addHandler({
@@ -324,7 +324,7 @@
       }
     }, rangeCount);
 
-    graphValues.addHandler({
+    chartValues.addHandler({
       datasetChanged: function(dataset){
         this.set(dataset.itemCount);
       }

@@ -1393,7 +1393,7 @@
   };
 
  /**
-  * @see ./demo/graph/range.html
+  * @see ./demo/chart/range.html
   * @class
   */
   var Slice = Class(SourceDataset, {

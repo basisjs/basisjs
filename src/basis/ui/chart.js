@@ -8,9 +8,9 @@
 
 
  /**
-  * @see ./demo/graph/range.html
-  * @see ./demo/graph/dynamic-threads.html
-  * @namespace basis.ui.graph
+  * @see ./demo/chart/range.html
+  * @see ./demo/chart/dynamic-threads.html
+  * @namespace basis.ui.chart
   */
 
   var namespace = this.path;
@@ -47,9 +47,9 @@
   //
 
   var templates = basis.template.define(namespace, {
-    Graph: resource('templates/graph/Graph.tmpl'),
-    GraphSelection: resource('templates/graph/GraphSelection.tmpl'),
-    GraphViewer: resource('templates/graph/GraphViewer.tmpl')
+    Chart: resource('templates/chart/Chart.tmpl'),
+    ChartSelection: resource('templates/chart/ChartSelection.tmpl'),
+    ChartViewer: resource('templates/chart/ChartViewer.tmpl')
   });
 
 
@@ -169,8 +169,8 @@
  /**
   * @class
   */
-  var GraphNode = Node.subclass({
-    className: namespace + '.GraphNode',
+  var ChartNode = Node.subclass({
+    className: namespace + '.ChartNode',
     event_requestRedraw: createEvent('requestRedraw'),
     event_disable: createEvent('disable'),
     event_enable: createEvent('enable')
@@ -179,15 +179,15 @@
  /**
   * @class
   */
-  var Graph = Canvas.subclass({
-    className: namespace + '.Graph',
+  var Chart = Canvas.subclass({
+    className: namespace + '.Chart',
 
-    childClass: GraphNode,
+    childClass: ChartNode,
 
-    template: templates.Graph,
+    template: templates.Chart,
     binding: {
-      graphSelection: 'satellite:',
-      graphViewer: 'satellite:'
+      chartSelection: 'satellite:',
+      chartViewer: 'satellite:'
     },
 
     style: {},
@@ -226,7 +226,7 @@
   });
 
   //
-  // Series Graph
+  // Series Chart
   //
   var SERIA_SOURCE_HANDLER = {
     datasetChanged: function(object, delta){
@@ -278,8 +278,8 @@
  /**
   * @class
   */
-  var GraphSeria = AbstractNode.subclass({
-    className: namespace + '.GraphSeria',
+  var ChartSeria = AbstractNode.subclass({
+    className: namespace + '.ChartSeria',
 
     valuesMap: null,
 
@@ -353,12 +353,12 @@
  /**
   * @class
   */
-  var GraphSeriesList = Node.subclass({
-    className: namespace + '.GraphSeriesList',
+  var ChartSeriesList = Node.subclass({
+    className: namespace + '.ChartSeriesList',
 
     event_valuesChanged: createEvent('valuesChanged', 'delta'),
 
-    childClass: GraphSeria,
+    childClass: ChartSeria,
     childFactory: function(config){
       return new this.childClass(config);
     },
@@ -384,7 +384,7 @@
     }
   });
 
-  var GRAPH_SERIES_HANDLER = {
+  var CHART_SERIES_HANDLER = {
     childNodesModified: function(object, delta){
       if (delta.inserted)
         for (var i = 0, seria; seria = delta.inserted[i]; i++)
@@ -425,7 +425,7 @@
     }
   };
 
-  var GRAPH_NODE_UPDATE_HANDLER = function(object){
+  var CHART_NODE_UPDATE_HANDLER = function(object){
     for (var i = 0, seria; seria = this.series.childNides[i]; i++)
       object.values[seria.basisObjectId] = seria.getValue(object, this.keyGetter(object));
 
@@ -435,13 +435,13 @@
  /**
   * @class
   */
-  var SeriesGraphNode = GraphNode.subclass({
-    className: namespace + '.SeriesGraphNode',
+  var SeriesChartNode = ChartNode.subclass({
+    className: namespace + '.SeriesChartNode',
 
     values: {},
 
     valueChangeEvents: oneFunctionProperty(
-      GRAPH_NODE_UPDATE_HANDLER,
+      CHART_NODE_UPDATE_HANDLER,
       {
         update: true
       }
@@ -449,17 +449,17 @@
 
     init: function(){
       this.values = {};
-      GraphNode.prototype.init.call(this);
+      ChartNode.prototype.init.call(this);
     }
   });
 
  /**
   * @class
   */
-  var SeriesGraph = Graph.subclass({
-    className: namespace + '.SeriesGraph',
+  var SeriesChart = Chart.subclass({
+    className: namespace + '.SeriesChart',
 
-    childClass: SeriesGraphNode,    
+    childClass: SeriesChartNode,    
 
     keyGetter: $self,
     keyTitleGetter: function(object){
@@ -467,7 +467,7 @@
     },
     
     event_childNodesModified: function(delta){
-      Graph.prototype.event_childNodesModified.call(this, delta);
+      Chart.prototype.event_childNodesModified.call(this, delta);
 
       if (!this.series || !this.series.childNodes)
         return;
@@ -496,7 +496,7 @@
 
     //init
     init: function(){
-      Graph.prototype.init.call(this);
+      Chart.prototype.init.call(this);
 
       if (Array.isArray(this.series))
       {
@@ -509,9 +509,9 @@
         };
       }
 
-      this.series = new GraphSeriesList(extend({ owner: this }, this.series));
-      this.series.addHandler(GRAPH_SERIES_HANDLER, this);
-      GRAPH_SERIES_HANDLER.childNodesModified.call(this, this.series, { inserted: this.series.childNodes });
+      this.series = new ChartSeriesList(extend({ owner: this }, this.series));
+      this.series.addHandler(CHART_SERIES_HANDLER, this);
+      CHART_SERIES_HANDLER.childNodesModified.call(this, this.series, { inserted: this.series.childNodes });
     },
 
     getValuesForSeria: function(seria){
@@ -526,7 +526,7 @@
       this.series.destroy();
       delete this.series;
 
-      Graph.prototype.destroy.call(this);
+      Chart.prototype.destroy.call(this);
     }
   });
 
@@ -534,8 +534,8 @@
  /**
   * @class
   */
-  var AxisGraph = SeriesGraph.subclass({
-    className: namespace + '.AxisGraph',
+  var AxisChart = SeriesChart.subclass({
+    className: namespace + '.AxisChart',
 
     showLegend: true,
     showYLabels: true,
@@ -554,7 +554,7 @@
     init: function(){
       this.clientRect = {};
 
-      SeriesGraph.prototype.init.call(this);
+      SeriesChart.prototype.init.call(this);
     },
 
     drawFrame: function(){
@@ -842,7 +842,7 @@
         this.drawSeria(this.getValuesForSeria(seria), seria.getColor(), i, minValue, maxValue, step, LEFT, TOP, WIDTH - LEFT - RIGHT, HEIGHT - TOP - BOTTOM);
       }  
 
-      //save graph data
+      //save chart data
       extend(this.clientRect, {
         left: LEFT,
         top: TOP,
@@ -943,33 +943,33 @@
 
 
   //
-  // GraphSelection
+  // ChartSelection
   // 
   var ctrlPressed = false;
   var startItemPosition = -1;
   var addSelectionMode = true;
 
-  function getGraphXByMouseX(graph, globalX){
-    var graphRect = graph.element.getBoundingClientRect();
-    return globalX - graphRect.left - graph.clientRect.left;
+  function getChartXByMouseX(chart, globalX){
+    var chartRect = chart.element.getBoundingClientRect();
+    return globalX - chartRect.left - chart.clientRect.left;
   }
 
-  function getGraphYByMouseY(graph, globalY){
-    var graphRect = graph.element.getBoundingClientRect();
-    return globalY - graphRect.top - graph.clientRect.top;
+  function getChartYByMouseY(chart, globalY){
+    var chartRect = chart.element.getBoundingClientRect();
+    return globalY - chartRect.top - chart.clientRect.top;
   }
 
-  function getGraphItemPositionByMouseX(graph, mouseX){
-    var width = graph.clientRect.width;
-    var itemCount = graph.childNodes.length;
-    var x = getGraphXByMouseX(graph, mouseX);
+  function getChartItemPositionByMouseX(chart, mouseX){
+    var width = chart.clientRect.width;
+    var itemCount = chart.childNodes.length;
+    var x = getChartXByMouseX(chart, mouseX);
     return Math.max(0, Math.min(itemCount - 1, Math.round(x / (width / (itemCount - 1)))));
   }
 
-  function rebuildGraphSelection(graph, curItemPosition, startItemPosition){
-    var applyItems = graph.childNodes.slice(Math.min(startItemPosition, curItemPosition), Math.max(startItemPosition, curItemPosition) + 1);
+  function rebuildChartSelection(chart, curItemPosition, startItemPosition){
+    var applyItems = chart.childNodes.slice(Math.min(startItemPosition, curItemPosition), Math.max(startItemPosition, curItemPosition) + 1);
 
-    var selectedItems = arrayFrom(graph.selection.getItems());
+    var selectedItems = arrayFrom(chart.selection.getItems());
     if (addSelectionMode)
     {
       selectedItems = selectedItems.concat(applyItems);
@@ -988,28 +988,28 @@
     return selectedItems;
   }
 
-  var GRAPH_ELEMENT_HANDLER = {
+  var CHART_ELEMENT_HANDLER = {
     mousedown: function(event){
-      var graph = this.owner; 
-      var x = getGraphXByMouseX(graph, Event.mouseX(event));
-      var y = getGraphYByMouseY(graph, Event.mouseY(event));
+      var chart = this.owner; 
+      var x = getChartXByMouseX(chart, Event.mouseX(event));
+      var y = getChartYByMouseY(chart, Event.mouseY(event));
 
       if (x > 0 && x < this.clientRect.width && y > 0 && y < this.clientRect.height)
       {
-        for (var eventName in GRAPH_SELECTION_GLOBAL_HANDLER)
-          Event.addGlobalHandler(eventName, GRAPH_SELECTION_GLOBAL_HANDLER[eventName], this);
+        for (var eventName in CHART_SELECTION_GLOBAL_HANDLER)
+          Event.addGlobalHandler(eventName, CHART_SELECTION_GLOBAL_HANDLER[eventName], this);
 
         addSelectionMode = Event.mouseButton(event, Event.MOUSE_LEFT);
 
-        var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
+        var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
         //if (/*!shiftPressed || */!startItemPosition)
           startItemPosition = curItemPosition;
 
         //lastItemPosition = curItemPosition;
-        var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
+        var selectedItems = rebuildChartSelection(chart, curItemPosition, startItemPosition);
 
         if (!ctrlPressed && addSelectionMode)
-          graph.selection.clear();
+          chart.selection.clear();
 
         this.draw(selectedItems);
       }
@@ -1045,37 +1045,37 @@
     }
   };
 
-  var GRAPH_SELECTION_GLOBAL_HANDLER = {
+  var CHART_SELECTION_GLOBAL_HANDLER = {
     mousemove: function(event){
-      var graph = this.owner; 
+      var chart = this.owner; 
       
-      var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
+      var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
   
       /*if (curItemPosition != lastItemPosition)
       {*/
         //lastItemPosition = curItemPosition;
-        var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
+        var selectedItems = rebuildChartSelection(chart, curItemPosition, startItemPosition);
         this.draw(selectedItems);
       //}
     },
     mouseup: function(event){
-      var graph = this.owner; 
+      var chart = this.owner; 
 
-      var curItemPosition = getGraphItemPositionByMouseX(graph, Event.mouseX(event));
-      var selectedItems = rebuildGraphSelection(graph, curItemPosition, startItemPosition);
+      var curItemPosition = getChartItemPositionByMouseX(chart, Event.mouseX(event));
+      var selectedItems = rebuildChartSelection(chart, curItemPosition, startItemPosition);
       
-      graph.selection.lastSelectedRange = {
+      chart.selection.lastSelectedRange = {
         start: Math.min(curItemPosition, startItemPosition),
         end: Math.max(curItemPosition, startItemPosition)
       };
-      graph.selection.set(selectedItems);
+      chart.selection.set(selectedItems);
 
-      for (var i in GRAPH_SELECTION_GLOBAL_HANDLER)
-        Event.removeGlobalHandler(i, GRAPH_SELECTION_GLOBAL_HANDLER[i], this);
+      for (var i in CHART_SELECTION_GLOBAL_HANDLER)
+        Event.removeGlobalHandler(i, CHART_SELECTION_GLOBAL_HANDLER[i], this);
     }
   };
 
-  var GRAPH_SELECTION_HANDLER = {
+  var CHART_SELECTION_HANDLER = {
     datasetChanged: function(){
       this.draw();
     }
@@ -1084,8 +1084,8 @@
  /**
   * @class
   */
-  var GraphSelection = AbstractCanvas.subclass({
-    className: namespace + '.GraphSelection',
+  var ChartSelection = AbstractCanvas.subclass({
+    className: namespace + '.ChartSelection',
 
     style: {
       fillStyle: '#dfdaff', 
@@ -1093,7 +1093,7 @@
       alpha: '.7'
     },
 
-    template: templates.GraphSelection,
+    template: templates.ChartSelection,
 
     listen: {
       owner: {
@@ -1109,16 +1109,16 @@
       
       if (oldOwner && oldOwner.selection)
       {
-        oldOwner.selection.removeHandler(GRAPH_SELECTION_HANDLER, this);
-        Event.removeHandlers(oldOwner.element, GRAPH_ELEMENT_HANDLER, this);
+        oldOwner.selection.removeHandler(CHART_SELECTION_HANDLER, this);
+        Event.removeHandlers(oldOwner.element, CHART_ELEMENT_HANDLER, this);
       }
 
       if (this.owner && this.owner.selection)
       {
         this.recalc();
-        this.owner.selection.addHandler(GRAPH_SELECTION_HANDLER, this);
+        this.owner.selection.addHandler(CHART_SELECTION_HANDLER, this);
 
-        Event.addHandlers(this.owner.element, GRAPH_ELEMENT_HANDLER, this);
+        Event.addHandlers(this.owner.element, CHART_ELEMENT_HANDLER, this);
       }
     },
 
@@ -1181,10 +1181,10 @@
  /**
   * @class
   */
-  var GraphViewer = AbstractCanvas.subclass({
-    className: namespace + '.GraphViewer',
+  var ChartViewer = AbstractCanvas.subclass({
+    className: namespace + '.ChartViewer',
 
-    template: templates.GraphViewer,
+    template: templates.ChartViewer,
 
     action: {
       move: function(event){
@@ -1397,8 +1397,8 @@
  /**
   * @class
   */
-  var LinearGraph = AxisGraph.subclass({
-    className: namespace + '.LinearGraph',
+  var LinearChart = AxisChart.subclass({
+    className: namespace + '.LinearChart',
 
     fillArea: false,
     style: {
@@ -1408,11 +1408,11 @@
     },
 
     satelliteConfig: {
-      graphViewer: {
-        instanceOf: GraphViewer
+      chartViewer: {
+        instanceOf: ChartViewer
       },
-      graphSelection: {
-        instanceOf: GraphSelection,
+      chartSelection: {
+        instanceOf: ChartSelection,
         existsIf: getter('selection')
       }
     },
@@ -1421,7 +1421,7 @@
       if (this.selection && !(this.selection instanceof Selection))
         this.selection = complete({ multiple: true }, this.selection);
 
-      AxisGraph.prototype.init.call(this);
+      AxisChart.prototype.init.call(this);
     },
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
@@ -1470,14 +1470,14 @@
   });
 
   //
-  // Bar Graph
+  // Bar Chart
   //
 
   /**
    * @class
    */
-  var BarGraphViewer = GraphViewer.subclass({
-    className: namespace + '.BarGraphViewer',
+  var BarChartViewer = ChartViewer.subclass({
+    className: namespace + '.BarChartViewer',
 
     draw: function(x, y){
       var context = this.context;
@@ -1561,19 +1561,19 @@
   /**
    * @class
    */
-  var BarGraph = AxisGraph.subclass({
-    className: namespace + '.BarGraph',
+  var BarChart = AxisChart.subclass({
+    className: namespace + '.BarChart',
     
     bars: null,
     keyValuesOnEdges: false,
 
     satelliteConfig: {
-      graphViewer: BarGraphViewer
+      chartViewer: BarChartViewer
     },
 
     drawFrame: function(){
       this.bars = [];
-      AxisGraph.prototype.drawFrame.call(this);
+      AxisChart.prototype.drawFrame.call(this);
     },
 
     drawSeria: function(values, color, pos, min, max, step, left, top, width, height){
@@ -1646,8 +1646,8 @@
   /**
    * @class
    */
-  var StackedBarGraph = BarGraph.subclass({
-    className: namespace + '.StackedBarGraph',
+  var StackedBarChart = BarChart.subclass({
+    className: namespace + '.StackedBarChart',
 
     getMaxValue: function(){
       var max = -Infinity;
@@ -1698,17 +1698,17 @@
 
   module.exports = {
     ColorPicker: ColorPicker,
-    GraphNode: GraphNode,
-    Graph: Graph,
-    GraphSeria: GraphSeria,
-    GraphSeriesList: GraphSeriesList,
-    SeriesGraphNode: SeriesGraphNode,
-    SeriesGraph: SeriesGraph,
-    AxisGraph: AxisGraph,
-    GraphSelection: GraphSelection,
-    GraphViewer: GraphViewer,
-    LinearGraph: LinearGraph,
-    BarGraphViewer: BarGraphViewer,
-    BarGraph: BarGraph,
-    StackedBarGraph: StackedBarGraph
+    ChartNode: ChartNode,
+    Chart: Chart,
+    ChartSeria: ChartSeria,
+    ChartSeriesList: ChartSeriesList,
+    SeriesChartNode: SeriesChartNode,
+    SeriesChart: SeriesChart,
+    AxisChart: AxisChart,
+    ChartSelection: ChartSelection,
+    ChartViewer: ChartViewer,
+    LinearChart: LinearChart,
+    BarChartViewer: BarChartViewer,
+    BarChart: BarChart,
+    StackedBarChart: StackedBarChart
   };

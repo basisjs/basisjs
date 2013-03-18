@@ -1,0 +1,14 @@
+.Basis-Chart
+{
+  position: relative;
+  display: inline;
+  display: inline-block;
+  zoom: 1;
+  outline: none;
+}
+
+.Basis-Chart__Canvas
+{
+  vertical-align: top;
+  position: relative;
+}

@@ -51,5 +51,5 @@ basis.require('basis.ui.resizer');
 basis.require('basis.ui.paginator');
 basis.require('basis.ui.pageslider');
 basis.require('basis.ui.canvas');
-basis.require('basis.ui.graph');
+basis.require('basis.ui.chart');
 basis.require('basis.format.highlight');

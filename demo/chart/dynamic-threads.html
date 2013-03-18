@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis.js demos: Graph with dynamic threads</title>
+  <title>Basis.js demos: Chart with dynamic threads</title>
 
   <style type="text/css" id="demo-css">
     BODY, HTML
@@ -14,7 +14,7 @@
       font-family: Tahoma, Verdana, Arial, sans-serif;
     }
 
-    .Basis-Graph
+    .Basis-Chart
     {
       float: left;
       margin-right: 2em;
@@ -64,12 +64,12 @@
     basis.require('basis.date');
     basis.require('basis.dom');
     basis.require('basis.entity');
-    basis.require('basis.ui.graph');
+    basis.require('basis.ui.chart');
     basis.require('basis.ui.field');
 
     var DOM = basis.dom;
     var nsEntity = basis.entity;
-    var LinearGraph = basis.ui.graph.LinearGraph;
+    var LinearChart = basis.ui.chart.LinearChart;
     var nsField = basis.ui.field;
 
     //
@@ -111,7 +111,7 @@
     var lastValue;
     var value;
 
-    Math.seedrandom("graph");
+    Math.seedrandom("chart");
 
     var min = 100000;
     var max = 5000000;
@@ -134,9 +134,9 @@
     }
     CompanyReport.all.sync(data);
 
-    var graphCompanies = new nsEntity.EntitySet({ wrapper: Company });
+    var chartCompanies = new nsEntity.EntitySet({ wrapper: Company });
 
-    var graph = new LinearGraph({
+    var chart = new LinearChart({
       container: DOM.get('demo-container'),
       width: 800,
       height: 450,
@@ -154,7 +154,7 @@
       },
 
       series: {
-        dataSource: graphCompanies,
+        dataSource: chartCompanies,
         childClass: {
           sourceGetter: function(object){
             return CompanyReport.getGrouping('Company').getSubset(object.target);
@@ -179,7 +179,7 @@
       },
       handler: {
         change: function(){
-          graphCompanies.set(this.getValue());
+          chartCompanies.set(this.getValue());
         }
       }
     });
@@ -188,7 +188,7 @@
     new basis.ui.Node({
       cssClassName: 'selectionContainer',
       container: DOM.get('demo-container'),
-      dataSource: graph.selection,
+      dataSource: chart.selection,
       childClass: {
         template: 
           '<div>{title}</div>',
