@@ -1,31 +1,25 @@
+.Basis-Blocker
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
 
-  .Basis-Blocker
-  {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-  }
+.Basis-Blocker-Mate
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
 
-  .Basis-Blocker-Mate
-  {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: white;
-
-      -moz-opacity: .5;
-      -khtml-opacity: .5;
-      -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=50)";
-      filter: progid:DXImageTransform.Microsoft.Alpha(opacity=50);
-    opacity: .5;
-  }
-
-  .opacity-not-support .Basis-Blocker-Mate
-  {
-    background: url(res/mate_white.png);
-  }
+    -moz-opacity: .5;
+    -khtml-opacity: .5;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(opacity=50)";
+    filter: progid:DXImageTransform.Microsoft.Alpha(opacity=50);
+  opacity: .5;
+}
