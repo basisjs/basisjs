@@ -192,13 +192,13 @@
       cursorOverrideRule = cssom.createRule('*');
       cursorOverrideRule.creator = this;
     },
-    event_start: function(cfg){
-      super_.event_start.call(this, cfg);
+    event_start: function(dragData){
+      super_.event_start.call(this, dragData);
 
       cursorOverrideRule.setProperty('cursor', this.cursor + ' !important');
 
-      cfg.delta = PROPERTY_DELTA[this.property];
-      cfg.factor = this.factor;
+      dragData.delta = PROPERTY_DELTA[this.property];
+      dragData.factor = this.factor;
 
       // determine dir
       var cssFloat = computedStyle(this.element, 'float');
@@ -208,9 +208,9 @@
       var parentNode = relToOffsetParent ? this.element.offsetParent : this.element.parentNode;
       var parentNodeSize;
       
-      if (cfg.delta == 'deltaY')
+      if (dragData.delta == 'deltaY')
       {
-        cfg.offsetStart = this.element.clientHeight
+        dragData.offsetStart = this.element.clientHeight
           - parseFloat(computedStyle(this.element, 'padding-top'))
           - parseFloat(computedStyle(this.element, 'padding-bottom'));
 
@@ -218,12 +218,12 @@
         if (!relToOffsetParent)
           parentNodeSize -= parseFloat(computedStyle(parentNode, 'padding-top')) + parseFloat(computedStyle(parentNode, 'padding-bottom'));
 
-        if (isNaN(cfg.factor))
-          cfg.factor = -(relToOffsetParent && computedStyle(this.element, 'bottom') != 'auto') || 1;
+        if (isNaN(dragData.factor))
+          dragData.factor = -(relToOffsetParent && computedStyle(this.element, 'bottom') != 'auto') || 1;
       }
       else
       {
-        cfg.offsetStart = this.element.clientWidth
+        dragData.offsetStart = this.element.clientWidth
           - parseFloat(computedStyle(this.element, 'padding-left'))
           - parseFloat(computedStyle(this.element, 'padding-right'));
 
@@ -231,36 +231,36 @@
         if (!relToOffsetParent)
           parentNodeSize -= parseFloat(computedStyle(parentNode, 'padding-left')) + parseFloat(computedStyle(parentNode, 'padding-right'));
 
-        if (isNaN(cfg.factor))
+        if (isNaN(dragData.factor))
         {
           if (cssFloat == 'right')
-            cfg.factor = -1;
+            dragData.factor = -1;
           else
             if (cssFloat == 'left')
-              cfg.factor = 1;
+              dragData.factor = 1;
             else
-              cfg.factor = -(relToOffsetParent && computedStyle(this.element, 'right') != 'auto') || 1;
+              dragData.factor = -(relToOffsetParent && computedStyle(this.element, 'right') != 'auto') || 1;
         }
       }
 
-      cfg.offsetStartInPercent = 100 / parentNodeSize;
+      dragData.offsetStartInPercent = 100 / parentNodeSize;
       classList(this.resizer).add('selected');
     },
-    event_move: function(cfg){
-      super_.event_move.call(this, cfg);
+    event_move: function(dragData){
+      super_.event_move.call(this, dragData);
 
-      var metricName = cfg.delta == 'deltaX' ? 'offsetWidth' : 'offsetHeight';
+      var metricName = dragData.delta == 'deltaX' ? 'offsetWidth' : 'offsetHeight';
       var metricValue = this.element[metricName];
       var curValue = this.element.style[this.property];
 
-      this.element.style[this.property] = cfg.offsetStartInPercent * (cfg.offsetStart + cfg.factor * cfg[cfg.delta]) + '%';
+      this.element.style[this.property] = dragData.offsetStartInPercent * (dragData.offsetStart + dragData.factor * dragData[dragData.delta]) + '%';
 
       // restore value if new value takes no effect
       if (this.element[metricName] == metricValue)
         this.element.style[this.property] = curValue;
     },
-    event_over: function(cfg){
-      super_.event_over.call(this, cfg);
+    event_over: function(dragData){
+      super_.event_over.call(this, dragData);
 
       classList(this.resizer).remove('selected');
       resizerDisableRule.setProperty('pointerEvents', 'auto');
