@@ -2,7 +2,6 @@
   basis.require('basis.timer');
   basis.require('basis.event');
   basis.require('basis.dom');
-  basis.require('basis.cssom');
   basis.require('basis.data');
 
 
@@ -21,21 +20,16 @@
   // import names
 
   var Class = basis.Class;
-  var DOM = basis.dom;
-
-  var cleaner = basis.cleaner;
-
   var getter = basis.getter;
-  var cssom = basis.cssom;
-  var classList = basis.cssom.classList;
+  var cleaner = basis.cleaner;
 
   var TimeEventManager = basis.timer.TimeEventManager;
   var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
-  var nsData = basis.data;
-  var DataObject = nsData.DataObject;
-  var STATE = nsData.STATE;
+  var DOM = basis.dom;
+  var DataObject = basis.data.DataObject;
+  var STATE = basis.data.STATE;
 
   //
   // Main part
@@ -334,26 +328,6 @@
     },
 
    /**
-    * Add link to object in simpler way.
-    * @example
-    *   // add custom class name to element (class name looks like "state-property.value")
-    *   property.addLinkShortcut(element, 'className', 'state-{0}');
-    *   // add 'loading' class name to element, when property is true
-    *   property.addLinkShortcut( element, 'className', { true: 'loading' });
-    *   // switch style.display property (using cssom.show/cssom.hide)
-    *   property.addLinkShortcut(element, 'show', { ShowValue: true });
-    *   property.addLinkShortcut(element, 'show', function(value){ return value == 'ShowValue' });  // the same
-    *   property.addLinkShortcut(element, 'hide', { 'HideValue': true } });  // variation
-    * @param {object} element Target object.
-    * @param {string} shortcutName Name of shortcut.
-    * @param {string|function|object=} format Value modificator.
-    * @return {object} Returns object.
-    */
-    addLinkShortcut: function(element, shortcutName, format){
-      return this.addLink(element, Property.shortcut[shortcutName], format);
-    },
-
-   /**
     * Removes link or all links from object if exists. Parameters must be the same
     * as for addLink method. If field omited all links removes.
     * @example
@@ -457,24 +431,6 @@
       cleaner.remove(this);
     }
   });
-
-  Property.shortcut = {
-    className: function(newValue, oldValue){
-      classList(this).replace(oldValue, newValue);
-    },
-    show: function(newValue){
-      cssom.display(this, !!newValue);
-    },
-    hide: function(newValue){
-      cssom.display(this, !newValue);
-    },
-    disable: function(newValue){
-      this.disabled = !!newValue;
-    },
-    enable: function(newValue){
-      this.disabled = !newValue;
-    }
-  };
 
   //
   //  Property Set
