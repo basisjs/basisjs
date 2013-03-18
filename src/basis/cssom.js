@@ -29,7 +29,7 @@
 
   var CLASSLIST_SUPPORTED = DOMTokenList && document && document.documentElement.classList instanceof DOMTokenList;
   var IMPORTANT_REGEXP = /\s*!important/i;
-  var IMPORTANT = String('important');
+  var IMPORTANT = 'important';
   var GENERIC_RULE_SEED = 1;
   var cssStyleSheets = {};
 
@@ -119,12 +119,12 @@
   * @return {StyleSheet}
   */
   function addStyleSheet(url, title){
-    var element = dom.createElement(!url ? 'STYLE[type="text/css"]' : 'LINK[type="text/css"][rel="{alt}stylesheet"][href={url}]'.format({
+    var element = dom.createElement(!url ? 'style[type="text/css"]' : 'link[type="text/css"][rel="{alt}stylesheet"][href={url}]'.format({
       alt: title ? 'alternate ' : '',
       url: url.quote('"')
     }));
 
-    dom.tag(null, 'HEAD')[0].appendChild(element);
+    dom.tag(null, 'head')[0].appendChild(element);
 
     return StyleSheet_makeCompatible(element.sheet || element.styleSheet);
   }
@@ -174,12 +174,11 @@
     }
   }
 
-  createStyleMapping('opacity', 'opacity MozOpacity KhtmlOpacity filter', true, {
+  createStyleMapping('opacity', 'opacity filter', true, {
     filter: function(value){
       return 'alpha(opacity:' + parseInt(value * 100, 10) + ')';
     }
   });
-  createStyleMapping('border-radius', 'borderRadius MozBorderRadius WebkitBorderRadius', true);
   createStyleMapping('float', 'cssFloat styleFloat');
 
  /**
@@ -722,15 +721,6 @@
       ? new ClassListNS(ns, classList(element))
       : classList(element);
   };
-
-  //
-  // platform specific actions
-  //
-
-  basis.ready(function(){
-    classList(document.body).bool('opacity-not-support', !basis.platformFeature['css-opacity']);
-  });
-
 
   //
   // CSS resource
