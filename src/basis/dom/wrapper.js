@@ -2220,10 +2220,12 @@
     * @destructor
     */
     destroy: function(){
-      if (this.hasOwnSelection())
-        this.setSelection();
-
       this.unselect();
+
+      this.contextSelection = null;
+      
+      if (this.selection)
+        this.setSelection();
 
       // inherit
       AbstractNode.prototype.destroy.call(this);

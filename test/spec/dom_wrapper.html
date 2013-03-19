@@ -1006,25 +1006,51 @@
                 {
                   name: 'destroy child with own selection',
                   test: function(){
-                    var node = new Node({
-                      selection: {},
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet()
+                    var parent = new Node({
+                      selection: true,
+                      childNodes: [new Node({ selected: true }), new Node, new Node]
                     });
 
-                    node.firstChild.select();
+                    this.is(true, parent.firstChild.selected);
+                    this.is(true, parent.selection.pick() != null);
 
-                    var childNode = new Node({
-                      selection: {},
-                      childFactory: nodeFactory,
-                      childNodes: getTestSet()
+                    var child = new Node({
+                      selection: true,
+                      childNodes: [new Node({ selected: true }), new Node, new Node]
                     });
-                    childNode.firstChild.select();
-                    node.appendChild(childNode);
 
-                    childNode.destroy();
+                    this.is(true, child.firstChild.selected);
+                    this.is(true, parent.firstChild.selected);
 
-                    this.is(true, !!node.selection.pick());
+                    parent.appendChild(child);
+                    child.destroy();
+
+                    this.is(true, parent.firstChild.selected);
+                    this.is(true, parent.selection.itemCount > 0);
+                  }
+                },
+                {
+                  name: 'destroy selected child with own selection',
+                  test: function(){
+                    var parent = new Node({
+                      selection: true,
+                      childNodes: [new Node, new Node, new Node]
+                    });
+
+                    var child = new Node({
+                      selection: true,
+                      selected: true,
+                      childNodes: [new Node({ selected: true }), new Node, new Node]
+                    });
+
+                    parent.appendChild(child);
+
+                    this.is(true, child.firstChild.selected);
+                    this.is(true, parent.lastChild.selected);
+
+                    child.destroy();
+
+                    this.is(true, parent.selection.itemCount == 0);
                   }
                 }
               ]
