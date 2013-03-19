@@ -1331,6 +1331,7 @@
     StringId: StringId,
     Index: Index,
     CalculateField: CalculateField,
+    calc: CalculateField,
 
     EntityType: EntityTypeWrapper,
     Entity: Entity,
