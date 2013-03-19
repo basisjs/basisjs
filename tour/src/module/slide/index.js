@@ -5,6 +5,11 @@ basis.require('basis.data.index');
 basis.require('app.type');
 
 var prevCode = '';
+var timer;
+
+function updateLauncher(){
+  view.tmpl.launcher.src = 'launcher.html';
+}
 
 var filesView = new basis.ui.tabs.TabControl({
   autoDelegate: true,
@@ -21,7 +26,35 @@ var filesView = new basis.ui.tabs.TabControl({
     },
     handler: {
       select: function(){
-        this.parentNode.owner.tmpl.editor.value = this.data.content;
+        editor.setDelegate(this);
+      }
+    }
+  }
+});
+
+var editor = new basis.ui.Node({
+  template: resource('template/editor.tmpl'),
+  binding: {
+    content: 'data:'
+  },
+  action: {
+    update: function(event){
+      this.target.update({
+        content: event.sender.value
+      }, true);
+    }
+  },
+  handler: {
+    update: function(sender, delta){
+      if ('filename' in delta)
+        return updateLauncher();
+
+      if ('content' in delta)
+      {
+        if (timer)
+          clearTimeout(timer);
+
+        timer = setTimeout(updateLauncher, 500);
       }
     }
   }
@@ -41,9 +74,11 @@ var view = new basis.ui.Node({
   binding: {
     //code: 'data:',
     description: 'data:',
-    files: filesView,
     num: 'data:',
-    slideCount: basis.data.index.count(app.type.Slide.all)
+    slideCount: basis.data.index.count(app.type.Slide.all),
+
+    files: filesView,
+    editor: editor
   },
   action: {
     toc: function(){
@@ -56,21 +91,6 @@ var view = new basis.ui.Node({
     next: function(){
       var next = this.data.next;
       basis.router.navigate(next ? next.data.id : '');
-    },
-    runCode: function(event){
-      var value = event.sender.value;
-
-      try {
-        new Function(value);
-      } catch(e) {
-        return;
-      }
-
-      if (prevCode != value)
-      {
-        prevCode = value;
-        this.tmpl.launcher.src = this.tmpl.launcher.src;
-      }
     }
   }  
 });
@@ -78,6 +98,10 @@ var view = new basis.ui.Node({
 module.exports = view;
 
 global.launcherCallback = function(){
-  var sourceCodeNode = document.getElementById('code-editor');
-  return prevCode = sourceCodeNode ? sourceCodeNode.value : 'document.write("Source code not found")';
+  var res = {};
+  var files = view.data.files ? view.data.files.getItems() : [];
+  files.forEach(function(file){
+    res[file.data.name] = file.data.content;
+  });
+  return res;
 }

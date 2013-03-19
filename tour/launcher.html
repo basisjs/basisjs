@@ -5,9 +5,20 @@
   <title>basis.js tour code launcher</title>
 
   <style>
+    BODY
+    {
+      font-family: Tahoma, Verdana, Arial, sans;
+      font-size: small;
+    }
     #basis-tour-console
     {
-      border: 1px solid #E0E0E0;
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      max-height: 75%;
+      border-top: 1px solid #333;
+      background: rgba(0,0,0,.25);
     }
     .basis-tour-message
     {
@@ -15,7 +26,7 @@
     }
     .basis-tour-message_warn
     {
-      color: red;
+      color: #D00;
     }
     .basis-tour-message_info
     {
@@ -55,31 +66,35 @@
 
       return res;
     })(window.console);
-  </script>
-  <script src="../src/basis.js" basis-config></script>
-</head>
-<body>
-  <script>
+
     window.onerror = function(message){
       document.write(message);
     }
-
-    document.write(+new Date);
-
-    basis.ready(function(){
-      document.body.appendChild(virtualConsole);
-
-      if (top.launcherCallback)
-      {
-        try {
-          Function(top.launcherCallback())();
-        } catch(e) {
-          document.write('<div style="font-weight: bold; color: #AA0000;">Syntax error: ' + e.message + '</div>');
+  </script>
+  <script>
+    //document.write(+new Date);
+    if (top.launcherCallback)
+    {
+      (function(){
+        var resources = top.launcherCallback();
+        if (window.__resources__)
+        {
+          for (var key in resources)
+            window.__resources__[key] = resources[key];
         }
-      }
-      else
-        document.write('<div style="font-weight: bold; color: #AA0000;">Sorry, but I have no required environment</div>')
+        else
+          window.__resources__ = resources;
+      })();
+    }
+  </script>
+  <script src="../src/basis.js" basis-config></script>
+  <script>
+    basis.ready(function(){
+      basis.resource('index.js').fetch();
+      document.body.appendChild(virtualConsole);
     });
   </script>
+</head>
+<body>
 </body>
 </html>
