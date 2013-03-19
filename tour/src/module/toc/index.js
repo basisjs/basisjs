@@ -15,7 +15,7 @@ module.exports = new basis.ui.Node({
     },
     action: {
       openPage: function(){
-        basis.router.navigate(this.data.filename.replace(/\.html$/, ''));
+        basis.router.navigate(this.data.hash);
       }
     }
   }

@@ -12,6 +12,10 @@ var Page = new basis.entity.EntityType({
   name: 'Page',
   fields: {
     filename: basis.entity.StringId,
+    num: Number,
+    hash: calc('filename', function(filename){
+      return filename.replace(/\.[a-z]+$/, '');
+    }),
     html: String,
     title: calc('filename', 'html', function(filename, html){
       var m = html.match(/<h1>((?:[\r\n]|.)*)<\/h1>/);
@@ -36,6 +40,8 @@ var Page = new basis.entity.EntityType({
     })
   }
 });
+Page.addField('prev', Page);
+Page.addField('next', Page);
 
 Page.entityType.entityClass.extend({
   state: basis.data.STATE.UNDEFINED,
@@ -46,7 +52,22 @@ Page.entityType.entityClass.extend({
 });
 
 Page.all.setSyncAction(function(){
-  this.sync(basis.resource('page/index.json').fetch());
+  var data = basis.resource('page/index.json').fetch();
+  
+  this.sync(data);
+  
+  var prev = null;
+  var next = null;
+  for (var i = 0, page; page = Page.get(data[i]); i++)
+  {
+    next = Page.get(data[i + 1]);
+    page.update({
+      num: i + 1,
+      prev: prev,
+      next: next
+    });
+    prev = page;
+  }
 });
 
 
