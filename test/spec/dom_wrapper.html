@@ -1001,6 +1001,35 @@
               ]
             },
             {
+              name: 'selection',
+              testcase: [
+                {
+                  name: 'destroy child with own selection',
+                  test: function(){
+                    var node = new Node({
+                      selection: {},
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet()
+                    });
+
+                    node.firstChild.select();
+
+                    var childNode = new Node({
+                      selection: {},
+                      childFactory: nodeFactory,
+                      childNodes: getTestSet()
+                    });
+                    childNode.firstChild.select();
+                    node.appendChild(childNode);
+
+                    childNode.destroy();
+
+                    this.is(true, !!node.selection.pick());
+                  }
+                }
+              ]
+            },
+            {
               name: 'Dynamic test',
               testcase: [
                 {
