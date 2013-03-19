@@ -41,7 +41,7 @@ module.exports = new basis.ui.Node({
     description: 'data:',
     files: filesView,
     num: 'data:',
-    pageCount: basis.data.index.count(app.type.Page.all)
+    slideCount: basis.data.index.count(app.type.Slide.all)
   },
   action: {
     toc: function(){

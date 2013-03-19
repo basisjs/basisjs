@@ -1,4 +1,4 @@
 
   module.exports = {
-    Page: resource('type/page.js').fetch()
+    Slide: resource('type/slide.js').fetch()
   };

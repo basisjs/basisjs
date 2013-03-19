@@ -1,4 +1,3 @@
-
 basis.require('basis.entity');
 
 
@@ -8,8 +7,8 @@ var calc = basis.entity.CalculateField;
 // main part
 //
 
-var Page = new basis.entity.EntityType({
-  name: 'Page',
+var Slide = new basis.entity.EntityType({
+  name: 'Slide',
   fields: {
     filename: basis.entity.StringId,
     num: Number,
@@ -40,33 +39,33 @@ var Page = new basis.entity.EntityType({
     })
   }
 });
-Page.addField('prev', Page);
-Page.addField('next', Page);
+Slide.addField('prev', Slide);
+Slide.addField('next', Slide);
 
-Page.entityType.entityClass.extend({
+Slide.entityType.entityClass.extend({
   state: basis.data.STATE.UNDEFINED,
   syncAction: function(){
-    var content = basis.resource('page/' + this.data.filename).fetch();
+    var content = basis.resource('slide/' + this.data.filename).fetch();
     this.set('html', content);
   }
 });
 
-Page.all.setSyncAction(function(){
-  var data = basis.resource('page/index.json').fetch();
+Slide.all.setSyncAction(function(){
+  var data = basis.resource('slide/index.json').fetch();
   
   this.sync(data);
   
   var prev = null;
   var next = null;
-  for (var i = 0, page; page = Page.get(data[i]); i++)
+  for (var i = 0, slide; slide = Slide.get(data[i]); i++)
   {
-    next = Page.get(data[i + 1]);
-    page.update({
+    next = Slide.get(data[i + 1]);
+    slide.update({
       num: i + 1,
       prev: prev,
       next: next
     });
-    prev = page;
+    prev = slide;
   }
 });
 
@@ -75,4 +74,4 @@ Page.all.setSyncAction(function(){
 // export names
 //
 
-module.exports = Page;
+module.exports = Slide;

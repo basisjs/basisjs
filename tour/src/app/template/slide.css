@@ -1,4 +1,4 @@
-.app-page
+.app-slide
 {
   display: none;
   position: absolute;
@@ -8,7 +8,7 @@
   bottom: 0;
 }
 
-.app-page_selected
+.app-slide_selected
 {
   display: block;
 }

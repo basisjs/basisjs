@@ -2,7 +2,7 @@ basis.require('basis.ui');
 basis.require('app.type');
 
 module.exports = new basis.ui.Node({
-  dataSource: app.type.Page.all,
+  dataSource: app.type.Slide.all,
   active: true,
 
   template: resource('template/list.tmpl'),
@@ -14,7 +14,7 @@ module.exports = new basis.ui.Node({
       title: 'data:'
     },
     action: {
-      openPage: function(){
+      openSlide: function(){
         basis.router.navigate(this.data.hash);
       }
     }
