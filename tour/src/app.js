@@ -13,7 +13,7 @@ module.exports = basis.app({
 
       selection: true,
       childClass: {
-        template: resource('app/template/slide.tmpl'),
+        template: resource('app/template/page.tmpl'),
         event_select: function(){
           basis.ui.Node.prototype.event_select.call(this);
 
