@@ -31,6 +31,8 @@
 {
   background: silver;
   height: 2.5em;
+    -webkit-user-select: none;
+  user-select: none;
 }
 #nav SPAN
 {

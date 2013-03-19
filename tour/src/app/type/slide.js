@@ -1,7 +1,7 @@
 basis.require('basis.entity');
 
-
 var calc = basis.entity.CalculateField;
+var File = resource('file.js').fetch();
 
 //
 // main part
@@ -10,63 +10,44 @@ var calc = basis.entity.CalculateField;
 var Slide = new basis.entity.EntityType({
   name: 'Slide',
   fields: {
-    filename: basis.entity.StringId,
+    id: basis.entity.StringId,
     num: Number,
-    hash: calc('filename', function(filename){
-      return filename.replace(/\.[a-z]+$/, '');
-    }),
-    html: String,
-    title: calc('filename', 'html', function(filename, html){
-      var m = html.match(/<h1>((?:[\r\n]|.)*)<\/h1>/);
-      return m ? m[1] : filename;
-    }),
-    code: calc('html', function(html){
-      var m = html.match(/<pre id="sourceCode">((?:[\r\n]|.)*?)<\/pre>/);
-      return m ? m[1] : '';
-    }),
-    description: calc('html', function(html){
-      var m = html.match(/<div id="description">((?:[\r\n]|.)*?)<\/div>/);
-      return m ? m[1] : '';
-    }),
-    files: calc('html', function(){
-      return [
-        new basis.data.Object({
-          data: {
-            filename: 'file1'
-          }
-        })
-      ]
-    })
+    title: String,
+    description: String,
+    code: String,
+    files: new basis.entity.EntitySetType(File)
   }
 });
 Slide.addField('prev', Slide);
 Slide.addField('next', Slide);
 
-Slide.entityType.entityClass.extend({
-  state: basis.data.STATE.UNDEFINED,
-  syncAction: function(){
-    var content = basis.resource('slide/' + this.data.filename).fetch();
-    this.set('html', content);
-  }
-});
+// Slide.entityType.entityClass.extend({
+//   state: basis.data.STATE.UNDEFINED,
+//   syncAction: function(){
+//     var content = basis.resource('slide/' + this.data.filename).fetch();
+//     this.set('html', content);
+//   }
+// });
 
 Slide.all.setSyncAction(function(){
   var data = basis.resource('slide/index.json').fetch();
-  
-  this.sync(data);
-  
   var prev = null;
   var next = null;
-  for (var i = 0, slide; slide = Slide.get(data[i]); i++)
+  for (var i = 0, item; item = data[i]; i++)
   {
-    next = Slide.get(data[i + 1]);
-    slide.update({
+    next = data[i + 1];
+    basis.object.extend(item, {
       num: i + 1,
-      prev: prev,
-      next: next
+      prev: prev && prev.id,
+      next: next && next.id,
+      files: ['index.js'].concat(item.files || []).map(function(filename){
+        return item.id + '/' + filename;
+      })
     });
-    prev = slide;
+    prev = item;
   }
+
+  this.sync(data);
 });
 
 

@@ -7,6 +7,7 @@ module.exports = new basis.ui.Node({
 
   template: resource('template/list.tmpl'),
   
+  sorting: 'data.num',
   childClass: {
     active: true,
     template: resource('template/item.tmpl'),
@@ -15,7 +16,7 @@ module.exports = new basis.ui.Node({
     },
     action: {
       openSlide: function(){
-        basis.router.navigate(this.data.hash);
+        basis.router.navigate(this.data.id);
       }
     }
   }

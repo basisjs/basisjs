@@ -11,21 +11,23 @@ var filesView = new basis.ui.tabs.TabControl({
   handler: {
     update: function(sender, delta){
       if ('files' in delta)
-        this.setChildNodes(this.data.files);
+        this.setChildNodes(this.data.files ? this.data.files.getItems() : []);
     }
   },
   childClass: {
+    active: true,
     binding: {
-      title: 'data:filename'
+      title: 'data:name'
+    },
+    handler: {
+      select: function(){
+        this.parentNode.owner.tmpl.editor.value = this.data.content;
+      }
     }
-  },
-  childNodes: [
-    { title: 'test' },
-    { title: 'test2' }
-  ]
+  }
 });
 
-module.exports = new basis.ui.Node({
+var view = new basis.ui.Node({
   autoDelegate: true,
   active: true,
   handler: {
@@ -37,7 +39,7 @@ module.exports = new basis.ui.Node({
 
   template: resource('template/view.tmpl'),
   binding: {
-    code: 'data:',
+    //code: 'data:',
     description: 'data:',
     files: filesView,
     num: 'data:',
@@ -49,11 +51,11 @@ module.exports = new basis.ui.Node({
     },
     prev: function(){
       var prev = this.data.prev;
-      basis.router.navigate(prev ? prev.data.hash : '');
+      basis.router.navigate(prev ? prev.data.id : '');
     },
     next: function(){
       var next = this.data.next;
-      basis.router.navigate(next ? next.data.hash : '');
+      basis.router.navigate(next ? next.data.id : '');
     },
     runCode: function(event){
       var value = event.sender.value;
@@ -72,6 +74,8 @@ module.exports = new basis.ui.Node({
     }
   }  
 });
+
+module.exports = view;
 
 global.launcherCallback = function(){
   var sourceCodeNode = document.getElementById('code-editor');

@@ -1,21 +1,4 @@
-<!doctype html>
-
-<html>
-<head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <title>basis.js tour: simple class</title>
-
-  <script src="../../src/basis.js" basis-config="autoload: '../src/app'"></script>
-  <script>
-    //location.replace('/tour/');
-  </script>
-</head>
-<body>
-  <h1>Class: Inheritance</h1>
-  <div id="description">
-    class inheritance
-  </div>
-  <pre id="sourceCode">var Human = basis.Class(null, { // you can use basis.Class instead of null
+var Human = basis.Class(null, { // you can use basis.Class instead of null
   name: 'no name',
   init: function(name){ // special method - constructor
     this.name = name;
@@ -44,8 +27,3 @@ console.log(mario.say()); // My name is Super Mario. I'm 99 level.
 console.log(mario instanceof basis.Class); // false (for some reasons it false now)
 console.log(mario instanceof Human); // true
 console.log(mario instanceof Gamer); // true
-</pre>
-  <div id="files">
-  </div>
-</body>
-</html>

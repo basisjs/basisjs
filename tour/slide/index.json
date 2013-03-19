@@ -1,6 +1,21 @@
 [
-  "class_create.html",
-  "class_inheritance.html",
-  "ui_list_resources.html",
-  "broken_link.html"
+  {
+    "id": "class_create",
+    "title": "Class: Simple class",
+    "description": "test description"
+  },
+  {
+    "id": "class_inheritance",
+    "title": "Class: Inheritance",
+    "description": "Text about inheritance"
+  },
+  {
+    "id": "ui_list_resources",
+    "title": "UI: List with resources",
+    "description": "Simple list with templates in separate files.",
+    "files": [
+      "list.tmpl",
+      "item.tmpl"
+    ]
+  }
 ]
