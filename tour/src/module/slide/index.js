@@ -4,35 +4,7 @@ basis.require('basis.router');
 basis.require('basis.data.index');
 basis.require('app.type');
 
-var prevCode = '';
 var timer;
-var updateResource;
-var updatableFiles = [];
-
-var updatableHandler = {
-  update: function(sender, delta){
-    if ('content' in delta)
-      updateResource(this.data.name, this.data.content);
-  }
-};
-
-global.launcherCallback = function(fn){
-  updateResource = fn;
-  updatableFiles.splice(0).forEach(function(file){
-    file.removeHandler(updatableHandler);
-  });
-
-  var res = {};
-  (view.data.files ? view.data.files.getItems() : []).forEach(function(file){
-    res[file.data.name] = file.data.content;
-    if (file.data.updatable)
-    {
-      updatableFiles.push(file);
-      file.addHandler(updatableHandler);
-    }
-  });
-  return res;
-}
 
 function updateLauncher(){
   view.tmpl.launcher.src = 'launcher.html';
@@ -89,7 +61,6 @@ var editor = new basis.ui.Node({
 
 var view = new basis.ui.Node({
   autoDelegate: true,
-  active: true,
   handler: {
     targetChanged: function(){
       if (this.target)
@@ -99,8 +70,9 @@ var view = new basis.ui.Node({
 
   template: resource('template/view.tmpl'),
   binding: {
-    //code: 'data:',
+    title: 'data:',
     description: 'data:',
+
     num: 'data:',
     slideCount: basis.data.index.count(app.type.Slide.all),
 

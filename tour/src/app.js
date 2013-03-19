@@ -54,6 +54,34 @@ module.exports = basis.app({
   }
 });
 
-module.exports.selectSlide = function(slide){
-  view.setDelegate(slide);
-}
+
+//
+// launcher callback
+//
+
+var updateResourceFn;
+var updatableFiles = [];
+var updatableHandler = {
+  update: function(sender, delta){
+    if ('content' in delta)
+      updateResourceFn(this.data.name, this.data.content);
+  }
+};
+
+global.launcherCallback = function(fn){
+  updateResourceFn = fn;
+  updatableFiles.splice(0).forEach(function(file){
+    file.removeHandler(updatableHandler);
+  });
+
+  var res = {};
+  (view.data.files ? view.data.files.getItems() : []).forEach(function(file){
+    res[file.data.name] = file.data.content;
+    if (file.data.updatable)
+    {
+      updatableFiles.push(file);
+      file.addHandler(updatableHandler);
+    }
+  });
+  return res;
+};
