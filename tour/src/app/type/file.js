@@ -7,7 +7,12 @@ var File = new basis.entity.EntityType({
     name: basis.entity.calc('filename', function(filename){
       return basis.path.basename(filename);
     }),
-    content: String
+    content: String,
+    updatable: basis.entity.calc('filename', function(filename){
+      var ext = basis.path.extname(filename);
+      var cfg = basis.resource.extensions[ext];
+      return (cfg && cfg.updatable) || ext == '.tmpl';
+    })
   }
 });
 

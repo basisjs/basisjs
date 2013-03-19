@@ -72,11 +72,13 @@
     }
   </script>
   <script>
-    //document.write(+new Date);
+    document.write(+new Date);
     if (top.launcherCallback)
     {
       (function(){
-        var resources = top.launcherCallback();
+        var resources = top.launcherCallback(function(filename, content){
+          basis.resource(basis.path.resolve(filename)).update(content);
+        });
         if (window.__resources__)
         {
           for (var key in resources)

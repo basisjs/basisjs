@@ -15,7 +15,9 @@
     "description": "Simple list with templates in separate files.",
     "files": [
       "list.tmpl",
-      "item.tmpl"
+      "list.css",
+      "item.tmpl",
+      "item.css"
     ]
   }
 ]

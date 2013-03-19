@@ -6,9 +6,42 @@ basis.require('app.type');
 
 var prevCode = '';
 var timer;
+var updateResource;
+var updatableFiles = [];
+
+var updatableHandler = {
+  update: function(sender, delta){
+    if ('content' in delta)
+      updateResource(this.data.name, this.data.content);
+  }
+};
+
+global.launcherCallback = function(fn){
+  updateResource = fn;
+  updatableFiles.splice(0).forEach(function(file){
+    file.removeHandler(updatableHandler);
+  });
+
+  var res = {};
+  (view.data.files ? view.data.files.getItems() : []).forEach(function(file){
+    res[file.data.name] = file.data.content;
+    if (file.data.updatable)
+    {
+      updatableFiles.push(file);
+      file.addHandler(updatableHandler);
+    }
+  });
+  return res;
+}
 
 function updateLauncher(){
   view.tmpl.launcher.src = 'launcher.html';
+}
+function prepareToUpdate(){
+  if (timer)
+    clearTimeout(timer);
+
+  timer = setTimeout(updateLauncher, 500);
 }
 
 var filesView = new basis.ui.tabs.TabControl({
@@ -39,23 +72,17 @@ var editor = new basis.ui.Node({
   },
   action: {
     update: function(event){
+      this.updateLauncher = !this.data.updatable;
       this.target.update({
         content: event.sender.value
       }, true);
+      this.updateLauncher = false;
     }
   },
   handler: {
     update: function(sender, delta){
-      if ('filename' in delta)
-        return updateLauncher();
-
-      if ('content' in delta)
-      {
-        if (timer)
-          clearTimeout(timer);
-
-        timer = setTimeout(updateLauncher, 500);
-      }
+      if ('content' in delta && this.updateLauncher)
+        prepareToUpdate();
     }
   }
 });
@@ -64,9 +91,9 @@ var view = new basis.ui.Node({
   autoDelegate: true,
   active: true,
   handler: {
-    update: function(sender, delta){
-      if ('code' in delta)
-        this.tmpl.launcher.src = this.tmpl.launcher.src;
+    targetChanged: function(){
+      if (this.target)
+        updateLauncher();
     }
   },  
 
@@ -96,12 +123,3 @@ var view = new basis.ui.Node({
 });
 
 module.exports = view;
-
-global.launcherCallback = function(){
-  var res = {};
-  var files = view.data.files ? view.data.files.getItems() : [];
-  files.forEach(function(file){
-    res[file.data.name] = file.data.content;
-  });
-  return res;
-}
