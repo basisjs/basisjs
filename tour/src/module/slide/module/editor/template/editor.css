@@ -8,5 +8,6 @@
   margin: 0;
   border: none;
   resize: none;
-  background: #F0F0F0;
+  background: rgba(255,255,0,.1);
+  outline: none;
 }

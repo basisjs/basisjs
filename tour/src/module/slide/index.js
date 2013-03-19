@@ -6,56 +6,12 @@ basis.require('app.type');
 
 var timer;
 
-function updateLauncher(){
-  view.tmpl.launcher.src = 'launcher.html';
-}
-function prepareToUpdate(){
-  if (timer)
-    clearTimeout(timer);
+var fileList = resource('module/fileList/index.js').fetch();
+var editor = resource('module/editor/index.js').fetch();
 
-  timer = setTimeout(updateLauncher, 500);
-}
-
-var filesView = new basis.ui.tabs.TabControl({
-  autoDelegate: true,
-  handler: {
-    update: function(sender, delta){
-      if ('files' in delta)
-        this.setChildNodes(this.data.files ? this.data.files.getItems() : []);
-    }
-  },
-  childClass: {
-    active: true,
-    binding: {
-      title: 'data:name'
-    },
-    handler: {
-      select: function(){
-        editor.setDelegate(this);
-      }
-    }
-  }
-});
-
-var editor = new basis.ui.Node({
-  template: resource('template/editor.tmpl'),
-  binding: {
-    content: 'data:'
-  },
-  action: {
-    update: function(event){
-      this.updateLauncher = !this.data.updatable;
-      this.target.update({
-        content: event.sender.value
-      }, true);
-      this.updateLauncher = false;
-    }
-  },
-  handler: {
-    update: function(sender, delta){
-      if ('content' in delta && this.updateLauncher)
-        prepareToUpdate();
-    }
+fileList.selection.addHandler({
+  datasetChanged: function(){
+    editor.setDelegate(this.pick());
   }
 });
 
@@ -64,7 +20,7 @@ var view = new basis.ui.Node({
   handler: {
     targetChanged: function(){
       if (this.target)
-        updateLauncher();
+        this.run();
     }
   },  
 
@@ -76,7 +32,7 @@ var view = new basis.ui.Node({
     num: 'data:',
     slideCount: basis.data.index.count(app.type.Slide.all),
 
-    files: filesView,
+    files: fileList,
     editor: editor
   },
   action: {
@@ -91,7 +47,18 @@ var view = new basis.ui.Node({
       var next = this.data.next;
       basis.router.navigate(next ? next.data.id : '');
     }
-  }  
+  },
+
+  prepareToRun: function(){
+    if (this.timer)
+      clearTimeout(this.timer);
+
+    this.timer = setTimeout(this.run.bind(this), 500);
+  },
+  run: function (){
+    this.timer = clearTimeout(this.timer);
+    this.tmpl.launcher.src = 'launcher.html';
+  }
 });
 
 module.exports = view;
