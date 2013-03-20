@@ -72,7 +72,6 @@
     }
   </script>
   <script>
-    document.write(+new Date);
     if (top.launcherCallback)
     {
       (function(){
@@ -92,9 +91,14 @@
   <script src="../src/basis.js" basis-config></script>
   <script>
     basis.ready(function(){
-      basis.resource('index.js').fetch();
+      try {
+        basis.resource('main.js').fetch();
+      } catch(e) {
+        console.warn(e.message || e);
+      }
       document.body.appendChild(virtualConsole);
     });
+    document.write(+new Date);
   </script>
 </head>
 <body>

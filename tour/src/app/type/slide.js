@@ -40,7 +40,7 @@ Slide.all.setSyncAction(function(){
       num: i + 1,
       prev: prev && prev.id,
       next: next && next.id,
-      files: ['index.js'].concat(item.files || []).map(function(filename){
+      files: ['main.js'].concat(item.files || []).map(function(filename){
         return item.id + '/' + filename;
       })
     });

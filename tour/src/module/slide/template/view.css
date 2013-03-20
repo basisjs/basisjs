@@ -19,25 +19,33 @@
 {
   background: #E0E0E0;
   position: absolute;
-  top: 2.5em;
+  top: 2em;
+  margin-top: 8px;
   left: 0;
   right: 0;
   bottom: 0;
   padding: 15px;
   overflow: auto;
 }
+#description H2
+{
+  margin-top: 0;
+}
 
 #nav
 {
   background: silver;
-  height: 2.5em;
+  height: 2em;
+  padding: 4px;
+  overflow: hidden;
     -webkit-user-select: none;
   user-select: none;
 }
 #nav SPAN
 {
+  float: left;
   padding: 4px 8px;
-  margin: 2px;
+  margin: 0 2px;
   background: rgba(0,0,0,.2);
   cursor: pointer;
 }
@@ -54,13 +62,46 @@
 }
 #header
 {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   height: 2.5em;
+  overflow: hidden;
+  position: relative;
+}
+#header H1
+{
+  font-weight: normal;
+  margin: 0;
   line-height: 1.5em;
-  font-size: 150%;
+  font-size: 175%;
   text-indent: .25em;
+}
+#header .buttons
+{
+  position: absolute;
+  right: 4px;
+  top: 4px;
+}
+#header .buttons .button
+{
+  cursor: pointer;
+  background: #E0E0E0;
+  padding: 4px 8px;
+  float: left;
+}
+#header .buttons .button-reset
+{
+  visibility: hidden;
+  opacity: 0;
+    -webkit-transition: opacity .2s, visibility .2s;
+  transition: opacity .2s, visibility .2s;
+}
+#header .buttons .button-reset_hasChanges
+{
+  visibility: visible;
+  opacity: 1;
+}
+#header .buttons .button:hover
+{
+  background: gold;
 }
 #files-tabs
 {

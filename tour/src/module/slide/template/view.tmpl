@@ -1,4 +1,5 @@
 <b:resource src="view.css"/>
+<b:define name="hasChanges" type="bool"/>
 
 <div class="app-slide">
   <div id="navAndContentSide">
@@ -10,12 +11,16 @@
     </div>
     <div id="description">
       <!--{toc}-->
+      <h2>{title}</h2>
       {description}
     </div>
   </div>
   <div id="interactiveSide">
     <div id="header">
-      Basis.js tour
+      <h1>Basis.js tour</h1>
+      <div class="buttons">
+        <span class="button button-reset button-reset_{hasChanges}" event-click="resetSlide">reset slide</span>
+      </div>
     </div>
     <div id="files-tabs">
       <!--{files}-->

@@ -1,0 +1,7 @@
+.slide-file-list
+{
+  overflow: hidden;
+  position: absolute;
+  bottom: 0;
+  padding-left: 6px;
+}

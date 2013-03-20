@@ -1,7 +1,9 @@
 basis.require('basis.ui');
+
 var list = new basis.ui.Node({
   container: document.body,
   template: resource('list.tmpl'),
+
   childClass: {
     template: resource('item.tmpl'),
     binding: {

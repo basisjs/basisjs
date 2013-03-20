@@ -1,3 +1,5 @@
+basis.require('basis.data');
+basis.require('basis.data.dataset');
 basis.require('basis.ui');
 basis.require('basis.ui.tabs');
 basis.require('basis.router');
@@ -5,7 +7,6 @@ basis.require('basis.data.index');
 basis.require('app.type');
 
 var timer;
-
 var fileList = resource('module/fileList/index.js').fetch();
 var editor = resource('module/editor/index.js').fetch();
 
@@ -15,9 +16,32 @@ fileList.selection.addHandler({
   }
 });
 
+var updateSet = new basis.data.Dataset({
+  listen: {
+    item: {
+      update: function(sender){
+        if (!sender.data.updatable)
+          view.prepareToRun();
+      }
+    }
+  }
+});
+var changedFiles = new basis.data.dataset.Subset({
+  source: updateSet,
+  ruleEvents: {
+    rollbackUpdate: true
+  },
+  rule: function(item){
+    return item.modified;
+  }
+});
+
 var view = new basis.ui.Node({
   autoDelegate: true,
   handler: {
+    update: function(){
+      updateSet.set(this.data.files ? this.data.files.getItems() : []);
+    },
     targetChanged: function(){
       if (this.target)
         this.run();
@@ -31,6 +55,7 @@ var view = new basis.ui.Node({
 
     num: 'data:',
     slideCount: basis.data.index.count(app.type.Slide.all),
+    hasChanges: basis.data.index.count(changedFiles),
 
     files: fileList,
     editor: editor
@@ -46,6 +71,11 @@ var view = new basis.ui.Node({
     next: function(){
       var next = this.data.next;
       basis.router.navigate(next ? next.data.id : '');
+    },
+    resetSlide: function(){
+      this.data.files.getItems().forEach(function(file){
+        file.rollback();
+      });
     }
   },
 
