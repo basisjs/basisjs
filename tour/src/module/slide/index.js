@@ -51,7 +51,12 @@ var view = new basis.ui.Node({
   template: resource('template/view.tmpl'),
   binding: {
     title: 'data:',
-    description: 'data:',
+    description: {
+      events: 'update',
+      getter: function(node){
+        return node.data.id ? basis.resource('slide/' + node.data.id + '/index.html') : null;
+      }
+    },
 
     num: 'data:',
     slideCount: basis.data.index.count(app.type.Slide.all),

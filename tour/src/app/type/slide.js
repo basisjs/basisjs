@@ -13,7 +13,6 @@ var Slide = new basis.entity.EntityType({
     id: basis.entity.StringId,
     num: Number,
     title: String,
-    description: String,
     code: String,
     files: new basis.entity.EntitySetType(File)
   }
@@ -21,13 +20,10 @@ var Slide = new basis.entity.EntityType({
 Slide.addField('prev', Slide);
 Slide.addField('next', Slide);
 
-// Slide.entityType.entityClass.extend({
-//   state: basis.data.STATE.UNDEFINED,
-//   syncAction: function(){
-//     var content = basis.resource('slide/' + this.data.filename).fetch();
-//     this.set('html', content);
-//   }
-// });
+
+//
+// sync data
+//
 
 Slide.all.setSyncAction(function(){
   var data = basis.resource('slide/index.json').fetch();
@@ -52,7 +48,7 @@ Slide.all.setSyncAction(function(){
 
 
 //
-// export names
+// export
 //
 
 module.exports = Slide;

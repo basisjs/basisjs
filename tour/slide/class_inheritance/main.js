@@ -1,6 +1,6 @@
-var Human = basis.Class(null, { // you can use basis.Class instead of null
+var Human = basis.Class(null, { // use null if no ancestor class
   name: 'no name',
-  init: function(name){ // special method - constructor
+  init: function(name){ // calls once, when instance creates
     this.name = name;
   },
   say: function(){
@@ -22,8 +22,7 @@ var Gamer = basis.Class(Human, {
 var john = new Human('John');
 var mario = new Gamer('Super Mario', 99);
 
-console.log(john.say()); // My name is John.
-console.log(mario.say()); // My name is Super Mario. I'm 99 level.
-console.log(mario instanceof basis.Class); // false (for some reasons it false now)
+console.log('John says:', john.say()); // My name is John.
+console.log('Mario says:', mario.say()); // My name is Super Mario. I'm 99 level.
 console.log(mario instanceof Human); // true
 console.log(mario instanceof Gamer); // true

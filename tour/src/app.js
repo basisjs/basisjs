@@ -46,7 +46,7 @@ module.exports = basis.app({
     });
 
     basis.router.add('*slide', function(slide){
-      view.setDelegate(app.type.Slide.getSlot(slide));
+      view.setDelegate(slide ? app.type.Slide.getSlot(slide) : null);
     });
     basis.router.start();
 

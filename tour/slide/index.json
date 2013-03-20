@@ -1,18 +1,15 @@
 [
   {
     "id": "class_create",
-    "title": "Class: Simple class",
-    "description": "test description"
+    "title": "Class: Simple class"
   },
   {
     "id": "class_inheritance",
-    "title": "Class: Inheritance",
-    "description": "Text about inheritance"
+    "title": "Class: Inheritance"
   },
   {
     "id": "ui_list_resources",
     "title": "UI: List with resources",
-    "description": "Simple list with templates in separate files.",
     "files": [
       "list.tmpl",
       "list.css",
