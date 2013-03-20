@@ -19,8 +19,11 @@ var File = new basis.entity.EntityType({
 File.entityType.entityClass.extend({
   state: basis.data.STATE.UNDEFINED,
   syncAction: function(){
-    var content = basis.resource('slide/' + this.data.filename).get(true);
-    this.set('content', content);
+    var res = basis.resource('slide/' + this.data.filename);
+    res.attach(function(){
+      this.set('content', res.get(true));
+    }, this);
+    this.set('content', res.get(true));
   }
 });
 
