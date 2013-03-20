@@ -8,6 +8,14 @@
     "title": "Class: Inheritance"
   },
   {
+    "id": "ui_node",
+    "title": "UI: Basics"
+  },
+  {
+    "id": "ui_simple",
+    "title": "UI: Do it simple"
+  },
+  {
     "id": "ui_list",
     "title": "UI: List"
   },

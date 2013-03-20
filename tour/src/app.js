@@ -1,7 +1,6 @@
 basis.require('basis.app');
 basis.require('basis.ui');
 basis.require('basis.router');
-basis.require('basis.devpanel');  
 basis.require('app.type');
 
 

@@ -17,7 +17,7 @@
 }
 #description
 {
-  background: #E0E0E0;
+  background: #E0FFE0;
   position: absolute;
   top: 2em;
   margin-top: 8px;
@@ -26,6 +26,7 @@
   bottom: 0;
   padding: 15px;
   overflow: auto;
+  line-height: 1.4;
 }
 #description H2
 {

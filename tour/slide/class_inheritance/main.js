@@ -1,6 +1,6 @@
-var Human = basis.Class(null, { // use null if no ancestor class
+var Human = basis.Class(null, {
   name: 'no name',
-  init: function(name){ // calls once, when instance creates
+  init: function(name){
     this.name = name;
   },
   say: function(){
@@ -15,7 +15,8 @@ var Gamer = basis.Class(Human, {
     this.level = level;
   },
   say: function(){
-    return Human.prototype.say.call(this) + ' I\'m {0} level.'.format(this.level);
+    return Human.prototype.say.call(this) +
+      ' I\'m {0} level.'.format(this.level);
   }
 });
 

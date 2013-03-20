@@ -1,23 +1,18 @@
 basis.require('basis.ui');
 
-var Item = basis.ui.Node.subclass({
-  className: 'Item',
-  template:
-    '<li>{title}</li>',
-  binding: {
-    title: 'title'
-  }
-});
-
 var list = new basis.ui.Node({
   container: document.body,
-  template:
-    '<ul/>',
+  template: resource('list.tmpl'),
+
+  childClass: {
+    template: resource('item.tmpl'),
+    binding: {
+      title: 'title'
+    }
+  },
   childNodes: [
-    new Item({ title: 'foo' }),
-    new Item({ title: 'bar' })
+    { title: 'Item foo' },
+    { title: 'Item bar' },
+    { title: 'Item baz' }
   ]
 });
-
-list.appendChild(new Item({ title: 'baz' }));
-list.insertBefore(new Item({ title: 'first' }), list.firstChild);
