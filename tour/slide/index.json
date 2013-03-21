@@ -58,5 +58,28 @@
       "item.tmpl",
       "item.css"
     ]
+  },
+  {
+    "id": "ui_loose_coupling",
+    "title": "UI: Loose coupling",
+    "files": [
+      "list.tmpl",
+      "list.css",
+      "item.tmpl",
+      "item.css"
+    ]
+  },
+  {
+    "id": "ui_true_modularity",
+    "title": "UI: True modularity",
+    "files": [
+      "editor.js",
+      "editor.tmpl",
+      "list.js",
+      "list.tmpl",
+      "list.css",
+      "item.tmpl",
+      "item.css"
+    ]
   }
 ]
