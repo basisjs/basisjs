@@ -1,0 +1,16 @@
+.item
+{
+  background: #F0F0F0;
+  margin: 1px;
+  padding: 4px;
+  cursor: pointer;
+}
+.item:hover
+{
+  background: #E0E0E0;
+}
+.item_selected
+{
+  cursor: default;
+  background: gold !important;
+}

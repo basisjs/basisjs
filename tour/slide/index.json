@@ -8,8 +8,34 @@
     "title": "Class: Inheritance"
   },
   {
+    "id": "ui_list",
+    "title": "UI: List"
+  },
+  {
+    "id": "ui_list_childClass",
+    "title": "UI: childClass"
+  },
+  {
+    "id": "ui_list_childFactory",
+    "title": "UI: childFactory"
+  },
+  {
+    "id": "ui_list_dataSource",
+    "title": "UI: dataSource"
+  },
+  {
     "id": "ui_list_resources",
     "title": "UI: List with resources",
+    "files": [
+      "list.tmpl",
+      "list.css",
+      "item.tmpl",
+      "item.css"
+    ]
+  },
+  {
+    "id": "ui_selection",
+    "title": "UI: Selection",
     "files": [
       "list.tmpl",
       "list.css",
