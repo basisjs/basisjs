@@ -93,6 +93,12 @@ var view = new basis.ui.Node({
   run: function (){
     this.timer = clearTimeout(this.timer);
     this.tmpl.launcher.src = 'launcher.html';
+
+    this.tmpl.set('reloaded', true);
+    var self = this;
+    setTimeout(function(){
+      self.tmpl.set('reloaded', false);
+    }, 0);
   }
 });
 
