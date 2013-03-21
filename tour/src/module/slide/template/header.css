@@ -1,0 +1,42 @@
+#header
+{
+  overflow: hidden;
+  position: relative;
+}
+#header H1
+{
+  font-weight: normal;
+  margin: 0;
+  line-height: 1.5em;
+  font-size: 175%;
+  text-indent: .25em;
+}
+#header .buttons
+{
+  position: absolute;
+  right: 4px;
+  top: 4px;
+}
+#header .buttons .button
+{
+  cursor: pointer;
+  background: #E0E0E0;
+  padding: 4px 8px;
+  float: left;
+}
+#header .buttons .button-reset
+{
+  visibility: hidden;
+  opacity: 0;
+    -webkit-transition: opacity .2s, visibility .2s;
+  transition: opacity .2s, visibility .2s;
+}
+#header .buttons .button-reset_hasChanges
+{
+  visibility: visible;
+  opacity: 1;
+}
+#header .buttons .button:hover
+{
+  background: gold;
+}

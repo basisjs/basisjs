@@ -1,9 +1,11 @@
 basis.require('basis.data');
 basis.require('basis.data.dataset');
+basis.require('basis.data.index');
+basis.require('basis.layout');
 basis.require('basis.ui');
 basis.require('basis.ui.tabs');
+basis.require('basis.ui.resizer');
 basis.require('basis.router');
-basis.require('basis.data.index');
 basis.require('app.type');
 
 var timer;
@@ -21,7 +23,7 @@ var updateSet = new basis.data.Dataset({
     item: {
       update: function(sender){
         if (!sender.data.updatable)
-          view.prepareToRun();
+          panels.lastChild.prepareToRun();
       }
     }
   }
@@ -36,17 +38,74 @@ var changedFiles = new basis.data.dataset.Subset({
   }
 });
 
+var panels = new basis.layout.VerticalPanelStack({
+  template: resource('template/main-part.tmpl'),
+  autoDelegate: true,
+  childNodes: [
+    {
+      template: resource('template/header.tmpl')
+    },
+    {
+      autoDelegate: true,
+      template: resource('template/files.tmpl'),
+      childNodes: fileList
+    },
+    {
+      autoDelegate: true,
+      flex: 1,
+      template: resource('template/code.tmpl'),
+      childNodes: editor
+    },
+    {
+      autoDelegate: true,
+      template: resource('template/preview.tmpl'),
+      handler: {
+        update: function(){
+          updateSet.set(this.data.files ? this.data.files.getItems() : []);
+        },
+        targetChanged: function(){
+          if (this.target)
+            this.run();
+        }
+      },
+      prepareToRun: function(){
+        if (timer)
+          clearTimeout(timer);
+
+        timer = setTimeout(this.run.bind(this), 500);
+      },
+      run: function (){
+        timer = clearTimeout(timer);
+        this.tmpl.launcher.src = 'launcher.html';
+
+        this.tmpl.set('reloaded', true);
+        var self = this;
+        setTimeout(function(){
+          self.tmpl.set('reloaded', false);
+        }, 0);
+      },
+
+      init: function(){
+        basis.ui.Node.prototype.init.call(this);
+        this.resizer = new basis.ui.resizer.Resizer({
+          property: 'height',
+          factor: -1
+        });
+      },
+      templateSync: function(noRecreate){
+        basis.ui.Node.prototype.templateSync.call(this, noRecreate);
+        this.resizer.setElement(this.element);
+      },
+      destroy: function(){
+        basis.ui.Node.prototype.destroy.call(this);
+        this.resizer = this.resizer.destroy();
+      }
+    }
+  ]
+});
+
 var view = new basis.ui.Node({
   autoDelegate: true,
-  handler: {
-    update: function(){
-      updateSet.set(this.data.files ? this.data.files.getItems() : []);
-    },
-    targetChanged: function(){
-      if (this.target)
-        this.run();
-    }
-  },  
 
   template: resource('template/view.tmpl'),
   binding: {
@@ -62,8 +121,7 @@ var view = new basis.ui.Node({
     slideCount: basis.data.index.count(app.type.Slide.all),
     hasChanges: basis.data.index.count(changedFiles),
 
-    files: fileList,
-    editor: editor
+    panels: panels
   },
   action: {
     toc: function(){
@@ -84,21 +142,17 @@ var view = new basis.ui.Node({
     }
   },
 
-  prepareToRun: function(){
-    if (this.timer)
-      clearTimeout(this.timer);
-
-    this.timer = setTimeout(this.run.bind(this), 500);
+  init: function(){
+    basis.ui.Node.prototype.init.call(this);
+    this.resizer = new basis.ui.resizer.Resizer();
   },
-  run: function (){
-    this.timer = clearTimeout(this.timer);
-    this.tmpl.launcher.src = 'launcher.html';
-
-    this.tmpl.set('reloaded', true);
-    var self = this;
-    setTimeout(function(){
-      self.tmpl.set('reloaded', false);
-    }, 0);
+  templateSync: function(noRecreate){
+    basis.ui.Node.prototype.templateSync.call(this, noRecreate);
+    this.resizer.setElement(this.tmpl.sidebar);
+  },
+  destroy: function(){
+    basis.ui.Node.prototype.destroy.call(this);
+    this.resizer = this.resizer.destroy();
   }
 });
 

@@ -2,35 +2,17 @@
 <b:define name="hasChanges" type="bool"/>
 
 <div class="app-slide">
-  <div id="navAndContentSide">
+  <div{sidebar} id="navAndContentSide">
     <div id="nav">
-      <span event-click="toc">Table of content</span>
-      <span event-click="prev">Prev</span>
-      <span event-click="next">Next</span>
-      {num}/{slideCount}
+      <span id="slideCounter">{num}/{slideCount}</span>
+      <span class="button" event-click="toc">Table of content</span>
+      <span class="button" event-click="prev">Prev</span>
+      <span class="button" event-click="next">Next</span>
     </div>
     <div id="description">
-      <!--{toc}-->
       <h2>{title}</h2>
       <div{description}/>
     </div>
   </div>
-  <div id="interactiveSide">
-    <div id="header">
-      <h1>Basis.js tour</h1>
-      <div class="buttons">
-        <span class="button button-reset button-reset_{hasChanges}" event-click="resetSlide">reset slide</span>
-      </div>
-    </div>
-    <div id="files-tabs">
-      <!--{files}-->
-    </div>
-    <div id="code">
-      <!--{editor}-->
-    </div>
-    <div id="preview">
-      <span class="reloaded-label reloaded-label_{reloaded}">Page reloaded</span>
-      <iframe{launcher} src="launcher.html" />
-    </div>
-  </div>
+  <!--{panels}-->
 </div>
