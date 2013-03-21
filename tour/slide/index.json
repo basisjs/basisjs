@@ -42,5 +42,15 @@
       "item.tmpl",
       "item.css"
     ]
+  },
+  {
+    "id": "ui_selection_source",
+    "title": "UI: Selection as source",
+    "files": [
+      "list.tmpl",
+      "list.css",
+      "item.tmpl",
+      "item.css"
+    ]
   }
 ]

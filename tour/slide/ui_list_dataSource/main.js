@@ -1,7 +1,7 @@
 basis.require('basis.data');
 basis.require('basis.ui');
 
-var dataset = new Dataset({
+var dataset = new basis.data.Dataset({
   items: ['foo', 'bar', 'baz'].map(function(value){
     return new basis.data.DataObject({
       data: {
@@ -20,9 +20,9 @@ var list = new basis.ui.Node({
 
   childClass: {
     template:
-      '<li>{title}</li>',
+      '<li>{name}</li>',
     binding: {
-      title: 'title'
+      name: 'data:'
     }
   }
 });
