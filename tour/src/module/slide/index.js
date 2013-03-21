@@ -41,23 +41,33 @@ var changedFiles = new basis.data.dataset.Subset({
 var panels = new basis.layout.VerticalPanelStack({
   template: resource('template/main-part.tmpl'),
   autoDelegate: true,
+  childClass: {
+    autoDelegate: true
+  },
   childNodes: [
     {
-      template: resource('template/header.tmpl')
+      template: resource('template/header.tmpl'),
+      binding: {
+        hasChanges: basis.data.index.count(changedFiles)
+      },
+      action: {
+        resetSlide: function(){
+          this.data.files.getItems().forEach(function(file){
+            file.rollback();
+          });
+        }
+      }
     },
     {
-      autoDelegate: true,
       template: resource('template/files.tmpl'),
       childNodes: fileList
     },
     {
-      autoDelegate: true,
       flex: 1,
       template: resource('template/code.tmpl'),
       childNodes: editor
     },
     {
-      autoDelegate: true,
       template: resource('template/preview.tmpl'),
       handler: {
         update: function(){
@@ -119,7 +129,6 @@ var view = new basis.ui.Node({
 
     num: 'data:',
     slideCount: basis.data.index.count(app.type.Slide.all),
-    hasChanges: basis.data.index.count(changedFiles),
 
     panels: panels
   },
@@ -134,11 +143,6 @@ var view = new basis.ui.Node({
     next: function(){
       var next = this.data.next;
       basis.router.navigate(next ? next.data.id : '');
-    },
-    resetSlide: function(){
-      this.data.files.getItems().forEach(function(file){
-        file.rollback();
-      });
     }
   },
 

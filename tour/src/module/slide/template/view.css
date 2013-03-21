@@ -11,10 +11,11 @@
 {
   float: right;
   position: relative;
-  width: 40%;
+  width: 35%;
   height: 100%;
   background: gray;
   min-width: 200px;
+  max-width: 50%;
 }
 #navAndContentSide .Basis-Resizer
 {
