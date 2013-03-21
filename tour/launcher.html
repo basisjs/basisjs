@@ -90,6 +90,12 @@
   </script>
   <script src="../src/basis.js" basis-config></script>
   <script>
+    window.tour = {
+      plainStr: function(obj){
+        return JSON.stringify(basis.object.slice(obj));
+      }
+    };
+
     basis.ready(function(){
       try {
         basis.resource('main.js').fetch();

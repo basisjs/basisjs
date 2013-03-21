@@ -8,6 +8,14 @@
     "title": "Class: Inheritance"
   },
   {
+    "id": "class_create_pattern",
+    "title": "Class: Instance create patterns"
+  },
+  {
+    "id": "class_ext",
+    "title": "Class: Extensions"
+  },
+  {
     "id": "ui_node",
     "title": "UI: Basics"
   },
@@ -30,16 +38,6 @@
   {
     "id": "ui_list_dataSource",
     "title": "UI: dataSource"
-  },
-  {
-    "id": "ui_list_resources",
-    "title": "UI: List with resources",
-    "files": [
-      "list.tmpl",
-      "list.css",
-      "item.tmpl",
-      "item.css"
-    ]
   },
   {
     "id": "ui_selection",
