@@ -488,10 +488,18 @@
 
     processResponse: function(){
       this.update({
+        contentType: this.xhr.getResponseHeader('content-type'),
         responseText: this.xhr.responseText,
         responseXML: this.xhr.responseXML,
         status: this.xhr.status
       });
+    },
+
+    getResponseData: function(){
+      if (/^application\/json/i.test(this.data.contentType))
+        return this.data.responseText.toObject();
+      else
+        return this.data.responseText;
     },
 
     processErrorResponse: function(){
