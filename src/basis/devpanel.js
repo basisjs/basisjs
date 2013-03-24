@@ -1,9 +1,9 @@
 basis.ready(function(){
   // init interface
-  resource('devpanel/panel.js').fetch();
+  resource('devpanel/index.js').fetch();
 
   // init transport
-  var transport = resource('devpanel/transport.js').fetch();
+  var transport = resource('devpanel/API/transport.js').fetch();
   transport.init();
 
   // prepare API object
@@ -18,9 +18,9 @@ basis.ready(function(){
         });
     }
   };
-  basis.object.extend(basis.appCP, resource('devpanel/fileAPI.js').fetch());
-  basis.object.extend(basis.appCP, resource('devpanel/l10nAPI.js').fetch());
-  basis.object.extend(basis.appCP, resource('devpanel/inspectorAPI.js').fetch());  
+  basis.object.extend(basis.appCP, resource('devpanel/API/file.js').fetch());
+  basis.object.extend(basis.appCP, resource('devpanel/API/l10n.js').fetch());
+  basis.object.extend(basis.appCP, resource('devpanel/API/inspector.js').fetch());  
 
   console.log('basis devpanel inited');
 });

@@ -1,0 +1,18 @@
+.Devpanel-Menu
+{
+  display: none;
+
+  position: absolute;
+  right: 0;
+  padding: 1px;
+  background: #E8E8E8;
+  color: #444;
+  text-align: left;
+  margin-top: 2px;
+  box-shadow: 0 0 5px 1px rgba(0, 0, 0, .25), 0 0 1px 1px rgba(255, 255, 255, 1) inset;
+}
+
+.Devpanel-Menu_opened
+{
+  display: block;
+}

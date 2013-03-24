@@ -27,7 +27,7 @@
 }
 
 .Basis-DevPanel:hover,
-.Basis-DevPanel.active,
+.Basis-DevPanel.activated,
 BODY.devpanel-inspectMode .Basis-DevPanel
 {
   opacity: 1;
@@ -39,6 +39,11 @@ BODY.devpanel-inspectMode .Basis-DevPanel
   pointer-events: none;
 }
 
+.Basis-DevPanel-Section
+{
+  position: relative;
+  display: inline-block;
+}
 
 .Basis-DevPanel-Button
 {
@@ -67,7 +72,7 @@ BODY.devpanel-inspectMode .Basis-DevPanel
 
 .Basis-DevPanel-Button.culture
 {
-  padding: 2px 5px;
+  padding: 4px 5px 5px;
 }
 .Basis-DevPanel-Button.culture SPAN
 {
@@ -75,6 +80,11 @@ BODY.devpanel-inspectMode .Basis-DevPanel
   width: 16px; 
   height: 11px;
   background: url(img/flags.png) no-repeat center center;
+}
+
+.Basis-DevPanel-Button.culture.base span
+{
+  background: url(img/international.png) no-repeat center center !important;
 }
 
 .Basis-DevPanel-Button:hover

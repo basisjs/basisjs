@@ -1,0 +1,20 @@
+.Devpanel-MenuItem
+{
+  min-width: 120px;
+  padding: 0.5em;
+  border-bottom: 1px solid white;
+}
+.Devpanel-MenuItem:last-child
+{
+  border-bottom: 0;
+}
+.Devpanel-MenuItem.selected
+{
+  background: #4B77CC;
+  color: white;
+}
+.Devpanel-MenuItem:hover
+{
+  background: #89ACF0;
+  color: white;
+}

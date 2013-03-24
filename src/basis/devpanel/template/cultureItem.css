@@ -1,14 +1,20 @@
 
-.Basis-Devpanel-CultureItem .Basis-Menu-Item-Caption
+.Devpanel-CultureMenuItem
 {
   position: relative;
+  padding-left: 2.5em;
 }
-.Basis-Devpanel-CultureItem .flag
+.Devpanel-CultureMenuItem .flag
 {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 10px;
+  left: 10px;
   width: 16px;
   height: 11px;
-  background: url(img/flags.png) no-repeat 0 0;
+  background: url(img/flags.png) no-repeat .5em 0;
+}
+
+.Devpanel-CultureMenuItem.base .flag
+{
+  background: url(img/international.png) no-repeat 50% 50% !important;
 }

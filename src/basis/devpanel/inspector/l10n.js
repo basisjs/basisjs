@@ -6,7 +6,7 @@ basis.require('basis.cssom');
 var DOM = basis.dom;
 
 var colorPicker = resource('colorPicker.js').fetch();
-var transport = resource('../transport.js').fetch();
+var transport = resource('../API/transport.js').fetch();
 
 var inspectMode;
 var elements = [];

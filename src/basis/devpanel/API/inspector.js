@@ -1,7 +1,7 @@
 var transport = resource('transport.js').fetch();
 
-var l10nInspector = resource('inspector/l10n.js').fetch();
-var templateInspector = resource('inspector/template.js').fetch();
+var l10nInspector = resource('../inspector/l10n.js').fetch();
+var templateInspector = resource('../inspector/template.js').fetch();
 
 module.exports = {
   getInspectMode: function(){

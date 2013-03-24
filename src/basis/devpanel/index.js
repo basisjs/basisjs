@@ -7,22 +7,10 @@ basis.require('basis.l10n');
 var l10nInspector = resource('inspector/l10n.js').fetch();
 var templateInspector = resource('inspector/template.js').fetch();
 
-var countryFlagBinding = {
-  spriteX: {
-    events: 'update',
-    getter: function(object){
-      return object.country ? 16 * (object.country.charCodeAt(0) - 65) : 1000;
-    }
-  },
-  spriteY: {
-    events: 'update',
-    getter: function(object){
-      return object.country ? 11 * (object.country.charCodeAt(1) - 65) : 1000;
-    }
-  }  
-};
+var themeList = resource('themeList.js').fetch();
+var cultureList = resource('cultureList.js').fetch();
 
-var themeMenu = new basis.ui.menu.Menu({
+/*var themeMenu = new basis.ui.Node({
   dir: 'right bottom right top',  
   autorotate: true,
 
@@ -35,6 +23,7 @@ var themeMenu = new basis.ui.menu.Menu({
   },  
 
   childClass: {
+    template
     click: function(){
       this.select();
       themeMenu.hide();
@@ -46,10 +35,18 @@ var themeMenu = new basis.ui.menu.Menu({
       value: themeName,
       selected: basis.template.currentTheme().name == themeName
     }
-  })
-});
+  }),
+  show: function(){
+    this.opened = true;
+    this.updateBind('opened');
+  }
+  hide: function(){
+    this.opened = false;
+    this.updateBind('opened');
+  }
+});*/
 
-var cultureMenu = new basis.ui.menu.Menu({
+/*var cultureMenu = new basis.ui.menu.Menu({
   dir: 'right bottom right top',
   autorotate: true,
 
@@ -78,7 +75,7 @@ var cultureMenu = new basis.ui.menu.Menu({
       selected: basis.l10n.getCulture() == culture
     }
   })
-});
+});*/
 
 
 //
@@ -86,24 +83,49 @@ var cultureMenu = new basis.ui.menu.Menu({
 //
 var panel = new basis.ui.Node({
   container: document.body,
-  template: resource('template/panel.tmpl'),
+  
+  activated: false,
   themeName: basis.template.currentTheme().name,
-  binding: basis.object.extend({
-    active: 'active',
-    themeName: 'themeName'
-  }, countryFlagBinding),
+  culture: basis.l10n.getCulture(),
+  
+  template: resource('template/panel.tmpl'),
+  
+  binding: {
+    themeList: themeList,
+    cultureList: cultureList,    
+    activated: 'activated',
+    themeName: 'themeName',
+    base: function(object){
+      return object.culture == 'base';
+    },
+    spriteX: {
+      events: 'update',
+      getter: function(object){
+        var country = object.culture.split('-').pop();
+        return country ? 16 * (country.charCodeAt(0) - 65) : 1000;
+      }
+    },
+    spriteY: {
+      events: 'update',
+      getter: function(object){
+        var country = object.culture.split('-').pop();
+        return country ? 11 * (country.charCodeAt(1) - 65) : 1000;
+      }
+    }      
+  },
+  
   action: {
     inspectTemplate: function(){
       templateInspector.startInspect();
     },
     showThemes: function(){
-      themeMenu.show(this.tmpl.themeButton);
+      themeList.setDelegate(this);
     },
     inspectl10n: function(){
       l10nInspector.startInspect();
     },
     showCultures: function(){
-      cultureMenu.show(this.tmpl.cultureButton);
+      cultureList.setDelegate(this);
     },
     storePosition: function(event){
       if (localStorage){
@@ -113,20 +135,22 @@ var panel = new basis.ui.Node({
   }
 });
 
-basis.template.onThemeChange(function(themeName){
-  panel.themeName = themeName;
-  panel.updateBind('themeName');
-  themeMenu.getChild(themeName, 'value').select();
-}, null, true);
+themeList.selection.addHandler({
+  datasetChanged: function(object, delta){
+    var theme = this.pick();
+    panel.themeName = theme.value;
+    panel.updateBind('themeName');
+  }
+});
 
-basis.l10n.onCultureChange(function(culture){
-  panel.country = culture.split('-').pop();
-  panel.updateBind('spriteY');
-  panel.updateBind('spriteX');
-  var item = cultureMenu.getChild(culture, 'value');
-  if (item)
-    item.select();
-}, null, true);
+cultureList.selection.addHandler({
+  datasetChanged: function(object, delta){
+    panel.culture = this.pick().value;
+    panel.updateBind('base');
+    panel.updateBind('spriteY');
+    panel.updateBind('spriteX');
+  }
+});
 
 
 //

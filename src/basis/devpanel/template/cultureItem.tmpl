@@ -1,12 +1,12 @@
 <b:resource src="cultureItem.css"/>
+<b:define name="base" type="bool"/>
 
-<b:include src="basis.ui.menu.MenuItem" class="Basis-Devpanel-CultureItem">
-  <b:replace ref="content">
-    <a{content} class="Basis-Menu-Item-Caption">
-      <div class="flag" style="background-position: -{spriteX}px -{spriteY}px;"></div>
-      <span>
-        {caption}
-      </span>
-    </a>
+<b:include src="app.menu.Item" class="Devpanel-CultureMenuItem {base}">
+  <b:replace ref="title">
+   <div class="flag" style="background-position: -{spriteX}px -{spriteY}px;"></div>
+    <span>
+      {title}
+    </span>
   </b:replace>
 </b:include>
+

@@ -6,7 +6,7 @@ basis.require('basis.ui');
 basis.require('basis.ui.popup');
 
 var DOM = basis.dom;
-var transport = resource('../transport.js').fetch();
+var transport = resource('../API/transport.js').fetch();
 
 var inspectMode;
 var inspectDepth = 0;
