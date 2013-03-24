@@ -1,6 +1,8 @@
+basis.require('basis.l10n');
+
 var Menu = resource('module/menu/index.js').fetch();
 
-module.exports = new Menu({
+var view = new Menu({
   selection: {
     handler: {
       datasetChanged: function(){
@@ -47,7 +49,9 @@ module.exports = new Menu({
 });
 
 basis.l10n.onCultureChange(function(culture){
-  var item = module.exports.getChild(culture, 'value');
+  var item = view.getChild(culture, 'value');
   if (item)
     item.select();
 }, null, true);
+
+module.exports = view;

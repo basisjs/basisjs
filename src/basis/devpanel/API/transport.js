@@ -1,23 +1,22 @@
-  
-  basis.require('basis.dom');
-  
-  var transferDiv;
-  var transferDataEvent;
+basis.require('basis.dom');
 
-  module.exports = {
-    init: function(){
-      transferDataEvent = document.createEvent('Event');
-      transferDataEvent.initEvent('transferData', true, true);
+var transferDiv;
+var transferDataEvent;
 
-      transferDiv = document.body.appendChild(
-        basis.dom.createElement('pre#transferDiv[style="position: absolute; left: -2000px"]')
-      );
-    },
-    sendData: function(action, data){
-      transferDiv.setAttribute('action', action);
-      transferDiv.innerHTML = '';
-      transferDiv.appendChild(document.createTextNode(JSON.stringify(data || {})));
-      transferDiv.dispatchEvent(transferDataEvent);
-      transferDiv.innerHTML = '';
-    }
+module.exports = {
+  init: function(){
+    transferDataEvent = document.createEvent('Event');
+    transferDataEvent.initEvent('transferData', true, true);
+
+    transferDiv = document.body.appendChild(
+      basis.dom.createElement('pre#transferDiv[style="position: absolute; left: -2000px"]')
+    );
+  },
+  sendData: function(action, data){
+    transferDiv.setAttribute('action', action);
+    transferDiv.innerHTML = '';
+    transferDiv.appendChild(document.createTextNode(JSON.stringify(data || {})));
+    transferDiv.dispatchEvent(transferDataEvent);
+    transferDiv.innerHTML = '';
   }
+};

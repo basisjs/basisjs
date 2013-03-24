@@ -24,4 +24,4 @@ module.exports = {
   templateEndInspect: function(){
     templateInspector.endInspect();
   }  
-}
+};

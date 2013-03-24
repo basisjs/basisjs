@@ -1,14 +1,15 @@
+basis.require('basis.template');
+
 var Menu = resource('module/menu/index.js').fetch();
 
-module.exports = new Menu({
+var view = new Menu({
   selection: {
     handler: {
       datasetChanged: function(){
         basis.template.setTheme(this.pick().value);
       }
     }
-  },  
-
+  },
   childClass: {
     binding: {
       title: 'value'
@@ -23,5 +24,9 @@ module.exports = new Menu({
 });
 
 basis.template.onThemeChange(function(themeName){
-  module.exports.getChild(themeName, 'value').select();
+  var item = view.getChild(themeName, 'value');
+  if (item)
+    item.select();
 }, null, true);
+
+module.exports = view;

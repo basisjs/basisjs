@@ -1,3 +1,5 @@
+basis.require('basis.template');
+
 
 var transport = resource('transport.js').fetch();
 var sendData = transport.sendData;
@@ -104,4 +106,4 @@ module.exports = {
     if (file)
       file.save(content);
   }
-}
+};

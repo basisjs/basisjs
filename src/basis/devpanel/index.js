@@ -1,6 +1,4 @@
-
 basis.require('basis.ui');
-basis.require('basis.ui.menu');
 basis.require('basis.dragdrop');
 basis.require('basis.l10n');
 
@@ -9,73 +7,6 @@ var templateInspector = resource('inspector/template.js').fetch();
 
 var themeList = resource('themeList.js').fetch();
 var cultureList = resource('cultureList.js').fetch();
-
-/*var themeMenu = new basis.ui.Node({
-  dir: 'right bottom right top',  
-  autorotate: true,
-
-  selection: {
-    handler: {
-      datasetChanged: function(){
-        basis.template.setTheme(this.pick().value);
-      }
-    }
-  },  
-
-  childClass: {
-    template
-    click: function(){
-      this.select();
-      themeMenu.hide();
-    }
-  },
-  childNodes: basis.template.getThemeList().map(function(themeName){
-    return {
-      caption: themeName,
-      value: themeName,
-      selected: basis.template.currentTheme().name == themeName
-    }
-  }),
-  show: function(){
-    this.opened = true;
-    this.updateBind('opened');
-  }
-  hide: function(){
-    this.opened = false;
-    this.updateBind('opened');
-  }
-});*/
-
-/*var cultureMenu = new basis.ui.menu.Menu({
-  dir: 'right bottom right top',
-  autorotate: true,
-
-  selection: {
-    handler: {
-      datasetChanged: function(){
-        basis.l10n.setCulture(this.pick().value);
-      }
-    }
-  },  
-
-  childClass: {
-    template: resource('template/cultureItem.tmpl'),
-    binding: countryFlagBinding,
-    click: function(){
-      this.select();
-      cultureMenu.hide();
-    }
-  },
-  childNodes: ['base'].concat(basis.l10n.getCultureList()).map(function(culture){
-    return {
-      groupId: 'general',
-      caption: culture,
-      value: culture,
-      country: culture.split('-').pop(),
-      selected: basis.l10n.getCulture() == culture
-    }
-  })
-});*/
 
 
 //
@@ -159,7 +90,7 @@ cultureList.selection.addHandler({
 if (localStorage){
   var position = (localStorage['basis-devpanel'] || '10;10').split(';');
   panel.element.style.left = position[0] + 'px';
-  panel.element.style.top  = position[1] + 'px';  
+  panel.element.style.top = position[1] + 'px';  
 }
 
 new basis.dragdrop.MoveableElement({
@@ -167,7 +98,9 @@ new basis.dragdrop.MoveableElement({
   trigger: panel.tmpl.dragElement
 });
 
+
 //
 // exports
 //
+
 module.exports = panel;

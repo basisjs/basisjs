@@ -1,4 +1,3 @@
-
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
@@ -184,10 +183,11 @@ function getColorForDictionary(dictionaryName){
 //
 // exports
 //
+
 module.exports = {
   startInspect: startInspect,
   endInspect: endInspect,
   isActive: function(){
     return !!inspectMode;
   }
-}
+};

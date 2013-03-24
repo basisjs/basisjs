@@ -1,4 +1,3 @@
-
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.data.property');
@@ -242,4 +241,4 @@ module.exports = {
   isActive: function(){
     return !!inspectMode;
   }
-}
+};

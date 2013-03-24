@@ -1,4 +1,4 @@
-
+basis.require('basis.l10n');
 basis.require('basis.data.property');
 
 var STATE = basis.data.STATE;
@@ -144,4 +144,4 @@ module.exports = {
       file.save(newContent);
     }
   }
-}
+};
