@@ -23,7 +23,7 @@
   var dictionaries = {};
 
   var currentCulture = 'base';
-  var cultureList = ['en-US', 'ru-RU', 'uk-UA'];
+  var cultureList = [];
   var cultureGetTokenValue = {};
   var cultureReplacement = {};
   var tokenIndex = [];

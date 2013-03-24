@@ -43,6 +43,8 @@
     basis.require('basis.ui.button');
     basis.require('basis.ui.calendar');
 
+    basis.l10n.setCultureList('en-US ru-RU uk-UA');
+
     new basis.ui.button.ButtonPanel({
       container: basis.dom.get('demo-container'),
       childNodes: [null].concat(basis.l10n.getCultureList()).map(function(culture){
