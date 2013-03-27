@@ -752,5 +752,17 @@
 
     AjaxTransport: AjaxTransport,
     AjaxRequest: AjaxRequest,
-    Transport: AjaxTransport
+    Transport: AjaxTransport,
+
+    request: function(config){
+      var transport = new AjaxTransport(config);
+      transport.addHandler({
+        complete: function(){
+          setTimeout(function(){
+            transport.destroy();
+          }, 0);
+        }
+      });
+      transport.request();
+    }
   };
