@@ -124,7 +124,7 @@
       url: url.quote('"')
     }));
 
-    dom.tag(null, 'head')[0].appendChild(element);
+    dom.appendHead(element);
 
     return StyleSheet_makeCompatible(element.sheet || element.styleSheet);
   }
