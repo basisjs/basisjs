@@ -471,39 +471,6 @@
           entityType.addField(key, wrapper);
         },
         all: entityType.all,
-        createCollection: function(name, memberSelector, dataset){
-          var collection = entityType.collection_[name];
-
-          if (!collection && memberSelector)
-          {
-            return entityType.collection_[name] = new EntityCollection({
-              wrapper: result,
-              source: dataset || entityType.all,
-              rule: memberSelector
-            });
-          }
-
-          return collection;
-        },
-        getCollection: function(name){
-          return entityType.collection_[name];
-        },
-        createGrouping: function(name, rule, dataset){
-          var grouping = entityType.grouping_[name];
-          if (!grouping && rule)
-          {
-            return entityType.grouping_[name] = new EntityGrouping({
-              wrapper: result,
-              source: dataset || entityType.all,
-              rule: rule
-            });
-          }
-
-          return grouping;
-        },
-        getGrouping: function(name){
-          return entityType.grouping_[name];
-        },
         getSlot: function(index, defaults){
           return entityType.getSlot(index, defaults);
         }
