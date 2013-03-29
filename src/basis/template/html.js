@@ -1,5 +1,4 @@
 
-  basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.l10n');
   basis.require('basis.template');
@@ -18,7 +17,6 @@
   //
 
   var document = global.document;
-  var dom = basis.dom;
   var domEvent = basis.dom.event;
   var arrayFrom = basis.array.from;
   var l10nToken = basis.l10n.getToken;
@@ -61,7 +59,10 @@
 
   // Test for browser (IE) normalize text nodes during cloning
   var CLONE_NORMALIZATION_TEXT_BUG = (function(){
-    return dom.createElement('', 'a', 'b').cloneNode(true).childNodes.length == 1;
+    var element = document.createElement('div');
+    element.appendChild(document.createTextNode('a'));
+    element.appendChild(document.createTextNode('b'));
+    return element.cloneNode(true).childNodes.length == 1;
   })();
 
 
