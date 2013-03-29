@@ -473,6 +473,10 @@
         all: entityType.all,
         getSlot: function(index, defaults){
           return entityType.getSlot(index, defaults);
+        },
+
+        extend: function(){
+          entityClass.extend.apply(entityClass, arguments);
         }
       });
 
