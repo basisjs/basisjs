@@ -29,6 +29,5 @@ var list1 = new List({
 var list2 = new List({
   header: 'Selected items',
   dataSource: list1.selection,
-  template:
-    '<b:include src="list.tmpl"><b:after ref="header"> ({childCount})</b:after></b:include>'
+  template: '<b:include src="list.tmpl"><b:after ref="header"> ({childCount})</b:after></b:include>'
 });

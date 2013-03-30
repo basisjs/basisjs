@@ -60,8 +60,8 @@
     ]
   },
   {
-    "id": "ui_loose_coupling",
-    "title": "UI: Loose coupling",
+    "id": "ui_node_communication",
+    "title": "UI: Node communication",
     "files": [
       "list.tmpl",
       "list.css",
@@ -70,8 +70,8 @@
     ]
   },
   {
-    "id": "ui_true_modularity",
-    "title": "UI: True modularity",
+    "id": "ui_loose_coupling",
+    "title": "UI: Loose coupling",
     "files": [
       "editor.js",
       "editor.tmpl",

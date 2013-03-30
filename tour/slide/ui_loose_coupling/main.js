@@ -1,43 +1,28 @@
 basis.require('basis.ui');
 
-var editor = new basis.ui.Node({
+// load our components as modules
+var editor = resource('editor.js').fetch();
+var list = resource('list.js').fetch();
+
+// link editor & list together
+// all we need to know, that both are basis.ui.Node, and list has selection
+list.selection.addHandler({
+  datasetChanged: function(sender){
+    this.setDelegate(sender.pick());
+    this.focus();
+  }
+}, editor);
+
+// create view that host nested components
+var view = new basis.ui.Node({
   container: document.body,
   template:
-    '<input{focus} value="{title}" event-keyup="update" event-change="update"/>',
+    '<div>' + 
+      '<!--{editor}-->' +
+      '<!--{list}-->' +
+    '</div>',
   binding: {
-    title: 'data:'
-  },
-  action: {
-    update: function(event){
-      this.update({
-        title: event.sender.value
-      });
-    }
+    editor: editor,
+    list: list
   }
-});
-
-var list = new basis.ui.Node({
-  container: document.body,
-  template: resource('list.tmpl'),
-
-  selection: {
-    handler: {
-      // selection is dataset, datasetChanged fires when it changes
-      datasetChanged: function(){
-        editor.setDelegate(this.pick());
-        editor.focus();
-      }
-    }
-  },
-  childClass: {
-    template: resource('item.tmpl'),
-    binding: {
-      title: 'data:'
-    }
-  },
-  childNodes: [
-    { data: { title: 'Item foo' } },
-    { data: { title: 'Item bar' } },
-    { data: { title: 'Item baz' } }
-  ]
 });

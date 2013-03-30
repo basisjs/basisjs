@@ -2,13 +2,11 @@ basis.require('basis.ui');
 
 var list = new basis.ui.Node({
   container: document.body,
-  template:
-    '<ul/>',
+  template: '<ul/>',
 
   childClass: {
     className: 'Item',
-    template:
-      '<li>{title}</li>',
+    template: '<li>{title}</li>',
     binding: {
       title: 'title'
     }
@@ -19,5 +17,5 @@ var list = new basis.ui.Node({
   ]
 });
 
-list.appendChild({ title: 'baz' });
-list.insertBefore({ title: 'first' }, list.firstChild);
+list.appendChild({ title: 'to be last' });
+list.insertBefore({ title: 'to be first' }, list.firstChild);

@@ -14,13 +14,9 @@ var dataset = new basis.data.Dataset({
 var list = new basis.ui.Node({
   container: document.body,
   dataSource: dataset,
-
-  template:
-    '<ul/>',
-
+  template: '<ul/>',
   childClass: {
-    template:
-      '<li>{name}</li>',
+    template: '<li>{name}</li>',
     binding: {
       name: 'data:'
     }

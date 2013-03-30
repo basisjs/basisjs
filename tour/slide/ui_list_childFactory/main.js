@@ -1,37 +1,27 @@
 basis.require('basis.ui');
 
-var Item = basis.ui.Node.subclass({
+var BaseItem = basis.ui.Node.subclass({
   binding: {
     caption: 'caption'
   }
 });
-
-var Checkbox = Item.subclass({
-  className: 'Checkbox',
-  template:
-    '<li><input type="checkbox"/> {caption}</li>'
-});
-
-var Radio = Item.subclass({
-  className: 'Radio',
-  template:
-    '<li><input type="radio"/> {caption}</li>'
-});
+var classMap = {
+  check: BaseItem.subclass({
+    template: '<li><input type="checkbox"/> {caption}</li>'
+  }),
+  radio: BaseItem.subclass({
+    template: '<li><input type="radio"/> {caption}</li>'
+  })
+};
 
 var list = new basis.ui.Node({
   container: document.body,
-  template:
-    '<ul/>',
+  template: '<ul/>',
 
-  childClass: Item,
+  childClass: BaseItem,
   childFactory: function(config){
-    var childClass = Item;
-    switch (config.type)
-    {
-      case 'check': childClass = Checkbox; break;
-      case 'radio': childClass = Radio; break;
-    }
-    return new childClass(config);
+    var childCls = classMap[config.type] || BaseItem;
+    return new childCls(config);
   },
   childNodes: [
     { type: 'check', caption: 'foo' },
