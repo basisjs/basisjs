@@ -87,8 +87,8 @@
         if (match)
         {
           var args = basis.array.from(match, 1);
-          var callbacks_ = basis.array.from(route.callbacks);
-          for (var i = 0, item; item = callbacks_[i]; i++)
+          var callbacks = basis.array.from(route.callbacks);
+          for (var i = 0, item; item = callbacks[i]; i++)
             item.callback.apply(item.context, args);
 
           ;;;basis.dev.log(namespace + ' hash match:', route.source, args);
@@ -133,7 +133,7 @@
   */
   function navigate(path, replace){
     if (replace)
-      location.replace(location.pathname + '#' + (path || '/'));
+      location.replace(location.pathname + '#' + path);
     else
       location.hash = path;
 
