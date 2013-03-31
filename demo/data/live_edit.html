@@ -13,7 +13,7 @@
       background: white;
       border: 1px solid #AAA;
       width: 320px;
-      height: 450px;
+      height: 400px;
       overflow: auto;
       overflow-y: scroll;
       overflow-x: hidden;
@@ -115,7 +115,7 @@
     });
 
     // Generate data
-    for (var i = 1; i < 10; i++)
+    for (var i = 1; i <= 8; i++)
       Article({
         id: i,
         title: 'Article #' + i,
@@ -158,7 +158,7 @@
     // Article list
     //
     var articleList = new basis.ui.Node({
-      id: 'ArticleList',
+      template: '<div id="ArticleList"/>',
       dataSource: Article.all,  // set data source
       childClass: ArticleNode,  // set class for child nodes
       sorting: basis.getter('data.title', String.toLowerCase),  // sorting for child nodes
@@ -182,8 +182,8 @@
     }
 
     var myForm = new basis.ui.form.FormContent({
-      disabled: true,             // desable by default
-      autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,   // delegate parent
+      disabled: true,             // disable by default
+      autoDelegate: true,         // delegate parent
       childNodes: [               // define fields
         {
           type: 'text',           // type of field
@@ -222,19 +222,19 @@
     });
 
     var formPanel = new basis.ui.button.ButtonPanel({
-      autoDelegate: basis.dom.wrapper.DELEGATE.PARENT,
+      autoDelegate: true,
       disabled: true,
       childNodes: [
         {
           caption: 'Save',
           click: function(){
-            myForm.getRootDelegate().commit();
+            myForm.target.commit();
           }
         },
         {
           caption: 'Cancel',
           click: function(){
-            myForm.getRootDelegate().rollback();
+            myForm.target.rollback();
             myForm.loadData(myForm.data);
           }
         }
@@ -260,18 +260,29 @@
     });
 
     var articleEditor = new basis.ui.Node({
-      id: 'EditForm',
-      childNodes: [              // set child nodes
-        myForm,
-        formPanel
-      ]
+      template:
+        '<div id="EditForm">' +
+          '<!--{form}-->' +
+          '<!--{buttonPanel}-->' +
+        '</div>',
+      binding: {
+        form: myForm,
+        buttonPanel: formPanel
+      }
     });
 
-    // insert into document
-    basis.dom.insert('demo-container', [
-      articleList.element,
-      articleEditor.element
-    ]);
+    new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+      template:
+        '<div>' +
+          '<!--{articleList}-->' +
+          '<!--{editor}-->' +
+        '</div>',
+      binding: {
+        articleList: articleList,
+        editor: articleEditor
+      }
+    });
 
   </script>  
 </body>

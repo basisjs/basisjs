@@ -25,6 +25,67 @@
     {
       overflow: hidden;
     }
+
+    #ArticleList
+    {
+      background: white;
+      border: 1px solid #AAA;
+      width: 320px;
+      height: 400px;
+      overflow: auto;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      float: left;
+      margin-right: 10px;
+    }
+    .Article
+    {
+      margin: 2px;
+      padding: 4px;
+      border: 1px solid #E0E0E0;
+      border-radius: 3px;
+      background: #F8F8F8 no-repeat 4px 2px;
+      font-size: 85%;
+      cursor: pointer;
+    }
+    .Article-Title
+    {
+      font-weight: bold;
+    }
+    .Article:hover
+    {
+      border-color: #C0C0C0;
+      background-color: #F0F0F0;
+    }
+    .Article.selected
+    {
+      border-color: #A0D8F0;
+      background-color: #F0F4FF;
+    }
+
+    #EditForm
+    {
+      border-radius: 5px;
+      background: #EEE;
+      padding: 10px;
+      float: left;
+    }
+    #EditForm INPUT,
+    #EditForm TEXTAREA
+    {
+      width: 40ex;
+      font-family: Consolas, Courier New, monospace;
+    }
+    #EditForm TEXTAREA
+    {
+      height: 5em;
+      resize: none;
+    }
+
+    #EditForm .disabled .Basis-Field-Container
+    {
+      opacity: .4;
+    }
   </style>
   <!--[if lt IE 7]>
   <style type="text/css">
@@ -45,86 +106,62 @@
 
   <script id="demo-javascript" type="text/javascript">
     basis.require('basis.entity');
-    basis.require('basis.ui.tree');
+    basis.require('basis.ui');
     basis.require('basis.ui.form');
     basis.require('basis.ui.button');
     
-    // Определяем новый тип данных.
+    // define data type
     var Article = new basis.entity.EntityType({
-      // Необязательное поле, используется в основном для отладки.
       name: 'Article',
-      
-      // Опеределяем какое поле является ключом. Это так же необязательное поле и в данной
-      // демонстрации не используется, однако лучше определять ключевое поле, чтобы придать
-      // уникальность и дать возможность адресовать к нужным данным.
-      id: 'id',
-
-      // Определяем набор полей
       fields: {
-        id: Number,
+        id: basis.entity.IntId,
         title: String,
         content: String
       }
     });
 
-    // Генерируем тестовый набор данных.
-    for (var i = 0; i < 10; i++)
+    // generate data
+    for (var i = 1; i <= 8; i++)
       Article({
         id: i,
         title: 'title #' + i,
         content: 'content #' + i
       });
 
-    // Создаем новый класс для листьев дерева с переопределеной функцией формирования заголовка.
-    // Данный код вынесен отдельно для наглядности и мог бы быть вставлен непосрественно в
-    // конструкторе дерева, без заведения переменной для нового класса.
-    var MyTreeNode = basis.Class.create(basis.ui.tree.Node, {
+    // article node
+    var ArticleNode = basis.Class(basis.ui.Node, {
+      template:
+        '<div class="Article {selected}" event-click="select">' +
+          '<div class="Article-Title">[{id}] {title}</div>' +
+          '<div class="Article-Content">{content}</div>' +
+        '</div>',
       binding: {
-        events: 'update',
-        getter: basis.getter('data', '[{id}] {title}')
+        id: 'data:',
+        title: 'data:',
+        content: 'data:'
       }
     });
 
-    // Создаем дерево
-    var myTree = new basis.ui.tree.Tree({
-      // Определяем класс для дочерних узлов (описан выше)
-      childClass: MyTreeNode,
+    // list
+    var myList = new basis.ui.Node({
+      template: '<div id="ArticleList"/>',
 
-      // Задаем управляющую коллекцию. Так как мы используем Entity, то нет необходимости в
-      // создании массива для хранения списка всех экземпляров данных, а так же нет необходимости
-      // отслеживать изменения в данном наборе: новые элементы будут добавляться, удаляться и
-      // изменяться по мере работы непосредственно с самими данными.
       dataSource: Article.all,
+      childClass: ArticleNode,
+      sorting: 'data.title',
 
-      // Определяем сортировку для дочерних узлов: сортируем по node.data.title.
-      sorting: basis.getter('data.title'),
-
-      // Задаем обработчик на событие изменения выборки (Selection).
-      selection: {}
-    });
-
-    myTree.selection.addHandler({
-      datasetChanged: function(){
-        // В данном контесте this указывает на выборку (myTree.selection).
-
-        // Назначаем делегатом формы первый выбранный элемент. Если не выбрано ни одного узла
-        // (this.pick() равно undefined), то форма останется без делегата (по сути не будет
-        // привязана к каким либо данным).
-        myForm.setDelegate(this.pick());
+      selection: {
+        handler: {
+          datasetChanged: function(){
+            myForm.setDelegate(this.pick());
+          }
+        }
       }
     });
 
-    // Создаем форму
+    // form
     var myForm = new basis.ui.form.FormContent({
-      // Делаем форму недоступной для редактирования на первоначальном этапе, так как к ней еще
-      // не привязаны данные и соответственно нечего редактировать.
       disabled: true,
-
-      // Создаем поля формы.
-      // Важно, чтобы имена полей (свойство name) соотвествовали полям редактируемых данных. Только
-      // в этом случае будет обеспечена правильная работа метода myForm.loadData, а так же данные
-      // полученные путем сериализации формы (myForm.serialize()) будут "совместимы" с редактируемым
-      // типом данных и смогут быть использованы для обновления целевого (редактируемого) объекта.
       childNodes: [
         {
           type: 'text',
@@ -136,73 +173,67 @@
           name: 'content',
           title: 'Content'
         }
-      ]
-    });
+      ],
 
-    // Добавляем собственные обработчики событий.
-    // Событие смены делегата
-    myForm.addHandler({
-      delegateChanged: function(){
-        // В данном контесте this указывает на форму (myForm).
-
-        if (this.delegate)
-        {
-          // Если делегат назначен - загружаем данные в поля формы. Так как при назначении
-          // делегата объект начинает указывать на те же данные что и делегат (свойство data), мы
-          // можем оперировать с ними как будто они собственные (принадлежат форме), без обращения
-          // непосрественно к делегату. В данном случае this.data === this.delegate.data.
-          this.loadData(this.data);
-
-          // Делаем форму активной.
-          this.enable();
-        }
-        else
-        {
-          // Так как форма больше не привязана к данным - очищаем поля.
-          this.reset();
-
-          // Делаем форму НЕактивной.
-          this.disable();
+      handler: {
+        delegateChanged: function(){
+          if (this.delegate)
+          {
+            this.loadData(this.data);
+            this.enable();
+          }
+          else
+          {
+            this.reset();
+            this.disable();
+          }
         }
       }
     });
 
-    // Создаем панель с кнопками
+    // panel
     var myButtonPanel = new basis.ui.button.ButtonPanel({
       childNodes: [
         {
-          // Функция сохранения
           caption: 'Save',
           click: function(){
-            // Так как форма указывает на те же данные, что и редактируемый объект мы можем вызывать
-            // метод обновления самой формы (myForm.update). В случае если никакого объекта не привязано
-            // то будут обновлен собственный контейнер данных (myForm.data), что не имеет никакого 
-            // эффекта. Но так как в поведении формы мы ограничили ее доступность к редактированию, которое
-            // доступно только когда форме задан делегат, то в таком случае возможно лишь "сохранение"
-            // путого объекта
             myForm.update(myForm.serialize());
           }
         },
         {
-          // Функция отмены (сброс в начальное состояние).
-          caption: 'Cancel',
+          caption: 'Reset',
           click: function(){
-            // Если к форме привязаны данные (задан делегат) загружаем данные из объекта какими они были
-            // до сохранения. Опять же, так как к форме привязан делегат, то ее контейнер данных содержит
-            // данные редактируемого объекта. Если делегат не назначен (форме) то форма будет содержать
-            // пустой контейнер данных и данный метод не будет иметь эффекта.
             myForm.loadData(myForm.data);
           }
         }
       ]
     });
 
-    // Вставляем компоненты в документ
-    basis.dom.insert('demo-container', [
-      myTree.element,
-      myForm.element,
-      myButtonPanel.element
-    ]);
+    // add views to document
+    var myEditor = new basis.ui.Node({
+      template:
+        '<div id="EditForm">' +
+          '<!--{form}-->' +
+          '<!--{buttonPanel}-->' +
+        '</div>',
+      binding: {
+        form: myForm,
+        buttonPanel: myButtonPanel
+      }
+    });
+
+    new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+      template:
+        '<div>' +
+          '<!--{articleList}-->' +
+          '<!--{editor}-->' +
+        '</div>',
+      binding: {
+        articleList: myList,
+        editor: myEditor
+      }
+    });
 
   </script>  
 </body>
