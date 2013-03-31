@@ -1580,7 +1580,7 @@
       {
         subset = this.keyMap.resolve(list[j]);
 
-        if (subset)
+        if (subset && !subset.has(sourceObject))
         {
           subsetId = subset.basisObjectId;
           newList[subsetId] = subset;
@@ -1643,13 +1643,14 @@
           sourceMap[sourceObject.basisObjectId] = sourceObjectInfo;
 
           if (Array.isArray(list))
-            for (var j = 0; j < list.length; j++)
+            for (var j = 0, dupFilter = {}; j < list.length; j++)
             {
               subset = this.keyMap.get(list[j], true);
 
-              if (subset && !subset.has(sourceObject))
+              if (subset && !dupFilter[subset.basisObjectId])
               {
                 subsetId = subset.basisObjectId;
+                dupFilter[subsetId] = true;
                 sourceObjectInfo.list[subsetId] = subset;
 
                 subset.event_datasetChanged({ inserted: [sourceObject] });
