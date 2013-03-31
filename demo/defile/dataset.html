@@ -51,6 +51,11 @@
       /*text-align: center;*/
     }
 
+    .DemoBlock .items
+    {
+      min-height: 4em;
+    }
+
     .item
     {
       margin: 2px 0 2px 4px;
@@ -187,7 +192,7 @@
       template:
         '<div class="DemoBlock">' +
           '<span{content}/>' +
-          '<!-- {childNodesHere} -->' +
+          '<div{childNodesElement} class="items"/>' +
           '<h3>{title}</h3>' +
         '</div>',
 

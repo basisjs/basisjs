@@ -128,7 +128,7 @@
       var DOM = basis.dom;
       var Event = basis.dom.event;
 
-      var gString = basis.data.generator.String;
+      var gString = basis.data.generator.string;
 
       var Tree = basis.ui.tree.Tree;
       var TreeNode = basis.ui.tree.Node;
@@ -212,7 +212,7 @@
           var kind = i % 2 ? TreeFolder : TreeNode;
           // create node
           var node = new kind(data[i]);
-          //var node = { title: title, type: i % 2 ? 'TreeFolder' : 'TreeNode', data: { id: 'tree_node' + i, value: val } };
+
           // add node to tree
           var refNode = nodes[(i * count * 173) % nodes.length];
           if (refNode == TestTree)
@@ -224,16 +224,12 @@
             nodes.push(node);
         }
         TestTree.setChildNodes(cn);
-        //DOM.insert(TestTree.content, TestTree.childNodes.map(function(node){ return node.element }));
-        //if (console && console.profileEnd) console.profileEnd();
 
         var time = ((new Date() - timeStart)/1000).toFixed(3);
         DOM.get('time').innerHTML = '<b>' + count + '</b> node(s) generated in <b>' + time + '</b> sec';
 
-        
         cn.length = 0;
         nodes.length = 0;
-
       };
 
       var buttons = {
@@ -298,7 +294,7 @@
           this.enable();
         }
       };
-//      keys(buttons).forEach(function(id){ var btn = DOM.get('button' + id); addHandler(btn, 'click', buttons[id], TestTree) });
+
       Event.addHandler(document, 'click', function(event){
         var sender = Event.sender(event);
         if (sender.tagName == 'BUTTON' && sender.id)
@@ -306,10 +302,6 @@
           (buttons[sender.id.substr(6)] || $self).call(TestTree);
           Event.kill(event);
         }
-      });
-
-      Event.onLoad(function(){
-        //genNodes(2000);
       });
 
     })();

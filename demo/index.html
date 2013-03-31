@@ -34,12 +34,12 @@
       padding: 0;
     }
 
-    .Demo-Group
+    .demo-group
     {
       padding-bottom: 1.5em !important;
     }
 
-    #DemoList .Demo-Group-Title
+    #DemoList .demo-group__title
     {
       clear: both;
       font-size: 210%;
@@ -47,13 +47,13 @@
       padding-left: 22px;
     }
 
-    #DemoList .Demo-Group-Content
+    #DemoList .demo-group__content
     {
       overflow: hidden;
       padding: 5px;
     }
 
-    #DemoList .Demo-TreeNode
+    #DemoList .demo-item
     {
       width: 140px;
       display: inline-block;
@@ -62,7 +62,7 @@
       cursor: pointer;
       height: 100%;
     }
-    #DemoList .Demo-TreeNode A
+    #DemoList .demo-item A
     {
       padding-top: 4px;
       display: block;
@@ -74,12 +74,12 @@
       -o-transition: text-shadow .33s;
       transition: text-shadow .33s;
     }
-    #DemoList .Demo-TreeNode A:hover
+    #DemoList .demo-item A:hover
     {
       background: #F2ECC9;
       text-shadow: 0px 1px 1px rgba(0,0,0,.12);
     }
-    #DemoList .Demo-TreeNode IMG
+    #DemoList .demo-item IMG
     {
       margin: 5px 5px 0 5px;
       border: 1px solid #E0E0E0;
@@ -91,22 +91,53 @@
       transition: opacity .33s, border-color .33s, box-shadow .33s;
       opacity: .85;
     }
-    #DemoList .Demo-TreeNode A:hover IMG
+    #DemoList .demo-item A:hover IMG
     {
       opacity: 1;
       border-color: #C0C0C0;
       box-shadow: 1px 1px 3px rgba(0,0,0,.15);
     }
-    #DemoList .Demo-TreeNode .title
+    #DemoList .demo-item .title
     {
       display: block;
       padding: 7px 10px 10px;
       text-align: center;
       font-size: 85%;
     }
-    #DemoList .selected
+    #DemoList .demo-item_wow
     {
-      background-color: #EAF7FF !important;
+      width: 280px;
+    }
+    #DemoList .demo-item_wow A
+    {
+      background: rgba(255, 225, 0, .25);
+      border-right: 3px solid #FAF8EC;
+      overflow: hidden;
+      display: block;
+    }
+    #DemoList .demo-item_wow IMG
+    {
+      opacity: 1;
+    }
+    #DemoList .demo-item__wowtext::before
+    {
+      content: 'WOW!';
+      margin-right: 1ex;
+      font-weight: bold;
+    }
+    #DemoList .demo-item__wowtext
+    {
+      font-size: 90%;
+      padding: 5px 12px 8px 0;
+      text-align: left;
+      overflow: hidden;
+      color: #886600;
+    }
+    #DemoList .demo-item_header
+    {
+      width: 50%;
+      float: left;
+      margin-right: -8px;
     }
   </style>
   <!--[if lt IE 7]>
@@ -123,6 +154,34 @@
 </head>
 
 <body>
+  <script type="text/basis-template" id="demo-item">
+    <li class="demo-item" event-click="select">
+      <a{content} href="{url}">
+        <img src="{imageUrl}" width="100" height="75" event-error="setDefaultImage"/>
+        <span class="title">{title}</span>
+      </a>
+    </li>
+  </script>
+
+  <script type="text/basis-template" id="demo-item_wow">
+    <li class="demo-item demo-item_wow" event-click="select">
+      <a{content} href="{url}">
+        <div class="demo-item_header">
+          <img src="{imageUrl}" width="100" height="75" event-error="setDefaultImage"/>
+          <span class="title">{title}</span>
+        </div>
+        <div class="demo-item__wowtext">{wow}</div>
+      </a>
+    </li>
+  </script>
+
+  <script type="text/basis-template" id="demo-group">
+    <li class="demo-group">
+      <div class="demo-group__title"><span>{title}</span></div>
+      <ul{childNodesElement} class="demo-group__content"/>
+    </li>
+  </script>
+
   <script type="text/javascript">
     (function(){
       basis.require('basis.ui');
@@ -131,11 +190,11 @@
         {
           title: 'Apps',
           demos: [
-            { title: 'Basis Docs', url: '../docs/', image: 'apps/docs.png' },
-            { title: 'Blog', url: 'apps/blog/', image: 'apps/blog/blog.png' },
-            { title: 'TodoMVC', url: 'apps/todomvc/basis/', image: 'apps/todomvc/logo.png' },
-            //{ title: 'Todo list', url: 'apps/todo.html' },
-            { title: '(external) Wallet One Cabinet', url: 'https://www.walletone.com/client/', image: 'apps/w1.png' }
+            { title: 'Basis Docs', url: '../docs/', image: 'apps/docs.png',
+              wow: 'Basisjs docs generates on fly. It analyze framework structure and source code to show article for any class, function or property.' },
+            { title: 'Blog', url: 'apps/blog/', image: 'apps/blog/blog.png',
+              wow: 'Demo of blog contains 5000 blog post, build category list, archive and tag cloud on client side in extremely small time' },
+            { title: 'TodoMVC', url: 'apps/todomvc/basis/', image: 'apps/todomvc/logo.png' }
           ]
         },
         {
@@ -145,7 +204,7 @@
             { title: 'Nested grouping', url: 'common/grouping_of_grouping.html' },
             { title: 'Match input', url: 'common/match.html' },
             { title: 'Share selection', url: 'common/selection_share.html' },
-            { title: 'Multiple selections for control', url: 'common/selection_multiple.html' },
+            { title: 'Multiple selections', url: 'common/selection_multiple.html' },
             { title: 'Selection as data source', url: 'common/selection_datasource.html' },
             { title: 'Using of satellites', url: 'common/satellite.html' }
           ]
@@ -153,10 +212,12 @@
         {
           title: 'Data flow',
           demos: [
-            { title: 'Using of datasets', url: 'defile/dataset.html' },
+            { title: 'Using of datasets', url: 'defile/dataset.html',
+              wow: 'Datasets help to automate various operations on data object sets like union of set, subtract, split set for subsets and so on. Look how easy it is.' },
             { title: 'Using of aggregates', url: 'defile/data_index.html' },
             { title: 'Entity simple', url: 'data/entity.html' },
-            { title: 'Live entity edit', url: 'data/live_edit.html' },
+            { title: 'Live entity edit', url: 'data/live_edit.html',
+              wow: 'Typed data object provide ability to change data and store those changes, for future rollback or commit. Look how to do that in this demo.' },
             { title: 'Entity user list', url: 'data/userlist.html' },
             { title: 'M:M relationship editor', url: 'data/m2m.html' },
             { title: 'Build tree using dataset', url: 'data/generate_tree.html' },
@@ -164,21 +225,13 @@
             { title: 'Tag cloud', url: 'data/tag_cloud.html' }
           ]
         },
-        /*{
-          title: 'Ajax',
-          demos: [
-            { title: 'SOAP simple', url: 'ajax/soap-simple.html' },
-            { title: 'SOAP list', url: 'ajax/soap-list.html' },
-            { title: 'Parallel', url: 'ajax/parallel.html' }
-          ]
-        },*/
         {
           title: 'Speed Demos',
           demos: [
-            { title: 'basis.ui.tree', url: '../test/speed/tree.html', image: 'res/img/speed.png' },
-            { title: 'basis.ui.table', url: '../test/speed/table.html', image: 'res/img/speed.png' },
-            { title: 'basis.data.DataObject', url: '../test/speed/DataObject.html', image: 'res/img/speed.png' }/*,
-            { title: 'Entity', url: '../test/speed/Entity.html', image: 'res/img/speed.png' }*/
+            { title: 'Tree generation', url: '../test/speed/tree.html', image: 'res/img/speed.png',
+              wow: 'Interface nodes base on DOM model, so interface organize as tree. Look how fast basisjs generates trees.' },
+            { title: 'Table generation', url: '../test/speed/table.html', image: 'res/img/speed.png' },
+            { title: 'Data generation', url: '../test/speed/DataObject.html', image: 'res/img/speed.png' }
           ]
         },
         {
@@ -203,52 +256,53 @@
           title: 'Chart',
           demos: [
             { title: 'Chart with dynamic threads', url: 'chart/dynamic-threads.html' },
-            { title: 'Chart with range selection', url: 'chart/range.html' },
+            { title: 'Chart with range selection', url: 'chart/range.html',
+              wow: 'Framework ready for thousands of data object. In this demo you can see how efficient it works with datasets. Try move range and change it size.' },
             { title: 'Bar Chart', url: 'chart/bar.html' }
           ]
         }
       ];
 
-      window.demos = new basis.ui.Node({
-        id: 'DemoList',
-        container: document.body,
-        template: 
-          '<ul/>',
-
-        childClass: {
-          className: 'Demo-TreeNode',
-          template:
-            '<li class="Demo-TreeNode" event-click="select">' +
-              '<a{content} href="{url}">' +
-                '<img src="{imageUrl}" event-error="setDefaultImage" width="100" height="75"/>' +
-                '<span class="title">{title}</span>' +
-              '</a>' +
-            '</li>',
-
-          binding: {
-            title: 'data:',
-            url: 'data:',
-            imageUrl: function(node){
-              return node.data.image || node.data.url.replace('.html', '.png');
-            }
-          },
-
-          action: {
-            setDefaultImage: function(){
-              this.data.image = 'res/img/noimg.png';
-              this.updateBind('imageUrl');
-            }
+      var DemoItem = basis.ui.Node.subclass({
+        template: 'id:demo-item',
+        action: {
+          setDefaultImage: function(){
+            this.update({
+              image: 'res/img/noimg.png'
+            });
           }
         },
+        binding: {
+          title: 'data:',
+          wow: 'data:',
+          url: 'data:',
+          imageUrl: {
+            events: 'update',
+            getter: function(node){
+              return node.data.image || node.data.url.replace('.html', '.png');
+            }
+          }
+        }
+      });
+
+      var WowDemoItem = DemoItem.subclass({
+        template: 'id:demo-item_wow'
+      });
+
+      window.demos = new basis.ui.Node({
+        container: document.body,
+        template: '<ul id="DemoList"/>',
+
+        childClass: DemoItem,
+        childFactory: function(config){
+          var ItemClass = config.data.wow ? WowDemoItem : DemoItem;
+          return new ItemClass(config);
+        },
         grouping: {
+          groupGetter: 'section',
           childClass: {
-            template: 
-              '<li{element} class="Demo-Group">' +
-                '<div class="Demo-Group-Title"><span>{title}</span></div>' +
-                '<ul{childNodesElement} class="Demo-Group-Content"/>' +
-              '</li>'
-          },
-          groupGetter: 'section'
+            template: 'id:demo-group'
+          }
         },
         childNodes: data.map(function(section){
           return section.demos.map(function(demo){
