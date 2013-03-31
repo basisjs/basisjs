@@ -65,6 +65,13 @@
     {
       float: right;
       padding-left: 1ex;
+      padding-top: 7px;
+    }
+    .groupPanel BUTTON
+    {
+      position: relative;
+      top: -2px;
+      margin: 0 12px 0 8px;
     }
 
     .noGroup
@@ -118,15 +125,11 @@
 
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.data');
-    basis.require('basis.dom');
     basis.require('basis.entity');
     basis.require('basis.ui.menu');
     basis.require('basis.ui.field');
         
-    // make shortcut
-    var Data = basis.data;
-    var DOM = basis.dom;
-
+    // define types
     var UserGroup = new basis.entity.EntityType({
       fields: {
         groupId: basis.entity.IntId,
@@ -190,18 +193,15 @@
       defaultHandler: function(node){
         if (node)
         {
-          this.update({ group: node.target });
+          this.update({
+            group: node.target
+          });
           this.hide();
         }
       },
       handler: {
-        delegateChanged: function(node, oldDelegate){
+        delegateChanged: function(sender, oldDelegate){
           selectedGroup.set([this.data.group]);
-
-          if (oldDelegate)
-            basis.cssom.classList(oldDelegate.element).remove('menuOpened');
-          if (this.delegate)
-            basis.cssom.classList(this.delegate.element).add('menuOpened');
         },
         hide: function(){
           this.setDelegate();
@@ -210,11 +210,11 @@
     });
 
     var userList = new basis.ui.Node({
-      id: 'UserList',
-      container: DOM.get('demo-container'),
+      container: document.getElementById('demo-container'),
+      template: '<div id="UserList"/>',
 
       dataSource: User.all,
-      sorting: basis.getter('data.title'),
+      sorting: 'data.title',
       selection: true,
       childClass: {
         template:
@@ -225,12 +225,10 @@
             '</div>' +
             '<span class="user__title">{title}</span>' + 
           '</div>',
-
         binding: {
           group: 'satellite:',
           title: 'data:'
         },
-
         action: {
           select: function(){
             this.select();
@@ -246,9 +244,7 @@
             existsIf: basis.getter('data.group'),
             delegate: basis.getter('data.group'),
             instanceOf: basis.ui.Node.subclass({
-              template:
-                '{title}',
-
+              template: '{title}',
               binding: {
                 title: 'data:'
               }
@@ -259,16 +255,15 @@
     });
 
     var groupList = new basis.ui.Node({
-      container: DOM.get('demo-container'),
-
-      id: 'GroupList',
+      container: document.getElementById('demo-container'),
+      template: '<div id="GroupList"/>',
       
       dataSource: UserGroup.all,
-      sorting: basis.getter('data.groupId'),
+      sorting: 'data.groupId',
       childClass: {
         template:
           '<div class="group">' +
-            '<button event-click="delete">delete</button>' +
+            '<button event-click="destroy">delete</button>' +
             '<!--{titleEditor}-->' +
           '</div>',
 
@@ -277,35 +272,27 @@
         },
 
         action: {
-          'delete': function(){
+          destroy: function(){
             this.target.destroy();
           }
         },
 
         satelliteConfig: {
           titleEditor: {
-            instanceOf: basis.ui.field.Text,
-            config: {
-              autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
+            instanceOf: basis.ui.field.Text.subclass({
+              autoDelegate: true,
               maxLength: 32,
               handler: {
                 update: function(){
                   this.setValue(this.data.title);
                 },
                 change: function(){
-                  this.update({ title: this.getValue() });
-                },
-                fieldKeydown: function(){
-                  this.update({ title: this.getValue() });                  
-                },
-                fieldKeypress: function(){
-                  this.update({ title: this.getValue() });                  
-                },
-                filedKeyup: function(){
-                  this.update({ title: this.getValue() });                  
+                  this.update({
+                    title: this.getValue()
+                  });
                 }
               }
-            }
+            })
           }
         }
       }
