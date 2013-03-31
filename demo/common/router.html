@@ -1,0 +1,131 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis.js demos: Router</title>
+
+  <style type="text/css" id="demo-css">
+    HTML,
+    BODY
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .page
+    {
+      padding: 8px;
+      margin: 1em 0;
+      background: white;
+      border: 1px solid #888;
+    }
+
+    .page-unselected
+    {
+      display: none;
+    }
+  </style>
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <div id="demo-container">
+    <div>
+      <a href="#page1">Show page 1</a>
+      <a href="#page2">Show page 2</a>
+    </div>
+    <br/>
+  </div>
+
+  <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.ui');
+    basis.require('basis.router');
+
+    //
+    // Solution #1
+    //
+    var pages = new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+      template: '<div>Solution #1</div>',
+      selection: true,
+      childClass: {
+        template:
+          '<div class="page page-{unselected}">' +
+            '{name}' + 
+          '</div>',
+        binding: {
+          name: 'name'
+        }
+      },
+      childNodes: [
+        { name: 'page1' },
+        { name: 'page2' }
+      ]
+    });
+
+    basis.router.add('page:num', function(num){
+      var page = pages.getChildByName('page' + num);
+      if (page)
+        page.select();
+    });
+
+    //
+    // Solution #2
+    //
+
+    var _postInit = basis.ui.Node.prototype.postInit;
+    basis.ui.Node.extend({   // or you can create special subclass instead
+      postInit: function(){
+        _postInit.call(this);
+
+        if (this.router)
+          basis.router.add(this.router, this.routerCallback, this);
+      },
+      routerCallback: function(){
+        this.select();
+      }
+    });
+
+    new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+      template: '<div>Solution #2</div>',
+      selection: true,
+      childClass: {
+        template:
+          '<div class="page page-{unselected}">' +
+            '{name}' + 
+          '</div>',
+        binding: {
+          name: 'name'
+        }
+      },
+      childNodes: [
+        { name: 'page1', router: 'page1' },
+        { name: 'page2', router: 'page2' }
+      ]
+    });
+
+    //
+    // start router
+    //
+
+    basis.router.start();
+
+  </script>
+</body>
+
+</html>
