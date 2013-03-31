@@ -56,10 +56,20 @@
       this.start.call(request.requestData.origin);
     },
     success: function(transport, request, data){
-      this.success.call(request.requestData.origin, data);
+      var origin = request.requestData.origin;
+
+      this.success.call(origin, data);
+
+      if (origin.state == STATE_PROCESSING)
+        origin.setState(STATE_READY);
     },
-    failure: function(transport, request){
-      this.failure.call(request.requestData.origin, request.data.error);
+    failure: function(transport, request, error){
+      var origin = request.requestData.origin;
+
+      this.failure.call(origin, error);
+
+      if (origin.state == STATE_PROCESSING)
+        origin.setState(STATE_ERROR, error);
     },
     complete: function(transport, request){
       this.complete.call(request.requestData.origin);
