@@ -252,6 +252,11 @@
       }
     });
 
+    var linkByField = new basis.data.dataset.Split({
+      source: Link.all,
+      rule: 'data.FieldId'
+    });
+
     var words = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Sed metus nibh, sodales a, porta at, vulputate eget, dui. Pellentesque ut nisl. Maecenas tortor turpis, interdum non, sodales non, iaculis ac, lacus.'.replace(/[^a-z]+/ig, ' ').toLowerCase().qw();
 
     // Генерируем тестовый набор данных.
@@ -339,7 +344,7 @@
         },
         init: function(){
           nsTree.Folder.prototype.init.call(this);
-          this.setDataSource(Link.getGrouping('FieldId').getSubset(this.data.FieldId, true));
+          this.setDataSource(linkByField.getSubset(this.data.FieldId, true));
         },
 
         childFactory: basis.ui.Node.prototype.childFactory,
@@ -505,7 +510,7 @@
           caption: 'Uncheck all',
           groupId: 1,
           click: function(){
-            Link.getGrouping('FieldId').getSubset(relatedTree.data.FieldId).sync([]);
+            linkByField.getSubset(relatedTree.data.FieldId).sync([]);
           }
         },
         {
