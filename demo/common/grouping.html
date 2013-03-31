@@ -17,9 +17,8 @@
 
     .Demo-Section
     {
-      width: 400px;
+      width: 350px;
       float: left;
-      border-right: 1px solid #EEE;
       margin-right: 10px;
       padding-right: 10px;
     }
@@ -36,7 +35,7 @@
 
     #demo-changeGroupingList
     {
-      margin: .5em 0;
+      margin: .5em;
     }
   </style>
   <!--[if lt IE 7]>
@@ -54,21 +53,12 @@
 </head>
 
 <body>
-  <div id="demo-container"><div id="demo-changeGroupingList">Choose grouping: </div></div>
+  <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.data');
     basis.require('basis.ui.tree');
     basis.require('basis.ui.table');
     basis.require('basis.ui.field');
-    
-    // make shortcut
-    var DOM = basis.dom;
-    var Data = basis.data;
-    var nsTree = basis.ui.tree;
-    var nsTable = basis.ui.table;
-    var nsField = basis.ui.field;
 
     // data
     var data = [
@@ -83,13 +73,11 @@
     // Create controls
     //
 
-    var demoContainer = DOM.get('demo-container');
-
-    var tree = new nsTree.Tree({
+    var tree = new basis.ui.tree.Tree({
       childNodes: data
     });
 
-    var table = new nsTable.Table({
+    var table = new basis.ui.table.Table({
       childNodes: data,
       structure: [
         { header: 'Title', body: basis.getter('data.title') },
@@ -97,44 +85,57 @@
       ]
     });
 
-    // insert controls to document
-    DOM.insert(demoContainer, DOM.wrap([
-      tree.element,
-      table.element
-    ], { '.Demo-Section': basis.fn.$true }));
+    new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+      template:
+        '<div>' +
+          '<div id="demo-changeGroupingList">' +
+            'Choose grouping:' + 
+            '<!--{groupingSelect}-->' +
+          '</div>' +
+          '<div class="Demo-Section">' +
+            '<!--{tree}-->' +
+          '</div>' +
+          '<div class="Demo-Section">' +
+            '<!--{table}-->' +
+          '</div>' +
+        '</div>',
 
-    var groupigList = new nsField.RadioGroup({
-      container: DOM.get('demo-changeGroupingList'),
-      event_change: function(){
-        nsField.RadioGroup.prototype.event_change.call(this);
-
-        var grouping = this.getValue();
-        tree.setGrouping(grouping);
-        table.setGrouping(grouping);
-      },
-      childNodes: [
-        {
-          selected: true,
-          title: 'No grouping',
-          value: null
-        },
-        {
-          title: 'Group by title',
-          value: 'data.title'
-        },
-        {
-          title: 'Group by first letter',
-          value: {
-            groupGetter: 'data.title.charAt(0)',
-            sorting: 'data.title',
-            childClass: {
-              binding: {
-                title: basis.getter('data.title', 'Group for letter <{0}>')
+      binding: {
+        tree: tree,
+        table: table,
+        groupingSelect: new basis.ui.field.RadioGroup({
+          handler: {
+            change: function(){
+              tree.setGrouping(this.getValue());
+              table.setGrouping(this.getValue());
+            }
+          },
+          childNodes: [
+            {
+              selected: true,
+              title: 'No grouping',
+              value: null
+            },
+            {
+              title: 'Group by title',
+              value: 'data.title'
+            },
+            {
+              title: 'Group by first letter',
+              value: {
+                groupGetter: 'data.title.charAt(0)',
+                sorting: 'data.title',
+                childClass: {
+                  binding: {
+                    title: basis.getter('data.title', 'Group for letter <{0}>')
+                  }
+                }
               }
             }
-          }
-        }
-      ]
+          ]
+        })
+      }
     });
 
   </script>

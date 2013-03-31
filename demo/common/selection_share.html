@@ -16,17 +16,35 @@
       font-family: Tahoma, Verdana, Arial, sans-serif;
     }
 
-    #demo-container .Basis-Tree
+    .demo-list
+    {
+      float: left;
+      margin-right: 10px;
+    }
+    .demo-list__content
     {
       background: white;
       border: 1px solid #AAA;
-      width: 300px;
-      height: 400px;
+      width: 220px;
+      height: 300px;
       overflow: auto;
       overflow-y: scroll;
       overflow-x: hidden;
-      float: left;
-      margin-right: 10px;
+    }
+    .demo-list-item
+    {
+      padding: 4px;
+      border-bottom: 1px solid #E0E0E0;
+      cursor: pointer;
+    }
+    .demo-list-item:hover
+    {
+      background: #F0F0F0;
+    }
+    .demo-list-item_selected
+    {
+      background: gold !important;
+      cursor: default;
     }
   </style>
   <!--[if lt IE 7]>
@@ -51,85 +69,82 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.ui.tree');
+    basis.require('basis.ui');
    
-    // make shortcut
-    var DOM = basis.dom;
-    var nsTree = basis.ui.tree;
-
-    // data for tree
+    // data for node
     var data = [
-      { data: { title: 'node1' } },
-      { data: { title: 'node2' },
-        childNodes: [
-          { data: { title: 'node2.1' } },
-          { data: { title: 'node2.1' } }
-        ]
-      },
-      { data: { title: 'node3' },
-        childNodes: [
-          { data: { title: 'node3.1' } },
-          { data: { title: 'node3.2' } },
-          { data: { title: 'node3.3' },
-            childNodes: [
-              { data: { title: 'node3.3.1' } },
-              { data: { title: 'node3.3.2' } },
-              { data: { title: 'node3.3.3' } },
-              { data: { title: 'node3.3.4' } },
-              { data: { title: 'node3.3.5' } }
-            ]
-          }
-        ]
-      },
-      { data: { title: 'node4' } }
+      { data: { title: 'Lorem' } },
+      { data: { title: 'Sed' } },
+      { data: { title: 'Pellentesque' } },
+      { data: { title: 'Maecenas' } },
+      { data: { title: 'Letters from A to Z' } }
     ];
 
-    var treeChildFactory = function(config){
-      if (config.childNodes)
-        return new nsTree.Folder(basis.object.extend({ childFactory: this.childFactory }, config));
-      else
-        return new nsTree.Node(config);
-    };
-
     //
-    // Create tree controls
+    // main part
     //
 
     // setup selection for control (multiple mode)
-    var demoContainer = DOM.get('demo-container');
-    var treeSelection = new basis.dom.wrapper.Selection({ multiple: true });
-    var tree1 = new nsTree.Tree({
-      id: 'Tree1',
-      container: demoContainer,
-      selection: treeSelection, 
-      childFactory: treeChildFactory,
-      childNodes: data
+    var sharedSelection = new basis.dom.wrapper.Selection({
+      multiple: true
     });
 
-    var tree2 = new nsTree.Tree({
-      id: 'Tree2',
-      container: demoContainer,
-      selection: treeSelection,
-      childFactory: treeChildFactory,
-      childNodes: data
-    });
-
-    var tree3 = new nsTree.Tree({
-      id: 'Tree3',
-      container: demoContainer,
-      selection: tree2.selection, // pass tree2 selection object (it is still treeSelection)
-      childFactory: treeChildFactory,
-      childNodes: data
-    });
-
-    // make output of selection content
-    var contentText = DOM.createText('nothing');
-    DOM.insert(demoContainer, DOM.createElement('', DOM.createElement('LABEL', 'Selection contains: '), contentText));
-    treeSelection.addHandler({
-      datasetChanged: function(){
-        contentText.nodeValue = this.getItems().map(function(node){ return '({0}) {1}'.format(DOM.axis(node, DOM.AXIS_ANCESTOR).pop().element.id, node.data.title); }).join(', ') || 'nothing';
+    var List = basis.ui.Node.subclass({
+      template:
+        '<div class="demo-list">' +
+          '{name}' +
+          '<div{childNodesElement} class="demo-list__content"/>' +
+        '</div>',
+      binding: {
+        name: 'name'
+      },
+      childClass: {
+        template: '<div class="demo-list-item demo-list-item_{selected}" event-click="select">{title}</div>',
+        binding: {
+          title: 'data:'
+        }
       }
+    });
+  
+    var node1 = new List({
+      name: 'List 1',
+      selection: sharedSelection, 
+      childNodes: data
+    });
+
+    var node2 = new List({
+      name: 'List 2',
+      selection: sharedSelection,
+      childNodes: data
+    });
+
+    var node3 = new List({
+      name: 'List 3',
+      selection: node2.selection, // pass node2 selection object (it is still sharedSelection)
+      childNodes: data
+    });
+
+    new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+      childNodes: [
+        node1,
+        node2,
+        node3,
+
+        // output of selection content
+        new basis.ui.Node({
+          template: '<div>Selected items:</div>',
+          dataSource: sharedSelection,
+          childClass: {
+            template: '<div>{title}</div>',
+            binding: {
+              title: function(node){
+                return '({0}) {1}'.format(node.delegate.parentNode.name, node.data.title);
+              }
+            }
+          }
+        })
+      ]
     });
 
   </script>

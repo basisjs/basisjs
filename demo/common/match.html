@@ -19,7 +19,6 @@
     {
       width: 300px;
       float: left;
-      border-right: 1px solid #EEE;
       margin-right: 10px;
       padding-right: 10px;
     }
@@ -79,17 +78,11 @@
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.data');
     basis.require('basis.dom');
-    basis.require('basis.ui.tree');
     basis.require('basis.ui.table');
-    basis.require('basis.ui.form');
+    basis.require('basis.ui.field');
     
     // make shortcut
-    var Data = basis.data;
     var DOM = basis.dom;
-    var nsTree = basis.ui.tree;
-    var nsTable = basis.ui.table;
-    var nsForm = basis.ui.form;
-
     var MatchInput = basis.ui.field.MatchInput;
 
     // data
@@ -101,13 +94,43 @@
       { data: { title: 'Letters from A to Z', content: 'abcdefghijklmnopqrstuvwxyz' } }
     ].repeat(5).sortAsObject(Math.random);
 
-    // Create a tree
-    var tree = new nsTree.Tree({
+    var MatchDemo = new basis.ui.Node.subclass({
+      container: document.getElementById('demo-container'),
+      template:
+        '<div class="Demo-Section">' +
+          'Type in:' +
+          '<!--{matchInput}-->' +
+          '<!--{component}-->' +
+        '</div>'
+    });
+
+    // Create a list
+    var list = new basis.ui.Node({
+      template: '<ul/>',
+      childClass: {
+        template: '<li>{title}</li>',
+        binding: {
+          title: 'data:'
+        }
+      },
       childNodes: data
     });
 
+    new MatchDemo({
+      binding: {
+        component: list,
+        matchInput: new MatchInput({
+          template: '<b:include src="basis.ui.field.MatchInput" class="MatchHolder"/>',
+          matchFilter: {
+            textNodeGetter: 'tmpl.title',
+            node: list
+          }
+        })
+      }
+    });
+
     // Create a table
-    var table = new nsTable.Table({
+    var table = new basis.ui.table.Table({
       structure: [
         { header: 'Title', body: { content: basis.getter('data.title') }, sorting: basis.getter('data.title') },
         { header: 'Content', body: { templateRef: 'text', content: basis.getter('data.content') } }
@@ -115,32 +138,19 @@
       childNodes: data
     });
 
-    // insert controls to document and link with match input
-    DOM.insert(DOM.get('demo-container'), DOM.wrap([
-      [
-        'Type in:',
-        new MatchInput({
-          cssClassName: 'MatchHolder',
-          matchFilter: {
-            textNodeGetter: 'tmpl.title',
-            node: tree
-          }
-        }).element,
-        tree.element
-      ],
-      [
-        'Type in:',
-        new MatchInput({
-          cssClassName: 'MatchHolder',
+    new MatchDemo({
+      binding: {
+        component: table,
+        matchInput: new MatchInput({
+          template: '<b:include src="basis.ui.field.MatchInput" class="MatchHolder"/>',
           matchFilter: {
             node: table,
             textNodeGetter: 'tmpl.text.firstChild',
             wrapElement: 'A.custom-match'
           }
-        }).element,
-        table.element
-      ]
-    ], { '.Demo-Section': basis.fn.$true }));
+        })
+      }
+    });
 
   </script>
 </body>

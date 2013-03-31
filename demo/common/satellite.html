@@ -266,15 +266,13 @@
             '<button event-click="destroy">delete</button>' +
             '<!--{titleEditor}-->' +
           '</div>',
-
-        binding: {
-          titleEditor: 'satellite:'
-        },
-
         action: {
           destroy: function(){
             this.target.destroy();
           }
+        },
+        binding: {
+          titleEditor: 'satellite:'
         },
 
         satelliteConfig: {

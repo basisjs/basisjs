@@ -136,44 +136,17 @@
   </div>
 
   <script type="text/javascript" id="demo-javascript">
-
-    basis.require('basis.data');
-    basis.require('basis.dom');
     basis.require('basis.ui');
-    
-    // make shortcut
-    var Data = basis.data;
-    var DOM = basis.dom;
-    var nsUI = basis.ui;
+
 
     //
     // NUMBER GROUP DEMO
     //
 
-    // data
-    var data = [];
-    for (var i = 0; i < 32; i++)
-    {
-      data.push({
-        data: {
-          id: i
-        }
-      });
-    }
+    var list = new basis.ui.Node({
+      container: document.getElementById('NumberDemo-Container'),
 
-    var list = new nsUI.Node({
-      container: DOM.get('NumberDemo-Container'),
-      childNodes: data,
-      childClass: {
-        template:
-          '<span class="item">' +
-            '{value}' +
-          '</span>',
-        binding: {
-          value: 'data.id'
-        }
-      },
-      groupingClass: nsUI.GroupingNode.subclass({
+      groupingClass: basis.ui.GroupingNode.subclass({
         groupGetter: function(node){
           return node.data.id >> 1;
         },
@@ -196,8 +169,25 @@
             }
           }
         }
-      }
+      },
+      childClass: {
+        template:
+          '<span class="item">' +
+            '{value}' +
+          '</span>',
+        binding: {
+          value: 'data.id'
+        }
+      },
+      childNodes: basis.array.create(32, function(idx){
+        return {
+          data: {
+            id: idx
+          }
+        };
+      })
     });
+
 
     //
     // METRO DEMO
@@ -415,11 +405,10 @@
       'Venezuela': 'South America'
     };
 
-    var metroList = new nsUI.Node({
-      id: 'MetroDemo',
-      container: DOM.get('MetroDemo-Container'),
+    var metroList = new basis.ui.Node({
+      container: document.getElementById('MetroDemo-Container'),
+      template: '<div id="MetroDemo"/>',
 
-      childNodes: Data(metro),
       sorting: 'data.name',
       childClass: {
         template:
@@ -429,10 +418,15 @@
           '</li>',
 
         binding: {
-          name: 'data.name',
-          city: 'data.city'
+          name: 'data:',
+          city: 'data:'
         }
       },
+      childNodes: metro.map(function(item){
+        return {
+          data: item
+        }
+      }),
 
       grouping: {
         // group metro by country
@@ -456,7 +450,7 @@
             template:
               '<div class="metro-continent">' +
                 '<h3 class="metro-continent-title">{title}</h3>' +
-                '<!-- {childNodesHere} -->' +
+                '<!--{childNodesHere}-->' +
               '</div>'
           }
         }

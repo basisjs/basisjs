@@ -20,26 +20,28 @@
       background: white;
       border: 1px solid #AAA;
       width: 300px;
-      height: 500px;
+      height: 450px;
+      margin-right: 2ex;
       overflow: auto;
       overflow-y: scroll;
       overflow-x: hidden;
+      float: left;
     }
-    .green-selection .Basis-TreeNode-Content .selected .Basis-TreeNode-Caption
+    .selection-green .Basis-TreeNode-Content .selected .Basis-TreeNode-Caption
     {
       background-color: #00AA00 !important;
       color: white !important;
     }
-    .green-selection .Basis-TreeNode-Content .Basis-TreeNode-Caption
+    .selection-green .Basis-TreeNode-Content .Basis-TreeNode-Caption
     {
       color: #00CC00 !important;
     }
-    .red-selection .Basis-TreeNode-Content .selected .Basis-TreeNode-Caption
+    .selection-red .Basis-TreeNode-Content .selected .Basis-TreeNode-Caption
     {
       background-color: #DD0000 !important;
       color: black !important;
     }
-    .red-selection .Basis-TreeNode-Content .Basis-TreeNode-Caption
+    .selection-red .Basis-TreeNode-Content .Basis-TreeNode-Caption
     {
       color: #DD0000 !important;
     }
@@ -63,29 +65,21 @@
   <div id="demo-container"></div>
 
   <script type="text/javascript" id="demo-javascript">
-    basis.require('basis.dom');
-    basis.require('basis.dom.wrapper');
+    basis.require('basis.ui');
     basis.require('basis.ui.tree');
     
-    // make shortcut
-    var DOM = basis.dom;
-    var nsTree = basis.ui.tree;
     var Selection = basis.dom.wrapper.Selection;
 
     //
-    // THIS SECTION FOR AUTOMATIC SELECTION CONTENT OUTPUT AND NOT A PART OF DEMONSTATION
+    // store selections on creation
     //
-    var selectionOutput = DOM.insert(DOM.get('demo-container'), DOM.createElement());
+    var selections = [];
     var _init = Selection.prototype.init;
-    Selection.prototype.init = function(config){
-      _init.call(this, config);
-      this.element = DOM.insert(selectionOutput, DOM.createElement('', DOM.createElement('LABEL', (this.name || 'Tree selection') + ': '), this.content = DOM.createText('{no items}')));
-      this.addHandler({
-        datasetChanged: function(){
-          this.content.nodeValue = this.getItems().map(basis.getter('data.title')).join(', ') || '{no items}';
-        }
-      });
+    Selection.prototype.init = function(){
+      _init.call(this);
+      selections.push(this);
     };
+
 
     //
     // Main part
@@ -97,23 +91,20 @@
     // data for tree
     var data = [
       { data: { title: 'node1' } },
-      { data: { title: 'node2 (Red selection holder)' },
+      { data: { title: 'node2' },
         selection: redSelection,
-        cssClassName: 'red-selection',
         childNodes: [
           { data: { title: 'node2.1' } },
           { data: { title: 'node2.2' } }
         ]
       },
-      { data: { title: 'node3 (Green selection holder)' },
+      { data: { title: 'node3' },
         selection: new Selection({ multiple: true, name: 'Green selection' }),
-        cssClassName: 'green-selection',
         childNodes: [
           { data: { title: 'node3.1' } },
           { data: { title: 'node3.2' } },
-          { data: { title: 'node3.3 (Red selection holder)' },
+          { data: { title: 'node3.3' },
             selection: redSelection,
-            cssClassName: 'red-selection',
             childNodes: [
               { data: { title: 'node3.3.1' } },
               { data: { title: 'node3.3.2' } },
@@ -140,25 +131,63 @@
       { data: { title: 'node4' } }
     ];
 
-    // create a tree
-    new nsTree.Tree({
-      id: 'DemoTree',
-      container: DOM.get('demo-container'),
+    var CustomFolder = basis.ui.tree.Folder.subclass({
+      template:
+        '<b:include src="basis.ui.tree.Folder" class="selection-{selectionName}">' +
+          '<b:after ref="title"> {selectionTitle}</b:after>' +
+        '</b:include>',
+      binding: {
+        selectionName: function(node){
+          return node.selection ? node.selection.name.split(/\s+/)[0].toLowerCase() : '';
+        },
+        selectionTitle: function(node){
+          return node.selection ? '(' + node.selection.name + ' holder)' : '';
+        }
+      }
+    });
 
-      childFactory: function(config){
-        if (config.childNodes)
-          return new nsTree.Folder(basis.object.extend({ childFactory: this.childFactory }, config));
-        else
-          return new nsTree.Node(config);
-      },
+    // create a tree
+    new basis.ui.tree.Tree({
+      container: document.getElementById('demo-container'),
+      template: '<b:include src="basis.ui.tree.Tree" id="DemoTree"/>',
 
       selection: {
+        name: 'Tree selection',
         multiple: true
       },
 
+      childFactory: function(config){
+        if (config.childNodes)
+          return new CustomFolder(basis.object.extend({ childFactory: this.childFactory }, config));
+        else
+          return new basis.ui.tree.Node(config);
+      },
       childNodes: data
     });
 
+    // selection info
+    new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+
+      childNodes: selections,
+      childClass: {
+        template:
+          '<div>{name}: {items}</div>',
+        binding: {
+          name: 'delegate.name',
+          items: function(node){
+            return node.delegate.getItems().map(basis.getter('data.title')).join(', ') || '{no items}';
+          }
+        },
+        listen: {
+          delegate: {
+            datasetChanged: function(){
+              this.updateBind('items');
+            }
+          }
+        }
+      }
+    });
   </script>
 </body>
 
