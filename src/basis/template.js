@@ -1439,7 +1439,7 @@
     if (host && host.tagName == 'SCRIPT')
     {
       if (host.type == 'text/basis-template')
-        content = host.textContent || host.text;
+        return host.textContent || host.text;
       
       ;;;basis.dev.warn('Template script element with wrong type', host.type);
 
