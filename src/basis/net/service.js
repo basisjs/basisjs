@@ -67,8 +67,8 @@
 
         needSignature: this.isSecure,
 
-        event_failure: function(request){
-          TransportClass.prototype.event_failure.call(this, request);
+        event_failure: function(request, error){
+          TransportClass.prototype.event_failure.call(this, request, error);
 
           if (this.needSignature && this.service.isSessionExpiredError(request))
           {
