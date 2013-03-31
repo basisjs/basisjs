@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis.js demos: Entity user list</title>
+  <title>Basis.js demos: Sync datasets with server data</title>
 
   <style id="demo-css" type="text/css">
     HTML,
@@ -86,143 +86,74 @@
   <div id="demo-container"></div>
 
   <script id="demo-javascript" type="text/javascript">
-    basis.require('basis.data');
-    basis.require('basis.dom');
     basis.require('basis.ui');
     basis.require('basis.entity');
-    basis.require('basis.ui.tree');
-    basis.require('basis.ui.label');
-    basis.require('basis.net');
+    basis.require('basis.net.service');
 
-    //
-    // import names
-    //
-
-    var Data = basis.data;
-    var DOM = basis.dom;
-
-    var nsUI = basis.ui;
-    var nsEntity = basis.entity;
-    var nsTree = basis.ui.tree;
-    var nsLabel = basis.ui.label;
-
-    var STATE = basis.data.STATE;
-
-    var demoContainer = DOM.get('demo-container');
-
-    //
-    // reusable handlers
-    //
-
-    var colHandler = {
-      subscribersChanged: function(){
-        if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
-          this.adapter.request();
-      },
-      stateChanged: function(){
-        if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
-          this.adapter.request();
-      }
-    };
-    var adapterHandler = {
-      success: function(sender, request){
-        var data = request.data.responseText.toObject();
-        this.sync(data && data.map(this.wrapper.reader));
-      }
-    };
+    // create service to load data
+    var service = new basis.net.service.Service();
 
     // define data types
 
-    var UserGroup = new nsEntity.EntityType({
+    var UserGroup = new basis.entity.EntityType({
       name: 'UserGroup',
       fields: {
-        groupId: nsEntity.IntId,
+        groupId: basis.entity.IntId,
         title: String
-      },
-      all: {
-        handler: colHandler,
-        init: function(){
-          this.constructor.prototype.init.call(this);
-          this.adapter = new basis.net.Transport({
-            url: '../res/data/groups.json',
-            influence: [this],
-            handler: {
-              context: this,
-              callbacks: adapterHandler
-            }
-          });
-        }
       }
     });
 
-    var User = new nsEntity.EntityType({
+    // define sync action to load data
+    UserGroup.all.setSyncAction(service.createAction({
+      url: '../res/data/groups.json',
+      success: function(data){
+        this.sync(data && data.map(this.wrapper.reader));
+      }
+    }));
+
+    var User = new basis.entity.EntityType({
       name: 'User',
       fields: {
-        userId: nsEntity.IntId,
+        userId: basis.entity.IntId,
         group: UserGroup,
         title: String
       },
       aliases: {
         groupId: 'group'
       },
-      all: {
-        handler: colHandler,
-        init: function(){
-          this.constructor.prototype.init.call(this);
-          this.adapter = new basis.net.Transport({
-            url: '../res/data/users.json',
-            influence: [this],
-            handler: {
-              context: this,
-              callbacks: adapterHandler
-            }
-          });
-        }
+      all: { // we also can define settings for all in data type definition
+        syncAction: service.createAction({
+          url: '../res/data/users.json',
+          success: function(data){
+            this.sync(data && data.map(this.wrapper.reader));
+          }
+        })
       }
     });
 
-    // create sync adapters
-
-    //UserGroup.all.addHandler(colHandler);
-    /*UserGroup.all.adapter = new Basis.Ajax.Transport({
-      url: '../res/data/groups.json',
-      influence: UserGroup.all,
-      handler: {
-        context: UserGroup.all,
-        callbacks: adapterHandler
-      }
-    });*/
-
-    //User.all.addHandler(colHandler);
-    /*User.all.adapter = new Basis.Ajax.Transport({
-      url: '../res/data/users.json',
-      influence: User.all,
-      handler: {
-        context: User.all,
-        callbacks: adapterHandler
-      }
-    }); */
-
     // create controls
 
-    DOM.insert(demoContainer, DOM.createElement({
-      description: 'BUTTON',
-      click: function(){
-        UserGroup.all.deprecate();
-        User.all.deprecate();
+    new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+      template: '<button event-click="update">Update</button>',
+      action: {
+        update: function(){
+          UserGroup.all.deprecate();
+          User.all.deprecate();
+        }
       }
-    }, 'Update'));
+    });
 
     //
     // User list
     //
 
-    var tree = new nsUI.Node({
-      id: 'UserList',
-      container: demoContainer,
+    var tree = new basis.ui.Node({
+      container: document.getElementById('demo-container'),
+      template: '<div id="UserList"/>',
 
-      active: true,
       dataSource: User.all,
+      active: true,
 
       selection: {
         multiple: true
@@ -233,48 +164,41 @@
           '<div class="user {selected}" event-click="select">' +
             '{title}' +
           '</div>',
-
-        binding: {
-          title: 'data:'
-        },
-
         action: {
           select: function(event){
             this.select(event.ctrlKey || event.metaKey);
           }
+        },
+        binding: {
+          title: 'data:'
         }
       },
 
       sorting: 'data.title',
       grouping: {
-        active: true,
         dataSource: UserGroup.all,
+        active: true,
 
         groupGetter: 'data.group',
         sorting: 'data.title',
 
         childClass: {
           template:
-            '<div class="PartitionNode" event-click="selectAll">' +
-              '<div class="PartitionNode-Title">{title}</div>' +
-              '<!--{childNodeHere}-->' +
+            '<div class="PartitionNode">' +
+              '<div class="PartitionNode-Title" event-click="selectAll" title="Click to select all users in group">' +
+                '{title}' +
+              '</div>' +
             '</div>',
-
-          binding: {
-            title: 'data:'
-          },
-
           action: {
             selectAll: function(){
               this.parentNode.owner.selection.set(this.nodes);
             }
+          },
+          binding: {
+            title: 'data:'
           }
         }
       }
-    });
-
-    new nsLabel.DataSourceProcessing({
-      delegate: tree
     });
 
   </script>
