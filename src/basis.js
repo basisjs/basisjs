@@ -1512,6 +1512,13 @@
   };
 
   extend(getResource, {
+    getFiles: function(){
+      var result = [];
+      for (var url in resourceCache)
+        result.push(pathUtils.relative(url));
+      
+      return result;
+    },
     getSource: function(resourceUrl){
       return getResourceContent(pathUtils.resolve(resourceUrl));
     },
