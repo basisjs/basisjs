@@ -63,6 +63,10 @@ BODY.devpanel-inspectMode .Basis-DevPanel
 {
   background: url(img/inspect-l10n.png) no-repeat center center; 
 }
+.Basis-DevPanel-Button.fileInspector
+{
+ background: url(img/folder.png) no-repeat center center;  
+}
 
 .Basis-DevPanel-Button.theme SPAN
 {

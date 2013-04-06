@@ -24,3 +24,10 @@ basis.ready(function(){
 
   console.log('basis devpanel inited');
 });
+
+module.exports = {
+  openFileInspector: function(){
+    var fileInspector = resource('devpanel/module/fileInspector/fileInspector.js').fetch();
+    fileInspector.open();
+  }
+}

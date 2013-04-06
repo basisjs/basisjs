@@ -7,6 +7,7 @@ var templateInspector = resource('inspector/template.js').fetch();
 
 var themeList = resource('themeList.js').fetch();
 var cultureList = resource('cultureList.js').fetch();
+var fileInspectror = resource('module/fileInspector/fileInspector.js');
 
 
 //
@@ -57,6 +58,9 @@ var panel = new basis.ui.Node({
     },
     showCultures: function(){
       cultureList.setDelegate(this);
+    },
+    inspectFile: function(){
+      fileInspectror().toggle();
     },
     storePosition: function(event){
       if (localStorage){

@@ -1,0 +1,20 @@
+.Devpanel-FileView
+{
+  color: black;
+  height: 100%;
+  overflow-y: scroll;
+}
+
+.Devpanel-FileView-Title
+{
+  font-size: 1.2em;
+  margin-bottom: 1em;
+}
+
+.Devpanel-FileView .Basis-SyntaxHighlight
+{
+  padding: 0;
+  margin: 0;
+  border: none;
+  overflow: visible;
+}
