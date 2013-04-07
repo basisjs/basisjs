@@ -1,5 +1,5 @@
 basis.require('basis.ui.tree');
-
+basis.require('basis.data.dataset');
 //
 // process resources
 //
@@ -71,3 +71,4 @@ module.exports = new basis.ui.tree.Tree({
   dataSource: fileGroup.getSubset("", true),
   childFactory: treeChildFactory
 });
+
