@@ -269,7 +269,7 @@
     * State of object. Might be managed by delegate object (if used).
     * @type {basis.data.STATE|string}
     */
-    state: STATE.READY,
+    state: STATE.UNDEFINED,
 
    /**
     * Fires when state or state.data was changed.
@@ -1029,13 +1029,6 @@
   */
   var AbstractDataset = Class(DataObject, {
     className: namespace('AbstractDataset'),
-
-   /**
-    * Default state for set is undefined. It useful to trigger dataset update
-    * on demand.
-    * @inheritDoc
-    */
-    state: STATE.UNDEFINED,
 
    /**
     * Cardinality of set.
