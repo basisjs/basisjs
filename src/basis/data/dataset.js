@@ -1257,7 +1257,7 @@
 
     var pos;
     var id = map.object.basisObjectId;
-    var value = map.value || 0;
+    var value = map.value;
     var cmpValue;
     var cmpId;
     var item;
