@@ -898,7 +898,7 @@
           entityType.index__.calcWrapper(entity.__id__);
 
       } catch(e) {
-        ;;;entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message));
+        ;;;entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
         entity.__id__ = id;
         rollbackChanges(entity, delta, rollbackDelta);
         update = false;
