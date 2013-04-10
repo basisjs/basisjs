@@ -207,7 +207,7 @@
       var cssPosition = computedStyle(this.element, 'position');
 
       var relToOffsetParent = cssPosition == 'absolute' || cssPosition == 'fixed';
-      var parentNode = relToOffsetParent ? this.element.offsetParent : this.element.parentNode;
+      var parentNode = relToOffsetParent ? this.element.offsetParent || document.body : this.element.parentNode;
       var parentNodeSize;
       
       if (dragData.delta == 'deltaY')
