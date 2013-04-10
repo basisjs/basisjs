@@ -25,6 +25,9 @@ module.exports = new basis.ui.Node({
   action: {
     close: function(){
       this.close();
+    },
+    kill: function(event){
+      basis.dom.event.kill(event);
     }
   },
   toggle: function(){
@@ -43,11 +46,11 @@ module.exports = new basis.ui.Node({
   }
 });
 
-new basis.ui.resizer.Resizer({
+/*new basis.ui.resizer.Resizer({
   element: module.exports.element,
   property: 'height',
   factor: -1
-});
+});*/
 
 new basis.ui.resizer.Resizer({
   element: module.exports.tmpl.fileList,

@@ -23,6 +23,12 @@ var codeNode = new basis.format.highlight.SourceCodeNode({
 module.exports = new basis.ui.Node({
   template: resource('template/fileView.tmpl'),
   binding: {
-    code: codeNode
+    code: codeNode,
+    hasCode: {
+      events: 'update',
+      getter: function(object){
+        return !!object.data.code;
+      }
+    }
   }
 });

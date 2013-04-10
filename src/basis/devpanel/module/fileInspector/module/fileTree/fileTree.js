@@ -52,13 +52,19 @@ var TreeNode = basis.ui.tree.Node.subclass({
 var TreeFolder = basis.ui.tree.Folder.subclass({
   collapsed: true,
   childFactory: treeChildFactory,  
-  
+
   sorting: function(object){
     return (object.data.isFolder ? 0 : 1) + '_' + object.data.path;
   },
-  
+
   binding: {
     title: 'data:name'
+  },
+  action: {
+    select: function(event){
+      basis.ui.tree.Folder.prototype.action.select.call(this, event);
+      this.toggle();
+    }
   },
   
   init: function(){

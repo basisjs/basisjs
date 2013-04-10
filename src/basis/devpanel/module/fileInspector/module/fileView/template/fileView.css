@@ -2,7 +2,9 @@
 {
   color: black;
   height: 100%;
-  overflow-y: scroll;
+  overflow-y: auto;
+  background: #F1F1F1;
+  position: relative;
 }
 
 .Devpanel-FileView-Title
@@ -18,3 +20,28 @@
   border: none;
   overflow: visible;
 }
+
+.Devpanel-FileView-Splash
+{
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  margin-top: -1em;
+
+  text-align: center;
+  color: #999;
+  text-shadow: 0 1px 0 white;
+}
+
+
+.Devpanel-FileView-Code,
+.Devpanel-FileView_hasCode .Devpanel-FileView-Splash
+{
+  display: none;
+}
+
+.Devpanel-FileView_hasCode .Devpanel-FileView-Code
+{
+  display: block;
+}
+
