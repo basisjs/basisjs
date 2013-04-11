@@ -1171,9 +1171,96 @@
     }
   });
 
-  //
-  // Dataset
-  //
+
+ /**
+  * @class
+  */
+  var DatasetWrapper = Class(DataObject, {
+    className: namespace + '.DatasetWrapper',
+
+    subscribeTo: SUBSCRIPTION.DELEGATE + SUBSCRIPTION.TARGET + SUBSCRIPTION.DATASET,
+
+    listen: {
+      dataset: {
+        itemsChanged: function(dataset, delta){
+          this.itemCount = dataset.itemCount;
+          this.dispatch_itemsChanged(dataset, delta);
+        },
+        destroy: function(){
+          this.setDataset();
+        }
+      }
+    },
+
+   /**
+    * @type {basis.data.AbstractDataset}
+    */
+    dataset: null,
+
+   /**
+    * Fires when dataset was changed.
+    * @param {basis.data.AbstractDataset} oldDataset
+    * @event
+    */
+    dispatch_datasetChanged: createEvent('datasetChanged', 'oldDataset'),
+
+   /**
+    * Proxy event of dataset. Fires when items of dataset was changed.
+    * @param {object} delta
+    * @event
+    */
+    dispatch_itemsChanged: createEvent('itemsChanged', 'delta'),
+
+   /**
+    * @constructor
+    */
+    init: function(){
+      var dataset = this.dataset;
+      if (dataset)
+      {
+        this.dataset = null;
+        this.setDataset(dataset);
+      }
+
+      DataObject.prototype.init.call(this);
+    },
+
+   /**
+    * @param {basis.data.AbstractDataset} dataset
+    */
+    setDataset: function(dataset){
+      if (dataset instanceof AbstractDataset == false)
+        dataset = null;
+      
+      if (this.dataset !== dataset)
+      {
+        var listenHandler = this.listen.dataset;
+        var oldDataset = this.dataset;
+
+        if (listenHandler)
+        {
+          if (oldDataset)
+            oldDataset.removeHandler(listenHandler, this);
+          if (dataset)
+            dataset.addHandler(listenHandler, this);
+        }
+
+        this.dataset = dataset;
+        this.dispatch_datasetChanged(oldDataset);
+      }
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      if (this.dataset)
+        this.setDataset();
+
+      DataObject.prototype.destroy.call(this);
+    }
+  });
+
 
  /**
   * @class
@@ -1571,5 +1658,6 @@
     KeyObjectMap: KeyObjectMap,
 
     AbstractDataset: AbstractDataset,
-    Dataset: Dataset
+    Dataset: Dataset,
+    DatasetWrapper: DatasetWrapper
   };
