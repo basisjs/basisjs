@@ -160,7 +160,7 @@
       // process handler
       if (this.handler && !this.handler.callbacks)
       {
-        if (DEBUG && 'handlerContext' in this)
+        if (DEVMODE && 'handlerContext' in this)
           basis.dev.warn('handlerContext is obsolete. Use # handler: { callbacks: {..}, context: <handlerContext> } # instead.');
 
         this.handler = {
