@@ -304,7 +304,7 @@
 
     if (captureHandler)
     {
-      captureHandler.handler.call(captureHandler.thisObject, event);
+      captureHandler.handler.call(captureHandler.thisObject, new Event(event));
       kill(event);
       return;
     }
@@ -314,7 +314,7 @@
       for (var i = handlers.length; i-- > 0;)
       {
         var handlerObject = handlers[i];
-        handlerObject.handler.call(handlerObject.thisObject, event);
+        handlerObject.handler.call(handlerObject.thisObject, new Event(event));
       }
     }
   }
@@ -462,7 +462,7 @@
 
         // call eventType handlers
         for (var i = 0, item; item = eventTypeHandlers[i++];)
-          item.handler.call(item.thisObject, event);
+          item.handler.call(item.thisObject, new Event(event));
       };
 
       if (W3CSUPPORT) 
