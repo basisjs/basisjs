@@ -63,6 +63,8 @@
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.date');
     basis.require('basis.dom');
+    basis.require('basis.data');
+    basis.require('basis.data.dataset');    
     basis.require('basis.entity');
     basis.require('basis.ui.chart');
     basis.require('basis.ui.field');
@@ -93,10 +95,11 @@
       },
       aliases: {
         CompanyId: 'Company'
-      },
-      groupings: {
-        Company: basis.getter('data.Company')
       }
+    });
+    var reportByCompany = new basis.data.dataset.Split({
+      source: CompanyReport.all,
+      rule: 'data.Company'
     });
 
     var companies = [
@@ -143,7 +146,7 @@
 
       selection: true,
 
-      dataSource: CompanyReport.getGrouping('Company').getSubset(Company('microsoft')),
+      dataSource: reportByCompany.getSubset(Company('microsoft')),
       sorting: basis.getter('data.Date'),
       keyGetter: function(object){
         return object.data.Date;
@@ -157,7 +160,7 @@
         dataSource: chartCompanies,
         childClass: {
           sourceGetter: function(object){
-            return CompanyReport.getGrouping('Company').getSubset(object.target);
+            return reportByCompany.getSubset(object.target);
           },
           legendGetter: function(object){
             return object.data.Title;
