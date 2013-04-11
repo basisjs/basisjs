@@ -838,8 +838,8 @@
     },
 
     recalc: function(){
-      for (var idx in this.item_)
-        this.calcMember(this.item_[idx]);
+      for (var idx in this.items_)
+        this.calcMember(this.items_[idx]);
 
       this.indexUpdated = false;
       this.timer_ = clearTimeout(this.timer_);

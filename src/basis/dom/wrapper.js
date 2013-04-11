@@ -2510,7 +2510,7 @@
 
   var CHILDNODESDATASET_HANDLER = {
     childNodesModified: function(sender, delta){
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var newDelta = {};
       var node;
       var insertCount = 0;
