@@ -82,8 +82,7 @@
           else
             // getter is function that returns value if value is basis.Token or basis.data.Object instance
             // those sort of instance have mechanism (via bindingBridge) to update itself
-            // TODO: basis.data.Object should be replace for basis.data.AbstractData
-            if (value instanceof basis.Token || (value instanceof basis.data.Object && value.bindingBridge))
+            if (value instanceof basis.Token || (value instanceof basis.data.AbstractData && value.bindingBridge))
               value = basis.fn.$const(value);
 
           if (typeof value != 'object')
