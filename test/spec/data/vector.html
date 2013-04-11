@@ -85,14 +85,14 @@
 
       function checkVector(vector){
         var sourceItems = [];
-        var keys = basis.object.keys(vector.memberMap_);
+        var keys = basis.object.keys(vector.members_);
         var items = vector.getItems();
         var scount = 0;
         var scount2 = 0;
 
-        for (var key in vector.item_)
-          if (items.indexOf(vector.item_[key]) == -1)
-            return 'getItems and vector.item_ diconnected';
+        for (var key in vector.items_)
+          if (items.indexOf(vector.items_[key]) == -1)
+            return 'getItems and vector.items_ diconnected';
 
         if (keys.length != vector.itemCount)
           return 'itemCount broken';
@@ -104,11 +104,11 @@
             return 'wrong key of source object (' + key + ')';
           if (sourceObjectInfo.key != vector.rule(sourceObjectInfo.object))
             return 'key property of sourceObjectInfo is wrong (' + key + ')';
-          if (sourceObjectInfo.key in vector.memberMap_ == false)
+          if (sourceObjectInfo.key in vector.members_ == false)
             return 'sourceObjectInfo.key is not in member map (' + key + ')';
-          if (key in vector.memberMap_[sourceObjectInfo.key] == false)
+          if (key in vector.members_[sourceObjectInfo.key] == false)
             return 'link to sourceObjectInfo in member is missed (' + key + ')';
-          if (vector.memberMap_[sourceObjectInfo.key][key] != sourceObjectInfo)
+          if (vector.members_[sourceObjectInfo.key][key] != sourceObjectInfo)
             return 'wrong link to sourceObjectInfo in member (' + key + ')';
 
           for (var k in sourceObjectInfo.values)
@@ -127,9 +127,9 @@
         }
 
         var mcount = 0;
-        for (var key in vector.memberMap_)
+        for (var key in vector.members_)
         {
-          var member = vector.memberMap_[key];
+          var member = vector.members_[key];
           var ocount = 0;
           for (var k in member)
           {
