@@ -1162,37 +1162,6 @@
     },
 
    /**
-    * @param {Array.<basis.data.Object>} items
-    */
-    add: function(items){
-    },
-
-   /**
-    * @param {Array.<basis.data.Object>} items
-    */
-    remove: function(items){
-    },
-
-   /**
-    * @param {Array.<basis.data.Object>} items
-    */
-    set: function(items){
-    },
-
-   /**
-    * @param {Array.<basis.data.Object>} items
-    * @param {boolean=} set
-    */
-    sync: function(items, set){
-    },
-
-   /**
-    * Removes all items from dataset.
-    */
-    clear: function(){
-    },
-
-   /**
     * @destructor
     */
     destroy: function(){
