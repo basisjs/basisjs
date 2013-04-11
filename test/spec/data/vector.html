@@ -299,7 +299,7 @@
                         count: basis.data.vector.count()
                       },
                       handler: {
-                        datasetChanged: function(sender, delta){
+                        itemsChanged: function(sender, delta){
                           dispatch_deleted = delta.deleted;
                           dispatch_inserted = delta.inserted;
                         }

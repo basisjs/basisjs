@@ -229,7 +229,7 @@
   // Series Chart
   //
   var SERIA_SOURCE_HANDLER = {
-    datasetChanged: function(object, delta){
+    itemsChanged: function(object, delta){
       var key;
       var value;
       var valuesDelta = [];
@@ -329,14 +329,14 @@
         if (oldSource)
         {
           oldSource.removeHandler(SERIA_SOURCE_HANDLER, this);
-          SERIA_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { deleted: oldSource.getItems() });
+          SERIA_SOURCE_HANDLER.itemsChanged.call(this, oldSource, { deleted: oldSource.getItems() });
         }
 
         this.source = source;
         if (this.source)
         {
           this.source.addHandler(SERIA_SOURCE_HANDLER, this);
-          SERIA_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { inserted: this.source.getItems() });
+          SERIA_SOURCE_HANDLER.itemsChanged.call(this, oldSource, { inserted: this.source.getItems() });
         }
 
         this.dispatch_sourceChanged(oldSource);
@@ -1076,7 +1076,7 @@
   };
 
   var CHART_SELECTION_HANDLER = {
-    datasetChanged: function(){
+    itemsChanged: function(){
       this.draw();
     }
   };

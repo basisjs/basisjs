@@ -43,7 +43,7 @@
 
     listen: {
       selection: {
-        datasetChanged: function(selection){
+        itemsChanged: function(selection){
           this.scrollToPage(selection.pick());
         }
       }

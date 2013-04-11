@@ -59,7 +59,7 @@
 
     selection: {
       handler: {
-        datasetChanged: function(){
+        itemsChanged: function(){
           var node = this.pick();
 
           if (node && typeof node.onselect == 'function')

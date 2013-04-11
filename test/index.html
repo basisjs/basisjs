@@ -292,7 +292,7 @@
         limit: 1,
         rule: 'basisObjectId',
         handler: {
-          datasetChanged: function(sender, delta){
+          itemsChanged: function(sender, delta){
             if (delta.inserted)
               delta.inserted.forEach(function(item){
                 item.update({ test: null });
@@ -311,7 +311,7 @@
             delegate: processingQueue,
             listen: {
               delegate: {
-                datasetChanged: function(sender){
+                itemsChanged: function(sender){
                   if (sender.itemCount)
                     this.disable();
                   else
@@ -328,7 +328,7 @@
             delegate: processingQueue,
             listen: {
               delegate: {
-                datasetChanged: function(sender){
+                itemsChanged: function(sender){
                   if (!sender.itemCount)
                     this.disable();
                   else

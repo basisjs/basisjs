@@ -32,7 +32,7 @@ var navTree = new app.ext.docTree.DocTree({
 
   selection: {
     handler: {
-      datasetChanged: function(){
+      itemsChanged: function(){
         var selected = this.pick();
         if (selected)
         {

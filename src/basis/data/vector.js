@@ -253,7 +253,7 @@
       {
         var delta = changeSourceObjectKey(this, key, sourceObjectInfo, true);
         if (delta = getDelta(delta.inserted && [delta.inserted], delta.deleted && [delta.deleted]))
-          this.dispatch_datasetChanged(delta);
+          this.dispatch_itemsChanged(delta);
       }
       else
         recalcSourceObject(this, sourceObjectInfo);
@@ -261,7 +261,7 @@
   };
 
   var VECTOR_SOURCE_HANDLER = {
-    datasetChanged: function(sender, delta){
+    itemsChanged: function(sender, delta){
       var sourceInserted = delta.inserted;
       var sourceDeleted = delta.deleted;
       var memberMap = this.memberMap_;
@@ -372,7 +372,7 @@
 
       // fire event
       if (delta = getDelta(inserted, deleted))
-        this.dispatch_datasetChanged(delta);
+        this.dispatch_itemsChanged(delta);
     }
   };
 
@@ -392,8 +392,8 @@
 
     rule: defaultRule,
 
-    dispatch_datasetChanged: function(delta){
-      SourceDataset.prototype.dispatch_datasetChanged.call(this, delta);
+    dispatch_itemsChanged: function(delta){
+      SourceDataset.prototype.dispatch_itemsChanged.call(this, delta);
 
       // destroy deleted
       if (delta.deleted)
@@ -538,7 +538,7 @@
       }
 
       if (delta = getDelta(inserted, deleted))
-        this.dispatch_datasetChanged(delta);
+        this.dispatch_itemsChanged(delta);
     }
   });
 

@@ -164,7 +164,7 @@
       sorting: basis.getter('data.title', String.toLowerCase),  // sorting for child nodes
       selection: {              // we need for selection, define config for it
         handler: {
-          datasetChanged: function(){
+          itemsChanged: function(){
             // this -> articleList.selection
             articleEditor.setDelegate(this.pick());
           }

@@ -28,7 +28,7 @@ basis.ready(function(){
   var searchTree = resource('app/layout/searchTree.js')();
 
   navTree.selection.addHandler({
-    datasetChanged: function(){
+    itemsChanged: function(){
       var selected = this.pick();
       targetContent.setDelegate(selected);
       document.title = 'Basis API' + (selected ? ': ' + selected.data.title + (selected.data.path ? ' @ ' + selected.data.path : '') : '');
@@ -36,7 +36,7 @@ basis.ready(function(){
   });
 
   searchTree.selection.addHandler({
-    datasetChanged: function(){
+    itemsChanged: function(){
       var item = this.pick();
       if (item)
         navTree.open(item.data.fullPath);

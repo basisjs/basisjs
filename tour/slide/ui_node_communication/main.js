@@ -22,8 +22,8 @@ var list = new basis.ui.Node({
 
   selection: {
     handler: {
-      // selection is dataset, datasetChanged fires when it changes
-      datasetChanged: function(){
+      // selection is dataset, itemsChanged fires when it changes
+      itemsChanged: function(){
         editor.setDelegate(this.pick());
         editor.focus();
       }

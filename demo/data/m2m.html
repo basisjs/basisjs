@@ -384,7 +384,7 @@
       // Задаем обработчик на событие изменения выборки (Selection).
       selection: {
         handler: {
-          datasetChanged: function(){
+          itemsChanged: function(){
             relatedTree.setDelegate(this.pick());
           }
         }

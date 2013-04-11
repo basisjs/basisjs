@@ -325,8 +325,8 @@
         run1(function(){
           var c1 = Transfer.createCollection('col1', getter('getId()%2'), Transfer.all);
           var c2 = User.createCollection('col2', getter('getId()%2'), User.all);
-          c1.addHandler({ datasetChanged: function(dataset, delta){ c1count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0); } });
-          c2.addHandler({ datasetChanged: function(dataset, delta){ c2count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0); } });
+          c1.addHandler({ itemsChanged: function(dataset, delta){ c1count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0); } });
+          c2.addHandler({ itemsChanged: function(dataset, delta){ c2count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0); } });
           DOM.insert(document.body, [
             DOM.createElement('hr'),
             DOM.createElement(null, '2 collection added')

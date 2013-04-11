@@ -270,7 +270,7 @@
         handler: {
           context: this,
           callbacks: {
-            datasetChanged: function(dataset){
+            itemsChanged: function(dataset){
               var cell = dataset.pick();
               if (cell && this.owner)
                 this.owner.setSorting(cell.colSorting, cell.order);

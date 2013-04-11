@@ -318,13 +318,13 @@
     var rangeCount = new basis.data.property.Property(reportSlice.itemCount);
 
     reportSlice.addHandler({
-      datasetChanged: function(dataset){
+      itemsChanged: function(dataset){
         this.set(dataset.itemCount);
       }
     }, rangeCount);
 
     chartValues.addHandler({
-      datasetChanged: function(dataset){
+      itemsChanged: function(dataset){
         this.set(dataset.itemCount);
       }
     }, totalCount);

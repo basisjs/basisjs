@@ -13,7 +13,7 @@ var fileList = resource('module/fileList/index.js').fetch();
 var editor = resource('module/editor/index.js').fetch();
 
 fileList.selection.addHandler({
-  datasetChanged: function(){
+  itemsChanged: function(){
     editor.setDelegate(this.pick());
   }
 });

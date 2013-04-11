@@ -5,7 +5,7 @@ var Menu = resource('module/menu/index.js').fetch();
 var view = new Menu({
   selection: {
     handler: {
-      datasetChanged: function(){
+      itemsChanged: function(){
         basis.template.setTheme(this.pick().value);
       }
     }

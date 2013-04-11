@@ -972,7 +972,7 @@
         calc(this, delta);
 
         // reg entity in all entity type instances list
-        all.dispatch_datasetChanged({
+        all.dispatch_itemsChanged({
           inserted: [this]
         });
 
@@ -1267,7 +1267,7 @@
         DataObject.prototype.destroy.call(this);
 
         // delete from all entity type list (is it right order?)
-        all.dispatch_datasetChanged({
+        all.dispatch_itemsChanged({
           deleted: [this]
         });
 

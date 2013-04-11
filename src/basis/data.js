@@ -1046,7 +1046,7 @@
    /**
     * Set of all items, even items are not in member set. May be used as storage for
     * members, which provide posibility to avoid dublicates in resultinf set before
-    * dispatch_datasetChanged event be fired.
+    * dispatch_itemsChanged event be fired.
     * @type {Object}
     * @private
     */
@@ -1067,7 +1067,7 @@
     * and `deleted` property is array of removed items.
     * @event
     */
-    dispatch_datasetChanged: createEvent('datasetChanged', 'delta') && function(delta){
+    dispatch_itemsChanged: createEvent('itemsChanged', 'delta') && function(delta){
       var items;
       var insertCount = 0;
       var deleteCount = 0;
@@ -1100,7 +1100,7 @@
       this.cache_ = null;
 
       // call event 
-      events.datasetChanged.call(this, delta);
+      events.itemsChanged.call(this, delta);
     },
 
    /**
@@ -1280,7 +1280,7 @@
       // trace changes
       if (inserted.length)
       {
-        this.dispatch_datasetChanged(delta = {
+        this.dispatch_itemsChanged(delta = {
           inserted: inserted
         });
       }
@@ -1322,7 +1322,7 @@
       // trace changes
       if (deleted.length)
       {
-        this.dispatch_datasetChanged(delta = {
+        this.dispatch_itemsChanged(delta = {
           deleted: deleted
         });
       }
@@ -1394,7 +1394,7 @@
       
       // fire event if any changes
       if (delta = getDelta(inserted, deleted))
-        this.dispatch_datasetChanged(delta);
+        this.dispatch_itemsChanged(delta);
 
       return delta;
     },
@@ -1455,7 +1455,7 @@
           for (var i = deleted.length; i-- > 0;)
             deleted[i].removeHandler(listenHandler, this);
 
-        this.dispatch_datasetChanged(delta = {
+        this.dispatch_itemsChanged(delta = {
           deleted: deleted
         });
          
@@ -1473,7 +1473,7 @@
 
   Dataset.setAccumulateState = (function(){
     var proto = AbstractDataset.prototype;
-    var realEvent = proto.dispatch_datasetChanged;
+    var realEvent = proto.dispatch_itemsChanged;
     var setStateCount = 0;
     var urgentTimer;
     var eventCache = {};
@@ -1536,7 +1536,7 @@
     }
 
     function setAccumulateStateOff(){
-      proto.dispatch_datasetChanged = realEvent;
+      proto.dispatch_itemsChanged = realEvent;
       flushAllDataset();
     }
 
@@ -1545,7 +1545,7 @@
       {
         if (setStateCount == 0)
         {
-          proto.dispatch_datasetChanged = storeDatasetDelta;
+          proto.dispatch_itemsChanged = storeDatasetDelta;
           if (!urgentTimer)
             urgentTimer = setTimeout(urgentFlush, 0);
         }

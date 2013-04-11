@@ -226,7 +226,7 @@ basis.ready(function(){
 
       listen: {
         delegate: {
-          datasetChanged: function(){
+          itemsChanged: function(){
             this.updateBind('count');
           }
         }
@@ -246,8 +246,8 @@ basis.ready(function(){
   var cloudCalcs = new basis.data.index.IndexMap({
     source: cloud,
     indexes: {
-      itemCountMin: basis.data.index.min('itemCount', 'datasetChanged'),
-      itemCountMax: basis.data.index.max('itemCount', 'datasetChanged')
+      itemCountMin: basis.data.index.min('itemCount', 'itemsChanged'),
+      itemCountMax: basis.data.index.max('itemCount', 'itemsChanged')
     },
     calcs: {
       percentOfMax: function(data, indexes, obj){
@@ -258,7 +258,7 @@ basis.ready(function(){
       }
     },
     ruleEvents: {
-      datasetChanged: true
+      itemsChanged: true
     }
   });
 

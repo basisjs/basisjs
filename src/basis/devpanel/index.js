@@ -71,7 +71,7 @@ var panel = new basis.ui.Node({
 });
 
 themeList.selection.addHandler({
-  datasetChanged: function(object, delta){
+  itemsChanged: function(object, delta){
     var theme = this.pick();
     panel.themeName = theme.value;
     panel.updateBind('themeName');
@@ -79,7 +79,7 @@ themeList.selection.addHandler({
 });
 
 cultureList.selection.addHandler({
-  datasetChanged: function(object, delta){
+  itemsChanged: function(object, delta){
     panel.culture = this.pick().value;
     panel.updateBind('base');
     panel.updateBind('spriteY');

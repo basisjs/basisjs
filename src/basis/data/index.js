@@ -463,7 +463,7 @@
   };
 
   var DATASET_WITH_INDEX_HANDLER = {
-    datasetChanged: function(object, delta){
+    itemsChanged: function(object, delta){
       var array;
 
       // add handler to new source object
@@ -511,7 +511,7 @@
         this.indexes__ = {};
 
         this.addHandler(DATASET_WITH_INDEX_HANDLER);
-        DATASET_WITH_INDEX_HANDLER.datasetChanged.call(this, this, {
+        DATASET_WITH_INDEX_HANDLER.itemsChanged.call(this, this, {
           inserted: this.getItems()
         });
       }

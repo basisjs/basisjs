@@ -993,7 +993,7 @@
    */
 
   var DOMMIXIN_DATASOURCE_HANDLER = {
-    datasetChanged: function(dataSource, delta){
+    itemsChanged: function(dataSource, delta){
       var newDelta = {};
       var deleted = [];
 
@@ -1731,8 +1731,8 @@
 
           if (listenHandler)
           {
-            if (dataSource.itemCount && listenHandler.datasetChanged)
-              listenHandler.datasetChanged.call(this, dataSource, {
+            if (dataSource.itemCount && listenHandler.itemsChanged)
+              listenHandler.itemsChanged.call(this, dataSource, {
                 inserted: dataSource.getItems()
               });
           }
@@ -2541,7 +2541,7 @@
       }
 
       if (insertCount || deleteCount)
-        this.dispatch_datasetChanged(newDelta);
+        this.dispatch_itemsChanged(newDelta);
     },
     destroy: function(){
       this.destroy();
@@ -2616,8 +2616,8 @@
    /**
     * @inheritDoc
     */
-    dispatch_datasetChanged: function(delta){
-      Dataset.prototype.dispatch_datasetChanged.call(this, delta);
+    dispatch_itemsChanged: function(delta){
+      Dataset.prototype.dispatch_itemsChanged.call(this, delta);
 
       if (delta.inserted)
       {

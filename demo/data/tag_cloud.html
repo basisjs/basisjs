@@ -127,7 +127,7 @@
       },
       listen: {
         sourceObject: {
-          datasetChanged: true
+          itemsChanged: true
         }
       }
     });
@@ -156,7 +156,7 @@
 
         listen: {
           delegate: {
-            datasetChanged: function(dataset){
+            itemsChanged: function(dataset){
               this.updateBind('count');
             }
           }

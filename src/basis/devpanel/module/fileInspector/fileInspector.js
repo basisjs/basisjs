@@ -5,7 +5,7 @@ var fileTree = resource('module/fileTree/fileTree.js').fetch();
 var fileView = resource('module/fileView/fileView.js').fetch();
 
 fileTree.selection.addHandler({
-  datasetChanged: function(object){
+  itemsChanged: function(object){
     fileView.setDelegate(this.pick());
   }
 });

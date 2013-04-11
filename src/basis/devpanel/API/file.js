@@ -27,7 +27,7 @@ var FILE_HANDLER = {
   }
 };
 var FILE_LIST_HANDLER = {
-  datasetChanged: function(dataset, delta){
+  itemsChanged: function(dataset, delta){
     var data = {};
     if (delta.inserted)
     {
@@ -69,7 +69,7 @@ if (basis.devtools)
 {
   var files = basis.devtools.files;
   files.addHandler(FILE_LIST_HANDLER);
-  FILE_LIST_HANDLER.datasetChanged.call(files, files, {
+  FILE_LIST_HANDLER.itemsChanged.call(files, files, {
     inserted: files.getItems()
   });
 }
