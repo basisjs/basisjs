@@ -28,8 +28,9 @@
   var createEvent = basis.event.create;
 
   var DOM = basis.dom;
-  var DataObject = basis.data.Object;
+  var AbstractData = basis.data.AbstractData;
   var STATE = basis.data.STATE;
+
 
   //
   // Main part
@@ -37,8 +38,9 @@
 
   // Module exceptions
 
-  /** @const */ var EXCEPTION_DATAOBJECT_REQUIRED = namespace + ': Instance of DataObject required';
+  /** @const */ var EXCEPTION_ABSTRACTDATA_REQUIRED = namespace + ': Instance of AbstractData required';
   /** @const */ var EXCEPTION_BAD_OBJECT_LINK = namespace + ': Link to undefined object ignored';
+
 
   //
   //  ABSTRACT PROPERTY
@@ -47,7 +49,7 @@
  /**
   * @class
   */
-  var AbstractProperty = Class(DataObject, {
+  var AbstractProperty = Class(AbstractData, {
     className: namespace + '.AbstractProperty',
 
     dispatch_change: createEvent('change'),
@@ -78,7 +80,7 @@
     * @constructor
     */
     init: function(initValue, handlers, proxy){
-      DataObject.prototype.init.call(this, {});
+      AbstractData.prototype.init.call(this, {});
       if (handlers)
         this.addHandler(handlers);
 
@@ -136,10 +138,6 @@
       }
     },
 
-    update: function(newValue, forceEvent){
-      return this.set(newValue, forceEvent);
-    },
-
    /**
     * Sets init value for property.
     */
@@ -159,7 +157,7 @@
     * @destructor
     */
     destroy: function(){
-      DataObject.prototype.destroy.call(this);
+      AbstractData.prototype.destroy.call(this);
 
       delete this.initValue;
       delete this.proxy;
@@ -297,7 +295,7 @@
         // object must be an Object
         // IE HtmlNode isn't instanceof Object, therefore additionaly used typeof
         if (typeof object != 'object' && object instanceof Object == false)
-          throw new Error(EXCEPTION_BAD_OBJECT_LINK);
+          throw EXCEPTION_BAD_OBJECT_LINK;
 
         field = getFieldHandler(object);
       }
@@ -524,28 +522,28 @@
     },
 
    /**
-    * Adds one or more DataObject instances to objects collection.
-    * @param {...basis.data.Object}
+    * Adds one or more AbstractData instances to objects collection.
+    * @param {...basis.data.AbstractData}
     */
     add: function(/* dataObject1 .. dataObjectN */){
       for (var i = 0, len = arguments.length; i < len; i++)
       {
         var object = arguments[i];
-        if (object instanceof DataObject)
+        if (object instanceof AbstractData)
         {
           if (this.objects.add(object))
             object.addHandler(DataObjectSetHandlers, this);
         }
         else
-          throw new Error(EXCEPTION_DATAOBJECT_REQUIRED);
+          throw EXCEPTION_ABSTRACTDATA_REQUIRED;
       }
 
       this.fire(true, true);
     },
 
    /**
-    * Removes DataObject instance from objects collection.
-    * @param {basis.data.Object} object
+    * Removes AbstractData instance from objects collection.
+    * @param {basis.data.AbstractData} object
     */
     remove: function(object){
       if (this.objects.remove(object))
@@ -555,7 +553,7 @@
     },
 
    /**
-    * Removes all DataObject instances from objects collection.
+    * Removes all AbstractData instances from objects collection.
     */
     clear: function(){
       for (var i = 0, object; object = this.objects[i]; i++)
@@ -584,14 +582,14 @@
     },
 
    /**
-    * Makes object not sensitive for attached DataObject changes.
+    * Makes object not sensitive for attached AbstractData changes.
     */
     lock: function(){
       this.locked = true;
     },
 
    /**
-    * Makes object sensitive for attached DataObject changes.
+    * Makes object sensitive for attached AbstractData changes.
     */
     unlock: function(){
       this.locked = false;
