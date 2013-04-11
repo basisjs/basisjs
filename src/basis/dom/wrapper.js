@@ -38,6 +38,7 @@
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
   var STATE = basis.data.STATE;
 
+  var AbstractData = basis.data.AbstractData;
   var DataObject = basis.data.Object;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
@@ -764,7 +765,7 @@
     setSatellite: function(name, satellite){
       var oldSatellite = this.satellite[name];
       
-      if (satellite instanceof DataObject == false)
+      if (satellite instanceof AbstractData == false)
         satellite = null;
 
       if (oldSatellite != satellite && !this.satelliteConfig[name])
