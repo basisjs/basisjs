@@ -106,7 +106,7 @@
         eventFunction = new Function('eventName', 'slice', 'DEVMODE',
           'var eventFunction;\n' +
           'return eventFunction = function(' + slice.call(arguments, 1).join(', ') + '){' +
-          '//' + namespace + '.dispatcher.' + eventName + '\n' +
+          '//' + namespace + '.events.' + eventName + '\n' +
           eventFunction.toString()
             .replace(/\beventName\b/g, "'" + eventName + "'")
             .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + 
@@ -141,9 +141,6 @@
     */
     handler: null,
 
-    // TODO: remove
-    handlerContext: null,
-
    /**
     * Fires when object is destroing.
     * NOTE: don't override
@@ -163,9 +160,12 @@
       // process handler
       if (this.handler && !this.handler.callbacks)
       {
+        if (DEBUG && 'handlerContext' in this)
+          basis.dev.warn('handlerContext is obsolete. Use # handler: { callbacks: {..}, context: <handlerContext> } # instead.');
+
         this.handler = {
           callbacks: this.handler,
-          context: this.handlerContext || this
+          context: this
         }
       }
     },
