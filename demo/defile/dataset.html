@@ -152,14 +152,14 @@
     // Init data
     //
     var data = basis.array.create(10, function(i){
-      return new nsData.DataObject({
+      return new nsData.Object({
         data: {
           value: i + 1
         }
       });
     });
     var data2 = 'one two three four five six seven eight nine ten'.qw().map(function(value){
-      return new nsData.DataObject({
+      return new nsData.Object({
         data: {
           value: value
         }

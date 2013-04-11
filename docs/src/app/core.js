@@ -187,7 +187,7 @@
       }
     },
     dispatch_update: function(delta){
-      nsData.DataObject.prototype.dispatch_update.call(this, delta);
+      nsData.Object.prototype.dispatch_update.call(this, delta);
       if (this.subscriberCount && 'text' in delta)
       {
         var self = this;
@@ -198,7 +198,7 @@
       this.setActive(!!this.subscriberCount);
     },
     dispatch_subscribersChanged: function(){
-      nsData.DataObject.prototype.dispatch_subscribersChanged.call(this);
+      nsData.Object.prototype.dispatch_subscribersChanged.call(this);
       if (this.subscriberCount && this.data.text)
       {
         var self = this;
@@ -410,7 +410,7 @@
         }
       }
 
-      var dataObject = mapDO[fullPath] = new nsData.DataObject({
+      var dataObject = mapDO[fullPath] = new nsData.Object({
         data: {
           path: path,
           fullPath: fullPath,

@@ -5,7 +5,7 @@
   var classList = basis.cssom.classList;
 
   var clsById = app.core.clsList.map(function(cls){
-    return new basis.data.DataObject({
+    return new basis.data.Object({
       data: {
         className: cls.className,
         clsId: cls.docsUid_,
@@ -93,14 +93,14 @@
             cls = clsList[cls];
             if (basis.Class.isClass(cls))
             {
-              dsClsList[cls.docsUid_] = new basis.data.DataObject({
+              dsClsList[cls.docsUid_] = new basis.data.Object({
                 part: 'self',
                 delegate: clsById[cls.docsUid_]
               });
 
               if (!dsClsList[cls.docsSuperUid_])
               {
-                dsClsList[cls.docsSuperUid_] = new basis.data.DataObject({
+                dsClsList[cls.docsSuperUid_] = new basis.data.Object({
                   part: 'parent',
                   delegate: clsById[cls.docsSuperUid_]
                 });
@@ -108,7 +108,7 @@
 
               for (var i = 0; i < clsById.length; i++)
                 if (clsById[i].data.superClsId === cls.docsUid_)
-                  dsClsList[i] = new basis.data.DataObject({
+                  dsClsList[i] = new basis.data.Object({
                     part: 'subclass',
                     delegate: clsById[i]
                   });

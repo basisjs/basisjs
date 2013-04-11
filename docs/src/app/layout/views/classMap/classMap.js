@@ -5,7 +5,7 @@
   var classList = basis.cssom.classList;
 
   var clsById = app.core.clsList.map(function(cls){
-    return new basis.data.DataObject({
+    return new basis.data.Object({
       data: {
         className: cls.className,
         clsId: cls.docsUid_,

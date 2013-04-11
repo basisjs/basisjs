@@ -36,7 +36,7 @@
   var createEvent = basis.event.create;
 
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
-  var DataObject = basis.data.DataObject;
+  var DataObject = basis.data.Object;
   var KeyObjectMap = basis.data.KeyObjectMap;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
@@ -81,8 +81,8 @@
   
  /**
   * Returns delta object
-  * @param {Array.<basis.data.DataObject>} inserted
-  * @param {Array.<basis.data.DataObject>} deleted
+  * @param {Array.<basis.data.Object>} inserted
+  * @param {Array.<basis.data.Object>} deleted
   * @return {object|boolean}
   */
   function getDelta(inserted, deleted){
@@ -949,7 +949,7 @@
 
    /**
     * Map function for source object, to get member object.
-    * @type {function(basis.data.DataObject):basis.data.DataObject}
+    * @type {function(basis.data.Object):basis.data.Object}
     * @readonly
     */
     map: $self,
@@ -957,7 +957,7 @@
    /**
     * Filter function. It should return false, than result of map function
     * become a member.
-    * @type {function(basis.data.DataObject):boolean}
+    * @type {function(basis.data.Object):boolean}
     * @readonly
     */
     filter: $false,
@@ -979,14 +979,14 @@
 
    /**
     * NOTE: Can't be changed after init.
-    * @type {function(basis.data.DataObject, basis.data.DataObject)}
+    * @type {function(basis.data.Object, basis.data.Object)}
     * @readonly
     */
     addMemberRef: null,
 
    /**
     * NOTE: Can't be changed after init.
-    * @type {function(basis.data.DataObject, basis.data.DataObject)}
+    * @type {function(basis.data.Object, basis.data.Object)}
     * @readonly
     */
     removeMemberRef: null,
@@ -1002,7 +1002,7 @@
 
    /**
     * Set new transform function and apply new function to source objects.
-    * @param {function(basis.data.DataObject):basis.data.DataObject} map
+    * @param {function(basis.data.Object):basis.data.Object} map
     */
     setMap: function(map){
       if (typeof map != 'function')
@@ -1017,7 +1017,7 @@
 
    /**
     * Set new filter function and apply new function to source objects.
-    * @param {function(basis.data.DataObject):boolean} filter
+    * @param {function(basis.data.Object):boolean} filter
     */
     setFilter: function(filter){
       if (typeof filter != 'function')
@@ -1032,7 +1032,7 @@
 
    /**
     * Set new filter function.
-    * @param {function(basis.data.DataObject):boolean} rule
+    * @param {function(basis.data.Object):boolean} rule
     * @return {Object} Delta of member changes.
     */
     setRule: function(rule){
@@ -1225,9 +1225,9 @@
 
    /**
     * Fetch subset dataset by some data.
-    * @param {basis.data.DataObject|Object} data
+    * @param {basis.data.Object|Object} data
     * @param {boolean} autocreate
-    * @return {basis.data.DataObject}
+    * @return {basis.data.Object}
     */
     getSubset: function(data, autocreate){
       return this.keyMap.get(data, autocreate);
@@ -1401,7 +1401,7 @@
 
    /**
     * Ordering items function.
-    * @type {function(basis.data.DataObject)}
+    * @type {function(basis.data.Object)}
     * @readonly
     */
     rule: getter($true),
@@ -1712,7 +1712,7 @@
     subsetClass: AbstractDataset,
     
    /**
-    * @type {function(basis.data.DataObject)}
+    * @type {function(basis.data.Object)}
     */
     rule: getter($false),
 
@@ -1759,9 +1759,9 @@
 
    /**
     * Fetch subset dataset by some data.
-    * @param {basis.data.DataObject|Object} data
+    * @param {basis.data.Object|Object} data
     * @param {boolean} autocreate
-    * @return {basis.data.DataObject}
+    * @return {basis.data.Object}
     */
     getSubset: function(data, autocreate){
       return this.keyMap.get(data, autocreate);

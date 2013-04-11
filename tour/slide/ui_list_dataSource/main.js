@@ -3,7 +3,7 @@ basis.require('basis.ui');
 
 var dataset = new basis.data.Dataset({
   items: ['foo', 'bar', 'baz'].map(function(value){
-    return new basis.data.DataObject({
+    return new basis.data.Object({
       data: {
         name: value
       }
@@ -24,7 +24,7 @@ var list = new basis.ui.Node({
 });
 
 dataset.remove(dataset.pick());
-dataset.add(new basis.data.DataObject({
+dataset.add(new basis.data.Object({
   data: {
     name: 'extra'
   }

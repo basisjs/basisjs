@@ -20,7 +20,7 @@
   var Class = basis.Class;
   
   var nsData = basis.data;
-  var DataObject = nsData.DataObject;
+  var DataObject = nsData.Object;
   var KeyObjectMap = nsData.KeyObjectMap;
   var AbstractDataset = nsData.AbstractDataset;
 

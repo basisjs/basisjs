@@ -25,7 +25,7 @@
   var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
-  var DataObject = basis.data.DataObject;
+  var DataObject = basis.data.Object;
   var Slot = basis.data.Slot;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;

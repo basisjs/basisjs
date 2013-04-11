@@ -30,8 +30,8 @@
 
  /**
   * Returns delta object
-  * @param {Array.<basis.data.DataObject>} inserted
-  * @param {Array.<basis.data.DataObject>} deleted
+  * @param {Array.<basis.data.Object>} inserted
+  * @param {Array.<basis.data.Object>} deleted
   * @return {object|boolean}
   */
   function getDelta(inserted, deleted){

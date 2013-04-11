@@ -28,7 +28,7 @@
   var createEvent = basis.event.create;
 
   var DOM = basis.dom;
-  var DataObject = basis.data.DataObject;
+  var DataObject = basis.data.Object;
   var STATE = basis.data.STATE;
 
   //
@@ -468,7 +468,7 @@
     },
 
    /**
-    * @type {Array.<basis.data.DataObject>}
+    * @type {Array.<basis.data.Object>}
     */
     objects: null,
 
@@ -525,7 +525,7 @@
 
    /**
     * Adds one or more DataObject instances to objects collection.
-    * @param {...basis.data.DataObject}
+    * @param {...basis.data.Object}
     */
     add: function(/* dataObject1 .. dataObjectN */){
       for (var i = 0, len = arguments.length; i < len; i++)
@@ -545,7 +545,7 @@
 
    /**
     * Removes DataObject instance from objects collection.
-    * @param {basis.data.DataObject} object
+    * @param {basis.data.Object} object
     */
     remove: function(object){
       if (this.objects.remove(object))

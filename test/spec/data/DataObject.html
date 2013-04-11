@@ -24,7 +24,7 @@
       basis.require('basis.data');
 
       var eventTypeFilter = function(event){ return event.type == this; };
-      var proto = basis.data.DataObject.prototype;
+      var proto = basis.data.Object.prototype;
       var eventsMap = {};
       var seed = 1;
 
@@ -69,7 +69,7 @@
     loadTest((function(){
 
       var nsData = basis.data;
-      var DataObject = nsData.DataObject;
+      var DataObject = nsData.Object;
 
       function checkObject(object){
 
