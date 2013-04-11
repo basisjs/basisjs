@@ -92,8 +92,8 @@
         }
 
         // that feature available in development mode only
-        if (DEVMODE && this.event_debug)
-          this.event_debug({
+        if (DEVMODE && this.dispatch_debug)
+          this.dispatch_debug({
             sender: this,
             type: eventName,
             args: arguments
@@ -149,7 +149,7 @@
     * NOTE: don't override
     * @event
     */
-    event_destroy: createDispatcher('destroy'),
+    dispatch_destroy: createDispatcher('destroy'),
 
    /**
     * Related object listeners.
@@ -241,7 +241,7 @@
         this.destroy = warnOnDestroy;
 
       // fire object destroy event handlers
-      this.event_destroy();
+      this.dispatch_destroy();
 
       // drop event handlers if any
       this.handler = null;
@@ -257,7 +257,7 @@
       * WARN: This functionality is supported in development only.
       * @type {function(event)}
       */
-      event_debug: null
+      dispatch_debug: null
     });
   }
 

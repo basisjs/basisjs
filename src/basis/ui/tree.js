@@ -136,8 +136,8 @@
     */
     childFactory: null,
 
-    event_collapse: createEvent('collapse'),
-    event_expand: createEvent('expand'),
+    dispatch_collapse: createEvent('collapse'),
+    dispatch_expand: createEvent('expand'),
 
    /**
     * Template for node element. 
@@ -216,7 +216,7 @@
       Node.prototype.init.call(this);
 
       if (this.collapsed && this.collapsible)
-        this.event_collapse();
+        this.dispatch_collapse();
     },
 
    /**
@@ -227,7 +227,7 @@
       if (this.collapsed)
       {
         this.collapsed = false;
-        this.event_expand();
+        this.dispatch_expand();
 
         return true;
       }
@@ -242,7 +242,7 @@
       if (!this.collapsed && this.collapsible)
       {
         this.collapsed = true;
-        this.event_collapse();
+        this.dispatch_collapse();
 
         return true;
       }

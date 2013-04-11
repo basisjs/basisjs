@@ -63,13 +63,13 @@
         });
       },
 
-      event_start: function(request){
+      dispatch_start: function(request){
         basis.dom.event.addHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
-        basis.net.Transport.prototype.event_start.call(this, request);
+        basis.net.Transport.prototype.dispatch_start.call(this, request);
       },
-      event_complete: function(request){
+      dispatch_complete: function(request){
         basis.dom.event.removeHandler(request.xhr.upload, 'progress', REQUEST_PROGRESS_HANDLER, request);
-        basis.net.Transport.prototype.event_complete.call(this, request);
+        basis.net.Transport.prototype.dispatch_complete.call(this, request);
       }
     });
 
@@ -97,11 +97,11 @@
           this.processResponse();
 
           if (this.isSuccessful())
-            this.transport.event_success(this);
+            this.transport.dispatch_success(this);
           else
-            this.transport.event_failure(this);
+            this.transport.dispatch_failure(this);
 
-          this.transport.event_complete(this);
+          this.transport.dispatch_complete(this);
 
           this.inprogress = false;
           var that = this;
@@ -134,7 +134,7 @@
         if (!form)
           return;
 
-        this.transport.event_start(this);
+        this.transport.dispatch_start(this);
         this.insertFrame();
         this.inprogress = true;
         this.setState(basis.data.STATE.PROCESSING);
@@ -149,7 +149,7 @@
         {
           this.removeFrame();
           this.inprogress = false;
-          this.transport.event_abort(this);
+          this.transport.dispatch_abort(this);
         }
       },
       destroy: function(){

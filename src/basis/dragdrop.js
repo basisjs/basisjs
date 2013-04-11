@@ -74,7 +74,7 @@
     if (!dragging)
     {
       dragging = true;
-      dragElement.event_start(dragData, event);
+      dragElement.dispatch_start(dragData, event);
     }
 
     if (dragElement.axisX)
@@ -83,7 +83,7 @@
     if (dragElement.axisY)
       dragData.deltaY = dragElement.axisYproxy(Event.mouseY(event) - dragData.initY);
 
-    dragElement.event_drag(dragData, event);
+    dragElement.dispatch_drag(dragData, event);
   }
 
   function stopDrag(event){
@@ -97,7 +97,7 @@
     if (dragging)
     {
       dragging = false;
-      dragElement.event_over(dragData, event);
+      dragElement.dispatch_over(dragData, event);
     }
     
     dragElement = null;
@@ -131,9 +131,9 @@
     axisYproxy: basis.fn.$self,
 
     prepareDrag: function(){},
-    event_start: createEvent('start'), // occure on first mouse move
-    event_drag: createEvent('drag'),
-    event_over: createEvent('over'),
+    dispatch_start: createEvent('start'), // occure on first mouse move
+    dispatch_drag: createEvent('drag'),
+    dispatch_over: createEvent('over'),
 
     //
     // Constructor
@@ -208,7 +208,7 @@
   var MoveableElement = DragDropElement.subclass({
     className: namespace + '.MoveableElement',
     
-    event_start: function(dragData, event){
+    dispatch_start: function(dragData, event){
       var element = this.containerGetter(this, dragData.initX, dragData.initY);
 
       if (element)
@@ -218,10 +218,10 @@
         dragData.viewport = new nsLayout.Viewport(this.baseElement);
       }
 
-      DragDropElement.prototype.event_start.call(this, dragData, event);
+      DragDropElement.prototype.dispatch_start.call(this, dragData, event);
     },
 
-    event_drag: function(dragData, event){
+    dispatch_drag: function(dragData, event){
       if (!dragData.element)
         return;
 
@@ -251,7 +251,7 @@
         dragData.element.style.top = newTop + 'px';
       }
 
-      DragDropElement.prototype.event_drag.call(this, dragData, event);
+      DragDropElement.prototype.dispatch_drag.call(this, dragData, event);
     }
   });
 

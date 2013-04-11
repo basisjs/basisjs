@@ -171,9 +171,9 @@
   */
   var ChartNode = Node.subclass({
     className: namespace + '.ChartNode',
-    event_requestRedraw: createEvent('requestRedraw'),
-    event_disable: createEvent('disable'),
-    event_enable: createEvent('enable')
+    dispatch_requestRedraw: createEvent('requestRedraw'),
+    dispatch_disable: createEvent('disable'),
+    dispatch_enable: createEvent('enable')
   });
 
  /**
@@ -192,16 +192,16 @@
 
     style: {},
 
-    event_sortingChanged: function(oldSorting, oldSortingDesc){
-      Canvas.prototype.event_sortingChanged.call(this, oldSorting, oldSortingDesc);
+    dispatch_sortingChanged: function(oldSorting, oldSortingDesc){
+      Canvas.prototype.dispatch_sortingChanged.call(this, oldSorting, oldSortingDesc);
       this.redrawRequest();
     },
-    event_groupingChanged: function(oldGrouping){
-      Canvas.prototype.event_groupingChanged.call(this, oldGrouping);
+    dispatch_groupingChanged: function(oldGrouping){
+      Canvas.prototype.dispatch_groupingChanged.call(this, oldGrouping);
       this.redrawRequest();
     },
-    event_childNodesModified: function(delta){
-      Canvas.prototype.event_childNodesModified.call(this, delta);
+    dispatch_childNodesModified: function(delta){
+      Canvas.prototype.dispatch_childNodesModified.call(this, delta);
       this.redrawRequest();
     },
 
@@ -258,7 +258,7 @@
         }
       }
 
-      this.event_valuesChanged(valuesDelta);
+      this.dispatch_valuesChanged(valuesDelta);
     } 
   };
 
@@ -271,7 +271,7 @@
       this.valuesMap[key] = value;
       valuesDelta[key] = value;
 
-      this.event_valuesChanged(valuesDelta);
+      this.dispatch_valuesChanged(valuesDelta);
     }
   };
 
@@ -302,10 +302,10 @@
     },
 
     //events
-    event_valuesChanged: createEvent('valuesChanged', 'delta'),
-    event_sourceChanged: createEvent('sourceChanged', 'oldSource'),
-    event_disable: createEvent('disable'),
-    event_enable: createEvent('enable'),
+    dispatch_valuesChanged: createEvent('valuesChanged', 'delta'),
+    dispatch_sourceChanged: createEvent('sourceChanged', 'oldSource'),
+    dispatch_disable: createEvent('disable'),
+    dispatch_enable: createEvent('enable'),
 
     init: function(){
       this.valuesMap = {};
@@ -339,7 +339,7 @@
           SERIA_SOURCE_HANDLER.datasetChanged.call(this, oldSource, { inserted: this.source.getItems() });
         }
 
-        this.event_sourceChanged(oldSource);
+        this.dispatch_sourceChanged(oldSource);
       }
     },
 
@@ -356,7 +356,7 @@
   var ChartSeriesList = Node.subclass({
     className: namespace + '.ChartSeriesList',
 
-    event_valuesChanged: createEvent('valuesChanged', 'delta'),
+    dispatch_valuesChanged: createEvent('valuesChanged', 'delta'),
 
     childClass: ChartSeria,
     childFactory: function(config){
@@ -366,7 +366,7 @@
     listen: {
       childNode: { // seria
         valuesChanged: function(seria, delta){
-          this.event_valuesChanged(seria, delta);
+          this.dispatch_valuesChanged(seria, delta);
         }
       }
     },
@@ -466,8 +466,8 @@
       return this.keyGetter(object); 
     },
     
-    event_childNodesModified: function(delta){
-      Chart.prototype.event_childNodesModified.call(this, delta);
+    dispatch_childNodesModified: function(delta){
+      Chart.prototype.dispatch_childNodesModified.call(this, delta);
 
       if (!this.series || !this.series.childNodes)
         return;
@@ -1104,8 +1104,8 @@
       }
     },
 
-    event_ownerChanged: function(oldOwner){
-      AbstractCanvas.prototype.event_ownerChanged.call(this, oldOwner);
+    dispatch_ownerChanged: function(oldOwner){
+      AbstractCanvas.prototype.dispatch_ownerChanged.call(this, oldOwner);
       
       if (oldOwner && oldOwner.selection)
       {
@@ -1212,8 +1212,8 @@
       }
     },
 
-    event_ownerChanged: function(oldOwner){
-      AbstractCanvas.prototype.event_ownerChanged.call(this, oldOwner);
+    dispatch_ownerChanged: function(oldOwner){
+      AbstractCanvas.prototype.dispatch_ownerChanged.call(this, oldOwner);
 
       if (this.owner)
         this.recalc();

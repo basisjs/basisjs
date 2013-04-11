@@ -117,7 +117,7 @@
         subscribers[subscriberId] = from;
         var count = to.subscriberCount += 1;
         if (count == 1)
-          to.event_subscribersChanged(+1);
+          to.dispatch_subscribersChanged(+1);
       }
       else
       {
@@ -134,7 +134,7 @@
         var count = to.subscriberCount -= 1;
         if (count == 0)
         {
-          to.event_subscribersChanged(-1);
+          to.dispatch_subscribersChanged(-1);
           to.subscribers_ = null;
         }
       }
@@ -277,7 +277,7 @@
     * @param {object} oldState Object state before changes.
     * @event
     */
-    event_stateChanged: createEvent('stateChanged', 'oldState'),
+    dispatch_stateChanged: createEvent('stateChanged', 'oldState'),
 
    /**
     * Indicates if object influences to related objects or not (is
@@ -290,7 +290,7 @@
     * Fires when state of subscription was changed.
     * @event
     */
-    event_activeChanged: createEvent('activeChanged'),
+    dispatch_activeChanged: createEvent('activeChanged'),
 
    /**
     * Subscriber type indicates what sort of influence has current object on
@@ -320,7 +320,7 @@
     * @param {basis.data.DataObject} object Object which subscribers count was changed.
     * @event
     */
-    event_subscribersChanged: createEvent('subscribersChanged'),
+    dispatch_subscribersChanged: createEvent('subscribersChanged'),
 
    /**
     * @readonly
@@ -376,7 +376,7 @@
         this.state = Object(stateCode);
         this.state.data = data;
 
-        this.event_stateChanged(oldState);
+        this.dispatch_stateChanged(oldState);
 
         return true; // state was changed
       }
@@ -404,7 +404,7 @@
       if (this.active != isActive)
       {
         this.active = isActive;
-        this.event_activeChanged();
+        this.dispatch_activeChanged();
 
         if (isActive)
           addSub(this, this.subscribeTo);
@@ -542,7 +542,7 @@
     * (value of property before changes).
     * @event
     */
-    event_update: createEvent('update', 'delta'),
+    dispatch_update: createEvent('update', 'delta'),
 
    /**
     * Object that manage data updates if assigned.
@@ -561,7 +561,7 @@
     * @param {basis.data.DataObject} oldDelegate Object delegate before changes.
     * @event
     */
-    event_delegateChanged: createEvent('delegateChanged', 'oldDelegate'),
+    dispatch_delegateChanged: createEvent('delegateChanged', 'oldDelegate'),
 
    /**
     * Flag to determine is this object target object or not. This property
@@ -584,7 +584,7 @@
     * @param {basis.data.DataObject} oldTarget Object before changes.
     * @event
     */
-    event_targetChanged: createEvent('targetChanged', 'oldTarget'),
+    dispatch_targetChanged: createEvent('targetChanged', 'oldTarget'),
 
    /**
     * Root of delegate chain. By default and when no delegate, it points to object itself.
@@ -599,7 +599,7 @@
     * @param {basis.data.DataObject} oldRoot Object root before changes.
     * @event
     */
-    event_rootChanged: createEvent('rootChanged', 'oldRoot'),
+    dispatch_rootChanged: createEvent('rootChanged', 'oldRoot'),
 
    /**
     * Flag determines object behaviour when assigned delegate is destroing:
@@ -617,11 +617,11 @@
       delegate: {
         update: function(object, delta){
           this.data = object.data;
-          this.event_update(delta);
+          this.dispatch_update(delta);
         },
         stateChanged: function(object, oldState){
           this.state = object.state;
-          this.event_stateChanged(oldState);
+          this.dispatch_stateChanged(oldState);
         },
         targetChanged: function(object, oldTarget){
           this.target = object.target;
@@ -636,12 +636,12 @@
               this.target.addHandler(targetListenHandler, this);
           }
 
-          this.event_targetChanged(oldTarget);
+          this.dispatch_targetChanged(oldTarget);
         },
         rootChanged: function(object, oldRoot){
           this.data = object.data;
           this.root = object.root;
-          this.event_rootChanged(oldRoot);
+          this.dispatch_rootChanged(oldRoot);
         },
         destroy: function(){
           if (this.cascadeDestroy)
@@ -813,13 +813,13 @@
           // fire update event if any key in delta (data changed)
           for (var key in delta)
           {
-            this.event_update(delta);
+            this.dispatch_update(delta);
             break;
           }
 
           // fire stateChanged event if state was changed
           if (oldState !== this.state && (String(oldState) != this.state || oldState.data !== this.state.data))
-            this.event_stateChanged(oldState);
+            this.dispatch_stateChanged(oldState);
         }
         else
         {
@@ -836,14 +836,14 @@
 
         // fire event if target changed
         if (this.root !== oldRoot)
-          this.event_rootChanged(oldRoot);
+          this.dispatch_rootChanged(oldRoot);
 
         // fire event if target changed
         if (this.target !== oldTarget)
-          this.event_targetChanged(oldTarget);
+          this.dispatch_targetChanged(oldTarget);
 
         // fire event if delegate changed
-        this.event_delegateChanged(oldDelegate);
+        this.dispatch_delegateChanged(oldDelegate);
 
         // delegate was changed
         return true;
@@ -896,7 +896,7 @@
 
         if (updateCount)
         {
-          this.event_update(delta);
+          this.dispatch_update(delta);
           return delta;
         }
       }
@@ -1046,7 +1046,7 @@
    /**
     * Set of all items, even items are not in member set. May be used as storage for
     * members, which provide posibility to avoid dublicates in resultinf set before
-    * event_datasetChanged event be fired.
+    * dispatch_datasetChanged event be fired.
     * @type {Object}
     * @private
     */
@@ -1067,7 +1067,7 @@
     * and `deleted` property is array of removed items.
     * @event
     */
-    event_datasetChanged: createEvent('datasetChanged', 'delta') && function(delta){
+    dispatch_datasetChanged: createEvent('datasetChanged', 'delta') && function(delta){
       var items;
       var insertCount = 0;
       var deleteCount = 0;
@@ -1280,7 +1280,7 @@
       // trace changes
       if (inserted.length)
       {
-        this.event_datasetChanged(delta = {
+        this.dispatch_datasetChanged(delta = {
           inserted: inserted
         });
       }
@@ -1322,7 +1322,7 @@
       // trace changes
       if (deleted.length)
       {
-        this.event_datasetChanged(delta = {
+        this.dispatch_datasetChanged(delta = {
           deleted: deleted
         });
       }
@@ -1394,7 +1394,7 @@
       
       // fire event if any changes
       if (delta = getDelta(inserted, deleted))
-        this.event_datasetChanged(delta);
+        this.dispatch_datasetChanged(delta);
 
       return delta;
     },
@@ -1455,7 +1455,7 @@
           for (var i = deleted.length; i-- > 0;)
             deleted[i].removeHandler(listenHandler, this);
 
-        this.event_datasetChanged(delta = {
+        this.dispatch_datasetChanged(delta = {
           deleted: deleted
         });
          
@@ -1473,7 +1473,7 @@
 
   Dataset.setAccumulateState = (function(){
     var proto = AbstractDataset.prototype;
-    var realEvent = proto.event_datasetChanged;
+    var realEvent = proto.dispatch_datasetChanged;
     var setStateCount = 0;
     var urgentTimer;
     var eventCache = {};
@@ -1536,7 +1536,7 @@
     }
 
     function setAccumulateStateOff(){
-      proto.event_datasetChanged = realEvent;
+      proto.dispatch_datasetChanged = realEvent;
       flushAllDataset();
     }
 
@@ -1545,7 +1545,7 @@
       {
         if (setStateCount == 0)
         {
-          proto.event_datasetChanged = storeDatasetDelta;
+          proto.dispatch_datasetChanged = storeDatasetDelta;
           if (!urgentTimer)
             urgentTimer = setTimeout(urgentFlush, 0);
         }

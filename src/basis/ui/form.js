@@ -62,7 +62,7 @@
       }
     },
 
-    event_reset: createEvent('reset'),
+    dispatch_reset: createEvent('reset'),
 
     onSubmit: basis.fn.$false,
 
@@ -101,7 +101,7 @@
       for (var field = this.firstChild; field; field = field.nextSibling)
         field.reset();
 
-      this.event_reset();
+      this.dispatch_reset();
     },
     validate: function(){
       var errors = [];

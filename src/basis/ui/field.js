@@ -143,21 +143,21 @@
     // events
     //
 
-    event_commit: createEvent('commit'),
-    event_change: createEvent('change', 'oldValue') && function(oldValue){
+    dispatch_commit: createEvent('commit'),
+    dispatch_change: createEvent('change', 'oldValue') && function(oldValue){
       this.writeFieldValue_(this.value);
       events.change.call(this, oldValue);
     },
-    event_validityChanged: createEvent('validityChanged', 'oldValidity'),
-    event_errorChanged: createEvent('errorChanged'),
-    event_exampleChanged: createEvent('exampleChanged'),
-    event_descriptionChanged: createEvent('descriptionChanged'),
+    dispatch_validityChanged: createEvent('validityChanged', 'oldValidity'),
+    dispatch_errorChanged: createEvent('errorChanged'),
+    dispatch_exampleChanged: createEvent('exampleChanged'),
+    dispatch_descriptionChanged: createEvent('descriptionChanged'),
 
-    event_fieldInput: createEvent('fieldInput', 'event'),
-    event_fieldChange: createEvent('fieldChange', 'event'),
-    event_fieldKeydown: createEvent('fieldKeydown', 'event'),
-    event_fieldKeypress: createEvent('fieldKeypress', 'event'),
-    event_fieldKeyup: createEvent('fieldKeyup', 'event') && function(event){
+    dispatch_fieldInput: createEvent('fieldInput', 'event'),
+    dispatch_fieldChange: createEvent('fieldChange', 'event'),
+    dispatch_fieldKeydown: createEvent('fieldKeydown', 'event'),
+    dispatch_fieldKeypress: createEvent('fieldKeypress', 'event'),
+    dispatch_fieldKeyup: createEvent('fieldKeyup', 'event') && function(event){
       if (this.nextFieldOnEnter)
       {
         if (event.key == event.KEY.ENTER || event.key == event.KEY.CTRL_ENTER)
@@ -171,14 +171,14 @@
 
       events.fieldKeyup.call(this, event);
     },
-    event_fieldFocus: createEvent('fieldFocus', 'event') && function(event){
+    dispatch_fieldFocus: createEvent('fieldFocus', 'event') && function(event){
       this.focused = true;
       /*if (this.validity)
         this.setValidity();*/
 
       events.fieldFocus.call(this, event);
     },
-    event_fieldBlur: createEvent('fieldBlur', 'event') && function(event){
+    dispatch_fieldBlur: createEvent('fieldBlur', 'event') && function(event){
       this.validate(true);
       this.focused = false;
 
@@ -222,7 +222,7 @@
 
     action: 'focus blur change keydown keypress keyup input'.qw().reduce(
       function(res, item){
-        var eventName = 'event_field' + item.capitalize();
+        var eventName = 'dispatch_field' + item.capitalize();
         res[item] = function(event){
           this.setValue(this.readFieldValue_());
           this[eventName](event);
@@ -297,14 +297,14 @@
       if (example != this.example)
       {
         this.example = example;
-        this.event_exampleChanged();
+        this.dispatch_exampleChanged();
       }
     },
     setDescription: function(description){
       if (description != this.description)
       {
         this.description = description;
-        this.event_descriptionChanged();
+        this.dispatch_descriptionChanged();
       }
     },
 
@@ -320,7 +320,7 @@
       {
         var oldValue = this.value;
         this.value = newValue;
-        this.event_change(oldValue);
+        this.dispatch_change(oldValue);
       }
     },
     reset: function(){
@@ -343,7 +343,7 @@
       if (this.validity !== validity)
       {
         this.validity = validity;
-        this.event_validityChanged();
+        this.dispatch_validityChanged();
       }
 
       if (!message || validity != VALIDITY_INVALID)
@@ -352,7 +352,7 @@
       if (this.error != message)
       {
         this.error = message;
-        this.event_errorChanged();
+        this.dispatch_errorChanged();
       }
     },
     validate: function(onlyValid){
@@ -373,7 +373,7 @@
     },
 
     commit: function(){
-      this.event_commit();
+      this.dispatch_commit();
     },
 
     destroy: function(){
@@ -405,8 +405,8 @@
   var TextField = Field.subclass({
     className: namespace + '.TextField',
 
-    event_minLengthChanged: createEvent('minLengthChanged'),
-    event_maxLengthChanged: createEvent('maxLengthChanged'),
+    dispatch_minLengthChanged: createEvent('minLengthChanged'),
+    dispatch_maxLengthChanged: createEvent('maxLengthChanged'),
 
     defaultValue: '',
     readOnly: false,
@@ -470,7 +470,7 @@
         }
 
         this.minLength = len;
-        this.event_minLengthChanged();
+        this.dispatch_minLengthChanged();
       }
     },
     setMaxLength: function(len){
@@ -487,7 +487,7 @@
         }
 
         this.maxLength = len;
-        this.event_maxLengthChanged();
+        this.dispatch_maxLengthChanged();
       }
     },
 
@@ -540,15 +540,15 @@
     nextFieldOnEnter: false,
     symbolsLeft: 0,
 
-    event_symbolsLeftChanged: createEvent('symbolsLeftChanged'),
-    event_fieldFocus: !window.opera
-      ? TextField.prototype.event_fieldFocus
+    dispatch_symbolsLeftChanged: createEvent('symbolsLeftChanged'),
+    dispatch_fieldFocus: !window.opera
+      ? TextField.prototype.dispatch_fieldFocus
         // fix opera's bug: when invisible textarea becomes visible and user
         // changes it content, value property returns empty string instead of field value
       : function(event){
           this.contentEditable = true;
           this.contentEditable = false;
-          TextField.prototype.event_fieldFocus.call(this, event);
+          TextField.prototype.dispatch_fieldFocus.call(this, event);
         },
 
     template: templates.Textarea,
@@ -604,7 +604,7 @@
       if (this.symbolsLeft != symbolsLeft)
       {
         this.symbolsLeft = symbolsLeft;
-        this.event_symbolsLeftChanged();
+        this.dispatch_symbolsLeftChanged();
       }
     }
   });
@@ -718,7 +718,7 @@
 
   var COMPLEXFIELD_SELECTION_HANDLER = {
     datasetChanged: function(){
-      this.event_change();
+      this.dispatch_change();
     }
   };
 
@@ -887,8 +887,8 @@
 
     childClass: ComboboxItem,
     
-    event_change: function(event){
-      ComplexField.prototype.event_change.call(this, event);
+    dispatch_change: function(event){
+      ComplexField.prototype.dispatch_change.call(this, event);
 
       var value = this.getValue();
 
@@ -896,8 +896,8 @@
         this.property.set(value);
     },
 
-    event_childNodesModified: function(delta){
-      ComplexField.prototype.event_childNodesModified.call(this, delta);
+    dispatch_childNodesModified: function(delta){
+      ComplexField.prototype.dispatch_childNodesModified.call(this, delta);
       if (this.property)
         this.setValue(this.property.value);
     },
@@ -995,7 +995,7 @@
           this.focus();
         }
 
-        this.event_fieldKeyup(event);
+        this.dispatch_fieldKeyup(event);
       },
       keydown: function(event){
         switch (event.key)
@@ -1013,7 +1013,7 @@
             break;
         }
 
-        this.event_fieldKeydown(event);
+        this.dispatch_fieldKeydown(event);
       }
     },
 
@@ -1175,10 +1175,10 @@
       return false;
     },
 
-    event_change: function(value, oldValue){
+    dispatch_change: function(value, oldValue){
       this.rx = this.regexpGetter(value);
 
-      Property.prototype.event_change.call(this, value, oldValue);
+      Property.prototype.dispatch_change.call(this, value, oldValue);
     },
 
     extendConstructor_: true,
@@ -1216,8 +1216,8 @@
   var Matcher = MatchProperty.subclass({
     className: namespace + '.Matcher',
 
-    event_change: function(value, oldValue){
-      MatchProperty.prototype.event_change.call(this, value, oldValue);
+    dispatch_change: function(value, oldValue){
+      MatchProperty.prototype.dispatch_change.call(this, value, oldValue);
 
       this.applyMatch();
     },
@@ -1241,8 +1241,8 @@
   var MatchFilter = MatchProperty.subclass({
     className: namespace + '.MatchFilter',
 
-    event_change: function(value, oldValue){
-      MatchProperty.prototype.event_change.call(this, value, oldValue);
+    dispatch_change: function(value, oldValue){
+      MatchProperty.prototype.dispatch_change.call(this, value, oldValue);
 
       this.node.setMatchFunction(value ? this.matchFunction.bind(this) : null);
     }
@@ -1258,13 +1258,13 @@
 
     matchFilterClass: MatchFilter,
 
-    event_fieldKeyup: function(event){
-      Text.prototype.event_fieldKeyup.call(this, event);
+    dispatch_fieldKeyup: function(event){
+      Text.prototype.dispatch_fieldKeyup.call(this, event);
       this.matchFilter.set(this.getValue());
     },
 
-    event_change: function(event){
-      Text.prototype.event_change.call(this, event);
+    dispatch_change: function(event){
+      Text.prototype.dispatch_change.call(this, event);
       this.matchFilter.set(this.getValue());
     },
 

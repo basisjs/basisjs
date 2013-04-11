@@ -176,7 +176,7 @@
   var destroyJsDocEntity = JsDocEntity.entityType.entityClass.prototype.destroy;
   JsDocEntity.entityType.entityClass.extend({
     subscribeTo: basis.data.SUBSCRIPTION.INHERITDOC,
-    event_inheritDocChanged: basis.event.create('inheritDocChanged'),
+    dispatch_inheritDocChanged: basis.event.create('inheritDocChanged'),
     inheritDoc: null,
     listen: {
       inheritDoc: {
@@ -186,8 +186,8 @@
         }
       }
     },
-    event_update: function(delta){
-      nsData.DataObject.prototype.event_update.call(this, delta);
+    dispatch_update: function(delta){
+      nsData.DataObject.prototype.dispatch_update.call(this, delta);
       if (this.subscriberCount && 'text' in delta)
       {
         var self = this;
@@ -197,8 +197,8 @@
       }
       this.setActive(!!this.subscriberCount);
     },
-    event_subscribersChanged: function(){
-      nsData.DataObject.prototype.event_subscribersChanged.call(this);
+    dispatch_subscribersChanged: function(){
+      nsData.DataObject.prototype.dispatch_subscribersChanged.call(this);
       if (this.subscriberCount && this.data.text)
       {
         var self = this;
@@ -224,7 +224,7 @@
         if (doc)
           this.set('tags', doc.data.tags);
 
-        this.event_inheritDocChanged(oldInherit);
+        this.dispatch_inheritDocChanged(oldInherit);
       }
     },
     destroy: function(){
@@ -354,7 +354,7 @@
               kind = 'property';
             else
             {
-              var m = title.match(/^event_(.+)/);
+              var m = title.match(/^dispatch_(.+)/);
               if (m)
               {
                 kind = 'event';

@@ -5,8 +5,8 @@
   var SearchMatchInput = basis.ui.field.MatchInput.subclass({
     matchFilterClass: basis.ui.field.MatchFilter.subclass({
       textNodeGetter: basis.getter('tmpl.title'),
-      event_change: function(value, oldValue){
-        basis.ui.field.MatchProperty.prototype.event_change.call(this, value, oldValue);
+      dispatch_change: function(value, oldValue){
+        basis.ui.field.MatchProperty.prototype.dispatch_change.call(this, value, oldValue);
 
         var fc = value.charAt(0);
         var v = value.substr(1).replace(/./g, function(m){ return '[' + m.toUpperCase() + m.toLowerCase() + ']'; });

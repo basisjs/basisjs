@@ -956,8 +956,8 @@
                   test: function(){
 
                     var groupDelegateClass = Class(Node, {
-                      event_subscribersChanged: function(){
-                        Node.prototype.event_subscribersChanged.call(this);
+                      dispatch_subscribersChanged: function(){
+                        Node.prototype.dispatch_subscribersChanged.call(this);
                         if (this.subscriberCount)
                           this.update({ title: this.data.title_ });
                       }

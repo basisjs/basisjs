@@ -103,10 +103,10 @@
     scrollX: true,
     scrollY: true,
 
-    event_start: createEvent('start'),
-    event_finish: createEvent('finish'),
-    event_startInertia: createEvent('startInertia'),
-    event_updatePosition: createEvent('updatePosition', 'scrollPosition'),
+    dispatch_start: createEvent('start'),
+    dispatch_finish: createEvent('finish'),
+    dispatch_startInertia: createEvent('startInertia'),
+    dispatch_updatePosition: createEvent('updatePosition', 'scrollPosition'),
 
     init: function(){
       this.lastMouseX = 0;
@@ -214,7 +214,7 @@
       this.lastUpdateTime = Date.now();
       this.updateFrameHandle = this.nextFrame();
 
-      this.event_start();
+      this.dispatch_start();
     },
 
     stopUpdate: function(){
@@ -228,7 +228,7 @@
 
       this.updateElementPosition();
 
-      this.event_finish();
+      this.dispatch_finish();
     },
 
     onMouseDown: function(event){
@@ -337,7 +337,7 @@
       Event.removeGlobalHandler('mouseup', this.onMouseUp, this);
       Event.removeGlobalHandler('touchend', this.onMouseUp, this);
 
-      this.event_startInertia();
+      this.dispatch_startInertia();
     },
 
     onUpdate: function(time){
@@ -424,7 +424,7 @@
       }
 
       this.updateElementPosition();
-      this.event_updatePosition(time, this.viewportX, this.viewportY);
+      this.dispatch_updatePosition(time, this.viewportX, this.viewportY);
 
       this.nextFrame();
     },
@@ -610,8 +610,8 @@
     scrollY: true,
     wheelDelta: 40,
 
-    event_realign: createEvent('realign'),
-    event_updatePosition: createEvent('updatePosition'),
+    dispatch_realign: createEvent('realign'),
+    dispatch_updatePosition: createEvent('updatePosition'),
 
     template: templates.ScrollPanel,
 
@@ -699,7 +699,7 @@
       if (!this.scroller.panningActive)
         this.fixPosition();
 
-      this.event_updatePosition();
+      this.dispatch_updatePosition();
     },
 
     fixPosition: function(){
@@ -723,7 +723,7 @@
       {
         this.calcDimensions();
         this.updatePosition();
-        this.event_realign();
+        this.dispatch_realign();
       }
     },
     
@@ -777,8 +777,8 @@
       }
     },
 
-    event_childNodesModified: function(delta){
-      ScrollPanel.prototype.event_childNodesModified.call(this, delta);
+    dispatch_childNodesModified: function(delta){
+      ScrollPanel.prototype.dispatch_childNodesModified.call(this, delta);
 
       if (this.scroller && this.childNodes.length == delta.inserted.length)
       {
@@ -799,8 +799,8 @@
         }
       },
 
-      event_select: function(){
-        UINode.prototype.event_select.call(this);
+      dispatch_select: function(){
+        UINode.prototype.dispatch_select.call(this);
         this.parentNode.scrollToChild(this);
       }
     }),

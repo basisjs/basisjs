@@ -76,7 +76,7 @@
   */
   var HeaderGroupingNode = Class(GroupingNode, {
     className: namespace + '.HeaderGroupingNode',
-    event_ownerChanged: function(oldOwner){
+    dispatch_ownerChanged: function(oldOwner){
       if (oldOwner)
         DOM.remove(this.headerRow);
 
@@ -90,7 +90,7 @@
         } while (cursor = cursor.grouping);
       }
       
-      GroupingNode.prototype.event_ownerChanged.call(this, oldOwner);
+      GroupingNode.prototype.dispatch_ownerChanged.call(this, oldOwner);
     },
 
    /**
@@ -106,7 +106,7 @@
           binding: this.binding || {}
         });
       },
-      event_childNodesModified: function(delta){
+      dispatch_childNodesModified: function(delta){
         var colSpan = 0;
         if (this.nodes[0] && this.nodes[0] instanceof this.constructor)
         {
@@ -119,9 +119,9 @@
         this.cell.element.colSpan = colSpan;
 
         if (this.groupNode)
-          this.groupNode.event_childNodesModified({});
+          this.groupNode.dispatch_childNodesModified({});
 
-        PartitionNode.prototype.event_childNodesModified.call(this, delta);
+        PartitionNode.prototype.dispatch_childNodesModified.call(this, delta);
       },
       destroy: function(){
         PartitionNode.prototype.destroy.call(this);

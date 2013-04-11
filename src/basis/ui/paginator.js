@@ -62,7 +62,7 @@
   var PaginatorNode = UINode.subclass({
     className: namespace + '.PaginatorNode',
 
-    event_pageNumberChanged: createEvent('pageNumberChanged', 'oldPageNumber'),
+    dispatch_pageNumberChanged: createEvent('pageNumberChanged', 'oldPageNumber'),
 
     template: templates.PaginatorNode,
 
@@ -94,7 +94,7 @@
         var oldPageNumber = this.pageNumber;
         this.pageNumber = pageNumber;
 
-        this.event_pageNumberChanged(oldPageNumber);
+        this.dispatch_pageNumberChanged(oldPageNumber);
       }
     }
   });
@@ -157,8 +157,8 @@
     selection: true,
     childClass: PaginatorNode,
 
-    event_activePageChanged: createEvent('activePageChanged'),
-    event_pageCountChanged: createEvent('pageCountChanged'),
+    dispatch_activePageChanged: createEvent('activePageChanged'),
+    dispatch_pageCountChanged: createEvent('pageCountChanged'),
 
     pageSpan: NaN,
     pageCount: NaN,
@@ -222,7 +222,7 @@
         this.tmpl.activePageMark.style.width = percent(activePageMarkWidth);
         this.tmpl.activePageMarkWrapper.style.width = percent(1 - rangeWidth);
 
-        this.event_pageCountChanged(this.pageCount);
+        this.dispatch_pageCountChanged(this.pageCount);
       }
 
       // spanWidth : (1 - spanWidth)
@@ -245,7 +245,7 @@
       if (newActivePage != this.activePage)
       {
         this.activePage = Number(newActivePage);
-        this.event_activePageChanged(newActivePage);
+        this.dispatch_activePageChanged(newActivePage);
       }
 
       updateSelection(this);

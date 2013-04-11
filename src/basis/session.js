@@ -48,10 +48,10 @@
    */
 
   var SessionManager = new Emitter({
-    event_sessionOpen: createEvent('sessionOpen'),
-    event_sessionClose: createEvent('sessionClose'),
-    event_sessionFreeze: createEvent('sessionFreeze'),
-    event_sessionUnfreeze: createEvent('sessionUnfreeze'),
+    dispatch_sessionOpen: createEvent('sessionOpen'),
+    dispatch_sessionClose: createEvent('sessionClose'),
+    dispatch_sessionFreeze: createEvent('sessionFreeze'),
+    dispatch_sessionUnfreeze: createEvent('sessionUnfreeze'),
 
     isOpened: function(){
       return !!activeSession;
@@ -86,7 +86,7 @@
       ;;;basis.dev.info('Session opened: ' + activeSession.key);
 
       // fire event
-      this.event_sessionOpen();
+      this.dispatch_sessionOpen();
     },
     close: function(){
       if (activeSession)
@@ -96,7 +96,7 @@
 
         ;;;basis.dev.info('Session closed: ' + activeSession.key);
 
-        this.event_sessionClose();
+        this.dispatch_sessionClose();
 
         activeSession = null;
         timestamp = null;
@@ -105,7 +105,7 @@
     freeze: function(){
       if (activeSession && !freezeState)
       {
-        this.event_sessionFreeze();
+        this.dispatch_sessionFreeze();
 
         freezeState = true;
         timestamp = null;
@@ -117,7 +117,7 @@
         freezeState = false;
         timestamp = genTimestamp();
 
-        this.event_sessionUnfreeze();
+        this.dispatch_sessionUnfreeze();
       }
     },
     storeData: function(key, data){
@@ -149,8 +149,8 @@
   var Session = Class(Emitter, {
     className: namespace + '.Session',
 
-    event_destroy: function(){
-      events.event_destroy.call(this);
+    dispatch_destroy: function(){
+      events.dispatch_destroy.call(this);
 
       if (activeSession == this)
         SessionManager.close();
