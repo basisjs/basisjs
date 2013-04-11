@@ -7,10 +7,9 @@
 
  /**
   * Namespace overview:
-  * - {basis.data.property.DataObjectSet}
   * - {basis.data.property.AbstractProperty}
   * - {basis.data.property.Property}
-  * - {basis.data.property.PropertySet} as aliases for {basis.data.property.DataObjectSet}
+  * - {basis.data.property.DataObjectSet}  
   *
   * @namespace basis.data.property
   */
@@ -656,8 +655,7 @@
   //
 
   module.exports = {
-    DataObjectSet: DataObjectSet,
     AbstractProperty: AbstractProperty,
     Property: Property,
-    PropertySet: DataObjectSet
+    DataObjectSet: DataObjectSet
   };
