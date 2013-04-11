@@ -273,7 +273,6 @@
 
    /**
     * Fires when state or state.data was changed.
-    * @param {basis.data.Object} object Object which state was changed.
     * @param {object} oldState Object state before changes.
     * @event
     */
@@ -317,10 +316,10 @@
 
    /**
     * Fires when count of subscribers (subscriberCount property) was changed.
-    * @param {basis.data.Object} object Object which subscribers count was changed.
+    * @param {Number} delta 1 or -1 depends on subscribers was add or removed.
     * @event
     */
-    dispatch_subscribersChanged: createEvent('subscribersChanged'),
+    dispatch_subscribersChanged: createEvent('subscribersChanged', 'delta'),
 
    /**
     * @readonly
@@ -535,8 +534,6 @@
 
    /**
     * Fires on data changes.
-    * @param {basis.data.Object} object Object which data property
-    * was changed. Usually it is root of delegate chain.
     * @param {object} delta Delta of changes. Keys in delta are property
     * names that was changed, and values is previous value of property
     * (value of property before changes).
@@ -557,7 +554,6 @@
 
    /**
     * Fires when delegate was changed.
-    * @param {basis.data.Object} object Object which state was changed.
     * @param {basis.data.Object} oldDelegate Object delegate before changes.
     * @event
     */
@@ -580,7 +576,6 @@
 
    /**
     * Fires when target property was changed.
-    * @param {basis.data.Object} object Object which target property was changed.
     * @param {basis.data.Object} oldTarget Object before changes.
     * @event
     */
@@ -595,7 +590,6 @@
 
    /**
     * Fires when root of delegate chain was changed.
-    * @param {basis.data.Object} object Object which root was changed.
     * @param {basis.data.Object} oldRoot Object root before changes.
     * @event
     */
@@ -1061,7 +1055,6 @@
 
    /**
     * Fires when items changed.
-    * @param {basis.data.AbstractDataset} dataset
     * @param {Object} delta Delta of changes. Must have property `inserted`
     * or `deleted`, or both of them. `inserted` property is array of new items
     * and `deleted` property is array of removed items.
