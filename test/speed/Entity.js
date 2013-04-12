@@ -1,5 +1,6 @@
 
     basis.require('basis.date');
+    basis.require('basis.cssom');    
     basis.require('basis.dom');
     basis.require('basis.dom.event');
     basis.require('basis.data');
@@ -18,31 +19,9 @@
 
     var eventStat = {};
 
-    if (basis.event.Emitter.event)
-    {
-      function wrapEvent(eventName){
-        var func = basis.event.Emitter.event[eventName];
-        basis.event.Emitter.event[eventName] = function(){
-          eventStat[eventName] = (eventStat[eventName] || 0) + 1;
-          func.apply(this, arguments);
-        };
-      }
-     
-      basis.object.keys(basis.event.Emitter.event).forEach(wrapEvent);
+    basis.event.Emitter.prototype.dispatch_debug = function(event){
+      eventStat[event.type] = (eventStat[event.type] || 0) + 1;
     }
-
-    var addCount = 0;
-    var removeCount = 0;
-    /*var _add = basis.Emitter.prototype.addHandler.method;
-    basis.Emitter.prototype.addHandler.method = function(){
-      addCount++;
-      return _add.apply(this, arguments);
-    }/*
-    var _remove = basis.Emitter.prototype.removeHandler.method;
-    basis.Emitter.prototype.removeHandler.method = function(){
-      removeCount++;
-      _remove.apply(this, arguments);
-    }*/
 
     function saveEventStat(){
       savedEventStat_ = basis.object.extend({}, eventStat);
@@ -277,7 +256,7 @@
 
     function summary(){
       return DOM.createElement({
-          description: 'SPAN',
+          description: 'DIV',
           css: {
             display: 'block',
             color: '#888',
@@ -323,8 +302,14 @@
       if (PROFILE) console.profile();
       run1(function(){
         run1(function(){
-          var c1 = Transfer.createCollection('col1', getter('getId()%2'), Transfer.all);
-          var c2 = User.createCollection('col2', getter('getId()%2'), User.all);
+          var c1 = new basis.entity.Collection({
+            source: Transfer.all,
+            rule: 'getId()%2'
+          });
+          var c2 = new basis.entity.Collection({
+            source: User.all,
+            rule: 'getId()%2'
+          });
           c1.addHandler({ itemsChanged: function(dataset, delta){ c1count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0); } });
           c2.addHandler({ itemsChanged: function(dataset, delta){ c2count += (delta.inserted ? delta.inserted.length : 0) - (delta.deleted ? delta.deleted.length : 0); } });
           DOM.insert(document.body, [

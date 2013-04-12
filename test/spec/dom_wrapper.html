@@ -40,7 +40,7 @@
       var groupDatasetByGroupMap = {};
       var groupDatasetByGroup10 = new basis.data.Dataset({
         items: basis.array.create(10, function(idx){
-          return groupDatasetByGroupMap[idx + 1] = new basis.data.DataObject({
+          return groupDatasetByGroupMap[idx + 1] = new basis.data.Object({
             data: {
               id: idx + 1,
               title: idx + 1
@@ -84,7 +84,7 @@
       function getDataset(){
         return new basis.data.Dataset({
           items: testSet.map(function(item){
-            return new basis.data.DataObject({
+            return new basis.data.Object({
               data: basis.object.slice(item.data)
             });
           })

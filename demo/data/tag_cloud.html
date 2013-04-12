@@ -96,7 +96,7 @@
     
     var data = new basis.data.Dataset({
       items: basis.array.create(256, function(idx){
-        return new basis.data.DataObject({
+        return new basis.data.Object({
           data: {
             id: idx,
             tags: genTags(1, 6)
@@ -168,10 +168,10 @@
             delegate: function(owner){
               return indexMap.getMember(owner.root);
             },
-            instanceOf: basis.data.DataObject.subclass({
+            instanceOf: basis.data.Object.subclass({
               active: true,
               dispatch_update: function(delta){
-                basis.data.DataObject.prototype.dispatch_update.call(this, delta);
+                basis.data.Object.prototype.dispatch_update.call(this, delta);
 
                 this.owner.element.style.fontSize = '{0:.2}%'.format(50 + 200 * this.data.percentOfMax);
               }

@@ -25,12 +25,12 @@
   var Emitter = basis.event.Emitter;
   var createEvent = basis.event.create;
 
-  var DataObject = basis.data.DataObject;
+  var DataObject = basis.data.Object;
   var Slot = basis.data.Slot;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
-  var Collection = basis.data.dataset.Subset;
-  var Grouping = basis.data.dataset.Split;
+  var Subset = basis.data.dataset.Subset;
+  var Split = basis.data.dataset.Split;
   var STATE = basis.data.STATE;
 
   var NULL_INFO = {};
@@ -219,13 +219,6 @@
     return function(){
       if (!this.name)
         this.name = getUntitledName(name);
-      /*if (config)
-      {
-        this.name = config.name || getUntitledName(name);
-        this.wrapper = config.wrapper;
-      }
-      else
-        this.name = getUntitledName(name);*/
 
       // inherit
       superClass.prototype.init.call(this);
@@ -288,18 +281,14 @@
  /**
   * @class
   */
-  var EntityCollection = Class(Collection, {
+  var EntityCollection = Class(Subset, {
     className: namespace + '.EntityCollection',
 
-    init: ENTITYSET_INIT_METHOD(Collection, 'EntityCollection'),
-    sync: ENTITYSET_SYNC_METHOD(Collection)/*,
-
-    set: ENTITYSET_WRAP_METHOD,
-    add: ENTITYSET_WRAP_METHOD,
-    remove: ENTITYSET_WRAP_METHOD*/
+    init: ENTITYSET_INIT_METHOD(Subset, 'EntityCollection'),
+    sync: ENTITYSET_SYNC_METHOD(Subset)
   });
 
-  EntityCollection.sourceHandler = Collection.sourceHandler;
+  EntityCollection.sourceHandler = Subset.sourceHandler;
 
   //
   // Entity grouping
@@ -308,16 +297,16 @@
  /**
   * @class
   */
-  var EntityGrouping = Class(Grouping, {
+  var EntityGrouping = Class(Split, {
     className: namespace + '.EntityGrouping',
 
     subsetClass: ReadOnlyEntitySet,
 
-    init: ENTITYSET_INIT_METHOD(Grouping, 'EntityGrouping'),
-    sync: ENTITYSET_SYNC_METHOD(Grouping),
+    init: ENTITYSET_INIT_METHOD(Split, 'EntityGrouping'),
+    sync: ENTITYSET_SYNC_METHOD(Split),
 
     getSubset: function(object, autocreate){
-      var group = Grouping.prototype.getSubset.call(this, object, autocreate);
+      var group = Split.prototype.getSubset.call(this, object, autocreate);
       if (group)
         group.wrapper = this.wrapper;
       return group;
@@ -556,34 +545,6 @@
 
       if (config.aliases)
         basis.object.iterate(config.aliases, this.addAlias, this);
-
-      this.collection_ = {};
-      if (config.collections)
-      {
-        for (var name in config.collections)
-        {
-          this.collection_[name] = new EntityCollection({
-            name: name,
-            wrapper: wrapper,
-            source: this.all,
-            rule: config.collections[name] || basis.fn.$true
-          });
-        }
-      }
-
-      this.grouping_ = {};
-      if (config.groupings)
-      {
-        for (var name in config.groupings)
-        {
-          this.grouping_[name] = new EntityGrouping({
-            name: name,
-            wrapper: wrapper,
-            source: this.all,
-            rule: config.groupings[name] || basis.fn.$true
-          });
-        }
-      }
 
       entityClass__ = this.entityClass = Entity(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters).extend({
         entityType: this,

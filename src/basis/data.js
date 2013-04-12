@@ -9,7 +9,7 @@
   * - Const:
   *   {basis.data.STATE}, {basis.data.SUBSCRIPTION}
   * - Classes:
-  *   {basis.data.DataObject}, {basis.data.KeyObjectMap},
+  *   {basis.data.Object}, {basis.data.KeyObjectMap},
   *   {basis.data.AbstractDataset}, {basis.data.Dataset}
   *
   * @namespace basis.data
@@ -273,7 +273,6 @@
 
    /**
     * Fires when state or state.data was changed.
-    * @param {basis.data.DataObject} object Object which state was changed.
     * @param {object} oldState Object state before changes.
     * @event
     */
@@ -317,10 +316,10 @@
 
    /**
     * Fires when count of subscribers (subscriberCount property) was changed.
-    * @param {basis.data.DataObject} object Object which subscribers count was changed.
+    * @param {Number} delta 1 or -1 depends on subscribers was add or removed.
     * @event
     */
-    dispatch_subscribersChanged: createEvent('subscribersChanged'),
+    dispatch_subscribersChanged: createEvent('subscribersChanged', 'delta'),
 
    /**
     * @readonly
@@ -395,8 +394,8 @@
 
    /**
     * Set new value for isActiveSubscriber property.
-    * @param {boolean} isActive New value for {basis.data.DataObject#active} property.
-    * @return {boolean} Returns true if {basis.data.DataObject#active} was changed.
+    * @param {boolean} isActive New value for {basis.data.Object#active} property.
+    * @return {boolean} Returns true if {basis.data.Object#active} was changed.
     */
     setActive: function(isActive){
       isActive = !!isActive;
@@ -419,8 +418,8 @@
 
    /**
     * Set new value for subscriptionType property.
-    * @param {number} subscriptionType New value for {basis.data.DataObject#subscribeTo} property.
-    * @return {boolean} Returns true if {basis.data.DataObject#subscribeTo} was changed.
+    * @param {number} subscriptionType New value for {basis.data.Object#subscribeTo} property.
+    * @return {boolean} Returns true if {basis.data.Object#subscribeTo} was changed.
     */
     setSubscription: function(subscriptionType){
       var curSubscriptionType = this.subscribeTo;
@@ -516,11 +515,11 @@
   //
 
  /**
-  * Base class for data storing.
+  * Key-value storage.
   * @class
   */
   var DataObject = Class(AbstractData, {
-    className: namespace + '.DataObject',
+    className: namespace + '.Object',
 
    /**
     * @inheritDoc
@@ -535,8 +534,6 @@
 
    /**
     * Fires on data changes.
-    * @param {basis.data.DataObject} object Object which data property
-    * was changed. Usually it is root of delegate chain.
     * @param {object} delta Delta of changes. Keys in delta are property
     * names that was changed, and values is previous value of property
     * (value of property before changes).
@@ -546,7 +543,7 @@
 
    /**
     * Object that manage data updates if assigned.
-    * @type {basis.data.DataObject}
+    * @type {basis.data.Object}
     */
     delegate: null,
 
@@ -557,8 +554,7 @@
 
    /**
     * Fires when delegate was changed.
-    * @param {basis.data.DataObject} object Object which state was changed.
-    * @param {basis.data.DataObject} oldDelegate Object delegate before changes.
+    * @param {basis.data.Object} oldDelegate Object delegate before changes.
     * @event
     */
     dispatch_delegateChanged: createEvent('delegateChanged', 'oldDelegate'),
@@ -573,30 +569,28 @@
 
    /**
     * Reference to root delegate if some object in delegate chain marked as targetPoint.
-    * @type {basis.data.DataObject}
+    * @type {basis.data.Object}
     * @readonly
     */
     target: null,
 
    /**
     * Fires when target property was changed.
-    * @param {basis.data.DataObject} object Object which target property was changed.
-    * @param {basis.data.DataObject} oldTarget Object before changes.
+    * @param {basis.data.Object} oldTarget Object before changes.
     * @event
     */
     dispatch_targetChanged: createEvent('targetChanged', 'oldTarget'),
 
    /**
     * Root of delegate chain. By default and when no delegate, it points to object itself.
-    * @type {basis.data.DataObject}
+    * @type {basis.data.Object}
     * @readonly
     */
     root: null,
 
    /**
     * Fires when root of delegate chain was changed.
-    * @param {basis.data.DataObject} object Object which root was changed.
-    * @param {basis.data.DataObject} oldRoot Object root before changes.
+    * @param {basis.data.Object} oldRoot Object root before changes.
     * @event
     */
     dispatch_rootChanged: createEvent('rootChanged', 'oldRoot'),
@@ -687,7 +681,7 @@
 
    /**
     * Returns true if current object is connected to another object through delegate bubbling.
-    * @param {basis.data.DataObject} object
+    * @param {basis.data.Object} object
     * @return {boolean} Whether objects are connected.
     */
     isConnected: function(object){
@@ -704,7 +698,7 @@
 
    /**
     * Returns root delegate object (that haven't delegate).
-    * @return {basis.data.DataObject}
+    * @return {basis.data.Object}
     */
     getRootDelegate: function(){
       var object = this;
@@ -718,8 +712,8 @@
    /**
     * Set new delegate object or reject it (if passed null).
     * @example
-    *   var a = new basis.data.DataObject();
-    *   var b = new basis.data.DataObject();
+    *   var a = new basis.data.Object();
+    *   var b = new basis.data.Object();
     *
     *   a.setDelegate(b);
     *   a.update({ prop: 123 });
@@ -735,7 +729,7 @@
     *   a.setState(basis.data.STATE.PROCESSING);
     *   alert(a.state); // shows 'processing'
     *   alert(a.state === b.state); // shows true
-    * @param {basis.data.DataObject=} newDelegate
+    * @param {basis.data.Object=} newDelegate
     * @return {boolean} Returns current delegate object.
     */
     setDelegate: function(newDelegate){
@@ -1041,7 +1035,7 @@
     * Set of members. 
     * @private
     */
-    item_: null,
+    items_: null,
 
    /**
     * Set of all items, even items are not in member set. May be used as storage for
@@ -1050,18 +1044,17 @@
     * @type {Object}
     * @private
     */
-    memberMap_: null,
+    members_: null,
 
    /**
     * Cache array of members, for getItems method.
-    * @type {Array.<basis.data.DataObject>}
+    * @type {Array.<basis.data.Object>}
     * @private
     */
     cache_: null,
 
    /**
     * Fires when items changed.
-    * @param {basis.data.AbstractDataset} dataset
     * @param {Object} delta Delta of changes. Must have property `inserted`
     * or `deleted`, or both of them. `inserted` property is array of new items
     * and `deleted` property is array of removed items.
@@ -1078,7 +1071,7 @@
       {
         while (object = items[insertCount])
         {
-          this.item_[object.basisObjectId] = object;
+          this.items_[object.basisObjectId] = object;
           insertCount++;
         }
       }
@@ -1088,7 +1081,7 @@
       {
         while (object = items[deleteCount])
         {
-          delete this.item_[object.basisObjectId];
+          delete this.items_[object.basisObjectId];
           deleteCount++;
         }
       }
@@ -1110,37 +1103,37 @@
       // inherit
       DataObject.prototype.init.call(this);
 
-      this.memberMap_ = {};
-      this.item_ = {};
+      this.members_ = {};
+      this.items_ = {};
     },
 
    /**
     * Check is object in dataset.
-    * @param {basis.data.DataObject} object Object check for.
+    * @param {basis.data.Object} object Object check for.
     * @return {boolean} Returns true if object in dataset.
     */
     has: function(object){
-      return !!(object && this.item_[object.basisObjectId]);
+      return !!(object && this.items_[object.basisObjectId]);
     },
 
    /**
     * Returns all items in dataset.
-    * @return {Array.<basis.data.DataObject>} 
+    * @return {Array.<basis.data.Object>} 
     */
     getItems: function(){
       if (!this.cache_)
-        this.cache_ = values(this.item_);
+        this.cache_ = values(this.items_);
 
       return this.cache_;
     },
 
    /**
     * Returns first any item if exists.
-    * @return {basis.data.DataObject}
+    * @return {basis.data.Object}
     */
     pick: function(){
-      for (var objectId in this.item_)
-        return this.item_[objectId];
+      for (var objectId in this.items_)
+        return this.items_[objectId];
 
       return null;
     },
@@ -1148,48 +1141,17 @@
    /**
     * Returns some N items from dataset if exists.
     * @param {number} count Max length of resulting array.
-    * @return {Array.<basis.data.DataObject>} 
+    * @return {Array.<basis.data.Object>} 
     */
     top: function(count){
       var result = [];
 
       if (count)
-        for (var objectId in this.item_)
-          if (result.push(this.item_[objectId]) >= count)
+        for (var objectId in this.items_)
+          if (result.push(this.items_[objectId]) >= count)
             break;
 
       return result;
-    },
-
-   /**
-    * @param {Array.<basis.data.DataObject>} items
-    */
-    add: function(items){
-    },
-
-   /**
-    * @param {Array.<basis.data.DataObject>} items
-    */
-    remove: function(items){
-    },
-
-   /**
-    * @param {Array.<basis.data.DataObject>} items
-    */
-    set: function(items){
-    },
-
-   /**
-    * @param {Array.<basis.data.DataObject>} items
-    * @param {boolean=} set
-    */
-    sync: function(items, set){
-    },
-
-   /**
-    * Removes all items from dataset.
-    */
-    clear: function(){
     },
 
    /**
@@ -1204,14 +1166,101 @@
       this.cache_ = EMPTY_ARRAY;  // empty array here, to prevent recalc cache
       this.itemCount = 0;
 
-      this.memberMap_ = null;
-      this.item_ = null;
+      this.members_ = null;
+      this.items_ = null;
     }
   });
 
-  //
-  // Dataset
-  //
+
+ /**
+  * @class
+  */
+  var DatasetWrapper = Class(DataObject, {
+    className: namespace + '.DatasetWrapper',
+
+    subscribeTo: SUBSCRIPTION.DELEGATE + SUBSCRIPTION.TARGET + SUBSCRIPTION.DATASET,
+
+    listen: {
+      dataset: {
+        itemsChanged: function(dataset, delta){
+          this.itemCount = dataset.itemCount;
+          this.dispatch_itemsChanged(dataset, delta);
+        },
+        destroy: function(){
+          this.setDataset();
+        }
+      }
+    },
+
+   /**
+    * @type {basis.data.AbstractDataset}
+    */
+    dataset: null,
+
+   /**
+    * Fires when dataset was changed.
+    * @param {basis.data.AbstractDataset} oldDataset
+    * @event
+    */
+    dispatch_datasetChanged: createEvent('datasetChanged', 'oldDataset'),
+
+   /**
+    * Proxy event of dataset. Fires when items of dataset was changed.
+    * @param {object} delta
+    * @event
+    */
+    dispatch_itemsChanged: createEvent('itemsChanged', 'delta'),
+
+   /**
+    * @constructor
+    */
+    init: function(){
+      var dataset = this.dataset;
+      if (dataset)
+      {
+        this.dataset = null;
+        this.setDataset(dataset);
+      }
+
+      DataObject.prototype.init.call(this);
+    },
+
+   /**
+    * @param {basis.data.AbstractDataset} dataset
+    */
+    setDataset: function(dataset){
+      if (dataset instanceof AbstractDataset == false)
+        dataset = null;
+      
+      if (this.dataset !== dataset)
+      {
+        var listenHandler = this.listen.dataset;
+        var oldDataset = this.dataset;
+
+        if (listenHandler)
+        {
+          if (oldDataset)
+            oldDataset.removeHandler(listenHandler, this);
+          if (dataset)
+            dataset.addHandler(listenHandler, this);
+        }
+
+        this.dataset = dataset;
+        this.dispatch_datasetChanged(oldDataset);
+      }
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      if (this.dataset)
+        this.setDataset();
+
+      DataObject.prototype.destroy.call(this);
+    }
+  });
+
 
  /**
   * @class
@@ -1231,7 +1280,7 @@
     },
 
    /**
-    * @config {Array.<basis.data.DataObject>} items Initial set of items.
+    * @config {Array.<basis.data.Object>} items Initial set of items.
     * @constructor
     */
     init: function(){
@@ -1246,18 +1295,21 @@
       }
     },
 
-    add: function(data){
+   /**
+    * @param {Array.<basis.data.Object>} items
+    */
+    add: function(items){
       var delta;
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var inserted = [];
       var listenHandler = this.listen.item;
 
-      if (data && !Array.isArray(data))
-        data = [data];
+      if (items && !Array.isArray(items))
+        items = [items];
 
-      for (var i = 0; i < data.length; i++)
+      for (var i = 0; i < items.length; i++)
       {
-        var object = data[i];
+        var object = items[i];
         if (object instanceof DataObject)
         {
           var objectId = object.basisObjectId;
@@ -1273,7 +1325,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.DataObject');
+          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -1288,18 +1340,21 @@
       return delta;
     },
 
-    remove: function(data){
+   /**
+    * @param {Array.<basis.data.Object>} items
+    */
+    remove: function(items){
       var delta;
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var deleted = [];
       var listenHandler = this.listen.item;
 
-      if (data && !Array.isArray(data))
-        data = [data];
+      if (items && !Array.isArray(items))
+        items = [items];
 
-      for (var i = 0; i < data.length; i++)
+      for (var i = 0; i < items.length; i++)
       {
-        var object = data[i];
+        var object = items[i];
         if (object instanceof DataObject)
         {
           var objectId = object.basisObjectId;
@@ -1315,7 +1370,7 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.DataObject');
+          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
@@ -1330,18 +1385,21 @@
       return delta;
     },
 
-    set: function(data){
+   /**
+    * @param {Array.<basis.data.Object>} items
+    */
+    set: function(items){
       // a little optimizations
       if (!this.itemCount)
-        return this.add(data);
+        return this.add(items);
 
-      if (!data.length)
+      if (!items.length)
         return this.clear();
 
       // main part
 
-      // build map for new data
-      var memberMap = this.memberMap_;
+      // build map for new items
+      var memberMap = this.members_;
       var exists = {};  // unique input DataObject's
       var deleted = [];
       var inserted = [];
@@ -1350,16 +1408,16 @@
       var delta;
       var listenHandler = this.listen.item;
 
-      for (var i = 0; i < data.length; i++)
+      for (var i = 0; i < items.length; i++)
       {
-        object = data[i];
+        object = items[i];
 
         if (object instanceof DataObject)
         {
           objectId = object.basisObjectId;
           exists[objectId] = object;
 
-          // insert data
+          // insert
           if (!memberMap[objectId])
           {
             memberMap[objectId] = object;
@@ -1372,11 +1430,11 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.DataObject');
+          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
-      // delete data
+      // delete
       for (var objectId in memberMap)
       {
         if (!exists[objectId])
@@ -1399,22 +1457,26 @@
       return delta;
     },
 
-    sync: function(data, set){
-      if (!data)
+   /**
+    * @param {Array.<basis.data.Object>} items
+    * @param {boolean=} set    
+    */
+    sync: function(items, set){
+      if (!items)
         return;
 
       Dataset.setAccumulateState(true);
 
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var object;
       var objectId;
       var exists = {};
       var inserted = [];
       var res;
 
-      for (var i = 0; i < data.length; i++)
+      for (var i = 0; i < items.length; i++)
       {
-        object = data[i];
+        object = items[i];
 
         if (object instanceof DataObject)
         {
@@ -1426,14 +1488,14 @@
         }
         else
         {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.DataObject');
+          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
         }
       }
 
-      for (var objectId in this.item_)
+      for (var objectId in this.items_)
       {
         if (!exists[objectId])
-          this.item_[objectId].destroy();
+          this.items_[objectId].destroy();
       }
 
       if (set && inserted.length)
@@ -1444,6 +1506,9 @@
       return res;
     },
 
+   /**
+    * Removes all items from dataset.
+    */
     clear: function(){
       var delta;
       var deleted = this.getItems();
@@ -1459,7 +1524,7 @@
           deleted: deleted
         });
          
-        this.memberMap_ = {};
+        this.members_ = {};
       }
 
       return delta;
@@ -1593,5 +1658,6 @@
     KeyObjectMap: KeyObjectMap,
 
     AbstractDataset: AbstractDataset,
-    Dataset: Dataset
+    Dataset: Dataset,
+    DatasetWrapper: DatasetWrapper
   };

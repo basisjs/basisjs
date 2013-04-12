@@ -30,8 +30,8 @@
 
  /**
   * Returns delta object
-  * @param {Array.<basis.data.DataObject>} inserted
-  * @param {Array.<basis.data.DataObject>} deleted
+  * @param {Array.<basis.data.Object>} inserted
+  * @param {Array.<basis.data.Object>} deleted
   * @return {object|boolean}
   */
   function getDelta(inserted, deleted){
@@ -141,7 +141,7 @@
   function recalcSourceObject(dataset, sourceObjectInfo){
     var calcs = dataset.calcs;
     var updateData = {};
-    var member = dataset.memberMap_[sourceObjectInfo.key];
+    var member = dataset.members_[sourceObjectInfo.key];
     var item = member.item;
 
     for (var calcName in calcs)
@@ -157,8 +157,8 @@
 
   function changeSourceObjectKey(dataset, newKey, sourceObjectInfo, recalc){
     var objectId = sourceObjectInfo.object.basisObjectId;
-    var oldMember = dataset.memberMap_[sourceObjectInfo.key];
-    var newMember = dataset.memberMap_[newKey];
+    var oldMember = dataset.members_[sourceObjectInfo.key];
+    var newMember = dataset.members_[newKey];
     var calcs = dataset.calcs;
     var inserted;
     var deleted;
@@ -175,7 +175,7 @@
     if (--oldMember.count == 0)
     {
       // delete
-      delete dataset.memberMap_[sourceObjectInfo.key];
+      delete dataset.members_[sourceObjectInfo.key];
       deleted = oldItem;
     }
     else
@@ -212,7 +212,7 @@
         count: 0,
         item: newItem
       };
-      dataset.memberMap_[newKey] = newMember;
+      dataset.members_[newKey] = newMember;
       inserted = newItem;
 
       if (dataset.slots_[newKey])
@@ -264,7 +264,7 @@
     itemsChanged: function(sender, delta){
       var sourceInserted = delta.inserted;
       var sourceDeleted = delta.deleted;
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var sourceMap = this.sourceMap_;
       var calcs = this.calcs;
       var inserted = [];
@@ -275,7 +275,7 @@
         {
           var objectId = object.basisObjectId;
           var key = this.rule(object);
-          var member = this.memberMap_[key];
+          var member = this.members_[key];
           var item;
 
           // create member if necessary
@@ -288,7 +288,7 @@
               count: 0,
               item: item
             };
-            this.memberMap_[key] = member;
+            this.members_[key] = member;
             inserted.push(item);
 
             if (this.slots_[key])
@@ -428,7 +428,7 @@
     },
 
     get: function(key){
-      var member = this.memberMap_[key];
+      var member = this.members_[key];
       if (member)
         return member.item;
     },
@@ -474,7 +474,7 @@
           {
             var sourceObjectInfo = sourceMap[objectId];
             var key = sourceObjectInfo.key;
-            var member = this.memberMap_[key];
+            var member = this.members_[key];
 
             if (!newValues[key])
             {

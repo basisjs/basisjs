@@ -8,7 +8,7 @@
 
     var createElement = basis.dom.createElement;
     var DOM = basis.dom;
-    var DataObject = basis.data.DataObject;
+    var DataObject = basis.data.Object;
 
     var TEST_REPEAT_COUNT = 3;
     var TEST_COUNT = 10000;

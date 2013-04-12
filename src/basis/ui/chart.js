@@ -34,7 +34,7 @@
   var oneFunctionProperty = basis.Class.oneFunctionProperty;
   var createEvent = basis.event.create;
 
-  var DataObject = basis.data.DataObject;
+  var DataObject = basis.data.Object;
   var AbstractNode = basis.dom.wrapper.AbstractNode;
   var Node = basis.dom.wrapper.Node;
   var Selection = basis.dom.wrapper.Selection;

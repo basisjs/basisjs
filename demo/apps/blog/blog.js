@@ -38,7 +38,7 @@ basis.ready(function(){
 
   var allPostDataset = new basis.data.Dataset({
     items: postsData.map(function(data){
-      return new basis.data.DataObject({
+      return new basis.data.Object({
         data: data
       });
     })

@@ -38,7 +38,8 @@
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
   var STATE = basis.data.STATE;
 
-  var DataObject = basis.data.DataObject;
+  var AbstractData = basis.data.AbstractData;
+  var DataObject = basis.data.Object;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
 
@@ -404,7 +405,7 @@
 
    /**
     * @param {string} key
-    * @param {basis.data.DataObject} oldSattelite Old satellite for key
+    * @param {basis.data.Object} oldSattelite Old satellite for key
     */
     dispatch_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
 
@@ -759,12 +760,12 @@
    /**
     * Set replace satellite with defined name for new one.
     * @param {string} name Satellite name.
-    * @param {basis.data.DataObject} satellite New satellite node.
+    * @param {basis.data.Object} satellite New satellite node.
     */
     setSatellite: function(name, satellite){
       var oldSatellite = this.satellite[name];
       
-      if (satellite instanceof DataObject == false)
+      if (satellite instanceof AbstractData == false)
         satellite = null;
 
       if (oldSatellite != satellite && !this.satelliteConfig[name])
@@ -1930,7 +1931,7 @@
 
    /**
     * @param {string} key
-    * @param {basis.data.DataObject} oldSattelite Old satellite for key
+    * @param {basis.data.Object} oldSattelite Old satellite for key
     */
     dispatch_satelliteChanged: function(key, oldSatellite){
       AbstractNode.prototype.dispatch_satelliteChanged.call(this, key, oldSatellite);
@@ -2510,7 +2511,7 @@
 
   var CHILDNODESDATASET_HANDLER = {
     childNodesModified: function(sender, delta){
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var newDelta = {};
       var node;
       var insertCount = 0;

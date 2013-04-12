@@ -245,10 +245,6 @@
       fields: {
         FieldId: nsEntity.NumberId,
         WordId: nsEntity.NumberId
-      },
-
-      groupings: {
-        FieldId: basis.getter('data.FieldId')
       }
     });
 
@@ -510,7 +506,9 @@
           caption: 'Uncheck all',
           groupId: 1,
           click: function(){
-            linkByField.getSubset(relatedTree.data.FieldId).sync([]);
+            linkByField.getSubset(relatedTree.data.FieldId).getItems().forEach(function(item){
+              item.destroy();
+            });
           }
         },
         {

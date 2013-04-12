@@ -73,7 +73,7 @@
             if (namespace != lastNamespace)
             {
               lastNamespace = namespace;
-              group = new basis.data.DataObject({
+              group = new basis.data.Object({
                 data: {
                   title: namespace,
                   namespace: namespace
@@ -82,7 +82,7 @@
               groupId++;
             }
 
-            list.push(new basis.data.DataObject({
+            list.push(new basis.data.Object({
               group: group,
               data: {
                 match: isClass || (proto && proto.tag),

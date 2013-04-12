@@ -25,7 +25,7 @@
   var STATE = basis.data.STATE;
 
   var TimeEventManager = basis.timer.TimeEventManager;
-  var DataObject = basis.data.DataObject;
+  var DataObject = basis.data.Object;
   var Emitter = basis.event.Emitter;
 
 

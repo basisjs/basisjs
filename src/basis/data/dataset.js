@@ -36,7 +36,7 @@
   var createEvent = basis.event.create;
 
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
-  var DataObject = basis.data.DataObject;
+  var DataObject = basis.data.Object;
   var KeyObjectMap = basis.data.KeyObjectMap;
   var AbstractDataset = basis.data.AbstractDataset;
   var Dataset = basis.data.Dataset;
@@ -81,8 +81,8 @@
   
  /**
   * Returns delta object
-  * @param {Array.<basis.data.DataObject>} inserted
-  * @param {Array.<basis.data.DataObject>} deleted
+  * @param {Array.<basis.data.Object>} inserted
+  * @param {Array.<basis.data.Object>} deleted
   * @return {object|boolean}
   */
   function getDelta(inserted, deleted){
@@ -105,7 +105,7 @@
 
   var MERGE_DATASET_HANDLER = {
     itemsChanged: function(source, delta){
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var updated = {};
 
       var object;
@@ -237,7 +237,7 @@
     * @return {Object} Delta of member changes.
     */
     applyRule: function(scope){
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var rule = this.rule;
       var sourceCount = this.sources.length;
       var inserted = [];
@@ -254,7 +254,7 @@
         memberCounter = memberMap[objectId];
         isMember = sourceCount && memberCounter.count && rule(memberCounter.count, sourceCount);
 
-        if (isMember != !!this.item_[objectId])
+        if (isMember != !!this.items_[objectId])
           (isMember
             ? inserted // not in items -> insert
             : deleted  // already in items -> delete
@@ -286,8 +286,8 @@
             source.addHandler(this.listen.source, this);
 
           // process new source objects and update member map
-          var memberMap = this.memberMap_;
-          for (var objectId in source.item_)
+          var memberMap = this.members_;
+          for (var objectId in source.items_)
           {
             // check: is this object already known
             if (memberMap[objectId])
@@ -300,7 +300,7 @@
               // add to source map
               memberMap[objectId] = {
                 count: 1,
-                object: source.item_[objectId]
+                object: source.items_[objectId]
               };
             }
           }
@@ -335,8 +335,8 @@
           source.removeHandler(this.listen.source, this);
 
         // process removing source objects and update member map
-        var memberMap = this.memberMap_;
-        for (var objectId in source.item_)
+        var memberMap = this.members_;
+        for (var objectId in source.items_)
           memberMap[objectId].count--;
 
         // build delta and fire event
@@ -619,13 +619,13 @@
         var deleted = [];
         var inserted = [];
 
-        for (var key in this.item_)
-          if (!minuend.item_[key] || subtrahend.item_[key])
-            deleted.push(this.item_[key]);
+        for (var key in this.items_)
+          if (!minuend.items_[key] || subtrahend.items_[key])
+            deleted.push(this.items_[key]);
 
-        for (var key in minuend.item_)
-          if (!this.item_[key] && !subtrahend.item_[key])
-            inserted.push(minuend.item_[key]);
+        for (var key in minuend.items_)
+          if (!this.items_[key] && !subtrahend.items_[key])
+            inserted.push(minuend.items_[key]);
 
         if (delta = getDelta(inserted, deleted))
           this.dispatch_itemsChanged(delta);
@@ -798,7 +798,7 @@
     // if member ref is changed
     if (curMember !== newMember)
     {
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var delta;
       var inserted;
       var deleted;
@@ -861,7 +861,7 @@
   var MAPFILTER_SOURCE_HANDLER = {
     itemsChanged: function(source, delta){
       var sourceMap = this.sourceMap_;
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var inserted = [];
       var deleted = [];
       var sourceObject;
@@ -949,7 +949,7 @@
 
    /**
     * Map function for source object, to get member object.
-    * @type {function(basis.data.DataObject):basis.data.DataObject}
+    * @type {function(basis.data.Object):basis.data.Object}
     * @readonly
     */
     map: $self,
@@ -957,7 +957,7 @@
    /**
     * Filter function. It should return false, than result of map function
     * become a member.
-    * @type {function(basis.data.DataObject):boolean}
+    * @type {function(basis.data.Object):boolean}
     * @readonly
     */
     filter: $false,
@@ -979,14 +979,14 @@
 
    /**
     * NOTE: Can't be changed after init.
-    * @type {function(basis.data.DataObject, basis.data.DataObject)}
+    * @type {function(basis.data.Object, basis.data.Object)}
     * @readonly
     */
     addMemberRef: null,
 
    /**
     * NOTE: Can't be changed after init.
-    * @type {function(basis.data.DataObject, basis.data.DataObject)}
+    * @type {function(basis.data.Object, basis.data.Object)}
     * @readonly
     */
     removeMemberRef: null,
@@ -1002,7 +1002,7 @@
 
    /**
     * Set new transform function and apply new function to source objects.
-    * @param {function(basis.data.DataObject):basis.data.DataObject} map
+    * @param {function(basis.data.Object):basis.data.Object} map
     */
     setMap: function(map){
       if (typeof map != 'function')
@@ -1017,7 +1017,7 @@
 
    /**
     * Set new filter function and apply new function to source objects.
-    * @param {function(basis.data.DataObject):boolean} filter
+    * @param {function(basis.data.Object):boolean} filter
     */
     setFilter: function(filter){
       if (typeof filter != 'function')
@@ -1032,7 +1032,7 @@
 
    /**
     * Set new filter function.
-    * @param {function(basis.data.DataObject):boolean} rule
+    * @param {function(basis.data.Object):boolean} rule
     * @return {Object} Delta of member changes.
     */
     setRule: function(rule){
@@ -1052,7 +1052,7 @@
     */
     applyRule: function(){
       var sourceMap = this.sourceMap_;
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var curMember;
       var newMember;
       var curMemberId;
@@ -1118,11 +1118,11 @@
       }
 
       // get deleted delta
-      for (curMemberId in this.item_)
+      for (curMemberId in this.items_)
         if (memberMap[curMemberId] == 0)
         {
           delete memberMap[curMemberId];
-          deleted.push(this.item_[curMemberId]);
+          deleted.push(this.items_[curMemberId]);
         }
 
       // if any changes, fire event
@@ -1225,9 +1225,9 @@
 
    /**
     * Fetch subset dataset by some data.
-    * @param {basis.data.DataObject|Object} data
+    * @param {basis.data.Object|Object} data
     * @param {boolean} autocreate
-    * @return {basis.data.DataObject}
+    * @return {basis.data.Object}
     */
     getSubset: function(data, autocreate){
       return this.keyMap.get(data, autocreate);
@@ -1401,7 +1401,7 @@
 
    /**
     * Ordering items function.
-    * @type {function(basis.data.DataObject)}
+    * @type {function(basis.data.Object)}
     * @readonly
     */
     rule: getter($true),
@@ -1525,7 +1525,7 @@
         end = start + this.limit;
       }
 
-      var curSet = basis.object.slice(this.item_);
+      var curSet = basis.object.slice(this.items_);
       var newSet = this.index_.slice(Math.max(0, start), Math.max(0, end));
       var inserted = [];
       var delta;
@@ -1564,7 +1564,7 @@
 
   var CLOUD_SOURCEOBJECT_UPDATE = function(sourceObject){
     var sourceMap = this.sourceMap_;
-    var memberMap = this.memberMap_;
+    var memberMap = this.members_;
     var sourceObjectId = sourceObject.basisObjectId;
 
     var oldList = sourceMap[sourceObjectId].list;
@@ -1621,7 +1621,7 @@
   var CLOUD_SOURCE_HANDLER = {
     itemsChanged: function(dataset, delta){
       var sourceMap = this.sourceMap_;
-      var memberMap = this.memberMap_;
+      var memberMap = this.members_;
       var updateHandler = this.ruleEvents;
       var array;
       var subset;
@@ -1712,7 +1712,7 @@
     subsetClass: AbstractDataset,
     
    /**
-    * @type {function(basis.data.DataObject)}
+    * @type {function(basis.data.Object)}
     */
     rule: getter($false),
 
@@ -1759,9 +1759,9 @@
 
    /**
     * Fetch subset dataset by some data.
-    * @param {basis.data.DataObject|Object} data
+    * @param {basis.data.Object|Object} data
     * @param {boolean} autocreate
-    * @return {basis.data.DataObject}
+    * @return {basis.data.Object}
     */
     getSubset: function(data, autocreate){
       return this.keyMap.get(data, autocreate);
