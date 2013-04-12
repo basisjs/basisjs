@@ -52,6 +52,7 @@
   */
   var STATE = {
     priority: [],
+    values: {},
 
    /**
     * Register new state
@@ -64,6 +65,7 @@
 
       STATE[name] = value;
       STATE_EXISTS[value] = name;
+      this.values[value] = name;
 
       if (order)
         order = this.priority.indexOf(order);
@@ -356,7 +358,7 @@
     },
 
    /**
-    * Set new state for object. Fire stateChanged event only if state (or state text) was changed.
+    * Set new state for object. Fire stateChanged event only if state (or state data) was changed.
     * @param {basis.data.STATE|string} state New state for object
     * @param {*=} data
     * @return {boolean} Current object state.

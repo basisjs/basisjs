@@ -206,6 +206,12 @@
         return String(node.state);
       }
     },
+    childNodesState: {
+      events: 'childNodesStateChanged',
+      getter: function(node){
+        return String(node.childNodesState);
+      }
+    },
     childCount: {
       events: 'childNodesModified',
       getter: function(node){
