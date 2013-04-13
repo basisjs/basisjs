@@ -25,7 +25,6 @@
   var cssom = basis.cssom;
 
   var classList = basis.cssom.classList;
-  var getter = basis.getter;
   var createEvent = basis.event.create;
 
   var Template = basis.template.html.Template;
@@ -80,30 +79,30 @@
           if (typeof value == 'string')
             value = BINDING_PRESET.process(key, value);
           else
-            // getter is function that returns value if value is basis.Token or basis.data.Object instance
-            // those sort of instance have mechanism (via bindingBridge) to update itself
+            // getter is function that returns value if value is basis.Token or basis.data.AbstractData instance
+            // those sort of instance has mechanism (via bindingBridge) to update value itself
             if (value instanceof basis.Token || (value instanceof basis.data.AbstractData && value.bindingBridge))
               value = basis.fn.$const(value);
 
           if (typeof value != 'object')
           {
             def = {
-              getter: getter(value)
+              getter: basis.getter(value)
             };
           }
           else
             if (Array.isArray(value))
             {
               def = {
-                getter: getter(value[0]),
-                events: value[1]
+                events: value[0],
+                getter: basis.getter(value[1])
               };
             }
             else
             {
               def = {
-                getter: getter(value.getter),
-                events: value.events
+                events: value.events,
+                getter: basis.getter(value.getter)
               };
             }
         }
@@ -152,7 +151,10 @@
   //
 
   BINDING_PRESET.add('data', function(path){
-    return ['data.' + path, 'update'];
+    return {
+      events: 'update',
+      getter: 'data.' + path
+    };
   });
 
   BINDING_PRESET.add('satellite', function(satelliteName){
@@ -204,6 +206,12 @@
       events: 'stateChanged',
       getter: function(node){
         return String(node.state);
+      }
+    },
+    childNodesState: {
+      events: 'childNodesStateChanged',
+      getter: function(node){
+        return String(node.childNodesState);
       }
     },
     childCount: {

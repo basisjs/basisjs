@@ -192,7 +192,8 @@
   // register new subscription types
   //
 
-  SUBSCRIPTION.addProperty('owner', 'ownerChanged');  SUBSCRIPTION.addProperty('dataSource', 'dataSourceChanged');
+  SUBSCRIPTION.addProperty('owner', 'ownerChanged');
+  SUBSCRIPTION.addProperty('dataSource', 'dataSourceChanged');
 
   //
   // AbstractNode
@@ -335,9 +336,10 @@
   var AbstractNode = Class(DataObject, {
     className: namespace + '.AbstractNode',
 
-    //
-    // events
-    //
+   /**
+    * @inheritDoc
+    */
+    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASOURCE,
 
    /**
     * @inheritDoc
@@ -355,68 +357,6 @@
         parentNode.insertBefore(this, this.nextSibling);
       }
     },
-
-    // new events
-
-   /**
-    * This is a general event for notification of childs changes to the parent node.
-    * It may be dispatched after a single modification to the childNodes or after
-    * multiple changes have occurred. 
-    * @param {object} delta Delta of changes.
-    * @event
-    */
-    dispatch_childNodesModified: createEvent('childNodesModified', 'delta') && function(delta){
-      events.childNodesModified.call(this, delta);
-
-      var listen = this.listen.childNode;
-      var array;
-      if (listen)
-      {
-        if (array = delta.inserted)
-          for (var i = 0, child; child = array[i]; i++)
-            child.addHandler(listen, this);
-
-        if (array = delta.deleted)
-          for (var i = 0, child; child = array[i]; i++)
-            child.removeHandler(listen, this);
-      }
-    },
-
-   /**
-    * @param {basis.data.AbstractDataset} oldDataSource
-    */
-    dispatch_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
-
-   /**
-    * @param {basis.dom.wrapper.GroupingNode} oldGroupingNode
-    */
-    dispatch_groupingChanged: createEvent('groupingChanged', 'oldGroupingNode'),
-
-   /**
-    * @param {function()} oldSorting
-    * @param {boolean} oldSortingDesc
-    */
-    dispatch_sortingChanged: createEvent('sortingChanged', 'oldSorting', 'oldSortingDesc'),
-
-   /**
-    * @param {basis.dom.wrapper.AbstractNode} oldOwner
-    */
-    dispatch_ownerChanged: createEvent('ownerChanged', 'oldOwner'),
-
-   /**
-    * @param {string} key
-    * @param {basis.data.Object} oldSattelite Old satellite for key
-    */
-    dispatch_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
-
-    //
-    // properties
-    //
-
-   /**
-    * @inheritDoc
-    */
-    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASOURCE,
 
    /**
     * @inheritDoc
@@ -456,6 +396,43 @@
     childNodes: null,
 
    /**
+    * This is a general event for notification of childs changes to the parent node.
+    * It may be dispatched after a single modification to the childNodes or after
+    * multiple changes have occurred. 
+    * @param {object} delta Delta of changes.
+    * @event
+    */
+    dispatch_childNodesModified: createEvent('childNodesModified', 'delta') && function(delta){
+      events.childNodesModified.call(this, delta);
+
+      var listen = this.listen.childNode;
+      var array;
+      if (listen)
+      {
+        if (array = delta.inserted)
+          for (var i = 0, child; child = array[i]; i++)
+            child.addHandler(listen, this);
+
+        if (array = delta.deleted)
+          for (var i = 0, child; child = array[i]; i++)
+            child.removeHandler(listen, this);
+      }
+    },
+
+   /**
+    * State of childNodes, similar to state property. Might be managed by dataSource (if used).
+    * @type {basis.data.STATE|string}
+    */
+    childNodesState: STATE.UNDEFINED,
+
+   /**
+    * Fires when childNodesState or childNodesState.data was changed.
+    * @param {object} oldState Value of childNodesState before changes.
+    * @event
+    */
+    dispatch_childNodesStateChanged: createEvent('childNodesStateChanged', 'oldState'),
+
+   /**
     * All child nodes must be instances of childClass.
     * @type {Class}
     */
@@ -466,6 +443,11 @@
     * @type {basis.data.AbstractDataset}
     */
     dataSource: null,
+
+   /**
+    * @param {basis.data.AbstractDataset} oldDataSource
+    */
+    dispatch_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
 
    /**
     * Map dataSource members to child nodes.
@@ -531,12 +513,23 @@
     sortingDesc: false,
 
    /**
+    * @param {function()} oldSorting
+    * @param {boolean} oldSortingDesc
+    */
+    dispatch_sortingChanged: createEvent('sortingChanged', 'oldSorting', 'oldSortingDesc'),
+
+   /**
     * GroupingNode config
     * @see ./demo/common/grouping.html
     * @see ./demo/common/grouping_of_grouping.html
     * @type {basis.dom.wrapper.GroupingNode}
     */
     grouping: null,
+
+   /**
+    * @param {basis.dom.wrapper.GroupingNode} oldGroupingNode
+    */
+    dispatch_groupingChanged: createEvent('groupingChanged', 'oldGroupingNode'),
 
    /**
     * Class for grouping control. Class should be inherited from {basis.dom.wrapper.GroupingNode}
@@ -570,10 +563,22 @@
     satellite: null,
 
    /**
+    * @param {string} key
+    * @param {basis.data.Object} oldSattelite Old satellite for key
+    */
+    dispatch_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
+
+   /**
     * Node owner. Generaly using by satellites and GroupingNode.
     * @type {basis.dom.wrapper.AbstractNode}
     */
     owner: null,
+
+   /**
+    * @param {basis.dom.wrapper.AbstractNode} oldOwner
+    */
+    dispatch_ownerChanged: createEvent('ownerChanged', 'oldOwner'),
+
 
     //
     // methods
@@ -663,6 +668,29 @@
       {
         this.owner = null;
         this.setOwner(owner);
+      }
+    },
+
+   /**
+    * Set new state for child nodes. Fire childNodesStateChanged event only if state (or state data) was changed.
+    * @param {basis.data.STATE|string} state New state for child nodes.
+    * @param {*=} data
+    * @return {boolean} Current child nodes state.
+    */
+    setChildNodesState: function(state, data){
+      var stateCode = String(state);
+      var oldState = this.childNodesState;
+
+      if (!STATE.values[stateCode])
+        throw new Error('Wrong state value');
+
+      // set new state for object
+      if (oldState != stateCode || oldState.data != data)
+      {
+        this.childNodesState = Object(stateCode);
+        this.childNodesState.data = data;
+
+        this.dispatch_stateChanged(oldState);
       }
     },
 
@@ -1073,6 +1101,9 @@
       if (this.destroyDataSourceMember && deleted.length)
         for (var i = 0, item; item = deleted[i]; i++)
           item.destroy();
+    },
+    stateChanged: function(dataSource){
+      this.setChildNodesState(dataSource.state);
     },
     destroy: function(dataSource){
       if (this.dataSource === dataSource)
@@ -1729,6 +1760,7 @@
         if (dataSource)
         {
           this.dataSourceMap_ = {};
+          this.setChildNodesState(dataSource.state);
 
           if (listenHandler)
           {
@@ -1737,6 +1769,10 @@
                 inserted: dataSource.getItems()
               });
           }
+        }
+        else
+        {
+          this.setChildNodesState(STATE.UNDEFINED);
         }
 
         // TODO: restore sorting & grouping, fast node reorder
