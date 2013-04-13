@@ -254,6 +254,7 @@
 
   SUBSCRIPTION.addProperty('delegate', 'delegateChanged');
   SUBSCRIPTION.addProperty('target', 'targetChanged');
+  SUBSCRIPTION.addProperty('dataset', 'datasetChanged');
 
 
   //
@@ -1021,6 +1022,137 @@
   }
 
  /**
+  * Returns delta betwwen dataset, that could be used for event
+  * @return {object|undefined}
+  */
+  function getDatasetDelta(a, b){
+    var inserted = [];
+    var deleted = [];
+
+    if (!a || !a.itemCount)
+      inserted = b.getItems();
+    else
+    {
+      if (!b || !b.itemCount)
+        deleted = a.getItems();
+      else
+      {
+        for (var key in a.items_)
+        {
+          var item = a.items_[key];
+          if (item.basisObjectId in b.items_ == false)
+            deleted.push(item);
+        }
+
+        for (var key in b.items_)
+        {
+          var item = b.items_[key];
+          if (item.basisObjectId in a.items_ == false)
+            inserted.push(item);
+        }
+      }
+    }
+
+    return getDelta(inserted, deleted);
+  }
+
+
+ /**
+  * @class
+  */
+  var DatasetWrapper = Class(DataObject, {
+    className: namespace + '.DatasetWrapper',
+
+    subscribeTo: DataObject.prototype.subscribeTo + SUBSCRIPTION.DATASET,
+
+    listen: {
+      dataset: {
+        itemsChanged: function(dataset, delta){
+          this.itemCount = dataset.itemCount;
+          this.dispatch_itemsChanged(delta);
+        },
+        destroy: function(){
+          this.setDataset();
+        }
+      }
+    },
+
+   /**
+    * @type {basis.data.AbstractDataset}
+    */
+    dataset: null,
+
+   /**
+    * Fires when dataset was changed.
+    * @param {basis.data.AbstractDataset} oldDataset
+    * @event
+    */
+    dispatch_datasetChanged: createEvent('datasetChanged', 'oldDataset'),
+
+   /**
+    * Proxy event of dataset. Fires when items of dataset was changed.
+    * @param {object} delta
+    * @event
+    */
+    dispatch_itemsChanged: createEvent('itemsChanged', 'delta'),
+
+   /**
+    * @constructor
+    */
+    init: function(){
+      var dataset = this.dataset;
+      if (dataset)
+      {
+        this.dataset = null;
+        this.setDataset(dataset);
+      }
+
+      DataObject.prototype.init.call(this);
+    },
+
+   /**
+    * @param {basis.data.AbstractDataset} dataset
+    */
+    setDataset: function(dataset){
+      if (dataset instanceof AbstractDataset == false)
+        dataset = null;
+      
+      if (this.dataset !== dataset)
+      {
+        var listenHandler = this.listen.dataset;
+        var oldDataset = this.dataset;
+        var delta;
+
+        if (listenHandler)
+        {
+          if (oldDataset)
+            oldDataset.removeHandler(listenHandler, this);
+          if (dataset)
+            dataset.addHandler(listenHandler, this);
+        }
+
+        this.itemCount = dataset ? dataset.itemCount : 0;
+        if (delta = getDatasetDelta(oldDataset, dataset))
+          this.dispatch_itemsChanged(delta);
+
+        this.dataset = dataset;
+        this.dispatch_datasetChanged(oldDataset);
+      }
+    },
+
+   /**
+    * @destructor
+    */
+    destroy: function(){
+      if (this.dataset)
+        this.setDataset();
+
+      DataObject.prototype.destroy.call(this);
+    }
+  });
+
+
+ /**
   * @class
   */
   var AbstractDataset = Class(DataObject, {
@@ -1170,96 +1302,6 @@
 
       this.members_ = null;
       this.items_ = null;
-    }
-  });
-
-
- /**
-  * @class
-  */
-  var DatasetWrapper = Class(DataObject, {
-    className: namespace + '.DatasetWrapper',
-
-    subscribeTo: SUBSCRIPTION.DELEGATE + SUBSCRIPTION.TARGET + SUBSCRIPTION.DATASET,
-
-    listen: {
-      dataset: {
-        itemsChanged: function(dataset, delta){
-          this.itemCount = dataset.itemCount;
-          this.dispatch_itemsChanged(dataset, delta);
-        },
-        destroy: function(){
-          this.setDataset();
-        }
-      }
-    },
-
-   /**
-    * @type {basis.data.AbstractDataset}
-    */
-    dataset: null,
-
-   /**
-    * Fires when dataset was changed.
-    * @param {basis.data.AbstractDataset} oldDataset
-    * @event
-    */
-    dispatch_datasetChanged: createEvent('datasetChanged', 'oldDataset'),
-
-   /**
-    * Proxy event of dataset. Fires when items of dataset was changed.
-    * @param {object} delta
-    * @event
-    */
-    dispatch_itemsChanged: createEvent('itemsChanged', 'delta'),
-
-   /**
-    * @constructor
-    */
-    init: function(){
-      var dataset = this.dataset;
-      if (dataset)
-      {
-        this.dataset = null;
-        this.setDataset(dataset);
-      }
-
-      DataObject.prototype.init.call(this);
-    },
-
-   /**
-    * @param {basis.data.AbstractDataset} dataset
-    */
-    setDataset: function(dataset){
-      if (dataset instanceof AbstractDataset == false)
-        dataset = null;
-      
-      if (this.dataset !== dataset)
-      {
-        var listenHandler = this.listen.dataset;
-        var oldDataset = this.dataset;
-
-        if (listenHandler)
-        {
-          if (oldDataset)
-            oldDataset.removeHandler(listenHandler, this);
-          if (dataset)
-            dataset.addHandler(listenHandler, this);
-        }
-
-        this.dataset = dataset;
-        this.dispatch_datasetChanged(oldDataset);
-      }
-    },
-
-   /**
-    * @destructor
-    */
-    destroy: function(){
-      if (this.dataset)
-        this.setDataset();
-
-      DataObject.prototype.destroy.call(this);
     }
   });
 
@@ -1661,5 +1703,7 @@
 
     AbstractDataset: AbstractDataset,
     Dataset: Dataset,
-    DatasetWrapper: DatasetWrapper
+    DatasetWrapper: DatasetWrapper,
+
+    getDatasetDelta: getDatasetDelta
   };
