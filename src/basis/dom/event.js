@@ -301,10 +301,11 @@
   function observeGlobalEvents(event){
     var handlers = arrayFrom(globalHandlers[event.type]);
     var captureHandler = captureHandlers[event.type];
+    var wrappedEvent = new Event(event);
 
     if (captureHandler)
     {
-      captureHandler.handler.call(captureHandler.thisObject, event);
+      captureHandler.handler.call(captureHandler.thisObject, wrappedEvent);
       kill(event);
       return;
     }
@@ -314,7 +315,7 @@
       for (var i = handlers.length; i-- > 0;)
       {
         var handlerObject = handlers[i];
-        handlerObject.handler.call(handlerObject.thisObject, event);
+        handlerObject.handler.call(handlerObject.thisObject, wrappedEvent);
       }
     }
   }
@@ -461,8 +462,8 @@
         }
 
         // call eventType handlers
-        for (var i = 0, item; item = eventTypeHandlers[i++];)
-          item.handler.call(item.thisObject, event);
+        for (var i = 0, wrappedEvent = new Event(event), item; item = eventTypeHandlers[i++];)
+          item.handler.call(item.thisObject, wrappedEvent);
       };
 
       if (W3CSUPPORT) 
