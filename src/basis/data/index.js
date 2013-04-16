@@ -661,8 +661,8 @@
         member.removeHandler(this.listen.member, this);
     },
 
-    dispatch_sourceChanged: function(oldSource){
-      MapFilter.prototype.dispatch_sourceChanged.call(this, oldSource);
+    emit_sourceChanged: function(oldSource){
+      MapFilter.prototype.emit_sourceChanged.call(this, oldSource);
       
       var index;
 

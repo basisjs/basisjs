@@ -47,8 +47,8 @@
   });
 
   var prototypeMapPopupMatchInput = new basis.ui.field.MatchInput({
-    dispatch_keyup: function(event){
-      this.constructor.prototype.dispatch_keyup.call(this, event);
+    emit_keyup: function(event){
+      this.constructor.prototype.emit_keyup.call(this, event);
 
       var selected = prototypeMapPopup.selection.pick();
       switch (Event.key(event)){

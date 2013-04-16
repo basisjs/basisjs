@@ -261,9 +261,9 @@
     periodStart: null,
     periodEnd: null,
 
-    dispatch_periodChanged: createEvent('periodChanged'),
-    dispatch_select: function(){
-      UINode.prototype.dispatch_select.call(this);
+    emit_periodChanged: createEvent('periodChanged'),
+    emit_select: function(){
+      UINode.prototype.emit_select.call(this);
 
       DOM.focus(this.element);
     },
@@ -326,7 +326,7 @@
             this.unselect();
         }
 
-        this.dispatch_periodChanged();
+        this.emit_periodChanged();
       }
     }
   });
@@ -353,8 +353,8 @@
   var CalendarSection = Class(UINode, {
     className: namespace + '.CalendarSection',
 
-    dispatch_periodChanged: createEvent('periodChanged'),
-    dispatch_selectedDateChanged: createEvent('selectedDateChanged'),
+    emit_periodChanged: createEvent('periodChanged'),
+    emit_selectedDateChanged: createEvent('selectedDateChanged'),
 
     template: templates.Section,
 
@@ -401,7 +401,7 @@
           for (var i = 0, child; child = this.childNodes[i]; i++)
             child.setPeriod(periods[i], this.selectedDate, rebuild);
 
-        this.dispatch_periodChanged(oldPeriodStart, oldPeriodEnd);
+        this.emit_periodChanged(oldPeriodStart, oldPeriodEnd);
       }
     },
 
@@ -423,7 +423,7 @@
             this.selection.clear();
         }
 
-        this.dispatch_selectedDateChanged(oldSelectedDate);
+        this.emit_selectedDateChanged(oldSelectedDate);
       }
     },
 
@@ -662,7 +662,7 @@
   var Calendar = Class(UINode, {
     className: namespace + '.Calendar',
 
-    dispatch_change: createEvent('change'),
+    emit_change: createEvent('change'),
 
     selection: true,
     childClass: CalendarSection,
@@ -686,7 +686,7 @@
       }
     },
 
-    dispatch_childNodesModified: function(delta){
+    emit_childNodesModified: function(delta){
       if (delta.inserted)
         for (var i = 0, section; section = delta.inserted[i++];)
         {
@@ -698,7 +698,7 @@
         for (var i = 0, section; section = delta.deleted[i++];)
           this.selectedDate.removeLink(section, section.setSelectedDate);
 
-      UINode.prototype.dispatch_childNodesModified.call(this, delta);
+      UINode.prototype.emit_childNodesModified.call(this, delta);
 
       DOM.insert(
         DOM.clear(this.tmpl.sectionTabs),
@@ -788,7 +788,7 @@
       else
       {
         if (!forward)
-          this.dispatch_change();
+          this.emit_change();
       }
     },
 

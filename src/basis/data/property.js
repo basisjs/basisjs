@@ -51,7 +51,7 @@
   var AbstractProperty = Class(AbstractData, {
     className: namespace + '.AbstractProperty',
 
-    dispatch_change: createEvent('change'),
+    emit_change: createEvent('change'),
 
    /**
     * Indicates that property is locked (don't fire event for changes).
@@ -108,7 +108,7 @@
       }
 
       if (!this.locked && (updated || forceEvent))
-        this.dispatch_change(newValue, oldValue);
+        this.emit_change(newValue, oldValue);
 
       return updated;
     },
@@ -133,7 +133,7 @@
       {
         this.locked = false;
         if (this.value !== this.lockValue_)
-          this.dispatch_change(this.value, this.lockValue_);
+          this.emit_change(this.value, this.lockValue_);
       }
     },
 
@@ -222,8 +222,8 @@
    /**
     * @event
     */
-    dispatch_change: function(value, oldValue){
-      AbstractProperty.prototype.dispatch_change.call(this, value, oldValue);
+    emit_change: function(value, oldValue){
+      AbstractProperty.prototype.emit_change.call(this, value, oldValue);
 
       if (!this.links_.length || cleaner.globalDestroy)
         return;

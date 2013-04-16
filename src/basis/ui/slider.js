@@ -169,8 +169,8 @@
   var Slider = UINode.subclass({
     className: namespace + '.Slider',
 
-    dispatch_change: createEvent('change', 'oldValue'),
-    dispatch_rangeChanged: createEvent('rangeChanged'),
+    emit_change: createEvent('change', 'oldValue'),
+    emit_rangeChanged: createEvent('rangeChanged'),
 
     captionFormat: function(value){
       return Math.round(Number(value));
@@ -422,7 +422,7 @@
         this.value = this.normalize(this.min + stepValue * this.step);
         this.stepValue = stepValue;
 
-        this.dispatch_change(oldValue);
+        this.emit_change(oldValue);
       }
     },
 

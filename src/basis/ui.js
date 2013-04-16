@@ -272,7 +272,7 @@
       * Fires when template had changed.
       * @event
       */
-      dispatch_templateChanged: createEvent('templateChanged'),
+      emit_templateChanged: createEvent('templateChanged'),
 
      /**
       * @type {Object}
@@ -325,17 +325,17 @@
      /**
       * @inheritDoc
       */
-      dispatch_update: function(delta){
+      emit_update: function(delta){
         this.templateUpdate(this.tmpl, 'update', delta);
 
-        super_.dispatch_update.call(this, delta);
+        super_.emit_update.call(this, delta);
       },
 
      /**
       * @inheritDoc
       */
-      dispatch_match: function(){
-        super_.dispatch_match.call(this);
+      emit_match: function(){
+        super_.emit_match.call(this);
 
         cssom.display(this.element, true);
       },
@@ -343,8 +343,8 @@
      /**
       * @inheritDoc
       */
-      dispatch_unmatch: function(){
-        super_.dispatch_unmatch.call(this);
+      emit_unmatch: function(){
+        super_.emit_unmatch.call(this);
 
         cssom.display(this.element, false);
       },
@@ -506,7 +506,7 @@
               parentNode.replaceChild(this.element, oldElement);
 
             // ??? fire event
-            this.dispatch_templateChanged();
+            this.emit_templateChanged();
           }
 
           this.templateBinding_ = binding;
@@ -585,7 +585,7 @@
 
           // ??? fire event
           //if (oldTemplate && template)
-          //  this.dispatch_templateChanged();
+          //  this.emit_templateChanged();
         }
       },
 
@@ -771,9 +771,9 @@
    /**
     * @inheritDoc
     */
-    dispatch_ownerChanged: function(oldOwner){
+    emit_ownerChanged: function(oldOwner){
       this.syncDomRefs();
-      DWGroupingNode.prototype.dispatch_ownerChanged.call(this, oldOwner);
+      DWGroupingNode.prototype.emit_ownerChanged.call(this, oldOwner);
     },
 
     listen: {

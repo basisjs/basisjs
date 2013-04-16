@@ -33,12 +33,12 @@
     active: true,
     template: resource('jsdoc/template/jsdocPanel.tmpl'),
 
-    dispatch_update: function(delta){
-      basis.ui.Node.prototype.dispatch_update.call(this, delta);
+    emit_update: function(delta){
+      basis.ui.Node.prototype.emit_update.call(this, delta);
       this.parse();
     },
-    dispatch_targetChanged: function(oldTarget){
-      basis.ui.Node.prototype.dispatch_targetChanged.call(this, oldTarget);
+    emit_targetChanged: function(oldTarget){
+      basis.ui.Node.prototype.emit_targetChanged.call(this, oldTarget);
       this.parse();
     },
 
@@ -151,8 +151,8 @@
   });
 
   var PrototypeJsDocPanel = JsDocPanel.subclass({
-    dispatch_update: function(delta){
-      JsDocPanel.prototype.dispatch_update.call(this, delta);
+    emit_update: function(delta){
+      JsDocPanel.prototype.emit_update.call(this, delta);
 
       var owner = this.owner;
       var tags = this.data.tags;

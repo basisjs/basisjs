@@ -28,7 +28,7 @@
       var eventsMap = {};
       var seed = 1;
 
-      proto.dispatch_debug = function(event){
+      proto.emit_debug = function(event){
         if (!this.testEventId_)
         {
           this.testEventId_ = seed++;

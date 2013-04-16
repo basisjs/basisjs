@@ -40,8 +40,8 @@
       if (!eventName || 'clsId' in delta)
         this.setDataSource(clsSplitBySuper.getSubset(this.data.clsId));
     },
-    dispatch_childNodesModified: function(delta){
-      basis.ui.Node.prototype.dispatch_childNodesModified.call(this, delta);
+    emit_childNodesModified: function(delta){
+      basis.ui.Node.prototype.emit_childNodesModified.call(this, delta);
       classList(this.tmpl.container).bool('has-subclasses', !!this.childNodes.length);
     }, 
 

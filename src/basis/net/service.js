@@ -43,10 +43,10 @@
 
     transportClass: AjaxTransport,
 
-    dispatch_sessionOpen: createEvent('sessionOpen'),
-    dispatch_sessionClose: createEvent('sessionClose'),
-    dispatch_sessionFreeze: createEvent('sessionFreeze'),
-    dispatch_sessionUnfreeze: createEvent('sessionUnfreeze'),
+    emit_sessionOpen: createEvent('sessionOpen'),
+    emit_sessionClose: createEvent('sessionClose'),
+    emit_sessionFreeze: createEvent('sessionFreeze'),
+    emit_sessionUnfreeze: createEvent('sessionUnfreeze'),
 
     isSecure: false,
 
@@ -67,8 +67,8 @@
 
         needSignature: this.isSecure,
 
-        dispatch_failure: function(request, error){
-          TransportClass.prototype.dispatch_failure.call(this, request, error);
+        emit_failure: function(request, error){
+          TransportClass.prototype.emit_failure.call(this, request, error);
 
           if (this.needSignature && this.service.isSessionExpiredError(request))
           {
@@ -110,13 +110,13 @@
 
       this.unfreeze();
 
-      this.dispatch_sessionOpen();
+      this.emit_sessionOpen();
     },
 
     closeSession: function(){
       this.freeze();
 
-      this.dispatch_sessionClose();
+      this.emit_sessionClose();
     },
 
     freeze: function(){ 
@@ -133,7 +133,7 @@
       for (var i = 0, transport; transport = this.inprogressTransports[i]; i++)
         transport.stop();
 
-      this.dispatch_sessionFreeze();
+      this.emit_sessionFreeze();
     },
 
     unfreeze: function(){
@@ -141,7 +141,7 @@
         for (var i = 0, transport; transport = this.stoppedTransports[i]; i++)
           transport.resume();
 
-      this.dispatch_sessionUnfreeze();
+      this.emit_sessionUnfreeze();
     },
     
     createTransport: function(config){

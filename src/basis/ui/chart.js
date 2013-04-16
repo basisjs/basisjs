@@ -171,9 +171,9 @@
   */
   var ChartNode = Node.subclass({
     className: namespace + '.ChartNode',
-    dispatch_requestRedraw: createEvent('requestRedraw'),
-    dispatch_disable: createEvent('disable'),
-    dispatch_enable: createEvent('enable')
+    emit_requestRedraw: createEvent('requestRedraw'),
+    emit_disable: createEvent('disable'),
+    emit_enable: createEvent('enable')
   });
 
  /**
@@ -192,16 +192,16 @@
 
     style: {},
 
-    dispatch_sortingChanged: function(oldSorting, oldSortingDesc){
-      Canvas.prototype.dispatch_sortingChanged.call(this, oldSorting, oldSortingDesc);
+    emit_sortingChanged: function(oldSorting, oldSortingDesc){
+      Canvas.prototype.emit_sortingChanged.call(this, oldSorting, oldSortingDesc);
       this.redrawRequest();
     },
-    dispatch_groupingChanged: function(oldGrouping){
-      Canvas.prototype.dispatch_groupingChanged.call(this, oldGrouping);
+    emit_groupingChanged: function(oldGrouping){
+      Canvas.prototype.emit_groupingChanged.call(this, oldGrouping);
       this.redrawRequest();
     },
-    dispatch_childNodesModified: function(delta){
-      Canvas.prototype.dispatch_childNodesModified.call(this, delta);
+    emit_childNodesModified: function(delta){
+      Canvas.prototype.emit_childNodesModified.call(this, delta);
       this.redrawRequest();
     },
 
@@ -258,7 +258,7 @@
         }
       }
 
-      this.dispatch_valuesChanged(valuesDelta);
+      this.emit_valuesChanged(valuesDelta);
     } 
   };
 
@@ -271,7 +271,7 @@
       this.valuesMap[key] = value;
       valuesDelta[key] = value;
 
-      this.dispatch_valuesChanged(valuesDelta);
+      this.emit_valuesChanged(valuesDelta);
     }
   };
 
@@ -302,10 +302,10 @@
     },
 
     //events
-    dispatch_valuesChanged: createEvent('valuesChanged', 'delta'),
-    dispatch_sourceChanged: createEvent('sourceChanged', 'oldSource'),
-    dispatch_disable: createEvent('disable'),
-    dispatch_enable: createEvent('enable'),
+    emit_valuesChanged: createEvent('valuesChanged', 'delta'),
+    emit_sourceChanged: createEvent('sourceChanged', 'oldSource'),
+    emit_disable: createEvent('disable'),
+    emit_enable: createEvent('enable'),
 
     init: function(){
       this.valuesMap = {};
@@ -339,7 +339,7 @@
           SERIA_SOURCE_HANDLER.itemsChanged.call(this, oldSource, { inserted: this.source.getItems() });
         }
 
-        this.dispatch_sourceChanged(oldSource);
+        this.emit_sourceChanged(oldSource);
       }
     },
 
@@ -356,7 +356,7 @@
   var ChartSeriesList = Node.subclass({
     className: namespace + '.ChartSeriesList',
 
-    dispatch_valuesChanged: createEvent('valuesChanged', 'delta'),
+    emit_valuesChanged: createEvent('valuesChanged', 'delta'),
 
     childClass: ChartSeria,
     childFactory: function(config){
@@ -366,7 +366,7 @@
     listen: {
       childNode: { // seria
         valuesChanged: function(seria, delta){
-          this.dispatch_valuesChanged(seria, delta);
+          this.emit_valuesChanged(seria, delta);
         }
       }
     },
@@ -466,8 +466,8 @@
       return this.keyGetter(object); 
     },
     
-    dispatch_childNodesModified: function(delta){
-      Chart.prototype.dispatch_childNodesModified.call(this, delta);
+    emit_childNodesModified: function(delta){
+      Chart.prototype.emit_childNodesModified.call(this, delta);
 
       if (!this.series || !this.series.childNodes)
         return;
@@ -1104,8 +1104,8 @@
       }
     },
 
-    dispatch_ownerChanged: function(oldOwner){
-      AbstractCanvas.prototype.dispatch_ownerChanged.call(this, oldOwner);
+    emit_ownerChanged: function(oldOwner){
+      AbstractCanvas.prototype.emit_ownerChanged.call(this, oldOwner);
       
       if (oldOwner && oldOwner.selection)
       {
@@ -1212,8 +1212,8 @@
       }
     },
 
-    dispatch_ownerChanged: function(oldOwner){
-      AbstractCanvas.prototype.dispatch_ownerChanged.call(this, oldOwner);
+    emit_ownerChanged: function(oldOwner){
+      AbstractCanvas.prototype.emit_ownerChanged.call(this, oldOwner);
 
       if (this.owner)
         this.recalc();

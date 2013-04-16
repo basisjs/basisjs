@@ -113,10 +113,10 @@
   var Window = Class(UINode, {
     className: namespace + '.Window',
 
-    dispatch_beforeShow: createEvent('beforeShow'),
-    dispatch_open: createEvent('open'),
-    dispatch_close: createEvent('close'),
-    dispatch_active: createEvent('active'),
+    emit_beforeShow: createEvent('beforeShow'),
+    emit_open: createEvent('open'),
+    emit_close: createEvent('close'),
+    emit_active: createEvent('active'),
 
     closeOnEscape: true,
 
@@ -290,11 +290,11 @@
 
         this.realign();
 
-        this.dispatch_beforeShow(params);
+        this.emit_beforeShow(params);
         cssom.visibility(this.element, true);
 
-        this.dispatch_open(params);
-        //this.dispatch_active(params);
+        this.emit_open(params);
+        //this.emit_active(params);
       }
       else
       {
@@ -309,7 +309,7 @@
 
         this.autocenter = this.autocenter_;
 
-        this.dispatch_close();
+        this.emit_close();
       }
     },
     destroy: function(){
@@ -379,7 +379,7 @@
         {
           // put selected on top
           windowManager.insertBefore(selected);
-          windowManager.dispatch_childNodesModified({});
+          windowManager.emit_childNodesModified({});
         }
       }
       else

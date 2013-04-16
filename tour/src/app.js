@@ -13,8 +13,8 @@ module.exports = basis.app({
       selection: true,
       childClass: {
         template: resource('app/template/page.tmpl'),
-        dispatch_select: function(){
-          basis.ui.Node.prototype.dispatch_select.call(this);
+        emit_select: function(){
+          basis.ui.Node.prototype.emit_select.call(this);
 
           if (this.lazyChildNodes)
           {

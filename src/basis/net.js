@@ -55,7 +55,7 @@
       event.apply(transportDispatcher, args);
 
       if (this.transport)
-        this.transport['dispatch_' + eventName].apply(this.transport, args);
+        this.transport['emit_' + eventName].apply(this.transport, args);
 
       event.apply(this, arguments);
     };
@@ -99,15 +99,15 @@
 
     transport: null,
 
-    dispatch_start: createRequestEvent('start'),
-    dispatch_timeout: createRequestEvent('timeout'),
-    dispatch_abort: createRequestEvent('abort'),
-    dispatch_success: createRequestEvent('success'),
-    dispatch_failure: createRequestEvent('failure'),
-    dispatch_complete: createRequestEvent('complete'),
+    emit_start: createRequestEvent('start'),
+    emit_timeout: createRequestEvent('timeout'),
+    emit_abort: createRequestEvent('abort'),
+    emit_success: createRequestEvent('success'),
+    emit_failure: createRequestEvent('failure'),
+    emit_complete: createRequestEvent('complete'),
 
-    dispatch_stateChanged: function(oldState){
-      DataObject.prototype.dispatch_stateChanged.call(this, oldState);
+    emit_stateChanged: function(oldState){
+      DataObject.prototype.emit_stateChanged.call(this, oldState);
 
       if (this.influence)
         for (var i = 0; i < this.influence.length; i++)
@@ -151,12 +151,12 @@
     poolLimit: null,
     poolHashGetter: basis.fn.$true,
 
-    dispatch_start: createTransportEvent('start'),
-    dispatch_timeout: createTransportEvent('timeout'),
-    dispatch_abort: createTransportEvent('abort'),
-    dispatch_success: createTransportEvent('success'),
-    dispatch_failure: createTransportEvent('failure'),
-    dispatch_complete: createTransportEvent('complete'),
+    emit_start: createTransportEvent('start'),
+    emit_timeout: createTransportEvent('timeout'),
+    emit_abort: createTransportEvent('abort'),
+    emit_success: createTransportEvent('success'),
+    emit_failure: createTransportEvent('failure'),
+    emit_complete: createTransportEvent('complete'),
 
     init: function(){
       this.requests = {};
@@ -409,7 +409,7 @@
     ;;;if (this.debug) basis.dev.log('State: (' + readyState + ') ' + ['UNSENT', 'OPENED', 'HEADERS_RECEIVED', 'LOADING', 'DONE'][readyState]);
 
     // dispatch self event
-    this.dispatch_readyStateChanged(readyState);
+    this.emit_readyStateChanged(readyState);
 
     if (readyState == STATE_DONE)
     {
@@ -420,8 +420,8 @@
 
       if (typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders()))
       {
-        this.dispatch_failure();
-        this.dispatch_abort();
+        this.emit_failure();
+        this.emit_abort();
         newState = STATE.ERROR;
       }
       else
@@ -431,7 +431,7 @@
         // dispatch events
         if (this.isSuccessful())
         {
-          this.dispatch_success(this.getResponseData());
+          this.emit_success(this.getResponseData());
           newState = STATE.READY;
         }
         else
@@ -439,13 +439,13 @@
 
           this.processErrorResponse();
 
-          this.dispatch_failure(this.data.error);
+          this.emit_failure(this.data.error);
           newState = STATE.ERROR;
         }
       }
 
       // dispatch complete event
-      this.dispatch_complete(this);
+      this.emit_complete(this);
     }
     else
       newState = STATE.PROCESSING;
@@ -466,7 +466,7 @@
 
     debug: false,
 
-    dispatch_readyStateChanged: createRequestEvent('readyStateChanged'),
+    emit_readyStateChanged: createRequestEvent('readyStateChanged'),
 
     init: function(){
       AbstractRequest.prototype.init.call(this);
@@ -572,7 +572,7 @@
       if (ua.test('gecko1.8.1-') && requestData.asynchronous)
         this.xhr = createXmlHttpRequest();
 
-      this.dispatch_start();
+      this.emit_start();
 
       var xhr = this.xhr;
 
@@ -663,7 +663,7 @@
         }
       });
 
-      this.dispatch_timeout(this);
+      this.emit_timeout(this);
       this.abort();
     },
 
@@ -684,7 +684,7 @@
 
     requestClass: AjaxRequest,
 
-    dispatch_readyStateChanged: createTransportEvent('readyStateChanged'),
+    emit_readyStateChanged: createTransportEvent('readyStateChanged'),
 
     // transport properties
     asynchronous: true,

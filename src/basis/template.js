@@ -1326,7 +1326,7 @@
 
               for (var j = 0, eventName; eventName = eventList[j]; j++)
               {
-                ;;;if (testNode && ('dispatch_' + eventName) in testNode == false) basis.dev.warn('basis.template.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
+                ;;;if (testNode && ('emit_' + eventName) in testNode == false) basis.dev.warn('basis.template.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
                 if (events[eventName])
                 {
                   events[eventName].push(key);

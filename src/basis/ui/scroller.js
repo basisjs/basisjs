@@ -103,10 +103,10 @@
     scrollX: true,
     scrollY: true,
 
-    dispatch_start: createEvent('start'),
-    dispatch_finish: createEvent('finish'),
-    dispatch_startInertia: createEvent('startInertia'),
-    dispatch_updatePosition: createEvent('updatePosition', 'scrollPosition'),
+    emit_start: createEvent('start'),
+    emit_finish: createEvent('finish'),
+    emit_startInertia: createEvent('startInertia'),
+    emit_updatePosition: createEvent('updatePosition', 'scrollPosition'),
 
     init: function(){
       this.lastMouseX = 0;
@@ -214,7 +214,7 @@
       this.lastUpdateTime = Date.now();
       this.updateFrameHandle = this.nextFrame();
 
-      this.dispatch_start();
+      this.emit_start();
     },
 
     stopUpdate: function(){
@@ -228,7 +228,7 @@
 
       this.updateElementPosition();
 
-      this.dispatch_finish();
+      this.emit_finish();
     },
 
     onMouseDown: function(event){
@@ -337,7 +337,7 @@
       Event.removeGlobalHandler('mouseup', this.onMouseUp, this);
       Event.removeGlobalHandler('touchend', this.onMouseUp, this);
 
-      this.dispatch_startInertia();
+      this.emit_startInertia();
     },
 
     onUpdate: function(time){
@@ -424,7 +424,7 @@
       }
 
       this.updateElementPosition();
-      this.dispatch_updatePosition(time, this.viewportX, this.viewportY);
+      this.emit_updatePosition(time, this.viewportX, this.viewportY);
 
       this.nextFrame();
     },
@@ -610,8 +610,8 @@
     scrollY: true,
     wheelDelta: 40,
 
-    dispatch_realign: createEvent('realign'),
-    dispatch_updatePosition: createEvent('updatePosition'),
+    emit_realign: createEvent('realign'),
+    emit_updatePosition: createEvent('updatePosition'),
 
     template: templates.ScrollPanel,
 
@@ -699,7 +699,7 @@
       if (!this.scroller.panningActive)
         this.fixPosition();
 
-      this.dispatch_updatePosition();
+      this.emit_updatePosition();
     },
 
     fixPosition: function(){
@@ -723,7 +723,7 @@
       {
         this.calcDimensions();
         this.updatePosition();
-        this.dispatch_realign();
+        this.emit_realign();
       }
     },
     
@@ -777,8 +777,8 @@
       }
     },
 
-    dispatch_childNodesModified: function(delta){
-      ScrollPanel.prototype.dispatch_childNodesModified.call(this, delta);
+    emit_childNodesModified: function(delta){
+      ScrollPanel.prototype.emit_childNodesModified.call(this, delta);
 
       if (this.scroller && this.childNodes.length == delta.inserted.length)
       {
@@ -799,8 +799,8 @@
         }
       },
 
-      dispatch_select: function(){
-        UINode.prototype.dispatch_select.call(this);
+      emit_select: function(){
+        UINode.prototype.emit_select.call(this);
         this.parentNode.scrollToChild(this);
       }
     }),

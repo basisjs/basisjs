@@ -99,7 +99,7 @@
       event = wrap(event);
 
       basis.object.extend(basis.object.complete(this, event), { 
-        dispatch_: event,
+        emit_: event,
 
         sender: sender(event),
 
@@ -115,13 +115,13 @@
       });
     },
     stopBubble: function(){
-      cancelBubble(this.dispatch_);
+      cancelBubble(this.emit_);
     },
     stopPropagation: function(){
-      cancelBubble(this.dispatch_);
+      cancelBubble(this.emit_);
     },
     preventDefault: function(){
-      cancelDefault(this.dispatch_);
+      cancelDefault(this.emit_);
     },
     die: function(){
       this.stopBubble();
@@ -135,7 +135,7 @@
   * @return {Event}
   */
   function wrap(event){
-    return event instanceof Event ? event.dispatch_ : event || global.event;
+    return event instanceof Event ? event.emit_ : event || global.event;
   }
 
  /**

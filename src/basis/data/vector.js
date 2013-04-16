@@ -253,7 +253,7 @@
       {
         var delta = changeSourceObjectKey(this, key, sourceObjectInfo, true);
         if (delta = getDelta(delta.inserted && [delta.inserted], delta.deleted && [delta.deleted]))
-          this.dispatch_itemsChanged(delta);
+          this.emit_itemsChanged(delta);
       }
       else
         recalcSourceObject(this, sourceObjectInfo);
@@ -372,7 +372,7 @@
 
       // fire event
       if (delta = getDelta(inserted, deleted))
-        this.dispatch_itemsChanged(delta);
+        this.emit_itemsChanged(delta);
     }
   };
 
@@ -392,8 +392,8 @@
 
     rule: defaultRule,
 
-    dispatch_itemsChanged: function(delta){
-      SourceDataset.prototype.dispatch_itemsChanged.call(this, delta);
+    emit_itemsChanged: function(delta){
+      SourceDataset.prototype.emit_itemsChanged.call(this, delta);
 
       // destroy deleted
       if (delta.deleted)
@@ -538,7 +538,7 @@
       }
 
       if (delta = getDelta(inserted, deleted))
-        this.dispatch_itemsChanged(delta);
+        this.emit_itemsChanged(delta);
     }
   });
 

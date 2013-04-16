@@ -105,9 +105,9 @@
       totalTestCount: 1,
       completeTestCount: 0,
 
-      dispatch_progress: createEvent('progress'),
-      dispatch_reset: createEvent('reset'),
-      dispatch_over: createEvent('over'),
+      emit_progress: createEvent('progress'),
+      emit_reset: createEvent('reset'),
+      emit_over: createEvent('over'),
 
       name: 'no name',
       testType: 'AbstractTest',
@@ -135,7 +135,7 @@
           this.completeTestCount = 0;
           this.progress(-tmp);
 
-          this.dispatch_reset();
+          this.emit_reset();
         }
       },
 
@@ -155,13 +155,13 @@
         this.completeTestCount = this.totalTestCount;
         this.progress(tmp);
 
-        this.dispatch_over();
+        this.emit_over();
       },
       success: basis.fn.$null,
       fault: basis.fn.$null,
       progress: function(diff){
         if (diff)
-          this.dispatch_progress(diff, this.completeTestCount/(this.totalTestCount || 1));
+          this.emit_progress(diff, this.completeTestCount/(this.totalTestCount || 1));
       },
       toString: function(){
         return (this.testType ? this.testType + ' ' : '') + this.name + ': ' + (this.empty ? 'empty' : (!this.complete ? 'uncomplete' : (this.success ? 'success' : 'fault (passed {1} of {0})'.format(this.testCount, this.successCount))));
@@ -395,7 +395,7 @@
 
       testType: 'TestCase',
 
-      dispatch_progress: function(diff, progress){
+      emit_progress: function(diff, progress){
         events.progress.call(this, diff, progress);
         this.completeTestCount += diff;
       },
@@ -414,7 +414,7 @@
 
           item.addHandler({
             progress: function(sender, diff, progress){
-              this.dispatch_progress(diff, (this.completeTestCount + diff)/(this.totalTestCount || 0));
+              this.emit_progress(diff, (this.completeTestCount + diff)/(this.totalTestCount || 0));
             },
             over: function(sender){
               if (sender instanceof TestCase)

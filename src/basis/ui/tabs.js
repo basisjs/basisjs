@@ -68,9 +68,9 @@
 
     childClass: UINode,
 
-    dispatch_childNodesModified: function(delta){
+    emit_childNodesModified: function(delta){
       findAndSelectActiveNode.call(this);
-      UINode.prototype.dispatch_childNodesModified.call(this, delta);
+      UINode.prototype.emit_childNodesModified.call(this, delta);
     },
 
     listen: {
@@ -120,11 +120,11 @@
     childClass: null,
 
     unselectDisabled: true,
-    dispatch_disable: function(){
+    emit_disable: function(){
       if (this.unselectDisabled)
         this.unselect();
 
-      UINode.prototype.dispatch_disable.call(this);
+      UINode.prototype.emit_disable.call(this);
     }
   });
 

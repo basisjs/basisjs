@@ -28,7 +28,7 @@
       var eventsMap = {};
       var seed = 1;
 
-      proto.dispatch_debug = function(event){
+      proto.emit_debug = function(event){
         if (!this.testEventId_)
         {
           this.testEventId_ = seed++;
@@ -290,8 +290,8 @@
                 {
                   name: 'create with no rule, set some rule, than set default',
                   test: function(){
-                    var dispatch_deleted;
-                    var dispatch_inserted;
+                    var emit_deleted;
+                    var emit_inserted;
                     var vector = new basis.data.vector.Vector({
                       source: createDS(),
                       calcs: {
@@ -300,8 +300,8 @@
                       },
                       handler: {
                         itemsChanged: function(sender, delta){
-                          dispatch_deleted = delta.deleted;
-                          dispatch_inserted = delta.inserted;
+                          emit_deleted = delta.deleted;
+                          emit_inserted = delta.inserted;
                         }
                       }
                     });
@@ -314,9 +314,9 @@
                     var before_setRule_items = vector.getItems();
 
                     vector.setRule(basis.getter('data.value>>1'));
-                    this.is(before_setRule_items, dispatch_deleted);
-                    this.is(vector.getItems(), dispatch_inserted);
-                    this.is(5, dispatch_inserted && dispatch_inserted.length);
+                    this.is(before_setRule_items, emit_deleted);
+                    this.is(vector.getItems(), emit_inserted);
+                    this.is(5, emit_inserted && emit_inserted.length);
                     this.is(false, checkVector(vector));
                     var items = vector.getItems();
                     var count2count = 0;
@@ -336,9 +336,9 @@
                     var before_setRule_items = vector.getItems();
 
                     vector.setRule();
-                    this.is(before_setRule_items, dispatch_deleted);
-                    this.is(5, dispatch_deleted && dispatch_deleted.length);
-                    this.is(vector.getItems(), dispatch_inserted);
+                    this.is(before_setRule_items, emit_deleted);
+                    this.is(5, emit_deleted && emit_deleted.length);
+                    this.is(vector.getItems(), emit_inserted);
                     this.is(false, checkVector(vector));
                     this.is(1, vector.itemCount);
                     this.is(10, vector.pick().data.count);

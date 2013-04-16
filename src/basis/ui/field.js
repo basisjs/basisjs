@@ -143,21 +143,21 @@
     // events
     //
 
-    dispatch_commit: createEvent('commit'),
-    dispatch_change: createEvent('change', 'oldValue') && function(oldValue){
+    emit_commit: createEvent('commit'),
+    emit_change: createEvent('change', 'oldValue') && function(oldValue){
       this.writeFieldValue_(this.value);
       events.change.call(this, oldValue);
     },
-    dispatch_validityChanged: createEvent('validityChanged', 'oldValidity'),
-    dispatch_errorChanged: createEvent('errorChanged'),
-    dispatch_exampleChanged: createEvent('exampleChanged'),
-    dispatch_descriptionChanged: createEvent('descriptionChanged'),
+    emit_validityChanged: createEvent('validityChanged', 'oldValidity'),
+    emit_errorChanged: createEvent('errorChanged'),
+    emit_exampleChanged: createEvent('exampleChanged'),
+    emit_descriptionChanged: createEvent('descriptionChanged'),
 
-    dispatch_fieldInput: createEvent('fieldInput', 'event'),
-    dispatch_fieldChange: createEvent('fieldChange', 'event'),
-    dispatch_fieldKeydown: createEvent('fieldKeydown', 'event'),
-    dispatch_fieldKeypress: createEvent('fieldKeypress', 'event'),
-    dispatch_fieldKeyup: createEvent('fieldKeyup', 'event') && function(event){
+    emit_fieldInput: createEvent('fieldInput', 'event'),
+    emit_fieldChange: createEvent('fieldChange', 'event'),
+    emit_fieldKeydown: createEvent('fieldKeydown', 'event'),
+    emit_fieldKeypress: createEvent('fieldKeypress', 'event'),
+    emit_fieldKeyup: createEvent('fieldKeyup', 'event') && function(event){
       if (this.nextFieldOnEnter)
       {
         if (event.key == event.KEY.ENTER || event.key == event.KEY.CTRL_ENTER)
@@ -171,14 +171,14 @@
 
       events.fieldKeyup.call(this, event);
     },
-    dispatch_fieldFocus: createEvent('fieldFocus', 'event') && function(event){
+    emit_fieldFocus: createEvent('fieldFocus', 'event') && function(event){
       this.focused = true;
       /*if (this.validity)
         this.setValidity();*/
 
       events.fieldFocus.call(this, event);
     },
-    dispatch_fieldBlur: createEvent('fieldBlur', 'event') && function(event){
+    emit_fieldBlur: createEvent('fieldBlur', 'event') && function(event){
       this.validate(true);
       this.focused = false;
 
@@ -222,7 +222,7 @@
 
     action: 'focus blur change keydown keypress keyup input'.qw().reduce(
       function(res, item){
-        var eventName = 'dispatch_field' + item.capitalize();
+        var eventName = 'emit_field' + item.capitalize();
         res[item] = function(event){
           this.setValue(this.readFieldValue_());
           this[eventName](event);
@@ -297,14 +297,14 @@
       if (example != this.example)
       {
         this.example = example;
-        this.dispatch_exampleChanged();
+        this.emit_exampleChanged();
       }
     },
     setDescription: function(description){
       if (description != this.description)
       {
         this.description = description;
-        this.dispatch_descriptionChanged();
+        this.emit_descriptionChanged();
       }
     },
 
@@ -320,7 +320,7 @@
       {
         var oldValue = this.value;
         this.value = newValue;
-        this.dispatch_change(oldValue);
+        this.emit_change(oldValue);
       }
     },
     reset: function(){
@@ -343,7 +343,7 @@
       if (this.validity !== validity)
       {
         this.validity = validity;
-        this.dispatch_validityChanged();
+        this.emit_validityChanged();
       }
 
       if (!message || validity != VALIDITY_INVALID)
@@ -352,7 +352,7 @@
       if (this.error != message)
       {
         this.error = message;
-        this.dispatch_errorChanged();
+        this.emit_errorChanged();
       }
     },
     validate: function(onlyValid){
@@ -373,7 +373,7 @@
     },
 
     commit: function(){
-      this.dispatch_commit();
+      this.emit_commit();
     },
 
     destroy: function(){
@@ -405,8 +405,8 @@
   var TextField = Field.subclass({
     className: namespace + '.TextField',
 
-    dispatch_minLengthChanged: createEvent('minLengthChanged'),
-    dispatch_maxLengthChanged: createEvent('maxLengthChanged'),
+    emit_minLengthChanged: createEvent('minLengthChanged'),
+    emit_maxLengthChanged: createEvent('maxLengthChanged'),
 
     defaultValue: '',
     readOnly: false,
@@ -470,7 +470,7 @@
         }
 
         this.minLength = len;
-        this.dispatch_minLengthChanged();
+        this.emit_minLengthChanged();
       }
     },
     setMaxLength: function(len){
@@ -487,7 +487,7 @@
         }
 
         this.maxLength = len;
-        this.dispatch_maxLengthChanged();
+        this.emit_maxLengthChanged();
       }
     },
 
@@ -540,15 +540,15 @@
     nextFieldOnEnter: false,
     symbolsLeft: 0,
 
-    dispatch_symbolsLeftChanged: createEvent('symbolsLeftChanged'),
-    dispatch_fieldFocus: !window.opera
-      ? TextField.prototype.dispatch_fieldFocus
+    emit_symbolsLeftChanged: createEvent('symbolsLeftChanged'),
+    emit_fieldFocus: !window.opera
+      ? TextField.prototype.emit_fieldFocus
         // fix opera's bug: when invisible textarea becomes visible and user
         // changes it content, value property returns empty string instead of field value
       : function(event){
           this.contentEditable = true;
           this.contentEditable = false;
-          TextField.prototype.dispatch_fieldFocus.call(this, event);
+          TextField.prototype.emit_fieldFocus.call(this, event);
         },
 
     template: templates.Textarea,
@@ -604,7 +604,7 @@
       if (this.symbolsLeft != symbolsLeft)
       {
         this.symbolsLeft = symbolsLeft;
-        this.dispatch_symbolsLeftChanged();
+        this.emit_symbolsLeftChanged();
       }
     }
   });
@@ -718,7 +718,7 @@
 
   var COMPLEXFIELD_SELECTION_HANDLER = {
     itemsChanged: function(){
-      this.dispatch_change();
+      this.emit_change();
     }
   };
 
@@ -887,8 +887,8 @@
 
     childClass: ComboboxItem,
     
-    dispatch_change: function(event){
-      ComplexField.prototype.dispatch_change.call(this, event);
+    emit_change: function(event){
+      ComplexField.prototype.emit_change.call(this, event);
 
       var value = this.getValue();
 
@@ -896,8 +896,8 @@
         this.property.set(value);
     },
 
-    dispatch_childNodesModified: function(delta){
-      ComplexField.prototype.dispatch_childNodesModified.call(this, delta);
+    emit_childNodesModified: function(delta){
+      ComplexField.prototype.emit_childNodesModified.call(this, delta);
       if (this.property)
         this.setValue(this.property.value);
     },
@@ -995,7 +995,7 @@
           this.focus();
         }
 
-        this.dispatch_fieldKeyup(event);
+        this.emit_fieldKeyup(event);
       },
       keydown: function(event){
         switch (event.key)
@@ -1013,7 +1013,7 @@
             break;
         }
 
-        this.dispatch_fieldKeydown(event);
+        this.emit_fieldKeydown(event);
       }
     },
 
@@ -1175,10 +1175,10 @@
       return false;
     },
 
-    dispatch_change: function(value, oldValue){
+    emit_change: function(value, oldValue){
       this.rx = this.regexpGetter(value);
 
-      Property.prototype.dispatch_change.call(this, value, oldValue);
+      Property.prototype.emit_change.call(this, value, oldValue);
     },
 
     extendConstructor_: true,
@@ -1216,8 +1216,8 @@
   var Matcher = MatchProperty.subclass({
     className: namespace + '.Matcher',
 
-    dispatch_change: function(value, oldValue){
-      MatchProperty.prototype.dispatch_change.call(this, value, oldValue);
+    emit_change: function(value, oldValue){
+      MatchProperty.prototype.emit_change.call(this, value, oldValue);
 
       this.applyMatch();
     },
@@ -1241,8 +1241,8 @@
   var MatchFilter = MatchProperty.subclass({
     className: namespace + '.MatchFilter',
 
-    dispatch_change: function(value, oldValue){
-      MatchProperty.prototype.dispatch_change.call(this, value, oldValue);
+    emit_change: function(value, oldValue){
+      MatchProperty.prototype.emit_change.call(this, value, oldValue);
 
       this.node.setMatchFunction(value ? this.matchFunction.bind(this) : null);
     }
@@ -1258,13 +1258,13 @@
 
     matchFilterClass: MatchFilter,
 
-    dispatch_fieldKeyup: function(event){
-      Text.prototype.dispatch_fieldKeyup.call(this, event);
+    emit_fieldKeyup: function(event){
+      Text.prototype.emit_fieldKeyup.call(this, event);
       this.matchFilter.set(this.getValue());
     },
 
-    dispatch_change: function(event){
-      Text.prototype.dispatch_change.call(this, event);
+    emit_change: function(event){
+      Text.prototype.emit_change.call(this, event);
       this.matchFilter.set(this.getValue());
     },
 

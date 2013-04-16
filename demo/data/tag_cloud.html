@@ -170,8 +170,8 @@
             },
             instanceOf: basis.data.Object.subclass({
               active: true,
-              dispatch_update: function(delta){
-                basis.data.Object.prototype.dispatch_update.call(this, delta);
+              emit_update: function(delta){
+                basis.data.Object.prototype.emit_update.call(this, delta);
 
                 this.owner.element.style.fontSize = '{0:.2}%'.format(50 + 200 * this.data.percentOfMax);
               }

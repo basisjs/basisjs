@@ -163,8 +163,8 @@
       sorting: basis.getter('data.name'),
       grouping: grouping,
       collapsed: true,
-      dispatch_expand: function(){
-        nsTree.Folder.prototype.dispatch_expand.call(this);
+      emit_expand: function(){
+        nsTree.Folder.prototype.emit_expand.call(this);
         this.setDataSource(goupingByParentId.getSubset(this.data.path + '' + this.data.name + '/'));
       }
     });

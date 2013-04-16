@@ -116,11 +116,11 @@
       }
     },
 
-    dispatch_beforeShow: createEvent('beforeShow'),
-    dispatch_show: createEvent('show'),
-    dispatch_hide: createEvent('hide'),
-    dispatch_realign: createEvent('realign'),
-    dispatch_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir'),
+    emit_beforeShow: createEvent('beforeShow'),
+    emit_show: createEvent('show'),
+    emit_hide: createEvent('hide'),
+    emit_realign: createEvent('realign'),
+    emit_layoutChanged: createEvent('layoutChanged', 'oldOrientation', 'oldDir'),
 
     visible: false,
     autorotate: false,
@@ -167,7 +167,7 @@
 
       if (oldDir != this.dir || oldOrientation != this.orientation)
       {
-        this.dispatch_layoutChanged(oldOrientation, oldDir);
+        this.emit_layoutChanged(oldOrientation, oldDir);
         if (!noRealign)
           this.realign();
       }
@@ -341,7 +341,7 @@
 
         this.cssRule.setStyle(style);
 
-        this.dispatch_realign();
+        this.emit_realign();
       }
     },
     show: function(relElement, dir, orientation){
@@ -367,7 +367,7 @@
         popupManager.appendChild(this);
 
         // dispatch `beforeShow` event, there we can fill popup with content
-        this.dispatch_beforeShow();
+        this.emit_beforeShow();
 
         // set visible flag
         this.visible = true;
@@ -378,7 +378,7 @@
         cssom.visibility(this.element, true);
 
         // dispatch `show` event, there we can set focus for elements etc.
-        this.dispatch_show();
+        this.emit_show();
       }
       else
         this.realign();
@@ -393,7 +393,7 @@
           popupManager.removeChild(this);
 
         // dispatch event
-        this.dispatch_hide();
+        this.emit_hide();
       }
     },
     hideAll: function(){
@@ -432,7 +432,7 @@
     handheldMode: false,
     selection: true,
 
-    dispatch_childNodesModified: function(delta){
+    emit_childNodesModified: function(delta){
       if (delta.deleted)
         for (var i = delta.deleted.length - 1, item; item = delta.deleted[i]; i--)
           item.hide();
@@ -461,7 +461,7 @@
         Event.removeHandler(window, 'resize', this.realignAll, this);
       }
 
-      UINode.prototype.dispatch_childNodesModified.call(this, delta);
+      UINode.prototype.emit_childNodesModified.call(this, delta);
     },
 
     insertBefore: function(newChild, refChild){

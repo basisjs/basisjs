@@ -114,7 +114,7 @@
     updateCount: 0,
     lastDrawUpdateCount: -1,
 
-    dispatch_draw: createEvent('draw'),
+    emit_draw: createEvent('draw'),
     listen: {
       childNode: {
         redrawRequest: function(){
@@ -164,7 +164,7 @@
 
       this.drawFrame();
 
-      this.dispatch_draw();
+      this.emit_draw();
 
       return true;
     },

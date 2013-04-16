@@ -194,8 +194,8 @@
       cursorOverrideRule = cssom.createRule('*');
       cursorOverrideRule.creator = this;
     },
-    dispatch_start: function(dragData, event){
-      super_.dispatch_start.call(this, dragData, event);
+    emit_start: function(dragData, event){
+      super_.emit_start.call(this, dragData, event);
 
       cursorOverrideRule.setProperty('cursor', this.cursor + ' !important');
 
@@ -248,8 +248,8 @@
       dragData.offsetStartInPercent = 100 / parentNodeSize;
       classList(this.resizer).add('selected');
     },
-    dispatch_drag: function(dragData, event){
-      super_.dispatch_drag.call(this, dragData, event);
+    emit_drag: function(dragData, event){
+      super_.emit_drag.call(this, dragData, event);
 
       var metricName = dragData.delta == 'deltaX' ? 'offsetWidth' : 'offsetHeight';
       var metricValue = this.element[metricName];
@@ -261,8 +261,8 @@
       if (this.element[metricName] == metricValue)
         this.element.style[this.property] = curValue;
     },
-    dispatch_over: function(dragData, event){
-      super_.dispatch_over.call(this, dragData, event);
+    emit_over: function(dragData, event){
+      super_.emit_over.call(this, dragData, event);
 
       classList(this.resizer).remove('selected');
       resizerDisableRule.setProperty('pointerEvents', 'auto');

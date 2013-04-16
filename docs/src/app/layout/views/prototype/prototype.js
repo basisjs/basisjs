@@ -38,7 +38,7 @@
     binding: {
       jsdocs: 'satellite:',
       nodeType: 'nodeType',
-      title: 'data:key.replace(/^dispatch_/, "")',
+      title: 'data:key.replace(/^emit_/, "")',
       path: {
         events: 'update',
         getter: function(node){
@@ -53,8 +53,8 @@
           return app.core.JsDocEntity.getSlot(owner.data.cls.docsProto_[owner.data.key].path);
         },
         instanceOf: PrototypeJsDocPanel/*JsDocPanel.subclass({
-          dispatch_update: function(delta){
-            JsDocPanel.prototype.dispatch_update.call(this, delta);
+          emit_update: function(delta){
+            JsDocPanel.prototype.emit_update.call(this, delta);
 
             var owner = this.owner;
             var tags = this.data.tags;
@@ -181,8 +181,8 @@
       }
     },
 
-    dispatch_update: function(delta){
-      View.prototype.dispatch_update.call(this, delta);
+    emit_update: function(delta){
+      View.prototype.emit_update.call(this, delta);
 
       if (this.data.obj)
       {

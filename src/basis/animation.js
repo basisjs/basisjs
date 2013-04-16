@@ -73,17 +73,17 @@
     timer: null,
     started: false,
 
-    dispatch_start: createEvent('start'),
-    dispatch_finish: createEvent('finish'),
-    dispatch_invert: createEvent('invert'),
-    dispatch_change: function(value, prevValue){
+    emit_start: createEvent('start'),
+    emit_finish: createEvent('finish'),
+    emit_invert: createEvent('invert'),
+    emit_change: function(value, prevValue){
       if (value == 0.0)
-        this.dispatch_start();
+        this.emit_start();
 
-      Property.prototype.dispatch_change.call(this, value, prevValue);
+      Property.prototype.emit_change.call(this, value, prevValue);
 
       if (value == 1.0)
-        this.dispatch_finish();
+        this.emit_finish();
     },
 
     extendConstructor_: true,
@@ -119,7 +119,7 @@
       }
     },
     invert: function(){
-      this.dispatch_invert();
+      this.emit_invert();
 
       if (this.started)
       {

@@ -17,10 +17,10 @@
       fullPath: 'data:',
       tag: 'data:tag || "none"'
     },
-    dispatch_match: function(){
+    emit_match: function(){
       this.tmpl.set('absent', '');
     },
-    dispatch_unmatch: function(){
+    emit_unmatch: function(){
       this.tmpl.set('absent', 'absent');
     }
   });

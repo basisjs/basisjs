@@ -49,8 +49,8 @@
       }
     },
 
-    dispatch_childNodesModified: function(delta){
-      PageControl.prototype.dispatch_childNodesModified.call(this, delta);
+    emit_childNodesModified: function(delta){
+      PageControl.prototype.emit_childNodesModified.call(this, delta);
 
       for (var i = 0, child; child = this.childNodes[i]; i++)
         cssom.setStyle(child.element, {

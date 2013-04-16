@@ -76,7 +76,7 @@
 
     childClass: {
       expanded: false,
-      dispatch_toggle: basis.event.create('toggle'),
+      emit_toggle: basis.event.create('toggle'),
 
       template: resource('template/bindingsPanelItem.tmpl'),
 
@@ -98,7 +98,7 @@
       action: {
         toggle: function(){
           this.expanded = !this.expanded;
-          this.dispatch_toggle();
+          this.emit_toggle();
         }
       },
 
@@ -156,7 +156,7 @@
 
     childClass: {
       expanded: false,
-      dispatch_toggle: basis.event.create('toggle'),
+      emit_toggle: basis.event.create('toggle'),
 
       template: resource('template/actionsPanelItem.tmpl'),
 
@@ -177,7 +177,7 @@
       action: {
         toggle: function(){
           this.expanded = !this.expanded;
-          this.dispatch_toggle();
+          this.emit_toggle();
         }
       },
 
@@ -227,7 +227,7 @@
       }
     },
 
-    dispatch_templateViewChanged: basis.event.create('templateViewChanged'),
+    emit_templateViewChanged: basis.event.create('templateViewChanged'),
 
     templateUpdate: function(){
       var rootCfg = {};
@@ -261,7 +261,7 @@
 
       var oldTemplate = this.templateView;
       this.templateView = template;
-      this.dispatch_templateViewChanged(oldTemplate);
+      this.emit_templateViewChanged(oldTemplate);
     },
 
     satelliteConfig: {

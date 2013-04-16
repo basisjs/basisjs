@@ -181,9 +181,9 @@
         return;
 
       if (disabled)
-        node.dispatch_disable();
+        node.emit_disable();
       else
-        node.dispatch_enable();
+        node.emit_enable();
     }
   }
 
@@ -299,7 +299,7 @@
         satellite = new config.instanceOf(satelliteConfig);
 
         owner.satellite[key] = satellite;
-        owner.dispatch_satelliteChanged(key, null);
+        owner.emit_satelliteChanged(key, null);
 
         if (owner.listen.satellite)
           satellite.addHandler(owner.listen.satellite, owner);
@@ -311,7 +311,7 @@
       {
         delete owner.satellite[key];
 
-        owner.dispatch_satelliteChanged(key, satellite);
+        owner.emit_satelliteChanged(key, satellite);
 
         satellite.destroy();
       }
@@ -344,8 +344,8 @@
    /**
     * @inheritDoc
     */
-    dispatch_update: function(delta){
-      DataObject.prototype.dispatch_update.call(this, delta);
+    emit_update: function(delta){
+      DataObject.prototype.emit_update.call(this, delta);
 
       var parentNode = this.parentNode;
       if (parentNode)
@@ -402,7 +402,7 @@
     * @param {object} delta Delta of changes.
     * @event
     */
-    dispatch_childNodesModified: createEvent('childNodesModified', 'delta') && function(delta){
+    emit_childNodesModified: createEvent('childNodesModified', 'delta') && function(delta){
       events.childNodesModified.call(this, delta);
 
       var listen = this.listen.childNode;
@@ -430,7 +430,7 @@
     * @param {object} oldState Value of childNodesState before changes.
     * @event
     */
-    dispatch_childNodesStateChanged: createEvent('childNodesStateChanged', 'oldState'),
+    emit_childNodesStateChanged: createEvent('childNodesStateChanged', 'oldState'),
 
    /**
     * All child nodes must be instances of childClass.
@@ -447,7 +447,7 @@
    /**
     * @param {basis.data.AbstractDataset} oldDataSource
     */
-    dispatch_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
+    emit_dataSourceChanged: createEvent('dataSourceChanged', 'oldDataSource'),
 
    /**
     * Map dataSource members to child nodes.
@@ -516,7 +516,7 @@
     * @param {function()} oldSorting
     * @param {boolean} oldSortingDesc
     */
-    dispatch_sortingChanged: createEvent('sortingChanged', 'oldSorting', 'oldSortingDesc'),
+    emit_sortingChanged: createEvent('sortingChanged', 'oldSorting', 'oldSortingDesc'),
 
    /**
     * GroupingNode config
@@ -529,7 +529,7 @@
    /**
     * @param {basis.dom.wrapper.GroupingNode} oldGroupingNode
     */
-    dispatch_groupingChanged: createEvent('groupingChanged', 'oldGroupingNode'),
+    emit_groupingChanged: createEvent('groupingChanged', 'oldGroupingNode'),
 
    /**
     * Class for grouping control. Class should be inherited from {basis.dom.wrapper.GroupingNode}
@@ -566,7 +566,7 @@
     * @param {string} key
     * @param {basis.data.Object} oldSattelite Old satellite for key
     */
-    dispatch_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
+    emit_satelliteChanged: createEvent('satelliteChanged', 'key', 'oldSatellite'),
 
    /**
     * Node owner. Generaly using by satellites and GroupingNode.
@@ -577,7 +577,7 @@
    /**
     * @param {basis.dom.wrapper.AbstractNode} oldOwner
     */
-    dispatch_ownerChanged: createEvent('ownerChanged', 'oldOwner'),
+    emit_ownerChanged: createEvent('ownerChanged', 'oldOwner'),
 
 
     //
@@ -690,7 +690,7 @@
         this.childNodesState = Object(stateCode);
         this.childNodesState.data = data;
 
-        this.dispatch_stateChanged(oldState);
+        this.emit_stateChanged(oldState);
       }
     },
 
@@ -778,7 +778,7 @@
       {
         this.owner = owner;
 
-        this.dispatch_ownerChanged(oldOwner);
+        this.emit_ownerChanged(oldOwner);
 
         if (this.autoDelegate == DELEGATE.OWNER || this.autoDelegate === DELEGATE.ANY)
           this.setDelegate(owner);
@@ -821,7 +821,7 @@
             satellite.addHandler(satelliteListen, this);
         }
 
-        this.dispatch_satelliteChanged(name, oldSatellite);
+        this.emit_satelliteChanged(name, oldSatellite);
       }
     },    
 
@@ -956,7 +956,7 @@
 
       newNode.groupNode = this;
 
-      this.dispatch_childNodesModified({ inserted: [newNode] });
+      this.emit_childNodesModified({ inserted: [newNode] });
     },
 
    /**
@@ -971,7 +971,7 @@
         this.last = nodes[nodes.length - 1] || null;
         oldNode.groupNode = null;
 
-        this.dispatch_childNodesModified({ deleted: [oldNode] });
+        this.emit_childNodesModified({ deleted: [oldNode] });
       }
 
       if (!this.first && this.autoDestroyIfEmpty)
@@ -998,7 +998,7 @@
       this.first = null;
       this.last = null;
 
-      this.dispatch_childNodesModified({ deleted: nodes });
+      this.emit_childNodesModified({ deleted: nodes });
 
       // destroy partition if necessary
       if (this.autoDestroyIfEmpty)
@@ -1095,7 +1095,7 @@
         // use fast child insert method if possible (it also fire childNodesModified event)
         this.setChildNodes(newDelta.inserted);
       else
-        this.dispatch_childNodesModified(newDelta);
+        this.emit_childNodesModified(newDelta);
 
       // destroy removed items
       if (this.destroyDataSourceMember && deleted.length)
@@ -1137,7 +1137,7 @@
       group.first = nodes[0] || null;
       group.last = nodes[nodes.length - 1] || null;
       order.push.apply(order, nodes);
-      group.dispatch_childNodesModified({ inserted: nodes });
+      group.emit_childNodesModified({ inserted: nodes });
     }
 
     return order;
@@ -1546,7 +1546,7 @@
 
         // dispatch event
         if (!this.dataSource)
-          this.dispatch_childNodesModified({ inserted: [newChild] });
+          this.emit_childNodesModified({ inserted: [newChild] });
 
         if (newChild.listen.parentNode)
           this.addHandler(newChild.listen.parentNode, newChild);
@@ -1608,7 +1608,7 @@
 
       // dispatch event
       if (!this.dataSource)
-        this.dispatch_childNodesModified({ deleted: [oldChild] });
+        this.emit_childNodesModified({ deleted: [oldChild] });
 
       if (oldChild.autoDelegate == DELEGATE.PARENT || oldChild.autoDelegate === DELEGATE.ANY)
         oldChild.setDelegate();
@@ -1660,7 +1660,7 @@
 
       // dispatch event
       // NOTE: important dispatch event before nodes remove/destroy, because listeners may analyze removing nodes
-      this.dispatch_childNodesModified({ deleted: childNodes });
+      this.emit_childNodesModified({ deleted: childNodes });
 
       for (var i = childNodes.length; i-- > 0;)
       {
@@ -1708,16 +1708,16 @@
         if (newChildNodes.length)
         {
           // switch off dispatch
-          var tmp = this.dispatch_childNodesModified;
-          this.dispatch_childNodesModified = $undef;
+          var tmp = this.emit_childNodesModified;
+          this.emit_childNodesModified = $undef;
 
           // insert nodes
           for (var i = 0, len = newChildNodes.length; i < len; i++)
             this.insertBefore(newChildNodes[i]);
 
           // restore event dispatch & dispatch changes event
-          this.dispatch_childNodesModified = tmp;
-          this.dispatch_childNodesModified({ inserted: this.childNodes });
+          this.emit_childNodesModified = tmp;
+          this.emit_childNodesModified({ inserted: this.childNodes });
         }
       }
     },
@@ -1777,7 +1777,7 @@
 
         // TODO: restore sorting & grouping, fast node reorder
 
-        this.dispatch_dataSourceChanged(oldDataSource);
+        this.emit_dataSourceChanged(oldDataSource);
       }
     },
 
@@ -1859,7 +1859,7 @@
           }
         }
 
-        this.dispatch_groupingChanged(oldGroupingNode);
+        this.emit_groupingChanged(oldGroupingNode);
       }
     },
 
@@ -1914,7 +1914,7 @@
           fastChildNodesOrder(this, order);
         }
 
-        this.dispatch_sortingChanged(oldSorting, oldSortingDesc);
+        this.emit_sortingChanged(oldSorting, oldSortingDesc);
       }
     },
 
@@ -1931,7 +1931,7 @@
         for (var node = this.lastChild; node; node = node.previousSibling)
           node.match(matchFunction);
 
-        this.dispatch_matchFunctionChanged(oldMatchFunction);
+        this.emit_matchFunctionChanged(oldMatchFunction);
       }
     }
   };
@@ -1947,7 +1947,7 @@
     * Occurs after disabled property has been set to false.
     * @event
     */
-    dispatch_enable: createEvent('enable') && function(){
+    emit_enable: createEvent('enable') && function(){
       for (var child = this.firstChild; child; child = child.nextSibling)
         updateNodeDisableContext(child, false);
 
@@ -1958,7 +1958,7 @@
     * Occurs after disabled property has been set to true.
     * @event
     */
-    dispatch_disable: createEvent('disable') && function(){
+    emit_disable: createEvent('disable') && function(){
       for (var child = this.firstChild; child; child = child.nextSibling)
         updateNodeDisableContext(child, true);
 
@@ -1969,8 +1969,8 @@
     * @param {string} key
     * @param {basis.data.Object} oldSattelite Old satellite for key
     */
-    dispatch_satelliteChanged: function(key, oldSatellite){
-      AbstractNode.prototype.dispatch_satelliteChanged.call(this, key, oldSatellite);
+    emit_satelliteChanged: function(key, oldSatellite){
+      AbstractNode.prototype.emit_satelliteChanged.call(this, key, oldSatellite);
 
       if (this.satellite[key] instanceof Node)
         updateNodeDisableContext(this.satellite[key], this.disabled || this.contextDisabled);
@@ -1980,31 +1980,31 @@
     * Occurs after selected property has been set to true.
     * @event
     */
-    dispatch_select: createEvent('select'),
+    emit_select: createEvent('select'),
 
    /**
     * Occurs after selected property has been set to false.
     * @event
     */
-    dispatch_unselect: createEvent('unselect'),
+    emit_unselect: createEvent('unselect'),
 
    /**
     * Occurs after matched property has been set to true.
     * @event
     */
-    dispatch_match: createEvent('match'),
+    emit_match: createEvent('match'),
 
    /**
     * Occurs after matched property has been set to false.
     * @event
     */
-    dispatch_unmatch: createEvent('unmatch'),
+    emit_unmatch: createEvent('unmatch'),
 
    /**
     * Occurs after matchFunction property has been changed.
     * @event
     */
-    dispatch_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
+    emit_matchFunctionChanged: createEvent('matchFunctionChanged', 'oldMatchFunction'),
 
    /**
     * Indicate could be able node to be selected or not.
@@ -2092,7 +2092,7 @@
 
       // synchronize node state according to config
       if (this.disabled)
-        this.dispatch_disable();
+        this.emit_disable();
 
       if (this.selected)
       {
@@ -2165,7 +2165,7 @@
         if (!selected && this.selectable)
         {
           this.selected = true;
-          this.dispatch_select();
+          this.emit_select();
         }
 
       return this.selected != selected;
@@ -2186,7 +2186,7 @@
         else
         {
           this.selected = false;
-          this.dispatch_unselect();
+          this.emit_unselect();
         }
       }
 
@@ -2203,7 +2203,7 @@
         this.disabled = false;
 
         if (this.disabled == this.contextDisabled)
-          this.dispatch_enable();
+          this.emit_enable();
       }
     },
 
@@ -2216,7 +2216,7 @@
         this.disabled = true;
 
         if (this.disabled != this.contextDisabled)
-          this.dispatch_disable();
+          this.emit_disable();
       }
     },
 
@@ -2247,9 +2247,9 @@
         this.matched = matched;
 
         if (matched)
-          this.dispatch_match();
+          this.emit_match();
         else
-          this.dispatch_unmatch();
+          this.emit_unmatch();
       }
     },
 
@@ -2282,7 +2282,7 @@
    /**
     * @inheritDoc
     */
-    dispatch_childNodesModified: function(delta){
+    emit_childNodesModified: function(delta){
       events.childNodesModified.call(this, delta);
 
       this.nullGroup.nextSibling = this.firstChild;
@@ -2309,7 +2309,7 @@
    /**
     * @inheritDoc
     */
-    dispatch_ownerChanged: function(oldOwner){
+    emit_ownerChanged: function(oldOwner){
       // detach from old owner, if it still connected
       if (oldOwner && oldOwner.grouping === this)
         oldOwner.setGrouping(null, true);
@@ -2578,7 +2578,7 @@
       }
 
       if (insertCount || deleteCount)
-        this.dispatch_itemsChanged(newDelta);
+        this.emit_itemsChanged(newDelta);
     },
     destroy: function(){
       this.destroy();
@@ -2653,8 +2653,8 @@
    /**
     * @inheritDoc
     */
-    dispatch_itemsChanged: function(delta){
-      Dataset.prototype.dispatch_itemsChanged.call(this, delta);
+    emit_itemsChanged: function(delta){
+      Dataset.prototype.emit_itemsChanged.call(this, delta);
 
       if (delta.inserted)
       {
@@ -2663,7 +2663,7 @@
           if (!node.selected)
           {
             node.selected = true;
-            node.dispatch_select();
+            node.emit_select();
           }
         }
       }
@@ -2675,7 +2675,7 @@
           if (node.selected)
           {
             node.selected = false;
-            node.dispatch_unselect();
+            node.emit_unselect();
           }
         }
       }
