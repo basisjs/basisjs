@@ -27,34 +27,6 @@
   };
 
 
-  //
-  // listen scheme
-  //
-
-  var LISTEN_MAP = {};
-  var LISTEN = {
-    add: function(listenName, eventName, propertyName, callback){
-      if (!propertyName)
-        propertyName = listenName;
-
-      LISTEN_MAP[eventName] = {
-        listenName: listenName,
-        listen: callback || function(listenHandler, args){
-          if (args[0])  // second argument is oldObject
-            args[0].removeHandler(listenHandler, this);
-
-          if (this[propertyName])
-            this[propertyName].addHandler(listenHandler, this);
-        }
-      };
-
-      var eventFunction = events[eventName];
-      if (eventFunction)
-        extend(eventFunction, LISTEN_MAP[eventName]);
-    }
-  };
-
-
  /**
   * Creates new type of event or returns existing one, if it was created before.
   * @param {string} eventName
@@ -69,10 +41,6 @@
         var cursor = this;
         var args;
         var fn;
-
-        if (eventFunction.listen)
-          if (fn = this.listen[eventFunction.listenName])
-            eventFunction.listen.call(this, fn, arguments);
 
         while (cursor = cursor.handler)
         {
@@ -114,9 +82,6 @@
       }
 
       events[eventName] = eventFunction;
-
-      if (LISTEN_MAP[eventName])
-        extend(eventFunction, LISTEN_MAP[eventName]);
     }
 
     return eventFunction;
@@ -267,8 +232,6 @@
   //
 
   module.exports = {
-    LISTEN: LISTEN,
-
     create: createDispatcher,
     events: events,
 
