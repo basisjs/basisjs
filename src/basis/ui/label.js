@@ -22,7 +22,6 @@
   var DOM = basis.dom;
   var cssom = basis.cssom;
 
-  var LISTEN = basis.event.LISTEN;
   var STATE = basis.data.STATE;
   var DELEGATE = basis.dom.wrapper.DELEGATE;
 
@@ -170,12 +169,19 @@
     var oldOwnerDataSource = this.ownerDataSource;
     if (oldOwnerDataSource != newOwnerDataSource)
     {
+      var listenHandler = this.listen.ownerDataSource;
+      if (listenHandler)
+      {
+        if (oldOwnerDataSource)
+          oldOwnerDataSource.removeHandler(listenHandler, this);
+        if (newOwnerDataSource)
+          newOwnerDataSource.addHandler(listenHandler, this);
+      }
+
       this.ownerDataSource = newOwnerDataSource;
       this.emit_ownerDataSourceChanged(oldOwnerDataSource);
     }
   }
-
-  LISTEN.add('ownerDataSource', 'ownerDataSourceChanged');
 
  /**
   * @class

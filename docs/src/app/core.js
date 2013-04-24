@@ -171,7 +171,6 @@
 
 
   basis.data.SUBSCRIPTION.addProperty('inheritDoc');
-  basis.event.LISTEN.add('inheritDoc', 'inheritDocChanged');
 
   var destroyJsDocEntity = JsDocEntity.entityType.entityClass.prototype.destroy;
   JsDocEntity.entityType.entityClass.extend({
@@ -219,6 +218,15 @@
       var oldInherit = this.inheritDoc;
       if (oldInherit != doc)
       {
+        var listenHandler = this.listen.inheritDoc;
+        if (listenHandler)
+        {
+          if (oldInherit)
+            oldInherit.removeHandler(listenHandler, this);
+          if (doc)
+            doc.addHandler(listenHandler, this);
+        }
+
         this.inheritDoc = doc;
 
         if (doc)

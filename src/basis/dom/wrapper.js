@@ -34,7 +34,6 @@
   var createEvent = basis.event.create;
   var events = basis.event.events;
 
-  var LISTEN = basis.event.LISTEN;
   var SUBSCRIPTION = basis.data.SUBSCRIPTION;
   var STATE = basis.data.STATE;
 
@@ -320,14 +319,6 @@
 
   // default satellite hooks
   var SATELLITE_OWNER_HOOK = oneFunctionProperty(SATELLITE_UPDATE, {});
-
-
-  //
-  // reg new type of listen
-  //
-
-  LISTEN.add('owner', 'ownerChanged');
-  LISTEN.add('dataSource', 'dataSourceChanged');
 
 
  /**
@@ -776,8 +767,16 @@
       var oldOwner = this.owner;
       if (oldOwner !== owner)
       {
-        this.owner = owner;
+        var listenHandler = this.listen.owner;
+        if (listenHandler)
+        {
+          if (oldOwner)
+            oldOwner.removeHandler(listenHandler, this);
+          if (owner)
+            owner.addHandler(listenHandler, this);
+        }
 
+        this.owner = owner;
         this.emit_ownerChanged(oldOwner);
 
         if (this.autoDelegate == DELEGATE.OWNER || this.autoDelegate === DELEGATE.ANY)
@@ -1739,6 +1738,9 @@
         {
           this.dataSourceMap_ = null;
           this.dataSource = null;
+
+          if (listenHandler)
+            oldDataSource.removeHandler(listenHandler, this);
         }
 
         // remove old children
@@ -1764,10 +1766,14 @@
 
           if (listenHandler)
           {
+            dataSource.addHandler(listenHandler, this);
+
             if (dataSource.itemCount && listenHandler.itemsChanged)
+            {
               listenHandler.itemsChanged.call(this, dataSource, {
                 inserted: dataSource.getItems()
               });
+            }
           }
         }
         else
