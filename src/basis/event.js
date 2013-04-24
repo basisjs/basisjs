@@ -272,8 +272,5 @@
     create: createDispatcher,
     events: events,
 
-    Emitter: Emitter,
-
-    // deprecated
-    EventObject: Emitter
+    Emitter: Emitter
   }; 
