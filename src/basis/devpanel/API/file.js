@@ -92,14 +92,11 @@ module.exports = {
     basis.devtools.createFile(filename);
   },
   readFile: function(filename){
-    var file = basis.devtools.getFile(filename);
-    if (file)
-    {
-      if (file.data.content)
-        sendFile(file);
-      else
-        file.read();
-    }
+    var file = basis.devtools.getFile(filename, true);
+    if (file.data.content)
+      sendFile(file);
+    else
+      file.read();
   },
   saveFile: function(filename, content){
     var file = basis.devtools.getFile(filename);

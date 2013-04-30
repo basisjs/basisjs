@@ -31,7 +31,7 @@ module.exports = {
       if (dictionaries[dictionaryName].location)
         data.push({
           Dictionary: dictionaryName,
-          Location: dictionaries[dictionaryName].location
+          Location: basis.path.relative(dictionaries[dictionaryName].location)
         });
 
     sendData('dictionaryList', data);
@@ -48,18 +48,21 @@ module.exports = {
         tokens: {}
       };
 
-      for (var tokenName in dict.resources['base'])
+      if (dict.resources['base'])
       {
-        if (!data.tokens[tokenName])
+        for (var tokenName in dict.resources['base'])
         {
-          data.tokens[tokenName] = {};
-          dict.getToken(tokenName);
+          if (!data.tokens[tokenName])
+          {
+            data.tokens[tokenName] = {};
+            dict.getToken(tokenName);
+          }
+          
+          data.tokens[tokenName][culture] = dict.resources[culture] && dict.resources[culture][tokenName] || '';
         }
-        
-        data.tokens[tokenName][culture] = dict.resources[culture] && dict.resources[culture][tokenName] || '';
-      }
 
-      sendData('dictionaryResource', data);
+        sendData('dictionaryResource', data);
+      }
     }
   },
 
@@ -68,12 +71,11 @@ module.exports = {
     token.dictionary.setCultureValue(culture, name, value);
   },
 
-  saveDictionary: function(dictionaryName, cultureList){
+  saveDictionary: function(dictionaryName, location, cultureList){
     if (!basis.devtools)
       return;
 
     var dict = basis.l10n.getDictionary(dictionaryName);
-    var location = dict.location;
 
     var dictionaryData = {};
     var dictContent;
@@ -103,13 +105,15 @@ module.exports = {
     var file;
     var newContent;
 
+
     for (var i = 0, culture; culture = cultureList[i]; i++)
     {
       filename = '/' + basis.path.relative(location + '/' + culture + '.json');
       file = basis.devtools.getFile(filename, true);
 
       dictionaries = Object.extend({}, basis.resource(filename)());
-      dictionaries[dictionaryName] = dict.resources[culture];
+
+      //dictionaries[dictionaryName] = dict.resources[culture];
       dictParts = [];
       for (var dName in dictionaries)
       {
@@ -117,15 +121,16 @@ module.exports = {
 
         if (dName == dict.namespace)
         {
-          for (var tokenName in dict.resources['base'])
+          for (var tokenName in dictionaries[dName])
           {
-            if (dict.resources[culture][tokenName])
-              resourceParts.push('    "' + tokenName + '": "' + dict.resources[culture][tokenName] + '"');
+            var tokenValue = dict.resources[culture][tokenName] || dictionaries[dName][tokenName] || '';
+
+            resourceParts.push('    "' + tokenName + '": "' + tokenValue + '"');
 
             if (!dictionaryData[tokenName])
               dictionaryData[tokenName] = {};
 
-            dictionaryData[tokenName][culture] = dict.resources[culture][tokenName] || '';
+            dictionaryData[tokenName][culture] = tokenValue;
           }
         }
         else
