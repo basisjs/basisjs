@@ -105,13 +105,13 @@ module.exports = {
     var file;
     var newContent;
 
-
+    debugger;
     for (var i = 0, culture; culture = cultureList[i]; i++)
     {
       filename = '/' + basis.path.relative(location + '/' + culture + '.json');
       file = basis.devtools.getFile(filename, true);
 
-      dictionaries = Object.extend({}, basis.resource(filename)());
+      dictionaries = basis.object.extend({}, basis.resource(filename)());
 
       //dictionaries[dictionaryName] = dict.resources[culture];
       dictParts = [];
@@ -121,9 +121,10 @@ module.exports = {
 
         if (dName == dict.namespace)
         {
-          for (var tokenName in dictionaries[dName])
+          var tokens = basis.object.complete(basis.object.extend({}, dict.resources[culture]), dictionaries[dName]);
+          for (var tokenName in tokens)
           {
-            var tokenValue = dict.resources[culture][tokenName] || dictionaries[dName][tokenName] || '';
+            var tokenValue = tokens[tokenName] || '';
 
             resourceParts.push('    "' + tokenName + '": "' + tokenValue + '"');
 
