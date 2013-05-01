@@ -105,7 +105,6 @@ module.exports = {
     var file;
     var newContent;
 
-    debugger;
     for (var i = 0, culture; culture = cultureList[i]; i++)
     {
       filename = '/' + basis.path.relative(location + '/' + culture + '.json');

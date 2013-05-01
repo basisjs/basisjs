@@ -15,7 +15,7 @@ module.exports = {
   sendData: function(action, data){
     transferDiv.setAttribute('action', action);
     transferDiv.innerHTML = '';
-    transferDiv.appendChild(document.createTextNode(JSON.stringify(data || {})));
+    transferDiv.appendChild(document.createTextNode(JSON.stringify(data)));
     transferDiv.dispatchEvent(transferDataEvent);
     transferDiv.innerHTML = '';
   }
