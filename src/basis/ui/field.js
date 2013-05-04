@@ -976,7 +976,7 @@
               return;
             }
 
-            next = DOM.axis(cur ? cur : this.firstChild, DOM.AXIS_FOLLOWING_SIBLING).search(false, 'disabled');
+            next = DOM.axis(cur || this.firstChild, DOM.AXIS_FOLLOWING_SIBLING).search(false, 'disabled');
           break;
 
           case event.KEY.UP: 
@@ -990,7 +990,7 @@
               return;
             }
 
-            next = cur ? DOM.axis(cur, DOM.AXIS_PRESCENDING_SIBLING).search(false, 'disabled') : this.firstChild;
+            next = DOM.axis(cur || this.lastChild, DOM.AXIS_PRECEDING_SIBLING).search(false, 'disabled');
           break;
         }
 
