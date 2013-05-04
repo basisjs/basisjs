@@ -66,6 +66,16 @@
 
     onSubmit: basis.fn.$false,
 
+    focusFirstNonEmpty: true,
+    focus: function(select){
+      for (var i = 0, field; field = this.childNodes[i]; i++)
+        if (field.focusable && (!this.focusFirstNonEmpty || !field.getValue() || !field.getValue().length))
+        {
+          field.focus(select);
+          return;
+        }
+    },
+
    /**
     * @deprecated
     */
