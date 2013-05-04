@@ -52,12 +52,11 @@
     listen: {
       childNode: {
         commit: function(field){
-          var next = DOM.axis(field, DOM.AXIS_FOLLOWING_SIBLING).search(true, 'focusable');
+          while (field = field.nextSibling)
+            if (field.focusable)
+              return field.focus(true);
 
-          if (next)
-            next.focus(true);
-          else
-            this.submit();
+          this.submit();
         }
       }
     },
@@ -92,23 +91,24 @@
     },
 
     loadData: function(data, noValidate){
-      var names = basis.object.keys(data);
-
-      for (var field = this.firstChild; field; field = field.nextSibling)
+      for (var i = 0, field; field = this.childNodes[i]; i++)
       {
-        if (names.indexOf(field.name) != -1)
+        if (field.name in data)
+        {
           field.setValue(data[field.name]);
+          field.setValidity();  // set undefined validity
+        }
         else
+        {
           field.reset();
-
-        field.setValidity();  // set undefined validity
+        }
       }
 
       if (!noValidate)
         this.validate();
     },
     reset: function(){
-      for (var field = this.firstChild; field; field = field.nextSibling)
+      for (var i = 0, field; field = this.childNodes[i]; i++)
         field.reset();
 
       this.emit_reset();
@@ -117,7 +117,7 @@
       var errors = [];
       var error;
 
-      for (var field = this.firstChild; field; field = field.nextSibling)
+      for (var i = 0, field; field = this.childNodes[i]; i++)
         if (error = field.validate())
           errors.push(error);
 
