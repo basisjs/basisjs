@@ -595,6 +595,11 @@
       }
     },
 
+    init: function(){
+      TextField.prototype.init.call(this);
+      this.updateSymbolsLeft();
+    },
+
     updateSymbolsLeft: function(){
       var symbolsLeft = this.maxLength ? this.maxLength - this.getValue().length : -1;
 
