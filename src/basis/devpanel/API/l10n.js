@@ -112,6 +112,9 @@ module.exports = {
 
       dictionaries = basis.object.extend({}, basis.resource(filename)());
 
+      if (!dictionaries[dict.namespace])
+        dictionaries[dict.namespace] = {};
+
       //dictionaries[dictionaryName] = dict.resources[culture];
       dictParts = [];
       for (var dName in dictionaries)
