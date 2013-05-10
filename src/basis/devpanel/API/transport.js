@@ -6,11 +6,16 @@ var transferDataEvent;
 module.exports = {
   init: function(){
     transferDataEvent = document.createEvent('Event');
-    transferDataEvent.initEvent('transferData', true, true);
+    transferDataEvent.initEvent('devpanelData', false, false);
 
     transferDiv = document.body.appendChild(
-      basis.dom.createElement('pre#transferDiv[style="position: absolute; left: -2000px"]')
+      basis.dom.createElement('pre#devpanelSharedDom[style="position: absolute; left: -2000px"]')
     );
+
+    // dispatch init
+    var initEvent = document.createEvent('Event');
+    initEvent.initEvent('devpanelInit', false, false);
+    document.body.dispatchEvent(initEvent);
   },
   sendData: function(action, data){
     transferDiv.setAttribute('action', action);
