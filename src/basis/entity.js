@@ -369,10 +369,9 @@
   var EntityTypeWrapper = function(config){
     if (this instanceof EntityTypeWrapper)
     {
-      var isSingleton = config.singleton || config.isSingleton; // TODO: remove support for config.isSingleton
-
       var result;
-      if (isSingleton)
+
+      if (config.singleton)
         result = function(data){
           var entity = entityType.singleton_;
 
@@ -520,14 +519,11 @@
       }, config.all));
 
       // singleton
-      this.singleton = config.singleton;
-      if ('isSingleton' in config)
-      {
-        this.singleton = config.isSingleton;
-        ;;;basis.dev.warn('Property `isSingleton` in config is deprecated, and will be dropped soon. Use `singleton` property instead.');
-      }
+      this.singleton = !!config.singleton;
       if (this.singleton)
         this.get = getSingleton;
+
+      ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');      
 
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters);
