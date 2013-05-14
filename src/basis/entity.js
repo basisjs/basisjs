@@ -345,6 +345,11 @@
       };
 
       result.entitySetType = entitySetType;
+      result.reader = function(data){
+        if (Array.isArray(data))
+          return data.map(wrapper.reader || wrapper);
+        return data;
+      }
 
       return result;
     }
