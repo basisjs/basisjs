@@ -488,7 +488,6 @@
 
     defaults: null,
     fields: null,
-    extensible: false,
 
     index__: null,
     slot_: null,
@@ -529,9 +528,6 @@
       }
       if (this.singleton)
         this.get = getSingleton;
-
-      if (config.extensible)
-        this.extensible = true;
 
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters);
@@ -952,15 +948,8 @@
 
         if (!valueWrapper)
         {
-          // exit if no new fields allowed
-          if (!entityType.extensible)
-          {
-            ;;; entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
-            return false;
-          }
-
-          // emulate field wrapper
-          valueWrapper = $self;
+          ;;;entityWarn(this, 'Field "' + key + '" is not defined, value has been ignored.');
+          return false;
         }
 
         // main part
