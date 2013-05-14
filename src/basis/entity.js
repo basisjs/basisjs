@@ -795,18 +795,6 @@
   */
   var createEntityClass = function(entityType, all, fields, defaults, slots){
 
-    function rollbackChanges(entity, delta, rollbackDelta){
-      for (var key in delta)
-        entity.data[key] = delta[key];
-
-      if (rollbackDelta && !entity.modified)
-        for (var key in rollbackDelta)
-        {
-          entity.modified = rollbackDelta;
-          break;
-        }
-    }
-
     function calc(entity, delta, rollbackDelta){
       var update = false;
       var calcs = entityType.calcs;
@@ -820,21 +808,16 @@
           for (var i = 0, calc; calc = calcs[i]; i++)
           {
             var key = calc.key;
+            var oldValue = data[key];
+            var newValue = calc.wrapper(delta, data, oldValue);
 
-            if (key)
+            // if no key that's a constrain, nothing to do
+            if (key && newValue !== oldValue)
             {
-              var oldValue = data[key];
-              var newValue = calc.wrapper(delta, data, oldValue);
-
-              if (newValue !== oldValue)
-              {
-                data[key] = newValue;
-                delta[key] = oldValue;
-                update = true;
-              }
+              data[key] = newValue;
+              delta[key] = oldValue;
+              update = true;
             }
-            else
-              calc.wrapper(delta, data);
           }
         }
 
@@ -848,9 +831,20 @@
 
       } catch(e) {
         ;;;entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
-        rollbackChanges(entity, delta, rollbackDelta);
+
         update = false;
         newId = curId;
+
+        // rollback all changes
+        for (var key in delta)
+          entity.data[key] = delta[key];
+
+        if (rollbackDelta && !entity.modified)
+          for (var key in rollbackDelta)
+          {
+            entity.modified = rollbackDelta;
+            break;
+          }
       }
 
       if (newId !== curId)
