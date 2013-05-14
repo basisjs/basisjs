@@ -17,7 +17,6 @@
   var keys = basis.object.keys;
   var extend = basis.object.extend;
   var complete = basis.object.complete;
-  var arrayFrom = basis.array.from;
   var $self = basis.fn.$self;
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
@@ -68,13 +67,13 @@
   var Index = basis.Class(null, {
     className: namespace + '.Index',
 
-    init: function(normalize){
-      var index = this.index = {};
+    init: function(fn){
+      var index = {};
+      this.index = index;
 
-      this.normalize = normalize;
       this.calcWrapper = function(newValue, oldValue){
         // normalize new value
-        var value = normalize(newValue, oldValue);
+        var value = fn(newValue, oldValue);
 
         if (value !== oldValue && index[value])
           throw 'Duplicate value for index ' + oldValue + ' => ' + newValue;
@@ -525,14 +524,11 @@
       ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');      
 
       // create entity class
-      this.entityClass = createEntityClass(this, this.all, this.index__, this.slot_, this.fields, this.defaults);
+      this.entityClass = createEntityClass(this, this.all, this.slot_, this.fields, this.defaults);
       this.entityClass.extend({
         entityType: this,
         type: wrapper,
         typeName: this.name,
-        getId: function(){
-          return this.__id__;
-        },
         state: config.state || this.entityClass.state
       });
 
@@ -777,7 +773,7 @@
   //
 
   function entityWarn(entity, message){
-    ;;;basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity); 
+    basis.dev.warn('[basis.entity ' + entity.entityType.name + '#' + entity.basisObjectId + '] ' + message, entity); 
   }
 
  /**
@@ -797,9 +793,7 @@
  /**
   * @class
   */
-  var createEntityClass = function(entityType, all, index__, typeSlot, fields, defaults){
-
-    var idField = entityType.idField;
+  var createEntityClass = function(entityType, all, typeSlot, fields, defaults){
 
     function rollbackChanges(entity, delta, rollbackDelta){
       for (var key in delta)
@@ -816,21 +810,25 @@
     function calc(entity, delta, rollbackDelta){
       var update = false;
       var calcs = entityType.calcs;
-      var id = entity.__id__;
-
+      var curId = entity.__id__;
+      var newId;
       var data = entity.data;
+
       try {
         if (calcs)
         {
-          for (var i = 0, calc; calc = calcs[i++];)
+          for (var i = 0, calc; calc = calcs[i]; i++)
           {
             var key = calc.key;
+
             if (key)
             {
               var oldValue = data[key];
-              data[key] = calc.wrapper(delta, data, data[key]);
-              if (data[key] !== oldValue)
+              var newValue = calc.wrapper(delta, data, oldValue);
+
+              if (newValue !== oldValue)
               {
+                data[key] = newValue;
                 delta[key] = oldValue;
                 update = true;
               }
@@ -841,32 +839,36 @@
         }
 
         if (entityType.compositeKey)
-          entity.__id__ = entityType.compositeKey(delta, data, entity.__id__);
+          newId = entityType.compositeKey(delta, data, curId);
         else
-          if (idField && idField in delta)
-            entity.__id__ = data[idField];
+          newId = entityType.idField && entityType.idField in delta ? data[entityType.idField] : curId;
 
-        if (entity.__id__ !== id)
-          entityType.index__.calcWrapper(entity.__id__);
+        if (newId !== curId)
+          entityType.index__.calcWrapper(newId, curId);
 
       } catch(e) {
         ;;;entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
-        entity.__id__ = id;
         rollbackChanges(entity, delta, rollbackDelta);
         update = false;
+        newId = curId;
       }
 
-      if (entity.__id__ !== id)
-        updateIndex(entity, id, entity.__id__);
+      if (newId !== curId)
+      {
+        entity.__id__ = newId;
+        updateIndex(entity, curId, newId);
+      }
 
       return update;      
     }
 
     function updateIndex(entity, curValue, newValue){
+      var index = entityType.index__;
+
       // if current value is not null, remove old value from index first
       if (curValue != null)
       {
-        index__.remove(curValue, entity);
+        index.remove(curValue, entity);
         if (typeSlot[curValue])
           typeSlot[curValue].setDelegate();
       }
@@ -874,7 +876,7 @@
       // if new value is not null, add new value to index
       if (newValue != null)
       {
-        index__.add(newValue, entity);
+        index.add(newValue, entity);
         if (typeSlot[newValue])
           typeSlot[newValue].setDelegate(entity);
       }
@@ -934,6 +936,9 @@
       toString: function(){
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
       },
+      getId: function(){
+        return this.__id__;
+      },
       get: function(key){
         return this.data[key];
       },
@@ -968,7 +973,7 @@
           result = {};
 
           // NOTE: rollback is not allowed for id field
-          if (key != idField)
+          if (key != entityType.idField)
           {
             if (rollback)
             {
