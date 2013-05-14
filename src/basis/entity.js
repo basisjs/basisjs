@@ -690,7 +690,7 @@
           }
         };
     },
-    addCalcField: function(key, wrapper, valueWrapper){
+    addCalcField: function(key, wrapper){
       if (key && this.fields[key])
       {
         ;;;basis.dev.warn('Field `{0}` had defined already'.format(key));
@@ -702,9 +702,7 @@
 
       var calcConfig = {
         args: wrapper.args || [],
-        wrapper: !valueWrapper ? wrapper : function(delta, data, oldValue){
-          return valueWrapper(wrapper(delta, data, oldValue));
-        }
+        wrapper: wrapper
       };
 
       // NOTE: simple dependence calculation
