@@ -501,7 +501,6 @@
       this.idFields = {};
       this.defaults = {};
       this.aliases = {};
-      this.getters = {};      
       this.slot_ = {};
 
       // init index
@@ -526,7 +525,7 @@
       ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');      
 
       // create entity class
-      this.entityClass = createEntityClass(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters);
+      this.entityClass = createEntityClass(this, this.all, this.index__, this.slot_, this.fields, this.defaults);
       this.entityClass.extend({
         entityType: this,
         type: wrapper,
@@ -652,12 +651,12 @@
 
       this.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
 
-      this.getters['get_' + key] = function(){
+      this.entityClass.prototype['get_' + key] = function(){
         return this.data[key];
       };
-      /*this.setters['set_' + key] = function(value, rollback){
+      this.entityClass.prototype['set_' + key] = function(value, rollback){
         return this.set(key, value, rollback);
-      };*/
+      };
 
       if (!fieldDestroyHandlers[key])
         fieldDestroyHandlers[key] = {
@@ -798,7 +797,7 @@
  /**
   * @class
   */
-  var createEntityClass = function(entityType, all, index__, typeSlot, fields, defaults, getters){
+  var createEntityClass = function(entityType, all, index__, typeSlot, fields, defaults){
 
     var idField = entityType.idField;
 
@@ -881,7 +880,7 @@
       }
     }
 
-    return Class(BaseEntity, getters, {
+    return Class(BaseEntity, {
       className: namespace + '.Entity',
 
       extendConstructor_: false,
