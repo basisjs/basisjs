@@ -116,6 +116,8 @@
     },
     destroy: function(){
       this.index = null;
+      this.valueWrapper = null;
+      this.calcWrapper = null;
     }
   });
 
@@ -189,6 +191,7 @@
 
     result.args = names;
     result.calc = result;
+
     return result;
   }
 
@@ -251,10 +254,8 @@
     remove: ENTITYSET_WRAP_METHOD(Dataset, 'remove'),
 
     destroy: function(){
-      // inherit
       Dataset.prototype.destroy.call(this);
-
-      delete this.wrapper;
+      this.wrapper = null;
     }
   });
 
@@ -497,7 +498,6 @@
   */
   var EntityTypeConstructor = Class(null, {
     className: namespace + '.EntityType',
-    name: 'UntitledEntityType',
 
     defaults: null,
     fields: null,
@@ -507,61 +507,68 @@
     slot_: null,
 
     init: function(config, wrapper){
-      this.name = config.name || getUntitledName(this.name);
-
-      var entityClass__;
-
-      this.index__ = config.index;
-      this.idFields = {};
-
+      // process name
+      this.name = config.name || getUntitledName('UntitledEntityType');
       ;;;if (entityTypes.search(this.name, getter('name'))) basis.dev.warn('Dublicate entity type name: ', this.name);
-      entityTypes.push(this);
 
+      // init properties
+      this.fields = {};
+      this.idFields = {};
+      this.defaults = {};
+      this.aliases = {};
+      this.getters = {};      
+      this.slot_ = {};
+
+      // init index
+      if (config.index)
+      {
+        if (config.index instanceof Index)
+          this.index__ = config.index;
+        /** @cut */else basis.dev.warn('index must be instanceof basis.entity.Index');
+      }
+
+      // wrapper and all instances set
+      this.wrapper = wrapper;
+      this.all = new ReadOnlyEntitySet(basis.object.complete({
+        wrapper: wrapper
+      }, config.all));
+
+      // singleton
       this.singleton = config.singleton;
       if ('isSingleton' in config)
       {
         this.singleton = config.isSingleton;
         ;;;basis.dev.warn('Property `isSingleton` in config is deprecated, and will be dropped soon. Use `singleton` property instead.');
       }
-
-      this.wrapper = wrapper;
-
-      this.all = new ReadOnlyEntitySet(basis.object.extend(config.all || {}, {
-        wrapper: wrapper
-      }));
-      this.slot_ = {};
+      if (this.singleton)
+        this.get = getSingleton;
 
       if (config.extensible)
         this.extensible = true;
 
-      this.fields = {};
-      this.defaults = {};
-      this.aliases = {};
-      this.getters = {};
-
-      basis.object.iterate(config.fields, this.addField, this);
-      if (config.constrains)
-        config.constrains.forEach(function(item){
-          this.addCalcField(null, item);
-        }, this);
-
-      if (this.singleton)
-        this.get = getSingleton;
-
-      if (config.aliases)
-        basis.object.iterate(config.aliases, this.addAlias, this);
-
-      entityClass__ = this.entityClass = Entity(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters).extend({
+      // create entity class
+      this.entityClass = createEntityClass(this, this.all, this.index__, this.slot_, this.fields, this.defaults, this.getters);
+      this.entityClass.extend({
         entityType: this,
         type: wrapper,
         typeName: this.name,
         getId: function(){
           return this.__id__;
-        }
+        },
+        state: config.state || this.entityClass.state
       });
 
-      if (config.state)
-        entityClass__.extend({ state: config.state });
+      // define fields, aliases and constrains
+      basis.object.iterate(config.fields, this.addField, this);
+      basis.object.iterate(config.aliases, this.addAlias, this);
+
+      if (config.constrains)
+        config.constrains.forEach(function(item){
+          this.addCalcField(null, item);
+        }, this);
+
+      // reg entity type
+      entityTypes.push(this);
     },
     reader: function(data){
       var result = {};
@@ -604,9 +611,15 @@
       {
         if (alias in this.aliases == false)
           this.aliases[alias] = key;
-        /** @cut */else basis.dev.warn('Alias `{0}` already exists'.format(alias));
+        else
+        {
+          ;;;basis.dev.warn('Alias `{0}` already exists'.format(alias));
+        }
       }
-      /** @cut */else basis.dev.warn('Can\'t add alias `{0}` for non-exists field `{1}`'.format(alias, key));
+      else
+      {
+        ;;;basis.dev.warn('Can\'t add alias `{0}` for non-exists field `{1}`'.format(alias, key));
+      }
     },
     addField: function(key, config){
       if (this.all.itemCount)
@@ -811,7 +824,7 @@
  /**
   * @class
   */
-  var Entity = function(entityType, all, index__, typeSlot, fields, defaults, getters){
+  var createEntityClass = function(entityType, all, index__, typeSlot, fields, defaults, getters){
 
     var idField = entityType.idField;
 
