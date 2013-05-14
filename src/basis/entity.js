@@ -488,7 +488,7 @@
     fields: null,
 
     index__: null,
-    slot_: null,
+    slots: null,
 
     init: function(config, wrapper){
       // process name
@@ -500,7 +500,7 @@
       this.idFields = {};
       this.defaults = {};
       this.aliases = {};
-      this.slot_ = {};
+      this.slots = {};
 
       // init index
       if (config.index)
@@ -524,7 +524,7 @@
       ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');      
 
       // create entity class
-      this.entityClass = createEntityClass(this, this.all, this.slot_, this.fields, this.defaults);
+      this.entityClass = createEntityClass(this, this.all, this.fields, this.defaults, this.slots);
       this.entityClass.extend({
         entityType: this,
         type: wrapper,
@@ -747,7 +747,7 @@
       var id = this.getId(data);
       if (id != null)
       {
-        var slot = this.slot_[id];
+        var slot = this.slots[id];
         if (!slot)
         {
           if (isKeyType[typeof data])
@@ -758,7 +758,7 @@
             data = tmp;
           }
 
-          slot = this.slot_[id] = new Slot({
+          slot = this.slots[id] = new Slot({
             delegate: this.get(id),
             data: data
           });
@@ -793,7 +793,7 @@
  /**
   * @class
   */
-  var createEntityClass = function(entityType, all, typeSlot, fields, defaults){
+  var createEntityClass = function(entityType, all, fields, defaults, slots){
 
     function rollbackChanges(entity, delta, rollbackDelta){
       for (var key in delta)
@@ -869,16 +869,16 @@
       if (curValue != null)
       {
         index.remove(curValue, entity);
-        if (typeSlot[curValue])
-          typeSlot[curValue].setDelegate();
+        if (slots[curValue])
+          slots[curValue].setDelegate();
       }
 
       // if new value is not null, add new value to index
       if (newValue != null)
       {
         index.add(newValue, entity);
-        if (typeSlot[newValue])
-          typeSlot[newValue].setDelegate(entity);
+        if (slots[newValue])
+          slots[newValue].setDelegate(entity);
       }
     }
 
