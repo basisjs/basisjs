@@ -72,18 +72,6 @@
       var index = this.index = {};
 
       this.normalize = normalize;
-      this.valueWrapper = function(newValue, oldValue){
-        // normalize new value
-        var value = normalize(newValue, oldValue);
-
-        if (value !== oldValue && index[value])
-        {
-          ;;;basis.dev.warn('Duplicate value for index ' + oldValue + ' => ' + newValue);
-          return oldValue;  // no changes
-        }
-
-        return value;
-      };
       this.calcWrapper = function(newValue, oldValue){
         // normalize new value
         var value = normalize(newValue, oldValue);
@@ -116,7 +104,6 @@
     },
     destroy: function(){
       this.index = null;
-      this.valueWrapper = null;
       this.calcWrapper = null;
     }
   });
@@ -664,9 +651,6 @@
         {
           this.idField = key;
         }
-
-        //calcWrapper = this.index__.calcWrapper;
-        //wrapper = this.index__.valueWrapper;
       }
 
       if (config.calc)
