@@ -972,8 +972,8 @@
         {
           result = {};
 
-          // NOTE: rollback is not allowed for id field
-          if (key != entityType.idField)
+          // NOTE: rollback is not allowed for id fields
+          if (!entityType.idFields[key])
           {
             if (rollback)
             {
