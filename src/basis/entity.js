@@ -372,7 +372,7 @@
 
       if (config.singleton)
         result = function(data){
-          var entity = entityType.singleton_;
+          var entity = entityType.get();
 
           if (entity)
           {
@@ -518,9 +518,17 @@
       // singleton
       this.singleton = !!config.singleton;
       if (this.singleton)
+      {
+        var singletonInstance;
         this.get = function(){
-          return this.singleton_;
+          return singletonInstance;
         };
+        this.all.addHandler({
+          itemsChanged: function(sender, delta){
+            singletonInstance = delta.inserted ? delta.inserted[0] : null;
+          }
+        }, this);
+      }
 
       ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');      
 
@@ -924,9 +932,6 @@
         all.emit_itemsChanged({
           inserted: [this]
         });
-
-        if (entityType.singleton)
-          entityType.singleton_ = this;
       },
       toString: function(){
         return '[object ' + this.constructor.className + '(' + this.entityType.name + ')]';
@@ -1215,9 +1220,6 @@
         all.emit_itemsChanged({
           deleted: [this]
         });
-
-        if (entityType.singleton)
-          entityType.singleton_ = null;
 
         // clear links
         this.data = NULL_INFO; 
