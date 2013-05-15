@@ -67,43 +67,44 @@
   var Index = basis.Class(null, {
     className: namespace + '.Index',
 
+    items: null,
+    fn: String,
+
     init: function(fn){
-      var index = {};
-      this.index = index;
+      this.items = {};
+      if (typeof fn == 'function')
+        this.fn = fn;
+    },
+    calcWrapper: function(newValue, oldValue){
+      var value = this.fn(newValue, oldValue);
 
-      this.calcWrapper = function(newValue, oldValue){
-        // normalize new value
-        var value = fn(newValue, oldValue);
+      if (value !== oldValue && this.items[value])
+        throw 'Duplicate value for index ' + oldValue + ' => ' + newValue;
 
-        if (value !== oldValue && index[value])
-          throw 'Duplicate value for index ' + oldValue + ' => ' + newValue;
-
-        return value;
-      };
+      return value;
     },
     get: function(value, checkType){
-      var item = this.index[value];
-      if (item && (!checkType || item instanceof checkType))
+      var item = this.items[value];
+      if (!checkType || item instanceof checkType)
         return item;
     },
     add: function(value, item){
-      var curr = this.index[value];
-      if (item && (!curr || curr === item))
+      var cur = this.items[value];
+      if (item && (!cur || cur === item))
       {
-        this.index[value] = item;
+        this.items[value] = item;
         return true;
       }
     },
     remove: function(value, item){
-      if (this.index[value] === item)
+      if (this.items[value] === item)
       {
-        delete this.index[value];
+        delete this.items[value];
         return true;
       }
     },
     destroy: function(){
-      this.index = null;
-      this.calcWrapper = null;
+      this.items = null;
     }
   });
 
@@ -416,8 +417,8 @@
                   idValue = data[idField];
             }
 
-            if (idValue != null && index)
-              entity = index.get(idValue, entityType.entityClass);
+            if (idValue != null && entityType.index)
+              entity = entityType.index.get(idValue, entityType.entityClass);
 
             if (entity && entity.entityType === entityType)
               entity.update(data);
@@ -429,40 +430,40 @@
         };
 
       var entityType = new EntityTypeConstructor(config || {}, result);
-      var index = entityType.index__;
       var entityClass = entityType.entityClass;
 
       extend(result, {
+        all: entityType.all,
+
+        type: entityType,
+        typeName: entityType.name,
+        entityType: entityType,
+
         toString: function(){
           return this.typeName + '()';
         },
-        entityType: entityType,
-        type: result,
-        typeName: entityType.name,
-        index: index,
+
         reader: function(data){
           return entityType.reader(data);
-        },
-
-        get: function(data){
-          return entityType.get(data);
         },
         addField: function(key, wrapper){
           entityType.addField(key, wrapper);
         },
-        all: entityType.all,
-        getSlot: function(index, defaults){
-          return entityType.getSlot(index, defaults);
+        addCalcField: function(key, wrapper){
+          entityType.addCalcField(key, wrapper);
+        },
+        
+        get: function(data){
+          return entityType.get(data);
+        },
+        getSlot: function(id, defaults){
+          return entityType.getSlot(id, defaults);
         },
 
         extend: function(){
-          entityClass.extend.apply(entityClass, arguments);
+          return entityClass.extend.apply(entityClass, arguments);
         }
       });
-
-      // debug only
-      //result.entityType = entityType;
-      //result.callText = function(){ return entityType.name };
 
       return result;
     }
@@ -483,11 +484,17 @@
   var EntityTypeConstructor = Class(null, {
     className: namespace + '.EntityType',
 
-    defaults: null,
-    fields: null,
+    wrapper: null,
+    all: null,
 
-    index__: null,
+    fields: null,
+    idFields: null,
+    defaults: null,
+
+    aliases: null,
     slots: null,
+
+    index: null,
 
     init: function(config, wrapper){
       // process name
@@ -502,10 +509,11 @@
       this.slots = {};
 
       // init index
-      if (config.index)
+      var index = config.index;
+      if (index)
       {
-        if (config.index instanceof Index)
-          this.index__ = config.index;
+        if (index instanceof Index)
+          this.index = index;
         /** @cut */else basis.dev.warn('index must be instanceof basis.entity.Index');
       }
 
@@ -633,8 +641,8 @@
 
       if (config.id)
       {
-        if (!this.index__)
-          this.index__ = new Index(String);
+        if (!this.index)
+          this.index = new Index(String);
 
         this.idFields[key] = true;
 
@@ -732,7 +740,7 @@
     get: function(entityOrData){
       var id = this.getId(entityOrData);
       if (id != null)
-        return this.index__.get(id, this.entityClass);
+        return this.index.get(id, this.entityClass);
     },
     getId: function(entityOrData){
       if ((this.idField || this.compositeKey) && entityOrData != null)
@@ -836,7 +844,7 @@
           newId = entityType.idField && entityType.idField in delta ? data[entityType.idField] : curId;
 
         if (newId !== curId)
-          entityType.index__.calcWrapper(newId, curId);
+          entityType.index.calcWrapper(newId, curId);
 
       } catch(e) {
         ;;;entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
@@ -866,7 +874,7 @@
     }
 
     function updateIndex(entity, curValue, newValue){
-      var index = entityType.index__;
+      var index = entityType.index;
 
       // if current value is not null, remove old value from index first
       if (curValue != null)
