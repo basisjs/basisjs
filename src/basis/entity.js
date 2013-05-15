@@ -529,7 +529,7 @@
         entityType: this,
         type: wrapper,
         typeName: this.name,
-        state: config.state || this.entityClass.state
+        state: config.state || this.entityClass.prototype.state
       });
 
       // define fields, aliases and constrains
