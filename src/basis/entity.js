@@ -417,7 +417,7 @@
                   idValue = data[idField];
             }
 
-            if (idValue != null && entityType.index)
+            if (idValue != null)
               entity = entityType.index.get(idValue, entityType.entityClass);
 
             if (entity && entity.entityType === entityType)
@@ -494,7 +494,9 @@
     aliases: null,
     slots: null,
 
+    singleton: false,
     index: null,
+    entityClass: null,
 
     init: function(config, wrapper){
       // process name
@@ -566,32 +568,20 @@
 
       // key type value
       if (isKeyType[typeof data])
-      {
-        if (this.idField)
-        {
-          result[this.idField] = data;
-          return result;
-        }
-        return null;
-      }
+        return this.idField ? data : null;
 
       // return null id data is not an object
       if (!data || data == null)
         return null;
-
         
       // map data
       for (var key in data)
       {
-        var fieldKey = key in this.aliases 
-          ? this.aliases[key]
-          : '';
-
-        if (fieldKey && fieldKey in this.fields)
+        var fieldKey = this.aliases[key];
+        if (fieldKey)
         {
-          result[fieldKey] = this.fields[fieldKey].reader
-            ? this.fields[fieldKey].reader(data[key])
-            : data[key];
+          var reader = this.fields[fieldKey].reader;
+          result[fieldKey] = reader ? reader(data[key]) : data[key];
         }
       }
 
