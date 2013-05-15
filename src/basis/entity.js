@@ -1232,6 +1232,29 @@
   function isEntity(value){
     return value && value instanceof Entity;
   }
+  function createType(configOrName, fields){
+    var config = configOrName || {};
+
+    if (typeof configOrName == 'string')
+    {
+      config = {
+        name: config,
+        fields: fields || {}
+      };
+    }
+    else
+    {
+      if (fields)
+        config = basis.object.merge(config, {
+          fields: fields
+        });
+    }
+
+    return new EntityTypeWrapper(config);
+  }
+  function createSetType(config){
+    return new EntitySetWrapper(config);
+  }  
 
   //
   // export names
@@ -1239,6 +1262,8 @@
 
   module.exports = {
     isEntity: isEntity,
+    createType: createType,
+    createSetType: createSetType,
 
     NumericId: NumericId,
     NumberId: NumberId,
