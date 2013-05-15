@@ -157,6 +157,15 @@
   }
 
  /**
+  * Merge several objects into new object and returns it.
+  * @param {...*} args
+  * @return {object}
+  */ 
+  function merge(/* obj1 .. objN */){
+    return arrayFrom(arguments).reduce(extend, {});
+  }  
+
+ /**
   * Returns list of callback call result for every object's key-value pair.
   * @param {object} object Any object can has properties.
   * @param {function(key, value)} callback
@@ -2355,6 +2364,7 @@
       values: values,
       slice: slice,
       splice: splice,
+      merge: merge,
       iterate: iterate,
       coalesce: coalesce
     },
