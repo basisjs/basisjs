@@ -475,7 +475,6 @@
   // Entity type constructor
   //
 
-  var getSingleton = getter('singleton_');
   var fieldDestroyHandlers = {};
 
  /**
@@ -519,7 +518,9 @@
       // singleton
       this.singleton = !!config.singleton;
       if (this.singleton)
-        this.get = getSingleton;
+        this.get = function(){
+          return this.singleton_;
+        };
 
       ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');      
 
@@ -796,11 +797,11 @@
   var createEntityClass = function(entityType, all, fields, defaults, slots){
 
     function calc(entity, delta, rollbackDelta){
-      var update = false;
       var calcs = entityType.calcs;
+      var data = entity.data;
+      var updated = false;
       var curId = entity.__id__;
       var newId;
-      var data = entity.data;
 
       try {
         if (calcs)
@@ -816,7 +817,7 @@
             {
               data[key] = newValue;
               delta[key] = oldValue;
-              update = true;
+              updated = true;
             }
           }
         }
@@ -832,10 +833,10 @@
       } catch(e) {
         ;;;entityWarn(entity, '(rollback changes) Exception on field calcs: ' + (e && e.message || e));
 
-        update = false;
+        // rollback all changes
+        updated = false;
         newId = curId;
 
-        // rollback all changes
         for (var key in delta)
           entity.data[key] = delta[key];
 
@@ -853,7 +854,7 @@
         updateIndex(entity, curId, newId);
       }
 
-      return update;      
+      return updated;      
     }
 
     function updateIndex(entity, curValue, newValue){
