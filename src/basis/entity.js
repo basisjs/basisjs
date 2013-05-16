@@ -1275,7 +1275,7 @@
     calc: CalculateField,
 
     EntityType: EntityTypeWrapper,
-    Entity: Entity,
+    Entity: createEntityClass,
     BaseEntity: BaseEntity,
 
     EntitySetType: EntitySetWrapper,
