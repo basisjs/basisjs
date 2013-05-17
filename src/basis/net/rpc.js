@@ -97,10 +97,10 @@
 
     // splice properties
     var fn = basis.object.splice(config, ['prepare', 'request']);
-    var callback = [
+    var callback = basis.object.merge(
       DEFAULT_CALLBACK,
       basis.object.splice(config, ['start', 'success', 'failure', 'complete'])
-    ].merge();
+    );
 
     // lazy transport
     var getTransport = basis.fn.lazyInit(function(){
@@ -124,7 +124,7 @@
 
         this.request = getTransport().request(basis.object.complete({
           origin: this
-        }, fn.request.call(this)));
+        }, fn.request.apply(this, arguments)));
       }
       else
       {
