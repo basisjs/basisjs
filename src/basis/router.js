@@ -25,10 +25,10 @@
   var SPLAT_PARAM = /\\\*\w+/g;
 
   var routes = {};
+  var matched = {};
   var started = false;
   var currentPath;
   var timer;
-  var match;
 
 
   function pathToRegExp(route){
@@ -92,54 +92,107 @@
 
     if (newPath != currentPath)
     {
-      ;;;basis.dev.log(namespace + ' hash changed:', newPath);
+      var inserted = [];
+      var deleted = [];
       currentPath = newPath;
+
+      ;;;basis.dev.log(namespace + ' hash changed:', newPath);
 
       for (var path in routes)
       {
         var route = routes[path];
         var match = newPath.match(route.regexp);
+
         if (match)
         {
-          var args = basis.array.from(match, 1);
-          var callbacks = basis.array.from(route.callbacks);
-          for (var i = 0, item; item = callbacks[i]; i++)
-            item.callback.apply(item.context, args);
-
-          ;;;basis.dev.log(namespace + ' hash match:', route.source, args);
+          if (!matched[path])
+            inserted.push(route);
+          matched[path] = match;
+        }
+        else
+        {
+          if (matched[path])
+          {
+            deleted.push(route);
+            delete matched[path];
+          }
         }
       }
+
+      // callback off for previous matched
+      for (var i = 0, route; route = deleted[i]; i++)
+      {
+        var callbacks = basis.array.from(route.callbacks);
+        for (var j = 0, item; item = callbacks[j]; j++)
+          if (item.leave)
+            item.leave.call(item.context);
+      }       
+
+      // callback off for previous matched
+      for (var i = 0, route; route = inserted[i]; i++)
+      {
+        var callbacks = basis.array.from(route.callbacks);
+        for (var j = 0, item; item = callbacks[j]; j++)
+          if (item.enter)
+            item.enter.call(item.context);
+      }
+
+      // callback for matched
+      for (var path in matched)
+      {
+        var route = routes[path];
+        var args = basis.array.from(matched[path], 1);
+        var callbacks = basis.array.from(route.callbacks);
+
+        ;;;basis.dev.log(namespace + ' hash match:', route.source, args);
+
+        for (var i = 0, item; item = callbacks[i]; i++)
+          if (item.match)
+            item.match.apply(item.context, args);
+      }
     }
+
   }
 
  /**
   * Add path to be handled
   */
-  function add(path, callback, context){
+  function add(path, callback, context, onoff){
     var route = routes[path];
+    var config;
+    var match;
 
     if (!route)
     {
-      route = {
+      route = routes[path] = {
         source: path,
         callbacks: [],
         regexp: Object.prototype.toString.call(path) != '[object RegExp]'
           ? pathToRegExp(path)
           : path
       };
-      routes[path] = route;
+
+      if (currentPath)
+        if (match = currentPath.match(route.regexp))
+          matched[path] = match;
     }
     
-    route.callbacks.push({
-      callback: callback,
-      context: context
-    });
+    if (typeof callback == 'function')
+      config = {
+        match: callback,
+        context: context
+      };
+    else
+      config = callback;
 
-    if (currentPath)
+    route.callbacks.push(config);
+
+    if (match = matched[path])
     {
-      var match = currentPath.match(route.regexp);
-      if (match)
-        callback.apply(context, basis.array.from(match, 1));
+      if (config.enter)
+        config.enter.call(context);
+      if (config.match)
+        config.match.apply(context, basis.array.from(match, 1));
     }
   }
 
@@ -150,12 +203,32 @@
     var route = routes[path];
 
     if (route)
-      for (var i = 0, cb; cb = route.callbacks[i]; i++)
-        if (cb.callback === callback && cb.context === context)
+    {
+      var idx = -1;
+
+      if (typeof callback == 'function')
+      {
+        for (var i = route.callbacks.length - 1, cb; cb = route.callbacks[i]; i--)
+          if (cb.macth === callback && cb.context === context)
+          {
+            idx = i;
+            break;
+          }
+      }
+      else
+        idx = route.callbacks.indexOf(callback);
+
+      if (idx!= -1)
+      {
+        route.callbacks.splice(i, 1);
+
+        if (!route.callbacks.length)
         {
-          route.callbacks.splice(i, 1);
-          return;
+          delete routes[path];
+          delete matched[path];
         }
+      }
+    }
   }
 
  /**
