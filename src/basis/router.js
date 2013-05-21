@@ -10,6 +10,10 @@
   var namespace = this.path;
 
 
+  //
+  // main part
+  //
+
   var location = global.location;
   var document = global.document;
   var docMode = document.documentMode;
@@ -20,6 +24,12 @@
   var NAMED_PARAM = /:\w+/g;
   var SPLAT_PARAM = /\\\*\w+/g;
 
+  var routes = {};
+  var started = false;
+  var currentPath;
+  var timer;
+  var match;
+
 
   function pathToRegExp(route){
     return new RegExp(
@@ -27,15 +37,23 @@
       String(route)
         .forRegExp()
         .replace(NAMED_PARAM, '([^\/]+)')
-        .replace(SPLAT_PARAM, '(.*?)') +
-      '$',
+        .replace(SPLAT_PARAM, '(.*?)')
+      + '$',
     'i');
   }
 
-  var routes = {};
-  var started = false;
-  var currentPath;
-  var timer;
+  function startWatch(){
+    if (eventSupport)
+      basis.dom.event.addHandler(global, 'hashchange', checkUrl);
+    else
+      timer = setInterval(checkUrl, CHECK_INTERVAL);
+  }
+  function stopWatch(){
+    if (eventSupport)
+      basis.dom.event.removeHandler(global, 'hashchange', checkUrl);
+    else
+      clearInterval(timer);
+  }
 
 
  /**
@@ -44,10 +62,7 @@
   function start(){
     if (!started)
     {
-      if (eventSupport)
-        basis.dom.event.addHandler(global, 'hashchange', checkUrl);
-      else
-        timer = setInterval(checkUrl, 50);
+      startWatch();
 
       ;;;basis.dev.log(namespace + ' started');
       started = true;
@@ -60,13 +75,13 @@
   * Stop router
   */
   function stop(){
-    if (eventSupport)
-      basis.dom.event.removeHandler(global, 'hashchange', checkUrl);
-    else
-      clearInterval(timer);
+    if (started)
+    {
+      stopWatch();
 
-    ;;;basis.dev.log(namespace + ' stopped');
-    started = false;
+      ;;;basis.dev.log(namespace + ' stopped');
+      started = false;
+    }
   }
 
  /**
@@ -129,6 +144,21 @@
   }
 
  /**
+  * Remove handler for path
+  */ 
+  function remove(path, callback, context){
+    var route = routes[path];
+
+    if (route)
+      for (var i = 0, cb; cb = route.callbacks[i]; i++)
+        if (cb.callback === callback && cb.context === context)
+        {
+          route.callbacks.splice(i, 1);
+          return;
+        }
+  }
+
+ /**
   * Navigate to specified path
   */
   function navigate(path, replace){
@@ -147,6 +177,7 @@
 
   module.exports = {
     add: add,
+    remove: remove,
     stop: stop,
     start: start,
     checkUrl: checkUrl,
