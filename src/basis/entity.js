@@ -337,7 +337,7 @@
         entitySetType: entitySetType,
         extend: function(){
           return entitySetClass.extend.apply(entitySetClass, arguments);
-        }
+        },
         reader: function(data){
           if (Array.isArray(data))
             return data.map(wrapper.reader || wrapper);
