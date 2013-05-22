@@ -94,9 +94,8 @@
     {
       var inserted = [];
       var deleted = [];
+      ;;;var log = [];
       currentPath = newPath;
-
-      ;;;basis.dev.log(namespace + ' hash changed:', newPath);
 
       for (var path in routes)
       {
@@ -125,7 +124,10 @@
         var callbacks = basis.array.from(route.callbacks);
         for (var j = 0, item; item = callbacks[j]; j++)
           if (item.leave)
+          {
+            ;;;log.push('\n', { type: 'leave', path: route.source, cb: item, route: route });
             item.leave.call(item.context);
+          }
       }       
 
       // callback off for previous matched
@@ -134,7 +136,10 @@
         var callbacks = basis.array.from(route.callbacks);
         for (var j = 0, item; item = callbacks[j]; j++)
           if (item.enter)
+          {
+            ;;;log.push('\n', { type: 'enter', path: route.source, cb: item, route: route });
             item.enter.call(item.context);
+          }
       }
 
       // callback for matched
@@ -144,12 +149,15 @@
         var args = basis.array.from(matched[path], 1);
         var callbacks = basis.array.from(route.callbacks);
 
-        ;;;basis.dev.log(namespace + ' hash match:', route.source, args);
-
         for (var i = 0, item; item = callbacks[i]; i++)
           if (item.match)
+          {
+            ;;;log.push('\n', { type: 'match', path: route.source, cb: item, route: route, args: args });
             item.match.apply(item.context, args);
+          }
       }
+
+      ;;;basis.dev.info.apply(basis.dev, [namespace + ': hash changed to ' + newPath].concat(log.length ? log : 'no matches'));
     }
 
   }
