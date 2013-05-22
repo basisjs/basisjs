@@ -318,6 +318,7 @@
         }
       });
 
+      var entitySetClass = entitySetType.entitySetClass;
       var result = function(data, entitySet){
         if (data != null)
         {
@@ -332,12 +333,17 @@
           return null;
       };
 
-      result.entitySetType = entitySetType;
-      result.reader = function(data){
-        if (Array.isArray(data))
-          return data.map(wrapper.reader || wrapper);
-        return data;
-      }
+      basis.object.extend(result, {
+        entitySetType: entitySetType,
+        extend: function(){
+          return entitySetClass.extend.apply(entitySetClass, arguments);
+        }
+        reader: function(data){
+          if (Array.isArray(data))
+            return data.map(wrapper.reader || wrapper);
+          return data;
+        }
+      });
 
       return result;
     }
