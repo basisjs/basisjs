@@ -123,10 +123,10 @@
       {
         var callbacks = basis.array.from(route.callbacks);
         for (var j = 0, item; item = callbacks[j]; j++)
-          if (item.leave)
+          if (item.callback.leave)
           {
             ;;;log.push('\n', { type: 'leave', path: route.source, cb: item, route: route });
-            item.leave.call(item.context);
+            item.callback.leave.call(item.context);
           }
       }       
 
@@ -135,10 +135,10 @@
       {
         var callbacks = basis.array.from(route.callbacks);
         for (var j = 0, item; item = callbacks[j]; j++)
-          if (item.enter)
+          if (item.callback.enter)
           {
             ;;;log.push('\n', { type: 'enter', path: route.source, cb: item, route: route });
-            item.enter.call(item.context);
+            item.callback.enter.call(item.context);
           }
       }
 
@@ -150,10 +150,10 @@
         var callbacks = basis.array.from(route.callbacks);
 
         for (var i = 0, item; item = callbacks[i]; i++)
-          if (item.match)
+          if (item.callback.match)
           {
             ;;;log.push('\n', { type: 'match', path: route.source, cb: item, route: route, args: args });
-            item.match.apply(item.context, args);
+            item.callback.match.apply(item.context, args);
           }
       }
 
@@ -165,7 +165,7 @@
  /**
   * Add path to be handled
   */
-  function add(path, callback, context, onoff){
+  function add(path, callback, context){
     var route = routes[path];
     var config;
     var match;
@@ -185,22 +185,22 @@
           matched[path] = match;
     }
     
-    if (typeof callback == 'function')
-      config = {
-        match: callback,
-        context: context
-      };
-    else
-      config = callback;
+    config = {
+      cb_: callback,
+      callback: typeof callback != 'function' ? callback : {
+        match: callback
+      },
+      context: context
+    };
 
     route.callbacks.push(config);
 
     if (match = matched[path])
     {
-      if (config.enter)
-        config.enter.call(context);
-      if (config.match)
-        config.match.apply(context, basis.array.from(match, 1));
+      if (config.callback.enter)
+        config.callback.enter.call(context);
+      if (config.callback.match)
+        config.callback.match.apply(context, basis.array.from(match, 1));
     }
   }
 
@@ -214,28 +214,19 @@
     {
       var idx = -1;
 
-      if (typeof callback == 'function')
-      {
-        for (var i = route.callbacks.length - 1, cb; cb = route.callbacks[i]; i--)
-          if (cb.macth === callback && cb.context === context)
-          {
-            idx = i;
-            break;
-          }
-      }
-      else
-        idx = route.callbacks.indexOf(callback);
-
-      if (idx!= -1)
-      {
-        route.callbacks.splice(i, 1);
-
-        if (!route.callbacks.length)
+      for (var i = 0, cb; cb = route.callbacks[i]; i++)
+        if (cb.cb_ === callback && cb.context === context)
         {
-          delete routes[path];
-          delete matched[path];
+          route.callbacks.splice(i, 1);
+
+          if (!route.callbacks.length)
+          {
+            delete routes[path];
+            delete matched[path];
+          }
+
+          break;
         }
-      }
     }
   }
 
