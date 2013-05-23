@@ -6,6 +6,5 @@
   <b:define name="orientation" type="enum" values="v-left-top v-right-top v-center-top v-left-center v-right-center v-center-center v-left-bottom v-right-bottom v-center-bottom h-left-top h-right-top h-center-top h-left-center h-right-center h-center-center h-left-bottom h-right-bottom h-center-bottom"/>
 
   <div class="Basis-Popup popup-{orientation} {anim:visible} {selected} {disabled}">
-    <div class="Basis-Popup-CloseButton" event-click="hide"><span>{closeText}</span></div>
     <div{content|childNodesElement} class="Basis-Popup-Content"/>
   </div>

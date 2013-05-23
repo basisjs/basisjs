@@ -42,11 +42,7 @@
     Balloon: resource('templates/popup/Balloon.tmpl'),
     popupManager: resource('templates/popup/popupManager.tmpl')
   });
-
-  basis.l10n.createDictionary(namespace, __dirname + 'l10n/popup', {
-    "close": "Close"
-  });
-
+  
 
   //
   // main part
@@ -88,10 +84,7 @@
   var Popup = Class(UINode, {
     className: namespace + '.Popup',
 
-    closeText: basis.l10n.getToken(namespace, 'close'),
-
     template: templates.Popup,
-
     binding: {
       visible: {
         events: 'show hide',
@@ -104,9 +97,6 @@
         getter: function(node){
           return (node.orientation + '-' + node.dir.qw().slice(2, 4).join('-')).toLowerCase();
         }
-      },
-      closeText: function(node){
-        return node.closeText;
       }
     },
 
