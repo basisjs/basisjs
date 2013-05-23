@@ -136,9 +136,6 @@
     init: function(){
       UINode.prototype.init.call(this);
 
-      // add generic rule
-      this.cssRule = cssom.uniqueRule(this.element);
-
       this.ignoreClickFor = arrayFrom(this.ignoreClickFor);
 
       if (this.dir)
@@ -150,10 +147,7 @@
       UINode.prototype.templateSync.call(this, noRecreate);
 
       if (this.element)
-      {
-        cssom.classList(this.element).add(this.cssRule.token);
         this.realign();
-      }
     },
     setLayout: function(dir, orientation, noRealign){
       var oldDir = this.dir;
@@ -339,7 +333,7 @@
             break;
         }
 
-        this.cssRule.setStyle(style);
+        cssom.setStyle(this.element, style);
 
         this.emit_realign();
       }
@@ -403,9 +397,6 @@
       this.hide();
 
       UINode.prototype.destroy.call(this);
-
-      this.cssRule.destroy();
-      this.cssRule = null;
     }
   });
 
