@@ -42,7 +42,7 @@
     Balloon: resource('templates/popup/Balloon.tmpl'),
     popupManager: resource('templates/popup/popupManager.tmpl')
   });
-  
+
 
   //
   // main part
@@ -410,7 +410,6 @@
   var popupManager = new UINode({
     template: templates.popupManager,
 
-    handheldMode: false,
     selection: true,
 
     emit_childNodesModified: function(delta){
@@ -420,9 +419,6 @@
 
       if (delta.inserted && !delta.deleted && this.childNodes.length == delta.inserted.length)
       {
-        document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
-                                                           // general sibling combinator (~) doesn't work otherwise
-                                                           // (it's useful for handheld scenarios, when popups show on fullsreen)
         Event.addGlobalHandler('click', this.hideByClick, this);
         Event.addGlobalHandler('keydown', this.hideByKey, this);
         Event.addGlobalHandler('scroll', this.hideByScroll, this);
@@ -433,9 +429,6 @@
         this.lastChild.select();
       else
       {
-        document.body.className = document.body.className; // BUGFIX: for IE7+ and webkit (chrome8/safari5)
-                                                           // general sibling combinator (~) doesn't work otherwise
-                                                           // (it's useful for handheld scenarios, when popups show on fullsreen)
         Event.removeGlobalHandler('click', this.hideByClick, this);
         Event.removeGlobalHandler('keydown', this.hideByKey, this);
         Event.removeGlobalHandler('scroll', this.hideByScroll, this);
@@ -446,24 +439,8 @@
     },
 
     insertBefore: function(newChild, refChild){
-      // save documentElement (IE, mozilla and others) and body (webkit) scrollTop
-      var documentScrollTop = document.documentElement.scrollTop;
-      var bodyScrollTop = document.body.scrollTop;
-
       if (UINode.prototype.insertBefore.call(this,newChild, refChild))
-      {
-        // store saved scrollTop to popup and scroll viewport to top
-        newChild.documentST_ = documentScrollTop;
-        newChild.bodyST_ = bodyScrollTop;
-        if (this.handheldMode)
-        {
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-        }
-
-        // set zIndex
         newChild.setZIndex(basis.ui.window ? basis.ui.window.getWindowTopZIndex() : 2001);
-      }
     },
     removeChild: function(popup){
       if (popup)
@@ -472,13 +449,6 @@
           this.removeChild(popup.nextSibling);
 
         UINode.prototype.removeChild.call(this, popup);
-
-        // restore documentElement (IE, mozilla and others) and body (webkit) scrollTop
-        if (this.handheldMode)
-        {
-          document.documentElement.scrollTop = popup.documentST_;
-          document.body.scrollTop = popup.bodyST_;
-        }
       }
     },
     realignAll: function(){
@@ -549,9 +519,6 @@
     popupManager.realignAll();
   });
 
-  function setHandheldMode(mode){
-    popupManager.handheldMode = !!mode;
-  }
 
   //
   // export names
@@ -567,9 +534,6 @@
       BOTTOM: BOTTOM,
       CENTER: CENTER
     },
-
-    // methods
-    setHandheldMode: setHandheldMode,
 
     // classes
     Popup: Popup,
