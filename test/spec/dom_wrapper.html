@@ -997,6 +997,27 @@
                     this.is(4, getGroups(node).length);
                     this.is($values([9, 7, 2, 0, 6, 5, 1, 8, 3, 4].map(convertToNode)), $values(node.childNodes));
                   }
+                },
+                {
+                  name: 'grouping change events (issue #8)',
+                  test: function(){
+                    // preparation
+                    var events;
+                    var node = new Node({
+                      grouping: {},
+                      handler: {
+                        '*': function(e){
+                          if (events && e.type == 'groupingChanged')
+                            events.push(e);
+                        }
+                      }
+                    });
+
+                    // test
+                    events = [];
+                    node.setGrouping({});
+                    this.is(1, events.length);
+                  }
                 }
               ]
             },
