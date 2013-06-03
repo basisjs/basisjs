@@ -1523,6 +1523,7 @@
   extend(getResource, {
     getFiles: function(){
       var result = [];
+
       for (var url in resourceCache)
         result.push(pathUtils.relative(url));
       
@@ -1548,7 +1549,7 @@
         } catch(e) {
           ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
         }
-        return result || false;
+        return result || null;
       }, {
         updatable: true
       })
