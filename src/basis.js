@@ -1581,7 +1581,7 @@
 
     // run
     compiledSourceCode.call(
-      context,
+      context.exports,
       context.exports,
       context,
       basis,
@@ -1631,7 +1631,9 @@
 
           return extend(namespace, {
             path: pathFn,
-            exports: {},
+            exports: {
+              path: pathFn
+            },
             toString: $const('[basis.namespace ' + path + ']'),
             extend: function(names){
               extend(this.exports, names);
