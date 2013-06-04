@@ -1557,7 +1557,7 @@
   });
 
 
-  var runScriptInContext = function(context, sourceURL, sourceCode, prefix){
+  var runScriptInContext = function(context, sourceURL, sourceCode){
     var baseURL = pathUtils.dirname(sourceURL) + '/';
     var compiledSourceCode = sourceCode;
 
@@ -1568,7 +1568,6 @@
     if (typeof compiledSourceCode != 'function')
       try {
         compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
-          (prefix || '') +
           '"use strict";\n\n' +
           sourceCode +
           '//@ sourceURL=' + sourceURL
@@ -1727,11 +1726,11 @@
           var requestUrl = requirePath + filename;
 
           var ns = getNamespace(namespace);
-          var scriptText = getResourceContent(requestUrl);
-          runScriptInContext(ns, requestUrl, scriptText, '/** @namespace ' + namespace + ' */\n');
+          var sourceCode = getResourceContent(requestUrl);
+          runScriptInContext(ns, requestUrl, sourceCode);
           complete(ns, ns.exports);
           ;;;ns.filename_ = requestUrl;
-          ;;;ns.source_ = scriptText;
+          ;;;ns.source_ = sourceCode;
         }
       };
     }
