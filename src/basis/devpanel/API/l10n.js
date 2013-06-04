@@ -110,7 +110,7 @@ module.exports = {
       filename = '/' + basis.path.relative(location + '/' + culture + '.json');
       file = basis.devtools.getFile(filename, true);
 
-      dictionaries = basis.object.extend({}, basis.resource(filename)());
+      dictionaries = basis.object.slice(basis.resource(filename)());
 
       if (!dictionaries[dict.namespace])
         dictionaries[dict.namespace] = {};
@@ -123,7 +123,7 @@ module.exports = {
 
         if (dName == dict.namespace)
         {
-          var tokens = basis.object.complete(basis.object.extend({}, dict.resources[culture]), dictionaries[dName]);
+          var tokens = basis.object.complete(basis.object.slice(dict.resources[culture]), dictionaries[dName]);
           for (var tokenName in tokens)
           {
             var tokenValue = tokens[tokenName] || '';
