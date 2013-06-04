@@ -2022,7 +2022,7 @@
   // export names
   //
 
-  this.setWrapper(baseTheme.define);
+  module.setWrapper(baseTheme.define);
 
   module.exports = {
     DECLARATION_VERSION: DECLARATION_VERSION,

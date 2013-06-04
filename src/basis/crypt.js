@@ -539,7 +539,7 @@
 
 
   //
-  // wrap function
+  // namespace wrapper
   //
 
   var cryptTarget = '';
@@ -561,7 +561,7 @@
     };
   });
 
-  this.setWrapper(function(target){
+  module.setWrapper(function(target){
     cryptTarget = target || '';
     return context_;
   });

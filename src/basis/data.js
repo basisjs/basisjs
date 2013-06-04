@@ -1681,7 +1681,7 @@
       return { data: data };
   }
 
-  this.setWrapper(dataWrapper);
+  module.setWrapper(dataWrapper);
 
 
   //
