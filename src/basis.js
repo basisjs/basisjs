@@ -1673,20 +1673,25 @@
       var requirePath = pathUtils.dirname(module.filename) + '/';
       var moduleProto = module.constructor.prototype;
       return function(path){
-        var load_ = moduleProto.load;
+        var _compile = moduleProto._compile;
         var namespace = getNamespace(path);
 
-        // patch node.js module.load
-        moduleProto.load = function(){
-          load_.apply(extend(this, namespace), arguments);
+        // patch node.js module._compile
+        moduleProto._compile = function(content, filename){
+          this.basis = basis;
+          content = 
+            'var basis = module.basis;\n' +
+            'var resource = function(filename){ return basis.require(__dirname + "/" + filename) };\n' +
+            content;
+          _compile.call(extend(this, namespace), content, filename);
         };
 
         var exports = require(requirePath + path.replace(/\./g, '/'));
         namespace.exports = exports;
         complete(namespace, exports);
 
-        // restore node.js module.load
-        moduleProto.load = load_;
+        // restore node.js module._compile
+        moduleProto._compile = _compile;
 
         return exports;
       };
