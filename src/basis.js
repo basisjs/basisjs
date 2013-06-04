@@ -1673,20 +1673,22 @@
       var requirePath = pathUtils.dirname(module.filename) + '/';
       var moduleProto = module.constructor.prototype;
       return function(path){
-        return (function(){
-          var temp = moduleProto.load;
-          moduleProto.load = function(){
-            this.exports = getNamespace(path);
-            temp.apply(this, arguments);
-          };
+        var load_ = moduleProto.load;
+        var namespace = getNamespace(path);
 
-          var exports = require(requirePath + path.replace(/\./g, '/'));
+        // patch node.js module.load
+        moduleProto.load = function(){
+          load_.apply(extend(this, namespace), arguments);
+        };
 
-          complete(getNamespace(path), exports);
-          moduleProto.load = temp;
+        var exports = require(requirePath + path.replace(/\./g, '/'));
+        namespace.exports = exports;
+        complete(namespace, exports);
 
-          return exports;
-        })();
+        // restore node.js module.load
+        moduleProto.load = load_;
+
+        return exports;
       };
     }
     else
