@@ -681,7 +681,7 @@
         this.childNodesState = Object(stateCode);
         this.childNodesState.data = data;
 
-        this.emit_stateChanged(oldState);
+        this.emit_childNodesStateChanged(oldState);
       }
     },
 
