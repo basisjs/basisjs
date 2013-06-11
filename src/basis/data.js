@@ -1289,6 +1289,14 @@
     },
 
    /**
+    * Todo nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
+    * TODO: remove method definition and method call in destroy method.
+    */ 
+    clear: function(){
+
+    },
+
+   /**
     * @destructor
     */
     destroy: function(){
