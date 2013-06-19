@@ -282,6 +282,9 @@
   }
 
   function updateDictionaryResource(dictionaryData, culture, dictionary){
+    if (!dictionaryData)
+      return;
+
     if (Array.isArray(dictionaryData))
     { // packed dictionary
       var idx = 0;
