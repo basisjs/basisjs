@@ -77,6 +77,32 @@
     CENTER: CENTER
   };
 
+  var DEFAULT_DIR = [RIGHT, BOTTOM, RIGHT, TOP].join(' ');
+  // all possible correct dir values
+  var DIR_MAP = (function(){
+    var h = [LEFT, CENTER, RIGHT];
+    var v = [TOP, CENTER, BOTTOM];
+    var result = {};
+    var perm = {};
+
+    for (var i = 0; i < 3; i++)
+      for (var j = 0; j < 3; j++)
+      {
+        perm[h[i] + ' ' + v[j]] = h[i] + ' ' + v[j];
+        perm[v[j] + ' ' + h[i]] = h[i] + ' ' + v[j];
+      }
+
+    for (var p1 in perm)
+      for (var p2 in perm)
+        result[p1 + ' ' + p2] = perm[p1] + ' ' + perm[p2];
+
+    return result;
+  })();
+
+  function normalizeDir(value, valueOnFailure){
+    return DIR_MAP[typeof value == 'string' && value.toUpperCase()] || valueOnFailure;
+  }
+
 
  /**
   * @class
@@ -116,12 +142,12 @@
     autorotate: false,
 
     dir: '',
-    defaultDir: [RIGHT, BOTTOM, RIGHT, TOP].join(' '),
+    defaultDir: DEFAULT_DIR,
     orientation: ORIENTATION.VERTICAL,
 
     hideOnAnyClick: true,
     hideOnKey: false,
-    hideOnScroll: false,
+    hideOnScroll: true,
     ignoreClickFor: null,
 
     init: function(){
@@ -130,7 +156,15 @@
       this.ignoreClickFor = arrayFrom(this.ignoreClickFor);
 
       if (this.dir)
-        this.defaultDir = this.dir.toUpperCase();
+      {
+        this.dir = normalizeDir(this.dir, DEFAULT_DIR);
+        this.defaultDir = this.dir;
+      }
+      else
+      {
+        this.defaultDir = normalizeDir(this.defaultDir, DEFAULT_DIR);
+        this.dir = this.defaultDir;
+      }
 
       this.setLayout(this.defaultDir, this.orientation);
     },
@@ -144,8 +178,7 @@
       var oldDir = this.dir;
       var oldOrientation = this.orientation;
 
-      if (typeof dir == 'string')
-        this.dir = dir.toUpperCase();
+      this.dir = normalizeDir(dir, this.dir);
 
       if (typeof orientation == 'string')
         this.orientation = orientation;
@@ -168,9 +201,9 @@
     },
     rotate: function(offset){
       var dir = this.dir.qw();
-      offset = ((offset % 4) + 4) % 4;
-
       var result = [];
+      
+      offset = ((offset % 4) + 4) % 4;
 
       if (!offset)
         return dir;
@@ -181,7 +214,6 @@
       var idx = ROTATE_MATRIX.indexOf(a + b) >> 1;
 
       var index = ((idx & 0xFC) + (((idx & 0x03) + offset) & 0x03)) << 1;
-
       result.push(
         LETTER_TO_SIDE[ROTATE_MATRIX.charAt(index)],
         LETTER_TO_SIDE[ROTATE_MATRIX.charAt(index + 1)]
@@ -192,9 +224,9 @@
       var b = dir[3].charAt(0);
       var idx = ROTATE_MATRIX.indexOf(a + b) >> 1;
 
-      offset = (a != 'C' && b != 'C') && ((dir[0] == dir[2]) != (dir[1] == dir[3])) ? -offset + 4 : offset;
-      var index = ((idx & 0xFC) + (((idx & 0x03) + offset) & 0x03)) << 1;
+      offset = a != 'C' && b != 'C' && (dir[0] == dir[2]) != (dir[1] == dir[3]) ? -offset + 4 : offset;
 
+      var index = ((idx & 0xFC) + (((idx & 0x03) + offset) & 0x03)) << 1;
       result.push(
         LETTER_TO_SIDE[ROTATE_MATRIX.charAt(index)],
         LETTER_TO_SIDE[ROTATE_MATRIX.charAt(index + 1)]
@@ -207,10 +239,10 @@
       {
         var box = new layout.Box(this.relElement, false, this.element.offsetParent);
         var viewport = new layout.Viewport(this.element.offsetParent);
-        var width  = this.element.offsetWidth;
+        var width = this.element.offsetWidth;
         var height = this.element.offsetHeight;
 
-        dir = String(dir || this.dir).toUpperCase().qw();
+        dir = normalizeDir(dir, this.dir).qw();
 
         var pointX = dir[0] == CENTER ? box.left + (box.width >> 1) : box[dir[0].toLowerCase()];
         var pointY = dir[1] == CENTER ? box.top + (box.height >> 1) : box[dir[1].toLowerCase()];
@@ -219,10 +251,7 @@
             (dir[2] != LEFT) * (pointX < (width >> (dir[2] == CENTER)))
             ||
             (dir[2] != RIGHT) * ((viewport.width - pointX) < (width >> (dir[2] == CENTER)))
-           )
-          return false;
-
-        if (
+            ||
             (dir[3] != TOP) * (pointY < (height >> (dir[3] == CENTER)))
             ||
             (dir[3] != BOTTOM) * ((viewport.height - pointY) < (height >> (dir[3] == CENTER)))
@@ -272,7 +301,7 @@
             var rotate = this.autorotate[rotateOffset++];
 
             if (typeof rotate == 'string')
-              curDir = rotate.toUpperCase().split(' ');
+              curDir = normalizeDir(rotate, curDir.join(' ')).split(' ');
             else
               curDir = this.rotate(rotate);
           }
@@ -334,7 +363,7 @@
       this.relElement = DOM.get(relElement) || this.relElement;
 
       // set up direction and orientation
-      this.setLayout(dir || this.defaultDir, orientation);
+      this.setLayout(normalizeDir(dir, this.defaultDir), orientation);
 
       // if not visible yet, make popup visible
       if (!this.visible)
