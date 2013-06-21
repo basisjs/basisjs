@@ -134,7 +134,7 @@ function domTreeHighlight(root){
           var bindings = (node.tmpl.set.debug && node.tmpl.set.debug()) || [];
           for (var j = 0, binding; binding = bindings[j]; j++)
           {
-            if (binding.attachment && binding.dom.nodeType == basis.dom.TEXT_NODE/* && child.contains(binding.dom)*/)
+            if (binding.attachment instanceof basis.l10n.Token && binding.dom.nodeType == basis.dom.TEXT_NODE)
             {
               //nodes.push(binding.dom);
               range.selectNodeContents(binding.dom);
