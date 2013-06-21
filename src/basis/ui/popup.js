@@ -121,6 +121,7 @@
 
     hideOnAnyClick: true,
     hideOnKey: false,
+    hideOnScroll: false,
     ignoreClickFor: null,
 
     init: function(){
@@ -507,7 +508,7 @@
       while (popup)
       {
         var next = popup.previousSibling;
-        if (popup.relElement && popup.offsetParent !== sender && DOM.parentOf(sender, popup.relElement))
+        if (popup.hideOnScroll && popup.relElement && popup.offsetParent !== sender && DOM.parentOf(sender, popup.relElement))
           popup.hide();
         popup = next;
       }
