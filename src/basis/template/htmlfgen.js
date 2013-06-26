@@ -42,7 +42,7 @@
     var pathList;
     var refList;
     var bindingList;
-    var objectRefList;
+    var markedElementList;
     var rootPath;
 
     function putRefs(refs, pathIdx){
@@ -116,7 +116,7 @@
           myRef = -1;
 
           if (path == rootPath)
-            objectRefList.push(localPath);
+            markedElementList.push(localPath + '.basisObjectId');
 
           if (!explicitRef)
           {
@@ -183,7 +183,7 @@
       pathList = [];
       refList = [];
       bindingList = [];
-      objectRefList = [];
+      markedElementList = [];
       rootPath = path || '_';
 
       processTokens(tokens, rootPath);
@@ -192,7 +192,7 @@
         path: pathList,
         ref: refList,
         binding: bindingList,
-        objectRefList: objectRefList
+        markedElementList: markedElementList
       };
     };
   })();
@@ -506,81 +506,76 @@
   })();
 
 
-  var getFunctions = (function(){
+  var getFunctions = function(tokens, debug, uri, source){
+    // try get functions from cache by templateId
+    var fn = tmplFunctions[uri && basis.path.relative(uri)];
 
-    function addBasisObjectId(ref){
-      return ref + '.basisObjectId';
+    if (fn)
+      return fn;
+
+    // build functions
+    var paths = buildPathes(tokens, '_');
+    var bindings = buildBindings(paths.binding);
+    var objectRefs = paths.markedElementList.join('=');
+    var createInstance;
+    var fnBody;
+    var result = {
+      keys: bindings.keys,
+      l10nKeys: bindings.l10nKeys
+    };      
+
+    if (bindings.l10n)
+    {
+      var code = [];
+      for (var key in bindings.l10n)
+        code.push(
+          'case"' + key +'":\n' +
+          'if(value==null)value="{' + key + '}";' +
+          '__l10n[token]=value;' +
+          bindings.l10n[key].join(';') +
+          'break;'
+        );
+
+      result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'TEXT_BUG',
+        (source ? '/*\n' + source + '\n*/\n' : '') +
+        'var ' + paths.path + ';return function(token, value){' +
+        'switch(token){' +
+          code.join('') +
+        '}}'
+        /**@cut*/ + (uri ? '//@ sourceURL=' + uri + '_l10n' : '')
+      );
     }
 
-    return function(tokens, debug, uri, source){
-      var fn = tmplFunctions[uri && basis.path.relative(uri)];
-      var paths = buildPathes(tokens, '_');
-      var bindings = buildBindings(paths.binding);
-      var result = {
-        keys: bindings.keys,
-        l10nKeys: bindings.l10nKeys
-      };
-
-      // try get functions by templateId
-      if (fn)
-      {
-        return fn;
-        //result.createInstance = fn[0];
-        //result.createL10nSync = fn[1];
-      }
-      else
-      {
-        var objectRefs = paths.objectRefList.map(addBasisObjectId).join('=');
-        var createInstance;
-        var fnBody;
-
-        if (bindings.l10n)
-        {
-          var code = [];
-          for (var key in bindings.l10n)
-            code.push(
-              'case"' + key +'":\n' +
-              'if(value==null)value="{' + key + '}";' +
-              '__l10n[token]=value;' +
-              bindings.l10n[key].join(';') +
-              'break;'
-            );
-
-          result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'TEXT_BUG',
-            (source ? '/*\n' + source + '\n*/\n' : '') +
-            'var ' + paths.path + ';return function(token, value){' +
-            'switch(token){' +
-              code.join('') +
-            '}}'
-            /**@cut*/ + (uri ? '//@ sourceURL=' + uri + '_l10n' : '')
-          );
-        }
-
-        /**@cut*/try {
-        result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG',
-          fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
-          'return function createInstance_(obj,actionCallback,updateCallback){' + 
-          'var id=gMap.seed++,attaches={},resolve=tools.resolve,_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
-          (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
-          'function updateAttach(){set(String(this),attaches[this])};\n' +
-          bindings.body +
-          /**@cut*/(debug ? ';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' : '') +
-          ';return tMap[id]={' + [paths.ref, 'set:set,rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
+    /**@cut*/try {
+    result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG',
+      fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
+      'return function createInstance_(obj,actionCallback,updateCallback){' + 
+        'var id=gMap.seed++,' +
+        'attaches={},' + 
+        'resolve=tools.resolve,' +
+        '_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
+        (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
+        'function updateAttach(){set(this+"",attaches[this])};\n' +
+        bindings.body +
+        /**@cut*/(debug ? ';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' : '') +
+        ';' +
+        'return tMap[id]={' + [
+          paths.ref,
+          'set:set,' +
+          'rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
           'destroy:function(){' +
             'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
             'attaches=null;' +
-            /**@cut*/(debug ? 'delete set.debug;' : '') + 
             'delete tMap[id];' + 
-            'delete gMap[id];' +
-            '}'] +
-          '}' + /**@cut*/ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
-        '}');
-        /**@cut*/} catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }
-      }
+            (objectRefs ? 'delete gMap[id];' : '') +
+          '}'] +
+        '}' + /**@cut*/ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
+      '}'
+    );
+    /**@cut*/} catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }
 
-      return result;
-    }
-  })();
+    return result;
+  }
 
   module.exports = {
   	getFunctions: getFunctions
