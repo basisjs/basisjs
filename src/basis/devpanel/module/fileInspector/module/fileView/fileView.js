@@ -1,3 +1,4 @@
+basis.require('basis.ui');
 basis.require('basis.format.highlight');
 
 var FILE_EXT_CODE_MAP = {

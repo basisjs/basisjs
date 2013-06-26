@@ -1,5 +1,6 @@
-basis.require('basis.ui.tree');
+basis.require('basis.data');
 basis.require('basis.data.dataset');
+basis.require('basis.ui.tree');
 //
 // process resources
 //
