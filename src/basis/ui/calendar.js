@@ -22,7 +22,6 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var Event = basis.dom.event;
 
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
@@ -458,9 +457,6 @@
       UINode.prototype.init.call(this);
 
       this.setSelectedDate(selectedDate);
-
-      // FIXME: remove when possible; it is a hack, because tabElement will be placed aside of this.tmpl.element
-      Event.addHandler(this.tmpl.tabElement, 'click', this.select.bind(this, false));
     },
 
     getTitle: function(){},
@@ -644,10 +640,6 @@
         }
       }
     }
-/*
-    getTitle: function(periodStart){
-      return [Math.floor(1 + periodStart.getMonth().base(3)/3), LOCALE('QUARTER').toLowerCase(), periodStart.getFullYear()].join(' ');
-    }*/
   });
 
   //
@@ -661,10 +653,39 @@
     className: namespace + '.Calendar',
 
     emit_change: createEvent('change'),
+    emit_childNodesModified: function(delta){
+      if (delta.inserted)
+        for (var i = 0, section; section = delta.inserted[i++];)
+        {
+          section.setViewDate(this.date.value);
+          this.selectedDate.addLink(section, section.setSelectedDate);
+        }
 
-    selection: true,
-    childClass: CalendarSection,
-    childFactory: function(){},
+      if (delta.deleted)
+        for (var i = 0, section; section = delta.deleted[i++];)
+          this.selectedDate.removeLink(section, section.setSelectedDate);
+
+      UINode.prototype.emit_childNodesModified.call(this, delta);
+
+      if (this.selection && !this.selection.itemCount && this.firstChild)
+        this.firstChild.select();
+
+      // sync section tabs
+      var tabElementMap = {};
+
+      DOM.insert(
+        this.tmpl.sectionTabs,
+        this.childNodes.map(function(section){
+          return tabElementMap[section.basisObjectId] = section.tmpl.tabElement || document.createComment('');
+        })
+      );
+
+      for (var key in this.tabElementMap_)
+        if (!tabElementMap[key])
+          DOM.remove(this.tabElementMap_[key]);
+
+      this.tabElementMap_ = tabElementMap;
+    },
 
     template: templates.Calendar,
     binding: {
@@ -683,29 +704,6 @@
         this.selectedDate.set(new Date());
       }
     },
-
-    emit_childNodesModified: function(delta){
-      if (delta.inserted)
-        for (var i = 0, section; section = delta.inserted[i++];)
-        {
-          section.setViewDate(this.date.value);
-          this.selectedDate.addLink(section, section.setSelectedDate);
-        }
-
-      if (delta.deleted)
-        for (var i = 0, section; section = delta.deleted[i++];)
-          this.selectedDate.removeLink(section, section.setSelectedDate);
-
-      UINode.prototype.emit_childNodesModified.call(this, delta);
-
-      DOM.insert(
-        DOM.clear(this.tmpl.sectionTabs),
-        this.childNodes.map(getter('tmpl.tabElement'))
-      );
-
-      if (this.selection && !this.selection.itemCount && this.firstChild)
-        this.firstChild.select();
-    },
     templateAction: function(actionName, event, node){
       UINode.prototype.templateAction.call(this, actionName, event);
 
@@ -716,9 +714,29 @@
         this.selectedDate.set(new Date(this.selectedDate.value).add(activeSection.nodePeriodUnit, this.selectedDate.value.diff(activeSection.nodePeriodUnit, newDate)));
         this.nextSection(BACKWARD);
       }
+    },    
+
+    selection: true,
+    childClass: CalendarSection,
+    childFactory: function(){},
+
+    tabElementMap_: {},
+    listen: {
+      childNode: {
+        templateChanged: function(sender){
+          var newTabElement = sender.tmpl.tabElement || document.createComment();
+          var curTabElement = this.tabElementMap_[sender.basisObjectId];
+          if (newTabElement !== curTabElement)
+          {
+            this.tabElementMap_[sender.basisObjectId] = newTabElement;
+            DOM.replace(curTabElement, newTabElement);
+          }
+        }
+      }
     },
 
     date: null,
+    sections: ['Month', /*'Quarter', 'YearQuarters', */'Year', 'YearDecade'/*, 'Century'*/],
 
     // enable/disable periods
     minDate: null,
@@ -726,7 +744,6 @@
     map: null,
     periodEnableByDefault: true,   // default state of periods: 1 = enabled, 0 = disabled
 
-    sections: ['Month', /*'Quarter', 'YearQuarters', */'Year', 'YearDecade'/*, 'Century'*/],
 
    /**
     * @constructor
@@ -990,7 +1007,7 @@
 
             // check for not disabled days
             mask = DAY_COUNT_MASK[cursor.getMonthDayCount()];
-            if (checkMapDays(i/monthCount, month & mask ^ mask, s.day, e.day))
+            if (checkMapDays(i / monthCount, month & mask ^ mask, s.day, e.day))
               return true;
 
             // move to next month
@@ -1032,7 +1049,7 @@
 
             // check for enabled days
             month = year[monthIndex = cursor.getMonth()];
-            if (month && checkMapDays(i/monthCount, month, s.day, e.day))
+            if (month && checkMapDays(i / monthCount, month, s.day, e.day))
               return true;
 
             // move to next month
@@ -1059,6 +1076,7 @@
       this.selectedDate = null;
 
       delete this.isPeriodEnabled;
+      this.tabElementMap_ = null;
     }
   });
 
