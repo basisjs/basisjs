@@ -5,14 +5,14 @@
 <div class="Basis-DevPanel {activated}" event-click="showMenu" event-mousemove="storePosition">
   <div{dragElement} class="Basis-DevPanel-DragTrigger">&nbsp;</div>  
   <div class="Basis-DevPanel-Section Basis-DevPanel-Section-Template">
-    <div class="Basis-DevPanel-Button template" event-click="inspectTemplate">&nbsp;</div>
+    <div class="Basis-DevPanel-Button template" event-mousedown="inspectTemplate">&nbsp;</div>
     <div{themeButton} class="Basis-DevPanel-Button theme" event-click="showThemes">
       <span>{themeName}</span>
     </div>
     <!--{themeList}-->
   </div>
   <div class="Basis-DevPanel-Section Basis-DevPanel-Section-l10n">  
-    <div class="Basis-DevPanel-Button l10n" event-click="inspectl10n">&nbsp;</div>
+    <div class="Basis-DevPanel-Button l10n" event-mousedown="inspectl10n">&nbsp;</div>
     <div{cultureButton} class="Basis-DevPanel-Button culture {base}" event-click="showCultures">
       <span style="background-position: -{spriteX}px -{spriteY}px;">&nbsp;</span>
     </div>

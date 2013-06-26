@@ -48,13 +48,19 @@ var panel = new basis.ui.Node({
   
   action: {
     inspectTemplate: function(){
-      templateInspector.startInspect();
+      basis.dom.event.captureEvent('click', function(){
+        basis.dom.event.releaseEvent('click');
+        templateInspector.startInspect();
+      });      
     },
     showThemes: function(){
       themeList.setDelegate(this);
     },
     inspectl10n: function(){
-      l10nInspector.startInspect();
+      basis.dom.event.captureEvent('click', function(){
+        basis.dom.event.releaseEvent('click');
+        l10nInspector.startInspect();
+      });
     },
     showCultures: function(){
       cultureList.setDelegate(this);
