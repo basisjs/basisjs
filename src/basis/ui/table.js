@@ -494,6 +494,10 @@
     className: namespace + '.Table',
 
     template: templates.Table,
+    binding: {
+      header: 'satellite:',
+      footer: 'satellite:'
+    },
 
     headerClass: Header,
     footerClass: Footer,
@@ -515,14 +519,9 @@
 
       this.header = new this.headerClass(extend({ owner: this, structure: this.structure }, this.header));
       this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
-    },
 
-    templateSync: function(noRecreate){
-      UINode.prototype.templateSync.call(this, noRecreate);
-
-      DOM.replace(this.tmpl.header, this.header.element);
-      if (this.footer.useFooter)
-        DOM.replace(this.tmpl.footer, this.footer.element);      
+      this.setSatellite('header', this.header);
+      this.setSatellite('footer', this.footer);
     },
 
     applyConfig_: function(structure){
@@ -584,10 +583,7 @@
     destroy: function(){
       UINode.prototype.destroy.call(this);
 
-      this.header.destroy();
       this.header = null;
-
-      this.footer.destroy();
       this.footer = null;
     }
   });    
