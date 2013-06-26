@@ -296,6 +296,7 @@
     },
     action: {
       click: function(event){
+        // FIXME: shouldn't access to parent
         var calendar = this.parentNode && this.parentNode.parentNode;
         if (calendar && !this.isDisabled())
           calendar.templateAction('click', event, this);
@@ -308,15 +309,10 @@
         this.periodStart = period.periodStart;
         this.periodEnd = period.periodEnd;
 
-        // FIXME: shouldn't access to parent
-        var calendar = this.parentNode && this.parentNode.parentNode;
-        if (calendar)
-        {
-          if (calendar.isPeriodEnabled(this.periodStart, this.periodEnd))
-            this.enable();
-          else
-            this.disable();
-        }
+        if (this.isPeriodEnabled(this.periodStart, this.periodEnd))
+          this.enable();
+        else
+          this.disable();
 
         if (selectedDate)
         {
@@ -451,6 +447,8 @@
 
       this.childNodes = getPeriods.call(this).map(function(period){
         return {
+          isPeriodEnabled: this.isPeriodEnabled,
+          disabled: !this.isPeriodEnabled(period.periodStart, period.periodEnd),
           nodePeriodName: this.nodePeriodName,
           periodStart: period.periodStart,
           periodEnd: period.periodEnd
@@ -743,12 +741,12 @@
       // inherit
       UINode.prototype.init.call(this);
 
-      // min/max dates
-
       // insert sections
+      this.isPeriodEnabled = this.isPeriodEnabled.bind(this);
       if (this.sections)
-        DOM.insert(this, this.sections.map(function(sectionClass){
+        this.setChildNodes(this.sections.map(function(sectionClass){
           return new CalendarSection[sectionClass]({
+            isPeriodEnabled: this.isPeriodEnabled,
             selectedDate: this.selectedDate.value
           });
         }, this));
@@ -1053,7 +1051,14 @@
     destroy: function(){
       UINode.prototype.destroy.call(this);
 
+      // clean up
       this.date.destroy();
+      this.date = null;
+
+      this.selectedDate.destroy();
+      this.selectedDate = null;
+
+      delete this.isPeriodEnabled;
     }
   });
 
