@@ -493,8 +493,7 @@
       if (!this.firstChild)
         return;
 
-      var sender = Event.sender(event);
-      var ancestorAxis = DOM.axis(sender, DOM.AXIS_ANCESTOR_OR_SELF);
+      var ancestorAxis = DOM.axis(event.sender, DOM.AXIS_ANCESTOR_OR_SELF);
 
       for (var popup = this.lastChild; popup; popup = popup.previousSibling)
       {
@@ -517,24 +516,23 @@
       this.removeChild(this.getChild(true, 'hideOnAnyClick'));
     },
     hideByKey: function(event){
-      var key = Event.key(event);
       var popup = this.lastChild;
       if (popup && popup.hideOnKey)
       {
         var result = false;
 
         if (typeof popup.hideOnKey == 'function')
-          result = popup.hideOnKey(key);
+          result = popup.hideOnKey(event.key);
         else
           if (Array.isArray(popup.hideOnKey))
-            result = popup.hideOnKey.has(key);
+            result = popup.hideOnKey.has(event.key);
 
         if (result)
           popup.hide();
       }
     },
     hideByScroll: function(event){
-      var sender = Event.sender(event);
+      var sender = event.sender;
 
       if (DOM.parentOf(sender, this.element))
         return;
