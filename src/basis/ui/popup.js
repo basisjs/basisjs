@@ -490,25 +490,31 @@
         this.removeChild(this.firstChild);
     },
     hideByClick: function(event){
+      if (!this.firstChild)
+        return;
+
       var sender = Event.sender(event);
-      var ancestorAxis;
+      var ancestorAxis = DOM.axis(sender, DOM.AXIS_ANCESTOR_OR_SELF);
 
-      var popups = this.childNodes.filter(getter('hideOnAnyClick')).reverse();
-
-      for (var i = 0, popup; popup = popups[i]; i++)
+      for (var popup = this.lastChild; popup; popup = popup.previousSibling)
       {
-        if (!ancestorAxis)
-          ancestorAxis = DOM.axis(sender, DOM.AXIS_ANCESTOR_OR_SELF);
-
         if (ancestorAxis.has(popup.element) || ancestorAxis.some(Array.prototype.has, popup.ignoreClickFor))
         {
-          this.removeChild(popups[i - 1]);
+          while (popup = popup.nextSibling)
+          {
+            if (popup.hideOnAnyClick)
+            {
+              this.removeChild(popup);
+              break;
+            }
+          }
+
           return;
         }
       }
 
-      this.removeChild(popups.pop());
-      //this.clear();
+      // remove first hideOnAnyClick:true popup
+      this.removeChild(this.getChild(true, 'hideOnAnyClick'));
     },
     hideByKey: function(event){
       var key = Event.key(event);
