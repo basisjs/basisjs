@@ -115,7 +115,7 @@
         {
           myRef = -1;
 
-          if (!i && path == rootPath)
+          if (path == rootPath)
             objectRefList.push(localPath);
 
           if (!explicitRef)
