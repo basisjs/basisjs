@@ -236,17 +236,16 @@
     className: namespace + '.Header',
 
     childClass: HeaderCell,
-
     groupingClass: HeaderGroupingNode,
 
     template: templates.Header,
-
     binding: {
       order: function(node){
         return node.owner.sortingDesc ? 'desc' : 'asc';
       }
     },
 
+    selection: {},
     listen: {
       owner: {
         sortingChanged: function(owner){
@@ -261,24 +260,17 @@
 
           this.updateBind('order');
         }
+      },
+      selection: {
+        itemsChanged: function(selection){
+          var cell = selection.pick();
+          if (cell && this.owner)
+            this.owner.setSorting(cell.colSorting, cell.order);
+        }
       }
     },
 
     init: function(){
-      this.selection = {
-        owner: this,
-        handler: {
-          context: this,
-          callbacks: {
-            itemsChanged: function(dataset){
-              var cell = dataset.pick();
-              if (cell && this.owner)
-                this.owner.setSorting(cell.colSorting, cell.order);
-            }
-          }
-        }
-      };
-
       UINode.prototype.init.call(this);
 
       this.applyConfig_(this.structure);
