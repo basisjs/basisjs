@@ -12,23 +12,19 @@ var elements = [];
 var overlay;
 
 var overlay = DOM.createElement({
-  description: 'DIV[style="position: fixed; top: 0; bottom: 0; left: 0; right: 0; z-index: 10000; background: rgba(110,163,217,0.2)"]',
-  click: function(event){
-    var sender = DOM.event.sender(event);
-
-    var token = sender.token;
-    if (token)
-    {
-      endInspect();
-      loadToken(token);
-    } 
-  }
+  description: '[style="position: fixed; top: 0; bottom: 0; left: 0; right: 0; z-index: 10000; background: rgba(110,163,217,0.2)"]'
 });
 
-DOM.event.addHandler(overlay, 'contextmenu', function(event){
-  DOM.event.kill(event);  
-  endInspect();
-});
+function pickHandler(){
+  var sender = DOM.event.sender(event);
+
+  var token = sender.token;
+  if (token)
+  {
+    endInspect();
+    loadToken(token);
+  } 
+}
 
 function loadToken(token){
   var dictionary = token.dictionary;
@@ -54,11 +50,6 @@ function loadToken(token){
 
 // dom mutation observer
 
-var observerConfig = {
-  subtree: true,
-  attributes: true,
-  characterData: true
-};
 var observer = (function(){
   var names = ['MutationObserver', 'WebKitMutationObserver'];
   
@@ -76,20 +67,36 @@ function startInspect(){
     basis.cssom.classList(document.body).add('devpanel-inspectMode');
     inspectMode = true;
     highlight();
+
     basis.dom.event.addGlobalHandler('scroll', updateHighlight);
-    if (observer)
-      observer.observe(document.body, observerConfig);
+    DOM.event.captureEvent('mousedown', DOM.event.kill);
+    DOM.event.captureEvent('mouseup', DOM.event.kill);
+    DOM.event.captureEvent('contextmenu', endInspect);
+    DOM.event.captureEvent('click', pickHandler);    
 
     transport.sendData('startInspect', 'l10n');
+
+    if (observer)
+      observer.observe(document.body, {
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
   }
 }
 function endInspect(){
   if (inspectMode)
   {
-    basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
-    basis.dom.event.removeGlobalHandler('scroll', updateHighlight);
     if (observer)
       observer.disconnect();
+
+    basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
+
+    basis.dom.event.removeGlobalHandler('scroll', updateHighlight);
+    DOM.event.releaseEvent('mousedown');
+    DOM.event.releaseEvent('mouseup');
+    DOM.event.releaseEvent('contextmenu');    
+    DOM.event.releaseEvent('click');
 
     unhighlight();
     inspectMode = false;
