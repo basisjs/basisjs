@@ -273,18 +273,14 @@
     init: function(){
       UINode.prototype.init.call(this);
 
-      this.applyConfig_(this.structure);
-    },
-    applyConfig_: function(structure){
-      if (structure)
+      if (this.structure)
       {
         var cells = [];
         var autoSorting = [];
         var ownerSorting = this.owner && this.owner.sorting;
         
-        for (var i = 0; i < structure.length; i++)
+        for (var i = 0, colConfig; colConfig = this.structure[i]; i++)
         {
-          var colConfig = structure[i];
           var headerConfig = colConfig.header;
           var config = {};
           
@@ -367,22 +363,11 @@
     init: function(){
       UINode.prototype.init.call(this);
 
-      this.applyConfig_(this.structure);
-    },
-
-    applyConfig_: function(structure){
-      if (structure)
+      if (this.structure)
       {
         var prevCell = null;
-
-        this.clear();
-        this.useFooter = false;
-
-        for (var i = 0; i < structure.length; i++)
+        for (var i = 0, colConfig; colConfig = this.structure[i]; i++)
         {
-          var colConfig = structure[i];
-          var cell;
-
           if ('footer' in colConfig)
           {
             var footerConfig = colConfig.footer != null ? colConfig.footer : {};
@@ -394,8 +379,6 @@
 
             if (typeof content == 'function')
               content = content.call(this);
-              
-            this.useFooter = true;
 
             // fill config
 
@@ -406,25 +389,23 @@
 
             if (footerConfig.template)
               config.template = footerConfig.template;
+
             if (footerConfig.binding)
               config.binding = footerConfig.binding;
+
             if ('value' in footerConfig)
               config.value = footerConfig.value;
 
             // create instace of cell
-           
-            cell = this.appendChild(config);
+            prevCell = this.appendChild(config);
           }
           else
           {
             if (prevCell)
               prevCell.setColSpan(prevCell.colSpan + 1);
             else
-              cell = this.appendChild({});
+              prevCell = this.appendChild({});
           }
-
-          if (cell)
-            prevCell = cell;
         }
       }
     }
@@ -505,37 +486,27 @@
     },
 
     init: function(){
-      this.applyConfig_(this.structure);
+      var useFooter = false;
 
-      UINode.prototype.init.call(this);
-
-      this.header = new this.headerClass(extend({ owner: this, structure: this.structure }, this.header));
-      this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
-
-      this.setSatellite('header', this.header);
-      this.setSatellite('footer', this.footer);
-    },
-
-    applyConfig_: function(structure){
-      if (structure)
+      // apply structure config
+      if (this.structure)
       {
         var template = '';
         var binding = {};
 
-        if (this.firstChild)
-          this.clear();
-
-        for (var i = 0; i < structure.length; i++)
+        for (var i = 0, colConfig; colConfig = this.structure[i]; i++)
         {
-          var col = structure[i];
-          var cell = col.body || {};
+          var cell = colConfig.body || {};
+
+          if ('footer' in colConfig)
+            useFooter = true;
 
           if (typeof cell == 'function' || typeof cell == 'string')
             cell = {
               content: cell
             };
 
-          var className = [col.cssClassName || '', cell.cssClassName || ''].join(' ').trim();
+          var className = [colConfig.cssClassName || '', cell.cssClassName || ''].join(' ').trim();
           var content = cell.content;
           var contentType = typeof content;
 
@@ -565,6 +536,20 @@
 
           binding: binding
         });
+      }
+
+      // inherit
+      UINode.prototype.init.call(this);
+
+      // header
+      this.header = new this.headerClass(extend({ owner: this, structure: this.structure }, this.header));
+      this.setSatellite('header', this.header);
+
+      // footer
+      if (useFooter)
+      {
+        this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
+        this.setSatellite('footer', this.footer);
       }
     },
 
