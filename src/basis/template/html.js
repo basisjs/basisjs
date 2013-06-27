@@ -57,7 +57,7 @@
     svg: 'http://www.w3.org/2000/svg'
   };
 
-  // Test for browser (IE) normalize text nodes during cloning
+  // test for browser (IE) normalize text nodes during cloning
   var CLONE_NORMALIZATION_TEXT_BUG = (function(){
     var element = document.createElement('div');
     element.appendChild(document.createTextNode('a'));
@@ -65,7 +65,12 @@
     return element.cloneNode(true).childNodes.length == 1;
   })();
 
-
+  // test for class attribute set via setAttribute bug (IE7 and lower)
+  var SET_CLASS_ATTRIBUTE_BUG = (function(){
+    var element = document.createElement('div');
+    element.setAttribute('class', 'a');
+    return !element.className;
+  })();
 
 
  /**
@@ -487,6 +492,14 @@
       result.setAttribute(attrName, actions);
     }
 
+    function setAttribute(name, value){
+      if (SET_CLASS_ATTRIBUTE_BUG && name == 'class')
+        name = 'className';
+
+      result.setAttribute(name, value);
+    }
+
+
     var result = parent || document.createDocumentFragment();
 
     for (var i = parent ? 4 : 0, token; token = tokens[i]; i++)
@@ -521,7 +534,7 @@
           else
           {
             if (attrName != 'class' && attrName != 'style' ? !token[TOKEN_BINDINGS] : attrValue)
-              result.setAttribute(attrName, attrValue || '');
+              setAttribute(attrName, attrValue || '');
           }
 
           break;
@@ -531,7 +544,7 @@
           var attrValue = token[ATTR_VALUE - 1];
 
           if (attrValue)
-            result.setAttribute(ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]], attrValue);
+            setAttribute(ATTR_NAME_BY_TYPE[token[TOKEN_TYPE]], attrValue);
 
           break;
 
