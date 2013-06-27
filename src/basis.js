@@ -1284,11 +1284,20 @@
     else
     {
       var linkEl = document.createElement('A');
+      var HREF_ABSOLUTIZE_BUG = (function(){
+        linkEl.href = '';
+        return !linkEl.href;
+      })();
 
       utils = {
         normalize: function(path){
           linkEl.href = path || '';
-          //linkEl.href = linkEl.pathname;
+
+          // IE7 and lower does not absolutize href on assign, but do that on link cloning
+          // we replace linkEl for it's clone to get absolute path
+          if (HREF_ABSOLUTIZE_BUG)
+            linkEl = linkEl.cloneNode(false);
+
           return linkEl.href.substring(0, linkEl.href.length - linkEl.hash.length - linkEl.search.length);
         },
         dirname: function(path){
