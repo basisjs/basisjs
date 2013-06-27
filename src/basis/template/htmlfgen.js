@@ -30,7 +30,7 @@
   // main part
   //
 
-  var tmplFunctions = {};
+  var tmplFunctions = {}; // precompiled functions
 
 
  /**
@@ -124,7 +124,7 @@
             myRef = pathList.length;
           }
 
-          // TODO: temporate solution, rewrite function
+          // TODO: temporary solution, rewrite function
           var attrs = [];
           var children = [];
           for (var j = ELEMENT_ATTRS, t; t = token[j]; j++)
@@ -202,8 +202,6 @@
   * build template bindings code
   */
   var buildBindings = (function(){
-    var quoteEscape = /"/g;
-
     var SPECIAL_ATTR_MAP = {
       disabled: '*',  // any tag
       checked: ['input'],
@@ -239,8 +237,9 @@
       var colonPos;
 
       for (var j = 0; j < symbols.length; j++)
+      {
         if (typeof symbols[j] == 'string')
-          expression.push('"' + symbols[j].replace(quoteEscape, '\\"') + '"');
+          expression.push('"' + symbols[j].replace(/"/g, '\\"') + '"');
         else
         {
           exprVar = dictionary[symbols[j]];
@@ -257,6 +256,7 @@
           else
             expression.push('__l10n["' + exprVar.substr(colonPos + 1) + '"]');
         }
+      }
 
       if (expression.length == 1)
         expression.push('""');
@@ -268,6 +268,13 @@
     * @func
     */
     return function(bindings){
+      function putBindCode(type){
+        toolsUsed[type] = true;
+        bindCode.push(
+          bindVar + '=' + type + '(' + basis.array(arguments, 1) + ');'
+        );
+      }
+
       var bindMap = {};
       var bindCode;
       var bindVar;
@@ -278,7 +285,7 @@
       var l10nKeys;
       var toolsUsed = {};
       var specialAttr;
-      ;;;var debugList = [];
+      /** @cut */ var debugList = [];
 
       for (var i = 0, binding; binding = bindings[i]; i++)
       {
@@ -288,11 +295,9 @@
 
         var namePart = bindName.split(':');
         var anim = namePart[0] == 'anim';
+
         if (anim)
-        {
           bindName = namePart[1];
-          //anim = TRANSITION_SUPPORTED;
-        }
 
         bindCode = bindMap[bindName];
         bindVar = '_' + i;
@@ -318,23 +323,29 @@
           bindCode = bindMap[l10nName];
           bindCode.l10n = true;
 
-          if (binding[0] == TYPE_TEXT)
+          if (bindType == TYPE_TEXT)
           {
-            ;;;debugList.push('{binding:"' + l10nName + '",dom:' + domRef + ',val:__l10n["' + l10nName + '"],attachment:l10nToken("' + l10nName + '")}');
-            ;;;toolsUsed.l10nToken = true;
-            bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"];');
+            /** @cut */ debugList.push('{' + [
+            /** @cut */   'binding:"' + l10nName + '"',
+            /** @cut */   'dom:' + domRef,
+            /** @cut */   'val:__l10n["' + l10nName + '"]',
+            /** @cut */   'attachment:l10nToken("' + l10nName + '")'
+            /** @cut */ ] +'}');
+            /** @cut */ toolsUsed.l10nToken = true;
+
             l10nMap[l10nName].push(domRef + '.nodeValue=value;');
+            
+            bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"];');
           }
           else
           {
             attrName = '"' + binding[ATTR_NAME] + '"';
+            
+            // use NaN value to make sure it trigger in any case
             l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, 'l10n')] + ');');
 
-            toolsUsed.bind_attr = true;
             varList.push(bindVar);
-            bindCode.push(
-              bindVar + '=bind_attr(' + [domRef, attrName, bindVar, buildAttrExpression(binding)] + ');'
-            );
+            putBindCode('bind_attr', domRef, attrName, bindVar, buildAttrExpression(binding));
           }
 
           continue;
@@ -348,20 +359,27 @@
 
         if (bindType != TYPE_ATTRIBUTE)
         {
-          ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+          /** @cut */ debugList.push('{' + [
+          /** @cut */   'binding:"' + bindName + '"',
+          /** @cut */   'dom:' + domRef,
+          /** @cut */   'val:' + bindVar,
+          /** @cut */   'attachment:attaches["' + bindName + '"]'
+          /** @cut */ ] +'}');
 
-          var bindFunction = bindFunctions[bindType];
           varList.push(bindVar + '=' + domRef);
-          toolsUsed[bindFunction] = true;
-          bindCode.push(
-            bindVar + '=' + bindFunction + '(' + [domRef, bindVar] + ',value);'
-          );
+          putBindCode(bindFunctions[bindType], domRef, bindVar, 'value');
         }
         else
         {
           var attrName = binding[ATTR_NAME];
 
-          ;;;debugList.push('{binding:"' + bindName + '",dom:' + domRef + ',attr:"' + attrName + '",val:' + bindVar + ',attachment:attaches["' + bindName + '"]}');
+          /** @cut */ debugList.push('{' + [
+          /** @cut */   'binding:"' + bindName + '"',
+          /** @cut */   'dom:' + domRef,
+          /** @cut */   'attr:"' + attrName + '"',
+          /** @cut */   'val:' + bindVar,
+          /** @cut */   'attachment:attaches["' + bindName + '"]'
+          /** @cut */ ] + '}');
 
           switch (attrName)
           {
@@ -369,12 +387,17 @@
               var defaultExpr = '';
               var valueExpr = 'value';
               var prefix = binding[4];
+              var bindingLength = binding.length;
 
-              if (binding.length >= 6)
+              if (bindingLength >= 6)
               {
-                if (binding.length == 6 || typeof binding[6] == 'string') // bool
+                // predictable binding
+
+                if (bindingLength == 6 || typeof binding[6] == 'string')
                 {
-                  if (binding.length == 6)
+                  // bool binding
+
+                  if (bindingLength == 6)
                   {
                     valueExpr = 'value?"' + bindName + '":""';
                     if (binding[5])
@@ -384,36 +407,35 @@
                   {
                     prefix = '';
                     valueExpr = 'value?"' + binding[6] + '":""';
+                    
                     if (binding[5])
                       defaultExpr = binding[6];
                   }
                 }
-                else // enum
+                else
                 {
-                  if (binding.length == 7)
-                  {
-                    valueExpr = binding[6].map(function(val){ return 'value=="' + val + '"'; }).join('||');
-                    
-                    if (!valueExpr)  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
-                      continue;
+                  // enum binding
 
-                    valueExpr += '?value:""';
+                  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
+                  if (!binding[6].length)
+                    continue;
+
+                  if (bindingLength == 7)
+                  {
+                    valueExpr = binding[6].map(function(val){
+                      return 'value=="' + val + '"';
+                    }).join('||') + '?value:""';
+
                     if (binding[5])
                       defaultExpr = prefix + binding[6][binding[5] - 1];
                   }
                   else
                   {
-                    prefix = "";
-                    valueExpr = [];
-                    var values = binding[6];
-                    for (var jj = 0; jj < values.length; jj++)
-                      valueExpr.push('value=="' + values[jj] + '"?"' + binding[7][jj] + '"');
-                    
-                    if (!valueExpr.length)  // if enum list is empty - ignore binding; Probably we should remove it in makeDeclaration
-                      continue;
+                    prefix = '';
+                    valueExpr = binding[6].map(function(val, idx){
+                      return 'value=="' + val + '"?"' + this[idx] + '"';
+                    }, binding[7]).join(':') + ':""';
 
-                    valueExpr.push('""');
-                    valueExpr = valueExpr.join(':');
                     if (binding[5])
                       defaultExpr = binding[7][binding[5] - 1];
                   }
@@ -421,70 +443,57 @@
               }
               else
               {
-                // quirks mode
-                // number || string set as it
-                // otherwise treat as boolean, if true set binding name and empty string in other cases
+                // quirks mode (unpredictable binding)
+                // number || string set as is
+                // otherwise treat as boolean, if new value is true set binding name and empty string in other cases
                 valueExpr = 'typeof value=="string"||typeof value=="number"?value:(value?"' + bindName + '":"")';
               }
 
               varList.push(bindVar + '="' + defaultExpr + '"');
-              toolsUsed.bind_attrClass = true;
-              bindCode.push(
-                bindVar + '=bind_attrClass(' + [domRef, bindVar, valueExpr, '"' + prefix + '"'] + (anim ? ',1' : '') + ');'
-              );
+              putBindCode('bind_attrClass', domRef, bindVar, valueExpr, '"' + prefix + '"', anim);
 
               break;
 
             case 'style':
               varList.push(bindVar + '=""');
-              toolsUsed.bind_attrStyle = true;
-              bindCode.push(
-                bindVar + '=bind_attrStyle(' + [domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding)] + ');'
-              );
+              putBindCode('bind_attrStyle', domRef, '"' + binding[6] + '"', bindVar, buildAttrExpression(binding));
 
               break;
 
             default:
-              varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n'));
-              toolsUsed.bind_attr = true;
-
               specialAttr = SPECIAL_ATTR_MAP[attrName];
 
-              bindCode.push(
-                bindVar + '=bind_attr(' + [domRef, '"' + attrName + '"', bindVar,
-                  specialAttr && SPECIAL_ATTR_SINGLE[attrName]
-                    ? buildAttrExpression(binding, 'bool') + '?"' + attrName + '":""'
-                    : buildAttrExpression(binding)
-                  ] +
-                ');'
+              varList.push(bindVar + '=' + buildAttrExpression(binding, 'l10n'));
+              putBindCode('bind_attr', domRef, '"' + attrName + '"', bindVar,
+                specialAttr && SPECIAL_ATTR_SINGLE[attrName]
+                  ? buildAttrExpression(binding, 'bool') + '?"' + attrName + '":""'
+                  : buildAttrExpression(binding)
               );
 
-              if (specialAttr)
-              {
-                if (specialAttr == '*' || specialAttr.has(binding[6].toLowerCase()))
-                {
-                  bindCode.push('if(' + domRef + '.' + attrName + '!=' + bindVar + ')' + domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!' : '') + '(' + bindVar + ');');
-                }
-              }
+              if (specialAttr && (specialAttr == '*' || specialAttr.has(binding[6].toLowerCase())))
+                bindCode.push(
+                  'if(' + domRef + '.' + attrName + '!=' + bindVar + ')' +
+                    domRef + '.' + attrName + '=' + (SPECIAL_ATTR_SINGLE[attrName] ? '!!(' : '(') + bindVar + ');'
+                );
           }
         }
       }
 
       result.push(
-        'function set(bindName,value){\n' +
+        'function set(bindName,value){' +
           'value=resolve(attaches,updateAttach,bindName,value);' +
           'switch(bindName){'
       );
 
       for (var bindName in bindMap)
         result.push(
-          'case"' + bindName + '":\n' +
+          'case"' + bindName + '":' +
           (bindMap[bindName].l10n
-            ? bindMap[bindName].join('\n')
+            ? bindMap[bindName].join('')
             : 'if(__' + bindName + '!==value)' +
               '{' +
-                '__' + bindName + '=value;\n' +
-                bindMap[bindName].join('\n') +
+                '__' + bindName + '=value;' +
+                bindMap[bindName].join('') +
               '}') +
           'break;'
         );
@@ -495,10 +504,10 @@
         varList.push(key + '=tools.' + key);
 
       return {
-        /** @cut */debugList: debugList,
+        /** @cut */ debugList: debugList,
         keys: basis.object.keys(bindMap),
         vars: varList,
-        body: result.join(''),
+        set: result.join(''),
         l10n: l10nMap,
         l10nKeys: l10nKeys
       };
@@ -529,37 +538,45 @@
       var code = [];
       for (var key in bindings.l10n)
         code.push(
-          'case"' + key +'":\n' +
-          'if(value==null)value="{' + key + '}";' +
-          '__l10n[token]=value;' +
-          bindings.l10n[key].join(';') +
+          'case"' + key +'":' +
+            'if(value==null)value="{' + key + '}";' +
+            '__l10n[token]=value;' +
+            bindings.l10n[key].join(';') +
           'break;'
         );
 
       result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'TEXT_BUG',
-        (source ? '/*\n' + source + '\n*/\n' : '') +
-        'var ' + paths.path + ';return function(token, value){' +
-        'switch(token){' +
-          code.join('') +
-        '}}'
+        /**@cut*/ (source ? '/*\n' + source + '\n*/\n' : '') +
+
+        'var ' + paths.path + ';' +
+        'return function(token, value){' +
+          'switch(token){' +
+            code.join('') +
+          '}' +
+        '}'
+        
         /**@cut*/ + (uri ? '//@ sourceURL=' + uri + '_l10n' : '')
       );
     }
 
-    /**@cut*/try {
+    /**@cut*/ try {
     result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG',
-      fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
-      'return function createInstance_(obj,actionCallback,updateCallback){' + 
+      /**@cut*/ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
+      'return function createInstance_(obj,actionCallback,updateCallback){' +
         'var id=gMap.seed++,' +
         'attaches={},' + 
         'resolve=tools.resolve,' +
-        '_=build(),' + paths.path.concat(bindings.vars) + ';\n' +
-        (objectRefs ? 'if(obj)gMap[' + objectRefs + '=id]=obj;\n' : '') +
-        'function updateAttach(){set(this+"",attaches[this])};\n' +
-        bindings.body +
-        /**@cut*/(debug ? ';set.debug=function(){return[' + bindings.debugList.join(',') + ']}' : '') +
-        ';' +
-        'return tMap[id]={' + [
+        '_=build(),' + 
+        paths.path.concat(bindings.vars) + 
+
+        (objectRefs ? ';if(obj)gMap[' + objectRefs + '=id]=obj' : '') +
+
+        ';function updateAttach(){set(this+"",attaches[this])}' +
+
+        bindings.set +
+        /**@cut*/ (debug ? 'set.debug=function(){return[' + bindings.debugList + ']}' : '') +
+
+        ';return tMap[id]={' + [
           paths.ref,
           'set:set,' +
           'rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
@@ -569,10 +586,12 @@
             'delete tMap[id];' + 
             (objectRefs ? 'delete gMap[id];' : '') +
           '}'] +
-        '}' + /**@cut*/ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
+        '}' +
+
+        /**@cut*/ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
       '}'
     );
-    /**@cut*/} catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }
+    /**@cut*/ } catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }
 
     return result;
   }
@@ -580,4 +599,3 @@
   module.exports = {
   	getFunctions: getFunctions
   };
-  
