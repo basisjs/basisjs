@@ -830,10 +830,10 @@
             this.textNode = dom.insert(this.element, '');
         }
 
-        this.syncCssText();
-
         setBase(this.baseURI);
         dom.appendHead(this.element);
+        this.syncCssText();  // set css text after node inserted into document, IE8 and lower
+                             // crash otherwise (this.element.styleSheet is not defined)
         restoreBase();
       }
 
