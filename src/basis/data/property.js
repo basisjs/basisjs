@@ -598,15 +598,21 @@
     * @private
     */
     update: function(){
+      var valueChanged = this.valueChanged_;
+      var stateChanged = this.stateChanged_;
+      
+      this.valueChanged_ = false;
+      this.stateChanged_ = false;
+
       delete this.timer_;
       TimeEventManager.remove(this, 'update');
 
       if (!cleaner.globalDestroy)
       {
-        if (this.valueChanged_)
+        if (valueChanged)
           this.set(this.calculateValue());
 
-        if (this.stateChanged_)
+        if (stateChanged)
         {
           var len = this.objects.length;
           if (!len)
@@ -632,9 +638,6 @@
           }
         }
       }
-
-      this.valueChanged_ = false;
-      this.stateChanged_ = false;
     },
 
    /**
