@@ -71,14 +71,17 @@
       // function wrapper for more verbose in development mode
       if (DEVMODE)
       {
-        eventFunction = new Function('eventName', 'slice', 'DEVMODE',
-          'var eventFunction;\n' +
-          'return eventFunction = function(' + slice.call(arguments, 1).join(', ') + '){' +
-          '//' + namespace + '.events.' + eventName + '\n' +
-          eventFunction.toString()
-            .replace(/\beventName\b/g, "'" + eventName + "'")
-            .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + 
-        '}')(eventName, slice, DEVMODE);
+        eventFunction = new Function('slice, DEVMODE',
+          'return {"' + namespace + '.events.' + eventName + '":\n\n      ' +
+
+            'function(' + slice.call(arguments, 1).join(', ') + '){' +
+              eventFunction.toString()
+                .replace(/\beventName\b/g, "'" + eventName + "'")
+                .replace(/^function[^(]*\(\)[^{]*\{|\}$/g, '') + 
+            '}' +
+
+          '\n\n}["' + namespace + '.events.' + eventName + '"];'
+        )(slice, DEVMODE);
       }
 
       events[eventName] = eventFunction;
