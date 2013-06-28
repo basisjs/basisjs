@@ -823,6 +823,11 @@
           this.cssText = resource.get(true);
         }
 
+        // set base before <style> element creating, because IE9+ set baseURI
+        // for <style> element when element creates
+        setBase(this.baseURI);
+
+        // create <style> element for first time
         if (!this.element)
         {
           this.element = dom.createElement('style[src="' + path.relative(this.url) + '"]');
@@ -830,10 +835,13 @@
             this.textNode = dom.insert(this.element, '');
         }
 
-        setBase(this.baseURI);
+        // add element to document
         dom.appendHead(this.element);
-        this.syncCssText();  // set css text after node inserted into document, IE8 and lower
-                             // crash otherwise (this.element.styleSheet is not defined)
+        
+        // set css text after node inserted into document,
+        // IE8 and lower crash otherwise (this.element.styleSheet is not defined)
+        this.syncCssText();
+
         restoreBase();
       }
 
