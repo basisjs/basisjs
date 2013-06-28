@@ -470,10 +470,10 @@
     objects: null,
 
    /**
-    * @type {number}
+    * @type {boolean}
     * @private
     */
-    timer_: null,
+    timer_: false,
 
    /**
     * @type {boolean}
@@ -600,11 +600,11 @@
     update: function(){
       var valueChanged = this.valueChanged_;
       var stateChanged = this.stateChanged_;
-      
+
       this.valueChanged_ = false;
       this.stateChanged_ = false;
 
-      delete this.timer_;
+      this.timer_ = false;
       TimeEventManager.remove(this, 'update');
 
       if (!cleaner.globalDestroy)
