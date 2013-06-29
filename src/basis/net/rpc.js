@@ -22,38 +22,6 @@
 
   var nothingToDo = function(){};  
 
-  // default callbacks
-  var callback = {
-    setProcessing: function(){
-      this.setState(STATE_PROCESSING);
-    },
-    setUndefined: function(){
-      this.setState(STATE_UNDEFINED);
-    },
-    setReady: function(){
-      this.setState(STATE_READY);
-    },
-    setError: function(error){
-      this.setState(STATE_ERROR, error);
-    },
-    update_setReady: function(data){
-      this.update(data);
-      this.setState(STATE_READY);
-    },
-    commit_setReady: function(data){
-      this.commit(data);
-      this.setState(STATE_READY);
-    },
-    set_setReady: function(data){
-      this.set(data || []);
-      this.setState(STATE_READY);
-    },
-    sync_setReady: function(data){
-      this.sync(data || []);
-      this.setState(STATE_READY);
-    }
-  };
-
   // default transport handler
   var CALLBACK_HANDLER = {
     start: function(transport, request){
@@ -171,6 +139,5 @@
 
   module.exports = {
     createRpc: createRpc,
-    createRpcFactory: createRpcFactory,
-    callback: callback
+    createRpcFactory: createRpcFactory
   };
