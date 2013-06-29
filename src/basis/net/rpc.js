@@ -10,8 +10,7 @@
   // import names
   //
 
-  var $undef = basis.fn.$undef;
-
+  var STATE_UNDEFINED = basis.data.STATE.UNDEFINED;
   var STATE_READY = basis.data.STATE.READY;
   var STATE_PROCESSING = basis.data.STATE.PROCESSING;
   var STATE_ERROR = basis.data.STATE.ERROR;
@@ -21,10 +20,15 @@
   // main part
   //
 
+  var nothingToDo = function(){};  
+
   // default callbacks
   var callback = {
     setProcessing: function(){
       this.setState(STATE_PROCESSING);
+    },
+    setUndefined: function(){
+      this.setState(STATE_UNDEFINED);
     },
     setReady: function(){
       this.setState(STATE_READY);
@@ -53,7 +57,12 @@
   // default transport handler
   var CALLBACK_HANDLER = {
     start: function(transport, request){
+      var origin = request.requestData.origin;
+
       this.start.call(request.requestData.origin);
+
+      if (origin.state != STATE_PROCESSING)
+        origin.setState(STATE_PROCESSING);
     },
     success: function(transport, request, data){
       var origin = request.requestData.origin;
@@ -71,6 +80,14 @@
       if (origin.state == STATE_PROCESSING)
         origin.setState(STATE_ERROR, error);
     },
+    abort: function(transport, request){
+      var origin = request.requestData.origin;
+
+      this.abort.call(origin);
+
+      if (origin.state == STATE_PROCESSING)
+        origin.setState(STATE_UNDEFINED);
+    },
     complete: function(transport, request){
       this.complete.call(request.requestData.origin);
     }
@@ -78,10 +95,11 @@
 
   // default callbacks
   var DEFAULT_CALLBACK = {
-    start: callback.setProcessing,
-    success: callback.setReady,
-    failure: callback.setError,
-    complete: $undef
+    start: nothingToDo,
+    success: nothingToDo,
+    failure: nothingToDo,
+    abort: nothingToDo,
+    complete: nothingToDo
   };
 
  /**
@@ -91,15 +109,15 @@
   function createRpc(config){
     // make a copy of config with defaults
     config = basis.object.extend({
-      prepare: $undef,
-      request: $undef
+      prepare: nothingToDo,
+      request: nothingToDo
     }, config);
 
     // splice properties
     var fn = basis.object.splice(config, ['prepare', 'request']);
     var callback = basis.object.merge(
       DEFAULT_CALLBACK,
-      basis.object.splice(config, ['start', 'success', 'failure', 'complete'])
+      basis.object.splice(config, ['start', 'success', 'failure', 'abort', 'complete'])
     );
 
     // lazy transport
@@ -113,6 +131,7 @@
         transport = config.createTransport(config);
 
       transport.addHandler(CALLBACK_HANDLER, callback);
+
       return transport;
     });
 
