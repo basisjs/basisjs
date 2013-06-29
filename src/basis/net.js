@@ -98,6 +98,7 @@
     requestData: null,
 
     transport: null,
+    stateOnAbort: STATE.UNDEFINED,
 
     emit_start: createRequestEvent('start'),
     emit_timeout: createRequestEvent('timeout'),
@@ -389,13 +390,12 @@
   * @function readyStateChangeHandler
   */
   function readyStateChangeHandler(readyState){
+    var transport = this.transport;
+    var xhr = this.xhr;
     var newState;
 
-    var xhr = this.xhr;
     if (!xhr)
       return;
-
-    var transport = this.transport;
 
     if (typeof readyState != 'number')
       readyState = xhr.readyState;
@@ -420,9 +420,8 @@
 
       if (typeof xhr.responseText == 'unknown' || (!xhr.responseText && !xhr.getAllResponseHeaders()))
       {
-        this.emit_failure();
         this.emit_abort();
-        newState = STATE.ERROR;
+        newState = this.stateOnAbort;
       }
       else
       {
@@ -436,7 +435,6 @@
         }
         else
         {
-
           this.processErrorResponse();
 
           this.emit_failure(this.data.error);
