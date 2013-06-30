@@ -254,9 +254,9 @@
 
   // Register base subscription types
 
-  SUBSCRIPTION.addProperty('delegate', 'delegateChanged');
-  SUBSCRIPTION.addProperty('target', 'targetChanged');
-  SUBSCRIPTION.addProperty('dataset', 'datasetChanged');
+  SUBSCRIPTION.addProperty('delegate');
+  SUBSCRIPTION.addProperty('target');
+  SUBSCRIPTION.addProperty('dataset');
 
 
   //

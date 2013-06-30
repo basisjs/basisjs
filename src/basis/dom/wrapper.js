@@ -191,8 +191,8 @@
   // register new subscription types
   //
 
-  SUBSCRIPTION.addProperty('owner', 'ownerChanged');
-  SUBSCRIPTION.addProperty('dataSource', 'dataSourceChanged');
+  SUBSCRIPTION.addProperty('owner');
+  SUBSCRIPTION.addProperty('dataSource');
 
   //
   // AbstractNode
