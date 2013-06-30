@@ -525,9 +525,6 @@
   var Value = Class(AbstractData, {
     className: namespace + '.Value',
 
-    // use custom constructor
-    extendConstructor_: false,
-
    /**
     * Fires when value was changed.
     * @param {*} curValue Current value.
@@ -569,21 +566,15 @@
     lockedValue_: null,
 
    /**
-    * @param {object} initValue Initial value for object.
-    * @param {object=} handler
-    * @param {function()=} proxy
     * @constructor
     */
-    init: function(initValue, handler, proxy){
+    init: function(){
       AbstractData.prototype.init.call(this);
 
-      if (handler)
-        this.addHandler(handler);
+      if (typeof this.proxy != 'function')
+        this.proxy = $self;
 
-      if (typeof proxy == 'function')
-        this.proxy = proxy;
-
-      this.value = this.proxy(initValue);
+      this.value = this.proxy(this.value);
       this.initValue = this.value;
     },
 

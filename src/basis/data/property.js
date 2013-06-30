@@ -74,13 +74,17 @@
   var Property = Class(Value, {
     className: namespace + '.Property',
 
+    // use custom constructor
+    extendConstructor_: false,
+
    /**
-    * @type {object}
+    * @type {Array.<object>}
     * @private
     */
     links_: null,
 
    /**
+    * Settings for bindings.
     */
     bindingBridge: {
       attach: function(property, handler, context){
@@ -108,11 +112,18 @@
     },
 
    /**
-    * @inheritDoc
+    * @param {object} initValue Initial value for object.
+    * @param {object=} handler
+    * @param {function()=} proxy
     * @constructor
     */
-    init: function(initValue, handlers, proxy){
-      Value.prototype.init.call(this, initValue, handlers, proxy);
+    init: function(initValue, handler, proxy){
+      this.value = initValue;
+      this.handler = handler;
+      this.proxy = proxy;
+
+      Value.prototype.init.call(this);
+
       this.links_ = [];
 
       cleaner.add(this);
@@ -188,7 +199,7 @@
 
       // add link
       ;;;if (this.links_.some(function(link){ return link.object == object && link.field == field; })) basis.dev.warn('Property.addLink: Duplicate link for property');
-      this.links_.push(link);  // !!! TODO: check for object-field duplicates
+      this.links_.push(link);
       
       if (link.isEmitter)
         object.addHandler(EMMITER_HANDLER, this); // add unlink handler on object destroy
