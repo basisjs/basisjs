@@ -518,9 +518,9 @@
     grouping: null,
 
    /**
-    * @param {basis.dom.wrapper.GroupingNode} oldGroupingNode
+    * @param {basis.dom.wrapper.GroupingNode} oldGrouping
     */
-    emit_groupingChanged: createEvent('groupingChanged', 'oldGroupingNode'),
+    emit_groupingChanged: createEvent('groupingChanged', 'oldGrouping'),
 
    /**
     * Class for grouping control. Class should be inherited from {basis.dom.wrapper.GroupingNode}
@@ -1805,16 +1805,19 @@
 
       if (this.grouping !== grouping)
       {
-        var oldGroupingNode = this.grouping;
+        var oldGrouping = this.grouping;
         var order;
 
-        if (this.grouping)
+        if (oldGrouping)
         {
+          // NOTE: important to reset grouping before calling fastChildNodesOrder
+          // because it sorts nodes in according to grouping
+          // NOTE: important to reset grouping before owner reset for oldGrouping
+          // otherwise groupingChanged event occur twice
+          this.grouping = null;
+          
           if (!grouping)
           {
-            // NOTE: it's important to clear locaGrouping before calling fastChildNodesOrder
-            // because it sorts nodes in according to grouping
-            this.grouping = null;
 
             if (this.firstChild)
             {
@@ -1833,14 +1836,14 @@
             }
           }
 
-          oldGroupingNode.setOwner();
+          oldGrouping.setOwner();
         }
 
         if (grouping)
         {
-          // NOTE: it important set grouping before set owner for grouping,
-          // because grouping will try set grouping property on owner change
-          // for it's new owner and it fall in recursion
+          // NOTE: important to set grouping before owner for that grouping,
+          // because grouping will try set grouping property on it's owner change
+          // for new owner and fall in recursion
           this.grouping = grouping;
           grouping.setOwner(this);
 
@@ -1865,7 +1868,7 @@
           }
         }
 
-        this.emit_groupingChanged(oldGroupingNode);
+        this.emit_groupingChanged(oldGrouping);
       }
     },
 
