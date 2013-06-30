@@ -45,6 +45,7 @@
 
   <script id="demo-javascript" type="text/javascript">
     basis.require('basis.dom');
+    basis.require('basis.event');
     basis.require('basis.data');
     basis.require('basis.dom.wrapper');
     basis.require('basis.ui.button');
@@ -64,6 +65,15 @@
         return this.objects.reduce(function(value, object){
           return value + object.value;
         }, 0);
+      }
+    });
+
+    // patch Value to compute changes count
+    basis.data.Value.extend({
+      updateCount: 0,
+      emit_change: function(){
+        this.updateCount += 1;
+        basis.event.events.change.apply(this, arguments);
       }
     });
 

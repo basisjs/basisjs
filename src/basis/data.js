@@ -117,6 +117,7 @@
       if (!subscribers[subscriberId])
       {
         subscribers[subscriberId] = from;
+
         var count = to.subscriberCount += 1;
         if (count == 1)
           to.emit_subscribersChanged(+1);
@@ -133,6 +134,7 @@
       if (subscribers && subscribers[subscriberId])
       {
         delete subscribers[subscriberId];
+
         var count = to.subscriberCount -= 1;
         if (count == 0)
         {
@@ -549,11 +551,6 @@
     lockValue_: null,
 
    /**
-    * @type {number}
-    */
-    updateCount: 0,
-
-   /**
     * @param {object} initValue Initial value for object.
     * @param {object=} handler
     * @param {function()=} proxy
@@ -586,7 +583,6 @@
       {
         this.value = newValue;
         updated = true;
-        this.updateCount += 1;
       }
 
       if (!this.locked && (updated || forceEvent))
