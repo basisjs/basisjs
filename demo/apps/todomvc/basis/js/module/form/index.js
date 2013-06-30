@@ -1,22 +1,28 @@
+basis.require('basis.ui');
+basis.require('app.type');
 
-  basis.require('basis.ui');
-  basis.require('app.type');
+module.exports = new basis.ui.Node({
+  template: resource('template/form.tmpl'),
+  action: {
+    create: function(event){
+      // do action only when enter key pressed
+      if (event.key != event.KEY.ENTER)
+        return;
 
-  module.exports = new basis.ui.Node({
-    template: resource('template/form.tmpl'),
-    action: {
-      create: function(event){
-        if (event.key != event.KEY.ENTER)
-          return;
+      // read input value and trim it
+      var value = event.sender.value.trim();
 
-        var value = event.sender.value.trim();
-        if (value)
-        {
-          event.sender.value = '';
-          app.type.Todo({
-            title: value
-          });
-        }
+      // check is there non empty string
+      if (value)
+      {
+        // clear input
+        event.sender.value = '';
+
+        // create new todo
+        app.type.Todo({
+          title: value
+        });
       }
     }
-  });
+  }
+});
