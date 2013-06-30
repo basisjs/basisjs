@@ -79,10 +79,6 @@
       var DOM = basis.dom;
       var Event = basis.dom.event;
 
-      /*var sum = basis.data.index.sum;
-      var max = basis.data.index.max;
-      var count = basis.data.index.count;*/
-
       setRowCount = function(value){
         DOM.get('rowCount').value = value;
         if (isNaN(value)) 
@@ -123,15 +119,9 @@
         sorting: 'data.title'
       };
           
-      //testAMax  = new Max(basis.getter('count', Number));
       TestTable = new basis.ui.table.Table({
         id: 'table',
         container: document.body,
-        /*registers: [
-          //testAOddCount = new Count('count % 2'),
-          testASum  = sum(basis.getter('amount', Number)),
-          testASum2 = sum(basis.getter('count', Number))
-        ],*/
         selection: {
           multiple: multipleSelection.checked
         },
@@ -197,11 +187,6 @@
               content: function(node){
                 return '{0:.4}'.format(Math.random());
               }
-            },
-
-            footer: {
-              cssClassName: 'right',
-              content: '-' //testAOddCount.addLink(DOM.createText(), null, 'odd count: {0}')
             }
           },
           { 
@@ -227,10 +212,6 @@
             body: {
               cssClassName: 'italic',
               content: basis.getter('data.amount', '${0:.2}')
-            },
-
-            footer: {
-              content: '-' //testASum.addLink(DOM.createText(), null, '{0:.2} р.')
             }
           },
           { 
@@ -243,10 +224,6 @@
 
             body: {
               content: basis.getter('data.count', Number)
-            },
-
-            footer: {
-              content: '-' //testASum2.addLink(DOM.createText(), null)
             }
           }
         ]
@@ -266,16 +243,14 @@
             amount: basis.data.generator.number(2, -1000, 1000), 
             count:  basis.data.generator.number(0, -10, 10)
           });
-        // console.log(data.last().count);
 
         var d = Date.now();
-      //console.profile();
+
         if (useLoadData.checked)
           TestTable.loadData(data);
         else
           for (var i = 0; i < count; i++)
             TestTable.appendChild({ data: data[i] });
-      //console.profileEnd();
 
         var loadDataTime = Date.now() - d;
         DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + (loadDataTime/1000).toFixed(3) + '</b> sec ' + ((clearTime)/1000).toFixed(3).quote('(');
@@ -283,48 +258,6 @@
       Event.onLoad(function(){
         setRowCount(10);
       });
-
-      /*
-      tableFilter = new DOM.Wrapper.Property('', {
-        change: function(value){
-          var rx = new RegExp('(' + value.forRegExp() + ')', 'i');
-          TestTable.setMatchFunction(value ? function(node, reset){
-            if (!reset)
-            {
-              var textNode = node._m || node.element.childNodes[5].firstChild.firstChild;
-              var p = textNode.nodeValue.split(rx);
-              if (p.length > 1)
-              {
-                DOM.replace(
-                  node._x || textNode,
-                  node._x = DOM.createElement('SPAN.matched', DOM.wrap(p, { 'SPAN.match': function(v, i){ return i % 2 == 1 }}))
-                );
-                node._m = textNode;
-                return true;
-              }
-            }
-            
-            if (node._x)
-            {
-              DOM.replace(node._x, node._m);
-              delete node._x;
-              delete node._m;
-            }
-            
-            return false;
-          } : null);
-        }
-      }, String.trim);
-
-      DOM.insert(document.body, DOM.createElement({
-        description: 'INPUT',
-        keyup: function(){
-          tableFilter.set(this.value)
-        },
-        change: function(){
-          tableFilter.set(this.value)
-        }
-      }), DOM.INSERT_BEFORE, TestTable.element);*/
 
       var field = new basis.ui.field.MatchInput({
         matchFilter: {
