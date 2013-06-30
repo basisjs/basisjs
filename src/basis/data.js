@@ -537,6 +537,24 @@
     emit_change: createEvent('change', 'curValue', 'oldValue'),
 
    /**
+    * Actual value.
+    * @type {*}
+    */
+    value: null,
+
+   /**
+    * Value that was set on init.
+    * @type {*}
+    */
+    initValue: null,
+
+   /**
+    * Function for preprocessing value before set.
+    * @type {function(value)}
+    */
+    proxy: basis.fn.$self,
+
+   /**
     * Indicates that property is locked (don't fire event for changes).
     * @type {boolean}
     * @readonly
@@ -548,7 +566,7 @@
     * @type {object}
     * @private
     */
-    lockValue_: null,
+    lockedValue_: null,
 
    /**
     * @param {object} initValue Initial value for object.
@@ -557,26 +575,29 @@
     * @constructor
     */
     init: function(initValue, handler, proxy){
-      AbstractData.prototype.init.call(this, {});
+      AbstractData.prototype.init.call(this);
 
       if (handler)
         this.addHandler(handler);
 
-      this.proxy = typeof proxy == 'function' ? proxy : basis.fn.$self;
-      this.initValue = this.value = this.proxy(initValue);
+      if (typeof proxy == 'function')
+        this.proxy = proxy;
+
+      this.value = this.proxy(initValue);
+      this.initValue = this.value;
     },
 
    /**
-    * Sets new value for property, only when data not equivalent current
-    * property's value. In causes when value was changed or forceEvent
-    * parameter was true event 'change' dispatching.
-    * @param {object} data New value for property.
-    * @param {boolean=} forceEvent Dispatch 'change' event even value not changed.
+    * Sets new value but only if value is not equivalent to current
+    * property's value. Change event emit in causes when value was changed
+    * or forceEvent parameter is true.
+    * @param {object} value New value for property.
+    * @param {boolean=} forceEvent Emit change event even if value is not change.
     * @return {boolean} Whether value was changed.
     */
-    set: function(data, forceEvent){
+    set: function(value, forceEvent){
       var oldValue = this.value;
-      var newValue = this.proxy ? this.proxy(data) : data;
+      var newValue = this.proxy(value);
       var updated = false;
 
       if (newValue !== oldValue)
@@ -597,26 +618,30 @@
     lock: function(){
       if (!this.locked)
       {
-        this.lockValue_ = this.value;
         this.locked = true;
+        this.lockedValue_ = this.value;
       }
     },
 
    /**
-    * Unlocks object for change event fire. If value was changed during object
-    * lock, than change event fires.
+    * Unlocks object for change event fire. If value changed during object
+    * was locked, than change event fires.
     */
     unlock: function(){
       if (this.locked)
       {
         this.locked = false;
-        if (this.value !== this.lockValue_)
-          this.emit_change(this.value, this.lockValue_);
+
+        if (this.value !== this.lockedValue_)
+        {
+          this.emit_change(this.value, this.lockedValue_);
+          this.lockedValue_ = null;
+        }
       }
     },
 
    /**
-    * Sets init value for property.
+    * Restore init value.
     */
     reset: function(){
       this.set(this.initValue);
@@ -628,10 +653,10 @@
     destroy: function(){
       AbstractData.prototype.destroy.call(this);
 
-      delete this.initValue;
-      delete this.proxy;
-      delete this.lockValue_;
-      delete this.value;
+      this.proxy = null;
+      this.initValue = null;
+      this.value = null;
+      this.lockedValue_ = null;
     }
   });
 
