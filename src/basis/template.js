@@ -1408,7 +1408,7 @@
 
     if (instances)
       for (var id in instances)
-        instances[id].rebuild();
+        instances[id].rebuild_();
 
     if (funcs.l10nKeys)
     {
@@ -1571,8 +1571,8 @@
     * Remove reference from DOM structure
     * @param {Object=} object Storage of DOM references.
     */
-    clearInstance: function(object){
-      object.destroy();
+    clearInstance: function(tmpl){
+      tmpl.destroy_();
     },
 
     getBinding: function(bindings){
@@ -2002,7 +2002,7 @@
       for (var i = 0, template; template = templateList[i]; i++)
       {
         for (var key in template.instances_)
-          template.instances_[key].destroy();
+          template.instances_[key].destroy_();
 
         template.attaches_ = null;
         template.createInstance = null;

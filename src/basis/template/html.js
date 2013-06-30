@@ -404,16 +404,16 @@
  /**
   * @func
   */
-  function findHostNode(cursor){
+  function findHostTemplate(cursor){
     var refId;
-    var node;
+    var tmplRef;
 
     do {
       if (refId = cursor.basisObjectId)
       {
         // if node found, return it
-        if (node = tmplNodeMap[refId])
-          return node;
+        if (tmplRef = tmplNodeMap[refId])
+          return tmplRef;
       }
     } while (cursor = cursor.parentNode);
 
@@ -450,12 +450,12 @@
         return;
 
       // search for nearest node refer to basis.Class instance
-      var node = findHostNode(cursor);
-      if (node && typeof node.templateAction == 'function')
+      var tmplRef = findHostTemplate(cursor);
+      if (tmplRef)
       {
         var actions = attr.nodeValue.qw();
         for (var i = 0, actionName; actionName = actions[i++];)
-          node.templateAction(actionName, event);
+          tmplRef.tmpl.action_(actionName, event);
       }
     };
   }
@@ -570,7 +570,7 @@
   };
 
   function resolveObjectById(refId){
-    return tmplNodeMap[refId];
+    return tmplNodeMap[refId].context;
   }
 
   var HtmlTemplate = Template.subclass({

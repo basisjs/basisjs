@@ -563,25 +563,27 @@
     /** @cut */ try {
     result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG',
       /** @cut */ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
-      'return function createInstance_(obj,actionCallback,updateCallback){' +
+      'return function createInstance_(obj,onAction,onUpdate){' +
         'var id=gMap.seed++,' +
+        'ref={context:obj},' +
         'attaches={},' + 
         'resolve=tools.resolve,' +
         '_=build(),' + 
         paths.path.concat(bindings.vars) + 
 
-        (objectRefs ? ';if(obj)gMap[' + objectRefs + '=id]=obj' : '') +
+        (objectRefs ? ';if(obj)gMap[' + objectRefs + '=id]=ref' : '') +
 
         ';function updateAttach(){set(this+"",attaches[this])}' +
 
         bindings.set +
         /** @cut */ (debug ? 'set.debug=function(){return[' + bindings.debugList + ']}' : '') +
 
-        ';return tMap[id]={' + [
+        ';return tMap[id]=ref.tmpl={' + [
           paths.ref,
           'set:set,' +
-          'rebuild:function(){if(updateCallback)updateCallback.call(obj)},' +
-          'destroy:function(){' +
+          'rebuild_:function(){if(onUpdate)onUpdate.call(obj)},' +
+          'action_:function(action,event){if(onAction)onAction.call(obj,action,event)},' +
+          'destroy_:function(){' +
             'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
             'attaches=null;' +
             'delete tMap[id];' + 

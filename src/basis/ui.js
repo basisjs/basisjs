@@ -398,7 +398,7 @@
           if (!noRecreate)
           {
             if (this.tmpl)
-              this.tmpl.destroy();
+              template.clearInstance(this.tmpl);
      
             tmpl = template.createInstance(this, this.templateAction, this.templateSync);
 
