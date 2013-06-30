@@ -1832,7 +1832,6 @@
     AbstractData: AbstractData,
     Value: Value,
     Object: DataObject,
-    DataObject: DataObject,
     Slot: Slot,
 
     KeyObjectMap: KeyObjectMap,
