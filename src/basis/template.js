@@ -406,11 +406,11 @@
           if (tokenElement)
           {
             tokenElement.innerHTML = m;
-            tokenMap[token] = tokenElement.firstChild ? tokenElement.firstChild.nodeValue : '';
+            tokenMap[token] = tokenElement.firstChild ? tokenElement.firstChild.nodeValue : m;
           }
         }
       }
-      return tokenMap[token];
+      return tokenMap[token] || m;
     }
 
     function untoken(value){
