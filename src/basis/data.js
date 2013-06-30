@@ -563,7 +563,7 @@
 
    /**
     * Value before property locked (passed as oldValue when property unlock).
-    * @type {object}
+    * @type {*}
     * @private
     */
     lockedValue_: null,
@@ -589,27 +589,20 @@
 
    /**
     * Sets new value but only if value is not equivalent to current
-    * property's value. Change event emit in causes when value was changed
-    * or forceEvent parameter is true.
-    * @param {object} value New value for property.
-    * @param {boolean=} forceEvent Emit change event even if value is not change.
-    * @return {boolean} Whether value was changed.
+    * property's value. Change event emit if value was changed.
+    * @param {*} value New value for property.
     */
-    set: function(value, forceEvent){
+    set: function(value){
       var oldValue = this.value;
       var newValue = this.proxy(value);
-      var updated = false;
 
       if (newValue !== oldValue)
       {
         this.value = newValue;
-        updated = true;
+
+        if (!this.locked)
+          this.emit_change(newValue, oldValue);
       }
-
-      if (!this.locked && (updated || forceEvent))
-        this.emit_change(newValue, oldValue);
-
-      return updated;
     },
 
    /**
