@@ -110,28 +110,44 @@
       ]
     });
 
-    DOM.insert(container, DOM.createElement('', property1.addLink(DOM.createText(), null, 'Property1.value: {0}'), ' ', p1_uc = DOM.createText('(update count: 0)')));
-    DOM.insert(container, DOM.createElement('', property2.addLink(DOM.createText(), null, 'Property2.value: {0}'), ' ', p2_uc = DOM.createText('(update count: 0)')));
-    DOM.insert(container, DOM.createElement('', dataObjectSet.addLink(DOM.createText(), null, 'DataObjectSet.value (sum of property1.value & property2.value): {0}'), ' ', dos_uc = DOM.createText('(update count: 0)')));
-
-    property1.addHandler({
-      change: function(){
-        p1_uc.nodeValue = '(update count: {0})'.format(this.updateCount);
-      }
+    new basis.ui.Node({
+      container: container,
+      childClass: {
+        template:
+          '<b:define name="value" type="bool"/>' +
+          '<div>' +
+            '{name}: {value} (update count: {updateCount})' +
+          '</div>',
+        binding: {
+          name: 'name',
+          value: 'value',
+          updateCount: 'updateCount'
+        }
+      },
+      childNodes: [
+        {
+          name: 'Property1.value',
+          value: property1,
+          updateCount: new basis.data.property.Expression(property1, function(){
+            return property1.updateCount;
+          })
+        },
+        {
+          name: 'Property2.value',
+          value: property2,
+          updateCount: new basis.data.property.Expression(property2, function(){
+            return property2.updateCount;
+          })
+        },
+        {
+          name: 'DataObjectSet.value (sum of property1.value & property2.value)',
+          value: dataObjectSet,
+          updateCount: new basis.data.property.Expression(dataObjectSet, function(){
+            return dataObjectSet.updateCount;
+          })
+        }
+      ]
     });
-
-    property2.addHandler({
-      change: function(){
-        p2_uc.nodeValue = '(update count: {0})'.format(this.updateCount);
-      }
-    });
-
-    dataObjectSet.addHandler({
-      change: function(){
-        dos_uc.nodeValue = '(update count: {0})'.format(this.updateCount);
-      }
-    });
-
 
   </script>  
 </body>

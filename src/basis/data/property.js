@@ -8,7 +8,8 @@
  /**
   * Namespace overview:
   * - {basis.data.property.Property}
-  * - {basis.data.property.DataObjectSet}  
+  * - {basis.data.property.DataObjectSet}
+  * - {basis.data.property.Expression}
   *
   * @namespace basis.data.property
   */
@@ -540,10 +541,64 @@
 
 
   //
+  // Expression
+  //
+
+ /**
+  * @class
+  */
+  var Expression = Property.subclass({
+    className: namespace + '.Expression',
+
+    init: function(args, calc){
+      Property.prototype.init.call(this);
+
+      var args = basis.array(arguments);
+      var calc = args.pop();
+
+      if (typeof calc != 'function')
+      {
+        ;;;basis.dev.warn(this.constructor.className + ': last argument of constructor must be a function');
+        calc = basis.fn.$undef;
+      }
+
+      if (args.length == 1)
+      {
+        args[0].addLink(this, function(value){
+          this.set(calc.call(this, value));
+        });
+      }
+
+      if (args.length > 1)
+      {
+        var changeWatcher = new DataObjectSet({
+          objects: args,
+          calculateOnInit: true,
+          calculateValue: function(){
+            return calc.apply(this, args.map(function(item){
+              return item.value;
+            }));
+          }
+        });
+
+        changeWatcher.addLink(this, this.set);
+
+        this.addHandler({
+          destroy: function(){
+            changeWatcher.destroy();
+          }
+        });
+      }
+    }
+  });
+
+
+  //
   // export names
   //
 
   module.exports = {
     Property: Property,
-    DataObjectSet: DataObjectSet
+    DataObjectSet: DataObjectSet,
+    Expression: Expression
   };
