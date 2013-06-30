@@ -413,7 +413,8 @@
     if (inserted)
       for (var i = 0, object; object = inserted[i++];)
       {
-        var newValue = index.valueGetter(object);
+        var newValue = Number(index.valueGetter(object)) || 0;
+
         indexCache[object.basisObjectId] = newValue;
         index.add_(newValue);
       }
