@@ -8,6 +8,7 @@
   */
 
   var namespace = this.path;
+  var ns = basis.namespace(String(namespace));
 
 
   //
@@ -64,7 +65,7 @@
     {
       startWatch();
 
-      ;;;basis.dev.log(namespace + ' started');
+      ;;;if (ns.debug) basis.dev.log(namespace + ' started');
       started = true;
 
       checkUrl();      
@@ -79,7 +80,7 @@
     {
       stopWatch();
 
-      ;;;basis.dev.log(namespace + ' stopped');
+      ;;;if (ns.debug) basis.dev.log(namespace + ' stopped');
       started = false;
     }
   }
@@ -157,7 +158,7 @@
           }
       }
 
-      ;;;basis.dev.info.apply(basis.dev, [namespace + ': hash changed to ' + newPath].concat(log.length ? log : 'no matches'));
+      ;;;if (ns.debug) basis.dev.info.apply(basis.dev, [namespace + ': hash changed to ' + newPath].concat(log.length ? log : 'no matches'));
     }
 
   }
@@ -248,6 +249,8 @@
   //
 
   module.exports = {
+    debug: false,
+
     add: add,
     remove: remove,
     stop: stop,
