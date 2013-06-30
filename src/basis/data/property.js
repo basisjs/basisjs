@@ -44,7 +44,7 @@
   //  PROPERTY
   //
 
-  var PropertyObjectDestroyAction = { 
+  var EMMITER_HANDLER = { 
     destroy: function(object){
       this.removeLink(object); 
     } 
@@ -191,7 +191,7 @@
       this.links_.push(link);  // !!! TODO: check for object-field duplicates
       
       if (link.isEmitter)
-        object.addHandler(PropertyObjectDestroyAction, this); // add unlink handler on object destroy
+        object.addHandler(EMMITER_HANDLER, this); // add unlink handler on object destroy
 
       // make effect on object
       this.apply_(link);
@@ -249,7 +249,7 @@
         if (link.object === object && (deleteAll || field == link.field))
         {
           if (link.isEmitter)
-            link.object.removeHandler(PropertyObjectDestroyAction, this); // remove unlink handler on object destroy
+            link.object.removeHandler(EMMITER_HANDLER, this); // remove unlink handler on object destroy
         }
         else
           this.links_[k++] = link;
@@ -264,7 +264,7 @@
       // destroy links
       for (var i = 0, link; link = this.links_[i]; i++)
         if (link.isEmitter)
-          link.object.removeHandler(PropertyObjectDestroyAction, this); // remove unlink on object destroy
+          link.object.removeHandler(EMMITER_HANDLER, this); // remove unlink on object destroy
 
       // clear links array
       this.links_.clear();

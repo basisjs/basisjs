@@ -552,7 +552,7 @@
     * Function for preprocessing value before set.
     * @type {function(value)}
     */
-    proxy: basis.fn.$self,
+    proxy: $self,
 
    /**
     * Indicates that property is locked (don't fire event for changes).
