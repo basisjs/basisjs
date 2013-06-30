@@ -1471,25 +1471,26 @@
 
     if (!resourceCache[resourceUrl])
     {
-      var extWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
-      var resourceObject;
+      var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
+      var wrappedContent;
       var wrapped = false;
+
       var resource = function(){
-        if (extWrapper)
+        var content = getResourceContent(resourceUrl);
+
+        if (!contentWrapper)
+          return content;
+
+        if (!wrapped)
         {
-          if (!wrapped)
-          {
-            resourceObject = extWrapper(getResourceContent(resourceUrl), resourceUrl);
-            wrapped = true;              
-          }
-          return resourceObject;
+          wrappedContent = contentWrapper(content, resourceUrl);
+          wrapped = true;              
         }
 
-        return getResourceContent(resourceUrl);
+        return wrappedContent;
       };
 
-      extend(resource, new Token());
-      extend(resource, {
+      extend(resource, extend(new Token(), {
         url: resourceUrl,
         fetch: resource,
         toString: function(){
@@ -1497,15 +1498,17 @@
         },
         update: function(newContent, force){
           newContent = String(newContent);
+
           if (force || newContent != requestResourceCache[resourceUrl])
           {
             requestResourceCache[resourceUrl] = newContent;
-            if (extWrapper && wrapped)
+
+            if (contentWrapper)
             {
-              if (!extWrapper.updatable)
+              if (wrapped && !contentWrapper.updatable)
                 return;
 
-              resourceObject = extWrapper(newContent, resourceUrl);
+              wrappedContent = contentWrapper(newContent, resourceUrl);
             }
 
             this.apply();
@@ -1520,9 +1523,14 @@
         },
         get: function(source){
           return source ? getResourceContent(resourceUrl) : resource();
+        },
+        ready: function(fn, context){
+          this.attach(fn, context);
+          return this;
         }
-      });
+      }));
 
+      // cache result
       resourceCache[resourceUrl] = resource;
     }
 
