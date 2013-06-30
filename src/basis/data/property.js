@@ -7,7 +7,6 @@
 
  /**
   * Namespace overview:
-  * - {basis.data.property.AbstractProperty} (deprecated, replaced by basis.data.Value)
   * - {basis.data.property.Property}
   * - {basis.data.property.DataObjectSet}  
   *
@@ -24,7 +23,6 @@
 
   var TimeEventManager = basis.timer.TimeEventManager;
   var Emitter = basis.event.Emitter;
-  var createEvent = basis.event.create;
 
   var DOM = basis.dom;
   var AbstractData = basis.data.AbstractData;
@@ -535,7 +533,6 @@
   //
 
   module.exports = {
-    AbstractProperty: Value,
     Property: Property,
     DataObjectSet: DataObjectSet
   };
