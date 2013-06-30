@@ -546,7 +546,7 @@
         );
 
       result.createL10nSync = new Function('_', '__l10n', 'bind_attr', 'TEXT_BUG',
-        /**@cut*/ (source ? '/*\n' + source + '\n*/\n' : '') +
+        /** @cut */ (source ? '/*\n' + source + '\n*/\n' : '') +
 
         'var ' + paths.path + ';' +
         'return function(token, value){' +
@@ -555,13 +555,14 @@
           '}' +
         '}'
         
-        /**@cut*/ + (uri ? '//@ sourceURL=' + uri + '_l10n' : '')
+        /** @cut */ + (uri ? '//# sourceURL=' + uri + '_l10n' : '')
+        /** @cut */ + (uri ? '//@ sourceURL=' + uri + '_l10n' : '')
       );
     }
 
-    /**@cut*/ try {
+    /** @cut */ try {
     result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG',
-      /**@cut*/ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
+      /** @cut */ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
       'return function createInstance_(obj,actionCallback,updateCallback){' +
         'var id=gMap.seed++,' +
         'attaches={},' + 
@@ -574,7 +575,7 @@
         ';function updateAttach(){set(this+"",attaches[this])}' +
 
         bindings.set +
-        /**@cut*/ (debug ? 'set.debug=function(){return[' + bindings.debugList + ']}' : '') +
+        /** @cut */ (debug ? 'set.debug=function(){return[' + bindings.debugList + ']}' : '') +
 
         ';return tMap[id]={' + [
           paths.ref,
@@ -588,10 +589,11 @@
           '}'] +
         '}' +
 
-        /**@cut*/ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
+        /** @cut */ (uri ? '//# sourceURL=' + uri + '\n' : '') +
+        /** @cut */ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
       '}'
     );
-    /**@cut*/ } catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }
+    /** @cut */ } catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }
 
     return result;
   }

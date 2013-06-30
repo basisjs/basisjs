@@ -1587,6 +1587,7 @@
         compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
           '"use strict";\n\n' +
           sourceCode +
+          '//# sourceURL=' + sourceURL +
           '//@ sourceURL=' + sourceURL
         );
       } catch(e) {
