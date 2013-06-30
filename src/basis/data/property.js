@@ -7,7 +7,7 @@
 
  /**
   * Namespace overview:
-  * - {basis.data.property.AbstractProperty}
+  * - {basis.data.property.AbstractProperty} (deprecated, replaced by basis.data.Value)
   * - {basis.data.property.Property}
   * - {basis.data.property.DataObjectSet}  
   *
@@ -28,6 +28,7 @@
 
   var DOM = basis.dom;
   var AbstractData = basis.data.AbstractData;
+  var Value = basis.data.Value;
   var STATE = basis.data.STATE;
 
 
@@ -40,130 +41,6 @@
   /** @const */ var EXCEPTION_ABSTRACTDATA_REQUIRED = namespace + ': Instance of AbstractData required';
   /** @const */ var EXCEPTION_BAD_OBJECT_LINK = namespace + ': Link to undefined object ignored';
 
-
-  //
-  //  ABSTRACT PROPERTY
-  //
-  
- /**
-  * @class
-  */
-  var AbstractProperty = Class(AbstractData, {
-    className: namespace + '.AbstractProperty',
-
-    emit_change: createEvent('change'),
-
-   /**
-    * Indicates that property is locked (don't fire event for changes).
-    * @type {boolean}
-    * @readonly
-    */
-    locked: false,
-
-   /**
-    * Value before property locked (passed as oldValue when property unlock).
-    * @type {object}
-    * @private
-    */
-    lockValue_: null,
-
-   /** use custom constructor */
-    extendConstructor_: false,
-
-    updateCount: 0,
-
-   /**
-    * @param {object} initValue Initial value for object.
-    * @param {object=} handlers
-    * @param {function()=} proxy
-    * @constructor
-    */
-    init: function(initValue, handlers, proxy){
-      AbstractData.prototype.init.call(this, {});
-      if (handlers)
-        this.addHandler(handlers);
-
-      this.proxy = typeof proxy == 'function' ? proxy : basis.fn.$self;
-      this.initValue = this.value = this.proxy(initValue);
-    },
-
-   /**
-    * Sets new value for property, only when data not equivalent current
-    * property's value. In causes when value was changed or forceEvent
-    * parameter was true event 'change' dispatching.
-    * @param {object} data New value for property.
-    * @param {boolean=} forceEvent Dispatch 'change' event even value not changed.
-    * @return {boolean} Whether value was changed.
-    */
-    set: function(data, forceEvent){
-      var oldValue = this.value;
-      var newValue = this.proxy ? this.proxy(data) : data;
-      var updated = false;
-
-      if (newValue !== oldValue)
-      {
-        this.value = newValue;
-        updated = true;
-        this.updateCount += 1;
-      }
-
-      if (!this.locked && (updated || forceEvent))
-        this.emit_change(newValue, oldValue);
-
-      return updated;
-    },
-
-   /**
-    * Locks object for change event fire.
-    */
-    lock: function(){
-      if (!this.locked)
-      {
-        this.lockValue_ = this.value;
-        this.locked = true;
-      }
-    },
-
-   /**
-    * Unlocks object for change event fire. If value was changed during object
-    * lock, than change event fires.
-    */
-    unlock: function(){
-      if (this.locked)
-      {
-        this.locked = false;
-        if (this.value !== this.lockValue_)
-          this.emit_change(this.value, this.lockValue_);
-      }
-    },
-
-   /**
-    * Sets init value for property.
-    */
-    reset: function(){
-      this.set(this.initValue);
-    },
-
-   /**
-    * Returns object value.
-    * @return {object}
-    */
-    /*toString: function(){
-      return this.value != null && this.value.constructor == Object ? String(this.value) : this.value;
-    },*/
-
-   /**
-    * @destructor
-    */
-    destroy: function(){
-      AbstractData.prototype.destroy.call(this);
-
-      delete this.initValue;
-      delete this.proxy;
-      delete this.lockValue_;
-      delete this.value;
-    }
-  });
 
   //
   //  PROPERTY
@@ -196,7 +73,7 @@
  /**
   * @class
   */
-  var Property = Class(AbstractProperty, {
+  var Property = Class(Value, {
     className: namespace + '.Property',
 
    /**
@@ -223,7 +100,7 @@
     * @event
     */
     emit_change: function(value, oldValue){
-      AbstractProperty.prototype.emit_change.call(this, value, oldValue);
+      Value.prototype.emit_change.call(this, value, oldValue);
 
       if (!this.links_.length || cleaner.globalDestroy)
         return;
@@ -237,7 +114,7 @@
     * @constructor
     */
     init: function(initValue, handlers, proxy){
-      AbstractProperty.prototype.init.call(this, initValue, handlers, proxy);
+      Value.prototype.init.call(this, initValue, handlers, proxy);
       this.links_ = [];
 
       cleaner.add(this);
@@ -422,7 +299,7 @@
     destroy: function(){
       this.clear();
 
-      AbstractProperty.prototype.destroy.call(this);
+      Value.prototype.destroy.call(this);
 
       this.links_ = null;
       cleaner.remove(this);
@@ -658,7 +535,7 @@
   //
 
   module.exports = {
-    AbstractProperty: AbstractProperty,
+    AbstractProperty: Value,
     Property: Property,
     DataObjectSet: DataObjectSet
   };
