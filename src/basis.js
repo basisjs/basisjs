@@ -1472,34 +1472,45 @@
     if (!resourceCache[resourceUrl])
     {
       var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
-      var wrappedContent;
+      var inited = false;
       var wrapped = false;
+      var wrappedContent;
 
       var resource = function(){
-        var content = getResourceContent(resourceUrl);
+        var result = getResourceContent(resourceUrl);
 
-        if (!contentWrapper)
-          return content;
-
-        if (!wrapped)
+        if (contentWrapper)
         {
-          wrappedContent = contentWrapper(content, resourceUrl);
-          wrapped = true;              
+          if (!wrapped)
+          {
+            wrappedContent = contentWrapper(result, resourceUrl);
+            wrapped = true;              
+          }
+
+          result = wrappedContent;
         }
 
-        return wrappedContent;
+        if (!inited)
+        {
+          inited = true;
+          resource.apply();
+        }
+
+        return result;
       };
 
       extend(resource, extend(new Token(), {
         url: resourceUrl,
-        fetch: resource,
+        fetch: function(){
+          return resource();
+        },
         toString: function(){
           return '[basis.resource ' + resourceUrl + ']';
         },
-        update: function(newContent, force){
+        update: function(newContent){
           newContent = String(newContent);
 
-          if (force || newContent != requestResourceCache[resourceUrl])
+          if (!inited || newContent != requestResourceCache[resourceUrl])
           {
             requestResourceCache[resourceUrl] = newContent;
 
@@ -1519,14 +1530,24 @@
           var newContent = getResourceContent(resourceUrl, true);
 
           if (newContent != oldContent)
-            this.update(newContent, true);
+          {
+            inited = false;
+            this.update(newContent);
+          }
         },
         get: function(source){
           return source ? getResourceContent(resourceUrl) : resource();
         },
         ready: function(fn, context){
+          if (inited)
+          {
+            fn.call(context, resource());
+
+            if (contentWrapper && !contentWrapper.updatable)
+              return;
+          }
+
           this.attach(fn, context);
-          return this;
         }
       }));
 
