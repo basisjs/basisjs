@@ -1,7 +1,7 @@
 
   basis.require('basis.event');
   basis.require('basis.net');
-  basis.require('basis.net.rpc');
+  basis.require('basis.net.action');
 
 
  /**
@@ -16,7 +16,7 @@
   //
 
   var createEvent = basis.event.create;
-  var createRpc = basis.net.rpc.createRpc;
+  var createAction = basis.net.action.create;
 
   var Emitter = basis.event.Emitter;
   var AjaxTransport = basis.net.AjaxTransport;
@@ -149,7 +149,7 @@
     },
 
     createAction: function(config){
-      return createRpc(basis.object.complete({
+      return createAction(basis.object.complete({
         service: this
       }, config));
     },
