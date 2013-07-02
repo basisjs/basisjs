@@ -87,12 +87,8 @@ basis.ready(function(){
     ruleEvents: false,
     rule: function(obj){
       return obj.data.title
-        .replace(/(?:^|[\.\_])?([A-Z])(?:[A-Z]+|[a-z]+)|(?:^|[\.\_])(?:([a-z])[a-z]+|([A-Z])[A-Z]+)|[^a-zA-Z]/g, '$1$2$3')
+        .replace(/(?:^|[\.\_])?([A-Z])(?:[A-Z]+|[a-z]+)|(?:^|[\.\_])?(?:([a-z])[a-z]+|([A-Z])[A-Z]+)|[^a-zA-Z]/g, '$1$2$3')
         .toUpperCase()
-        .split('')
-        .sort()
-        .join('')
-        .replace(/([A-Z])\1+/g, '$1')
         .split('');
     }
   });
