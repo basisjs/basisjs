@@ -27,7 +27,7 @@ basis.require('basis.data.vector');
 basis.require('basis.entity');
 basis.require('basis.session');
 basis.require('basis.net');
-basis.require('basis.net.rpc');
+basis.require('basis.net.action');
 basis.require('basis.net.service');
 basis.require('basis.net.soap');
 basis.require('basis.net.upload');
