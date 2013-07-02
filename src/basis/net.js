@@ -20,6 +20,7 @@
   var extend = basis.object.extend;
   var arrayFrom = basis.array.from;
   var objectSlice = basis.object.slice;
+  var objectMerge = basis.object.merge;
   var createEvent = basis.event.create;
 
   var STATE = basis.data.STATE;
@@ -358,10 +359,7 @@
   * @private
   */
   function setRequestHeaders(request, requestData){
-    var headers = {
-      'X-Requested-With': 'XMLHttpRequest',
-      'X-Powered-By': 'basis.js'
-    };
+    var headers = {};
 
     if (IS_METHOD_WITH_BODY.test(requestData.method)) 
     {
@@ -378,7 +376,7 @@
                                                                         // date wrong and response with code 400
 
     basis.object.iterate(extend(headers, requestData.headers), function(key, value){
-      if (value != null)
+      if (value != null && typeof value != 'function')
         this.setRequestHeader(key, value);
     }, request);
   }
@@ -459,8 +457,8 @@
   var AjaxRequest = AbstractRequest.subclass({
     className: namespace + '.AjaxRequest',
 
-    timeout:  30000, // 30 sec
     requestStartTime: 0,
+    timeout: 30000, // 30 sec
 
     debug: false,
 
@@ -689,11 +687,11 @@
     method: 'GET',
     contentType: 'application/x-www-form-urlencoded',
     encoding: null,
+    requestHeaders: basis.Class.extensibleProperty(),
 
     init: function(){
       AbstractTransport.prototype.init.call(this);
 
-      this.requestHeaders = objectSlice(this.requestHeaders);
       this.params = objectSlice(this.params);
     },
 
@@ -727,9 +725,9 @@
         contentType: requestData.contentType || this.contentType,
         encoding: requestData.encoding || this.encoding,
         asynchronous: this.asynchronous,
-        headers: [this.requestHeaders, requestData.headers].merge(),
+        headers: objectMerge(this.requestHeaders, requestData.headers),
         postBody: requestData.postBody || this.postBody,
-        params: [this.params, requestData.params].merge(),
+        params: objectMerge(this.params, requestData.params),
         routerParams: requestData.routerParams,
         influence: requestData.influence
       });
