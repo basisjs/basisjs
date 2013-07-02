@@ -824,7 +824,7 @@
         }
 
         // set base before <style> element creating, because IE9+ set baseURI
-        // for <style> element when element creates
+        // for <style> element on element creation
         setBase(this.baseURI);
 
         // create <style> element for first time
