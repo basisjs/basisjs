@@ -35,12 +35,6 @@
   // Main part
   //
 
-  // global.FlashCanvasOptions = {
-  //   swfPath: __dirname + 'external/flashcanvas/'
-  // };
-  // resource('external/flashcanvas/flashcanvas.js').fecth();
-
-
  /**
   * @class
   */
@@ -79,9 +73,6 @@
       }
 
       Node.prototype.templateSync.call(this, noRecreate);
-
-      //if (typeof global.FlashCanvas != 'undefined')
-      //  global.FlashCanvas.initElement(canvasElement);
       
       this.context = canvasElement && canvasElement.getContext ? canvasElement.getContext('2d') : null;
 
