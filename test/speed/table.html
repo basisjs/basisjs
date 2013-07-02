@@ -62,10 +62,8 @@
       <label><input type="checkbox" id="logEvents"/> log events</label>
       <label><input type="checkbox" id="multipleSelection"/> multiple selection (using CTRL)</label>
       <label><input type="checkbox" id="useGrouping"/> use grouping</label>
-      <label><input type="checkbox" id="useLoadData" checked="checked"/> use loadData method to fill table (faster)</label>
     </div>
   </div>
-  <!--<img src="/test.jpg"/>-->
   <script type="text/javascript">
     
     (function(){
@@ -96,7 +94,7 @@
 
       //var testASum, testASum2;
       var logEventCheckbox = DOM.get('logEvents');
-      var useLoadData = DOM.get('useLoadData');
+      var useSetChildNodes = DOM.get('useSetChildNodes');
       var useGrouping = DOM.get('useGrouping');
       var multipleSelection = DOM.get('multipleSelection');
 
@@ -237,20 +235,18 @@
 
         var data = [];
         for (var i = 0; i < count; i++)
-          data.push({ 
-            id:     basis.data.generator.number(0, 0, 10000), 
-            title:  stringcache[i] || (stringcache[i] = basis.data.generator.string(2, 50)), 
-            amount: basis.data.generator.number(2, -1000, 1000), 
-            count:  basis.data.generator.number(0, -10, 10)
+          data.push({
+            data: {
+              id:     basis.data.generator.number(0, 0, 10000), 
+              title:  stringcache[i] || (stringcache[i] = basis.data.generator.string(2, 50)), 
+              amount: basis.data.generator.number(2, -1000, 1000), 
+              count:  basis.data.generator.number(0, -10, 10)
+            }
           });
 
         var d = Date.now();
 
-        if (useLoadData.checked)
-          TestTable.loadData(data);
-        else
-          for (var i = 0; i < count; i++)
-            TestTable.appendChild({ data: data[i] });
+        TestTable.setChildNodes(data);
 
         var loadDataTime = Date.now() - d;
         DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + (loadDataTime/1000).toFixed(3) + '</b> sec ' + ((clearTime)/1000).toFixed(3).quote('(');

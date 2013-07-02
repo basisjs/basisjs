@@ -1,5 +1,4 @@
 
-  basis.require('basis.data');
   basis.require('basis.dom');
   basis.require('basis.dom.wrapper');
   basis.require('basis.l10n');
@@ -25,7 +24,6 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var nsData = basis.data;
 
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
@@ -551,10 +549,6 @@
         this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
         this.setSatellite('footer', this.footer);
       }
-    },
-
-    loadData: function(items){
-      this.setChildNodes(nsData.wrapData(items));
     },
 
     destroy: function(){
