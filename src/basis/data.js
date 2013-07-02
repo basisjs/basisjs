@@ -582,18 +582,22 @@
     * Sets new value but only if value is not equivalent to current
     * property's value. Change event emit if value was changed.
     * @param {*} value New value for property.
+    * @return {boolean} Returns true if value was changed.
     */
     set: function(value){
       var oldValue = this.value;
       var newValue = this.proxy(value);
+      var changed = newValue !== oldValue;
 
-      if (newValue !== oldValue)
+      if (changed)
       {
         this.value = newValue;
 
         if (!this.locked)
           this.emit_change(newValue, oldValue);
       }
+
+      return changed;
     },
 
    /**
