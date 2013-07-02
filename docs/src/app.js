@@ -168,10 +168,10 @@ basis.ready(function(){
   // Global events
   //
   basis.dom.event.addGlobalHandler('click', function(e){
-    if (!basis.dom.event.mouseButton(e, basis.dom.event.MOUSE_LEFT))
+    if (!event.mouseLeft)
       return;
     
-    var sender = basis.dom.event.sender(e);
+    var sender = event.sender;
 
     if (sender.tagName != 'A')
       sender = basis.dom.findAncestor(sender, function(node){ return node.tagName == 'A'; });
@@ -180,8 +180,7 @@ basis.ready(function(){
       navTree.open(sender.hash, basis.dom.parentOf(navTree.element, sender));
   });
 
-  basis.dom.event.addGlobalHandler('keydown', function(e){
-    var event = basis.dom.event(e);
+  basis.dom.event.addGlobalHandler('keydown', function(event){
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || prototypeMapPopup().visible)
       return;
 

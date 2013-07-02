@@ -255,7 +255,7 @@
         var loadDataTime = Date.now() - d;
         DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + (loadDataTime/1000).toFixed(3) + '</b> sec ' + ((clearTime)/1000).toFixed(3).quote('(');
       };
-      Event.onLoad(function(){
+      basis.ready(function(){
         setRowCount(10);
       });
 
