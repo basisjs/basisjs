@@ -1789,7 +1789,9 @@
 
   function wrapData(data){
     if (Array.isArray(data))
-      return data.map(wrapData);
+      return data.map(function(item){
+        return { data: item };
+      });
     else
       return { data: data };
   }
