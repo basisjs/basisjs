@@ -1784,17 +1784,39 @@
 
 
   //
-  // namespace wrapper
+  // helpers
   //
 
-  function dataWrapper(data){
+  function wrapData(data){
     if (Array.isArray(data))
-      return data.map(dataWrapper);
+      return data.map(wrapData);
     else
       return { data: data };
   }
 
-  module.setWrapper(dataWrapper);
+  function wrapObject(value){
+    if (!value || value.constructor !== Object)
+      value = {
+        value: value
+      };
+
+    return new DataObject({
+      data: value
+    });
+  }
+
+  function wrap(value){
+    return Array.isArray(value)
+      ? value.map(wrapObject)
+      : wrapObject(value);
+  }
+
+
+  //
+  // namespace wrapper
+  //
+
+  module.setWrapper(wrapData);
 
 
   //
@@ -1818,5 +1840,9 @@
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
 
-    getDatasetDelta: getDatasetDelta
+    getDatasetDelta: getDatasetDelta,
+
+    wrapData: wrapData,
+    wrapObject: wrapObject,
+    wrap: wrap
   };
