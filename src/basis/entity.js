@@ -216,12 +216,12 @@
   };
 
   var ENTITYSET_SYNC_METHOD = function(superClass){
-    return function(data, set){
+    return function(data){
       Dataset.setAccumulateState(true);
       data = (data || []).map(this.wrapper);
       Dataset.setAccumulateState(false);
 
-      return superClass.prototype.sync.call(this, data, set);
+      return superClass.prototype.sync.call(this, data);
     };
   };
 

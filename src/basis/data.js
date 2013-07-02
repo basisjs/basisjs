@@ -1468,7 +1468,6 @@
     },
 
    /**
-    * @config {Array.<basis.data.Object>} items Initial set of items.
     * @constructor
     */
     init: function(){
@@ -1484,13 +1483,14 @@
     },
 
    /**
-    * @param {Array.<basis.data.Object>} items
+    * @param {Array.<basis.data.Object>|basis.data.Object} items
+    * @return {object|undefined} Returns delta of changes or undefined if no changes.
     */
     add: function(items){
-      var delta;
       var memberMap = this.members_;
-      var inserted = [];
       var listenHandler = this.listen.item;
+      var inserted = [];
+      var delta;
 
       if (items && !Array.isArray(items))
         items = [items];
@@ -1529,13 +1529,14 @@
     },
 
    /**
-    * @param {Array.<basis.data.Object>} items
+    * @param {Array.<basis.data.Object>|basis.data.Object} items
+    * @return {object|undefined} Returns delta of changes or undefined if no changes.
     */
     remove: function(items){
-      var delta;
       var memberMap = this.members_;
-      var deleted = [];
       var listenHandler = this.listen.item;
+      var deleted = [];
+      var delta;
 
       if (items && !Array.isArray(items))
         items = [items];
@@ -1575,6 +1576,7 @@
 
    /**
     * @param {Array.<basis.data.Object>} items
+    * @return {object|undefined} Returns delta of changes or undefined if no changes.
     */
     set: function(items){
       // a little optimizations
@@ -1588,13 +1590,13 @@
 
       // build map for new items
       var memberMap = this.members_;
+      var listenHandler = this.listen.item;
       var exists = {};  // unique input DataObject's
       var deleted = [];
       var inserted = [];
       var object;
       var objectId;
       var delta;
-      var listenHandler = this.listen.item;
 
       for (var i = 0; i < items.length; i++)
       {
@@ -1646,66 +1648,33 @@
     },
 
    /**
+    * Set new item set and destroy deleted items.
     * @param {Array.<basis.data.Object>} items
-    * @param {boolean=} set    
+    * @return {Array.<basis.data.Object>|undefined} Returns array of inserted items or undefined if nothing inserted.
     */
-    sync: function(items, set){
-      if (!items)
-        return;
+    sync: function(items){
+      var delta = this.set(items) || {};
+      var deleted = delta.deleted;
 
-      Dataset.setAccumulateState(true);
+      if (deleted)
+        for (var i = 0, object; object = deleted[i]; i++)
+          object.destroy();
 
-      var memberMap = this.members_;
-      var object;
-      var objectId;
-      var exists = {};
-      var inserted = [];
-      var res;
-
-      for (var i = 0; i < items.length; i++)
-      {
-        object = items[i];
-
-        if (object instanceof DataObject)
-        {
-          objectId = object.basisObjectId;
-
-          exists[objectId] = object;
-          if (!memberMap[objectId])
-            inserted.push(object);
-        }
-        else
-        {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
-        }
-      }
-
-      for (var objectId in this.items_)
-      {
-        if (!exists[objectId])
-          this.items_[objectId].destroy();
-      }
-
-      if (set && inserted.length)
-        res = this.add(inserted);
-
-      Dataset.setAccumulateState(false);
-
-      return res;
+      return delta.inserted;
     },
 
    /**
     * Removes all items from dataset.
     */
     clear: function(){
-      var delta;
       var deleted = this.getItems();
       var listenHandler = this.listen.item;
+      var delta;
 
       if (deleted.length)
       {
         if (listenHandler)
-          for (var i = deleted.length; i-- > 0;)
+          for (var i = 0; i < deleted.length; i++)
             deleted[i].removeHandler(listenHandler, this);
 
         this.emit_itemsChanged(delta = {
