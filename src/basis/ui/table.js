@@ -554,7 +554,7 @@
     },
 
     loadData: function(items){
-      this.setChildNodes(nsData(items));
+      this.setChildNodes(nsData.wrapData(items));
     },
 
     destroy: function(){
