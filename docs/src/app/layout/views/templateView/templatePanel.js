@@ -33,10 +33,10 @@
         return result + ')';
       }
       else
-        return getter.toString();
+        return Function.prototype.toString.call(getter);
     }
 
-    var result = { asIs: fn.toString() };
+    var result = { asIs: Function.prototype.toString.call(fn) };
     var getter = resolveGetter(fn);
 
     if (result.asIs != getter)
