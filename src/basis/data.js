@@ -478,6 +478,8 @@
     * @param {function|null} syncAction
     */
     setSyncAction: function(syncAction){
+      var oldAction = this.syncAction;
+
       if (typeof syncAction != 'function')
         syncAction = null;
 
@@ -485,13 +487,15 @@
 
       if (syncAction)
       {
-        this.addHandler(this.syncEvents);
+        if (!oldAction)
+          this.addHandler(this.syncEvents);
         if (this.isSyncRequired())
           this.syncAction();
       }
       else
       {
-        this.removeHandler(this.syncEvents);
+        if (oldAction)
+          this.removeHandler(this.syncEvents);
       }
     },     
 
