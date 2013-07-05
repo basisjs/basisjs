@@ -356,8 +356,13 @@
       if (this.active)
         this.addHandler(getMaskConfig(this.subscribeTo).handler);
 
-      if (this.syncAction)
-        this.setSyncAction(this.syncAction);
+      var syncAction = this.syncAction;
+
+      if (syncAction)
+      {
+        this.syncAction = null;
+        this.setSyncAction(syncAction);
+      }
     },
 
    /**
