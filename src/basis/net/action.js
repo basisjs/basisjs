@@ -1,5 +1,6 @@
 
   basis.require('basis.data');
+  basis.require('basis.net');
 
  /**
   * @namespace basis.net.action
@@ -71,6 +72,23 @@
   };
 
  /**
+  * @function
+  */ 
+  function resolveTransport(config){
+    if (config.transport)
+      return config.transport;
+
+    if (config.service)
+      return config.service.createTransport(config);
+
+    if (config.createTransport)
+      return config.createTransport(config);
+
+    // fallback, create instance of basis.net.Transport by default, if no other options
+    return new basis.net.Transport(config);
+  }
+
+ /**
   * Creates a function that init service transport if necessary and make a request.
   * @function
   */
@@ -90,13 +108,7 @@
 
     // lazy transport
     var getTransport = basis.fn.lazyInit(function(){
-      var transport = config.transport;
-
-      if (!transport && config.service)
-        transport = config.service.createTransport(config);
-
-      if (!transport && config.createTransport)
-        transport = config.createTransport(config);
+      var transport = resolveTransport(config);
 
       transport.addHandler(CALLBACK_HANDLER, callback);
 
