@@ -1675,9 +1675,7 @@
 
     templateClass: Template,
     ruleEvents: null,
-    rule: function(){
-      return '';
-    },  
+    rule: String,  // return empty string as template source
 
     init: function(config){
       this.ruleRet_ = [];
@@ -1689,8 +1687,10 @@
       {
         this.ruleEvents = {};      
         for (var i = 0, eventName; eventName = events[i]; i++)
-          this.ruleEvents[eventName] = this.resolve;
+          this.ruleEvents[eventName] = true;
       }
+
+      cleaner.add(this);
     },
     resolve: function(object){
       var ret = this.rule(object);
@@ -1705,6 +1705,7 @@
       return this.templates_[idx];
     },
     destroy: function(){
+      this.rule = null;
       this.templates_ = null;
       this.ruleRet_ = null;
     }
