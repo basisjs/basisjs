@@ -335,6 +335,20 @@
    /**
     * @inheritDoc
     */
+    isSyncRequired: function(){
+      return this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    syncEvents: {
+      activeChanged: false
+    },
+
+   /**
+    * @inheritDoc
+    */
     emit_update: function(delta){
       DataObject.prototype.emit_update.call(this, delta);
 
