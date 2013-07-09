@@ -1805,21 +1805,23 @@
       return { data: data };
   }
 
-  function wrapObject(value){
-    if (!value || value.constructor !== Object)
-      value = {
-        value: value
+  function wrapObject(data){
+    if (!data || data.constructor !== Object)
+      data = {
+        value: data
       };
 
     return new DataObject({
-      data: value
+      data: data
     });
   }
 
-  function wrap(value){
+  function wrap(value, retObject){
+    var wrapper = retObject ? wrapObject : wrapData;
+
     return Array.isArray(value)
-      ? value.map(wrapObject)
-      : wrapObject(value);
+      ? value.map(wrapper)
+      : wrapper(value);
   }
 
 
