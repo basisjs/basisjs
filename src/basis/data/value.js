@@ -1,7 +1,6 @@
 
   basis.require('basis.timer');
   basis.require('basis.event');
-  basis.require('basis.dom');
   basis.require('basis.data');
 
 
@@ -17,33 +16,22 @@
 
   var namespace = this.path;
 
+
   // import names
 
-  var Class = basis.Class;
   var getter = basis.getter;
+
   var cleaner = basis.cleaner;
-
   var TimeEventManager = basis.timer.TimeEventManager;
-  var Emitter = basis.event.Emitter;
 
-  var DOM = basis.dom;
+  var Emitter = basis.event.Emitter;
   var AbstractData = basis.data.AbstractData;
   var Value = basis.data.Value;
   var STATE = basis.data.STATE;
 
 
   //
-  // Main part
-  //
-
-  // Module exceptions
-
-  /** @const */ var EXCEPTION_ABSTRACTDATA_REQUIRED = namespace + ': Instance of AbstractData required';
-  /** @const */ var EXCEPTION_BAD_OBJECT_LINK = namespace + ': Link to undefined object ignored';
-
-
-  //
-  //  PROPERTY
+  // BindValue
   //
 
   var EMMITER_HANDLER = { 
@@ -52,28 +40,10 @@
     } 
   };
 
-  var DOM_INSERT_HANDLER = function(value){
-    DOM.insert(DOM.clear(this), value);
-  };
-
-  function getFieldHandler(object){
-    // property
-    if (object instanceof BindValue)
-      return object.set;
-
-    // DOM
-    var nodeType = object.nodeType;
-    if (isNaN(nodeType) == false)
-      if (nodeType == 1)
-        return DOM_INSERT_HANDLER;
-      else
-        return 'nodeValue';
-  }
-
  /**
   * @class
   */
-  var BindValue = Class(Value, {
+  var BindValue = Value.subclass({
     className: namespace + '.BindValue',
 
    /**
@@ -128,55 +98,38 @@
     * removes property links on object destroy.
     * @example
     *
-    *   var property = new basis.data.value.BindValue();
-    *   property.addLink(htmlElement);  // property.set(value) -> DOM.insert(DOM.clear(htmlElement), value);
-    *   property.addLink(htmlTextNode); // shortcut for property.addLink(htmlTextNode, 'nodeValue')
-    *                                   // property.set(value) -> htmlTextNode.nodeValue = value;
+    *   var value = new basis.data.value.BindValue({ ... });
     *
-    *   property.addLink(htmlTextNode, null, '[{0}]'); // htmlTextNode.nodeValue = '[{0}]'.format(value, oldValue);
-    *   property.addLink(htmlTextNode, null, convert); // htmlTextNode.nodeValue = convert(value);
+    *   value.addLink(object, 'property');          // object.property = value;
+    *   value.addLink(object, 'property', '[{0}]'); // object.property = '[{0}]'.format(value, oldValue);
+    *   value.addLink(object, 'property', Number);  // object.property = Number(value, oldValue);
+    *   value.addLink(object, 'property', { a: 1, b: 2});  // object.property = { a: 1, b: 2 }[value];
+    *   value.addLink(object, object.method);       // object.method(value, oldValue);
     *
-    *   property.addLink(object, 'property');          // object.property = value;
-    *   property.addLink(object, 'property', '[{0}]'); // object.property = '[{0}]'.format(value, oldValue);
-    *   property.addLink(object, 'property', Number);  // object.property = Number(value, oldValue);
-    *   property.addLink(object, 'property', { a: 1, b: 2});  // object.property = { a: 1, b: 2 }[value];
-    *   property.addLink(object, object.method);       // object.method(value, oldValue);
-    *
-    *   property.addLink(object, function(value, oldValue){ // {function}.call(object, value, oldValue);
+    *   value.addLink(object, function(value, oldValue){ // {function}.call(object, value, oldValue);
     *     // some code
-    *     // (`this` is object property attached to)
+    *     // `this` refer to object
     *   });
     *
     *   // Trace property changes
     *   var historyOfChanges = new Array();
-    *   var property = new basis.data.value.BindValue(1);
-    *   property.addLink(historyOfChanges, historyOfChanges.push);  // historyOfChanges -> [1]
-    *   property.set(2);  // historyOfChanges -> [1, 2]
-    *   property.set(3);  // historyOfChanges -> [1, 2, 3]
-    *   property.set(3);  // property didn't change self value
+    *   var value = new basis.data.value.BindValue({ value: 1 });
+    *   value.addLink(historyOfChanges, historyOfChanges.push);  // historyOfChanges -> [1]
+    *   value.set(2);  // historyOfChanges -> [1, 2]
+    *   value.set(3);  // historyOfChanges -> [1, 2, 3]
+    *   value.set(3);  // property didn't change self value
     *                     // historyOfChanges -> [1, 2, 3]
-    *   property.set(1);  // historyOfChanges -> [1, 2, 3, 1]
+    *   value.set(1);  // historyOfChanges -> [1, 2, 3, 1]
     *
-    *   // Another one
-    *   property.addLink(console, console.log, 'new value of property is {0}');
+    *   // Use console for log value changes
+    *   value.addLink(console, console.log, 'new value is {0}');
     *
     * @param {object} object Target object.
-    * @param {string|function=} field Field or method of target object.
+    * @param {string|function} field Field or method of target object.
     * @param {string|function|object=} format Value modificator.
     * @return {object} Returns object.
     */
     addLink: function(object, field, format){
-      // process field name
-      if (field == null)
-      {
-        // object must be an Object
-        // IE HtmlNode isn't instanceof Object, therefore additionaly used typeof
-        if (typeof object != 'object' && object instanceof Object == false)
-          throw EXCEPTION_BAD_OBJECT_LINK;
-
-        field = getFieldHandler(object);
-      }
-
       // process format argument
       if (typeof format != 'function')
         format = getter(basis.fn.$self, format);
@@ -190,7 +143,7 @@
       };
 
       // add link
-      ;;;if (this.links_.some(function(link){ return link.object == object && link.field == field; })) basis.dev.warn('BindValue.addLink: Duplicate link for property');
+      ;;;if (this.links_.some(function(link){ return link.object == object && link.field == field; })) basis.dev.warn(this.constructor.className + '#addLink: Duplicate link for property');
       this.links_.push(link);
       
       if (link.isEmitter)
@@ -203,53 +156,47 @@
     },
 
    /**
-    * Removes link or all links from object if exists. Parameters must be the same
-    * as for addLink method. If field omited all links removes.
+    * Removes link from object. Parameters must be the same
+    * as for addLink method. If field omited all links are remove.
     * @example
+    *   var value = new basis.data.value.BindValue();
     *   // add links
-    *   property.addLink(object, 'field');
-    *   property.addLink(object, object.method);
+    *   value.addLink(object, 'field');
+    *   value.addLink(object, object.method);
     *   // remove links
-    *   property.removeLink(object, 'field');
-    *   property.removeLink(object, object.method);
-    *   // or remove all links from object
-    *   property.removeLink(object);
+    *   value.removeLink(object, 'field');
+    *   value.removeLink(object, object.method);
+    *   // or remove all links to object
+    *   value.removeLink(object);
     *
     *   // incorrect usage
-    *   property.addLink(object, function(value){ this.field = value * 2; });
+    *   value.addLink(object, function(value){ this.field = value * 2; });
     *   ...
-    *   property.removeLink(object, function(value){ this.field = value * 2; });
+    *   value.removeLink(object, function(value){ this.field = value * 2; });
     *   // link property to object still present
     *
     *   // right way
     *   var linkHandler = function(value){ this.field = value * 2; };
-    *   property.addLink(object, linkHandler);
+    *   value.addLink(object, linkHandler);
     *   ...
-    *   property.removeLink(object, linkHandler);
+    *   value.removeLink(object, linkHandler);
     *
     *   // for cases when object is instance of {basis.event.Emitter} removing link on destroy is not required
-    *   var node = new Node();
-    *   property.addLink(node, 'title');
+    *   var emitterInstance = new basis.event.Emitter();
+    *   value.addLink(emitterInstance, 'title');
     *   ...
-    *   node.destroy();       // links will be removed automatically
+    *   emitterInstance.destroy();    // links to emitterInstance will be removed
     * @param {object} object
     * @param {string|function=} field
     */
     removeLink: function(object, field){
-      if (this.links_ == null) // property destroyed
+      if (this.links_ == null) // object already destroyed
         return;
 
-      var deleteAll = arguments.length < 2;
-
-      // process field name
-      if (!deleteAll && field == null)
-        field = getFieldHandler(object);
-
       // delete link
-      var k = 0;
-      for (var i = 0, link; link = this.links_[i]; i++)
+      for (var i = 0, k = 0, link; link = this.links_[i]; i++)
       {
-        if (link.object === object && (deleteAll || field == link.field))
+        if (link.object === object && (!field || field == link.field))
         {
           if (link.isEmitter)
             link.object.removeHandler(EMMITER_HANDLER, this); // remove unlink handler on object destroy
@@ -356,7 +303,7 @@
  /**
   * @class
   */    
-  var ObjectSet = Class(BindValue, {
+  var ObjectSet = BindValue.subclass({
     className: namespace + '.ObjectSet',
 
    /**
@@ -438,7 +385,7 @@
             object.addHandler(OBJECTSET_HANDLER, this);
         }
         else
-          throw EXCEPTION_ABSTRACTDATA_REQUIRED;
+          throw this.constructor.className + '#add: Instance of AbstractData required';
       }
 
       this.fire(true, true);
