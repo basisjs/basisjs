@@ -8,7 +8,7 @@
  /**
   * Namespace overview:
   * - {basis.data.value.Property}
-  * - {basis.data.value.DataObjectSet}
+  * - {basis.data.value.ObjectSet} (alias basis.data.value.DataObjectSet, but it's deprecate)
   * - {basis.data.value.Expression}
   *
   * @namespace basis.data.value
@@ -316,12 +316,13 @@
     }
   });
 
+
   //
-  //  Property Set
+  //  Object set
   //
-                                         // priority: lowest -------------------------------------------------------------> highest
-  var DataObjectSetStatePriority = STATE.priority; //[STATE.READY, STATE.DEPRECATED, STATE.UNDEFINED, STATE.ERROR, STATE.PROCESSING];
-  var DataObjectSetHandlers = {
+                                       // priority: lowest -------------------------------------------------------------> highest
+  var OBJECTSET_STATE_PRIORITY = STATE.priority; //[STATE.READY, STATE.DEPRECATED, STATE.UNDEFINED, STATE.ERROR, STATE.PROCESSING];
+  var OBJECTSET_HANDLER = {
     stateChanged: function(){
       this.fire(false, true);
     },
@@ -339,11 +340,9 @@
  /**
   * @class
   */    
-  var DataObjectSet = Class(Property, {
-    className: namespace + '.DataObjectSet',
+  var ObjectSet = Class(Property, {
+    className: namespace + '.ObjectSet',
 
-    statePriority: DataObjectSetStatePriority,
-    
    /**
     * @type {function}
     */
@@ -375,9 +374,9 @@
     stateChanged_: true,
 
    /**
-    * Default state is UNDEFINED
-    */
-    state: STATE.UNDEFINED,
+    * @type {Array.<basis.data.STATE>}
+    */ 
+    statePriority: OBJECTSET_STATE_PRIORITY,
 
    /**
     * use extend constructor
@@ -418,7 +417,7 @@
         if (object instanceof AbstractData)
         {
           if (this.objects.add(object))
-            object.addHandler(DataObjectSetHandlers, this);
+            object.addHandler(OBJECTSET_HANDLER, this);
         }
         else
           throw EXCEPTION_ABSTRACTDATA_REQUIRED;
@@ -433,7 +432,7 @@
     */
     remove: function(object){
       if (this.objects.remove(object))
-        object.removeHandler(DataObjectSetHandlers, this);
+        object.removeHandler(OBJECTSET_HANDLER, this);
 
       this.fire(true, true);
     },
@@ -443,7 +442,7 @@
     */
     clear: function(){
       for (var i = 0, object; object = this.objects[i]; i++)
-        object.removeHandler(DataObjectSetHandlers, this);
+        object.removeHandler(OBJECTSET_HANDLER, this);
       this.objects.clear();
 
       this.fire(true, true);
@@ -571,7 +570,7 @@
 
       if (args.length > 1)
       {
-        var changeWatcher = new DataObjectSet({
+        var changeWatcher = new ObjectSet({
           objects: args,
           calculateOnInit: true,
           calculateValue: function(){
@@ -599,6 +598,9 @@
 
   module.exports = {
     Property: Property,
-    DataObjectSet: DataObjectSet,
+    ObjectSet: ObjectSet,
     Expression: Expression
   };
+
+  // deprecated
+  module.exports.DataObjectSet = ObjectSet;

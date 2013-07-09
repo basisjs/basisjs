@@ -81,7 +81,7 @@ module.exports = {
     var dictContent;
     var resourceParts;
 
-    var fileDataObjectSet = new basis.data.value.DataObjectSet({
+    var fileObjectSet = new basis.data.value.ObjectSet({
       state: STATE.READY,
       handler: {
         stateChanged: function(){
@@ -92,7 +92,7 @@ module.exports = {
 
           if (this.state == STATE.READY || this.state == STATE.ERROR)
             setTimeout(function(){
-              fileDataObjectSet.destroy();
+              fileObjectSet.destroy();
             }, 0);
         }
       }
@@ -148,7 +148,7 @@ module.exports = {
       newContent = '{' + dictParts.join(', ') + '\r\n}';  
 
 
-      fileDataObjectSet.add(file);
+      fileObjectSet.add(file);
       file.save(newContent);
     }
   }

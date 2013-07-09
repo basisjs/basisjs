@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis.js demos: Property &amp; DataObjectSet</title>
+  <title>Basis.js demos: Property &amp; ObjectSet</title>
 
   <style type="text/css" id="demo-css">
     .Basis-Tree
@@ -47,6 +47,7 @@
     basis.require('basis.dom');
     basis.require('basis.event');
     basis.require('basis.data');
+    basis.require('basis.data.value');
     basis.require('basis.dom.wrapper');
     basis.require('basis.ui.button');
     basis.require('basis.data.value');
@@ -56,10 +57,10 @@
     var nsWrappers = basis.dom.wrapper;
     var nsButton = basis.ui.button;
     
-    var property1 = new nsData.property.Property(0);
-    var property2 = new nsData.property.Property(0);
+    var property1 = new nsData.value.Property(0);
+    var property2 = new nsData.value.Property(0);
 
-    var dataObjectSet = new nsData.property.DataObjectSet({
+    var dataObjectSet = new nsData.value.ObjectSet({
       objects: [property1, property2],
       calculateValue: function(){
         return this.objects.reduce(function(value, object){
@@ -140,7 +141,7 @@
           })
         },
         {
-          name: 'DataObjectSet.value (sum of property1.value & property2.value)',
+          name: 'ObjectSet.value (sum of property1.value & property2.value)',
           value: dataObjectSet,
           updateCount: new basis.data.value.Expression(dataObjectSet, function(){
             return dataObjectSet.updateCount;
