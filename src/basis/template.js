@@ -1928,7 +1928,7 @@
               if (dictionary.hasOwnProperty(path))
                 addSource(path, dictionary[path]);
 
-            return this;
+            return themeInterface;
           }
           else
           {
