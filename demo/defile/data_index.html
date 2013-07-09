@@ -187,7 +187,7 @@
           header: '#',
           body: '{id}',
           footer: {
-            value: new basis.data.property.Expression(
+            value: new basis.data.value.Expression(
               basis.data.index.min(dataset, 'data.value'),
               basis.data.index.max(dataset, 'data.value'),
               function(min, max) {
@@ -224,7 +224,7 @@
           cssClassName: 'right',
           body: '{percentOfTotalSum}',
           footer: {
-            value: new basis.data.property.Expression(
+            value: new basis.data.value.Expression(
               basis.data.index.avg(indexMap, 'data.percentOfTotalRange'),
               function(avg){
                 return (avg * 100).toFixed(2) + '%';

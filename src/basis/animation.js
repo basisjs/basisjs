@@ -1,7 +1,7 @@
 
   basis.require('basis.event');
   basis.require('basis.cssom');
-  basis.require('basis.data.property');
+  basis.require('basis.data.value');
 
 
  /**
@@ -16,7 +16,7 @@
   //
 
   var Class = basis.Class;
-  var Property = basis.data.property.Property;
+  var Property = basis.data.value.Property;
 
   var setStyle = basis.cssom.setStyle;
   var createEvent = basis.event.create;

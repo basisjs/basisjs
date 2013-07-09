@@ -1,5 +1,5 @@
 basis.require('basis.ui');
-basis.require('basis.data.property');
+basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('app.type');
 
@@ -65,7 +65,7 @@ module.exports = new basis.ui.Node({
   binding: {
     completed: basis.data.index.count(Todo.completed),
     active: basis.data.index.count(Todo.active),
-    itemLabel: new basis.data.property.Expression(basis.data.index.count(app.type.Todo.active), function(value){
+    itemLabel: new basis.data.value.Expression(basis.data.index.count(app.type.Todo.active), function(value){
       return value == 1 ? 'item' : 'items';
     }),
     filters: filters

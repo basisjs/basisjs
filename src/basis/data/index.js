@@ -2,7 +2,7 @@
   basis.require('basis.timer');
   basis.require('basis.data');
   basis.require('basis.data.dataset');
-  basis.require('basis.data.property');
+  basis.require('basis.data.value');
 
 
  /**
@@ -24,7 +24,7 @@
   var KeyObjectMap = nsData.KeyObjectMap;
   var AbstractDataset = nsData.AbstractDataset;
 
-  var Property = basis.data.property.Property;
+  var Property = basis.data.value.Property;
   var MapFilter = basis.data.dataset.MapFilter;
 
 

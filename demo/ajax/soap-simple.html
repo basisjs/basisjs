@@ -185,7 +185,7 @@
 
     var staticCallResult = $('convertFormStaticCall_Result');
 
-    var celsiusValue = new basis.data.property.Property(100);
+    var celsiusValue = new basis.data.value.Property(100);
 
     var service2 = new basis.net.soap.Service('/w3schools_com/webservices/tempconvert.asmx', 'http://tempuri.org/');
     var service2_method = service2.createMethodCall('CelsiusToFahrenheit', {

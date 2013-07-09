@@ -49,7 +49,7 @@
     basis.require('basis.data');
     basis.require('basis.dom.wrapper');
     basis.require('basis.ui.button');
-    basis.require('basis.data.property');
+    basis.require('basis.data.value');
 
     var DOM = basis.dom;
     var nsData = basis.data;
@@ -128,21 +128,21 @@
         {
           name: 'Property1.value',
           value: property1,
-          updateCount: new basis.data.property.Expression(property1, function(){
+          updateCount: new basis.data.value.Expression(property1, function(){
             return property1.updateCount;
           })
         },
         {
           name: 'Property2.value',
           value: property2,
-          updateCount: new basis.data.property.Expression(property2, function(){
+          updateCount: new basis.data.value.Expression(property2, function(){
             return property2.updateCount;
           })
         },
         {
           name: 'DataObjectSet.value (sum of property1.value & property2.value)',
           value: dataObjectSet,
-          updateCount: new basis.data.property.Expression(dataObjectSet, function(){
+          updateCount: new basis.data.value.Expression(dataObjectSet, function(){
             return dataObjectSet.updateCount;
           })
         }

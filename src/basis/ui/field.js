@@ -4,7 +4,7 @@
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
-  basis.require('basis.data.property');
+  basis.require('basis.data.value');
   basis.require('basis.ui');
   basis.require('basis.ui.popup');
 
@@ -32,7 +32,7 @@
   var events = basis.event.events;
   var l10nToken = basis.l10n.getToken;
 
-  var Property = basis.data.property.Property;
+  var Property = basis.data.value.Property;
   var Selection = basis.dom.wrapper.Selection;
   var UINode = basis.ui.Node;
   var Popup = basis.ui.popup.Popup;

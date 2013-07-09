@@ -1,5 +1,5 @@
 basis.require('basis.ui');
-basis.require('basis.data.property');
+basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('app.type');
 
@@ -13,7 +13,7 @@ module.exports = new basis.ui.Node({
 
   template: resource('template/list.tmpl'),
   binding: {
-    noActive: new basis.data.property.Expression(
+    noActive: new basis.data.value.Expression(
       basis.data.index.count(app.type.Todo.active),
       function(value){
         return !value;

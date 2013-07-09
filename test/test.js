@@ -1,20 +1,10 @@
-/*!
- * Basis javascript library 
- * http://code.google.com/p/basis-js/
- *
- * @copyright
- * Copyright (c) 2006-2012 Roman Dvornov.
- *
- * @license
- * GNU General Public License v2.0 <http://www.gnu.org/licenses/gpl-2.0.html>
- */
 
   (function(){
     basis.require('basis.dom');
     basis.require('basis.cssom');
     basis.require('basis.ua');
     basis.require('basis.event');
-    basis.require('basis.data.property');
+    basis.require('basis.data.value');
 
     var namespace = 'basis.test';
 
@@ -27,7 +17,7 @@
     var Class = basis.Class;
 
     var Emitter = basis.event.Emitter;
-    var Property = basis.data.property.Property;
+    var Property = basis.data.value.Property;
 
     var events = basis.event.events;
     var createEvent = basis.event.create;

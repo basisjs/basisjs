@@ -1,7 +1,7 @@
 basis.require('basis.app');
 basis.require('basis.ui');
 basis.require('basis.router');
-basis.require('basis.data.property');
+basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('app.type');
 
@@ -17,7 +17,7 @@ module.exports = basis.app({
         form: resource('module/form/index.js').fetch(),
         list: resource('module/list/index.js').fetch(),
         stat: resource('module/stat/index.js').fetch(),
-        empty: new basis.data.property.Expression(
+        empty: new basis.data.value.Expression(
           basis.data.index.count(app.type.Todo.all),
           function(value){
             return !value;

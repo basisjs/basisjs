@@ -1,6 +1,6 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
-basis.require('basis.data.property');
+basis.require('basis.data.value');
 basis.require('basis.ui');
 basis.require('basis.ui.popup');
 
@@ -35,7 +35,7 @@ function pickHandler(event){
   }
 }
 
-var pickupTarget = new basis.data.property.Property(null, {
+var pickupTarget = new basis.data.value.Property(null, {
   change: function(value, oldValue){
     updatePickupElement(value, oldValue);
   }

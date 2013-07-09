@@ -1,5 +1,5 @@
 basis.require('basis.l10n');
-basis.require('basis.data.property');
+basis.require('basis.data.value');
 
 var STATE = basis.data.STATE;
 
@@ -81,7 +81,7 @@ module.exports = {
     var dictContent;
     var resourceParts;
 
-    var fileDataObjectSet = new basis.data.property.DataObjectSet({
+    var fileDataObjectSet = new basis.data.value.DataObjectSet({
       state: STATE.READY,
       handler: {
         stateChanged: function(){

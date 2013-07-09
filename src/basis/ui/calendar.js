@@ -3,7 +3,7 @@
   basis.require('basis.date');
   basis.require('basis.dom');
   basis.require('basis.dom.event');
-  basis.require('basis.data.property');
+  basis.require('basis.data.value');
   basis.require('basis.ui');
   basis.require('basis.l10n');
 
@@ -28,7 +28,7 @@
   var createEvent = basis.event.create;
   var l10nToken = basis.l10n.getToken;
 
-  var Property = basis.data.property.Property;
+  var Property = basis.data.value.Property;
   var UINode = basis.ui.Node;
 
 
