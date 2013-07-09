@@ -22,6 +22,8 @@
   var l10nToken = basis.l10n.getToken;
   var getFunctions = basis.template.htmlfgen.getFunctions;
   
+  var TemplateSwitchConfig = basis.template.TemplateSwitchConfig;
+  var TemplateSwitcher = basis.template.TemplateSwitcher;
   var Template = basis.template.Template;
 
   var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
@@ -573,18 +575,33 @@
     return tmplNodeMap[refId].context;
   }
 
+
+ /**
+  * @class
+  */
   var HtmlTemplate = Template.subclass({
     className: namespace + '.Template',
 
     __extend__: function(value){
       if (value instanceof HtmlTemplate)
         return value;
-      else
-        return new HtmlTemplate(value);
+
+      if (value instanceof TemplateSwitchConfig)
+        return new HtmlTemplateSwitcher(value);
+
+      return new HtmlTemplate(value);
     },
 
     builder: buildFunctions
   });
+
+
+ /**
+  * @class
+  */
+  var HtmlTemplateSwitcher = TemplateSwitcher.subclass({
+    templateClass: HtmlTemplate
+  });  
 
 
   //
@@ -592,7 +609,8 @@
   //
 
   module.exports = {
-    Template: HtmlTemplate
+    Template: HtmlTemplate,
+    TemplateSwitcher: HtmlTemplateSwitcher
   };
 
   //

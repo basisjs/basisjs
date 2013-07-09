@@ -1499,8 +1499,11 @@
     __extend__: function(value){
       if (value instanceof Template)
         return value;
-      else
-        return new Template(value);
+
+      if (value instanceof TemplateSwitchConfig)
+        return new TemplateSwitcher(value);
+
+      return new Template(value);
     },
 
    /**
@@ -1651,6 +1654,72 @@
       }
     }
   });
+
+
+ /**
+  * @class
+  */
+  var TemplateSwitchConfig = function(config){
+    basis.object.extend(this, config);
+  };
+
+
+ /**
+  * @class
+  */
+  var TemplateSwitcher = basis.Class(null, {
+    ruleRet_: null,
+    templates_: null,
+
+    templateClass: Template,
+    ruleEvents: null,
+    rule: function(){
+      return '';
+    },  
+
+    init: function(config){
+      this.ruleRet_ = [];
+      this.templates_ = [];
+      this.rule = config.rule;
+
+      var events = config.events;
+      if (events && events.length)
+      {
+        this.ruleEvents = {};      
+        for (var i = 0, eventName; eventName = events[i]; i++)
+          this.ruleEvents[eventName] = this.resolve;
+      }
+    },
+    resolve: function(object){
+      var ret = this.rule(object);
+      var idx = this.ruleRet_.indexOf(ret);
+
+      if (idx == -1)
+      {
+        this.ruleRet_.push(ret);
+        idx = this.templates_.push(new this.templateClass(ret)) - 1;
+      }
+
+      return this.templates_[idx];
+    },
+    destroy: function(){
+      this.templates_ = null;
+      this.ruleRet_ = null;
+    }
+  });
+
+ /**
+  * Helper to create TemplateSwitchConfig
+  */
+  function switcher(events, rule){
+    var args = basis.array(arguments);
+    var rule = args.pop();
+
+    return new TemplateSwitchConfig({
+      rule: rule,
+      events: args.join(' ').trim().split(/\s+/)
+    });
+  }
 
 
   //
@@ -2051,7 +2120,11 @@
     COMMENT_VALUE: COMMENT_VALUE,
 
     // classes
+    TemplateSwitchConfig: TemplateSwitchConfig,
+    TemplateSwitcher: TemplateSwitcher,
     Template: Template,
+
+    switcher: switcher,
 
     // for debug purposes
     tokenize: tokenize,
