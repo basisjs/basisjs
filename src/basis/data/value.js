@@ -7,6 +7,7 @@
 
  /**
   * Namespace overview:
+  * - {basis.data.value.BindValue}
   * - {basis.data.value.Property}
   * - {basis.data.value.ObjectSet} (alias basis.data.value.DataObjectSet, but it's deprecate)
   * - {basis.data.value.Expression}
@@ -57,7 +58,7 @@
 
   function getFieldHandler(object){
     // property
-    if (object instanceof Property)
+    if (object instanceof BindValue)
       return object.set;
 
     // DOM
@@ -72,11 +73,8 @@
  /**
   * @class
   */
-  var Property = Class(Value, {
-    className: namespace + '.Property',
-
-    // use custom constructor
-    extendConstructor_: false,
+  var BindValue = Class(Value, {
+    className: namespace + '.BindValue',
 
    /**
     * @type {Array.<object>}
@@ -113,16 +111,9 @@
     },
 
    /**
-    * @param {object} initValue Initial value for object.
-    * @param {object=} handler
-    * @param {function()=} proxy
     * @constructor
     */
     init: function(initValue, handler, proxy){
-      this.value = initValue;
-      this.handler = handler;
-      this.proxy = proxy;
-
       Value.prototype.init.call(this);
 
       this.links_ = [];
@@ -131,13 +122,13 @@
     },
 
    /**
-    * Adds link to object property or method. Optional parameter format using to
-    * convert value to another value or type.
-    * If object instance of {basis.event.Emitter}, property attached handler. This handler
-    * removes property links to object, when object destroy.
+    * Adds link to object property or method. Optional parameter `format` using for
+    * value convertation to another value or type.
+    * If object is instance of {basis.event.Emitter}, BindValue attach handler which
+    * removes property links on object destroy.
     * @example
     *
-    *   var property = new Property();
+    *   var property = new basis.data.value.BindValue();
     *   property.addLink(htmlElement);  // property.set(value) -> DOM.insert(DOM.clear(htmlElement), value);
     *   property.addLink(htmlTextNode); // shortcut for property.addLink(htmlTextNode, 'nodeValue')
     *                                   // property.set(value) -> htmlTextNode.nodeValue = value;
@@ -158,7 +149,7 @@
     *
     *   // Trace property changes
     *   var historyOfChanges = new Array();
-    *   var property = new Property(1);
+    *   var property = new basis.data.value.BindValue(1);
     *   property.addLink(historyOfChanges, historyOfChanges.push);  // historyOfChanges -> [1]
     *   property.set(2);  // historyOfChanges -> [1, 2]
     *   property.set(3);  // historyOfChanges -> [1, 2, 3]
@@ -199,7 +190,7 @@
       };
 
       // add link
-      ;;;if (this.links_.some(function(link){ return link.object == object && link.field == field; })) basis.dev.warn('Property.addLink: Duplicate link for property');
+      ;;;if (this.links_.some(function(link){ return link.object == object && link.field == field; })) basis.dev.warn('BindValue.addLink: Duplicate link for property');
       this.links_.push(link);
       
       if (link.isEmitter)
@@ -317,6 +308,31 @@
   });
 
 
+ /**
+  * @class
+  */
+  var Property = BindValue.subclass({
+    className: namespace + '.Property',
+
+    // use custom constructor
+    extendConstructor_: false,
+
+   /**
+    * @param {object} initValue Initial value for object.
+    * @param {object=} handler
+    * @param {function()=} proxy
+    * @constructor
+    */
+    init: function(initValue, handler, proxy){
+      this.value = initValue;
+      this.handler = handler;
+      this.proxy = proxy;
+
+      BindValue.prototype.init.call(this);
+    }
+  });
+
+
   //
   //  Object set
   //
@@ -340,8 +356,24 @@
  /**
   * @class
   */    
-  var ObjectSet = Class(Property, {
+  var ObjectSet = Class(BindValue, {
     className: namespace + '.ObjectSet',
+
+   /**
+    * @type {Array.<basis.data.Object>}
+    */
+    objects: null,
+
+   /**
+    * @inheritDoc
+    */
+    value: 0,
+
+   /**
+    * @type {boolean}
+    * @private
+    */
+    valueChanged_: false,
 
    /**
     * @type {function}
@@ -351,21 +383,14 @@
     },
 
    /**
-    * @type {Array.<basis.data.Object>}
+    * @type {boolean}
     */
-    objects: null,
+    calculateOnInit: false,
 
    /**
-    * @type {boolean}
-    * @private
-    */
-    timer_: false,
-
-   /**
-    * @type {boolean}
-    * @private
-    */
-    valueChanged_: false,
+    * @type {Array.<basis.data.STATE>}
+    */ 
+    statePriority: OBJECTSET_STATE_PRIORITY,
 
    /**
     * @type {boolean}
@@ -374,23 +399,16 @@
     stateChanged_: true,
 
    /**
-    * @type {Array.<basis.data.STATE>}
-    */ 
-    statePriority: OBJECTSET_STATE_PRIORITY,
-
-   /**
-    * use extend constructor
+    * @type {boolean}
+    * @private
     */
-    extendConstructor_: true,
+    timer_: false,
 
    /**
     * @constructor
     */
     init: function(){
-      var handlers = this.handler;
-      this.handler = null;
-
-      Property.prototype.init.call(this, this.value || 0, handlers, this.proxy);
+      BindValue.prototype.init.call(this);
 
       var objects = this.objects;
       this.objects = [];
@@ -443,6 +461,7 @@
     clear: function(){
       for (var i = 0, object; object = this.objects[i]; i++)
         object.removeHandler(OBJECTSET_HANDLER, this);
+
       this.objects.clear();
 
       this.fire(true, true);
@@ -534,7 +553,7 @@
       this.clear();
       TimeEventManager.remove(this, 'update');
 
-      Property.prototype.destroy.call(this);
+      BindValue.prototype.destroy.call(this);
     }
   });
 
@@ -550,7 +569,7 @@
     className: namespace + '.Expression',
 
     init: function(args, calc){
-      Property.prototype.init.call(this);
+      BindValue.prototype.init.call(this);
 
       var args = basis.array(arguments);
       var calc = args.pop();
@@ -597,6 +616,7 @@
   //
 
   module.exports = {
+    BindValue: BindValue,
     Property: Property,
     ObjectSet: ObjectSet,
     Expression: Expression
