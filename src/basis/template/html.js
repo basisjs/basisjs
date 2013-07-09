@@ -600,6 +600,8 @@
   * @class
   */
   var HtmlTemplateSwitcher = TemplateSwitcher.subclass({
+    className: namespace + '.TemplateSwitcher',
+
     templateClass: HtmlTemplate
   });  
 

@@ -1668,6 +1668,8 @@
   * @class
   */
   var TemplateSwitcher = basis.Class(null, {
+    className: namespace + '.TemplateSwitcher',
+
     ruleRet_: null,
     templates_: null,
 
@@ -1708,8 +1710,9 @@
     }
   });
 
+
  /**
-  * Helper to create TemplateSwitchConfig
+  * Helper to create TemplateSwitchConfig instance
   */
   function switcher(events, rule){
     var args = basis.array(arguments);
