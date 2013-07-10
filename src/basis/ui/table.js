@@ -178,10 +178,12 @@
 
     colSorting: null,
     defaultOrder: false,
+    title: '\xA0',
 
     template: templates.HeaderCell,
 
     binding: {
+      title: 'title',
       sortable: function(node){
         return node.colSorting ? 'sortable' : '';
       }
@@ -285,13 +287,15 @@
           if ('groupId' in colConfig)
             config.groupId = colConfig.groupId;
 
-          // content
-          config.content = (headerConfig == null || typeof headerConfig != 'object' || headerConfig instanceof basis.l10n.Token
-            ? headerConfig 
-            : headerConfig.content) || '\xA0';
+          ;;;if (headerConfig && typeof headerConfig == 'object' && 'content' in headerConfig) basis.dev.warn('`content` property in header cell config is deprecated, use `title` instead');
 
-          if (typeof config.content == 'function')
-            config.content = config.content.call(this);
+          // content
+          config.title = (headerConfig == null || typeof headerConfig != 'object' || headerConfig instanceof basis.l10n.Token
+            ? headerConfig 
+            : 'title' in headerConfig ? headerConfig.title : headerConfig.content) || '\xA0';
+
+          if (typeof config.title == 'function')
+            config.title = config.title.call(this);
 
           // css classes
           config.cssClassName = (headerConfig.cssClassName || '') + ' ' + (colConfig.cssClassName || '');
@@ -371,19 +375,25 @@
             var footerConfig = colConfig.footer != null ? colConfig.footer : {};
 
             if (typeof footerConfig != 'object')
-              footerConfig = { content: footerConfig };
-
-            var content = footerConfig.content;
-
-            if (typeof content == 'function')
-              content = content.call(this);
+              footerConfig = { value: footerConfig };
 
             // fill config
 
             var config = {
-              cssClassName: (colConfig.cssClassName || '') + ' ' + (footerConfig.cssClassName || ''),
-              content: content
+              cssClassName: (colConfig.cssClassName || '') + ' ' + (footerConfig.cssClassName || '')
             };
+
+            if ('content' in footerConfig)
+            {
+              ;;;basis.dev.warn('`content` property in footer cell config is deprecated, use `value` instead');
+
+              var content = footerConfig.content;
+
+              if (typeof content == 'function')
+                content = content.call(this);
+
+              config.value = content;
+            }            
 
             if (footerConfig.template)
               config.template = footerConfig.template;
