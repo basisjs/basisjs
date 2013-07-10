@@ -1656,6 +1656,37 @@
   });
 
 
+
+// template: basis.template.wrapper(
+//   '<b:class value="..."/>'
+// )
+
+// var TemplateWrapper = Class(Template, {
+//   source_: '',
+//   template: null,
+//   init: function(source, template){
+//     Template.prototype.init.call(this);
+//     this.setTemplate(template);
+//   },
+//   setTemplate: function(template){
+//     if (this.template !== template)
+//       this.template = template;
+//       this.setSource(??)
+//   },
+//   setSource: function(source){
+//     if (this.source_ != source)
+//     {
+//       var newSource =
+//         '<b:include src="#' + this.template.templateId + '">' +
+//           source +
+//         '</b:include>';
+
+//       Template.prototype.setSource.call(this, newSource);
+//     }
+//   }
+// });
+
+
  /**
   * @class
   */
