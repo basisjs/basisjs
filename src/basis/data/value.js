@@ -550,7 +550,8 @@
 
         this.addHandler({
           destroy: function(){
-            changeWatcher.destroy();
+            if (!cleaner.globalDestroy)
+              changeWatcher.destroy();
           }
         });
       }
