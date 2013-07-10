@@ -375,7 +375,12 @@
             var footerConfig = colConfig.footer != null ? colConfig.footer : {};
 
             if (typeof footerConfig != 'object')
+            {
+              if (typeof footerConfig == 'function')
+                footerConfig = footerConfig.call(this);
+
               footerConfig = { value: footerConfig };
+            }
 
             // fill config
 
