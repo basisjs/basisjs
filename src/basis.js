@@ -1319,9 +1319,19 @@
         resolve: function(path){  // TODO: more compliant with node.js
           return this.normalize(path);
         },
-        relative: function(path){
-          var abs = this.normalize(path).split(/\//);
-          var loc = this.baseURI.split(/\//);
+        relative: function(from, to){
+          if (!to)
+          {
+            to = from;
+            from = this.baseURI;
+          }
+          else
+          {
+            from = this.dirname(from);
+          }
+
+          var abs = this.normalize(to).split(/\//);
+          var loc = from.split(/\//);
           var i = 0;
 
           while (abs[i] == loc[i] && typeof loc[i] == 'string')
