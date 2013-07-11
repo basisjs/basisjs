@@ -1350,6 +1350,8 @@
   }
 
   function createType(configOrName, fields){
+    ;;;if (this instanceof createType) basis.dev.warn('`new` operator was used with basis.entity.createType, it\'s a mistake');
+
     var config = configOrName || {};
 
     if (typeof configOrName == 'string')
@@ -1371,6 +1373,8 @@
   }
 
   function createSetType(nameOrWrapper, wrapper){
+    ;;;if (this instanceof createSetType) basis.dev.warn('`new` operator was used with basis.entity.createSetType, it\'s a mistake');
+
     return arguments.length > 1
       ? new EntitySetWrapper(wrapper, nameOrWrapper)
       : new EntitySetWrapper(nameOrWrapper);
