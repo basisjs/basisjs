@@ -524,6 +524,7 @@
           }
 
           this.templateUpdate(this.tmpl);
+          
           if (binding && binding.names.length)
           {
             if (binding.handler)
@@ -532,14 +533,15 @@
             binding.sync.call(this);
           }
 
-          if (oldElement && this.element && oldElement !== this.element)
+          if (oldElement && oldElement.nodeType != 11 && this.element && oldElement !== this.element)
           {
             var parentNode = oldElement && oldElement.parentNode;
+            
             if (parentNode)
               parentNode.replaceChild(this.element, oldElement);
 
-            // ??? fire event
-            //this.emit_templateChanged();
+            // emit event
+            this.emit_templateChanged();
           }
 
           this.templateBinding_ = binding;
@@ -610,10 +612,6 @@
                 parentNode.removeChild(oldElement);
             }
           }
-
-          // ??? fire event
-          //if (oldTemplate && template)
-          //  this.emit_templateChanged();
         }
       },
 
