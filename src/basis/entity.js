@@ -615,19 +615,42 @@
         return;
       }
 
+      // registrate alias
       this.aliases[key] = key;
 
-      if (typeof config == 'function' && config.calc !== config)
+      // normalize config
+      if (Array.isArray(config)
+          || (typeof config == 'function' && config.calc !== config))
       {
         config = {
           type: config
         };
       }
-
-      if ('type' in config && typeof config.type != 'function')
+      else
       {
-        ;;;basis.dev.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
-        config.type = $self;
+        // make a copy of config to avoid side effect
+        config = basis.object.slice(config);
+      }
+
+      // process type in config
+      if ('type' in config)
+      {
+        // if type is array convert it into enum
+        if (Array.isArray(config.type))
+        {
+          var values = config.type.slice(); // make copy of array to make it stable
+          config.type = function(value, oldValue){
+            return values.indexOf(value) != -1 ? value : oldValue;
+          }
+          config.defValue = config.type(config.defValue, values[0]);
+        }
+
+        // if type still is not a function - ignore it
+        if (typeof config.type != 'function')
+        {
+          ;;;basis.dev.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
+          config.type = $self;
+        }
       }
 
       var wrapper = config.type || $self;
