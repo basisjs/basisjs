@@ -20,13 +20,13 @@ function extractPath(path){
   {
     var folder = basis.path.relative(basis.path.dirname(path));
     var isFolder = !basis.path.extname(path)
-    fileSet.add(new basis.data.Object(basis.data({
+    fileSet.add(basis.data.wrapObject({
       path: path,
       name: basis.path.basename(path),
       folder: folder,
       isFolder: isFolder,
       code: !isFolder ? basis.resource.getSource(path) : null
-    })));
+    }));
 
     fileMap[path] = true;
 
