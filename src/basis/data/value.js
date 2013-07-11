@@ -83,7 +83,7 @@
    /**
     * @constructor
     */
-    init: function(initValue, handler, proxy){
+    init: function(){
       Value.prototype.init.call(this);
 
       this.links_ = [];

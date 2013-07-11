@@ -31,7 +31,7 @@ module.exports = {
       if (dictionaries[dictionaryName].location)
         data.push({
           Dictionary: dictionaryName,
-          Location: basis.path.relative(dictionaries[dictionaryName].location)
+          Location: '/' + basis.path.relative('/', dictionaries[dictionaryName].location)
         });
 
     sendData('dictionaryList', data);
@@ -107,7 +107,7 @@ module.exports = {
 
     for (var i = 0, culture; culture = cultureList[i]; i++)
     {
-      filename = '/' + basis.path.relative(location + '/' + culture + '.json');
+      filename = '/' + basis.path.relative('/', location + '/' + culture + '.json');
       file = basis.devtools.getFile(filename, true);
 
       dictionaries = basis.object.slice(basis.resource(filename)());

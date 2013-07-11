@@ -95,12 +95,9 @@
 
     // define data types
 
-    var UserGroup = new basis.entity.EntityType({
-      name: 'UserGroup',
-      fields: {
-        groupId: basis.entity.IntId,
-        title: String
-      }
+    var UserGroup = basis.entity.createType('UserGroup', {
+      groupId: basis.entity.IntId,
+      title: String
     });
 
     // define sync action to load data
@@ -111,11 +108,11 @@
       }
     }));
 
-    var User = new basis.entity.EntityType({
+    var User = basis.entity.createType({
       name: 'User',
       fields: {
         userId: basis.entity.IntId,
-        group: UserGroup,
+        group: 'UserGroup',
         title: String
       },
       aliases: {

@@ -34,11 +34,11 @@
 
   var NULL_INFO = {};
 
-  //
-
+  // 
   var isKeyType = { 'string': 1, 'number': 1 };
   var entityTypes = [];
 
+  // buildin indexes
   var NumericId = function(value){
     return isNaN(value) ? null : Number(value);
   };
@@ -52,12 +52,59 @@
     return value == null ? null : String(value);
   };
 
-  // ---
-
+  // name generator
   var untitledNames = {};
   function getUntitledName(name){
     untitledNames[name] = untitledNames[name] || 0;
     return name + (untitledNames[name]++);
+  }
+
+  // types map
+  var namedTypes = {};
+  var deferredTypeDef = {};
+  var TYPE_DEFINITION_PLACEHOLDER = function TYPE_DEFINITION_PLACEHOLDER(){};
+
+  function resolveType(typeName, type){
+    var list = deferredTypeDef[typeName];
+
+    if (list)
+    {
+      for (var i = 0, def; def = list[i]; i++)
+      {
+        var typeClass = def[0];
+        var fieldName = def[1];
+
+        if (typeClass instanceof EntityTypeConstructor)
+          typeClass.fields[fieldName] = type;
+        else if (typeClass instanceof EntitySet)
+          typeClass.wrapper = type;
+        else
+          console.log('Type definition is not resolved', def);
+      }
+
+      delete deferredTypeDef[typeName];
+    }
+
+    namedTypes[typeName] = type;
+  }
+
+  function getTypeByName(typeName, typeClass, field){
+    if (namedTypes[typeName])
+      return namedTypes[typeName];
+
+    var list = deferredTypeDef[typeName];
+
+    if (!list)
+      list = deferredTypeDef[typeName] = [];
+
+    list.push([typeClass, field]);
+
+    return TYPE_DEFINITION_PLACEHOLDER;
+  }
+
+  function validateScheme(){
+    for (var typeName in deferredTypeDef)
+      basis.dev.warn(namespace + ': type `' + typeName + '` is not defined, but used by ' + deferredTypeDef[typeName].length + ' type(s)');
   }
 
   //
@@ -79,7 +126,7 @@
       var value = this.fn(newValue, oldValue);
 
       if (value !== oldValue && this.items[value])
-        throw 'Duplicate value for index ' + oldValue + ' => ' + newValue;
+        throw 'Duplicate value for index [' + oldValue + ' -> ' + newValue + ']';
 
       return value;
     },
@@ -305,15 +352,21 @@
   // EntitySetWrapper
   //
 
-  var EntitySetWrapper = function(wrapper){
+  var EntitySetWrapper = function(wrapper, name){
     if (this instanceof EntitySetWrapper)
     {
       if (!wrapper)
         wrapper = $self;
 
+      if (!name || namedTypes[name])
+      {
+        /** @cut */ if (namedTypes[name]) basis.dev.warn(namespace + ': Dublicate type name - ' + this.name);
+        name = getUntitledName('UntitledEntitySetType');
+      }
+
       var entitySetType = new EntitySetConstructor({
         entitySetClass: {
-          name: 'Set of {' + ((wrapper.entityType || wrapper).name || 'UnknownWrapper') + '}',
+          /** @cut */ name: 'Set of {' + (typeof wrapper == 'string' ? wrapper : (wrapper.entityType || wrapper).name || 'UnknownType') + '}',
           wrapper: wrapper
         }
       });
@@ -333,14 +386,33 @@
           return null;
       };
 
-      basis.object.extend(result, {
+      // if wrapper is string resolve it by named type map
+      if (typeof wrapper == 'string')
+        entitySetClass.prototype.wrapper = getTypeByName(wrapper, entitySetClass);
+
+      // resolve type name
+      resolveType(name, result);
+
+      // extend result with additional properties
+      extend(result, {
+        type: entitySetType,
+        typeName: name,
+
+        toString: function(){
+          return this.typeName + '()';
+        },
+
         entitySetType: entitySetType,
         extend: function(){
           return entitySetClass.extend.apply(entitySetClass, arguments);
         },
         reader: function(data){
           if (Array.isArray(data))
+          {
+            var wrapper = entitySetClass.wrapper;
             return data.map(wrapper.reader || wrapper);
+          }
+
           return data;
         }
       });
@@ -438,12 +510,16 @@
       var entityType = new EntityTypeConstructor(config || {}, result);
       var entityClass = entityType.entityClass;
 
+      // resolve type by name
+      resolveType(entityType.name, result);
+
+      // extend result with additional properties
       extend(result, {
         all: entityType.all,
 
         type: entityType,
         typeName: entityType.name,
-        entityType: entityType,
+        entityType: entityType,  // ?? deprecated
 
         toString: function(){
           return this.typeName + '()';
@@ -506,8 +582,12 @@
 
     init: function(config, wrapper){
       // process name
-      this.name = config.name || getUntitledName('UntitledEntityType');
-      ;;;if (entityTypes.search(this.name, getter('name'))) basis.dev.warn('Dublicate entity type name: ', this.name);
+      this.name = config.name;
+      if (!this.name || namedTypes[this.name])
+      {
+        /** @cut */ if (namedTypes[this.name]) basis.dev.warn(namespace + ': Dublicate type name - ' + this.name);
+        this.name = getUntitledName('UntitledEntityType');
+      }
 
       // init properties
       this.fields = {};
@@ -615,19 +695,48 @@
         return;
       }
 
+      // registrate alias
       this.aliases[key] = key;
 
-      if (typeof config == 'function' && config.calc !== config)
+      // normalize config
+      if (typeof config == 'string'
+          || Array.isArray(config)
+          || (typeof config == 'function' && config.calc !== config))
       {
         config = {
           type: config
         };
       }
-
-      if ('type' in config && typeof config.type != 'function')
+      else
       {
-        ;;;basis.dev.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
-        config.type = $self;
+        // make a copy of config to avoid side effect
+        config = basis.object.slice(config);
+      }
+
+      // process type in config
+      if ('type' in config)
+      {
+        if (typeof config.type == 'string')
+        {
+          config.type = getTypeByName(config.type, this, key);
+        }
+
+        // if type is array convert it into enum
+        if (Array.isArray(config.type))
+        {
+          var values = config.type.slice(); // make copy of array to make it stable
+          config.type = function(value, oldValue){
+            return values.indexOf(value) != -1 ? value : oldValue;
+          }
+          config.defValue = config.type(config.defValue, values[0]);
+        }
+
+        // if type still is not a function - ignore it
+        if (typeof config.type != 'function')
+        {
+          ;;;basis.dev.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
+          config.type = $self;
+        }
       }
 
       var wrapper = config.type || $self;
@@ -1237,9 +1346,12 @@
   //
 
   function isEntity(value){
-    return value && value instanceof Entity;
+    return value && value instanceof BaseEntity;
   }
+
   function createType(configOrName, fields){
+    ;;;if (this instanceof createType) basis.dev.warn('`new` operator was used with basis.entity.createType, it\'s a mistake');
+
     var config = configOrName || {};
 
     if (typeof configOrName == 'string')
@@ -1259,8 +1371,13 @@
 
     return new EntityTypeWrapper(config);
   }
-  function createSetType(config){
-    return new EntitySetWrapper(config);
+
+  function createSetType(nameOrWrapper, wrapper){
+    ;;;if (this instanceof createSetType) basis.dev.warn('`new` operator was used with basis.entity.createSetType, it\'s a mistake');
+
+    return arguments.length > 1
+      ? new EntitySetWrapper(wrapper, nameOrWrapper)
+      : new EntitySetWrapper(nameOrWrapper);
   }  
 
   //
@@ -1271,6 +1388,10 @@
     isEntity: isEntity,
     createType: createType,
     createSetType: createSetType,
+    validate: validateScheme,
+    getTypeByName: function(typeName){
+      return namedTypes[typeName];
+    },
 
     NumericId: NumericId,
     NumberId: NumberId,
