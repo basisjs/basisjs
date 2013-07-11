@@ -1417,6 +1417,7 @@
 
   var resourceCache = {};
   var requestResourceCache = {};
+  /** @cut */ var resourceResolvingStack = [];
 
   // apply prefetched resources to cache
   (function(){
@@ -1466,38 +1467,53 @@
     return requestResourceCache[url];
   };
 
-  // basis.resource  
+  // basis.resource
   var getResource = function(resourceUrl){
     resourceUrl = pathUtils.resolve(resourceUrl);
 
     if (!resourceCache[resourceUrl])
     {
       var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
-      var inited = false;
+      var resolved = false;
       var wrapped = false;
-      var wrappedContent;
+      var content;
 
       var resource = function(){
-        var result = getResourceContent(resourceUrl);
+        // if resource resolved, just return content
+        if (resolved)
+          return content;
 
+        // fetch url content
+        var urlContent = getResourceContent(resourceUrl);
+
+        /** @cut    recursion warning */
+        /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
+        /** @cut */ if (idx != -1)
+        /** @cut */   basis.dev.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+        /** @cut */ resourceResolvingStack.push(resourceUrl);
+
+        // if resource type has wrapper - wrap it, or use url content as result
         if (contentWrapper)
         {
           if (!wrapped)
           {
-            wrappedContent = contentWrapper(result, resourceUrl);
-            wrapped = true;              
+            wrapped = true;
+            content = contentWrapper(urlContent, resourceUrl);
           }
-
-          result = wrappedContent;
         }
-
-        if (!inited)
+        else
         {
-          inited = true;
-          resource.apply();
+          content = urlContent;
         }
 
-        return result;
+        // mark as resolved and apply binded functions
+        resolved = true;
+        resource.apply();
+
+        /** @cut    recursion warning */
+        /** @cut */ resourceResolvingStack.pop();
+
+        return content;
       };
 
       extend(resource, extend(new Token(), {
@@ -1511,19 +1527,23 @@
         update: function(newContent){
           newContent = String(newContent);
 
-          if (!inited || newContent != requestResourceCache[resourceUrl])
+          if (!resolved || newContent != requestResourceCache[resourceUrl])
           {
             requestResourceCache[resourceUrl] = newContent;
 
             if (contentWrapper)
             {
-              if (wrapped && !contentWrapper.updatable)
+              // don't wrap content if it isn't wrapped yet or wrapped but not updatable
+              if (!wrapped || !contentWrapper.updatable)
                 return;
 
-              wrappedContent = contentWrapper(newContent, resourceUrl);
+              content = contentWrapper(newContent, resourceUrl);
             }
+            else
+              content = newContent;
 
-            this.apply();
+            resolved = true;
+            resource.apply();
           }
         },
         reload: function(){
@@ -1532,15 +1552,15 @@
 
           if (newContent != oldContent)
           {
-            inited = false;
-            this.update(newContent);
+            resolved = false;
+            resource.update(newContent);
           }
         },
         get: function(source){
           return source ? getResourceContent(resourceUrl) : resource();
         },
         ready: function(fn, context){
-          if (inited)
+          if (resolved)
           {
             fn.call(context, resource());
 
@@ -1548,7 +1568,7 @@
               return;
           }
 
-          this.attach(fn, context);
+          resource.attach(fn, context);
         }
       }));
 
