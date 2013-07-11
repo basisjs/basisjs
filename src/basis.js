@@ -1440,6 +1440,7 @@
         // otherwise browser could never ask server for new file content
         // and use file content from cache
         req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
+        req.setRequestHeader('X-Basis-Resource', 1);
         req.send('');
 
         if (req.status >= 200 && req.status < 400)
