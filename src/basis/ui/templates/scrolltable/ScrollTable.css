@@ -10,7 +10,7 @@
     empty-cells: show;
   }
 
-  .Basis-ScrollTable.FitToContainer
+  .Basis-ScrollTable_fitToContainer
   {
     position: absolute;
     left: 0;

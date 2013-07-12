@@ -97,9 +97,18 @@
     columnWidthSync_: null,
 
    /**
+    * Should table try to fit it's container or not.
+    * @type boolean
+    */
+    fitToContainer: false,
+
+   /**
     * @inheritDoc
     */
     template: templates.ScrollTable,
+    binding: {
+      fitToContainer: 'fitToContainer'
+    },
     action: {
       scroll: function(){
         var scrollLeft = -this.tmpl.scrollContainer.scrollLeft + 'px';
@@ -229,7 +238,9 @@
       this.tmpl.headerExpandCell.style.left = tableWidth + 'px';
       this.tmpl.footerExpandCell.style.left = tableWidth + 'px';
       this.tmpl.tableElement.style.margin = '-' + headerHeight + 'px 0 -' + footerHeight + 'px';
-      this.element.style.paddingBottom = (headerHeight + footerHeight) + 'px';
+
+      if (this.fitToContainer)
+        this.element.style.paddingBottom = (headerHeight + footerHeight) + 'px';
 
       // reset timer
       // it should be at the end of relayout to prevent relayout call while relayout

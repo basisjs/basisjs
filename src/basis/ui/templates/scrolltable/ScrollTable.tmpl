@@ -3,8 +3,9 @@
   <b:resource src="ScrollTable.css"/>
   <b:define name="selected" type="bool"/>
   <b:define name="disabled" type="bool"/>
+  <b:define name="fitToContainer" type="bool"/>
 
-  <div class="Basis-Table Basis-ScrollTable {selected} {disabled}" event-load="">
+  <div class="Basis-Table Basis-ScrollTable Basis-ScrollTable_{fitToContainer} {selected} {disabled}" event-load="">
     <div class="Basis-ScrollTable-Header-Container">
       <table{headerOffset} class="Basis-ScrollTable-Header" cellspacing="0">
         <!--{header}-->
