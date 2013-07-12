@@ -1,40 +1,40 @@
 # 0.9.5 (july 12, 2013)
 
-- API: `basis.data.Value#set` method returns `true` if value was changed (restored for consistent data classes API)
-- FIX: `basis.net.Transport` don't add extra headers by default (it may break CORS)
+- API: `basis.data.Value#set` method returns `true` if value was changed
+- FIX: `basis.net.Transport` don't add extra headers for request by default (break CORS)
 - API: `basis.net.Transport#requestHeaders` is extensible property now
 - API: `basis.net.rpc` was transformed into `basis.net.action` (`basis.net.rpc` is still available until 0.10.0)
-- API: `basis.data.Dataset#sync` method doesn't accept second argument (`set`) anymore and works as this argument is `true` (`false` value for second argument is never used and was confused)
+- API: `basis.data.Dataset#sync` method doesn't accept second argument anymore and works as this argument is `true` (`false` value for second argument was never used and confusing)
 - API: new helpers `basis.data.wrap`, `basis.data.wrapObject` and `basis.data.wrapData`
 - API: using of `basis.data` as a function is deprecated now (use `basis.data.wrap` instead)
-- API: add warning when using deprecated `basis.dom.event.onLoad` (`basis.ready` must be use instead)
 - API: using of `basis.dom.event` as a function is deprecated now (use `basis.dom.event.wrap` instead)
 - API: using of `basis.ui.field` as a function is deprecated now (use `basis.ui.field.create` instead)
+- API: add warning when using deprecated `basis.dom.event.onLoad` (`basis.ready` must be use instead)
 - API: `basis.ui.Table#loadData` method was removed
 - FIX: building of search index in docs
 - FIX: exception on function to string convertation in docs (for functions with overloaded `toString` method)
 - NEW: `basis.ui.PageSlider` is support for page rotation now
 - FIX: double add handler in `basis.data.AbstractData#setSyncAction`
-- NEW: `basis.net.action.create` creates instance of `basis.net.Transport` by default if `transport`, `service` and `createTrasport` properties is not defined in config
+- NEW: `basis.net.action.create` creates instance of `basis.net.Transport` by default if `transport`, `service` and `createTransport` properties are not defined in config
 - FIX: `basis.template.Theme#define` become context free
-- NEW: `basis.template.TemplateSwitcher` class and `basis.template.switcher` helper was inplemeted, to simplify template switch according to some rule
-- NEW: `basis.dom.wrapper.AbstractNode` sync was tweaked to simplify synchronization by node with no additional models or datasets
-- API: `basis.data.property` was transform into `basis.data.value`  (`basis.net.rpc` is still available until 0.10.0)
+- NEW: `basis.template.TemplateSwitcher` class and `basis.template.switcher` helper was implemented to simplify template switching according to rule
+- NEW: `basis.dom.wrapper.AbstractNode` sync was tweaked to simplify synchronization by node itself with no additional models or datasets
+- API: `basis.data.property` was transform into `basis.data.value`  (`basis.net.property` is still available until 0.10.0)
 - API: `basis.data.DataObjectSet` was renamed to `basis.data.ObjectSet` (`basis.data.DataObjectSet` is still available as alias)
 - API: new class `basis.data.value.BindValue` (it is `basis.data.value.Property` class but with extend constructor), `basis.data.value.Property` inherits it
-- API: `basis.data.value.BindValue#addLink` and `basis.data.value.BindValue#removeLink` requires explicit value for second argument ([backward path](https://gist.github.com/lahmatiy/5962364))
+- API: `basis.data.value.BindValue#addLink` and `basis.data.value.BindValue#removeLink` requires explicit value for second argument now ([backward path](https://gist.github.com/lahmatiy/5962364))
 - API: content property in header/footer cell config for `basis.ui.Table` is deprecated now
-- API: if value for footer cell is a function, use that function call result as a value
-- FIX: exception in `basis.data.value.Expression` on global destroy (try to destroy object twice)
-- NEW: basis send `X-Basis-Resource` header when fetch resource content (it helps basisjs-tools server to build resource cache correctly)
-- FIX: recursion on resolving basis resources (browser is not freezing now, and show warning message in console when recursion occur)
-- API: `basis.path.relative` can accept two aguments now, in this case it works similar to `path.relative` in `node.js`
+- API: if value for footer cell in config is a function, use function call result as a value
+- FIX: exception in `basis.data.value.Expression` on global destroy (attempt to destroy object twice)
+- NEW: send `X-Basis-Resource` header when fetch resource content (it helps `basisjs-tools` server to build resource cache correctly)
+- FIX: recursion on resolving basis resources (browser is not freezing now, and show warning message in console when recursion occurs)
+- API: `basis.path.relative` may accepts two aguments now, in this case it works similar to `path.relative` in `node.js`
 - FIX: resolving dictionary pathes in `basis.devpanel` was fixed
 - NEW: `basis.entity.Entity` accepts array as value for field type, in this case field become an enum
-- NEW: `basis.entity.Entity` accepts string as value for field type (type with that name may not be defined at that moment, when type defines it's wrapper will be set to that field)
-- NEW: `basis.entity.EntitySet` accepts string as wrapper (type with that name may not be defined at that moment, when type defines it's wrapper will be set as wrapper for `EntitySet`)
+- NEW: `basis.entity.Entity` accepts string as value for field type (type with that name may not be defined at that moment, when type defines it's wrapper sets as value for that field)
+- NEW: `basis.entity.EntitySet` accepts string as wrapper (type with that name may not be defined at that moment, when type defines it's wrapper sets as wrapper for `EntitySet`)
 - NEW: `basis.entity.EntitySet` can be named now (second argument for `basis.entity.EntitySet` constructor or first argument for `basis.entity.createSetType` function)
-- NEW: new function `basis.entity.validate` add warnings to console if some types was used in `Entity`/`EntitySet` definition but not defined
+- NEW: new function `basis.entity.validate` adds warnings to console if some types was used in `Entity`/`EntitySet` definitions but not defined yet
 - FIX: `basis.ui.ScrollTable` crash when table has no footer
 - NEW: new property `basis.ui.ScrollTable#fitToContainer`
 
