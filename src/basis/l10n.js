@@ -28,6 +28,106 @@
   var cultureReplacement = {};
   var tokenIndex = [];
 
+
+ /**
+  * @class
+  */ 
+  var ComputeToken = Class(basis.Token, {
+    className: namespace + '.ComputeToken',
+
+    value: '',
+    values: null,
+    valueGetter: function(object){
+    },
+
+    token: null,
+    tokenHandler: function(value){
+      this.values = String(value || '').split('|');
+      this.compute();
+    },
+
+    object: null,
+    objectHandler: null,
+
+    init: function(token, object, objectHandler, valueGetter){
+      basis.Token.prototype.init.call(this);
+
+      this.valueGetter = valueGetter;
+      this.objectHandler = objectHandler;
+      this.setToken(token);
+      this.setObject(object);
+    },
+
+    setToken: function(token){
+      if (this.token !== token)
+      {
+        if (this.token)
+          this.token.detach(this.tokenHandler, this)
+
+        this.token = token;
+        this.values = null;
+
+        if (token)
+        {
+          token.attach(this.tokenHandler, this);
+          this.tokenHandler(token.get());
+        }
+      }
+    },
+    setObject: function(object){
+      if (this.object !== object)
+      {
+        if (this.object)
+          this.object.removeHandler(this.objectHandler, this);
+
+        this.object = object;
+
+        if (object)
+        {
+          object.addHandler(this.objectHandler, this);
+          this.compute();
+        }
+      }
+    },
+
+    compute: function(){
+      if (this.values && this.object)
+      {
+        var value = this.valueGetter(this.object);
+        this.set(this.values[value] || '[no value for ' + value + ']');
+      }
+      else
+        this.set('[uncomputable value]');
+    },
+
+    toString: function(){
+      return this.value;
+    },
+
+    get: function(){
+      return this.value;
+    },
+    set: function(value){
+      if (value != this.value)
+      {
+        this.value = value;
+        this.apply();
+      }
+    },
+
+    destroy: function(){
+      this.value = null;
+      this.values = null;
+      this.setObject();
+      this.setToken();
+      
+      basis.Token.prototype.destroy.call(this);
+    }
+  });
+
+ /**
+  * @class
+  */ 
   var Token = Class(basis.Token, {
     className: namespace + '.Token',
 
@@ -54,6 +154,35 @@
       {
         this.value = value;
         this.apply();
+      }
+    },
+
+    enum: function(events, getter){
+      if (arguments.length == 1)
+      {
+        getter = events;
+        events = '';
+      }
+
+      var token = this;
+      var handler = {
+        destroy: function(){
+          this.destroy();
+        }
+      };
+      var updateValue = function(){
+        this.compute();
+      };
+
+      getter = basis.getter(getter);
+      events = String(events).trim().split(/\s+|\s*,\s*/);
+
+      for (var i = 0, eventName; eventName = events[i]; i++)
+        if (eventName != 'destroy')
+          handler[eventName] = updateValue;
+
+      return function(object){
+        return new ComputeToken(token, object, handler, getter);
       }
     },
 
