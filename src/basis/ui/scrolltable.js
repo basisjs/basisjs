@@ -180,7 +180,7 @@
     */
     relayout: function(){
       var headerElement = this.header.element;
-      var footerElement = this.footer.element;
+      var footerElement = this.footer ? this.footer.element : null;
 
       //
       // Sync header html
@@ -195,11 +195,14 @@
       //
       // Sync footer html
       //
-      var footerOuterHTML = DOM.outerHTML(footerElement);
-      if (this.shadowFooterHtml_ != footerOuterHTML)
+      if (footerElement)
       {
-        this.shadowFooterHtml_ = footerOuterHTML;
-        replaceTemplateNode(this, 'shadowFooter', footerElement.cloneNode(true));
+        var footerOuterHTML = DOM.outerHTML(footerElement);
+        if (this.shadowFooterHtml_ != footerOuterHTML)
+        {
+          this.shadowFooterHtml_ = footerOuterHTML;
+          replaceTemplateNode(this, 'shadowFooter', footerElement.cloneNode(true));
+        }
       }
 
       //
@@ -209,9 +212,8 @@
       {
         columnWidth = column.measure.offsetWidth + 'px';
         cssom.setStyleProperty(column.header.firstChild, 'width', columnWidth);
-        cssom.setStyleProperty(column.footer.firstChild, 'width', columnWidth);
-        //column.header.firstChild.style.width = columnWidth;
-        //column.footer.firstChild.style.width = columnWidth;
+        if (footerElement)
+          cssom.setStyleProperty(column.footer.firstChild, 'width', columnWidth);
       }
 
       //
@@ -219,7 +221,7 @@
       //
       var tableWidth = this.tmpl.boundElement.offsetWidth || 0;
       var headerHeight = headerElement.offsetHeight || 0;
-      var footerHeight = footerElement.offsetHeight || 0;
+      var footerHeight = (footerElement && footerElement.offsetHeight) || 0;
 
       //
       // Update style properties

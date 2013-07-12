@@ -141,8 +141,10 @@
     });
 
     basis.ready(function(){
-      container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));
+      var container = createBlock('basis.ui.scrolltable.ScrollTable fit to container').appendChild(basis.dom.createElement('.scrollTableContainer'));
+
       var table = new ScrollTable({
+        container: container,
         selection: {
           multiple: true
         },
@@ -152,14 +154,13 @@
         },
         structure: [
           { groupId: 2, header: 'Company', body: getter('data.title'), sorting: getter('data.title') },
-          { header: 'Price', body: getter('data.price', '${0:.2}'), sorting: getter('data.price'), footer: { content: 'footer' } },
+          { header: 'Price', body: getter('data.price', '${0:.2}'), sorting: getter('data.price') },
           { header: 'Change', body: getter('data.change', '{0:.2}') },
           { header: '% Change', body: getter('data.percentChange', '{0:.2}%') },
           { header: 'Last Updated', body: getter('data.lastUpdate.toFormat("%M/%D/%Y")') }
         ],
         childNodes: data
-      }); 
-      basis.dom.insert(container, table.element);
+      });
 
       var r = new basis.ui.resizer.Resizer({ element: container.parentNode });
       basis.cssom.setStyle(r.resizer, {
@@ -187,13 +188,6 @@
       }); 
 
     });
-
-    /*basis.dom.insert('demo-container', basis.dom.createElement('button', 'remove')).onclick = function(){
-      basis.dom.remove(table.element);
-    };
-    basis.dom.insert('demo-container', basis.dom.createElement('button', 'insert')).onclick = function(){
-      basis.dom.insert(container, table.element);
-    };*/
 
 
 
