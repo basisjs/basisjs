@@ -141,14 +141,22 @@ function domTreeHighlight(root){
           var bindings = (node.tmpl.set.debug && node.tmpl.set.debug()) || [];
           for (var j = 0, binding; binding = bindings[j]; j++)
           {
-            if (binding.attachment instanceof basis.l10n.Token && binding.dom.nodeType == basis.dom.TEXT_NODE)
+            if (binding.dom.nodeType != basis.dom.TEXT_NODE)
+              continue;
+
+            var token = binding.attachment;
+
+            if (token instanceof basis.l10n.ComputeToken)
+              token = token.valueToken;
+
+            if (token instanceof basis.l10n.Token)
             {
               //nodes.push(binding.dom);
               range.selectNodeContents(binding.dom);
               var rect = range.getBoundingClientRect();
               if (rect)
               {
-                var color = getColorForDictionary(binding.attachment.dictionary.namespace);
+                var color = getColorForDictionary(token.dictionary.namespace);
                 var bgColor = 'rgba(' + color.join(',') + ', .3)';
                 var borderColor = 'rgba(' + color.join(',') + ', .6)';
                 var element = overlay.appendChild(basis.dom.createElement({
@@ -165,7 +173,7 @@ function domTreeHighlight(root){
                   }
                 }));
 
-                element.token = binding.attachment;
+                element.token = token;
 
                 elements.push(element);
               }

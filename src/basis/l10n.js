@@ -692,6 +692,7 @@
   //
 
   module.exports = {
+    ComputeToken: ComputeToken,
     Token: Token,
     token: getToken,
     getToken: function(){
