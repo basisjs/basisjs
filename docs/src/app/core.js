@@ -607,6 +607,7 @@
       var line = 0;
       var lineFix;
       var scopeNS;
+      var jsDocsName;
       var parts = resource.text
         .replace(/\r\n|\n\r|\r/g, '\n')
         .replace(/\/\*+(\s*@cut.+\*)?\//g, '')
@@ -616,6 +617,9 @@
         lineFix = 0;
         if (idx % 2)
         {
+          if (jsDocsName = code.match(/@name\s+([a-z0-9_\$\.]+)/i))
+            jsDocsName = jsDocsName[1];
+
           if (code.match(/@annotation/))
           {
             skipDeclaration = true;
@@ -660,7 +664,7 @@
               var name = m[3];
 
               lineFix = (m[1].match(/\n/g) || []).length;
-              createJsDocEntity(jsdoc[jsdoc.length - 1], ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
+              createJsDocEntity(jsdoc[jsdoc.length - 1], jsDocsName || ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
               
               if (isClass)
                 clsPrefix = name;
