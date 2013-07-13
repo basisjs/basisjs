@@ -20,6 +20,16 @@
 
   var tokenIndex = [];
 
+  function ownKeys(object){
+    var result = [];
+
+    for (var key in object)
+      if (Object.prototype.hasOwnProperty.call(object, key))
+        result.push(key);
+
+    return result;
+  }
+
  /**
   * @class
   */ 
@@ -33,9 +43,13 @@
 
     token: null,
     tokenHandler: function(value){
-      this.values = String(value || '').split('|');
+      this.values = typeof value == 'object' || Array.isArray(value)
+        ? ownKeys(value)
+        : null;
+
       this.compute();
     },
+    valueToken: null,
 
     object: null,
     objectHandler: null,
@@ -85,13 +99,23 @@
     },
 
     compute: function(){
+      var token = null;
+
       if (this.values && this.object)
+        token = getToken(this.token.dictionary.name, this.token.name, this.valueGetter(this.object));
+
+      if (this.valueToken !== token)
       {
-        var value = this.valueGetter(this.object);
-        this.set(this.values[value] || '[no value for ' + value + ']');
+        if (this.valueToken)
+          this.valueToken.detach(this.set, this);
+
+        this.valueToken = token;
+
+        if (token)
+          token.attach(this.set, this);
       }
-      else
-        this.set('[uncomputable value]');
+
+      this.set(this.valueToken ? this.valueToken.value : '[l10n:uncomputable value]');
     },
 
     toString: function(){
@@ -110,10 +134,11 @@
     },
 
     destroy: function(){
-      this.value = null;
-      this.values = null;
       this.setObject();
       this.setToken();
+      this.compute();      
+      this.value = null;
+      this.values = null;
       
       basis.Token.prototype.destroy.call(this);
     }
