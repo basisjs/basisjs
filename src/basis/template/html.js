@@ -372,7 +372,7 @@
       var fn = getFunctions(tokens, true, sourceURL, tokens.source_);
       var templateMap = {};
       var l10nMap = {};
-      var l10nProtoSync;
+      var l10nLinks = [];
 
       var proto = buildHtml(tokens);
       var build = function(){
@@ -381,19 +381,51 @@
 
       if (fn.createL10nSync)
       {
-        l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
+        var l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
 
         for (var i = 0, key; key = fn.l10nKeys[i]; i++)
           l10nProtoSync(key, l10nToken(key).value);
+
+        if (fn.l10nKeys)
+          for (var i = 0, key; key = fn.l10nKeys[i]; i++)
+          {
+            var link = {
+              path: key,
+              token: l10nToken(key),
+              handler: function(value){
+                l10nProtoSync(this.path, value);
+                for (var id in templateMap)
+                  templateMap[id].set(this.path, value);
+              }
+            };
+            link.token.attach(link.handler, link);
+            l10nLinks.push(link);
+          }
       }
 
       return {
         createInstance: fn.createInstance(tmplNodeMap, templateMap, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG),
-        l10nProtoSync: l10nProtoSync,
         
         keys: fn.keys,
-        l10nKeys: fn.l10nKeys,
-        map: templateMap
+        map: templateMap,
+
+        destroy: function(rebuild){
+          for (var i = 0, link; link = l10nLinks[i]; i++)
+            link.token.detach(link.handler, link);
+
+          if (rebuild)
+            for (var id in templateMap)
+              templateMap[id].rebuild_();
+
+          for (var id in templateMap)
+            templateMap[id].destroy_();
+
+          fn = null;
+          proto = null;
+          l10nLinks = null;
+          l10nProtoSync = null;
+          templateMap = null;
+        }
       };
     };
   })();

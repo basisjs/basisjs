@@ -1220,7 +1220,7 @@
   * @func
   */
   function templateSourceUpdate(){
-    if (this.instances_)
+    if (this.destroyBuilder)
       buildTemplate.call(this);
 
     for (var i = 0, attach; attach = this.attaches_[i]; i++)
@@ -1368,10 +1368,11 @@
   function buildTemplate(){
     var decl = getDeclFromSource(this.source, this.baseURI);
     var instances = this.instances_;
+    var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens);  // makeFunctions
-    var l10n = this.l10n_;
     var deps = this.deps_;
 
+    // detach old deps
     if (deps)
     {
       this.deps_ = null;
@@ -1379,6 +1380,7 @@
         dep.bindingBridge.detach(dep, buildTemplate, this);
     }
 
+    // attach new deps
     if (decl.deps && decl.deps.length)
     {
       deps = decl.deps;
@@ -1387,18 +1389,13 @@
         dep.bindingBridge.attach(dep, buildTemplate, this);
     }
 
-    if (l10n)
-    {
-      this.l10n_ = null;
-      for (var i = 0, link; link = l10n[i]; i++)
-        link.token.detach(link.handler, link);
-    }
-
+    // apply new values
     this.createInstance = funcs.createInstance;
     this.getBinding = createBindingFunction(funcs.keys);
     this.instances_ = funcs.map;
+    this.destroyBuilder = funcs.destroy;
 
-    var l10nProtoSync = funcs.l10nProtoSync;
+    // apply resources
     var hasResources = decl.resources && decl.resources.length > 0;
 
     if (hasResources)
@@ -1411,30 +1408,9 @@
 
     this.resources = hasResources && decl.resources;
 
-    if (instances)
-      for (var id in instances)
-        instances[id].rebuild_();
-
-    if (funcs.l10nKeys)
-    {
-      l10n = [];
-      this.l10n_ = l10n;
-      instances = funcs.map;
-      for (var i = 0, key; key = funcs.l10nKeys[i]; i++)
-      {
-        var link = {
-          path: key,
-          token: basis.l10n.token(key),
-          handler: function(value){
-            l10nProtoSync(this.path, value);
-            for (var id in instances)
-              instances[id].set(this.path, value);
-          }
-        };
-        link.token.attach(link.handler, link);
-        l10n.push(link);
-      }
-    }
+    // destroy old builder instance if exists
+    if (destroyBuilder)
+      destroyBuilder(true);
   }
 
 
@@ -1657,6 +1633,17 @@
 
         templateSourceUpdate.call(this);
       }
+    },
+    destroy: function(){
+      if (this.destroyBuilder)
+        this.destroyBuilder();
+
+      this.attaches_ = null;
+      this.instances_ = null;
+      this.createInstance = null;
+      this.getBinding = null;
+      this.resources = null;
+      this.source = null;
     }
   });
 
@@ -2078,18 +2065,7 @@
 
       // clear templates
       for (var i = 0, template; template = templateList[i]; i++)
-      {
-        for (var key in template.instances_)
-          template.instances_[key].destroy_();
-
-        template.attaches_ = null;
-        template.createInstance = null;
-        template.getBinding = null;
-        template.instances_ = null;
-        template.resources = null;
-        template.l10n_ = null;
-        template.source = null;
-      }
+        template.destroy();        
 
       templateList = null;
     }
