@@ -30,7 +30,6 @@
   var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
   var events = basis.event.events;
-  var l10nToken = basis.l10n.token;
 
   var Property = basis.data.value.Property;
   var Selection = basis.dom.wrapper.Selection;
@@ -41,6 +40,8 @@
   //
   // definitions
   //
+
+  var dict = basis.l10n.dictionary(__filename);
 
   var templates = basis.template.define(namespace, {
     Example: resource('templates/field/Example.tmpl'),
@@ -80,22 +81,6 @@
     radio: resource('templates/field/native-type-radio.tmpl'),
     select: resource('templates/field/native-type-select.tmpl'),
     file: resource('templates/field/native-type-file.tmpl')
-  });
-
-  basis.l10n.createDictionary(namespace, __dirname + 'l10n/field', {
-    "symbolsLeft": "Symbols left"
-  });
-
-  basis.l10n.createDictionary(namespace + '.validator', __dirname + 'l10n/field', {
-    "regExpWrongFormat": "The value has wrong format.",
-    "required": "The field is required and must have a value.",
-    "numberWrongFormat": "The value has wrong format of number.",
-    "currencyWrongFormat": "The value has wrong format of currency.",
-    "currencyMustBeGreaterZero": "The value must be greater than zero.",
-    "emailWrongFormat": "The value has a wrong format of e-mail.",
-    "urlWrongFormat": "The value has a wrong format of URL.",
-    "minLengthError": "The value must be longer than {0} symbols.",
-    "maxLengthError": "The value must be shorter than {0} symbols."
   });
 
 
@@ -1307,47 +1292,47 @@
       return function(field){
         var value = field.getValue();
         if (value != '' && !value.match(regexp))
-          return new ValidatorError(field, l10nToken(namespace, 'validator', 'regExpWrongFormat'));
+          return new ValidatorError(field, dict.token('validator.regExpWrongFormat'));
       };
     },
     Required: function(field){
       var value = field.getValue();
       if (basis.fn.$isNull(value) || value == '')
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'required'));
+        return new ValidatorError(field, dict.token('validator.required'));
     },
     Number: function(field){
       var value = field.getValue();
       if (isNaN(value))
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'numberWrongFormat'));
+        return new ValidatorError(field, dict.token('validator.numberWrongFormat'));
     },
     Currency: function(field){
       var value = field.getValue();
       if (isNaN(value))
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyWrongFormat'));
+        return new ValidatorError(field, dict.token('validator.currencyWrongFormat'));
       if (value <= 0)
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'currencyMustBeGreaterZero'));
+        return new ValidatorError(field, dict.token('validator.currencyMustBeGreaterZero'));
     },
     Email: function(field){
       var value = field.getValue().trim();
       if (value != '' && !value.match(REGEXP_EMAIL))
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'emailWrongFormat'));
+        return new ValidatorError(field, dict.token('validator.emailWrongFormat'));
     },
     Url: function(field){
       var value = field.getValue().trim();
       if (value != '' && !value.match(REGEXP_URL))
-        return new ValidatorError(field, l10nToken(namespace, 'validator', 'urlWrongFormat'));
+        return new ValidatorError(field, dict.token('validator.urlWrongFormat'));
     },
     MinLength: function(field){
       var value = field.getValue();
       var length = basis.fn.$isNotNull(value.length) ? value.length : String(value).length;
       if (length < field.minLength)
-        return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'minLengthError')).format(field.minLength));
+        return new ValidatorError(field, String(dict.token('validator.minLengthError')).format(field.minLength));
     },
     MaxLength: function(field){
       var value = field.getValue();
       var length = basis.fn.$isNotNull(value.length) ? value.length : String(value).length;
       if (length > field.maxLength)
-        return new ValidatorError(field, String(l10nToken(namespace, 'validator', 'maxLengthError')).format(field.maxLength));
+        return new ValidatorError(field, String(dict.token('validator.maxLengthError')).format(field.maxLength));
     }
   };
 
