@@ -1320,7 +1320,7 @@
           return this.normalize(path);
         },
         relative: function(from, to){
-          if (!to)
+          if (typeof to != 'string')
           {
             to = from;
             from = this.baseURI;
