@@ -37,17 +37,14 @@
   // definitions
   //
 
+  var dict = basis.l10n.dictionary(__filename);
+
   var templates = basis.template.define(namespace, {
     Blocker: resource('templates/window/Blocker.tmpl'),
     Window: resource('templates/window/Window.tmpl'),
     TitleButton: resource('templates/window/TitleButton.tmpl'),
     ButtonPanel: resource('templates/window/ButtonPanel.tmpl'),
     windowManager: resource('templates/window/windowManager.tmpl')
-  });
-
-  basis.l10n.createDictionary(namespace, __dirname + 'l10n/window', {
-    "emptyTitle": "[no title]",
-    "closeButton": "Close"
   });
 
 
@@ -127,7 +124,7 @@
     moveable: true,
     zIndex: 0,
 
-    title: basis.l10n.token(namespace, 'emptyTitle'),
+    title: dict.token('emptyTitle'),
 
     template: templates.Window,
     binding: {
