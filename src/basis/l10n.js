@@ -162,9 +162,9 @@
     init: function(dictionary, tokenName){
       basis.Token.prototype.init.call(this);
 
-      this.dictionary = dictionary;
-      this.name = tokenName;
       this.index = tokenIndex.push(this) - 1;
+      this.name = tokenName;
+      this.dictionary = dictionary;
     },
 
     get: function(){
@@ -279,25 +279,46 @@
     * @constructor
     * @param {string} name Dictionary name
     */ 
-    init: function(name){
-      this.name = name;
+    init: function(resource){
       this.tokens = {};
       this.resources = {};
 
+      this.resource = resource;
+      this.update(resource());
+      resource.attach(this.update, this);
+
       this.index = dictionaryList.push(this) - 1;
+
+      createDictionaryNotifier.notify(resource.url);
     },
 
    /**
     * @param {string} culture Culture name
     * @param {object} tokens Object that contains new tokens data
     */ 
-    update: function(culture, tokens){
-      for (var tokenName in this.tokens)
-        if (!tokens[tokenName])
-          this.setCultureValue(culture, tokenName, '');
+    update: function(data){
+      function walkTokens(culture, tokens, path){
+        // for (var tokenName in this.tokens)
+        //   if (!tokens[tokenName])
+        //     this.setCultureValue(culture, tokenName, '');
 
-      for (var tokenName in tokens)
-        this.setCultureValue(culture, tokenName, tokens[tokenName]);
+        if (path)
+          path += '.';
+        
+        for (var tokenName in tokens)
+          if (Object.prototype.hasOwnProperty.call(tokens, tokenName))
+          {
+            var value = tokens[tokenName];
+
+            this.setCultureValue(culture, path + tokenName, tokens[tokenName]);
+
+            if (value && (typeof value == 'object' || Array.isArray(value)))
+              walkTokens.call(this, culture, value, path + tokenName);
+          }
+      }
+
+      for (var culture in data)
+        walkTokens.call(this, culture, data[culture], '');
     },
 
    /**
@@ -357,7 +378,7 @@
    /**
     * @param {string} tokenName Token name
     */ 
-    getToken: function(tokenName){
+    token: function(tokenName){
       if (tokenName in this.tokens == false)
       {
         this.tokens[tokenName] = new Token(this, tokenName);
@@ -365,6 +386,11 @@
       }
 
       return this.tokens[tokenName];
+    },
+
+    getToken: function(tokenName){
+      ;;;console.log('Dictionary#getToken is deprecated now, use Dictionary#token instead');
+      return this.token(tokenName);
     },
 
    /**
@@ -382,11 +408,11 @@
   * @return {basis.l10n.Dictionary}
   */ 
   function resolveDictionary(location){
-    location = basis.path.normalize(location);
-    var dictionary = dictionaryByLocation[location];
+    var resource = basis.resource(location);
+    var dictionary = dictionaryByLocation[resource.url];
 
     if (!dictionary)
-      dictionary = dictionaryByLocation[location] = new Dictionary(location);
+      dictionary = dictionaryByLocation[resource.url] = new Dictionary(resource);
 
     return dictionary;
   }
@@ -415,154 +441,19 @@
     return dictionaries;
   }
 
-
  /**
-  * Returns dictionary by name. If autoCreate is true dictionary will be created if
-  * it doesn't created yet.
-  * @param {string} dictionaryName Dictionary name
-  * @param {boolean} autoCreate Should dictionary to be created if it's now created yet.
-  * @return {basis.l10n.Dictionary}
+  * 
   */
-  function getDictionary(dictionaryName, autoCreate){
-    var dictionary = dictionaries[dictionaryName];    
-
-    if (!dictionary && autoCreate)
-      dictionary = dictionaries[dictionaryName] = new Dictionary(dictionaryName);
-
-    return dictionary;
-  }
-
-
- /**
-  * Creates new dictionary.
-  * @example
-  *   basis.l10n.createDictionary('my.dictionary.namespace', __dirname + 'l10n', {
-  *     title: 'Hello world'
-  *   });
-  * @param {string} dictionaryName Dictionary name.
-  * @param {string} location Directory where dictionary resources placed.
-  * @param {object} tokens Base tokens map.
-  */
-  function createDictionary(dictionaryName, location, tokens){
-    ;;;if (this !== module) basis.dev.warn('basis.l10n.createDictionary: Called with wrong context. Don\'t shortcut this function call, use basis.l10n.createDictionary to make build possible');
-
-    var dictionary = getDictionary(dictionaryName);
-
-    ;;;if (dictionary) basis.dev.warn('basis.l10n.createDictionary: Dictionary ' + dictionaryName + ' is already created');
-
-    dictionary = getDictionary(dictionaryName, true);
-    dictionary.location = location;
-
-    if (Array.isArray(tokens))
-    { // packed dictionary
-      var idx = 0;
-      var token;
-      var item;
-      for (var i = 0; i < tokens.length; i++, idx++)
-      {
-        item = tokens[i];
-        if (typeof item == 'number')
-          idx += item;
-        else
-        {
-          if (token = tokenIndex[idx])
-            token.dictionary.setCultureValue('base', token.name, item);
-        }
-      }
+  var createDictionaryNotifier = new basis.Token();
+  basis.object.extend(createDictionaryNotifier, {
+    notify: function(value){
+      this.value = value;
+      this.apply();
+    },
+    get: function(){
+      return this.value;
     }
-    else
-      dictionary.update('base', tokens);
-
-    loadCultureForDictionary(dictionary, currentCulture);
-
-    fireCreateDictionaryEvent(dictionaryName);
-  }
-
-
- /**
-  * Update dictionary by new tokens for some culture.
-  * @param {string} dictionaryName Dictionary name
-  * @param {string} location Directory where dictionary resources placed.
-  * @param {object} tokens Base tokens map
-  */ 
-  function updateDictionary(dictionaryName, culture, tokens){
-    getDictionary(dictionaryName, true).update(culture, tokens);
-  }
-
-
- /**
-  * @param {object|Array.<object>} dictionaryData
-  * @param {string} culture Culture name
-  * @param {string} dictionaryName Dictionary name
-  */
-  function updateDictionaryResource(dictionaryData, culture, dictionaryName){
-    if (!dictionaryData)
-      return;
-
-    if (Array.isArray(dictionaryData))
-    { // packed dictionary
-      var idx = 0;
-      var token;
-      var item;
-      for (var i = 0; i < dictionaryData.length; i++, idx++)
-      {
-        item = dictionaryData[i];
-        if (typeof item == 'number')
-          idx += item;
-        else
-        {
-          if (token = tokenIndex[idx])
-            token.dictionary.setCultureValue(culture, token.name, item);
-        }
-      }
-    }
-    else
-    {
-      if (dictionaryName)
-      {
-        if (dictionaryData[dictionaryName])
-          updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);
-      }
-      else
-      {
-        for (var dictionaryName in dictionaryData)
-          updateDictionary(dictionaryName, culture, dictionaryData[dictionaryName]);
-      }
-    }
-  }
-
-  //
-  // update dictionary event handling
-  //
-
-  function addHandler(handler, context){
-    for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
-      if (listener.handler == handler && listener.context == context)
-        return false;
-
-    dictionaryUpdateListeners.push({
-      handler: handler,
-      context: context
-    });
-
-    return true;
-  }
-
-  function removeHandler(handler, context){
-    for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
-      if (listener.handler == handler && listener.context == context)
-      {
-        dictionaryUpdateListeners.splice(i, 1);
-        return true;
-      }
-
-    return false;
-  }
-
-  function fireCreateDictionaryEvent(dictionaryName){
-    for (var i = 0, listener; listener = dictionaryUpdateListeners[i]; i++)
-      listener.handler.call(listener.context, dictionaryName);
-  }
+  });
 
 
   //
@@ -574,7 +465,30 @@
   var cultureGetTokenValue = {};
   var cultureFallback = {}; 
   var cultureChangeHandlers = [];
+  var cultures = {};
 
+
+ /**
+  * @class
+  */
+  var Culture = basis.Class(null, {
+    name: '',
+    init: function(name){
+      this.name = name;
+    }
+  });
+
+ /**
+  * 
+  */
+  function resolveCulture(name){
+    var culture = cultures[name];
+
+    if (!culture)
+      culture = cultures[name] = new Culture(name);
+
+    return culture;
+  }
 
  /**
   * Returns current culture name.
@@ -728,13 +642,11 @@
     },
     
     dictionary: resolveDictionary,
-    getDictionary: getDictionary,
-    createDictionary: createDictionary,
-    updateDictionary: updateDictionary,
     /** dev */ getDictionaries: getDictionaries,
-    /** dev */ addCreateDictionaryHandler: addHandler,
-    /** dev */ removeCreateDictionaryHandler: removeHandler,
+    /** dev */ addCreateDictionaryHandler: createDictionaryNotifier.attach.bind(createDictionaryNotifier),
+    /** dev */ removeCreateDictionaryHandler: createDictionaryNotifier.detach.bind(createDictionaryNotifier),
 
+    culture: resolveCulture,
     getCulture: getCulture,
     setCulture: setCulture,
     getCultureList: getCultureList,

@@ -1152,7 +1152,7 @@
       return unpredictable;
     }
 
-    return function makeDeclaration(source, baseURI, options){
+    return function makeDeclaration(source, baseURI, options, sourceUrl){
       options = options || {};
       var debug = options.debug;
       var warns = [];
@@ -1169,7 +1169,8 @@
         warns: warns
       };
 
-      result.dictURI = basis.path.relative(result.baseURI + 'l10n');
+      // todo: fix me
+      result.dictURI = basis.path.relative(result.baseURI + (sourceUrl ? basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.json' : 'l10n.json'));
 
       if (!source.templateTokens)
       {
@@ -1258,16 +1259,19 @@
   */
   function getDeclFromSource(source, baseURI, clone, options){
     var result = source;
+    var sourceUrl;
 
     if (typeof result == 'function')
     {
       baseURI = 'baseURI' in source ? source.baseURI : baseURI;
+      sourceUrl = 'url' in source ? source.url : sourceUrl;
       result = result();
     }
 
     if (result instanceof basis.Token)
     {
       baseURI = 'baseURI' in source ? source.baseURI : baseURI;
+      sourceUrl = 'url' in source ? source.url : sourceUrl;
       result = result.get();
     }
 
@@ -1287,7 +1291,7 @@
     }
 
     if (typeof result == 'string')
-      result = makeDeclaration(result, baseURI, options);
+      result = makeDeclaration(result, baseURI, options, sourceUrl);
 
     return result;
   }
