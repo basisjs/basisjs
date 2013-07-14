@@ -218,20 +218,15 @@
 
 
  /**
-  * Returns token for path. If more than one argument passed, arguments
-  * join by dot. Path also may be index reference, that used in production.
+  * Returns token for path. Path also may be index reference, that used in production.
   * @example
-  *   basis.l10n.token('path.to.some.token');
-  *   basis.l10n.token(namespace, 'tokenName');
-  *   basis.l10n.token(namespace, 'some.path', name);
+  *   basis.l10n.token('token.path@path/to/dict');  // token by name and dictionary location
+  *   basis.l10n.token('#123');  // get token by base 36 index, use in production
   * @name basis.l10n.token
-  * @param {...string} path
-  * @return {basis.l10n.Token} Token for passed path.
+  * @param {string} path
+  * @return {basis.l10n.Token}
   */
   function getToken(path){
-    if (arguments.length > 1)
-      path = arrayFrom(arguments).join('.');
-
     if (path.charAt(0) == '#')
     {
       // return index by absolute index
@@ -239,8 +234,15 @@
     }
     else
     {
-      var dotIndex = path.lastIndexOf('.');
-      return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
+      var parts = path.match(/^(.+?)(?:@(.+))?$/)
+
+      if (parts.length == 1)
+      {
+        var dotIndex = path.lastIndexOf('.');
+        return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
+      }
+      else
+        return resolveDictionary(parts[2]).getToken(parts[1]);
     }
   }
 
@@ -254,6 +256,9 @@
   var dictionaries = {};
   var dictionaryUpdateListeners = [];
 
+  var dictionaryByLocation = {};
+  var dictionaryList = [];
+
 
  /**
   * @class
@@ -266,6 +271,11 @@
     resources: null,
 
    /**
+    * @type {number}
+    */ 
+    index: NaN,
+
+   /**
     * @constructor
     * @param {string} name Dictionary name
     */ 
@@ -273,6 +283,8 @@
       this.name = name;
       this.tokens = {};
       this.resources = {};
+
+      this.index = dictionaryList.push(this) - 1;
     },
 
    /**
@@ -363,6 +375,21 @@
       this.resources = null;
     }
   });
+
+
+ /**
+  * @param {string} location
+  * @return {basis.l10n.Dictionary}
+  */ 
+  function resolveDictionary(location){
+    location = basis.path.normalize(location);
+    var dictionary = dictionaryByLocation[location];
+
+    if (!dictionary)
+      dictionary = dictionaryByLocation[location] = new Dictionary(location);
+
+    return dictionary;
+  }
 
 
  /**
@@ -700,6 +727,7 @@
       return getToken.apply(this, arguments);
     },
     
+    dictionary: resolveDictionary,
     getDictionary: getDictionary,
     createDictionary: createDictionary,
     updateDictionary: updateDictionary,
