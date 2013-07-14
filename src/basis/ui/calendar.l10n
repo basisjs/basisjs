@@ -1,0 +1,182 @@
+{
+  "en-US": {
+    "quarter": "Quarter",
+    "today": "Today",
+    "selected": "Selected",
+    "month": {
+      "jan": "January",
+      "feb": "February",
+      "mar": "March",
+      "apr": "April",
+      "may": "May",
+      "jun": "June",
+      "jul": "July",
+      "aug": "August",
+      "sep": "September",
+      "oct": "October",
+      "nov": "November",
+      "dec": "December"
+    },
+    "monthShort": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "day": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thr": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    },
+    "day2": {
+      "mon": "Mo",
+      "tue": "Tu",
+      "wed": "We",
+      "thr": "Th",
+      "fri": "Fr",
+      "sat": "Sa",
+      "sun": "Su"
+    },
+    "day3": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thr": "Thr",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
+  "ru-RU": {
+    "quarter": "Квартал",
+    "today": "Сегодня",
+    "selected": "Выбрано",
+    "month": {
+      "jan": "Январь",
+      "feb": "Февраль",
+      "mar": "Март",
+      "apr": "Апрель",
+      "may": "Май",
+      "jun": "Июнь",
+      "jul": "Июль",
+      "aug": "Август",
+      "sep": "Сентябрь",
+      "oct": "Октябрь",
+      "nov": "Ноябрь",
+      "dec": "Декабрь"
+    },
+    "monthShort": {
+      "jan": "Янв",
+      "feb": "Фев",
+      "mar": "Мар",
+      "apr": "Апр",
+      "may": "Май",
+      "jun": "Июн",
+      "jul": "Июл",
+      "aug": "Авг",
+      "sep": "Сен",
+      "oct": "Окт",
+      "nov": "Ноя",
+      "dec": "Дек"
+    },
+    "day": {
+      "mon": "Понедельник",
+      "tue": "Вторник",
+      "wed": "Среда",
+      "thr": "Четверг",
+      "fri": "Пятница",
+      "sat": "Суббота",
+      "sun": "Воскресенье"
+    },
+    "day2": {
+      "mon": "Пн",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thr": "Чт",
+      "fri": "Пт",
+      "sat": "Сб",
+      "sun": "Вс"
+    },
+    "day3": {
+      "mon": "Пн",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thr": "Чт",
+      "fri": "Пт",
+      "sat": "Сб",
+      "sun": "Вс"
+    }
+  },
+  "uk-UA": {
+    "quarter": "Квартал",
+    "today": "Сьогодні",
+    "selected": "Вибрані",
+    "month": {
+      "jan": "Січня",
+      "feb": "Лютого",
+      "mar": "Березня",
+      "apr": "Квітня",
+      "may": "Травня",
+      "jun": "Червня",
+      "jul": "Липня",
+      "aug": "Серпня",
+      "sep": "Вересня",
+      "oct": "Жовтня",
+      "nov": "Листопада",
+      "dec": "Грудня"
+    },
+    "monthShort": {
+      "jan": "Січ",
+      "feb": "Лют",
+      "mar": "Бер",
+      "apr": "Кві",
+      "may": "Тра",
+      "jun": "Чер",
+      "jul": "Лип",
+      "aug": "Сер",
+      "sep": "Вер",
+      "oct": "Жов",
+      "nov": "Лис",
+      "dec": "Гру"
+    },
+    "day": {
+      "mon": "Понеділок",
+      "tue": "Вівторок",
+      "wed": "Середа",
+      "thr": "Четвер",
+      "fri": "П'ятниця",
+      "sat": "Субота",
+      "sun": "Неділя"
+    },
+    "day2": {
+      "mon": "Пн",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thr": "Чт",
+      "fri": "Пт",
+      "sat": "Сб",
+      "sun": "Нд"
+    },
+    "day3": {
+      "mon": "Пн",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thr": "Чт",
+      "fri": "Пт",
+      "sat": "Сб",
+      "sun": "Нд"
+    }
+  }
+}
