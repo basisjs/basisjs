@@ -786,7 +786,7 @@
 
                 case 'l10n':
                   if (elAttrs.src)
-                    template.dictURI = elAttrs.src;
+                    template.dictURI = path.relative(template.baseURI + elAttrs.src);
                 break;
 
                 case 'define':
