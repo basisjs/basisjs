@@ -13,6 +13,9 @@
   var Class = basis.Class;
   var arrayFrom = basis.array.from;
 
+  // process .l10n files as .json
+  basis.resource.extensions['.l10n'] = basis.resource.extensions['.json'];
+
 
   //
   // Token
@@ -234,15 +237,12 @@
     }
     else
     {
-      var parts = path.match(/^(.+?)(?:@(.+))?$/)
+      var parts = path.match(/^(.+?)(?:@(.+))$/)
 
-      if (parts.length == 1)
-      {
-        var dotIndex = path.lastIndexOf('.');
-        return getDictionary(path.substr(0, dotIndex), true).getToken(path.substr(dotIndex + 1));
-      }
-      else
-        return resolveDictionary(parts[2]).getToken(parts[1]);
+      if (parts)
+        return resolveDictionary(parts[2]).token(parts[1]);
+
+      ;;;basis.dev.warn('basis.l10n.token acepts token refence in format token.path@path/to/dict.l10n');
     }
   }
 
@@ -408,7 +408,8 @@
   * @return {basis.l10n.Dictionary}
   */ 
   function resolveDictionary(location){
-    var resource = basis.resource(location);
+    var extname = basis.path.extname(location);
+    var resource = basis.resource(extname != '.l10n' ? basis.path.dirname(location) + '/' + basis.path.basename(location, extname) + '.l10n' : location);
     var dictionary = dictionaryByLocation[resource.url];
 
     if (!dictionary)
@@ -438,7 +439,7 @@
   * @return {Array.<basis.l10n.Dictionary>}
   */
   function getDictionaries(){
-    return dictionaries;
+    return dictionaryList;
   }
 
  /**
@@ -511,8 +512,8 @@
     {
       currentCulture = culture;
 
-      for (var name in dictionaries)
-        setCultureForDictionary(dictionaries[name], currentCulture);
+      for (var i = 0, dictionary; dictionary = dictionaryList[i]; i++)
+        dictionary.setCulture(currentCulture);
 
       for (var i = 0, handler; handler = cultureChangeHandlers[i]; i++)
         handler.fn.call(handler.context, culture);

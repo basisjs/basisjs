@@ -1170,7 +1170,7 @@
       };
 
       // todo: fix me
-      result.dictURI = basis.path.relative(result.baseURI + (sourceUrl ? basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.json' : 'l10n.json'));
+      result.dictURI = basis.path.relative(result.baseURI + (sourceUrl ? basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n' : 'l10n.json'));
 
       if (!source.templateTokens)
       {
