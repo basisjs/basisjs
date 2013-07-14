@@ -1,4 +1,6 @@
 
+  basis.require('basis.l10n');
+
  /**
   * @namespace basis.template
   */
@@ -380,6 +382,7 @@
     var CLASS_ATTR_BINDING = /^([a-z_][a-z0-9_\-]*)?\{((anim:)?[a-z_][a-z0-9_\-]*)\}$/i;
     var STYLE_ATTR_PARTS = /\s*[^:]+?\s*:(?:\(.*?\)|".*?"|'.*?'|[^;]+?)+(?:;|$)/gi;
     var STYLE_PROPERTY = /\s*([^:]+?)\s*:((?:\(.*?\)|".*?"|'.*?'|[^;]+?)+);?$/i;
+    var STYLE_ATTR_BINDING = /\{([a-z_][a-z0-9_]*)\}/i;
     var ATTR_BINDING = /\{([a-z_][a-z0-9_]*|l10n:[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*)\}/i;
     var NAMED_CHARACTER_REF = /&([a-z]+|#[0-9]+|#x[0-9a-f]{1,4});?/gi;
     var tokenMap = basis.NODE_ENV ? require('./template/htmlentity.json') : {};
@@ -496,7 +499,7 @@
                 var propertyName = m[1];
                 var value = m[2].trim();
 
-                var valueParts = value.split(ATTR_BINDING);
+                var valueParts = value.split(STYLE_ATTR_BINDING);
                 if (valueParts.length > 1)
                 {
                   var expr = buildExpression(valueParts);
@@ -783,20 +786,6 @@
                     template.resources.push(path.resolve(template.baseURI + elAttrs.src));
                 break;
 
-                /*case 'set':
-                  if ('name' in elAttrs && 'value' in elAttrs)
-                  {
-                    var value = elAttrs.value;
-
-                    if (value == 'true')
-                      value = true;
-                    if (value == 'false')
-                      value = false;
-
-                    template.options[elAttrs.name] = value;
-                  }
-                break;*/
-
                 case 'define':
                   if ('name' in elAttrs && !template.defines[elAttrs.name])
                   {
@@ -816,7 +805,6 @@
                 break;
 
                 case 'include':
-
                   if (elAttrs.src)
                   {
                     var isTemplateRef = /^#\d+$/.test(elAttrs.src);
@@ -1043,6 +1031,17 @@
     }
 
     function normalizeRefs(tokens, map, stIdx){
+      function absl10n(value){
+        if (typeof value != 'string')
+          return value;
+
+        var parts = value.split(':');
+        if (parts[0] == 'l10n' && parts[1].charAt(0) != '#')
+          parts[1] = '#' + basis.l10n.token(parts[1]).index.toString(36);
+
+        return parts.join(':');
+      }
+
       if (!map)
         map = {};
 
@@ -1075,6 +1074,12 @@
             };
           }
         }
+
+        if (token[TOKEN_TYPE] == TYPE_TEXT)
+          token[TOKEN_BINDINGS] = absl10n(token[TOKEN_BINDINGS]);
+
+        if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE && token[TOKEN_BINDINGS])
+          token[TOKEN_BINDINGS][0] = token[TOKEN_BINDINGS][0].map(absl10n);
 
         if (token[TOKEN_TYPE] == TYPE_ELEMENT)
           normalizeRefs(token, map, ELEMENT_ATTRS);
@@ -1419,7 +1424,7 @@
       {
         var link = {
           path: key,
-          token: basis.l10n.getToken(key),
+          token: basis.l10n.token(key),
           handler: function(value){
             l10nProtoSync(this.path, value);
             for (var id in instances)

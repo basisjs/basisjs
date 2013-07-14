@@ -164,8 +164,7 @@
 
       this.dictionary = dictionary;
       this.name = tokenName;
-
-      tokenIndex.push(this);
+      this.index = tokenIndex.push(this) - 1;
     },
 
     get: function(){
@@ -235,7 +234,7 @@
 
     if (path.charAt(0) == '#')
     {
-      // return token by index (using in production)
+      // return index by absolute index
       return tokenIndex[parseInt(path.substr(1), 36)];
     }
     else
@@ -451,6 +450,7 @@
 
     fireCreateDictionaryEvent(dictionaryName);
   }
+
 
  /**
   * Update dictionary by new tokens for some culture.
