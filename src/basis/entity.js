@@ -409,7 +409,7 @@
         reader: function(data){
           if (Array.isArray(data))
           {
-            var wrapper = entitySetClass.wrapper;
+            var wrapper = entitySetClass.prototype.wrapper;
             return data.map(wrapper.reader || wrapper);
           }
 
