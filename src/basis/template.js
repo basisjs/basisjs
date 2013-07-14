@@ -1,6 +1,4 @@
 
-  basis.require('basis.l10n');
-
  /**
   * @namespace basis.template
   */
@@ -786,6 +784,11 @@
                     template.resources.push(path.resolve(template.baseURI + elAttrs.src));
                 break;
 
+                case 'l10n':
+                  if (elAttrs.src)
+                    template.dictURI = elAttrs.src;
+                break;
+
                 case 'define':
                   if ('name' in elAttrs && !template.defines[elAttrs.name])
                   {
@@ -1030,14 +1033,14 @@
       return result.length ? result : 0;
     }
 
-    function normalizeRefs(tokens, map, stIdx){
+    function normalizeRefs(tokens, dictURI, map, stIdx){
       function absl10n(value){
         if (typeof value != 'string')
           return value;
 
         var parts = value.split(':');
-        if (parts[0] == 'l10n' && parts[1].charAt(0) != '#')
-          parts[1] = '#' + basis.l10n.token(parts[1]).index.toString(36);
+        if (parts[0] == 'l10n' && parts[1].indexOf('@') == -1)
+          parts[1] = parts[1] + '@' + dictURI;
 
         return parts.join(':');
       }
@@ -1075,14 +1078,20 @@
           }
         }
 
-        if (token[TOKEN_TYPE] == TYPE_TEXT)
-          token[TOKEN_BINDINGS] = absl10n(token[TOKEN_BINDINGS]);
+        switch (token[TOKEN_TYPE]) {
+          case TYPE_TEXT:
+            token[TOKEN_BINDINGS] = absl10n(token[TOKEN_BINDINGS]);
+            break;
 
-        if (token[TOKEN_TYPE] == TYPE_ATTRIBUTE && token[TOKEN_BINDINGS])
-          token[TOKEN_BINDINGS][0] = token[TOKEN_BINDINGS][0].map(absl10n);
+          case TYPE_ATTRIBUTE:
+            if (token[TOKEN_BINDINGS])
+              token[TOKEN_BINDINGS][0] = token[TOKEN_BINDINGS][0].map(absl10n);
+            break;
 
-        if (token[TOKEN_TYPE] == TYPE_ELEMENT)
-          normalizeRefs(token, map, ELEMENT_ATTRS);
+          case TYPE_ELEMENT:
+            normalizeRefs(token, dictURI, map, ELEMENT_ATTRS);
+            break;
+        }
       }
 
       return map;
@@ -1143,7 +1152,7 @@
       return unpredictable;
     }
 
-    return function(source, baseURI, options){
+    return function makeDeclaration(source, baseURI, options){
       options = options || {};
       var debug = options.debug;
       var warns = [];
@@ -1159,6 +1168,8 @@
         unpredictable: true,
         warns: warns
       };
+
+      result.dictURI = basis.path.relative(result.baseURI + 'l10n');
 
       if (!source.templateTokens)
       {
@@ -1178,7 +1189,7 @@
 
       // normalize refs
       addTokenRef(result.tokens[0], 'element');
-      normalizeRefs(result.tokens);
+      normalizeRefs(result.tokens, result.dictURI);
 
       // deal with defines
       result.unpredictable = !!applyDefines(result.tokens, result, options);
@@ -1190,7 +1201,6 @@
 
       if (!warns.length)
         result.warns = false;
-      //else console.warn('Template make declaration warns', result, result.warns.join('\n'));
 
       return result;
     };
