@@ -22,6 +22,7 @@
   //
 
   var tokenIndex = [];
+  var tokenEnums = {};
 
   function ownKeys(object){
     var result = [];
@@ -193,25 +194,41 @@
         events = '';
       }
 
+      getter = basis.getter(getter);
+      events = String(events).trim().split(/\s+|\s*,\s*/).sort();
+
+      var enumId = events.concat(getter.basisGetterId_).join('_');
+
+      if (tokenEnums[enumId])
+        return tokenEnums[enumId];
+
       var token = this;
-      var handler = {
-        destroy: function(){
-          this.destroy();
-        }
-      };
+      var computeTokenMap = {};
       var updateValue = function(){
         this.compute();
       };
-
-      getter = basis.getter(getter);
-      events = String(events).trim().split(/\s+|\s*,\s*/);
+      var handler = {
+        destroy: function(object){
+          delete computeTokenMap[object.basisObjectId];
+          this.destroy();
+        }
+      };
 
       for (var i = 0, eventName; eventName = events[i]; i++)
         if (eventName != 'destroy')
           handler[eventName] = updateValue;
 
-      return function(object){
-        return new ComputeToken(token, object, handler, getter);
+      return tokenEnums[enumId] = function(object){
+        if (object instanceof basis.event.Emitter == false)
+          throw 'basis.l10n.Token#enum: object must be an instanceof basis.event.Emitter';
+
+        var objectId = object.basisObjectId;
+        var computeToken = computeTokenMap[objectId];
+
+        if (!computeToken)
+          computeToken = computeTokenMap[objectId] = new ComputeToken(token, object, handler, getter);
+
+        return computeToken;
       }
     },
 
