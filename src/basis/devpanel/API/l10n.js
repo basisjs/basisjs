@@ -67,7 +67,7 @@ module.exports = {
   },
 
   setTokenCultureValue: function(namespace, name, culture, value){
-    var token = basis.l10n.getToken(namespace + '.' + name);
+    var token = basis.l10n.token(namespace + '.' + name);
     token.dictionary.setCultureValue(culture, name, value);
   },
 

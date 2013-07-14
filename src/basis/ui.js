@@ -171,8 +171,8 @@
   });
 
   BINDING_PRESET.add('l10n', function(token){
-    ;;;basis.dev.warn('`l10n:` prefix in binding is deprecated. Use explicit basis.l10n.getToken("' + token + '") instead');
-    return basis.fn.$const(basis.l10n.getToken(token));
+    ;;;basis.dev.warn('`l10n:` prefix in binding is deprecated. Use explicit basis.l10n.token("' + token + '") instead');
+    return basis.fn.$const(basis.l10n.token(token));
   });
 
 
