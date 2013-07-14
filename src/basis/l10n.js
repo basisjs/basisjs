@@ -105,7 +105,7 @@
       var token = null;
 
       if (this.values && this.object)
-        token = getToken(this.token.dictionary.name, this.token.name, this.valueGetter(this.object));
+        token = this.token.dictionary.token(this.token.name + '.' + this.valueGetter(this.object));
 
       if (this.valueToken !== token)
       {
@@ -154,6 +154,11 @@
     className: namespace + '.Token',
 
     value: '',
+
+   /**
+    * @type {number}
+    */ 
+    index: NaN,
 
     toString: function(){
       return this.value;
@@ -242,7 +247,7 @@
       if (parts)
         return resolveDictionary(parts[2]).token(parts[1]);
 
-      ;;;basis.dev.warn('basis.l10n.token acepts token refence in format token.path@path/to/dict.l10n');
+      ;;;basis.dev.warn('basis.l10n.token accepts token references in format token.path@path/to/dict.l10n');
     }
   }
 
@@ -461,7 +466,7 @@
   // Culture
   //
 
-  var currentCulture = 'base';
+  var currentCulture = 'en-US';
   var cultureList = [];
   var cultureGetTokenValue = {};
   var cultureFallback = {}; 
@@ -560,58 +565,6 @@
 
 
  /**
-  * @param {string} dictionary Dictionary name
-  * @param {string} culture Culture name
-  */ 
-  function setCultureForDictionary(dictionary, culture){
-    loadCultureForDictionary(dictionary, culture);
-    dictionary.setCulture(culture);
-  }
-
-
- /**
-  * Load culture resources for some dictionary
-  * @param {string} dictionary Dictionary name
-  * @param {string} culture Culture name
-  */ 
-  function loadCultureForDictionary(dictionary, culture){
-    function load(culture){
-      if (culture == 'base')
-        return;
-
-      if (!cultureList || cultureList.indexOf(culture) != -1)
-      {
-        if (!dictionary.location)
-          return;
-
-        var location = dictionary.location + '/' + culture;
-
-        var resource = basis.resource(location + '.json');
-        if (!resourcesLoaded[location])
-        {
-          resourcesLoaded[location] = true;
-          resource.attach(function(content){
-            updateDictionaryResource(content, culture);
-          });
-        }
-
-        updateDictionaryResource(resource(), culture, dictionary.name);
-      }
-      else
-      {
-        ;;;basis.dev.warn('Culture "' + culture + '" is not specified in the list');
-      }
-    }
-
-    if (cultureFallback[culture]) 
-      for (var i = 0, fallbackCulture; fallbackCulture = cultureFallback[culture][i]; i++) 
-        load(fallbackCulture);
-
-    load(culture);
-  }
-
-
- /**
   * Add callback on culture change.
   * @param {function(culture)} fn Callback
   * @param {context=} context Context for callback
@@ -652,7 +605,6 @@
     setCulture: setCulture,
     getCultureList: getCultureList,
     setCultureList: setCultureList,
-    /** dev */ loadCultureForDictionary: loadCultureForDictionary,
 
     onCultureChange: onCultureChange
   };
