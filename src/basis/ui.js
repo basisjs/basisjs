@@ -568,7 +568,7 @@
           {
             oldTemplate.clearInstance(this.tmpl);
 
-            var oldBinding = oldTemplate.getBinding(this.binding, this);
+            var oldBinding = this.templateBinding_;
             if (oldBinding && oldBinding.handler)
               this.removeHandler(oldBinding.handler);
 
