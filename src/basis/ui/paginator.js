@@ -46,14 +46,6 @@
     return (100 * value || 0).toFixed(4) + '%';
   }
 
-  function updateSelection(paginator){
-    var node = paginator.childNodes.search(paginator.activePage, 'pageNumber');
-
-    if (node)
-      node.select();
-    else
-      paginator.selection.clear();
-  }
 
  /**
   * Base child node class for Paginator
@@ -70,7 +62,7 @@
       pageNumber: {
         events: 'pageNumberChanged',
         getter: function(node){
-          return node.pageNumber + 1;
+          return node.pageNumber;
         }
       }
     },
@@ -109,10 +101,11 @@
     },
     drag: function(sender, dragData){
       var pos = ((this.initOffset + dragData.deltaX) / this.tmpl.scrollThumbWrapper.offsetWidth).fit(0, 1);
+      this.scrollThumbLeft_ = percent(pos);
       this.setSpanStartPage(Math.round(pos * (this.pageCount - this.pageSpan)));
-      this.tmpl.scrollThumb.style.left = percent(pos);
     },
     over: function(){
+      this.scrollThumbLeft_ = NaN;
       this.setSpanStartPage(this.spanStartPage_);
     }
   };
@@ -127,21 +120,72 @@
     template: templates.Paginator,
     binding: {
       noScroll: {
-        events: 'pageCountChanged',
+        events: 'pageCountChanged pageSpanChanged',
         getter: function(node){
           return node.pageSpan >= node.pageCount ? 'noScroll' : '';
+        }
+      },
+      outOfRange: {
+        events: 'pageCountChanged activePageChanged',
+        getter: function(node){
+          return node.activePage < 0 || node.activePage >= node.pageCount;
+        }
+      },
+      activePageMarkWrapperWidth: {
+        events: 'pageCountChanged',
+        getter: function(node){
+          return percent(1 - (1 / node.pageCount));
+        }
+      },
+      activePageMarkWidth: {
+        events: 'pageCountChanged',
+        getter: function(node){
+          var rangeWidth = 1 / node.pageCount;
+
+          return percent(rangeWidth / (1 - rangeWidth));
+        }
+      },
+      activePageMarkLeft: {
+        events: 'pageCountChanged activePageChanged',
+        getter: function(node){
+          var activePage = node.activePage.fit(0, node.pageCount - 1);
+          return percent(activePage / Math.max(node.pageCount - 1, 1))
+        }
+      },
+      scrollThumbWrapperWidth: {
+        events: 'pageCountChanged pageSpanChanged',
+        getter: function(node){
+          return percent(1 - (node.pageSpan / node.pageCount));
+        }
+      },
+      scrollThumbWidth: {
+        events: 'pageCountChanged pageSpanChanged',
+        getter: function(node){
+          // spanWidth        : 1 - spanWidth
+          // scrollThumbWidth : 1
+          // ---
+          // scrollThumbWidth = spanWidth / (1 - spanWidth)
+          var spanWidth = node.pageSpan / node.pageCount;
+
+          return percent(spanWidth / (1 - spanWidth));
+        }
+      },
+      scrollThumbLeft: {
+        events: 'pageCountChanged pageSpanChanged',
+        getter: function(node){
+          return node.scrollThumbLeft_ || percent((node.spanStartPage_ / Math.max(node.pageCount - node.pageSpan, 1)).fit(0, 1));
         }
       }
     },
     action: {
-      jumpTo: function(actionName, event){
-        var scrollbar = this.tmpl.scrollbar;
-        var pos = (Event.mouseX(event) - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
+      jumpTo: function(event){
+        var scrollbar = this.tmpl.scrollbar || this.element;
+        var pos = (event.mouseX - (new Box(scrollbar)).left) / scrollbar.offsetWidth;
 
         this.setSpanStartPage(Math.floor(pos * this.pageCount) - Math.floor(this.pageSpan / 2));
       },
       scroll: function(event){
-        var delta = Event.wheelDelta(event);
+        var delta = event.wheelDelta;
         
         if (delta)
         {
@@ -149,7 +193,7 @@
           this.setSpanStartPage(this.spanStartPage_ + delta);
 
           // prevent page scrolling
-          Event.cancelDefault(event);
+          event.die();
         }
       }
     },
@@ -157,35 +201,37 @@
     selection: true,
     childClass: PaginatorNode,
 
-    emit_activePageChanged: createEvent('activePageChanged'),
-    emit_pageCountChanged: createEvent('pageCountChanged'),
+    emit_activePageChanged: createEvent('activePageChanged', 'oldActivePahe'),
+    emit_pageCountChanged: createEvent('pageCountChanged', 'oldPageCount'),
+    emit_pageSpanChanged: createEvent('pageSpanChanged', 'oldPageSpan'),
 
-    pageSpan: NaN,
-    pageCount: NaN,
-    activePage: NaN,
-
-    defaultPageSpan: 5,
-    defaultPageCount: 1,
-    defaultActivePage: 0,
+    pageOffset: 1,
+    pageSpan: 5,
+    pageCount: 1,
+    activePage: 1,
 
     spanStartPage_: -1,
+    scrollThumbLeft_: NaN,
 
+   /**
+    * @constructor
+    */
     init: function(){
       UINode.prototype.init.call(this);
 
-      var pageSpan = this.pageSpan || this.defaultPageSpan;
-      var pageCount = this.pageCount || this.defaultPageCount;
-      var activePage = this.activePage || this.defaultActivePage;
+      var pageSpan = this.pageSpan;
+      var pageCount = this.pageCount;
+      var activePage = this.activePage;
 
       this.pageSpan = NaN;
       this.pageCount = NaN;
       this.activePage = NaN;
 
-      this.setProperties(pageCount, pageSpan);
+      this.setPageCount(pageCount);
+      this.setPageSpan(pageSpan);
       this.setActivePage(activePage, true);
 
       this.scrollbarDD = new DragDropElement({
-        element: this.tmpl.scrollThumb,
         handler: {
           context: this,
           callbacks: DRAGDROP_HANDLER
@@ -194,86 +240,138 @@
     },
 
    /**
+    * @inheritDoc
+    */ 
+    templateSync: function(noRecreate){
+      UINode.prototype.templateSync.call(this, noRecreate);
+
+      this.scrollbarDD.setElement(
+        'scrollThumb' in this.tmpl && 'scrollThumbWrapper' in this.tmpl
+          ? this.tmpl.scrollThumb
+          : null
+      );
+    },
+
+   /**
     * @param {number} pageCount
-    * @param {number} pageSpan
-    * @param {number} activePage
     */
-    setProperties: function(pageCount, pageSpan, activePage){
-      pageCount = pageCount || 1;
-      pageSpan = Math.min(pageSpan || 10, pageCount);
+    setPageCount: function(pageCount, pageSpan){
+      var newPageCount = Number(pageCount) || 0;
+      var oldPageCount = this.pageCount;
 
-      if (pageSpan != this.pageSpan)
+      if (newPageCount != oldPageCount)
       {
-        this.pageSpan = pageSpan;
-        this.setChildNodes(createArray(pageSpan, function(idx){
-          return {
-            pageNumber: idx
-          };
-        }));
+        // set new value
+        this.pageCount = newPageCount;
+
+        // sync
+        this.syncPages();
+        this.updateSelection();
+
+        // emit event
+        this.emit_pageCountChanged(oldPageCount);
       }
-
-      if (this.pageCount != pageCount)
-      {
-        this.pageCount = pageCount;
-
-        var rangeWidth = 1 / pageCount;
-        var activePageMarkWidth = rangeWidth / (1 - rangeWidth);
-
-        this.tmpl.activePageMark.style.width = percent(activePageMarkWidth);
-        this.tmpl.activePageMarkWrapper.style.width = percent(1 - rangeWidth);
-
-        this.emit_pageCountChanged(this.pageCount);
-      }
-
-      // spanWidth : (1 - spanWidth)
-      // scrollThumbWidth : 1
-      // ---
-      // scrollThumbWidth = spanWidth * 1 / (1 - spanWidth)
-
-      var spanWidth = pageSpan / pageCount;
-      var scrollThumbWidth = spanWidth / (1 - spanWidth);
-
-      this.tmpl.scrollThumbWrapper.style.width = percent(1 - spanWidth);
-      this.tmpl.scrollThumb.style.width = percent(scrollThumbWidth);
-
-      this.setSpanStartPage(this.spanStartPage_);
-      this.setActivePage(arguments.length == 3 ? activePage : this.activePage);
     },
-    setActivePage: function(newActivePage, spotlightActivePage){
-      newActivePage = newActivePage.fit(0, this.pageCount - 1);
 
-      if (newActivePage != this.activePage)
+   /** 
+    * @param {number} pageSpan
+    */
+    setPageSpan: function(pageSpan){
+      var newPageSpan = Math.max(1, pageSpan);
+      var oldPageSpan = this.pageSpan;
+
+      if (newPageSpan != oldPageSpan)
       {
-        this.activePage = Number(newActivePage);
-        this.emit_activePageChanged(newActivePage);
+        // set new value
+        this.pageSpan = newPageSpan;
+        
+        // sync
+        this.syncPages();
+        this.updateSelection();
+
+        // emit event
+        this.emit_pageSpanChanged(oldPageSpan);
       }
-
-      updateSelection(this);
-
-      this.tmpl.activePageMark.style.left = percent(newActivePage / Math.max(this.pageCount - 1, 1));
-
-      if (spotlightActivePage)
-        this.spotlightPage(this.activePage);
     },
+
+   /**
+    * @param {number} activePage
+    * @param {boolean} spotlight
+    */ 
+    setActivePage: function(activePage, spotlight){
+      var newActivePage = Math.ceil(activePage - this.pageOffset) || 0;
+      var oldActivePage = this.activePage;   
+
+      if (newActivePage != oldActivePage)
+      {
+        this.activePage = newActivePage;
+        this.emit_activePageChanged(oldActivePage);
+
+        if (spotlight)
+          this.spotlightPage(this.activePage);
+        else
+          this.updateSelection();
+      }
+    },
+
+   /**
+    * @param {number} pageNumber
+    */ 
     spotlightPage: function(pageNumber){
       this.setSpanStartPage(pageNumber - Math.round(this.pageSpan / 2) + 1);
     },
+
+   /**
+    * @param {number} pageNumber
+    */ 
     setSpanStartPage: function(pageNumber){
-      pageNumber = pageNumber.fit(0, this.pageCount - this.pageSpan);
+      pageNumber = pageNumber.fit(0, this.pageCount < this.pageSpan ? 0 : this.pageCount - this.pageSpan);
 
       if (pageNumber != this.spanStartPage_)
       {
         this.spanStartPage_ = pageNumber;
 
         for (var i = 0, child; child = this.childNodes[i]; i++)
-          child.setPageNumber(pageNumber + i);
+          child.setPageNumber(this.pageOffset + pageNumber + i);
 
-        updateSelection(this);
+        this.updateSelection();
       }
 
-      this.tmpl.scrollThumb.style.left = percent((pageNumber / Math.max(this.pageCount - this.pageSpan, 1)).fit(0, 1));
+      this.updateBind('scrollThumbLeft');
     },
 
+   /**
+    */ 
+    updateSelection: function(){
+      var node = this.childNodes.search(this.activePage + this.pageOffset, 'pageNumber');
+
+      if (node)
+        node.select();
+      else
+        this.selection.clear();
+    },
+
+   /**
+    */ 
+    syncPages: function(){
+      if (!this.pageSpan || !this.pageCount)
+        this.clear();
+
+      var pages = [];
+      var pageCount = Math.min(this.pageSpan, this.pageCount);
+
+      for (var i = 0; i < pageCount; i++)
+        pages.push({
+          pageNumber: this.pageOffset + this.spanStartPage_ + i
+        });
+      
+      this.setChildNodes(pages);
+      this.setSpanStartPage(this.spanStartPage_);      
+    },
+
+   /**
+    * @destructor
+    */
     destroy: function(){
       this.scrollbarDD.destroy();
       this.scrollbarDD = null;

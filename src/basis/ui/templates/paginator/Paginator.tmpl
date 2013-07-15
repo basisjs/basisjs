@@ -3,16 +3,27 @@
   <b:define name="selected" type="bool"/>
   <b:define name="disabled" type="bool"/>
   <b:define name="noScroll" type="bool"/>
+  <b:define name="outOfRange" type="bool"/>
 
 	<div class="Basis-Paginator Basis-Paginator-{noScroll} {selected} {disabled}" event-mousewheel="scroll">
-    <table><tbody><tr{childNodesElement}/></tbody></table>
-    <div{scrollbarContainer} class="Basis-Paginator-ScrollbarContainer">
+    <table>
+      <tbody>
+        <tr{childNodesElement}/>
+      </tbody>
+    </table>
+    <div class="Basis-Paginator-ScrollbarContainer">
       <div{scrollbar} class="Basis-Paginator-Scrollbar" event-click="jumpTo">
-        <div{activePageMarkWrapper}>
-          <div{activePageMark} class="Basis-Paginator-ActivePageMark"><div/></div>
+        <div style="width: {activePageMarkWrapperWidth}">
+          <div class="Basis-Paginator-ActivePageMark Basis-Paginator-ActivePageMark_{outOfRange}" style="width: {activePageMarkWidth}; left: {activePageMarkLeft}">
+            <div/>
+          </div>
         </div>
-        <div{scrollThumbWrapper}>
-          <div{scrollThumb} class="Basis-Paginator-ScrollbarSlider"><div{scrollThumbElement}><span/></div></div>
+        <div{scrollThumbWrapper} style="width: {scrollThumbWrapperWidth}">
+          <div{scrollThumb} class="Basis-Paginator-ScrollbarSlider" style="width: {scrollThumbWidth}; left: {scrollThumbLeft}">
+            <div>
+              <span/>
+            </div>
+          </div>
         </div>
       </div>
     </div>
