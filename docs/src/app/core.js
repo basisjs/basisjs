@@ -92,7 +92,7 @@
   }
 
   function parseJsDocText(text){
-    var parts = text.split(/\s*@([a-z]+)[\t ]*/i);
+    var parts = text.split(/^\s*@([a-z]+)[\t ]*/im);
     var tags = {};
     parts.unshift('description');
     for (var i = 0, key; key = parts[i]; i += 2)
