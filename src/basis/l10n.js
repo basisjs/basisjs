@@ -259,7 +259,7 @@
     }
     else
     {
-      var parts = path.match(/^(.+?)(?:@(.+))$/)
+      var parts = path.match(/^(.+?)@(.+)$/);
 
       if (parts)
         return resolveDictionary(parts[2]).token(parts[1]);
