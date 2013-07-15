@@ -255,7 +255,7 @@
    /**
     * @param {number} pageCount
     */
-    setPageCount: function(pageCount, pageSpan){
+    setPageCount: function(pageCount){
       var newPageCount = Number(pageCount) || 0;
       var oldPageCount = this.pageCount;
 
@@ -309,8 +309,8 @@
 
         if (spotlight)
           this.spotlightPage(this.activePage);
-        else
-          this.updateSelection();
+
+        this.updateSelection();
       }
     },
 
