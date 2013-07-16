@@ -665,7 +665,7 @@
     {
       var len = object.length;
 
-      if (typeof len == 'undefined')
+      if (typeof len == 'undefined' || typeof object == 'function')
         return [object];
 
       if (!offset)
