@@ -465,15 +465,16 @@
       var count = arguments.length;
       var lw = word & 0xFFFF;
       var hw = word >> 16;
+
       for (var i = 1; i < count; i++)
       {
         var b = arguments[i];
         lw += (b & 0xFFFF);
         hw += (b >> 16) + (lw >> 16);
         lw &= 0xFFFF;
-      }  
-      return (hw << 16) | (lw & 0xFFFF);
+      }
 
+      return (hw << 16) | (lw & 0xFFFF);
     }
 
     function vector(val){
@@ -539,7 +540,7 @@
 
 
   //
-  // namespace wrapper
+  // chain wrapper
   //
 
   var cryptTarget = '';
@@ -561,17 +562,25 @@
     };
   });
 
-  module.setWrapper(function(target){
+  function wrap(target){
     cryptTarget = target || '';
     return context_;
-  });
+  };
+
 
   //
   // export names
   //
 
+  module.setWrapper(function(){
+    ;;;basis.dev.warn('using basis.crypt as function is deprecated now, use basis.crypt.wrap instead');
+    return wrap.apply(this, arguments);
+  });
+
   module.exports = {
     HEX: HEX,
     SHA1: SHA1,
-    MD5: MD5
+    MD5: MD5,
+
+    wrap: wrap
   };
