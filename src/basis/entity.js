@@ -74,12 +74,7 @@
         var typeClass = def[0];
         var fieldName = def[1];
 
-        if (typeClass instanceof EntityTypeConstructor)
-          typeClass.fields[fieldName] = type;
-        else if (typeClass instanceof EntitySet)
-          typeClass.wrapper = type;
-        else
-          console.log('Type definition is not resolved', def);
+        typeClass[fieldName] = type;
       }
 
       delete deferredTypeDef[typeName];
@@ -388,7 +383,7 @@
 
       // if wrapper is string resolve it by named type map
       if (typeof wrapper == 'string')
-        entitySetClass.prototype.wrapper = getTypeByName(wrapper, entitySetClass);
+        entitySetClass.prototype.wrapper = getTypeByName(wrapper, entitySetClass.prototype, 'wrapper');
 
       // resolve type name
       resolveType(name, result);
@@ -718,7 +713,7 @@
       {
         if (typeof config.type == 'string')
         {
-          config.type = getTypeByName(config.type, this, key);
+          config.type = getTypeByName(config.type, this.fields, key);
         }
 
         // if type is array convert it into enum
