@@ -589,14 +589,14 @@
   basis.object.extend(module.exports, {
     HEX: function(){
       ;;;basis.dev.warn('basis.crypt.HEX is deprecated, use basis.crypt.hex instead');
-      return HEX.apply(this.arguments); 
+      return HEX.apply(this, arguments); 
     },
     SHA1: function(){
       ;;;basis.dev.warn('basis.crypt.SHA1 is deprecated, use basis.crypt.sha1 instead');
-      return SHA1.apply(this.arguments); 
-    },
+      return SHA1.apply(this, arguments);
+    }, 
     MD5: function(){
       ;;;basis.dev.warn('basis.crypt.MD5 is deprecated, use basis.crypt.md5 instead');
-      return MD5.apply(this.arguments); 
+      return MD5.apply(this, arguments);
     }
   });
