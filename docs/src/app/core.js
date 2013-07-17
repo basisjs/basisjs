@@ -13,8 +13,7 @@
   var nsData = basis.data;
   var nsEntity = basis.entity;
   var nsAjax = basis.net;
-
-  var TimeEventManager = basis.timer.TimeEventManager;
+  
 
   // main part
 
@@ -190,9 +189,9 @@
       if (this.subscriberCount && 'text' in delta)
       {
         var self = this;
-        setTimeout(function(){
+        basis.timer.nextTick(function(){
           self.parseText(self.data.text);
-        }, 0);
+        });
       }
       this.setActive(!!this.subscriberCount);
     },
@@ -201,9 +200,9 @@
       if (this.subscriberCount && this.data.text)
       {
         var self = this;
-        setTimeout(function(){
+        basis.timer.nextTick(function(){
           self.parseText(self.data.text);
-        }, 0);
+        });
       }
       this.setActive(!!this.subscriberCount);
     },
@@ -715,7 +714,7 @@
         },
         complete: function(){
           this.curResource = null;
-          TimeEventManager.add(this, 'load', Date.now() + 5);
+          basis.timer.nextTick(this.load.bind(this));
         }
       }, resourceLoader);
 
@@ -731,7 +730,7 @@
           attemptCount: 0
         });
 
-        TimeEventManager.add(resourceLoader, 'load', Date.now());
+        basis.timer.nextTick(this.load.bind(this));
       }
     },
     load: function(){
@@ -763,12 +762,12 @@
     if (item)
     {
       sourceParser[item.kind](item);
-      setTimeout(resolveRes, 0);
+      basis.timer.nextTick(resolveRes);
     }
     else
       basis.dev.log(new Date - resolveResStart);
   }
-  setTimeout(resolveRes, 0);
+  basis.timer.nextTick(resolveRes);
 
 
   module.exports = {

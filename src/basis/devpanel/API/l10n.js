@@ -91,9 +91,9 @@ module.exports = {
             sendData('saveDictionary', { result: 'error', dictionaryName: dictionaryName, errorText: this.state.data });
 
           if (this.state == STATE.READY || this.state == STATE.ERROR)
-            setTimeout(function(){
+            basis.timer.nextTick(function(){
               fileObjectSet.destroy();
-            }, 0);
+            });
         }
       }
     });

@@ -8,6 +8,7 @@
 
 
  /**
+  * @see ./demo/defile/table.html
   * @namespace basis.ui.scrolltable
   */
 
@@ -181,7 +182,7 @@
     */
     requestRelayout: function(){
       if (!this.timer_)
-        this.timer_ = setTimeout(this.relayout, 0);
+        this.timer_ = basis.timer.nextTick(this.relayout, 0);
     },
 
    /**
