@@ -30,20 +30,11 @@ function loadToken(token){
   var dictionary = token.dictionary;
   var cultureList = basis.l10n.getCultureList();
 
-  var data = { 
+  var data = {
     cultureList: cultureList,
     selectedToken: token.name,
-    dictionaryName: dictionary.namespace, 
-    tokens: {}
+    dictionaryName: '/' + basis.path.relative('/', dictionary.resource.url)
   };
-
-  for (var key in dictionary.tokens)
-  {
-    var tkn = dictionary.tokens[key];
-    data.tokens[tkn.name] = {};
-    for (var j = 0, culture; culture = cultureList[j]; j++)
-      data.tokens[tkn.name][culture] = dictionary.getCultureValue(culture, tkn.name);
-  }
 
   transport.sendData('token', data);        
 }

@@ -4,6 +4,8 @@ basis.require('basis.template');
 var transport = resource('transport.js').fetch();
 var sendData = transport.sendData;
 
+var IS_FILE_ALLOWED_REGEX = /\.(tmpl|css|l10n)$/;
+
 function sendFile(file){
   var data = basis.object.slice(file.data);
 
@@ -35,7 +37,7 @@ var FILE_LIST_HANDLER = {
       var fileData;
       for (var i = 0, object; object = delta.inserted[i]; i++)
       {
-        if (/\.(tmpl|css)$/.test(object.data.filename))
+        if (IS_FILE_ALLOWED_REGEX.test(object.data.filename))
         {
           fileData = basis.object.slice(object.data);
           delete fileData.content;
@@ -52,7 +54,7 @@ var FILE_LIST_HANDLER = {
 
       for (var i = 0, object; object = delta.deleted[i]; i++)
       {
-        if (/\.(tmpl|css)$/.test(object.data.filename))
+        if (IS_FILE_ALLOWED_REGEX.test(object.data.filename))
         {
           data.deleted.push(object.data.filename);
           object.removeHandler(FILE_HANDLER);
