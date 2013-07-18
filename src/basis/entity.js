@@ -555,6 +555,21 @@
 
   var fieldDestroyHandlers = {};
 
+  function chooseArray(newArray, oldArray){
+    if (!Array.isArray(newArray))
+      return null;
+      
+    if (!Array.isArray(oldArray) || newArray.length != oldArray.length)
+      return newArray || null;
+
+    for (var i = 0; i < newArray.length; i++)
+      if (newArray[i] !== oldArray[i])
+        return newArray;
+    
+    return oldArray;
+  }  
+
+
  /**
   * @class
   */
@@ -725,6 +740,9 @@
           }
           config.defValue = config.type(config.defValue, values[0]);
         }
+
+        if (config.type === Array)
+          config.type = chooseArray;
 
         // if type still is not a function - ignore it
         if (typeof config.type != 'function')
@@ -1063,6 +1081,10 @@
         // main part
         var result;
         var rollbackData = this.modified;
+
+        if (valueWrapper === chooseArray && rollbackData && key in rollbackData)
+          value = chooseArray(value, rollbackData[key]);
+
         var newValue = valueWrapper(value, this.data[key]);
         var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
                                         // that why we fetch it again after valueWrapper call
