@@ -170,11 +170,6 @@
     };
   });
 
-  BINDING_PRESET.add('l10n', function(token){
-    ;;;basis.dev.warn('`l10n:` prefix in binding is deprecated. Use explicit basis.l10n.token("' + token + '") instead');
-    return basis.fn.$const(basis.l10n.token(token));
-  });
-
 
  /**
   * Base binding
@@ -568,7 +563,7 @@
           {
             oldTemplate.clearInstance(this.tmpl);
 
-            var oldBinding = oldTemplate.getBinding(this.binding, this);
+            var oldBinding = this.templateBinding_;
             if (oldBinding && oldBinding.handler)
               this.removeHandler(oldBinding.handler);
 

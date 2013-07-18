@@ -1830,7 +1830,7 @@
   //
 
   module.setWrapper(function(value){
-    ;;;basis.dev.warn('using basis.data as function is deprecated now, use basis.data.wrapData instead');    
+    ;;;basis.dev.warn('using basis.data as function is deprecated now, use basis.data.wrapData instead');
     return wrapData(value);
   });
 

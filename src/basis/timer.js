@@ -17,34 +17,21 @@
 
 
   //
-  // Support for setImmediate/clearImmediate and fast setTimeout(.., 0)
+  // Support for setImmediate/clearImmediate
   //
 
-  (function(){
+  var setImmediate = global.setImmediate || global.msSetImmediate;
+  var clearImmediate = global.clearImmediate || global.msSetImmediate;
 
+  (function(){
     //
     // Inspired on Domenic Denicola's solution https://github.com/NobleJS/setImmediate
     //
-
-    if (global.msSetImmediate && global.msClearImmediate)
+    if (!setImmediate)
     {
-      global.setImmediate = global.msSetImmediate;
-      global.clearImmediate = global.msClearImmediate;
-    }
-
-    if (!global.setImmediate)
-    {
+      var MESSAGE_NAME = 'basisjs.setImmediate';
       var createScript = function(){
-        return document.createElement("script");
-      };
-
-      var MESSAGE_NAME = "setImmediate.basis";
-
-      // by default
-      var addToQueue = function(taskId){
-        global.nativeSetTimeout_(function(){
-          runTask(taskId);
-        }, 0);
+        return document.createElement('script');
       };
 
       var runTask = (function(){
@@ -54,7 +41,7 @@
         //
         // Add support for setImmediate
         //
-        global.setImmediate = function(){
+        setImmediate = function(){
           taskById[++taskId] = {
             fn: arguments[0],
             args: arrayFrom(arguments, 1)
@@ -68,7 +55,7 @@
         //
         // Add support for clearImmediate
         //
-        global.clearImmediate = function(id){
+        clearImmediate = function(id){
           delete taskById[id];
         };
 
@@ -86,10 +73,9 @@
               else
               {
                 (global.execScript || function(fn){
-                  global["eval"].call(global, fn);
+                  global['eval'].call(global, fn);
                 })(String(task.fn));
               }
-
             } finally {
               delete taskById[id];
             }
@@ -97,6 +83,13 @@
         };
       })();
 
+
+      // by default
+      var addToQueue = function(taskId){
+        global.nativeSetTimeout_(function(){
+          runTask(taskId);
+        }, 0);
+      };
 
       //
       // implement platform specific solution
@@ -108,7 +101,7 @@
           channel.port1.onmessage = function(){
             runTask(taskId);
           };
-          channel.port2.postMessage(""); // broken in Opera if no value
+          channel.port2.postMessage(''); // broken in Opera if no value
         };
       }
       else
@@ -124,7 +117,7 @@
           global.onmessage = function(){
             postMessageSupported = false;
           };
-          global.postMessage("", "*");
+          global.postMessage('', '*');
           global.onmessage = oldOnMessage;
         }
 
@@ -142,19 +135,19 @@
           };
 
           if (global.addEventListener)
-            global.addEventListener("message", handleMessage, true);
+            global.addEventListener('message', handleMessage, true);
           else
-            global.attachEvent("onmessage", handleMessage);
+            global.attachEvent('onmessage', handleMessage);
 
           // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
           // invoking our onGlobalMessage listener above.
           addToQueue = function(taskId){
-            global.postMessage(MESSAGE_NAME + taskId, "*");
+            global.postMessage(MESSAGE_NAME + taskId, '*');
           };
         }
         else
         {
-          if (document && "onreadystatechange" in createScript())
+          if (document && 'onreadystatechange' in createScript())
           {
             // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
             // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
@@ -173,40 +166,52 @@
         }
       }
     }
-
-    //
-    // store native setTimeout/clearTimeout
-    //
-    global.nativeSetTimeout_ = global.setTimeout;
-    global.nativeClearTimeout_ = global.clearTimeout;
-
-    //
-    // Override setTimeout
-    //
-    global.setTimeout = function(fn, timeout){
-      return isNaN(timeout) || timeout <= 0
-        ? MESSAGE_NAME + global.setImmediate(fn)
-        : global.nativeSetTimeout_(fn, timeout);
-    };
-
-    //
-    // Override clearTimeout
-    //
-    global.clearTimeout = function(timer){
-      var immediateId = String(timer).split(MESSAGE_NAME)[1];
-
-      return immediateId
-        ? global.clearImmediate(immediateId)
-        : global.nativeClearTimeout_(timer);
-    };
   })();
 
+  
+  //!!!!!!!!!!!!!!!!!!!!!!!! this section will be removed in 0.10 !!!!!!!!!!!!!!!!!!!!!!!!
+  //
+  // Add support for setImmediate/clearImmediate
+  //
+  if (!global.setImmediate)
+  {
+    global.setImmediate = setImmediate;
+    global.clearImmediate = clearImmediate;
+  }
 
   //
-  // TimeEventManager
+  // store native setTimeout/clearTimeout
+  //
+  global.nativeSetTimeout_ = global.setTimeout;
+  global.nativeClearTimeout_ = global.clearTimeout;
+
+  //
+  // Override setTimeout
+  //
+  global.setTimeout = function(fn, timeout){
+    return isNaN(timeout) || timeout <= 0
+      ? 'basisjs.setImmediate' + setImmediate(fn)
+      : global.nativeSetTimeout_(fn, timeout);
+  };
+
+  //
+  // Override clearTimeout
+  //
+  global.clearTimeout = function(timer){
+    var immediateId = String(timer).split('basisjs.setImmediate')[1];
+
+    return immediateId
+      ? clearImmediate(immediateId)
+      : global.nativeClearTimeout_(timer);
+  };
+  //!!!!!!!!!!!!!!!!!!!!!!!! this section will be removed in 0.10 !!!!!!!!!!!!!!!!!!!!!!!!
+
+
+  //
+  // taskManager
   //
 
-  var TimeEventManager = (function(){
+  var taskManager = (function(){
     var NEVER = 2E12;
     var EVENT_TIME_GETTER = getter('eventTime');
 
@@ -334,6 +339,14 @@
   // export names
   //
 
-  module.exports ={
-    TimeEventManager: TimeEventManager
+  module.exports = {
+    nextTick: setImmediate,
+    setImmediate: setImmediate,
+    clearImmediate: clearImmediate,
+
+    add: taskManager.add,
+    remove: taskManager.remove
   };
+
+  // deprecated
+  module.exports.TimeEventManager = taskManager;

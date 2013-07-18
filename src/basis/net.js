@@ -25,7 +25,6 @@
 
   var STATE = basis.data.STATE;
 
-  var TimeEventManager = basis.timer.TimeEventManager;
   var DataObject = basis.data.Object;
   var Emitter = basis.event.Emitter;
 
@@ -287,9 +286,9 @@
       var nextRequest = this.requestQueue.shift();
       if (nextRequest)
       {
-        setTimeout(function(){
+        basis.timer.nextTick(function(){
           nextRequest.doRequest();
-        }, 0);
+        });
       }
     }
   };
@@ -459,6 +458,7 @@
 
     requestStartTime: 0,
     timeout: 30000, // 30 sec
+    timer_: null,
 
     debug: false,
 
@@ -643,12 +643,12 @@
         this.xhr.ontimeout = this.timeoutAbort.bind(this);
       }
       else
-        TimeEventManager.add(this, 'timeoutAbort', Date.now() + timeout);
+        this.timer_ = setTimeout(this.timeoutAbort.bind(this), timeout);
     },
 
     clearTimeout: function(){
       if ('ontimeout' in this.xhr == false)
-        TimeEventManager.remove(this, 'timeoutAbort');
+        this.timer_ = clearTimeout(this.timer_);
     },
 
     timeoutAbort: function(){
@@ -755,9 +755,9 @@
       var transport = new AjaxTransport(config);
       transport.addHandler({
         complete: function(){
-          setTimeout(function(){
+          basis.timer.nextTick(function(){
             transport.destroy();
-          }, 0);
+          });
         }
       });
       transport.request();

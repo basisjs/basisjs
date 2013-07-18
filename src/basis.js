@@ -665,7 +665,7 @@
     {
       var len = object.length;
 
-      if (typeof len == 'undefined')
+      if (typeof len == 'undefined' || typeof object == 'function')
         return [object];
 
       if (!offset)
@@ -1320,7 +1320,7 @@
           return this.normalize(path);
         },
         relative: function(from, to){
-          if (!to)
+          if (typeof to != 'string')
           {
             to = from;
             from = this.baseURI;

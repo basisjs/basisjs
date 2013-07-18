@@ -30,6 +30,7 @@
   var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
   var events = basis.event.events;
+  var l10nToken = basis.l10n.token;
 
   var Property = basis.data.value.Property;
   var Selection = basis.dom.wrapper.Selection;

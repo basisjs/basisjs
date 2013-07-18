@@ -26,6 +26,7 @@
   <script type="text/javascript">
     basis.require('basis.format.highlight');
     basis.require('basis.net');
+    basis.require('basis.timer');
 
     var line = parseInt((location.hash || '').replace(/^#/, ''));
     var filename = ((location.search || '').match(/[\?\&]file=([^&]+)/) || [])[1];
@@ -52,10 +53,10 @@
               if (lineElement)
               {
                 lineElement.className += ' selected';
-                setTimeout(function(){
+                basis.timer.nextTick(function(){
                   document.documentElement.scrollTop =
                   document.body.scrollTop = lineElement.offsetTop - 200;
-                }, 15);
+                });
               }
             }
           }

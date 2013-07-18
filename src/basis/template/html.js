@@ -1,4 +1,5 @@
 
+  basis.require('basis.timer');
   basis.require('basis.dom.event');
   basis.require('basis.l10n');
   basis.require('basis.template');
@@ -236,9 +237,9 @@
               if (anim)
               {
                 domRef.classList.add(newClass + '-anim');
-                setTimeout(function(){
+                basis.timer.nextTick(function(){
                   domRef.classList.remove(newClass + '-anim');
-                }, 0);
+                });
               }
             }
           }
@@ -270,7 +271,7 @@
               if (anim)
               {
                 classList.add(newClass + '-anim');
-                setTimeout(function(){
+                basis.timer.nextTick(function(){
                   var classList = (classNameIsObject ? domRef.className.baseVal : domRef.className).split(WHITESPACE);
                   
                   classList.remove(newClass + '-anim');
@@ -279,7 +280,7 @@
                     domRef.className.baseVal = classList.join(' ');
                   else
                     domRef.className = classList.join(' ');                  
-                }, 0);
+                });
               }
             }
 
