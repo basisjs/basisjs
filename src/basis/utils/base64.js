@@ -1,11 +1,11 @@
 
-  basis.require('basis.crypt.utf16');
+  basis.require('basis.utils.utf16');
 
  /**
-  * @namespace basis.crypt.Base64
+  * @namespace basis.utils.base64
   */
 
-  var utf16 = basis.crypt.utf16;
+  var utf16 = basis.utils.utf16;
 
   var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='.split('');
   var charIndex = chars.reduce(function(res, item, index){

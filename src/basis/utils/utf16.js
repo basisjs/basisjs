@@ -1,6 +1,6 @@
 
  /**
-  * @namespace basis.crypt.utf16
+  * @namespace basis.utils.utf16
   */
 
   var chars = basis.array.create(255, function(i){
