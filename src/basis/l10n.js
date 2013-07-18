@@ -270,8 +270,6 @@
 
     var dictionary = getDictionary(dictionaryName);
 
-    ;;;if (dictionary) basis.dev.warn('basis.l10n.createDictionary: Dictionary ' + dictionaryName + ' is already created');
-
     dictionary = getDictionary(dictionaryName, true);
     dictionary.location = location;
 
