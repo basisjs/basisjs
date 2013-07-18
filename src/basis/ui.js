@@ -265,6 +265,12 @@
 
 
  /**
+  * @type {number}
+  */
+  var focusTimer;
+
+
+ /**
   * @mixin
   */
   var TemplateMixin = function(super_){
@@ -659,9 +665,14 @@
         {
           var focusElement = this.tmpl.focus || this.element;
           if (focusElement)
-            setImmediate(function(){
+          {
+            if (focusTimer)
+              focusTimer = basis.timer.clearImmediate(focusTimer);
+
+            focusTimer = basis.timer.setImmediate(function(){
               DOM.focus(focusElement, select);
             });
+          }
         }
       },
 
