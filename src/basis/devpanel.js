@@ -18,6 +18,7 @@ basis.ready(function(){
         });
     }
   };
+  basis.object.extend(basis.appCP, resource('devpanel/API/version.js').fetch());
   basis.object.extend(basis.appCP, resource('devpanel/API/server.js').fetch());
   basis.object.extend(basis.appCP, resource('devpanel/API/file.js').fetch());
   basis.object.extend(basis.appCP, resource('devpanel/API/l10n.js').fetch());
