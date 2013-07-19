@@ -625,7 +625,8 @@
     var methods = {
       log: $undef,
       info: $undef,
-      warn: $undef
+      warn: $undef,
+      error: $undef
     };
 
     if (typeof console != 'undefined')
@@ -1637,14 +1638,16 @@
     if (typeof compiledSourceCode != 'function')
       try {
         compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
+          '//@ sourceURL=' + sourceURL + '\n' +
+          '//# sourceURL=' + sourceURL + '\n' +
           '"use strict";\n\n' +
-          sourceCode +
-          '//# sourceURL=' + sourceURL +
-          '//@ sourceURL=' + sourceURL
+          sourceCode
         );
       } catch(e) {
         /** @cut */ if ('line' in e == false && 'addEventListener' in window)
         /** @cut */ {
+        /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
+        /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
         /** @cut */   window.addEventListener('error', function onerror(event){
         /** @cut */     if (event.filename == sourceURL)
         /** @cut */     {
@@ -1661,7 +1664,10 @@
         /** @cut */   document.head.removeChild(script);
         /** @cut */ }
 
-        throw 'Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 2) : '') + ': ' + e;
+        // don't throw new exception, just output error message and return undefined
+        // in this case more chances for other modules continue to work
+        basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 4) : '') + ': ' + e);
+        return;
       }
 
     // run
