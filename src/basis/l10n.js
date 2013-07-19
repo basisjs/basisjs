@@ -73,7 +73,7 @@
   *   basis.l10n.token('path.to.some.token');
   *   basis.l10n.token(namespace, 'tokenName');
   *   basis.l10n.token(namespace, 'some.path', name);
-  * @name basis.l10n.token
+  * @name token
   * @param {...string} path
   * @return {basis.l10n.Token} Token for passed path.
   */

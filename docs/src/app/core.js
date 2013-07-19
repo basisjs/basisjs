@@ -660,18 +660,16 @@
             var m = code.match(/^([\s\n]*)(var\s+|function\s+)?([a-z0-9_\$\.]+)/i);
             if (m)
             {
-              var name = m[3];
+              var name = jsDocsName || m[3];
+
+              if (m[2])
+                clsPrefix = '';
 
               lineFix = (m[1].match(/\n/g) || []).length;
-              createJsDocEntity(jsdoc[jsdoc.length - 1], jsDocsName || ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
+              createJsDocEntity(jsdoc[jsdoc.length - 1], ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
               
               if (isClass)
                 clsPrefix = name;
-              else
-                if (m[2])
-                {
-                  clsPrefix = '';
-                }
             }
           }
           skipDeclaration = false;

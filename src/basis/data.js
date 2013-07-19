@@ -665,6 +665,7 @@
  /**
   * Key-value storage.
   * @class
+  * @name Object
   */
   var DataObject = Class(AbstractData, {
     className: namespace + '.Object',
