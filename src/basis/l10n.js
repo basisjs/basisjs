@@ -51,7 +51,7 @@
         ? ownKeys(value)
         : null;
 
-      this.compute();
+      this.evaluate();
     },
     valueToken: null,
 
@@ -97,12 +97,12 @@
         if (object)
         {
           object.addHandler(this.objectHandler, this);
-          this.compute();
+          this.evaluate();
         }
       }
     },
 
-    compute: function(){
+    evaluate: function(){
       var token = null;
 
       if (this.values && this.object)
@@ -140,7 +140,7 @@
     destroy: function(){
       this.setObject();
       this.setToken();
-      this.compute();      
+      this.evaluate();      
       this.value = null;
       this.values = null;
       
@@ -187,7 +187,7 @@
       }
     },
 
-    enum: function(events, getter){
+    compute: function(events, getter){
       if (arguments.length == 1)
       {
         getter = events;
@@ -205,7 +205,7 @@
       var token = this;
       var computeTokenMap = {};
       var updateValue = function(){
-        this.compute();
+        this.evaluate();
       };
       var handler = {
         destroy: function(object){
@@ -220,7 +220,7 @@
 
       return tokenEnums[enumId] = function(object){
         if (object instanceof basis.event.Emitter == false)
-          throw 'basis.l10n.Token#enum: object must be an instanceof basis.event.Emitter';
+          throw 'basis.l10n.Token#compute: object must be an instanceof basis.event.Emitter';
 
         var objectId = object.basisObjectId;
         var computeToken = computeTokenMap[objectId];

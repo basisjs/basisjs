@@ -461,7 +461,7 @@
           return node.periodStart.getFullYear();
         }
       },
-      title: dict.token('month').enum('periodChanged', function(node){
+      title: dict.token('month').compute('periodChanged', function(node){
         return monthNumToRef[node.periodStart.getMonth()];
       })
     }
@@ -484,7 +484,7 @@
     },
 
     binding: {
-      tabTitle: dict.token('month').enum('selectedDateChanged', function(node){
+      tabTitle: dict.token('month').compute('selectedDateChanged', function(node){
         return monthNumToRef[node.selectedDate.getMonth()];
       })
     }
@@ -566,7 +566,7 @@
     nodePeriodUnit: MONTH,
 
     binding: {
-      title: dict.token('quarter').enum('periodChanged', function(node){
+      title: dict.token('quarter').compute('periodChanged', function(node){
         return 1;  // todo: fix me
       })
     }
