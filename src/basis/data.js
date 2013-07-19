@@ -1593,7 +1593,7 @@
       if (!this.itemCount)
         return this.add(items);
 
-      if (!items.length)
+      if (!items || !items.length)
         return this.clear();
 
       // main part
