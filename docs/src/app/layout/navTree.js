@@ -26,6 +26,7 @@ var navTree = new app.ext.docTree.DocTree({
       data: { kind: 'Section', title: 'basis', fullPath: 'basis' },
       selectable: false,
       childNodes: basis.object.iterate(basis.namespaces_, function(key){
+        if (key in app.core.mapDO == false) debugger;
         return app.core.mapDO[key];
       })
     }
