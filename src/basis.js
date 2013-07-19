@@ -1643,8 +1643,25 @@
           '//@ sourceURL=' + sourceURL
         );
       } catch(e) {
-        ;;;var src = document.createElement('script');src.src = sourceURL;src.async = false;document.head.appendChild(src);document.head.removeChild(src);
-        throw 'Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e);
+        /** @cut */ if ('line' in e == false && 'addEventListener' in window)
+        /** @cut */ {
+        /** @cut */   window.addEventListener('error', function onerror(event){
+        /** @cut */     if (event.filename == sourceURL)
+        /** @cut */     {
+        /** @cut */       window.removeEventListener('error', onerror);
+        /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
+        /** @cut */       event.preventDefault()
+        /** @cut */     }
+        /** @cut */   })
+        /** @cut */ 
+        /** @cut */   var script = document.createElement('script');
+        /** @cut */   script.src = sourceURL;
+        /** @cut */   script.async = false;
+        /** @cut */   document.head.appendChild(script);
+        /** @cut */   document.head.removeChild(script);
+        /** @cut */ }
+
+        throw 'Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 2) : '') + ': ' + e;
       }
 
     // run
