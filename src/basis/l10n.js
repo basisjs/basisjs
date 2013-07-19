@@ -11,19 +11,12 @@
   //
 
   var Class = basis.Class;
-  var arrayFrom = basis.array.from;
+
 
   // process .l10n files as .json
   basis.resource.extensions['.l10n'] = basis.resource.extensions['.json'];
 
-
-  //
-  // Token
-  //
-
-  var tokenIndex = [];
-  var tokenEnums = {};
-
+  // get own object keys
   function ownKeys(object){
     var result = [];
 
@@ -33,6 +26,14 @@
 
     return result;
   }
+
+  //
+  // Token
+  //
+
+  var tokenIndex = [];
+  var tokenEnums = {};
+
 
  /**
   * @class
@@ -130,7 +131,7 @@
       return this.value;
     },
     set: function(value){
-      if (value != this.value)
+      if (value !== this.value)
       {
         this.value = value;
         this.apply();
@@ -180,7 +181,7 @@
       return this.value;
     },
     set: function(value){
-      if (value != this.value)
+      if (value !== this.value)
       {
         this.value = value;
         this.apply();
@@ -251,7 +252,7 @@
   * @param {string} path
   * @return {basis.l10n.Token}
   */
-  function getToken(path){
+  function resolveToken(path){
     if (path.charAt(0) == '#')
     {
       // return index by absolute index
@@ -264,7 +265,7 @@
       if (parts)
         return resolveDictionary(parts[2]).token(parts[1]);
 
-      ;;;basis.dev.warn('basis.l10n.token accepts token references in format token.path@path/to/dict.l10n');
+      ;;;basis.dev.warn('basis.l10n.token accepts token references in format `token.path@path/to/dict.l10n` only');
     }
   }
 
@@ -273,13 +274,17 @@
   // Dictionary
   //
 
-  var dictionaryLocations = {};
-  var resourcesLoaded = {};
-  var dictionaries = {};
+  var dictionaries = [];
+  var dictionaryByLocation = {};
   var dictionaryUpdateListeners = [];
 
-  var dictionaryByLocation = {};
-  var dictionaryList = [];
+  function walkTokens(dictionary, culture, tokens, path){
+    path = path ? path + '.' : '';
+    
+    for (var tokenName in tokens)
+      if (Object.prototype.hasOwnProperty.call(tokens, tokenName))
+        dictionary.setCultureValue(culture, path + tokenName, tokens[tokenName]);
+  }
 
 
  /**
@@ -288,9 +293,17 @@
   var Dictionary = Class(null, {
     className: namespace + '.Dictionary',
 
-    name: '[noname]',
+   /**
+    * Token map.
+    * @type {object}
+    */ 
     tokens: null,
-    resources: null,
+
+   /**
+    * Values by cultures
+    * @type {object}
+    */ 
+    cultureValues: null,
 
    /**
     * @type {number}
@@ -298,49 +311,38 @@
     index: NaN,
 
    /**
+    * Token data source
+    * @type {basis.resource}
+    */
+    resource: null, 
+
+   /**
     * @constructor
     * @param {string} name Dictionary name
     */ 
     init: function(resource){
       this.tokens = {};
-      this.resources = {};
+      this.cultureValues = {};
 
+      // attach to resource
       this.resource = resource;
       this.update(resource());
       resource.attach(this.update, this);
 
-      this.index = dictionaryList.push(this) - 1;
+      // add to dictionary list
+      this.index = dictionaries.push(this) - 1;
 
+      // notify dictionary created
       createDictionaryNotifier.notify(resource.url);
     },
 
    /**
-    * @param {string} culture Culture name
-    * @param {object} tokens Object that contains new tokens data
+    * @param {object} data Object that contains new tokens data
     */ 
     update: function(data){
-      function walkTokens(culture, tokens, path){
-        // for (var tokenName in this.tokens)
-        //   if (!tokens[tokenName])
-        //     this.setCultureValue(culture, tokenName, '');
-
-        if (path)
-          path += '.';
-        
-        for (var tokenName in tokens)
-          if (Object.prototype.hasOwnProperty.call(tokens, tokenName))
-          {
-            var value = tokens[tokenName];
-
-            this.setCultureValue(culture, path + tokenName, tokens[tokenName]);
-
-            if (value && (typeof value == 'object' || Array.isArray(value)))
-              walkTokens.call(this, culture, value, path + tokenName);
-          }
-      }
-
       for (var culture in data)
-        walkTokens.call(this, culture, data[culture], '');
+        if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
+          walkTokens(this, culture, data[culture]);
     },
 
    /**
@@ -348,27 +350,10 @@
     */ 
     setCulture: function(culture){
       for (var tokenName in this.tokens)
-        this.setTokenValue(culture, tokenName);
-    },
-
-   /**
-    * @param {string} culture Culture name
-    * @param {string} tokenName Token name
-    * @return {*}
-    */ 
-    getTokenValue: function(culture, tokenName){
-      return this.getCultureValue(culture, tokenName) || this.getCultureValue('base', tokenName);
-    },
-
-   /**
-    * @param {string} culture Culture name
-    * @param {string} tokenName Token name
-    */ 
-    setTokenValue: function(culture, tokenName){
-      this.tokens[tokenName].set(cultureGetTokenValue[culture]
-        ? cultureGetTokenValue[culture].call(this, tokenName)
-        : this.getTokenValue(culture, tokenName)
-      );
+        this.tokens[tokenName].set(cultureGetTokenValue[culture]
+          ? cultureGetTokenValue[culture].call(this, tokenName)
+          : this.getCultureValue(culture, tokenName)
+        );
     },
 
    /**
@@ -377,7 +362,7 @@
     * @return {*}
     */ 
     getCultureValue: function(culture, tokenName){
-      return this.resources[culture] && this.resources[culture][tokenName];
+      return this.cultureValues[culture] && this.cultureValues[culture][tokenName];
     },    
 
    /**
@@ -386,33 +371,40 @@
     * @param {string} tokenValue New token value
     */ 
     setCultureValue: function(culture, tokenName, tokenValue){
-      var resource = this.resources[culture];
+      var cultureValues = this.cultureValues[culture];
 
-      if (!resource)
-        resource = this.resources[culture] = {};
+      if (!cultureValues)
+        cultureValues = this.cultureValues[culture] = {};
 
-      resource[tokenName] = tokenValue;
+      cultureValues[tokenName] = tokenValue;
 
-      if (this.tokens[tokenName] && (culture == 'base' || culture == currentCulture))
-        this.setTokenValue(currentCulture, tokenName);
+      if (this.tokens[tokenName] && culture == currentCulture)
+        this.tokens[tokenName].set(cultureGetTokenValue[culture]
+          ? cultureGetTokenValue[culture].call(this, tokenName)
+          : this.getCultureValue(culture, tokenName)
+        );
+
+      if (tokenValue && (typeof tokenValue == 'object' || Array.isArray(tokenValue)))
+        walkTokens(this, culture, tokenValue, tokenName);
     },
 
    /**
     * @param {string} tokenName Token name
-    */ 
+    * @return {basis.l10n.Token}
+    */
     token: function(tokenName){
-      if (tokenName in this.tokens == false)
+      var token = this.tokens[tokenName];
+
+      if (!token)
       {
-        this.tokens[tokenName] = new Token(this, tokenName);
-        this.setTokenValue(currentCulture, tokenName);
+        token = this.tokens[tokenName] = new Token(this, tokenName);
+        token.set(cultureGetTokenValue[currentCulture]
+          ? cultureGetTokenValue[currentCulture].call(this, tokenName)
+          : this.getCultureValue(currentCulture, tokenName)
+        );
       }
 
-      return this.tokens[tokenName];
-    },
-
-    getToken: function(tokenName){
-      ;;;console.log('Dictionary#getToken is deprecated now, use Dictionary#token instead');
-      return this.token(tokenName);
+      return token;
     },
 
    /**
@@ -420,7 +412,8 @@
     */ 
     destroy: function(){
       this.tokens = null;
-      this.resources = null;
+      this.cultureValues = null;
+      dictionaries.remove(this);
     }
   });
 
@@ -461,14 +454,13 @@
   * @return {Array.<basis.l10n.Dictionary>}
   */
   function getDictionaries(){
-    return dictionaryList;
+    return dictionaries.slice(0);
   }
 
  /**
   * 
   */
-  var createDictionaryNotifier = new basis.Token();
-  basis.object.extend(createDictionaryNotifier, {
+  var createDictionaryNotifier = basis.object.extend(new basis.Token(), {
     notify: function(value){
       this.value = value;
       this.apply();
@@ -534,7 +526,7 @@
     {
       currentCulture = culture;
 
-      for (var i = 0, dictionary; dictionary = dictionaryList[i]; i++)
+      for (var i = 0, dictionary; dictionary = dictionaries[i]; i++)
         dictionary.setCulture(currentCulture);
 
       for (var i = 0, handler; handler = cultureChangeHandlers[i]; i++)
@@ -548,12 +540,12 @@
   * @return {Array.<string>}
   */ 
   function getCultureList(){
-    return cultureList;
+    return cultureList.slice(0);
   }
 
 
  /**
-  * Set new culture list.
+  * Set new culture list. May be called only once.
   * @example
   *   basis.l10n.setCultureList(['ru-RU', 'en-US']);
   *   basis.l10n.setCultureList('ru-RU en-US');
@@ -606,17 +598,15 @@
   module.exports = {
     ComputeToken: ComputeToken,
     Token: Token,
-    token: getToken,
-    getToken: function(){
-      ;;;basis.dev.warn('basis.l10n.getToken is deprecated, use basis.l10n.token instead');
-      return getToken.apply(this, arguments);
-    },
+    token: resolveToken,
     
+    Dictionary: Dictionary,
     dictionary: resolveDictionary,
     /** dev */ getDictionaries: getDictionaries,
     /** dev */ addCreateDictionaryHandler: createDictionaryNotifier.attach.bind(createDictionaryNotifier),
     /** dev */ removeCreateDictionaryHandler: createDictionaryNotifier.detach.bind(createDictionaryNotifier),
 
+    Culture: Culture,
     culture: resolveCulture,
     getCulture: getCulture,
     setCulture: setCulture,
