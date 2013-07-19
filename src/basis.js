@@ -1645,7 +1645,6 @@
       } catch(e) {
         ;;;var src = document.createElement('script');src.src = sourceURL;src.async = false;document.head.appendChild(src);document.head.removeChild(src);
         throw 'Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e);
-        //return;
       }
 
     // run
@@ -1771,10 +1770,14 @@
     {
       var nsRootPath = config.path;
       var requested = {};
+      /** @cut */ var requires;
 
       return function(namespace, path){
         if (/[^a-z0-9_\.]/i.test(namespace))
           throw 'Namespace `' + namespace + '` contains wrong chars.';
+
+        /** @cut */ if (requires)
+        /** @cut */   requires.push(namespace);
 
         var filename = namespace.replace(/\./g, '/') + '.js';
         var namespaceRoot = namespace.split('.')[0];
@@ -1782,9 +1785,10 @@
         if (namespaceRoot == namespace)
           nsRootPath[namespaceRoot] = path || nsRootPath[namespace] || (pathUtils.baseURI + '/');
 
-        var requirePath = nsRootPath[namespaceRoot];
         if (!namespaces[namespace])
         {
+          var requirePath = nsRootPath[namespaceRoot];
+
           if (!/^(https?|chrome-extension):/.test(requirePath))
             throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
 
@@ -1795,12 +1799,21 @@
 
           var requestUrl = requirePath + filename;
 
+
           var ns = getNamespace(namespace);
           var sourceCode = getResourceContent(requestUrl);
+
+          /** @cut */ var savedRequires = requires;
+          /** @cut */ requires = [];
+
           runScriptInContext(ns, requestUrl, sourceCode);
           complete(ns, ns.exports);
-          ;;;ns.filename_ = requestUrl;
-          ;;;ns.source_ = sourceCode;
+
+          /** @cut */ ns.filename_ = requestUrl;
+          /** @cut */ ns.source_ = sourceCode;
+          /** @cut */ ns.requires_ = requires;
+
+          /** @cut */ requires = savedRequires;
         }
       };
     }
