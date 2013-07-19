@@ -625,7 +625,8 @@
     var methods = {
       log: $undef,
       info: $undef,
-      warn: $undef
+      warn: $undef,
+      error: $undef
     };
 
     if (typeof console != 'undefined')

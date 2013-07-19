@@ -202,6 +202,8 @@
   * build template bindings code
   */
   var buildBindings = (function(){
+    var L10N_BINDING = /\.\{([a-zA-Z_][a-zA-Z0-9_\-]*)\}/;
+
     var SPECIAL_ATTR_MAP = {
       disabled: '*',  // any tag
       checked: ['input'],
@@ -245,6 +247,7 @@
           exprVar = dictionary[symbols[j]];
           colonPos = exprVar.indexOf(':');
           if (colonPos == -1)
+          {
             expression.push(
               special == 'l10n'
                 ? '"{' + exprVar + '}"'
@@ -253,8 +256,16 @@
                      : '__' + exprVar
                   )
             );
+          }
           else
-            expression.push('__l10n["' + exprVar.substr(colonPos + 1) + '"]');
+          {
+            var bindingName = null;
+            var l10nPath = exprVar.substr(colonPos + 1).replace(L10N_BINDING, function(m, name){
+              bindingName = name;
+              return '';
+            });
+            expression.push('__l10n["' + l10nPath + '"]' + (bindingName ? '[__' + bindingName + ']' : ''));
+          }
         }
       }
 
@@ -282,6 +293,7 @@
       var result = [];
       var varName;
       var l10nMap;
+      var l10nCompute;
       var l10nKeys;
       var toolsUsed = {};
       var specialAttr;
@@ -292,6 +304,12 @@
         var bindType = binding[0];
         var domRef = binding[1];
         var bindName = binding[2];
+
+        if (['set', 'rebuild_', 'action_', 'destroy_'].indexOf(bindName) != -1)
+        {
+          ;;;basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
+          continue;
+        }
 
         var namePart = bindName.split(':');
         var anim = namePart[0] == 'anim';
@@ -305,11 +323,20 @@
 
         if (namePart[0] == 'l10n' && namePart[1])
         {
-          var l10nName = namePart[1];
+          var l10nFullPath = namePart[1];
+          var l10nBinding = null;
+          var l10nName = l10nFullPath.replace(L10N_BINDING, function(m, name){
+            l10nBinding = name;
+            return '';
+          });
+
+          console.log(l10nName, l10nBinding);
+      
 
           if (!l10nMap)
           {
             l10nMap = {};
+            l10nCompute = {};
             l10nKeys = [];
           }
 
@@ -317,6 +344,7 @@
           {
             bindMap[l10nName] = [];
             l10nMap[l10nName] = [];
+            l10nCompute[l10nName] = [];
             l10nKeys.push(l10nName);
           }
 
@@ -326,32 +354,66 @@
           if (bindType == TYPE_TEXT)
           {
             /** @cut */ debugList.push('{' + [
-            /** @cut */   'binding:"' + l10nName + '"',
+            /** @cut */   'binding:"' + l10nFullPath + '"',
             /** @cut */   'dom:' + domRef,
-            /** @cut */   'val:__l10n["' + l10nName + '"]',
-            /** @cut */   'attachment:l10nToken("' + l10nName + '")'
-            /** @cut */ ] +'}');
+            /** @cut */   'val:__l10n["' + l10nName + '"]' + (l10nBinding ? '[__' + l10nBinding + ']' : ''),
+            /** @cut */   'attachment:l10nToken("' + l10nName + '")' + (l10nBinding ? '[__' + l10nBinding + ']' : '')
+            /** @cut */ ] + '}');
             /** @cut */ toolsUsed.l10nToken = true;
 
-            l10nMap[l10nName].push(domRef + '.nodeValue=value;');
+            if (!l10nBinding)
+              l10nMap[l10nName].push(domRef + '.nodeValue=value;');
             
-            bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"];');
+            bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"]' + (l10nBinding ? '[__' + l10nBinding + ']' : '') + ';');
+
+            if (l10nBinding)
+            {
+              bindCode = bindMap[l10nBinding];
+              if (!bindCode)
+              {
+                bindCode = bindMap[l10nBinding] = [];
+                varList.push('__' + l10nBinding);
+              }
+              bindCode.push(domRef + '.nodeValue=__l10n["' + l10nName + '"]' + (l10nBinding ? '[__' + l10nBinding + ']' : '') + ';');
+            }
           }
           else
           {
             attrName = '"' + binding[ATTR_NAME] + '"';
+
+            /** @cut */ debugList.push('{' + [
+            /** @cut */   'binding:"' + l10nFullPath + '"',
+            /** @cut */   'dom:' + domRef,
+            /** @cut */   'attr:' + attrName,
+            /** @cut */   'val:__l10n["' + l10nName + '"]' + (l10nBinding ? '[' + l10nBinding + ']' : ''),
+            /** @cut */   'attachment:l10nToken("' + l10nName + '")' + (l10nBinding ? '[' + l10nBinding + ']' : '')
+            /** @cut */ ] + '}');            
             
-            // use NaN value to make sure it trigger in any case
-            l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, 'l10n')] + ');');
+            if (!l10nBinding)
+            {
+              // use NaN value to make sure it trigger in any case
+              l10nMap[l10nName].push('bind_attr(' + [domRef, attrName, 'NaN', buildAttrExpression(binding, 'l10n')] + ');');
+            }
 
             varList.push(bindVar);
             putBindCode('bind_attr', domRef, attrName, bindVar, buildAttrExpression(binding));
+
+            if (l10nBinding)
+            {
+              bindCode = bindMap[l10nBinding];
+              if (!bindCode)
+              {
+                bindCode = bindMap[l10nBinding] = [];
+                varList.push('__' + l10nBinding);
+              }
+              putBindCode('bind_attr', domRef, attrName, bindVar, buildAttrExpression(binding));
+            }
           }
 
           continue;
         }
 
-        if (!bindMap[bindName])
+        if (!bindCode)
         {
           bindCode = bindMap[bindName] = [];
           varList.push(varName);
@@ -531,7 +593,9 @@
     var result = {
       keys: bindings.keys,
       l10nKeys: bindings.l10nKeys
-    };      
+    };
+
+    console.log(bindings);
 
     if (bindings.l10n)
     {
@@ -553,10 +617,10 @@
           'switch(token){' +
             code.join('') +
           '}' +
-        '}'
+        '}\n'
         
-        /** @cut */ + (uri ? '//# sourceURL=' + uri + '_l10n' : '')
-        /** @cut */ + (uri ? '//@ sourceURL=' + uri + '_l10n' : '')
+        /** @cut */ + (uri ? '//# sourceURL=' + uri + '_l10n\n' : '')
+        /** @cut */ + (uri ? '//@ sourceURL=' + uri + '_l10n\n' : '')
       );
     }
 
@@ -591,11 +655,11 @@
           '}'] +
         '}' +
 
-        /** @cut */ (uri ? '//# sourceURL=' + uri + '\n' : '') +
-        /** @cut */ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
+        /** @cut */ (uri ? '\n//# sourceURL=' + uri : '') +
+        /** @cut */ (uri ? '\n//@ sourceURL=' + uri + '\n' : '') +
       '}'
     );
-    /** @cut */ } catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }
+    /** @cut */ } catch(e) { basis.dev.error('Can\'t build createInstance: ' + e + '\n', fnBody); }
 
     return result;
   }
