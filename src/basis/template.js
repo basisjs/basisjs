@@ -1419,7 +1419,7 @@
       {
         var link = {
           path: key,
-          token: basis.l10n.getToken(key),
+          token: basis.l10n.token(key),
           handler: function(value){
             l10nProtoSync(this.path, value);
             for (var id in instances)

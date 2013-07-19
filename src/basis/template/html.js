@@ -20,7 +20,7 @@
   var document = global.document;
   var domEvent = basis.dom.event;
   var arrayFrom = basis.array.from;
-  var l10nToken = basis.l10n.getToken;
+  var l10nToken = basis.l10n.token;
   var getFunctions = basis.template.htmlfgen.getFunctions;
   
   var TemplateSwitchConfig = basis.template.TemplateSwitchConfig;
