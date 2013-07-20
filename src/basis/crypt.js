@@ -1,301 +1,26 @@
 
+  basis.require('basis.utils.utf8');
+  basis.require('basis.utils.utf16');
+  basis.require('basis.utils.base64');
+
  /**
   * @namespace basis.crypt
   */
 
-  var namespace = this.path;
-
-
-  //
-  // Main part
-  //
-
   var arrayFrom = basis.array.from;
   var createArray = basis.array.create;
+  var UTF16 = basis.utils.utf16;
+  var UTF8 = basis.utils.utf8;
+  var base64 = basis.utils.base64;
+
 
   function rotateLeft(number, offset){
     return (number << offset) | (number >>> (32 - offset));
   }
 
-  var chars = createArray(255, function(i){
-    return String.fromCharCode(i);
-  });
 
   // =======================================
-  //  [ UTF16 Encode/Decode ]
-
-  var UTF16 = (function(){
-  
-   /**
-    * @namespace basis.crypt.UTF16
-    */
-    var namespace = 'basis.crypt.UTF16';
-
-    // utf16 string -> utf16 bytes array
-    function toBytes(input){  
-      var output = [];
-      var len = input.length;
-
-      for (var i = 0; i < len; i++)
-      {
-        var c = input.charCodeAt(i);
-        output.push(c & 0xFF, c >> 8);
-      }
-
-      return output;
-    }
-
-    // utf16 bytes array -> utf16 string
-    function fromBytes(input){
-      var output = '';
-      var len = input.length;
-      var b1, b2;
-      var i = 0;
-
-      while (i < len)
-      {
-        b1 = input[i++] || 0;
-        b2 = input[i++] || 0;
-        output += String.fromCharCode((b2 << 8) | b1);
-      }
-      return output;
-    }
-
-    // utf16 string -> utf8 string
-    function toUTF8(input){
-      var output = '';
-      var len = input.length;
-
-      for (var i = 0; i < len; i++)
-      {
-        var c = input.charCodeAt(i);
-
-        if (c < 128)
-          output += chars[c];
-        else 
-          if (c < 2048)
-            output += chars[(c >> 6) | 192] +
-                      chars[(c & 63) | 128];
-          else 
-            output += chars[(c >> 12) | 224] +
-                      chars[((c >> 6) & 63) | 128] +
-                      chars[(c & 63) | 128];
-      }
-      return output;
-    }
-
-    // utf16 string -> utf8 bytes array
-    function toUTF8Bytes(input){
-      return UTF8.toBytes(toUTF8(input));
-    }
-
-    // utf8 string -> utf16 string
-    function fromUTF8(input){
-      //return this.fromUTF8Bytes(UTF8.toBytes(input));
-
-      var output = '';
-      var len = input.length;
-      var c1, c2, c3;
-      var i = 0;
-
-      while (i < len)
-      {
-        c1 = input.charCodeAt(i++);
-        if (c1 < 128) 
-          output += chars[c1];
-        else
-        {
-          c2 = input.charCodeAt(i++);
-          if (c1 & 32) 
-          {
-            c3 = input.charCodeAt(i++);
-            output += String.fromCharCode(((c1 & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
-          }
-          else
-            output += String.fromCharCode(((c1 & 31) << 6)  | (c2 & 63));
-        }
-      }
-      return output;
-    }
-
-    // utf8 bytes array -> utf16 string
-    function fromUTF8Bytes(input){
-      return fromUTF8(UTF8.fromBytes(input));
-    }
-
-    return basis.namespace(namespace).extend({
-      toBytes: toBytes,
-      fromBytes: fromBytes,
-      toUTF8: toUTF8,
-      fromUTF8: fromUTF8,
-      toUTF8Bytes: toUTF8Bytes,
-      fromUTF8Bytes: fromUTF8Bytes
-    });
-
-  })();
-
-  // =======================================
-  //  [ UTF8 Encode/Decode ]
-
-  var UTF8 = (function(){
-  
-    var namespace = 'basis.crypt.UTF8';
-
-    // utf8 string
-    function toBytes(input){
-      var len = input.length;
-      var output = new Array(len);
-
-      for (var i = 0; i < len; i++)
-        output[i] = input.charCodeAt(i);
-
-      return output;
-    }
-
-    // utf8 bytes array
-    function fromBytes(input){
-      var len = input.length;
-      var output = '';
-
-      for (var i = 0; i < len; i++)
-        output += chars[input[i]];
-
-      return output;    
-    }
-
-    // utf8 string -> utf16 string
-    function toUTF16(input){
-      return UTF16.fromUTF8(input);
-    }
-
-    // utf8 string  -> utf16 bytes array
-    function toUTF16Bytes(input){
-      return UTF16.toBytes(UTF16.fromUTF8(input));
-    }
-    
-    // utf16 string -> utf8 string
-    function fromUTF16(input){
-      return UTF16.toUTF8(input);
-    }
-
-    // utf16 bytes array -> utf8 string
-    function fromUTF16Bytes(input){
-      return UTF16.toUTF8(UTF16.fromBytes(input));
-    }
-
-    return basis.namespace(namespace).extend({
-      toBytes: toBytes,
-      fromBytes: fromBytes,
-      toUTF16: toUTF16,
-      fromUTF16: fromUTF16,
-      toUTF16Bytes: toUTF16Bytes,
-      fromUTF16Bytes: fromUTF16Bytes
-    });
-  })();
-
-  // =====================================================
-  //   BASE64
-
-  var Base64 = (function(){
-
-   /**
-    * @namespace basis.crypt.Base64
-    */
-    var namespace = 'basis.crypt.Base64';
-
-    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=".toArray();
-    var charIndex = {};
-    
-    chars.forEach(function(item, index){ charIndex[item] = index; });
-
-    function encode(input, useUTF8){
-      // convert to bytes array if necessary
-      if (input.constructor != Array)
-        if (useUTF8)
-          input = UTF16.toUTF8Bytes(input);
-        else
-          input = UTF16.toBytes(input);
-       
-      // encode
-      var len = input.length;
-      var i = 0;
-      var output = "";
-      var chr1, chr2, chr3;
-      var enc1, enc2, enc3, enc4;
-
-      while (i < len)
-      {
-        chr1 = input[i++];
-        chr2 = input[i++];
-        chr3 = input[i++];
-       
-        enc1 = chr1 >> 2;
-        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-        enc4 = chr3 & 63;
-
-        if (chr2 == undefined)
-        	enc3 = enc4 = 64;
-        else if (chr3 == undefined)
-        	enc4 = 64;
-
-        output += chars[enc1] + chars[enc2] + chars[enc3] + chars[enc4];
-      }
-       
-      return output;
-    } 
-    
-    function decode(input, useUTF8){
-      input = input.replace(/[^a-z0-9\+\/]/ig, '');
-
-      var output = [];
-      var chr1, chr2, chr3;
-      var enc1, enc2, enc3, enc4;
-      var i = 0;
-      var len = input.length;
-      
-      // decode 
-      while (i < len)
-      {
-        enc1 = charIndex[input.charAt(i++)];
-        enc2 = charIndex[input.charAt(i++)];
-        enc3 = charIndex[input.charAt(i++)];
-        enc4 = charIndex[input.charAt(i++)];
-       
-        chr1 = (enc1 << 2) | (enc2 >> 4);
-        chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-        chr3 = ((enc3 & 3) << 6) | enc4;
-       
-        output.push(chr1, chr2, chr3);
-      }
-
-      if (enc3 == null || enc3 == 64) output.pop();
-      if (enc4 == null || enc4 == 64) output.pop();
-
-      // convert to UTF8 if necessary
-      if (useUTF8)
-        return UTF16.fromUTF8Bytes(output);
-      else
-        return UTF16.fromBytes(output);
-    }
-
-    //
-    // export names
-    //
-
-    return basis.namespace(namespace).extend({
-      encode: encode,
-      decode: decode
-    });
-
-  })();
-
- /**
-  * @namespace basis.crypt
-  */
-
-  // =======================================
-  //  [ HEX Encode/Decode ]
+  //  [ hex Encode/Decode ]
 
   function number2hex(number){
     var result = [];
@@ -313,13 +38,13 @@
     return result.reverse().join('');
   }
 
-  function HEX(input){
+  function hex(input){
     if (typeof input == 'number')
       return number2hex(input);
 
     var output;
     if (Array.isArray(input))
-      output = input.map(HEX);
+      output = input.map(hex);
     else
       output = String(input).toArray().map(function(c){ return number2hex(c.charCodeAt(0)); });
 
@@ -327,9 +52,9 @@
   }
 
   // ==========================================
-  //  SHA1
+  //  sha1
 
-  var SHA1 = (function(){
+  var sha1 = (function(){
 
     var K = [0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6];
     var F = [
@@ -355,12 +80,12 @@
     }
 
     //
-    // SHA1 main function
+    // sha1 main function
     //
 
     return function(message, useUTF8){
       // convert to bytes array if necessary
-      if (message.constructor != Array)
+      if (!Array.isArray(message))
         if (useUTF8)
           message = UTF16.toUTF8Bytes(message);
         else
@@ -422,9 +147,9 @@
   })();
 
   // ==========================================
-  //  MD5
+  //  md5
 
-  var MD5 = (function(){
+  var md5 = (function(){
 
     var C_2_POW_32 = Math.pow(2, 32);
     var S;
@@ -465,15 +190,16 @@
       var count = arguments.length;
       var lw = word & 0xFFFF;
       var hw = word >> 16;
+
       for (var i = 1; i < count; i++)
       {
         var b = arguments[i];
         lw += (b & 0xFFFF);
         hw += (b >> 16) + (lw >> 16);
         lw &= 0xFFFF;
-      }  
-      return (hw << 16) | (lw & 0xFFFF);
+      }
 
+      return (hw << 16) | (lw & 0xFFFF);
     }
 
     function vector(val){
@@ -484,7 +210,7 @@
     }
 
     //
-    // MD5 main function
+    // md5 main function
     //
 
     return function(message, useUTF8){
@@ -493,7 +219,7 @@
         initConst();
 
       // convert to bytes array if necessary
-      if (message.constructor != Array)
+      if (!Array.isArray(message))
         if (useUTF8)
           message = UTF16.toUTF8Bytes(message);
         else
@@ -539,18 +265,18 @@
 
 
   //
-  // namespace wrapper
+  // chain wrapper
   //
 
   var cryptTarget = '';
 
   var cryptMethods = {
-    sha1: function(useUTF8){ return SHA1(this, useUTF8); },
-    sha1hex: function(useUTF8){ return HEX(SHA1(this, useUTF8)); },
-    md5: function(useUTF8){ return MD5(this, useUTF8); },
-    md5hex: function(useUTF8){ return HEX(MD5(this, useUTF8)); },
-    base64: function(useUTF8){ return Base64.encode(this, useUTF8); },
-    hex: function(){ return HEX(this); }
+    sha1: function(useUTF8){ return sha1(this, useUTF8); },
+    sha1hex: function(useUTF8){ return hex(sha1(this, useUTF8)); },
+    md5: function(useUTF8){ return md5(this, useUTF8); },
+    md5hex: function(useUTF8){ return hex(md5(this, useUTF8)); },
+    base64: function(useUTF8){ return base64.encode(this, useUTF8); },
+    hex: function(){ return hex(this); }
   };
 
   var context_ = {};
@@ -561,17 +287,45 @@
     };
   });
 
-  module.setWrapper(function(target){
+  function wrap(target){
     cryptTarget = target || '';
     return context_;
-  });
+  };
+
 
   //
   // export names
   //
 
+  module.setWrapper(function(){
+    ;;;basis.dev.warn('using basis.crypt as function is deprecated now, use basis.crypt.wrap instead');
+    return wrap.apply(this, arguments);
+  });
+
   module.exports = {
-    HEX: HEX,
-    SHA1: SHA1,
-    MD5: MD5
+    hex: hex,
+    sha1: sha1,
+    md5: md5,
+
+    wrap: wrap
   };
+
+
+  // deprecated
+  basis.object.extend(module.exports, {
+    UTF16: basis.object.slice(UTF16),
+    UTF8: basis.object.slice(UTF8),
+    Base64: basis.object.slice(base64),
+    HEX: function(){
+      ;;;basis.dev.warn('basis.crypt.HEX is deprecated, use basis.crypt.hex instead');
+      return HEX.apply(this, arguments); 
+    },
+    SHA1: function(){
+      ;;;basis.dev.warn('basis.crypt.SHA1 is deprecated, use basis.crypt.sha1 instead');
+      return SHA1.apply(this, arguments);
+    }, 
+    MD5: function(){
+      ;;;basis.dev.warn('basis.crypt.MD5 is deprecated, use basis.crypt.md5 instead');
+      return MD5.apply(this, arguments);
+    }
+  });

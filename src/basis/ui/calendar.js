@@ -26,7 +26,7 @@
   var arrayFrom = basis.array.from;
   var getter = basis.getter;
   var createEvent = basis.event.create;
-  var l10nToken = basis.l10n.getToken;
+  var l10nToken = basis.l10n.token;
 
   var Property = basis.data.value.Property;
   var UINode = basis.ui.Node;

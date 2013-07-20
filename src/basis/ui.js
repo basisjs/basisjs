@@ -170,11 +170,6 @@
     };
   });
 
-  BINDING_PRESET.add('l10n', function(token){
-    ;;;basis.dev.warn('`l10n:` prefix in binding is deprecated. Use explicit basis.l10n.getToken("' + token + '") instead');
-    return basis.fn.$const(basis.l10n.getToken(token));
-  });
-
 
  /**
   * Base binding
@@ -267,6 +262,12 @@
   * Base template for TemplateMixin
   */
   var TEMPLATE = new Template('<div/>');
+
+
+ /**
+  * @type {number}
+  */
+  var focusTimer;
 
 
  /**
@@ -568,7 +569,7 @@
           {
             oldTemplate.clearInstance(this.tmpl);
 
-            var oldBinding = oldTemplate.getBinding(this.binding, this);
+            var oldBinding = this.templateBinding_;
             if (oldBinding && oldBinding.handler)
               this.removeHandler(oldBinding.handler);
 
@@ -664,9 +665,14 @@
         {
           var focusElement = this.tmpl.focus || this.element;
           if (focusElement)
-            setImmediate(function(){
+          {
+            if (focusTimer)
+              focusTimer = basis.timer.clearImmediate(focusTimer);
+
+            focusTimer = basis.timer.setImmediate(function(){
               DOM.focus(focusElement, select);
             });
+          }
         }
       },
 

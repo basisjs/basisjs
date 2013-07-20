@@ -67,7 +67,7 @@ module.exports = {
   },
 
   setTokenCultureValue: function(namespace, name, culture, value){
-    var token = basis.l10n.getToken(namespace + '.' + name);
+    var token = basis.l10n.token(namespace + '.' + name);
     token.dictionary.setCultureValue(culture, name, value);
   },
 
@@ -91,9 +91,9 @@ module.exports = {
             sendData('saveDictionary', { result: 'error', dictionaryName: dictionaryName, errorText: this.state.data });
 
           if (this.state == STATE.READY || this.state == STATE.ERROR)
-            setTimeout(function(){
+            basis.timer.nextTick(function(){
               fileObjectSet.destroy();
-            }, 0);
+            });
         }
       }
     });

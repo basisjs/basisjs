@@ -128,7 +128,7 @@
       if (this.handler && !this.handler.callbacks)
       {
         if (DEVMODE && 'handlerContext' in this)
-          basis.dev.warn('handlerContext is obsolete. Use # handler: { callbacks: {..}, context: <handlerContext> } # instead.');
+          basis.dev.warn(this.constructor.className + ': handlerContext is obsolete. Use # handler: { callbacks: {..}, context: <handlerContext> } # instead.');
 
         this.handler = {
           callbacks: this.handler,
@@ -145,7 +145,7 @@
     */
     addHandler: function(callbacks, context){
       if (DEVMODE && !callbacks)
-        basis.dev.warn(this.className + '#addHandler: callbacks is not an object (', callbacks, ')');
+        basis.dev.warn(this.constructor.className + '#addHandler: callbacks is not an object (', callbacks, ')');
 
       context = context || this;
       
@@ -157,7 +157,7 @@
         {
           if (cursor.callbacks === callbacks && cursor.context === context)
           {
-            basis.dev.warn(this.className + '#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
+            basis.dev.warn(this.constructor.className + '#addHandler: add duplicate event callbacks', callbacks, 'to Emitter instance:', this);
             break;
           }
         }
@@ -197,7 +197,7 @@
 
       // handler not found
       if (DEVMODE && prev !== this)
-        basis.dev.warn(this.className + '#removeHandler: no handler removed');
+        basis.dev.warn(this.constructor.className + '#removeHandler: no handler removed');
     },
 
    /**

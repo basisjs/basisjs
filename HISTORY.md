@@ -1,3 +1,35 @@
+# 0.9.6 (july 20, 2013)
+
+- API: change `basis.path.relative` to work correctly with `Array` ES5 iterate methods
+- API: drop `basis.l10n.Token#enum` method as not ready to use (will be provided in 0.10)
+- API: drop deprecated `l10n:` binding preset in `basis.ui`
+- FIX: replace usage of `basis.l10n.getToken` to `basis.l10n.token`
+- NEW: add support for `@name` tag in `jsDocs` in docs (to overload local name into export name)
+- FIX: fix jsDocs parsing in docs
+- FIX: fix name to `jsDocs` association in docs
+- FIX: don't remove binding handler on `basis.ui.Node#setTemplate` if it was not be added
+- FIX: fix css `transform` support test in `basis.ui.scroller` (it always wrongly returns false)
+- FIX: fix type by name resolving in `basis.entity`
+- API: use `Array` as field type for `basis.entity` type declaration implemented
+- API: no more exception when no arguments on `basis.data.Dataset#set` and `basis.data.Dataset#sync` invoke
+- API: `basis.array.from` converts function into array with single item (that function), but not iterate it (because functions has length `property`)
+- API: deprecate using `basis.app`, `basis.crypt`, `basis.template` and `basis.format.highlight` as function
+- API: `basis.timer` exports `setImmediate`, `clearImmediate`, `nextTick` (alias for `setImmediate`), and `basis.timer.TimeEventManager.add`/`basis.timer.TimeEventManager.remove` methods as functions
+- API: `basis.timer.TimeEventManager` is deprecated now
+- API: `basis.crypt` exports `HEX`, `SHA1` and `MD5` functions in lower case (`hex`, `sha1` and `md5`), upper case versions become deprecated;
+- API: `basis.crypt.base64/utf8/utf16` moved into separate files and new namespaces `basis.utils.base64/utf8/utf16`
+- FIX: remove annoying warning in `basis.l10n.createDictionary`
+- API: `basis.ui.table` header/footer cell config reworked to accept instances of `basis.Token` & `basis.event.Emitter` as value, but not config
+- API: `basis.ui.Node#setSelected` and `basis.ui.Node#setDisabled` methods are implemented
+- FIX: improve `basis.ui.Node#focus` to avoid infinite focus jumping across elements in some cases
+- NEW: new method `basis.devpanel` API `getVersion` implemented
+- NEW: store requires list in `namespace` object for debug purposes (`requires_` property)
+- NEW: better `basis.resource` javascript compilation errors output
+- API: don't throw exception on `basis.resource` javascript compilation error, just output error message and return `undefined`
+- NEW: `basis.dev.error` function implemented
+- API: split `basis.format.highlight` into `basis.utils.highlight` and `basis.ui.code`;
+- API: `basis.format.highlight` is deprecated now
+
 # 0.9.5 (july 12, 2013)
 
 - API: `basis.data.Value#set` method returns `true` if value was changed

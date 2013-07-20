@@ -1,6 +1,6 @@
 
   basis.require('basis.dom.wrapper');
-  basis.require('basis.format.highlight');
+  basis.require('basis.ui.code');
   basis.require('app.ext.view');
 
   module.exports = new app.ext.view.View({
@@ -14,7 +14,7 @@
     },
 
     satelliteConfig: {
-      sourceCode: basis.format.highlight.SourceCodeNode.subclass({
+      sourceCode: basis.ui.code.SourceCode.subclass({
         autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
         lang: 'js',
         codeGetter: basis.getter('data.obj || ""', String)

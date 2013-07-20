@@ -13,8 +13,7 @@
   var nsData = basis.data;
   var nsEntity = basis.entity;
   var nsAjax = basis.net;
-
-  var TimeEventManager = basis.timer.TimeEventManager;
+  
 
   // main part
 
@@ -92,7 +91,7 @@
   }
 
   function parseJsDocText(text){
-    var parts = text.split(/\s*@([a-z]+)[\t ]*/i);
+    var parts = text.split(/^\s*@([a-z]+)[\t ]*/im);
     var tags = {};
     parts.unshift('description');
     for (var i = 0, key; key = parts[i]; i += 2)
@@ -190,9 +189,9 @@
       if (this.subscriberCount && 'text' in delta)
       {
         var self = this;
-        setTimeout(function(){
+        basis.timer.nextTick(function(){
           self.parseText(self.data.text);
-        }, 0);
+        });
       }
       this.setActive(!!this.subscriberCount);
     },
@@ -201,9 +200,9 @@
       if (this.subscriberCount && this.data.text)
       {
         var self = this;
-        setTimeout(function(){
+        basis.timer.nextTick(function(){
           self.parseText(self.data.text);
-        }, 0);
+        });
       }
       this.setActive(!!this.subscriberCount);
     },
@@ -607,6 +606,7 @@
       var line = 0;
       var lineFix;
       var scopeNS;
+      var jsDocsName;
       var parts = resource.text
         .replace(/\r\n|\n\r|\r/g, '\n')
         .replace(/\/\*+(\s*@cut.+\*)?\//g, '')
@@ -616,6 +616,9 @@
         lineFix = 0;
         if (idx % 2)
         {
+          if (jsDocsName = code.match(/@name\s+([a-z0-9_\$\.]+)/i))
+            jsDocsName = jsDocsName[1];
+
           if (code.match(/@annotation/))
           {
             skipDeclaration = true;
@@ -657,18 +660,16 @@
             var m = code.match(/^([\s\n]*)(var\s+|function\s+)?([a-z0-9_\$\.]+)/i);
             if (m)
             {
-              var name = m[3];
+              var name = jsDocsName || m[3];
+
+              if (m[2])
+                clsPrefix = '';
 
               lineFix = (m[1].match(/\n/g) || []).length;
               createJsDocEntity(jsdoc[jsdoc.length - 1], ns + '.' + (clsPrefix ? clsPrefix + '.prototype.' : '') + name);
               
               if (isClass)
                 clsPrefix = name;
-              else
-                if (m[2])
-                {
-                  clsPrefix = '';
-                }
             }
           }
           skipDeclaration = false;
@@ -711,7 +712,7 @@
         },
         complete: function(){
           this.curResource = null;
-          TimeEventManager.add(this, 'load', Date.now() + 5);
+          basis.timer.nextTick(this.load.bind(this));
         }
       }, resourceLoader);
 
@@ -727,7 +728,7 @@
           attemptCount: 0
         });
 
-        TimeEventManager.add(resourceLoader, 'load', Date.now());
+        basis.timer.nextTick(this.load.bind(this));
       }
     },
     load: function(){
@@ -759,12 +760,12 @@
     if (item)
     {
       sourceParser[item.kind](item);
-      setTimeout(resolveRes, 0);
+      basis.timer.nextTick(resolveRes);
     }
     else
       basis.dev.log(new Date - resolveResStart);
   }
-  setTimeout(resolveRes, 0);
+  basis.timer.nextTick(resolveRes);
 
 
   module.exports = {

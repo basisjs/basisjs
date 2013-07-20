@@ -11,6 +11,8 @@
   * - {basis.data.value.ObjectSet} (alias basis.data.value.DataObjectSet, but it's deprecate)
   * - {basis.data.value.Expression}
   *
+  * @see ./demo/data/basic.html
+  *
   * @namespace basis.data.value
   */
 
@@ -22,7 +24,6 @@
   var getter = basis.getter;
 
   var cleaner = basis.cleaner;
-  var TimeEventManager = basis.timer.TimeEventManager;
 
   var Emitter = basis.event.Emitter;
   var AbstractData = basis.data.AbstractData;
@@ -346,7 +347,7 @@
     stateChanged_: true,
 
    /**
-    * @type {boolean}
+    * @type {number}
     * @private
     */
     timer_: false,
@@ -425,10 +426,7 @@
         this.stateChanged_ = this.stateChanged_ || !!stateChanged;
 
         if (!this.timer_ && (this.valueChanged_ || this.stateChanged_))
-        {
-          this.timer_ = true;
-          TimeEventManager.add(this, 'update', Date.now());
-        }
+          this.timer_ = basis.timer.setImmediate(this.update.bind(this));
       }
     },
 
@@ -456,8 +454,7 @@
       this.valueChanged_ = false;
       this.stateChanged_ = false;
 
-      this.timer_ = false;
-      TimeEventManager.remove(this, 'update');
+      this.timer_ = basis.timer.clearImmediate(this.timer_);
 
       if (!cleaner.globalDestroy)
       {
@@ -498,7 +495,7 @@
     destroy: function(){
       this.lock();
       this.clear();
-      TimeEventManager.remove(this, 'update');
+      basis.timer.clearImmediate(this.timer_);
 
       BindValue.prototype.destroy.call(this);
     }

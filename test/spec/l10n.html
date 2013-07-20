@@ -37,39 +37,39 @@
               test: function(){
                 basis.l10n.createDictionary('test', '', { value: 'base' });
                 basis.l10n.setCulture();
-                this.is('base', basis.l10n.getToken('test.value').value);
+                this.is('base', basis.l10n.token('test.value').value);
 
                 basis.l10n.setCultureList('a/b/c b/c c');
 
                 basis.l10n.setCulture('c');
-                this.is('base', basis.l10n.getToken('test.value').value);
+                this.is('base', basis.l10n.token('test.value').value);
                 basis.l10n.setCulture('b');
-                this.is('base', basis.l10n.getToken('test.value').value);
+                this.is('base', basis.l10n.token('test.value').value);
                 basis.l10n.setCulture('a');
-                this.is('base', basis.l10n.getToken('test.value').value);
+                this.is('base', basis.l10n.token('test.value').value);
 
                 basis.l10n.updateDictionary('test', 'c', { value: 'c' });
                 basis.l10n.setCulture('c');
-                this.is('c', basis.l10n.getToken('test.value').value);
+                this.is('c', basis.l10n.token('test.value').value);
 
                 basis.l10n.setCulture('b');
-                this.is('c', basis.l10n.getToken('test.value').value);
+                this.is('c', basis.l10n.token('test.value').value);
                 basis.l10n.setCulture('a');
-                this.is('c', basis.l10n.getToken('test.value').value);
+                this.is('c', basis.l10n.token('test.value').value);
                 basis.l10n.updateDictionary('test', 'b', { value: 'b' });
-                this.is('b', basis.l10n.getToken('test.value').value);
+                this.is('b', basis.l10n.token('test.value').value);
                 basis.l10n.setCulture('b');
-                this.is('b', basis.l10n.getToken('test.value').value);
+                this.is('b', basis.l10n.token('test.value').value);
                 basis.l10n.setCulture('c');
-                this.is('c', basis.l10n.getToken('test.value').value);
+                this.is('c', basis.l10n.token('test.value').value);
 
                 basis.l10n.updateDictionary('test', 'a', { value: 'a' });
                 basis.l10n.setCulture('a');
-                this.is('a', basis.l10n.getToken('test.value').value);
+                this.is('a', basis.l10n.token('test.value').value);
                 basis.l10n.setCulture('b');
-                this.is('b', basis.l10n.getToken('test.value').value);
+                this.is('b', basis.l10n.token('test.value').value);
                 basis.l10n.setCulture('c');
-                this.is('c', basis.l10n.getToken('test.value').value);
+                this.is('c', basis.l10n.token('test.value').value);
               }
             }
           ]
