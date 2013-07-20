@@ -127,7 +127,7 @@
     moveable: true,
     zIndex: 0,
 
-    title: basis.l10n.getToken(namespace, 'emptyTitle'),
+    title: basis.l10n.token(namespace, 'emptyTitle'),
 
     template: templates.Window,
     binding: {

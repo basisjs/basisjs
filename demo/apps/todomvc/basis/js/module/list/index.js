@@ -1,4 +1,5 @@
 basis.require('basis.ui');
+basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('app.type');
 
@@ -12,7 +13,12 @@ module.exports = new basis.ui.Node({
 
   template: resource('template/list.tmpl'),
   binding: {
-    noActive: 'noActive'
+    noActive: new basis.data.value.Expression(
+      basis.data.index.count(app.type.Todo.active),
+      function(value){
+        return !value;
+      }
+    )
   },
   action: {
     toggle: function(event){
@@ -65,9 +71,4 @@ module.exports = new basis.ui.Node({
       }
     }
   }
-});
-
-basis.data.index.count(app.type.Todo.active).addLink(module.exports, function(value){
-  this.noActive = value == 0;
-  this.updateBind('noActive');
 });

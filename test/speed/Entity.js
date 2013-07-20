@@ -338,5 +338,5 @@
 
     if (location.hash == '#autorun')
     {
-      basis.Event.onLoad(function(){ runBtn.click(); });
+      basis.ready(function(){ runBtn.click(); });
     }

@@ -62,10 +62,8 @@
       <label><input type="checkbox" id="logEvents"/> log events</label>
       <label><input type="checkbox" id="multipleSelection"/> multiple selection (using CTRL)</label>
       <label><input type="checkbox" id="useGrouping"/> use grouping</label>
-      <label><input type="checkbox" id="useLoadData" checked="checked"/> use loadData method to fill table (faster)</label>
     </div>
   </div>
-  <!--<img src="/test.jpg"/>-->
   <script type="text/javascript">
     
     (function(){
@@ -78,10 +76,6 @@
 
       var DOM = basis.dom;
       var Event = basis.dom.event;
-
-      /*var sum = basis.data.index.sum;
-      var max = basis.data.index.max;
-      var count = basis.data.index.count;*/
 
       setRowCount = function(value){
         DOM.get('rowCount').value = value;
@@ -100,7 +94,7 @@
 
       //var testASum, testASum2;
       var logEventCheckbox = DOM.get('logEvents');
-      var useLoadData = DOM.get('useLoadData');
+      var useSetChildNodes = DOM.get('useSetChildNodes');
       var useGrouping = DOM.get('useGrouping');
       var multipleSelection = DOM.get('multipleSelection');
 
@@ -123,15 +117,9 @@
         sorting: 'data.title'
       };
           
-      //testAMax  = new Max(basis.getter('count', Number));
       TestTable = new basis.ui.table.Table({
         id: 'table',
         container: document.body,
-        /*registers: [
-          //testAOddCount = new Count('count % 2'),
-          testASum  = sum(basis.getter('amount', Number)),
-          testASum2 = sum(basis.getter('count', Number))
-        ],*/
         selection: {
           multiple: multipleSelection.checked
         },
@@ -197,11 +185,6 @@
               content: function(node){
                 return '{0:.4}'.format(Math.random());
               }
-            },
-
-            footer: {
-              cssClassName: 'right',
-              content: '-' //testAOddCount.addLink(DOM.createText(), null, 'odd count: {0}')
             }
           },
           { 
@@ -227,10 +210,6 @@
             body: {
               cssClassName: 'italic',
               content: basis.getter('data.amount', '${0:.2}')
-            },
-
-            footer: {
-              content: '-' //testASum.addLink(DOM.createText(), null, '{0:.2} р.')
             }
           },
           { 
@@ -243,10 +222,6 @@
 
             body: {
               content: basis.getter('data.count', Number)
-            },
-
-            footer: {
-              content: '-' //testASum2.addLink(DOM.createText(), null)
             }
           }
         ]
@@ -260,27 +235,23 @@
 
         var data = [];
         for (var i = 0; i < count; i++)
-          data.push({ 
-            id:     basis.data.generator.number(0, 0, 10000), 
-            title:  stringcache[i] || (stringcache[i] = basis.data.generator.string(2, 50)), 
-            amount: basis.data.generator.number(2, -1000, 1000), 
-            count:  basis.data.generator.number(0, -10, 10)
+          data.push({
+            data: {
+              id:     basis.data.generator.number(0, 0, 10000), 
+              title:  stringcache[i] || (stringcache[i] = basis.data.generator.string(2, 50)), 
+              amount: basis.data.generator.number(2, -1000, 1000), 
+              count:  basis.data.generator.number(0, -10, 10)
+            }
           });
-        // console.log(data.last().count);
 
         var d = Date.now();
-      //console.profile();
-        if (useLoadData.checked)
-          TestTable.loadData(data);
-        else
-          for (var i = 0; i < count; i++)
-            TestTable.appendChild({ data: data[i] });
-      //console.profileEnd();
+
+        TestTable.setChildNodes(data);
 
         var loadDataTime = Date.now() - d;
         DOM.get('time').innerHTML = '<b>' + count + '</b> row(s) generates in <b>' + (loadDataTime/1000).toFixed(3) + '</b> sec ' + ((clearTime)/1000).toFixed(3).quote('(');
       };
-      Event.onLoad(function(){
+      basis.ready(function(){
         setRowCount(10);
       });
 

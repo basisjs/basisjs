@@ -116,6 +116,7 @@
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.dom');
     basis.require('basis.entity');
+    basis.require('basis.data.value');
     basis.require('basis.ui.chart');
     basis.require('basis.ui.form');
     basis.require('basis.dragdrop');
@@ -314,8 +315,8 @@
       }
     });
 
-    var totalCount = new basis.data.property.Property(chartValues.itemCount);
-    var rangeCount = new basis.data.property.Property(reportSlice.itemCount);
+    var totalCount = new basis.data.value.Property(chartValues.itemCount);
+    var rangeCount = new basis.data.value.Property(reportSlice.itemCount);
 
     reportSlice.addHandler({
       itemsChanged: function(dataset){

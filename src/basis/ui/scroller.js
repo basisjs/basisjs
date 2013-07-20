@@ -55,7 +55,7 @@
   var TRANSFORM_PROPERTY_NAME;
   
   (function(){
-    var style = document.createElement('div');
+    var style = document.createElement('div').style;
     
     function testProps(properties){
       for (var i = 0, propertyName; propertyName = properties[i]; i++)
@@ -470,6 +470,13 @@
         this.updateElementPosition();
       }
     },
+
+    addPositionX: function(addX, smooth){
+      this.setPositionX(this.viewportX + addX, smooth);
+    },
+    addPositionY: function(addY, smooth){
+      this.setPositionY(this.viewportY + addY, smooth);
+    },    
 
     getCurrentDirection: function(axis){
       return axis == 'x' ? this.currentDirectionX : this.currentDirectionY;

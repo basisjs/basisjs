@@ -20,11 +20,11 @@
   var extend = basis.object.extend;
   var arrayFrom = basis.array.from;
   var objectSlice = basis.object.slice;
+  var objectMerge = basis.object.merge;
   var createEvent = basis.event.create;
 
   var STATE = basis.data.STATE;
 
-  var TimeEventManager = basis.timer.TimeEventManager;
   var DataObject = basis.data.Object;
   var Emitter = basis.event.Emitter;
 
@@ -286,9 +286,9 @@
       var nextRequest = this.requestQueue.shift();
       if (nextRequest)
       {
-        setTimeout(function(){
+        basis.timer.nextTick(function(){
           nextRequest.doRequest();
-        }, 0);
+        });
       }
     }
   };
@@ -358,10 +358,7 @@
   * @private
   */
   function setRequestHeaders(request, requestData){
-    var headers = {
-      'X-Requested-With': 'XMLHttpRequest',
-      'X-Powered-By': 'basis.js'
-    };
+    var headers = {};
 
     if (IS_METHOD_WITH_BODY.test(requestData.method)) 
     {
@@ -378,7 +375,7 @@
                                                                         // date wrong and response with code 400
 
     basis.object.iterate(extend(headers, requestData.headers), function(key, value){
-      if (value != null)
+      if (value != null && typeof value != 'function')
         this.setRequestHeader(key, value);
     }, request);
   }
@@ -459,8 +456,9 @@
   var AjaxRequest = AbstractRequest.subclass({
     className: namespace + '.AjaxRequest',
 
-    timeout:  30000, // 30 sec
     requestStartTime: 0,
+    timeout: 30000, // 30 sec
+    timer_: null,
 
     debug: false,
 
@@ -645,12 +643,12 @@
         this.xhr.ontimeout = this.timeoutAbort.bind(this);
       }
       else
-        TimeEventManager.add(this, 'timeoutAbort', Date.now() + timeout);
+        this.timer_ = setTimeout(this.timeoutAbort.bind(this), timeout);
     },
 
     clearTimeout: function(){
       if ('ontimeout' in this.xhr == false)
-        TimeEventManager.remove(this, 'timeoutAbort');
+        this.timer_ = clearTimeout(this.timer_);
     },
 
     timeoutAbort: function(){
@@ -689,11 +687,11 @@
     method: 'GET',
     contentType: 'application/x-www-form-urlencoded',
     encoding: null,
+    requestHeaders: basis.Class.extensibleProperty(),
 
     init: function(){
       AbstractTransport.prototype.init.call(this);
 
-      this.requestHeaders = objectSlice(this.requestHeaders);
       this.params = objectSlice(this.params);
     },
 
@@ -727,9 +725,9 @@
         contentType: requestData.contentType || this.contentType,
         encoding: requestData.encoding || this.encoding,
         asynchronous: this.asynchronous,
-        headers: [this.requestHeaders, requestData.headers].merge(),
+        headers: objectMerge(this.requestHeaders, requestData.headers),
         postBody: requestData.postBody || this.postBody,
-        params: [this.params, requestData.params].merge(),
+        params: objectMerge(this.params, requestData.params),
         routerParams: requestData.routerParams,
         influence: requestData.influence
       });
@@ -757,9 +755,9 @@
       var transport = new AjaxTransport(config);
       transport.addHandler({
         complete: function(){
-          setTimeout(function(){
+          basis.timer.nextTick(function(){
             transport.destroy();
-          }, 0);
+          });
         }
       });
       transport.request();

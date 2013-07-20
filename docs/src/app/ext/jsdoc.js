@@ -1,5 +1,6 @@
 
   basis.require('app.core');
+  basis.require('basis.utils.highlight');
 
   var classList = basis.cssom.classList;
   var DOM = basis.dom;
@@ -129,7 +130,7 @@
             DOM.createElement('DIV.label', 'Example:'),
             code = DOM.createElement('PRE.Basis-SyntaxHighlight')
           ]);
-          code.innerHTML = basis.format.highlight.highlight(newData.tags.example, 'js');
+          code.innerHTML = basis.utils.highlight.highlight(newData.tags.example, 'js');
         }
       }
 

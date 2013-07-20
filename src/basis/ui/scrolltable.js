@@ -8,6 +8,7 @@
 
 
  /**
+  * @see ./demo/defile/table.html
   * @namespace basis.ui.scrolltable
   */
 
@@ -97,9 +98,18 @@
     columnWidthSync_: null,
 
    /**
+    * Should table try to fit it's container or not.
+    * @type boolean
+    */
+    fitToContainer: false,
+
+   /**
     * @inheritDoc
     */
     template: templates.ScrollTable,
+    binding: {
+      fitToContainer: 'fitToContainer'
+    },
     action: {
       scroll: function(){
         var scrollLeft = -this.tmpl.scrollContainer.scrollLeft + 'px';
@@ -172,7 +182,7 @@
     */
     requestRelayout: function(){
       if (!this.timer_)
-        this.timer_ = setTimeout(this.relayout, 0);
+        this.timer_ = basis.timer.nextTick(this.relayout, 0);
     },
 
    /**
@@ -180,7 +190,7 @@
     */
     relayout: function(){
       var headerElement = this.header.element;
-      var footerElement = this.footer.element;
+      var footerElement = this.footer ? this.footer.element : null;
 
       //
       // Sync header html
@@ -195,11 +205,14 @@
       //
       // Sync footer html
       //
-      var footerOuterHTML = DOM.outerHTML(footerElement);
-      if (this.shadowFooterHtml_ != footerOuterHTML)
+      if (footerElement)
       {
-        this.shadowFooterHtml_ = footerOuterHTML;
-        replaceTemplateNode(this, 'shadowFooter', footerElement.cloneNode(true));
+        var footerOuterHTML = DOM.outerHTML(footerElement);
+        if (this.shadowFooterHtml_ != footerOuterHTML)
+        {
+          this.shadowFooterHtml_ = footerOuterHTML;
+          replaceTemplateNode(this, 'shadowFooter', footerElement.cloneNode(true));
+        }
       }
 
       //
@@ -209,9 +222,8 @@
       {
         columnWidth = column.measure.offsetWidth + 'px';
         cssom.setStyleProperty(column.header.firstChild, 'width', columnWidth);
-        cssom.setStyleProperty(column.footer.firstChild, 'width', columnWidth);
-        //column.header.firstChild.style.width = columnWidth;
-        //column.footer.firstChild.style.width = columnWidth;
+        if (footerElement)
+          cssom.setStyleProperty(column.footer.firstChild, 'width', columnWidth);
       }
 
       //
@@ -219,7 +231,7 @@
       //
       var tableWidth = this.tmpl.boundElement.offsetWidth || 0;
       var headerHeight = headerElement.offsetHeight || 0;
-      var footerHeight = footerElement.offsetHeight || 0;
+      var footerHeight = (footerElement && footerElement.offsetHeight) || 0;
 
       //
       // Update style properties
@@ -227,7 +239,9 @@
       this.tmpl.headerExpandCell.style.left = tableWidth + 'px';
       this.tmpl.footerExpandCell.style.left = tableWidth + 'px';
       this.tmpl.tableElement.style.margin = '-' + headerHeight + 'px 0 -' + footerHeight + 'px';
-      this.element.style.paddingBottom = (headerHeight + footerHeight) + 'px';
+
+      if (this.fitToContainer)
+        this.element.style.paddingBottom = (headerHeight + footerHeight) + 'px';
 
       // reset timer
       // it should be at the end of relayout to prevent relayout call while relayout

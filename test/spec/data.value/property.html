@@ -4,7 +4,7 @@
 
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-  <title>Basis Test Suite - basis.data.property</title>
+  <title>Basis Test Suite - basis.data.value</title>
 
   <style type="text/css">
     @import "../../style/style.css";
@@ -30,8 +30,8 @@
 
       var DOM = basis.dom;
 
-      var Property = basis.data.property.Property;
-      var PropertySet = basis.data.property.DataObjectSet;
+      var Property = basis.data.value.Property;
+      var PropertySet = basis.data.value.ObjectSet;
 
       var TestProperty;
 
@@ -59,6 +59,7 @@
             {
               name: 'set #1',
               test: function(){
+                var TestProperty = new Property(123);
                 var t = {};
                 var value = Math.random();
 
@@ -73,18 +74,14 @@
                 this.is(value, TestProperty.value);
                 this.is(0, t.saved);
 
-                // fire on existing value set, with forced flag
-                t.saved = 0;
-                TestProperty.set(value, true);
-                this.is(value, TestProperty.value);
-                this.is(value, t.saved);
-
                 TestProperty.clear();
               }
             },
             {
               name: 'set #2',
               test: function(){
+                var TestProperty = new Property(123);
+
                 var t = {};
                 var value = Math.random();
                 TestProperty.addLink(t, 'saved');
@@ -113,9 +110,11 @@
             {
               name: 'set #3',
               test: function(){
+                var TestProperty = new Property(123);
+
                 var t = DOM.createElement('DIV');
                 var value = Math.random();
-                TestProperty.addLink(t);
+                TestProperty.addLink(t, 'innerHTML');
                 TestProperty.set(value);
                 this.is(value, TestProperty.value);
                 this.is(String(value), t.innerHTML);
@@ -131,7 +130,7 @@
 
                 var t = DOM.createText('#text');
                 var value = Math.random();
-                TestProperty.addLink(t);
+                TestProperty.addLink(t, 'nodeValue');
                 TestProperty.set(value);
                 this.is(value, TestProperty.value);
                 this.is(String(value), t.nodeValue);
@@ -139,7 +138,7 @@
 
                 var t = DOM.createText('#text');
                 var value = Math.random();
-                TestProperty.addLink(t, null, '{0:.2}');
+                TestProperty.addLink(t, 'nodeValue', '{0:.2}');
                 TestProperty.set(value);
                 this.is(value, TestProperty.value);
                 this.is(value.toFixed(2), t.nodeValue);
@@ -186,14 +185,13 @@
                 s.a.set(11);
                 s.b.set(11);
 
-                this.is(0, 0); // WTF?
-
                 s.a.set('test');
               }
             },
             {
               name: 'checkout',
               test: function(){
+                // this checks here because PropertySet update occur by timeout
                 this.is(1, updateCount);
                 this.is('test', s.a.value);
                 this.is(11, s.b.value);
@@ -206,7 +204,7 @@
                 s.a = new Property(1);
                 s.b = new Property(2);
 
-                updateCount = 0;
+                var updateCount = 0;
                 s.add(s.a);
                 s.add(s.b);
 

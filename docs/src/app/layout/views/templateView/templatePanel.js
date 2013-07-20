@@ -1,4 +1,6 @@
 
+  basis.require('basis.ui.code');
+
   /*basis.require('app.view.templateView.actions');
   basis.require('app.view.templateView.bindings');*/
 
@@ -33,10 +35,10 @@
         return result + ')';
       }
       else
-        return getter.toString();
+        return Function.prototype.toString.call(getter);
     }
 
-    var result = { asIs: fn.toString() };
+    var result = { asIs: Function.prototype.toString.call(fn) };
     var getter = resolveGetter(fn);
 
     if (result.asIs != getter)
@@ -106,7 +108,7 @@
         source: {
           hook: { toggle: true },
           existsIf: basis.getter('expanded'),
-          instanceOf: basis.format.highlight.SourceCodeNode.subclass({
+          instanceOf: basis.ui.code.SourceCode.subclass({
             autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
             lang: 'js',
             lineNumber: false,
@@ -185,7 +187,7 @@
         source: {
           hook: { toggle: true },
           existsIf: basis.getter('expanded'),
-          instanceOf: basis.format.highlight.SourceCodeNode.subclass({
+          instanceOf: basis.ui.code.SourceCode.subclass({
             autoDelegate: basis.dom.wrapper.DELEGATE.OWNER,
             lang: 'js',
             lineNumber: false,

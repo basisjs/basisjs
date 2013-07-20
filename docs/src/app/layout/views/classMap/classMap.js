@@ -1,4 +1,9 @@
 
+  basis.require('basis.timer');
+  basis.require('basis.cssom');
+  basis.require('basis.data')
+  basis.require('basis.data.dataset')
+  basis.require('basis.ui')
   basis.require('app.core');
   basis.require('app.ext.view');
 
@@ -75,7 +80,7 @@
         clearTimeout(scrollTimeout);
         classNode = searchClassNode(this, this.delegate.data.obj.className);
         if (classNode)
-          scrollTimeout = setTimeout(scrollToClassNode, 0);
+          scrollTimeout = basis.timer.nextTick(scrollToClassNode);
       }
     }     
   });

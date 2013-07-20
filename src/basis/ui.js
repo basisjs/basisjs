@@ -4,6 +4,7 @@
   basis.require('basis.data');
   basis.require('basis.dom.wrapper');
   basis.require('basis.cssom');
+  basis.require('basis.template');
   basis.require('basis.template.html');
 
 
@@ -28,6 +29,7 @@
   var createEvent = basis.event.create;
 
   var Template = basis.template.html.Template;
+  var TemplateSwitcher = basis.template.html.TemplateSwitcher;
   var DWNode = basis.dom.wrapper.Node;
   var DWPartitionNode = basis.dom.wrapper.PartitionNode;
   var DWGroupingNode = basis.dom.wrapper.GroupingNode;
@@ -168,11 +170,6 @@
     };
   });
 
-  BINDING_PRESET.add('l10n', function(token){
-    ;;;basis.dev.warn('`l10n:` prefix in binding is deprecated. Use explicit basis.l10n.getToken("' + token + '") instead');
-    return basis.fn.$const(basis.l10n.getToken(token));
-  });
-
 
  /**
   * Base binding
@@ -250,11 +247,27 @@
     }
   });
 
+ /**
+  */
+  var TEMPLATE_SWITCHER_HANDLER = {
+    '*': function(event){
+      var switcher = this.templateSwitcher_;
+      if (switcher && switcher.ruleEvents && switcher.ruleEvents[event.type])
+        this.setTemplate(switcher.resolve(this));
+    }
+  };
+
 
  /**
   * Base template for TemplateMixin
   */
   var TEMPLATE = new Template('<div/>');
+
+
+ /**
+  * @type {number}
+  */
+  var focusTimer;
 
 
  /**
@@ -273,6 +286,11 @@
       * @event
       */
       emit_templateChanged: createEvent('templateChanged'),
+
+     /**
+      * @type {basis.template.TemplateSwitcher}
+      */
+      templateSwitcher_: null,
 
      /**
       * @type {Object}
@@ -514,11 +532,31 @@
       },
 
      /**
-      *
+      * @param {basis.template.Template|basis.template.TemplateSwitcher} template
       */
       setTemplate: function(template){
+        var curSwitcher = this.templateSwitcher_;
+
+        if (template instanceof basis.template.TemplateSwitcher)
+        {
+          var switcher = template;
+          this.templateSwitcher_ = switcher;
+
+          template = switcher.resolve(this);
+
+          if (!curSwitcher)
+            this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
+        }
+        
         if (template instanceof Template == false)
           template = null;
+
+        // drop template switcher if no template, or new template is not a result of switcher resolving
+        if (curSwitcher && (!template || curSwitcher.resolve(this) !== template))
+        {
+          this.templateSwitcher_ = null;
+          this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
+        }
 
         if (this.template !== template)
         {
@@ -531,7 +569,7 @@
           {
             oldTemplate.clearInstance(this.tmpl);
 
-            var oldBinding = oldTemplate.getBinding(this.binding, this);
+            var oldBinding = this.templateBinding_;
             if (oldBinding && oldBinding.handler)
               this.removeHandler(oldBinding.handler);
 
@@ -627,9 +665,14 @@
         {
           var focusElement = this.tmpl.focus || this.element;
           if (focusElement)
-            setImmediate(function(){
+          {
+            if (focusTimer)
+              focusTimer = basis.timer.clearImmediate(focusTimer);
+
+            focusTimer = basis.timer.setImmediate(function(){
               DOM.focus(focusElement, select);
             });
+          }
         }
       },
 

@@ -4,7 +4,7 @@
   basis.require('basis.dom');
   basis.require('basis.dom.event');
   basis.require('basis.dom.wrapper');
-  basis.require('basis.data.property');
+  basis.require('basis.data.value');
   basis.require('basis.ui');
   basis.require('basis.ui.popup');
 
@@ -30,9 +30,9 @@
   var arrayFrom = basis.array.from;
   var createEvent = basis.event.create;
   var events = basis.event.events;
-  var l10nToken = basis.l10n.getToken;
+  var l10nToken = basis.l10n.token;
 
-  var Property = basis.data.property.Property;
+  var Property = basis.data.value.Property;
   var Selection = basis.dom.wrapper.Selection;
   var UINode = basis.ui.Node;
   var Popup = basis.ui.popup.Popup;
@@ -1370,13 +1370,18 @@
     'checkgroup': CheckGroup
   };
 
-  module.setWrapper(function(config){
+  function createField(config){
     var fieldType = (config && config.type) || 'text';
 
     if (fieldType2Class.hasOwnProperty(fieldType))
       return new fieldType2Class[fieldType](config);
     else
       throw 'Unknown field type `{0}`'.format(fieldType);
+  }
+
+  module.setWrapper(function(config){
+    ;;;basis.dev.warn('using basis.ui.field as function is deprecated now, use basis.ui.field.create instead');
+    return createField(config);
   });
 
   module.exports = {
@@ -1384,6 +1389,7 @@
     validator: Validator,
     ValidatorError: ValidatorError,
 
+    create: createField,
     addFieldType: function(type, fieldClass){
       ;;;if (!fieldClass.isSubclassOf(Field)) throw 'basis.ui.field.addFieldType: Class is not a subclass of Field';
 

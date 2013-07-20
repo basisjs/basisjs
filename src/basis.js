@@ -625,7 +625,8 @@
     var methods = {
       log: $undef,
       info: $undef,
-      warn: $undef
+      warn: $undef,
+      error: $undef
     };
 
     if (typeof console != 'undefined')
@@ -665,7 +666,7 @@
     {
       var len = object.length;
 
-      if (typeof len == 'undefined')
+      if (typeof len == 'undefined' || typeof object == 'function')
         return [object];
 
       if (!offset)
@@ -1319,9 +1320,19 @@
         resolve: function(path){  // TODO: more compliant with node.js
           return this.normalize(path);
         },
-        relative: function(path){
-          var abs = this.normalize(path).split(/\//);
-          var loc = this.baseURI.split(/\//);
+        relative: function(from, to){
+          if (typeof to != 'string')
+          {
+            to = from;
+            from = this.baseURI;
+          }
+          else
+          {
+            from = this.dirname(from);
+          }
+
+          var abs = this.normalize(to).split(/\//);
+          var loc = from.split(/\//);
           var i = 0;
 
           while (abs[i] == loc[i] && typeof loc[i] == 'string')
@@ -1417,6 +1428,7 @@
 
   var resourceCache = {};
   var requestResourceCache = {};
+  /** @cut */ var resourceResolvingStack = [];
 
   // apply prefetched resources to cache
   (function(){
@@ -1440,6 +1452,7 @@
         // otherwise browser could never ask server for new file content
         // and use file content from cache
         req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
+        req.setRequestHeader('X-Basis-Resource', 1);
         req.send('');
 
         if (req.status >= 200 && req.status < 400)
@@ -1465,53 +1478,83 @@
     return requestResourceCache[url];
   };
 
-  // basis.resource  
+  // basis.resource
   var getResource = function(resourceUrl){
     resourceUrl = pathUtils.resolve(resourceUrl);
 
     if (!resourceCache[resourceUrl])
     {
       var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
-      var wrappedContent;
+      var resolved = false;
       var wrapped = false;
+      var content;
 
       var resource = function(){
-        var content = getResourceContent(resourceUrl);
-
-        if (!contentWrapper)
+        // if resource resolved, just return content
+        if (resolved)
           return content;
 
-        if (!wrapped)
+        // fetch url content
+        var urlContent = getResourceContent(resourceUrl);
+
+        /** @cut    recursion warning */
+        /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
+        /** @cut */ if (idx != -1)
+        /** @cut */   basis.dev.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+        /** @cut */ resourceResolvingStack.push(resourceUrl);
+
+        // if resource type has wrapper - wrap it, or use url content as result
+        if (contentWrapper)
         {
-          wrappedContent = contentWrapper(content, resourceUrl);
-          wrapped = true;              
+          if (!wrapped)
+          {
+            wrapped = true;
+            content = contentWrapper(urlContent, resourceUrl);
+          }
+        }
+        else
+        {
+          content = urlContent;
         }
 
-        return wrappedContent;
+        // mark as resolved and apply binded functions
+        resolved = true;
+        resource.apply();
+
+        /** @cut    recursion warning */
+        /** @cut */ resourceResolvingStack.pop();
+
+        return content;
       };
 
       extend(resource, extend(new Token(), {
         url: resourceUrl,
-        fetch: resource,
+        fetch: function(){
+          return resource();
+        },
         toString: function(){
           return '[basis.resource ' + resourceUrl + ']';
         },
-        update: function(newContent, force){
+        update: function(newContent){
           newContent = String(newContent);
 
-          if (force || newContent != requestResourceCache[resourceUrl])
+          if (!resolved || newContent != requestResourceCache[resourceUrl])
           {
             requestResourceCache[resourceUrl] = newContent;
 
             if (contentWrapper)
             {
-              if (wrapped && !contentWrapper.updatable)
+              // don't wrap content if it isn't wrapped yet or wrapped but not updatable
+              if (!wrapped || !contentWrapper.updatable)
                 return;
 
-              wrappedContent = contentWrapper(newContent, resourceUrl);
+              content = contentWrapper(newContent, resourceUrl);
             }
+            else
+              content = newContent;
 
-            this.apply();
+            resolved = true;
+            resource.apply();
           }
         },
         reload: function(){
@@ -1519,14 +1562,24 @@
           var newContent = getResourceContent(resourceUrl, true);
 
           if (newContent != oldContent)
-            this.update(newContent, true);
+          {
+            resolved = false;
+            resource.update(newContent);
+          }
         },
         get: function(source){
           return source ? getResourceContent(resourceUrl) : resource();
         },
         ready: function(fn, context){
-          this.attach(fn, context);
-          return this;
+          if (resolved)
+          {
+            fn.call(context, resource());
+
+            if (contentWrapper && !contentWrapper.updatable)
+              return;
+          }
+
+          resource.attach(fn, context);
         }
       }));
 
@@ -1585,15 +1638,36 @@
     if (typeof compiledSourceCode != 'function')
       try {
         compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
+          '//@ sourceURL=' + sourceURL + '\n' +
+          '//# sourceURL=' + sourceURL + '\n' +
           '"use strict";\n\n' +
-          sourceCode +
-          '//# sourceURL=' + sourceURL +
-          '//@ sourceURL=' + sourceURL
+          sourceCode
         );
       } catch(e) {
-        ;;;var src = document.createElement('script');src.src = sourceURL;src.async = false;document.head.appendChild(src);document.head.removeChild(src);
-        throw 'Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e);
-        //return;
+        /** @cut */ if ('line' in e == false && 'addEventListener' in window)
+        /** @cut */ {
+        /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
+        /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
+        /** @cut */   window.addEventListener('error', function onerror(event){
+        /** @cut */     if (event.filename == sourceURL)
+        /** @cut */     {
+        /** @cut */       window.removeEventListener('error', onerror);
+        /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
+        /** @cut */       event.preventDefault()
+        /** @cut */     }
+        /** @cut */   })
+        /** @cut */ 
+        /** @cut */   var script = document.createElement('script');
+        /** @cut */   script.src = sourceURL;
+        /** @cut */   script.async = false;
+        /** @cut */   document.head.appendChild(script);
+        /** @cut */   document.head.removeChild(script);
+        /** @cut */ }
+
+        // don't throw new exception, just output error message and return undefined
+        // in this case more chances for other modules continue to work
+        basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 4) : '') + ': ' + e);
+        return;
       }
 
     // run
@@ -1719,10 +1793,14 @@
     {
       var nsRootPath = config.path;
       var requested = {};
+      /** @cut */ var requires;
 
       return function(namespace, path){
         if (/[^a-z0-9_\.]/i.test(namespace))
           throw 'Namespace `' + namespace + '` contains wrong chars.';
+
+        /** @cut */ if (requires)
+        /** @cut */   requires.push(namespace);
 
         var filename = namespace.replace(/\./g, '/') + '.js';
         var namespaceRoot = namespace.split('.')[0];
@@ -1730,9 +1808,10 @@
         if (namespaceRoot == namespace)
           nsRootPath[namespaceRoot] = path || nsRootPath[namespace] || (pathUtils.baseURI + '/');
 
-        var requirePath = nsRootPath[namespaceRoot];
         if (!namespaces[namespace])
         {
+          var requirePath = nsRootPath[namespaceRoot];
+
           if (!/^(https?|chrome-extension):/.test(requirePath))
             throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
 
@@ -1743,12 +1822,21 @@
 
           var requestUrl = requirePath + filename;
 
+
           var ns = getNamespace(namespace);
           var sourceCode = getResourceContent(requestUrl);
+
+          /** @cut */ var savedRequires = requires;
+          /** @cut */ requires = [];
+
           runScriptInContext(ns, requestUrl, sourceCode);
           complete(ns, ns.exports);
-          ;;;ns.filename_ = requestUrl;
-          ;;;ns.source_ = sourceCode;
+
+          /** @cut */ ns.filename_ = requestUrl;
+          /** @cut */ ns.source_ = sourceCode;
+          /** @cut */ ns.requires_ = requires;
+
+          /** @cut */ requires = savedRequires;
         }
       };
     }

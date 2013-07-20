@@ -53,6 +53,6 @@ module.exports = new basis.ui.Node({
 });*/
 
 new basis.ui.resizer.Resizer({
-  element: module.exports.tmpl.fileList,
+  element: module.exports.tmpl.fileList
 });
 

@@ -1,5 +1,5 @@
 
-  basis.require('basis.data');
+  basis.require('basis.event');
   basis.require('basis.dom');
   basis.require('basis.dom.wrapper');
   basis.require('basis.l10n');
@@ -25,7 +25,6 @@
 
   var Class = basis.Class;
   var DOM = basis.dom;
-  var nsData = basis.data;
 
   var getter = basis.getter;
   var nullGetter = basis.fn.nullGetter;
@@ -180,12 +179,16 @@
 
     colSorting: null,
     defaultOrder: false,
+    title: '\xA0',
 
     template: templates.HeaderCell,
 
     binding: {
       sortable: function(node){
         return node.colSorting ? 'sortable' : '';
+      },
+      title: function(node){
+        return node.title || String(node.title) || '\xA0';
       }
     },
 
@@ -283,17 +286,27 @@
         {
           var headerConfig = colConfig.header;
           var config = {};
+
+          if (headerConfig == null || typeof headerConfig != 'object' || headerConfig instanceof basis.Token || headerConfig instanceof basis.event.Emitter)
+            headerConfig = {
+              title: headerConfig
+            };
           
           if ('groupId' in colConfig)
             config.groupId = colConfig.groupId;
 
-          // content
-          config.content = (headerConfig == null || typeof headerConfig != 'object' || headerConfig instanceof basis.l10n.Token
-            ? headerConfig 
-            : headerConfig.content) || '\xA0';
+          // content in header config is deprecated
+          if ('content' in headerConfig)
+          {
+            ;;;basis.dev.warn('`content` property in header cell config is deprecated, use `title` instead');
+            config.title = headerConfig.content;
+          }
 
-          if (typeof config.content == 'function')
-            config.content = config.content.call(this);
+          if ('title' in headerConfig)
+            config.title = headerConfig.title;
+
+          if (typeof config.title == 'function')
+            config.title = config.title.call(this);
 
           // css classes
           config.cssClassName = (headerConfig.cssClassName || '') + ' ' + (colConfig.cssClassName || '');
@@ -372,29 +385,34 @@
           {
             var footerConfig = colConfig.footer != null ? colConfig.footer : {};
 
-            if (typeof footerConfig != 'object')
-              footerConfig = { content: footerConfig };
+            if (typeof footerConfig != 'object' || footerConfig instanceof basis.Token || footerConfig instanceof basis.event.Emitter)
+              footerConfig = {
+                value: footerConfig
+              };
 
-            var content = footerConfig.content;
-
-            if (typeof content == 'function')
-              content = content.call(this);
-
-            // fill config
-
+            // fulfill config
             var config = {
-              cssClassName: (colConfig.cssClassName || '') + ' ' + (footerConfig.cssClassName || ''),
-              content: content
+              cssClassName: (colConfig.cssClassName || '') + ' ' + (footerConfig.cssClassName || '')
             };
+
+            // content in footer config is deprecated
+            if ('content' in footerConfig)
+            {
+              ;;;basis.dev.warn('`content` property in footer cell config is deprecated, use `value` instead');
+              config.value = footerConfig.content;
+            }
+
+            if ('value' in footerConfig)
+              config.value = footerConfig.value;
+
+            if (typeof config.value == 'function')
+              config.value = config.value.call(this);
 
             if (footerConfig.template)
               config.template = footerConfig.template;
 
             if (footerConfig.binding)
               config.binding = footerConfig.binding;
-
-            if ('value' in footerConfig)
-              config.value = footerConfig.value;
 
             // create instace of cell
             prevCell = this.appendChild(config);
@@ -551,10 +569,6 @@
         this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
         this.setSatellite('footer', this.footer);
       }
-    },
-
-    loadData: function(items){
-      this.setChildNodes(nsData(items));
     },
 
     destroy: function(){

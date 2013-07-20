@@ -186,13 +186,14 @@
         {
           header: '#',
           body: '{id}',
-          footer: function(){
-            return [
-              'min/max: ',
-              basis.data.index.min(dataset, 'data.value').addLink(basis.dom.createText()),
-              '/',
-              basis.data.index.max(dataset, 'data.value').addLink(basis.dom.createText())
-            ];
+          footer: {
+            value: new basis.data.value.Expression(
+              basis.data.index.min(dataset, 'data.value'),
+              basis.data.index.max(dataset, 'data.value'),
+              function(min, max) {
+                return 'min/max: ' + min + '/' + max;
+              }
+            )
           }
         },
         {
@@ -222,8 +223,13 @@
           header: 'Total, %',
           cssClassName: 'right',
           body: '{percentOfTotalSum}',
-          footer: function(){
-            return basis.data.index.avg(indexMap, 'data.percentOfTotalRange * 100').addLink(basis.dom.createText(), null, '{0:.2}%');
+          footer: {
+            value: new basis.data.value.Expression(
+              basis.data.index.avg(indexMap, 'data.percentOfTotalRange'),
+              function(avg){
+                return (avg * 100).toFixed(2) + '%';
+              }
+            )
           }
         }
       ],

@@ -47,7 +47,7 @@
     template: templates.FormContent,
 
     childClass: field.Field,
-    childFactory: field,
+    childFactory: field.create,
 
     listen: {
       childNode: {

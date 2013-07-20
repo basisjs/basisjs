@@ -44,7 +44,13 @@
     listen: {
       selection: {
         itemsChanged: function(selection){
-          this.scrollToPage(selection.pick());
+          if (this.scroller)
+          {
+            if (this.rotate)
+              this.adjustRotation();
+
+            this.scrollToPage(selection.pick());
+          }
         }
       }
     },
@@ -73,7 +79,14 @@
         }
       });
 
-      this.scrollToPage(this.selection.pick());
+      if (this.rotate)
+        this.adjustRotation();
+
+      this.realign();
+    },
+
+    realign: function(){
+      this.scrollToPage(this.selection.pick(), true);
     },
 
     setPage: function(){
@@ -107,12 +120,42 @@
       this.scrollToPage(pageScrollTo);
     },
 
-    scrollToPage: function(page){
+    scrollToPage: function(page, noSmooth){
       if (page && this.scroller)
       {
         page.select();
-        this.scroller.setPositionX(page.element.offsetLeft, true);
+        this.scroller.setPositionX(page.element.offsetLeft, !noSmooth);
       }
+    },
+
+    adjustRotation: function(){
+      var selected = this.selection.pick();
+
+      var shiftLength = 0;
+
+      var childCount = this.childNodes.length;
+      var index = this.childNodes.indexOf(selected);
+
+      var delta = Math.round(childCount / 2) - index;
+
+      var childWidth = this.firstChild.element.offsetWidth;
+
+      for (var i = 0; i < Math.abs(delta); i++)
+      {
+        if (delta > 0)
+        {
+          this.insertBefore(this.lastChild, this.firstChild);
+          shiftLength += childWidth;
+        }
+        else
+        {
+          this.appendChild(this.firstChild);
+          shiftLength -= childWidth;
+        }
+      }
+
+      this.scroller.addPositionX(shiftLength);
+      this.emit_childNodesModified({});
     },
 
     destroy: function(){

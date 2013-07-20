@@ -2,7 +2,7 @@
   basis.require('basis.timer');
   basis.require('basis.data');
   basis.require('basis.data.dataset');
-  basis.require('basis.data.property');
+  basis.require('basis.data.value');
 
 
  /**
@@ -24,7 +24,7 @@
   var KeyObjectMap = nsData.KeyObjectMap;
   var AbstractDataset = nsData.AbstractDataset;
 
-  var Property = basis.data.property.Property;
+  var Property = basis.data.value.Property;
   var MapFilter = basis.data.dataset.MapFilter;
 
 
@@ -413,7 +413,8 @@
     if (inserted)
       for (var i = 0, object; object = inserted[i++];)
       {
-        var newValue = index.valueGetter(object);
+        var newValue = Number(index.valueGetter(object)) || 0;
+
         indexCache[object.basisObjectId] = newValue;
         index.add_(newValue);
       }
@@ -834,7 +835,7 @@
 
     recalcRequest: function(){
       if (!this.timer_)
-        this.timer_ = setTimeout(this.recalc, 0);
+        this.timer_ = basis.timer.setImmediate(this.recalc);
     },
 
     recalc: function(){
@@ -842,7 +843,7 @@
         this.calcMember(this.items_[idx]);
 
       this.indexUpdated = false;
-      this.timer_ = clearTimeout(this.timer_);
+      this.timer_ = basis.timer.clearImmediate(this.timer_);
     },
 
     calcMember: function(member){

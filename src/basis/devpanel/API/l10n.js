@@ -1,5 +1,5 @@
 basis.require('basis.l10n');
-basis.require('basis.data.property');
+basis.require('basis.data.value');
 
 var STATE = basis.data.STATE;
 
@@ -31,7 +31,7 @@ module.exports = {
       if (dictionaries[dictionaryName].location)
         data.push({
           Dictionary: dictionaryName,
-          Location: basis.path.relative(dictionaries[dictionaryName].location)
+          Location: '/' + basis.path.relative('/', dictionaries[dictionaryName].location)
         });
 
     sendData('dictionaryList', data);
@@ -67,7 +67,7 @@ module.exports = {
   },
 
   setTokenCultureValue: function(namespace, name, culture, value){
-    var token = basis.l10n.getToken(namespace + '.' + name);
+    var token = basis.l10n.token(namespace + '.' + name);
     token.dictionary.setCultureValue(culture, name, value);
   },
 
@@ -81,7 +81,7 @@ module.exports = {
     var dictContent;
     var resourceParts;
 
-    var fileDataObjectSet = new basis.data.property.DataObjectSet({
+    var fileObjectSet = new basis.data.value.ObjectSet({
       state: STATE.READY,
       handler: {
         stateChanged: function(){
@@ -91,9 +91,9 @@ module.exports = {
             sendData('saveDictionary', { result: 'error', dictionaryName: dictionaryName, errorText: this.state.data });
 
           if (this.state == STATE.READY || this.state == STATE.ERROR)
-            setTimeout(function(){
-              fileDataObjectSet.destroy();
-            }, 0);
+            basis.timer.nextTick(function(){
+              fileObjectSet.destroy();
+            });
         }
       }
     });
@@ -107,7 +107,7 @@ module.exports = {
 
     for (var i = 0, culture; culture = cultureList[i]; i++)
     {
-      filename = '/' + basis.path.relative(location + '/' + culture + '.json');
+      filename = '/' + basis.path.relative('/', location + '/' + culture + '.json');
       file = basis.devtools.getFile(filename, true);
 
       dictionaries = basis.object.slice(basis.resource(filename)());
@@ -148,7 +148,7 @@ module.exports = {
       newContent = '{' + dictParts.join(', ') + '\r\n}';  
 
 
-      fileDataObjectSet.add(file);
+      fileObjectSet.add(file);
       file.save(newContent);
     }
   }

@@ -406,11 +406,11 @@
           if (tokenElement)
           {
             tokenElement.innerHTML = m;
-            tokenMap[token] = tokenElement.firstChild ? tokenElement.firstChild.nodeValue : '';
+            tokenMap[token] = tokenElement.firstChild ? tokenElement.firstChild.nodeValue : m;
           }
         }
       }
-      return tokenMap[token];
+      return tokenMap[token] || m;
     }
 
     function untoken(value){
@@ -1419,7 +1419,7 @@
       {
         var link = {
           path: key,
-          token: basis.l10n.getToken(key),
+          token: basis.l10n.token(key),
           handler: function(value){
             l10nProtoSync(this.path, value);
             for (var id in instances)
@@ -1499,8 +1499,11 @@
     __extend__: function(value){
       if (value instanceof Template)
         return value;
-      else
-        return new Template(value);
+
+      if (value instanceof TemplateSwitchConfig)
+        return new TemplateSwitcher(value);
+
+      return new Template(value);
     },
 
    /**
@@ -1651,6 +1654,76 @@
       }
     }
   });
+
+
+ /**
+  * @class
+  */
+  var TemplateSwitchConfig = function(config){
+    basis.object.extend(this, config);
+  };
+
+
+ /**
+  * @class
+  */
+  var TemplateSwitcher = basis.Class(null, {
+    className: namespace + '.TemplateSwitcher',
+
+    ruleRet_: null,
+    templates_: null,
+
+    templateClass: Template,
+    ruleEvents: null,
+    rule: String,  // return empty string as template source
+
+    init: function(config){
+      this.ruleRet_ = [];
+      this.templates_ = [];
+      this.rule = config.rule;
+
+      var events = config.events;
+      if (events && events.length)
+      {
+        this.ruleEvents = {};      
+        for (var i = 0, eventName; eventName = events[i]; i++)
+          this.ruleEvents[eventName] = true;
+      }
+
+      cleaner.add(this);
+    },
+    resolve: function(object){
+      var ret = this.rule(object);
+      var idx = this.ruleRet_.indexOf(ret);
+
+      if (idx == -1)
+      {
+        this.ruleRet_.push(ret);
+        idx = this.templates_.push(new this.templateClass(ret)) - 1;
+      }
+
+      return this.templates_[idx];
+    },
+    destroy: function(){
+      this.rule = null;
+      this.templates_ = null;
+      this.ruleRet_ = null;
+    }
+  });
+
+
+ /**
+  * Helper to create TemplateSwitchConfig instance
+  */
+  function switcher(events, rule){
+    var args = basis.array(arguments);
+    var rule = args.pop();
+
+    return new TemplateSwitchConfig({
+      rule: rule,
+      events: args.join(' ').trim().split(/\s+/)
+    });
+  }
 
 
   //
@@ -1928,7 +2001,7 @@
               if (dictionary.hasOwnProperty(path))
                 addSource(path, dictionary[path]);
 
-            return this;
+            return themeInterface;
           }
           else
           {
@@ -2022,7 +2095,10 @@
   // export names
   //
 
-  module.setWrapper(baseTheme.define);
+  module.setWrapper(function(){
+    ;;;basis.dev.warn('using basis.template as function is deprecated now, use basis.template.define instead');
+    return baseTheme.define.apply(baseTheme, arguments);
+  });
 
   module.exports = {
     DECLARATION_VERSION: DECLARATION_VERSION,
@@ -2051,7 +2127,11 @@
     COMMENT_VALUE: COMMENT_VALUE,
 
     // classes
+    TemplateSwitchConfig: TemplateSwitchConfig,
+    TemplateSwitcher: TemplateSwitcher,
     Template: Template,
+
+    switcher: switcher,
 
     // for debug purposes
     tokenize: tokenize,

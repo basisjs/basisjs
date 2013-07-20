@@ -1,4 +1,5 @@
 
+  basis.require('basis.timer');
   basis.require('basis.dom.event');
   basis.require('basis.l10n');
   basis.require('basis.template');
@@ -19,9 +20,11 @@
   var document = global.document;
   var domEvent = basis.dom.event;
   var arrayFrom = basis.array.from;
-  var l10nToken = basis.l10n.getToken;
+  var l10nToken = basis.l10n.token;
   var getFunctions = basis.template.htmlfgen.getFunctions;
   
+  var TemplateSwitchConfig = basis.template.TemplateSwitchConfig;
+  var TemplateSwitcher = basis.template.TemplateSwitcher;
   var Template = basis.template.Template;
 
   var TYPE_ELEMENT = basis.template.TYPE_ELEMENT;
@@ -234,9 +237,9 @@
               if (anim)
               {
                 domRef.classList.add(newClass + '-anim');
-                setTimeout(function(){
+                basis.timer.nextTick(function(){
                   domRef.classList.remove(newClass + '-anim');
-                }, 0);
+                });
               }
             }
           }
@@ -268,7 +271,7 @@
               if (anim)
               {
                 classList.add(newClass + '-anim');
-                setTimeout(function(){
+                basis.timer.nextTick(function(){
                   var classList = (classNameIsObject ? domRef.className.baseVal : domRef.className).split(WHITESPACE);
                   
                   classList.remove(newClass + '-anim');
@@ -277,7 +280,7 @@
                     domRef.className.baseVal = classList.join(' ');
                   else
                     domRef.className = classList.join(' ');                  
-                }, 0);
+                });
               }
             }
 
@@ -573,18 +576,35 @@
     return tmplNodeMap[refId].context;
   }
 
+
+ /**
+  * @class
+  */
   var HtmlTemplate = Template.subclass({
     className: namespace + '.Template',
 
     __extend__: function(value){
       if (value instanceof HtmlTemplate)
         return value;
-      else
-        return new HtmlTemplate(value);
+
+      if (value instanceof TemplateSwitchConfig)
+        return new HtmlTemplateSwitcher(value);
+
+      return new HtmlTemplate(value);
     },
 
     builder: buildFunctions
   });
+
+
+ /**
+  * @class
+  */
+  var HtmlTemplateSwitcher = TemplateSwitcher.subclass({
+    className: namespace + '.TemplateSwitcher',
+
+    templateClass: HtmlTemplate
+  });  
 
 
   //
@@ -592,7 +612,8 @@
   //
 
   module.exports = {
-    Template: HtmlTemplate
+    Template: HtmlTemplate,
+    TemplateSwitcher: HtmlTemplateSwitcher
   };
 
   //

@@ -87,12 +87,8 @@ basis.ready(function(){
     ruleEvents: false,
     rule: function(obj){
       return obj.data.title
-        .replace(/(?:^|[\.\_])?([A-Z])(?:[A-Z]+|[a-z]+)|(?:^|[\.\_])(?:([a-z])[a-z]+|([A-Z])[A-Z]+)|[^a-zA-Z]/g, '$1$2$3')
+        .replace(/(?:^|[\.\_])?([A-Z])(?:[A-Z]+|[a-z]+)|(?:^|[\.\_])?(?:([a-z])[a-z]+|([A-Z])[A-Z]+)|[^a-zA-Z]/g, '$1$2$3')
         .toUpperCase()
-        .split('')
-        .sort()
-        .join('')
-        .replace(/([A-Z])\1+/g, '$1')
         .split('');
     }
   });
@@ -168,10 +164,10 @@ basis.ready(function(){
   // Global events
   //
   basis.dom.event.addGlobalHandler('click', function(e){
-    if (!basis.dom.event.mouseButton(e, basis.dom.event.MOUSE_LEFT))
+    if (!event.mouseLeft)
       return;
     
-    var sender = basis.dom.event.sender(e);
+    var sender = event.sender;
 
     if (sender.tagName != 'A')
       sender = basis.dom.findAncestor(sender, function(node){ return node.tagName == 'A'; });
@@ -180,8 +176,7 @@ basis.ready(function(){
       navTree.open(sender.hash, basis.dom.parentOf(navTree.element, sender));
   });
 
-  basis.dom.event.addGlobalHandler('keydown', function(e){
-    var event = basis.dom.event(e);
+  basis.dom.event.addGlobalHandler('keydown', function(event){
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || prototypeMapPopup().visible)
       return;
 

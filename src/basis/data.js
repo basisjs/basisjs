@@ -254,9 +254,9 @@
 
   // Register base subscription types
 
-  SUBSCRIPTION.addProperty('delegate', 'delegateChanged');
-  SUBSCRIPTION.addProperty('target', 'targetChanged');
-  SUBSCRIPTION.addProperty('dataset', 'datasetChanged');
+  SUBSCRIPTION.addProperty('delegate');
+  SUBSCRIPTION.addProperty('target');
+  SUBSCRIPTION.addProperty('dataset');
 
 
   //
@@ -356,8 +356,13 @@
       if (this.active)
         this.addHandler(getMaskConfig(this.subscribeTo).handler);
 
-      if (this.syncAction)
-        this.setSyncAction(this.syncAction);
+      var syncAction = this.syncAction;
+
+      if (syncAction)
+      {
+        this.syncAction = null;
+        this.setSyncAction(syncAction);
+      }
     },
 
    /**
@@ -478,6 +483,8 @@
     * @param {function|null} syncAction
     */
     setSyncAction: function(syncAction){
+      var oldAction = this.syncAction;
+
       if (typeof syncAction != 'function')
         syncAction = null;
 
@@ -485,13 +492,15 @@
 
       if (syncAction)
       {
-        this.addHandler(this.syncEvents);
+        if (!oldAction)
+          this.addHandler(this.syncEvents);
         if (this.isSyncRequired())
           this.syncAction();
       }
       else
       {
-        this.removeHandler(this.syncEvents);
+        if (oldAction)
+          this.removeHandler(this.syncEvents);
       }
     },     
 
@@ -525,15 +534,30 @@
   var Value = Class(AbstractData, {
     className: namespace + '.Value',
 
-    // use custom constructor
-    extendConstructor_: false,
-
    /**
     * Fires when value was changed.
     * @param {*} oldValue Value before changes.
     * @event
     */
     emit_change: createEvent('change', 'oldValue'),
+
+   /**
+    * Actual value.
+    * @type {*}
+    */
+    value: null,
+
+   /**
+    * Value that was set on init.
+    * @type {*}
+    */
+    initValue: null,
+
+   /**
+    * Function for preprocessing value before set.
+    * @type {function(value)}
+    */
+    proxy: $self,
 
    /**
     * Indicates that property is locked (don't fire event for changes).
@@ -544,50 +568,44 @@
 
    /**
     * Value before property locked (passed as oldValue when property unlock).
-    * @type {object}
+    * @type {*}
     * @private
     */
-    lockValue_: null,
+    lockedValue_: null,
 
    /**
-    * @param {object} initValue Initial value for object.
-    * @param {object=} handler
-    * @param {function()=} proxy
     * @constructor
     */
-    init: function(initValue, handler, proxy){
-      AbstractData.prototype.init.call(this, {});
+    init: function(){
+      AbstractData.prototype.init.call(this);
 
-      if (handler)
-        this.addHandler(handler);
+      if (typeof this.proxy != 'function')
+        this.proxy = $self;
 
-      this.proxy = typeof proxy == 'function' ? proxy : basis.fn.$self;
-      this.initValue = this.value = this.proxy(initValue);
+      this.value = this.proxy(this.value);
+      this.initValue = this.value;
     },
 
    /**
-    * Sets new value for property, only when data not equivalent current
-    * property's value. In causes when value was changed or forceEvent
-    * parameter was true event 'change' dispatching.
-    * @param {object} data New value for property.
-    * @param {boolean=} forceEvent Dispatch 'change' event even value not changed.
-    * @return {boolean} Whether value was changed.
+    * Sets new value but only if value is not equivalent to current
+    * property's value. Change event emit if value was changed.
+    * @param {*} value New value for property.
+    * @return {boolean} Returns true if value was changed.
     */
-    set: function(data, forceEvent){
+    set: function(value){
       var oldValue = this.value;
-      var newValue = this.proxy ? this.proxy(data) : data;
-      var updated = false;
+      var newValue = this.proxy(value);
+      var changed = newValue !== oldValue;
 
-      if (newValue !== oldValue)
+      if (changed)
       {
         this.value = newValue;
-        updated = true;
+
+        if (!this.locked)
+          this.emit_change(oldValue);
       }
 
-      if (!this.locked && (updated || forceEvent))
-        this.emit_change(oldValue);
-
-      return updated;
+      return changed;
     },
 
    /**
@@ -596,26 +614,30 @@
     lock: function(){
       if (!this.locked)
       {
-        this.lockValue_ = this.value;
         this.locked = true;
+        this.lockedValue_ = this.value;
       }
     },
 
    /**
-    * Unlocks object for change event fire. If value was changed during object
-    * lock, than change event fires.
+    * Unlocks object for change event fire. If value changed during object
+    * was locked, than change event fires.
     */
     unlock: function(){
       if (this.locked)
       {
         this.locked = false;
-        if (this.value !== this.lockValue_)
-          this.emit_change(this.lockValue_);
+
+        if (this.value !== this.lockedValue_)
+        {
+          this.emit_change(this.lockedValue_);
+          this.lockedValue_ = null;
+        }
       }
     },
 
    /**
-    * Sets init value for property.
+    * Restore init value.
     */
     reset: function(){
       this.set(this.initValue);
@@ -627,10 +649,10 @@
     destroy: function(){
       AbstractData.prototype.destroy.call(this);
 
-      delete this.initValue;
-      delete this.proxy;
-      delete this.lockValue_;
-      delete this.value;
+      this.proxy = null;
+      this.initValue = null;
+      this.value = null;
+      this.lockedValue_ = null;
     }
   });
 
@@ -642,6 +664,7 @@
  /**
   * Key-value storage.
   * @class
+  * @name Object
   */
   var DataObject = Class(AbstractData, {
     className: namespace + '.Object',
@@ -1454,7 +1477,6 @@
     },
 
    /**
-    * @config {Array.<basis.data.Object>} items Initial set of items.
     * @constructor
     */
     init: function(){
@@ -1470,13 +1492,14 @@
     },
 
    /**
-    * @param {Array.<basis.data.Object>} items
+    * @param {Array.<basis.data.Object>|basis.data.Object} items
+    * @return {object|undefined} Returns delta of changes or undefined if no changes.
     */
     add: function(items){
-      var delta;
       var memberMap = this.members_;
-      var inserted = [];
       var listenHandler = this.listen.item;
+      var inserted = [];
+      var delta;
 
       if (items && !Array.isArray(items))
         items = [items];
@@ -1515,13 +1538,14 @@
     },
 
    /**
-    * @param {Array.<basis.data.Object>} items
+    * @param {Array.<basis.data.Object>|basis.data.Object} items
+    * @return {object|undefined} Returns delta of changes or undefined if no changes.
     */
     remove: function(items){
-      var delta;
       var memberMap = this.members_;
-      var deleted = [];
       var listenHandler = this.listen.item;
+      var deleted = [];
+      var delta;
 
       if (items && !Array.isArray(items))
         items = [items];
@@ -1561,26 +1585,27 @@
 
    /**
     * @param {Array.<basis.data.Object>} items
+    * @return {object|undefined} Returns delta of changes or undefined if no changes.
     */
     set: function(items){
       // a little optimizations
       if (!this.itemCount)
         return this.add(items);
 
-      if (!items.length)
+      if (!items || !items.length)
         return this.clear();
 
       // main part
 
       // build map for new items
       var memberMap = this.members_;
+      var listenHandler = this.listen.item;
       var exists = {};  // unique input DataObject's
       var deleted = [];
       var inserted = [];
       var object;
       var objectId;
       var delta;
-      var listenHandler = this.listen.item;
 
       for (var i = 0; i < items.length; i++)
       {
@@ -1632,66 +1657,33 @@
     },
 
    /**
+    * Set new item set and destroy deleted items.
     * @param {Array.<basis.data.Object>} items
-    * @param {boolean=} set    
+    * @return {Array.<basis.data.Object>|undefined} Returns array of inserted items or undefined if nothing inserted.
     */
-    sync: function(items, set){
-      if (!items)
-        return;
+    sync: function(items){
+      var delta = this.set(items) || {};
+      var deleted = delta.deleted;
 
-      Dataset.setAccumulateState(true);
+      if (deleted)
+        for (var i = 0, object; object = deleted[i]; i++)
+          object.destroy();
 
-      var memberMap = this.members_;
-      var object;
-      var objectId;
-      var exists = {};
-      var inserted = [];
-      var res;
-
-      for (var i = 0; i < items.length; i++)
-      {
-        object = items[i];
-
-        if (object instanceof DataObject)
-        {
-          objectId = object.basisObjectId;
-
-          exists[objectId] = object;
-          if (!memberMap[objectId])
-            inserted.push(object);
-        }
-        else
-        {
-          ;;;basis.dev.warn('Wrong data type: value must be an instance of basis.data.Object');
-        }
-      }
-
-      for (var objectId in this.items_)
-      {
-        if (!exists[objectId])
-          this.items_[objectId].destroy();
-      }
-
-      if (set && inserted.length)
-        res = this.add(inserted);
-
-      Dataset.setAccumulateState(false);
-
-      return res;
+      return delta.inserted;
     },
 
    /**
     * Removes all items from dataset.
     */
     clear: function(){
-      var delta;
       var deleted = this.getItems();
       var listenHandler = this.listen.item;
+      var delta;
 
       if (deleted.length)
       {
         if (listenHandler)
-          for (var i = deleted.length; i-- > 0;)
+          for (var i = 0; i < deleted.length; i++)
             deleted[i].removeHandler(listenHandler, this);
 
         this.emit_itemsChanged(delta = {
@@ -1801,17 +1793,46 @@
 
 
   //
-  // namespace wrapper
+  // helpers
   //
 
-  function dataWrapper(data){
+  function wrapData(data){
     if (Array.isArray(data))
-      return data.map(dataWrapper);
+      return data.map(function(item){
+        return { data: item };
+      });
     else
       return { data: data };
   }
 
-  module.setWrapper(dataWrapper);
+  function wrapObject(data){
+    if (!data || data.constructor !== Object)
+      data = {
+        value: data
+      };
+
+    return new DataObject({
+      data: data
+    });
+  }
+
+  function wrap(value, retObject){
+    var wrapper = retObject ? wrapObject : wrapData;
+
+    return Array.isArray(value)
+      ? value.map(wrapper)
+      : wrapper(value);
+  }
+
+
+  //
+  // namespace wrapper
+  //
+
+  module.setWrapper(function(value){
+    ;;;basis.dev.warn('using basis.data as function is deprecated now, use basis.data.wrapData instead');
+    return wrapData(value);
+  });
 
 
   //
@@ -1835,5 +1856,9 @@
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
 
-    getDatasetDelta: getDatasetDelta
+    getDatasetDelta: getDatasetDelta,
+
+    wrapData: wrapData,
+    wrapObject: wrapObject,
+    wrap: wrap
   };
