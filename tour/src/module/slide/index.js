@@ -1,3 +1,4 @@
+basis.require('basis.timer');
 basis.require('basis.data');
 basis.require('basis.data.dataset');
 basis.require('basis.data.index');
@@ -90,9 +91,9 @@ var panels = new basis.layout.VerticalPanelStack({
 
         this.tmpl.set('reloaded', true);
         var self = this;
-        setTimeout(function(){
+        basis.timer.nextTick(function(){
           self.tmpl.set('reloaded', false);
-        }, 0);
+        });
       },
 
       init: function(){

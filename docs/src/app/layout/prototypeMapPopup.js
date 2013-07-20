@@ -1,5 +1,6 @@
 
   basis.require('basis.cssom');
+  basis.require('basis.timer');
   basis.require('basis.ui');
   basis.require('basis.ui.field');
   basis.require('basis.ui.popup');
@@ -36,7 +37,7 @@
           targetContent().scrollTo(element);
           
           classList(element).add('highlight');
-          setTimeout(function(){ classList(element).remove('highlight'); }, 0);
+          basis.timer.nextTick(function(){ classList(element).remove('highlight'); });
 
           prototypeMapPopup.hide();
         }

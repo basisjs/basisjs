@@ -665,6 +665,7 @@
  /**
   * Key-value storage.
   * @class
+  * @name Object
   */
   var DataObject = Class(AbstractData, {
     className: namespace + '.Object',
@@ -1592,7 +1593,7 @@
       if (!this.itemCount)
         return this.add(items);
 
-      if (!items.length)
+      if (!items || !items.length)
         return this.clear();
 
       // main part
@@ -1830,7 +1831,7 @@
   //
 
   module.setWrapper(function(value){
-    ;;;basis.dev.warn('using basis.data as function is deprecated now, use basis.data.wrapData instead');    
+    ;;;basis.dev.warn('using basis.data as function is deprecated now, use basis.data.wrapData instead');
     return wrapData(value);
   });
 

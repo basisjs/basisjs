@@ -170,11 +170,6 @@
     };
   });
 
-  BINDING_PRESET.add('l10n', function(token){
-    ;;;basis.dev.warn('`l10n:` prefix in binding is deprecated. Use explicit basis.l10n.getToken("' + token + '") instead');
-    return basis.fn.$const(basis.l10n.getToken(token));
-  });
-
 
  /**
   * Base binding
@@ -276,6 +271,12 @@
   function getDocumentFragment(){
     return fragments.pop() || document.createDocumentFragment();
   }
+
+
+ /**
+  * @type {number}
+  */
+  var focusTimer;
 
 
  /**
@@ -653,9 +654,14 @@
         {
           var focusElement = this.tmpl.focus || this.element;
           if (focusElement)
-            setImmediate(function(){
+          {
+            if (focusTimer)
+              focusTimer = basis.timer.clearImmediate(focusTimer);
+
+            focusTimer = basis.timer.setImmediate(function(){
               DOM.focus(focusElement, select);
             });
+          }
         }
       },
 

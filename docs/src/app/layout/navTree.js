@@ -1,3 +1,4 @@
+basis.require('basis.timer');
 basis.require('basis.dom.event');
 basis.require('app.ext.docTree');
 
@@ -25,6 +26,7 @@ var navTree = new app.ext.docTree.DocTree({
       data: { kind: 'Section', title: 'basis', fullPath: 'basis' },
       selectable: false,
       childNodes: basis.object.iterate(basis.namespaces_, function(key){
+        if (key in app.core.mapDO == false) debugger;
         return app.core.mapDO[key];
       })
     }
@@ -122,7 +124,8 @@ if ('onhashchange' in window)
   basis.dom.event.addHandler(window, 'hashchange', checkLocation);
 else
   setInterval(checkLocation, 250);
-setTimeout(checkLocation, 0);
+
+basis.timer.nextTick(checkLocation);
 
 //
 // exports

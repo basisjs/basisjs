@@ -2216,35 +2216,67 @@
       return this.selected != selected;
     },
 
+   /**
+    * Set new value for selected property.
+    * @param {boolean} selected Should be node selected or not.
+    * @param {boolean} multiple Apply new state in multiple select mode or not.
+    * @return {boolean} Returns true if selected property was changed.
+    */
+    setSelected: function(selected, multiple){
+      return selected
+        ? this.select(multiple)
+        : this.unselect();
+    },
 
    /**
     * Makes node enabled.
+    * @return {boolean} Returns true if disabled property was changed.
     */
     enable: function(){
-      if (this.disabled)
+      var disabled = this.disabled;
+
+      if (disabled)
       {
         this.disabled = false;
 
-        if (this.disabled == this.contextDisabled)
+        if (!this.contextDisabled)
           this.emit_enable();
       }
+
+      return this.disabled != disabled;
     },
 
    /**
     * Makes node disabled.
+    * @return {boolean} Returns true if disabled property was changed.
     */
     disable: function(){
-      if (!this.disabled)
+      var disabled = this.disabled;
+
+      if (!disabled)
       {
         this.disabled = true;
 
-        if (this.disabled != this.contextDisabled)
+        if (!this.contextDisabled)
           this.emit_disable();
       }
+
+      return this.disabled != disabled;
     },
 
    /**
-    * @return {boolean} Return true if node itself or one of ancestor/owner are disabled.
+    * Set new value for disabled property.
+    * @param {boolean} disabled Should be node disabled or not.
+    * @return {boolean} Returns true if disabled property was changed.
+    */
+    setDisabled: function(disabled){
+      return disabled
+        ? this.disable()
+        : this.enable();
+    },
+
+   /**
+    * @return {boolean} Return true if node itself or context (one of ancestors/owner) are disabled.
     */
     isDisabled: function(){
       return this.disabled || this.contextDisabled;

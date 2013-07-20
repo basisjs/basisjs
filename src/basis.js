@@ -625,7 +625,8 @@
     var methods = {
       log: $undef,
       info: $undef,
-      warn: $undef
+      warn: $undef,
+      error: $undef
     };
 
     if (typeof console != 'undefined')
@@ -665,7 +666,7 @@
     {
       var len = object.length;
 
-      if (typeof len == 'undefined')
+      if (typeof len == 'undefined' || typeof object == 'function')
         return [object];
 
       if (!offset)
@@ -1637,15 +1638,36 @@
     if (typeof compiledSourceCode != 'function')
       try {
         compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
+          '//@ sourceURL=' + sourceURL + '\n' +
+          '//# sourceURL=' + sourceURL + '\n' +
           '"use strict";\n\n' +
-          sourceCode +
-          '//# sourceURL=' + sourceURL +
-          '//@ sourceURL=' + sourceURL
+          sourceCode
         );
       } catch(e) {
-        ;;;var src = document.createElement('script');src.src = sourceURL;src.async = false;document.head.appendChild(src);document.head.removeChild(src);
-        throw 'Compilation error ' + sourceURL + ':\n' + ('stack' in e ? e.stack : e);
-        //return;
+        /** @cut */ if ('line' in e == false && 'addEventListener' in window)
+        /** @cut */ {
+        /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
+        /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
+        /** @cut */   window.addEventListener('error', function onerror(event){
+        /** @cut */     if (event.filename == sourceURL)
+        /** @cut */     {
+        /** @cut */       window.removeEventListener('error', onerror);
+        /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
+        /** @cut */       event.preventDefault()
+        /** @cut */     }
+        /** @cut */   })
+        /** @cut */ 
+        /** @cut */   var script = document.createElement('script');
+        /** @cut */   script.src = sourceURL;
+        /** @cut */   script.async = false;
+        /** @cut */   document.head.appendChild(script);
+        /** @cut */   document.head.removeChild(script);
+        /** @cut */ }
+
+        // don't throw new exception, just output error message and return undefined
+        // in this case more chances for other modules continue to work
+        basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 4) : '') + ': ' + e);
+        return;
       }
 
     // run
@@ -1771,10 +1793,14 @@
     {
       var nsRootPath = config.path;
       var requested = {};
+      /** @cut */ var requires;
 
       return function(namespace, path){
         if (/[^a-z0-9_\.]/i.test(namespace))
           throw 'Namespace `' + namespace + '` contains wrong chars.';
+
+        /** @cut */ if (requires)
+        /** @cut */   requires.push(namespace);
 
         var filename = namespace.replace(/\./g, '/') + '.js';
         var namespaceRoot = namespace.split('.')[0];
@@ -1782,9 +1808,10 @@
         if (namespaceRoot == namespace)
           nsRootPath[namespaceRoot] = path || nsRootPath[namespace] || (pathUtils.baseURI + '/');
 
-        var requirePath = nsRootPath[namespaceRoot];
         if (!namespaces[namespace])
         {
+          var requirePath = nsRootPath[namespaceRoot];
+
           if (!/^(https?|chrome-extension):/.test(requirePath))
             throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
 
@@ -1795,12 +1822,21 @@
 
           var requestUrl = requirePath + filename;
 
+
           var ns = getNamespace(namespace);
           var sourceCode = getResourceContent(requestUrl);
+
+          /** @cut */ var savedRequires = requires;
+          /** @cut */ requires = [];
+
           runScriptInContext(ns, requestUrl, sourceCode);
           complete(ns, ns.exports);
-          ;;;ns.filename_ = requestUrl;
-          ;;;ns.source_ = sourceCode;
+
+          /** @cut */ ns.filename_ = requestUrl;
+          /** @cut */ ns.source_ = sourceCode;
+          /** @cut */ ns.requires_ = requires;
+
+          /** @cut */ requires = savedRequires;
         }
       };
     }

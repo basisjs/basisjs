@@ -999,6 +999,110 @@
                   }
                 }*/
               ]
+            },
+            {
+              name: 'field types',
+              testcase: [
+                {
+                  name: 'Array',
+                  test: function(){
+                    var T = basis.entity.createType({
+                      fields: {
+                        array: Array
+                      }
+                    });
+
+                    var a = [1, 2, 3];
+                    var b = [1, 2, 3];
+                    var c = [4, 5, 6];
+
+                    // undefined by default
+                    var obj = T({});
+                    this.is(null, obj.data.array);
+
+                    // set array
+                    var obj = T({ array: a });
+                    this.is(a, obj.data.array);
+
+                    this.is(false, obj.set('array', a));
+                    this.is(a, obj.data.array);
+
+                    this.is(false, obj.set('array', b));
+                    this.is(a, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', c));
+                    this.is(c, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', b));
+                    this.is(b, obj.data.array);
+
+                    this.is(false, obj.set('array', a));
+                    this.is(b, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', null));
+                    this.is(null, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', a));
+                    this.is(a, obj.data.array);
+
+                    // everything non-array become null
+                    this.is('object', typeof obj.set('array', null));
+                    this.is(null, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', a));
+                    this.is('object', typeof obj.set('array', undefined));
+                    this.is(null, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', a));
+                    this.is('object', typeof obj.set('array', true));
+                    this.is(null, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', a));
+                    this.is('object', typeof obj.set('array', 'whatever'));
+                    this.is(null, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', a));
+                    this.is('object', typeof obj.set('array', 123));
+                    this.is(null, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', a));
+                    this.is('object', typeof obj.set('array', {}));
+                    this.is(null, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', a));
+                    this.is('object', typeof obj.set('array', function(){}));
+                    this.is(null, obj.data.array);
+
+                    this.is(false, obj.set('array', 'whatever'));
+                    this.is(null, obj.data.array);
+
+                    // update with rollback
+                    var obj = T({ array: a });
+                    this.is(a, obj.data.array);
+
+                    this.is(false, obj.set('array', b, true));
+                    this.is(null, obj.modified);
+
+                    this.is('object', typeof obj.set('array', c, true));
+                    this.is({ array: a }, obj.modified);
+                    this.is(true, (obj.modified && obj.modified.array) === a);
+
+                    this.is('object', typeof obj.set('array', b, true));
+                    this.is(null, obj.modified);
+                    this.is(true, obj.data.array === a);
+
+                    // update to null with rollback 
+                    this.is('object', typeof obj.set('array', null, true));
+                    this.is({ array: a }, obj.modified);
+                    this.is(true, (obj.modified && obj.modified.array) === a);
+                    this.is(null, obj.data.array);
+
+                    this.is('object', typeof obj.set('array', b, true));
+                    this.is(null, obj.modified);
+                    this.is(true, obj.data.array === a);
+                  }
+                }
+              ]
             }
           ]
         }

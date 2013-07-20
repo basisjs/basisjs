@@ -1419,7 +1419,7 @@
       {
         var link = {
           path: key,
-          token: basis.l10n.getToken(key),
+          token: basis.l10n.token(key),
           handler: function(value){
             l10nProtoSync(this.path, value);
             for (var id in instances)
@@ -2126,7 +2126,10 @@
   // export names
   //
 
-  module.setWrapper(baseTheme.define);
+  module.setWrapper(function(){
+    ;;;basis.dev.warn('using basis.template as function is deprecated now, use basis.template.define instead');
+    return baseTheme.define.apply(baseTheme, arguments);
+  });
 
   module.exports = {
     DECLARATION_VERSION: DECLARATION_VERSION,

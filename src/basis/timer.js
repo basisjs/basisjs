@@ -15,198 +15,203 @@
   var getter = basis.getter;
   var arrayFrom = basis.array.from;
 
+  var MESSAGE_NAME = 'basisjs.setImmediate';
+  var createScript = function(){
+    return document.createElement('script');
+  };
 
   //
-  // Support for setImmediate/clearImmediate and fast setTimeout(.., 0)
+  // Support for setImmediate/clearImmediate
   //
 
-  (function(){
+  var setImmediate = global.setImmediate || global.msSetImmediate;
+  var clearImmediate = global.clearImmediate || global.msSetImmediate;
 
-    //
-    // Inspired on Domenic Denicola's solution https://github.com/NobleJS/setImmediate
-    //
+  // bind context for setImmediate/clearImmediate, IE10 throw exception if context isn't global
+  if (setImmediate)
+    setImmediate = setImmediate.bind(global);
 
-    if (global.msSetImmediate && global.msClearImmediate)
-    {
-      global.setImmediate = global.msSetImmediate;
-      global.clearImmediate = global.msClearImmediate;
-    }
+  if (clearImmediate)
+    clearImmediate = clearImmediate.bind(global);
 
-    if (!global.setImmediate)
-    {
-      var createScript = function(){
-        return document.createElement("script");
-      };
+  //
+  // emulate setImmediate/clearImmediate
+  // Inspired on Domenic Denicola's solution https://github.com/NobleJS/setImmediate
+  //
+  if (!setImmediate)
+  {
+    var runTask = (function(){
+      var taskById = {};
+      var taskId = 1;
 
-      var MESSAGE_NAME = "setImmediate.basis";
-
-      // by default
-      var addToQueue = function(taskId){
-        global.nativeSetTimeout_(function(){
-          runTask(taskId);
-        }, 0);
-      };
-
-      var runTask = (function(){
-        var taskById = {};
-        var taskId = 1;
-
-        //
-        // Add support for setImmediate
-        //
-        global.setImmediate = function(){
-          taskById[++taskId] = {
-            fn: arguments[0],
-            args: arrayFrom(arguments, 1)
-          };
-
-          addToQueue(taskId);
-
-          return taskId;
+      // emulate setImmediate
+      setImmediate = function(){
+        taskById[++taskId] = {
+          fn: arguments[0],
+          args: arrayFrom(arguments, 1)
         };
 
-        //
-        // Add support for clearImmediate
-        //
-        global.clearImmediate = function(id){
-          delete taskById[id];
-        };
+        addToQueue(taskId);
 
-        //
-        // return result function for task run
-        //
-        return function(id){
-          var task = taskById[id];
+        return taskId;
+      };
 
-          if (task)
-          {
-            try {
-              if (typeof task.fn == 'function')
-                task.fn.apply(undefined, task.args);
-              else
-              {
-                (global.execScript || function(fn){
-                  global["eval"].call(global, fn);
-                })(String(task.fn));
-              }
+      // emulate clearImmediate
+      clearImmediate = function(id){
+        delete taskById[id];
+      };
 
-            } finally {
-              delete taskById[id];
+      //
+      // return result function for task run
+      //
+      return function(id){
+        var task = taskById[id];
+
+        if (task)
+        {
+          try {
+            if (typeof task.fn == 'function')
+              task.fn.apply(undefined, task.args);
+            else
+            {
+              (global.execScript || function(fn){
+                global['eval'].call(global, fn);
+              })(String(task.fn));
             }
+          } finally {
+            delete taskById[id];
+          }
+        }
+      };
+    })();
+
+    // by default
+    var addToQueue = function(taskId){
+      global.nativeSetTimeout_(function(){
+        runTask(taskId);
+      }, 0);
+    };
+
+    //
+    // implement platform specific solution
+    //
+    if (global.MessageChannel)
+    {
+      addToQueue = function(taskId){
+        var channel = new global.MessageChannel();
+        channel.port1.onmessage = function(){
+          runTask(taskId);
+        };
+        channel.port2.postMessage(''); // broken in Opera if no value
+      };
+    }
+    else
+    {
+      // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+      // where `global.postMessage` means something completely different and can't be used for this purpose.
+      var postMessageSupported = global.postMessage && !global.importScripts;
+
+      // IE8 has postMessage implementation, but it is synchronous and can't be used.
+      if (postMessageSupported)
+      {
+        var oldOnMessage = global.onmessage;
+        global.onmessage = function(){
+          postMessageSupported = false;
+        };
+        global.postMessage('', '*');
+        global.onmessage = oldOnMessage;
+      }
+
+      if (postMessageSupported)
+      {
+        // postMessage scheme
+        var handleMessage = function(event){
+          if (event && event.source == global)
+          {
+            var taskId = String(event.data).split(MESSAGE_NAME)[1];
+
+            if (taskId)
+              runTask(taskId);
           }
         };
-      })();
 
+        if (global.addEventListener)
+          global.addEventListener('message', handleMessage, true);
+        else
+          global.attachEvent('onmessage', handleMessage);
 
-      //
-      // implement platform specific solution
-      //
-      if (global.MessageChannel)
-      {
+        // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
+        // invoking our onGlobalMessage listener above.
         addToQueue = function(taskId){
-          var channel = new global.MessageChannel();
-          channel.port1.onmessage = function(){
-            runTask(taskId);
-          };
-          channel.port2.postMessage(""); // broken in Opera if no value
+          global.postMessage(MESSAGE_NAME + taskId, '*');
         };
       }
       else
       {
-        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
-        // where `global.postMessage` means something completely different and can't be used for this purpose.
-        var postMessageSupported = global.postMessage && !global.importScripts;
-
-        // IE8 has postMessage implementation, but it is synchronous and can't be used.
-        if (postMessageSupported)
+        if (document && 'onreadystatechange' in createScript())
         {
-          var oldOnMessage = global.onmessage;
-          global.onmessage = function(){
-            postMessageSupported = false;
-          };
-          global.postMessage("", "*");
-          global.onmessage = oldOnMessage;
-        }
-
-        if (postMessageSupported)
-        {
-          // postMessage scheme
-          var handleMessage = function(event){
-            if (event && event.source == global)
-            {
-              var taskId = String(event.data).split(MESSAGE_NAME)[1];
-
-              if (taskId)
-                runTask(taskId);
-            }
-          };
-
-          if (global.addEventListener)
-            global.addEventListener("message", handleMessage, true);
-          else
-            global.attachEvent("onmessage", handleMessage);
-
-          // Make `global` post a message to itself with the handle and identifying prefix, thus asynchronously
-          // invoking our onGlobalMessage listener above.
+          // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+          // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
           addToQueue = function(taskId){
-            global.postMessage(MESSAGE_NAME + taskId, "*");
-          };
-        }
-        else
-        {
-          if (document && "onreadystatechange" in createScript())
-          {
-            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
-            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called
-            addToQueue = function(taskId){
-              var scriptEl = createScript();
-              scriptEl.onreadystatechange = function(){
-                runTask(taskId);
+            var scriptEl = createScript();
+            scriptEl.onreadystatechange = function(){
+              runTask(taskId);
 
-                scriptEl.onreadystatechange = null;
-                scriptEl.parentNode.removeChild(scriptEl);
-                scriptEl = null;
-              };
-              document.documentElement.appendChild(scriptEl);
+              scriptEl.onreadystatechange = null;
+              scriptEl.parentNode.removeChild(scriptEl);
+              scriptEl = null;
             };
-          }
+            document.documentElement.appendChild(scriptEl);
+          };
         }
       }
     }
+  }
 
-    //
-    // store native setTimeout/clearTimeout
-    //
-    global.nativeSetTimeout_ = global.setTimeout;
-    global.nativeClearTimeout_ = global.clearTimeout;
+  
+  //!!!!!!!!!!!!!!!!!!!!!!!! this section will be removed in 0.10 !!!!!!!!!!!!!!!!!!!!!!!!
+  //
+  // Add support for setImmediate/clearImmediate
+  //
+  if (!global.setImmediate)
+  {
+    global.setImmediate = setImmediate;
+    global.clearImmediate = clearImmediate;
+  }
 
-    //
-    // Override setTimeout
-    //
-    global.setTimeout = function(fn, timeout){
-      return isNaN(timeout) || timeout <= 0
-        ? MESSAGE_NAME + global.setImmediate(fn)
-        : global.nativeSetTimeout_(fn, timeout);
-    };
+  //
+  // store native setTimeout/clearTimeout
+  //
+  global.nativeSetTimeout_ = global.setTimeout;
+  global.nativeClearTimeout_ = global.clearTimeout;
 
-    //
-    // Override clearTimeout
-    //
-    global.clearTimeout = function(timer){
-      var immediateId = String(timer).split(MESSAGE_NAME)[1];
+  //
+  // Override setTimeout
+  //
+  global.setTimeout = function(fn, timeout){
+    return isNaN(timeout) || timeout <= 0
+      ? MESSAGE_NAME + setImmediate(fn)
+      : global.nativeSetTimeout_(fn, timeout);
+  };
 
-      return immediateId
-        ? global.clearImmediate(immediateId)
-        : global.nativeClearTimeout_(timer);
-    };
-  })();
+  //
+  // Override clearTimeout
+  //
+  global.clearTimeout = function(timer){
+    var immediateId = String(timer).split(MESSAGE_NAME)[1];
+
+    return immediateId
+      ? clearImmediate(immediateId)
+      : global.nativeClearTimeout_(timer);
+  };
+  //!!!!!!!!!!!!!!!!!!!!!!!! this section will be removed in 0.10 !!!!!!!!!!!!!!!!!!!!!!!!
 
 
   //
-  // TimeEventManager
+  // taskManager
   //
 
-  var TimeEventManager = (function(){
+  var taskManager = (function(){
     var NEVER = 2E12;
     var EVENT_TIME_GETTER = getter('eventTime');
 
@@ -334,6 +339,14 @@
   // export names
   //
 
-  module.exports ={
-    TimeEventManager: TimeEventManager
+  module.exports = {
+    nextTick: setImmediate,
+    setImmediate: setImmediate,
+    clearImmediate: clearImmediate,
+
+    add: taskManager.add,
+    remove: taskManager.remove
   };
+
+  // deprecated
+  module.exports.TimeEventManager = taskManager;

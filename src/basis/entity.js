@@ -74,12 +74,7 @@
         var typeClass = def[0];
         var fieldName = def[1];
 
-        if (typeClass instanceof EntityTypeConstructor)
-          typeClass.fields[fieldName] = type;
-        else if (typeClass instanceof EntitySet)
-          typeClass.wrapper = type;
-        else
-          console.log('Type definition is not resolved', def);
+        typeClass[fieldName] = type;
       }
 
       delete deferredTypeDef[typeName];
@@ -388,7 +383,7 @@
 
       // if wrapper is string resolve it by named type map
       if (typeof wrapper == 'string')
-        entitySetClass.prototype.wrapper = getTypeByName(wrapper, entitySetClass);
+        entitySetClass.prototype.wrapper = getTypeByName(wrapper, entitySetClass.prototype, 'wrapper');
 
       // resolve type name
       resolveType(name, result);
@@ -560,6 +555,21 @@
 
   var fieldDestroyHandlers = {};
 
+  function chooseArray(newArray, oldArray){
+    if (!Array.isArray(newArray))
+      return null;
+      
+    if (!Array.isArray(oldArray) || newArray.length != oldArray.length)
+      return newArray || null;
+
+    for (var i = 0; i < newArray.length; i++)
+      if (newArray[i] !== oldArray[i])
+        return newArray;
+    
+    return oldArray;
+  }  
+
+
  /**
   * @class
   */
@@ -718,7 +728,7 @@
       {
         if (typeof config.type == 'string')
         {
-          config.type = getTypeByName(config.type, this, key);
+          config.type = getTypeByName(config.type, this.fields, key);
         }
 
         // if type is array convert it into enum
@@ -730,6 +740,9 @@
           }
           config.defValue = config.type(config.defValue, values[0]);
         }
+
+        if (config.type === Array)
+          config.type = chooseArray;
 
         // if type still is not a function - ignore it
         if (typeof config.type != 'function')
@@ -1068,6 +1081,10 @@
         // main part
         var result;
         var rollbackData = this.modified;
+
+        if (valueWrapper === chooseArray && rollbackData && key in rollbackData)
+          value = chooseArray(value, rollbackData[key]);
+
         var newValue = valueWrapper(value, this.data[key]);
         var curValue = this.data[key];  // NOTE: value can be modify by valueWrapper,
                                         // that why we fetch it again after valueWrapper call

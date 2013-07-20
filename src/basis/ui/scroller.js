@@ -55,7 +55,7 @@
   var TRANSFORM_PROPERTY_NAME;
   
   (function(){
-    var style = document.createElement('div');
+    var style = document.createElement('div').style;
     
     function testProps(properties){
       for (var i = 0, propertyName; propertyName = properties[i]; i++)

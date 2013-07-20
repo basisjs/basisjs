@@ -1,6 +1,6 @@
 basis.ready(function(){
   basis.require('basis.ui');
-  basis.require('basis.format.highlight');
+  basis.require('basis.utils.highlight');
 
   new basis.ui.Node({
     container: document.body,
@@ -27,7 +27,8 @@ basis.ready(function(){
 
                 if (!this.code)
                 {
-                  this.code = basis.format.highlight(document.getElementById('demo-javascript').innerHTML, 'js');
+                  basis.utils.highlight.useStyle();
+                  this.code = basis.utils.highlight.highlight(document.getElementById('demo-javascript').innerHTML, 'js');
                   this.updateBind('code');
                 }
 

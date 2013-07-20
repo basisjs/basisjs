@@ -835,7 +835,7 @@
 
     recalcRequest: function(){
       if (!this.timer_)
-        this.timer_ = setTimeout(this.recalc, 0);
+        this.timer_ = basis.timer.setImmediate(this.recalc);
     },
 
     recalc: function(){
@@ -843,7 +843,7 @@
         this.calcMember(this.items_[idx]);
 
       this.indexUpdated = false;
-      this.timer_ = clearTimeout(this.timer_);
+      this.timer_ = basis.timer.clearImmediate(this.timer_);
     },
 
     calcMember: function(member){
