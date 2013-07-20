@@ -530,11 +530,10 @@
 
    /**
     * Fires when value was changed.
-    * @param {*} curValue Current value.
     * @param {*} oldValue Value before changes.
     * @event
     */
-    emit_change: createEvent('change', 'curValue', 'oldValue'),
+    emit_change: createEvent('change', 'oldValue'),
 
    /**
     * Indicates that property is locked (don't fire event for changes).
@@ -586,7 +585,7 @@
       }
 
       if (!this.locked && (updated || forceEvent))
-        this.emit_change(newValue, oldValue);
+        this.emit_change(oldValue);
 
       return updated;
     },
@@ -611,7 +610,7 @@
       {
         this.locked = false;
         if (this.value !== this.lockValue_)
-          this.emit_change(this.value, this.lockValue_);
+          this.emit_change(this.lockValue_);
       }
     },
 

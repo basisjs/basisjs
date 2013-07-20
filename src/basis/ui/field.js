@@ -1180,10 +1180,10 @@
       return false;
     },
 
-    emit_change: function(value, oldValue){
-      this.rx = this.regexpGetter(value);
+    emit_change: function(oldValue){
+      this.rx = this.regexpGetter(this.value);
 
-      Property.prototype.emit_change.call(this, value, oldValue);
+      Property.prototype.emit_change.call(this, oldValue);
     },
 
     extendConstructor_: true,
@@ -1221,8 +1221,8 @@
   var Matcher = MatchProperty.subclass({
     className: namespace + '.Matcher',
 
-    emit_change: function(value, oldValue){
-      MatchProperty.prototype.emit_change.call(this, value, oldValue);
+    emit_change: function(oldValue){
+      MatchProperty.prototype.emit_change.call(this, oldValue);
 
       this.applyMatch();
     },
@@ -1246,10 +1246,10 @@
   var MatchFilter = MatchProperty.subclass({
     className: namespace + '.MatchFilter',
 
-    emit_change: function(value, oldValue){
-      MatchProperty.prototype.emit_change.call(this, value, oldValue);
+    emit_change: function(oldValue){
+      MatchProperty.prototype.emit_change.call(this, oldValue);
 
-      this.node.setMatchFunction(value ? this.matchFunction.bind(this) : null);
+      this.node.setMatchFunction(this.value ? this.matchFunction.bind(this) : null);
     }
   });
   

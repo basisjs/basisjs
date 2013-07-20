@@ -5,9 +5,10 @@
   var SearchMatchInput = basis.ui.field.MatchInput.subclass({
     matchFilterClass: basis.ui.field.MatchFilter.subclass({
       textNodeGetter: basis.getter('tmpl.title'),
-      emit_change: function(value, oldValue){
-        basis.ui.field.MatchProperty.prototype.emit_change.call(this, value, oldValue);
+      emit_change: function(oldValue){
+        basis.ui.field.MatchProperty.prototype.emit_change.call(this, oldValue);
 
+        var value = this.value;
         var fc = value.charAt(0);
         var v = value.substr(1).replace(/./g, function(m){ return '[' + m.toUpperCase() + m.toLowerCase() + ']'; });
         var rx = new RegExp('(^|[^a-zA-Z])([' + fc.toLowerCase() + fc.toUpperCase() +']' + v + ')|([a-z])(' + fc.toUpperCase() + v + ')');
@@ -60,8 +61,8 @@
         return new RegExp('(^|[^a-z])(' + value.forRegExp() + ')', 'i');
       },
       handler: {
-        change: function(sender, value){
-          searchInput.tmpl.set('empty', !value ? 'empty' : '');
+        change: function(){
+          searchInput.tmpl.set('empty', !this.value ? 'empty' : '');
         }
       }
     },

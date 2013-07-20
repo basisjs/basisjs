@@ -284,48 +284,6 @@
         setRowCount(10);
       });
 
-      /*
-      tableFilter = new DOM.Wrapper.Property('', {
-        change: function(value){
-          var rx = new RegExp('(' + value.forRegExp() + ')', 'i');
-          TestTable.setMatchFunction(value ? function(node, reset){
-            if (!reset)
-            {
-              var textNode = node._m || node.element.childNodes[5].firstChild.firstChild;
-              var p = textNode.nodeValue.split(rx);
-              if (p.length > 1)
-              {
-                DOM.replace(
-                  node._x || textNode,
-                  node._x = DOM.createElement('SPAN.matched', DOM.wrap(p, { 'SPAN.match': function(v, i){ return i % 2 == 1 }}))
-                );
-                node._m = textNode;
-                return true;
-              }
-            }
-            
-            if (node._x)
-            {
-              DOM.replace(node._x, node._m);
-              delete node._x;
-              delete node._m;
-            }
-            
-            return false;
-          } : null);
-        }
-      }, String.trim);
-
-      DOM.insert(document.body, DOM.createElement({
-        description: 'INPUT',
-        keyup: function(){
-          tableFilter.set(this.value)
-        },
-        change: function(){
-          tableFilter.set(this.value)
-        }
-      }), DOM.INSERT_BEFORE, TestTable.element);*/
-
       var field = new basis.ui.field.MatchInput({
         matchFilter: {
           node: TestTable,

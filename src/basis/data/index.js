@@ -682,10 +682,10 @@
 
     listen: {
       index: {
-        change: function(sender, value){
+        change: function(sender){
           var indexMap = this.indexMap;
 
-          indexMap.indexValues[this.key] = value;
+          indexMap.indexValues[this.key] = sender.value;
           indexMap.indexUpdated = true;
           indexMap.recalcRequest();
         }

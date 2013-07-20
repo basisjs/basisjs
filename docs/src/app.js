@@ -62,8 +62,8 @@ basis.ready(function(){
   var searchInput = resource('app/layout/searchInput.js')();
   searchInput.matchFilter.node = searchTree;
   searchInput.matchFilter.addHandler({
-    change: function(sender, value, oldValue){
-      if (value)
+    change: function(sender, oldValue){
+      if (this.value)
       {
         if (!oldValue)
         {
@@ -71,7 +71,7 @@ basis.ready(function(){
           sidebarPages.item('search').select();
         }
 
-        searchTree.setDataSource(searchCloud.getSubset(value.charAt(0).toUpperCase()));
+        searchTree.setDataSource(searchCloud.getSubset(this.value.charAt(0).toUpperCase()));
       }
       else
       {

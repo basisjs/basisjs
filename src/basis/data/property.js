@@ -99,8 +99,8 @@
    /**
     * @event
     */
-    emit_change: function(value, oldValue){
-      Value.prototype.emit_change.call(this, value, oldValue);
+    emit_change: function(oldValue){
+      Value.prototype.emit_change.call(this, oldValue);
 
       if (!this.links_.length || cleaner.globalDestroy)
         return;
