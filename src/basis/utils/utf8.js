@@ -1,11 +1,11 @@
 
-  basis.require('basis.crypt.utf16');
+  basis.require('basis.utils.utf16');
 
  /**
-  * @namespace basis.crypt.utf8
+  * @namespace basis.utils.utf8
   */
 
-  var utf16 = basis.crypt.utf16;
+  var utf16 = basis.utils.utf16;
   var chars = basis.array.create(255, function(i){
     return String.fromCharCode(i);
   });

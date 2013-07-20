@@ -665,6 +665,7 @@
  /**
   * Key-value storage.
   * @class
+  * @name Object
   */
   var DataObject = Class(AbstractData, {
     className: namespace + '.Object',
@@ -1592,7 +1593,7 @@
       if (!this.itemCount)
         return this.add(items);
 
-      if (!items.length)
+      if (!items || !items.length)
         return this.clear();
 
       // main part

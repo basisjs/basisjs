@@ -1,7 +1,7 @@
 
-  basis.require('basis.crypt.utf8');
-  basis.require('basis.crypt.utf16');
-  basis.require('basis.crypt.base64');
+  basis.require('basis.utils.utf8');
+  basis.require('basis.utils.utf16');
+  basis.require('basis.utils.base64');
 
  /**
   * @namespace basis.crypt
@@ -9,9 +9,9 @@
 
   var arrayFrom = basis.array.from;
   var createArray = basis.array.create;
-  var UTF16 = basis.crypt.utf16;
-  var UTF8 = basis.crypt.utf8;
-  var base64 = basis.crypt.base64;
+  var UTF16 = basis.utils.utf16;
+  var UTF8 = basis.utils.utf8;
+  var base64 = basis.utils.base64;
 
 
   function rotateLeft(number, offset){

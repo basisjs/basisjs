@@ -1,22 +1,19 @@
 basis.require('basis.ui');
-basis.require('basis.format.highlight');
+basis.require('basis.ui.code');
 
 var FILE_EXT_CODE_MAP = {
-  tmpl: 'text',
-  js: 'js',
-  css: 'css'
+  '.tmpl': 'text',
+  '.js': 'js',
+  '.css': 'css'
 }
 
-var codeNode = new basis.format.highlight.SourceCodeNode({
+var codeNode = new basis.ui.code.SourceCode({
   autoDelegate: true,
-  templateUpdate: function(){
+  emit_update: function(delta){
     if (this.data.path && !this.data.isFolder)
-    {
-      var ext = basis.path.extname(this.data.path);
-      this.lang = FILE_EXT_CODE_MAP[ext.slice(1)] || 'text';
-    }
-   
-    basis.format.highlight.SourceCodeNode.prototype.templateUpdate.apply(this, arguments);
+      this.lang = FILE_EXT_CODE_MAP[basis.path.extname(this.data.path)] || 'text';    
+
+    basis.ui.code.SourceCode.prototype.emit_update.call(this, delta);
   }
 });
 
