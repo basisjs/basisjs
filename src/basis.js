@@ -33,14 +33,8 @@
  * - basis.cleaner
  */
 
-// global scope: `window` in browser, or `global` on node.js
-;(function(global){
-
+;(function(global){ // global is current context (`window` in browser and `global` on node.js)
   'use strict';
-
-  //
-  // import names
-  //
 
   var document = global.document;
   var prefetchedResources = global.__resources__;
@@ -179,12 +173,6 @@
 
     return result;
   }
-
-
- /**
-  * Function extensions
-  * @namespace Function
-  */
 
  /**
   * @param {*} value
@@ -343,6 +331,7 @@
         return fn;
       }
 
+      // for cases when path isn't a property name chain
       return new Function('object', 'return object != null ? object.' + path + ' : object');
     }
 
@@ -620,8 +609,21 @@
   //
 
   var NODE_ENV = typeof process != 'undefined' && process.versions && process.versions.node;
+
+ /**
+  * Utilities for handling and transforming file paths. All these functions perform
+  * only string transformations. Server or something else are not consulted to
+  * check whether paths are valid.
+  *
+  * Functions are work similar to node.js `path` module. For node.js environment
+  * `path` module is used.
+  *
+  * @name path
+  * @namespace basis.path
+  */
   var pathUtils = (function(){
     var utils;
+    var baseURI;
 
     if (NODE_ENV)
     {
@@ -633,35 +635,115 @@
         'resolve',
         'relative'
       ]);
+
+      baseURI = __dirname;
     }
     else
     {
       var linkEl = document.createElement('a');
+      var normalizePathCache = {};
+
+      var ABSOLUTE_RX = /^([^\/]+:|\/)/;
       var HREF_ABSOLUTIZE_BUG = (function(){
         linkEl.href = '';
         return !linkEl.href;
       })();
 
       utils = {
+       /**
+        * Normalize a string path, taking care of '..' and '.' parts.
+        * When multiple slashes are found, they're replaced by a single one;
+        * when the path contains a trailing slash, it is preserved.
+        *
+        * Origin is not includes in result path.
+        *
+        * @example
+        *   basis.path.normalize('/foo/bar//baz/asdf/quux/..');
+        *   // returns '/foo/bar/baz/asdf'
+        *
+        *   basis.path.normalize('http://example.com:8080/foo//..//bar/');
+        *   // returns '/bar'
+        *
+        *   basis.path.normalize('//localhost/foo/./..//bar/');
+        *   // returns '/bar'
+        *
+        * @param {string} path
+        * @return {string}
+        */ 
         normalize: function(path){
-          linkEl.href = path || '';
+          if (!path)
+            path = '';
+
+          // use cache if possible
+          if (path in normalizePathCache)
+            return normalizePathCache[path];
+
+          // use link element as path resolver
+          linkEl.href = path
+            .replace(/^([a-z0-9\-]+:)?\/\/[^\/]+/i, '') // but cut off origin
+            .replace(/\/{2,}/g, '/');                   // and replace sequence of multiple `/` for one
 
           // IE7 and lower does not absolutize href on assign, but do that on link cloning
           // we replace linkEl for it's clone to get absolute path
           if (HREF_ABSOLUTIZE_BUG)
             linkEl = linkEl.cloneNode(false);
 
-          return linkEl.href.substring(0, linkEl.href.length - linkEl.hash.length - linkEl.search.length);
+          // result is link pathname with no trailing `/`
+          var result = linkEl.pathname.replace(/\/$/, '');
+
+          // cache result
+          normalizePathCache[path] = result;
+
+          return result;
         },
+
+       /**
+        * Return the directory name of a path. Similar to node.js path.dirname
+        * or the Unix dirname command.
+        *
+        * @example
+        *   basis.path.dirname('/foo/bar/baz/whatever'); // returns '/foo/bar/baz'
+        *
+        * @param {string} path
+        * @return {string}
+        */ 
         dirname: function(path){
           return this.normalize(path).replace(/\/[^\/]*$/, '');
         },
+
+       /**
+        * Return the extension of the path, from the last '.' to end of string
+        * in the last portion of the path. If there is no '.' in the last
+        * portion of the path or the first character of it is '.', then it
+        * returns an empty string.
+        *
+        * @example
+        *   basis.path.extname('index.html'); // returns '.html'
+        *   basis.path.extname('index.');     // returns '.'
+        *   basis.path.extname('index');      // returns ''
+        *
+        * @param {string} path
+        * @return {string} Path extension with leading dot or empty string.
+        */ 
         extname: function(path){
-          var ext = String(path).match(/\.[a-z0-9_\-]+$/);
+          var ext = this.normalize(path).match(/\.[^\\\/]*$/);
           return ext ? ext[0] : '';
         },
+
+       /**
+        * Return the last portion of a path. Similar to node.js path.basename
+        * or the Unix basename command.
+        *
+        * @example
+        *   basis.path.basename('/foo/bar/baz.html');          // returns 'baz.html'
+        *   basis.path.basename('/foo/bar/baz.html', '.html'); // returns 'baz'
+        *
+        * @param {string} path
+        * @param {string=} ext
+        * @return {string}
+        */ 
         basename: function(path, ext){
-          var filename = String(path).match(/[^\\\/]*$/);
+          var filename = this.normalize(path).match(/[^\\\/]*$/);
           filename = filename ? filename[0] : '';
 
           if (ext == this.extname(filename))
@@ -669,37 +751,94 @@
 
           return filename;
         },
-        resolve: function(path){  // TODO: more compliant with node.js
-          return this.normalize(path);
+
+       /**
+        * Resolves to to an absolute path.
+        *
+        * If to isn't already absolute from arguments are prepended in right
+        * to left order, until an absolute path is found. If after using all
+        * from paths still no absolute path is found, the current location is
+        * used as well. The resulting path is normalized, and trailing slashes
+        * are removed unless the path gets resolved to the root directory.
+        * Non-string arguments are ignored.
+        *
+        * @example
+        *   basis.path.resolve('/foo/bar', './baz');
+        *   // returns '/foo/bar/baz'
+        *
+        *   basis.path.resolve('/foo/bar', '/demo/file/');
+        *   // returns '/demo/file'
+        *
+        *   basis.path.resolve('foo', 'bar/baz/', '../gif/image.gif');
+        *   // if current location is /demo, it returns '/demo/foo/bar/gif/image.gif'
+        *
+        * @param {..string=} from
+        * @param {string} to
+        * @return {string}
+        */
+        resolve: function(from, to){
+          var args = arrayFrom(arguments).reverse();
+          var path = [];
+          var absoluteFound = false;
+
+          for (var i = 0; !absoluteFound && i < args.length; i++)
+            if (typeof args[i] == 'string')
+            {
+              path.unshift(args[i]);
+              absoluteFound = ABSOLUTE_RX.test(args[i]);
+            }
+
+          if (!absoluteFound)
+            path.unshift(baseURI);
+
+          return this.normalize(path.join('/'));
         },
+
+       /**
+        * Solve the relative path from from to to.
+        *
+        * At times we have two absolute paths, and we need to derive the
+        * relative path from one to the other. This is actually the reverse
+        * transform of {basis.path.resolve}, which means we see that:
+        *
+        *   basis.path.resolve(from, basis.path.relative(from, to)) == basis.path.resolve(to)
+        *
+        * If `to` argument omitted than resolve `from` relative to current baseURI.
+        *
+        * @example
+        *   basis.path.relative('/data/orandea/test/aaa', '/data/orandea/impl/bbb');
+        *   // returns '../../impl/bbb'
+        *
+        * @param {string} from
+        * @param {string=} to
+        * @return {string}
+        */
         relative: function(from, to){
           if (typeof to != 'string')
           {
             to = from;
-            from = this.baseURI;
-          }
-          else
-          {
-            from = this.dirname(from);
+            from = baseURI;
           }
 
           var abs = this.normalize(to).split(/\//);
-          var loc = from.split(/\//);
+          var loc = this.normalize(from).split(/\//);
           var i = 0;
 
           while (abs[i] == loc[i] && typeof loc[i] == 'string')
             i++;
 
           var prefix = '';
-          for (var j = loc.length - i; j >= 0; j--)
+          for (var j = loc.length - i; j > 0; j--)
             prefix += '../';
 
           return prefix + abs.slice(i).join('/');
         }
       };
+
+      baseURI = location.pathname.replace(/[^\/]+$/, '');
     }
 
-    utils.baseURI = utils.dirname(utils.resolve());
+    utils.baseURI = baseURI;
 
     return utils;
   })();
@@ -709,18 +848,30 @@
   // apply config
   //
 
-  var config = (function(){
-    function getConfigAttr(node){
-      return node.getAttributeNode('data-basis-config') || node.getAttributeNode('basis-config');
-    }
+ /**
+  * @namespace basis
+  */
 
-    var basisUrl = '';
+  var basisFilename = '';
+
+ /**
+  * basis.js options read from script's `basis-config` or `data-basis-config` attribute.
+  *
+  * Special processing options:
+  * - autoload: namespace that must be loaded right after core loaded
+  * - path: dictionary of paths for root namespaces
+  *
+  * Other options copy into basis.config as is.
+  */
+  var config = (function(){
+    var basisBaseURI = '';
     var config = {};
 
     if (NODE_ENV)
     {
       // node.js env
-      basisUrl = __dirname;
+      basisFilename = __filename;
+      basisBaseURI = __dirname;
     }
     else
     {
@@ -737,7 +888,8 @@
             ;;;consoleMethods.error('basis.js config parse fault: ' + e);
           }
 
-          basisUrl = pathUtils.dirname(scriptEl.src);
+          basisFilename = pathUtils.normalize(scriptEl.src)
+          basisBaseURI = pathUtils.dirname(basisFilename);
 
           break;
         }
@@ -745,7 +897,7 @@
     }
 
     config.path = extend(config.path || {}, {
-      basis: basisUrl
+      basis: basisBaseURI
     });
       
     var autoload = config.autoload;
@@ -773,7 +925,7 @@
     }
 
     for (var key in config.path)
-      config.path[key] = pathUtils.resolve(config.path[key] + '/');
+      config.path[key] = pathUtils.resolve(config.path[key]) + '/';
 
     return config;
   })();
@@ -784,6 +936,16 @@
   //
 
   var namespaces = {};
+
+ /**
+  * Returns namespace by path or creates new one (if namespace isn't exists).
+  * @example
+  *   var fooBarNamespace = basis.namespace('foo.bar');
+  * @name namespace
+  * @param {string} path
+  * @param {function()} wrapFunction Deprecated.
+  * @return {basis.Namespace}
+  */
   var getNamespace = function(path, wrapFunction){
     var cursor = global;
     var nsRoot;
@@ -800,7 +962,7 @@
          /**
           * @returns {*|undefined}
           */
-          function namespace(){
+          function namespace_(){
             if (wrapFunction)
               return wrapFunction.apply(this, arguments);
           }
@@ -811,7 +973,7 @@
           };
           pathFn.toString = $const(path);
 
-          return extend(namespace, {
+          return extend(namespace_, {
             path: pathFn,
             exports: {
               path: pathFn
@@ -1318,20 +1480,20 @@
   //
 
   var resourceCache = {};
-  var requestResourceCache = {};
+  var resourceRequestCache = {};
   /** @cut */ var resourceResolvingStack = [];
 
   // apply prefetched resources to cache
   (function(){
     if (prefetchedResources)
       for (var key in prefetchedResources)
-        requestResourceCache[pathUtils.resolve(key)] = prefetchedResources[key];
+        resourceRequestCache[pathUtils.resolve(key)] = prefetchedResources[key];
 
     prefetchedResources = null; // reset prefetched to reduce memory leaks
   })();
 
   var getResourceContent = function(url, ignoreCache){
-    if (ignoreCache || !requestResourceCache.hasOwnProperty(url))
+    if (ignoreCache || !resourceRequestCache.hasOwnProperty(url))
     {
       var resourceContent = '';
 
@@ -1365,13 +1527,15 @@
         }
       }
 
-      requestResourceCache[url] = resourceContent;
+      resourceRequestCache[url] = resourceContent;
     }
 
-    return requestResourceCache[url];
+    return resourceRequestCache[url];
   };
 
-  // basis.resource
+ /**
+  * @name resource
+  */
   var getResource = function(resourceUrl){
     resourceUrl = pathUtils.resolve(resourceUrl);
 
@@ -1431,9 +1595,9 @@
         update: function(newContent){
           newContent = String(newContent);
 
-          if (!resolved || newContent != requestResourceCache[resourceUrl])
+          if (!resolved || newContent != resourceRequestCache[resourceUrl])
           {
-            requestResourceCache[resourceUrl] = newContent;
+            resourceRequestCache[resourceUrl] = newContent;
 
             if (contentWrapper)
             {
@@ -1451,7 +1615,7 @@
           }
         },
         reload: function(){
-          var oldContent = requestResourceCache[resourceUrl];
+          var oldContent = resourceRequestCache[resourceUrl];
           var newContent = getResourceContent(resourceUrl, true);
 
           if (newContent != oldContent)
@@ -1631,13 +1795,13 @@
         var namespaceRoot = namespace.split('.')[0];
 
         if (namespaceRoot == namespace)
-          nsRootPath[namespaceRoot] = nsRootPath[namespace] || (pathUtils.baseURI + '/');
+          nsRootPath[namespaceRoot] = nsRootPath[namespace] || pathUtils.baseURI;
 
         if (!namespaces[namespace])
         {
           var requirePath = nsRootPath[namespaceRoot];
 
-          if (!/^(https?|chrome-extension):/.test(requirePath))
+          if (!/^\//.test(requirePath))
             throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
 
           if (!requested[namespace])
@@ -2395,7 +2559,7 @@
   */
 
  /**
-  * Singleton object to destroy registred objects on page unload
+  * Singleton object to destroy registred via {basis.cleaner.add} method objects on page unload event.
   */
   var cleaner = (function(){
     var objects = [];
@@ -2462,6 +2626,8 @@
 
   // create and extend basis namespace
   var basis = getNamespace('basis').extend({
+    filename_: basisFilename,
+
     NODE_ENV: NODE_ENV,
     config: config,
     platformFeature: {},
