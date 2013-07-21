@@ -751,15 +751,31 @@
     AjaxRequest: AjaxRequest,
     Transport: AjaxTransport,
 
-    request: function(config){
+    request: function(config, successCallback, failureCallback){
+      if (typeof config == 'string')
+        config = {
+          url: config,
+          asynchronous: !!(successCallback || failureCallback)
+        };
+
       var transport = new AjaxTransport(config);
       transport.addHandler({
+        success: successCallback && function(sender, req, data){
+          successCallback(data);
+        },
+        failure: failureCallback && function(sender, req, error){
+          failureCallback(error);
+        },
         complete: function(){
           basis.timer.nextTick(function(){
             transport.destroy();
           });
         }
       });
-      transport.request();
+
+      var req = transport.request();
+
+      if (!req.requestData.asynchronous)
+        return req.getResponseData();
     }
   };
