@@ -8,28 +8,32 @@
 
 /**
  * @annotation
- * Basis library core module. It provides various most using functions
- * and base functionality.
+ * Basis library core module. It provides various most using functions,
+ * classes and functionality.
  *
  * This file should be loaded first.
  *
  * Content overview:
- * - Buildin class extensions and fixes
- *   o Object (static class members only)
+ * - util functions
+ * - console method wrappers (basis.dev)
+ * - basis.path (path utils)
+ * - process config (basis.config)
+ * - basis.namespace
+ * - basis.Class namespace (provides inheritance)
+ * - basis.Token
+ * - basis.resource
+ * - basis.require
+ * - buildin class extensions and fixes
  *   o Function
  *   o Array
  *   o String
  *   o Number
  *   o Date (more extensions for Date in src/basis/date.js)
- * - namespace sheme (module subsystem)
- * - resouces
- * - basis.Class namespace (provides inheritance)
- * - cleaner
- * - Token
- * - basis.ready (on load handler)
+ * - basis.ready
+ * - basis.cleaner
  */
 
-// Define global scope: `window` in browser, or `global` on node.js
+// global scope: `window` in browser, or `global` on node.js
 ;(function(global){
 
   'use strict';
@@ -41,11 +45,6 @@
   var document = global.document;
   var prefetchedResources = global.__resources__;
 
-
- /**
-  * Object extensions
-  * @namespace Object
-  */
 
  /**
   * Returns first not null value.
@@ -589,6 +588,1086 @@
   }
 
 
+  // ============================================
+  // safe console method wrappers
+  //
+
+  var consoleMethods = (function(){
+    var methods = {
+      log: $undef,
+      info: $undef,
+      warn: $undef,
+      error: $undef
+    };
+
+    if (typeof console != 'undefined')
+      iterate(methods, function(methodName){
+        methods[methodName] = 'bind' in Function.prototype && typeof console[methodName] == 'function'
+          ? Function.prototype.bind.call(console[methodName], console)
+            // ie8 and lower, it's also more safe when Function.prototype.bind defined
+            // by other libraries (like es5-shim)
+          : function(){
+              Function.prototype.apply.call(console[methodName], console, arguments)
+            };
+      });
+
+    return methods;
+  })();
+
+
+  // ============================================
+  // path utils
+  //
+
+  var NODE_ENV = typeof process != 'undefined' && process.versions && process.versions.node;
+  var pathUtils = (function(){
+    var utils;
+
+    if (NODE_ENV)
+    {
+      utils = slice(require('path'), [
+        'normalize',
+        'dirname',
+        'extname',
+        'basename',
+        'resolve',
+        'relative'
+      ]);
+    }
+    else
+    {
+      var linkEl = document.createElement('a');
+      var HREF_ABSOLUTIZE_BUG = (function(){
+        linkEl.href = '';
+        return !linkEl.href;
+      })();
+
+      utils = {
+        normalize: function(path){
+          linkEl.href = path || '';
+
+          // IE7 and lower does not absolutize href on assign, but do that on link cloning
+          // we replace linkEl for it's clone to get absolute path
+          if (HREF_ABSOLUTIZE_BUG)
+            linkEl = linkEl.cloneNode(false);
+
+          return linkEl.href.substring(0, linkEl.href.length - linkEl.hash.length - linkEl.search.length);
+        },
+        dirname: function(path){
+          return this.normalize(path).replace(/\/[^\/]*$/, '');
+        },
+        extname: function(path){
+          var ext = String(path).match(/\.[a-z0-9_\-]+$/);
+          return ext ? ext[0] : '';
+        },
+        basename: function(path, ext){
+          var filename = String(path).match(/[^\\\/]*$/);
+          filename = filename ? filename[0] : '';
+
+          if (ext == this.extname(filename))
+            filename = filename.substring(0, filename.length - ext.length);
+
+          return filename;
+        },
+        resolve: function(path){  // TODO: more compliant with node.js
+          return this.normalize(path);
+        },
+        relative: function(from, to){
+          if (typeof to != 'string')
+          {
+            to = from;
+            from = this.baseURI;
+          }
+          else
+          {
+            from = this.dirname(from);
+          }
+
+          var abs = this.normalize(to).split(/\//);
+          var loc = from.split(/\//);
+          var i = 0;
+
+          while (abs[i] == loc[i] && typeof loc[i] == 'string')
+            i++;
+
+          var prefix = '';
+          for (var j = loc.length - i; j >= 0; j--)
+            prefix += '../';
+
+          return prefix + abs.slice(i).join('/');
+        }
+      };
+    }
+
+    utils.baseURI = utils.dirname(utils.resolve());
+
+    return utils;
+  })();
+
+
+  // =============================================
+  // apply config
+  //
+
+  var config = (function(){
+    function getConfigAttr(node){
+      return node.getAttributeNode('data-basis-config') || node.getAttributeNode('basis-config');
+    }
+
+    var basisUrl = '';
+    var config = {};
+
+    if (NODE_ENV)
+    {
+      // node.js env
+      basisUrl = __dirname;
+    }
+    else
+    {
+      // browser env
+      var scripts = document.getElementsByTagName('script');
+      for (var i = 0, scriptEl; scriptEl = scripts[i]; i++)
+      {
+        var configAttrNode = scriptEl.getAttributeNode('data-basis-config') || scriptEl.getAttributeNode('basis-config');
+        if (configAttrNode)
+        {
+          try {
+            extend(config, Function('return{' + configAttrNode.nodeValue + '}')() || {});
+          } catch (e) {
+            ;;;consoleMethods.error('basis.js config parse fault: ' + e);
+          }
+
+          basisUrl = pathUtils.dirname(scriptEl.src);
+
+          break;
+        }
+      }
+    }
+
+    config.path = extend(config.path || {}, {
+      basis: basisUrl
+    });
+      
+    var autoload = config.autoload;
+    config.autoload = false;
+    if (autoload)
+    {
+      var m = autoload.match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)((?:\.[a-z$_][a-z0-9$_]*)*)$/i);
+      if (m)
+      {
+        if (m[2] != 'basis')
+        {
+          config.autoload = m[2] + (m[3] || '');
+          if (m[1])
+            config.path[m[2]] = m[1].replace(/\/$/, '');
+        }
+        else
+        {
+          ;;;consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
+        }
+      }
+      else
+      {
+        ;;;consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
+      }
+    }
+
+    for (var key in config.path)
+      config.path[key] = pathUtils.resolve(config.path[key] + '/');
+
+    return config;
+  })();
+
+
+  // ============================================
+  // Namespace subsystem
+  //
+
+  var namespaces = {};
+  var getNamespace = function(path, wrapFunction){
+    var cursor = global;
+    var nsRoot;
+
+    path = path.split('.');
+    for (var i = 0, name; name = path[i]; i++)
+    {
+      if (!cursor[name])
+      {
+        var nspath = path.slice(0, i + 1).join('.');
+
+        // create new namespace
+        cursor[name] = (function(path, wrapFn){
+         /**
+          * @returns {*|undefined}
+          */
+          function namespace(){
+            if (wrapFunction)
+              return wrapFunction.apply(this, arguments);
+          }
+
+          var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
+          var pathFn = function(name){
+            return path + (name ? '.' + name : '');
+          };
+          pathFn.toString = $const(path);
+
+          return extend(namespace, {
+            path: pathFn,
+            exports: {
+              path: pathFn
+            },
+            toString: $const('[basis.namespace ' + path + ']'),
+            extend: function(names){
+              extend(this.exports, names);
+              return complete(this, names);
+            },
+            setWrapper: function(wrapFn){
+              if (typeof wrapFn == 'function')
+              {
+                ;;;if (wrapFunction) consoleMethods.warn('Wrapper for ' + path + ' is already set. Probably mistake here.');
+                wrapFunction = wrapFn;
+              }
+            }
+          });
+        })(nspath, i < path.length ? wrapFunction : null);
+
+        if (nsRoot)
+          nsRoot.namespaces_[nspath] = cursor[name];
+      }
+
+      cursor = cursor[name];
+
+      if (!nsRoot)
+      {
+        nsRoot = cursor;
+        if (!nsRoot.namespaces_)
+          nsRoot.namespaces_ = {};
+      }
+    }
+
+    namespaces[path.join('.')] = cursor;
+
+    return cursor;
+  }
+
+
+  // ============================================
+  // OOP section: Class implementation
+  //
+
+  var Class = (function(){
+
+   /**
+    * This namespace introduce class creation scheme. It recomended for new
+    * classes creation, but use able to use buildin sheme for your purposes.
+    *
+    * The main benefits that provides by this sheme, that all methods are able
+    * to call inherited method (via this.inherit(args..)), like in other OO
+    * languages. All Basis classes and components (with some exceptions) are
+    * building using this sheme.
+    * @example
+    *   var classA = basis.Class(null, { // you can use basis.Class instead of null
+    *     name: 'default value',
+    *     init: function(title){ // special method - constructor
+    *       this.title = title;
+    *     },
+    *     say: function(){
+    *       return 'My name is {0}.'.format(this.title);
+    *     }
+    *   });
+    *
+    *   var classB = basis.Class(classA, {
+    *     age: 0,
+    *     init: function(title, age){
+    *       classA.prototype.init.call(this, title);
+    *       this.age = age;
+    *     },
+    *     say: function(){
+    *       return classA.prototype.say.call(this) + ' I\'m {0} year old.'.format(this.age);
+    *     }
+    *   });
+    *
+    *   var foo = new classA('John');
+    *   var bar = new classB('Ivan', 25);
+    *   alert(foo.say()); // My name is John.
+    *   alert(bar.say()); // My name is Ivan. I'm 25 year old.
+    *   alert(bar instanceof basis.Class); // false (for some reasons it false now)
+    *   alert(bar instanceof classA); // true
+    *   alert(bar instanceof classB); // true
+    * @namespace basis.Class
+    */
+
+    var namespace = 'basis.Class';
+
+
+   /**
+    * Root class for all classes created by Basis class model.
+    */
+    var BaseClass = function(){};
+
+   /**
+    * Global instances seed.
+    */
+    var seed = { id: 1 };
+    var classSeed = 1;
+    var NULL_FUNCTION = function(){};
+
+   /**
+    * Class construct helper: self reference value
+    */
+    var SELF = {};
+
+   /**
+    * Test object is it a class.
+    * @func
+    * @param {Object} object
+    * @return {boolean} Returns true if object is class.
+    */
+    function isClass(object){
+      return typeof object == 'function' && !!object.basisClassId_;
+    }
+
+   /**
+    * @func
+    */
+    function isSubclassOf(superClass){
+      var cursor = this;
+      while (cursor && cursor !== superClass)
+        cursor = cursor.superClass_;
+      return cursor === superClass;
+    }
+
+   /**
+    * @func
+    * dev mode only
+    */
+    function dev_verboseNameWrap(name, args, fn){
+      return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
+    }
+
+
+    // test is toString property enumerable
+    var TOSTRING_BUG = (function(){
+      for (var key in { toString: 1 })
+        return false;
+      return true;
+    })();
+
+
+    //
+    // main class object
+    //
+    extend(BaseClass, {
+      // Base class name
+      className: namespace,
+
+      extendConstructor_: false,
+
+      // prototype defaults
+      prototype: {
+        constructor: null,
+        init: NULL_FUNCTION,
+        postInit: NULL_FUNCTION,
+        toString: function(){
+          return '[object ' + (this.constructor || this).className + ']';
+        },
+        destroy: function(){
+          for (var prop in this)
+            this[prop] = null;
+
+          this.destroy = $undef;
+        }
+      },
+
+     /**
+      * Class constructor.
+      * @param {function()} SuperClass Class that new one inherits of.
+      * @param {...object} extensions Objects that extends new class prototype.
+      * @return {function()} A new class.
+      */
+      create: function(SuperClass, extensions){
+        var classId = classSeed++;        
+
+        if (typeof SuperClass != 'function')
+          SuperClass = BaseClass;
+
+        /** @cut */ var className = '';
+
+        /** @cut */ for (var i = 1, extension; extension = arguments[i]; i++)
+        /** @cut */   if (typeof extension != 'function' && extension.className)
+        /** @cut */     className = extension.className;
+
+        /** @cut */ if (!className)
+        /** @cut */   className = SuperClass.className + '._Class' + classId;
+        /** @cut */// consoleMethods.warn('Class has no name');
+
+        // temp class constructor with no init call
+        var NewClassProto = function(){};
+
+        // verbose name in dev
+        /** @cut */ NewClassProto = dev_verboseNameWrap(className, {}, NewClassProto);
+
+        NewClassProto.prototype = SuperClass.prototype;
+
+        var newProto = new NewClassProto;
+        var newClassProps = {
+          /** @cut */ className: className,
+
+          basisClassId_: classId,
+          superClass_: SuperClass,
+          extendConstructor_: !!SuperClass.extendConstructor_,
+
+          // class methods
+          isSubclassOf: isSubclassOf,
+          subclass: function(){
+            return BaseClass.create.apply(null, [newClass].concat(arrayFrom(arguments)));
+          },
+          extend: BaseClass.extend,
+          // auto extend creates a subclass
+          __extend__: function(value){
+            if (value && value !== SELF && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
+              return BaseClass.create.call(null, newClass, value);
+            else
+              return value;
+          },
+
+          // new class prototype
+          prototype: newProto
+        };
+
+        // extend newClass prototype
+        for (var i = 1, extension; extension = arguments[i]; i++)
+        {
+          newClassProps.extend(
+            typeof extension == 'function' && !isClass(extension)
+              ? extension(SuperClass.prototype)
+              : extension
+          );
+        }
+
+
+        /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
+
+        // new class constructor
+        var newClass = newClassProps.extendConstructor_
+          // constructor with instance extension
+          ? function(extend){
+              // mark object
+              this.basisObjectId = seed.id++;
+
+              // extend and override instance properties
+              var prop;
+              for (var key in extend)
+              {
+                prop = this[key];
+                this[key] = prop && prop.__extend__
+                  ? prop.__extend__(extend[key])
+                  : extend[key];
+              }
+
+              // call constructor
+              this.init();
+
+              // post init
+              this.postInit();
+            }
+
+          // simple constructor
+          : function(){
+              // mark object
+              this.basisObjectId = seed.id++;
+
+              // call constructor
+              this.init.apply(this, arguments);
+
+              // post init
+              this.postInit();
+            };
+
+        // verbose name in dev
+        // NOTE: this code makes Chrome and Firefox show class name in console
+        ;;;newClass = dev_verboseNameWrap(className, { seed: seed }, newClass);
+
+        // add constructor property to prototype
+        newProto.constructor = newClass;
+
+        for (var key in newProto)
+          if (newProto[key] === SELF)
+            newProto[key] = newClass;
+          //else
+          //  newProto[key] = newProto[key];
+
+        // extend constructor with properties
+        extend(newClass, newClassProps);
+
+        return newClass;
+      },
+
+     /**
+      * Extend class prototype
+      * @param {Object} source If source has a prototype, it will be used to extend current prototype.
+      * @return {function()} Returns `this`.
+      */
+      extend: function(source){
+        var proto = this.prototype;
+
+        if (source.prototype)
+          source = source.prototype;
+
+        for (var key in source)
+        {
+          var value = source[key];
+          var protoValue = proto[key];
+
+          if (key == 'className' || key == 'extendConstructor_')
+            this[key] = value;
+          else
+          {
+            if (protoValue && protoValue.__extend__)
+              proto[key] = protoValue.__extend__(value);
+            else
+            {
+              proto[key] = value;
+              //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
+            }
+          }
+        }
+
+        // for browsers that doesn't enum toString
+        if (TOSTRING_BUG && source[key = 'toString'] !== Object.prototype[key])
+          proto[key] = source[key];
+
+        return this;
+      }
+    });
+
+
+   /**
+    * @func
+    */
+    var customExtendProperty = function(extension, func, devName){
+      return {
+        __extend__: function(extension){
+          if (!extension)
+            return extension;
+
+          if (extension && extension.__extend__)
+            return extension;
+
+          var Base = function(){};
+          /** @cut verbose name in dev */Base = dev_verboseNameWrap(devName || 'customExtendProperty', {}, Base);
+          Base.prototype = this;
+          var result = new Base;
+          func(result, extension);
+          return result;
+        }
+      }.__extend__(extension || {});
+    };
+
+
+   /**
+    * @func
+    */
+    var extensibleProperty = function(extension){
+      return customExtendProperty(extension, extend, 'extensibleProperty');
+    };
+
+
+   /**
+    * @func
+    */
+    var nestedExtendProperty = function(extension){
+      return customExtendProperty(extension, function(result, extension){
+        for (var key in extension)
+        {
+          var value = result[key];
+          result[key] = value && value.__extend__
+            ? value.__extend__(extension[key])
+            : extensibleProperty(extension[key]);
+        }
+      }, 'nestedExtendProperty');
+    };
+
+   /**
+    * @func
+    */
+    var oneFunctionProperty = function(fn, keys){
+      var create = function(keys){
+        var result;
+
+        if (keys)
+        {
+          if (keys.__extend__)
+            return keys;
+
+          result = {
+            __extend__: create
+          };
+
+          // verbose name in dev
+          ;;;var Cls = dev_verboseNameWrap('oneFunctionProperty', {}, function(){}); result = new Cls; result.__extend__ = create;
+
+          for (var key in keys)
+            if (keys[key])
+              result[key] = fn;
+        }
+
+        return result;
+      };
+
+      return create(keys || {});
+    };
+
+
+    //
+    // export names
+    //
+
+    return getNamespace(namespace, BaseClass.create).extend({
+      SELF: SELF,
+      BaseClass: BaseClass,
+      create: BaseClass.create,
+      isClass: isClass,
+      customExtendProperty: customExtendProperty,
+      extensibleProperty: extensibleProperty,
+      nestedExtendProperty: nestedExtendProperty,
+      oneFunctionProperty: oneFunctionProperty
+    });
+  })();
+
+
+ /**
+  * @namespace basis
+  */
+
+ /**
+  * @class
+  */
+  var Token = Class(null, {
+    className: 'basis.Token',
+
+    handlers: null,
+
+    bindingBridge: {
+      attach: function(host, fn, context){
+        return host.attach(fn, context);
+      },
+      detach: function(host, fn, context){
+        return host.detach(fn, context);
+      },
+      get: function(host){
+        return host.get();
+      }
+    },
+
+    set: function(value){
+    },
+    get: function(){
+    },
+
+    attach: function(fn, context){
+      var cursor = this;
+
+      while (cursor = cursor.handlers)
+        if (cursor.fn === fn && cursor.context === context)
+          return false;
+
+      this.handlers = {
+        fn: fn,
+        context: context,
+        handlers: this.handlers
+      };
+
+      return true;
+    },
+    detach: function(fn, context){
+      var cursor = this;
+      var prev = this;
+
+      while (cursor = cursor.handlers)
+      {
+        if (cursor.fn === fn && cursor.context === context)
+        {
+          prev.handlers = cursor.handlers;
+          return true;
+        }
+
+        prev = cursor;
+      }
+
+      return false;
+    },
+
+    apply: function(){
+      var value = this.get();
+      var cursor = this;
+
+      while (cursor = cursor.handlers)
+        cursor.fn.call(cursor.context, value);
+    },
+
+    // destructor
+    destroy: function(){
+      this.handlers = null;
+    }  
+  });
+
+
+  //
+  // Resources
+  //
+
+  var resourceCache = {};
+  var requestResourceCache = {};
+  /** @cut */ var resourceResolvingStack = [];
+
+  // apply prefetched resources to cache
+  (function(){
+    if (prefetchedResources)
+      for (var key in prefetchedResources)
+        requestResourceCache[pathUtils.resolve(key)] = prefetchedResources[key];
+
+    prefetchedResources = null; // reset prefetched to reduce memory leaks
+  })();
+
+  var getResourceContent = function(url, ignoreCache){
+    if (ignoreCache || !requestResourceCache.hasOwnProperty(url))
+    {
+      var resourceContent = '';
+
+      if (!NODE_ENV)
+      {
+        var req = new XMLHttpRequest();
+        req.open('GET', url, false);
+        // set if-modified-since header since begining prevents cache using;
+        // otherwise browser could never ask server for new file content
+        // and use file content from cache
+        req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
+        req.setRequestHeader('X-Basis-Resource', 1);
+        req.send('');
+
+        if (req.status >= 200 && req.status < 400)
+          resourceContent = req.responseText;
+        else
+        {
+          ;;;consoleMethods.error('basis.resource: Unable to load ' + url + ' (status code ' + req.status + ')');
+        }
+      }
+      else
+      {
+        try
+        {
+          resourceContent = require('fs').readFileSync(url, 'utf-8');
+        }
+        catch (e)
+        {
+          ;;;consoleMethods.error('basis.resource: Unable to load ' + url, e);
+        }
+      }
+
+      requestResourceCache[url] = resourceContent;
+    }
+
+    return requestResourceCache[url];
+  };
+
+  // basis.resource
+  var getResource = function(resourceUrl){
+    resourceUrl = pathUtils.resolve(resourceUrl);
+
+    if (!resourceCache[resourceUrl])
+    {
+      var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
+      var resolved = false;
+      var wrapped = false;
+      var content;
+
+      var resource = function(){
+        // if resource resolved, just return content
+        if (resolved)
+          return content;
+
+        // fetch url content
+        var urlContent = getResourceContent(resourceUrl);
+
+        /** @cut    recursion warning */
+        /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
+        /** @cut */ if (idx != -1)
+        /** @cut */   basis.dev.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
+        /** @cut */ resourceResolvingStack.push(resourceUrl);
+
+        // if resource type has wrapper - wrap it, or use url content as result
+        if (contentWrapper)
+        {
+          if (!wrapped)
+          {
+            wrapped = true;
+            content = contentWrapper(urlContent, resourceUrl);
+          }
+        }
+        else
+        {
+          content = urlContent;
+        }
+
+        // mark as resolved and apply binded functions
+        resolved = true;
+        resource.apply();
+
+        /** @cut    recursion warning */
+        /** @cut */ resourceResolvingStack.pop();
+
+        return content;
+      };
+
+      extend(resource, extend(new Token(), {
+        url: resourceUrl,
+        fetch: function(){
+          return resource();
+        },
+        toString: function(){
+          return '[basis.resource ' + resourceUrl + ']';
+        },
+        update: function(newContent){
+          newContent = String(newContent);
+
+          if (!resolved || newContent != requestResourceCache[resourceUrl])
+          {
+            requestResourceCache[resourceUrl] = newContent;
+
+            if (contentWrapper)
+            {
+              // don't wrap content if it isn't wrapped yet or wrapped but not updatable
+              if (!wrapped || !contentWrapper.updatable)
+                return;
+
+              content = contentWrapper(newContent, resourceUrl);
+            }
+            else
+              content = newContent;
+
+            resolved = true;
+            resource.apply();
+          }
+        },
+        reload: function(){
+          var oldContent = requestResourceCache[resourceUrl];
+          var newContent = getResourceContent(resourceUrl, true);
+
+          if (newContent != oldContent)
+          {
+            resolved = false;
+            resource.update(newContent);
+          }
+        },
+        get: function(source){
+          return source ? getResourceContent(resourceUrl) : resource();
+        },
+        ready: function(fn, context){
+          if (resolved)
+          {
+            fn.call(context, resource());
+
+            if (contentWrapper && !contentWrapper.updatable)
+              return;
+          }
+
+          resource.attach(fn, context);
+        }
+      }));
+
+      // cache result
+      resourceCache[resourceUrl] = resource;
+    }
+
+    return resourceCache[resourceUrl];
+  };
+
+  extend(getResource, {
+    getFiles: function(){
+      var result = [];
+
+      for (var url in resourceCache)
+        result.push(pathUtils.relative(url));
+      
+      return result;
+    },
+    getSource: function(resourceUrl){
+      return getResourceContent(pathUtils.resolve(resourceUrl));
+    },
+    exists: function(resourceUrl){
+      return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
+    },
+    extensions: {
+      '.js': function(resource, url){
+        return runScriptInContext({ exports: {} }, url, resource).exports;
+      },
+      '.json': extend(function(resource, url){
+        if (typeof resource == 'object')
+          return resource;
+
+        var result;
+        try {
+          result = JSON.parse(String(resource));
+        } catch(e) {
+          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
+        }
+        return result || null;
+      }, {
+        updatable: true
+      })
+    }
+  });
+
+
+  var runScriptInContext = function(context, sourceURL, sourceCode){
+    var baseURL = pathUtils.dirname(sourceURL) + '/';
+    var compiledSourceCode = sourceCode;
+
+    if (!context.exports)
+      context.exports = {};
+
+    // compile context function
+    if (typeof compiledSourceCode != 'function')
+      try {
+        compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
+          '//@ sourceURL=' + sourceURL + '\n' +
+          '//# sourceURL=' + sourceURL + '\n' +
+          '"use strict";\n\n' +
+          sourceCode
+        );
+      } catch(e) {
+        /** @cut */ if ('line' in e == false && 'addEventListener' in window)
+        /** @cut */ {
+        /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
+        /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
+        /** @cut */   window.addEventListener('error', function onerror(event){
+        /** @cut */     if (event.filename == sourceURL)
+        /** @cut */     {
+        /** @cut */       window.removeEventListener('error', onerror);
+        /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
+        /** @cut */       event.preventDefault()
+        /** @cut */     }
+        /** @cut */   })
+        /** @cut */ 
+        /** @cut */   var script = document.createElement('script');
+        /** @cut */   script.src = sourceURL;
+        /** @cut */   script.async = false;
+        /** @cut */   document.head.appendChild(script);
+        /** @cut */   document.head.removeChild(script);
+        /** @cut */ }
+
+        // don't throw new exception, just output error message and return undefined
+        // in this case more chances for other modules continue to work
+        basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 4) : '') + ': ' + e);
+        return;
+      }
+
+    // run
+    compiledSourceCode.call(
+      context.exports,
+      context.exports,
+      context,
+      basis,
+      global,
+      sourceURL,
+      baseURL,
+      function(relativePath){
+        return getResource(baseURL + relativePath);
+      }
+    );
+
+    return context;
+  };
+
+
+ /**
+  * @param {string} namespace
+  * @name require
+  */
+  var requireNamespace = (function(){
+    if (NODE_ENV)
+    {
+      var requirePath = pathUtils.dirname(module.filename) + '/';
+      var moduleProto = module.constructor.prototype;
+      return function(path){
+        var _compile = moduleProto._compile;
+        var namespace = getNamespace(path);
+
+        // patch node.js module._compile
+        moduleProto._compile = function(content, filename){
+          this.basis = basis;
+          content = 
+            'var basis = module.basis;\n' +
+            'var resource = function(filename){ return basis.require(__dirname + "/" + filename) };\n' +
+            content;
+          _compile.call(extend(this, namespace), content, filename);
+        };
+
+        var exports = require(requirePath + path.replace(/\./g, '/'));
+        namespace.exports = exports;
+        complete(namespace, exports);
+
+        // restore node.js module._compile
+        moduleProto._compile = _compile;
+
+        return exports;
+      };
+    }
+    else
+    {
+      var nsRootPath = config.path;
+      var requested = {};
+      /** @cut */ var requires;
+
+      return function(namespace){
+        if (/[^a-z0-9_\.]/i.test(namespace))
+          throw 'Namespace `' + namespace + '` contains wrong chars.';
+
+        /** @cut */ if (requires)
+        /** @cut */   requires.push(namespace);
+
+        var filename = namespace.replace(/\./g, '/') + '.js';
+        var namespaceRoot = namespace.split('.')[0];
+
+        if (namespaceRoot == namespace)
+          nsRootPath[namespaceRoot] = nsRootPath[namespace] || (pathUtils.baseURI + '/');
+
+        if (!namespaces[namespace])
+        {
+          var requirePath = nsRootPath[namespaceRoot];
+
+          if (!/^(https?|chrome-extension):/.test(requirePath))
+            throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
+
+          if (!requested[namespace])
+            requested[namespace] = true;
+          else
+            throw 'Recursive require for ' + namespace;
+
+          var requestUrl = requirePath + filename;
+
+
+          var ns = getNamespace(namespace);
+          var sourceCode = getResourceContent(requestUrl);
+
+          /** @cut */ var savedRequires = requires;
+          /** @cut */ requires = [];
+
+          runScriptInContext(ns, requestUrl, sourceCode);
+          complete(ns, ns.exports);
+
+          /** @cut */ ns.filename_ = requestUrl;
+          /** @cut */ ns.source_ = sourceCode;
+          /** @cut */ ns.requires_ = requires;
+
+          /** @cut */ requires = savedRequires;
+        }
+      };
+    }
+  })();
+
+
  /**
   * @namespace Function.prototype
   */
@@ -616,32 +1695,6 @@
           };
     }
   });
-
-
-  //
-  // safe console method wrappers
-  //
-  var consoleMethods = (function(){
-    var methods = {
-      log: $undef,
-      info: $undef,
-      warn: $undef,
-      error: $undef
-    };
-
-    if (typeof console != 'undefined')
-      iterate(methods, function(methodName){
-        methods[methodName] = typeof console[methodName] == 'function'
-          ? Function.prototype.bind.call(console[methodName], console)
-            // ie8 and lower, it's also more safe when Function.prototype.bind defined
-            // by other libraries (like es5-shim)
-          : function(){
-              Function.prototype.apply.call(console[methodName], console, arguments)
-            };
-      });
-
-    return methods;
-  })();
 
 
  /**
@@ -1258,976 +2311,6 @@
   * @namespace basis
   */
 
-  // ============================================
-  // path
-  //
-
-  var NODE_ENV = typeof process != 'undefined' && process.versions && process.versions.node;
-  var pathUtils = (function(){
-    var utils;
-
-    if (NODE_ENV)
-    {
-      var _node_path = require('path');
-      var _node_fs = require('fs');
-
-      utils = slice(_node_path, [
-        'normalize',
-        'dirname',
-        'extname',
-        'basename',
-        'resolve',
-        'relative'
-      ]);
-
-      utils.existsSync = _node_fs.existsSync || _node_path.existsSync;
-    }
-    else
-    {
-      var linkEl = document.createElement('A');
-      var HREF_ABSOLUTIZE_BUG = (function(){
-        linkEl.href = '';
-        return !linkEl.href;
-      })();
-
-      utils = {
-        normalize: function(path){
-          linkEl.href = path || '';
-
-          // IE7 and lower does not absolutize href on assign, but do that on link cloning
-          // we replace linkEl for it's clone to get absolute path
-          if (HREF_ABSOLUTIZE_BUG)
-            linkEl = linkEl.cloneNode(false);
-
-          return linkEl.href.substring(0, linkEl.href.length - linkEl.hash.length - linkEl.search.length);
-        },
-        dirname: function(path){
-          return this.normalize(path).replace(/\/[^\/]*$/, '');
-        },
-        extname: function(path){
-          var ext = String(path).match(/\.[a-z0-9_\-]+$/);
-          return ext ? ext[0] : '';
-        },
-        basename: function(path, ext){
-          var filename = String(path).match(/[^\\\/]*$/);
-          filename = filename ? filename[0] : '';
-
-          if (ext == this.extname(filename))
-            filename = filename.substring(0, filename.length - ext.length);
-
-          return filename;
-        },
-        resolve: function(path){  // TODO: more compliant with node.js
-          return this.normalize(path);
-        },
-        relative: function(from, to){
-          if (typeof to != 'string')
-          {
-            to = from;
-            from = this.baseURI;
-          }
-          else
-          {
-            from = this.dirname(from);
-          }
-
-          var abs = this.normalize(to).split(/\//);
-          var loc = from.split(/\//);
-          var i = 0;
-
-          while (abs[i] == loc[i] && typeof loc[i] == 'string')
-            i++;
-
-          return '../'.repeat(loc.length - i) + abs.slice(i).join('/');
-        }
-      };
-    }
-
-    utils.baseURI = utils.dirname(utils.resolve());
-
-    return utils;
-  })();
-
-
-  //
-  // apply config
-  //
-
-  var config = (function(){
-    function getConfigAttr(node){
-      return node.getAttributeNode('data-basis-config') || node.getAttributeNode('basis-config');
-    }
-
-    var config = {};
-    var basisUrl = '';
-
-    if (NODE_ENV)
-    {
-      // node.js env
-      basisUrl = __dirname;
-    }
-    else
-    {
-      // browser env
-      var basisScriptEl = arrayFrom(document.getElementsByTagName('script')).filter(getConfigAttr).pop();
-      if (basisScriptEl)
-      {
-        var configValue = getConfigAttr(basisScriptEl).nodeValue.trim();
-        if (configValue)
-        {
-          try {
-            config = ('{' + configValue + '}').toObject(true) || {};
-          } catch (e) {
-            ;;;consoleMethods.warn('basis.js config parse fault: ' + e);
-          }
-        }
-
-        basisUrl = pathUtils.dirname(basisScriptEl.src);
-      }
-    }
-
-    if (!config.path)
-      config.path = {};
-
-    config.path.basis = basisUrl;
-      
-    var autoload = config.autoload;
-    config.autoload = false;
-    if (autoload)
-    {
-      var m = autoload.match(/^((?:[^\/]*\/)*)([a-z$_][a-z0-9$_]*)((?:\.[a-z$_][a-z0-9$_]*)*)$/i);
-      if (m)
-      {
-        if (m[2] != 'basis')
-        {
-          config.autoload = m[2] + (m[3] || '');
-          if (m[1])
-            config.path[m[2]] = m[1].replace(/\/$/, '');
-        }
-        else
-        {
-          ;;;consoleMethods.warn('value for autoload can\'t be `basis` (setting ignored): ' + autoload);
-        }
-      }
-      else
-      {
-        ;;;consoleMethods.warn('wrong autoload value (setting ignored): ' + autoload);
-      }
-    }
-
-    for (var key in config.path)
-      config.path[key] = pathUtils.resolve(config.path[key] + '/');
-
-    return config;
-  })();  
-
-
-  //
-  // Resources
-  //
-
-  var resourceCache = {};
-  var requestResourceCache = {};
-  /** @cut */ var resourceResolvingStack = [];
-
-  // apply prefetched resources to cache
-  (function(){
-    if (prefetchedResources)
-      for (var key in prefetchedResources)
-        requestResourceCache[pathUtils.resolve(key)] = prefetchedResources[key];
-
-    prefetchedResources = null; // reset prefetched to reduce memory leaks
-  })();
-
-  var getResourceContent = function(url, ignoreCache){
-    if (ignoreCache || !requestResourceCache.hasOwnProperty(url))
-    {
-      var resourceContent = '';
-
-      if (!NODE_ENV)
-      {
-        var req = new XMLHttpRequest();
-        req.open('GET', url, false);
-        // set if-modified-since header since begining prevents cache using;
-        // otherwise browser could never ask server for new file content
-        // and use file content from cache
-        req.setRequestHeader('If-Modified-Since', new Date(0).toGMTString());
-        req.setRequestHeader('X-Basis-Resource', 1);
-        req.send('');
-
-        if (req.status >= 200 && req.status < 400)
-          resourceContent = req.responseText;
-        else
-        {
-          ;;;consoleMethods.warn('basis.resource: Unable to load ' + url);
-        }
-      }
-      else
-      {
-        if (pathUtils.existsSync(url))
-          resourceContent = require('fs').readFileSync(url, 'utf-8');
-        else
-        {
-          ;;;consoleMethods.warn('basis.resource: Unable to load ' + url);
-        }
-      }
-
-      requestResourceCache[url] = resourceContent;
-    }
-
-    return requestResourceCache[url];
-  };
-
-  // basis.resource
-  var getResource = function(resourceUrl){
-    resourceUrl = pathUtils.resolve(resourceUrl);
-
-    if (!resourceCache[resourceUrl])
-    {
-      var contentWrapper = getResource.extensions[pathUtils.extname(resourceUrl)];
-      var resolved = false;
-      var wrapped = false;
-      var content;
-
-      var resource = function(){
-        // if resource resolved, just return content
-        if (resolved)
-          return content;
-
-        // fetch url content
-        var urlContent = getResourceContent(resourceUrl);
-
-        /** @cut    recursion warning */
-        /** @cut */ var idx = resourceResolvingStack.indexOf(resourceUrl);
-        /** @cut */ if (idx != -1)
-        /** @cut */   basis.dev.warn('basis.resource recursion:', resourceResolvingStack.slice(idx).concat(resourceUrl).map(pathUtils.relative, pathUtils).join(' -> '));
-        /** @cut */ resourceResolvingStack.push(resourceUrl);
-
-        // if resource type has wrapper - wrap it, or use url content as result
-        if (contentWrapper)
-        {
-          if (!wrapped)
-          {
-            wrapped = true;
-            content = contentWrapper(urlContent, resourceUrl);
-          }
-        }
-        else
-        {
-          content = urlContent;
-        }
-
-        // mark as resolved and apply binded functions
-        resolved = true;
-        resource.apply();
-
-        /** @cut    recursion warning */
-        /** @cut */ resourceResolvingStack.pop();
-
-        return content;
-      };
-
-      extend(resource, extend(new Token(), {
-        url: resourceUrl,
-        fetch: function(){
-          return resource();
-        },
-        toString: function(){
-          return '[basis.resource ' + resourceUrl + ']';
-        },
-        update: function(newContent){
-          newContent = String(newContent);
-
-          if (!resolved || newContent != requestResourceCache[resourceUrl])
-          {
-            requestResourceCache[resourceUrl] = newContent;
-
-            if (contentWrapper)
-            {
-              // don't wrap content if it isn't wrapped yet or wrapped but not updatable
-              if (!wrapped || !contentWrapper.updatable)
-                return;
-
-              content = contentWrapper(newContent, resourceUrl);
-            }
-            else
-              content = newContent;
-
-            resolved = true;
-            resource.apply();
-          }
-        },
-        reload: function(){
-          var oldContent = requestResourceCache[resourceUrl];
-          var newContent = getResourceContent(resourceUrl, true);
-
-          if (newContent != oldContent)
-          {
-            resolved = false;
-            resource.update(newContent);
-          }
-        },
-        get: function(source){
-          return source ? getResourceContent(resourceUrl) : resource();
-        },
-        ready: function(fn, context){
-          if (resolved)
-          {
-            fn.call(context, resource());
-
-            if (contentWrapper && !contentWrapper.updatable)
-              return;
-          }
-
-          resource.attach(fn, context);
-        }
-      }));
-
-      // cache result
-      resourceCache[resourceUrl] = resource;
-    }
-
-    return resourceCache[resourceUrl];
-  };
-
-  extend(getResource, {
-    getFiles: function(){
-      var result = [];
-
-      for (var url in resourceCache)
-        result.push(pathUtils.relative(url));
-      
-      return result;
-    },
-    getSource: function(resourceUrl){
-      return getResourceContent(pathUtils.resolve(resourceUrl));
-    },
-    exists: function(resourceUrl){
-      return !!resourceCache.hasOwnProperty(pathUtils.resolve(resourceUrl));
-    },
-    extensions: {
-      '.js': function(resource, url){
-        return runScriptInContext({ exports: {} }, url, resource).exports;
-      },
-      '.json': extend(function(resource, url){
-        if (typeof resource == 'object')
-          return resource;
-
-        var result;
-        try {
-          result = JSON.parse(String(resource));
-        } catch(e) {
-          ;;;consoleMethods.warn('basis.resource: Can\'t parse JSON from ' + url, { url: url, source: String(resource) });
-        }
-        return result || null;
-      }, {
-        updatable: true
-      })
-    }
-  });
-
-
-  var runScriptInContext = function(context, sourceURL, sourceCode){
-    var baseURL = pathUtils.dirname(sourceURL) + '/';
-    var compiledSourceCode = sourceCode;
-
-    if (!context.exports)
-      context.exports = {};
-
-    // compile context function
-    if (typeof compiledSourceCode != 'function')
-      try {
-        compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
-          '//@ sourceURL=' + sourceURL + '\n' +
-          '//# sourceURL=' + sourceURL + '\n' +
-          '"use strict";\n\n' +
-          sourceCode
-        );
-      } catch(e) {
-        /** @cut */ if ('line' in e == false && 'addEventListener' in window)
-        /** @cut */ {
-        /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
-        /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
-        /** @cut */   window.addEventListener('error', function onerror(event){
-        /** @cut */     if (event.filename == sourceURL)
-        /** @cut */     {
-        /** @cut */       window.removeEventListener('error', onerror);
-        /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
-        /** @cut */       event.preventDefault()
-        /** @cut */     }
-        /** @cut */   })
-        /** @cut */ 
-        /** @cut */   var script = document.createElement('script');
-        /** @cut */   script.src = sourceURL;
-        /** @cut */   script.async = false;
-        /** @cut */   document.head.appendChild(script);
-        /** @cut */   document.head.removeChild(script);
-        /** @cut */ }
-
-        // don't throw new exception, just output error message and return undefined
-        // in this case more chances for other modules continue to work
-        basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 4) : '') + ': ' + e);
-        return;
-      }
-
-    // run
-    compiledSourceCode.call(
-      context.exports,
-      context.exports,
-      context,
-      basis,
-      global,
-      sourceURL,
-      baseURL,
-      function(relativePath){
-        return getResource(baseURL + relativePath);
-      }
-    );
-
-    return context;
-  };
-
-
-  // ============================================
-  // Namespace subsystem
-  //
-
-  var namespaces = {};
-  var getNamespace = function(path, wrapFunction){
-    var cursor = global;
-    var nsRoot;
-
-    path = path.split('.');
-    for (var i = 0, name; name = path[i]; i++)
-    {
-      if (!cursor[name])
-      {
-        var nspath = path.slice(0, i + 1).join('.');
-
-        // create new namespace
-        cursor[name] = (function(path, wrapFn){
-         /**
-          * @returns {*|undefined}
-          */
-          function namespace(){
-            if (wrapFunction)
-              return wrapFunction.apply(this, arguments);
-          }
-
-          var wrapFunction = typeof wrapFn == 'function' ? wrapFn : null;
-          var pathFn = function(name){
-            return path + (name ? '.' + name : '');
-          };
-          pathFn.toString = $const(path);
-
-          return extend(namespace, {
-            path: pathFn,
-            exports: {
-              path: pathFn
-            },
-            toString: $const('[basis.namespace ' + path + ']'),
-            extend: function(names){
-              extend(this.exports, names);
-              return complete(this, names);
-            },
-            setWrapper: function(wrapFn){
-              if (typeof wrapFn == 'function')
-              {
-                ;;;if (wrapFunction) consoleMethods.warn('Wrapper for ' + path + ' is already set. Probably mistake here.');
-                wrapFunction = wrapFn;
-              }
-            }
-          });
-        })(nspath, i < path.length ? wrapFunction : null);
-
-        if (nsRoot)
-          nsRoot.namespaces_[nspath] = cursor[name];
-      }
-
-      cursor = cursor[name];
-
-      if (!nsRoot)
-      {
-        nsRoot = cursor;
-        if (!nsRoot.namespaces_)
-          nsRoot.namespaces_ = {};
-      }
-    }
-
-    namespaces[path.join('.')] = cursor;
-
-    return cursor;
-  }
-
-  // basis.require
-  var requireNamespace = (function(){
-    if (NODE_ENV)
-    {
-      var requirePath = pathUtils.dirname(module.filename) + '/';
-      var moduleProto = module.constructor.prototype;
-      return function(path){
-        var _compile = moduleProto._compile;
-        var namespace = getNamespace(path);
-
-        // patch node.js module._compile
-        moduleProto._compile = function(content, filename){
-          this.basis = basis;
-          content = 
-            'var basis = module.basis;\n' +
-            'var resource = function(filename){ return basis.require(__dirname + "/" + filename) };\n' +
-            content;
-          _compile.call(extend(this, namespace), content, filename);
-        };
-
-        var exports = require(requirePath + path.replace(/\./g, '/'));
-        namespace.exports = exports;
-        complete(namespace, exports);
-
-        // restore node.js module._compile
-        moduleProto._compile = _compile;
-
-        return exports;
-      };
-    }
-    else
-    {
-      var nsRootPath = config.path;
-      var requested = {};
-      /** @cut */ var requires;
-
-      return function(namespace, path){
-        if (/[^a-z0-9_\.]/i.test(namespace))
-          throw 'Namespace `' + namespace + '` contains wrong chars.';
-
-        /** @cut */ if (requires)
-        /** @cut */   requires.push(namespace);
-
-        var filename = namespace.replace(/\./g, '/') + '.js';
-        var namespaceRoot = namespace.split('.')[0];
-
-        if (namespaceRoot == namespace)
-          nsRootPath[namespaceRoot] = path || nsRootPath[namespace] || (pathUtils.baseURI + '/');
-
-        if (!namespaces[namespace])
-        {
-          var requirePath = nsRootPath[namespaceRoot];
-
-          if (!/^(https?|chrome-extension):/.test(requirePath))
-            throw 'Path `' + namespace + '` (' + requirePath + ') can\'t be resolved';
-
-          if (!requested[namespace])
-            requested[namespace] = true;
-          else
-            throw 'Recursive require for ' + namespace;
-
-          var requestUrl = requirePath + filename;
-
-
-          var ns = getNamespace(namespace);
-          var sourceCode = getResourceContent(requestUrl);
-
-          /** @cut */ var savedRequires = requires;
-          /** @cut */ requires = [];
-
-          runScriptInContext(ns, requestUrl, sourceCode);
-          complete(ns, ns.exports);
-
-          /** @cut */ ns.filename_ = requestUrl;
-          /** @cut */ ns.source_ = sourceCode;
-          /** @cut */ ns.requires_ = requires;
-
-          /** @cut */ requires = savedRequires;
-        }
-      };
-    }
-  })();
-
-
-  // ============================================
-  // OOP section: Class implementation
-  //
-
-  var Class = (function(){
-
-   /**
-    * This namespace introduce class creation scheme. It recomended for new
-    * classes creation, but use able to use buildin sheme for your purposes.
-    *
-    * The main benefits that provides by this sheme, that all methods are able
-    * to call inherited method (via this.inherit(args..)), like in other OO
-    * languages. All Basis classes and components (with some exceptions) are
-    * building using this sheme.
-    * @example
-    *   var classA = basis.Class(null, { // you can use basis.Class instead of null
-    *     name: 'default value',
-    *     init: function(title){ // special method - constructor
-    *       this.title = title;
-    *     },
-    *     say: function(){
-    *       return 'My name is {0}.'.format(this.title);
-    *     }
-    *   });
-    *
-    *   var classB = basis.Class(classA, {
-    *     age: 0,
-    *     init: function(title, age){
-    *       classA.prototype.init.call(this, title);
-    *       this.age = age;
-    *     },
-    *     say: function(){
-    *       return classA.prototype.say.call(this) + ' I\'m {0} year old.'.format(this.age);
-    *     }
-    *   });
-    *
-    *   var foo = new classA('John');
-    *   var bar = new classB('Ivan', 25);
-    *   alert(foo.say()); // My name is John.
-    *   alert(bar.say()); // My name is Ivan. I'm 25 year old.
-    *   alert(bar instanceof basis.Class); // false (for some reasons it false now)
-    *   alert(bar instanceof classA); // true
-    *   alert(bar instanceof classB); // true
-    * @namespace basis.Class
-    */
-
-    var namespace = 'basis.Class';
-
-
-   /**
-    * Root class for all classes created by Basis class model.
-    */
-    var BaseClass = function(){};
-
-   /**
-    * Global instances seed.
-    */
-    var seed = { id: 1 };
-    var classSeed = 1;
-    var NULL_FUNCTION = function(){};
-
-   /**
-    * Class construct helper: self reference value
-    */
-    var SELF = {};
-
-   /**
-    * Test object is it a class.
-    * @func
-    * @param {Object} object
-    * @return {boolean} Returns true if object is class.
-    */
-    function isClass(object){
-      return typeof object == 'function' && !!object.basisClassId_;
-    }
-
-   /**
-    * @func
-    */
-    function isSubclassOf(superClass){
-      var cursor = this;
-      while (cursor && cursor !== superClass)
-        cursor = cursor.superClass_;
-      return cursor === superClass;
-    }
-
-   /**
-    * @func
-    * dev mode only
-    */
-    function dev_verboseNameWrap(name, args, fn){
-      return new Function(keys(args), 'return {"' + name + '": ' + fn + '\n}["' + name + '"]').apply(null, values(args));
-    }
-
-
-    // test is toString property enumerable
-    var TOSTRING_BUG = (function(){
-      for (var key in { toString: 1 })
-        return false;
-      return true;
-    })();
-
-
-    //
-    // main class object
-    //
-    extend(BaseClass, {
-      // Base class name
-      className: namespace,
-
-      extendConstructor_: false,
-
-      // prototype defaults
-      prototype: {
-        constructor: null,
-        init: NULL_FUNCTION,
-        postInit: NULL_FUNCTION,
-        toString: function(){
-          return '[object ' + (this.constructor || this).className + ']';
-        },
-        destroy: function(){
-          for (var prop in this)
-            this[prop] = null;
-
-          this.destroy = $undef;
-        }
-      },
-
-     /**
-      * Class constructor.
-      * @param {function()} SuperClass Class that new one inherits of.
-      * @param {...object} extensions Objects that extends new class prototype.
-      * @return {function()} A new class.
-      */
-      create: function(SuperClass, extensions){
-        var classId = classSeed++;        
-
-        if (typeof SuperClass != 'function')
-          SuperClass = BaseClass;
-
-        /** @cut */ var className = '';
-
-        /** @cut */ for (var i = 1, extension; extension = arguments[i]; i++)
-        /** @cut */   if (typeof extension != 'function' && extension.className)
-        /** @cut */     className = extension.className;
-
-        /** @cut */ if (!className)
-        /** @cut */   className = SuperClass.className + '._Class' + classId;
-        /** @cut */// consoleMethods.warn('Class has no name');
-
-        // temp class constructor with no init call
-        var NewClassProto = function(){};
-
-        // verbose name in dev
-        /** @cut */ NewClassProto = dev_verboseNameWrap(className, {}, NewClassProto);
-
-        NewClassProto.prototype = SuperClass.prototype;
-
-        var newProto = new NewClassProto;
-        var newClassProps = {
-          /** @cut */ className: className,
-
-          basisClassId_: classId,
-          superClass_: SuperClass,
-          extendConstructor_: !!SuperClass.extendConstructor_,
-
-          // class methods
-          isSubclassOf: isSubclassOf,
-          subclass: function(){
-            return BaseClass.create.apply(null, [newClass].concat(arrayFrom(arguments)));
-          },
-          extend: BaseClass.extend,
-          // auto extend creates a subclass
-          __extend__: function(value){
-            if (value && value !== SELF && (typeof value == 'object' || (typeof value == 'function' && !isClass(value))))
-              return BaseClass.create.call(null, newClass, value);
-            else
-              return value;
-          },
-
-          // new class prototype
-          prototype: newProto
-        };
-
-        // extend newClass prototype
-        for (var i = 1, extension; extension = arguments[i]; i++)
-        {
-          newClassProps.extend(
-            typeof extension == 'function' && !isClass(extension)
-              ? extension(SuperClass.prototype)
-              : extension
-          );
-        }
-
-
-        /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
-
-        // new class constructor
-        var newClass = newClassProps.extendConstructor_
-          // constructor with instance extension
-          ? function(extend){
-              // mark object
-              this.basisObjectId = seed.id++;
-
-              // extend and override instance properties
-              var prop;
-              for (var key in extend)
-              {
-                prop = this[key];
-                this[key] = prop && prop.__extend__
-                  ? prop.__extend__(extend[key])
-                  : extend[key];
-              }
-
-              // call constructor
-              this.init();
-
-              // post init
-              this.postInit();
-            }
-
-          // simple constructor
-          : function(){
-              // mark object
-              this.basisObjectId = seed.id++;
-
-              // call constructor
-              this.init.apply(this, arguments);
-
-              // post init
-              this.postInit();
-            };
-
-        // verbose name in dev
-        // NOTE: this code makes Chrome and Firefox show class name in console
-        ;;;newClass = dev_verboseNameWrap(className, { seed: seed }, newClass);
-
-        // add constructor property to prototype
-        newProto.constructor = newClass;
-
-        for (var key in newProto)
-          if (newProto[key] === SELF)
-            newProto[key] = newClass;
-          //else
-          //  newProto[key] = newProto[key];
-
-        // extend constructor with properties
-        extend(newClass, newClassProps);
-
-        return newClass;
-      },
-
-     /**
-      * Extend class prototype
-      * @param {Object} source If source has a prototype, it will be used to extend current prototype.
-      * @return {function()} Returns `this`.
-      */
-      extend: function(source){
-        var proto = this.prototype;
-
-        if (source.prototype)
-          source = source.prototype;
-
-        for (var key in source)
-        {
-          var value = source[key];
-          var protoValue = proto[key];
-
-          if (key == 'className' || key == 'extendConstructor_')
-            this[key] = value;
-          else
-          {
-            if (protoValue && protoValue.__extend__)
-              proto[key] = protoValue.__extend__(value);
-            else
-            {
-              proto[key] = value;
-              //;;;if (value && !value.__extend__ && (value.constructor == Object || value.constructor == Array)){ consoleMethods.warn('!' + key); }
-            }
-          }
-        }
-
-        // for browsers that doesn't enum toString
-        if (TOSTRING_BUG && source[key = 'toString'] !== Object.prototype[key])
-          proto[key] = source[key];
-
-        return this;
-      }
-    });
-
-
-   /**
-    * @func
-    */
-    var customExtendProperty = function(extension, func, devName){
-      return {
-        __extend__: function(extension){
-          if (!extension)
-            return extension;
-
-          if (extension && extension.__extend__)
-            return extension;
-
-          var Base = function(){};
-          /** @cut verbose name in dev */Base = dev_verboseNameWrap(devName || 'customExtendProperty', {}, Base);
-          Base.prototype = this;
-          var result = new Base;
-          func(result, extension);
-          return result;
-        }
-      }.__extend__(extension || {});
-    };
-
-
-   /**
-    * @func
-    */
-    var extensibleProperty = function(extension){
-      return customExtendProperty(extension, extend, 'extensibleProperty');
-    };
-
-
-   /**
-    * @func
-    */
-    var nestedExtendProperty = function(extension){
-      return customExtendProperty(extension, function(result, extension){
-        for (var key in extension)
-        {
-          var value = result[key];
-          result[key] = value && value.__extend__
-            ? value.__extend__(extension[key])
-            : extensibleProperty(extension[key]);
-        }
-      }, 'nestedExtendProperty');
-    };
-
-   /**
-    * @func
-    */
-    var oneFunctionProperty = function(fn, keys){
-      var create = function(keys){
-        var result;
-
-        if (keys)
-        {
-          if (keys.__extend__)
-            return keys;
-
-          result = {
-            __extend__: create
-          };
-
-          // verbose name in dev
-          ;;;var Cls = dev_verboseNameWrap('oneFunctionProperty', {}, function(){}); result = new Cls; result.__extend__ = create;
-
-          for (var key in keys)
-            if (keys[key])
-              result[key] = fn;
-        }
-
-        return result;
-      };
-
-      return create(keys || {});
-    };
-
-
-    //
-    // export names
-    //
-
-    return getNamespace(namespace, BaseClass.create).extend({
-      SELF: SELF,
-      BaseClass: BaseClass,
-      create: BaseClass.create,
-      isClass: isClass,
-      customExtendProperty: customExtendProperty,
-      extensibleProperty: extensibleProperty,
-      nestedExtendProperty: nestedExtendProperty,
-      oneFunctionProperty: oneFunctionProperty
-    });
-  })();
-
-
  /**
   * Attach document ready handlers
   * @function
@@ -2371,79 +2454,6 @@
 
     return result;
   })();
-
-
- /**
-  * @class
-  */
-  var Token = Class(null, {
-    className: 'basis.Token',
-
-    handlers: null,
-
-    bindingBridge: {
-      attach: function(host, fn, context){
-        return host.attach(fn, context);
-      },
-      detach: function(host, fn, context){
-        return host.detach(fn, context);
-      },
-      get: function(host){
-        return host.get();
-      }
-    },
-
-    set: function(value){
-    },
-    get: function(){
-    },
-
-    attach: function(fn, context){
-      var cursor = this;
-
-      while (cursor = cursor.handlers)
-        if (cursor.fn === fn && cursor.context === context)
-          return false;
-
-      this.handlers = {
-        fn: fn,
-        context: context,
-        handlers: this.handlers
-      };
-
-      return true;
-    },
-    detach: function(fn, context){
-      var cursor = this;
-      var prev = this;
-
-      while (cursor = cursor.handlers)
-      {
-        if (cursor.fn === fn && cursor.context === context)
-        {
-          prev.handlers = cursor.handlers;
-          return true;
-        }
-
-        prev = cursor;
-      }
-
-      return false;
-    },
-
-    apply: function(){
-      var value = this.get();
-      var cursor = this;
-
-      while (cursor = cursor.handlers)
-        cursor.fn.call(cursor.context, value);
-    },
-
-    // destructor
-    destroy: function(){
-      this.handlers = null;
-    }  
-  });
 
 
   //
