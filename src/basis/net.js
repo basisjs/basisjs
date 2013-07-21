@@ -574,11 +574,11 @@
 
       this.prevReadyState_ = -1;
 
-      if (requestData.asynchronous)
-        // set ready state change handler
-        xhr.onreadystatechange = readyStateChangeHandler.bind(this);
-      else
-        // catch state change for 'loading' in synchronous mode
+      // set ready state change handler
+      xhr.onreadystatechange = readyStateChangeHandler.bind(this);
+
+      // catch state change for 'loading' in synchronous mode
+      if (!requestData.asynchronous)
         readyStateChangeHandler.call(this, STATE_UNSENT);
 
       // open XMLHttpRequest
