@@ -1439,18 +1439,14 @@
     },
     detach: function(fn, context){
       var cursor = this;
-      var prev = this;
+      var prev;
 
-      while (cursor = cursor.handlers)
-      {
+      while (prev = cursor, cursor = cursor.handlers)
         if (cursor.fn === fn && cursor.context === context)
         {
           prev.handlers = cursor.handlers;
           return true;
         }
-
-        prev = cursor;
-      }
 
       return false;
     },

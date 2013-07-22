@@ -179,21 +179,18 @@
     */
     removeHandler: function(callbacks, context){
       var cursor = this;
-      var prev = cursor;
+      var prev;
 
       context = context || this;
 
       // search for handler and remove it
-      while (cursor = cursor.handler)
-      {
+      while (prev = cursor, cursor = cursor.handler)
         if (cursor.callbacks === callbacks && cursor.context === context)
         {
           cursor.callbacks = NULL_HANDLER; // make it non-callable
           prev.handler = cursor.handler;
           return;
         }
-        prev = cursor;
-      }
 
       // handler not found
       if (DEVMODE && prev !== this)
