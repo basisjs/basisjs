@@ -1403,8 +1403,20 @@
   var Token = Class(null, {
     className: 'basis.Token',
 
-    handlers: null,
+   /**
+    * @type {*}
+    */ 
+    value: null,
 
+   /**
+    * @type {object}
+    */
+    handler: null,
+
+   /**
+    * Binding interface.
+    * @type {object}
+    */ 
     bindingBridge: {
       attach: function(host, fn, context){
         return host.attach(fn, context);
@@ -1417,51 +1429,95 @@
       }
     },
 
-    set: function(value){
-    },
-    get: function(){
+   /**
+    * @constructor
+    */ 
+    init: function(value){
+      this.value = value;
     },
 
+   /**
+    * Returns token value.
+    * @return {*} Current token value.
+    */
+    get: function(){
+      return this.value;
+    },
+
+   /**
+    * Set new value for token. Call apply method if value has been changed.
+    * @param {*} value
+    */ 
+    set: function(value){
+      if (this.value !== value)
+      {
+        this.value = value;
+        this.apply();
+      }
+    },
+
+   /**
+    * Add callback on token value changes. Doesn't add duplicate callback and context pairs.
+    * @param {function(value)} fn
+    * @param {object=} context
+    * @return {boolean} Return true if callback was added.
+    */
     attach: function(fn, context){
       var cursor = this;
 
-      while (cursor = cursor.handlers)
+      while (cursor = cursor.handler)
         if (cursor.fn === fn && cursor.context === context)
           return false;
 
-      this.handlers = {
+      this.handler = {
         fn: fn,
         context: context,
-        handlers: this.handlers
+        handlers: this.handler
       };
 
       return true;
     },
+
+   /**
+    * Remove callback. Must be passed the same arguments as for {basis.Token#attach} method.
+    * @param {function(value)} fn
+    * @param {object=} context
+    * @return {boolean}
+    */
     detach: function(fn, context){
       var cursor = this;
       var prev;
 
-      while (prev = cursor, cursor = cursor.handlers)
+      while (prev = cursor, cursor = cursor.handler)
         if (cursor.fn === fn && cursor.context === context)
         {
-          prev.handlers = cursor.handlers;
+          prev.handler = cursor.handler;
           return true;
         }
 
       return false;
     },
 
+   /**
+    * Call every attached callbacks with current token value.
+    */ 
     apply: function(){
       var value = this.get();
       var cursor = this;
 
-      while (cursor = cursor.handlers)
+      while (cursor = cursor.handler)
         cursor.fn.call(cursor.context, value);
     },
 
-    // destructor
+   /**
+    * Actually it's not require invoke destroy method for token, garbage 
+    * collector have no problems to free token's memory when all references
+    * to token are removed.
+    * @destructor
+    */
     destroy: function(){
-      this.handlers = null;
+      this.handler = null;
+      this.value = null;
     }  
   });
 
