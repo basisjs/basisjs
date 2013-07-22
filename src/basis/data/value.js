@@ -38,7 +38,7 @@
   var EMMITER_HANDLER = { 
     destroy: function(object){
       this.removeLink(object); 
-    } 
+    }
   };
 
  /**
@@ -46,6 +46,11 @@
   */
   var BindValue = Value.subclass({
     className: namespace + '.BindValue',
+
+   /**
+    * @inheritDocs
+    */ 
+    computeValueClass: basis.Class.SELF,
 
    /**
     * @type {Array.<object>}

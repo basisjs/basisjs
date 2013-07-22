@@ -525,8 +525,15 @@
 
 
   //
-  //  ABSTRACT PROPERTY
+  // Value
   //
+
+  var computeFunctions = {};
+  var COMPUTE_VALUE_HANDLER = {
+    change: function(){
+      this.evaluate();
+    }
+  };  
   
  /**
   * @class
@@ -575,6 +582,12 @@
     lockedValue_: null,
 
    /**
+    * Class for {basis.data.Value#compute} function instances.
+    * @type {basis.Class}
+    */ 
+    computeValueClass: Class.SELF,
+
+   /**
     * @constructor
     */
     init: function(){
@@ -610,6 +623,13 @@
     },
 
    /**
+    * Restore init value.
+    */
+    reset: function(){
+      this.set(this.initValue);
+    },
+
+   /**
     * Locks object for change event fire.
     */
     lock: function(){
@@ -638,11 +658,74 @@
     },
 
    /**
-    * Restore init value.
+    * @param {string|Array.<string>=} events
+    * @param {function(object, value)} fn
+    * @return {function(object)}
     */
-    reset: function(){
-      this.set(this.initValue);
-    },
+    compute: function(events, fn){
+      if (arguments.length == 1)
+      {
+        fn = events;
+        events = '';
+      }
+
+      events = String(events).trim().split(/\s+|\s*,\s*/).sort();
+
+      var computeId = events.concat(basis.getter(fn).basisGetterId_, this.basisObjectId).join('_');
+
+      if (computeFunctions[computeId])
+        return computeFunctions[computeId];
+
+      var masterValue = this;
+      var computeValuesMap = {};
+      var updateValue = function(){
+        this.evaluate();
+      };
+      var handler = {
+        destroy: function(object){
+          delete computeValuesMap[object.basisObjectId];
+          this.destroy();
+        }
+      };
+
+      for (var i = 0, eventName; eventName = events[i]; i++)
+        if (eventName != 'destroy')
+          handler[eventName] = updateValue;
+
+      this.addHandler({
+        destroy: function(){
+          for (var key in computeValuesMap)
+            computeValuesMap[key].destroy();
+          computeValuesMap = null;
+          masterValue = null;
+        }
+      });
+
+      return computeFunctions[computeId] = function(object){
+        /** @cut */ if (object instanceof basis.event.Emitter == false)
+        /** @cut */   basis.dev.warn('basis.data.Value#compute: object must be an instanceof basis.event.Emitter');
+
+        var objectId = object.basisObjectId;
+        var computeValue = computeValuesMap[objectId];
+
+        if (!computeValue)
+        {
+          computeValue = computeValuesMap[objectId] = new masterValue.computeValueClass({
+            evaluate: function(){
+              this.set(fn(object, masterValue.value));
+            }
+          });
+
+          // attach handlers to related objects
+          object.addHandler(handler, computeValue);
+          masterValue.addHandler(COMPUTE_VALUE_HANDLER, computeValue);
+
+          computeValue.evaluate();
+        }
+
+        return computeValue;
+      }
+    },    
 
    /**
     * @destructor
@@ -659,7 +742,7 @@
 
 
   //
-  // DataObject
+  // Object
   //
 
  /**
