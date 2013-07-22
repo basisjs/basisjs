@@ -2689,6 +2689,11 @@
       isEmpty: isEmptyString,
       isNotEmpty: isNotEmptyString,
       format: String.prototype.format
+    },
+    bool: {
+      invert: function(value){
+        return !value;
+      }
     }
   });
 
