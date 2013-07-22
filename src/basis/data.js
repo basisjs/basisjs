@@ -565,7 +565,7 @@
     * Function for preprocessing value before set.
     * @type {function(value)}
     */
-    proxy: $self,
+    proxy: null,
 
    /**
     * Indicates that property is locked (don't fire event for changes).
@@ -593,10 +593,9 @@
     init: function(){
       AbstractData.prototype.init.call(this);
 
-      if (typeof this.proxy != 'function')
-        this.proxy = $self;
+      if (this.proxy)
+        this.value = this.proxy(this.value);
 
-      this.value = this.proxy(this.value);
       this.initValue = this.value;
     },
 
@@ -608,7 +607,7 @@
     */
     set: function(value){
       var oldValue = this.value;
-      var newValue = this.proxy(value);
+      var newValue = this.proxy ? this.proxy(value) : value;
       var changed = newValue !== oldValue;
 
       if (changed)

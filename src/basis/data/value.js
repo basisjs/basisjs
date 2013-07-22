@@ -22,13 +22,13 @@
   // import names
 
   var getter = basis.getter;
-
   var cleaner = basis.cleaner;
-
   var Emitter = basis.event.Emitter;
   var AbstractData = basis.data.AbstractData;
   var Value = basis.data.Value;
   var STATE = basis.data.STATE;
+
+  var instanceMap = {};
 
 
   //
@@ -79,11 +79,12 @@
     emit_change: function(value, oldValue){
       Value.prototype.emit_change.call(this, value, oldValue);
 
-      if (!this.links_.length || cleaner.globalDestroy)
+      if (cleaner.globalDestroy)
         return;
 
-      for (var i = 0, link; link = this.links_[i++];)
-        this.apply_(link, oldValue);
+      var cursor = this;
+      while (cursor = cursor.links_)
+        this.apply_(cursor, oldValue);
     },
 
    /**
@@ -92,9 +93,7 @@
     init: function(){
       Value.prototype.init.call(this);
 
-      this.links_ = [];
-
-      cleaner.add(this);
+      instanceMap[this.basisObjectId] = this;
     },
 
    /**
@@ -102,6 +101,7 @@
     * value convertation to another value or type.
     * If object is instance of {basis.event.Emitter}, BindValue attach handler which
     * removes property links on object destroy.
+    *
     * @example
     *
     *   var value = new basis.data.value.BindValue({ ... });
@@ -140,23 +140,29 @@
       if (typeof format != 'function')
         format = getter(basis.fn.$self, format);
 
-      // create link
-      var link = { 
-        object: object,
-        format: format,
-        field: field,
-        isEmitter: object instanceof Emitter 
-      };
+      // check for duplicates
+      /** @cut */ var cursor = this;
+      /** @cut */ while (cursor = cursor.links_)
+      /** @cut */   if (cursor.object === object && cursor.field == field)
+      /** @cut */   {
+      /** @cut */     basis.dev.warn(this.constructor.className + '#addLink: Duplicate link for property');
+      /** @cut */     break;
+      /** @cut */   }
 
-      // add link
-      ;;;if (this.links_.some(function(link){ return link.object == object && link.field == field; })) basis.dev.warn(this.constructor.className + '#addLink: Duplicate link for property');
-      this.links_.push(link);
+      // create link
+      this.links_ = { 
+        object: object,
+        field: field,
+        format: format,
+        links_: this.links_
+      };
       
-      if (link.isEmitter)
-        object.addHandler(EMMITER_HANDLER, this); // add unlink handler on object destroy
+      // add handler if object is basis.event.Emitter
+      if (object instanceof Emitter)
+        object.addHandler(EMMITER_HANDLER, this);
 
       // make effect on object
-      this.apply_(link);
+      this.apply_(this.links_);
 
       return object;
     },
@@ -164,6 +170,7 @@
    /**
     * Removes link from object. Parameters must be the same
     * as for addLink method. If field omited all links are remove.
+    *
     * @example
     *   var value = new basis.data.value.BindValue();
     *   // add links
@@ -172,14 +179,14 @@
     *   // remove links
     *   value.removeLink(object, 'field');
     *   value.removeLink(object, object.method);
-    *   // or remove all links to object
+    *   // or remove all links for object
     *   value.removeLink(object);
     *
     *   // incorrect usage
     *   value.addLink(object, function(value){ this.field = value * 2; });
     *   ...
     *   value.removeLink(object, function(value){ this.field = value * 2; });
-    *   // link property to object still present
+    *   // link to object will not removed
     *
     *   // right way
     *   var linkHandler = function(value){ this.field = value * 2; };
@@ -192,38 +199,39 @@
     *   value.addLink(emitterInstance, 'title');
     *   ...
     *   emitterInstance.destroy();    // links to emitterInstance will be removed
+    *
     * @param {object} object
     * @param {string|function=} field
     */
     removeLink: function(object, field){
-      if (this.links_ == null) // object already destroyed
-        return;
+      var cursor = this;
+      var prev;
 
-      // delete link
-      for (var i = 0, k = 0, link; link = this.links_[i]; i++)
-      {
-        if (link.object === object && (!field || field == link.field))
+      while (prev = cursor, cursor = cursor.links_)
+        if (cursor.object === object && (!field || field == cursor.field))
         {
-          if (link.isEmitter)
-            link.object.removeHandler(EMMITER_HANDLER, this); // remove unlink handler on object destroy
+          // delete link
+          prev.links_ = cursor.links_;
+
+          // remove handler if object is basis.event.Emitter
+          if (cursor.object instanceof Emitter)
+            cursor.object.removeHandler(EMMITER_HANDLER, this);
         }
-        else
-          this.links_[k++] = link;
-      }
-      this.links_.length = k;
     },
 
    /**
     * Removes all property links to objects.
     */
     clear: function(){
-      // destroy links
-      for (var i = 0, link; link = this.links_[i]; i++)
-        if (link.isEmitter)
-          link.object.removeHandler(EMMITER_HANDLER, this); // remove unlink on object destroy
+      var cursor = this;
 
-      // clear links array
-      this.links_.clear();
+      // remove event handlers from basis.event.Emitter instances
+      while (cursor = cursor.links_)
+        if (cursor.object instanceof Emitter)
+          cursor.object.removeHandler(EMMITER_HANDLER, this);
+
+      // clear links
+      this.links_ = null;
     },
 
    /**
@@ -256,7 +264,7 @@
       Value.prototype.destroy.call(this);
 
       this.links_ = null;
-      cleaner.remove(this);
+      delete instanceMap[this.basisObjectId];
     }
   });
 
@@ -500,7 +508,8 @@
     destroy: function(){
       this.lock();
       this.clear();
-      basis.timer.clearImmediate(this.timer_);
+      if (this.timer_)
+        basis.timer.clearImmediate(this.timer_);
 
       BindValue.prototype.destroy.call(this);
     }
@@ -558,6 +567,18 @@
         });
       }
     }
+  });
+
+
+  //
+  // clean up instances
+  //
+
+  cleaner.add(function(){
+    for (var key in instanceMap)
+      instanceMap[key].destroy();
+
+    instanceMap = null;
   });
 
 
