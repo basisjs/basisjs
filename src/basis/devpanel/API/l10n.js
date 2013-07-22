@@ -112,8 +112,8 @@ module.exports = {
 
       dictionaries = basis.object.slice(basis.resource(filename)());
 
-      if (!dictionaries[dict.namespace])
-        dictionaries[dict.namespace] = {};
+      if (!dictionaries[dict.name])
+        dictionaries[dict.name] = {};
 
       //dictionaries[dictionaryName] = dict.resources[culture];
       dictParts = [];
@@ -121,7 +121,7 @@ module.exports = {
       {
         resourceParts = [];
 
-        if (dName == dict.namespace)
+        if (dName == dict.name)
         {
           var tokens = basis.object.complete(basis.object.slice(dict.resources[culture]), dictionaries[dName]);
           for (var tokenName in tokens)
