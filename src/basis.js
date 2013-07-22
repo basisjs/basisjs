@@ -622,8 +622,9 @@
   * @namespace basis.path
   */
   var pathUtils = (function(){
-    var utils;
+    var origin = '';
     var baseURI;
+    var utils;
 
     if (NODE_ENV)
     {
@@ -828,9 +829,11 @@
       };
 
       baseURI = location.pathname.replace(/[^\/]+$/, '');
+      origin = location.protocol + '//' + location.host;
     }
 
     utils.baseURI = baseURI;
+    utils.origin = origin;
 
     return utils;
   })();
@@ -1687,8 +1690,8 @@
     if (typeof compiledSourceCode != 'function')
       try {
         compiledSourceCode = new Function('exports, module, basis, global, __filename, __dirname, resource',
-          '//@ sourceURL=' + sourceURL + '\n' +
-          '//# sourceURL=' + sourceURL + '\n' +
+          '//@ sourceURL=' + pathUtils.origin + sourceURL + '\n' +
+          '//# sourceURL=' + pathUtils.origin + sourceURL + '\n' +
           '"use strict";\n\n' +
           sourceCode
         );
