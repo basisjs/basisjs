@@ -636,7 +636,7 @@
         'relative'
       ]);
 
-      baseURI = __dirname;
+      baseURI = utils.resolve('.') + '/';
     }
     else
     {
