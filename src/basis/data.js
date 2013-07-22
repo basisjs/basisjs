@@ -1518,7 +1518,18 @@
     },
 
    /**
-    * Todo nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
+    * Call fn for every item in dataset.
+    * @param {function(item)} fn
+    */ 
+    forEach: function(fn){
+      var items = this.getItems();
+
+      for (var i = 0; i < items.length; i++)
+        fn(items[i]);
+    },
+
+   /**
+    * Do nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
     * TODO: remove method definition and method call in destroy method.
     */ 
     clear: function(){
