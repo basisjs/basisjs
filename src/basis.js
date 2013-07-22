@@ -640,14 +640,10 @@
     }
     else
     {
-      var linkEl = document.createElement('a');
-      var normalizePathCache = {};
-
       var ABSOLUTE_RX = /^([^\/]+:|\/)/;
-      var HREF_ABSOLUTIZE_BUG = (function(){
-        linkEl.href = '';
-        return !linkEl.href;
-      })();
+      var ORIGIN_RX = /^([a-zA-Z0-9\-]+:)?\/\/[^\/]+/;
+      var SEARCH_HASH_RX = /[\?#].*$/;
+      var DELIM_RX = /\/+/;
 
       utils = {
        /**
@@ -671,30 +667,26 @@
         * @return {string}
         */ 
         normalize: function(path){
-          if (!path)
-            path = '';
-
-          // use cache if possible
-          if (path in normalizePathCache)
-            return normalizePathCache[path];
-
           // use link element as path resolver
-          linkEl.href = path
-            .replace(/^([a-z0-9\-]+:)?\/\/[^\/]+/i, '') // but cut off origin
-            .replace(/\/{2,}/g, '/');                   // and replace sequence of multiple `/` for one
+          var result = [];
+          var parts = (path || '')
+                .replace(ORIGIN_RX, '')         // but cut off origin
+                .replace(SEARCH_HASH_RX, '')    // cut off query search and hash
+                .split(DELIM_RX);               // split by sequence of `/`
 
-          // IE7 and lower does not absolutize href on assign, but do that on link cloning
-          // we replace linkEl for it's clone to get absolute path
-          if (HREF_ABSOLUTIZE_BUG)
-            linkEl = linkEl.cloneNode(false);
+          // process path parts
+          for (var i = 0; i < parts.length; i++)
+          {
+            if (parts[i] == '..')
+              result.pop();
+            else
+            {
+              if ((parts[i] || !i) && parts[i] != '.')
+                result.push(parts[i]);
+            }
+          }
 
-          // result is link pathname with no trailing `/`
-          var result = linkEl.pathname.replace(/\/$/, '');
-
-          // cache result
-          normalizePathCache[path] = result;
-
-          return result;
+          return result.join('/');
         },
 
        /**
