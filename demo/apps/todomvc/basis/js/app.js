@@ -5,7 +5,7 @@ basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('app.type');
 
-module.exports = basis.app({
+module.exports = basis.app.create({
   replace: 'todoapp',
 
   init: function(){
