@@ -1587,8 +1587,8 @@
     * @return {function(object)}
     */
     compute: function(events, fn){
-      function addItem(item, pair){
-        var itemId = item && item.basisObjectId;
+      function addItem(pair){
+        var itemId = pair.item && pair.item.basisObjectId;
         if (itemId)
         {
           var list = itemToObjects[itemId];
@@ -1599,8 +1599,8 @@
           list.push(pair);
         }
       }
-      function removeItem(item, pair){
-        var itemId = item && item.basisObjectId;
+      function removeItem(pair){
+        var itemId = pair.item && pair.item.basisObjectId;
         if (itemId)
         {
           var list = itemToObjects[itemId];
@@ -1626,9 +1626,9 @@
         var newItem = fn(object) || null;
         if (newItem !== this.item)
         {
-          removeItem(this.item, this);
-          addItem(newItem, this);
+          removeItem(this);
           this.item = newItem;
+          addItem(this);
           this.token.set(hostDataset.has(newItem));
         }
       });
@@ -1642,7 +1642,7 @@
         
         handler.destroy = function(object){
           delete tokenMap[object.basisObjectId];
-          removeItem(this.item, object);
+          removeItem(this);
           this.token.destroy(); // `this` is a token
         };
 
@@ -1701,7 +1701,7 @@
               item: item
             };
 
-            addItem(item, pair);
+            addItem(pair);
 
             // attach handler re-evaluate handler to object
             object.addHandler(handler, pair);
