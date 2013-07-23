@@ -697,7 +697,12 @@
           },
           destroy: function(){
             for (var key in tokenMap)
-              tokenMap[key].token.destroy();
+            {
+              var pair = tokenMap[key];
+              pair.object.removeHandler(handler, pair.token);
+              pair.token.destroy();
+            }
+
             tokenMap = null;
             hostValue = null;
           }
