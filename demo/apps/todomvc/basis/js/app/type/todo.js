@@ -1,7 +1,7 @@
 basis.require('basis.entity');
 basis.require('basis.data.dataset');
 
-var Todo = new basis.entity.createType('Todo', {
+var Todo = basis.entity.createType('Todo', {
   id: {
     type: basis.entity.IntId,
     calc: function(delta, data, oldValue){

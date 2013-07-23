@@ -7,30 +7,23 @@ basis.require('app.type');
 // import names
 
 var Todo = app.type.Todo;
-
+var count = basis.data.index.count;
 
 //
 // filters
 //
 
 var filters = new basis.ui.Node({
-  template: resource('template/filters.tmpl'),
-
-  autoDelegate: true,
-  handler: {
-    rootChanged: function(){
-      var child = this.getChild(this.root, 'dataset');
-      if (child)
-        child.select();
-    }
-  },
-  
+  template: resource('template/filters.tmpl'),  
   selection: true,
   childClass: {
     template: resource('template/filter-button.tmpl'),
     binding: {
       url: 'url',
-      title: 'title'
+      title: 'title',
+      selected: app.selectedDataset.compute(function(node, value){
+        return node.dataset === value;
+      })
     }
   },
   childNodes: [
@@ -57,22 +50,18 @@ var filters = new basis.ui.Node({
 //
 
 module.exports = new basis.ui.Node({
-  autoDelegate: true,
-
-  itemLabel: '',
-
   template: resource('template/footer.tmpl'),
   binding: {
-    completed: basis.data.index.count(Todo.completed),
-    active: basis.data.index.count(Todo.active),
-    itemLabel: new basis.data.value.Expression(basis.data.index.count(app.type.Todo.active), function(value){
+    filters: filters,
+    completed: count(Todo.completed),
+    active: count(Todo.active),
+    itemLabel: count(app.type.Todo.active).as(function(value){
       return value == 1 ? 'item' : 'items';
-    }),
-    filters: filters
+    })
   },
   action: {
     clearCompleted: function(){
-      Todo.completed.getItems().forEach(function(item){
+      Todo.completed.forEach(function(item){
         item.destroy();
       });
     }
