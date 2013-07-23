@@ -48,11 +48,6 @@
     className: namespace + '.BindValue',
 
    /**
-    * @inheritDocs
-    */ 
-    computeValueClass: basis.Class.SELF,
-
-   /**
     * @type {Array.<object>}
     * @private
     */

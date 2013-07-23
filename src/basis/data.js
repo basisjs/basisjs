@@ -529,12 +529,8 @@
   //
 
   var computeFunctions = {};
-  var COMPUTE_VALUE_HANDLER = {
-    change: function(){
-      this.evaluate();
-    }
-  };  
-  
+
+
  /**
   * @class
   */
@@ -580,12 +576,6 @@
     * @private
     */
     lockedValue_: null,
-
-   /**
-    * Class for {basis.data.Value#compute} function instances.
-    * @type {basis.Class}
-    */ 
-    computeValueClass: Class.SELF,
 
    /**
     * @constructor
@@ -662,69 +652,72 @@
     * @return {function(object)}
     */
     compute: function(events, fn){
-      if (arguments.length == 1)
+      if (!fn)
       {
         fn = events;
-        events = '';
+        events = null;
       }
 
-      events = String(events).trim().split(/\s+|\s*,\s*/).sort();
-
-      var computeId = events.concat(basis.getter(fn).basisGetterId_, this.basisObjectId).join('_');
-
-      if (computeFunctions[computeId])
-        return computeFunctions[computeId];
-
-      var masterValue = this;
-      var computeValuesMap = {};
-      var updateValue = function(){
-        this.evaluate();
-      };
-      var handler = {
-        destroy: function(object){
-          delete computeValuesMap[object.basisObjectId];
-          this.destroy();
-        }
-      };
-
-      for (var i = 0, eventName; eventName = events[i]; i++)
-        if (eventName != 'destroy')
-          handler[eventName] = updateValue;
-
-      this.addHandler({
-        destroy: function(){
-          for (var key in computeValuesMap)
-            computeValuesMap[key].destroy();
-          computeValuesMap = null;
-          masterValue = null;
-        }
+      var hostValue = this;
+      var handler = basis.event.createHandler(events, function(object){
+        this.set(fn(object, hostValue.value)); // `this` is a token
       });
+      var getComputeTokenId = handler.events.concat(String(fn), this.basisObjectId).join('_');
+      var getComputeToken = computeFunctions[getComputeTokenId];
 
-      return computeFunctions[computeId] = function(object){
-        /** @cut */ if (object instanceof basis.event.Emitter == false)
-        /** @cut */   basis.dev.warn('basis.data.Value#compute: object must be an instanceof basis.event.Emitter');
+      if (!getComputeToken)
+      {
+        var tokenMap = {};
+        
+        handler.destroy = function(object){
+          delete tokenMap[object.basisObjectId];
+          this.destroy(); // `this` is a token
+        };
 
-        var objectId = object.basisObjectId;
-        var computeValue = computeValuesMap[objectId];
-
-        if (!computeValue)
-        {
-          computeValue = computeValuesMap[objectId] = new masterValue.computeValueClass({
-            evaluate: function(){
-              this.set(fn(object, masterValue.value));
+        this.addHandler({
+          change: function(){
+            for (var key in tokenMap)
+            {
+              var pair = tokenMap[key];
+              pair.token.set(fn(pair.object, this.value));
             }
-          });
+          },
+          destroy: function(){
+            for (var key in tokenMap)
+              tokenMap[key].token.destroy();
+            tokenMap = null;
+            hostValue = null;
+          }
+        });
 
-          // attach handlers to related objects
-          object.addHandler(handler, computeValue);
-          masterValue.addHandler(COMPUTE_VALUE_HANDLER, computeValue);
+        getComputeToken = computeFunctions[getComputeTokenId] = function(object){
+          /** @cut */ if (object instanceof basis.event.Emitter == false)
+          /** @cut */   basis.dev.warn('basis.data.Value#compute: object must be an instanceof basis.event.Emitter');
 
-          computeValue.evaluate();
+          var objectId = object.basisObjectId;
+          var pair = tokenMap[objectId];
+
+          if (!pair)
+          {
+            // create token with computed value
+            var token = new basis.Token(fn(object, hostValue.value));
+            
+            // attach handler re-evaluate handler to object
+            object.addHandler(handler, token);
+
+            // store to map
+            pair = tokenMap[objectId] = {
+              token: token,
+              object: object
+            };
+          }
+
+          return pair.token;
         }
-
-        return computeValue;
       }
-    },    
+
+      return getComputeToken;
+    },
 
    /**
     * @destructor
