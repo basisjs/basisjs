@@ -786,6 +786,20 @@
   //
 
  /**
+  * Returns true if object is connected to another object through delegate chain.
+  * @param {basis.data.Object} a
+  * @param {basis.data.Object} b
+  * @return {boolean} Whether objects are connected.
+  */
+  function isConnected(a, b){
+    while (b && b !== a && b !== b.delegate)
+      b = b.delegate;
+        
+    return b === a;
+  }
+
+
+ /**
   * Key-value storage.
   * @class
   * @name Object
@@ -952,23 +966,6 @@
     },
 
    /**
-    * Returns true if current object is connected to another object through delegate bubbling.
-    * @param {basis.data.Object} object
-    * @return {boolean} Whether objects are connected.
-    */
-    isConnected: function(object){
-      if (object instanceof DataObject)
-      {
-        while (object && object !== this && object !== object.delegate)
-          object = object.delegate;
-          
-        return object === this;
-      }
-
-      return false;
-    },
-
-   /**
     * Returns root delegate object (that haven't delegate).
     * @return {basis.data.Object}
     */
@@ -1013,7 +1010,7 @@
       {
         // check for connected prevents from linking to objects
         // that has this object in delegate chains
-        if (newDelegate.delegate && this.isConnected(newDelegate))
+        if (newDelegate.delegate && isConnected(this, newDelegate))
         {
           // show warning in dev mode about new delegate ignore because it is already connected with object
           ;;;basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
@@ -1991,6 +1988,7 @@
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
 
+    isConnected: isConnected,
     getDatasetDelta: getDatasetDelta,
 
     wrapData: wrapData,
