@@ -530,6 +530,15 @@
 
   var computeFunctions = {};
 
+  var VALUE_TOKEN_HANDLER = {
+    change: function(sender){
+      var cursor = this;
+
+      while (cursor = cursor.tokens_)
+        cursor.token.set(cursor.fn(sender.value));
+    }
+  };
+
 
  /**
   * @class
@@ -566,7 +575,6 @@
    /**
     * Indicates that property is locked (don't fire event for changes).
     * @type {boolean}
-    * @readonly
     */
     locked: false,
 
@@ -576,6 +584,11 @@
     * @private
     */
     lockedValue_: null,
+
+   /**
+    * @type {object}
+    */
+    tokens_: null,
 
    /**
     * @constructor
@@ -720,6 +733,40 @@
     },
 
    /**
+    * Returns token which value equals to transformed via fn function value.
+    * @param {function} fn
+    * @return {basis.Token}
+    */ 
+    as: function(fn){
+      if (this.tokens_)
+      {
+        // try to find token with the same function
+        var cursor = this;
+
+        while (cursor = cursor.tokens_)
+          if (cursor.fn == String(fn))
+            return cursor.token;
+      }
+      else
+      {
+        // add handler on value change, if there was no token before
+        this.addHandler(VALUE_TOKEN_HANDLER);
+      }
+
+      // create token
+      var token = new basis.Token(fn(this.value));
+
+      // add to list
+      this.tokens_ = {
+        fn: fn,
+        token: token,
+        tokens_: this.tokens_
+      };
+
+      return token;
+    },
+
+   /**
     * @destructor
     */
     destroy: function(){
@@ -729,6 +776,7 @@
       this.initValue = null;
       this.value = null;
       this.lockedValue_ = null;
+      this.tokens_ = null;
     }
   });
 
