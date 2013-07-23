@@ -782,7 +782,10 @@
 
       this.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
 
-      this.entityClass.prototype['get_' + key] = function(){
+      this.entityClass.prototype['get_' + key] = function(real){
+        if (real && this.modified && key in this.modified)
+          return this.modified[key];
+
         return this.data[key];
       };
       this.entityClass.prototype['set_' + key] = function(value, rollback){
@@ -1065,7 +1068,10 @@
       getId: function(){
         return this.__id__;
       },
-      get: function(key){
+      get: function(key, real){
+        if (real && this.modified && key in this.modified)
+          return this.modified[key];
+
         return this.data[key];
       },
       set: function(key, value, rollback, silent_){
