@@ -30,7 +30,7 @@
  /**
   * Creates new type of event or returns existing one, if it was created before.
   * @param {string} eventName
-  * @func
+  * @return {function(..eventArgs)}
   */
   function createDispatcher(eventName){
     var eventFunction = events[eventName];
@@ -88,6 +88,31 @@
     }
 
     return eventFunction;
+  }
+
+ /**
+  * @param {string|Array.<string>=} events
+  * @param {function} eventCallback
+  * @return {object}
+  */
+  function createHandler(events, eventCallback){
+    var handler = {
+      events: []
+    };
+
+    if (events)
+    {
+      events = String(events).trim().split(/\s+|\s*,\s*/).sort();
+      handler = {
+        events: events
+      };
+
+      for (var i = 0, eventName; eventName = events[i]; i++)
+        if (eventName != 'destroy')
+          handler[eventName] = eventCallback;
+    }
+
+    return handler;
   }
 
 
@@ -233,6 +258,8 @@
 
   module.exports = {
     create: createDispatcher,
+    createHandler: createHandler,
+
     events: events,
 
     Emitter: Emitter
