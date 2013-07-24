@@ -355,7 +355,7 @@
 
       if (!name || namedTypes[name])
       {
-        /** @cut */ if (namedTypes[name]) basis.dev.warn(namespace + ': Dublicate type name - ' + this.name);
+        /** @cut */ if (namedTypes[name]) basis.dev.warn(namespace + ': Duplicate entity set type name `' + this.name + '`, name ignored');
         name = getUntitledName('UntitledEntitySetType');
       }
 
@@ -475,7 +475,14 @@
             if (isKeyType[typeof data])
             {
               if (!idField)
+              {
+                /** @cut */ if (entityType.compositeKey)
+                /** @cut */   basis.dev.warn('basis.entity: Entity type `' + entityType.name + '` wrapper was invoked with ' + typeof(data) + ' value as index, but entity type index is composite and consists of [' + keys(entityType.idFields).join(', ') + '] fields');
+                /** @cut */ else
+                /** @cut */   basis.dev.warn('basis.entity: Entity type `' + entityType.name + '` wrapper was invoked with ' + typeof(data) + ' value as index, but entity type has no index');
+
                 return;
+              }
 
               idValue = data;
               data = {};
@@ -773,7 +780,7 @@
       this.name = config.name;
       if (!this.name || namedTypes[this.name])
       {
-        /** @cut */ if (namedTypes[this.name]) basis.dev.warn(namespace + ': Dublicate type name - ' + this.name);
+        /** @cut */ if (namedTypes[this.name]) basis.dev.warn(namespace + ': Duplicate type name `' + this.name + '`, name ignored');
         this.name = getUntitledName('UntitledEntityType');
       }
 
