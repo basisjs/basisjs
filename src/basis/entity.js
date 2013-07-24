@@ -1053,16 +1053,18 @@
         // copy default values
         var value;
         var delta = {};
+        var defaultValue;
         for (var key in fields)
         {
+          defaultValue = typeof defaults[key] == 'function' ? defaults[key](data) : defaults[key];
           if (key in data)
           {
-            delta[key] = defaults[key];
+            delta[key] = defaultValue;
             value = fields[key](data[key]);
           }
           else
           {
-            value = defaults[key];
+            value = defaultValue;
           }
 
           if (value && value !== this && value instanceof Emitter)
