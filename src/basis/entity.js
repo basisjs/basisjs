@@ -636,7 +636,7 @@
         }, this);
       }
 
-      ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');      
+      ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');
 
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.fields, this.defaults, this.slots);
@@ -658,6 +658,19 @@
 
       // reg entity type
       entityTypes.push(this);
+
+      /** @cut */ this.addAlias = function(){
+      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addAlias method is deprecated, define all field aliases on type create');
+      /** @cut */   EntityTypeConstructor.prototype.addAlias.apply(this, arguments);
+      /** @cut */ };
+      /** @cut */ this.addField = function(){
+      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addField method is deprecated, define all fields on type create and use type by name resolving');
+      /** @cut */   EntityTypeConstructor.prototype.addField.apply(this, arguments);
+      /** @cut */ };
+      /** @cut */ this.addCalcField = function(){
+      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addCalcField method is deprecated, define all fields on type create');
+      /** @cut */   EntityTypeConstructor.prototype.addCalcField.apply(this, arguments);
+      /** @cut */ };
     },
     reader: function(data){
       var result = {};
@@ -827,7 +840,6 @@
       if (key)
       {
         // natural calc field
-
         calcConfig.key = key;
         for (var i = 0; i < this.calcs.length; i++)
           if (this.calcs[i].args.has(key))
