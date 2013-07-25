@@ -117,9 +117,14 @@
     }
 
     basis.ready(function(){
-      var tmpEl = appEl;
+      var insertEl = appEl;
+      var initResult = appInit.call(app);
+
+      if (initResult && initResult.element)
+        insertEl = initResult.element;
+
       appEl = null;
-      app.setElement(appInit.call(app) || tmpEl);
+      app.setElement(insertEl);
     });
 
     return app;
