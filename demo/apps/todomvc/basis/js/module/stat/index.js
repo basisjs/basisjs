@@ -13,32 +13,28 @@ var count = basis.data.index.count;
 
 var filters = new basis.ui.Node({
   template: resource('template/filters.tmpl'),  
-  selection: true,
   childClass: {
     template: resource('template/filter-button.tmpl'),
     binding: {
       url: 'url',
       title: 'title',
       selected: Todo.selected.compute(function(node, value){
-        return node.dataset === value;
+        return Todo[node.url || 'all'] === value;
       })
     }
   },
   childNodes: [
     {
       url: '',
-      title: 'All',
-      dataset: Todo.all
+      title: 'All'
     },
     {
       url: 'active',
-      title: 'Active',
-      dataset: Todo.active
+      title: 'Active'
     },
     {
       url: 'completed',
-      title: 'Completed',
-      dataset: Todo.completed
+      title: 'Completed'
     }
   ]
 });
