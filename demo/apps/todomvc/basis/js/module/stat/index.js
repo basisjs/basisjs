@@ -1,8 +1,6 @@
 basis.require('basis.ui');
-basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('app.type');
-
 
 // import names
 
@@ -21,7 +19,7 @@ var filters = new basis.ui.Node({
     binding: {
       url: 'url',
       title: 'title',
-      selected: app.selectedDataset.compute(function(node, value){
+      selected: Todo.selected.compute(function(node, value){
         return node.dataset === value;
       })
     }
@@ -55,7 +53,7 @@ module.exports = new basis.ui.Node({
     filters: filters,
     completed: count(Todo.completed),
     active: count(Todo.active),
-    itemLabel: count(app.type.Todo.active).as(function(value){
+    itemLabel: count(Todo.active).as(function(value){
       return value == 1 ? 'item' : 'items';
     })
   },

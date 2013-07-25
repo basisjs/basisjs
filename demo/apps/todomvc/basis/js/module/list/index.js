@@ -1,5 +1,4 @@
 basis.require('basis.ui');
-basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('app.type');
 
@@ -63,6 +62,6 @@ var view = new basis.ui.Node({
   }
 });
 
-app.selectedDataset.addLink(view, view.setDataSource);
+Todo.selected.addLink(view, view.setDataSource);
 
 module.exports = view;
