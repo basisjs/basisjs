@@ -404,7 +404,8 @@
           // if node has grouping move groups into template
           if (this.grouping)
           {
-            (this.tmpl.groupsElement || this.childNodesElement).appendChild(nodeDocumentFragment);
+            var childNodesElement = this.tmpl.groupsElement || this.childNodesElement;
+            childNodesElement.appendChild(nodeDocumentFragment);
           }
           
           // release fragment
@@ -455,6 +456,9 @@
               this.childNodesElement = document.createDocumentFragment();
               ;;;this.noChildNodesElement = true;
             }
+
+            if (this.grouping)
+              this.grouping.syncDomRefs();
 
             if (this instanceof PartitionNode)
             {
@@ -827,7 +831,7 @@
     syncDomRefs: function(){
       var cursor = this;
       var owner = this.owner;
-      var element = null;//this.nullElement;
+      var element = null;
 
       if (owner)
       {
@@ -840,6 +844,13 @@
         cursor.element = cursor.childNodesElement = element;
       }
       while (cursor = cursor.grouping);
+    },
+
+    destroy: function(){
+      DWGroupingNode.prototype.destroy.call(this);
+      this.element = null;
+      this.childNodesElement = null;
+      this.nullElement = null;
     }
   });
 

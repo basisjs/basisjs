@@ -139,6 +139,7 @@
     */
     init: function(){
       GroupingNode.prototype.init.call(this);
+      this.nullElement = DOM.createFragment();
       this.element = this.childNodesElement = this.headerRow = DOM.createElement('tr.Basis-Table-Header-GroupContent');
     },
 
@@ -162,12 +163,33 @@
       GroupingNode.prototype.removeChild.call(oldChild);
     },
 
+    syncDomRefs: function(){
+      var cursor = this;
+      var owner = this.owner;
+      var element = null;
+
+      if (owner)
+      {
+        element = (owner.tmpl && owner.tmpl.groupsElement) || owner.childNodesElement;
+        element.appendChild(this.nullElement);
+      }
+
+      do
+      {
+        cursor.element = cursor.childNodesElement = element;
+      }
+      while (cursor = cursor.grouping);
+    },
+
    /**
     * @inheritDoc
     */
     destroy: function(){
       GroupingNode.prototype.destroy.call(this);
       this.headerRow = null;
+      this.element = null;
+      this.childNodesElement = null;
+      this.nullElement;
     }
   });
 
