@@ -333,12 +333,17 @@
       {
         if (bridge)
         {
-          if (value !== oldAttach)
+          if (!oldAttach || value !== oldAttach.value)
           {
             if (oldAttach)
-              oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
-            bridge.attach(value, updateAttach, bindingName);
-            attaches[bindingName] = value;
+              oldAttach.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
+
+            attaches[bindingName] = {
+              name: bindingName,
+              value: value
+            };
+            
+            bridge.attach(value, updateAttach, attaches[bindingName]);
           }
 
           value = bridge.get(value);
@@ -347,11 +352,12 @@
         {
           if (oldAttach)
           {
-            oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
-            delete attaches[bindingName];
+            oldAttach.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
+            attaches[bindingName] = null;
           }
         }
       }
+
       return value;
     }
 

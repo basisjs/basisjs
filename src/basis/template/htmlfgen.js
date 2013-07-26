@@ -330,9 +330,6 @@
             return '';
           });
 
-          console.log(l10nName, l10nBinding);
-      
-
           if (!l10nMap)
           {
             l10nMap = {};
@@ -425,7 +422,7 @@
           /** @cut */   'binding:"' + bindName + '"',
           /** @cut */   'dom:' + domRef,
           /** @cut */   'val:' + bindVar,
-          /** @cut */   'attachment:attaches["' + bindName + '"]'
+          /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
           /** @cut */ ] +'}');
 
           varList.push(bindVar + '=' + domRef);
@@ -440,7 +437,7 @@
           /** @cut */   'dom:' + domRef,
           /** @cut */   'attr:"' + attrName + '"',
           /** @cut */   'val:' + bindVar,
-          /** @cut */   'attachment:attaches["' + bindName + '"]'
+          /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
           /** @cut */ ] + '}');
 
           switch (attrName)
@@ -567,7 +564,7 @@
 
       return {
         /** @cut */ debugList: debugList,
-        keys: basis.object.keys(bindMap),
+        keys: basis.object.keys(bindMap).filter(function(key){ return key.indexOf('@') == -1 }),
         vars: varList,
         set: result.join(''),
         l10n: l10nMap,
@@ -594,8 +591,6 @@
       keys: bindings.keys,
       l10nKeys: bindings.l10nKeys
     };
-
-    console.log(bindings);
 
     if (bindings.l10n)
     {
@@ -630,14 +625,14 @@
       'return function createInstance_(obj,onAction,onUpdate){' +
         'var id=gMap.seed++,' +
         'ref={context:obj},' +
-        'attaches={},' + 
+        'attaches={' + bindings.keys.map(function(key){ return key + ':null' }) + '},' + 
         'resolve=tools.resolve,' +
         '_=build(),' + 
         paths.path.concat(bindings.vars) + 
 
         (objectRefs ? ';if(obj)gMap[' + objectRefs + '=id]=ref' : '') +
 
-        ';function updateAttach(){set(this+"",attaches[this])}' +
+        ';function updateAttach(){set(this.name,this.value)}' +
 
         bindings.set +
         /** @cut */ (debug ? 'set.debug=function(){return[' + bindings.debugList + ']}' : '') +
@@ -648,7 +643,8 @@
           'rebuild_:function(){if(onUpdate)onUpdate.call(obj)},' +
           'action_:function(action,event){if(onAction)onAction.call(obj,action,event)},' +
           'destroy_:function(){' +
-            'for(var key in attaches)if(attaches[key])attaches[key].bindingBridge.detach(attaches[key],updateAttach,key);' +
+            'var a;' +
+            'for(var key in attaches)if(a = attaches[key])a.value.bindingBridge.detach(a.value,updateAttach,a);' +
             'attaches=null;' +
             'delete tMap[id];' + 
             (objectRefs ? 'delete gMap[id];' : '') +
