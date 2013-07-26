@@ -102,6 +102,7 @@
     minScrollDelta: 0,
     scrollX: true,
     scrollY: true,
+    panning: true,
 
     emit_start: createEvent('start'),
     emit_finish: createEvent('finish'),
@@ -154,17 +155,34 @@
       this.updateElementPosition = TRANSFORM_SUPPORT ? this.updatePosition_styleTransform : this.updatePosition_styleTopLeft;
     },
     setElement: function(element){
-      if (this.targetElement)
-      {
-        Event.removeHandler(this.targetElement, 'mousedown', this.onMouseDown, this);
-        Event.removeHandler(this.targetElement, 'touchstart', this.onMouseDown, this);        
-      }
+      if (this.targetElement && this.panning)
+        this.removeTargetElementHandlers();
+      
       this.targetElement = element;
-      if (this.targetElement)
+
+      if (this.targetElement && this.panning)
+        this.addTargetElementHandlers();
+    },
+    setPanning: function(panning){
+      panning = !!panning;
+
+      if (this.panning != panning)
       {
-        Event.addHandler(this.targetElement, 'mousedown', this.onMouseDown, this);
-        Event.addHandler(this.targetElement, 'touchstart', this.onMouseDown, this);
+        this.panning = panning;
+
+        if (panning)
+          this.addTargetElementHandlers();
+        else
+          this.removeTargetElementHandlers();
       }
+    },
+    addTargetElementHandlers: function(){
+      Event.addHandler(this.targetElement, 'mousedown', this.onMouseDown, this);
+      Event.addHandler(this.targetElement, 'touchstart', this.onMouseDown, this);
+    },
+    removeTargetElementHandlers: function(){
+      Event.removeHandler(this.targetElement, 'mousedown', this.onMouseDown, this);
+      Event.removeHandler(this.targetElement, 'touchstart', this.onMouseDown, this);
     },
    
     updatePosition_styleTopLeft: function(){
