@@ -76,18 +76,10 @@
   var HeaderGroupingNode = Class(GroupingNode, {
     className: namespace + '.HeaderGroupingNode',
     emit_ownerChanged: function(oldOwner){
-      if (oldOwner)
+      if (oldOwner && !this.owner)
         DOM.remove(this.headerRow);
 
-      if (this.owner && this.owner.element)
-      {
-        var cursor = this;
-        var element = this.owner.element;
-        do
-        {
-          DOM.insert(element, cursor.headerRow, DOM.INSERT_BEGIN);
-        } while (cursor = cursor.grouping);
-      }
+      this.syncDomRefs();
       
       GroupingNode.prototype.emit_ownerChanged.call(this, oldOwner);
     },
@@ -177,6 +169,8 @@
       do
       {
         cursor.element = cursor.childNodesElement = element;
+        if (element)
+          DOM.insert(element, cursor.headerRow, DOM.INSERT_BEGIN);
       }
       while (cursor = cursor.grouping);
     },
