@@ -68,7 +68,6 @@
       PageControl.prototype.init.call(this);
 
       this.scroller = new Scroller({
-        targetElement: this.tmpl.childNodesElement,
         scrollY: false,
         minScrollDelta: 10,
         handler: {
@@ -81,7 +80,11 @@
 
       if (this.rotate)
         this.adjustRotation();
+    },
 
+    templateSync: function(noRecreate){
+      PageControl.prototype.templateSync.call(this, noRecreate);
+      this.scroller.setElement(this.childNodesElement);
       this.realign();
     },
 

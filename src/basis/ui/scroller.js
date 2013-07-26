@@ -145,9 +145,12 @@
       //init
       Emitter.prototype.init.call(this);
 
-      var element = this.targetElement;
-      this.targetElement = null;
-      this.setElement(element);
+      if (this.targetElement)
+      {
+        var element = this.targetElement;
+        this.targetElement = null;
+        this.setElement(element);
+      }
 
       this.onUpdateHandler = this.onUpdate.bind(this);
 
@@ -169,9 +172,9 @@
    
     updatePosition_styleTopLeft: function(){
       if (this.scrollX)
-        this.targetElement.style.left = -(this.viewportX) + 'px';
+        this.targetElement.style.left = -this.viewportX + 'px';
       if (this.scrollY)
-        this.targetElement.style.top = -(this.viewportY) + 'px';
+        this.targetElement.style.top = -this.viewportY + 'px';
     },
 
     updatePosition_styleTransform: function(){
@@ -672,11 +675,10 @@
       this.maxPositionY = 0;
 
       // create scroller
-      var scrollerConfig = basis.object.extend(this.scroller || {}, {
-        targetElement: this.tmpl.scrollElement,
+      var scrollerConfig = basis.object.complete({
         scrollX: this.scrollX,
         scrollY: this.scrollY
-      });
+      }, this.scroller);
 
       this.scroller = new Scroller(scrollerConfig);
       this.scroller.addHandler({
@@ -691,15 +693,17 @@
           this.updateBind('scrollProcess');
         }
       }, this);
-
-      // add resize handler
-      basis.layout.addBlockResizeHandler(this.tmpl.scrollElement, this.realign.bind(this));
     },
 
     templateSync: function(noRecreate){
       UINode.prototype.templateSync.call(this, noRecreate);
 
-      this.scroller.setElement(this.tmpl.scrollElement);
+      var scrollElement = this.tmpl.scrollElement || this.element;
+
+      this.scroller.setElement(scrollElement);
+
+      // add resize handler
+      basis.layout.addBlockResizeHandler(scrollElement, this.realign.bind(this));
     },
 
     updatePosition: function(){
@@ -825,13 +829,17 @@
           updatePosition: this.applyPosition
         }, this);
       }
+    },
+
+    postInit: function(){
+      ScrollPanel.prototype.postInit.call(this);
 
       if (!this.selection.itemCount && this.firstChild)
       {
         this.firstChild.select();
         this.scrollToChild(this.firstChild, true);
       }
-    },                         
+    },
 
     setPosition: function(position, instantly){
       if (this.scrollX)
