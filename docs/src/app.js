@@ -180,10 +180,10 @@ basis.ready(function(){
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || prototypeMapPopup().visible)
       return;
 
-    basis.dom.focus(searchInput.tmpl.field, !searchInput.focused);
+    searchInput.focus(!searchInput.focused);
   });
 
-  basis.dom.focus(searchInput.tmpl.field, true);
+  searchInput.focus(true);
 
   app.stat.initTime.set(new Date - initTime);
 });
