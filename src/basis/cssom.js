@@ -748,7 +748,7 @@
   function setBase(baseURI){
     // Opera and IE doesn't resolve pathes correctly, if base href is not an absolute path
     // convert path to absolute value
-    baseEl.setAttribute('href', path.resolve(baseURI));
+    baseEl.setAttribute('href', baseURI);
 
     // if more than one <base> elements in document, only first has effect
     // put our <base> resolver at the begining of <head>

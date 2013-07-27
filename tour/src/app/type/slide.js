@@ -7,18 +7,15 @@ var File = resource('file.js').fetch();
 // main part
 //
 
-var Slide = new basis.entity.EntityType({
-  name: 'Slide',
-  fields: {
-    id: basis.entity.StringId,
-    num: Number,
-    title: String,
-    code: String,
-    files: new basis.entity.EntitySetType(File)
-  }
+var Slide = basis.entity.createType('Slide', {
+  id: basis.entity.StringId,
+  num: Number,
+  title: String,
+  code: String,
+  files: new basis.entity.EntitySetType(File),
+  prev: 'Slide',
+  next: 'Slide'
 });
-Slide.addField('prev', Slide);
-Slide.addField('next', Slide);
 
 
 //

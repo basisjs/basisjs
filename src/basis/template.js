@@ -1769,45 +1769,75 @@
     get: getSourceByPath
   });
 
+
  /**
   * @class
   */
   var SourceWrapper = Class(basis.Token, {
     className: namespace + '.SourceWrapper',
-    content: null,
 
-    init: function(content, path){
-      basis.Token.prototype.init.call(this);
+   /**
+    * Url of wrapped content, if exists.
+    * @type {string}
+    */
+    url: '',
+
+   /**
+    * Base URI of wrapped content, if exists.
+    * @type {string}
+    */
+    baseURI: '',
+
+   /**
+    * @constructor
+    * @param {*} value
+    * @param {string} path
+    */ 
+    init: function(value, path){
+      basis.Token.prototype.init.call(this, null);
       this.path = path;
-      this.set(content);
+      this.set(value);
     },
-    set: function(content){
-      if (this.content != content)
-      {
-        if (this.content && this.content.bindingBridge)
-          this.content.bindingBridge.detach(this.content, this.apply, this);
 
-        this.content = content;
+   /**
+    * @inheritDocs
+    */
+    get: function(){
+      return this.value && this.value.bindingBridge
+        ? this.value.bindingBridge.get(this.value)
+        : this.value;
+    },
+
+   /**
+    * @inheritDocs
+    */ 
+    set: function(content){
+      if (this.value != content)
+      {
+        if (this.value && this.value.bindingBridge)
+          this.value.bindingBridge.detach(this.value, this.apply, this);
+
+        this.value = content;
         this.url = (content && content.url) || '';
         this.baseURI = (typeof content == 'object' || typeof content == 'function') && 'baseURI' in content ? content.baseURI : path.dirname(this.url) + '/';
 
-        if (this.content && this.content.bindingBridge)
-          this.content.bindingBridge.attach(this.content, this.apply, this);
+        if (this.value && this.value.bindingBridge)
+          this.value.bindingBridge.attach(this.value, this.apply, this);
 
         this.apply();
       }
     },
-    get: function(){
-      return this.content && this.content.bindingBridge
-        ? this.content.bindingBridge.get(this.content)
-        : this.content;
-    },
+
+   /**
+    * @destructor
+    */
     destroy: function(){
-      basis.Token.prototype.destroy.call(this);
       this.apply = basis.fn.$null;
       this.set();
+      basis.Token.prototype.destroy.call(this);
     }
   });
+
 
   function getSourceByPath(){
     var path = basis.array(arguments).join('.');

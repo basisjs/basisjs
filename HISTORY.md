@@ -1,4 +1,31 @@
-# 0.9.6 (july 20, 2013)
+## 0.9.7 (july 27, 2013)
+
+- FIX: fix state changing events for `basis.net` synchronous requests
+- NEW: simplify usage of `basis.net.request`
+- API: make `basis.path` methods compliance to node.js `path` module
+- NEW: add origin property to `basis.path`
+- FIX: fix `basis.devpanel` l10n regression (dictionary name fetching)
+- FIX: temporaty fix in `basis.ui` to solve problem with template switching on `childNodesModified` event
+- NEW: `basis.bool.invert` function implemented
+- NEW: `basis.data.Value#compute` method implemented
+- NEW: `basis.data.Value#as` method implemented
+- NEW: `basis.data.Dataset#forEach` method implemented
+- NEW: `basis.Token` reworked, and now has value by default and get/set methods are not abstract any more
+- FIX: fix `basis.app` wrapper regression
+- NEW: `basis.event.createHandler` function implemented
+- API: drop `basis.data.Object#isConnected`, it becomes a method of `basis.data`
+- API: new boolean argument for `basis.entity.Entity#get` and `basis.entity.Entity#get_*` methods, to get data using modified
+- API: deprecate `basis.entity.EntityTypeConstructor`'s `addField`, `addCalcField` and `addAlias` methods
+- NEW: default value in `basis.entity` type config could be a function that compute value on init
+- NEW: warn when invoke `basis.entity` type wrapper with value as index, but it has no index or index is composite
+- NEW: `basis.app` init now can returns object that contains element as property (example, instance of `basis.ui.Node`)
+- NEW: `basis.ui.scroller` scroll panning is optional now
+- FIX: fix file path resolving for links in docs
+- FIX: add `basis` to namespace list in docs
+- `basis.data.Value` & `basis.data.value.BindValue` refactoring
+- rework TodoMVC demo to use new possibility of framework
+
+## 0.9.6 (july 20, 2013)
 
 - API: change `basis.path.relative` to work correctly with `Array` ES5 iterate methods
 - API: drop `basis.l10n.Token#enum` method as not ready to use (will be provided in 0.10)
@@ -30,7 +57,7 @@
 - API: split `basis.format.highlight` into `basis.utils.highlight` and `basis.ui.code`;
 - API: `basis.format.highlight` is deprecated now
 
-# 0.9.5 (july 12, 2013)
+## 0.9.5 (july 12, 2013)
 
 - API: `basis.data.Value#set` method returns `true` if value was changed
 - FIX: `basis.net.Transport` don't add extra headers for request by default (break CORS)
@@ -70,7 +97,7 @@
 - FIX: `basis.ui.ScrollTable` crash when table has no footer
 - NEW: new property `basis.ui.ScrollTable#fitToContainer`
 
-# 0.9.4 (july 2, 2013)
+## 0.9.4 (july 2, 2013)
 
 - NEW: `basis.event.events.*` functions have verbose name in dev mode now (was `anonymous function` before)
 - API: `basis.data.property.DataObjectSet` reset `value`/`state` changed flags before set/compute new `value`/`state`, it makes possible trigger recalc `value`/`state` inside event callbacks
@@ -91,4 +118,3 @@
 - TodoMVC refactored
 - Basis.js templates become more independent from host object implementation
 - Various small fixes and code clean up
-

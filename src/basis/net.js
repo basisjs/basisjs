@@ -574,11 +574,11 @@
 
       this.prevReadyState_ = -1;
 
-      if (requestData.asynchronous)
-        // set ready state change handler
-        xhr.onreadystatechange = readyStateChangeHandler.bind(this);
-      else
-        // catch state change for 'loading' in synchronous mode
+      // set ready state change handler
+      xhr.onreadystatechange = readyStateChangeHandler.bind(this);
+
+      // catch state change for 'loading' in synchronous mode
+      if (!requestData.asynchronous)
         readyStateChangeHandler.call(this, STATE_UNSENT);
 
       // open XMLHttpRequest
@@ -751,15 +751,31 @@
     AjaxRequest: AjaxRequest,
     Transport: AjaxTransport,
 
-    request: function(config){
+    request: function(config, successCallback, failureCallback){
+      if (typeof config == 'string')
+        config = {
+          url: config,
+          asynchronous: !!(successCallback || failureCallback)
+        };
+
       var transport = new AjaxTransport(config);
       transport.addHandler({
+        success: successCallback && function(sender, req, data){
+          successCallback(data);
+        },
+        failure: failureCallback && function(sender, req, error){
+          failureCallback(error);
+        },
         complete: function(){
           basis.timer.nextTick(function(){
             transport.destroy();
           });
         }
       });
-      transport.request();
+
+      var req = transport.request();
+
+      if (!req.requestData.asynchronous)
+        return req.getResponseData();
     }
   };

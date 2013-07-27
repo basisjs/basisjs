@@ -57,7 +57,7 @@
         var filename = basis.path.relative(newData.file);
         result.appendChild(
           DOM.createElement('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]'.format(filename, newData.line),
-            filename.split('src/basis/').pop() + ':' + newData.line
+            basis.path.basename(filename) + ':' + newData.line
           )
         );
       }

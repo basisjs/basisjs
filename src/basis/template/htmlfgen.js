@@ -555,8 +555,8 @@
           '}' +
         '}'
         
-        /** @cut */ + (uri ? '//# sourceURL=' + uri + '_l10n' : '')
-        /** @cut */ + (uri ? '//@ sourceURL=' + uri + '_l10n' : '')
+        /** @cut */ + (uri ? '//# sourceURL=' + basis.path.origin + uri + '_l10n' : '')
+        /** @cut */ + (uri ? '//@ sourceURL=' + basis.path.origin + uri + '_l10n' : '')
       );
     }
 
@@ -591,8 +591,8 @@
           '}'] +
         '}' +
 
-        /** @cut */ (uri ? '//# sourceURL=' + uri + '\n' : '') +
-        /** @cut */ (uri ? '//@ sourceURL=' + uri + '\n' : '') +
+        /** @cut */ (uri ? '//# sourceURL=' + basis.path.origin + uri + '\n' : '') +
+        /** @cut */ (uri ? '//@ sourceURL=' + basis.path.origin + uri + '\n' : '') +
       '}'
     );
     /** @cut */ } catch(e) { basis.dev.warn("can't build createInstance\n", fnBody); }

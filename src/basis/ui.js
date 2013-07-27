@@ -768,9 +768,14 @@
         // later (after inherited method call)
         super_.setChildNodes.call(this, childNodes, keepAlive);
 
-        // restore childNodesElement
+        // flush dom fragment nodes into container
         container.insertBefore(domFragment, container.insertPoint || null); // NOTE: null at the end for IE
-        target.childNodesElement = container;
+
+        // restore childNodesElement, but only if childNodesElement isn't changed during children insert,
+        // as example, by template switching on childNodesModified
+        // TODO: find better solution, movement template creation into postInit can solve that problem on init
+        if (target.childNodesElement === domFragment)
+          target.childNodesElement = container;
       }
     };
   };
