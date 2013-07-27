@@ -1457,32 +1457,27 @@
     },
 
    /**
-    * Add callback on token value changes. Doesn't add duplicate callback and context pairs.
+    * Add callback on token value changes.
     * @param {function(value)} fn
     * @param {object=} context
-    * @return {boolean} Return true if callback was added.
     */
     attach: function(fn, context){
-      var cursor = this;
-
-      while (cursor = cursor.handler)
-        if (cursor.fn === fn && cursor.context === context)
-          return false;
+      /** @cut */ var cursor = this;
+      /** @cut */ while (cursor = cursor.handler)
+      /** @cut */  if (cursor.fn === fn && cursor.context === context)
+      /** @cut */    consoleMethods.warn('basis.Token#attach: duplicate fn & context pair');
 
       this.handler = {
         fn: fn,
         context: context,
         handler: this.handler
       };
-
-      return true;
     },
 
    /**
     * Remove callback. Must be passed the same arguments as for {basis.Token#attach} method.
     * @param {function(value)} fn
     * @param {object=} context
-    * @return {boolean}
     */
     detach: function(fn, context){
       var cursor = this;
@@ -1492,10 +1487,8 @@
         if (cursor.fn === fn && cursor.context === context)
         {
           prev.handler = cursor.handler;
-          return true;
+          break;
         }
-
-      return false;
     },
 
    /**
