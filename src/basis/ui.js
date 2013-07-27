@@ -443,6 +443,8 @@
           {
             if (this.content instanceof basis.l10n.Token)
             {
+              ;;;basis.dev.warn('WARN: use instance of basis.l10n.Token as value for basis.ui.Node#content property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.content);
+
               // FIXME: buggy code here, looks like we shouldn't want to do that
               var token = this.content;
               var textNode = DOM.createText(token.value);
