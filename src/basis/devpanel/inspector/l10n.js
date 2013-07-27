@@ -33,7 +33,7 @@ function loadToken(token){
   var data = { 
     cultureList: cultureList,
     selectedToken: token.name,
-    dictionaryName: dictionary.namespace, 
+    dictionaryName: dictionary.name, 
     tokens: {}
   };
 
@@ -148,7 +148,7 @@ function domTreeHighlight(root){
               var rect = range.getBoundingClientRect();
               if (rect)
               {
-                var color = getColorForDictionary(binding.attachment.dictionary.namespace);
+                var color = getColorForDictionary(binding.attachment.dictionary.name);
                 var bgColor = 'rgba(' + color.join(',') + ', .3)';
                 var borderColor = 'rgba(' + color.join(',') + ', .6)';
                 var element = overlay.appendChild(basis.dom.createElement({

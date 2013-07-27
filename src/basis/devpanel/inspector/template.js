@@ -17,19 +17,18 @@ function pickHandler(event){
   DOM.event.kill(event);
 
   var node = pickupTarget.value;
-  
+
   if (node){
     var url = node.template.source.url;
-    if (url){
+
+    if (url)
       transport.sendData('pickTemplate', {
-        filename: url.substr((location.protocol + '//' + location.host).length)
+        filename: url
       });
-    }
-    else {
+    else
       transport.sendData('pickTemplate', {
         content: template.source
-      });     
-    }
+      });
 
     endInspect();
   }

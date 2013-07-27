@@ -355,7 +355,7 @@
 
       if (!name || namedTypes[name])
       {
-        /** @cut */ if (namedTypes[name]) basis.dev.warn(namespace + ': Dublicate type name - ' + this.name);
+        /** @cut */ if (namedTypes[name]) basis.dev.warn(namespace + ': Duplicate entity set type name `' + this.name + '`, name ignored');
         name = getUntitledName('UntitledEntitySetType');
       }
 
@@ -475,7 +475,14 @@
             if (isKeyType[typeof data])
             {
               if (!idField)
+              {
+                /** @cut */ if (entityType.compositeKey)
+                /** @cut */   basis.dev.warn('basis.entity: Entity type `' + entityType.name + '` wrapper was invoked with ' + typeof(data) + ' value as index, but entity type index is composite and consists of [' + keys(entityType.idFields).join(', ') + '] fields');
+                /** @cut */ else
+                /** @cut */   basis.dev.warn('basis.entity: Entity type `' + entityType.name + '` wrapper was invoked with ' + typeof(data) + ' value as index, but entity type has no index');
+
                 return;
+              }
 
               idValue = data;
               data = {};
@@ -567,7 +574,185 @@
         return newArray;
     
     return oldArray;
-  }  
+  }
+
+  function addField(entityType, key, config){
+    if (entityType.all.itemCount)
+    {
+      ;;;basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
+      return;
+    }
+
+    // registrate alias
+    entityType.aliases[key] = key;
+
+    // normalize config
+    if (typeof config == 'string'
+        || Array.isArray(config)
+        || (typeof config == 'function' && config.calc !== config))
+    {
+      config = {
+        type: config
+      };
+    }
+    else
+    {
+      // make a copy of config to avoid side effect
+      config = basis.object.slice(config);
+    }
+
+    // process type in config
+    if ('type' in config)
+    {
+      if (typeof config.type == 'string')
+        config.type = getTypeByName(config.type, entityType.fields, key);
+
+      // if type is array convert it into enum
+      if (Array.isArray(config.type))
+      {
+        var values = config.type.slice(); // make copy of array to make it stable
+        config.type = function(value, oldValue){
+          var exists = values.indexOf(value) != -1;
+          ;;;if (!exists) basis.dev.warn('Set value that not in list for ' + entityType.name + '#field.' + key + ', new value ignored.');
+          return exists ? value : oldValue;
+        };
+        config.defValue = config.type(config.defValue, values[0]);
+      }
+
+      if (config.type === Array)
+        config.type = chooseArray;
+
+      // if type still is not a function - ignore it
+      if (typeof config.type != 'function')
+      {
+        ;;;basis.dev.warn('EntityType ' + entityType.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
+        config.type = $self;
+      }
+    }
+
+    var wrapper = config.type || $self;
+
+    if ([NumericId, NumberId, IntId, StringId].has(wrapper))
+      config.id = true;
+
+    if (config.id)
+    {
+      if (!entityType.index)
+        entityType.index = new Index(String);
+
+      entityType.idFields[key] = true;
+
+      if (entityType.idField || entityType.compositeKey)
+      {
+        entityType.idField = null;
+        entityType.compositeKey = ConcatString.apply(null, keys(entityType.idFields));
+      }
+      else
+      {
+        entityType.idField = key;
+      }
+    }
+
+    if (config.calc)
+      addCalcField(entityType, key, config.calc);
+    else
+      entityType.fields[key] = wrapper;
+
+    entityType.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
+
+    entityType.entityClass.prototype['get_' + key] = function(real){
+      if (real && this.modified && key in this.modified)
+        return this.modified[key];
+
+      return this.data[key];
+    };
+
+    entityType.entityClass.prototype['set_' + key] = function(value, rollback){
+      return this.set(key, value, rollback);
+    };
+
+    if (!fieldDestroyHandlers[key])
+      fieldDestroyHandlers[key] = {
+        destroy: function(){
+          this.set(key, null);
+        }
+      };
+  }
+
+  function addFieldAlias(entityType, alias, key){
+    if (key in entityType.fields)
+    {
+      if (alias in entityType.aliases == false)
+        entityType.aliases[alias] = key;
+      else
+      {
+        ;;;basis.dev.warn('Alias `' + alias + '` already exists');
+      }
+    }
+    else
+    {
+      ;;;basis.dev.warn('Can\'t add alias `' + alias + '` for non-exists field `' + key + '`');
+    }
+  }
+
+  function addCalcField(entityType, key, wrapper){
+    if (key && entityType.fields[key])
+    {
+      ;;;basis.dev.warn('Field `' + key + '` had defined already');
+      return;
+    }
+
+    if (!entityType.calcs)
+      entityType.calcs = [];
+
+    var calcConfig = {
+      args: wrapper.args || [],
+      wrapper: wrapper
+    };
+
+    // NOTE: simple dependence calculation
+    // TODO: check, is algoritm make real check for dependencies or not?
+    var before = entityType.calcs.length;
+    var after = 0;
+
+    if (wrapper.args)
+      for (var i = 0; i < entityType.calcs.length; i++)
+        if (wrapper.args.has(entityType.calcs[i].key))
+          after = i + 1;
+
+    if (key)
+    {
+      // natural calc field
+      calcConfig.key = key;
+      for (var i = 0; i < entityType.calcs.length; i++)
+        if (entityType.calcs[i].args.has(key))
+        {
+          before = i;
+          break;
+        }
+
+      if (after > before)
+      {
+        ;;;basis.dev.warn('Can\'t add calculate field `{0}`, because recursion'.format(key));
+        return;
+      }
+
+      if (entityType.idField && key == entityType.idField)
+        entityType.compositeKey = wrapper;
+
+      entityType.fields[key] = function(value, oldValue){
+        ;;;basis.dev.log('Calculate fields are readonly');
+        return oldValue;
+      };
+    }
+    else
+    {
+      // constrain
+      before = after;
+    }
+
+    entityType.calcs.splice(Math.min(before, after), 0, calcConfig);
+  }
 
 
  /**
@@ -595,7 +780,7 @@
       this.name = config.name;
       if (!this.name || namedTypes[this.name])
       {
-        /** @cut */ if (namedTypes[this.name]) basis.dev.warn(namespace + ': Dublicate type name - ' + this.name);
+        /** @cut */ if (namedTypes[this.name]) basis.dev.warn(namespace + ': Duplicate type name `' + this.name + '`, name ignored');
         this.name = getUntitledName('UntitledEntityType');
       }
 
@@ -636,7 +821,7 @@
         }, this);
       }
 
-      ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');      
+      ;;;if ('isSingleton' in config) basis.dev.warn('Property `isSingleton` in config is obsolete. Use `singleton` property instead.');
 
       // create entity class
       this.entityClass = createEntityClass(this, this.all, this.fields, this.defaults, this.slots);
@@ -648,16 +833,32 @@
       });
 
       // define fields, aliases and constrains
-      basis.object.iterate(config.fields, this.addField, this);
-      basis.object.iterate(config.aliases, this.addAlias, this);
+      for (var key in config.fields)
+        addField(this, key, config.fields[key]);
+
+      for (var key in config.aliases)
+        addFieldAlias(this, key, config.aliases[key]);      
 
       if (config.constrains)
         config.constrains.forEach(function(item){
-          this.addCalcField(null, item);
+          addCalcField(this, null, item);
         }, this);
 
       // reg entity type
       entityTypes.push(this);
+
+      /** @cut */ this.addField = function(key, config){
+      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addField method is deprecated, define all fields on type create and use type by name resolving');
+      /** @cut */   addField(this, key, config);
+      /** @cut */ };
+      /** @cut */ this.addAlias = function(alias, key){
+      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addAlias method is deprecated, define all field aliases on type create');
+      /** @cut */   addFieldAlias(this, alias, key);
+      /** @cut */ };
+      /** @cut */ this.addCalcField = function(key, wrapper){
+      /** @cut */   ;;;basis.dev.warn('basis.entity.EntityTypeConstructor#addCalcField method is deprecated, define all fields on type create');
+      /** @cut */   addCalcField(this, key, wrapper);
+      /** @cut */ };
     },
     reader: function(data){
       var result = {};
@@ -682,178 +883,6 @@
       }
 
       return result;
-    },
-    addAlias: function(alias, key){
-      if (key in this.fields)
-      {
-        if (alias in this.aliases == false)
-          this.aliases[alias] = key;
-        else
-        {
-          ;;;basis.dev.warn('Alias `{0}` already exists'.format(alias));
-        }
-      }
-      else
-      {
-        ;;;basis.dev.warn('Can\'t add alias `{0}` for non-exists field `{1}`'.format(alias, key));
-      }
-    },
-    addField: function(key, config){
-      if (this.all.itemCount)
-      {
-        ;;;basis.dev.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not added, you must destroy all existed entity first.');
-        return;
-      }
-
-      // registrate alias
-      this.aliases[key] = key;
-
-      // normalize config
-      if (typeof config == 'string'
-          || Array.isArray(config)
-          || (typeof config == 'function' && config.calc !== config))
-      {
-        config = {
-          type: config
-        };
-      }
-      else
-      {
-        // make a copy of config to avoid side effect
-        config = basis.object.slice(config);
-      }
-
-      // process type in config
-      if ('type' in config)
-      {
-        if (typeof config.type == 'string')
-        {
-          config.type = getTypeByName(config.type, this.fields, key);
-        }
-
-        // if type is array convert it into enum
-        if (Array.isArray(config.type))
-        {
-          var values = config.type.slice(); // make copy of array to make it stable
-          config.type = function(value, oldValue){
-            return values.indexOf(value) != -1 ? value : oldValue;
-          }
-          config.defValue = config.type(config.defValue, values[0]);
-        }
-
-        if (config.type === Array)
-          config.type = chooseArray;
-
-        // if type still is not a function - ignore it
-        if (typeof config.type != 'function')
-        {
-          ;;;basis.dev.warn('(debug) EntityType ' + this.name + ': Field wrapper for `' + key + '` field is not a function. Field wrapper has been ignored. Wrapper: ', config.type);
-          config.type = $self;
-        }
-      }
-
-      var wrapper = config.type || $self;
-
-      if ([NumericId, NumberId, IntId, StringId].has(wrapper))
-        config.id = true;
-
-      if (config.id)
-      {
-        if (!this.index)
-          this.index = new Index(String);
-
-        this.idFields[key] = true;
-
-        if (this.idField || this.compositeKey)
-        {
-          this.idField = null;
-          this.compositeKey = ConcatString.apply(null, keys(this.idFields));
-        }
-        else
-        {
-          this.idField = key;
-        }
-      }
-
-      if (config.calc)
-        this.addCalcField(key, config.calc);
-      else
-        this.fields[key] = wrapper;
-
-      this.defaults[key] = 'defValue' in config ? config.defValue : wrapper();
-
-      this.entityClass.prototype['get_' + key] = function(){
-        return this.data[key];
-      };
-      this.entityClass.prototype['set_' + key] = function(value, rollback){
-        return this.set(key, value, rollback);
-      };
-
-      if (!fieldDestroyHandlers[key])
-        fieldDestroyHandlers[key] = {
-          destroy: function(){
-            this.set(key, null);
-          }
-        };
-    },
-    addCalcField: function(key, wrapper){
-      if (key && this.fields[key])
-      {
-        ;;;basis.dev.warn('Field `{0}` had defined already'.format(key));
-        return;
-      }
-
-      if (!this.calcs)
-        this.calcs = [];
-
-      var calcConfig = {
-        args: wrapper.args || [],
-        wrapper: wrapper
-      };
-
-      // NOTE: simple dependence calculation
-      // TODO: check, is algoritm make real check for dependencies or not?
-      var before = this.calcs.length;
-      var after = 0;
-
-      if (wrapper.args)
-        for (var i = 0; i < this.calcs.length; i++)
-          if (wrapper.args.has(this.calcs[i].key))
-            after = i + 1;
-
-      if (key)
-      {
-        // natural calc field
-
-        calcConfig.key = key;
-        for (var i = 0; i < this.calcs.length; i++)
-          if (this.calcs[i].args.has(key))
-          {
-            before = i;
-            break;
-          }
-
-        if (after > before)
-        {
-          ;;;basis.dev.warn('Can\'t add calculate field `{0}`, because recursion'.format(key));
-          return;
-        }
-
-        if (this.idField && key == this.idField)
-          this.compositeKey = wrapper;
-
-        this.fields[key] = function(value, oldValue){
-          ;;;basis.dev.log('Calculate fields are readonly');
-          return oldValue;
-        };
-      }
-      else
-      {
-        // constrain
-        before = after;
-      }
-
-      this.calcs.splice(Math.min(before, after), 0, calcConfig);
     },
     get: function(entityOrData){
       var id = this.getId(entityOrData);
@@ -1040,7 +1069,13 @@
           }
           else
           {
-            value = defaults[key];
+            if (typeof defaults[key] == 'function')
+            {
+              delta[key] = undefined;
+              value = defaults[key](data);
+            }
+            else
+              value = defaults[key];
           }
 
           if (value && value !== this && value instanceof Emitter)
@@ -1065,7 +1100,10 @@
       getId: function(){
         return this.__id__;
       },
-      get: function(key){
+      get: function(key, real){
+        if (real && this.modified && key in this.modified)
+          return this.modified[key];
+
         return this.data[key];
       },
       set: function(key, value, rollback, silent_){

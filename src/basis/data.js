@@ -525,9 +525,21 @@
 
 
   //
-  //  ABSTRACT PROPERTY
+  // Value
   //
-  
+
+  var computeFunctions = {};
+
+  var VALUE_TOKEN_HANDLER = {
+    change: function(sender){
+      var cursor = this;
+
+      while (cursor = cursor.tokens_)
+        cursor.token.set(cursor.fn(sender.value));
+    }
+  };
+
+
  /**
   * @class
   */
@@ -557,12 +569,11 @@
     * Function for preprocessing value before set.
     * @type {function(value)}
     */
-    proxy: $self,
+    proxy: null,
 
    /**
     * Indicates that property is locked (don't fire event for changes).
     * @type {boolean}
-    * @readonly
     */
     locked: false,
 
@@ -574,15 +585,19 @@
     lockedValue_: null,
 
    /**
+    * @type {object}
+    */
+    tokens_: null,
+
+   /**
     * @constructor
     */
     init: function(){
       AbstractData.prototype.init.call(this);
 
-      if (typeof this.proxy != 'function')
-        this.proxy = $self;
+      if (this.proxy)
+        this.value = this.proxy(this.value);
 
-      this.value = this.proxy(this.value);
       this.initValue = this.value;
     },
 
@@ -594,7 +609,7 @@
     */
     set: function(value){
       var oldValue = this.value;
-      var newValue = this.proxy(value);
+      var newValue = this.proxy ? this.proxy(value) : value;
       var changed = newValue !== oldValue;
 
       if (changed)
@@ -606,6 +621,13 @@
       }
 
       return changed;
+    },
+
+   /**
+    * Restore init value.
+    */
+    reset: function(){
+      this.set(this.initValue);
     },
 
    /**
@@ -637,10 +659,115 @@
     },
 
    /**
-    * Restore init value.
+    * @param {string|Array.<string>=} events
+    * @param {function(object, value)} fn
+    * @return {function(object)}
     */
-    reset: function(){
-      this.set(this.initValue);
+    compute: function(events, fn){
+      if (!fn)
+      {
+        fn = events;
+        events = null;
+      }
+
+      var hostValue = this;
+      var handler = basis.event.createHandler(events, function(object){
+        this.set(fn(object, hostValue.value)); // `this` is a token
+      });
+      var getComputeTokenId = handler.events.concat(String(fn), this.basisObjectId).join('_');
+      var getComputeToken = computeFunctions[getComputeTokenId];
+
+      if (!getComputeToken)
+      {
+        var tokenMap = {};
+        
+        handler.destroy = function(object){
+          delete tokenMap[object.basisObjectId];
+          this.destroy(); // `this` is a token
+        };
+
+        this.addHandler({
+          change: function(){
+            for (var key in tokenMap)
+            {
+              var pair = tokenMap[key];
+              pair.token.set(fn(pair.object, this.value));
+            }
+          },
+          destroy: function(){
+            for (var key in tokenMap)
+            {
+              var pair = tokenMap[key];
+              pair.object.removeHandler(handler, pair.token);
+              pair.token.destroy();
+            }
+
+            tokenMap = null;
+            hostValue = null;
+          }
+        });
+
+        getComputeToken = computeFunctions[getComputeTokenId] = function(object){
+          /** @cut */ if (object instanceof basis.event.Emitter == false)
+          /** @cut */   basis.dev.warn('basis.data.Value#compute: object must be an instanceof basis.event.Emitter');
+
+          var objectId = object.basisObjectId;
+          var pair = tokenMap[objectId];
+
+          if (!pair)
+          {
+            // create token with computed value
+            var token = new basis.Token(fn(object, hostValue.value));
+            
+            // attach handler re-evaluate handler to object
+            object.addHandler(handler, token);
+
+            // store to map
+            pair = tokenMap[objectId] = {
+              token: token,
+              object: object
+            };
+          }
+
+          return pair.token;
+        }
+      }
+
+      return getComputeToken;
+    },
+
+   /**
+    * Returns token which value equals to transformed via fn function value.
+    * @param {function} fn
+    * @return {basis.Token}
+    */ 
+    as: function(fn){
+      if (this.tokens_)
+      {
+        // try to find token with the same function
+        var cursor = this;
+
+        while (cursor = cursor.tokens_)
+          if (cursor.fn == String(fn))
+            return cursor.token;
+      }
+      else
+      {
+        // add handler on value change, if there was no token before
+        this.addHandler(VALUE_TOKEN_HANDLER);
+      }
+
+      // create token
+      var token = new basis.Token(fn(this.value));
+
+      // add to list
+      this.tokens_ = {
+        fn: fn,
+        token: token,
+        tokens_: this.tokens_
+      };
+
+      return token;
     },
 
    /**
@@ -653,13 +780,28 @@
       this.initValue = null;
       this.value = null;
       this.lockedValue_ = null;
+      this.tokens_ = null;
     }
   });
 
 
   //
-  // DataObject
+  // Object
   //
+
+ /**
+  * Returns true if object is connected to another object through delegate chain.
+  * @param {basis.data.Object} a
+  * @param {basis.data.Object} b
+  * @return {boolean} Whether objects are connected.
+  */
+  function isConnected(a, b){
+    while (b && b !== a && b !== b.delegate)
+      b = b.delegate;
+        
+    return b === a;
+  }
+
 
  /**
   * Key-value storage.
@@ -828,23 +970,6 @@
     },
 
    /**
-    * Returns true if current object is connected to another object through delegate bubbling.
-    * @param {basis.data.Object} object
-    * @return {boolean} Whether objects are connected.
-    */
-    isConnected: function(object){
-      if (object instanceof DataObject)
-      {
-        while (object && object !== this && object !== object.delegate)
-          object = object.delegate;
-          
-        return object === this;
-      }
-
-      return false;
-    },
-
-   /**
     * Returns root delegate object (that haven't delegate).
     * @return {basis.data.Object}
     */
@@ -889,7 +1014,7 @@
       {
         // check for connected prevents from linking to objects
         // that has this object in delegate chains
-        if (newDelegate.delegate && this.isConnected(newDelegate))
+        if (newDelegate.delegate && isConnected(this, newDelegate))
         {
           // show warning in dev mode about new delegate ignore because it is already connected with object
           ;;;basis.dev.warn('New delegate has already connected to object. Delegate assignment has been ignored.', this, newDelegate);
@@ -1143,6 +1268,7 @@
         item.destroy();
     }
   });
+
 
   //
   // Datasets
@@ -1434,11 +1560,21 @@
     },
 
    /**
-    * Todo nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
+    * Call fn for every item in dataset.
+    * @param {function(item)} fn
+    */ 
+    forEach: function(fn){
+      var items = this.getItems();
+
+      for (var i = 0; i < items.length; i++)
+        fn(items[i]);
+    },
+
+   /**
+    * Do nothing, but incorrectly call in destroy method. Temporary here to avoid exceptions.
     * TODO: remove method definition and method call in destroy method.
     */ 
     clear: function(){
-
     },
 
    /**
@@ -1856,6 +1992,7 @@
     Dataset: Dataset,
     DatasetWrapper: DatasetWrapper,
 
+    isConnected: isConnected,
     getDatasetDelta: getDatasetDelta,
 
     wrapData: wrapData,

@@ -744,12 +744,13 @@
     }
   };
 
-  var resolveQueue = basis.object.values(basis.namespaces_).map(function(ns){
+  basis.source_ = basis.net.request(basis.filename_);
+  var resolveQueue = basis.object.values(basis.namespaces_).concat(basis).map(function(ns){
     return ns.source_
       ? {
           url: ns.filename_,
           kind: 'jsdoc',
-          text: '/** @namespace ' + ns.path + '*/' + ns.source_
+          text: '/** @namespace ' + (ns === basis ? 'basis' : ns.path) + '*/' + ns.source_
         }
       : null;
   }).filter(basis.fn.$isNotNull);

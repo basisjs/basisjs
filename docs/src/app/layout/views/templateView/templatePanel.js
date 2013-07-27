@@ -219,7 +219,7 @@
       },
       externalFileCaption: function(node){
         var template = node.data.obj && node.data.obj.prototype.template;
-        return ((template && template.source && template.source.url) || '').split('src/basis/').pop();
+        return basis.path.basename((template && template.source && template.source.url) || '');
       },
       externalFileUrl: function(node){
         var template = node.data.obj && node.data.obj.prototype.template;

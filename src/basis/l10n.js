@@ -27,17 +27,11 @@
   var Token = Class(basis.Token, {
     className: namespace + '.Token',
 
-    value: '',
-
-    toString: function(){
-      return this.value;
-    },
-
    /**
     * @constructor
     */ 
     init: function(dictionary, tokenName){
-      basis.Token.prototype.init.call(this);
+      basis.Token.prototype.init.call(this, null);
 
       this.dictionary = dictionary;
       this.name = tokenName;
@@ -45,23 +39,8 @@
       tokenIndex.push(this);
     },
 
-    get: function(){
+    toString: function(){
       return this.value;
-    },
-    set: function(value){
-      if (value != this.value)
-      {
-        this.value = value;
-        this.apply();
-      }
-    },
-
-   /**
-    * @destructor
-    */ 
-    destroy: function(){
-      this.value = null;
-      basis.Token.prototype.destroy.call(this);
     }
   });
 
