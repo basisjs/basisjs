@@ -1270,11 +1270,10 @@
     }
   });
 
+
   //
   // Datasets
   //
-
-  var datasetComputeFunctions = {};
 
  /**
   * Returns delta object
@@ -1577,141 +1576,6 @@
     * TODO: remove method definition and method call in destroy method.
     */ 
     clear: function(){
-
-    },
-
-
-   /**
-    * @param {string|Array.<string>=} events
-    * @param {function(object, value)} fn
-    * @return {function(object)}
-    */
-    compute: function(events, fn){
-      function addItem(pair){
-        var itemId = pair.item && pair.item.basisObjectId;
-        if (itemId)
-        {
-          var list = itemToObjects[itemId];
-
-          if (!list)
-            list = itemToObjects[itemId] = [];
-
-          list.push(pair);
-        }
-      }
-      function removeItem(pair){
-        var itemId = pair.item && pair.item.basisObjectId;
-        if (itemId)
-        {
-          var list = itemToObjects[itemId];
-
-          if (list)
-            list.remove(pair);
-
-          if (!list.length)
-            delete itemToObjects[itemId];
-        }
-      }
-
-      if (!fn)
-      {
-        fn = events;
-        events = null;
-      }
-
-      fn = basis.getter(fn);
-
-      var hostDataset = this;
-      var handler = basis.event.createHandler(events, function(object){
-        var newItem = fn(object) || null;
-        if (newItem !== this.item)
-        {
-          removeItem(this);
-          this.item = newItem;
-          addItem(this);
-          this.token.set(hostDataset.has(newItem));
-        }
-      });
-      var getComputeTokenId = handler.events.concat(fn.basisGetterId_, this.basisObjectId).join('_');
-      var getComputeToken = datasetComputeFunctions[getComputeTokenId];
-
-      if (!getComputeToken)
-      {
-        var tokenMap = {};
-        var itemToObjects = {};
-        
-        handler.destroy = function(object){
-          delete tokenMap[object.basisObjectId];
-          removeItem(this);
-          this.token.destroy(); // `this` is a token
-        };
-
-        this.addHandler({
-          itemsChanged: function(sender, delta){
-            var array;
-
-            if (array = delta.inserted)
-              for (var i = 0, pair, objects; i < array.length; i++)
-              {
-                objects = itemToObjects[array[i].basisObjectId];
-                if (objects)
-                  for (var j = 0; j < objects.length; j++)
-                    objects[j].token.set(true);
-              }
-
-            if (array = delta.deleted)
-              for (var i = 0, pair, objects; i < array.length; i++)
-              {
-                objects = itemToObjects[array[i].basisObjectId];
-                if (objects)
-                  for (var j = 0; j < objects.length; j++)
-                    objects[j].token.set(false);
-              }
-          },
-          destroy: function(){
-            for (var key in tokenMap)
-            {
-              var pair = tokenMap[key];
-              pair.object.removeHandler(handler, pair);
-              pair.token.destroy();
-            }
-            tokenMap = null;
-            itemToObjects = null;
-            hostDataset = null;
-          }
-        });
-
-        getComputeToken = datasetComputeFunctions[getComputeTokenId] = function(object){
-          /** @cut */ if (object instanceof basis.event.Emitter == false)
-          /** @cut */   basis.dev.warn('basis.data.Value#compute: object must be an instanceof basis.event.Emitter');
-
-          var objectId = object.basisObjectId;
-          var pair = tokenMap[objectId];
-
-          if (!pair)
-          {
-            // create token with computed value
-            var item = fn(object) || null;
-            var token = new basis.Token(hostDataset.has(item));
-
-            // store to map
-            pair = tokenMap[objectId] = {
-              token: token,
-              object: object,
-              item: item
-            };
-
-            addItem(pair);
-
-            // attach handler re-evaluate handler to object
-            object.addHandler(handler, pair);
-          }
-
-          return pair.token;
-        }
-      }
-
-      return getComputeToken;
     },
 
    /**
