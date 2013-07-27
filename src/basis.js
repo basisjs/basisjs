@@ -1472,7 +1472,7 @@
       this.handler = {
         fn: fn,
         context: context,
-        handlers: this.handler
+        handler: this.handler
       };
 
       return true;

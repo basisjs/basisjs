@@ -100,90 +100,37 @@
     var bind_node = W3C_DOM_NODE_SUPPORTED
       // W3C DOM way
       ? function(domRef, oldNode, newValue){
-          var newNode = domRef;
-
-          if (newValue instanceof Node)
-          {
-            if (newValue.nodeType == 11)  // fragment
-            {
-              if (newValue.firstChild === newValue.lastChild)
-                newNode = newValue.firstChild;
-              else
-                newNode = arrayFrom(newValue);
-            }
-            else
-              newNode = newValue;
-          }
-          /*else
-          {
-            if (newValue && Array.isArray(newValue))
-              if (newValue.length == 1)
-                newNode = newValue[0];
-              else
-                newNode = arrayFrom(newValue);
-          }*/
+          var newNode = newValue instanceof Node && !newValue.basisNodeInUse ? newValue : domRef;
 
           if (newNode !== oldNode)
           {
-            if (Array.isArray(newNode))
-            {
-              if (oldNode.fragmentStart)
-              {
-                newNode.fragmentStart = oldNode.fragmentStart;
-                newNode.fragmentEnd = oldNode.fragmentEnd;
-
-                var cursor = newNode.fragmentStart.nextSibling;
-                while (cursor && cursor != newNode.fragmentEnd)
-                {
-                  var tmp = cursor;
-                  cursor = cursor.nextSibling;
-                  tmp.parentNode.removeChild(tmp);
-                }
-              }
-              else
-              {
-                newNode.fragmentStart = document.createComment('start');
-                newNode.fragmentEnd = document.createComment('end');
-                oldNode.parentNode.insertBefore(newNode.fragmentStart, oldNode);
-                oldNode.parentNode.replaceChild(newNode.fragmentEnd, oldNode);
-              }
-
-              for (var i = 0, node; node = newNode[i]; i++)
-                newNode.fragmentEnd.parentNode.insertBefore(node, newNode.fragmentEnd);
-            }
-            else
-            {
-              if (oldNode && oldNode.fragmentStart)
-              {
-                var cursor = oldNode.fragmentStart.nextSibling;
-                while (cursor && cursor != oldNode.fragmentEnd)
-                {
-                  var tmp = cursor;
-                  cursor = cursor.nextSibling;
-                  tmp.parentNode.removeChild(tmp);
-                }
-                oldNode.fragmentStart.parentNode.removeChild(oldNode.fragmentStart);
-                oldNode = oldNode.fragmentEnd;
-              }
-
-              oldNode.parentNode.replaceChild(newNode, oldNode);
-            }
+            oldNode.parentNode.replaceChild(newNode, oldNode);
+            if (oldNode !== domRef) oldNode.basisNodeInUse = false;
+            if (newNode !== domRef) newNode.basisNodeInUse = true;
           }
 
           return newNode;
         }
       // Old browsers way (IE6-8 and other)
       : function(domRef, oldNode, newValue){
-          var newNode = newValue && typeof newValue == 'object' ? newValue : domRef;
+          var newNode = newValue && typeof newValue == 'object' && !newNode.basisNodeInUse ? newValue : domRef;
 
           if (newNode !== oldNode)
+          {
             try {
               oldNode.parentNode.replaceChild(newNode, oldNode);
+              if (oldNode !== domRef) oldNode.basisNodeInUse = false;
+              if (newNode !== domRef) newNode.basisNodeInUse = true;
             } catch(e) {
               newNode = domRef;
               if (oldNode !== newNode)
+              {
                 oldNode.parentNode.replaceChild(newNode, oldNode);
+                if (oldNode !== domRef) oldNode.basisNodeInUse = false;
+                if (newNode !== domRef) newNode.basisNodeInUse = true;
+              }
             }
+          }
 
           return newNode;
         };
@@ -336,7 +283,7 @@
           if (!oldAttach || value !== oldAttach.value)
           {
             if (oldAttach)
-              oldAttach.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
+              oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
 
             attaches[bindingName] = {
               name: bindingName,
@@ -347,13 +294,13 @@
             bridge.attach(value, updateAttach, attaches[bindingName]);
           }
 
-          value = bridge.get(value, object);
+          value = bridge.get(value, updateAttach, attaches[bindingName]);
         }
         else
         {
           if (oldAttach)
           {
-            oldAttach.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
+            oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
             attaches[bindingName] = null;
           }
         }

@@ -43,6 +43,7 @@
 
   var tokenIndex = [];
   var tokenEnums = {};
+  var TEMPLATE_HANDLER_ID = 1;
 
   function processMarkup(value){
     value = String(value)
@@ -184,19 +185,17 @@
       detach: function(host, fn, context){
         return host.detach(fn, context);
       },
-      get: function(host, object){
-        if (!object || !host.template)
-          return host.get();
-
-        if (object instanceof Emitter)
+      get: function(host, fn, context){
+        if (host.template && fn && context)
         {
-          var id = object.basisObjectId;
+          var cursor = host;
 
-          if (id in host.tmpl == false)
-            return host.attachTemplate(object).element;
-          else
-            return host.tmpl[id].element;
+          while (cursor = cursor.handler)
+            if (cursor.fn === fn && cursor.context === context && cursor.id)
+              return host.tmpl[cursor.id].element;
         }
+
+        return host.get();
       }
     },
 
@@ -209,11 +208,12 @@
     * @constructor
     */ 
     init: function(dictionary, tokenName, type){
-      basis.Token.prototype.init.call(this, null);
+      basis.Token.prototype.init.call(this, '');
 
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
       this.dictionary = dictionary;
+
       if (type)
         this.setType(type);
     },
@@ -255,25 +255,40 @@
       }
     },
 
-    attachTemplate: function(object){
+    attachTemplate: function(handler){
       var template = this.template;
       var tmpl = this.tmpl;
-      var id = object.basisObjectId;
+      var object = handler.context.object;
+      var id = handler.id;
+      var self = this;
 
-      return tmpl[id] = template.createInstance(object, null, function tmplSync(){
-        if (tmpl)
+      tmpl[id] = template.createInstance(object, null, function tmplSync(){
+        if (tmpl[id])
+        {
+          tmpl[id].element.toString = null;
           template.clearInstance(tmpl[id]);
+        }
 
         tmpl[id] = template.createInstance(object, null, tmplSync);
+        tmpl[id].element.toString = function(){
+          return self.value;
+        }
       });
+
+      tmpl[id].element.toString = function(){
+        return self.value;
+      };
+
+      return tmpl[id];
     },
 
-    detachTemplate: function(object){
+    detachTemplate: function(handler){
       var template = this.template;
-      var id = object.basisObjectId;
+      var id = handler.id;
 
       if (template && id in this.tmpl)
       {
+        this.tmpl[id].element.toString = null;
         template.clearInstance(this.tmpl[id]);
         delete this.tmpl[id];
       }
@@ -282,32 +297,43 @@
     attach: function(fn, context){
       basis.Token.prototype.attach.call(this, fn, context);
 
-      if (this.template && context && context.object && context.object instanceof Emitter)
-        this.attachTemplate(context.object);
+      if (context && context.object && context.object instanceof Emitter)
+      {
+        this.handler.id = TEMPLATE_HANDLER_ID++;
+
+        if (this.template)
+          this.attachTemplate(this.handler);
+      }
     },
 
     detach: function(fn, context){
-      basis.Token.prototype.detach.call(this, fn, context);
+      var cursor = this;
+      var prev;
 
-      if (this.template && context && context.object)
-        this.detachTemplate(context.object);
+      while (prev = cursor, cursor = cursor.handler)
+        if (cursor.fn === fn && cursor.context === context)
+        {
+          prev.handler = cursor.handler;
+
+          if (this.template && cursor.id)
+            this.detachTemplate(cursor);
+
+          return true;
+        }
     },
 
     apply: function(){
       var value = this.get();
       var cursor = this;
 
-      while (cursor = cursor.handlers)
+      while (cursor = cursor.handler)
       {
-        var object = cursor.context && cursor.context.object;
-        if (this.template && object && object instanceof Emitter)
+        if (this.template && cursor.id)
         {
-          var id = object.basisObjectId;
+          if (cursor.id in this.tmpl == false)
+            this.attachTemplate(cursor);
 
-          if (id in this.tmpl == false)
-            this.attachTemplate(object);
-
-          cursor.fn.call(cursor.context, this.tmpl[id].element);
+          cursor.fn.call(cursor.context, this.tmpl[cursor.id].element);
         }
         else
           cursor.fn.call(cursor.context, value);
