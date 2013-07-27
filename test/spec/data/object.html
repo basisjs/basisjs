@@ -329,14 +329,14 @@
 
                     objectC.setDelegate(objectA); // should be ignored
                     this.is(true, objectC.delegate === null);
-                    this.is(true, objectC.isConnected(objectA));
+                    this.is(true, basis.data.isConnected(objectC, objectA));
 
                     objectA.setDelegate(objectC);
                     this.is(true, objectA.delegate === objectC);
-                    this.is(true, objectC.isConnected(objectA));
-                    this.is(true, objectC.isConnected(objectB));
-                    this.is(false, objectB.isConnected(objectA));
-                    this.is(false, objectB.isConnected(objectC));
+                    this.is(true, basis.data.isConnected(objectC, objectA));
+                    this.is(true, basis.data.isConnected(objectC, objectB));
+                    this.is(false, basis.data.isConnected(objectB, objectA));
+                    this.is(false, basis.data.isConnected(objectB, objectC));
                   }
                 }
               ]

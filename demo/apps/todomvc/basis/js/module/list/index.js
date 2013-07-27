@@ -1,32 +1,21 @@
 basis.require('basis.ui');
-basis.require('basis.data.value');
 basis.require('basis.data.index');
 basis.require('app.type');
 
-module.exports = new basis.ui.Node({
-  autoDelegate: true,
-  handler: {
-    rootChanged: function(){
-      this.setDataSource(this.root);
-    }
-  },
+var Todo = app.type.Todo;
 
+var view = new basis.ui.Node({
   template: resource('template/list.tmpl'),
   binding: {
-    noActive: new basis.data.value.Expression(
-      basis.data.index.count(app.type.Todo.active),
-      function(value){
-        return !value;
-      }
-    )
+    noActive: basis.data.index.count(Todo.active).as(basis.bool.invert)
   },
   action: {
     toggle: function(event){
-      var dataset = event.sender.checked ? app.type.Todo.active : app.type.Todo.completed;
+      var dataset = event.sender.checked ? Todo.active : Todo.completed;
 
       // invert completed flag for dataset members
-      dataset.getItems().forEach(function(todo){
-        todo.set('completed', !todo.data.completed);
+      dataset.forEach(function(item){
+        item.set_completed(!item.data.completed);
       });
     }
   },
@@ -72,3 +61,7 @@ module.exports = new basis.ui.Node({
     }
   }
 });
+
+Todo.selected.addLink(view, view.setDataSource);
+
+module.exports = view;

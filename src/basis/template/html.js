@@ -375,15 +375,10 @@
     };
 
     return function(tokens){
-      var sourceURL = this.source.url || 'inline_template' + this.templateId;
-
-      var fn = getFunctions(tokens, true, sourceURL, tokens.source_);
+      var fn = getFunctions(tokens, true, this.source.url, tokens.source_);
       var templateMap = {};
       var l10nMap = {};
       var l10nLinks = [];
-
-      window.xx = window.xx || {};
-      window.xx[sourceURL] = templateMap;
 
       var proto = buildHtml(tokens);
       var build = function(){

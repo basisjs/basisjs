@@ -147,7 +147,7 @@ function domTreeHighlight(root){
               var rect = range.getBoundingClientRect();
               if (rect)
               {
-                var color = getColorForDictionary(token.dictionary.namespace);
+                var color = getColorForDictionary(token.dictionary.resource.url);
                 var bgColor = 'rgba(' + color.join(',') + ', .3)';
                 var borderColor = 'rgba(' + color.join(',') + ', .6)';
                 var element = overlay.appendChild(basis.dom.createElement({

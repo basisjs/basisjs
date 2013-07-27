@@ -52,8 +52,28 @@
             {
               name: 'addLink/removeLink',
               test: function(){
+                var p = new Property(1);
+                var o = new basis.data.Object();
 
+                this.is(null, p.links_);
+                this.is(null, o.handler);
+                
+                p.addLink(o, 'xxx');
+                this.is(1, o.xxx);
+                this.is(true, o.handler !== null);
+                this.is(true, p.links_.object === o);
+                this.is(null, p.links_.links_);
 
+                p.removeLink(o);
+                this.is(null, o.handler);
+                this.is(null, p.links_);
+
+                p.addLink(o, 'xxx');
+                this.is(true, p.links_.object === o);
+
+                o.destroy();
+                this.is(null, o.handler);
+                this.is(null, p.links_);
               }
             },
             {

@@ -5,7 +5,7 @@ basis.require('app.type');
 
 
 var view;
-module.exports = basis.app({
+module.exports = basis.app.create({
   init: function(){
     view = new basis.ui.Node({
       template: resource('app/template/layout.tmpl'),

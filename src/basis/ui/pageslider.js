@@ -67,7 +67,7 @@
     init: function(){
       PageControl.prototype.init.call(this);
 
-      this.scroller = new Scroller({
+      this.scroller = new Scroller(basis.object.extend({
         targetElement: this.tmpl.childNodesElement,
         scrollY: false,
         minScrollDelta: 10,
@@ -77,7 +77,7 @@
             startInertia: this.setPage
           }
         }
-      });
+      }, this.scrollerConfig));
 
       if (this.rotate)
         this.adjustRotation();

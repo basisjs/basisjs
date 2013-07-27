@@ -205,15 +205,11 @@
     */ 
     index: NaN,
 
-    toString: function(){
-      return this.value;
-    },
-
    /**
     * @constructor
     */ 
     init: function(dictionary, tokenName, type){
-      basis.Token.prototype.init.call(this);
+      basis.Token.prototype.init.call(this, null);
 
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
@@ -222,9 +218,10 @@
         this.setType(type);
     },
 
-    get: function(){
+    toString: function(){
       return this.value;
     },
+
     set: function(value){
       if (value !== this.value)
       {
