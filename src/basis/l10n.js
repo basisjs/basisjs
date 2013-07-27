@@ -1,4 +1,12 @@
 
+  basis.require('basis.event');
+
+  basis.require('basis.timer');
+  setImmediate(function(){
+    basis.require('basis.template.html');
+  });
+
+
  /**
   * @namespace basis.l10n
   */
@@ -11,6 +19,8 @@
   //
 
   var Class = basis.Class;
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
+  var Emitter = basis.event.Emitter;
 
 
   // process .l10n files as .json
@@ -21,7 +31,7 @@
     var result = [];
 
     for (var key in object)
-      if (Object.prototype.hasOwnProperty.call(object, key))
+      if (hasOwnProperty.call(object, key))
         result.push(key);
 
     return result;
@@ -33,6 +43,14 @@
 
   var tokenIndex = [];
   var tokenEnums = {};
+
+  function processMarkup(value){
+    value = String(value)
+      .replace(/</g, '&lt;')
+      .replace(/\*(.*?)\*/g, '<b>$1</b>');
+
+    return '<span class="basis-markup">' + value + '</span>';
+  }
 
 
  /**
@@ -157,6 +175,31 @@
 
     value: '',
 
+    type: 'default',
+
+    bindingBridge: {
+      attach: function(host, fn, context){
+        return host.attach(fn, context);
+      },
+      detach: function(host, fn, context){
+        return host.detach(fn, context);
+      },
+      get: function(host, object){
+        if (!object || !host.template)
+          return host.get();
+
+        if (object instanceof Emitter)
+        {
+          var id = object.basisObjectId;
+
+          if (id in host.tmpl == false)
+            return host.attachTemplate(object).element;
+          else
+            return host.tmpl[id].element;
+        }
+      }
+    },
+
    /**
     * @type {number}
     */ 
@@ -169,12 +212,14 @@
    /**
     * @constructor
     */ 
-    init: function(dictionary, tokenName){
+    init: function(dictionary, tokenName, type){
       basis.Token.prototype.init.call(this);
 
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
       this.dictionary = dictionary;
+      if (type)
+        this.setType(type);
     },
 
     get: function(){
@@ -184,7 +229,91 @@
       if (value !== this.value)
       {
         this.value = value;
+
+        if (this.template)
+          this.template.setSource(processMarkup(value));
+
         this.apply();
+      }
+    },
+
+    setType: function(type){
+      if (this.type != type)
+      {
+        if (this.template)
+        {
+          this.template.destroy();
+          this.template = null;
+          this.tmpl = null;
+        }
+
+        if (type == 'markup')
+        {
+          this.template = new basis.template.html.Template(processMarkup(this.value));
+          this.tmpl = {};
+        }
+
+        this.type = type;
+        this.apply();
+      }
+    },
+
+    attachTemplate: function(object){
+      var template = this.template;
+      var tmpl = this.tmpl;
+      var id = object.basisObjectId;
+
+      return tmpl[id] = template.createInstance(object, null, function tmplSync(){
+        if (tmpl)
+          template.clearInstance(tmpl[id]);
+
+        tmpl[id] = template.createInstance(object, null, tmplSync);
+      });
+    },
+
+    detachTemplate: function(object){
+      var template = this.template;
+      var id = object.basisObjectId;
+
+      if (template && id in this.tmpl)
+      {
+        template.clearInstance(this.tmpl[id]);
+        delete this.tmpl[id];
+      }
+    },
+
+    attach: function(fn, context){
+      basis.Token.prototype.attach.call(this, fn, context);
+
+      if (this.template && context && context.object && context.object instanceof Emitter)
+        this.attachTemplate(context.object);
+    },
+
+    detach: function(fn, context){
+      basis.Token.prototype.detach.call(this, fn, context);
+
+      if (this.template && context && context.object)
+        this.detachTemplate(context.object);
+    },
+
+    apply: function(){
+      var value = this.get();
+      var cursor = this;
+
+      while (cursor = cursor.handlers)
+      {
+        var object = cursor.context && cursor.context.object;
+        if (this.template && object && object instanceof Emitter)
+        {
+          var id = object.basisObjectId;
+
+          if (id in this.tmpl == false)
+            this.attachTemplate(object);
+
+          cursor.fn.call(cursor.context, this.tmpl[id].element);
+        }
+        else
+          cursor.fn.call(cursor.context, value);
       }
     },
 
@@ -220,8 +349,8 @@
           handler[eventName] = updateValue;
 
       return tokenEnums[enumId] = function(object){
-        if (object instanceof basis.event.Emitter == false)
-          throw 'basis.l10n.Token#compute: object must be an instanceof basis.event.Emitter';
+        if (object instanceof Emitter == false)
+          throw 'basis.l10n.Token#compute: object must be an instanceof Emitter';
 
         var objectId = object.basisObjectId;
         var computeToken = computeTokenMap[objectId];
@@ -238,6 +367,14 @@
     */ 
     destroy: function(){
       this.value = null;
+      this.tmpl = null;
+
+      if (this.template)
+      {
+        this.template.destroy();
+        this.template = null;
+      }
+
       basis.Token.prototype.destroy.call(this);
     }
   });
@@ -282,7 +419,7 @@
     path = path ? path + '.' : '';
     
     for (var tokenName in tokens)
-      if (Object.prototype.hasOwnProperty.call(tokens, tokenName))
+      if (hasOwnProperty.call(tokens, tokenName))
         dictionary.setCultureValue(culture, path + tokenName, tokens[tokenName]);
   }
 
@@ -487,6 +624,8 @@
   * @class
   */
   var Culture = basis.Class(null, {
+    className: namespace + '.Culture',
+
     name: '',
     init: function(name){
       this.name = name;

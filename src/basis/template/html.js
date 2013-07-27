@@ -325,7 +325,7 @@
 
 
 
-    function resolveValue(attaches, updateAttach, bindingName, value){
+    function resolveValue(attaches, updateAttach, bindingName, value, object){
       var bridge = value && value.bindingBridge;
       var oldAttach = attaches[bindingName];
 
@@ -340,13 +340,14 @@
 
             attaches[bindingName] = {
               name: bindingName,
+              object: object,
               value: value
             };
-            
+
             bridge.attach(value, updateAttach, attaches[bindingName]);
           }
 
-          value = bridge.get(value);
+          value = bridge.get(value, object);
         }
         else
         {
@@ -380,6 +381,9 @@
       var templateMap = {};
       var l10nMap = {};
       var l10nLinks = [];
+
+      window.xx = window.xx || {};
+      window.xx[sourceURL] = templateMap;
 
       var proto = buildHtml(tokens);
       var build = function(){
