@@ -784,7 +784,7 @@
           if (!absoluteFound)
             path.unshift(baseURI);
 
-          return this.normalize(path.join('/'));
+          return this.normalize(path.join('/').replace(DELIM_RX, '/'));
         },
 
        /**
