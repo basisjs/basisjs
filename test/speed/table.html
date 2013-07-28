@@ -118,8 +118,9 @@
       };
           
       TestTable = new basis.ui.table.Table({
-        id: 'table',
         container: document.body,
+        template: '<b:include src="basis.ui.table.Table" id="table"/>',
+
         selection: {
           multiple: multipleSelection.checked
         },

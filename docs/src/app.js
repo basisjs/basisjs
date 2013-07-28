@@ -99,14 +99,14 @@ basis.ready(function(){
 
   new VerticalPanelStack({
     container: basis.dom.get('Layout'),
-    id: 'Sidebar',
+    template: '<b:include src="basis.layout.Stack" id="Sidebar"/>',
     childNodes: [
       {
-        id: 'Toolbar',
+        template: '<b:include src="basis.layout.Panel" id="Toolbar"/>',
         childNodes: searchInput
       },
       {
-        id: 'SidebarContent',
+        template: '<b:include src="basis.layout.Panel" id="SidebarContent"/>',
         flex: 1,
         childNodes: sidebarPages
       }
@@ -115,10 +115,10 @@ basis.ready(function(){
 
   var contentLayout = new VerticalPanelStack({
     container: basis.dom.get('Layout'),
-    id: 'Content',
+    template: '<b:include src="basis.layout.Stack" id="Content"/>',
     childNodes: [
       {
-        id: 'ContentHeader',
+        template: '<b:include src="basis.layout.Panel" id="ContentHeader"/>',
         content: targetHeader.element
       },
       { 

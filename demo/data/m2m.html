@@ -286,7 +286,7 @@
 
     // Главное дерево - список полей
     var masterTree = new nsTree.Tree({
-      id: 'MasterTree',
+      template: '<b:include src="basis.ui.tree.Tree" id="MasterTree">',
 
       dataSource: Field.all,
 
@@ -419,7 +419,7 @@
 
     // Зависимый список - список слов
     var relatedTree = new nsTree.Tree({
-      id: 'RelatedTree',
+      template: '<b:include src="basis.ui.tree.Tree" id="RelatedTree">',
 
       emit_targetChanged: function(delta){
         nsTree.Tree.prototype.emit_targetChanged.call(this, delta);
