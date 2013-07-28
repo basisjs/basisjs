@@ -1194,13 +1194,7 @@
 
         // extend newClass prototype
         for (var i = 1, extension; extension = arguments[i]; i++)
-        {
-          newClassProps.extend(
-            typeof extension == 'function' && !isClass(extension)
-              ? extension(SuperClass.prototype)
-              : extension
-          );
-        }
+          newClassProps.extend(extension);
 
 
         /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
@@ -1267,6 +1261,9 @@
       */
       extend: function(source){
         var proto = this.prototype;
+
+        if (typeof source == 'function' && !isClass(source))
+          source = source(this.superClass_.prototype);
 
         if (source.prototype)
           source = source.prototype;
