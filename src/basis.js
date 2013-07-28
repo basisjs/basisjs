@@ -782,9 +782,9 @@
             }
 
           if (!absoluteFound)
-            path.unshift(baseURI);
+            path.unshift(baseURI == '/' ? '' : baseURI);
 
-          return this.normalize(path.join('/').replace(DELIM_RX, '/'));
+          return this.normalize(path.join('/'));
         },
 
        /**
