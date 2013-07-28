@@ -383,7 +383,7 @@
             /** @cut */   'dom:' + domRef,
             /** @cut */   'attr:' + attrName,
             /** @cut */   'val:__l10n["' + l10nName + '"]' + (l10nBinding ? '[' + l10nBinding + ']' : ''),
-            /** @cut */   'attachment:l10nToken("' + l10nName + '")' + (l10nBinding ? '[' + l10nBinding + ']' : '')
+            /** @cut */   'attachment:l10nToken("' + l10nName + '")' + (l10nBinding ? '.token(' + l10nBinding + ')' : '')
             /** @cut */ ] + '}');            
             
             if (!l10nBinding)

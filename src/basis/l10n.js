@@ -126,7 +126,7 @@
       var token = null;
 
       if (this.values && this.object)
-        token = this.token.dictionary.token(this.token.name + '.' + this.valueGetter(this.object));
+        token = this.token.token(this.valueGetter(this.object));
 
       if (this.valueToken !== token)
       {
@@ -235,6 +235,9 @@
     },
 
     setType: function(type){
+      if (type != 'plural' && type != 'markup')
+        type = 'default';
+
       if (this.type != type)
       {
         if (this.template)
@@ -385,6 +388,14 @@
       }
     },
 
+    token: function(name){
+      if (this.type == 'plural')
+        name = cultures[currentCulture].plural(name);
+
+      if (this.dictionary)
+        return this.dictionary.token(this.name + '.' + name);
+    },
+
    /**
     * @destructor
     */ 
@@ -460,6 +471,11 @@
     tokens: null,
 
    /**
+    * @type {object}
+    */
+    types: null, 
+
+   /**
     * Values by cultures
     * @type {object}
     */ 
@@ -482,6 +498,7 @@
     */ 
     init: function(resource){
       this.tokens = {};
+      this.types = {};
       this.cultureValues = {};
 
       // attach to resource
@@ -503,6 +520,13 @@
       for (var culture in data)
         if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
           walkTokens(this, culture, data[culture]);
+
+      this.types = (data._meta && data._meta.type) || {};
+      for (var key in this.tokens)
+      {
+        this.tokens[key].setType(this.types[key])
+        console.log(key, this.types[key]);
+      }
     },
 
    /**
@@ -557,7 +581,7 @@
 
       if (!token)
       {
-        token = this.tokens[tokenName] = new Token(this, tokenName);
+        token = this.tokens[tokenName] = new Token(this, tokenName, this.types[tokenName]);
         token.set(cultureGetTokenValue[currentCulture]
           ? cultureGetTokenValue[currentCulture].call(this, tokenName)
           : this.getCultureValue(currentCulture, tokenName)
@@ -635,7 +659,7 @@
   // Culture
   //
 
-  var currentCulture = 'en-US';
+  var currentCulture = null;
   var cultureList = [];
   var cultureGetTokenValue = {};
   var cultureFallback = {}; 
@@ -652,6 +676,10 @@
     name: '',
     init: function(name){
       this.name = name;
+    },
+
+    plural: function(value){
+      return Number(value) == 1 ? 0 : 1;
     }
   });
 
@@ -682,7 +710,7 @@
   */ 
   function setCulture(culture){
     if (!culture)
-      culture = 'base';
+      return;
 
     if (currentCulture != culture)
     {
@@ -726,7 +754,7 @@
     for (var i = 0, culture; culture = list[i]; i++)
     {
       cultureRow = culture.split('/');
-      cultures.push(cultureRow[0]);
+      cultures[cultureRow[0]] = resolveCulture(cultureRow[0]);
       cultureGetTokenValue[cultureRow[0]] = createGetTokenValueFunction(cultureRow);
       cultureFallback[cultureRow[0]] = cultureRow.slice(1);
     }
@@ -751,6 +779,9 @@
     if (fire)
       fn.call(context, currentCulture);
   }
+
+  setCultureList('en-US');
+  setCulture('en-US');
 
 
   //
