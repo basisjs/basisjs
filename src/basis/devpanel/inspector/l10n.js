@@ -9,11 +9,12 @@ var transport = resource('../API/transport.js').fetch();
 
 var inspectMode;
 var elements = [];
-var overlay;
+var range = document.createRange();
 
-var overlay = DOM.createElement({
-  description: '[style="position: fixed; top: 0; bottom: 0; left: 0; right: 0; z-index: 10000; background: rgba(110,163,217,0.2)"]'
-});
+var overlayContent = DOM.createElement('[style="position: absolute; top: 0; left: 0"]');
+var overlay = DOM.createElement('[style="position: fixed; pointer-events: none; top: 0; bottom: 0; left: 0; right: 0; z-index: 10000; background: rgba(110,163,217,0.2)"]',
+  overlayContent
+);
 
 function pickHandler(){
   var sender = DOM.event.sender(event);
@@ -56,10 +57,11 @@ function startInspect(){
   if (!inspectMode)
   {
     basis.cssom.classList(document.body).add('devpanel-inspectMode');
+    updateOnScroll();
     inspectMode = true;
     highlight();
 
-    basis.dom.event.addGlobalHandler('scroll', updateHighlight);
+    basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
     DOM.event.captureEvent('mousedown', DOM.event.kill);
     DOM.event.captureEvent('mouseup', DOM.event.kill);
     DOM.event.captureEvent('contextmenu', endInspect);
@@ -83,7 +85,7 @@ function endInspect(){
 
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
 
-    basis.dom.event.removeGlobalHandler('scroll', updateHighlight);
+    basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
     DOM.event.releaseEvent('mousedown');
     DOM.event.releaseEvent('mouseup');
     DOM.event.releaseEvent('contextmenu');    
@@ -92,6 +94,17 @@ function endInspect(){
     unhighlight();
     inspectMode = false;
     transport.sendData('endInspect', 'l10n');
+  }
+}
+
+function updateOnScroll(event){
+  overlayContent.style.top = -document.body.scrollTop + 'px';
+  overlayContent.style.left = -document.body.scrollLeft + 'px';
+
+  if (event && event.target !== document)
+  {
+    unhighlight();
+    highlight();
   }
 }
 
@@ -112,14 +125,17 @@ function unhighlight(){
   DOM.remove(overlay);
 }
 
-function updateHighlight(){
-  unhighlight();
-  highlight();
+function updateHighlight(records){
+  for (var i = 0; i < records.length; i++)
+    if (records[i].target != overlayContent)
+    {
+      unhighlight();
+      highlight();
+      break;
+    }
 }
 
 function domTreeHighlight(root){
-  var range = document.createRange();
-
   for (var i = 0, child; child = root.childNodes[i]; i++)
   {
     if (child.nodeType == basis.dom.ELEMENT_NODE) 
@@ -132,40 +148,46 @@ function domTreeHighlight(root){
           var bindings = (node.tmpl.set.debug && node.tmpl.set.debug()) || [];
           for (var j = 0, binding; binding = bindings[j]; j++)
           {
-            if (binding.dom.nodeType != basis.dom.TEXT_NODE)
-              continue;
-
             var token = binding.attachment;
 
             if (token instanceof basis.l10n.ComputeToken)
               token = token.valueToken;
 
-            if (token instanceof basis.l10n.Token)
+            if (token instanceof basis.l10n.Token && token.dictionary)
             {
-              //nodes.push(binding.dom);
-              range.selectNodeContents(binding.dom);
-              var rect = range.getBoundingClientRect();
+              var rect;
+
+              if (binding.val && binding.val.nodeType == 1)
+              {
+                rect = binding.val.getBoundingClientRect();
+              }
+              else
+              {
+                range.selectNodeContents(binding.dom);
+                var rect = range.getBoundingClientRect();
+              }
+
               if (rect)
               {
                 var color = getColorForDictionary(token.dictionary.resource.url);
                 var bgColor = 'rgba(' + color.join(',') + ', .3)';
                 var borderColor = 'rgba(' + color.join(',') + ', .6)';
-                var element = overlay.appendChild(basis.dom.createElement({
+                var element = overlayContent.appendChild(basis.dom.createElement({
                   css: {
                     backgroundColor: bgColor,
                     outline: '1px solid ' + borderColor,
                     zIndex: 65000,
-                    position: 'fixed',
+                    position: 'absolute',
                     cursor: 'pointer',
-                    top: rect.top + 'px',
-                    left: rect.left + 'px',
+                    top: document.body.scrollTop + rect.top + 'px',
+                    left: document.body.scrollLeft + rect.left + 'px',
                     width: rect.width + 'px', 
-                    height: rect.height + 'px'
+                    height: rect.height + 'px',
+                    pointerEvents: 'auto'
                   }
                 }));
 
                 element.token = token;
-
                 elements.push(element);
               }
             }
