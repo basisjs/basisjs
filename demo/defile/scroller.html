@@ -217,19 +217,24 @@
     //
     var worldMapBlock = createBlock('World Map on ScrollPanel');
 
-    var worldMap = new ScrollPanel({
-      id: 'WorldMapPanel',
-      container: worldMapBlock,
-      content: DOM.createElement('img[src="../res/img/map.gif"][event-click="coord"][width="2550"][height="1285"]'),
-
-      scrollTo: function(x, y){
-        this.scroller.setPosition(Math.max(0, x - this.element.offsetWidth / 2), Math.max(0, y - this.element.offsetHeight / 2));
-      }
-    });
-
     new uiNode({
-      id: 'CountriesPanel',
       container: worldMapBlock,
+
+      template:
+        '<div>' +
+          '<!--{worldMap}-->' +
+          '<div{childNodesElement} id="CountriesPanel"/>' +
+        '</div>',
+      binding: {
+        worldMap: new ScrollPanel({
+          template: '<b:include src="basis.ui.scroller.ScrollPanel" id="WorldMapPanel"/>',
+          content: DOM.createElement('img[src="../res/img/map.gif"][event-click="coord"][width="2550"][height="1285"]'),
+
+          scrollTo: function(x, y){
+            this.scroller.setPosition(Math.max(0, x - this.element.offsetWidth / 2), Math.max(0, y - this.element.offsetHeight / 2));
+          }
+        })
+      },
 
       childClass: {
         template:
@@ -241,7 +246,7 @@
 
         action: {
           scrollTo: function(){
-            worldMap.scrollTo(this.data.PositionX, this.data.PositionY);
+            this.parentNode.satellite.worldMap.scrollTo(this.data.PositionX, this.data.PositionY);
           }
         }
       },
@@ -297,7 +302,7 @@
 
     new ScrollPanel({
       scrollX: false,
-      cssClassName: 'ScrollList',
+      template: '<b:include src="basis.ui.scroller.ScrollPanel" class="ScrollList"/>',
       container: createBlock('Scroll List', 'short'),
 
       childClass: {
@@ -333,7 +338,7 @@
     //
 
     new PageSlider({
-      cssClassName: 'Page-Slider',
+      template: '<b:include src="basis.ui.pageslider.PageSlider" class="Page-Slider"/>',
       container: createBlock('Page Slider', 'short'),
 
       childNodes: [
@@ -348,7 +353,6 @@
     //
 
     var ImageGallery = ScrollGallery.subclass({
-      cssClassName: 'ImageGallery',
       childClass: {
         template: 
           '<div{content} class="ImageItem" event-click="select">' +
@@ -374,7 +378,7 @@
     new ImageGallery({
       scrollX: true,
       container: createBlock('Horizontal Image Gallery', 'short'),
-      cssClassName: 'HImageGallery',
+      template: '<b:include src="basis.ui.scroller.ScrollPanel" class="ImageGallery HImageGallery"/>',
 
       childNodes: [
         { src: 'button.png' },
@@ -392,7 +396,7 @@
     new ImageGallery({
       scrollY: true,
       container: createBlock('Vertical Image Gallery', 'short'),
-      cssClassName: 'VImageGallery',
+      template: '<b:include src="basis.ui.scroller.ScrollPanel" class="ImageGallery VImageGallery"/>',
 
       childNodes: [
         { src: 'button.png' },

@@ -621,7 +621,7 @@
       if (this.requestData)
       {
         this.abort();
-        this.send(this.requestData);
+        this.doRequest();
       }
     },
 

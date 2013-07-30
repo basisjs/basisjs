@@ -118,7 +118,6 @@
     basis.require('basis.entity');
     basis.require('basis.data.value');
     basis.require('basis.ui.chart');
-    basis.require('basis.ui.form');
     basis.require('basis.dragdrop');
     basis.require('basis.ui.calendar');
 
@@ -126,7 +125,6 @@
     var nsEntity = basis.entity;
     var LinearChart = basis.ui.chart.LinearChart;
 
-    var nsForm = basis.ui.form;
 
     //
     // Example
@@ -188,8 +186,9 @@
     });
 
     new LinearChart({
-      id: 'RangeChart',
       container: DOM.get('demo-container'),
+      template: '<b:include src="basis.ui.chart.Chart" id="RangeChart">',
+      
       width: 800,
       height: 50,
       showLegend: false,

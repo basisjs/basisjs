@@ -120,8 +120,13 @@
       var insertEl = appEl;
       var initResult = appInit.call(app);
 
-      if (initResult && initResult.element)
-        insertEl = initResult.element;
+      if (initResult)
+      {
+        if (initResult.element)
+          insertEl = initResult.element;
+        else
+          insertEl = initResult;
+      }
 
       appEl = null;
       app.setElement(insertEl);

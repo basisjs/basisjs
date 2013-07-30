@@ -24,7 +24,7 @@
   var KeyObjectMap = nsData.KeyObjectMap;
   var AbstractDataset = nsData.AbstractDataset;
 
-  var Property = basis.data.value.Property;
+  var BindValue = basis.data.value.BindValue;
   var MapFilter = basis.data.dataset.MapFilter;
 
 
@@ -68,7 +68,7 @@
   * Base class for indexes.
   * @class
   */
-  var Index = Class(Property, {
+  var Index = Class(BindValue, {
     className: namespace + '.Index',
     autoDestroy: true,
 
@@ -89,6 +89,11 @@
     * @type {Object}
     */
     updateEvents: {},
+
+   /**
+    * @inheritDocs
+    */ 
+    value: 0,
    
    /**
     * @constructor
@@ -96,7 +101,7 @@
     init: function(){
       this.indexCache_ = {};
 
-      Property.prototype.init.call(this, 0);
+      BindValue.prototype.init.call(this);
     },
 
    /**
@@ -117,8 +122,15 @@
     update_: function(newValue, oldValue){
     },
 
+   /**
+    * Normalize value to be computable.
+    */ 
+    normalize: function(value){
+      return Number(value) || 0;
+    },
+
     destroy: function(){
-      Property.prototype.destroy.call(this);
+      BindValue.prototype.destroy.call(this);
 
       this.indexCache_ = null;
     }
@@ -169,14 +181,21 @@
     * @inheritDoc
     */
     add_: function(value){
-      this.value += !!value;
+      this.value += value;
     },
 
    /**
     * @inheritDoc
     */
     remove_: function(value){
-      this.value -= !!value;
+      this.value -= value;
+    },
+
+   /**
+    * @inheritDoc
+    */
+    normalize: function(value){
+      return !!value;
     },
 
    /**
@@ -243,6 +262,11 @@
     vector_: null,
 
    /**
+    * @inheritDocs
+    */ 
+    value: undefined,
+
+   /**
     * @inheritDoc
     */
     init: function(){
@@ -254,25 +278,42 @@
     * @inheritDoc
     */
     add_: function(value){
-      this.vector_.splice(binarySearchPos(this.vector_, value), 0, value);
-      this.value = this.vectorGetter(this.vector_);
+      if (value !== null)
+      {
+        this.vector_.splice(binarySearchPos(this.vector_, value), 0, value);
+        this.value = this.vectorGetter(this.vector_);
+      }
     },
 
    /**
     * @inheritDoc
     */
     remove_: function(value){
-      this.vector_.splice(binarySearchPos(this.vector_, value), 1);
-      this.value = this.vectorGetter(this.vector_);
+      if (value !== null)
+      {
+        this.vector_.splice(binarySearchPos(this.vector_, value), 1);
+        this.value = this.vectorGetter(this.vector_);
+      }
     },
 
    /**
     * @inheritDoc
     */
     update_: function(newValue, oldValue){
-      this.vector_.splice(binarySearchPos(this.vector_, oldValue), 1);
-      this.vector_.splice(binarySearchPos(this.vector_, newValue), 0, newValue);
+      if (oldValue !== null)
+        this.vector_.splice(binarySearchPos(this.vector_, oldValue), 1);
+
+      if (newValue !== null)
+        this.vector_.splice(binarySearchPos(this.vector_, newValue), 0, newValue);
+
       this.set(this.vectorGetter(this.vector_));
+    },
+
+   /**
+    * @inheritDoc
+    */
+    normalize: function(value){
+      return typeof value == 'string' || typeof value == 'number' ? value : null;
     },
 
    /**
@@ -413,7 +454,7 @@
     if (inserted)
       for (var i = 0, object; object = inserted[i++];)
       {
-        var newValue = Number(index.valueGetter(object)) || 0;
+        var newValue = index.normalize(index.valueGetter(object));
 
         indexCache[object.basisObjectId] = newValue;
         index.add_(newValue);
@@ -450,7 +491,7 @@
           oldValue = index.indexCache_[objectId];
 
           // calc new value
-          newValue = index.valueGetter(object);
+          newValue = index.normalize(index.valueGetter(object));
 
           // update if value has changed
           if (newValue !== oldValue)

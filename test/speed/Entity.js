@@ -58,9 +58,8 @@
 
     var User = new nsEntity.EntityType({
       name: 'User',
-      id: 'UserId',
       fields: {
-        UserId: nsEntity.IntId || basis.fn.def(Number, null, isNaN),
+        UserId: nsEntity.IntId,
         Title: String,
         Value: Number
       }
@@ -68,9 +67,8 @@
 
     var Currency = new nsEntity.EntityType({
       name: 'Currency',
-      id: 'CurrencyId',
       fields: {
-        CurrencyId: nsEntity.IntId || basis.fn.def(Number, null, isNaN),
+        CurrencyId: nsEntity.IntId,
         Code: String,
         Title: String
       }
@@ -78,9 +76,8 @@
 
     var Transfer = new nsEntity.EntityType({
       name: 'Transfer',
-      id: 'TransferId',
       fields: {
-        TransferId: nsEntity.IntId || basis.fn.def(Number, null, isNaN),
+        TransferId: nsEntity.IntId,
         User: User,
         Amount: Number,
         Currency: Currency,

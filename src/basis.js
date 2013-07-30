@@ -782,7 +782,7 @@
             }
 
           if (!absoluteFound)
-            path.unshift(baseURI);
+            path.unshift(baseURI == '/' ? '' : baseURI);
 
           return this.normalize(path.join('/'));
         },
@@ -1194,13 +1194,7 @@
 
         // extend newClass prototype
         for (var i = 1, extension; extension = arguments[i]; i++)
-        {
-          newClassProps.extend(
-            typeof extension == 'function' && !isClass(extension)
-              ? extension(SuperClass.prototype)
-              : extension
-          );
-        }
+          newClassProps.extend(extension);
 
 
         /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
@@ -1267,6 +1261,9 @@
       */
       extend: function(source){
         var proto = this.prototype;
+
+        if (typeof source == 'function' && !isClass(source))
+          source = source(this.superClass_.prototype);
 
         if (source.prototype)
           source = source.prototype;
@@ -1457,32 +1454,27 @@
     },
 
    /**
-    * Add callback on token value changes. Doesn't add duplicate callback and context pairs.
+    * Add callback on token value changes.
     * @param {function(value)} fn
     * @param {object=} context
-    * @return {boolean} Return true if callback was added.
     */
     attach: function(fn, context){
-      var cursor = this;
-
-      while (cursor = cursor.handler)
-        if (cursor.fn === fn && cursor.context === context)
-          return false;
+      /** @cut */ var cursor = this;
+      /** @cut */ while (cursor = cursor.handler)
+      /** @cut */  if (cursor.fn === fn && cursor.context === context)
+      /** @cut */    consoleMethods.warn('basis.Token#attach: duplicate fn & context pair');
 
       this.handler = {
         fn: fn,
         context: context,
         handler: this.handler
       };
-
-      return true;
     },
 
    /**
     * Remove callback. Must be passed the same arguments as for {basis.Token#attach} method.
     * @param {function(value)} fn
     * @param {object=} context
-    * @return {boolean}
     */
     detach: function(fn, context){
       var cursor = this;
@@ -1492,10 +1484,8 @@
         if (cursor.fn === fn && cursor.context === context)
         {
           prev.handler = cursor.handler;
-          return true;
+          break;
         }
-
-      return false;
     },
 
    /**
@@ -1753,7 +1743,7 @@
         /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
         /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
         /** @cut */   window.addEventListener('error', function onerror(event){
-        /** @cut */     if (event.filename == sourceURL)
+        /** @cut */     if (event.filename == pathUtils.origin + sourceURL)
         /** @cut */     {
         /** @cut */       window.removeEventListener('error', onerror);
         /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
@@ -1771,7 +1761,7 @@
         // don't throw new exception, just output error message and return undefined
         // in this case more chances for other modules continue to work
         basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 4) : '') + ': ' + e);
-        return;
+        return context;
       }
 
     // run

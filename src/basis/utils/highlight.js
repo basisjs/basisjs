@@ -1,23 +1,9 @@
 
+  basis.require('basis.cssom');
+
  /**
   * @namespace basis.utils.highlight
   */
-
-  var namespace = this.path;
-
-
-  //
-  // import names
-  //
-
-  var Class = basis.Class;
-  var UINode = basis.ui.Node;
-  var arrayFrom = basis.array.from;
-
-
-  //
-  // Main part
-  //
 
   var LANG_PARSER = {};
   var PARSER = {
@@ -30,7 +16,8 @@
   // default parser
   //
 
-  PARSER.add('text', arrayFrom);
+  PARSER.add('text', basis.array);
+
 
   //
   // javascript parser
@@ -131,6 +118,11 @@
       return result;
     };
   })());
+
+
+  //
+  // css parser
+  //
 
   PARSER.add('css', (function(){
     var prefixes =
@@ -325,7 +317,11 @@
 
 
  /**
-  * @func
+  * Function that produce html code from text.
+  * @param {string} text
+  * @param {string=} lang
+  * @param {object=} options
+  * @return {string}
   */
   function highlight(text, lang, options){
 

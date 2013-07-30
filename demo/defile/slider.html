@@ -117,18 +117,18 @@
       new Slider({ min: 0, max: 100,
         marks: [
           { 
+            template: '<b:include src="basis.ui.slider.MarkLayer" class="ranges"/>',
             childClass: { isRange: true },
-            cssClassName: 'ranges',
             marks: [
-              { pos: .13, caption: 'range1', cssClassName: 'red' },
-              { pos: .46, caption: 'range2', cssClassName: 'green' }
+              { pos: .13, caption: 'range1', template: '<b:include src="basis.ui.slider.Mark" class="red"/>' },
+              { pos: .46, caption: 'range2', template: '<b:include src="basis.ui.slider.Mark" class="green"/>' }
             ]
           },
           { 
             marks: [
-              { pos: .33, caption: 'smthing', cssClassName: 'red' },
-              { pos: .56, caption: 'smthing2', cssClassName: 'green' },
-              { pos: .83, caption: 'lahmatiy', cssClassName: 'red' }
+              { pos: .33, caption: 'smthing', template: '<b:include src="basis.ui.slider.Mark" class="red"/>' },
+              { pos: .56, caption: 'smthing2', template: '<b:include src="basis.ui.slider.Mark" class="green"/>' },
+              { pos: .83, caption: 'lahmatiy', template: '<b:include src="basis.ui.slider.Mark" class="red"/>' }
             ]
           },
           5
