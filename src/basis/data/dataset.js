@@ -109,10 +109,14 @@
       if (!events)
         return null;
 
+      if (events.__extend__)
+        return events;
+
       if (typeof events != 'string' && !Array.isArray(events))
       {
-        events = events && typeof events == 'object' ? basis.object.keys(events) : null;
-        /** @cut */ if (events) basis.dev.warn('Using an object for ruleEvents is deprecated, use space separated event names string or array of strings instead.');
+        events = typeof events == 'object' ? basis.object.keys(events) : null;
+        /** @cut */ if (events)
+        /** @cut */   basis.dev.warn('Using an object for ruleEvents is deprecated, use space separated event names string or array of strings instead.');
       }
 
       return extend(basis.event.createHandler(events, fn), {
