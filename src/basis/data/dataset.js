@@ -59,11 +59,11 @@
         var array;
 
         if (array = delta.inserted)
-          for (var i = array.length; i-- > 0;)
+          for (var i = 0, item; item = array[i]; i++)
             SUBSCRIPTION.link('source', object, array[i]);
 
         if (array = delta.deleted)
-          for (var i = array.length; i-- > 0;)
+          for (var i = 0, item; item = array[i]; i++)
             SUBSCRIPTION.unlink('source', object, array[i]);
       }
     },
@@ -98,6 +98,29 @@
     if (result)
       return delta;
   }
+
+ /**
+  * Create ruleEvents property.
+  * @param {function(sender, ..args)} fn
+  * @param {string|Array.<string>}
+  */
+  function createRuleEvents(fn, events){
+    return (function createRuleEvents__extend__(events){
+      if (!events)
+        return null;
+
+      if (typeof events != 'string' && !Array.isArray(events))
+      {
+        events = events && typeof events == 'object' ? basis.object.keys(events) : null;
+        /** @cut */ if (events) basis.dev.warn('Using an object for ruleEvents is deprecated, use space separated event names string or array of strings instead.');
+      }
+
+      return extend(basis.event.createHandler(events, fn), {
+        __extend__: createRuleEvents__extend__
+      });
+    })(events);
+  }
+
 
   //
   // Merge dataset 
@@ -970,12 +993,7 @@
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    ruleEvents: oneFunctionProperty(
-      MAPFILTER_SOURCEOBJECT_UPDATE,
-      {
-        update: true
-      }
-    ),
+    ruleEvents: createRuleEvents(MAPFILTER_SOURCEOBJECT_UPDATE, 'update'),
 
    /**
     * NOTE: Can't be changed after init.
@@ -1409,12 +1427,7 @@
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    ruleEvents: oneFunctionProperty(
-      SLICE_SOURCEOBJECT_UPDATE,
-      {
-        update: true
-      }
-    ),
+    ruleEvents: createRuleEvents(SLICE_SOURCEOBJECT_UPDATE, 'update'),
 
    /**
     * Calculated source object values
@@ -1719,12 +1732,7 @@
    /**
     * Events list when dataset should recompute rule for source item.
     */
-    ruleEvents: oneFunctionProperty(
-      CLOUD_SOURCEOBJECT_UPDATE,
-      {
-        update: true
-      }
-    ),
+    ruleEvents: createRuleEvents(CLOUD_SOURCEOBJECT_UPDATE, 'update'),
 
    /**
     * @type {basis.data.KeyObjectMap}
@@ -1786,6 +1794,8 @@
   //
 
   module.exports = {
+    createRuleEvents: createRuleEvents,
+
     // operable datasets
     Merge: Merge,
     Subtract: Subtract,
