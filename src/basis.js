@@ -38,6 +38,7 @@
 
   var document = global.document;
   var prefetchedResources = global.__resources__;
+  var Object_toString = Object.prototype.toString;
 
 
  /**
@@ -1288,7 +1289,7 @@
         }
 
         // for browsers that doesn't enum toString
-        if (TOSTRING_BUG && source[key = 'toString'] !== Object.prototype[key])
+        if (TOSTRING_BUG && source[key = 'toString'] !== Object_toString)
           proto[key] = source[key];
 
         return this;
@@ -1911,7 +1912,7 @@
     * @return {boolean}
     */
     isArray: function(value){
-      return Object.prototype.toString.call(value) === '[object Array]';
+      return Object_toString.call(value) === '[object Array]';
     }
   });
 
