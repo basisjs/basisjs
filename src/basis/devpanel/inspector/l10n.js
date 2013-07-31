@@ -1,6 +1,7 @@
 basis.require('basis.dom');
 basis.require('basis.dom.event');
 basis.require('basis.cssom');
+basis.require('basis.ui');
 
 var DOM = basis.dom;
 
@@ -11,10 +12,20 @@ var inspectMode;
 var elements = [];
 var range = document.createRange();
 
-var overlayContent = DOM.createElement('[style="position: absolute; top: 0; left: 0"]');
-var overlay = DOM.createElement('[style="position: fixed; pointer-events: none; top: 0; bottom: 0; left: 0; right: 0; z-index: 10000; background: rgba(110,163,217,0.2)"]',
-  overlayContent
-);
+var overlayNode = new basis.ui.Node({
+  template: resource('template/l10n_overlay.tmpl'),
+  action: {
+    mouseover: function(e){
+      basis.cssom.classList(overlayContent).add('hover');
+    },
+    mouseout: function(e){
+      basis.cssom.classList(overlayContent).remove('hover');
+    }
+  }
+});
+
+var overlay = overlayNode.tmpl.element;
+var overlayContent = overlayNode.tmpl.content;
 
 function pickHandler(){
   var sender = DOM.event.sender(event);
@@ -62,6 +73,7 @@ function startInspect(){
     highlight();
 
     basis.dom.event.addGlobalHandler('scroll', updateOnScroll);
+    basis.dom.event.addHandler(window, 'resize', updateOnResize);
     DOM.event.captureEvent('mousedown', DOM.event.kill);
     DOM.event.captureEvent('mouseup', DOM.event.kill);
     DOM.event.captureEvent('contextmenu', endInspect);
@@ -87,6 +99,7 @@ function endInspect(){
     basis.cssom.classList(document.body).remove('devpanel-inspectMode');    
 
     basis.dom.event.removeGlobalHandler('scroll', updateOnScroll);
+    basis.dom.event.removeHandler(window, 'resize', updateOnResize);
     DOM.event.releaseEvent('mousedown');
     DOM.event.releaseEvent('mouseup');
     DOM.event.releaseEvent('contextmenu');    
@@ -104,6 +117,16 @@ function updateOnScroll(event){
 
   if (event && event.target !== document)
     highlight(true);
+}
+
+var resizeTimer;
+function updateOnResize(){
+  clearTimeout(resizeTimer);
+  basis.cssom.classList(overlayContent).add('hide');
+  resizeTimer = setTimeout(function(){
+    basis.cssom.classList(overlayContent).remove('hide');
+    highlight(true);
+  }, 100);
 }
 
 function highlight(keepOverlay){
@@ -124,13 +147,17 @@ function unhighlight(keepOverlay){
   }
 
   if (!keepOverlay)
+  {
+    basis.cssom.classList(overlayContent).remove('hover');
     DOM.remove(overlay);
+  }
 }
 
 function updateHighlight(records){
-  console.log(records);
   for (var i = 0; i < records.length; i++)
-    if (records[i].target != overlayContent && records[i].target.id != 'devpanelSharedDom')
+    if (records[i].target != overlayContent
+        && records[i].target.parentNode != overlayContent
+        && records[i].target.id != 'devpanelSharedDom')
     {
       highlight(true);
       break;
@@ -159,17 +186,14 @@ function addTokenToHighlight(token, ref, domNode){
       var bgColor = 'rgba(' + color.join(',') + ', .3)';
       var borderColor = 'rgba(' + color.join(',') + ', .6)';
       var element = overlayContent.appendChild(basis.dom.createElement({
+        description: '.devpanel-l10n-token',
         css: {
           backgroundColor: bgColor,
           outline: '1px solid ' + borderColor,
-          zIndex: 65000,
-          position: 'absolute',
-          cursor: 'pointer',
           top: document.body.scrollTop + rect.top + 'px',
           left: document.body.scrollLeft + rect.left + 'px',
           width: rect.width + 'px', 
-          height: rect.height + 'px',
-          pointerEvents: 'auto'
+          height: rect.height + 'px'
         }
       }));
 

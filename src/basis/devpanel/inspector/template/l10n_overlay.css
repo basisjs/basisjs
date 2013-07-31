@@ -1,0 +1,46 @@
+#devpanel-l10n-overlay
+{
+  position: fixed;
+  pointer-events: none;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  background: rgba(110,163,217,0.2);
+}
+#devpanel-l10n-overlay__content
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 1;
+    -webkit-transition: opacity .3s;
+  transition: opacity .3s;
+}
+#devpanel-l10n-overlay__content.hide
+{
+  opacity: 0;
+    -webkit-transition: opacity .15s;
+  transition: opacity .15s;
+}
+#devpanel-l10n-overlay__content .devpanel-l10n-token
+{
+  position: absolute;
+  z-index: 65000;
+  cursor: pointer;
+  pointer-events: auto;
+    -webkit-transition: background .35s .1s, outline-color .35s .1s;
+  transition: background .35s .1s, outline-color .35s .1s;
+}
+#devpanel-l10n-overlay__content.hover .devpanel-l10n-token:hover,
+#devpanel-l10n-overlay__content.hover .devpanel-l10n-token:not(:hover)
+{
+    -webkit-transition: background .1s, outline-color .1s;
+  transition: background .1s, outline-color .1s;
+}
+#devpanel-l10n-overlay__content.hover .devpanel-l10n-token:not(:hover)
+{
+  background: rgba(210,210,210,.3) !important;
+  outline-color: rgba(210,210,210,.6) !important;
+}
