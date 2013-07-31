@@ -1,0 +1,98 @@
+<!doctype html>
+
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+
+  <title>Basis.js demos: Calendar</title>
+
+  <style type="text/css" id="demo-css">
+    BODY, HTML
+    {
+      font-size: small;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    .Basis-Calendar
+    {
+      margin: 2ex;
+      float: left;
+    }
+  </style>
+
+  <!--[if lt IE 7]>
+  <style type="text/css">
+    BODY
+    {
+      font-size: x-small;
+    }
+  </style>
+  <![endif]-->
+  
+  <script type="text/javascript" data-basis-config src="../../src/basis.js"></script>
+
+  <script type="text/javascript" src="../demo.js"></script>
+</head>
+
+<body>
+  <div id="demo-container"></div>
+
+  <script type="text/javascript" id="demo-javascript">
+    basis.require('basis.l10n');
+    basis.require('basis.ui.button');
+    basis.require('basis.devpanel')
+
+    basis.l10n.setCultureList('en-US ru-RU uk-UA');
+
+    new basis.ui.button.ButtonPanel({
+      container: basis.dom.get('demo-container'),
+      childNodes: basis.l10n.getCultureList().map(function(culture){
+        return {
+          caption: culture || 'Default (English)',
+          click: function(){
+            basis.l10n.setCulture(culture);
+          }
+        };
+      })
+    });
+
+    var t = new basis.l10n.Token(null, 'a', 'markup');
+    t.set('test *test* test');
+    n = new basis.ui.Node({
+      container: basis.dom.get('demo-container'),
+      template: '<span title="{a}">[{a}]<br/>[{b}]<br/>[{a}]</span>',
+      binding: {
+        a: t,
+        b: t
+      }
+    });
+
+    var t2 = basis.l10n.dictionary('l10n.l10n');
+
+    n2 = new basis.ui.Node({
+      container: basis.dom.get('demo-container'),
+      data: { count: 5 },
+      template: basis.resource('l10n.tmpl'),
+      action: {
+        dec: function(){
+          this.update({ count: this.data.count - 1 });
+        },
+        inc: function(){
+          this.update({ count: this.data.count + 1 });
+        }
+      },
+      binding: {
+        count: 'data:',
+        plural: t2.token('plural').compute('update', function(node){
+          return node.data.count;
+        }),
+        markupToken: t2.token('markupToken'),
+        markupToken2: t2.token('markupToken')
+      }
+    });
+
+  </script>
+</body>
+
+</html>
