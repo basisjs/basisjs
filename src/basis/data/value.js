@@ -205,6 +205,9 @@
       while (prev = cursor, cursor = cursor.links_)
         if (cursor.object === object && (!field || field == cursor.field))
         {
+          // prevent apply new values
+          cursor.field = null;
+
           // delete link
           prev.links_ = cursor.links_;
 

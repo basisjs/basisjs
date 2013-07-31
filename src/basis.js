@@ -38,6 +38,7 @@
 
   var document = global.document;
   var prefetchedResources = global.__resources__;
+  var Object_toString = Object.prototype.toString;
 
 
  /**
@@ -855,12 +856,15 @@
   * Special processing options:
   * - autoload: namespace that must be loaded right after core loaded
   * - path: dictionary of paths for root namespaces
+  * - extClass: extend buildin classes (Object, Array, String, )
   *
   * Other options copy into basis.config as is.
   */
   var config = (function(){
     var basisBaseURI = '';
-    var config = {};
+    var config = {
+      extClass: true
+    };
 
     if (NODE_ENV)
     {
@@ -1288,7 +1292,7 @@
         }
 
         // for browsers that doesn't enum toString
-        if (TOSTRING_BUG && source[key = 'toString'] !== Object.prototype[key])
+        if (TOSTRING_BUG && source[key = 'toString'] !== Object_toString)
           proto[key] = source[key];
 
         return this;
@@ -1483,9 +1487,16 @@
       while (prev = cursor, cursor = cursor.handler)
         if (cursor.fn === fn && cursor.context === context)
         {
+          // make it non-callable
+          cursor.fn = $undef;
+
+          // remove from list
           prev.handler = cursor.handler;
-          break;
+
+          return;
         }
+
+      /** @cut */ consoleMethods.warn('basis.Token#detach: fn & context pair not found, nothing was removed');
     },
 
    /**
@@ -1911,7 +1922,7 @@
     * @return {boolean}
     */
     isArray: function(value){
-      return Object.prototype.toString.call(value) === '[object Array]';
+      return Object_toString.call(value) === '[object Array]';
     }
   });
 
@@ -1920,7 +1931,8 @@
     {
       var len = object.length;
 
-      if (typeof len == 'undefined' || typeof object == 'function')
+                                       // Safari 5.1 has a bug, typeof for node collection returns `function`
+      if (typeof len == 'undefined' || Object_toString.call(object) == '[object Function]')
         return [object];
 
       if (!offset)
@@ -2753,10 +2765,15 @@
   // basis extenstions
   //
 
-  extend(Object, basis.object);
-  extend(Function, basis.fn);
-  extend(Array, basis.array);
-  extend(String, basis.string);
+  if (config.extClass)
+  {
+    /** @cut */ consoleMethods.warn('Extension of build classes by custom functions (i.e. Object.*, Array.*, String.*, Function.*) is deprecated, but extends by default until 0.10 version; use `extClass: false` in basis.js config to prevent buildin class extenstion and make code ready to new basis.js versions');
+
+    extend(Object, basis.object);
+    extend(Function, basis.fn);
+    extend(Array, basis.array);
+    extend(String, basis.string);
+  }
 
 
   //

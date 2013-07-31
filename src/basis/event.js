@@ -212,8 +212,12 @@
       while (prev = cursor, cursor = cursor.handler)
         if (cursor.callbacks === callbacks && cursor.context === context)
         {
-          cursor.callbacks = NULL_HANDLER; // make it non-callable
+          // make it non-callable
+          cursor.callbacks = NULL_HANDLER;
+
+          // remove from list
           prev.handler = cursor.handler;
+
           return;
         }
 
