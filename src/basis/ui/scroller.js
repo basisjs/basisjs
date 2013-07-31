@@ -634,6 +634,8 @@
     scrollX: true, 
     scrollY: true,
     wheelDelta: 40,
+    inertia: true,
+    panning: true,
 
     emit_realign: createEvent('realign'),
     emit_updatePosition: createEvent('updatePosition'),
@@ -656,9 +658,12 @@
         var delta = Event.wheelDelta(event);
 
         if (this.scrollY)
-          this.scroller.setPositionY(this.scroller.viewportTargetY - this.wheelDelta * delta, true);
+          this.scroller.setPositionY(this.scroller.viewportTargetY - this.wheelDelta * delta, this.inertia);
         else if (this.scrollX)
-          this.scroller.setPositionX(this.scroller.viewportTargetX - this.wheelDelta * delta, true);
+          this.scroller.setPositionX(this.scroller.viewportTargetX - this.wheelDelta * delta, this.inertia);
+
+        if (!this.inertia)
+          this.updatePosition();
 
         Event.kill(event);
       }
@@ -693,7 +698,8 @@
       var scrollerConfig = basis.object.extend(this.scroller || {}, {
         targetElement: this.tmpl.scrollElement,
         scrollX: this.scrollX,
-        scrollY: this.scrollY
+        scrollY: this.scrollY,
+        panning: this.panning
       });
 
       this.scroller = new Scroller(scrollerConfig);
@@ -733,13 +739,13 @@
       if (this.scrollX && (scroller.viewportX < this.minPositionX || scroller.viewportX > this.maxPositionX))
       {
         var positionX = Math.min(this.maxPositionX, Math.max(this.minPositionX, scroller.viewportX));
-        scroller.setPositionX(positionX, true);
+        scroller.setPositionX(positionX, this.inertia);
       }
 
       if (this.scrollY && (scroller.viewportY < this.minPositionY || scroller.viewportY > this.maxPositionY))
       {
         var positionY = Math.min(this.maxPositionY, Math.max(this.minPositionY, scroller.viewportY));
-        scroller.setPositionY(positionY, true);
+        scroller.setPositionY(positionY, this.inertia);
       }
     },
 
