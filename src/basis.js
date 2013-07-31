@@ -1487,9 +1487,16 @@
       while (prev = cursor, cursor = cursor.handler)
         if (cursor.fn === fn && cursor.context === context)
         {
+          // make it non-callable
+          cursor.fn = $undef;
+
+          // remove from list
           prev.handler = cursor.handler;
-          break;
+
+          return;
         }
+
+      /** @cut */ consoleMethods.warn('basis.Token#detach: fn & context pair not found, nothing was removed');
     },
 
    /**
