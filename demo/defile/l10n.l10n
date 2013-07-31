@@ -2,17 +2,21 @@
   "_meta": {
     "type": {
       "markupToken": "markup",
+      "recursion": "markup",
+      "recursion2": "markup",
       "plural": "plural",
       "unknownType": "unknownType1"
     }
   },
   "en-US": {
-    "markupToken": "test *test* test (count: {count}) (a.b: {l10n:a.b}) ",
+    "markupToken": "test *test* test (count: {count}) (a.b: {l10n:a.b})<br/>{l10n:recursion} ",
+    "recursion": "[ recursion >> {l10n:recursion2} {count} ]",
+    "recursion2": "[ recursion2 >> {l10n:recursion}  ]",
     "plural": ["test", "tests"],
     "default": "test *test* test",
     "unknownType": "test *test* test",
     "a": {
-      "b": 1234
+      "b": 12323
     }
   }
 }

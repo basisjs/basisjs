@@ -517,6 +517,9 @@
     * @param {object} data Object that contains new tokens data
     */ 
     update: function(data){
+      if (!data)
+        data = {};
+
       for (var culture in data)
         if (!/^_|_$/.test(culture)) // ignore names with underscore in the begining or ending (reserved for meta)
           walkTokens(this, culture, data[culture]);

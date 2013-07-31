@@ -367,10 +367,51 @@
   // Convert tokens to declaration
   //
 
-  function dirname(url){
-    return String(url).replace(/[^\\\/]+$/, '');
+  var tokenTemplate = {};
+  var L10nProxyToken = basis.Token.subclass({
+    className: namespace + '.L10nProxyToken',
+    token: null,
+    url: '',
+    init: function(token){
+      this.url = token.dictionary.resource.url + '#' + token.name;
+      this.token = token;
+      this.set();
+
+      token.attach(this.set, this);
+    },
+    set: function(){
+      return basis.Token.prototype.set.call(this,
+        this.token.type == 'markup'
+          ? processMarkup(this.token.value)
+          : ''
+      );
+    },
+    destroy: function(){
+      basis.Token.prototype.destroy.call(this);
+      this.token = null;
+    }
+  })
+
+  function processMarkup(value){
+    // temporary
+    return String(value).replace(/\*(.*?)\*/g, '<b>$1</b>');
   }
 
+  function getL10nTemplate(token){
+    if (typeof token == 'string')
+      token = basis.l10n.token(token);
+
+    if (!token)
+      return null;
+
+    var id = token.basisObjectId;
+    var template = tokenTemplate[id];
+
+    if (!template)
+      template = tokenTemplate[id] = new Template(new L10nProxyToken(token));
+
+    return template;
+  }
 
  /**
   * make compiled version of template
@@ -787,11 +828,8 @@
                 break;
 
                 case 'l10n':
-                  for (var key in template.l10n)
-                  {
-                    template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
-                    continue;
-                  }
+                  /** @cut */ if (template.l10nResolved)
+                  /** @cut */   template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
 
                   if (elAttrs.src)
                     template.dictURI = path.relative(template.baseURI + elAttrs.src);
@@ -816,46 +854,53 @@
                 break;
 
                 case 'include':
-                  if (elAttrs.src)
+                  var templateSrc = elAttrs.src;
+                  if (templateSrc)
                   {
-                    var isTemplateRef = /^#\d+$/.test(elAttrs.src);
-                    var url = isTemplateRef ? elAttrs.src.substr(1) : elAttrs.src;
+                    var isTemplateRef = /^#\d+$/.test(templateSrc);
+                    var url = isTemplateRef ? templateSrc.substr(1) : templateSrc;
+                    var resource;
 
-                    if (includeStack.indexOf(url) == -1) // prevent recursion
+                    if (isTemplateRef)
+                      resource = templateList[url];
+                    else if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
+                      resource = getSourceByPath(url);
+                    else
+                      resource = basis.resource(path.resolve(template.baseURI + url));
+
+                    if (includeStack.indexOf(resource) == -1) // prevent recursion
                     {
-                      includeStack.push(url);
-
                       var decl;
+
+                      template.deps.add(resource);
+                      
+                      // prevent recursion
+                      includeStack.push(resource);
 
                       if (isTemplateRef)
                       {
-                        var tmpl = templateList[url];
-                        template.deps.add(tmpl);
+                        // source wrapper
+                        if (resource.source.bindingBridge)
+                          template.deps.add(resource.source);
 
-                        if (tmpl.source.bindingBridge)
-                          template.deps.add(tmpl.source);
-
-                        decl = getDeclFromSource(tmpl.source, tmpl.baseURI, true, options);
+                        decl = getDeclFromSource(resource.source, resource.baseURI, true, options);
                       }
                       else
                       {
-                        var resource;
-
-                        if (/^[a-z0-9\.]+$/i.test(url) && !/\.tmpl$/.test(url))
-                          resource = getSourceByPath(url);
-                        else
-                          resource = basis.resource(path.resolve(template.baseURI + url));
-
-                        template.deps.add(resource);
                         decl = getDeclFromSource(resource.get(), resource.url ? path.dirname(resource.url) + '/' : '', true, options);
                       }
 
+                      // prevent recursion
                       includeStack.pop();
 
                       if (decl.resources && 'no-style' in elAttrs == false)
                         addUnique(template.resources, decl.resources);
+                      
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
+
+                      /** @cut */ if (decl.l10n)
+                      /** @cut */   addUnique(template.l10n, decl.l10n);
 
                       var tokenRefMap = normalizeRefs(decl.tokens);
                       var instructions = (token.childs || []).slice();
@@ -973,7 +1018,15 @@
                     }
                     else
                     {
-                      ;;;basis.dev.warn('Recursion: ', includeStack.join(' -> '));
+                      /** @cut */ var stack = includeStack.slice(includeStack.indexOf(resource) || 0).concat(resource).map(function(res){
+                      /** @cut */   if (res instanceof Template)
+                      /** @cut */     res = res.source;
+                      /** @cut */   if (res instanceof L10nProxyToken)
+                      /** @cut */     return '{l10n:' + res.token.name + '@' + res.token.dictionary.resource.url + '}';
+                      /** @cut */   return res.url || '[inline template]';
+                      /** @cut */ });
+                      /** @cut */ template.warns.push('Recursion: ', stack.join(' -> '));
+                      /** @cut */ basis.dev.warn('Recursion in template ' + (template.sourceUrl || '[inline template]') + ': ', stack.join(' -> '));
                     }
                   }
 
@@ -1002,10 +1055,13 @@
             // process l10n
             if (bindings)
             {
-              var l10nBinding = absl10n(bindings, template.dictURI);
+              var l10nBinding = absl10n(bindings, template.dictURI);  // l10n:foo.bar.{binding}@dict/path/to.l10n
               var parts = l10nBinding.split(/[:@\{]/);
-              if (parts.length == 3 && parts[0] == 'l10n')
+
+              // if prefix is l10n: and token has no value bindings
+              if (parts[0] == 'l10n' && parts.length == 3)
               {
+                // check for dictionary
                 if (!parts[2])
                 {
                   // reset binding with no dictionary
@@ -1016,18 +1072,20 @@
                 }
                 else
                 {
-                  var l10nToken = basis.l10n.token(parts.slice(1).join('@'));
+                  var l10nId = parts.slice(1).join('@');
+                  var l10nToken = basis.l10n.token(l10nId);
+                  var l10nTemplate = getL10nTemplate(l10nToken);
 
-                  template.l10n[l10nBinding] = l10nToken;
+                  template.l10nResolved = true;
 
-                  if (l10nToken.type == 'markup')
+                  if (l10nTemplate && l10nToken.type == 'markup')
                   {
-                    var decl = getDeclFromSource(String(l10nToken.value).replace(/\*(.*?)\*/g, '<b>$1</b>'), template.dictURI, true, options);
-                    var tokenRefMap = normalizeRefs(decl.tokens);
-                    removeTokenRef(tokenRefMap.element.token, 'element');
-                    result.push.apply(result, decl.tokens);
+                    tokens[i--] = tokenize('<b:include src="#' + l10nTemplate.templateId + '"/>')[0];
                     continue;
                   }
+                  /** @cut for token type change in dev mode */
+                  /** @cut */ else
+                  /** @cut */   template.l10n.add(l10nId);
                 }
               }
             }
@@ -1125,7 +1183,11 @@
 
           case TYPE_ATTRIBUTE:
             if (token[TOKEN_BINDINGS])
-              token[TOKEN_BINDINGS][0] = token[TOKEN_BINDINGS][0].map(absl10n);
+            {
+              var array = token[TOKEN_BINDINGS][0];
+              for (var j = 0; j < array.length; j++)
+                array[j] = absl10n(array[j], dictURI);
+            }
             break;
 
           case TYPE_ELEMENT:
@@ -1200,11 +1262,12 @@
 
       // result object
       var result = {
+        sourceUrl: sourceUrl,
         baseURI: baseURI || '',
         tokens: null,
         resources: [],
         deps: [],
-        l10n: {},
+        /** @cut for token type change in dev mode */ l10n: [],
         defines: {},
         unpredictable: true,
         warns: warns
@@ -1240,6 +1303,7 @@
 
       // delete unnecessary keys
       delete result.defines;
+      delete result.l10nResolved;
 
       if (!warns.length)
         result.warns = false;
@@ -1417,13 +1481,14 @@
     };
   }
 
-  function l10nHandler(value){
-    if (this.type == 'markup' || this.token.type == 'markup')
-    {
-      console.log('rebuild!!!', this.token.name);
-      buildTemplate.call(this.template);
-    }
-  }
+  /** @cut for token type change in dev mode */
+  /** @cut */ function l10nHandler(value){
+  /** @cut */   if (this.type != 'markup' && this.token.type == 'markup')
+  /** @cut */   {
+  /** @cut */     console.log('rebuild!!!', this.token.name);
+  /** @cut */     buildTemplate.call(this.template);
+  /** @cut */   }
+  /** @cut */ }
 
  /**
   * @func
@@ -1433,7 +1498,9 @@
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens);  // makeFunctions
     var deps = this.deps_;
-    var l10n = this.l10n_;
+
+    /** @cut for token type change in dev mode */
+    /** @cut */ var l10n = this.l10n_;
 
     // detach old deps
     if (deps)
@@ -1442,10 +1509,12 @@
       for (var i = 0, dep; dep = deps[i]; i++)
         dep.bindingBridge.detach(dep, buildTemplate, this);
     }
+    
+    /** @cut for token type change in dev mode */
+    /** @cut */ if (l10n)
+    /** @cut */   for (var i = 0, item; item = l10n[i]; i++)
+    /** @cut */     item.token.bindingBridge.detach(item.token, l10nHandler, item);
 
-    if (l10n)
-      for (var key in l10n)
-        l10n[key].token.bindingBridge.detach(l10n[key].token, l10nHandler, l10n[key]);
 
     // attach new deps
     if (decl.deps && decl.deps.length)
@@ -1456,17 +1525,21 @@
         dep.bindingBridge.attach(dep, buildTemplate, this);
     }
 
-    if (decl.l10n)
-    {
-      l10n = decl.l10n;
-      this.l10n_ = {};
-      for (var key in l10n)
-        l10n[key].bindingBridge.attach(l10n[key], l10nHandler, this.l10n_[key] = {
-          template: this,
-          token: l10n[key],
-          type: l10n[key].type
-        });
-    }
+    /** @cut for token type change in dev mode */
+    /** @cut */ if (decl.l10n)
+    /** @cut */ {
+    /** @cut */   l10n = decl.l10n;
+    /** @cut */   this.l10n_ = {};
+    /** @cut */   for (var i = 0, key; key = l10n[i]; i++)
+    /** @cut */   {
+    /** @cut */     var l10nToken = basis.l10n.token(key);
+    /** @cut */     l10nToken.bindingBridge.attach(l10nToken, l10nHandler, this.l10n_[key] = {
+    /** @cut */       template: this,
+    /** @cut */       token: l10nToken,
+    /** @cut */       type: l10nToken.type
+    /** @cut */     });
+    /** @cut */   }
+    /** @cut */ }
 
     // apply new values
     this.createInstance = funcs.createInstance;
@@ -1701,7 +1774,7 @@
         {
           if (source.url)
           {
-            this.baseURI = dirname(source.url);
+            this.baseURI = path.dirname(source.url) + '/';
             if (!tmplFilesMap[source.url])
               tmplFilesMap[source.url] = [];
             tmplFilesMap[source.url].add(this);
@@ -1859,14 +1932,14 @@
       if (this.value != content)
       {
         if (this.value && this.value.bindingBridge)
-          this.value.bindingBridge.detach(this.value, this.apply, this);
+          this.value.bindingBridge.detach(this.value, SourceWrapper.prototype.apply, this);
 
         this.value = content;
         this.url = (content && content.url) || '';
         this.baseURI = (typeof content == 'object' || typeof content == 'function') && 'baseURI' in content ? content.baseURI : path.dirname(this.url) + '/';
 
         if (this.value && this.value.bindingBridge)
-          this.value.bindingBridge.attach(this.value, this.apply, this);
+          this.value.bindingBridge.attach(this.value, SourceWrapper.prototype.apply, this);
 
         this.apply();
       }

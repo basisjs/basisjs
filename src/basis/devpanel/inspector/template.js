@@ -35,8 +35,8 @@ function pickHandler(event){
 }
 
 var pickupTarget = new basis.data.value.Property(null, {
-  change: function(value, oldValue){
-    updatePickupElement(value, oldValue);
+  change: function(sender, value, oldValue){
+    updatePickupElement(sender, oldValue);
   }
 }, function(value){
   return value && value.element && value.template instanceof basis.template.Template ? value : null;
