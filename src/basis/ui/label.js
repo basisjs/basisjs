@@ -324,6 +324,9 @@
   });
 
 
+  ;;;basis.dev.warn('basis.ui.label is deprecated and will be dropped in basisjs 0.10 version');
+
+
   //
   // export names
   //
