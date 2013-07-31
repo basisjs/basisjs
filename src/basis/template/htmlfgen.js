@@ -116,7 +116,7 @@
           myRef = -1;
 
           if (path == rootPath)
-            markedElementList.push(localPath + '.basisObjectId');
+            markedElementList.push(localPath + '.basisTemplateId');
 
           if (!explicitRef)
           {
@@ -305,7 +305,7 @@
         var domRef = binding[1];
         var bindName = binding[2];
 
-        if (['set', 'rebuild_', 'action_', 'destroy_'].indexOf(bindName) != -1)
+        if (['set', 'destroy_'].indexOf(bindName) != -1)
         {
           ;;;basis.dev.warn('binding name `' + bindName + '` is prohibited, binding ignored');
           continue;
@@ -620,34 +620,42 @@
     }
 
     /** @cut */ try {
-    result.createInstance = new Function('gMap', 'tMap', 'build', 'tools', '__l10n', 'TEXT_BUG',
+    result.createInstance = new Function('tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG',
       /** @cut */ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
-      'return function createInstance_(obj,onAction,onUpdate){' +
-        'var id=gMap.seed++,' +
-        'ref={context:obj},' +
+      'var seed=0;' +
+      'return function createInstance_(obj,onAction,onRebuild){' +
+        'var ref=map[++seed]={' +
+          'context:obj,' +
+          'action:onAction,' +
+          'rebuild:onRebuild,' +
+          'tmpl:null' +
+        '},' +
+        'id=seed,' +
         'attaches={' + bindings.keys.map(function(key){ return key + ':null' }) + '},' + 
         'resolve=tools.resolve,' +
         '_=build(),' + 
         paths.path.concat(bindings.vars) + 
 
-        (objectRefs ? ';if(obj)gMap[' + objectRefs + '=id]=ref' : '') +
+        (objectRefs ? ';if(obj)' + objectRefs + '=tid+"-"+id' : '') +
 
         ';function updateAttach(){set(this.name,this.value)}' +
 
         bindings.set +
         /** @cut */ (debug ? 'set.debug=function(){return[' + bindings.debugList + ']}' : '') +
 
-        ';return tMap[id]=ref.tmpl={' + [
+        ';return ref.tmpl={' + [
           paths.ref,
           'set:set,' +
-          'rebuild_:function(){if(onUpdate)onUpdate.call(obj)},' +
-          'action_:function(action,event){if(onAction)onAction.call(obj,action,event)},' +
           'destroy_:function(){' +
+            // detach attaches
             'var a;' +
-            'for(var key in attaches)if(a = attaches[key])a.value.bindingBridge.detach(a.value,updateAttach,a);' +
+            'for(var key in attaches)' +
+              'if(a = attaches[key])' +
+                'a.detach(a.value,updateAttach,a);' +
             'attaches=null;' +
-            'delete tMap[id];' + 
-            (objectRefs ? 'delete gMap[id];' : '') +
+
+            // delete from template map
+            'delete map[id];' +
           '}'] +
         '}' +
 

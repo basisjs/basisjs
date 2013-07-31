@@ -1380,7 +1380,6 @@
   */
   function buildTemplate(){
     var decl = getDeclFromSource(this.source, this.baseURI);
-    var instances = this.instances_;
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens);  // makeFunctions
     var deps = this.deps_;
@@ -1405,21 +1404,22 @@
     // apply new values
     this.createInstance = funcs.createInstance;
     this.getBinding = createBindingFunction(funcs.keys);
-    this.instances_ = funcs.map;
     this.destroyBuilder = funcs.destroy;
 
-    // apply resources
-    var hasResources = decl.resources && decl.resources.length > 0;
+    ;;;this.instances_ = funcs.instances_;
 
-    if (hasResources)
-      for (var i = 0, res; res = decl.resources[i]; i++)
+    // apply resources
+    var declResources = decl.resources && decl.resources.length > 0 ? decl.resources : null;
+
+    if (declResources)
+      for (var i = 0, res; res = declResources[i]; i++)
         startUseResource(res);
 
     if (this.resources)
       for (var i = 0, res; res = this.resources[i]; i++)
         stopUseResource(res);
 
-    this.resources = hasResources && decl.resources;
+    this.resources = declResources;
 
     // destroy old builder instance if exists
     if (destroyBuilder)
@@ -1652,11 +1652,12 @@
         this.destroyBuilder();
 
       this.attaches_ = null;
-      this.instances_ = null;
       this.createInstance = null;
       this.getBinding = null;
       this.resources = null;
       this.source = null;
+
+      ;;;this.instances_ = null;
     }
   });
 

@@ -81,11 +81,11 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
     binding: {
       title: {
         events: 'delegateChanged update',
-        getter: function(object){
-          if (object.delegate)
+        getter: function(node){
+          if (node.delegate)
           {
-            var el = object.delegate.element;
-            return object.delegate.constructor.className + '#' + el.basisObjectId + ', ' + el.tagName.toLowerCase() + (el.id ? '#' + el.id : (el.className ? '.' + el.className.split(' ').join('.') : ''));
+            var el = node.delegate.element;
+            return node.delegate.constructor.className + '#' + node.delegate.basisObjectId + ', ' + el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className.split(' ').join('.') : '');
           }
         }
       }
@@ -168,7 +168,7 @@ function mousemoveHandler(){
   var cursor = sender;
   var refId;
   do {
-    if (refId = cursor.basisObjectId)
+    if (refId = cursor.basisTemplateId)
     { 
       inspectDepth = 0;
       return pickupTarget.set(basis.template.resolveObjectById(refId));
@@ -191,7 +191,7 @@ function mouseWheelHandler(){
 
   var refId;
   do {
-    if (refId = cursor.basisObjectId)
+    if (refId = cursor.basisTemplateId)
     {
       lastRefId = refId;
       lastDepth = curDepth;

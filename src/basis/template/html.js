@@ -55,7 +55,9 @@
 
   // dictionaries
   var tmplEventListeners = {};
-  var tmplNodeMap = { seed: 1 };
+  var templates = {};
+  var templateId = 0;
+
   var namespaceURI = {
     svg: 'http://www.w3.org/2000/svg'
   };
@@ -283,11 +285,12 @@
           if (!oldAttach || value !== oldAttach.value)
           {
             if (oldAttach)
-              oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
+              oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
 
             attaches[bindingName] = {
               name: bindingName,
               object: object,
+              detach: bridge.detach,
               value: value
             };
 
@@ -300,7 +303,7 @@
         {
           if (oldAttach)
           {
-            oldAttach.value.bindingBridge.detach(oldAttach.value, updateAttach, oldAttach);
+            oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
             attaches[bindingName] = null;
           }
         }
@@ -323,7 +326,7 @@
 
     return function(tokens){
       var fn = getFunctions(tokens, true, this.source.url, tokens.source_);
-      var templateMap = {};
+      var instances = {};
       var l10nMap = {};
       var l10nLinks = [];
 
@@ -331,6 +334,9 @@
       var build = function(){
         return proto.cloneNode(true);
       };
+
+      var id = templateId++;
+      templates[id] = instances;
 
       if (fn.createL10nSync)
       {
@@ -347,37 +353,44 @@
               token: l10nToken(key),
               handler: function(value){
                 l10nProtoSync(this.path, value);
-                for (var id in templateMap)
-                  templateMap[id].set(this.path, value);
+                for (var key in instances)
+                  instances[key].tmpl.set(this.path, value);
               }
             };
             link.token.attach(link.handler, link);
             l10nLinks.push(link);
+            link = null;
           }
       }
 
       return {
-        createInstance: fn.createInstance(tmplNodeMap, templateMap, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG),
+        createInstance: fn.createInstance(id, instances, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG),
         
         keys: fn.keys,
-        map: templateMap,
+        /** @cut */ instances_: instances,
 
         destroy: function(rebuild){
           for (var i = 0, link; link = l10nLinks[i]; i++)
             link.token.detach(link.handler, link);
 
-          if (rebuild)
-            for (var id in templateMap)
-              templateMap[id].rebuild_();
-
-          for (var id in templateMap)
-            templateMap[id].destroy_();
+          for (var key in instances)
+          {
+            var tmplRef = instances[key];
+            if (rebuild && tmplRef.rebuild)
+              tmplRef.rebuild.call(tmplRef.context);
+            if (!rebuild || key in instances)
+              tmplRef.tmpl.destroy_();
+          }
 
           fn = null;
+          build = null;
           proto = null;
+          l10nMap = null;
           l10nLinks = null;
           l10nProtoSync = null;
-          templateMap = null;
+          instances = null;
+
+          delete templates[id];
         }
       };
     };
@@ -387,25 +400,6 @@
   //
   // Constructs dom structure
   //
-
- /**
-  * @func
-  */
-  function findHostTemplate(cursor){
-    var refId;
-    var tmplRef;
-
-    do {
-      if (refId = cursor.basisObjectId)
-      {
-        // if node found, return it
-        if (tmplRef = tmplNodeMap[refId])
-          return tmplRef;
-      }
-    } while (cursor = cursor.parentNode);
-
-    return cursor;
-  }
 
  /**
   * @func
@@ -420,7 +414,6 @@
 
       var cursor = event.sender;
       var attr;
-      var refId;
 
       // IE events may have no source, nothing to do in this case
       if (!cursor)
@@ -436,13 +429,26 @@
       if (!cursor || !attr)
         return;
 
-      // search for nearest node refer to basis.Class instance
-      var tmplRef = findHostTemplate(cursor);
-      if (tmplRef)
+      // search for nearest node with basisTemplateId property
+      var refId;
+      var tmplRef;
+
+      do {
+        if (refId = cursor.basisTemplateId)
+        {
+          // if node found, return it
+          // refIf is "templateId-instanceId"
+          var parts = refId.split('-', 2);
+          if (tmplRef = templates[parts[0]][parts[1]])
+            break;
+        }
+      } while (cursor = cursor.parentNode);
+
+      if (tmplRef && tmplRef.action)
       {
         var actions = attr.nodeValue.qw();
         for (var i = 0, actionName; actionName = actions[i++];)
-          tmplRef.tmpl.action_(actionName, event);
+          tmplRef.action.call(tmplRef.context, actionName, event);
       }
     };
   }
@@ -557,7 +563,10 @@
   };
 
   function resolveObjectById(refId){
-    return tmplNodeMap[refId].context;
+    var parts = refId.split('-', 2);
+    var instances = templates[parts[0]];
+
+    return instances && instances[parts[1]] && instances[parts[1]].context;
   }
 
 

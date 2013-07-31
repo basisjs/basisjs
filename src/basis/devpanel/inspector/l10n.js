@@ -140,9 +140,9 @@ function domTreeHighlight(root){
   {
     if (child.nodeType == basis.dom.ELEMENT_NODE) 
     {
-      if (child.basisObjectId)
+      if (child.basisTemplateId)
       {
-        var node = basis.template.resolveObjectById(child.basisObjectId);
+        var node = basis.template.resolveObjectById(child.basisTemplateId);
         if (node)
         {
           var bindings = (node.tmpl.set.debug && node.tmpl.set.debug()) || [];
