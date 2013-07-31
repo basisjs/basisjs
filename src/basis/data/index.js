@@ -745,7 +745,7 @@
       function(sender, delta){
         MapFilter.prototype.ruleEvents.update.call(this, sender, delta);
 
-        this.sourceMap_[sourceObject.basisObjectId].updated = true;
+        this.sourceMap_[sender.basisObjectId].updated = true;
         this.recalcRequest();
       },
       'update'
