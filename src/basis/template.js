@@ -382,7 +382,7 @@
     set: function(){
       return basis.Token.prototype.set.call(this,
         this.token.type == 'markup'
-          ? processMarkup(this.token.value)
+          ? processMarkup(this.token.value, this.token.name + '@' + this.token.dictionary.resource.url)
           : ''
       );
     },
@@ -390,11 +390,11 @@
       basis.Token.prototype.destroy.call(this);
       this.token = null;
     }
-  })
+  });
 
-  function processMarkup(value){
+  function processMarkup(value, id){
     // temporary
-    return String(value).replace(/\*(.*?)\*/g, '<b>$1</b>');
+    return '<span class="basisjs-markup" data-basisjs-l10n="' + id + '">' + String(value).replace(/\*(.*?)\*/g, '<b>$1</b>') + '</span>';
   }
 
   function getL10nTemplate(token){

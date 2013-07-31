@@ -437,9 +437,7 @@
         if (refId = cursor.basisTemplateId)
         {
           // if node found, return it
-          // refIf is "templateId-instanceId"
-          var parts = refId.split('-', 2);
-          if (tmplRef = templates[parts[0]][parts[1]])
+          if (tmplRef = resolveTemplateById(refId))
             break;
         }
       } while (cursor = cursor.parentNode);
@@ -562,11 +560,23 @@
     return result;
   };
 
-  function resolveObjectById(refId){
+  function resolveTemplateById(refId){
     var parts = refId.split('-', 2);
     var instances = templates[parts[0]];
 
-    return instances && instances[parts[1]] && instances[parts[1]].context;
+    return instances && instances[parts[1]];
+  }
+
+  function resolveObjectById(refId){
+    var templateRef = resolveTemplateById(refId);
+
+    return templateRef && templateRef.context;
+  }
+
+  function resolveTmplById(refId){
+    var templateRef = resolveTemplateById(refId);
+
+    return templateRef && templateRef.tmpl;
   }
 
 
@@ -616,5 +626,6 @@
   basis.template.extend({
     buildHtml: buildHtml,
     buildFunctions: buildFunctions,
-    resolveObjectById: resolveObjectById
+    resolveObjectById: resolveObjectById,
+    resolveTmplById: resolveTmplById
   });
