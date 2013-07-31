@@ -1924,7 +1924,8 @@
     {
       var len = object.length;
 
-      if (typeof len == 'undefined' || typeof object == 'function')
+                                       // Safari 5.1 has a bug, typeof for node collection returns `function`
+      if (typeof len == 'undefined' || Object_toString.call(object) == '[object Function]')
         return [object];
 
       if (!offset)
