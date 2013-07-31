@@ -1,4 +1,7 @@
 
+  basis.require('basis.l10n');
+
+
  /**
   * @namespace basis.template
   */
@@ -784,6 +787,12 @@
                 break;
 
                 case 'l10n':
+                  for (var key in template.l10n)
+                  {
+                    template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
+                    continue;
+                  }
+
                   if (elAttrs.src)
                     template.dictURI = path.relative(template.baseURI + elAttrs.src);
                 break;
@@ -800,8 +809,8 @@
                         var values = elAttrs.values ? elAttrs.values.qw() : [];
                         template.defines[elAttrs.name] = [values.indexOf(elAttrs['default']) + 1, values];
                         break;
-                      ;;;default:
-                      ;;;  template.warns.push('Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
+                      /** @cut */ default:
+                      /** @cut */  template.warns.push('Bad define type `' + elAttrs.type + '` for ' + elAttrs.name);
                     }
                   }
                 break;
@@ -822,6 +831,7 @@
                       {
                         var tmpl = templateList[url];
                         template.deps.add(tmpl);
+
                         if (tmpl.source.bindingBridge)
                           template.deps.add(tmpl.source);
 
@@ -846,9 +856,6 @@
                         addUnique(template.resources, decl.resources);
                       if (decl.deps)
                         addUnique(template.deps, decl.deps);
-
-                      //basis.dev.log(elAttrs.src + ' -> ' + url);
-                      //basis.dev.log(decl);
 
                       var tokenRefMap = normalizeRefs(decl.tokens);
                       var instructions = (token.childs || []).slice();
@@ -981,7 +988,7 @@
               1,                       // TOKEN_TYPE = 0
               bindings,                // TOKEN_BINDINGS = 1
               refs,                    // TOKEN_REFS = 2
-              name(token)             // ELEMENT_NAME = 3
+              name(token)              // ELEMENT_NAME = 3
             ]
             item.push.apply(item, attrs(token, item, options.optimizeSize) || []);
             item.push.apply(item, process(token.childs, template, options) || []);
@@ -990,7 +997,40 @@
 
           case TYPE_TEXT:
             if (refs && refs.length == 2 && refs.search('element'))
-              bindings = refs[+!Array.lastSearchIndex];
+              bindings = refs[+!Array.lastSearchIndex]; // get first one reference but not `element`
+
+            // process l10n
+            if (bindings)
+            {
+              var l10nBinding = absl10n(bindings, template.dictURI);
+              var parts = l10nBinding.split(/[:@\{]/);
+              if (parts.length == 3 && parts[0] == 'l10n')
+              {
+                if (!parts[2])
+                {
+                  // reset binding with no dictionary
+                  refs.remove(bindings);
+                  if (refs.length == 0)
+                    refs = null;
+                  bindings = 0;
+                }
+                else
+                {
+                  var l10nToken = basis.l10n.token(parts.slice(1).join('@'));
+
+                  template.l10n[l10nBinding] = l10nToken;
+
+                  if (l10nToken.type == 'markup')
+                  {
+                    var decl = getDeclFromSource(String(l10nToken.value).replace(/\*(.*?)\*/g, '<b>$1</b>'), template.dictURI, true, options);
+                    var tokenRefMap = normalizeRefs(decl.tokens);
+                    removeTokenRef(tokenRefMap.element.token, 'element');
+                    result.push.apply(result, decl.tokens);
+                    continue;
+                  }
+                }
+              }
+            }
 
             item = [
               3,                       // TOKEN_TYPE = 0
@@ -1032,18 +1072,18 @@
       return result.length ? result : 0;
     }
 
+    function absl10n(value, dictURI){
+      if (typeof value != 'string')
+        return value;
+
+      var parts = value.split(':');
+      if (parts[0] == 'l10n' && parts[1].indexOf('@') == -1)
+        parts[1] = parts[1] + '@' + dictURI;
+
+      return parts.join(':');
+    }
+
     function normalizeRefs(tokens, dictURI, map, stIdx){
-      function absl10n(value){
-        if (typeof value != 'string')
-          return value;
-
-        var parts = value.split(':');
-        if (parts[0] == 'l10n' && parts[1].indexOf('@') == -1)
-          parts[1] = parts[1] + '@' + dictURI;
-
-        return parts.join(':');
-      }
-
       if (!map)
         map = {};
 
@@ -1077,9 +1117,10 @@
           }
         }
 
-        switch (token[TOKEN_TYPE]) {
+        switch (token[TOKEN_TYPE])
+        {
           case TYPE_TEXT:
-            token[TOKEN_BINDINGS] = absl10n(token[TOKEN_BINDINGS]);
+            token[TOKEN_BINDINGS] = absl10n(token[TOKEN_BINDINGS], dictURI);
             break;
 
           case TYPE_ATTRIBUTE:
@@ -1163,13 +1204,14 @@
         tokens: null,
         resources: [],
         deps: [],
+        l10n: {},
         defines: {},
         unpredictable: true,
         warns: warns
       };
 
-      // todo: fix me
-      result.dictURI = basis.path.relative(result.baseURI + (sourceUrl ? basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n' : 'l10n.json'));
+      // resolve l10n dictionary url
+      result.dictURI = sourceUrl ? basis.path.relative(result.baseURI + basis.path.basename(sourceUrl, basis.path.extname(sourceUrl)) + '.l10n') : baseURI;
 
       if (!source.templateTokens)
       {
@@ -1375,6 +1417,14 @@
     };
   }
 
+  function l10nHandler(value){
+    if (this.type == 'markup' || this.token.type == 'markup')
+    {
+      console.log('rebuild!!!', this.token.name);
+      buildTemplate.call(this.template);
+    }
+  }
+
  /**
   * @func
   */
@@ -1383,6 +1433,7 @@
     var destroyBuilder = this.destroyBuilder;
     var funcs = this.builder(decl.tokens);  // makeFunctions
     var deps = this.deps_;
+    var l10n = this.l10n_;
 
     // detach old deps
     if (deps)
@@ -1391,6 +1442,10 @@
       for (var i = 0, dep; dep = deps[i]; i++)
         dep.bindingBridge.detach(dep, buildTemplate, this);
     }
+
+    if (l10n)
+      for (var key in l10n)
+        l10n[key].token.bindingBridge.detach(l10n[key].token, l10nHandler, l10n[key]);
 
     // attach new deps
     if (decl.deps && decl.deps.length)
@@ -1401,12 +1456,25 @@
         dep.bindingBridge.attach(dep, buildTemplate, this);
     }
 
+    if (decl.l10n)
+    {
+      l10n = decl.l10n;
+      this.l10n_ = {};
+      for (var key in l10n)
+        l10n[key].bindingBridge.attach(l10n[key], l10nHandler, this.l10n_[key] = {
+          template: this,
+          token: l10n[key],
+          type: l10n[key].type
+        });
+    }
+
     // apply new values
     this.createInstance = funcs.createInstance;
     this.getBinding = createBindingFunction(funcs.keys);
     this.destroyBuilder = funcs.destroy;
 
     ;;;this.instances_ = funcs.instances_;
+    ;;;this.decl_ = decl;
 
     // apply resources
     var declResources = decl.resources && decl.resources.length > 0 ? decl.resources : null;
@@ -1658,6 +1726,7 @@
       this.source = null;
 
       ;;;this.instances_ = null;
+      ;;;this.decl_ = null;
     }
   });
 

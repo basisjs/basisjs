@@ -523,10 +523,7 @@
 
       this.types = (data._meta && data._meta.type) || {};
       for (var key in this.tokens)
-      {
         this.tokens[key].setType(this.types[key])
-        console.log(key, this.types[key]);
-      }
     },
 
    /**
