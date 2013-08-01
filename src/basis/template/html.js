@@ -78,6 +78,18 @@
   })();
 
 
+  var l10nTemplates = {};
+  function getL10nTemplate(token){
+    var template = basis.template.getL10nTemplate(token);
+    var id = template.templateId
+    var htmlTemplate = l10nTemplates[id];
+
+    if (!htmlTemplate)
+      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(template.source);
+
+    return htmlTemplate;
+  }
+
  /**
   * Build functions for creating instance of template.
   */
@@ -277,6 +289,7 @@
     function resolveValue(attaches, updateAttach, bindingName, value, object){
       var bridge = value && value.bindingBridge;
       var oldAttach = attaches[bindingName];
+      var tmpl = null;
 
       if (bridge || oldAttach)
       {
@@ -285,24 +298,60 @@
           if (!oldAttach || value !== oldAttach.value)
           {
             if (oldAttach)
-              oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
+            {
+              if (oldAttach.tmpl)
+              {
+                oldAttach.tmpl.element.toString = null;
+                oldAttach.tmpl.destroy_();
+              }
 
-            attaches[bindingName] = {
+              oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
+            }
+
+            if (value.type == 'markup' && value instanceof basis.l10n.Token)
+            {
+              var template = getL10nTemplate(value);
+              tmpl = template.createInstance(object, null, function onRebuild(){
+                tmpl.destroy_();
+                tmpl = newAttach.tmpl = template.createInstance(object, null, onRebuild);
+                tmpl.element.toString = function(){
+                  return value.value;
+                };
+                updateAttach.call(newAttach);
+              });
+              tmpl.element.toString = function(){
+                return value.value;
+              }
+            }
+
+            var newAttach = attaches[bindingName] = {
               name: bindingName,
               object: object,
               detach: bridge.detach,
-              value: value
+              value: value,
+              tmpl: tmpl
             };
 
-            bridge.attach(value, updateAttach, attaches[bindingName]);
+            bridge.attach(value, updateAttach, newAttach);
           }
+          else
+            tmpl = value && value.type == 'markup' ? oldAttach.tmpl : null;
 
-          value = bridge.get(value, updateAttach, attaches[bindingName]);
+          if (tmpl)
+            return tmpl.element;
+
+          value = bridge.get(value);
         }
         else
         {
           if (oldAttach)
           {
+            if (oldAttach.tmpl)
+            {
+              oldAttach.tmpl.element.toString = null;
+              oldAttach.tmpl.destroy_();
+            }
+
             oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
             attaches[bindingName] = null;
           }

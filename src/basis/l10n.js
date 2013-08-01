@@ -1,11 +1,6 @@
 
   basis.require('basis.event');
 
-  basis.require('basis.timer');
-  setImmediate(function(){
-    basis.require('basis.template.html');
-  });
-
 
  /**
   * @namespace basis.l10n
@@ -43,15 +38,6 @@
 
   var tokenIndex = [];
   var tokenEnums = {};
-  var TEMPLATE_HANDLER_ID = 1;
-
-  function processMarkup(value){
-    value = String(value)
-      .replace(/</g, '&lt;')
-      .replace(/\*(.*?)\*/g, '<b>$1</b>');
-
-    return '<span class="basis-markup">' + value + '</span>';
-  }
 
 
  /**
@@ -178,27 +164,6 @@
 
     type: 'default',
 
-    bindingBridge: {
-      attach: function(host, fn, context){
-        return host.attach(fn, context);
-      },
-      detach: function(host, fn, context){
-        return host.detach(fn, context);
-      },
-      get: function(host, fn, context){
-        if (host.template && fn && context)
-        {
-          var cursor = host;
-
-          while (cursor = cursor.handler)
-            if (cursor.fn === fn && cursor.context === context && cursor.id)
-              return host.tmpl[cursor.id].element;
-        }
-
-        return host.get();
-      }
-    },
-
    /**
     * @type {number}
     */ 
@@ -226,10 +191,6 @@
       if (value !== this.value)
       {
         this.value = value;
-
-        if (this.template)
-          this.template.setSource(processMarkup(value));
-
         this.apply();
       }
     },
@@ -240,106 +201,8 @@
 
       if (this.type != type)
       {
-        if (this.template)
-        {
-          this.template.destroy();
-          this.template = null;
-          this.tmpl = null;
-        }
-
-        if (type == 'markup')
-        {
-          this.template = new basis.template.html.Template(processMarkup(this.value));
-          this.tmpl = {};
-        }
-
         this.type = type;
         this.apply();
-      }
-    },
-
-    attachTemplate: function(handler){
-      var template = this.template;
-      var tmpl = this.tmpl;
-      var object = handler.context.object;
-      var id = handler.id;
-      var self = this;
-
-      tmpl[id] = template.createInstance(object, null, function tmplSync(){
-        if (tmpl[id])
-        {
-          tmpl[id].element.toString = null;
-          template.clearInstance(tmpl[id]);
-        }
-
-        tmpl[id] = template.createInstance(object, null, tmplSync);
-        tmpl[id].element.toString = function(){
-          return self.value;
-        }
-      });
-
-      tmpl[id].element.toString = function(){
-        return self.value;
-      };
-
-      return tmpl[id];
-    },
-
-    detachTemplate: function(handler){
-      var template = this.template;
-      var id = handler.id;
-
-      if (template && id in this.tmpl)
-      {
-        this.tmpl[id].element.toString = null;
-        template.clearInstance(this.tmpl[id]);
-        delete this.tmpl[id];
-      }
-    },
-
-    attach: function(fn, context){
-      basis.Token.prototype.attach.call(this, fn, context);
-
-      if (context && context.object && context.object instanceof Emitter)
-      {
-        this.handler.id = TEMPLATE_HANDLER_ID++;
-
-        if (this.template)
-          this.attachTemplate(this.handler);
-      }
-    },
-
-    detach: function(fn, context){
-      var cursor = this;
-      var prev;
-
-      while (prev = cursor, cursor = cursor.handler)
-        if (cursor.fn === fn && cursor.context === context)
-        {
-          prev.handler = cursor.handler;
-
-          if (this.template && cursor.id)
-            this.detachTemplate(cursor);
-
-          return true;
-        }
-    },
-
-    apply: function(){
-      var value = this.get();
-      var cursor = this;
-
-      while (cursor = cursor.handler)
-      {
-        if (this.template && cursor.id)
-        {
-          if (cursor.id in this.tmpl == false)
-            this.attachTemplate(cursor);
-
-          cursor.fn.call(cursor.context, this.tmpl[cursor.id].element);
-        }
-        else
-          cursor.fn.call(cursor.context, value);
       }
     },
 
@@ -748,7 +611,7 @@
     if (typeof list == 'string')
       list = list.qw();
 
-    var cultures = [];
+    var cultures = {};
     var cultureRow;
 
     for (var i = 0, culture; culture = list[i]; i++)
@@ -759,7 +622,7 @@
       cultureFallback[cultureRow[0]] = cultureRow.slice(1);
     }
 
-    cultureList = cultures;
+    cultureList = basis.object.keys(cultures);
   }
 
 

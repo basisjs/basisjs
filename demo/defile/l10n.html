@@ -57,20 +57,9 @@
       })
     });
 
-    var t = new basis.l10n.Token(null, 'a', 'markup');
-    t.set('test *test* test');
-    n = new basis.ui.Node({
-      container: basis.dom.get('demo-container'),
-      template: '<span title="{a}">[{a}]<br/>[{b}]<br/>[{a}]</span>',
-      binding: {
-        a: t,
-        b: t
-      }
-    });
+    var dict = basis.l10n.dictionary('l10n.l10n');
 
-    var t2 = basis.l10n.dictionary('l10n.l10n');
-
-    n2 = new basis.ui.Node({
+    var testNode = new basis.ui.Node({
       container: basis.dom.get('demo-container'),
       data: { count: 5 },
       template: basis.resource('l10n.tmpl'),
@@ -84,11 +73,11 @@
       },
       binding: {
         count: 'data:',
-        plural: t2.token('plural').compute('update', function(node){
+        plural: dict.token('plural').compute('update', function(node){
           return node.data.count;
         }),
-        markupToken: t2.token('markupToken'),
-        markupToken2: t2.token('markupToken')
+        markupToken: dict.token('markupToken'),
+        markupToken2: dict.token('markupToken')
       }
     });
 

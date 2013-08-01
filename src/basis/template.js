@@ -1485,7 +1485,7 @@
   /** @cut */ function l10nHandler(value){
   /** @cut */   if (this.type != 'markup' && this.token.type == 'markup')
   /** @cut */   {
-  /** @cut */     console.log('rebuild!!!', this.token.name);
+  /** @cut */     //console.log('rebuild!!!', this.token.name);
   /** @cut */     buildTemplate.call(this.template);
   /** @cut */   }
   /** @cut */ }
@@ -2304,6 +2304,7 @@
     tokenize: tokenize,
     getDeclFromSource: getDeclFromSource,
     makeDeclaration: makeDeclaration,
+    getL10nTemplate: getL10nTemplate,
 
     // theme
     Theme: Theme,

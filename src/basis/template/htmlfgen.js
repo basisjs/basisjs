@@ -651,7 +651,8 @@
             'var a;' +
             'for(var key in attaches)' +
               'if(a = attaches[key])' +
-                'a.detach(a.value,updateAttach,a);' +
+                'resolve(attaches,updateAttach,key,null);' +
+                //'a.detach(a.value,updateAttach,a);' +
             'attaches=null;' +
 
             // delete from template map
