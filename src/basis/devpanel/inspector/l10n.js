@@ -217,7 +217,7 @@ function domTreeHighlight(root){
           var token = binding.attachment;
 
           if (token instanceof basis.l10n.ComputeToken)
-            token = token.valueToken;
+            token = token.token;
 
           addTokenToHighlight(token, binding.val, binding.dom);
         }

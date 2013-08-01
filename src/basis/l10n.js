@@ -37,8 +37,25 @@
   //
 
   var tokenIndex = [];
-  var tokenEnums = {};
+  var tokenComputeFn = {};
+  var tokenComputes = {};
 
+  function tokenUpdateComputes(value){
+    var tokens = tokenComputes[this.basisObjectId];
+    var get = this.computeGetMethod;
+
+    for (var key in tokens)
+    {
+      var computeToken = tokens[key];
+      var curValue = computeToken.get();
+      var newValue = get.call(computeToken);
+
+      computeToken.get = get;
+
+      if (curValue !== newValue)
+        computeToken.apply();
+    }
+  }
 
  /**
   * @class
@@ -46,110 +63,20 @@
   var ComputeToken = Class(basis.Token, {
     className: namespace + '.ComputeToken',
 
-    value: '',
-    values: null,
-    valueGetter: function(object){
-    },
-
-    token: null,
-    tokenHandler: function(value){
-      this.values = typeof value == 'object' || Array.isArray(value)
-        ? ownKeys(value)
-        : null;
-
-      this.evaluate();
-    },
-    valueToken: null,
-
-    object: null,
-    objectHandler: null,
-
    /**
     * @constructor
     */ 
-    init: function(token, object, objectHandler, valueGetter){
-      basis.Token.prototype.init.call(this);
-
-      this.valueGetter = valueGetter;
-      this.objectHandler = objectHandler;
-      this.setToken(token);
-      this.setObject(object);
-    },
-
-    setToken: function(token){
-      if (this.token !== token)
-      {
-        if (this.token)
-          this.token.detach(this.tokenHandler, this)
-
-        this.token = token;
-        this.values = null;
-
-        if (token)
-        {
-          token.attach(this.tokenHandler, this);
-          this.tokenHandler(token.get());
-        }
-      }
-    },
-    setObject: function(object){
-      if (this.object !== object)
-      {
-        if (this.object)
-          this.object.removeHandler(this.objectHandler, this);
-
-        this.object = object;
-
-        if (object)
-        {
-          object.addHandler(this.objectHandler, this);
-          this.evaluate();
-        }
-      }
-    },
-
-    evaluate: function(){
-      var token = null;
-
-      if (this.values && this.object)
-        token = this.token.token(this.valueGetter(this.object));
-
-      if (this.valueToken !== token)
-      {
-        if (this.valueToken)
-          this.valueToken.detach(this.set, this);
-
-        this.valueToken = token;
-
-        if (token)
-          token.attach(this.set, this);
-      }
-
-      this.set(this.valueToken ? this.valueToken.value : '[l10n:uncomputable value]');
+    init: function(value, token){
+      ;;;this.token = token;
+      basis.Token.prototype.init.call(this, value);
     },
 
     toString: function(){
-      return this.value;
+      return this.get();
     },
 
-    get: function(){
-      return this.value;
-    },
-    set: function(value){
-      if (value !== this.value)
-      {
-        this.value = value;
-        this.apply();
-      }
-    },
-
-    destroy: function(){
-      this.setObject();
-      this.setToken();
-      this.evaluate();      
-      this.value = null;
-      this.values = null;
-      
+    destroy: function(){    
+      ;;;this.token = null;  
       basis.Token.prototype.destroy.call(this);
     }
   });
@@ -172,8 +99,8 @@
    /**
     * @constructor
     */ 
-    init: function(dictionary, tokenName, type){
-      basis.Token.prototype.init.call(this, '');
+    init: function(dictionary, tokenName, type, value){
+      basis.Token.prototype.init.call(this, value);
 
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
@@ -184,15 +111,25 @@
     },
 
     toString: function(){
-      return this.value;
+      return this.get();
     },
 
-    set: function(value){
-      if (value !== this.value)
-      {
-        this.value = value;
-        this.apply();
-      }
+    apply: function(){
+      var values = {};
+
+      if ((this.type == 'plural' && Array.isArray(this.value)) 
+          || (this.type == 'default' && typeof this.value == 'object'))
+        values = basis.object.slice(this.value, ownKeys(this.value));
+
+      this.computeGetMethod = this.type == 'plural'
+        ? function(){
+            return values[cultures[currentCulture].plural(this.value)];
+          }
+        : function(){
+            return values[this.value];
+          };
+
+      basis.Token.prototype.apply.call(this);
     },
 
     setType: function(type){
@@ -216,19 +153,26 @@
       getter = basis.getter(getter);
       events = String(events).trim().split(/\s+|\s*,\s*/).sort();
 
-      var enumId = events.concat(getter.basisGetterId_).join('_');
+      var tokenId = this.basisObjectId;
+      var enumId = events.concat(tokenId, getter.basisGetterId_).join('_');
 
-      if (tokenEnums[enumId])
-        return tokenEnums[enumId];
+      if (tokenComputeFn[enumId])
+        return tokenComputeFn[enumId];
+
+      if (!tokenComputes[tokenId])
+      {
+        tokenComputes[tokenId] = {};
+        this.attach(tokenUpdateComputes, this)
+      }
 
       var token = this;
-      var computeTokenMap = {};
-      var updateValue = function(){
-        this.evaluate();
+      var objectTokenMap = {};
+      var updateValue = function(object){
+        this.set(getter(object));
       };
       var handler = {
         destroy: function(object){
-          delete computeTokenMap[object.basisObjectId];
+          delete objectTokenMap[object.basisObjectId];
           this.destroy();
         }
       };
@@ -237,15 +181,20 @@
         if (eventName != 'destroy')
           handler[eventName] = updateValue;
 
-      return tokenEnums[enumId] = function(object){
+      return tokenComputeFn[enumId] = function(object){
         if (object instanceof Emitter == false)
           throw 'basis.l10n.Token#compute: object must be an instanceof Emitter';
 
         var objectId = object.basisObjectId;
-        var computeToken = computeTokenMap[objectId];
+        var computeToken = objectTokenMap[objectId];
 
         if (!computeToken)
-          computeToken = computeTokenMap[objectId] = new ComputeToken(token, object, handler, getter);
+        {
+          computeToken = objectTokenMap[objectId] = new ComputeToken(getter(object), token);
+          tokenComputes[computeToken.basisObjectId] = computeToken;
+          computeToken.get = token.computeGetMethod;
+          object.addHandler(handler, computeToken);
+        }
 
         return computeToken;
       }
@@ -264,13 +213,6 @@
     */ 
     destroy: function(){
       this.value = null;
-      this.tmpl = null;
-
-      if (this.template)
-      {
-        this.template.destroy();
-        this.template = null;
-      }
 
       basis.Token.prototype.destroy.call(this);
     }
@@ -444,10 +386,11 @@
 
       if (!token)
       {
-        token = this.tokens[tokenName] = new Token(this, tokenName, this.types[tokenName]);
-        token.set(cultureGetTokenValue[currentCulture]
-          ? cultureGetTokenValue[currentCulture].call(this, tokenName)
-          : this.getCultureValue(currentCulture, tokenName)
+        token = this.tokens[tokenName] = new Token(this, tokenName, this.types[tokenName],
+          // value
+          cultureGetTokenValue[currentCulture]
+            ? cultureGetTokenValue[currentCulture].call(this, tokenName)
+            : this.getCultureValue(currentCulture, tokenName)
         );
       }
 
