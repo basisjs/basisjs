@@ -9,7 +9,8 @@
   <br/>
   plural [{l10n:plural}]
   <br/>
-  plural.count [{l10n:plural.{count}}]
+  plural.count [{l10n:plural.{count}}] 
+  <input value="{count} ~~ {l10n:plural.{count}} ~~ "/>
   <br/>
   plural from binding [{plural}]
   <br/>
@@ -28,4 +29,6 @@
   markupToken from binding in attr <input value="{markupToken}"/>
   <br/>
   a.b {l10n:a.b}
+  <br/>
+  {l10n:a.{count}}
 </div>

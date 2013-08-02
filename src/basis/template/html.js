@@ -374,7 +374,7 @@
     };
 
     return function(tokens){
-      var fn = getFunctions(tokens, true, this.source.url, tokens.source_);
+      var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG);
       var instances = {};
       var l10nMap = {};
       var l10nLinks = [];

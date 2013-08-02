@@ -40,22 +40,6 @@
   var tokenComputeFn = {};
   var tokenComputes = {};
 
-  function tokenUpdateComputes(value){
-    var tokens = tokenComputes[this.basisObjectId];
-    var get = this.computeGetMethod;
-
-    for (var key in tokens)
-    {
-      var computeToken = tokens[key];
-      var curValue = computeToken.get();
-      var newValue = get.call(computeToken);
-
-      computeToken.get = get;
-
-      if (curValue !== newValue)
-        computeToken.apply();
-    }
-  }
 
  /**
   * @class
@@ -67,7 +51,10 @@
     * @constructor
     */ 
     init: function(value, token){
-      ;;;this.token = token;
+      token.computeTokens[this.basisObjectId] = this;
+      this.token = token;
+      this.get = token.computeGetMethod;
+
       basis.Token.prototype.init.call(this, value);
     },
 
@@ -76,7 +63,9 @@
     },
 
     destroy: function(){    
-      ;;;this.token = null;  
+      delete this.token.computeTokens[this.basisObjectId];
+      this.token = null;
+
       basis.Token.prototype.destroy.call(this);
     }
   });
@@ -87,14 +76,30 @@
   var Token = Class(basis.Token, {
     className: namespace + '.Token',
 
-    value: '',
-
-    type: 'default',
-
    /**
     * @type {number}
     */ 
     index: NaN,
+
+   /**
+    * @type {basis.l10n.Dictionary}
+    */
+    dictionary: null,
+
+   /**
+    * @type {string}
+    */
+    name: '',
+
+   /**
+    * enum default, plural, markup
+    */ 
+    type: 'default',
+
+   /**
+    *
+    */ 
+    computeTokens: null,
 
    /**
     * @constructor
@@ -105,29 +110,49 @@
       this.index = tokenIndex.push(this) - 1;
       this.name = tokenName;
       this.dictionary = dictionary;
+      this.computeTokens = {};
 
       if (type)
         this.setType(type);
+      else
+        this.apply();
     },
 
     toString: function(){
       return this.get();
     },
 
+    computeGetMethod: function(){
+    },
+
     apply: function(){
       var values = {};
-
-      if ((this.type == 'plural' && Array.isArray(this.value)) 
-          || (this.type == 'default' && typeof this.value == 'object'))
-        values = basis.object.slice(this.value, ownKeys(this.value));
-
-      this.computeGetMethod = this.type == 'plural'
+      var tokens = this.computeTokens;
+      var get = this.type == 'plural'
         ? function(){
             return values[cultures[currentCulture].plural(this.value)];
           }
         : function(){
             return values[this.value];
           };
+
+      this.computeGetMethod = get;
+
+      if ((this.type == 'plural' && Array.isArray(this.value)) 
+          || (this.type == 'default' && typeof this.value == 'object'))
+        values = basis.object.slice(this.value, ownKeys(this.value));
+
+      for (var key in tokens)
+      {
+        var computeToken = tokens[key];
+        var curValue = computeToken.get();
+        var newValue = get.call(computeToken);
+
+        computeToken.get = get;
+
+        if (curValue !== newValue)
+          computeToken.apply();
+      }
 
       basis.Token.prototype.apply.call(this);
     },
@@ -159,12 +184,6 @@
       if (tokenComputeFn[enumId])
         return tokenComputeFn[enumId];
 
-      if (!tokenComputes[tokenId])
-      {
-        tokenComputes[tokenId] = {};
-        this.attach(tokenUpdateComputes, this)
-      }
-
       var token = this;
       var objectTokenMap = {};
       var updateValue = function(object){
@@ -191,13 +210,15 @@
         if (!computeToken)
         {
           computeToken = objectTokenMap[objectId] = new ComputeToken(getter(object), token);
-          tokenComputes[computeToken.basisObjectId] = computeToken;
-          computeToken.get = token.computeGetMethod;
           object.addHandler(handler, computeToken);
         }
 
         return computeToken;
       }
+    },
+
+    computeToken: function(value){
+      return new ComputeToken(value, this);
     },
 
     token: function(name){
@@ -212,6 +233,10 @@
     * @destructor
     */ 
     destroy: function(){
+      for (var key in this.computeTokens)
+        this.computeTokens[key].destroy();
+
+      this.computeTokens = null;
       this.value = null;
 
       basis.Token.prototype.destroy.call(this);
@@ -482,6 +507,16 @@
     name: '',
     init: function(name){
       this.name = name;
+
+      // temporary here
+      if (name == 'ru-RU')
+        this.plural = function(n){
+          if (n % 10 == 1 && n % 100 !=11)
+            return 0;
+          if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20))
+            return 1;
+          return 2;
+        }
     },
 
     plural: function(value){
