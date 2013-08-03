@@ -38,6 +38,7 @@
 
   var document = global.document;
   var prefetchedResources = global.__resources__;
+  var Object_toString = Object.prototype.toString;
 
 
  /**
@@ -644,7 +645,6 @@
       var ABSOLUTE_RX = /^([^\/]+:|\/)/;
       var ORIGIN_RX = /^([a-zA-Z0-9\-]+:)?\/\/[^\/]+/;
       var SEARCH_HASH_RX = /[\?#].*$/;
-      var DELIM_RX = /\/+/;
 
       utils = {
        /**
@@ -673,7 +673,7 @@
           var parts = (path || '')
                 .replace(ORIGIN_RX, '')         // but cut off origin
                 .replace(SEARCH_HASH_RX, '')    // cut off query search and hash
-                .split(DELIM_RX);               // split by sequence of `/`
+                .split('/');                    // split by `/`
 
           // process path parts
           for (var i = 0; i < parts.length; i++)
@@ -782,7 +782,7 @@
             }
 
           if (!absoluteFound)
-            path.unshift(baseURI);
+            path.unshift(baseURI == '/' ? '' : baseURI);
 
           return this.normalize(path.join('/'));
         },
@@ -855,12 +855,15 @@
   * Special processing options:
   * - autoload: namespace that must be loaded right after core loaded
   * - path: dictionary of paths for root namespaces
+  * - extClass: extend buildin classes (Object, Array, String, )
   *
   * Other options copy into basis.config as is.
   */
   var config = (function(){
     var basisBaseURI = '';
-    var config = {};
+    var config = {
+      extClass: true
+    };
 
     if (NODE_ENV)
     {
@@ -1194,13 +1197,7 @@
 
         // extend newClass prototype
         for (var i = 1, extension; extension = arguments[i]; i++)
-        {
-          newClassProps.extend(
-            typeof extension == 'function' && !isClass(extension)
-              ? extension(SuperClass.prototype)
-              : extension
-          );
-        }
+          newClassProps.extend(extension);
 
 
         /** @cut */if (newProto.init != NULL_FUNCTION && !/^function[^(]*\(\)/.test(newProto.init) && newClassProps.extendConstructor_) consoleMethods.warn('probably wrong extendConstructor_ value for ' + newClassProps.className);
@@ -1268,6 +1265,9 @@
       extend: function(source){
         var proto = this.prototype;
 
+        if (typeof source == 'function' && !isClass(source))
+          source = source(this.superClass_.prototype);
+
         if (source.prototype)
           source = source.prototype;
 
@@ -1291,7 +1291,7 @@
         }
 
         // for browsers that doesn't enum toString
-        if (TOSTRING_BUG && source[key = 'toString'] !== Object.prototype[key])
+        if (TOSTRING_BUG && source[key = 'toString'] !== Object_toString)
           proto[key] = source[key];
 
         return this;
@@ -1457,32 +1457,27 @@
     },
 
    /**
-    * Add callback on token value changes. Doesn't add duplicate callback and context pairs.
+    * Add callback on token value changes.
     * @param {function(value)} fn
     * @param {object=} context
-    * @return {boolean} Return true if callback was added.
     */
     attach: function(fn, context){
-      var cursor = this;
-
-      while (cursor = cursor.handler)
-        if (cursor.fn === fn && cursor.context === context)
-          return false;
+      /** @cut */ var cursor = this;
+      /** @cut */ while (cursor = cursor.handler)
+      /** @cut */  if (cursor.fn === fn && cursor.context === context)
+      /** @cut */    consoleMethods.warn('basis.Token#attach: duplicate fn & context pair');
 
       this.handler = {
         fn: fn,
         context: context,
-        handlers: this.handler
+        handler: this.handler
       };
-
-      return true;
     },
 
    /**
     * Remove callback. Must be passed the same arguments as for {basis.Token#attach} method.
     * @param {function(value)} fn
     * @param {object=} context
-    * @return {boolean}
     */
     detach: function(fn, context){
       var cursor = this;
@@ -1491,11 +1486,16 @@
       while (prev = cursor, cursor = cursor.handler)
         if (cursor.fn === fn && cursor.context === context)
         {
+          // make it non-callable
+          cursor.fn = $undef;
+
+          // remove from list
           prev.handler = cursor.handler;
-          return true;
+
+          return;
         }
 
-      return false;
+      /** @cut */ consoleMethods.warn('basis.Token#detach: fn & context pair not found, nothing was removed');
     },
 
    /**
@@ -1753,7 +1753,7 @@
         /** @cut */   // Chrome (V8) doesn't provide line number where does error occur,
         /** @cut */   // here is tricky aproach to fetch line number in second 'compilation error' message
         /** @cut */   window.addEventListener('error', function onerror(event){
-        /** @cut */     if (event.filename == sourceURL)
+        /** @cut */     if (event.filename == pathUtils.origin + sourceURL)
         /** @cut */     {
         /** @cut */       window.removeEventListener('error', onerror);
         /** @cut */       console.error('Compilation error at ' + event.filename + ':' + event.lineno + ': ' + e);
@@ -1771,7 +1771,7 @@
         // don't throw new exception, just output error message and return undefined
         // in this case more chances for other modules continue to work
         basis.dev.error('Compilation error at ' + sourceURL + ('line' in e ? ':' + (e.line - 4) : '') + ': ' + e);
-        return;
+        return context;
       }
 
     // run
@@ -1921,7 +1921,7 @@
     * @return {boolean}
     */
     isArray: function(value){
-      return Object.prototype.toString.call(value) === '[object Array]';
+      return Object_toString.call(value) === '[object Array]';
     }
   });
 
@@ -1930,7 +1930,8 @@
     {
       var len = object.length;
 
-      if (typeof len == 'undefined' || typeof object == 'function')
+                                       // Safari 5.1 has a bug, typeof for node collection returns `function`
+      if (typeof len == 'undefined' || Object_toString.call(object) == '[object Function]')
         return [object];
 
       if (!offset)
@@ -2763,10 +2764,15 @@
   // basis extenstions
   //
 
-  extend(Object, basis.object);
-  extend(Function, basis.fn);
-  extend(Array, basis.array);
-  extend(String, basis.string);
+  if (config.extClass)
+  {
+    /** @cut */ consoleMethods.warn('Extension of build classes by custom functions (i.e. Object.*, Array.*, String.*, Function.*) is deprecated, but extends by default until 0.10 version; use `extClass: false` in basis.js config to prevent buildin class extenstion and make code ready to new basis.js versions');
+
+    extend(Object, basis.object);
+    extend(Function, basis.fn);
+    extend(Array, basis.array);
+    extend(String, basis.string);
+  }
 
 
   //

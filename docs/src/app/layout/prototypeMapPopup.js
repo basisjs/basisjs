@@ -74,7 +74,8 @@
   prototypeMapPopupPanel.setSatellite('matchInput', prototypeMapPopupMatchInput);
 
   var prototypeMapPopup = new basis.ui.popup.Balloon({
-    id: 'PrototypeMapPopup',
+    template: '<b:include src="basis.ui.popup.Balloon" id="PrototypeMapPopup"/>',
+
     dir: 'center bottom center top',
     selection: {},
 

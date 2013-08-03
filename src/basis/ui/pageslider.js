@@ -43,11 +43,15 @@
 
     listen: {
       selection: {
-        itemsChanged: function(selection){
+        itemsChanged: function(selection, delta){
           if (this.scroller)
           {
             if (this.rotate)
-              this.adjustRotation();
+            {
+              var nextPosition = this.childNodes.indexOf(delta.deleted[0]);
+              var prevPosition = this.childNodes.indexOf(delta.inserted[0]);
+              this.adjustRotation(nextPosition > prevPosition);
+            }
 
             this.scrollToPage(selection.pick());
           }
@@ -79,7 +83,7 @@
       }, this.scrollerConfig));
 
       if (this.rotate)
-        this.adjustRotation();
+        this.adjustRotation(true);
     },
 
     templateSync: function(noRecreate){
@@ -127,11 +131,13 @@
       if (page && this.scroller)
       {
         page.select();
-        this.scroller.setPositionX(page.element.offsetLeft, !noSmooth);
+        
+        if (page.element.offsetWidth > 0)
+          this.scroller.setPositionX(page.element.offsetLeft, !noSmooth);
       }
     },
 
-    adjustRotation: function(){
+    adjustRotation: function(leftToRight){
       var selected = this.selection.pick();
 
       var shiftLength = 0;
@@ -139,7 +145,7 @@
       var childCount = this.childNodes.length;
       var index = this.childNodes.indexOf(selected);
 
-      var delta = Math.round(childCount / 2) - index;
+      var delta = (leftToRight ? Math.ceil(childCount / 2) - 1 : Math.round(childCount / 2)) - index;
 
       var childWidth = this.firstChild.element.offsetWidth;
 
@@ -160,6 +166,19 @@
       this.scroller.addPositionX(shiftLength);
       this.emit_childNodesModified({});
     },
+
+    selectNext: function(){
+      if (this.rotate)
+        this.adjustRotation(true);
+      
+      this.scrollToPage(this.selection.pick().nextSibling);
+    },
+    selectPrev: function(){
+      if (this.rotate)
+        this.adjustRotation(false);      
+      
+      this.scrollToPage(this.selection.pick().previousSibling);
+    },    
 
     destroy: function(){
       PageControl.prototype.destroy.call(this);

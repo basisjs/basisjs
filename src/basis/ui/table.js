@@ -509,6 +509,9 @@
     headerClass: Header,
     footerClass: Footer,
 
+    header: null,
+    footer: null,
+
     columnCount: 0,
 
     selection: true, 
@@ -580,7 +583,7 @@
       this.setSatellite('header', this.header);
 
       // footer
-      if (useFooter)
+      if (useFooter || this.footer)
       {
         this.footer = new this.footerClass(extend({ owner: this, structure: this.structure }, this.footer));
         this.setSatellite('footer', this.footer);

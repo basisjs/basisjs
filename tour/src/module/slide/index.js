@@ -31,9 +31,7 @@ var updateSet = new basis.data.Dataset({
 });
 var changedFiles = new basis.data.dataset.Subset({
   source: updateSet,
-  ruleEvents: {
-    rollbackUpdate: true
-  },
+  ruleEvents: 'rollbackUpdate',
   rule: function(item){
     return item.modified;
   }
