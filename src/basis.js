@@ -645,7 +645,6 @@
       var ABSOLUTE_RX = /^([^\/]+:|\/)/;
       var ORIGIN_RX = /^([a-zA-Z0-9\-]+:)?\/\/[^\/]+/;
       var SEARCH_HASH_RX = /[\?#].*$/;
-      var DELIM_RX = /\/+/;
 
       utils = {
        /**
@@ -674,7 +673,7 @@
           var parts = (path || '')
                 .replace(ORIGIN_RX, '')         // but cut off origin
                 .replace(SEARCH_HASH_RX, '')    // cut off query search and hash
-                .split(DELIM_RX);               // split by sequence of `/`
+                .split('/');                    // split by `/`
 
           // process path parts
           for (var i = 0; i < parts.length; i++)
