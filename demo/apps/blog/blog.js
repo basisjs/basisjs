@@ -245,20 +245,11 @@ basis.ready(function(){
 
   var cloudCalcs = new basis.data.index.IndexMap({
     source: cloud,
-    indexes: {
-      itemCountMin: basis.data.index.min('itemCount', 'itemsChanged'),
-      itemCountMax: basis.data.index.max('itemCount', 'itemsChanged')
-    },
     calcs: {
-      percentOfMax: function(data, indexes, obj){
-        return (obj.itemCount - indexes.itemCountMin) / (indexes.itemCountMax - indexes.itemCountMin);
-      },
+      percentOfRange: basis.data.index.percentOfRange('itemCount', 'itemsChanged'),
       source: function(data, indexes, obj){
         return obj;
       }
-    },
-    ruleEvents: {
-      itemsChanged: true
     }
   });
 
@@ -277,7 +268,7 @@ basis.ready(function(){
         fontSize: {
           events: 'update',
           getter: function(node){
-            return '{0:.2}%'.format(80 + 120 * node.data.percentOfMax.fit(0, 1));
+            return '{0:.2}%'.format(80 + 120 * node.data.percentOfRange);
           }
         }
       },

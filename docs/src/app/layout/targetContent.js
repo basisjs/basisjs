@@ -25,8 +25,6 @@ var VIEW_MAP = {
 };
 
 module.exports = new basis.ui.Node({
-  id: 'ObjectView',
-
   template: resource('template/targetContent.tmpl'),
   binding: {
     indexPage: 'satellite:',

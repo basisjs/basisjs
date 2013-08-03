@@ -81,8 +81,9 @@
 
     // create a tree
     new nsTree.Tree({
-      id: 'DemoTree',
       container: dom.get('demo-container'),
+      template: '<b:include src="basis.ui.tree.Tree" id="DemoTree"/>',
+
       sorting: basis.getter('title'),
       sortingDesc: true,
       grouping: {

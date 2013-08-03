@@ -183,17 +183,17 @@
     new ButtonPanel({
       childNodes: [
         {
-          cssClassName: 'imageLeft',
+          template: '<b:include src="basis.ui.button.Button" class="imageLeft"/>',
           caption: 'Button12',
           click: alertCaption
         },
         {
-          cssClassName: 'imageRight',
+          template: '<b:include src="basis.ui.button.Button" class="imageRight"/>',
           caption: 'Button13',
           click: alertCaption
         },
         {
-          cssClassName: 'imageOnly',
+          template: '<b:include src="basis.ui.button.Button" class="imageOnly"/>',
           caption: 'Button14',
           click: alertCaption
         },
@@ -208,7 +208,7 @@
     new ButtonPanel({
       childNodes: [
         {
-          cssClassName: 'big',
+          template: '<b:include src="basis.ui.button.Button" class="big"/>',
           caption: 'Button15',
           click: alertCaption
         }
@@ -219,9 +219,9 @@
     var button16Container = createBlock('Button with 50% Width');
     basis.dom.insert(button16Container, basis.dom.createElement('[style="width: 50%; font-size: 10px; text-align: center; margin-bottom: 3px;"]', basis.dom.createElement('[style="border: solid #666; border-width: 2px 1px 0; color: black;"]', '50%')));
     new Button({
+      template: '<b:include src="basis.ui.button.Button" class="fixedWidthButton"/>',
       caption: 'Button16',
       click: alertCaption,
-      cssClassName: 'fixedWidthButton',
       container: button16Container
     });
 

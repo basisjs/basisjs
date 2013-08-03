@@ -212,11 +212,11 @@
     }
 
     // verbose function code in dev mode
-    /** @cut */ result = Function('calcFn', 'return ' + result.toString()
+    /** @cut */ result = Function('calcFn', 'names', 'return ' + result.toString()
     /** @cut */   .replace(/(foo|bar|baz)/g, function(m, w){
     /** @cut */      return '"' + names[w == 'foo' ? 0 : (w == 'bar' ? 1 : 2)] + '"';
     /** @cut */    })
-    /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))(calcFn);
+    /** @cut */   .replace(/\[\"([^"]+)\"\]/g, '.$1'))(calcFn, names);
 
     result.args = names;
     result.calc = result;

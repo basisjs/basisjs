@@ -152,9 +152,6 @@
       // create tree (reference allowed in global scope)
       TestTree = new Tree({
         container: 'tree',
-        cssClassName: {
-          content: 'Frame-Nodes'
-        },
         childFactory: function(config){
           if (config.type == 'TreeFolder')
             return new TreeFolder(config);
