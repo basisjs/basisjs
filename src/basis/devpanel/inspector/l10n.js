@@ -10,7 +10,6 @@ var transport = resource('../API/transport.js').fetch();
 
 var inspectMode;
 var elements = [];
-var range = document.createRange();
 
 var overlayNode = new basis.ui.Node({
   template: resource('template/l10n_overlay.tmpl'),
@@ -176,6 +175,7 @@ function addTokenToHighlight(token, ref, domNode){
     }
     else
     {
+      var range = document.createRange();
       range.selectNodeContents(domNode);
       rect = range.getBoundingClientRect();
     }

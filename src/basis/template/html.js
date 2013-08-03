@@ -127,7 +127,7 @@
         }
       // Old browsers way (IE6-8 and other)
       : function(domRef, oldNode, newValue){
-          var newNode = newValue && typeof newValue == 'object' && !newNode.basisNodeInUse ? newValue : domRef;
+          var newNode = newValue && typeof newValue == 'object' && !newValue.basisNodeInUse ? newValue : domRef;
 
           if (newNode !== oldNode)
           {
