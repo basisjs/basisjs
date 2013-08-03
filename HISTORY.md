@@ -1,3 +1,22 @@
+## 0.9.8 (august 3, 2013)
+
+- API: new basis config option `extClass` to disable buildin class extension (preparations for 0.10)
+- API: move extension check into class extend method
+- FIX: check for value is a function in `basis.array.from`
+- FIX: various bugs in `basis.path`
+- FIX: broken error output on resource compilation error
+- API: simplify `basis.Token#attach` and `basis.Token#detach` methods
+- FIX: fix removal item from lists in `basis.Token#detach` & `basis.data.value.BindValue#removeLink` methods
+- FIX: `basis.net.Transport#repeat` method doesn't process request data properly
+- API: various fixes of `basis.data.index.Index` and it's subclasses
+- FIX: exception for `basis.entity`'s calcs with more than 3 arguments in dev mode
+- API: using object for ruleEvents property of `basis.data.dataset`'s classes is deprecated (space separated event names string or array of string should be used instead)
+- API: warn about usage instance of `basis.l10n.Token` as value `basis.ui.Node#content`
+- API: `basis.ui.scroller.Scroller`'s scroll inertia can be turned off via config
+- API: `basis.ui.pageslider.Pageslider`'s rotation adjustment improvements
+- API: mark `basis.ui.label` as deprecated
+- API: make possible to set footer for `basis.ui.table.Table` instance directly in config, not only via `structure`
+
 ## 0.9.7 (july 27, 2013)
 
 - FIX: fix state changing events for `basis.net` synchronous requests
