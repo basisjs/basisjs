@@ -5,7 +5,7 @@
 <head>
   <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 
-  <title>Basis.js demos: Parallel loading</title>
+  <title>Basis.js demos: Consequent loading</title>
 
   <style type="text/css" id="demo-css">
     HTML,
@@ -52,15 +52,14 @@
   <script type="text/javascript" id="demo-javascript">
     basis.require('basis.data');
     basis.require('basis.net');
+    basis.require('basis.ui');
     basis.require('basis.ui.button');
 
-    var STATE = basis.data.STATE;
-
     var titleResolver = new basis.net.Transport({
+      poolLimit: 1,
       poolHashGetter: function(requestData){
         return requestData.url;
       },
-      poolLimit: 1,
       handler: {
         success: function(sender, req){
           var m = req.data.responseText.match(/<title>([^<]*)<\/title>/i);
@@ -75,68 +74,39 @@
 
     var UrlDataObject = basis.Class(basis.data.Object, {
       adapter: titleResolver,
-      state: STATE.UNDEFINED,
-      handler: {
-        subscribersChanged: function(){
-          if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
-          {
-            this.adapter.request({
-              url: '../' + this.data.url,
-              influence: [this]
-            });
-          }
-        },
-        stateChanged: function(){
-          if (this.subscriberCount && (this.state == STATE.UNDEFINED || this.state == STATE.DEPRECATED))
-          {
-            this.adapter.request({
-              url: '../' + this.data.url,
-              influence: [this]
-            });
-          }
-        }
+      syncAction: function(){
+        this.adapter.request({
+          url: basis.path.resolve('..', this.data.url),
+          influence: [this]
+        });
       }
     });
 
-    // create service and it's method
-    var indexTransport = new basis.net.Transport({
-      url: '../index.html',
-      handler: {
-        success: function(sender, req){
-          var list = req.data.responseText.match(/url:\s*(\"[^\"]+\"|\'[^\']+\')/g);
-          var result = [];
-
-          for (var i = 0; i < list.length; i++)
-          {
-            var m = list[i].match(/\"([^\"]+)\"|\'([^\']+)\'/);
-            result.push(new UrlDataObject({
-              data: { url: m[1] || m[2] }
-            }));
-          }
-
-          links.set(result);
-        }
-      }
-    });
-    indexTransport.request();
-
-    var button = new basis.ui.button.Button({
-      container: basis.dom.get('demo-container'),
-      caption: 'Set active',
-      click: function(){
-        for (var i = 0, child; child = list.childNodes[i]; i++)
-          child.setActive(true);
-      }
-    });
-
-    var links = new basis.data.Dataset();
     var list = new basis.ui.Node({
-      container: basis.dom.get('demo-container'),
-      template: '<div class="demo-list"/>',
-      dataSource: links,
+      template: '<ul class="demo-list"/>',
+
+      syncAction: function(){
+        basis.net.request('../index.html', function(data){
+          var items = [];
+
+          data.replace(/url:\s*\'([^\']+)\'/g, function(m, url){
+            if (url != 'data:')
+              items.push(new UrlDataObject({
+                data: {
+                  url: url
+                }
+              }));
+          });
+
+          this.setChildNodes(items);
+        }.bind(this));
+      },
+
       childClass: {
         template:
-          '<div class="state-{state}">{title}</div>',
+          '<li class="state-{state}">' +
+            '{title}' +
+          '</li>',
 
         binding: {
           title: {
@@ -146,6 +116,28 @@
             }
           }
         }
+      }
+    });
+
+    var demoView = new basis.ui.Node({
+      container: basis.dom.get('demo-container'),
+      
+      template:
+        '<div>' +
+          '<!--{button}-->' +
+          '<!--{list}-->' +
+        '</div>',
+
+      binding: {
+        button: new basis.ui.button.Button({
+          caption: 'Start loading',
+          click: function(){
+            for (var i = 0, child; child = list.childNodes[i]; i++)
+              child.setActive(true);
+          }
+        }),
+        
+        list: list
       }
     });
     
