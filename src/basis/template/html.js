@@ -288,7 +288,7 @@
    /**
     * @func
     */ 
-    function resolveValue(attaches, updateAttach, bindingName, value, object){
+    function resolveValue(attaches, updateAttach, bindingName, value, object, bindings, bindingInterface){
       var bridge = value && value.bindingBridge;
       var oldAttach = attaches[bindingName];
       var tmpl = null;
@@ -315,12 +315,12 @@
               var template = getL10nTemplate(value);
               tmpl = template.createInstance(object, null, function onRebuild(){
                 tmpl.destroy_();
-                tmpl = newAttach.tmpl = template.createInstance(object, null, onRebuild);
+                tmpl = newAttach.tmpl = template.createInstance(object, null, onRebuild, bindings, bindingInterface);
                 tmpl.element.toString = function(){
                   return value.value;
                 };
                 updateAttach.call(newAttach);
-              });
+              }, bindings, bindingInterface);
               tmpl.element.toString = function(){
                 return value.value;
               }

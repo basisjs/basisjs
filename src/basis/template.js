@@ -1517,11 +1517,11 @@
   }
 
  /**
-  * Creates DOM structure template from marked HTML. Use {basis.Html.Template#createInstance}
+  * Creates DOM structure template from marked HTML. Use {basis.template.html.Template#createInstance}
   * method to apply template to object. It creates clone of DOM structure and adds
   * links into object to pointed parts of structure.
   *
-  * To remove links to DOM structure from object use {basis.Html.Template#clearInstance}
+  * To remove links to DOM structure from object use {basis.template.html.Template#clearInstance}
   * method.
   * @example
   *   // create a template
@@ -1533,7 +1533,7 @@
   *   );
   *
   *   // create list container
-  *   var list = document.createElement('ul'); // or create using another template
+  *   var list = document.createElement('ul');
   *
   *   // create 10 DOM elements using template
   *   for (var i = 0; i < 10; i++)
@@ -1615,19 +1615,21 @@
 
    /**
     * Create DOM structure and return object with references for it's nodes.
-    * @param {Object=} node Object which templateAction method will be called on events.
+    * @param {object=} object Object which templateAction method will be called on events.
     * @param {function=} actionCallback
     * @param {function=} updateCallback
-    * @return {Object}
+    * @param {object=} bindings
+    * @param {object=} bindingInterface Object like { attach: function(object, handler, context), detach: function(object, handler, context) }
+    * @return {object}
     */
-    createInstance: function(node, actionCallback, updateCallback){
+    createInstance: function(object, actionCallback, updateCallback, bindings, bindingInterface){
       buildTemplate.call(this);
-      return this.createInstance.apply(this, arguments);
+      return this.createInstance(object, actionCallback, updateCallback, bindings, bindingInterface);
     },
 
    /**
     * Remove reference from DOM structure
-    * @param {Object=} object Storage of DOM references.
+    * @param {object=} object Storage of DOM references.
     */
     clearInstance: function(tmpl){
       tmpl.destroy_();
@@ -1708,6 +1710,7 @@
         templateSourceUpdate.call(this);
       }
     },
+
     destroy: function(){
       if (this.destroyBuilder)
         this.destroyBuilder();

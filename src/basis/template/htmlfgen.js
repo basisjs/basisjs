@@ -578,7 +578,7 @@
 
       result.push(
         'function set(bindName,value){' +
-          'value=resolve(attaches,updateAttach,bindName,value,obj);' +
+          'value=resolve(attaches,updateAttach,bindName,value,obj,bindings,bindingInterface);' +
           'switch(bindName){'
       );
 
