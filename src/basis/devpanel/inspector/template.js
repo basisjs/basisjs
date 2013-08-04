@@ -19,16 +19,11 @@ function pickHandler(event){
   var node = pickupTarget.value;
 
   if (node){
-    var url = node.template.source.url;
+    var source = node.template.source;
 
-    if (url)
-      transport.sendData('pickTemplate', {
-        filename: url
-      });
-    else
-      transport.sendData('pickTemplate', {
-        content: template.source
-      });
+    transport.sendData('pickTemplate', {
+      filename: source.url || source
+    });
 
     endInspect();
   }
@@ -76,24 +71,9 @@ function updatePickupElement(property, oldValue){
 }
 
 var nodeInfoPopup = basis.fn.lazyInit(function(){
-  var panel = new basis.ui.Node({
-    template: '<div>{title}</div>',
-    binding: {
-      title: {
-        events: 'delegateChanged update',
-        getter: function(node){
-          if (node.delegate)
-          {
-            var el = node.delegate.element;
-            return node.delegate.constructor.className + '#' + node.delegate.basisObjectId + ', ' + el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className.split(' ').join('.') : '');
-          }
-        }
-      }
-    }
-  });
-
-  var popup = new basis.ui.popup.Balloon({
+  return new basis.ui.popup.Balloon({
     dir: 'left bottom left top',
+    template: resource('template/template_hintPopup.tmpl'),
     autorotate: [
       'left top left bottom', 
       'left bottom left bottom', 
@@ -103,23 +83,61 @@ var nodeInfoPopup = basis.fn.lazyInit(function(){
       'right bottom right bottom',
       'right top right top' 
     ],
-    childNodes: panel,
+    binding: {
+      instanceName: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          if (node.delegate)
+          {
+            var el = node.delegate.element;
+            return node.delegate.constructor.className + '#' + node.delegate.basisObjectId;
+          }
+        }
+      },
+      rootNodeSelector: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          if (node.delegate)
+          {
+            var el = node.delegate.element;
+            return el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className.split(' ').join('.') : '');
+          }
+        }
+      },
+      source: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          if (node.delegate)
+          {
+            var template = node.delegate.template;
+            var url = template.source.url ? basis.path.relative(template.source.url) : '[inline template]'
+            return url.charAt(0) == '.' ? basis.path.resolve(url) : url;
+          }
+        }
+      },
+      name: {
+        events: 'delegateChanged update',
+        getter: function(node){
+          if (node.delegate)
+          {
+            var source = node.delegate.template.source;
+            return source instanceof basis.template.SourceWrapper ? source.path : '';
+          }
+        }
+      }
+    },
     handler: {
       delegateChanged: function(){
         if (this.delegate)
           this.show(this.delegate.element);
         else
           this.hide();
-
-        panel.setDelegate(this.delegate);
       },
       hide: function(){
         this.setDelegate();
       }
     }
   });
-
-  return popup;
 });
 
 function startInspect(){ 
@@ -228,7 +246,7 @@ function getOffsetRect(elem){
     left: Math.round(left),
     width: box.width,
     height: box.height
-  }
+  };
 }
 
 //

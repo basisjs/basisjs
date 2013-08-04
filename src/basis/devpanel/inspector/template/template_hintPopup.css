@@ -1,0 +1,34 @@
+#devpanel-l10n-templateHintPopup
+{
+  position: fixed;
+  padding: 4px 8px;
+  margin: 3px;
+  outline: 1px solid #D0C0AA;
+  outline: 1px solid rgba(180, 170, 120, .7);
+  background: #E8E4C0;
+  background: rgba(255, 255, 210, .95);
+  pointer-events: none;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #885500;
+}
+
+.devpanel-l10n-templateHintPopup__element,
+.devpanel-l10n-templateHintPopup__rootNodeSelector,
+.devpanel-l10n-templateHintPopup__source
+{
+  display: block;
+}
+.devpanel-l10n-templateHintPopup__name
+{
+  display: none;
+}
+.devpanel-l10n-templateHintPopup__name_name
+{
+  display: block;
+}
+
+.devpanel-l10n-templateHintPopup__propertyTitle
+{
+  color: black;
+}

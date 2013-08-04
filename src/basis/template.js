@@ -2297,6 +2297,7 @@
     TemplateSwitchConfig: TemplateSwitchConfig,
     TemplateSwitcher: TemplateSwitcher,
     Template: Template,
+    SourceWrapper: SourceWrapper,
 
     switcher: switcher,
 
