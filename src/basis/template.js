@@ -1256,7 +1256,6 @@
 
     return function makeDeclaration(source, baseURI, options, sourceUrl){
       options = options || {};
-      var debug = options.debug;
       var warns = [];
       ;;;var source_;
 
@@ -1401,85 +1400,6 @@
     return result;
   }
 
- /**
-  * @func
-  */
-  function createTemplateBindingUpdater(names, getters){
-    return function templateBindingUpdater(){
-      for (var i = 0, bindingName; bindingName = names[i]; i++)
-        this.tmpl.set(bindingName, getters[bindingName](this));
-    };
-  }
-
- /**
-  * @func
-  */
-  function createBindingFunction(keys){
-    var bindingCache = {};
-    return function getBinding(bindings, testNode){
-      var cacheId = 'bindingId' in bindings
-        ? bindings.bindingId
-        : null;
-
-      ;;;if (!cacheId) basis.dev.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
-
-      var result = bindingCache[cacheId];
-
-      if (!result)
-      {
-        var names = [];
-        var getters = {};
-        var events = {};
-        var handler;
-        for (var i = 0, key; key = keys[i]; i++)
-        {
-          var binding = bindings[key];
-          var getter = binding && binding.getter;
-
-          if (getter)
-          {
-            getters[key] = getter;
-            names.push(key);
-
-            if (binding.events)
-            {
-              var eventList = binding.events;
-
-              if (!Array.isArray(eventList))
-                eventList = String(eventList).qw();
-
-              for (var j = 0, eventName; eventName = eventList[j]; j++)
-              {
-                ;;;if (testNode && ('emit_' + eventName) in testNode == false) basis.dev.warn('basis.template.Template.getBinding: unknown event `' + eventName + '` for ' + (testNode.constructor && testNode.constructor.className));
-                if (events[eventName])
-                {
-                  events[eventName].push(key);
-                }
-                else
-                {
-                  handler = handler || {};
-                  events[eventName] = [key];
-                  handler[eventName] = createTemplateBindingUpdater(events[eventName], getters);
-                }
-              }
-            }
-          }
-        }
-
-        result = {
-          names: names,
-          events: events,
-          sync: createTemplateBindingUpdater(names, getters),
-          handler: handler
-        };
-
-        if (cacheId)
-          bindingCache[cacheId] = result;
-      }
-
-      return result;
-    };
-  }
 
   /** @cut for token type change in dev mode */
   /** @cut */ function l10nHandler(value){
@@ -1543,7 +1463,7 @@
 
     // apply new values
     this.createInstance = funcs.createInstance;
-    this.getBinding = createBindingFunction(funcs.keys);
+    this.getBinding = function(){ return {names:[],events:{},handler:null,sync:function(){}} };//createBindingFunction(funcs.keys);
     this.destroyBuilder = funcs.destroy;
 
     ;;;this.instances_ = funcs.instances_;
@@ -1702,7 +1622,7 @@
     */
     createInstance: function(node, actionCallback, updateCallback){
       buildTemplate.call(this);
-      return this.createInstance(node, actionCallback, updateCallback);
+      return this.createInstance.apply(this, arguments);
     },
 
    /**

@@ -284,8 +284,10 @@
       return newValue;
     };
 
-
-
+    
+   /**
+    * @func
+    */ 
     function resolveValue(attaches, updateAttach, bindingName, value, object){
       var bridge = value && value.bindingBridge;
       var oldAttach = attaches[bindingName];
@@ -361,6 +363,86 @@
       return value;
     }
 
+   /**
+    * @func
+    */
+    function createBindingUpdater(names, getters){
+      return function bindingUpdater(object){
+        for (var i = 0, bindingName; bindingName = names[i]; i++)
+          this(bindingName, getters[bindingName](object));
+      };
+    }
+
+   /**
+    * @func
+    */
+    function createBindingFunction(keys){
+      var bindingCache = {};
+
+     /**
+      * @param {object} bindings
+      */
+      return function getBinding(bindings){
+        var cacheId = 'bindingId' in bindings ? bindings.bindingId : null;
+
+        /** @cut */ if (!cacheId)
+        /** @cut */   basis.dev.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
+
+        var result = bindingCache[cacheId];
+
+        if (!result)
+        {
+          var names = [];
+          var getters = {};
+          var events = {};
+          var handler = {};
+          var hasEvents = false;
+
+          for (var i = 0, bindingName; bindingName = keys[i]; i++)
+          {
+            var binding = bindings[bindingName];
+            var getter = binding && binding.getter;
+
+            if (getter)
+            {
+              getters[bindingName] = getter;
+              names.push(bindingName);
+
+              if (binding.events)
+              {
+                var eventList = String(binding.events).trim().split(/\s+|\s*,\s*/);
+
+                for (var j = 0, eventName; eventName = eventList[j]; j++)
+                {
+                  if (events[eventName])
+                    events[eventName].push(bindingName);
+                  else
+                    events[eventName] = [bindingName];
+                }
+              }
+            }
+          }
+
+          for (var eventName in events)
+          {
+            hasEvents = true;
+            handler[eventName] = createBindingUpdater(events[eventName], getters);
+          }
+
+          result = {
+            names: names,
+            sync: createBindingUpdater(names, getters),
+            handler: hasEvents ? handler : null
+          };
+
+          if (cacheId)
+            bindingCache[cacheId] = result;
+        }
+
+        return result;
+      };
+    }
+
     var tools = {
       bind_textNode: bind_textNode,
       bind_node: bind_node,
@@ -370,7 +452,8 @@
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
-      l10nToken: l10nToken
+      l10nToken: l10nToken,
+      createBindingFunction: createBindingFunction
     };
 
     return function(tokens){

@@ -660,8 +660,10 @@
     /** @cut */ try {
     result.createInstance = new Function('tid', 'map', 'build', 'tools', '__l10n', 'TEXT_BUG',
       /** @cut */ fnBody = (source ? '/*\n' + source + '\n*/\n' : '') +
-      'var seed=0;' +
-      'return function createInstance_(obj,onAction,onRebuild){' +
+      'var seed=0,' +
+      'getBindings=tools.createBindingFunction([' + bindings.keys.map(function(key){ return '"' + key + '"'; }) + ']),' +
+      'resolve=tools.resolve;' +
+      'return function createInstance_(obj,onAction,onRebuild,bindings,bindingInterface){' +
         'var ref=map[++seed]={' +
           'context:obj,' +
           'action:onAction,' +
@@ -670,7 +672,7 @@
         '},' +
         'id=seed,' +
         'attaches={' + bindings.keys.map(function(key){ return key + ':null' }) + '},' +
-        'resolve=tools.resolve,' +
+        'tmplBindings,' +
         '_=build(),' +
         paths.path.concat(bindings.vars) +
 
@@ -680,12 +682,20 @@
 
         bindings.set +
         /** @cut */ (debug ? 'set.debug=function(){return[' + bindings.debugList + ']}' : '') +
-        
+
+        // sync template with bindings
+        ';if(bindings){' +
+          'tmplBindings=getBindings(bindings);' +
+          'if(bindingInterface&&tmplBindings.handler)bindingInterface.attach(obj,tmplBindings.handler,set);' +
+          'tmplBindings.sync.call(set,obj);' +
+        '}' +
         ';' + bindings.l10nCompute +
+
         ';return ref.tmpl={' + [
           paths.ref,
           'set:set,' +
           'destroy_:function(){' +
+            'if(bindings&&bindingInterface&&tmplBindings.handler)bindingInterface.detach(obj,tmplBindings.handler,set);' +
             // detach attaches
             'var a;' +
             'for(var key in attaches)' +
