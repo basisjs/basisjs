@@ -668,6 +668,7 @@
           'context:obj,' +
           'action:onAction,' +
           'rebuild:onRebuild,' +
+          /** @cut */ (debug ? 'debug:function(){return[' + bindings.debugList + ']},' : '') +
           'tmpl:null' +
         '},' +
         'id=seed,' +
@@ -681,7 +682,6 @@
         ';function updateAttach(){set(this.name,this.value)}' +
 
         bindings.set +
-        /** @cut */ (debug ? 'set.debug=function(){return[' + bindings.debugList + ']}' : '') +
 
         // sync template with bindings
         ';if(bindings){' +

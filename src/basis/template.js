@@ -373,7 +373,7 @@
     token: null,
     url: '',
     init: function(token){
-      this.url = token.dictionary.resource.url + '#' + token.name;
+      this.url = token.dictionary.resource.url + ':' + token.name;
       this.token = token;
       this.set();
 

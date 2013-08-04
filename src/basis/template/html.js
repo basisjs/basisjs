@@ -711,6 +711,12 @@
     return templateRef && templateRef.tmpl;
   }
 
+  function getDebugInfoById(refId){
+    var templateRef = resolveTemplateById(refId);
+
+    return templateRef && templateRef.debug && templateRef.debug();
+  }
+
 
  /**
   * @class
@@ -756,6 +762,8 @@
   // TODO: remove
   //
   basis.template.extend({
+    /** @cut using only in dev mode */ getDebugInfoById: getDebugInfoById,
+
     buildHtml: buildHtml,
     buildFunctions: buildFunctions,
     resolveObjectById: resolveObjectById,

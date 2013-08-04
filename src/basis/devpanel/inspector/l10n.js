@@ -208,11 +208,10 @@ function domTreeHighlight(root){
   {
     if (child.basisTemplateId)
     {
-      var tmpl = basis.template.resolveTmplById(child.basisTemplateId);
-      if (tmpl)
+      var debugInfo = basis.template.getDebugInfoById(child.basisTemplateId);
+      if (debugInfo)
       {
-        var bindings = tmpl.set.debug ? tmpl.set.debug() : [];
-        for (var j = 0, binding; binding = bindings[j]; j++)
+        for (var j = 0, binding; binding = debugInfo[j]; j++)
         {
           var token = binding.attachment;
 
