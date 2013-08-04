@@ -265,6 +265,15 @@
 
 
  /**
+  * Fragment factory
+  */
+  var fragments = [];
+  function getDocumentFragment(){
+    return fragments.pop() || document.createDocumentFragment();
+  }
+
+
+ /**
   * @type {number}
   */
   var focusTimer;
@@ -371,13 +380,7 @@
       * @inheritDoc
       */
       init: function(){
-        // create dom fragment by template
-        var template = this.template;
-        if (template)
-        {
-          this.template = null;
-          this.setTemplate(template);
-        }
+        this.element = this.childNodesElement = getDocumentFragment();
 
         // inherit init
         super_.init.call(this);
@@ -389,12 +392,29 @@
       postInit: function(){
         super_.postInit.call(this);
 
-        if (this.template)
+        // create dom fragment by template
+        var template = this.template;
+        if (template)
         {
-          this.templateSync(true);
+          var nodeDocumentFragment = this.element;
 
+          this.template = null;
+          this.setTemplate(template);
+
+          // if node has grouping move groups into template
+          if (this.grouping)
+          {
+            var childNodesElement = this.tmpl.groupsElement || this.childNodesElement;
+            childNodesElement.appendChild(nodeDocumentFragment);
+          }
+          
+          // release fragment
+          fragments.push(nodeDocumentFragment);
+
+          // process container 
           if (this.container)
           {
+            // use basis.dom.insert, because `container` may be contains element id as value
             DOM.insert(this.container, this.element);
             this.container = null;
           }
@@ -435,6 +455,22 @@
             {
               this.childNodesElement = document.createDocumentFragment();
               ;;;this.noChildNodesElement = true;
+            }
+
+            if (this.grouping)
+              this.grouping.syncDomRefs();
+
+            if (this instanceof PartitionNode)
+            {
+              var nodes = this.nodes;
+              if (nodes)
+                for (var i = nodes.length - 1, child; child = nodes[i]; i--)
+                  child.parentNode.insertBefore(child, child.nextSibling);
+            }
+            else
+            {
+              for (var child = this.lastChild; child; child = child.previousSibling)
+                this.insertBefore(child, child.nextSibling);
             }
           }
 
@@ -495,6 +531,7 @@
           }
 
           this.templateUpdate(this.tmpl);
+          
           if (binding && binding.names.length)
           {
             if (binding.handler)
@@ -503,29 +540,14 @@
             binding.sync.call(this);
           }
 
-          if (this instanceof PartitionNode)
-          {
-            var nodes = this.nodes;
-            if (nodes)
-              for (var i = nodes.length; i-- > 0;)
-              {
-                var child = nodes[i];
-                child.parentNode.insertBefore(child, child.nextSibling);
-              }
-          }
-          else
-          {
-            for (var child = this.lastChild; child; child = child.previousSibling)
-              this.insertBefore(child, child.nextSibling);
-          }
-
-          if (oldElement && this.element && oldElement !== this.element)
+          if (oldElement && oldElement.nodeType != 11 && this.element && oldElement !== this.element)
           {
             var parentNode = oldElement && oldElement.parentNode;
+            
             if (parentNode)
               parentNode.replaceChild(this.element, oldElement);
 
-            // ??? fire event
+            // emit event
             this.emit_templateChanged();
           }
 
@@ -539,6 +561,7 @@
       setTemplate: function(template){
         var curSwitcher = this.templateSwitcher_;
 
+        // dance with template switcher
         if (template instanceof basis.template.TemplateSwitcher)
         {
           var switcher = template;
@@ -550,6 +573,7 @@
             this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
         }
         
+        // check template for correct class instance
         if (template instanceof Template == false)
           template = null;
 
@@ -560,14 +584,19 @@
           this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
         }
 
+        // apply new value
         if (this.template !== template)
         {
           var tmpl;
           var oldTemplate = this.template;
           var oldElement = this.element;
 
-          // drop old template
-          if (oldTemplate)
+          // set new template
+          this.template = template;
+
+          if (template)
+            this.templateSync();
+          else
           {
             oldTemplate.clearInstance(this.tmpl);
 
@@ -576,38 +605,6 @@
               this.removeHandler(oldBinding.handler);
 
             this.templateBinding_ = null;
-          }
-
-          this.template = template;
-
-          // set new template
-          if (template)
-          {
-            tmpl = template.createInstance(this, this.templateAction, this.templateSync);
-
-            if (tmpl.childNodesHere)
-            {
-              tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
-              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;  // FIXME: we should avoid add expando to dom nodes
-            }
-
-            this.tmpl = tmpl;
-            this.element = tmpl.element;
-            this.childNodesElement = tmpl.childNodesElement || tmpl.element;
-
-            ;;;this.noChildNodesElement = false;
-
-            if (this.childNodesElement.nodeType != 1)
-            {
-              this.childNodesElement = document.createDocumentFragment();
-              ;;;this.noChildNodesElement = true;
-            }
-
-            if (oldTemplate)
-              this.templateSync(true);
-          }
-          else
-          {
             this.tmpl = null;
             this.element = null;
             this.childNodesElement = null;
@@ -622,10 +619,6 @@
                 parentNode.removeChild(oldElement);
             }
           }
-
-          // ??? fire event
-          //if (oldTemplate && template)
-          //  this.emit_templateChanged();
         }
       },
 
@@ -845,7 +838,7 @@
     syncDomRefs: function(){
       var cursor = this;
       var owner = this.owner;
-      var element = null;//this.nullElement;
+      var element = null;
 
       if (owner)
       {
@@ -858,6 +851,13 @@
         cursor.element = cursor.childNodesElement = element;
       }
       while (cursor = cursor.grouping);
+    },
+
+    destroy: function(){
+      DWGroupingNode.prototype.destroy.call(this);
+      this.element = null;
+      this.childNodesElement = null;
+      this.nullElement = null;
     }
   });
 

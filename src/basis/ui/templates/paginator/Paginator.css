@@ -71,7 +71,7 @@
     position: absolute;
     top: 0;
     left: 50%;
-    margin-top: -7px;
+    margin-top: -6px;
     margin-left: -8px;
     width: 16px;
     height: 16px;
@@ -85,6 +85,10 @@
     top: 0;
     left: 0;
     min-width: 2px;
+  }
+  .Basis-Paginator-ActivePageMark_outOfRange
+  {
+    display: none;
   }
   .Basis-Paginator-ActivePageMark DIV
   {

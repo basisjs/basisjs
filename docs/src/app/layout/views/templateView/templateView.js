@@ -31,29 +31,41 @@
       viewOptions: {
         instanceOf: app.ext.view.ViewOptions,
         config: function(owner){
-          var contentClassList = classList(owner.tmpl.content, 'show');
-
           return {
             title: 'References',
+            showMode: '',
+
+            template: resource('template/viewOptionList.tmpl'),
+            binding: {
+              show: function(node){
+                return node.showMode;
+              }
+            },
+            listen: {
+              selection: {
+                itemsChanged: function(selection){
+                  var item = selection.pick();
+                  if (item)
+                  {
+                    this.showMode = item.showMode;
+                    this.updateBind('show');
+                  }
+                }
+              }
+            },
             childNodes: [
               {
                 title: 'Schematic',
-                onselect: function(){
-                  contentClassList.set('references');
-                }
+                showMode: 'references'
               },
               {
                 title: 'Highlight',
-                selected: true,
-                onselect: function(){
-                  contentClassList.set('realReferences');
-                }
+                showMode: 'realReferences',
+                selected: true
               },
               {
                 title: 'Hide',
-                onselect: function(){
-                  contentClassList.clear();
-                }
+                showMode: ''
               }
             ]
           };

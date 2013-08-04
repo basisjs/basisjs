@@ -32,6 +32,14 @@
     childClass: InheritanceItem,
 
     template: resource('template/inheritanceView.tmpl'),
+    binding: {
+      show_namespace: {
+        events: 'groupingChanged',
+        getter: function(node){
+          return node.grouping ? '' : 'show-namespace';
+        }
+      }
+    },
 
     groupingClass: {
       childClass: {
@@ -48,10 +56,6 @@
     },
 
     handler: {
-      groupingChanged: function(){
-        this.tmpl.set('show_namespace', this.grouping ? '' : 'show-namespace');
-        //classList(this.tmpl.content).bool('show-namespace', !this.grouping);
-      },
       update: function(){
         this.clear();
 
