@@ -832,7 +832,7 @@
                   /** @cut */   template.warns.push('<b:l10n> must be declared before any `l10n:` token (instruction ignored)');
 
                   if (elAttrs.src)
-                    template.dictURI = path.relative(template.baseURI + elAttrs.src);
+                    template.dictURI = path.relative('.', template.baseURI + elAttrs.src);
                 break;
 
                 case 'define':
