@@ -247,8 +247,23 @@
   {
     Emitter.extend({
      /**
+      * Function that returns handler list as array.
+      * WARN: This functionality is supported in development mode only.
+      * @return {Array.<object>} List of handlers
+      */ 
+      handler_list: function(){
+        var result = [];
+        var cursor = this;
+
+        while (cursor = cursor.handler)
+          result.push([cursor.callbacks, cursor.context]);
+
+        return result;
+      },
+
+     /**
       * Function that call on any event. Use it for debug purposes.
-      * WARN: This functionality is supported in development only.
+      * WARN: This functionality is supported in development mode only.
       * @type {function(event)}
       */
       emit_debug: null
