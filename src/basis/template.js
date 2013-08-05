@@ -394,7 +394,7 @@
 
   function processMarkup(value, id){
     // temporary
-    return '<span class="basisjs-markup" data-basisjs-l10n="' + id + '">' + String(value).replace(/\*(.*?)\*/g, '<b>$1</b>') + '</span>';
+    return '<span class="basisjs-markup" data-basisjs-l10n="' + id + '">' + String(value) + '</span>';
   }
 
   function getL10nTemplate(token){
@@ -1416,7 +1416,7 @@
   function buildTemplate(){
     var decl = getDeclFromSource(this.source, this.baseURI);
     var destroyBuilder = this.destroyBuilder;
-    var funcs = this.builder(decl.tokens);  // makeFunctions
+    var funcs = this.builder(decl.tokens, this);  // makeFunctions
     var deps = this.deps_;
 
     /** @cut for token type change in dev mode */
@@ -2248,6 +2248,7 @@
     COMMENT_VALUE: COMMENT_VALUE,
 
     // classes
+    L10nProxyToken: L10nProxyToken,
     TemplateSwitchConfig: TemplateSwitchConfig,
     TemplateSwitcher: TemplateSwitcher,
     Template: Template,

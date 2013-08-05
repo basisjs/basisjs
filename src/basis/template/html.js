@@ -456,7 +456,7 @@
       createBindingFunction: createBindingFunction
     };
 
-    return function(tokens){
+    return function(tokens, template){
       var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG);
       var instances = {};
       var l10nMap = {};
@@ -468,7 +468,10 @@
       };
 
       var id = templateId++;
-      templates[id] = instances;
+      templates[id] = {
+        template: template,
+        instances: instances
+      };
 
       if (fn.createL10nSync)
       {
@@ -569,7 +572,7 @@
         if (refId = cursor.basisTemplateId)
         {
           // if node found, return it
-          if (tmplRef = resolveTemplateById(refId))
+          if (tmplRef = resolveInstanceById(refId))
             break;
         }
       } while (cursor = cursor.parentNode);
@@ -694,25 +697,32 @@
 
   function resolveTemplateById(refId){
     var parts = refId.split('-', 2);
-    var instances = templates[parts[0]];
+    var object = templates[parts[0]];
 
-    return instances && instances[parts[1]];
+    return object && object.template;
+  }
+
+  function resolveInstanceById(refId){
+    var parts = refId.split('-', 2);
+    var object = templates[parts[0]];
+
+    return object && object.instances[parts[1]];
   }
 
   function resolveObjectById(refId){
-    var templateRef = resolveTemplateById(refId);
+    var templateRef = resolveInstanceById(refId);
 
     return templateRef && templateRef.context;
   }
 
   function resolveTmplById(refId){
-    var templateRef = resolveTemplateById(refId);
+    var templateRef = resolveInstanceById(refId);
 
     return templateRef && templateRef.tmpl;
   }
 
   function getDebugInfoById(refId){
-    var templateRef = resolveTemplateById(refId);
+    var templateRef = resolveInstanceById(refId);
 
     return templateRef && templateRef.debug && templateRef.debug();
   }
@@ -766,6 +776,8 @@
 
     buildHtml: buildHtml,
     buildFunctions: buildFunctions,
+
+    resolveTemplateById: resolveTemplateById,
     resolveObjectById: resolveObjectById,
     resolveTmplById: resolveTmplById
   });

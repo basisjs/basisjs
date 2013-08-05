@@ -12,9 +12,7 @@ function sendFile(file){
   if (basis.path.extname(file.data.filename) == '.tmpl' && file.data.content)
   {
     data.declaration = basis.template.makeDeclaration(file.data.content, basis.path.dirname(basis.path.resolve(file.data.filename)) + '/', {}, file.data.filename);
-    data.resources = data.declaration.resources.map(function(item){
-      return item.substr((location.protocol + '//' + location.host).length)
-    });
+    data.resources = data.declaration.resources;
     // delete deps as it can has resource and ResourceWrapper which can't be serialized
     data.declaration.deps = [];
   }
