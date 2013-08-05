@@ -455,6 +455,7 @@
       if (tmplRef)
       {
         var actions = attr.nodeValue.qw();
+        event.actionTarget = cursor;
         for (var i = 0, actionName; actionName = actions[i++];)
           tmplRef.tmpl.action_(actionName, event);
       }
