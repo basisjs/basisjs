@@ -93,7 +93,7 @@ var pickupTarget = new basis.data.value.Property(null, {
     }
     else
     {
-      document.body.removeChild(overlay);
+      DOM.remove(overlay);
       DOM.event.releaseEvent('mousedown');
       DOM.event.releaseEvent('mouseup');
       DOM.event.releaseEvent('contextmenu');    

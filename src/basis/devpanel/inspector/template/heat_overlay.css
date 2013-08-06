@@ -1,0 +1,46 @@
+#devpanel-heat-overlay
+{
+  position: fixed;
+  pointer-events: none;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  background: rgba(110,163,217,0.2);
+  background1: rgba(255,255,255,0.2);
+}
+#devpanel-heat-overlay__content
+{
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 1;
+    -webkit-transition: opacity .3s;
+  transition: opacity .3s;
+}
+#devpanel-heat-overlay__content.hide
+{
+  opacity: 0;
+    -webkit-transition: opacity .15s;
+  transition: opacity .15s;
+}
+#devpanel-heat-overlay__content .devpanel-heat-token
+{
+  position: absolute;
+  z-index: 65000;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: verdana;
+  line-height: 13px;
+  text-indent: 1px;
+  color: black;
+  text-shadow:
+    0 -1px 0 white,
+    0 1px 0 white,
+   -1px 0 0 white,
+    1px 0 0 white,
+    1px 1px 1px black,
+   -1px -1px 1px black;
+}

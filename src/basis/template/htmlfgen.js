@@ -460,6 +460,7 @@
           /** @cut */   'binding:"' + bindName + '"',
           /** @cut */   'dom:' + domRef,
           /** @cut */   'val:' + bindVar,
+          /** @cut */   'updates:$$' + bindName,
           /** @cut */   'attachment:attaches["' + bindName + '"]&&attaches["' + bindName + '"].value'
           /** @cut */ ] +'}');
 
@@ -583,17 +584,21 @@
       );
 
       for (var bindName in bindMap)
+      {
+        /** @cut */ if (bindName.indexOf('@') == -1) varList.push('$$' + bindName + '=0');
         result.push(
           'case"' + bindName + '":' +
           (bindMap[bindName].l10n
             ? bindMap[bindName].join('')
             : 'if(__' + bindName + '!==value)' +
               '{' +
+                /** @cut */ '$$' + bindName + '++;' +
                 '__' + bindName + '=value;' +
                 bindMap[bindName].join('') +
               '}') +
           'break;'
         );
+      }
 
       result.push('}}');
 
@@ -697,9 +702,9 @@
           'destroy_:function(){' +
             'if(bindings&&bindingInterface&&tmplBindings.handler)bindingInterface.detach(obj,tmplBindings.handler,set);' +
             // detach attaches
-            'var a;' +
+            //'var a;' +
             'for(var key in attaches)' +
-              'if(a = attaches[key])' +
+              //'if(a = attaches[key])' +
                 'resolve(attaches,updateAttach,key,null);' +
                 //'a.detach(a.value,updateAttach,a);' +
             'attaches=null;' +
