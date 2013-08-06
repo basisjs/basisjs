@@ -189,6 +189,8 @@
   // Override setTimeout
   //
   global.setTimeout = function(fn, timeout){
+    ;;;if (isNaN(timeout) || timeout <= 0) basis.dev.warn('Don\'t use setTimeout() with zero timeout, use basis.timer.setImmediate instead');
+
     return isNaN(timeout) || timeout <= 0
       ? MESSAGE_NAME + setImmediate(fn)
       : global.nativeSetTimeout_(fn, timeout);
@@ -340,7 +342,12 @@
   //
 
   module.exports = {
-    nextTick: setImmediate,
+    nextTick: function(fn){
+      if (basis.NODE_ENV)
+        process.nextTick(fn);
+      else
+        setImmediate(fn);
+    },
     setImmediate: setImmediate,
     clearImmediate: clearImmediate,
 
