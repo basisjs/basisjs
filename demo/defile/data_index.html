@@ -155,7 +155,7 @@
           }
         },
         {
-          caption: 'stress test #1',
+          caption: 'stress test #1 (1000 random updates)',
           click: function(){
             var items = dataset.getItems();
             var t = new Date();
@@ -235,11 +235,18 @@
       ],
 
       childClass: {
+        percentOfTotalSum: 0,
+        percentOfTotalRange: 0,
+        percentOfValueMax: 0,
+
         binding: {
           id: 'data:',
           title: 'data:',
           value: 'data:',
-          total: 'data:'
+          total: 'data:',
+          percentOfTotalSum: 'percentOfTotalSum',
+          percentOfTotalRange: 'percentOfTotalRange',
+          percentOfValueMax: 'percentOfValueMax'
         },
         satelliteConfig: {
           indexes: {
@@ -252,10 +259,12 @@
               emit_update: function(delta){
                 nsData.Object.prototype.emit_update.call(this, delta);
 
-                var tmpl = this.owner.tmpl;
-                tmpl.set('percentOfTotalSum', '{0:.2}%'.format(100 * this.data.percentOfTotalSum));
-                tmpl.set('percentOfTotalRange', '{0:.2}%'.format(100 * this.data.percentOfTotalRange));
-                tmpl.set('percentOfValueMax', '{0:.2}%'.format(100 * this.data.percentOfValueMax));
+                this.owner.percentOfTotalSum = '{0:.2}%'.format(100 * this.data.percentOfTotalSum);
+                this.owner.updateBind('percentOfTotalSum');
+                this.owner.percentOfTotalRange = '{0:.2}%'.format(100 * this.data.percentOfTotalRange);
+                this.owner.updateBind('percentOfTotalRange');
+                this.owner.percentOfValueMax = '{0:.2}%'.format(100 * this.data.percentOfValueMax);
+                this.owner.updateBind('percentOfValueMax');
               }
             })
           }
