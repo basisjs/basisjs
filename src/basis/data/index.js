@@ -356,7 +356,7 @@
 
   var DATASET_INDEX_HANDLER = {
     destroy: function(object){
-      this.deleteIndex(object);
+      removeDatasetIndex(this, object);
     }
   };
 
@@ -423,7 +423,7 @@
       var indexConstructor = getIndexConstructor(IndexClass, getter || defGetter, events);
 
       if (dataset)
-        return dataset.getIndex(indexConstructor);
+        return getDatasetIndex(dataset, indexConstructor);
       else
         return indexConstructor;
     };
@@ -480,10 +480,11 @@
       var eventType = event.type;
       var object = event.sender;
       var objectId = object.basisObjectId;
+      var indexes = datasetIndexes[this.basisObjectId];
 
-      for (var indexId in this.indexes__)
+      for (var indexId in indexes)
       {
-        index = this.indexes__[indexId];
+        index = indexes[indexId];
 
         if (index.updateEvents[eventType])
         {
@@ -519,17 +520,84 @@
           array[i].removeHandler(ITEM_INDEX_HANDLER, this);
 
       // apply changes for indexes
-      for (var indexId in this.indexes__)
-        applyIndexDelta(this.indexes__[indexId], delta.inserted, delta.deleted);
+      var indexes = datasetIndexes[this.basisObjectId];
+      for (var indexId in indexes)
+        applyIndexDelta(indexes[indexId], delta.inserted, delta.deleted);
     },
     
     destroy: function(){
-      var indexes = basis.object.values(this.indexes__);
+      var indexes = datasetIndexes[this.basisObjectId];
       for (var indexId in indexes)
-        this.deleteIndex(indexes[indexId]);
+        removeDatasetIndex(this, indexes[indexId]);
     }
   };
 
+ //
+ // 
+ //
+
+ var datasetIndexes = {};
+
+ /**
+  * @param {basis.data.AbstractDataset} dataset
+  * @param {basis.data.index.IndexConstructor} indexConstructor
+  */ 
+  function getDatasetIndex(dataset, indexConstructor){
+    if (indexConstructor instanceof IndexConstructor == false)
+      throw 'indexConstructor must be an instance of IndexConstructor';
+
+    var datasetId = dataset.basisObjectId;
+    var indexes = datasetIndexes[datasetId];
+
+    if (!indexes)
+    {
+      indexes = datasetIndexes[datasetId] = {};
+
+      dataset.addHandler(DATASET_WITH_INDEX_HANDLER);
+      DATASET_WITH_INDEX_HANDLER.itemsChanged.call(dataset, dataset, {
+        inserted: dataset.getItems()
+      });
+    }
+
+    var indexId = indexConstructor.indexId;
+    var index = indexes[indexId];
+
+    if (!index)
+    {
+      indexConstructor = indexConstructors_[indexId];
+      if (!indexConstructor)
+        throw 'Wrong index constructor';
+
+      index = new indexConstructor.indexClass();
+      index.addHandler(DATASET_INDEX_HANDLER, dataset);
+
+      indexes[indexId] = index;
+      applyIndexDelta(index, dataset.getItems());
+    }
+
+    return index; 
+  }
+
+ /**
+  * @param {basis.data.AbstractDataset} dataset
+  * @param {basis.data.index.Index}
+  */
+  function removeDatasetIndex(dataset, index){
+    var indexes = datasetIndexes[dataset.basisObjectId];
+    if (indexes && indexes[index.indexId])
+    {
+      delete indexes[index.indexId];
+      index.removeHandler(DATASET_INDEX_HANDLER, dataset);
+
+      // if any index in dataset nothing to do
+      for (var key in indexes)
+        return;
+
+      // if no indexes - delete indexes storage and remove handlers
+      dataset.removeHandler(DATASET_WITH_INDEX_HANDLER);
+      delete datasetIndexes[dataset.basisObjectId];
+    }
+  }
 
  /**
   * Extend for basis.data.AbstractDataset
@@ -537,64 +605,19 @@
   */
   AbstractDataset.extend({
    /**
-    * @type {Object}
-    */
-    indexes__: null,
-
-   /**
     * @param {basis.data.index.IndexConstructor}
     */ 
     getIndex: function(indexConstructor){
-      if (indexConstructor instanceof IndexConstructor == false)
-        throw 'indexConstructor must be an instance of IndexConstructor';
-
-      if (!this.indexes__)
-      {
-        this.indexes__ = {};
-
-        this.addHandler(DATASET_WITH_INDEX_HANDLER);
-        DATASET_WITH_INDEX_HANDLER.itemsChanged.call(this, this, {
-          inserted: this.getItems()
-        });
-      }
-
-      var indexId = indexConstructor.indexId;
-      var index = this.indexes__[indexId];
-
-      if (!index)
-      {
-        indexConstructor = indexConstructors_[indexId];
-        if (!indexConstructor)
-          throw 'Wrong index constructor';
-
-        index = new indexConstructor.indexClass();
-        index.addHandler(DATASET_INDEX_HANDLER, this);
-
-        this.indexes__[indexId] = index;
-        applyIndexDelta(index, this.getItems());
-      }
-
-      return index; 
+      ;;;basis.dev.warn('basis.data.Dataset#getIndex is deprecated and will be removed soon, use basis.data.index.getDatasetIndex or basis.data.index.{indexName} functions instead');
+      return getDatasetIndex(this, indexConstructor);
     },
 
    /**
-    * @param {basis.data.index.IndexConstructor|basis.data.index.Index}
+    * @param {basis.data.index.Index}
     */
     deleteIndex: function(index){
-      if (this.indexes__ && this.indexes__[index.indexId])
-      {
-        delete this.indexes__[index.indexId];
-        index.removeHandler(DATASET_INDEX_HANDLER, this);
-        //index.destroy();
-
-        // if any index in dataset nothing to do
-        for (var key in this.indexes__)
-          return;
-
-        // if no indexes - delete indexes storage and remove handlers
-        this.removeHandler(DATASET_WITH_INDEX_HANDLER);
-        this.indexes__ = null;
-      }
+      ;;;basis.dev.warn('basis.data.Dataset#deleteIndex is deprecated and will be removed soon, use basis.data.index.removeDatasetIndex fucntion instead');
+      removeDatasetIndex(this, index);
     }
   });
 
@@ -706,19 +729,18 @@
     emit_sourceChanged: function(oldSource){
       MapFilter.prototype.emit_sourceChanged.call(this, oldSource);
       
-      var index;
-
       for (var indexName in this.indexes_)
       {
-        index = this.indexes_[indexName];
+        var index = this.indexes_[indexName];
+
         if (oldSource)
         { 
-          this.deleteIndex(indexName);
-          oldSource.deleteIndex(this.indexes[indexName]);
+          this.removeIndex(indexName);
+          removeDatasetIndex(oldSource, this.indexes[indexName]);
         }
 
         if (this.source)
-          this.addIndex(indexName, this.source.getIndex(index));
+          this.addIndex(indexName, getDatasetIndex(this.source, index));
       }
     },
 
@@ -788,7 +810,7 @@
           if (!this.indexes_[key])
           {
             this.indexes_[key] = index;
-            index = this.source && this.source.getIndex(index);
+            index = this.source ? getDatasetIndex(this.source, index) : null;
           }
           else
           {
@@ -942,6 +964,9 @@
   module.exports = {
     IndexConstructor: IndexConstructor,
     createIndexConstructor: createIndexConstructor,
+
+    getDatasetIndex: getDatasetIndex,
+    removeDatasetIndex: removeDatasetIndex,
 
     Index: Index,
     Count: Count,
