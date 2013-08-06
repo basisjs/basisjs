@@ -108,13 +108,11 @@
       var seed = 0;
 
       return function(){
-        return new basis.data.Object({
-          data: {
-            id: ++seed,
-            title: 'item' + seed,
-            value: parseInt(50 * Math.random(), 10),
-            total: parseInt(150 * Math.random(), 10)
-          }
+        return basis.data.wrapObject({
+          id: ++seed,
+          title: 'item' + seed,
+          value: parseInt(50 * Math.random(), 10),
+          total: parseInt(150 * Math.random(), 10)
         });
       };
     })();
@@ -138,7 +136,7 @@
         {
           caption: 'add',
           click: function(){
-            dataset.add([createDataItem()]);
+            dataset.add(createDataItem());
           }
         },
         {
@@ -166,8 +164,8 @@
             {
               var item = items[parseInt(8461 * i) % items.length];
               item.update({
-                value: (item.data.value + i) % 50,
-                total: (item.data.total + i) % 150
+                value: parseInt(item.data.value + Math.random() * i) % 50,
+                total: parseInt(item.data.total + Math.random() * i) % 150
               });
             }
             indexMap.unlock();
@@ -224,12 +222,9 @@
           cssClassName: 'right',
           body: '{percentOfTotalSum}',
           footer: {
-            value: new basis.data.value.Expression(
-              basis.data.index.avg(indexMap, 'data.percentOfTotalRange'),
-              function(avg){
-                return (avg * 100).toFixed(2) + '%';
-              }
-            )
+            value: basis.data.index.avg(indexMap, 'data.percentOfTotalSum').as(function(avg){
+              return (avg * 100).toFixed(2) + '%';
+            })
           }
         }
       ],
