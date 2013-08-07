@@ -5,6 +5,10 @@ basis.require('basis.dom.event');
 basis.require('basis.layout');
 basis.require('app.stat');
 basis.require('app.core');
+basis.require('basis.l10n');
+
+basis.l10n.setCultureList('en-US/ru-RU ru-RU'); // en-US temporary fallback on ru-RU
+//basis.l10n.setCulture('ru-RU');
 
 basis.ready(function(){
   var initTime = new Date;
