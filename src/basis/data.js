@@ -739,10 +739,14 @@
 
    /**
     * Returns token which value equals to transformed via fn function value.
-    * @param {function} fn
-    * @return {basis.Token}
+    * @param {function(value)} fn
+    * @param {boolean=} deferred
+    * @return {basis.Token|basis.DeferredToken}
     */ 
-    as: function(fn){
+    as: function(fn, deferred){
+      if (typeof fn != 'function')
+        fn = basis.fn.$self;
+
       if (this.tokens_)
       {
         // try to find token with the same function
@@ -750,7 +754,9 @@
 
         while (cursor = cursor.tokens_)
           if (cursor.fn == String(fn))
-            return cursor.token;
+            return deferred
+              ? cursor.token.deferred()
+              : cursor.token;
       }
       else
       {
@@ -768,7 +774,15 @@
         tokens_: this.tokens_
       };
 
-      return token;
+      return deferred ? token.deferred() : token;
+    },
+
+   /**
+    * @param {function(value)} fn
+    * @return {basis.DeferredToken}
+    */
+    deferred: function(fn){
+      return this.as(fn, true);
     },
 
    /**
