@@ -599,22 +599,6 @@
 
       if (this.selection && !this.selection.itemCount && this.firstChild)
         this.firstChild.select();
-
-      // sync section tabs
-      var tabElementMap = {};
-
-      DOM.insert(
-        this.tmpl.sectionTabs,
-        this.childNodes.map(function(section){
-          return tabElementMap[section.basisObjectId] = section.tmpl.tabElement || document.createComment('');
-        })
-      );
-
-      for (var key in this.tabElementMap_)
-        if (!tabElementMap[key])
-          DOM.remove(this.tabElementMap_[key]);
-
-      this.tabElementMap_ = tabElementMap;
     },
 
     template: templates.Calendar,
@@ -644,26 +628,24 @@
         this.selectedDate.set(new Date(this.selectedDate.value).add(activeSection.nodePeriodUnit, this.selectedDate.value.diff(activeSection.nodePeriodUnit, newDate)));
         this.nextSection(BACKWARD);
       }
-    },    
+    },
+
+    satelliteConfig: {
+      shadowTabs: basis.ui.ShadowNodeList.subclass({
+        getChildNodesElement: function(host){
+          return host.tmpl.sectionTabs;
+        },
+        childClass: {
+          getElement: function(node){
+            return node.tmpl.tabElement;
+          }
+        }
+      })
+    },   
 
     selection: true,
     childClass: CalendarSection,
     childFactory: function(){},
-
-    tabElementMap_: {},
-    listen: {
-      childNode: {
-        templateChanged: function(sender){
-          var newTabElement = sender.tmpl.tabElement || document.createComment();
-          var curTabElement = this.tabElementMap_[sender.basisObjectId];
-          if (newTabElement !== curTabElement)
-          {
-            this.tabElementMap_[sender.basisObjectId] = newTabElement;
-            DOM.replace(curTabElement, newTabElement);
-          }
-        }
-      }
-    },
 
     date: null,
     sections: ['Month', /*'Quarter', 'YearQuarters', */'Year', 'YearDecade'/*, 'Century'*/],
