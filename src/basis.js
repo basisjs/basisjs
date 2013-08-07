@@ -1576,6 +1576,11 @@
     handler: null,
 
    /**
+    * @type {basis.DeferredToken}
+    */
+    deferredToken: null,
+
+   /**
     * Binding interface.
     * @type {object}
     */ 
@@ -1672,15 +1677,93 @@
     },
 
    /**
+    * Returns deferred token based on this token. Every token can has
+    * only one it's own deferred token.
+    * @return {basis.DeferredToken}
+    */
+    deferred: function(){
+      var token = this.deferredToken;
+   
+      if (!token)
+      {
+        token = this.deferredToken = new basis.DeferredToken(this.value);
+        this.attach(token.set, token);
+      }
+   
+      return token;
+    },
+
+   /**
     * Actually it's not require invoke destroy method for token, garbage 
     * collector have no problems to free token's memory when all references
     * to token are removed.
     * @destructor
     */
     destroy: function(){
+      if (this.deferredToken)
+      {
+        this.deferredToken.destroy();
+        this.deferredToken = null;
+      }
+
       this.handler = null;
       this.value = null;
     }  
+  });
+
+  //
+  // Deferred token
+  //
+
+  var awaitToApply = (function(){
+    var tokens = {};
+    var timer;
+   
+    function applyTokens(){
+      var list = tokens;
+   
+      // reset list & timer
+      tokens = {};
+      timer = null;
+   
+      // call apply method for all tokens in the list
+      for (var key in list)
+        list[key].apply();
+    }
+   
+    return function(token){
+      if (token.basisObjectId in tokens)
+        return;
+ 
+      tokens[token.basisObjectId] = token;
+ 
+      if (!timer)
+        setImmediate(applyTokens);
+    }
+  })();
+   
+ /**
+  * @class
+  */ 
+  var DeferredToken = Token.subclass({
+   /**
+    * Set new value for token and schedule to call apply method.
+    * @param {*} value
+    */
+    set: function(value){
+      if (this.value !== value)
+      {
+        this.value = value;
+        awaitToApply(this);
+      }
+    },
+
+   /**
+    * That method for DeferredToken returns token itself.
+    */ 
+    deferred: function(){
+      return this;
+    }
   });
 
 
@@ -2860,6 +2943,7 @@
 
     Class: Class,
     Token: Token,
+    DeferredToken: DeferredToken,
 
     cleaner: cleaner,
     console: consoleMethods,
