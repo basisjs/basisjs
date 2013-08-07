@@ -94,13 +94,6 @@
     start: function(){
       this.autocenter = false;
       this.element.style.margin = 0;
-    },
-    over: function(){
-      this.cssRule.setStyle(basis.object.slice(this.element.style, ['left', 'top']));
-      cssom.setStyle(this.element, {
-        top: '',
-        left: ''
-      });
     }
   };
 
@@ -140,16 +133,16 @@
         this.activate();
       },
       keydown: function(event){
-        switch (Event.key(event))
+        switch (event.key)
         {
-          case Event.KEY.ESCAPE:
+          case event.KEY.ESCAPE:
             if (this.closeOnEscape)
               this.close();
             break;
 
-          case Event.KEY.ENTER:
-            if (Event.sender(event).tagName != 'TEXTAREA')
-              Event.kill(event);
+          case event.KEY.ENTER:
+            if (event.sender.tagName != 'TEXTAREA')
+              event.die();
             break;
         }
       }
@@ -187,9 +180,6 @@
 
     init: function(){
       UINode.prototype.init.call(this);
-
-      // add generic rule
-      this.cssRule = cssom.uniqueRule();
 
       // make window moveable
       if (this.moveable)
@@ -235,31 +225,36 @@
       this.updateBind('title');
     },
     templateSync: function(noRecreate){
+      var style;
+      if (!this.autocenter && this.element.nodeType == 1)
+        style = basis.object.slice(this.element.style, ['left', 'top', 'margin']);
+
       UINode.prototype.templateSync.call(this, noRecreate);
 
-      if (this.element)
+      if (this.element.nodeType == 1)
       {
+        if (style)
+          cssom.setStyle(this.element, style);
+
         if (this.dde)
           this.dde.setElement(this.element, this.tmpl.ddtrigger || (this.tmpl.title && this.tmpl.title.parentNode) || this.element);
 
         if (this.buttonPanel)
           DOM.insert(this.tmpl.content || this.element, this.buttonPanel.element);
-
-        cssom.classList(this.element).add(this.cssRule.token);
-
-        this.realign();
       }
+
+      this.realign();
     },
     setZIndex: function(zIndex){
       this.zIndex = zIndex;
-      this.element.style.zIndex = zIndex;
+      if (this.tmpl && this.element.style)
+        this.element.style.zIndex = zIndex;
     },
     realign: function(){
       this.setZIndex(this.zIndex);
-      if (this.autocenter)
+      if (this.tmpl && this.autocenter)
       {
-        this.element.style.margin = '';
-        this.cssRule.setStyle(
+        cssom.setStyle(this.element,
           this.element.offsetWidth
             ? {
                 left: '50%',
@@ -269,7 +264,8 @@
               }
             : {
                 left: 0,
-                top: 0
+                top: 0,
+                margin: 0
               }
         );
       }
@@ -323,9 +319,6 @@
       }
 
       UINode.prototype.destroy.call(this);
-
-      this.cssRule.destroy();
-      this.cssRule = null;
     }
   });
 
