@@ -117,11 +117,7 @@
           var newNode = newValue instanceof Node && !newValue.basisNodeInUse ? newValue : domRef;
 
           if (newNode !== oldNode)
-          {
             oldNode.parentNode.replaceChild(newNode, oldNode);
-            if (oldNode !== domRef) oldNode.basisNodeInUse = false;
-            if (newNode !== domRef) newNode.basisNodeInUse = true;
-          }
 
           return newNode;
         }
@@ -133,16 +129,10 @@
           {
             try {
               oldNode.parentNode.replaceChild(newNode, oldNode);
-              if (oldNode !== domRef) oldNode.basisNodeInUse = false;
-              if (newNode !== domRef) newNode.basisNodeInUse = true;
             } catch(e) {
               newNode = domRef;
               if (oldNode !== newNode)
-              {
                 oldNode.parentNode.replaceChild(newNode, oldNode);
-                if (oldNode !== domRef) oldNode.basisNodeInUse = false;
-                if (newNode !== domRef) newNode.basisNodeInUse = true;
-              }
             }
           }
 
