@@ -1915,7 +1915,7 @@
         {
           proto.emit_itemsChanged = storeDatasetDelta;
           if (!urgentTimer)
-            urgentTimer = setTimeout(urgentFlush, 0);
+            urgentTimer = basis.setImmediate(urgentFlush);
         }
         setStateCount++;
       }
