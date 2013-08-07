@@ -732,6 +732,10 @@
 
           return pair.token;
         }
+
+        getComputeToken.deferred = function(object){
+          return getComputeToken(object).deferred();
+        }
       }
 
       return getComputeToken;
@@ -753,7 +757,7 @@
         var cursor = this;
 
         while (cursor = cursor.tokens_)
-          if (cursor.fn == String(fn))
+          if (cursor.fn == String(fn)) // compare functions as strings, as they should be with no sideeffect
             return deferred
               ? cursor.token.deferred()
               : cursor.token;
