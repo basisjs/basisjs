@@ -733,9 +733,11 @@
           return pair.token;
         }
 
-        getComputeToken.deferred = function(object){
-          return getComputeToken(object).deferred();
-        }
+        getComputeToken.deferred = function(){
+          return function(object){
+            return getComputeToken(object).deferred();
+          }
+        };
       }
 
       return getComputeToken;
