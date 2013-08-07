@@ -1,0 +1,11 @@
+{
+  "en-US": {
+    "symbolsLeft": "Symbols left"
+  },
+  "ru-RU": {
+    "symbolsLeft": "Осталось символов"
+  },
+  "uk-UA": {
+    "symbolsLeft": "Залишилося символів"
+  }
+}

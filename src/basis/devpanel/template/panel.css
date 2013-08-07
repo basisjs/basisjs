@@ -17,24 +17,24 @@
   
   font-family: Arial;
   color: white;
-  color: rgba(255, 255, 255, 0.5);
   text-align: center;
   
   cursor: pointer;
   
   padding: 1px;
   background: -webkit-linear-gradient(top, #89ACF0, #4B77CC);
+
+  font-size: 12px;
 }
 
 .Basis-DevPanel:hover,
 .Basis-DevPanel.activated,
-BODY.devpanel-inspectMode .Basis-DevPanel
+.devpanel-inspectMode .Basis-DevPanel
 {
   opacity: 1;
-  color: white;
 }
 
-BODY.devpanel-inspectMode .Basis-DevPanel
+.devpanel-inspectMode .Basis-DevPanel
 {
   pointer-events: none;
 }
@@ -51,56 +51,31 @@ BODY.devpanel-inspectMode .Basis-DevPanel
   border-right: 1px solid rgba(255, 255, 255, .4);
   margin-left: -1px;
   display: inline-block;
-  padding: 3px 10px 4px;
-  /*background: -webkit-linear-gradient(top, #89ACF0, #4B77CC);*/
+  padding: 5px 10px 4px;
+  background:  no-repeat center center;
 }
-
-.Basis-DevPanel-Button.template
-{
-  background: url(img/inspect-template.png) no-repeat center center; 
-}
-.Basis-DevPanel-Button.l10n
-{
-  background: url(img/inspect-l10n.png) no-repeat center center; 
-}
-.Basis-DevPanel-Button.fileInspector
-{
- background: url(img/folder.png) no-repeat center center;  
-}
-
-.Basis-DevPanel-Button.theme SPAN
-{
-  font-size: 12px;
-  color: white;
-}
-
-.Basis-DevPanel-Button.culture
-{
-  padding: 4px 5px 5px;
-}
-.Basis-DevPanel-Button.culture SPAN
-{
-  display: inline-block;
-  width: 16px; 
-  height: 11px;
-  background: url(img/flags.png) no-repeat center center;
-}
-
-.Basis-DevPanel-Button.culture.base span
-{
-  background: url(img/international.png) no-repeat center center !important;
-}
-
 .Basis-DevPanel-Button:hover
 {
   background-color: rgba(120, 161, 240, 0.8);
 }
-
-
 .Basis-DevPanel-Button:last-child
 {
   border-right: none;
 }
+
+.Basis-DevPanel-Button.template
+{
+  background-image: url(img/inspect-template.png); 
+}
+.Basis-DevPanel-Button.l10n
+{
+  background-image: url(img/inspect-l10n.png);
+}
+.Basis-DevPanel-Button.fileInspector
+{
+  background-image: url(img/folder.png);
+}
+
 
 .Basis-DevPanel-DragTrigger
 {

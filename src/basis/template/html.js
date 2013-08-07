@@ -55,7 +55,9 @@
 
   // dictionaries
   var tmplEventListeners = {};
-  var tmplNodeMap = { seed: 1 };
+  var templates = {};
+  var templateId = 0;
+
   var namespaceURI = {
     svg: 'http://www.w3.org/2000/svg'
   };
@@ -75,6 +77,18 @@
     return !element.className;
   })();
 
+
+  var l10nTemplates = {};
+  function getL10nTemplate(token){
+    var template = basis.template.getL10nTemplate(token);
+    var id = template.templateId
+    var htmlTemplate = l10nTemplates[id];
+
+    if (!htmlTemplate)
+      htmlTemplate = l10nTemplates[id] = new HtmlTemplate(template.source);
+
+    return htmlTemplate;
+  }
 
  /**
   * Build functions for creating instance of template.
@@ -100,90 +114,37 @@
     var bind_node = W3C_DOM_NODE_SUPPORTED
       // W3C DOM way
       ? function(domRef, oldNode, newValue){
-          var newNode = domRef;
-
-          if (newValue instanceof Node)
-          {
-            if (newValue.nodeType == 11)  // fragment
-            {
-              if (newValue.firstChild === newValue.lastChild)
-                newNode = newValue.firstChild;
-              else
-                newNode = arrayFrom(newValue);
-            }
-            else
-              newNode = newValue;
-          }
-          /*else
-          {
-            if (newValue && Array.isArray(newValue))
-              if (newValue.length == 1)
-                newNode = newValue[0];
-              else
-                newNode = arrayFrom(newValue);
-          }*/
+          var newNode = newValue instanceof Node && !newValue.basisNodeInUse ? newValue : domRef;
 
           if (newNode !== oldNode)
           {
-            if (Array.isArray(newNode))
-            {
-              if (oldNode.fragmentStart)
-              {
-                newNode.fragmentStart = oldNode.fragmentStart;
-                newNode.fragmentEnd = oldNode.fragmentEnd;
-
-                var cursor = newNode.fragmentStart.nextSibling;
-                while (cursor && cursor != newNode.fragmentEnd)
-                {
-                  var tmp = cursor;
-                  cursor = cursor.nextSibling;
-                  tmp.parentNode.removeChild(tmp);
-                }
-              }
-              else
-              {
-                newNode.fragmentStart = document.createComment('start');
-                newNode.fragmentEnd = document.createComment('end');
-                oldNode.parentNode.insertBefore(newNode.fragmentStart, oldNode);
-                oldNode.parentNode.replaceChild(newNode.fragmentEnd, oldNode);
-              }
-
-              for (var i = 0, node; node = newNode[i]; i++)
-                newNode.fragmentEnd.parentNode.insertBefore(node, newNode.fragmentEnd);
-            }
-            else
-            {
-              if (oldNode && oldNode.fragmentStart)
-              {
-                var cursor = oldNode.fragmentStart.nextSibling;
-                while (cursor && cursor != oldNode.fragmentEnd)
-                {
-                  var tmp = cursor;
-                  cursor = cursor.nextSibling;
-                  tmp.parentNode.removeChild(tmp);
-                }
-                oldNode.fragmentStart.parentNode.removeChild(oldNode.fragmentStart);
-                oldNode = oldNode.fragmentEnd;
-              }
-
-              oldNode.parentNode.replaceChild(newNode, oldNode);
-            }
+            oldNode.parentNode.replaceChild(newNode, oldNode);
+            if (oldNode !== domRef) oldNode.basisNodeInUse = false;
+            if (newNode !== domRef) newNode.basisNodeInUse = true;
           }
 
           return newNode;
         }
       // Old browsers way (IE6-8 and other)
       : function(domRef, oldNode, newValue){
-          var newNode = newValue && typeof newValue == 'object' ? newValue : domRef;
+          var newNode = newValue && typeof newValue == 'object' && !newValue.basisNodeInUse ? newValue : domRef;
 
           if (newNode !== oldNode)
+          {
             try {
               oldNode.parentNode.replaceChild(newNode, oldNode);
+              if (oldNode !== domRef) oldNode.basisNodeInUse = false;
+              if (newNode !== domRef) newNode.basisNodeInUse = true;
             } catch(e) {
               newNode = domRef;
               if (oldNode !== newNode)
+              {
                 oldNode.parentNode.replaceChild(newNode, oldNode);
+                if (oldNode !== domRef) oldNode.basisNodeInUse = false;
+                if (newNode !== domRef) newNode.basisNodeInUse = true;
+              }
             }
+          }
 
           return newNode;
         };
@@ -323,23 +284,63 @@
       return newValue;
     };
 
-
-
-    function resolveValue(attaches, updateAttach, bindingName, value){
+    
+   /**
+    * @func
+    */ 
+    function resolveValue(attaches, updateAttach, bindingName, value, object, bindings, bindingInterface){
       var bridge = value && value.bindingBridge;
       var oldAttach = attaches[bindingName];
+      var tmpl = null;
 
       if (bridge || oldAttach)
       {
         if (bridge)
         {
-          if (value !== oldAttach)
+          if (!oldAttach || value !== oldAttach.value)
           {
             if (oldAttach)
-              oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
-            bridge.attach(value, updateAttach, bindingName);
-            attaches[bindingName] = value;
+            {
+              if (oldAttach.tmpl)
+              {
+                oldAttach.tmpl.element.toString = null;
+                oldAttach.tmpl.destroy_();
+              }
+
+              oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
+            }
+
+            if (value.type == 'markup' && value instanceof basis.l10n.Token)
+            {
+              var template = getL10nTemplate(value);
+              tmpl = template.createInstance(object, null, function onRebuild(){
+                tmpl.destroy_();
+                tmpl = newAttach.tmpl = template.createInstance(object, null, onRebuild, bindings, bindingInterface);
+                tmpl.element.toString = function(){
+                  return value.value;
+                };
+                updateAttach.call(newAttach);
+              }, bindings, bindingInterface);
+              tmpl.element.toString = function(){
+                return value.value;
+              }
+            }
+
+            var newAttach = attaches[bindingName] = {
+              name: bindingName,
+              object: object,
+              detach: bridge.detach,
+              value: value,
+              tmpl: tmpl
+            };
+
+            bridge.attach(value, updateAttach, newAttach);
           }
+          else
+            tmpl = value && value.type == 'markup' ? oldAttach.tmpl : null;
+
+          if (tmpl)
+            return tmpl.element;
 
           value = bridge.get(value);
         }
@@ -347,12 +348,99 @@
         {
           if (oldAttach)
           {
-            oldAttach.bindingBridge.detach(oldAttach, updateAttach, bindingName);
-            delete attaches[bindingName];
+            if (oldAttach.tmpl)
+            {
+              oldAttach.tmpl.element.toString = null;
+              oldAttach.tmpl.destroy_();
+            }
+
+            oldAttach.detach(oldAttach.value, updateAttach, oldAttach);
+            attaches[bindingName] = null;
           }
         }
       }
+
       return value;
+    }
+
+   /**
+    * @func
+    */
+    function createBindingUpdater(names, getters){
+      return function bindingUpdater(object){
+        for (var i = 0, bindingName; bindingName = names[i]; i++)
+          this(bindingName, getters[bindingName](object));
+      };
+    }
+
+   /**
+    * @func
+    */
+    function createBindingFunction(keys){
+      var bindingCache = {};
+
+     /**
+      * @param {object} bindings
+      */
+      return function getBinding(bindings){
+        var cacheId = 'bindingId' in bindings ? bindings.bindingId : null;
+
+        /** @cut */ if (!cacheId)
+        /** @cut */   basis.dev.warn('basis.template.Template.getBinding: bindings has no bindingId property, cache is not used');
+
+        var result = bindingCache[cacheId];
+
+        if (!result)
+        {
+          var names = [];
+          var getters = {};
+          var events = {};
+          var handler = {};
+          var hasEvents = false;
+
+          for (var i = 0, bindingName; bindingName = keys[i]; i++)
+          {
+            var binding = bindings[bindingName];
+            var getter = binding && binding.getter;
+
+            if (getter)
+            {
+              getters[bindingName] = getter;
+              names.push(bindingName);
+
+              if (binding.events)
+              {
+                var eventList = String(binding.events).trim().split(/\s+|\s*,\s*/);
+
+                for (var j = 0, eventName; eventName = eventList[j]; j++)
+                {
+                  if (events[eventName])
+                    events[eventName].push(bindingName);
+                  else
+                    events[eventName] = [bindingName];
+                }
+              }
+            }
+          }
+
+          for (var eventName in events)
+          {
+            hasEvents = true;
+            handler[eventName] = createBindingUpdater(events[eventName], getters);
+          }
+
+          result = {
+            names: names,
+            sync: createBindingUpdater(names, getters),
+            handler: hasEvents ? handler : null
+          };
+
+          if (cacheId)
+            bindingCache[cacheId] = result;
+        }
+
+        return result;
+      };
     }
 
     var tools = {
@@ -364,35 +452,81 @@
       bind_attrClass: bind_attrClass,
       bind_attrStyle: bind_attrStyle,
       resolve: resolveValue,
-      l10nToken: l10nToken
+      l10nToken: l10nToken,
+      createBindingFunction: createBindingFunction
     };
 
-    return function(tokens){
-      var fn = getFunctions(tokens, true, this.source.url, tokens.source_);
-      var templateMap = {};
+    return function(tokens, template){
+      var fn = getFunctions(tokens, true, this.source.url, tokens.source_, !CLONE_NORMALIZATION_TEXT_BUG);
+      var instances = {};
       var l10nMap = {};
-      var l10nProtoSync;
+      var l10nLinks = [];
 
       var proto = buildHtml(tokens);
       var build = function(){
         return proto.cloneNode(true);
       };
 
+      var id = templateId++;
+      templates[id] = {
+        template: template,
+        instances: instances
+      };
+
       if (fn.createL10nSync)
       {
-        l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
+        var l10nProtoSync = fn.createL10nSync(proto, l10nMap, bind_attr, CLONE_NORMALIZATION_TEXT_BUG);
 
         for (var i = 0, key; key = fn.l10nKeys[i]; i++)
           l10nProtoSync(key, l10nToken(key).value);
+
+        if (fn.l10nKeys)
+          for (var i = 0, key; key = fn.l10nKeys[i]; i++)
+          {
+            var link = {
+              path: key,
+              token: l10nToken(key),
+              handler: function(value){
+                l10nProtoSync(this.path, value);
+                for (var key in instances)
+                  instances[key].tmpl.set(this.path, value);
+              }
+            };
+            link.token.attach(link.handler, link);
+            l10nLinks.push(link);
+            link = null;
+          }
       }
 
       return {
-        createInstance: fn.createInstance(tmplNodeMap, templateMap, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG),
-        l10nProtoSync: l10nProtoSync,
+        createInstance: fn.createInstance(id, instances, build, tools, l10nMap, CLONE_NORMALIZATION_TEXT_BUG),
         
         keys: fn.keys,
-        l10nKeys: fn.l10nKeys,
-        map: templateMap
+        /** @cut */ instances_: instances,
+
+        destroy: function(rebuild){
+          for (var i = 0, link; link = l10nLinks[i]; i++)
+            link.token.detach(link.handler, link);
+
+          for (var key in instances)
+          {
+            var tmplRef = instances[key];
+            if (rebuild && tmplRef.rebuild)
+              tmplRef.rebuild.call(tmplRef.context);
+            if (!rebuild || key in instances)
+              tmplRef.tmpl.destroy_();
+          }
+
+          fn = null;
+          build = null;
+          proto = null;
+          l10nMap = null;
+          l10nLinks = null;
+          l10nProtoSync = null;
+          instances = null;
+
+          delete templates[id];
+        }
       };
     };
   })();
@@ -401,25 +535,6 @@
   //
   // Constructs dom structure
   //
-
- /**
-  * @func
-  */
-  function findHostTemplate(cursor){
-    var refId;
-    var tmplRef;
-
-    do {
-      if (refId = cursor.basisObjectId)
-      {
-        // if node found, return it
-        if (tmplRef = tmplNodeMap[refId])
-          return tmplRef;
-      }
-    } while (cursor = cursor.parentNode);
-
-    return cursor;
-  }
 
  /**
   * @func
@@ -434,7 +549,6 @@
 
       var cursor = event.sender;
       var attr;
-      var refId;
 
       // IE events may have no source, nothing to do in this case
       if (!cursor)
@@ -450,13 +564,24 @@
       if (!cursor || !attr)
         return;
 
-      // search for nearest node refer to basis.Class instance
-      var tmplRef = findHostTemplate(cursor);
-      if (tmplRef)
+      // search for nearest node with basisTemplateId property
+      var refId;
+      var tmplRef;
+
+      do {
+        if (refId = cursor.basisTemplateId)
+        {
+          // if node found, return it
+          if (tmplRef = resolveInstanceById(refId))
+            break;
+        }
+      } while (cursor = cursor.parentNode);
+
+      if (tmplRef && tmplRef.action)
       {
         var actions = attr.nodeValue.qw();
         for (var i = 0, actionName; actionName = actions[i++];)
-          tmplRef.tmpl.action_(actionName, event);
+          tmplRef.action.call(tmplRef.context, actionName, event);
       }
     };
   }
@@ -562,7 +687,7 @@
           if (CLONE_NORMALIZATION_TEXT_BUG && i && tokens[i - 1][TOKEN_TYPE] == TYPE_TEXT)
             result.appendChild(document.createComment(''));
 
-          result.appendChild(document.createTextNode(token[TEXT_VALUE] || (token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : '') || (token[TOKEN_BINDINGS] ? '!' : '')));
+          result.appendChild(document.createTextNode(token[TEXT_VALUE] || (token[TOKEN_REFS] ? '{' + token[TOKEN_REFS].join('|') + '}' : '') || (token[TOKEN_BINDINGS] ? '{' + token[TOKEN_BINDINGS] + '}' : '')));
           break;
       }
     }
@@ -570,8 +695,36 @@
     return result;
   };
 
+  function resolveTemplateById(refId){
+    var parts = refId.split('-', 2);
+    var object = templates[parts[0]];
+
+    return object && object.template;
+  }
+
+  function resolveInstanceById(refId){
+    var parts = refId.split('-', 2);
+    var object = templates[parts[0]];
+
+    return object && object.instances[parts[1]];
+  }
+
   function resolveObjectById(refId){
-    return tmplNodeMap[refId].context;
+    var templateRef = resolveInstanceById(refId);
+
+    return templateRef && templateRef.context;
+  }
+
+  function resolveTmplById(refId){
+    var templateRef = resolveInstanceById(refId);
+
+    return templateRef && templateRef.tmpl;
+  }
+
+  function getDebugInfoById(refId){
+    var templateRef = resolveInstanceById(refId);
+
+    return templateRef && templateRef.debug && templateRef.debug();
   }
 
 
@@ -619,7 +772,12 @@
   // TODO: remove
   //
   basis.template.extend({
+    /** @cut using only in dev mode */ getDebugInfoById: getDebugInfoById,
+
     buildHtml: buildHtml,
     buildFunctions: buildFunctions,
-    resolveObjectById: resolveObjectById
+
+    resolveTemplateById: resolveTemplateById,
+    resolveObjectById: resolveObjectById,
+    resolveTmplById: resolveTmplById
   });

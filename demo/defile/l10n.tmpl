@@ -1,0 +1,34 @@
+<div style="border: 2px solid green; padding: 5px">
+  <button event-click="dec">-</button>
+  count is {count} 
+  <button event-click="inc">+</button>
+  <hr/>
+  default [{l10n:default}]
+  <br/>
+  unknown type as default [{l10n:unknownType}]
+  <br/>
+  plural [{l10n:plural}]
+  <br/>
+  plural.count [{l10n:plural.{count}}] 
+  <input value="{count} ~~ {l10n:plural.{count}} ~~ "/>
+  <br/>
+  plural from binding [{plural}]
+  <br/>
+  markupToken [{l10n:markupToken}]
+  <br/>
+  markupToken (second) [{l10n:markupToken}]
+  <br/>
+  markupToken in attr <input value="{l10n:markupToken}"/>
+  <br/>
+  markupToken from binding [{markupToken}]
+  <br/>
+  markupToken from binding (second binding) [{markupToken}]
+  <br/>
+  markupToken2 from binding [{markupToken2}]
+  <br/>
+  markupToken from binding in attr <input value="{markupToken}"/>
+  <br/>
+  a.b {l10n:a.b}
+  <br/>
+  {l10n:a.{count}}
+</div>

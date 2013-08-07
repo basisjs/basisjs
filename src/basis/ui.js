@@ -45,6 +45,9 @@
 
   var bindingSeed = 1;
 
+  // check for wrong event names in bindings in dev mode
+  /** @cut */ var unknownEventBindingCheck = {};
+
  /**
   * Function that extends list of binding by extension.
   * @param {object} binding
@@ -52,6 +55,7 @@
   */
   function extendBinding(binding, extension){
     binding.bindingId = bindingSeed++;
+
     for (var key in extension)
     {
       var def = null;
@@ -175,30 +179,6 @@
   * Base binding
   */
   var TEMPLATE_BINDING = Class.customExtendProperty({
-    selected: {
-      events: 'select unselect',
-      getter: function(node){
-        return node.selected;
-      }
-    },
-    unselected: {
-      events: 'select unselect',
-      getter: function(node){
-        return !node.selected;
-      }
-    },
-    disabled: {
-      events: 'disable enable',
-      getter: function(node){
-        return node.disabled || node.contextDisabled;
-      }
-    },
-    enabled: {
-      events: 'disable enable',
-      getter: function(node){
-        return !(node.disabled || node.contextDisabled);
-      }
-    },
     state: {
       events: 'stateChanged',
       getter: function(node){
@@ -231,6 +211,16 @@
     }
   }, extendBinding);
 
+  // interface for attach/detach binding handler from/to template
+  var BINDING_TEMPLATE_INTERFACE = {
+    attach: function(object, handler, context){
+      object.addHandler(handler, context);
+    },
+    detach: function(object, handler, context){
+      object.removeHandler(handler, context);
+    }
+  };
+
 
  /**
   * Base action
@@ -262,6 +252,15 @@
   * Base template for TemplateMixin
   */
   var TEMPLATE = new Template('<div/>');
+
+
+ /**
+  * Fragment factory
+  */
+  var fragments = [];
+  function getDocumentFragment(){
+    return fragments.pop() || document.createDocumentFragment();
+  }
 
 
  /**
@@ -371,13 +370,7 @@
       * @inheritDoc
       */
       init: function(){
-        // create dom fragment by template
-        var template = this.template;
-        if (template)
-        {
-          this.template = null;
-          this.setTemplate(template);
-        }
+        this.element = this.childNodesElement = getDocumentFragment();
 
         // inherit init
         super_.init.call(this);
@@ -389,12 +382,47 @@
       postInit: function(){
         super_.postInit.call(this);
 
-        if (this.template)
+        // create dom fragment by template
+        var template = this.template;
+        if (template)
         {
-          this.templateSync(true);
+          var nodeDocumentFragment = this.element;
 
+          // check for wrong event name in binding
+          /** @cut */ var bindingId = this.constructor.basisClassId_ + '_' + this.binding.bindingId;
+          /** @cut */ if (bindingId in unknownEventBindingCheck == false)
+          /** @cut */ {
+          /** @cut */   unknownEventBindingCheck[bindingId] = true;
+          /** @cut */   for (var bindName in this.binding)
+          /** @cut */   {
+          /** @cut */     var events = this.binding[bindName] && this.binding[bindName].events;
+          /** @cut */     if (events)
+          /** @cut */     {
+          /** @cut */       events = String(events).trim().split(/\s+|\s*,\s*/);
+          /** @cut */       for (var i = 0, eventName; eventName = events[i]; i++)
+          /** @cut */         if (('emit_' + eventName) in this == false)
+          /** @cut */           basis.dev.warn('basis.ui: binding `' + bindName + '` has unknown event `' + eventName + '` for ' + this.constructor.className);
+          /** @cut */     }
+          /** @cut */   }
+          /** @cut */ }
+
+          this.template = null;
+          this.setTemplate(template);
+
+          // if node has grouping move groups into template
+          if (this.grouping)
+          {
+            var childNodesElement = this.tmpl.groupsElement || this.childNodesElement;
+            childNodesElement.appendChild(nodeDocumentFragment);
+          }
+          
+          // release fragment
+          fragments.push(nodeDocumentFragment);
+
+          // process container 
           if (this.container)
           {
+            // use basis.dom.insert, because `container` may be contains element id as value
             DOM.insert(this.container, this.element);
             this.container = null;
           }
@@ -403,133 +431,117 @@
 
       templateSync: function(noRecreate){
         var template = this.template;
-        var binding = template.getBinding(this.binding, this) || null;
-        var oldBinding = this.templateBinding_;
         var tmpl = this.tmpl;
         var oldElement = this.element;
 
-        if (binding !== oldBinding)
+        if (!noRecreate)
         {
-          if (oldBinding && oldBinding.handler)
-            this.removeHandler(oldBinding.handler);
+          if (this.tmpl)
+            template.clearInstance(this.tmpl);
+   
+          tmpl = template.createInstance(this, this.templateAction, this.templateSync, this.binding, BINDING_TEMPLATE_INTERFACE);
 
-          if (!noRecreate)
+          if (tmpl.childNodesHere)
           {
-            if (this.tmpl)
-              template.clearInstance(this.tmpl);
-     
-            tmpl = template.createInstance(this, this.templateAction, this.templateSync);
-
-            if (tmpl.childNodesHere)
-            {
-              tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
-              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere; // FIXME: we should avoid add expando to dom nodes
-            }
-
-            this.tmpl = tmpl;
-            this.element = tmpl.element;
-            this.childNodesElement = tmpl.childNodesElement || tmpl.element;
-            ;;;this.noChildNodesElement = false;
-
-            if (this.childNodesElement.nodeType != 1)
-            {
-              this.childNodesElement = document.createDocumentFragment();
-              ;;;this.noChildNodesElement = true;
-            }
+            tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
+            tmpl.childNodesElement.insertPoint = tmpl.childNodesHere; // FIXME: we should avoid add expando to dom nodes
           }
 
-          // insert content
-          if (this.content)
+          this.tmpl = tmpl;
+          this.element = tmpl.element;
+          this.childNodesElement = tmpl.childNodesElement || tmpl.element;
+          ;;;this.noChildNodesElement = false;
+
+          if (this.childNodesElement.nodeType != 1)
           {
-            if (this.content instanceof basis.l10n.Token)
-            {
-              ;;;basis.dev.warn('WARN: use instance of basis.l10n.Token as value for basis.ui.Node#content property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.content);
-
-              // FIXME: buggy code here, looks like we shouldn't want to do that
-              var token = this.content;
-              var textNode = DOM.createText(token.value);
-              var handler = function(value){
-                this.nodeValue = value;
-              };
-
-              token.attach(handler, textNode);
-              this.addHandler({
-                destroy: function(){
-                  token.detach(handler, textNode);
-                }
-              });
-
-              DOM.insert(tmpl.content || tmpl.element, textNode);
-            }
-            else
-              DOM.insert(tmpl.content || tmpl.element, this.content);
+            this.childNodesElement = document.createDocumentFragment();
+            ;;;this.noChildNodesElement = true;
           }
 
-          // update template
-          if (this.id)
-          {
-            ;;;basis.dev.warn('WARN: basis.ui.Node#id property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.id);
-
-            tmpl.element.id = this.id;
-          }
-
-          var cssClassNames = this.cssClassName;
-          if (cssClassNames)
-          {
-            ;;;basis.dev.warn('WARN: basis.ui.Node#cssClassName property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.cssClassName);
-
-            if (typeof cssClassNames == 'string')
-              cssClassNames = { element: cssClassNames };
-
-            for (var alias in cssClassNames)
-            {
-              var node = tmpl[alias];
-              if (node)
-              {
-                var nodeClassName = classList(node);
-                var names = String(cssClassNames[alias]).qw();
-                for (var i = 0, name; name = names[i++];)
-                  nodeClassName.add(name);
-              }
-            }
-          }
-
-          this.templateUpdate(this.tmpl);
-          if (binding && binding.names.length)
-          {
-            if (binding.handler)
-              this.addHandler(binding.handler);
-
-            binding.sync.call(this);
-          }
+          if (this.grouping)
+            this.grouping.syncDomRefs();
 
           if (this instanceof PartitionNode)
           {
             var nodes = this.nodes;
             if (nodes)
-              for (var i = nodes.length; i-- > 0;)
-              {
-                var child = nodes[i];
+              for (var i = nodes.length - 1, child; child = nodes[i]; i--)
                 child.parentNode.insertBefore(child, child.nextSibling);
-              }
           }
           else
           {
             for (var child = this.lastChild; child; child = child.previousSibling)
               this.insertBefore(child, child.nextSibling);
           }
+        }
 
-          if (oldElement && this.element && oldElement !== this.element)
+        // insert content
+        if (this.content)
+        {
+          if (this.content instanceof basis.l10n.Token)
           {
-            var parentNode = oldElement && oldElement.parentNode;
-            if (parentNode)
-              parentNode.replaceChild(this.element, oldElement);
+            ;;;basis.dev.warn('WARN: use instance of basis.l10n.Token as value for basis.ui.Node#content property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.content);
 
-            // ??? fire event
-            this.emit_templateChanged();
+            // FIXME: buggy code here, looks like we shouldn't want to do that
+            var token = this.content;
+            var textNode = DOM.createText(token.value);
+            var handler = function(value){
+              this.nodeValue = value;
+            };
+
+            token.attach(handler, textNode);
+            this.addHandler({
+              destroy: function(){
+                token.detach(handler, textNode);
+              }
+            });
+
+            DOM.insert(tmpl.content || tmpl.element, textNode);
           }
+          else
+            DOM.insert(tmpl.content || tmpl.element, this.content);
+        }
 
-          this.templateBinding_ = binding;
+        // update template
+        if (this.id)
+        {
+          ;;;basis.dev.warn('WARN: basis.ui.Node#id property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.id);
+
+          tmpl.element.id = this.id;
+        }
+
+        var cssClassNames = this.cssClassName;
+        if (cssClassNames)
+        {
+          ;;;basis.dev.warn('WARN: basis.ui.Node#cssClassName property is prohibited and being removed soon, class:', this.constructor.className, ', value:', this.cssClassName);
+
+          if (typeof cssClassNames == 'string')
+            cssClassNames = { element: cssClassNames };
+
+          for (var alias in cssClassNames)
+          {
+            var node = tmpl[alias];
+            if (node)
+            {
+              var nodeClassName = classList(node);
+              var names = String(cssClassNames[alias]).qw();
+              for (var i = 0, name; name = names[i++];)
+                nodeClassName.add(name);
+            }
+          }
+        }
+
+        this.templateUpdate(this.tmpl);
+
+        if (oldElement && oldElement.nodeType != 11 && this.element && oldElement !== this.element)
+        {
+          var parentNode = oldElement && oldElement.parentNode;
+          
+          if (parentNode)
+            parentNode.replaceChild(this.element, oldElement);
+
+          // emit event
+          this.emit_templateChanged();
         }
       },
 
@@ -539,6 +551,7 @@
       setTemplate: function(template){
         var curSwitcher = this.templateSwitcher_;
 
+        // dance with template switcher
         if (template instanceof basis.template.TemplateSwitcher)
         {
           var switcher = template;
@@ -550,6 +563,7 @@
             this.addHandler(TEMPLATE_SWITCHER_HANDLER, this);
         }
         
+        // check template for correct class instance
         if (template instanceof Template == false)
           template = null;
 
@@ -560,54 +574,22 @@
           this.removeHandler(TEMPLATE_SWITCHER_HANDLER, this);
         }
 
+        // apply new value
         if (this.template !== template)
         {
           var tmpl;
           var oldTemplate = this.template;
           var oldElement = this.element;
 
-          // drop old template
-          if (oldTemplate)
+          // set new template
+          this.template = template;
+
+          if (template)
+            this.templateSync();
+          else
           {
             oldTemplate.clearInstance(this.tmpl);
 
-            var oldBinding = this.templateBinding_;
-            if (oldBinding && oldBinding.handler)
-              this.removeHandler(oldBinding.handler);
-
-            this.templateBinding_ = null;
-          }
-
-          this.template = template;
-
-          // set new template
-          if (template)
-          {
-            tmpl = template.createInstance(this, this.templateAction, this.templateSync);
-
-            if (tmpl.childNodesHere)
-            {
-              tmpl.childNodesElement = tmpl.childNodesHere.parentNode;
-              tmpl.childNodesElement.insertPoint = tmpl.childNodesHere;  // FIXME: we should avoid add expando to dom nodes
-            }
-
-            this.tmpl = tmpl;
-            this.element = tmpl.element;
-            this.childNodesElement = tmpl.childNodesElement || tmpl.element;
-
-            ;;;this.noChildNodesElement = false;
-
-            if (this.childNodesElement.nodeType != 1)
-            {
-              this.childNodesElement = document.createDocumentFragment();
-              ;;;this.noChildNodesElement = true;
-            }
-
-            if (oldTemplate)
-              this.templateSync(true);
-          }
-          else
-          {
             this.tmpl = null;
             this.element = null;
             this.childNodesElement = null;
@@ -622,10 +604,6 @@
                 parentNode.removeChild(oldElement);
             }
           }
-
-          // ??? fire event
-          //if (oldTemplate && template)
-          //  this.emit_templateChanged();
         }
       },
 
@@ -845,7 +823,7 @@
     syncDomRefs: function(){
       var cursor = this;
       var owner = this.owner;
-      var element = null;//this.nullElement;
+      var element = null;
 
       if (owner)
       {
@@ -858,6 +836,13 @@
         cursor.element = cursor.childNodesElement = element;
       }
       while (cursor = cursor.grouping);
+    },
+
+    destroy: function(){
+      DWGroupingNode.prototype.destroy.call(this);
+      this.element = null;
+      this.childNodesElement = null;
+      this.nullElement = null;
     }
   });
 
@@ -867,6 +852,34 @@
   */
   var Node = Class(DWNode, TemplateMixin, ContainerTemplateMixin, {
     className: namespace + '.Node',
+
+    // those bindings here because PartitionNode has no select/unselect/disable/enable events for now
+    binding: {
+      selected: {
+        events: 'select unselect',
+        getter: function(node){
+          return node.selected;
+        }
+      },
+      unselected: {
+        events: 'select unselect',
+        getter: function(node){
+          return !node.selected;
+        }
+      },
+      disabled: {
+        events: 'disable enable',
+        getter: function(node){
+          return node.disabled || node.contextDisabled;
+        }
+      },
+      enabled: {
+        events: 'disable enable',
+        getter: function(node){
+          return !(node.disabled || node.contextDisabled);
+        }
+      }
+    },
 
     childClass: Class.SELF,
     childFactory: function(config){

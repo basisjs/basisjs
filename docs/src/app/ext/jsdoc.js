@@ -32,7 +32,12 @@
   var JsDocPanel = basis.ui.Node.subclass({
     className: module.path + '.JsDocPanel',
     active: true,
+    codeElement: null,
+
     template: resource('jsdoc/template/jsdocPanel.tmpl'),
+    binding: {
+      codeElement: 'codeElement'
+    },
 
     emit_update: function(delta){
       basis.ui.Node.prototype.emit_update.call(this, delta);
@@ -45,13 +50,12 @@
 
     parse: function(){
       var newData = this.data;
-
-      DOM.clear(this.tmpl.content);
+      var result = DOM.createFragment();
 
       if (newData.file)
       {
         var filename = basis.path.relative(newData.file);
-        DOM.insert(this.tmpl.content,
+        result.appendChild(
           DOM.createElement('A.location[href="source_viewer.html?file={0}#{1}"][target="_blank"]'.format(filename, newData.line),
             basis.path.basename(filename) + ':' + newData.line
           )
@@ -62,17 +66,14 @@
       {
         var tags = DOM.wrap(basis.object.keys(basis.object.slice(newData.tags, tagLabels)), { 'SPAN.tag': basis.fn.$true });
         if (tags.length)
-          DOM.insert(this.tmpl.content, DOM.createElement('.tags', tags));
+          result.appendChild(DOM.createElement('.tags', tags));
         
         if (newData.tags.description)
         {
           if (!newData.tags.description_)
-          {
             newData.tags.description_ = parseDescription(newData.tags.description);
-          }
           
-          DOM.insert(DOM.clear(this.tmpl.description), newData.tags.description_);
-          DOM.insert(this.tmpl.content, this.tmpl.description);
+          result.appendChild(DOM.createElement('.description', newData.tags.description_));
         }
 
         if (newData.tags.see && newData.tags.see.length)
@@ -81,24 +82,23 @@
             this.linksPanel = new JsDocLinksPanel();
 
           this.linksPanel.setChildNodes(newData.tags.see.map(app.core.resolveUrl).map(app.core.JsDocLinkEntity));
-          DOM.insert(this.tmpl.content, this.linksPanel.element);
+          result.appendChild(this.linksPanel.element);
         }
         
         if (newData.tags.param)
         {
-          DOM.insert(this.tmpl.content, [
+          DOM.insert(result, [
             DOM.createElement('DIV.label', 'Parameters:'),
             DOM.createElement('UL',
               basis.object.iterate(newData.tags.param, function(key, value){
                 var types = value.type.replace(/=$/, '');
                 var isOptional = types != value.type;
+
                 return DOM.createElement('LI.param' + (isOptional ? '.optional' : ''),
                   DOM.createElement('SPAN.name', key),
-                  //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
                   DOM.createElement('SPAN.types', parseTypes(types)),
                   (isOptional ? ' (optional)' : ''),
                   parseDescription(value.description || '')
-                  //DOM.createElement('P', value.description)
                 );
               })
             )
@@ -107,16 +107,14 @@
 
         if (newData.tags.returns)
         {
-          DOM.insert(this.tmpl.content, [
+          DOM.insert(result, [
             DOM.createElement('DIV.label', 'Returns:'),
             DOM.createElement('UL',
               basis.object.iterate({ ret: newData.tags.returns }, function(key, value){
                 var types = value.type.replace(/=$/, '');
                 return DOM.createElement('LI.param',
-                  //DOM.createElement('SPAN.types', DOM.wrap(types.split(/\s*(\|)\s*/), { 'SPAN.splitter': function(value, idx){ return idx % 2 } })),
                   DOM.createElement('SPAN.types', parseTypes(types)),
                   parseDescription(value.description || '')
-                  //DOM.createElement('P', value.description)
                 );
               })
             )
@@ -126,7 +124,7 @@
         if (newData.tags.example)
         {
           var code;
-          DOM.insert(this.tmpl.content, [
+          DOM.insert(result, [
             DOM.createElement('DIV.label', 'Example:'),
             code = DOM.createElement('PRE.Basis-SyntaxHighlight')
           ]);
@@ -134,17 +132,27 @@
         }
       }
 
-      //cssom.display(this.element, !!newData.text)
+      var codeElement = this.codeElement;
+
+      if (!codeElement)
+      {
+        codeElement = this.codeElement = DOM.createElement();
+        this.updateBind('codeElement');
+      }
+      else
+        DOM.clear(codeElement);
+
+      codeElement.appendChild(result);
     },
 
     destroy: function(){
       if (this.data.tags && this.data.tags.description_)
-        delete this.data.tags.description_;
+        this.data.tags.description_ = null;
 
       if (this.linksPanel)
       {
         this.linksPanel.destroy();
-        delete this.linksPanel;
+        this.linksPanel = null;
       }
 
       basis.ui.Node.prototype.destroy.call(this);

@@ -1,0 +1,11 @@
+{
+  "en-US": {
+    "closeButton": "Close"
+  },
+  "ru-RU": {
+    "closeButton": "Закрыть"
+  },
+  "uk-UA": {
+    "closeButton": "Закрити"
+  }
+}

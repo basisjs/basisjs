@@ -5,6 +5,10 @@ basis.require('basis.dom.event');
 basis.require('basis.layout');
 basis.require('app.stat');
 basis.require('app.core');
+basis.require('basis.l10n');
+
+basis.l10n.setCultureList('en-US/ru-RU ru-RU'); // en-US temporary fallback on ru-RU
+//basis.l10n.setCulture('ru-RU');
 
 basis.ready(function(){
   var initTime = new Date;
@@ -180,10 +184,10 @@ basis.ready(function(){
     if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || prototypeMapPopup().visible)
       return;
 
-    basis.dom.focus(searchInput.tmpl.field, !searchInput.focused);
+    searchInput.focus(!searchInput.focused);
   });
 
-  basis.dom.focus(searchInput.tmpl.field, true);
+  searchInput.focus(true);
 
   app.stat.initTime.set(new Date - initTime);
 });

@@ -473,8 +473,8 @@
 
     flex: 0,
 
-    init: function(){
-      UINode.prototype.init.call(this);
+    templateSync: function(noRecreate){
+      UINode.prototype.templateSync.call(this, noRecreate);
 
       if (this.flex)
       {

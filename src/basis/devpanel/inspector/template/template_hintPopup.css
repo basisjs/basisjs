@@ -1,0 +1,37 @@
+#devpanel-l10n-templateHintPopup
+{
+  position: fixed;
+  padding: 4px 8px;
+  margin: 2px 0;
+  border: 1px solid #D0C0AA;
+  border: 1px solid rgba(180, 170, 120, .7);
+  background: #E8E4C0;
+  background: rgba(255, 255, 210, .95);
+  pointer-events: none;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #885500;
+    -webkit-transition: all .05s;
+  transition: all .05s;
+  z-index: 10001 !important;
+}
+
+.devpanel-l10n-templateHintPopup__element,
+.devpanel-l10n-templateHintPopup__rootNodeSelector,
+.devpanel-l10n-templateHintPopup__source
+{
+  display: block;
+}
+.devpanel-l10n-templateHintPopup__name
+{
+  display: none;
+}
+.devpanel-l10n-templateHintPopup__name_name
+{
+  display: block;
+}
+
+.devpanel-l10n-templateHintPopup__propertyTitle
+{
+  color: black;
+}

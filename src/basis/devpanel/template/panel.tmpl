@@ -13,10 +13,13 @@
   </div>
   <div class="Basis-DevPanel-Section Basis-DevPanel-Section-l10n">  
     <div class="Basis-DevPanel-Button l10n" event-mousedown="inspectl10n">&nbsp;</div>
-    <div{cultureButton} class="Basis-DevPanel-Button culture {base}" event-click="showCultures">
-      <span style="background-position: -{spriteX}px -{spriteY}px;">&nbsp;</span>
+    <div{cultureButton} class="Basis-DevPanel-Button culture" event-click="showCultures">
+      <span>{cultureName}</span>
     </div>
     <!--{cultureList}-->
+  </div>
+  <div class="Basis-DevPanel-Section">
+    <div class="Basis-DevPanel-Button" event-mousedown="inspectHeat">Heat map</div>
   </div>
   <div class="Basis-DevPanel-Section Basis-DevPanel-Section-FileInspector">
     <div class="Basis-DevPanel-Button fileInspector" event-click="inspectFile">&nbsp;</div>

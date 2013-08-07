@@ -4,15 +4,15 @@ basis.require('basis.template');
 var transport = resource('transport.js').fetch();
 var sendData = transport.sendData;
 
+var IS_FILE_ALLOWED_REGEX = /\.(tmpl|css|l10n)$/;
+
 function sendFile(file){
   var data = basis.object.slice(file.data);
 
   if (basis.path.extname(file.data.filename) == '.tmpl' && file.data.content)
   {
-    data.declaration = basis.template.makeDeclaration(file.data.content, basis.path.dirname(basis.path.resolve(file.data.filename)) + '/');
-    data.resources = data.declaration.resources.map(function(item){
-      return item.substr((location.protocol + '//' + location.host).length)
-    });
+    data.declaration = basis.template.makeDeclaration(file.data.content, basis.path.dirname(basis.path.resolve(file.data.filename)) + '/', {}, file.data.filename);
+    data.resources = data.declaration.resources;
     // delete deps as it can has resource and ResourceWrapper which can't be serialized
     data.declaration.deps = [];
   }
@@ -35,7 +35,7 @@ var FILE_LIST_HANDLER = {
       var fileData;
       for (var i = 0, object; object = delta.inserted[i]; i++)
       {
-        if (/\.(tmpl|css)$/.test(object.data.filename))
+        if (IS_FILE_ALLOWED_REGEX.test(object.data.filename))
         {
           fileData = basis.object.slice(object.data);
           delete fileData.content;
@@ -52,7 +52,7 @@ var FILE_LIST_HANDLER = {
 
       for (var i = 0, object; object = delta.deleted[i]; i++)
       {
-        if (/\.(tmpl|css)$/.test(object.data.filename))
+        if (IS_FILE_ALLOWED_REGEX.test(object.data.filename))
         {
           data.deleted.push(object.data.filename);
           object.removeHandler(FILE_HANDLER);

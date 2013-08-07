@@ -1,0 +1,41 @@
+{
+  "en-US": {
+    "validator": {
+      "regExpWrongFormat": "The value has wrong format.",
+      "required": "The field is required and must have a value.",
+      "numberWrongFormat": "The value has wrong format of number.",
+      "currencyWrongFormat": "The value has wrong format of currency.",
+      "currencyMustBeGreaterZero": "The value must be greater than zero.",
+      "emailWrongFormat": "The value has a wrong format of e-mail.",
+      "urlWrongFormat": "The value has a wrong format of URL.",
+      "minLengthError": "The value must be longer than {0} symbols.",
+      "maxLengthError": "The value must be shorter than {0} symbols."
+    }
+  },
+  "ru-RU": {
+    "validator": {
+      "regExpWrongFormat": "Значение имеет неверный формат.",
+      "required": "Поле не должно оставаться пустым.",
+      "numberWrongFormat": "Поле имеет неверный формат числа.",
+      "currencyWrongFormat": "Поле имеет неверный формат суммы.",
+      "currencyMustBeGreaterZero": "Сумма должна быть больше нуля.",
+      "emailWrongFormat": "Поле имеет неверный формат e-mail.",
+      "urlWrongFormat": "Поле имеет неверный формат URL.",
+      "minLengthError": "Значение не должно быть короче чем {0} символов.",
+      "maxLengthError": "Значение не должно быть длиннее чем {0} символов."
+    }
+  },
+  "uk-UA": {
+    "validator": {
+      "regExpWrongFormat": "Значення має невірний формат.",
+      "required": "Поле не повинно бути пустим.",
+      "numberWrongFormat": "Поле має невірний формат числа.",
+      "currencyWrongFormat": "Поле має невірний формат суми.",
+      "currencyMustBeGreaterZero": "Сума повинна бути більше нуля.",
+      "emailWrongFormat": "Поле має невірний формат e-mail.",
+      "urlWrongFormat": "Поле має невірний формат URL.",
+      "minLengthError": "Значення не повинно бути коротше ніж {0} символів.",
+      "maxLengthError": "Значення не має бути довшим ніж {0} символів."
+    }
+  }
+}

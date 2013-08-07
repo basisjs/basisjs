@@ -1,0 +1,11 @@
+{
+  "en-US": {
+    "emptyTitle": "[no title]"
+  },
+  "ru-RU": {
+    "emptyTitle": "[нет заголовка]"
+  },
+  "uk-UA": {
+    "emptyTitle": "[немає заголовка]"
+  }
+}

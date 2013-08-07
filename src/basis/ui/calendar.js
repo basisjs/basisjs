@@ -50,77 +50,13 @@
   // definitions
   //
 
+  var dict = basis.l10n.dictionary(__filename);
+
   var templates = basis.template.define(namespace, {
     Calendar: resource('templates/calendar/Calendar.tmpl'),
     Section: resource('templates/calendar/Section.tmpl'),
     SectionMonth: resource('templates/calendar/SectionMonth.tmpl'),
     Node: resource('templates/calendar/Node.tmpl')
-  });
-
-  basis.l10n.createDictionary(namespace, __dirname + 'l10n/calendar', {
-    "quarter": "Quarter",
-    "today": "Today",
-    "selected": "Selected"
-  });
-
-  basis.l10n.createDictionary(namespace + '.month', __dirname + 'l10n/calendar', {
-    "jan": "January",
-    "feb": "February",
-    "mar": "March",
-    "apr": "April",
-    "may": "May",
-    "jun": "June",
-    "jul": "July",
-    "aug": "August",
-    "sep": "September",
-    "oct": "October",
-    "nov": "November",
-    "dec": "December"
-  });
-
-  basis.l10n.createDictionary(namespace + '.monthShort', __dirname + 'l10n/calendar', {
-    "jan": "Jan",
-    "feb": "Feb",
-    "mar": "Mar",
-    "apr": "Apr",
-    "may": "May",
-    "jun": "Jun",
-    "jul": "Jul",
-    "aug": "Aug",
-    "sep": "Sep",
-    "oct": "Oct",
-    "nov": "Nov",
-    "dec": "Dec"
-  });
-
-  basis.l10n.createDictionary(namespace + '.day', __dirname + 'l10n/calendar', {
-    "mon": "Monday",
-    "tue": "Tuesday",
-    "wed": "Wednesday",
-    "thr": "Thursday",
-    "fri": "Friday",
-    "sat": "Saturday",
-    "sun": "Sunday"
-  });
-
-  basis.l10n.createDictionary(namespace + '.day2', __dirname + 'l10n/calendar', {
-    "mon": "Mo",
-    "tue": "Tu",
-    "wed": "We",
-    "thr": "Th",
-    "fri": "Fr",
-    "sat": "Sa",
-    "sun": "Su"
-  });
-
-  basis.l10n.createDictionary(namespace + '.day3', __dirname + 'l10n/calendar', {
-    "mon": "Mon",
-    "tue": "Tue",
-    "wed": "Wed",
-    "thr": "Thr",
-    "fri": "Fri",
-    "sat": "Sat",
-    "sun": "Sun"
   });
 
   //
@@ -194,11 +130,11 @@
       return period.periodStart.getFullYear();
     },
     quarter: function(period){
-      return l10nToken(namespace, 'quarter');
+      return dict.token('quarter');
       //return LOCALE('QUARTER').toLowerCase().format(1 + period.periodStart.getMonth().base(3)/3);
     },
     month: function(period){
-      return l10nToken(namespace, 'monthShort', monthNumToRef[period.periodStart.getMonth()]);
+      return dict.token('monthShort.' + monthNumToRef[period.periodStart.getMonth()]);
       //return LOCALE('MONTH').SHORT[period.periodStart.getMonth()].toLowerCase();
     },
     day: function(period){
@@ -510,8 +446,8 @@
     nodePeriodName: DAY,
     nodePeriodUnit: DAY,
 
-    getTabTitle: function(node){
-      return node.getDate();
+    getTabTitle: function(date){
+      return date.getDate();
     },
     getInitOffset: function(date){
       return 1 + (new Date(date).set(DAY, 1).getDay() + 5) % 7;
@@ -525,12 +461,9 @@
           return node.periodStart.getFullYear();
         }
       },
-      title: {
-        events: 'periodChanged',
-        getter: function(node){
-          return l10nToken(namespace, 'month', monthNumToRef[node.periodStart.getMonth()]);
-        }
-      }
+      title: dict.token('month').compute('periodChanged', function(node){
+        return monthNumToRef[node.periodStart.getMonth()];
+      })
     }
   });
 
@@ -546,11 +479,14 @@
     nodePeriodName: MONTH,
     nodePeriodUnit: MONTH,
 
-    getTabTitle: function(node){
-      return l10nToken(namespace, 'month', monthNumToRef[node.getMonth()]);
+    getTitle: function(date){
+      return date.getFullYear();
     },
-    getTitle: function(node){
-      return node.getFullYear();
+
+    binding: {
+      tabTitle: dict.token('month').compute('selectedDateChanged', function(node){
+        return monthNumToRef[node.selectedDate.getMonth()];
+      })
     }
   });
 
@@ -569,11 +505,11 @@
     getInitOffset: function(){
       return 1;
     },
-    getTabTitle: function(node){
-      return node.getFullYear();
+    getTabTitle: function(date){
+      return date.getFullYear();
     },
-    getTitle: function(periodStart){
-      return periodStart.getFullYear() + ' - ' + this.periodEnd.getFullYear();
+    getTitle: function(date){
+      return date.getFullYear() + ' - ' + this.periodEnd.getFullYear();
     }
   });
 
@@ -591,12 +527,9 @@
     nodePeriodUnitCount: 10,
 
     getTabTitle: function(date){
-      if (date)
-      {
-        var year = date.getFullYear();
-        var start = year - year % 10;
-        return start + '-' + (Number(start.toString().substr(-2)) + 9).lead(2);
-      }
+      var year = date.getFullYear();
+      var start = year - year % 10;
+      return start + '-' + (Number(start.toString().substr(-2)) + 9).lead(2);
     },
 
     getInitOffset: function(){
@@ -633,12 +566,9 @@
     nodePeriodUnit: MONTH,
 
     binding: {
-      title: {
-        events: 'periodChanged',
-        getter: function(){
-          return l10nToken(namespace, 'quarter');
-        }
-      }
+      title: dict.token('quarter').compute('periodChanged', function(node){
+        return 1;  // todo: fix me
+      })
     }
   });
 

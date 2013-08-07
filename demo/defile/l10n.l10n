@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "type": {
+      "markupToken": "markup",
+      "recursion": "markup",
+      "recursion2": "markup",
+      "plural": "plural",
+      "unknownType": "unknownType1",
+      "a.5": "markup"
+    }
+  },
+  "en-US": {
+    "markupToken": "test *test* test (count: {count}) (a.b: {l10n:a.b})<br/>{l10n:recursion} ",
+    "recursion": "[ recursion >> {l10n:recursion2} {count} ]",
+    "recursion2": "[ recursion2 >> {l10n:recursion_}  ]",
+    "plural": ["test", "tests"],
+    "default": "test *test* test",
+    "unknownType": "test *test* test",
+    "a": {
+      "b": 12323,
+      "5": "enum markup {l10n:default} {count}"
+    }
+  },
+  "ru-RU": {
+    "markupToken": "ТЕСТ *test* test (count: {count}) (a.b: {l10n:a.b})<br/>{l10n:recursion} ",
+    "recursion": "[ recursion >> {l10n:recursion2} {count} ]",
+    "recursion2": "[ recursion2 >> {l10n:recursion_}  ]",
+    "plural": ["тест", "теста", "тестов"],
+    "default": "test *test* test",
+    "unknownType": "test *test* test",
+    "a": {
+      "b": 12323,
+      "5": "enum разметка {l10n:default} {count}"
+    }
+  }
+}

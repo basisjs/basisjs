@@ -5,14 +5,13 @@ basis.require('basis.ui');
 
 var DOM = basis.dom;
 
-var colorPicker = resource('colorPicker.js').fetch();
-var transport = resource('../API/transport.js').fetch();
+//var transport = resource('../API/transport.js').fetch();
 
 var inspectMode;
 var elements = [];
 
 var overlayNode = new basis.ui.Node({
-  template: resource('template/l10n_overlay.tmpl'),
+  template: resource('template/heat_overlay.tmpl'),
   action: {
     mouseover: function(e){
       basis.cssom.classList(overlayContent).add('hover');
@@ -25,30 +24,6 @@ var overlayNode = new basis.ui.Node({
 
 var overlay = overlayNode.tmpl.element;
 var overlayContent = overlayNode.tmpl.content;
-
-function pickHandler(){
-  var sender = DOM.event.sender(event);
-
-  var token = sender.token;
-  if (token)
-  {
-    endInspect();
-    loadToken(token);
-  } 
-}
-
-function loadToken(token){
-  var dictionary = token.dictionary;
-  var cultureList = basis.l10n.getCultureList();
-
-  var data = {
-    cultureList: cultureList,
-    selectedToken: token.name,
-    dictionaryName: '/' + basis.path.relative('/', dictionary.resource.url)
-  };
-
-  transport.sendData('token', data);        
-}
 
 // dom mutation observer
 
@@ -76,9 +51,9 @@ function startInspect(){
     DOM.event.captureEvent('mousedown', DOM.event.kill);
     DOM.event.captureEvent('mouseup', DOM.event.kill);
     DOM.event.captureEvent('contextmenu', endInspect);
-    DOM.event.captureEvent('click', pickHandler);    
+    //DOM.event.captureEvent('click', pickHandler);
 
-    transport.sendData('startInspect', 'l10n');
+    //transport.sendData('startInspect', 'l10n');
 
     if (observer)
       observer.observe(document.body, {
@@ -89,6 +64,7 @@ function startInspect(){
       });
   }
 }
+
 function endInspect(){
   if (inspectMode)
   {
@@ -106,7 +82,8 @@ function endInspect(){
 
     unhighlight();
     inspectMode = false;
-    transport.sendData('endInspect', 'l10n');
+
+    //transport.sendData('endInspect', 'l10n');
   }
 }
 
@@ -130,20 +107,48 @@ function updateOnResize(){
 
 function highlight(keepOverlay){
   unhighlight(keepOverlay);
+
   domTreeHighlight(document.body);
+
+  var tokenElements = document.createDocumentFragment();
+  var min = Infinity;
+  var max = -Infinity;
+  
+  for (var i = 0, data; data = elements[i]; i++)
+  {
+    min = Math.min(min, data.updates);
+    max = Math.max(max, data.updates);
+  }
+
+  for (var i = 0, data; data = elements[i]; i++)
+  {
+    var temp = max != min ? 1 - ((data.updates - min) / (max - min)) : 1;
+    var bgColor = 'rgba(' + [255 - parseInt(128 * temp), parseInt(temp * 255), 0].join(',') + ', .4)';
+    var borderColor = 'rgba(' + [200 - parseInt(128 * temp), parseInt(temp * 200), 0].join(',') + ', .75)';
+    data.element = tokenElements.appendChild(basis.dom.createElement({
+      description: '.devpanel-heat-token',
+      css: {
+        backgroundColor: bgColor,
+        outline: '1px solid ' + borderColor,
+        top: document.body.scrollTop + data.rect.top + 'px',
+        left: document.body.scrollLeft + data.rect.left + 'px',
+        width: data.rect.width + 'px', 
+        height: data.rect.height + 'px'
+      }
+    }, data.updates == 1 ? '' : data.updates));
+  }
+
+  overlayContent.appendChild(tokenElements);
 
   if (!keepOverlay)
     DOM.insert(document.body, overlay);
 }
 
 function unhighlight(keepOverlay){
-  var node;
+  var data;
 
-  while (node = elements.pop())
-  {
-    node.token = null;
-    DOM.remove(node);
-  }
+  while (data = elements.pop())
+    DOM.remove(data.element);
 
   if (!keepOverlay)
   {
@@ -163,48 +168,8 @@ function updateHighlight(records){
     }
 }
 
-
-function addTokenToHighlight(token, ref, domNode){
-  if (token instanceof basis.l10n.Token && token.dictionary)
-  {
-    var rect;
-
-    if (ref && ref.nodeType == 1)
-    {
-      rect = ref.getBoundingClientRect();
-    }
-    else
-    {
-      var range = document.createRange();
-      range.selectNodeContents(domNode);
-      rect = range.getBoundingClientRect();
-    }
-
-    if (rect)
-    {
-      var color = getColorForDictionary(token.dictionary.resource.url);
-      var bgColor = 'rgba(' + color.join(',') + ', .3)';
-      var borderColor = 'rgba(' + color.join(',') + ', .6)';
-      var element = overlayContent.appendChild(basis.dom.createElement({
-        description: '.devpanel-l10n-token',
-        css: {
-          backgroundColor: bgColor,
-          outline: '1px solid ' + borderColor,
-          top: document.body.scrollTop + rect.top + 'px',
-          left: document.body.scrollLeft + rect.left + 'px',
-          width: rect.width + 'px', 
-          height: rect.height + 'px'
-        }
-      }));
-
-      element.token = token;
-      elements.push(element);
-    }
-  }
-}
-
 function domTreeHighlight(root){
-  for (var i = 0, child, l10nRef; child = root.childNodes[i]; i++)
+  for (var i = 0, child; child = root.childNodes[i]; i++)
   {
     if (child.basisTemplateId)
     {
@@ -213,32 +178,41 @@ function domTreeHighlight(root){
       {
         for (var j = 0, binding; binding = debugInfo[j]; j++)
         {
-          var token = binding.attachment;
+          if (!binding.updates)
+            continue;
 
-          if (token instanceof basis.l10n.ComputeToken)
-            token = token.token;
+          var rect;
+          var domNode = binding.val instanceof Node ? binding.val : binding.dom;
 
-          addTokenToHighlight(token, binding.val, binding.dom);
+          if (domNode)
+          {
+            switch (domNode.nodeType)
+            {
+              case 1:
+                rect = domNode.getBoundingClientRect();
+                break;
+              case 3:
+                var range = document.createRange();
+                range.selectNodeContents(domNode);
+                rect = range.getBoundingClientRect();
+                break;
+            }
+          }
+
+          if (rect)
+          {
+            elements.push({
+              updates: binding.updates,
+              rect: rect
+            });
+          }
         }
       }
     }
 
     if (child.nodeType == basis.dom.ELEMENT_NODE) 
-    {
-      if (l10nRef = child.getAttribute('data-basisjs-l10n'))
-        addTokenToHighlight(basis.l10n.token(l10nRef), child, child);
-
       domTreeHighlight(child);
-    }  
   }
-}
-
-var dictionaryColor = {};
-function getColorForDictionary(dictionaryName){
-  if (!dictionaryColor[dictionaryName])
-    dictionaryColor[dictionaryName] = colorPicker.getColor();
-
-  return dictionaryColor[dictionaryName];
 }
 
 //
